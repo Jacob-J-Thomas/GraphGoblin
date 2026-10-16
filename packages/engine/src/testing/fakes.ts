@@ -917,16 +917,7 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
   ): Promise<{ receipt: WebhookReceipt; duplicate: boolean }> {
     const frozen = intent ? parseRunAdmission(intent) : undefined;
     assertWebhookClaim(input, frozen);
-    const prior = [...this.receipts.values()].find(
-      (r) =>
-        r.ownerId === input.ownerId &&
-        r.loopId === input.loopId &&
-        r.triggerNodeId === input.triggerNodeId &&
-        r.contentHash === input.contentHash,
-    );
-    if (prior) return Promise.resolve({ receipt: structuredClone(prior), duplicate: true });
     const keySeen =
-      !!input.dedupeByKey &&
       !!input.inbound.dedupeKey &&
       ([...this.receipts.values()].some(
         (receipt) =>

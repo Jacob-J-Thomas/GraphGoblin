@@ -34,8 +34,6 @@ export interface WebhookClaim {
   loopId: string;
   triggerNodeId: string;
   contentHash: string;
-  /** Only an authored, nonempty key activates business dedupe; content replay is unconditional. */
-  dedupeByKey?: true;
   inbound: WebhookInbound;
 }
 export type WebhookFailureCode =
@@ -149,8 +147,6 @@ export function parseRunAdmission(value: unknown): RunAdmission {
 
 export function assertWebhookClaim(input: WebhookClaim, intent?: RunAdmission): void {
   if (
-    (input.dedupeByKey !== undefined && input.dedupeByKey !== true) ||
-    (input.dedupeByKey && !input.inbound.dedupeKey) ||
     input.inbound.ownerId !== input.ownerId ||
     !/^[a-f0-9]{64}$/.test(input.contentHash) ||
     input.inbound.type !== 'webhook' ||

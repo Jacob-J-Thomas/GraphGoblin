@@ -167,7 +167,28 @@ export interface WebhookEndpointDraft {
 type EndpointRow = typeof webhookEndpoints.$inferSelect;
 
 function toEndpoint(row: EndpointRow): WebhookEndpointRecord {
-  return { ...row };
+  if (
+    row.authType !== 'hmac-sha256' ||
+    row.signatureHeader === null ||
+    row.secretRef === null ||
+    row.signatureMessage === null
+  )
+    throw new Error('Unsupported webhook signing configuration');
+  const {
+    authType: _type,
+    signatureMessage,
+    windowSeconds,
+    signatureHeader,
+    secretRef,
+    ...rest
+  } = row;
+  return {
+    ...rest,
+    signatureHeader,
+    secretRef,
+    signatureScheme: signatureMessage === 'body' ? 'hmac-sha256-body' : 'hmac-sha256',
+    replayWindowSeconds: windowSeconds,
+  };
 }
 
 /** Webhook receivers in the `webhook_endpoints` table. */
@@ -219,8 +240,12 @@ export class SqliteWebhookEndpoints {
           token: tokens.get(d.triggerNodeId) ?? newToken(),
           secretRef: d.secretRef,
           signatureHeader: d.signatureHeader,
-          signatureScheme: d.signatureScheme,
-          replayWindowSeconds: d.replayWindowSeconds,
+          authType: 'hmac-sha256' as const,
+          signatureMessage:
+            d.signatureScheme === 'hmac-sha256-body'
+              ? ('body' as const)
+              : ('timestamp-body' as const),
+          windowSeconds: d.replayWindowSeconds,
           enabled: true,
           createdAt: now,
         }));

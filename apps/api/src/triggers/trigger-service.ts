@@ -280,7 +280,7 @@ export class TriggerService {
   /**
    * Verify and act on one delivery to `/hooks/<token>`. Order: endpoint lookup (404), rate limit
    * (429), timestamp window (401), secret (503), signature (401), JSON (400), expressions (422),
-   * then acknowledge saved or already consumed input. Body receipts dispatch asynchronously.
+   * then acknowledge saved or already consumed input. All receipts dispatch asynchronously.
    */
   async handleWebhook(
     token: string,
@@ -338,17 +338,15 @@ export class TriggerService {
     const node = await this.triggerNode(endpoint.versionId, endpoint.triggerNodeId, 'webhook');
     if (!node) return fail(404, 'HOOK_NOT_FOUND', 'unknown webhook');
     const bindings = { headers: this.expressionHeaders(headers, endpoint.signatureHeader) };
-    let dedupeKey: string;
-    let authoredKey: string | undefined;
+    let dedupeKey: string | undefined;
     let passes: boolean;
     try {
-      authoredKey = node.dedupeKey
+      dedupeKey = node.dedupeKey
         ? stringKey(
             await evaluateExpression(node.dedupeKey, payload, { bindings }),
             endpoint.signatureScheme === 'hmac-sha256-body',
           )
         : undefined;
-      dedupeKey = authoredKey ?? `sig-hash:${verified.signatureHash}`;
       passes = node.filter ? await evaluatePredicate(node.filter, payload, { bindings }) : true;
     } catch {
       return fail(422, 'EXPRESSION_FAILED', 'the webhook filter or dedupe expression failed');
@@ -360,7 +358,7 @@ export class TriggerService {
       ownerId: endpoint.ownerId,
       type: 'webhook',
       payload,
-      dedupeKey,
+      ...(dedupeKey ? { dedupeKey } : {}),
       source,
       receivedAt: now.toISOString(),
       runIds: [],
@@ -374,68 +372,34 @@ export class TriggerService {
       source: 'webhook' as const,
       caller: { kind: 'system' as const, id: source },
       payload,
-      dedupeKey,
+      ...(dedupeKey ? { dedupeKey } : {}),
     };
-    if (endpoint.signatureScheme === 'hmac-sha256-body') {
-      try {
-        const outcome = await this.deps.manager.receiveWebhook(
-          {
-            id: this.deps.ids.next(),
-            ownerId: endpoint.ownerId,
-            loopId: endpoint.loopId,
-            triggerNodeId: endpoint.triggerNodeId,
-            contentHash: verified.contentHash,
-            ...(authoredKey ? { dedupeByKey: true as const } : {}),
-            inbound: record,
-          },
-          start,
-          !passes,
-        );
-        return {
-          kind: 'accepted',
-          event: record,
-          ...(outcome.receipt.intent ? { runId: outcome.receipt.intent.run.id } : {}),
-          filtered: outcome.state === 'filtered',
-        };
-      } catch {
-        return fail(
-          503,
-          'WEBHOOK_ADMISSION_FAILED',
-          'the delivery could not be admitted; retry later',
-        );
-      }
+    try {
+      const outcome = await this.deps.manager.receiveWebhook(
+        {
+          id: this.deps.ids.next(),
+          ownerId: endpoint.ownerId,
+          loopId: endpoint.loopId,
+          triggerNodeId: endpoint.triggerNodeId,
+          contentHash: verified.contentHash,
+          inbound: record,
+        },
+        start,
+        !passes,
+      );
+      return {
+        kind: 'accepted',
+        event: record,
+        ...(outcome.receipt.intent ? { runId: outcome.receipt.intent.run.id } : {}),
+        filtered: outcome.state === 'filtered',
+      };
+    } catch {
+      return fail(
+        503,
+        'WEBHOOK_ADMISSION_FAILED',
+        'the delivery could not be admitted; retry later',
+      );
     }
-    // TODO(#168 T4 continuation): move timestamp intake onto claim/create with 0013. Preserve
-    // its current window dedupe until T5 implements Allow and permanent explicit keys.
-    const inserted = await this.deps.inbound.insertUnlessDuplicate(record, {
-      ownerId: endpoint.ownerId,
-      source,
-      dedupeKey,
-      since: new Date(now.getTime() - (endpoint.replayWindowSeconds ?? 300) * 1000).toISOString(),
-    });
-    if (inserted.duplicate) {
-      return { kind: 'accepted', event: inserted.duplicate, filtered: false };
-    }
-    if (!passes) return { kind: 'accepted', event: record, filtered: true };
-
-    const run = await this.deps.manager.startRun({
-      ownerId: endpoint.ownerId,
-      loopId: endpoint.loopId,
-      versionId: endpoint.versionId,
-      triggerNodeId: endpoint.triggerNodeId,
-      triggerKind: 'webhook',
-      source: 'webhook',
-      caller: { kind: 'system', id: source },
-      payload,
-      dedupeKey,
-    });
-    await this.deps.inbound.setRunIds(record.id, [run.id]);
-    return {
-      kind: 'accepted',
-      event: { ...record, runIds: [run.id] },
-      runId: run.id,
-      filtered: false,
-    };
   }
 
   // ---------------------------------------------------------------------------

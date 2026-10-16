@@ -105,7 +105,6 @@ function inputs() {
     loopId: run.loopId,
     triggerNodeId: 'hook',
     contentHash: 'a'.repeat(64),
-    dedupeByKey: true,
     inbound: {
       id: ids.next(),
       ownerId: run.ownerId,
@@ -218,7 +217,7 @@ const scenarios: Scenario[] = [
     },
   },
   {
-    name: 'claim freezes caller objects and duplicate content retains its allocated identity',
+    name: 'claim freezes caller objects and identical keyed content gets a distinct deduplicated receipt',
     async run(f) {
       const { intent, claim, ids } = inputs();
       const expected = structuredClone(intent);
@@ -232,8 +231,9 @@ const scenarios: Scenario[] = [
         { ...claim, id: ids.next(), inbound: { ...claim.inbound, id: ids.next() } },
         expected,
       );
-      equal(duplicate.duplicate, true);
-      equal(duplicate.receipt.id, first.receipt.id);
+      equal(duplicate.duplicate, false);
+      equal(duplicate.receipt.status, 'deduplicated');
+      equal(duplicate.receipt.id === first.receipt.id, false);
     },
   },
   {
@@ -282,10 +282,34 @@ const scenarios: Scenario[] = [
     },
   },
   {
+    name: 'Allow admits identical unkeyed raw bodies as distinct receipts and runs',
+    async run(f) {
+      const { intent, claim, ids } = inputs();
+      delete claim.inbound.dedupeKey;
+      delete intent.initialThread.invocation.trigger.dedupeKey;
+      const first = await f.admission.claim(claim, intent);
+      const second = structuredClone(intent);
+      second.run.id = ids.next();
+      second.initialThread.run.id = second.run.id;
+      second.queued.initialThread = second.initialThread;
+      const next = { ...claim, id: ids.next(), inbound: { ...claim.inbound, id: ids.next() } };
+      const repeated = await f.admission.claim(next, second);
+      equal(repeated.duplicate, false);
+      equal(repeated.receipt.status, 'pending');
+      await f.admission.create(intent, first.receipt.id);
+      await f.admission.create(second, repeated.receipt.id);
+      equal((await f.inbound(claim.inbound.id))?.runIds, [intent.run.id]);
+      equal((await f.inbound(next.inbound.id))?.runIds, [second.run.id]);
+      equal((await f.events(intent.run.id)).length, 1);
+      equal((await f.events(second.run.id)).length, 1);
+    },
+  },
+  {
     name: 'due selection is deterministic, nonnegative and bounded at five',
     async run(f) {
       const { intent, claim, ids, now } = inputs();
-      delete claim.dedupeByKey;
+      delete claim.inbound.dedupeKey;
+      delete intent.initialThread.invocation.trigger.dedupeKey;
       for (let index = 0; index < 7; index++)
         await f.admission.claim(
           {

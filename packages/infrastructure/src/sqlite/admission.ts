@@ -190,23 +190,8 @@ export class SqliteTriggerAdmission implements TriggerAdmissionPort {
     const frozen = intent ? parseRunAdmission(intent) : undefined;
     assertWebhookClaim(input, frozen);
     return this.db.transaction(async (tx) => {
-      // TODO(#168 T5): replace raw-content consumption with Allow, without a stored policy switch.
-      const [prior] = await tx
-        .select()
-        .from(webhookReceipts)
-        .where(
-          and(
-            eq(webhookReceipts.ownerId, input.ownerId),
-            eq(webhookReceipts.loopId, input.loopId),
-            eq(webhookReceipts.triggerNodeId, input.triggerNodeId),
-            eq(webhookReceipts.contentHash, input.contentHash),
-          ),
-        );
-      if (prior) return { receipt: receiptOf(prior), duplicate: true };
-      // Raw content is checked first. A new body always gets its own consumed receipt, even
-      // when its authored identity was filtered or failed before any run existed.
       let keySeen = false;
-      if (input.dedupeByKey && input.inbound.dedupeKey) {
+      if (input.inbound.dedupeKey) {
         const [receiptKey] = await tx
           .select({ id: webhookReceipts.id })
           .from(webhookReceipts)

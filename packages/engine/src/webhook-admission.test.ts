@@ -91,22 +91,29 @@ describe('durable webhook admission', () => {
         .filter((event) => event.type === 'run.queued'),
     ).toHaveLength(1);
   });
-  it('consumes filtered content across versions and takes no execution pins', async () => {
+  it('allows repeated unkeyed content after a filtered receipt', async () => {
     const { engine, input, claim } = await setup();
     expect((await engine.manager.receiveWebhook(claim, input, true)).state).toBe('filtered');
-    expect(
-      (await engine.manager.receiveWebhook({ ...claim, id: engine.ports.ids.next() }, input, false))
-        .state,
-    ).toBe('duplicate');
     expect(await engine.manager.loopInUse(input.loopId)).toBe(false);
-    expect(engine.ports.runs.runs.size).toBe(0);
+    const next = {
+      ...claim,
+      id: engine.ports.ids.next(),
+      inbound: { ...claim.inbound, id: engine.ports.ids.next() },
+    };
+    const repeated = await engine.manager.receiveWebhook(next, input, false);
+    expect(repeated.state).toBe('pending');
+    await engine.manager.waitForIdle();
+    expect(engine.ports.runs.runs.size).toBe(1);
+    expect(engine.ports.events.all(repeated.receipt.intent!.run.id)[0]).toMatchObject({
+      seq: 1,
+      type: 'run.queued',
+    });
   });
   it('keeps business duplicate content terminal across a restarted manager and known webhook runs', async () => {
     const { engine, input, claim } = await setup();
     const keyedInput = { ...input, dedupeKey: 'key' };
     const keyedClaim = {
       ...claim,
-      dedupeByKey: true as const,
       inbound: { ...claim.inbound, dedupeKey: 'key' },
     };
     expect((await engine.manager.receiveWebhook(keyedClaim, keyedInput, true)).state).toBe(
@@ -140,7 +147,7 @@ describe('durable webhook admission', () => {
         .state,
     ).toBe('deduplicated');
     expect([...engine.ports.runs.runs.keys()]).toEqual([historic.id]);
-    Object.defineProperty(known, 'dedupeByKey', { value: false });
+    known.inbound.ownerId = 'other';
     expect(() => engine.ports.admission.claim(known)).toThrow(AdmissionConflictError);
   });
   it('uses items-only atomic admission without reusing, enqueuing or consuming pending reserved identities', async () => {

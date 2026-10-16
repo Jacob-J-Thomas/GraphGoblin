@@ -277,7 +277,7 @@ it('applies 0012 during atomic fresh initialization', async () => {
   expect(
     (await handle.client.execute('SELECT count(*) AS count FROM __drizzle_migrations')).rows[0]
       ?.count,
-  ).toBe(13);
+  ).toBe(14);
   expect(
     (await handle.client.execute('SELECT format_version,status FROM gg_upgrade_state')).rows,
   ).toMatchObject([{ format_version: 4, status: 'complete' }]);
@@ -320,7 +320,11 @@ it('drops a populated inline-CHECK column on deployed libsql, preserving ordinar
       checks: table.checks.filter((check) => !check.includes('template_subject')),
       indexes: table.indexes.filter((index) => !templateIndexes.includes(index.name)),
     }));
-  await applyShippedSqlToHistoricalTestFixture(handle);
+  for (const statement of retirement.sql) await handle.client.execute(statement);
+  await handle.client.execute({
+    sql: 'INSERT INTO __drizzle_migrations(hash,created_at) VALUES (?,?)',
+    args: [retirement.hash, retirement.folderMillis],
+  });
   const after = await storeStructure(handle.client);
   expect(after).toEqual(expected);
   expect(await rowSets(handle, after)).toEqual(rows);

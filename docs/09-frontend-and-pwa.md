@@ -1,9 +1,10 @@
 # 09 - Frontend and PWA
 
 The public webhook response is fixed `202 {accepted:true}`. Events reads private delivery metadata
-and run links from `GET /events`, including saved pending and permanently failed body-receipt
+and run links from `GET /events`, including saved pending and permanently failed webhook
 admissions; it cannot infer run creation from a sender's acknowledgement. The general Webhook
-controls remain part of the #168 T4 continuation.
+controls remain pending in #168 T4. Repeated unkeyed deliveries can appear as separate receipts and
+runs for either signing recipe; a sender acknowledgement does not promise deduplication.
 
 ## Shape (Decided)
 

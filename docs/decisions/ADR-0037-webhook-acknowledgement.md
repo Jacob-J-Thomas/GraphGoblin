@@ -1,6 +1,6 @@
 # ADR-0037 - Acknowledge saved webhook intake before dispatch
 
-Date: 2026-10-15. Status: **Accepted scope; T4 admission checkpoint implemented; remaining T4 and product review pending**.
+Date: 2026-10-15. Status: **Accepted scope; signed admission, Allow and SQL 0013 implemented; general configuration and product review pending**.
 
 ## Context
 
@@ -36,18 +36,31 @@ parsing. Count raw authentication headers case-insensitively before selecting a 
 existing signature prefix/case acceptance, constant-time comparison, timestamp bounds and limits.
 Literal JSON `null` remains valid.
 
+## Uniform admission and Allow
+
+Both existing signing recipes use the same claim, fixed acknowledgement and asynchronous create
+path. Timestamp freshness is purely authentication. Identical unkeyed raw bodies may produce
+distinct receipts and runs. The content hash remains audit evidence and its index is non-unique;
+there is no raw-content suppression or policy selector. A present authored key always enters the
+existing claim lookup, without `dedupeByKey`. Same-ID recovery remains distinct from an external
+repeat. This supersedes ADR-0024's content consumption and timestamp-window deduplication rules.
+
+SQL `0013_trigger_configuration` preserves endpoint identities and tokens while replacing signing
+columns with `auth_type`, `signature_message`, `signature_header`, `secret_ref` and `window_seconds`.
+CHECKs enforce all three target recipes, including null signing fields for None and an integer
+1?86,400 timestamp window. Body/extraction/key configuration belongs in the pinned definition.
+Format 4 is unreleased and readiness compares structure: its baseline is now 0013, refusing old
+stores before automatic migration/recovery. No installed-store conversion is delivered here.
+
 ## Checkpoint and remaining work
 
-This checkpoint implements asynchronous body-receipt dispatch, the fixed public response,
-authentication order and adapter conformance. The old timestamp insert/start/link path remains
-until the T4 continuation can change endpoint configuration and receipt storage together. The
-current signing config, content/window dedupe algorithms and trigger `filter` remain. No migration,
-format baseline change, unsigned intake, body-mode picker or event extraction is claimed here.
+The size-bounded checkpoint implements unified signed admission, uniform Allow and SQL 0013.
+The live contract still has the two existing flat signing shapes; only that contract is read.
+The SQL adapter writes/reads their signing fields using the new columns. Unsigned rows cannot
+be authored or admitted yet. The strict nested authentication/body/event-type contract, unsigned
+intake, text/bytes decoding, extraction/metadata, safe summaries, general editor controls and
+updated GitHub extraction presets remain T4 work. No completed general configuration is claimed.
 
-The continuation implements the strict nested authentication/body/event-type config, 0013 and its
-readiness decision, all-recipe atomic intake, metadata, editor/presets and associated tests/docs.
-Q5 is decided **Allow**, with no policy selector: T5 implements that algorithm and permanent
-explicit keys. T6 removes `filter` and adds conversion rules. These are delivery seams, not
-alternative stored policies or permission to change installed data.
-
-Independent review and owner product review remain required before integration.
+T5 tightens explicit-key permanence, validation and historical/cross-kind lookup. T6 removes
+`filter` and adds conversion rules. Independent review and owner product review remain required
+before integration.

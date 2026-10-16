@@ -111,7 +111,7 @@ async function through(index: number) {
   });
   return handle;
 }
-it.each([8, 9, 10, 11])(
+it.each([8, 9, 10, 11, 12])(
   'refuses a format-4 marker whose ledger stops before the baseline at migration %s',
   async (index) => {
     const handle = await through(index);
@@ -141,7 +141,7 @@ it('refuses a head ledger with missing additive structure after a no-op migratio
   expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toEqual(before);
 });
 it('requires the shipped baseline constraint names as well as their expressions', async () => {
-  const handle = await through(12);
+  const handle = await through(13);
   const ddl = (
     await handle.client.execute("SELECT sql FROM sqlite_master WHERE name='webhook_receipts'")
   ).rows[0]!.sql;
@@ -169,11 +169,11 @@ it('derives dropped and IF NOT EXISTS indexes from the executed migration catalo
       ...last,
       idx: last.idx + 1,
       when: last.when + 1,
-      tag: '0013_index_probe',
+      tag: '0014_index_probe',
     });
     await writeFile(path, JSON.stringify(journal));
     await writeFile(
-      join(folder, '0013_index_probe.sql'),
+      join(folder, '0014_index_probe.sql'),
       'DROP INDEX runs_parent_idx;\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS gate_probe_idx ON runs(id);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS gate_probe_idx ON runs(id);',
     );
     const descriptor = await currentStoreReadiness(folder);

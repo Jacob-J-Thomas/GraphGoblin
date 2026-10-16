@@ -1,3 +1,5 @@
+import { readMigrationFiles } from 'drizzle-orm/migrator';
+import { SHIPPED_MIGRATIONS, FORMAT_BASELINES } from './readiness.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RunRecord } from '@graphgoblin/contracts';
 import {
@@ -9,7 +11,7 @@ import {
 } from '@graphgoblin/contracts/testing';
 import { LoopDefinitionSchema } from '@graphgoblin/contracts';
 import { FakeClock, FakeIds } from '@graphgoblin/engine/testing';
-import { openMemoryDatabase, type DatabaseHandle } from './db.js';
+import { openDatabase, openMemoryDatabase, type DatabaseHandle } from './db.js';
 import { SqliteLoopRepository } from './loops.js';
 import { SqliteRunRepository } from './runs.js';
 import {
@@ -255,5 +257,103 @@ describe('trigger lookups on runs and loops', () => {
       await runs.findTriggerDedupeKeys(fakeUlid('unrelated-loop'), 'hook', ['delivery-1']),
     ).toEqual(new Set());
     select.mockRestore();
+  });
+});
+
+describe('0013 trigger configuration', () => {
+  const insert = `INSERT INTO webhook_endpoints (id,owner_id,loop_id,version_id,trigger_node_id,token,auth_type,signature_message,signature_header,secret_ref,window_seconds,enabled,created_at) VALUES (?,'local','loop','version','hook','token',?,?,?,?,?,1,'2026-10-02T12:00:00.000Z')`;
+  it.each([
+    ['none', null, null, null, null],
+    ['hmac-sha256', 'body', 'x-signature', 'key', null],
+    ['hmac-sha256', 'timestamp-body', 'x-signature', 'key', 1],
+    ['hmac-sha256', 'timestamp-body', 'x-signature', 'key', 86400],
+  ])('accepts exactly the %s recipe fields (%s, %s, %s, %s)', async (...recipe) => {
+    await expect(
+      handle.client.execute({ sql: insert, args: ['valid', ...recipe] }),
+    ).resolves.toBeDefined();
+    const store = new SqliteWebhookEndpoints(handle.db, clock, ids);
+    if (recipe[0] === 'none')
+      await expect(store.findByToken('token')).rejects.toThrow(
+        'Unsupported webhook signing configuration',
+      );
+    else
+      expect(await store.findByToken('token')).toMatchObject({
+        secretRef: 'key',
+        signatureHeader: 'x-signature',
+        signatureScheme: recipe[1] === 'body' ? 'hmac-sha256-body' : 'hmac-sha256',
+        replayWindowSeconds: recipe[4],
+      });
+  });
+  it.each([
+    ['none', 'body', null, null, null],
+    ['none', null, 'x-signature', null, null],
+    ['none', null, null, 'key', null],
+    ['none', null, null, null, 300],
+    ['hmac-sha256', null, 'x-signature', 'key', null],
+    ['hmac-sha256', 'body', null, 'key', null],
+    ['hmac-sha256', 'body', 'x-signature', null, null],
+    ['hmac-sha256', 'body', 'x-signature', 'key', 300],
+    ['hmac-sha256', 'timestamp-body', null, 'key', 300],
+    ['hmac-sha256', 'timestamp-body', 'x-signature', null, 300],
+    ['hmac-sha256', 'timestamp-body', 'x-signature', 'key', null],
+    ['hmac-sha256', 'timestamp-body', 'x-signature', 'key', 0],
+    ['hmac-sha256', 'timestamp-body', 'x-signature', 'key', 86401],
+    ['hmac-sha256', 'timestamp-body', 'x-signature', 'key', 1.5],
+    ['custom', 'body', 'x-signature', 'key', null],
+    ['hmac-sha256', 'custom', 'x-signature', 'key', null],
+  ])('rejects inconsistent recipe %j / %j / %j / %j / %j', async (...recipe) => {
+    await expect(
+      handle.client.execute({ sql: insert, args: ['invalid', ...recipe] }),
+    ).rejects.toThrow('CHECK constraint failed');
+    expect((await handle.client.execute('SELECT * FROM webhook_endpoints')).rows).toEqual([]);
+  });
+  it('maps both old signing rows without changing identities, tokens or timestamps and removes content uniqueness', async () => {
+    const past = openDatabase({ url: ':memory:' });
+    try {
+      const migrations = readMigrationFiles({ migrationsFolder: SHIPPED_MIGRATIONS });
+      for (const migration of migrations.slice(0, 13))
+        for (const statement of migration.sql) await past.client.execute(statement);
+      for (const scheme of ['hmac-sha256', 'hmac-sha256-body'])
+        await past.client.execute({
+          sql: `INSERT INTO webhook_endpoints VALUES (?,'local','loop','version','hook',?,'key','x-signature',?,?,1,'2026-10-02T12:00:00.000Z')`,
+          args: [scheme, scheme, scheme, scheme === 'hmac-sha256' ? 300 : null],
+        });
+      for (const statement of migrations[13]!.sql) await past.client.execute(statement);
+      const migrated = (await past.client.execute('SELECT * FROM webhook_endpoints ORDER BY id'))
+        .rows;
+      expect(migrated).toEqual(
+        ['hmac-sha256', 'hmac-sha256-body'].map((id) => ({
+          id,
+          owner_id: 'local',
+          loop_id: 'loop',
+          version_id: 'version',
+          trigger_node_id: 'hook',
+          token: id,
+          auth_type: 'hmac-sha256',
+          signature_message: id === 'hmac-sha256' ? 'timestamp-body' : 'body',
+          signature_header: 'x-signature',
+          secret_ref: 'key',
+          window_seconds: id === 'hmac-sha256' ? 300 : null,
+          enabled: 1,
+          created_at: '2026-10-02T12:00:00.000Z',
+        })),
+      );
+      expect(
+        (await past.client.execute("PRAGMA index_list('webhook_endpoints')")).rows.map(
+          (row) => row.name,
+        ),
+      ).toEqual(
+        expect.arrayContaining(['webhook_endpoints_token_idx', 'webhook_endpoints_loop_idx']),
+      );
+      for (const id of ['first', 'second'])
+        await past.client.execute({
+          sql: `INSERT INTO webhook_receipts (id,owner_id,loop_id,trigger_node_id,content_hash,inbound_id,status) VALUES (?,'local','loop','hook',?,?,'filtered')`,
+          args: [id, 'a'.repeat(64), id],
+        });
+      expect((await past.client.execute('SELECT * FROM webhook_receipts')).rows).toHaveLength(2);
+      expect(FORMAT_BASELINES[4]).toBe('0013_trigger_configuration');
+    } finally {
+      past.close();
+    }
   });
 });

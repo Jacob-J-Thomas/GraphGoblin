@@ -229,15 +229,17 @@ Optional `timeoutSeconds` exists on inferencing and script nodes and on wait and
 
 ## Webhook admission checkpoint (#168 T4)
 
-**Webhook admission checkpoint (#168 T4).** Body-signed deliveries freeze their run admission under
+**Webhook admission checkpoint (#168 T4).** Both signing recipes freeze their run admission under
 the deletion lock and acknowledge once claim saves the inbound row and receipt, complete intent,
 pending pins and key reservation. Dispatch separately commits the run/thread, queued event, pins,
 admitted receipt and inbound run link, then notifies. Retry metadata failure cannot invalidate the
 earlier acknowledgement. Recovery uses the saved intent and ID, with a non-overlapping 15-second
 sweep of at most five due receipts and backoff capped at five minutes. The exported
 `@graphgoblin/engine/testing` admission contract cases run the same assertions on staged fake writes
-and SQLite transactions, including faults at every claim/create write. Timestamp intake joins this
-path in the T4 continuation; its current separate writes remain a known gap. See
+and SQLite transactions, including faults at every claim/create write. Identical unkeyed raw bodies
+receive distinct receipts and runs; raw hashes are audit evidence only. Authored keys share the same
+claim rule across both signing recipes. Timestamp freshness authenticates a request; it does not
+select a deduplication window. See
 [ADR-0037](decisions/ADR-0037-webhook-acknowledgement.md).
 
 ## Replay and debugging (Decided by implementation, 2026-10-03)
