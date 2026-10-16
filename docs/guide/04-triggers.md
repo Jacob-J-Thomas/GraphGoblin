@@ -1,5 +1,25 @@
 # Configure triggers
 
+## Choose a trigger type
+
+Add the single **Trigger** node and open its editor. **Trigger type** comes first:
+**Manual**, **Cron**, **Poll**, **Event** or **Webhook**. Each choice describes when
+it starts a run and shows its own fields. Manual offers an input schema and start
+surfaces; Cron offers its schedule, timezone, missed-fire policy and enabled flag;
+Poll offers the interval, probe, firing condition, dedupe, optional Items and enabled
+flag. Webhook keeps the existing **Signing protocol** choices under its type.
+Event and Webhook retain their current intake fields in this step.
+
+**Start from a preset** is optional and sits after the trigger fields. Choose a
+GitHub recipe, fill in its setup and choose **Preview GitHub preset**. The preview
+shows the current and replacement configurations and names any unfinished input
+that will be replaced. **Cancel preview** changes nothing and returns focus to
+Preview. **Apply GitHub preset** replaces the trigger configuration in one undo
+step, keeps connections, and returns focus to Trigger type. All generated fields
+remain editable. Undo restores both the previous configuration and unfinished
+input; reapplying requires a fresh preview. Changing the config or undo history
+invalidates an open preview. The stored discriminator remains `subtype` for now.
+
 ## Publish to arm automatic triggers
 
 Edit a trigger's `config`, connect its `out` port, and publish. Cron, webhook, event, and poll triggers use published versions. Publishing replaces the armed version while existing runs keep theirs. Boot re-arms published loops. Every firing creates a new run; overlapping runs can execute in parallel.
@@ -25,11 +45,11 @@ The response contains `schedules`, `webhooks`, and `polls`. Older schedule and e
 
 ## Start manually
 
-Choose `subtype` of `manual`, optionally set `inputSchema`, and declare `exposeTo`. Start it from **Runs → New run** (the editor's **Open in Runs** link goes there), the API start request, or MCP's `start_run` as shown in [Run and observe](03-run-and-observe.md). Treat exposure declarations as advisory in this build; see the [editor limitation](02-build-a-loop.md#choose-nodes).
+Choose **Manual** in **Trigger type**, optionally set `inputSchema`, and declare `exposeTo`. Start it from **Runs → New run** (the editor's **Open in Runs** link goes there), the API start request, or MCP's `start_run` as shown in [Run and observe](03-run-and-observe.md). Treat exposure declarations as advisory in this build; see the [editor limitation](02-build-a-loop.md#choose-nodes).
 
 ## Schedule with cron
 
-Choose **cron** in the trigger's Subtype, then choose a schedule in **Repeat**:
+Choose **Cron** in **Trigger type**, then choose a schedule in **Repeat**:
 every N minutes, every N hours, daily, weekdays, weekly on chosen days, or monthly
 on day N. Set the time and days where offered. Minute steps restart each hour;
 hour steps restart each day. Months without the selected monthly day are skipped.

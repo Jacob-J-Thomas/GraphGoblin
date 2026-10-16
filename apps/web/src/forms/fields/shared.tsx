@@ -47,6 +47,8 @@ export type FieldOverrides = Readonly<Record<string, FieldControl>>;
 export interface UnionPickerOption {
   value: string;
   label: string;
+  /** The variant's structure, for pickers that group choices by their literal fields. */
+  schema?: Schema;
 }
 
 export interface UnionPickerProps {

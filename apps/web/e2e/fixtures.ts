@@ -6,6 +6,9 @@ import {
   type Locator,
   type Page,
 } from '@playwright/test';
+import { manualTriggerConfig } from '../src/__fixtures__/triggers.js';
+export type { TriggerFields } from '../src/__fixtures__/triggers.js';
+export { triggerConfig, manualTriggerConfig } from '../src/__fixtures__/triggers.js';
 
 /** Tests run against the server global-setup started; its URL arrives through the environment. */
 export const test = base.extend({
@@ -30,7 +33,7 @@ export function approvalLoop(name: string) {
         id: 'start',
         kind: 'trigger',
         label: 'Start',
-        config: { subtype: 'manual' },
+        config: manualTriggerConfig(),
         ui: { x: 0, y: 80 },
       },
       {

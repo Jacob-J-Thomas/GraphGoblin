@@ -343,14 +343,15 @@ const SchemaFormBindings = memo(function SchemaFormBindings({
                             className="grid gap-field"
                           >
                             {shape.kind === 'union' && RootPicker ? (
-                              <div data-field="kind">
+                              <div data-field={shape.discriminator ?? 'kind'}>
                                 <RootPicker
-                                  name="kind"
-                                  label="Kind"
+                                  name={shape.discriminator ?? 'kind'}
+                                  label={humanize(shape.discriminator ?? 'kind')}
                                   required
                                   options={shape.options.map((option, index) => ({
                                     value: String(index),
                                     label: optionLabel(option, shape.discriminator),
+                                    schema: option,
                                   }))}
                                   value={String(unionIndex)}
                                   onChange={(value) => switchVariant(Number(value))}

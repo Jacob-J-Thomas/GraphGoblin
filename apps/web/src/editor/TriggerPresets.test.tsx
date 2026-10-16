@@ -5,6 +5,7 @@ import { runInNewContext } from 'node:vm';
 import { TriggerConfigSchema } from '@graphgoblin/contracts';
 import { evaluatePredicate } from '@graphgoblin/domain';
 import { describe, expect, it, vi } from 'vitest';
+import { manualTriggerConfig, triggerConfig } from '../__fixtures__/triggers.js';
 import { TriggerPresets } from './TriggerPresets.js';
 import {
   canApplyGitHubPreset,
@@ -65,20 +66,120 @@ function executeGhProgram(program: string, result: GhSpawnResult) {
 }
 
 describe('TriggerPresets', () => {
+  it('shows editor captions and row numbers for held Poll fields', async () => {
+    const user = userEvent.setup();
+    render(
+      <TriggerPresets
+        config={triggerConfig('poll', {
+          intervalSeconds: 60,
+          probe: { kind: 'none' },
+          fireWhen: 'true',
+        })}
+        heldInputs={{
+          intervalSeconds: {},
+          'items.dedupeKey': {},
+          'items.maxRunsPerPoll': {},
+          'probe.args.0': {},
+        }}
+        onApply={vi.fn()}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: 'Start from a preset' }));
+    await user.selectOptions(screen.getByLabelText('Preset'), 'issues-poll');
+    await user.type(screen.getByLabelText('Repository owner'), 'octo');
+    await user.type(screen.getByLabelText('Repository'), 'service');
+    await user.type(screen.getByLabelText('Issue label'), 'ready');
+    await user.click(screen.getByRole('button', { name: 'Preview GitHub preset' }));
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Unfinished input will be replaced: Interval seconds, Per-item dedupe key, Items Max runs per poll, Probe Args 1.',
+    );
+    expect(screen.getByRole('alert')).not.toHaveTextContent('items.dedupeKey');
+  });
+
+  it.each(['config', 'heldInputs', 'historyEpoch'] as const)(
+    'invalidates a preview after the current %s changes',
+    async (changed) => {
+      const user = userEvent.setup();
+      const onApply = vi.fn();
+      const props = { config: manualTriggerConfig(), heldInputs: {}, historyEpoch: 0, onApply };
+      const { rerender } = render(<TriggerPresets {...props} />);
+      expect(screen.queryByRole('form', { name: 'GitHub preset setup' })).not.toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'Start from a preset' }));
+      await user.selectOptions(screen.getByLabelText('Preset'), 'issues-poll');
+      expect(screen.getByRole('button', { name: 'Preview GitHub preset' })).toBeDisabled();
+      await user.type(screen.getByLabelText('Repository owner'), 'octo');
+      await user.type(screen.getByLabelText('Repository'), 'service');
+      await user.type(screen.getByLabelText('Issue label'), 'ready');
+      await user.click(screen.getByRole('button', { name: 'Preview GitHub preset' }));
+      expect(screen.getByRole('region', { name: 'Preset preview' })).toBeVisible();
+      expect(screen.getByRole('status')).toBeEmptyDOMElement();
+      rerender(
+        <TriggerPresets
+          {...props}
+          {...{
+            config: changed === 'config' ? manualTriggerConfig() : props.config,
+            heldInputs:
+              changed === 'heldInputs'
+                ? { inputSchema: { text: '{unfinished' } }
+                : props.heldInputs,
+            historyEpoch: changed === 'historyEpoch' ? 1 : props.historyEpoch,
+          }}
+        />,
+      );
+      expect(screen.queryByRole('button', { name: 'Apply GitHub preset' })).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Preview GitHub preset' })).toBeEnabled();
+      expect(screen.getByRole('status')).toHaveTextContent(
+        'Preset preview is out of date. Preview the preset again before applying.',
+      );
+      expect(onApply).not.toHaveBeenCalled();
+      await user.click(screen.getByRole('button', { name: 'Preview GitHub preset' }));
+      expect(screen.getByRole('region', { name: 'Preset preview' })).toBeVisible();
+      expect(screen.getByRole('status')).toBeEmptyDOMElement();
+    },
+  );
+
+  it('keeps setup optional and requires explicit branch and signing values for a PR preset', async () => {
+    const user = userEvent.setup();
+    const onApply = vi.fn();
+    render(<TriggerPresets config={manualTriggerConfig()} onApply={onApply} />);
+    const toggle = screen.getByRole('button', { name: 'Start from a preset' });
+    await user.click(toggle);
+    await user.selectOptions(screen.getByLabelText('Preset'), 'pull-request-ready');
+    expect(screen.queryByLabelText('Issue label')).not.toBeInTheDocument();
+    await user.type(screen.getByLabelText('Repository owner'), 'octo');
+    await user.type(screen.getByLabelText('Repository'), 'service');
+    await user.type(screen.getByLabelText('Pull request base branch'), 'main');
+    expect(screen.getByRole('button', { name: 'Preview GitHub preset' })).toBeDisabled();
+    await user.type(screen.getByLabelText('Signing secret name'), 'repo-hook');
+    await user.click(screen.getByRole('button', { name: 'Preview GitHub preset' }));
+    expect(screen.getByRole('region', { name: 'Preset preview' })).toHaveTextContent('repo-hook');
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('region', { name: 'Preset preview' })).not.toBeInTheDocument();
+    expect(onApply).not.toHaveBeenCalled();
+    await user.click(toggle);
+    expect(screen.getByLabelText('Pull request base branch')).toHaveValue('main');
+    expect(screen.queryByRole('button', { name: 'Apply GitHub preset' })).not.toBeInTheDocument();
+  });
+
   it('builds an editable body-signed issue-label filter from explicit setup values', async () => {
     const user = userEvent.setup();
     const onApply = vi.fn();
-    render(<TriggerPresets config={{ subtype: 'manual' }} onApply={onApply} />);
+    render(<TriggerPresets config={manualTriggerConfig()} onApply={onApply} />);
 
+    await user.click(screen.getByRole('button', { name: 'Start from a preset' }));
     await user.selectOptions(screen.getByLabelText('Preset'), 'issues-labeled');
     await user.type(screen.getByLabelText('Repository owner'), 'octo-team');
     await user.type(screen.getByLabelText('Repository'), 'service_repo');
     await user.type(screen.getByLabelText('Issue label'), 'Ready "now"');
     await user.type(screen.getByLabelText('Signing secret name'), 'github-hook');
-    expect(screen.getByRole('button', { name: 'Apply GitHub preset' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Preview GitHub preset' })).toBeEnabled();
     expect(screen.getByText(/signature authenticates the exact request body/i)).toBeVisible();
     expect(screen.getByText(/raw body independently of that ID/i)).toBeVisible();
 
+    await user.click(screen.getByRole('button', { name: 'Preview GitHub preset' }));
+    expect(onApply).not.toHaveBeenCalled();
+    expect(screen.getByRole('region', { name: 'Preset preview' })).toHaveFocus();
     await user.click(screen.getByRole('button', { name: 'Apply GitHub preset' }));
     expect(onApply).toHaveBeenCalledWith({
       subtype: 'webhook',
@@ -205,14 +306,18 @@ describe('TriggerPresets', () => {
   it('creates a bounded GitHub issue poll and encodes the query label as one argument', async () => {
     const user = userEvent.setup();
     const onApply = vi.fn();
-    render(<TriggerPresets config={{ subtype: 'manual' }} onApply={onApply} />);
+    render(<TriggerPresets config={manualTriggerConfig()} onApply={onApply} />);
 
+    await user.click(screen.getByRole('button', { name: 'Start from a preset' }));
     await user.selectOptions(screen.getByLabelText('Preset'), 'issues-poll');
     await user.type(screen.getByLabelText('Repository owner'), 'octo');
     await user.type(screen.getByLabelText('Repository'), 'service');
     await user.type(screen.getByLabelText('Issue label'), 'ready for review');
     expect(screen.queryByLabelText('Signing secret name')).not.toBeInTheDocument();
     expect(screen.getByText(/rejects output over 200 issues or 64 KiB/i)).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Preview GitHub preset' }));
+    expect(onApply).not.toHaveBeenCalled();
+    expect(screen.getByRole('region', { name: 'Preset preview' })).toHaveFocus();
     await user.click(screen.getByRole('button', { name: 'Apply GitHub preset' }));
 
     const config = onApply.mock.calls[0]?.[0] as Record<string, unknown>;

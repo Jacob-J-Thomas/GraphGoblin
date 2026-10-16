@@ -333,6 +333,34 @@ Connection-removal review receives focus on its labelled group, described by the
 
 Regression: `forms/part-a-audit.test.tsx`, `forms/json-sections.test.tsx`, `forms/introspect.test.ts`, `forms/layout.test.ts`, `editor/store.decision-routes.test.ts`, `editor/model.test.ts`, `editor/EditorPage.test.tsx`, `forms/context.test.tsx`, and Edge `e2e/node-json.spec.ts` cover variants, render counts, incomplete native numbers and intentional clears, full-config JSON parent refinements and live sibling changes, numbers, suggestions, multiline prose, every section's round trip, absent/empty values, syntax/schema rejection, pending versus semantically unchanged text, accurate unapplied messages, Cancel, refusal/focus for held descendant input, one capability notice, Context value counts, tabs, history, route removal confirmation, reorder/ID swaps, isolated decision edits and save/reload. Independent `e2e/issue-170-qa.spec.ts` covers the device/server/publish numeric invariant and Claude JSON refusal, with no expected failures; rerun screenshots go to Playwright artifacts, preserving the committed QA evidence. Existing `forms`, `form-controls`, `editor-modal`, `decision-routes`, `undo`, `validation`, `drafts`, and `node-placement` browser checks remain regression gates. See [ADR-0032](decisions/ADR-0032-section-json-editing.md).
 
+### Trigger types and optional presets (#168 T1)
+
+The palette keeps one Trigger node kind. Its config form uses a trigger-specific
+root picker: **Manual**, **Cron**, **Poll**, **Event**, **Webhook**, in that order,
+with a short description. Only the selected type's schema fields render. Manual
+shows input schema and start surfaces; Cron keeps its schedule control, timezone,
+missed-fire policy and enabled flag; Poll keeps both single-result and Items
+modes, probe fields, firing condition and dedupe. Webhook's two existing signing
+variants are presented under **Signing protocol**. Event/Webhook intake and
+stored `subtype` remain unchanged until later #168 children. Other schema unions
+keep their own labels and controls.
+
+**Start from a preset** is an optional disclosure after the type's fields. Setup
+is local until **Preview GitHub preset**; the focused preview shows current and
+replacement config, names held input that will be replaced, and offers Cancel
+and Apply. Cancel returns focus to Preview without editing the graph. Apply
+replaces the entire trigger config and clears its held input as one commit in
+history, preserves connections, and focuses Trigger type. Undo/redo restore held
+input and focus through the same D2 form paths. An intervening config, held-input
+or history change invalidates the preview and announces that it is out of date; applying again requires a fresh review. The two named JSON blocks are keyboard tab stops so their contents can be scrolled before reaching Cancel and Apply.
+The existing GitHub recipes stay editable; downstream graph recipes belong to T2.
+
+The shared web test helper `src/__fixtures__/triggers.ts` owns trigger construction
+so T3 can switch the discriminator centrally. Component regressions cover the
+five types, signing, optional presets, preview/cancel/apply, held input, validation
+focus and keyboard undo. The affected Playwright specs
+check these controls in light and dark themes; browser execution is a separate orchestrator gate.
+
 ### Cron schedule control (Decided, #20)
 
 The node control registry (`editor/field-controls.ts`) registers `cron` for a cron

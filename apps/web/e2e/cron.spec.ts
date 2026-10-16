@@ -1,8 +1,21 @@
 import type { APIRequestContext } from '@playwright/test';
-import { approvalLoop, closeNode, expect, openNode, test } from './fixtures.js';
+import {
+  approvalLoop,
+  closeNode,
+  expect,
+  openNode,
+  test,
+  triggerConfig,
+  type TriggerFields,
+} from './fixtures.js';
 
-type CronConfig = { subtype: 'cron'; expression: string; timezone?: string };
-async function createCronLoop(request: APIRequestContext, name: string, config: CronConfig) {
+type CronConfig = ReturnType<typeof triggerConfig<'cron'>>;
+async function createCronLoop(
+  request: APIRequestContext,
+  name: string,
+  fields: TriggerFields<'cron'>,
+) {
+  const config = triggerConfig('cron', fields);
   const definition = approvalLoop(name);
   const created = await request.post('/loops', {
     data: {
@@ -28,7 +41,6 @@ for (const timezone of ['Etc/UTC', 'Asia/Kolkata']) {
     request,
   }, testInfo) => {
     const id = await createCronLoop(request, `zone ${timezone}`, {
-      subtype: 'cron',
       expression: '0 9 * * *',
       timezone,
     });
@@ -67,7 +79,6 @@ for (const scenario of [
     request,
   }, testInfo) => {
     const id = await createCronLoop(request, `clear ${scenario.name}`, {
-      subtype: 'cron',
       expression: scenario.expression,
       timezone: 'UTC',
     });
@@ -109,7 +120,7 @@ for (const scenario of [
   });
 }
 
-test('switching subtype to cron waits for a schedule without a preview or mount edit', async ({
+test('switching trigger type to Cron waits for a schedule without a preview or mount edit', async ({
   page,
   request,
 }, testInfo) => {
@@ -123,7 +134,7 @@ test('switching subtype to cron waits for a schedule without a preview or mount 
   page.on('request', (req) => {
     if (req.url().endsWith('/triggers/cron/preview')) previews++;
   });
-  await dialog.getByLabel('Subtype').selectOption('cron');
+  await dialog.getByLabel('Trigger type').selectOption('cron');
   await expect(dialog.getByLabel('Repeat')).toHaveValue('empty');
   await expect(dialog.getByLabel('Repeat').locator('option:checked')).toHaveText(
     'Choose a schedule…',
@@ -139,9 +150,9 @@ test('switching subtype to cron waits for a schedule without a preview or mount 
   await expect(dialog.getByRole('region', { name: 'Upcoming runs' })).toHaveCount(0);
   await page.screenshot({ path: testInfo.outputPath('choose-schedule.png') });
   // One undo returns to manual: opening the empty builder added no extra history step.
-  await dialog.getByLabel('Subtype').focus();
+  await dialog.getByLabel('Trigger type').focus();
   await page.keyboard.press('Control+z');
-  await expect(dialog.getByLabel('Subtype').locator('option:checked')).toHaveText('manual');
+  await expect(dialog.getByLabel('Trigger type').locator('option:checked')).toHaveText('Manual');
   await page.keyboard.press('Control+y');
   await expect(dialog.getByLabel('Repeat')).toHaveValue('empty');
   await dialog.getByLabel('Repeat').selectOption('daily');
@@ -154,7 +165,6 @@ test('custom selection and an expression field issue reveal and focus raw text',
   request,
 }) => {
   const id = await createCronLoop(request, 'raw expression focus', {
-    subtype: 'cron',
     expression: '0 9 * * *',
     timezone: 'UTC',
   });
@@ -195,7 +205,7 @@ test('cron presets, keyboard days, timezone and custom source round trip through
           node.id === 'start'
             ? {
                 ...node,
-                config: { subtype: 'cron', expression: '*/7 3-5 * * 1,3', timezone: 'UTC' },
+                config: triggerConfig('cron', { expression: '*/7 3-5 * * 1,3', timezone: 'UTC' }),
               }
             : node,
         ),
@@ -242,13 +252,14 @@ test('cron presets, keyboard days, timezone and custom source round trip through
       };
       return data.draft.definition.nodes[0]!.config;
     })
-    .toEqual({
-      subtype: 'cron',
-      expression: '30 9 * * 1,3',
-      timezone: 'Europe/London',
-      missedFirePolicy: 'skip',
-      enabled: true,
-    });
+    .toEqual(
+      triggerConfig('cron', {
+        expression: '30 9 * * 1,3',
+        timezone: 'Europe/London',
+        missedFirePolicy: 'skip',
+        enabled: true,
+      }),
+    );
   await page.reload();
   dialog = await openNode(page, 'start');
   await expect(dialog.getByLabel('Repeat')).toHaveValue('weekly');
@@ -288,7 +299,7 @@ test('preview and displayed slots equal the scheduler across London DST; invalid
         ...definition,
         nodes: definition.nodes.map((node) =>
           node.id === 'start'
-            ? { ...node, config: { subtype: 'cron', expression, timezone } }
+            ? { ...node, config: triggerConfig('cron', { expression, timezone }) }
             : node,
         ),
       },

@@ -6,6 +6,7 @@ import {
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { manualTriggerConfig } from '../__fixtures__/triggers.js';
 import { FakeApi } from '../__fixtures__/fake-api.js';
 import { getCode, setCode } from '../__fixtures__/codemirror.js';
 import { renderApp } from '../__fixtures__/render.js';
@@ -292,16 +293,19 @@ describe('NodeEditorDialog GitHub trigger presets', () => {
         id: 'github',
         kind: 'trigger',
         label: 'GitHub',
-        config: { subtype: 'manual' },
+        config: manualTriggerConfig(),
       },
       'Edit trigger github',
     );
 
+    await user.click(within(dialog).getByRole('button', { name: 'Start from a preset' }));
     await user.selectOptions(within(dialog).getByLabelText('Preset'), 'issues-labeled');
     await user.type(within(dialog).getByLabelText('Repository owner'), 'octo-team');
     await user.type(within(dialog).getByLabelText('Repository'), 'service');
     await user.type(within(dialog).getByLabelText('Issue label'), 'ready');
     await user.type(within(dialog).getByLabelText('Signing secret name'), 'issue-hook');
+    await user.click(within(dialog).getByRole('button', { name: 'Preview GitHub preset' }));
+    expect(within(dialog).getByRole('region', { name: 'Preset preview' })).toHaveFocus();
     await user.click(within(dialog).getByRole('button', { name: 'Apply GitHub preset' }));
 
     const node = () => store().definition?.nodes.find((candidate) => candidate.id === 'github');
@@ -316,7 +320,7 @@ describe('NodeEditorDialog GitHub trigger presets', () => {
       filter: expect.stringContaining('repository.full_name = "octo-team/service"'),
     });
     expect(store().past).toHaveLength(1);
-    expect(within(dialog).getByLabelText('Subtype')).toHaveDisplayValue('webhook (body)');
+    expect(within(dialog).getByLabelText('Trigger type')).toHaveDisplayValue('Webhook');
     expect(within(dialog).queryByLabelText('Replay window seconds')).not.toBeInTheDocument();
     expect(within(dialog).getByLabelText('Secret ref')).toHaveValue('issue-hook');
     expect(getCode('Dedupe key')).toBe('$headers."x-github-delivery"');
@@ -342,14 +346,17 @@ describe('NodeEditorDialog GitHub trigger presets', () => {
         id: 'backlog',
         kind: 'trigger',
         label: 'Backlog',
-        config: { subtype: 'manual' },
+        config: manualTriggerConfig(),
       },
       'Edit trigger backlog',
     );
+    await user.click(within(dialog).getByRole('button', { name: 'Start from a preset' }));
     await user.selectOptions(within(dialog).getByLabelText('Preset'), 'issues-poll');
     await user.type(within(dialog).getByLabelText('Repository owner'), 'octo');
     await user.type(within(dialog).getByLabelText('Repository'), 'service');
     await user.type(within(dialog).getByLabelText('Issue label'), 'ready');
+    await user.click(within(dialog).getByRole('button', { name: 'Preview GitHub preset' }));
+    expect(within(dialog).getByRole('region', { name: 'Preset preview' })).toHaveFocus();
     await user.click(within(dialog).getByRole('button', { name: 'Apply GitHub preset' }));
 
     expect(within(dialog).getByLabelText('Max runs per poll')).toHaveValue(5);
@@ -368,10 +375,7 @@ describe('NodeEditorDialog GitHub trigger presets', () => {
     expect(
       store().definition?.nodes.find((node) => node.id === 'backlog')?.config,
     ).not.toHaveProperty('dedupeKey');
-    await user.selectOptions(
-      within(dialog).getByLabelText('Subtype'),
-      within(dialog).getByRole('option', { name: 'webhook (body)' }),
-    );
+    await user.selectOptions(within(dialog).getByLabelText('Trigger type'), 'webhook');
     await waitFor(() => expect(getCode('Dedupe key')).toBe(''));
     expect(within(dialog).queryByLabelText('Per-item dedupe key')).not.toBeInTheDocument();
     expect(

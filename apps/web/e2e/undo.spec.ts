@@ -340,14 +340,14 @@ test('Ctrl+Z from a checkbox or a select undoes and keeps focus on that control'
   await page.keyboard.press('Control+y');
   await expect(start.getByRole('checkbox', { name: 'mcp' })).not.toBeChecked();
 
-  const subtype = start.getByLabel('Subtype');
-  await subtype.selectOption('cron');
+  const triggerType = start.getByLabel('Trigger type');
+  await triggerType.selectOption('cron');
   await expect(start.getByLabel('Repeat')).toBeVisible();
-  await subtype.focus();
+  await triggerType.focus();
   await page.keyboard.press('Control+z');
-  await expect(start.getByLabel('Subtype').locator('option:checked')).toHaveText('manual');
+  await expect(start.getByLabel('Trigger type').locator('option:checked')).toHaveText('Manual');
   await expect(start.getByLabel('Repeat')).toHaveCount(0);
-  await expect(start.getByLabel('Subtype')).toBeFocused();
+  await expect(start.getByLabel('Trigger type')).toBeFocused();
 });
 
 test('model then effort are two undo steps, and undo and redo keep Advanced open (review F5, F6)', async ({
