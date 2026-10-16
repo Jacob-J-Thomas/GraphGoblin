@@ -323,7 +323,9 @@ const SchemaFormBindings = memo(function SchemaFormBindings({
           collections.remember(next);
           setUnionIndex(index);
           form.reset(asValues(withUnsetFields(shape.options[index] as Schema, next)));
-          setIssues(issuesOf(schema, next));
+          const found = issuesOf(schema, next);
+          issuesSnapshotRef.current = JSON.stringify(found);
+          setIssues(found);
           onChangeRef.current(next, pendingChangeRef.current!);
         }),
     );

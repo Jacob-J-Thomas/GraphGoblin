@@ -75,7 +75,7 @@ function WebhookConfiguration({ webhook }: { webhook: InboundEvent['webhook'] })
   if (!webhook) return null;
   return (
     <details className="mt-2 text-xs">
-      <summary className="cursor-pointer">Webhook configuration</summary>
+      <summary className="cursor-pointer touch-target">Webhook configuration</summary>
       {webhook.configurationAvailable ? (
         <pre
           tabIndex={0}
