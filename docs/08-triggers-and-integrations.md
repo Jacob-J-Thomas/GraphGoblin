@@ -2,7 +2,11 @@
 
 Stored trigger configs use `type`: `manual`, `cron`, `webhook`, `event`, or `poll`.
 Both webhook signing variants use `type: 'webhook'`. Config parsers reject
-`subtype`; convert old exports only through the format-4 offline upgrade.
+`subtype`; current stores and exports using it remain refused until the integrated
+format-4 cutover converts them. The pure V3-to-V4 definition converter automatically
+renames this discriminator, preserving every other field without a review item.
+Webhook signing and filters are unchanged by this rule; the installed-store and
+offline-tool cutover is still separate work.
 The invocation envelope continues to record the source as `trigger.kind`.
 
 ## Trigger envelope (Decided)
