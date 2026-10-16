@@ -12,8 +12,14 @@ export function consumerNeedsReview(
   kind: 'expression' | 'template',
   safeOutputs = new Set<string>(),
   safeLastOutput = false,
+  runtimeCountersReviewed = false,
 ): boolean {
   const unsafePath = (path: string[]) => {
+    if (
+      path[0] === 'counters' ||
+      (path[0] === 'run' && (path.length === 1 || path[1] === 'iteration'))
+    )
+      return !runtimeCountersReviewed;
     if (path[0] === 'outputs') return !(safeOutputs.has(path[1] ?? '') && path[2] === 'value');
     if (path[0] === 'lastOutput') return !safeLastOutput;
     return ['vars', 'parent', 'thread', 'context', 'child', 'result'].includes(path[0] ?? '');
@@ -72,6 +78,110 @@ export function consumerNeedsReview(
     );
   };
   return inspect(kind === 'expression' ? jsonata(source).ast() : new Liquid().parse(source));
+}
+
+/** Only direct, static iteration reads have a proven one-gate equivalent. */
+export function iterationConsumer(
+  source: string,
+  kind: 'expression' | 'template',
+  gateId: string | null,
+): { needed: boolean; automatic: boolean; proposed: string } {
+  const edits: { start: number; end: number; value: string }[] = [];
+  let needed = false,
+    unproven = false;
+  const seen = new Set<object>();
+  const inspect = (node: unknown, scoped = false): void => {
+    if (Array.isArray(node)) {
+      node.forEach((entry) => inspect(entry, scoped));
+      return;
+    }
+    if (!object(node) || seen.has(node)) return;
+    seen.add(node);
+    if (
+      kind === 'template' &&
+      ['assign', 'capture', 'for', 'tablerow'].includes(String(node.name)) &&
+      ['run', 'gates'].includes(String(node.key ?? node.variable))
+    )
+      unproven = true;
+    if (
+      (kind === 'expression' && ['string', 'number', 'value'].includes(String(node.type))) ||
+      (kind === 'template' && [TokenKind.HTML, TokenKind.Quoted].includes(Number(node.kind)))
+    )
+      return;
+    const tokens =
+      kind === 'expression' && node.type === 'path' && Array.isArray(node.steps)
+        ? node.steps
+        : kind === 'template' && node.kind === TokenKind.PropertyAccess && Array.isArray(node.props)
+          ? node.props
+          : kind === 'expression' && node.type === 'name'
+            ? [node]
+            : null;
+    if (tokens) {
+      const parts = tokens.map((token) =>
+        object(token) ? String(token[kind === 'expression' ? 'value' : 'content']) : '',
+      );
+      const staticPath = tokens.every(
+        (token) =>
+          object(token) &&
+          (kind === 'expression'
+            ? token.type === 'name' && token.stages === undefined && token.predicate === undefined
+            : token.kind === TokenKind.Word),
+      );
+      if (
+        parts[0] === 'counters' ||
+        (parts[0] === 'run' &&
+          (!staticPath ||
+            parts.length === 1 ||
+            parts[1] === 'iteration' ||
+            tokens.some((token) => object(token) && token.stages !== undefined)))
+      ) {
+        needed = true;
+        if (scoped || !gateId || !staticPath || parts[0] !== 'run' || parts[1] !== 'iteration')
+          unproven = true;
+        else {
+          const first = tokens[0] as Obj,
+            second = tokens[1] as Obj;
+          const start = kind === 'expression' ? Number(first.position) - 3 : Number(first.begin);
+          const end = Number(second[kind === 'expression' ? 'position' : 'end']);
+          if (source.slice(start, end) !== 'run.iteration') unproven = true;
+          else
+            edits.push({
+              start,
+              end,
+              value:
+                'gates.' +
+                (kind === 'expression' && gateId.includes('-') ? '`' + gateId + '`' : gateId) +
+                '.passes',
+            });
+        }
+      }
+      // Stages and computed property tokens can themselves read iteration/counters.
+      for (const token of tokens)
+        if (object(token))
+          for (const [key, value] of Object.entries(token))
+            if (
+              !['input', 'value', 'content', 'type', 'kind', 'position', 'begin', 'end'].includes(
+                key,
+              )
+            )
+              inspect(value, true);
+      if (kind === 'expression')
+        for (const [key, value] of Object.entries(node))
+          if (!['type', 'steps', 'value', 'position'].includes(key)) inspect(value, true);
+      return;
+    }
+    for (const [key, value] of Object.entries(node))
+      if (!['liquid', 'engine', 'tokenizer', 'input'].includes(key))
+        inspect(
+          value,
+          scoped || (kind === 'expression' && ['lambda', 'transform'].includes(String(node.type))),
+        );
+  };
+  inspect(kind === 'expression' ? jsonata(source).ast() : new Liquid().parse(source));
+  if (!needed || unproven) return { needed, automatic: false, proposed: source };
+  for (const edit of edits.sort((a, b) => b.start - a.start))
+    source = source.slice(0, edit.start) + edit.value + source.slice(edit.end);
+  return { needed, automatic: true, proposed: source };
 }
 
 /** Rewrite only unfiltered lexical root names proven by JSONata's AST, never string literals. */

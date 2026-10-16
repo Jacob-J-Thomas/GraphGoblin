@@ -15,7 +15,12 @@ import {
 import { validateLoop } from '../graph.js';
 import { decisionRouteDeclarations } from '../answers.js';
 import { findAuthoredSources, syntaxIssues } from '../syntax.js';
-import { consumerNeedsReview, rewriteLastOutput, proposeAnswerConsumer } from './consumers.js';
+import {
+  consumerNeedsReview,
+  rewriteLastOutput,
+  proposeAnswerConsumer,
+  iterationConsumer,
+} from './consumers.js';
 import {
   DefinitionReview,
   problem,
@@ -169,6 +174,47 @@ function allocate(used: Set<string>, base: string): string {
   return value;
 }
 
+type V3Exit = Extract<V3Node, { kind: 'exit' }>;
+function planExit(node: V3Exit, used: Set<string>) {
+  const config = node.config,
+    back = config.default === 'loop-back';
+  const predicates = config.criteria.filter((criterion) => criterion.when === 'predicate');
+  const constant = predicates[0];
+  if (
+    config.criteria.some((criterion) => criterion.when === 'last-output-matches') ||
+    (!back &&
+      (!predicates.length ||
+        config.criteria.some(
+          (criterion) => criterion.when === 'max-iterations' || criterion.when === 'max-duration',
+        ) ||
+        (config.criteria.length === 1 &&
+          constant?.evaluation.kind === 'expression' &&
+          constant.match.type === 'noul' &&
+          constant.evaluation.jsonata.trim() === String(constant.match.value))))
+  )
+    return null;
+  const finish = allocate(used, node.id + '-complete');
+  const exhausted = back ? allocate(used, node.id + '-exhausted') : null;
+  const entries = predicates.map((_, index) =>
+    index === 0 ? node.id : allocate(used, node.id + '-check-' + (index + 1)),
+  );
+  const checks = predicates.map((predicate, index) => ({
+    entry: entries[index]!,
+    matched: allocate(used, node.id + '-matched-' + (index + 1)),
+    compare:
+      predicate.evaluation.kind === 'expression'
+        ? null
+        : allocate(used, entries[index]! + '-match'),
+  }));
+  const last = checks.at(-1);
+  return {
+    finish,
+    exhausted,
+    checks,
+    gateId: back ? (last ? (last.compare ?? last.entry) : node.id) : null,
+  };
+}
+
 /** Definition-only stage. `ready` is false until every required owner review is resolved.
  * No history, store, API, configured-instance retirement or offline-tool composition occurs here.
  */
@@ -207,6 +253,17 @@ export async function convertDefinitionV3ToV4(
   const nodes: Obj[] = [],
     edges = clone(source.edges);
   const nodeIds = new Set(source.nodes.map((node) => node.id));
+  const loopBacks = source.nodes.filter(
+    (node) => node.kind === 'exit' && node.config.default === 'loop-back',
+  );
+  const exitPlans = new Map(
+    source.nodes.flatMap((node) =>
+      node.kind === 'exit' ? [[node.id, planExit(node, nodeIds)] as const] : [],
+    ),
+  );
+  const iterationGateId =
+    loopBacks.length === 1 ? (exitPlans.get(loopBacks[0]!.id)?.gateId ?? null) : null;
+  let rewroteIteration = false;
   const edgeIds = new Set(source.edges.map((edge) => edge.id));
   const settings: Obj = clone(source.settings);
   delete settings.maxIterations;
@@ -239,6 +296,120 @@ export async function convertDefinitionV3ToV4(
     ),
   );
 
+  async function runtimeCounterSource(
+    text: string,
+    kind: 'expression' | 'template',
+    nodeId: string | null,
+    path: string,
+  ): Promise<unknown> {
+    const state = iterationConsumer(text, kind, iterationGateId);
+    if (!state.needed) return text;
+    if (state.automatic) rewroteIteration = true;
+    return review.change(
+      nodeId,
+      path,
+      state.automatic ? 'iteration-consumer' : 'output-consumer',
+      text,
+      state.proposed,
+      state.automatic
+        ? "Replace the old one-based shared iteration with the sole repeat gate's one-based passes. The engine seeds this maxPasses gate at 1 before execution."
+        : 'run.iteration stays 1 in fresh format-4 runs; counters and iteration without a unique proven repeat gate require an owner-authored source resolution.',
+      !state.automatic,
+    );
+  }
+
+  async function exitPolicy(
+    original: V3Exit,
+    path: string,
+    nodeStart: number,
+    proposal: { nodes: Obj[]; edges: V3LoopDefinition['edges'] } | null,
+    requiredCode?: string,
+  ) {
+    const id = path + ':exit-policy';
+    const graph = await review.change(
+      original.id,
+      path,
+      'exit-policy',
+      original.config,
+      proposal,
+      proposal === null
+        ? 'Supply an authored current exit graph. Preserve ordered criteria and return semantics; do not approximate JSON Schema or historical iteration counters.'
+        : 'Review terminal outcomes, captures, return mapping, ordered-criterion timing and independent gate budgets. Gate limits run after evaluation and only on repeat; no history/replay entry is approved by this definition rule.',
+    );
+    const replacement = resolutions[id];
+    if (
+      requiredCode &&
+      (replacement?.action !== 'replace' || review.items.at(-1)?.status !== 'resolved')
+    )
+      review.issues.push(
+        problem(
+          requiredCode,
+          path,
+          'An authored graph replacement is required; resolve review item ' + id,
+        ),
+      );
+    if (replacement?.action !== 'replace') return;
+    if (
+      Object.keys(resolutions).some(
+        (key) => key.startsWith(path + '/') && resolutions[key]?.action === 'replace',
+      )
+    )
+      review.issues.push(
+        problem('V4_RESOLUTION_CONFLICT', path, 'graph replacement overlaps source replacements'),
+      );
+    const fragment = graph as { nodes?: unknown; edges?: unknown } | null;
+    if (
+      !fragment ||
+      typeof fragment !== 'object' ||
+      Object.keys(fragment).some((key) => !['nodes', 'edges'].includes(key)) ||
+      !Array.isArray(fragment.nodes) ||
+      !Array.isArray(fragment.edges)
+    ) {
+      review.issues.push(
+        problem(
+          'V4_RESOLUTION_INVALID',
+          path,
+          'expected an exit graph fragment with nodes and edges',
+        ),
+      );
+      return;
+    }
+    const checked = LoopDefinitionSchema.safeParse({
+      ...source,
+      schemaVersion: CURRENT_DEFINITION_FORMAT,
+      settings,
+      nodes: fragment.nodes,
+      edges: fragment.edges,
+    });
+    if (
+      !checked.success ||
+      !checked.data.nodes.some((node) => node.id === original.id) ||
+      checked.data.nodes.some(
+        (node) => node.id !== original.id && source.nodes.some((old) => old.id === node.id),
+      ) ||
+      checked.data.edges.some(
+        (edge) => !checked.data.nodes.some((node) => node.id === edge.from.node),
+      )
+    ) {
+      review.issues.push(
+        problem(
+          'V4_RESOLUTION_INVALID',
+          path,
+          'fragment must retain the exit entry id and own its nodes and outgoing edges',
+        ),
+      );
+      return;
+    }
+    const fragmentIds = new Set(proposal?.nodes.map((node) => node.id) ?? []);
+    nodes.splice(nodeStart, nodes.length - nodeStart, ...checked.data.nodes);
+    for (let index = edges.length - 1; index >= 0; index--)
+      if (fragmentIds.has(edges[index]!.from.node)) edges.splice(index, 1);
+    edges.push(...checked.data.edges);
+    for (const node of checked.data.nodes)
+      if (node.kind === 'decision' && node.config.maxPasses !== undefined)
+        settings.maxNodeVisits = Math.max(Number(settings.maxNodeVisits), node.config.maxPasses);
+  }
+
   // Walk the frozen schemas, then locate exact leaves without treating dots in record keys as separators.
   async function consumers(
     value: unknown,
@@ -249,20 +420,26 @@ export async function convertDefinitionV3ToV4(
     const authored = findAuthoredSources(schema, value, frozen);
     const visit = async (entry: unknown, dotted: string, pointer: string): Promise<unknown> => {
       const found = authored.find((item) => item.path === dotted && item.source === entry);
-      if (found && changedOutput && consumerNeedsReview(found.source, found.kind, safeOutputs))
-        return review.change(
-          nodeId,
-          pointer,
-          'output-consumer',
-          entry,
-          proposeAnswerConsumer(
-            found.source,
-            found.kind,
-            decisions,
-            nodeId ? producer(source, nodeId) : null,
-          ),
-          'Review the static-path proposal and trace all captured values to their producer. Dynamic paths, removed fields, aliases and whole outputs require explicit evidence or a replacement.',
-        );
+      if (found) {
+        const transformed = await runtimeCounterSource(found.source, found.kind, nodeId, pointer);
+        if (typeof transformed !== 'string') return transformed;
+        if (review.items.at(-1)?.id === pointer + ':output-consumer') return transformed;
+        if (changedOutput && consumerNeedsReview(transformed, found.kind, safeOutputs, false, true))
+          return review.change(
+            nodeId,
+            pointer,
+            'output-consumer',
+            transformed,
+            proposeAnswerConsumer(
+              transformed,
+              found.kind,
+              decisions,
+              nodeId ? producer(source, nodeId) : null,
+            ),
+            'Review the static-path proposal and trace all captured values to their producer. Dynamic paths, removed fields, aliases and whole outputs require explicit evidence or a replacement.',
+          );
+        return transformed;
+      }
       if (Array.isArray(entry)) {
         const result: unknown[] = [];
         for (const [index, child] of entry.entries())
@@ -363,24 +540,41 @@ export async function convertDefinitionV3ToV4(
       continue;
     }
     for (const edge of oldExitEdges) edges.splice(edges.indexOf(edge), 1);
+    if (!back && (config.loopBack || oldExitEdges.length))
+      await review.change(
+        original.id,
+        path + '/loopBack',
+        'ignored-loop-back',
+        { loopBack: config.loopBack ?? null, edges: oldExitEdges },
+        null,
+        'Review removal of ignored continuation configuration.',
+        true,
+        false,
+      );
     const work = producer(source, original.id);
     let mapping: unknown = config.return.mapping;
     if (config.return.mapping !== 'none') {
-      const proven = work !== null && safeOutputs.has(work);
-      const proposed = !consumerNeedsReview(
+      const returnSource = await runtimeCounterSource(
         config.return.mapping,
         'expression',
-        safeOutputs,
-        proven,
-      )
-        ? rewriteLastOutput(config.return.mapping, outputRef(work ?? 'unproven'))
-        : null;
-      const answerProposal = proposeAnswerConsumer(
-        config.return.mapping,
-        'expression',
-        decisions,
-        work,
+        original.id,
+        path + '/return/mapping',
       );
+      if (typeof returnSource !== 'string') {
+        review.issues.push(
+          problem(
+            'V4_RESOLUTION_INVALID',
+            path + '/return/mapping',
+            'return source replacement must be a string',
+          ),
+        );
+        continue;
+      }
+      const proven = work !== null && safeOutputs.has(work);
+      const proposed = !consumerNeedsReview(returnSource, 'expression', safeOutputs, proven, true)
+        ? rewriteLastOutput(returnSource, outputRef(work ?? 'unproven'))
+        : null;
+      const answerProposal = proposeAnswerConsumer(returnSource, 'expression', decisions, work);
       mapping = await review.change(
         original.id,
         path + '/return/mapping',
@@ -404,6 +598,22 @@ export async function convertDefinitionV3ToV4(
         config: { outcome, returns: mapping, destinations: clone(config.return.channels) },
       });
     const predicates = config.criteria.filter((criterion) => criterion.when === 'predicate');
+    for (const [criterionIndex, criterion] of config.criteria.entries()) {
+      if (
+        (criterion.when === 'max-iterations' || criterion.when === 'max-duration') &&
+        config.criteria.slice(criterionIndex + 1).some((later) => later.when === 'predicate')
+      )
+        await review.change(
+          original.id,
+          `${path}/criteria/${criterionIndex}`,
+          'ordered-limit',
+          criterion,
+          { timing: 'after-evaluation-on-repeat', criterion },
+          'This V3 limit preceded a predicate and could exhaust before that predicate ran. Generated gates evaluate first, then check limits only on a repeat. Review this order change or preserve it in an authored graph.',
+          true,
+          false,
+        );
+    }
     const constant = predicates[0];
     if (
       !back &&
@@ -425,13 +635,7 @@ export async function convertDefinitionV3ToV4(
       continue;
     }
     if (config.criteria.some((criterion) => criterion.when === 'last-output-matches')) {
-      review.issues.push(
-        problem(
-          'V4_EXIT_SCHEMA_POLICY_REQUIRED',
-          path,
-          'last-output-matches requires an authored schema-check policy graph; JSON Schema is not approximated by JSONata',
-        ),
-      );
+      await exitPolicy(original, path, nodeStart, null, 'V4_EXIT_SCHEMA_POLICY_REQUIRED');
       continue;
     }
     const ceilings = config.criteria
@@ -441,28 +645,11 @@ export async function convertDefinitionV3ToV4(
       .filter((criterion) => criterion.when === 'max-duration')
       .map((criterion) => criterion.seconds);
     if (!back && (ceilings.length || durations.length)) {
-      review.issues.push(
-        problem(
-          'V4_TERMINAL_LIMIT_POLICY_REQUIRED',
-          path,
-          'non-repeating ordered limit criteria need an authored policy graph',
-        ),
-      );
+      await exitPolicy(original, path, nodeStart, null, 'V4_TERMINAL_LIMIT_POLICY_REQUIRED');
       continue;
     }
     if (!back && !predicates.length) {
       terminal(original.id, 'success');
-      if (config.loopBack || oldExitEdges.length)
-        await review.change(
-          original.id,
-          path + '/loopBack',
-          'ignored-loop-back',
-          { loopBack: config.loopBack ?? null, edges: oldExitEdges },
-          null,
-          'Review removal of ignored continuation configuration.',
-          true,
-          false,
-        );
       continue;
     }
     const maxPasses = Math.min(source.settings.maxIterations, ...ceilings);
@@ -471,13 +658,12 @@ export async function convertDefinitionV3ToV4(
       ...(durations.length ? { maxRunTimeSeconds: Math.min(...durations) } : {}),
     };
     if (back) settings.maxNodeVisits = Math.max(Number(settings.maxNodeVisits), maxPasses);
-    const finish = allocate(nodeIds, original.id + '-complete');
+    const plan = exitPlans.get(original.id)!;
+    if (!plan) throw new Error('missing generated exit plan');
+    const { finish, exhausted } = plan;
     if (!back || !predicates.length) terminal(finish, 'success');
-    const exhausted = back ? allocate(nodeIds, original.id + '-exhausted') : null;
     if (exhausted) terminal(exhausted, 'exhausted');
-    const checks = predicates.map((_, position) =>
-      position === 0 ? original.id : allocate(nodeIds, original.id + '-check-' + (position + 1)),
-    );
+    const checks = plan.checks.map((check) => check.entry);
     if (!checks.length) checks.push(original.id);
     if (!predicates.length) {
       nodes.push({
@@ -499,17 +685,46 @@ export async function convertDefinitionV3ToV4(
       link(original.id, 'finish', finish);
       link(original.id, 'limit-reached', exhausted!);
     }
+    if (back && loopBacks.length > 1)
+      await review.change(
+        plan.gateId,
+        path,
+        'shared-iteration-budget',
+        {
+          maxIterations: source.settings.maxIterations,
+          loopBackExitIds: loopBacks.map((node) => node.id),
+        },
+        limits,
+        'V3 shared one iteration budget across all loop-back exits. This generated gate now has an independent pass budget; several or nested gates can run longer or reach MAX_NODE_VISITS. Review the combined budget.',
+        true,
+        false,
+      );
     for (const [position, predicate] of predicates.entries()) {
       const criterionIndex = config.criteria.indexOf(predicate);
       const predicatePath = `${path}/criteria/${criterionIndex}`;
       const id = checks[position]!;
       const last = position === predicates.length - 1;
-      const matched = allocate(nodeIds, original.id + '-matched-' + (position + 1));
+      const matched = plan.checks[position]!.matched;
       terminal(matched, predicate.outcome);
       const noMatch = !last ? checks[position + 1]! : back ? config.loopBack!.targetNodeId : finish;
       let evaluated: Obj;
       if (predicate.evaluation.kind === 'expression') {
-        const raw = predicate.evaluation.jsonata;
+        const raw = await runtimeCounterSource(
+          predicate.evaluation.jsonata,
+          'expression',
+          original.id,
+          predicatePath + '/evaluation/jsonata',
+        );
+        if (typeof raw !== 'string') {
+          review.issues.push(
+            problem(
+              'V4_RESOLUTION_INVALID',
+              predicatePath,
+              'predicate source replacement must be a string',
+            ),
+          );
+          continue;
+        }
         const rewritten = work ? rewriteLastOutput(raw, outputRef(work)) : null;
         const jsonata = await review.change(
           original.id,
@@ -524,6 +739,7 @@ export async function convertDefinitionV3ToV4(
               'expression',
               safeOutputs,
               work !== null && safeOutputs.has(work),
+              true,
             ),
         );
         if (typeof jsonata !== 'string') {
@@ -550,6 +766,22 @@ export async function convertDefinitionV3ToV4(
           ),
         };
       } else {
+        const question = await runtimeCounterSource(
+          predicate.evaluation.question,
+          'template',
+          original.id,
+          predicatePath + '/evaluation/question',
+        );
+        if (typeof question !== 'string') {
+          review.issues.push(
+            problem(
+              'V4_RESOLUTION_INVALID',
+              predicatePath,
+              'provider question replacement must be a string',
+            ),
+          );
+          continue;
+        }
         const sides =
           predicate.answer.type === 'noul' && 'true' in predicate.answer ? predicate.answer : null;
         const answer = sides
@@ -570,6 +802,7 @@ export async function convertDefinitionV3ToV4(
           answer,
           evaluation: {
             ...predicate.evaluation,
+            question,
             context: { messages: 'last', includeLastOutput: true },
           },
           recordAlternatives: true,
@@ -600,7 +833,7 @@ export async function convertDefinitionV3ToV4(
             false,
           );
         // Preserve primitive routes, then compare the observed result without recomputing it.
-        const compare = allocate(nodeIds, id + '-match');
+        const compare = plan.checks[position]!.compare!;
         const current = evaluated as DecisionConfig;
         for (const route of decisionRouteDeclarations(current)) link(id, route.id, compare);
         nodes.push({ ...clone(original), id, kind: 'decision', config: evaluated });
@@ -642,81 +875,7 @@ export async function convertDefinitionV3ToV4(
     const fragmentNodes = nodes.slice(nodeStart);
     const fragmentIds = new Set(fragmentNodes.map((node) => node.id));
     const fragmentEdges = edges.filter((edge) => fragmentIds.has(edge.from.node));
-    const graph = await review.change(
-      original.id,
-      path,
-      'exit-policy',
-      config,
-      {
-        nodes: fragmentNodes,
-        edges: fragmentEdges,
-      },
-      'Review terminal outcomes, captures, return mapping, ordered-criterion timing and independent gate budgets. Gate limits run after evaluation and only on repeat; no history/replay entry is approved by this definition rule.',
-    );
-    const replacement = resolutions[path + ':exit-policy'];
-    if (replacement?.action === 'replace') {
-      if (
-        Object.keys(resolutions).some(
-          (key) => key.startsWith(path + '/') && resolutions[key]?.action === 'replace',
-        )
-      )
-        review.issues.push(
-          problem('V4_RESOLUTION_CONFLICT', path, 'graph replacement overlaps source replacements'),
-        );
-      const fragment = graph as { nodes?: unknown; edges?: unknown } | null;
-      if (
-        !fragment ||
-        typeof fragment !== 'object' ||
-        Object.keys(fragment).some((key) => !['nodes', 'edges'].includes(key)) ||
-        !Array.isArray(fragment.nodes) ||
-        !Array.isArray(fragment.edges)
-      ) {
-        review.issues.push(
-          problem(
-            'V4_RESOLUTION_INVALID',
-            path,
-            'expected an exit graph fragment with nodes and edges',
-          ),
-        );
-      } else {
-        const checked = LoopDefinitionSchema.safeParse({
-          ...source,
-          schemaVersion: CURRENT_DEFINITION_FORMAT,
-          settings,
-          nodes: fragment.nodes,
-          edges: fragment.edges,
-        });
-        if (
-          !checked.success ||
-          !checked.data.nodes.some((node) => node.id === original.id) ||
-          checked.data.nodes.some(
-            (node) => node.id !== original.id && source.nodes.some((old) => old.id === node.id),
-          ) ||
-          checked.data.edges.some(
-            (edge) => !checked.data.nodes.some((node) => node.id === edge.from.node),
-          )
-        ) {
-          review.issues.push(
-            problem(
-              'V4_RESOLUTION_INVALID',
-              path,
-              'fragment must retain the exit entry id and own its nodes and outgoing edges',
-            ),
-          );
-        } else {
-          nodes.splice(nodeStart, nodes.length - nodeStart, ...checked.data.nodes);
-          for (let edgeIndex = edges.length - 1; edgeIndex >= 0; edgeIndex--)
-            if (fragmentIds.has(edges[edgeIndex]!.from.node)) edges.splice(edgeIndex, 1);
-          edges.push(...checked.data.edges);
-          for (const node of checked.data.nodes)
-            if (node.kind === 'decision' && node.config.maxPasses !== undefined)
-              settings.maxNodeVisits = Math.max(
-                Number(settings.maxNodeVisits),
-                node.config.maxPasses,
-              );
-        }
-      }
-    }
+    await exitPolicy(original, path, nodeStart, { nodes: fragmentNodes, edges: fragmentEdges });
   }
   const convertedSettings = await consumers(settings, V3LoopSettingsSchema, null, '/settings');
   const variables =
@@ -745,6 +904,25 @@ export async function convertDefinitionV3ToV4(
       ),
     );
   else {
+    if (
+      rewroteIteration &&
+      (result.data.nodes.filter(
+        (node) => node.kind === 'decision' && node.config.maxPasses !== undefined,
+      ).length !== 1 ||
+        !result.data.nodes.some(
+          (node) =>
+            node.id === iterationGateId &&
+            node.kind === 'decision' &&
+            node.config.maxPasses !== undefined,
+        ))
+    )
+      review.issues.push(
+        problem(
+          'V4_ITERATION_GATE_UNPROVEN',
+          '/',
+          'An automatic iteration rewrite requires the original sole generated maxPasses gate; the authored graph changed its identity or multiplicity.',
+        ),
+      );
     review.issues.push(
       ...validateLoop(result.data)
         .filter((entry) => entry.severity === 'error')

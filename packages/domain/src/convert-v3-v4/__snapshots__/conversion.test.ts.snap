@@ -1,6 +1,4049 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`definition conversion golden rules > converts the frozen shipped implementation draft exits to E1 behavior 1`] = `
+exports[
+  `E2 review regressions > F1 automatically maps a sole gate expression, template and return to one-based passes 1`
+] = `
+{
+  "reviews": [
+    {
+      "hash": "65ee64161fd559e8496c3df0cb79ee29733f8b5f64d99d80952e318dfcc8d399",
+      "id": "/nodes/1/config/prompt:iteration-consumer",
+      "kind": "iteration-consumer",
+      "nodeId": "work",
+      "oldValue": "Pass {{ run.iteration }}",
+      "path": "/nodes/1/config/prompt",
+      "proposedValue": "Pass {{ gates.done.passes }}",
+      "reason": "Replace the old one-based shared iteration with the sole repeat gate's one-based passes. The engine seeds this maxPasses gate at 1 before execution.",
+      "status": "automatic",
+    },
+    {
+      "hash": "225e5a5d91e7cc2fcde38e5ad755ea21b993f0d8668e7abd92f9e329b4990c42",
+      "id": "/nodes/2/config/return/mapping:iteration-consumer",
+      "kind": "iteration-consumer",
+      "nodeId": "done",
+      "oldValue": "run.iteration",
+      "path": "/nodes/2/config/return/mapping",
+      "proposedValue": "gates.done.passes",
+      "reason": "Replace the old one-based shared iteration with the sole repeat gate's one-based passes. The engine seeds this maxPasses gate at 1 before execution.",
+      "status": "automatic",
+    },
+    {
+      "hash": "3bd5fff795568045b5c5b8e5d90f7bf0c6f997948a8749f985598ecec768adc7",
+      "id": "/nodes/2/config/return/mapping:exit-return",
+      "kind": "exit-return",
+      "nodeId": "done",
+      "oldValue": "run.iteration",
+      "path": "/nodes/2/config/return/mapping",
+      "proposedValue": "gates.done.passes",
+      "reason": "Bind lastOutput to the unique incoming output producer before new decisions overwrite it.",
+      "status": "automatic",
+    },
+    {
+      "hash": "04d7668c4daff30a87c8171597fb8276b28a76ee4691c45395c1ac1010e3115e",
+      "id": "/nodes/2/config/criteria/0/evaluation/jsonata:iteration-consumer",
+      "kind": "iteration-consumer",
+      "nodeId": "done",
+      "oldValue": "run.iteration >= 3",
+      "path": "/nodes/2/config/criteria/0/evaluation/jsonata",
+      "proposedValue": "gates.done.passes >= 3",
+      "reason": "Replace the old one-based shared iteration with the sole repeat gate's one-based passes. The engine seeds this maxPasses gate at 1 before execution.",
+      "status": "automatic",
+    },
+    {
+      "hash": "5eb7742072cd59e1b005c172514ba3f85843fd7a89bb8846e38f921ee48afc8c",
+      "id": "/nodes/2/config/criteria/0/evaluation/jsonata:predicate-input",
+      "kind": "predicate-input",
+      "nodeId": "done",
+      "oldValue": "gates.done.passes >= 3",
+      "path": "/nodes/2/config/criteria/0/evaluation/jsonata",
+      "proposedValue": "gates.done.passes >= 3",
+      "reason": "Expression predicates retain threadView semantics; bind lastOutput to the proven work output before inserted decisions overwrite it. Unproven/dynamic sources require review.",
+      "status": "automatic",
+    },
+    {
+      "hash": "8c18fcd44538db608c86b9fbb9f4ec0ede4c9b5bb159919b76a10a0c6d176025",
+      "id": "/nodes/2/config:exit-policy",
+      "kind": "exit-policy",
+      "nodeId": "done",
+      "oldValue": {
+        "criteria": [
+          {
+            "answer": {
+              "type": "noul",
+            },
+            "evaluation": {
+              "jsonata": "run.iteration >= 3",
+              "kind": "expression",
+            },
+            "match": {
+              "type": "noul",
+              "value": true,
+            },
+            "outcome": "success",
+            "when": "predicate",
+          },
+        ],
+        "default": "loop-back",
+        "loopBack": {
+          "targetNodeId": "work",
+        },
+        "return": {
+          "channels": [
+            {
+              "kind": "caller",
+            },
+          ],
+          "mapping": "run.iteration",
+        },
+      },
+      "path": "/nodes/2/config",
+      "proposedValue": {
+        "edges": [
+          {
+            "from": {
+              "node": "done",
+              "port": "limit-reached",
+            },
+            "id": "done-limit-reached",
+            "to": {
+              "node": "done-exhausted",
+              "port": "in",
+            },
+          },
+          {
+            "from": {
+              "node": "done",
+              "port": "matched",
+            },
+            "id": "done-matched",
+            "to": {
+              "node": "done-matched-1",
+              "port": "in",
+            },
+          },
+          {
+            "from": {
+              "node": "done",
+              "port": "unmatched",
+            },
+            "id": "done-unmatched",
+            "to": {
+              "node": "work",
+              "port": "in",
+            },
+          },
+        ],
+        "nodes": [
+          {
+            "config": {
+              "destinations": [
+                {
+                  "kind": "caller",
+                },
+              ],
+              "outcome": "exhausted",
+              "returns": "gates.done.passes",
+            },
+            "id": "done-exhausted",
+            "kind": "exit",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0,
+            },
+          },
+          {
+            "config": {
+              "destinations": [
+                {
+                  "kind": "caller",
+                },
+              ],
+              "outcome": "success",
+              "returns": "gates.done.passes",
+            },
+            "id": "done-matched-1",
+            "kind": "exit",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0,
+            },
+          },
+          {
+            "config": {
+              "jsonata": "($v := (gates.done.passes >= 3); $type($v) = "boolean" ? ($v ? "matched" : "unmatched") : $error("Expected a boolean"))",
+              "kind": "expression",
+              "maxPasses": 5,
+              "routes": [
+                {
+                  "id": "matched",
+                  "label": "Matched",
+                },
+                {
+                  "id": "unmatched",
+                  "label": "Unmatched",
+                  "repeat": true,
+                },
+              ],
+            },
+            "id": "done",
+            "kind": "decision",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0,
+            },
+          },
+        ],
+      },
+      "reason": "Review terminal outcomes, captures, return mapping, ordered-criterion timing and independent gate budgets. Gate limits run after evaluation and only on repeat; no history/replay entry is approved by this definition rule.",
+      "status": "pending",
+    },
+  ],
+  "value": {
+    "edges": [
+      {
+        "from": {
+          "node": "start",
+          "port": "out",
+        },
+        "id": "start-work",
+        "to": {
+          "node": "work",
+          "port": "in",
+        },
+      },
+      {
+        "from": {
+          "node": "work",
+          "port": "out",
+        },
+        "id": "work-done",
+        "to": {
+          "node": "done",
+          "port": "in",
+        },
+      },
+      {
+        "from": {
+          "node": "done",
+          "port": "limit-reached",
+        },
+        "id": "done-limit-reached",
+        "to": {
+          "node": "done-exhausted",
+          "port": "in",
+        },
+      },
+      {
+        "from": {
+          "node": "done",
+          "port": "matched",
+        },
+        "id": "done-matched",
+        "to": {
+          "node": "done-matched-1",
+          "port": "in",
+        },
+      },
+      {
+        "from": {
+          "node": "done",
+          "port": "unmatched",
+        },
+        "id": "done-unmatched",
+        "to": {
+          "node": "work",
+          "port": "in",
+        },
+      },
+    ],
+    "name": "Conversion fixture",
+    "nodes": [
+      {
+        "config": {
+          "exposeTo": [
+            "ui",
+            "api",
+            "mcp",
+          ],
+          "subtype": "manual",
+        },
+        "id": "start",
+        "kind": "trigger",
+        "label": "Start",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+      {
+        "config": {
+          "exposeTo": [
+            "api",
+          ],
+          "mode": "input",
+          "onTimeout": "continue",
+          "prompt": "Pass {{ gates.done.passes }}",
+        },
+        "id": "work",
+        "kind": "wait",
+        "label": "Work",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+      {
+        "config": {
+          "destinations": [
+            {
+              "kind": "caller",
+            },
+          ],
+          "outcome": "exhausted",
+          "returns": "gates.done.passes",
+        },
+        "id": "done-exhausted",
+        "kind": "exit",
+        "label": "Done",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+      {
+        "config": {
+          "destinations": [
+            {
+              "kind": "caller",
+            },
+          ],
+          "outcome": "success",
+          "returns": "gates.done.passes",
+        },
+        "id": "done-matched-1",
+        "kind": "exit",
+        "label": "Done",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+      {
+        "config": {
+          "jsonata": "($v := (gates.done.passes >= 3); $type($v) = "boolean" ? ($v ? "matched" : "unmatched") : $error("Expected a boolean"))",
+          "kind": "expression",
+          "maxPasses": 5,
+          "routes": [
+            {
+              "id": "matched",
+              "label": "Matched",
+            },
+            {
+              "id": "unmatched",
+              "label": "Unmatched",
+              "repeat": true,
+            },
+          ],
+        },
+        "id": "done",
+        "kind": "decision",
+        "label": "Done",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+    ],
+    "schemaVersion": 4,
+    "settings": {
+      "defaults": {
+        "byHarness": {},
+      },
+      "maxNodeVisits": 5,
+      "subloopDepthLimit": 8,
+      "workingDirectory": {
+        "kind": "temp",
+      },
+    },
+    "variables": {},
+  },
+}
+`;
+
+exports[
+  `E2 review regressions > F1 requires an owner source resolution with two loop-back exits 1`
+] = `
+{
+  "reviews": [
+    {
+      "hash": "146767c8fc3c993f6aa71194a21b944d1e58368164c7fdf92f7bbd758581cd75",
+      "id": "/nodes/1/config/evaluation/jsonata:output-consumer",
+      "kind": "output-consumer",
+      "nodeId": "work",
+      "oldValue": "run.iteration >= 3 ? "yes" : "no"",
+      "path": "/nodes/1/config/evaluation/jsonata",
+      "proposedValue": "run.iteration >= 3 ? "yes" : "no"",
+      "reason": "run.iteration stays 1 in fresh format-4 runs; counters and iteration without a unique proven repeat gate require an owner-authored source resolution.",
+      "status": "pending",
+    },
+    {
+      "hash": "31562bbcbc64de2b842a69001e96cac5a487bd436d660b672e2e0103e06b8c9a",
+      "id": "/nodes/1/config:unused-controls",
+      "kind": "unused-controls",
+      "nodeId": "work",
+      "oldValue": {
+        "answer": {
+          "options": [
+            {
+              "criteria": "Ready",
+              "id": "yes",
+              "label": "Yes",
+            },
+            {
+              "criteria": "Needs work",
+              "id": "no",
+              "label": "No",
+            },
+          ],
+          "type": "choice",
+        },
+        "recordAlternatives": true,
+      },
+      "path": "/nodes/1/config",
+      "proposedValue": [
+        {
+          "id": "yes",
+          "label": "Yes",
+        },
+        {
+          "id": "no",
+          "label": "No",
+        },
+      ],
+      "reason": "Remove unused classifier criteria and recording controls from expression/LLM decisions.",
+      "status": "automatic",
+    },
+    {
+      "hash": "91b72bbbaa571fc91d4ec3d8ca8049ca5ee6208819166b0a5d4569eb5b3fca31",
+      "id": "/nodes/2/config:shared-iteration-budget",
+      "kind": "shared-iteration-budget",
+      "nodeId": "done",
+      "oldValue": {
+        "loopBackExitIds": [
+          "done",
+          "again",
+        ],
+        "maxIterations": 5,
+      },
+      "path": "/nodes/2/config",
+      "proposedValue": {
+        "maxPasses": 5,
+      },
+      "reason": "V3 shared one iteration budget across all loop-back exits. This generated gate now has an independent pass budget; several or nested gates can run longer or reach MAX_NODE_VISITS. Review the combined budget.",
+      "status": "pending",
+    },
+    {
+      "hash": "5f37af79f277101f72c07107523fcf68348cff0e63cfd2fab7e79a500bbe1f24",
+      "id": "/nodes/2/config:exit-policy",
+      "kind": "exit-policy",
+      "nodeId": "done",
+      "oldValue": {
+        "criteria": [],
+        "default": "loop-back",
+        "loopBack": {
+          "targetNodeId": "work",
+        },
+        "return": {
+          "channels": [
+            {
+              "kind": "caller",
+            },
+          ],
+          "mapping": "none",
+        },
+      },
+      "path": "/nodes/2/config",
+      "proposedValue": {
+        "edges": [
+          {
+            "from": {
+              "node": "done",
+              "port": "repeat",
+            },
+            "id": "done-repeat",
+            "to": {
+              "node": "work",
+              "port": "in",
+            },
+          },
+          {
+            "from": {
+              "node": "done",
+              "port": "finish",
+            },
+            "id": "done-finish",
+            "to": {
+              "node": "done-complete",
+              "port": "in",
+            },
+          },
+          {
+            "from": {
+              "node": "done",
+              "port": "limit-reached",
+            },
+            "id": "done-limit-reached",
+            "to": {
+              "node": "done-exhausted",
+              "port": "in",
+            },
+          },
+        ],
+        "nodes": [
+          {
+            "config": {
+              "destinations": [
+                {
+                  "kind": "caller",
+                },
+              ],
+              "outcome": "success",
+              "returns": "none",
+            },
+            "id": "done-complete",
+            "kind": "exit",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0,
+            },
+          },
+          {
+            "config": {
+              "destinations": [
+                {
+                  "kind": "caller",
+                },
+              ],
+              "outcome": "exhausted",
+              "returns": "none",
+            },
+            "id": "done-exhausted",
+            "kind": "exit",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0,
+            },
+          },
+          {
+            "config": {
+              "jsonata": ""repeat"",
+              "kind": "expression",
+              "maxPasses": 5,
+              "routes": [
+                {
+                  "id": "repeat",
+                  "label": "Repeat",
+                  "repeat": true,
+                },
+                {
+                  "id": "finish",
+                  "label": "Finish",
+                },
+              ],
+            },
+            "id": "done",
+            "kind": "decision",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0,
+            },
+          },
+        ],
+      },
+      "reason": "Review terminal outcomes, captures, return mapping, ordered-criterion timing and independent gate budgets. Gate limits run after evaluation and only on repeat; no history/replay entry is approved by this definition rule.",
+      "status": "pending",
+    },
+    {
+      "hash": "97c33b394c238d154644e2afc81e564da6c3724db74a17a64699c309432b2dcc",
+      "id": "/nodes/3/config:shared-iteration-budget",
+      "kind": "shared-iteration-budget",
+      "nodeId": "again",
+      "oldValue": {
+        "loopBackExitIds": [
+          "done",
+          "again",
+        ],
+        "maxIterations": 5,
+      },
+      "path": "/nodes/3/config",
+      "proposedValue": {
+        "maxPasses": 5,
+      },
+      "reason": "V3 shared one iteration budget across all loop-back exits. This generated gate now has an independent pass budget; several or nested gates can run longer or reach MAX_NODE_VISITS. Review the combined budget.",
+      "status": "pending",
+    },
+    {
+      "hash": "a7fd10e4968d06b0cff5f1e0a2ca3edc9b6adb048c7f6c2c63b2dcb762ac7f16",
+      "id": "/nodes/3/config:exit-policy",
+      "kind": "exit-policy",
+      "nodeId": "again",
+      "oldValue": {
+        "criteria": [],
+        "default": "loop-back",
+        "loopBack": {
+          "targetNodeId": "work",
+        },
+        "return": {
+          "channels": [
+            {
+              "kind": "caller",
+            },
+          ],
+          "mapping": "none",
+        },
+      },
+      "path": "/nodes/3/config",
+      "proposedValue": {
+        "edges": [
+          {
+            "from": {
+              "node": "again",
+              "port": "repeat",
+            },
+            "id": "again-repeat",
+            "to": {
+              "node": "work",
+              "port": "in",
+            },
+          },
+          {
+            "from": {
+              "node": "again",
+              "port": "finish",
+            },
+            "id": "again-finish",
+            "to": {
+              "node": "again-complete",
+              "port": "in",
+            },
+          },
+          {
+            "from": {
+              "node": "again",
+              "port": "limit-reached",
+            },
+            "id": "again-limit-reached",
+            "to": {
+              "node": "again-exhausted",
+              "port": "in",
+            },
+          },
+        ],
+        "nodes": [
+          {
+            "config": {
+              "destinations": [
+                {
+                  "kind": "caller",
+                },
+              ],
+              "outcome": "success",
+              "returns": "none",
+            },
+            "id": "again-complete",
+            "kind": "exit",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0,
+            },
+          },
+          {
+            "config": {
+              "destinations": [
+                {
+                  "kind": "caller",
+                },
+              ],
+              "outcome": "exhausted",
+              "returns": "none",
+            },
+            "id": "again-exhausted",
+            "kind": "exit",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0,
+            },
+          },
+          {
+            "config": {
+              "jsonata": ""repeat"",
+              "kind": "expression",
+              "maxPasses": 5,
+              "routes": [
+                {
+                  "id": "repeat",
+                  "label": "Repeat",
+                  "repeat": true,
+                },
+                {
+                  "id": "finish",
+                  "label": "Finish",
+                },
+              ],
+            },
+            "id": "again",
+            "kind": "decision",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0,
+            },
+          },
+        ],
+      },
+      "reason": "Review terminal outcomes, captures, return mapping, ordered-criterion timing and independent gate budgets. Gate limits run after evaluation and only on repeat; no history/replay entry is approved by this definition rule.",
+      "status": "pending",
+    },
+  ],
+  "value": {
+    "edges": [
+      {
+        "from": {
+          "node": "start",
+          "port": "out",
+        },
+        "id": "start-work",
+        "to": {
+          "node": "work",
+          "port": "in",
+        },
+      },
+      {
+        "from": {
+          "node": "work",
+          "port": "yes",
+        },
+        "id": "work-yes",
+        "to": {
+          "node": "done",
+          "port": "in",
+        },
+      },
+      {
+        "from": {
+          "node": "work",
+          "port": "no",
+        },
+        "id": "work-no",
+        "to": {
+          "node": "again",
+          "port": "in",
+        },
+      },
+      {
+        "from": {
+          "node": "done",
+          "port": "repeat",
+        },
+        "id": "done-repeat",
+        "to": {
+          "node": "work",
+          "port": "in",
+        },
+      },
+      {
+        "from": {
+          "node": "done",
+          "port": "finish",
+        },
+        "id": "done-finish",
+        "to": {
+          "node": "done-complete",
+          "port": "in",
+        },
+      },
+      {
+        "from": {
+          "node": "done",
+          "port": "limit-reached",
+        },
+        "id": "done-limit-reached",
+        "to": {
+          "node": "done-exhausted",
+          "port": "in",
+        },
+      },
+      {
+        "from": {
+          "node": "again",
+          "port": "repeat",
+        },
+        "id": "again-repeat",
+        "to": {
+          "node": "work",
+          "port": "in",
+        },
+      },
+      {
+        "from": {
+          "node": "again",
+          "port": "finish",
+        },
+        "id": "again-finish",
+        "to": {
+          "node": "again-complete",
+          "port": "in",
+        },
+      },
+      {
+        "from": {
+          "node": "again",
+          "port": "limit-reached",
+        },
+        "id": "again-limit-reached",
+        "to": {
+          "node": "again-exhausted",
+          "port": "in",
+        },
+      },
+    ],
+    "name": "Conversion fixture",
+    "nodes": [
+      {
+        "config": {
+          "exposeTo": [
+            "ui",
+            "api",
+            "mcp",
+          ],
+          "subtype": "manual",
+        },
+        "id": "start",
+        "kind": "trigger",
+        "label": "Start",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+      {
+        "config": {
+          "jsonata": "run.iteration >= 3 ? "yes" : "no"",
+          "kind": "expression",
+          "routes": [
+            {
+              "id": "yes",
+              "label": "Yes",
+            },
+            {
+              "id": "no",
+              "label": "No",
+            },
+          ],
+        },
+        "id": "work",
+        "kind": "decision",
+        "label": "Work",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+      {
+        "config": {
+          "destinations": [
+            {
+              "kind": "caller",
+            },
+          ],
+          "outcome": "success",
+          "returns": "none",
+        },
+        "id": "done-complete",
+        "kind": "exit",
+        "label": "Done",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+      {
+        "config": {
+          "destinations": [
+            {
+              "kind": "caller",
+            },
+          ],
+          "outcome": "exhausted",
+          "returns": "none",
+        },
+        "id": "done-exhausted",
+        "kind": "exit",
+        "label": "Done",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+      {
+        "config": {
+          "jsonata": ""repeat"",
+          "kind": "expression",
+          "maxPasses": 5,
+          "routes": [
+            {
+              "id": "repeat",
+              "label": "Repeat",
+              "repeat": true,
+            },
+            {
+              "id": "finish",
+              "label": "Finish",
+            },
+          ],
+        },
+        "id": "done",
+        "kind": "decision",
+        "label": "Done",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+      {
+        "config": {
+          "destinations": [
+            {
+              "kind": "caller",
+            },
+          ],
+          "outcome": "success",
+          "returns": "none",
+        },
+        "id": "again-complete",
+        "kind": "exit",
+        "label": "Done",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+      {
+        "config": {
+          "destinations": [
+            {
+              "kind": "caller",
+            },
+          ],
+          "outcome": "exhausted",
+          "returns": "none",
+        },
+        "id": "again-exhausted",
+        "kind": "exit",
+        "label": "Done",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+      {
+        "config": {
+          "jsonata": ""repeat"",
+          "kind": "expression",
+          "maxPasses": 5,
+          "routes": [
+            {
+              "id": "repeat",
+              "label": "Repeat",
+              "repeat": true,
+            },
+            {
+              "id": "finish",
+              "label": "Finish",
+            },
+          ],
+        },
+        "id": "again",
+        "kind": "decision",
+        "label": "Done",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+    ],
+    "schemaVersion": 4,
+    "settings": {
+      "defaults": {
+        "byHarness": {},
+      },
+      "maxNodeVisits": 5,
+      "subloopDepthLimit": 8,
+      "workingDirectory": {
+        "kind": "temp",
+      },
+    },
+    "variables": {},
+  },
+}
+`;
+
+exports[
+  `E2 review regressions > F1 requires an owner source resolution with zero loop-back exits 1`
+] = `
+{
+  "reviews": [
+    {
+      "hash": "35b4232689f02498d2144ab951a65e31a68fc8e69de27cc7592b47bc60d0a955",
+      "id": "/nodes/1/config/evaluation/jsonata:output-consumer",
+      "kind": "output-consumer",
+      "nodeId": "work",
+      "oldValue": "run.iteration >= 3 ? "yes" : "no"",
+      "path": "/nodes/1/config/evaluation/jsonata",
+      "proposedValue": "run.iteration >= 3 ? "yes" : "no"",
+      "reason": "run.iteration stays 1 in fresh format-4 runs; counters and iteration without a unique proven repeat gate require an owner-authored source resolution.",
+      "status": "pending",
+    },
+    {
+      "hash": "c4678c11896c36da8b3974c6c5cbde19eed1ebd29009cb71ac5215a49962d7ba",
+      "id": "/nodes/1/config:unused-controls",
+      "kind": "unused-controls",
+      "nodeId": "work",
+      "oldValue": {
+        "answer": {
+          "options": [
+            {
+              "criteria": "Ready",
+              "id": "yes",
+              "label": "Yes",
+            },
+            {
+              "criteria": "Needs work",
+              "id": "no",
+              "label": "No",
+            },
+          ],
+          "type": "choice",
+        },
+        "recordAlternatives": true,
+      },
+      "path": "/nodes/1/config",
+      "proposedValue": [
+        {
+          "id": "yes",
+          "label": "Yes",
+        },
+        {
+          "id": "no",
+          "label": "No",
+        },
+      ],
+      "reason": "Remove unused classifier criteria and recording controls from expression/LLM decisions.",
+      "status": "automatic",
+    },
+  ],
+  "value": {
+    "edges": [
+      {
+        "from": {
+          "node": "start",
+          "port": "out",
+        },
+        "id": "start-work",
+        "to": {
+          "node": "work",
+          "port": "in",
+        },
+      },
+      {
+        "from": {
+          "node": "work",
+          "port": "yes",
+        },
+        "id": "work-yes",
+        "to": {
+          "node": "done",
+          "port": "in",
+        },
+      },
+      {
+        "from": {
+          "node": "work",
+          "port": "no",
+        },
+        "id": "work-no",
+        "to": {
+          "node": "done",
+          "port": "in",
+        },
+      },
+    ],
+    "name": "Conversion fixture",
+    "nodes": [
+      {
+        "config": {
+          "exposeTo": [
+            "ui",
+            "api",
+            "mcp",
+          ],
+          "subtype": "manual",
+        },
+        "id": "start",
+        "kind": "trigger",
+        "label": "Start",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+      {
+        "config": {
+          "jsonata": "run.iteration >= 3 ? "yes" : "no"",
+          "kind": "expression",
+          "routes": [
+            {
+              "id": "yes",
+              "label": "Yes",
+            },
+            {
+              "id": "no",
+              "label": "No",
+            },
+          ],
+        },
+        "id": "work",
+        "kind": "decision",
+        "label": "Work",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+      {
+        "config": {
+          "destinations": [
+            {
+              "kind": "caller",
+            },
+          ],
+          "outcome": "success",
+          "returns": "none",
+        },
+        "id": "done",
+        "kind": "exit",
+        "label": "Done",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+    ],
+    "schemaVersion": 4,
+    "settings": {
+      "defaults": {
+        "byHarness": {},
+      },
+      "maxNodeVisits": 5,
+      "subloopDepthLimit": 8,
+      "workingDirectory": {
+        "kind": "temp",
+      },
+    },
+    "variables": {},
+  },
+}
+`;
+
+exports[
+  `E2 review regressions > F1 reviews counters even with one gate and does not partially rewrite a mixed read 1`
+] = `
+{
+  "reviews": [
+    {
+      "hash": "e055d3e5bf05ccc29cdc0c2b2aaae92b4f4e05c33ca8b258dfa505931882795f",
+      "id": "/nodes/2/config/return/mapping:output-consumer",
+      "kind": "output-consumer",
+      "nodeId": "done",
+      "oldValue": "run.iteration + counters.nodeVisits.work",
+      "path": "/nodes/2/config/return/mapping",
+      "proposedValue": "run.iteration + counters.nodeVisits.work",
+      "reason": "run.iteration stays 1 in fresh format-4 runs; counters and iteration without a unique proven repeat gate require an owner-authored source resolution.",
+      "status": "pending",
+    },
+    {
+      "hash": "53086fc6265a34b5c95275b27c7d498a151474772e7ca6948865c7f52197829b",
+      "id": "/nodes/2/config/return/mapping:exit-return",
+      "kind": "exit-return",
+      "nodeId": "done",
+      "oldValue": "run.iteration + counters.nodeVisits.work",
+      "path": "/nodes/2/config/return/mapping",
+      "proposedValue": "run.iteration + counters.nodeVisits.work",
+      "reason": "Bind lastOutput to the unique incoming output producer before new decisions overwrite it.",
+      "status": "automatic",
+    },
+    {
+      "hash": "adaf64b2c338c1483eeaa79a18755d2e41c6937bbefc973ad8d9e428faeca8b2",
+      "id": "/nodes/2/config:exit-policy",
+      "kind": "exit-policy",
+      "nodeId": "done",
+      "oldValue": {
+        "criteria": [],
+        "default": "loop-back",
+        "loopBack": {
+          "targetNodeId": "work",
+        },
+        "return": {
+          "channels": [
+            {
+              "kind": "caller",
+            },
+          ],
+          "mapping": "run.iteration + counters.nodeVisits.work",
+        },
+      },
+      "path": "/nodes/2/config",
+      "proposedValue": {
+        "edges": [
+          {
+            "from": {
+              "node": "done",
+              "port": "repeat",
+            },
+            "id": "done-repeat",
+            "to": {
+              "node": "work",
+              "port": "in",
+            },
+          },
+          {
+            "from": {
+              "node": "done",
+              "port": "finish",
+            },
+            "id": "done-finish",
+            "to": {
+              "node": "done-complete",
+              "port": "in",
+            },
+          },
+          {
+            "from": {
+              "node": "done",
+              "port": "limit-reached",
+            },
+            "id": "done-limit-reached",
+            "to": {
+              "node": "done-exhausted",
+              "port": "in",
+            },
+          },
+        ],
+        "nodes": [
+          {
+            "config": {
+              "destinations": [
+                {
+                  "kind": "caller",
+                },
+              ],
+              "outcome": "success",
+              "returns": "run.iteration + counters.nodeVisits.work",
+            },
+            "id": "done-complete",
+            "kind": "exit",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0,
+            },
+          },
+          {
+            "config": {
+              "destinations": [
+                {
+                  "kind": "caller",
+                },
+              ],
+              "outcome": "exhausted",
+              "returns": "run.iteration + counters.nodeVisits.work",
+            },
+            "id": "done-exhausted",
+            "kind": "exit",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0,
+            },
+          },
+          {
+            "config": {
+              "jsonata": ""repeat"",
+              "kind": "expression",
+              "maxPasses": 5,
+              "routes": [
+                {
+                  "id": "repeat",
+                  "label": "Repeat",
+                  "repeat": true,
+                },
+                {
+                  "id": "finish",
+                  "label": "Finish",
+                },
+              ],
+            },
+            "id": "done",
+            "kind": "decision",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0,
+            },
+          },
+        ],
+      },
+      "reason": "Review terminal outcomes, captures, return mapping, ordered-criterion timing and independent gate budgets. Gate limits run after evaluation and only on repeat; no history/replay entry is approved by this definition rule.",
+      "status": "pending",
+    },
+  ],
+  "value": {
+    "edges": [
+      {
+        "from": {
+          "node": "start",
+          "port": "out",
+        },
+        "id": "start-work",
+        "to": {
+          "node": "work",
+          "port": "in",
+        },
+      },
+      {
+        "from": {
+          "node": "work",
+          "port": "out",
+        },
+        "id": "work-done",
+        "to": {
+          "node": "done",
+          "port": "in",
+        },
+      },
+      {
+        "from": {
+          "node": "done",
+          "port": "repeat",
+        },
+        "id": "done-repeat",
+        "to": {
+          "node": "work",
+          "port": "in",
+        },
+      },
+      {
+        "from": {
+          "node": "done",
+          "port": "finish",
+        },
+        "id": "done-finish",
+        "to": {
+          "node": "done-complete",
+          "port": "in",
+        },
+      },
+      {
+        "from": {
+          "node": "done",
+          "port": "limit-reached",
+        },
+        "id": "done-limit-reached",
+        "to": {
+          "node": "done-exhausted",
+          "port": "in",
+        },
+      },
+    ],
+    "name": "Conversion fixture",
+    "nodes": [
+      {
+        "config": {
+          "exposeTo": [
+            "ui",
+            "api",
+            "mcp",
+          ],
+          "subtype": "manual",
+        },
+        "id": "start",
+        "kind": "trigger",
+        "label": "Start",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+      {
+        "config": {
+          "mode": "duration",
+          "onTimeout": "continue",
+          "seconds": 1,
+        },
+        "id": "work",
+        "kind": "wait",
+        "label": "Work",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+      {
+        "config": {
+          "destinations": [
+            {
+              "kind": "caller",
+            },
+          ],
+          "outcome": "success",
+          "returns": "run.iteration + counters.nodeVisits.work",
+        },
+        "id": "done-complete",
+        "kind": "exit",
+        "label": "Done",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+      {
+        "config": {
+          "destinations": [
+            {
+              "kind": "caller",
+            },
+          ],
+          "outcome": "exhausted",
+          "returns": "run.iteration + counters.nodeVisits.work",
+        },
+        "id": "done-exhausted",
+        "kind": "exit",
+        "label": "Done",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+      {
+        "config": {
+          "jsonata": ""repeat"",
+          "kind": "expression",
+          "maxPasses": 5,
+          "routes": [
+            {
+              "id": "repeat",
+              "label": "Repeat",
+              "repeat": true,
+            },
+            {
+              "id": "finish",
+              "label": "Finish",
+            },
+          ],
+        },
+        "id": "done",
+        "kind": "decision",
+        "label": "Done",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+    ],
+    "schemaVersion": 4,
+    "settings": {
+      "defaults": {
+        "byHarness": {},
+      },
+      "maxNodeVisits": 5,
+      "subloopDepthLimit": 8,
+      "workingDirectory": {
+        "kind": "temp",
+      },
+    },
+    "variables": {},
+  },
+}
+`;
+
+exports[
+  `E2 review regressions > F1 uses the actual provider comparison gate ID in decision and provider templates 1`
+] = `
+{
+  "reviews": [
+    {
+      "hash": "68f71c5e4fb683bddb53873240e6f46d2d63369113059f7a2a7e2241934ec837",
+      "id": "/nodes/1/config/evaluation/jsonata:iteration-consumer",
+      "kind": "iteration-consumer",
+      "nodeId": "work",
+      "oldValue": "run.iteration >= 3 ? "yes" : "no"",
+      "path": "/nodes/1/config/evaluation/jsonata",
+      "proposedValue": "gates.\`done-match\`.passes >= 3 ? "yes" : "no"",
+      "reason": "Replace the old one-based shared iteration with the sole repeat gate's one-based passes. The engine seeds this maxPasses gate at 1 before execution.",
+      "status": "automatic",
+    },
+    {
+      "hash": "97843fa5ff560f7e3d819fc9031e7e0eec698ba084740bd100d30d4edd876774",
+      "id": "/nodes/1/config:unused-controls",
+      "kind": "unused-controls",
+      "nodeId": "work",
+      "oldValue": {
+        "answer": {
+          "options": [
+            {
+              "criteria": "Ready",
+              "id": "yes",
+              "label": "Yes",
+            },
+            {
+              "criteria": "Needs work",
+              "id": "no",
+              "label": "No",
+            },
+          ],
+          "type": "choice",
+        },
+        "recordAlternatives": true,
+      },
+      "path": "/nodes/1/config",
+      "proposedValue": [
+        {
+          "id": "yes",
+          "label": "Yes",
+        },
+        {
+          "id": "no",
+          "label": "No",
+        },
+      ],
+      "reason": "Remove unused classifier criteria and recording controls from expression/LLM decisions.",
+      "status": "automatic",
+    },
+    {
+      "hash": "6b07bad8f0d0b289312ed8ad4296be5ee8db174f5c2b0817fdf24f12a7aa66c9",
+      "id": "/nodes/2/config/criteria/0/evaluation/question:iteration-consumer",
+      "kind": "iteration-consumer",
+      "nodeId": "done",
+      "oldValue": "Pass {{ run.iteration }}?",
+      "path": "/nodes/2/config/criteria/0/evaluation/question",
+      "proposedValue": "Pass {{ gates.done-match.passes }}?",
+      "reason": "Replace the old one-based shared iteration with the sole repeat gate's one-based passes. The engine seeds this maxPasses gate at 1 before execution.",
+      "status": "automatic",
+    },
+    {
+      "hash": "59aaded075c97271272fd753ac1a74653a99aa942cf16cb9832ca8ae29fe5a7c",
+      "id": "/nodes/2/config/criteria/0:classifier-decision",
+      "kind": "classifier-decision",
+      "nodeId": "done",
+      "oldValue": {
+        "answer": {
+          "options": [
+            {
+              "criteria": "Ready",
+              "id": "yes",
+              "label": "Yes",
+            },
+            {
+              "criteria": "Needs work",
+              "id": "no",
+              "label": "No",
+            },
+          ],
+          "type": "choice",
+        },
+        "evaluation": {
+          "context": {
+            "includeLastOutput": true,
+            "messages": "last",
+          },
+          "kind": "classifier",
+          "minConfidence": 0.7,
+          "model": "jev",
+          "question": "Pass {{ gates.done-match.passes }}?",
+        },
+        "recordAlternatives": true,
+      },
+      "path": "/nodes/2/config/criteria/0",
+      "proposedValue": {
+        "answer": {
+          "options": [
+            {
+              "criteria": "Ready",
+              "id": "yes",
+              "label": "Yes",
+            },
+            {
+              "criteria": "Needs work",
+              "id": "no",
+              "label": "No",
+            },
+          ],
+          "type": "choice",
+        },
+        "context": {
+          "includeLastOutput": true,
+          "messages": "last",
+        },
+        "kind": "classifier",
+        "minConfidence": 0.7,
+        "model": "jev",
+        "question": "Pass {{ gates.done-match.passes }}?",
+        "recordAlternatives": true,
+      },
+      "reason": "Flatten classifier configuration; preserve all mathematics and route identities.",
+      "status": "automatic",
+    },
+    {
+      "hash": "681b53d38d26bf5eceb30b24a7304d4425ae988a3697195fefb1b1f592f22372",
+      "id": "/nodes/2/config/criteria/0:provider-predicate",
+      "kind": "provider-predicate",
+      "nodeId": "done",
+      "oldValue": {
+        "answer": {
+          "options": [
+            {
+              "criteria": "Ready",
+              "id": "yes",
+              "label": "Yes",
+            },
+            {
+              "criteria": "Needs work",
+              "id": "no",
+              "label": "No",
+            },
+          ],
+          "type": "choice",
+        },
+        "evaluation": {
+          "kind": "classifier",
+          "minConfidence": 0.7,
+          "model": "jev",
+          "question": "Pass {{ run.iteration }}?",
+        },
+        "match": {
+          "optionIds": [
+            "yes",
+          ],
+          "type": "choice",
+        },
+        "outcome": "success",
+        "when": "predicate",
+      },
+      "path": "/nodes/2/config/criteria/0",
+      "proposedValue": {
+        "answer": {
+          "options": [
+            {
+              "criteria": "Ready",
+              "id": "yes",
+              "label": "Yes",
+            },
+            {
+              "criteria": "Needs work",
+              "id": "no",
+              "label": "No",
+            },
+          ],
+          "type": "choice",
+        },
+        "context": {
+          "includeLastOutput": true,
+          "messages": "last",
+        },
+        "kind": "classifier",
+        "minConfidence": 0.7,
+        "model": "jev",
+        "question": "Pass {{ gates.done-match.passes }}?",
+        "recordAlternatives": true,
+      },
+      "reason": "Review old bare lastOutput/provider state, classifier rejection (now failure), matching and generated graph. Provider prompts/state may require explicit captures.",
+      "status": "pending",
+    },
+    {
+      "hash": "4f966ef55cd384d1f3a010d5a0eaf313b2f32eb1f379a872ec09e7ce646857cb",
+      "id": "/nodes/2/config:exit-policy",
+      "kind": "exit-policy",
+      "nodeId": "done",
+      "oldValue": {
+        "criteria": [
+          {
+            "answer": {
+              "options": [
+                {
+                  "criteria": "Ready",
+                  "id": "yes",
+                  "label": "Yes",
+                },
+                {
+                  "criteria": "Needs work",
+                  "id": "no",
+                  "label": "No",
+                },
+              ],
+              "type": "choice",
+            },
+            "evaluation": {
+              "kind": "classifier",
+              "minConfidence": 0.7,
+              "model": "jev",
+              "question": "Pass {{ run.iteration }}?",
+            },
+            "match": {
+              "optionIds": [
+                "yes",
+              ],
+              "type": "choice",
+            },
+            "outcome": "success",
+            "when": "predicate",
+          },
+        ],
+        "default": "loop-back",
+        "loopBack": {
+          "targetNodeId": "work",
+        },
+        "return": {
+          "channels": [
+            {
+              "kind": "caller",
+            },
+          ],
+          "mapping": "none",
+        },
+      },
+      "path": "/nodes/2/config",
+      "proposedValue": {
+        "edges": [
+          {
+            "from": {
+              "node": "done",
+              "port": "yes",
+            },
+            "id": "done-yes",
+            "to": {
+              "node": "done-match",
+              "port": "in",
+            },
+          },
+          {
+            "from": {
+              "node": "done",
+              "port": "no",
+            },
+            "id": "done-no",
+            "to": {
+              "node": "done-match",
+              "port": "in",
+            },
+          },
+          {
+            "from": {
+              "node": "done-match",
+              "port": "limit-reached",
+            },
+            "id": "done-match-limit-reached",
+            "to": {
+              "node": "done-exhausted",
+              "port": "in",
+            },
+          },
+          {
+            "from": {
+              "node": "done-match",
+              "port": "matched",
+            },
+            "id": "done-match-matched",
+            "to": {
+              "node": "done-matched-1",
+              "port": "in",
+            },
+          },
+          {
+            "from": {
+              "node": "done-match",
+              "port": "unmatched",
+            },
+            "id": "done-match-unmatched",
+            "to": {
+              "node": "work",
+              "port": "in",
+            },
+          },
+        ],
+        "nodes": [
+          {
+            "config": {
+              "destinations": [
+                {
+                  "kind": "caller",
+                },
+              ],
+              "outcome": "exhausted",
+              "returns": "none",
+            },
+            "id": "done-exhausted",
+            "kind": "exit",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0,
+            },
+          },
+          {
+            "config": {
+              "destinations": [
+                {
+                  "kind": "caller",
+                },
+              ],
+              "outcome": "success",
+              "returns": "none",
+            },
+            "id": "done-matched-1",
+            "kind": "exit",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0,
+            },
+          },
+          {
+            "config": {
+              "answer": {
+                "options": [
+                  {
+                    "criteria": "Ready",
+                    "id": "yes",
+                    "label": "Yes",
+                  },
+                  {
+                    "criteria": "Needs work",
+                    "id": "no",
+                    "label": "No",
+                  },
+                ],
+                "type": "choice",
+              },
+              "context": {
+                "includeLastOutput": true,
+                "messages": "last",
+              },
+              "kind": "classifier",
+              "minConfidence": 0.7,
+              "model": "jev",
+              "question": "Pass {{ gates.done-match.passes }}?",
+              "recordAlternatives": true,
+            },
+            "id": "done",
+            "kind": "decision",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0,
+            },
+          },
+          {
+            "config": {
+              "jsonata": "(outputs.done.value.observation.answer.optionId in ["yes"]) ? "matched" : "unmatched"",
+              "kind": "expression",
+              "maxPasses": 5,
+              "routes": [
+                {
+                  "id": "matched",
+                  "label": "Matched",
+                },
+                {
+                  "id": "unmatched",
+                  "label": "Unmatched",
+                  "repeat": true,
+                },
+              ],
+            },
+            "id": "done-match",
+            "kind": "decision",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0,
+            },
+          },
+        ],
+      },
+      "reason": "Review terminal outcomes, captures, return mapping, ordered-criterion timing and independent gate budgets. Gate limits run after evaluation and only on repeat; no history/replay entry is approved by this definition rule.",
+      "status": "pending",
+    },
+  ],
+  "value": {
+    "edges": [
+      {
+        "from": {
+          "node": "start",
+          "port": "out",
+        },
+        "id": "start-work",
+        "to": {
+          "node": "work",
+          "port": "in",
+        },
+      },
+      {
+        "from": {
+          "node": "work",
+          "port": "yes",
+        },
+        "id": "work-yes",
+        "to": {
+          "node": "done",
+          "port": "in",
+        },
+      },
+      {
+        "from": {
+          "node": "work",
+          "port": "no",
+        },
+        "id": "work-no",
+        "to": {
+          "node": "done",
+          "port": "in",
+        },
+      },
+      {
+        "from": {
+          "node": "done",
+          "port": "yes",
+        },
+        "id": "done-yes",
+        "to": {
+          "node": "done-match",
+          "port": "in",
+        },
+      },
+      {
+        "from": {
+          "node": "done",
+          "port": "no",
+        },
+        "id": "done-no",
+        "to": {
+          "node": "done-match",
+          "port": "in",
+        },
+      },
+      {
+        "from": {
+          "node": "done-match",
+          "port": "limit-reached",
+        },
+        "id": "done-match-limit-reached",
+        "to": {
+          "node": "done-exhausted",
+          "port": "in",
+        },
+      },
+      {
+        "from": {
+          "node": "done-match",
+          "port": "matched",
+        },
+        "id": "done-match-matched",
+        "to": {
+          "node": "done-matched-1",
+          "port": "in",
+        },
+      },
+      {
+        "from": {
+          "node": "done-match",
+          "port": "unmatched",
+        },
+        "id": "done-match-unmatched",
+        "to": {
+          "node": "work",
+          "port": "in",
+        },
+      },
+    ],
+    "name": "Conversion fixture",
+    "nodes": [
+      {
+        "config": {
+          "exposeTo": [
+            "ui",
+            "api",
+            "mcp",
+          ],
+          "subtype": "manual",
+        },
+        "id": "start",
+        "kind": "trigger",
+        "label": "Start",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+      {
+        "config": {
+          "jsonata": "gates.\`done-match\`.passes >= 3 ? "yes" : "no"",
+          "kind": "expression",
+          "routes": [
+            {
+              "id": "yes",
+              "label": "Yes",
+            },
+            {
+              "id": "no",
+              "label": "No",
+            },
+          ],
+        },
+        "id": "work",
+        "kind": "decision",
+        "label": "Work",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+      {
+        "config": {
+          "destinations": [
+            {
+              "kind": "caller",
+            },
+          ],
+          "outcome": "exhausted",
+          "returns": "none",
+        },
+        "id": "done-exhausted",
+        "kind": "exit",
+        "label": "Done",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+      {
+        "config": {
+          "destinations": [
+            {
+              "kind": "caller",
+            },
+          ],
+          "outcome": "success",
+          "returns": "none",
+        },
+        "id": "done-matched-1",
+        "kind": "exit",
+        "label": "Done",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+      {
+        "config": {
+          "answer": {
+            "options": [
+              {
+                "criteria": "Ready",
+                "id": "yes",
+                "label": "Yes",
+              },
+              {
+                "criteria": "Needs work",
+                "id": "no",
+                "label": "No",
+              },
+            ],
+            "type": "choice",
+          },
+          "context": {
+            "includeLastOutput": true,
+            "messages": "last",
+          },
+          "kind": "classifier",
+          "minConfidence": 0.7,
+          "model": "jev",
+          "question": "Pass {{ gates.done-match.passes }}?",
+          "recordAlternatives": true,
+        },
+        "id": "done",
+        "kind": "decision",
+        "label": "Done",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+      {
+        "config": {
+          "jsonata": "(outputs.done.value.observation.answer.optionId in ["yes"]) ? "matched" : "unmatched"",
+          "kind": "expression",
+          "maxPasses": 5,
+          "routes": [
+            {
+              "id": "matched",
+              "label": "Matched",
+            },
+            {
+              "id": "unmatched",
+              "label": "Unmatched",
+              "repeat": true,
+            },
+          ],
+        },
+        "id": "done-match",
+        "kind": "decision",
+        "label": "Done",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+    ],
+    "schemaVersion": 4,
+    "settings": {
+      "defaults": {
+        "byHarness": {},
+      },
+      "maxNodeVisits": 5,
+      "subloopDepthLimit": 8,
+      "workingDirectory": {
+        "kind": "temp",
+      },
+    },
+    "variables": {},
+  },
+}
+`;
+
+exports[
+  `E2 review regressions > F2 accepts an authored duration exit graph and refuses absent, stale and malformed answers 1`
+] = `
+{
+  "converted": {
+    "ok": true,
+    "ready": true,
+    "reviewItems": [
+      {
+        "hash": "1cb800cc187faff400681ed4adaea9b38d0650ecba05f784944d1ee2d539961f",
+        "id": "/nodes/2/config:exit-policy",
+        "kind": "exit-policy",
+        "nodeId": "done",
+        "oldValue": {
+          "criteria": [
+            {
+              "outcome": "exhausted",
+              "seconds": 2,
+              "when": "max-duration",
+            },
+          ],
+          "default": "success",
+          "return": {
+            "channels": [
+              {
+                "kind": "caller",
+              },
+            ],
+            "mapping": "none",
+          },
+        },
+        "path": "/nodes/2/config",
+        "proposedValue": null,
+        "reason": "Supply an authored current exit graph. Preserve ordered criteria and return semantics; do not approximate JSON Schema or historical iteration counters.",
+        "status": "resolved",
+      },
+    ],
+    "value": {
+      "edges": [
+        {
+          "from": {
+            "node": "start",
+            "port": "out",
+          },
+          "id": "start-work",
+          "to": {
+            "node": "work",
+            "port": "in",
+          },
+        },
+        {
+          "from": {
+            "node": "work",
+            "port": "out",
+          },
+          "id": "work-done",
+          "to": {
+            "node": "done",
+            "port": "in",
+          },
+        },
+      ],
+      "name": "Conversion fixture",
+      "nodes": [
+        {
+          "config": {
+            "exposeTo": [
+              "ui",
+              "api",
+              "mcp",
+            ],
+            "subtype": "manual",
+          },
+          "id": "start",
+          "kind": "trigger",
+          "label": "Start",
+          "ui": {
+            "x": 0,
+            "y": 0,
+          },
+        },
+        {
+          "config": {
+            "mode": "duration",
+            "onTimeout": "continue",
+            "seconds": 1,
+          },
+          "id": "work",
+          "kind": "wait",
+          "label": "Work",
+          "ui": {
+            "x": 0,
+            "y": 0,
+          },
+        },
+        {
+          "config": {
+            "destinations": [],
+            "outcome": "exhausted",
+            "returns": "none",
+          },
+          "id": "done",
+          "kind": "exit",
+          "label": "Reviewed terminal policy",
+          "ui": {
+            "x": 0,
+            "y": 0,
+          },
+        },
+      ],
+      "schemaVersion": 4,
+      "settings": {
+        "defaults": {
+          "byHarness": {},
+        },
+        "maxNodeVisits": 5,
+        "subloopDepthLimit": 8,
+        "workingDirectory": {
+          "kind": "temp",
+        },
+      },
+      "variables": {},
+    },
+  },
+  "refused": {
+    "issues": [
+      {
+        "code": "V4_TERMINAL_LIMIT_POLICY_REQUIRED",
+        "message": "An authored graph replacement is required; resolve review item /nodes/2/config:exit-policy",
+        "path": "/nodes/2/config",
+      },
+      {
+        "code": "NO_EXIT",
+        "message": "a loop needs at least one exit node",
+        "path": "/",
+      },
+      {
+        "code": "EDGE_TO_MISSING",
+        "message": "edge "work-done" ends at unknown node "done"",
+        "path": "/",
+      },
+      {
+        "code": "TRIGGER_NO_EXIT_PATH",
+        "message": "trigger "start" cannot reach any exit node",
+        "path": "/",
+      },
+    ],
+    "ok": false,
+    "reviewItems": [
+      {
+        "hash": "1cb800cc187faff400681ed4adaea9b38d0650ecba05f784944d1ee2d539961f",
+        "id": "/nodes/2/config:exit-policy",
+        "kind": "exit-policy",
+        "nodeId": "done",
+        "oldValue": {
+          "criteria": [
+            {
+              "outcome": "exhausted",
+              "seconds": 2,
+              "when": "max-duration",
+            },
+          ],
+          "default": "success",
+          "return": {
+            "channels": [
+              {
+                "kind": "caller",
+              },
+            ],
+            "mapping": "none",
+          },
+        },
+        "path": "/nodes/2/config",
+        "proposedValue": null,
+        "reason": "Supply an authored current exit graph. Preserve ordered criteria and return semantics; do not approximate JSON Schema or historical iteration counters.",
+        "status": "pending",
+      },
+    ],
+  },
+}
+`;
+
+exports[
+  `E2 review regressions > F2 accepts an authored iterations exit graph and refuses absent, stale and malformed answers 1`
+] = `
+{
+  "converted": {
+    "ok": true,
+    "ready": true,
+    "reviewItems": [
+      {
+        "hash": "f8b95bec0d5bc01b701bda4fe5800d47a426185d210880f5a8041520558532da",
+        "id": "/nodes/2/config:exit-policy",
+        "kind": "exit-policy",
+        "nodeId": "done",
+        "oldValue": {
+          "criteria": [
+            {
+              "outcome": "exhausted",
+              "value": 1,
+              "when": "max-iterations",
+            },
+          ],
+          "default": "success",
+          "return": {
+            "channels": [
+              {
+                "kind": "caller",
+              },
+            ],
+            "mapping": "none",
+          },
+        },
+        "path": "/nodes/2/config",
+        "proposedValue": null,
+        "reason": "Supply an authored current exit graph. Preserve ordered criteria and return semantics; do not approximate JSON Schema or historical iteration counters.",
+        "status": "resolved",
+      },
+    ],
+    "value": {
+      "edges": [
+        {
+          "from": {
+            "node": "start",
+            "port": "out",
+          },
+          "id": "start-work",
+          "to": {
+            "node": "work",
+            "port": "in",
+          },
+        },
+        {
+          "from": {
+            "node": "work",
+            "port": "out",
+          },
+          "id": "work-done",
+          "to": {
+            "node": "done",
+            "port": "in",
+          },
+        },
+      ],
+      "name": "Conversion fixture",
+      "nodes": [
+        {
+          "config": {
+            "exposeTo": [
+              "ui",
+              "api",
+              "mcp",
+            ],
+            "subtype": "manual",
+          },
+          "id": "start",
+          "kind": "trigger",
+          "label": "Start",
+          "ui": {
+            "x": 0,
+            "y": 0,
+          },
+        },
+        {
+          "config": {
+            "mode": "duration",
+            "onTimeout": "continue",
+            "seconds": 1,
+          },
+          "id": "work",
+          "kind": "wait",
+          "label": "Work",
+          "ui": {
+            "x": 0,
+            "y": 0,
+          },
+        },
+        {
+          "config": {
+            "destinations": [],
+            "outcome": "exhausted",
+            "returns": "none",
+          },
+          "id": "done",
+          "kind": "exit",
+          "label": "Reviewed terminal policy",
+          "ui": {
+            "x": 0,
+            "y": 0,
+          },
+        },
+      ],
+      "schemaVersion": 4,
+      "settings": {
+        "defaults": {
+          "byHarness": {},
+        },
+        "maxNodeVisits": 5,
+        "subloopDepthLimit": 8,
+        "workingDirectory": {
+          "kind": "temp",
+        },
+      },
+      "variables": {},
+    },
+  },
+  "refused": {
+    "issues": [
+      {
+        "code": "V4_TERMINAL_LIMIT_POLICY_REQUIRED",
+        "message": "An authored graph replacement is required; resolve review item /nodes/2/config:exit-policy",
+        "path": "/nodes/2/config",
+      },
+      {
+        "code": "NO_EXIT",
+        "message": "a loop needs at least one exit node",
+        "path": "/",
+      },
+      {
+        "code": "EDGE_TO_MISSING",
+        "message": "edge "work-done" ends at unknown node "done"",
+        "path": "/",
+      },
+      {
+        "code": "TRIGGER_NO_EXIT_PATH",
+        "message": "trigger "start" cannot reach any exit node",
+        "path": "/",
+      },
+    ],
+    "ok": false,
+    "reviewItems": [
+      {
+        "hash": "f8b95bec0d5bc01b701bda4fe5800d47a426185d210880f5a8041520558532da",
+        "id": "/nodes/2/config:exit-policy",
+        "kind": "exit-policy",
+        "nodeId": "done",
+        "oldValue": {
+          "criteria": [
+            {
+              "outcome": "exhausted",
+              "value": 1,
+              "when": "max-iterations",
+            },
+          ],
+          "default": "success",
+          "return": {
+            "channels": [
+              {
+                "kind": "caller",
+              },
+            ],
+            "mapping": "none",
+          },
+        },
+        "path": "/nodes/2/config",
+        "proposedValue": null,
+        "reason": "Supply an authored current exit graph. Preserve ordered criteria and return semantics; do not approximate JSON Schema or historical iteration counters.",
+        "status": "pending",
+      },
+    ],
+  },
+}
+`;
+
+exports[
+  `E2 review regressions > F2 accepts an authored schema exit graph and refuses absent, stale and malformed answers 1`
+] = `
+{
+  "converted": {
+    "ok": true,
+    "ready": true,
+    "reviewItems": [
+      {
+        "hash": "70e207d0224a2fec63c33a3d0f212f831d37ae479765662b471f993f869ee260",
+        "id": "/nodes/2/config:exit-policy",
+        "kind": "exit-policy",
+        "nodeId": "done",
+        "oldValue": {
+          "criteria": [
+            {
+              "jsonSchema": {},
+              "outcome": "success",
+              "when": "last-output-matches",
+            },
+          ],
+          "default": "success",
+          "return": {
+            "channels": [
+              {
+                "kind": "caller",
+              },
+            ],
+            "mapping": "none",
+          },
+        },
+        "path": "/nodes/2/config",
+        "proposedValue": null,
+        "reason": "Supply an authored current exit graph. Preserve ordered criteria and return semantics; do not approximate JSON Schema or historical iteration counters.",
+        "status": "resolved",
+      },
+    ],
+    "value": {
+      "edges": [
+        {
+          "from": {
+            "node": "start",
+            "port": "out",
+          },
+          "id": "start-work",
+          "to": {
+            "node": "work",
+            "port": "in",
+          },
+        },
+        {
+          "from": {
+            "node": "work",
+            "port": "out",
+          },
+          "id": "work-done",
+          "to": {
+            "node": "done",
+            "port": "in",
+          },
+        },
+      ],
+      "name": "Conversion fixture",
+      "nodes": [
+        {
+          "config": {
+            "exposeTo": [
+              "ui",
+              "api",
+              "mcp",
+            ],
+            "subtype": "manual",
+          },
+          "id": "start",
+          "kind": "trigger",
+          "label": "Start",
+          "ui": {
+            "x": 0,
+            "y": 0,
+          },
+        },
+        {
+          "config": {
+            "mode": "duration",
+            "onTimeout": "continue",
+            "seconds": 1,
+          },
+          "id": "work",
+          "kind": "wait",
+          "label": "Work",
+          "ui": {
+            "x": 0,
+            "y": 0,
+          },
+        },
+        {
+          "config": {
+            "destinations": [],
+            "outcome": "exhausted",
+            "returns": "none",
+          },
+          "id": "done",
+          "kind": "exit",
+          "label": "Reviewed terminal policy",
+          "ui": {
+            "x": 0,
+            "y": 0,
+          },
+        },
+      ],
+      "schemaVersion": 4,
+      "settings": {
+        "defaults": {
+          "byHarness": {},
+        },
+        "maxNodeVisits": 5,
+        "subloopDepthLimit": 8,
+        "workingDirectory": {
+          "kind": "temp",
+        },
+      },
+      "variables": {},
+    },
+  },
+  "refused": {
+    "issues": [
+      {
+        "code": "V4_EXIT_SCHEMA_POLICY_REQUIRED",
+        "message": "An authored graph replacement is required; resolve review item /nodes/2/config:exit-policy",
+        "path": "/nodes/2/config",
+      },
+      {
+        "code": "NO_EXIT",
+        "message": "a loop needs at least one exit node",
+        "path": "/",
+      },
+      {
+        "code": "EDGE_TO_MISSING",
+        "message": "edge "work-done" ends at unknown node "done"",
+        "path": "/",
+      },
+      {
+        "code": "TRIGGER_NO_EXIT_PATH",
+        "message": "trigger "start" cannot reach any exit node",
+        "path": "/",
+      },
+    ],
+    "ok": false,
+    "reviewItems": [
+      {
+        "hash": "70e207d0224a2fec63c33a3d0f212f831d37ae479765662b471f993f869ee260",
+        "id": "/nodes/2/config:exit-policy",
+        "kind": "exit-policy",
+        "nodeId": "done",
+        "oldValue": {
+          "criteria": [
+            {
+              "jsonSchema": {},
+              "outcome": "success",
+              "when": "last-output-matches",
+            },
+          ],
+          "default": "success",
+          "return": {
+            "channels": [
+              {
+                "kind": "caller",
+              },
+            ],
+            "mapping": "none",
+          },
+        },
+        "path": "/nodes/2/config",
+        "proposedValue": null,
+        "reason": "Supply an authored current exit graph. Preserve ordered criteria and return semantics; do not approximate JSON Schema or historical iteration counters.",
+        "status": "pending",
+      },
+    ],
+  },
+}
+`;
+
+exports[
+  `E2 review regressions > F4 names max-duration changing from before a predicate to after evaluation 1`
+] = `
+{
+  "reviews": [
+    {
+      "hash": "7e3071cd30e139e42566ee5382dc33ca32cd1f18444e7bac0ac4e8a6844aa7cb",
+      "id": "/nodes/2/config/return/mapping:exit-return",
+      "kind": "exit-return",
+      "nodeId": "done",
+      "oldValue": "lastOutput.value",
+      "path": "/nodes/2/config/return/mapping",
+      "proposedValue": "outputs.work.value",
+      "reason": "Bind lastOutput to the unique incoming output producer before new decisions overwrite it.",
+      "status": "automatic",
+    },
+    {
+      "hash": "13d9f6f687549cf55c1a48553592ff4a18fabec1c0128dac79a4988b379e85f9",
+      "id": "/nodes/2/config/criteria/0:ordered-limit",
+      "kind": "ordered-limit",
+      "nodeId": "done",
+      "oldValue": {
+        "outcome": "exhausted",
+        "seconds": 20,
+        "when": "max-duration",
+      },
+      "path": "/nodes/2/config/criteria/0",
+      "proposedValue": {
+        "criterion": {
+          "outcome": "exhausted",
+          "seconds": 20,
+          "when": "max-duration",
+        },
+        "timing": "after-evaluation-on-repeat",
+      },
+      "reason": "This V3 limit preceded a predicate and could exhaust before that predicate ran. Generated gates evaluate first, then check limits only on a repeat. Review this order change or preserve it in an authored graph.",
+      "status": "pending",
+    },
+    {
+      "hash": "0088060accf46e2c162d4d1393b5cdcb0661d3f25e4de7b2a24498689724bfba",
+      "id": "/nodes/2/config/criteria/1/evaluation/jsonata:predicate-input",
+      "kind": "predicate-input",
+      "nodeId": "done",
+      "oldValue": "true",
+      "path": "/nodes/2/config/criteria/1/evaluation/jsonata",
+      "proposedValue": "true",
+      "reason": "Expression predicates retain threadView semantics; bind lastOutput to the proven work output before inserted decisions overwrite it. Unproven/dynamic sources require review.",
+      "status": "automatic",
+    },
+    {
+      "hash": "7435852429c7663adf9636b7875de5de360c87b74a2dd5d1dfa9fc2574b57450",
+      "id": "/nodes/2/config:exit-policy",
+      "kind": "exit-policy",
+      "nodeId": "done",
+      "oldValue": {
+        "criteria": [
+          {
+            "outcome": "exhausted",
+            "seconds": 20,
+            "when": "max-duration",
+          },
+          {
+            "answer": {
+              "type": "noul",
+            },
+            "evaluation": {
+              "jsonata": "true",
+              "kind": "expression",
+            },
+            "match": {
+              "type": "noul",
+              "value": true,
+            },
+            "outcome": "success",
+            "when": "predicate",
+          },
+        ],
+        "default": "loop-back",
+        "loopBack": {
+          "targetNodeId": "work",
+        },
+        "return": {
+          "channels": [
+            {
+              "kind": "caller",
+            },
+          ],
+          "mapping": "lastOutput.value",
+        },
+      },
+      "path": "/nodes/2/config",
+      "proposedValue": {
+        "edges": [
+          {
+            "from": {
+              "node": "done",
+              "port": "limit-reached",
+            },
+            "id": "done-limit-reached",
+            "to": {
+              "node": "done-exhausted",
+              "port": "in",
+            },
+          },
+          {
+            "from": {
+              "node": "done",
+              "port": "matched",
+            },
+            "id": "done-matched",
+            "to": {
+              "node": "done-matched-1",
+              "port": "in",
+            },
+          },
+          {
+            "from": {
+              "node": "done",
+              "port": "unmatched",
+            },
+            "id": "done-unmatched",
+            "to": {
+              "node": "work",
+              "port": "in",
+            },
+          },
+        ],
+        "nodes": [
+          {
+            "config": {
+              "destinations": [
+                {
+                  "kind": "caller",
+                },
+              ],
+              "outcome": "exhausted",
+              "returns": "outputs.work.value",
+            },
+            "id": "done-exhausted",
+            "kind": "exit",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0,
+            },
+          },
+          {
+            "config": {
+              "destinations": [
+                {
+                  "kind": "caller",
+                },
+              ],
+              "outcome": "success",
+              "returns": "outputs.work.value",
+            },
+            "id": "done-matched-1",
+            "kind": "exit",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0,
+            },
+          },
+          {
+            "config": {
+              "jsonata": "($v := (true); $type($v) = "boolean" ? ($v ? "matched" : "unmatched") : $error("Expected a boolean"))",
+              "kind": "expression",
+              "maxPasses": 5,
+              "maxRunTimeSeconds": 20,
+              "routes": [
+                {
+                  "id": "matched",
+                  "label": "Matched",
+                },
+                {
+                  "id": "unmatched",
+                  "label": "Unmatched",
+                  "repeat": true,
+                },
+              ],
+            },
+            "id": "done",
+            "kind": "decision",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0,
+            },
+          },
+        ],
+      },
+      "reason": "Review terminal outcomes, captures, return mapping, ordered-criterion timing and independent gate budgets. Gate limits run after evaluation and only on repeat; no history/replay entry is approved by this definition rule.",
+      "status": "pending",
+    },
+  ],
+  "value": {
+    "edges": [
+      {
+        "from": {
+          "node": "start",
+          "port": "out",
+        },
+        "id": "start-work",
+        "to": {
+          "node": "work",
+          "port": "in",
+        },
+      },
+      {
+        "from": {
+          "node": "work",
+          "port": "out",
+        },
+        "id": "work-done",
+        "to": {
+          "node": "done",
+          "port": "in",
+        },
+      },
+      {
+        "from": {
+          "node": "done",
+          "port": "limit-reached",
+        },
+        "id": "done-limit-reached",
+        "to": {
+          "node": "done-exhausted",
+          "port": "in",
+        },
+      },
+      {
+        "from": {
+          "node": "done",
+          "port": "matched",
+        },
+        "id": "done-matched",
+        "to": {
+          "node": "done-matched-1",
+          "port": "in",
+        },
+      },
+      {
+        "from": {
+          "node": "done",
+          "port": "unmatched",
+        },
+        "id": "done-unmatched",
+        "to": {
+          "node": "work",
+          "port": "in",
+        },
+      },
+    ],
+    "name": "Conversion fixture",
+    "nodes": [
+      {
+        "config": {
+          "exposeTo": [
+            "ui",
+            "api",
+            "mcp",
+          ],
+          "subtype": "manual",
+        },
+        "id": "start",
+        "kind": "trigger",
+        "label": "Start",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+      {
+        "config": {
+          "mode": "duration",
+          "onTimeout": "continue",
+          "seconds": 1,
+        },
+        "id": "work",
+        "kind": "wait",
+        "label": "Work",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+      {
+        "config": {
+          "destinations": [
+            {
+              "kind": "caller",
+            },
+          ],
+          "outcome": "exhausted",
+          "returns": "outputs.work.value",
+        },
+        "id": "done-exhausted",
+        "kind": "exit",
+        "label": "Done",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+      {
+        "config": {
+          "destinations": [
+            {
+              "kind": "caller",
+            },
+          ],
+          "outcome": "success",
+          "returns": "outputs.work.value",
+        },
+        "id": "done-matched-1",
+        "kind": "exit",
+        "label": "Done",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+      {
+        "config": {
+          "jsonata": "($v := (true); $type($v) = "boolean" ? ($v ? "matched" : "unmatched") : $error("Expected a boolean"))",
+          "kind": "expression",
+          "maxPasses": 5,
+          "maxRunTimeSeconds": 20,
+          "routes": [
+            {
+              "id": "matched",
+              "label": "Matched",
+            },
+            {
+              "id": "unmatched",
+              "label": "Unmatched",
+              "repeat": true,
+            },
+          ],
+        },
+        "id": "done",
+        "kind": "decision",
+        "label": "Done",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+    ],
+    "schemaVersion": 4,
+    "settings": {
+      "defaults": {
+        "byHarness": {},
+      },
+      "maxNodeVisits": 5,
+      "subloopDepthLimit": 8,
+      "workingDirectory": {
+        "kind": "temp",
+      },
+    },
+    "variables": {},
+  },
+}
+`;
+
+exports[
+  `E2 review regressions > F4 names max-iterations changing from before a predicate to after evaluation 1`
+] = `
+{
+  "reviews": [
+    {
+      "hash": "3f8fe1b841a9af9b82e379a442dd50439fd684ba1388fa2dc1370d4f5f8b8d28",
+      "id": "/nodes/2/config/return/mapping:exit-return",
+      "kind": "exit-return",
+      "nodeId": "done",
+      "oldValue": "lastOutput.value",
+      "path": "/nodes/2/config/return/mapping",
+      "proposedValue": "outputs.work.value",
+      "reason": "Bind lastOutput to the unique incoming output producer before new decisions overwrite it.",
+      "status": "automatic",
+    },
+    {
+      "hash": "e479aad881f695a35f1efacd5bf2b66ab0290709bd82d92e38e4040771ed2c8c",
+      "id": "/nodes/2/config/criteria/0:ordered-limit",
+      "kind": "ordered-limit",
+      "nodeId": "done",
+      "oldValue": {
+        "outcome": "exhausted",
+        "value": 3,
+        "when": "max-iterations",
+      },
+      "path": "/nodes/2/config/criteria/0",
+      "proposedValue": {
+        "criterion": {
+          "outcome": "exhausted",
+          "value": 3,
+          "when": "max-iterations",
+        },
+        "timing": "after-evaluation-on-repeat",
+      },
+      "reason": "This V3 limit preceded a predicate and could exhaust before that predicate ran. Generated gates evaluate first, then check limits only on a repeat. Review this order change or preserve it in an authored graph.",
+      "status": "pending",
+    },
+    {
+      "hash": "7042f3c3e4cc5b34fc45dffd246a363d58e343dd38ac799b7d9a406f7c34cddf",
+      "id": "/nodes/2/config/criteria/1/evaluation/jsonata:predicate-input",
+      "kind": "predicate-input",
+      "nodeId": "done",
+      "oldValue": "true",
+      "path": "/nodes/2/config/criteria/1/evaluation/jsonata",
+      "proposedValue": "true",
+      "reason": "Expression predicates retain threadView semantics; bind lastOutput to the proven work output before inserted decisions overwrite it. Unproven/dynamic sources require review.",
+      "status": "automatic",
+    },
+    {
+      "hash": "409dcb7e155f76f2ca182d46ed883b6abc51cf89bfa46a4282acc0d5102b850c",
+      "id": "/nodes/2/config:exit-policy",
+      "kind": "exit-policy",
+      "nodeId": "done",
+      "oldValue": {
+        "criteria": [
+          {
+            "outcome": "exhausted",
+            "value": 3,
+            "when": "max-iterations",
+          },
+          {
+            "answer": {
+              "type": "noul",
+            },
+            "evaluation": {
+              "jsonata": "true",
+              "kind": "expression",
+            },
+            "match": {
+              "type": "noul",
+              "value": true,
+            },
+            "outcome": "success",
+            "when": "predicate",
+          },
+        ],
+        "default": "loop-back",
+        "loopBack": {
+          "targetNodeId": "work",
+        },
+        "return": {
+          "channels": [
+            {
+              "kind": "caller",
+            },
+          ],
+          "mapping": "lastOutput.value",
+        },
+      },
+      "path": "/nodes/2/config",
+      "proposedValue": {
+        "edges": [
+          {
+            "from": {
+              "node": "done",
+              "port": "limit-reached",
+            },
+            "id": "done-limit-reached",
+            "to": {
+              "node": "done-exhausted",
+              "port": "in",
+            },
+          },
+          {
+            "from": {
+              "node": "done",
+              "port": "matched",
+            },
+            "id": "done-matched",
+            "to": {
+              "node": "done-matched-1",
+              "port": "in",
+            },
+          },
+          {
+            "from": {
+              "node": "done",
+              "port": "unmatched",
+            },
+            "id": "done-unmatched",
+            "to": {
+              "node": "work",
+              "port": "in",
+            },
+          },
+        ],
+        "nodes": [
+          {
+            "config": {
+              "destinations": [
+                {
+                  "kind": "caller",
+                },
+              ],
+              "outcome": "exhausted",
+              "returns": "outputs.work.value",
+            },
+            "id": "done-exhausted",
+            "kind": "exit",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0,
+            },
+          },
+          {
+            "config": {
+              "destinations": [
+                {
+                  "kind": "caller",
+                },
+              ],
+              "outcome": "success",
+              "returns": "outputs.work.value",
+            },
+            "id": "done-matched-1",
+            "kind": "exit",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0,
+            },
+          },
+          {
+            "config": {
+              "jsonata": "($v := (true); $type($v) = "boolean" ? ($v ? "matched" : "unmatched") : $error("Expected a boolean"))",
+              "kind": "expression",
+              "maxPasses": 3,
+              "routes": [
+                {
+                  "id": "matched",
+                  "label": "Matched",
+                },
+                {
+                  "id": "unmatched",
+                  "label": "Unmatched",
+                  "repeat": true,
+                },
+              ],
+            },
+            "id": "done",
+            "kind": "decision",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0,
+            },
+          },
+        ],
+      },
+      "reason": "Review terminal outcomes, captures, return mapping, ordered-criterion timing and independent gate budgets. Gate limits run after evaluation and only on repeat; no history/replay entry is approved by this definition rule.",
+      "status": "pending",
+    },
+  ],
+  "value": {
+    "edges": [
+      {
+        "from": {
+          "node": "start",
+          "port": "out",
+        },
+        "id": "start-work",
+        "to": {
+          "node": "work",
+          "port": "in",
+        },
+      },
+      {
+        "from": {
+          "node": "work",
+          "port": "out",
+        },
+        "id": "work-done",
+        "to": {
+          "node": "done",
+          "port": "in",
+        },
+      },
+      {
+        "from": {
+          "node": "done",
+          "port": "limit-reached",
+        },
+        "id": "done-limit-reached",
+        "to": {
+          "node": "done-exhausted",
+          "port": "in",
+        },
+      },
+      {
+        "from": {
+          "node": "done",
+          "port": "matched",
+        },
+        "id": "done-matched",
+        "to": {
+          "node": "done-matched-1",
+          "port": "in",
+        },
+      },
+      {
+        "from": {
+          "node": "done",
+          "port": "unmatched",
+        },
+        "id": "done-unmatched",
+        "to": {
+          "node": "work",
+          "port": "in",
+        },
+      },
+    ],
+    "name": "Conversion fixture",
+    "nodes": [
+      {
+        "config": {
+          "exposeTo": [
+            "ui",
+            "api",
+            "mcp",
+          ],
+          "subtype": "manual",
+        },
+        "id": "start",
+        "kind": "trigger",
+        "label": "Start",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+      {
+        "config": {
+          "mode": "duration",
+          "onTimeout": "continue",
+          "seconds": 1,
+        },
+        "id": "work",
+        "kind": "wait",
+        "label": "Work",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+      {
+        "config": {
+          "destinations": [
+            {
+              "kind": "caller",
+            },
+          ],
+          "outcome": "exhausted",
+          "returns": "outputs.work.value",
+        },
+        "id": "done-exhausted",
+        "kind": "exit",
+        "label": "Done",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+      {
+        "config": {
+          "destinations": [
+            {
+              "kind": "caller",
+            },
+          ],
+          "outcome": "success",
+          "returns": "outputs.work.value",
+        },
+        "id": "done-matched-1",
+        "kind": "exit",
+        "label": "Done",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+      {
+        "config": {
+          "jsonata": "($v := (true); $type($v) = "boolean" ? ($v ? "matched" : "unmatched") : $error("Expected a boolean"))",
+          "kind": "expression",
+          "maxPasses": 3,
+          "routes": [
+            {
+              "id": "matched",
+              "label": "Matched",
+            },
+            {
+              "id": "unmatched",
+              "label": "Unmatched",
+              "repeat": true,
+            },
+          ],
+        },
+        "id": "done",
+        "kind": "decision",
+        "label": "Done",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+    ],
+    "schemaVersion": 4,
+    "settings": {
+      "defaults": {
+        "byHarness": {},
+      },
+      "maxNodeVisits": 5,
+      "subloopDepthLimit": 8,
+      "workingDirectory": {
+        "kind": "temp",
+      },
+    },
+    "variables": {},
+  },
+}
+`;
+
+exports[
+  `E2 review regressions > F5 reports ignored continuation with a conditional terminal exit 1`
+] = `
+{
+  "reviews": [
+    {
+      "hash": "2573d3e155c7b644747106a23e039c9b5e342f672cb29622826fc48d8e8aef57",
+      "id": "/nodes/2/config/loopBack:ignored-loop-back",
+      "kind": "ignored-loop-back",
+      "nodeId": "done",
+      "oldValue": {
+        "edges": [
+          {
+            "from": {
+              "node": "done",
+              "port": "loopBack",
+            },
+            "id": "ignored-continuation",
+            "to": {
+              "node": "work",
+              "port": "in",
+            },
+          },
+        ],
+        "loopBack": {
+          "targetNodeId": "work",
+        },
+      },
+      "path": "/nodes/2/config/loopBack",
+      "proposedValue": null,
+      "reason": "Review removal of ignored continuation configuration.",
+      "status": "pending",
+    },
+    {
+      "hash": "142c0f0f4058aae88816bcab6012782c3988574f54e4151daa8ca59d6e5a09a1",
+      "id": "/nodes/2/config/criteria/0/evaluation/jsonata:predicate-input",
+      "kind": "predicate-input",
+      "nodeId": "done",
+      "oldValue": "trigger.payload.ready = true",
+      "path": "/nodes/2/config/criteria/0/evaluation/jsonata",
+      "proposedValue": "trigger.payload.ready = true",
+      "reason": "Expression predicates retain threadView semantics; bind lastOutput to the proven work output before inserted decisions overwrite it. Unproven/dynamic sources require review.",
+      "status": "automatic",
+    },
+    {
+      "hash": "66a499cabf0e71f69422df33a807bb1bd95b2b4dd44932d2999276bce89beef9",
+      "id": "/nodes/2/config:exit-policy",
+      "kind": "exit-policy",
+      "nodeId": "done",
+      "oldValue": {
+        "criteria": [
+          {
+            "answer": {
+              "type": "noul",
+            },
+            "evaluation": {
+              "jsonata": "trigger.payload.ready = true",
+              "kind": "expression",
+            },
+            "match": {
+              "type": "noul",
+              "value": true,
+            },
+            "outcome": "success",
+            "when": "predicate",
+          },
+        ],
+        "default": "success",
+        "loopBack": {
+          "targetNodeId": "work",
+        },
+        "return": {
+          "channels": [
+            {
+              "kind": "caller",
+            },
+          ],
+          "mapping": "none",
+        },
+      },
+      "path": "/nodes/2/config",
+      "proposedValue": {
+        "edges": [
+          {
+            "from": {
+              "node": "done",
+              "port": "matched",
+            },
+            "id": "done-matched",
+            "to": {
+              "node": "done-matched-1",
+              "port": "in",
+            },
+          },
+          {
+            "from": {
+              "node": "done",
+              "port": "unmatched",
+            },
+            "id": "done-unmatched",
+            "to": {
+              "node": "done-complete",
+              "port": "in",
+            },
+          },
+        ],
+        "nodes": [
+          {
+            "config": {
+              "destinations": [
+                {
+                  "kind": "caller",
+                },
+              ],
+              "outcome": "success",
+              "returns": "none",
+            },
+            "id": "done-complete",
+            "kind": "exit",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0,
+            },
+          },
+          {
+            "config": {
+              "destinations": [
+                {
+                  "kind": "caller",
+                },
+              ],
+              "outcome": "success",
+              "returns": "none",
+            },
+            "id": "done-matched-1",
+            "kind": "exit",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0,
+            },
+          },
+          {
+            "config": {
+              "jsonata": "($v := (trigger.payload.ready = true); $type($v) = "boolean" ? ($v ? "matched" : "unmatched") : $error("Expected a boolean"))",
+              "kind": "expression",
+              "routes": [
+                {
+                  "id": "matched",
+                  "label": "Matched",
+                },
+                {
+                  "id": "unmatched",
+                  "label": "Unmatched",
+                },
+              ],
+            },
+            "id": "done",
+            "kind": "decision",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0,
+            },
+          },
+        ],
+      },
+      "reason": "Review terminal outcomes, captures, return mapping, ordered-criterion timing and independent gate budgets. Gate limits run after evaluation and only on repeat; no history/replay entry is approved by this definition rule.",
+      "status": "pending",
+    },
+  ],
+  "value": {
+    "edges": [
+      {
+        "from": {
+          "node": "start",
+          "port": "out",
+        },
+        "id": "start-work",
+        "to": {
+          "node": "work",
+          "port": "in",
+        },
+      },
+      {
+        "from": {
+          "node": "work",
+          "port": "out",
+        },
+        "id": "work-done",
+        "to": {
+          "node": "done",
+          "port": "in",
+        },
+      },
+      {
+        "from": {
+          "node": "done",
+          "port": "matched",
+        },
+        "id": "done-matched",
+        "to": {
+          "node": "done-matched-1",
+          "port": "in",
+        },
+      },
+      {
+        "from": {
+          "node": "done",
+          "port": "unmatched",
+        },
+        "id": "done-unmatched",
+        "to": {
+          "node": "done-complete",
+          "port": "in",
+        },
+      },
+    ],
+    "name": "Conversion fixture",
+    "nodes": [
+      {
+        "config": {
+          "exposeTo": [
+            "ui",
+            "api",
+            "mcp",
+          ],
+          "subtype": "manual",
+        },
+        "id": "start",
+        "kind": "trigger",
+        "label": "Start",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+      {
+        "config": {
+          "mode": "duration",
+          "onTimeout": "continue",
+          "seconds": 1,
+        },
+        "id": "work",
+        "kind": "wait",
+        "label": "Work",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+      {
+        "config": {
+          "destinations": [
+            {
+              "kind": "caller",
+            },
+          ],
+          "outcome": "success",
+          "returns": "none",
+        },
+        "id": "done-complete",
+        "kind": "exit",
+        "label": "Done",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+      {
+        "config": {
+          "destinations": [
+            {
+              "kind": "caller",
+            },
+          ],
+          "outcome": "success",
+          "returns": "none",
+        },
+        "id": "done-matched-1",
+        "kind": "exit",
+        "label": "Done",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+      {
+        "config": {
+          "jsonata": "($v := (trigger.payload.ready = true); $type($v) = "boolean" ? ($v ? "matched" : "unmatched") : $error("Expected a boolean"))",
+          "kind": "expression",
+          "routes": [
+            {
+              "id": "matched",
+              "label": "Matched",
+            },
+            {
+              "id": "unmatched",
+              "label": "Unmatched",
+            },
+          ],
+        },
+        "id": "done",
+        "kind": "decision",
+        "label": "Done",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+    ],
+    "schemaVersion": 4,
+    "settings": {
+      "defaults": {
+        "byHarness": {},
+      },
+      "maxNodeVisits": 5,
+      "subloopDepthLimit": 8,
+      "workingDirectory": {
+        "kind": "temp",
+      },
+    },
+    "variables": {},
+  },
+}
+`;
+
+exports[`E2 review regressions > F5 reports ignored continuation with a constant terminal exit 1`] =
+  `
+{
+  "reviews": [
+    {
+      "hash": "324dc3a7c416af71eb5049cb3d620e11d3cc13aadbc593cc695760e7cd6aa1dc",
+      "id": "/nodes/2/config/loopBack:ignored-loop-back",
+      "kind": "ignored-loop-back",
+      "nodeId": "done",
+      "oldValue": {
+        "edges": [
+          {
+            "from": {
+              "node": "done",
+              "port": "loopBack",
+            },
+            "id": "ignored-continuation",
+            "to": {
+              "node": "work",
+              "port": "in",
+            },
+          },
+        ],
+        "loopBack": {
+          "targetNodeId": "work",
+        },
+      },
+      "path": "/nodes/2/config/loopBack",
+      "proposedValue": null,
+      "reason": "Review removal of ignored continuation configuration.",
+      "status": "pending",
+    },
+    {
+      "hash": "1f22741afa22bd16beb79d0ee73a953dca50e15ead30c6efcb5b5e0e491077e7",
+      "id": "/nodes/2/config:constant-terminal",
+      "kind": "constant-terminal",
+      "nodeId": "done",
+      "oldValue": {
+        "criteria": [
+          {
+            "answer": {
+              "type": "noul",
+            },
+            "evaluation": {
+              "jsonata": "true",
+              "kind": "expression",
+            },
+            "match": {
+              "type": "noul",
+              "value": true,
+            },
+            "outcome": "success",
+            "when": "predicate",
+          },
+        ],
+        "default": "success",
+        "loopBack": {
+          "targetNodeId": "work",
+        },
+        "return": {
+          "channels": [
+            {
+              "kind": "caller",
+            },
+          ],
+          "mapping": "none",
+        },
+      },
+      "path": "/nodes/2/config",
+      "proposedValue": {
+        "destinations": [
+          {
+            "kind": "caller",
+          },
+        ],
+        "outcome": "success",
+        "returns": "none",
+      },
+      "reason": "A literal boolean match always terminates with this outcome.",
+      "status": "automatic",
+    },
+  ],
+  "value": {
+    "edges": [
+      {
+        "from": {
+          "node": "start",
+          "port": "out",
+        },
+        "id": "start-work",
+        "to": {
+          "node": "work",
+          "port": "in",
+        },
+      },
+      {
+        "from": {
+          "node": "work",
+          "port": "out",
+        },
+        "id": "work-done",
+        "to": {
+          "node": "done",
+          "port": "in",
+        },
+      },
+    ],
+    "name": "Conversion fixture",
+    "nodes": [
+      {
+        "config": {
+          "exposeTo": [
+            "ui",
+            "api",
+            "mcp",
+          ],
+          "subtype": "manual",
+        },
+        "id": "start",
+        "kind": "trigger",
+        "label": "Start",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+      {
+        "config": {
+          "mode": "duration",
+          "onTimeout": "continue",
+          "seconds": 1,
+        },
+        "id": "work",
+        "kind": "wait",
+        "label": "Work",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+      {
+        "config": {
+          "destinations": [
+            {
+              "kind": "caller",
+            },
+          ],
+          "outcome": "success",
+          "returns": "none",
+        },
+        "id": "done",
+        "kind": "exit",
+        "label": "Done",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+    ],
+    "schemaVersion": 4,
+    "settings": {
+      "defaults": {
+        "byHarness": {},
+      },
+      "maxNodeVisits": 5,
+      "subloopDepthLimit": 8,
+      "workingDirectory": {
+        "kind": "temp",
+      },
+    },
+    "variables": {},
+  },
+}
+`;
+
+exports[`E2 review regressions > F5 reports ignored continuation with a none terminal exit 1`] = `
+{
+  "reviews": [
+    {
+      "hash": "f1ee31002afa0beebc48b45d1a563b9bfe7905cdd52a8d6ad4c874450929fbb0",
+      "id": "/nodes/2/config/loopBack:ignored-loop-back",
+      "kind": "ignored-loop-back",
+      "nodeId": "done",
+      "oldValue": {
+        "edges": [
+          {
+            "from": {
+              "node": "done",
+              "port": "loopBack",
+            },
+            "id": "ignored-continuation",
+            "to": {
+              "node": "work",
+              "port": "in",
+            },
+          },
+        ],
+        "loopBack": {
+          "targetNodeId": "work",
+        },
+      },
+      "path": "/nodes/2/config/loopBack",
+      "proposedValue": null,
+      "reason": "Review removal of ignored continuation configuration.",
+      "status": "pending",
+    },
+  ],
+  "value": {
+    "edges": [
+      {
+        "from": {
+          "node": "start",
+          "port": "out",
+        },
+        "id": "start-work",
+        "to": {
+          "node": "work",
+          "port": "in",
+        },
+      },
+      {
+        "from": {
+          "node": "work",
+          "port": "out",
+        },
+        "id": "work-done",
+        "to": {
+          "node": "done",
+          "port": "in",
+        },
+      },
+    ],
+    "name": "Conversion fixture",
+    "nodes": [
+      {
+        "config": {
+          "exposeTo": [
+            "ui",
+            "api",
+            "mcp",
+          ],
+          "subtype": "manual",
+        },
+        "id": "start",
+        "kind": "trigger",
+        "label": "Start",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+      {
+        "config": {
+          "mode": "duration",
+          "onTimeout": "continue",
+          "seconds": 1,
+        },
+        "id": "work",
+        "kind": "wait",
+        "label": "Work",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+      {
+        "config": {
+          "destinations": [
+            {
+              "kind": "caller",
+            },
+          ],
+          "outcome": "success",
+          "returns": "none",
+        },
+        "id": "done",
+        "kind": "exit",
+        "label": "Done",
+        "ui": {
+          "x": 0,
+          "y": 0,
+        },
+      },
+    ],
+    "schemaVersion": 4,
+    "settings": {
+      "defaults": {
+        "byHarness": {},
+      },
+      "maxNodeVisits": 5,
+      "subloopDepthLimit": 8,
+      "workingDirectory": {
+        "kind": "temp",
+      },
+    },
+    "variables": {},
+  },
+}
+`;
+
+exports[
+  `definition conversion golden rules > converts the frozen shipped implementation draft exits to E1 behavior 1`
+] = `
 {
   "reviews": [
     {
@@ -1176,7 +5219,9 @@ Inspect the resulting files or proposed patch and any supplied evidence. Return 
 }
 `;
 
-exports[`definition conversion golden rules > converts the frozen shipped qa draft exits to E1 behavior 1`] = `
+exports[
+  `definition conversion golden rules > converts the frozen shipped qa draft exits to E1 behavior 1`
+] = `
 {
   "reviews": [
     {
@@ -2442,7 +6487,9 @@ Challenge unsupported conclusions, missing evidence, and invalid test reasoning.
 }
 `;
 
-exports[`definition conversion golden rules > converts the frozen shipped review draft exits to E1 behavior 1`] = `
+exports[
+  `definition conversion golden rules > converts the frozen shipped review draft exits to E1 behavior 1`
+] = `
 {
   "reviews": [
     {
@@ -3447,7 +7494,9 @@ Address only these actionable findings. Edit accessible source in the configured
 }
 `;
 
-exports[`definition conversion golden rules > converts the frozen shipped starter draft exits to E1 behavior 1`] = `
+exports[
+  `definition conversion golden rules > converts the frozen shipped starter draft exits to E1 behavior 1`
+] = `
 {
   "reviews": [
     {
@@ -3612,7 +7661,9 @@ Use only the supplied context and accessible working directory. Missing reposito
 }
 `;
 
-exports[`definition conversion golden rules > matches the LLM Choice confidence loop-back golden and resolves all reviews 1`] = `
+exports[
+  `definition conversion golden rules > matches the LLM Choice confidence loop-back golden and resolves all reviews 1`
+] = `
 {
   "reviews": [
     {
@@ -4233,7 +8284,9 @@ no (No): Needs work",
 }
 `;
 
-exports[`definition conversion golden rules > matches the LLM false confidence zero loop-back golden and resolves all reviews 1`] = `
+exports[
+  `definition conversion golden rules > matches the LLM false confidence zero loop-back golden and resolves all reviews 1`
+] = `
 {
   "reviews": [
     {
@@ -4838,7 +8891,9 @@ false (No): Needs work",
 }
 `;
 
-exports[`definition conversion golden rules > matches the LLM true loop-back golden and resolves all reviews 1`] = `
+exports[
+  `definition conversion golden rules > matches the LLM true loop-back golden and resolves all reviews 1`
+] = `
 {
   "reviews": [
     {
@@ -5430,7 +9485,9 @@ false (No): Needs work",
 }
 `;
 
-exports[`definition conversion golden rules > matches the ceiling loop-back golden and resolves all reviews 1`] = `
+exports[
+  `definition conversion golden rules > matches the ceiling loop-back golden and resolves all reviews 1`
+] = `
 {
   "reviews": [
     {
@@ -5744,7 +9801,9 @@ exports[`definition conversion golden rules > matches the ceiling loop-back gold
 }
 `;
 
-exports[`definition conversion golden rules > matches the classifier Choice loop-back golden and resolves all reviews 1`] = `
+exports[
+  `definition conversion golden rules > matches the classifier Choice loop-back golden and resolves all reviews 1`
+] = `
 {
   "reviews": [
     {
@@ -6327,7 +10386,9 @@ exports[`definition conversion golden rules > matches the classifier Choice loop
 }
 `;
 
-exports[`definition conversion golden rules > matches the classifier Noul false loop-back golden and resolves all reviews 1`] = `
+exports[
+  `definition conversion golden rules > matches the classifier Noul false loop-back golden and resolves all reviews 1`
+] = `
 {
   "reviews": [
     {
@@ -6895,7 +10956,9 @@ exports[`definition conversion golden rules > matches the classifier Noul false 
 }
 `;
 
-exports[`definition conversion golden rules > matches the classifier Score loop-back golden and resolves all reviews 1`] = `
+exports[
+  `definition conversion golden rules > matches the classifier Score loop-back golden and resolves all reviews 1`
+] = `
 {
   "reviews": [
     {
@@ -7438,7 +11501,8 @@ exports[`definition conversion golden rules > matches the classifier Score loop-
 }
 `;
 
-exports[`definition conversion golden rules > matches the complete Choice LLM decision golden 1`] = `
+exports[`definition conversion golden rules > matches the complete Choice LLM decision golden 1`] =
+  `
 {
   "reviews": [
     {
@@ -7639,7 +11703,9 @@ no (No): Needs work",
 }
 `;
 
-exports[`definition conversion golden rules > matches the complete Choice classifier decision golden 1`] = `
+exports[
+  `definition conversion golden rules > matches the complete Choice classifier decision golden 1`
+] = `
 {
   "reviews": [
     {
@@ -7831,7 +11897,9 @@ exports[`definition conversion golden rules > matches the complete Choice classi
 }
 `;
 
-exports[`definition conversion golden rules > matches the complete Choice expression decision golden 1`] = `
+exports[
+  `definition conversion golden rules > matches the complete Choice expression decision golden 1`
+] = `
 {
   "reviews": [
     {
@@ -8182,7 +12250,9 @@ no (No): Needs work",
 }
 `;
 
-exports[`definition conversion golden rules > matches the complete Noul classifier decision golden 1`] = `
+exports[
+  `definition conversion golden rules > matches the complete Noul classifier decision golden 1`
+] = `
 {
   "reviews": [
     {
@@ -8371,7 +12441,9 @@ exports[`definition conversion golden rules > matches the complete Noul classifi
 }
 `;
 
-exports[`definition conversion golden rules > matches the complete Noul expression decision golden 1`] = `
+exports[
+  `definition conversion golden rules > matches the complete Noul expression decision golden 1`
+] = `
 {
   "reviews": [
     {
@@ -8523,7 +12595,9 @@ exports[`definition conversion golden rules > matches the complete Noul expressi
 }
 `;
 
-exports[`definition conversion golden rules > matches the complete Score classifier decision golden 1`] = `
+exports[
+  `definition conversion golden rules > matches the complete Score classifier decision golden 1`
+] = `
 {
   "reviews": [
     {
@@ -8704,7 +12778,9 @@ exports[`definition conversion golden rules > matches the complete Score classif
 }
 `;
 
-exports[`definition conversion golden rules > matches the duration loop-back golden and resolves all reviews 1`] = `
+exports[
+  `definition conversion golden rules > matches the duration loop-back golden and resolves all reviews 1`
+] = `
 {
   "reviews": [
     {
@@ -9020,7 +13096,9 @@ exports[`definition conversion golden rules > matches the duration loop-back gol
 }
 `;
 
-exports[`definition conversion golden rules > matches the expression false loop-back golden and resolves all reviews 1`] = `
+exports[
+  `definition conversion golden rules > matches the expression false loop-back golden and resolves all reviews 1`
+] = `
 {
   "reviews": [
     {
@@ -9355,7 +13433,9 @@ exports[`definition conversion golden rules > matches the expression false loop-
 }
 `;
 
-exports[`definition conversion golden rules > matches the expression true loop-back golden and resolves all reviews 1`] = `
+exports[
+  `definition conversion golden rules > matches the expression true loop-back golden and resolves all reviews 1`
+] = `
 {
   "reviews": [
     {
@@ -9690,11 +13770,13 @@ exports[`definition conversion golden rules > matches the expression true loop-b
 }
 `;
 
-exports[`definition conversion golden rules > matches the ordered mixed predicates loop-back golden and resolves all reviews 1`] = `
+exports[
+  `definition conversion golden rules > matches the ordered mixed predicates loop-back golden and resolves all reviews 1`
+] = `
 {
   "reviews": [
     {
-      "hash": "e76ccb3efea7c9163cf689551b0bb68b7a828f00808fb93e99d6534d31068cf1",
+      "hash": "be28577edeca6373d9155b2af161297f21a4cd149ec5f0de417bde1cabff499a",
       "id": "/nodes/2/config/return/mapping:exit-return",
       "kind": "exit-return",
       "nodeId": "done",
@@ -9705,19 +13787,41 @@ exports[`definition conversion golden rules > matches the ordered mixed predicat
       "status": "automatic",
     },
     {
-      "hash": "69e39383ff37cbda98762a480b3e7bd2cfdc901e8bc576c2be8da445ff692da0",
-      "id": "/nodes/2/config/criteria/0/evaluation/jsonata:predicate-input",
+      "hash": "6d449167131fe404e6b50a34be00000a796869132800325bd77c26ee62b66f23",
+      "id": "/nodes/2/config/criteria/0:ordered-limit",
+      "kind": "ordered-limit",
+      "nodeId": "done",
+      "oldValue": {
+        "outcome": "exhausted",
+        "seconds": 30,
+        "when": "max-duration",
+      },
+      "path": "/nodes/2/config/criteria/0",
+      "proposedValue": {
+        "criterion": {
+          "outcome": "exhausted",
+          "seconds": 30,
+          "when": "max-duration",
+        },
+        "timing": "after-evaluation-on-repeat",
+      },
+      "reason": "This V3 limit preceded a predicate and could exhaust before that predicate ran. Generated gates evaluate first, then check limits only on a repeat. Review this order change or preserve it in an authored graph.",
+      "status": "pending",
+    },
+    {
+      "hash": "561a7bf45fad8f3c9cd732d4c81a21f7722e576e57dcdb55a8da051715247e90",
+      "id": "/nodes/2/config/criteria/1/evaluation/jsonata:predicate-input",
       "kind": "predicate-input",
       "nodeId": "done",
       "oldValue": "false",
-      "path": "/nodes/2/config/criteria/0/evaluation/jsonata",
+      "path": "/nodes/2/config/criteria/1/evaluation/jsonata",
       "proposedValue": "false",
       "reason": "Expression predicates retain threadView semantics; bind lastOutput to the proven work output before inserted decisions overwrite it. Unproven/dynamic sources require review.",
       "status": "automatic",
     },
     {
-      "hash": "b89475d2e2a10e90366b4c0c2b12f18462b5a8cdc286e555527047a758d4650d",
-      "id": "/nodes/2/config/criteria/1:classifier-decision",
+      "hash": "6250a054e18126401a191a2ff94980f7171976110365583c0f5261278cbb76c6",
+      "id": "/nodes/2/config/criteria/2:classifier-decision",
       "kind": "classifier-decision",
       "nodeId": "done",
       "oldValue": {
@@ -9748,7 +13852,7 @@ exports[`definition conversion golden rules > matches the ordered mixed predicat
         },
         "recordAlternatives": true,
       },
-      "path": "/nodes/2/config/criteria/1",
+      "path": "/nodes/2/config/criteria/2",
       "proposedValue": {
         "answer": {
           "options": [
@@ -9779,8 +13883,8 @@ exports[`definition conversion golden rules > matches the ordered mixed predicat
       "status": "automatic",
     },
     {
-      "hash": "31bd593e0a2181c5ed5d16e42756426d6afdc6d46d20e70fa90f6e8006db570b",
-      "id": "/nodes/2/config/criteria/1:provider-predicate",
+      "hash": "8742ee1ef7d1936c363395a7a9a10ef771f0fdd1a992519aa0c532433a25cb5a",
+      "id": "/nodes/2/config/criteria/2:provider-predicate",
       "kind": "provider-predicate",
       "nodeId": "done",
       "oldValue": {
@@ -9814,7 +13918,7 @@ exports[`definition conversion golden rules > matches the ordered mixed predicat
         "outcome": "success",
         "when": "predicate",
       },
-      "path": "/nodes/2/config/criteria/1",
+      "path": "/nodes/2/config/criteria/2",
       "proposedValue": {
         "answer": {
           "options": [
@@ -9845,12 +13949,17 @@ exports[`definition conversion golden rules > matches the ordered mixed predicat
       "status": "pending",
     },
     {
-      "hash": "c0440ef119785c23963ad58fa8d18b271940e54389671e53f5c0280393251347",
+      "hash": "44aa8ebbd31e7c7b288bf7a75c25de4bc0ea59265d59ef482fb1ba9af6956e1c",
       "id": "/nodes/2/config:exit-policy",
       "kind": "exit-policy",
       "nodeId": "done",
       "oldValue": {
         "criteria": [
+          {
+            "outcome": "exhausted",
+            "seconds": 30,
+            "when": "max-duration",
+          },
           {
             "answer": {
               "type": "noul",
@@ -9896,11 +14005,6 @@ exports[`definition conversion golden rules > matches the ordered mixed predicat
             },
             "outcome": "success",
             "when": "predicate",
-          },
-          {
-            "outcome": "exhausted",
-            "seconds": 30,
-            "when": "max-duration",
           },
           {
             "outcome": "exhausted",

@@ -10,6 +10,7 @@ import {
 } from '@graphgoblin/contracts';
 import { validateLoop } from '../graph.js';
 import { evaluateExpression } from '../expression.js';
+import { renderTemplate } from '../template.js';
 import {
   convertDefinitionV3ToV4,
   booleanRouteExpression,
@@ -228,9 +229,9 @@ describe('definition conversion golden rules', () => {
     [
       'ordered mixed predicates',
       [
+        { when: 'max-duration', seconds: 30 },
         predicate({ kind: 'expression', jsonata: 'false' }),
         predicate(classifier, choice, { type: 'choice', optionIds: ['yes'] }),
-        { when: 'max-duration', seconds: 30 },
         { when: 'max-iterations', value: 2 },
       ],
     ],
@@ -305,6 +306,397 @@ describe('definition conversion golden rules', () => {
       for (const edge of source.edges)
         expect(result.value.edges.some((entry) => entry.id === edge.id)).toBe(true);
       expect(result.value.settings.maxNodeVisits).toBe(expected.settings.maxNodeVisits);
+      expect({ value: result.value, reviews: result.reviewItems }).toMatchSnapshot();
+    },
+  );
+});
+
+describe('E2 review regressions', () => {
+  function twoLoopBacks() {
+    const source = loop(
+      { ...back, return: { mapping: 'none' } },
+      {
+        answer: choice,
+        evaluation: { kind: 'expression', jsonata: 'run.iteration >= 3 ? "yes" : "no"' },
+      },
+    );
+    const oldExit = source.nodes[2]!;
+    source.nodes.push({ ...structuredClone(oldExit), id: 'again' });
+    source.edges.find((edge) => edge.from.port === 'no')!.to.node = 'again';
+    return source;
+  }
+
+  it('F1 automatically maps a sole gate expression, template and return to one-based passes', async () => {
+    const source = loop({
+      ...back,
+      criteria: [predicate({ kind: 'expression', jsonata: 'run.iteration >= 3' })],
+      return: { mapping: 'run.iteration' },
+    });
+    source.nodes[1] = {
+      ...source.nodes[1]!,
+      kind: 'wait',
+      config: {
+        mode: 'input',
+        prompt: 'Pass {{ run.iteration }}',
+        exposeTo: ['api'],
+        onTimeout: 'continue',
+      },
+    };
+    const result = candidate(await convertDefinitionV3ToV4(source));
+    const changes = result.reviewItems.filter((item) => item.kind === 'iteration-consumer');
+    expect(changes).toHaveLength(3);
+    expect(changes.every((item) => item.status === 'automatic')).toBe(true);
+    expect(changes.map((item) => item.oldValue)).toEqual(
+      expect.arrayContaining(['run.iteration >= 3', 'Pass {{ run.iteration }}', 'run.iteration']),
+    );
+    const gate = result.value.nodes.find((node) => node.id === 'done');
+    if (gate?.kind !== 'decision' || gate.config.kind !== 'expression')
+      throw new Error('missing expression gate');
+    expect(gate.config.maxPasses).toBe(5);
+    const work = result.value.nodes.find((node) => node.id === 'work');
+    if (work?.kind !== 'wait' || work.config.mode !== 'input') throw new Error('missing input');
+    for (const passes of [1, 3]) {
+      const view = { run: { iteration: 1 }, gates: { done: { passes } } };
+      expect(await evaluateExpression(gate.config.jsonata, view)).toBe(
+        passes >= 3 ? 'matched' : 'unmatched',
+      );
+      expect(await renderTemplate(work.config.prompt, view)).toBe('Pass ' + passes);
+      for (const node of result.value.nodes)
+        if (node.kind === 'exit')
+          expect(await evaluateExpression(node.config.returns, view)).toBe(passes);
+    }
+    expect({ value: result.value, reviews: result.reviewItems }).toMatchSnapshot();
+  });
+
+  it.each(['zero', 'two'] as const)(
+    'F1 requires an owner source resolution with %s loop-back exits',
+    async (count) => {
+      const source =
+        count === 'two'
+          ? twoLoopBacks()
+          : loop(
+              {},
+              {
+                answer: choice,
+                evaluation: { kind: 'expression', jsonata: 'run.iteration >= 3 ? "yes" : "no"' },
+              },
+            );
+      const result = candidate(await convertDefinitionV3ToV4(source));
+      const item = result.reviewItems.find(
+        (entry) => entry.kind === 'output-consumer' && entry.path.endsWith('/evaluation/jsonata'),
+      )!;
+      expect(item.status).toBe('pending');
+      expect(item.proposedValue).toBe(item.oldValue);
+      expect(result.reviewItems.some((entry) => entry.kind === 'iteration-consumer')).toBe(false);
+      const resolved = candidate(
+        await convertDefinitionV3ToV4(source, {
+          [item.id]: {
+            hash: item.hash,
+            action: 'replace',
+            value: '"yes"',
+            reason: 'Owner selected an explicit route policy.',
+          },
+        }),
+      );
+      expect(resolved.value.nodes.find((node) => node.id === 'work')?.config).toMatchObject({
+        jsonata: '"yes"',
+      });
+      expect({ value: result.value, reviews: result.reviewItems }).toMatchSnapshot();
+    },
+  );
+
+  it('F1 reviews counters even with one gate and does not partially rewrite a mixed read', async () => {
+    const source = loop({
+      ...back,
+      return: { mapping: 'run.iteration + counters.nodeVisits.work' },
+    });
+    const result = candidate(await convertDefinitionV3ToV4(source));
+    const item = result.reviewItems.find((entry) => entry.kind === 'output-consumer')!;
+    expect(item.status).toBe('pending');
+    expect(item.oldValue).toBe(item.proposedValue);
+    expect(result.reviewItems.filter((entry) => entry.id === item.id)).toHaveLength(1);
+    expect(consumerNeedsReview('counters', 'expression')).toBe(true);
+    expect(consumerNeedsReview('{{ counters.usage }}', 'template')).toBe(true);
+    expect({ value: result.value, reviews: result.reviewItems }).toMatchSnapshot();
+  });
+
+  it('F1 keeps other run fields and literal iteration text safe', async () => {
+    for (const field of ['id', 'loopId', 'versionId', 'parentRunId']) {
+      expect(consumerNeedsReview('run.' + field, 'expression')).toBe(false);
+      expect(consumerNeedsReview('{{ run.' + field + ' }}', 'template')).toBe(false);
+    }
+    const result = candidate(
+      await convertDefinitionV3ToV4(
+        loop({ return: { mapping: '{"id":run.id,"text":"run.iteration counters"}' } }),
+      ),
+    );
+    expect(result.ready).toBe(true);
+  });
+
+  it('F1 refuses an authored graph that would remove the seeded gate referenced by an automatic rewrite', async () => {
+    const source = loop({ ...back, return: { mapping: 'run.iteration' } });
+    const result = candidate(await convertDefinitionV3ToV4(source));
+    const item = result.reviewItems.find((entry) => entry.kind === 'exit-policy')!;
+    const graph = {
+      nodes: [{ id: 'done', kind: 'exit', label: 'Removed gate', config: { outcome: 'success' } }],
+      edges: [],
+    };
+    const refused = await convertDefinitionV3ToV4(source, {
+      [item.id]: {
+        hash: item.hash,
+        action: 'replace',
+        value: graph,
+        reason: 'This would leave no seeded gate.',
+      },
+    });
+    expect(refused.ok).toBe(false);
+    if (!refused.ok)
+      expect(refused.issues.map((entry) => entry.code)).toContain('V4_ITERATION_GATE_UNPROVEN');
+  });
+
+  it('F1 requires review for a counters template even without changed output shapes', async () => {
+    const source = loop();
+    source.nodes[1] = {
+      ...source.nodes[1]!,
+      kind: 'wait',
+      config: {
+        mode: 'input',
+        prompt: '{{ counters.nodeVisits.work }}',
+        exposeTo: ['api'],
+        onTimeout: 'continue',
+      },
+    };
+    const result = candidate(await convertDefinitionV3ToV4(source));
+    const item = result.reviewItems.find((entry) => entry.kind === 'output-consumer')!;
+    expect(item).toMatchObject({ path: '/nodes/1/config/prompt', status: 'pending' });
+    const resolved = candidate(
+      await convertDefinitionV3ToV4(source, {
+        [item.id]: {
+          hash: item.hash,
+          action: 'replace',
+          value: 'Owner-reviewed prompt',
+          reason: 'Removed the old counters dependency.',
+        },
+      }),
+    );
+    expect(resolved.ready).toBe(true);
+  });
+
+  it('F1 uses the actual provider comparison gate ID in decision and provider templates', async () => {
+    const source = loop(
+      {
+        ...back,
+        criteria: [
+          predicate({ ...classifier, question: 'Pass {{ run.iteration }}?' }, choice, {
+            type: 'choice',
+            optionIds: ['yes'],
+          }),
+        ],
+        return: { mapping: 'none' },
+      },
+      {
+        answer: choice,
+        evaluation: { kind: 'expression', jsonata: 'run.iteration >= 3 ? "yes" : "no"' },
+      },
+    );
+    const result = candidate(await convertDefinitionV3ToV4(source));
+    const gate = result.value.nodes.find(
+      (node) => node.kind === 'decision' && node.config.maxPasses !== undefined,
+    )!;
+    expect(gate.id).toBe('done-match');
+    const work = result.value.nodes.find((node) => node.id === 'work');
+    if (work?.kind !== 'decision' || work.config.kind !== 'expression')
+      throw new Error('missing work decision');
+    expect(work.config.jsonata).toBe('gates.`done-match`.passes >= 3 ? "yes" : "no"');
+    const provider = result.value.nodes.find((node) => node.id === 'done');
+    if (provider?.kind !== 'decision' || provider.config.kind !== 'classifier')
+      throw new Error('missing provider');
+    expect(
+      await renderTemplate(provider.config.question, { gates: { 'done-match': { passes: 3 } } }),
+    ).toBe('Pass 3?');
+    expect({ value: result.value, reviews: result.reviewItems }).toMatchSnapshot();
+  });
+
+  it.each(['expression', 'template'] as const)(
+    'F1 reviews dynamic %s iteration lookups rather than guessing',
+    async (kind) => {
+      const source = loop({ ...back, return: { mapping: 'none' } });
+      source.nodes[1] = {
+        ...source.nodes[1]!,
+        kind: 'wait',
+        config: {
+          mode: 'input',
+          prompt: kind === 'template' ? '{{ run[vars.key] }}' : '{{ run.iteration }}',
+          exposeTo: ['api'],
+          onTimeout: 'continue',
+        },
+      };
+      const exit = source.nodes[2];
+      if (exit?.kind !== 'exit') throw new Error('missing exit');
+      if (kind === 'expression') exit.config.return.mapping = '$lookup(run, "iteration")';
+      const result = candidate(await convertDefinitionV3ToV4(source));
+      expect(
+        result.reviewItems.some(
+          (item) => item.kind === 'output-consumer' && item.status === 'pending',
+        ),
+      ).toBe(true);
+    },
+  );
+
+  it.each([
+    ['expression', 'messages.(run.iteration)'],
+    ['template', '{% for run in messages %}{{ run.iteration }}{% endfor %}'],
+    ['template', '{% assign gates = trigger.payload %}{{ run.iteration }}'],
+  ] as const)(
+    'F1 keeps context-dependent %s iteration reads for owner review',
+    async (kind, text) => {
+      const source = loop({ ...back, return: { mapping: kind === 'expression' ? text : 'none' } });
+      if (kind === 'template')
+        source.nodes[1] = {
+          ...source.nodes[1]!,
+          kind: 'wait',
+          config: { mode: 'input', prompt: text, exposeTo: ['api'], onTimeout: 'continue' },
+        };
+      const result = candidate(await convertDefinitionV3ToV4(source));
+      expect(result.reviewItems.some((item) => item.kind === 'iteration-consumer')).toBe(false);
+      expect(result.reviewItems.find((item) => item.kind === 'output-consumer')).toMatchObject({
+        status: 'pending',
+        oldValue: text,
+        proposedValue: text,
+      });
+    },
+  );
+
+  it.each([
+    [
+      'schema',
+      { criteria: [{ when: 'last-output-matches', jsonSchema: {} }] },
+      'V4_EXIT_SCHEMA_POLICY_REQUIRED',
+    ],
+    [
+      'iterations',
+      { criteria: [{ when: 'max-iterations', value: 1 }] },
+      'V4_TERMINAL_LIMIT_POLICY_REQUIRED',
+    ],
+    [
+      'duration',
+      { criteria: [{ when: 'max-duration', seconds: 2 }] },
+      'V4_TERMINAL_LIMIT_POLICY_REQUIRED',
+    ],
+  ] as const)(
+    'F2 accepts an authored %s exit graph and refuses absent, stale and malformed answers',
+    async (_name, exit, code) => {
+      const source = loop(exit),
+        refused = await convertDefinitionV3ToV4(source);
+      expect(refused.ok).toBe(false);
+      const item = refused.reviewItems.find((entry) => entry.kind === 'exit-policy')!;
+      expect(item).toMatchObject({
+        id: '/nodes/2/config:exit-policy',
+        status: 'pending',
+        proposedValue: null,
+      });
+      if (!refused.ok)
+        expect(refused.issues.find((entry) => entry.code === code)?.message).toContain(item.id);
+      const graph = {
+        nodes: [
+          {
+            id: 'done',
+            kind: 'exit',
+            label: 'Reviewed terminal policy',
+            config: { outcome: 'exhausted', returns: 'none', destinations: [] },
+          },
+        ],
+        edges: [],
+      };
+      const answer = {
+        hash: item.hash,
+        action: 'replace' as const,
+        value: graph,
+        reason: 'Owner approved this exact terminal policy.',
+      };
+      const converted = candidate(await convertDefinitionV3ToV4(source, { [item.id]: answer }));
+      expect(converted.ready).toBe(true);
+      for (const bad of [
+        { ...answer, hash: '0'.repeat(64) },
+        { ...answer, value: { nodes: 'malformed', edges: [] } },
+        { ...answer, action: 'approve' as const, value: undefined },
+      ])
+        expect((await convertDefinitionV3ToV4(source, { [item.id]: bad })).ok).toBe(false);
+      expect({ refused, converted }).toMatchSnapshot();
+    },
+  );
+
+  it('F3 identifies the formerly shared budget on each actual gate', async () => {
+    const result = candidate(await convertDefinitionV3ToV4(twoLoopBacks()));
+    const items = result.reviewItems.filter((entry) => entry.kind === 'shared-iteration-budget');
+    expect(items.map((entry) => entry.nodeId)).toEqual(['done', 'again']);
+    for (const item of items) {
+      expect(item.status).toBe('pending');
+      expect(item.reason).toContain('shared one iteration budget');
+      expect(item.reason).toContain('MAX_NODE_VISITS');
+      expect(result.value.nodes.find((node) => node.id === item.nodeId)?.config).toMatchObject({
+        maxPasses: 5,
+      });
+    }
+    expect(
+      candidate(await convertDefinitionV3ToV4(loop(back))).reviewItems.some(
+        (entry) => entry.kind === 'shared-iteration-budget',
+      ),
+    ).toBe(false);
+  });
+
+  it.each(['max-iterations', 'max-duration'] as const)(
+    'F4 names %s changing from before a predicate to after evaluation',
+    async (when) => {
+      const limit = when === 'max-iterations' ? { when, value: 3 } : { when, seconds: 20 };
+      const source = loop({
+        ...back,
+        criteria: [limit, predicate({ kind: 'expression', jsonata: 'true' })],
+      });
+      const result = candidate(await convertDefinitionV3ToV4(source));
+      const item = result.reviewItems.find((entry) => entry.kind === 'ordered-limit')!;
+      expect(item).toMatchObject({ path: '/nodes/2/config/criteria/0', status: 'pending' });
+      expect(item.reason).toContain('before that predicate ran');
+      expect(item.reason).toContain('evaluate first');
+      expect({ value: result.value, reviews: result.reviewItems }).toMatchSnapshot();
+      const after = candidate(
+        await convertDefinitionV3ToV4(
+          loop({ ...back, criteria: [predicate({ kind: 'expression', jsonata: 'true' }), limit] }),
+        ),
+      );
+      expect(after.reviewItems.some((entry) => entry.kind === 'ordered-limit')).toBe(false);
+    },
+  );
+
+  it.each(['none', 'conditional', 'constant'] as const)(
+    'F5 reports ignored continuation with a %s terminal exit',
+    async (shape) => {
+      const source = loop({
+        loopBack: { targetNodeId: 'work' },
+        criteria:
+          shape === 'none'
+            ? []
+            : [
+                predicate({
+                  kind: 'expression',
+                  jsonata: shape === 'constant' ? 'true' : 'trigger.payload.ready = true',
+                }),
+              ],
+      });
+      source.edges.push({
+        id: 'ignored-continuation',
+        from: { node: 'done', port: 'loopBack' },
+        to: { node: 'work', port: 'in' },
+      });
+      const result = candidate(await convertDefinitionV3ToV4(source));
+      const item = result.reviewItems.find((entry) => entry.kind === 'ignored-loop-back')!;
+      expect(item.status).toBe('pending');
+      expect(item.oldValue).toMatchObject({
+        loopBack: { targetNodeId: 'work' },
+        edges: [{ id: 'ignored-continuation' }],
+      });
+      expect(result.value.edges.some((edge) => edge.id === 'ignored-continuation')).toBe(false);
+      expect(candidate(await convertDefinitionV3ToV4(source, approvals(result))).ready).toBe(true);
       expect({ value: result.value, reviews: result.reviewItems }).toMatchSnapshot();
     },
   );
