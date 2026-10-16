@@ -64,9 +64,22 @@ function Identity({ value }: { value: EvaluationProvenance }) {
               <code>{value[key]}</code>
             </dd>
           </Fragment>
-        ) : value.kind === 'llm' && (key === 'model' || key === 'effort') ? (
+        ) : value.kind !== 'expression' &&
+          (key === 'provider' ||
+            key === 'model' ||
+            (key === 'effort' && value.kind === 'llm') ||
+            (key === 'classifierId' && value.kind === 'classifier')) ? (
           <Fragment key={key}>
-            <dt>{key === 'model' ? 'Model' : 'Effort'}</dt>
+            <dt>
+              {
+                {
+                  model: 'Model',
+                  effort: 'Effort',
+                  provider: 'Provider',
+                  classifierId: 'Classifier',
+                }[key]
+              }
+            </dt>
             <dd>Not recorded</dd>
           </Fragment>
         ) : null,
@@ -129,6 +142,41 @@ function ClassifierDetails({ answer, prefix = '' }: { answer: ClassifierAnswer; 
           ))}
         </ul>
       ) : null}
+      {answer.type !== 'noul' && answer.probabilities === null ? (
+        <p className="mt-2 text-sm text-muted">Alternative probabilities: not recorded.</p>
+      ) : null}
+    </>
+  );
+}
+
+function DecisionAcceptance({
+  event,
+  definition,
+  definitionLoading,
+}: {
+  event: Extract<RunEvent, { type: 'decision.made' }>;
+  definition: LoopDefinition | undefined;
+  definitionLoading: boolean;
+}) {
+  if (event.observation.kind !== 'classifier') return null;
+  const node = definition?.nodes.find((node) => node.id === event.nodeId);
+  const config =
+    node?.kind === 'decision' && node.config.kind === 'classifier' ? node.config : undefined;
+  const confidence = event.observation.answer.confidence;
+  return (
+    <>
+      <dt>Confidence acceptance</dt>
+      <dd>
+        {!definition && definitionLoading
+          ? 'Loading run-version configuration…'
+          : !config
+            ? 'Not recorded (classifier configuration unavailable)'
+            : config.minConfidence === undefined
+              ? 'No minimum configured in run version'
+              : confidence === null
+                ? `Not recorded; run-version minimum ${config.minConfidence}`
+                : `${confidence >= config.minConfidence ? 'Meets' : 'Below'} run-version minimum ${config.minConfidence}`}
+      </dd>
     </>
   );
 }
@@ -167,7 +215,8 @@ function ObservationDetails({
           </dd>
         </>
       ) : null}
-      {observation.kind !== 'classifier' && provenance.kind === 'llm' ? (
+      {observation.kind !== 'classifier' &&
+      (provenance.kind === 'llm' || observation.reasoning !== null) ? (
         <>
           <dt>Reasoning excerpt</dt>
           <dd className="whitespace-pre-wrap">{observation.reasoning ?? 'Not recorded'}</dd>
@@ -280,9 +329,11 @@ function ExitCriterionDetail({
 export function EvaluationDetails({
   event,
   definition,
+  definitionLoading = false,
 }: {
   event: RunEvent | undefined;
   definition?: LoopDefinition | undefined;
+  definitionLoading?: boolean;
 }) {
   if (!event || !['decision.made', 'exit.evaluated', 'run.failed'].includes(event.type))
     return null;
@@ -339,6 +390,11 @@ export function EvaluationDetails({
               <code>{event.portId}</code>
             </dd>
             <Identity value={event.provenance} />
+            <DecisionAcceptance
+              event={event}
+              definition={definition}
+              definitionLoading={definitionLoading}
+            />
             <ObservationDetails
               observation={event.observation}
               provenance={event.provenance}

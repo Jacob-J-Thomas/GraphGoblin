@@ -206,6 +206,7 @@ export function useLoadEditor(loopId: string) {
         useEditorStore.getState().load(loopId, local.definition, {
           dirty: true,
           baseToken: local.baseToken ?? serverToken,
+          decisionRoutes: local.decisionRoutes,
         });
         setRestoredGeneration(useEditorStore.getState().generation);
       } else if (server) {
@@ -213,7 +214,10 @@ export function useLoadEditor(loopId: string) {
         if (cancelled) return;
         useEditorStore.getState().load(loopId, server, { baseToken: serverToken });
       } else if (local) {
-        useEditorStore.getState().load(loopId, local.definition, { baseToken: local.baseToken });
+        useEditorStore.getState().load(loopId, local.definition, {
+          baseToken: local.baseToken,
+          decisionRoutes: local.decisionRoutes,
+        });
       } else if (archivedCopies.length > 0 || rawSetAside.length > 0) {
         setRawCopies([...archivedCopies, ...rawSetAside]);
         setReady(true);
@@ -241,6 +245,7 @@ export function useLoadEditor(loopId: string) {
     await saveLocalDraft({
       loopId,
       definition: restoredCopy.definition,
+      ...(restoredCopy.decisionRoutes ? { decisionRoutes: restoredCopy.decisionRoutes } : {}),
       savedAt: new Date().toISOString(),
       synced: false,
     });
@@ -250,7 +255,11 @@ export function useLoadEditor(loopId: string) {
     if (now.loopId === loopId && now.generation === startedIn) {
       // Choosing this copy over the newer server draft is an explicit overwrite: base it on the
       // server draft shown now.
-      now.load(loopId, restoredCopy.definition, { dirty: true, baseToken: now.baseToken });
+      now.load(loopId, restoredCopy.definition, {
+        dirty: true,
+        baseToken: now.baseToken,
+        decisionRoutes: restoredCopy.decisionRoutes,
+      });
       setRestoredGeneration(useEditorStore.getState().generation);
     }
     await clearSetAsideDraft(loopId);

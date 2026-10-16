@@ -88,7 +88,7 @@ function seedRun(api: FakeApi, overrides: Parameters<FakeApi['addRun']>[0] = {})
 }
 
 describe('RunInspectorPage', () => {
-  it('loads the run’s pinned version to show its authored Noul threshold', async () => {
+  it('shows loading acceptance until the run’s pinned version resolves with its authored Noul threshold', async () => {
     const api = new FakeApi();
     const definition = (truthThreshold: number) =>
       LoopDefinitionSchema.parse({
@@ -143,10 +143,29 @@ describe('RunInspectorPage', () => {
         },
       }),
     );
+    let releaseVersion!: () => void;
+    const pending = new Promise<void>((resolve) => {
+      releaseVersion = resolve;
+    });
+    api.override('GET /loops/:id/versions/:versionId', async (call) => {
+      await pending;
+      return api.builtIn(call);
+    });
     renderApp(`/runs/${run.id}`, api);
 
+    expect(await screen.findByText('Loading run-version configuration…')).toBeInTheDocument();
+    expect(
+      screen.queryByText('Not recorded (classifier configuration unavailable)'),
+    ).not.toBeInTheDocument();
+    releaseVersion();
+
     expect(await screen.findByText('True-probability threshold')).toBeInTheDocument();
-    expect(screen.getByText('True-probability threshold').parentElement).toHaveTextContent('0.2');
+    await waitFor(() =>
+      expect(screen.getByText('True-probability threshold').parentElement).toHaveTextContent('0.2'),
+    );
+    expect(screen.getByText('Confidence acceptance').parentElement).toHaveTextContent(
+      'No minimum configured in run version',
+    );
     expect(
       api.calls.some(
         (call) => call.method === 'GET' && call.path === `/loops/${loop.id}/versions/${pinned.id}`,

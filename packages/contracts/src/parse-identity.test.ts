@@ -77,7 +77,7 @@ describe('parsing is unchanged', () => {
         harness: 'codex',
         model: { mode: 'inherit' },
         effort: { mode: 'inherit' },
-        instructions: '',
+        instructions: 'Choose A when the check passes; otherwise choose B.',
         routes: [
           { id: 'a', label: 'A', criteria: 'A' },
           { id: 'b', label: 'B', criteria: 'B' },

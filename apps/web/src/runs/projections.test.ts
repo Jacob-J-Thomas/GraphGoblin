@@ -134,7 +134,7 @@ describe('run projections', () => {
           observation: { kind: 'route', routeId: 'yes', confidence: null, reasoning: null },
         }),
       ),
-    ).toContain('with confidence not recorded');
+    ).toContain('with self-reported confidence (informational) not recorded');
   });
   it('describes Noul truth probability and fractional Score output separately', () => {
     const classifier = {

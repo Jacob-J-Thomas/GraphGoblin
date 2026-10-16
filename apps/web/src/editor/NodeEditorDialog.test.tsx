@@ -73,12 +73,21 @@ describe('NodeEditorDialog evaluator-specific decisions', () => {
           loopId = id;
         },
       );
-      if (kind !== 'expression')
+      if (kind !== 'expression') {
         await user.click(within(dialog).getByRole('radio', { name: kind }));
+        await user.click(within(dialog).getByRole('button', { name: 'Confirm change' }));
+      }
       if (kind === 'classifier') {
         await user.click(within(dialog).getByRole('radio', { name: 'Noul' }));
+        await user.click(within(dialog).getByRole('button', { name: 'Confirm change' }));
         await user.selectOptions(within(dialog).getByRole('combobox', { name: 'Model' }), 'jev');
         setCode('Question', 'Does the evidence support approval?');
+        for (const side of ['true', 'false']) {
+          const field = dialog.querySelector<HTMLTextAreaElement>(
+            `[data-field="answer.${side}.criteria"] textarea`,
+          )!;
+          await user.type(field, `Evidence supports ${side}`);
+        }
       } else if (kind === 'llm') {
         setCode(
           'Instructions',
@@ -204,6 +213,7 @@ describe('NodeEditorDialog evaluator-specific decisions', () => {
       'Edit decision pick',
     );
     await user.click(within(dialog).getByRole('radio', { name: 'llm' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Confirm change' }));
     expect(dialog.querySelector('[data-field="instructions"]')).toBeInTheDocument();
     expect(dialog.querySelector('[data-field="jsonata"]')).not.toBeInTheDocument();
     act(() => store().openNode('pick', { field: 'config.instructions' }));
@@ -213,8 +223,10 @@ describe('NodeEditorDialog evaluator-specific decisions', () => {
       ),
     );
     await user.click(within(dialog).getByRole('radio', { name: 'classifier' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Confirm change' }));
     expect(within(dialog).getByRole('radiogroup', { name: 'Answer type' })).toBeVisible();
     await user.click(within(dialog).getByRole('radio', { name: 'Noul' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Confirm change' }));
     const node = store().definition?.nodes.find((node) => node.id === 'pick');
     expect(node?.config).toMatchObject({ kind: 'classifier', answer: { type: 'noul' } });
     await user.click(advanced(dialog));
@@ -222,10 +234,12 @@ describe('NodeEditorDialog evaluator-specific decisions', () => {
       within(dialog).getByLabelText('Noul true-probability threshold', { exact: true }),
     ).toBeVisible();
     await user.click(within(dialog).getByRole('radio', { name: 'Score' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Confirm change' }));
     expect(
       within(dialog).queryByLabelText('Noul true-probability threshold', { exact: true }),
     ).not.toBeInTheDocument();
     await user.click(within(dialog).getByRole('radio', { name: 'expression' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Confirm change' }));
     expect(dialog.querySelector('[data-field="jsonata"]')).toBeInTheDocument();
     expect(
       within(dialog).queryByRole('radiogroup', { name: 'Answer type' }),

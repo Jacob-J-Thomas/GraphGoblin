@@ -177,12 +177,14 @@ function describeDecision(event: Extract<RunEvent, { type: 'decision.made' }>): 
   }
   const provider = provenance.provider ? ` via ${provenance.provider}` : '';
   const model = provenance.model ? ` (${provenance.model})` : '';
+  const confidenceLabel =
+    provenance.kind === 'llm' ? 'self-reported confidence (informational)' : 'confidence';
   const confidenceText =
     confidence !== null
-      ? ` with confidence ${confidence}`
+      ? ` with ${confidenceLabel} ${confidence}`
       : provenance.kind === 'llm' ||
           (observation.kind === 'classifier' && observation.answer.type !== 'score')
-        ? ' with confidence not recorded'
+        ? ` with ${confidenceLabel} not recorded`
         : '';
   const diagnostics = event.diagnostics.map((item) => `; ${item.code}: ${item.message}`).join('');
   return `${description} with ${provenance.kind}${provider}${model}${confidenceText}${diagnostics}`;

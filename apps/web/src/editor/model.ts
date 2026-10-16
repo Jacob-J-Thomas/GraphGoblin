@@ -4,6 +4,7 @@
  * it with the same `contracts` schemas and `domain` rules the API runs on publish.
  */
 import {
+  ChoiceOptionIdSchema,
   CURRENT_DEFINITION_FORMAT,
   LoopDefinitionSchema,
   NodeSchema,
@@ -148,9 +149,13 @@ export function portsOf(node: NodeInput): string[] {
   const config = record(node.config);
   switch (node.kind) {
     case 'decision': {
-      return (decisionRows(node.config) ?? [])
-        .map((option) => record(option)['id'])
-        .filter((id): id is string => typeof id === 'string' && id !== '');
+      return [
+        ...new Set(
+          (decisionRows(node.config) ?? [])
+            .map((option) => record(option)['id'])
+            .filter((id): id is string => typeof id === 'string' && id !== ''),
+        ),
+      ];
     }
     case 'script': {
       const labels = Object.values(record(config['exitCodeRoutes'])).filter(
@@ -179,7 +184,9 @@ export function canvasPortLabels(node: NodeInput): Readonly<Record<string, strin
   return Object.fromEntries(
     rows.flatMap((option) => {
       const row = record(option);
-      return typeof row['id'] === 'string' && typeof row['label'] === 'string'
+      return typeof row['id'] === 'string' &&
+        typeof row['label'] === 'string' &&
+        rows.filter((other) => record(other)['id'] === row['id']).length === 1
         ? [[row['id'], row['label']]]
         : [];
     }),
@@ -203,6 +210,12 @@ export function connectionProblem(
   if (to.kind === 'trigger') return 'triggers have no input';
   const port = conn.sourceHandle ?? 'out';
   if (!canvasPorts(from).includes(port)) return `"${from.id}" has no output port "${port}"`;
+  if (
+    from.kind === 'decision' &&
+    (!ChoiceOptionIdSchema.safeParse(port).success ||
+      (decisionRows(from.config) ?? []).filter((row) => record(row)['id'] === port).length !== 1)
+  )
+    return 'Finish a unique, valid route ID before connecting it';
   if (def.edges.some((e) => e.from.node === from.id && e.from.port === port)) {
     return `port "${port}" of "${from.id}" is already connected`;
   }

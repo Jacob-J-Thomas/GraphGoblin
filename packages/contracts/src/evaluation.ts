@@ -278,6 +278,13 @@ export const LlmDecisionConfigSchema = LlmPredicateConfigSchema.extend({
   context: DecisionContextSchema.prefault({}).meta(
     field('Selected provider context.', { context: true, jsonEditor: true }),
   ),
+}).superRefine((config, ctx) => {
+  if (!config.instructions.trim())
+    ctx.addIssue({
+      code: 'custom',
+      path: ['instructions'],
+      message: 'instructions must contain source',
+    });
 });
 export const ClassifierEvaluationConfigSchema = z.strictObject({
   kind: z.literal('classifier').meta(field('Evaluate one classifier primitive.')),
@@ -327,7 +334,12 @@ export const ClassifierDecisionConfigSchema = ClassifierEvaluationConfigSchema.e
     .meta(
       field('Record classifier probability alternatives.', { advanced: true, group: 'Recording' }),
     ),
-}).superRefine(classifierThreshold);
+})
+  .superRefine(classifierThreshold)
+  .superRefine((config, ctx) => {
+    if (!config.question.trim())
+      ctx.addIssue({ code: 'custom', path: ['question'], message: 'question must contain source' });
+  });
 export const DecisionConfigSchema = z.discriminatedUnion('kind', [
   ExpressionDecisionConfigSchema,
   LlmDecisionConfigSchema,

@@ -32,6 +32,197 @@ function noulDefinition(truthThreshold?: number) {
 }
 
 describe('EvaluationDetails', () => {
+  it('distinguishes loading classifier configuration from unavailable historical configuration', () => {
+    const decision = event('run', 1, 'decision.made', {
+      nodeId: 'check',
+      portId: 'true',
+      diagnostics: [],
+      provenance: {
+        kind: 'classifier',
+        provider: 'typesafe',
+        classifierId: 'jev',
+        model: 'jev-latest',
+        effort: null,
+      },
+      observation: {
+        kind: 'classifier',
+        answer: { type: 'noul', holds: true, trueProbability: 0.8, confidence: 0.8 },
+      },
+    });
+    const { rerender } = render(<EvaluationDetails event={decision} definitionLoading />);
+    expect(screen.getByText('Confidence acceptance').parentElement).toHaveTextContent(
+      'Loading run-version configuration…',
+    );
+    expect(
+      screen.queryByText('Not recorded (classifier configuration unavailable)'),
+    ).not.toBeInTheDocument();
+    rerender(
+      <EvaluationDetails event={decision} definition={noulDefinition()} definitionLoading />,
+    );
+    expect(screen.getByText('Confidence acceptance').parentElement).toHaveTextContent(
+      'No minimum configured in run version',
+    );
+    rerender(<EvaluationDetails event={decision} />);
+    expect(screen.getByText('Confidence acceptance').parentElement).toHaveTextContent(
+      'Not recorded (classifier configuration unavailable)',
+    );
+  });
+  it('shows an expression route with no provider, classifier evidence or invented confidence', () => {
+    render(
+      <EvaluationDetails
+        event={event('run', 1, 'decision.made', {
+          nodeId: 'pick',
+          portId: 'ship',
+          diagnostics: [],
+          provenance: {
+            kind: 'expression',
+            provider: null,
+            classifierId: null,
+            model: null,
+            effort: null,
+          },
+          observation: { kind: 'route', routeId: 'ship', confidence: null, reasoning: null },
+        })}
+      />,
+    );
+    expect(screen.getByText('Route ID').parentElement).toHaveTextContent('ship');
+    expect(screen.queryByText('Confidence')).not.toBeInTheDocument();
+    expect(screen.queryByText('Provider')).not.toBeInTheDocument();
+    expect(screen.queryByText('Confidence acceptance')).not.toBeInTheDocument();
+  });
+
+  it('shows confidence and reasoning when they were recorded on a historical expression fact', () => {
+    render(
+      <EvaluationDetails
+        event={event('run', 1, 'decision.made', {
+          nodeId: 'pick',
+          portId: 'ship',
+          diagnostics: [],
+          provenance: {
+            kind: 'expression',
+            provider: null,
+            classifierId: null,
+            model: null,
+            effort: null,
+          },
+          observation: {
+            kind: 'route',
+            routeId: 'ship',
+            confidence: 0.4,
+            reasoning: 'Recorded historical explanation.',
+          },
+        })}
+      />,
+    );
+    expect(screen.getByText('Confidence').parentElement).toHaveTextContent('0.4');
+    expect(screen.getByText('Reasoning excerpt').parentElement).toHaveTextContent(
+      'Recorded historical explanation.',
+    );
+    expect(screen.queryByText('Self-reported confidence')).not.toBeInTheDocument();
+  });
+
+  it.each([
+    [undefined, 0.8, 'No minimum configured in run version'],
+    [0.7, 0.8, 'Meets run-version minimum 0.7'],
+    [0.9, 0.8, 'Below run-version minimum 0.9'],
+    [0.7, null, 'Not recorded; run-version minimum 0.7'],
+  ] as const)(
+    'shows recorded Choice evidence and factual confidence comparison %#',
+    (minimum, confidence, expected) => {
+      const definition = noulDefinition();
+      const node = definition.nodes[0]!;
+      if (node.kind !== 'decision' || node.config.kind !== 'classifier')
+        throw new Error('Missing classifier fixture');
+      node.config.answer = {
+        type: 'choice',
+        options: [
+          { id: 'ship', label: 'Ship', criteria: 'Ready' },
+          { id: 'review', label: 'Review', criteria: 'Needs work' },
+        ],
+      };
+      if (minimum !== undefined) node.config.minConfidence = minimum;
+      const { rerender } = render(
+        <EvaluationDetails
+          definition={definition}
+          event={event('run', 1, 'decision.made', {
+            nodeId: 'check',
+            portId: 'ship',
+            diagnostics: [],
+            provenance: {
+              kind: 'classifier',
+              provider: 'http',
+              classifierId: 'local',
+              model: 'local-v1',
+              effort: null,
+            },
+            observation: {
+              kind: 'classifier',
+              answer: {
+                type: 'choice',
+                optionId: 'ship',
+                confidence,
+                probabilities: { ship: 0.8, review: 0.2 },
+              },
+            },
+          })}
+        />,
+      );
+      expect(screen.getByText('Option ID').parentElement).toHaveTextContent('ship');
+      expect(screen.getByText('Confidence acceptance').parentElement).toHaveTextContent(expected);
+      expect(screen.getByRole('list', { name: 'Alternative probabilities' })).toHaveTextContent(
+        'review: 0.2',
+      );
+      rerender(
+        <EvaluationDetails
+          event={event('run', 2, 'decision.made', {
+            nodeId: 'check',
+            portId: 'ship',
+            diagnostics: [],
+            provenance: {
+              kind: 'classifier',
+              provider: null,
+              classifierId: null,
+              model: null,
+              effort: null,
+            },
+            observation: {
+              kind: 'classifier',
+              answer: { type: 'choice', optionId: 'ship', confidence: null, probabilities: null },
+            },
+          })}
+        />,
+      );
+      expect(screen.getByText('Confidence acceptance').parentElement).toHaveTextContent(
+        'Not recorded (classifier configuration unavailable)',
+      );
+      expect(screen.getByText('Alternative probabilities: not recorded.')).toBeInTheDocument();
+      expect(screen.getByText('Model').parentElement).toHaveTextContent('Not recorded');
+    },
+  );
+
+  it('preserves a historical boolean observation without inventing a route answer or reasoning', () => {
+    render(
+      <EvaluationDetails
+        event={event('run', 1, 'decision.made', {
+          nodeId: 'check',
+          portId: 'old-port',
+          diagnostics: [],
+          provenance: {
+            kind: 'llm',
+            provider: null,
+            classifierId: null,
+            model: null,
+            effort: null,
+          },
+          observation: { kind: 'boolean', holds: null, confidence: null, reasoning: null },
+        })}
+      />,
+    );
+    expect(screen.getByText('Answer').parentElement).toHaveTextContent('unknown (not recorded)');
+    expect(screen.getByText('Selected port').parentElement).toHaveTextContent('old-port');
+    expect(screen.getByText('Reasoning excerpt').parentElement).toHaveTextContent('Not recorded');
+    expect(screen.queryByText('Route ID')).not.toBeInTheDocument();
+  });
   it('renders errors, absent optional evidence, and false low-confidence results in plain words', () => {
     render(
       <EvaluationDetails
@@ -308,7 +499,7 @@ describe('EvaluationDetails', () => {
         /reported by the evaluator; informational only, not a calibrated classifier score/,
       ),
     ).toBeInTheDocument();
-    expect(screen.getAllByText('Not recorded')).toHaveLength(2);
+    expect(screen.getAllByText('Not recorded')).toHaveLength(3);
     expect(screen.getByText('0.7')).toBeInTheDocument();
   });
 

@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { memo, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { memo, use, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { FormEditReviewContext } from './edit-review.js';
 import { FormProvider, useForm, type FieldValues, type Resolver } from 'react-hook-form';
 import { FieldGroup, Label, Select } from '../components/ui/index.js';
 import { FormChangeContext, nextChangeId, type ChangeScope, type FormChange } from './changes.js';
@@ -283,6 +284,7 @@ const SchemaFormBindings = memo(function SchemaFormBindings({
   const variantSchema = shape.kind === 'union' ? (shape.options[unionIndex] as Schema) : schema;
   const discriminator = shape.kind === 'union' ? shape.discriminator : undefined;
   const RootPicker = unionPickers?.[''];
+  const reviewEdit = use(FormEditReviewContext);
   const layout = useMemo(() => {
     const variant = shapeOf(variantSchema);
     return variant.kind === 'object'
@@ -291,17 +293,36 @@ const SchemaFormBindings = memo(function SchemaFormBindings({
   }, [variantSchema, discriminator, fieldOrder]);
 
   // A choice: one undo step, with the unparsed text of the fields it replaces.
-  const switchVariant = (index: number) =>
-    changeScope({ path: '', kind: 'commit' }, () => {
-      if (shape.kind !== 'union') return;
-      repathParseErrors(parseErrorChannel, [{ from: '' }]);
-      const next = asValues(initialValue(shape.options[index] as Schema));
-      collections.remember(next);
-      setUnionIndex(index);
-      form.reset(asValues(withUnsetFields(shape.options[index] as Schema, next)));
-      setIssues(issuesOf(schema, next));
-      onChangeRef.current(next, pendingChangeRef.current!);
-    });
+  const switchVariant = (index: number) => {
+    if (shape.kind !== 'union' || index === unionIndex) return;
+    reviewEdit(
+      { type: 'variant', path: '', value: initialValue(shape.options[index] as Schema) },
+      (value, keep = [], moves = []) =>
+        changeScope({ path: '', kind: 'commit' }, () => {
+          repathParseErrors(
+            parseErrorChannel,
+            Object.keys(parseErrorChannel.errors ?? {})
+              .filter((path) => !keep.some((key) => path === key || path.startsWith(`${key}.`)))
+              .map((from) => {
+                const move = moves.find(
+                  ({ from: path }) => from === path || from.startsWith(`${path}.`),
+                );
+                return {
+                  from,
+                  ...(move ? { to: move.to + from.slice(move.from.length) } : {}),
+                  exact: true,
+                };
+              }),
+          );
+          const next = asValues(value);
+          collections.remember(next);
+          setUnionIndex(index);
+          form.reset(asValues(withUnsetFields(shape.options[index] as Schema, next)));
+          setIssues(issuesOf(schema, next));
+          onChangeRef.current(next, pendingChangeRef.current!);
+        }),
+    );
+  };
 
   return (
     <FormChangeContext value={changeScope}>

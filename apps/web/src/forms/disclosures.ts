@@ -76,6 +76,22 @@ export function createCollectionIdentities(identities: DisclosureIdentities, val
       }
       rows = next;
     },
+    move: (name: string, from: number, to: number) => {
+      const order = [...rows[name]!];
+      order.splice(to, 0, order.splice(from, 1)[0]!);
+      const next: Record<string, readonly number[]> = {};
+      for (const [path, ids] of Object.entries(rows)) {
+        const suffix = path.startsWith(`${name}.`) ? path.slice(name.length + 1) : undefined;
+        const index = suffix === undefined ? undefined : Number(suffix.split('.')[0]);
+        const moved = index === undefined ? undefined : order.indexOf(rows[name]![index]!);
+        const key =
+          moved !== undefined && moved >= 0
+            ? `${name}.${moved}${suffix!.slice(String(index).length)}`
+            : path;
+        next[key] = path === name ? order : ids;
+      }
+      rows = next;
+    },
     key: (path: string): string => {
       // The innermost known row also identifies disclosures nested inside that row.
       const parents = Object.keys(rows).sort((a, b) => b.length - a.length);

@@ -1,4 +1,5 @@
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
+import type { DecisionRoutes } from '../editor/decision-route-edges.js';
 import { del, get, set, update, type UseStore } from 'idb-keyval';
 
 /**
@@ -8,6 +9,8 @@ import { del, get, set, update, type UseStore } from 'idb-keyval';
 export interface LocalDraft {
   loopId: string;
   definition: LoopDefinitionInput;
+  /** Device-only row ownership, needed when an unfinished ID differs from its connected port. */
+  decisionRoutes?: DecisionRoutes;
   savedAt: string;
   /** True once the server accepted this exact definition. */
   synced: boolean;
