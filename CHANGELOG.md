@@ -4,6 +4,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- GitHub webhook presets now preview and apply editable body-check decisions, output-restoring mutations and quiet Success exits in one undo step, preserving successor connections and explicitly reviewing replacement edits; poll presets are unchanged. (#168, step 21 T2)
+
 - Trigger editing starts with Manual, Cron, Poll, Event or Webhook and type-specific fields. GitHub presets are optional, preview the full configuration replacement, and apply as one undoable edit that also restores unfinished input on undo. The palette keeps one Trigger node; stored `subtype` and current intake behavior are unchanged. (#168, step 20 T1)
 
 - Internal: added pure format-3-to-4 definition conversion rules with strict expression routing, reviewed LLM instructions and exit graphs, producer-aware consumer proposals, and hash-bound owner resolutions. Review follow-up maps proven single-gate iteration reads to pass counts, accepts authored graphs for schema and non-repeating limit policies, and reports shared budgets, changed limit ordering and all ignored continuation fields. The offline tool/API and history remain unchanged; the integrated cutover composes this stage later. (#164, step 15 E2)

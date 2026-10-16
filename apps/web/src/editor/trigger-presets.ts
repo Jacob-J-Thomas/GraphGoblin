@@ -1,3 +1,7 @@
+import type { NodeInput } from '@graphgoblin/contracts';
+
+type TriggerInput = Extract<NodeInput, { kind: 'trigger' }>['config'];
+
 export const GITHUB_TRIGGER_PRESETS = [
   { id: 'issues-labeled', label: 'Webhook: issue gets a label' },
   { id: 'pull-request-ready', label: 'Webhook: pull request opened or marked ready' },
@@ -45,7 +49,7 @@ function repositoryFilter(setup: GitHubTriggerSetup): string {
   return `repository.full_name = ${jsonataString(`${setup.owner.trim()}/${setup.repository.trim()}`)}`;
 }
 
-function bodyWebhook(filter: string, setup: GitHubTriggerSetup): Record<string, unknown> {
+function bodyWebhook(setup: GitHubTriggerSetup): TriggerInput {
   return {
     subtype: 'webhook',
     signature: {
@@ -54,7 +58,6 @@ function bodyWebhook(filter: string, setup: GitHubTriggerSetup): Record<string, 
       secretRef: setup.secretRef.trim(),
     },
     dedupeKey: '$headers."x-github-delivery"',
-    filter,
   };
 }
 
@@ -70,30 +73,27 @@ function githubIssuePollProgram(endpoint: string): string {
   ].join('');
 }
 
-/** The preset is only a starting config; the editor keeps every generated value editable. */
+/** Body-only check over the engine's thread view; decisions must return a declared route ID. */
+export function githubEventCheck(
+  preset: Exclude<GitHubTriggerPreset, 'issues-poll'>,
+  setup: GitHubTriggerSetup,
+): string {
+  const repository = repositoryFilter(setup);
+  const check =
+    preset === 'issues-labeled'
+      ? `${repository} and action = "labeled" and $exists(issue) and $not($exists(issue.pull_request)) and label.name = ${jsonataString(setup.label.trim())}`
+      : preset === 'pull-request-ready'
+        ? `${repository} and action in ["opened", "ready_for_review"] and $exists(pull_request) and pull_request.draft = false and pull_request.base.ref = ${jsonataString(setup.baseBranch.trim())}`
+        : `${repository} and action = "closed" and $exists(pull_request) and pull_request.merged = true and pull_request.base.ref = ${jsonataString(setup.baseBranch.trim())}`;
+  return `invocation.trigger.payload.(${check}) ? "pass" : "ignore"`;
+}
+
+/** Webhooks also need the editable downstream fragment built by previewGitHubPreset. */
 export function makeGitHubTriggerPreset(
   preset: GitHubTriggerPreset,
   setup: GitHubTriggerSetup,
-): Record<string, unknown> {
-  const repository = repositoryFilter(setup);
-  if (preset === 'issues-labeled') {
-    return bodyWebhook(
-      `${repository} and action = "labeled" and $exists(issue) and $not($exists(issue.pull_request)) and label.name = ${jsonataString(setup.label.trim())}`,
-      setup,
-    );
-  }
-  if (preset === 'pull-request-ready') {
-    return bodyWebhook(
-      `${repository} and action in ["opened", "ready_for_review"] and $exists(pull_request) and pull_request.draft = false and pull_request.base.ref = ${jsonataString(setup.baseBranch.trim())}`,
-      setup,
-    );
-  }
-  if (preset === 'pull-request-merged') {
-    return bodyWebhook(
-      `${repository} and action = "closed" and $exists(pull_request) and pull_request.merged = true and pull_request.base.ref = ${jsonataString(setup.baseBranch.trim())}`,
-      setup,
-    );
-  }
+): TriggerInput {
+  if (preset !== 'issues-poll') return bodyWebhook(setup);
 
   const owner = setup.owner.trim();
   const repo = setup.repository.trim();

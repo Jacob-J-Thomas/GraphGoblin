@@ -116,56 +116,69 @@ describe('trigger authoring', () => {
     await waitFor(() => expect(within(dialog).getByLabelText('Trigger type')).toHaveFocus());
   });
 
-  it('previews, cancels and applies a poll preset as one undo step including held input', async () => {
-    const user = userEvent.setup();
-    const dialog = await openTrigger();
-    setCode('Input schema', '{unfinished');
-    await waitFor(() => expect(store().fieldErrors['node:start']?.['inputSchema']).toBeDefined());
-    const before = current();
-    const held = store().fieldErrors;
-    const past = store().past.length;
-    await user.click(within(dialog).getByRole('button', { name: 'Start from a preset' }));
-    await user.selectOptions(within(dialog).getByLabelText('Preset'), 'issues-poll');
-    await user.type(within(dialog).getByLabelText('Repository owner'), 'octo-team');
-    await user.type(within(dialog).getByLabelText('Repository'), 'service');
-    await user.type(within(dialog).getByLabelText('Issue label'), 'ready');
-    const preview = within(dialog).getByRole('button', { name: 'Preview GitHub preset' });
-    preview.focus();
-    await user.keyboard('{Enter}');
-    expect(within(dialog).getByRole('region', { name: 'Preset preview' })).toHaveFocus();
-    expect(
-      within(dialog).getByText(/Unfinished input will be replaced: Input schema/),
-    ).toBeVisible();
-    expect(current()).toBe(before);
-    expect(store().past).toHaveLength(past);
-    await user.tab();
-    expect(within(dialog).getByRole('region', { name: 'Current configuration' })).toHaveFocus();
-    await user.tab();
-    expect(within(dialog).getByRole('region', { name: 'Preset configuration' })).toHaveFocus();
-    await user.tab();
-    expect(within(dialog).getByRole('button', { name: 'Cancel preview' })).toHaveFocus();
-    await user.keyboard('{Enter}');
-    await waitFor(() => expect(preview).toHaveFocus());
-    expect(store().fieldErrors).toBe(held);
-    await user.keyboard('{Enter}');
-    await user.tab();
-    expect(within(dialog).getByRole('region', { name: 'Current configuration' })).toHaveFocus();
-    await user.tab();
-    expect(within(dialog).getByRole('region', { name: 'Preset configuration' })).toHaveFocus();
-    await user.tab();
-    expect(within(dialog).getByRole('button', { name: 'Cancel preview' })).toHaveFocus();
-    await user.tab();
-    expect(within(dialog).getByRole('button', { name: 'Apply GitHub preset' })).toHaveFocus();
-    await user.keyboard('{Enter}');
-    await waitFor(() => expect(within(dialog).getByLabelText('Trigger type')).toHaveFocus());
-    expect(current()).toMatchObject({ subtype: 'poll', intervalSeconds: 60 });
-    expect(store().fieldErrors['node:start']).toBeUndefined();
-    expect(store().past).toHaveLength(past + 1);
-    await user.keyboard(UNDO);
-    expect(current()).toBe(before);
-    expect(getCode('Input schema')).toBe('{unfinished');
-    expect(store().fieldErrors).toEqual(held);
-    await user.keyboard(REDO);
-    expect(within(dialog).getByLabelText('Interval seconds')).toHaveValue(60);
-  });
+  it.each(['issues-poll', 'issues-labeled'] as const)(
+    'previews, cancels and applies %s as one undo step including graph and held input',
+    async (preset) => {
+      const user = userEvent.setup();
+      const dialog = await openTrigger();
+      setCode('Input schema', '{unfinished');
+      await waitFor(() => expect(store().fieldErrors['node:start']?.['inputSchema']).toBeDefined());
+      const before = current();
+      const beforeGraph = store().definition;
+      const held = store().fieldErrors;
+      const past = store().past.length;
+      await user.click(within(dialog).getByRole('button', { name: 'Start from a preset' }));
+      await user.selectOptions(within(dialog).getByLabelText('Preset'), preset);
+      await user.type(within(dialog).getByLabelText('Repository owner'), 'octo-team');
+      await user.type(within(dialog).getByLabelText('Repository'), 'service');
+      await user.type(within(dialog).getByLabelText('Issue label'), 'ready');
+      if (preset === 'issues-labeled')
+        await user.type(within(dialog).getByLabelText('Signing secret name'), 'synthetic-hook');
+      const preview = within(dialog).getByRole('button', { name: 'Preview GitHub preset' });
+      preview.focus();
+      await user.keyboard('{Enter}');
+      expect(within(dialog).getByRole('region', { name: 'Preset preview' })).toHaveFocus();
+      expect(
+        within(dialog).getByText(/Unfinished input will be replaced: Input schema/),
+      ).toBeVisible();
+      expect(current()).toBe(before);
+      expect(store().past).toHaveLength(past);
+      await user.tab();
+      expect(within(dialog).getByRole('region', { name: 'Current configuration' })).toHaveFocus();
+      await user.tab();
+      expect(within(dialog).getByRole('region', { name: 'Preset configuration' })).toHaveFocus();
+      await user.tab();
+      expect(within(dialog).getByRole('button', { name: 'Cancel preview' })).toHaveFocus();
+      await user.keyboard('{Enter}');
+      await waitFor(() => expect(preview).toHaveFocus());
+      expect(store().fieldErrors).toBe(held);
+      await user.keyboard('{Enter}');
+      await user.tab();
+      expect(within(dialog).getByRole('region', { name: 'Current configuration' })).toHaveFocus();
+      await user.tab();
+      expect(within(dialog).getByRole('region', { name: 'Preset configuration' })).toHaveFocus();
+      await user.tab();
+      expect(within(dialog).getByRole('button', { name: 'Cancel preview' })).toHaveFocus();
+      await user.tab();
+      expect(within(dialog).getByRole('button', { name: 'Apply GitHub preset' })).toHaveFocus();
+      await user.keyboard('{Enter}');
+      await waitFor(() => expect(within(dialog).getByLabelText('Trigger type')).toHaveFocus());
+      expect(current()).toMatchObject({
+        subtype: preset === 'issues-poll' ? 'poll' : 'webhook',
+        ...(preset === 'issues-poll' ? { intervalSeconds: 60 } : {}),
+      });
+      expect(store().definition!.nodes).toHaveLength(preset === 'issues-poll' ? 2 : 5);
+      expect(store().fieldErrors['node:start']).toBeUndefined();
+      expect(store().past).toHaveLength(past + 1);
+      await user.keyboard(UNDO);
+      expect(current()).toBe(before);
+      expect(store().definition).toBe(beforeGraph);
+      expect(getCode('Input schema')).toBe('{unfinished');
+      expect(store().fieldErrors).toEqual(held);
+      await user.keyboard(REDO);
+      if (preset === 'issues-poll')
+        expect(within(dialog).getByLabelText('Interval seconds')).toHaveValue(60);
+      else expect(within(dialog).getByLabelText('Secret ref')).toHaveValue('synthetic-hook');
+    },
+  );
 });

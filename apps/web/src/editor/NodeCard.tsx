@@ -7,6 +7,7 @@ import { IssueBadge } from './IssueBadge.js';
 import { KindChip, kindStyle } from './KindChip.js';
 import { KIND_INFO, type EditorIssue } from './model.js';
 import { useEditorStore } from './store.js';
+import { NODE_CARD_SIZE } from './routing-geometry.js';
 
 export interface NodeCardData extends Record<string, unknown> {
   node: NodeInput;
@@ -40,9 +41,9 @@ export const NodeCard = memo(function NodeCard({ data, selected }: NodeProps<Flo
   const info = KIND_INFO[node.kind];
   return (
     <div
-      style={kindStyle(node.kind)}
+      style={{ ...kindStyle(node.kind), width: NODE_CARD_SIZE.width }}
       className={cn(
-        'w-[184px] rounded-lg border bg-surface-raised text-xs text-default',
+        'rounded-lg border bg-surface-raised text-xs text-default',
         selected
           ? 'glow-node-selected border-canvas-node-selected outline-2 outline-canvas-node-selected'
           : 'border-default shadow-2',

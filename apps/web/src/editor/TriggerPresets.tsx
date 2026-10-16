@@ -1,10 +1,12 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
+import type { LoopDefinitionInput } from '@graphgoblin/contracts';
 import { Button, FieldGroup, HelpText, Input, Label, Select } from '../components/ui/index.js';
+import { previewGitHubPreset, type GitHubPresetPreview } from './github-fragment.js';
+import type { FieldErrors } from './history.js';
 import { triggerFieldLabel } from './trigger-field-labels.js';
 import {
   canApplyGitHubPreset,
   GITHUB_TRIGGER_PRESETS,
-  makeGitHubTriggerPreset,
   unsupportedSigningScheme,
   type GitHubTriggerPreset,
   type GitHubTriggerSetup,
@@ -21,29 +23,43 @@ const EMPTY_SETUP: GitHubTriggerSetup = {
 /** An accessible setup panel that applies an editable GitHub starter config in one editor step. */
 export function TriggerPresets({
   config,
+  definition,
+  triggerId,
+  draftInputs,
+  generation,
   heldInputs,
   historyEpoch,
   onApply,
 }: {
   config: unknown;
+  definition: LoopDefinitionInput;
+  triggerId: string;
+  draftInputs?: FieldErrors | undefined;
+  generation?: number | undefined;
   heldInputs?: Record<string, unknown> | undefined;
   historyEpoch?: number | undefined;
-  onApply: (config: Record<string, unknown>) => void;
+  onApply: (preview: GitHubPresetPreview) => string | undefined;
 }) {
   const id = useId();
   const [open, setOpen] = useState(false);
+  const [error, setError] = useState<string>();
   const previewButtonRef = useRef<HTMLButtonElement>(null);
   const previewRegionRef = useRef<HTMLDivElement>(null);
   const [preview, setPreview] = useState<{
     config: unknown;
     heldInputs: typeof heldInputs;
     historyEpoch: typeof historyEpoch;
-    replacement: Record<string, unknown>;
+    replacement: GitHubPresetPreview;
+    draftInputs: typeof draftInputs;
+    generation: typeof generation;
   }>();
   const activePreview =
     preview?.config === config &&
     preview?.heldInputs === heldInputs &&
-    preview?.historyEpoch === historyEpoch
+    preview?.historyEpoch === historyEpoch &&
+    preview?.replacement.source === definition &&
+    preview?.draftInputs === draftInputs &&
+    preview?.generation === generation
       ? preview
       : undefined;
   useEffect(() => {
@@ -62,12 +78,15 @@ export function TriggerPresets({
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setError(undefined);
     if (preset && canApply)
       setPreview({
         config,
         heldInputs,
         historyEpoch,
-        replacement: makeGitHubTriggerPreset(preset, setup),
+        draftInputs,
+        generation,
+        replacement: previewGitHubPreset(definition, triggerId, preset, setup),
       });
   };
 
@@ -107,9 +126,9 @@ export function TriggerPresets({
       {open ? (
         <div id={`${id}-setup`} className="grid gap-3">
           <p className="text-xs text-muted">
-            Choose an optional GitHub starting config, preview it, then edit its fields. Applying
-            replaces the current trigger configuration in one undoable edit. GraphGoblin does not
-            call GitHub from this editor.
+            Choose an optional GitHub starting point, preview it, then edit its fields and nodes.
+            Applying replaces the trigger configuration and applies the shown graph in one undoable
+            edit. GraphGoblin does not call GitHub from this editor.
           </p>
           <form aria-label="GitHub preset setup" onSubmit={submit} className="grid gap-3">
             <fieldset
@@ -187,7 +206,7 @@ export function TriggerPresets({
                       <HelpText>
                         {preset === 'issues-poll'
                           ? 'The label name is encoded safely in the gh query.'
-                          : 'The label name is encoded safely in the webhook filter.'}
+                          : 'The label name is encoded safely in the event-check decision.'}
                       </HelpText>
                     </FieldGroup>
                   ) : null}
@@ -205,7 +224,7 @@ export function TriggerPresets({
                         onChange={(event) => update('baseBranch', event.target.value)}
                         placeholder="main"
                       />
-                      <HelpText>The filter checks the signed pull request body.</HelpText>
+                      <HelpText>The decision checks the signed pull request body.</HelpText>
                     </FieldGroup>
                   ) : null}
 
@@ -268,10 +287,38 @@ export function TriggerPresets({
             >
               <h4 className="font-semibold">Preset preview</h4>
               <p className="text-sm">
-                Replace the entire trigger configuration with the following editable fields.
-                Connections stay as they are. Undo restores the current configuration and unfinished
-                input.
+                Replace the entire trigger configuration. Changed fields:{' '}
+                {activePreview.replacement.fields.join(', ') || 'none'}. Undo restores the graph and
+                unfinished input.
               </p>
+              {activePreview.replacement.removedNodes.length ? (
+                <div className="grid gap-2">
+                  <p role="alert">
+                    {activePreview.replacement.addedNodes.length
+                      ? 'Replace the existing check/restore/exit fragment, including all owner edits shown below.'
+                      : 'Remove the existing check/restore/exit fragment, including all owner edits shown below, and reconnect its former successor directly to the trigger.'}
+                  </p>
+                  <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words text-xs">
+                    {JSON.stringify(
+                      {
+                        unfinishedInputToReplace: Object.fromEntries(
+                          activePreview.replacement.removedNodes.map((node) => [
+                            `node:${node.id}`,
+                            draftInputs?.[`node:${node.id}`],
+                          ]),
+                        ),
+                      },
+                      null,
+                      2,
+                    )}
+                  </pre>
+                </div>
+              ) : activePreview.replacement.addedNodes.length ? (
+                <p>
+                  Insert an editable check/restore/quiet-exit fragment. Existing downstream nodes
+                  are retained.
+                </p>
+              ) : null}
               {heldInputs && Object.keys(heldInputs).length ? (
                 <p role="alert">
                   Unfinished input will be replaced:{' '}
@@ -301,8 +348,35 @@ export function TriggerPresets({
                 tabIndex={0}
                 className="max-h-64 overflow-auto whitespace-pre-wrap break-words text-xs"
               >
-                {JSON.stringify(activePreview.replacement, null, 2)}
+                {JSON.stringify(
+                  activePreview.replacement.definition.nodes.find((node) => node.id === triggerId)!
+                    .config,
+                  null,
+                  2,
+                )}
               </pre>
+              <p className="text-sm font-semibold">Nodes and edges to add, replace or rewire</p>
+              <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words text-xs">
+                {JSON.stringify(
+                  {
+                    removeNodes: activePreview.replacement.removedNodes,
+                    removeEdges: activePreview.replacement.removedEdges,
+                    addNodes: activePreview.replacement.addedNodes,
+                    addEdges: activePreview.replacement.addedEdges,
+                    rewireEdges: activePreview.replacement.rewiredEdges.map((edge) => ({
+                      before: definition.edges.find((old) => old.id === edge.id),
+                      after: edge,
+                    })),
+                  },
+                  null,
+                  2,
+                )}
+              </pre>
+              {activePreview.replacement.issues.map((issue, index) => (
+                <p key={index} role={issue.severity === 'error' ? 'alert' : undefined}>
+                  {issue.message}
+                </p>
+              ))}
               <div className="flex flex-wrap gap-2">
                 <Button
                   size="sm"
@@ -315,9 +389,13 @@ export function TriggerPresets({
                 </Button>
                 <Button
                   size="sm"
+                  disabled={activePreview.replacement.issues.some(
+                    (issue) => issue.severity === 'error',
+                  )}
                   onClick={() => {
-                    onApply(activePreview.replacement);
-                    setPreview(undefined);
+                    const problem = onApply(activePreview.replacement);
+                    setError(problem);
+                    if (!problem) setPreview(undefined);
                   }}
                 >
                   Apply GitHub preset
@@ -325,6 +403,7 @@ export function TriggerPresets({
               </div>
             </div>
           ) : null}
+          {error ? <p role="alert">{error}</p> : null}
         </div>
       ) : null}
     </section>

@@ -11,6 +11,7 @@ import type { FormChange } from '../forms/changes.js';
 import type { ParseError, ParseErrorReason } from '../forms/parse-errors.js';
 import { cleanGateLimits, hasRepeatRoute } from './decision-gates.js';
 import { decisionRouteEdges, type DecisionRoutes } from './decision-route-edges.js';
+import type { GitHubPresetPreview } from './github-fragment.js';
 import {
   historyClock,
   recordStep,
@@ -28,6 +29,7 @@ import {
   KIND_INFO,
   nextEdgeId,
   nextNodeId,
+  validateDraft,
   type ConnectionRequest,
 } from './model.js';
 
@@ -132,6 +134,10 @@ export interface EditorState {
     change?: FormChange,
   ) => void;
   renameNode: (nodeId: string, nextId: string) => void;
+  applyGitHubPreset: (
+    preview: GitHubPresetPreview,
+    expected: Pick<EditorState, 'fieldErrors' | 'historyEpoch' | 'generation'>,
+  ) => string | undefined;
   moveNode: (nodeId: string, position: { x: number; y: number }) => void;
   removeNode: (nodeId: string) => void;
   connect: (connection: ConnectionRequest) => string | null;
@@ -442,6 +448,49 @@ export const useEditorStore = create<EditorState>((set, get) => {
         change,
         nodeId,
       ),
+
+    applyGitHubPreset: (preview, expected) => {
+      const s = get();
+      if (
+        s.definition !== preview.source ||
+        s.fieldErrors !== expected.fieldErrors ||
+        s.historyEpoch !== expected.historyEpoch ||
+        s.generation !== expected.generation
+      )
+        return 'The draft changed. Preview the preset again.';
+      const errors = validateDraft(preview.definition).issues.filter(
+        (issue) => issue.severity === 'error',
+      );
+      if (errors.length) return errors.map((issue) => issue.message).join(' ');
+      const scopes = new Set(
+        [preview.triggerId, ...preview.removedNodes.map((node) => node.id)].map(
+          (id) => `node:${id}`,
+        ),
+      );
+      const fieldErrors = Object.fromEntries(
+        Object.entries(s.fieldErrors).filter(([scope]) => !scopes.has(scope)),
+      );
+      const next = decisionRouteEdges(preview.definition, s.decisionRoutes);
+      const before = {
+        definition: preview.source,
+        fieldErrors: s.fieldErrors,
+        decisionRoutes: s.decisionRoutes,
+      };
+      const after = { ...next, fieldErrors };
+      set({
+        ...after,
+        revision: s.revision + 1,
+        saveState: 'pending',
+        ...recordStep(
+          historyOf(s),
+          before,
+          after,
+          { label: `apply GitHub preset to ${preview.triggerId}` },
+          historyClock.now(),
+        ),
+      });
+      return undefined;
+    },
 
     renameNode: (nodeId, nextId) => {
       if (nodeId === nextId) return;

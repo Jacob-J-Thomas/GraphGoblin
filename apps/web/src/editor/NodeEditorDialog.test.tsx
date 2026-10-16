@@ -18,10 +18,19 @@ const UNDO = '{Control>}z{/Control}';
 const REDO = '{Control>}{Shift>}z{/Shift}{/Control}';
 const store = () => useEditorStore.getState();
 
-/** A loop with one more node, `extra`, unconnected. */
+/** A loop with one more node; triggers have a valid successor for preset admission. */
 function loopWith(extra: NodeInput): LoopDefinitionInput {
   const definition = newLoopDefinition('dialog');
-  return { ...definition, nodes: [...definition.nodes, extra] };
+  return {
+    ...definition,
+    nodes: [...definition.nodes, extra],
+    edges: [
+      ...definition.edges,
+      ...(extra.kind === 'trigger'
+        ? [{ id: 'extra-start', from: { node: extra.id, port: 'out' }, to: { node: 'done' } }]
+        : []),
+    ],
+  };
 }
 
 async function openDialog(
@@ -286,7 +295,7 @@ describe('NodeEditorDialog evaluator-specific decisions', () => {
 });
 
 describe('NodeEditorDialog GitHub trigger presets', () => {
-  it('applies an editable body-signed preset as one undoable config change', async () => {
+  it('applies an editable body-signed fragment as one undoable graph change', async () => {
     const user = userEvent.setup();
     const dialog = await openDialog(
       {
@@ -317,8 +326,16 @@ describe('NodeEditorDialog GitHub trigger presets', () => {
         secretRef: 'issue-hook',
       },
       dedupeKey: '$headers."x-github-delivery"',
-      filter: expect.stringContaining('repository.full_name = "octo-team/service"'),
     });
+    expect(node()?.config).not.toHaveProperty('filter');
+    expect(
+      store().definition!.nodes.find((candidate) => candidate.id === 'event-check')!.config,
+    ).toMatchObject({
+      jsonata: expect.stringContaining('repository.full_name = "octo-team/service"'),
+    });
+    expect(store().definition!.edges.find((edge) => edge.id === 'extra-start')!.from.node).toBe(
+      'restore-output',
+    );
     expect(store().past).toHaveLength(1);
     expect(within(dialog).getByLabelText('Trigger type')).toHaveDisplayValue('Webhook');
     expect(within(dialog).queryByLabelText('Replay window seconds')).not.toBeInTheDocument();
