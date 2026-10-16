@@ -115,7 +115,10 @@ Preview lists config fields, added/replaced nodes and added/removed/rewired edge
 Apply checks the current schemas and graph rules, including limits, and records one
 undo step with held input. Existing check/restore/exit topology is explicitly
 reviewed for replacement, including owner edits; ambiguous/shared topology is
-retained and a new fragment is inserted. Poll presets remain configuration-only.
+retained and a new fragment is inserted for webhook recipes. The poll recipe
+removes a recognized earlier webhook fragment and reconnects its former successor
+directly to the trigger; otherwise, a retained downstream check is disclosed with
+a warning that it may ignore poll results.
 
 ## Inbound event bus (Decided, shipped in M6)
 

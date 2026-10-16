@@ -22,6 +22,7 @@ export * from './regex-safety.js';
 export * from './model-resolution.js';
 export * from './upgrade.js';
 export * from './upgrade-current.js';
+export * from './convert-v3-v4/index.js';
 export * from './upgrade-history-current.js';
 export * from './upgrade-history.js';
 

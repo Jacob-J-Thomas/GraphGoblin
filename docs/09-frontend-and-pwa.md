@@ -355,8 +355,10 @@ The three webhook recipes add an editable expression check, output-restoring mut
 and quiet terminal Success exit. No trigger filter is generated. Continue routes
 through the mutate to every former successor, preserving edge IDs, ports and manual
 routes. Nodes use collision-free IDs and the editor's card clearance geometry to
-place beside the trigger without moving existing cards. The poll recipe stays
-configuration-only.
+place beside the trigger without moving existing cards. The poll recipe removes a recognized earlier webhook fragment and reconnects
+its former successor directly to the trigger. If a downstream check cannot be
+safely recognized for removal, it stays in place and the preview warns that it
+may ignore poll results.
 
 Apply validates the resulting definition with the current schemas and `validateLoop`,
 including size limits. Errors block Apply; warnings are shown. Zero successors or
@@ -364,20 +366,23 @@ multiple edges from the same port remain invalid under the current graph rules;
 preview preserves them, and the owner must repair them before applying. The store
 commits graph, decision-row ownership and held-input clearing atomically as one undo
 step. Undo/redo restore the full graph and held input; focus returns to Trigger type.
-An intervening graph, held-input, load or history change invalidates the preview.
+An intervening graph, held-input, load or history change invalidates the preview and
+announces that it is out of date; applying again requires a fresh review. The two
+named JSON blocks are keyboard tab stops so their contents can be scrolled before
+reaching Cancel and Apply.
 
 Reapplying recognizes only a private immediate decision(pass --> mutate, ignore --> exit)
 topology and explicitly previews replacing all three current nodes, their edits,
 held text and internal edges. Successor edges keep their IDs. Config/label/position
-edits remain visible in that replacement. Shared or ambiguously rewired fragments
+edits remain visible in that replacement. For webhook recipes, shared or ambiguously rewired fragments
 are retained as downstream nodes, with insertion stated in the preview. There is
 no stored preset ownership or protected generated node kind.
 
 The shared web test helper `src/__fixtures__/triggers.ts` owns trigger construction
 so T3 can switch the discriminator centrally. Component regressions cover the
 five types, signing, optional presets, preview/cancel/apply, held input, validation
-focus and keyboard undo in light and dark themes. The affected Playwright specs
-follow these controls; browser execution is a separate orchestrator gate.
+focus and keyboard undo. The affected Playwright specs
+check these controls in light and dark themes; browser execution is a separate orchestrator gate.
 
 ### Cron schedule control (Decided, #20)
 

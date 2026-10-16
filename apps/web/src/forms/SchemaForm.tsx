@@ -351,6 +351,7 @@ const SchemaFormBindings = memo(function SchemaFormBindings({
                                   options={shape.options.map((option, index) => ({
                                     value: String(index),
                                     label: optionLabel(option, shape.discriminator),
+                                    schema: option,
                                   }))}
                                   value={String(unionIndex)}
                                   onChange={(value) => switchVariant(Number(value))}

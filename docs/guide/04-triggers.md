@@ -20,8 +20,8 @@ restore and quiet exit, rewiring the former connection through restore. The prev
 lists every node and edge change. All generated fields and nodes remain editable.
 Undo restores the whole graph and unfinished input; redo reapplies it. Reapplying
 explicitly reviews replacement of an existing check/restore/exit fragment, including
-your edits. Shared or ambiguously rewired nodes are retained and the preview says it
-is inserting another fragment. Changing the graph, held input, load or undo history
+your edits. For webhook recipes, shared or ambiguously rewired nodes are retained
+and the preview says it is inserting another fragment. Changing the graph, held input, load or undo history
 invalidates an open preview. Apply validates graph rules and limits; repair any
 unconnected or multiply connected output before applying. The stored discriminator remains `subtype` for now.
 
@@ -228,7 +228,10 @@ Use your actual trigger ID in the safely quoted lookup. It restores the whole
 output (`nodeId`, `value`, `at` and optional `schemaRef`), because a decision replaces
 `lastOutput`. The Ignore branch ends at an ordinary terminal Exit configured as
 `{"outcome":"success","returns":"none","destinations":[]}`, with no outgoing edge.
-Edit any generated node directly to change behavior. The poll recipe is unchanged.
+Edit any generated node directly to change behavior. The poll recipe removes a recognized earlier webhook fragment and reconnects
+its former successor directly to the trigger. Unrecognized, shared or ambiguous
+checks stay in place; the preview warns that they may ignore poll results.
+Removal and reconnection are part of the same undo step.
 
 Create the secret in Settings, publish the loop, and use its enabled `/hooks/<token>` URL as the GitHub payload URL. Configure JSON content and the same secret in GitHub. Subscribe to **Issues** for the example above; use **Pull requests** for PR checks. Expose only the hooks path through HTTPS, preserving the original body bytes. GitHub signs the payload in `X-Hub-Signature-256`; see its [signature verification reference](https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries) and [event payload reference](https://docs.github.com/en/webhooks/webhook-events-and-payloads).
 
