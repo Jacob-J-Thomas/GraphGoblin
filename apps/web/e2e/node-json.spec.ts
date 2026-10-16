@@ -190,9 +190,11 @@ for (const kind of ['expression', 'llm'] as const) {
     await expect(dialog.locator('[data-field="routes.1.id"] input')).toHaveValue('next');
     await page.reload();
     dialog = await openNode(page, 'approve');
-    await expect(dialog.locator(`[data-field="${sourcePath}"] [role="textbox"]`)).toHaveText(
-      source,
+    // The code editor renders one element per line, so compare its lines rather than its text.
+    await expect(dialog.locator(`[data-field="${sourcePath}"] .cm-line`)).toHaveText(
+      source.split('\n'),
     );
+    expect((await config(request, id))[sourcePath]).toBe(source);
     await expect(dialog.locator('[data-field="routes.1.id"] input')).toHaveValue('next');
     expect((await config(request, id))['routes']).toEqual(replaced);
   });
