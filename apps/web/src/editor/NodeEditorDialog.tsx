@@ -36,6 +36,7 @@ import { EXIT_FIELD_OVERRIDES } from './ExitFields.js';
 
 import { hasRepeatRoute, cleanGateLimits } from './decision-gates.js';
 import { TriggerPresets } from './TriggerPresets.js';
+import { TriggerTypePicker } from './TriggerTypePicker.js';
 import { CatalogWarningsContext } from '../forms/fields/model.js';
 import { GateLimitIssuesContext } from './DecisionGateFields.js';
 import { canvasFocusTarget } from './canvas-focus.js';
@@ -54,6 +55,7 @@ const DECISION_UNION_PICKERS = {
   answer: DecisionAnswerPicker,
 };
 const DECISION_FIELD_ORDER = ['instructions', 'jsonata', 'routes', 'answer'] as const;
+const TRIGGER_UNION_PICKERS = { '': TriggerTypePicker };
 const DECISION_FIELD_LABELS = {
   minConfidence: 'Min confidence',
   truthThreshold: 'Noul true-probability threshold',
@@ -537,20 +539,6 @@ export function NodeEditorDialog({
         {/* Not keyed by the node id: a rename keeps the form (and focus) where it is. Issue paths
             `config.<path>` name its fields (focus-field.ts). */}
         <div data-field-scope="config" className="grid min-w-0">
-          {node.kind === 'trigger' ? (
-            <TriggerPresets
-              config={node.config}
-              onApply={(config) => {
-                updateNode(node.id, { config }, { path: '', kind: 'commit', id: nextChangeId() });
-                setEpoch((current) => current + 1);
-              }}
-            />
-          ) : null}
-          {node.kind === 'trigger' && node.config?.subtype === 'poll' ? (
-            <HelpText>
-              With Items configured, leave Whole-probe dedupe key empty and use Per-item dedupe key.
-            </HelpText>
-          ) : null}
           {node.kind === 'exit' ? (
             <HelpText>
               Exits finish the run with Success, Failure or Exhausted. Returns is a JSONata
@@ -665,7 +653,11 @@ export function NodeEditorDialog({
                               label={`${node.id} config`}
                               controls={NODE_FIELD_CONTROLS}
                               unionPickers={
-                                node.kind === 'decision' ? DECISION_UNION_PICKERS : undefined
+                                node.kind === 'decision'
+                                  ? DECISION_UNION_PICKERS
+                                  : node.kind === 'trigger'
+                                    ? TRIGGER_UNION_PICKERS
+                                    : undefined
                               }
                               fieldOverrides={
                                 node.kind === 'decision'
@@ -691,6 +683,21 @@ export function NodeEditorDialog({
               </CatalogWarningsContext>
             </ReorderablePathsContext>
           </FormEditReviewContext>
+          {node.kind === 'trigger' ? (
+            <TriggerPresets
+              config={node.config}
+              heldInputs={fieldErrors[`node:${node.id}`]}
+              historyEpoch={historyEpoch}
+              onApply={(config) => {
+                const change = { path: '', kind: 'commit', id: nextChangeId() } as const;
+                for (const path of Object.keys(fieldErrors[`node:${node.id}`] ?? {}))
+                  setFieldError(`node:${node.id}`, path, undefined, undefined, change);
+                updateNode(node.id, { config }, change);
+                setEpoch((current) => current + 1);
+                requestAnimationFrame(() => focusIssue(bodyRef.current, 'config.subtype'));
+              }}
+            />
+          ) : null}
         </div>
         <NodeConnections node={node} definition={definition} />
       </section>

@@ -101,20 +101,20 @@ describe('EditorPage undo and redo', () => {
     await openEditor();
     const dialog = await editNode('start', 'Edit trigger start');
     const loaded = node('start')!.config;
-    await user.selectOptions(within(dialog).getByLabelText('Subtype'), 'cron');
+    await user.selectOptions(within(dialog).getByLabelText('Trigger type'), 'cron');
     expect(node('start')!.config).toMatchObject({ subtype: 'cron' });
     focusDone(dialog);
     await user.keyboard(UNDO);
     expect(node('start')!.config).toBe(loaded);
-    expect(within(dialog).getByLabelText('Subtype')).toHaveDisplayValue('manual');
+    expect(within(dialog).getByLabelText('Trigger type')).toHaveDisplayValue('Manual');
     await user.keyboard(REDO);
-    expect(within(dialog).getByLabelText('Subtype')).toHaveDisplayValue('cron');
+    expect(within(dialog).getByLabelText('Trigger type')).toHaveDisplayValue('Cron');
     // From the select itself: it has no text to undo, so the editor's undo applies, and focus
     // stays on the (remounted) select.
-    act(() => within(dialog).getByLabelText('Subtype').focus());
+    act(() => within(dialog).getByLabelText('Trigger type').focus());
     await user.keyboard(UNDO);
-    expect(within(dialog).getByLabelText('Subtype')).toHaveDisplayValue('manual');
-    expect(within(dialog).getByLabelText('Subtype')).toHaveFocus();
+    expect(within(dialog).getByLabelText('Trigger type')).toHaveDisplayValue('Manual');
+    expect(within(dialog).getByLabelText('Trigger type')).toHaveFocus();
     await user.click(within(dialog).getByRole('button', { name: 'Done' }));
 
     const settings = store().definition!.settings;
