@@ -30,20 +30,13 @@ Ports: `out`.
 
 ### `type: "webhook"`
 
-| Field                 | Type                           | Required | Default | Description                                                         |
-| --------------------- | ------------------------------ | -------- | ------- | ------------------------------------------------------------------- |
-| `signature`           | { scheme, header?, secretRef } | yes      |         | HMAC of the timestamp and body using the selected secret.           |
-| `replayWindowSeconds` | integer                        | no       | `300`   | How far the signed timestamp may be from the server clock.          |
-| `dedupeKey`           | string                         | no       |         | JSONata producing a key; a repeated key does not start another run. |
-| `filter`              | string                         | no       |         | JSONata predicate; payloads that fail it are recorded and ignored.  |
-
-### `type: "webhook"`
-
-| Field       | Type                           | Required | Default | Description                                                         |
-| ----------- | ------------------------------ | -------- | ------- | ------------------------------------------------------------------- |
-| `signature` | { scheme, header?, secretRef } | yes      |         | HMAC of the exact raw request body using the selected secret.       |
-| `dedupeKey` | string                         | no       |         | JSONata producing a key; a repeated key does not start another run. |
-| `filter`    | string                         | no       |         | JSONata predicate; payloads that fail it are recorded and ignored.  |
+| Field            | Type                                                              | Required | Default | Description                                                         |
+| ---------------- | ----------------------------------------------------------------- | -------- | ------- | ------------------------------------------------------------------- |
+| `authentication` | one of `"none"` \| `"hmac-sha256"` \| `"hmac-sha256"` by `type`   | no       | `{}`    | How the sender authenticates the raw request.                       |
+| `body`           | { type? }                                                         | no       | `{}`    | Representation of the trigger payload.                              |
+| `eventType`      | one of `"constant"` \| `"header"` \| `"json-pointer"` by `source` | no       | `{}`    | Invocation metadata; does not publish an Event.                     |
+| `dedupeKey`      | string                                                            | no       |         | JSONata producing a key; a repeated key does not start another run. |
+| `filter`         | string                                                            | no       |         | JSONata predicate; payloads that fail it are recorded and ignored.  |
 
 ### `type: "event"`
 

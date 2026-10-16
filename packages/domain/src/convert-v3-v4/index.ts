@@ -610,8 +610,36 @@ async function convertDefinition(
         nodes.push({ ...clone(original), config: converted });
       } else if (original.kind === 'trigger') {
         // Analyse and validate frozen V3 fields before emitting the current discriminator.
-        const { subtype, ...fields } = V3NodeConfigSchemas.trigger.parse(config);
-        nodes.push({ ...clone(original), config: { type: subtype, ...fields } });
+        const parsedTrigger = V3NodeConfigSchemas.trigger.parse(config);
+        const { subtype, ...fields } = parsedTrigger;
+        if (parsedTrigger.subtype === 'webhook') {
+          const { signature, dedupeKey, filter } = parsedTrigger;
+          const authentication = {
+            type: 'hmac-sha256',
+            message: signature.scheme === 'hmac-sha256' ? 'timestamp-body' : 'body',
+            header: signature.header.toLowerCase(),
+            secretRef: signature.secretRef,
+            ...(signature.scheme === 'hmac-sha256' && 'replayWindowSeconds' in parsedTrigger
+              ? { windowSeconds: parsedTrigger.replayWindowSeconds }
+              : {}),
+          };
+          const converted = await review.change(
+            original.id,
+            path,
+            'webhook-json-decoding',
+            parsedTrigger,
+            {
+              type: 'webhook',
+              authentication,
+              body: { type: 'json' },
+              eventType: { source: 'constant', value: 'webhook' },
+              ...(dedupeKey !== undefined ? { dedupeKey } : {}),
+              ...(filter !== undefined ? { filter } : {}),
+            },
+            'Review strict UTF-8 and nonempty JSON intake: empty/whitespace JSON now rejects (literal null remains valid); malformed UTF-8 no longer becomes replacement characters. Timestamp intake previously accepted empty bodies differently. Existing payload/filter/key values are preserved.',
+          );
+          nodes.push({ ...clone(original), config: converted });
+        } else nodes.push({ ...clone(original), config: { type: subtype, ...fields } });
       } else nodes.push({ ...clone(original), config });
       continue;
     }

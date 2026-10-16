@@ -35,6 +35,7 @@ import {
   replayStateAt,
   replayThread,
   stableHash,
+  stableStringify,
   threadView,
   validateJson,
 } from '@graphgoblin/domain';
@@ -86,6 +87,7 @@ export interface StartRunInput {
   /** Defaults to the first manual trigger, then the first trigger of any kind. */
   triggerNodeId?: string;
   triggerKind?: TriggerKind;
+  eventType?: string;
   source: InvocationSource;
   caller?: Caller;
   payload?: JsonValue;
@@ -297,6 +299,7 @@ export class RunManager {
   private stopped = false;
   private webhookSweep: ReturnType<typeof setInterval> | undefined;
   private webhookRecovery: Promise<void> | undefined;
+  private readonly webhookDispatches = new Set<Promise<void>>();
 
   constructor(
     private readonly ports: EnginePorts,
@@ -335,7 +338,8 @@ export class RunManager {
   }
 
   /** Resolves when nothing is queued or executing. */
-  waitForIdle(): Promise<void> {
+  async waitForIdle(): Promise<void> {
+    await this.waitForWebhookRecovery();
     if (this.queue.length === 0 && this.active.size === 0) return Promise.resolve();
     return new Promise((resolve) => this.idleWaiters.push(resolve));
   }
@@ -378,6 +382,7 @@ export class RunManager {
           kind: input.triggerKind ?? triggerKindOf(trigger),
           payload,
           receivedAt: now,
+          ...(input.eventType !== undefined ? { eventType: input.eventType } : {}),
           ...(input.dedupeKey ? { dedupeKey: input.dedupeKey } : {}),
         },
         ...(input.returnDefaults ? { returnDefaults: input.returnDefaults } : {}),
@@ -462,15 +467,14 @@ export class RunManager {
     };
   }
 
-  /** Body-signature receipts serialize with deletion, retain the frozen start on dispatch failure. */
+  /** Acknowledge the durable claim; dispatch and execution never delay the caller. */
   async receiveWebhook(
     claim: WebhookClaim,
     input: StartRunInput,
     filtered: boolean,
   ): Promise<{
-    state: 'duplicate' | 'deduplicated' | 'filtered' | 'admitted' | 'pending' | 'failed';
+    state: 'deduplicated' | 'filtered' | 'pending';
     receipt: WebhookReceipt;
-    run?: RunRecord;
   }> {
     if (
       claim.ownerId !== input.ownerId ||
@@ -478,8 +482,8 @@ export class RunManager {
       claim.triggerNodeId !== input.triggerNodeId
     )
       throw new AdmissionConflictError();
-    const prepared = await this.prepareStart(input);
     const result = await this.withPinLock(async () => {
+      const prepared = await this.prepareStart(input);
       await this.assertVersionPresent(prepared.version.id, input.loopId);
       const intent = filtered
         ? undefined
@@ -489,34 +493,70 @@ export class RunManager {
             prepared.thread,
             {},
           );
-      const { receipt, duplicate } = await this.ports.admission.claim(claim, intent);
-      if (duplicate) return { state: 'duplicate' as const, receipt };
+      let claimed;
+      try {
+        claimed = await this.ports.admission.claim(claim, intent);
+      } catch (error) {
+        // Confirm a lost claim acknowledgement by its allocated identity. Never acknowledge an
+        // unrelated receipt or manufacture another run after an uncertain storage result.
+        const saved = await this.ports.admission.get(claim.id);
+        if (
+          !saved ||
+          saved.ownerId !== claim.ownerId ||
+          saved.loopId !== claim.loopId ||
+          saved.triggerNodeId !== claim.triggerNodeId ||
+          saved.contentHash !== claim.contentHash ||
+          saved.inboundId !== claim.inbound.id ||
+          (saved.status === 'filtered' && intent !== undefined) ||
+          (!['filtered', 'deduplicated'].includes(saved.status) &&
+            stableStringify(saved.intent) !== stableStringify(intent))
+        )
+          throw error;
+        claimed = { receipt: saved };
+      }
+      const { receipt } = claimed;
       if (receipt.status === 'deduplicated') return { state: 'deduplicated' as const, receipt };
       if (!intent) return { state: 'filtered' as const, receipt };
+      return { state: 'pending' as const, receipt };
+    });
+    if (result.state === 'pending') {
+      const dispatch = this.dispatchWebhook(result.receipt).catch(() => {
+        // The claim is already durable. Even retry-metadata failure must not turn it into a
+        // public error; the unchanged pending receipt remains due at boot/the next sweep.
+        this.ports.logger.error({ code: 'WEBHOOK_RECOVERY_FAILED' }, 'webhook dispatch failed');
+      });
+      this.webhookDispatches.add(dispatch);
+      void dispatch.finally(() => this.webhookDispatches.delete(dispatch));
+    }
+    return result;
+  }
+
+  private async dispatchWebhook(receipt: Pick<WebhookReceipt, 'id' | 'attempts'>): Promise<void> {
+    const run = await this.withPinLock(async () => {
+      if (this.stopped) return undefined;
+      let current = receipt;
       try {
-        const run = await this.ports.admission.create(intent, receipt.id);
-        return { state: 'admitted' as const, receipt, run };
-      } catch (error) {
-        // A lost commit acknowledgement may leave an admitted queued run. Reconcile its exact
-        // saved identity before reporting a retry; notification errors never undo a commit.
+        const saved = await this.ports.admission.get(receipt.id);
+        if (saved) current = saved;
+        if (!saved || saved.status !== 'pending') return undefined;
+        if (saved.nextAttemptAt && saved.nextAttemptAt > this.now()) return undefined;
+        const intent = saved.intent;
+        if (!intent) throw new AdmissionConflictError();
+        await this.assertVersionPresent(intent.run.versionId, intent.run.loopId);
         try {
-          const saved = await this.ports.admission.get(receipt.id);
-          if (saved?.status === 'admitted') {
-            const run = await this.ports.admission.create(intent, receipt.id);
-            return { state: 'admitted' as const, receipt: saved, run };
-          }
-        } catch {
-          /* Uncertain storage remains recoverable from the durable run/receipt. */
+          return await this.ports.admission.create(intent, receipt.id);
+        } catch (error) {
+          const confirmed = await this.ports.admission.get(receipt.id);
+          if (confirmed?.status === 'admitted')
+            return await this.ports.admission.create(intent, receipt.id);
+          throw error;
         }
-        await this.recordWebhookFailure(receipt, error);
-        const saved = (await this.ports.admission.get(receipt.id)) ?? receipt;
-        return saved.status === 'failed'
-          ? { state: 'failed' as const, receipt: saved }
-          : { state: 'pending' as const, receipt: saved };
+      } catch (error) {
+        await this.recordWebhookFailure(current, error);
+        return undefined;
       }
     });
-    if (result.run) this.enqueue(result.run.id);
-    return result;
+    if (run && !this.stopped) this.enqueue(run.id);
   }
 
   private async recordWebhookFailure(
@@ -544,20 +584,7 @@ export class RunManager {
       const due = await this.ports.admission.due(this.now(), 5);
       for (const receipt of due) {
         if (this.stopped) break;
-        const run = await this.withPinLock(async () => {
-          try {
-            const saved = await this.ports.admission.get(receipt.id);
-            if (!saved || saved.status !== 'pending') return undefined;
-            const intent = saved.intent;
-            if (!intent) throw new AdmissionConflictError();
-            await this.assertVersionPresent(intent.run.versionId, intent.run.loopId);
-            return await this.ports.admission.create(intent, receipt.id);
-          } catch (error) {
-            await this.recordWebhookFailure(receipt, error);
-            return undefined;
-          }
-        });
-        if (run && !this.stopped) this.enqueue(run.id);
+        await this.dispatchWebhook(receipt);
       }
     })().finally(() => {
       this.webhookRecovery = undefined;
@@ -566,6 +593,7 @@ export class RunManager {
   }
 
   async waitForWebhookRecovery(): Promise<void> {
+    while (this.webhookDispatches.size) await Promise.all(this.webhookDispatches);
     await this.webhookRecovery;
   }
 

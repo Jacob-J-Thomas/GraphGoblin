@@ -247,13 +247,11 @@ export const webhookEndpoints = sqliteTable(
     triggerNodeId: text('trigger_node_id').notNull(),
     /** Random 32-byte URL-safe value; the public path is `/hooks/<token>`. Kept across versions. */
     token: text('token').notNull(),
-    /** Secret name in the owner's secret store; the value is resolved at verification time. */
-    secretRef: text('secret_ref').notNull(),
-    signatureHeader: text('signature_header').notNull(),
-    signatureScheme: text('signature_scheme', {
-      enum: ['hmac-sha256', 'hmac-sha256-body'],
-    }).notNull(),
-    replayWindowSeconds: integer('replay_window_seconds'),
+    authType: text('auth_type', { enum: ['none', 'hmac-sha256'] }).notNull(),
+    signatureMessage: text('signature_message', { enum: ['body', 'timestamp-body'] }),
+    signatureHeader: text('signature_header'),
+    secretRef: text('secret_ref'),
+    windowSeconds: integer('window_seconds'),
     enabled: integer('enabled', { mode: 'boolean' }).notNull(),
     createdAt: text('created_at').notNull(),
   },
@@ -262,7 +260,7 @@ export const webhookEndpoints = sqliteTable(
     index('webhook_endpoints_loop_idx').on(t.loopId, t.versionId),
     check(
       'webhook_endpoint_signing_check',
-      sql`(${t.signatureScheme} = 'hmac-sha256' AND ${t.replayWindowSeconds} > 0 AND ${t.replayWindowSeconds} IS NOT NULL) OR (${t.signatureScheme} = 'hmac-sha256-body' AND ${t.replayWindowSeconds} IS NULL)`,
+      sql`(${t.authType} = 'none' AND ${t.signatureMessage} IS NULL AND ${t.signatureHeader} IS NULL AND ${t.secretRef} IS NULL AND ${t.windowSeconds} IS NULL) OR (${t.authType} = 'hmac-sha256' AND ${t.signatureHeader} IS NOT NULL AND ${t.secretRef} IS NOT NULL AND ((${t.signatureMessage} IS NOT NULL AND ${t.signatureMessage} = 'body' AND ${t.windowSeconds} IS NULL) OR (${t.signatureMessage} IS NOT NULL AND ${t.signatureMessage} = 'timestamp-body' AND ${t.windowSeconds} IS NOT NULL AND typeof(${t.windowSeconds}) = 'integer' AND ${t.windowSeconds} BETWEEN 1 AND 86400)))`,
     ),
   ],
 );
@@ -306,12 +304,7 @@ export const webhookReceipts = sqliteTable(
     failureCode: text('failure_code').$type<WebhookFailureCode>(),
   },
   (t) => [
-    uniqueIndex('webhook_receipts_content_idx').on(
-      t.ownerId,
-      t.loopId,
-      t.triggerNodeId,
-      t.contentHash,
-    ),
+    index('webhook_receipts_content_idx').on(t.ownerId, t.loopId, t.triggerNodeId, t.contentHash),
     uniqueIndex('webhook_receipts_inbound_idx').on(t.inboundId),
     index('webhook_receipts_due_idx').on(t.status, t.nextAttemptAt),
     check(

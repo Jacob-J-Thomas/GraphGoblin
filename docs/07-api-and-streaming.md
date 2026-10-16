@@ -33,7 +33,7 @@ Runs
 
 Triggers and events
   POST   /triggers/cron/preview         next cron slots without saving or arming; loops:read
-  POST   /hooks/{endpointToken}         signed webhook receiver (public; timestamp/body or raw-body HMAC, scheme-specific replay protection, 1 MiB, rate limit; see 08)
+  POST   /hooks/{endpointToken}         webhook receiver (None or HMAC; JSON/text/bytes); 202 {accepted:true} after atomic receipt claim, asynchronous dispatch (1 MiB, rate limit; see 08)
   GET    /loops/{id}/triggers           schedules, webhook endpoints (path only, never the secret), armed poll triggers
   POST   /events                        inbound event bus; body: { type, payload, dedupeKey? }; fires event triggers, returns runIds and duplicate
   GET    /events?type=&before=&limit=   stored inbound events (API, exit channels, webhooks), newest first
@@ -55,6 +55,16 @@ Settings and catalog
 ```
 
 Run and loop lists are paginated with cursors. Loop/run ids are ULIDs; classifier ids are bounded URL-safe names, with `jev` reserved for the built-in.
+
+Webhook endpoint summaries expose nested safe `authentication`, pinned `body`, `eventType`,
+optional `dedupeKey`/`filter`, and `configurationAvailable`. Secret references are names only.
+`GET /events` exposes that summary under optional `webhook` for webhook deliveries, retaining the
+existing delivery state/attempts/retry/failure/run-link fields. Disabled orphans mark configuration
+unavailable. Enabled mismatches log a safe warning while both listings stay readable; intake still
+refuses with `HOOK_NOT_READY`. Events lookups share request-local endpoint/version/loop caches. Public hooks return only
+`202 {accepted:true}` after saving; raw-byte authentication precedes decoding/extraction. See 08
+for `EVENT_TYPE_AMBIGUOUS` (400), `EVENT_TYPE_INVALID` (422), bounds and exact recipes. Invocation
+event metadata does not change `POST /events` or publish anything to the bus.
 
 ## Loop deletion
 

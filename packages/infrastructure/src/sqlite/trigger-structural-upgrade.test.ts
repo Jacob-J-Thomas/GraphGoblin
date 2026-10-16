@@ -27,14 +27,29 @@ async function previousStructure(custom = false) {
   const handle = await openMemoryDatabase();
   handles.push(handle);
   const definition = minimalLoop();
-  definition.nodes[0]!.config = {
-    type: 'webhook',
-    signature: { scheme: 'hmac-sha256', secretRef: 'secret' },
-    ...(custom ? { dedupeKey: 'payload.id' } : {}),
-  };
   const repo = new SqliteLoopRepository(handle.db, new FakeClock(), new FakeIds());
   const { loop } = await repo.create('local', LoopDefinitionSchema.parse(definition));
   const version = (await repo.publish(loop.id))!;
+  const historical = {
+    ...definition,
+    nodes: definition.nodes.map((node, index) =>
+      index === 0
+        ? {
+            ...node,
+            config: {
+              subtype: 'webhook',
+              signature: { scheme: 'hmac-sha256', secretRef: 'secret' },
+              ...(custom ? { dedupeKey: 'payload.id' } : {}),
+            },
+          }
+        : node,
+    ),
+  };
+  await handle.client.execute({
+    sql: 'UPDATE loop_versions SET definition=? WHERE id=?',
+    args: [JSON.stringify(historical), version.id],
+  });
+
   const key = 'sig:sha256=' + 'ab'.repeat(32),
     runId = fakeUlid('history-run'),
     invocationId = fakeUlid('history-invocation');
@@ -287,7 +302,7 @@ it('preserves a failed decision and its resumability while refusing the incomple
   await refusesUnchanged(handle.client, await approval(handle));
 });
 
-it('refuses a missing structural ledger, a nonunique receipt index and inconsistent signing fields before startup mutation', async () => {
+it('refuses a missing structural ledger, a content-unique receipt index and inconsistent signing fields before startup mutation', async () => {
   const ledger = await openMemoryDatabase();
   handles.push(ledger);
   await ledger.client.execute('DELETE FROM __drizzle_migrations WHERE created_at>=1791396000000');
@@ -297,7 +312,7 @@ it('refuses a missing structural ledger, a nonunique receipt index and inconsist
   handles.push(unique);
   await unique.client.execute('DROP INDEX webhook_receipts_content_idx');
   await unique.client.execute(
-    'CREATE INDEX webhook_receipts_content_idx ON webhook_receipts(owner_id,loop_id,trigger_node_id,content_hash)',
+    'CREATE UNIQUE INDEX webhook_receipts_content_idx ON webhook_receipts(owner_id,loop_id,trigger_node_id,content_hash)',
   );
   await expect(guardDatabaseUpgrade(unique.client)).rejects.toMatchObject({
     code: 'DATA_UPGRADE_REQUIRED',
@@ -306,7 +321,7 @@ it('refuses a missing structural ledger, a nonunique receipt index and inconsist
   handles.push(signing);
   await signing.client.execute('PRAGMA ignore_check_constraints=ON');
   await signing.client.execute(
-    "INSERT INTO webhook_endpoints(id,owner_id,loop_id,version_id,trigger_node_id,token,secret_ref,signature_header,signature_scheme,replay_window_seconds,enabled,created_at) VALUES ('ep','local','loop','version','hook','token','secret','x-signature','hmac-sha256-body',300,1,'2026-10-02T12:00:00.000Z')",
+    "INSERT INTO webhook_endpoints(id,owner_id,loop_id,version_id,trigger_node_id,token,secret_ref,signature_header,auth_type,signature_message,window_seconds,enabled,created_at) VALUES ('ep','local','loop','version','hook','token','secret','x-signature','hmac-sha256','body',300,1,'2026-10-02T12:00:00.000Z')",
   );
   await expect(guardDatabaseUpgrade(signing.client)).rejects.toMatchObject({
     code: 'DATA_UPGRADE_REQUIRED',
@@ -330,7 +345,7 @@ it('refuses an incomplete intermediate receipt layout before migration or recove
     'CREATE INDEX webhook_receipts_due_idx ON webhook_receipts(status,next_attempt_at)',
   );
   await expect(handle.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
-  expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toHaveLength(13);
+  expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toHaveLength(14);
 });
 it('rolls back when a proven linked webhook run vanishes before rewrite traversal', async () => {
   const { handle, runId, key } = await previousStructure();

@@ -52,11 +52,14 @@ function repositoryFilter(setup: GitHubTriggerSetup): string {
 function bodyWebhook(setup: GitHubTriggerSetup): TriggerInput {
   return {
     type: 'webhook',
-    signature: {
-      scheme: 'hmac-sha256-body',
+    authentication: {
+      type: 'hmac-sha256',
+      message: 'body',
       header: 'x-hub-signature-256',
       secretRef: setup.secretRef.trim(),
     },
+    body: { type: 'json' },
+    eventType: { source: 'header', name: 'x-github-event', fallback: 'webhook' },
     dedupeKey: '$headers."x-github-delivery"',
   };
 }
@@ -123,11 +126,12 @@ export function unsupportedSigningScheme(config: unknown): string | undefined {
   if (typeof config !== 'object' || config === null || Array.isArray(config)) return undefined;
   const trigger = config as Record<string, unknown>;
   if (trigger['type'] !== 'webhook') return undefined;
-  const signature = trigger['signature'];
-  if (typeof signature !== 'object' || signature === null || Array.isArray(signature))
-    return undefined;
-  const scheme = (signature as Record<string, unknown>)['scheme'];
-  if (typeof scheme !== 'string' || scheme === 'hmac-sha256' || scheme === 'hmac-sha256-body')
-    return undefined;
-  return scheme;
+  const auth = trigger['authentication'];
+  if (typeof auth !== 'object' || auth === null || Array.isArray(auth)) return undefined;
+  const { type, message } = auth as Record<string, unknown>;
+  if (typeof type !== 'string' || type === 'none') return undefined;
+  if (type !== 'hmac-sha256') return type;
+  return typeof message === 'string' && message !== 'body' && message !== 'timestamp-body'
+    ? message
+    : undefined;
 }

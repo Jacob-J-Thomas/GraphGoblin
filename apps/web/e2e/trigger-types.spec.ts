@@ -44,12 +44,25 @@ for (const theme of ['light', 'dark']) {
     await expect(dialog.getByLabel('Event type')).toBeVisible();
     await expect(dialog.getByLabel('Filter', { exact: true })).toBeVisible();
     await type.selectOption('webhook');
-    const signing = dialog.getByLabel('Signing protocol');
-    await expect(signing.locator('option:checked')).toHaveText('Timestamp and body');
-    await expect(dialog.getByLabel('Replay window seconds')).toBeVisible();
-    await signing.selectOption({ label: 'Body only (GitHub)' });
-    await expect(dialog.getByLabel('Replay window seconds')).toHaveCount(0);
-    await dialog.getByLabel('Secret ref').fill('synthetic-hook');
+    const signing = dialog.getByLabel('Authentication recipe');
+    await expect(signing.locator('option:checked')).toHaveText('None');
+    await signing.selectOption({ label: 'Timestamp and body HMAC' });
+    await expect(dialog.getByLabel('Timestamp window (seconds)')).toBeVisible();
+    await signing.selectOption({ label: 'Body HMAC' });
+    await expect(dialog.getByLabel('Timestamp window (seconds)')).toHaveCount(0);
+    await dialog.getByLabel('Secret name', { exact: true }).fill('synthetic-hook');
+    const modes = dialog.getByRole('radiogroup', { name: 'Body mode' });
+    await modes.getByText('text', { exact: true }).click();
+    await expect(modes.getByRole('radio', { name: 'text', exact: true })).toBeChecked();
+    await page.keyboard.press('Control+z');
+    await expect(modes.getByRole('radio', { name: 'json', exact: true })).toBeChecked();
+    await page.keyboard.press('Control+y');
+    await dialog.getByLabel('Event type source').selectOption('header');
+    await dialog.getByLabel('Event header').fill('x-provider-event');
+    await expect(dialog.getByLabel('Fallback event type')).toHaveAttribute(
+      'placeholder',
+      'webhook',
+    );
 
     const optional = dialog.getByRole('button', { name: 'Start from a preset' });
     await optional.focus();
@@ -94,11 +107,77 @@ for (const theme of ['light', 'dark']) {
     await expect(dialog.getByLabel('Interval seconds')).toHaveValue('60');
     await page.keyboard.press('Control+z');
     await expect(type).toHaveValue('webhook');
-    await expect(dialog.getByLabel('Secret ref')).toHaveValue('synthetic-hook');
-    await expect(signing.locator('option:checked')).toHaveText('Body only (GitHub)');
+    await expect(dialog.getByLabel('Secret name', { exact: true })).toHaveValue('synthetic-hook');
+    await expect(signing.locator('option:checked')).toHaveText('Body HMAC');
     await page.keyboard.press('Control+y');
     await expect(type).toHaveValue('poll');
     await expect(dialog.getByLabel('Max runs per poll')).toHaveValue('5');
     await page.screenshot({ path: testInfo.outputPath(`poll-fields-${theme}.png`) });
+  });
+}
+
+for (const width of [360, 1440]) {
+  test(`general webhook configuration persists and validates at ${width}px`, async ({
+    page,
+    request,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    const created = await request.post('/loops', {
+      data: { definition: approvalLoop(`general webhook ${width}`) },
+    });
+    expect(created.status()).toBe(201);
+    const id = ((await created.json()) as { loop: { id: string } }).loop.id;
+    await page.goto(`/app/loops/${id}/edit`);
+    const dialog = await openNode(page, 'start');
+    await dialog.getByLabel('Trigger type').selectOption('webhook');
+    const auth = dialog.getByLabel('Authentication recipe');
+    await expect(auth.locator('option:checked')).toHaveText('None');
+    await auth.focus();
+    await page.keyboard.press('ArrowDown');
+    await expect(auth.locator('option:checked')).toHaveText('Body HMAC');
+    await dialog.getByLabel('Secret name', { exact: true }).fill('synthetic-hook');
+    await expect(dialog.getByLabel('Signing header')).toHaveAttribute(
+      'placeholder',
+      'x-hub-signature-256',
+    );
+    await auth.focus();
+    await auth.selectOption({ label: 'Timestamp and body HMAC' });
+    await expect(dialog.getByLabel('Timestamp window (seconds)')).toHaveAttribute(
+      'placeholder',
+      '300',
+    );
+    await page.keyboard.press('Control+z');
+    await expect(auth.locator('option:checked')).toHaveText('Body HMAC');
+    await expect(auth).toBeFocused();
+    await auth.selectOption({ label: 'None' });
+    await expect(dialog.getByLabel('Secret name', { exact: true })).toHaveCount(0);
+    const modes = dialog.getByRole('radiogroup', { name: 'Body mode' });
+    await modes.getByText('bytes', { exact: true }).click();
+    await dialog.getByLabel('Event type source').selectOption('json-pointer');
+    await dialog.getByLabel('JSON pointer').fill('/event~1type/0');
+    await expect(
+      dialog.getByText('JSON pointers require JSON body mode', { exact: true }).first(),
+    ).toBeVisible();
+    await modes.getByText('json', { exact: true }).click();
+    await expect(
+      dialog.getByText('JSON pointers require JSON body mode', { exact: true }),
+    ).toHaveCount(0);
+    await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
+    await page.reload();
+    const reopened = await openNode(page, 'start');
+    await expect(reopened.getByLabel('Authentication recipe').locator('option:checked')).toHaveText(
+      'None',
+    );
+    await expect(reopened.getByLabel('JSON pointer')).toHaveValue('/event~1type/0');
+    await expect(reopened.getByLabel('Fallback event type')).toHaveValue('webhook');
+    const exported = await request.get(`/loops/${id}/export?draft=true`);
+    expect(exported.ok()).toBe(true);
+    const value = (await exported.json()) as { loop: { nodes: { id: string; config: unknown }[] } };
+    expect(value.loop.nodes.find((node) => node.id === 'start')?.config).toMatchObject({
+      type: 'webhook',
+      authentication: { type: 'none' },
+      body: { type: 'json' },
+      eventType: { source: 'json-pointer', pointer: '/event~1type/0', fallback: 'webhook' },
+    });
   });
 }

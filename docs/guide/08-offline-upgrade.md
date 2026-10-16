@@ -1,5 +1,12 @@
 # Upgrade stored loops to format 3
 
+**Current format-4 boundary:** startup requires the SQL 0013 structure and refuses older stores.
+The procedures below describe the retained format-3 converter; they do not deliver the integrated
+format-4 installed-store cutover. The pure V3-to-V4 definition converter maps both old webhook
+signing recipes to nested `authentication`, supplies JSON/constant metadata and requires one
+hash-bound `webhook-json-decoding` review per trigger for strict UTF-8/nonempty JSON. Definition
+proposals pass the current schema and graph validation. They do not authorize database apply.
+
 The retained format-2 stage replaces decision strategy chains with one explicit evaluator, introduces stable option IDs and canonical decision evidence, and moves model defaults under their harness. The normal API accepts only the current format. An old portable export returns `LOOP_FORMAT_UPGRADE_REQUIRED`; an old database stops startup with `DATA_UPGRADE_REQUIRED` before migrations, recovery or triggers run. A genuinely empty database is initialized normally. Context-thread schema version remains 1.
 
 Use the one-off `graphgoblin-upgrade` command from this checkout after `pnpm.cmd build`. It never guesses which evaluator should replace a mixed chain. Keep the old build, original data, and exports until the upgraded copy has passed your acceptance checks. Architecture approval is separate from approval of the actual conversion manifest.
@@ -14,7 +21,7 @@ pnpm.cmd graphgoblin-upgrade export --input .\old-loop.json --out .\converted-lo
 
 A successful result is a format-3 export (or a version-3 definition when the input was a bare definition). Format-1 input first passes through a frozen format-2 conversion; both stages must resolve before any output is accepted. Exit code 2 means the output is a refusal report, not an importable loop. Resolve every reported ambiguity in a separate JSON resolutions file, then retry to a different new output path with `--resolutions .\resolutions.json`.
 
-The offline converter retains fixed format-2 and format-3 validation rules; the current stored format remains 3.
+The retained offline converter uses fixed format-2 and format-3 validation rules. The current runtime requires format 4; older stores and exports await the reviewed integrated cutover.
 
 The resolutions object has four optional fields:
 
@@ -75,6 +82,6 @@ After `pnpm build`, run `pnpm test:upgrade` for the offline command acceptance c
 
 ## Structural readiness of earlier development stores
 
-The GitHub-trigger cutover extends this same converter with endpoint signing schemes, durable webhook receipts and an indexed trigger dedupe lookup. A store already converted to definition format 2 by an earlier feature-branch build may still lack those structures. Stop that instance and run the inventory, resolution, verified-backup and apply workflow above; changing the version marker or allowing ordinary startup migrations is not a substitute. Normal startup checks structure before migrations, recovery or arming triggers.
+The retained GitHub-trigger converter handles historical endpoint signing schemes, durable webhook receipts and an indexed trigger dedupe lookup. The current format-4 baseline is SQL 0013: endpoints have recipe CHECKs and the raw-content receipt index is non-unique. Body, event extraction and explicit key configuration live in the pinned definition. Earlier development stores remain refused until the integrated cutover; changing a version marker or allowing ordinary startup migrations is not a substitute. Normal startup checks structure before migrations, recovery or arming triggers.
 
 The inventory refuses every nonterminal run and pending webhook admission. Existing canonical decision history is preserved. Old default timestamp-signature dedupe keys are converted only when endpoint, version, node and signing configuration prove their origin and no authored dedupe expression overrides the default. Custom keys remain unchanged; missing or ambiguous provenance stops conversion. Disabled endpoints left by ordinary loop deletion may remain unchanged only when the loop, its versions and runs are absent and every retained delivery has an empty, well-formed run-link list. Their keys are not inferred or rewritten. Enabled endpoints, surviving execution references and inconsistent live-loop provenance still refuse conversion. The manifest transaction applies structural and fact changes together, retaining its source audit.

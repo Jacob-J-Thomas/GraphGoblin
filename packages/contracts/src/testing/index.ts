@@ -159,8 +159,15 @@ export function everyFieldLoop(): LoopDefinitionInput {
         label: 'Hook',
         config: {
           type: 'webhook',
-          signature: { scheme: 'hmac-sha256', header: 'x-sig', secretRef: 'hook-secret' },
-          replayWindowSeconds: 120,
+          authentication: {
+            type: 'hmac-sha256',
+            message: 'timestamp-body',
+            header: 'x-sig',
+            secretRef: 'hook-secret',
+            windowSeconds: 120,
+          },
+          body: { type: 'json' },
+          eventType: { source: 'constant', value: 'webhook' },
           dedupeKey: 'payload.id',
           filter: 'payload.action = "opened"',
         },
@@ -202,8 +209,9 @@ export function everyFieldLoop(): LoopDefinitionInput {
         label: 'GitHub hook',
         config: {
           type: 'webhook',
-          signature: {
-            scheme: 'hmac-sha256-body',
+          authentication: {
+            type: 'hmac-sha256',
+            message: 'body',
             header: 'x-hub-signature-256',
             secretRef: 'github-secret',
           },

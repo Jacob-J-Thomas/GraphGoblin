@@ -15,7 +15,7 @@ const DELIVERY: Record<EventDelivery['state'], { label: string; tone: Tone; expl
       label: 'Filtered',
       tone: 'neutral',
       explanation:
-        'No run was started. This authenticated body stays consumed if you later change the filter.',
+        'No run was started. An authored key stays consumed; unkeyed redeliveries are separate deliveries.',
     },
     deduplicated: {
       label: 'Deduplicated',
@@ -71,8 +71,35 @@ function Source({ source }: { source: string }) {
   return <span>{source}</span>;
 }
 
+function WebhookConfiguration({ webhook }: { webhook: InboundEvent['webhook'] }) {
+  if (!webhook) return null;
+  return (
+    <details className="mt-2 text-xs">
+      <summary className="cursor-pointer touch-target">Webhook configuration</summary>
+      {webhook.configurationAvailable ? (
+        <pre
+          tabIndex={0}
+          role="region"
+          aria-label="Webhook configuration"
+          className="mt-1 max-w-md overflow-auto rounded-md border border-default bg-code-bg px-2 py-1 text-code-fg"
+        >
+          {prettyJson({
+            authentication: webhook.authentication,
+            body: webhook.body,
+            eventType: webhook.eventType,
+            dedupeKey: webhook.dedupeKey,
+            filter: webhook.filter,
+          })}
+        </pre>
+      ) : (
+        <p>Configuration unavailable for this delivery.</p>
+      )}
+    </details>
+  );
+}
+
 /**
- * Events received on the inbound bus: `POST /events`, signed webhook deliveries, and exit events
+ * Events received on the inbound bus: `POST /events`, webhook deliveries, and exit events
  * of other runs, with the runs each one started.
  */
 export function EventsPage() {
@@ -109,6 +136,7 @@ export function EventsPage() {
                       </Td>
                       <Td label="Source" className="text-sm">
                         <Source source={event.source} />
+                        <WebhookConfiguration webhook={event.webhook} />
                       </Td>
                       <Td label="Delivery" className="text-sm">
                         <Delivery delivery={event.delivery} />

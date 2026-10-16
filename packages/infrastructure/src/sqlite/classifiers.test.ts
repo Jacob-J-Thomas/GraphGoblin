@@ -148,8 +148,8 @@ describe('classifier repository', () => {
           .map((column) => `"${column.replaceAll('"', '""')}"`)
           .join(',');
         await writeFile(join(dir, 'meta/_journal.json'), JSON.stringify(journal));
-        // The current catalog includes 0012_retire_template_instances as its thirteenth entry.
-        expect(await handle.pendingMigrations()).toBe(13 - count);
+        // The current catalog includes 0013_trigger_configuration as its fourteenth entry.
+        expect(await handle.pendingMigrations()).toBe(14 - count);
         await expect(handle.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
         await applyShippedSqlToHistoricalTestFixture(handle, dir);
         expect((await handle.client.execute('SELECT * FROM loop_versions')).rows).toEqual(versions);

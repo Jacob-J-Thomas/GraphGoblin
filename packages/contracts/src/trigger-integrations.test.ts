@@ -1,77 +1,119 @@
 import { describe, expect, it } from 'vitest';
-import { z } from 'zod';
-import { fieldMeta } from './meta.js';
 import {
-  BodyWebhookConfigSchema,
-  PollItemsSchema,
-  TimestampWebhookConfigSchema,
   WebhookConfigSchema,
+  WebhookAuthenticationSchema,
+  PollItemsSchema,
+  HeaderNameSchema,
+  EventNameSchema,
+  WebhookPointerSchema,
 } from './trigger-integrations.js';
 
-describe('strict webhook signing branches', () => {
-  it('preserves existing timestamp field placement, defaults, filter and dedupe', () => {
-    const config = {
+describe('general webhook configuration', () => {
+  it('defaults nested objects and recipe-specific fields', () => {
+    expect(WebhookConfigSchema.parse({ type: 'webhook' })).toEqual({
       type: 'webhook',
-      signature: { scheme: 'hmac-sha256', secretRef: 'hook-key' },
-      filter: 'payload.action = "opened"',
-      dedupeKey: 'headers."x-github-delivery"',
-    };
-    expect(WebhookConfigSchema.parse(config)).toEqual({
-      ...config,
-      signature: { ...config.signature, header: 'x-graphgoblin-signature' },
-      replayWindowSeconds: 300,
+      authentication: { type: 'none' },
+      body: { type: 'json' },
+      eventType: { source: 'constant', value: 'webhook' },
     });
-    expect(WebhookConfigSchema.parse({ ...config, replayWindowSeconds: 42 })).toHaveProperty(
-      'replayWindowSeconds',
-      42,
-    );
-    expect(fieldMeta(TimestampWebhookConfigSchema).title).toBe('webhook (timestamp)');
-  });
-
-  it('defaults the body header while refusing any timestamp-window field', () => {
-    const config = {
-      type: 'webhook',
-      signature: { scheme: 'hmac-sha256-body', secretRef: 'hook-key' },
-    };
-    expect(WebhookConfigSchema.parse(config)).toEqual({
-      ...config,
-      signature: { ...config.signature, header: 'x-hub-signature-256' },
-    });
-    expect(WebhookConfigSchema.safeParse({ ...config, replayWindowSeconds: 300 }).success).toBe(
-      false,
-    );
     expect(
-      WebhookConfigSchema.safeParse({ ...config, replayWindowSeconds: undefined }).success,
-    ).toBe(false);
-    expect(fieldMeta(BodyWebhookConfigSchema).title).toBe('webhook (body)');
+      WebhookAuthenticationSchema.parse({
+        type: 'hmac-sha256',
+        message: 'body',
+        secretRef: 'hook',
+      }),
+    ).toEqual({
+      type: 'hmac-sha256',
+      message: 'body',
+      secretRef: 'hook',
+      header: 'x-hub-signature-256',
+    });
+    expect(
+      WebhookAuthenticationSchema.parse({
+        type: 'hmac-sha256',
+        message: 'timestamp-body',
+        secretRef: 'hook',
+      }),
+    ).toEqual({
+      type: 'hmac-sha256',
+      message: 'timestamp-body',
+      secretRef: 'hook',
+      header: 'x-graphgoblin-signature',
+      windowSeconds: 300,
+    });
   });
-
-  it('rejects unsupported schemes, missing secrets, injected headers and unknown fields', () => {
-    for (const signature of [
-      { scheme: 'sha1', secretRef: 'key' },
-      { scheme: 'hmac-sha256-body' },
-      { scheme: 'hmac-sha256-body', secretRef: '' },
-      { scheme: 'hmac-sha256-body', secretRef: 'key', header: 'x-signature\r\nAuthorization' },
-      { scheme: 'hmac-sha256-body', secretRef: 'key', header: 'x signature' },
-      { scheme: 'hmac-sha256-body', secretRef: 'key', replayWindowSeconds: 1 },
+  it('accepts modes and extraction choices, retaining filter and key', () => {
+    for (const type of ['json', 'text', 'bytes'])
+      expect(
+        WebhookConfigSchema.parse({
+          type: 'webhook',
+          body: { type },
+          dedupeKey: 'id',
+          filter: 'true',
+        }).body.type,
+      ).toBe(type);
+    for (const eventType of [
+      { source: 'header', name: 'x-event' },
+      { source: 'json-pointer', pointer: '/a~1b/~0/0' },
+      { source: 'json-pointer', pointer: '' },
     ])
-      expect(WebhookConfigSchema.safeParse({ type: 'webhook', signature }).success).toBe(false);
-    expect(
-      WebhookConfigSchema.safeParse({
-        type: 'webhook',
-        signature: { scheme: 'hmac-sha256-body', secretRef: 'key' },
-        unknown: true,
-      }).success,
-    ).toBe(false);
+      expect(WebhookConfigSchema.parse({ type: 'webhook', eventType }).eventType).toMatchObject({
+        ...eventType,
+        fallback: 'webhook',
+      });
+    for (const windowSeconds of [1, 86400])
+      expect(
+        WebhookAuthenticationSchema.parse({
+          type: 'hmac-sha256',
+          message: 'timestamp-body',
+          secretRef: 'hook',
+          windowSeconds,
+        }),
+      ).toHaveProperty('windowSeconds', windowSeconds);
   });
-
-  it('exports distinct strict JSON-schema branches so the body form cannot author a window', () => {
-    const timestamp = z.toJSONSchema(TimestampWebhookConfigSchema);
-    const body = z.toJSONSchema(BodyWebhookConfigSchema);
-    expect(timestamp).toHaveProperty('properties.replayWindowSeconds.default', 300);
-    expect(body).not.toHaveProperty('properties.replayWindowSeconds');
-    expect(body.additionalProperties).toBe(false);
-    expect(timestamp.additionalProperties).toBe(false);
+  it('refuses flat/unknown shapes and incompatible body/pointer configuration', () => {
+    for (const extra of [
+      { signature: { scheme: 'hmac-sha256' } },
+      { replayWindowSeconds: 300 },
+      { unknown: true },
+      { authentication: { type: 'none', secretRef: 'key' } },
+      { authentication: { type: 'hmac-sha256', message: 'body' } },
+      {
+        authentication: {
+          type: 'hmac-sha256',
+          message: 'body',
+          secretRef: 'key',
+          windowSeconds: 300,
+        },
+      },
+      { body: { type: 'xml' } },
+      { body: { type: 'text' }, eventType: { source: 'json-pointer', pointer: '/a' } },
+    ])
+      expect(WebhookConfigSchema.safeParse({ type: 'webhook', ...extra }).success).toBe(false);
+    for (const windowSeconds of [0, 86401, 1.5])
+      expect(
+        WebhookConfigSchema.safeParse({
+          type: 'webhook',
+          authentication: {
+            type: 'hmac-sha256',
+            message: 'timestamp-body',
+            secretRef: 'key',
+            windowSeconds,
+          },
+        }).success,
+      ).toBe(false);
+  });
+  it('bounds RFC header names, event names and RFC6901 pointers', () => {
+    for (const value of ['', 'X-event', 'x event', 'x\r\nnext', 'x'.repeat(129)])
+      expect(HeaderNameSchema.safeParse(value).success).toBe(false);
+    expect(HeaderNameSchema.parse("x-!#$%&'*+.^_`|~012")).toBeDefined();
+    for (const value of ['', ' ', '\t', 'a\u0000b', '\u007f', '\u0080', 'x'.repeat(129)])
+      expect(EventNameSchema.safeParse(value).success).toBe(false);
+    expect(EventNameSchema.parse(' issues ')).toBe(' issues ');
+    for (const value of ['a', '/~', '/~2', '/'.repeat(33), '/' + 'a'.repeat(1024)])
+      expect(WebhookPointerSchema.safeParse(value).success).toBe(false);
+    for (const value of ['', '/~01', '/'.repeat(32), '/' + 'a'.repeat(1023)])
+      expect(WebhookPointerSchema.safeParse(value).success).toBe(true);
   });
 });
 

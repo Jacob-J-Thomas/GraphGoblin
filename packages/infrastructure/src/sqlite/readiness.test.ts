@@ -10,6 +10,29 @@ afterEach(() => {
   for (const handle of handles.splice(0)) handle.close();
 });
 
+it.each(['X Sig', 'X-Sig', '', 'x'.repeat(129), 'x\nbad'])(
+  'refuses a stored noncanonical header %j before startup writes',
+  async (header) => {
+    const handle = await openMemoryDatabase();
+    handles.push(handle);
+    await handle.client.execute({
+      sql: "INSERT INTO webhook_endpoints (id,owner_id,loop_id,version_id,trigger_node_id,token,auth_type,signature_message,signature_header,secret_ref,enabled,created_at) VALUES ('bad','local','loop','version','hook','token','hmac-sha256','body',?,'key',1,?)",
+      args: [header, FIXTURE_TS],
+    });
+    const before = (await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows;
+    await expect(guardDatabaseUpgrade(handle.client)).rejects.toMatchObject({
+      code: 'DATA_UPGRADE_REQUIRED',
+      message: expect.stringContaining('signing headers'),
+    });
+    expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toEqual(
+      before,
+    );
+    expect(
+      (await handle.client.execute('SELECT signature_header FROM webhook_endpoints')).rows,
+    ).toEqual([{ signature_header: header }]);
+  },
+);
+
 it.each([
   ['missing table', 'DROP TABLE webhook_receipts'],
   ['missing column', 'ALTER TABLE loops DROP COLUMN description'],
@@ -111,7 +134,7 @@ async function through(index: number) {
   });
   return handle;
 }
-it.each([8, 9, 10, 11])(
+it.each([8, 9, 10, 11, 12])(
   'refuses a format-4 marker whose ledger stops before the baseline at migration %s',
   async (index) => {
     const handle = await through(index);
@@ -141,7 +164,7 @@ it('refuses a head ledger with missing additive structure after a no-op migratio
   expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toEqual(before);
 });
 it('requires the shipped baseline constraint names as well as their expressions', async () => {
-  const handle = await through(12);
+  const handle = await through(13);
   const ddl = (
     await handle.client.execute("SELECT sql FROM sqlite_master WHERE name='webhook_receipts'")
   ).rows[0]!.sql;
@@ -169,11 +192,11 @@ it('derives dropped and IF NOT EXISTS indexes from the executed migration catalo
       ...last,
       idx: last.idx + 1,
       when: last.when + 1,
-      tag: '0013_index_probe',
+      tag: '0014_index_probe',
     });
     await writeFile(path, JSON.stringify(journal));
     await writeFile(
-      join(folder, '0013_index_probe.sql'),
+      join(folder, '0014_index_probe.sql'),
       'DROP INDEX runs_parent_idx;\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS gate_probe_idx ON runs(id);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS gate_probe_idx ON runs(id);',
     );
     const descriptor = await currentStoreReadiness(folder);

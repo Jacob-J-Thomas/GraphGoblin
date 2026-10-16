@@ -37,8 +37,12 @@ async function hook(t: TestApp) {
   const id = await t.publishLoop(
     triggerLoop('hook', {
       type: 'webhook',
-      signature: { secretRef: 'hook', scheme: 'hmac-sha256' },
-      replayWindowSeconds: 300,
+      authentication: {
+        secretRef: 'hook',
+        type: 'hmac-sha256',
+        message: 'timestamp-body',
+        windowSeconds: 300,
+      },
     }),
   );
   const list = (await t.app.inject(`/loops/${id}/triggers`)).json<{
@@ -341,7 +345,7 @@ describe('adversarial API invariants', () => {
     ).toBe(202);
     expect(
       (await t.app.inject({ method: 'POST', url: h.path, payload: '{"a":1}', headers })).statusCode,
-    ).toBe(409);
+    ).toBe(202);
     await t.idle();
   });
   it.each([-300001, -299999, 299999, 300001])(

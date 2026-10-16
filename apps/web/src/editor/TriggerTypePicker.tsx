@@ -1,7 +1,7 @@
 import { useId } from 'react';
 import { FieldGroup, HelpText, Label, Select } from '../components/ui/index.js';
 import type { UnionPickerProps } from '../forms/fields.js';
-import { discriminatorValue, shapeOf } from '../forms/introspect.js';
+import { discriminatorValue } from '../forms/introspect.js';
 
 const TYPES = [
   {
@@ -23,25 +23,19 @@ const TYPES = [
   {
     value: 'webhook',
     label: 'Webhook',
-    description: 'Start from a signed HTTP request.',
+    description: 'Start from an HTTP POST request.',
   },
 ] as const;
 
-/** Presentation only: the schema stores `type`, with two webhook signing variants. */
+/** Presentation only: the schema stores `type`, with one configuration per type. */
 export function TriggerTypePicker({ options, value, onChange }: UnionPickerProps) {
   const id = useId();
-  const variants = options.map((option) => {
-    const shape = option.schema ? shapeOf(option.schema) : undefined;
-    const signature = shape?.kind === 'object' ? shape.shape['signature'] : undefined;
-    return {
-      ...option,
-      type: option.schema ? discriminatorValue(option.schema, 'type') : undefined,
-      scheme: signature ? discriminatorValue(signature, 'scheme') : undefined,
-    };
-  });
+  const variants = options.map((option) => ({
+    ...option,
+    type: option.schema ? discriminatorValue(option.schema, 'type') : undefined,
+  }));
   const selected = variants.find((option) => option.value === value);
   const type = TYPES.find((candidate) => candidate.value === selected?.type);
-  const webhookOptions = variants.filter((option) => option.type === 'webhook');
   const poll = type?.value === 'poll';
   return (
     <div className="grid gap-field">
@@ -81,25 +75,47 @@ export function TriggerTypePicker({ options, value, onChange }: UnionPickerProps
           </>
         ) : null}
       </FieldGroup>
-      {type?.value === 'webhook' ? (
-        <FieldGroup data-field="signature.scheme">
-          <Label htmlFor={`${id}-signing`} required>
-            Signing protocol
-          </Label>
-          <Select
-            id={`${id}-signing`}
-            aria-required="true"
-            value={value}
-            onChange={(event) => onChange(event.target.value)}
-          >
-            {webhookOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.scheme === 'hmac-sha256-body' ? 'Body only (GitHub)' : 'Timestamp and body'}
-              </option>
-            ))}
-          </Select>
-        </FieldGroup>
-      ) : null}
     </div>
   );
+}
+
+/** Native selects share the schema form's commit, focus and undo handling. */
+function WebhookPicker({
+  name,
+  options,
+  value,
+  onChange,
+  required,
+  describedBy,
+  invalid,
+  label,
+}: UnionPickerProps) {
+  const id = useId();
+  return (
+    <div data-field={`${name}.${name === 'authentication' ? 'message' : 'source'}`}>
+      <Label htmlFor={id} required={required}>
+        {label}
+      </Label>
+      <Select
+        id={id}
+        value={value ?? ''}
+        onChange={(event) => onChange(event.target.value)}
+        aria-required={required}
+        aria-describedby={describedBy}
+        aria-invalid={invalid}
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </Select>
+    </div>
+  );
+}
+export function WebhookAuthenticationPicker(props: UnionPickerProps) {
+  return <WebhookPicker {...props} label="Authentication recipe" />;
+}
+export function WebhookEventTypePicker(props: UnionPickerProps) {
+  return <WebhookPicker {...props} label="Event type source" />;
 }

@@ -320,8 +320,9 @@ describe('NodeEditorDialog GitHub trigger presets', () => {
     const node = () => store().definition?.nodes.find((candidate) => candidate.id === 'github');
     expect(node()?.config).toMatchObject({
       type: 'webhook',
-      signature: {
-        scheme: 'hmac-sha256-body',
+      authentication: {
+        type: 'hmac-sha256',
+        message: 'body',
         header: 'x-hub-signature-256',
         secretRef: 'issue-hook',
       },
@@ -339,18 +340,18 @@ describe('NodeEditorDialog GitHub trigger presets', () => {
     expect(store().past).toHaveLength(1);
     expect(within(dialog).getByLabelText('Trigger type')).toHaveDisplayValue('Webhook');
     expect(within(dialog).queryByLabelText('Replay window seconds')).not.toBeInTheDocument();
-    expect(within(dialog).getByLabelText('Secret ref')).toHaveValue('issue-hook');
+    expect(within(dialog).getByLabelText('Secret name')).toHaveValue('issue-hook');
     expect(getCode('Dedupe key')).toBe('$headers."x-github-delivery"');
     expect(within(dialog).queryByLabelText('Per-item dedupe key')).not.toBeInTheDocument();
 
-    await user.clear(within(dialog).getByLabelText('Secret ref'));
-    await user.type(within(dialog).getByLabelText('Secret ref'), 'renamed-hook');
-    expect(node()?.config).toMatchObject({ signature: { secretRef: 'renamed-hook' } });
+    await user.clear(within(dialog).getByLabelText('Secret name'));
+    await user.type(within(dialog).getByLabelText('Secret name'), 'renamed-hook');
+    expect(node()?.config).toMatchObject({ authentication: { secretRef: 'renamed-hook' } });
 
     act(() => store().undo());
     expect(node()?.config).toMatchObject({
       type: 'webhook',
-      signature: { secretRef: 'issue-hook' },
+      authentication: { secretRef: 'issue-hook' },
     });
     act(() => store().undo());
     expect(node()?.config).toEqual({ type: 'manual', exposeTo: ['ui', 'api', 'mcp'] });

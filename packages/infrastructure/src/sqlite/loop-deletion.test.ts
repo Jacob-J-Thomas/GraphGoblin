@@ -106,7 +106,8 @@ async function triggers(
     token: seed,
     secretRef: 'key',
     signatureHeader: 'signature',
-    signatureScheme: 'hmac-sha256-body',
+    authType: 'hmac-sha256',
+    signatureMessage: 'body',
     enabled: true,
     createdAt: FIXTURE_TS,
   });

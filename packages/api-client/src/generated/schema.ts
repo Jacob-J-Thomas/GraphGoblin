@@ -2022,6 +2022,72 @@ export interface paths {
                                 source: string;
                                 receivedAt: string;
                                 runIds: string[];
+                                webhook?: {
+                                    id: string;
+                                    ownerId: string;
+                                    loopId: string;
+                                    versionId: string;
+                                    triggerNodeId: string;
+                                    path: string;
+                                    authentication: {
+                                        /**
+                                         * @default none
+                                         * @enum {string}
+                                         */
+                                        type: "none";
+                                    } | {
+                                        /** @enum {string} */
+                                        type: "hmac-sha256";
+                                        /** @enum {string} */
+                                        message: "body";
+                                        /** @default x-hub-signature-256 */
+                                        header: string;
+                                        secretRef: string;
+                                    } | {
+                                        /** @enum {string} */
+                                        type: "hmac-sha256";
+                                        /** @enum {string} */
+                                        message: "timestamp-body";
+                                        /** @default x-graphgoblin-signature */
+                                        header: string;
+                                        secretRef: string;
+                                        /** @default 300 */
+                                        windowSeconds: number;
+                                    };
+                                    configurationAvailable: boolean;
+                                    body?: {
+                                        /**
+                                         * @default json
+                                         * @enum {string}
+                                         */
+                                        type: "json" | "text" | "bytes";
+                                    } | undefined;
+                                    eventType?: ({
+                                        /**
+                                         * @default constant
+                                         * @enum {string}
+                                         */
+                                        source: "constant";
+                                        /** @default webhook */
+                                        value: string;
+                                    } | {
+                                        /** @enum {string} */
+                                        source: "header";
+                                        name: string;
+                                        /** @default webhook */
+                                        fallback: string;
+                                    } | {
+                                        /** @enum {string} */
+                                        source: "json-pointer";
+                                        pointer: string;
+                                        /** @default webhook */
+                                        fallback: string;
+                                    }) | undefined;
+                                    dedupeKey?: string | undefined;
+                                    filter?: string | undefined;
+                                    enabled: boolean;
+                                    createdAt: string;
+                                } | undefined;
                                 delivery?: {
                                     /** @enum {string} */
                                     state: "filtered" | "deduplicated" | "pending" | "admitted" | "failed";
@@ -2069,6 +2135,72 @@ export interface paths {
                             source: string;
                             receivedAt: string;
                             runIds: string[];
+                            webhook?: {
+                                id: string;
+                                ownerId: string;
+                                loopId: string;
+                                versionId: string;
+                                triggerNodeId: string;
+                                path: string;
+                                authentication: {
+                                    /**
+                                     * @default none
+                                     * @enum {string}
+                                     */
+                                    type: "none";
+                                } | {
+                                    /** @enum {string} */
+                                    type: "hmac-sha256";
+                                    /** @enum {string} */
+                                    message: "body";
+                                    /** @default x-hub-signature-256 */
+                                    header: string;
+                                    secretRef: string;
+                                } | {
+                                    /** @enum {string} */
+                                    type: "hmac-sha256";
+                                    /** @enum {string} */
+                                    message: "timestamp-body";
+                                    /** @default x-graphgoblin-signature */
+                                    header: string;
+                                    secretRef: string;
+                                    /** @default 300 */
+                                    windowSeconds: number;
+                                };
+                                configurationAvailable: boolean;
+                                body?: {
+                                    /**
+                                     * @default json
+                                     * @enum {string}
+                                     */
+                                    type: "json" | "text" | "bytes";
+                                } | undefined;
+                                eventType?: ({
+                                    /**
+                                     * @default constant
+                                     * @enum {string}
+                                     */
+                                    source: "constant";
+                                    /** @default webhook */
+                                    value: string;
+                                } | {
+                                    /** @enum {string} */
+                                    source: "header";
+                                    name: string;
+                                    /** @default webhook */
+                                    fallback: string;
+                                } | {
+                                    /** @enum {string} */
+                                    source: "json-pointer";
+                                    pointer: string;
+                                    /** @default webhook */
+                                    fallback: string;
+                                }) | undefined;
+                                dedupeKey?: string | undefined;
+                                filter?: string | undefined;
+                                enabled: boolean;
+                                createdAt: string;
+                            } | undefined;
                             delivery?: {
                                 /** @enum {string} */
                                 state: "filtered" | "deduplicated" | "pending" | "admitted" | "failed";
@@ -2136,11 +2268,62 @@ export interface paths {
                                 versionId: string;
                                 triggerNodeId: string;
                                 path: string;
-                                secretRef: string;
-                                signatureHeader: string;
-                                /** @enum {string} */
-                                signatureScheme: "hmac-sha256" | "hmac-sha256-body";
-                                replayWindowSeconds: number | null;
+                                authentication: {
+                                    /**
+                                     * @default none
+                                     * @enum {string}
+                                     */
+                                    type: "none";
+                                } | {
+                                    /** @enum {string} */
+                                    type: "hmac-sha256";
+                                    /** @enum {string} */
+                                    message: "body";
+                                    /** @default x-hub-signature-256 */
+                                    header: string;
+                                    secretRef: string;
+                                } | {
+                                    /** @enum {string} */
+                                    type: "hmac-sha256";
+                                    /** @enum {string} */
+                                    message: "timestamp-body";
+                                    /** @default x-graphgoblin-signature */
+                                    header: string;
+                                    secretRef: string;
+                                    /** @default 300 */
+                                    windowSeconds: number;
+                                };
+                                configurationAvailable: boolean;
+                                body?: {
+                                    /**
+                                     * @default json
+                                     * @enum {string}
+                                     */
+                                    type: "json" | "text" | "bytes";
+                                } | undefined;
+                                eventType?: ({
+                                    /**
+                                     * @default constant
+                                     * @enum {string}
+                                     */
+                                    source: "constant";
+                                    /** @default webhook */
+                                    value: string;
+                                } | {
+                                    /** @enum {string} */
+                                    source: "header";
+                                    name: string;
+                                    /** @default webhook */
+                                    fallback: string;
+                                } | {
+                                    /** @enum {string} */
+                                    source: "json-pointer";
+                                    pointer: string;
+                                    /** @default webhook */
+                                    fallback: string;
+                                }) | undefined;
+                                dedupeKey?: string | undefined;
+                                filter?: string | undefined;
                                 enabled: boolean;
                                 createdAt: string;
                             }[];
@@ -2174,7 +2357,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Signed webhook receiver (public; timestamp HMAC or exact body HMAC, durable body replay protection, rate limit) */
+        /** Webhook receiver (public; saved-input acknowledgement, optional HMAC, JSON/text/bytes, 1 MiB, rate limit) */
         post: {
             parameters: {
                 query?: never;
@@ -2193,25 +2376,8 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            event: {
-                                id: string;
-                                ownerId: string;
-                                type: string;
-                                payload: components["schemas"]["JsonValue"];
-                                dedupeKey?: string | undefined;
-                                source: string;
-                                receivedAt: string;
-                                runIds: string[];
-                                delivery?: {
-                                    /** @enum {string} */
-                                    state: "filtered" | "deduplicated" | "pending" | "admitted" | "failed";
-                                    attempts: number;
-                                    nextAttemptAt?: string | undefined;
-                                    failureCode?: string | undefined;
-                                } | undefined;
-                            };
-                            runId?: string | undefined;
-                            filtered: boolean;
+                            /** @enum {boolean} */
+                            accepted: true;
                         };
                     };
                 };
@@ -2345,27 +2511,62 @@ export interface components {
                 } | {
                     /** @constant */
                     type: "webhook";
-                    signature: {
+                    /** @default {} */
+                    authentication?: ({
+                        /**
+                         * @default none
+                         * @constant
+                         */
+                        type?: "none" | undefined;
+                    } | {
                         /** @constant */
-                        scheme: "hmac-sha256";
-                        /** @default x-graphgoblin-signature */
-                        header?: string | undefined;
-                        secretRef: string;
-                    };
-                    /** @default 300 */
-                    replayWindowSeconds?: number | undefined;
-                    dedupeKey?: string | undefined;
-                    filter?: string | undefined;
-                } | {
-                    /** @constant */
-                    type: "webhook";
-                    signature: {
+                        type: "hmac-sha256";
                         /** @constant */
-                        scheme: "hmac-sha256-body";
+                        message: "body";
                         /** @default x-hub-signature-256 */
                         header?: string | undefined;
                         secretRef: string;
-                    };
+                    } | {
+                        /** @constant */
+                        type: "hmac-sha256";
+                        /** @constant */
+                        message: "timestamp-body";
+                        /** @default x-graphgoblin-signature */
+                        header?: string | undefined;
+                        secretRef: string;
+                        /** @default 300 */
+                        windowSeconds?: number | undefined;
+                    }) | undefined;
+                    /** @default {} */
+                    body?: {
+                        /**
+                         * @default json
+                         * @enum {string}
+                         */
+                        type?: ("json" | "text" | "bytes") | undefined;
+                    } | undefined;
+                    /** @default {} */
+                    eventType?: ({
+                        /**
+                         * @default constant
+                         * @constant
+                         */
+                        source?: "constant" | undefined;
+                        /** @default webhook */
+                        value?: string | undefined;
+                    } | {
+                        /** @constant */
+                        source: "header";
+                        name: string;
+                        /** @default webhook */
+                        fallback?: string | undefined;
+                    } | {
+                        /** @constant */
+                        source: "json-pointer";
+                        pointer: string;
+                        /** @default webhook */
+                        fallback?: string | undefined;
+                    }) | undefined;
                     dedupeKey?: string | undefined;
                     filter?: string | undefined;
                 } | {
@@ -3866,6 +4067,7 @@ export interface components {
                     /** Format: date-time */
                     receivedAt: string;
                     dedupeKey?: string | undefined;
+                    eventType?: string | undefined;
                 };
                 returnDefaults?: components["schemas"]["ReturnChannelInput"][] | undefined;
                 replayOf?: {
@@ -4048,26 +4250,58 @@ export interface components {
                 } | {
                     /** @constant */
                     type: "webhook";
-                    signature: {
+                    authentication: {
+                        /**
+                         * @default none
+                         * @constant
+                         */
+                        type: "none";
+                    } | {
                         /** @constant */
-                        scheme: "hmac-sha256";
-                        /** @default x-graphgoblin-signature */
-                        header: string;
-                        secretRef: string;
-                    };
-                    /** @default 300 */
-                    replayWindowSeconds: number;
-                    dedupeKey?: string | undefined;
-                    filter?: string | undefined;
-                } | {
-                    /** @constant */
-                    type: "webhook";
-                    signature: {
+                        type: "hmac-sha256";
                         /** @constant */
-                        scheme: "hmac-sha256-body";
+                        message: "body";
                         /** @default x-hub-signature-256 */
                         header: string;
                         secretRef: string;
+                    } | {
+                        /** @constant */
+                        type: "hmac-sha256";
+                        /** @constant */
+                        message: "timestamp-body";
+                        /** @default x-graphgoblin-signature */
+                        header: string;
+                        secretRef: string;
+                        /** @default 300 */
+                        windowSeconds: number;
+                    };
+                    body: {
+                        /**
+                         * @default json
+                         * @enum {string}
+                         */
+                        type: "json" | "text" | "bytes";
+                    };
+                    eventType: {
+                        /**
+                         * @default constant
+                         * @constant
+                         */
+                        source: "constant";
+                        /** @default webhook */
+                        value: string;
+                    } | {
+                        /** @constant */
+                        source: "header";
+                        name: string;
+                        /** @default webhook */
+                        fallback: string;
+                    } | {
+                        /** @constant */
+                        source: "json-pointer";
+                        pointer: string;
+                        /** @default webhook */
+                        fallback: string;
                     };
                     dedupeKey?: string | undefined;
                     filter?: string | undefined;
@@ -5558,6 +5792,7 @@ export interface components {
                     /** Format: date-time */
                     receivedAt: string;
                     dedupeKey?: string | undefined;
+                    eventType?: string | undefined;
                 };
                 returnDefaults?: components["schemas"]["ReturnChannel"][] | undefined;
                 replayOf?: {

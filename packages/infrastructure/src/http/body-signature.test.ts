@@ -2,6 +2,16 @@ import { describe, expect, it } from 'vitest';
 import { signPayload, signRawBody, verifyRawBodySignature, verifySignature } from './delivery.js';
 
 describe('body-only webhook HMAC', () => {
+  it('matches an independent timestamp/raw-byte vector, including bytes that UTF-8 cannot decode', () => {
+    const timestamp = '2026-10-15T12:00:00.000Z';
+    const body = Uint8Array.from([0xff, 0xfe, 0x00, 0x80]);
+    const expected = 'sha256=abe7ea2a045a40d8ce09ca218c8eed28039101e728731672e40efc416376c80b';
+    expect(signPayload('local-test-secret', timestamp, body)).toBe(expected);
+    expect(verifySignature('local-test-secret', timestamp, body, expected)).toBe(true);
+    expect(
+      verifySignature('local-test-secret', timestamp, Buffer.from(body).toString('utf8'), expected),
+    ).toBe(false);
+  });
   // Official interoperability vector: https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries
   it('matches the published GitHub SHA256 vector without a timestamp', () => {
     const body = Buffer.from('Hello, World!', 'utf8');

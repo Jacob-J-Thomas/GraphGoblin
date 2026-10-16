@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { EventNameSchema } from './trigger-integrations.js';
 import {
   JsonValueSchema,
   SlugSchema,
@@ -30,6 +31,7 @@ export const TriggerEnvelopeSchema = z.strictObject({
   payload: JsonValueSchema,
   receivedAt: TimestampSchema,
   dedupeKey: z.string().max(512).optional(),
+  eventType: EventNameSchema.optional(),
 });
 export type TriggerEnvelope = z.infer<typeof TriggerEnvelopeSchema>;
 

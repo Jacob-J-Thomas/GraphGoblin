@@ -16,7 +16,7 @@ import type {
   Usage,
   WorkingDirectorySpec,
 } from '@graphgoblin/contracts';
-import { isTerminal } from '@graphgoblin/domain';
+import { isTerminal, stableStringify } from '@graphgoblin/domain';
 import type {
   ArtifactStorePort,
   ChoiceRequest,
@@ -824,12 +824,27 @@ export class FakeModelCatalog {
   }
 }
 
+/** Staged writes exposed only by the testing adapter for transaction fault injection. */
+export type AdmissionWrite =
+  | 'claim.inbound'
+  | 'claim.receipt'
+  | 'create.run'
+  | 'create.event'
+  | 'create.receipt'
+  | 'create.link';
+
 export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
   readonly receipts = new Map<string, WebhookReceipt>();
   readonly inbound = new Map<string, WebhookClaim['inbound']>();
+  /** Resolved endpoint provenance for preserved inbound-only claims in the testing adapter. */
+  readonly inboundScopes = new Map<
+    string,
+    Pick<WebhookClaim, 'ownerId' | 'loopId' | 'triggerNodeId'>
+  >();
   constructor(
     private readonly runs: InMemoryRunRepository,
     private readonly events: InMemoryEventStore,
+    private readonly beforeWrite: (write: AdmissionWrite) => void = () => {},
   ) {}
   async create(authored: RunAdmission, receiptId?: string): Promise<RunRecord> {
     const input = parseRunAdmission(authored);
@@ -838,10 +853,19 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
       receiptId &&
       (!receipt?.intent ||
         !['pending', 'admitted'].includes(receipt.status) ||
-        JSON.stringify(receipt.intent) !== JSON.stringify(input))
+        stableStringify(parseRunAdmission(receipt.intent)) !== stableStringify(input))
     )
       throw new AdmissionConflictError();
     if (receipt && !this.inbound.has(receipt.inboundId)) throw new AdmissionConflictError();
+    if (receipt) {
+      const inbound = this.inbound.get(receipt.inboundId)!;
+      if (
+        inbound.runIds.length &&
+        stableStringify(inbound.runIds) !== stableStringify([input.run.id])
+      )
+        throw new AdmissionConflictError();
+      assertWebhookClaim({ ...receipt, inbound: { ...inbound, runIds: [] } }, input);
+    }
     let run = this.runs.runs.get(input.run.id);
     const created = !run;
     if (run) {
@@ -851,16 +875,28 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
     } else {
       if (this.events.all(input.run.id).length) throw new AdmissionConflictError();
       run = { ...input.run, lastEventSeq: 1 };
+      this.beforeWrite('create.run');
+      this.beforeWrite('create.event');
+    }
+    // Prepare every write (including injected failures) before installing any state. No await
+    // separates installation and publication, so listeners see the complete transaction.
+    const admitted = receipt ? structuredClone(receipt) : undefined;
+    const linked = receipt ? structuredClone(this.inbound.get(receipt.inboundId)!) : undefined;
+    if (admitted && linked) {
+      admitted.status = 'admitted';
+      delete admitted.nextAttemptAt;
+      delete admitted.failureCode;
+      linked.runIds = [run.id];
+      this.beforeWrite('create.receipt');
+      this.beforeWrite('create.link');
+    }
+    if (created) {
       this.runs.commitCreated(run, input.initialThread);
       this.events.commitQueued(queuedEvent(input));
     }
-    if (receipt) {
-      receipt.status = 'admitted';
-      delete receipt.nextAttemptAt;
-      delete receipt.failureCode;
-      const inbound = this.inbound.get(receipt.inboundId);
-      if (!inbound) throw new AdmissionConflictError();
-      inbound.runIds = [run.id];
+    if (admitted && linked) {
+      this.receipts.set(admitted.id, admitted);
+      this.inbound.set(linked.id, linked);
     }
     if (created) this.events.notifyCommitted(queuedEvent(input));
     return run;
@@ -880,29 +916,30 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
       return undefined;
     return this.create(input);
   }
-  claim(
-    input: WebhookClaim,
-    intent?: RunAdmission,
-  ): Promise<{ receipt: WebhookReceipt; duplicate: boolean }> {
-    assertWebhookClaim(input, intent);
-    const prior = [...this.receipts.values()].find(
-      (r) =>
-        r.ownerId === input.ownerId &&
-        r.loopId === input.loopId &&
-        r.triggerNodeId === input.triggerNodeId &&
-        r.contentHash === input.contentHash,
-    );
-    if (prior) return Promise.resolve({ receipt: prior, duplicate: true });
+  claim(input: WebhookClaim, intent?: RunAdmission): Promise<{ receipt: WebhookReceipt }> {
+    const frozen = intent ? parseRunAdmission(intent) : undefined;
+    assertWebhookClaim(input, frozen);
     const keySeen =
-      !!input.dedupeByKey &&
       !!input.inbound.dedupeKey &&
       ([...this.receipts.values()].some(
         (receipt) =>
           receipt.ownerId === input.ownerId &&
           receipt.loopId === input.loopId &&
           receipt.triggerNodeId === input.triggerNodeId &&
-          this.inbound.get(receipt.inboundId)?.dedupeKey === input.inbound.dedupeKey,
+          (this.inbound.get(receipt.inboundId)?.dedupeKey === input.inbound.dedupeKey ||
+            receipt.intent?.initialThread.invocation.trigger.dedupeKey === input.inbound.dedupeKey),
       ) ||
+        [...this.inbound.values()].some((inbound) => {
+          const scope = this.inboundScopes.get(inbound.id);
+          return (
+            inbound.type === 'webhook' &&
+            inbound.dedupeKey === input.inbound.dedupeKey &&
+            inbound.ownerId === input.ownerId &&
+            scope?.ownerId === input.ownerId &&
+            scope.loopId === input.loopId &&
+            scope.triggerNodeId === input.triggerNodeId
+          );
+        }) ||
         this.runs.hasTriggerKey(
           input.ownerId,
           input.loopId,
@@ -916,30 +953,53 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
       triggerNodeId: input.triggerNodeId,
       contentHash: input.contentHash,
       inboundId: input.inbound.id,
-      status: keySeen ? 'deduplicated' : intent ? 'pending' : 'filtered',
+      status: keySeen ? 'deduplicated' : frozen ? 'pending' : 'filtered',
       attempts: 0,
-      ...(!keySeen && intent
+      ...(!keySeen && frozen
         ? {
-            intent: structuredClone(parseRunAdmission(intent)),
+            intent: frozen,
             nextAttemptAt: input.inbound.receivedAt,
           }
         : {}),
     };
+    if (this.receipts.has(input.id) || this.inbound.has(input.inbound.id))
+      throw new AdmissionConflictError();
+    const inbound = structuredClone(input.inbound);
+    this.beforeWrite('claim.inbound');
+    this.beforeWrite('claim.receipt');
     this.receipts.set(receipt.id, receipt);
-    this.inbound.set(input.inbound.id, structuredClone(input.inbound));
-    return Promise.resolve({ receipt, duplicate: false });
+    this.inbound.set(inbound.id, inbound);
+    this.inboundScopes.set(inbound.id, {
+      ownerId: input.ownerId,
+      loopId: input.loopId,
+      triggerNodeId: input.triggerNodeId,
+    });
+    return Promise.resolve({ receipt: structuredClone(receipt) });
   }
   get(id: string): Promise<WebhookReceipt | undefined> {
-    return Promise.resolve(this.receipts.get(id));
+    const receipt = this.receipts.get(id);
+    return Promise.resolve(
+      receipt
+        ? {
+            ...structuredClone(receipt),
+            ...(receipt.intent ? { intent: parseRunAdmission(receipt.intent) } : {}),
+          }
+        : undefined,
+    );
   }
-  due(now: string, limit: number): Promise<WebhookReceipt[]> {
+  due(now: string, limit: number): Promise<Pick<WebhookReceipt, 'id' | 'attempts'>[]> {
     return Promise.resolve(
       [...this.receipts.values()]
         .filter(
           (r) => r.status === 'pending' && r.nextAttemptAt !== undefined && r.nextAttemptAt <= now,
         )
-        .sort((a, b) => (a.nextAttemptAt ?? '').localeCompare(b.nextAttemptAt ?? ''))
-        .slice(0, Math.min(5, limit)),
+        .sort(
+          (a, b) =>
+            (a.nextAttemptAt ?? '').localeCompare(b.nextAttemptAt ?? '') ||
+            a.id.localeCompare(b.id),
+        )
+        .slice(0, Math.max(0, Math.min(5, limit)))
+        .map(({ id, attempts }) => ({ id, attempts })),
     );
   }
   failed(id: string, code: WebhookFailureCode, nextAttemptAt?: string): Promise<void> {

@@ -21,6 +21,7 @@ import {
   CURRENT_DEFINITION_FORMAT,
   ContextThreadSchema,
   HarnessDefaultsSchema,
+  HeaderNameSchema,
   LoopDefinitionSchema,
   RunEventSchema,
   RunRecordSchema,
@@ -173,17 +174,27 @@ export async function guardDatabaseUpgrade(
     throw new DatabaseUpgradeRequiredError(
       'The shipped migration ledger is incomplete or inconsistent',
     );
+  // An explicitly selected historical SQL catalogue can stop before 0013. The current baseline above
+  // always requires auth_type before this data-level validation can be reached.
   if (
     structure
       .find((table) => table.name === 'webhook_endpoints')
-      ?.columns.some((column) => column.name === 'signature_scheme')
+      ?.columns.some((column) => column.name === 'auth_type')
   ) {
     const malformed = await rows(
       client,
-      "SELECT id FROM webhook_endpoints WHERE signature_scheme IS NULL OR signature_scheme NOT IN ('hmac-sha256','hmac-sha256-body') OR NOT ((signature_scheme='hmac-sha256' AND replay_window_seconds IS NOT NULL AND replay_window_seconds>0) OR (signature_scheme='hmac-sha256-body' AND replay_window_seconds IS NULL))",
+      `SELECT id FROM webhook_endpoints WHERE auth_type IS NULL OR NOT (("auth_type" = 'none' AND "signature_message" IS NULL AND "signature_header" IS NULL AND "secret_ref" IS NULL AND "window_seconds" IS NULL) OR ("auth_type" = 'hmac-sha256' AND "signature_header" IS NOT NULL AND "secret_ref" IS NOT NULL AND (("signature_message" IS NOT NULL AND "signature_message" = 'body' AND "window_seconds" IS NULL) OR ("signature_message" IS NOT NULL AND "signature_message" = 'timestamp-body' AND "window_seconds" IS NOT NULL AND typeof("window_seconds") = 'integer' AND "window_seconds" BETWEEN 1 AND 86400))))`,
     );
     if (malformed.length)
       throw new DatabaseUpgradeRequiredError('Stored webhook signing fields are inconsistent');
+    const signingHeaders = await rows(
+      client,
+      "SELECT signature_header FROM webhook_endpoints WHERE auth_type = 'hmac-sha256'",
+    );
+    if (signingHeaders.some((row) => !HeaderNameSchema.safeParse(row.signature_header).success))
+      throw new DatabaseUpgradeRequiredError(
+        'Stored webhook signing headers are not lowercase RFC tokens',
+      );
   }
   if (!options.skipDefinitions)
     for await (const batch of tableBatches(client, 'loop_versions'))

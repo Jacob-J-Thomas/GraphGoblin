@@ -35,8 +35,12 @@ import { EXIT_FIELD_OVERRIDES } from './ExitFields.js';
 
 import { hasRepeatRoute, cleanGateLimits } from './decision-gates.js';
 import { TriggerPresets } from './TriggerPresets.js';
-import { TriggerTypePicker } from './TriggerTypePicker.js';
-import { POLL_FIELD_LABELS } from './trigger-field-labels.js';
+import {
+  TriggerTypePicker,
+  WebhookAuthenticationPicker,
+  WebhookEventTypePicker,
+} from './TriggerTypePicker.js';
+import { POLL_FIELD_LABELS, WEBHOOK_FIELD_LABELS } from './trigger-field-labels.js';
 import { CatalogWarningsContext } from '../forms/fields/model.js';
 import { GateLimitIssuesContext } from './DecisionGateFields.js';
 import { canvasFocusTarget } from './canvas-focus.js';
@@ -55,7 +59,11 @@ const DECISION_UNION_PICKERS = {
   answer: DecisionAnswerPicker,
 };
 const DECISION_FIELD_ORDER = ['instructions', 'jsonata', 'routes', 'answer'] as const;
-const TRIGGER_UNION_PICKERS = { '': TriggerTypePicker };
+const TRIGGER_UNION_PICKERS = {
+  '': TriggerTypePicker,
+  authentication: WebhookAuthenticationPicker,
+  eventType: WebhookEventTypePicker,
+};
 const DECISION_FIELD_LABELS = {
   minConfidence: 'Min confidence',
   truthThreshold: 'Noul true-probability threshold',
@@ -627,9 +635,11 @@ export function NodeEditorDialog({
                     value={
                       node.kind === 'trigger' && node.config?.type === 'poll'
                         ? POLL_FIELD_LABELS
-                        : node.kind === 'decision'
-                          ? DECISION_FIELD_LABELS
-                          : DEFAULT_FIELD_LABELS
+                        : node.kind === 'trigger' && node.config?.type === 'webhook'
+                          ? WEBHOOK_FIELD_LABELS
+                          : node.kind === 'decision'
+                            ? DECISION_FIELD_LABELS
+                            : DEFAULT_FIELD_LABELS
                     }
                   >
                     <VariableSuggestionsContext value={variables}>
