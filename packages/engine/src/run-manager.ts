@@ -505,7 +505,7 @@ export class RunManager {
           saved.contentHash !== claim.contentHash ||
           saved.inboundId !== claim.inbound.id ||
           saved.status === 'filtered' ||
-          (!['filtered', 'deduplicated'].includes(saved.status) &&
+          (saved.status !== 'deduplicated' &&
             stableStringify(saved.intent) !== stableStringify(intent))
         )
           throw error;

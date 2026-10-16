@@ -13,10 +13,11 @@ type Fragment = Pick<LoopDefinition, 'nodes' | 'edges'>;
 
 /** The plan's once-only wrapper, completed for infinities: $type throws on +/-Infinity even
  * though JSONata arithmetic can return them and evaluatePredicate accepts them.
+ * The eval call's own block creates a frame so source bindings cannot replace coercion helpers.
  */
 export function filterRouteExpression(source: string): string {
   return `(
-    $v := $eval(${JSON.stringify(source)}, invocation.trigger.payload);
+    $v := ($eval(${JSON.stringify(source)}, invocation.trigger.payload));
     $infinite := $v = (1/0) or $v = (-1/0);
     $t := $infinite ? 'number' : $type($v);
     $truth := $exists($v) and (

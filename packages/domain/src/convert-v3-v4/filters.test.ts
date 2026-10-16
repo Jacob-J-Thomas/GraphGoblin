@@ -84,6 +84,36 @@ describe('predicate coercion parity', () => {
       }),
     ).toBe(expected ? 'pass' : 'ignore');
   });
+  it.each([
+    ['$exists := function($x){false}', true],
+    ['$count := function($x){0}', true],
+    ['$keys := function($x){[]}', true],
+    ['$length := function($x){0}', true],
+    ['$type := function($x){"null"}', true],
+    ['$exists := false', false],
+    ['$count := [false]', true],
+    ['$keys := {"a":false}', true],
+    ['$length := "ready"', true],
+    ['$type := null', false],
+    ['($exists := function($x){false}; [false])', true],
+    ['($count := function($x){0}; [])', false],
+    ['(($exists := function($x){false}); ($length := function($x){0}; "ready"))', true],
+  ])('isolates source bindings during coercion: %s', async (source, expected) => {
+    expect(await evaluatePredicate(String(source), {})).toBe(expected);
+    expect(
+      await evaluateExpression(filterRouteExpression(String(source)), {
+        invocation: { trigger: { payload: {} } },
+      }),
+    ).toBe(expected ? 'pass' : 'ignore');
+  });
+  it('creates a separate JSONata frame for a parenthesized eval call', async () => {
+    const source = JSON.stringify('$exists := function($x){false}');
+    // Characterize this JSONata version: eval alone mutates its caller, but a block contains it.
+    expect(await evaluateExpression(`($v := $eval(${source}); $exists(null))`, {})).toBe(false);
+    expect(
+      await evaluateExpression(`($v := ($eval(${source})); [$exists(null), $type($v)])`, {}),
+    ).toEqual([true, 'function']);
+  });
   it('quotes source exactly and retains guarded eval, regex/depth/deadline failures', async () => {
     const source = 'text = "quoted \\" line\\n"';
     expect(filterRouteExpression(source)).toContain(JSON.stringify(source));
@@ -332,6 +362,18 @@ describe('stored trigger filter graphs', () => {
     '$map(items, function($x){$x.ready})',
   ])('recognizes payload-only source %s', (source) =>
     expect(filterNeedsReplacement(source)).toBe(false),
+  );
+  it.each(['items@$x[$x.ready]', 'items#$i[$i = 0]'])(
+    'conservatively requires replacement for deterministic context/position binding: %s',
+    async (expression) => {
+      expect(await evaluatePredicate(expression, { items: [{ ready: true }] })).toBe(true);
+      expect(filterNeedsReplacement(expression)).toBe(true);
+      const result = await convert(frozen(expression));
+      expect(result.reviewItems.find((item) => item.kind === 'trigger-filter')).toMatchObject({
+        proposedValue: null,
+        status: 'pending',
+      });
+    },
   );
   it.each(['several', 'missing', 'wrong port', 'no outgoing'])(
     'refuses %s successor topology',
