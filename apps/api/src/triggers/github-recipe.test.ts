@@ -39,17 +39,17 @@ async function recipe() {
     .map((result) => result.data);
   const selected = configs.find(
     (config) =>
-      config?.subtype === 'poll' &&
+      config?.type === 'poll' &&
       config.items &&
       config.probe.kind === 'script' &&
       config.probe.command === 'node',
   );
-  if (!selected || selected.subtype !== 'poll' || selected.probe.kind !== 'script')
+  if (!selected || selected.type !== 'poll' || selected.probe.kind !== 'script')
     throw new Error('documented gh items recipe missing');
   return selected;
 }
 function definition(
-  config: Extract<ReturnType<typeof TriggerConfigSchema.parse>, { subtype: 'poll' }>,
+  config: Extract<ReturnType<typeof TriggerConfigSchema.parse>, { type: 'poll' }>,
 ): LoopDefinitionInput {
   return {
     schemaVersion: CURRENT_DEFINITION_FORMAT,

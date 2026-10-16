@@ -86,7 +86,7 @@ describe('a minimal run', () => {
       id: 'start',
       kind: 'trigger',
       label: 'Start',
-      config: { subtype: 'manual', inputSchema: { type: 'object', required: ['topic'] } },
+      config: { type: 'manual', inputSchema: { type: 'object', required: ['topic'] } },
     };
     const version = engine.publish(loop);
     await expect(engine.start(version.loopId)).rejects.toMatchObject({ code: 'INVALID_INPUT' });
@@ -126,7 +126,7 @@ describe('a minimal run', () => {
       id: 'start',
       kind: 'trigger',
       label: 'Cron',
-      config: { subtype: 'cron', expression: '* * * * *' },
+      config: { type: 'cron', expression: '* * * * *' },
     };
     const version = engine.publish(loop);
     const run = await engine.runToIdle(version.loopId, null, { source: 'cron' });

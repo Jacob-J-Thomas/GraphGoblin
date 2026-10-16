@@ -43,7 +43,7 @@ describe.skipIf(!live)('API live smoke with the real Codex adapter', () => {
         name: 'live-smoke',
         settings: { workingDirectory: { kind: 'fixed', path: workDir } },
         nodes: [
-          { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+          { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
           {
             id: 'ask',
             kind: 'inference',

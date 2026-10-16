@@ -89,7 +89,7 @@ function gallery(childLoopId) {
     settings: { maxIterations: 5 },
     variables: { severity: { type: 'integer', minimum: 0 } },
     nodes: [
-      n('nightly', 'trigger', 'Nightly', { subtype: 'manual', inputSchema: RUN_INPUT }, 0, 0),
+      n('nightly', 'trigger', 'Nightly', { type: 'manual', inputSchema: RUN_INPUT }, 0, 0),
       n(
         'triage',
         'inference',
@@ -198,7 +198,7 @@ function approvalGate() {
     name: 'approval-gate',
     description: 'Asks a person before it finishes',
     nodes: [
-      n('start', 'trigger', 'Start', { subtype: 'manual', inputSchema: RUN_INPUT }, 0, 80),
+      n('start', 'trigger', 'Start', { type: 'manual', inputSchema: RUN_INPUT }, 0, 80),
       n(
         'approve',
         'wait',
@@ -232,7 +232,7 @@ async function seed(base) {
     name: 'pr-review',
     description: 'Reviews an open pull request',
     nodes: [
-      n('start', 'trigger', 'Start', { subtype: 'manual' }, 0, 80),
+      n('start', 'trigger', 'Start', { type: 'manual' }, 0, 80),
       n('done', 'exit', 'Done', {}, 260, 80),
     ],
     edges: [{ id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'done' } }],

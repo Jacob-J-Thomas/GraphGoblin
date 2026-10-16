@@ -102,7 +102,7 @@ describe('EditorPage undo and redo', () => {
     const dialog = await editNode('start', 'Edit trigger start');
     const loaded = node('start')!.config;
     await user.selectOptions(within(dialog).getByLabelText('Trigger type'), 'cron');
-    expect(node('start')!.config).toMatchObject({ subtype: 'cron' });
+    expect(node('start')!.config).toMatchObject({ type: 'cron' });
     focusDone(dialog);
     await user.keyboard(UNDO);
     expect(node('start')!.config).toBe(loaded);

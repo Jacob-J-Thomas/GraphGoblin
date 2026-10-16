@@ -1,7 +1,18 @@
 import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import type { LoopDefinitionInput, RunRecord } from '@graphgoblin/contracts';
-import { FIXTURE_TS, fakeUlid, kitchenSinkLoop, minimalLoop } from '@graphgoblin/contracts/testing';
+import type {
+  LoopDefinition,
+  LoopDefinitionInput,
+  LoopExport,
+  RunRecord,
+} from '@graphgoblin/contracts';
+import {
+  FIXTURE_TS,
+  fakeUlid,
+  everyFieldLoop,
+  kitchenSinkLoop,
+  minimalLoop,
+} from '@graphgoblin/contracts/testing';
 import { createInitialThread } from '@graphgoblin/engine';
 import { createTestApp, type TestApp } from './testing/test-app.js';
 
@@ -20,7 +31,7 @@ function waitLoop(name = 'wait'): LoopDefinitionInput {
     schemaVersion: CURRENT_DEFINITION_FORMAT,
     name,
     nodes: [
-      { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
+      { id: 'start', kind: 'trigger', label: 'S', config: { type: 'manual' } },
       {
         id: 'wait',
         kind: 'wait',
@@ -86,6 +97,65 @@ describe('system routes', () => {
 });
 
 describe('loops', () => {
+  it.each(everyFieldLoop().nodes.filter((node) => node.kind === 'trigger'))(
+    'keeps type through draft save, reopen, export and import for $id',
+    async (trigger) => {
+      const definition = minimalLoop();
+      definition.nodes[0]!.config = trigger.config;
+      const created = await t.app.inject({
+        method: 'POST',
+        url: '/loops',
+        payload: { definition },
+      });
+      expect(created.statusCode).toBe(201);
+      const { loop } = created.json<{ loop: { id: string } }>();
+      const reopened = (await t.app.inject(`/loops/${loop.id}`)).json<{
+        draft: { definition: LoopDefinition };
+      }>().draft.definition;
+      const config = reopened.nodes[0]!.config;
+      expect(config).toMatchObject(trigger.config);
+      expect(config).not.toHaveProperty('subtype');
+      const saved = await t.app.inject({
+        method: 'PUT',
+        url: `/loops/${loop.id}/draft`,
+        payload: { definition: { ...reopened, name: 'saved trigger' } },
+      });
+      expect(saved.statusCode).toBe(200);
+      const exported = await t.app.inject(`/loops/${loop.id}/export?draft=true`);
+      expect(exported.statusCode).toBe(200);
+      const document = exported.json<LoopExport>();
+      expect(document.loop.nodes[0]!.config).toEqual(config);
+      const imported = await t.app.inject({
+        method: 'POST',
+        url: '/loops/import',
+        payload: document,
+      });
+      expect(imported.statusCode).toBe(201);
+      expect(
+        imported.json<{ draft: { definition: LoopDefinition } }>().draft.definition.nodes[0]!
+          .config,
+      ).toEqual(config);
+
+      const { type, ...fields } = trigger.config;
+      for (const legacy of [
+        { subtype: type, ...fields },
+        { ...trigger.config, subtype: type },
+      ]) {
+        const rejected = await t.app.inject({
+          method: 'PUT',
+          url: `/loops/${loop.id}/draft`,
+          payload: {
+            definition: {
+              ...reopened,
+              nodes: [{ ...reopened.nodes[0], config: legacy }, ...reopened.nodes.slice(1)],
+            },
+          },
+        });
+        expect(rejected.statusCode).toBe(400);
+      }
+    },
+  );
+
   it('creates, reads, drafts, validates, publishes, exports, imports, and deletes', async () => {
     const created = await t.app.inject({
       method: 'POST',
@@ -388,7 +458,7 @@ describe('runs', () => {
       schemaVersion: CURRENT_DEFINITION_FORMAT,
       name: 'infer',
       nodes: [
-        { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
+        { id: 'start', kind: 'trigger', label: 'S', config: { type: 'manual' } },
         { id: 'infer', kind: 'inference', label: 'I', config: { prompt: { template: 'hi' } } },
         { id: 'done', kind: 'exit', label: 'D', config: {} },
       ],

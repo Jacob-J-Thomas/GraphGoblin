@@ -103,7 +103,7 @@ export function minimalLoop(): LoopDefinitionInput {
     schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: 'minimal',
     nodes: [
-      { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+      { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
       { id: 'done', kind: 'exit', label: 'Done', config: {} },
     ],
     edges: [{ id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'done' } }],
@@ -111,7 +111,7 @@ export function minimalLoop(): LoopDefinitionInput {
 }
 
 /**
- * A loop that sets every config field of every node kind, every subtype, mode, and operation, so
+ * A loop that sets every config field of every node kind, every type, mode, and operation, so
  * a test can check that parsing it (and exporting and importing it) gives the same value before
  * and after a change to the schemas' metadata. It is schema-valid, not a runnable graph.
  */
@@ -139,14 +139,14 @@ export function everyFieldLoop(): LoopDefinitionInput {
         kind: 'trigger',
         label: 'Manual',
         ui: { x: 10, y: 20 },
-        config: { subtype: 'manual', inputSchema: { type: 'object' }, exposeTo: ['ui', 'mcp'] },
+        config: { type: 'manual', inputSchema: { type: 'object' }, exposeTo: ['ui', 'mcp'] },
       },
       {
         id: 'cron',
         kind: 'trigger',
         label: 'Cron',
         config: {
-          subtype: 'cron',
+          type: 'cron',
           expression: '*/5 * * * *',
           timezone: 'Europe/Paris',
           missedFirePolicy: 'run-each',
@@ -158,7 +158,7 @@ export function everyFieldLoop(): LoopDefinitionInput {
         kind: 'trigger',
         label: 'Hook',
         config: {
-          subtype: 'webhook',
+          type: 'webhook',
           signature: { scheme: 'hmac-sha256', header: 'x-sig', secretRef: 'hook-secret' },
           replayWindowSeconds: 120,
           dedupeKey: 'payload.id',
@@ -170,7 +170,7 @@ export function everyFieldLoop(): LoopDefinitionInput {
         kind: 'trigger',
         label: 'Event',
         config: {
-          subtype: 'event',
+          type: 'event',
           eventType: 'build-done',
           filter: 'payload.ok',
           dedupeKey: 'payload.id',
@@ -181,7 +181,7 @@ export function everyFieldLoop(): LoopDefinitionInput {
         kind: 'trigger',
         label: 'Poller',
         config: {
-          subtype: 'poll',
+          type: 'poll',
           intervalSeconds: 30,
           probe: {
             kind: 'http',
@@ -201,7 +201,7 @@ export function everyFieldLoop(): LoopDefinitionInput {
         kind: 'trigger',
         label: 'GitHub hook',
         config: {
-          subtype: 'webhook',
+          type: 'webhook',
           signature: {
             scheme: 'hmac-sha256-body',
             header: 'x-hub-signature-256',
@@ -216,7 +216,7 @@ export function everyFieldLoop(): LoopDefinitionInput {
         kind: 'trigger',
         label: 'Items poller',
         config: {
-          subtype: 'poll',
+          type: 'poll',
           intervalSeconds: 30,
           probe: { kind: 'script', command: 'gh', args: ['api'], timeoutSeconds: 10 },
           fireWhen: 'true',
@@ -494,12 +494,12 @@ export function kitchenSinkLoop(): LoopDefinitionInput {
     },
     variables: { topic: { type: 'string' } },
     nodes: [
-      { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+      { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
       {
         id: 'nightly',
         kind: 'trigger',
         label: 'Nightly',
-        config: { subtype: 'cron', expression: '0 2 * * *', timezone: 'UTC' },
+        config: { type: 'cron', expression: '0 2 * * *', timezone: 'UTC' },
       },
       {
         id: 'prep',

@@ -45,7 +45,7 @@ If import is refused, the alert lists each invalid field's path and reason, incl
 
 A saved model that is missing or disabled stays selected with **not in catalog** or **disabled in the catalog** and a warning. An effort the selected model does not support stays selected and flagged too. Changing the model never changes effort silently. Catalog validation warnings appear beside the model field when they add information and do not block publishing. If the catalog cannot load, the current values remain in read-only dropdowns with one message and **Retry model catalog** beside Model; the pickers recover without changing saved values or dropping keyboard focus. A failed refresh keeps cached choices editable and warns that the catalog may be out of date.
 
-**Trigger (`trigger`).** Choose `subtype`: `manual`, `cron`, `webhook`, `event`, or `poll`. For manual starts, set `inputSchema` to validate input and `exposeTo` to declare intended `ui`, `api`, and `mcp` surfaces. The trigger records its payload as an output and follows `out`. Configure automatic sources in [Triggers](04-triggers.md).
+**Trigger (`trigger`).** Choose `type`: `manual`, `cron`, `webhook`, `event`, or `poll`. For manual starts, set `inputSchema` to validate input and `exposeTo` to declare intended `ui`, `api`, and `mcp` surfaces. The trigger records its payload as an output and follows `out`. Configure automatic sources in [Triggers](04-triggers.md).
 
 > After 1.0: Surface-aware start and input controls. Today `exposeTo` is recorded and described to MCP callers, but the web launcher and engine commands do not enforce it. Use API authentication for access control.
 
@@ -158,7 +158,7 @@ The body wraps your definition:
     "schemaVersion": 4,
     "name": "starter",
     "nodes": [
-      { "id": "start", "kind": "trigger", "label": "Start", "config": { "subtype": "manual" } },
+      { "id": "start", "kind": "trigger", "label": "Start", "config": { "type": "manual" } },
       { "id": "done", "kind": "exit", "label": "Done", "config": {} }
     ],
     "edges": [
@@ -195,7 +195,7 @@ Save this bare definition as a JSON file and import it. It follows the contracts
       "label": "Start",
       "ui": { "x": 0, "y": 80 },
       "config": {
-        "subtype": "manual",
+        "type": "manual",
         "exposeTo": ["ui", "api", "mcp"],
         "inputSchema": {
           "type": "object",

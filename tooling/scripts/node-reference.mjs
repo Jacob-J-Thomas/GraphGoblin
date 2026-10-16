@@ -15,7 +15,7 @@ export const NODE_DOCS = {
     purpose:
       'Starts a run. A loop may have several triggers; each produces the same trigger envelope.',
     ports: '`out`.',
-    variantKey: 'subtype',
+    variantKey: 'type',
   },
   decision: {
     title: 'Decision',
@@ -223,7 +223,7 @@ function table(rows) {
 /**
  * Fields with no description in the schemas' metadata (`fieldDocs`, see `nodeFieldDocs`), and
  * kinds missing from NODE_DOCS. The generator fails on any, so a new config field cannot reach the
- * reference undocumented. A union's tag (`subtype`, `mode`) names its variant's table, not a row.
+ * reference undocumented. A union's tag (`type`, `mode`) names its variant's table, not a row.
  */
 export function undocumentedFields(jsonSchemas, fieldDocs) {
   const missing = [];

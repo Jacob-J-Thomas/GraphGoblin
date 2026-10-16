@@ -319,7 +319,7 @@ describe('NodeEditorDialog GitHub trigger presets', () => {
 
     const node = () => store().definition?.nodes.find((candidate) => candidate.id === 'github');
     expect(node()?.config).toMatchObject({
-      subtype: 'webhook',
+      type: 'webhook',
       signature: {
         scheme: 'hmac-sha256-body',
         header: 'x-hub-signature-256',
@@ -349,11 +349,11 @@ describe('NodeEditorDialog GitHub trigger presets', () => {
 
     act(() => store().undo());
     expect(node()?.config).toMatchObject({
-      subtype: 'webhook',
+      type: 'webhook',
       signature: { secretRef: 'issue-hook' },
     });
     act(() => store().undo());
-    expect(node()?.config).toEqual({ subtype: 'manual', exposeTo: ['ui', 'api', 'mcp'] });
+    expect(node()?.config).toEqual({ type: 'manual', exposeTo: ['ui', 'api', 'mcp'] });
   });
 
   it('shows bounded item controls for the GitHub poll preset', async () => {
@@ -412,7 +412,7 @@ describe('NodeEditorDialog disclosures across undo and redo', () => {
         kind: 'trigger',
         label: 'Cron',
         config: {
-          subtype: 'cron',
+          type: 'cron',
           expression: '30 7 * * 1',
           timezone: 'UTC',
         },

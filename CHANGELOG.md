@@ -4,6 +4,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Trigger configs use one strict `type` discriminator across the editor, API, MCP and exports. Both webhook signing variants keep `type: 'webhook'`; their fields and validation are unchanged. **Upgrade:** current trigger configs and exports require `type` instead of `subtype`. Rebuild backend, web and generated clients together. Old exports are converted only by the format-4 offline upgrade; current parsers reject `subtype`. (#168, step 22 T3)
+
 - GitHub webhook presets now preview and apply editable body-check decisions, output-restoring mutations and quiet Success exits in one undo step, preserving successor connections and explicitly reviewing replacement edits; poll presets are unchanged. (#168, step 21 T2)
 
 - Trigger editing starts with Manual, Cron, Poll, Event or Webhook and type-specific fields. GitHub presets are optional, preview the full configuration replacement, and apply as one undoable edit that also restores unfinished input on undo. The palette keeps one Trigger node; stored `subtype` and current intake behavior are unchanged. (#168, step 20 T1)

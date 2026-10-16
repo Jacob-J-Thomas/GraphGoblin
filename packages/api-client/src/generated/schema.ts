@@ -2317,7 +2317,7 @@ export interface components {
                 kind: "trigger";
                 config: {
                     /** @constant */
-                    subtype: "manual";
+                    type: "manual";
                     inputSchema?: {
                         [key: string]: unknown;
                     } | undefined;
@@ -2331,7 +2331,7 @@ export interface components {
                     exposeTo?: ("ui" | "api" | "mcp")[] | undefined;
                 } | {
                     /** @constant */
-                    subtype: "cron";
+                    type: "cron";
                     expression: string;
                     /** @default UTC */
                     timezone?: string | undefined;
@@ -2344,7 +2344,7 @@ export interface components {
                     enabled?: boolean | undefined;
                 } | {
                     /** @constant */
-                    subtype: "webhook";
+                    type: "webhook";
                     signature: {
                         /** @constant */
                         scheme: "hmac-sha256";
@@ -2358,7 +2358,7 @@ export interface components {
                     filter?: string | undefined;
                 } | {
                     /** @constant */
-                    subtype: "webhook";
+                    type: "webhook";
                     signature: {
                         /** @constant */
                         scheme: "hmac-sha256-body";
@@ -2370,13 +2370,13 @@ export interface components {
                     filter?: string | undefined;
                 } | {
                     /** @constant */
-                    subtype: "event";
+                    type: "event";
                     eventType: string;
                     filter?: string | undefined;
                     dedupeKey?: string | undefined;
                 } | {
                     /** @constant */
-                    subtype: "poll";
+                    type: "poll";
                     intervalSeconds: number;
                     probe: {
                         /** @constant */
@@ -4020,7 +4020,7 @@ export interface components {
                 kind: "trigger";
                 config: {
                     /** @constant */
-                    subtype: "manual";
+                    type: "manual";
                     inputSchema?: {
                         [key: string]: unknown;
                     } | undefined;
@@ -4034,7 +4034,7 @@ export interface components {
                     exposeTo: ("ui" | "api" | "mcp")[];
                 } | {
                     /** @constant */
-                    subtype: "cron";
+                    type: "cron";
                     expression: string;
                     /** @default UTC */
                     timezone: string;
@@ -4047,7 +4047,7 @@ export interface components {
                     enabled: boolean;
                 } | {
                     /** @constant */
-                    subtype: "webhook";
+                    type: "webhook";
                     signature: {
                         /** @constant */
                         scheme: "hmac-sha256";
@@ -4061,7 +4061,7 @@ export interface components {
                     filter?: string | undefined;
                 } | {
                     /** @constant */
-                    subtype: "webhook";
+                    type: "webhook";
                     signature: {
                         /** @constant */
                         scheme: "hmac-sha256-body";
@@ -4073,13 +4073,13 @@ export interface components {
                     filter?: string | undefined;
                 } | {
                     /** @constant */
-                    subtype: "event";
+                    type: "event";
                     eventType: string;
                     filter?: string | undefined;
                     dedupeKey?: string | undefined;
                 } | {
                     /** @constant */
-                    subtype: "poll";
+                    type: "poll";
                     intervalSeconds: number;
                     probe: {
                         /** @constant */

@@ -259,28 +259,50 @@ describe('node config schemas', () => {
     });
   });
 
-  it('trigger subtypes parse with defaults', () => {
-    const manual = TriggerConfigSchema.parse({ subtype: 'manual' });
-    expect(manual.subtype === 'manual' && manual.exposeTo).toEqual(['ui', 'api', 'mcp']);
-    const cron = TriggerConfigSchema.parse({ subtype: 'cron', expression: '* * * * *' });
-    expect(cron.subtype === 'cron' && cron.missedFirePolicy).toBe('skip');
+  it.each([
+    { type: 'manual' },
+    { type: 'cron', expression: '* * * * *' },
+    { type: 'webhook', signature: { scheme: 'hmac-sha256', secretRef: 'hook-secret' } },
+    { type: 'webhook', signature: { scheme: 'hmac-sha256-body', secretRef: 'hook-secret' } },
+    { type: 'event', eventType: 'issue-ready' },
+    { type: 'poll', intervalSeconds: 30, probe: { kind: 'none' }, fireWhen: 'true' },
+  ])('requires type and rejects subtype and unknown fields: %j', (config) => {
+    expect(TriggerConfigSchema.parse(config)).toMatchObject(config);
+    const { type, ...fields } = config;
+    expect(TriggerConfigSchema.safeParse({ subtype: type, ...fields }).success).toBe(false);
+    for (const extra of [{ subtype: type }, { unknown: true }])
+      expect(TriggerConfigSchema.safeParse({ ...config, ...extra }).success).toBe(false);
+    const branch = TriggerConfigSchema.options.find((schema) => schema.safeParse(config).success)!;
+    expect(branch.safeParse({ ...config, subtype: type }).error?.issues).toContainEqual({
+      code: 'unrecognized_keys',
+      keys: ['subtype'],
+      path: [],
+      message: 'Unrecognized key: "subtype"',
+    });
+  });
+
+  it('trigger types parse with defaults', () => {
+    const manual = TriggerConfigSchema.parse({ type: 'manual' });
+    expect(manual.type === 'manual' && manual.exposeTo).toEqual(['ui', 'api', 'mcp']);
+    const cron = TriggerConfigSchema.parse({ type: 'cron', expression: '* * * * *' });
+    expect(cron.type === 'cron' && cron.missedFirePolicy).toBe('skip');
     const hook = TriggerConfigSchema.parse({
-      subtype: 'webhook',
+      type: 'webhook',
       signature: { scheme: 'hmac-sha256', secretRef: 'hook-secret' },
     });
     expect(
-      hook.subtype === 'webhook' && 'replayWindowSeconds' in hook && hook.replayWindowSeconds,
+      hook.type === 'webhook' && 'replayWindowSeconds' in hook && hook.replayWindowSeconds,
     ).toBe(300);
-    expect(TriggerConfigSchema.parse({ subtype: 'event', eventType: 'issue-ready' }).subtype).toBe(
+    expect(TriggerConfigSchema.parse({ type: 'event', eventType: 'issue-ready' }).type).toBe(
       'event',
     );
     const poll = TriggerConfigSchema.parse({
-      subtype: 'poll',
+      type: 'poll',
       intervalSeconds: 30,
       probe: { kind: 'http', url: 'https://example.test/status' },
       fireWhen: 'probe.body.ready',
     });
-    expect(poll.subtype === 'poll' && poll.probe.kind === 'http' && poll.probe.method).toBe('GET');
+    expect(poll.type === 'poll' && poll.probe.kind === 'http' && poll.probe.method).toBe('GET');
   });
 
   it('node envelope defaults ui position', () => {

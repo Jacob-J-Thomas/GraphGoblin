@@ -92,7 +92,7 @@ test('incomplete weekly Monday 07:30 blocks publish, survives dialog remount, an
     ...definition,
     nodes: definition.nodes.map((node) =>
       node.id === 'start'
-        ? { ...node, config: { subtype: 'cron', expression: '30 7 * * 1', timezone: 'UTC' } }
+        ? { ...node, config: { type: 'cron', expression: '30 7 * * 1', timezone: 'UTC' } }
         : node,
     ),
   });

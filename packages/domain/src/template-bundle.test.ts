@@ -24,7 +24,7 @@ describe('manual template draft validation', () => {
           id: 'start',
           label: 'Start',
           kind: 'trigger',
-          config: { subtype: 'cron', expression: '* * * * *', timezone: 'UTC' },
+          config: { type: 'cron', expression: '* * * * *', timezone: 'UTC' },
         },
       ],
     }).nodes[0]!;
@@ -57,7 +57,7 @@ function definition() {
     schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: 'Authored',
     nodes: [
-      { id: 'start', label: 'Start', kind: 'trigger', config: { subtype: 'manual' } },
+      { id: 'start', label: 'Start', kind: 'trigger', config: { type: 'manual' } },
       {
         id: 'settings',
         label: 'Settings',

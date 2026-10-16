@@ -67,6 +67,10 @@ type NodeKind =
 
 An edge's `ui.route` is canvas layout, like a node's `ui`: the positions of the route's inner segments in canvas coordinates, alternating the x of a vertical segment and the y of a horizontal one (`x, y, ..., x`, so an odd count from 1 to 63). The first and last segments are horizontal and run from the ports' own heights, so the route stays attached when a card moves. The route lives on the edge it draws: deleting the edge deletes it, renaming a node keeps it, and versions pin it with the rest of the definition. The engine ignores it. The route field itself does not change the format. Current definitions and exports use version 4; the integrated cutover preserves these routes.
 
+Trigger nodes store `config.type`: `manual`, `cron`, `webhook`, `event`, or `poll`.
+Both webhook signing variants use `type: 'webhook'`. Current configs and exports
+reject `subtype`; old exports are converted only by the format-4 offline upgrade.
+
 Validation rules enforced by `domain` before a version can be published:
 
 - At least one trigger node and at least one exit node.

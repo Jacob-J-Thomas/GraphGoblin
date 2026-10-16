@@ -15,7 +15,7 @@ async function setup() {
   managers.push(engine.manager);
   const definition = minimalLoop();
   definition.nodes[0]!.config = {
-    subtype: 'webhook',
+    type: 'webhook',
     signature: { scheme: 'hmac-sha256-body', secretRef: 'secret' },
   };
   const version = engine.publish(definition);
@@ -110,7 +110,7 @@ describe('durable webhook admission', () => {
     );
     const definition = minimalLoop();
     definition.nodes[0]!.config = {
-      subtype: 'poll',
+      type: 'poll',
       intervalSeconds: 5,
       probe: { kind: 'script', command: 'fake' },
       fireWhen: 'true',

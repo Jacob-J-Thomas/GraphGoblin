@@ -1,10 +1,14 @@
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { loops } from '@graphgoblin/api-client';
+import { TriggerConfigSchema } from '@graphgoblin/contracts';
 import { afterEach, describe, expect, it } from 'vitest';
 import { getCode, setCode } from '../__fixtures__/codemirror.js';
 import { FakeApi } from '../__fixtures__/fake-api.js';
 import { renderApp } from '../__fixtures__/render.js';
 import { triggerConfig } from '../__fixtures__/triggers.js';
+import { createAppClient } from '../api/context.js';
+import { loadLocalDraft } from '../drafts/local-drafts.js';
 import { applyTheme, setTheme } from '../lib/theme.js';
 import { newLoopDefinition } from './model.js';
 import { useEditorStore } from './store.js';
@@ -26,6 +30,53 @@ async function openTrigger() {
 }
 
 afterEach(() => applyTheme('dark'));
+
+it.each([
+  triggerConfig('manual', { exposeTo: ['ui', 'mcp'], inputSchema: { type: 'object' } }),
+  triggerConfig('cron', { expression: '30 7 * * 1', timezone: 'Europe/Paris' }),
+  triggerConfig('event', { eventType: 'build-ready', filter: 'true', dedupeKey: 'id' }),
+  triggerConfig('poll', { intervalSeconds: 30, probe: { kind: 'none' }, fireWhen: 'true' }),
+  triggerConfig('webhook', {
+    signature: { scheme: 'hmac-sha256', secretRef: 'hook' },
+    filter: 'true',
+  }),
+  triggerConfig('webhook', {
+    signature: { scheme: 'hmac-sha256-body', secretRef: 'github' },
+    dedupeKey: 'id',
+  }),
+])('keeps type through editor save, device draft, reopen and export: %j', async (config) => {
+  const api = new FakeApi();
+  const definition = newLoopDefinition('trigger round trip');
+  definition.nodes[0]!.config = config;
+  const expected = TriggerConfigSchema.parse(config);
+  const loop = api.addLoop(definition);
+  const first = renderApp(`/loops/${loop.id}/edit`, api);
+  await screen.findByRole('heading', { name: definition.name });
+  act(() => {
+    store().openNode('start');
+    store().updateNode('start', { label: 'Saved trigger' });
+  });
+  expect(within(screen.getByRole('dialog')).getByLabelText('Trigger type')).toHaveDisplayValue(
+    config.type[0]!.toUpperCase() + config.type.slice(1),
+  );
+  await waitFor(() => expect(api.callsTo('PUT', `/loops/${loop.id}/draft`)).toHaveLength(1), {
+    timeout: 4000,
+  });
+  await waitFor(() =>
+    expect(screen.getByTestId('save-state')).toHaveTextContent('All changes saved'),
+  );
+  expect(api.loops.get(loop.id)!.draft!.definition.nodes[0]!.config).toEqual(expected);
+  expect((await loadLocalDraft(loop.id))!.definition.nodes[0]!.config).toEqual(expected);
+  first.unmount();
+  renderApp(`/loops/${loop.id}/edit`, api);
+  await screen.findByRole('heading', { name: definition.name });
+  act(() => store().openNode('start'));
+  expect(current()).toEqual(expected);
+  expect(current()).not.toHaveProperty('subtype');
+  const client = createAppClient('http://graphgoblin.test', api.fetch);
+  const exported = await loops.export(client, loop.id, { draft: true });
+  expect(exported.loop.nodes[0]!.config).toEqual(expected);
+});
 
 for (const theme of ['light', 'dark'] as const) {
   describe(`trigger authoring in ${theme}`, () => {
@@ -88,7 +139,7 @@ for (const theme of ['light', 'dark'] as const) {
         within(dialog).getByRole('option', { name: 'Body only (GitHub)' }),
       );
       expect(current()).toMatchObject({
-        subtype: 'webhook',
+        type: 'webhook',
         signature: { scheme: 'hmac-sha256-body' },
       });
       expect(within(dialog).queryByLabelText('Replay window seconds')).not.toBeInTheDocument();
@@ -122,7 +173,7 @@ for (const theme of ['light', 'dark'] as const) {
       await waitFor(() => expect(within(dialog).getByLabelText('Event type')).toHaveFocus());
       await user.type(within(dialog).getByLabelText('Event type'), 'incoming');
       expect(within(dialog).getByLabelText('Event type')).toHaveFocus();
-      act(() => store().openNode('start', { field: 'config.subtype' }));
+      act(() => store().openNode('start', { field: 'config.type' }));
       await waitFor(() => expect(within(dialog).getByLabelText('Trigger type')).toHaveFocus());
     });
 
@@ -168,7 +219,7 @@ for (const theme of ['light', 'dark'] as const) {
         expect(within(dialog).getByRole('button', { name: 'Apply GitHub preset' })).toHaveFocus();
         await user.keyboard('{Enter}');
         await waitFor(() => expect(within(dialog).getByLabelText('Trigger type')).toHaveFocus());
-        expect(current()).toMatchObject({ subtype: preset === 'issues-poll' ? 'poll' : 'webhook' });
+        expect(current()).toMatchObject({ type: preset === 'issues-poll' ? 'poll' : 'webhook' });
         expect(store().definition!.nodes).toHaveLength(preset === 'issues-poll' ? 2 : 5);
         expect(store().fieldErrors['node:start']).toBeUndefined();
         expect(store().past).toHaveLength(past + 1);

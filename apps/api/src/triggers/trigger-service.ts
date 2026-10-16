@@ -36,10 +36,7 @@ import { FixedWindowRateLimiter } from './rate-limit.js';
 import { verifyWebhookBody } from './webhook-body.js';
 
 type TriggerNode = Extract<Node, { kind: 'trigger' }>;
-type Config<S extends TriggerNode['config']['subtype']> = Extract<
-  TriggerNode['config'],
-  { subtype: S }
->;
+type Config<S extends TriggerNode['config']['type']> = Extract<TriggerNode['config'], { type: S }>;
 
 /**
  * An event may start at most this many runs in a row through event triggers. Together with the
@@ -150,7 +147,7 @@ export class TriggerService {
   checkDefinition(definition: LoopDefinition): ValidationIssue[] {
     const issues: ValidationIssue[] = [];
     for (const node of nodesOfKind(definition, 'trigger')) {
-      if (node.config.subtype !== 'cron') continue;
+      if (node.config.type !== 'cron') continue;
       const problem = CronScheduler.validate(node.config.expression, node.config.timezone);
       if (problem) {
         issues.push({
@@ -177,7 +174,7 @@ export class TriggerService {
     const hookDrafts: WebhookEndpointDraft[] = [];
     for (const node of triggers) {
       const config = node.config;
-      if (config.subtype === 'cron') {
+      if (config.type === 'cron') {
         let next: Date | undefined;
         try {
           next = config.enabled
@@ -198,7 +195,7 @@ export class TriggerService {
           enabled: config.enabled && next !== undefined,
           nextFireAt: next?.toISOString(),
         });
-      } else if (config.subtype === 'webhook') {
+      } else if (config.type === 'webhook') {
         hookDrafts.push({
           ownerId: loop.ownerId,
           triggerNodeId: node.id,
@@ -592,7 +589,7 @@ export class TriggerService {
       const version = await this.deps.loops.getVersion(loop.currentVersionId);
       if (!version) continue;
       for (const node of nodesOfKind(version.definition, 'trigger')) {
-        if (node.config.subtype === 'event' && node.config.eventType === type) {
+        if (node.config.type === 'event' && node.config.eventType === type) {
           matches.push({ loop, version, node });
         }
       }
@@ -603,13 +600,13 @@ export class TriggerService {
   private async triggerNode<S extends 'webhook'>(
     versionId: string,
     nodeId: string,
-    subtype: S,
+    type: S,
   ): Promise<Config<S> | undefined> {
     const version = await this.deps.loops.getVersion(versionId);
     const node = version
       ? nodesOfKind(version.definition, 'trigger').find((n) => n.id === nodeId)
       : undefined;
-    return node?.config.subtype === subtype ? (node.config as Config<S>) : undefined;
+    return node?.config.type === type ? (node.config as Config<S>) : undefined;
   }
 
   /** String header metadata for expressions; the configured signing credential stays private. */

@@ -70,7 +70,7 @@ export const KIND_INFO: Record<NodeKind, { label: string; description: string; c
 export function defaultConfig(kind: NodeKind): Record<string, unknown> {
   switch (kind) {
     case 'trigger':
-      return { subtype: 'manual' };
+      return { type: 'manual' };
     case 'decision':
       return {
         kind: 'expression',
@@ -400,7 +400,7 @@ export function newLoopDefinition(name: string): LoopDefinitionInput {
         id: 'start',
         kind: 'trigger',
         label: 'Start',
-        config: { subtype: 'manual' },
+        config: { type: 'manual' },
         ui: { x: 0, y: 80 },
       },
       { id: 'done', kind: 'exit', label: 'Done', config: {}, ui: { x: 320, y: 80 } },

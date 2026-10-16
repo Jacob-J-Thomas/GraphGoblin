@@ -13,7 +13,7 @@ function definition(model?: string): LoopDefinitionInput {
     schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: `MCP classifier ${model ?? 'default'}`,
     nodes: [
-      { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+      { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
       {
         id: 'choose',
         kind: 'decision',

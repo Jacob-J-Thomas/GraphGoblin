@@ -247,7 +247,7 @@ describe('subloop node', () => {
     schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: 'child',
     nodes: [
-      { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
+      { id: 'start', kind: 'trigger', label: 'S', config: { type: 'manual' } },
       {
         id: 'work',
         kind: 'mutate',
@@ -287,7 +287,7 @@ describe('subloop node', () => {
       schemaVersion: CURRENT_DEFINITION_FORMAT,
       name: 'parent',
       nodes: [
-        { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
+        { id: 'start', kind: 'trigger', label: 'S', config: { type: 'manual' } },
         {
           id: 'prep',
           kind: 'mutate',

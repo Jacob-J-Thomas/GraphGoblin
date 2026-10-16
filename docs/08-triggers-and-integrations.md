@@ -1,5 +1,10 @@
 # 08 - Triggers and integrations
 
+Stored trigger configs use `type`: `manual`, `cron`, `webhook`, `event`, or `poll`.
+Both webhook signing variants use `type: 'webhook'`. Config parsers reject
+`subtype`; convert old exports only through the format-4 offline upgrade.
+The invocation envelope continues to record the source as `trigger.kind`.
+
 ## Trigger envelope (Decided)
 
 Every trigger source produces the same envelope, embedded in the invocation and therefore in the thread.

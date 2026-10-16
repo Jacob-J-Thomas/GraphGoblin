@@ -26,7 +26,7 @@ const TYPES = [
   },
 ] as const;
 
-/** Presentation only: the schema still stores subtype and its two webhook signing variants. */
+/** Presentation only: the schema still stores type and its two webhook signing variants. */
 export function TriggerTypePicker({ options, value, onChange }: UnionPickerProps) {
   const id = useId();
   const selected = options.find((option) => option.value === value)!;

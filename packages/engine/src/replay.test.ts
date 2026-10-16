@@ -10,7 +10,7 @@ function linearLoop(): LoopDefinitionInput {
     schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: 'linear',
     nodes: [
-      { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+      { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
       {
         id: 'a',
         kind: 'mutate',
@@ -234,7 +234,7 @@ function minimalChild(): LoopDefinitionInput {
     schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: 'child',
     nodes: [
-      { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+      { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
       { id: 'done', kind: 'exit', label: 'Done', config: { returns: '"ok"' } },
     ],
     edges: [{ id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'done' } }],

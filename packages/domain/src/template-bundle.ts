@@ -18,7 +18,7 @@ export function validateTemplateDraft(input: unknown): LoopDefinition {
   requireIntegrity(
     definition.nodes.every((node) =>
       node.kind === 'trigger'
-        ? node.config.subtype === 'manual'
+        ? node.config.type === 'manual'
         : node.kind !== 'script' && node.kind !== 'subloop' && node.kind !== 'heartbeat',
     ),
     'template drafts must be manual workflows without scripts, subloops or heartbeat probes',

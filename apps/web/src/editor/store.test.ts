@@ -12,7 +12,7 @@ describe('editor store', () => {
 
   it('records clearing the last cron day as one choice, undo restores Monday and redo the blocker', () => {
     const definition = newLoopDefinition('cron');
-    definition.nodes[0]!.config = { subtype: 'cron', expression: '30 7 * * 1', timezone: 'UTC' };
+    definition.nodes[0]!.config = { type: 'cron', expression: '30 7 * * 1', timezone: 'UTC' };
     store().load('L1', definition);
     const error = {
       message: 'Choose at least one day.',
@@ -241,9 +241,9 @@ describe('undo and redo', () => {
     ['edit label of start', () => store().updateNode('start', { label: 'Begin' })],
     [
       'edit config of start',
-      () => store().updateNode('start', { config: { subtype: 'manual', exposeTo: ['ui'] } }),
+      () => store().updateNode('start', { config: { type: 'manual', exposeTo: ['ui'] } }),
     ],
-    ['edit start', () => store().updateNode('start', { label: 'B', config: { subtype: 'cron' } })],
+    ['edit start', () => store().updateNode('start', { label: 'B', config: { type: 'cron' } })],
     ['edit loop name', () => store().updateMeta({ name: 'b' })],
     ['edit loop description', () => store().updateMeta({ description: 'about' })],
     ['edit loop name and description', () => store().updateMeta({ name: 'b', description: 'c' })],
@@ -441,12 +441,12 @@ describe('undo and redo', () => {
     store().setFieldError('node:start', 'inputSchema', undefined);
     store().updateNode(
       'start',
-      { config: { subtype: 'manual', inputSchema: schema } },
+      { config: { type: 'manual', inputSchema: schema } },
       { path: 'inputSchema', kind: 'typing', id: 7 },
     );
     expect(store().past).toHaveLength(1);
     store().undo();
-    expect(node('start')!.config).toEqual({ subtype: 'manual' });
+    expect(node('start')!.config).toEqual({ type: 'manual' });
     expect(store().fieldErrors).toEqual({});
 
     // Text left unparsed is a step of its own: undo drops it, redo brings it back.
@@ -455,7 +455,7 @@ describe('undo and redo', () => {
     store().setFieldError('node:start', 'inputSchema', unparsed);
     store().undo();
     expect(store().fieldErrors).toEqual({});
-    expect(node('start')!.config).toEqual({ subtype: 'manual', inputSchema: schema });
+    expect(node('start')!.config).toEqual({ type: 'manual', inputSchema: schema });
     store().redo();
     expect(store().fieldErrors).toEqual({ 'node:start': { inputSchema: unparsed } });
   });

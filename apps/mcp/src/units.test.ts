@@ -151,18 +151,16 @@ describe('isEntryPoint', () => {
 });
 
 describe('describe helpers', () => {
-  it('describes every trigger subtype, waits, and exits of the kitchen-sink loop', () => {
+  it('describes every trigger type, waits, and exits of the kitchen-sink loop', () => {
     const definition = LoopDefinitionSchema.parse(kitchenSinkLoop());
     const described = describeDefinition(definition);
     expect(described.nodeKinds.length).toBe(9);
-    expect(described.triggers.find((tr) => tr.subtype === 'cron')).toEqual({
+    expect(described.triggers.find((tr) => tr.type === 'cron')).toEqual({
       nodeId: 'nightly',
       label: 'Nightly',
-      subtype: 'cron',
+      type: 'cron',
     });
-    expect(described.triggers.find((tr) => tr.subtype === 'manual')).not.toHaveProperty(
-      'inputSchema',
-    );
+    expect(described.triggers.find((tr) => tr.type === 'manual')).not.toHaveProperty('inputSchema');
     expect(described.exits.length).toBeGreaterThan(0);
   });
 
@@ -171,7 +169,7 @@ describe('describe helpers', () => {
       schemaVersion: CURRENT_DEFINITION_FORMAT,
       name: 'w',
       nodes: [
-        { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
+        { id: 'start', kind: 'trigger', label: 'S', config: { type: 'manual' } },
         { id: 'ask', kind: 'wait', label: 'A', config: { mode: 'input', prompt: 'p' } },
         { id: 'nap', kind: 'wait', label: 'N', config: { mode: 'duration', seconds: 1 } },
         { id: 'done', kind: 'exit', label: 'D', config: {} },

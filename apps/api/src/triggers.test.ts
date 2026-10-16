@@ -35,7 +35,7 @@ afterEach(async () => {
   await t.close();
 });
 
-type TriggerConfig = Record<string, unknown> & { subtype: string };
+type TriggerConfig = Record<string, unknown> & { type: string };
 
 function triggerLoop(
   name: string,
@@ -54,7 +54,7 @@ function triggerLoop(
               id: 'manual',
               kind: 'trigger' as const,
               label: 'M',
-              config: { subtype: 'manual' as const },
+              config: { type: 'manual' as const },
             },
           ]
         : []),
@@ -80,7 +80,7 @@ function triggerLoop(
 }
 
 const hookTrigger = (extra: Record<string, unknown> = {}): TriggerConfig => ({
-  subtype: 'webhook',
+  type: 'webhook',
   signature: { scheme: 'hmac-sha256', secretRef: 'hook-secret' },
   ...extra,
 });
@@ -139,14 +139,14 @@ async function settle(): Promise<void> {
 
 describe('arming on publish', () => {
   it('creates schedules and endpoints, keeps webhook paths, and disables old versions', async () => {
-    const loop = triggerLoop('armed', { subtype: 'cron', expression: '0 * * * *' });
+    const loop = triggerLoop('armed', { type: 'cron', expression: '0 * * * *' });
     loop.nodes.push(
       { id: 'hook', kind: 'trigger', label: 'H', config: hookTrigger() as never },
       {
         id: 'off',
         kind: 'trigger',
         label: 'Off',
-        config: { subtype: 'cron', expression: '0 0 * * *', enabled: false },
+        config: { type: 'cron', expression: '0 0 * * *', enabled: false },
       },
     );
     loop.edges.push(
@@ -181,7 +181,7 @@ describe('arming on publish', () => {
     await t.app.inject({
       method: 'PUT',
       url: `/loops/${id}/draft`,
-      payload: { definition: triggerLoop('armed', { subtype: 'manual' }) },
+      payload: { definition: triggerLoop('armed', { type: 'manual' }) },
     });
     await t.app.inject({ method: 'POST', url: `/loops/${id}/publish` });
     await setSecret();
@@ -198,7 +198,7 @@ describe('arming on publish', () => {
       url: '/loops',
       payload: {
         definition: triggerLoop('bad-cron', {
-          subtype: 'cron',
+          type: 'cron',
           expression: 'every tuesday',
           timezone: 'Mars/Olympus',
         }),
@@ -218,7 +218,7 @@ describe('arming on publish', () => {
     const loop = (await t.container.repos.loops.getLoop(id))!;
     const version = (await t.container.repos.loops.getVersion(loop.currentVersionId!))!;
     const definition = LoopDefinitionSchema.parse(
-      triggerLoop('broken', { subtype: 'cron', expression: 'nope' }),
+      triggerLoop('broken', { type: 'cron', expression: 'nope' }),
     );
     const armed = await t.container.triggers.armVersion(loop, { ...version, definition });
     expect(armed.schedules).toEqual([expect.objectContaining({ enabled: false })]);
@@ -229,7 +229,7 @@ describe('arming on publish', () => {
 describe('cron triggers', () => {
   it('starts a run when a schedule comes due', async () => {
     const id = await t.publishLoop(
-      triggerLoop('hourly', { subtype: 'cron', expression: '0 * * * *' }),
+      triggerLoop('hourly', { type: 'cron', expression: '0 * * * *' }),
     );
     expect(await t.container.cron.poll()).toBe(0);
     t.clock.set('2026-10-02T13:00:05.000Z');
@@ -251,20 +251,20 @@ describe('cron triggers', () => {
   it('applies the missed-fire policy after an outage', async () => {
     const each = await t.publishLoop(
       triggerLoop('each', {
-        subtype: 'cron',
+        type: 'cron',
         expression: '0 * * * *',
         missedFirePolicy: 'run-each',
       }),
     );
     const once = await t.publishLoop(
       triggerLoop('once', {
-        subtype: 'cron',
+        type: 'cron',
         expression: '0 * * * *',
         missedFirePolicy: 'run-once',
       }),
     );
     const skip = await t.publishLoop(
-      triggerLoop('skip', { subtype: 'cron', expression: '0 * * * *' }),
+      triggerLoop('skip', { type: 'cron', expression: '0 * * * *' }),
     );
     t.clock.set('2026-10-02T15:30:00.000Z');
     expect(await t.container.cron.recover()).toBe(4);
@@ -331,7 +331,7 @@ describe('boot', () => {
       url: '/loops',
       payload: {
         definition: triggerLoop('boot', {
-          subtype: 'cron',
+          type: 'cron',
           expression: '0 * * * *',
           missedFirePolicy: 'run-once',
         }),
@@ -635,19 +635,19 @@ describe('FixedWindowRateLimiter', () => {
 describe('event triggers', () => {
   it('fires matching event triggers with filters and dedupe, and lists events', async () => {
     const plain = await t.publishLoop(
-      triggerLoop('plain', { subtype: 'event', eventType: 'issue-ready' }),
+      triggerLoop('plain', { type: 'event', eventType: 'issue-ready' }),
     );
     const filtered = await t.publishLoop(
       triggerLoop('filtered', {
-        subtype: 'event',
+        type: 'event',
         eventType: 'issue-ready',
         filter: 'priority > 2',
       }),
     );
     const keyed = await t.publishLoop(
-      triggerLoop('keyed', { subtype: 'event', eventType: 'issue-ready', dedupeKey: 'issue' }),
+      triggerLoop('keyed', { type: 'event', eventType: 'issue-ready', dedupeKey: 'issue' }),
     );
-    await t.publishLoop(triggerLoop('other', { subtype: 'event', eventType: 'other-type' }));
+    await t.publishLoop(triggerLoop('other', { type: 'event', eventType: 'other-type' }));
 
     const first = await t.app.inject({
       method: 'POST',
@@ -705,7 +705,7 @@ describe('event triggers', () => {
 
   it('logs trigger failures and bus events that cannot be stored', async () => {
     await t.publishLoop(
-      triggerLoop('broken', { subtype: 'event', eventType: 'boom', filter: '$error("bad")' }),
+      triggerLoop('broken', { type: 'event', eventType: 'boom', filter: '$error("bad")' }),
     );
     const result = await t.app.inject({
       method: 'POST',
@@ -744,15 +744,15 @@ describe('event triggers', () => {
     const a = await t.publishLoop(
       triggerLoop(
         'loop-a',
-        { subtype: 'event', eventType: 'b-done' },
+        { type: 'event', eventType: 'b-done' },
         { emit: 'a-done', manual: true },
       ),
     );
     const b = await t.publishLoop(
-      triggerLoop('loop-b', { subtype: 'event', eventType: 'a-done' }, { emit: 'b-done' }),
+      triggerLoop('loop-b', { type: 'event', eventType: 'a-done' }, { emit: 'b-done' }),
     );
     const self = await t.publishLoop(
-      triggerLoop('loop-self', { subtype: 'event', eventType: 'ping' }, { emit: 'ping' }),
+      triggerLoop('loop-self', { type: 'event', eventType: 'ping' }, { emit: 'ping' }),
     );
 
     const started = await t.app.inject({
@@ -793,7 +793,7 @@ describe('event triggers', () => {
     for (let i = 0; i <= MAX_EVENT_CHAIN; i += 1) {
       ids.push(
         await t.publishLoop(
-          triggerLoop(`hop-${i}`, { subtype: 'event', eventType: `e${i}` }, { emit: `e${i + 1}` }),
+          triggerLoop(`hop-${i}`, { type: 'event', eventType: `e${i}` }, { emit: `e${i + 1}` }),
         ),
       );
     }
@@ -844,7 +844,7 @@ describe('poll triggers', () => {
     const { container, probes, clock, publish } = await pollContainer();
     const id = await publish(
       triggerLoop('poll-http', {
-        subtype: 'poll',
+        type: 'poll',
         intervalSeconds: 60,
         probe: {
           kind: 'http',
@@ -899,7 +899,7 @@ describe('poll triggers', () => {
     const { container, scripts, clock, logger, publish } = await pollContainer();
     await publish(
       triggerLoop('poll-script', {
-        subtype: 'poll',
+        type: 'poll',
         intervalSeconds: 5,
         probe: { kind: 'script', command: 'check', args: ['--at', '{{ now }}'] },
         fireWhen: 'probe.exitCode = 0',
@@ -907,7 +907,7 @@ describe('poll triggers', () => {
     );
     await publish(
       triggerLoop('poll-none', {
-        subtype: 'poll',
+        type: 'poll',
         intervalSeconds: 5,
         probe: { kind: 'none' },
         fireWhen: '$error("broken")',
@@ -915,7 +915,7 @@ describe('poll triggers', () => {
     );
     await publish(
       triggerLoop('poll-off', {
-        subtype: 'poll',
+        type: 'poll',
         intervalSeconds: 5,
         probe: { kind: 'none' },
         fireWhen: 'true',
@@ -945,7 +945,7 @@ describe('poll triggers', () => {
     const { container, probes, clock, publish } = await pollContainer();
     const id = await publish(
       triggerLoop('poll-tick', {
-        subtype: 'poll',
+        type: 'poll',
         intervalSeconds: 5,
         probe: { kind: 'http', url: 'https://example/' },
         fireWhen: 'probe.status = 200',
@@ -1418,7 +1418,7 @@ describe('body signing and durable admission', () => {
       vi.spyOn(t.container.ports.admission, 'create').mockRejectedValueOnce(new Error('retry'));
       expect((await bodyDelivery(path, '{"key":"same"}')).statusCode).toBe(503);
       const pollConfig = {
-        subtype: 'poll',
+        type: 'poll',
         intervalSeconds: 5,
         probe: { kind: 'script', command: 'fake-gh' },
         fireWhen: 'true',
@@ -1483,7 +1483,7 @@ describe('body signing and durable admission', () => {
     try {
       await blocked;
       const pollConfig = {
-        subtype: 'poll',
+        type: 'poll',
         intervalSeconds: 5,
         probe: { kind: 'script', command: 'fake-gh' },
         fireWhen: 'true',
@@ -1576,7 +1576,7 @@ describe('body signing and durable admission', () => {
 
 describe('bounded items-mode poll integration', () => {
   const config = (extra: Record<string, unknown> = {}) => ({
-    subtype: 'poll',
+    type: 'poll',
     intervalSeconds: 5,
     probe: { kind: 'script', command: 'fake-gh' },
     fireWhen: 'true',

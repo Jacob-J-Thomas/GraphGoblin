@@ -308,7 +308,7 @@ describe('editable GitHub fragments', () => {
     for (const secretRef of ['', 'a'.repeat(129)])
       expect(canApplyGitHubPreset('issues-labeled', { ...setup, secretRef })).toBe(false);
     expect(makeGitHubTriggerPreset('issues-poll', setup)).toMatchObject({
-      subtype: 'poll',
+      type: 'poll',
       intervalSeconds: 60,
     });
   });

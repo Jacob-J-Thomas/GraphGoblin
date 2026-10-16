@@ -341,8 +341,9 @@ with a short description. Only the selected type's schema fields render. Manual
 shows input schema and start surfaces; Cron keeps its schedule control, timezone,
 missed-fire policy and enabled flag; Poll keeps both single-result and Items
 modes, probe fields, firing condition and dedupe. Webhook's two existing signing
-variants are presented under **Signing protocol**. Event/Webhook intake and
-stored `subtype` remain unchanged until later #168 children. Other schema unions
+variants are presented under **Signing protocol**. Stored configs, device drafts,
+saved definitions and exports use `type`. Event/Webhook intake fields remain
+unchanged until later #168 children. Other schema unions
 keep their own labels and controls.
 
 **Start from a preset** is an optional disclosure after the type's fields. Setup

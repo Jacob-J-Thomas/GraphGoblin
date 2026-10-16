@@ -24,7 +24,7 @@ for (const finalChoice of ['repeat', 'done'] as const) {
           id: 'start',
           kind: 'trigger',
           label: 'Start',
-          config: { subtype: 'manual' },
+          config: { type: 'manual' },
           ui: { x: 0, y: 80 },
         },
         {

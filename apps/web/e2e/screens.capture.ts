@@ -84,7 +84,7 @@ interface Screen {
 }
 
 const at = (x: number, y: number) => ({ x, y });
-const trigger = { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } };
+const trigger = { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } };
 
 function chain(name: string, description: string, middle: Record<string, unknown>[]) {
   const nodes: Record<string, unknown>[] = [{ ...trigger, ui: at(0, 80) }];
@@ -125,7 +125,7 @@ function nightlyTriage(childLoopId: string) {
     name: 'nightly-triage',
     description: 'Triages new issues every night and opens a fix when one is needed',
     nodes: [
-      n('nightly', 'trigger', 'Nightly', { subtype: 'cron', expression: '0 2 * * 1-5' }, 0, 0),
+      n('nightly', 'trigger', 'Nightly', { type: 'cron', expression: '0 2 * * 1-5' }, 0, 0),
       n(
         'triage',
         'inference',

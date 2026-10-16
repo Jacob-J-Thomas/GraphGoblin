@@ -45,7 +45,7 @@ try {
       name: 'nightly-triage',
       description: 'Review incoming issues every night.',
       nodes: [
-        { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+        { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
         { id: 'done', kind: 'exit', label: 'Done', config: {} },
       ],
       edges: [{ id: 'edge', from: { node: 'start', port: 'out' }, to: { node: 'done' } }],

@@ -33,8 +33,8 @@ export function describeDefinition(definition: LoopDefinition) {
       triggers.push({
         nodeId: node.id,
         label: node.label,
-        subtype: config.subtype,
-        ...(config.subtype === 'manual'
+        type: config.type,
+        ...(config.type === 'manual'
           ? {
               startableFromMcp: config.exposeTo.includes('mcp'),
               ...(config.inputSchema ? { inputSchema: config.inputSchema } : {}),

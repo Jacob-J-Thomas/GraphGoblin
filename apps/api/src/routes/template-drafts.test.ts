@@ -42,7 +42,7 @@ describe('editable template starting points', () => {
       ).not.toHaveLength(0);
       for (const node of created.draft.definition.nodes) {
         expect(['script', 'subloop', 'heartbeat']).not.toContain(node.kind);
-        if (node.kind === 'trigger') expect(node.config.subtype).toBe('manual');
+        if (node.kind === 'trigger') expect(node.config.type).toBe('manual');
         if (node.kind === 'inference') {
           expect(node.config.model).toBeUndefined();
           expect(node.config.effort).toBeUndefined();

@@ -12,7 +12,7 @@ declare global {
   }
 }
 
-const start = { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } };
+const start = { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } };
 const done = { id: 'done', kind: 'exit', label: 'Done', config: {} };
 
 /** A loop whose one inference turn takes as long as the harness script says. */

@@ -50,14 +50,14 @@ describe('DELETE /loops/:id', () => {
         id: 'cron',
         kind: 'trigger',
         label: 'Cron',
-        config: { subtype: 'cron', expression: '0 * * * *' },
+        config: { type: 'cron', expression: '0 * * * *' },
       },
       {
         id: 'hook',
         kind: 'trigger',
         label: 'Hook',
         config: {
-          subtype: 'webhook',
+          type: 'webhook',
           signature: { scheme: 'hmac-sha256', secretRef: 'hook-secret' },
         },
       },
@@ -66,7 +66,7 @@ describe('DELETE /loops/:id', () => {
         kind: 'trigger',
         label: 'Poll',
         config: {
-          subtype: 'poll',
+          type: 'poll',
           intervalSeconds: 60,
           probe: { kind: 'http', url: 'https://example.test' },
           fireWhen: 'true',

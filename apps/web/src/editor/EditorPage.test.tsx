@@ -649,7 +649,7 @@ describe('EditorPage', () => {
     const user = userEvent.setup();
     const api = new FakeApi();
     const definition = newLoopDefinition('incomplete cron');
-    definition.nodes[0]!.config = { subtype: 'cron', expression: '30 7 * * 1', timezone: 'UTC' };
+    definition.nodes[0]!.config = { type: 'cron', expression: '30 7 * * 1', timezone: 'UTC' };
     const loop = api.addLoop(definition);
     renderApp(`/loops/${loop.id}/edit`, api);
     await screen.findByText('Ready to publish');
@@ -1259,7 +1259,7 @@ describe('EditorPage', () => {
             id: 'start',
             kind: 'trigger',
             label: 'Start',
-            config: { subtype: 'manual', inputSchema: { type: 'object' } },
+            config: { type: 'manual', inputSchema: { type: 'object' } },
           },
           {
             id: 'done',

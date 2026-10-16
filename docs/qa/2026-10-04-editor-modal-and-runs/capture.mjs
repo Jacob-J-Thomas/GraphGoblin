@@ -69,7 +69,7 @@ async function call(base, path, method = 'GET', body) {
   return res.status === 204 ? undefined : res.json();
 }
 
-const trigger = { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } };
+const trigger = { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } };
 
 function chain(name, description, middle) {
   const nodes = [{ ...trigger, ui: { x: 0, y: 80 } }];
@@ -109,7 +109,7 @@ function nightlyTriage(childLoopId) {
         'trigger',
         'Nightly',
         {
-          subtype: 'manual',
+          type: 'manual',
           inputSchema: {
             type: 'object',
             properties: { repo: { type: 'string' }, limit: { type: 'integer' } },

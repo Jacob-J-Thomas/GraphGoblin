@@ -35,7 +35,7 @@ function decisionLoop(optionCount = 2): LoopDefinitionInput {
       id: 'start',
       kind: 'trigger',
       label: 'Start',
-      config: { subtype: 'manual' },
+      config: { type: 'manual' },
       ui: { x: 0, y: 80 },
     },
     {
@@ -86,7 +86,7 @@ function primitiveLoop(
         id: 'start',
         kind: 'trigger',
         label: 'Start',
-        config: { subtype: 'manual' },
+        config: { type: 'manual' },
         ui: { x: 0, y: 80 },
       },
       { id: 'pick', kind: 'decision', label: 'Pick', config, ui: { x: 260, y: 80 } },

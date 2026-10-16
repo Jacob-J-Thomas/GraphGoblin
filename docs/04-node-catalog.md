@@ -6,9 +6,9 @@ There are **no error ports** in 1.0. Failures are handled by the engine's resili
 
 ## Trigger (Decided)
 
-Starts a run. A loop may have several trigger nodes; each is an entry point that produces the same trigger envelope shape.
+Starts a run. A loop may have several trigger nodes; each is an entry point that produces the same trigger envelope shape. The strict config discriminator is `type`; both webhook signing variants use `type: 'webhook'`.
 
-| Subtype   | Config                                                                                                                                                                 | Notes                                                                                                                           |
+| Type      | Config                                                                                                                                                                 | Notes                                                                                                                           |
 | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | `manual`  | `inputSchema?`, `exposeTo: ('ui' \| 'api' \| 'mcp')[]`                                                                                                                 | Button in the UI, REST call, or MCP tool. Optional input validated against the schema.                                          |
 | `cron`    | `expression`, `timezone`, `missedFirePolicy: 'skip' \| 'run-once' \| 'run-each'`, `enabled`                                                                            | Persisted schedule, re-armed at boot. Missed-fire policy is a per-trigger setting.                                              |
