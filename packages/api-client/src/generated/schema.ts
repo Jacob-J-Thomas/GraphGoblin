@@ -2084,7 +2084,6 @@ export interface paths {
                                         fallback: string;
                                     }) | undefined;
                                     dedupeKey?: string | undefined;
-                                    filter?: string | undefined;
                                     enabled: boolean;
                                     createdAt: string;
                                 } | undefined;
@@ -2197,7 +2196,6 @@ export interface paths {
                                     fallback: string;
                                 }) | undefined;
                                 dedupeKey?: string | undefined;
-                                filter?: string | undefined;
                                 enabled: boolean;
                                 createdAt: string;
                             } | undefined;
@@ -2323,7 +2321,6 @@ export interface paths {
                                     fallback: string;
                                 }) | undefined;
                                 dedupeKey?: string | undefined;
-                                filter?: string | undefined;
                                 enabled: boolean;
                                 createdAt: string;
                             }[];
@@ -2568,12 +2565,10 @@ export interface components {
                         fallback?: string | undefined;
                     }) | undefined;
                     dedupeKey?: string | undefined;
-                    filter?: string | undefined;
                 } | {
                     /** @constant */
                     type: "event";
                     eventType: string;
-                    filter?: string | undefined;
                     dedupeKey?: string | undefined;
                 } | {
                     /** @constant */
@@ -4304,12 +4299,10 @@ export interface components {
                         fallback: string;
                     };
                     dedupeKey?: string | undefined;
-                    filter?: string | undefined;
                 } | {
                     /** @constant */
                     type: "event";
                     eventType: string;
-                    filter?: string | undefined;
                     dedupeKey?: string | undefined;
                 } | {
                     /** @constant */

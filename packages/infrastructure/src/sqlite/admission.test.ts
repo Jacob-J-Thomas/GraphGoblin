@@ -60,6 +60,16 @@ function intent(): RunAdmission {
     pinnedLoopIds: [run.loopId, fakeUlid('child')],
   };
 }
+function scopedIntent(input: WebhookClaim): RunAdmission {
+  const frozen = intent();
+  frozen.run.ownerId = input.ownerId;
+  frozen.run.loopId = input.loopId;
+  frozen.initialThread.run.loopId = input.loopId;
+  frozen.initialThread.invocation.trigger.nodeId = input.triggerNodeId;
+  frozen.initialThread.invocation.trigger.dedupeKey = input.inbound.dedupeKey;
+  frozen.pinnedLoopIds = [input.loopId];
+  return frozen;
+}
 function claim(contentHash = 'a'.repeat(64)): WebhookClaim {
   return {
     id: fakeUlid('receipt:' + contentHash),
@@ -200,7 +210,7 @@ describe('SQLite atomic admission', () => {
   });
   it('allows identical unkeyed content across version and inbound identities', async () => {
     const input = claim();
-    expect((await admission.claim(input)).receipt.status).toBe('filtered');
+    expect((await admission.claim(input, intent())).receipt.status).toBe('pending');
     expect(
       (
         await admission.claim(
@@ -215,14 +225,17 @@ describe('SQLite atomic admission', () => {
     ).toBe('pending');
     expect(
       (
-        await admission.claim({
-          ...input,
-          id: fakeUlid('other-owner'),
-          ownerId: 'other',
-          inbound: { ...input.inbound, id: fakeUlid('other-event'), ownerId: 'other' },
-        })
+        await admission.claim(
+          {
+            ...input,
+            id: fakeUlid('other-owner'),
+            ownerId: 'other',
+            inbound: { ...input.inbound, id: fakeUlid('other-event'), ownerId: 'other' },
+          },
+          scopedIntent({ ...input, ownerId: 'other' }),
+        )
       ).receipt.status,
-    ).toBe('filtered');
+    ).toBe('pending');
     expect((await handle.client.execute('SELECT * FROM inbound_events')).rows).toHaveLength(3);
   });
   it('refuses changed immutable identity and malformed/missing receipt links without writing a run', async () => {
@@ -250,7 +263,12 @@ describe('SQLite atomic admission', () => {
       first.inbound.dedupeKey = 'same';
       const frozen = intent();
       frozen.initialThread.invocation.trigger.dedupeKey = 'same';
-      const receipt = await admission.claim(first, state === 'filtered' ? undefined : frozen);
+      const receipt = await admission.claim(first, frozen);
+      if (state === 'filtered')
+        await handle.client.execute({
+          sql: "UPDATE webhook_receipts SET status='filtered', intent=NULL, next_attempt_at=NULL WHERE id=?",
+          args: [first.id],
+        });
       if (state === 'failed') await admission.failed(first.id, 'WEBHOOK_INTENT_CONFLICT');
       if (state === 'admitted') await admission.create(frozen, first.id);
       const second = claim('b'.repeat(64));
@@ -283,7 +301,7 @@ describe('SQLite atomic admission', () => {
     await admission.create(frozen); // Timestamp webhook runs predate the receipt table.
     const input = claim();
     input.inbound.dedupeKey = 'historical';
-    expect((await admission.claim(input)).receipt.status).toBe('deduplicated');
+    expect((await admission.claim(input, scopedIntent(input))).receipt.status).toBe('deduplicated');
     for (const scope of ['owner', 'loop', 'node'] as const) {
       const other = claim((scope === 'owner' ? 'b' : scope === 'loop' ? 'c' : 'd').repeat(64));
       other.inbound.dedupeKey = 'historical';
@@ -293,12 +311,12 @@ describe('SQLite atomic admission', () => {
       }
       if (scope === 'loop') other.loopId = fakeUlid('other-loop');
       if (scope === 'node') other.triggerNodeId = 'other-node';
-      expect((await admission.claim(other)).receipt.status).toBe('filtered');
+      expect((await admission.claim(other, scopedIntent(other))).receipt.status).toBe('pending');
     }
     const hint = claim('e'.repeat(64));
     hint.inbound.dedupeKey = 'historical';
-    expect((await admission.claim(hint)).receipt.status).toBe('deduplicated');
-    expect(await admission.hasPendingPin(FIXTURE_IDS.loop)).toBe(false);
+    expect((await admission.claim(hint, scopedIntent(hint))).receipt.status).toBe('deduplicated');
+    expect(await admission.hasPendingPin(FIXTURE_IDS.loop)).toBe(true);
   });
   it.each(['pending', 'failed'] as const)(
     'keeps %s intent keys consumed when the inbound link is unavailable',

@@ -36,14 +36,12 @@ Ports: `out`.
 | `body`           | { type? }                                                         | no       | `{}`    | Representation of the trigger payload.                              |
 | `eventType`      | one of `"constant"` \| `"header"` \| `"json-pointer"` by `source` | no       | `{}`    | Invocation metadata; does not publish an Event.                     |
 | `dedupeKey`      | string                                                            | no       |         | JSONata producing a key; a repeated key does not start another run. |
-| `filter`         | string                                                            | no       |         | JSONata predicate; payloads that fail it are recorded and ignored.  |
 
 ### `type: "event"`
 
 | Field       | Type   | Required | Default | Description                                                         |
 | ----------- | ------ | -------- | ------- | ------------------------------------------------------------------- |
 | `eventType` | string | yes      |         | Inbound event type that fires the trigger.                          |
-| `filter`    | string | no       |         | JSONata predicate; payloads that fail it are recorded and ignored.  |
 | `dedupeKey` | string | no       |         | JSONata producing a key; a repeated key does not start another run. |
 
 ### `type: "poll"`

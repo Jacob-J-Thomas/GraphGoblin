@@ -42,8 +42,10 @@ for (const theme of ['light', 'dark']) {
     await expect(dialog.getByLabel('Repeat')).toHaveCount(0);
     await type.selectOption('event');
     await expect(dialog.getByLabel('Event type')).toBeVisible();
-    await expect(dialog.getByLabel('Filter', { exact: true })).toBeVisible();
+    await expect(dialog.getByLabel('Filter', { exact: true })).toHaveCount(0);
+    await expect(dialog.getByText(/Use a downstream decision for payload checks/)).toBeVisible();
     await type.selectOption('webhook');
+    await expect(dialog.getByLabel('Filter', { exact: true })).toHaveCount(0);
     const signing = dialog.getByLabel('Authentication recipe');
     await expect(signing.locator('option:checked')).toHaveText('None');
     await signing.selectOption({ label: 'Timestamp and body HMAC' });

@@ -152,10 +152,16 @@ const scenarios: Scenario[] = [
           ...next,
           id: ids.next(),
           inbound: { ...next.inbound, id: ids.next() },
-          [dimension]: ids.next(),
+          [dimension]: dimension === 'triggerNodeId' ? 'other-hook' : ids.next(),
         };
         other.inbound.ownerId = other.ownerId;
-        equal((await f.admission.claim(other)).receipt.status, 'filtered');
+        const scoped = structuredClone(intent);
+        scoped.run.ownerId = other.ownerId;
+        scoped.run.loopId = other.loopId;
+        scoped.initialThread.run.loopId = other.loopId;
+        scoped.initialThread.invocation.trigger.nodeId = other.triggerNodeId;
+        scoped.pinnedLoopIds = [other.loopId];
+        equal((await f.admission.claim(other, scoped)).receipt.status, 'pending');
       }
     },
   },
@@ -327,6 +333,7 @@ const scenarios: Scenario[] = [
     name: 'concurrent poll candidates consume one key and webhook sees the committed poll',
     async run(f) {
       const { intent, claim, ids } = inputs();
+      const webhook = structuredClone(intent);
       intent.initialThread.invocation.source = 'poll';
       intent.initialThread.invocation.trigger.kind = 'poll';
       const second = structuredClone(intent);
@@ -337,7 +344,7 @@ const scenarios: Scenario[] = [
         f.admission.createPollItem(second),
       ]);
       equal(admitted.filter(Boolean).length, 1);
-      equal((await f.admission.claim(claim)).receipt.status, 'deduplicated');
+      equal((await f.admission.claim(claim, webhook)).receipt.status, 'deduplicated');
     },
   },
   {

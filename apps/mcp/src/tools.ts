@@ -138,7 +138,7 @@ export function registerTools(
     {
       title: 'Describe a loop',
       description:
-        'Describe one loop before starting it: its manual triggers with their input JSON schemas, the wait nodes that will ask for input, and each exit node with its return mapping (what the run result will contain). Uses the published version, or the draft when nothing is published. Pass the loop id or exact name. Use the trigger inputSchema to build the input for start_run.',
+        'Describe one loop before starting it: its manual triggers with their input JSON schemas, the wait nodes that will ask for input, and each exit node with its return mapping (what the run result will contain). Uses the published version, or the draft when nothing is published. Pass the loop id or exact name. Use the trigger inputSchema to build the input for start_run. Triggers have no payload filters; use downstream decisions for payload checks.',
       inputSchema: { loopId: loopRef },
       annotations: { readOnlyHint: true, openWorldHint: false },
     },

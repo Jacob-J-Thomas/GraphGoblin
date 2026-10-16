@@ -44,7 +44,6 @@ const WebhookEndpointSchema = z.object({
   body: WebhookBodySchema.optional(),
   eventType: WebhookEventTypeSchema.optional(),
   dedupeKey: z.string().optional(),
-  filter: z.string().optional(),
   enabled: z.boolean(),
   createdAt: z.string(),
 });

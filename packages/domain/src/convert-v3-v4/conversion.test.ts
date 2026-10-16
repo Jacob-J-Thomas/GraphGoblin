@@ -134,7 +134,6 @@ describe('definition conversion golden rules', () => {
       config: {
         subtype: 'event',
         eventType: 'build-done',
-        filter: 'subtype = "ready"',
         dedupeKey: 'id',
       },
     },
@@ -177,7 +176,6 @@ describe('definition conversion golden rules', () => {
           secretRef: 'timestamp-key',
         },
         replayWindowSeconds: 120,
-        filter: 'subtype = "ready"',
         dedupeKey: '$headers."x-delivery"',
       },
     },
@@ -190,7 +188,6 @@ describe('definition conversion golden rules', () => {
           header: 'x-body-signature',
           secretRef: 'body-key',
         },
-        filter: 'subtype = "ready"',
         dedupeKey: '$headers."x-delivery"',
       },
     },
@@ -220,7 +217,6 @@ describe('definition conversion golden rules', () => {
           body: { type: 'json' },
           eventType: { source: 'constant', value: 'webhook' },
           dedupeKey: start.config.dedupeKey,
-          filter: start.config.filter,
         });
         expect(result.ready).toBe(false);
         expect(result.reviewItems.filter((item) => item.nodeId === start.id)).toEqual([
@@ -1500,7 +1496,6 @@ it('binds one decoding review to each frozen webhook and rejects stale approval 
     subtype: 'webhook',
     signature: { scheme: 'hmac-sha256', header: 'X-Event-Signature', secretRef: 'key' },
     replayWindowSeconds: 42,
-    filter: 'true',
     dedupeKey: 'id',
   });
   source.nodes[0] = { ...source.nodes[0]!, kind: 'trigger', config: hook };
@@ -1525,7 +1520,6 @@ it('binds one decoding review to each frozen webhook and rejects stale approval 
   );
   expect(result.value.nodes[0]?.config).toMatchObject({
     authentication: { header: 'x-event-signature', windowSeconds: 42 },
-    filter: 'true',
     dedupeKey: 'id',
   });
   const approved = candidate(await convertDefinitionV3ToV4(source, approvals(result)));

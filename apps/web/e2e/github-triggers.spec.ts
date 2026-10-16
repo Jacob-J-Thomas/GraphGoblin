@@ -111,6 +111,8 @@ test('body-signed GitHub preset saves, admits a matching hook, and deduplicates 
   await expect(dialog.getByRole('region', { name: 'Preset preview' })).toBeFocused();
   await dialog.getByRole('button', { name: 'Apply GitHub preset' }).click();
   await expect(dialog.getByLabel('Trigger type').locator('option:checked')).toHaveText('Webhook');
+  await expect(dialog.getByLabel('Filter', { exact: true })).toHaveCount(0);
+  await expect(dialog.getByText(/Use a downstream decision for payload checks/)).toBeVisible();
   await dialog.getByLabel('Secret name', { exact: true }).fill(secretRef);
   await expect(dialog.getByLabel('Timestamp window (seconds)')).toHaveCount(0);
   await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
@@ -129,6 +131,7 @@ test('body-signed GitHub preset saves, admits a matching hook, and deduplicates 
   await expect(restored.getByLabel('Trigger type').locator('option:checked')).toHaveText('Webhook');
   await expect(restored.getByLabel('Secret name', { exact: true })).toHaveValue(secretRef);
   await expect(restored.getByLabel('Timestamp window (seconds)')).toHaveCount(0);
+  await expect(restored.getByLabel('Filter', { exact: true })).toHaveCount(0);
   expect(patternMessages).toEqual([]);
   await restored.getByRole('button', { name: 'Done', exact: true }).click();
 

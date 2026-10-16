@@ -16,7 +16,7 @@ export interface DefinitionReviewItem {
 }
 export interface DefinitionResolution {
   hash: string;
-  action: 'approve' | 'replace';
+  action: 'approve' | 'replace' | 'remove';
   value?: unknown;
   reason: string;
 }
@@ -68,6 +68,7 @@ export class DefinitionReview {
     required = true,
     replaceable = true,
     replacementRequired = false,
+    removable = false,
   ): Promise<unknown> {
     const item = { id: path + ':' + kind, nodeId, path, kind, oldValue, proposedValue, reason };
     const hash = await definitionReviewHash(['v3-v4-definition-e2-1', this.source, item]);
@@ -88,9 +89,9 @@ export class DefinitionReview {
         resolution.hash !== hash ||
         typeof resolution.reason !== 'string' ||
         !resolution.reason.trim() ||
-        !['approve', 'replace'].includes(resolution.action) ||
-        (replacementRequired && resolution.action !== 'replace') ||
-        (resolution.action === 'approve' && Object.hasOwn(resolution, 'value')) ||
+        !['approve', 'replace', ...(removable ? ['remove'] : [])].includes(resolution.action) ||
+        (replacementRequired && resolution.action === 'approve') ||
+        (resolution.action !== 'replace' && Object.hasOwn(resolution, 'value')) ||
         (resolution.action === 'replace' &&
           (!replaceable ||
             !Object.hasOwn(resolution, 'value') ||
@@ -102,6 +103,7 @@ export class DefinitionReview {
       } else {
         status = 'resolved';
         if (resolution.action === 'replace') value = resolution.value;
+        if (resolution.action === 'remove') value = null;
       }
     }
     this.items.push({ ...item, hash, status });

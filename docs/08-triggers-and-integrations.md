@@ -4,8 +4,7 @@ Stored trigger configs use `type`: `manual`, `cron`, `webhook`, `event`, or `pol
 Webhooks use one strict `type: 'webhook'` object with nested authentication, body and event-type configuration. Config parsers reject
 `subtype`; current stores and exports using it remain refused until the integrated
 format-4 cutover converts them. The pure V3-to-V4 definition converter automatically
-renames this discriminator, preserving every other field without a review item.
-Webhook signing and filters are unchanged by this rule; the installed-store and
+renames this discriminator. Webhook decoding and stored filters have explicit review items; the installed-store and
 offline-tool cutover is still separate work.
 The invocation envelope continues to record the source as `trigger.kind`.
 
@@ -54,7 +53,7 @@ the recovery clock.
 
 ## General webhook configuration (#168 T4)
 
-A Webhook accepts an ordinary POST at `/hooks/<token>`. Tokens remain stable across versions for the same trigger node. The pinned definition owns `body`, `eventType`, `dedupeKey` and the temporarily retained `filter`. The endpoint row owns its safe authentication recipe; intake requires exact agreement with that pinned definition and owner/loop/version provenance before resolving a secret.
+A Webhook accepts an ordinary POST at `/hooks/<token>`. Tokens remain stable across versions for the same trigger node. The pinned definition owns `body`, `eventType`, `dedupeKey`. The endpoint row owns its safe authentication recipe; intake requires exact agreement with that pinned definition and owner/loop/version provenance before resolving a secret.
 
 ```ts
 {
@@ -63,7 +62,6 @@ A Webhook accepts an ordinary POST at `/hooks/<token>`. Tokens remain stable acr
   body: { type: 'json' },          // default
   eventType: { source: 'constant', value: 'webhook' }, // default
   dedupeKey?: Expression,
-  filter?: Expression, // retained until T6
 }
 ```
 
@@ -91,11 +89,11 @@ Pointers allow 1,024 characters and 32 segments with valid RFC 6901 `~0`/`~1` es
 
 Every saved delivery returns exactly `202 {accepted:true}` without payloads, run/event IDs or dispositions. Private Events exposes pending/admitted/failed/filtered/deduplicated state, attempts, retry time, safe failure code and run links. Unsaved/unconfirmed admission or signing/configuration readiness may return 503; a saved pending or failed admission cannot change the public acknowledgement. Other errors remain 400 decoding/ambiguous extraction, 401 authentication, 404 unknown/disabled hook, 413 body bound, 422 extraction/expression failure and 429 with Retry-After.
 
-**Allow** is uniform, with no policy switch: identical unkeyed bytes may create distinct receipts and runs. Raw SHA-256 is audit evidence only; it suppresses nothing. An external repeat is a new delivery; recovery reuses the same saved intent and run ID. An authored nonempty key uses the existing owner/loop/trigger claim lookup across both HMAC recipes and None. A duplicate key is saved as `deduplicated` without an executable intent. `filter` retains its existing intake behavior until T6; the GitHub presets put payload checks downstream.
+**Allow** is uniform, with no policy switch: identical unkeyed bytes may create distinct receipts and runs. Raw SHA-256 is audit evidence only; it suppresses nothing. An external repeat is a new delivery; recovery reuses the same saved intent and run ID. An authored nonempty key uses the existing owner/loop/trigger claim lookup across both HMAC recipes and None. A duplicate key is saved as `deduplicated` without an executable intent. Payload checks run downstream after admission; current configs reject `filter`. The `filtered` receipt state is historical only.
 
 Claim atomically saves inbound plus receipt, complete frozen intent, pending pins and key reservation under the deletion lock. Dispatch commits run/thread, pins, first queued event, receipt state and inbound link, then notifies. Recovery verifies immutable facts, uses the attempts re-read under the lock for backoff, and retains the nonoverlapping 15-second sweep, five due identities and five-minute backoff cap. The shared D29 runner tests fake/SQLite transactions; SQLite close/reopen supplements parity.
 
-Endpoint summaries expose `authentication`, pinned `body`, `eventType`, optional `dedupeKey`/`filter` and `configurationAvailable`. Orphan or mismatched summaries mark configuration unavailable; an enabled mismatch logs a safe warning without breaking either listing. Intake still refuses that endpoint with `HOOK_NOT_READY`. Events descriptions cache endpoint, version and loop reads within each request, including repeated missing endpoints; they never cache configuration across requests. Events exposes the same safe pinned configuration under `webhook`; the UI makes it inspectable per delivery. Neither summary exposes the internal admission intent or signing values.
+Endpoint summaries expose `authentication`, pinned `body`, `eventType`, optional `dedupeKey` and `configurationAvailable`. Orphan or mismatched summaries mark configuration unavailable; an enabled mismatch logs a safe warning without breaking either listing. Intake still refuses that endpoint with `HOOK_NOT_READY`. Events descriptions cache endpoint, version and loop reads within each request, including repeated missing endpoints; they never cache configuration across requests. Events exposes the same safe pinned configuration under `webhook`; the UI makes it inspectable per delivery. Neither summary exposes the internal admission intent or signing values.
 
 ### Permanent explicit keys (#168 T5)
 
@@ -109,7 +107,7 @@ Explicit keys remain consumed permanently in owner/loop/trigger-node scope acros
 
 SQL `0013_trigger_configuration` stores `auth_type`, `signature_message`, `signature_header`, `secret_ref` and `window_seconds`, preserving endpoint identities/tokens and both indexes. The copy canonicalizes valid mixed-case signing headers to lowercase; startup also validates stored headers as lowercase RFC tokens and refuses invalid names before writes. CHECKs enforce null signing fields for None, header/secret plus null window for body HMAC, and an integer 1-86,400 timestamp window. Body/extraction/key settings stay in the pinned definition. The content-hash receipt index is non-unique. Unreleased format 4 requires the 0013 structure; older stores are refused before automatic migration/recovery.
 
-The frozen V3-to-V4 definition converter maps both old signing recipes to nested authentication, lowercases header names, supplies JSON and constant `webhook` metadata, and preserves filter/key source. Each webhook has a hash-bound `webhook-json-decoding` review item for strict UTF-8/nonempty JSON, including the former timestamp empty-body behavior. Every proposal passes the current schema and graph validation. Definition approval does not perform the integrated installed-store cutover. T6 owns reviewed filter removal/conversion. See [ADR-0037](decisions/ADR-0037-webhook-acknowledgement.md).
+The frozen V3-to-V4 definition converter maps both old signing recipes to nested authentication, lowercases header names, supplies JSON and constant `webhook` metadata, and preserves key source. Each webhook has a hash-bound `webhook-json-decoding` review item for strict UTF-8/nonempty JSON, including the former timestamp empty-body behavior. Filters use the separate reviewed graph conversion below. Every proposal passes the current schema and graph validation. Definition approval does not perform the integrated installed-store cutover. See [ADR-0037](decisions/ADR-0037-webhook-acknowledgement.md).
 
 ### Editable GitHub webhook recipes (#168 T2)
 
@@ -137,9 +135,21 @@ removes a recognized earlier webhook fragment and reconnects its former successo
 directly to the trigger; otherwise, a retained downstream check is disclosed with
 a warning that it may ignore poll results.
 
+### Reviewed stored filters (#168 T6)
+
+Current Webhook/Event contracts reject `filter`, with no dual reader. Decisions, classifiers and scripts own payload policy. Every frozen filtered version needs a stored version ID and a hash-bound `trigger-filter` resolution: approve the generated graph, replace it with `{nodes, edges}`, or remove with an explicit reason accepting broader behaviour. Header, clock, randomness, dynamic-source, absolute-root (`$$`) and unavailable-context dependencies have no generated proposal and need replacement or explicit removal. Approvals never transfer to another stored version, even with identical definitions.
+
+Filters that read context (`@$x`) or position (`#$i`) bindings conservatively require a reviewed replacement or explicit removal, even when they use those bindings deterministically over the payload. The converter does not prove those binding scopes.
+
+The pure V3-to-V4 converter generates trigger -> expression decision; `pass` -> restore -> former successor and `ignore` -> a new quiet Success exit (`returns: "none"`, no destinations). The decision `$eval`s the JSON-escaped original source once against `invocation.trigger.payload` in a separate block frame, preventing source bindings from replacing the coercion helpers. It then implements `evaluatePredicate` coercion: missing/null false, nonempty arrays/objects true, other values JavaScript Boolean. It does not use JSONata `$boolean`. Sequences collapse according to JSONata evaluation; NaN is classified as object by `$type` and its empty keys yield false. Arithmetic can also produce positive/negative infinity, on which `$type` throws: the completed wrapper first compares `$v` with `1/0` and `-1/0`, assigning type `number` for those values before applying the plan's coercion branches. Lambdas, built-ins and regex functions pass. Guarded eval, unsafe-regex, depth/deadline and Expression bounds remain enforced.
+
+Restore sets `/lastOutput` from `$lookup(outputs, "<triggerId>")`. Trigger and successor-edge IDs stay; the old edge starts at restore, retains its destination and loses any invalid manual route, which the review reports. Generated Slug IDs are deterministic and collision-free. Ambiguous/multiple/missing successors, exhausted IDs and graphs above 500 nodes or 2,000 edges refuse conversion. Effectful exits are never reused. Replacements own new nodes and edges, preserve the original successor edge/destination, and pass current schema, syntax and graph validation.
+
+Review explicitly accepts formerly ignored input creating quiet runs, expression errors occurring after acknowledgement inside an admitted run, keys consumed before the check, and extra visits against the safety cap. This definition rule does not apply SQL, convert device drafts or authorize installation; the shared cutover still composes those operations and binds stored-version review identities.
+
 ## Inbound event bus (Decided, shipped in M6)
 
-- `POST /events` accepts `{ type, payload, dedupeKey? }` from any client with the `events:write` scope. The event is stored in `inbound_events` (`source: 'api'`) and fires every `event` trigger node of the owner's published loops whose `eventType` matches and whose `filter` passes. The response is the stored event with `runIds` and `duplicate`.
+- `POST /events` accepts `{ type, payload, dedupeKey? }` from any client with the `events:write` scope. The event is stored in `inbound_events` (`source: 'api'`) and fires every `event` trigger node of the owner's published loops whose `eventType` matches. The response is the stored event with `runIds` and `duplicate`.
 - Dedupe: an event whose `(type, dedupeKey)` was seen before fires nothing and returns `duplicate: true` with the earlier event's run ids. A trigger node's own `dedupeKey` expression additionally skips the event when that node has already started a run with the same key (looked up in the runs' stored trigger envelopes, so it survives restarts).
 - Exit nodes publish to the same bus through the `event` return channel, which is how loops compose without a parent loop: a triage loop can emit `issue-ready` and an implementation loop can trigger on it. Those events are stored with `source: 'run:<runId>'`, and the runs they start record `caller: { kind: 'run', id: <emitting run> }`.
 - `GET /events` lists stored events newest first (`limit`, `type`, `before`).

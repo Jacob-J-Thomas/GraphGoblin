@@ -88,7 +88,6 @@ function WebhookConfiguration({ webhook }: { webhook: InboundEvent['webhook'] })
             body: webhook.body,
             eventType: webhook.eventType,
             dedupeKey: webhook.dedupeKey,
-            filter: webhook.filter,
           })}
         </pre>
       ) : (

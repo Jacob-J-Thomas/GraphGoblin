@@ -183,8 +183,8 @@ export class SqliteTriggerAdmission implements TriggerAdmissionPort {
     if (committed.event) this.events.notifyCommitted([committed.event]);
     return committed.run;
   }
-  async claim(input: WebhookClaim, intent?: RunAdmission): Promise<{ receipt: WebhookReceipt }> {
-    const frozen = intent ? parseRunAdmission(intent) : undefined;
+  async claim(input: WebhookClaim, intent: RunAdmission): Promise<{ receipt: WebhookReceipt }> {
+    const frozen = parseRunAdmission(intent);
     assertWebhookClaim(input, frozen);
     return this.db.transaction(async (tx) => {
       let keySeen = false;
@@ -258,10 +258,10 @@ export class SqliteTriggerAdmission implements TriggerAdmissionPort {
           triggerNodeId: input.triggerNodeId,
           contentHash: input.contentHash,
           inboundId: input.inbound.id,
-          status: keySeen ? 'deduplicated' : frozen ? 'pending' : 'filtered',
-          intent: keySeen ? null : (frozen ?? null),
+          status: keySeen ? 'deduplicated' : 'pending',
+          intent: keySeen ? null : frozen,
           attempts: 0,
-          nextAttemptAt: !keySeen && frozen ? input.inbound.receivedAt : null,
+          nextAttemptAt: !keySeen ? input.inbound.receivedAt : null,
         })
         .returning();
       if (!row) throw new AdmissionConflictError();

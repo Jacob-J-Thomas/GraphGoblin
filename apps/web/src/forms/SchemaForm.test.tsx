@@ -453,7 +453,6 @@ describe('SchemaForm', () => {
             header: 'x-hub-signature-256',
             secretRef: '',
           },
-          filter: 'true',
         }}
         spy={spy}
       />,
@@ -478,7 +477,6 @@ describe('SchemaForm', () => {
         initial={{
           type: 'webhook',
           authentication: { type: 'custom-hmac', header: 'x-custom', secretRef: 'saved-secret' },
-          filter: 'true',
         }}
         spy={spy}
       />,
@@ -486,10 +484,10 @@ describe('SchemaForm', () => {
 
     expect(screen.getByTestId('value')).toHaveTextContent('"type":"custom-hmac"');
     expect(spy).not.toHaveBeenCalled();
-    setCode('Filter', 'false');
+    setCode('Dedupe key', 'id');
     expect(last(spy)).toMatchObject({
       authentication: { type: 'custom-hmac', secretRef: 'saved-secret' },
-      filter: 'false',
+      dedupeKey: 'id',
     });
   });
 

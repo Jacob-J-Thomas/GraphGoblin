@@ -42,14 +42,13 @@ describe('editable GitHub fragments', () => {
       const source = newLoopDefinition(preset);
       source.nodes[0]!.config = triggerConfig('webhook', {
         authentication: { type: 'hmac-sha256', message: 'body', secretRef: 'old' },
-        filter: 'false',
       });
       source.edges[0]!.ui = { route: [200] };
       const preview = previewGitHubPreset(source, 'start', preset, setup);
       const parsed = LoopDefinitionSchema.parse(preview.definition);
       expect(validateLoop(parsed)).toEqual([]);
       expect(preview.issues).toEqual([]);
-      expect(preview.fields).toContain('filter');
+      expect(preview.fields).toContain('authentication');
       expect(parsed.nodes[0]!.config).not.toHaveProperty('filter');
       expect(preview.addedNodes.map((node) => node.kind)).toEqual(['decision', 'mutate', 'exit']);
       expect(preview.addedNodes[0]!.config).toMatchObject({

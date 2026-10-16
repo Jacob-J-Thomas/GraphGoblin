@@ -544,6 +544,12 @@ export function NodeEditorDialog({
         {/* Not keyed by the node id: a rename keeps the form (and focus) where it is. Issue paths
             `config.<path>` name its fields (focus-field.ts). */}
         <div data-field-scope="config" className="grid min-w-0">
+          {node.kind === 'trigger' ? (
+            <HelpText>
+              Use a downstream decision for payload checks. Route unwanted input to a quiet success
+              exit with no returns or destinations.
+            </HelpText>
+          ) : null}
           {node.kind === 'exit' ? (
             <HelpText>
               Exits finish the run with Success, Failure or Exhausted. Returns is a JSONata

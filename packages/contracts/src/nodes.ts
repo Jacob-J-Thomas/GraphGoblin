@@ -75,9 +75,6 @@ export type Probe = z.infer<typeof ProbeSchema>;
 const DedupeKeySchema = ExpressionSchema.optional().meta(
   field('JSONata producing a key; a repeated key does not start another run.'),
 );
-const PayloadFilterSchema = ExpressionSchema.optional().meta(
-  field('JSONata predicate; payloads that fail it are recorded and ignored.'),
-);
 
 export const TriggerConfigSchema = z.union([
   z.strictObject({
@@ -112,7 +109,6 @@ export const TriggerConfigSchema = z.union([
   z.strictObject({
     type: z.literal('event'),
     eventType: SlugSchema.meta(field('Inbound event type that fires the trigger.')),
-    filter: PayloadFilterSchema,
     dedupeKey: DedupeKeySchema,
   }),
   z

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { TriggerConfigSchema } from './nodes.js';
 import {
   WebhookConfigSchema,
   WebhookAuthenticationSchema,
@@ -42,14 +43,13 @@ describe('general webhook configuration', () => {
       windowSeconds: 300,
     });
   });
-  it('accepts modes and extraction choices, retaining filter and key', () => {
+  it('accepts modes and extraction choices, retaining the key', () => {
     for (const type of ['json', 'text', 'bytes'])
       expect(
         WebhookConfigSchema.parse({
           type: 'webhook',
           body: { type },
           dedupeKey: 'id',
-          filter: 'true',
         }).body.type,
       ).toBe(type);
     for (const eventType of [
@@ -71,6 +71,14 @@ describe('general webhook configuration', () => {
         }),
       ).toHaveProperty('windowSeconds', windowSeconds);
   });
+  it.each([{ type: 'event', eventType: 'ready' }, { type: 'webhook' }])(
+    'rejects the removed trigger filter in %j',
+    (config) => {
+      expect(TriggerConfigSchema.safeParse(config).success).toBe(true);
+      for (const filter of ['true', undefined, null])
+        expect(TriggerConfigSchema.safeParse({ ...config, filter }).success).toBe(false);
+    },
+  );
   it('refuses flat/unknown shapes and incompatible body/pointer configuration', () => {
     for (const extra of [
       { signature: { scheme: 'hmac-sha256' } },

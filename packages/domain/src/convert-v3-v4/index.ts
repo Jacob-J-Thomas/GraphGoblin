@@ -29,6 +29,7 @@ import {
   type DefinitionReviewItem,
 } from './review.js';
 import type { UpgradeIssue } from '../upgrade.js';
+import { convertTriggerFilters } from './filters.js';
 export { canonicalReviewValue, definitionReviewHash } from './review.js';
 export type {
   DefinitionResolutions,
@@ -240,10 +241,13 @@ function carrySourceEdits(authored: unknown, baseline: unknown, revised: unknown
 
 /** Definition-only stage. `ready` is false until every required owner review is resolved.
  * No history, store, API, configured-instance retirement or offline-tool composition occurs here.
+ * Stored filters require the third argument: the enclosing version identity, bound into every
+ * review hash so identical definitions in different versions cannot share approvals.
  */
 export async function convertDefinitionV3ToV4(
   input: V3LoopDefinition,
   resolutions: DefinitionResolutions = {},
+  versionId?: string,
 ): Promise<DefinitionConversionResult> {
   if (
     resolutions &&
@@ -254,16 +258,17 @@ export async function convertDefinitionV3ToV4(
     const baselineResolutions = Object.fromEntries(
       Object.entries(resolutions).filter(([id]) => !id.endsWith(':iteration-consumer')),
     );
-    const baseline = await convertDefinition(input, baselineResolutions);
-    return convertDefinition(input, resolutions, baseline.reviewItems);
+    const baseline = await convertDefinition(input, baselineResolutions, [], versionId);
+    return convertDefinition(input, resolutions, baseline.reviewItems, versionId);
   }
-  return convertDefinition(input, resolutions);
+  return convertDefinition(input, resolutions, [], versionId);
 }
 
 async function convertDefinition(
   input: V3LoopDefinition,
   resolutions: DefinitionResolutions,
   baselineItems: DefinitionReviewItem[] = [],
+  versionId?: string,
 ): Promise<DefinitionConversionResult> {
   const parsed = V3LoopDefinitionSchema.safeParse(input);
   if (!parsed.success)
@@ -279,7 +284,10 @@ async function convertDefinition(
       reviewItems: [],
     };
   const source = clone(parsed.data);
-  const review = new DefinitionReview(source, resolutions);
+  const review = new DefinitionReview(
+    versionId === undefined ? source : { versionId, definition: source },
+    resolutions,
+  );
   const frozen = {
     settings: V3LoopSettingsSchema,
     nodes: V3NodeConfigSchemas,
@@ -562,8 +570,10 @@ async function convertDefinition(
   for (const [index, original] of source.nodes.entries()) {
     const path = `/nodes/${index}/config`;
     if (original.kind !== 'exit') {
+      const sourceConfig = clone(original.config) as Obj;
+      if (original.kind === 'trigger') delete sourceConfig.filter;
       let config = await consumers(
-        original.config,
+        sourceConfig,
         V3NodeConfigSchemas[original.kind],
         original.id,
         path,
@@ -613,7 +623,7 @@ async function convertDefinition(
         const parsedTrigger = V3NodeConfigSchemas.trigger.parse(config);
         const { subtype, ...fields } = parsedTrigger;
         if (parsedTrigger.subtype === 'webhook') {
-          const { signature, dedupeKey, filter } = parsedTrigger;
+          const { signature, dedupeKey } = parsedTrigger;
           const authentication = {
             type: 'hmac-sha256',
             message: signature.scheme === 'hmac-sha256' ? 'timestamp-body' : 'body',
@@ -634,9 +644,8 @@ async function convertDefinition(
               body: { type: 'json' },
               eventType: { source: 'constant', value: 'webhook' },
               ...(dedupeKey !== undefined ? { dedupeKey } : {}),
-              ...(filter !== undefined ? { filter } : {}),
             },
-            'Review strict UTF-8 and nonempty JSON intake: empty/whitespace JSON now rejects (literal null remains valid); malformed UTF-8 no longer becomes replacement characters. Timestamp intake previously accepted empty bodies differently. Existing payload/filter/key values are preserved.',
+            'Review strict UTF-8 and nonempty JSON intake: empty/whitespace JSON now rejects (literal null remains valid); malformed UTF-8 no longer becomes replacement characters. Timestamp intake previously accepted empty bodies differently. Payload and key values are preserved; filters have a separate graph review.',
           );
           nodes.push({ ...clone(original), config: converted });
         } else nodes.push({ ...clone(original), config: { type: subtype, ...fields } });
@@ -1000,6 +1009,7 @@ async function convertDefinition(
     const fragmentEdges = edges.filter((edge) => fragmentIds.has(edge.from.node));
     await exitPolicy(original, path, nodeStart, { nodes: fragmentNodes, edges: fragmentEdges });
   }
+  await convertTriggerFilters(source, nodes, edges, review, versionId);
   const convertedSettings = await consumers(settings, V3LoopSettingsSchema, null, '/settings');
   const variables =
     changedOutput && Object.keys(source.variables).length

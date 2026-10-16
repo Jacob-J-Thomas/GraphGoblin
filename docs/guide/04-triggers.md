@@ -10,7 +10,7 @@ Poll offers the interval, probe, firing condition, dedupe, optional Items and en
 flag. Webhook offers **Authentication recipe** (None, Body HMAC, Timestamp and body HMAC),
 **Body mode** (json, text, bytes) and **Event type source** (Constant, Header, JSON pointer).
 Only the selected recipe fields appear. None establishes no authenticated sender identity.
-Event/Webhook keep `filter` until T6; payload checks belong downstream.
+Event/Webhook reject `filter`; payload checks belong in downstream decisions, classifiers or scripts. The editor includes a reminder. Route unwanted input to a terminal Success exit with no returns or destinations.
 
 **Start from a preset** is optional and sits after the trigger fields. Choose a
 GitHub recipe, fill in its setup and choose **Preview GitHub preset**. The preview
@@ -197,7 +197,7 @@ sha256=1ed6e75a09e5efba80f692ea02ee05a85fb177ec7ed73cfe378758e7f8757c96
 
 Keep whitespace and newlines identical between signing and sending. Send the timestamp as ISO 8601 or Unix seconds. The server rejects timestamps more than `authentication.windowSeconds` away from its clock in either direction; the default is 300 seconds. Send the digest as lowercase hex with the `sha256=` prefix.
 
-`dedupeKey` and `filter` are JSONata over the parsed body, with lower-case request headers available through `$headers`. The configured signing header is excluded case-insensitively from both expressions; ordinary delivery and timestamp metadata remains available. The example deduplicates authored delivery IDs across signing recipes and versions. Without a dedupe expression, identical raw bodies can start separate runs; raw hashes are audit evidence only. Timestamp freshness authenticates the delivery and does not expire its authored key. Saved and duplicate requests return HTTP 202 `{accepted:true}`. Inspect **Events** for the payload, filter disposition and started-run links. The run's trigger payload is the parsed body, so templates read it as `trigger.payload`. A duplicate returns the same 202 without another run. Empty, whitespace-only, malformed JSON or invalid UTF-8 bodies return 400 `BODY_INVALID` (literal `null` is valid), and a filter or dedupe expression that fails returns 422 `EXPRESSION_FAILED`.
+`dedupeKey` is JSONata over the parsed body, with lower-case request headers available through `$headers`. The configured signing header is excluded case-insensitively from the expression; ordinary delivery and timestamp metadata remains available. The example deduplicates authored delivery IDs across signing recipes and versions. Without a dedupe expression, identical raw bodies can start separate runs; raw hashes are audit evidence only. Timestamp freshness authenticates the delivery and does not expire its authored key. Saved and duplicate requests return HTTP 202 `{accepted:true}`. Inspect **Events** for the payload, delivery state and started-run links (old `filtered` rows remain historical). The run's trigger payload is the parsed body, so templates read it as `trigger.payload`. A duplicate returns the same 202 without another run. Empty, whitespace-only, malformed JSON or invalid UTF-8 bodies return 400 `BODY_INVALID` (literal `null` is valid), and a dedupe expression that fails returns 422 `EXPRESSION_FAILED`.
 
 A configured key expression must return a nonempty key: null, undefined and empty string return 422 `KEY_INVALID`, before saving input. Strings stay literal, including whitespace; other values use JSON serialization. Keys longer than 512 characters are refused and never truncated, for all authentication recipes. With no `dedupeKey` expression, no automatic business identity is generated. Fix invalid expressions and resend; no claim was consumed by that refusal. Event and Poll key rules are unchanged.
 
@@ -281,13 +281,12 @@ Events shows delivery state and retry attempts. For either signing recipe, the 2
 
 ## Receive events and connect loops
 
-Configure an event trigger to match a type and optionally filter or deduplicate its payload:
+Configure an event trigger to match a type and optionally deduplicate its payload; add a downstream decision for payload checks:
 
 ```json
 {
   "type": "event",
   "eventType": "issue-ready",
-  "filter": "approved = true",
   "dedupeKey": "issueId"
 }
 ```
@@ -318,7 +317,7 @@ Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:4747/events' `
 
 Matching published triggers start runs. The response includes `runIds` and `duplicate`. A repeated event type plus request dedupe key returns the earlier event without starting more runs; this dedupe persists without a replay-window expiry. A node's own dedupe expression separately suppresses keys already used by that trigger.
 
-To emit from another loop, add an `event` return channel to its exit. Exit-generated payloads wrap the mapped value under `result`, alongside `runId`, `loopId`, and `outcome`; use those fields in the receiving trigger's filter and dedupe expressions.
+To emit from another loop, add an `event` return channel to its exit. Exit-generated payloads wrap the mapped value under `result`, alongside `runId`, `loopId`, and `outcome`; use those fields in the receiving trigger's dedupe expression and downstream decision checks.
 
 The self-trigger guard skips any loop already in the emitting run's chain, including parent subloops and earlier event callers. The chain stops at eight runs. The event remains recorded and skipped triggers produce warnings. An API-submitted event starts a fresh chain.
 
@@ -396,3 +395,5 @@ Keep the API bound to localhost. If inbound webhooks are necessary, use a TLS tu
 Cloudflare Tunnel and ngrok are examples from the design docs. Configure their proxy or gateway rules to reject every other path; a whole-origin tunnel also exposes the API and UI. Configure HMAC authentication and timestamp freshness when the sender supports them. Prefer manual or poll triggers when inbound access is unnecessary. Follow [Triggers and integrations](../08-triggers-and-integrations.md) and [Security and distribution](../11-security-and-distribution.md) for the tunnel posture.
 
 Continue with [MCP and the Codex plugin](05-mcp-and-codex-plugin.md).
+
+Stored filters require review during the format-4 cutover. Approve the exact version-bound generated check/restore/quiet-exit graph, supply a valid replacement fragment, or explicitly remove the filter with a reason. Formerly ignored input creates quiet runs, errors happen after acknowledgement, keys may already be consumed, and checks add visits. Filters needing headers, clock, randomness or unavailable context require replacement or explicit removal.
