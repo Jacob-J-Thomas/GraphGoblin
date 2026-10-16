@@ -1,4 +1,7 @@
 import {
+  WebhookAuthenticationSchema,
+  WebhookBodySchema,
+  WebhookEventTypeSchema,
   CronPreviewRequestSchema,
   CronPreviewResponseSchema,
   JsonValueSchema,
@@ -12,25 +15,6 @@ import type { Container } from '../container.js';
 import { problem } from '../plugins/errors.js';
 import { WEBHOOK_BODY_LIMIT } from '../triggers/trigger-service.js';
 import type { ApiInstance } from '../types.js';
-
-export const InboundEventSchema = z.object({
-  id: z.string(),
-  ownerId: z.string(),
-  type: z.string(),
-  payload: JsonValueSchema,
-  dedupeKey: z.string().optional(),
-  source: z.string(),
-  receivedAt: z.string(),
-  runIds: z.array(z.string()),
-  delivery: z
-    .object({
-      state: z.enum(['filtered', 'deduplicated', 'pending', 'admitted', 'failed']),
-      attempts: z.number().int(),
-      nextAttemptAt: z.string().optional(),
-      failureCode: z.string().optional(),
-    })
-    .optional(),
-});
 
 const ScheduleSchema = z.object({
   id: z.string(),
@@ -55,12 +39,34 @@ const WebhookEndpointSchema = z.object({
   triggerNodeId: z.string(),
   /** `/hooks/<token>`; the token is the credential-free address, the secret never leaves the store. */
   path: z.string(),
-  secretRef: z.string(),
-  signatureHeader: z.string(),
-  signatureScheme: z.enum(['hmac-sha256', 'hmac-sha256-body']),
-  replayWindowSeconds: z.number().int().nullable(),
+  authentication: WebhookAuthenticationSchema,
+  configurationAvailable: z.boolean(),
+  body: WebhookBodySchema.optional(),
+  eventType: WebhookEventTypeSchema.optional(),
+  dedupeKey: z.string().optional(),
+  filter: z.string().optional(),
   enabled: z.boolean(),
   createdAt: z.string(),
+});
+
+export const InboundEventSchema = z.object({
+  id: z.string(),
+  ownerId: z.string(),
+  type: z.string(),
+  payload: JsonValueSchema,
+  dedupeKey: z.string().optional(),
+  source: z.string(),
+  receivedAt: z.string(),
+  runIds: z.array(z.string()),
+  webhook: WebhookEndpointSchema.optional(),
+  delivery: z
+    .object({
+      state: z.enum(['filtered', 'deduplicated', 'pending', 'admitted', 'failed']),
+      attempts: z.number().int(),
+      nextAttemptAt: z.string().optional(),
+      failureCode: z.string().optional(),
+    })
+    .optional(),
 });
 
 const PollTargetSchema = z.object({
@@ -104,8 +110,7 @@ export function registerTriggerRoutes(app: ApiInstance, container: Container): v
     },
   );
 
-  // Signed webhook receiver. Public (see plugins/auth.ts); the HMAC signature is the credential.
-  // The body is read raw, because the signature covers the exact bytes the sender produced.
+  // Public receiver (see plugins/auth.ts), with optional HMAC authentication of exact raw bytes.
   void app.register((scope, _options, done) => {
     scope.removeAllContentTypeParsers();
     scope.addContentTypeParser('*', { parseAs: 'buffer' }, (_request, body, next) => {
@@ -118,7 +123,7 @@ export function registerTriggerRoutes(app: ApiInstance, container: Container): v
         schema: {
           tags: ['triggers'],
           summary:
-            'Signed webhook receiver (public; fixed acknowledgement of saved input, timestamp HMAC or exact body HMAC, 1 MiB, rate limit)',
+            'Webhook receiver (public; saved-input acknowledgement, optional HMAC, JSON/text/bytes, 1 MiB, rate limit)',
           security: [],
           params: z.object({ token: z.string().min(1).max(256) }),
           response: {
@@ -189,11 +194,15 @@ export function registerTriggerRoutes(app: ApiInstance, container: Container): v
       },
     },
     async (request) => ({
-      items: await repos.inbound.list(request.auth.ownerId, {
-        limit: request.query.limit ?? 100,
-        ...(request.query.type ? { type: request.query.type } : {}),
-        ...(request.query.before ? { before: request.query.before } : {}),
-      }),
+      items: await Promise.all(
+        (
+          await repos.inbound.list(request.auth.ownerId, {
+            limit: request.query.limit ?? 100,
+            ...(request.query.type ? { type: request.query.type } : {}),
+            ...(request.query.before ? { before: request.query.before } : {}),
+          })
+        ).map((event) => triggers.describeInbound(event)),
+      ),
     }),
   );
 

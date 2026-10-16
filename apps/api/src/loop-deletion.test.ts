@@ -58,7 +58,11 @@ describe('DELETE /loops/:id', () => {
         label: 'Hook',
         config: {
           type: 'webhook',
-          signature: { scheme: 'hmac-sha256', secretRef: 'hook-secret' },
+          authentication: {
+            type: 'hmac-sha256',
+            message: 'timestamp-body',
+            secretRef: 'hook-secret',
+          },
         },
       },
       {

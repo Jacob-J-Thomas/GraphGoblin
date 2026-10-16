@@ -267,6 +267,9 @@ const SchemaFormBindings = memo(function SchemaFormBindings({
         const found = issuesOf(schema, next);
         return JSON.stringify(previous) === JSON.stringify(found) ? previous : found;
       });
+      // A refinement may report on a sibling field (for example, a JSON pointer depends on
+      // the body mode). Refresh all resolver errors so changing that dependency clears it too.
+      void form.trigger();
       // Every field describes its changes; a write that does not is a step of its own.
       const change = pendingChangeRef.current ?? {
         path: name ?? '',

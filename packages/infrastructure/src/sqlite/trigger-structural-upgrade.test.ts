@@ -27,14 +27,29 @@ async function previousStructure(custom = false) {
   const handle = await openMemoryDatabase();
   handles.push(handle);
   const definition = minimalLoop();
-  definition.nodes[0]!.config = {
-    type: 'webhook',
-    signature: { scheme: 'hmac-sha256', secretRef: 'secret' },
-    ...(custom ? { dedupeKey: 'payload.id' } : {}),
-  };
   const repo = new SqliteLoopRepository(handle.db, new FakeClock(), new FakeIds());
   const { loop } = await repo.create('local', LoopDefinitionSchema.parse(definition));
   const version = (await repo.publish(loop.id))!;
+  const historical = {
+    ...definition,
+    nodes: definition.nodes.map((node, index) =>
+      index === 0
+        ? {
+            ...node,
+            config: {
+              subtype: 'webhook',
+              signature: { scheme: 'hmac-sha256', secretRef: 'secret' },
+              ...(custom ? { dedupeKey: 'payload.id' } : {}),
+            },
+          }
+        : node,
+    ),
+  };
+  await handle.client.execute({
+    sql: 'UPDATE loop_versions SET definition=? WHERE id=?',
+    args: [JSON.stringify(historical), version.id],
+  });
+
   const key = 'sig:sha256=' + 'ab'.repeat(32),
     runId = fakeUlid('history-run'),
     invocationId = fakeUlid('history-invocation');

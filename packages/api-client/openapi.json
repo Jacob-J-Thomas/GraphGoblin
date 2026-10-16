@@ -442,36 +442,181 @@
                               "type": "string",
                               "const": "webhook"
                             },
-                            "signature": {
+                            "authentication": {
+                              "default": {},
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "default": "none",
+                                      "type": "string",
+                                      "const": "none"
+                                    }
+                                  },
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "const": "hmac-sha256"
+                                    },
+                                    "message": {
+                                      "type": "string",
+                                      "const": "body"
+                                    },
+                                    "header": {
+                                      "default": "x-hub-signature-256",
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 128,
+                                      "pattern": "^[!#$%&'*+.^_`|~0-9a-z-]+$"
+                                    },
+                                    "secretRef": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 128
+                                    }
+                                  },
+                                  "required": [
+                                    "type",
+                                    "message",
+                                    "secretRef"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "const": "hmac-sha256"
+                                    },
+                                    "message": {
+                                      "type": "string",
+                                      "const": "timestamp-body"
+                                    },
+                                    "header": {
+                                      "default": "x-graphgoblin-signature",
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 128,
+                                      "pattern": "^[!#$%&'*+.^_`|~0-9a-z-]+$"
+                                    },
+                                    "secretRef": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 128
+                                    },
+                                    "windowSeconds": {
+                                      "default": 300,
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 86400
+                                    }
+                                  },
+                                  "required": [
+                                    "type",
+                                    "message",
+                                    "secretRef"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              ]
+                            },
+                            "body": {
+                              "default": {},
                               "type": "object",
                               "properties": {
-                                "scheme": {
+                                "type": {
+                                  "default": "json",
                                   "type": "string",
-                                  "const": "hmac-sha256"
-                                },
-                                "header": {
-                                  "default": "x-graphgoblin-signature",
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 128
-                                },
-                                "secretRef": {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 128
+                                  "enum": [
+                                    "json",
+                                    "text",
+                                    "bytes"
+                                  ]
                                 }
                               },
-                              "required": [
-                                "scheme",
-                                "secretRef"
-                              ],
                               "additionalProperties": false
                             },
-                            "replayWindowSeconds": {
-                              "default": 300,
-                              "type": "integer",
-                              "exclusiveMinimum": 0,
-                              "maximum": 86400
+                            "eventType": {
+                              "default": {},
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "source": {
+                                      "default": "constant",
+                                      "type": "string",
+                                      "const": "constant"
+                                    },
+                                    "value": {
+                                      "default": "webhook",
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 128,
+                                      "pattern": "^(?!\\s*$)[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+                                    }
+                                  },
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "source": {
+                                      "type": "string",
+                                      "const": "header"
+                                    },
+                                    "name": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 128,
+                                      "pattern": "^[!#$%&'*+.^_`|~0-9a-z-]+$"
+                                    },
+                                    "fallback": {
+                                      "default": "webhook",
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 128,
+                                      "pattern": "^(?!\\s*$)[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+                                    }
+                                  },
+                                  "required": [
+                                    "source",
+                                    "name"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "source": {
+                                      "type": "string",
+                                      "const": "json-pointer"
+                                    },
+                                    "pointer": {
+                                      "type": "string",
+                                      "maxLength": 1024,
+                                      "pattern": "^(?:\\/(?:[^~]|~[01])*)?$"
+                                    },
+                                    "fallback": {
+                                      "default": "webhook",
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 128,
+                                      "pattern": "^(?!\\s*$)[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+                                    }
+                                  },
+                                  "required": [
+                                    "source",
+                                    "pointer"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              ]
                             },
                             "dedupeKey": {
                               "type": "string",
@@ -485,58 +630,7 @@
                             }
                           },
                           "required": [
-                            "type",
-                            "signature"
-                          ],
-                          "additionalProperties": false
-                        },
-                        {
-                          "type": "object",
-                          "properties": {
-                            "type": {
-                              "type": "string",
-                              "const": "webhook"
-                            },
-                            "signature": {
-                              "type": "object",
-                              "properties": {
-                                "scheme": {
-                                  "type": "string",
-                                  "const": "hmac-sha256-body"
-                                },
-                                "header": {
-                                  "default": "x-hub-signature-256",
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 128,
-                                  "pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$"
-                                },
-                                "secretRef": {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 128
-                                }
-                              },
-                              "required": [
-                                "scheme",
-                                "secretRef"
-                              ],
-                              "additionalProperties": false
-                            },
-                            "dedupeKey": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 100000
-                            },
-                            "filter": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 100000
-                            }
-                          },
-                          "required": [
-                            "type",
-                            "signature"
+                            "type"
                           ],
                           "additionalProperties": false
                         },
@@ -6728,6 +6822,12 @@
                   "dedupeKey": {
                     "type": "string",
                     "maxLength": 512
+                  },
+                  "eventType": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "pattern": "^(?!\\s*$)[^\\u0000-\\u001f\\u007f-\\u009f]+$"
                   }
                 },
                 "required": [
@@ -7463,37 +7563,193 @@
                               "type": "string",
                               "const": "webhook"
                             },
-                            "signature": {
+                            "authentication": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "default": "none",
+                                      "type": "string",
+                                      "const": "none"
+                                    }
+                                  },
+                                  "required": [
+                                    "type"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "const": "hmac-sha256"
+                                    },
+                                    "message": {
+                                      "type": "string",
+                                      "const": "body"
+                                    },
+                                    "header": {
+                                      "default": "x-hub-signature-256",
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 128,
+                                      "pattern": "^[!#$%&'*+.^_`|~0-9a-z-]+$"
+                                    },
+                                    "secretRef": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 128
+                                    }
+                                  },
+                                  "required": [
+                                    "type",
+                                    "message",
+                                    "header",
+                                    "secretRef"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "const": "hmac-sha256"
+                                    },
+                                    "message": {
+                                      "type": "string",
+                                      "const": "timestamp-body"
+                                    },
+                                    "header": {
+                                      "default": "x-graphgoblin-signature",
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 128,
+                                      "pattern": "^[!#$%&'*+.^_`|~0-9a-z-]+$"
+                                    },
+                                    "secretRef": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 128
+                                    },
+                                    "windowSeconds": {
+                                      "default": 300,
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 86400
+                                    }
+                                  },
+                                  "required": [
+                                    "type",
+                                    "message",
+                                    "header",
+                                    "secretRef",
+                                    "windowSeconds"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              ]
+                            },
+                            "body": {
                               "type": "object",
                               "properties": {
-                                "scheme": {
+                                "type": {
+                                  "default": "json",
                                   "type": "string",
-                                  "const": "hmac-sha256"
-                                },
-                                "header": {
-                                  "default": "x-graphgoblin-signature",
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 128
-                                },
-                                "secretRef": {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 128
+                                  "enum": [
+                                    "json",
+                                    "text",
+                                    "bytes"
+                                  ]
                                 }
                               },
                               "required": [
-                                "scheme",
-                                "header",
-                                "secretRef"
+                                "type"
                               ],
                               "additionalProperties": false
                             },
-                            "replayWindowSeconds": {
-                              "default": 300,
-                              "type": "integer",
-                              "exclusiveMinimum": 0,
-                              "maximum": 86400
+                            "eventType": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "source": {
+                                      "default": "constant",
+                                      "type": "string",
+                                      "const": "constant"
+                                    },
+                                    "value": {
+                                      "default": "webhook",
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 128,
+                                      "pattern": "^(?!\\s*$)[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+                                    }
+                                  },
+                                  "required": [
+                                    "source",
+                                    "value"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "source": {
+                                      "type": "string",
+                                      "const": "header"
+                                    },
+                                    "name": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 128,
+                                      "pattern": "^[!#$%&'*+.^_`|~0-9a-z-]+$"
+                                    },
+                                    "fallback": {
+                                      "default": "webhook",
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 128,
+                                      "pattern": "^(?!\\s*$)[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+                                    }
+                                  },
+                                  "required": [
+                                    "source",
+                                    "name",
+                                    "fallback"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "source": {
+                                      "type": "string",
+                                      "const": "json-pointer"
+                                    },
+                                    "pointer": {
+                                      "type": "string",
+                                      "maxLength": 1024,
+                                      "pattern": "^(?:\\/(?:[^~]|~[01])*)?$"
+                                    },
+                                    "fallback": {
+                                      "default": "webhook",
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 128,
+                                      "pattern": "^(?!\\s*$)[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+                                    }
+                                  },
+                                  "required": [
+                                    "source",
+                                    "pointer",
+                                    "fallback"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              ]
                             },
                             "dedupeKey": {
                               "type": "string",
@@ -7508,59 +7764,9 @@
                           },
                           "required": [
                             "type",
-                            "signature",
-                            "replayWindowSeconds"
-                          ],
-                          "additionalProperties": false
-                        },
-                        {
-                          "type": "object",
-                          "properties": {
-                            "type": {
-                              "type": "string",
-                              "const": "webhook"
-                            },
-                            "signature": {
-                              "type": "object",
-                              "properties": {
-                                "scheme": {
-                                  "type": "string",
-                                  "const": "hmac-sha256-body"
-                                },
-                                "header": {
-                                  "default": "x-hub-signature-256",
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 128,
-                                  "pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$"
-                                },
-                                "secretRef": {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 128
-                                }
-                              },
-                              "required": [
-                                "scheme",
-                                "header",
-                                "secretRef"
-                              ],
-                              "additionalProperties": false
-                            },
-                            "dedupeKey": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 100000
-                            },
-                            "filter": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 100000
-                            }
-                          },
-                          "required": [
-                            "type",
-                            "signature"
+                            "authentication",
+                            "body",
+                            "eventType"
                           ],
                           "additionalProperties": false
                         },
@@ -13870,6 +14076,12 @@
                   "dedupeKey": {
                     "type": "string",
                     "maxLength": 512
+                  },
+                  "eventType": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "pattern": "^(?!\\s*$)[^\\u0000-\\u001f\\u007f-\\u009f]+$"
                   }
                 },
                 "required": [
@@ -17226,6 +17438,261 @@
                         "type": "string"
                       }
                     },
+                    "webhook": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "ownerId": {
+                          "type": "string"
+                        },
+                        "loopId": {
+                          "type": "string"
+                        },
+                        "versionId": {
+                          "type": "string"
+                        },
+                        "triggerNodeId": {
+                          "type": "string"
+                        },
+                        "path": {
+                          "type": "string"
+                        },
+                        "authentication": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "type": {
+                                  "default": "none",
+                                  "type": "string",
+                                  "enum": [
+                                    "none"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "type"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "hmac-sha256"
+                                  ]
+                                },
+                                "message": {
+                                  "type": "string",
+                                  "enum": [
+                                    "body"
+                                  ]
+                                },
+                                "header": {
+                                  "default": "x-hub-signature-256",
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 128,
+                                  "pattern": "^[!#$%&'*+.^_`|~0-9a-z-]+$"
+                                },
+                                "secretRef": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 128
+                                }
+                              },
+                              "required": [
+                                "type",
+                                "message",
+                                "header",
+                                "secretRef"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "hmac-sha256"
+                                  ]
+                                },
+                                "message": {
+                                  "type": "string",
+                                  "enum": [
+                                    "timestamp-body"
+                                  ]
+                                },
+                                "header": {
+                                  "default": "x-graphgoblin-signature",
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 128,
+                                  "pattern": "^[!#$%&'*+.^_`|~0-9a-z-]+$"
+                                },
+                                "secretRef": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 128
+                                },
+                                "windowSeconds": {
+                                  "default": 300,
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 86400
+                                }
+                              },
+                              "required": [
+                                "type",
+                                "message",
+                                "header",
+                                "secretRef",
+                                "windowSeconds"
+                              ],
+                              "additionalProperties": false
+                            }
+                          ]
+                        },
+                        "configurationAvailable": {
+                          "type": "boolean"
+                        },
+                        "body": {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "default": "json",
+                              "type": "string",
+                              "enum": [
+                                "json",
+                                "text",
+                                "bytes"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "type"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "eventType": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "source": {
+                                  "default": "constant",
+                                  "type": "string",
+                                  "enum": [
+                                    "constant"
+                                  ]
+                                },
+                                "value": {
+                                  "default": "webhook",
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 128,
+                                  "pattern": "^(?!\\s*$)[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+                                }
+                              },
+                              "required": [
+                                "source",
+                                "value"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "source": {
+                                  "type": "string",
+                                  "enum": [
+                                    "header"
+                                  ]
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 128,
+                                  "pattern": "^[!#$%&'*+.^_`|~0-9a-z-]+$"
+                                },
+                                "fallback": {
+                                  "default": "webhook",
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 128,
+                                  "pattern": "^(?!\\s*$)[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+                                }
+                              },
+                              "required": [
+                                "source",
+                                "name",
+                                "fallback"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "source": {
+                                  "type": "string",
+                                  "enum": [
+                                    "json-pointer"
+                                  ]
+                                },
+                                "pointer": {
+                                  "type": "string",
+                                  "maxLength": 1024,
+                                  "pattern": "^(?:\\/(?:[^~]|~[01])*)?$"
+                                },
+                                "fallback": {
+                                  "default": "webhook",
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 128,
+                                  "pattern": "^(?!\\s*$)[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+                                }
+                              },
+                              "required": [
+                                "source",
+                                "pointer",
+                                "fallback"
+                              ],
+                              "additionalProperties": false
+                            }
+                          ]
+                        },
+                        "dedupeKey": {
+                          "type": "string"
+                        },
+                        "filter": {
+                          "type": "string"
+                        },
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "createdAt": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "ownerId",
+                        "loopId",
+                        "versionId",
+                        "triggerNodeId",
+                        "path",
+                        "authentication",
+                        "configurationAvailable",
+                        "enabled",
+                        "createdAt"
+                      ],
+                      "additionalProperties": false
+                    },
                     "delivery": {
                       "type": "object",
                       "properties": {
@@ -17351,6 +17818,261 @@
                             "items": {
                               "type": "string"
                             }
+                          },
+                          "webhook": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "ownerId": {
+                                "type": "string"
+                              },
+                              "loopId": {
+                                "type": "string"
+                              },
+                              "versionId": {
+                                "type": "string"
+                              },
+                              "triggerNodeId": {
+                                "type": "string"
+                              },
+                              "path": {
+                                "type": "string"
+                              },
+                              "authentication": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "type": {
+                                        "default": "none",
+                                        "type": "string",
+                                        "enum": [
+                                          "none"
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "type"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "type": {
+                                        "type": "string",
+                                        "enum": [
+                                          "hmac-sha256"
+                                        ]
+                                      },
+                                      "message": {
+                                        "type": "string",
+                                        "enum": [
+                                          "body"
+                                        ]
+                                      },
+                                      "header": {
+                                        "default": "x-hub-signature-256",
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 128,
+                                        "pattern": "^[!#$%&'*+.^_`|~0-9a-z-]+$"
+                                      },
+                                      "secretRef": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 128
+                                      }
+                                    },
+                                    "required": [
+                                      "type",
+                                      "message",
+                                      "header",
+                                      "secretRef"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "type": {
+                                        "type": "string",
+                                        "enum": [
+                                          "hmac-sha256"
+                                        ]
+                                      },
+                                      "message": {
+                                        "type": "string",
+                                        "enum": [
+                                          "timestamp-body"
+                                        ]
+                                      },
+                                      "header": {
+                                        "default": "x-graphgoblin-signature",
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 128,
+                                        "pattern": "^[!#$%&'*+.^_`|~0-9a-z-]+$"
+                                      },
+                                      "secretRef": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 128
+                                      },
+                                      "windowSeconds": {
+                                        "default": 300,
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 86400
+                                      }
+                                    },
+                                    "required": [
+                                      "type",
+                                      "message",
+                                      "header",
+                                      "secretRef",
+                                      "windowSeconds"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                ]
+                              },
+                              "configurationAvailable": {
+                                "type": "boolean"
+                              },
+                              "body": {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "default": "json",
+                                    "type": "string",
+                                    "enum": [
+                                      "json",
+                                      "text",
+                                      "bytes"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "type"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "eventType": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "source": {
+                                        "default": "constant",
+                                        "type": "string",
+                                        "enum": [
+                                          "constant"
+                                        ]
+                                      },
+                                      "value": {
+                                        "default": "webhook",
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 128,
+                                        "pattern": "^(?!\\s*$)[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+                                      }
+                                    },
+                                    "required": [
+                                      "source",
+                                      "value"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "source": {
+                                        "type": "string",
+                                        "enum": [
+                                          "header"
+                                        ]
+                                      },
+                                      "name": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 128,
+                                        "pattern": "^[!#$%&'*+.^_`|~0-9a-z-]+$"
+                                      },
+                                      "fallback": {
+                                        "default": "webhook",
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 128,
+                                        "pattern": "^(?!\\s*$)[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+                                      }
+                                    },
+                                    "required": [
+                                      "source",
+                                      "name",
+                                      "fallback"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "source": {
+                                        "type": "string",
+                                        "enum": [
+                                          "json-pointer"
+                                        ]
+                                      },
+                                      "pointer": {
+                                        "type": "string",
+                                        "maxLength": 1024,
+                                        "pattern": "^(?:\\/(?:[^~]|~[01])*)?$"
+                                      },
+                                      "fallback": {
+                                        "default": "webhook",
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 128,
+                                        "pattern": "^(?!\\s*$)[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+                                      }
+                                    },
+                                    "required": [
+                                      "source",
+                                      "pointer",
+                                      "fallback"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                ]
+                              },
+                              "dedupeKey": {
+                                "type": "string"
+                              },
+                              "filter": {
+                                "type": "string"
+                              },
+                              "enabled": {
+                                "type": "boolean"
+                              },
+                              "createdAt": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "ownerId",
+                              "loopId",
+                              "versionId",
+                              "triggerNodeId",
+                              "path",
+                              "authentication",
+                              "configurationAvailable",
+                              "enabled",
+                              "createdAt"
+                            ],
+                            "additionalProperties": false
                           },
                           "delivery": {
                             "type": "object",
@@ -17518,30 +18240,218 @@
                           "path": {
                             "type": "string"
                           },
-                          "secretRef": {
-                            "type": "string"
-                          },
-                          "signatureHeader": {
-                            "type": "string"
-                          },
-                          "signatureScheme": {
-                            "type": "string",
-                            "enum": [
-                              "hmac-sha256",
-                              "hmac-sha256-body"
-                            ]
-                          },
-                          "replayWindowSeconds": {
+                          "authentication": {
                             "anyOf": [
                               {
-                                "type": "integer",
-                                "minimum": -9007199254740991,
-                                "maximum": 9007199254740991
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "default": "none",
+                                    "type": "string",
+                                    "enum": [
+                                      "none"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "type"
+                                ],
+                                "additionalProperties": false
                               },
                               {
-                                "type": "null"
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "hmac-sha256"
+                                    ]
+                                  },
+                                  "message": {
+                                    "type": "string",
+                                    "enum": [
+                                      "body"
+                                    ]
+                                  },
+                                  "header": {
+                                    "default": "x-hub-signature-256",
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 128,
+                                    "pattern": "^[!#$%&'*+.^_`|~0-9a-z-]+$"
+                                  },
+                                  "secretRef": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 128
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "message",
+                                  "header",
+                                  "secretRef"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "hmac-sha256"
+                                    ]
+                                  },
+                                  "message": {
+                                    "type": "string",
+                                    "enum": [
+                                      "timestamp-body"
+                                    ]
+                                  },
+                                  "header": {
+                                    "default": "x-graphgoblin-signature",
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 128,
+                                    "pattern": "^[!#$%&'*+.^_`|~0-9a-z-]+$"
+                                  },
+                                  "secretRef": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 128
+                                  },
+                                  "windowSeconds": {
+                                    "default": 300,
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 86400
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "message",
+                                  "header",
+                                  "secretRef",
+                                  "windowSeconds"
+                                ],
+                                "additionalProperties": false
                               }
                             ]
+                          },
+                          "configurationAvailable": {
+                            "type": "boolean"
+                          },
+                          "body": {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "default": "json",
+                                "type": "string",
+                                "enum": [
+                                  "json",
+                                  "text",
+                                  "bytes"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "type"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "eventType": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "source": {
+                                    "default": "constant",
+                                    "type": "string",
+                                    "enum": [
+                                      "constant"
+                                    ]
+                                  },
+                                  "value": {
+                                    "default": "webhook",
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 128,
+                                    "pattern": "^(?!\\s*$)[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+                                  }
+                                },
+                                "required": [
+                                  "source",
+                                  "value"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "source": {
+                                    "type": "string",
+                                    "enum": [
+                                      "header"
+                                    ]
+                                  },
+                                  "name": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 128,
+                                    "pattern": "^[!#$%&'*+.^_`|~0-9a-z-]+$"
+                                  },
+                                  "fallback": {
+                                    "default": "webhook",
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 128,
+                                    "pattern": "^(?!\\s*$)[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+                                  }
+                                },
+                                "required": [
+                                  "source",
+                                  "name",
+                                  "fallback"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "source": {
+                                    "type": "string",
+                                    "enum": [
+                                      "json-pointer"
+                                    ]
+                                  },
+                                  "pointer": {
+                                    "type": "string",
+                                    "maxLength": 1024,
+                                    "pattern": "^(?:\\/(?:[^~]|~[01])*)?$"
+                                  },
+                                  "fallback": {
+                                    "default": "webhook",
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 128,
+                                    "pattern": "^(?!\\s*$)[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+                                  }
+                                },
+                                "required": [
+                                  "source",
+                                  "pointer",
+                                  "fallback"
+                                ],
+                                "additionalProperties": false
+                              }
+                            ]
+                          },
+                          "dedupeKey": {
+                            "type": "string"
+                          },
+                          "filter": {
+                            "type": "string"
                           },
                           "enabled": {
                             "type": "boolean"
@@ -17557,10 +18467,8 @@
                           "versionId",
                           "triggerNodeId",
                           "path",
-                          "secretRef",
-                          "signatureHeader",
-                          "signatureScheme",
-                          "replayWindowSeconds",
+                          "authentication",
+                          "configurationAvailable",
                           "enabled",
                           "createdAt"
                         ],
@@ -17620,7 +18528,7 @@
     },
     "/hooks/{token}": {
       "post": {
-        "summary": "Signed webhook receiver (public; fixed acknowledgement of saved input, timestamp HMAC or exact body HMAC, 1 MiB, rate limit)",
+        "summary": "Webhook receiver (public; saved-input acknowledgement, optional HMAC, JSON/text/bytes, 1 MiB, rate limit)",
         "tags": [
           "triggers"
         ],

@@ -6,8 +6,10 @@ import type {
   LoopVersionRecord,
   Node,
   RunRecord,
+  WebhookConfig,
 } from '@graphgoblin/contracts';
 import {
+  stableStringify,
   evaluateExpression,
   evaluatePredicate,
   nodesOfKind,
@@ -33,7 +35,7 @@ import type {
 import type { InboundEvent, InboundEventBus } from '../event-bus.js';
 import type { PollTarget, PollTriggers } from './poll.js';
 import { FixedWindowRateLimiter } from './rate-limit.js';
-import { verifyWebhookBody } from './webhook-body.js';
+import { extractWebhookEventType, verifyWebhookBody } from './webhook-body.js';
 
 type TriggerNode = Extract<Node, { kind: 'trigger' }>;
 type Config<S extends TriggerNode['config']['type']> = Extract<TriggerNode['config'], { type: S }>;
@@ -95,9 +97,18 @@ export interface EventIngestResult {
 
 export interface LoopTriggers {
   schedules: ScheduleRecord[];
-  webhooks: (Omit<WebhookEndpointRecord, 'token'> & { path: string })[];
+  webhooks: WebhookEndpointSummary[];
   polls: PollTarget[];
 }
+
+export type WebhookEndpointSummary = Omit<WebhookEndpointRecord, 'token'> & {
+  path: string;
+  configurationAvailable: boolean;
+  body?: WebhookConfig['body'];
+  eventType?: WebhookConfig['eventType'];
+  dedupeKey?: string;
+  filter?: string;
+};
 
 function describe(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -199,10 +210,7 @@ export class TriggerService {
         hookDrafts.push({
           ownerId: loop.ownerId,
           triggerNodeId: node.id,
-          secretRef: config.signature.secretRef,
-          signatureHeader: config.signature.header.toLowerCase(),
-          signatureScheme: config.signature.scheme,
-          replayWindowSeconds: 'replayWindowSeconds' in config ? config.replayWindowSeconds : null,
+          authentication: config.authentication,
         });
       }
     }
@@ -241,9 +249,41 @@ export class TriggerService {
     const endpoints = await this.deps.endpoints.listForLoop(loopId);
     return {
       schedules,
-      webhooks: endpoints.map(({ token, ...rest }) => ({ ...rest, path: `/hooks/${token}` })),
+      webhooks: await Promise.all(endpoints.map((endpoint) => this.describeWebhook(endpoint))),
       polls: this.deps.polls.list(loopId),
     };
+  }
+
+  private async describeWebhook(endpoint: WebhookEndpointRecord): Promise<WebhookEndpointSummary> {
+    const { token, ...rest } = endpoint;
+    const config = await this.webhookConfig(endpoint);
+    const matches =
+      config !== undefined &&
+      stableStringify(config.authentication) === stableStringify(endpoint.authentication);
+    if (!matches && endpoint.enabled)
+      throw new Error('Enabled webhook configuration does not match its pinned definition');
+    return {
+      ...rest,
+      path: `/hooks/${token}`,
+      configurationAvailable: matches,
+      ...(matches
+        ? {
+            body: config.body,
+            eventType: config.eventType,
+            ...(config.dedupeKey ? { dedupeKey: config.dedupeKey } : {}),
+            ...(config.filter ? { filter: config.filter } : {}),
+          }
+        : {}),
+    };
+  }
+
+  async describeInbound(
+    event: InboundEventRecord,
+  ): Promise<InboundEventRecord & { webhook?: WebhookEndpointSummary }> {
+    if (event.type !== 'webhook' || !event.source.startsWith('webhook:')) return event;
+    const endpoint = await this.deps.endpoints.get(event.source.slice('webhook:'.length));
+    if (!endpoint || endpoint.ownerId !== event.ownerId) return event;
+    return { ...event, webhook: await this.describeWebhook(endpoint) };
   }
 
   // ---------------------------------------------------------------------------
@@ -279,7 +319,7 @@ export class TriggerService {
 
   /**
    * Verify and act on one delivery to `/hooks/<token>`. Order: endpoint lookup (404), rate limit
-   * (429), timestamp window (401), secret (503), signature (401), JSON (400), expressions (422),
+   * (429), pinned configuration, optional authentication, decoding (400), extraction/expressions,
    * then acknowledge saved or already consumed input. All receipts dispatch asynchronously.
    */
   async handleWebhook(
@@ -311,40 +351,54 @@ export class TriggerService {
     }
 
     const now = this.deps.clock.now();
-    const secret = await this.deps.secretsFor(endpoint.ownerId).resolve(endpoint.secretRef);
+    const node = await this.webhookConfig(endpoint);
+    if (!node || stableStringify(node.authentication) !== stableStringify(endpoint.authentication))
+      return fail(
+        503,
+        'HOOK_NOT_READY',
+        'the endpoint configuration does not match its pinned definition',
+      );
+    const authentication = endpoint.authentication;
+    const secret =
+      authentication.type === 'none'
+        ? undefined
+        : await this.deps.secretsFor(endpoint.ownerId).resolve(authentication.secretRef);
     const verified = verifyWebhookBody(
-      endpoint.signatureScheme === 'hmac-sha256-body'
-        ? { scheme: 'hmac-sha256-body', header: endpoint.signatureHeader }
-        : {
-            scheme: 'hmac-sha256',
-            header: endpoint.signatureHeader,
-            replayWindowSeconds: endpoint.replayWindowSeconds ?? 300,
-          },
+      authentication,
       rawBody,
       headers,
       now,
       secret,
       rawHeaders,
+      node.body,
     );
     if (!verified.ok) {
       if (verified.code === 'HOOK_NOT_READY')
         this.deps.logger.warn(
-          { endpointId: endpoint.id, secretRef: endpoint.secretRef },
+          {
+            endpointId: endpoint.id,
+            secretRef: authentication.type === 'none' ? undefined : authentication.secretRef,
+          },
           'webhook secret is not set',
         );
       return fail(verified.status, verified.code, verified.detail);
     }
     const payload = verified.payload;
-    const node = await this.triggerNode(endpoint.versionId, endpoint.triggerNodeId, 'webhook');
-    if (!node) return fail(404, 'HOOK_NOT_FOUND', 'unknown webhook');
-    const bindings = { headers: this.expressionHeaders(headers, endpoint.signatureHeader) };
+    const extracted = extractWebhookEventType(node.eventType, payload, headers, rawHeaders);
+    if (!extracted.ok) return fail(extracted.status, extracted.code, extracted.detail);
+    const bindings = {
+      headers: this.expressionHeaders(
+        headers,
+        authentication.type === 'none' ? undefined : authentication.header,
+      ),
+    };
     let dedupeKey: string | undefined;
     let passes: boolean;
     try {
       dedupeKey = node.dedupeKey
         ? stringKey(
             await evaluateExpression(node.dedupeKey, payload, { bindings }),
-            endpoint.signatureScheme === 'hmac-sha256-body',
+            authentication.type === 'hmac-sha256' && authentication.message === 'body',
           )
         : undefined;
       passes = node.filter ? await evaluatePredicate(node.filter, payload, { bindings }) : true;
@@ -370,6 +424,7 @@ export class TriggerService {
       triggerNodeId: endpoint.triggerNodeId,
       triggerKind: 'webhook' as const,
       source: 'webhook' as const,
+      eventType: extracted.eventType,
       caller: { kind: 'system' as const, id: source },
       payload,
       ...(dedupeKey ? { dedupeKey } : {}),
@@ -543,26 +598,31 @@ export class TriggerService {
     return matches;
   }
 
-  private async triggerNode<S extends 'webhook'>(
-    versionId: string,
-    nodeId: string,
-    type: S,
-  ): Promise<Config<S> | undefined> {
-    const version = await this.deps.loops.getVersion(versionId);
-    const node = version
-      ? nodesOfKind(version.definition, 'trigger').find((n) => n.id === nodeId)
-      : undefined;
-    return node?.config.type === type ? (node.config as Config<S>) : undefined;
+  /** Endpoint rows own authentication; the exact pinned definition owns payload configuration. */
+  private async webhookConfig(endpoint: WebhookEndpointRecord): Promise<WebhookConfig | undefined> {
+    const version = await this.deps.loops.getVersion(endpoint.versionId);
+    const loop = await this.deps.loops.getLoop(endpoint.loopId);
+    if (
+      !version ||
+      version.loopId !== endpoint.loopId ||
+      version.status !== 'published' ||
+      loop?.ownerId !== endpoint.ownerId
+    )
+      return undefined;
+    const node = nodesOfKind(version.definition, 'trigger').find(
+      (node) => node.id === endpoint.triggerNodeId,
+    );
+    return node?.config.type === 'webhook' ? node.config : undefined;
   }
 
   /** String header metadata for expressions; the configured signing credential stays private. */
   private expressionHeaders(
     headers: Record<string, unknown>,
-    signingHeader: string,
+    signingHeader: string | undefined,
   ): Record<string, string> {
     const out: Record<string, string> = {};
     for (const name of Object.keys(headers)) {
-      if (name.toLowerCase() === signingHeader.toLowerCase()) continue;
+      if (name.toLowerCase() === signingHeader?.toLowerCase()) continue;
       const value = headers[name];
       const text =
         typeof value === 'string'

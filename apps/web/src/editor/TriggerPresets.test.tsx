@@ -351,7 +351,7 @@ describe('TriggerPresets', () => {
     await user.click(screen.getByRole('button', { name: 'Apply GitHub preset' }));
     expect(onApply.mock.calls[0]?.[0].definition.nodes[0].config).toMatchObject({
       type: 'webhook',
-      signature: { scheme: 'hmac-sha256-body', secretRef: 'github-hook' },
+      authentication: { type: 'hmac-sha256', message: 'body', secretRef: 'github-hook' },
       dedupeKey: '$headers."x-github-delivery"',
     });
     expect(onApply.mock.calls[0]?.[0].definition.nodes[0].config).not.toHaveProperty('filter');
@@ -451,7 +451,7 @@ describe('TriggerPresets', () => {
     const onApply = vi.fn();
     render(
       <TriggerPresets
-        config={{ type: 'webhook', signature: { scheme: 'custom-hmac', secretRef: 'saved' } }}
+        config={{ type: 'webhook', authentication: { type: 'custom-hmac', secretRef: 'saved' } }}
         onApply={onApply}
       />,
     );

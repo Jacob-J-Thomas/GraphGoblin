@@ -34,11 +34,11 @@ it.each([
   triggerConfig('event', { eventType: 'build-ready', filter: 'true', dedupeKey: 'id' }),
   triggerConfig('poll', { intervalSeconds: 30, probe: { kind: 'none' }, fireWhen: 'true' }),
   triggerConfig('webhook', {
-    signature: { scheme: 'hmac-sha256', secretRef: 'hook' },
+    authentication: { type: 'hmac-sha256', message: 'timestamp-body', secretRef: 'hook' },
     filter: 'true',
   }),
   triggerConfig('webhook', {
-    signature: { scheme: 'hmac-sha256-body', secretRef: 'github' },
+    authentication: { type: 'hmac-sha256', message: 'body', secretRef: 'github' },
     dedupeKey: 'id',
   }),
 ])('keeps type through editor save, device draft, reopen and export: %j', async (config) => {
@@ -120,30 +120,34 @@ describe('trigger authoring', () => {
     expect(within(dialog).queryByLabelText('Interval seconds')).not.toBeInTheDocument();
 
     await user.selectOptions(type, 'webhook');
-    expect(within(dialog).getByLabelText('Signing protocol')).toHaveDisplayValue(
-      'Timestamp and body',
+    const authentication = within(dialog).getByLabelText('Authentication recipe');
+    expect(authentication).toHaveDisplayValue('None');
+    expect(within(dialog).queryByLabelText('Signing secret name')).not.toBeInTheDocument();
+    await user.selectOptions(
+      authentication,
+      within(dialog).getByRole('option', { name: 'Timestamp and body HMAC' }),
     );
-    expect(within(dialog).getByLabelText('Replay window seconds')).toBeVisible();
-    expect(within(dialog).getByLabelText('Secret ref')).toBeVisible();
+    expect(within(dialog).getByLabelText('Timestamp window (seconds)')).toBeVisible();
+    expect(within(dialog).getByLabelText('Secret name')).toBeVisible();
     expect(within(dialog).getByLabelText('Filter')).toBeVisible();
     await user.selectOptions(
-      within(dialog).getByLabelText('Signing protocol'),
-      within(dialog).getByRole('option', { name: 'Body only (GitHub)' }),
+      authentication,
+      within(dialog).getByRole('option', { name: 'Body HMAC' }),
     );
     expect(current()).toMatchObject({
       type: 'webhook',
-      signature: { scheme: 'hmac-sha256-body' },
+      authentication: { type: 'hmac-sha256', message: 'body' },
     });
-    expect(within(dialog).queryByLabelText('Replay window seconds')).not.toBeInTheDocument();
+    expect(within(dialog).queryByLabelText('Timestamp window (seconds)')).not.toBeInTheDocument();
     const bodySigned = current();
     const steps = store().past.length;
     await user.selectOptions(type, 'webhook');
     expect(current()).toBe(bodySigned);
     expect(store().past).toHaveLength(steps);
-    act(() => store().openNode('start', { field: 'config.signature.scheme' }));
-    await waitFor(() => expect(within(dialog).getByLabelText('Signing protocol')).toHaveFocus());
+    act(() => store().openNode('start', { field: 'config.authentication.message' }));
+    await waitFor(() => expect(authentication).toHaveFocus());
     await user.selectOptions(type, 'manual');
-    expect(within(dialog).queryByLabelText('Signing protocol')).not.toBeInTheDocument();
+    expect(within(dialog).queryByLabelText('Authentication recipe')).not.toBeInTheDocument();
     expect(type).toHaveFocus();
   });
 
@@ -229,7 +233,83 @@ describe('trigger authoring', () => {
       await user.keyboard(REDO);
       if (preset === 'issues-poll')
         expect(within(dialog).getByLabelText('Interval seconds')).toHaveValue(60);
-      else expect(within(dialog).getByLabelText('Secret ref')).toHaveValue('synthetic-hook');
+      else expect(within(dialog).getByLabelText('Secret name')).toHaveValue('synthetic-hook');
     },
   );
+});
+
+it('edits authentication, body and extraction by keyboard with one-step undo and field validation', async () => {
+  const user = userEvent.setup();
+  const dialog = await openTrigger();
+  await user.selectOptions(within(dialog).getByLabelText('Trigger type'), 'webhook');
+  const auth = () => within(dialog).getByLabelText('Authentication recipe');
+  auth().focus();
+  await user.selectOptions(auth(), within(dialog).getByRole('option', { name: 'Body HMAC' }));
+  expect(auth()).toHaveFocus();
+  await user.type(within(dialog).getByLabelText('Secret name'), 'synthetic');
+  expect(within(dialog).getByLabelText('Signing header')).toHaveAttribute(
+    'placeholder',
+    'x-hub-signature-256',
+  );
+  await user.selectOptions(
+    auth(),
+    within(dialog).getByRole('option', { name: 'Timestamp and body HMAC' }),
+  );
+  expect(within(dialog).getByLabelText('Timestamp window (seconds)')).toHaveAttribute(
+    'placeholder',
+    '300',
+  );
+  await user.keyboard(UNDO);
+  expect(auth()).toHaveDisplayValue('Body HMAC');
+  expect(auth()).toHaveFocus();
+  expect(within(dialog).getByLabelText('Secret name')).toHaveValue('synthetic');
+  await user.keyboard(REDO);
+  expect(auth()).toHaveDisplayValue('Timestamp and body HMAC');
+  await user.selectOptions(auth(), within(dialog).getByRole('option', { name: 'None' }));
+  expect(within(dialog).queryByLabelText('Signing header')).not.toBeInTheDocument();
+  expect(within(dialog).queryByLabelText('Secret name')).not.toBeInTheDocument();
+
+  const modes = () => within(dialog).getByRole('radiogroup', { name: 'Body mode' });
+  await user.click(within(modes()).getByRole('radio', { name: 'text' }));
+  expect(current()).toMatchObject({ body: { type: 'text' } });
+  await user.keyboard(UNDO);
+  expect(within(modes()).getByRole('radio', { name: 'json' })).toBeChecked();
+  await user.keyboard(REDO);
+  expect(within(modes()).getByRole('radio', { name: 'text' })).toBeChecked();
+  const source = () => within(dialog).getByLabelText('Event type source');
+  await user.selectOptions(source(), 'header');
+  await user.type(within(dialog).getByLabelText('Event header'), 'x-provider-event');
+  expect(within(dialog).getByLabelText('Fallback event type')).toHaveAttribute(
+    'placeholder',
+    'webhook',
+  );
+  await user.selectOptions(source(), 'json-pointer');
+  await user.type(within(dialog).getByLabelText('JSON pointer'), '/kind');
+  await waitFor(() =>
+    expect(
+      within(dialog).getAllByText('JSON pointers require JSON body mode').length,
+    ).toBeGreaterThan(0),
+  );
+  await user.click(within(modes()).getByRole('radio', { name: 'json' }));
+  await waitFor(() =>
+    expect(
+      within(dialog).queryByText('JSON pointers require JSON body mode'),
+    ).not.toBeInTheDocument(),
+  );
+  expect(TriggerConfigSchema.parse(current())).toMatchObject({
+    authentication: { type: 'none' },
+    body: { type: 'json' },
+    eventType: { source: 'json-pointer', pointer: '/kind', fallback: 'webhook' },
+  });
+  act(() => store().openNode('start', { field: 'config.eventType.pointer' }));
+  await waitFor(() => expect(within(dialog).getByLabelText('JSON pointer')).toHaveFocus());
+  await user.selectOptions(source(), 'constant');
+  expect(within(dialog).getByLabelText('Constant event type')).toHaveAttribute(
+    'placeholder',
+    'webhook',
+  );
+  await user.keyboard(UNDO);
+  expect(source()).toHaveDisplayValue('JSON pointer');
+  expect(source()).toHaveFocus();
+  expect(within(dialog).getByLabelText('JSON pointer')).toHaveValue('/kind');
 });

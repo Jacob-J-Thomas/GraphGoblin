@@ -405,12 +405,18 @@ describe('SchemaForm', () => {
     const type = screen.getByLabelText('Type');
     await user.selectOptions(
       type,
-      within(type).getByRole('option', { name: 'webhook (timestamp)' }).getAttribute('value')!,
+      within(type).getByRole('option', { name: 'webhook' }).getAttribute('value')!,
     );
-    expect(last(spy)).toMatchObject({ type: 'webhook', signature: { scheme: 'hmac-sha256' } });
-    expect(screen.getByText('hmac-sha256')).toBeInTheDocument();
+    await user.selectOptions(
+      screen.getByLabelText('Kind'),
+      screen.getByRole('option', { name: 'Timestamp and body HMAC' }),
+    );
+    expect(last(spy)).toMatchObject({
+      type: 'webhook',
+      authentication: { type: 'hmac-sha256', message: 'timestamp-body' },
+    });
     await user.type(screen.getByLabelText('Secret ref'), 'hook-secret');
-    expect(last(spy)).toMatchObject({ signature: { secretRef: 'hook-secret' } });
+    expect(last(spy)).toMatchObject({ authentication: { secretRef: 'hook-secret' } });
 
     await user.selectOptions(
       type,
@@ -429,8 +435,9 @@ describe('SchemaForm', () => {
         schema={NodeConfigSchemas.trigger}
         initial={{
           type: 'webhook',
-          signature: {
-            scheme: 'hmac-sha256-body',
+          authentication: {
+            type: 'hmac-sha256',
+            message: 'body',
             header: 'x-hub-signature-256',
             secretRef: '',
           },
@@ -441,35 +448,36 @@ describe('SchemaForm', () => {
     );
 
     const type = screen.getByLabelText('Type');
-    expect(type).toHaveDisplayValue('webhook (body)');
-    expect(screen.getByText('hmac-sha256-body')).toBeInTheDocument();
-    expect(screen.queryByLabelText('Replay window seconds')).not.toBeInTheDocument();
+    expect(type).toHaveDisplayValue('webhook');
+    expect(screen.getByLabelText('Kind')).toHaveDisplayValue('Body HMAC');
+    expect(screen.queryByLabelText('Window seconds')).not.toBeInTheDocument();
     await user.type(screen.getByLabelText('Secret ref'), 'github-key');
     expect(last(spy)).toMatchObject({
       type: 'webhook',
-      signature: { scheme: 'hmac-sha256-body', secretRef: 'github-key' },
+      authentication: { type: 'hmac-sha256', message: 'body', secretRef: 'github-key' },
     });
   });
 
-  it('keeps an unknown stored signing scheme visible in raw form data without coercing it', async () => {
-    const user = userEvent.setup();
+  it('keeps an unknown stored signing scheme visible in raw form data without coercing it', () => {
     const spy = vi.fn();
     render(
       <Harness
         schema={NodeConfigSchemas.trigger}
         initial={{
           type: 'webhook',
-          signature: { scheme: 'custom-hmac', header: 'x-custom', secretRef: 'saved-secret' },
+          authentication: { type: 'custom-hmac', header: 'x-custom', secretRef: 'saved-secret' },
+          filter: 'true',
         }}
         spy={spy}
       />,
     );
 
-    expect(screen.getByTestId('value')).toHaveTextContent('"scheme":"custom-hmac"');
+    expect(screen.getByTestId('value')).toHaveTextContent('"type":"custom-hmac"');
     expect(spy).not.toHaveBeenCalled();
-    await user.type(screen.getByLabelText('Secret ref'), '-edited');
+    setCode('Filter', 'false');
     expect(last(spy)).toMatchObject({
-      signature: { scheme: 'custom-hmac', secretRef: 'saved-secret-edited' },
+      authentication: { type: 'custom-hmac', secretRef: 'saved-secret' },
+      filter: 'false',
     });
   });
 

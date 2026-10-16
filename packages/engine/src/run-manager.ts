@@ -87,6 +87,7 @@ export interface StartRunInput {
   /** Defaults to the first manual trigger, then the first trigger of any kind. */
   triggerNodeId?: string;
   triggerKind?: TriggerKind;
+  eventType?: string;
   source: InvocationSource;
   caller?: Caller;
   payload?: JsonValue;
@@ -381,6 +382,7 @@ export class RunManager {
           kind: input.triggerKind ?? triggerKindOf(trigger),
           payload,
           receivedAt: now,
+          ...(input.eventType !== undefined ? { eventType: input.eventType } : {}),
           ...(input.dedupeKey ? { dedupeKey: input.dedupeKey } : {}),
         },
         ...(input.returnDefaults ? { returnDefaults: input.returnDefaults } : {}),
@@ -533,8 +535,10 @@ export class RunManager {
   private async dispatchWebhook(receipt: Pick<WebhookReceipt, 'id' | 'attempts'>): Promise<void> {
     const run = await this.withPinLock(async () => {
       if (this.stopped) return undefined;
+      let current = receipt;
       try {
         const saved = await this.ports.admission.get(receipt.id);
+        if (saved) current = saved;
         if (!saved || saved.status !== 'pending') return undefined;
         if (saved.nextAttemptAt && saved.nextAttemptAt > this.now()) return undefined;
         const intent = saved.intent;
@@ -549,7 +553,7 @@ export class RunManager {
           throw error;
         }
       } catch (error) {
-        await this.recordWebhookFailure(receipt, error);
+        await this.recordWebhookFailure(current, error);
         return undefined;
       }
     });

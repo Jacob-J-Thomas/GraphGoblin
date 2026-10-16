@@ -262,8 +262,14 @@ describe('node config schemas', () => {
   it.each([
     { type: 'manual' },
     { type: 'cron', expression: '* * * * *' },
-    { type: 'webhook', signature: { scheme: 'hmac-sha256', secretRef: 'hook-secret' } },
-    { type: 'webhook', signature: { scheme: 'hmac-sha256-body', secretRef: 'hook-secret' } },
+    {
+      type: 'webhook',
+      authentication: { type: 'hmac-sha256', message: 'timestamp-body', secretRef: 'hook-secret' },
+    },
+    {
+      type: 'webhook',
+      authentication: { type: 'hmac-sha256', message: 'body', secretRef: 'hook-secret' },
+    },
     { type: 'event', eventType: 'issue-ready' },
     { type: 'poll', intervalSeconds: 30, probe: { kind: 'none' }, fireWhen: 'true' },
   ])('requires type and rejects subtype and unknown fields: %j', (config) => {
@@ -288,10 +294,13 @@ describe('node config schemas', () => {
     expect(cron.type === 'cron' && cron.missedFirePolicy).toBe('skip');
     const hook = TriggerConfigSchema.parse({
       type: 'webhook',
-      signature: { scheme: 'hmac-sha256', secretRef: 'hook-secret' },
+      authentication: { type: 'hmac-sha256', message: 'timestamp-body', secretRef: 'hook-secret' },
     });
     expect(
-      hook.type === 'webhook' && 'replayWindowSeconds' in hook && hook.replayWindowSeconds,
+      hook.type === 'webhook' &&
+        hook.authentication.type === 'hmac-sha256' &&
+        hook.authentication.message === 'timestamp-body' &&
+        hook.authentication.windowSeconds,
     ).toBe(300);
     expect(TriggerConfigSchema.parse({ type: 'event', eventType: 'issue-ready' }).type).toBe(
       'event',

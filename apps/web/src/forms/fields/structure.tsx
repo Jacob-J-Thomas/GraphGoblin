@@ -870,25 +870,22 @@ function UnionField({
   const option = shape.options[index] as Schema;
   const optionShape = shapeOf(option);
   const Picker = use(UnionPickersContext)[name];
-  const pickerOptions = shape.options.map((candidate) => ({
-    value: shape.discriminator
-      ? discriminatorValue(candidate, shape.discriminator)
-      : optionLabel(candidate),
+  const tags = shape.options.map((candidate) =>
+    shape.discriminator ? discriminatorValue(candidate, shape.discriminator) : '',
+  );
+  const uniqueTags = shape.discriminator !== undefined && new Set(tags).size === tags.length;
+  const pickerOptions = shape.options.map((candidate, index) => ({
+    value: uniqueTags ? tags[index]! : String(index),
     label: optionLabel(candidate, shape.discriminator),
+    schema: candidate,
   }));
-  const selectedValue =
-    !unset && shape.discriminator ? discriminatorValue(option, shape.discriminator) : undefined;
+  const selectedValue = !unset ? pickerOptions[index]?.value : undefined;
   const chooseVariant = (selected: string | undefined) => {
     const chosen =
       selected === undefined
         ? undefined
         : pickerOptions.findIndex((candidate) => candidate.value === selected);
-    if (
-      chosen === -1 ||
-      (shape.discriminator && selected === selectedValue) ||
-      (unset && selected === undefined)
-    )
-      return;
+    if (chosen === -1 || selected === selectedValue || (unset && selected === undefined)) return;
     const next = chosen === undefined ? undefined : initialValue(shape.options[chosen] as Schema);
     reviewEdit({ type: 'variant', path: name, value: next }, (replacement, keep, moves = []) => {
       change({ path: name, kind: 'commit' }, () => {
@@ -940,7 +937,7 @@ function UnionField({
         ) : (
           <>
             <Label htmlFor={id} required={required}>
-              {shape.discriminator ? humanize(shape.discriminator) : 'Kind'}
+              {uniqueTags && shape.discriminator ? humanize(shape.discriminator) : 'Kind'}
             </Label>
             <Select
               {...control}

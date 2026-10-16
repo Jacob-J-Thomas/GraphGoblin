@@ -1,10 +1,9 @@
 # 09 - Frontend and PWA
 
-The public webhook response is fixed `202 {accepted:true}`. Events reads private delivery metadata
-and run links from `GET /events`, including saved pending and permanently failed webhook
-admissions; it cannot infer run creation from a sender's acknowledgement. The general Webhook
-controls remain pending in #168 T4. Repeated unkeyed deliveries can appear as separate receipts and
-runs for either signing recipe; a sender acknowledgement does not promise deduplication.
+The public webhook response is fixed `202 {accepted:true}`. Events reads private delivery state,
+retry metadata, safe pinned configuration and run links; acknowledgement does not imply run
+creation or deduplication of unkeyed repeats. Its per-delivery **Webhook configuration** disclosure
+shows authentication recipe, secret names, body/extraction/key settings or unavailable history.
 
 ## Shape (Decided)
 
@@ -241,7 +240,7 @@ The adversarial QA report is `docs/qa/2026-10-03-wp-d2.md`. Behaviour that chang
 - **Drafts.** Device drafts saved before the node-only harness change were discarded by a one-off IndexedDB store upgrade, including live and set-aside copies. New in-progress drafts remain on the device across reloads even with schema errors. If an older tab or PWA window blocks the store upgrade, draft loading falls back to the server copy after three seconds, and device storage reports itself blocked (see "Device storage and the save states" below). Every edit is mirrored to IndexedDB at once and flushed to the server when the editor unmounts, so leaving inside the debounce window loses nothing. An unsynced local draft older than the server's last save is set aside, under its own IndexedDB key that later edits do not touch, and offered (use or discard) on every load until the user chooses. Draft saves for a loop are serialized, including the one sent when leaving the editor, and a save updates the editor only while the same loop and editor generation are loaded, so an older save never lands after a newer one. Two tabs no longer overwrite each other: see "Draft conflicts" below.
 - **Editor.** Palette additions pan into view. List fields with a default show the default and a Customize button instead of item fields bound to nothing. Settings' "(server default)" deletes the setting.
 - **Run inspector.** Replay starts from `run.queued`'s `initialThread`, so subloop child runs reconstruct correctly; a log that does not replay shows an explanation; an error boundary per screen keeps the shell alive. Events are appended, rendered, and reported in 100 ms batches and session storage never throws on quota: a 1,211-event run opens in about 0.5 s with a handful of run fetches (it took 7 s and one fetch per event before).
-- **Events screen** shows each event's source (API, webhook delivery, or the run whose exit emitted it) and links to the runs it started. Webhook receipts distinguish filtered, deduplicated, pending, admitted and failed delivery states, with retry attempts and safe failure codes. While the mounted page contains pending receipts, it refreshes every two seconds so recovery results and new run links appear automatically; interval refresh stops after all displayed receipts are terminal or the page unmounts. Normal focus and reconnect refresh remain enabled. Webhook endpoint configuration stays on the API (`GET /loops/{id}/triggers`); the screen does not list endpoints yet.
+- **Events screen** shows each event's source (API, webhook delivery, or the run whose exit emitted it) and links to the runs it started. Webhook receipts distinguish filtered, deduplicated, pending, admitted and failed delivery states, with retry attempts and safe failure codes. While the mounted page contains pending receipts, it refreshes every two seconds so recovery results and new run links appear automatically; interval refresh stops after all displayed receipts are terminal or the page unmounts. Normal focus and reconnect refresh remain enabled. Each delivery can disclose its pinned safe webhook configuration; complete endpoint history remains available through `GET /loops/{id}/triggers`.
 - **Settings** check the secret name rule before sending, and validation messages name the first failing field.
 
 ## Draft conflicts (Decided, WP-F2)
@@ -346,11 +345,14 @@ root picker: **Manual**, **Cron**, **Poll**, **Event**, **Webhook**, in that ord
 with a short description. Only the selected type's schema fields render. Manual
 shows input schema and start surfaces; Cron keeps its schedule control, timezone,
 missed-fire policy and enabled flag; Poll keeps both single-result and Items
-modes, probe fields, firing condition and dedupe. Webhook's two existing signing
-variants are presented under **Signing protocol**. Stored configs, device drafts,
-saved definitions and exports use `type`. Event/Webhook intake fields remain
-unchanged until later #168 children. Other schema unions
-keep their own labels and controls.
+modes, probe fields, firing condition and dedupe. Webhook has one strict nested config.
+**Authentication recipe** chooses None, Body HMAC, or Timestamp and body HMAC and shows only
+applicable signing header/Secret name/window fields. **Body mode** uses the keyboard-accessible
+json/text/bytes segmented control. **Event type source** chooses Constant, Header or JSON pointer
+with source-specific value/name/pointer and fallback controls. Pointers require JSON; validation
+focuses the pointer field when the selected mode conflicts. Native picker focus and unfinished
+input survive normal undo/redo. Stored configs, device drafts, saved definitions and exports
+use `type`. Event/Webhook retain `filter` until T6. Other schema unions keep their labels.
 
 **Start from a preset** is an optional disclosure after the type's fields. Setup
 is local until **Preview GitHub preset**. The focused preview lists changed trigger

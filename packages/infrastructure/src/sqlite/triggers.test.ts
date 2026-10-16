@@ -50,10 +50,13 @@ const cron = (triggerNodeId: string, nextFireAt?: string): ScheduleDraft => ({
 const hook = (triggerNodeId: string): WebhookEndpointDraft => ({
   ownerId: 'local',
   triggerNodeId,
-  secretRef: 'hook-secret',
-  signatureHeader: 'x-graphgoblin-signature',
-  signatureScheme: 'hmac-sha256',
-  replayWindowSeconds: 300,
+  authentication: {
+    type: 'hmac-sha256',
+    message: 'timestamp-body',
+    secretRef: 'hook-secret',
+    header: 'x-graphgoblin-signature',
+    windowSeconds: 300,
+  },
 });
 
 describe('SqliteScheduleStore', () => {
@@ -272,17 +275,18 @@ describe('0013 trigger configuration', () => {
       handle.client.execute({ sql: insert, args: ['valid', ...recipe] }),
     ).resolves.toBeDefined();
     const store = new SqliteWebhookEndpoints(handle.db, clock, ids);
-    if (recipe[0] === 'none')
-      await expect(store.findByToken('token')).rejects.toThrow(
-        'Unsupported webhook signing configuration',
-      );
-    else
-      expect(await store.findByToken('token')).toMatchObject({
-        secretRef: 'key',
-        signatureHeader: 'x-signature',
-        signatureScheme: recipe[1] === 'body' ? 'hmac-sha256-body' : 'hmac-sha256',
-        replayWindowSeconds: recipe[4],
-      });
+    expect(await store.findByToken('token')).toMatchObject({
+      authentication:
+        recipe[0] === 'none'
+          ? { type: 'none' }
+          : {
+              type: 'hmac-sha256',
+              message: recipe[1],
+              secretRef: 'key',
+              header: 'x-signature',
+              ...(recipe[1] === 'timestamp-body' ? { windowSeconds: recipe[4] } : {}),
+            },
+    });
   });
   it.each([
     ['none', 'body', null, null, null],
@@ -356,4 +360,68 @@ describe('0013 trigger configuration', () => {
       past.close();
     }
   });
+});
+
+it('refuses inconsistent authentication rows instead of filling or discarding stored signing fields', async () => {
+  await handle.client.execute('PRAGMA ignore_check_constraints=ON');
+  const store = new SqliteWebhookEndpoints(handle.db, clock, ids);
+  for (const [auth, message, header, secret, window] of [
+    ['none', null, 'x-signature', null, null],
+    ['hmac-sha256', 'body', 'x-signature', 'key', 300],
+    ['hmac-sha256', 'body', null, 'key', null],
+    ['hmac-sha256', 'timestamp-body', 'x-signature', 'key', null],
+  ]) {
+    await handle.client.execute('DELETE FROM webhook_endpoints');
+    await handle.client.execute({
+      sql: "INSERT INTO webhook_endpoints VALUES ('bad','local','loop','version','hook','token',?,?,?,?,?,1,'2026-10-02T12:00:00.000Z')",
+      args: [auth ?? null, message ?? null, header ?? null, secret ?? null, window ?? null],
+    });
+    await expect(store.findByToken('token')).rejects.toThrow();
+  }
+  expect(await store.get('missing')).toBeUndefined();
+});
+
+it('arms all authentication recipes using exact SQL fields and stable endpoint tokens across versions', async () => {
+  const store = new SqliteWebhookEndpoints(handle.db, clock, ids);
+  const recipes: WebhookEndpointDraft['authentication'][] = [
+    { type: 'none' },
+    { type: 'hmac-sha256', message: 'body', header: 'x-body', secretRef: 'body-key' },
+    {
+      type: 'hmac-sha256',
+      message: 'timestamp-body',
+      header: 'x-timestamp',
+      secretRef: 'timestamp-key',
+      windowSeconds: 45,
+    },
+  ];
+  for (const [index, authentication] of recipes.entries()) {
+    const rows = await store.replaceForVersion(
+      'loop',
+      String(index),
+      [{ ownerId: 'local', triggerNodeId: 'hook', authentication }],
+      () => 'stable',
+    );
+    const enabled = rows.find((row) => row.enabled)!;
+    expect(enabled).toMatchObject({ token: 'stable', versionId: String(index), authentication });
+    expect(await store.get(enabled.id)).toEqual(enabled);
+    if (index === 0)
+      expect(
+        (
+          await handle.client.execute(
+            'SELECT auth_type,signature_message,signature_header,secret_ref,window_seconds FROM webhook_endpoints',
+          )
+        ).rows[0],
+      ).toEqual({
+        auth_type: 'none',
+        signature_message: null,
+        signature_header: null,
+        secret_ref: null,
+        window_seconds: null,
+      });
+    clock.advance(1000);
+  }
+  expect((await store.findByToken('stable'))?.authentication).toEqual(recipes[2]);
+  expect((await store.listForLoop('loop')).map((row) => row.authentication)).toEqual(
+    [...recipes].reverse(),
+  );
 });

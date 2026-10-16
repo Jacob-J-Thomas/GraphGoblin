@@ -37,8 +37,12 @@ async function hook(t: TestApp) {
   const id = await t.publishLoop(
     triggerLoop('hook', {
       type: 'webhook',
-      signature: { secretRef: 'hook', scheme: 'hmac-sha256' },
-      replayWindowSeconds: 300,
+      authentication: {
+        secretRef: 'hook',
+        type: 'hmac-sha256',
+        message: 'timestamp-body',
+        windowSeconds: 300,
+      },
     }),
   );
   const list = (await t.app.inject(`/loops/${id}/triggers`)).json<{

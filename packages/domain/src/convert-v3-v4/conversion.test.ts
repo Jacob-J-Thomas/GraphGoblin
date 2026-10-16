@@ -195,7 +195,7 @@ describe('definition conversion golden rules', () => {
       },
     },
   ])(
-    'automatically converts $name to type while preserving every other field',
+    'converts $name with current configuration and explicit decoding review',
     async ({ config }) => {
       const source = loop();
       const start = source.nodes[0]!;
@@ -204,9 +204,40 @@ describe('definition conversion golden rules', () => {
       const before = structuredClone(source);
       const { subtype, ...fields } = start.config;
       const result = candidate(await convertDefinitionV3ToV4(source));
-      expect(result.ready).toBe(true);
-      expect(result.value.nodes[0]).toEqual({ ...start, config: { type: subtype, ...fields } });
-      expect(result.reviewItems.filter((item) => item.nodeId === start.id)).toEqual([]);
+      if (start.config.subtype === 'webhook') {
+        const signature = start.config.signature;
+        expect(result.value.nodes[0]?.config).toEqual({
+          type: 'webhook',
+          authentication: {
+            type: 'hmac-sha256',
+            message: signature.scheme === 'hmac-sha256' ? 'timestamp-body' : 'body',
+            header: signature.header.toLowerCase(),
+            secretRef: signature.secretRef,
+            ...('replayWindowSeconds' in start.config
+              ? { windowSeconds: start.config.replayWindowSeconds }
+              : {}),
+          },
+          body: { type: 'json' },
+          eventType: { source: 'constant', value: 'webhook' },
+          dedupeKey: start.config.dedupeKey,
+          filter: start.config.filter,
+        });
+        expect(result.ready).toBe(false);
+        expect(result.reviewItems.filter((item) => item.nodeId === start.id)).toEqual([
+          expect.objectContaining({
+            id: '/nodes/0/config:webhook-json-decoding',
+            kind: 'webhook-json-decoding',
+            status: 'pending',
+          }),
+        ]);
+        const approved = candidate(await convertDefinitionV3ToV4(source, approvals(result)));
+        expect(approved.ready).toBe(true);
+        expect(approved.value).toEqual(result.value);
+      } else {
+        expect(result.ready).toBe(true);
+        expect(result.value.nodes[0]).toEqual({ ...start, config: { type: subtype, ...fields } });
+        expect(result.reviewItems.filter((item) => item.nodeId === start.id)).toEqual([]);
+      }
       expect(JSON.stringify(result.value)).not.toMatch(/"subtype"\s*:/);
       expect(source).toEqual(before);
     },
@@ -1461,4 +1492,53 @@ describe('consumers, refusals and exact resolutions', () => {
     const result = candidate(await convertDefinitionV3ToV4(V3LoopDefinitionSchema.parse(raw)));
     expect(result.reviewItems.find((item) => item.kind === 'exit-return')?.status).toBe('pending');
   });
+});
+
+it('binds one decoding review to each frozen webhook and rejects stale approval or invalid current headers', async () => {
+  const source = loop();
+  const hook = V3NodeConfigSchemas.trigger.parse({
+    subtype: 'webhook',
+    signature: { scheme: 'hmac-sha256', header: 'X-Event-Signature', secretRef: 'key' },
+    replayWindowSeconds: 42,
+    filter: 'true',
+    dedupeKey: 'id',
+  });
+  source.nodes[0] = { ...source.nodes[0]!, kind: 'trigger', config: hook };
+  source.nodes.push({
+    id: 'other-hook',
+    kind: 'trigger',
+    label: 'Other',
+    ui: source.nodes[0].ui,
+    config: V3NodeConfigSchemas.trigger.parse({
+      subtype: 'webhook',
+      signature: { scheme: 'hmac-sha256-body', secretRef: 'other' },
+    }),
+  });
+  source.edges.push({
+    id: 'other-work',
+    from: { node: 'other-hook', port: 'out' },
+    to: { node: 'work', port: 'in' },
+  });
+  const result = candidate(await convertDefinitionV3ToV4(source));
+  expect(result.reviewItems.filter((item) => item.kind === 'webhook-json-decoding')).toHaveLength(
+    2,
+  );
+  expect(result.value.nodes[0]?.config).toMatchObject({
+    authentication: { header: 'x-event-signature', windowSeconds: 42 },
+    filter: 'true',
+    dedupeKey: 'id',
+  });
+  const approved = candidate(await convertDefinitionV3ToV4(source, approvals(result)));
+  expect(approved.ready).toBe(true);
+  const changed = structuredClone(source);
+  const first = changed.nodes[0];
+  if (first?.kind !== 'trigger' || first.config.subtype !== 'webhook')
+    throw new Error('missing webhook');
+  first.config.signature.secretRef = 'changed';
+  expect(await convertDefinitionV3ToV4(changed, approvals(result))).toMatchObject({
+    ok: false,
+    issues: expect.arrayContaining([expect.objectContaining({ code: 'V4_RESOLUTION_INVALID' })]),
+  });
+  first.config.signature.header = 'invalid header';
+  expect(await convertDefinitionV3ToV4(changed)).toMatchObject({ ok: false });
 });

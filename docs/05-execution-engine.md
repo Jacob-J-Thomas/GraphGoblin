@@ -227,9 +227,9 @@ Optional `timeoutSeconds` exists on inferencing and script nodes and on wait and
 - The SSE stream (07) is a tail of the same log, which is why reconnecting clients can resume from a sequence number without loss.
 - Large payloads such as transcripts, full probe responses, and return payloads above a size threshold are stored as artifacts on disk, keyed by content hash, and referenced from events.
 
-## Webhook admission checkpoint (#168 T4)
+## General webhook admission (#168 T4)
 
-**Webhook admission checkpoint (#168 T4).** Both signing recipes freeze their run admission under
+**Webhook admission (#168 T4).** All three authentication recipes freeze their run admission under
 the deletion lock and acknowledge once claim saves the inbound row and receipt, complete intent,
 pending pins and key reservation. Dispatch separately commits the run/thread, queued event, pins,
 admitted receipt and inbound run link, then notifies. Retry metadata failure cannot invalidate the
@@ -238,8 +238,11 @@ sweep of at most five due receipts and backoff capped at five minutes. The expor
 `@graphgoblin/engine/testing` admission contract cases run the same assertions on staged fake writes
 and SQLite transactions, including faults at every claim/create write. Identical unkeyed raw bodies
 receive distinct receipts and runs; raw hashes are audit evidence only. Authored keys share the same
-claim rule across both signing recipes. Timestamp freshness authenticates a request; it does not
-select a deduplication window. See
+claim rule across both signing recipes. None establishes no sender identity. JSON/text/bytes decoding and event extraction precede
+admission; extracted metadata is optional `invocation.trigger.eventType`, preserved in the
+initial thread and sequence-1 queued event without publishing to the Event bus. Timestamp
+freshness authenticates a request; it does not select a deduplication window. Retry backoff uses
+attempts re-read under the deletion lock, rather than the due-list snapshot. See
 [ADR-0037](decisions/ADR-0037-webhook-acknowledgement.md).
 
 ## Replay and debugging (Decided by implementation, 2026-10-03)

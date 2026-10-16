@@ -7,8 +7,10 @@ Add the single **Trigger** node and open its editor. **Trigger type** comes firs
 it starts a run and shows its own fields. Manual offers an input schema and start
 surfaces; Cron offers its schedule, timezone, missed-fire policy and enabled flag;
 Poll offers the interval, probe, firing condition, dedupe, optional Items and enabled
-flag. Webhook keeps the existing **Signing protocol** choices under its type.
-Event and Webhook retain their current intake fields in this step.
+flag. Webhook offers **Authentication recipe** (None, Body HMAC, Timestamp and body HMAC),
+**Body mode** (json, text, bytes) and **Event type source** (Constant, Header, JSON pointer).
+Only the selected recipe fields appear. None establishes no authenticated sender identity.
+Event/Webhook keep `filter` until T6; payload checks belong downstream.
 
 **Start from a preset** is optional and sits after the trigger fields. Choose a
 GitHub recipe, fill in its setup and choose **Preview GitHub preset**. The preview
@@ -106,6 +108,25 @@ Trigger payloads contain `scheduledFor` and `catchUp`. The schedule advances bef
 
 After a long outage `run-once` still starts exactly one catch-up run, for the latest missed slot at or before the restart, however many slots were missed. `run-each` starts at most 100 catch-up runs per schedule: it keeps the latest 100 missed slots, runs them oldest first, drops the older missed slots with a warning in the log naming the number dropped and the first retained slot, and moves the schedule to its next future slot.
 
+## Receive an ordinary POST
+
+A new Webhook defaults to None authentication, JSON body and constant `webhook` event metadata.
+None requires no secret and establishes no sender identity. Text supports XML/form-like content as
+a UTF-8 string, including empty input; Bytes produces `{encoding:"base64",data}`. The raw limit is
+1 MiB for every mode. Interpret text or bytes downstream.
+
+Choose Header extraction with a lowercase header name and fallback, or JSON pointer extraction
+with a fallback. Pointers require JSON mode, allow the empty root pointer, RFC 6901 escapes,
+1,024 characters and 32 segments, and traverse own properties/array indices only. Missing, blank
+or nonscalar values use fallback. Ambiguous headers return 400 `EVENT_TYPE_AMBIGUOUS`;
+control/overlong scalar metadata returns 422 `EVENT_TYPE_INVALID`. Event names and fallbacks must
+be nonblank, control-free and at most 128 characters. This metadata is recorded on the invocation;
+it does not publish to the Event bus.
+
+Authentication, body and extraction changes use the normal editor focus, validation and undo.
+JSON remains strict, nonempty UTF-8 JSON; literal `null` is valid. The flat signing fields are no
+longer accepted. Existing stores/exports need the reviewed format-4 cutover.
+
 ## Receive a timestamp-signed webhook
 
 Create a secret in [Settings](06-settings-and-secrets.md#store-secrets), then reference its name in the trigger:
@@ -113,14 +134,16 @@ Create a secret in [Settings](06-settings-and-secrets.md#store-secrets), then re
 ```json
 {
   "type": "webhook",
-  "signature": {
-    "scheme": "hmac-sha256",
+  "authentication": {
+    "type": "hmac-sha256",
+    "message": "timestamp-body",
     "header": "x-graphgoblin-signature",
-    "secretRef": "incoming-hook"
+    "secretRef": "incoming-hook",
+    "windowSeconds": 300
   },
-  "replayWindowSeconds": 300,
-  "dedupeKey": "deliveryId",
-  "filter": "action = \"opened\""
+  "body": { "type": "json" },
+  "eventType": { "source": "constant", "value": "webhook" },
+  "dedupeKey": "deliveryId"
 }
 ```
 
@@ -132,7 +155,7 @@ POST /hooks/{token}
 
 The token stays stable across versions for the same trigger node ID. Replace or rename that node and publish to obtain a new token. The signing secret is resolved by name on each delivery.
 
-The signature is HMAC-SHA256, keyed with the secret, over the exact UTF-8 bytes of the timestamp, a dot, and the body. It goes in the header named by `signature.header` (default `x-graphgoblin-signature`). The timestamp always goes in `x-graphgoblin-timestamp`.
+The signature is HMAC-SHA256, keyed with the secret, over the exact UTF-8 bytes of the timestamp, a dot, and the body. It goes in the header named by `authentication.header` (default `x-graphgoblin-signature`). The timestamp always goes in `x-graphgoblin-timestamp`.
 
 In Bash, install curl and OpenSSL, then replace the token and secret placeholders:
 
@@ -172,7 +195,7 @@ For a quick check of your signing code, the secret `s3cret-value`, the timestamp
 sha256=1ed6e75a09e5efba80f692ea02ee05a85fb177ec7ed73cfe378758e7f8757c96
 ```
 
-Keep whitespace and newlines identical between signing and sending. Send the timestamp as ISO 8601 or Unix seconds. The server rejects timestamps more than `replayWindowSeconds` away from its clock in either direction; the default is 300 seconds. Send the digest as lowercase hex with the `sha256=` prefix.
+Keep whitespace and newlines identical between signing and sending. Send the timestamp as ISO 8601 or Unix seconds. The server rejects timestamps more than `authentication.windowSeconds` away from its clock in either direction; the default is 300 seconds. Send the digest as lowercase hex with the `sha256=` prefix.
 
 `dedupeKey` and `filter` are JSONata over the parsed body, with lower-case request headers available through `$headers`. The configured signing header is excluded case-insensitively from both expressions; ordinary delivery and timestamp metadata remains available. The example deduplicates authored delivery IDs across signing recipes and versions. Without a dedupe expression, identical raw bodies can start separate runs; raw hashes are audit evidence only. Timestamp freshness authenticates the delivery and does not expire its authored key. Saved and duplicate requests return HTTP 202 `{accepted:true}`. Inspect **Events** for the payload, filter disposition and started-run links. The run's trigger payload is the parsed body, so templates read it as `trigger.payload`. A duplicate returns the same 202 without another run. Empty, whitespace-only, malformed JSON or invalid UTF-8 bodies return 400 `BODY_INVALID` (literal `null` is valid), and a filter or dedupe expression that fails returns 422 `EXPRESSION_FAILED`.
 
@@ -185,11 +208,14 @@ For a GitHub webhook, use body signing instead of the timestamp protocol above:
 ```json
 {
   "type": "webhook",
-  "signature": {
-    "scheme": "hmac-sha256-body",
+  "authentication": {
+    "type": "hmac-sha256",
+    "message": "body",
     "header": "x-hub-signature-256",
     "secretRef": "github-repo-hook"
   },
+  "body": { "type": "json" },
+  "eventType": { "source": "header", "name": "x-github-event", "fallback": "webhook" },
   "dedupeKey": "$headers.\"x-github-delivery\""
 }
 ```
@@ -209,8 +235,8 @@ invocation.trigger.payload.(repository.full_name = "OWNER/REPO" and action = "la
 ```
 
 Labels and branches are encoded as JSON strings, including quotes, backslashes,
-newlines and Unicode. The checks are body-only: header-based event checks await T4
-and event-type extraction. `restore-output` is an ordinary Mutate node with:
+newlines and Unicode. The presets extract `x-github-event` metadata with fallback `webhook`. The default authority
+checks remain body-only; event headers are hints, available as `invocation.trigger.eventType`. `restore-output` is an ordinary Mutate node with:
 
 ```json
 {
@@ -235,7 +261,7 @@ Removal and reconnection are part of the same undo step.
 
 Create the secret in Settings, publish the loop, and use its enabled `/hooks/<token>` URL as the GitHub payload URL. Configure JSON content and the same secret in GitHub. Subscribe to **Issues** for the example above; use **Pull requests** for PR checks. Expose only the hooks path through HTTPS, preserving the original body bytes. GitHub signs the payload in `X-Hub-Signature-256`; see its [signature verification reference](https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries) and [event payload reference](https://docs.github.com/en/webhooks/webhook-events-and-payloads).
 
-Replace the repository and label values deliberately. Body signing has no `replayWindowSeconds` field. Each logical endpoint should have its own signing secret. The delivery ID and event headers are unsigned hints: check repository, object shape and action in the signed body. The editable decision uses these signed-body checks:
+Replace the repository and label values deliberately. Body signing has no `windowSeconds` field. Each logical endpoint should have its own signing secret. The delivery ID and event headers are unsigned hints: check repository, object shape and action in the signed body. The editable decision uses these signed-body checks:
 
 | Intent                       | Signed-body checks after the repository check                                                                                          |
 | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
@@ -363,6 +389,6 @@ Keep the API bound to localhost. If inbound webhooks are necessary, use a TLS tu
 /hooks/*
 ```
 
-Cloudflare Tunnel and ngrok are examples from the design docs. Configure their proxy or gateway rules to reject every other path; a whole-origin tunnel also exposes the API and UI. Keep HMAC verification and replay protection enabled. Prefer manual or poll triggers when inbound access is unnecessary. Follow [Triggers and integrations](../08-triggers-and-integrations.md) and [Security and distribution](../11-security-and-distribution.md) for the tunnel posture.
+Cloudflare Tunnel and ngrok are examples from the design docs. Configure their proxy or gateway rules to reject every other path; a whole-origin tunnel also exposes the API and UI. Configure HMAC authentication and timestamp freshness when the sender supports them. Prefer manual or poll triggers when inbound access is unnecessary. Follow [Triggers and integrations](../08-triggers-and-integrations.md) and [Security and distribution](../11-security-and-distribution.md) for the tunnel posture.
 
 Continue with [MCP and the Codex plugin](05-mcp-and-codex-plugin.md).

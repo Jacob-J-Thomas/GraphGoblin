@@ -41,7 +41,7 @@ describe('editable GitHub fragments', () => {
     (preset) => {
       const source = newLoopDefinition(preset);
       source.nodes[0]!.config = triggerConfig('webhook', {
-        signature: { scheme: 'hmac-sha256-body', secretRef: 'old' },
+        authentication: { type: 'hmac-sha256', message: 'body', secretRef: 'old' },
         filter: 'false',
       });
       source.edges[0]!.ui = { route: [200] };

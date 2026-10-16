@@ -132,7 +132,7 @@ You can also store your Jev API key manually with this exact name:
 jev-api-key
 ```
 
-The Jev decider uses it for decisions. Setting or deleting it refreshes that adapter without a restart. Without it, a decision selecting Jev fails as unavailable and can be resumed after the key is restored. Webhook signing uses the name in `signature.secretRef`; outbound signing uses the return channel's `secretRef`.
+The Jev decider uses it for decisions. Setting or deleting it refreshes that adapter without a restart. Without it, a decision selecting Jev fails as unavailable and can be resumed after the key is restored. Webhook HMAC authentication uses the name in `authentication.secretRef`; None requires no secret. Outbound signing uses the return channel's `secretRef`.
 
 For a script environment variable, use this reference syntax:
 

@@ -72,12 +72,20 @@
       "kind": "trigger",
       "config": {
         "type": "webhook",
-        "signature": {
-          "scheme": "hmac-sha256",
+        "authentication": {
+          "type": "hmac-sha256",
+          "message": "timestamp-body",
           "header": "x-sig",
-          "secretRef": "hook-secret"
+          "secretRef": "hook-secret",
+          "windowSeconds": 120
         },
-        "replayWindowSeconds": 120,
+        "body": {
+          "type": "json"
+        },
+        "eventType": {
+          "source": "constant",
+          "value": "webhook"
+        },
         "dedupeKey": "payload.id",
         "filter": "payload.action = \"opened\""
       }
@@ -133,10 +141,18 @@
       "kind": "trigger",
       "config": {
         "type": "webhook",
-        "signature": {
-          "scheme": "hmac-sha256-body",
+        "authentication": {
+          "type": "hmac-sha256",
+          "message": "body",
           "header": "x-hub-signature-256",
           "secretRef": "github-secret"
+        },
+        "body": {
+          "type": "json"
+        },
+        "eventType": {
+          "source": "constant",
+          "value": "webhook"
         },
         "dedupeKey": "issue.number",
         "filter": "action = \"opened\""

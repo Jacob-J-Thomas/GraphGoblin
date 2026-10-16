@@ -16,7 +16,7 @@ async function setup() {
   const definition = minimalLoop();
   definition.nodes[0]!.config = {
     type: 'webhook',
-    signature: { scheme: 'hmac-sha256-body', secretRef: 'secret' },
+    authentication: { type: 'hmac-sha256', message: 'body', secretRef: 'secret' },
   };
   const version = engine.publish(definition);
   const input = {
@@ -381,4 +381,19 @@ it('marks a removed saved target permanently failed and ignores stale already-ad
   ]);
   await engine.manager.retryPendingWebhooks();
   expect(create).not.toHaveBeenCalled();
+});
+
+it('uses attempts re-read under the lock when a due-list snapshot is stale (T4a F2)', async () => {
+  const { engine, input, claim } = await setup();
+  vi.spyOn(engine.ports.admission, 'create').mockRejectedValue(new Error('transient'));
+  await engine.manager.receiveWebhook(claim, input, false);
+  await engine.manager.waitForWebhookRecovery();
+  const saved = engine.ports.admission.receipts.get(claim.id)!;
+  saved.attempts = 4;
+  engine.ports.clock.advance(5000);
+  vi.spyOn(engine.ports.admission, 'due').mockResolvedValueOnce([{ id: claim.id, attempts: 0 }]);
+  await engine.manager.retryPendingWebhooks();
+  const retried = (await engine.ports.admission.get(claim.id))!;
+  expect(retried.attempts).toBe(5);
+  expect(Date.parse(retried.nextAttemptAt!) - engine.ports.clock.now().getTime()).toBe(80000);
 });

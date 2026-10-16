@@ -14,7 +14,7 @@ function store(custom = false) {
               id: 'hook',
               kind: 'trigger',
               config: {
-                type: 'webhook',
+                subtype: 'webhook',
                 signature: { scheme: 'hmac-sha256', secretRef: 'secret' },
                 ...(custom ? { dedupeKey: 'payload.id' } : {}),
               },

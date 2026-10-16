@@ -28,18 +28,7 @@ describe('TriggerTypePicker', () => {
       await user.selectOptions(type, triggerType);
       expect(onChange.mock.lastCall?.[0]).toMatchObject({ type: triggerType });
     }
-    const signing = screen.getByLabelText('Signing protocol');
-    expect(signing).toHaveDisplayValue('Timestamp and body');
-    await user.selectOptions(signing, screen.getByRole('option', { name: 'Body only (GitHub)' }));
-    expect(onChange.mock.lastCall?.[0]).toMatchObject({
-      type: 'webhook',
-      signature: { scheme: 'hmac-sha256-body' },
-    });
-    await user.selectOptions(signing, screen.getByRole('option', { name: 'Timestamp and body' }));
-    expect(onChange.mock.lastCall?.[0]).toMatchObject({
-      type: 'webhook',
-      signature: { scheme: 'hmac-sha256' },
-    });
+    expect(screen.queryByLabelText('Signing protocol')).not.toBeInTheDocument();
     await user.selectOptions(type, 'manual');
     expect(type).toHaveDisplayValue('Manual');
   });

@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { WebhookConfigSchema } from '@graphgoblin/contracts';
+import { V3WebhookConfigSchema as WebhookConfigSchema } from '@graphgoblin/contracts';
 import type { UpgradeIssue } from '@graphgoblin/domain';
 
 type Row = Record<string, unknown>;

@@ -1,7 +1,7 @@
 # 08 - Triggers and integrations
 
 Stored trigger configs use `type`: `manual`, `cron`, `webhook`, `event`, or `poll`.
-Both webhook signing variants use `type: 'webhook'`. Config parsers reject
+Webhooks use one strict `type: 'webhook'` object with nested authentication, body and event-type configuration. Config parsers reject
 `subtype`; current stores and exports using it remain refused until the integrated
 format-4 cutover converts them. The pure V3-to-V4 definition converter automatically
 renames this discriminator, preserving every other field without a review item.
@@ -52,59 +52,56 @@ The `run-each` catch-up cap does not change `run-once` semantics. Even after an
 outage longer than 100 slots, `run-once` uses the latest missed slot at or before
 the recovery clock.
 
-## Timestamp-signed webhook
+## General webhook configuration (#168 T4)
 
-- Each webhook trigger node gets an endpoint token: 32 random bytes, base64url, in the path `/hooks/<token>`. The token stays the same across published versions for the same trigger node id, so publishing does not break a sender's configuration; to rotate it, rename or replace the node. The signing secret is the owner's secret named by the node's `signature.secretRef`, resolved from the secret store on every delivery.
-- `/hooks/` needs no API key because the HMAC signature is the credential. See [Public routes](07-api-and-streaming.md#public-routes-decided-by-implementation-2026-10-03) for the full list.
-- Checks, in order, with the response for each failure:
+A Webhook accepts an ordinary POST at `/hooks/<token>`. Tokens remain stable across versions for the same trigger node. The pinned definition owns `body`, `eventType`, `dedupeKey` and the temporarily retained `filter`. The endpoint row owns its safe authentication recipe; intake requires exact agreement with that pinned definition and owner/loop/version provenance before resolving a secret.
 
-  | Check                                                                                                                                                   | Failure                                              |
-  | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-  | Body at most 1 MB (enforced while reading, before anything else)                                                                                        | 413                                                  |
-  | Token names an enabled endpoint                                                                                                                         | 404 `HOOK_NOT_FOUND`                                 |
-  | Per-endpoint rate limit                                                                                                                                 | 429 `RATE_LIMITED` with `retry-after`                |
-  | `x-graphgoblin-timestamp` present (ISO 8601 or Unix seconds) and within `replayWindowSeconds` of the server clock, in either direction                  | 401 `TIMESTAMP_MISSING` or `TIMESTAMP_OUT_OF_WINDOW` |
-  | The secret exists                                                                                                                                       | 503 `HOOK_NOT_READY`                                 |
-  | `sha256=<hex of HMAC-SHA256(secret, "<timestamp>.<raw body>")>` in the configured header (default `x-graphgoblin-signature`), compared in constant time | 401 `SIGNATURE_INVALID`                              |
-  | Body is nonempty, fatal UTF-8, valid JSON (literal `null` allowed)                                                                                      | 400 `BODY_INVALID`                                   |
-  | `dedupeKey` and `filter` expressions evaluate                                                                                                           | 422 `EXPRESSION_FAILED`                              |
-  | Authored key not already claimed for this owner/loop/trigger                                                                                            | 202 `{accepted:true}` (no additional run)            |
-
-- Expressions are JSONata over the parsed body, with request headers bound as `$headers` (lower-case names), excluding the configured signing header case-insensitively for both `dedupeKey` and `filter`. Without an authored key there is no business identity: identical bytes can start separate runs, including an external retry after a lost response. The raw SHA-256 hash remains audit evidence. Timestamp freshness is solely an authentication check.
-- Every accepted delivery is recorded in `inbound_events` (`type: 'webhook'`, `source: 'webhook:<endpointId>'`). When the `filter` rejects it no run starts; otherwise the run starts with `source: 'webhook'`, `triggerKind: 'webhook'`, the parsed body as payload, and the dedupe key, and the public response is always 202 `{accepted:true}`. Inspect the private Events listing for payloads and run links.
-- Rate limit: 60 deliveries per endpoint per minute by default (`GG_HOOK_RATE_LIMIT`), a fixed one-minute window counted in memory. It is a guard against a misbehaving sender, not a security boundary: counts reset on restart, a burst at a window edge can reach twice the limit, and the check runs before the signature so an attacker with the token can exhaust it.
-
-Sending a delivery by hand:
-
-```sh
-TOKEN=...                      # from GET /loops/{id}/triggers -> webhooks[].path
-SECRET=...                     # the value stored as the secret named by signature.secretRef
-BODY='{"action":"opened","number":7}'
-TS=$(date -u +%Y-%m-%dT%H:%M:%SZ)   # or Unix seconds: TS=$(date +%s)
-SIG="sha256=$(printf '%s.%s' "$TS" "$BODY" | openssl dgst -sha256 -hmac "$SECRET" | sed 's/^.* //')"
-curl -sS -X POST "http://127.0.0.1:4747/hooks/$TOKEN" \
-  -H 'content-type: application/json' \
-  -H "x-graphgoblin-timestamp: $TS" \
-  -H "x-graphgoblin-signature: $SIG" \
-  --data-binary "$BODY"
+```ts
+{
+  type: 'webhook',
+  authentication: { type: 'none' }, // default
+  body: { type: 'json' },          // default
+  eventType: { source: 'constant', value: 'webhook' }, // default
+  dedupeKey?: Expression,
+  filter?: Expression, // retained until T6
+}
 ```
 
-Sign exactly the bytes you send (`--data-binary`, not `-d`, which strips newlines). GraphGoblin's own outbound webhook return channel signs the same way, so one GraphGoblin can trigger another.
+All objects are strict; flat `signature` and `replayWindowSeconds` fields are rejected. None establishes no sender identity. The same endpoint lookup, 60/minute default limiter, 1 MiB raw bound (including chunked bodies), decoding, extraction and atomic admission apply to every recipe.
 
-## Body-signed webhook and durable admission (#29, #168 T4 checkpoint)
+| Authentication                                                                     | Fields and signing message                                                                                                             |
+| ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `{type:'none'}`                                                                    | No signing fields or secret lookup; no authenticated sender identity.                                                                  |
+| `{type:'hmac-sha256', message:'body', header, secretRef}`                          | HMAC-SHA256 over exact raw bytes. Header defaults to `x-hub-signature-256`; no timestamp window.                                       |
+| `{type:'hmac-sha256', message:'timestamp-body', header, secretRef, windowSeconds}` | Sign UTF-8 timestamp, a dot and raw bytes. Header defaults to `x-graphgoblin-signature`; integer window 1-86,400 seconds, default 300. |
 
-Select `signature.scheme: hmac-sha256-body` for GitHub-compatible signing. The default header is `x-hub-signature-256`. The digest is `sha256=<hex HMAC-SHA256(secret, exact raw body)>`; no timestamp header is required, and `replayWindowSeconds` is rejected for this branch. Signature validation precedes strict UTF-8 decoding and JSON parsing. The same 1 MiB body limit, enabled-endpoint check and rate limit apply.
+HMAC values retain the `sha256=<hex>` format and constant-time comparison. The fixed timestamp header is `x-graphgoblin-timestamp`, accepting ISO or Unix seconds, within the configured window in either direction. Authenticate raw bytes before decoding, extraction or expressions. Duplicate raw authentication headers are counted case-insensitively and rejected. Header names are lowercase RFC token characters, length 1-128. Only secret names leave the owner's secret store.
 
-Every valid delivery gets a distinct durable receipt. **Allow** applies uniformly to both signing recipes: identical unkeyed bodies may create separate receipts and runs. There is no raw-content suppression or stored policy switch. A recovery attempt reuses the saved receipt and intent; an external redelivery is a new delivery.
+### Body and event metadata
 
-An authored nonempty `dedupeKey` suppresses bodies with the same business identity. The claim transaction checks previous receipts in every state and admitted runs in the same owner/loop/trigger scope, without expiry. This includes keys from either signing recipe. A key duplicate is recorded as `deduplicated`, has no executable intent and returns 202 `{accepted:true}`. Existing expression validation remains: body-signing keys longer than 512 characters return 422 `EXPRESSION_FAILED`; timestamp keys retain their current truncation until T5 establishes one validation rule.
-A matching delivery freezes a run ID, invocation, initial thread and subloop pins. Receipt claim and pending pins share the engine's deletion lock. Run admission commits that state together with the sequence-1 queued event and receipt link, and publishes notifications only after commit. The public 202 follows durable claim, before create or execution finishes. A transient dispatch failure retains the pending intent and never changes a saved delivery into a public 503 or 409. A lost claim acknowledgement is reconciled against the allocated receipt identity; an unconfirmed save returns 503. Permanent identity or target failures are saved as failed with a safe code. Startup recovery and a non-overlapping 15-second sweep retry at most five due intents, with persisted backoff capped at five minutes. Recovery reuses only the allocated run ID after immutable identity checks. Pending pins prevent deletion; permanent failures remain visible rather than silently allocating another run.
+- JSON uses fatal UTF-8 and nonempty valid JSON. Empty/whitespace JSON returns 400 `BODY_INVALID`; literal `null` is valid.
+- Text yields a JSON string, including empty string. Invalid UTF-8 returns 400 `BODY_INVALID`.
+- Bytes yields `{encoding:'base64', data}` without text decoding. Every mode retains the 1 MiB raw bound.
 
-`GET /events` can include `delivery: {state, attempts, nextAttemptAt?, failureCode?}`. This exposes disposition without raw signatures, secret headers or the internal frozen intent. Schemes are listed on armed endpoints, with a null replay window for body signing. See [ADR-0037](decisions/ADR-0037-webhook-acknowledgement.md) and the historical [ADR-0024](decisions/ADR-0024-github-trigger-admission.md) and the [GitHub setup guide](guide/04-triggers.md#github-body-signatures).
+`eventType` is one of `{source:'constant', value}`, `{source:'header', name, fallback}` or `{source:'json-pointer', pointer, fallback}`. Value and fallback are EventNames: nonblank, control-free strings of length 1-128; fallback defaults to `webhook`. Missing, blank or nonscalar selected values use fallback. Ambiguous headers return 400 `EVENT_TYPE_AMBIGUOUS`; control characters or overlong scalars return 422 `EVENT_TYPE_INVALID`, including scalars that would otherwise be blank.
 
-The current checkpoint retains the existing flat signing contract and `filter`, while both signing recipes now use claim/create. SQL `0013_trigger_configuration` rebuilds endpoints with `auth_type`, `signature_message`, `signature_header`, `secret_ref` and `window_seconds`, preserving identity, tokens, enabled state and creation time. Recipe CHECKs support unsigned, body HMAC and timestamp-body HMAC; current authoring still permits only the two signed recipes. Body/extraction/key settings stay in pinned definitions. The content-hash receipt index is non-unique. Format 4 is unreleased, so its readiness baseline moves to 0013: an old structure is refused before automatic migration or recovery. Installed-store conversion remains part of the integrated cutover.
+Pointers allow 1,024 characters and 32 segments with valid RFC 6901 `~0`/`~1` escapes. They require JSON body mode, follow own properties and array indices only, and may select a scalar root with the empty pointer. A new webhook run records extracted `invocation.trigger.eventType` through StartRunInput, the initial thread and sequence-1 queued event. Trigger output remains the decoded payload. This metadata neither publishes an Event nor establishes repository/sender authority.
 
-The nested authentication/body/event-type contract, unsigned runtime intake, decoding/extraction controls, invocation metadata and endpoint summaries remain T4 work. T5 tightens explicit-key validation and historical/cross-kind lookup; T6 removes `filter`. No stored policy selector is added.
+### Acknowledgement, repeats and recovery
+
+Every saved delivery returns exactly `202 {accepted:true}` without payloads, run/event IDs or dispositions. Private Events exposes pending/admitted/failed/filtered/deduplicated state, attempts, retry time, safe failure code and run links. Unsaved/unconfirmed admission or signing/configuration readiness may return 503; a saved pending or failed admission cannot change the public acknowledgement. Other errors remain 400 decoding/ambiguous extraction, 401 authentication, 404 unknown/disabled hook, 413 body bound, 422 extraction/expression failure and 429 with Retry-After.
+
+**Allow** is uniform, with no policy switch: identical unkeyed bytes may create distinct receipts and runs. Raw SHA-256 is audit evidence only; it suppresses nothing. An external repeat is a new delivery; recovery reuses the same saved intent and run ID. An authored nonempty key uses the existing owner/loop/trigger claim lookup across both HMAC recipes and None. A duplicate key is saved as `deduplicated` without an executable intent. T4 retains existing key-expression validation; T5 finishes `KEY_INVALID`, bounds and historical/cross-kind key lookup. `filter` retains its existing intake behavior until T6; the GitHub presets put payload checks downstream.
+
+Claim atomically saves inbound plus receipt, complete frozen intent, pending pins and key reservation under the deletion lock. Dispatch commits run/thread, pins, first queued event, receipt state and inbound link, then notifies. Recovery verifies immutable facts, uses the attempts re-read under the lock for backoff, and retains the nonoverlapping 15-second sweep, five due identities and five-minute backoff cap. The shared D29 runner tests fake/SQLite transactions; SQLite close/reopen supplements parity.
+
+Endpoint summaries expose `authentication`, pinned `body`, `eventType`, optional `dedupeKey`/`filter` and `configurationAvailable`. Disabled orphan/mismatched summaries mark configuration unavailable; enabled missing/mismatched provenance refuses. Events exposes the same safe pinned configuration under `webhook`; the UI makes it inspectable per delivery. Neither summary exposes the internal admission intent or signing values.
+
+### Storage and conversion
+
+SQL `0013_trigger_configuration` stores `auth_type`, `signature_message`, `signature_header`, `secret_ref` and `window_seconds`, preserving endpoint identities/tokens and both indexes. CHECKs enforce null signing fields for None, header/secret plus null window for body HMAC, and an integer 1-86,400 timestamp window. Body/extraction/key settings stay in the pinned definition. The content-hash receipt index is non-unique. Unreleased format 4 requires the 0013 structure; older stores are refused before automatic migration/recovery.
+
+The frozen V3-to-V4 definition converter maps both old signing recipes to nested authentication, lowercases header names, supplies JSON and constant `webhook` metadata, and preserves filter/key source. Each webhook has a hash-bound `webhook-json-decoding` review item for strict UTF-8/nonempty JSON, including the former timestamp empty-body behavior. Every proposal passes the current schema and graph validation. Definition approval does not perform the integrated installed-store cutover. T6 owns reviewed filter removal/conversion. See [ADR-0037](decisions/ADR-0037-webhook-acknowledgement.md).
 
 ### Editable GitHub webhook recipes (#168 T2)
 
@@ -114,11 +111,11 @@ They insert ordinary editable nodes: trigger --> expression decision (`event-che
 Continue (`pass`) --> mutate (`restore-output`) --> former successor, and Ignore
 (`ignore`) --> terminal Success exit with `returns: "none"`, `destinations: []` and no
 continuation. Non-matching deliveries therefore create visible quiet successful
-runs. Intake, receipt and dedupe behavior otherwise remains unchanged in this child.
+runs. These payload checks run downstream of the shared webhook intake and admission path.
 
 Checks read `invocation.trigger.payload` and return route IDs. They preserve the
 repository/action/object/label/draft/merged/base checks and JSON-quote user strings.
-Event header checks await T4 event-type extraction; these recipes check only the
+Presets extract `x-github-event` with fallback `webhook`; their authority checks use the
 signed body. The mutate uses `set /lastOutput` with an expression
 `$lookup(outputs, "<triggerId>")`, copying the full `nodeId/value/at/schemaRef`
 record. It does not replace that record with a mutate output.
@@ -167,7 +164,7 @@ HTTP probe results omit authorization, cookie, set-cookie and API-key response h
 The most secure default for a single-user laptop is to accept nothing inbound and use polling or manual triggers. When inbound webhooks are needed during development:
 
 - Use a tunnel that terminates TLS and authenticates the tunnel itself, such as a Cloudflare Tunnel or an ngrok endpoint with its own auth, pointed only at `/hooks/*`.
-- Keep signature verification and replay protection on. The tunnel is not a substitute.
+- Choose the required signing recipe and timestamp freshness check deliberately. The tunnel is not a substitute.
 - Never expose the whole API through the tunnel. Bind the API to localhost and route only the hooks prefix.
 - For real distribution, the hosted version terminates TLS itself and sits behind the auth provider; webhook endpoints remain signature-gated and unauthenticated by design.
 

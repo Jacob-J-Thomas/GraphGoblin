@@ -18,6 +18,7 @@ import {
   FakeScripts,
 } from '@graphgoblin/engine/testing';
 import { AdmissionConflictError, parseRunAdmission, RunManager } from '@graphgoblin/engine';
+import { SqliteSecrets } from '@graphgoblin/infrastructure/sqlite';
 import { signPayload, signRawBody } from '@graphgoblin/infrastructure/http';
 import { buildApp } from './app.js';
 import { loadConfig } from './config.js';
@@ -82,7 +83,7 @@ function triggerLoop(
 
 const hookTrigger = (extra: Record<string, unknown> = {}): TriggerConfig => ({
   type: 'webhook',
-  signature: { scheme: 'hmac-sha256', secretRef: 'hook-secret' },
+  authentication: { type: 'hmac-sha256', message: 'timestamp-body', secretRef: 'hook-secret' },
   ...extra,
 });
 
@@ -380,7 +381,7 @@ describe('boot', () => {
         definition: triggerLoop(
           'restart-body-key',
           hookTrigger({
-            signature: { scheme: 'hmac-sha256-body', secretRef: 'hook-secret' },
+            authentication: { type: 'hmac-sha256', message: 'body', secretRef: 'hook-secret' },
             dedupeKey: '$string(number)',
           }),
         ),
@@ -539,7 +540,12 @@ describe('webhooks', () => {
   it('accepts Unix-second timestamps, literal null, and a custom signature header', async () => {
     await setSecret();
     const { path } = await hookPath({
-      signature: { scheme: 'hmac-sha256', secretRef: 'hook-secret', header: 'X-Hub-Signature-256' },
+      authentication: {
+        type: 'hmac-sha256',
+        message: 'timestamp-body',
+        secretRef: 'hook-secret',
+        header: 'x-hub-signature-256',
+      },
     });
     const seconds = String(Math.floor(t.clock.now().getTime() / 1000));
     const response = await deliver(path, 'null', {
@@ -569,7 +575,12 @@ describe('webhooks', () => {
     await setSecret();
     const { id, path } = await hookPath({
       dedupeKey: '$headers."x-delivery" & ":" & id',
-      replayWindowSeconds: 60,
+      authentication: {
+        type: 'hmac-sha256',
+        message: 'timestamp-body',
+        secretRef: 'hook-secret',
+        windowSeconds: 60,
+      },
     });
     const first = await deliver(path, '{"id":1}', { headers: { 'x-delivery': 'd' } });
     expect(first.json()).toEqual({ accepted: true });
@@ -1089,7 +1100,10 @@ describe('body signing and durable admission', () => {
     expect(await runsOf(id)).toEqual([]);
   });
   const bodyHook = (extra: Record<string, unknown> = {}) =>
-    hookTrigger({ signature: { scheme: 'hmac-sha256-body', secretRef: 'hook-secret' }, ...extra });
+    hookTrigger({
+      authentication: { type: 'hmac-sha256', message: 'body', secretRef: 'hook-secret' },
+      ...extra,
+    });
   async function bodyDelivery(
     path: string,
     body: string,
@@ -1125,7 +1139,12 @@ describe('body signing and durable admission', () => {
         triggerLoop(
           'credential-binding',
           hookTrigger({
-            signature: { scheme, header: configuredHeader, secretRef: 'hook-secret' },
+            authentication: {
+              type: 'hmac-sha256',
+              message: scheme === 'hmac-sha256-body' ? 'body' : 'timestamp-body',
+              header: configuredHeader.toLowerCase(),
+              secretRef: 'hook-secret',
+            },
             dedupeKey: '$lookup($headers, ' + JSON.stringify(presentedHeader) + ')',
           }),
         ),
@@ -1178,7 +1197,12 @@ describe('body signing and durable admission', () => {
         triggerLoop(
           'filter-credential-binding',
           hookTrigger({
-            signature: { scheme, header: 'X-Custom-Signature', secretRef: 'hook-secret' },
+            authentication: {
+              type: 'hmac-sha256',
+              message: scheme === 'hmac-sha256-body' ? 'body' : 'timestamp-body',
+              header: 'x-custom-signature',
+              secretRef: 'hook-secret',
+            },
             dedupeKey: '$string($headers)',
             filter:
               '$not($exists($headers."x-custom-signature")) and $not($exists($headers."X-Custom-Signature")) and $headers."x-github-delivery" = "delivery-1" and $exists($headers."x-graphgoblin-timestamp")',
@@ -1231,7 +1255,12 @@ describe('body signing and durable admission', () => {
               definition: triggerLoop(
                 'filter-credential-binding',
                 hookTrigger({
-                  signature: { scheme, header: 'X-Custom-Signature', secretRef: 'hook-secret' },
+                  authentication: {
+                    type: 'hmac-sha256',
+                    message: scheme === 'hmac-sha256-body' ? 'body' : 'timestamp-body',
+                    header: 'x-custom-signature',
+                    secretRef: 'hook-secret',
+                  },
                   filter: '$error($string($headers))',
                 }),
               ),
@@ -1292,7 +1321,13 @@ describe('body signing and durable admission', () => {
       const id = await t.publishLoop(
         triggerLoop(
           'missing-secret-' + scheme,
-          hookTrigger({ signature: { scheme, secretRef: 'hook-secret' } }),
+          hookTrigger({
+            authentication: {
+              type: 'hmac-sha256',
+              message: scheme === 'hmac-sha256-body' ? 'body' : 'timestamp-body',
+              secretRef: 'hook-secret',
+            },
+          }),
         ),
       );
       const endpoint = (await triggersOf(t, id)).webhooks[0]!;
@@ -1493,7 +1528,18 @@ describe('body signing and durable admission', () => {
   it('uses the same authored key claims across timestamp and body recipes', async () => {
     await setSecret();
     const id = await t.publishLoop(
-      triggerLoop('scheme-key', hookTrigger({ dedupeKey: '"fixed"', replayWindowSeconds: 1 })),
+      triggerLoop(
+        'scheme-key',
+        hookTrigger({
+          dedupeKey: '"fixed"',
+          authentication: {
+            type: 'hmac-sha256',
+            message: 'timestamp-body',
+            secretRef: 'hook-secret',
+            windowSeconds: 1,
+          },
+        }),
+      ),
     );
     const path = (await triggersOf(t, id)).webhooks[0]!.path;
     expect((await deliver(path, '{"id":1}')).statusCode).toBe(202);
@@ -1514,7 +1560,15 @@ describe('body signing and durable admission', () => {
       payload: {
         definition: triggerLoop(
           'scheme-key',
-          hookTrigger({ dedupeKey: '"fixed"', replayWindowSeconds: 1 }),
+          hookTrigger({
+            dedupeKey: '"fixed"',
+            authentication: {
+              type: 'hmac-sha256',
+              message: 'timestamp-body',
+              secretRef: 'hook-secret',
+              windowSeconds: 1,
+            },
+          }),
         ),
       },
     });
@@ -1823,7 +1877,14 @@ describe('unified signed webhook admission and Allow', () => {
     const id = await t.publishLoop(
       triggerLoop(
         'unified',
-        hookTrigger({ signature: { scheme, secretRef: 'hook-secret' }, ...extra }),
+        hookTrigger({
+          authentication: {
+            type: 'hmac-sha256',
+            message: scheme === 'hmac-sha256-body' ? 'body' : 'timestamp-body',
+            secretRef: 'hook-secret',
+          },
+          ...extra,
+        }),
       ),
     );
     const path = (await triggersOf(t, id)).webhooks[0]!.path;
@@ -1929,4 +1990,221 @@ describe('unified signed webhook admission and Allow', () => {
       ).toHaveLength(1);
     },
   );
+});
+
+describe('general webhook configuration and unsigned intake', () => {
+  async function setup(config: Record<string, unknown> = {}) {
+    const id = await t.publishLoop(triggerLoop('general-hook', { type: 'webhook', ...config }));
+    const endpoint = (await triggersOf(t, id)).webhooks[0]!;
+    return { id, path: endpoint.path, endpoint };
+  }
+  const post = (path: string, body: string | Buffer, headers: Record<string, string> = {}) =>
+    t.app.inject({
+      method: 'POST',
+      url: path,
+      payload: body,
+      headers: { 'content-type': 'application/octet-stream', ...headers },
+    });
+  it('applies Allow to concurrent unsigned repeats while consuming an explicit key once', async () => {
+    const unkeyed = await setup();
+    const responses = await Promise.all([
+      post(unkeyed.path, '{"id":1}'),
+      post(unkeyed.path, '{"id":1}'),
+    ]);
+    for (const response of responses) {
+      expect(response.statusCode).toBe(202);
+      expect(response.json()).toEqual({ accepted: true });
+    }
+    await t.idle();
+    const runs = await runsOf(unkeyed.id);
+    expect(new Set(runs.map((run) => run.id)).size).toBe(2);
+    const receipts = (
+      await t.container.handle.client.execute('SELECT id,content_hash FROM webhook_receipts')
+    ).rows;
+    expect(receipts).toHaveLength(2);
+    expect(receipts[0]?.content_hash).toBe(receipts[1]?.content_hash);
+    expect(receipts[0]?.id).not.toBe(receipts[1]?.id);
+    const keyed = await setup({ dedupeKey: '$string(id)' });
+    const duplicates = await Promise.all([
+      post(keyed.path, '{"id":1}'),
+      post(keyed.path, '{"id":1}'),
+    ]);
+    expect(duplicates.map((response) => response.statusCode)).toEqual([202, 202]);
+    await t.idle();
+    expect(await runsOf(keyed.id)).toHaveLength(1);
+    expect(
+      (await t.container.repos.inbound.list('local')).filter(
+        (event) => event.delivery?.state === 'deduplicated',
+      ),
+    ).toHaveLength(1);
+  });
+  it.each([
+    {
+      body: { type: 'json' },
+      raw: Buffer.from('{"kind":"order.created"}'),
+      payload: { kind: 'order.created' },
+      eventType: { source: 'json-pointer', pointer: '/kind', fallback: 'webhook' },
+      expected: 'order.created',
+    },
+    {
+      body: { type: 'text' },
+      raw: Buffer.from('<order>\u{1f47a}</order>'),
+      payload: '<order>\u{1f47a}</order>',
+      eventType: { source: 'header', name: 'x-event', fallback: 'webhook' },
+      expected: 'order.created',
+    },
+    {
+      body: { type: 'bytes' },
+      raw: Buffer.from([255, 0, 128]),
+      payload: { encoding: 'base64', data: '/wCA' },
+      eventType: { source: 'constant', value: 'order.created' },
+      expected: 'order.created',
+    },
+  ])(
+    'admits unsigned $body.type through saved intent, queued metadata and recovery',
+    async (config) => {
+      const { id, path } = await setup({ body: config.body, eventType: config.eventType });
+      const resolve = vi.spyOn(SqliteSecrets.prototype, 'resolve');
+      vi.spyOn(t.container.ports.admission, 'create').mockRejectedValueOnce(new Error('transient'));
+      const bus = vi.spyOn(t.container.bus, 'publish');
+      const response = await post(path, config.raw, { 'x-event': 'order.created' });
+      expect(response.statusCode).toBe(202);
+      expect(response.json()).toEqual({ accepted: true });
+      await t.container.manager.waitForWebhookRecovery();
+      expect(resolve).not.toHaveBeenCalled();
+      expect(bus).not.toHaveBeenCalled();
+      expect(await runsOf(id)).toEqual([]);
+      const rows = (await t.container.handle.client.execute('SELECT intent FROM webhook_receipts'))
+        .rows;
+      const storedIntent = rows[0]!.intent;
+      if (typeof storedIntent !== 'string') throw new Error('Expected a saved JSON intent');
+      const saved = parseRunAdmission(JSON.parse(storedIntent));
+      expect(saved.initialThread.invocation.trigger).toMatchObject({
+        payload: config.payload,
+        eventType: config.expected,
+      });
+      expect(saved.initialThread.invocation.caller).toMatchObject({ kind: 'system' });
+      t.clock.advance(5000);
+      await t.container.manager.retryPendingWebhooks();
+      await t.idle();
+      expect((await runsOf(id)).map((run) => run.id)).toEqual([saved.run.id]);
+      expect((await t.container.repos.events.read(saved.run.id))[0]).toMatchObject({
+        type: 'run.queued',
+        seq: 1,
+        initialThread: {
+          invocation: { trigger: { eventType: config.expected, payload: config.payload } },
+        },
+      });
+    },
+  );
+  it('applies the limiter/bound/decoding to None without accepting an authenticated identity', async () => {
+    const { path } = await setup();
+    expect((await post(path, '')).json()).toMatchObject({ code: 'BODY_INVALID' });
+    expect((await post(path, Buffer.from([255]))).statusCode).toBe(400);
+    expect((await post(path, Buffer.alloc(1024 * 1024 + 1))).statusCode).toBe(413);
+    await t.close();
+    t = await createTestApp({ env: { GG_HOOK_RATE_LIMIT: '1' } });
+    const limited = await setup({ body: { type: 'text' } });
+    expect((await post(limited.path, '')).statusCode).toBe(202);
+    const response = await post(limited.path, '');
+    expect(response.statusCode).toBe(429);
+    expect(response.headers['retry-after']).toBe('60');
+  });
+  it('never claims an invalid/ambiguous extracted event type and uses fallback for missing metadata', async () => {
+    const { path } = await setup({
+      eventType: { source: 'header', name: 'x-event', fallback: 'fallback' },
+    });
+    const claim = vi.spyOn(t.container.ports.admission, 'claim');
+    const token = path.slice('/hooks/'.length);
+    expect(
+      await t.container.triggers.handleWebhook(token, Buffer.from('{}'), { 'x-event': 'a' }, [
+        'x-event',
+        'a',
+        'X-EVENT',
+        'b',
+      ]),
+    ).toMatchObject({ status: 400, code: 'EVENT_TYPE_AMBIGUOUS' });
+    for (const value of ['bad\nevent', 'x'.repeat(129)])
+      expect(
+        await t.container.triggers.handleWebhook(token, Buffer.from('{}'), { 'x-event': value }),
+      ).toMatchObject({ status: 422, code: 'EVENT_TYPE_INVALID' });
+    expect(claim).not.toHaveBeenCalled();
+    expect((await post(path, '{}')).statusCode).toBe(202);
+    await t.idle();
+    expect(claim.mock.calls[0]?.[1]?.initialThread.invocation.trigger.eventType).toBe('fallback');
+  });
+  it('exposes pinned safe configuration on endpoint/Events summaries and refuses row disagreement before authentication', async () => {
+    await setSecret('private-signing-value');
+    const { id, path, endpoint } = await setup({
+      authentication: { type: 'hmac-sha256', message: 'body', secretRef: 'hook-secret' },
+      body: { type: 'text' },
+      eventType: { source: 'header', name: 'x-event', fallback: 'fallback' },
+      dedupeKey: '"fixed"',
+    });
+    const response = await post(path, 'text', {
+      'x-hub-signature-256': signRawBody('private-signing-value', Buffer.from('text')),
+    });
+    expect(response.statusCode).toBe(202);
+    await t.idle();
+    const summaries = (await t.app.inject(`/loops/${id}/triggers`)).json();
+    expect(summaries).toMatchObject({
+      webhooks: [
+        {
+          configurationAvailable: true,
+          authentication: { type: 'hmac-sha256', message: 'body', secretRef: 'hook-secret' },
+          body: { type: 'text' },
+          eventType: { source: 'header', name: 'x-event', fallback: 'fallback' },
+          dedupeKey: '"fixed"',
+        },
+      ],
+    });
+    const events = (await t.app.inject('/events')).json();
+    expect(events).toMatchObject({
+      items: [
+        {
+          type: 'webhook',
+          webhook: {
+            authentication: { secretRef: 'hook-secret' },
+            body: { type: 'text' },
+            configurationAvailable: true,
+          },
+        },
+      ],
+    });
+    expect(JSON.stringify({ summaries, events })).not.toContain('private-signing-value');
+    await t.container.handle.client.execute({
+      sql: "UPDATE webhook_endpoints SET auth_type='none',signature_message=NULL,signature_header=NULL,secret_ref=NULL,window_seconds=NULL WHERE id=?",
+      args: [endpoint.id],
+    });
+    const claim = vi.spyOn(t.container.ports.admission, 'claim');
+    expect((await post(path, 'text')).json()).toMatchObject({
+      status: 503,
+      code: 'HOOK_NOT_READY',
+    });
+    expect(claim).not.toHaveBeenCalled();
+    await t.container.triggers.disarmLoop(id);
+    expect((await t.app.inject(`/loops/${id}/triggers`)).json()).toMatchObject({
+      webhooks: [{ configurationAvailable: false }],
+    });
+  });
+  it('marks disabled orphan summaries unavailable and omits absent or foreign endpoint data from Events', async () => {
+    const { id, path, endpoint } = await setup();
+    expect((await post(path, '{}')).statusCode).toBe(202);
+    await t.idle();
+    await t.container.triggers.disarmLoop(id);
+    await t.container.handle.client.execute({
+      sql: 'DELETE FROM loop_versions WHERE id=?',
+      args: [endpoint.versionId],
+    });
+    expect((await t.app.inject(`/loops/${id}/triggers`)).json()).toMatchObject({
+      webhooks: [{ configurationAvailable: false, authentication: { type: 'none' } }],
+    });
+    const event = (await t.container.repos.inbound.list('local'))[0]!;
+    expect(
+      await t.container.triggers.describeInbound({ ...event, ownerId: 'other' }),
+    ).not.toHaveProperty('webhook');
+    expect(
+      await t.container.triggers.describeInbound({ ...event, source: 'webhook:missing' }),
+    ).not.toHaveProperty('webhook');
+  });
 });

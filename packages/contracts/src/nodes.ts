@@ -21,11 +21,7 @@ import {
   MutationListSchema,
 } from './mutations.js';
 import { ReturnChannelSchema } from './thread.js';
-import {
-  BodyWebhookConfigSchema,
-  PollItemsSchema,
-  TimestampWebhookConfigSchema,
-} from './trigger-integrations.js';
+import { PollItemsSchema, WebhookConfigSchema } from './trigger-integrations.js';
 
 export const NodeKindSchema = z.enum([
   'trigger',
@@ -112,8 +108,7 @@ export const TriggerConfigSchema = z.union([
       .meta(field('What to do with fires missed while the server was down.')),
     enabled: z.boolean().default(true).meta(field('Whether the schedule is armed.')),
   }),
-  TimestampWebhookConfigSchema,
-  BodyWebhookConfigSchema,
+  WebhookConfigSchema,
   z.strictObject({
     type: z.literal('event'),
     eventType: SlugSchema.meta(field('Inbound event type that fires the trigger.')),
