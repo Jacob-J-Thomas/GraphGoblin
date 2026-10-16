@@ -81,6 +81,54 @@ function triggerLoop(
   };
 }
 
+/** Ordinary downstream policy; admitted inputs always create a run before this check. */
+function checkedLoop(name: string, trigger: TriggerConfig, predicate: string): LoopDefinitionInput {
+  const definition = triggerLoop(name, trigger);
+  definition.settings = { maxNodeVisits: 20 };
+  definition.nodes.push(
+    {
+      id: 'check',
+      kind: 'decision',
+      label: 'Check',
+      config: {
+        kind: 'expression',
+        jsonata: `(${predicate}) ? "pass" : "ignore"`,
+        routes: [
+          { id: 'pass', label: 'Pass' },
+          { id: 'ignore', label: 'Ignore' },
+        ],
+      },
+    },
+    {
+      id: 'restore',
+      kind: 'mutate',
+      label: 'Restore',
+      config: {
+        operations: [
+          {
+            op: 'set',
+            path: '/lastOutput',
+            value: { kind: 'expression', jsonata: '$lookup(outputs, "trig")' },
+          },
+        ],
+      },
+    },
+    {
+      id: 'quiet',
+      kind: 'exit',
+      label: 'Quiet',
+      config: { outcome: 'success', returns: 'none', destinations: [] },
+    },
+  );
+  definition.edges = [
+    { id: 'e1', from: { node: 'restore', port: 'out' }, to: { node: 'done' } },
+    { id: 'check-edge', from: { node: 'trig', port: 'out' }, to: { node: 'check' } },
+    { id: 'pass', from: { node: 'check', port: 'pass' }, to: { node: 'restore' } },
+    { id: 'ignore', from: { node: 'check', port: 'ignore' }, to: { node: 'quiet' } },
+  ];
+  return definition;
+}
+
 const hookTrigger = (extra: Record<string, unknown> = {}): TriggerConfig => ({
   type: 'webhook',
   authentication: { type: 'hmac-sha256', message: 'timestamp-body', secretRef: 'hook-secret' },
@@ -557,18 +605,47 @@ describe('webhooks', () => {
     expect((await t.container.repos.inbound.list('local'))[0]?.payload).toBeNull();
   });
 
-  it('records filtered deliveries without starting a run', async () => {
+  it('acknowledges formerly ignored payloads and quietly exits inside the admitted run', async () => {
     await setSecret();
-    const { id, path } = await hookPath({ filter: "action = 'opened'" });
-    const response = await deliver(path, JSON.stringify({ action: 'closed' }));
-    expect(response.statusCode).toBe(202);
-    expect(response.json()).toEqual({ accepted: true });
-    expect((await t.container.repos.inbound.list('local'))[0]?.runIds).toEqual([]);
-    expect(response.json<{ runId?: string }>().runId).toBeUndefined();
-    expect(await runsOf(id)).toEqual([]);
-    expect((await deliver(path, JSON.stringify({ action: 'opened' }))).json()).toMatchObject({
-      accepted: true,
-    });
+    const id = await t.publishLoop(
+      checkedLoop('downstream', hookTrigger(), 'invocation.trigger.payload.action = "opened"'),
+    );
+    const path = (await triggersOf(t, id)).webhooks[0]!.path;
+    expect((await deliver(path, '{"action":"closed"}')).json()).toEqual({ accepted: true });
+    await settle();
+    const [run] = await runsOf(id);
+    expect(run?.status).toBe('succeeded');
+    const events = await t.container.repos.events.read(run!.id);
+    expect(
+      events.filter((event) => event.type === 'node.started').map((event) => event.nodeId),
+    ).toEqual(['trig', 'check', 'quiet']);
+    expect(events.some((event) => event.type === 'return.delivered')).toBe(false);
+    expect((await t.container.repos.inbound.list('local'))[0]?.runIds).toEqual([run!.id]);
+    expect((await t.container.repos.inbound.list('local'))[0]?.delivery?.state).toBe('admitted');
+    expect((await deliver(path, '{"action":"opened"}')).statusCode).toBe(202);
+    await settle();
+    expect(await runsOf(id)).toHaveLength(2);
+  });
+
+  it('reports downstream expression errors in an admitted run after 202 and keeps its key consumed', async () => {
+    await setSecret();
+    const id = await t.publishLoop(
+      checkedLoop(
+        'broken downstream',
+        hookTrigger({ dedupeKey: '"key"' }),
+        '$error("downstream failure")',
+      ),
+    );
+    const path = (await triggersOf(t, id)).webhooks[0]!.path;
+    expect((await deliver(path, '{}')).statusCode).toBe(202);
+    await settle();
+    expect((await runsOf(id))[0]?.status).toBe('failed');
+    expect((await deliver(path, '{"different":true}')).statusCode).toBe(202);
+    await settle();
+    expect(await runsOf(id)).toHaveLength(1);
+    expect((await t.container.repos.inbound.list('local'))[0]?.delivery?.state).toBe(
+      'deduplicated',
+    );
   });
 
   it('dedupes authored keys after timestamp freshness windows', async () => {
@@ -598,7 +675,7 @@ describe('webhooks', () => {
   });
 
   it('reports invalid JSON, failing expressions, missing secrets, and oversized bodies', async () => {
-    const { path } = await hookPath({ filter: '$error("nope")' });
+    const { path } = await hookPath({ dedupeKey: '$error("nope")' });
     expect((await deliver(path, '{}')).json()).toMatchObject({
       status: 503,
       code: 'HOOK_NOT_READY',
@@ -647,16 +724,16 @@ describe('FixedWindowRateLimiter', () => {
 });
 
 describe('event triggers', () => {
-  it('fires matching event triggers with filters and dedupe, and lists events', async () => {
+  it('fires matching event triggers before downstream checks, preserves dedupe, and lists events', async () => {
     const plain = await t.publishLoop(
       triggerLoop('plain', { type: 'event', eventType: 'issue-ready' }),
     );
     const filtered = await t.publishLoop(
-      triggerLoop('filtered', {
-        type: 'event',
-        eventType: 'issue-ready',
-        filter: 'priority > 2',
-      }),
+      checkedLoop(
+        'filtered',
+        { type: 'event', eventType: 'issue-ready' },
+        'invocation.trigger.payload.priority > 2',
+      ),
     );
     const keyed = await t.publishLoop(
       triggerLoop('keyed', { type: 'event', eventType: 'issue-ready', dedupeKey: 'issue' }),
@@ -673,13 +750,19 @@ describe('event triggers', () => {
       duplicate: false,
       source: 'api',
     });
-    expect(first.json<{ runIds: string[] }>().runIds).toHaveLength(2);
+    expect(first.json<{ runIds: string[] }>().runIds).toHaveLength(3);
     await settle();
     expect(await runsOf(plain)).toHaveLength(1);
-    expect(await runsOf(filtered)).toHaveLength(0);
+    expect(await runsOf(filtered)).toHaveLength(1);
+    expect((await runsOf(filtered))[0]?.status).toBe('succeeded');
+    expect(
+      (await t.container.repos.events.read((await runsOf(filtered))[0]!.id))
+        .filter((event) => event.type === 'node.started')
+        .map((event) => event.nodeId),
+    ).toEqual(['trig', 'check', 'quiet']);
     expect(await runsOf(keyed)).toHaveLength(1);
 
-    // Same issue again: the keyed trigger dedupes; the high priority passes the filter.
+    // Same issue again: the keyed trigger dedupes; high priority passes the downstream check.
     const second = await t.app.inject({
       method: 'POST',
       url: '/events',
@@ -688,8 +771,11 @@ describe('event triggers', () => {
     expect(second.json<{ runIds: string[] }>().runIds).toHaveLength(2);
     await settle();
     expect(await runsOf(keyed)).toHaveLength(1);
-    expect(await runsOf(filtered)).toHaveLength(1);
-    const thread = await t.container.repos.runs.getInitialThread((await runsOf(filtered))[0]!.id);
+    expect(await runsOf(filtered)).toHaveLength(2);
+    const secondRun = (await runsOf(filtered)).find((run) =>
+      second.json<{ runIds: string[] }>().runIds.includes(run.id),
+    )!;
+    const thread = await t.container.repos.runs.getInitialThread(secondRun.id);
     expect(thread?.invocation).toMatchObject({
       source: 'event',
       caller: { kind: 'system' },
@@ -719,7 +805,7 @@ describe('event triggers', () => {
 
   it('logs trigger failures and bus events that cannot be stored', async () => {
     await t.publishLoop(
-      triggerLoop('broken', { type: 'event', eventType: 'boom', filter: '$error("bad")' }),
+      triggerLoop('broken', { type: 'event', eventType: 'boom', dedupeKey: '$error("bad")' }),
     );
     const result = await t.app.inject({
       method: 'POST',
@@ -1170,7 +1256,6 @@ describe('body signing and durable admission', () => {
       );
       expect(result).toMatchObject({
         kind: 'accepted',
-        filtered: false,
       });
       if (result.kind !== 'accepted' || !result.runId)
         throw new Error('expected admitted delivery');
@@ -1193,7 +1278,7 @@ describe('body signing and durable admission', () => {
     },
   );
   it.each(['hmac-sha256', 'hmac-sha256-body'] as const)(
-    'shares credential-free $headers with the %s filter and retains delivery/timestamp metadata',
+    'keeps credential-free $headers in %s keys and retains delivery/timestamp metadata',
     async (scheme) => {
       await setSecret();
       const id = await t.publishLoop(
@@ -1207,8 +1292,6 @@ describe('body signing and durable admission', () => {
               secretRef: 'hook-secret',
             },
             dedupeKey: '$string($headers)',
-            filter:
-              '$not($exists($headers."x-custom-signature")) and $not($exists($headers."X-Custom-Signature")) and $headers."x-github-delivery" = "delivery-1" and $exists($headers."x-graphgoblin-timestamp")',
           }),
         ),
       );
@@ -1231,7 +1314,7 @@ describe('body signing and durable admission', () => {
         Buffer.from(body),
         headers,
       );
-      expect(result).toMatchObject({ kind: 'accepted', filtered: false });
+      expect(result).toMatchObject({ kind: 'accepted' });
       if (result.kind !== 'accepted' || !result.runId)
         throw new Error('expected admitted delivery');
       expect(JSON.parse(result.event.dedupeKey!)).toEqual({
@@ -1264,7 +1347,7 @@ describe('body signing and durable admission', () => {
                     header: 'x-custom-signature',
                     secretRef: 'hook-secret',
                   },
-                  filter: '$error($string($headers))',
+                  dedupeKey: '$error($string($headers))',
                 }),
               ),
             },
@@ -1493,10 +1576,10 @@ describe('body signing and durable admission', () => {
     await t.idle();
     expect(await runsOf(other)).toHaveLength(1);
   });
-  it('keeps authored filtered and pending keys consumed before any run exists', async () => {
+  it('keeps quiet-run and pending keys consumed', async () => {
     await setSecret();
     const id = await t.publishLoop(
-      triggerLoop('body-filter-key', bodyHook({ filter: 'false', dedupeKey: '"fixed"' })),
+      checkedLoop('body-filter-key', bodyHook({ dedupeKey: '"fixed"' }), 'false'),
     );
     const path = (await triggersOf(t, id)).webhooks[0]!.path;
     expect((await bodyDelivery(path, '{"id":1}')).statusCode).toBe(202);
@@ -1509,7 +1592,8 @@ describe('body signing and durable admission', () => {
       200,
     );
     expect((await bodyDelivery(path, '{"id":2}')).json()).toMatchObject({ accepted: true });
-    expect(await runsOf(id)).toHaveLength(0);
+    await settle();
+    expect(await runsOf(id)).toHaveLength(1);
     expect(await t.container.ports.admission.hasPendingPin(id)).toBe(false);
     const pending = await t.publishLoop(
       triggerLoop('body-pending-key', bodyHook({ dedupeKey: '"fixed"' })),
@@ -1703,9 +1787,9 @@ describe('body signing and durable admission', () => {
     await t.idle();
     expect(await runsOf(id)).toHaveLength(2);
   });
-  it('allows unkeyed content after filter correction, and rejects invalid signatures before JSON', async () => {
+  it('allows unkeyed content after downstream check correction, and rejects invalid signatures before JSON', async () => {
     await setSecret();
-    const id = await t.publishLoop(triggerLoop('body-filter', bodyHook({ filter: 'false' })));
+    const id = await t.publishLoop(checkedLoop('body-filter', bodyHook(), 'false'));
     const path = (await triggersOf(t, id)).webhooks[0]!.path;
     const body = '{"action":"ping"}';
     expect((await bodyDelivery(path, body)).json()).toMatchObject({ accepted: true });
@@ -1717,7 +1801,7 @@ describe('body signing and durable admission', () => {
     await t.app.inject({ method: 'POST', url: `/loops/${id}/publish` });
     expect((await bodyDelivery(path, body)).statusCode).toBe(202);
     await t.idle();
-    expect(await runsOf(id)).toHaveLength(1);
+    expect(await runsOf(id)).toHaveLength(2);
     expect(
       (await bodyDelivery(path, 'broken', { 'x-hub-signature-256': 'sha256=' + '0'.repeat(64) }))
         .statusCode,
@@ -1725,7 +1809,6 @@ describe('body signing and durable admission', () => {
     expect((await bodyDelivery(path, 'broken')).statusCode).toBe(400);
     expect((await t.app.inject('/events')).json()).toMatchObject({
       items: expect.arrayContaining([
-        expect.objectContaining({ delivery: { state: 'filtered', attempts: 0 } }),
         expect.objectContaining({ delivery: { state: 'admitted', attempts: 0 } }),
       ]),
     });

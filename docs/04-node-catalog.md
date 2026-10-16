@@ -8,17 +8,19 @@ There are **no error ports** in 1.0. Failures are handled by the engine's resili
 
 Starts a run. A loop may have several trigger nodes; each is an entry point that produces the same trigger envelope shape. The strict config discriminator is `type`; both webhook signing variants use `type: 'webhook'`.
 
-| Type      | Config                                                                                                                                                                 | Notes                                                                                                                           |
-| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `manual`  | `inputSchema?`, `exposeTo: ('ui' \| 'api' \| 'mcp')[]`                                                                                                                 | Button in the UI, REST call, or MCP tool. Optional input validated against the schema.                                          |
-| `cron`    | `expression`, `timezone`, `missedFirePolicy: 'skip' \| 'run-once' \| 'run-each'`, `enabled`                                                                            | Persisted schedule, re-armed at boot. Missed-fire policy is a per-trigger setting.                                              |
-| `webhook` | Timestamp signature (`hmac-sha256`) with `replayWindowSeconds`, or raw-body signature (`hmac-sha256-body`) without a window; `dedupeKey?: JSONata`, `filter?: JSONata` | Generic signed endpoint. Body mode durably consumes authenticated content, including filtered deliveries.                       |
-| `event`   | `eventType`, `filter?: JSONata`, `dedupeKey?: JSONata`                                                                                                                 | Fires on GraphGoblin's own inbound-event bus. Other loops can emit to it through an exit return channel.                        |
-| `poll`    | `intervalSeconds`, `probe: Probe`, `fireWhen: JSONata`, `dedupeKey?`, optional `items: { select, dedupeKey, maxRunsPerPoll? }`                                         | Needs no inbound connectivity. Items mode validates a bounded candidate array and admits unseen items up to the configured cap. |
+| Type      | Config                                                                                                                         | Notes                                                                                                                           |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| `manual`  | `inputSchema?`, `exposeTo: ('ui' \| 'api' \| 'mcp')[]`                                                                         | Button in the UI, REST call, or MCP tool. Optional input validated against the schema.                                          |
+| `cron`    | `expression`, `timezone`, `missedFirePolicy: 'skip' \| 'run-once' \| 'run-each'`, `enabled`                                    | Persisted schedule, re-armed at boot. Missed-fire policy is a per-trigger setting.                                              |
+| `webhook` | `authentication`, `body`, `eventType`, `dedupeKey?: JSONata`                                                                   | General POST endpoint; None or either HMAC recipe. Payload checks run downstream.                                               |
+| `event`   | `eventType`, `dedupeKey?: JSONata`                                                                                             | Fires on the inbound-event bus; payload checks run downstream.                                                                  |
+| `poll`    | `intervalSeconds`, `probe: Probe`, `fireWhen: JSONata`, `dedupeKey?`, optional `items: { select, dedupeKey, maxRunsPerPoll? }` | Needs no inbound connectivity. Items mode validates a bounded candidate array and admits unseen items up to the configured cap. |
 
 Concurrency: every firing starts a new run, in parallel with any already running. A per-loop policy is post-1.0.
 
 Ports: `out`.
+
+Webhook and Event configs reject `filter`. Use a downstream decision, classifier or script to branch away or quietly exit. A quiet exit is terminal Success with `returns: "none"` and no destinations. Poll `fireWhen` remains the poll's condition. See [ADR-0038](decisions/ADR-0038-downstream-payload-checks.md).
 
 Invalid cron schedules produce `CRON_INVALID` issues with the trigger's nodeId and
 `config.expression` or `config.timezone`, identifying the field to fix. Following

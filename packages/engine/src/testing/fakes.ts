@@ -916,8 +916,8 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
       return undefined;
     return this.create(input);
   }
-  claim(input: WebhookClaim, intent?: RunAdmission): Promise<{ receipt: WebhookReceipt }> {
-    const frozen = intent ? parseRunAdmission(intent) : undefined;
+  claim(input: WebhookClaim, intent: RunAdmission): Promise<{ receipt: WebhookReceipt }> {
+    const frozen = parseRunAdmission(intent);
     assertWebhookClaim(input, frozen);
     const keySeen =
       !!input.inbound.dedupeKey &&
@@ -953,9 +953,9 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
       triggerNodeId: input.triggerNodeId,
       contentHash: input.contentHash,
       inboundId: input.inbound.id,
-      status: keySeen ? 'deduplicated' : frozen ? 'pending' : 'filtered',
+      status: keySeen ? 'deduplicated' : 'pending',
       attempts: 0,
-      ...(!keySeen && frozen
+      ...(!keySeen
         ? {
             intent: frozen,
             nextAttemptAt: input.inbound.receivedAt,

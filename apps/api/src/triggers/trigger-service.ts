@@ -11,7 +11,6 @@ import type {
 import {
   stableStringify,
   evaluateExpression,
-  evaluatePredicate,
   nodesOfKind,
   type ValidationIssue,
 } from '@graphgoblin/domain';
@@ -75,7 +74,6 @@ export type WebhookOutcome =
       kind: 'accepted';
       event: InboundEventRecord;
       runId?: string;
-      filtered: boolean;
     };
 
 export interface EventIngest {
@@ -107,7 +105,6 @@ export type WebhookEndpointSummary = Omit<WebhookEndpointRecord, 'token'> & {
   body?: WebhookConfig['body'];
   eventType?: WebhookConfig['eventType'];
   dedupeKey?: string;
-  filter?: string;
 };
 
 function describe(error: unknown): string {
@@ -308,7 +305,6 @@ export class TriggerService {
             body: config.body,
             eventType: config.eventType,
             ...(config.dedupeKey ? { dedupeKey: config.dedupeKey } : {}),
-            ...(config.filter ? { filter: config.filter } : {}),
           }
         : {}),
     };
@@ -441,7 +437,6 @@ export class TriggerService {
       ),
     };
     let dedupeKey: string | undefined;
-    let passes: boolean;
     try {
       if (node.dedupeKey !== undefined) {
         dedupeKey = webhookKey(await evaluateExpression(node.dedupeKey, payload, { bindings }));
@@ -452,9 +447,8 @@ export class TriggerService {
             'the webhook key must be nonempty and at most 512 characters',
           );
       }
-      passes = node.filter ? await evaluatePredicate(node.filter, payload, { bindings }) : true;
     } catch {
-      return fail(422, 'EXPRESSION_FAILED', 'the webhook filter or dedupe expression failed');
+      return fail(422, 'EXPRESSION_FAILED', 'the webhook dedupe expression failed');
     }
 
     const source = `webhook:${endpoint.id}`;
@@ -491,13 +485,11 @@ export class TriggerService {
           inbound: record,
         },
         start,
-        !passes,
       );
       return {
         kind: 'accepted',
         event: record,
         ...(outcome.receipt.intent ? { runId: outcome.receipt.intent.run.id } : {}),
-        filtered: outcome.state === 'filtered',
       };
     } catch {
       return fail(
@@ -553,7 +545,6 @@ export class TriggerService {
       }
       try {
         const config = node.config as Config<'event'>;
-        if (config.filter && !(await evaluatePredicate(config.filter, input.payload))) continue;
         const nodeKey = config.dedupeKey
           ? stringKey(await evaluateExpression(config.dedupeKey, input.payload))
           : undefined;

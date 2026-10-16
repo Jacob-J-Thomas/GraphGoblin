@@ -169,7 +169,6 @@ export function everyFieldLoop(): LoopDefinitionInput {
           body: { type: 'json' },
           eventType: { source: 'constant', value: 'webhook' },
           dedupeKey: 'payload.id',
-          filter: 'payload.action = "opened"',
         },
       },
       {
@@ -179,7 +178,6 @@ export function everyFieldLoop(): LoopDefinitionInput {
         config: {
           type: 'event',
           eventType: 'build-done',
-          filter: 'payload.ok',
           dedupeKey: 'payload.id',
         },
       },
@@ -216,7 +214,6 @@ export function everyFieldLoop(): LoopDefinitionInput {
             secretRef: 'github-secret',
           },
           dedupeKey: 'issue.number',
-          filter: 'action = "opened"',
         },
       },
       {

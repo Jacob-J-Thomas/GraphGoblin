@@ -57,7 +57,7 @@ Settings and catalog
 Run and loop lists are paginated with cursors. Loop/run ids are ULIDs; classifier ids are bounded URL-safe names, with `jev` reserved for the built-in.
 
 Webhook endpoint summaries expose nested safe `authentication`, pinned `body`, `eventType`,
-optional `dedupeKey`/`filter`, and `configurationAvailable`. Secret references are names only.
+optional `dedupeKey`, and `configurationAvailable`. Secret references are names only. Webhook and Event configs reject `filter`; payload checks belong in downstream decisions. Historical `filtered` receipt states remain readable.
 `GET /events` exposes that summary under optional `webhook` for webhook deliveries, retaining the
 existing delivery state/attempts/retry/failure/run-link fields. Disabled orphans mark configuration
 unavailable. Enabled mismatches log a safe warning while both listings stay readable; intake still

@@ -471,9 +471,8 @@ export class RunManager {
   async receiveWebhook(
     claim: WebhookClaim,
     input: StartRunInput,
-    filtered: boolean,
   ): Promise<{
-    state: 'deduplicated' | 'filtered' | 'pending';
+    state: 'deduplicated' | 'pending';
     receipt: WebhookReceipt;
   }> {
     if (
@@ -485,14 +484,12 @@ export class RunManager {
     const result = await this.withPinLock(async () => {
       const prepared = await this.prepareStart(input);
       await this.assertVersionPresent(prepared.version.id, input.loopId);
-      const intent = filtered
-        ? undefined
-        : await this.prepareAdmission(
-            prepared.version.definition,
-            prepared.run,
-            prepared.thread,
-            {},
-          );
+      const intent = await this.prepareAdmission(
+        prepared.version.definition,
+        prepared.run,
+        prepared.thread,
+        {},
+      );
       let claimed;
       try {
         claimed = await this.ports.admission.claim(claim, intent);
@@ -507,7 +504,7 @@ export class RunManager {
           saved.triggerNodeId !== claim.triggerNodeId ||
           saved.contentHash !== claim.contentHash ||
           saved.inboundId !== claim.inbound.id ||
-          (saved.status === 'filtered' && intent !== undefined) ||
+          saved.status === 'filtered' ||
           (!['filtered', 'deduplicated'].includes(saved.status) &&
             stableStringify(saved.intent) !== stableStringify(intent))
         )
@@ -516,7 +513,6 @@ export class RunManager {
       }
       const { receipt } = claimed;
       if (receipt.status === 'deduplicated') return { state: 'deduplicated' as const, receipt };
-      if (!intent) return { state: 'filtered' as const, receipt };
       return { state: 'pending' as const, receipt };
     });
     if (result.state === 'pending') {

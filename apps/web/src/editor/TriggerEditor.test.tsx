@@ -31,11 +31,10 @@ async function openTrigger() {
 it.each([
   triggerConfig('manual', { exposeTo: ['ui', 'mcp'], inputSchema: { type: 'object' } }),
   triggerConfig('cron', { expression: '30 7 * * 1', timezone: 'Europe/Paris' }),
-  triggerConfig('event', { eventType: 'build-ready', filter: 'true', dedupeKey: 'id' }),
+  triggerConfig('event', { eventType: 'build-ready', dedupeKey: 'id' }),
   triggerConfig('poll', { intervalSeconds: 30, probe: { kind: 'none' }, fireWhen: 'true' }),
   triggerConfig('webhook', {
     authentication: { type: 'hmac-sha256', message: 'timestamp-body', secretRef: 'hook' },
-    filter: 'true',
   }),
   triggerConfig('webhook', {
     authentication: { type: 'hmac-sha256', message: 'body', secretRef: 'github' },
@@ -115,7 +114,8 @@ describe('trigger authoring', () => {
 
     await user.selectOptions(type, 'event');
     expect(within(dialog).getByLabelText('Event type')).toBeVisible();
-    expect(within(dialog).getByLabelText('Filter')).toBeVisible();
+    expect(within(dialog).queryByLabelText('Filter')).not.toBeInTheDocument();
+    expect(within(dialog).getByText(/Use a downstream decision for payload checks/)).toBeVisible();
     expect(within(dialog).getByLabelText('Dedupe key')).toBeVisible();
     expect(within(dialog).queryByLabelText('Interval seconds')).not.toBeInTheDocument();
 
@@ -129,7 +129,8 @@ describe('trigger authoring', () => {
     );
     expect(within(dialog).getByLabelText('Timestamp window (seconds)')).toBeVisible();
     expect(within(dialog).getByLabelText('Secret name')).toBeVisible();
-    expect(within(dialog).getByLabelText('Filter')).toBeVisible();
+    expect(within(dialog).queryByLabelText('Filter')).not.toBeInTheDocument();
+    expect(within(dialog).getByText(/Use a downstream decision for payload checks/)).toBeVisible();
     await user.selectOptions(
       authentication,
       within(dialog).getByRole('option', { name: 'Body HMAC' }),

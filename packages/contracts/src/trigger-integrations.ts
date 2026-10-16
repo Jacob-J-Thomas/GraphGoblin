@@ -5,9 +5,6 @@ import { field } from './meta.js';
 const dedupeKey = ExpressionSchema.optional().meta(
   field('JSONata producing a key; a repeated key does not start another run.'),
 );
-const filter = ExpressionSchema.optional().meta(
-  field('JSONata predicate; payloads that fail it are recorded and ignored.'),
-);
 
 /** Lowercase HTTP field-name (RFC 9110 token). */
 export const HeaderNameSchema = z
@@ -117,7 +114,6 @@ export const WebhookConfigSchema = z
       field('Invocation metadata; does not publish an Event.'),
     ),
     dedupeKey,
-    filter,
   })
   .refine((value) => value.eventType.source !== 'json-pointer' || value.body.type === 'json', {
     path: ['eventType', 'pointer'],
