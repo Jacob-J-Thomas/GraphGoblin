@@ -72,33 +72,39 @@ Ports: Declared route ids for expression/LLM; classifier option, side or band id
 
 ### `kind: "expression"`
 
-| Field     | Type     | Required | Default | Description                                               |
-| --------- | -------- | -------- | ------- | --------------------------------------------------------- |
-| `jsonata` | string   | yes      |         | JSONata source; return a declared route id for decisions. |
-| `routes`  | object[] | yes      |         | Two to sixty-four stable readable routes.                 |
+| Field               | Type     | Required | Default | Description                                                                                                              |
+| ------------------- | -------- | -------- | ------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `jsonata`           | string   | yes      |         | JSONata source; return a declared route id for decisions.                                                                |
+| `maxPasses`         | integer  | no       |         | Required with a repeat route. One-based passes; a non-repeat choice wins on the last pass.                               |
+| `maxRunTimeSeconds` | integer  | no       |         | Optional maximum elapsed seconds from run start, including waits and pauses. Checked after evaluation, only on a repeat. |
+| `routes`            | object[] | yes      |         | Two to sixty-four stable readable routes.                                                                                |
 
 ### `kind: "llm"`
 
-| Field          | Type                                         | Required | Default | Advanced                                | Description                                           |
-| -------------- | -------------------------------------------- | -------- | ------- | --------------------------------------- | ----------------------------------------------------- |
-| `instructions` | string                                       | yes      |         |                                         | Liquid instructions rendered against the full thread. |
-| `harness`      | `"codex"`                                    | yes      |         |                                         | Implemented structured evaluator harness.             |
-| `model`        | one of `"inherit"` \| `"explicit"` by `mode` | yes      |         |                                         | Inherit or explicitly select the model.               |
-| `effort`       | one of `"inherit"` \| `"explicit"` by `mode` | yes      |         |                                         | Inherit or explicitly select reasoning effort.        |
-| `routes`       | object[]                                     | yes      |         |                                         | Declared stable route ids and readable labels.        |
-| `context`      | { messages?, vars?, includeLastOutput? }     | no       | `{}`    | all but `messages`, `includeLastOutput` | Selected provider context.                            |
+| Field               | Type                                         | Required | Default | Advanced                                | Description                                                                                                              |
+| ------------------- | -------------------------------------------- | -------- | ------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `instructions`      | string                                       | yes      |         |                                         | Liquid instructions rendered against the full thread.                                                                    |
+| `harness`           | `"codex"`                                    | yes      |         |                                         | Implemented structured evaluator harness.                                                                                |
+| `model`             | one of `"inherit"` \| `"explicit"` by `mode` | yes      |         |                                         | Inherit or explicitly select the model.                                                                                  |
+| `effort`            | one of `"inherit"` \| `"explicit"` by `mode` | yes      |         |                                         | Inherit or explicitly select reasoning effort.                                                                           |
+| `maxPasses`         | integer                                      | no       |         |                                         | Required with a repeat route. One-based passes; a non-repeat choice wins on the last pass.                               |
+| `maxRunTimeSeconds` | integer                                      | no       |         |                                         | Optional maximum elapsed seconds from run start, including waits and pauses. Checked after evaluation, only on a repeat. |
+| `routes`            | object[]                                     | yes      |         |                                         | Declared stable route ids and readable labels.                                                                           |
+| `context`           | { messages?, vars?, includeLastOutput? }     | no       | `{}`    | all but `messages`, `includeLastOutput` | Selected provider context.                                                                                               |
 
 ### `kind: "classifier"`
 
-| Field                | Type                                                 | Required | Default | Advanced                                | Description                                          |
-| -------------------- | ---------------------------------------------------- | -------- | ------- | --------------------------------------- | ---------------------------------------------------- |
-| `model`              | string                                               | yes      |         |                                         | Explicit classifier catalog id.                      |
-| `question`           | string                                               | yes      |         |                                         | Liquid classifier question.                          |
-| `minConfidence`      | number                                               | no       |         | yes                                     | Classifier confidence minimum.                       |
-| `truthThreshold`     | number                                               | no       |         | yes                                     | Noul true probability threshold; omission means 0.5. |
-| `answer`             | one of `"choice"` \| `"noul"` \| `"score"` by `type` | yes      |         |                                         | Classifier answer and stable ports.                  |
-| `context`            | { messages?, vars?, includeLastOutput? }             | no       | `{}`    | all but `messages`, `includeLastOutput` | Selected provider context.                           |
-| `recordAlternatives` | boolean                                              | no       | `true`  | yes                                     | Record classifier probability alternatives.          |
+| Field                | Type                                                 | Required | Default | Advanced                                | Description                                                                                                              |
+| -------------------- | ---------------------------------------------------- | -------- | ------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `model`              | string                                               | yes      |         |                                         | Explicit classifier catalog id.                                                                                          |
+| `question`           | string                                               | yes      |         |                                         | Liquid classifier question.                                                                                              |
+| `minConfidence`      | number                                               | no       |         | yes                                     | Classifier confidence minimum.                                                                                           |
+| `truthThreshold`     | number                                               | no       |         | yes                                     | Noul true probability threshold; omission means 0.5.                                                                     |
+| `maxPasses`          | integer                                              | no       |         |                                         | Required with a repeat route. One-based passes; a non-repeat choice wins on the last pass.                               |
+| `maxRunTimeSeconds`  | integer                                              | no       |         |                                         | Optional maximum elapsed seconds from run start, including waits and pauses. Checked after evaluation, only on a repeat. |
+| `answer`             | one of `"choice"` \| `"noul"` \| `"score"` by `type` | yes      |         |                                         | Classifier answer and stable ports.                                                                                      |
+| `context`            | { messages?, vars?, includeLastOutput? }             | no       | `{}`    | all but `messages`, `includeLastOutput` | Selected provider context.                                                                                               |
+| `recordAlternatives` | boolean                                              | no       | `true`  | yes                                     | Record classifier probability alternatives.                                                                              |
 
 ## Inferencing (`inference`)
 
@@ -223,9 +229,8 @@ Decides whether the loop is done, what it returns, where that goes, and whether 
 
 Ports: `loopBack`, only when configured.
 
-| Field      | Type                                                                                                           | Required | Default     | Description                                                                 |
-| ---------- | -------------------------------------------------------------------------------------------------------------- | -------- | ----------- | --------------------------------------------------------------------------- |
-| `criteria` | array of (one of `"max-iterations"` \| `"max-duration"` \| `"predicate"` \| `"last-output-matches"` by `when`) | no       | `[]`        | Evaluated in order; the first that matches decides the outcome.             |
-| `default`  | `"success"` \| `"loop-back"`                                                                                   | no       | `"success"` | What happens when no criterion matches.                                     |
-| `loopBack` | { targetNodeId }                                                                                               | no       |             | The node a loop-back returns to.                                            |
-| `return`   | { mapping?, channels? }                                                                                        | no       | `{}`        | JSONata mapping for the return payload and the channels it is delivered to. |
+| Field          | Type                                                                                      | Required | Default               | Description                                                                                          |
+| -------------- | ----------------------------------------------------------------------------------------- | -------- | --------------------- | ---------------------------------------------------------------------------------------------------- |
+| `outcome`      | `"success"` \| `"failure"` \| `"exhausted"`                                               | no       | `"success"`           | Terminal outcome; Exhausted produces run status exhausted and preserves the return value.            |
+| `returns`      | `"none"` \| string                                                                        | no       | `"none"`              | JSONata return mapping, or none. Gate decisions replace lastOutput; prefer outputs.<workNode>.value. |
+| `destinations` | array of (one of `"caller"` \| `"webhook"` \| `"file"` \| `"event"` \| `"log"` by `kind`) | no       | `[{"kind":"caller"}]` | Return destinations; caller by default. No delivery when returns is none.                            |

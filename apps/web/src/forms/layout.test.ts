@@ -81,10 +81,18 @@ describe('formLayout', () => {
       const layout = formLayout(shape(schema), '', 'kind', true);
       expect(names(layout.basic)).toEqual(
         kind === 'expression'
-          ? ['jsonata', 'routes']
+          ? ['jsonata', 'maxPasses', 'maxRunTimeSeconds', 'routes']
           : kind === 'classifier'
-            ? ['model', 'question', 'answer']
-            : ['instructions', 'harness', 'model', 'effort', 'routes'],
+            ? ['model', 'question', 'maxPasses', 'maxRunTimeSeconds', 'answer']
+            : [
+                'instructions',
+                'harness',
+                'model',
+                'effort',
+                'maxPasses',
+                'maxRunTimeSeconds',
+                'routes',
+              ],
       );
       expect(sections(layout)).toEqual(
         kind === 'classifier'

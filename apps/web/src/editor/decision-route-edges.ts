@@ -1,3 +1,4 @@
+import { hasRepeatRoute } from './decision-gates.js';
 import { ChoiceOptionIdSchema, type LoopDefinitionInput } from '@graphgoblin/contracts';
 import type { FormChange } from '../forms/changes.js';
 
@@ -83,6 +84,8 @@ export function removedAnswerConnections(
       Array.isArray(answer) ? { kind: 'expression', routes: answer } : { answer },
     )?.rows.map((row) => row.id),
   );
+  if (hasRepeatRoute(Array.isArray(answer) ? { kind: 'expression', routes: answer } : { answer }))
+    ids.add('limit-reached');
   return edges.filter((edge) => edge.from.node === nodeId && !ids.has(edge.from.port));
 }
 
@@ -172,7 +175,12 @@ export function decisionRouteEdges(
         ...(jsonReplacement
           ? {
               edgeIds: definition.edges
-                .filter((edge) => edge.from.node === node.id && edge.from.port === id)
+                .filter(
+                  (edge) =>
+                    edge.from.node === node.id &&
+                    edge.from.port !== 'limit-reached' &&
+                    edge.from.port === id,
+                )
                 .map((edge) => edge.id),
             }
           : {}),
@@ -190,7 +198,9 @@ export function decisionRouteEdges(
           if (!kept.has(row.key)) for (const edgeId of row.edgeIds) removed.add(edgeId);
       }
     }
-    const outgoing = definition.edges.filter((edge) => edge.from.node === node.id);
+    const outgoing = definition.edges.filter(
+      (edge) => edge.from.node === node.id && edge.from.port !== 'limit-reached',
+    );
     const claimed = new Set(before.rows.flatMap((row) => row.edgeIds));
     rows = rows.map((row) => {
       const unique =

@@ -63,9 +63,7 @@ export function RunInspectorPage() {
   const seq = selectedSeq ?? log.lastSeq;
   const selectedEvent = log.events.find((event) => event.seq === seq);
   const needsPinnedDefinition =
-    selectedEvent?.type === 'exit.evaluated' ||
-    selectedEvent?.type === 'decision.made' ||
-    selectedEvent?.type === 'run.failed';
+    selectedEvent?.type === 'decision.made' || selectedEvent?.type === 'run.failed';
   const versionQuery = useLoopVersion(
     runQuery.data?.loopId ?? '',
     runQuery.data?.versionId ?? '',
@@ -91,7 +89,6 @@ export function RunInspectorPage() {
                 <RunStatusBadge status={run.status} />
               </div>
               <div className="col-start-1 row-start-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted">
-                <span>iteration {run.iteration}</span>
                 {run.currentNodeId ? <span>at {run.currentNodeId}</span> : null}
                 <Link to={`/loops/${run.loopId}/edit`} className={META_LINK}>
                   loop

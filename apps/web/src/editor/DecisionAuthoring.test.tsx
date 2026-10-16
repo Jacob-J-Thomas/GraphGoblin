@@ -51,6 +51,171 @@ async function setup(config: unknown = { kind: 'expression', jsonata: '"ship"', 
 const confirm = async (user: ReturnType<typeof userEvent.setup>, dialog: HTMLElement) =>
   user.click(within(dialog).getByRole('button', { name: 'Confirm change' }));
 
+describe('decision gates', () => {
+  it('previews removed gate limits for Routes JSON and applies cleanup with one undo', async () => {
+    const user = userEvent.setup();
+    const { dialog } = await setup({
+      kind: 'expression',
+      jsonata: '"ship"',
+      routes: routes.map((r, i) => ({ ...r, ...(i === 0 ? { repeat: true } : {}) })),
+      maxPasses: 3,
+    });
+    act(() => {
+      store().connect({ source: 'pick', sourceHandle: 'limit-reached', target: 'done' });
+    });
+    const before = store().definition;
+    await user.click(within(dialog).getByRole('button', { name: 'Edit as JSON: Routes' }));
+    setCode('Routes JSON', JSON.stringify(routes));
+    await user.click(within(dialog).getByRole('button', { name: 'Apply JSON' }));
+    const review = within(dialog).getByRole('group', {
+      name: 'Confirm connection and setting removal',
+    });
+    expect(review).toHaveTextContent('Maximum passes');
+    expect(review).toHaveTextContent('limit-reached → done');
+    expect(review).not.toHaveTextContent('Maximum run time');
+    expect(store().definition).toBe(before);
+    await user.click(within(dialog).getByRole('button', { name: 'Confirm Apply JSON' }));
+    expect(pick().config).not.toHaveProperty('maxPasses');
+    expect(store().definition!.edges.some((e) => e.from.port === 'limit-reached')).toBe(false);
+    act(() => store().undo());
+    expect(store().definition).toEqual(before);
+  });
+  it('marks only one repeat route and requires maximum passes with focused validation', async () => {
+    const user = userEvent.setup();
+    const { dialog } = await setup();
+    expect(within(dialog).queryByLabelText('Maximum passes', { exact: true })).toBeNull();
+    const switches = within(dialog).getAllByRole('switch', { name: 'Repeat route' });
+    await user.click(switches[0]!);
+    expect(within(dialog).getByLabelText('Maximum passes', { exact: true })).toHaveAttribute(
+      'aria-required',
+      'true',
+    );
+    expect(validateDraft(store().definition!).issues).toContainEqual(
+      expect.objectContaining({ nodeId: 'pick', path: 'config.maxPasses' }),
+    );
+    act(() => store().openNode('pick', { field: 'config.maxPasses' }));
+    await waitFor(() =>
+      expect(within(dialog).getByLabelText('Maximum passes', { exact: true })).toHaveFocus(),
+    );
+    await user.type(within(dialog).getByLabelText('Maximum passes', { exact: true }), '3');
+    expect(validateDraft(store().definition!).issues).toContainEqual(
+      expect.objectContaining({
+        nodeId: 'pick',
+        code: 'PORT_UNCONNECTED',
+        path: 'config.maxPasses',
+      }),
+    );
+    await user.type(
+      within(dialog).getByLabelText('Maximum run time (seconds)', { exact: true }),
+      '60',
+    );
+    act(() => {
+      store().connect({ source: 'pick', sourceHandle: 'limit-reached', target: 'done' });
+    });
+    await user.click(switches[1]!);
+    expect(
+      within(dialog)
+        .getAllByRole('switch', { name: 'Repeat route' })
+        .map((s) => s.getAttribute('aria-checked')),
+    ).toEqual(['false', 'true', 'false']);
+    expect(pick().config).toMatchObject({ maxPasses: 3, maxRunTimeSeconds: 60 });
+    expect(store().definition!.edges.some((e) => e.from.port === 'limit-reached')).toBe(true);
+  });
+
+  it('previews removing repeat settings and the Limit reached edge; cancel and undo preserve all', async () => {
+    const user = userEvent.setup();
+    const { dialog } = await setup({
+      kind: 'expression',
+      jsonata: '"ship"',
+      routes: routes.map((r, i) => ({ ...r, ...(i === 0 ? { repeat: true } : {}) })),
+      maxPasses: 3,
+      maxRunTimeSeconds: 60,
+    });
+    act(() => {
+      store().connect({ source: 'pick', sourceHandle: 'limit-reached', target: 'done' });
+    });
+    act(() => store().setFieldError('node:pick', 'maxRunTimeSeconds', held));
+    const before = store().definition,
+      steps = store().past.length;
+    await user.click(within(dialog).getAllByRole('switch', { name: 'Repeat route' })[0]!);
+    const review = within(dialog).getByRole('region', { name: 'Remove repeat route?' });
+    expect(review).toHaveTextContent('Maximum passes');
+    expect(review).toHaveTextContent('Limit reached → done');
+    expect(review).toHaveTextContent('Maximum run time (unfinished text)');
+    expect(store().definition).toBe(before);
+    await user.click(within(review).getByRole('button', { name: 'Cancel change' }));
+    expect(store().definition).toBe(before);
+    await user.click(within(dialog).getAllByRole('switch', { name: 'Repeat route' })[0]!);
+    await confirm(user, dialog);
+    expect(store().past).toHaveLength(steps + 1);
+    expect(pick().config).not.toHaveProperty('maxPasses');
+    expect(pick().config).not.toHaveProperty('maxRunTimeSeconds');
+    expect(store().fieldErrors['node:pick']?.['maxRunTimeSeconds']).toBeUndefined();
+    expect(store().definition!.edges.some((e) => e.from.port === 'limit-reached')).toBe(false);
+    expect(within(dialog).queryByLabelText('Maximum passes', { exact: true })).toBeNull();
+    act(() => store().undo());
+    expect(store().definition).toEqual(before);
+    expect(store().fieldErrors['node:pick']?.['maxRunTimeSeconds']).toEqual(held);
+    act(() => store().redo());
+    expect(pick().config).not.toHaveProperty('maxPasses');
+  });
+
+  it.each(['choice', 'noul', 'score'] as const)(
+    'marks classifier %s repeat routes and retains limits through kind changes',
+    async (type) => {
+      const user = userEvent.setup();
+      const two = options.slice(0, 2);
+      const answer =
+        type === 'noul'
+          ? { type, true: two[0], false: two[1] }
+          : type === 'score'
+            ? {
+                type,
+                anchors: ['Low', 'High'],
+                bands: two.map(({ id, label }, i) => ({ id, label, min: i / 2, max: (i + 1) / 2 })),
+              }
+            : { type, options: two };
+      const { dialog } = await setup({
+        kind: 'classifier',
+        model: 'jev',
+        question: 'Check.',
+        answer,
+      });
+      await user.click(within(dialog).getAllByRole('switch', { name: 'Repeat route' })[0]!);
+      await user.type(within(dialog).getByLabelText('Maximum passes', { exact: true }), '2');
+      await user.click(within(dialog).getByRole('radio', { name: 'expression' }));
+      await confirm(user, dialog);
+      expect(pick().config).toMatchObject({
+        kind: 'expression',
+        maxPasses: 2,
+        routes: [
+          expect.objectContaining({ repeat: true }),
+          expect.not.objectContaining({ repeat: true }),
+        ],
+      });
+    },
+  );
+
+  it('removing the repeat row previews limits and cleans the gate as one undo step', async () => {
+    const user = userEvent.setup();
+    const { dialog } = await setup({
+      kind: 'expression',
+      jsonata: '"ship"',
+      routes: routes.map((r, i) => ({ ...r, ...(i === 0 ? { repeat: true } : {}) })),
+      maxPasses: 3,
+    });
+    const before = store().definition;
+    await user.click(within(dialog).getByRole('button', { name: 'Remove routes 1' }));
+    expect(
+      within(dialog).getByRole('region', { name: 'Remove connected route?' }),
+    ).toHaveTextContent('Maximum passes');
+    await confirm(user, dialog);
+    expect(pick().config).not.toHaveProperty('maxPasses');
+    act(() => store().undo());
+    expect(store().definition).toEqual(before);
+  });
+});
+
 describe('decision authoring checkpoint', () => {
   beforeEach(() => localStorage.setItem(LOOP_PANEL_STORAGE_KEY, 'expanded'));
 

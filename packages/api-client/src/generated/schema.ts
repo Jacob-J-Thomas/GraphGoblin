@@ -2290,7 +2290,7 @@ export interface components {
                     } | undefined;
                 } | undefined;
                 /** @default 10 */
-                maxIterations?: number | undefined;
+                maxNodeVisits?: number | undefined;
                 /** @default 8 */
                 subloopDepthLimit?: number | undefined;
             } | undefined;
@@ -2439,9 +2439,12 @@ export interface components {
                     /** @constant */
                     kind: "expression";
                     jsonata: string;
+                    maxPasses?: number | undefined;
+                    maxRunTimeSeconds?: number | undefined;
                     routes: {
                         id: string;
                         label: string;
+                        repeat?: boolean | undefined;
                     }[];
                 } | {
                     /** @constant */
@@ -2466,9 +2469,12 @@ export interface components {
                         /** @enum {string} */
                         value: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
                     };
+                    maxPasses?: number | undefined;
+                    maxRunTimeSeconds?: number | undefined;
                     routes: {
                         id: string;
                         label: string;
+                        repeat?: boolean | undefined;
                     }[];
                     /** @default {} */
                     context?: {
@@ -2487,12 +2493,15 @@ export interface components {
                     question: string;
                     minConfidence?: number | undefined;
                     truthThreshold?: number | undefined;
+                    maxPasses?: number | undefined;
+                    maxRunTimeSeconds?: number | undefined;
                     answer: {
                         /** @constant */
                         type: "choice";
                         options: {
                             id: string;
                             label: string;
+                            repeat?: boolean | undefined;
                             criteria: string;
                         }[];
                     } | {
@@ -2501,11 +2510,13 @@ export interface components {
                         true: {
                             id: string;
                             label: string;
+                            repeat?: boolean | undefined;
                             criteria: string;
                         };
                         false: {
                             id: string;
                             label: string;
+                            repeat?: boolean | undefined;
                             criteria: string;
                         };
                     } | {
@@ -2515,6 +2526,7 @@ export interface components {
                         bands: {
                             id: string;
                             label: string;
+                            repeat?: boolean | undefined;
                             min: number;
                             max: number;
                         }[];
@@ -3243,144 +3255,21 @@ export interface components {
                 /** @constant */
                 kind: "exit";
                 config: {
-                    /** @default [] */
-                    criteria?: ({
-                        /** @constant */
-                        when: "max-iterations";
-                        value: number;
-                        /**
-                         * @default exhausted
-                         * @constant
-                         */
-                        outcome?: "exhausted" | undefined;
-                    } | {
-                        /** @constant */
-                        when: "max-duration";
-                        seconds: number;
-                        /**
-                         * @default exhausted
-                         * @constant
-                         */
-                        outcome?: "exhausted" | undefined;
-                    } | {
-                        /** @constant */
-                        when: "predicate";
-                        predicate: {
-                            /** @constant */
-                            kind: "expression";
-                            jsonata: string;
-                        } | {
-                            /** @constant */
-                            kind: "llm";
-                            instructions: string;
-                            /** @constant */
-                            harness: "codex";
-                            model: {
-                                /** @constant */
-                                mode: "inherit";
-                            } | {
-                                /** @constant */
-                                mode: "explicit";
-                                value: string;
-                            };
-                            effort: {
-                                /** @constant */
-                                mode: "inherit";
-                            } | {
-                                /** @constant */
-                                mode: "explicit";
-                                /** @enum {string} */
-                                value: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
-                            };
-                        } | {
-                            /** @constant */
-                            kind: "classifier";
-                            model: string;
-                            question: string;
-                            minConfidence?: number | undefined;
-                            truthThreshold?: number | undefined;
-                            answer: {
-                                /** @constant */
-                                type: "choice";
-                                options: {
-                                    id: string;
-                                    label: string;
-                                    criteria: string;
-                                }[];
-                            } | {
-                                /** @constant */
-                                type: "noul";
-                                true: {
-                                    label: string;
-                                    criteria: string;
-                                };
-                                false: {
-                                    label: string;
-                                    criteria: string;
-                                };
-                            } | {
-                                /** @constant */
-                                type: "score";
-                                anchors: string[];
-                            };
-                        };
-                        match: {
-                            /** @constant */
-                            type: "boolean";
-                            /** @default true */
-                            value?: boolean | undefined;
-                            minReportedConfidence?: number | undefined;
-                        } | {
-                            /** @constant */
-                            type: "noul";
-                            /** @default true */
-                            value?: boolean | undefined;
-                        } | {
-                            /** @constant */
-                            type: "choice";
-                            optionIds: string[];
-                        } | {
-                            /** @constant */
-                            type: "score";
-                            /** @enum {string} */
-                            operator: "lt" | "lte" | "eq" | "gte" | "gt";
-                            value: number;
-                        };
-                        /** @enum {string} */
-                        outcome: "success" | "failure";
-                    } | {
-                        /** @constant */
-                        when: "last-output-matches";
-                        jsonSchema: {
-                            [key: string]: unknown;
-                        };
-                        /**
-                         * @default success
-                         * @constant
-                         */
-                        outcome?: "success" | undefined;
-                    })[] | undefined;
                     /**
                      * @default success
                      * @enum {string}
                      */
-                    default?: ("success" | "loop-back") | undefined;
-                    loopBack?: {
-                        targetNodeId: string;
-                    } | undefined;
-                    /** @default {} */
-                    return?: {
-                        /** @default none */
-                        mapping?: ("none" | string) | undefined;
-                        /**
-                         * @default [
-                         *       {
-                         *         "kind": "caller"
-                         *       }
-                         *     ]
-                         */
-                        channels?: components["schemas"]["ReturnChannelInput"][] | undefined;
-                    } | undefined;
+                    outcome?: ("success" | "failure" | "exhausted") | undefined;
+                    /** @default none */
+                    returns?: ("none" | string) | undefined;
+                    /**
+                     * @default [
+                     *       {
+                     *         "kind": "caller"
+                     *       }
+                     *     ]
+                     */
+                    destinations?: components["schemas"]["ReturnChannelInput"][] | undefined;
                 };
             })[];
             edges: {
@@ -3439,7 +3328,7 @@ export interface components {
         RunStatusInput: "queued" | "running" | "waiting" | "paused" | "succeeded" | "failed" | "cancelled" | "exhausted";
         RunFailureInput: {
             /** @enum {string} */
-            code: "HARNESS_NOT_INSTALLED" | "HARNESS_NOT_AUTHENTICATED" | "HARNESS_QUOTA_EXHAUSTED" | "HARNESS_TURN_FAILED" | "HARNESS_TERMINATION_UNCONFIRMED" | "WORKING_DIRECTORY_MISSING" | "SCRIPT_EXIT_CODE" | "SCRIPT_TIMEOUT" | "INFERENCE_TIMEOUT" | "OUTPUT_SCHEMA_MISMATCH" | "SUBLOOP_DEPTH_EXCEEDED" | "SUBLOOP_NOT_FOUND" | "DECISION_NO_ROUTE" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED" | "DECIDER_UNAVAILABLE" | "SECRET_MISSING" | "TEMPLATE_ERROR" | "TEMPLATE_PREREQUISITE_UNAVAILABLE" | "TEMPLATE_ISOLATION_UNAVAILABLE" | "TEMPLATE_REPORT_UNAVAILABLE" | "TEMPLATE_AUTHORITY_REFUSED" | "TEMPLATE_BINDING_CHANGED" | "EXPRESSION_ERROR" | "WAIT_TIMEOUT" | "HEARTBEAT_EXHAUSTED" | "RETURN_DELIVERY_FAILED" | "MAX_ITERATIONS" | "INTERNAL_ERROR";
+            code: "HARNESS_NOT_INSTALLED" | "HARNESS_NOT_AUTHENTICATED" | "HARNESS_QUOTA_EXHAUSTED" | "HARNESS_TURN_FAILED" | "HARNESS_TERMINATION_UNCONFIRMED" | "WORKING_DIRECTORY_MISSING" | "SCRIPT_EXIT_CODE" | "SCRIPT_TIMEOUT" | "INFERENCE_TIMEOUT" | "OUTPUT_SCHEMA_MISMATCH" | "SUBLOOP_DEPTH_EXCEEDED" | "SUBLOOP_NOT_FOUND" | "DECISION_NO_ROUTE" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED" | "DECIDER_UNAVAILABLE" | "SECRET_MISSING" | "TEMPLATE_ERROR" | "TEMPLATE_PREREQUISITE_UNAVAILABLE" | "TEMPLATE_ISOLATION_UNAVAILABLE" | "TEMPLATE_REPORT_UNAVAILABLE" | "TEMPLATE_AUTHORITY_REFUSED" | "TEMPLATE_BINDING_CHANGED" | "EXPRESSION_ERROR" | "WAIT_TIMEOUT" | "HEARTBEAT_EXHAUSTED" | "RETURN_DELIVERY_FAILED" | "MAX_ITERATIONS" | "MAX_NODE_VISITS" | "INTERNAL_ERROR";
             message: string;
             nodeId?: string | undefined;
             resumable: boolean;
@@ -3814,7 +3703,8 @@ export interface components {
                     } | null;
                 };
             };
-            portId: string;
+            portId: string | "limit-reached";
+            gate?: components["schemas"]["GateEvidenceInput"] | undefined;
             diagnostics: components["schemas"]["EvaluationDiagnosticInput"][];
             runId: string;
             seq: number;
@@ -3831,10 +3721,8 @@ export interface components {
             /** @constant */
             type: "exit.evaluated";
             nodeId: string;
-            iteration: number;
-            maxIterations: number;
-            criteria: components["schemas"]["ExitCriterionEvaluationInput"][];
-            result: components["schemas"]["ExitEvaluationOutcomeInput"];
+            /** @enum {string} */
+            outcome: "success" | "failure" | "exhausted";
         } | {
             runId: string;
             seq: number;
@@ -3915,175 +3803,14 @@ export interface components {
             code: string;
             message: string;
         };
-        ExitCriterionEvaluationInput: {
-            index: number;
-            /** @enum {string} */
-            strategy: "expression" | "classifier" | "llm";
-            /** @enum {string} */
-            status: "matched" | "not-matched";
-            observation: {
-                /** @constant */
-                kind: "route";
-                routeId: string;
-                confidence: number | null;
-                reasoning: string | null;
-            } | {
-                /** @constant */
-                kind: "boolean";
-                holds: boolean | null;
-                confidence: number | null;
-                reasoning: string | null;
-            } | {
-                /** @constant */
-                kind: "classifier";
-                answer: {
-                    /** @constant */
-                    type: "choice";
-                    optionId: string;
-                    confidence: number | null;
-                    probabilities: {
-                        [key: string]: number;
-                    } | null;
-                } | {
-                    /** @constant */
-                    type: "noul";
-                    holds: boolean | null;
-                    trueProbability: number | null;
-                    confidence: number | null;
-                } | {
-                    /** @constant */
-                    type: "score";
-                    score: number;
-                    confidence: number | null;
-                    legend: {
-                        [key: string]: string;
-                    };
-                    probabilities: {
-                        [key: string]: number;
-                    } | null;
-                };
-            };
-            provenance: {
-                /** @enum {string} */
-                kind: "expression" | "classifier" | "llm";
-                provider: string | null;
-                classifierId: string | null;
-                model: string | null;
-                effort: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | null;
-            };
-            acceptance: ({
-                /** @constant */
-                status: "accepted";
-            } | {
-                /** @constant */
-                status: "rejected";
-                /** @constant */
-                code: "EVALUATION_RESULT_REJECTED";
-                minConfidence: number;
-            }) | null;
-            match: {
-                /** @constant */
-                type: "boolean";
-                /** @default true */
-                value?: boolean | undefined;
-                minReportedConfidence?: number | undefined;
-            } | {
-                /** @constant */
-                type: "noul";
-                /** @default true */
-                value?: boolean | undefined;
-            } | {
-                /** @constant */
-                type: "choice";
-                optionIds: string[];
-            } | {
-                /** @constant */
-                type: "score";
-                /** @enum {string} */
-                operator: "lt" | "lte" | "eq" | "gte" | "gt";
-                value: number;
-            };
-            configuredMinConfidence?: number | undefined;
-            rejection?: {
-                /** @enum {string} */
-                kind: "classifier-confidence" | "llm-reported-confidence";
-                minimum: number;
-                confidence: number | null;
-            } | undefined;
-        } | {
-            index: number;
-            /** @enum {string} */
-            strategy: "max-iterations" | "max-duration" | "last-output-matches";
-            /** @enum {string} */
-            status: "matched" | "not-matched";
-            holds: boolean | null;
-        } | {
-            index: number;
-            /** @enum {string} */
-            strategy: "expression" | "classifier" | "llm" | "max-iterations" | "max-duration" | "last-output-matches";
-            /** @constant */
-            status: "skipped";
-            reason: {
-                /** @enum {string} */
-                code: "EARLIER_CRITERION_MATCHED" | "EARLIER_CRITERION_FAILED";
-                message: string;
-            };
-        } | {
-            index: number;
-            /** @enum {string} */
-            strategy: "expression" | "classifier" | "llm" | "max-iterations" | "max-duration" | "last-output-matches";
-            /** @constant */
-            status: "error";
-            diagnostic: {
-                /** @enum {string} */
-                code: "CRITERION_ERROR" | "RETURN_MAPPING_ERROR" | "DECIDER_UNAVAILABLE" | "DECIDER_NOT_AUTHENTICATED" | "DECIDER_RATE_LIMITED" | "DECIDER_HTTP_ERROR" | "DECIDER_UNREACHABLE" | "DECIDER_INVALID_RESPONSE" | "DECIDER_REDIRECT" | "DECIDER_TIMEOUT" | "DECIDER_ERROR" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED";
-                message: string;
-                status?: number | undefined;
-            };
-            provenance?: {
-                /** @enum {string} */
-                kind: "expression" | "classifier" | "llm";
-                provider: string | null;
-                classifierId: string | null;
-                model: string | null;
-                effort: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | null;
-            } | undefined;
-        };
-        ExitEvaluationOutcomeInput: {
-            /** @constant */
-            kind: "completed";
-            /** @enum {string} */
-            outcome: "success" | "failure" | "exhausted";
-            /** @enum {string} */
-            reason: "criterion-matched" | "default-success";
-            criterionIndex?: number | undefined;
-        } | {
-            /** @constant */
-            kind: "looped-back";
-            /** @constant */
-            reason: "no-criterion-matched";
-            targetNodeId: string;
-        } | {
-            /** @constant */
-            kind: "limit-reached";
-            /** @enum {string} */
-            limit: "max-iterations" | "max-duration" | "iteration-ceiling";
-            value: number;
-            criterionIndex?: number | undefined;
-            /** @constant */
-            outcome: "exhausted";
-        } | {
-            /** @constant */
-            kind: "failed";
-            diagnostic: {
-                /** @enum {string} */
-                code: "CRITERION_ERROR" | "RETURN_MAPPING_ERROR" | "DECIDER_UNAVAILABLE" | "DECIDER_NOT_AUTHENTICATED" | "DECIDER_RATE_LIMITED" | "DECIDER_HTTP_ERROR" | "DECIDER_UNREACHABLE" | "DECIDER_INVALID_RESPONSE" | "DECIDER_REDIRECT" | "DECIDER_TIMEOUT" | "DECIDER_ERROR" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED";
-                message: string;
-                status?: number | undefined;
-            };
-        } | {
-            /** @constant */
-            kind: "cancelled";
+        GateEvidenceInput: {
+            previousPasses: number;
+            passes: number;
+            repeatRouteId: string;
+            maxPasses: number;
+            maxRunTimeSeconds?: number | undefined;
+            elapsedSeconds: number;
+            limit: ("max-passes" | "max-run-time") | null;
         };
         ReturnChannelInput: {
             /** @constant */
@@ -4184,6 +3911,12 @@ export interface components {
                 /** Format: date-time */
                 at: string;
             } | undefined;
+            /** @default {} */
+            gates?: {
+                [key: string]: {
+                    passes: number;
+                };
+            } | undefined;
             counters: {
                 nodeVisits: {
                     [key: string]: number;
@@ -4261,7 +3994,7 @@ export interface components {
                     };
                 };
                 /** @default 10 */
-                maxIterations: number;
+                maxNodeVisits: number;
                 /** @default 8 */
                 subloopDepthLimit: number;
             };
@@ -4409,9 +4142,12 @@ export interface components {
                     /** @constant */
                     kind: "expression";
                     jsonata: string;
+                    maxPasses?: number | undefined;
+                    maxRunTimeSeconds?: number | undefined;
                     routes: {
                         id: string;
                         label: string;
+                        repeat?: boolean | undefined;
                     }[];
                 } | {
                     /** @constant */
@@ -4436,9 +4172,12 @@ export interface components {
                         /** @enum {string} */
                         value: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
                     };
+                    maxPasses?: number | undefined;
+                    maxRunTimeSeconds?: number | undefined;
                     routes: {
                         id: string;
                         label: string;
+                        repeat?: boolean | undefined;
                     }[];
                     context: {
                         /** @default last */
@@ -4456,12 +4195,15 @@ export interface components {
                     question: string;
                     minConfidence?: number | undefined;
                     truthThreshold?: number | undefined;
+                    maxPasses?: number | undefined;
+                    maxRunTimeSeconds?: number | undefined;
                     answer: {
                         /** @constant */
                         type: "choice";
                         options: {
                             id: string;
                             label: string;
+                            repeat?: boolean | undefined;
                             criteria: string;
                         }[];
                     } | {
@@ -4470,11 +4212,13 @@ export interface components {
                         true: {
                             id: string;
                             label: string;
+                            repeat?: boolean | undefined;
                             criteria: string;
                         };
                         false: {
                             id: string;
                             label: string;
+                            repeat?: boolean | undefined;
                             criteria: string;
                         };
                     } | {
@@ -4484,6 +4228,7 @@ export interface components {
                         bands: {
                             id: string;
                             label: string;
+                            repeat?: boolean | undefined;
                             min: number;
                             max: number;
                         }[];
@@ -5202,143 +4947,21 @@ export interface components {
                 /** @constant */
                 kind: "exit";
                 config: {
-                    /** @default [] */
-                    criteria: ({
-                        /** @constant */
-                        when: "max-iterations";
-                        value: number;
-                        /**
-                         * @default exhausted
-                         * @constant
-                         */
-                        outcome: "exhausted";
-                    } | {
-                        /** @constant */
-                        when: "max-duration";
-                        seconds: number;
-                        /**
-                         * @default exhausted
-                         * @constant
-                         */
-                        outcome: "exhausted";
-                    } | {
-                        /** @constant */
-                        when: "predicate";
-                        predicate: {
-                            /** @constant */
-                            kind: "expression";
-                            jsonata: string;
-                        } | {
-                            /** @constant */
-                            kind: "llm";
-                            instructions: string;
-                            /** @constant */
-                            harness: "codex";
-                            model: {
-                                /** @constant */
-                                mode: "inherit";
-                            } | {
-                                /** @constant */
-                                mode: "explicit";
-                                value: string;
-                            };
-                            effort: {
-                                /** @constant */
-                                mode: "inherit";
-                            } | {
-                                /** @constant */
-                                mode: "explicit";
-                                /** @enum {string} */
-                                value: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
-                            };
-                        } | {
-                            /** @constant */
-                            kind: "classifier";
-                            model: string;
-                            question: string;
-                            minConfidence?: number | undefined;
-                            truthThreshold?: number | undefined;
-                            answer: {
-                                /** @constant */
-                                type: "choice";
-                                options: {
-                                    id: string;
-                                    label: string;
-                                    criteria: string;
-                                }[];
-                            } | {
-                                /** @constant */
-                                type: "noul";
-                                true: {
-                                    label: string;
-                                    criteria: string;
-                                };
-                                false: {
-                                    label: string;
-                                    criteria: string;
-                                };
-                            } | {
-                                /** @constant */
-                                type: "score";
-                                anchors: string[];
-                            };
-                        };
-                        match: {
-                            /** @constant */
-                            type: "boolean";
-                            /** @default true */
-                            value: boolean;
-                            minReportedConfidence?: number | undefined;
-                        } | {
-                            /** @constant */
-                            type: "noul";
-                            /** @default true */
-                            value: boolean;
-                        } | {
-                            /** @constant */
-                            type: "choice";
-                            optionIds: string[];
-                        } | {
-                            /** @constant */
-                            type: "score";
-                            /** @enum {string} */
-                            operator: "lt" | "lte" | "eq" | "gte" | "gt";
-                            value: number;
-                        };
-                        /** @enum {string} */
-                        outcome: "success" | "failure";
-                    } | {
-                        /** @constant */
-                        when: "last-output-matches";
-                        jsonSchema: {
-                            [key: string]: unknown;
-                        };
-                        /**
-                         * @default success
-                         * @constant
-                         */
-                        outcome: "success";
-                    })[];
                     /**
                      * @default success
                      * @enum {string}
                      */
-                    default: "success" | "loop-back";
-                    loopBack?: {
-                        targetNodeId: string;
-                    } | undefined;
-                    return: {
-                        /** @default none */
-                        mapping: "none" | string;
-                        /**
-                         * @default [
-                         *       {
-                         *         "kind": "caller"
-                         *       }
-                         *     ]
-                         */
-                        channels: components["schemas"]["ReturnChannel"][];
-                    };
+                    outcome: "success" | "failure" | "exhausted";
+                    /** @default none */
+                    returns: "none" | string;
+                    /**
+                     * @default [
+                     *       {
+                     *         "kind": "caller"
+                     *       }
+                     *     ]
+                     */
+                    destinations: components["schemas"]["ReturnChannel"][];
                 };
             })[];
             edges: {
@@ -5397,7 +5020,7 @@ export interface components {
         RunStatus: "queued" | "running" | "waiting" | "paused" | "succeeded" | "failed" | "cancelled" | "exhausted";
         RunFailure: {
             /** @enum {string} */
-            code: "HARNESS_NOT_INSTALLED" | "HARNESS_NOT_AUTHENTICATED" | "HARNESS_QUOTA_EXHAUSTED" | "HARNESS_TURN_FAILED" | "HARNESS_TERMINATION_UNCONFIRMED" | "WORKING_DIRECTORY_MISSING" | "SCRIPT_EXIT_CODE" | "SCRIPT_TIMEOUT" | "INFERENCE_TIMEOUT" | "OUTPUT_SCHEMA_MISMATCH" | "SUBLOOP_DEPTH_EXCEEDED" | "SUBLOOP_NOT_FOUND" | "DECISION_NO_ROUTE" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED" | "DECIDER_UNAVAILABLE" | "SECRET_MISSING" | "TEMPLATE_ERROR" | "TEMPLATE_PREREQUISITE_UNAVAILABLE" | "TEMPLATE_ISOLATION_UNAVAILABLE" | "TEMPLATE_REPORT_UNAVAILABLE" | "TEMPLATE_AUTHORITY_REFUSED" | "TEMPLATE_BINDING_CHANGED" | "EXPRESSION_ERROR" | "WAIT_TIMEOUT" | "HEARTBEAT_EXHAUSTED" | "RETURN_DELIVERY_FAILED" | "MAX_ITERATIONS" | "INTERNAL_ERROR";
+            code: "HARNESS_NOT_INSTALLED" | "HARNESS_NOT_AUTHENTICATED" | "HARNESS_QUOTA_EXHAUSTED" | "HARNESS_TURN_FAILED" | "HARNESS_TERMINATION_UNCONFIRMED" | "WORKING_DIRECTORY_MISSING" | "SCRIPT_EXIT_CODE" | "SCRIPT_TIMEOUT" | "INFERENCE_TIMEOUT" | "OUTPUT_SCHEMA_MISMATCH" | "SUBLOOP_DEPTH_EXCEEDED" | "SUBLOOP_NOT_FOUND" | "DECISION_NO_ROUTE" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED" | "DECIDER_UNAVAILABLE" | "SECRET_MISSING" | "TEMPLATE_ERROR" | "TEMPLATE_PREREQUISITE_UNAVAILABLE" | "TEMPLATE_ISOLATION_UNAVAILABLE" | "TEMPLATE_REPORT_UNAVAILABLE" | "TEMPLATE_AUTHORITY_REFUSED" | "TEMPLATE_BINDING_CHANGED" | "EXPRESSION_ERROR" | "WAIT_TIMEOUT" | "HEARTBEAT_EXHAUSTED" | "RETURN_DELIVERY_FAILED" | "MAX_ITERATIONS" | "MAX_NODE_VISITS" | "INTERNAL_ERROR";
             message: string;
             nodeId?: string | undefined;
             resumable: boolean;
@@ -5772,7 +5395,8 @@ export interface components {
                     } | null;
                 };
             };
-            portId: string;
+            portId: string | "limit-reached";
+            gate?: components["schemas"]["GateEvidence"] | undefined;
             diagnostics: components["schemas"]["EvaluationDiagnostic"][];
             runId: string;
             seq: number;
@@ -5789,10 +5413,8 @@ export interface components {
             /** @constant */
             type: "exit.evaluated";
             nodeId: string;
-            iteration: number;
-            maxIterations: number;
-            criteria: components["schemas"]["ExitCriterionEvaluation"][];
-            result: components["schemas"]["ExitEvaluationOutcome"];
+            /** @enum {string} */
+            outcome: "success" | "failure" | "exhausted";
         } | {
             runId: string;
             seq: number;
@@ -5873,175 +5495,14 @@ export interface components {
             code: string;
             message: string;
         };
-        ExitCriterionEvaluation: {
-            index: number;
-            /** @enum {string} */
-            strategy: "expression" | "classifier" | "llm";
-            /** @enum {string} */
-            status: "matched" | "not-matched";
-            observation: {
-                /** @constant */
-                kind: "route";
-                routeId: string;
-                confidence: number | null;
-                reasoning: string | null;
-            } | {
-                /** @constant */
-                kind: "boolean";
-                holds: boolean | null;
-                confidence: number | null;
-                reasoning: string | null;
-            } | {
-                /** @constant */
-                kind: "classifier";
-                answer: {
-                    /** @constant */
-                    type: "choice";
-                    optionId: string;
-                    confidence: number | null;
-                    probabilities: {
-                        [key: string]: number;
-                    } | null;
-                } | {
-                    /** @constant */
-                    type: "noul";
-                    holds: boolean | null;
-                    trueProbability: number | null;
-                    confidence: number | null;
-                } | {
-                    /** @constant */
-                    type: "score";
-                    score: number;
-                    confidence: number | null;
-                    legend: {
-                        [key: string]: string;
-                    };
-                    probabilities: {
-                        [key: string]: number;
-                    } | null;
-                };
-            };
-            provenance: {
-                /** @enum {string} */
-                kind: "expression" | "classifier" | "llm";
-                provider: string | null;
-                classifierId: string | null;
-                model: string | null;
-                effort: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | null;
-            };
-            acceptance: ({
-                /** @constant */
-                status: "accepted";
-            } | {
-                /** @constant */
-                status: "rejected";
-                /** @constant */
-                code: "EVALUATION_RESULT_REJECTED";
-                minConfidence: number;
-            }) | null;
-            match: {
-                /** @constant */
-                type: "boolean";
-                /** @default true */
-                value: boolean;
-                minReportedConfidence?: number | undefined;
-            } | {
-                /** @constant */
-                type: "noul";
-                /** @default true */
-                value: boolean;
-            } | {
-                /** @constant */
-                type: "choice";
-                optionIds: string[];
-            } | {
-                /** @constant */
-                type: "score";
-                /** @enum {string} */
-                operator: "lt" | "lte" | "eq" | "gte" | "gt";
-                value: number;
-            };
-            configuredMinConfidence?: number | undefined;
-            rejection?: {
-                /** @enum {string} */
-                kind: "classifier-confidence" | "llm-reported-confidence";
-                minimum: number;
-                confidence: number | null;
-            } | undefined;
-        } | {
-            index: number;
-            /** @enum {string} */
-            strategy: "max-iterations" | "max-duration" | "last-output-matches";
-            /** @enum {string} */
-            status: "matched" | "not-matched";
-            holds: boolean | null;
-        } | {
-            index: number;
-            /** @enum {string} */
-            strategy: "expression" | "classifier" | "llm" | "max-iterations" | "max-duration" | "last-output-matches";
-            /** @constant */
-            status: "skipped";
-            reason: {
-                /** @enum {string} */
-                code: "EARLIER_CRITERION_MATCHED" | "EARLIER_CRITERION_FAILED";
-                message: string;
-            };
-        } | {
-            index: number;
-            /** @enum {string} */
-            strategy: "expression" | "classifier" | "llm" | "max-iterations" | "max-duration" | "last-output-matches";
-            /** @constant */
-            status: "error";
-            diagnostic: {
-                /** @enum {string} */
-                code: "CRITERION_ERROR" | "RETURN_MAPPING_ERROR" | "DECIDER_UNAVAILABLE" | "DECIDER_NOT_AUTHENTICATED" | "DECIDER_RATE_LIMITED" | "DECIDER_HTTP_ERROR" | "DECIDER_UNREACHABLE" | "DECIDER_INVALID_RESPONSE" | "DECIDER_REDIRECT" | "DECIDER_TIMEOUT" | "DECIDER_ERROR" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED";
-                message: string;
-                status?: number | undefined;
-            };
-            provenance?: {
-                /** @enum {string} */
-                kind: "expression" | "classifier" | "llm";
-                provider: string | null;
-                classifierId: string | null;
-                model: string | null;
-                effort: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | null;
-            } | undefined;
-        };
-        ExitEvaluationOutcome: {
-            /** @constant */
-            kind: "completed";
-            /** @enum {string} */
-            outcome: "success" | "failure" | "exhausted";
-            /** @enum {string} */
-            reason: "criterion-matched" | "default-success";
-            criterionIndex?: number | undefined;
-        } | {
-            /** @constant */
-            kind: "looped-back";
-            /** @constant */
-            reason: "no-criterion-matched";
-            targetNodeId: string;
-        } | {
-            /** @constant */
-            kind: "limit-reached";
-            /** @enum {string} */
-            limit: "max-iterations" | "max-duration" | "iteration-ceiling";
-            value: number;
-            criterionIndex?: number | undefined;
-            /** @constant */
-            outcome: "exhausted";
-        } | {
-            /** @constant */
-            kind: "failed";
-            diagnostic: {
-                /** @enum {string} */
-                code: "CRITERION_ERROR" | "RETURN_MAPPING_ERROR" | "DECIDER_UNAVAILABLE" | "DECIDER_NOT_AUTHENTICATED" | "DECIDER_RATE_LIMITED" | "DECIDER_HTTP_ERROR" | "DECIDER_UNREACHABLE" | "DECIDER_INVALID_RESPONSE" | "DECIDER_REDIRECT" | "DECIDER_TIMEOUT" | "DECIDER_ERROR" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED";
-                message: string;
-                status?: number | undefined;
-            };
-        } | {
-            /** @constant */
-            kind: "cancelled";
+        GateEvidence: {
+            previousPasses: number;
+            passes: number;
+            repeatRouteId: string;
+            maxPasses: number;
+            maxRunTimeSeconds?: number | undefined;
+            elapsedSeconds: number;
+            limit: ("max-passes" | "max-run-time") | null;
         };
         ReturnChannel: {
             /** @constant */
@@ -6142,6 +5603,12 @@ export interface components {
                 /** Format: date-time */
                 at: string;
             } | undefined;
+            /** @default {} */
+            gates: {
+                [key: string]: {
+                    passes: number;
+                };
+            };
             counters: {
                 nodeVisits: {
                     [key: string]: number;

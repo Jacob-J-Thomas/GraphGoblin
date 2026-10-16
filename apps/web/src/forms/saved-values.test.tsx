@@ -231,9 +231,9 @@ describe('the same edits save the same config', () => {
       'exit',
       {},
       async (user) => {
-        await user.click(radio('default', 'loop-back'));
+        await user.click(radio('outcome', 'exhausted'));
       },
-      { default: 'loop-back', return: {} },
+      { outcome: 'exhausted' },
     );
   });
 });

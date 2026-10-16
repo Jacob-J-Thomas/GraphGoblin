@@ -11,7 +11,7 @@
 
 Structured edits in the dialog save as you type; section JSON saves when applied, and unfinished text stays in this editing session when closing: use **Done**, the close button, **Esc**, or a click outside it, and focus returns to the node. An ID you are still typing applies when the dialog closes; an ID that cannot apply keeps the dialog open once with the reason, and closing again keeps the old ID. **Delete** and **Backspace** inside the dialog only edit text. While the dialog is open the rest of the editor waits, so close it to reach **Publish** or the palette. Below 768 px wide the dialog is a sheet along the bottom of the window.
 
-**Undo** and **Redo** at the start of the toolbar's buttons take back or repeat a change to the loop: adding, moving, connecting, renaming, or deleting nodes, removing edges, rerouting or resetting a line, and edits to labels, config, the loop's name and description, settings, and variables. Each button's name says what it will change, for example **Undo move start**. **Ctrl+Z** undoes and **Ctrl+Shift+Z** or **Ctrl+Y** redoes (**Cmd+Z** and **Cmd+Shift+Z** on a Mac) with focus anywhere except a text field or a code editor, where the keys undo your typing in that field instead; on a checkbox, an option, a list, or a button they undo the editor. Typing in one field is one step, as is one drag; deleting a node and undoing brings back its edges and any loop-back to it, and discarding held input can be undone like any change. An undo is saved like any other edit. The editor keeps the last 100 steps for as long as it is open; reloading it or choosing **Reload server draft** starts afresh.
+**Undo** and **Redo** at the start of the toolbar's buttons take back or repeat a change to the loop: adding, moving, connecting, renaming, or deleting nodes, removing edges, rerouting or resetting a line, and edits to labels, config, the loop's name and description, settings, and variables. Each button's name says what it will change, for example **Undo move start**. **Ctrl+Z** undoes and **Ctrl+Shift+Z** or **Ctrl+Y** redoes (**Cmd+Z** and **Cmd+Shift+Z** on a Mac) with focus anywhere except a text field or a code editor, where the keys undo your typing in that field instead; on a checkbox, an option, a list, or a button they undo the editor. Typing in one field is one step, as is one drag; deleting a node and undoing brings back its edges and all connections to it, and discarding held input can be undone like any change. An undo is saved like any other edit. The editor keeps the last 100 steps for as long as it is open; reloading it or choosing **Reload server draft** starts afresh.
 
 The **Palette** and **Loop settings** panels each have their own Show and Hide buttons. The browser remembers both choices; until you choose, the palette starts expanded on windows at least 1024 px wide and collapsed below, and the loop panel starts expanded at 1280 px and wider and collapsed below. Each collapsed panel keeps a narrow rail with its Show button. Validation stays in sight either way, on the nodes and beside **Publish** (see [Connect and validate](#connect-and-validate)).
 
@@ -71,15 +71,17 @@ The selected port is `lastOutput.value.portId`, provider details are `lastOutput
 
 **Heartbeat (`heartbeat`).** Set `intervalSeconds` and a `probe` of `http`, `script`, `signal-count`, or `none`. Supply at least one of `until` (JSONata), `maxBeats`, or `deadline` (Liquid timestamp). HTTP probes have method, URL, headers, body, and timeout fields; script probes have command, args, and timeout fields. The condition sees `probe`, `thread`, `beat`, and `now`. The first probe executes on entry; later beats park on timers. Choose `record` of `summary` or `full`, and `onExhausted` of `continue` or `fail-run`; completion follows `out`.
 
-**Exit (`exit`).** Evaluate `criteria` in order using `max-iterations`, `max-duration`, `predicate`, or `last-output-matches`. Choose `default` of `success` or `loop-back`; the latter needs `loopBack.targetNodeId` and a matching edge. Set `return.mapping` to a JSONata expression and choose `return.channels`; `none` omits the payload. A terminal exit has no output port; a configured loop-back exposes `loopBack`. The loop's iteration ceiling is checked when the exit evaluates, so route repeated work through an exit to bound it.
+**Exit (`exit`).** Exits are terminal: `{outcome, returns, destinations}`. `outcome` is `success` (default), `failure` or `exhausted`; `returns` is a JSONata expression or `none` (default); `destinations` defaults to `[{kind:"caller"}]` and supports caller, webhook, file, event and log. Exits have no criteria, predicate, default routing or loop-back, and no output ports.
+
+Success finishes `succeeded`, Failure finishes `failed`, and Exhausted finishes the distinct terminal status `exhausted`. Exhausted means the authored graph gave up further repetition; normally a gate's Limit reached output leads here. It is an outcome, not a resumable node failure. Every outcome evaluates the same return expression and delivers its value unchanged; Exhausted adds no wrapper or implicit last output. Use `outputs.<workNodeId>.value` when returning work output, because the preceding gate replaces `lastOutput`.
 
 ## Connect and validate
 
 Decision outputs connect by stable route **ID**, using the canvas handle or **Connections** in the dialog. Readable labels can be renamed and rows reordered without changing identity. Removing a connected route first lists its connections for confirmation, including when its ID is unfinished; confirmation removes the route and its owned connections in one undoable edit. **Undo** and **Redo** restore the route, unfinished input and connections together. Section JSON matches surviving IDs, so an ID replaced in JSON loses its connections after a separate removal review. Blank or duplicate IDs and labels block publication.
 
-Connect exactly one edge per output port. Multiple inputs may converge on a node, but each run follows one route at a time. Triggers have no input. Ordinary output ports are `out`, decision ports are route IDs, script ports include exit-code labels, and exit ports are limited to `loopBack`. Edge targets use `in`.
+Connect exactly one edge per output port. Multiple inputs may converge on a node, but each run follows one route at a time. Triggers have no input. Ordinary output ports are `out`, decision ports are route IDs, script ports include exit-code labels, and gates add `limit-reached` and exits have no outputs. Edge targets use `in`.
 
-For a loop-back, connect the exit handle to a working node, such as inference or mutation. The canvas sets `loopBack.targetNodeId` for you; it cannot target a trigger or another exit. Only this exit transition increments the iteration. A cycle through other nodes does not consume the iteration limit.
+Mark **Repeat route** on the decision route that leads back through work to the same gate. Set **Maximum passes** and optionally **Maximum run time (seconds)**; connect **Limit reached** to an Exhausted exit. A non-repeat choice on the last pass wins. Read `gates.<nodeId>.passes` in expressions. Unmarking previews removal of limits and the Limit reached edge, then applies them together with Undo support.
 
 Loop-backs and connections whose output tip is to the right of the input follow square paths with rounded corners; small moves do not flip their shape. Return lanes sit at least 32 px from cards, with 24 px clearance at rounded corners. Inner spans get lanes first, and connections keep separate vertical trunks. Free lanes with 24 px separation always take priority; crowded gaps compress or share lanes only when those candidates are exhausted, and labels move along the lane to stay apart. Tight neighbours reduce clearance only on the endpoint approaches, keeping the lane and label away from the cards. Leave at least **8 px between facing card bodies** for the protruding handles; there is no 64 px minimum spacing. Moving a card remains one Undo step, and moving it back restores the same route. The loop-back keeps its moving dash, with its label on a straight segment; long names retain their full accessible name and hover title. Click an edge, or focus it and press Enter, then Delete to remove it; Undo restores it. **Port covered by a card; move the card** means another card covers the actual handle; **No clear route; move a card** means the bounded router could not find an escape.
 
@@ -89,13 +91,13 @@ To move a line out of the way, select it (click it, or move to it with **Tab** a
 
 Check validation after every change. A node with problems shows an issue badge in its header: a cross when any of them is an error, a warning triangle when they are all warnings, and the count when there are several. Hover the badge, move to it with **Tab**, or click it to list each issue with its severity, message, and field; the list stays open while the pointer is over it or focus is inside it, a click keeps it open, and **Esc** closes it. Choose an issue to open the node's dialog with that field focused; an issue without a field opens the dialog at its top. The same badge sits beside the dialog's title while you edit. Beside **Publish**, the toolbar shows the loop's error and warning counts; click them for the issues that belong to the whole loop or to an edge, then a row per node with issues, which opens that node. With nothing to list it shows **Ready to publish** once the server has checked the saved draft (cron expressions, subloop references), **Checking…** until then, and **Validation unavailable** when the server could not be asked (offline, say); **Publish** runs the checks again either way. Text that does not parse in a JSON field is an issue too, with **Discard the unparsed text** in its row. An incomplete cron schedule uses **Discard the incomplete schedule**; valid section JSON waiting for Apply says it is **JSON not applied yet**, with **Discard the unapplied JSON** available in its issue row. These actions clear the held input and can be undone.
 
-Fix errors before publishing: missing trigger or exit, unconnected or doubly connected ports, duplicate IDs, invalid targets or ports, unreachable nodes, a trigger with no path to an exit, undeclared variables, and inconsistent loop-backs. Warnings, such as an exit criterion above the loop's iteration ceiling, do not block publishing. The server repeats these checks when you publish, adds cron expression and timezone checks (they show on the trigger's badge once the draft has saved), and rejects errors with HTTP 422 `LOOP_INVALID`.
+Fix errors before publishing: missing trigger or exit, unconnected or doubly connected ports, duplicate IDs, invalid targets or ports, unreachable nodes, a trigger with no path to an exit, undeclared variables, a noncyclic repeat, missing gate limits or an unconnected Limit reached. The server repeats these checks on publication and returns HTTP 422 `LOOP_INVALID`.
 
 ## Set workspace and limits
 
 | Setting             | Configure it                                                                                                                                                                                                   |
 | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `maxIterations`     | Default 10, range 1 to 10,000. It limits exit loop-backs (the run ends `exhausted`) and fresh visits per node (the run fails `MAX_ITERATIONS`).                                                                |
+| `maxNodeVisits`     | Default 10, range 1 to 10,000. Safety cap against unintended cycles; exceeding fresh visits per node fails `MAX_NODE_VISITS`. Intentional repeats use a decision gate.                                         |
 | `workingDirectory`  | `temp` (default), `fixed` with `path`, or `template` with a Liquid `template`. The filesystem adapter creates the resolved directory if needed.                                                                |
 | `subloopDepthLimit` | Default 8, range 1 to 64. A subloop node can replace it with `depthLimitOverride`.                                                                                                                             |
 | `defaults`          | Set optional model and effort under `byHarness.codex` or `byHarness.claude`. Node values override that harness's loop defaults, then owner and API-process defaults. Harness is chosen on each inference node. |
@@ -106,7 +108,7 @@ For a repository workspace, use an absolute path. For a temporary workspace, use
 {
   "workingDirectory": { "kind": "temp" },
   "defaults": { "byHarness": { "codex": { "model": "gpt-6-luna", "effort": "low" } } },
-  "maxIterations": 3,
+  "maxNodeVisits": 3,
   "subloopDepthLimit": 8
 }
 ```
@@ -153,7 +155,7 @@ The body wraps your definition:
 ```json
 {
   "definition": {
-    "schemaVersion": 2,
+    "schemaVersion": 4,
     "name": "starter",
     "nodes": [
       { "id": "start", "kind": "trigger", "label": "Start", "config": { "subtype": "manual" } },
@@ -176,13 +178,13 @@ Save this bare definition as a JSON file and import it. It follows the contracts
 
 ```json
 {
-  "schemaVersion": 2,
+  "schemaVersion": 4,
   "name": "first-summary",
   "description": "Ask Codex for a short explanation of a topic.",
   "settings": {
     "workingDirectory": { "kind": "temp" },
     "defaults": { "byHarness": { "codex": { "model": "gpt-6-luna", "effort": "low" } } },
-    "maxIterations": 3,
+    "maxNodeVisits": 3,
     "subloopDepthLimit": 8
   },
   "variables": {},
@@ -223,12 +225,9 @@ Save this bare definition as a JSON file and import it. It follows the contracts
       "label": "Done",
       "ui": { "x": 560, "y": 80 },
       "config": {
-        "criteria": [],
-        "default": "success",
-        "return": {
-          "mapping": "{ \"summary\": lastOutput.value }",
-          "channels": [{ "kind": "caller" }]
-        }
+        "outcome": "success",
+        "returns": "{ \"summary\": outputs.summarise.value }",
+        "destinations": [{ "kind": "caller" }]
       }
     }
   ],
@@ -249,12 +248,14 @@ Save this bare definition as a JSON file and import it. It follows the contracts
 
 Read [Node catalog](../04-node-catalog.md) for design context. Continue with [Run and observe](03-run-and-observe.md).
 
-## Match an exit answer
+## Author a bounded repeat
 
-Decision and exit **Answer type** cards keep their labels short. Tab reaches the chosen answer once; use the arrow keys to change it. Keyboard focus on a radio shows its explanation without moving focus, and leaving the option or pressing Escape closes it. Clicking or tapping a card selects it without opening help. Hover or tap the help button beside Choice, Noul or Score to read the same explanation; these buttons are outside the Tab order. Tap again to close pinned help without changing the answer. Screen readers can read each option's explanation even while the help is closed.
+A decision becomes a gate when exactly one route is marked `repeat: true`. This marker belongs on an expression/LLM route, Choice option, Noul side or Score band; it is never inferred from canvas direction. Require `maxPasses` (1–10,000); optionally set `maxRunTimeSeconds` (positive integer seconds, at most 31,536,000). Without a repeat marker neither limit is allowed. Reserve the port ID `limit-reached`: authors cannot use it as a route ID. The gate exposes **Limit reached** only while a repeat is marked, and that output must be connected. The repeat route must lead through a cycle back to the gate; exits are terminal and triggers cannot be repeat targets.
 
-An exit criterion can evaluate a Noul, Choice or Score answer and compare it with an explicit rule. Choose true or false for Noul, one or more declared IDs for Choice, or a rubric-index comparison for Score. Provider Noul also needs criteria for each side. Score preserves fractional values; exits do not need routing bands.
+Passes are one-based, available to JSONata as `gates.<nodeId>.passes` (quote an ID with punctuation, for example `gates."my-gate".passes`). Every marked gate starts at 1. Evaluation happens first. An allowed repeat increments its count once; a non-repeat choice or a refused repeat leaves it unchanged. A non-repeat choice on the last allowed pass wins. If the decision chooses repeat at `maxPasses`, or after the optional run-time limit, it takes `limit-reached` instead. Both limits reached together are recorded as `max-passes`.
 
-Choose a classifier that supports the answer type, or Codex LLM for Noul/Choice. Expressions produce strict boolean Noul. A classifier confidence minimum and the optional LLM self-reported confidence minimum can reject an answer before matching. A rejected answer never matches, even if the rule asks for false. Inspect the raw answer, gate and rule separately in the run timeline.
+Maximum run time is elapsed wall time from `run.startedAt` (falling back to `createdAt`), including waits, pauses and recovery downtime. It is checked after evaluation and only on a repeat choice; it does not interrupt running work or override a finishing choice. A replay fork keeps the checkpoint's passes and starts its own run clock.
 
-Criteria run from top to bottom. A match on the final permitted iteration still completes; if none matches, the default either succeeds or takes the single loop-back, subject to the iteration ceiling. Keep explicit duration/iteration criteria in the intended order. Existing question context is unchanged; no new session controls are required.
+Use **Outcome: Exhausted** on the exit connected to Limit reached. A normal Done route can lead to Success or Failure. The inspector keeps the evaluator's choice, actual port and pass count together.
+
+Changing a node ID updates its connections. Update authored references such as `gates."old-id".passes` and `outputs."old-id".value` yourself.

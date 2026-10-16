@@ -74,34 +74,16 @@ describe('classifier issue paths', () => {
     expect(method).toHaveFocus();
   });
 
-  it('config.criteria.N.predicate.model focuses that exit criterion’s classifier picker', () => {
-    const root = body('exit', {
-      criteria: [
-        { when: 'max-iterations', value: 3 },
-        {
-          when: 'predicate',
-          match: { type: 'noul', value: true },
-          outcome: 'success',
-          predicate: {
-            kind: 'classifier',
-            model: 'missing',
-            question: 'Done?',
-            answer: {
-              type: 'noul',
-              true: { label: 'Done', criteria: 'The task is complete' },
-              false: { label: 'Pending', criteria: 'Work remains' },
-            },
-          },
-        },
+  it('config.maxPasses focuses the required gate limit', () => {
+    const root = body('decision', {
+      kind: 'expression',
+      jsonata: '"repeat"',
+      routes: [
+        { id: 'repeat', label: 'Repeat', repeat: true },
+        { id: 'done', label: 'Done' },
       ],
     });
-    expect(focusIssuePath(root, 'config.criteria.1.predicate.model')).toBe(true);
-    const focused = document.activeElement as HTMLInputElement;
-    expect(focused.tagName).toBe('SELECT');
-    expect(focused).toHaveValue('missing');
-    expect(focused.closest('[data-field]')).toHaveAttribute(
-      'data-field',
-      'criteria.1.predicate.model',
-    );
+    expect(focusIssuePath(root, 'config.maxPasses')).toBe(true);
+    expect(screen.getByLabelText('Max passes')).toHaveFocus();
   });
 });

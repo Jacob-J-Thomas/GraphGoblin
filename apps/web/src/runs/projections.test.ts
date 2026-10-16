@@ -72,6 +72,33 @@ const ALL: RunEvent[] = [
 ];
 
 describe('run projections', () => {
+  it.each(['success', 'failure', 'exhausted'] as const)(
+    'describes a terminal %s exit',
+    (outcome) => {
+      expect(describeEvent(event(R, 1, 'exit.evaluated', { nodeId: 'done', outcome }))).toBe(
+        `Exited: ${outcome}`,
+      );
+    },
+  );
+
+  it('replays absolute gate counts and describes the limit separately from the chosen route', () => {
+    const initial = sampleThread();
+    const entry = event(R, 1, 'decision.made', {
+      nodeId: 'check',
+      ...expressionEvidence('repeat'),
+      portId: 'limit-reached',
+      gate: {
+        previousPasses: 3,
+        passes: 3,
+        repeatRouteId: 'repeat',
+        maxPasses: 3,
+        elapsedSeconds: 1,
+        limit: 'max-passes',
+      },
+    });
+    expect(describeEvent(entry)).toContain('passes 3 → 3 of 3; Limit reached (max-passes)');
+    expect(threadAt(initial, [entry], 1).gates['check']).toEqual({ passes: 3 });
+  });
   it('omits missing optional Score confidence but retains missing required LLM and Choice confidence', () => {
     const provenance = {
       kind: 'classifier' as const,
@@ -243,186 +270,6 @@ describe('run projections', () => {
     expect(useRunEventStore.getState().runs[R]?.events).toEqual([refreshed]);
     expect(sessionStorage.getItem('graphgoblin-run-events-v3')).toContain('"portId":"good"');
     useRunEventStore.setState({ runs: {} });
-  });
-  it('describes completion reasons and limits independently of optional criterion indices', () => {
-    for (const criterionIndex of [undefined, 0]) {
-      const index = criterionIndex === undefined ? {} : { criterionIndex };
-      const base = { nodeId: 'done', iteration: 2, maxIterations: 5, criteria: [] };
-      for (const outcome of ['success', 'failure', 'exhausted'] as const) {
-        for (const reason of ['criterion-matched', 'default-success'] as const) {
-          const entry = event(R, 1, 'exit.evaluated', {
-            ...base,
-            result: { kind: 'completed', reason, outcome, ...index },
-          });
-          expect(describeEvent(entry)).toBe(
-            reason === 'default-success'
-              ? `Exited: default ${outcome}, no criterion matched`
-              : `Exited: ${criterionIndex === undefined ? 'a criterion' : 'criterion 1'} matched (${outcome})`,
-          );
-        }
-      }
-      for (const limit of ['max-iterations', 'max-duration', 'iteration-ceiling'] as const) {
-        const entry = event(R, 1, 'exit.evaluated', {
-          ...base,
-          result: { kind: 'limit-reached', limit, value: 5, outcome: 'exhausted', ...index },
-        });
-        expect(describeEvent(entry)).toBe(
-          `Exited: ${limit === 'max-duration' ? 'duration limit of 5 seconds' : 'iteration limit of 5'} reached${limit === 'iteration-ceiling' ? ' (loop ceiling)' : ''}${criterionIndex === undefined ? '' : ' (criterion 1)'}`,
-        );
-      }
-    }
-    const entry = event(R, 1, 'exit.evaluated', {
-      nodeId: 'done',
-      iteration: 1,
-      maxIterations: 5,
-      criteria: [
-        {
-          index: 0,
-          strategy: 'expression',
-          status: 'matched',
-          provenance: {
-            kind: 'expression',
-            provider: null,
-            classifierId: null,
-            model: null,
-            effort: null,
-          },
-          acceptance: { status: 'accepted' },
-          match: {
-            type: 'boolean',
-            value: true,
-          },
-          observation: {
-            kind: 'boolean',
-            holds: true,
-            confidence: null,
-            reasoning: null,
-          },
-        },
-      ],
-      result: {
-        kind: 'completed',
-        reason: 'criterion-matched',
-        outcome: 'failure',
-        criterionIndex: 0,
-      },
-    });
-    expect(describeEvent(entry)).toBe(
-      'Exited: criterion 1 (Expression) matched: Boolean true (failure)',
-    );
-    if (entry.type !== 'exit.evaluated') throw new Error('Expected an exit event fixture');
-    expect(
-      describeEvent({
-        ...entry,
-        criteria: [
-          {
-            index: 0,
-            strategy: 'expression',
-            status: 'matched',
-            provenance: {
-              kind: 'expression',
-              provider: null,
-              classifierId: null,
-              model: null,
-              effort: null,
-            },
-            acceptance: { status: 'accepted' },
-            match: {
-              type: 'boolean',
-              value: true,
-            },
-            observation: {
-              kind: 'boolean',
-              holds: true,
-              confidence: null,
-              reasoning: null,
-            },
-          },
-        ],
-        result: {
-          kind: 'completed',
-          reason: 'default-success',
-          outcome: 'failure',
-          criterionIndex: 0,
-        },
-      }),
-    ).toBe('Exited: default failure, no criterion matched');
-  });
-  it('describes every exit outcome and keeps exit activity grouped by node', () => {
-    const exit = (fields: Parameters<typeof event<'exit.evaluated'>>[3]) =>
-      event(R, 1, 'exit.evaluated', fields);
-    const base = { nodeId: 'done', iteration: 2, maxIterations: 5, criteria: [] };
-    for (const [result, expected] of [
-      [
-        { kind: 'completed', reason: 'default-success', outcome: 'success' },
-        'Exited: default success',
-      ],
-      [
-        { kind: 'looped-back', reason: 'no-criterion-matched', targetNodeId: 'prep' },
-        'Looped back: no criterion matched, iteration 2 of 5',
-      ],
-      [
-        {
-          kind: 'limit-reached',
-          limit: 'max-duration',
-          value: 10,
-          criterionIndex: 0,
-          outcome: 'exhausted',
-        },
-        'duration limit of 10 seconds reached (criterion 1)',
-      ],
-      [
-        { kind: 'limit-reached', limit: 'iteration-ceiling', value: 5, outcome: 'exhausted' },
-        'iteration limit of 5 reached (loop ceiling)',
-      ],
-      [
-        { kind: 'failed', diagnostic: { code: 'DECIDER_ERROR', message: 'Provider failed' } },
-        'Exit evaluation failed: Provider failed',
-      ],
-      [{ kind: 'cancelled' }, 'Exit evaluation cancelled'],
-    ] as const) {
-      const entry = exit({ ...base, result });
-      expect(describeEvent(entry)).toContain(expected);
-      expect(nodeActivity([entry]).get('done')).toEqual([entry]);
-    }
-    expect(
-      describeEvent(
-        exit({
-          ...base,
-          criteria: [
-            {
-              index: 0,
-              strategy: 'expression',
-              status: 'matched',
-              provenance: {
-                kind: 'expression',
-                provider: null,
-                classifierId: null,
-                model: null,
-                effort: null,
-              },
-              acceptance: { status: 'accepted' },
-              match: {
-                type: 'boolean',
-                value: true,
-              },
-              observation: {
-                kind: 'boolean',
-                holds: true,
-                confidence: null,
-                reasoning: null,
-              },
-            },
-          ],
-          result: {
-            kind: 'completed',
-            reason: 'criterion-matched',
-            outcome: 'failure',
-            criterionIndex: 0,
-          },
-        }),
-      ),
-    ).toBe('Exited: criterion 1 (Expression) matched: Boolean true (failure)');
   });
   it('describes every event type', () => {
     const lines = ALL.map(describeEvent);

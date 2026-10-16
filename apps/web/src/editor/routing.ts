@@ -36,6 +36,8 @@ export interface RoutingEdge {
   source: string;
   target: string;
   port: string;
+  /** Explicit authored gate marker, independent of the route ID or canvas direction. */
+  repeat?: boolean;
   /**
    * A fixed (manual) route, in the contract's `edge.ui.route` form (#44). It is drawn as given,
    * with stubs from the current port tips, and automatic routes reserve around it. One that
@@ -112,7 +114,7 @@ export function backwardDirection(
   to: Point,
   previous?: boolean,
 ): boolean {
-  if (edge.port === 'loopBack' || edge.source === edge.target) return true;
+  if (edge.repeat || edge.source === edge.target) return true;
   const delta = from.x - to.x;
   return previous === undefined
     ? delta >= 0
@@ -187,7 +189,11 @@ export function sameNode(a: RoutingNode, b: RoutingNode): boolean {
   );
 }
 const sameConnection = (a: RoutingEdge, b: RoutingEdge | undefined) =>
-  !!b && a.source === b.source && a.target === b.target && a.port === b.port;
+  !!b &&
+  a.source === b.source &&
+  a.target === b.target &&
+  a.port === b.port &&
+  !!a.repeat === !!b.repeat;
 /** The same connection with the same fixed route: a reused route stays valid. */
 export const sameEdge = (a: RoutingEdge, b: RoutingEdge | undefined): boolean =>
   sameConnection(a, b) &&

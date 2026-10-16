@@ -19,7 +19,7 @@ Ask only what you cannot infer: how the loop starts (manual, schedule, webhook, 
   "name": "review-until-green",
   "description": "One sentence on what the loop does.",
   "settings": {
-    "maxIterations": 5,
+    "maxNodeVisits": 5,
     "defaults": { "byHarness": { "codex": { "model": "gpt-6-luna", "effort": "low" } } }
   },
   "variables": { "topic": { "type": "string" } },
@@ -31,17 +31,17 @@ Ask only what you cannot infer: how the loop starts (manual, schedule, webhook, 
 }
 ```
 
-Rules: node and edge ids are bounded slugs and unique; every node has a `label`; an edge goes from a node's output port to another node (the target port is always `in`). Most nodes have one output port `out`; expression/LLM decisions use their declared `routes[].id`; classifier Choice uses option IDs, Noul uses the authored `true.id` and `false.id` ports, and Score uses the authored `bands[].id` ports; script nodes may add ports through `exitCodeRoutes`; exit nodes only have `loopBack` when configured. There are no error ports: failures are handled by the engine. Templates use Liquid over the context thread (for example `{{ vars.topic }}`, `{{ lastOutput.value }}`); expressions use JSONata.
+Rules: node and edge ids are bounded slugs and unique; every node has a `label`; an edge goes from a node's output port to another node (the target port is always `in`). Most nodes have one output port `out`; expression/LLM decisions use their declared `routes[].id`; classifier Choice uses option IDs, Noul uses the authored `true.id` and `false.id` ports, and Score uses the authored `bands[].id` ports; script nodes may add ports through `exitCodeRoutes`; exit nodes are terminal and have no output ports. There are no error ports: failures are handled by the engine. Templates use Liquid over the context thread (for example `{{ vars.topic }}`, `{{ lastOutput.value }}`); expressions use JSONata.
 
 ### Node catalog (the nine kinds)
 
 Decision configuration is a strict union on `kind`:
 
 - `expression`: `jsonata` and `routes: [{id,label}, ...]`. The single snippet must return a declared scalar string ID. A plain check becomes `vars.done ? "done" : "retry"`, with both routes declared. Non-string, missing or undeclared results fail; nothing is coerced.
-- `llm`: freeform Liquid `instructions`, readable `routes`, `harness: "codex"`, required `model` and `effort` selections (`{mode:"inherit"}` or `{mode:"explicit",value:...}`), plus optional provider `context`. Describe routing guidance in the instructions. Codex returns exactly `route`, `confidence` and `reasoning`; route must be declared. Confidence is finite in [0,1] and informational only, with no gate. Reasoning is stored as an excerpt of at most 2,048 characters. No repair or fallback occurs.
+- `llm`: freeform Liquid `instructions`, readable `routes`, `harness: "codex"`, required `model` and `effort` selections (`{mode:"inherit"}` or `{mode:"explicit",value:...}`), plus optional provider `context`. Describe routing guidance in the instructions. Codex returns exactly `route`, `confidence` and `reasoning`; route must be declared. Confidence is finite in [0,1] and informational only, with no confidence threshold. Reasoning is stored as an excerpt of at most 2,048 characters. No repair or fallback occurs.
 - `classifier`: explicit catalog `model`, Liquid `question`, `answer`, optional `context`, optional `minConfidence`, Noul-only optional `truthThreshold`, and optional `recordAlternatives`. Only classifiers use `answer.type`: Choice options have `{id,label,criteria}`; Noul has authored true/false sides with IDs, labels and criteria; Score has ordered anchors and contiguous bands with stable IDs. Noul probability equality at the truth threshold selects true; its chosen-side confidence is checked separately. Score preserves fractional indices without rounding. Select an enabled classifier supporting the requested primitive from `/classifier-models`.
 
-Expression/LLM routes contain only IDs and labels: 2-64 declarations, unique bounded slug IDs excluding `in`, and unique trimmed nonblank labels of at most 120 characters. Do not add classifier answer blocks, criteria or recordAlternatives to these branches. Nested `evaluation` and inactive settings are rejected.
+Expression/LLM routes contain IDs, labels and an optional `repeat` marker: 2-64 declarations, unique bounded slug IDs excluding `in` and `limit-reached`, and unique trimmed nonblank labels of at most 120 characters. Do not add classifier answer blocks, criteria or recordAlternatives to these branches. Nested `evaluation` and inactive settings are rejected.
 
 ```json
 {
@@ -56,11 +56,15 @@ Expression/LLM routes contain only IDs and labels: 2-64 declarations, unique bou
 
 Decision outputs are `{portId,provenance,observation}`. Read `lastOutput.value.observation.routeId` for an expression/LLM route and `lastOutput.value.observation.answer` for classifier evidence. `decision.made` has at most three factual diagnostics; fresh decisions have none. Questions/instructions still render against the full thread; provider context selectors do not restrict Liquid exposure.
 
-Exit predicates temporarily use `{when:"predicate",predicate,match,outcome}`. Expressions and Codex return booleans with `match:{type:"boolean",value:true}`; Codex uses Liquid `instructions`. Classifiers declare their primitive under `predicate.answer`, with Choice `match.optionIds`, Noul `match.value`, or Score `match.operator`/`value`. Classifier confidence and existing exit-only `match.minReportedConfidence` rejection remain nonmatches. Errors fail evaluation. Preserve existing criterion order, returns and loop-back; do not introduce a Continue node or the later decision-gate exit design.
+A decision becomes a gate when one route, Choice option, Noul side or Score band has `repeat: true`. At most one may repeat. Set required `maxPasses` (1?10,000) and optional `maxRunTimeSeconds` (positive integer seconds); neither is allowed without a repeat. Connect the repeat route back through work to the same gate, and connect the dedicated `limit-reached` port to an Exhausted exit. That reserved ID cannot be a route ID. The canvas direction does not mark a repeat.
+
+Passes start at 1. Read `gates.<nodeId>.passes` in JSONata. Evaluation happens first: a non-repeat choice wins even on the last pass. An allowed repeat increments once; a repeat at the limit takes `limit-reached` without incrementing. Run time is elapsed wall time from run start, including waits and pauses, checked after evaluation only on repeat. `decision.made.gate` records previous/current passes, configured limits, elapsed seconds and the stopping limit; `observation` retains the evaluator choice and `portId` is the actual routed port.
+
+Exits use `{outcome:"success"|"failure"|"exhausted", returns:"<JSONata>"|"none", destinations:[{kind:"caller"}]}` with defaults success, none and caller. No criteria, predicate, default or loop-back is accepted. Outcomes map to succeeded, failed and distinct exhausted statuses. Exhausted is terminal, means the graph gave up further repetition, and delivers the mapped value unchanged. Return work via `outputs.<workNodeId>.value`, because a gate replaces `lastOutput`.
 
 Current definitions/exports use format 4. Old exports and format-3 stores require the integrated cutover, which is not supplied by D1.
 
-Unavailable classifiers block publication at `config.model` (or `config.criteria.<index>.predicate.model` for exits). Registering an HTTP classifier with `secretRef` needs both `settings:write` and `secrets:write`; authenticated remote endpoints require HTTPS. Select `config.harness` on inference nodes (`codex` or installed `claude`); supported model/effort selections come from the live catalog and harness preflight. Claude currently uses the installed CLI's Claude.ai account, with installed-CLI, login and exact model checks. Loop `settings.defaults.byHarness` holds optional model and effort per harness; it does not choose the node's harness. Model and effort inherit within that harness when omitted. Decision/exit LLM evaluation and structured repair currently use their Codex ports.
+Unavailable classifiers block publication at `config.model`. Registering an HTTP classifier with `secretRef` needs both `settings:write` and `secrets:write`; authenticated remote endpoints require HTTPS. Select `config.harness` on inference nodes (`codex` or installed `claude`); supported model/effort selections come from the live catalog and harness preflight. Claude currently uses the installed CLI's Claude.ai account, with installed-CLI, login and exact model checks. Loop `settings.defaults.byHarness` holds optional model and effort per harness; it does not choose the node's harness. Model and effort inherit within that harness when omitted. LLM decision evaluation and structured repair currently use their Codex ports.
 
 | Kind        | Purpose                                          | Key config                                                                                                                                                                                                                                    |
 | ----------- | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -72,9 +76,9 @@ Unavailable classifiers block publication at `config.model` (or `config.criteria
 | `subloop`   | Runs another loop as a child                     | `loopRef.loopId`, `loopRef.version` (`latest` or a number), `input` mapping (`mode`: `inherit`, `project`, `fresh`), `output` mapping (`mode`: `result-only`, `merge`, `custom`)                                                              |
 | `wait`      | Parks the run                                    | `mode`: `input` (`prompt`, `inputSchema?`), `duration` (`seconds`), `until` (`timestamp`), `signal` (`name`); `timeoutSeconds?`, `onTimeout` (`continue`, `fail-run`)                                                                         |
 | `heartbeat` | Repeats a probe on an interval until a condition | `intervalSeconds`, `probe` (`http`, `script`, `signal-count`, `none`), and at least one of `until` (JSONata), `maxBeats`, `deadline`                                                                                                          |
-| `exit`      | Ends the run or loops back                       | `criteria` (`max-iterations`, `max-duration`, `predicate`, `last-output-matches`), `default` (`success` or `loop-back` with `loopBack.targetNodeId`), `return.mapping` (JSONata or `none`), `return.channels` (default caller)                |
+| `exit`      | Finishes the run                                 | `outcome`: success, failure or exhausted; `returns`: JSONata or none; `destinations`: caller (default), webhook, file, event or log                                                                                                           |
 
-Prefer the smallest graph that does the job. Give every loop that can go around again an exit criterion or rely on `settings.maxIterations`.
+Prefer the smallest graph that does the job. Use decision gates for intentional repeats. `settings.maxNodeVisits` is an independent safety cap against unintended cycles; exceeding it fails with `MAX_NODE_VISITS`. It is not a pass limit.
 
 ## 3. Validate and save as a draft
 

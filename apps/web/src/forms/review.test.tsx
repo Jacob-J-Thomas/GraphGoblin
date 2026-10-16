@@ -244,19 +244,26 @@ it('clears hidden parse errors when a nested union switches variant, including s
   const user = userEvent.setup();
   render(
     <StoredForm
-      schema={NodeConfigSchemas.exit}
-      initial={{ criteria: [{ when: 'last-output-matches', jsonSchema: { type: 'string' } }] }}
+      schema={z.object({
+        items: z.array(
+          z.discriminatedUnion('kind', [
+            z.object({ kind: z.literal('schema'), jsonSchema: z.unknown() }),
+            z.object({ kind: z.literal('count'), value: z.number() }),
+          ]),
+        ),
+      })}
+      initial={{ items: [{ kind: 'schema', jsonSchema: { type: 'string' } }] }}
     />,
   );
   setCode('Json schema', '{hidden');
   await user.selectOptions(
-    screen.getByLabelText('When'),
-    screen.getByRole('option', { name: 'max-iterations' }),
+    screen.getByLabelText('Kind'),
+    screen.getByRole('option', { name: 'count' }),
   );
   expect(fieldErrorIssues(useEditorStore.getState().fieldErrors)).toEqual([]);
   await user.selectOptions(
-    screen.getByLabelText('When'),
-    screen.getByRole('option', { name: 'last-output-matches' }),
+    screen.getByLabelText('Kind'),
+    screen.getByRole('option', { name: 'schema' }),
   );
   expect(getCode('Json schema')).not.toBe('{hidden');
 });

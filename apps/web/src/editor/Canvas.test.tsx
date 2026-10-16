@@ -100,13 +100,11 @@ describe('Canvas handlers', () => {
     expect(data('infer').issues).toEqual([]);
     const decide = flow().nodes!.find((n) => n.id === 'decide')!;
     expect(decide.data.ports).toEqual(['good', 'bad']);
-    const loopBack = flow().edges!.find((e) => e.id === 'e11')!;
-    expect(loopBack).toMatchObject({ label: 'loopBack', animated: true, sourceHandle: 'loopBack' });
     expect(flow().edgeTypes).toEqual({ orthogonal: OrthogonalEdge });
     expect(flow().edges!.find((e) => e.id === 'e1')!.label).toBeUndefined();
   });
 
-  it('uses routed geometry only for backward edges and deletes loopBack with its config', () => {
+  it('uses routed geometry for backward edges and preserves gate settings on edge deletion', () => {
     const definition = simpleLoop();
     geometry = geometryOf(routingInput(definition).nodes);
     store().load('L1', definition);
@@ -114,16 +112,16 @@ describe('Canvas handlers', () => {
     const back = flow().edges!.find((e) => e.id === 'return')!;
     expect(back).toMatchObject({
       type: 'orthogonal',
-      label: 'loopBack',
+      label: 'Repeat',
       animated: true,
-      ariaLabel: 'done loopBack to work',
+      ariaLabel: 'done Repeat (repeat) to work',
       data: { forward: false, suspended: false },
     });
     const { channel } = back.data as OrthogonalEdgeData;
     expect(channel.getSnapshot()).toMatchObject({ blocked: false });
     const previousPath = channel.getSnapshot();
     const measured = structuredClone(geometry.nodes);
-    measured[3]!.outputs['loopBack']!.y += 10;
+    measured[3]!.outputs['repeat']!.y += 10;
     geometry = geometryOf(measured);
     const previousEdges = flow().edges;
     view.rerender(<Canvas definition={store().definition!} issues={[]} />);
@@ -140,14 +138,15 @@ describe('Canvas handlers', () => {
     expect(flow().edges!.find((e) => e.id === 'start-work')).toBe(forward);
     fireEvent.keyDown(view.getByTestId('canvas'), { key: 'Delete' });
     expect(store().definition!.edges.some((e) => e.id === 'return')).toBe(false);
-    expect(store().definition!.nodes.find((n) => n.id === 'done')!.config).not.toHaveProperty(
-      'loopBack',
+    expect(store().definition!.nodes.find((n) => n.id === 'done')!.config).toHaveProperty(
+      'maxPasses',
+      3,
     );
     expect(store().past).toHaveLength(1);
     act(() => store().undo());
     expect(store().definition!.nodes.find((n) => n.id === 'done')!.config).toHaveProperty(
-      'loopBack.targetNodeId',
-      'work',
+      'maxPasses',
+      3,
     );
   });
 
@@ -590,7 +589,9 @@ describe('manual edge routes (#44)', () => {
     fireEvent.keyDown(lane(), { key: 'ArrowUp' });
     expect(route('return')![1]).toBe(220);
     expect(screen.getByText('Segment at y 220. It crosses a card.')).toBeInTheDocument();
-    expect(edge('return').ariaLabel).toBe('done loopBack to work, manual route, crosses a card');
+    expect(edge('return').ariaLabel).toBe(
+      'done Repeat (repeat) to work, manual route, crosses a card',
+    );
     expect(screen.getByText('Crosses a card')).toBeInTheDocument();
     // Shift moves five grid lines: out above the cards again.
     clock += 100;
@@ -601,7 +602,7 @@ describe('manual edge routes (#44)', () => {
     expect(route('return')![1]).toBe(88);
     // Arrows across the segment do nothing; the whole run of nudges is one step.
     fireEvent.keyDown(lane(), { key: 'ArrowLeft' });
-    expect(labels()).toEqual(['reroute done loopBack to work']);
+    expect(labels()).toEqual(['reroute done repeat to work']);
     act(() => store().undo());
     expect(route('return')).toBeUndefined();
   });
@@ -654,7 +655,12 @@ describe('manual edge routes (#44)', () => {
       definition.edges.find((e) => e.id === 'start-work')!.ui = { route: stored };
       geometry = {
         preparationMs: 0,
-        outputOrder: new Map(definition.nodes.map((node) => [node.id, ['out', 'loopBack']])),
+        outputOrder: new Map(
+          definition.nodes.map((node) => [
+            node.id,
+            node.id === 'done' ? ['repeat', 'finish', 'limit-reached'] : ['out'],
+          ]),
+        ),
         nodes: definition.nodes.map((n) => ({
           id: n.id,
           ...n.ui!,
@@ -662,7 +668,9 @@ describe('manual edge routes (#44)', () => {
           height: 122,
           outputs: {
             out: { x: n.ui!.x + 190, y: n.ui!.y + 61 },
-            loopBack: { x: n.ui!.x + 190, y: n.ui!.y + 61 },
+            repeat: { x: n.ui!.x + 190, y: n.ui!.y + 61 },
+            finish: { x: n.ui!.x + 190, y: n.ui!.y + 41 },
+            'limit-reached': { x: n.ui!.x + 190, y: n.ui!.y + 21 },
           },
           input: { x: n.ui!.x - 6, y: n.ui!.y + 61 },
         })),
@@ -763,7 +771,7 @@ describe('manual edge routes (#44)', () => {
     definition.edges.find((e) => e.id === 'return')!.ui = { route: [1116, 290, 268] };
     store().load('L1', definition);
     render(<Live />);
-    expect(edge('return').ariaLabel).toBe('done loopBack to work, manual route');
+    expect(edge('return').ariaLabel).toBe('done Repeat (repeat) to work, manual route');
     // Dragging `check` down onto the lane: the route is set aside while the card is over it.
     const check = flow().nodes!.find((n) => n.id === 'check')!;
     act(() => flow().onNodeDragStart!({} as never, check, [check]));
@@ -774,7 +782,7 @@ describe('manual edge routes (#44)', () => {
       ]),
     );
     expect(edge('return').ariaLabel).toBe(
-      'done loopBack to work, manual route set aside under a moving card',
+      'done Repeat (repeat) to work, manual route set aside under a moving card',
     );
     expect(edge('return').data).toMatchObject({ suspended: true });
     // Released there: the route is removed in the move's step and the edge routes automatically.
@@ -824,7 +832,7 @@ describe('manual edge routes (#44)', () => {
       ]),
     );
     expect(route('return')).toEqual([1116, 290, 268]);
-    expect(edge('return').ariaLabel).toBe('done loopBack to work, manual route');
+    expect(edge('return').ariaLabel).toBe('done Repeat (repeat) to work, manual route');
     expect(store().definition!.nodes.find((n) => n.id === 'check')!.ui).toEqual({ x: 600, y: 340 });
     expect(labels()).toEqual(['move check']);
   });
@@ -953,7 +961,7 @@ describe('manual edge routes (#44)', () => {
     clock += 100;
     fireEvent.keyDown(lane(), { key: 'ArrowDown' });
     expect(route('return')).not.toEqual(dragged);
-    expect(labels()).toEqual(['reroute done loopBack to work', 'reroute done loopBack to work']);
+    expect(labels()).toEqual(['reroute done repeat to work', 'reroute done repeat to work']);
     act(() => store().undo());
     expect(route('return')).toEqual(dragged);
     act(() => store().undo());

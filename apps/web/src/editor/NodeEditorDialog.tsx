@@ -20,7 +20,7 @@ import { createDisclosureIdentities, type DisclosureStates } from '../forms/disc
 import { SchemaForm } from '../forms/SchemaForm.js';
 import { FieldLabelsContext } from '../forms/fields/shared.js';
 import { VariableSuggestionsContext } from '../forms/fields/suggestions.js';
-import { JsonApplyReviewContext } from '../forms/fields/json.js';
+import { JsonApplyReviewContext, JsonCandidateContext } from '../forms/fields/json.js';
 import { removedAnswerConnections } from './decision-route-edges.js';
 import { nextChangeId } from '../forms/changes.js';
 import {
@@ -32,8 +32,9 @@ import {
 import { convertDecision, decisionFieldLabel } from './decision-authoring.js';
 import { DecisionKindPicker } from './DecisionKindPicker.js';
 import { DecisionAnswerPicker } from './DecisionAnswerPicker.js';
+import { EXIT_FIELD_OVERRIDES } from './ExitFields.js';
 
-import { exitPredicateVariantChange } from './ExitPredicateFields.js';
+import { hasRepeatRoute, cleanGateLimits } from './decision-gates.js';
 import { TriggerPresets } from './TriggerPresets.js';
 import { CatalogWarningsContext } from '../forms/fields/model.js';
 import { canvasFocusTarget } from './canvas-focus.js';
@@ -55,6 +56,8 @@ const DECISION_FIELD_ORDER = ['instructions', 'jsonata', 'routes', 'answer'] as 
 const DECISION_FIELD_LABELS = {
   minConfidence: 'Min confidence',
   truthThreshold: 'Noul true-probability threshold',
+  maxPasses: 'Maximum passes',
+  maxRunTimeSeconds: 'Maximum run time (seconds)',
 };
 const POLL_FIELD_LABELS = {
   dedupeKey: 'Whole-probe dedupe key (single-result only)',
@@ -151,7 +154,6 @@ export function NodeEditorDialog({
   const historyEpoch = useEditorStore((s) => s.historyEpoch);
   const bodyRef = useRef<HTMLElement>(null);
   const pendingHarnessFocusRef = useRef(false);
-  const pendingPredicateFocusRef = useRef<string | undefined>(undefined);
   const [epoch, setEpoch] = useState(0);
   const [review, setReview] = useState<{
     title: string;
@@ -204,15 +206,48 @@ export function NodeEditorDialog({
   const info = KIND_INFO[node.kind];
   const nodeIssues = useMemo(() => issues.filter((i) => i.nodeId === node.id), [issues, node.id]);
   const variables = useMemo(() => Object.keys(definition.variables ?? {}), [definition.variables]);
+  const lostGateLimits = () =>
+    ['maxPasses', 'maxRunTimeSeconds'].flatMap((path) => {
+      const held = fieldErrors[`node:${node.id}`]?.[path];
+      return record(node.config)[path] !== undefined || held
+        ? [
+            `${path === 'maxPasses' ? 'Maximum passes' : 'Maximum run time'}${held ? ' (unfinished text)' : ''}`,
+          ]
+        : [];
+    });
+  const normalizeJsonCandidate = useMemo(
+    () => (candidate: unknown) =>
+      node.kind === 'decision' && hasRepeatRoute(node.config)
+        ? cleanGateLimits(candidate)
+        : candidate,
+    [node.kind, node.config],
+  );
   const reviewJsonApply = useMemo(
-    () => (path: string, next: unknown) =>
-      node.kind === 'decision' && (path === 'answer' || path === 'routes')
-        ? removedAnswerConnections(definition.edges, node.id, next).map((edge) => ({
-            id: edge.id,
-            description: `${edge.from.port ?? '(no route)'} → ${edge.to.node}`,
-          }))
-        : [],
-    [definition.edges, node.id, node.kind],
+    () => (path: string, next: unknown) => {
+      if (node.kind !== 'decision' || (path !== 'answer' && path !== 'routes')) return [];
+      const removedGate =
+        hasRepeatRoute(node.config) && !hasRepeatRoute({ ...record(node.config), [path]: next });
+      return [
+        ...(removedGate
+          ? ['maxPasses', 'maxRunTimeSeconds'].flatMap((key) =>
+              record(node.config)[key] !== undefined || fieldErrors[`node:${node.id}`]?.[key]
+                ? [
+                    {
+                      id: key,
+                      description: `${key === 'maxPasses' ? 'Maximum passes' : 'Maximum run time'}${fieldErrors[`node:${node.id}`]?.[key] ? ' (unfinished text)' : ''}`,
+                      kind: 'field' as const,
+                    },
+                  ]
+                : [],
+            )
+          : []),
+        ...removedAnswerConnections(definition.edges, node.id, next).map((edge) => ({
+          id: edge.id,
+          description: `${edge.from.port ?? '(no route)'} → ${edge.to.node}`,
+        })),
+      ];
+    },
+    [definition.edges, node.id, node.kind, node.config, fieldErrors],
   );
   const catalogWarnings = useMemo(
     () =>
@@ -240,13 +275,6 @@ export function NodeEditorDialog({
   }, [nodeFocus, node.id]);
 
   useLayoutEffect(() => {
-    const path = pendingPredicateFocusRef.current;
-    if (path === undefined) return;
-    pendingPredicateFocusRef.current = undefined;
-    focusIssue(bodyRef.current, `config.${path}`);
-  }, [epoch]);
-
-  useLayoutEffect(() => {
     if (!pendingHarnessFocusRef.current) return;
     pendingHarnessFocusRef.current = false;
     bodyRef.current
@@ -261,6 +289,12 @@ export function NodeEditorDialog({
   };
 
   const handleConfigChange = (config: unknown, change: Parameters<typeof updateNode>[2]) => {
+    if (node.kind === 'decision' && hasRepeatRoute(node.config) && !hasRepeatRoute(config)) {
+      config = cleanGateLimits(config);
+      for (const path of ['maxPasses', 'maxRunTimeSeconds'])
+        setFieldError(`node:${node.id}`, path, undefined, undefined, change);
+      setEpoch((current) => current + 1);
+    }
     if (
       node.kind === 'inference' &&
       change?.path === 'harness' &&
@@ -291,15 +325,6 @@ export function NodeEditorDialog({
       updateNode(node.id, { config: normalized }, change);
       return;
     }
-    if (node.kind === 'exit') {
-      const normalized = exitPredicateVariantChange(config, node.config, change?.path);
-      if (normalized !== config) {
-        pendingPredicateFocusRef.current = change?.path;
-        setEpoch((current) => current + 1);
-      }
-      updateNode(node.id, { config: normalized }, change);
-      return;
-    }
     updateNode(node.id, { config }, change);
   };
 
@@ -307,6 +332,24 @@ export function NodeEditorDialog({
     if (node.kind !== 'decision') return apply(request.value);
     reviewReturnRef.current =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    if (request.type === 'gate') {
+      setReview({
+        config: node.config,
+        edges: definition.edges,
+        historyEpoch,
+        focusPath: request.path,
+        title: 'Remove repeat route?',
+        lost: [
+          ...lostGateLimits(),
+          ...definition.edges
+            .filter((e) => e.from.node === node.id && e.from.port === 'limit-reached')
+            .map((e) => `Connection Limit reached → ${e.to.node} (${e.id})`),
+        ],
+        incomplete: [],
+        apply: () => apply(request.value),
+      });
+      return;
+    }
     if (request.type === 'variant' && (request.path === '' || request.path === 'answer')) {
       const converted = convertDecision(
         node.config,
@@ -350,15 +393,29 @@ export function NodeEditorDialog({
     ) {
       const owned =
         useEditorStore.getState().decisionRoutes[node.id]?.rows[request.index!]?.edgeIds ?? [];
-      const edges = definition.edges.filter((edge) => owned.includes(edge.id));
-      if (edges.length) {
+      const rows =
+        request.path === 'routes'
+          ? record(node.config)['routes']
+          : record(record(node.config)['answer'])[
+              request.path === 'answer.options' ? 'options' : 'bands'
+            ];
+      const removedRepeat = Array.isArray(rows) && record(rows[request.index!])['repeat'] === true;
+      const edges = definition.edges.filter(
+        (edge) =>
+          owned.includes(edge.id) ||
+          (removedRepeat && edge.from.node === node.id && edge.from.port === 'limit-reached'),
+      );
+      if (edges.length || removedRepeat) {
         setReview({
           config: node.config,
           edges: definition.edges,
           historyEpoch,
           focusPath: request.path,
           title: 'Remove connected route?',
-          lost: edges.map((edge) => `Connection ${edge.from.port} → ${edge.to.node} (${edge.id})`),
+          lost: [
+            ...(removedRepeat ? lostGateLimits() : []),
+            ...edges.map((edge) => `Connection ${edge.from.port} → ${edge.to.node} (${edge.id})`),
+          ],
           incomplete: [],
           apply: () => apply(request.value),
         });
@@ -495,9 +552,14 @@ export function NodeEditorDialog({
           ) : null}
           {node.kind === 'exit' ? (
             <HelpText>
-              Exit predicates run in order. Evaluation produces a typed answer; Match declares which
-              answer exits the loop. A classifier or self-reported confidence gate rejection is
-              always a nonmatch, and the run inspector keeps the raw answer and gate separate.
+              Exits finish the run with Success, Failure or Exhausted. Returns is a JSONata
+              expression, or none. Destinations receive the returned value.
+            </HelpText>
+          ) : null}
+          {node.kind === 'decision' && hasRepeatRoute(node.config) ? (
+            <HelpText>
+              Limit reached is taken when a limit stops the chosen repeat route. Connect it to an
+              Exhausted exit. Evaluation happens first: a non-repeat choice wins on the last pass.
             </HelpText>
           ) : null}
           {activeReview ? (
@@ -514,8 +576,10 @@ export function NodeEditorDialog({
               ) : (
                 <>
                   <p>
-                    {activeReview.title === 'Remove connected route?'
-                      ? 'The route and listed connections will be removed together in one undoable edit.'
+                    {['Remove connected route?', 'Remove repeat route?'].includes(
+                      activeReview.title,
+                    )
+                      ? 'The repeat settings and listed connections will be removed together in one undoable edit.'
                       : 'Route IDs, labels and representable connections stay together. This is one undoable edit.'}
                   </p>
                   {activeReview.routing ? <p>{activeReview.routing}</p> : null}
@@ -583,33 +647,39 @@ export function NodeEditorDialog({
                 >
                   <VariableSuggestionsContext value={variables}>
                     <JsonApplyReviewContext value={reviewJsonApply}>
-                      <fieldset
-                        disabled={activeReview !== undefined}
-                        inert={activeReview !== undefined}
-                        className="grid min-w-0 gap-0 border-0 p-0"
-                      >
-                        <SchemaForm
-                          key={`${node.kind}:${epoch}:${historyEpoch}`}
-                          schema={NodeConfigSchemas[node.kind]}
-                          fieldOrder={node.kind === 'decision' ? DECISION_FIELD_ORDER : undefined}
-                          value={node.config}
-                          label={`${node.id} config`}
-                          controls={NODE_FIELD_CONTROLS}
-                          unionPickers={
-                            node.kind === 'decision' ? DECISION_UNION_PICKERS : undefined
-                          }
-                          fieldOverrides={
-                            node.kind === 'decision' ? DECISION_FIELD_OVERRIDES : undefined
-                          }
-                          problems={configProblems}
-                          disclosures={disclosures}
-                          onChange={handleConfigChange}
-                          parseErrors={fieldErrors[`node:${node.id}`]}
-                          onParseError={(path, error, reason, change) =>
-                            setFieldError(`node:${node.id}`, path, error, reason, change)
-                          }
-                        />
-                      </fieldset>
+                      <JsonCandidateContext value={normalizeJsonCandidate}>
+                        <fieldset
+                          disabled={activeReview !== undefined}
+                          inert={activeReview !== undefined}
+                          className="grid min-w-0 gap-0 border-0 p-0"
+                        >
+                          <SchemaForm
+                            key={`${node.kind}:${epoch}:${historyEpoch}`}
+                            schema={NodeConfigSchemas[node.kind]}
+                            fieldOrder={node.kind === 'decision' ? DECISION_FIELD_ORDER : undefined}
+                            value={node.config}
+                            label={`${node.id} config`}
+                            controls={NODE_FIELD_CONTROLS}
+                            unionPickers={
+                              node.kind === 'decision' ? DECISION_UNION_PICKERS : undefined
+                            }
+                            fieldOverrides={
+                              node.kind === 'decision'
+                                ? DECISION_FIELD_OVERRIDES
+                                : node.kind === 'exit'
+                                  ? EXIT_FIELD_OVERRIDES
+                                  : undefined
+                            }
+                            problems={configProblems}
+                            disclosures={disclosures}
+                            onChange={handleConfigChange}
+                            parseErrors={fieldErrors[`node:${node.id}`]}
+                            onParseError={(path, error, reason, change) =>
+                              setFieldError(`node:${node.id}`, path, error, reason, change)
+                            }
+                          />
+                        </fieldset>
+                      </JsonCandidateContext>
                     </JsonApplyReviewContext>
                   </VariableSuggestionsContext>
                 </FieldLabelsContext>
@@ -617,14 +687,7 @@ export function NodeEditorDialog({
             </ReorderablePathsContext>
           </FormEditReviewContext>
         </div>
-        <NodeConnections
-          node={node}
-          definition={definition}
-          onChange={(port) => {
-            // Connecting or removing an exit's loop-back also sets or clears its config.
-            if (port === 'loopBack') setEpoch((e) => e + 1);
-          }}
-        />
+        <NodeConnections node={node} definition={definition} />
       </section>
     </Dialog>
   );

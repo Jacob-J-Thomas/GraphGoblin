@@ -118,17 +118,17 @@ describe('EditorPage undo and redo', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Done' }));
 
     const settings = store().definition!.settings;
-    const iterations = screen.getByLabelText('Max iterations');
+    const iterations = screen.getByLabelText('Maximum node visits');
     expect(iterations).toHaveValue(10);
     await user.clear(iterations);
     await user.type(iterations, '4');
-    expect(store().definition!.settings).toMatchObject({ maxIterations: 4 });
+    expect(store().definition!.settings).toMatchObject({ maxNodeVisits: 4 });
     act(() => screen.getByRole('heading', { name: 'Loop settings' }).focus());
     await user.keyboard(UNDO);
     expect(store().definition!.settings).toBe(settings);
-    expect(screen.getByLabelText('Max iterations')).toHaveValue(10);
+    expect(screen.getByLabelText('Maximum node visits')).toHaveValue(10);
     await user.keyboard(REDO);
-    expect(screen.getByLabelText('Max iterations')).toHaveValue(4);
+    expect(screen.getByLabelText('Maximum node visits')).toHaveValue(4);
   });
 
   it('closes the node editor when an undo removes its node, and returns focus to the canvas', async () => {

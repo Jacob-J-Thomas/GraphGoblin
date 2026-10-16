@@ -1,5 +1,7 @@
 # ADR-0015 - Visit cap, draft conflicts, and the first API key
 
+Supersession: [ADR-0036](ADR-0036-decision-gates-terminal-exits.md) replaces this ADR's exit predicates, loop-back and iteration-limit rules where applicable. Historical text below is retained.
+
 Date: 2026-10-03. Status: Accepted. Answers open questions 16, 17, and 18 raised by the WP-D2 adversarial QA pass (defects D28, D26, D27 in `qa/2026-10-03-wp-d2.md`).
 
 ## 1. Unbounded cycles: `maxIterations` caps visits per node (question 16, D28)

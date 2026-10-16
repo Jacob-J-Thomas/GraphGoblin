@@ -81,22 +81,7 @@ describe('restoring a set-aside copy', () => {
           id: 'done',
           kind: 'exit',
           label: 'Done',
-          config: {
-            criteria: [
-              {
-                when: 'predicate',
-                match: {
-                  type: 'boolean',
-                  value: false,
-                },
-                outcome: 'success',
-                predicate: {
-                  kind: 'expression',
-                  jsonata: '(',
-                },
-              },
-            ],
-          },
+          config: { returns: '(' },
         },
       ],
     };

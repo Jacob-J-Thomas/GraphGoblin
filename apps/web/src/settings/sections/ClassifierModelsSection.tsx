@@ -245,7 +245,7 @@ export function ClassifierModelsSection() {
                           messages={CLASSIFIER_TOGGLE_MESSAGES}
                           description={
                             entry.source === 'builtin'
-                              ? 'Disabling Jev also stops Exit predicates that use Jev.'
+                              ? 'Disabling Jev also stops classifier decisions that use Jev.'
                               : undefined
                           }
                           onToggle={async (enabled) => {

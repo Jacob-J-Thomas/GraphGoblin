@@ -14,6 +14,7 @@ import {
   Textarea,
 } from '../components/ui/index.js';
 import { SchemaForm } from '../forms/SchemaForm.js';
+import { FieldLabelsContext } from '../forms/fields/shared.js';
 import { CatalogWarningsContext } from '../forms/fields/model.js';
 import { LOOP_FIELD_CONTROLS } from './field-controls.js';
 import type { EditorIssue } from './model.js';
@@ -68,22 +69,28 @@ export function LoopSettingsPanel({
         />
       </FieldGroup>
       <h3 className="mt-2 text-xs font-semibold tracking-wide text-muted uppercase">Settings</h3>
+      <HelpText>
+        Maximum node visits is a safety cap against unintended cycles. Use a decision gate's maximum
+        passes for an intentional repeat.
+      </HelpText>
       <CatalogWarningsContext
         value={issues
           .filter((issue) => !issue.nodeId && issue.path?.startsWith('settings.'))
           .map((issue) => ({ ...issue, path: issue.path?.slice('settings.'.length) }))}
       >
-        <SchemaForm
-          schema={LoopSettingsSchema}
-          controls={LOOP_FIELD_CONTROLS}
-          value={definition.settings ?? {}}
-          label="Loop settings form"
-          onChange={updateSettings}
-          parseErrors={fieldErrors['settings']}
-          onParseError={(path, error, reason, change) =>
-            setFieldError('settings', path, error, reason, change)
-          }
-        />
+        <FieldLabelsContext value={{ maxNodeVisits: 'Maximum node visits' }}>
+          <SchemaForm
+            schema={LoopSettingsSchema}
+            controls={LOOP_FIELD_CONTROLS}
+            value={definition.settings ?? {}}
+            label="Loop settings form"
+            onChange={updateSettings}
+            parseErrors={fieldErrors['settings']}
+            onParseError={(path, error, reason, change) =>
+              setFieldError('settings', path, error, reason, change)
+            }
+          />
+        </FieldLabelsContext>
       </CatalogWarningsContext>
       <div className="mt-2 grid gap-1">
         <h3 className="text-xs font-semibold tracking-wide text-muted uppercase">Variables</h3>

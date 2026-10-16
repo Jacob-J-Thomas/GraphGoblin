@@ -98,6 +98,27 @@ describe('SseParser', () => {
 });
 
 describe('subscribeRunEvents', () => {
+  it('accepts exhausted completion and closes without reconnecting', async () => {
+    const finished: RunEvent = {
+      runId,
+      seq: 1,
+      ts: FIXTURE_TS,
+      type: 'run.finished',
+      status: 'exhausted',
+      outcome: 'exhausted',
+    };
+    const { fetch, urls } = scripted([stream([frame(finished)])]);
+    const seen: RunEvent[] = [];
+    await subscribeRunEvents({
+      client: createGraphGoblinClient({ baseUrl: 'http://api', fetch }),
+      runId,
+      onEvent: (e) => {
+        seen.push(e);
+      },
+    }).done;
+    expect(seen).toEqual([finished]);
+    expect(urls).toHaveLength(1);
+  });
   it('delivers validated events in order, skips replays, and stops after a terminal event', async () => {
     const { fetch, urls, requests } = scripted([
       stream([

@@ -4,18 +4,12 @@ import {
   type ClassifierAnswer,
   type EvaluationObservation,
   type EvaluationProvenance,
-  type ExitCriterionEvaluation,
   type LoopDefinition,
   type RunEvent,
 } from '@graphgoblin/contracts';
 import { Card } from '../../components/ui/index.js';
 import { Fragment } from 'react';
-import {
-  answerDescription,
-  describeEvent,
-  observationDescription,
-  strategyName,
-} from '../projections.js';
+import { answerDescription, describeEvent, observationDescription } from '../projections.js';
 
 function record(value: unknown): Record<string, unknown> {
   return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : {};
@@ -87,26 +81,12 @@ function Identity({ value }: { value: EvaluationProvenance }) {
     </>
   );
 }
-function truthThreshold(
-  definition: LoopDefinition | undefined,
-  nodeId: string | undefined,
-  index?: number,
-) {
+function truthThreshold(definition: LoopDefinition | undefined, nodeId: string | undefined) {
   const node = definition?.nodes.find((n) => n.id === nodeId);
-  const config =
-    node?.kind === 'decision'
-      ? node.config
-      : node?.kind === 'exit' && index !== undefined
-        ? node.config.criteria[index]
-        : undefined;
-  const predicate =
-    config && 'when' in config
-      ? config.when === 'predicate'
-        ? config.predicate
-        : undefined
-      : config;
-  return predicate?.kind === 'classifier' && predicate.answer.type === 'noul'
-    ? (predicate.truthThreshold ?? 0.5)
+  return node?.kind === 'decision' &&
+    node.config.kind === 'classifier' &&
+    node.config.answer.type === 'noul'
+    ? (node.config.truthThreshold ?? 0.5)
     : undefined;
 }
 function ClassifierDetails({ answer, prefix = '' }: { answer: ClassifierAnswer; prefix?: string }) {
@@ -225,106 +205,6 @@ function ObservationDetails({
     </>
   );
 }
-function matchDescription(
-  criterion: Extract<ExitCriterionEvaluation, { observation: EvaluationObservation }>,
-) {
-  const match = criterion.match;
-  switch (match.type) {
-    case 'boolean':
-      return `Boolean is ${match.value}`;
-    case 'noul':
-      return `Noul is ${match.value}`;
-    case 'choice':
-      return `Choice option ID is one of ${match.optionIds.join(', ')}`;
-    case 'score':
-      return `Score ${{ lt: '<', lte: '≤', eq: '=', gte: '≥', gt: '>' }[match.operator]} ${match.value}`;
-  }
-}
-function ExitCriterionDetail({
-  criterion,
-  definition,
-  nodeId,
-}: {
-  criterion: ExitCriterionEvaluation;
-  definition: LoopDefinition | undefined;
-  nodeId: string;
-}) {
-  return (
-    <li>
-      <p>
-        Criterion {criterion.index + 1} ({strategyName(criterion.strategy)}):{' '}
-        {criterion.status === 'skipped'
-          ? `skipped: ${criterion.reason.message}`
-          : criterion.status === 'error'
-            ? `error: ${criterion.diagnostic.message}`
-            : `${criterion.status === 'matched' ? 'matched' : 'did not match'}${'observation' in criterion ? '' : `; predicate ${criterion.holds === null ? 'unknown (not recorded)' : criterion.holds}`}`}
-      </p>
-      <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
-        {criterion.status === 'error' ? (
-          <>
-            <dt>Diagnostic</dt>
-            <dd>
-              <code>{criterion.diagnostic.code}</code>
-            </dd>
-          </>
-        ) : null}
-        {'provenance' in criterion && criterion.provenance ? (
-          <Identity value={criterion.provenance} />
-        ) : null}
-        {'observation' in criterion ? (
-          <>
-            <dt>Raw answer</dt>
-            <dd>{observationDescription(criterion.observation)}</dd>
-            <dt>Match rule</dt>
-            <dd>{matchDescription(criterion)}</dd>
-            <dt>
-              {criterion.provenance.kind === 'llm' ? 'Raw answer acceptance' : 'Acceptance gate'}
-            </dt>
-            <dd>
-              {criterion.acceptance === null
-                ? 'Unknown (not recorded)'
-                : criterion.acceptance.status === 'accepted'
-                  ? 'Accepted'
-                  : `Rejected below configured classifier minimum ${criterion.acceptance.minConfidence}`}
-            </dd>
-            {criterion.configuredMinConfidence !== undefined ? (
-              <>
-                <dt>Configured classifier minimum</dt>
-                <dd>{criterion.configuredMinConfidence}</dd>
-              </>
-            ) : null}
-            <ObservationDetails
-              observation={criterion.observation}
-              provenance={criterion.provenance}
-              threshold={truthThreshold(definition, nodeId, criterion.index)}
-            />
-            {criterion.rejection ? (
-              <>
-                <dt>Confidence gate</dt>
-                <dd>
-                  {criterion.rejection.kind === 'classifier-confidence'
-                    ? 'Classifier confidence'
-                    : 'Self-reported LLM confidence'}{' '}
-                  gate rejected{' '}
-                  {criterion.rejection.confidence === null
-                    ? 'confidence was not reported; required minimum'
-                    : `${criterion.rejection.confidence}${criterion.rejection.kind === 'llm-reported-confidence' ? ' (reported by Codex)' : ''} below`}{' '}
-                  {criterion.rejection.minimum}; treated as a nonmatch.
-                </dd>
-              </>
-            ) : null}
-          </>
-        ) : null}
-      </dl>
-      {'observation' in criterion && criterion.observation.kind === 'classifier' ? (
-        <ClassifierDetails
-          answer={criterion.observation.answer}
-          prefix={`Criterion ${criterion.index + 1} `}
-        />
-      ) : null}
-    </li>
-  );
-}
 /** Existing evaluation inspection, projected from evaluator-specific factual observations. */
 export function EvaluationDetails({
   event,
@@ -343,16 +223,10 @@ export function EvaluationDetails({
     <Card title="Evaluation details">
       <p>{describeEvent(event)}</p>
       {event.type === 'exit.evaluated' ? (
-        <ol aria-label="Exit criteria" className="grid gap-2 text-sm">
-          {event.criteria.map((criterion) => (
-            <ExitCriterionDetail
-              key={criterion.index}
-              criterion={criterion}
-              definition={definition}
-              nodeId={event.nodeId}
-            />
-          ))}
-        </ol>
+        <p>
+          Exit outcome: {event.outcome}. This exit is terminal. See the run result for the returned
+          value.
+        </p>
       ) : event.type === 'decision.made' ? (
         <>
           <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
@@ -379,16 +253,49 @@ export function EvaluationDetails({
                     : observationDescription(event.observation)}
             </dd>
             <dt>
-              {event.observation.kind === 'classifier' && event.observation.answer.type === 'score'
-                ? 'Band port'
+              {event.portId === 'limit-reached'
+                ? 'Selected port'
                 : event.observation.kind === 'classifier' &&
-                    event.observation.answer.type === 'noul'
-                  ? 'Side port'
-                  : 'Selected port'}
+                    event.observation.answer.type === 'score'
+                  ? 'Band port'
+                  : event.observation.kind === 'classifier' &&
+                      event.observation.answer.type === 'noul'
+                    ? 'Side port'
+                    : 'Selected port'}
             </dt>
             <dd>
               <code>{event.portId}</code>
             </dd>
+            {event.gate ? (
+              <>
+                <dt>Previous passes</dt>
+                <dd>{event.gate.previousPasses}</dd>
+                <dt>Current passes</dt>
+                <dd>{event.gate.passes}</dd>
+                <dt>Repeat route</dt>
+                <dd>
+                  <code>{event.gate.repeatRouteId}</code>
+                </dd>
+                <dt>Maximum passes</dt>
+                <dd>{event.gate.maxPasses}</dd>
+                <dt>Maximum run time</dt>
+                <dd>
+                  {event.gate.maxRunTimeSeconds === undefined
+                    ? 'Not configured'
+                    : `${event.gate.maxRunTimeSeconds} seconds`}
+                </dd>
+                <dt>Elapsed from run start</dt>
+                <dd>{event.gate.elapsedSeconds} seconds</dd>
+                <dt>Limit stopping repeat</dt>
+                <dd>
+                  {event.gate.limit === 'max-passes'
+                    ? 'Maximum passes'
+                    : event.gate.limit === 'max-run-time'
+                      ? 'Maximum run time'
+                      : 'None'}
+                </dd>
+              </>
+            ) : null}
             <Identity value={event.provenance} />
             <DecisionAcceptance
               event={event}

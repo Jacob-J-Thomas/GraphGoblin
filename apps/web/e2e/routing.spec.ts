@@ -131,8 +131,7 @@ for (const theme of ['dark', 'light']) {
   }) => {
     // Keep deletion schema-valid so the cleared config can also be read back from the API.
     const definition = simpleLoop();
-    const done = definition.nodes.find((node) => node.id === 'done')!;
-    if (done.kind === 'exit') done.config.default = 'success';
+
     const loopId = await openGraph(page, request, definition, theme);
     const back = edge(page, 'return');
     const path = back.locator('.react-flow__edge-path');
@@ -167,8 +166,9 @@ for (const theme of ['dark', 'light']) {
     const saved = (await (await request.get(`/loops/${loopId}`)).json()) as {
       draft: { definition: LoopDefinitionInput };
     };
-    expect(saved.draft.definition.nodes.find((n) => n.id === 'done')!.config).not.toHaveProperty(
-      'loopBack',
+    expect(saved.draft.definition.nodes.find((n) => n.id === 'done')!.config).toHaveProperty(
+      'maxPasses',
+      3,
     );
     await page.keyboard.press('Control+z');
     await expect(back).toHaveCount(1);

@@ -322,7 +322,7 @@ describe('SchemaForm', () => {
       { operations: [{ op: 'set', path: '/vars/x', value: { kind: 'expression', jsonata: '' } }] },
       'Jsonata',
     ],
-    [NodeConfigSchemas.exit, { return: { mapping: '', channels: [{ kind: 'caller' }] } }, 'Value'],
+    [NodeConfigSchemas.exit, { returns: '' }, 'Value'],
   ] as const)(
     'keeps required mapping and decision expression errors',
     async (schema, initial, label) => {
@@ -594,7 +594,7 @@ describe('SchemaForm', () => {
       [NodeConfigSchemas.heartbeat, { intervalSeconds: 5 }],
       [
         NodeConfigSchemas.exit,
-        { criteria: [{ when: 'predicate', strategy: 'expression', outcome: 'success' }] },
+        { outcome: 'success', returns: 'none', destinations: [{ kind: 'caller' }] },
       ],
       [LoopSettingsSchema, {}],
       [z.object({ when: z.date(), tags: z.array(z.enum(['a', 'b'])).optional() }), {}],
@@ -609,13 +609,13 @@ describe('SchemaForm', () => {
   it('clears a field that had an initial value instead of restoring it', async () => {
     const user = userEvent.setup();
     const spy = vi.fn();
-    render(<Harness schema={LoopSettingsSchema} initial={{ maxIterations: 3 }} spy={spy} />);
-    const input = screen.getByLabelText('Max iterations');
+    render(<Harness schema={LoopSettingsSchema} initial={{ maxNodeVisits: 3 }} spy={spy} />);
+    const input = screen.getByLabelText('Max node visits');
     await user.clear(input);
     expect(input).toHaveValue(null);
-    expect(last(spy)).not.toHaveProperty('maxIterations');
+    expect(last(spy)).not.toHaveProperty('maxNodeVisits');
     await user.type(input, '4');
-    expect(last(spy)['maxIterations']).toBe(4);
+    expect(last(spy)['maxNodeVisits']).toBe(4);
   });
 
   it('disables adding past an array maximum and keeps non-object initial values', async () => {

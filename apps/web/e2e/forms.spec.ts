@@ -40,7 +40,7 @@ async function draft(request: APIRequestContext, id: string) {
             args?: string[];
             env?: Record<string, string>;
             until?: string;
-            criteria?: { jsonSchema?: unknown }[];
+            operations?: { jsonSchema?: unknown }[];
           };
         }[];
         variables?: unknown;
@@ -155,20 +155,38 @@ test('unparsed collection rows follow removal and rename, and stop blocking Publ
     data: {
       definition: {
         ...definition,
-        variables: { first: { type: 'string' }, second: { type: 'number' } },
-        nodes: definition.nodes.map((node) =>
-          node.id === 'done'
-            ? {
-                ...node,
-                config: {
-                  criteria: [
-                    { when: 'last-output-matches', jsonSchema: { type: 'string' } },
-                    { when: 'last-output-matches', jsonSchema: { type: 'number' } },
-                  ],
-                },
-              }
-            : node,
-        ),
+        variables: { first: { type: 'string' }, second: { type: 'number' }, coerced: {} },
+        nodes: [
+          ...definition.nodes.map((node) =>
+            node.id === 'done'
+              ? {
+                  ...node,
+                  kind: 'mutate',
+                  config: {
+                    operations: [
+                      {
+                        op: 'coerce',
+                        source: '/trigger/payload',
+                        target: '/vars/coerced',
+                        jsonSchema: { type: 'string' },
+                      },
+                      {
+                        op: 'coerce',
+                        source: '/trigger/payload',
+                        target: '/vars/coerced',
+                        jsonSchema: { type: 'number' },
+                      },
+                    ],
+                  },
+                }
+              : node,
+          ),
+          { id: 'finish', kind: 'exit', label: 'Finish', config: {} },
+        ],
+        edges: [
+          ...definition.edges,
+          { id: 'finish-edge', from: { node: 'done', port: 'out' }, to: { node: 'finish' } },
+        ],
       },
     },
   });
@@ -176,11 +194,13 @@ test('unparsed collection rows follow removal and rename, and stop blocking Publ
   const id = ((await created.json()) as { loop: { id: string } }).loop.id;
   await page.goto(`/app/loops/${id}/edit`);
   await openNode(page, 'done');
-  const criteria = page.getByRole('group', { name: 'Criteria', exact: true });
-  const first = criteria.getByRole('group', { name: 'Criteria 1', exact: true });
-  await first.locator('.cm-content').fill('{broken');
+  const criteria = page.getByRole('group', { name: 'Operations', exact: true });
+  const first = criteria.getByRole('group', { name: 'Operations 1', exact: true });
+  await first.getByRole('button', { name: /^Operations 1/ }).click();
+  await criteria.getByRole('button', { name: /^Operations 2/ }).click();
+  await first.locator('[data-field$="jsonSchema"] .cm-content').fill('{broken');
   await expect(first.getByText(/Invalid JSON/)).toBeVisible();
-  await criteria.getByRole('button', { name: 'Remove criteria 1' }).click();
+  await criteria.getByRole('button', { name: 'Remove operations 1' }).click();
   await expect(criteria.getByText(/Invalid JSON/)).toHaveCount(0);
   await expect(page.getByLabel('Json schema', { exact: true })).toContainText('number');
   await closeNode(page);
@@ -200,12 +220,12 @@ test('unparsed collection rows follow removal and rename, and stop blocking Publ
   expect(await saved.json()).toMatchObject({
     current: {
       definition: {
-        variables: {},
+        variables: { coerced: {} },
         nodes: expect.arrayContaining([
           expect.objectContaining({
             id: 'done',
             config: expect.objectContaining({
-              criteria: [expect.objectContaining({ jsonSchema: { type: 'number' } })],
+              operations: [expect.objectContaining({ jsonSchema: { type: 'number' } })],
             }),
           }),
         ]),

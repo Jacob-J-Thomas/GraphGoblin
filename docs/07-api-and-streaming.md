@@ -96,10 +96,10 @@ schemas. The current definition and export formats are version 4. Historical mig
 JSON event pages and SSE carry the same strict `RunEvent` contract, also advertised in
 `/openapi.json`. Both preserve execution evidence before the run's terminal event.
 
-| Event            | Evidence                                                                                                                                                                                                                                                                                                                                                                                               |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `exit.evaluated` | Node, iteration, hard ceiling, ordered criteria with zero-based indices, strategy, matched/not-matched verdict, predicate boolean and confidence, resolved Codex model or Jev classifier, bounded Codex reasoning, skipped reasons and safe errors. `result` names completion and its matching criterion, loop-back and its cause, a configured or hard limit and its value, failure, or cancellation. |
-| `decision.made`  | Stable `portId`, resolved `provenance`, evaluator-specific `observation`, and at most three factual `diagnostics`. Fresh route/classifier decisions have empty diagnostics.                                                                                                                                                                                                                            |
+| Event            | Evidence                                                                                                                                                                                                                                                                                             |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `exit.evaluated` | Terminal `{nodeId,outcome}`; no criteria or routing result. Appended atomically with completion.                                                                                                                                                                                                     |
+| `decision.made`  | Stable `portId`, resolved `provenance`, evaluator-specific `observation`, and at most three factual `diagnostics`. Fresh route/classifier decisions have empty diagnostics. Gates additionally record `gate` with previous/current passes, repeat route, limits, elapsed seconds and stopping limit. |
 
 Skip messages and failure diagnostics use fixed summaries and allowlisted codes; provider
 error bodies, credential values, and raw response payloads are excluded. Codex reasoning
@@ -274,11 +274,11 @@ PUT requires strict custom HTTP metadata, including provider `http`; it rejects 
 
 Decision events and output now use `{answer:{type:"choice",optionId,confidence,probabilities},portId,provenance:{kind,provider,classifierId,model,effort}}`. Every key is present; inapplicable or unknown historical values are null. The event additionally has `diagnostics`, limited to three entries for preserved pre-cutover skips. Fresh emissions undergo strict per-kind validation. This is a breaking contract; regenerate clients and use the offline upgrade tool for old exports and stored records.
 
-Decision and exit-predicate failures never retain provider raw answers, messages, stacks or secret-bearing error bodies. Decisions use typed `EVALUATION_*` failures with explicit resumability; exit predicates retain their existing failure contract pending #99. Classifier probabilities must cover exactly the submitted stable option IDs. Unknown choices and malformed confidence are invalid responses, not reasons to try another evaluator. Persisted diagnostics contain only fixed safe text and validated identifiers/numbers.
+Decision evaluation failures never retain provider raw answers, messages, stacks or secret-bearing error bodies. Decisions use typed `EVALUATION_*` failures with explicit resumability. Exits only evaluate return mappings. Classifier probabilities must cover exactly the submitted stable option IDs. Unknown choices and malformed confidence are invalid responses, not reasons to try another evaluator. Persisted diagnostics contain only fixed safe text and validated identifiers/numbers.
 
 ## Validation agreement (Decided, WP-D2)
 
-Classifier validation joins the same issue collection for create, import, draft save, validate and publish. It applies to `config.kind: classifier` at `config.model`, requiring the declared Choice, Noul or Score capability, and to exit classifier predicates at `config.criteria.<index>.predicate.model`. Expression source issues identify `config.jsonata`; LLM issues identify `config.instructions`, `config.model.value` or `config.effort.value`. Unknown models and unsupported capability are admission errors. Disabled, missing/blank-secret and unreadable-secret selections remain visible as diagnostics and block publication. Runtime rechecks the chosen entry and fails without fallback if it is unavailable.
+Classifier validation joins the same issue collection for create, import, draft save, validate and publish. It applies to `config.kind: classifier` at `config.model`, requiring the declared Choice, Noul or Score capability, without an exit predicate path. Expression source issues identify `config.jsonata`; LLM issues identify `config.instructions`, `config.model.value` or `config.effort.value`. Unknown models and unsupported capability are admission errors. Disabled, missing/blank-secret and unreadable-secret selections remain visible as diagnostics and block publication. Runtime rechecks the chosen entry and fails without fallback if it is unavailable.
 
 `POST /loops`, `POST /loops/import`, `PUT /loops/{id}/draft`, `POST /loops/{id}/validate`, and `POST /loops/{id}/publish` report the same issue list: the `domain` rules (`validateLoop`, which includes Liquid and JSONata syntax checks), trigger checks such as cron syntax, and subloop references, which must name a loop of the same owner with a published version (`SUBLOOP_NOT_FOUND`, `SUBLOOP_NOT_PUBLISHED`; a loop may reference itself). `publishable` from validate is true exactly when publish would accept the draft. The editor runs the `domain` rules locally and adds the API-only issues from validate.
 
@@ -287,8 +287,6 @@ The API validates explicit and inherited model/effort selections within the sele
 Known limitation: loop-default model warnings always check the Codex catalog, the only supported
 inference harness. Revisit this check when a second harness exists so a model inherited by nodes
 using different harnesses can be checked against each relevant catalog.
-
-Exit predicates whose strategy is `jev` check built-in Jev in the same five admission endpoints. They report `CLASSIFIER_MODEL_DISABLED`, `CLASSIFIER_SECRET_MISSING`, or `CLASSIFIER_SECRET_UNREADABLE` warnings at node-relative `config.criteria.<index>.strategy`, naming the exit, model, and Settings remedy. These warnings block publication, as they do for other selected evaluators. If an already published predicate becomes unavailable and is evaluated, the exit fails with `DECIDER_UNAVAILABLE`. Codex exit predicates also validate their effective inherited model/effort and block publication when the selected model or harness is unavailable; the exit evaluation contract itself is unchanged.
 
 ## Draft conflicts (Decided, WP-F2, ADR-0015)
 
@@ -342,3 +340,13 @@ these identities during admission; authored run input cannot assert them.
 Repository recipes remain unregistered in this foundation release.
 
 Ordinary copied drafts use the ordinary engine resume behavior. The API installs no template admission, execution, resume or reporting policy. Dormant configured runtime modules await deletion in the next #165 split.
+
+## Gate admission and terminal outcomes (#164 E1)
+
+Create, import, draft save, validate and publish share the gate and terminal-exit schemas and graph checks. A missing `maxPasses` points at `nodes.<index>.config.maxPasses`; node-relative issues use `config.maxPasses`. Multiple repeat markers identify the extra `config.routes.<index>.repeat`, `config.answer.options.<index>.repeat`, Noul side or Score band path. A noncyclic repeat is `REPEAT_ROUTE_NOT_CYCLIC`; a missing Limit reached connection is `PORT_UNCONNECTED` at `config.maxPasses`. Reserve `limit-reached` in all authored route IDs.
+
+Exits are terminal: `{outcome, returns, destinations}`. `outcome` is `success` (default), `failure` or `exhausted`; `returns` is a JSONata expression or `none` (default); `destinations` defaults to `[{kind:"caller"}]` and supports caller, webhook, file, event and log. Exits have no criteria, predicate, default routing or loop-back, and no output ports.
+
+Success finishes `succeeded`, Failure finishes `failed`, and Exhausted finishes the distinct terminal status `exhausted`. Exhausted means the authored graph gave up further repetition; normally a gate's Limit reached output leads here. It is an outcome, not a resumable node failure. Every outcome evaluates the same return expression and delivers its value unchanged; Exhausted adds no wrapper or implicit last output. Use `outputs.<workNodeId>.value` when returning work output, because the preceding gate replaces `lastOutput`.
+
+JSON event pages, SSE, generated clients and MCP use the same `exhausted` status. SSE and MCP waiting stop on it. `run.finished` carries status/outcome; `run.result` carries the return value, including on Failure or Exhausted. A failed exit outcome has no resumable failure object. See [ADR-0036](decisions/ADR-0036-decision-gates-terminal-exits.md).

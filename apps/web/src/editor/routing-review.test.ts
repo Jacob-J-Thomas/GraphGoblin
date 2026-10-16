@@ -268,12 +268,13 @@ describe('routing review regressions', () => {
             122,
             6,
           );
-          n.outputs = { loopBack: { x: n.x + 190, y: n.y + 61 } };
+          n.outputs = { repeat: { x: n.x + 190, y: n.y + 61 } };
           return n;
         });
         const edges = nodes.slice(1).map((n, i) => ({
           ...connection(n.id, nodes[Math.floor(random() * (i + 1))]!.id, 'e' + i),
-          port: 'loopBack',
+          port: 'repeat',
+          repeat: true,
         }));
         const plan = createRoutingPlan(nodes, edges);
         for (const route of plan.routes.values()) {
@@ -311,14 +312,14 @@ describe('routing review regressions', () => {
         box('wall', 400, 0, 100, 200),
       ];
       for (const n of nodes) {
-        n.outputs = { loopBack: n.outputs['out']! };
+        n.outputs = { repeat: n.outputs['out']! };
         if (direction < 0) {
           n.y = -n.y - n.height;
           n.input!.y *= -1;
-          n.outputs['loopBack']!.y *= -1;
+          n.outputs['repeat']!.y *= -1;
         }
       }
-      const e = { ...connection('source', 'target'), port: 'loopBack' };
+      const e = { ...connection('source', 'target'), port: 'repeat', repeat: true };
       const index = new BoxIndex(
         nodes.map((n) => ({
           id: n.id,
@@ -465,11 +466,12 @@ describe('routing review regressions', () => {
 
   it('routes at least forty of eighty crowded returns with distinct trunks and readable labels', () => {
     const source = box('source', 600, 0);
-    source.outputs = { loopBack: source.outputs['out']! };
+    source.outputs = { repeat: source.outputs['out']! };
     const nodes = [source, box('target', 0, 0)];
     const edges = Array.from({ length: 80 }, (_, i) => ({
       ...connection('source', 'target', `return-${i}`),
-      port: 'loopBack',
+      port: 'repeat',
+      repeat: true,
     }));
     const routes = [...routeBackwardEdges(nodes, edges).values()].filter((r) => r.points.length);
     expect(routes.length).toBeGreaterThanOrEqual(40);
@@ -688,9 +690,10 @@ describe('routing review regressions', () => {
       }
       const edges = nodes.slice(1).map((n, i) => ({
         ...connection(n.id, nodes[Math.floor(random() * i)]!.id),
-        port: 'loopBack',
+        port: 'repeat',
+        repeat: true,
       }));
-      for (const n of nodes) n.outputs = { loopBack: n.outputs['out']! };
+      for (const n of nodes) n.outputs = { repeat: n.outputs['out']! };
       const plan = createRoutingPlan(nodes, edges);
       searches += plan.statistics.expansions > 0 ? 1 : 0;
       for (const e of edges) {
@@ -716,7 +719,7 @@ describe('routing review regressions', () => {
         const n = moved[Math.floor(moved.length / 2)]!;
         n.y += 30;
         n.input!.y += 30;
-        n.outputs['loopBack']!.y += 30;
+        n.outputs['repeat']!.y += 30;
         const next = createRoutingPlan(moved, edges, undefined, plan);
         expect(next.routes, 'incremental sparse trial ' + trial).toEqual(
           createRoutingPlan(moved, edges).routes,

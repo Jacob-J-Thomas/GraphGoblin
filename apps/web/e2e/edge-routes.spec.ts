@@ -37,17 +37,35 @@ function crossingLoop(name = 'Manual routes'): LoopDefinitionInput {
       { id: 'work', kind: 'mutate', label: 'Work', config: note, ui: { x: 640, y: 100 } },
       {
         id: 'done',
-        kind: 'exit',
+        kind: 'decision',
         label: 'Done',
-        config: { default: 'success', loopBack: { targetNodeId: 'work' } },
+        config: {
+          kind: 'expression',
+          jsonata: '"finish"',
+          routes: [
+            { id: 'repeat', label: 'Repeat', repeat: true },
+            { id: 'finish', label: 'Finish' },
+          ],
+          maxPasses: 3,
+        },
         ui: { x: 960, y: 100 },
+      },
+      { id: 'success', kind: 'exit', label: 'Success', config: {}, ui: { x: 1240, y: 100 } },
+      {
+        id: 'exhausted',
+        kind: 'exit',
+        label: 'Exhausted',
+        config: { outcome: 'exhausted' },
+        ui: { x: 1240, y: 320 },
       },
     ],
     edges: [
       { id: 'start-work', from: { node: 'start', port: 'out' }, to: { node: 'work' } },
       { id: 'work-side', from: { node: 'work', port: 'out' }, to: { node: 'side' } },
       { id: 'side-done', from: { node: 'side', port: 'out' }, to: { node: 'done' } },
-      { id: 'return', from: { node: 'done', port: 'loopBack' }, to: { node: 'work' } },
+      { id: 'finish', from: { node: 'done', port: 'finish' }, to: { node: 'success' } },
+      { id: 'limit', from: { node: 'done', port: 'limit-reached' }, to: { node: 'exhausted' } },
+      { id: 'return', from: { node: 'done', port: 'repeat' }, to: { node: 'work' } },
     ],
   };
 }
@@ -60,7 +78,7 @@ const segment = (page: Page, id: string, index: number) =>
 async function openLoop(page: Page, id: string, theme = 'dark') {
   await page.addInitScript((value) => localStorage.setItem('graphgoblin-theme', value), theme);
   await page.goto(`/app/loops/${id}/edit`);
-  await expect(page.locator('.react-flow__node')).toHaveCount(4);
+  await expect(page.locator('.react-flow__node')).toHaveCount(6);
   for (const name of ['Hide palette', 'Hide loop settings']) {
     const button = page.getByRole('button', { name, exact: true });
     if (await button.isVisible()) await button.click();
@@ -217,7 +235,7 @@ for (const theme of ['dark', 'light']) {
       back: await path(page, 'return').getAttribute('d'),
     };
     await page.reload();
-    await expect(page.locator('.react-flow__node')).toHaveCount(4);
+    await expect(page.locator('.react-flow__node')).toHaveCount(6);
     await page.getByRole('button', { name: 'Fit view' }).click();
     await expect(path(page, 'start-work')).toHaveAttribute('d', drawn.forward!);
     await expect(path(page, 'return')).toHaveAttribute('d', drawn.back!);

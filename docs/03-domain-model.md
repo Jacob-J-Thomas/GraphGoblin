@@ -32,7 +32,7 @@ type LoopDefinition = {
   settings: {
     workingDirectory: WorkingDirectorySpec; // see 04 and 06
     defaults: { byHarness: { codex?: { model?: string; effort?: Effort } } };
-    maxIterations: number; // hard ceiling on loop-backs and on fresh visits per node; exit nodes may set lower
+    maxNodeVisits: number; // independent safety cap on fresh visits per node
     subloopDepthLimit: number; // default 8
   };
   variables: Record<string, JsonSchema>; // declared vars with schemas; the editor uses these
@@ -71,7 +71,7 @@ Validation rules enforced by `domain` before a version can be published:
 
 - At least one trigger node and at least one exit node.
 - Every trigger connects, directly or through other nodes, to an exit.
-- Every output port of every non-exit node is connected. Exit `loopBack` is optional.
+- Every output port is connected, including a marked gate's `limit-reached`. Exits are terminal and have no outputs.
 - Node configs validate against their kind's schema. Referenced variables exist. Referenced subloops exist and are published (checked by the API, which can see other loops; a loop may reference itself).
 - Every supplied Liquid template parses and every JSONata expression contains non-whitespace source and compiles, in node configs and loop settings (`TEMPLATE_INVALID`, `EXPRESSION_INVALID`, each with the field's `path`: `config.<path>` relative to its node, or `settings.<path>`). Empty and whitespace-only templates are valid and render exactly as authored. Omit optional blank expressions; the editor clears them. For optional templates, only exactly empty input means absent in the form; whitespace is preserved. This authoring rule lives in shared domain validation, so API imports and publishing agree with the editor without changing contracts parsing or fixture defaults.
 - No edge targets a trigger node's input.
@@ -79,7 +79,7 @@ Validation rules enforced by `domain` before a version can be published:
 Harness selection belongs to inference nodes (`config.harness`, default `codex`). Loop defaults
 provide only model and effort. Definitions containing `settings.defaults.harness` are rejected
 as unknown keys; imports and API clients must remove it. There is no compatibility parser.
-Current definitions and exports use format 4. Decisions are a strict union on kind: expressions return a declared route ID, LLMs use Liquid instructions and declared routes, and classifiers retain Choice, Noul and Score. Outputs contain portId, provenance and observation. Exit predicates temporarily use a separate predicate/match contract. [ADR-0035](decisions/ADR-0035-evaluator-specific-decisions.md) supersedes the earlier decision matrix and output shape. Frozen V3 conversion stages remain format 3; old stores and exports are refused until the integrated cutover adds the 3-to-4 stage. Thread format remains 1.
+Current definitions and exports use format 4. Decisions are a strict union on kind: expressions return a declared route ID, LLMs use Liquid instructions and declared routes, and classifiers retain Choice, Noul and Score. Outputs contain portId, provenance and observation. Decision gates own repeat markers and limits; exits are terminal (ADR-0036). [ADR-0035](decisions/ADR-0035-evaluator-specific-decisions.md) supersedes the earlier decision matrix and output shape. Frozen V3 conversion stages remain format 3; old stores and exports are refused until the integrated cutover adds the 3-to-4 stage. Thread format remains 1.
 
 ## Versioning (Decided)
 
@@ -132,6 +132,8 @@ type ContextThread = {
   messages: Message[]; // the conversational spine
   vars: Record<string, unknown>; // declared variables, validated by the loop's variable schemas
   artifacts: Artifact[]; // references to large things: transcripts, files, diffs, JSON blobs
+  outputs: Record<string, { value: unknown }>;
+  gates: Record<string, { passes: number }>; // engine-owned, one-based per decision gate
   counters: {
     nodeVisits: Record<string, number>;
     usage: { inputTokens: number; outputTokens: number };
@@ -210,22 +212,23 @@ engine-owned region. Usage roll-up remains an engine operation.
 
 Each event has `runId`, `seq`, `ts`, `type`, optional `nodeId`, and a typed `payload`. Large payloads are stored as artifacts and referenced.
 
-| Type                                                                 | Payload                                                                      |
-| -------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `run.queued`, `run.started`, `run.finished`                          | status, outcome, result reference                                            |
-| `run.paused`, `run.resumed`, `run.cancel_requested`, `run.cancelled` | actor                                                                        |
-| `run.waiting`, `run.woken`                                           | wait spec, wake reason                                                       |
-| `run.failed`                                                         | failure object                                                               |
-| `iteration.incremented`                                              | from, to, loopBack target                                                    |
-| `node.started`, `node.finished`                                      | config hash; patch, route, duration                                          |
-| `node.progress`                                                      | small structured progress from long nodes; harness items are summarised here |
-| `harness.session`                                                    | harness, sessionId, mode (`fresh` or `resumed`), model, effort               |
-| `harness.usage`                                                      | tokens as reported by the harness, informational                             |
-| `decision.made`                                                      | portId, provenance, observation, at most three factual diagnostics           |
-| `signal.received`, `input.received`                                  | name, payload reference                                                      |
-| `heartbeat.beat`                                                     | beat number, probe result summary                                            |
-| `child_run.started`, `child_run.finished`                            | child run id, outcome                                                        |
-| `return.delivered`, `return.failed`                                  | channel, target, status                                                      |
+| Type                                                                 | Payload                                                                                               |
+| -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `run.queued`, `run.started`, `run.finished`                          | status, outcome, result reference                                                                     |
+| `run.paused`, `run.resumed`, `run.cancel_requested`, `run.cancelled` | actor                                                                                                 |
+| `run.waiting`, `run.woken`                                           | wait spec, wake reason                                                                                |
+| `run.failed`                                                         | failure object                                                                                        |
+| `iteration.incremented`                                              | historical from, to, target; not emitted by new gates                                                 |
+| `node.started`, `node.finished`                                      | config hash; patch, route, duration                                                                   |
+| `node.progress`                                                      | small structured progress from long nodes; harness items are summarised here                          |
+| `harness.session`                                                    | harness, sessionId, mode (`fresh` or `resumed`), model, effort                                        |
+| `harness.usage`                                                      | tokens as reported by the harness, informational                                                      |
+| `decision.made`                                                      | portId, provenance, observation, optional gate pass/limit evidence, at most three factual diagnostics |
+| `exit.evaluated`                                                     | nodeId, terminal outcome                                                                              |
+| `signal.received`, `input.received`                                  | name, payload reference                                                                               |
+| `heartbeat.beat`                                                     | beat number, probe result summary                                                                     |
+| `child_run.started`, `child_run.finished`                            | child run id, outcome                                                                                 |
+| `return.delivered`, `return.failed`                                  | channel, target, status                                                                               |
 
 ## Other entities (Decided)
 
@@ -244,3 +247,17 @@ Each event has `runId`, `seq`, `ts`, `type`, optional `nodeId`, and a typed `pay
 Body-signed webhooks also keep `webhook_receipts`: a unique owner/loop/trigger/content hash, inbound-event link, filtered/deduplicated/pending/admitted/failed state, frozen admission intent, attempts, next-attempt time and safe failure code. Pending admissions retain target pins. The admission port commits run identity, initial thread, subloop pins, queued event and receipt link together; notifications follow commit. See [ADR-0024](decisions/ADR-0024-github-trigger-admission.md).
 
 Every table carries `ownerId`. 1.0 has one owner, `local`.
+
+## Gate and exit invariants (#164 E1)
+
+A decision becomes a gate when exactly one route is marked `repeat: true`. This marker belongs on an expression/LLM route, Choice option, Noul side or Score band; it is never inferred from canvas direction. Require `maxPasses` (1–10,000); optionally set `maxRunTimeSeconds` (positive integer seconds, at most 31,536,000). Without a repeat marker neither limit is allowed. Reserve the port ID `limit-reached`: authors cannot use it as a route ID. The gate exposes **Limit reached** only while a repeat is marked, and that output must be connected. The repeat route must lead through a cycle back to the gate; exits are terminal and triggers cannot be repeat targets.
+
+Passes are one-based, available to JSONata as `gates.<nodeId>.passes` (quote an ID with punctuation, for example `gates."my-gate".passes`). Every marked gate starts at 1. Evaluation happens first. An allowed repeat increments its count once; a non-repeat choice or a refused repeat leaves it unchanged. A non-repeat choice on the last allowed pass wins. If the decision chooses repeat at `maxPasses`, or after the optional run-time limit, it takes `limit-reached` instead. Both limits reached together are recorded as `max-passes`.
+
+Maximum run time is elapsed wall time from `run.startedAt` (falling back to `createdAt`), including waits, pauses and recovery downtime. It is checked after evaluation and only on a repeat choice; it does not interrupt running work or override a finishing choice. A replay fork keeps the checkpoint's passes and starts its own run clock.
+
+Exits are terminal: `{outcome, returns, destinations}`. `outcome` is `success` (default), `failure` or `exhausted`; `returns` is a JSONata expression or `none` (default); `destinations` defaults to `[{kind:"caller"}]` and supports caller, webhook, file, event and log. Exits have no criteria, predicate, default routing or loop-back, and no output ports.
+
+Success finishes `succeeded`, Failure finishes `failed`, and Exhausted finishes the distinct terminal status `exhausted`. Exhausted means the authored graph gave up further repetition; normally a gate's Limit reached output leads here. It is an outcome, not a resumable node failure. Every outcome evaluates the same return expression and delivers its value unchanged; Exhausted adds no wrapper or implicit last output. Use `outputs.<workNodeId>.value` when returning work output, because the preceding gate replaces `lastOutput`.
+
+`/gates` is engine-owned; authored mutation patches cannot alter counts. Graph validation reports a noncyclic repeat at its precise `config.*.repeat` path (`REPEAT_ROUTE_NOT_CYCLIC`), and an unconnected Limit reached at `config.maxPasses` (`PORT_UNCONNECTED`). Schema validation identifies missing limits and extra repeat markers directly.

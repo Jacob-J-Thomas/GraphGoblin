@@ -28,19 +28,19 @@ const mutate = (id: string, ui: { x: number; y: number }) => ({
 });
 
 /**
- * The approval loop plus nodes with one issue (a warning), two errors, and an error with a
- * warning: `done`'s criterion is above the loop's ceiling, `stray` is unconnected and unreachable,
- * and `late` is an unreachable exit whose criterion is above the ceiling too.
+ * The approval loop plus nodes with one or two errors:
+ * `done` has an invalid return expression, `stray` is unconnected and unreachable,
+ * and `late` is an unreachable exit with the same expression error.
  */
 function issuesLoop(name: string) {
   const loop = approvalLoop(name);
-  const aboveCeiling = { criteria: [{ when: 'max-iterations', value: 99 }] };
+  const invalidReturn = { returns: '(' };
   return {
     ...loop,
     nodes: [
-      ...loop.nodes.map((n) => (n.id === 'done' ? { ...n, config: aboveCeiling } : n)),
+      ...loop.nodes.map((n) => (n.id === 'done' ? { ...n, config: invalidReturn } : n)),
       mutate('stray', { x: 260, y: 260 }),
-      { id: 'late', kind: 'exit', label: 'Late', config: aboveCeiling, ui: { x: 520, y: 260 } },
+      { id: 'late', kind: 'exit', label: 'Late', config: invalidReturn, ui: { x: 520, y: 260 } },
     ],
   };
 }
@@ -53,17 +53,17 @@ async function breakInputSchema(page: Page): Promise<void> {
   await closeNode(page);
 }
 
-test('badges count each node’s issues and tell errors from warnings by more than colour', async ({
+test('badges count node issues and identify errors with text and icons', async ({
   page,
   request,
 }) => {
   const loopId = await createLoop(request, issuesLoop('qa badges'));
   await page.goto(`/app/loops/${loopId}/edit`);
-  // One issue: the icon alone (the name carries the count); a warning is a triangle.
+  // One issue: the icon alone; its accessible name carries the count.
   const done = badge(page, 'done');
   await expect(done).toHaveAccessibleName('1 issue on done');
   await expect(done).toHaveText('');
-  await expect(done.locator('svg')).toHaveAttribute('data-icon', 'alert');
+  await expect(done.locator('svg')).toHaveAttribute('data-icon', 'failed');
   // Several: the count too; any error makes it a cross.
   await expect(badge(page, 'stray')).toHaveAccessibleName('2 issues on stray');
   await expect(badge(page, 'stray')).toHaveText('2');
@@ -76,16 +76,14 @@ test('badges count each node’s issues and tell errors from warnings by more th
   const size = await done.evaluate((el: HTMLElement) => [el.offsetWidth, el.offsetHeight]);
   expect(Math.min(...size)).toBeGreaterThanOrEqual(24);
   // The counts beside Publish come from the same list.
-  await expect(page.getByRole('button', { name: '3 errors, 2 warnings' })).toBeVisible();
+  await expect(page.getByRole('button', { name: '5 errors' })).toBeVisible();
 
-  // Mixed: the popover says which is which, in words as well as icons.
+  // The popover names both the expression and graph errors.
   await late.click();
   const list = popover(page, 'late');
-  await expect(list).toContainText('1 error, 1 warning on late');
+  await expect(list).toContainText('2 errors on late');
   await expect(list.getByRole('button', { name: /^Error NODE_UNREACHABLE/ })).toBeVisible();
-  await expect(
-    list.getByRole('button', { name: /^Warning CRITERION_ABOVE_CEILING/ }),
-  ).toBeVisible();
+  await expect(list.getByRole('button', { name: /^Error EXPRESSION_INVALID/ })).toBeVisible();
 });
 
 test('hover: the popover opens, stays while the pointer is in it, and choosing an issue focuses its field', async ({

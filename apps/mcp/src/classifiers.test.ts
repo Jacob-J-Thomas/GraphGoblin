@@ -44,7 +44,7 @@ function definition(model?: string): LoopDefinitionInput {
         id: 'done',
         kind: 'exit',
         label: 'Done',
-        config: { return: { mapping: 'lastOutput.value.portId' } },
+        config: { returns: 'lastOutput.value.portId' },
       },
     ],
     edges: [

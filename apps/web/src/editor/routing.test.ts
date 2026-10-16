@@ -27,7 +27,7 @@ const box = (id: string, x: number, y: number, width = 184, height = 122): Routi
   input: { x, y: y + height / 2 },
   outputs: {
     out: { x: x + width, y: y + height * 0.75 },
-    loopBack: { x: x + width, y: y + height * 0.75 },
+    repeat: { x: x + width, y: y + height * 0.75 },
   },
 });
 const edge = (source: string, target: string, port = 'out'): RoutingEdge => ({
@@ -35,6 +35,7 @@ const edge = (source: string, target: string, port = 'out'): RoutingEdge => ({
   source,
   target,
   port,
+  repeat: port === 'repeat',
 });
 
 /** Independently check the public clearance, including own boxes except the two straight stubs. */
@@ -93,10 +94,10 @@ describe('backward routing geometry', () => {
     },
   );
 
-  it('keeps forward edges unchanged, including a script out, but always routes loopBack', () => {
+  it('keeps forward edges unchanged, including a script out, but always routes repeat', () => {
     const nodes = [box('a', 0, 0), box('b', 400, 0)];
     expect(routeBackwardEdges(nodes, [edge('a', 'b')]).size).toBe(0);
-    expect(assertGeometry(nodes, [edge('a', 'b', 'loopBack')]).size).toBe(1);
+    expect(assertGeometry(nodes, [edge('a', 'b', 'repeat')]).size).toBe(1);
     expect(routeBackwardEdges(nodes, [edge('missing', 'b'), edge('a', 'missing')]).size).toBe(0);
     expect(routeBackwardEdges(nodes, [edge('b', 'a', 'unknown')]).size).toBe(0);
     const { input: _input, ...noInput } = nodes[0]!;
@@ -148,10 +149,10 @@ describe('backward routing geometry', () => {
         y: (pill.top + pill.bottom) / 2,
       });
     }
-    expect(routeText('loopBack', { blocked: false, unavailable: true })).toBe(
-      'loopBack: No clear route; move a card',
+    expect(routeText('repeat', { blocked: false, unavailable: true })).toBe(
+      'repeat: No clear route; move a card',
     );
-    expect(routeText('loopBack', { blocked: false, unavailable: false })).toBe('loopBack');
+    expect(routeText('repeat', { blocked: false, unavailable: false })).toBe('repeat');
     expect(routeText('out', { blocked: false, unavailable: false })).toBe('');
   });
 
@@ -169,7 +170,7 @@ describe('backward routing geometry', () => {
     });
     const { nodes: simple } = routingInput(simpleLoop());
     const edges = Array.from({ length: 12 }, (_, i) => ({
-      ...edge('done', 'work', 'loopBack'),
+      ...edge('done', 'work', 'repeat'),
       id: `e${i}`,
     }));
     expect(assertGeometry(simple, edges).size).toBe(12);

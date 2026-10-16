@@ -184,36 +184,12 @@ describe('editor store', () => {
     expect(store().selectedNodeId).toBeUndefined();
   });
 
-  it('keeps exit loop-backs in sync with edges, renames, and removals', () => {
-    store().load('L1', newLoopDefinition('a'));
-    store().addNode('mutate', { x: 0, y: 0 });
-    expect(
-      store().connect({ source: 'done', sourceHandle: 'loopBack', target: 'mutate' }),
-    ).toBeNull();
-    const exit = () => store().definition!.nodes.find((n) => n.id === 'done')!;
-    expect(exit().config).toEqual({ loopBack: { targetNodeId: 'mutate' } });
-    store().renameNode('mutate', 'again');
-    expect(exit().config).toEqual({ loopBack: { targetNodeId: 'again' } });
-    const edgeId = store().definition!.edges.find((e) => e.from.port === 'loopBack')!.id;
-    store().removeEdge(edgeId);
-    expect(exit().config).toEqual({});
-    store().connect({ source: 'done', sourceHandle: 'loopBack', target: 'again' });
-    store().removeNode('again');
-    expect(exit().config).toEqual({});
-    store().removeEdge('missing');
-
-    expect(store().connect({ source: 'done', sourceHandle: 'loopBack', target: 'start' })).toBe(
-      'triggers have no input',
-    );
-    expect(store().connectionError).toBe('triggers have no input');
-  });
-
   it('replaces settings and variables and tracks save state', () => {
     store().load('L1', kitchenSinkLoop());
-    store().updateSettings({ maxIterations: 5 });
+    store().updateSettings({ maxNodeVisits: 5 });
     store().updateVariables({ n: { type: 'number' } });
     expect(store().definition).toMatchObject({
-      settings: { maxIterations: 5 },
+      settings: { maxNodeVisits: 5 },
       variables: { n: { type: 'number' } },
     });
     store().setSaveState('saved', undefined, 7);
@@ -259,11 +235,6 @@ describe('undo and redo', () => {
       () => store().connect({ source: 'mutate', sourceHandle: 'out', target: 'done' }),
       () => store().addNode('mutate', { x: 0, y: 0 }),
     ],
-    [
-      'connect done loopBack to mutate',
-      () => store().connect({ source: 'done', sourceHandle: 'loopBack', target: 'mutate' }),
-      () => store().addNode('mutate', { x: 0, y: 0 }),
-    ],
     ['remove edge start to done', () => store().removeEdge('e1')],
     ['delete done', () => store().removeNode('done')],
     ['rename done to finish', () => store().renameNode('done', 'finish')],
@@ -276,7 +247,7 @@ describe('undo and redo', () => {
     ['edit loop name', () => store().updateMeta({ name: 'b' })],
     ['edit loop description', () => store().updateMeta({ description: 'about' })],
     ['edit loop name and description', () => store().updateMeta({ name: 'b', description: 'c' })],
-    ['edit loop settings', () => store().updateSettings({ maxIterations: 5 })],
+    ['edit loop settings', () => store().updateSettings({ maxNodeVisits: 5 })],
     ['edit variables', () => store().updateVariables({ n: { type: 'number' } })],
     ['edit config of start', () => store().setFieldError('node:start', 'inputSchema', unparsed)],
     ['edit loop settings', () => store().setFieldError('settings', 'defaults', unparsed)],
@@ -563,10 +534,10 @@ describe('undo and redo', () => {
     expect(store().fieldErrors).toEqual({});
     // The loop settings form works the same way: typing in one field, then a choice.
     pause();
-    store().updateSettings({ maxIterations: 5 }, { path: 'maxIterations', kind: 'typing', id: 3 });
-    store().updateSettings({ maxIterations: 50 }, { path: 'maxIterations', kind: 'typing', id: 4 });
+    store().updateSettings({ maxNodeVisits: 5 }, { path: 'maxNodeVisits', kind: 'typing', id: 3 });
+    store().updateSettings({ maxNodeVisits: 50 }, { path: 'maxNodeVisits', kind: 'typing', id: 4 });
     store().updateSettings(
-      { maxIterations: 50, defaults: { effort: 'low' } },
+      { maxNodeVisits: 50, defaults: { effort: 'low' } },
       { path: 'defaults.effort', kind: 'commit', id: 5 },
     );
     expect(
@@ -575,7 +546,7 @@ describe('undo and redo', () => {
         .map((entry) => entry.label),
     ).toEqual(['edit loop settings', 'edit loop settings']);
     store().undo();
-    expect(store().definition!.settings).toEqual({ maxIterations: 50 });
+    expect(store().definition!.settings).toEqual({ maxNodeVisits: 50 });
   });
 
   it('keeps a discard of unparsed text as a step of its own, however soon it follows the typing', () => {
@@ -618,11 +589,12 @@ describe('undo and redo', () => {
     expect(store().past).toHaveLength(steps);
   });
 
-  it('restores a deleted node with its edges, unparsed text, and an exit’s loop-back target', () => {
+  it('restores a deleted node with its route connections and unparsed text', () => {
     store().load('L1', newLoopDefinition('a'));
     store().addNode('mutate', { x: 0, y: 0 });
     store().connect({ source: 'mutate', sourceHandle: 'out', target: 'done' });
-    store().connect({ source: 'done', sourceHandle: 'loopBack', target: 'mutate' });
+    store().addNode('decision', { x: 0, y: 0 });
+    store().connect({ source: 'decision', sourceHandle: 'yes', target: 'mutate' });
     store().setFieldError('node:mutate', 'operations', unparsed);
     store().openNode('mutate');
     pause();
@@ -633,7 +605,7 @@ describe('undo and redo', () => {
     expect(store().fieldErrors).toEqual({});
     store().undo();
     expect(snapshot()).toEqual(before);
-    expect(node('done')!.config).toEqual({ loopBack: { targetNodeId: 'mutate' } });
+    expect(node('done')!.config).toEqual({});
     const touching = store().definition!.edges.filter((e) =>
       [e.from.node, e.to.node].includes('mutate'),
     );
@@ -644,7 +616,8 @@ describe('undo and redo', () => {
   it('keeps a renamed node selected and its editor open across undo and redo', () => {
     store().load('L1', newLoopDefinition('a'));
     store().addNode('mutate', { x: 0, y: 0 });
-    store().connect({ source: 'done', sourceHandle: 'loopBack', target: 'mutate' });
+    store().addNode('decision', { x: 0, y: 0 });
+    store().connect({ source: 'decision', sourceHandle: 'yes', target: 'mutate' });
     store().setFieldError('node:mutate', 'operations', unparsed);
     store().openNode('mutate');
     const session = store().nodeDialogSession;
@@ -657,7 +630,7 @@ describe('undo and redo', () => {
       nodeDialogOpen: true,
       nodeDialogSession: session,
     });
-    expect(node('done')!.config).toEqual({ loopBack: { targetNodeId: 'mutate' } });
+    expect(node('done')!.config).toEqual({});
     expect(store().definition!.edges.at(-1)!.to.node).toBe('mutate');
     expect(store().fieldErrors).toEqual({ 'node:mutate': { operations: unparsed } });
     store().redo();
