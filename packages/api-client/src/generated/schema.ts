@@ -317,6 +317,11 @@ export interface paths {
                                 edgeId?: string | undefined;
                                 path?: string | undefined;
                             }[];
+                            notices: {
+                                code: string;
+                                path: string;
+                                message: string;
+                            }[];
                         };
                     };
                 };

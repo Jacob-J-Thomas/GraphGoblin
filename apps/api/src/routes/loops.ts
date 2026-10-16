@@ -10,7 +10,14 @@ import {
   type LoopDefinition,
   type LoopRecord,
 } from '@graphgoblin/contracts';
-import { exportLoop, importLoop, stableHash } from '@graphgoblin/domain';
+import {
+  exportLoop,
+  importLoop,
+  stableHash,
+  upgradeExportCurrent,
+  upgradeLoopCurrent,
+  type UpgradeIssue,
+} from '@graphgoblin/domain';
 import { EngineRequestError } from '@graphgoblin/engine';
 import { LoopInUseError } from '@graphgoblin/infrastructure/sqlite';
 import type { FastifyRequest } from 'fastify';
@@ -143,21 +150,6 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
   app.post(
     '/loops/import',
     {
-      preValidation: async (request, reply) => {
-        const body: unknown = request.body;
-        if (
-          typeof body === 'object' &&
-          body !== null &&
-          (('formatVersion' in body && [1, 2, 3].includes(Number(body.formatVersion))) ||
-            ('schemaVersion' in body && [1, 2, 3].includes(Number(body.schemaVersion))))
-        )
-          return problem(
-            reply,
-            400,
-            'LOOP_FORMAT_UPGRADE_REQUIRED',
-            'Use the offline graphgoblin-upgrade export command and resolve any authored criteria to convert this document to format 4',
-          );
-      },
       schema: {
         tags: ['loops'],
         summary: 'Create or update a loop from exported JSON',
@@ -167,12 +159,51 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
             loop: LoopRecordSchema,
             draft: LoopVersionRecordSchema,
             issues: z.array(IssueSchema),
+            notices: z.array(z.object({ code: z.string(), path: z.string(), message: z.string() })),
           }),
         },
       },
     },
     async (request, reply) => {
-      const imported = importLoop(request.body);
+      let input: unknown = request.body;
+      let notices: UpgradeIssue[] = [];
+      if (
+        typeof input === 'object' &&
+        input !== null &&
+        (('formatVersion' in input && [1, 2, 3].includes(Number(input.formatVersion))) ||
+          ('schemaVersion' in input && [1, 2, 3].includes(Number(input.schemaVersion))))
+      ) {
+        const result =
+          'formatVersion' in input
+            ? await upgradeExportCurrent(input)
+            : await upgradeLoopCurrent(input);
+        if (!result.ok) {
+          const pending = result.issues.some((issue) => issue.kind === 'pending');
+          const invalid = result.issues.some((issue) => issue.kind === 'invalid');
+          return problem(
+            reply,
+            400,
+            pending ? 'LOOP_FORMAT_UPGRADE_REQUIRED' : 'LOOP_IMPORT_SOURCE_INVALID',
+            [
+              ...(invalid
+                ? [
+                    'The source, export envelope or conversion has invalid issues. Correct the listed invalid issues; graphgoblin-upgrade export cannot convert invalid source.',
+                  ]
+                : []),
+              ...(pending
+                ? [
+                    'Review is required. Run graphgoblin-upgrade export --input old.json --out review.json. For v3 items, create resolutions.json with {"v3":{"<id>":{"hash":"<reported hash>","action":"approve","reason":"Reviewed this exact proposal"}}}, using each reported id/hash. Some items require action "replace" with a value, or allow "remove". Earlier-stage items use the v1/v2 namespaces in the guide. Retry export with --resolutions resolutions.json and a new output path.',
+                  ]
+                : []),
+              'See docs/guide/08-offline-upgrade.md#convert-a-portable-export.',
+            ].join(' '),
+            { issues: result.issues, reviewItems: result.reviewItems },
+          );
+        }
+        input = result.value;
+        notices = result.notices;
+      }
+      const imported = importLoop(input);
       const admission = await publishIssues(request.auth.ownerId, imported.definition);
       if (admission.some((issue) => rejectsDraftAdmission(imported.definition, issue)))
         return problem(
@@ -191,7 +222,7 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
         imported.definition,
         created.loop.id,
       );
-      return { ...created, issues };
+      return { ...created, issues, notices };
     },
   );
 

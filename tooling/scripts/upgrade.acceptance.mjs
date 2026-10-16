@@ -28,8 +28,12 @@ import {
   FIXTURE_IDS,
   FIXTURE_TS,
 } from '../../packages/contracts/dist/testing/index.js';
-import { V3LoopExportSchema } from '../../packages/contracts/dist/index.js';
-import { upgradeExportCurrent, upgradeExportV1 } from '../../packages/domain/dist/index.js';
+import { LoopExportSchema } from '../../packages/contracts/dist/index.js';
+import {
+  upgradeExportCurrent,
+  upgradeExportToV3,
+  upgradeExportV1,
+} from '../../packages/domain/dist/index.js';
 const url = (file) => 'file:' + file.replaceAll('\\', '/');
 const original = {
   schemaVersion: 1,
@@ -169,7 +173,7 @@ const formatCutoverRefusal = {
 
 test('marked format-3 store refuses atomically with marker and migration ledger unchanged', () =>
   temporary(async (root) => {
-    const historical = upgradeExportCurrent(
+    const historical = upgradeExportToV3(
       {
         format: 'graphgoblin-loop',
         formatVersion: 1,
@@ -241,14 +245,23 @@ test('portable refusal, explicit resolutions, new output and complete original p
       JSON.parse(await readFile(refused, 'utf8')).format,
       'graphgoblin-upgrade-refusals',
     );
-    await writeFile(choices, JSON.stringify(resolutions));
+    const first = await upgradeExportCurrent(JSON.parse(bytes), { v1: resolutions });
+    const v3 = Object.fromEntries(
+      first.reviewItems
+        .filter((item) => item.status === 'pending')
+        .map((item) => [
+          item.id,
+          { hash: item.hash, action: 'approve', reason: 'Reviewed exact source and proposal' },
+        ]),
+    );
+    await writeFile(choices, JSON.stringify({ v1: resolutions, v3 }));
     assert.equal(
       (await runUpgrade(['export', '--input', input, '--out', converted, '--resolutions', choices]))
         .ok,
       true,
     );
-    const historical = V3LoopExportSchema.parse(JSON.parse(await readFile(converted, 'utf8')));
-    assert.equal(historical.formatVersion, 3);
+    const historical = LoopExportSchema.parse(JSON.parse(await readFile(converted, 'utf8')));
+    assert.equal(historical.formatVersion, 4);
     assert.equal(await readFile(input, 'utf8'), bytes);
     await assert.rejects(
       runUpgrade(['export', '--input', input, '--out', converted, '--resolutions', choices]),
@@ -303,7 +316,7 @@ test('real frozen AIDLC artifact requires explicit choices and preserves every o
     fixture.loop.edges.map((edge) => ({ ...edge, to: { port: 'in', ...edge.to } })),
   );
 });
-test('format-2 provider exit exports refuse without authored sides and convert only the explicit resolution', () =>
+test('format-2 provider exit exports require namespaced sides and subsequent hash-bound graph review', () =>
   temporary(async (root) => {
     const input = join(root, 'exit-v2.json'),
       refused = join(root, 'exit-refused.json'),
@@ -356,12 +369,14 @@ test('format-2 provider exit exports refuse without authored sides and convert o
     await writeFile(
       resolution,
       JSON.stringify({
-        predicates: {
-          '/nodes/1/config/criteria/0': {
-            answer: {
-              type: 'noul',
-              true: { label: 'Complete', criteria: 'All required work is complete' },
-              false: { label: 'Pending', criteria: 'Required work remains' },
+        v2: {
+          predicates: {
+            '/nodes/1/config/criteria/0': {
+              answer: {
+                type: 'noul',
+                true: { label: 'Complete', criteria: 'All required work is complete' },
+                false: { label: 'Pending', criteria: 'Required work remains' },
+              },
             },
           },
         },
@@ -370,24 +385,16 @@ test('format-2 provider exit exports refuse without authored sides and convert o
     assert.equal(
       (await runUpgrade(['export', '--input', input, '--out', output, '--resolutions', resolution]))
         .ok,
-      true,
+      false,
     );
-    const converted = V3LoopExportSchema.parse(JSON.parse(await readFile(output, 'utf8')));
-    assert.equal(converted.formatVersion, 3);
-    assert.deepEqual(converted.loop.edges, old.loop.edges);
-    assert.deepEqual(converted.loop.nodes[1].config.return, old.loop.nodes[1].config.return);
-    assert.deepEqual(converted.loop.nodes[1].config.criteria[0].evaluation, {
-      kind: 'llm',
-      harness: 'codex',
-      model: { mode: 'inherit' },
-      effort: { mode: 'inherit' },
-      question: 'Is the task complete?',
-    });
-    assert.deepEqual(converted.loop.nodes[1].config.criteria[0].match, {
-      type: 'noul',
-      value: true,
-      minReportedConfidence: 0.8,
-    });
+    const pendingReport = JSON.parse(await readFile(output, 'utf8'));
+    assert.equal(pendingReport.format, 'graphgoblin-upgrade-refusals');
+    assert.ok(
+      pendingReport.reviewItems.some(
+        (item) => item.status === 'pending' && item.id && item.hash && item.reason,
+      ),
+    );
+    assert.equal(pendingReport.value, undefined);
     assert.equal(await readFile(input, 'utf8'), bytes);
   }));
 test('native read-only client cannot create a missing file or write existing rows', () =>

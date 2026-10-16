@@ -30,13 +30,13 @@ import {
 } from '@graphgoblin/contracts';
 import {
   stableStringify,
-  upgradeLoopCurrent,
+  upgradeLoopToV3 as upgradeLoopCurrent,
   upgradeRunHistoryCurrent,
   upgradedFailure,
   upgradeDefaultsV1,
-  validateUpgradeCurrentResolutions,
+  validateUpgradeV3Resolutions as validateUpgradeCurrentResolutions,
   type UpgradeIssue,
-  type UpgradeCurrentResolutions,
+  type UpgradeV3Resolutions as UpgradeCurrentResolutions,
 } from '@graphgoblin/domain';
 
 type Executor = Pick<Client, 'execute'>;

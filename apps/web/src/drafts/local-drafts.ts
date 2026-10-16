@@ -1,6 +1,9 @@
-import type { LoopDefinitionInput } from '@graphgoblin/contracts';
+import { CURRENT_DEFINITION_FORMAT, type LoopDefinitionInput } from '@graphgoblin/contracts';
 import type { DecisionRoutes } from '../editor/decision-route-edges.js';
-import { del, get, set, update, type UseStore } from 'idb-keyval';
+import { del, get, update, promisifyRequest, type UseStore } from 'idb-keyval';
+
+/** Cannot match a server content hash; converted device edits need explicit reconciliation. */
+export const UNRECONCILED_DEVICE_TOKEN = 'unreconciled-device-format';
 
 /**
  * Unsaved editor drafts mirrored to IndexedDB, so a reload or an offline spell never loses work.
@@ -17,7 +20,7 @@ export interface LocalDraft {
   /** The server draft token this copy is based on, sent as `If-Match` when it is saved. */
   baseToken?: string;
   /** Present only when a legacy local copy was preserved because safe conversion was impossible. */
-  migrationIssues?: { code: string; path: string; message: string }[];
+  migrationIssues?: { code: string; path: string; message: string; id?: string; hash?: string }[];
 }
 
 /**
@@ -76,9 +79,8 @@ function openDraftDatabase(): Promise<IDBDatabase> {
     };
     request.onupgradeneeded = () => {
       const db = request.result;
-      // Retire pre-upgrade device copies once; new drafts can be incomplete while editing.
-      if (db.objectStoreNames.contains('drafts')) db.deleteObjectStore('drafts');
-      db.createObjectStore('drafts');
+      // Preserve every device copy; format conversion happens per draft, after archival.
+      if (!db.objectStoreNames.contains('drafts')) db.createObjectStore('drafts');
     };
     request.onsuccess = () => {
       clearTimeout(blockedTimeout);
@@ -150,7 +152,53 @@ async function run<T>(operation: (store: UseStore) => Promise<T>): Promise<T> {
 }
 
 export async function saveLocalDraft(draft: LocalDraft): Promise<void> {
-  await run((store) => set(draft.loopId, draft, store));
+  await saveDraft(draft.loopId, draft);
+}
+
+/** Also protects copies first discovered after a blocked database upgrade finishes. */
+async function preserveLegacyDraft(
+  key: string,
+  definition: LoopDefinitionInput,
+): Promise<LocalDraft | undefined> {
+  if (definition.schemaVersion !== CURRENT_DEFINITION_FORMAT) return;
+  return run(async (store) => {
+    const original = await get<LocalDraft>(key, store);
+    if (!original || original.definition.schemaVersion === CURRENT_DEFINITION_FORMAT) return;
+    await saveArchivedDraft(original);
+    const copies = await get<LocalDraft[]>(archiveKey(original.loopId), store);
+    if (!copies?.some((copy) => JSON.stringify(copy) === JSON.stringify(original)))
+      throw new Error('The original device copy could not be verified.');
+    return original;
+  });
+}
+
+/** The check and replacement run in one write transaction; a concurrent old edit must survive. */
+function requirePreserved(
+  local: LocalDraft | undefined,
+  original: LocalDraft | undefined,
+  definition: LoopDefinitionInput,
+): void {
+  if (
+    definition.schemaVersion === CURRENT_DEFINITION_FORMAT &&
+    local &&
+    local.definition.schemaVersion !== CURRENT_DEFINITION_FORMAT &&
+    JSON.stringify(local) !== JSON.stringify(original)
+  )
+    throw new Error('The device copy changed while being preserved. Reload before replacing it.');
+}
+
+async function saveDraft(key: string, draft: LocalDraft): Promise<void> {
+  const original = await preserveLegacyDraft(key, draft.definition);
+  await run((store) =>
+    update<LocalDraft>(
+      key,
+      (local) => {
+        requirePreserved(local, original, draft.definition);
+        return draft;
+      },
+      store,
+    ),
+  );
 }
 
 export async function loadLocalDraft(loopId: string): Promise<LocalDraft | undefined> {
@@ -178,10 +226,12 @@ export async function recordServerSave(
   definition: LoopDefinitionInput,
   token: string,
 ): Promise<void> {
+  const original = await preserveLegacyDraft(loopId, definition);
   await run((store) =>
     update<LocalDraft>(
       loopId,
       (local) => {
+        requirePreserved(local, original, definition);
         if (local && JSON.stringify(local.definition) !== JSON.stringify(definition)) {
           return { ...local, baseToken: token };
         }
@@ -206,9 +256,43 @@ export async function clearLocalDraft(loopId: string): Promise<void> {
   });
 }
 
-/** Remove only the live mirror after a legacy copy has been durably set aside. */
-export async function clearActiveLocalDraft(loopId: string): Promise<void> {
-  await run((store) => del(loopId, store));
+/** Compare content and metadata, excluding the raw notice's generated migration issues. */
+function sameCopy(copy: LocalDraft, expected: LocalDraft): boolean {
+  return (
+    copy.loopId === expected.loopId &&
+    copy.savedAt === expected.savedAt &&
+    copy.synced === expected.synced &&
+    copy.baseToken === expected.baseToken &&
+    JSON.stringify(copy.definition) === JSON.stringify(expected.definition) &&
+    JSON.stringify(copy.decisionRoutes) === JSON.stringify(expected.decisionRoutes)
+  );
+}
+
+async function clearDraft(key: string, expected?: LocalDraft): Promise<void> {
+  if (!expected) return run((store) => del(key, store));
+  await run((store) =>
+    store('readwrite', (items) => {
+      const reading = items.get(key);
+      let changed = false;
+      reading.onsuccess = () => {
+        const copy = reading.result as LocalDraft | undefined;
+        if (copy && !sameCopy(copy, expected)) {
+          changed = true;
+          items.transaction.abort();
+        } else items.delete(key);
+      };
+      return promisifyRequest(items.transaction).catch((error: unknown) => {
+        throw changed
+          ? new Error('The device copy changed before removal. Reload before replacing it.')
+          : error;
+      });
+    }),
+  );
+}
+
+/** Remove only the verified live mirror; a concurrent edit is never cleared. */
+export async function clearActiveLocalDraft(loopId: string, expected?: LocalDraft): Promise<void> {
+  await clearDraft(loopId, expected);
 }
 
 /**
@@ -220,15 +304,15 @@ function setAsideKey(loopId: string): string {
 }
 
 export async function saveSetAsideDraft(draft: LocalDraft): Promise<void> {
-  await run((store) => set(setAsideKey(draft.loopId), draft, store));
+  await saveDraft(setAsideKey(draft.loopId), draft);
 }
 
 export async function loadSetAsideDraft(loopId: string): Promise<LocalDraft | undefined> {
   return loadDraft(setAsideKey(loopId));
 }
 
-export async function clearSetAsideDraft(loopId: string): Promise<void> {
-  await run((store) => del(setAsideKey(loopId), store));
+export async function clearSetAsideDraft(loopId: string, expected?: LocalDraft): Promise<void> {
+  await clearDraft(setAsideKey(loopId), expected);
 }
 
 /** Raw device copies that could not be converted safely, kept outside the live autosave key. */
@@ -255,11 +339,7 @@ export async function saveArchivedDraft(draft: LocalDraft): Promise<void> {
       archiveKey(draft.loopId),
       (copies) => {
         const current = copies ?? [];
-        const duplicate = current.some(
-          (copy) =>
-            copy.savedAt === draft.savedAt &&
-            JSON.stringify(copy.definition) === JSON.stringify(draft.definition),
-        );
+        const duplicate = current.some((copy) => JSON.stringify(copy) === JSON.stringify(draft));
         return duplicate ? current : [...current, draft];
       },
       store,
@@ -271,12 +351,7 @@ export async function clearArchivedDraft(loopId: string, draft: LocalDraft): Pro
   await run((store) =>
     update<LocalDraft[]>(
       archiveKey(loopId),
-      (copies) =>
-        (copies ?? []).filter(
-          (copy) =>
-            copy.savedAt !== draft.savedAt ||
-            JSON.stringify(copy.definition) !== JSON.stringify(draft.definition),
-        ),
+      (copies) => (copies ?? []).filter((copy) => !sameCopy(copy, draft)),
       store,
     ),
   );

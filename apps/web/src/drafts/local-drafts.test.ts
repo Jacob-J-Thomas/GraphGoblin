@@ -1,3 +1,4 @@
+import type { LoopDefinitionInput } from '@graphgoblin/contracts';
 import { minimalLoop } from '@graphgoblin/contracts/testing';
 import { IDBFactory } from 'fake-indexeddb';
 import { createStore, promisifyRequest, set } from 'idb-keyval';
@@ -88,8 +89,8 @@ describe('local drafts in IndexedDB', () => {
     await recovered;
     expect(changes.at(-1)).toBeUndefined();
     unsubscribe();
-    // The upgrade retired the version 1 copy; writes work again.
-    expect(await drafts.loadLocalDraft(draft.loopId)).toBeUndefined();
+    // The upgrade preserved the version 1 copy; writes work again.
+    expect(await drafts.loadLocalDraft(draft.loopId)).toEqual(draft);
     await drafts.saveLocalDraft(draft);
     expect(await drafts.loadLocalDraft(draft.loopId)).toEqual(draft);
   });
@@ -102,7 +103,7 @@ describe('local drafts in IndexedDB', () => {
       setTimeout(() => oldDatabase.close(), 10);
     };
     try {
-      expect(await drafts.loadLocalDraft('before-upgrade')).toBeUndefined();
+      expect(await drafts.loadLocalDraft('before-upgrade')).toBe('old copy');
       await drafts.saveLocalDraft({
         loopId: 'after-upgrade',
         definition: minimalLoop(),
@@ -136,7 +137,7 @@ describe('local drafts in IndexedDB', () => {
     expect(drafts.deviceStorageProblem()).toBeUndefined();
   });
 
-  it('retires the version 1 store once and opens an empty version 2 store', async () => {
+  it('preserves the version 1 store when opening version 2', async () => {
     const opening = indexedDB.open('graphgoblin', 1);
     opening.onupgradeneeded = () => opening.result.createObjectStore('drafts');
     const oldDatabase = await promisifyRequest(opening);
@@ -152,15 +153,15 @@ describe('local drafts in IndexedDB', () => {
     await promisifyRequest(transaction);
     oldDatabase.close();
 
-    expect(await drafts.loadLocalDraft(draft.loopId)).toBeUndefined();
-    expect(await drafts.loadSetAsideDraft(draft.loopId)).toBeUndefined();
+    expect(await drafts.loadLocalDraft(draft.loopId)).toEqual(draft);
+    expect(await drafts.loadSetAsideDraft(draft.loopId)).toEqual(draft);
     const database = await promisifyRequest(indexedDB.open('graphgoblin'));
     try {
       expect(database.version).toBe(2);
       expect(Array.from(database.objectStoreNames)).toEqual(['drafts']);
       expect(
         await promisifyRequest(database.transaction('drafts').objectStore('drafts').getAllKeys()),
-      ).toEqual([]);
+      ).toEqual([draft.loopId, `${draft.loopId}:set-aside`]);
     } finally {
       database.close();
     }
@@ -169,6 +170,105 @@ describe('local drafts in IndexedDB', () => {
     vi.resetModules();
     const reloaded = await import('./local-drafts.js');
     expect(await reloaded.loadLocalDraft(draft.loopId)).toEqual(draft);
+  });
+
+  it.each(['active', 'set-aside', 'server-save'] as const)(
+    'preserves a late-discovered old %s copy before any current write',
+    async (kind) => {
+      const original = {
+        loopId: 'late-old-copy',
+        definition: { ...minimalLoop(), schemaVersion: 3 } as unknown as LoopDefinitionInput,
+        savedAt: 'old',
+        synced: false,
+        baseToken: 'old-token',
+      };
+      const save = kind === 'set-aside' ? drafts.saveSetAsideDraft : drafts.saveLocalDraft;
+      await save(original);
+      if (kind === 'server-save')
+        await drafts.recordServerSave(original.loopId, minimalLoop(), 'new-token');
+      else await save({ ...original, definition: minimalLoop() });
+      expect(await drafts.loadArchivedDrafts(original.loopId)).toEqual([original]);
+    },
+  );
+
+  it('refuses to replace an old copy edited by another tab during preservation', async () => {
+    const original = {
+      loopId: 'concurrent-original',
+      definition: { ...minimalLoop(), schemaVersion: 3 } as unknown as LoopDefinitionInput,
+      savedAt: 'old',
+      synced: false,
+    };
+    const latest = {
+      ...original,
+      definition: { ...original.definition, name: 'another tab edit' },
+    };
+    await drafts.saveLocalDraft(original);
+    const originalGet = IDBObjectStore.prototype.get;
+    let interleaved = false;
+    const reading = vi.spyOn(IDBObjectStore.prototype, 'get').mockImplementation(function (
+      this: IDBObjectStore,
+      key,
+    ) {
+      const request = originalGet.call(this, key);
+      if (key === `${original.loopId}:raw-archive` && !interleaved)
+        request.addEventListener('success', () => {
+          if (interleaved) return;
+          interleaved = true;
+          const tx = this.transaction.db.transaction('drafts', 'readwrite');
+          tx.objectStore('drafts').put(latest, original.loopId);
+        });
+      return request;
+    });
+    try {
+      await expect(
+        drafts.saveLocalDraft({ ...original, definition: minimalLoop() }),
+      ).rejects.toThrow('changed while being preserved');
+      expect(interleaved).toBe(true);
+      expect(await drafts.loadLocalDraft(original.loopId)).toEqual(latest);
+      expect(await drafts.loadArchivedDrafts(original.loopId)).toEqual([original]);
+    } finally {
+      reading.mockRestore();
+    }
+  });
+
+  it.each(['active', 'set-aside'] as const)(
+    'never clears a changed %s source after archiving an earlier copy',
+    async (source) => {
+      const original = {
+        loopId: 'changed-source',
+        definition: minimalLoop(),
+        savedAt: 'old',
+        synced: false,
+      };
+      const newer = { ...original, definition: { ...minimalLoop(), name: 'new work' } };
+      const save = source === 'active' ? drafts.saveLocalDraft : drafts.saveSetAsideDraft;
+      const load = source === 'active' ? drafts.loadLocalDraft : drafts.loadSetAsideDraft;
+      const clear = source === 'active' ? drafts.clearActiveLocalDraft : drafts.clearSetAsideDraft;
+      await save(original);
+      await drafts.saveArchivedDraft(original);
+      await save(newer);
+      await expect(clear(original.loopId, original)).rejects.toThrow('changed before removal');
+      expect(await load(original.loopId)).toEqual(newer);
+      await clear(original.loopId, newer);
+      expect(await load(original.loopId)).toBeUndefined();
+    },
+  );
+
+  it('keeps distinct original metadata when archiving and discarding otherwise identical copies', async () => {
+    const first = {
+      loopId: 'distinct-originals',
+      definition: minimalLoop(),
+      savedAt: 'same-time',
+      synced: false,
+      baseToken: 'one',
+    };
+    const second = { ...first, baseToken: 'two' };
+    await drafts.saveArchivedDraft(first);
+    await drafts.saveArchivedDraft(second);
+    await drafts.saveArchivedDraft(first);
+    expect(await drafts.loadArchivedDrafts(first.loopId)).toEqual([first, second]);
+    await drafts.clearArchivedDraft(first.loopId, first);
+    expect(await drafts.loadArchivedDrafts(first.loopId)).toEqual([second]);
   });
 
   it.each(['live', 'set-aside'] as const)(

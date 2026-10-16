@@ -4,7 +4,7 @@ import { FIXTURE_IDS, FIXTURE_TS, minimalLoop, sampleThread } from '@graphgoblin
 import { type RunStatus, V2NodeConfigSchemas } from '@graphgoblin/contracts';
 import { openMemoryDatabase, openDatabase, type DatabaseHandle } from './db.js';
 import { SqliteRunRepository } from './runs.js';
-import { upgradeLoopV1, upgradeLoopCurrent } from '@graphgoblin/domain';
+import { upgradeLoopV1, upgradeLoopToV3 as upgradeLoopCurrent } from '@graphgoblin/domain';
 import { fakeUlid } from '@graphgoblin/contracts/testing';
 import {
   applyDatabaseUpgrade,

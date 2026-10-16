@@ -33,6 +33,9 @@ export interface UpgradeIssue {
   code: string;
   path: string;
   message: string;
+  /** Present on hash-bound format-4 review refusals. */
+  id?: string;
+  hash?: string;
 }
 export type UpgradeResult<T> =
   { ok: true; value: T; notices: UpgradeIssue[] } | { ok: false; issues: UpgradeIssue[] };

@@ -237,7 +237,7 @@ The adversarial QA report is `docs/qa/2026-10-03-wp-d2.md`. Behaviour that chang
 
 - **API key entry.** With `GG_REQUIRE_API_KEY=true` the shell under `/app/` is public; the first 401 shows an "API key required" panel, the key is kept in `localStorage` and sent on every request and event stream, a refused key asks again, and Settings has "Forget key". Entering a key refetches every screen and restarts event streams, so a deep link opened before the key goes live without a reload; forgetting the key (in any tab, followed through the `storage` event) drops loaded data and restarts streams without it. Changing the stored key, including a `storage` event from another tab, resets the API-key list and refreshes its **This browser** marker, cancelling the query that used the previous credentials; a late 401 from a previous key is ignored. The list reload can close an open Revoke dialog when a key changes from another tab; this is accepted behaviour. A stored key is still sent in trusted mode, revoking it shows the API key panel, and **Forget key** in Settings recovers access without it. Tokens never enter query keys; `current` describes the credentials used for that response.
 - **Validation agrees with the API.** The editor lists the local `domain` issues (now including Liquid and JSONata syntax), the issues only the API can find (cron syntax, subloop references) from `POST /loops/{id}/validate` after each save, and `FIELD_INPUT_INVALID` for held input: unparsed JSON, an incomplete schedule, or valid section JSON awaiting Apply. Invalid input keeps its existing message; valid pending JSON says it is JSON not applied yet. Publish asks the user to complete/discard invalid input or apply/cancel pending JSON first. The held text and its issue stay in the editor state when the field is left (coming back shows the text again) until the text parses (and section JSON is applied), the user discards it (in the field or from its issue's row: since #15 in the node's badge popover, or beside Publish for loop settings and variables), its row is removed, or an undo takes back the typing that produced it (redo brings it back; see "Undo and redo"). Renames and removals update these stored paths through the form's parse-error channel. Removing an optional object or switching a union variant also clears errors for the fields it removes. Shared domain validation rejects supplied blank JSONata expressions, including whitespace-only input from imports or API clients; the form omits optional blank expressions instead. Empty and whitespace-only Liquid templates remain valid. Contracts parsing is unchanged. Publishing an unchanged loop says there is nothing to publish; the outcome message clears on the next edit.
-- **Drafts.** Device drafts saved before the node-only harness change were discarded by a one-off IndexedDB store upgrade, including live and set-aside copies. New in-progress drafts remain on the device across reloads even with schema errors. If an older tab or PWA window blocks the store upgrade, draft loading falls back to the server copy after three seconds, and device storage reports itself blocked (see "Device storage and the save states" below). Every edit is mirrored to IndexedDB at once and flushed to the server when the editor unmounts, so leaving inside the debounce window loses nothing. An unsynced local draft older than the server's last save is set aside, under its own IndexedDB key that later edits do not touch, and offered (use or discard) on every load until the user chooses. Draft saves for a loop are serialized, including the one sent when leaving the editor, and a save updates the editor only while the same loop and editor generation are loaded, so an older save never lands after a newer one. Two tabs no longer overwrite each other: see "Draft conflicts" below.
+- **Drafts.** IndexedDB store upgrades preserve live, set-aside and archived copies; they never delete the drafts store. New in-progress drafts remain on the device across reloads even with schema errors. If an older tab or PWA window blocks the store upgrade, draft loading falls back to the server copy after three seconds, and device storage reports itself blocked (see "Device storage and the save states" below). Every edit is mirrored to IndexedDB at once and flushed to the server when the editor unmounts, so leaving inside the debounce window loses nothing. An unsynced local draft older than the server's last save is set aside, under its own IndexedDB key that later edits do not touch, and offered (use or discard) on every load until the user chooses. Draft saves for a loop are serialized, including the one sent when leaving the editor, and a save updates the editor only while the same loop and editor generation are loaded, so an older save never lands after a newer one. Two tabs no longer overwrite each other: see "Draft conflicts" below.
 - **Editor.** Palette additions pan into view. List fields with a default show the default and a Customize button instead of item fields bound to nothing. Settings' "(server default)" deletes the setting.
 - **Run inspector.** Replay starts from `run.queued`'s `initialThread`, so subloop child runs reconstruct correctly; a log that does not replay shows an explanation; an error boundary per screen keeps the shell alive. Events are appended, rendered, and reported in 100 ms batches and session storage never throws on quota: a 1,211-event run opens in about 0.5 s with a handful of run fetches (it took 7 s and one fetch per event before).
 - **Events screen** shows each event's source (API, webhook delivery, or the run whose exit emitted it) and links to the runs it started. Webhook receipts distinguish historical filtered rows and current deduplicated, pending, admitted and failed delivery states, with retry attempts and safe failure codes. While the mounted page contains pending receipts, it refreshes every two seconds so recovery results and new run links appear automatically; interval refresh stops after all displayed receipts are terminal or the page unmounts. Normal focus and reconnect refresh remain enabled. Each delivery can disclose its pinned safe webhook configuration; complete endpoint history remains available through `GET /loops/{id}/triggers`.
@@ -254,6 +254,38 @@ The adversarial QA report is `docs/qa/2026-10-03-wp-d2.md`. Behaviour that chang
 - Regression: `src/editor/EditorPage.conflict.test.tsx` and the two-tab E2E `e2e/drafts.spec.ts`.
 
 ## Device storage and the save states (Decided, phase review F2)
+
+### Device format conversion
+
+`readDeviceDraft` loads the converter lazily only for an older-format device copy.
+If the converter chunk cannot load, every device key stays untouched and editing
+and autosave stay paused. The notice offers **Retry conversion** or a page reload;
+the next editor load tries again. A chunk-load failure does not archive or mark a
+draft unconvertible.
+
+Automatic conversion archives and reads back the complete original, including
+metadata and tokens, before replacing an active or set-aside key. A synced mirror
+stays a clean cache; the server definition wins whenever available. Genuinely
+unsynced work stays unsynced. If the server timestamp is newer, the converted work
+is set aside using the existing restore/discard notice.
+
+The old `baseToken` is invalidated with `unreconciled-device-format`, including on
+an offline synced cache in case it is edited later. A first save of converted edits
+enters `DRAFT_CONFLICT`; its notice explains the format conversion and requires
+**Reload server draft** or explicit **Overwrite with this copy** with a fresh token.
+Opening a synced mirror does not make it dirty and does not trigger this conflict.
+
+Pending review or conversion failure keeps an inert, exportable raw original in
+its active, set-aside or archive slot. The notice lists review IDs and reasons;
+issues retain their hashes. Archives are labelled without hashing or reconverting them and are never activated automatically. Failed
+archive writes or verification block editing and overwriting autosave. Incomplete
+current drafts still reopen unchanged. Restoring a converted set-aside copy is an
+explicit choice to overwrite using the currently displayed server token.
+
+Run events and their SSE resume cursors are the only persisted run data, in
+`sessionStorage`. Their key is `graphgoblin-run-events-v4`; earlier keys are removed
+once at module initialisation before hydration. Repeated reads do not repeat cleanup. No old-event reader exists. React Query data is memory-only and
+the service worker caches the app shell, never API responses.
 
 The IndexedDB mirror can be refused: an older GraphGoblin tab or PWA window that keeps its version 1 connection open blocks the version 2 store upgrade, and storage can fail for other reasons (quota, private modes). The editor reports where the edits are only after the write that keeps them has answered.
 

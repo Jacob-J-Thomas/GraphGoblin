@@ -237,11 +237,11 @@ describe('run projections', () => {
     );
   });
 
-  it('ignores the v2 event cache and retains decisions replayed with the canonical contract', async () => {
+  it('invalidates old event caches and cursors and retains only current-format replay', async () => {
     useRunEventStore.setState({ runs: {} });
     useRunEventStore.persist.clearStorage();
     sessionStorage.setItem(
-      'graphgoblin-run-events-v2',
+      'graphgoblin-run-events-v3',
       JSON.stringify({
         state: {
           runs: {
@@ -263,13 +263,29 @@ describe('run projections', () => {
         version: 0,
       }),
     );
-    await useRunEventStore.persist.rehydrate();
-    expect(useRunEventStore.getState().runs[R]).toBeUndefined();
+    vi.resetModules();
+    const { useRunEventStore: freshStore, quotaSafeSessionStorage: freshStorage } =
+      await import('./event-store.js');
+    await freshStore.persist.rehydrate();
+    expect(freshStore.getState().runs[R]).toBeUndefined();
+    expect(sessionStorage.getItem('graphgoblin-run-events-v3')).toBeNull();
     const refreshed = event(R, 1, 'decision.made', { nodeId: 'd', ...expressionEvidence('good') });
-    useRunEventStore.getState().append(R, refreshed);
-    expect(useRunEventStore.getState().runs[R]?.events).toEqual([refreshed]);
-    expect(sessionStorage.getItem('graphgoblin-run-events-v3')).toContain('"portId":"good"');
-    useRunEventStore.setState({ runs: {} });
+    freshStore.getState().append(R, refreshed);
+    expect(freshStore.getState().runs[R]?.events).toEqual([refreshed]);
+    expect(sessionStorage.getItem('graphgoblin-run-events-v4')).toContain('"portId":"good"');
+    sessionStorage.setItem(
+      'graphgoblin-run-events-v3',
+      'written by an older tab after initialisation',
+    );
+    const removing = vi.spyOn(Storage.prototype, 'removeItem');
+    try {
+      freshStorage.getItem('graphgoblin-run-events-v4');
+      await freshStore.persist.rehydrate();
+      expect(removing).not.toHaveBeenCalled();
+    } finally {
+      removing.mockRestore();
+    }
+    freshStore.setState({ runs: {} });
   });
   it('describes every event type', () => {
     const lines = ALL.map(describeEvent);
@@ -324,7 +340,7 @@ describe('run projections', () => {
     expect(useRunEventStore.getState().runs['r1']).toBeUndefined();
     clear('bulk20');
     expect(useRunEventStore.getState().runs['bulk20']).toBeUndefined();
-    expect(sessionStorage.getItem('graphgoblin-run-events-v3')).toContain('bulk19');
+    expect(sessionStorage.getItem('graphgoblin-run-events-v4')).toContain('bulk19');
   });
 });
 

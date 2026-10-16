@@ -165,10 +165,15 @@ export async function runUpgrade(argv) {
     const resolutions = options.resolutions ? await json(options.resolutions) : {};
     const result =
       original?.format === 'graphgoblin-loop'
-        ? upgradeExportCurrent(original, resolutions)
-        : upgradeLoopCurrent(original, resolutions);
+        ? await upgradeExportCurrent(original, resolutions)
+        : await upgradeLoopCurrent(original, resolutions);
     if (!result.ok) {
-      await output(options.out, { format: 'graphgoblin-upgrade-refusals', issues: result.issues });
+      await output(options.out, {
+        format: 'graphgoblin-upgrade-refusals',
+        issues: result.issues,
+        notices: result.notices,
+        reviewItems: result.reviewItems,
+      });
       return { ok: false, command, refusals: result.issues.length };
     }
     await output(options.out, result.value);

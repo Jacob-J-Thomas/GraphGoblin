@@ -71,6 +71,8 @@ export function EditorPage() {
     setAside,
     rawCopies,
     preservationBlocked,
+    conversionLoadFailed,
+    retryConversion,
     restoreSetAside,
     discardSetAside,
     discardRawCopy,
@@ -226,15 +228,18 @@ export function EditorPage() {
     <Alert
       key={`${copy.source}-${copy.savedAt}-${index}`}
       tone="warn"
-      title="This device copy could not be migrated safely"
+      title={
+        copy.migrationIssues[0]?.code === 'UPGRADE_ARCHIVED_RAW_COPY'
+          ? 'Original device copy preserved'
+          : 'This device copy could not be migrated safely'
+      }
     >
-      Its original contents remain available on this device. The editor will not load it because
-      conversion found unresolved legacy data. Export the original JSON before deleting the device
-      copy if you need to recover it elsewhere.
+      Its original contents remain available on this device as an inert copy. Export the original
+      JSON before deleting the device copy if you need to recover it elsewhere.
       <ul className="mt-2 list-disc pl-5">
-        {copy.migrationIssues.slice(0, 3).map((issue, issueIndex) => (
+        {copy.migrationIssues.map((issue, issueIndex) => (
           <li key={`${issue.code}-${issueIndex}`}>
-            <code>{issue.path || '/'}</code>: {issue.message}
+            <code>{issue.id ?? (issue.path || '/')}</code>: {issue.message}
           </li>
         ))}
       </ul>
@@ -267,6 +272,20 @@ export function EditorPage() {
     [],
   );
 
+  if (conversionLoadFailed) {
+    return (
+      <main className="grid gap-3 p-page">
+        <Alert tone="warn" title="Device draft conversion could not load">
+          Your device copies are unchanged. Retry conversion or reload this page.
+          <span className="mt-2 flex gap-2">
+            <Button size="sm" variant="outline" onClick={retryConversion}>
+              Retry conversion
+            </Button>
+          </span>
+        </Alert>
+      </main>
+    );
+  }
   if (!ready) {
     if (query.isError && !isOfflineError(query.error))
       return <ErrorState error={query.error} what="Loop" />;
