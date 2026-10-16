@@ -37,6 +37,7 @@ import { EXIT_FIELD_OVERRIDES } from './ExitFields.js';
 import { hasRepeatRoute, cleanGateLimits } from './decision-gates.js';
 import { TriggerPresets } from './TriggerPresets.js';
 import { TriggerTypePicker } from './TriggerTypePicker.js';
+import { POLL_FIELD_LABELS } from './trigger-field-labels.js';
 import { CatalogWarningsContext } from '../forms/fields/model.js';
 import { GateLimitIssuesContext } from './DecisionGateFields.js';
 import { canvasFocusTarget } from './canvas-focus.js';
@@ -61,10 +62,6 @@ const DECISION_FIELD_LABELS = {
   truthThreshold: 'Noul true-probability threshold',
   maxPasses: 'Maximum passes',
   maxRunTimeSeconds: 'Maximum run time (seconds)',
-};
-const POLL_FIELD_LABELS = {
-  dedupeKey: 'Whole-probe dedupe key (single-result only)',
-  'items.dedupeKey': 'Per-item dedupe key',
 };
 const DEFAULT_FIELD_LABELS = {};
 const DECISION_REORDERABLE = ['routes', 'answer.options', 'answer.bands'];

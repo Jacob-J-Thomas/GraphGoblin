@@ -352,14 +352,14 @@ and Apply. Cancel returns focus to Preview without editing the graph. Apply
 replaces the entire trigger config and clears its held input as one commit in
 history, preserves connections, and focuses Trigger type. Undo/redo restore held
 input and focus through the same D2 form paths. An intervening config, held-input
-or history change invalidates the preview; applying again requires a fresh review.
+or history change invalidates the preview and announces that it is out of date; applying again requires a fresh review. The two named JSON blocks are keyboard tab stops so their contents can be scrolled before reaching Cancel and Apply.
 The existing GitHub recipes stay editable; downstream graph recipes belong to T2.
 
 The shared web test helper `src/__fixtures__/triggers.ts` owns trigger construction
 so T3 can switch the discriminator centrally. Component regressions cover the
 five types, signing, optional presets, preview/cancel/apply, held input, validation
-focus and keyboard undo in light and dark themes. The affected Playwright specs
-follow these controls; browser execution is a separate orchestrator gate.
+focus and keyboard undo. The affected Playwright specs
+check these controls in light and dark themes; browser execution is a separate orchestrator gate.
 
 ### Cron schedule control (Decided, #20)
 

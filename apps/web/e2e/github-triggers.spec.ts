@@ -259,7 +259,8 @@ test('GitHub issue poll preset keeps bounded item settings editable and reloadab
   await expect(restoredItems.getByLabel('Per-item dedupe key')).toHaveText(
     '"octo-team/fixture-repo:issue:" & $string(item.number)',
   );
-  await expect(restored.getByText('does not call GitHub from this editor')).toBeVisible();
+  await expect(restored.getByText(/Poll probes run on the GraphGoblin server/)).toBeVisible();
+  await expect(restored.getByText(/gh must be installed and authenticated there/)).toBeVisible();
 });
 
 test('Events exposes safe labels for all five webhook delivery dispositions', async ({ page }) => {
