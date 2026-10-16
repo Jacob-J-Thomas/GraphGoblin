@@ -276,7 +276,7 @@ describe('inference node', () => {
       schemaVersion: CURRENT_DEFINITION_FORMAT,
       name: 'chain',
       nodes: [
-        { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
+        { id: 'start', kind: 'trigger', label: 'S', config: { type: 'manual' } },
         {
           id: 'a',
           kind: 'inference',

@@ -322,7 +322,7 @@ describe('decision option edits in editor history', () => {
       expect(store().definition!.edges).toBe(edges);
     }
     store().updateNode('pick', { config: config() });
-    store().updateNode('start', { config: { subtype: 'manual' } });
+    store().updateNode('start', { config: { type: 'manual' } });
     store().updateNode('missing', { config: config() });
     store().updateNode('pick', { label: 'Choose' });
     expect(store().definition!.edges).toBe(edges);

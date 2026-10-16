@@ -17,7 +17,7 @@ function StartForm({ loopId, version }: { loopId: string; version: LoopVersionRe
   const queryClient = useQueryClient();
   const triggers = version.definition.nodes.filter(
     (n): n is Extract<typeof n, { kind: 'trigger' }> =>
-      n.kind === 'trigger' && n.config.subtype === 'manual',
+      n.kind === 'trigger' && n.config.type === 'manual',
   );
   const [triggerId, setTriggerId] = useState(triggers[0]?.id ?? '');
   const start = useMutation({
@@ -40,7 +40,7 @@ function StartForm({ loopId, version }: { loopId: string; version: LoopVersionRe
     );
   }
   const trigger = triggers.find((t) => t.id === triggerId);
-  const inputSchema = trigger?.config.subtype === 'manual' ? trigger.config.inputSchema : undefined;
+  const inputSchema = trigger?.config.type === 'manual' ? trigger.config.inputSchema : undefined;
   return (
     <>
       <FieldGroup className="max-w-[440px]">

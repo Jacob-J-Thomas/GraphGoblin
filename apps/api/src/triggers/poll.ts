@@ -17,7 +17,7 @@ import {
 } from '@graphgoblin/domain';
 import type { ClockPort, HttpProbePort, Logger, RunManager, ScriptPort } from '@graphgoblin/engine';
 
-type PollConfig = Extract<Extract<Node, { kind: 'trigger' }>['config'], { subtype: 'poll' }>;
+type PollConfig = Extract<Extract<Node, { kind: 'trigger' }>['config'], { type: 'poll' }>;
 
 export interface PollTarget {
   ownerId: string;
@@ -82,7 +82,7 @@ export class PollTriggers {
     const now = this.deps.clock.now().getTime();
     for (const node of nodesOfKind(version.definition, 'trigger')) {
       const config = node.config;
-      if (config.subtype !== 'poll' || !config.enabled) continue;
+      if (config.type !== 'poll' || !config.enabled) continue;
       this.armed.set(`${loop.id}/${node.id}`, {
         ownerId: loop.ownerId,
         loopId: loop.id,

@@ -36,7 +36,7 @@ async function hook(t: TestApp) {
   await t.container.repos.secretsFor('local').set('hook', 'secret-marker');
   const id = await t.publishLoop(
     triggerLoop('hook', {
-      subtype: 'webhook',
+      type: 'webhook',
       signature: { secretRef: 'hook', scheme: 'hmac-sha256' },
       replayWindowSeconds: 300,
     }),
@@ -392,7 +392,7 @@ describe('adversarial API invariants', () => {
         await t.publishLoop(
           triggerLoop(
             `event-${i}`,
-            { subtype: 'event', eventType: `event-${i}` },
+            { type: 'event', eventType: `event-${i}` },
             `event-${(i + 1) % count}`,
           ),
         );
@@ -416,7 +416,7 @@ describe('adversarial API invariants', () => {
       method: 'POST',
       url: '/loops',
       payload: {
-        definition: triggerLoop('draft-cron', { subtype: 'cron', expression: '* * * * *' }),
+        definition: triggerLoop('draft-cron', { type: 'cron', expression: '* * * * *' }),
       },
     });
     const id = response.json<{ loop: { id: string } }>().loop.id;

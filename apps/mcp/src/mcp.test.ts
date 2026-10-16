@@ -44,7 +44,7 @@ const inputLoop: LoopDefinitionInput = {
       kind: 'trigger',
       label: 'Start',
       config: {
-        subtype: 'manual',
+        type: 'manual',
         inputSchema: { type: 'object', properties: { topic: { type: 'string' } } },
       },
     },
@@ -71,7 +71,7 @@ const signalLoop: LoopDefinitionInput = {
   schemaVersion: CURRENT_DEFINITION_FORMAT,
   name: 'signal-wait',
   nodes: [
-    { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual', exposeTo: ['ui'] } },
+    { id: 'start', kind: 'trigger', label: 'S', config: { type: 'manual', exposeTo: ['ui'] } },
     { id: 'hold', kind: 'wait', label: 'Hold', config: { mode: 'signal', name: 'go' } },
     { id: 'done', kind: 'exit', label: 'D', config: {} },
   ],
@@ -85,7 +85,7 @@ const slowLoop: LoopDefinitionInput = {
   schemaVersion: CURRENT_DEFINITION_FORMAT,
   name: 'slow-inference',
   nodes: [
-    { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
+    { id: 'start', kind: 'trigger', label: 'S', config: { type: 'manual' } },
     { id: 'think', kind: 'inference', label: 'T', config: { prompt: { template: 'think' } } },
     { id: 'done', kind: 'exit', label: 'D', config: {} },
   ],
@@ -168,7 +168,7 @@ describe('MCP server against the in-process API', () => {
       {
         nodeId: 'start',
         label: 'Start',
-        subtype: 'manual',
+        type: 'manual',
         startableFromMcp: true,
         inputSchema: { type: 'object', properties: { topic: { type: 'string' } } },
       },

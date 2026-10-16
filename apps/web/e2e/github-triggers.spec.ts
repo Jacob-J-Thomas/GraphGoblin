@@ -117,7 +117,7 @@ test('body-signed GitHub preset saves, admits a matching hook, and deduplicates 
   await expect
     .poll(() => triggerConfig(request, loopId))
     .toMatchObject({
-      subtype: 'webhook',
+      type: 'webhook',
       signature: { scheme: 'hmac-sha256-body', secretRef },
     });
 
@@ -241,7 +241,7 @@ test('GitHub issue poll preset keeps bounded item settings editable and reloadab
   await expect
     .poll(() => triggerConfig(request, loopId))
     .toMatchObject({
-      subtype: 'poll',
+      type: 'poll',
       items: {
         select: 'probe.json',
         dedupeKey: '"octo-team/fixture-repo:issue:" & $string(item.number)',

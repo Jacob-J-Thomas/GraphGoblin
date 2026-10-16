@@ -37,7 +37,7 @@ function inputLoop(name: string) {
     kind: 'trigger',
     label: 'Start',
     config: {
-      subtype: 'manual',
+      type: 'manual',
       inputSchema: {
         type: 'object',
         properties: { repo: { type: 'string' } },

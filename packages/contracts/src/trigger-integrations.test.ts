@@ -11,7 +11,7 @@ import {
 describe('strict webhook signing branches', () => {
   it('preserves existing timestamp field placement, defaults, filter and dedupe', () => {
     const config = {
-      subtype: 'webhook',
+      type: 'webhook',
       signature: { scheme: 'hmac-sha256', secretRef: 'hook-key' },
       filter: 'payload.action = "opened"',
       dedupeKey: 'headers."x-github-delivery"',
@@ -30,7 +30,7 @@ describe('strict webhook signing branches', () => {
 
   it('defaults the body header while refusing any timestamp-window field', () => {
     const config = {
-      subtype: 'webhook',
+      type: 'webhook',
       signature: { scheme: 'hmac-sha256-body', secretRef: 'hook-key' },
     };
     expect(WebhookConfigSchema.parse(config)).toEqual({
@@ -55,10 +55,10 @@ describe('strict webhook signing branches', () => {
       { scheme: 'hmac-sha256-body', secretRef: 'key', header: 'x signature' },
       { scheme: 'hmac-sha256-body', secretRef: 'key', replayWindowSeconds: 1 },
     ])
-      expect(WebhookConfigSchema.safeParse({ subtype: 'webhook', signature }).success).toBe(false);
+      expect(WebhookConfigSchema.safeParse({ type: 'webhook', signature }).success).toBe(false);
     expect(
       WebhookConfigSchema.safeParse({
-        subtype: 'webhook',
+        type: 'webhook',
         signature: { scheme: 'hmac-sha256-body', secretRef: 'key' },
         unknown: true,
       }).success,

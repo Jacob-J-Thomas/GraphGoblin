@@ -30,7 +30,7 @@ function crossingLoop(name = 'Manual routes'): LoopDefinitionInput {
         id: 'start',
         kind: 'trigger',
         label: 'Start',
-        config: { subtype: 'manual' },
+        config: { type: 'manual' },
         ui: { x: 0, y: 100 },
       },
       { id: 'side', kind: 'mutate', label: 'Side', config: note, ui: { x: 320, y: 100 } },

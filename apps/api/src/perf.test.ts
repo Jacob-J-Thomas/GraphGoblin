@@ -23,7 +23,7 @@ const loop: LoopDefinitionInput = {
   schemaVersion: CURRENT_DEFINITION_FORMAT,
   name: 'perf',
   nodes: [
-    { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
+    { id: 'start', kind: 'trigger', label: 'S', config: { type: 'manual' } },
     { id: 'infer', kind: 'inference', label: 'I', config: { prompt: { template: 'stream' } } },
     { id: 'done', kind: 'exit', label: 'D', config: {} },
   ],

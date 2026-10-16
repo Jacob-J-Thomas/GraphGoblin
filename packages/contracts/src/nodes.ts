@@ -85,7 +85,7 @@ const PayloadFilterSchema = ExpressionSchema.optional().meta(
 
 export const TriggerConfigSchema = z.union([
   z.strictObject({
-    subtype: z.literal('manual'),
+    type: z.literal('manual'),
     inputSchema: JsonSchemaSchema.optional().meta(
       field('JSON Schema the manual input must satisfy.'),
     ),
@@ -94,7 +94,7 @@ export const TriggerConfigSchema = z.union([
     ),
   }),
   z.strictObject({
-    subtype: z.literal('cron'),
+    type: z.literal('cron'),
     expression: z
       .string()
       .min(1)
@@ -115,14 +115,14 @@ export const TriggerConfigSchema = z.union([
   TimestampWebhookConfigSchema,
   BodyWebhookConfigSchema,
   z.strictObject({
-    subtype: z.literal('event'),
+    type: z.literal('event'),
     eventType: SlugSchema.meta(field('Inbound event type that fires the trigger.')),
     filter: PayloadFilterSchema,
     dedupeKey: DedupeKeySchema,
   }),
   z
     .strictObject({
-      subtype: z.literal('poll'),
+      type: z.literal('poll'),
       intervalSeconds: z.number().int().min(5).max(86_400).meta(field('Seconds between probes.')),
       probe: ProbeSchema.meta(
         field('What to call on each poll: HTTP, a script, a signal count, or nothing.'),

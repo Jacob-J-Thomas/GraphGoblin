@@ -34,12 +34,12 @@ describe('editor model', () => {
   it('allocates unique node and edge ids', () => {
     const def = minimalLoop();
     expect(nextNodeId(def, 'decision')).toBe('decision');
-    def.nodes.push({ id: 'decision', kind: 'trigger', label: 'x', config: { subtype: 'manual' } });
+    def.nodes.push({ id: 'decision', kind: 'trigger', label: 'x', config: { type: 'manual' } });
     def.nodes.push({
       id: 'decision-2',
       kind: 'trigger',
       label: 'x',
-      config: { subtype: 'manual' },
+      config: { type: 'manual' },
     });
     expect(nextNodeId(def, 'decision')).toBe('decision-3');
     expect(nextEdgeId(def)).toBe('e2');

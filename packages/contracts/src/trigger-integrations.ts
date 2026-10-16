@@ -12,7 +12,7 @@ const filter = ExpressionSchema.optional().meta(
 /** Existing timestamp signing retains its top-level window and defaults. */
 export const TimestampWebhookConfigSchema = z
   .strictObject({
-    subtype: z.literal('webhook'),
+    type: z.literal('webhook'),
     signature: z
       .strictObject({
         scheme: z.literal('hmac-sha256'),
@@ -39,7 +39,7 @@ export const TimestampWebhookConfigSchema = z
 /** Body signatures have indefinite raw-content replay suppression and no timestamp window. */
 export const BodyWebhookConfigSchema = z
   .strictObject({
-    subtype: z.literal('webhook'),
+    type: z.literal('webhook'),
     signature: z
       .strictObject({
         scheme: z.literal('hmac-sha256-body'),

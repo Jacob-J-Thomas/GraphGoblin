@@ -27,7 +27,7 @@ const TYPES = [
   },
 ] as const;
 
-/** Presentation only: the schema still stores subtype and its two webhook signing variants. */
+/** Presentation only: the schema stores `type`, with two webhook signing variants. */
 export function TriggerTypePicker({ options, value, onChange }: UnionPickerProps) {
   const id = useId();
   const variants = options.map((option) => {
@@ -35,7 +35,7 @@ export function TriggerTypePicker({ options, value, onChange }: UnionPickerProps
     const signature = shape?.kind === 'object' ? shape.shape['signature'] : undefined;
     return {
       ...option,
-      type: option.schema ? discriminatorValue(option.schema, 'subtype') : undefined,
+      type: option.schema ? discriminatorValue(option.schema, 'type') : undefined,
       scheme: signature ? discriminatorValue(signature, 'scheme') : undefined,
     };
   });

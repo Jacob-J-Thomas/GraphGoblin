@@ -120,7 +120,7 @@ export function singleNodeLoop(
     schemaVersion: CURRENT_DEFINITION_FORMAT,
     name,
     nodes: [
-      { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+      { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
       node,
       { id: 'done', kind: 'exit', label: 'Done', config: exitConfig },
     ],

@@ -30,7 +30,7 @@ const inferLoop: LoopDefinitionInput = {
   schemaVersion: CURRENT_DEFINITION_FORMAT,
   name: 'infer',
   nodes: [
-    { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
+    { id: 'start', kind: 'trigger', label: 'S', config: { type: 'manual' } },
     { id: 'infer', kind: 'inference', label: 'I', config: { prompt: { template: 'hi' } } },
     { id: 'done', kind: 'exit', label: 'D', config: {} },
   ],
@@ -44,7 +44,7 @@ const returnLoop: LoopDefinitionInput = {
   schemaVersion: CURRENT_DEFINITION_FORMAT,
   name: 'returns',
   nodes: [
-    { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
+    { id: 'start', kind: 'trigger', label: 'S', config: { type: 'manual' } },
     { id: 'wait', kind: 'wait', label: 'W', config: { mode: 'input', prompt: 'Value?' } },
     { id: 'done', kind: 'exit', label: 'D', config: { returns: 'lastOutput.value' } },
   ],

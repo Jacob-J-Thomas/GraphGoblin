@@ -265,7 +265,7 @@ describe('SchemaForm', () => {
     render(
       <Harness
         schema={NodeConfigSchemas.trigger}
-        initial={{ subtype: 'manual', inputSchema: { type: 'object' } }}
+        initial={{ type: 'manual', inputSchema: { type: 'object' } }}
         spy={spy}
       />,
     );
@@ -395,32 +395,30 @@ describe('SchemaForm', () => {
   it('switches a root discriminated union and shows literal and nested object fields', async () => {
     const user = userEvent.setup();
     const spy = vi.fn();
-    render(
-      <Harness schema={NodeConfigSchemas.trigger} initial={{ subtype: 'manual' }} spy={spy} />,
-    );
+    render(<Harness schema={NodeConfigSchemas.trigger} initial={{ type: 'manual' }} spy={spy} />);
     expect(screen.getByRole('group', { name: 'Expose to' })).toBeInTheDocument();
     await user.click(screen.getByRole('checkbox', { name: 'mcp' }));
     expect(last(spy)['exposeTo']).toEqual(['ui', 'api']);
     await user.click(screen.getByRole('checkbox', { name: 'mcp' }));
     expect(last(spy)['exposeTo']).toEqual(['ui', 'api', 'mcp']);
 
-    const subtype = screen.getByLabelText('Subtype');
+    const type = screen.getByLabelText('Type');
     await user.selectOptions(
-      subtype,
-      within(subtype).getByRole('option', { name: 'webhook (timestamp)' }).getAttribute('value')!,
+      type,
+      within(type).getByRole('option', { name: 'webhook (timestamp)' }).getAttribute('value')!,
     );
-    expect(last(spy)).toMatchObject({ subtype: 'webhook', signature: { scheme: 'hmac-sha256' } });
+    expect(last(spy)).toMatchObject({ type: 'webhook', signature: { scheme: 'hmac-sha256' } });
     expect(screen.getByText('hmac-sha256')).toBeInTheDocument();
     await user.type(screen.getByLabelText('Secret ref'), 'hook-secret');
     expect(last(spy)).toMatchObject({ signature: { secretRef: 'hook-secret' } });
 
     await user.selectOptions(
-      subtype,
-      within(subtype).getByRole('option', { name: 'cron' }).getAttribute('value')!,
+      type,
+      within(type).getByRole('option', { name: 'cron' }).getAttribute('value')!,
     );
     await user.type(screen.getByLabelText('Expression'), '0 2 * * *');
     await user.click(screen.getByLabelText('Enabled'));
-    expect(last(spy)).toMatchObject({ subtype: 'cron', expression: '0 2 * * *', enabled: false });
+    expect(last(spy)).toMatchObject({ type: 'cron', expression: '0 2 * * *', enabled: false });
   });
 
   it('retains the selected body-signature branch while its secret is incomplete', async () => {
@@ -430,7 +428,7 @@ describe('SchemaForm', () => {
       <Harness
         schema={NodeConfigSchemas.trigger}
         initial={{
-          subtype: 'webhook',
+          type: 'webhook',
           signature: {
             scheme: 'hmac-sha256-body',
             header: 'x-hub-signature-256',
@@ -442,13 +440,13 @@ describe('SchemaForm', () => {
       />,
     );
 
-    const subtype = screen.getByLabelText('Subtype');
-    expect(subtype).toHaveDisplayValue('webhook (body)');
+    const type = screen.getByLabelText('Type');
+    expect(type).toHaveDisplayValue('webhook (body)');
     expect(screen.getByText('hmac-sha256-body')).toBeInTheDocument();
     expect(screen.queryByLabelText('Replay window seconds')).not.toBeInTheDocument();
     await user.type(screen.getByLabelText('Secret ref'), 'github-key');
     expect(last(spy)).toMatchObject({
-      subtype: 'webhook',
+      type: 'webhook',
       signature: { scheme: 'hmac-sha256-body', secretRef: 'github-key' },
     });
   });
@@ -460,7 +458,7 @@ describe('SchemaForm', () => {
       <Harness
         schema={NodeConfigSchemas.trigger}
         initial={{
-          subtype: 'webhook',
+          type: 'webhook',
           signature: { scheme: 'custom-hmac', header: 'x-custom', secretRef: 'saved-secret' },
         }}
         spy={spy}

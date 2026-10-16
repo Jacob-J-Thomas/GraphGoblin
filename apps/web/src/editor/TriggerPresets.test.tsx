@@ -350,7 +350,7 @@ describe('TriggerPresets', () => {
     expect(preview).toHaveTextContent('rewireEdges');
     await user.click(screen.getByRole('button', { name: 'Apply GitHub preset' }));
     expect(onApply.mock.calls[0]?.[0].definition.nodes[0].config).toMatchObject({
-      subtype: 'webhook',
+      type: 'webhook',
       signature: { scheme: 'hmac-sha256-body', secretRef: 'github-hook' },
       dedupeKey: '$headers."x-github-delivery"',
     });
@@ -376,7 +376,7 @@ describe('TriggerPresets', () => {
 
     const config = onApply.mock.calls[0]?.[0].definition.nodes[0].config as Record<string, unknown>;
     expect(config).toMatchObject({
-      subtype: 'poll',
+      type: 'poll',
       intervalSeconds: 60,
       fireWhen: 'true',
       items: {
@@ -402,7 +402,7 @@ describe('TriggerPresets', () => {
     expect(program).not.toContain('--slurp');
 
     const parsed = TriggerConfigSchema.parse(config);
-    if (parsed.subtype !== 'poll' || parsed.probe.kind !== 'script')
+    if (parsed.type !== 'poll' || parsed.probe.kind !== 'script')
       throw new Error('The poll preset did not produce a script probe.');
     const curated = [
       {
@@ -451,7 +451,7 @@ describe('TriggerPresets', () => {
     const onApply = vi.fn();
     render(
       <TriggerPresets
-        config={{ subtype: 'webhook', signature: { scheme: 'custom-hmac', secretRef: 'saved' } }}
+        config={{ type: 'webhook', signature: { scheme: 'custom-hmac', secretRef: 'saved' } }}
         onApply={onApply}
       />,
     );

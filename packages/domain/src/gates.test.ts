@@ -15,7 +15,7 @@ function gateLoop(): LoopDefinitionInput {
     schemaVersion: 4,
     name: 'gate',
     nodes: [
-      { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+      { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
       {
         id: 'gate',
         kind: 'decision',

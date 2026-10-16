@@ -28,7 +28,7 @@ async function previousStructure(custom = false) {
   handles.push(handle);
   const definition = minimalLoop();
   definition.nodes[0]!.config = {
-    subtype: 'webhook',
+    type: 'webhook',
     signature: { scheme: 'hmac-sha256', secretRef: 'secret' },
     ...(custom ? { dedupeKey: 'payload.id' } : {}),
   };

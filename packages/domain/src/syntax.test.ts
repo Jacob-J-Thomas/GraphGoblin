@@ -14,7 +14,7 @@ function loop(nodes: LoopDefinitionInput['nodes'], settings?: LoopDefinitionInpu
     schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: 'syntax',
     nodes: [
-      { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+      { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
       ...nodes,
       { id: 'done', kind: 'exit', label: 'Done', config: {} },
     ],

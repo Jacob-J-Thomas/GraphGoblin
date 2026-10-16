@@ -76,7 +76,7 @@ describe('restoring a set-aside copy', () => {
     const definition: LoopDefinitionInput = {
       ...newLoopDefinition('unfinished local expression'),
       nodes: [
-        { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+        { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
         {
           id: 'done',
           kind: 'exit',

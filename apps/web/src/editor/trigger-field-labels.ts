@@ -10,8 +10,8 @@ export function triggerFieldLabel(config: unknown, path: string): string {
   if (
     typeof config === 'object' &&
     config !== null &&
-    'subtype' in config &&
-    config.subtype === 'poll' &&
+    'type' in config &&
+    config.type === 'poll' &&
     Object.hasOwn(POLL_FIELD_LABELS, path)
   )
     return POLL_FIELD_LABELS[path as keyof typeof POLL_FIELD_LABELS];

@@ -49,7 +49,7 @@ describe('validateLoop', () => {
 
   it('reports duplicates, missing endpoints, bad ports, and triggers as targets', () => {
     const input = minimalLoop();
-    input.nodes.push({ id: 'start', kind: 'trigger', label: 'Dup', config: { subtype: 'manual' } });
+    input.nodes.push({ id: 'start', kind: 'trigger', label: 'Dup', config: { type: 'manual' } });
     input.edges.push(
       { id: 'e1', from: { node: 'ghost', port: 'out' }, to: { node: 'done' } },
       { id: 'e2', from: { node: 'done', port: 'nope' }, to: { node: 'start' } },
@@ -80,7 +80,7 @@ describe('validateLoop', () => {
     const noExit = parse({
       schemaVersion: CURRENT_DEFINITION_FORMAT,
       name: 'x',
-      nodes: [{ id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } }],
+      nodes: [{ id: 'start', kind: 'trigger', label: 'S', config: { type: 'manual' } }],
       edges: [],
     });
     expect(codes(noExit)).toEqual(

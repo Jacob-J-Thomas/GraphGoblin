@@ -28,7 +28,7 @@ function loop(
     schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: 'classifier',
     nodes: [
-      { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+      { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
       {
         id: 'decide',
         kind: 'decision',

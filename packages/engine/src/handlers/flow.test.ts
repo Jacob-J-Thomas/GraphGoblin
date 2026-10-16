@@ -30,7 +30,7 @@ function decisionLoop(
     schemaVersion: CURRENT_DEFINITION_FORMAT,
     name,
     nodes: [
-      { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+      { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
       {
         id: 'decide',
         kind: 'decision',
@@ -671,7 +671,7 @@ describe('script node', () => {
       schemaVersion: CURRENT_DEFINITION_FORMAT,
       name: 'codes',
       nodes: [
-        { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
+        { id: 'start', kind: 'trigger', label: 'S', config: { type: 'manual' } },
         {
           id: 'script',
           kind: 'script',

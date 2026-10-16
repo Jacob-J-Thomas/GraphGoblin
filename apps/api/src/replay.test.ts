@@ -25,7 +25,7 @@ function askLoop(): LoopDefinitionInput {
     schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: 'ask',
     nodes: [
-      { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
+      { id: 'start', kind: 'trigger', label: 'S', config: { type: 'manual' } },
       {
         id: 'prep',
         kind: 'mutate',

@@ -29,7 +29,14 @@ const llm = {
 };
 describe('frozen format-2 targets', () => {
   it('retains old exit parsing and exact nested default injection after current contracts become format 3', () => {
-    const old = { ...minimalLoop(), schemaVersion: 2 };
+    const base = minimalLoop();
+    const old = {
+      ...base,
+      schemaVersion: 2,
+      nodes: base.nodes.map((node) =>
+        node.kind === 'trigger' ? { ...node, config: { subtype: 'manual' } } : node,
+      ),
+    };
     const parsed = V2LoopDefinitionSchema.parse(old);
     expect(parsed.schemaVersion).toBe(2);
     expect(parsed.settings).toEqual({

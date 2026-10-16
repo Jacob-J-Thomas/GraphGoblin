@@ -203,11 +203,11 @@ describe('the same edits save the same config', () => {
   it('trigger, wait, heartbeat, and exit', async () => {
     await expectSaved(
       'trigger',
-      { subtype: 'manual' },
+      { type: 'manual' },
       async (user) => {
         await user.click(within(fieldAt('exposeTo')).getByRole('checkbox', { name: 'mcp' }));
       },
-      { subtype: 'manual', exposeTo: ['ui', 'api'] },
+      { type: 'manual', exposeTo: ['ui', 'api'] },
     );
     await expectSaved(
       'wait',

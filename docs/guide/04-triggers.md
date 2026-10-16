@@ -23,7 +23,7 @@ explicitly reviews replacement of an existing check/restore/exit fragment, inclu
 your edits. For webhook recipes, shared or ambiguously rewired nodes are retained
 and the preview says it is inserting another fragment. Changing the graph, held input, load or undo history
 invalidates an open preview. Apply validates graph rules and limits; repair any
-unconnected or multiply connected output before applying. The stored discriminator remains `subtype` for now.
+unconnected or multiply connected output before applying. The stored discriminator is `type`.
 
 ## Publish to arm automatic triggers
 
@@ -84,7 +84,7 @@ the schedule. The saved config shape is unchanged:
 
 ```json
 {
-  "subtype": "cron",
+  "type": "cron",
   "expression": "0 2 * * *",
   "timezone": "America/Chicago",
   "missedFirePolicy": "run-once",
@@ -112,7 +112,7 @@ Create a secret in [Settings](06-settings-and-secrets.md#store-secrets), then re
 
 ```json
 {
-  "subtype": "webhook",
+  "type": "webhook",
   "signature": {
     "scheme": "hmac-sha256",
     "header": "x-graphgoblin-signature",
@@ -184,7 +184,7 @@ For a GitHub webhook, use body signing instead of the timestamp protocol above:
 
 ```json
 {
-  "subtype": "webhook",
+  "type": "webhook",
   "signature": {
     "scheme": "hmac-sha256-body",
     "header": "x-hub-signature-256",
@@ -255,7 +255,7 @@ Configure an event trigger to match a type and optionally filter or deduplicate 
 
 ```json
 {
-  "subtype": "event",
+  "type": "event",
   "eventType": "issue-ready",
   "filter": "approved = true",
   "dedupeKey": "issueId"
@@ -304,7 +304,7 @@ Use a poll trigger when a laptop should not accept inbound connections:
 
 ```json
 {
-  "subtype": "poll",
+  "type": "poll",
   "intervalSeconds": 60,
   "probe": {
     "kind": "http",
@@ -328,7 +328,7 @@ Use an authenticated local `gh` installation and Node.js for read-only polling. 
 
 ```json
 {
-  "subtype": "poll",
+  "type": "poll",
   "intervalSeconds": 60,
   "probe": {
     "kind": "script",

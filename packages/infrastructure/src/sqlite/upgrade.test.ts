@@ -165,7 +165,7 @@ describe('format-3 exit cutover', () => {
       ...minimalLoop(),
       schemaVersion: 2,
       nodes: [
-        minimalLoop().nodes[0],
+        { ...minimalLoop().nodes[0], config: { subtype: 'manual' } },
         {
           id: 'done',
           kind: 'exit',
@@ -199,7 +199,7 @@ describe('format-3 exit cutover', () => {
       ...minimalLoop(),
       schemaVersion: 2,
       nodes: [
-        minimalLoop().nodes[0],
+        { ...minimalLoop().nodes[0], config: { subtype: 'manual' } },
         {
           id: 'done',
           kind: 'exit',
@@ -306,7 +306,7 @@ const definition = () => ({
   schemaVersion: 1,
   settings: { defaults: { model: 'gpt-6-luna', effort: 'low' } },
   nodes: [
-    minimalLoop().nodes[0],
+    { ...minimalLoop().nodes[0], config: { subtype: 'manual' } },
     {
       id: 'decide',
       kind: 'decision',
@@ -600,10 +600,14 @@ describe('offline database upgrade boundary', () => {
     await expect(incomplete.migrate()).rejects.toThrow(/incomplete/);
     const mixed = await legacy();
     const old = definition();
-    old.nodes[1]!.config = { ...old.nodes[1]!.config, strategy: ['codex', 'expression'] };
+    const nodes = old.nodes.map((node, index) =>
+      index === 1
+        ? { ...node, config: { ...node!.config, strategy: ['codex', 'expression'] } }
+        : node,
+    );
     await mixed.client.execute({
       sql: 'UPDATE loop_versions SET definition=?',
-      args: [JSON.stringify(old)],
+      args: [JSON.stringify({ ...old, nodes })],
     });
     await expect(applyDatabaseUpgrade(mixed.client, await manifest(mixed))).rejects.toThrow(
       /format-4 conversion/,
@@ -682,7 +686,7 @@ it('requires explicit failed parent disposition for possible changed child retur
   const parent = {
     ...definition(),
     nodes: [
-      minimalLoop().nodes[0],
+      { ...minimalLoop().nodes[0], config: { subtype: 'manual' } },
       {
         id: 'child',
         kind: 'subloop',

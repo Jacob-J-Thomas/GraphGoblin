@@ -152,7 +152,7 @@ describe('field metadata', () => {
       for (const option of def.options ?? [schema as unknown as Walkable]) {
         const shape = option._zod.def.shape ?? {};
         for (const [key, child] of Object.entries(shape)) {
-          if (key === 'subtype' || key === 'mode') continue; // the variant's tag, named by its table
+          if (key === 'type' || key === 'mode') continue; // the variant's tag, named by its table
           expect(fieldMeta(child as unknown as z.ZodType).description, `${kind}.${key}`).toEqual(
             expect.any(String),
           );

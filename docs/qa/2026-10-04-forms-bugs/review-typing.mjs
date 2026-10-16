@@ -63,7 +63,7 @@ try {
               id: 'start',
               kind: 'trigger',
               label: 'Start',
-              config: { subtype: 'manual' },
+              config: { type: 'manual' },
               ui: { x: 0, y: 80 },
             },
             { id: 'measure', kind, label: 'Measure', config, ui: { x: 260, y: 80 } },

@@ -27,7 +27,7 @@ const waitLoop: LoopDefinitionInput = {
   schemaVersion: CURRENT_DEFINITION_FORMAT,
   name: 'sse',
   nodes: [
-    { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
+    { id: 'start', kind: 'trigger', label: 'S', config: { type: 'manual' } },
     { id: 'wait', kind: 'wait', label: 'W', config: { mode: 'input', prompt: 'go?' } },
     { id: 'done', kind: 'exit', label: 'D', config: {} },
   ],
@@ -131,7 +131,7 @@ describe('SSE event stream', () => {
       schemaVersion: CURRENT_DEFINITION_FORMAT,
       name: 'evaluation-stream',
       nodes: [
-        { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+        { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
         { id: 'wait', kind: 'wait', label: 'Wait', config: { mode: 'input', prompt: 'Continue?' } },
         {
           id: 'decide',

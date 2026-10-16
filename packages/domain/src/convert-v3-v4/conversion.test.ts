@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
   LoopDefinitionSchema,
   V3LoopDefinitionSchema,
+  V3NodeConfigSchemas,
   type V3LoopDefinition,
   type V3LoopDefinitionInput,
   type LoopDefinition,
@@ -109,6 +110,141 @@ function predicate(
 }
 
 describe('definition conversion golden rules', () => {
+  it.each([
+    {
+      name: 'manual',
+      config: {
+        subtype: 'manual',
+        inputSchema: { type: 'object', required: ['topic'] },
+        exposeTo: ['api', 'mcp'],
+      },
+    },
+    {
+      name: 'cron',
+      config: {
+        subtype: 'cron',
+        expression: '15 4 * * 1',
+        timezone: 'America/Chicago',
+        missedFirePolicy: 'run-each',
+        enabled: false,
+      },
+    },
+    {
+      name: 'event',
+      config: {
+        subtype: 'event',
+        eventType: 'build-done',
+        filter: 'subtype = "ready"',
+        dedupeKey: 'id',
+      },
+    },
+    {
+      name: 'poll',
+      config: {
+        subtype: 'poll',
+        intervalSeconds: 30,
+        probe: {
+          kind: 'http',
+          method: 'POST',
+          url: 'https://example.test/status',
+          headers: { accept: 'application/json' },
+          body: '{"since":"{{ vars.since }}"}',
+          timeoutSeconds: 12,
+        },
+        fireWhen: 'probe.status = 200',
+        dedupeKey: 'probe.body.id',
+        enabled: false,
+      },
+    },
+    {
+      name: 'items poll',
+      config: {
+        subtype: 'poll',
+        intervalSeconds: 5,
+        probe: { kind: 'script', command: 'probe', args: ['--json'], timeoutSeconds: 30 },
+        fireWhen: 'true',
+        items: { select: 'probe.json', dedupeKey: 'item.id', maxRunsPerPoll: 3 },
+        enabled: true,
+      },
+    },
+    {
+      name: 'timestamp webhook',
+      config: {
+        subtype: 'webhook',
+        signature: {
+          scheme: 'hmac-sha256',
+          header: 'x-timestamp-signature',
+          secretRef: 'timestamp-key',
+        },
+        replayWindowSeconds: 120,
+        filter: 'subtype = "ready"',
+        dedupeKey: '$headers."x-delivery"',
+      },
+    },
+    {
+      name: 'body webhook',
+      config: {
+        subtype: 'webhook',
+        signature: {
+          scheme: 'hmac-sha256-body',
+          header: 'x-body-signature',
+          secretRef: 'body-key',
+        },
+        filter: 'subtype = "ready"',
+        dedupeKey: '$headers."x-delivery"',
+      },
+    },
+  ])(
+    'automatically converts $name to type while preserving every other field',
+    async ({ config }) => {
+      const source = loop();
+      const start = source.nodes[0]!;
+      if (start.kind !== 'trigger') throw new Error('missing trigger');
+      start.config = V3NodeConfigSchemas.trigger.parse(config);
+      const before = structuredClone(source);
+      const { subtype, ...fields } = start.config;
+      const result = candidate(await convertDefinitionV3ToV4(source));
+      expect(result.ready).toBe(true);
+      expect(result.value.nodes[0]).toEqual({ ...start, config: { type: subtype, ...fields } });
+      expect(result.reviewItems.filter((item) => item.nodeId === start.id)).toEqual([]);
+      expect(JSON.stringify(result.value)).not.toMatch(/"subtype"\s*:/);
+      expect(source).toEqual(before);
+    },
+  );
+
+  it('analyses trigger expressions against V3 before emitting the current config', async () => {
+    const source = loop({ ...back, criteria: [{ when: 'max-iterations', value: 3 }] });
+    const start = source.nodes[0]!;
+    if (start.kind !== 'trigger') throw new Error('missing trigger');
+    start.config = V3NodeConfigSchemas.trigger.parse({
+      subtype: 'poll',
+      intervalSeconds: 30,
+      probe: { kind: 'none' },
+      fireWhen: 'run.iteration > 2',
+    });
+    const result = candidate(await convertDefinitionV3ToV4(source));
+    const converted = result.value.nodes[0];
+    if (converted?.kind !== 'trigger' || converted.config.type !== 'poll')
+      throw new Error('missing converted poll');
+    const gate = result.value.nodes.find(
+      (node) => node.kind === 'decision' && node.config.maxPasses,
+    );
+    if (!gate) throw new Error('missing repeat gate');
+    expect(
+      await evaluateExpression(converted.config.fireWhen, { gates: { [gate.id]: { passes: 3 } } }),
+    ).toBe(true);
+    expect(
+      await evaluateExpression(converted.config.fireWhen, { gates: { [gate.id]: { passes: 2 } } }),
+    ).toBe(false);
+    expect(
+      result.reviewItems.find((item) => item.path === '/nodes/0/config/fireWhen'),
+    ).toMatchObject({
+      kind: 'iteration-consumer',
+      status: 'automatic',
+    });
+    expect(JSON.stringify(result.value)).not.toMatch(/"subtype"\s*:/);
+  });
+
   it.each([
     ['Choice expression', choice, { kind: 'expression', jsonata: '"yes"' }],
     ['Noul expression', noul, { kind: 'expression', jsonata: 'true' }],
@@ -279,7 +415,7 @@ describe('definition conversion golden rules', () => {
   });
 
   it.each(['starter', 'implementation', 'review', 'qa'])(
-    'converts the frozen shipped %s draft exits to E1 behavior',
+    'converts the frozen shipped %s draft triggers and exits to current behavior',
     async (name) => {
       const old = JSON.parse(
         readFileSync(new URL(`./fixtures/${name}.v3.json`, import.meta.url), 'utf8').replace(
@@ -298,7 +434,7 @@ describe('definition conversion golden rules', () => {
       const expected = LoopDefinitionSchema.parse(current.loop);
       for (const node of expected.nodes) {
         const original = source.nodes.find((entry) => entry.id === node.id);
-        if (node.kind === 'exit' || original?.kind === 'exit')
+        if (node.kind === 'trigger' || node.kind === 'exit' || original?.kind === 'exit')
           expect(result.value.nodes.find((entry) => entry.id === node.id)?.config).toEqual(
             node.config,
           );

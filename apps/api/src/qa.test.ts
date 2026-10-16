@@ -16,7 +16,7 @@ afterEach(async () => {
   await t.close();
 });
 
-const start = { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } } as const;
+const start = { id: 'start', kind: 'trigger', label: 'S', config: { type: 'manual' } } as const;
 const done = { id: 'done', kind: 'exit', label: 'D', config: {} } as const;
 function chain(name: string, middle: LoopDefinitionInput['nodes'][number]): LoopDefinitionInput {
   return {
@@ -130,7 +130,7 @@ describe('validate, draft saves, and publish agree', () => {
               id: 'start',
               kind: 'trigger',
               label: 'S',
-              config: { subtype: 'cron', expression: 'not cron' },
+              config: { type: 'cron', expression: 'not cron' },
             },
             done,
           ],
@@ -247,7 +247,7 @@ describe('validate, draft saves, and publish agree', () => {
           id: 'start',
           kind: 'trigger',
           label: 'S',
-          config: { subtype: 'cron', expression: 'not cron' },
+          config: { type: 'cron', expression: 'not cron' },
         },
         done,
       ],

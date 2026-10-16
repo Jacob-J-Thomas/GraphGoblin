@@ -118,7 +118,7 @@ const SYSTEM_ACTOR: Actor = { kind: 'system', id: 'engine' };
 const ACTIVE_STATUSES: readonly RunStatus[] = ['queued', 'running', 'waiting', 'paused'];
 
 function triggerKindOf(node: Extract<Node, { kind: 'trigger' }>): TriggerKind {
-  return node.config.subtype;
+  return node.config.type;
 }
 
 /**
@@ -351,7 +351,7 @@ export class RunManager {
     const def = version.definition;
     const trigger = this.resolveTrigger(def, input.triggerNodeId);
     const payload: JsonValue = input.payload ?? null;
-    if (trigger.config.subtype === 'manual' && trigger.config.inputSchema) {
+    if (trigger.config.type === 'manual' && trigger.config.inputSchema) {
       const validation = validateJson(trigger.config.inputSchema, payload);
       if (!validation.ok) {
         throw new EngineRequestError(
@@ -427,7 +427,7 @@ export class RunManager {
       prepared.version.definition,
       prepared.thread.invocation.trigger.nodeId,
     );
-    if (trigger?.kind !== 'trigger' || trigger.config.subtype !== 'poll' || !trigger.config.items)
+    if (trigger?.kind !== 'trigger' || trigger.config.type !== 'poll' || !trigger.config.items)
       throw new EngineRequestError(
         'INVALID_STATE',
         'Atomic poll admission requires an items-mode trigger',
@@ -1931,7 +1931,7 @@ export class RunManager {
         );
       return found;
     }
-    const manual = triggers.find((t) => t.config.subtype === 'manual') ?? triggers[0];
+    const manual = triggers.find((t) => t.config.type === 'manual') ?? triggers[0];
     if (!manual) throw new EngineRequestError('TRIGGER_NOT_FOUND', 'loop has no trigger node');
     return manual;
   }

@@ -625,7 +625,7 @@ export function NodeEditorDialog({
                 <GateLimitIssuesContext value={nodeIssues}>
                   <FieldLabelsContext
                     value={
-                      node.kind === 'trigger' && node.config?.subtype === 'poll'
+                      node.kind === 'trigger' && node.config?.type === 'poll'
                         ? POLL_FIELD_LABELS
                         : node.kind === 'decision'
                           ? DECISION_FIELD_LABELS
@@ -697,7 +697,7 @@ export function NodeEditorDialog({
                 });
                 if (problem) return problem;
                 setEpoch((current) => current + 1);
-                requestAnimationFrame(() => focusIssue(bodyRef.current, 'config.subtype'));
+                requestAnimationFrame(() => focusIssue(bodyRef.current, 'config.type'));
                 return undefined;
               }}
             />

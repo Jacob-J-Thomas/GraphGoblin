@@ -608,6 +608,10 @@ async function convertDefinition(
       if (original.kind === 'decision') {
         const converted = await decision(config as V3DecisionConfig, original.id, path, review);
         nodes.push({ ...clone(original), config: converted });
+      } else if (original.kind === 'trigger') {
+        // Analyse and validate frozen V3 fields before emitting the current discriminator.
+        const { subtype, ...fields } = V3NodeConfigSchemas.trigger.parse(config);
+        nodes.push({ ...clone(original), config: { type: subtype, ...fields } });
       } else nodes.push({ ...clone(original), config });
       continue;
     }

@@ -66,7 +66,7 @@ const start = {
   id: 'start',
   kind: 'trigger',
   label: 'Start',
-  config: { subtype: 'manual' },
+  config: { type: 'manual' },
   ui: { x: 0, y: 80 },
 };
 

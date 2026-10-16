@@ -24,7 +24,7 @@ function decisionLoop(model = 'kev'): LoopDefinitionInput {
     schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: 'classifier editor',
     nodes: [
-      { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+      { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
       {
         id: 'pick',
         kind: 'decision',

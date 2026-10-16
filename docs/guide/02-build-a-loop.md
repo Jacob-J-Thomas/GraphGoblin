@@ -158,7 +158,7 @@ The body wraps your definition:
     "schemaVersion": 4,
     "name": "starter",
     "nodes": [
-      { "id": "start", "kind": "trigger", "label": "Start", "config": { "subtype": "manual" } },
+      { "id": "start", "kind": "trigger", "label": "Start", "config": { "type": "manual" } },
       { "id": "done", "kind": "exit", "label": "Done", "config": {} }
     ],
     "edges": [
@@ -195,7 +195,7 @@ Save this bare definition as a JSON file and import it. It follows the contracts
       "label": "Start",
       "ui": { "x": 0, "y": 80 },
       "config": {
-        "subtype": "manual",
+        "type": "manual",
         "exposeTo": ["ui", "api", "mcp"],
         "inputSchema": {
           "type": "object",

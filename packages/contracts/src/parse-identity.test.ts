@@ -24,7 +24,7 @@ interface Walkable {
 }
 
 describe('the every-field loop', () => {
-  it('sets every config field of every node kind and subtype', () => {
+  it('sets every config field of every node kind and type', () => {
     const nodes = everyFieldLoop().nodes;
     for (const [kind, schema] of Object.entries(NodeConfigSchemas)) {
       const walkable = schema as unknown as Walkable;
@@ -71,7 +71,7 @@ describe('parsing is unchanged', () => {
 
   it('parses each node config left at its defaults to the golden value', async () => {
     const empty: Record<string, unknown> = {
-      trigger: { subtype: 'manual' },
+      trigger: { type: 'manual' },
       decision: {
         kind: 'llm',
         harness: 'codex',

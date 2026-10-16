@@ -15,7 +15,7 @@ describe('cron issue paths in the node editor', () => {
       <div data-field-scope="config">
         <SchemaForm
           schema={NodeConfigSchemas.trigger}
-          value={{ subtype: 'cron', expression: '0 9 * * *', timezone: 'UTC' }}
+          value={{ type: 'cron', expression: '0 9 * * *', timezone: 'UTC' }}
           label="Trigger config"
           controls={NODE_FIELD_CONTROLS}
           onChange={() => undefined}

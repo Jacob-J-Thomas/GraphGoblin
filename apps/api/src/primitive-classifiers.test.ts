@@ -21,7 +21,7 @@ function definition(type: 'noul' | 'score', model = 'local-primitive'): LoopDefi
     schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: type,
     nodes: [
-      { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+      { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
       {
         id: 'decide',
         kind: 'decision',

@@ -8,7 +8,7 @@ import { SchemaForm } from '../forms/SchemaForm.js';
 import { TriggerTypePicker } from './TriggerTypePicker.js';
 
 describe('TriggerTypePicker', () => {
-  it('uses subtype and signing literals when every schema title is changed to the same text', async () => {
+  it('uses type and signing literals when every schema title is changed to the same text', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
     const schema = z.union(
@@ -24,20 +24,20 @@ describe('TriggerTypePicker', () => {
       />,
     );
     const type = screen.getByLabelText('Trigger type');
-    for (const subtype of ['cron', 'poll', 'event', 'webhook']) {
-      await user.selectOptions(type, subtype);
-      expect(onChange.mock.lastCall?.[0]).toMatchObject({ subtype });
+    for (const triggerType of ['cron', 'poll', 'event', 'webhook']) {
+      await user.selectOptions(type, triggerType);
+      expect(onChange.mock.lastCall?.[0]).toMatchObject({ type: triggerType });
     }
     const signing = screen.getByLabelText('Signing protocol');
     expect(signing).toHaveDisplayValue('Timestamp and body');
     await user.selectOptions(signing, screen.getByRole('option', { name: 'Body only (GitHub)' }));
     expect(onChange.mock.lastCall?.[0]).toMatchObject({
-      subtype: 'webhook',
+      type: 'webhook',
       signature: { scheme: 'hmac-sha256-body' },
     });
     await user.selectOptions(signing, screen.getByRole('option', { name: 'Timestamp and body' }));
     expect(onChange.mock.lastCall?.[0]).toMatchObject({
-      subtype: 'webhook',
+      type: 'webhook',
       signature: { scheme: 'hmac-sha256' },
     });
     await user.selectOptions(type, 'manual');

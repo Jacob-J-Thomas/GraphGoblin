@@ -204,7 +204,7 @@ test('the run form keeps a long choice inside its field and puts each problem be
         ? {
             ...node,
             config: {
-              subtype: 'manual',
+              type: 'manual',
               inputSchema: {
                 type: 'object',
                 required: ['approved', 'next'],

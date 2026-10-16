@@ -12,14 +12,14 @@ Starts a run. A loop may have several triggers; each produces the same trigger e
 
 Ports: `out`.
 
-### `subtype: "manual"`
+### `type: "manual"`
 
 | Field         | Type                                    | Required | Default              | Description                                                      |
 | ------------- | --------------------------------------- | -------- | -------------------- | ---------------------------------------------------------------- |
 | `inputSchema` | object                                  | no       |                      | JSON Schema the manual input must satisfy.                       |
 | `exposeTo`    | array of (`"ui"` \| `"api"` \| `"mcp"`) | no       | `["ui","api","mcp"]` | Surfaces that may start the run: the web app, the REST API, MCP. |
 
-### `subtype: "cron"`
+### `type: "cron"`
 
 | Field              | Type                                     | Required | Default  | Description                                             |
 | ------------------ | ---------------------------------------- | -------- | -------- | ------------------------------------------------------- |
@@ -28,7 +28,7 @@ Ports: `out`.
 | `missedFirePolicy` | `"skip"` \| `"run-once"` \| `"run-each"` | no       | `"skip"` | What to do with fires missed while the server was down. |
 | `enabled`          | boolean                                  | no       | `true`   | Whether the schedule is armed.                          |
 
-### `subtype: "webhook"`
+### `type: "webhook"`
 
 | Field                 | Type                           | Required | Default | Description                                                         |
 | --------------------- | ------------------------------ | -------- | ------- | ------------------------------------------------------------------- |
@@ -37,7 +37,7 @@ Ports: `out`.
 | `dedupeKey`           | string                         | no       |         | JSONata producing a key; a repeated key does not start another run. |
 | `filter`              | string                         | no       |         | JSONata predicate; payloads that fail it are recorded and ignored.  |
 
-### `subtype: "webhook"`
+### `type: "webhook"`
 
 | Field       | Type                           | Required | Default | Description                                                         |
 | ----------- | ------------------------------ | -------- | ------- | ------------------------------------------------------------------- |
@@ -45,7 +45,7 @@ Ports: `out`.
 | `dedupeKey` | string                         | no       |         | JSONata producing a key; a repeated key does not start another run. |
 | `filter`    | string                         | no       |         | JSONata predicate; payloads that fail it are recorded and ignored.  |
 
-### `subtype: "event"`
+### `type: "event"`
 
 | Field       | Type   | Required | Default | Description                                                         |
 | ----------- | ------ | -------- | ------- | ------------------------------------------------------------------- |
@@ -53,7 +53,7 @@ Ports: `out`.
 | `filter`    | string | no       |         | JSONata predicate; payloads that fail it are recorded and ignored.  |
 | `dedupeKey` | string | no       |         | JSONata producing a key; a repeated key does not start another run. |
 
-### `subtype: "poll"`
+### `type: "poll"`
 
 | Field             | Type                                                                    | Required | Default | Description                                                                                 |
 | ----------------- | ----------------------------------------------------------------------- | -------- | ------- | ------------------------------------------------------------------------------------------- |

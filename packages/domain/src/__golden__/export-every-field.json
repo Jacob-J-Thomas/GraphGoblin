@@ -40,7 +40,7 @@
         },
         "kind": "trigger",
         "config": {
-          "subtype": "manual",
+          "type": "manual",
           "inputSchema": {
             "type": "object"
           },
@@ -59,7 +59,7 @@
         },
         "kind": "trigger",
         "config": {
-          "subtype": "cron",
+          "type": "cron",
           "expression": "*/5 * * * *",
           "timezone": "Europe/Paris",
           "missedFirePolicy": "run-each",
@@ -75,7 +75,7 @@
         },
         "kind": "trigger",
         "config": {
-          "subtype": "webhook",
+          "type": "webhook",
           "signature": {
             "scheme": "hmac-sha256",
             "header": "x-sig",
@@ -95,7 +95,7 @@
         },
         "kind": "trigger",
         "config": {
-          "subtype": "event",
+          "type": "event",
           "eventType": "build-done",
           "filter": "payload.ok",
           "dedupeKey": "payload.id"
@@ -110,7 +110,7 @@
         },
         "kind": "trigger",
         "config": {
-          "subtype": "poll",
+          "type": "poll",
           "intervalSeconds": 30,
           "probe": {
             "kind": "http",
@@ -136,7 +136,7 @@
         },
         "kind": "trigger",
         "config": {
-          "subtype": "webhook",
+          "type": "webhook",
           "signature": {
             "scheme": "hmac-sha256-body",
             "header": "x-hub-signature-256",
@@ -155,7 +155,7 @@
         },
         "kind": "trigger",
         "config": {
-          "subtype": "poll",
+          "type": "poll",
           "intervalSeconds": 30,
           "probe": {
             "kind": "script",

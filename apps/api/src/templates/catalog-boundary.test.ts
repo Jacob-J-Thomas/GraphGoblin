@@ -223,7 +223,7 @@ describe('installed template catalog boundaries', () => {
     for (const nodes of [
       f.exported.loop.nodes.map((node) =>
         node.kind === 'trigger'
-          ? { ...node, config: { subtype: 'cron', expression: '* * * * *', timezone: 'UTC' } }
+          ? { ...node, config: { type: 'cron', expression: '* * * * *', timezone: 'UTC' } }
           : node,
       ),
       f.exported.loop.nodes.map((node) =>

@@ -16,7 +16,7 @@ import {
   test,
 } from './fixtures.js';
 
-const start = { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } };
+const start = { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } };
 const done = { id: 'done', kind: 'exit', label: 'Done', config: {} };
 function chain(name: string, middle: Record<string, unknown> & { id: string }) {
   return {

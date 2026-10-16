@@ -51,7 +51,7 @@ function repositoryFilter(setup: GitHubTriggerSetup): string {
 
 function bodyWebhook(setup: GitHubTriggerSetup): TriggerInput {
   return {
-    subtype: 'webhook',
+    type: 'webhook',
     signature: {
       scheme: 'hmac-sha256-body',
       header: 'x-hub-signature-256',
@@ -100,7 +100,7 @@ export function makeGitHubTriggerPreset(
   const label = encodeURIComponent(setup.label.trim());
   const endpoint = `repos/${owner}/${repo}/issues?state=open&labels=${label}&per_page=100`;
   return {
-    subtype: 'poll',
+    type: 'poll',
     intervalSeconds: 60,
     probe: {
       kind: 'script',
@@ -122,7 +122,7 @@ export function makeGitHubTriggerPreset(
 export function unsupportedSigningScheme(config: unknown): string | undefined {
   if (typeof config !== 'object' || config === null || Array.isArray(config)) return undefined;
   const trigger = config as Record<string, unknown>;
-  if (trigger['subtype'] !== 'webhook') return undefined;
+  if (trigger['type'] !== 'webhook') return undefined;
   const signature = trigger['signature'];
   if (typeof signature !== 'object' || signature === null || Array.isArray(signature))
     return undefined;

@@ -181,7 +181,7 @@ const SETTINGS = [
 async function seedDialogs(request: Parameters<typeof publishLoop>[0]) {
   const child = await publishLoop(request, approvalLoop('responsive child'));
   const configs = [
-    ['trigger', { subtype: 'cron', expression: '30 7 * * 1' }],
+    ['trigger', { type: 'cron', expression: '30 7 * * 1' }],
     [
       'decision',
       {
@@ -874,7 +874,7 @@ for (const theme of ['dark', 'light'] as const) {
             id: 'start',
             kind: 'trigger',
             label: 'Start',
-            config: { subtype: 'manual' },
+            config: { type: 'manual' },
             ui: { x: -260, y: 0 },
           },
           {

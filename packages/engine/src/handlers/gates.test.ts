@@ -20,7 +20,7 @@ function gateLoop(
     name: 'gate',
     settings: { maxNodeVisits: 20 },
     nodes: [
-      { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+      { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
       {
         id: 'work',
         kind: 'mutate',
