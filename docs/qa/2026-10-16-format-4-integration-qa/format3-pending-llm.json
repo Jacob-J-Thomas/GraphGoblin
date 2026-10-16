@@ -1,0 +1,98 @@
+{
+  "format": "graphgoblin-loop",
+  "formatVersion": 3,
+  "exportedAt": "2026-10-16T00:00:00.000Z",
+  "loop": {
+    "schemaVersion": 3,
+    "name": "f4qa-1792145615028 pending LLM",
+    "settings": {
+      "maxIterations": 7
+    },
+    "nodes": [
+      {
+        "id": "start",
+        "kind": "trigger",
+        "label": "start",
+        "config": {
+          "subtype": "manual"
+        }
+      },
+      {
+        "id": "pick",
+        "kind": "decision",
+        "label": "pick",
+        "config": {
+          "answer": {
+            "type": "choice",
+            "options": [
+              {
+                "id": "yes",
+                "label": "Yes",
+                "criteria": "Ready"
+              },
+              {
+                "id": "no",
+                "label": "No",
+                "criteria": "Not ready"
+              }
+            ]
+          },
+          "evaluation": {
+            "kind": "llm",
+            "harness": "codex",
+            "question": "Select ready route",
+            "model": {
+              "mode": "inherit"
+            },
+            "effort": {
+              "mode": "inherit"
+            },
+            "context": {}
+          },
+          "recordAlternatives": true
+        }
+      },
+      {
+        "id": "done",
+        "kind": "exit",
+        "label": "done",
+        "config": {}
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "from": {
+          "node": "start",
+          "port": "out"
+        },
+        "to": {
+          "node": "pick",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e2",
+        "from": {
+          "node": "pick",
+          "port": "yes"
+        },
+        "to": {
+          "node": "done",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e3",
+        "from": {
+          "node": "pick",
+          "port": "no"
+        },
+        "to": {
+          "node": "done",
+          "port": "in"
+        }
+      }
+    ]
+  }
+}
