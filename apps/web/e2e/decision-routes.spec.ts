@@ -150,7 +150,11 @@ for (const hasTouch of [true, false]) {
         );
         await openLoop(page, request);
         const dialog = await openNode(page, 'pick');
-        await dialog.getByRole('radio', { name: 'classifier', exact: true }).click();
+        await dialog
+          .getByRole('radiogroup', { name: 'Decision kind' })
+          .getByText('classifier', { exact: true })
+          .click();
+        await dialog.getByRole('button', { name: 'Confirm change', exact: true }).click();
         await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
         for (const width of hasTouch ? [1440, 360] : [1440]) {
           await page.setViewportSize({ width, height: 900 });
@@ -164,12 +168,79 @@ for (const hasTouch of [true, false]) {
         const group = dialog.getByRole('radiogroup', { name: 'Answer type' });
         await group.getByRole('radio', { name: 'Choice', exact: true }).focus();
         await page.keyboard.press('ArrowRight');
+        await dialog.getByRole('button', { name: 'Confirm change', exact: true }).click();
         await expect(group.getByRole('radio', { name: 'Noul', exact: true })).toBeChecked();
         await expect(group.getByRole('radio', { name: 'Noul', exact: true })).toBeFocused();
       });
     }
   });
 }
+
+test('kind changes preview losses, cancel, undo, retain edges and reload; Noul never truncates routes', async ({
+  page,
+  request,
+}) => {
+  const loopId = await openLoop(page, request, decisionLoop(3));
+  let dialog = await openNode(page, 'pick');
+  await dialog
+    .getByRole('radiogroup', { name: 'Decision kind' })
+    .getByText('llm', { exact: true })
+    .click();
+  await expect(dialog.getByRole('region', { name: 'Change decision kind?' })).toContainText(
+    'JSONata source',
+  );
+  await dialog.getByRole('button', { name: 'Cancel change', exact: true }).click();
+  await expect(dialog.getByRole('radio', { name: 'expression', exact: true })).toBeChecked();
+  await expect(dialog.locator('[data-field="jsonata"] [role="textbox"]')).toHaveText('"yes"');
+  await dialog
+    .getByRole('radiogroup', { name: 'Decision kind' })
+    .getByText('llm', { exact: true })
+    .click();
+  await dialog.getByRole('button', { name: 'Confirm change', exact: true }).click();
+  await expect(dialog.locator('[data-field="instructions"] [role="textbox"]')).toHaveAttribute(
+    'aria-invalid',
+    'true',
+  );
+  await expect(edge(page, 'yes-edge')).toHaveCount(1);
+  await page.keyboard.press('Control+z');
+  await expect(dialog.getByRole('radio', { name: 'expression', exact: true })).toBeChecked();
+  await page.keyboard.press('Control+Shift+z');
+  await expect(dialog.getByRole('radio', { name: 'llm', exact: true })).toBeChecked();
+  await dialog
+    .locator('[data-field="instructions"] [role="textbox"]')
+    .fill('Choose Yes when complete; otherwise No or the third route.');
+  await dialog.getByRole('button', { name: 'Move routes 1 down', exact: true }).click();
+  await closeNode(page);
+  const saved = await savedDraft(page, request, loopId);
+  const decision = saved.nodes.find((node) => node.id === 'pick');
+  expect(decision?.config).toMatchObject({
+    kind: 'llm',
+    routes: [{ id: 'no' }, { id: 'yes' }, { id: 'route-3' }],
+  });
+  expect(saved.edges.find((item) => item.id === 'yes-edge')?.from.port).toBe('yes');
+  await page.reload();
+  dialog = await openNode(page, 'pick');
+  await expect(dialog.getByRole('radio', { name: 'llm', exact: true })).toBeChecked();
+  await dialog
+    .getByRole('radiogroup', { name: 'Decision kind' })
+    .getByText('classifier', { exact: true })
+    .click();
+  await dialog.getByRole('button', { name: 'Confirm change', exact: true }).click();
+  await expect(dialog.getByRole('combobox', { name: 'Model', exact: true })).toHaveValue('');
+  await dialog
+    .getByRole('radiogroup', { name: 'Answer type' })
+    .getByText('Noul', { exact: true })
+    .click();
+  await expect(
+    dialog.getByRole('region', { name: 'Change classifier answer type?' }),
+  ).toContainText('exactly two routes');
+  await expect(dialog.getByRole('button', { name: 'Confirm change', exact: true })).toHaveCount(0);
+  await dialog.getByRole('button', { name: 'Cancel change', exact: true }).click();
+  await expect(dialog.locator('[data-field="answer.options"] [data-collection-row]')).toHaveCount(
+    3,
+  );
+  await expect(edge(page, 'yes-edge')).toHaveCount(1);
+});
 
 test('option IDs stay connected when numeric display labels change, save, and reload', async ({
   page,
@@ -194,9 +265,14 @@ test('option IDs stay connected when numeric display labels change, save, and re
 
   // A blank in-progress ID keeps ownership on the last valid port. Repairing the same row moves
   // that edge with it, and restoring the ID does not create or transfer another connection.
+  await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
   const thirdId = dialog.locator('[data-field="routes.2.id"] input');
   await thirdId.fill('');
   await expect(connections).toContainText('route-3');
+  await expect(page.getByTestId('save-state')).toHaveText('Saved on this device only');
+  await page.reload();
+  await openNode(page, 'pick');
+  await expect(thirdId).toHaveValue('');
   await thirdId.fill('route-4');
   await expect(connections).toContainText('7 (route-4)');
   await expect(handle(page, 'pick', 'route-4')).toBeVisible();
@@ -437,6 +513,11 @@ test('removing a connected option removes its edge in the same undo step', async
   const loopId = await openLoop(page, request, definition);
   const dialog = await openNode(page, 'pick');
   await dialog.getByRole('button', { name: 'Remove routes 1', exact: true }).click();
+  await expect(dialog.getByRole('region', { name: 'Remove connected route?' })).toContainText(
+    'yes-edge',
+  );
+  await expect(edge(page, 'yes-edge')).toHaveCount(1);
+  await dialog.getByRole('button', { name: 'Confirm change', exact: true }).click();
   await closeNode(page);
   await expect(edge(page, 'yes-edge')).toHaveCount(0);
   expect(

@@ -21,7 +21,8 @@ test('Loops keeps on cancel, contains keyboard focus, exports, and deletes on co
   const trigger = page.getByRole('button', { name: 'Delete actions loop', exact: true });
   await trigger.click();
   const dialog = page.getByRole('alertdialog', { name: 'Delete “actions loop”?' });
-  await expect(dialog).toContainText('all its versions and its triggers');
+  await expect(dialog).toContainText('all its versions, its triggers and all its runs (0)');
+  await expect(dialog).toContainText('including run history and artifact references');
   await expect(dialog.getByRole('button', { name: 'Keep' })).toBeFocused();
   await page.keyboard.press('Tab');
   await expect(dialog.getByRole('button', { name: 'Confirm delete actions loop' })).toBeFocused();

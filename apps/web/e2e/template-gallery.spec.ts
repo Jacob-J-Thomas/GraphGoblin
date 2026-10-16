@@ -137,7 +137,7 @@ test('retains keyboard focus and guards all cards while a copy is pending', asyn
   await expect(create).toBeFocused();
   await expect(page.getByRole('status').filter({ hasText: 'Creating draft' })).toBeVisible();
   await page.keyboard.press('Enter');
-  const other = page.getByRole('button', { name: 'Use GitHub issue implementation', exact: true });
+  const other = page.getByRole('button', { name: 'Use Implementation workflow', exact: true });
   await other.focus();
   await expect(other).toHaveAttribute('aria-disabled', 'true');
   await page.keyboard.press('Enter');

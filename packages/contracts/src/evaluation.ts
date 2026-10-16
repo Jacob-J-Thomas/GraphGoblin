@@ -352,7 +352,16 @@ export const LlmDecisionConfigSchema = LlmSourceSchema.extend({
   context: DecisionContextSchema.prefault({}).meta(
     field('Selected provider context.', { context: true, jsonEditor: true }),
   ),
-}).superRefine(gateLimitsIssues);
+})
+  .superRefine(gateLimitsIssues)
+  .superRefine((config, ctx) => {
+    if (!config.instructions.trim())
+      ctx.addIssue({
+        code: 'custom',
+        path: ['instructions'],
+        message: 'instructions must contain source',
+      });
+  });
 export const ClassifierEvaluationConfigSchema = z.strictObject({
   kind: z.literal('classifier').meta(field('Evaluate one classifier primitive.')),
   model: ClassifierModelIdSchema.meta(
@@ -404,7 +413,11 @@ export const ClassifierDecisionConfigSchema = ClassifierEvaluationConfigSchema.e
     ),
 })
   .superRefine(classifierThreshold)
-  .superRefine(gateLimitsIssues);
+  .superRefine(gateLimitsIssues)
+  .superRefine((config, ctx) => {
+    if (!config.question.trim())
+      ctx.addIssue({ code: 'custom', path: ['question'], message: 'question must contain source' });
+  });
 export const DecisionConfigSchema = z.discriminatedUnion('kind', [
   ExpressionDecisionConfigSchema,
   LlmDecisionConfigSchema,

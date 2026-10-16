@@ -353,8 +353,8 @@ const matchValue = (dialog: Locator) => dialog.locator('[data-field="criteria.0.
 async function scoreOperator(dialog: Locator, value: string) {
   await dialog
     .locator('[data-field="criteria.0.match.operator"]')
-    .getByRole('radio', { name: value, exact: true })
-    .click();
+    .getByRole('combobox', { name: 'Operator', exact: true })
+    .selectOption(value);
 }
 
 async function assertOnlyLoopBack(page: Page) {
@@ -504,6 +504,7 @@ exitTest(
               kind: 'boolean',
               holds: false,
               confidence: null,
+              reasoning: null,
             },
           }),
         ],
@@ -514,8 +515,8 @@ exitTest(
       events.some((event) => event.type === 'return.delivered' && event.channel.kind === 'caller'),
     ).toBe(true);
     const details = await inspectLastExit(page);
-    await expect(details).toContainText('Noul false');
-    await expect(details).toContainText('Noul is false');
+    await expect(details).toContainText('Boolean false');
+    await expect(details).toContainText('Boolean is false');
     await expect(details).toContainText('Accepted');
     expect(await classifier.requests()).toHaveLength(0);
   },
@@ -672,15 +673,15 @@ exitTest(
     await expect(
       dialog
         .locator('[data-field="criteria.0.match.operator"]')
-        .getByRole('radio', { name: 'eq', exact: true }),
-    ).toBeChecked();
+        .getByRole('combobox', { name: 'Operator', exact: true }),
+    ).toHaveValue('eq');
     await expect(matchValue(dialog).getByRole('spinbutton')).toHaveValue('1.2');
     await closeNode(page);
     await publish(page, 1);
     const nonmatching = await runLoop(page, request, url, loopId, 'exhausted');
     expect(exitEvaluations(nonmatching)[0]?.criteria[0]).toMatchObject({
       status: 'not-matched',
-      answer: { type: 'score', score: 1.25, confidence: 0.9 },
+      observation: { kind: 'classifier', answer: { type: 'score', score: 1.25, confidence: 0.9 } },
       acceptance: { status: 'accepted' },
       match: { type: 'score', operator: 'eq', value: 1.2 },
     });
@@ -696,7 +697,7 @@ exitTest(
     const rejected = await runLoop(page, request, url, loopId, 'exhausted');
     expect(exitEvaluations(rejected)[0]?.criteria[0]).toMatchObject({
       status: 'not-matched',
-      answer: { type: 'score', score: 1.25, confidence: 0.6 },
+      observation: { kind: 'classifier', answer: { type: 'score', score: 1.25, confidence: 0.6 } },
       acceptance: { status: 'rejected', code: 'EVALUATION_RESULT_REJECTED', minConfidence: 0.8 },
       rejection: { kind: 'classifier-confidence', minimum: 0.8, confidence: 0.6 },
     });
@@ -725,7 +726,11 @@ exitTest(
       maxIterations: 1,
       result: { kind: 'completed', reason: 'criterion-matched', criterionIndex: 0 },
       criteria: [
-        { status: 'matched', answer: { score: 1.25 }, acceptance: { status: 'accepted' } },
+        {
+          status: 'matched',
+          observation: { kind: 'classifier', answer: { score: 1.25 } },
+          acceptance: { status: 'accepted' },
+        },
       ],
     });
     expect(await classifier.requests()).toHaveLength(3);
@@ -789,8 +794,8 @@ exitTest(
     expect(exitEvaluations(events)[0]).toMatchObject({
       result: { kind: 'completed', reason: 'criterion-matched', criterionIndex: 1 },
       criteria: [
-        { index: 0, status: 'not-matched', answer: { holds: false } },
-        { index: 1, status: 'matched', answer: { holds: true } },
+        { index: 0, status: 'not-matched', observation: { kind: 'boolean', holds: false } },
+        { index: 1, status: 'matched', observation: { kind: 'boolean', holds: true } },
         { index: 2, status: 'skipped' },
       ],
     });
@@ -847,7 +852,10 @@ exitTest(
     for (const event of exitEvaluations(rejected)) {
       expect(event.criteria[0]).toMatchObject({
         status: 'not-matched',
-        answer: { type: 'noul', holds: false, trueProbability: 0.25, confidence: 0.75 },
+        observation: {
+          kind: 'classifier',
+          answer: { type: 'noul', holds: false, trueProbability: 0.25, confidence: 0.75 },
+        },
         match: { type: 'noul', value: false },
         acceptance: { status: 'rejected', minConfidence: 0.8 },
         rejection: { kind: 'classifier-confidence', minimum: 0.8, confidence: 0.75 },
@@ -883,7 +891,11 @@ exitTest(
       iteration: 1,
       result: { kind: 'looped-back' },
       criteria: [
-        { status: 'not-matched', answer: { holds: true }, acceptance: { status: 'accepted' } },
+        {
+          status: 'not-matched',
+          observation: { kind: 'classifier', answer: { holds: true } },
+          acceptance: { status: 'accepted' },
+        },
       ],
     });
     expect(exitEvaluations(matched)[1]).toMatchObject({
@@ -898,7 +910,10 @@ exitTest(
       criteria: [
         {
           status: 'matched',
-          answer: { holds: false, trueProbability: 0.125, confidence: 0.875 },
+          observation: {
+            kind: 'classifier',
+            answer: { holds: false, trueProbability: 0.125, confidence: 0.875 },
+          },
           acceptance: { status: 'accepted' },
         },
       ],
