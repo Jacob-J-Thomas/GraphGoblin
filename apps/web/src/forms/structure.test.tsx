@@ -19,7 +19,15 @@ import type { Schema } from './introspect.js';
 
 beforeEach(() => useEditorStore.getState().reset());
 
-function StoredForm({ schema, initial }: { schema: Schema; initial: unknown }) {
+function StoredForm({
+  schema,
+  initial,
+  onValue,
+}: {
+  schema: Schema;
+  initial: unknown;
+  onValue?: (value: unknown) => void;
+}) {
   const [value, setValue] = useState(initial);
   const errors = useEditorStore((s) => s.fieldErrors['test']);
   return (
@@ -27,35 +35,39 @@ function StoredForm({ schema, initial }: { schema: Schema; initial: unknown }) {
       schema={schema}
       value={value}
       label="form"
-      onChange={setValue}
+      onChange={(next) => {
+        setValue(next);
+        onValue?.(next);
+      }}
       parseErrors={errors}
       onParseError={(path, error) => useEditorStore.getState().setFieldError('test', path, error)}
     />
   );
 }
 
-it('removes unparsed array text without overwriting the next criterion', async () => {
+it('removes unparsed array text without overwriting the next operation', async () => {
   const user = userEvent.setup();
   const spy = vi.fn();
   render(
-    <SchemaForm
-      schema={NodeConfigSchemas.exit}
-      label="form"
-      onChange={spy}
-      value={{
-        criteria: [
-          { when: 'last-output-matches', jsonSchema: { type: 'string' }, outcome: 'success' },
-          { when: 'last-output-matches', jsonSchema: { type: 'number' }, outcome: 'success' },
+    <StoredForm
+      schema={NodeConfigSchemas.mutate}
+      onValue={spy}
+      initial={{
+        operations: [
+          { op: 'coerce', source: '/vars/x', target: '/vars/y', jsonSchema: { type: 'string' } },
+          { op: 'coerce', source: '/vars/x', target: '/vars/y', jsonSchema: { type: 'number' } },
         ],
       }}
     />,
   );
+  await user.click(screen.getByRole('button', { name: /^Operations 1/ }));
+  await user.click(screen.getByRole('button', { name: /^Operations 2/ }));
   setCode('Json schema', '{broken', 0);
-  await user.click(screen.getByRole('button', { name: 'Remove criteria 1' }));
+  await user.click(screen.getByRole('button', { name: 'Remove operations 1' }));
   expect(JSON.parse(getCode('Json schema'))).toEqual({ type: 'number' });
   expect(screen.queryByText(/Invalid JSON/)).not.toBeInTheDocument();
   expect(spy.mock.calls.at(-1)?.[0]).toMatchObject({
-    criteria: [{ jsonSchema: { type: 'number' } }],
+    operations: [{ jsonSchema: { type: 'number' } }],
   });
 });
 
@@ -324,30 +336,30 @@ it('S24: conflict reload replaces mounted Settings and Variables and later edits
   const api = new FakeApi();
   const initial = {
     ...newLoopDefinition('mine'),
-    settings: { maxIterations: 3 },
+    settings: { maxNodeVisits: 3 },
     variables: { old: { type: 'string' } },
   };
   const loop = api.addLoop(initial);
   renderApp(`/loops/${loop.id}/edit`, api);
-  await screen.findByLabelText('Max iterations');
+  await screen.findByLabelText('Maximum node visits');
   setCode('Variables value 1', '{broken');
   api.saveDraftElsewhere(loop.id, {
     ...newLoopDefinition('server'),
-    settings: { maxIterations: 7 },
+    settings: { maxNodeVisits: 7 },
     variables: { fresh: { type: 'number' } },
   });
   act(() => useEditorStore.getState().updateMeta({ description: 'local' }));
   await screen.findByText('The draft changed on the server', undefined, { timeout: 4000 });
   await user.click(screen.getByRole('button', { name: 'Reload server draft' }));
-  await waitFor(() => expect(screen.getByLabelText('Max iterations')).toHaveValue(7));
+  await waitFor(() => expect(screen.getByLabelText('Maximum node visits')).toHaveValue(7));
   expect(screen.getByLabelText('Variables key 1')).toHaveValue('fresh');
   expect(JSON.parse(getCode('Variables value 1'))).toEqual({ type: 'number' });
   expect(useEditorStore.getState().fieldErrors).toEqual({});
-  await user.clear(screen.getByLabelText('Max iterations'));
-  await user.type(screen.getByLabelText('Max iterations'), '8');
+  await user.clear(screen.getByLabelText('Maximum node visits'));
+  await user.type(screen.getByLabelText('Maximum node visits'), '8');
   setCode('Variables value 1', '{"type":"boolean"}');
   expect(useEditorStore.getState().definition).toMatchObject({
-    settings: { maxIterations: 8 },
+    settings: { maxNodeVisits: 8 },
     variables: { fresh: { type: 'boolean' } },
   });
 });

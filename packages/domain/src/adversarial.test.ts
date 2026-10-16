@@ -338,6 +338,7 @@ describe('adversarial domain invariants', () => {
     '/run/id',
     '/invocation/source',
     '/counters/usage',
+    '/gates/review/passes',
     '/vars-other/x',
     '',
     '/vars~1escape',

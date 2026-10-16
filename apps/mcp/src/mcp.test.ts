@@ -58,7 +58,7 @@ const inputLoop: LoopDefinitionInput = {
       id: 'done',
       kind: 'exit',
       label: 'Done',
-      config: { return: { mapping: '$.lastOutput' } },
+      config: { returns: '$.lastOutput' },
     },
   ],
   edges: [
@@ -180,9 +180,9 @@ describe('MCP server against the in-process API', () => {
       {
         nodeId: 'done',
         label: 'Done',
-        default: 'success',
-        returnMapping: '$.lastOutput',
-        returnChannels: ['caller'],
+        outcome: 'success',
+        returns: '$.lastOutput',
+        destinations: ['caller'],
       },
     ]);
     expect(body(await call('describe_loop', { loopId: askId })).loop.name).toBe('Ask Me');
@@ -248,6 +248,67 @@ describe('MCP server against the in-process API', () => {
     expect(runs.nextBefore).toBeUndefined();
     const everything = body(await call('list_runs'));
     expect((everything.items as { id: string }[]).map((r) => r.id)).toContain(started.runId);
+  });
+
+  it('stops waiting on exhausted, preserving the return value and recorded gate evidence', async () => {
+    const definition = minimalLoop();
+    definition.name = 'MCP exhausted gate';
+    definition.nodes.push({
+      id: 'gate',
+      kind: 'decision',
+      label: 'Gate',
+      config: {
+        kind: 'expression',
+        jsonata: '"repeat"',
+        routes: [
+          { id: 'repeat', label: 'Repeat', repeat: true },
+          { id: 'done', label: 'Done' },
+        ],
+        maxPasses: 1,
+      },
+      ui: { x: 0, y: 0 },
+    });
+    const exit = definition.nodes.find((n) => n.kind === 'exit');
+    if (exit?.kind !== 'exit') throw new Error('Expected exit');
+    exit.config = {
+      outcome: 'exhausted',
+      returns: '{"work":"kept"}',
+      destinations: [{ kind: 'caller' }],
+    };
+    definition.edges[0]!.to.node = 'gate';
+    definition.edges.push(
+      { id: 'repeat', from: { node: 'gate', port: 'repeat' }, to: { node: 'gate', port: 'in' } },
+      { id: 'done', from: { node: 'gate', port: 'done' }, to: { node: 'done', port: 'in' } },
+      {
+        id: 'limit',
+        from: { node: 'gate', port: 'limit-reached' },
+        to: { node: 'done', port: 'in' },
+      },
+    );
+    const loopId = await t.publishLoop(definition);
+    const started = body<{ runId: string }>(await call('start_run', { loopId }));
+    const done = body(await call('wait_for_run', { runId: started.runId }));
+    expect(done).toMatchObject({
+      finished: true,
+      run: { status: 'exhausted', outcome: 'exhausted', result: { work: 'kept' } },
+    });
+    expect(body(await call('get_run', { runId: started.runId }))).toMatchObject({
+      status: 'exhausted',
+      result: { work: 'kept' },
+    });
+    expect(body(await call('list_runs', { status: ['exhausted'], loopId })).items).toEqual([
+      expect.objectContaining({ id: started.runId, status: 'exhausted' }),
+    ]);
+    expect(body(await call('get_run_thread', { runId: started.runId })).gates).toEqual({
+      gate: { passes: 1 },
+    });
+    expect(body(await call('read_run_events', { runId: started.runId })).items).toContainEqual(
+      expect.objectContaining({
+        type: 'decision.made',
+        portId: 'limit-reached',
+        gate: expect.objectContaining({ previousPasses: 1, passes: 1, limit: 'max-passes' }),
+      }),
+    );
   });
 
   it('times out with a cursor while a run is busy, reports progress, then succeeds', async () => {

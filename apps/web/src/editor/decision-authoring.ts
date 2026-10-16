@@ -100,8 +100,12 @@ export function convertDecision(
   const before = record(previous);
   const answer = record(before['answer']);
   const rows = decisionRows(previous);
-  const routes = rows.map(({ id, label }) => ({ id, label }));
-  const keep: string[] = [];
+  const routes = rows.map((row) => ({
+    id: row['id'],
+    label: row['label'],
+    ...(row['repeat'] === true ? { repeat: true } : {}),
+  }));
+  const keep: string[] = ['maxPasses', 'maxRunTimeSeconds'];
   const moves: DecisionConversion['moves'] = [];
   const lost: string[] = [];
   const incomplete: string[] = [];
@@ -121,9 +125,10 @@ export function convertDecision(
     incomplete.push('Liquid instructions');
   } else {
     const type = primitive ?? 'choice';
-    const criteria = rows.map(({ id, label, criteria }) => ({
+    const criteria = rows.map(({ id, label, criteria, repeat }) => ({
       id,
       label,
+      ...(repeat === true ? { repeat: true } : {}),
       criteria: typeof criteria === 'string' ? criteria : '',
     }));
     let nextAnswer: Record<string, unknown>;
@@ -206,6 +211,8 @@ export function convertDecision(
     config['context'] = before['context'];
     keep.push('context');
   }
+  for (const key of ['maxPasses', 'maxRunTimeSeconds'])
+    if (before[key] !== undefined) config[key] = before[key];
   const nextPaths = rowPaths(config);
   const retainCriteria =
     before['kind'] === 'classifier' &&
@@ -213,7 +220,7 @@ export function convertDecision(
     answer['type'] !== 'score' &&
     record(config['answer'])['type'] !== 'score';
   rowPaths(before).forEach((from, index) => {
-    for (const field of ['id', 'label', ...(retainCriteria ? ['criteria'] : [])]) {
+    for (const field of ['id', 'label', 'repeat', ...(retainCriteria ? ['criteria'] : [])]) {
       const source = `${from}.${field}`;
       const target = `${nextPaths[index]}.${field}`;
       if (source === target) keep.push(source);

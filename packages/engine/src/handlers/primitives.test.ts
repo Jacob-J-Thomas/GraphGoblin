@@ -47,7 +47,7 @@ function loop(
         id,
         kind: 'exit' as const,
         label: id,
-        config: { return: { mapping: 'outputs.decide.value' } },
+        config: { returns: 'outputs.decide.value' },
       })),
     ],
     edges: [

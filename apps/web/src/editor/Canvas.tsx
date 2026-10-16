@@ -1,3 +1,4 @@
+import { isRepeatPort } from './decision-gates.js';
 import { EdgeRouteSchema, type LoopDefinitionInput, type NodeKind } from '@graphgoblin/contracts';
 import {
   Background,
@@ -215,13 +216,28 @@ function buildEdges(
       !!from &&
       !!to &&
       backwardDirection(
-        { id: edge.id, source: edge.from.node, target: edge.to.node, port: edge.from.port },
+        {
+          id: edge.id,
+          source: edge.from.node,
+          target: edge.to.node,
+          port: edge.from.port,
+          repeat: def.nodes.some(
+            (n) =>
+              n.id === edge.from.node &&
+              n.kind === 'decision' &&
+              isRepeatPort(n.config, edge.from.port),
+          ),
+        },
         { x: from.position.x + (from.measured?.width ?? 184) + 6, y: 0 },
         { x: to.position.x - 6, y: 0 },
         before ? before.type === 'orthogonal' && !beforeData?.forward : undefined,
       );
     const backward = directions.get(edge.id) ?? pendingDirection;
     const isSelected = edge.id === selected;
+    const repeat = def.nodes.some(
+      (n) =>
+        n.id === edge.from.node && n.kind === 'decision' && isRepeatPort(n.config, edge.from.port),
+    );
     const suspended = plan.suspended.has(edge.id);
     const type = route || backward || isSelected ? 'orthogonal' : 'smoothstep';
     const channel = type === 'orthogonal' ? channels.edge(edge.id, route) : undefined;
@@ -253,7 +269,8 @@ function buildEdges(
       before.data === data &&
       before.ariaLabel === ariaLabel &&
       before.type === type &&
-      before.selected === isSelected
+      before.selected === isSelected &&
+      !!before.animated === repeat
     )
       return before;
     return {
@@ -271,7 +288,7 @@ function buildEdges(
       ...(edge.from.port !== 'out'
         ? { label: portLabel, labelBgPadding: [8, 3], labelBgBorderRadius: 9 }
         : {}),
-      ...(edge.from.port === 'loopBack' ? { animated: true, className: 'gg-edge-loop' } : {}),
+      ...(repeat ? { animated: true, className: 'gg-edge-loop' } : {}),
     };
   });
 }
@@ -405,11 +422,17 @@ export function Canvas({
           source: edge.from.node,
           target: edge.to.node,
           port: edge.from.port,
+          repeat: definition.nodes.some(
+            (n) =>
+              n.id === edge.from.node &&
+              n.kind === 'decision' &&
+              isRepeatPort(n.config, edge.from.port),
+          ),
           ...(route ? { route } : {}),
           ...(route && allowed ? { allowCrossing: allowed } : {}),
         };
       }),
-    [definition.edges, routeDrag, nodeDrag, authoredCrossings],
+    [definition.edges, definition.nodes, routeDrag, nodeDrag, authoredCrossings],
   );
   const decisionPorts = useMemo(
     () => new Map([...cardData].filter(([, data]) => data.node.kind === 'decision')),

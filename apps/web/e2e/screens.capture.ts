@@ -162,7 +162,7 @@ function nightlyTriage(childLoopId: string) {
         400,
       ),
       n('approve', 'wait', 'Approve merge', { mode: 'input', prompt: 'Merge the fix?' }, 260, 400),
-      n('done', 'exit', 'Done', { loopBack: { targetNodeId: 'triage' } }, 520, 400),
+      n('done', 'exit', 'Done', {}, 520, 400),
     ],
     edges: [
       { id: 'e1', from: { node: 'nightly', port: 'out' }, to: { node: 'triage' } },
@@ -174,7 +174,6 @@ function nightlyTriage(childLoopId: string) {
       { id: 'e7', from: { node: 'watch-ci', port: 'out' }, to: { node: 'approve' } },
       { id: 'e8', from: { node: 'record', port: 'out' }, to: { node: 'done' } },
       { id: 'e9', from: { node: 'approve', port: 'out' }, to: { node: 'done' } },
-      { id: 'e10', from: { node: 'done', port: 'loopBack' }, to: { node: 'triage' } },
     ],
   };
 }

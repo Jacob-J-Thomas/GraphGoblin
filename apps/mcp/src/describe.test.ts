@@ -4,6 +4,43 @@ import { minimalLoop } from '@graphgoblin/contracts/testing';
 import { describeDefinition } from './describe.js';
 
 describe('evaluator-specific decision descriptions', () => {
+  it.each([undefined, 60])(
+    'describes gate limits, repeat routes and terminal exits (seconds: %s)',
+    (seconds) => {
+      const definition = LoopDefinitionSchema.parse(minimalLoop());
+      definition.nodes.push({
+        id: 'gate',
+        kind: 'decision',
+        label: 'Gate',
+        config: DecisionConfigSchema.parse({
+          kind: 'expression',
+          jsonata: '"repeat"',
+          routes: [
+            { id: 'repeat', label: 'Repeat', repeat: true },
+            { id: 'done', label: 'Done' },
+          ],
+          maxPasses: 3,
+          ...(seconds ? { maxRunTimeSeconds: seconds } : {}),
+        }),
+        ui: { x: 0, y: 0 },
+      });
+      const result = describeDefinition(definition);
+      expect(result.decisions[0]?.gate).toMatchObject({
+        maxPasses: 3,
+        limitPort: 'limit-reached',
+        passCountPath: 'gates."gate".passes',
+      });
+      expect(result.exits[0]).toMatchObject({
+        outcome: 'success',
+        returns: 'none',
+        destinations: ['caller'],
+      });
+      definition.nodes.at(-1)!.id = 'my-gate';
+      expect(describeDefinition(definition).decisions[0]?.gate?.passCountPath).toBe(
+        'gates."my-gate".passes',
+      );
+    },
+  );
   const routes = [
     { id: 'yes', label: 'Yes' },
     { id: 'no', label: 'No' },

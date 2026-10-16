@@ -1,5 +1,7 @@
 # ADR-0035: Evaluator-specific decisions and definition format 4
 
+Supersession: [ADR-0036](ADR-0036-decision-gates-terminal-exits.md) replaces this ADR's exit predicates, loop-back and iteration-limit rules where applicable. Historical text below is retained.
+
 Status: Accepted. Implements #164 step 12 (D1), with the owner's informational-only LLM confidence amendment.
 
 ## Context

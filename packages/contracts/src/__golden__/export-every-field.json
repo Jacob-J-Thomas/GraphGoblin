@@ -19,7 +19,7 @@
           }
         }
       },
-      "maxIterations": 7,
+      "maxNodeVisits": 7,
       "subloopDepthLimit": 4
     },
     "variables": {
@@ -185,6 +185,8 @@
         "config": {
           "kind": "expression",
           "jsonata": "\"good\"",
+          "maxPasses": 7,
+          "maxRunTimeSeconds": 3600,
           "routes": [
             {
               "id": "good",
@@ -192,7 +194,8 @@
             },
             {
               "id": "bad",
-              "label": "Bad"
+              "label": "Bad",
+              "repeat": true
             }
           ]
         }
@@ -211,6 +214,8 @@
           "question": "Choose",
           "minConfidence": 0.5,
           "truthThreshold": 0.7,
+          "maxPasses": 7,
+          "maxRunTimeSeconds": 3600,
           "answer": {
             "type": "noul",
             "true": {
@@ -221,6 +226,7 @@
             "false": {
               "id": "bad",
               "label": "Bad",
+              "repeat": true,
               "criteria": "Fail"
             }
           },
@@ -254,6 +260,8 @@
             "mode": "explicit",
             "value": "high"
           },
+          "maxPasses": 7,
+          "maxRunTimeSeconds": 3600,
           "routes": [
             {
               "id": "good",
@@ -261,7 +269,8 @@
             },
             {
               "id": "bad",
-              "label": "bad"
+              "label": "bad",
+              "repeat": true
             }
           ],
           "context": {
@@ -677,91 +686,30 @@
         },
         "kind": "exit",
         "config": {
-          "criteria": [
+          "outcome": "success",
+          "returns": "{ \"topic\": vars.topic }",
+          "destinations": [
             {
-              "when": "max-iterations",
-              "value": 5,
-              "outcome": "exhausted"
+              "kind": "caller"
             },
             {
-              "when": "max-duration",
-              "seconds": 3600,
-              "outcome": "exhausted"
+              "kind": "webhook",
+              "url": "https://example.test/done",
+              "secretRef": "hook-secret"
             },
             {
-              "when": "predicate",
-              "predicate": {
-                "kind": "classifier",
-                "model": "jev",
-                "question": "Done?",
-                "minConfidence": 0.5,
-                "answer": {
-                  "type": "noul",
-                  "true": {
-                    "label": "Done",
-                    "criteria": "Complete"
-                  },
-                  "false": {
-                    "label": "Pending",
-                    "criteria": "Incomplete"
-                  }
-                }
-              },
-              "match": {
-                "type": "noul",
-                "value": true
-              },
-              "outcome": "success"
+              "kind": "file",
+              "path": "out/result.md",
+              "format": "markdown"
             },
             {
-              "when": "predicate",
-              "predicate": {
-                "kind": "expression",
-                "jsonata": "false"
-              },
-              "match": {
-                "type": "boolean",
-                "value": true
-              },
-              "outcome": "failure"
+              "kind": "event",
+              "eventType": "loop-done"
             },
             {
-              "when": "last-output-matches",
-              "jsonSchema": {
-                "type": "object"
-              },
-              "outcome": "success"
+              "kind": "log"
             }
-          ],
-          "default": "loop-back",
-          "loopBack": {
-            "targetNodeId": "infer"
-          },
-          "return": {
-            "mapping": "{ \"topic\": vars.topic }",
-            "channels": [
-              {
-                "kind": "caller"
-              },
-              {
-                "kind": "webhook",
-                "url": "https://example.test/done",
-                "secretRef": "hook-secret"
-              },
-              {
-                "kind": "file",
-                "path": "out/result.md",
-                "format": "markdown"
-              },
-              {
-                "kind": "event",
-                "eventType": "loop-done"
-              },
-              {
-                "kind": "log"
-              }
-            ]
-          }
+          ]
         }
       }
     ],

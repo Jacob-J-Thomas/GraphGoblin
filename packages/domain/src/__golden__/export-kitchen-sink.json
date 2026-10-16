@@ -19,7 +19,7 @@
           }
         }
       },
-      "maxIterations": 3,
+      "maxNodeVisits": 3,
       "subloopDepthLimit": 8
     },
     "variables": {
@@ -246,28 +246,16 @@
         },
         "kind": "exit",
         "config": {
-          "criteria": [
+          "outcome": "success",
+          "returns": "{ \"topic\": vars.topic }",
+          "destinations": [
             {
-              "when": "max-iterations",
-              "value": 3,
-              "outcome": "exhausted"
+              "kind": "caller"
+            },
+            {
+              "kind": "log"
             }
-          ],
-          "default": "loop-back",
-          "loopBack": {
-            "targetNodeId": "prep"
-          },
-          "return": {
-            "mapping": "{ \"topic\": vars.topic }",
-            "channels": [
-              {
-                "kind": "caller"
-              },
-              {
-                "kind": "log"
-              }
-            ]
-          }
+          ]
         }
       }
     ],
@@ -390,17 +378,6 @@
         },
         "to": {
           "node": "done",
-          "port": "in"
-        }
-      },
-      {
-        "id": "e11",
-        "from": {
-          "node": "done",
-          "port": "loopBack"
-        },
-        "to": {
-          "node": "prep",
           "port": "in"
         }
       }

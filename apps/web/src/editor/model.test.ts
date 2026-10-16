@@ -52,7 +52,7 @@ describe('editor model', () => {
     const byId = (id: string) => sink.nodes.find((n) => n.id === id)!;
     expect(portsOf(byId('decide'))).toEqual(['good', 'bad']);
     expect(portsOf(byId('check'))).toEqual(['out', 'retry']);
-    expect(portsOf(byId('done'))).toEqual(['loopBack']);
+    expect(portsOf(byId('done'))).toEqual([]);
     expect(portsOf(byId('prep'))).toEqual(['out']);
 
     const broken = (kind: NodeInput['kind'], config: unknown): NodeInput =>
@@ -91,13 +91,13 @@ describe('editor model', () => {
       ),
     ).toEqual(['out', 'x']);
     expect(portsOf(broken('script', null))).toEqual(['out']);
-    expect(portsOf(broken('exit', { loopBack: { targetNodeId: 'a' }, default: 'nope' }))).toEqual([
-      'loopBack',
-    ]);
+    expect(portsOf(broken('exit', { loopBack: { targetNodeId: 'a' }, default: 'nope' }))).toEqual(
+      [],
+    );
     expect(portsOf(broken('exit', { default: 'nope' }))).toEqual([]);
     expect(portsOf(broken('wait', { mode: 'nope' }))).toEqual(['out']);
-    expect(canvasPorts(broken('exit', { default: 'nope' }))).toEqual(['loopBack']);
-    expect(canvasPorts(byId('done'))).toEqual(['loopBack']);
+    expect(canvasPorts(broken('exit', { default: 'nope' }))).toEqual([]);
+    expect(canvasPorts(byId('done'))).toEqual([]);
   });
 
   it('refuses connections into triggers, from unknown ports, and from used ports', () => {
@@ -125,7 +125,7 @@ describe('editor model', () => {
     ).toBeNull();
     expect(
       connectionProblem(def, { source: 'done', sourceHandle: 'loopBack', target: 'mid' }),
-    ).toBeNull();
+    ).toContain('no output port');
   });
 
   it('labels Noul sides and Score bands while keeping their stable IDs as ports', () => {

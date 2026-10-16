@@ -35,17 +35,25 @@ Choose one `kind`; its fields describe that evaluator directly. See [ADR-0035](d
 | `llm`        | Liquid `instructions`, `routes`, `harness: "codex"`, inherit-or-explicit `model` and `effort` | A checked structured completion chooses one declared route.    |
 | `classifier` | catalog `model`, Liquid `question`, `answer`                                                  | Choice options, Noul sides or Score bands derive stable ports. |
 
-Expression and LLM `routes` are 2-64 `{id,label}` declarations. IDs are unique bounded slugs, excluding `in`; trimmed labels are unique, nonblank and at most 120 characters. A plain check becomes a route-returning expression, for example `vars.done ? "done" : "retry"`, with both routes declared.
+Expression and LLM `routes` are 2-64 `{id,label}` declarations. IDs are unique bounded slugs, excluding `in` and `limit-reached`; trimmed labels are unique, nonblank and at most 120 characters. A plain check becomes a route-returning expression, for example `vars.done ? "done" : "retry"`, with both routes declared.
 
 Classifier Choice retains options with IDs, labels and criteria. Noul retains authored true/false sides: probability at or above `truthThreshold` (default 0.5) selects true, with chosen-side confidence p or 1-p. Optional `minConfidence` rejects below the minimum; equality passes. Score retains ordered zero-based anchors and contiguous named bands; an interior boundary enters the next band and the final endpoint remains inclusive. Scores are never rounded. `recordAlternatives` and provider `context` are classifier fields; LLM also has provider `context`. Expressions have neither setting.
 
-LLM responses require exactly `route`, `confidence` and `reasoning`, with no extra properties. The route must be declared, confidence finite in [0,1], and the stored reasoning excerpt at most 2,048 characters. Confidence is informational: no LLM decision gate exists. There is no repair or evaluator fallback.
+LLM responses require exactly `route`, `confidence` and `reasoning`, with no extra properties. The route must be declared, confidence finite in [0,1], and the stored reasoning excerpt at most 2,048 characters. Confidence is informational and has no acceptance threshold. There is no repair or evaluator fallback.
 
 Source templates render against the full thread. Provider context selection separately prepares messages, variables and optional bare last output; it does not restrict Liquid exposure. Classifier requests, fractions and retry behaviour remain unchanged. Invalid explicit model/effort or classifier capabilities are admission errors; disabled/unconfigured selections remain visible in drafts and block publication.
 
 The output is `{portId,provenance,observation}`. Route observations contain `kind: "route"`, `routeId`, confidence and reasoning (both null for expressions). Classifier observations contain `kind: "classifier"` and typed `answer`. `decision.made` adds at most three historical diagnostics; fresh emissions have none. A rejected classifier retains validated evidence in failure details and selects no route or output patch. Typed failures, resumability and cancellation retain their existing boundaries.
 
 Current definitions/exports use format 4. Old exports and stores require the integrated cutover; no temporary 3-to-4 converter exists. The generated [node reference](reference/nodes.md) lists exact fields.
+
+### Gates and repeat limits (#164 E1)
+
+A decision becomes a gate when exactly one route is marked `repeat: true`. This marker belongs on an expression/LLM route, Choice option, Noul side or Score band; it is never inferred from canvas direction. Require `maxPasses` (1–10,000); optionally set `maxRunTimeSeconds` (positive integer seconds, at most 31,536,000). Without a repeat marker neither limit is allowed. Reserve the port ID `limit-reached`: authors cannot use it as a route ID. The gate exposes **Limit reached** only while a repeat is marked, and that output must be connected. The repeat route must lead through a cycle back to the gate; exits are terminal and triggers cannot be repeat targets.
+
+Passes are one-based, available to JSONata as `gates.<nodeId>.passes` (quote an ID with punctuation, for example `gates."my-gate".passes`). Every marked gate starts at 1. Evaluation happens first. An allowed repeat increments its count once; a non-repeat choice or a refused repeat leaves it unchanged. A non-repeat choice on the last allowed pass wins. If the decision chooses repeat at `maxPasses`, or after the optional run-time limit, it takes `limit-reached` instead. Both limits reached together are recorded as `max-passes`.
+
+Maximum run time is elapsed wall time from `run.startedAt` (falling back to `createdAt`), including waits, pauses and recovery downtime. It is checked after evaluation and only on a repeat choice; it does not interrupt running work or override a finishing choice. A replay fork keeps the checkpoint's passes and starts its own run clock.
 
 ## Inferencing (Decided)
 
@@ -211,54 +219,13 @@ Two readings of "heartbeat" fit this node. The first is "poll until a condition 
 
 Ports: `out`.
 
-## Exit (Decided, #99)
+## Exit (Decided, #164 E1)
 
-Decides whether the loop is done, what it returns, where that goes, and whether to go around again. Criteria run in their authored order; the first match decides the outcome.
+Exits are terminal: `{outcome, returns, destinations}`. `outcome` is `success` (default), `failure` or `exhausted`; `returns` is a JSONata expression or `none` (default); `destinations` defaults to `[{kind:"caller"}]` and supports caller, webhook, file, event and log. Exits have no criteria, predicate, default routing or loop-back, and no output ports.
 
-A predicate declares `{predicate, match}`. Expression and Codex predicates return a strict boolean and use `match.type: "boolean"`. Classifier predicates declare Choice, Noul or Score under `predicate.answer`; they use matching option IDs, a boolean Noul value or an exact fractional Score comparison. Predicates have no graph routes or Score bands. This separate contract preserves exit behaviour until step 14 removes criteria.
+Success finishes `succeeded`, Failure finishes `failed`, and Exhausted finishes the distinct terminal status `exhausted`. Exhausted means the authored graph gave up further repetition; normally a gate's Limit reached output leads here. It is an outcome, not a resumable node failure. Every outcome evaluates the same return expression and delivers its value unchanged; Exhausted adds no wrapper or implicit last output. Use `outputs.<workNodeId>.value` when returning work output, because the preceding gate replaces `lastOutput`.
 
-Classifier evaluation requires a catalog model supporting the requested primitive. Disabled, missing or unusable-secret selections block publication and fail at runtime if availability changes. Custom HTTP classifiers and built-in Jev use the same registry. LLM evaluation uses Codex with inherited or explicit model/effort. Expression and LLM predicates are boolean; classifiers support Choice, Noul and Score.
-
-Classifier `minConfidence` and optional LLM `match.minReportedConfidence` are separate acceptance gates. Equality passes. A valid rejected answer is retained as evidence but cannot match, including a false answer with match=false. LLM confidence is self-reported. Invalid responses, provider errors, unavailable configuration and cancellation fail evaluation rather than falling through. There is no fallback.
-
-Questions still render against the full thread. Provider state is the existing trigger payload, all variables, bare last output or null, last message content or null, and iteration. No exit context selector or new session behavior is introduced.
-
-```ts
-// Example predicate; see the generated reference for the complete union.
-const criterion = {
-  when: 'predicate',
-  answer: { type: 'noul' },
-  evaluation: { kind: 'expression', jsonata: 'vars.done = true' },
-  match: { type: 'noul', value: true },
-  outcome: 'success',
-};
-
-type ExitConfig = {
-  criteria: ExitCriterion[];
-  default: 'success' | 'loop-back';
-  loopBack?: { targetNodeId: string };
-  return: {
-    mapping: string | 'none';
-    channels: ReturnChannel[];
-  };
-};
-
-// Other criteria retain their existing max-iterations, max-duration and
-// last-output-matches shapes and their authored positions.
-
-type ReturnChannel =
-  | { kind: 'caller' } // run result, MCP tool result, parent subloop output
-  | { kind: 'webhook'; url: string; secretRef?: string } // signed POST
-  | { kind: 'file'; path: string; format: 'json' | 'markdown' | 'text' }
-  | { kind: 'event'; eventType: string } // emits onto the inbound-event bus; other loops can trigger on it
-  | { kind: 'log' };
-```
-
-Behaviour: the engine evaluates criteria. A `success` or `failure` outcome, or `exhausted`, finishes the run, renders the return mapping, and delivers it to each channel, recording `return.delivered` or `return.failed` per channel. A loop-back increments `run.iteration` and `counters.nodeVisits`, emits `iteration.incremented`, and moves the token to the target node. Predicates are evaluated before the implicit ceiling: a match at the final iteration may complete, and a provider can still fail there. Only a no-match default loop-back checks the loop's `settings.maxIterations` ceiling and finishes exhausted. It also caps fresh visits per node: a node that would start for the (`maxIterations` + 1)th time fails the run with `MAX_ITERATIONS`, which bounds cycles outside an exit loop-back, such as a decision routing back to itself (see 05).
-
-The caller is whatever created the invocation: a UI session, an API client, an MCP client such as a Codex session that used a skill or tool, a cron schedule, or a parent run. The `caller` channel resolves to the right delivery automatically: the run's `result` field for everyone, the MCP tool result for MCP callers, and the subloop output mapping for parent runs.
-
-Ports: `loopBack` only, and only when configured.
+The caller destination resolves to the run result, the MCP caller or the parent subloop output mapping. Delivery records `return.delivered` or `return.failed` for each destination.
 
 ## Post-1.0 node ideas (recorded, not planned)
 

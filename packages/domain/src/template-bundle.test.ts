@@ -47,7 +47,7 @@ describe('manual template draft validation', () => {
     const input = definition();
     const exit = input.nodes.find((node) => node.kind === 'exit');
     if (!exit || exit.kind !== 'exit') throw new Error('missing exit');
-    exit.config.return.channels = [{ kind: 'file', path: 'result.json', format: 'json' }];
+    exit.config.destinations = [{ kind: 'file', path: 'result.json', format: 'json' }];
     expect(() => validateTemplateDraft(input)).toThrow('only to the caller');
   });
 });

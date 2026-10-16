@@ -8,17 +8,19 @@ import type {
   ClassifierAnswer,
   EvaluationObservation,
   RunEvent,
+  LoopDefinition,
 } from '@graphgoblin/contracts';
 import { getAtPointer, replayThread } from '@graphgoblin/domain';
 
 /**
  * The thread as the run started. The engine records it on the first event (`run.queued`),
  * including a subloop child's seed; logs written before that field existed fall back to the
- * immutable `run` and `invocation` from the current thread with every collection empty.
+ * immutable `run` and `invocation` from the current thread and one-based gates from the definition.
  */
 export function initialThreadFrom(
   current: ContextThread,
   events: readonly RunEvent[] = [],
+  definition?: LoopDefinition,
 ): ContextThread {
   const first = events[0];
   if (first?.type === 'run.queued' && first.initialThread) return first.initialThread;
@@ -30,6 +32,11 @@ export function initialThreadFrom(
     vars: {},
     artifacts: [],
     outputs: {},
+    gates: Object.fromEntries(
+      (definition?.nodes ?? [])
+        .filter((node) => node.kind === 'decision' && node.config.maxPasses !== undefined)
+        .map((node) => [node.id, { passes: 1 }]),
+    ),
     counters: {
       nodeVisits: {},
       usage: { inputTokens: 0, outputTokens: 0, cachedInputTokens: 0, reasoningOutputTokens: 0 },
@@ -166,7 +173,7 @@ function describeDecision(event: Extract<RunEvent, { type: 'decision.made' }>): 
           description = `Chose ${answer.optionId}`;
           break;
         case 'score':
-          description = `Scored ${answer.score} to band ${event.portId}`;
+          description = `Scored ${answer.score} to band ${event.gate?.limit ? event.gate.repeatRouteId : event.portId}`;
           break;
         case 'noul':
           description = `Answered ${answer.holds === null ? 'unknown (not recorded)' : answer.holds} (true probability ${answer.trueProbability ?? 'not recorded'})`;
@@ -187,35 +194,11 @@ function describeDecision(event: Extract<RunEvent, { type: 'decision.made' }>): 
         ? ` with ${confidenceLabel} not recorded`
         : '';
   const diagnostics = event.diagnostics.map((item) => `; ${item.code}: ${item.message}`).join('');
-  return `${description} with ${provenance.kind}${provider}${model}${confidenceText}${diagnostics}`;
+  return `${description} with ${provenance.kind}${provider}${model}${confidenceText}${event.gate ? `; passes ${event.gate.previousPasses} → ${event.gate.passes} of ${event.gate.maxPasses}${event.gate.limit ? `; Limit reached (${event.gate.limit})` : ''}` : ''}${diagnostics}`;
 }
 
 function describeExit(event: Extract<RunEvent, { type: 'exit.evaluated' }>): string {
-  const result = event.result;
-  switch (result.kind) {
-    case 'completed': {
-      if (result.reason === 'default-success')
-        return `Exited: default ${result.outcome}, no criterion matched`;
-      const criterion = event.criteria.find((c) => c.index === result.criterionIndex);
-      const label =
-        result.criterionIndex === undefined
-          ? 'a criterion'
-          : `criterion ${result.criterionIndex + 1}`;
-      const detail =
-        criterion?.status === 'matched'
-          ? ` (${strategyName(criterion.strategy)}) matched${'observation' in criterion ? `: ${observationDescription(criterion.observation)}` : ''}`
-          : ' matched';
-      return `Exited: ${label}${detail} (${result.outcome})`;
-    }
-    case 'looped-back':
-      return `Looped back: no criterion matched, iteration ${event.iteration} of ${event.maxIterations}`;
-    case 'limit-reached':
-      return `Exited: ${result.limit === 'max-duration' ? `duration limit of ${result.value} seconds` : `iteration limit of ${result.value}`} reached${result.limit === 'iteration-ceiling' ? ' (loop ceiling)' : ''}${result.criterionIndex !== undefined ? ` (criterion ${result.criterionIndex + 1})` : ''}`;
-    case 'failed':
-      return `Exit evaluation failed: ${result.diagnostic.message}`;
-    case 'cancelled':
-      return 'Exit evaluation cancelled';
-  }
+  return `Exited: ${event.outcome}`;
 }
 
 export function strategyName(strategy: string): string {

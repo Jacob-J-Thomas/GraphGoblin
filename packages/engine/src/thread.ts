@@ -26,6 +26,7 @@ export function createInitialThread(input: InitialThreadInput): ContextThread {
     artifacts: input.seed?.artifacts ?? [],
     outputs: input.seed?.outputs ?? {},
     ...(input.seed?.lastOutput ? { lastOutput: input.seed.lastOutput } : {}),
+    gates: {},
     counters: {
       nodeVisits: {},
       usage: { inputTokens: 0, outputTokens: 0, cachedInputTokens: 0, reasoningOutputTokens: 0 },

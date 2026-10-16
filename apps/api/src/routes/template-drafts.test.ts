@@ -309,7 +309,8 @@ describe('bounded manual starting-point execution', () => {
       'Added guard',
       { status: 'approved', summary: 'Guard verified', findings: [] },
     ]);
-    expect(run).toMatchObject({ status: 'succeeded', outcome: 'success', iteration: 2 });
+    expect(run).toMatchObject({ status: 'succeeded', outcome: 'success', iteration: 1 });
+    expect((await app!.container.manager.getThread(run!.id))?.gates.retry?.passes).toBe(2);
     expect(app!.harness.started).toHaveLength(3);
     expect(app!.harness.started[1]?.turn.prompt).toContain('Guard empty input');
     expect(app!.harness.started[2]?.turn.prompt).toContain('Added guard');
@@ -329,7 +330,9 @@ describe('bounded manual starting-point execution', () => {
       finding,
       'Third attempt',
     ]);
-    expect(run).toMatchObject({ status: 'exhausted', outcome: 'exhausted', iteration: 3 });
+    expect(run).toMatchObject({ status: 'exhausted', outcome: 'exhausted', iteration: 1 });
+    expect((await app!.container.manager.getThread(run!.id))?.gates.retry?.passes).toBe(3);
+    expect(run?.result).toEqual(finding);
     expect(app!.harness.started).toHaveLength(6);
   });
 
@@ -348,7 +351,9 @@ describe('bounded manual starting-point execution', () => {
     const qa = { status: 'pass', summary: 'Proposed result', evidence: ['Insufficient assertion'] };
     const challenge = { assessment: 'unsound', summary: 'Evidence insufficient' };
     const run = await execute('qa', ['Acceptance criterion', qa, challenge, qa, challenge]);
-    expect(run).toMatchObject({ status: 'exhausted', outcome: 'exhausted', iteration: 2 });
+    expect(run).toMatchObject({ status: 'exhausted', outcome: 'exhausted', iteration: 1 });
+    expect((await app!.container.manager.getThread(run!.id))?.gates.retry?.passes).toBe(2);
+    expect(run?.result).toEqual({ qa, challenge });
     expect(app!.harness.started).toHaveLength(5);
   });
 });

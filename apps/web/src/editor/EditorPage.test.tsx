@@ -143,44 +143,44 @@ describe('EditorPage', () => {
     );
     width.mockRestore();
     // The toolbar's indicator counts the merged list; each node's badge counts its own issues.
-    // An exit criterion above the ceiling is a warning.
+    // An invalid return expression is an error.
     await user.click(screen.getByRole('button', { name: 'Hide loop settings' }));
     act(() =>
       useEditorStore.getState().updateNode('done', {
-        config: { criteria: [{ when: 'max-iterations', value: 99 }] },
+        config: { returns: '(' },
       }),
     );
-    expect(screen.getByRole('button', { name: '1 warning' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: '1 error' })).toHaveAttribute(
       'data-severity',
-      'warning',
+      'error',
     );
     expect(nodeBadge('done')).toHaveAttribute('aria-label', '1 issue on done');
-    expect(nodeBadge('done')).toHaveAttribute('data-severity', 'warning');
+    expect(nodeBadge('done')).toHaveAttribute('data-severity', 'error');
     expect(nodeBadge('start')).toBeNull();
     expect(screen.queryByText('Ready to publish')).toBeNull();
-    // A new wait node brings two errors (unconnected port, unreachable node).
+    // A new wait node brings two more errors (unconnected port, unreachable node).
     await user.click(screen.getByRole('button', { name: 'Add Wait node' }));
-    expect(screen.getByRole('button', { name: '2 errors, 1 warning' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: '3 errors' })).toHaveAttribute(
       'data-severity',
       'error',
     );
     expect(nodeBadge('wait')).toHaveAttribute('aria-label', '2 issues on wait');
     expect(nodeBadge('wait')).toHaveTextContent('2');
-    // One error (loop settings text that does not parse) and two warnings (a second exit above
-    // the ceiling); the loop-level error has no node, so no badge.
+    // Held settings text adds a loop-level error; another invalid exit adds an expression
+    // error and an unreachable-node error. The loop-level error has no node badge.
     act(() => useEditorStore.getState().removeNode('wait'));
     act(() =>
       useEditorStore.getState().setFieldError('settings', 'x', { message: 'bad', text: '{' }),
     );
-    expect(screen.getByRole('button', { name: '1 error, 1 warning' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '2 errors' })).toBeInTheDocument();
     act(() => {
       useEditorStore.getState().addNode('exit', { x: 0, y: 0 });
       useEditorStore.getState().updateNode('exit', {
-        config: { criteria: [{ when: 'max-iterations', value: 99 }] },
+        config: { returns: '(' },
       });
     });
     // The new exit is also unreachable (an error).
-    const indicator = screen.getByRole('button', { name: '2 errors, 2 warnings' });
+    const indicator = screen.getByRole('button', { name: '4 errors' });
     expect(nodeBadge('done')).toHaveAttribute('aria-label', '1 issue on done');
     expect(nodeBadge('exit')).toHaveAttribute('aria-label', '2 issues on exit');
     // Its popover lists the loop-level issue in full and one row per node.
@@ -925,14 +925,14 @@ describe('EditorPage', () => {
     await user.click(screen.getByRole('button', { name: 'Add Exit node' }));
     act(() => useEditorStore.getState().openNode('exit'));
     expect(await screen.findByText('[{"kind":"caller"}]')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Customize channels' }));
+    await user.click(screen.getByRole('button', { name: 'Customize destinations' }));
     await waitFor(() =>
       expect(
         (
           useEditorStore.getState().definition?.nodes.find((n) => n.id === 'exit')?.config as {
-            return?: { channels?: unknown };
+            destinations?: unknown;
           }
-        ).return?.channels,
+        ).destinations,
       ).toEqual([{ kind: 'caller' }]),
     );
     expect(screen.queryByText(/expected object, received undefined/)).toBeNull();
@@ -998,50 +998,6 @@ describe('EditorPage', () => {
     act(() => useEditorStore.getState().openNode('wait'));
     await user.click(within(form).getByRole('button', { name: 'Connect' }));
     expect(within(form).getByRole('alert')).toHaveTextContent('Connection refused: unknown node');
-  });
-
-  it('connects a chosen port, and keeps an exit’s loop-back config in step with its edge', async () => {
-    const user = userEvent.setup();
-    const api = new FakeApi();
-    const loop = api.addLoop(kitchenSinkLoop());
-    renderApp(`/loops/${loop.id}/edit`, api);
-    await screen.findByRole('heading', { name: 'kitchen-sink' });
-
-    // A script with two free ports: pick the second.
-    act(() => useEditorStore.getState().openNode('check'));
-    let dialog = await screen.findByRole('dialog', { name: 'Edit script check' });
-    await user.click(within(dialog).getByRole('button', { name: 'Remove edge e5' }));
-    await user.click(within(dialog).getByRole('button', { name: 'Remove edge e5b' }));
-    const form = within(dialog).getByRole('form', { name: 'Connect check' });
-    await user.selectOptions(within(form).getByLabelText('Output'), 'retry');
-    await user.selectOptions(within(form).getByLabelText('To'), 'decide');
-    await user.click(within(form).getByRole('button', { name: 'Connect' }));
-    expect(useEditorStore.getState().definition!.edges).toContainEqual(
-      expect.objectContaining({
-        from: { node: 'check', port: 'retry' },
-        to: { node: 'decide', port: 'in' },
-      }),
-    );
-    await user.click(within(dialog).getByRole('button', { name: 'Done' }));
-
-    // The exit's loop-back: removing the edge clears the field, connecting sets it again.
-    act(() => useEditorStore.getState().openNode('done'));
-    dialog = await screen.findByRole('dialog', { name: 'Edit exit done' });
-    expect(within(dialog).getByLabelText('Target node id')).toHaveValue('prep');
-    await user.click(within(dialog).getByRole('button', { name: 'Remove edge e11' }));
-    expect(within(dialog).queryByLabelText('Target node id')).toBeNull();
-    const loopBack = within(dialog).getByRole('form', { name: 'Connect done' });
-    await user.selectOptions(within(loopBack).getByLabelText('To'), 'infer');
-    await user.click(within(loopBack).getByRole('button', { name: 'Connect' }));
-    expect(within(dialog).getByLabelText('Target node id')).toHaveValue('infer');
-    // An edit elsewhere in the form keeps it.
-    await user.clear(within(dialog).getByLabelText('Label'));
-    await user.type(within(dialog).getByLabelText('Label'), 'Finish');
-    expect(
-      useEditorStore.getState().definition!.nodes.find((n) => n.id === 'done')!.config,
-    ).toMatchObject({
-      loopBack: { targetNodeId: 'infer' },
-    });
   });
 
   it('never lets an older save land after a newer one', async () => {
@@ -1203,9 +1159,9 @@ describe('EditorPage', () => {
     await user.type(name, 'sink');
     expect(screen.getByRole('heading', { name: 'sink' })).toBeInTheDocument();
     await user.type(screen.getByLabelText('Description'), 'x');
-    await user.clear(screen.getByLabelText('Max iterations'));
-    await user.type(screen.getByLabelText('Max iterations'), '4');
-    expect(useEditorStore.getState().definition!.settings).toMatchObject({ maxIterations: 4 });
+    await user.clear(screen.getByLabelText('Maximum node visits'));
+    await user.type(screen.getByLabelText('Maximum node visits'), '4');
+    expect(useEditorStore.getState().definition!.settings).toMatchObject({ maxNodeVisits: 4 });
     await user.click(
       within(panel.querySelector('[data-field="variables"]')!).getByRole('button', {
         name: 'Add entry',
@@ -1309,7 +1265,7 @@ describe('EditorPage', () => {
             id: 'done',
             kind: 'exit',
             label: 'Done',
-            config: { return: { mapping: 'vars', channels: [{ kind: 'caller' }] } },
+            config: { returns: 'vars', destinations: [{ kind: 'caller' }] },
           },
         ],
       },

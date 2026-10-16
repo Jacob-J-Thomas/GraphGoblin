@@ -30,12 +30,18 @@ const PENDING_JSON = 'Choose Apply JSON or Cancel JSON to finish this edit.';
 interface RemovedConnection {
   id: string;
   description: string;
+  kind?: 'field';
 }
 
 /** The editor supplies graph consequences; the form only presents and confirms them. */
 export const JsonApplyReviewContext = createContext<
   (path: string, value: unknown) => readonly RemovedConnection[]
 >(() => []);
+
+/** Normalize dependent editor settings in a complete candidate before section validation. */
+export const JsonCandidateContext = createContext<(candidate: unknown) => unknown>(
+  (candidate) => candidate,
+);
 
 /** Replace one section in a fresh candidate, never in the live form or store. */
 function replaceSection(value: unknown, path: readonly string[], next: unknown): unknown {
@@ -299,9 +305,13 @@ export function JsonText({
           className="mt-2 grid min-w-0 gap-2"
         >
           <HelpText id={confirmationTitleId} tone="warn">
-            Confirm connection removal
+            {confirmation.connections.some((item) => item.kind === 'field')
+              ? 'Confirm connection and setting removal'
+              : 'Confirm connection removal'}
           </HelpText>
-          <HelpText tone="warn">Applying this JSON will remove these connections:</HelpText>
+          <HelpText tone="warn">
+            Applying this JSON will remove these connections or settings:
+          </HelpText>
           <ul id={confirmationListId} className="min-w-0 break-words text-sm">
             {confirmation.connections.map((connection) => (
               <li key={connection.id}>{connection.description}</li>
@@ -339,6 +349,7 @@ export function JsonSection({
   const field = useField(name, 'commit');
   const { getValues } = useFormContext();
   const scope = use(FormScopeContext)!;
+  const normalizeCandidate = use(JsonCandidateContext);
   const validationCacheRef = useRef<{
     schema: Schema;
     candidate: unknown;
@@ -346,7 +357,9 @@ export function JsonSection({
   }>(null);
   const validateValue = useCallback(
     (next: unknown, recheck = false) => {
-      const candidate = stripUnset(replaceSection(getValues(), name.split('.'), next));
+      const candidate = normalizeCandidate(
+        stripUnset(replaceSection(getValues(), name.split('.'), next)),
+      );
       const cached = validationCacheRef.current;
       if (!recheck && cached?.schema === scope.rootSchema && sameJson(cached.candidate, candidate))
         return cached.error;
@@ -367,7 +380,7 @@ export function JsonSection({
       validationCacheRef.current = { schema: scope.rootSchema, candidate, error };
       return error;
     },
-    [getValues, name, scope.rootSchema],
+    [getValues, name, scope.rootSchema, normalizeCandidate],
   );
   // The parent controller subscribes to whole-section writes, not descendant keystrokes.
   // Read the live section when opening/changing mode so structured child edits are included.

@@ -912,7 +912,7 @@ for (const theme of ['dark', 'light'] as const) {
             id: 'done',
             kind: 'exit',
             label: 'Done',
-            config: { loopBack: { targetNodeId: 'decide' } },
+            config: {},
             ui: { x: 520, y: 0 },
           },
         ],
@@ -920,7 +920,7 @@ for (const theme of ['dark', 'light'] as const) {
           { id: 'start-decide', from: { node: 'start', port: 'out' }, to: { node: 'decide' } },
           { id: 'decide-peer', from: { node: 'decide', port: 'yes' }, to: { node: 'peer' } },
           { id: 'peer-done', from: { node: 'peer', port: 'out' }, to: { node: 'done' } },
-          { id: 'return', from: { node: 'done', port: 'loopBack' }, to: { node: 'decide' } },
+          { id: 'return', from: { node: 'decide', port: 'no' }, to: { node: 'decide' } },
         ],
       };
       const response = await request.post('/loops', { data: { definition } });

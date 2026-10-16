@@ -412,7 +412,7 @@ describe('finalization on SQLite (review of WP-G, fourth round)', () => {
     const def = singleNodeLoop(
       'resumed-finalization',
       { id: 'infer', kind: 'inference', label: 'I', config: { prompt: { template: 'go' } } },
-      { return: { mapping: '7', channels: [{ kind: 'log' }] } },
+      { returns: '7', destinations: [{ kind: 'log' }] },
     );
     const r = await manager.startRun({
       ownerId: 'local',
@@ -464,7 +464,7 @@ describe('finalization on SQLite (review of WP-G, fourth round)', () => {
       const def = singleNodeLoop(
         'stale-finalizer',
         { id: 'infer', kind: 'inference', label: 'I', config: { prompt: { template: 'go' } } },
-        { return: { mapping: '7', channels: [{ kind: 'log' }] } },
+        { returns: '7', destinations: [{ kind: 'log' }] },
       );
       let entered!: () => void;
       const enteredP = new Promise<void>((resolve) => (entered = resolve));
@@ -545,19 +545,9 @@ describe('finalization on SQLite (review of WP-G, fourth round)', () => {
         'concurrent-resume',
         { id: 'infer', kind: 'inference', label: 'I', config: { prompt: { template: 'go' } } },
         {
-          ...(exitFailure
-            ? {
-                criteria: [
-                  {
-                    when: 'predicate',
-                    predicate: { kind: 'expression', jsonata: 'true' },
-                    match: { type: 'boolean', value: true },
-                    outcome: 'failure',
-                  },
-                ],
-              }
-            : {}),
-          return: { mapping: '7', channels: [{ kind: 'log' }] },
+          outcome: exitFailure ? 'failure' : 'success',
+          returns: '7',
+          destinations: [{ kind: 'log' }],
         },
       );
       const r = await manager.startRun({

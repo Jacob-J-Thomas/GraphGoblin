@@ -4,12 +4,10 @@ import {
   type ClassifierDecisionConfig,
   type ExpressionDecisionConfig,
   type LlmDecisionConfig,
-  type PredicateConfig,
   type ClassifierEvaluation,
   type EvaluationProvenance,
   type JsonValue,
   type ClassifierAnswer,
-  type PredicateEvaluation,
   type EvaluationObservation,
 } from '@graphgoblin/contracts';
 import { evaluateExpression, validatePrimitiveAnswer } from '@graphgoblin/domain';
@@ -26,7 +24,7 @@ interface EvaluationRequest {
   resolveModel: HandlerServices['resolveModel'];
 }
 export interface ClassifierEvaluationRequest extends EvaluationRequest {
-  config: ClassifierDecisionConfig | Extract<PredicateConfig, { kind: 'classifier' }>;
+  config: ClassifierDecisionConfig;
   question: string;
   context: JsonValue;
 }
@@ -34,15 +32,6 @@ export type RouteEvaluationRequest = EvaluationRequest &
   (
     | { config: ExpressionDecisionConfig; expressionView: unknown }
     | { config: LlmDecisionConfig; instructions: string; context: JsonValue }
-  );
-export type BooleanEvaluationRequest = EvaluationRequest &
-  (
-    | { config: Extract<PredicateConfig, { kind: 'expression' }>; expressionView: unknown }
-    | {
-        config: Extract<PredicateConfig, { kind: 'llm' }>;
-        instructions: string;
-        context: JsonValue;
-      }
   );
 const CLASSIFIER_MESSAGES: Record<ClassifierUnavailableReason, string> = {
   CLASSIFIER_MODEL_NOT_FOUND: 'The selected classifier is not in the catalog',
@@ -281,10 +270,9 @@ async function expressionValue(
 }
 async function evaluateLlm(
   request: EvaluationRequest,
-  config: LlmDecisionConfig | Extract<PredicateConfig, { kind: 'llm' }>,
+  config: LlmDecisionConfig,
   instructions: string,
   context: JsonValue,
-  mode: 'route' | 'boolean',
 ): Promise<{ provenance: EvaluationProvenance; observation: EvaluationObservation }> {
   request.signal.throwIfAborted();
   const decider = request.ports.deciders.find(
@@ -307,10 +295,7 @@ async function evaluateLlm(
   let raw: unknown;
   try {
     const prepared = { instructions, context, ...resolved };
-    raw =
-      mode === 'route' && 'routes' in config
-        ? await decider.route({ ...prepared, routes: config.routes }, request.signal)
-        : await decider.evaluateBoolean(prepared, request.signal);
+    raw = await decider.route({ ...prepared, routes: config.routes }, request.signal);
     request.signal.throwIfAborted();
   } catch (error) {
     providerFailure(request, error, provenance);
@@ -323,8 +308,7 @@ async function evaluateLlm(
       false,
       { provenance },
     );
-  const keys =
-    mode === 'route' ? ['route', 'confidence', 'reasoning'] : ['holds', 'confidence', 'reasoning'];
+  const keys = ['route', 'confidence', 'reasoning'];
   if (
     Object.keys(raw).length !== 3 ||
     Object.keys(raw).some((key) => !keys.includes(key)) ||
@@ -343,44 +327,26 @@ async function evaluateLlm(
       false,
       { provenance },
     );
-  const observation: EvaluationObservation =
-    mode === 'route' && 'routes' in config
-      ? (() => {
-          if (
-            !('route' in raw) ||
-            typeof raw.route !== 'string' ||
-            !config.routes.some((route) => route.id === raw.route)
-          )
-            fail(
-              request,
-              'EVALUATION_INVALID_RESPONSE',
-              'The LLM must return a declared route id',
-              false,
-              { provenance },
-            );
-          return {
-            kind: 'route' as const,
-            routeId: raw.route,
-            confidence: raw.confidence,
-            reasoning: raw.reasoning.slice(0, 2048),
-          };
-        })()
-      : (() => {
-          if (!('holds' in raw) || typeof raw.holds !== 'boolean')
-            fail(
-              request,
-              'EVALUATION_INVALID_RESPONSE',
-              'The LLM predicate must return a boolean',
-              false,
-              { provenance },
-            );
-          return {
-            kind: 'boolean' as const,
-            holds: raw.holds,
-            confidence: raw.confidence,
-            reasoning: raw.reasoning.slice(0, 2048),
-          };
-        })();
+  const observation: EvaluationObservation = (() => {
+    if (
+      !('route' in raw) ||
+      typeof raw.route !== 'string' ||
+      !config.routes.some((route) => route.id === raw.route)
+    )
+      fail(
+        request,
+        'EVALUATION_INVALID_RESPONSE',
+        'The LLM must return a declared route id',
+        false,
+        { provenance },
+      );
+    return {
+      kind: 'route' as const,
+      routeId: raw.route,
+      confidence: raw.confidence,
+      reasoning: raw.reasoning.slice(0, 2048),
+    };
+  })();
   const emission = EvaluationEmissionSchema.safeParse({ provenance, observation });
   if (!emission.success)
     fail(
@@ -406,33 +372,5 @@ export async function evaluateRoute(request: RouteEvaluationRequest) {
       observation: { kind: 'route' as const, routeId: value, confidence: null, reasoning: null },
     };
   }
-  return evaluateLlm(request, request.config, request.instructions, request.context, 'route');
-}
-export async function evaluateBoolean(
-  request: BooleanEvaluationRequest,
-): Promise<PredicateEvaluation> {
-  if ('expressionView' in request) {
-    const value = await expressionValue(request, request.config.jsonata, request.expressionView);
-    if (typeof value !== 'boolean')
-      fail(
-        request,
-        'EVALUATION_INVALID_RESPONSE',
-        'The predicate expression must return a boolean',
-      );
-    return {
-      provenance: expressionProvenance,
-      observation: { kind: 'boolean', holds: value, confidence: null, reasoning: null },
-      acceptance: { status: 'accepted' },
-    };
-  }
-  return {
-    ...(await evaluateLlm(
-      request,
-      request.config,
-      request.instructions,
-      request.context,
-      'boolean',
-    )),
-    acceptance: { status: 'accepted' },
-  };
+  return evaluateLlm(request, request.config, request.instructions, request.context);
 }

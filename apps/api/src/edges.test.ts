@@ -46,7 +46,7 @@ const returnLoop: LoopDefinitionInput = {
   nodes: [
     { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
     { id: 'wait', kind: 'wait', label: 'W', config: { mode: 'input', prompt: 'Value?' } },
-    { id: 'done', kind: 'exit', label: 'D', config: { return: { mapping: 'lastOutput.value' } } },
+    { id: 'done', kind: 'exit', label: 'D', config: { returns: 'lastOutput.value' } },
   ],
   edges: [
     { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'wait' } },

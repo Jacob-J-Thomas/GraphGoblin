@@ -35,7 +35,7 @@ function LoopSignature({ loopId }: { loopId: string }) {
                 key={e.id}
                 className="rounded-md border border-default bg-code-bg px-2 py-1 whitespace-pre-wrap text-code-fg"
               >
-                {e.id}: {e.config.return.mapping}
+                {e.id}: {e.config.returns}
               </pre>
             ))}
           </div>

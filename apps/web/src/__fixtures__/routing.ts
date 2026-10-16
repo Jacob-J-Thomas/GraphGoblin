@@ -1,6 +1,7 @@
 import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import type { LoopDefinitionInput, NodeInput } from '@graphgoblin/contracts';
 import { canvasPorts, defaultConfig } from '../editor/model.js';
+import { hasRepeatRoute, isRepeatPort } from '../editor/decision-gates.js';
 import type { RoutingEdge, RoutingNode } from '../editor/routing.js';
 
 const edge = (id: string, source: string, target: string, port = 'out') => ({
@@ -13,14 +14,18 @@ function node(id: string, kind: NodeInput['kind'], x: number, y = 100): NodeInpu
   return { id, label: id, kind, config: defaultConfig(kind), ui: { x, y } } as NodeInput;
 }
 
-function exit(id: string, x: number, target: string, y = 100): NodeInput {
+function gate(id: string, x: number, y = 100): NodeInput {
   return {
-    ...node(id, 'exit', x, y),
-    kind: 'exit',
+    ...node(id, 'decision', x, y),
+    kind: 'decision',
     config: {
-      loopBack: { targetNodeId: target },
-      default: 'loop-back',
-      criteria: [{ when: 'max-iterations', value: 3 }],
+      kind: 'expression',
+      jsonata: '"repeat"',
+      routes: [
+        { id: 'repeat', label: 'Repeat', repeat: true },
+        { id: 'finish', label: 'Finish' },
+      ],
+      maxPasses: 3,
     },
   };
 }
@@ -33,13 +38,13 @@ export function simpleLoop(): LoopDefinitionInput {
       node('start', 'trigger', 0),
       node('work', 'mutate', 300),
       node('check', 'script', 600),
-      exit('done', 900, 'work'),
+      gate('done', 900),
     ],
     edges: [
       edge('start-work', 'start', 'work'),
       edge('work-check', 'work', 'check'),
       edge('check-done', 'check', 'done'),
-      edge('return', 'done', 'work', 'loopBack'),
+      edge('return', 'done', 'work', 'repeat'),
     ],
   };
 }
@@ -52,8 +57,8 @@ export function nestedLoops(): LoopDefinitionInput {
       node('start', 'trigger', 0),
       node('outer-work', 'mutate', 300),
       node('inner-work', 'mutate', 600),
-      exit('inner-done', 900, 'inner-work'),
-      exit('outer-done', 1200, 'outer-work'),
+      gate('inner-done', 900),
+      gate('outer-done', 1200),
       {
         ...node('choose', 'decision', 600, -160),
         kind: 'decision',
@@ -79,8 +84,8 @@ export function nestedLoops(): LoopDefinitionInput {
       edge('inner-check', 'inner-work', 'choose'),
       edge('choose-repeat', 'choose', 'inner-done', 'repeat'),
       edge('choose-finish', 'choose', 'outer-done', 'finish'),
-      edge('inner-return', 'inner-done', 'inner-work', 'loopBack'),
-      edge('outer-return', 'outer-done', 'outer-work', 'loopBack'),
+      edge('inner-return', 'inner-done', 'inner-work', 'repeat'),
+      edge('outer-return', 'outer-done', 'outer-work', 'repeat'),
     ],
   };
 }
@@ -162,20 +167,20 @@ export function tightGap(): LoopDefinitionInput {
   return definition;
 }
 
-/** An exit can point right: the clear Z path has no middle horizontal after stub simplification. */
+/** A gate repeat can point right: the clear Z path has no middle horizontal after stub simplification. */
 export function forwardLoopBack(): LoopDefinitionInput {
   return {
     schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: 'Forward loop-back detour',
     nodes: [
       node('start', 'trigger', -300, 0),
-      exit('done', 0, 'work', 0),
+      gate('done', 0, 0),
       node('work', 'wait', 700, 280),
       node('ceiling', 'wait', 180, -150),
       node('shelf', 'wait', 180, 160),
       node('wall', 'wait', 500, 30),
     ],
-    edges: [edge('begin', 'start', 'done'), edge('return', 'done', 'work', 'loopBack')],
+    edges: [edge('begin', 'start', 'done'), edge('return', 'done', 'work', 'repeat')],
   };
 }
 
@@ -198,8 +203,8 @@ export function denseGraph(count = 100): LoopDefinitionInput {
     edges.push(edge(`retry-${i}`, `n${i}`, i === 1 ? 'n1' : `n${i - 1}`, 'retry'));
     if (i < 3) edges.push(edge(`self-${i}`, `n${i}`, `n${i}`, 'self'));
   }
-  nodes.push(exit('done', 9 * 320, 'n1', Math.floor((count - 1) / 10) * 270));
-  edges.push(edge('return', 'done', 'n1', 'loopBack'));
+  nodes.push(gate('done', 9 * 320, Math.floor((count - 1) / 10) * 270));
+  edges.push(edge('return', 'done', 'n1', 'repeat'));
   return {
     schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: `Dense graph: ${count} nodes, ${count * 2} edges`,
@@ -217,7 +222,10 @@ export function routingInput(definition: LoopDefinitionInput): {
     nodes: definition.nodes.map((n) => {
       const { x = 0, y = 0 } = n.ui ?? {};
       const ports = canvasPorts(n);
-      const height = 102 + ports.length * 20;
+      // Synthetic gate boxes keep the repeat tip fixed for the routing regression corpus.
+      // Browser specs measure the real multi-port card instead.
+      const gate = n.kind === 'decision' && hasRepeatRoute(n.config);
+      const height = 102 + (gate ? 1 : ports.length) * 20;
       return {
         id: n.id,
         x,
@@ -225,7 +233,9 @@ export function routingInput(definition: LoopDefinitionInput): {
         width: 184,
         height,
         input: { x, y: y + height / 2 },
-        outputs: Object.fromEntries(ports.map((p, i) => [p, { x: x + 184, y: y + 100 + i * 20 }])),
+        outputs: Object.fromEntries(
+          ports.map((p, i) => [p, { x: x + 184, y: y + 100 + (gate ? -i : i) * 20 }]),
+        ),
       };
     }),
     edges: definition.edges.map((e) => ({
@@ -233,6 +243,9 @@ export function routingInput(definition: LoopDefinitionInput): {
       source: e.from.node,
       target: e.to.node,
       port: e.from.port,
+      repeat: definition.nodes.some(
+        (n) => n.id === e.from.node && n.kind === 'decision' && isRepeatPort(n.config, e.from.port),
+      ),
     })),
   };
 }

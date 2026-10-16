@@ -256,12 +256,6 @@ export interface LlmRouteResult {
   confidence: number;
   reasoning: string;
 }
-export type LlmBooleanRequest = Omit<LlmRouteRequest, 'routes'>;
-export interface LlmBooleanResult {
-  holds: boolean;
-  confidence: number;
-  reasoning: string;
-}
 export interface ScoreRequest extends PrimitiveRequest {
   anchors: string[];
 }
@@ -271,7 +265,6 @@ export interface DeciderPort {
   readonly id: 'codex';
   available(): boolean;
   route(request: LlmRouteRequest, signal: AbortSignal): Promise<LlmRouteResult>;
-  evaluateBoolean(request: LlmBooleanRequest, signal: AbortSignal): Promise<LlmBooleanResult>;
 }
 
 /** Primitive-specific provider snapshot; an in-flight request retains its resolved configuration. */

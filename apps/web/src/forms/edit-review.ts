@@ -1,7 +1,7 @@
 import { createContext } from 'react';
 
 export interface FormEditRequest {
-  type: 'variant' | 'remove';
+  type: 'variant' | 'remove' | 'gate';
   path: string;
   value: unknown;
   index?: number;

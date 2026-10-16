@@ -7,7 +7,6 @@ import {
 import {
   evaluateClassifier,
   evaluateRoute,
-  evaluateBoolean,
   type ClassifierEvaluationRequest,
 } from './primitive-evaluator.js';
 import { createFakePorts } from './testing/index.js';
@@ -56,7 +55,11 @@ describe('separate typed evaluation operations', () => {
         truthThreshold: 0.8,
         answer:
           type === 'score'
-            ? { type, anchors: ['Low', 'High'] }
+            ? {
+                type,
+                anchors: ['Low', 'High'],
+                bands: [{ id: 'all', label: 'All', min: 0, max: 1 }],
+              }
             : {
                 type,
                 options: [
@@ -115,23 +118,6 @@ describe('separate typed evaluation operations', () => {
       }),
     ).rejects.toMatchObject({ name: 'AbortError' });
   });
-  it('evaluates strict booleans independently of decision route ports', async () => {
-    const input = request();
-    expect(
-      await evaluateBoolean({
-        ...input,
-        config: { kind: 'expression', jsonata: 'false' },
-        expressionView: {},
-      }),
-    ).toMatchObject({ observation: { kind: 'boolean', holds: false } });
-    await expect(
-      evaluateBoolean({
-        ...input,
-        config: { kind: 'expression', jsonata: 'missing' },
-        expressionView: {},
-      }),
-    ).rejects.toMatchObject({ code: 'EVALUATION_INVALID_RESPONSE' });
-  });
   it.each([
     { route: 'unknown', confidence: 0.5, reasoning: 'R' },
     ...[NaN, Infinity, -0.1, 1.1, null].map((confidence) => ({
@@ -185,20 +171,21 @@ describe('separate typed evaluation operations', () => {
       input.signal,
     );
   });
-  it.each(['route', 'boolean'] as const)(
+  it.each(['route'] as const)(
     'keeps inconsistent LLM %s evidence within the typed failure boundary',
-    async (mode) => {
+    async () => {
       const ports = createFakePorts();
       const input = {
         ...request(),
         ports,
         resolveModel: () => Promise.resolve({ model: '', effort: 'low' as const }),
       };
-      const { routes: _routes, context: _context, ...predicate } = llm;
-      const result =
-        mode === 'route'
-          ? evaluateRoute({ ...input, config: llm, instructions: 'Choose', context: null })
-          : evaluateBoolean({ ...input, config: predicate, instructions: 'Ready?', context: null });
+      const result = evaluateRoute({
+        ...input,
+        config: llm,
+        instructions: 'Choose',
+        context: null,
+      });
       await expect(result).rejects.toMatchObject({
         name: 'RunFailureError',
         code: 'EVALUATION_INVALID_RESPONSE',
@@ -211,18 +198,6 @@ describe('separate typed evaluation operations', () => {
       expect(ports.classifiers.requests).toEqual([]);
     },
   );
-  it('checks malformed boolean responses and has no fallback', async () => {
-    const input = request(),
-      ports = createFakePorts();
-    Object.defineProperty(ports.codexDecider, 'evaluateBoolean', {
-      value: () => Promise.resolve({ holds: 'true', confidence: 1, reasoning: 'R' }),
-    });
-    const { routes: _routes, context: _context, ...config } = llm;
-    await expect(
-      evaluateBoolean({ ...input, ports, config, instructions: 'Ready?', context: null }),
-    ).rejects.toMatchObject({ code: 'EVALUATION_INVALID_RESPONSE' });
-    expect(ports.classifiers.requests).toEqual([]);
-  });
   it('honors cancellation during registry and model resolution before provider calls', async () => {
     const input = request(),
       ports = createFakePorts(),

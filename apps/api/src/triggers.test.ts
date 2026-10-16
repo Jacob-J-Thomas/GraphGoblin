@@ -63,12 +63,10 @@ function triggerLoop(
         kind: 'exit',
         label: 'D',
         config: {
-          return: {
-            mapping: '"done"',
-            channels: options.emit
-              ? [{ kind: 'event', eventType: options.emit }]
-              : [{ kind: 'log' }],
-          },
+          returns: '"done"',
+          destinations: options.emit
+            ? [{ kind: 'event', eventType: options.emit }]
+            : [{ kind: 'log' }],
         },
       },
     ],

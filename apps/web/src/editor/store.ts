@@ -9,6 +9,7 @@ import type { z } from 'zod';
 import { create } from 'zustand';
 import type { FormChange } from '../forms/changes.js';
 import type { ParseError, ParseErrorReason } from '../forms/parse-errors.js';
+import { cleanGateLimits, hasRepeatRoute } from './decision-gates.js';
 import { decisionRouteEdges, type DecisionRoutes } from './decision-route-edges.js';
 import {
   historyClock,
@@ -189,10 +190,6 @@ export interface NodeFocusTarget {
 }
 
 let generations = 0;
-
-function config(node: NodeInput): Record<string, unknown> {
-  return typeof node.config === 'object' && node.config !== null ? node.config : {};
-}
 
 const INITIAL = {
   loopId: undefined,
@@ -408,12 +405,29 @@ export const useEditorStore = create<EditorState>((set, get) => {
         (d) => {
           return {
             ...d,
+            edges:
+              changes.config !== undefined &&
+              !hasRepeatRoute(changes.config) &&
+              d.edges.some(
+                (edge) => edge.from.node === nodeId && edge.from.port === 'limit-reached',
+              )
+                ? d.edges.filter(
+                    (edge) => edge.from.node !== nodeId || edge.from.port !== 'limit-reached',
+                  )
+                : d.edges,
             nodes: d.nodes.map((n) =>
               n.id === nodeId
                 ? ({
                     ...n,
                     ...(changes.label !== undefined ? { label: changes.label } : {}),
-                    ...(changes.config !== undefined ? { config: changes.config } : {}),
+                    ...(changes.config !== undefined
+                      ? {
+                          config:
+                            n.kind === 'decision' && hasRepeatRoute(n.config)
+                              ? cleanGateLimits(changes.config)
+                              : changes.config,
+                        }
+                      : {}),
                   } as NodeInput)
                 : n,
             ),
@@ -438,15 +452,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
       edit(
         (d) => ({
           ...d,
-          nodes: d.nodes.map((n) => {
-            const renamed = n.id === nodeId ? { ...n, id: nextId } : n;
-            const cfg = config(renamed);
-            const loopBack = cfg['loopBack'] as { targetNodeId?: string } | undefined;
-            if (renamed.kind === 'exit' && loopBack?.targetNodeId === nodeId) {
-              return { ...renamed, config: { ...cfg, loopBack: { targetNodeId: nextId } } };
-            }
-            return renamed;
-          }),
+          nodes: d.nodes.map((n) => (n.id === nodeId ? { ...n, id: nextId } : n)),
           edges: d.edges.map((e) => ({
             ...e,
             from: e.from.node === nodeId ? { ...e.from, node: nextId } : e.from,
@@ -477,14 +483,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
       edit(
         (d) => ({
           ...d,
-          nodes: d.nodes
-            .filter((n) => n.id !== nodeId)
-            .map((n) => {
-              const loopBack = config(n)['loopBack'] as { targetNodeId?: string } | undefined;
-              if (n.kind !== 'exit' || loopBack?.targetNodeId !== nodeId) return n;
-              const { loopBack: _removed, ...rest } = config(n);
-              return { ...n, config: rest };
-            }),
+          nodes: d.nodes.filter((n) => n.id !== nodeId),
           edges: d.edges.filter((e) => e.from.node !== nodeId && e.to.node !== nodeId),
         }),
         { label: `delete ${nodeId}` },
@@ -517,11 +516,6 @@ export const useEditorStore = create<EditorState>((set, get) => {
         (d) => ({
           ...d,
           edges: [...d.edges, edge],
-          nodes: d.nodes.map((n) =>
-            n.id === connection.source && n.kind === 'exit' && port === 'loopBack'
-              ? { ...n, config: { ...config(n), loopBack: { targetNodeId: connection.target } } }
-              : n,
-          ),
         }),
         { label: `connect ${edgeName(edge)}` },
       );
@@ -535,12 +529,6 @@ export const useEditorStore = create<EditorState>((set, get) => {
         (d) => ({
           ...d,
           edges: d.edges.filter((e) => e.id !== edgeId),
-          nodes: d.nodes.map((n) => {
-            if (n.id !== edge.from.node || n.kind !== 'exit' || edge.from.port !== 'loopBack')
-              return n;
-            const { loopBack: _removed, ...rest } = config(n);
-            return { ...n, config: rest };
-          }),
         }),
         { label: `remove edge ${edgeName(edge)}` },
       );

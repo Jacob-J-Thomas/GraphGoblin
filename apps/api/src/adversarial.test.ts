@@ -28,7 +28,7 @@ function triggerLoop(name: string, config: unknown, emit?: string): LoopDefiniti
       id: 'done',
       kind: 'exit',
       label: 'Done',
-      config: { return: { mapping: '42', channels: [{ kind: 'event', eventType: emit }] } },
+      config: { returns: '42', destinations: [{ kind: 'event', eventType: emit }] },
     };
   return def;
 }
@@ -627,7 +627,7 @@ describe('adversarial API invariants', () => {
     ).toBe(413);
     for (const definition of [
       { ...minimalLoop(), unknown: 1 },
-      { ...minimalLoop(), settings: { maxIterations: '3' } },
+      { ...minimalLoop(), settings: { maxNodeVisits: '3' } },
     ])
       expect(
         (await t.app.inject({ method: 'POST', url: '/loops', payload: { definition } })).statusCode,

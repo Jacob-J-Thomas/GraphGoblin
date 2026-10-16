@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
 import { createTestEngine, singleNodeLoop } from './testing/scenario.js';
 
-/** A mutate node looping back from the exit until the iteration ceiling. */
-function loopBackLoop(routed: boolean): LoopDefinitionInput {
+/** A mutate node repeating through a decision gate. */
+function gateLoop(routed: boolean): LoopDefinitionInput {
   const def = singleNodeLoop(
     routed ? 'routed' : 'automatic',
     {
@@ -14,10 +14,30 @@ function loopBackLoop(routed: boolean): LoopDefinitionInput {
         operations: [{ op: 'set', path: '/vars/seen', value: { kind: 'literal', value: 1 } }],
       },
     },
-    { default: 'loop-back', loopBack: { targetNodeId: 'mut' } },
+    {},
   );
-  def.settings = { maxIterations: 3 };
-  def.edges.push({ id: 'back', from: { node: 'done', port: 'loopBack' }, to: { node: 'mut' } });
+  def.settings = { maxNodeVisits: 3 };
+  def.nodes.splice(2, 0, {
+    id: 'gate',
+    kind: 'decision',
+    label: 'Gate',
+    config: {
+      kind: 'expression',
+      jsonata: '"repeat"',
+      routes: [
+        { id: 'repeat', label: 'Repeat', repeat: true },
+        { id: 'done', label: 'Done' },
+      ],
+      maxPasses: 3,
+    },
+  });
+  def.nodes[3] = { id: 'done', kind: 'exit', label: 'Done', config: { outcome: 'exhausted' } };
+  def.edges[1]!.to.node = 'gate';
+  def.edges.push(
+    { id: 'back', from: { node: 'gate', port: 'repeat' }, to: { node: 'mut' } },
+    { id: 'done', from: { node: 'gate', port: 'done' }, to: { node: 'done' } },
+    { id: 'limit', from: { node: 'gate', port: 'limit-reached' }, to: { node: 'done' } },
+  );
   if (routed) {
     // Manual canvas routes (#44) on a forward edge and on the loop-back.
     def.edges[0] = { ...def.edges[0]!, ui: { route: [120] } };
@@ -31,7 +51,7 @@ describe('manual edge routes (#44)', () => {
     const outcomes = [];
     for (const routed of [false, true]) {
       const engine = await createTestEngine();
-      const version = engine.publish(loopBackLoop(routed));
+      const version = engine.publish(gateLoop(routed));
       // The published version pins the routes with the rest of the definition.
       expect(version.definition.edges.find((e) => e.id === 'back')?.ui).toEqual(
         routed ? { route: [520, -140, -60] } : undefined,
@@ -41,7 +61,7 @@ describe('manual edge routes (#44)', () => {
       outcomes.push({
         status: run.status,
         outcome: run.outcome,
-        iteration: run.iteration,
+        passes: thread?.gates.gate?.passes,
         events: engine.eventTypes(run.id),
         routes: engine
           .events(run.id)
@@ -49,7 +69,7 @@ describe('manual edge routes (#44)', () => {
         visits: thread?.counters.nodeVisits,
       });
     }
-    expect(outcomes[0]!.iteration).toBe(3);
+    expect(outcomes[0]!.passes).toBe(3);
     expect(outcomes[1]).toEqual(outcomes[0]);
   });
 });

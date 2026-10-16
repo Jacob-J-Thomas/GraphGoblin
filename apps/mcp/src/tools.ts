@@ -242,7 +242,7 @@ export function registerTools(
     {
       title: 'Get a run',
       description:
-        'Get the current snapshot of a run: status, current node, iteration, what it is waiting for, its result (when succeeded), and its failure (when failed). Call this to check a run without waiting; use wait_for_run to wait.',
+        'Get the current snapshot of a run: status, current node, iteration, what it is waiting for, its returned value (including exhausted), and its failure details (for node failures). Call this to check a run without waiting; use wait_for_run to wait.',
       inputSchema: { runId },
       annotations: { readOnlyHint: true, openWorldHint: false },
     },

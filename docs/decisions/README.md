@@ -38,3 +38,5 @@ One file per decision. Status is Accepted unless stated. Supersede by adding a n
 | [0032](ADR-0032-section-json-editing.md)                 | Explicit schema-validated section JSON with session-held text                                  |
 | [0033](ADR-0033-loop-deletion-removes-runs.md)           | Loop deletion atomically removes its runs and dependent history                                |
 | [0035](ADR-0035-evaluator-specific-decisions.md)         | Evaluator-specific decisions, factual observations and format 4                                |
+
+[ADR-0036: Decision gates and terminal exits](ADR-0036-decision-gates-terminal-exits.md) supersedes earlier exit loop-back rules.

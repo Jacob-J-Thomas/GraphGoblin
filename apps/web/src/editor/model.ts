@@ -13,6 +13,7 @@ import {
   type NodeKind,
 } from '@graphgoblin/contracts';
 import { outputPorts, validateLoop, type ValidationIssue } from '@graphgoblin/domain';
+import { hasRepeatRoute } from './decision-gates.js';
 
 /** The drag-and-drop data type that carries a node kind from the palette to the canvas. */
 export const KIND_MIME = 'application/x-graphgoblin-kind';
@@ -41,7 +42,7 @@ export const KIND_INFO: Record<NodeKind, { label: string; description: string; c
     trigger: { label: 'Trigger', description: 'Starts a run', color: 'kind-trigger' },
     decision: {
       label: 'Decision',
-      description: 'Chooses a labelled route',
+      description: 'Chooses a route and can limit repeats',
       color: 'kind-decision',
     },
     inference: {
@@ -58,7 +59,11 @@ export const KIND_INFO: Record<NodeKind, { label: string; description: string; c
       color: 'kind-wait',
     },
     heartbeat: { label: 'Heartbeat', description: 'Polls on an interval', color: 'kind-heartbeat' },
-    exit: { label: 'Exit', description: 'Finishes or loops back', color: 'kind-exit' },
+    exit: {
+      label: 'Exit',
+      description: 'Finishes with an outcome and return value',
+      color: 'kind-exit',
+    },
   };
 
 /** A small, mostly valid starting config for each kind. */
@@ -150,11 +155,12 @@ export function portsOf(node: NodeInput): string[] {
   switch (node.kind) {
     case 'decision': {
       return [
-        ...new Set(
-          (decisionRows(node.config) ?? [])
+        ...new Set([
+          ...(decisionRows(node.config) ?? [])
             .map((option) => record(option)['id'])
             .filter((id): id is string => typeof id === 'string' && id !== ''),
-        ),
+          ...(hasRepeatRoute(node.config) ? ['limit-reached'] : []),
+        ]),
       ];
     }
     case 'script': {
@@ -164,33 +170,33 @@ export function portsOf(node: NodeInput): string[] {
       return ['out', ...new Set(labels)];
     }
     case 'exit':
-      return config['loopBack'] ? ['loopBack'] : [];
+      return [];
     default:
       return ['out'];
   }
 }
 
-/** Ports drawn on the canvas: the node's ports, plus the optional `loopBack` port on exits. */
-export function canvasPorts(node: NodeInput): string[] {
-  const ports = portsOf(node);
-  return node.kind === 'exit' && !ports.includes('loopBack') ? [...ports, 'loopBack'] : ports;
-}
+/** Half-authored gates keep their Limit reached handle; exits have no output. */
+export const canvasPorts = portsOf;
 
 /** Display labels for the handles; decision IDs remain the actual connection ports. */
 export function canvasPortLabels(node: NodeInput): Readonly<Record<string, string>> {
   if (node.kind !== 'decision') return {};
   const rows = decisionRows(node.config);
   if (!rows) return {};
-  return Object.fromEntries(
-    rows.flatMap((option) => {
-      const row = record(option);
-      return typeof row['id'] === 'string' &&
-        typeof row['label'] === 'string' &&
-        rows.filter((other) => record(other)['id'] === row['id']).length === 1
-        ? [[row['id'], row['label']]]
-        : [];
-    }),
-  );
+  const gated = hasRepeatRoute(node.config);
+  const labels: Record<string, string> = gated ? { 'limit-reached': 'Limit reached' } : {};
+  for (const option of rows) {
+    const row = record(option);
+    if (
+      typeof row['id'] === 'string' &&
+      !(row['id'] === 'limit-reached' && gated) &&
+      typeof row['label'] === 'string' &&
+      rows.filter((other) => record(other)['id'] === row['id']).length === 1
+    )
+      labels[row['id']] = row['label'];
+  }
+  return labels;
 }
 
 export interface ConnectionRequest {
@@ -212,6 +218,7 @@ export function connectionProblem(
   if (!canvasPorts(from).includes(port)) return `"${from.id}" has no output port "${port}"`;
   if (
     from.kind === 'decision' &&
+    !(port === 'limit-reached' && hasRepeatRoute(from.config)) &&
     (!ChoiceOptionIdSchema.safeParse(port).success ||
       (decisionRows(from.config) ?? []).filter((row) => record(row)['id'] === port).length !== 1)
   )

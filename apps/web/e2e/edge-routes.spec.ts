@@ -37,17 +37,35 @@ function crossingLoop(name = 'Manual routes'): LoopDefinitionInput {
       { id: 'work', kind: 'mutate', label: 'Work', config: note, ui: { x: 640, y: 100 } },
       {
         id: 'done',
-        kind: 'exit',
+        kind: 'decision',
         label: 'Done',
-        config: { default: 'success', loopBack: { targetNodeId: 'work' } },
+        config: {
+          kind: 'expression',
+          jsonata: '"finish"',
+          routes: [
+            { id: 'repeat', label: 'Repeat', repeat: true },
+            { id: 'finish', label: 'Finish' },
+          ],
+          maxPasses: 3,
+        },
         ui: { x: 960, y: 100 },
+      },
+      { id: 'success', kind: 'exit', label: 'Success', config: {}, ui: { x: 1240, y: 100 } },
+      {
+        id: 'exhausted',
+        kind: 'exit',
+        label: 'Exhausted',
+        config: { outcome: 'exhausted' },
+        ui: { x: 1240, y: 320 },
       },
     ],
     edges: [
       { id: 'start-work', from: { node: 'start', port: 'out' }, to: { node: 'work' } },
       { id: 'work-side', from: { node: 'work', port: 'out' }, to: { node: 'side' } },
       { id: 'side-done', from: { node: 'side', port: 'out' }, to: { node: 'done' } },
-      { id: 'return', from: { node: 'done', port: 'loopBack' }, to: { node: 'work' } },
+      { id: 'finish', from: { node: 'done', port: 'finish' }, to: { node: 'success' } },
+      { id: 'limit', from: { node: 'done', port: 'limit-reached' }, to: { node: 'exhausted' } },
+      { id: 'return', from: { node: 'done', port: 'repeat' }, to: { node: 'work' } },
     ],
   };
 }
@@ -60,7 +78,7 @@ const segment = (page: Page, id: string, index: number) =>
 async function openLoop(page: Page, id: string, theme = 'dark') {
   await page.addInitScript((value) => localStorage.setItem('graphgoblin-theme', value), theme);
   await page.goto(`/app/loops/${id}/edit`);
-  await expect(page.locator('.react-flow__node')).toHaveCount(4);
+  await expect(page.locator('.react-flow__node')).toHaveCount(6);
   for (const name of ['Hide palette', 'Hide loop settings']) {
     const button = page.getByRole('button', { name, exact: true });
     if (await button.isVisible()) await button.click();
@@ -184,16 +202,17 @@ for (const theme of ['dark', 'light']) {
     await expect(path(page, 'start-work')).not.toHaveClass(/gg-route-crossing/);
     await screenshot(page, info, `rerouted-forward-${theme}`);
 
-    // Loop-back: drag its lane further down.
+    // The gate's first output returns above the cards. Move its lane farther up;
+    // dragging down would deliberately cross the taller gate's own body.
     await select(page, 'return');
     const lane = segment(page, 'return', 3);
     const before = await path(page, 'return').getAttribute('d');
-    await drag(page, lane, 0, 70);
+    await drag(page, lane, 0, -70);
     await saved(page);
     await expect(path(page, 'return')).not.toHaveAttribute('d', before!);
     const route = (await storedRoute(request, loopId, 'return'))!;
     expect(route).toHaveLength(3);
-    expect(await cardsCrossed(page, 'return', ['done', 'work'])).toEqual([]);
+    expect(await cardsCrossed(page, 'return', [])).toEqual([]);
 
     // Handles: 24 px targets, the selected-edge stroke on the canvas (3:1), focus ring on focus.
     const dot = lane.locator('.gg-route-handle-dot');
@@ -217,11 +236,12 @@ for (const theme of ['dark', 'light']) {
       back: await path(page, 'return').getAttribute('d'),
     };
     await page.reload();
-    await expect(page.locator('.react-flow__node')).toHaveCount(4);
+    await expect(page.locator('.react-flow__node')).toHaveCount(6);
     await page.getByRole('button', { name: 'Fit view' }).click();
     await expect(path(page, 'start-work')).toHaveAttribute('d', drawn.forward!);
     await expect(path(page, 'return')).toHaveAttribute('d', drawn.back!);
     await expect(edge(page, 'return')).toHaveAttribute('aria-label', /manual route$/);
+    expect(await cardsCrossed(page, 'return', [])).toEqual([]);
   });
 }
 

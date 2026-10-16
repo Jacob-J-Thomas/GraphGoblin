@@ -1,930 +1,190 @@
-import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import {
-  ClassifierModelSummarySchema,
-  ExitPredicateSchema,
+  CURRENT_DEFINITION_FORMAT,
   LoopDefinitionSchema,
   RunEventSchema,
-  type ExitConfig,
-  type ExitPredicate,
-  type LoopDefinition,
+  RunRecordSchema,
   type LoopDefinitionInput,
-  type RunEvent,
 } from '@graphgoblin/contracts';
-import { z } from 'zod';
-import type { APIRequestContext, Locator, Page } from '@playwright/test';
 import { closeNode, control, expect, openNode, test } from './fixtures.js';
 
-const LOCAL_MODEL = 'exit-local';
-const CHOICE_MODEL = 'exit-choice-only';
-
-type ClassifierReply =
-  | { type: 'noul'; trueProbability: number }
-  | { type: 'score'; score: number; confidence: number; probabilities: Record<string, number> };
-
-type Synthetic = {
-  url: string;
-  classifier: {
-    endpoint: string;
-    replies: (replies: ClassifierReply[]) => Promise<void>;
-    requests: () => Promise<{ model: string; type: 'choice' | 'noul' | 'score' }[]>;
-  };
-};
-
-async function startControlledClassifier(request: APIRequestContext) {
-  const started = await control(request, '/classifier/start');
-  const endpoint = z.string().parse(started['endpoint']);
-  expect(new URL(endpoint).hostname).toBe('127.0.0.1');
-  return {
-    endpoint,
-    async replies(replies: ClassifierReply[]) {
-      const result = await control(request, '/classifier/replies', { endpoint, replies });
-      expect(result['configured']).toBe(true);
-      expect(result['queued']).toBe(replies.length);
-    },
-    async requests() {
-      const result = await control(request, '/classifier/requests', { endpoint });
-      return z
-        .object({
-          model: z.string(),
-          type: z.enum(['choice', 'noul', 'score']),
-        })
-        .array()
-        .parse(result['requests']);
-    },
-    async close() {
-      const result = await control(request, '/classifier/stop', { endpoint });
-      expect(result['closed']).toBe(true);
-    },
-  };
-}
-
-/** Each test has its own memory-only API and loopback HTTP fake; no native provider is selectable. */
-const exitTest = test.extend<{ synthetic: Synthetic }>({
-  synthetic: async ({ request }, use) => {
-    const classifier = await startControlledClassifier(request);
-    try {
-      const app = await control(request, '/apps', { realClassifiers: true });
-      const url = String(app['url']);
-      const catalog = await classifierCatalog(request, url);
-      expect(catalog.some((model) => model.id === 'jev')).toBe(true);
-      for (const model of catalog) {
-        const disabled = await request.patch(url + '/classifier-models/' + model.id, {
-          data: { enabled: false },
-        });
-        expect(disabled.status()).toBe(200);
-      }
-      await registerLocalClassifier(request, url, classifier.endpoint, LOCAL_MODEL, [
-        'choice',
-        'noul',
-        'score',
-      ]);
-      const isolated = await classifierCatalog(request, url);
-      expect(isolated.filter((model) => model.enabled).map((model) => model.id)).toEqual([
-        LOCAL_MODEL,
-      ]);
-      expect(isolated.find((model) => model.id === 'jev')?.enabled).toBe(false);
-      await use({ url, classifier });
-    } finally {
-      await classifier.close();
-    }
-  },
-});
-
-// A failed acceptance must remain available for diagnosis, including in CI.
-exitTest.describe.configure({ retries: 0 });
-
-for (const width of [1440, 360])
-  exitTest(
-    `temporary predicate fields fit width ${width}`,
-    async ({ page, request, synthetic }) => {
-      await page.setViewportSize({ width, height: 900 });
-      await createLoop(
-        page,
-        request,
-        synthetic.url,
-        exitLoop('Predicate layout', [expression('true')]),
-      );
-      const dialog = await criterionEditor(page);
-      await expect(
-        dialog.locator('[data-field="criteria.0.predicate.jsonata"] [role="textbox"]'),
-      ).toBeVisible();
-      await expect(
-        dialog.locator('[data-field="criteria.0.match.value"]').getByRole('switch'),
-      ).toBeChecked();
-      await expect(dialog.locator('[data-field="criteria.0.predicate.routes"]')).toHaveCount(0);
-    },
-  );
-
-async function classifierCatalog(request: APIRequestContext, url: string) {
-  const response = await request.get(url + '/classifier-models');
-  expect(response.status()).toBe(200);
-  const body = (await response.json()) as { items: unknown };
-  return ClassifierModelSummarySchema.array().parse(body.items);
-}
-
-async function registerLocalClassifier(
-  request: APIRequestContext,
-  url: string,
-  endpoint: string,
-  id: string,
-  primitives: ('choice' | 'noul' | 'score')[],
-) {
-  expect(new URL(endpoint).hostname).toBe('127.0.0.1');
-  const created = await request.put(url + '/classifier-models/' + id, {
-    data: {
-      provider: 'http',
-      providerModel: id,
-      displayName: id === CHOICE_MODEL ? 'Local Choice Only' : 'Local Exit Primitives',
-      endpoint,
-      primitives,
-    },
-  });
-  expect(created.status()).toBe(200);
-  expect(
-    (await request.patch(url + '/classifier-models/' + id, { data: { enabled: true } })).status(),
-  ).toBe(200);
-}
-
-function expression(jsonata: string, value = true): ExitPredicate {
-  return ExitPredicateSchema.parse({
-    when: 'predicate',
-    match: {
-      type: 'boolean',
-      value,
-    },
-    outcome: 'success',
-    predicate: {
-      kind: 'expression',
-      jsonata,
-    },
-  });
-}
-
-function noul(minConfidence: number): ExitPredicate {
-  return ExitPredicateSchema.parse({
-    when: 'predicate',
-    match: { type: 'noul', value: false },
-    outcome: 'success',
-    predicate: {
-      kind: 'classifier',
-      model: LOCAL_MODEL,
-      question: 'Is the synthetic result ready?',
-      minConfidence,
-      answer: {
-        type: 'noul',
-        true: { label: 'Ready', criteria: 'Every synthetic check passes' },
-        false: { label: 'Continue', criteria: 'A synthetic check is still incomplete' },
-      },
-    },
-  });
-}
-
-function score(): ExitPredicate {
-  return ExitPredicateSchema.parse({
-    when: 'predicate',
-    match: { type: 'score', operator: 'gte', value: 1.5 },
-    outcome: 'success',
-    predicate: {
-      kind: 'classifier',
-      model: LOCAL_MODEL,
-      question: 'Score the synthetic result.',
-      minConfidence: 0.8,
-      answer: { type: 'score', anchors: ['Low', 'Moderate', 'High'] },
-    },
-  });
-}
-
-function exitLoop(
-  name: string,
-  criteria: ExitConfig['criteria'],
-  maxIterations = 1,
-): LoopDefinitionInput {
-  return {
-    schemaVersion: CURRENT_DEFINITION_FORMAT,
-    name,
-    settings: { maxIterations },
-    nodes: [
-      {
-        id: 'start',
-        kind: 'trigger',
-        label: 'Start',
-        config: { subtype: 'manual' },
-        ui: { x: 0, y: 80 },
-      },
-      {
-        id: 'prepare',
-        kind: 'mutate',
-        label: 'Prepare',
-        config: {
-          operations: [
-            { op: 'set', path: '/vars/synthetic', value: { kind: 'literal', value: true } },
-          ],
-        },
-        ui: { x: 260, y: 80 },
-      },
-      {
-        id: 'alternate',
-        kind: 'mutate',
-        label: 'Alternate',
-        config: {
-          operations: [{ op: 'append-message', role: 'assistant', content: 'Alternate ran' }],
-        },
-        ui: { x: 260, y: 260 },
-      },
-      {
-        id: 'done',
-        kind: 'exit',
-        label: 'Done',
-        config: {
-          criteria,
-          default: 'loop-back',
-          loopBack: { targetNodeId: 'prepare' },
-          return: { mapping: '{ "synthetic": vars.synthetic }', channels: [{ kind: 'caller' }] },
-        },
-        ui: { x: 540, y: 80 },
-      },
-    ],
-    edges: [
-      { id: 'start-prepare', from: { node: 'start', port: 'out' }, to: { node: 'prepare' } },
-      {
-        id: 'prepare-alternate',
-        from: { node: 'prepare', port: 'out' },
-        to: { node: 'alternate' },
-      },
-      { id: 'alternate-done', from: { node: 'alternate', port: 'out' }, to: { node: 'done' } },
-      { id: 'exit-loopback', from: { node: 'done', port: 'loopBack' }, to: { node: 'prepare' } },
-    ],
-  };
-}
-
-function exitConfig(definition: LoopDefinition): ExitConfig {
-  const node = definition.nodes.find((item) => item.id === 'done');
-  if (node?.kind !== 'exit') throw new Error('Saved exit node is missing.');
-  return node.config;
-}
-
-function assertLocalModels(definition: LoopDefinition | LoopDefinitionInput) {
-  const node = definition.nodes.find((item) => item.id === 'done');
-  if (node?.kind !== 'exit') throw new Error('Exit fixture is missing.');
-  for (const criterion of node.config.criteria ?? []) {
-    if (criterion.when === 'predicate' && criterion.predicate.kind === 'classifier') {
-      expect([LOCAL_MODEL, CHOICE_MODEL]).toContain(criterion.predicate.model);
-    }
-  }
-}
-
-async function openEditor(page: Page, url: string, loopId: string) {
-  await page.goto(url + '/app/loops/' + loopId + '/edit');
-  await expect(page.getByTestId('node-done')).toBeVisible();
-  for (const name of ['Hide palette', 'Hide loop settings']) {
-    const button = page.getByRole('button', { name, exact: true });
-    if (await button.isVisible()) await button.click();
-  }
-  await page.getByRole('button', { name: 'Fit view' }).click();
-  await page.evaluate(() => document.fonts.ready);
-}
-
-async function createLoop(
-  page: Page,
-  request: APIRequestContext,
-  url: string,
-  definition: LoopDefinitionInput,
-) {
-  assertLocalModels(definition);
-  const response = await request.post(url + '/loops', { data: { definition } });
-  expect(response.status(), await response.text()).toBe(201);
-  const body = (await response.json()) as { loop: { id: string } };
-  const validation = await request.post(url + '/loops/' + body.loop.id + '/validate', {
-    data: { definition },
-  });
-  expect(validation.status()).toBe(200);
-  expect(await validation.json()).toEqual({ publishable: true, issues: [] });
-  await openEditor(page, url, body.loop.id);
-  await expect(page.getByText('Ready to publish', { exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Publish', exact: true })).toBeEnabled();
-  return body.loop.id;
-}
-
-async function savedDraft(page: Page, request: APIRequestContext, url: string, loopId: string) {
-  await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
-  const response = await request.get(url + '/loops/' + loopId);
-  expect(response.status()).toBe(200);
-  const body = (await response.json()) as { draft: { definition: unknown } };
-  const definition = LoopDefinitionSchema.parse(body.draft.definition);
-  assertLocalModels(definition);
-  return definition;
-}
-
-async function criterionEditor(page: Page, index = 0): Promise<Locator> {
-  await openNode(page, 'done');
-  const dialog = page.getByRole('dialog', { name: 'Edit exit done', exact: true });
-  await expect(dialog).toHaveAccessibleName('Edit exit done');
-  const row = dialog.locator('[data-row-path="criteria.' + index + '"]');
-  await expect(row).toBeVisible();
-  const name = 'Criteria ' + (index + 1);
-  const disclosure = row.getByRole('button', { name: new RegExp('^' + name + '\\b') });
-  if (await disclosure.count()) {
-    await expect(disclosure).toHaveCount(1);
-    if ((await disclosure.getAttribute('aria-expanded')) === 'false') await disclosure.click();
-    await expect(disclosure).toHaveAttribute('aria-expanded', 'true');
-  } else {
-    await expect(row.getByRole('group', { name, exact: true })).toBeVisible();
-  }
-  for (const advanced of await row.getByRole('button', { name: /^Advanced\b/ }).all()) {
-    if ((await advanced.isVisible()) && (await advanced.getAttribute('aria-expanded')) === 'false')
-      await advanced.click();
-  }
-  return dialog;
-}
-
-async function chooseAnswer(_page: Page, dialog: Locator, type: 'Choice' | 'Noul' | 'Score') {
-  const picker = dialog
-    .locator('[data-field="criteria.0.predicate.answer"]')
-    .getByLabel('Type', { exact: true });
-  await picker.selectOption(String(['Choice', 'Noul', 'Score'].indexOf(type)));
-  if (type === 'Score') {
-    const anchors = dialog.locator('[data-field="criteria.0.predicate.answer.anchors"]');
-    await anchors.getByRole('button', { name: 'Add anchors', exact: true }).click();
-    for (const [index, text] of ['Low', 'Middle', 'High'].entries())
-      await dialog.getByLabel('Anchors ' + (index + 1), { exact: true }).fill(text);
-  }
-}
-const matchValue = (dialog: Locator) => dialog.locator('[data-field="criteria.0.match.value"]');
-async function scoreOperator(dialog: Locator, value: string) {
-  await dialog
-    .locator('[data-field="criteria.0.match.operator"]')
-    .getByRole('combobox', { name: 'Operator', exact: true })
-    .selectOption(value);
-}
-
-async function assertOnlyLoopBack(page: Page) {
-  const outputs = page.locator('.react-flow__handle[data-nodeid="done"]:not([data-handleid="in"])');
-  await expect(outputs).toHaveCount(1);
-  await expect(outputs).toHaveAttribute('data-handleid', 'loopBack');
-}
-
-async function publish(page: Page, version: number) {
-  await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
-  await expect(page.getByText('Ready to publish', { exact: true })).toBeVisible();
-  const button = page.getByRole('button', { name: 'Publish', exact: true });
-  await expect(button).toBeEnabled();
-  await button.click();
-  await expect(page.getByText('Published version ' + version + '.')).toBeVisible();
-}
-
-async function runLoop(
-  page: Page,
-  request: APIRequestContext,
-  url: string,
-  loopId: string,
-  status: 'succeeded' | 'exhausted',
-): Promise<RunEvent[]> {
-  await page.goto(url + '/app/runs/new?loop=' + loopId);
-  await page.getByRole('button', { name: 'Start run' }).click();
-  await expect(page).toHaveURL(/\/app\/runs\/[0-9A-Z]{26}$/);
-  await expect(page.locator('[data-status="' + status + '"]').first()).toBeVisible();
-  const runId = page.url().split('/').at(-1);
-  const response = await request.get(url + '/runs/' + runId + '/events');
-  expect(response.status()).toBe(200);
-  const body = (await response.json()) as { items: unknown };
-  const events = RunEventSchema.array().parse(body.items);
-  const finishedExits = events
-    .filter((event) => event.type === 'node.finished')
-    .filter((event) => event.nodeId === 'done');
-  expect(finishedExits).toHaveLength(exitEvaluations(events).length);
-  expect(finishedExits.every((event) => event.patch.length === 0)).toBe(true);
-  expect(events.some((event) => event.type === 'decision.made')).toBe(false);
-  return events;
-}
-
-function exitEvaluations(events: RunEvent[]) {
-  return events.filter((event) => event.type === 'exit.evaluated');
-}
-
-async function inspectLastExit(page: Page) {
-  await page
-    .getByRole('list', { name: 'Timeline' })
-    .getByRole('button', { name: /exit\.evaluated/ })
-    .last()
-    .click();
-  await expect(page.getByRole('heading', { name: 'Evaluation details' })).toBeVisible();
-  return page.getByRole('list', { name: 'Exit criteria' });
-}
-
-exitTest(
-  'unfinished current exit expression survives device-only reload and remains editable',
-  async ({ page, request, synthetic }) => {
-    const { url, classifier } = synthetic;
-    const loopId = await createLoop(
-      page,
-      request,
-      url,
-      exitLoop('Unfinished exit draft', [expression('true')]),
-    );
-    let dialog = await criterionEditor(page);
-    let editor = dialog.locator('[data-field="criteria.0.predicate.jsonata"] [role="textbox"]');
-    await editor.fill('');
-    await expect(page.getByTestId('save-state')).toHaveText('Saved on this device only');
-    const serverBefore = await request.get(url + '/loops/' + loopId);
-    expect(serverBefore.status()).toBe(200);
-    await page.reload();
-    await expect(
-      page.getByText('Restored unsaved changes from this device.', { exact: true }),
-    ).toBeVisible();
-    await expect(
-      page.getByText('This device copy could not be migrated safely', { exact: true }),
-    ).toHaveCount(0);
-    dialog = await criterionEditor(page);
-    editor = dialog.locator('[data-field="criteria.0.predicate.jsonata"] [role="textbox"]');
-    await expect(editor).toHaveText('');
-    await expect(page.getByTestId('save-state')).toHaveText('Saved on this device only');
-    const serverAfter = await request.get(url + '/loops/' + loopId);
-    expect(serverAfter.status()).toBe(200);
-    expect(await serverAfter.json()).toEqual(await serverBefore.json());
-    await editor.fill('false');
-    await closeNode(page);
-    const repaired = await savedDraft(page, request, url, loopId);
-    expect(exitConfig(repaired).criteria).toEqual([expression('false')]);
-    expect(await classifier.requests()).toEqual([]);
-  },
-);
-
-exitTest(
-  'expression boolean false matches false after authoring, saving, reloading, publishing and running',
-  async ({ page, request, synthetic }) => {
-    const { url, classifier } = synthetic;
-    const loopId = await createLoop(
-      page,
-      request,
-      url,
-      exitLoop('Exit expression false', [expression('true')]),
-    );
-    let dialog = await criterionEditor(page);
-    await expect(
-      dialog.locator('[data-field="criteria.0.predicate"]').getByLabel('Kind', { exact: true }),
-    ).toHaveValue('0');
-    await dialog
-      .locator('[data-field="criteria.0.predicate.jsonata"] [role="textbox"]')
-      .fill('false');
-    await matchValue(dialog).getByRole('switch').click();
-    await expect(matchValue(dialog).getByRole('switch')).not.toBeChecked();
-    await closeNode(page);
-    const saved = await savedDraft(page, request, url, loopId);
-    expect(exitConfig(saved).criteria).toEqual([expression('false', false)]);
-    await assertOnlyLoopBack(page);
-    await page.reload();
-    dialog = await criterionEditor(page);
-    await expect(
-      dialog.locator('[data-field="criteria.0.predicate.jsonata"] [role="textbox"]'),
-    ).toHaveText('false');
-    await expect(matchValue(dialog).getByRole('switch')).not.toBeChecked();
-    await closeNode(page);
-    await publish(page, 1);
-    const events = await runLoop(page, request, url, loopId, 'succeeded');
-    expect(exitEvaluations(events)).toEqual([
-      expect.objectContaining({
-        iteration: 1,
-        maxIterations: 1,
-        result: {
-          kind: 'completed',
-          outcome: 'success',
-          reason: 'criterion-matched',
-          criterionIndex: 0,
-        },
-        criteria: [
-          expect.objectContaining({
-            status: 'matched',
-            strategy: 'expression',
-            match: {
-              type: 'boolean',
-              value: false,
-            },
-            acceptance: { status: 'accepted' },
-            observation: {
-              kind: 'boolean',
-              holds: false,
-              confidence: null,
-              reasoning: null,
-            },
-          }),
-        ],
-      }),
-    ]);
-    expect(events.some((event) => event.type === 'iteration.incremented')).toBe(false);
-    expect(
-      events.some((event) => event.type === 'return.delivered' && event.channel.kind === 'caller'),
-    ).toBe(true);
-    const details = await inspectLastExit(page);
-    await expect(details).toContainText('Boolean false');
-    await expect(details).toContainText('Boolean is false');
-    await expect(details).toContainText('Accepted');
-    expect(await classifier.requests()).toHaveLength(0);
-  },
-);
-
-exitTest(
-  'Choice matches stable IDs, then a primitive switch requires a Score-capable local classifier',
-  async ({ page, request, synthetic }) => {
-    const { url, classifier } = synthetic;
-    await registerLocalClassifier(request, url, classifier.endpoint, CHOICE_MODEL, ['choice']);
-    const predicate = ExitPredicateSchema.parse({
-      when: 'predicate',
-      match: { type: 'choice', optionIds: ['continue'] },
-      outcome: 'success',
-      predicate: {
-        kind: 'classifier',
-        model: CHOICE_MODEL,
-        question: 'Choose the synthetic status.',
-        answer: {
-          type: 'choice',
-          options: [
-            { id: 'ready', label: 'Ready', criteria: 'Ready to exit' },
-            { id: 'continue', label: 'Continue', criteria: 'Continue checking' },
-          ],
-        },
-      },
-    });
-    const loopId = await createLoop(page, request, url, exitLoop('Exit Choice IDs', [predicate]));
-    let dialog = await criterionEditor(page);
-    await dialog
-      .locator('[data-field="criteria.0.predicate.answer.options.0.label"] input')
-      .fill('Reviewed');
-    const selected = dialog.locator('[data-field="criteria.0.match.optionIds.0"] input');
-    await selected.fill('ready');
-    await closeNode(page);
-    const choiceSaved = exitConfig(await savedDraft(page, request, url, loopId)).criteria[0];
-    expect(choiceSaved).toMatchObject({
-      match: { type: 'choice', optionIds: ['ready'] },
-      predicate: {
-        model: CHOICE_MODEL,
-        answer: {
-          type: 'choice',
-          options: [{ id: 'ready', label: 'Reviewed' }, { id: 'continue' }],
-        },
-      },
-    });
-    await page.reload();
-    dialog = await criterionEditor(page);
-    await expect(dialog.locator('[data-field="criteria.0.match.optionIds.0"] input')).toHaveValue(
-      'ready',
-    );
-    await expect(dialog.getByRole('combobox', { name: 'Model', exact: true })).toHaveValue(
-      CHOICE_MODEL,
-    );
-    await closeNode(page);
-    await publish(page, 1);
-    const events = await runLoop(page, request, url, loopId, 'succeeded');
-    expect(exitEvaluations(events)[0]?.criteria[0]).toMatchObject({
-      status: 'matched',
-      match: { type: 'choice', optionIds: ['ready'] },
-      provenance: { classifierId: CHOICE_MODEL },
-      observation: {
-        kind: 'classifier',
-        answer: {
-          type: 'choice',
-          optionId: 'ready',
-        },
-      },
-    });
-    expect(await classifier.requests()).toHaveLength(1);
-    expect((await classifier.requests())[0]?.model).toBe(CHOICE_MODEL);
-    expect((await classifier.requests())[0]?.type).toBe('choice');
-
-    await openEditor(page, url, loopId);
-    dialog = await criterionEditor(page);
-    await chooseAnswer(page, dialog, 'Score');
-    const picker = dialog.getByRole('combobox', { name: 'Model', exact: true });
-    await expect(picker).toHaveValue(CHOICE_MODEL);
-    await expect(picker.getByRole('option', { selected: true })).toContainText('not Score-capable');
-    await expect(dialog).toContainText('Choose a Score-capable classifier');
-    await expect(picker.locator('option[value="jev"]')).toHaveCount(0);
-    await picker.selectOption(LOCAL_MODEL);
-    await scoreOperator(dialog, 'gte');
-    await matchValue(dialog).getByRole('spinbutton').fill('1.25');
-    await closeNode(page);
-    expect(exitConfig(await savedDraft(page, request, url, loopId)).criteria[0]).toMatchObject({
-      match: { type: 'score', operator: 'gte', value: 1.25 },
-      predicate: {
-        kind: 'classifier',
-        model: LOCAL_MODEL,
-        answer: { type: 'score' },
-      },
-    });
-    await page.reload();
-    dialog = await criterionEditor(page);
-    await expect(
-      dialog
-        .locator('[data-field="criteria.0.predicate.answer"]')
-        .getByLabel('Type', { exact: true }),
-    ).toHaveValue('2');
-    await expect(dialog.getByRole('combobox', { name: 'Model', exact: true })).toHaveValue(
-      LOCAL_MODEL,
-    );
-    await expect(matchValue(dialog).getByRole('spinbutton')).toHaveValue('1.25');
-    await expect(dialog.getByRole('radio', { name: 'Codex LLM', exact: true })).toHaveCount(0);
-    await closeNode(page);
-    await assertOnlyLoopBack(page);
-  },
-);
-
-exitTest(
-  'fractional Score keeps exact comparison and separates accepted nonmatch from confidence rejection',
-  async ({ page, request, synthetic }) => {
-    const { url, classifier } = synthetic;
-    await classifier.replies([
-      {
-        type: 'score',
-        score: 1.25,
-        confidence: 0.9,
-        probabilities: { '0': 0.2, '1': 0.6, '2': 0.2 },
-      },
-      {
-        type: 'score',
-        score: 1.25,
-        confidence: 0.6,
-        probabilities: { '0': 0.2, '1': 0.6, '2': 0.2 },
-      },
-      {
-        type: 'score',
-        score: 1.25,
-        confidence: 0.6,
-        probabilities: { '0': 0.2, '1': 0.6, '2': 0.2 },
-      },
-    ]);
-    const loopId = await createLoop(
-      page,
-      request,
-      url,
-      exitLoop('Exit fractional Score', [score()]),
-    );
-    let dialog = await criterionEditor(page);
-    await scoreOperator(dialog, 'eq');
-    await matchValue(dialog).getByRole('spinbutton').fill('1.2');
-    await closeNode(page);
-    expect(exitConfig(await savedDraft(page, request, url, loopId)).criteria[0]).toMatchObject({
-      match: { type: 'score', operator: 'eq', value: 1.2 },
-      predicate: {
-        model: LOCAL_MODEL,
-        minConfidence: 0.8,
-      },
-    });
-    await page.reload();
-    dialog = await criterionEditor(page);
-    await expect(
-      dialog
-        .locator('[data-field="criteria.0.match.operator"]')
-        .getByRole('combobox', { name: 'Operator', exact: true }),
-    ).toHaveValue('eq');
-    await expect(matchValue(dialog).getByRole('spinbutton')).toHaveValue('1.2');
-    await closeNode(page);
-    await publish(page, 1);
-    const nonmatching = await runLoop(page, request, url, loopId, 'exhausted');
-    expect(exitEvaluations(nonmatching)[0]?.criteria[0]).toMatchObject({
-      status: 'not-matched',
-      observation: { kind: 'classifier', answer: { type: 'score', score: 1.25, confidence: 0.9 } },
-      acceptance: { status: 'accepted' },
-      match: { type: 'score', operator: 'eq', value: 1.2 },
-    });
-    expect(exitEvaluations(nonmatching)[0]?.criteria[0]).not.toHaveProperty('rejection');
-    let details = await inspectLastExit(page);
-    await expect(details).toContainText('Score 1.25');
-    await expect(details).toContainText('Score = 1.2');
-    await expect(details).toContainText('Accepted');
-    await expect(
-      details.getByRole('list', { name: 'Criterion 1 rubric index probabilities' }),
-    ).toContainText('1: 0.6');
-
-    const rejected = await runLoop(page, request, url, loopId, 'exhausted');
-    expect(exitEvaluations(rejected)[0]?.criteria[0]).toMatchObject({
-      status: 'not-matched',
-      observation: { kind: 'classifier', answer: { type: 'score', score: 1.25, confidence: 0.6 } },
-      acceptance: { status: 'rejected', code: 'EVALUATION_RESULT_REJECTED', minConfidence: 0.8 },
-      rejection: { kind: 'classifier-confidence', minimum: 0.8, confidence: 0.6 },
-    });
-    details = await inspectLastExit(page);
-    await expect(details).toContainText('Score 1.25');
-    await expect(details).toContainText('Rejected below configured classifier minimum 0.8');
-    await expect(details).toContainText('treated as a nonmatch');
-
-    await openEditor(page, url, loopId);
-    dialog = await criterionEditor(page);
-    await scoreOperator(dialog, 'gte');
-    await matchValue(dialog).getByRole('spinbutton').fill('1.25');
-    await dialog.getByLabel('Min confidence', { exact: true }).fill('0.6');
-    await closeNode(page);
-    expect(exitConfig(await savedDraft(page, request, url, loopId)).criteria[0]).toMatchObject({
-      match: { type: 'score', operator: 'gte', value: 1.25 },
-      predicate: {
-        model: LOCAL_MODEL,
-        minConfidence: 0.6,
-      },
-    });
-    await publish(page, 2);
-    const matched = await runLoop(page, request, url, loopId, 'succeeded');
-    expect(exitEvaluations(matched)[0]).toMatchObject({
-      iteration: 1,
-      maxIterations: 1,
-      result: { kind: 'completed', reason: 'criterion-matched', criterionIndex: 0 },
-      criteria: [
+for (const finalChoice of ['repeat', 'done'] as const) {
+  test(`authors a gate and terminal exits; last pass chooses ${finalChoice}`, async ({
+    page,
+    request,
+  }) => {
+    const instance = await control(request, '/apps');
+    const url = String(instance['url']);
+    const instanceId = instance['instanceId'];
+    const definition: LoopDefinitionInput = {
+      schemaVersion: CURRENT_DEFINITION_FORMAT,
+      name: `Gate ${finalChoice}`,
+      settings: { maxNodeVisits: 10 },
+      nodes: [
         {
-          status: 'matched',
-          observation: { kind: 'classifier', answer: { score: 1.25 } },
-          acceptance: { status: 'accepted' },
+          id: 'start',
+          kind: 'trigger',
+          label: 'Start',
+          config: { subtype: 'manual' },
+          ui: { x: 0, y: 80 },
         },
-      ],
-    });
-    expect(await classifier.requests()).toHaveLength(3);
-    expect((await classifier.requests()).every((call) => call.model === LOCAL_MODEL)).toBe(true);
-  },
-);
-
-exitTest(
-  'ordered criteria removal and loopback reconnect undo restore the exact saved contract without answer ports',
-  async ({ page, request, synthetic }) => {
-    const { url, classifier } = synthetic;
-    const loopId = await createLoop(
-      page,
-      request,
-      url,
-      exitLoop('Exit order and undo', [
-        expression('false'),
-        expression('true'),
-        expression('true'),
-      ]),
-    );
-    const before = await savedDraft(page, request, url, loopId);
-    let dialog = await criterionEditor(page);
-    await dialog.getByRole('button', { name: 'Remove criteria 1', exact: true }).click();
-    await closeNode(page);
-    expect(exitConfig(await savedDraft(page, request, url, loopId)).criteria).toEqual(
-      exitConfig(before).criteria.slice(1),
-    );
-    await page.getByRole('button', { name: /^Undo / }).click();
-    expect(exitConfig(await savedDraft(page, request, url, loopId))).toEqual(exitConfig(before));
-
-    dialog = await criterionEditor(page);
-    const connections = dialog.getByRole('region', { name: 'Connections' });
-    await connections
-      .getByRole('button', { name: 'Remove edge exit-loopback', exact: true })
-      .click();
-    await expect(connections).toContainText('No outgoing edges.');
-    await dialog.getByLabel('Output', { exact: true }).selectOption('loopBack');
-    await dialog.getByLabel('To', { exact: true }).selectOption('alternate');
-    await dialog.getByRole('button', { name: 'Connect', exact: true }).click();
-    await expect(connections).toContainText('alternate');
-    await closeNode(page);
-    const reconnected = await savedDraft(page, request, url, loopId);
-    expect(exitConfig(reconnected).loopBack).toEqual({ targetNodeId: 'alternate' });
-    expect(reconnected.edges.find((item) => item.from.node === 'done')).toMatchObject({
-      from: { node: 'done', port: 'loopBack' },
-      to: { node: 'alternate' },
-    });
-    await page.getByRole('button', { name: /^Undo / }).click();
-    await page.getByRole('button', { name: /^Undo / }).click();
-    const undone = await savedDraft(page, request, url, loopId);
-    expect(exitConfig(undone)).toEqual(exitConfig(before));
-    expect(undone.edges).toEqual(before.edges);
-    await assertOnlyLoopBack(page);
-    await page.reload();
-    const reloaded = await savedDraft(page, request, url, loopId);
-    expect(exitConfig(reloaded)).toEqual(exitConfig(before));
-    expect(reloaded.edges).toEqual(before.edges);
-    await publish(page, 1);
-    const events = await runLoop(page, request, url, loopId, 'succeeded');
-    expect(exitEvaluations(events)[0]).toMatchObject({
-      result: { kind: 'completed', reason: 'criterion-matched', criterionIndex: 1 },
-      criteria: [
-        { index: 0, status: 'not-matched', observation: { kind: 'boolean', holds: false } },
-        { index: 1, status: 'matched', observation: { kind: 'boolean', holds: true } },
-        { index: 2, status: 'skipped' },
-      ],
-    });
-    const details = await inspectLastExit(page);
-    await expect(details.getByRole('listitem').nth(0)).toContainText('did not match');
-    await expect(details.getByRole('listitem').nth(1)).toContainText('matched');
-    await expect(details.getByRole('listitem').nth(2)).toContainText('skipped');
-    expect(await classifier.requests()).toHaveLength(0);
-  },
-);
-
-exitTest(
-  'rejected classifier false remains a nonmatch; equality at the confidence minimum can match on the final iteration',
-  async ({ page, request, synthetic }) => {
-    const { url, classifier } = synthetic;
-    // First run rejects both false answers. In the second run an accepted true does
-    // not match false; the final false has confidence exactly at the authored gate.
-    await classifier.replies([
-      { type: 'noul', trueProbability: 0.25 },
-      { type: 'noul', trueProbability: 0.25 },
-      { type: 'noul', trueProbability: 0.875 },
-      { type: 'noul', trueProbability: 0.125 },
-    ]);
-    const loopId = await createLoop(
-      page,
-      request,
-      url,
-      exitLoop('Exit false confidence gate', [noul(0.8)], 2),
-    );
-    let dialog = await criterionEditor(page);
-    await expect(matchValue(dialog).getByRole('switch')).not.toBeChecked();
-    await dialog
-      .getByLabel('Question', { exact: true })
-      .fill('Is the synthetic final result ready?');
-    await closeNode(page);
-    expect(exitConfig(await savedDraft(page, request, url, loopId)).criteria[0]).toMatchObject({
-      match: { type: 'noul', value: false },
-      predicate: {
-        model: LOCAL_MODEL,
-        minConfidence: 0.8,
-        question: 'Is the synthetic final result ready?',
-      },
-    });
-    await page.reload();
-    dialog = await criterionEditor(page);
-    await expect(dialog.getByRole('combobox', { name: 'Model', exact: true })).toHaveValue(
-      LOCAL_MODEL,
-    );
-    await expect(matchValue(dialog).getByRole('switch')).not.toBeChecked();
-    await closeNode(page);
-    await publish(page, 1);
-    const rejected = await runLoop(page, request, url, loopId, 'exhausted');
-    expect(exitEvaluations(rejected)).toHaveLength(2);
-    for (const event of exitEvaluations(rejected)) {
-      expect(event.criteria[0]).toMatchObject({
-        status: 'not-matched',
-        observation: {
-          kind: 'classifier',
-          answer: { type: 'noul', holds: false, trueProbability: 0.25, confidence: 0.75 },
-        },
-        match: { type: 'noul', value: false },
-        acceptance: { status: 'rejected', minConfidence: 0.8 },
-        rejection: { kind: 'classifier-confidence', minimum: 0.8, confidence: 0.75 },
-      });
-    }
-    expect(rejected.filter((event) => event.type === 'iteration.incremented')).toHaveLength(1);
-    expect(exitEvaluations(rejected).at(-1)?.result).toMatchObject({
-      kind: 'limit-reached',
-      limit: 'iteration-ceiling',
-      value: 2,
-    });
-    let details = await inspectLastExit(page);
-    await expect(details).toContainText('Noul false');
-    await expect(details).toContainText('Noul is false');
-    await expect(details).toContainText('did not match');
-    await expect(details).toContainText('treated as a nonmatch');
-
-    await openEditor(page, url, loopId);
-    dialog = await criterionEditor(page);
-    await dialog.getByLabel('Min confidence', { exact: true }).fill('0.875');
-    await closeNode(page);
-    expect(exitConfig(await savedDraft(page, request, url, loopId)).criteria[0]).toMatchObject({
-      match: { type: 'noul', value: false },
-      predicate: {
-        model: LOCAL_MODEL,
-        minConfidence: 0.875,
-      },
-    });
-    await publish(page, 2);
-    const matched = await runLoop(page, request, url, loopId, 'succeeded');
-    expect(exitEvaluations(matched)).toHaveLength(2);
-    expect(exitEvaluations(matched)[0]).toMatchObject({
-      iteration: 1,
-      result: { kind: 'looped-back' },
-      criteria: [
         {
-          status: 'not-matched',
-          observation: { kind: 'classifier', answer: { holds: true } },
-          acceptance: { status: 'accepted' },
+          id: 'work',
+          kind: 'inference',
+          label: 'Work',
+          config: { prompt: { template: 'Synthetic work pass {{ gates.gate.passes }}' } },
+          ui: { x: 260, y: 80 },
         },
-      ],
-    });
-    expect(exitEvaluations(matched)[1]).toMatchObject({
-      iteration: 2,
-      maxIterations: 2,
-      result: {
-        kind: 'completed',
-        outcome: 'success',
-        criterionIndex: 0,
-        reason: 'criterion-matched',
-      },
-      criteria: [
         {
-          status: 'matched',
-          observation: {
-            kind: 'classifier',
-            answer: { holds: false, trueProbability: 0.125, confidence: 0.875 },
+          id: 'gate',
+          kind: 'decision',
+          label: 'Gate',
+          config: {
+            kind: 'expression',
+            jsonata: '"repeat"',
+            routes: [
+              { id: 'repeat', label: 'Repeat' },
+              { id: 'done', label: 'Done' },
+            ],
           },
-          acceptance: { status: 'accepted' },
+          ui: { x: 520, y: 80 },
+        },
+        {
+          id: 'done',
+          kind: 'exit',
+          label: 'Success',
+          config: { returns: 'outputs.work.value' },
+          ui: { x: 800, y: 80 },
+        },
+        {
+          id: 'exhausted',
+          kind: 'exit',
+          label: 'Exhausted',
+          config: { returns: 'outputs.work.value' },
+          ui: { x: 800, y: 320 },
         },
       ],
+      edges: [
+        { id: 'start-work', from: { node: 'start', port: 'out' }, to: { node: 'work' } },
+        { id: 'work-gate', from: { node: 'work', port: 'out' }, to: { node: 'gate' } },
+        { id: 'repeat-edge', from: { node: 'gate', port: 'repeat' }, to: { node: 'work' } },
+        { id: 'done-edge', from: { node: 'gate', port: 'done' }, to: { node: 'done' } },
+      ],
+    };
+    const created = await request.post(url + '/loops', { data: { definition } });
+    expect(created.status()).toBe(201);
+    const { loop } = (await created.json()) as { loop: { id: string } };
+    await page.goto(url + '/app/loops/' + loop.id + '/edit');
+    let dialog = await openNode(page, 'gate');
+    await dialog
+      .locator('[data-field="routes.0.repeat"]')
+      .getByRole('switch', { name: 'Repeat route' })
+      .click();
+    await expect(dialog.getByLabel('Maximum passes', { exact: true })).toHaveAttribute(
+      'aria-required',
+      'true',
+    );
+    await dialog.getByLabel('Maximum passes', { exact: true }).fill('3');
+    await dialog.getByLabel('Maximum run time (seconds)', { exact: true }).fill('60');
+    await dialog
+      .locator('[data-field="jsonata"] [role="textbox"]')
+      .fill(finalChoice === 'repeat' ? '"repeat"' : 'gates.gate.passes >= 3 ? "done" : "repeat"');
+    await expect(dialog.getByText(/Limit reached is taken/)).toBeVisible();
+    const connect = dialog.getByRole('form', { name: 'Connect gate' });
+    await connect.getByLabel('Output').selectOption('limit-reached');
+    await connect.getByLabel('To').selectOption('exhausted');
+    await connect.getByRole('button', { name: 'Connect', exact: true }).click();
+    await closeNode(page);
+    await expect(
+      page.locator('.react-flow__handle[data-nodeid="gate"][data-handleid="limit-reached"]'),
+    ).toHaveCount(1);
+    dialog = await openNode(page, 'exhausted');
+    // The visible choice card covers its visually hidden radio, so choose it from the keyboard.
+    const exhausted = dialog.getByRole('radio', { name: 'Exhausted', exact: true });
+    await exhausted.focus();
+    await page.keyboard.press('Space');
+    await expect(exhausted).toBeChecked();
+    await expect(dialog.getByRole('form', { name: 'Connect exhausted' })).toHaveCount(0);
+    await closeNode(page);
+    await expect(page.getByText('Ready to publish')).toBeVisible();
+    await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
+    await expect
+      .poll(async () => {
+        const response = await request.get(url + '/loops/' + loop.id);
+        const body = (await response.json()) as { draft: { definition: unknown } };
+        const saved = LoopDefinitionSchema.parse(body.draft.definition);
+        const gate = saved.nodes.find((n) => n.id === 'gate');
+        const exit = saved.nodes.find((n) => n.id === 'exhausted');
+        return {
+          gate: gate?.kind === 'decision' ? gate.config : undefined,
+          exit: exit?.kind === 'exit' ? exit.config : undefined,
+          limitTarget: saved.edges.find(
+            (edge) => edge.from.node === 'gate' && edge.from.port === 'limit-reached',
+          )?.to.node,
+        };
+      })
+      .toMatchObject({
+        gate: {
+          maxPasses: 3,
+          maxRunTimeSeconds: 60,
+          routes: [{ id: 'repeat', repeat: true }, { id: 'done' }],
+        },
+        exit: { outcome: 'exhausted', returns: 'outputs.work.value' },
+        limitTarget: 'exhausted',
+      });
+    await page.reload();
+    dialog = await openNode(page, 'gate');
+    await expect(dialog.getByLabel('Maximum passes', { exact: true })).toHaveValue('3');
+    await expect(dialog.getByLabel('Maximum run time (seconds)', { exact: true })).toHaveValue(
+      '60',
+    );
+    await closeNode(page);
+    await page.getByRole('button', { name: 'Publish', exact: true }).click();
+    await expect(page.getByText('Published version 1.')).toBeVisible();
+    await control(request, '/harness/script', {
+      instanceId,
+      turns: Array.from({ length: 3 }, () => ({ finalText: 'synthetic work' })),
     });
-    expect(matched.filter((event) => event.type === 'iteration.incremented')).toEqual([
-      expect.objectContaining({ from: 1, to: 2, targetNodeId: 'prepare' }),
-    ]);
-    expect(await classifier.requests()).toHaveLength(4);
-    expect((await classifier.requests()).every((call) => call.model === LOCAL_MODEL)).toBe(true);
-    details = await inspectLastExit(page);
-    await expect(details).toContainText('Noul false');
-    await expect(details).toContainText('Accepted');
-  },
-);
+    const started = await request.post(url + '/loops/' + loop.id + '/runs', {
+      data: { input: {} },
+    });
+    expect(started.status()).toBe(202);
+    const startedBody = (await started.json()) as { run: unknown };
+    const runId = RunRecordSchema.parse(startedBody.run).id;
+    await expect
+      .poll(
+        async () =>
+          RunRecordSchema.parse(await (await request.get(url + '/runs/' + runId)).json()).status,
+      )
+      .toBe(finalChoice === 'repeat' ? 'exhausted' : 'succeeded');
+    const eventsResponse = await request.get(url + '/runs/' + runId + '/events');
+    const body = (await eventsResponse.json()) as { items: unknown[] };
+    const decisions = RunEventSchema.array()
+      .parse(body.items)
+      .filter((e) => e.type === 'decision.made');
+    expect(decisions.map((e) => e.gate?.previousPasses)).toEqual([1, 2, 3]);
+    expect(decisions.map((e) => e.gate?.passes)).toEqual([2, 3, 3]);
+    expect(decisions.at(-1)?.portId).toBe(finalChoice === 'repeat' ? 'limit-reached' : 'done');
+    await page.goto(url + '/app/runs/' + runId);
+    const timeline = page.getByRole('list', { name: 'Timeline' });
+    await timeline.getByText('decision.made').first().click();
+    await expect(
+      page.getByText('Previous passes', { exact: true }).locator('xpath=following-sibling::dd[1]'),
+    ).toHaveText('1');
+    await expect(
+      page.getByText('Current passes', { exact: true }).locator('xpath=following-sibling::dd[1]'),
+    ).toHaveText('2');
+    await timeline.getByText('decision.made').last().click();
+    await expect(
+      page.getByText('Previous passes', { exact: true }).locator('xpath=following-sibling::dd[1]'),
+    ).toContainText('3');
+    await expect(
+      page.getByText('Current passes', { exact: true }).locator('xpath=following-sibling::dd[1]'),
+    ).toContainText('3');
+    await expect(
+      page
+        .getByText('Limit stopping repeat', { exact: true })
+        .locator('xpath=following-sibling::dd[1]'),
+    ).toContainText(finalChoice === 'repeat' ? 'Maximum passes' : 'None');
+    await expect(page.getByTestId('run-result')).toContainText('synthetic work');
+  });
+}

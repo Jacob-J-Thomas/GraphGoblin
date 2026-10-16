@@ -48,6 +48,18 @@ export function describeDefinition(definition: LoopDefinition) {
         label: node.label,
         kind: config.kind,
         routes: decisionRouteDeclarations(config),
+        ...(config.maxPasses !== undefined
+          ? {
+              gate: {
+                maxPasses: config.maxPasses,
+                ...(config.maxRunTimeSeconds !== undefined
+                  ? { maxRunTimeSeconds: config.maxRunTimeSeconds }
+                  : {}),
+                limitPort: 'limit-reached',
+                passCountPath: `gates.${JSON.stringify(node.id)}.passes`,
+              },
+            }
+          : {}),
         ...(config.kind === 'classifier'
           ? { answerType: config.answer.type, model: config.model }
           : config.kind === 'llm'
@@ -65,9 +77,9 @@ export function describeDefinition(definition: LoopDefinition) {
       exits.push({
         nodeId: node.id,
         label: node.label,
-        default: node.config.default,
-        returnMapping: node.config.return.mapping,
-        returnChannels: node.config.return.channels.map((c) => c.kind),
+        outcome: node.config.outcome,
+        returns: node.config.returns,
+        destinations: node.config.destinations.map((c) => c.kind),
       });
     }
   }

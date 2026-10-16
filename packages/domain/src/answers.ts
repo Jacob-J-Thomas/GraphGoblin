@@ -88,10 +88,22 @@ export function decisionRouteDeclarations(config: DecisionConfig): RouteDeclarat
   if (config.kind !== 'classifier') return config.routes;
   switch (config.answer.type) {
     case 'choice':
-      return config.answer.options.map(({ id, label }) => ({ id, label }));
+      return config.answer.options.map(({ id, label, repeat }) => ({
+        id,
+        label,
+        ...(repeat !== undefined ? { repeat } : {}),
+      }));
     case 'noul':
-      return [config.answer.true, config.answer.false].map(({ id, label }) => ({ id, label }));
+      return [config.answer.true, config.answer.false].map(({ id, label, repeat }) => ({
+        id,
+        label,
+        ...(repeat !== undefined ? { repeat } : {}),
+      }));
     case 'score':
-      return config.answer.bands.map(({ id, label }) => ({ id, label }));
+      return config.answer.bands.map(({ id, label, repeat }) => ({
+        id,
+        label,
+        ...(repeat !== undefined ? { repeat } : {}),
+      }));
   }
 }

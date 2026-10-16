@@ -18,7 +18,7 @@ export type WorkingDirectorySpec = z.infer<typeof WorkingDirectorySpecSchema>;
 export const LoopSettingsSchema = z.strictObject({
   workingDirectory: WorkingDirectorySpecSchema.default({ kind: 'temp' }),
   defaults: HarnessDefaultsSchema.prefault({}),
-  maxIterations: z.number().int().positive().max(10_000).default(10),
+  maxNodeVisits: z.number().int().positive().max(10_000).default(10),
   subloopDepthLimit: z.number().int().positive().max(64).default(8),
 });
 export type LoopSettings = z.infer<typeof LoopSettingsSchema>;

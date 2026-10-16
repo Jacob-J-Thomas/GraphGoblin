@@ -9,15 +9,7 @@ import { useEditorStore } from './store.js';
  * The keyboard path for drawing an edge: pick one of this node's free output ports and a target.
  * Applies the same rules as dragging on the canvas, and says why when it refuses.
  */
-function ConnectForm({
-  node,
-  definition,
-  onConnected,
-}: {
-  node: NodeInput;
-  definition: LoopDefinitionInput;
-  onConnected: (port: string) => void;
-}) {
+function ConnectForm({ node, definition }: { node: NodeInput; definition: LoopDefinitionInput }) {
   const used = new Set(
     definition.edges.filter((e) => e.from.node === node.id).map((e) => e.from.port),
   );
@@ -39,7 +31,6 @@ function ConnectForm({
           .getState()
           .connect({ source: node.id, sourceHandle: chosenPort, target });
         setRefused(problem ?? undefined);
-        if (!problem) onConnected(chosenPort);
       }}
     >
       <FieldRow>
@@ -84,17 +75,14 @@ function ConnectForm({
 }
 
 /**
- * The node's outgoing edges, each with a Remove button, and the Connect form. `onChange` reports
- * the port of each edge added or removed here (an exit's `loopBack` edge also changes its config).
+ * The node's outgoing edges, each with a Remove button, and the Connect form.
  */
 export function NodeConnections({
   node,
   definition,
-  onChange,
 }: {
   node: NodeInput;
   definition: LoopDefinitionInput;
-  onChange: (port: string) => void;
 }) {
   const outgoing = definition.edges.filter((e) => e.from.node === node.id);
   const portLabels = canvasPortLabels(node);
@@ -123,7 +111,6 @@ export function NodeConnections({
                 aria-label={`Remove edge ${edge.id}`}
                 onClick={() => {
                   useEditorStore.getState().removeEdge(edge.id);
-                  onChange(edge.from.port);
                 }}
               >
                 <Icon name="close" />
@@ -132,12 +119,7 @@ export function NodeConnections({
           ))}
         </ul>
       )}
-      <ConnectForm
-        key={`${node.id}:${outgoing.length}`}
-        node={node}
-        definition={definition}
-        onConnected={onChange}
-      />
+      <ConnectForm key={`${node.id}:${outgoing.length}`} node={node} definition={definition} />
     </section>
   );
 }

@@ -71,7 +71,7 @@ describe('errors', () => {
       kind: 'exit',
       label: 'E',
       ui: { x: 0, y: 0 },
-      config: { criteria: [], default: 'success', return: { mapping: 'none', channels: [] } },
+      config: { outcome: 'success', returns: 'none', destinations: [] },
     };
     expect(nodeOfKind(node, 'exit').kind).toBe('exit');
     expect(() => nodeOfKind(node, 'wait')).toThrow(/expected node n to be wait/);
@@ -462,10 +462,8 @@ describe('run manager edge cases', () => {
           config: { operations: [{ op: 'delete', path: '/vars/x' }] },
         },
         {
-          return: {
-            mapping: '{ "a": 1 }',
-            channels: [{ kind: 'file', path: 'out.txt', format: 'text' }],
-          },
+          returns: '{ "a": 1 }',
+          destinations: [{ kind: 'file', path: 'out.txt', format: 'text' }],
         },
       ),
     );
@@ -475,7 +473,7 @@ describe('run manager edge cases', () => {
 });
 
 describe('handler edge cases', () => {
-  it('exit: jev predicates and missing last output', async () => {
+  it('exit: returns no value when its mapping is none', async () => {
     const engine = await createTestEngine();
     const version = engine.publish(
       singleNodeLoop(
@@ -486,31 +484,13 @@ describe('handler edge cases', () => {
           label: 'M',
           config: { operations: [{ op: 'delete', path: '/vars/x' }] },
         },
-        {
-          criteria: [
-            {
-              when: 'predicate',
-              predicate: {
-                kind: 'classifier',
-                model: 'jev',
-                question: 'done?',
-                answer: {
-                  type: 'noul',
-                  true: { label: 'Ready', criteria: 'Task is done' },
-                  false: { label: 'Continue', criteria: 'Task is not done' },
-                },
-              },
-              match: { type: 'noul', value: true },
-              outcome: 'success',
-            },
-          ],
-        },
+        {},
       ),
     );
     const run = await engine.runToIdle(version.loopId);
     expect(run.status).toBe('succeeded');
-    expect(engine.ports.jev.classifierNouls[0]?.context).toMatchObject({ lastOutput: null });
-    expect(engine.ports.jev.classifierNouls[0]).not.toHaveProperty('model');
+    expect(run.result).toBeUndefined();
+    expect(engine.ports.jev.classifierNouls).toEqual([]);
   });
 
   it('heartbeat: POST probes render headers and bodies', async () => {
@@ -684,7 +664,7 @@ describe('handler edge cases', () => {
           id: 'done',
           kind: 'exit',
           label: 'D',
-          config: { return: { mapping: '$count(messages) & ":" & $count($keys(vars))' } },
+          config: { returns: '$count(messages) & ":" & $count($keys(vars))' },
         },
       ],
       edges: [{ id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'done' } }],
@@ -715,7 +695,7 @@ describe('handler edge cases', () => {
           id: 'done',
           kind: 'exit',
           label: 'D',
-          config: { return: { mapping: '{ "last": lastOutput.value, "vars": vars }' } },
+          config: { returns: '{ "last": lastOutput.value, "vars": vars }' },
         },
       ],
       edges: [

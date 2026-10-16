@@ -27,7 +27,7 @@ export function validateTemplateDraft(input: unknown): LoopDefinition {
     definition.nodes.every(
       (node) =>
         node.kind !== 'exit' ||
-        node.config.return.channels.every((channel) => channel.kind === 'caller'),
+        node.config.destinations.every((channel) => channel.kind === 'caller'),
     ),
     'template drafts must return results only to the caller',
   );
