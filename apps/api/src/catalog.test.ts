@@ -436,3 +436,77 @@ describe('uniform strict evaluator admission', () => {
     expect((await t.app.inject('/loops')).json().items).toEqual([]);
   });
 });
+
+it.each([1, 2, 3])('imports an automatic format-%s export as format 4', async (schemaVersion) => {
+  const response = await t.app.inject({
+    method: 'POST',
+    url: '/loops/import',
+    payload: {
+      format: 'graphgoblin-loop',
+      formatVersion: schemaVersion,
+      exportedAt: '2026-10-02T12:00:00.000Z',
+      loop: {
+        schemaVersion,
+        name: 'converted export',
+        nodes: [
+          { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+          { id: 'done', kind: 'exit', label: 'Done', config: {} },
+        ],
+        edges: [{ id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'done' } }],
+      },
+    },
+  });
+  expect(response.statusCode).toBe(201);
+  expect(response.json().draft.definition).toMatchObject({
+    schemaVersion: 4,
+    nodes: [{ config: { type: 'manual' } }, { config: { outcome: 'success' } }],
+  });
+});
+
+it('refuses pending export review with item ids, hashes and reasons, and refuses supplied resolutions', async () => {
+  const source = {
+    format: 'graphgoblin-loop',
+    formatVersion: 3,
+    exportedAt: '2026-10-02T12:00:00.000Z',
+    loop: {
+      schemaVersion: 3,
+      name: 'pending export',
+      nodes: [
+        { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+        {
+          id: 'done',
+          kind: 'exit',
+          label: 'Done',
+          config: { criteria: [{ when: 'max-iterations', value: 3 }] },
+        },
+      ],
+      edges: [{ id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'done' } }],
+    },
+  };
+  const response = await t.app.inject({ method: 'POST', url: '/loops/import', payload: source });
+  expect(response.statusCode).toBe(400);
+  expect(response.json()).toMatchObject({
+    code: 'LOOP_FORMAT_UPGRADE_REQUIRED',
+    errors: {
+      reviewItems: expect.arrayContaining([
+        expect.objectContaining({
+          id: '/nodes/1/config:exit-policy',
+          hash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          reason: expect.any(String),
+          status: 'pending',
+        }),
+      ]),
+      issues: expect.arrayContaining([
+        expect.objectContaining({ id: '/nodes/1/config:exit-policy' }),
+      ]),
+    },
+  });
+  const malformed = await t.app.inject({
+    method: 'POST',
+    url: '/loops/import',
+    payload: { ...source, resolutions: { v3: { bad: { hash: 2 } } } },
+  });
+  expect(malformed.statusCode).toBe(400);
+  expect(malformed.json().errors.issues[0].code).toBe('UPGRADE_EXPORT_INVALID');
+  expect((await t.app.inject('/loops')).json().items).toEqual([]);
+});

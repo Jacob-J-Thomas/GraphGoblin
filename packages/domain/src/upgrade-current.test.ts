@@ -12,11 +12,11 @@ import {
   sampleThreadV3 as sampleThread,
 } from './__fixtures__/upgrade-v3.js';
 import {
-  upgradeLoopCurrent,
-  upgradeExportCurrent,
-  validateUpgradeCurrentResolutions,
+  upgradeLoopToV3 as upgradeLoopCurrent,
+  upgradeExportToV3 as upgradeExportCurrent,
+  validateUpgradeV3Resolutions as validateUpgradeCurrentResolutions,
   provenBooleanExpression,
-} from './upgrade-current.js';
+} from './upgrade-v2-v3.js';
 import { upgradeRunHistoryCurrent } from './upgrade-history-current.js';
 import { upgradeLoopV1 } from './upgrade.js';
 

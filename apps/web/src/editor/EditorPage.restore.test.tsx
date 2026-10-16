@@ -12,6 +12,7 @@ import { useEditorStore } from './store.js';
 const gate = vi.hoisted(() => ({
   hold: false,
   failArchive: false,
+  hideArchive: false,
   release: (): void => undefined,
 }));
 
@@ -25,6 +26,8 @@ vi.mock('../drafts/local-drafts.js', async (importOriginal) => {
       }
       return actual.saveLocalDraft(draft);
     },
+    loadArchivedDrafts: async (loopId: string) =>
+      gate.hideArchive ? [] : actual.loadArchivedDrafts(loopId),
     saveArchivedDraft: async (draft: Parameters<typeof actual.saveArchivedDraft>[0]) => {
       if (gate.failArchive) throw new Error('simulated archive failure');
       return actual.saveArchivedDraft(draft);
@@ -43,7 +46,7 @@ describe('restoring a set-aside copy', () => {
         defaults: { model: 'gpt-6-luna', effort: 'low' },
       },
       nodes: [
-        base.nodes[0],
+        { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
         {
           id: 'pick',
           kind: 'decision',
@@ -60,7 +63,7 @@ describe('restoring a set-aside copy', () => {
             jev: { model: 'kev', minConfidence: 0.7 },
           },
         },
-        base.nodes[1],
+        { id: 'done', kind: 'exit', label: 'Done', config: {} },
       ],
       edges: [
         { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'pick' } },
@@ -104,7 +107,7 @@ describe('restoring a set-aside copy', () => {
     expect((await drafts.loadLocalDraft(loop.id))?.definition).toEqual(definition);
   });
 
-  it('preserves an unambiguous v1 device draft raw until the integrated format-4 cutover', async () => {
+  it('converts a v1 draft, archives the exact original and requires explicit first-save overwrite', async () => {
     const api = new FakeApi(),
       loop = api.addLoop(newLoopDefinition('server copy'));
     const original = {
@@ -115,12 +118,141 @@ describe('restoring a set-aside copy', () => {
     };
     await drafts.saveLocalDraft(original);
     renderApp(`/loops/${loop.id}/edit`, api);
-    expect(await screen.findByRole('heading', { name: 'server copy' })).toBeInTheDocument();
-    expect(
-      await screen.findByText('This device copy could not be migrated safely'),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'legacy device copy' })).toBeInTheDocument();
     await waitFor(async () => expect(await drafts.loadArchivedDrafts(loop.id)).toEqual([original]));
+    expect(await drafts.loadLocalDraft(loop.id)).toMatchObject({
+      synced: false,
+      definition: { schemaVersion: 4 },
+      baseToken: 'unreconciled-device-format',
+    });
+    await screen.findByText('The draft changed on the server');
+    expect(api.loops.get(loop.id)?.draft?.definition.name).toBe('server copy');
+    await userEvent.click(screen.getByRole('button', { name: 'Overwrite with this copy' }));
+    await waitFor(() =>
+      expect(screen.getByTestId('save-state')).toHaveTextContent('All changes saved'),
+    );
+    expect(api.loops.get(loop.id)?.draft?.definition.name).toBe('legacy device copy');
+  });
+
+  function oldManual(name: string, pending = false): LoopDefinitionInput {
+    return {
+      schemaVersion: 3,
+      name,
+      nodes: [
+        { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+        {
+          id: 'done',
+          kind: 'exit',
+          label: 'Done',
+          config: pending ? { criteria: [{ when: 'max-iterations', value: 3 }] } : {},
+        },
+      ],
+      edges: [{ id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'done' } }],
+    } as unknown as LoopDefinitionInput;
+  }
+
+  it('keeps pending v3 review ids and hashes with an exportable inert original, including archives', async () => {
+    const api = new FakeApi(),
+      loop = api.addLoop(newLoopDefinition('server copy'));
+    const original = {
+      loopId: loop.id,
+      definition: oldManual('pending draft', true),
+      savedAt: 'old',
+      synced: false,
+      baseToken: 'old-token',
+    };
+    const archive = { ...original, savedAt: 'archived' };
+    await drafts.saveLocalDraft(original);
+    await drafts.saveArchivedDraft(archive);
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'server copy' });
+    expect(await screen.findAllByText('/nodes/1/config:exit-policy')).toHaveLength(2);
+    expect(screen.getByRole('button', { name: 'Export original device copy' })).toBeVisible();
     expect(await drafts.loadLocalDraft(loop.id)).toBeUndefined();
+    expect(await drafts.loadArchivedDrafts(loop.id)).toEqual([archive, original]);
+    expect(useEditorStore.getState().definition?.name).toBe('server copy');
+  });
+
+  it.each(['write', 'readback'] as const)(
+    'blocks overwrite of an automatic conversion after archive %s failure',
+    async (failure) => {
+      const api = new FakeApi(),
+        loop = api.addLoop(newLoopDefinition('server copy'));
+      const original = {
+        loopId: loop.id,
+        definition: oldManual('automatic draft'),
+        savedAt: 'old',
+        synced: true,
+        baseToken: 'old-token',
+      };
+      await drafts.saveLocalDraft(original);
+      gate.failArchive = failure === 'write';
+      gate.hideArchive = failure === 'readback';
+      try {
+        renderApp(`/loops/${loop.id}/edit`, api);
+        await screen.findByText('Device copy preservation failed');
+        act(() => useEditorStore.getState().updateMeta({ description: 'blocked' }));
+        await new Promise((resolve) => setTimeout(resolve, 650));
+        expect(api.callsTo('PUT', `/loops/${loop.id}/draft`)).toHaveLength(0);
+        expect(await drafts.loadLocalDraft(loop.id)).toEqual(original);
+      } finally {
+        gate.failArchive = false;
+        gate.hideArchive = false;
+      }
+    },
+  );
+
+  it('archives and converts a synced v3 active draft even when the server timestamp is newer', async () => {
+    const api = new FakeApi(),
+      loop = api.addLoop(newLoopDefinition('server copy'));
+    const original = {
+      loopId: loop.id,
+      definition: oldManual('automatic active'),
+      savedAt: '1900-01-01T00:00:00.000Z',
+      synced: true,
+      baseToken: api.draftToken(loop.id)!,
+    };
+    await drafts.saveLocalDraft(original);
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'automatic active' });
+    await screen.findByText('The draft changed on the server');
+    expect(await drafts.loadArchivedDrafts(loop.id)).toEqual([original]);
+    expect(await drafts.loadLocalDraft(loop.id)).toMatchObject({
+      synced: false,
+      definition: { schemaVersion: 4 },
+    });
+    expect(api.loops.get(loop.id)?.draft?.definition.name).toBe('server copy');
+  });
+
+  it('preserves and converts a set-aside copy and keeps its archived original inert on reopening', async () => {
+    const api = new FakeApi(),
+      loop = api.addLoop(newLoopDefinition('server copy'));
+    const original = {
+      loopId: loop.id,
+      definition: oldManual('automatic aside'),
+      savedAt: 'old',
+      synced: true,
+      baseToken: 'old-token',
+    };
+    await drafts.saveSetAsideDraft(original);
+    const view = renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('button', { name: "Use this device's copy instead" });
+    expect(await drafts.loadArchivedDrafts(loop.id)).toEqual([original]);
+    expect(await drafts.loadSetAsideDraft(loop.id)).toMatchObject({
+      synced: false,
+      baseToken: 'unreconciled-device-format',
+      definition: { schemaVersion: 4 },
+    });
+    view.unmount();
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByText('Original device copy preserved');
+    expect(screen.getByRole('button', { name: 'Export original device copy' })).toBeVisible();
+    expect((await drafts.loadArchivedDrafts(loop.id))[0]).toEqual(original);
+    await userEvent.click(screen.getByRole('button', { name: "Use this device's copy instead" }));
+    await screen.findByRole('heading', { name: 'automatic aside' });
+    await waitFor(() =>
+      expect(screen.getByTestId('save-state')).toHaveTextContent('All changes saved'),
+    );
   });
 
   it('keeps an ambiguous v1 device draft raw and prevents it from replacing the server copy', async () => {

@@ -10,7 +10,13 @@ import {
   type LoopDefinition,
   type LoopRecord,
 } from '@graphgoblin/contracts';
-import { exportLoop, importLoop, stableHash } from '@graphgoblin/domain';
+import {
+  exportLoop,
+  importLoop,
+  stableHash,
+  upgradeExportCurrent,
+  upgradeLoopCurrent,
+} from '@graphgoblin/domain';
 import { EngineRequestError } from '@graphgoblin/engine';
 import { LoopInUseError } from '@graphgoblin/infrastructure/sqlite';
 import type { FastifyRequest } from 'fastify';
@@ -150,13 +156,23 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
           body !== null &&
           (('formatVersion' in body && [1, 2, 3].includes(Number(body.formatVersion))) ||
             ('schemaVersion' in body && [1, 2, 3].includes(Number(body.schemaVersion))))
-        )
+        ) {
+          const result =
+            'formatVersion' in body
+              ? await upgradeExportCurrent(body)
+              : await upgradeLoopCurrent(body);
+          if (result.ok) {
+            request.body = result.value;
+            return;
+          }
           return problem(
             reply,
             400,
             'LOOP_FORMAT_UPGRADE_REQUIRED',
-            'Use the offline graphgoblin-upgrade export command and resolve any authored criteria to convert this document to format 4',
+            'Use graphgoblin-upgrade export to review the listed items before importing as format 4.',
+            { issues: result.issues, reviewItems: result.reviewItems },
           );
+        }
       },
       schema: {
         tags: ['loops'],

@@ -175,7 +175,23 @@ Templates are catalogue assets copied into ordinary loops, never runnable instan
 
 `FORMAT_BASELINES[4]` requires `0012_retire_template_instances` in the migration ledger and its resulting structure before any startup writes. Startup refuses older stores, including a format-4 marker at 0011; it never applies this cutover SQL to them. Fresh initialization executes all migrations, ledger entries and the format-4 marker in one transaction.
 
-Until the real 3-to-4 stage exists, the offline converter refuses every store that is not already complete format 4, including unmarked stores and any remaining template table or subject column. The coordinated #164/#165 cutover (steps 26-28) deletes configured template instances, their loops, versions, all their runs and dependents before 0012, without an archive, with the format marker written last in the same transaction. This child supplies SQL and schema metadata only; it does not implement that conversion or authorize an installed upgrade. The libsql migration tests exercise SQL directly on disposable 0011 fixtures, separately from startup and converter admission.
+Until the owner chooses and completes the server-store cutover, offline apply refuses every store that is not already complete format 4, including unmarked stores and any remaining template table or subject column. Full-history versus definitions-only conversion remains an owner decision. Export and device conversion performs no SQL apply, run-history or manifest conversion and authorizes no installed upgrade. The libsql migration tests exercise SQL directly on disposable 0011 fixtures, separately from startup and converter admission.
+
+## Offline definitions and portable exports
+
+`upgradeLoopCurrent` and `upgradeExportCurrent` are async, explicit definition-only
+converters to format 4. They compose frozen 1?2?3 stages with
+`convertDefinitionV3ToV4`, or validate already-current input. Resolutions have
+separate `v1`, `v2` and `v3` namespaces. Results always report `notices` and
+`reviewItems`; success supplies `value`, while pending/invalid conversion supplies
+`issues` and withholds the candidate. Review items retain E2 IDs, source-bound
+hashes, reasons and statuses. Stale and unused resolutions refuse.
+
+The export CLI and API import use this composition. Automatic old exports import
+normally; pending imports return a structured `LOOP_FORMAT_UPGRADE_REQUIRED` problem
+and need offline review. See the [offline guide](guide/08-offline-upgrade.md).
+The server store still uses the frozen format-3 stages and refuses incomplete
+format-4 stores; this definition-only path changes no history, SQL apply or manifest.
 
 ## Crash recovery (Decided)
 

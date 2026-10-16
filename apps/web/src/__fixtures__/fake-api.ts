@@ -32,6 +32,8 @@ import {
   LoopImportError,
   stableHash,
   validateLoop,
+  upgradeExportCurrent,
+  upgradeLoopCurrent,
   type ValidationIssue,
 } from '@graphgoblin/domain';
 
@@ -484,9 +486,29 @@ export class FakeApi {
     ],
     [
       'POST /loops/import',
-      (call) => {
+      async (call) => {
         try {
-          const imported = importLoop(call.body);
+          let input = call.body;
+          if (
+            typeof input === 'object' &&
+            input !== null &&
+            (('formatVersion' in input && [1, 2, 3].includes(Number(input.formatVersion))) ||
+              ('schemaVersion' in input && [1, 2, 3].includes(Number(input.schemaVersion))))
+          ) {
+            const converted =
+              'formatVersion' in input
+                ? await upgradeExportCurrent(input)
+                : await upgradeLoopCurrent(input);
+            if (!converted.ok)
+              return problem(
+                400,
+                'LOOP_FORMAT_UPGRADE_REQUIRED',
+                'Use the offline graphgoblin-upgrade export command to review this export.',
+                { issues: converted.issues, reviewItems: converted.reviewItems },
+              );
+            input = converted.value;
+          }
+          const imported = importLoop(input);
           const loop = this.addLoop(imported.definition);
           return json(
             { loop, draft: this.loops.get(loop.id)!.draft, issues: imported.issues },

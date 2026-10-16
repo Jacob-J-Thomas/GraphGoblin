@@ -1,39 +1,72 @@
-# Upgrade stored loops to format 3
+# Upgrade exports and device drafts to format 4
 
-**Current format-4 boundary:** startup requires the SQL 0013 structure and refuses older stores.
-The procedures below describe the retained format-3 converter; they do not deliver the integrated
-format-4 installed-store cutover. The pure V3-to-V4 definition converter maps both old webhook
-signing recipes to nested `authentication`, supplies JSON/constant metadata and requires one
-hash-bound `webhook-json-decoding` review per trigger for strict UTF-8/nonempty JSON. Definition
-proposals pass the current schema and graph validation. They do not authorize database apply.
+The portable export command and API import compose frozen 1?2?3 stages with the
+V3?V4 definition converter. Format-2 input starts at 2?3; format-3 input starts at
+3?4. Format-4 input must pass the current schema. Exports always use format 4;
+context-thread schema version remains 1.
 
-The retained format-2 stage replaces decision strategy chains with one explicit evaluator, introduces stable option IDs and canonical decision evidence, and moves model defaults under their harness. The normal API accepts only the current format. An old portable export returns `LOOP_FORMAT_UPGRADE_REQUIRED`; an old database stops startup with `DATA_UPGRADE_REQUIRED` before migrations, recovery or triggers run. A genuinely empty database is initialized normally. Context-thread schema version remains 1.
-
-Use the one-off `graphgoblin-upgrade` command from this checkout after `pnpm.cmd build`. It never guesses which evaluator should replace a mixed chain. Keep the old build, original data, and exports until the upgraded copy has passed your acceptance checks. Architecture approval is separate from approval of the actual conversion manifest.
+**Server stores remain a separate cutover.** Startup and offline apply still refuse
+stores that are not complete format-4 stores (`DATA_UPGRADE_REQUIRED`). Choosing
+full-history conversion or definitions-only conversion, final SQL apply, history,
+manifest approval and installed-instance rehearsal remain owner work. A converted
+export does not authorize or perform a database upgrade.
 
 ## Convert a portable export
 
-Choose a new output path; the tool refuses to overwrite an existing file:
+After `pnpm.cmd build`, choose a new output path; existing files are never overwritten:
 
 ```powershell
 pnpm.cmd graphgoblin-upgrade export --input .\old-loop.json --out .\converted-loop.json
 ```
 
-A successful result is a format-3 export (or a version-3 definition when the input was a bare definition). Format-1 input first passes through a frozen format-2 conversion; both stages must resolve before any output is accepted. Exit code 2 means the output is a refusal report, not an importable loop. Resolve every reported ambiguity in a separate JSON resolutions file, then retry to a different new output path with `--resolutions .\resolutions.json`.
+A successful result is a format-4 export, or a format-4 bare definition when the
+input was bare. Straightforward triggers, classifier decisions, Choice expressions
+and unconditional terminal exits can convert automatically. LLM instructions,
+Noul route expressions, conditional or repeating exits, webhook decoding, trigger
+filters and output consumers may require review. The exact report is authoritative;
+a syntactically valid candidate alone does not establish equivalent behavior.
 
-The retained offline converter uses fixed format-2 and format-3 validation rules. The current runtime requires format 4; older stores and exports await the reviewed integrated cutover.
+Exit code 2 produces `graphgoblin-upgrade-refusals` with `issues`, automatic-change
+`notices` and `reviewItems`. Items list stable `id`, SHA-256 `hash`, source `path`,
+`reason`, proposed value and status. No candidate definition is included while
+anything is pending or invalid. Resolve every reported item, then retry with a
+new output path and `--resolutions .\resolutions.json`.
 
-The resolutions object has four optional fields:
+Resolution files use three independent optional namespaces:
 
-- `decisions`: a map from node ID to the complete new decision configuration, including its answer and evaluator. Replacement option IDs must preserve the original route-ID set and edge ports; invalid original IDs need a separately reviewed repair. Mixed chains, invalid old option labels/criteria, and expressions whose string result cannot be proven need an explicit choice.
-- `sources`: a map from a reported JSON pointer to the reviewed replacement Liquid or JSONata source. For a decision output, the old `lastOutput.value.route` becomes `lastOutput.value.answer.optionId`; use the source-specific path from the report. An inference result may independently contain `route` or `confidence`, so inspect its producer rather than replacing every matching string. Whole output values, indirect lookups and dynamic consumers need review too, including subloop return values and captured result variables. Replacements must parse, and final definitions must satisfy the clean contract. Do not also provide a source replacement inside a node covered by a complete `decisions` replacement: overlapping instructions are refused; put that source in the complete replacement instead.
-- `opaqueConsumers`: a map from script node ID to `{reason:"..."}`, recording why the external command receiving the thread or last output works with the new shape. Review and update the script itself first; a reason is an approval record, not an automatic script rewrite.
+- `v1`: the frozen 1?2 `decisions`, `sources` and `opaqueConsumers` maps. Decision
+  replacements preserve the original route IDs; source replacements name exact
+  pointers. Opaque consumer approvals contain a nonblank reason and require
+  external consumer review.
+- `v2`: the frozen 2?3 `predicates` map, keyed by exact criterion pointers such as
+  `/nodes/2/config/criteria/0`. Provider predicates need authored Noul side criteria;
+  ambiguous expressions need an explicitly boolean `jsonata` rewrite.
+- `v3`: the E2 converter's map from review item ID to
+  `{hash, action: "approve" | "replace" | "remove", reason, value?}`. Use the exact
+  reported hash. Replacement requires `value`; removal is supported only where
+  the item explicitly permits it. Graph and source replacements must respect
+  the converter's overlap rules.
 
-- `predicates`: a map from an exact exit criterion pointer such as `/nodes/2/config/criteria/0` to a reviewed resolution. Every legacy Jev or Codex predicate needs `answer: {type: "noul", true: {label: "Yes", criteria: "..."}, false: {label: "No", criteria: "..."}}` with criteria describing the actual question. Do not invent them from old judgments. Ambiguous/coercing expressions instead need `jsonata: "..."` whose result is provably boolean. Use the actual per-version pointer from inventory. Unused, overlapping or incompatible resolutions are refused.
+For example, `{ "v1": { "sources": { "/reported/path": "reviewed source" } },
+"v3": { "/reported/path:output-consumer": { "hash": "reported SHA-256",
+"action": "approve", "reason": "Reviewed this exact proposal" } } }`.
+Earlier-stage rewrites can expose further v3 review items on the next attempt.
+Portable v3 reviews use a `portable:` identity derived from the canonical parsed source hash, including filter graph reviews; server-version manifest approvals cannot be reused here.
+Flat legacy resolution keys, malformed, stale, conflicting and unused resolutions
+are refused. Review the complete loop and external consumers; hashes bind a
+proposal to its source, not to the truth of an owner's assessment.
 
-Format 3 replaces legacy exit strategies with explicit answer/evaluation/match contracts. Jev retains its truth threshold of 0.5 and configured confidence minimum; Codex retains inherited defaults and its optional self-reported confidence gate. A failed gate always prevents a match. Added side criteria and stricter malformed-response checks may change future native judgments. Historical answers, confidence and provenance remain factual; missing facts are null. Thread schema 1 and session rows are unchanged. #33 and #38 remain deferred.
+API import converts old exports automatically when no review is pending. Otherwise
+it returns `400 LOOP_FORMAT_UPGRADE_REQUIRED` with `errors.issues` and
+`errors.reviewItems`, including IDs, hashes and reasons. API-supplied resolutions
+are unsupported; use the offline command and import its completed format-4 output.
+The MCP server has no import tool.
 
-Conversion is deliberately conservative. Review the complete loop and any external consumers, not just the reported lines. The converter cannot establish arbitrary program behavior. The [decision reference](../04-node-catalog.md#decision) describes the new contract.
+## Retained database tooling
+
+The following inventory, manifest, apply and recovery descriptions document the
+retained earlier tooling. They do not provide a format-4 server cutover: apply
+continues to refuse an older store. Do not alter markers to bypass that refusal.
 
 ## Inventory and approve a stopped database
 
@@ -72,7 +105,22 @@ Restoring the pre-upgrade backup discards every edit and run created after that 
 
 ## Browser drafts and converter lifetime
 
-On opening the new app, the same pure converter upgrades unambiguous device drafts. Ambiguous or incomplete drafts in an older format are set aside with their original JSON available for export; resolve them through the offline export command. The editor does not silently select an evaluator. The run-event cache is versioned so old decision events are fetched again from the upgraded server.
+Opening the editor converts automatic old device drafts once, archives and reads
+back the exact original before replacing an active or set-aside key, and marks the
+current copy unsynced. Old server tokens are discarded: the first autosave gets a
+conflict and requires **Reload server draft** or **Overwrite with this copy** using
+a fresh server token. Set-aside restoration is also an explicit overwrite choice.
+
+Pending, incomplete or failed old conversions remain inert raw copies with review
+issues and **Export original device copy**. Archived originals stay inert. Failed
+archival or readback blocks overwriting autosave. Incomplete current drafts still
+reopen for editing. The IndexedDB drafts store is preserved across version upgrades. A raw device-copy
+export includes its metadata and tokens; keep that original file and copy its
+`definition` field into a separate input file for the offline export command.
+
+The session-storage run-event cache and SSE cursor use the current format in their
+key; old keys are removed, forcing a fresh replay. There is no old-event reader.
+API responses are not cached by the service worker; React Query state is in memory.
 
 This converter remains available through the cutover release. It can be retired no earlier than the next incompatible release with an upgrade notice. Old exports after retirement require the appropriate older converter/build; runtime parsing does not keep a legacy decision executor.
 

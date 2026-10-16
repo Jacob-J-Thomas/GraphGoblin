@@ -1,4 +1,4 @@
-import type { RunEvent } from '@graphgoblin/contracts';
+import { CURRENT_DEFINITION_FORMAT, type RunEvent } from '@graphgoblin/contracts';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
@@ -21,7 +21,13 @@ export interface RunEventStoreState {
  * its first event instead of resuming (still without gaps or duplicates).
  */
 export const quotaSafeSessionStorage = {
-  getItem: (name: string) => sessionStorage.getItem(name),
+  getItem: (name: string) => {
+    // Cached events and their SSE cursors cannot cross the format cutover. Refetch facts.
+    for (const version of [1, 2, 3])
+      sessionStorage.removeItem(`graphgoblin-run-events-v${version}`);
+    sessionStorage.removeItem('graphgoblin-run-events');
+    return sessionStorage.getItem(name);
+  },
   setItem: (name: string, value: string) => {
     try {
       sessionStorage.setItem(name, value);
@@ -69,8 +75,7 @@ export const useRunEventStore = create<RunEventStoreState>()(
         }),
     }),
     {
-      // Canonical decision evidence replaces the older v2 decision payload; replay these logs.
-      name: 'graphgoblin-run-events-v3',
+      name: `graphgoblin-run-events-v${CURRENT_DEFINITION_FORMAT}`,
       storage: createJSONStorage(() => quotaSafeSessionStorage),
       partialize: (state) => ({ runs: state.runs }),
     },
