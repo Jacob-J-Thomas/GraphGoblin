@@ -210,11 +210,11 @@ test('an older version’s open connection blocks device drafts: the editor says
   await expect(page.locator('.react-flow__node[data-id="subloop"]')).toBeVisible();
 });
 
-for (const pending of [false, true]) {
-  test(`a seeded format-3 device draft ${pending ? 'stays raw with review and export' : 'reopens converted and conflicts before overwrite'}`, async ({
-    page,
-    request,
-  }) => {
+for (const scenario of ['pending', 'synced', 'stale', 'unsynced'] as const) {
+  test(`a seeded format-3 device draft: ${scenario}`, async ({ page, request }) => {
+    const pending = scenario === 'pending';
+    const synced = scenario === 'synced';
+    const stale = scenario === 'stale';
     const created = await request.post('/loops', {
       data: { definition: approvalLoop('cutover server') },
     });
@@ -222,8 +222,8 @@ for (const pending of [false, true]) {
     const { loop } = (await created.json()) as { loop: { id: string } };
     const original = {
       loopId: loop.id,
-      savedAt: '2000-01-01T00:00:00.000Z',
-      synced: true,
+      savedAt: scenario === 'unsynced' ? '2999-01-01T00:00:00.000Z' : '2000-01-01T00:00:00.000Z',
+      synced,
       baseToken: 'old-server-token',
       definition: {
         schemaVersion: 3,
@@ -271,9 +271,28 @@ for (const pending of [false, true]) {
       const path = await download.path();
       if (!path) throw new Error('Expected local download');
       expect(JSON.parse(await readFile(path, 'utf8'))).toEqual(original);
+    } else if (synced || stale) {
+      await expect(page.getByRole('heading', { name: 'cutover server' })).toBeVisible();
+      await expect(page.getByText('This device draft was converted to format 4')).toBeHidden();
+      await expect(page.getByText('The draft changed on the server')).toBeHidden();
+      if (stale) {
+        await expect(page.getByText('The server has a newer draft')).toBeVisible();
+        await page.getByRole('button', { name: "Use this device's copy instead" }).click();
+        await expect(page.getByRole('heading', { name: 'automatic device' })).toBeVisible();
+        await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
+      } else {
+        await expect(
+          page.getByRole('button', { name: "Use this device's copy instead" }),
+        ).toBeHidden();
+        await page.reload();
+        await expect(page.getByRole('heading', { name: 'cutover server' })).toBeVisible();
+        await expect(page.getByText('Original device copy preserved')).toBeVisible();
+        await expect(page.getByText('This device draft was converted to format 4')).toBeHidden();
+      }
     } else {
       await expect(page.getByRole('heading', { name: 'automatic device' })).toBeVisible();
-      await expect(page.getByText('The draft changed on the server')).toBeVisible();
+      await expect(page.getByText('This device draft was converted to format 4')).toBeVisible();
+      await expect(page.getByText(/Another tab or device saved/)).toBeHidden();
       const before = (await (await request.get(`/loops/${loop.id}`)).json()) as {
         draft: { definition: { name: string } };
       };

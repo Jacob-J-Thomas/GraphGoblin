@@ -489,6 +489,7 @@ export class FakeApi {
       async (call) => {
         try {
           let input = call.body;
+          let notices: { code: string; path: string; message: string }[] = [];
           if (
             typeof input === 'object' &&
             input !== null &&
@@ -502,16 +503,20 @@ export class FakeApi {
             if (!converted.ok)
               return problem(
                 400,
-                'LOOP_FORMAT_UPGRADE_REQUIRED',
-                'Use the offline graphgoblin-upgrade export command to review this export.',
+                converted.reviewItems.some((item) => item.status === 'pending') ||
+                  converted.issues.some((issue) => issue.code.endsWith('_REQUIRED'))
+                  ? 'LOOP_FORMAT_UPGRADE_REQUIRED'
+                  : 'LOOP_IMPORT_SOURCE_INVALID',
+                'Use graphgoblin-upgrade export with --resolutions resolutions.json and the reported v3 item ids and hashes. See docs/guide/08-offline-upgrade.md#convert-a-portable-export.',
                 { issues: converted.issues, reviewItems: converted.reviewItems },
               );
             input = converted.value;
+            notices = converted.notices;
           }
           const imported = importLoop(input);
           const loop = this.addLoop(imported.definition);
           return json(
-            { loop, draft: this.loops.get(loop.id)!.draft, issues: imported.issues },
+            { loop, draft: this.loops.get(loop.id)!.draft, issues: imported.issues, notices },
             201,
           );
         } catch (error) {

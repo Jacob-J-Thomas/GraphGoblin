@@ -2,6 +2,9 @@ import { CURRENT_DEFINITION_FORMAT, type LoopDefinitionInput } from '@graphgobli
 import type { DecisionRoutes } from '../editor/decision-route-edges.js';
 import { del, get, update, promisifyRequest, type UseStore } from 'idb-keyval';
 
+/** Cannot match a server content hash; converted device edits need explicit reconciliation. */
+export const UNRECONCILED_DEVICE_TOKEN = 'unreconciled-device-format';
+
 /**
  * Unsaved editor drafts mirrored to IndexedDB, so a reload or an offline spell never loses work.
  * The server draft stays the source of truth once an autosave succeeds.

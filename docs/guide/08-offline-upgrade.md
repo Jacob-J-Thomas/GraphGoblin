@@ -56,10 +56,13 @@ Flat legacy resolution keys, malformed, stale, conflicting and unused resolution
 are refused. Review the complete loop and external consumers; hashes bind a
 proposal to its source, not to the truth of an owner's assessment.
 
-API import converts old exports automatically when no review is pending. Otherwise
-it returns `400 LOOP_FORMAT_UPGRADE_REQUIRED` with `errors.issues` and
+API import converts old exports automatically when no review is pending and returns
+automatic rewrite `notices` alongside validation `issues` in its `201` response.
+The web import result shows these changes. Pending review returns `400 LOOP_FORMAT_UPGRADE_REQUIRED` with `errors.issues` and
 `errors.reviewItems`, including IDs, hashes and reasons. API-supplied resolutions
-are unsupported; use the offline command and import its completed format-4 output.
+are unsupported; use `--resolutions resolutions.json` with the `v3` map described
+above and import the completed format-4 output. Invalid old source or envelopes
+return `LOOP_IMPORT_SOURCE_INVALID` instead of a pending-review code.
 The MCP server has no import tool.
 
 ## Retained database tooling
@@ -105,14 +108,19 @@ Restoring the pre-upgrade backup discards every edit and run created after that 
 
 ## Browser drafts and converter lifetime
 
-Opening the editor converts automatic old device drafts once, archives and reads
-back the exact original before replacing an active or set-aside key, and marks the
-current copy unsynced. Old server tokens are discarded: the first autosave gets a
-conflict and requires **Reload server draft** or **Overwrite with this copy** using
-a fresh server token. Set-aside restoration is also an explicit overwrite choice.
+Opening the editor archives and reads back the exact original before replacing an
+active or set-aside key with its converted definition. A synced mirror remains a
+clean cache and the server copy wins; opening it causes no conflict. Unsynced work
+stays unsynced. Older unsynced work is set aside when the server is newer, and
+restoring it is an explicit overwrite choice.
+
+Old server tokens are invalidated. Saving converted edits requires **Reload server
+draft** or **Overwrite with this copy** using a fresh token; the conflict notice
+explains the format conversion. This also protects edits made from a converted
+synced cache while offline.
 
 Pending, incomplete or failed old conversions remain inert raw copies with review
-issues and **Export original device copy**. Archived originals stay inert. Failed
+issues and **Export original device copy**. Archived originals stay inert and are labelled without reconversion. Failed
 archival or readback blocks overwriting autosave. Incomplete current drafts still
 reopen for editing. The IndexedDB drafts store is preserved across version upgrades. A raw device-copy
 export includes its metadata and tokens; keep that original file and copy its

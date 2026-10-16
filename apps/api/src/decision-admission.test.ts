@@ -148,7 +148,7 @@ describe('evaluator-specific decision admission', () => {
     },
   );
   it.each([1, 2, 3])(
-    'refuses a format-%s export with the existing upgrade-required code',
+    'refuses malformed format-%s source independently of pending review',
     async (version) => {
       const t = await createTestApp();
       apps.push(t);
@@ -162,7 +162,7 @@ describe('evaluator-specific decision admission', () => {
         },
       });
       expect(response.statusCode).toBe(400);
-      expect(response.json().code).toBe('LOOP_FORMAT_UPGRADE_REQUIRED');
+      expect(response.json().code).toBe('LOOP_IMPORT_SOURCE_INVALID');
     },
   );
 });

@@ -84,11 +84,23 @@ node; omission defaults to Codex. Create, draft save, and validate request bodie
 canonical `LoopDefinitionSchema`. `settings.defaults.harness` is rejected as an unknown key,
 with its field path, regardless of its value.
 
-`POST /loops/import` delegates to `domain.importLoop`, accepting canonical bare definitions
-and portable export envelopes. Envelope errors retain paths such as
-`loop.settings.defaults.harness`, `formatVersion`, or `exportedAt`, under `LOOP_IMPORT_ERROR`.
-Ordinary bodies use `VALIDATION_FAILED`. Responses and exports use the canonical, encodable
-schemas. The current definition and export formats are version 4. Historical migration `0005` removed loop-level harness selection; the later decision/default cutover requires the stopped-instance [offline upgrade](guide/08-offline-upgrade.md). Until the integrated cutover supplies conversion, format-1/2/3 exports and format-3 stores remain refused. Old-format imports receive `LOOP_FORMAT_UPGRADE_REQUIRED`, and unconverted stores stop before ordinary migrations or recovery. There is no tolerant runtime read path. See the CHANGELOG upgrade notes.
+`POST /loops/import` explicitly converts old-format bare definitions and portable
+exports before current-schema admission. Its `201` response contains `loop`, `draft`,
+validation `issues` and automatic conversion `notices` (`code`, `path`, `message`).
+Current imports have an empty notices array. The web import result displays these
+changes alongside validation issues.
+
+Pending conversion returns `400 LOOP_FORMAT_UPGRADE_REQUIRED` with `errors.issues`
+and hash-bound `errors.reviewItems`. The detail points to the [portable export
+workflow](guide/08-offline-upgrade.md#convert-a-portable-export) and the offline
+`--resolutions resolutions.json` file with its `v3` item map. Simply invalid old
+source/envelopes return `LOOP_IMPORT_SOURCE_INVALID`; current envelope errors retain
+paths such as `loop.settings.defaults.harness`, `formatVersion` or `exportedAt`
+under `LOOP_IMPORT_ERROR`. Ordinary bodies use `VALIDATION_FAILED`.
+
+Responses and exports use format 4. The server-store cutover remains separate:
+unconverted stores still stop before ordinary migrations or recovery. No tolerant
+runtime reader is added. See the CHANGELOG upgrade notes.
 
 ## SSE protocol (Decided)
 

@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { FakeApi } from '../__fixtures__/fake-api.js';
 import { renderApp } from '../__fixtures__/render.js';
+import * as converter from '@graphgoblin/domain/upgrade';
 import * as drafts from '../drafts/local-drafts.js';
 import { newLoopDefinition } from './model.js';
 import { useEditorStore } from './store.js';
@@ -125,7 +126,7 @@ describe('restoring a set-aside copy', () => {
       definition: { schemaVersion: 4 },
       baseToken: 'unreconciled-device-format',
     });
-    await screen.findByText('The draft changed on the server');
+    await screen.findByText('This device draft was converted to format 4');
     expect(api.loops.get(loop.id)?.draft?.definition.name).toBe('server copy');
     await userEvent.click(screen.getByRole('button', { name: 'Overwrite with this copy' }));
     await waitFor(() =>
@@ -166,7 +167,8 @@ describe('restoring a set-aside copy', () => {
     await drafts.saveArchivedDraft(archive);
     renderApp(`/loops/${loop.id}/edit`, api);
     await screen.findByRole('heading', { name: 'server copy' });
-    expect(await screen.findAllByText('/nodes/1/config:exit-policy')).toHaveLength(2);
+    expect(await screen.findAllByText('/nodes/1/config:exit-policy')).toHaveLength(1);
+    expect(screen.getByText('Original device copy preserved')).toBeVisible();
     expect(screen.getByRole('button', { name: 'Export original device copy' })).toBeVisible();
     expect(await drafts.loadLocalDraft(loop.id)).toBeUndefined();
     expect(await drafts.loadArchivedDrafts(loop.id)).toEqual([archive, original]);
@@ -202,27 +204,94 @@ describe('restoring a set-aside copy', () => {
     },
   );
 
-  it('archives and converts a synced v3 active draft even when the server timestamp is newer', async () => {
+  it.each([false, true])(
+    'keeps a converted synced mirror as a clean cache, with offline=%s',
+    async (offline) => {
+      const api = new FakeApi(),
+        loop = api.addLoop(newLoopDefinition('server copy'));
+      api.offline = offline;
+      const original = {
+        loopId: loop.id,
+        definition: oldManual('cached device copy'),
+        savedAt: '2999-01-01T00:00:00.000Z',
+        synced: true,
+        baseToken: 'old-token',
+      };
+      await drafts.saveLocalDraft(original);
+      renderApp(`/loops/${loop.id}/edit`, api);
+      await screen.findByRole('heading', { name: offline ? 'cached device copy' : 'server copy' });
+      await new Promise((resolve) => setTimeout(resolve, 700));
+      expect(useEditorStore.getState().revision).toBe(useEditorStore.getState().savedRevision);
+      expect(useEditorStore.getState().conflict).toBeUndefined();
+      expect(api.callsTo('PUT', `/loops/${loop.id}/draft`)).toHaveLength(0);
+      expect(await drafts.loadArchivedDrafts(loop.id)).toEqual([original]);
+      expect(await drafts.loadLocalDraft(loop.id)).toMatchObject({
+        synced: true,
+        definition: { schemaVersion: 4 },
+      });
+    },
+  );
+
+  it('sets stale converted unsynced work aside and restores it only by explicit choice', async () => {
     const api = new FakeApi(),
       loop = api.addLoop(newLoopDefinition('server copy'));
     const original = {
       loopId: loop.id,
-      definition: oldManual('automatic active'),
+      definition: oldManual('stale device work'),
       savedAt: '1900-01-01T00:00:00.000Z',
-      synced: true,
-      baseToken: api.draftToken(loop.id)!,
+      synced: false,
+      baseToken: 'old-token',
     };
     await drafts.saveLocalDraft(original);
     renderApp(`/loops/${loop.id}/edit`, api);
-    await screen.findByRole('heading', { name: 'automatic active' });
-    await screen.findByText('The draft changed on the server');
-    expect(await drafts.loadArchivedDrafts(loop.id)).toEqual([original]);
-    expect(await drafts.loadLocalDraft(loop.id)).toMatchObject({
+    await screen.findByRole('heading', { name: 'server copy' });
+    expect(await screen.findByText('The server has a newer draft')).toBeVisible();
+    expect(await drafts.loadSetAsideDraft(loop.id)).toMatchObject({
       synced: false,
-      definition: { schemaVersion: 4 },
+      definition: { name: 'stale device work', schemaVersion: 4 },
     });
-    expect(api.loops.get(loop.id)?.draft?.definition.name).toBe('server copy');
+    expect(useEditorStore.getState().conflict).toBeUndefined();
+    expect(api.callsTo('PUT', `/loops/${loop.id}/draft`)).toHaveLength(0);
+    expect(await drafts.loadArchivedDrafts(loop.id)).toEqual([original]);
+    await userEvent.click(screen.getByRole('button', { name: "Use this device's copy instead" }));
+    await screen.findByRole('heading', { name: 'stale device work' });
+    await waitFor(() =>
+      expect(screen.getByTestId('save-state')).toHaveTextContent('All changes saved'),
+    );
+    expect(useEditorStore.getState().conflict).toBeUndefined();
   });
+
+  it.each([false, true])(
+    'does not convert archives or current drafts, with current cache=%s',
+    async (currentCache) => {
+      const api = new FakeApi(),
+        loop = api.addLoop(newLoopDefinition('server copy'));
+      const original = {
+        loopId: loop.id,
+        definition: oldManual('inert old archive', true),
+        savedAt: 'old',
+        synced: false,
+      };
+      await drafts.saveArchivedDraft(original);
+      if (currentCache)
+        await drafts.saveLocalDraft({
+          loopId: loop.id,
+          definition: newLoopDefinition('current cache'),
+          savedAt: 'old',
+          synced: true,
+        });
+      const conversion = vi.spyOn(converter, 'upgradeLoopCurrent');
+      try {
+        renderApp(`/loops/${loop.id}/edit`, api);
+        await screen.findByText('Original device copy preserved');
+        expect(screen.getByRole('button', { name: 'Export original device copy' })).toBeVisible();
+        expect(conversion).not.toHaveBeenCalled();
+        expect(await drafts.loadArchivedDrafts(loop.id)).toEqual([original]);
+      } finally {
+        conversion.mockRestore();
+      }
+    },
+  );
 
   it('preserves and converts a set-aside copy and keeps its archived original inert on reopening', async () => {
     const api = new FakeApi(),
@@ -239,7 +308,7 @@ describe('restoring a set-aside copy', () => {
     await screen.findByRole('button', { name: "Use this device's copy instead" });
     expect(await drafts.loadArchivedDrafts(loop.id)).toEqual([original]);
     expect(await drafts.loadSetAsideDraft(loop.id)).toMatchObject({
-      synced: false,
+      synced: true,
       baseToken: 'unreconciled-device-format',
       definition: { schemaVersion: 4 },
     });

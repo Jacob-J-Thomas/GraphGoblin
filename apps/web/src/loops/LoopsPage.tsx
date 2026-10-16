@@ -110,7 +110,7 @@ function ImportLoop() {
   const client = useApi();
   const queryClient = useQueryClient();
   const [message, setMessage] = useState<
-    { tone: 'good' | 'bad'; text: string; issues?: string[] } | undefined
+    { tone: 'good' | 'bad'; text: string; issues?: string[]; notices?: string[] } | undefined
   >();
   const importLoop = useMutation({
     mutationFn: (document: Record<string, unknown>) => loops.import(client, document),
@@ -120,6 +120,7 @@ function ImportLoop() {
         tone: 'good',
         text: `Imported "${created.loop.name}".`,
         issues: created.issues.map((i) => `${i.code}: ${i.message}`),
+        notices: created.notices.map((notice) => `${notice.path}: ${notice.message}`),
       });
     },
     onError: (error) =>
@@ -152,6 +153,16 @@ function ImportLoop() {
       {message ? (
         <div id="import-loop-result">
           <Alert tone={message.tone} title={message.text}>
+            {message.notices && message.notices.length > 0 ? (
+              <div>
+                <p>Automatic changes made during import:</p>
+                <ul className="list-disc pl-4 text-xs">
+                  {message.notices.map((notice, index) => (
+                    <li key={index}>{notice}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
             {message.issues && message.issues.length > 0 ? (
               <ul className="list-disc pl-4 text-xs">
                 {message.issues.map((issue, i) => (

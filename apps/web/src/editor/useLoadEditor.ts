@@ -1,6 +1,6 @@
 import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { useEffect, useRef, useState } from 'react';
-import { upgradeLoopCurrent, type UpgradeIssue } from '@graphgoblin/domain';
+import type { UpgradeIssue } from '@graphgoblin/domain';
 import { useLoop } from '../api/queries.js';
 import {
   clearArchivedDraft,
@@ -12,6 +12,7 @@ import {
   saveArchivedDraft,
   saveLocalDraft,
   saveSetAsideDraft,
+  UNRECONCILED_DEVICE_TOKEN,
   type LocalDraft,
 } from '../drafts/local-drafts.js';
 import { useEditorStore } from './store.js';
@@ -41,25 +42,27 @@ async function readDeviceDraft(draft: LocalDraft | undefined): Promise<DeviceDra
     definition.schemaVersion === CURRENT_DEFINITION_FORMAT
   )
     return { draft: current };
-  const result = await upgradeLoopCurrent(definition).catch(() => ({
-    ok: false as const,
-    issues: [
-      {
-        code: 'UPGRADE_CONVERSION_FAILED',
-        path: '/',
-        message: 'Conversion failed; the original device copy is retained.',
-      },
-    ],
-  }));
+  const result = await import('@graphgoblin/domain/upgrade')
+    .then(({ upgradeLoopCurrent }) => upgradeLoopCurrent(definition))
+    .catch(() => ({
+      ok: false as const,
+      issues: [
+        {
+          code: 'UPGRADE_CONVERSION_FAILED',
+          path: '/',
+          message: 'Conversion failed; the original device copy is retained.',
+        },
+      ],
+    }));
   if (!result.ok) return { unconvertible: { ...draft, migrationIssues: result.issues } };
   return {
     draft: {
       ...current,
       definition: result.value,
-      synced: false,
-      // Deliberately cannot match a server content hash. The first save must fetch a fresh
-      // token through DRAFT_CONFLICT and the user's explicit reload/overwrite choice.
-      baseToken: 'unreconciled-device-format',
+      synced: draft.synced,
+      // Discard the old token, including on a clean offline cache: any later edits must
+      // reconcile through DRAFT_CONFLICT. Synced caches themselves do not trigger a save.
+      baseToken: UNRECONCILED_DEVICE_TOKEN,
     },
   };
 }
@@ -123,24 +126,20 @@ export function useLoadEditor(loopId: string) {
       let rawSetAside: RawDeviceCopy[] = asideRead.unconvertible
         ? [{ ...asideRead.unconvertible, source: 'set-aside' as const }]
         : [];
-      const archivedCopies = await Promise.all(
-        storedArchive.map(async (draft) => {
-          const read = await readDeviceDraft(draft);
-          return {
-            ...(read.unconvertible ?? {
-              ...draft,
-              migrationIssues: [
-                {
-                  code: 'UPGRADE_ARCHIVED_RAW_COPY',
-                  path: '/schemaVersion',
-                  message: 'This original device copy is retained without conversion.',
-                },
-              ],
-            }),
-            source: 'archive' as const,
-          };
-        }),
-      );
+      // Archives are inert originals, not editor candidates. Do not hash/convert them on load.
+      const archivedCopies = storedArchive.map((draft): RawDeviceCopy => ({
+        ...draft,
+        migrationIssues: draft.migrationIssues?.length
+          ? draft.migrationIssues
+          : [
+              {
+                code: 'UPGRADE_ARCHIVED_RAW_COPY',
+                path: '/schemaVersion',
+                message: 'This original device copy is retained without conversion.',
+              },
+            ],
+        source: 'archive' as const,
+      }));
       const preservationFailures: RawDeviceCopy[] = [];
       if (local && storedLocal && local.definition !== storedLocal.definition) {
         try {
@@ -185,12 +184,7 @@ export function useLoadEditor(loopId: string) {
       // device saved since): keep the newer server copy and set the local one aside, under its
       // own key so later edits of the server copy cannot overwrite it.
       const serverIsNewer =
-        local &&
-        local.baseToken !== 'unreconciled-device-format' &&
-        !local.synced &&
-        server &&
-        serverUpdatedAt &&
-        serverUpdatedAt > local.savedAt;
+        local && !local.synced && server && serverUpdatedAt && serverUpdatedAt > local.savedAt;
       if (cancelled) return;
       if (failedToPreserveSetAside || preservationFailures.length > 0) {
         if (server) useEditorStore.getState().load(loopId, server, { baseToken: serverToken });

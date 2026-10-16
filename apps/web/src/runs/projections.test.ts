@@ -263,14 +263,29 @@ describe('run projections', () => {
         version: 0,
       }),
     );
-    await useRunEventStore.persist.rehydrate();
-    expect(useRunEventStore.getState().runs[R]).toBeUndefined();
+    vi.resetModules();
+    const { useRunEventStore: freshStore, quotaSafeSessionStorage: freshStorage } =
+      await import('./event-store.js');
+    await freshStore.persist.rehydrate();
+    expect(freshStore.getState().runs[R]).toBeUndefined();
     expect(sessionStorage.getItem('graphgoblin-run-events-v3')).toBeNull();
     const refreshed = event(R, 1, 'decision.made', { nodeId: 'd', ...expressionEvidence('good') });
-    useRunEventStore.getState().append(R, refreshed);
-    expect(useRunEventStore.getState().runs[R]?.events).toEqual([refreshed]);
+    freshStore.getState().append(R, refreshed);
+    expect(freshStore.getState().runs[R]?.events).toEqual([refreshed]);
     expect(sessionStorage.getItem('graphgoblin-run-events-v4')).toContain('"portId":"good"');
-    useRunEventStore.setState({ runs: {} });
+    sessionStorage.setItem(
+      'graphgoblin-run-events-v3',
+      'written by an older tab after initialisation',
+    );
+    const removing = vi.spyOn(Storage.prototype, 'removeItem');
+    try {
+      freshStorage.getItem('graphgoblin-run-events-v4');
+      await freshStore.persist.rehydrate();
+      expect(removing).not.toHaveBeenCalled();
+    } finally {
+      removing.mockRestore();
+    }
+    freshStore.setState({ runs: {} });
   });
   it('describes every event type', () => {
     const lines = ALL.map(describeEvent);

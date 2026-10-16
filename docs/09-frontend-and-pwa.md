@@ -257,25 +257,29 @@ The adversarial QA report is `docs/qa/2026-10-03-wp-d2.md`. Behaviour that chang
 
 ### Device format conversion
 
-`readDeviceDraft` uses the composed 1?2?3?4 conversion for older drafts. Automatic
-conversion archives and reads back the complete original, including metadata and
-tokens, before replacing an active or set-aside key. The result is current and
-unsynced, even if the original was synced. Its `baseToken` is deliberately set to
-`unreconciled-device-format`, which cannot equal a server content hash. The first
-autosave therefore enters `DRAFT_CONFLICT`; only **Reload server draft** or an
-explicit **Overwrite with this copy** resolves it with a fresh token. A converted
-copy is not discarded merely because the server timestamp is newer.
+`readDeviceDraft` loads the converter lazily only for an older-format device copy.
+Automatic conversion archives and reads back the complete original, including
+metadata and tokens, before replacing an active or set-aside key. A synced mirror
+stays a clean cache; the server definition wins whenever available. Genuinely
+unsynced work stays unsynced. If the server timestamp is newer, the converted work
+is set aside using the existing restore/discard notice.
+
+The old `baseToken` is invalidated with `unreconciled-device-format`, including on
+an offline synced cache in case it is edited later. A first save of converted edits
+enters `DRAFT_CONFLICT`; its notice explains the format conversion and requires
+**Reload server draft** or explicit **Overwrite with this copy** with a fresh token.
+Opening a synced mirror does not make it dirty and does not trigger this conflict.
 
 Pending review or conversion failure keeps an inert, exportable raw original in
 its active, set-aside or archive slot. The notice lists review IDs and reasons;
-issues retain their hashes. Archives are never activated automatically. Failed
+issues retain their hashes. Archives are labelled without hashing or reconverting them and are never activated automatically. Failed
 archive writes or verification block editing and overwriting autosave. Incomplete
 current drafts still reopen unchanged. Restoring a converted set-aside copy is an
 explicit choice to overwrite using the currently displayed server token.
 
 Run events and their SSE resume cursors are the only persisted run data, in
 `sessionStorage`. Their key is `graphgoblin-run-events-v4`; earlier keys are removed
-before hydration. No old-event reader exists. React Query data is memory-only and
+once at module initialisation before hydration. Repeated reads do not repeat cleanup. No old-event reader exists. React Query data is memory-only and
 the service worker caches the app shell, never API responses.
 
 The IndexedDB mirror can be refused: an older GraphGoblin tab or PWA window that keeps its version 1 connection open blocks the version 2 store upgrade, and storage can fail for other reasons (quota, private modes). The editor reports where the edits are only after the write that keeps them has answered.

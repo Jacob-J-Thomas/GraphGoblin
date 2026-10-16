@@ -217,6 +217,7 @@ describe('LoopsPage', () => {
           JSON.stringify({
             loop: { id: 'x', name: 'warned', ownerId: 'local', createdAt: TS, updatedAt: TS },
             issues: [{ code: 'NO_EXIT', severity: 'error', message: 'needs exit' }],
+            notices: [],
           }),
           { status: 201, headers: { 'content-type': 'application/json' } },
         ),
@@ -226,7 +227,7 @@ describe('LoopsPage', () => {
     fireEvent.change(input, { target: { files: [] } });
   });
 
-  it('directs a v1 export to the offline upgrade command', async () => {
+  it('distinguishes invalid old source from pending import reviews', async () => {
     const user = userEvent.setup();
     renderApp('/loops', new FakeApi());
     const document = {
@@ -240,8 +241,55 @@ describe('LoopsPage', () => {
       new File([JSON.stringify(document)], 'old-loop.json', { type: 'application/json' }),
     );
     const alert = await screen.findByRole('alert');
-    expect(alert).toHaveTextContent('LOOP_FORMAT_UPGRADE_REQUIRED');
-    expect(alert).toHaveTextContent('Use the offline graphgoblin-upgrade export command');
+    expect(alert).toHaveTextContent('LOOP_IMPORT_SOURCE_INVALID');
+    expect(alert).toHaveTextContent('graphgoblin-upgrade export');
+  });
+
+  it('shows the automatic changes reported by an old-format import', async () => {
+    const user = userEvent.setup();
+    renderApp('/loops', new FakeApi());
+    const document = {
+      schemaVersion: 3,
+      name: 'automatic expression import',
+      nodes: [
+        { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+        {
+          id: 'pick',
+          kind: 'decision',
+          label: 'Pick',
+          config: {
+            answer: {
+              type: 'choice',
+              options: [
+                { id: 'yes', label: 'Yes', criteria: 'Ready' },
+                { id: 'no', label: 'No', criteria: 'Pending' },
+              ],
+            },
+            evaluation: { kind: 'expression', jsonata: '"yes"' },
+            recordAlternatives: true,
+          },
+        },
+        { id: 'done', kind: 'exit', label: 'Done', config: {} },
+      ],
+      edges: [
+        { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'pick' } },
+        ...['yes', 'no'].map((port) => ({
+          id: port,
+          from: { node: 'pick', port },
+          to: { node: 'done' },
+        })),
+      ],
+    };
+    await user.upload(
+      await screen.findByLabelText('Import an exported loop (JSON)'),
+      new File([JSON.stringify(document)], 'old.json', { type: 'application/json' }),
+    );
+    expect(await screen.findByText('Automatic changes made during import:')).toBeVisible();
+    expect(
+      screen.getByText(
+        '/nodes/1/config: Remove unused classifier criteria and recording controls from expression/LLM decisions.',
+      ),
+    ).toBeVisible();
   });
 
   it('exports the published version or the draft as a download', async () => {

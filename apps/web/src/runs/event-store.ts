@@ -21,13 +21,7 @@ export interface RunEventStoreState {
  * its first event instead of resuming (still without gaps or duplicates).
  */
 export const quotaSafeSessionStorage = {
-  getItem: (name: string) => {
-    // Cached events and their SSE cursors cannot cross the format cutover. Refetch facts.
-    for (const version of [1, 2, 3])
-      sessionStorage.removeItem(`graphgoblin-run-events-v${version}`);
-    sessionStorage.removeItem('graphgoblin-run-events');
-    return sessionStorage.getItem(name);
-  },
+  getItem: (name: string) => sessionStorage.getItem(name),
   setItem: (name: string, value: string) => {
     try {
       sessionStorage.setItem(name, value);
@@ -76,7 +70,13 @@ export const useRunEventStore = create<RunEventStoreState>()(
     }),
     {
       name: `graphgoblin-run-events-v${CURRENT_DEFINITION_FORMAT}`,
-      storage: createJSONStorage(() => quotaSafeSessionStorage),
+      storage: createJSONStorage(() => {
+        // Once at module initialisation, before hydration. Never read old events or cursors.
+        for (const version of [1, 2, 3])
+          sessionStorage.removeItem(`graphgoblin-run-events-v${version}`);
+        sessionStorage.removeItem('graphgoblin-run-events');
+        return quotaSafeSessionStorage;
+      }),
       partialize: (state) => ({ runs: state.runs }),
     },
   ),
