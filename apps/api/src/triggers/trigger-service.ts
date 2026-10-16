@@ -280,12 +280,13 @@ export class TriggerService {
   /**
    * Verify and act on one delivery to `/hooks/<token>`. Order: endpoint lookup (404), rate limit
    * (429), timestamp window (401), secret (503), signature (401), JSON (400), expressions (422),
-   * replay (409), then record and start the run unless the filter rejects it.
+   * then acknowledge saved or already consumed input. Body receipts dispatch asynchronously.
    */
   async handleWebhook(
     token: string,
     rawBody: Uint8Array,
     headers: Record<string, unknown>,
+    rawHeaders?: readonly string[],
   ): Promise<WebhookOutcome> {
     const fail = (status: number, code: string, detail: string): WebhookOutcome => ({
       kind: 'error',
@@ -293,6 +294,8 @@ export class TriggerService {
       code,
       detail,
     });
+    if (rawBody.byteLength > WEBHOOK_BODY_LIMIT)
+      return fail(413, 'BODY_TOO_LARGE', 'the webhook body exceeds 1 MiB');
     const endpoint = await this.deps.endpoints.findByToken(token);
     if (!endpoint || !endpoint.enabled) return fail(404, 'HOOK_NOT_FOUND', 'unknown webhook');
 
@@ -321,6 +324,7 @@ export class TriggerService {
       headers,
       now,
       secret,
+      rawHeaders,
     );
     if (!verified.ok) {
       if (verified.code === 'HOOK_NOT_READY')
@@ -387,34 +391,10 @@ export class TriggerService {
           start,
           !passes,
         );
-        if (outcome.state === 'duplicate')
-          return fail(
-            409,
-            'REPLAYED',
-            'this content was already received; filtered content remains consumed',
-          );
-        if (outcome.state === 'deduplicated')
-          return fail(
-            409,
-            'DUPLICATE_KEY',
-            'this authored key was already consumed; inspect its Events entry',
-          );
-        if (outcome.state === 'failed')
-          return fail(
-            503,
-            outcome.receipt.failureCode ?? 'WEBHOOK_ADMISSION_FAILED',
-            'saved delivery cannot be admitted; inspect its Events entry',
-          );
-        if (outcome.state === 'pending')
-          return fail(
-            503,
-            'WEBHOOK_ADMISSION_RETRY',
-            'delivery saved; admission will be retried automatically',
-          );
         return {
           kind: 'accepted',
-          event: { ...record, runIds: outcome.run ? [outcome.run.id] : [] },
-          ...(outcome.run ? { runId: outcome.run.id } : {}),
+          event: record,
+          ...(outcome.receipt.intent ? { runId: outcome.receipt.intent.run.id } : {}),
           filtered: outcome.state === 'filtered',
         };
       } catch {
@@ -425,6 +405,8 @@ export class TriggerService {
         );
       }
     }
+    // TODO(#168 T4 continuation): move timestamp intake onto claim/create with 0013. Preserve
+    // its current window dedupe until T5 implements Allow and permanent explicit keys.
     const inserted = await this.deps.inbound.insertUnlessDuplicate(record, {
       ownerId: endpoint.ownerId,
       source,
@@ -432,7 +414,7 @@ export class TriggerService {
       since: new Date(now.getTime() - (endpoint.replayWindowSeconds ?? 300) * 1000).toISOString(),
     });
     if (inserted.duplicate) {
-      return fail(409, 'REPLAYED', 'this delivery was already received');
+      return { kind: 'accepted', event: inserted.duplicate, filtered: false };
     }
     if (!passes) return { kind: 'accepted', event: record, filtered: true };
 

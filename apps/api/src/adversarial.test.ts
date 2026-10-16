@@ -341,7 +341,7 @@ describe('adversarial API invariants', () => {
     ).toBe(202);
     expect(
       (await t.app.inject({ method: 'POST', url: h.path, payload: '{"a":1}', headers })).statusCode,
-    ).toBe(409);
+    ).toBe(202);
     await t.idle();
   });
   it.each([-300001, -299999, 299999, 300001])(

@@ -1,4 +1,9 @@
-import { ContextThreadSchema, RunEventSchema, RunRecordSchema } from '@graphgoblin/contracts';
+import {
+  ContextThreadSchema,
+  JsonValueSchema,
+  RunEventSchema,
+  RunRecordSchema,
+} from '@graphgoblin/contracts';
 import { stableStringify } from '@graphgoblin/domain';
 import {
   AdmissionConflictError,
@@ -97,10 +102,35 @@ export class SqliteTriggerAdmission implements TriggerAdmissionPort {
         )
           throw new AdmissionConflictError();
         const [inbound] = await tx
-          .select({ id: inboundEvents.id })
+          .select()
           .from(inboundEvents)
           .where(eq(inboundEvents.id, receipt.inboundId));
         if (!inbound) throw new AdmissionConflictError();
+        if (
+          inbound.runIds.length &&
+          stableStringify(inbound.runIds) !== stableStringify([input.run.id])
+        )
+          throw new AdmissionConflictError();
+        const { dedupeKey, payload, ...metadata } = inbound;
+        let decoded;
+        try {
+          decoded = JsonValueSchema.parse(JSON.parse(payload));
+        } catch {
+          throw new AdmissionConflictError();
+        }
+        assertWebhookClaim(
+          {
+            ...receipt,
+            inbound: {
+              ...metadata,
+              payload: decoded,
+              // An admitted inbound already links this run; claim validation expects no links.
+              runIds: [],
+              ...(dedupeKey !== null ? { dedupeKey } : {}),
+            },
+          },
+          input,
+        );
       }
       const [prior] = await tx.select().from(runs).where(eq(runs.id, input.run.id));
       const [first] = await tx
@@ -160,6 +190,7 @@ export class SqliteTriggerAdmission implements TriggerAdmissionPort {
     const frozen = intent ? parseRunAdmission(intent) : undefined;
     assertWebhookClaim(input, frozen);
     return this.db.transaction(async (tx) => {
+      // TODO(#168 T5): replace raw-content consumption with Allow, without a stored policy switch.
       const [prior] = await tx
         .select()
         .from(webhookReceipts)

@@ -7,8 +7,11 @@ export const SIGNATURE_HEADER = 'x-graphgoblin-signature';
 export const TIMESTAMP_HEADER = 'x-graphgoblin-timestamp';
 
 /** HMAC-SHA256 over `${timestamp}.${body}`, presented as `sha256=<hex>`. */
-export function signPayload(secret: string, timestamp: string, body: string): string {
-  const digest = createHmac('sha256', secret).update(`${timestamp}.${body}`, 'utf8').digest('hex');
+export function signPayload(secret: string, timestamp: string, body: string | Uint8Array): string {
+  const digest = createHmac('sha256', secret)
+    .update(timestamp + '.', 'utf8')
+    .update(body)
+    .digest('hex');
   return `sha256=${digest}`;
 }
 
@@ -16,7 +19,7 @@ export function signPayload(secret: string, timestamp: string, body: string): st
 export function verifySignature(
   secret: string,
   timestamp: string,
-  body: string,
+  body: string | Uint8Array,
   presented: string,
 ): boolean {
   const expected = Buffer.from(signPayload(secret, timestamp, body), 'utf8');

@@ -173,8 +173,8 @@ test('body-signed GitHub preset saves, admits a matching hook, and deduplicates 
     label: { name: 'ready' },
   });
   const duplicate = await send(secondBody);
-  expect(duplicate.status()).toBe(409);
-  expect(await duplicate.json()).toMatchObject({ code: 'DUPLICATE_KEY' });
+  expect(duplicate.status()).toBe(202);
+  expect(await duplicate.json()).toEqual({ accepted: true });
 
   const source = `webhook:${endpoint.id}`;
   await expect

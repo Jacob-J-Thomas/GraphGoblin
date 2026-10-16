@@ -1,5 +1,10 @@
 # 09 - Frontend and PWA
 
+The public webhook response is fixed `202 {accepted:true}`. Events reads private delivery metadata
+and run links from `GET /events`, including saved pending and permanently failed body-receipt
+admissions; it cannot infer run creation from a sender's acknowledgement. The general Webhook
+controls remain part of the #168 T4 continuation.
+
 ## Shape (Decided)
 
 A React single-page application built with Vite, served by the API process in 1.0, installable as a PWA. It talks to the API only through the generated typed client and to run state only through SSE. It contains no business rules: validation, routing, and execution semantics live in `contracts`, `domain`, and the backend. The editor can still validate drafts locally by importing `contracts` and `domain`, since both are pure.

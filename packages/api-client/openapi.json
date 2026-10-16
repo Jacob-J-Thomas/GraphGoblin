@@ -17620,7 +17620,7 @@
     },
     "/hooks/{token}": {
       "post": {
-        "summary": "Signed webhook receiver (public; timestamp HMAC or exact body HMAC, durable body replay protection, rate limit)",
+        "summary": "Signed webhook receiver (public; fixed acknowledgement of saved input, timestamp HMAC or exact body HMAC, 1 MiB, rate limit)",
         "tags": [
           "triggers"
         ],
@@ -17645,89 +17645,15 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "event": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "ownerId": {
-                          "type": "string"
-                        },
-                        "type": {
-                          "type": "string"
-                        },
-                        "payload": {
-                          "$ref": "#/components/schemas/JsonValue"
-                        },
-                        "dedupeKey": {
-                          "type": "string"
-                        },
-                        "source": {
-                          "type": "string"
-                        },
-                        "receivedAt": {
-                          "type": "string"
-                        },
-                        "runIds": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          }
-                        },
-                        "delivery": {
-                          "type": "object",
-                          "properties": {
-                            "state": {
-                              "type": "string",
-                              "enum": [
-                                "filtered",
-                                "deduplicated",
-                                "pending",
-                                "admitted",
-                                "failed"
-                              ]
-                            },
-                            "attempts": {
-                              "type": "integer",
-                              "minimum": -9007199254740991,
-                              "maximum": 9007199254740991
-                            },
-                            "nextAttemptAt": {
-                              "type": "string"
-                            },
-                            "failureCode": {
-                              "type": "string"
-                            }
-                          },
-                          "required": [
-                            "state",
-                            "attempts"
-                          ],
-                          "additionalProperties": false
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "ownerId",
-                        "type",
-                        "payload",
-                        "source",
-                        "receivedAt",
-                        "runIds"
-                      ],
-                      "additionalProperties": false
-                    },
-                    "runId": {
-                      "type": "string"
-                    },
-                    "filtered": {
-                      "type": "boolean"
+                    "accepted": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
                     }
                   },
                   "required": [
-                    "event",
-                    "filtered"
+                    "accepted"
                   ],
                   "additionalProperties": false
                 }

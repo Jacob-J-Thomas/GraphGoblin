@@ -2174,7 +2174,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Signed webhook receiver (public; timestamp HMAC or exact body HMAC, durable body replay protection, rate limit) */
+        /** Signed webhook receiver (public; fixed acknowledgement of saved input, timestamp HMAC or exact body HMAC, 1 MiB, rate limit) */
         post: {
             parameters: {
                 query?: never;
@@ -2193,25 +2193,8 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            event: {
-                                id: string;
-                                ownerId: string;
-                                type: string;
-                                payload: components["schemas"]["JsonValue"];
-                                dedupeKey?: string | undefined;
-                                source: string;
-                                receivedAt: string;
-                                runIds: string[];
-                                delivery?: {
-                                    /** @enum {string} */
-                                    state: "filtered" | "deduplicated" | "pending" | "admitted" | "failed";
-                                    attempts: number;
-                                    nextAttemptAt?: string | undefined;
-                                    failureCode?: string | undefined;
-                                } | undefined;
-                            };
-                            runId?: string | undefined;
-                            filtered: boolean;
+                            /** @enum {boolean} */
+                            accepted: true;
                         };
                     };
                 };

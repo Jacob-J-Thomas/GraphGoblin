@@ -143,7 +143,7 @@ export function parseRunAdmission(value: unknown): RunAdmission {
     run: run.data,
     initialThread: initialThread.data,
     queued,
-    pinnedLoopIds: raw.pinnedLoopIds as string[],
+    pinnedLoopIds: [...(raw.pinnedLoopIds as string[])],
   };
 }
 

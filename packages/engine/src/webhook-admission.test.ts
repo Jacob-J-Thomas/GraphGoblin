@@ -47,6 +47,50 @@ async function setup() {
   return { engine, version, input, claim };
 }
 describe('durable webhook admission', () => {
+  it('keeps a claimed delivery recoverable when dispatch and retry-metadata writes both fail', async () => {
+    const { engine, input, claim } = await setup();
+    vi.spyOn(engine.ports.admission, 'create').mockRejectedValueOnce(
+      new Error('private-dispatch-marker'),
+    );
+    vi.spyOn(engine.ports.admission, 'failed').mockRejectedValueOnce(
+      new Error('private-metadata-marker'),
+    );
+    const saved = await engine.manager.receiveWebhook(claim, input, false);
+    expect(saved.state).toBe('pending');
+    await engine.manager.waitForWebhookRecovery();
+    expect(await engine.ports.admission.get(claim.id)).toMatchObject({
+      status: 'pending',
+      attempts: 0,
+    });
+    expect(JSON.stringify(engine.ports.logger.lines)).not.toContain('private-');
+    await engine.manager.retryPendingWebhooks();
+    await engine.manager.waitForIdle();
+    expect([...engine.ports.runs.runs.keys()]).toEqual([saved.receipt.intent!.run.id]);
+  });
+  it('recovers a crash after claim, before create, using the saved run identity', async () => {
+    const { engine, input, claim } = await setup();
+    const create = vi.spyOn(engine.ports.admission, 'create');
+    const original = engine.ports.admission.claim.bind(engine.ports.admission);
+    vi.spyOn(engine.ports.admission, 'claim').mockImplementationOnce(async (...args) => {
+      const result = await original(...args);
+      engine.manager.stop();
+      return result;
+    });
+    const claimed = await engine.manager.receiveWebhook(claim, input, false);
+    await engine.manager.waitForWebhookRecovery();
+    expect(create).not.toHaveBeenCalled();
+    expect(engine.ports.runs.runs.size).toBe(0);
+    const restarted = new RunManager(engine.ports, DEFAULT_TEST_SETTINGS);
+    managers.push(restarted);
+    await restarted.start();
+    await restarted.waitForIdle();
+    expect([...engine.ports.runs.runs.keys()]).toEqual([claimed.receipt.intent!.run.id]);
+    expect(
+      engine.ports.events
+        .all(claimed.receipt.intent!.run.id)
+        .filter((event) => event.type === 'run.queued'),
+    ).toHaveLength(1);
+  });
   it('consumes filtered content across versions and takes no execution pins', async () => {
     const { engine, input, claim } = await setup();
     expect((await engine.manager.receiveWebhook(claim, input, true)).state).toBe('filtered');
@@ -163,8 +207,10 @@ describe('durable webhook admission', () => {
         .all(pending.receipt.intent!.run.id)
         .filter((e) => e.type === 'run.queued'),
     ).toHaveLength(1);
-    expect(pending.receipt.status).toBe('admitted');
-    expect(pending.receipt.attempts).toBe(1);
+    expect(await engine.ports.admission.get(pending.receipt.id)).toMatchObject({
+      status: 'admitted',
+      attempts: 1,
+    });
     expect(JSON.stringify([...engine.ports.admission.receipts.values()])).not.toContain(
       'credential-marker',
     );
@@ -199,9 +245,9 @@ describe('durable webhook admission', () => {
       throw new Error('after-commit');
     });
     const pending = await engine.manager.receiveWebhook(claim, input, false);
-    expect(pending.state).toBe('admitted');
-    expect(pending.receipt.status).toBe('admitted');
+    expect(pending.state).toBe('pending');
     await engine.manager.waitForIdle();
+    expect((await engine.ports.admission.get(pending.receipt.id))?.status).toBe('admitted');
     engine.manager.stop();
     const restarted = new RunManager(engine.ports, DEFAULT_TEST_SETTINGS);
     managers.push(restarted);
@@ -228,6 +274,7 @@ describe('durable webhook admission', () => {
         input,
         false,
       );
+    await engine.manager.waitForWebhookRecovery();
     engine.ports.clock.advance(5000);
     const create = vi.spyOn(engine.ports.admission, 'create');
     create.mockClear();
@@ -240,14 +287,17 @@ describe('durable webhook admission', () => {
     create.mockRejectedValue(new AdmissionConflictError());
     engine.ports.clock.advance(10000);
     await engine.manager.retryPendingWebhooks();
-    expect(receipt.status).toBe('failed');
-    expect(receipt.failureCode).toBe('WEBHOOK_INTENT_CONFLICT');
+    expect(await engine.ports.admission.get(receipt.id)).toMatchObject({
+      status: 'failed',
+      failureCode: 'WEBHOOK_INTENT_CONFLICT',
+    });
   });
   it('finishes ordinary boot recovery before admitting fresh pending webhook runs', async () => {
     const { engine, input, claim } = await setup();
     vi.spyOn(engine.ports.admission, 'create').mockRejectedValueOnce(new Error('retry'));
     const pending = await engine.manager.receiveWebhook(claim, input, false);
     const runId = pending.receipt.intent!.run.id;
+    await engine.manager.waitForWebhookRecovery();
     engine.manager.stop();
     engine.ports.clock.advance(5000);
     const original = engine.ports.runs.listByStatus.bind(engine.ports.runs);
@@ -288,18 +338,20 @@ it('periodic recovery runs without a restart and caps persisted backoff at five 
   const { engine, input, claim } = await setup();
   const create = vi.spyOn(engine.ports.admission, 'create').mockRejectedValue(new Error('retry'));
   const pending = await engine.manager.receiveWebhook(claim, input, false);
+  await engine.manager.waitForWebhookRecovery();
   for (let i = 0; i < 9; i++) {
     engine.ports.clock.advance(300000);
     await vi.advanceTimersByTimeAsync(15000);
-    const next = Date.parse(pending.receipt.nextAttemptAt!) - engine.ports.clock.now().getTime();
+    const saved = (await engine.ports.admission.get(pending.receipt.id))!;
+    const next = Date.parse(saved.nextAttemptAt!) - engine.ports.clock.now().getTime();
     expect(next).toBeLessThanOrEqual(300000);
   }
-  expect(pending.receipt.attempts).toBe(10);
+  expect((await engine.ports.admission.get(pending.receipt.id))?.attempts).toBe(10);
   create.mockRestore();
   engine.ports.clock.advance(300000);
   await vi.advanceTimersByTimeAsync(15000);
   await engine.manager.waitForIdle();
-  expect(pending.receipt.status).toBe('admitted');
+  expect((await engine.ports.admission.get(pending.receipt.id))?.status).toBe('admitted');
   expect(engine.ports.runs.runs.size).toBe(1);
 });
 it('marks a removed saved target permanently failed and ignores stale already-admitted sweep rows', async () => {
@@ -311,12 +363,14 @@ it('marks a removed saved target permanently failed and ignores stale already-ad
   engine.ports.loops.versions.delete(version.id);
   engine.ports.clock.advance(5000);
   await engine.manager.retryPendingWebhooks();
-  expect(pending.receipt.failureCode).toBe('WEBHOOK_TARGET_REMOVED');
-  expect(pending.receipt.status).toBe('failed');
+  expect(await engine.ports.admission.get(pending.receipt.id)).toMatchObject({
+    failureCode: 'WEBHOOK_TARGET_REMOVED',
+    status: 'failed',
+  });
   expect(await engine.manager.loopInUse(input.loopId)).toBe(false);
   create.mockClear();
   vi.spyOn(engine.ports.admission, 'due').mockResolvedValue([
-    { ...pending.receipt, status: 'admitted' },
+    { id: pending.receipt.id, attempts: pending.receipt.attempts },
   ]);
   await engine.manager.retryPendingWebhooks();
   expect(create).not.toHaveBeenCalled();

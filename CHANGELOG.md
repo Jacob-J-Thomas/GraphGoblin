@@ -4,6 +4,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Webhook intake now returns fixed `202 {accepted:true}` for saved/consumed input; body-signed receipts dispatch asynchronously and retain their allocated identity through recovery. Both existing HMAC protocols authenticate exact bytes before fatal UTF-8/nonempty JSON parsing and reject duplicate raw authentication headers. One shared fake/SQLite admission suite verifies rollback and notification boundaries. **Upgrade:** rebuild API and generated clients together; hook responses no longer include events/run IDs or duplicate 409s, and empty JSON bodies now return 400. General webhook configuration, 0013 and timestamp atomic intake remain in the #168 step 23 T4 continuation; no installed-store migration is included in this checkpoint.
+
 - Trigger configs use one strict `type` discriminator across the editor, API, MCP and exports. Both webhook signing variants keep `type: 'webhook'`; their fields and validation are unchanged. **Upgrade:** current trigger configs and exports require `type` instead of `subtype`. Rebuild backend, web and generated clients together. Current stores and exports holding `subtype` are refused until the integrated format-4 cutover converts them. (#168, step 22 T3)
 
 - GitHub webhook presets now preview and apply editable body-check decisions, output-restoring mutations and quiet Success exits in one undo step, preserving successor connections and explicitly reviewing replacement edits; poll presets are unchanged. (#168, step 21 T2)

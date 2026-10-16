@@ -15,7 +15,17 @@ export type WebhookBodyResult =
   | { ok: false; status: 400 | 401 | 503; code: string; detail: string };
 
 /** Ambiguous/multiple authentication headers never select an arbitrary first value. */
-function header(headers: Record<string, unknown>, name: string): string | undefined {
+function header(
+  headers: Record<string, unknown>,
+  name: string,
+  rawHeaders?: readonly string[],
+): string | undefined {
+  if (rawHeaders) {
+    let count = 0;
+    for (let index = 0; index < rawHeaders.length; index += 2)
+      if (rawHeaders[index]?.toLowerCase() === name.toLowerCase()) count++;
+    if (count !== 1) return undefined;
+  }
   const matches = Object.entries(headers).filter(
     ([key]) => key.toLowerCase() === name.toLowerCase(),
   );
@@ -31,6 +41,7 @@ export function verifyWebhookBody(
   headers: Record<string, unknown>,
   now: Date,
   secret: string | undefined,
+  rawHeaders?: readonly string[],
 ): WebhookBodyResult {
   const fail = (status: 400 | 401 | 503, code: string, detail: string): WebhookBodyResult => ({
     ok: false,
@@ -40,7 +51,7 @@ export function verifyWebhookBody(
   });
   let timestamp: string | undefined;
   if (signing.scheme === 'hmac-sha256') {
-    timestamp = header(headers, TIMESTAMP_HEADER);
+    timestamp = header(headers, TIMESTAMP_HEADER, rawHeaders);
     const at = timestamp
       ? /^\d{1,12}$/.test(timestamp)
         ? Number(timestamp) * 1000
@@ -53,21 +64,18 @@ export function verifyWebhookBody(
   }
   if (secret === undefined)
     return fail(503, 'HOOK_NOT_READY', 'the endpoint has no signing secret configured');
-  const signature = header(headers, signing.header);
+  const signature = header(headers, signing.header, rawHeaders);
   const valid =
     signature !== undefined &&
     (signing.scheme === 'hmac-sha256-body'
       ? verifyRawBodySignature(secret, rawBody, signature)
-      : verifySignature(secret, timestamp ?? '', Buffer.from(rawBody).toString('utf8'), signature));
+      : verifySignature(secret, timestamp ?? '', rawBody, signature));
   if (!valid || signature === undefined)
     return fail(401, 'SIGNATURE_INVALID', 'the signature does not match');
   let payload: unknown;
   try {
-    const body =
-      signing.scheme === 'hmac-sha256-body'
-        ? new TextDecoder('utf-8', { fatal: true }).decode(rawBody)
-        : Buffer.from(rawBody).toString('utf8');
-    payload = signing.scheme === 'hmac-sha256' && body.trim() === '' ? null : JSON.parse(body);
+    const body = new TextDecoder('utf-8', { fatal: true }).decode(rawBody);
+    payload = JSON.parse(body);
   } catch {
     return fail(400, 'BODY_INVALID', 'the body is not valid UTF-8 JSON');
   }

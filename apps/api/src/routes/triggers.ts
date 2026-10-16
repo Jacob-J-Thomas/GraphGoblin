@@ -118,21 +118,22 @@ export function registerTriggerRoutes(app: ApiInstance, container: Container): v
         schema: {
           tags: ['triggers'],
           summary:
-            'Signed webhook receiver (public; timestamp HMAC or exact body HMAC, durable body replay protection, rate limit)',
+            'Signed webhook receiver (public; fixed acknowledgement of saved input, timestamp HMAC or exact body HMAC, 1 MiB, rate limit)',
           security: [],
           params: z.object({ token: z.string().min(1).max(256) }),
           response: {
-            202: z.object({
-              event: InboundEventSchema,
-              runId: z.string().optional(),
-              filtered: z.boolean(),
-            }),
+            202: z.object({ accepted: z.literal(true) }),
           },
         },
       },
       async (request, reply) => {
         const raw = request.body instanceof Uint8Array ? request.body : Buffer.alloc(0);
-        const outcome = await triggers.handleWebhook(request.params.token, raw, request.headers);
+        const outcome = await triggers.handleWebhook(
+          request.params.token,
+          raw,
+          request.headers,
+          request.raw.rawHeaders,
+        );
         if (outcome.kind === 'error') {
           if (outcome.retryAfterSeconds !== undefined) {
             void reply.header('retry-after', String(outcome.retryAfterSeconds));
@@ -140,11 +141,7 @@ export function registerTriggerRoutes(app: ApiInstance, container: Container): v
           return problem(reply, outcome.status, outcome.code, outcome.detail);
         }
         reply.status(202);
-        return {
-          event: outcome.event,
-          ...(outcome.runId ? { runId: outcome.runId } : {}),
-          filtered: outcome.filtered,
-        };
+        return { accepted: true as const };
       },
     );
     done();

@@ -227,6 +227,19 @@ Optional `timeoutSeconds` exists on inferencing and script nodes and on wait and
 - The SSE stream (07) is a tail of the same log, which is why reconnecting clients can resume from a sequence number without loss.
 - Large payloads such as transcripts, full probe responses, and return payloads above a size threshold are stored as artifacts on disk, keyed by content hash, and referenced from events.
 
+## Webhook admission checkpoint (#168 T4)
+
+**Webhook admission checkpoint (#168 T4).** Body-signed deliveries freeze their run admission under
+the deletion lock and acknowledge once claim saves the inbound row and receipt, complete intent,
+pending pins and key reservation. Dispatch separately commits the run/thread, queued event, pins,
+admitted receipt and inbound run link, then notifies. Retry metadata failure cannot invalidate the
+earlier acknowledgement. Recovery uses the saved intent and ID, with a non-overlapping 15-second
+sweep of at most five due receipts and backoff capped at five minutes. The exported
+`@graphgoblin/engine/testing` admission contract cases run the same assertions on staged fake writes
+and SQLite transactions, including faults at every claim/create write. Timestamp intake joins this
+path in the T4 continuation; its current separate writes remain a known gap. See
+[ADR-0037](decisions/ADR-0037-webhook-acknowledgement.md).
+
 ## Replay and debugging (Decided by implementation, 2026-10-03)
 
 Because every node input is reconstructible, the API offers "re-run this node with the same input", producing a new run forked at that node. This is the intended debugging tool, in place of error nodes. `RunManager.replay({ runId, nodeId, source?, caller? })`, exposed as `POST /runs/{id}/replay` and the MCP tool `replay_run`:

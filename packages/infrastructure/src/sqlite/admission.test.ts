@@ -12,6 +12,12 @@ import { openMemoryDatabase, type DatabaseHandle } from './db.js';
 import { SqliteEventStore } from './events.js';
 import { SqliteRunRepository } from './runs.js';
 import { SqliteInboundEvents } from './triggers.js';
+import { randomUUID } from 'node:crypto';
+import { unlink } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { openDatabase } from './db.js';
 let handle: DatabaseHandle;
 let events: SqliteEventStore;
 let admission: SqliteTriggerAdmission;
@@ -73,6 +79,37 @@ function claim(contentHash = 'a'.repeat(64)): WebhookClaim {
   };
 }
 describe('SQLite atomic admission', () => {
+  it('recovers the frozen run ID after closing the database immediately after claim', async () => {
+    const file = join(tmpdir(), `gg-admission-${randomUUID()}.db`);
+    const url = pathToFileURL(file).href;
+    let persisted = openDatabase({ url });
+    try {
+      await persisted.migrate();
+      const frozen = intent();
+      const input = claim();
+      await new SqliteTriggerAdmission(
+        persisted.db,
+        new SqliteEventStore(persisted.db, new FakeClock()),
+      ).claim(input, frozen);
+      persisted.close();
+      persisted = openDatabase({ url });
+      await persisted.migrate();
+      const restoredEvents = new SqliteEventStore(persisted.db, new FakeClock());
+      const restored = new SqliteTriggerAdmission(persisted.db, restoredEvents);
+      expect(await restored.due(FIXTURE_TS, 5)).toEqual([{ id: input.id, attempts: 0 }]);
+      const saved = (await restored.get(input.id))!;
+      expect(saved.intent).toEqual(frozen);
+      expect((await restored.create(saved.intent!, saved.id)).id).toBe(frozen.run.id);
+      expect((await restored.create(saved.intent!, saved.id)).id).toBe(frozen.run.id);
+      expect(await restoredEvents.read(frozen.run.id)).toHaveLength(1);
+      expect((await new SqliteInboundEvents(persisted.db).get(input.inbound.id))?.runIds).toEqual([
+        frozen.run.id,
+      ]);
+    } finally {
+      persisted.close();
+      for (const suffix of ['', '-wal', '-shm']) await unlink(file + suffix).catch(() => undefined);
+    }
+  });
   it('refuses re-admission without a receipt when the stored first event is malformed', async () => {
     const input = intent();
     input.initialThread.invocation.source = 'manual.api';

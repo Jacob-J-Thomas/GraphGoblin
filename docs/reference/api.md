@@ -103,11 +103,11 @@ The inbound event bus.
 
 Schedules, webhook endpoints, and the public /hooks receiver.
 
-| Method | Path                     | Summary                                                                                                         | Parameters                       | Request body                              | Responses |
-| ------ | ------------------------ | --------------------------------------------------------------------------------------------------------------- | -------------------------------- | ----------------------------------------- | --------- |
-| POST   | `/triggers/cron/preview` | Preview upcoming cron slots without arming a schedule (loops:read)                                              | -                                | `{ expression, timezone, count?, from? }` | 200       |
-| GET    | `/loops/{id}/triggers`   | Schedules, webhook endpoints, and armed poll triggers of a loop                                                 | `id`: string (path, required)    | -                                         | 200       |
-| POST   | `/hooks/{token}`         | Signed webhook receiver (public; timestamp HMAC or exact body HMAC, durable body replay protection, rate limit) | `token`: string (path, required) | -                                         | 202       |
+| Method | Path                     | Summary                                                                                                                      | Parameters                       | Request body                              | Responses |
+| ------ | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------- | -------------------------------- | ----------------------------------------- | --------- |
+| POST   | `/triggers/cron/preview` | Preview upcoming cron slots without arming a schedule (loops:read)                                                           | -                                | `{ expression, timezone, count?, from? }` | 200       |
+| GET    | `/loops/{id}/triggers`   | Schedules, webhook endpoints, and armed poll triggers of a loop                                                              | `id`: string (path, required)    | -                                         | 200       |
+| POST   | `/hooks/{token}`         | Signed webhook receiver (public; fixed acknowledgement of saved input, timestamp HMAC or exact body HMAC, 1 MiB, rate limit) | `token`: string (path, required) | -                                         | 202       |
 
 ## system
 

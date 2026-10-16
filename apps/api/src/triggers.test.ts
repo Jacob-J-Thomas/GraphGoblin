@@ -2,6 +2,7 @@ import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { Readable } from 'node:stream';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   LoopDefinitionSchema,
@@ -16,7 +17,7 @@ import {
   FakeProbes,
   FakeScripts,
 } from '@graphgoblin/engine/testing';
-import { RunManager } from '@graphgoblin/engine';
+import { AdmissionConflictError, parseRunAdmission, RunManager } from '@graphgoblin/engine';
 import { signPayload, signRawBody } from '@graphgoblin/infrastructure/http';
 import { buildApp } from './app.js';
 import { loadConfig } from './config.js';
@@ -409,10 +410,10 @@ describe('boot', () => {
     try {
       expect(
         (await restarted.inject(send('{"number":7,"updated_at":"second"}'))).json(),
-      ).toMatchObject({ code: 'DUPLICATE_KEY' });
+      ).toMatchObject({ accepted: true });
       expect(
         (await restarted.inject(send('{"number":7,"updated_at":"second"}'))).json(),
-      ).toMatchObject({ code: 'REPLAYED' });
+      ).toMatchObject({ accepted: true });
       expect(await second.repos.runs.list({ loopId: id })).toHaveLength(1);
       expect((await restarted.inject('/events')).json()).toMatchObject({
         items: expect.arrayContaining([
@@ -454,13 +455,11 @@ describe('webhooks', () => {
     const body = JSON.stringify({ action: 'opened', number: 7 });
     const response = await deliver(path, body);
     expect(response.statusCode).toBe(202);
-    const json = response.json<{ runId: string; filtered: boolean; event: { runIds: string[] } }>();
-    expect(json.filtered).toBe(false);
-    expect(json.event.runIds).toEqual([json.runId]);
+    expect(response.json()).toEqual({ accepted: true });
     await settle();
     const [run] = await runsOf(id);
-    expect(run?.id).toBe(json.runId);
-    const thread = await t.container.repos.runs.getInitialThread(json.runId);
+    expect(run).toBeDefined();
+    const thread = await t.container.repos.runs.getInitialThread(run!.id);
     expect(thread?.invocation).toMatchObject({
       source: 'webhook',
       trigger: { nodeId: 'trig', kind: 'webhook', payload: { action: 'opened', number: 7 } },
@@ -491,11 +490,10 @@ describe('webhooks', () => {
       },
     });
     expect(response.statusCode).toBe(202);
-    expect(response.json()).toMatchObject({
-      event: {
-        payload: { title: 'Ã©', action: 'opened' },
-        dedupeKey: expect.stringMatching(/^sig-hash:[a-f0-9]{64}$/),
-      },
+    expect(response.json()).toEqual({ accepted: true });
+    expect((await t.container.repos.inbound.list('local'))[0]).toMatchObject({
+      payload: { title: 'Ã©', action: 'opened' },
+      dedupeKey: expect.stringMatching(/^sig-hash:[a-f0-9]{64}$/),
     });
     expect(response.body).not.toContain(signature);
     expect(JSON.stringify(await t.container.repos.inbound.list('local'))).not.toContain(signature);
@@ -536,18 +534,22 @@ describe('webhooks', () => {
     const timestamp = t.clock.now().toISOString();
     expect((await deliver(path, '{"a":2}', { timestamp })).statusCode).toBe(202);
     const replay = await deliver(path, '{"a":2}', { timestamp });
-    expect(replay.json()).toMatchObject({ status: 409, code: 'REPLAYED' });
+    expect(replay.json()).toMatchObject({ accepted: true });
   });
 
-  it('accepts Unix-second timestamps, empty bodies, and a custom signature header', async () => {
+  it('accepts Unix-second timestamps, literal null, and a custom signature header', async () => {
     await setSecret();
     const { path } = await hookPath({
       signature: { scheme: 'hmac-sha256', secretRef: 'hook-secret', header: 'X-Hub-Signature-256' },
     });
     const seconds = String(Math.floor(t.clock.now().getTime() / 1000));
-    const response = await deliver(path, '', { timestamp: seconds, header: 'x-hub-signature-256' });
+    const response = await deliver(path, 'null', {
+      timestamp: seconds,
+      header: 'x-hub-signature-256',
+    });
     expect(response.statusCode).toBe(202);
-    expect(response.json()).toMatchObject({ event: { payload: null } });
+    expect(response.json()).toEqual({ accepted: true });
+    expect((await t.container.repos.inbound.list('local'))[0]?.payload).toBeNull();
   });
 
   it('records filtered deliveries without starting a run', async () => {
@@ -555,11 +557,12 @@ describe('webhooks', () => {
     const { id, path } = await hookPath({ filter: "action = 'opened'" });
     const response = await deliver(path, JSON.stringify({ action: 'closed' }));
     expect(response.statusCode).toBe(202);
-    expect(response.json()).toMatchObject({ filtered: true, event: { runIds: [] } });
+    expect(response.json()).toEqual({ accepted: true });
+    expect((await t.container.repos.inbound.list('local'))[0]?.runIds).toEqual([]);
     expect(response.json<{ runId?: string }>().runId).toBeUndefined();
     expect(await runsOf(id)).toEqual([]);
     expect((await deliver(path, JSON.stringify({ action: 'opened' }))).json()).toMatchObject({
-      filtered: false,
+      accepted: true,
     });
   });
 
@@ -570,10 +573,11 @@ describe('webhooks', () => {
       replayWindowSeconds: 60,
     });
     const first = await deliver(path, '{"id":1}', { headers: { 'x-delivery': 'd' } });
-    expect(first.json()).toMatchObject({ event: { dedupeKey: 'd:1' } });
+    expect(first.json()).toEqual({ accepted: true });
+    expect((await t.container.repos.inbound.list('local'))[0]?.dedupeKey).toBe('d:1');
     t.clock.advance(5_000);
     expect((await deliver(path, '{"id":1}', { headers: { 'x-delivery': 'd' } })).statusCode).toBe(
-      409,
+      202,
     );
     t.clock.advance(60_000);
     expect((await deliver(path, '{"id":1}', { headers: { 'x-delivery': 'd' } })).statusCode).toBe(
@@ -979,6 +983,112 @@ describe('poll triggers', () => {
 });
 
 describe('body signing and durable admission', () => {
+  it('bounds chunked raw input before invoking intake or decoding', async () => {
+    await setSecret();
+    const id = await t.publishLoop(triggerLoop('chunked-limit', bodyHook()));
+    const path = (await triggersOf(t, id)).webhooks[0]!.path;
+    const body = Buffer.alloc(1024 * 1024 + 1, 0x61);
+    const intake = vi.spyOn(t.container.triggers, 'handleWebhook');
+    const response = await t.app.inject({
+      method: 'POST',
+      url: path,
+      payload: Readable.from([body.subarray(0, 700000), body.subarray(700000)]),
+      headers: {
+        'content-type': 'application/octet-stream',
+        'transfer-encoding': 'chunked',
+        'x-hub-signature-256': signRawBody('shh', body),
+      },
+    });
+    expect(response.statusCode).toBe(413);
+    expect(intake).not.toHaveBeenCalled();
+    expect(await t.container.repos.inbound.list('local')).toEqual([]);
+    expect(await runsOf(id)).toEqual([]);
+    expect(
+      await t.container.triggers.handleWebhook(path.slice('/hooks/'.length), body, {}),
+    ).toMatchObject({ kind: 'error', status: 413 });
+  });
+  it('acknowledges a saved claim while create is blocked and exposes only the fixed receipt response', async () => {
+    await setSecret();
+    const id = await t.publishLoop(triggerLoop('blocked-create', bodyHook()));
+    const path = (await triggersOf(t, id)).webhooks[0]!.path;
+    const original = t.container.ports.admission.create.bind(t.container.ports.admission);
+    let release!: () => void;
+    const blocked = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const create = vi
+      .spyOn(t.container.ports.admission, 'create')
+      .mockImplementation(async (...args) => {
+        await blocked;
+        return original(...args);
+      });
+    try {
+      const response = await bodyDelivery(path, '{"id":1}');
+      expect(response.statusCode).toBe(202);
+      expect(response.json()).toEqual({ accepted: true });
+      expect(await runsOf(id)).toEqual([]);
+      expect(await t.container.ports.admission.hasPendingPin(id)).toBe(true);
+      const [saved] = (
+        await t.container.handle.client.execute('SELECT intent,status FROM webhook_receipts')
+      ).rows;
+      expect(saved?.status).toBe('pending');
+      expect((await t.app.inject('/events')).json()).toMatchObject({
+        items: [{ delivery: { state: 'pending', attempts: 0 }, runIds: [] }],
+      });
+      release();
+      await t.idle();
+      if (typeof saved?.intent !== 'string') throw new Error('saved intent missing');
+      const intent = parseRunAdmission(JSON.parse(saved.intent));
+      expect((await runsOf(id)).map((run) => run.id)).toEqual([intent.run.id]);
+      expect(create).toHaveBeenCalledTimes(1);
+    } finally {
+      release();
+      await t.container.manager.waitForWebhookRecovery();
+    }
+  });
+  it('returns 503 only for an unconfirmed claim; confirms a lost claim acknowledgement without another run', async () => {
+    await setSecret();
+    const id = await t.publishLoop(triggerLoop('claim-ack', bodyHook()));
+    const path = (await triggersOf(t, id)).webhooks[0]!.path;
+    const original = t.container.ports.admission.claim.bind(t.container.ports.admission);
+    const claim = vi
+      .spyOn(t.container.ports.admission, 'claim')
+      .mockRejectedValueOnce(new Error('safe-marker'));
+    const failed = await bodyDelivery(path, '{"id":1}');
+    expect(failed.statusCode).toBe(503);
+    expect(failed.body).not.toContain('safe-marker');
+    expect(
+      (await t.container.handle.client.execute('SELECT * FROM webhook_receipts')).rows,
+    ).toEqual([]);
+    claim.mockImplementationOnce(async (...args) => {
+      await original(...args);
+      throw new Error('lost-ack');
+    });
+    const saved = await bodyDelivery(path, '{"id":1}');
+    expect(saved.statusCode).toBe(202);
+    expect(saved.json()).toEqual({ accepted: true });
+    await t.idle();
+    expect(await runsOf(id)).toHaveLength(1);
+    expect((await bodyDelivery(path, '{"id":1}')).json()).toEqual({ accepted: true });
+    expect(await runsOf(id)).toHaveLength(1);
+  });
+  it('acknowledges permanently failed saved admission and retries no execution on redelivery', async () => {
+    await setSecret();
+    const id = await t.publishLoop(triggerLoop('failed-saved', bodyHook()));
+    const path = (await triggersOf(t, id)).webhooks[0]!.path;
+    vi.spyOn(t.container.ports.admission, 'create').mockRejectedValueOnce(
+      new AdmissionConflictError(),
+    );
+    expect((await bodyDelivery(path, '{}')).json()).toEqual({ accepted: true });
+    await t.container.manager.waitForWebhookRecovery();
+    expect((await t.app.inject('/events')).json()).toMatchObject({
+      items: [
+        { delivery: { state: 'failed', failureCode: 'WEBHOOK_INTENT_CONFLICT', attempts: 1 } },
+      ],
+    });
+    expect((await bodyDelivery(path, '{}')).statusCode).toBe(202);
+    expect(await runsOf(id)).toEqual([]);
+  });
   const bodyHook = (extra: Record<string, unknown> = {}) =>
     hookTrigger({ signature: { scheme: 'hmac-sha256-body', secretRef: 'hook-secret' }, ...extra });
   async function bodyDelivery(
@@ -1209,8 +1319,9 @@ describe('body signing and durable admission', () => {
       vi.spyOn(t.container.ports.admission, 'create')
         .mockRejectedValueOnce(new Error('retry'))
         .mockRejectedValueOnce(new Error('retry'));
-      expect((await bodyDelivery(path, '{"id":1}')).statusCode).toBe(503);
-      expect((await bodyDelivery(path, '{"id":2}')).statusCode).toBe(503);
+      expect((await bodyDelivery(path, '{"id":1}')).statusCode).toBe(202);
+      expect((await bodyDelivery(path, '{"id":2}')).statusCode).toBe(202);
+      await t.container.manager.waitForWebhookRecovery();
       const rows = (
         await t.container.handle.client.execute(
           'SELECT id,intent FROM webhook_receipts ORDER BY id',
@@ -1270,7 +1381,7 @@ describe('body signing and durable admission', () => {
           'x-hub-signature-256': 'sha256=' + signature.slice(7).toUpperCase(),
         })
       ).statusCode,
-    ).toBe(409);
+    ).toBe(202);
     await setSecret('rotated');
     await t.app.inject({
       method: 'PUT',
@@ -1278,9 +1389,9 @@ describe('body signing and durable admission', () => {
       payload: { definition: triggerLoop('github-body', bodyHook({ dedupeKey: '"changed"' })) },
     });
     await t.app.inject({ method: 'POST', url: `/loops/${id}/publish` });
-    expect((await bodyDelivery(path, body, {}, 'rotated')).statusCode).toBe(409);
+    expect((await bodyDelivery(path, body, {}, 'rotated')).statusCode).toBe(202);
     t.clock.advance(86400_000);
-    expect((await bodyDelivery(path, body, {}, 'rotated')).statusCode).toBe(409);
+    expect((await bodyDelivery(path, body, {}, 'rotated')).statusCode).toBe(202);
     expect(await runsOf(id)).toHaveLength(1);
     const records = (await t.app.inject('/events')).json<{ items: unknown[] }>();
     expect(JSON.stringify(records)).not.toContain(signature);
@@ -1296,8 +1407,8 @@ describe('body signing and durable admission', () => {
     const path = (await triggersOf(t, id)).webhooks[0]!.path;
     expect((await bodyDelivery(path, '{"number":7,"updated_at":"first"}')).statusCode).toBe(202);
     const second = await bodyDelivery(path, '{"number":7,"updated_at":"second"}');
-    expect(second.statusCode).toBe(409);
-    expect(second.json()).toMatchObject({ code: 'DUPLICATE_KEY' });
+    expect(second.statusCode).toBe(202);
+    expect(second.json()).toMatchObject({ accepted: true });
     await t.idle();
     expect(await runsOf(id)).toHaveLength(1);
     expect((await t.app.inject('/events')).json()).toMatchObject({
@@ -1306,8 +1417,8 @@ describe('body signing and durable admission', () => {
       ]),
     });
     const repeated = await bodyDelivery(path, '{"number":7,"updated_at":"second"}');
-    expect(repeated.statusCode).toBe(409);
-    expect(repeated.json()).toMatchObject({ code: 'REPLAYED' });
+    expect(repeated.statusCode).toBe(202);
+    expect(repeated.json()).toMatchObject({ accepted: true });
   });
   it('serializes concurrent distinct bodies with one key and keeps loop keys isolated', async () => {
     await setSecret();
@@ -1318,10 +1429,11 @@ describe('body signing and durable admission', () => {
       bodyDelivery(path, '{"number":9,"updated_at":"one"}'),
       bodyDelivery(path, '{"number":9,"updated_at":"two"}'),
     ]);
-    expect(deliveries.map((r) => r.statusCode).sort()).toEqual([202, 409]);
-    expect(deliveries.find((r) => r.statusCode === 409)?.json()).toMatchObject({
-      code: 'DUPLICATE_KEY',
-    });
+    expect(deliveries.map((r) => r.statusCode).sort()).toEqual([202, 202]);
+    expect(deliveries.map((r) => r.json<{ accepted: true }>())).toEqual([
+      { accepted: true },
+      { accepted: true },
+    ]);
     await t.idle();
     expect(await runsOf(id)).toHaveLength(1);
     const other = await t.publishLoop(triggerLoop('body-other-loop-key', config));
@@ -1351,7 +1463,7 @@ describe('body signing and durable admission', () => {
     expect((await t.app.inject({ method: 'POST', url: `/loops/${id}/publish` })).statusCode).toBe(
       200,
     );
-    expect((await bodyDelivery(path, '{"id":2}')).json()).toMatchObject({ code: 'DUPLICATE_KEY' });
+    expect((await bodyDelivery(path, '{"id":2}')).json()).toMatchObject({ accepted: true });
     expect(await runsOf(id)).toHaveLength(0);
     expect(await t.container.ports.admission.hasPendingPin(id)).toBe(false);
     const pending = await t.publishLoop(
@@ -1361,9 +1473,9 @@ describe('body signing and durable admission', () => {
     const create = vi
       .spyOn(t.container.ports.admission, 'create')
       .mockRejectedValueOnce(new Error('test-dispatch-failure'));
-    expect((await bodyDelivery(pendingPath, '{"id":1}')).statusCode).toBe(503);
+    expect((await bodyDelivery(pendingPath, '{"id":1}')).statusCode).toBe(202);
     expect((await bodyDelivery(pendingPath, '{"id":2}')).json()).toMatchObject({
-      code: 'DUPLICATE_KEY',
+      accepted: true,
     });
     expect(create).toHaveBeenCalledTimes(1);
     t.clock.advance(5000);
@@ -1388,7 +1500,7 @@ describe('body signing and durable admission', () => {
     expect((await t.app.inject({ method: 'POST', url: `/loops/${id}/publish` })).statusCode).toBe(
       200,
     );
-    expect((await bodyDelivery(path, '{"id":2}')).json()).toMatchObject({ code: 'DUPLICATE_KEY' });
+    expect((await bodyDelivery(path, '{"id":2}')).json()).toMatchObject({ accepted: true });
     await t.app.inject({
       method: 'PUT',
       url: `/loops/${id}/draft`,
@@ -1416,7 +1528,7 @@ describe('body signing and durable admission', () => {
       );
       const path = (await triggersOf(t, id)).webhooks[0]!.path;
       vi.spyOn(t.container.ports.admission, 'create').mockRejectedValueOnce(new Error('retry'));
-      expect((await bodyDelivery(path, '{"key":"same"}')).statusCode).toBe(503);
+      expect((await bodyDelivery(path, '{"key":"same"}')).statusCode).toBe(202);
       const pollConfig = {
         type: 'poll',
         intervalSeconds: 5,
@@ -1508,8 +1620,8 @@ describe('body signing and durable admission', () => {
       expect(await t.container.polls.poll()).toHaveLength(1);
       release();
       const response = await delivery;
-      expect(response.statusCode).toBe(409);
-      expect(response.json()).toMatchObject({ code: 'DUPLICATE_KEY' });
+      expect(response.statusCode).toBe(202);
+      expect(response.json()).toMatchObject({ accepted: true });
       await t.idle();
       expect(await runsOf(id)).toHaveLength(1);
       expect(await t.container.ports.admission.hasPendingPin(id)).toBe(false);
@@ -1532,14 +1644,14 @@ describe('body signing and durable admission', () => {
     const id = await t.publishLoop(triggerLoop('body-filter', bodyHook({ filter: 'false' })));
     const path = (await triggersOf(t, id)).webhooks[0]!.path;
     const body = '{"action":"ping"}';
-    expect((await bodyDelivery(path, body)).json()).toMatchObject({ filtered: true });
+    expect((await bodyDelivery(path, body)).json()).toMatchObject({ accepted: true });
     await t.app.inject({
       method: 'PUT',
       url: `/loops/${id}/draft`,
       payload: { definition: triggerLoop('body-filter', bodyHook()) },
     });
     await t.app.inject({ method: 'POST', url: `/loops/${id}/publish` });
-    expect((await bodyDelivery(path, body)).statusCode).toBe(409);
+    expect((await bodyDelivery(path, body)).statusCode).toBe(202);
     expect(await runsOf(id)).toHaveLength(0);
     expect(
       (await bodyDelivery(path, 'broken', { 'x-hub-signature-256': 'sha256=' + '0'.repeat(64) }))
@@ -1550,7 +1662,7 @@ describe('body signing and durable admission', () => {
       items: [{ delivery: { state: 'filtered', attempts: 0 } }],
     });
   });
-  it('returns safe 503 with a persisted pending intent, blocks deletion, and recovers before redelivery', async () => {
+  it('returns 202 with a persisted pending intent, blocks deletion, and recovers before redelivery', async () => {
     await setSecret();
     const id = await t.publishLoop(triggerLoop('body-pending', bodyHook()));
     const path = (await triggersOf(t, id)).webhooks[0]!.path;
@@ -1558,7 +1670,7 @@ describe('body signing and durable admission', () => {
       new Error('secret-marker'),
     );
     const response = await bodyDelivery(path, '{"id":2}');
-    expect(response.statusCode).toBe(503);
+    expect(response.statusCode).toBe(202);
     expect(response.body).not.toContain('secret-marker');
     expect((await t.app.inject({ method: 'DELETE', url: `/loops/${id}` })).statusCode).toBe(409);
     expect((await t.app.inject('/events')).json()).toMatchObject({
@@ -1570,7 +1682,7 @@ describe('body signing and durable admission', () => {
     await t.container.manager.retryPendingWebhooks();
     await t.idle();
     expect(await runsOf(id)).toHaveLength(1);
-    expect((await bodyDelivery(path, '{"id":2}')).statusCode).toBe(409);
+    expect((await bodyDelivery(path, '{"id":2}')).statusCode).toBe(202);
   });
 });
 
