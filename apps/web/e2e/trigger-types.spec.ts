@@ -69,12 +69,22 @@ for (const theme of ['light', 'dark']) {
     await expect(preview).toContainText('intervalSeconds');
     await expect(type).toHaveValue('webhook');
     await page.screenshot({ path: testInfo.outputPath(`preset-preview-${theme}.png`) });
+    // JSON blocks are explicit tab stops, including when their content does not overflow.
+    await page.keyboard.press('Tab');
+    await expect(preview.getByRole('region', { name: 'Current configuration' })).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(preview.getByRole('region', { name: 'Preset configuration' })).toBeFocused();
     await page.keyboard.press('Tab');
     await expect(preview.getByRole('button', { name: 'Cancel preview' })).toBeFocused();
     await page.keyboard.press('Enter');
     await expect(previewButton).toBeFocused();
     await expect(type).toHaveValue('webhook');
     await page.keyboard.press('Enter');
+    await expect(preview).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(preview.getByRole('region', { name: 'Current configuration' })).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(preview.getByRole('region', { name: 'Preset configuration' })).toBeFocused();
     await page.keyboard.press('Tab');
     await page.keyboard.press('Tab');
     await expect(preview.getByRole('button', { name: 'Apply GitHub preset' })).toBeFocused();

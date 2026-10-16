@@ -1,6 +1,6 @@
 import type { LoopDefinitionInput, NodeInput } from '@graphgoblin/contracts';
 import { nextEdgeId, validateDraft, type EditorIssue } from './model.js';
-import { expand, overlapsBox } from './routing-geometry.js';
+import { expand, NODE_CARD_SIZE, overlapsBox } from './routing-geometry.js';
 import {
   githubEventCheck,
   makeGitHubTriggerPreset,
@@ -45,22 +45,41 @@ function earlierFragment(def: LoopDefinitionInput, triggerId: string): NodeInput
   return nodes;
 }
 
+function hasDownstreamCheck(def: LoopDefinitionInput, triggerId: string): boolean {
+  const pending = [triggerId];
+  const seen = new Set<string>();
+  while (pending.length) {
+    const id = pending.pop()!;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    if (def.nodes.some((node) => node.id === id && node.kind === 'decision')) return true;
+    pending.push(...def.edges.filter((edge) => edge.from.node === id).map((edge) => edge.to.node));
+  }
+  return false;
+}
+
+const ROW_STEP = NODE_CARD_SIZE.height + 2 * NODE_CARD_SIZE.clearance;
+const COLUMN_STEP = NODE_CARD_SIZE.width + 4 * NODE_CARD_SIZE.clearance;
+
 /** Use the editor's card geometry/clearance helpers; leave existing cards in place. */
 function beside(def: LoopDefinitionInput, anchor: { x: number; y: number }) {
   const box = (id: string, x: number, y: number) => ({
     id,
     left: x,
-    right: x + 184,
+    right: x + NODE_CARD_SIZE.width,
     top: y,
-    bottom: y + 120,
+    bottom: y + NODE_CARD_SIZE.height,
   });
   let y = anchor.y;
   while (
     def.nodes.some((node) =>
-      overlapsBox(expand(box(node.id, node.ui?.x ?? 0, node.ui?.y ?? 0), 22), box('', anchor.x, y)),
+      overlapsBox(
+        expand(box(node.id, node.ui?.x ?? 0, node.ui?.y ?? 0), NODE_CARD_SIZE.clearance),
+        box('', anchor.x, y),
+      ),
     )
   )
-    y += 154;
+    y += ROW_STEP;
   return { x: anchor.x, y };
 }
 
@@ -73,7 +92,7 @@ export function previewGitHubPreset(
   const trigger = source.nodes.find((node) => node.id === triggerId);
   if (trigger?.kind !== 'trigger') throw new Error('The selected trigger no longer exists.');
   const config = makeGitHubTriggerPreset(preset, setup);
-  const removedNodes = preset === 'issues-poll' ? [] : earlierFragment(source, triggerId);
+  const removedNodes = earlierFragment(source, triggerId);
   const removedIds = new Set(removedNodes.map((node) => node.id));
   const removedEdges = source.edges.filter(
     (edge) =>
@@ -92,6 +111,17 @@ export function previewGitHubPreset(
   const addedNodes: NodeInput[] = [];
   const addedEdges: LoopDefinitionInput['edges'] = [];
   const rewiredEdges: LoopDefinitionInput['edges'] = [];
+  const rewireSuccessors = (from: string, to: string) => {
+    definition = {
+      ...definition,
+      edges: definition.edges.map((edge) => {
+        if (edge.from.node !== from) return edge;
+        const rewired = { ...edge, from: { ...edge.from, node: to } };
+        rewiredEdges.push(rewired);
+        return rewired;
+      }),
+    };
+  };
   if (preset !== 'issues-poll') {
     // Reserve against the original too: replacement never reuses a removed node's identity.
     const taken = new Set(source.nodes.map((node) => node.id));
@@ -129,7 +159,7 @@ export function previewGitHubPreset(
           { id: 'ignore', label: 'Ignore' },
         ],
       },
-      x + 286,
+      x + COLUMN_STEP,
       y,
     );
     const restore = add(
@@ -147,7 +177,7 @@ export function previewGitHubPreset(
           },
         ],
       },
-      x + 572,
+      x + 2 * COLUMN_STEP,
       y,
     );
     const quiet = add(
@@ -158,19 +188,10 @@ export function previewGitHubPreset(
         returns: 'none',
         destinations: [],
       },
-      x + 572,
-      y + 154,
+      x + 2 * COLUMN_STEP,
+      y + ROW_STEP,
     );
-    const previousSource = removedNodes[1]?.id ?? triggerId;
-    definition = {
-      ...definition,
-      edges: definition.edges.map((edge) => {
-        if (edge.from.node !== previousSource) return edge;
-        const rewired = { ...edge, from: { ...edge.from, node: restore } };
-        rewiredEdges.push(rewired);
-        return rewired;
-      }),
-    };
+    rewireSuccessors(removedNodes[1]?.id ?? triggerId, restore);
     for (const [from, port, to] of [
       [triggerId, 'out', check],
       [check, 'pass', restore],
@@ -184,8 +205,17 @@ export function previewGitHubPreset(
       addedEdges.push(edge);
       definition = { ...definition, edges: [...definition.edges, edge] };
     }
-  }
+  } else if (removedNodes[1]) rewireSuccessors(removedNodes[1].id, triggerId);
   const current = trigger.config as Record<string, unknown>;
+  const issues = validateDraft(definition).issues;
+  if (preset === 'issues-poll' && !removedNodes.length && hasDownstreamCheck(source, triggerId))
+    issues.push({
+      code: 'POLL_RETAINS_DOWNSTREAM_CHECK',
+      severity: 'warning',
+      nodeId: triggerId,
+      message:
+        "The trigger's existing downstream check stays in place and may ignore poll results. Review or edit it before applying.",
+    });
   return {
     source,
     definition,
@@ -199,6 +229,6 @@ export function previewGitHubPreset(
     removedEdges,
     addedEdges,
     rewiredEdges,
-    issues: validateDraft(definition).issues,
+    issues,
   };
 }

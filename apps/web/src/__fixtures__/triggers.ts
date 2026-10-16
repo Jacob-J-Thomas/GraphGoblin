@@ -8,7 +8,7 @@ export type TriggerFields<T extends TriggerType> = Fields<Extract<TriggerInput, 
 
 /** Shared current trigger configs for unit and e2e fixtures. */
 export function triggerConfig<T extends TriggerType>(type: T, fields: TriggerFields<T>) {
-  return { type: type, ...fields };
+  return { type, ...fields };
 }
 
 export const manualTriggerConfig = () => triggerConfig('manual', {});

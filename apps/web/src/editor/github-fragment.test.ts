@@ -251,6 +251,110 @@ describe('editable GitHub fragments', () => {
     expect(store().fieldErrors).toBe(before.fieldErrors);
   });
 
+  it.each(presets)(
+    'removes an edited %s fragment for poll and reconnects in one undo step',
+    (preset) => {
+      const source = newLoopDefinition('webhook to poll');
+      source.edges[0]!.ui = { route: [200] };
+      const initial = previewGitHubPreset(source, 'start', preset, setup).definition;
+      store().load('loop', initial);
+      store().updateNode('event-check', { label: 'Owner edited check' });
+      store().setFieldError('node:event-check', 'jsonata', { text: 'unfinished', message: 'held' });
+      const before = store();
+      const preview = previewGitHubPreset(before.definition!, 'start', 'issues-poll', setup);
+      expect(preview.removedNodes.map((node) => node.id)).toEqual([
+        'event-check',
+        'restore-output',
+        'quiet-exit',
+      ]);
+      expect(preview.removedNodes[0]!.label).toBe('Owner edited check');
+      expect(preview.removedEdges).toHaveLength(3);
+      expect(preview.addedNodes).toEqual([]);
+      expect(preview.addedEdges).toEqual([]);
+      expect(preview.rewiredEdges).toEqual(source.edges);
+      expect(preview.definition).toEqual({
+        ...source,
+        nodes: source.nodes.map((node) =>
+          node.id === 'start'
+            ? { ...node, config: makeGitHubTriggerPreset('issues-poll', setup) }
+            : node,
+        ),
+      });
+      expect(validateLoop(LoopDefinitionSchema.parse(preview.definition))).toEqual([]);
+      expect(preview.issues).toEqual([]);
+      expect(store()).toBe(before);
+      expect(store().applyGitHubPreset(preview, before)).toBeUndefined();
+      expect(store().past).toHaveLength(before.past.length + 1);
+      expect(store().fieldErrors).toEqual({});
+      const applied = store().definition;
+      store().undo();
+      expect(store().definition).toBe(before.definition);
+      expect(store().fieldErrors).toBe(before.fieldErrors);
+      store().redo();
+      expect(store().definition).toBe(applied);
+      expect(store().fieldErrors).toEqual({});
+    },
+  );
+
+  it.each(['unrecognized', 'ambiguous', 'nested'] as const)(
+    'warns and preserves a %s downstream check when applying poll',
+    (shape) => {
+      const source = previewGitHubPreset(
+        newLoopDefinition('retained check'),
+        'start',
+        'issues-labeled',
+        setup,
+      ).definition;
+      const check = source.nodes.find((node) => node.id === 'event-check')!;
+      if (check.kind !== 'decision' || check.config.kind !== 'expression')
+        throw new Error('Missing check');
+      if (shape === 'unrecognized') {
+        check.config.routes[0]!.id = 'continue';
+        source.edges.find(
+          (edge) => edge.from.node === check.id && edge.from.port === 'pass',
+        )!.from.port = 'continue';
+      } else if (shape === 'ambiguous') {
+        check.config.routes.push({ id: 'extra', label: 'Extra' });
+        source.edges.push({
+          id: 'extra',
+          from: { node: check.id, port: 'extra' },
+          to: { node: 'done' },
+        });
+      } else {
+        source.nodes.push({
+          id: 'preface',
+          kind: 'mutate',
+          label: 'Preface',
+          config: {
+            operations: [{ op: 'set', path: '/vars/x', value: { kind: 'literal', value: true } }],
+          },
+        });
+        source.edges.find((edge) => edge.from.node === 'start')!.to.node = 'preface';
+        source.edges.push({
+          id: 'preface',
+          from: { node: 'preface', port: 'out' },
+          to: { node: check.id },
+        });
+      }
+      store().load('loop', source);
+      const before = store();
+      const preview = previewGitHubPreset(source, 'start', 'issues-poll', setup);
+      expect(preview.removedNodes).toEqual([]);
+      expect(preview.removedEdges).toEqual([]);
+      expect(preview.rewiredEdges).toEqual([]);
+      expect(preview.definition.edges).toEqual(source.edges);
+      expect(preview.definition.nodes.slice(1)).toEqual(source.nodes.slice(1));
+      expect(validateLoop(LoopDefinitionSchema.parse(preview.definition))).toEqual([]);
+      expect(preview.issues).toMatchObject([
+        { code: 'POLL_RETAINS_DOWNSTREAM_CHECK', severity: 'warning' },
+      ]);
+      expect(store().applyGitHubPreset(preview, before)).toBeUndefined();
+      expect(store().past).toHaveLength(1);
+      store().undo();
+      expect(store().definition).toBe(source);
+    },
+  );
+
   it('retains ambiguous/shared downstream graphs and leaves the poll recipe alone', () => {
     const first = previewGitHubPreset(
       newLoopDefinition('shared'),
@@ -276,6 +380,16 @@ describe('editable GitHub fragments', () => {
     const poll = previewGitHubPreset(first, 'start', 'issues-poll', setup);
     expect(poll.addedNodes).toEqual([]);
     expect(poll.definition.edges).toEqual(first.edges);
+    expect(poll.removedNodes).toEqual([]);
+    expect(poll.issues).toMatchObject([
+      { code: 'POLL_RETAINS_DOWNSTREAM_CHECK', severity: 'warning' },
+    ]);
+    store().load('loop', first);
+    const before = store();
+    expect(store().applyGitHubPreset(poll, before)).toBeUndefined();
+    expect(store().past).toHaveLength(1);
+    store().undo();
+    expect(store().definition).toBe(first);
     expect(() => previewGitHubPreset(first, 'missing', 'issues-labeled', setup)).toThrow(
       'no longer exists',
     );
@@ -311,5 +425,15 @@ describe('editable GitHub fragments', () => {
       type: 'poll',
       intervalSeconds: 60,
     });
+  });
+
+  it('does not warn about a check when the existing downstream graph has none', () => {
+    const preview = previewGitHubPreset(
+      newLoopDefinition('no check'),
+      'start',
+      'issues-poll',
+      setup,
+    );
+    expect(preview.issues).toEqual([]);
   });
 });

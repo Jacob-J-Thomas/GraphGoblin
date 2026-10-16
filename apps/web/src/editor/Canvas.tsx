@@ -59,12 +59,13 @@ import { backwardDirection, routeMessage, type RoutingNode, type RoutingPlan } f
 import { useRouting } from './useRouting.js';
 import { createRouteChannels } from './route-channels.js';
 import { portWidthLimits } from './port-targets.js';
+import { NODE_CARD_SIZE } from './routing-geometry.js';
 
 const nodeTypes = { gg: NodeCard };
 const edgeTypes = { orthogonal: OrthogonalEdge };
 
 /** The background's dot spacing; keyboard nudges of a route segment move by it (#44). */
-export const CANVAS_GRID = 22;
+export const CANVAS_GRID = NODE_CARD_SIZE.clearance;
 /** A selected edge draws above the cards, so its segment handles and toolbar are never covered. */
 const SELECTED_EDGE_Z = 2000;
 const MIN_CANVAS_ZOOM = 0.5;
@@ -228,7 +229,7 @@ function buildEdges(
               isRepeatPort(n.config, edge.from.port),
           ),
         },
-        { x: from.position.x + (from.measured?.width ?? 184) + 6, y: 0 },
+        { x: from.position.x + (from.measured?.width ?? NODE_CARD_SIZE.width) + 6, y: 0 },
         { x: to.position.x - 6, y: 0 },
         before ? before.type === 'orthogonal' && !beforeData?.forward : undefined,
       );

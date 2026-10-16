@@ -4,11 +4,13 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
-- Trigger configs use one strict `type` discriminator across the editor, API, MCP and exports. Both webhook signing variants keep `type: 'webhook'`; their fields and validation are unchanged. **Upgrade:** current trigger configs and exports require `type` instead of `subtype`. Rebuild backend, web and generated clients together. Old exports are converted only by the format-4 offline upgrade; current parsers reject `subtype`. (#168, step 22 T3)
+- Trigger configs use one strict `type` discriminator across the editor, API, MCP and exports. Both webhook signing variants keep `type: 'webhook'`; their fields and validation are unchanged. **Upgrade:** current trigger configs and exports require `type` instead of `subtype`. Rebuild backend, web and generated clients together. Current stores and exports holding `subtype` are refused until the integrated format-4 cutover converts them. (#168, step 22 T3)
 
 - GitHub webhook presets now preview and apply editable body-check decisions, output-restoring mutations and quiet Success exits in one undo step, preserving successor connections and explicitly reviewing replacement edits; poll presets are unchanged. (#168, step 21 T2)
 
 - Trigger editing starts with Manual, Cron, Poll, Event or Webhook and type-specific fields. GitHub presets are optional, preview the full configuration replacement, and apply as one undoable edit that also restores unfinished input on undo. The palette keeps one Trigger node; stored `subtype` and current intake behavior are unchanged. (#168, step 20 T1)
+
+- Internal: added pure format-3-to-4 definition conversion rules with strict expression routing, reviewed LLM instructions and exit graphs, producer-aware consumer proposals, and hash-bound owner resolutions. Review follow-up maps proven single-gate iteration reads to pass counts, accepts authored graphs for schema and non-repeating limit policies, and reports shared budgets, changed limit ordering and all ignored continuation fields. The offline tool/API and history remain unchanged; the integrated cutover composes this stage later. (#164, step 15 E2)
 
 - Gate validation warns at Maximum passes when `maxPasses` exceeds `maxNodeVisits`, naming both limits and repeat-cycle nodes consistently across admission endpoints. Crash-boundary regression checks prove durable gate choices advance without recounting. Inspector fallback threads seed one-based gate counts from the pinned definition. **Upgrade (#164 E1 review):** `MAX_ITERATIONS` is removed from the current failure-code enum and generated client; use `MAX_NODE_VISITS`. Frozen historical schemas remain unchanged.
 

@@ -3,6 +3,7 @@ import type { LoopDefinitionInput } from '@graphgoblin/contracts';
 import { Button, FieldGroup, HelpText, Input, Label, Select } from '../components/ui/index.js';
 import { previewGitHubPreset, type GitHubPresetPreview } from './github-fragment.js';
 import type { FieldErrors } from './history.js';
+import { triggerFieldLabel } from './trigger-field-labels.js';
 import {
   canApplyGitHubPreset,
   GITHUB_TRIGGER_PRESETS,
@@ -271,6 +272,11 @@ export function TriggerPresets({
               ) : null}
             </fieldset>
           </form>
+          <p role="status" className={preview && !activePreview ? 'text-sm text-muted' : 'sr-only'}>
+            {preview && !activePreview
+              ? 'Preset preview is out of date. Preview the preset again before applying.'
+              : ''}
+          </p>
           {activePreview ? (
             <div
               ref={previewRegionRef}
@@ -288,8 +294,9 @@ export function TriggerPresets({
               {activePreview.replacement.removedNodes.length ? (
                 <div className="grid gap-2">
                   <p role="alert">
-                    Replace the existing check/restore/exit fragment, including all owner edits
-                    shown below.
+                    {activePreview.replacement.addedNodes.length
+                      ? 'Replace the existing check/restore/exit fragment, including all owner edits shown below.'
+                      : 'Remove the existing check/restore/exit fragment, including all owner edits shown below, and reconnect its former successor directly to the trigger.'}
                   </p>
                   <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words text-xs">
                     {JSON.stringify(
@@ -314,15 +321,33 @@ export function TriggerPresets({
               ) : null}
               {heldInputs && Object.keys(heldInputs).length ? (
                 <p role="alert">
-                  Unfinished input will be replaced: {Object.keys(heldInputs).join(', ')}.
+                  Unfinished input will be replaced:{' '}
+                  {Object.keys(heldInputs)
+                    .map((path) => triggerFieldLabel(config, path))
+                    .join(', ')}
+                  .
                 </p>
               ) : null}
-              <p className="text-sm font-semibold">Current configuration</p>
-              <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words text-xs">
+              <p id={`${id}-current-label`} className="text-sm font-semibold">
+                Current configuration
+              </p>
+              <pre
+                role="region"
+                aria-labelledby={`${id}-current-label`}
+                tabIndex={0}
+                className="max-h-64 overflow-auto whitespace-pre-wrap break-words text-xs"
+              >
                 {JSON.stringify(config, null, 2)}
               </pre>
-              <p className="text-sm font-semibold">Preset configuration</p>
-              <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words text-xs">
+              <p id={`${id}-preset-label`} className="text-sm font-semibold">
+                Preset configuration
+              </p>
+              <pre
+                role="region"
+                aria-labelledby={`${id}-preset-label`}
+                tabIndex={0}
+                className="max-h-64 overflow-auto whitespace-pre-wrap break-words text-xs"
+              >
                 {JSON.stringify(
                   activePreview.replacement.definition.nodes.find((node) => node.id === triggerId)!
                     .config,

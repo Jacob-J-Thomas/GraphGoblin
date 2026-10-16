@@ -4,7 +4,7 @@ import { Buffer } from 'node:buffer';
 import { runInNewContext } from 'node:vm';
 import { TriggerConfigSchema, type NodeInput } from '@graphgoblin/contracts';
 import { describe, expect, it, vi } from 'vitest';
-import { manualTriggerConfig } from '../__fixtures__/triggers.js';
+import { manualTriggerConfig, triggerConfig } from '../__fixtures__/triggers.js';
 import { TriggerPresets as PresetPanel } from './TriggerPresets.js';
 import { newLoopDefinition } from './model.js';
 import { previewGitHubPreset } from './github-fragment.js';
@@ -75,6 +75,83 @@ function executeGhProgram(program: string, result: GhSpawnResult) {
 }
 
 describe('TriggerPresets', () => {
+  it.each([false, true])(
+    'previews poll removal or retained-check warning (shared: %s)',
+    async (shared) => {
+      const setup = {
+        owner: 'octo',
+        repository: 'service',
+        label: 'ready',
+        baseBranch: '',
+        secretRef: 'hook',
+      };
+      const definition = previewGitHubPreset(
+        newLoopDefinition('poll conversion'),
+        'start',
+        'issues-labeled',
+        setup,
+      ).definition;
+      definition.nodes.find((node) => node.id === 'event-check')!.label = 'Owner edited check';
+      if (shared) {
+        definition.nodes.push({
+          id: 'shared-start',
+          kind: 'trigger',
+          label: 'Shared',
+          config: manualTriggerConfig(),
+        });
+        definition.edges.push({
+          id: 'shared-edge',
+          from: { node: 'shared-start', port: 'out' },
+          to: { node: 'restore-output' },
+        });
+      }
+      const original = JSON.stringify(definition);
+      const onApply = vi.fn();
+      render(
+        <PresetPanel
+          definition={definition}
+          triggerId="start"
+          config={definition.nodes[0]!.config}
+          onApply={onApply}
+        />,
+      );
+      const user = userEvent.setup();
+      await user.click(screen.getByRole('button', { name: 'Start from a preset' }));
+      await user.selectOptions(screen.getByLabelText('Preset'), 'issues-poll');
+      await user.type(screen.getByLabelText('Repository owner'), 'octo');
+      await user.type(screen.getByLabelText('Repository'), 'service');
+      await user.type(screen.getByLabelText('Issue label'), 'ready');
+      const previewButton = screen.getByRole('button', { name: 'Preview GitHub preset' });
+      await user.click(previewButton);
+      const preview = screen.getByRole('region', { name: 'Preset preview' });
+      if (shared) {
+        expect(preview).toHaveTextContent(
+          'existing downstream check stays in place and may ignore poll results',
+        );
+        expect(preview).not.toHaveTextContent('Remove the existing check/restore/exit fragment');
+      } else {
+        expect(preview).toHaveTextContent('Remove the existing check/restore/exit fragment');
+        expect(preview).toHaveTextContent('reconnect its former successor directly to the trigger');
+        expect(preview).toHaveTextContent('Owner edited check');
+      }
+      await user.click(screen.getByRole('button', { name: 'Cancel preview' }));
+      expect(JSON.stringify(definition)).toBe(original);
+      expect(onApply).not.toHaveBeenCalled();
+      await user.click(previewButton);
+      await user.click(screen.getByRole('button', { name: 'Apply GitHub preset' }));
+      expect(onApply).toHaveBeenCalledWith(
+        expect.objectContaining({
+          removedNodes: shared
+            ? []
+            : expect.arrayContaining([expect.objectContaining({ id: 'event-check' })]),
+          rewiredEdges: shared
+            ? []
+            : [expect.objectContaining({ id: 'e1', from: { node: 'start', port: 'out' } })],
+        }),
+      );
+    },
+  );
+
   it.each(['definition', 'draftInputs', 'generation'] as const)(
     'invalidates a graph preview when %s changes',
     async (changed) => {
@@ -157,6 +234,36 @@ describe('TriggerPresets', () => {
     expect(onApply).toHaveBeenCalledTimes(1);
   });
 
+  it('shows editor captions and row numbers for held Poll fields', async () => {
+    const user = userEvent.setup();
+    render(
+      <TriggerPresets
+        config={triggerConfig('poll', {
+          intervalSeconds: 60,
+          probe: { kind: 'none' },
+          fireWhen: 'true',
+        })}
+        heldInputs={{
+          intervalSeconds: {},
+          'items.dedupeKey': {},
+          'items.maxRunsPerPoll': {},
+          'probe.args.0': {},
+        }}
+        onApply={vi.fn()}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: 'Start from a preset' }));
+    await user.selectOptions(screen.getByLabelText('Preset'), 'issues-poll');
+    await user.type(screen.getByLabelText('Repository owner'), 'octo');
+    await user.type(screen.getByLabelText('Repository'), 'service');
+    await user.type(screen.getByLabelText('Issue label'), 'ready');
+    await user.click(screen.getByRole('button', { name: 'Preview GitHub preset' }));
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Unfinished input will be replaced: Interval seconds, Per-item dedupe key, Items Max runs per poll, Probe Args 1.',
+    );
+    expect(screen.getByRole('alert')).not.toHaveTextContent('items.dedupeKey');
+  });
+
   it.each(['config', 'heldInputs', 'historyEpoch'] as const)(
     'invalidates a preview after the current %s changes',
     async (changed) => {
@@ -173,6 +280,7 @@ describe('TriggerPresets', () => {
       await user.type(screen.getByLabelText('Issue label'), 'ready');
       await user.click(screen.getByRole('button', { name: 'Preview GitHub preset' }));
       expect(screen.getByRole('region', { name: 'Preset preview' })).toBeVisible();
+      expect(screen.getByRole('status')).toBeEmptyDOMElement();
       rerender(
         <TriggerPresets
           {...props}
@@ -188,7 +296,13 @@ describe('TriggerPresets', () => {
       );
       expect(screen.queryByRole('button', { name: 'Apply GitHub preset' })).not.toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Preview GitHub preset' })).toBeEnabled();
+      expect(screen.getByRole('status')).toHaveTextContent(
+        'Preset preview is out of date. Preview the preset again before applying.',
+      );
       expect(onApply).not.toHaveBeenCalled();
+      await user.click(screen.getByRole('button', { name: 'Preview GitHub preset' }));
+      expect(screen.getByRole('region', { name: 'Preset preview' })).toBeVisible();
+      expect(screen.getByRole('status')).toBeEmptyDOMElement();
     },
   );
 
