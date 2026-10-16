@@ -7,7 +7,7 @@ CREATE TABLE webhook_endpoints_next (
 );
 --> statement-breakpoint
 INSERT INTO webhook_endpoints_next (id,owner_id,loop_id,version_id,trigger_node_id,token,auth_type,signature_message,signature_header,secret_ref,window_seconds,enabled,created_at)
- SELECT id,owner_id,loop_id,version_id,trigger_node_id,token,'hmac-sha256',CASE signature_scheme WHEN 'hmac-sha256' THEN 'timestamp-body' WHEN 'hmac-sha256-body' THEN 'body' ELSE signature_scheme END,signature_header,secret_ref,replay_window_seconds,enabled,created_at FROM webhook_endpoints;
+ SELECT id,owner_id,loop_id,version_id,trigger_node_id,token,'hmac-sha256',CASE signature_scheme WHEN 'hmac-sha256' THEN 'timestamp-body' WHEN 'hmac-sha256-body' THEN 'body' ELSE signature_scheme END,lower(signature_header),secret_ref,replay_window_seconds,enabled,created_at FROM webhook_endpoints;
 --> statement-breakpoint
 DROP TABLE webhook_endpoints;
 --> statement-breakpoint

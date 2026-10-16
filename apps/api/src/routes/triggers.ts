@@ -194,14 +194,12 @@ export function registerTriggerRoutes(app: ApiInstance, container: Container): v
       },
     },
     async (request) => ({
-      items: await Promise.all(
-        (
-          await repos.inbound.list(request.auth.ownerId, {
-            limit: request.query.limit ?? 100,
-            ...(request.query.type ? { type: request.query.type } : {}),
-            ...(request.query.before ? { before: request.query.before } : {}),
-          })
-        ).map((event) => triggers.describeInbound(event)),
+      items: await triggers.describeInbound(
+        await repos.inbound.list(request.auth.ownerId, {
+          limit: request.query.limit ?? 100,
+          ...(request.query.type ? { type: request.query.type } : {}),
+          ...(request.query.before ? { before: request.query.before } : {}),
+        }),
       ),
     }),
   );

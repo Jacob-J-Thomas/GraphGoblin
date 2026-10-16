@@ -20,6 +20,8 @@ export interface AdmissionContractFixture {
   inbound(id: string): Promise<WebhookClaim['inbound'] | undefined>;
   subscribe(id: string, listener: (event: RunEvent) => void): () => void;
   failAt(write: AdmissionWrite | undefined): Promise<void>;
+  /** Preserve a historical inbound claim and its endpoint provenance, with no receipt/run. */
+  preserveInbound(input: WebhookClaim): Promise<void>;
   close(): void | Promise<void>;
 }
 export type AdmissionContractFactory = () => Promise<AdmissionContractFixture>;
@@ -40,6 +42,15 @@ export function createFakeAdmissionFixture(): Promise<AdmissionContractFixture> 
     subscribe: (id, listener) => events.subscribe(id, listener),
     failAt(write) {
       failure = write;
+      return Promise.resolve();
+    },
+    preserveInbound(input) {
+      admission.inbound.set(input.inbound.id, structuredClone(input.inbound));
+      admission.inboundScopes.set(input.inbound.id, {
+        ownerId: input.ownerId,
+        loopId: input.loopId,
+        triggerNodeId: input.triggerNodeId,
+      });
       return Promise.resolve();
     },
     close() {},
@@ -121,6 +132,55 @@ function inputs() {
 
 type Scenario = { name: string; run(fixture: AdmissionContractFixture): Promise<void> };
 const scenarios: Scenario[] = [
+  {
+    name: 'historical inbound-only keys are permanent across versions and isolated by owner/loop/node',
+    async run(f) {
+      const { claim, intent, ids } = inputs();
+      claim.inbound.receivedAt = '2000-01-01T00:00:00.000Z';
+      await f.preserveInbound(claim);
+      intent.run.versionId = ids.next();
+      intent.initialThread.run.versionId = intent.run.versionId;
+      const next = {
+        ...claim,
+        id: ids.next(),
+        inbound: { ...claim.inbound, id: ids.next(), receivedAt: '2099-01-01T00:00:00.000Z' },
+      };
+      equal((await f.admission.claim(next, intent)).receipt.status, 'deduplicated');
+      equal(await f.run(intent.run.id), undefined);
+      for (const dimension of ['ownerId', 'loopId', 'triggerNodeId'] as const) {
+        const other = {
+          ...next,
+          id: ids.next(),
+          inbound: { ...next.inbound, id: ids.next() },
+          [dimension]: ids.next(),
+        };
+        other.inbound.ownerId = other.ownerId;
+        equal((await f.admission.claim(other)).receipt.status, 'filtered');
+      }
+    },
+  },
+  {
+    name: 'racing explicit keys have one pending intent and permanent failure does not reopen the key',
+    async run(f) {
+      const { claim, intent, ids } = inputs();
+      const next = { ...claim, id: ids.next(), inbound: { ...claim.inbound, id: ids.next() } };
+      const claimed = await Promise.all([
+        f.admission.claim(claim, intent),
+        f.admission.claim(next, intent),
+      ]);
+      equal(claimed.map((value) => value.receipt.status).sort(), ['deduplicated', 'pending']);
+      const pending = claimed.find((value) => value.receipt.status === 'pending')!;
+      await f.admission.failed(pending.receipt.id, 'WEBHOOK_INTENT_CONFLICT');
+      intent.run.versionId = ids.next();
+      intent.initialThread.run.versionId = intent.run.versionId;
+      const repeat = {
+        ...claim,
+        id: ids.next(),
+        inbound: { ...claim.inbound, id: ids.next(), receivedAt: '2099-01-01T00:00:00.000Z' },
+      };
+      equal((await f.admission.claim(repeat, intent)).receipt.status, 'deduplicated');
+    },
+  },
   {
     name: 'ordinary create is atomic, canonical and idempotent; notification follows commit',
     async run(f) {
@@ -231,7 +291,6 @@ const scenarios: Scenario[] = [
         { ...claim, id: ids.next(), inbound: { ...claim.inbound, id: ids.next() } },
         expected,
       );
-      equal(duplicate.duplicate, false);
       equal(duplicate.receipt.status, 'deduplicated');
       equal(duplicate.receipt.id === first.receipt.id, false);
     },
@@ -294,7 +353,6 @@ const scenarios: Scenario[] = [
       second.queued.initialThread = second.initialThread;
       const next = { ...claim, id: ids.next(), inbound: { ...claim.inbound, id: ids.next() } };
       const repeated = await f.admission.claim(next, second);
-      equal(repeated.duplicate, false);
       equal(repeated.receipt.status, 'pending');
       await f.admission.create(intent, first.receipt.id);
       await f.admission.create(second, repeated.receipt.id);

@@ -87,6 +87,8 @@ describe('SQLite atomic admission', () => {
       await persisted.migrate();
       const frozen = intent();
       const input = claim();
+      frozen.initialThread.invocation.trigger.dedupeKey = 'durable-key';
+      input.inbound.dedupeKey = 'durable-key';
       await new SqliteTriggerAdmission(
         persisted.db,
         new SqliteEventStore(persisted.db, new FakeClock()),
@@ -99,6 +101,10 @@ describe('SQLite atomic admission', () => {
       expect(await restored.due(FIXTURE_TS, 5)).toEqual([{ id: input.id, attempts: 0 }]);
       const saved = (await restored.get(input.id))!;
       expect(saved.intent).toEqual(frozen);
+      const repeat = claim('b'.repeat(64));
+      repeat.inbound.dedupeKey = 'durable-key';
+      repeat.inbound.receivedAt = '2099-01-01T00:00:00.000Z';
+      expect((await restored.claim(repeat, frozen)).receipt.status).toBe('deduplicated');
       expect((await restored.create(saved.intent!, saved.id)).id).toBe(frozen.run.id);
       expect((await restored.create(saved.intent!, saved.id)).id).toBe(frozen.run.id);
       expect(await restoredEvents.read(frozen.run.id)).toHaveLength(1);
@@ -194,7 +200,7 @@ describe('SQLite atomic admission', () => {
   });
   it('allows identical unkeyed content across version and inbound identities', async () => {
     const input = claim();
-    expect((await admission.claim(input)).duplicate).toBe(false);
+    expect((await admission.claim(input)).receipt.status).toBe('filtered');
     expect(
       (
         await admission.claim(
@@ -205,8 +211,8 @@ describe('SQLite atomic admission', () => {
           },
           intent(),
         )
-      ).duplicate,
-    ).toBe(false);
+      ).receipt.status,
+    ).toBe('pending');
     expect(
       (
         await admission.claim({
@@ -215,8 +221,8 @@ describe('SQLite atomic admission', () => {
           ownerId: 'other',
           inbound: { ...input.inbound, id: fakeUlid('other-event'), ownerId: 'other' },
         })
-      ).duplicate,
-    ).toBe(false);
+      ).receipt.status,
+    ).toBe('filtered');
     expect((await handle.client.execute('SELECT * FROM inbound_events')).rows).toHaveLength(3);
   });
   it('refuses changed immutable identity and malformed/missing receipt links without writing a run', async () => {
@@ -251,7 +257,6 @@ describe('SQLite atomic admission', () => {
       second.inbound.dedupeKey = 'same';
       const result = await admission.claim(second, frozen);
       expect(result).toMatchObject({
-        duplicate: false,
         receipt: { status: 'deduplicated', attempts: 0 },
       });
       expect(result.receipt.intent).toBeUndefined();
@@ -295,6 +300,22 @@ describe('SQLite atomic admission', () => {
     expect((await admission.claim(hint)).receipt.status).toBe('deduplicated');
     expect(await admission.hasPendingPin(FIXTURE_IDS.loop)).toBe(false);
   });
+  it.each(['pending', 'failed'] as const)(
+    'keeps %s intent keys consumed when the inbound link is unavailable',
+    async (state) => {
+      const frozen = intent();
+      const first = claim();
+      first.inbound.dedupeKey = 'reserved';
+      frozen.initialThread.invocation.trigger.dedupeKey = 'reserved';
+      await admission.claim(first, frozen);
+      if (state === 'failed') await admission.failed(first.id, 'WEBHOOK_INTENT_CONFLICT');
+      await handle.client.execute('DELETE FROM inbound_events');
+      const repeat = claim('b'.repeat(64));
+      repeat.inbound.dedupeKey = 'reserved';
+      expect((await admission.claim(repeat, frozen)).receipt.status).toBe('deduplicated');
+      expect((await handle.client.execute('SELECT * FROM runs')).rows).toEqual([]);
+    },
+  );
   it('reserves pending webhook keys against atomic poll admission and releases only after permanent failure', async () => {
     const body = intent(),
       first = claim();

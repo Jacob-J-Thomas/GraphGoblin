@@ -10,6 +10,29 @@ afterEach(() => {
   for (const handle of handles.splice(0)) handle.close();
 });
 
+it.each(['X Sig', 'X-Sig', '', 'x'.repeat(129), 'x\nbad'])(
+  'refuses a stored noncanonical header %j before startup writes',
+  async (header) => {
+    const handle = await openMemoryDatabase();
+    handles.push(handle);
+    await handle.client.execute({
+      sql: "INSERT INTO webhook_endpoints (id,owner_id,loop_id,version_id,trigger_node_id,token,auth_type,signature_message,signature_header,secret_ref,enabled,created_at) VALUES ('bad','local','loop','version','hook','token','hmac-sha256','body',?,'key',1,?)",
+      args: [header, FIXTURE_TS],
+    });
+    const before = (await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows;
+    await expect(guardDatabaseUpgrade(handle.client)).rejects.toMatchObject({
+      code: 'DATA_UPGRADE_REQUIRED',
+      message: expect.stringContaining('signing headers'),
+    });
+    expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toEqual(
+      before,
+    );
+    expect(
+      (await handle.client.execute('SELECT signature_header FROM webhook_endpoints')).rows,
+    ).toEqual([{ signature_header: header }]);
+  },
+);
+
 it.each([
   ['missing table', 'DROP TABLE webhook_receipts'],
   ['missing column', 'ALTER TABLE loops DROP COLUMN description'],

@@ -21,6 +21,7 @@ import {
   CURRENT_DEFINITION_FORMAT,
   ContextThreadSchema,
   HarnessDefaultsSchema,
+  HeaderNameSchema,
   LoopDefinitionSchema,
   RunEventSchema,
   RunRecordSchema,
@@ -186,6 +187,14 @@ export async function guardDatabaseUpgrade(
     );
     if (malformed.length)
       throw new DatabaseUpgradeRequiredError('Stored webhook signing fields are inconsistent');
+    const signingHeaders = await rows(
+      client,
+      "SELECT signature_header FROM webhook_endpoints WHERE auth_type = 'hmac-sha256'",
+    );
+    if (signingHeaders.some((row) => !HeaderNameSchema.safeParse(row.signature_header).success))
+      throw new DatabaseUpgradeRequiredError(
+        'Stored webhook signing headers are not lowercase RFC tokens',
+      );
   }
   if (!options.skipDefinitions)
     for await (const batch of tableBatches(client, 'loop_versions'))

@@ -39,6 +39,19 @@ export async function createSqliteAdmissionFixture(): Promise<AdmissionContractF
           `CREATE TRIGGER fail_admission ${faults[write]} BEGIN SELECT RAISE(ABORT,'injected admission write failure'); END`,
         );
     },
+    async preserveInbound(input) {
+      await handle.client.execute({
+        sql: "INSERT INTO webhook_endpoints (id,owner_id,loop_id,version_id,trigger_node_id,token,auth_type,enabled,created_at) VALUES (?,?,?,'historical',?,'old-token','none',0,?)",
+        args: [
+          input.inbound.source.slice('webhook:'.length),
+          input.ownerId,
+          input.loopId,
+          input.triggerNodeId,
+          input.inbound.receivedAt,
+        ],
+      });
+      await inbound.insert(input.inbound);
+    },
     close: () => handle.close(),
   };
 }

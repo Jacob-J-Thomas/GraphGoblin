@@ -56,10 +56,7 @@ export interface TriggerAdmissionPort {
   create(input: RunAdmission, receiptId?: string): Promise<RunRecord>;
   /** Atomic items-only key admission. Undefined means consumed/reserved, without ID reuse. */
   createPollItem(input: RunAdmission): Promise<RunRecord | undefined>;
-  claim(
-    input: WebhookClaim,
-    intent?: RunAdmission,
-  ): Promise<{ receipt: WebhookReceipt; duplicate: boolean }>;
+  claim(input: WebhookClaim, intent?: RunAdmission): Promise<{ receipt: WebhookReceipt }>;
   get(id: string): Promise<WebhookReceipt | undefined>;
   /** Select retry identities only; each stored intent is validated independently by get(). */
   due(now: string, limit: number): Promise<Pick<WebhookReceipt, 'id' | 'attempts'>[]>;

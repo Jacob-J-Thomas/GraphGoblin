@@ -473,7 +473,7 @@ export class RunManager {
     input: StartRunInput,
     filtered: boolean,
   ): Promise<{
-    state: 'duplicate' | 'deduplicated' | 'filtered' | 'pending';
+    state: 'deduplicated' | 'filtered' | 'pending';
     receipt: WebhookReceipt;
   }> {
     if (
@@ -512,10 +512,9 @@ export class RunManager {
             stableStringify(saved.intent) !== stableStringify(intent))
         )
           throw error;
-        claimed = { receipt: saved, duplicate: false };
+        claimed = { receipt: saved };
       }
-      const { receipt, duplicate } = claimed;
-      if (duplicate) return { state: 'duplicate' as const, receipt };
+      const { receipt } = claimed;
       if (receipt.status === 'deduplicated') return { state: 'deduplicated' as const, receipt };
       if (!intent) return { state: 'filtered' as const, receipt };
       return { state: 'pending' as const, receipt };

@@ -57,6 +57,17 @@ function last(spy: ReturnType<typeof vi.fn>): Record<string, unknown> {
 }
 
 describe('SchemaForm', () => {
+  it('does not trigger a second resolver pass for each keystroke while schema issues are unchanged', async () => {
+    const user = userEvent.setup();
+    const parse = vi.fn();
+    const schema = z.object({ value: z.string() }).superRefine(parse);
+    render(<Harness schema={schema} initial={{ value: '' }} spy={vi.fn()} />);
+    await waitFor(() => expect(parse).toHaveBeenCalledTimes(2));
+    parse.mockClear();
+    await user.type(screen.getByLabelText('Value'), 'abc');
+    // One whole-value issue check and RHF's normal resolver per change; no extra trigger.
+    expect(parse).toHaveBeenCalledTimes(6);
+  });
   it('orders top-level fields without changing field paths or untouched values', async () => {
     const user = userEvent.setup(),
       spy = vi.fn();

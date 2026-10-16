@@ -111,7 +111,7 @@ test('body-signed GitHub preset saves, admits a matching hook, and deduplicates 
   await expect(dialog.getByRole('region', { name: 'Preset preview' })).toBeFocused();
   await dialog.getByRole('button', { name: 'Apply GitHub preset' }).click();
   await expect(dialog.getByLabel('Trigger type').locator('option:checked')).toHaveText('Webhook');
-  await dialog.getByLabel('Secret name').fill(secretRef);
+  await dialog.getByLabel('Secret name', { exact: true }).fill(secretRef);
   await expect(dialog.getByLabel('Timestamp window (seconds)')).toHaveCount(0);
   await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
   await expect
@@ -127,7 +127,7 @@ test('body-signed GitHub preset saves, admits a matching hook, and deduplicates 
   expect(await triggerConfig(request, loopId)).not.toHaveProperty('filter');
   const restored = await openNode(page, 'start');
   await expect(restored.getByLabel('Trigger type').locator('option:checked')).toHaveText('Webhook');
-  await expect(restored.getByLabel('Secret name')).toHaveValue(secretRef);
+  await expect(restored.getByLabel('Secret name', { exact: true })).toHaveValue(secretRef);
   await expect(restored.getByLabel('Timestamp window (seconds)')).toHaveCount(0);
   expect(patternMessages).toEqual([]);
   await restored.getByRole('button', { name: 'Done', exact: true }).click();
@@ -334,6 +334,6 @@ test('Events exposes safe labels for all five webhook delivery dispositions', as
   );
   await expect(row('deduplicated-event')).toContainText('none');
   await expect(row('filtered-event')).toContainText(
-    'No run was started. This authenticated body stays consumed if you later change the filter.',
+    'No run was started. An authored key stays consumed; unkeyed redeliveries are separate deliveries.',
   );
 });

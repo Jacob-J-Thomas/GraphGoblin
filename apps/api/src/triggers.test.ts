@@ -1145,7 +1145,10 @@ describe('body signing and durable admission', () => {
               header: configuredHeader.toLowerCase(),
               secretRef: 'hook-secret',
             },
-            dedupeKey: '$lookup($headers, ' + JSON.stringify(presentedHeader) + ')',
+            dedupeKey:
+              '($value := $lookup($headers, ' +
+              JSON.stringify(presentedHeader) +
+              '); $exists($value) ? $value : "credential-excluded")',
           }),
         ),
       );
@@ -1171,7 +1174,7 @@ describe('body signing and durable admission', () => {
       });
       if (result.kind !== 'accepted' || !result.runId)
         throw new Error('expected admitted delivery');
-      expect(result.event.dedupeKey).toBeUndefined();
+      expect(result.event.dedupeKey).toBe('credential-excluded');
       await t.idle();
       const initialThread = await t.container.repos.runs.getInitialThread(result.runId);
       expect(initialThread?.invocation.trigger.payload).toEqual(JSON.parse(body));
@@ -1280,7 +1283,7 @@ describe('body signing and durable admission', () => {
       expect(JSON.stringify({ errorResult, diagnostics: t.logger.lines })).not.toContain(signature);
     },
   );
-  it('rejects overlong body business keys before consuming content, preserves exact boundary keys and legacy timestamp truncation', async () => {
+  it('rejects overlong business keys before consuming content and preserves exact boundary keys', async () => {
     await setSecret();
     const id = await t.publishLoop(triggerLoop('body-key-length', bodyHook({ dedupeKey: 'key' })));
     const path = (await triggersOf(t, id)).webhooks[0]!.path;
@@ -1289,7 +1292,7 @@ describe('body signing and durable admission', () => {
     for (const body of bodies)
       expect((await bodyDelivery(path, body)).json()).toMatchObject({
         status: 422,
-        code: 'EXPRESSION_FAILED',
+        code: 'KEY_INVALID',
       });
     expect(
       (await t.container.handle.client.execute('SELECT * FROM webhook_receipts')).rows,
@@ -1308,12 +1311,12 @@ describe('body signing and durable admission', () => {
       triggerLoop('timestamp-key-length', hookTrigger({ dedupeKey: 'key' })),
     );
     const legacyPath = (await triggersOf(t, legacy)).webhooks[0]!.path;
-    expect((await deliver(legacyPath, bodies[0]!)).statusCode).toBe(202);
+    expect((await deliver(legacyPath, bodies[0]!)).json()).toMatchObject({
+      status: 422,
+      code: 'KEY_INVALID',
+    });
     await t.idle();
-    expect(
-      (await t.container.repos.runs.getInitialThread((await runsOf(legacy))[0]!.id))?.invocation
-        .trigger.dedupeKey,
-    ).toBe(prefix);
+    expect(await runsOf(legacy)).toEqual([]);
   });
   it.each(['hmac-sha256', 'hmac-sha256-body'] as const)(
     'logs safe operational context for a missing %s secret',
@@ -2182,6 +2185,22 @@ describe('general webhook configuration and unsigned intake', () => {
       code: 'HOOK_NOT_READY',
     });
     expect(claim).not.toHaveBeenCalled();
+    const unavailable = await t.app.inject(`/loops/${id}/triggers`);
+    expect(unavailable.statusCode).toBe(200);
+    expect(unavailable.json()).toMatchObject({ webhooks: [{ configurationAvailable: false }] });
+    const history = await t.app.inject('/events');
+    expect(history.statusCode).toBe(200);
+    expect(history.json()).toMatchObject({
+      items: [{ webhook: { configurationAvailable: false } }],
+    });
+    expect(t.logger.lines).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          level: 'warn',
+          obj: expect.objectContaining({ code: 'WEBHOOK_CONFIGURATION_UNAVAILABLE' }),
+        }),
+      ]),
+    );
     await t.container.triggers.disarmLoop(id);
     expect((await t.app.inject(`/loops/${id}/triggers`)).json()).toMatchObject({
       webhooks: [{ configurationAvailable: false }],
@@ -2201,10 +2220,48 @@ describe('general webhook configuration and unsigned intake', () => {
     });
     const event = (await t.container.repos.inbound.list('local'))[0]!;
     expect(
-      await t.container.triggers.describeInbound({ ...event, ownerId: 'other' }),
+      (await t.container.triggers.describeInbound([{ ...event, ownerId: 'other' }]))[0],
     ).not.toHaveProperty('webhook');
     expect(
-      await t.container.triggers.describeInbound({ ...event, source: 'webhook:missing' }),
+      (await t.container.triggers.describeInbound([{ ...event, source: 'webhook:missing' }]))[0],
     ).not.toHaveProperty('webhook');
+  });
+  it('bounds Events lookups by unique endpoint/version/loop and never caches across requests', async () => {
+    const definition = triggerLoop('shared pinned version', { type: 'webhook' });
+    definition.nodes.push({
+      id: 'other',
+      kind: 'trigger',
+      label: 'Other',
+      config: { type: 'webhook' },
+    });
+    definition.edges.push({
+      id: 'other-edge',
+      from: { node: 'other', port: 'out' },
+      to: { node: 'done' },
+    });
+    const id = await t.publishLoop(definition);
+    const endpoints = (await triggersOf(t, id)).webhooks;
+    for (let index = 0; index < 100; index++) {
+      await t.container.repos.inbound.insert({
+        id: t.container.ports.ids.next(),
+        ownerId: 'local',
+        type: 'webhook',
+        source: `webhook:${endpoints[index % 2]!.id}`,
+        receivedAt: t.clock.now().toISOString(),
+        payload: null,
+        runIds: [],
+      });
+    }
+    const endpointGet = vi.spyOn(t.container.repos.endpoints, 'get');
+    const versionGet = vi.spyOn(t.container.repos.loops, 'getVersion');
+    const loopGet = vi.spyOn(t.container.repos.loops, 'getLoop');
+    for (let request = 1; request <= 2; request++) {
+      const response = await t.app.inject('/events?limit=100');
+      expect(response.statusCode).toBe(200);
+      expect(response.json<{ items: unknown[] }>().items).toHaveLength(100);
+      expect(endpointGet).toHaveBeenCalledTimes(2 * request);
+      expect(versionGet).toHaveBeenCalledTimes(request);
+      expect(loopGet).toHaveBeenCalledTimes(request);
+    }
   });
 });

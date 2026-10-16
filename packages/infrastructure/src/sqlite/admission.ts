@@ -18,9 +18,9 @@ import {
   type WebhookReceipt,
   type WebhookFailureCode,
 } from '@graphgoblin/engine';
-import { and, asc, eq, getTableColumns, lte, sql } from 'drizzle-orm';
+import { and, asc, eq, getTableColumns, lte, or, sql } from 'drizzle-orm';
 import type { Database } from './db.js';
-import { inboundEvents, runEvents, runs, webhookReceipts } from './schema.js';
+import { inboundEvents, runEvents, runs, webhookEndpoints, webhookReceipts } from './schema.js';
 import { runInsert, runRecordFromRow } from './runs.js';
 import type { SqliteEventStore } from './events.js';
 
@@ -183,10 +183,7 @@ export class SqliteTriggerAdmission implements TriggerAdmissionPort {
     if (committed.event) this.events.notifyCommitted([committed.event]);
     return committed.run;
   }
-  async claim(
-    input: WebhookClaim,
-    intent?: RunAdmission,
-  ): Promise<{ receipt: WebhookReceipt; duplicate: boolean }> {
+  async claim(input: WebhookClaim, intent?: RunAdmission): Promise<{ receipt: WebhookReceipt }> {
     const frozen = intent ? parseRunAdmission(intent) : undefined;
     assertWebhookClaim(input, frozen);
     return this.db.transaction(async (tx) => {
@@ -195,31 +192,59 @@ export class SqliteTriggerAdmission implements TriggerAdmissionPort {
         const [receiptKey] = await tx
           .select({ id: webhookReceipts.id })
           .from(webhookReceipts)
-          .innerJoin(inboundEvents, eq(webhookReceipts.inboundId, inboundEvents.id))
+          .leftJoin(inboundEvents, eq(webhookReceipts.inboundId, inboundEvents.id))
           .where(
             and(
               eq(webhookReceipts.ownerId, input.ownerId),
               eq(webhookReceipts.loopId, input.loopId),
               eq(webhookReceipts.triggerNodeId, input.triggerNodeId),
-              eq(inboundEvents.dedupeKey, input.inbound.dedupeKey),
+              or(
+                eq(inboundEvents.dedupeKey, input.inbound.dedupeKey),
+                sql`json_extract(${webhookReceipts.intent}, '$.initialThread.invocation.trigger.dedupeKey') = ${input.inbound.dedupeKey}`,
+              ),
             ),
           )
           .limit(1);
-        const [runKey] = receiptKey
+        // Earlier deliveries may have an inbound claim without a receipt or a run. Endpoint
+        // provenance supplies its stable owner/loop/node scope, including disabled old versions.
+        const [inboundKey] = receiptKey
           ? []
           : await tx
-              .select({ id: runs.id })
-              .from(runs)
+              .select({ id: inboundEvents.id })
+              .from(webhookEndpoints)
+              .innerJoin(
+                inboundEvents,
+                and(
+                  eq(inboundEvents.ownerId, input.ownerId),
+                  eq(inboundEvents.type, 'webhook'),
+                  sql`${inboundEvents.source} = 'webhook:' || ${webhookEndpoints.id}`,
+                  eq(inboundEvents.dedupeKey, input.inbound.dedupeKey),
+                ),
+              )
               .where(
-                runKeyScope(
-                  input.ownerId,
-                  input.loopId,
-                  input.triggerNodeId,
-                  input.inbound.dedupeKey,
+                and(
+                  eq(webhookEndpoints.ownerId, input.ownerId),
+                  eq(webhookEndpoints.loopId, input.loopId),
+                  eq(webhookEndpoints.triggerNodeId, input.triggerNodeId),
                 ),
               )
               .limit(1);
-        keySeen = receiptKey !== undefined || runKey !== undefined;
+        const [runKey] =
+          receiptKey || inboundKey
+            ? []
+            : await tx
+                .select({ id: runs.id })
+                .from(runs)
+                .where(
+                  runKeyScope(
+                    input.ownerId,
+                    input.loopId,
+                    input.triggerNodeId,
+                    input.inbound.dedupeKey,
+                  ),
+                )
+                .limit(1);
+        keySeen = receiptKey !== undefined || inboundKey !== undefined || runKey !== undefined;
       }
       await tx
         .insert(inboundEvents)
@@ -240,7 +265,7 @@ export class SqliteTriggerAdmission implements TriggerAdmissionPort {
         })
         .returning();
       if (!row) throw new AdmissionConflictError();
-      return { receipt: receiptOf(row), duplicate: false };
+      return { receipt: receiptOf(row) };
     });
   }
   async get(id: string): Promise<WebhookReceipt | undefined> {

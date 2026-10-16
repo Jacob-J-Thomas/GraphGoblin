@@ -60,7 +60,8 @@ Webhook endpoint summaries expose nested safe `authentication`, pinned `body`, `
 optional `dedupeKey`/`filter`, and `configurationAvailable`. Secret references are names only.
 `GET /events` exposes that summary under optional `webhook` for webhook deliveries, retaining the
 existing delivery state/attempts/retry/failure/run-link fields. Disabled orphans mark configuration
-unavailable; enabled missing or mismatched pinned authentication refuses. Public hooks return only
+unavailable. Enabled mismatches log a safe warning while both listings stay readable; intake still
+refuses with `HOOK_NOT_READY`. Events lookups share request-local endpoint/version/loop caches. Public hooks return only
 `202 {accepted:true}` after saving; raw-byte authentication precedes decoding/extraction. See 08
 for `EVENT_TYPE_AMBIGUOUS` (400), `EVENT_TYPE_INVALID` (422), bounds and exact recipes. Invocation
 event metadata does not change `POST /events` or publish anything to the bus.

@@ -50,9 +50,9 @@ for (const theme of ['light', 'dark']) {
     await expect(dialog.getByLabel('Timestamp window (seconds)')).toBeVisible();
     await signing.selectOption({ label: 'Body HMAC' });
     await expect(dialog.getByLabel('Timestamp window (seconds)')).toHaveCount(0);
-    await dialog.getByLabel('Secret name').fill('synthetic-hook');
+    await dialog.getByLabel('Secret name', { exact: true }).fill('synthetic-hook');
     const modes = dialog.getByRole('radiogroup', { name: 'Body mode' });
-    await modes.getByRole('radio', { name: 'text', exact: true }).click();
+    await modes.getByText('text', { exact: true }).click();
     await expect(modes.getByRole('radio', { name: 'text', exact: true })).toBeChecked();
     await page.keyboard.press('Control+z');
     await expect(modes.getByRole('radio', { name: 'json', exact: true })).toBeChecked();
@@ -107,7 +107,7 @@ for (const theme of ['light', 'dark']) {
     await expect(dialog.getByLabel('Interval seconds')).toHaveValue('60');
     await page.keyboard.press('Control+z');
     await expect(type).toHaveValue('webhook');
-    await expect(dialog.getByLabel('Secret name')).toHaveValue('synthetic-hook');
+    await expect(dialog.getByLabel('Secret name', { exact: true })).toHaveValue('synthetic-hook');
     await expect(signing.locator('option:checked')).toHaveText('Body HMAC');
     await page.keyboard.press('Control+y');
     await expect(type).toHaveValue('poll');
@@ -135,11 +135,12 @@ for (const width of [360, 1440]) {
     await auth.focus();
     await page.keyboard.press('ArrowDown');
     await expect(auth.locator('option:checked')).toHaveText('Body HMAC');
-    await dialog.getByLabel('Secret name').fill('synthetic-hook');
+    await dialog.getByLabel('Secret name', { exact: true }).fill('synthetic-hook');
     await expect(dialog.getByLabel('Signing header')).toHaveAttribute(
       'placeholder',
       'x-hub-signature-256',
     );
+    await auth.focus();
     await auth.selectOption({ label: 'Timestamp and body HMAC' });
     await expect(dialog.getByLabel('Timestamp window (seconds)')).toHaveAttribute(
       'placeholder',
@@ -149,15 +150,15 @@ for (const width of [360, 1440]) {
     await expect(auth.locator('option:checked')).toHaveText('Body HMAC');
     await expect(auth).toBeFocused();
     await auth.selectOption({ label: 'None' });
-    await expect(dialog.getByLabel('Secret name')).toHaveCount(0);
+    await expect(dialog.getByLabel('Secret name', { exact: true })).toHaveCount(0);
     const modes = dialog.getByRole('radiogroup', { name: 'Body mode' });
-    await modes.getByRole('radio', { name: 'bytes', exact: true }).click();
+    await modes.getByText('bytes', { exact: true }).click();
     await dialog.getByLabel('Event type source').selectOption('json-pointer');
     await dialog.getByLabel('JSON pointer').fill('/event~1type/0');
     await expect(
       dialog.getByText('JSON pointers require JSON body mode', { exact: true }).first(),
     ).toBeVisible();
-    await modes.getByRole('radio', { name: 'json', exact: true }).click();
+    await modes.getByText('json', { exact: true }).click();
     await expect(
       dialog.getByText('JSON pointers require JSON body mode', { exact: true }),
     ).toHaveCount(0);

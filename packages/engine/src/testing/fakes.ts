@@ -836,6 +836,11 @@ export type AdmissionWrite =
 export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
   readonly receipts = new Map<string, WebhookReceipt>();
   readonly inbound = new Map<string, WebhookClaim['inbound']>();
+  /** Resolved endpoint provenance for preserved inbound-only claims in the testing adapter. */
+  readonly inboundScopes = new Map<
+    string,
+    Pick<WebhookClaim, 'ownerId' | 'loopId' | 'triggerNodeId'>
+  >();
   constructor(
     private readonly runs: InMemoryRunRepository,
     private readonly events: InMemoryEventStore,
@@ -911,10 +916,7 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
       return undefined;
     return this.create(input);
   }
-  claim(
-    input: WebhookClaim,
-    intent?: RunAdmission,
-  ): Promise<{ receipt: WebhookReceipt; duplicate: boolean }> {
+  claim(input: WebhookClaim, intent?: RunAdmission): Promise<{ receipt: WebhookReceipt }> {
     const frozen = intent ? parseRunAdmission(intent) : undefined;
     assertWebhookClaim(input, frozen);
     const keySeen =
@@ -924,8 +926,20 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
           receipt.ownerId === input.ownerId &&
           receipt.loopId === input.loopId &&
           receipt.triggerNodeId === input.triggerNodeId &&
-          this.inbound.get(receipt.inboundId)?.dedupeKey === input.inbound.dedupeKey,
+          (this.inbound.get(receipt.inboundId)?.dedupeKey === input.inbound.dedupeKey ||
+            receipt.intent?.initialThread.invocation.trigger.dedupeKey === input.inbound.dedupeKey),
       ) ||
+        [...this.inbound.values()].some((inbound) => {
+          const scope = this.inboundScopes.get(inbound.id);
+          return (
+            inbound.type === 'webhook' &&
+            inbound.dedupeKey === input.inbound.dedupeKey &&
+            inbound.ownerId === input.ownerId &&
+            scope?.ownerId === input.ownerId &&
+            scope.loopId === input.loopId &&
+            scope.triggerNodeId === input.triggerNodeId
+          );
+        }) ||
         this.runs.hasTriggerKey(
           input.ownerId,
           input.loopId,
@@ -955,7 +969,12 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
     this.beforeWrite('claim.receipt');
     this.receipts.set(receipt.id, receipt);
     this.inbound.set(inbound.id, inbound);
-    return Promise.resolve({ receipt: structuredClone(receipt), duplicate: false });
+    this.inboundScopes.set(inbound.id, {
+      ownerId: input.ownerId,
+      loopId: input.loopId,
+      triggerNodeId: input.triggerNodeId,
+    });
+    return Promise.resolve({ receipt: structuredClone(receipt) });
   }
   get(id: string): Promise<WebhookReceipt | undefined> {
     const receipt = this.receipts.get(id);

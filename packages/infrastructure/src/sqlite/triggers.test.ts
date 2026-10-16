@@ -319,7 +319,7 @@ describe('0013 trigger configuration', () => {
         for (const statement of migration.sql) await past.client.execute(statement);
       for (const scheme of ['hmac-sha256', 'hmac-sha256-body'])
         await past.client.execute({
-          sql: `INSERT INTO webhook_endpoints VALUES (?,'local','loop','version','hook',?,'key','x-signature',?,?,1,'2026-10-02T12:00:00.000Z')`,
+          sql: `INSERT INTO webhook_endpoints VALUES (?,'local','loop','version','hook',?,'key','X-Signature',?,?,1,'2026-10-02T12:00:00.000Z')`,
           args: [scheme, scheme, scheme, scheme === 'hmac-sha256' ? 300 : null],
         });
       for (const statement of migrations[13]!.sql) await past.client.execute(statement);

@@ -1,6 +1,6 @@
 # ADR-0037 - Acknowledge saved webhook intake before dispatch
 
-Date: 2026-10-15. Status: **Accepted; T4 implemented; independent and owner product review pending**.
+Date: 2026-10-15. Status: **Accepted; T4 and T5 implemented; T5 independent review and owner product review pending**.
 
 ## Context
 
@@ -66,7 +66,7 @@ without publishing an Event. Payload checks belong downstream; filter remains un
 
 SQL endpoint authentication must match its exact pinned definition and owner/version provenance.
 Safe endpoint/Events summaries expose recipe, secret names and pinned body/extraction/key config;
-disabled orphan history is explicitly unavailable. The editor provides native recipe/source
+orphan or mismatched history is explicitly unavailable. Enabled mismatches log safely while listings remain readable; intake still refuses. Events lookups are cached by endpoint/version/loop within the request only. The editor provides native recipe/source
 pickers and a body-mode control with validation, focus and undo. GitHub presets set body HMAC,
 JSON, x-github-event extraction with webhook fallback and x-github-delivery as an explicit key.
 Their editable downstream checks retain signed-body authority.
@@ -77,6 +77,24 @@ requires review of strict UTF-8/nonempty JSON, including the old timestamp empty
 Every proposal passes the current schema and graph validation. This is a definition-converter
 rule, not an installed-store migration or approval to apply data changes.
 
-T5 tightens explicit-key permanence, validation and historical/cross-kind lookup. T6 removes
-filter through reviewed graph conversion. Independent review and owner product review remain
+## Permanent explicit keys (T5, 2026-10-16)
+
+An absent dedupeKey creates no business identity and no automatic signature-hash or other key.
+A configured expression sees decoded payload and the bounded credential-free headers binding.
+Null, undefined and empty string return 422 KEY_INVALID before claim. Other values keep the
+current string-or-JSON form; reject above 512 characters rather than truncate. Whitespace stays
+literal. Expression evaluation failures remain EXPRESSION_FAILED. Event and Poll rules stay unchanged.
+
+Keys are permanent in owner/loop/trigger-node scope across versions and recipes. Claim atomically
+consults preserved receipt/inbound claims, saved intent reservations and committed run-envelope
+keys across trigger kinds. Historical inbound-only claims use preserved endpoint provenance,
+including disabled old versions. Permanent failure does not reopen a webhook key. There is no
+endpoint window, expiry refresh or signature-hash replay ledger. Concurrent identical keys have
+one executable intent; lost acknowledgements and restart preserve that identity. External keyed
+repeats have a new deduplicated receipt and no new run. The obsolete duplicate flag/state is removed.
+
+SQL 0013 lowercases copied signing headers; the startup guard also validates lowercase RFC tokens.
+This does not change the structural baseline or snapshot. Invalid names require reviewed repair.
+
+T6 removes filter through reviewed graph conversion. Independent review and owner product review remain
 required before integration.

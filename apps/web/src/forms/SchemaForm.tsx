@@ -202,6 +202,7 @@ const SchemaFormBindings = memo(function SchemaFormBindings({
   }, [schema]);
   const form = useForm<FieldValues>({ resolver, defaultValues: asValues(value), mode: 'onChange' });
   const [issues, setIssues] = useState<Issue[]>(() => issuesOf(schema, value));
+  const issuesSnapshotRef = useRef(JSON.stringify(issues));
   // The first issue at each path, for the fields react-hook-form does not control (record values).
   const issuesByPath = useMemo(() => {
     const byPath = new Map<string, string>();
@@ -263,13 +264,14 @@ const SchemaFormBindings = memo(function SchemaFormBindings({
     const subscription = form.watch((values, { name }) => {
       const next = stripUnset(values);
       collections.remember(next);
-      setIssues((previous) => {
-        const found = issuesOf(schema, next);
-        return JSON.stringify(previous) === JSON.stringify(found) ? previous : found;
-      });
-      // A refinement may report on a sibling field (for example, a JSON pointer depends on
-      // the body mode). Refresh all resolver errors so changing that dependency clears it too.
-      void form.trigger();
+      const found = issuesOf(schema, next);
+      const snapshot = JSON.stringify(found);
+      if (snapshot !== issuesSnapshotRef.current) {
+        issuesSnapshotRef.current = snapshot;
+        setIssues(found);
+        // Refresh sibling refinements only when schema issues change, not on each keystroke.
+        void form.trigger();
+      }
       // Every field describes its changes; a write that does not is a step of its own.
       const change = pendingChangeRef.current ?? {
         path: name ?? '',

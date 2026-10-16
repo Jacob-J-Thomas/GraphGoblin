@@ -114,11 +114,35 @@ function describe(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-function stringKey(value: unknown, strict = false): string | undefined {
+function stringKey(value: unknown): string | undefined {
   if (value === undefined || value === null) return undefined;
   const key = typeof value === 'string' ? value : JSON.stringify(value);
-  if (strict && key.length > 512) throw new Error('Webhook business key exceeds 512 characters');
   return key.length > 0 ? key.slice(0, 512) : undefined;
+}
+
+/** Webhooks have one explicit, permanent business-key rule, independent of authentication. */
+function webhookKey(value: unknown): string | undefined {
+  if (value === undefined || value === null || value === '') return undefined;
+  const key = typeof value === 'string' ? value : JSON.stringify(value);
+  return key !== undefined && key.length <= 512 ? key : undefined;
+}
+
+function lookupOnce<T>(
+  cache: Map<string, Promise<T>>,
+  id: string,
+  read: () => Promise<T>,
+): Promise<T> {
+  let result = cache.get(id);
+  if (!result) {
+    result = read();
+    cache.set(id, result);
+  }
+  return result;
+}
+
+interface WebhookLookup {
+  version(id: string): Promise<LoopVersionRecord | undefined>;
+  loop(id: string): Promise<LoopRecord | undefined>;
 }
 
 /**
@@ -247,21 +271,34 @@ export class TriggerService {
   async listForLoop(loopId: string): Promise<LoopTriggers> {
     const schedules = await this.deps.schedules.listForLoop(loopId);
     const endpoints = await this.deps.endpoints.listForLoop(loopId);
+    const lookup = this.webhookLookup();
     return {
       schedules,
-      webhooks: await Promise.all(endpoints.map((endpoint) => this.describeWebhook(endpoint))),
+      webhooks: await Promise.all(
+        endpoints.map((endpoint) => this.describeWebhook(endpoint, lookup)),
+      ),
       polls: this.deps.polls.list(loopId),
     };
   }
 
-  private async describeWebhook(endpoint: WebhookEndpointRecord): Promise<WebhookEndpointSummary> {
+  private async describeWebhook(
+    endpoint: WebhookEndpointRecord,
+    lookup: WebhookLookup,
+  ): Promise<WebhookEndpointSummary> {
     const { token, ...rest } = endpoint;
-    const config = await this.webhookConfig(endpoint);
+    const config = await this.webhookConfig(endpoint, lookup);
     const matches =
       config !== undefined &&
       stableStringify(config.authentication) === stableStringify(endpoint.authentication);
     if (!matches && endpoint.enabled)
-      throw new Error('Enabled webhook configuration does not match its pinned definition');
+      this.deps.logger.warn(
+        {
+          code: 'WEBHOOK_CONFIGURATION_UNAVAILABLE',
+          endpointId: endpoint.id,
+          versionId: endpoint.versionId,
+        },
+        'webhook configuration does not match its pinned definition',
+      );
     return {
       ...rest,
       path: `/hooks/${token}`,
@@ -278,12 +315,23 @@ export class TriggerService {
   }
 
   async describeInbound(
-    event: InboundEventRecord,
-  ): Promise<InboundEventRecord & { webhook?: WebhookEndpointSummary }> {
-    if (event.type !== 'webhook' || !event.source.startsWith('webhook:')) return event;
-    const endpoint = await this.deps.endpoints.get(event.source.slice('webhook:'.length));
-    if (!endpoint || endpoint.ownerId !== event.ownerId) return event;
-    return { ...event, webhook: await this.describeWebhook(endpoint) };
+    events: readonly InboundEventRecord[],
+  ): Promise<(InboundEventRecord & { webhook?: WebhookEndpointSummary })[]> {
+    const lookup = this.webhookLookup();
+    const endpoints = new Map<string, Promise<WebhookEndpointRecord | undefined>>();
+    const summaries = new Map<string, Promise<WebhookEndpointSummary>>();
+    return Promise.all(
+      events.map(async (event) => {
+        if (event.type !== 'webhook' || !event.source.startsWith('webhook:')) return event;
+        const id = event.source.slice('webhook:'.length);
+        const endpoint = await lookupOnce(endpoints, id, () => this.deps.endpoints.get(id));
+        if (!endpoint || endpoint.ownerId !== event.ownerId) return event;
+        return {
+          ...event,
+          webhook: await lookupOnce(summaries, id, () => this.describeWebhook(endpoint, lookup)),
+        };
+      }),
+    );
   }
 
   // ---------------------------------------------------------------------------
@@ -320,7 +368,7 @@ export class TriggerService {
   /**
    * Verify and act on one delivery to `/hooks/<token>`. Order: endpoint lookup (404), rate limit
    * (429), pinned configuration, optional authentication, decoding (400), extraction/expressions,
-   * then acknowledge saved or already consumed input. All receipts dispatch asynchronously.
+   * then acknowledge saved input. Pending receipts dispatch asynchronously.
    */
   async handleWebhook(
     token: string,
@@ -395,12 +443,15 @@ export class TriggerService {
     let dedupeKey: string | undefined;
     let passes: boolean;
     try {
-      dedupeKey = node.dedupeKey
-        ? stringKey(
-            await evaluateExpression(node.dedupeKey, payload, { bindings }),
-            authentication.type === 'hmac-sha256' && authentication.message === 'body',
-          )
-        : undefined;
+      if (node.dedupeKey !== undefined) {
+        dedupeKey = webhookKey(await evaluateExpression(node.dedupeKey, payload, { bindings }));
+        if (dedupeKey === undefined)
+          return fail(
+            422,
+            'KEY_INVALID',
+            'the webhook key must be nonempty and at most 512 characters',
+          );
+      }
       passes = node.filter ? await evaluatePredicate(node.filter, payload, { bindings }) : true;
     } catch {
       return fail(422, 'EXPRESSION_FAILED', 'the webhook filter or dedupe expression failed');
@@ -599,9 +650,21 @@ export class TriggerService {
   }
 
   /** Endpoint rows own authentication; the exact pinned definition owns payload configuration. */
-  private async webhookConfig(endpoint: WebhookEndpointRecord): Promise<WebhookConfig | undefined> {
-    const version = await this.deps.loops.getVersion(endpoint.versionId);
-    const loop = await this.deps.loops.getLoop(endpoint.loopId);
+  private webhookLookup(): WebhookLookup {
+    const versions = new Map<string, Promise<LoopVersionRecord | undefined>>();
+    const loops = new Map<string, Promise<LoopRecord | undefined>>();
+    return {
+      version: (id) => lookupOnce(versions, id, () => this.deps.loops.getVersion(id)),
+      loop: (id) => lookupOnce(loops, id, () => this.deps.loops.getLoop(id)),
+    };
+  }
+
+  private async webhookConfig(
+    endpoint: WebhookEndpointRecord,
+    lookup = this.webhookLookup(),
+  ): Promise<WebhookConfig | undefined> {
+    const version = await lookup.version(endpoint.versionId);
+    const loop = await lookup.loop(endpoint.loopId);
     if (
       !version ||
       version.loopId !== endpoint.loopId ||
