@@ -16,10 +16,12 @@ import {
   type LocalDraft,
 } from '../drafts/local-drafts.js';
 import { useEditorStore } from './store.js';
+import { loadDeviceUpgrader } from './load-device-upgrader.js';
 
 interface DeviceDraftRead {
   draft?: LocalDraft;
   unconvertible?: LocalDraft & { migrationIssues: UpgradeIssue[] };
+  loadFailed?: true;
 }
 
 export interface RawDeviceCopy extends LocalDraft {
@@ -42,18 +44,24 @@ async function readDeviceDraft(draft: LocalDraft | undefined): Promise<DeviceDra
     definition.schemaVersion === CURRENT_DEFINITION_FORMAT
   )
     return { draft: current };
-  const result = await import('@graphgoblin/domain/upgrade')
-    .then(({ upgradeLoopCurrent }) => upgradeLoopCurrent(definition))
-    .catch(() => ({
-      ok: false as const,
-      issues: [
-        {
-          code: 'UPGRADE_CONVERSION_FAILED',
-          path: '/',
-          message: 'Conversion failed; the original device copy is retained.',
-        },
-      ],
-    }));
+  let upgradeLoopCurrent: Awaited<ReturnType<typeof loadDeviceUpgrader>>['upgradeLoopCurrent'];
+  try {
+    ({ upgradeLoopCurrent } = await loadDeviceUpgrader());
+  } catch {
+    // A stale chunk or failed network request says nothing about the stored definition.
+    // Leave every key untouched so a retry or the next editor load can convert it.
+    return { loadFailed: true };
+  }
+  const result = await upgradeLoopCurrent(definition).catch(() => ({
+    ok: false as const,
+    issues: [
+      {
+        code: 'UPGRADE_CONVERSION_FAILED',
+        path: '/',
+        message: 'Conversion failed; the original device copy is retained.',
+      },
+    ],
+  }));
   if (!result.ok) return { unconvertible: { ...draft, migrationIssues: result.issues } };
   return {
     draft: {
@@ -100,6 +108,8 @@ export function useLoadEditor(loopId: string) {
   const [setAside, setSetAside] = useState<LocalDraft | undefined>();
   const [rawCopies, setRawCopies] = useState<RawDeviceCopy[]>([]);
   const [preservationBlocked, setPreservationBlocked] = useState(false);
+  const [conversionLoadFailed, setConversionLoadFailed] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [ready, setReady] = useState(false);
   const dataRef = useRef(query.data);
   dataRef.current = query.data;
@@ -121,6 +131,11 @@ export function useLoadEditor(loopId: string) {
         readDeviceDraft(storedSetAside),
       ]);
       if (cancelled) return;
+      if (localRead.loadFailed || asideRead.loadFailed) {
+        setConversionLoadFailed(true);
+        return;
+      }
+      setConversionLoadFailed(false);
       const local = localRead.draft;
       const earlierSetAside = asideRead.draft;
       let rawSetAside: RawDeviceCopy[] = asideRead.unconvertible
@@ -258,7 +273,7 @@ export function useLoadEditor(loopId: string) {
     return () => {
       cancelled = true;
     };
-  }, [loopId, ready, query.isSuccess, query.isError]);
+  }, [loopId, ready, query.isSuccess, query.isError, loadAttempt]);
 
   useEffect(() => () => useEditorStore.getState().reset(), [loopId]);
   const restoreSetAside = async () => {
@@ -310,6 +325,11 @@ export function useLoadEditor(loopId: string) {
     setAside,
     rawCopies,
     preservationBlocked,
+    conversionLoadFailed,
+    retryConversion: () => {
+      setConversionLoadFailed(false);
+      setLoadAttempt((attempt) => attempt + 1);
+    },
     restoreSetAside,
     discardSetAside,
     discardRawCopy,

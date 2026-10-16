@@ -258,6 +258,11 @@ The adversarial QA report is `docs/qa/2026-10-03-wp-d2.md`. Behaviour that chang
 ### Device format conversion
 
 `readDeviceDraft` loads the converter lazily only for an older-format device copy.
+If the converter chunk cannot load, every device key stays untouched and editing
+and autosave stay paused. The notice offers **Retry conversion** or a page reload;
+the next editor load tries again. A chunk-load failure does not archive or mark a
+draft unconvertible.
+
 Automatic conversion archives and reads back the complete original, including
 metadata and tokens, before replacing an active or set-aside key. A synced mirror
 stays a clean cache; the server definition wins whenever available. Genuinely

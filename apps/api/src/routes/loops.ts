@@ -178,16 +178,25 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
             ? await upgradeExportCurrent(input)
             : await upgradeLoopCurrent(input);
         if (!result.ok) {
-          const pending =
-            result.reviewItems.some((item) => item.status === 'pending') ||
-            result.issues.some((issue) => issue.code.endsWith('_REQUIRED'));
+          const pending = result.issues.some((issue) => issue.kind === 'pending');
+          const invalid = result.issues.some((issue) => issue.kind === 'invalid');
           return problem(
             reply,
             400,
             pending ? 'LOOP_FORMAT_UPGRADE_REQUIRED' : 'LOOP_IMPORT_SOURCE_INVALID',
-            pending
-              ? 'Run graphgoblin-upgrade export --input old.json --out review.json. For v3 items, create resolutions.json with {"v3":{"<id>":{"hash":"<reported hash>","action":"approve","reason":"Reviewed this exact proposal"}}}, using each reported id/hash. Some items require action "replace" with a value, or allow "remove". Earlier-stage items use the v1/v2 namespaces in the guide. Retry export with --resolutions resolutions.json and a new output path. See docs/guide/08-offline-upgrade.md#convert-a-portable-export.'
-              : 'The old-format source or export envelope is invalid. Correct the listed issues; graphgoblin-upgrade export cannot convert invalid source. See docs/guide/08-offline-upgrade.md#convert-a-portable-export.',
+            [
+              ...(invalid
+                ? [
+                    'The source, export envelope or conversion has invalid issues. Correct the listed invalid issues; graphgoblin-upgrade export cannot convert invalid source.',
+                  ]
+                : []),
+              ...(pending
+                ? [
+                    'Review is required. Run graphgoblin-upgrade export --input old.json --out review.json. For v3 items, create resolutions.json with {"v3":{"<id>":{"hash":"<reported hash>","action":"approve","reason":"Reviewed this exact proposal"}}}, using each reported id/hash. Some items require action "replace" with a value, or allow "remove". Earlier-stage items use the v1/v2 namespaces in the guide. Retry export with --resolutions resolutions.json and a new output path.',
+                  ]
+                : []),
+              'See docs/guide/08-offline-upgrade.md#convert-a-portable-export.',
+            ].join(' '),
             { issues: result.issues, reviewItems: result.reviewItems },
           );
         }

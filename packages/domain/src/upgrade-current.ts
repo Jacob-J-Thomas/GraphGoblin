@@ -28,17 +28,38 @@ export interface UpgradeCurrentResolutions {
   v2?: { predicates?: Record<string, ExitPredicateResolution> };
   v3?: DefinitionResolutions;
 }
+export interface CurrentUpgradeIssue extends UpgradeIssue {
+  kind: 'pending' | 'invalid';
+}
 export type CurrentUpgradeResult<T> = {
   notices: UpgradeIssue[];
   reviewItems: DefinitionReviewItem[];
-} & ({ ok: true; value: T } | { ok: false; issues: UpgradeIssue[] });
+} & ({ ok: true; value: T } | { ok: false; issues: CurrentUpgradeIssue[] });
+
+// The frozen stages retain their original result shapes. Classify their explicit review
+// codes at the composition boundary rather than asking consumers to infer from spelling.
+const pendingStageCodes = new Set([
+  'UPGRADE_DECISION_CHOICE_REQUIRED',
+  'UPGRADE_EXPRESSION_CHOICE_REQUIRED',
+  'UPGRADE_OPAQUE_CONSUMER_REVIEW_REQUIRED',
+  'UPGRADE_REFERENCE_CHOICE_REQUIRED',
+  'UPGRADE_EXIT_BOOLEAN_REQUIRED',
+  'UPGRADE_EXIT_CRITERIA_REQUIRED',
+  'V4_EXIT_SCHEMA_POLICY_REQUIRED',
+  'V4_TERMINAL_LIMIT_POLICY_REQUIRED',
+]);
+const classify = (entry: UpgradeIssue): CurrentUpgradeIssue => ({
+  ...entry,
+  kind: pendingStageCodes.has(entry.code) ? 'pending' : 'invalid',
+});
 
 const object = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
-const issue = (code: string, path: string, message: string): UpgradeIssue => ({
+const issue = (code: string, path: string, message: string): CurrentUpgradeIssue => ({
   code,
   path,
   message,
+  kind: 'invalid',
 });
 const invalid = () => [
   issue('UPGRADE_RESOLUTION_INVALID', '/', 'expected stage maps v1, v2 and v3'),
@@ -67,7 +88,8 @@ export async function upgradeLoopCurrent(
   resolutions: UpgradeCurrentResolutions = {},
 ): Promise<CurrentUpgradeResult<LoopDefinition>> {
   const errors = validateUpgradeCurrentResolutions(resolutions);
-  if (errors.length) return { ok: false, issues: errors, notices: [], reviewItems: [] };
+  if (errors.length)
+    return { ok: false, issues: errors.map(classify), notices: [], reviewItems: [] };
   const version = object(input) ? input.schemaVersion : undefined;
   const unused = Object.entries(resolutions).some(
     ([stage, entries]) =>
@@ -96,7 +118,8 @@ export async function upgradeLoopCurrent(
         };
   }
   const frozen = upgradeLoopV3(input, { ...resolutions.v1, ...resolutions.v2 });
-  if (!frozen.ok) return { ...frozen, notices: [], reviewItems: [] };
+  if (!frozen.ok)
+    return { ...frozen, issues: frozen.issues.map(classify), notices: [], reviewItems: [] };
   // Portable inputs have no stored version ID. Bind reviews to their complete parsed content
   // in a separate namespace; never reuse approvals from a server version's manifest.
   const identity = 'portable:' + (await definitionReviewHash(frozen.value));
@@ -105,19 +128,20 @@ export async function upgradeLoopCurrent(
     ...frozen.notices,
     ...converted.reviewItems
       .filter((item) => item.status === 'automatic')
-      .map((item) => issue(item.kind, item.path, item.reason)),
+      .map((item) => ({ code: item.kind, path: item.path, message: item.reason })),
   ];
   const pending = converted.reviewItems
     .filter((item) => item.status === 'pending')
     .map((item) => ({
       ...issue('UPGRADE_REVIEW_REQUIRED', item.path, item.reason),
+      kind: 'pending' as const,
       id: item.id,
       hash: item.hash,
     }));
   if (!converted.ok || !converted.ready)
     return {
       ok: false,
-      issues: [...(converted.ok ? [] : converted.issues), ...pending],
+      issues: [...(converted.ok ? [] : converted.issues.map(classify)), ...pending],
       notices,
       reviewItems: converted.reviewItems,
     };

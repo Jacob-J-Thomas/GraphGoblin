@@ -110,6 +110,7 @@ describe('composed format-4 definition and export conversion', () => {
       ok: false,
       issues: expect.arrayContaining([
         expect.objectContaining({
+          kind: 'pending',
           id: expect.any(String),
           hash: expect.stringMatching(/^[a-f0-9]{64}$/),
           message: expect.any(String),
@@ -117,6 +118,8 @@ describe('composed format-4 definition and export conversion', () => {
       ]),
     });
     expect(result).not.toHaveProperty('value');
+    if (result.ok) throw new Error('Expected pending reviews.');
+    expect(result.issues.every((item) => item.kind === 'pending')).toBe(true);
     const v3 = Object.fromEntries(
       result.reviewItems
         .filter((item) => item.status === 'pending')
@@ -166,7 +169,10 @@ describe('composed format-4 definition and export conversion', () => {
         },
       ],
     };
-    expect((await upgradeLoopCurrent(old)).ok).toBe(false);
+    expect(await upgradeLoopCurrent(old)).toMatchObject({
+      ok: false,
+      issues: [expect.objectContaining({ kind: 'pending', code: 'UPGRADE_EXIT_BOOLEAN_REQUIRED' })],
+    });
     const v2 = { predicates: { '/nodes/1/config/criteria/0': { jsonata: 'vars.done = true' } } };
     const result = await upgradeLoopCurrent(old, { v2 });
     expect(result.reviewItems.some((item) => item.status === 'pending')).toBe(true);
@@ -185,6 +191,19 @@ describe('composed format-4 definition and export conversion', () => {
         )
       ).ok,
     ).toBe(false);
+  });
+
+  it('classifies invalid graph issues separately from pending reviews in the same result', async () => {
+    const source = { ...pending(), edges: [] };
+    const result = await upgradeExportCurrent(envelope(source));
+    expect(result).toMatchObject({
+      ok: false,
+      issues: expect.arrayContaining([
+        expect.objectContaining({ kind: 'invalid', code: 'TRIGGER_NO_EXIT_PATH' }),
+        expect.objectContaining({ kind: 'pending', code: 'UPGRADE_REVIEW_REQUIRED' }),
+      ]),
+    });
+    expect(result).not.toHaveProperty('value');
   });
 
   it('binds portable filter reviews to source content and can complete their offline conversion', async () => {

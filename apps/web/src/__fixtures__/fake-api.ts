@@ -503,8 +503,7 @@ export class FakeApi {
             if (!converted.ok)
               return problem(
                 400,
-                converted.reviewItems.some((item) => item.status === 'pending') ||
-                  converted.issues.some((issue) => issue.code.endsWith('_REQUIRED'))
+                converted.issues.some((issue) => issue.kind === 'pending')
                   ? 'LOOP_FORMAT_UPGRADE_REQUIRED'
                   : 'LOOP_IMPORT_SOURCE_INVALID',
                 'Use graphgoblin-upgrade export with --resolutions resolutions.json and the reported v3 item ids and hashes. See docs/guide/08-offline-upgrade.md#convert-a-portable-export.',

@@ -71,6 +71,8 @@ export function EditorPage() {
     setAside,
     rawCopies,
     preservationBlocked,
+    conversionLoadFailed,
+    retryConversion,
     restoreSetAside,
     discardSetAside,
     discardRawCopy,
@@ -270,6 +272,20 @@ export function EditorPage() {
     [],
   );
 
+  if (conversionLoadFailed) {
+    return (
+      <main className="grid gap-3 p-page">
+        <Alert tone="warn" title="Device draft conversion could not load">
+          Your device copies are unchanged. Retry conversion or reload this page.
+          <span className="mt-2 flex gap-2">
+            <Button size="sm" variant="outline" onClick={retryConversion}>
+              Retry conversion
+            </Button>
+          </span>
+        </Alert>
+      </main>
+    );
+  }
   if (!ready) {
     if (query.isError && !isOfflineError(query.error))
       return <ErrorState error={query.error} what="Loop" />;

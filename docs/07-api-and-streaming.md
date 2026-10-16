@@ -93,7 +93,9 @@ changes alongside validation issues.
 Pending conversion returns `400 LOOP_FORMAT_UPGRADE_REQUIRED` with `errors.issues`
 and hash-bound `errors.reviewItems`. The detail points to the [portable export
 workflow](guide/08-offline-upgrade.md#convert-a-portable-export) and the offline
-`--resolutions resolutions.json` file with its `v3` item map. Simply invalid old
+`--resolutions resolutions.json` file with its `v3` item map. Each conversion issue
+is classified as `kind: "pending"` or `kind: "invalid"`. Mixed refusals include both
+kinds and both correction and review instructions. Simply invalid old
 source/envelopes return `LOOP_IMPORT_SOURCE_INVALID`; current envelope errors retain
 paths such as `loop.settings.defaults.harness`, `formatVersion` or `exportedAt`
 under `LOOP_IMPORT_ERROR`. Ordinary bodies use `VALIDATION_FAILED`.

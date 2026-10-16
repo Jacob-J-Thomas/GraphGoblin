@@ -184,7 +184,8 @@ converters to format 4. They compose frozen 1?2?3 stages with
 `convertDefinitionV3ToV4`, or validate already-current input. Resolutions have
 separate `v1`, `v2` and `v3` namespaces. Results always report `notices` and
 `reviewItems`; success supplies `value`, while pending/invalid conversion supplies
-`issues` and withholds the candidate. Review items retain E2 IDs, source-bound
+`issues` and withholds the candidate. Each issue has an explicit `kind` of `pending`
+or `invalid`; a refusal can contain both. Review items retain E2 IDs, source-bound
 hashes, reasons and statuses. Stale and unused resolutions refuse.
 
 The export CLI and API import use this composition. Automatic old exports import

@@ -27,7 +27,8 @@ filters and output consumers may require review. The exact report is authoritati
 a syntactically valid candidate alone does not establish equivalent behavior.
 
 Exit code 2 produces `graphgoblin-upgrade-refusals` with `issues`, automatic-change
-`notices` and `reviewItems`. Items list stable `id`, SHA-256 `hash`, source `path`,
+`notices` and `reviewItems`. Each issue has `kind: "pending"` or `kind: "invalid"`;
+a report can contain both. Items list stable `id`, SHA-256 `hash`, source `path`,
 `reason`, proposed value and status. No candidate definition is included while
 anything is pending or invalid. Resolve every reported item, then retry with a
 new output path and `--resolutions .\resolutions.json`.
@@ -63,6 +64,7 @@ The web import result shows these changes. Pending review returns `400 LOOP_FORM
 are unsupported; use `--resolutions resolutions.json` with the `v3` map described
 above and import the completed format-4 output. Invalid old source or envelopes
 return `LOOP_IMPORT_SOURCE_INVALID` instead of a pending-review code.
+Mixed refusals retain both issue kinds and explain both correction and review.
 The MCP server has no import tool.
 
 ## Retained database tooling
@@ -118,6 +120,10 @@ Old server tokens are invalidated. Saving converted edits requires **Reload serv
 draft** or **Overwrite with this copy** using a fresh token; the conflict notice
 explains the format conversion. This also protects edits made from a converted
 synced cache while offline.
+
+If the conversion code cannot load, the notice offers **Retry conversion** or a
+page reload. All device copies stay unchanged, editing and autosave pause, and
+opening the editor again retries the conversion.
 
 Pending, incomplete or failed old conversions remain inert raw copies with review
 issues and **Export original device copy**. Archived originals stay inert and are labelled without reconversion. Failed

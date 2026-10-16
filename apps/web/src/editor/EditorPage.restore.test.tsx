@@ -6,6 +6,7 @@ import { FakeApi } from '../__fixtures__/fake-api.js';
 import { renderApp } from '../__fixtures__/render.js';
 import * as converter from '@graphgoblin/domain/upgrade';
 import * as drafts from '../drafts/local-drafts.js';
+import * as deviceUpgrader from './load-device-upgrader.js';
 import { newLoopDefinition } from './model.js';
 import { useEditorStore } from './store.js';
 
@@ -151,6 +152,91 @@ describe('restoring a set-aside copy', () => {
       edges: [{ id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'done' } }],
     } as unknown as LoopDefinitionInput;
   }
+
+  it.each(['retry', 'reopen'] as const)(
+    'leaves all device keys untouched after a chunk-load failure and converts on %s',
+    async (recovery) => {
+      const api = new FakeApi(),
+        loop = api.addLoop(newLoopDefinition('server copy'));
+      const original = {
+        loopId: loop.id,
+        definition: oldManual('device work'),
+        savedAt: '2999-01-01T00:00:00.000Z',
+        synced: false,
+        baseToken: 'old-token',
+      };
+      const aside = { ...original, definition: oldManual('earlier work'), savedAt: 'aside' };
+      const archive = { ...original, definition: oldManual('archived work'), savedAt: 'archive' };
+      await drafts.saveLocalDraft(original);
+      await drafts.saveSetAsideDraft(aside);
+      await drafts.saveArchivedDraft(archive);
+      const loading = vi.spyOn(deviceUpgrader, 'loadDeviceUpgrader');
+      // Exercise a failure for either source, including after the active copy converted in memory.
+      if (recovery === 'retry')
+        loading.mockRejectedValueOnce(new Error('stale chunk')).mockResolvedValueOnce(converter);
+      else
+        loading.mockResolvedValueOnce(converter).mockRejectedValueOnce(new Error('network error'));
+      try {
+        const view = renderApp(`/loops/${loop.id}/edit`, api);
+        await screen.findByText('Device draft conversion could not load');
+        expect(screen.getByText(/Your device copies are unchanged/)).toBeVisible();
+        expect(screen.queryByText('This device copy could not be migrated safely')).toBeNull();
+        expect(await drafts.loadLocalDraft(loop.id)).toEqual(original);
+        expect(await drafts.loadSetAsideDraft(loop.id)).toEqual(aside);
+        expect(await drafts.loadArchivedDrafts(loop.id)).toEqual([archive]);
+        expect(api.callsTo('PUT', `/loops/${loop.id}/draft`)).toHaveLength(0);
+        expect(useEditorStore.getState().definition).toBeUndefined();
+        loading.mockRestore();
+        if (recovery === 'retry')
+          await userEvent.click(screen.getByRole('button', { name: 'Retry conversion' }));
+        else {
+          view.unmount();
+          renderApp(`/loops/${loop.id}/edit`, api);
+        }
+        await screen.findByRole('heading', { name: 'device work' });
+        expect(screen.queryByText('Device draft conversion could not load')).toBeNull();
+        expect(await drafts.loadLocalDraft(loop.id)).toMatchObject({
+          definition: { schemaVersion: 4, name: 'device work' },
+          synced: false,
+          baseToken: 'unreconciled-device-format',
+        });
+        expect(await drafts.loadSetAsideDraft(loop.id)).toMatchObject({
+          definition: { schemaVersion: 4, name: 'earlier work' },
+        });
+        expect(await drafts.loadArchivedDrafts(loop.id)).toEqual([archive, original, aside]);
+        await screen.findByText('This device draft was converted to format 4');
+        expect(api.loops.get(loop.id)?.draft?.definition.name).toBe('server copy');
+      } finally {
+        loading.mockRestore();
+      }
+    },
+  );
+
+  it('still preserves an inert exportable original when the loaded converter fails', async () => {
+    const api = new FakeApi(),
+      loop = api.addLoop(newLoopDefinition('server copy'));
+    const original = {
+      loopId: loop.id,
+      definition: oldManual('failed conversion'),
+      savedAt: 'old',
+      synced: false,
+    };
+    await drafts.saveLocalDraft(original);
+    const conversion = vi
+      .spyOn(converter, 'upgradeLoopCurrent')
+      .mockRejectedValueOnce(new Error('conversion failed'));
+    try {
+      renderApp(`/loops/${loop.id}/edit`, api);
+      await screen.findByText('This device copy could not be migrated safely');
+      expect(screen.queryByText('Device draft conversion could not load')).toBeNull();
+      expect(screen.getByRole('button', { name: 'Export original device copy' })).toBeVisible();
+      expect(await drafts.loadArchivedDrafts(loop.id)).toEqual([original]);
+      expect(await drafts.loadLocalDraft(loop.id)).toBeUndefined();
+      expect(useEditorStore.getState().definition?.name).toBe('server copy');
+    } finally {
+      conversion.mockRestore();
+    }
+  });
 
   it('keeps pending v3 review ids and hashes with an exportable inert original, including archives', async () => {
     const api = new FakeApi(),

@@ -431,6 +431,9 @@ describe('uniform strict evaluator admission', () => {
       const response = await t.app.inject({ method: 'POST', url: '/loops/import', payload });
       expect(response.statusCode).toBe(400);
       expect(response.json().code).toBe('LOOP_IMPORT_SOURCE_INVALID');
+      expect(response.json().errors.issues).toEqual(
+        expect.arrayContaining([expect.objectContaining({ kind: 'invalid' })]),
+      );
       expect(response.body).toContain('graphgoblin-upgrade');
     }
     expect((await t.app.inject('/loops')).json().items).toEqual([]);
@@ -498,7 +501,7 @@ it('refuses pending export review with item ids, hashes and reasons, and refuses
         }),
       ]),
       issues: expect.arrayContaining([
-        expect.objectContaining({ id: '/nodes/1/config:exit-policy' }),
+        expect.objectContaining({ id: '/nodes/1/config:exit-policy', kind: 'pending' }),
       ]),
     },
   });
@@ -594,9 +597,60 @@ it('keeps earlier-stage authored choices distinct from invalid source', async ()
     errors: {
       reviewItems: [],
       issues: expect.arrayContaining([
-        expect.objectContaining({ code: 'UPGRADE_EXIT_CRITERIA_REQUIRED' }),
+        expect.objectContaining({ code: 'UPGRADE_EXIT_CRITERIA_REQUIRED', kind: 'pending' }),
       ]),
     },
   });
   expect(response.json().detail).toContain('v1/v2 namespaces');
+  expect(response.json().detail).not.toContain('invalid issues');
+});
+
+it('reports both invalid graph issues and pending reviews in one import refusal', async () => {
+  const response = await t.app.inject({
+    method: 'POST',
+    url: '/loops/import',
+    payload: {
+      schemaVersion: 3,
+      name: 'mixed refusal',
+      nodes: [
+        { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+        {
+          id: 'pick',
+          kind: 'decision',
+          label: 'Pick',
+          config: {
+            answer: {
+              type: 'choice',
+              options: [
+                { id: 'yes', label: 'Yes', criteria: 'Ready' },
+                { id: 'no', label: 'No', criteria: 'Pending' },
+              ],
+            },
+            evaluation: {
+              kind: 'llm',
+              harness: 'codex',
+              model: { mode: 'inherit' },
+              effort: { mode: 'inherit' },
+              question: 'Ready?',
+            },
+          },
+        },
+        { id: 'done', kind: 'exit', label: 'Done', config: {} },
+      ],
+      edges: [],
+    },
+  });
+  expect(response.statusCode).toBe(400);
+  expect(response.json()).toMatchObject({
+    code: 'LOOP_FORMAT_UPGRADE_REQUIRED',
+    errors: {
+      issues: expect.arrayContaining([
+        expect.objectContaining({ kind: 'invalid', code: 'TRIGGER_NO_EXIT_PATH' }),
+        expect.objectContaining({ kind: 'pending', code: 'UPGRADE_REVIEW_REQUIRED' }),
+      ]),
+    },
+  });
+  expect(response.json().detail).toContain('Correct the listed invalid issues');
+  expect(response.json().detail).toContain('--resolutions resolutions.json');
+  expect((await t.app.inject('/loops')).json().items).toEqual([]);
 });
