@@ -22,7 +22,6 @@ import { FieldLabelsContext } from '../forms/fields/shared.js';
 import { VariableSuggestionsContext } from '../forms/fields/suggestions.js';
 import { JsonApplyReviewContext, JsonCandidateContext } from '../forms/fields/json.js';
 import { removedAnswerConnections } from './decision-route-edges.js';
-import { nextChangeId } from '../forms/changes.js';
 import {
   FormEditReviewContext,
   ReorderablePathsContext,
@@ -155,6 +154,7 @@ export function NodeEditorDialog({
   const nodeFocus = useEditorStore((s) => s.nodeFocus);
   // Bumped by undo and redo: the config form remounts with the restored values.
   const historyEpoch = useEditorStore((s) => s.historyEpoch);
+  const generation = useEditorStore((s) => s.generation);
   const bodyRef = useRef<HTMLElement>(null);
   const pendingHarnessFocusRef = useRef(false);
   const [epoch, setEpoch] = useState(0);
@@ -686,15 +686,22 @@ export function NodeEditorDialog({
           {node.kind === 'trigger' ? (
             <TriggerPresets
               config={node.config}
+              definition={definition}
+              triggerId={node.id}
+              draftInputs={fieldErrors}
+              generation={generation}
               heldInputs={fieldErrors[`node:${node.id}`]}
               historyEpoch={historyEpoch}
-              onApply={(config) => {
-                const change = { path: '', kind: 'commit', id: nextChangeId() } as const;
-                for (const path of Object.keys(fieldErrors[`node:${node.id}`] ?? {}))
-                  setFieldError(`node:${node.id}`, path, undefined, undefined, change);
-                updateNode(node.id, { config }, change);
+              onApply={(preview) => {
+                const problem = useEditorStore.getState().applyGitHubPreset(preview, {
+                  fieldErrors,
+                  historyEpoch,
+                  generation,
+                });
+                if (problem) return problem;
                 setEpoch((current) => current + 1);
                 requestAnimationFrame(() => focusIssue(bodyRef.current, 'config.subtype'));
+                return undefined;
               }}
             />
           ) : null}

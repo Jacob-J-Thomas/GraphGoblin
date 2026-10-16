@@ -15,10 +15,15 @@ GitHub recipe, fill in its setup and choose **Preview GitHub preset**. The previ
 shows the current and replacement configurations and names any unfinished input
 that will be replaced. **Cancel preview** changes nothing and returns focus to
 Preview. **Apply GitHub preset** replaces the trigger configuration in one undo
-step, keeps connections, and returns focus to Trigger type. All generated fields
-remain editable. Undo restores both the previous configuration and unfinished
-input; reapplying requires a fresh preview. Changing the config or undo history
-invalidates an open preview. The stored discriminator remains `subtype` for now.
+step and returns focus to Trigger type. Webhook recipes also add an editable check,
+restore and quiet exit, rewiring the former connection through restore. The preview
+lists every node and edge change. All generated fields and nodes remain editable.
+Undo restores the whole graph and unfinished input; redo reapplies it. Reapplying
+explicitly reviews replacement of an existing check/restore/exit fragment, including
+your edits. Shared or ambiguously rewired nodes are retained and the preview says it
+is inserting another fragment. Changing the graph, held input, load or undo history
+invalidates an open preview. Apply validates graph rules and limits; repair any
+unconnected or multiply connected output before applying. The stored discriminator remains `subtype` for now.
 
 ## Publish to arm automatic triggers
 
@@ -185,14 +190,49 @@ For a GitHub webhook, use body signing instead of the timestamp protocol above:
     "header": "x-hub-signature-256",
     "secretRef": "github-repo-hook"
   },
-  "dedupeKey": "$headers.\"x-github-delivery\"",
-  "filter": "repository.full_name = \"OWNER/REPO\" and action = \"labeled\" and $exists(issue) and $not($exists(issue.pull_request)) and label.name = \"ready\""
+  "dedupeKey": "$headers.\"x-github-delivery\""
 }
 ```
 
-Create the secret in Settings, publish the loop, and use its enabled `/hooks/<token>` URL as the GitHub payload URL. Configure JSON content and the same secret in GitHub. Subscribe to **Issues** for the example above; use **Pull requests** for PR filters. Expose only the hooks path through HTTPS, preserving the original body bytes. GitHub signs the payload in `X-Hub-Signature-256`; see its [signature verification reference](https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries) and [event payload reference](https://docs.github.com/en/webhooks/webhook-events-and-payloads).
+The webhook presets add this editable graph:
 
-Replace the repository and label values deliberately. Body signing has no `replayWindowSeconds` field. Each logical endpoint should have its own signing secret. The delivery ID and event headers are unsigned hints: check repository, object shape and action in the signed body. Useful filter variants are:
+```text
+trigger --> event-check --pass (Continue)--> restore-output --> former successor
+                     --ignore (Ignore)--> quiet-exit (Success, no returns)
+```
+
+For the issue-label example, `event-check` is an Expression decision with routes
+`[{"id":"pass","label":"Continue"},{"id":"ignore","label":"Ignore"}]` and JSONata:
+
+```jsonata
+invocation.trigger.payload.(repository.full_name = "OWNER/REPO" and action = "labeled" and $exists(issue) and $not($exists(issue.pull_request)) and label.name = "ready") ? "pass" : "ignore"
+```
+
+Labels and branches are encoded as JSON strings, including quotes, backslashes,
+newlines and Unicode. The checks are body-only: header-based event checks await T4
+and event-type extraction. `restore-output` is an ordinary Mutate node with:
+
+```json
+{
+  "operations": [
+    {
+      "op": "set",
+      "path": "/lastOutput",
+      "value": { "kind": "expression", "jsonata": "$lookup(outputs, \"start\")" }
+    }
+  ]
+}
+```
+
+Use your actual trigger ID in the safely quoted lookup. It restores the whole
+output (`nodeId`, `value`, `at` and optional `schemaRef`), because a decision replaces
+`lastOutput`. The Ignore branch ends at an ordinary terminal Exit configured as
+`{"outcome":"success","returns":"none","destinations":[]}`, with no outgoing edge.
+Edit any generated node directly to change behavior. The poll recipe is unchanged.
+
+Create the secret in Settings, publish the loop, and use its enabled `/hooks/<token>` URL as the GitHub payload URL. Configure JSON content and the same secret in GitHub. Subscribe to **Issues** for the example above; use **Pull requests** for PR checks. Expose only the hooks path through HTTPS, preserving the original body bytes. GitHub signs the payload in `X-Hub-Signature-256`; see its [signature verification reference](https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries) and [event payload reference](https://docs.github.com/en/webhooks/webhook-events-and-payloads).
+
+Replace the repository and label values deliberately. Body signing has no `replayWindowSeconds` field. Each logical endpoint should have its own signing secret. The delivery ID and event headers are unsigned hints: check repository, object shape and action in the signed body. The editable decision uses these signed-body checks:
 
 | Intent                       | Signed-body checks after the repository check                                                                                          |
 | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
@@ -202,7 +242,7 @@ Replace the repository and label values deliberately. Body signing has no `repla
 
 An authored business key also prevents distinct payload bodies from starting separate runs for the same identity. It is scoped to this owner, loop and trigger node across versions, without expiry. Previous body receipts (including filtered or pending deliveries) and admitted runs consume the key; an older timestamp-signed run can therefore suppress a later body-signed delivery with the same key. A distinct body with a consumed key returns 409 `DUPLICATE_KEY` and is recorded as `deduplicated` with no run. Repeating that exact body returns `REPLAYED`. Timestamp-signed receivers retain their own window semantics.
 
-A ping or unmatched payload returns 202 with `filtered: true`; no run starts. **Filtered content is permanently consumed.** Republishing a corrected filter does not reopen the same body. Exact raw-content replay is blocked across versions even if the delivery ID, signature casing, secret or business dedupe expression changes. This policy makes captured deliveries unusable as repeated run triggers; it is stricter than timestamp signing.
+With these presets, a ping or unmatched payload starts a visible run that ends quietly with Success and no return. Body receipts and keys are still consumed before the downstream decision. Republishing a corrected check does not reopen the same body. Exact raw-content replay is blocked across versions even if the delivery ID, signature casing, secret or business dedupe expression changes. This policy makes captured deliveries unusable as repeated run triggers; it is stricter than timestamp signing.
 
 Events shows delivery state and retry attempts. A transient admission failure returns 503 and retains one allocated run; the background sweep retries it without needing GitHub to redeliver. Pending admissions pin the loop and its referenced subloops. Permanent failures remain visible with a safe failure code. A repeated completed receipt returns 409 `REPLAYED`.
 

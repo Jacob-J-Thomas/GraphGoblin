@@ -122,6 +122,7 @@ test('body-signed GitHub preset saves, admits a matching hook, and deduplicates 
     });
 
   await page.reload();
+  expect(await triggerConfig(request, loopId)).not.toHaveProperty('filter');
   const restored = await openNode(page, 'start');
   await expect(restored.getByLabel('Trigger type').locator('option:checked')).toHaveText('Webhook');
   await expect(restored.getByLabel('Secret ref')).toHaveValue(secretRef);

@@ -14,7 +14,7 @@ type TriggerEnvelope = {
 };
 ```
 
-Nothing in the core knows about GitHub, CI systems, or error trackers. Provider-specific behavior is expressed through presets that fill in signature settings, filters, and dedupe keys for a generic webhook.
+Nothing in the core knows about GitHub, CI systems, or error trackers. Provider-specific behavior is expressed through presets that fill in signature settings and dedupe keys for a generic webhook and add editable downstream checks.
 
 ## Manual (Decided)
 
@@ -93,6 +93,29 @@ An authored nonempty `dedupeKey` also suppresses distinct bodies with the same b
 A matching delivery freezes a run ID, invocation, initial thread and subloop pins. Receipt claim and pending pins share the engine's deletion lock. Run admission commits that state together with the sequence-1 queued event and receipt link, and publishes notifications only after commit. A transient dispatch failure returns 503 while retaining the pending intent. Permanent identity or target failures are saved as failed with a safe code. Startup recovery and a non-overlapping 15-second sweep retry at most five due intents, with persisted backoff capped at five minutes. Recovery reuses only the allocated run ID after immutable identity checks. Pending pins prevent deletion; permanent failures remain visible rather than silently allocating another run.
 
 `GET /events` can include `delivery: {state, attempts, nextAttemptAt?, failureCode?}`. This exposes disposition without raw signatures, secret headers or the internal frozen intent. Schemes are listed on armed endpoints, with a null replay window for body signing. See [ADR-0024](decisions/ADR-0024-github-trigger-admission.md) and the [GitHub setup guide](guide/04-triggers.md#github-body-signatures).
+
+### Editable GitHub webhook recipes (#168 T2)
+
+The three webhook presets no longer generate trigger `filter`. They keep body HMAC on
+`x-hub-signature-256`, the chosen secret and `$headers."x-github-delivery"` dedupe.
+They insert ordinary editable nodes: trigger --> expression decision (`event-check`),
+Continue (`pass`) --> mutate (`restore-output`) --> former successor, and Ignore
+(`ignore`) --> terminal Success exit with `returns: "none"`, `destinations: []` and no
+continuation. Non-matching deliveries therefore create visible quiet successful
+runs. Intake, receipt and dedupe behavior otherwise remains unchanged in this child.
+
+Checks read `invocation.trigger.payload` and return route IDs. They preserve the
+repository/action/object/label/draft/merged/base checks and JSON-quote user strings.
+Event header checks await T4 event-type extraction; these recipes check only the
+signed body. The mutate uses `set /lastOutput` with an expression
+`$lookup(outputs, "<triggerId>")`, copying the full `nodeId/value/at/schemaRef`
+record. It does not replace that record with a mutate output.
+
+Preview lists config fields, added/replaced nodes and added/removed/rewired edges.
+Apply checks the current schemas and graph rules, including limits, and records one
+undo step with held input. Existing check/restore/exit topology is explicitly
+reviewed for replacement, including owner edits; ambiguous/shared topology is
+retained and a new fragment is inserted. Poll presets remain configuration-only.
 
 ## Inbound event bus (Decided, shipped in M6)
 

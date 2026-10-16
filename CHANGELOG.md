@@ -4,6 +4,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- GitHub webhook presets now preview and apply editable body-check decisions, output-restoring mutations and quiet Success exits in one undo step, preserving successor connections and explicitly reviewing replacement edits; poll presets are unchanged. (#168, step 21 T2)
+
 - Trigger editing starts with Manual, Cron, Poll, Event or Webhook and type-specific fields. GitHub presets are optional, preview the full configuration replacement, and apply as one undoable edit that also restores unfinished input on undo. The palette keeps one Trigger node; stored `subtype` and current intake behavior are unchanged. (#168, step 20 T1)
 
 - Gate validation warns at Maximum passes when `maxPasses` exceeds `maxNodeVisits`, naming both limits and repeat-cycle nodes consistently across admission endpoints. Crash-boundary regression checks prove durable gate choices advance without recounting. Inspector fallback threads seed one-based gate counts from the pinned definition. **Upgrade (#164 E1 review):** `MAX_ITERATIONS` is removed from the current failure-code enum and generated client; use `MAX_NODE_VISITS`. Frozen historical schemas remain unchanged.
