@@ -454,6 +454,133 @@ describe('E2 review regressions', () => {
       expect(refused.issues.map((entry) => entry.code)).toContain('V4_ITERATION_GATE_UNPROVEN');
   });
 
+  it.each([false, true])(
+    're-review F1 resolves every invalidated source with two authored gates (explicit return: %s)',
+    async (explicitReturn) => {
+      const source = loop({ ...back, return: { mapping: 'run.iteration' } });
+      source.nodes[1] = {
+        ...source.nodes[1]!,
+        kind: 'wait',
+        config: {
+          mode: 'input',
+          prompt: 'Pass {{ run.iteration }}',
+          exposeTo: ['api'],
+          onTimeout: 'continue',
+        },
+      };
+      const preview = candidate(await convertDefinitionV3ToV4(source));
+      const policy = preview.reviewItems.find((item) => item.kind === 'exit-policy')!;
+      const graph = structuredClone(policy.proposedValue) as {
+        nodes: LoopDefinition['nodes'];
+        edges: LoopDefinition['edges'];
+      };
+      graph.nodes.push({
+        id: 'extra',
+        label: 'Second gate',
+        kind: 'decision',
+        ui: { x: 0, y: 0 },
+        config: {
+          kind: 'expression',
+          jsonata: '"stop"',
+          routes: [
+            { id: 'repeat', label: 'Repeat', repeat: true },
+            { id: 'stop', label: 'Stop' },
+          ],
+          maxPasses: 2,
+        },
+      });
+      graph.edges.find(
+        (edge) => edge.from.node === 'done' && edge.from.port === 'finish',
+      )!.to.node = 'extra';
+      graph.edges.push(
+        {
+          id: 'extra-repeat',
+          from: { node: 'extra', port: 'repeat' },
+          to: { node: 'extra', port: 'in' },
+        },
+        {
+          id: 'extra-stop',
+          from: { node: 'extra', port: 'stop' },
+          to: { node: 'done-complete', port: 'in' },
+        },
+        {
+          id: 'extra-limit',
+          from: { node: 'extra', port: 'limit-reached' },
+          to: { node: 'done-exhausted', port: 'in' },
+        },
+      );
+      if (explicitReturn)
+        for (const node of graph.nodes)
+          if (node.kind === 'exit') node.config.returns = '"explicit owner value"';
+      const graphResolution: DefinitionResolutions = {
+        [policy.id]: {
+          hash: policy.hash,
+          action: 'replace',
+          value: graph,
+          reason: 'Owner authored a second gate.',
+        },
+      };
+      const refused = await convertDefinitionV3ToV4(source, graphResolution);
+      expect(refused.ok).toBe(false);
+      const items = refused.reviewItems.filter((item) => item.kind === 'iteration-consumer');
+      expect(items).toHaveLength(2);
+      for (const item of items) {
+        expect(item.status).toBe('pending');
+        if (!refused.ok)
+          expect(
+            refused.issues.find((issue) => issue.code === 'V4_ITERATION_GATE_UNPROVEN')?.message,
+          ).toContain(item.id);
+      }
+      const answers: DefinitionResolutions = { ...graphResolution };
+      for (const item of items)
+        answers[item.id] = {
+          hash: item.hash,
+          action: 'replace',
+          value: item.path.endsWith('/prompt')
+            ? 'Pass {{ gates.extra.passes }}'
+            : 'gates.extra.passes',
+          reason: 'Owner chose the second gate counter for this source.',
+        };
+      const converted = candidate(await convertDefinitionV3ToV4(source, answers));
+      expect(converted.ready).toBe(true);
+      expect(
+        converted.reviewItems
+          .filter((item) => item.kind === 'iteration-consumer')
+          .every((item) => item.status === 'resolved'),
+      ).toBe(true);
+      const input = converted.value.nodes.find((node) => node.id === 'work');
+      expect(input?.config).toMatchObject({ prompt: 'Pass {{ gates.extra.passes }}' });
+      for (const node of converted.value.nodes)
+        if (node.kind === 'exit')
+          expect(node.config.returns).toBe(
+            explicitReturn ? '"explicit owner value"' : 'gates.extra.passes',
+          );
+      const first = items[0]!;
+      for (const bad of [
+        { ...answers[first.id]!, hash: '0'.repeat(64) },
+        {
+          hash: first.hash,
+          action: 'approve' as const,
+          reason: 'Approval cannot choose a counter.',
+        },
+        { ...answers[first.id]!, value: 123 },
+      ])
+        expect((await convertDefinitionV3ToV4(source, { ...answers, [first.id]: bad })).ok).toBe(
+          false,
+        );
+      const changedGraph = structuredClone(graph);
+      changedGraph.nodes.find((node) => node.id === 'extra')!.label = 'Changed graph';
+      expect(
+        (
+          await convertDefinitionV3ToV4(source, {
+            ...answers,
+            [policy.id]: { ...graphResolution[policy.id]!, value: changedGraph },
+          })
+        ).ok,
+      ).toBe(false);
+    },
+  );
+
   it('F1 requires review for a counters template even without changed output shapes', async () => {
     const source = loop();
     source.nodes[1] = {

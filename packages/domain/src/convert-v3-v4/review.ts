@@ -67,6 +67,7 @@ export class DefinitionReview {
     reason: string,
     required = true,
     replaceable = true,
+    replacementRequired = false,
   ): Promise<unknown> {
     const item = { id: path + ':' + kind, nodeId, path, kind, oldValue, proposedValue, reason };
     const hash = await definitionReviewHash(['v3-v4-definition-e2-1', this.source, item]);
@@ -88,6 +89,7 @@ export class DefinitionReview {
         typeof resolution.reason !== 'string' ||
         !resolution.reason.trim() ||
         !['approve', 'replace'].includes(resolution.action) ||
+        (replacementRequired && resolution.action !== 'replace') ||
         (resolution.action === 'approve' && Object.hasOwn(resolution, 'value')) ||
         (resolution.action === 'replace' &&
           (!replaceable ||

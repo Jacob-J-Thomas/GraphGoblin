@@ -23,6 +23,7 @@ import {
 } from './consumers.js';
 import {
   DefinitionReview,
+  definitionReviewHash,
   problem,
   type DefinitionResolutions,
   type DefinitionReviewItem,
@@ -215,12 +216,54 @@ function planExit(node: V3Exit, used: Set<string>) {
   };
 }
 
+/** Keep explicit authored fields; carry reviewed source edits into unchanged generated fields. */
+function carrySourceEdits(authored: unknown, baseline: unknown, revised: unknown): unknown {
+  if (authored === baseline) return revised;
+  if (
+    !authored ||
+    !baseline ||
+    !revised ||
+    typeof authored !== 'object' ||
+    typeof baseline !== 'object' ||
+    typeof revised !== 'object' ||
+    Array.isArray(authored) ||
+    Array.isArray(baseline) ||
+    Array.isArray(revised)
+  )
+    return authored;
+  const result = { ...authored } as Obj;
+  for (const key of Object.keys(result))
+    if (Object.hasOwn(baseline, key) && Object.hasOwn(revised, key))
+      result[key] = carrySourceEdits(result[key], (baseline as Obj)[key], (revised as Obj)[key]);
+  return result;
+}
+
 /** Definition-only stage. `ready` is false until every required owner review is resolved.
  * No history, store, API, configured-instance retirement or offline-tool composition occurs here.
  */
 export async function convertDefinitionV3ToV4(
   input: V3LoopDefinition,
   resolutions: DefinitionResolutions = {},
+): Promise<DefinitionConversionResult> {
+  if (
+    resolutions &&
+    typeof resolutions === 'object' &&
+    !Array.isArray(resolutions) &&
+    Object.keys(resolutions).some((id) => id.endsWith(':iteration-consumer'))
+  ) {
+    const baselineResolutions = Object.fromEntries(
+      Object.entries(resolutions).filter(([id]) => !id.endsWith(':iteration-consumer')),
+    );
+    const baseline = await convertDefinition(input, baselineResolutions);
+    return convertDefinition(input, resolutions, baseline.reviewItems);
+  }
+  return convertDefinition(input, resolutions);
+}
+
+async function convertDefinition(
+  input: V3LoopDefinition,
+  resolutions: DefinitionResolutions,
+  baselineItems: DefinitionReviewItem[] = [],
 ): Promise<DefinitionConversionResult> {
   const parsed = V3LoopDefinitionSchema.safeParse(input);
   if (!parsed.success)
@@ -263,7 +306,39 @@ export async function convertDefinitionV3ToV4(
   );
   const iterationGateId =
     loopBacks.length === 1 ? (exitPlans.get(loopBacks[0]!.id)?.gateId ?? null) : null;
-  let rewroteIteration = false;
+  const iterationItems = new Set<string>();
+  const authoredGraphs = source.nodes.flatMap((node, index) => {
+    const resolution = resolutions[`/nodes/${index}/config:exit-policy`];
+    return node.kind === 'exit' && resolution?.action === 'replace' ? [resolution.value] : [];
+  });
+  const expectedGates = source.nodes.flatMap((node, index) => {
+    if (node.kind !== 'exit') return [];
+    const resolution = resolutions[`/nodes/${index}/config:exit-policy`];
+    if (resolution?.action === 'replace') {
+      const fragment = resolution.value as { nodes?: unknown } | null;
+      return fragment && Array.isArray(fragment.nodes)
+        ? fragment.nodes.flatMap((entry: unknown) => {
+            if (!entry || typeof entry !== 'object') return [];
+            const candidate = entry as Obj,
+              config = candidate.config as Obj | null;
+            return candidate.kind === 'decision' &&
+              config &&
+              typeof config === 'object' &&
+              config.maxPasses !== undefined
+              ? [candidate.id]
+              : [];
+          })
+        : [];
+    }
+    const gateId = exitPlans.get(node.id)?.gateId;
+    return gateId ? [gateId] : [];
+  });
+  const iterationProofInvalid =
+    iterationGateId !== null &&
+    (expectedGates.length !== 1 || expectedGates[0] !== iterationGateId);
+  const authoredGraphHash = iterationProofInvalid
+    ? await definitionReviewHash(authoredGraphs)
+    : null;
   const edgeIds = new Set(source.edges.map((edge) => edge.id));
   const settings: Obj = clone(source.settings);
   delete settings.maxIterations;
@@ -304,7 +379,7 @@ export async function convertDefinitionV3ToV4(
   ): Promise<unknown> {
     const state = iterationConsumer(text, kind, iterationGateId);
     if (!state.needed) return text;
-    if (state.automatic) rewroteIteration = true;
+    if (state.automatic) iterationItems.add(path + ':iteration-consumer');
     return review.change(
       nodeId,
       path,
@@ -312,9 +387,14 @@ export async function convertDefinitionV3ToV4(
       text,
       state.proposed,
       state.automatic
-        ? "Replace the old one-based shared iteration with the sole repeat gate's one-based passes. The engine seeds this maxPasses gate at 1 before execution."
+        ? iterationProofInvalid
+          ? 'The authored graph invalidates the single-gate iteration proof. Replace this source explicitly; approval of the automatic proposal is insufficient. Authored graph SHA-256: ' +
+            authoredGraphHash
+          : "Replace the old one-based shared iteration with the sole repeat gate's one-based passes. The engine seeds this maxPasses gate at 1 before execution."
         : 'run.iteration stays 1 in fresh format-4 runs; counters and iteration without a unique proven repeat gate require an owner-authored source resolution.',
-      !state.automatic,
+      !state.automatic || iterationProofInvalid,
+      true,
+      state.automatic && iterationProofInvalid,
     );
   }
 
@@ -326,12 +406,13 @@ export async function convertDefinitionV3ToV4(
     requiredCode?: string,
   ) {
     const id = path + ':exit-policy';
+    const baseline = baselineItems.find((item) => item.id === id);
     const graph = await review.change(
       original.id,
       path,
       'exit-policy',
       original.config,
-      proposal,
+      baseline ? baseline.proposedValue : proposal,
       proposal === null
         ? 'Supply an authored current exit graph. Preserve ordered criteria and return semantics; do not approximate JSON Schema or historical iteration counters.'
         : 'Review terminal outcomes, captures, return mapping, ordered-criterion timing and independent gate budgets. Gate limits run after evaluation and only on repeat; no history/replay entry is approved by this definition rule.',
@@ -351,7 +432,10 @@ export async function convertDefinitionV3ToV4(
     if (replacement?.action !== 'replace') return;
     if (
       Object.keys(resolutions).some(
-        (key) => key.startsWith(path + '/') && resolutions[key]?.action === 'replace',
+        (key) =>
+          key.startsWith(path + '/') &&
+          resolutions[key]?.action === 'replace' &&
+          !(iterationProofInvalid && iterationItems.has(key)),
       )
     )
       review.issues.push(
@@ -374,11 +458,18 @@ export async function convertDefinitionV3ToV4(
       );
       return;
     }
+    const baselineGraph = baseline?.proposedValue as { nodes?: Obj[] } | null | undefined;
+    const authoredNodes = fragment.nodes.map((node: unknown) => {
+      if (!node || typeof node !== 'object') return node;
+      const before = baselineGraph?.nodes?.find((entry) => entry.id === (node as Obj).id);
+      const after = proposal?.nodes.find((entry) => entry.id === (node as Obj).id);
+      return before && after ? carrySourceEdits(node, before, after) : node;
+    });
     const checked = LoopDefinitionSchema.safeParse({
       ...source,
       schemaVersion: CURRENT_DEFINITION_FORMAT,
       settings,
-      nodes: fragment.nodes,
+      nodes: authoredNodes,
       edges: fragment.edges,
     });
     if (
@@ -905,7 +996,7 @@ export async function convertDefinitionV3ToV4(
     );
   else {
     if (
-      rewroteIteration &&
+      iterationItems.size > 0 &&
       (result.data.nodes.filter(
         (node) => node.kind === 'decision' && node.config.maxPasses !== undefined,
       ).length !== 1 ||
@@ -915,14 +1006,22 @@ export async function convertDefinitionV3ToV4(
             node.kind === 'decision' &&
             node.config.maxPasses !== undefined,
         ))
-    )
-      review.issues.push(
-        problem(
-          'V4_ITERATION_GATE_UNPROVEN',
-          '/',
-          'An automatic iteration rewrite requires the original sole generated maxPasses gate; the authored graph changed its identity or multiplicity.',
-        ),
+    ) {
+      const pending = review.items.filter(
+        (item) =>
+          iterationItems.has(item.id) &&
+          (item.status !== 'resolved' || resolutions[item.id]?.action !== 'replace'),
       );
+      if (pending.length)
+        review.issues.push(
+          problem(
+            'V4_ITERATION_GATE_UNPROVEN',
+            '/',
+            'The authored graph invalidates the automatic iteration proof. Supply hash-bound source replace resolutions for: ' +
+              pending.map((item) => item.id).join(', '),
+          ),
+        );
+    }
     review.issues.push(
       ...validateLoop(result.data)
         .filter((entry) => entry.severity === 'error')
