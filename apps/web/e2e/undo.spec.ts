@@ -180,13 +180,7 @@ test('undo and redo from the toolbar and the keys, saved like any edit', async (
   expect(last.headers()['if-match']).toMatch(/^".+"$/);
   expect((last.postDataJSON() as { definition: Definition }).definition.nodes).toHaveLength(3);
   const { draft } = await serverDraft(request, loopId);
-  expect(draft.definition.nodes.map((n) => n.id)).toEqual([
-    'start',
-    'approve',
-    'done',
-    'success',
-    'exhausted',
-  ]);
+  expect(draft.definition.nodes.map((n) => n.id)).toEqual(['start', 'approve', 'done']);
 
   // A new edit after an undo leaves nothing to redo.
   await expect(redo).toHaveAccessibleName('Redo add wait');

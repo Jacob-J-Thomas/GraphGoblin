@@ -102,15 +102,31 @@ for (const finalChoice of ['repeat', 'done'] as const) {
     await expect(dialog.getByRole('form', { name: 'Connect exhausted' })).toHaveCount(0);
     await closeNode(page);
     await expect(page.getByText('Ready to publish')).toBeVisible();
+    await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
     await expect
       .poll(async () => {
         const response = await request.get(url + '/loops/' + loop.id);
         const body = (await response.json()) as { draft: { definition: unknown } };
         const saved = LoopDefinitionSchema.parse(body.draft.definition);
         const gate = saved.nodes.find((n) => n.id === 'gate');
-        return gate?.kind === 'decision' ? gate.config.maxPasses : undefined;
+        const exit = saved.nodes.find((n) => n.id === 'exhausted');
+        return {
+          gate: gate?.kind === 'decision' ? gate.config : undefined,
+          exit: exit?.kind === 'exit' ? exit.config : undefined,
+          limitTarget: saved.edges.find(
+            (edge) => edge.from.node === 'gate' && edge.from.port === 'limit-reached',
+          )?.to.node,
+        };
       })
-      .toBe(3);
+      .toMatchObject({
+        gate: {
+          maxPasses: 3,
+          maxRunTimeSeconds: 60,
+          routes: [{ id: 'repeat', repeat: true }, { id: 'done' }],
+        },
+        exit: { outcome: 'exhausted', returns: 'outputs.work.value' },
+        limitTarget: 'exhausted',
+      });
     await page.reload();
     dialog = await openNode(page, 'gate');
     await expect(dialog.getByLabel('Maximum passes', { exact: true })).toHaveValue('3');

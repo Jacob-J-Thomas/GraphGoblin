@@ -54,6 +54,43 @@ const envelope = (loop: unknown) => ({
 });
 
 describe('decision gate API admission', () => {
+  it('returns the visit-cap warning on all five admission paths while allowing an early non-repeat', async () => {
+    t = await createTestApp();
+    const definition = gateLoop();
+    definition.settings = { maxNodeVisits: 2 };
+    const gate = definition.nodes.find((n) => n.id === 'gate')!;
+    if (gate.kind === 'decision' && gate.config.kind === 'expression')
+      gate.config.jsonata = '"done"';
+    const created = await t.app.inject({ method: 'POST', url: '/loops', payload: { definition } });
+    expect(created.statusCode).toBe(201);
+    const id = created.json().loop.id as string;
+    const responses = [
+      created,
+      await t.app.inject({ method: 'POST', url: '/loops/import', payload: envelope(definition) }),
+      await t.app.inject({ method: 'PUT', url: `/loops/${id}/draft`, payload: { definition } }),
+      await t.app.inject({ method: 'POST', url: `/loops/${id}/validate`, payload: { definition } }),
+      await t.app.inject({ method: 'POST', url: `/loops/${id}/publish` }),
+    ];
+    for (const response of responses) {
+      expect(response.statusCode).toBeLessThan(300);
+      expect(response.json().issues).toEqual([
+        expect.objectContaining({
+          code: 'GATE_PASSES_ABOVE_VISIT_CAP',
+          severity: 'warning',
+          nodeId: 'gate',
+          path: 'config.maxPasses',
+          message: expect.stringContaining('maxPasses 3, above settings.maxNodeVisits 2'),
+        }),
+      ]);
+    }
+    expect(responses[3]!.json().publishable).toBe(true);
+    const started = await t.app.inject({ method: 'POST', url: `/loops/${id}/runs`, payload: {} });
+    await t.idle();
+    expect(
+      await t.container.repos.runs.get(started.json<{ run: RunRecord }>().run.id),
+    ).toMatchObject({ status: 'succeeded', result: 1 });
+  });
+
   it('agrees across create, import, draft save, validate and publish, and persists runtime counts', async () => {
     t = await createTestApp();
     const definition = gateLoop();

@@ -202,16 +202,17 @@ for (const theme of ['dark', 'light']) {
     await expect(path(page, 'start-work')).not.toHaveClass(/gg-route-crossing/);
     await screenshot(page, info, `rerouted-forward-${theme}`);
 
-    // Loop-back: drag its lane further down.
+    // The gate's first output returns above the cards. Move its lane farther up;
+    // dragging down would deliberately cross the taller gate's own body.
     await select(page, 'return');
     const lane = segment(page, 'return', 3);
     const before = await path(page, 'return').getAttribute('d');
-    await drag(page, lane, 0, 70);
+    await drag(page, lane, 0, -70);
     await saved(page);
     await expect(path(page, 'return')).not.toHaveAttribute('d', before!);
     const route = (await storedRoute(request, loopId, 'return'))!;
     expect(route).toHaveLength(3);
-    expect(await cardsCrossed(page, 'return', ['done', 'work'])).toEqual([]);
+    expect(await cardsCrossed(page, 'return', [])).toEqual([]);
 
     // Handles: 24 px targets, the selected-edge stroke on the canvas (3:1), focus ring on focus.
     const dot = lane.locator('.gg-route-handle-dot');
@@ -240,6 +241,7 @@ for (const theme of ['dark', 'light']) {
     await expect(path(page, 'start-work')).toHaveAttribute('d', drawn.forward!);
     await expect(path(page, 'return')).toHaveAttribute('d', drawn.back!);
     await expect(edge(page, 'return')).toHaveAttribute('aria-label', /manual route$/);
+    expect(await cardsCrossed(page, 'return', [])).toEqual([]);
   });
 }
 

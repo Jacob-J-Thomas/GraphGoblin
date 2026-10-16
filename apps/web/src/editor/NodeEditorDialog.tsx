@@ -37,6 +37,7 @@ import { EXIT_FIELD_OVERRIDES } from './ExitFields.js';
 import { hasRepeatRoute, cleanGateLimits } from './decision-gates.js';
 import { TriggerPresets } from './TriggerPresets.js';
 import { CatalogWarningsContext } from '../forms/fields/model.js';
+import { GateLimitIssuesContext } from './DecisionGateFields.js';
 import { canvasFocusTarget } from './canvas-focus.js';
 import { DECISION_FIELD_OVERRIDES, NODE_FIELD_CONTROLS } from './field-controls.js';
 import { focusIssuePath, groupFocus } from './focus-field.js';
@@ -636,53 +637,57 @@ export function NodeEditorDialog({
               value={node.kind === 'decision' ? DECISION_REORDERABLE : NO_REORDERABLE}
             >
               <CatalogWarningsContext value={catalogWarnings}>
-                <FieldLabelsContext
-                  value={
-                    node.kind === 'trigger' && node.config?.subtype === 'poll'
-                      ? POLL_FIELD_LABELS
-                      : node.kind === 'decision'
-                        ? DECISION_FIELD_LABELS
-                        : DEFAULT_FIELD_LABELS
-                  }
-                >
-                  <VariableSuggestionsContext value={variables}>
-                    <JsonApplyReviewContext value={reviewJsonApply}>
-                      <JsonCandidateContext value={normalizeJsonCandidate}>
-                        <fieldset
-                          disabled={activeReview !== undefined}
-                          inert={activeReview !== undefined}
-                          className="grid min-w-0 gap-0 border-0 p-0"
-                        >
-                          <SchemaForm
-                            key={`${node.kind}:${epoch}:${historyEpoch}`}
-                            schema={NodeConfigSchemas[node.kind]}
-                            fieldOrder={node.kind === 'decision' ? DECISION_FIELD_ORDER : undefined}
-                            value={node.config}
-                            label={`${node.id} config`}
-                            controls={NODE_FIELD_CONTROLS}
-                            unionPickers={
-                              node.kind === 'decision' ? DECISION_UNION_PICKERS : undefined
-                            }
-                            fieldOverrides={
-                              node.kind === 'decision'
-                                ? DECISION_FIELD_OVERRIDES
-                                : node.kind === 'exit'
-                                  ? EXIT_FIELD_OVERRIDES
-                                  : undefined
-                            }
-                            problems={configProblems}
-                            disclosures={disclosures}
-                            onChange={handleConfigChange}
-                            parseErrors={fieldErrors[`node:${node.id}`]}
-                            onParseError={(path, error, reason, change) =>
-                              setFieldError(`node:${node.id}`, path, error, reason, change)
-                            }
-                          />
-                        </fieldset>
-                      </JsonCandidateContext>
-                    </JsonApplyReviewContext>
-                  </VariableSuggestionsContext>
-                </FieldLabelsContext>
+                <GateLimitIssuesContext value={nodeIssues}>
+                  <FieldLabelsContext
+                    value={
+                      node.kind === 'trigger' && node.config?.subtype === 'poll'
+                        ? POLL_FIELD_LABELS
+                        : node.kind === 'decision'
+                          ? DECISION_FIELD_LABELS
+                          : DEFAULT_FIELD_LABELS
+                    }
+                  >
+                    <VariableSuggestionsContext value={variables}>
+                      <JsonApplyReviewContext value={reviewJsonApply}>
+                        <JsonCandidateContext value={normalizeJsonCandidate}>
+                          <fieldset
+                            disabled={activeReview !== undefined}
+                            inert={activeReview !== undefined}
+                            className="grid min-w-0 gap-0 border-0 p-0"
+                          >
+                            <SchemaForm
+                              key={`${node.kind}:${epoch}:${historyEpoch}`}
+                              schema={NodeConfigSchemas[node.kind]}
+                              fieldOrder={
+                                node.kind === 'decision' ? DECISION_FIELD_ORDER : undefined
+                              }
+                              value={node.config}
+                              label={`${node.id} config`}
+                              controls={NODE_FIELD_CONTROLS}
+                              unionPickers={
+                                node.kind === 'decision' ? DECISION_UNION_PICKERS : undefined
+                              }
+                              fieldOverrides={
+                                node.kind === 'decision'
+                                  ? DECISION_FIELD_OVERRIDES
+                                  : node.kind === 'exit'
+                                    ? EXIT_FIELD_OVERRIDES
+                                    : undefined
+                              }
+                              problems={configProblems}
+                              disclosures={disclosures}
+                              onChange={handleConfigChange}
+                              parseErrors={fieldErrors[`node:${node.id}`]}
+                              onParseError={(path, error, reason, change) =>
+                                setFieldError(`node:${node.id}`, path, error, reason, change)
+                              }
+                            />
+                          </fieldset>
+                        </JsonCandidateContext>
+                      </JsonApplyReviewContext>
+                    </VariableSuggestionsContext>
+                  </FieldLabelsContext>
+                </GateLimitIssuesContext>
               </CatalogWarningsContext>
             </ReorderablePathsContext>
           </FormEditReviewContext>

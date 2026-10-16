@@ -18,6 +18,8 @@ Exits become strict terminal `{outcome, returns, destinations}` nodes, with Succ
 
 Rename the independent per-node visit safety cap to `maxNodeVisits`, default 10, maximum 10,000. It stops unintended cycles with nonresumable `MAX_NODE_VISITS`. Fresh entries count; wakes/recovery/retries of the same visit retain existing attempt semantics. Fresh `run.iteration` stays 1; historical iteration events remain factual and replayable.
 
+If maximum passes exceeds the visit cap, report a field warning naming both limits and the repeat-cycle nodes. Continued repetition will hit the safety cap first, but an earlier non-repeat choice or time limit can still achieve the author's intent, so publication remains allowed. The current failure-code contract has no `MAX_ITERATIONS` alias; frozen upgrade schemas retain their historical enum.
+
 ## Authoring and consequences
 
 The palette remains nine kinds. Repeat switches are mutually exclusive. Limits appear only for gates, and Limit reached is visible even in an incomplete gate. Unmarking previews removal of limits and its edge; confirmation is one undoable edit. Kind/answer conversions preserve representable markers and limits. Exits expose outcome, returns and destinations; loop settings describe maximum node visits as a safety cap.

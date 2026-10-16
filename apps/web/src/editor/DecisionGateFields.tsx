@@ -1,4 +1,5 @@
-import { use, useId } from 'react';
+import { createContext, use, useId } from 'react';
+import type { ValidationIssue } from '@graphgoblin/domain';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { HelpText, Label, Switch } from '../components/ui/index.js';
 import { DefaultField, type FieldProps } from '../forms/fields.js';
@@ -8,6 +9,8 @@ import { UNSET } from '../forms/unset.js';
 import { unwrap } from '../forms/introspect.js';
 import { useParseErrors } from '../forms/parse-errors.js';
 import { gateRows, hasRepeatRoute } from './decision-gates.js';
+
+export const GateLimitIssuesContext = createContext<readonly ValidationIssue[]>([]);
 
 /** Selecting a repeat route clears the other markers in the same form commit. */
 export function RepeatRouteField({ name }: FieldProps) {
@@ -49,6 +52,9 @@ export function RepeatRouteField({ name }: FieldProps) {
 
 export function GateLimitField(props: FieldProps) {
   const config: unknown = useWatch();
+  const warnings = use(GateLimitIssuesContext).filter(
+    (issue) => issue.severity === 'warning' && issue.path === `config.${props.name}`,
+  );
   if (!hasRepeatRoute(config)) return null;
   return (
     <DefaultField
@@ -56,7 +62,10 @@ export function GateLimitField(props: FieldProps) {
       schema={
         props.name === 'maxPasses'
           ? unwrap(props.schema).base.describe(
-              'Required. Passes start at 1; a non-repeat choice wins on the last pass.',
+              [
+                'Required. Passes start at 1; a non-repeat choice wins on the last pass.',
+                ...warnings.map((issue) => `Warning: ${issue.message}`),
+              ].join(' '),
             )
           : props.schema
       }

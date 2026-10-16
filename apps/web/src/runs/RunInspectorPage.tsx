@@ -62,8 +62,11 @@ export function RunInspectorPage() {
   const [selectedSeq, setSelectedSeq] = useState<number | undefined>();
   const seq = selectedSeq ?? log.lastSeq;
   const selectedEvent = log.events.find((event) => event.seq === seq);
+  const firstEvent = log.events[0];
   const needsPinnedDefinition =
-    selectedEvent?.type === 'decision.made' || selectedEvent?.type === 'run.failed';
+    selectedEvent?.type === 'decision.made' ||
+    selectedEvent?.type === 'run.failed' ||
+    (firstEvent !== undefined && (firstEvent.type !== 'run.queued' || !firstEvent.initialThread));
   const versionQuery = useLoopVersion(
     runQuery.data?.loopId ?? '',
     runQuery.data?.versionId ?? '',
@@ -150,7 +153,12 @@ export function RunInspectorPage() {
             definitionLoading={versionQuery.isPending}
           />
           {threadQuery.data ? (
-            <ThreadViewer current={threadQuery.data} events={log.events} seq={seq} />
+            <ThreadViewer
+              current={threadQuery.data}
+              events={log.events}
+              seq={seq}
+              definition={versionQuery.data?.definition}
+            />
           ) : (
             <p className="text-sm text-muted">The thread is not available yet.</p>
           )}

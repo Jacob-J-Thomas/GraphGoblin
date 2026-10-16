@@ -455,6 +455,8 @@ Exit shows **Outcome** (Success, Failure, Exhausted), **Returns** (JSONata or `n
 
 The inspector displays recorded previous/current passes, repeat route, maximum passes, optional maximum run time, elapsed seconds from run start and which limit stopped repetition. Raw evaluation choice and actual selected port remain separate. Terminal exit details show outcome; Result shows the returned value. Exhausted is available in run filters and badges and stops SSE/MCP waiting.
 
+When a log lacks a recorded initial thread, the inspector fetches the immutable run definition and seeds each gate at `passes: 1`, including when inspecting an event before the first decision. A recorded initial thread always takes precedence, preserving replay-fork seeds.
+
 ## Template gallery (#28, #160)
 
 The Loops page's **New from template** action opens the installed catalog. Each card shows its description, tags and one green **Use &lt;template name&gt;** button. Using it immediately creates an ordinary independent draft and opens the editor. The gallery has no settings form, repository or GitHub URL field, prerequisite report, readiness presentation or configured-automation action. It does not fetch model choices or harness preflight for setup. Prompts consume the run's input and existing context; instructions, variables, model choices, limits and working directory can be configured in the copied loop. Cards share intrinsic grid rows so descriptions, tags and primary actions stay aligned across siblings and wrap at narrow widths.

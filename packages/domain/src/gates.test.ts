@@ -44,6 +44,77 @@ function gateLoop(): LoopDefinitionInput {
 const parse = (input: LoopDefinitionInput) => LoopDefinitionSchema.parse(input);
 
 describe('decision gate graph rules', () => {
+  it.each([2, 3, 4])('compares maximum passes with the node visit cap %s', (maxNodeVisits) => {
+    const input = gateLoop();
+    input.settings = { maxNodeVisits };
+    const warnings = validateLoop(parse(input)).filter(
+      (i) => i.code === 'GATE_PASSES_ABOVE_VISIT_CAP',
+    );
+    expect(warnings).toEqual(
+      maxNodeVisits < 3
+        ? [
+            {
+              code: 'GATE_PASSES_ABOVE_VISIT_CAP',
+              severity: 'warning',
+              nodeId: 'gate',
+              path: 'config.maxPasses',
+              message: expect.stringContaining(
+                'maxPasses 3, above settings.maxNodeVisits 2. Repeat-cycle nodes: "gate".',
+              ),
+            },
+          ]
+        : [],
+    );
+  });
+
+  it('names all repeat-cycle branches, excluding exits and paths beyond the gate', () => {
+    const input = gateLoop();
+    input.settings = { maxNodeVisits: 2 };
+    input.nodes.push(
+      {
+        id: 'branch',
+        kind: 'decision',
+        label: 'Branch',
+        config: {
+          kind: 'expression',
+          jsonata: '"left"',
+          routes: [
+            { id: 'left', label: 'Left' },
+            { id: 'right', label: 'Right' },
+            { id: 'quit', label: 'Quit' },
+          ],
+        },
+      },
+      {
+        id: 'left',
+        kind: 'mutate',
+        label: 'Left',
+        config: { operations: [{ op: 'delete', path: '/vars/unused' }] },
+      },
+      {
+        id: 'right',
+        kind: 'mutate',
+        label: 'Right',
+        config: { operations: [{ op: 'delete', path: '/vars/unused' }] },
+      },
+    );
+    input.edges[1]!.to.node = 'branch';
+    input.edges.push(
+      { id: 'left', from: { node: 'branch', port: 'left' }, to: { node: 'left' } },
+      { id: 'right', from: { node: 'branch', port: 'right' }, to: { node: 'right' } },
+      { id: 'quit', from: { node: 'branch', port: 'quit' }, to: { node: 'done' } },
+      { id: 'left-return', from: { node: 'left', port: 'out' }, to: { node: 'gate' } },
+      { id: 'right-return', from: { node: 'right', port: 'out' }, to: { node: 'gate' } },
+    );
+    expect(validateLoop(parse(input))).toEqual([
+      expect.objectContaining({
+        severity: 'warning',
+        path: 'config.maxPasses',
+        message: expect.stringContaining('Repeat-cycle nodes: "gate", "branch", "left", "right".'),
+      }),
+    ]);
+  });
+
   const classifierRoutes: { answer: ClassifierAnswerConfig; path: string }[] = [
     {
       answer: {

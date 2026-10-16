@@ -3,6 +3,7 @@ import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { LoopDefinitionSchema } from '@graphgoblin/contracts';
+import { minimalLoop } from '@graphgoblin/contracts/testing';
 import { event, FakeApi } from '../__fixtures__/fake-api.js';
 import { renderApp } from '../__fixtures__/render.js';
 import { useRunEventStore } from './event-store.js';
@@ -55,6 +56,61 @@ function seedRun(api: FakeApi, overrides: Parameters<FakeApi['addRun']>[0] = {})
 }
 
 describe('RunInspectorPage', () => {
+  it('loads the pinned definition for fallback gate counts before any decision event', async () => {
+    const api = new FakeApi();
+    const base = minimalLoop();
+    const loop = api.addLoop(
+      {
+        ...base,
+        nodes: [
+          ...base.nodes,
+          {
+            id: 'gate',
+            kind: 'decision',
+            label: 'Gate',
+            config: {
+              kind: 'expression',
+              jsonata: '"repeat"',
+              routes: [
+                { id: 'repeat', label: 'Repeat', repeat: true },
+                { id: 'done', label: 'Done' },
+              ],
+              maxPasses: 3,
+            },
+          },
+        ],
+      },
+      { published: true },
+    );
+    const run = api.addRun({
+      loopId: loop.id,
+      versionId: loop.currentVersionId!,
+      status: 'succeeded',
+    });
+    const thread = api.threads.get(run.id)!;
+    api.threads.set(run.id, { ...thread, gates: { gate: { passes: 3 } } });
+    api.pushEvent(run.id, event(run.id, 1, 'run.queued', {}));
+    api.pushEvent(
+      run.id,
+      event(run.id, 2, 'node.started', {
+        nodeId: 'gate',
+        kind: 'decision',
+        attempt: 1,
+        configHash: 'h',
+      }),
+    );
+    renderApp(`/runs/${run.id}`, api);
+    await userEvent.setup().click(await screen.findByText('Full thread JSON'));
+    await waitFor(() =>
+      expect(JSON.parse(screen.getByTestId('thread-json').textContent).gates).toEqual({
+        gate: { passes: 1 },
+      }),
+    );
+    expect(api.callsTo('GET', `/loops/${loop.id}/versions/${loop.currentVersionId}`)).toHaveLength(
+      1,
+    );
+  });
+
   it('shows loading acceptance until the run’s pinned version resolves with its authored Noul threshold', async () => {
     const api = new FakeApi();
     const definition = (truthThreshold: number) =>

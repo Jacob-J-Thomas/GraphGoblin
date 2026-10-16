@@ -63,6 +63,86 @@ const decisions = (e: TestEngine, runId: string) =>
 const hang = () => new Promise<never>(() => undefined);
 
 describe('decision gates', () => {
+  it('recovers the recorded repeat route after the atomic append, before either snapshot or cursor saves', async () => {
+    const e = await createTestEngine();
+    const def = gateLoop();
+    def.nodes[2] = {
+      id: 'gate',
+      kind: 'decision',
+      label: 'Gate',
+      config: {
+        kind: 'llm',
+        instructions: 'Choose',
+        routes,
+        harness: 'codex',
+        model: { mode: 'inherit' },
+        effort: { mode: 'inherit' },
+        maxPasses: 3,
+      },
+    };
+    def.nodes.push({
+      id: 'checkpoint',
+      kind: 'wait',
+      label: 'Checkpoint',
+      config: { mode: 'input', prompt: 'Continue?' },
+    });
+    def.edges[2]!.to.node = 'checkpoint';
+    def.edges.push({
+      id: 'checkpoint-work',
+      from: { node: 'checkpoint', port: 'out' },
+      to: { node: 'work' },
+    });
+    const choose = vi
+      .spyOn(e.ports.codexDecider, 'route')
+      .mockResolvedValue({ route: 'repeat', confidence: 1, reasoning: 'Repeat once' });
+    let crashed = false;
+    const append = e.ports.events.append.bind(e.ports.events);
+    const freeze = vi
+      .spyOn(e.ports.events, 'append')
+      .mockImplementation(async (id, batch, options) => {
+        const recorded = await append(id, batch, options);
+        if (batch.some((event) => event.type === 'decision.made')) {
+          expect(batch.map((event) => event.type)).toEqual(['decision.made', 'node.finished']);
+          crashed = true;
+          return hang();
+        }
+        return recorded;
+      });
+    const run = await e.start(e.publish(def).loopId);
+    await vi.waitFor(() => expect(crashed).toBe(true));
+    e.manager.stop();
+    expect((await e.ports.runs.get(run.id))?.currentNodeId).toBe('gate');
+    expect((await e.ports.runs.getThread(run.id))?.gates.gate?.passes).toBe(1);
+    expect(decisions(e, run.id)).toHaveLength(1);
+    expect(decisions(e, run.id)[0]).toMatchObject({
+      portId: 'repeat',
+      gate: { previousPasses: 1, passes: 2 },
+    });
+    freeze.mockRestore();
+    for (let restart = 0; restart < 2; restart++) {
+      const recovered = new RunManager(e.ports, e.settings);
+      await recovered.start();
+      await recovered.waitForIdle();
+      expect(await recovered.getRun(run.id)).toMatchObject({
+        status: 'waiting',
+        currentNodeId: 'checkpoint',
+      });
+      const thread = await recovered.getThread(run.id);
+      expect(thread).toMatchObject({ gates: { gate: { passes: 2 } }, vars: { work: 1 } });
+      expect(thread).toEqual(
+        replayThread((await e.ports.runs.getInitialThread(run.id))!, e.events(run.id)),
+      );
+      expect(choose).toHaveBeenCalledTimes(1);
+      expect(decisions(e, run.id)).toHaveLength(1);
+      expect(
+        e
+          .events(run.id)
+          .filter((event) => event.type === 'node.finished' && event.nodeId === 'gate'),
+      ).toHaveLength(1);
+      recovered.stop();
+    }
+  });
+
   it.each(['choice', 'noul', 'score'] as const)(
     'applies the same gate policy to classifier %s routes',
     async (type) => {

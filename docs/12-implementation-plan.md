@@ -206,7 +206,7 @@ M8 notes (WP-F2, packaging and the last product fixes, 2026-10-03):
 - **Install scripts** (task 1): `scripts/install.ps1` and `scripts/install.sh` check prerequisites, install, build, create the data directory, run the preflight, and print how to start; tested on Windows 11 with Windows PowerShell 5.1 and Git Bash. `pnpm start` at the root runs the built API, which now defaults `GG_DATA_DIR` to `~/.graphgoblin` and serves the checkout's `apps/web/dist` when `GG_WEB_DIST` is unset.
 - **First API key** (D27, question 18): `graphgoblin-api --create-api-key <name> [--scopes a,b]` prints a new key once without starting the server.
 - **Draft conflicts** (D26, question 17): `If-Match` with the draft's `draftToken` on `PUT /loops/{id}/draft`, 409 `DRAFT_CONFLICT`, and a reload-or-overwrite choice in the editor.
-- **Visit cap** (D28, question 16): `maxIterations` also caps fresh visits per node; a cycle outside an exit loop-back fails with `MAX_ITERATIONS`.
+- **Visit cap** (D28, question 16; updated by [ADR-0036](decisions/ADR-0036-decision-gates-terminal-exits.md)): `maxNodeVisits` caps fresh visits per node and fails with `MAX_NODE_VISITS`. Intentional repetition uses decision gates; the retired iteration failure code is absent from current contracts.
 - **User guide**: the "Coming in 1.0" callouts are replaced by documentation; what remains is marked "After 1.0". The cron latest-slot and read-scope callouts were replaced with documentation once WP-G, which implemented both, was merged.
 - Decisions for questions 16 to 18 are ADR-0015. The release notes are `CHANGELOG.md`. The 1.0 tag follows the final sign-off.
 

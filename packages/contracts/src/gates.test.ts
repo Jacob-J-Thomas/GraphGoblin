@@ -7,12 +7,18 @@ import {
   DecisionEmissionSchema,
   LIMIT_REACHED_PORT_ID,
   LoopSettingsSchema,
+  RunErrorCodeSchema,
 } from './index.js';
 
 const routes = [
   { id: 'repeat', label: 'Repeat', repeat: true },
   { id: 'done', label: 'Done' },
 ];
+
+it('rejects the retired iteration failure code in current contracts', () => {
+  expect(RunErrorCodeSchema.safeParse('MAX_ITERATIONS').success).toBe(false);
+  expect(RunErrorCodeSchema.parse('MAX_NODE_VISITS')).toBe('MAX_NODE_VISITS');
+});
 const expression = { kind: 'expression', jsonata: '"repeat"', routes, maxPasses: 3 };
 const classifiers = [
   { type: 'choice', options: routes.map((route) => ({ ...route, criteria: route.label })) },

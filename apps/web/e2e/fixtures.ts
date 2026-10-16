@@ -101,7 +101,7 @@ export async function openItem(scope: Page | Locator, name: string) {
 
 /** Close the open node editor with its Done button. */
 export async function closeNode(page: Page): Promise<void> {
-  await page.getByRole('dialog').getByRole('button', { name: 'Done' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Done', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
 }
 

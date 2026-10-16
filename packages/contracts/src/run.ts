@@ -64,7 +64,6 @@ export const RunErrorCodeSchema = z.enum([
   'WAIT_TIMEOUT',
   'HEARTBEAT_EXHAUSTED',
   'RETURN_DELIVERY_FAILED',
-  'MAX_ITERATIONS', // Historical failure fact; fresh runs emit MAX_NODE_VISITS.
   'MAX_NODE_VISITS',
   'INTERNAL_ERROR',
 ]);

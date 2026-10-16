@@ -137,6 +137,8 @@ Success finishes `succeeded`, Failure finishes `failed`, and Exhausted finishes 
 
 `settings.maxNodeVisits` (default 10, maximum 10,000) independently caps fresh entries per node. A `node.started` with attempt 1 counts; a wake, recovery or resumable retry of the same visit does not. Exceeding the cap fails before starting the node with `MAX_NODE_VISITS`, `resumable: false`, its node ID and `details.maxNodeVisits`. This catches unmarked cycles; it does not turn them into gate exhaustion. Configure enough visits for intentional work and gates.
 
+Validation reports `GATE_PASSES_ABOVE_VISIT_CAP` at `config.maxPasses` when a gate's maximum passes exceeds the visit cap. The warning names both numbers and all nodes on repeat-target paths back to that gate (excluding paths after the gate and exit branches). Continued repetition cannot reach the maximum-pass Limit reached output before the safety cap fails the run. This is a warning rather than an error because an earlier non-repeat choice or maximum run time can still finish the run as intended. All admission endpoints return the same warning, and the editor shows it beside Maximum passes.
+
 SQLite event reads enforce the current contract. A non-conforming row rejects the whole
 read page with an error naming its run, sequence, and type, without exposing its payload.
 Recovery cannot consume a partial invalid page. JSON pages and SSE replay use this same

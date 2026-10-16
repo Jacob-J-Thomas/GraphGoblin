@@ -1,5 +1,5 @@
-import type { RunEvent } from '@graphgoblin/contracts';
-import { sampleThread } from '@graphgoblin/contracts/testing';
+import { LoopDefinitionSchema, type RunEvent } from '@graphgoblin/contracts';
+import { minimalLoop, sampleThread } from '@graphgoblin/contracts/testing';
 import { describe, expect, it, vi } from 'vitest';
 import { event } from '../__fixtures__/fake-api.js';
 import { quotaSafeSessionStorage, useRunEventStore } from './event-store.js';
@@ -329,6 +329,49 @@ describe('run projections', () => {
 });
 
 describe('initial thread and replay failures', () => {
+  it('seeds fallback gates from the pinned definition at pass one, while preserving recorded fork seeds', () => {
+    const definition = LoopDefinitionSchema.parse({
+      ...minimalLoop(),
+      nodes: [
+        ...minimalLoop().nodes,
+        {
+          id: 'gate',
+          kind: 'decision',
+          label: 'Gate',
+          config: {
+            kind: 'expression',
+            jsonata: '"repeat"',
+            routes: [
+              { id: 'repeat', label: 'Repeat', repeat: true },
+              { id: 'done', label: 'Done' },
+            ],
+            maxPasses: 3,
+          },
+        },
+        {
+          id: 'ordinary',
+          kind: 'decision',
+          label: 'Ordinary',
+          config: {
+            kind: 'expression',
+            jsonata: '"done"',
+            routes: [
+              { id: 'repeat', label: 'Repeat' },
+              { id: 'done', label: 'Done' },
+            ],
+          },
+        },
+      ],
+    });
+    const current = sampleThread({ gates: { gate: { passes: 3 }, obsolete: { passes: 9 } } });
+    const initial = initialThreadFrom(current, [event(R, 1, 'run.queued', {})], definition);
+    expect(initial.gates).toEqual({ gate: { passes: 1 } });
+    const fork = sampleThread({ gates: { gate: { passes: 2 } } });
+    expect(
+      initialThreadFrom(current, [event(R, 1, 'run.queued', { initialThread: fork })], definition),
+    ).toBe(fork);
+  });
+
   it('starts from the thread recorded on run.queued, seed included', () => {
     const seeded = sampleThread();
     const events = [event(R, 1, 'run.queued', { initialThread: seeded }), ...ALL.slice(1)];

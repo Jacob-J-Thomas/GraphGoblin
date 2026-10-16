@@ -52,6 +52,38 @@ const confirm = async (user: ReturnType<typeof userEvent.setup>, dialog: HTMLEle
   user.click(within(dialog).getByRole('button', { name: 'Confirm change' }));
 
 describe('decision gates', () => {
+  it('surfaces a visit-cap warning and focuses Maximum passes without blocking publication', async () => {
+    const { dialog } = await setup({
+      kind: 'expression',
+      jsonata: '"stop"',
+      routes: routes.map((r, i) => ({ ...r, ...(i === 0 ? { repeat: true } : {}) })),
+      maxPasses: 11,
+    });
+    act(() => {
+      const edge = store().definition!.edges.find(
+        (e) => e.from.node === 'pick' && e.from.port === 'ship',
+      )!;
+      store().removeEdge(edge.id);
+      store().connect({ source: 'pick', sourceHandle: 'ship', target: 'pick' });
+      store().connect({ source: 'pick', sourceHandle: 'limit-reached', target: 'done' });
+    });
+    const result = validateDraft(store().definition!);
+    const warning = result.issues.find((i) => i.code === 'GATE_PASSES_ABOVE_VISIT_CAP')!;
+    expect(warning).toMatchObject({
+      severity: 'warning',
+      nodeId: 'pick',
+      path: 'config.maxPasses',
+    });
+    expect(result.issues.filter((i) => i.severity === 'error')).toEqual([]);
+    act(() => store().openNode(warning.nodeId!, { field: warning.path! }));
+    await waitFor(() =>
+      expect(within(dialog).getByLabelText('Maximum passes', { exact: true })).toHaveFocus(),
+    );
+    expect(
+      within(dialog).getByLabelText('Maximum passes', { exact: true }),
+    ).toHaveAccessibleDescription(/maxPasses 11, above settings.maxNodeVisits 10/);
+  });
+
   it('previews removed gate limits for Routes JSON and applies cleanup with one undo', async () => {
     const user = userEvent.setup();
     const { dialog } = await setup({

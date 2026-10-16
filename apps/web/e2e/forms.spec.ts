@@ -194,14 +194,15 @@ test('unparsed collection rows follow removal and rename, and stop blocking Publ
   const id = ((await created.json()) as { loop: { id: string } }).loop.id;
   await page.goto(`/app/loops/${id}/edit`);
   await openNode(page, 'done');
-  const criteria = page.getByRole('group', { name: 'Operations', exact: true });
-  const first = criteria.getByRole('group', { name: 'Operations 1', exact: true });
-  await first.getByRole('button', { name: /^Operations 1/ }).click();
-  await criteria.getByRole('button', { name: /^Operations 2/ }).click();
+  const operations = page.getByRole('group', { name: 'Operations', exact: true });
+  // Collapsed operation headers are not inside the group that their expanded content creates.
+  await operations.getByRole('button', { name: /^Operations 1 / }).click();
+  await operations.getByRole('button', { name: /^Operations 2 / }).click();
+  const first = operations.getByRole('group', { name: 'Operations 1', exact: true });
   await first.locator('[data-field$="jsonSchema"] .cm-content').fill('{broken');
   await expect(first.getByText(/Invalid JSON/)).toBeVisible();
-  await criteria.getByRole('button', { name: 'Remove operations 1' }).click();
-  await expect(criteria.getByText(/Invalid JSON/)).toHaveCount(0);
+  await operations.getByRole('button', { name: 'Remove operations 1' }).click();
+  await expect(operations.getByText(/Invalid JSON/)).toHaveCount(0);
   await expect(page.getByLabel('Json schema', { exact: true })).toContainText('number');
   await closeNode(page);
   await showLoopPanel(page);

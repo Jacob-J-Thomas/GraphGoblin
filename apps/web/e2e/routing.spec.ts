@@ -217,10 +217,38 @@ test('dragging a card across a return path reroutes clear of its measured box in
   const before = await path.getAttribute('d');
   const card = page.getByTestId('node-check');
   const rect = (await card.boundingBox())!;
+  // Gate return ports moved the automatic lane above the cards. Put the obstacle on
+  // the measured path instead of dragging down toward an obsolete exit return lane.
+  const onPath = await path.evaluate(
+    (element, x) => {
+      const curve = element as SVGPathElement;
+      const matrix = curve.getScreenCTM()!;
+      let nearest = { x: Infinity, y: 0 };
+      for (let at = 0; at <= curve.getTotalLength(); at += 2) {
+        const point = curve.getPointAtLength(at).matrixTransform(matrix);
+        if (Math.abs(point.x - x) < Math.abs(nearest.x - x)) nearest = { x: point.x, y: point.y };
+      }
+      return nearest;
+    },
+    rect.x + rect.width / 2,
+  );
+  const dx = onPath.x - (rect.x + rect.width / 2);
+  const dy = onPath.y - (rect.y + rect.height / 2);
   await page.mouse.move(rect.x + 60, rect.y + 14);
   await page.mouse.down();
-  await page.mouse.move(rect.x + 60, rect.y + 125, { steps: 16 });
+  await page.mouse.move(rect.x + 60 + dx, rect.y + 14 + dy, { steps: 16 });
   await page.mouse.up();
+  await expect
+    .poll(async () => {
+      const moved = (await card.boundingBox())!;
+      return (
+        onPath.x > moved.x &&
+        onPath.x < moved.x + moved.width &&
+        onPath.y > moved.y &&
+        onPath.y < moved.y + moved.height
+      );
+    })
+    .toBe(true);
   await expect(path).not.toHaveAttribute('d', before!);
   const collisions = await path.evaluate((element) => {
     const curve = element as SVGPathElement;

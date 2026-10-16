@@ -83,6 +83,33 @@ export function reachableFrom(def: LoopDefinition, startId: string): Set<string>
   return seen;
 }
 
+/** Nodes on any repeat-target -> gate path, stopping at the gate rather than its next routes. */
+function repeatCycleNodes(def: LoopDefinition, gate: string, target: string): string[] {
+  const forward = new Map<string, string[]>();
+  const reverse = new Map<string, string[]>();
+  for (const edge of def.edges) {
+    if (edge.from.node === gate) continue;
+    forward.set(edge.from.node, [...(forward.get(edge.from.node) ?? []), edge.to.node]);
+    reverse.set(edge.to.node, [...(reverse.get(edge.to.node) ?? []), edge.from.node]);
+  }
+  const visit = (start: string, adjacency: Map<string, string[]>) => {
+    const seen = new Set<string>();
+    const pending = [start];
+    while (pending.length > 0) {
+      const id = pending.pop()!;
+      if (seen.has(id)) continue;
+      seen.add(id);
+      pending.push(...(adjacency.get(id) ?? []));
+    }
+    return seen;
+  };
+  const fromTarget = visit(target, forward);
+  const toGate = visit(gate, reverse);
+  return def.nodes
+    .filter((node) => fromTarget.has(node.id) && toGate.has(node.id))
+    .map((n) => n.id);
+}
+
 /**
  * Structural validation beyond what the schemas check. Returns an empty array when the loop is
  * publishable. Error-severity issues block publishing; warnings do not.
@@ -225,6 +252,15 @@ export function validateLoop(def: LoopDefinition): ValidationIssue[] {
         edgeId: edge.id,
         path: `config.${routePath}.repeat`,
         message: 'a repeat route must lead back to its decision gate',
+      });
+    } else if (edge && (decision.config.maxPasses ?? 0) > def.settings.maxNodeVisits) {
+      const cycle = repeatCycleNodes(def, decision.id, edge.to.node);
+      issues.push({
+        code: 'GATE_PASSES_ABOVE_VISIT_CAP',
+        severity: 'warning',
+        nodeId: decision.id,
+        path: 'config.maxPasses',
+        message: `gate "${decision.id}" has maxPasses ${decision.config.maxPasses}, above settings.maxNodeVisits ${def.settings.maxNodeVisits}. Repeat-cycle nodes: ${cycle.map((id) => `"${id}"`).join(', ')}. Continued repetition will fail with MAX_NODE_VISITS before the maximum-pass Limit reached output. Lower maximum passes or raise the visit cap.`,
       });
     }
   }
