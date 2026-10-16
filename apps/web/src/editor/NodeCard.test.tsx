@@ -49,6 +49,7 @@ it('refreshes committed handle ids and order once, including same-height changes
     </StrictMode>
   );
   const view = render(card());
+  expect(screen.getByTestId('node-pick')).toHaveStyle({ width: '184px' });
   expect(update).not.toHaveBeenCalled();
   for (const ports of [
     ['yes', 'no', 'third'],

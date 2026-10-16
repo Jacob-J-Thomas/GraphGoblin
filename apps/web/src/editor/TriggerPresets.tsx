@@ -288,8 +288,9 @@ export function TriggerPresets({
               {activePreview.replacement.removedNodes.length ? (
                 <div className="grid gap-2">
                   <p role="alert">
-                    Replace the existing check/restore/exit fragment, including all owner edits
-                    shown below.
+                    {activePreview.replacement.addedNodes.length
+                      ? 'Replace the existing check/restore/exit fragment, including all owner edits shown below.'
+                      : 'Remove the existing check/restore/exit fragment, including all owner edits shown below, and reconnect its former successor directly to the trigger.'}
                   </p>
                   <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words text-xs">
                     {JSON.stringify(

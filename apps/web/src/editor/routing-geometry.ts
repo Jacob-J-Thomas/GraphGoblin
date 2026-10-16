@@ -1,3 +1,6 @@
+/** Shared card width, unmeasured footprint and canvas clearance. Rendered height stays content-driven. */
+export const NODE_CARD_SIZE = { width: 184, height: 120, clearance: 22 } as const;
+
 export interface Point {
   x: number;
   y: number;
