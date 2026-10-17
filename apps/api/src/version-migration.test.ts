@@ -1,4 +1,3 @@
-import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -93,21 +92,9 @@ async function seedVersion(status: 'draft' | 'published', definition = inference
     code: 'DATA_UPGRADE_REQUIRED',
   });
   const inventory = await inspectDatabaseUpgrade(t.container.handle.client);
+  // The API alone cannot cut over: apply needs the offline tool's held lock and verified backup.
   await expect(
-    applyDatabaseUpgrade(t.container.handle.client, {
-      format: 'graphgoblin-upgrade-manifest',
-      targetVersion: CURRENT_DEFINITION_FORMAT,
-      sourceHash: inventory.sourceHash,
-      approvedBy: 'test-owner',
-      approvedAt: FIXTURE_TS,
-      versions: Object.fromEntries(
-        inventory.versions.map((version) => [
-          version.id,
-          { definitionHash: version.definitionHash, resolutions: {} },
-        ]),
-      ),
-      failedRuns: {},
-    }),
+    applyDatabaseUpgrade(t.container.handle.client, { planHash: inventory.planHash }),
   ).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
   expect((await inspectDatabaseUpgrade(t.container.handle.client)).sourceHash).toBe(
     inventory.sourceHash,
