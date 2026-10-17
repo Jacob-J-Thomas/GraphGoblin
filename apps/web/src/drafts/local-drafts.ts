@@ -23,6 +23,25 @@ export interface LocalDraft {
   migrationIssues?: { code: string; path: string; message: string; id?: string; hash?: string }[];
 }
 
+/** Latest work in this window. Presence in memory does not imply a durable write succeeded. */
+export interface CachedDraft {
+  draft: LocalDraft;
+  durable: boolean;
+}
+const latest = new Map<string, CachedDraft>();
+const writes = new Map<string, Promise<void>>();
+
+export function rememberLocalDraft(draft: LocalDraft): CachedDraft {
+  const entry = { draft, durable: false };
+  latest.set(draft.loopId, entry);
+  return entry;
+}
+
+export function cachedLocalDraft(loopId: string): CachedDraft | undefined {
+  const cached = latest.get(loopId);
+  return cached?.draft.definition.schemaVersion === CURRENT_DEFINITION_FORMAT ? cached : undefined;
+}
+
 /**
  * Why device storage refused its last operation. `blocked`: another GraphGoblin window still holds
  * an older version's connection, so the store upgrade cannot run (it clears by itself when that
@@ -152,7 +171,18 @@ async function run<T>(operation: (store: UseStore) => Promise<T>): Promise<T> {
 }
 
 export async function saveLocalDraft(draft: LocalDraft): Promise<void> {
-  await saveDraft(draft.loopId, draft);
+  const entry = rememberLocalDraft(draft);
+  // Even a slow or refused write leaves the newest copy available for warm navigation.
+  const writing = (writes.get(draft.loopId) ?? Promise.resolve())
+    .catch(() => undefined)
+    .then(() => saveDraft(draft.loopId, draft));
+  writes.set(draft.loopId, writing);
+  try {
+    await writing;
+    entry.durable = true;
+  } finally {
+    if (writes.get(draft.loopId) === writing) writes.delete(draft.loopId);
+  }
 }
 
 /** Also protects copies first discovered after a blocked database upgrade finishes. */
@@ -202,7 +232,15 @@ async function saveDraft(key: string, draft: LocalDraft): Promise<void> {
 }
 
 export async function loadLocalDraft(loopId: string): Promise<LocalDraft | undefined> {
-  return loadDraft(loopId);
+  const before = latest.get(loopId);
+  const draft = await loadDraft(loopId);
+  if (
+    !before &&
+    !latest.has(loopId) &&
+    draft?.definition?.schemaVersion === CURRENT_DEFINITION_FORMAT
+  )
+    latest.set(loopId, { draft, durable: true });
+  return draft;
 }
 
 /** A blocked store reads as no copy, so the editor opens on the server's; the state says why. */
@@ -222,6 +260,30 @@ async function loadDraft(key: string): Promise<LocalDraft | undefined> {
  * is now based on `token`: its next save must not conflict with the write it descends from.
  */
 export async function recordServerSave(
+  loopId: string,
+  definition: LoopDefinitionInput,
+  token: string,
+): Promise<void> {
+  const cached = latest.get(loopId);
+  const draft: LocalDraft =
+    cached && JSON.stringify(cached.draft.definition) !== JSON.stringify(definition)
+      ? { ...cached.draft, baseToken: token }
+      : { loopId, definition, savedAt: new Date().toISOString(), synced: true, baseToken: token };
+  const entry = { draft, durable: false };
+  latest.set(loopId, entry);
+  const writing = (writes.get(loopId) ?? Promise.resolve())
+    .catch(() => undefined)
+    .then(() => persistServerSave(loopId, definition, token));
+  writes.set(loopId, writing);
+  try {
+    await writing;
+    entry.durable = true;
+  } finally {
+    if (writes.get(loopId) === writing) writes.delete(loopId);
+  }
+}
+
+async function persistServerSave(
   loopId: string,
   definition: LoopDefinitionInput,
   token: string,
@@ -254,6 +316,7 @@ export async function clearLocalDraft(loopId: string): Promise<void> {
     await del(setAsideKey(loopId), store);
     await del(archiveKey(loopId), store);
   });
+  latest.delete(loopId);
 }
 
 /** Compare content and metadata, excluding the raw notice's generated migration issues. */
@@ -293,6 +356,8 @@ async function clearDraft(key: string, expected?: LocalDraft): Promise<void> {
 /** Remove only the verified live mirror; a concurrent edit is never cleared. */
 export async function clearActiveLocalDraft(loopId: string, expected?: LocalDraft): Promise<void> {
   await clearDraft(loopId, expected);
+  const cached = latest.get(loopId);
+  if (!expected || (cached && sameCopy(cached.draft, expected))) latest.delete(loopId);
 }
 
 /**

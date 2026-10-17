@@ -33,10 +33,25 @@ export function useResolveConflict(loopId: string, flush: () => Promise<boolean>
    * load of A).
    */
   const askedBy = () => {
-    const { loopId: current, generation } = useEditorStore.getState();
+    const {
+      loopId: current,
+      generation,
+      revision,
+      fieldErrors,
+      historyEpoch,
+      nodeDialogSession,
+    } = useEditorStore.getState();
     return () => {
       const now = useEditorStore.getState();
-      return current === loopId && now.loopId === loopId && now.generation === generation;
+      return (
+        current === loopId &&
+        now.loopId === loopId &&
+        now.generation === generation &&
+        now.revision === revision &&
+        now.fieldErrors === fieldErrors &&
+        now.historyEpoch === historyEpoch &&
+        now.nodeDialogSession === nodeDialogSession
+      );
     };
   };
   const reload = () =>

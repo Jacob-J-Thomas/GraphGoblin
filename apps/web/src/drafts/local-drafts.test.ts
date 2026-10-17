@@ -306,3 +306,64 @@ describe('local drafts in IndexedDB', () => {
     expect(await drafts.loadSetAsideDraft('L1')).toBeUndefined();
   });
 });
+
+describe('per-loop memory copies and durable status', () => {
+  it('makes each latest write available synchronously without claiming durability early', async () => {
+    const a = { loopId: 'cache-a', definition: minimalLoop(), savedAt: 'a', synced: false };
+    const b = { ...a, loopId: 'cache-b', savedAt: 'b' };
+    const first = drafts.saveLocalDraft(a);
+    expect(drafts.cachedLocalDraft(a.loopId)).toEqual({ draft: a, durable: false });
+    const second = drafts.saveLocalDraft(b);
+    const newer = { ...a, definition: { ...a.definition, description: 'newest' }, savedAt: 'new' };
+    const third = drafts.saveLocalDraft(newer);
+    expect(drafts.cachedLocalDraft(a.loopId)).toEqual({ draft: newer, durable: false });
+    await Promise.all([first, second, third]);
+    expect(drafts.cachedLocalDraft(a.loopId)).toEqual({ draft: newer, durable: true });
+    expect(drafts.cachedLocalDraft(b.loopId)).toEqual({ draft: b, durable: true });
+    expect(await drafts.loadLocalDraft(a.loopId)).toEqual(newer);
+    await drafts.clearLocalDraft(a.loopId);
+    expect(drafts.cachedLocalDraft(a.loopId)).toBeUndefined();
+    expect(drafts.cachedLocalDraft(b.loopId)?.draft).toEqual(b);
+  });
+
+  it('keeps memory-only work separate from an older durable copy and clears only the expected copy', async () => {
+    const old = { loopId: 'memory-only', definition: minimalLoop(), savedAt: 'old', synced: false };
+    await drafts.saveLocalDraft(old);
+    const newer = {
+      ...old,
+      savedAt: 'new',
+      definition: { ...old.definition, description: 'memory only' },
+    };
+    drafts.rememberLocalDraft(newer);
+    expect(await drafts.loadLocalDraft(old.loopId)).toEqual(old);
+    expect(drafts.cachedLocalDraft(old.loopId)).toEqual({ draft: newer, durable: false });
+    await drafts.clearActiveLocalDraft(old.loopId, old);
+    expect(drafts.cachedLocalDraft(old.loopId)?.draft).toEqual(newer);
+    await drafts.clearActiveLocalDraft(old.loopId);
+    expect(drafts.cachedLocalDraft(old.loopId)).toBeUndefined();
+  });
+
+  it('advances the newest cached edit to the accepted token while keeping it unsynced', async () => {
+    const copy = {
+      loopId: 'record-cache',
+      definition: minimalLoop(),
+      savedAt: 'old',
+      synced: false,
+    };
+    await drafts.saveLocalDraft(copy);
+    const edited = { ...copy, definition: { ...copy.definition, description: 'new edit' } };
+    await drafts.saveLocalDraft(edited);
+    const recording = drafts.recordServerSave(copy.loopId, copy.definition, 'next-token');
+    expect(drafts.cachedLocalDraft(copy.loopId)).toMatchObject({
+      durable: false,
+      draft: { synced: false, baseToken: 'next-token', definition: { description: 'new edit' } },
+    });
+    await recording;
+    expect(drafts.cachedLocalDraft(copy.loopId)?.durable).toBe(true);
+    expect(await drafts.loadLocalDraft(copy.loopId)).toMatchObject({
+      synced: false,
+      baseToken: 'next-token',
+      definition: { description: 'new edit' },
+    });
+  });
+});

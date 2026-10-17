@@ -237,7 +237,7 @@ The adversarial QA report is `docs/qa/2026-10-03-wp-d2.md`. Behaviour that chang
 
 - **API key entry.** With `GG_REQUIRE_API_KEY=true` the shell under `/app/` is public; the first 401 shows an "API key required" panel, the key is kept in `localStorage` and sent on every request and event stream, a refused key asks again, and Settings has "Forget key". Entering a key refetches every screen and restarts event streams, so a deep link opened before the key goes live without a reload; forgetting the key (in any tab, followed through the `storage` event) drops loaded data and restarts streams without it. Changing the stored key, including a `storage` event from another tab, resets the API-key list and refreshes its **This browser** marker, cancelling the query that used the previous credentials; a late 401 from a previous key is ignored. The list reload can close an open Revoke dialog when a key changes from another tab; this is accepted behaviour. A stored key is still sent in trusted mode, revoking it shows the API key panel, and **Forget key** in Settings recovers access without it. Tokens never enter query keys; `current` describes the credentials used for that response.
 - **Validation agrees with the API.** The editor lists the local `domain` issues (now including Liquid and JSONata syntax), the issues only the API can find (cron syntax, subloop references) from `POST /loops/{id}/validate` after each save, and `FIELD_INPUT_INVALID` for held input: unparsed JSON, an incomplete schedule, or valid section JSON awaiting Apply. Invalid input keeps its existing message; valid pending JSON says it is JSON not applied yet. Publish asks the user to complete/discard invalid input or apply/cancel pending JSON first. The held text and its issue stay in the editor state when the field is left (coming back shows the text again) until the text parses (and section JSON is applied), the user discards it (in the field or from its issue's row: since #15 in the node's badge popover, or beside Publish for loop settings and variables), its row is removed, or an undo takes back the typing that produced it (redo brings it back; see "Undo and redo"). Renames and removals update these stored paths through the form's parse-error channel. Removing an optional object or switching a union variant also clears errors for the fields it removes. Shared domain validation rejects supplied blank JSONata expressions, including whitespace-only input from imports or API clients; the form omits optional blank expressions instead. Empty and whitespace-only Liquid templates remain valid. Contracts parsing is unchanged. Publishing an unchanged loop says there is nothing to publish; the outcome message clears on the next edit.
-- **Drafts.** IndexedDB store upgrades preserve live, set-aside and archived copies; they never delete the drafts store. New in-progress drafts remain on the device across reloads even with schema errors. If an older tab or PWA window blocks the store upgrade, draft loading falls back to the server copy after three seconds, and device storage reports itself blocked (see "Device storage and the save states" below). Every edit is mirrored to IndexedDB at once and flushed to the server when the editor unmounts, so leaving inside the debounce window loses nothing. An unsynced local draft older than the server's last save is set aside, under its own IndexedDB key that later edits do not touch, and offered (use or discard) on every load until the user chooses. Draft saves for a loop are serialized, including the one sent when leaving the editor, and a save updates the editor only while the same loop and editor generation are loaded, so an older save never lands after a newer one. Two tabs no longer overwrite each other: see "Draft conflicts" below.
+- **Drafts.** IndexedDB store upgrades preserve live, set-aside and archived copies; they never delete the drafts store. New in-progress drafts remain on the device across reloads even with schema errors. If an older tab or PWA window blocks the store upgrade, the server copy can open while the three-second storage grace runs, and device storage reports itself blocked (see "Device storage and the save states" below). After device inspection, every edit is mirrored to IndexedDB at once and, after safe reconciliation, flushed to the server when the editor unmounts, so leaving inside the debounce window loses nothing. An unsynced local draft older than the server's last save is set aside, under its own IndexedDB key that later edits do not touch, and offered (use or discard) on every load until the user chooses. Draft saves for a loop are serialized, including the one sent when leaving the editor, and a save updates the editor only while the same loop and editor generation are loaded, so an older save never lands after a newer one. Two tabs no longer overwrite each other: see "Draft conflicts" below.
 - **Editor.** Palette additions pan into view. List fields with a default show the default and a Customize button instead of item fields bound to nothing. Settings' "(server default)" deletes the setting.
 - **Run inspector.** Replay starts from `run.queued`'s `initialThread`, so subloop child runs reconstruct correctly; a log that does not replay shows an explanation; an error boundary per screen keeps the shell alive. Events are appended, rendered, and reported in 100 ms batches and session storage never throws on quota: a 1,211-event run opens in about 0.5 s with a handful of run fetches (it took 7 s and one fetch per event before).
 - **Events screen** shows each event's source (API, webhook delivery, or the run whose exit emitted it) and links to the runs it started. Webhook receipts distinguish historical filtered rows and current deduplicated, pending, admitted and failed delivery states, with retry attempts and safe failure codes. While the mounted page contains pending receipts, it refreshes every two seconds so recovery results and new run links appear automatically; interval refresh stops after all displayed receipts are terminal or the page unmounts. Normal focus and reconnect refresh remain enabled. Each delivery can disclose its pinned safe webhook configuration; complete endpoint history remains available through `GET /loops/{id}/triggers`.
@@ -247,13 +247,50 @@ The adversarial QA report is `docs/qa/2026-10-03-wp-d2.md`. Behaviour that chang
 
 - The editor keeps the server `draftToken` its copy is based on (from `GET /loops/{id}` at load, then from each save's response) and sends it as `If-Match` on every draft save, including the save sent when leaving the editor. The IndexedDB mirror stores it with the device copy (`baseToken`), so a copy restored after a reload is saved against the token it was based on; copies written before tokens existed use the server's current token.
 - Every accepted save advances the loop's token, even when the editor that sent it has closed, so the save sent on leaving the editor (queued behind it) is based on it. The device copy is updated in one IndexedDB transaction: a copy of exactly the saved definition becomes synced, and a newer unsynced copy keeps its definition but takes the new token as its base.
-- Reload and overwrite act only on the editor that asked: each step after an await re-checks the loop id and editor generation, so a slow answer never lands in another loop's editor.
+- Reload and overwrite act only on the editor that asked: each step after an await re-checks the loop id, editor generation and revision, so a slow answer never lands in another loop's editor.
 - A 409 `DRAFT_CONFLICT` stops autosave and shows "The draft changed on the server" with two buttons: **Reload server draft** (load the server draft and mark it synced on the device, dropping this editor's unsaved changes) and **Overwrite with this copy** (save again with the server's token from the conflict). Nothing is overwritten without one of these clicks. Edits made meanwhile stay on the device, the save state reads "Draft changed elsewhere", leaving the editor sends nothing, and Publish refuses until the conflict is resolved.
 - Choosing "Use this device's copy instead" for a set-aside copy is an explicit overwrite of the server draft shown.
 - The conflict notice says where the unsaved changes are, as the device copy stands: "kept on this device", "kept in this window only" while device storage refuses them, or "kept in this editor" while the device write runs. Reload works while device storage is unavailable: the server holds the draft, and a copy left unsynced on the device is based on an older token, so its next save asks again.
 - Regression: `src/editor/EditorPage.conflict.test.tsx` and the two-tab E2E `e2e/drafts.spec.ts`.
 
 ## Device storage and the save states (Decided, phase review F2)
+
+### Device-first editor loading (#171)
+
+The loop request and the active, set-aside and archive IndexedDB reads start together.
+Eligible current-format device work renders before a slow server answers. Warm navigation
+uses the latest per-loop in-memory copy, including edits whose durable write is still pending
+or failed; it never borrows another loop's copy. Memory presence and successful durable
+persistence are separate facts. Active writes are ordered per loop; an older completion
+cannot mark a newer copy durable. Format-3 copies still use the lazy converter and verified
+original archival described below; archives are never converted or activated.
+
+Loading has two independent milestones: **editor available** means a device or server
+copy can be edited; **server reconciled** means this opening's fresh server request and
+device reads have settled safely. A cached query alone cannot authorize saves. While
+checking, edits enter the per-loop memory copy immediately; durable mirrors wait for the
+initial device inspection, and all server saves (debounce, flush, leaving, reconnect and
+recovery) wait for reconciliation. Offline work remains editable and reconciles when the
+server returns. A failed storage read reports the storage problem and permits a usable
+server editor; preservation or conversion failures keep their stronger pause.
+
+A late response may replace only an untouched displayed copy. Edits, held field input,
+undo/redo or opening a node dialog prevent replacement. If the server is newer, the original
+unsynced copy is retained separately; any earlier set-aside copy is archived and verified
+before that slot is reused. An untouched editor then shows the server with **Use this
+device's copy instead**. An editor changed during loading keeps its work and, when its base
+is stale, asks **Reload server draft** or **Overwrite with this copy**. Old base tokens
+remain old until explicit resolution or a successful save advances them. A different durable copy found behind a warm cache is retained with **Another device copy is available**, without replacing the editor. A failed restore
+or discard retains the backup and reports a retryable notice.
+
+The timed regression in `editor/useLoadEditor.test.tsx` distinguishes this set-aside
+notice from a save's 409: the original reproduction had server response at 199 ms,
+query cache at 205 ms, device read at 212?214 ms and first render at 219 ms, with no PUT
+or 409. After the change, a cold copy rendered at 40 ms before the server answered at 254 ms; a warm copy rendered at 3 ms before its server answered at 168 ms. These are controlled test timings, not a production latency guarantee. The test requires device rendering and the device read to precede the held
+server response. It also exercises cold and warm openings. Browser regressions in
+`e2e/device-first.spec.ts` cover a slow server, two-loop warm navigation, edits before a
+late response, offline reload/recovery and explicit conflict overwrite; two-tab 409 and
+conversion cases remain in `e2e/drafts.spec.ts`.
 
 ### Device format conversion
 
@@ -270,8 +307,8 @@ unsynced work stays unsynced. If the server timestamp is newer, the converted wo
 is set aside using the existing restore/discard notice.
 
 The old `baseToken` is invalidated with `unreconciled-device-format`, including on
-an offline synced cache in case it is edited later. A first save of converted edits
-enters `DRAFT_CONFLICT`; its notice explains the format conversion and requires
+an offline synced cache in case it is edited later. Reconciliation of converted edits, or a subsequent save,
+requires an explicit conflict decision; its notice explains the format conversion and requires
 **Reload server draft** or explicit **Overwrite with this copy** with a fresh token.
 Opening a synced mirror does not make it dirty and does not trigger this conflict.
 

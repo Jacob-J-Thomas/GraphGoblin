@@ -597,6 +597,9 @@ describe('EditorPage', () => {
     // Locally valid, but the server's checks (cron, subloops) have not answered yet.
     expect(await screen.findByText('Checking…')).toBeInTheDocument();
     expect(screen.queryByText('Ready to publish')).toBeNull();
+    // The checking indicator also covers device/server reconciliation; release only the
+    // validation request this test is holding, once it has actually started.
+    await waitFor(() => expect(api.callsTo('POST', `/loops/${loop.id}/validate`)).toHaveLength(1));
     act(() => release());
     expect(await screen.findByText('Ready to publish')).toBeInTheDocument();
     // The next check fails (offline): not ready, not an error either.

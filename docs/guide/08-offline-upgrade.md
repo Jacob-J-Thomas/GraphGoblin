@@ -112,9 +112,9 @@ Restoring the pre-upgrade backup discards every edit and run created after that 
 
 Opening the editor archives and reads back the exact original before replacing an
 active or set-aside key with its converted definition. A synced mirror remains a
-clean cache and the server copy wins; opening it causes no conflict. Unsynced work
+clean cache, available before the server answers. An untouched cache reconciles to the server without a conflict; edits made while waiting are retained and checked against their original token. Unsynced work
 stays unsynced. Older unsynced work is set aside when the server is newer, and
-restoring it is an explicit overwrite choice.
+restoring it is an explicit overwrite choice. While offline or checking the server, the editor remains available but automatic server saves wait for reconciliation.
 
 Old server tokens are invalidated. Saving converted edits requires **Reload server
 draft** or **Overwrite with this copy** using a fresh token; the conflict notice

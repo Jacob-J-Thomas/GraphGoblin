@@ -107,6 +107,7 @@ export interface EditorState {
     definition: LoopDefinitionInput,
     options?: {
       dirty?: boolean;
+      deviceSaved?: boolean;
       baseToken?: string | undefined;
       decisionRoutes?: DecisionRoutes | undefined;
     },
@@ -358,6 +359,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
         decisionRoutes: decisionRouteEdges(definition, options.decisionRoutes ?? {}).decisionRoutes,
         revision: options.dirty ? 1 : 0,
         saveState: options.dirty ? 'pending' : 'saved',
+        deviceRevision: options.deviceSaved ? (options.dirty ? 1 : 0) : undefined,
         baseToken: options.baseToken,
         generation: (generations += 1),
       }),

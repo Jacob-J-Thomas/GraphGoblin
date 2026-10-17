@@ -6,6 +6,7 @@ import { keys } from '../api/queries.js';
 import {
   deviceStorageProblem,
   recordServerSave,
+  rememberLocalDraft,
   saveLocalDraft,
   subscribeDeviceStorage,
   UNRECONCILED_DEVICE_TOKEN,
@@ -22,18 +23,23 @@ export const AUTOSAVE_DELAY_MS = 600;
  * there once the write succeeds. A refused write leaves the edits in memory; the device storage's
  * state (`deviceStorageProblem`) says why, and the editor reports it.
  */
-function mirror(): void {
+function mirror(persist = true): void {
   const { loopId, definition, decisionRoutes, revision, generation, baseToken } =
     useEditorStore.getState();
   if (!loopId || !definition) return;
-  void saveLocalDraft({
+  const draft = {
     loopId,
     definition,
     decisionRoutes,
     savedAt: new Date().toISOString(),
     synced: false,
     ...(baseToken ? { baseToken } : {}),
-  }).then(
+  };
+  if (!persist) {
+    rememberLocalDraft(draft);
+    return;
+  }
+  void saveLocalDraft(draft).then(
     () => {
       const now = useEditorStore.getState();
       if (now.loopId === loopId && now.generation === generation) now.setDeviceRevision(revision);
@@ -103,7 +109,15 @@ export const CONVERSION_CONFLICT_MESSAGE =
 export function useAutosave(
   client: GraphGoblinClient,
   delayMs = AUTOSAVE_DELAY_MS,
-  enabled = true,
+  {
+    enabled = true,
+    deviceReady = true,
+    serverReconciled = true,
+  }: {
+    enabled?: boolean;
+    deviceReady?: boolean;
+    serverReconciled?: boolean;
+  } = {},
 ): () => Promise<boolean> {
   const queryClient = useQueryClient();
   const recoveryRead = useRef<{ generation: number; revision: number } | undefined>(undefined);
@@ -121,8 +135,10 @@ export function useAutosave(
   const inConflict = useEditorStore((s) => s.conflict !== undefined);
   const latest = useRef({ inConflict });
   latest.current = { inConflict };
-  const enabledRef = useRef(enabled);
-  enabledRef.current = enabled;
+  const enabledRef = useRef(enabled && serverReconciled);
+  enabledRef.current = enabled && serverReconciled;
+  const deviceReadyRef = useRef(enabled && deviceReady);
+  deviceReadyRef.current = enabled && deviceReady;
   useEffect(() => {
     const { loopId } = useEditorStore.getState();
     if (loopId && baseToken) latestTokens.set(loopId, baseToken);
@@ -219,17 +235,17 @@ export function useAutosave(
     // Mirror the edit to this device at once: navigating away or closing the tab inside the
     // debounce window must not lose it. The server save stays debounced.
     pending.current = { loopId, definition, revision, generation: loadGeneration };
-    mirror();
+    if (useEditorStore.getState().deviceRevision !== revision) mirror(deviceReady);
     clearTimeout(timer.current);
-    timer.current = setTimeout(() => void save(), delayMs);
-  }, [revision, loadGeneration, save, delayMs, enabled]);
+    timer.current = serverReconciled ? setTimeout(() => void save(), delayMs) : undefined;
+  }, [revision, loadGeneration, save, delayMs, enabled, deviceReady, serverReconciled]);
 
   // Device storage that refused the mirror (blocked by another window) works again: put the edits
   // that are only in this window on the device now, rather than on the next edit.
   useEffect(() => {
     if (!enabled) return;
     return subscribeDeviceStorage(() => {
-      if (!enabledRef.current) return;
+      if (!deviceReadyRef.current) return;
       if (deviceStorageProblem()) return;
       const { loopId, revision: rev, savedRevision, deviceRevision } = useEditorStore.getState();
       if (loopId && rev !== savedRevision && deviceRevision !== rev) mirror();
@@ -240,7 +256,10 @@ export function useAutosave(
     () => () => {
       // Leaving the editor with an unsaved edit: send it now, behind any save in flight, best
       // effort. The local copy above already holds it and wins on the next load if this fails.
-      if (!enabledRef.current) return;
+      if (!enabledRef.current) {
+        clearTimeout(timer.current);
+        return;
+      }
       const last = pending.current;
       if (!last || timer.current === undefined) return;
       clearTimeout(timer.current);

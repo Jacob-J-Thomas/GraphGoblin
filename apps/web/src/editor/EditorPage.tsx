@@ -68,8 +68,12 @@ export function EditorPage() {
     query,
     restoredGeneration,
     ready,
+    deviceRead,
+    serverReconciled,
     setAside,
+    setAsideIsLate,
     rawCopies,
+    recoveryError,
     preservationBlocked,
     conversionLoadFailed,
     retryConversion,
@@ -93,7 +97,11 @@ export function EditorPage() {
     PALETTE_STORAGE_KEY,
     palettePanelDefault,
   );
-  const flush = useAutosave(client, AUTOSAVE_DELAY_MS, ready && !preservationBlocked);
+  const flush = useAutosave(client, AUTOSAVE_DELAY_MS, {
+    enabled: ready && !preservationBlocked && !conversionLoadFailed,
+    deviceReady: deviceRead,
+    serverReconciled,
+  });
   useUndoShortcuts();
   const conflict = useEditorStore((s) => s.conflict);
   const resolve = useResolveConflict(loopId, flush);
@@ -131,7 +139,13 @@ export function EditorPage() {
   // arrives after the first check is a change of state (unknown to known) and runs them once more.
   const serverCheck = useQuery({
     queryKey: keys.validation(loopId, draftKey, catalogState),
-    enabled: Boolean(definition) && saved && local.schemaValid && !classifiers.isPending,
+    enabled:
+      serverReconciled &&
+      !conflict &&
+      Boolean(definition) &&
+      saved &&
+      local.schemaValid &&
+      !classifiers.isPending,
     // Unknown catalogs cannot certify freshness, even if this request found no issues. Keep its
     // badges available, but check again on reopening or recovery instead of trusting that answer.
     staleTime: catalogsResolved ? Infinity : 0,
@@ -299,6 +313,7 @@ export function EditorPage() {
           Editing and autosave are paused because the original device copy could not be safely
           archived. Export it or discard the blocked copy, then reload the editor.
         </Alert>
+        {recoveryError ? <Alert tone="warn">{recoveryError}</Alert> : null}
         {rawCopyWarnings}
       </main>
     );
@@ -306,6 +321,7 @@ export function EditorPage() {
   if (!definition) {
     return (
       <main className="grid gap-3 p-page">
+        {recoveryError ? <Alert tone="warn">{recoveryError}</Alert> : null}
         {rawCopyWarnings.length > 0 ? (
           rawCopyWarnings
         ) : (
@@ -343,6 +359,16 @@ export function EditorPage() {
 
   const notices = [
     ...rawCopyWarnings,
+    !serverReconciled && !query.isError ? (
+      <Alert key="reconciling" tone="info">
+        The editor is available. Checking the server and this device before saving changes.
+      </Alert>
+    ) : null,
+    recoveryError ? (
+      <Alert key="recovery-error" tone="warn">
+        {recoveryError}
+      </Alert>
+    ) : null,
     showRestoredNotice ? (
       <Alert
         key="restored"
@@ -356,14 +382,19 @@ export function EditorPage() {
       </Alert>
     ) : null,
     setAside ? (
-      <Alert key="set-aside" tone="warn" title="The server has a newer draft">
-        This device has unsaved changes from {formatDateTime(setAside.savedAt)}, older than the
-        draft saved on the server since, which is shown.{' '}
+      <Alert
+        key="set-aside"
+        tone="warn"
+        title={setAsideIsLate ? 'Another device copy is available' : 'The server has a newer draft'}
+      >
+        {setAsideIsLate
+          ? `A different copy from ${formatDateTime(setAside.savedAt)} was found on this device after editing opened. Your current work is kept; choose whether to use that saved copy instead.`
+          : `This device has unsaved changes from ${formatDateTime(setAside.savedAt)}, older than the draft saved on the server since, which is shown.`}{' '}
         <span className="mt-2 flex flex-wrap gap-2">
           <Button size="sm" variant="outline" onClick={() => void restoreSetAside()}>
             Use this device&apos;s copy instead
           </Button>
-          <Button size="sm" variant="ghost" onClick={discardSetAside}>
+          <Button size="sm" variant="ghost" onClick={() => void discardSetAside()}>
             Discard it
           </Button>
         </span>
