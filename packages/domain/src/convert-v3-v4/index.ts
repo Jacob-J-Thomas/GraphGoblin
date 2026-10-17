@@ -424,6 +424,9 @@ async function convertDefinition(
       proposal === null
         ? 'Supply an authored current exit graph. Preserve ordered criteria and return semantics; do not approximate JSON Schema or historical iteration counters.'
         : 'Review terminal outcomes, captures, return mapping, ordered-criterion timing and independent gate budgets. Gate limits run after evaluation and only on repeat; no history/replay entry is approved by this definition rule.',
+      true,
+      true,
+      requiredCode !== undefined,
     );
     const replacement = resolutions[id];
     if (

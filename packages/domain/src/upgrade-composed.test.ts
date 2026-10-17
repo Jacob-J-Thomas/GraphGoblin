@@ -206,6 +206,119 @@ describe('composed format-4 definition and export conversion', () => {
     expect(result).not.toHaveProperty('value');
   });
 
+  it('identifies the exact earlier-stage maps for node-ID and pointer resolutions', async () => {
+    const base = minimalLoopV3();
+    const old = (strategy: string[], jsonata: string) => ({
+      ...base,
+      schemaVersion: 1,
+      settings: { defaults: { model: 'gpt-6-luna', effort: 'low' } },
+      nodes: [
+        base.nodes[0],
+        {
+          id: 'choose',
+          kind: 'decision',
+          label: 'Choose',
+          config: {
+            strategy,
+            question: 'Choose?',
+            expression: { jsonata },
+            routes: [
+              { label: 'yes', description: 'Approve' },
+              { label: 'no', description: 'Reject' },
+            ],
+          },
+        },
+        { ...base.nodes[1], config: { return: { mapping: 'lastOutput.value.route' } } },
+        {
+          id: 'script',
+          kind: 'script',
+          label: 'Script',
+          config: { command: 'echo ok', stdin: 'thread' },
+        },
+      ],
+      edges: [],
+    });
+    for (const [strategy, jsonata, code, locations] of [
+      [
+        ['codex', 'expression'],
+        '"yes"',
+        'UPGRADE_DECISION_CHOICE_REQUIRED',
+        [{ stage: 'v1', map: 'decisions', key: 'choose' }],
+      ],
+      [
+        ['expression'],
+        'topic',
+        'UPGRADE_EXPRESSION_CHOICE_REQUIRED',
+        [
+          { stage: 'v1', map: 'decisions', key: 'choose' },
+          { stage: 'v1', map: 'sources', key: '/nodes/1/config/expression/jsonata' },
+        ],
+      ],
+      [
+        ['expression'],
+        'lastOutput.value.route',
+        'UPGRADE_REFERENCE_CHOICE_REQUIRED',
+        [
+          { stage: 'v1', map: 'sources', key: '/nodes/1/config/expression/jsonata' },
+          { stage: 'v1', map: 'decisions', key: 'choose' },
+        ],
+      ],
+    ] as const) {
+      const result = await upgradeLoopCurrent(old([...strategy], jsonata));
+      if (result.ok) throw new Error('Expected earlier-stage review');
+      expect(result.issues).toContainEqual(
+        expect.objectContaining({ code, resolutionLocations: locations }),
+      );
+      expect(result.issues).toContainEqual(
+        expect.objectContaining({
+          code: 'UPGRADE_REFERENCE_CHOICE_REQUIRED',
+          path: '/nodes/2/config/return/mapping',
+          resolutionLocations: [
+            { stage: 'v1', map: 'sources', key: '/nodes/2/config/return/mapping' },
+          ],
+        }),
+      );
+      expect(result.issues).toContainEqual(
+        expect.objectContaining({
+          code: 'UPGRADE_OPAQUE_CONSUMER_REVIEW_REQUIRED',
+          resolutionLocations: [{ stage: 'v1', map: 'opaqueConsumers', key: 'script' }],
+        }),
+      );
+    }
+    const v2 = {
+      ...base,
+      schemaVersion: 2,
+      nodes: [
+        base.nodes[0],
+        {
+          ...base.nodes[1],
+          config: {
+            criteria: [
+              {
+                when: 'predicate',
+                strategy: 'expression',
+                jsonata: 'vars.ready',
+                outcome: 'success',
+              },
+              { when: 'predicate', strategy: 'codex', question: 'Done?', outcome: 'success' },
+            ],
+          },
+        },
+      ],
+    };
+    const result = await upgradeLoopCurrent(v2);
+    if (result.ok) throw new Error('Expected earlier-stage review');
+    expect(result.issues.map((entry) => entry.resolutionLocations)).toEqual([
+      [{ stage: 'v2', map: 'predicates', key: '/nodes/1/config/criteria/0' }],
+      [{ stage: 'v2', map: 'predicates', key: '/nodes/1/config/criteria/1' }],
+    ]);
+    const invalid = await upgradeLoopCurrent({ ...v2, nodes: [] });
+    if (invalid.ok) throw new Error('Expected invalid frozen input');
+    expect(
+      invalid.issues.every((entry) => entry.kind === 'invalid' && !entry.resolutionLocations),
+    ).toBe(true);
+  });
+
   it('binds portable filter reviews to source content and can complete their offline conversion', async () => {
     const source = minimalLoopV3();
     const filtered = {

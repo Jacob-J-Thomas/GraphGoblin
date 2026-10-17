@@ -30,6 +30,12 @@ export interface UpgradeCurrentResolutions {
 }
 export interface CurrentUpgradeIssue extends UpgradeIssue {
   kind: 'pending' | 'invalid';
+  /** Frozen stages use node IDs for decisions/opaque consumers and pointers for sources/predicates. */
+  resolutionLocations?: {
+    stage: 'v1' | 'v2';
+    map: 'decisions' | 'sources' | 'opaqueConsumers' | 'predicates';
+    key: string;
+  }[];
 }
 export type CurrentUpgradeResult<T> = {
   notices: UpgradeIssue[];
@@ -82,10 +88,44 @@ export function validateUpgradeCurrentResolutions(value: unknown): UpgradeIssue[
   return [];
 }
 
+function legacyIssue(entry: UpgradeIssue, input: unknown): CurrentUpgradeIssue {
+  const classified = classify(entry);
+  if (classified.kind !== 'pending') return classified;
+  const locations: NonNullable<CurrentUpgradeIssue['resolutionLocations']> = [];
+  const index = /^\/nodes\/(\d+)\//.exec(entry.path)?.[1];
+  const node: unknown =
+    object(input) && Array.isArray(input.nodes) && index !== undefined
+      ? input.nodes[Number(index)]
+      : undefined;
+  const nodeId = object(node) && typeof node.id === 'string' ? node.id : undefined;
+  switch (entry.code) {
+    case 'UPGRADE_DECISION_CHOICE_REQUIRED':
+    case 'UPGRADE_EXPRESSION_CHOICE_REQUIRED':
+      if (nodeId) locations.push({ stage: 'v1', map: 'decisions', key: nodeId });
+      if (entry.code === 'UPGRADE_EXPRESSION_CHOICE_REQUIRED')
+        locations.push({ stage: 'v1', map: 'sources', key: entry.path });
+      break;
+    case 'UPGRADE_REFERENCE_CHOICE_REQUIRED':
+      locations.push({ stage: 'v1', map: 'sources', key: entry.path });
+      if (nodeId && object(node) && node.kind === 'decision')
+        locations.push({ stage: 'v1', map: 'decisions', key: nodeId });
+      break;
+    case 'UPGRADE_OPAQUE_CONSUMER_REVIEW_REQUIRED':
+      if (nodeId) locations.push({ stage: 'v1', map: 'opaqueConsumers', key: nodeId });
+      break;
+    case 'UPGRADE_EXIT_BOOLEAN_REQUIRED':
+    case 'UPGRADE_EXIT_CRITERIA_REQUIRED':
+      locations.push({ stage: 'v2', map: 'predicates', key: entry.path.replace(/\/jsonata$/, '') });
+      break;
+  }
+  return locations.length ? { ...classified, resolutionLocations: locations } : classified;
+}
+
 /** Explicit one-time conversion. No candidate definition escapes while review is pending. */
 export async function upgradeLoopCurrent(
   input: unknown,
   resolutions: UpgradeCurrentResolutions = {},
+  sourceIdentity?: string,
 ): Promise<CurrentUpgradeResult<LoopDefinition>> {
   const errors = validateUpgradeCurrentResolutions(resolutions);
   if (errors.length)
@@ -119,10 +159,15 @@ export async function upgradeLoopCurrent(
   }
   const frozen = upgradeLoopV3(input, { ...resolutions.v1, ...resolutions.v2 });
   if (!frozen.ok)
-    return { ...frozen, issues: frozen.issues.map(classify), notices: [], reviewItems: [] };
+    return {
+      ...frozen,
+      issues: frozen.issues.map((entry) => legacyIssue(entry, input)),
+      notices: [],
+      reviewItems: [],
+    };
   // Portable inputs have no stored version ID. Bind reviews to their complete parsed content
   // in a separate namespace; never reuse approvals from a server version's manifest.
-  const identity = 'portable:' + (await definitionReviewHash(frozen.value));
+  const identity = sourceIdentity ?? 'portable:' + (await definitionReviewHash(frozen.value));
   const converted = await convertDefinitionV3ToV4(frozen.value, resolutions.v3, identity);
   const notices = [
     ...frozen.notices,

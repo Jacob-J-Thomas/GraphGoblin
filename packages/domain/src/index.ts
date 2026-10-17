@@ -29,7 +29,5 @@ export {
   type UpgradeV3Resolutions,
 } from './upgrade-v2-v3.js';
 export * from './convert-v3-v4/index.js';
-export * from './upgrade-history-current.js';
-export * from './upgrade-history.js';
 
 export * from './poll-items.js';
