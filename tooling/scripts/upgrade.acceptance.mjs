@@ -18,7 +18,13 @@ import {
 } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath, URL } from 'node:url';
-import { argumentsFor, backupStoppedData, verifyStoppedBackup, runUpgrade } from './upgrade.mjs';
+import {
+  argumentsFor,
+  backupStoppedData,
+  verifyStoppedBackup,
+  cleanupWorkspaces,
+  runUpgrade,
+} from './upgrade.mjs';
 import { acquireDataDirLock } from '../../apps/api/dist/data-dir-lock.js';
 import {
   openDatabase,
@@ -116,25 +122,16 @@ async function reviewedPlan(root, data, file, prefix = '') {
   const report = join(root, prefix + 'inspect.json');
   const first = await cli(['inspect', '--data-dir', data, '--db-url', url(file), '--out', report]);
   const plan = JSON.parse(await readFile(report, 'utf8'));
-  const resolutions = Object.fromEntries(
-    plan.definitions
-      .filter((entry) => entry.conversion === 'pending')
-      .map((entry) => [
-        entry.id,
-        {
-          v3: Object.fromEntries(
-            entry.reviewItems
-              .filter((item) => item.status === 'pending')
-              .map((item) => [
-                item.id,
-                { hash: item.hash, action: 'approve', reason: 'Reviewed fixture proposal' },
-              ]),
-          ),
-        },
-      ]),
-  );
   const choices = join(root, prefix + 'resolutions.json');
-  await writeFile(choices, JSON.stringify(resolutions));
+  const bulk = await cli([
+    'resolutions',
+    '--from',
+    report,
+    '--approve-generated',
+    '--out',
+    choices,
+  ]);
+  assert.deepEqual(bulk.unresolved, []);
   const resolved = join(root, prefix + 'resolved-inspect.json');
   const result = await cli([
     'inspect',
@@ -151,6 +148,7 @@ async function reviewedPlan(root, data, file, prefix = '') {
   assert.equal(result.invalid, 0);
   return {
     first,
+    bulk,
     plan,
     result,
     choices,
@@ -190,8 +188,39 @@ test('format-3 export, inspect, verified backup, apply, startup admission, resto
     await mkdir(join(data, 'artifacts', 'transcript'), { recursive: true });
     await writeFile(join(data, 'artifacts', 'transcript', 'fixture'), 'historical transcript');
     await writeFile(join(data, 'master.key'), 'synthetic encryption material');
+    await mkdir(join(data, 'workspaces', 'run-fixture', 'nested'), { recursive: true });
+    await mkdir(join(data, 'workspaces', 'run-fixture', 'empty'));
+    await writeFile(
+      join(data, 'workspaces', 'run-fixture', 'nested', 'work.txt'),
+      'temporary run work',
+    );
+    for (const directory of ['fixed-user-work', 'templated-user-work']) {
+      await mkdir(join(root, directory));
+      await writeFile(join(root, directory, 'owner.txt'), 'keep user directory');
+    }
     const file = join(data, 'database.db');
     await seed(file);
+    const source = openDatabase({ url: url(file) });
+    try {
+      for (const row of (await source.client.execute('SELECT id,definition FROM loop_versions'))
+        .rows) {
+        const definition = JSON.parse(row.definition);
+        if (!['manual', 'event'].includes(definition.name)) continue;
+        definition.settings.workingDirectory =
+          definition.name === 'manual'
+            ? { kind: 'fixed', path: join(root, 'fixed-user-work') }
+            : {
+                kind: 'template',
+                template: join(root, 'templated-user-work').replaceAll('\\', '/'),
+              };
+        await source.client.execute({
+          sql: 'UPDATE loop_versions SET definition=? WHERE id=?',
+          args: [JSON.stringify(definition), row.id],
+        });
+      }
+    } finally {
+      source.close();
+    }
     const before = await readFile(file),
       state = await storedState(file);
     const exported = join(root, 'exported.json');
@@ -206,6 +235,10 @@ test('format-3 export, inspect, verified backup, apply, startup admission, resto
     const reviewed = await reviewedPlan(root, data, file);
     assert.deepEqual(await readFile(file), before);
     assert.equal(reviewed.plan.counts.artifactFiles, 1);
+    assert.equal(reviewed.plan.counts.workspaces, 1);
+    assert.equal(reviewed.plan.counts.workspaceFiles, 1);
+    assert.deepEqual(reviewed.first.pendingByKind, { 'webhook-json-decoding': 4 });
+    assert.equal(reviewed.bulk.approved, 4);
     assert.equal(reviewed.first.pending, 4);
     const backup = join(root, 'backup');
     const result = await cli(['apply', ...reviewed.args, '--backup-dir', backup]);
@@ -216,6 +249,21 @@ test('format-3 export, inspect, verified backup, apply, startup admission, resto
     assert.equal(result.disarmed.length, 5);
     assert.equal(result.readback, 'verified');
     assert.equal(result.backupDir, backup);
+    assert.equal(result.deletedWorkspaces, 1);
+    assert.equal(result.deletedWorkspaceFiles, 1);
+    assert.deepEqual(await readdir(join(data, 'workspaces')), []);
+    assert.equal(
+      await readFile(
+        join(backup, 'data', 'workspaces', 'run-fixture', 'nested', 'work.txt'),
+        'utf8',
+      ),
+      'temporary run work',
+    );
+    for (const directory of ['fixed-user-work', 'templated-user-work'])
+      assert.equal(
+        await readFile(join(root, directory, 'owner.txt'), 'utf8'),
+        'keep user directory',
+      );
     t.diagnostic(
       JSON.stringify({
         export: 'ok',
@@ -225,6 +273,7 @@ test('format-3 export, inspect, verified backup, apply, startup admission, resto
           definitions: result.definitions,
           deletedRuns: result.deletedRuns,
           deletedArtifactFiles: result.deletedArtifactFiles,
+          deletedWorkspaces: result.deletedWorkspaces,
           disarmed: result.disarmed.length,
           backupDir: result.backupDir,
           readback: result.readback,
@@ -295,9 +344,300 @@ test('strict CLI argument surface refuses duplicates, absent and unknown values'
     ['export', '--input', 'a', '--input', 'b', '--out', 'c'],
     ['export', '--input', 'a', '--out', 'b', '--bad', 'c'],
     ['export', '--input', '--out', 'b'],
+    ['resolutions', '--from', 'a', '--out', 'b'],
+    ['resolutions', '--from', 'a', '--approve-generated', 'false', '--out', 'b'],
+    ['resolutions', '--from', 'a', '--approve-generated', '--approve-generated', '--out', 'b'],
   ])
     assert.throws(() => argumentsFor(args));
 });
+const reportItem = (id, kind, proposedValue, hasGeneratedProposal = true) => ({
+  id,
+  kind,
+  path: id.split(':')[0],
+  nodeId: null,
+  oldValue: 'old',
+  proposedValue,
+  hasGeneratedProposal,
+  status: 'pending',
+  hash: 'a'.repeat(64),
+  reason: 'Review fixture behavior',
+});
+const mixedReport = () => ({
+  format: 'graphgoblin-upgrade-inspection',
+  targetVersion: 4,
+  definitions: [
+    {
+      id: 'version-a',
+      loopId: 'loop-a',
+      loopName: 'Loop A',
+      issues: [],
+      reviewItems: [
+        reportItem('/a:output-consumer', 'output-consumer', 'generated source'),
+        reportItem('/b:ignored-loop-back', 'ignored-loop-back', null),
+        reportItem('/c:exit-policy', 'exit-policy', null, false),
+        reportItem(
+          '/d:output-consumer',
+          'output-consumer',
+          'placeholder requiring replacement',
+          false,
+        ),
+        { ...reportItem('/e:automatic', 'automatic', 'automatic'), status: 'automatic' },
+        { ...reportItem('/f:resolved', 'resolved', 'resolved'), status: 'resolved' },
+      ],
+    },
+    {
+      id: 'draft-a',
+      loopId: 'loop-a',
+      loopName: 'Loop A',
+      issues: [],
+      reviewItems: [
+        reportItem('/a:output-consumer', 'output-consumer', 'independent draft proposal'),
+      ],
+    },
+    {
+      id: 'version-b',
+      loopId: 'loop-b',
+      loopName: 'Loop B',
+      reviewItems: [],
+      issues: [
+        {
+          kind: 'pending',
+          code: 'UPGRADE_EXIT_CRITERIA_REQUIRED',
+          path: '/nodes/1',
+          message: 'Author v2 sides',
+        },
+      ],
+    },
+  ],
+});
+test('bulk approval groups pending proposals by kind and loop, approves null removals, and lists authored work', () =>
+  temporary(async (root) => {
+    const report = join(root, 'inspect.json'),
+      out = join(root, 'resolutions.json');
+    await writeFile(report, JSON.stringify(mixedReport()));
+    const result = await cli([
+      'resolutions',
+      '--from',
+      report,
+      '--approve-generated',
+      '--out',
+      out,
+    ]);
+    const selected = JSON.parse(await readFile(out, 'utf8'));
+    assert.equal(result.approved, 3);
+    assert.equal(result.kept, 0);
+    assert.equal(result.unresolved.length, 3);
+    assert.deepEqual(Object.keys(selected['version-a'].v3), [
+      '/a:output-consumer',
+      '/b:ignored-loop-back',
+    ]);
+    assert.deepEqual(selected['version-a'].v3['/b:ignored-loop-back'], {
+      hash: 'a'.repeat(64),
+      action: 'approve',
+      reason: selected['version-a'].v3['/b:ignored-loop-back'].reason,
+    });
+    assert.match(selected['version-a'].v3['/b:ignored-loop-back'].reason, /--approve-generated/);
+    assert.equal(selected['draft-a'].v3['/a:output-consumer'].hash, 'a'.repeat(64));
+    assert.deepEqual(result.byKind['output-consumer'], {
+      pending: 3,
+      approved: 2,
+      kept: 0,
+      unresolved: 1,
+    });
+    assert.deepEqual(
+      result.byLoop.map((loop) => [loop.loopId, loop.loopName, loop.approved, loop.unresolved]),
+      [
+        ['loop-a', 'Loop A', 3, 2],
+        ['loop-b', 'Loop B', 0, 1],
+      ],
+    );
+    assert.equal(result.byLoop[0].byKind['ignored-loop-back'].approved, 1);
+    assert.deepEqual(
+      result.unresolved.map((item) => [item.versionId, item.id]),
+      [
+        ['version-a', '/c:exit-policy'],
+        ['version-a', '/d:output-consumer'],
+        ['version-b', '/nodes/1'],
+      ],
+    );
+    assert.match(result.tradeOff, /best effort/);
+  }));
+
+test('bulk merge preserves authored resolutions and every stage map, and existing output is never overwritten', () =>
+  temporary(async (root) => {
+    const report = join(root, 'inspect.json'),
+      merge = join(root, 'existing.json'),
+      out = join(root, 'merged.json');
+    await writeFile(report, JSON.stringify(mixedReport()));
+    const existing = {
+      'version-a': {
+        v1: { sources: { '/old/source': 'reviewed' } },
+        v2: { predicates: {} },
+        v3: {
+          '/a:output-consumer': {
+            hash: 'b'.repeat(64),
+            action: 'replace',
+            value: 'authored source',
+            reason: 'Owner authored',
+          },
+          '/c:exit-policy': {
+            hash: 'a'.repeat(64),
+            action: 'replace',
+            value: { nodes: [], edges: [] },
+            reason: 'Owner policy',
+          },
+        },
+      },
+      unrelated: { v3: {} },
+    };
+    const bytes = JSON.stringify(existing);
+    await writeFile(merge, bytes);
+    const result = await runUpgrade([
+      'resolutions',
+      '--from',
+      report,
+      '--approve-generated',
+      '--merge',
+      merge,
+      '--out',
+      out,
+    ]);
+    const selected = JSON.parse(await readFile(out, 'utf8'));
+    assert.equal(result.approved, 2);
+    assert.equal(result.kept, 2);
+    assert.equal(result.unresolved.length, 2);
+    assert.deepEqual(selected['version-a'].v1, existing['version-a'].v1);
+    assert.deepEqual(selected['version-a'].v2, existing['version-a'].v2);
+    for (const [id, value] of Object.entries(existing['version-a'].v3))
+      assert.deepEqual(selected['version-a'].v3[id], value);
+    assert.deepEqual(selected.unrelated, existing.unrelated);
+    assert.equal(await readFile(merge, 'utf8'), bytes);
+    const written = await readFile(out, 'utf8');
+    await assert.rejects(
+      runUpgrade([
+        'resolutions',
+        '--from',
+        report,
+        '--approve-generated',
+        '--merge',
+        merge,
+        '--out',
+        out,
+      ]),
+      { code: 'EEXIST' },
+    );
+    assert.equal(await readFile(out, 'utf8'), written);
+  }));
+
+test('bulk approval refuses malformed reports and merge namespaces without creating output', () =>
+  temporary(async (root) => {
+    const report = join(root, 'inspect.json'),
+      out = join(root, 'selected.json'),
+      merge = join(root, 'merge.json');
+    for (const value of [
+      {},
+      {
+        ...mixedReport(),
+        definitions: [...mixedReport().definitions, mixedReport().definitions[0]],
+      },
+      {
+        ...mixedReport(),
+        definitions: [
+          {
+            ...mixedReport().definitions[0],
+            reviewItems: [
+              {
+                ...reportItem('/a:output-consumer', 'output-consumer', null),
+                hasGeneratedProposal: undefined,
+              },
+            ],
+          },
+        ],
+      },
+    ]) {
+      await writeFile(report, JSON.stringify(value));
+      await assert.rejects(
+        runUpgrade(['resolutions', '--from', report, '--approve-generated', '--out', out]),
+        /report|metadata/,
+      );
+      await assert.rejects(access(out), { code: 'ENOENT' });
+    }
+    await writeFile(report, JSON.stringify(mixedReport()));
+    await writeFile(merge, JSON.stringify({ 'version-a': { sources: {} } }));
+    await assert.rejects(
+      runUpgrade([
+        'resolutions',
+        '--from',
+        report,
+        '--approve-generated',
+        '--merge',
+        merge,
+        '--out',
+        out,
+      ]),
+      /namespaced/,
+    );
+  }));
+
+test('generated approvals compose and apply real frozen workflow proposals including ignored continuation removal', (t) =>
+  temporary(async (root) => {
+    const data = join(root, 'data');
+    await mkdir(data);
+    const file = join(data, 'database.db');
+    await seed(file);
+    const workflow = JSON.parse(
+      await readFile(
+        new URL(
+          '../../packages/domain/src/convert-v3-v4/fixtures/implementation.v3.json',
+          import.meta.url,
+        ),
+        'utf8',
+      ).then((text) => text.replace(/^\uFEFF/, '')),
+    ).loop;
+    // Ignored continuation is itself a generated null/removal proposal.
+    const ignored = structuredClone(workflow);
+    const exit = ignored.nodes.find((node) => node.kind === 'exit');
+    exit.config = {
+      ...exit.config,
+      criteria: [],
+      default: 'success',
+      loopBack: {
+        targetNodeId: ignored.nodes.find((node) => node.kind !== 'trigger' && node.kind !== 'exit')
+          .id,
+      },
+    };
+    ignored.edges = ignored.edges.filter((edge) => edge.from.node !== exit.id);
+    const handle = openDatabase({ url: url(file) });
+    try {
+      const row = (
+        await handle.client.execute("SELECT id FROM loop_versions WHERE status='published' LIMIT 1")
+      ).rows[0];
+      await handle.client.execute({
+        sql: 'UPDATE loop_versions SET definition=? WHERE id=?',
+        args: [JSON.stringify(ignored), row.id],
+      });
+    } finally {
+      handle.close();
+    }
+    const reviewed = await reviewedPlan(root, data, file);
+    assert.ok(reviewed.bulk.approved > 4);
+    assert.ok(reviewed.bulk.byKind['ignored-loop-back'].approved > 0);
+    assert.ok(reviewed.bulk.byKind['opaque-consumer'].approved > 0);
+    assert.ok(reviewed.bulk.byKind['output-consumer'].approved > 0);
+    const result = await cli(['apply', ...reviewed.args, '--backup-dir', join(root, 'backup')]);
+    assert.equal(result.status, 'upgraded');
+    assert.equal(result.readback, 'verified');
+    t.diagnostic(
+      JSON.stringify({
+        command: 'resolutions --from inspect.json --approve-generated --out resolutions.json',
+        approved: reviewed.bulk.approved,
+        byKind: reviewed.bulk.byKind,
+        unresolved: reviewed.bulk.unresolved.length,
+        apply: result.status,
+      }),
+    );
+  }));
+
 test('portable refusal, explicit resolutions, new output and complete original preservation', () =>
   temporary(async (root) => {
     const input = join(root, 'old.json'),
@@ -556,6 +896,94 @@ test('refuses unresolved reviews, unused resolutions, changed plan/artifacts and
     await backupStoppedData(data, file, backup);
     await writeFile(join(backup, 'data', 'master.key'), 'not in inventory');
     await assert.rejects(verifyStoppedBackup(data, file, backup), /verification failed/);
+  }));
+
+test('workspace inventory binds the plan, stays read-only, and a changed workspace refuses apply before deletion', () =>
+  temporary(async (root) => {
+    const data = join(root, 'data');
+    await mkdir(join(data, 'workspaces', 'run'), { recursive: true });
+    const work = join(data, 'workspaces', 'run', 'work.txt');
+    await writeFile(work, 'original work');
+    const file = join(data, 'database.db');
+    await seed(file);
+    const before = await storedState(file);
+    const reviewed = await reviewedPlan(root, data, file);
+    assert.equal(await readFile(work, 'utf8'), 'original work');
+    assert.deepEqual(
+      reviewed.plan.workspaceEntries.map((entry) => entry.path),
+      ['run', 'run/work.txt'],
+    );
+    await writeFile(work, 'changed work');
+    await assert.rejects(
+      runUpgrade(['apply', ...reviewed.args, '--backup-dir', join(root, 'backup')]),
+      /hash changed/,
+    );
+    assert.equal(await readFile(work, 'utf8'), 'changed work');
+    assert.deepEqual(await storedState(file), before);
+    await assert.rejects(access(join(root, 'backup')), { code: 'ENOENT' });
+  }));
+
+test('a database inside a cleanup subtree is refused without deleting or modifying it', () =>
+  temporary(async (root) => {
+    for (const name of ['artifacts', 'workspaces']) {
+      const data = join(root, name + '-data');
+      await mkdir(join(data, name, 'run'), { recursive: true });
+      const file = join(data, name, 'run', 'database.db');
+      await seed(file);
+      const before = await readFile(file);
+      await assert.rejects(
+        runUpgrade([
+          'inspect',
+          '--data-dir',
+          data,
+          '--db-url',
+          url(file),
+          '--out',
+          join(root, name + '-report.json'),
+        ]),
+        /Database must be outside/,
+      );
+      assert.deepEqual(await readFile(file), before);
+    }
+  }));
+
+test('workspace cleanup helper removes nested junctions as links and never traverses user directories; a linked root refuses', () =>
+  temporary(async (root) => {
+    const data = join(root, 'data'),
+      user = join(root, 'user-workspace');
+    await mkdir(join(data, 'workspaces', 'run'), { recursive: true });
+    await mkdir(user);
+    await writeFile(join(user, 'keep.txt'), 'user-owned');
+    const kind = process.platform === 'win32' ? 'junction' : 'dir';
+    await symlink(user, join(data, 'workspaces', 'run', 'linked-user-work'), kind);
+    const file = join(data, 'database.db');
+    await seed(file);
+    const reviewed = await reviewedPlan(root, data, file);
+    assert.equal(reviewed.plan.workspaceEntries.length, 2);
+    assert.ok(reviewed.plan.workspaceEntries.find((entry) => entry.link));
+    // Exercise the post-commit remover directly: this host cannot copy junctions as
+    // file symlinks for a backup. Real commit/cleanup order is covered above with files.
+    await cleanupWorkspaces(data, reviewed.plan.workspaceEntries);
+    assert.deepEqual(await readdir(join(data, 'workspaces')), []);
+    assert.equal(await readFile(join(user, 'keep.txt'), 'utf8'), 'user-owned');
+    const linkedData = join(root, 'linked-data');
+    await mkdir(linkedData);
+    await symlink(user, join(linkedData, 'workspaces'), kind);
+    const linkedFile = join(linkedData, 'database.db');
+    await seed(linkedFile);
+    await assert.rejects(
+      runUpgrade([
+        'inspect',
+        '--data-dir',
+        linkedData,
+        '--db-url',
+        url(linkedFile),
+        '--out',
+        join(root, 'refused.json'),
+      ]),
+      /physical directory/,
+    );
+    assert.equal(await readFile(join(user, 'keep.txt'), 'utf8'), 'user-owned');
   }));
 
 test('external database backup copies base/WAL/SHM exactly and refuses overlapping or reused backup destinations', () =>

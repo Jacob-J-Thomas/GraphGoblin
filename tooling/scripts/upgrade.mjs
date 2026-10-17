@@ -9,6 +9,7 @@ import {
   realpath,
   writeFile,
   unlink,
+  rmdir,
 } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import process from 'node:process';
@@ -23,7 +24,9 @@ import {
   applyDatabaseUpgrade,
   guardDatabaseUpgrade,
   verifyDatabaseHead,
+  RUN_HISTORY_TABLES,
 } from '../../packages/infrastructure/dist/sqlite/index.js';
+import { generatedResolutions, pendingSummary } from './upgrade-resolutions.mjs';
 import { CURRENT_DEFINITION_FORMAT } from '../../packages/contracts/dist/index.js';
 import { upgradeExportCurrent, upgradeLoopCurrent } from '../../packages/domain/dist/index.js';
 
@@ -41,18 +44,22 @@ function within(parent, child) {
   const rel = relative(parent, child);
   return rel === '' || (rel !== '..' && !rel.startsWith('..' + sep) && !isAbsolute(rel));
 }
-async function tree(path, prefix = '') {
+async function tree(path, prefix = '', skipLocks = true) {
   const items = {};
   for (const entry of await readdir(path, { withFileTypes: true })) {
-    if (prefix === '' && ['graphgoblin.lock', 'graphgoblin.lock.reclaim'].includes(entry.name))
+    if (
+      skipLocks &&
+      prefix === '' &&
+      ['graphgoblin.lock', 'graphgoblin.lock.reclaim'].includes(entry.name)
+    )
       continue;
     const key = prefix ? prefix + '/' + entry.name : entry.name,
       full = join(path, entry.name);
-    if (entry.isDirectory()) {
+    if (entry.isSymbolicLink()) items[key] = { link: await readlink(full) };
+    else if (entry.isDirectory()) {
       items[key] = { directory: true };
-      Object.assign(items, await tree(full, key));
-    } else if (entry.isSymbolicLink()) items[key] = { link: await readlink(full) };
-    else items[key] = { sha256: hash(await readFile(full)) };
+      Object.assign(items, await tree(full, key, skipLocks));
+    } else items[key] = { sha256: hash(await readFile(full)) };
   }
   return Object.fromEntries(Object.entries(items).sort(([a], [b]) => a.localeCompare(b)));
 }
@@ -176,7 +183,7 @@ async function artifactInventory(dataDir) {
     const info = await lstat(root);
     if (!info.isDirectory() || info.isSymbolicLink())
       throw new Error('Artifacts must be a physical directory');
-    return Object.entries(await tree(root))
+    return Object.entries(await tree(root, '', false))
       .filter(([, entry]) => !entry.directory)
       .map(([path, entry]) => ({ path, ...entry }));
   } catch (error) {
@@ -184,50 +191,132 @@ async function artifactInventory(dataDir) {
     throw error;
   }
 }
+async function workspaceInventory(dataDir) {
+  const root = join(dataDir, 'workspaces');
+  let info;
+  try {
+    info = await lstat(root);
+  } catch (error) {
+    if (error?.code === 'ENOENT') return [];
+    throw error;
+  }
+  if (!info.isDirectory() || info.isSymbolicLink())
+    throw new Error('Workspaces must be a physical directory');
+  // A disappearing descendant is a changed inventory, never an empty subtree.
+  return Object.entries(await tree(root, '', false)).map(([path, entry]) => ({ path, ...entry }));
+}
+/** Remove exactly the inventoried leaves, then their empty directories. No recursive deletion.
+ * Check physical ancestors immediately before each mutation; nested links are removed as links. */
+export async function cleanupWorkspaces(dataDir, entries) {
+  const root = resolve(dataDir, 'workspaces');
+  const ordered = [...entries].sort(
+    (a, b) => b.path.split('/').length - a.path.split('/').length || a.path.localeCompare(b.path),
+  );
+  for (const entry of ordered) {
+    const full = resolve(root, entry.path);
+    if (!within(root, full) || full === root)
+      throw new Error('Workspace cleanup path escapes its inventory root');
+    let parent = dirname(full);
+    for (;;) {
+      const info = await lstat(parent);
+      if (
+        !info.isDirectory() ||
+        info.isSymbolicLink() ||
+        relative(parent, await realpath(parent)) !== ''
+      )
+        throw new Error('Workspace cleanup refuses linked ancestors');
+      if (parent === root) break;
+      parent = dirname(parent);
+    }
+    const info = await lstat(full);
+    if (entry.directory) {
+      if (info.isSymbolicLink() || !info.isDirectory())
+        throw new Error('Workspace directory changed during cleanup');
+      await rmdir(full);
+    } else {
+      if (
+        info.isSymbolicLink() !== Object.hasOwn(entry, 'link') ||
+        (!info.isSymbolicLink() && !info.isFile())
+      )
+        throw new Error('Workspace file/link changed during cleanup');
+      try {
+        await unlink(full);
+      } catch (error) {
+        // Windows directory junctions may require RemoveDirectory; rmdir never traverses them.
+        if (
+          info.isSymbolicLink() &&
+          process.platform === 'win32' &&
+          ['EPERM', 'EISDIR'].includes(error.code)
+        )
+          await rmdir(full);
+        else throw error;
+      }
+    }
+  }
+}
 async function inspectStore(client, dataDir, resolutions) {
   const inventory = await inspectDatabaseUpgrade(client, resolutions);
   const artifactFiles = inventory.status === 'current' ? [] : await artifactInventory(dataDir);
+  const workspaceEntries = inventory.status === 'current' ? [] : await workspaceInventory(dataDir);
   return {
     ...inventory,
     format: 'graphgoblin-upgrade-inspection',
     targetVersion: CURRENT_DEFINITION_FORMAT,
     databasePlanHash: inventory.planHash,
-    planHash: hash(JSON.stringify({ databasePlanHash: inventory.planHash, artifactFiles })),
-    counts: { ...inventory.counts, artifactFiles: artifactFiles.length },
+    planHash: hash(
+      JSON.stringify({ databasePlanHash: inventory.planHash, artifactFiles, workspaceEntries }),
+    ),
+    counts: {
+      ...inventory.counts,
+      artifactFiles: artifactFiles.length,
+      workspaces: workspaceEntries.filter((entry) => !entry.path.includes('/')).length,
+      workspaceFiles: workspaceEntries.filter((entry) => !entry.directory).length,
+    },
+    pendingByKind: pendingSummary(inventory.definitions),
+    workspaceEntries,
     artifactFiles,
   };
 }
 export function argumentsFor(argv) {
   const [command, ...rest] = argv;
   const options = {};
-  for (let i = 0; i < rest.length; i += 2) {
-    const key = rest[i],
-      value = rest[i + 1];
-    if (
-      !key?.startsWith('--') ||
-      value === undefined ||
-      value.startsWith('--') ||
-      Object.hasOwn(options, key.slice(2))
-    )
+  for (let i = 0; i < rest.length; i += 1) {
+    const key = rest[i];
+    if (!key?.startsWith('--') || Object.hasOwn(options, key.slice(2)))
       throw new Error('Expected unique --option value arguments');
+    if (key === '--approve-generated') {
+      options['approve-generated'] = true;
+      continue;
+    }
+    const value = rest[++i];
+    if (value === undefined || value.startsWith('--')) throw new Error('Expected --option value');
     options[key.slice(2)] = value;
   }
   const allowed = {
     inspect: ['data-dir', 'db-url', 'out', 'resolutions'],
     apply: ['data-dir', 'db-url', 'plan-hash', 'backup-dir', 'resolutions'],
     export: ['input', 'out', 'resolutions'],
+    resolutions: ['from', 'approve-generated', 'out', 'merge'],
   };
   if (
     !Object.hasOwn(allowed, command) ||
     Object.keys(options).some((key) => !allowed[command].includes(key))
   )
-    throw new Error('Use inspect, apply or export with the documented arguments');
-  for (const key of allowed[command].filter((key) => key !== 'resolutions'))
+    throw new Error('Use inspect, apply, export or resolutions with the documented arguments');
+  for (const key of allowed[command].filter((key) => !['resolutions', 'merge'].includes(key)))
     if (!options[key]) throw new Error('Missing --' + key);
   return { command, options };
 }
 export async function runUpgrade(argv) {
   const { command, options } = argumentsFor(argv);
+  if (command === 'resolutions') {
+    const { resolutions: generated, summary } = generatedResolutions(
+      await json(options.from),
+      options.merge ? await json(options.merge) : {},
+    );
+    await output(options.out, generated);
+    return { ok: true, command, out: resolve(options.out), ...summary };
+  }
   const resolutions = options.resolutions ? await json(options.resolutions) : {};
   if (command === 'export') {
     const original = await json(options.input);
@@ -251,6 +340,8 @@ export async function runUpgrade(argv) {
     url = options['db-url'],
     dbFile = databaseFilePath(url);
   if (!dbFile) throw new Error('Offline upgrade requires a local file database URL');
+  if (['artifacts', 'workspaces'].some((name) => within(resolve(dataDir, name), dbFile)))
+    throw new Error('Database must be outside the artifact and temporary workspace cleanup roots');
   // Physical paths bind lock, source, backup and artifact removal to the same directory.
   if (relative(dataDir, await realpath(dataDir)) !== '')
     throw new Error('Use the physical data directory');
@@ -286,6 +377,7 @@ export async function runUpgrade(argv) {
         blockedRuns: plan.blockedRuns.length,
         blockedReceipts: plan.blockedReceipts.length,
         disarm: plan.disarm.length,
+        pendingByKind: plan.pendingByKind,
         planHash: plan.planHash,
       };
     }
@@ -312,6 +404,11 @@ export async function runUpgrade(argv) {
             JSON.stringify(await artifactInventory(dataDir)) !== JSON.stringify(plan.artifactFiles)
           )
             throw new Error('Artifact plan changed before commit');
+          if (
+            JSON.stringify(await workspaceInventory(dataDir)) !==
+            JSON.stringify(plan.workspaceEntries)
+          )
+            throw new Error('Workspace plan changed before commit');
           await verifyStoppedBackup(dataDir, dbFile, backupDir, false);
         },
       },
@@ -320,6 +417,11 @@ export async function runUpgrade(argv) {
     await assertLock();
     if (JSON.stringify(await artifactInventory(dataDir)) !== JSON.stringify(plan.artifactFiles))
       throw new Error('Artifact files changed; database committed but cleanup is incomplete');
+    if (JSON.stringify(await workspaceInventory(dataDir)) !== JSON.stringify(plan.workspaceEntries))
+      throw new Error('Workspace paths changed; database committed but cleanup is incomplete');
+    await cleanupWorkspaces(dataDir, plan.workspaceEntries);
+    if ((await workspaceInventory(dataDir)).length)
+      throw new Error('Workspace cleanup readback failed');
     for (const file of plan.artifactFiles) await unlink(join(dataDir, 'artifacts', file.path));
     if ((await artifactInventory(dataDir)).length)
       throw new Error('Artifact cleanup readback failed');
@@ -328,14 +430,7 @@ export async function runUpgrade(argv) {
     const readback = await inspectDatabaseUpgrade(handle.client);
     if (
       readback.status !== 'current' ||
-      [
-        'runs',
-        'run_events',
-        'webhook_receipts',
-        'inbound_events',
-        'timers',
-        'harness_sessions',
-      ].some((name) => readback.tableCounts[name])
+      RUN_HISTORY_TABLES.some((name) => readback.tableCounts[name])
     )
       throw new Error('Committed store readback failed');
     return {
@@ -345,6 +440,8 @@ export async function runUpgrade(argv) {
       planHash: plan.planHash,
       backupDir,
       deletedArtifactFiles: plan.artifactFiles.length,
+      deletedWorkspaces: plan.counts.workspaces,
+      deletedWorkspaceFiles: plan.counts.workspaceFiles,
       disarmed: plan.disarm,
       readback: 'verified',
     };
@@ -361,7 +458,9 @@ export async function runUpgrade(argv) {
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   try {
     const result = await runUpgrade(process.argv.slice(2));
-    process.stdout.write(JSON.stringify(result) + '\n');
+    process.stdout.write(
+      JSON.stringify(result, null, result.command === 'resolutions' ? 2 : undefined) + '\n',
+    );
     if (!result.ok) process.exitCode = 2;
   } catch (error) {
     process.stderr.write(error.message + '\n');

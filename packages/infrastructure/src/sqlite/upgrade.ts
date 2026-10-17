@@ -276,6 +276,7 @@ export interface DatabaseUpgradeRequest {
 export interface DefinitionUpgrade {
   id: string;
   loopId: string;
+  loopName: string;
   status: string;
   definitionHash: string;
   targetDefinitionHash?: string;
@@ -494,6 +495,14 @@ export async function inspectDatabaseUpgrade(
         );
       }
     }
+  const loopNames = new Map(
+    names.includes('loops')
+      ? (await rows(client, 'SELECT id,name FROM loops')).map((row) => [
+          String(row.id),
+          String(row.name),
+        ])
+      : [],
+  );
   const definitions: DefinitionUpgrade[] = [];
   const disarm: DisarmedTrigger[] = [];
   if (names.includes('loop_versions'))
@@ -519,6 +528,7 @@ export async function inspectDatabaseUpgrade(
           definitions.push({
             id: String(row.id),
             loopId: String(row.loop_id),
+            loopName: loopNames.get(String(row.loop_id)) ?? String(row.loop_id),
             status: String(row.status),
             definitionHash: hash(input),
             ...(result.ok ? { targetDefinitionHash: hash(result.value) } : {}),
@@ -548,6 +558,7 @@ export async function inspectDatabaseUpgrade(
           definitions.push({
             id: String(row.id),
             loopId: String(row.loop_id),
+            loopName: loopNames.get(String(row.loop_id)) ?? String(row.loop_id),
             status: String(row.status),
             definitionHash: hash(row.definition),
             conversion: 'invalid',

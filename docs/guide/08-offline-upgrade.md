@@ -4,7 +4,7 @@ The format-4 cutover **keeps definitions and deletes all run history** ([ADR-003
 
 Kept: ordinary loops, every published version and server draft, secrets and owner encryption material, settings, API keys, webhook endpoint IDs/tokens and surviving schedule rows. Definitions become format 4. SQL 0013 maps both webhook signing schemes to the current authentication columns without rotating tokens. Old owner default settings, when present, become harness defaults.
 
-Deleted: every run, event, initial thread, snapshot, receipt, inbound event, timer, harness session, child notification, frozen admission intent and subloop pin, plus files under `artifacts/`. Configured template instances and all their loops, versions and drafts are deleted under #165. Existing in-database upgrade archives are removed too. Template catalogue starting points remain available for creating new ordinary loops.
+Deleted: every run, event, initial thread, snapshot, receipt, inbound event, timer, harness session, child notification, frozen admission intent and subloop pin, plus files under `artifacts/` and temporary run workspaces under `<dataDir>/workspaces/<runId>`. Fixed and templated workspace paths outside the data directory are user directories and are never touched. Configured template instances and all their loops, versions and drafts are deleted under #165. Existing in-database upgrade archives are removed too. Template catalogue starting points remain available for creating new ordinary loops.
 
 Every poll and cron in **every retained published version and draft** becomes `enabled: false`; surviving cron schedule rows are disabled too. History no longer supplies poll dedupe or cron catch-up evidence. Review the reported disarm list and re-arm deliberately after reviewing old external items. Webhooks keep their armed state. Historical webhook claims are gone, so a repeated delivery can be admitted again.
 
@@ -18,11 +18,29 @@ Build the new checkout with `pnpm.cmd build`. The commands below use placeholder
 pnpm.cmd graphgoblin-upgrade inspect --data-dir C:/GraphGoblin/data --db-url file:C:/GraphGoblin/data/graphgoblin.db --out C:/GraphGoblin/upgrade/inspect.json
 ```
 
-Inspect acquires the server's directory lock and opens SQLite natively read-only. It reports table/definition/deletion counts, artifact filenames and hashes, every version and draft's conversion state, pending IDs/hashes/reasons, ordinary blockers, trigger disarms and `planHash`. A complete current store reports `status: "current"`: nothing needs doing. A claimed current marker with incomplete structure is refused; never edit markers to bypass this check.
+Inspect acquires the server's directory lock and opens SQLite natively read-only. It reports table/definition/deletion counts, artifact filenames/hashes, temporary workspace paths/file hashes, every version and draft's conversion state, pending IDs/hashes/reasons and counts by item kind (`pendingByKind`), ordinary blockers, trigger disarms and `planHash`. A complete current store reports `status: "current"`: nothing needs doing. A claimed current marker with incomplete structure is refused; never edit markers to bypass this check.
 
-Inspect does not apply SQL or make rollback-only source writes. A changed source, structure, migration catalogue, resolution or artifact set changes the plan hash. Use a new output filename on each attempt; outputs are never overwritten.
+Inspect does not apply SQL or make rollback-only source writes. A changed source, structure, migration catalogue, resolution, artifact or temporary workspace set changes the plan hash. Use a new output filename on each attempt; outputs are never overwritten.
 
 ## Resolve review items
+
+The recommended path is **one explicit owner decision to approve generated proposals**. After inspecting the summary, run:
+
+```powershell
+pnpm.cmd graphgoblin-upgrade resolutions --from C:/GraphGoblin/upgrade/inspect.json --approve-generated --out C:/GraphGoblin/upgrade/resolutions.json
+```
+
+This writes a hash-bound `approve` for every pending item with a generated proposal, including removal proposals such as ignored loop-back configuration. It prints newly approved and preserved choices grouped by item kind and loop name/ID, plus the exact IDs, hashes, paths and reasons of items still requiring manual input. It never overwrites an output file. Use a fresh inspection from this build: `hasGeneratedProposal` distinguishes a generated removal (`proposedValue: null`) from a missing authored graph. Frozen v1/v2 questions without proposals remain manual work too.
+
+**Trade-off:** a generated proposal is mechanically equivalent where the converter proved it, and otherwise a reviewed best effort. `--approve-generated` is the owner's explicit acceptance of all those generated proposals; it does not establish equivalent judgments, dynamic references or opaque consumers. The owner checks the resulting behavior in the running product afterwards, including LLM instructions, return mappings and scripts. Items without a generated proposal stay unresolved and need authored replacements or earlier-stage resolutions before apply.
+
+To preserve existing authored choices, add `--merge`. Existing resolutions in every namespace are kept exactly and take precedence; even stale/unused choices are preserved for the next inspect to reject rather than silently replaced. Use another new output filename:
+
+```powershell
+pnpm.cmd graphgoblin-upgrade resolutions --from C:/GraphGoblin/upgrade/inspect.json --approve-generated --merge C:/GraphGoblin/upgrade/existing-resolutions.json --out C:/GraphGoblin/upgrade/resolutions.json
+```
+
+If earlier-stage answers expose more proposals, inspect with the current resolutions, then repeat `resolutions --from` with that new report and `--merge` into a new output path. Always reinspect with the final resolutions before using its new `planHash` for apply. The generator reads only the report and optional merge file; it does not open a data directory, modify a store or apply an upgrade.
 
 Server resolution files are keyed by **version or draft ID**, with independent `v1`, `v2` and `v3` namespaces inside each entry. For example:
 
@@ -58,11 +76,11 @@ Use `planHash` from the final resolved inspection. Choose a **new** backup direc
 pnpm.cmd graphgoblin-upgrade apply --data-dir C:/GraphGoblin/data --db-url file:C:/GraphGoblin/data/graphgoblin.db --plan-hash PASTE_FINAL_PLAN_HASH --resolutions C:/GraphGoblin/upgrade/resolutions.json --backup-dir C:/GraphGoblin/backups/before-format-4
 ```
 
-Apply takes the same stopped-data lock and rechecks the plan. Before opening a writer it copies the whole data tree to `<backup-dir>/data`, including encrypted secrets, key material and artifacts, and verifies hashes against the source. An external database and its WAL/SHM are copied to `<backup-dir>/database`, `database-wal` and `database-shm` when present. `backup.json` records identities and file hashes. The result and failure messages report `backupDir`/the backup path. Missing or corrupt backup evidence, overlap, reused destinations, linked data roots/database paths and changed sources refuse apply. Ordinary non-database links are copied as links; external targets are not snapshotted. Preserve required external content separately. Artifact roots must be physical directories; cleanup unlinks nested links without following their targets.
+Apply takes the same stopped-data lock and rechecks the plan. Before opening a writer it copies the whole data tree to `<backup-dir>/data`, including encrypted secrets, key material, artifacts and temporary run workspaces, and verifies hashes against the source. An external database and its WAL/SHM are copied to `<backup-dir>/database`, `database-wal` and `database-shm` when present. `backup.json` records identities and file hashes. The result and failure messages report `backupDir`/the backup path. Missing or corrupt backup evidence, overlap, reused destinations, linked data roots/database paths and changed sources refuse apply. Ordinary non-database links are copied as links; external targets are not snapshotted. Preserve required external content separately. The database file must be outside both cleanup subtrees. Artifact and temporary workspace roots must be physical directories. Workspace inventories contain every relative file/link/directory path, including empty directories. Cleanup checks physical ancestors and removes nested links as links, without traversing their targets. Only the reserved data-directory subtrees are inventoried; paths configured outside the data directory are untouched.
 
 Under one SQLite write transaction apply rechecks the database plan and blockers, deletes all history and template-owned definitions, removes any old database archive, applies structural SQL through 0013, rewrites definitions/defaults, disables schedule rows, stamps format 4 complete, and verifies readiness, head structure, ledger and integrity. A transaction failure rolls back deletions, DDL, ledger, definitions and marker together. Draft tokens and config hashes derive from rewritten definitions; no old token is retained.
 
-After commit, apply deletes the inventoried artifact files and reads back the store and artifact set. Empty artifact directories may remain. A filesystem/connection failure **after commit cannot roll SQLite back**: the failure says the database committed and reports the recovery backup. Preserve that copy and restore the complete backup before retrying if cleanup/readback did not finish. Do not treat a marker or a failed command as proof of a complete cutover.
+After commit, apply deletes the inventoried artifact files and temporary workspace entries, then reads back the store and both cleanup inventories. Workspaces are removed through individual unlinks and empty-directory removals, deepest paths first; there is no recursive deletion. Empty artifact directories and the `workspaces/` root may remain. A changed workspace inventory before commit refuses the transaction; unexpected contents encountered after commit stop cleanup and report the recovery backup. A filesystem/connection failure **after commit cannot roll SQLite back**: the failure says the database committed and reports the recovery backup. Preserve that copy and restore the complete backup before retrying if cleanup/readback did not finish. Do not treat a marker or a failed command as proof of a complete cutover.
 
 ## Start and check the new build
 

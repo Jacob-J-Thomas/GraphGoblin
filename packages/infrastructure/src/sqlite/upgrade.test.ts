@@ -100,6 +100,9 @@ describe('definitions-only format-4 cutover', () => {
       receipts: 9,
     });
     expect(plan.definitions).toHaveLength(16);
+    expect(
+      plan.definitions.find((entry) => entry.id === fixtureId('manual-version'))?.loopName,
+    ).toBe('manual');
     expect(plan.definitions.filter((entry) => entry.conversion === 'pending')).toHaveLength(4);
     expect(plan.definitions.filter((entry) => entry.conversion === 'invalid')).toEqual([]);
     expect(plan.blockedRuns).toEqual([]);
