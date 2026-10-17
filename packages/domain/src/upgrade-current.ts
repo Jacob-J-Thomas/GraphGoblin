@@ -86,6 +86,7 @@ export function validateUpgradeCurrentResolutions(value: unknown): UpgradeIssue[
 export async function upgradeLoopCurrent(
   input: unknown,
   resolutions: UpgradeCurrentResolutions = {},
+  sourceIdentity?: string,
 ): Promise<CurrentUpgradeResult<LoopDefinition>> {
   const errors = validateUpgradeCurrentResolutions(resolutions);
   if (errors.length)
@@ -122,7 +123,7 @@ export async function upgradeLoopCurrent(
     return { ...frozen, issues: frozen.issues.map(classify), notices: [], reviewItems: [] };
   // Portable inputs have no stored version ID. Bind reviews to their complete parsed content
   // in a separate namespace; never reuse approvals from a server version's manifest.
-  const identity = 'portable:' + (await definitionReviewHash(frozen.value));
+  const identity = sourceIdentity ?? 'portable:' + (await definitionReviewHash(frozen.value));
   const converted = await convertDefinitionV3ToV4(frozen.value, resolutions.v3, identity);
   const notices = [
     ...frozen.notices,

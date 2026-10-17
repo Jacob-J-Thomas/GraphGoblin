@@ -171,11 +171,11 @@ The request itself is a compare-and-set (`RunRepository.claimCancel`): `cancelRe
 
 ## Template storage retirement (Decided)
 
-Templates are catalogue assets copied into ordinary loops, never runnable instances. Migration `0012_retire_template_instances` drops the six template subject indexes, `runs.template_subject` (including its inline JSON CHECK), and `template_instances` with its owner index. Ordinary run, thread/checkpoint, parent, finalization and trigger-deduplication storage survives. Liquid, ordinary settings/model fields and working-directory kind `template` are unrelated and remain supported.
+Templates are catalogue assets copied into ordinary loops, never runnable instances. Migration `0012_retire_template_instances` drops the six template subject indexes, `runs.template_subject` (including its inline JSON CHECK), and `template_instances` with its owner index. The ordinary run, thread/checkpoint, parent, finalization and trigger-deduplication table layouts remain; the offline cutover below empties their historical contents. Liquid, ordinary settings/model fields and working-directory kind `template` are unrelated and remain supported.
 
-`FORMAT_BASELINES[4]` requires `0012_retire_template_instances` in the migration ledger and its resulting structure before any startup writes. Startup refuses older stores, including a format-4 marker at 0011; it never applies this cutover SQL to them. Fresh initialization executes all migrations, ledger entries and the format-4 marker in one transaction.
+`FORMAT_BASELINES[4]` requires `0013_trigger_configuration` in the migration ledger and its resulting structure before any startup writes. Startup refuses older stores, including a format-4 marker at 0011; it never applies this cutover SQL to them. Fresh initialization executes all migrations, ledger entries and the format-4 marker in one transaction.
 
-Until the owner chooses and completes the server-store cutover, offline apply refuses every store that is not already complete format 4, including unmarked stores and any remaining template table or subject column. Full-history versus definitions-only conversion remains an owner decision. Export and device conversion performs no SQL apply, run-history or manifest conversion and authorizes no installed upgrade. The libsql migration tests exercise SQL directly on disposable 0011 fixtures, separately from startup and converter admission.
+The offline server-store cutover keeps ordinary loop versions and drafts and deletes all run history, artifact files and configured template instances with their definitions ([ADR-0039](decisions/ADR-0039-format-four-definitions-only-cutover.md)). Inspect locks the stopped directory and reads without writes. Apply requires a verified complete backup, zero ordinary active runs/pending receipts or admission intents, resolved per-version review items and an unchanged plan hash. Template work never blocks retirement. History deletion, template retirement, SQL through 0013, definition rewrites, schedule disarming, completion marker and head verification share one transaction. Artifact files are removed after commit, with explicit post-commit failure reporting and backup recovery. No in-database archive or historical replay conversion remains. Polls and crons in every retained version/draft and schedule row are disabled; webhooks retain their armed state. See the [offline guide](guide/08-offline-upgrade.md).
 
 ## Offline definitions and portable exports
 
@@ -191,8 +191,7 @@ hashes, reasons and statuses. Stale and unused resolutions refuse.
 The export CLI and API import use this composition. Automatic old exports import
 normally; pending imports return a structured `LOOP_FORMAT_UPGRADE_REQUIRED` problem
 and need offline review. See the [offline guide](guide/08-offline-upgrade.md).
-The server store still uses the frozen format-3 stages and refuses incomplete
-format-4 stores; this definition-only path changes no history, SQL apply or manifest.
+The offline server-store tool uses the same composition for each retained version and draft. Portable export and device conversion do not authorize or perform a server cutover.
 
 ## Crash recovery (Decided)
 

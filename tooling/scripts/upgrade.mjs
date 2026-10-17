@@ -7,10 +7,11 @@ import {
   readdir,
   readlink,
   realpath,
-  stat,
   writeFile,
+  unlink,
 } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
+import process from 'node:process';
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { acquireDataDirLock } from '../../apps/api/dist/data-dir-lock.js';
@@ -20,6 +21,8 @@ import {
   databaseFilePath,
   inspectDatabaseUpgrade,
   applyDatabaseUpgrade,
+  guardDatabaseUpgrade,
+  verifyDatabaseHead,
 } from '../../packages/infrastructure/dist/sqlite/index.js';
 import { CURRENT_DEFINITION_FORMAT } from '../../packages/contracts/dist/index.js';
 import { upgradeExportCurrent, upgradeLoopCurrent } from '../../packages/domain/dist/index.js';
@@ -128,6 +131,72 @@ export async function backupStoppedData(dataDir, dbFile, backupDir) {
     external,
   });
 }
+/** Re-read the complete backup before opening a writer. A directory name alone is no proof. */
+export async function verifyStoppedBackup(dataDir, dbFile, backupDir, compareSource = true) {
+  const record = await json(join(backupDir, 'backup.json'));
+  if (
+    record.format !== 'graphgoblin-stopped-backup' ||
+    record.dataDir !== resolve(dataDir) ||
+    record.dbFile !== resolve(dbFile)
+  )
+    throw new Error('Backup identity is invalid');
+  if (JSON.stringify(await tree(join(backupDir, 'data'))) !== JSON.stringify(record.files))
+    throw new Error('Backup file verification failed');
+  if (compareSource && JSON.stringify(await tree(dataDir)) !== JSON.stringify(record.files))
+    throw new Error('Stopped source changed after backup');
+  const external = {};
+  if (!within(resolve(dataDir), resolve(dbFile)))
+    for (const suffix of ['', '-wal', '-shm']) {
+      try {
+        external[suffix] = { sha256: hash(await readFile(join(backupDir, 'database' + suffix))) };
+      } catch (error) {
+        if (suffix !== '' && error?.code === 'ENOENT') continue;
+        throw error;
+      }
+    }
+  if (JSON.stringify(external) !== JSON.stringify(record.external))
+    throw new Error('External database backup verification failed');
+  if (compareSource)
+    for (const suffix of ['', '-wal', '-shm']) {
+      if (within(resolve(dataDir), resolve(dbFile))) break;
+      let digest;
+      try {
+        digest = hash(await readFile(dbFile + suffix));
+      } catch (error) {
+        if (suffix !== '' && error?.code === 'ENOENT') digest = undefined;
+        else throw error;
+      }
+      if (digest !== record.external[suffix]?.sha256)
+        throw new Error('External database changed after backup');
+    }
+}
+async function artifactInventory(dataDir) {
+  const root = join(dataDir, 'artifacts');
+  try {
+    const info = await lstat(root);
+    if (!info.isDirectory() || info.isSymbolicLink())
+      throw new Error('Artifacts must be a physical directory');
+    return Object.entries(await tree(root))
+      .filter(([, entry]) => !entry.directory)
+      .map(([path, entry]) => ({ path, ...entry }));
+  } catch (error) {
+    if (error?.code === 'ENOENT') return [];
+    throw error;
+  }
+}
+async function inspectStore(client, dataDir, resolutions) {
+  const inventory = await inspectDatabaseUpgrade(client, resolutions);
+  const artifactFiles = inventory.status === 'current' ? [] : await artifactInventory(dataDir);
+  return {
+    ...inventory,
+    format: 'graphgoblin-upgrade-inspection',
+    targetVersion: CURRENT_DEFINITION_FORMAT,
+    databasePlanHash: inventory.planHash,
+    planHash: hash(JSON.stringify({ databasePlanHash: inventory.planHash, artifactFiles })),
+    counts: { ...inventory.counts, artifactFiles: artifactFiles.length },
+    artifactFiles,
+  };
+}
 export function argumentsFor(argv) {
   const [command, ...rest] = argv;
   const options = {};
@@ -144,25 +213,24 @@ export function argumentsFor(argv) {
     options[key.slice(2)] = value;
   }
   const allowed = {
-    inventory: ['data-dir', 'db-url', 'out'],
-    apply: ['data-dir', 'db-url', 'manifest', 'backup-dir'],
+    inspect: ['data-dir', 'db-url', 'out', 'resolutions'],
+    apply: ['data-dir', 'db-url', 'plan-hash', 'backup-dir', 'resolutions'],
     export: ['input', 'out', 'resolutions'],
-    audit: ['data-dir', 'db-url', 'out'],
   };
   if (
     !Object.hasOwn(allowed, command) ||
     Object.keys(options).some((key) => !allowed[command].includes(key))
   )
-    throw new Error('Use inventory, apply, export or audit with the documented arguments');
+    throw new Error('Use inspect, apply or export with the documented arguments');
   for (const key of allowed[command].filter((key) => key !== 'resolutions'))
     if (!options[key]) throw new Error('Missing --' + key);
   return { command, options };
 }
 export async function runUpgrade(argv) {
   const { command, options } = argumentsFor(argv);
+  const resolutions = options.resolutions ? await json(options.resolutions) : {};
   if (command === 'export') {
     const original = await json(options.input);
-    const resolutions = options.resolutions ? await json(options.resolutions) : {};
     const result =
       original?.format === 'graphgoblin-loop'
         ? await upgradeExportCurrent(original, resolutions)
@@ -183,75 +251,108 @@ export async function runUpgrade(argv) {
     url = options['db-url'],
     dbFile = databaseFilePath(url);
   if (!dbFile) throw new Error('Offline upgrade requires a local file database URL');
-  // Ownership is established before the database is opened; live GraphGoblin makes this fail.
+  // Physical paths bind lock, source, backup and artifact removal to the same directory.
+  if (relative(dataDir, await realpath(dataDir)) !== '')
+    throw new Error('Use the physical data directory');
   const lock = await acquireDataDirLock(dataDir);
+  const lockRecord = await readFile(join(dataDir, 'graphgoblin.lock'), 'utf8');
+  const assertLock = async () => {
+    if ((await readFile(join(dataDir, 'graphgoblin.lock'), 'utf8')) !== lockRecord)
+      throw new Error('Directory lock was lost; upgrade refused');
+  };
   let handle;
+  let backupDir;
+  let committed = false;
   try {
-    if (!(await stat(dbFile)).isFile()) throw new Error('Database file does not exist');
-    if (command === 'apply')
-      await backupStoppedData(dataDir, dbFile, resolve(options['backup-dir']));
-    if (command === 'apply') handle = openDatabase({ url });
-    else {
-      const client = openReadOnlyDatabaseClient(dbFile);
-      handle = { client, close: () => client.close() };
+    await requireRegularDatabasePaths(dbFile);
+    const reader = openReadOnlyDatabaseClient(dbFile);
+    let plan;
+    try {
+      plan = await inspectStore(reader, dataDir, resolutions);
+    } finally {
+      reader.close();
     }
-    if (command === 'inventory') {
-      const inventory = await inspectDatabaseUpgrade(handle.client);
-      await output(options.out, {
-        format: 'graphgoblin-upgrade-inventory',
-        targetVersion: CURRENT_DEFINITION_FORMAT,
-        sourceHash: inventory.sourceHash,
-        versions: inventory.versions,
-        blockedRuns: inventory.blockedRuns,
-        issues: inventory.issues,
-        manifest: {
-          format: 'graphgoblin-upgrade-manifest',
-          targetVersion: CURRENT_DEFINITION_FORMAT,
-          sourceHash: inventory.sourceHash,
-          approvedBy: '',
-          approvedAt: '',
-          versions: Object.fromEntries(
-            inventory.versions.map((version) => [
-              version.id,
-              { definitionHash: version.definitionHash, resolutions: {} },
-            ]),
-          ),
-          failedRuns: Object.fromEntries(
-            inventory.failedRuns.map((id) => [
-              id,
-              { disposition: 'nonresumable-replay', reason: '' },
-            ]),
-          ),
+    if (command === 'inspect') {
+      await output(options.out, plan);
+      return {
+        ok: true,
+        command,
+        status: plan.status,
+        counts: plan.counts,
+        pending: plan.definitions.filter((entry) => entry.conversion === 'pending').length,
+        invalid:
+          plan.issues.length +
+          plan.definitions.filter((entry) => entry.conversion === 'invalid').length,
+        blockedRuns: plan.blockedRuns.length,
+        blockedReceipts: plan.blockedReceipts.length,
+        disarm: plan.disarm.length,
+        planHash: plan.planHash,
+      };
+    }
+    if (plan.planHash !== options['plan-hash'])
+      throw new Error('Plan hash changed; inspect and review again');
+    if (plan.issues.length || plan.definitions.some((entry) => entry.conversion !== 'automatic'))
+      throw new Error('Inspect reports blockers or unresolved pending/invalid items');
+    if (plan.status === 'current')
+      return { ok: true, command, status: 'current', message: 'Nothing needs doing' };
+    if (plan.blockedRuns.length || plan.blockedReceipts.length)
+      throw new Error('Inspect reports ordinary blockers');
+    backupDir = resolve(options['backup-dir']);
+    await assertLock();
+    await backupStoppedData(dataDir, dbFile, backupDir);
+    await verifyStoppedBackup(dataDir, dbFile, backupDir);
+    handle = openDatabase({ url });
+    const result = await applyDatabaseUpgrade(
+      handle.client,
+      { planHash: plan.databasePlanHash, resolutions },
+      {
+        verifySafety: async () => {
+          await assertLock();
+          if (
+            JSON.stringify(await artifactInventory(dataDir)) !== JSON.stringify(plan.artifactFiles)
+          )
+            throw new Error('Artifact plan changed before commit');
+          await verifyStoppedBackup(dataDir, dbFile, backupDir, false);
         },
-      });
-      return {
-        ok: true,
-        command,
-        versions: inventory.versions.length,
-        blockedRuns: inventory.blockedRuns.length,
-        affectedFailedRuns: inventory.failedRuns.length,
-      };
-    }
-    if (command === 'apply')
-      return {
-        ok: true,
-        command,
-        ...(await applyDatabaseUpgrade(handle.client, await json(options.manifest))),
-      };
-    const result = await handle.client.execute(
-      'SELECT kind,identity,source_hash,manifest_hash,payload FROM gg_upgrade_archive ORDER BY manifest_hash,kind,identity',
+      },
     );
-    await output(options.out, {
-      format: 'graphgoblin-upgrade-audit',
-      records: result.rows.map((row) => ({
-        kind: row.kind,
-        identity: row.identity,
-        sourceHash: row.source_hash,
-        manifestHash: row.manifest_hash,
-        payload: JSON.parse(String(row.payload)),
-      })),
-    });
-    return { ok: true, command, records: result.rows.length };
+    committed = result.status === 'upgraded';
+    await assertLock();
+    if (JSON.stringify(await artifactInventory(dataDir)) !== JSON.stringify(plan.artifactFiles))
+      throw new Error('Artifact files changed; database committed but cleanup is incomplete');
+    for (const file of plan.artifactFiles) await unlink(join(dataDir, 'artifacts', file.path));
+    if ((await artifactInventory(dataDir)).length)
+      throw new Error('Artifact cleanup readback failed');
+    await guardDatabaseUpgrade(handle.client);
+    await verifyDatabaseHead(handle.client);
+    const readback = await inspectDatabaseUpgrade(handle.client);
+    if (
+      readback.status !== 'current' ||
+      [
+        'runs',
+        'run_events',
+        'webhook_receipts',
+        'inbound_events',
+        'timers',
+        'harness_sessions',
+      ].some((name) => readback.tableCounts[name])
+    )
+      throw new Error('Committed store readback failed');
+    return {
+      ok: true,
+      command,
+      ...result,
+      planHash: plan.planHash,
+      backupDir,
+      deletedArtifactFiles: plan.artifactFiles.length,
+      disarmed: plan.disarm,
+      readback: 'verified',
+    };
+  } catch (error) {
+    throw new Error(
+      `Offline upgrade failed (${committed ? 'database committed; restore backup if cleanup/readback failed' : 'no cutover committed'}). Backup: ${backupDir ?? 'not created'}. ${error.message}`,
+      { cause: error },
+    );
   } finally {
     handle?.close();
     await lock.release();
@@ -262,10 +363,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
     const result = await runUpgrade(process.argv.slice(2));
     process.stdout.write(JSON.stringify(result) + '\n');
     if (!result.ok) process.exitCode = 2;
-  } catch {
-    process.stderr.write(
-      'Offline upgrade refused; preserve the backup and inspect the inventory/approved manifest.\n',
-    );
+  } catch (error) {
+    process.stderr.write(error.message + '\n');
     process.exitCode = 1;
   }
 }
