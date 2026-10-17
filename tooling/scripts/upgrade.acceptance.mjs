@@ -33,7 +33,10 @@ import {
   verifyDatabaseHead,
 } from '../../packages/infrastructure/dist/sqlite/index.js';
 import { FIXTURE_TS } from '../../packages/contracts/dist/testing/index.js';
-import { seedFormatThreeStore } from '../../packages/infrastructure/dist/sqlite/testing/format-three-store.js';
+import {
+  fixtureId,
+  seedFormatThreeStore,
+} from '../../packages/infrastructure/dist/sqlite/testing/format-three-store.js';
 import { LoopExportSchema } from '../../packages/contracts/dist/index.js';
 import { upgradeExportCurrent, upgradeExportV1 } from '../../packages/domain/dist/index.js';
 const executeCli = promisify(execFile);
@@ -188,12 +191,10 @@ test('format-3 export, inspect, verified backup, apply, startup admission, resto
     await mkdir(join(data, 'artifacts', 'transcript'), { recursive: true });
     await writeFile(join(data, 'artifacts', 'transcript', 'fixture'), 'historical transcript');
     await writeFile(join(data, 'master.key'), 'synthetic encryption material');
-    await mkdir(join(data, 'workspaces', 'run-fixture', 'nested'), { recursive: true });
-    await mkdir(join(data, 'workspaces', 'run-fixture', 'empty'));
-    await writeFile(
-      join(data, 'workspaces', 'run-fixture', 'nested', 'work.txt'),
-      'temporary run work',
-    );
+    const run = fixtureId('manual-run');
+    await mkdir(join(data, 'workspaces', run, 'nested'), { recursive: true });
+    await mkdir(join(data, 'workspaces', run, 'empty'));
+    await writeFile(join(data, 'workspaces', run, 'nested', 'work.txt'), 'temporary run work');
     for (const directory of ['fixed-user-work', 'templated-user-work']) {
       await mkdir(join(root, directory));
       await writeFile(join(root, directory, 'owner.txt'), 'keep user directory');
@@ -253,10 +254,7 @@ test('format-3 export, inspect, verified backup, apply, startup admission, resto
     assert.equal(result.deletedWorkspaceFiles, 1);
     assert.deepEqual(await readdir(join(data, 'workspaces')), []);
     assert.equal(
-      await readFile(
-        join(backup, 'data', 'workspaces', 'run-fixture', 'nested', 'work.txt'),
-        'utf8',
-      ),
+      await readFile(join(backup, 'data', 'workspaces', run, 'nested', 'work.txt'), 'utf8'),
       'temporary run work',
     );
     for (const directory of ['fixed-user-work', 'templated-user-work'])
@@ -382,7 +380,6 @@ const mixedReport = () => ({
           false,
         ),
         { ...reportItem('/e:automatic', 'automatic', 'automatic'), status: 'automatic' },
-        { ...reportItem('/f:resolved', 'resolved', 'resolved'), status: 'resolved' },
       ],
     },
     {
@@ -527,6 +524,150 @@ test('bulk merge preserves authored resolutions and every stage map, and existin
       { code: 'EEXIST' },
     );
     assert.equal(await readFile(out, 'utf8'), written);
+  }));
+
+test('resolved inspect reports require --merge and preserve the owner choices when supplied', () =>
+  temporary(async (root) => {
+    const data = join(root, 'data');
+    await mkdir(data);
+    const file = join(data, 'database.db');
+    await seed(file);
+    const reviewed = await reviewedPlan(root, data, file);
+    const report = join(root, 'resolved-inspect.json');
+    const out = join(root, 'next-resolutions.json');
+    const args = ['resolutions', '--from', report, '--approve-generated', '--out', out];
+    await assert.rejects(runUpgrade(args), /resolved owner choices.*--merge/);
+    await assert.rejects(access(out), { code: 'ENOENT' });
+    const result = await cli([...args, '--merge', reviewed.choices]);
+    assert.equal(result.approved, 0);
+    assert.deepEqual(result.unresolved, []);
+    assert.deepEqual(
+      JSON.parse(await readFile(out, 'utf8')),
+      JSON.parse(await readFile(reviewed.choices, 'utf8')),
+    );
+  }));
+
+test('bulk summaries count merged v1 and v2 answers in their own namespaces', () =>
+  temporary(async (root) => {
+    const older = {
+      ...original,
+      nodes: [
+        ...original.nodes,
+        {
+          id: 'script',
+          kind: 'script',
+          label: 'Script',
+          config: { command: 'echo ok', stdin: 'thread' },
+        },
+      ],
+    };
+    const v2 = {
+      schemaVersion: 2,
+      name: 'earlier-stage-exits',
+      nodes: [
+        original.nodes[0],
+        {
+          id: 'done',
+          kind: 'exit',
+          label: 'Done',
+          config: {
+            criteria: [
+              {
+                when: 'predicate',
+                strategy: 'expression',
+                jsonata: 'vars.ready',
+                outcome: 'success',
+              },
+              { when: 'predicate', strategy: 'codex', question: 'Done?', outcome: 'success' },
+            ],
+          },
+        },
+      ],
+      edges: [{ id: 'a', from: { node: 'start', port: 'out' }, to: { node: 'done' } }],
+    };
+    const definitions = [];
+    for (const loop of [older, v2]) {
+      const result = await upgradeExportCurrent({
+        format: 'graphgoblin-loop',
+        formatVersion: loop.schemaVersion,
+        exportedAt: FIXTURE_TS,
+        loop,
+      });
+      assert.equal(result.ok, false);
+      assert.ok(result.issues.every((issue) => issue.kind === 'pending'));
+      definitions.push({
+        id: 'version-' + loop.schemaVersion,
+        loopId: 'loop-' + loop.schemaVersion,
+        issues: result.issues,
+        reviewItems: result.reviewItems,
+      });
+    }
+    const report = join(root, 'inspect.json'),
+      merge = join(root, 'merge.json'),
+      out = join(root, 'selected.json');
+    await writeFile(report, JSON.stringify({ ...mixedReport(), definitions }));
+    const existing = {
+      'version-1': {
+        v1: {
+          ...resolutions,
+          opaqueConsumers: { script: { reason: 'Owner reviewed opaque input' } },
+        },
+      },
+      'version-2': {
+        v2: {
+          predicates: {
+            '/nodes/1/config/criteria/0': { jsonata: 'true' },
+            '/nodes/1/config/criteria/1': {
+              answer: {
+                type: 'noul',
+                true: { label: 'Done', criteria: 'Complete' },
+                false: { label: 'Pending', criteria: 'Work remains' },
+              },
+            },
+          },
+        },
+      },
+    };
+    await writeFile(merge, JSON.stringify(existing));
+    const args = [
+      'resolutions',
+      '--from',
+      report,
+      '--approve-generated',
+      '--merge',
+      merge,
+      '--out',
+      out,
+    ];
+    const result = await cli(args);
+    assert.equal(result.approved, 0);
+    assert.equal(
+      result.kept,
+      definitions.reduce((count, definition) => count + definition.issues.length, 0),
+    );
+    assert.deepEqual(result.unresolved, []);
+    assert.equal(result.byKind.UPGRADE_OPAQUE_CONSUMER_REVIEW_REQUIRED.kept, 1);
+    assert.equal(result.byKind.UPGRADE_EXIT_BOOLEAN_REQUIRED.kept, 1);
+    assert.equal(result.byKind.UPGRADE_EXIT_CRITERIA_REQUIRED.kept, 1);
+    assert.deepEqual(JSON.parse(await readFile(out, 'utf8')), existing);
+    // Identical keys in the wrong namespace do not answer earlier-stage items.
+    const wrong = Object.fromEntries(
+      definitions.map((definition) => [
+        definition.id,
+        {
+          v3: Object.fromEntries(
+            definition.issues.map((issue) => [
+              issue.path,
+              { hash: 'a'.repeat(64), action: 'approve', reason: 'Wrong stage' },
+            ]),
+          ),
+        },
+      ]),
+    );
+    await writeFile(merge, JSON.stringify(wrong));
+    const refused = await cli([...args.slice(0, -1), join(root, 'wrong-stage.json')]);
+    assert.equal(refused.kept, 0);
+    assert.equal(refused.unresolved.length, result.kept);
   }));
 
 test('bulk approval refuses malformed reports and merge namespaces without creating output', () =>
@@ -898,11 +1039,103 @@ test('refuses unresolved reviews, unused resolutions, changed plan/artifacts and
     await assert.rejects(verifyStoppedBackup(data, file, backup), /verification failed/);
   }));
 
+test('workspace cleanup deletes stored run IDs and reports other top-level user entries left in place', () =>
+  temporary(async (root) => {
+    const data = join(root, 'data');
+    const run = fixtureId('manual-run');
+    const left = ['fixed-user-work', 'orphan-run', 'owner.txt', 'templated-user-work'];
+    for (const name of [run, ...left.filter((name) => name !== 'owner.txt')]) {
+      await mkdir(join(data, 'workspaces', name), { recursive: true });
+      await writeFile(join(data, 'workspaces', name, 'work.txt'), name);
+    }
+    await writeFile(join(data, 'workspaces', 'owner.txt'), 'owner data');
+    const file = join(data, 'database.db');
+    await seed(file);
+    const source = openDatabase({ url: url(file) });
+    try {
+      for (const row of (await source.client.execute('SELECT id,definition FROM loop_versions'))
+        .rows) {
+        const definition = JSON.parse(row.definition);
+        if (!['manual', 'event'].includes(definition.name)) continue;
+        definition.settings.workingDirectory =
+          definition.name === 'manual'
+            ? { kind: 'fixed', path: join(data, 'workspaces', 'fixed-user-work') }
+            : {
+                kind: 'template',
+                template: join(data, 'workspaces', 'templated-user-work').replaceAll('\\', '/'),
+              };
+        await source.client.execute({
+          sql: 'UPDATE loop_versions SET definition=? WHERE id=?',
+          args: [JSON.stringify(definition), row.id],
+        });
+      }
+    } finally {
+      source.close();
+    }
+    const reviewed = await reviewedPlan(root, data, file);
+    assert.deepEqual(reviewed.plan.workspaceLeftInPlace, left);
+    assert.deepEqual(reviewed.first.workspaceLeftInPlace, left);
+    assert.deepEqual(
+      reviewed.plan.workspaceEntries.map((entry) => entry.path),
+      [run, run + '/work.txt'],
+    );
+    const result = await cli(['apply', ...reviewed.args, '--backup-dir', join(root, 'backup')]);
+    assert.equal(result.deletedWorkspaces, 1);
+    assert.deepEqual(result.workspaceLeftInPlace, left);
+    assert.deepEqual((await readdir(join(data, 'workspaces'))).sort(), left);
+    for (const name of left.filter((name) => name !== 'owner.txt'))
+      assert.equal(await readFile(join(data, 'workspaces', name, 'work.txt'), 'utf8'), name);
+    assert.equal(await readFile(join(data, 'workspaces', 'owner.txt'), 'utf8'), 'owner data');
+  }));
+
+test('inspect refuses a workspace FIFO without opening it', async (t) => {
+  if (process.platform === 'win32') {
+    t.skip('Windows cannot create FIFO fixtures');
+    return;
+  }
+  await temporary(async (root) => {
+    const data = join(root, 'data');
+    const workspace = join(data, 'workspaces', fixtureId('manual-run'));
+    await mkdir(workspace, { recursive: true });
+    const file = join(data, 'database.db');
+    await seed(file);
+    try {
+      await executeCli('mkfifo', [join(workspace, 'pipe')]);
+    } catch (error) {
+      if (!['ENOENT', 'ENOTSUP', 'EPERM', 'EACCES'].includes(error.code)) throw error;
+      t.skip('Platform cannot create FIFO fixtures: ' + error.code);
+      return;
+    }
+    const before = await readFile(file);
+    const out = join(root, 'inspect.json');
+    await assert.rejects(
+      executeCli(
+        process.execPath,
+        [
+          fileURLToPath(new URL('./upgrade.mjs', import.meta.url)),
+          'inspect',
+          '--data-dir',
+          data,
+          '--db-url',
+          url(file),
+          '--out',
+          out,
+        ],
+        { timeout: 5000, windowsHide: true },
+      ),
+      /Unsupported filesystem entry.*pipe/,
+    );
+    await assert.rejects(access(out), { code: 'ENOENT' });
+    assert.deepEqual(await readFile(file), before);
+  });
+});
+
 test('workspace inventory binds the plan, stays read-only, and a changed workspace refuses apply before deletion', () =>
   temporary(async (root) => {
     const data = join(root, 'data');
-    await mkdir(join(data, 'workspaces', 'run'), { recursive: true });
-    const work = join(data, 'workspaces', 'run', 'work.txt');
+    const run = fixtureId('manual-run');
+    await mkdir(join(data, 'workspaces', run), { recursive: true });
+    const work = join(data, 'workspaces', run, 'work.txt');
     await writeFile(work, 'original work');
     const file = join(data, 'database.db');
     await seed(file);
@@ -911,7 +1144,7 @@ test('workspace inventory binds the plan, stays read-only, and a changed workspa
     assert.equal(await readFile(work, 'utf8'), 'original work');
     assert.deepEqual(
       reviewed.plan.workspaceEntries.map((entry) => entry.path),
-      ['run', 'run/work.txt'],
+      [run, run + '/work.txt'],
     );
     await writeFile(work, 'changed work');
     await assert.rejects(
@@ -951,11 +1184,12 @@ test('workspace cleanup helper removes nested junctions as links and never trave
   temporary(async (root) => {
     const data = join(root, 'data'),
       user = join(root, 'user-workspace');
-    await mkdir(join(data, 'workspaces', 'run'), { recursive: true });
+    const run = fixtureId('manual-run');
+    await mkdir(join(data, 'workspaces', run), { recursive: true });
     await mkdir(user);
     await writeFile(join(user, 'keep.txt'), 'user-owned');
     const kind = process.platform === 'win32' ? 'junction' : 'dir';
-    await symlink(user, join(data, 'workspaces', 'run', 'linked-user-work'), kind);
+    await symlink(user, join(data, 'workspaces', run, 'linked-user-work'), kind);
     const file = join(data, 'database.db');
     await seed(file);
     const reviewed = await reviewedPlan(root, data, file);

@@ -44,9 +44,10 @@ function within(parent, child) {
   const rel = relative(parent, child);
   return rel === '' || (rel !== '..' && !rel.startsWith('..' + sep) && !isAbsolute(rel));
 }
-async function tree(path, prefix = '', skipLocks = true) {
+async function tree(path, prefix = '', skipLocks = true, topLevelNames) {
   const items = {};
   for (const entry of await readdir(path, { withFileTypes: true })) {
+    if (prefix === '' && topLevelNames && !topLevelNames.has(entry.name)) continue;
     if (
       skipLocks &&
       prefix === '' &&
@@ -59,7 +60,11 @@ async function tree(path, prefix = '', skipLocks = true) {
     else if (entry.isDirectory()) {
       items[key] = { directory: true };
       Object.assign(items, await tree(full, key, skipLocks));
-    } else items[key] = { sha256: hash(await readFile(full)) };
+    } else if (entry.isFile()) items[key] = { sha256: hash(await readFile(full)) };
+    else
+      throw new Error(
+        'Unsupported filesystem entry (expected regular file, link or directory): ' + full,
+      );
   }
   return Object.fromEntries(Object.entries(items).sort(([a], [b]) => a.localeCompare(b)));
 }
@@ -191,19 +196,26 @@ async function artifactInventory(dataDir) {
     throw error;
   }
 }
-async function workspaceInventory(dataDir) {
+async function workspaceInventory(dataDir, runIds) {
   const root = join(dataDir, 'workspaces');
   let info;
   try {
     info = await lstat(root);
   } catch (error) {
-    if (error?.code === 'ENOENT') return [];
+    if (error?.code === 'ENOENT') return { entries: [], leftInPlace: [] };
     throw error;
   }
   if (!info.isDirectory() || info.isSymbolicLink())
     throw new Error('Workspaces must be a physical directory');
   // A disappearing descendant is a changed inventory, never an empty subtree.
-  return Object.entries(await tree(root, '', false)).map(([path, entry]) => ({ path, ...entry }));
+  const leftInPlace = (await readdir(root)).filter((name) => !runIds.has(name)).sort();
+  return {
+    entries: Object.entries(await tree(root, '', false, runIds)).map(([path, entry]) => ({
+      path,
+      ...entry,
+    })),
+    leftInPlace,
+  };
 }
 /** Remove exactly the inventoried leaves, then their empty directories. No recursive deletion.
  * Check physical ancestors immediately before each mutation; nested links are removed as links. */
@@ -257,14 +269,27 @@ export async function cleanupWorkspaces(dataDir, entries) {
 async function inspectStore(client, dataDir, resolutions) {
   const inventory = await inspectDatabaseUpgrade(client, resolutions);
   const artifactFiles = inventory.status === 'current' ? [] : await artifactInventory(dataDir);
-  const workspaceEntries = inventory.status === 'current' ? [] : await workspaceInventory(dataDir);
+  const workspaceRunIds =
+    inventory.status !== 'current' && inventory.tableCounts.runs !== undefined
+      ? (await client.execute('SELECT id FROM runs ORDER BY id')).rows.map((row) => String(row.id))
+      : [];
+  const workspaces =
+    inventory.status === 'current'
+      ? { entries: [], leftInPlace: [] }
+      : await workspaceInventory(dataDir, new Set(workspaceRunIds));
+  const { entries: workspaceEntries, leftInPlace: workspaceLeftInPlace } = workspaces;
   return {
     ...inventory,
     format: 'graphgoblin-upgrade-inspection',
     targetVersion: CURRENT_DEFINITION_FORMAT,
     databasePlanHash: inventory.planHash,
     planHash: hash(
-      JSON.stringify({ databasePlanHash: inventory.planHash, artifactFiles, workspaceEntries }),
+      JSON.stringify({
+        databasePlanHash: inventory.planHash,
+        artifactFiles,
+        workspaceEntries,
+        workspaceLeftInPlace,
+      }),
     ),
     counts: {
       ...inventory.counts,
@@ -274,6 +299,8 @@ async function inspectStore(client, dataDir, resolutions) {
     },
     pendingByKind: pendingSummary(inventory.definitions),
     workspaceEntries,
+    workspaceRunIds,
+    workspaceLeftInPlace,
     artifactFiles,
   };
 }
@@ -312,7 +339,7 @@ export async function runUpgrade(argv) {
   if (command === 'resolutions') {
     const { resolutions: generated, summary } = generatedResolutions(
       await json(options.from),
-      options.merge ? await json(options.merge) : {},
+      options.merge ? await json(options.merge) : undefined,
     );
     await output(options.out, generated);
     return { ok: true, command, out: resolve(options.out), ...summary };
@@ -378,6 +405,7 @@ export async function runUpgrade(argv) {
         blockedReceipts: plan.blockedReceipts.length,
         disarm: plan.disarm.length,
         pendingByKind: plan.pendingByKind,
+        workspaceLeftInPlace: plan.workspaceLeftInPlace,
         planHash: plan.planHash,
       };
     }
@@ -389,6 +417,7 @@ export async function runUpgrade(argv) {
       return { ok: true, command, status: 'current', message: 'Nothing needs doing' };
     if (plan.blockedRuns.length || plan.blockedReceipts.length)
       throw new Error('Inspect reports ordinary blockers');
+    const workspaceRunIds = new Set(plan.workspaceRunIds);
     backupDir = resolve(options['backup-dir']);
     await assertLock();
     await backupStoppedData(dataDir, dbFile, backupDir);
@@ -405,8 +434,11 @@ export async function runUpgrade(argv) {
           )
             throw new Error('Artifact plan changed before commit');
           if (
-            JSON.stringify(await workspaceInventory(dataDir)) !==
-            JSON.stringify(plan.workspaceEntries)
+            JSON.stringify(await workspaceInventory(dataDir, workspaceRunIds)) !==
+            JSON.stringify({
+              entries: plan.workspaceEntries,
+              leftInPlace: plan.workspaceLeftInPlace,
+            })
           )
             throw new Error('Workspace plan changed before commit');
           await verifyStoppedBackup(dataDir, dbFile, backupDir, false);
@@ -417,10 +449,13 @@ export async function runUpgrade(argv) {
     await assertLock();
     if (JSON.stringify(await artifactInventory(dataDir)) !== JSON.stringify(plan.artifactFiles))
       throw new Error('Artifact files changed; database committed but cleanup is incomplete');
-    if (JSON.stringify(await workspaceInventory(dataDir)) !== JSON.stringify(plan.workspaceEntries))
+    if (
+      JSON.stringify(await workspaceInventory(dataDir, workspaceRunIds)) !==
+      JSON.stringify({ entries: plan.workspaceEntries, leftInPlace: plan.workspaceLeftInPlace })
+    )
       throw new Error('Workspace paths changed; database committed but cleanup is incomplete');
     await cleanupWorkspaces(dataDir, plan.workspaceEntries);
-    if ((await workspaceInventory(dataDir)).length)
+    if ((await workspaceInventory(dataDir, workspaceRunIds)).entries.length)
       throw new Error('Workspace cleanup readback failed');
     for (const file of plan.artifactFiles) await unlink(join(dataDir, 'artifacts', file.path));
     if ((await artifactInventory(dataDir)).length)
@@ -442,6 +477,7 @@ export async function runUpgrade(argv) {
       deletedArtifactFiles: plan.artifactFiles.length,
       deletedWorkspaces: plan.counts.workspaces,
       deletedWorkspaceFiles: plan.counts.workspaceFiles,
+      workspaceLeftInPlace: plan.workspaceLeftInPlace,
       disarmed: plan.disarm,
       readback: 'verified',
     };

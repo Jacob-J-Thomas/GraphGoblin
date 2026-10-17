@@ -14,7 +14,11 @@ export function pendingItems(definitions) {
     };
     const items = definition.reviewItems
       .filter((item) => item.status === 'pending')
-      .map((item) => ({ ...item, ...context }));
+      .map((item) => ({
+        ...item,
+        ...context,
+        resolutionLocations: [{ stage: 'v3', key: item.id }],
+      }));
     // Frozen v1/v2 stages can require authored input before any v3 proposal exists.
     const earlier = definition.issues.filter(
       (issue) => issue.kind === 'pending' && !items.some((item) => item.id === issue.id),
@@ -29,6 +33,7 @@ export function pendingItems(definitions) {
         hash: issue.hash,
         reason: issue.message,
         hasGeneratedProposal: false,
+        resolutionLocations: issue.resolutionLocations ?? [],
       })),
     ];
   });
@@ -41,7 +46,7 @@ export function pendingSummary(definitions) {
 }
 
 /** Preserve all supplied stage maps and authored choices. Apply still rechecks source hashes. */
-export function generatedResolutions(report, merged = {}) {
+export function generatedResolutions(report, merged) {
   if (
     !object(report) ||
     report.format !== 'graphgoblin-upgrade-inspection' ||
@@ -77,6 +82,16 @@ export function generatedResolutions(report, merged = {}) {
         );
   }
   if (
+    merged === undefined &&
+    report.definitions.some((definition) =>
+      definition.reviewItems.some((item) => item.status === 'resolved'),
+    )
+  )
+    throw new Error(
+      'Inspect report contains resolved owner choices; supply --merge with the resolutions used for inspect to preserve them',
+    );
+  if (merged === undefined) merged = {};
+  if (
     !object(merged) ||
     Object.values(merged).some((value) => validateUpgradeCurrentResolutions(value).length)
   )
@@ -92,7 +107,12 @@ export function generatedResolutions(report, merged = {}) {
       ? resolutions[item.versionId]
       : undefined;
     let action;
-    if (existing?.v3 && Object.hasOwn(existing.v3, item.id)) {
+    if (
+      item.resolutionLocations.some(({ stage, map, key }) => {
+        const entries = map ? existing?.[stage]?.[map] : existing?.[stage];
+        return object(entries) && Object.hasOwn(entries, key);
+      })
+    ) {
       action = 'kept';
       kept += 1;
     } else if (item.hasGeneratedProposal) {
