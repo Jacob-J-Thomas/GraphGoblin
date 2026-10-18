@@ -48,24 +48,31 @@ describe('context placement', () => {
               harness: 'codex',
               model: { mode: 'inherit' },
               effort: { mode: 'inherit' },
-              question: 'q',
+              instructions: 'q',
             };
       render(
         <SchemaForm
           schema={NodeConfigSchemas.decision}
-          value={{ answer, evaluation }}
+          value={{
+            ...evaluation,
+            ...(kind === 'classifier'
+              ? { answer }
+              : { routes: answer.options.map(({ id, label }) => ({ id, label })) }),
+          }}
           label="form"
           onChange={vi.fn()}
         />,
       );
-      expect(screen.getByLabelText('Question')).toBeVisible();
-      expect(screen.getByRole('group', { name: 'Options' })).toBeVisible();
+      expect(screen.getByLabelText(kind === 'llm' ? 'Instructions' : 'Question')).toBeVisible();
+      expect(
+        screen.getByRole('group', { name: kind === 'llm' ? 'Routes' : 'Options' }),
+      ).toBeVisible();
       expect(screen.getByRole('tab', { name: 'Context' })).toHaveAttribute(
         'aria-selected',
         'false',
       );
       if (kind === 'classifier') {
-        const field = document.querySelector('[data-field="evaluation.minConfidence"]')!;
+        const field = document.querySelector('[data-field="minConfidence"]')!;
         expect(field).not.toBeVisible();
         expect(field.closest('[data-disclosure-panel]')).not.toBeNull();
       } else {
@@ -81,14 +88,12 @@ describe('context placement', () => {
         schema={NodeConfigSchemas.decision}
         value={{
           answer,
-          evaluation: {
-            kind: 'classifier',
-            model: 'jev',
-            question: 'q',
-            context: { vars: ['bad value'] },
-          },
+          kind: 'classifier',
+          model: 'jev',
+          question: 'q',
+          context: { vars: ['bad value'] },
         }}
-        problems={['evaluation.context.vars.0', 'evaluation.question']}
+        problems={['context.vars.0', 'question']}
         label="form"
         onChange={vi.fn()}
       />,
@@ -96,7 +101,7 @@ describe('context placement', () => {
     expect(screen.getByRole('tab', { name: 'Context 1 set 1 error' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Settings 1 error' })).toBeInTheDocument();
     act(() => {
-      expect(focusField(screen.getByRole('form'), 'evaluation.context.vars.0')).toBe(true);
+      expect(focusField(screen.getByRole('form'), 'context.vars.0')).toBe(true);
     });
     expect(screen.getByRole('tab', { name: 'Context 1 set 1 error' })).toHaveAttribute(
       'aria-selected',

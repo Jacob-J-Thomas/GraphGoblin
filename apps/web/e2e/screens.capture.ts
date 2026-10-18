@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 /**
  * Screenshots of every screen and its main states at four widths in both themes (#41, #11).
  *
@@ -83,7 +84,7 @@ interface Screen {
 }
 
 const at = (x: number, y: number) => ({ x, y });
-const trigger = { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } };
+const trigger = { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } };
 
 function chain(name: string, description: string, middle: Record<string, unknown>[]) {
   const nodes: Record<string, unknown>[] = [{ ...trigger, ui: at(0, 80) }];
@@ -100,7 +101,7 @@ function chain(name: string, description: string, middle: Record<string, unknown
     from: { node: nodes[i]!['id'], port: 'out' },
     to: { node: node['id'] },
   }));
-  return { schemaVersion: 3, name, description, nodes, edges };
+  return { schemaVersion: CURRENT_DEFINITION_FORMAT, name, description, nodes, edges };
 }
 
 const ask = (id: string, label: string, template: string) => ({
@@ -120,11 +121,11 @@ function nightlyTriage(childLoopId: string) {
     ui: at(x, y),
   });
   return {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: 'nightly-triage',
     description: 'Triages new issues every night and opens a fix when one is needed',
     nodes: [
-      n('nightly', 'trigger', 'Nightly', { subtype: 'cron', expression: '0 2 * * 1-5' }, 0, 0),
+      n('nightly', 'trigger', 'Nightly', { type: 'cron', expression: '0 2 * * 1-5' }, 0, 0),
       n(
         'triage',
         'inference',
@@ -161,7 +162,7 @@ function nightlyTriage(childLoopId: string) {
         400,
       ),
       n('approve', 'wait', 'Approve merge', { mode: 'input', prompt: 'Merge the fix?' }, 260, 400),
-      n('done', 'exit', 'Done', { loopBack: { targetNodeId: 'triage' } }, 520, 400),
+      n('done', 'exit', 'Done', {}, 520, 400),
     ],
     edges: [
       { id: 'e1', from: { node: 'nightly', port: 'out' }, to: { node: 'triage' } },
@@ -173,7 +174,6 @@ function nightlyTriage(childLoopId: string) {
       { id: 'e7', from: { node: 'watch-ci', port: 'out' }, to: { node: 'approve' } },
       { id: 'e8', from: { node: 'record', port: 'out' }, to: { node: 'done' } },
       { id: 'e9', from: { node: 'approve', port: 'out' }, to: { node: 'done' } },
-      { id: 'e10', from: { node: 'done', port: 'loopBack' }, to: { node: 'triage' } },
     ],
   };
 }

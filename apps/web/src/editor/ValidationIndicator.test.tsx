@@ -21,9 +21,9 @@ const onPrep: EditorIssue = {
   nodeId: 'prep',
 };
 const onInfer: EditorIssue = {
-  code: 'CRITERION_ABOVE_CEILING',
+  code: 'GATE_PASSES_ABOVE_VISIT_CAP',
   severity: 'warning',
-  message: 'above the ceiling',
+  message: 'above the visit cap',
   nodeId: 'infer',
 };
 

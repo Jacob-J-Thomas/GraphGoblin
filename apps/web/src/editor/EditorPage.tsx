@@ -13,7 +13,6 @@ import {
   keys,
   useClassifierModels,
   useModelCatalog,
-  useTemplateInstance,
 } from '../api/queries.js';
 import { ErrorState } from '../components/status.js';
 import { Alert, Button, useSidePanelState } from '../components/ui/index.js';
@@ -69,19 +68,21 @@ export function EditorPage() {
     query,
     restoredGeneration,
     ready,
+    deviceWritable,
+    deviceReadError,
+    retryDeviceRead,
+    serverReconciled,
     setAside,
+    setAsideIsLate,
     rawCopies,
+    recoveryError,
     preservationBlocked,
+    conversionLoadFailed,
+    retryConversion,
     restoreSetAside,
     discardSetAside,
     discardRawCopy,
   } = useLoadEditor(loopId);
-  const templateInstance = useTemplateInstance(query.data?.templateInstanceId ?? '');
-  const qaParent =
-    templateInstance.data?.settings.kind === 'qa' &&
-    templateInstance.data.id === query.data?.templateInstanceId &&
-    templateInstance.data.ownerId === query.data?.loop.ownerId &&
-    templateInstance.data.parentLoopId === loopId;
   const definition = useEditorStore((s) => s.definition);
   const saveState = useEditorStore((s) => s.saveState);
   const saveMessage = useEditorStore((s) => s.saveMessage);
@@ -98,7 +99,11 @@ export function EditorPage() {
     PALETTE_STORAGE_KEY,
     palettePanelDefault,
   );
-  const flush = useAutosave(client, AUTOSAVE_DELAY_MS, ready && !preservationBlocked);
+  const flush = useAutosave(client, AUTOSAVE_DELAY_MS, {
+    enabled: ready && !preservationBlocked && !conversionLoadFailed,
+    deviceReady: deviceWritable,
+    serverReconciled,
+  });
   useUndoShortcuts();
   const conflict = useEditorStore((s) => s.conflict);
   const resolve = useResolveConflict(loopId, flush);
@@ -136,7 +141,13 @@ export function EditorPage() {
   // arrives after the first check is a change of state (unknown to known) and runs them once more.
   const serverCheck = useQuery({
     queryKey: keys.validation(loopId, draftKey, catalogState),
-    enabled: Boolean(definition) && saved && local.schemaValid && !classifiers.isPending,
+    enabled:
+      serverReconciled &&
+      !conflict &&
+      Boolean(definition) &&
+      saved &&
+      local.schemaValid &&
+      !classifiers.isPending,
     // Unknown catalogs cannot certify freshness, even if this request found no issues. Keep its
     // badges available, but check again on reopening or recovery instead of trusting that answer.
     staleTime: catalogsResolved ? Infinity : 0,
@@ -218,7 +229,10 @@ export function EditorPage() {
   >();
   // Where the edits are besides the server: on this device once the mirror write of this revision
   // succeeded, in this window only when device storage refused it (`save-status.ts`).
-  const storageProblem = useDeviceStorageProblem();
+  const reportedStorageProblem = useDeviceStorageProblem();
+  const storageProblem = deviceReadError
+    ? { kind: 'failed' as const, message: deviceReadError }
+    : reportedStorageProblem;
   const deviceRevision = useEditorStore((s) => s.deviceRevision);
   const device = deviceCopyOf(revision, deviceRevision, storageProblem);
   const notice = saveNotice(saveState, saveMessage, device);
@@ -229,32 +243,47 @@ export function EditorPage() {
     const { migrationIssues: _migrationIssues, source: _source, ...original } = copy;
     downloadJson(`${fileSlug(loopId)}-original-device-copy.json`, original);
   };
-  const rawCopyWarnings = rawCopies.map((copy, index) => (
-    <Alert
-      key={`${copy.source}-${copy.savedAt}-${index}`}
-      tone="warn"
-      title="This device copy could not be migrated safely"
-    >
-      Its original contents remain available on this device. The editor will not load it because
-      conversion found unresolved legacy data. Export the original JSON before deleting the device
-      copy if you need to recover it elsewhere.
-      <ul className="mt-2 list-disc pl-5">
-        {copy.migrationIssues.slice(0, 3).map((issue, issueIndex) => (
-          <li key={`${issue.code}-${issueIndex}`}>
-            <code>{issue.path || '/'}</code>: {issue.message}
-          </li>
-        ))}
-      </ul>
-      <span className="mt-2 flex flex-wrap gap-2">
-        <Button size="sm" variant="outline" onClick={() => exportRawCopy(copy)}>
-          {index === 0 ? 'Export original device copy' : `Export original device copy ${index + 1}`}
-        </Button>
-        <Button size="sm" variant="ghost" onClick={() => void discardRawCopy(copy)}>
-          Discard this device copy
-        </Button>
-      </span>
-    </Alert>
-  ));
+  const rawCopyWarnings = rawCopies.map((copy, index) => {
+    const backup = copy.migrationIssues[0]?.code === 'DEVICE_DRAFT_BACKUP';
+    return (
+      <Alert
+        key={`${copy.source}-${copy.savedAt}-${index}`}
+        tone="warn"
+        title={
+          backup
+            ? 'Saved device backup'
+            : copy.migrationIssues[0]?.code === 'UPGRADE_ARCHIVED_RAW_COPY'
+              ? 'Original device copy preserved'
+              : 'This device copy could not be migrated safely'
+        }
+      >
+        {backup
+          ? 'This saved device draft is kept as a backup. Export it before discarding it if you need to recover it later.'
+          : 'Its original contents remain available on this device as an inert copy. Export the original JSON before deleting the device copy if you need to recover it elsewhere.'}
+        {!backup ? (
+          <ul className="mt-2 list-disc pl-5">
+            {copy.migrationIssues.map((issue, issueIndex) => (
+              <li key={`${issue.code}-${issueIndex}`}>
+                <code>{issue.id ?? (issue.path || '/')}</code>: {issue.message}
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        <span className="mt-2 flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" onClick={() => exportRawCopy(copy)}>
+            {backup
+              ? 'Export device backup'
+              : index === 0
+                ? 'Export original device copy'
+                : `Export original device copy ${index + 1}`}
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => void discardRawCopy(copy)}>
+            Discard this device copy
+          </Button>
+        </span>
+      </Alert>
+    );
+  });
 
   // Pending and saving are transient parts of an edit. Keep a dismissal until saving settles on
   // a different state/message or a new editor load starts.
@@ -274,6 +303,20 @@ export function EditorPage() {
     [],
   );
 
+  if (conversionLoadFailed) {
+    return (
+      <main className="grid gap-3 p-page">
+        <Alert tone="warn" title="Device draft conversion could not load">
+          Your device copies are unchanged. Retry conversion or reload this page.
+          <span className="mt-2 flex gap-2">
+            <Button size="sm" variant="outline" onClick={retryConversion}>
+              Retry conversion
+            </Button>
+          </span>
+        </Alert>
+      </main>
+    );
+  }
   if (!ready) {
     if (query.isError && !isOfflineError(query.error))
       return <ErrorState error={query.error} what="Loop" />;
@@ -287,6 +330,7 @@ export function EditorPage() {
           Editing and autosave are paused because the original device copy could not be safely
           archived. Export it or discard the blocked copy, then reload the editor.
         </Alert>
+        {recoveryError ? <Alert tone="warn">{recoveryError}</Alert> : null}
         {rawCopyWarnings}
       </main>
     );
@@ -294,6 +338,7 @@ export function EditorPage() {
   if (!definition) {
     return (
       <main className="grid gap-3 p-page">
+        {recoveryError ? <Alert tone="warn">{recoveryError}</Alert> : null}
         {rawCopyWarnings.length > 0 ? (
           rawCopyWarnings
         ) : (
@@ -330,14 +375,28 @@ export function EditorPage() {
   };
 
   const notices = [
-    qaParent ? (
-      <Alert key="qa-isolation" tone="warn" title="QA execution is blocked">
-        Enforced evidence-only isolation is unavailable. Publishing this parent starts polling;
-        selected merges permanently consume merge and linked-issue attempts, even though runs stop
-        before checkout or a model turn. Keep it unpublished until enforced isolation is available.
+    ...rawCopyWarnings,
+    deviceReadError ? (
+      <Alert key="device-read" tone="warn" title="Device drafts could not be read">
+        Changes are saved to the server; this window keeps a copy only in memory until device
+        storage can be read.
+        <span className="mt-2 flex gap-2">
+          <Button size="sm" variant="outline" onClick={retryDeviceRead}>
+            Retry device read
+          </Button>
+        </span>
       </Alert>
     ) : null,
-    ...rawCopyWarnings,
+    !serverReconciled && !query.isError && !deviceReadError ? (
+      <Alert key="reconciling" tone="info">
+        The editor is available. Checking the server and this device before saving changes.
+      </Alert>
+    ) : null,
+    recoveryError ? (
+      <Alert key="recovery-error" tone="warn">
+        {recoveryError}
+      </Alert>
+    ) : null,
     showRestoredNotice ? (
       <Alert
         key="restored"
@@ -351,14 +410,19 @@ export function EditorPage() {
       </Alert>
     ) : null,
     setAside ? (
-      <Alert key="set-aside" tone="warn" title="The server has a newer draft">
-        This device has unsaved changes from {formatDateTime(setAside.savedAt)}, older than the
-        draft saved on the server since, which is shown.{' '}
+      <Alert
+        key="set-aside"
+        tone="warn"
+        title={setAsideIsLate ? 'Another device copy is available' : 'The server has a newer draft'}
+      >
+        {setAsideIsLate
+          ? `A different copy from ${formatDateTime(setAside.savedAt)} was found on this device after editing opened. Your current work is kept; choose whether to use that saved copy instead.`
+          : `This device has unsaved changes from ${formatDateTime(setAside.savedAt)}, older than the draft saved on the server since, which is shown.`}{' '}
         <span className="mt-2 flex flex-wrap gap-2">
           <Button size="sm" variant="outline" onClick={() => void restoreSetAside()}>
             Use this device&apos;s copy instead
           </Button>
-          <Button size="sm" variant="ghost" onClick={discardSetAside}>
+          <Button size="sm" variant="ghost" onClick={() => void discardSetAside()}>
             Discard it
           </Button>
         </span>
@@ -434,7 +498,6 @@ export function EditorPage() {
           <ValidationIndicator
             issues={validation.issues}
             definition={def}
-            {...(qaParent ? { readyLabel: 'Graph ready to publish; QA execution blocked' } : {})}
             check={
               serverCheck.isError || (!catalogsResolved && (models.isError || classifiers.isError))
                 ? 'error'

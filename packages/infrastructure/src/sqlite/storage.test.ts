@@ -147,6 +147,25 @@ describe('SqliteRunRepository', () => {
     );
   });
 
+  it('rolls back a failed ordinary transition and allows only one concurrent resume', async () => {
+    const repo = new SqliteRunRepository(handle.db);
+    const run = runRecord({ status: 'failed' });
+    await repo.create(run, sampleThread());
+    await handle.client.execute(
+      "CREATE TRIGGER refuse_resume BEFORE UPDATE ON runs BEGIN SELECT RAISE(ABORT,'injected'); END",
+    );
+    await expect(repo.transition(run.id, ['failed'], { status: 'queued' })).rejects.toThrow();
+    expect(await repo.get(run.id)).toEqual(run);
+    expect(await repo.getInitialThread(run.id)).toEqual(sampleThread());
+    await handle.client.execute('DROP TRIGGER refuse_resume');
+    const resumed = await Promise.all([
+      repo.transition(run.id, ['failed'], { status: 'queued' }),
+      repo.transition(run.id, ['failed'], { status: 'queued' }),
+    ]);
+    expect(resumed.filter((record) => record !== undefined)).toHaveLength(1);
+    expect(await repo.get(run.id)).toMatchObject({ status: 'queued' });
+  });
+
   it('lists terminal runs until their finalization is recorded', async () => {
     const repo = new SqliteRunRepository(handle.db);
     const run = runRecord();
@@ -198,8 +217,8 @@ describe('SqliteRunRepository', () => {
     old.close();
     const current = openDatabase({ url });
     try {
-      // Twelve shipped migrations minus this fixture's two historical ledger entries.
-      expect(await current.pendingMigrations()).toBe(10);
+      // Fourteen shipped migrations minus this fixture's two historical ledger entries.
+      expect(await current.pendingMigrations()).toBe(12);
       await expect(current.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
       await applyShippedSqlToHistoricalTestFixture(current);
       const repo = new SqliteRunRepository(current.db);
@@ -682,8 +701,8 @@ describe('migration 0003 model catalog max effort', () => {
     }
     const current = openDatabase({ url });
     try {
-      // Includes 0011_enable_claude_fable after the three historical catalog migrations.
-      expect(await current.pendingMigrations()).toBe(9);
+      // Includes 0013_trigger_configuration after the three historical catalog migrations.
+      expect(await current.pendingMigrations()).toBe(11);
       await expect(current.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
       await applyShippedSqlToHistoricalTestFixture(current);
       expect(await current.pendingMigrations()).toBe(0);
@@ -952,7 +971,7 @@ function kitchenSinkLoopReduced() {
   const loop = kitchenSinkLoop();
   return {
     ...loop,
-    settings: { maxIterations: 3 },
+    settings: { maxNodeVisits: 3 },
     nodes: loop.nodes
       .filter((n) => ['start', 'prep', 'done'].includes(n.id))
       .map((n) => (n.id === 'done' ? { ...n, config: {} } : n)),

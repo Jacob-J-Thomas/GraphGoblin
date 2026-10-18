@@ -85,7 +85,7 @@ describe('ClassifierModelsSection', () => {
     expect(row).toHaveTextContent('Choice / classificationNoulScore');
     expect(within(row).queryByRole('button')).not.toBeInTheDocument();
     expect(toggle).toHaveAccessibleDescription(
-      'Jev: Enabled Disabling Jev also stops Exit predicates that use Jev.',
+      'Jev: Enabled Disabling Jev also stops classifier decisions that use Jev.',
     );
     // Custom rows have their endpoint and both actions.
     const kev = rowOf('Kev 4B');

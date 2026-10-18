@@ -1,14 +1,14 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { DecisionConfigSchema, V2LoopDefinitionSchema } from '@graphgoblin/contracts';
-import { FIXTURE_TS, minimalLoop, sampleThread, FIXTURE_IDS } from '@graphgoblin/contracts/testing';
+import { V2DecisionConfigSchema, V2LoopDefinitionSchema } from '@graphgoblin/contracts';
+import { FIXTURE_TS, FIXTURE_IDS } from '@graphgoblin/contracts/testing';
+import { minimalLoopV3 as minimalLoop } from './__fixtures__/upgrade-v3.js';
 import {
   upgradeDefaultsV1,
   upgradeExportV1,
   upgradeLoopV1,
   validateUpgradeResolutions,
 } from './upgrade.js';
-import { upgradeDecisionFactV1, upgradeRunHistoryV1, upgradedFailure } from './upgrade-history.js';
 
 function oldLoop(strategy: string[] = ['codex'], jsonata = '"yes"') {
   const base = minimalLoop();
@@ -46,7 +46,7 @@ function oldLoop(strategy: string[] = ['codex'], jsonata = '"yes"') {
     ],
   };
 }
-const chosen = DecisionConfigSchema.parse({
+const chosen = V2DecisionConfigSchema.parse({
   answer: {
     type: 'choice',
     options: [
@@ -167,7 +167,7 @@ describe('offline v1 authoring conversion', () => {
       expect(JSON.stringify(original)).toBe(before);
     },
   );
-  it('refuses opaque script stdin until the exact version manifest approves its reviewed consumer', () => {
+  it('refuses opaque script stdin until an exact source resolution approves its reviewed consumer', () => {
     const old = oldLoop();
     const withScript = {
       ...old,
@@ -244,147 +244,7 @@ describe('offline v1 authoring conversion', () => {
   });
 });
 
-const oldFact = { route: 'yes', strategy: 'codex', confidence: 0.8 };
-const event = (seq: number, type: string, rest: Record<string, unknown>) => ({
-  seq,
-  type,
-  runId: FIXTURE_IDS.run,
-  ts: FIXTURE_TS,
-  ...rest,
-});
-const output = { nodeId: 'decide', at: FIXTURE_TS, value: oldFact };
-const oldEvents = [
-  event(1, 'run.queued', { initialThread: sampleThread() }),
-  event(2, 'node.started', { nodeId: 'decide', kind: 'decision', attempt: 1, configHash: 'x' }),
-  event(3, 'decision.made', {
-    nodeId: 'decide',
-    ...oldFact,
-    alternatives: [{ route: 'no', confidence: 0.2 }],
-    skipped: [{ strategy: 'jev', code: 'PROVIDER_UNAVAILABLE', message: 'Not configured' }],
-  }),
-  event(4, 'node.finished', {
-    nodeId: 'decide',
-    route: 'yes',
-    durationMs: 1,
-    patch: [
-      { op: 'add', path: '/outputs/decide', value: output },
-      { op: 'add', path: '/lastOutput', value: output },
-    ],
-  }),
-];
-describe('offline historical conversion', () => {
-  it('preserves diagnostic code/message/order and honest unknown provenance, never fabricates probabilities', () => {
-    const result = upgradeRunHistoryV1({
-      initialThread: sampleThread(),
-      events: oldEvents,
-      decisionNodeIds: ['decide'],
-    });
-    expect(result.ok).toBe(true);
-    if (!result.ok) throw new Error(JSON.stringify(result.issues));
-    const made = result.value.events.find((event) => event.type === 'decision.made');
-    expect(made).toMatchObject({
-      answer: { type: 'choice', optionId: 'yes', confidence: 0.8, probabilities: null },
-      portId: 'yes',
-      provenance: { kind: 'llm', provider: 'codex', model: null, effort: null },
-      diagnostics: [
-        {
-          code: 'PROVIDER_UNAVAILABLE',
-          message: 'Not configured',
-          provenance: { kind: 'classifier', model: null },
-        },
-      ],
-    });
-    expect(result.value.finalThread.outputs.decide?.value).toEqual(upgradeDecisionFactV1(oldFact));
-    const checkpoint = upgradeRunHistoryV1({
-      initialThread: sampleThread(),
-      events: oldEvents,
-      decisionNodeIds: ['decide'],
-      snapshot: result.value.finalThread,
-      snapshotSeq: 4,
-    });
-    expect(checkpoint.ok).toBe(true); // Already canonical JSON values are preserved without reinterpretation.
-    const oldSnapshot = {
-      ...result.value.finalThread,
-      outputs: { decide: output },
-      lastOutput: output,
-    };
-    expect(
-      upgradeRunHistoryV1({
-        initialThread: sampleThread(),
-        events: oldEvents,
-        decisionNodeIds: ['decide'],
-        snapshot: oldSnapshot,
-        snapshotSeq: 4,
-      }).ok,
-    ).toBe(true);
-  });
-  it('refuses malformed events, invalid checkpoint/origin/order and partial legacy writes', () => {
-    for (const events of [
-      [{}],
-      [...oldEvents, oldEvents[3]],
-      [
-        event(1, 'decision.made', {
-          nodeId: 'decide',
-          route: 'other',
-          strategy: 'bad',
-          skipped: [],
-        }),
-      ],
-    ])
-      expect(
-        upgradeRunHistoryV1({ initialThread: sampleThread(), events, decisionNodeIds: ['decide'] })
-          .ok,
-      ).toBe(false);
-    expect(
-      upgradeRunHistoryV1({ initialThread: sampleThread(), events: oldEvents, decisionNodeIds: [] })
-        .ok,
-    ).toBe(false);
-    expect(
-      upgradeRunHistoryV1({
-        initialThread: sampleThread(),
-        events: oldEvents,
-        decisionNodeIds: ['decide'],
-        snapshot: sampleThread(),
-        snapshotSeq: 4,
-      }).ok,
-    ).toBe(false);
-    const partial = [
-      ...oldEvents,
-      event(5, 'node.started', { nodeId: 'decide', kind: 'decision', attempt: 2, configHash: 'x' }),
-      event(6, 'node.finished', {
-        nodeId: 'decide',
-        durationMs: 0,
-        patch: [{ op: 'replace', path: '/lastOutput/value/route', value: 'no' }],
-      }),
-    ];
-    expect(
-      upgradeRunHistoryV1({
-        initialThread: sampleThread(),
-        events: partial,
-        decisionNodeIds: ['decide'],
-      }).ok,
-    ).toBe(false);
-  });
-  it('preserves existing failure details with an explicit approved replay disposition', () => {
-    expect(
-      upgradedFailure(
-        { code: 'OLD', message: 'error', resumable: true, details: { known: 1 } },
-        { approvedAt: FIXTURE_TS, reason: 'Decision semantics changed' },
-      ),
-    ).toMatchObject({
-      code: 'OLD',
-      message: 'error',
-      resumable: false,
-      details: {
-        original: { known: 1 },
-        upgrade: { version: 2, disposition: 'nonresumable-replay', approvedAt: FIXTURE_TS },
-      },
-    });
-    expect(() => upgradedFailure(null, { approvedAt: FIXTURE_TS, reason: 'x' })).toThrow();
-  });
-});
-
-describe('adversarial offline source and history boundaries', () => {
+describe('adversarial offline definition source boundaries', () => {
   it.each([
     '$',
     '$$',
@@ -456,7 +316,7 @@ describe('adversarial offline source and history boundaries', () => {
       bands: [{ id: 'yes', label: 'All', min: 0, max: 1 }],
     },
   ])('refuses reinterpretation of a v1 Choice as another primitive %j', (answer) => {
-    const replacement = DecisionConfigSchema.parse({
+    const replacement = V2DecisionConfigSchema.parse({
       answer,
       evaluation: { kind: 'classifier', model: 'jev', question: 'Q' },
     });
@@ -482,81 +342,8 @@ describe('adversarial offline source and history boundaries', () => {
       validateUpgradeResolutions({ opaqueConsumers: { script: { reason: 'Reviewed' } } }),
     ).toEqual([]);
   });
-  it('does not reinterpret arbitrary user JSON resembling an output or reject unrelated confidence writes', () => {
-    const initial = sampleThread();
-    const note = {
-      nodeId: 'decide',
-      value: { route: 'yes', strategy: 'expression', confidence: null },
-    };
-    initial.vars.note = note;
-    initial.invocation.trigger.payload = { note };
-    initial.messages = [
-      {
-        id: 'message',
-        role: 'user',
-        content: JSON.stringify(note),
-        nodeId: 'start',
-        ts: FIXTURE_TS,
-      },
-    ];
-    initial.lastOutput = { nodeId: 'worker', value: { confidence: 0.1 }, at: FIXTURE_TS };
-    const events = [
-      event(1, 'node.started', {
-        nodeId: 'worker',
-        kind: 'inference',
-        attempt: 1,
-        configHash: 'x',
-      }),
-      event(2, 'node.finished', {
-        nodeId: 'worker',
-        durationMs: 0,
-        patch: [
-          { op: 'replace', path: '/lastOutput/value/confidence', value: 0.2 },
-          { op: 'add', path: '/vars/second', value: note },
-        ],
-      }),
-    ];
-    const result = upgradeRunHistoryV1({
-      initialThread: initial,
-      events,
-      decisionNodeIds: ['decide'],
-    });
-    expect(result.ok).toBe(true);
-    if (!result.ok) throw new Error(JSON.stringify(result.issues));
-    expect(result.value.initialThread.vars.note).toEqual(note);
-    expect(result.value.initialThread.invocation.trigger.payload).toEqual({ note });
-    expect(result.value.finalThread.vars.second).toEqual(note);
-    expect(result.value.finalThread.lastOutput?.value).toEqual({ confidence: 0.2 });
-  });
-  it('preserves factual DECISION_NO_ROUTE and refuses missing checkpoint proof', () => {
-    const failure = {
-      code: 'DECISION_NO_ROUTE',
-      message: 'No strategy produced a route',
-      resumable: true,
-    };
-    const result = upgradeRunHistoryV1({
-      initialThread: sampleThread(),
-      events: [event(1, 'run.failed', { failure })],
-      decisionNodeIds: ['decide'],
-    });
-    expect(result.ok).toBe(true);
-    if (result.ok) expect(result.value.events[0]).toMatchObject({ failure });
-    expect(
-      upgradedFailure(failure, { approvedAt: FIXTURE_TS, reason: 'Owner approves replay' }),
-    ).toMatchObject({ ...failure, resumable: false });
-    for (const snapshotSeq of [undefined, -1, 5]) {
-      expect(
-        upgradeRunHistoryV1({
-          initialThread: sampleThread(),
-          events: oldEvents,
-          decisionNodeIds: ['decide'],
-          snapshot: { ...sampleThread(), vars: { unknown: 'cache' } },
-          ...(snapshotSeq !== undefined ? { snapshotSeq } : {}),
-        }).ok,
-      ).toBe(false);
-    }
-  });
 });
+
 describe('opaque subloop result references at offline cutover', () => {
   const parent = (source: string) => {
     const old = oldLoop();

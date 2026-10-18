@@ -1,3 +1,7 @@
+import type { NodeInput } from '@graphgoblin/contracts';
+
+type TriggerInput = Extract<NodeInput, { kind: 'trigger' }>['config'];
+
 export const GITHUB_TRIGGER_PRESETS = [
   { id: 'issues-labeled', label: 'Webhook: issue gets a label' },
   { id: 'pull-request-ready', label: 'Webhook: pull request opened or marked ready' },
@@ -45,16 +49,18 @@ function repositoryFilter(setup: GitHubTriggerSetup): string {
   return `repository.full_name = ${jsonataString(`${setup.owner.trim()}/${setup.repository.trim()}`)}`;
 }
 
-function bodyWebhook(filter: string, setup: GitHubTriggerSetup): Record<string, unknown> {
+function bodyWebhook(setup: GitHubTriggerSetup): TriggerInput {
   return {
-    subtype: 'webhook',
-    signature: {
-      scheme: 'hmac-sha256-body',
+    type: 'webhook',
+    authentication: {
+      type: 'hmac-sha256',
+      message: 'body',
       header: 'x-hub-signature-256',
       secretRef: setup.secretRef.trim(),
     },
+    body: { type: 'json' },
+    eventType: { source: 'header', name: 'x-github-event', fallback: 'webhook' },
     dedupeKey: '$headers."x-github-delivery"',
-    filter,
   };
 }
 
@@ -70,37 +76,34 @@ function githubIssuePollProgram(endpoint: string): string {
   ].join('');
 }
 
-/** The preset is only a starting config; the editor keeps every generated value editable. */
+/** Body-only check over the engine's thread view; decisions must return a declared route ID. */
+export function githubEventCheck(
+  preset: Exclude<GitHubTriggerPreset, 'issues-poll'>,
+  setup: GitHubTriggerSetup,
+): string {
+  const repository = repositoryFilter(setup);
+  const check =
+    preset === 'issues-labeled'
+      ? `${repository} and action = "labeled" and $exists(issue) and $not($exists(issue.pull_request)) and label.name = ${jsonataString(setup.label.trim())}`
+      : preset === 'pull-request-ready'
+        ? `${repository} and action in ["opened", "ready_for_review"] and $exists(pull_request) and pull_request.draft = false and pull_request.base.ref = ${jsonataString(setup.baseBranch.trim())}`
+        : `${repository} and action = "closed" and $exists(pull_request) and pull_request.merged = true and pull_request.base.ref = ${jsonataString(setup.baseBranch.trim())}`;
+  return `invocation.trigger.payload.(${check}) ? "pass" : "ignore"`;
+}
+
+/** Webhooks also need the editable downstream fragment built by previewGitHubPreset. */
 export function makeGitHubTriggerPreset(
   preset: GitHubTriggerPreset,
   setup: GitHubTriggerSetup,
-): Record<string, unknown> {
-  const repository = repositoryFilter(setup);
-  if (preset === 'issues-labeled') {
-    return bodyWebhook(
-      `${repository} and action = "labeled" and $exists(issue) and $not($exists(issue.pull_request)) and label.name = ${jsonataString(setup.label.trim())}`,
-      setup,
-    );
-  }
-  if (preset === 'pull-request-ready') {
-    return bodyWebhook(
-      `${repository} and action in ["opened", "ready_for_review"] and $exists(pull_request) and pull_request.draft = false and pull_request.base.ref = ${jsonataString(setup.baseBranch.trim())}`,
-      setup,
-    );
-  }
-  if (preset === 'pull-request-merged') {
-    return bodyWebhook(
-      `${repository} and action = "closed" and $exists(pull_request) and pull_request.merged = true and pull_request.base.ref = ${jsonataString(setup.baseBranch.trim())}`,
-      setup,
-    );
-  }
+): TriggerInput {
+  if (preset !== 'issues-poll') return bodyWebhook(setup);
 
   const owner = setup.owner.trim();
   const repo = setup.repository.trim();
   const label = encodeURIComponent(setup.label.trim());
   const endpoint = `repos/${owner}/${repo}/issues?state=open&labels=${label}&per_page=100`;
   return {
-    subtype: 'poll',
+    type: 'poll',
     intervalSeconds: 60,
     probe: {
       kind: 'script',
@@ -122,12 +125,13 @@ export function makeGitHubTriggerPreset(
 export function unsupportedSigningScheme(config: unknown): string | undefined {
   if (typeof config !== 'object' || config === null || Array.isArray(config)) return undefined;
   const trigger = config as Record<string, unknown>;
-  if (trigger['subtype'] !== 'webhook') return undefined;
-  const signature = trigger['signature'];
-  if (typeof signature !== 'object' || signature === null || Array.isArray(signature))
-    return undefined;
-  const scheme = (signature as Record<string, unknown>)['scheme'];
-  if (typeof scheme !== 'string' || scheme === 'hmac-sha256' || scheme === 'hmac-sha256-body')
-    return undefined;
-  return scheme;
+  if (trigger['type'] !== 'webhook') return undefined;
+  const auth = trigger['authentication'];
+  if (typeof auth !== 'object' || auth === null || Array.isArray(auth)) return undefined;
+  const { type, message } = auth as Record<string, unknown>;
+  if (typeof type !== 'string' || type === 'none') return undefined;
+  if (type !== 'hmac-sha256') return type;
+  return typeof message === 'string' && message !== 'body' && message !== 'timestamp-body'
+    ? message
+    : undefined;
 }

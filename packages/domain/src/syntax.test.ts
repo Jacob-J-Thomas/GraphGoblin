@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { describe, expect, it } from 'vitest';
 import {
   LoopDefinitionSchema,
@@ -10,10 +11,10 @@ import { findAuthoredSources, syntaxIssues } from './syntax.js';
 
 function loop(nodes: LoopDefinitionInput['nodes'], settings?: LoopDefinitionInput['settings']) {
   return LoopDefinitionSchema.parse({
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: 'syntax',
     nodes: [
-      { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+      { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
       ...nodes,
       { id: 'done', kind: 'exit', label: 'Done', config: {} },
     ],
@@ -118,6 +119,9 @@ describe('syntax checks', () => {
           kind: 'decision',
           label: 'Question',
           config: {
+            kind: 'classifier',
+            model: 'jev',
+            question: '{{ broken',
             answer: {
               type: 'choice',
               options: [
@@ -125,7 +129,6 @@ describe('syntax checks', () => {
                 { id: 'b', label: 'B', criteria: 'B' },
               ],
             },
-            evaluation: { kind: 'classifier', model: 'jev', question: '{{ broken' },
           },
         },
         {
@@ -133,14 +136,12 @@ describe('syntax checks', () => {
           kind: 'decision',
           label: 'Pick',
           config: {
-            answer: {
-              type: 'choice',
-              options: [
-                { id: 'a', label: 'a', criteria: 'A' },
-                { id: 'b', label: 'b', criteria: 'B' },
-              ],
-            },
-            evaluation: { kind: 'expression', jsonata: '1 +' },
+            kind: 'expression',
+            jsonata: '1 +',
+            routes: [
+              { id: 'a', label: 'a', criteria: 'A' },
+              { id: 'b', label: 'b', criteria: 'B' },
+            ].map(({ id, label }) => ({ id, label })),
           },
         },
         {
@@ -182,8 +183,8 @@ describe('syntax checks', () => {
     expect(issues.map((i) => i.path)).toEqual([
       'settings.workingDirectory.template',
       'config.prompt.template',
-      'config.evaluation.question',
-      'config.evaluation.jsonata',
+      'config.question',
+      'config.jsonata',
       'config.args.1',
       'config.input.vars.a',
       'config.operations.0.content',
@@ -199,14 +200,13 @@ describe('syntax checks', () => {
     expect(findAuthoredSources(NodeConfigSchemas.exit, null)).toEqual([]);
     expect(
       findAuthoredSources(NodeConfigSchemas.exit, {
-        return: { mapping: 'none', channels: [] },
+        returns: 'none',
+        destinations: [],
       }),
     ).toEqual([]);
-    expect(findAuthoredSources(NodeConfigSchemas.exit, { return: { mapping: '$.a' } })).toEqual([
-      { kind: 'expression', source: '$.a', path: 'return.mapping' },
+    expect(findAuthoredSources(NodeConfigSchemas.exit, { returns: '$.a' })).toEqual([
+      { kind: 'expression', source: '$.a', path: 'returns' },
     ]);
-    expect(findAuthoredSources(NodeConfigSchemas.exit, { criteria: [{ when: 'bogus' }] })).toEqual(
-      [],
-    );
+    expect(findAuthoredSources(NodeConfigSchemas.exit, { returns: 42 })).toEqual([]);
   });
 });

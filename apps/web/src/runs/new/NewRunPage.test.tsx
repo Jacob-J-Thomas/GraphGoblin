@@ -18,7 +18,7 @@ function withInput(name: string, label = 'Start'): LoopDefinitionInput {
         kind: 'trigger',
         label,
         config: {
-          subtype: 'manual',
+          type: 'manual',
           inputSchema: {
             type: 'object',
             properties: { repo: { type: 'string' }, limit: { type: 'integer' } },
@@ -30,7 +30,7 @@ function withInput(name: string, label = 'Start'): LoopDefinitionInput {
         id: 'cron',
         kind: 'trigger',
         label: 'Nightly',
-        config: { subtype: 'cron', expression: '0 2 * * *', timezone: 'UTC' },
+        config: { type: 'cron', expression: '0 2 * * *', timezone: 'UTC' },
       },
       { id: 'done', kind: 'exit', label: 'Done', config: {} },
     ],
@@ -155,7 +155,7 @@ describe('New run', () => {
       id: 'quick',
       kind: 'trigger',
       label: 'Quick',
-      config: { subtype: 'manual' },
+      config: { type: 'manual' },
     });
     twoStarts.edges.push({
       id: 'e3',
@@ -219,7 +219,7 @@ describe('New run', () => {
             id: 'start',
             kind: 'trigger',
             label: 'Nightly',
-            config: { subtype: 'cron', expression: '0 2 * * *', timezone: 'UTC' },
+            config: { type: 'cron', expression: '0 2 * * *', timezone: 'UTC' },
           },
           { id: 'done', kind: 'exit', label: 'Done', config: {} },
         ],

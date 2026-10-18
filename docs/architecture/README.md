@@ -67,7 +67,7 @@ flowchart TB
 | `apps/web`                | api-client, contracts, domain, React, TanStack Query, Zustand, xyflow, `idb-keyval` | Editor, run inspector, settings, PWA                                                                                                                                   |
 | `apps/plugin-codex`       | `zod`                                                                               | Assembles the Codex plugin: MCP registration plus skills (`apps/plugin-codex/src/assemble.ts:69`)                                                                      |
 
-Layer direction is enforced by `pnpm check:layers` and dependency-cruiser (AGENTS.md). Each package exposes a `development` export condition pointing at TypeScript source, so tests and lint never need `dist/` (`packages/contracts/package.json:9`). The engine composition root is `apps/api`: `createContainer` opens the database, wires every engine port and the template runtime, and returns `start`/`stop` (`apps/api/src/container.ts:178`). The web app is a client of its REST API; the MCP server runs as its own process with a stdio or Streamable HTTP entry (`apps/mcp/src/main.ts:35`, `apps/mcp/src/main.ts:67`, `apps/mcp/src/main.ts:73`) calling the same API; the Codex plugin registers it.
+Layer direction is enforced by `pnpm check:layers` and dependency-cruiser (AGENTS.md). Each package exposes a `development` export condition pointing at TypeScript source, so tests and lint never need `dist/` (`packages/contracts/package.json:9`). The engine composition root is `apps/api`: `createContainer` opens the database, wires every engine port and the draft catalogue, and returns `start`/`stop` (`apps/api/src/container.ts:178`). The web app is a client of its REST API; the MCP server runs as its own process with a stdio or Streamable HTTP entry (`apps/mcp/src/main.ts:35`, `apps/mcp/src/main.ts:67`, `apps/mcp/src/main.ts:73`) calling the same API; the Codex plugin registers it.
 
 Note on placement: the Claude Code harness lives in `packages/infrastructure/src/claude` rather than an `adapter-claude` package, because it has no npm dependency (it spawns the user-installed CLI, ADR-0023). `docs/02-architecture.md:16` and `docs/02-architecture.md:76` still describe Codex as the only harness; see register item D26.
 
@@ -137,8 +137,8 @@ classDiagram
 - **Context thread**: the shared state every node reads and patches with RFC 6902 JSON Patch (`packages/contracts/src/thread.ts:129`).
 - **Runs**: eight statuses, four terminal (`packages/contracts/src/run.ts:11`); a wait spec records the visit that parked it in `startedSeq` (`packages/contracts/src/run.ts:97`).
 - **Events**: 25 run event types in one discriminated union (`packages/contracts/src/events.ts:240`): run lifecycle, `iteration.incremented`, node start/finish/progress, harness session/usage, `decision.made`, `exit.evaluated`, signals, inputs, heartbeats and return delivery.
-- **Templates** (to be retired by #165): `packages/contracts/src/template-settings.ts:172` and `packages/contracts/src/template-manifest.ts:149`.
-- **Frozen v2 schemas** for offline conversion are re-exported from the root entry (`packages/contracts/src/upgrade-v2.ts:1`, generated under `packages/contracts/src/generated/upgrade-v2`).
+- **Templates**: catalogue and ordinary-draft DTOs in `packages/contracts/src/template-manifest.ts`; configured settings, bundle, instance, prerequisite and instantiate DTOs/exports are removed (#165 step 09).
+- **Frozen v2 and v3 schemas** for offline conversion are re-exported from the root entry (`packages/contracts/src/upgrade-v2.ts:1` and `packages/contracts/src/upgrade-v3.ts:1`, generated under `packages/contracts/src/generated/upgrade-v2` and `upgrade-v3`). The v3 capture was added after this snapshot, from `12e5b87`, in preparation for format 4; runtime admission still uses current contracts.
 
 ## 3. SQLite schema and migration history
 
@@ -155,7 +155,6 @@ erDiagram
   loop_versions ||--o{ webhook_endpoints : arms
   webhook_endpoints ||--o{ webhook_receipts : consumes
   inbound_events ||--o| webhook_receipts : records
-  template_instances |o--o{ runs : "binds (template_subject)"
   runs |o--o{ runs : "parent_run_id"
 ```
 
@@ -175,8 +174,9 @@ Relationships are logical (`runs.parent_run_id` links subloop children, `package
 | 0009 | `packages/infrastructure/drizzle/0009_templates.sql:1`                    | `template_instances` (instance and binding JSON), `runs.template_subject`, five partial unique indexes over the subject JSON (issue attempt, QA merge, PR head, active PR, child visit) (ADR-0027)                                                                                                                 |
 | 0010 | `packages/infrastructure/drizzle/0010_qa_issue_attempt.sql:3`             | One more partial unique index: one QA rework decision per issue attempt                                                                                                                                                                                                                                            |
 | 0011 | `packages/infrastructure/drizzle/0011_enable_claude_fable.sql:1`          | Enables the Fable catalog row once after billing was removed (ADR-0029)                                                                                                                                                                                                                                            |
+| 0012 | `packages/infrastructure/drizzle/0012_retire_template_instances.sql:1`    | Drops the six template subject expression indexes, `runs.template_subject` with its inline CHECK, and `template_instances` including its owner index. Ordinary tables, rows, columns, checks and indexes remain.                                                                                                   |
 
-Drizzle's snapshot files stop at `0008_snapshot.json` (no snapshot for 0007, 0009, 0010 or 0011); 0003, 0005, 0007 and 0009 to 0011 are hand-written SQL. Running `drizzle-kit generate` on an unchanged schema emits a new migration that re-creates `template_instances` (Observed, register D12).
+`0012_snapshot.json` is the authoritative Drizzle baseline after 0000-0012; the historical `0011_snapshot.json` preserves the pre-retirement shape. `pnpm check:migrations` generates into a temporary copy and requires a no-op; CI runs the same gate. Historical SQL and ledger entries are unchanged; 0012 adds its own journal entry and snapshot.
 
 ### Billing removal (#159) and what is left
 
@@ -196,21 +196,28 @@ PR #178 (commit `21eec52`) removed `billingMode` and `billingStatus` from the Cl
 ```mermaid
 flowchart LR
   start[API start] --> guard{guardDatabaseUpgrade}
-  guard -- no tables --> fresh[Drizzle migrate, then stamp format 3]
-  guard -- marker format 3 complete and structure ready --> current[Drizzle migrate, recover, arm]
+  guard -- no tables --> fresh[Schema, ledger and format 4 marker in one transaction]
+  guard -- marker format 4 complete, 0012 applied and structure ready --> current[Drizzle migrate, recover, arm]
   guard -- anything else --> refuse[DATA_UPGRADE_REQUIRED]
   refuse --> tool[pnpm graphgoblin-upgrade on the stopped data dir]
   tool --> inventory[inventory: read-only, issues + manifest draft] --> manifest[owner-approved manifest] --> apply[apply: backup + hash verify] --> convert[transactional conversion]
 ```
 
-- **Guard** (`packages/infrastructure/src/sqlite/upgrade.ts:92`): an empty store is fresh; otherwise it requires exactly one `gg_upgrade_state` row with `format_version` 3 and status `complete` (`packages/infrastructure/src/sqlite/upgrade.ts:107`), checks the 0008 structure by column, index, ledger timestamp and constraint text (`packages/infrastructure/src/sqlite/upgrade.ts:111` to `packages/infrastructure/src/sqlite/upgrade.ts:178`), and parses every stored loop version with the current schema (`packages/infrastructure/src/sqlite/upgrade.ts:181`). The container calls it on a read-only client first, then again on the real handle (`apps/api/src/container.ts:200`, `apps/api/src/container.ts:232`), and `migrate()` calls it once more before Drizzle migrations (`packages/infrastructure/src/sqlite/db.ts:198`).
-- **Fresh stores**: Drizzle commits the migrations, then a separate step creates and fills the marker table (`packages/infrastructure/src/sqlite/db.ts:201`, `packages/infrastructure/src/sqlite/upgrade.ts:208`). An interruption between them leaves a store that the next start refuses (Observed, #152, register D4).
-- **Inspect** (`packages/infrastructure/src/sqlite/upgrade.ts:231`) reads every table into memory, runs the domain converter for each version, and reports refusals such as `UPGRADE_ORPHAN_RUN_VERSION` (`packages/infrastructure/src/sqlite/upgrade.ts:342`), nonterminal runs and failed runs that need a replay-only disposition.
-- **Apply** (`packages/infrastructure/src/sqlite/upgrade.ts:549`): one write transaction runs the remaining migrations itself, converts every version, archives the manifest and the original rows of seven selected tables (versions, runs, events, settings, endpoints, inbound events, receipts) into `gg_upgrade_archive` (`packages/infrastructure/src/sqlite/upgrade.ts:575`), rewrites webhook dedupe keys, converts each run's history, converts owner defaults, writes the marker (`packages/infrastructure/src/sqlite/upgrade.ts:737`), re-runs the guard and re-parses every event and run before committing.
-- **Frozen stages in domain**: `upgradeLoopV1` reads a frozen v1 JSON schema captured from commit `2f98219` (`packages/domain/src/upgrade-v1-schema.ts:1`); `upgradeLoopCurrent` composes v1 to v2 with v2 to v3 exit conversion (`packages/domain/src/upgrade-current.ts:94`); history conversion is `upgradeRunHistoryCurrent` (`packages/domain/src/upgrade-history-current.ts:93`). The web app uses the same converter for device drafts (`apps/web/src/editor/useLoadEditor.ts:43`).
+- **Current format**: `CURRENT_DEFINITION_FORMAT` in contracts is the single current definition/export/storage format (4). Frozen v2/v3 schemas and conversion stages retain their historical literals.
+- **Readiness** (`packages/infrastructure/src/sqlite/readiness.ts`): `FORMAT_BASELINES` binds the current format to its required SQL baseline (format 4: `0012_retire_template_instances`; historical format 3: `0008_github_triggers`). Baseline and head catalogues are derived by executing shipped SQL in disposable in-memory databases, including named checks, index expressions, drops and `IF NOT EXISTS`. Before writes, admission requires the complete current marker, a timestamp-ordered prefix of the shipped ledger containing the baseline, baseline structure, consistent signing/default data and strict current definitions. Applied SQL hashes are informational, as in Drizzle; older hashes of edited SQL do not force an offline upgrade. Drizzle then applies pending additive/data migrations normally. A post-migration check requires the full head structure and the complete timestamp ledger; a claimed format-4 store whose ledger stops before 0012 is refused without applying it. No second list of baseline tables or migration timestamps is maintained.
+- **Startup guard**: the API preflights before master-key creation, migrations, seeding or recovery. `migrate()` repeats marker, ledger and structure checks before writes and checks the full head afterwards. Only the definition parse is reused, and only for a preflight whose database file resolves inside the locked data directory. A `GG_DB_URL` outside it is reparsed before startup writes. Fresh initialization still rechecks emptiness under the write lock to prevent a competing initializer from authenticating an unmarked store.
+- **Fresh stores**: schema, ledger and current-format marker commit in one transaction through `initializeFreshDatabase` (step 02, #152).
+- **Inspect**: keyset reads use 500-row batches; canonical JSON spills merge in passes with at most 63 input files plus one output file and a binary heap, preserving UTF-16 order and the original whole-store hash. Run, orphan-event, pending-receipt and inbound-delivery issues preserve the old canonical row order. Inbound provenance projects only needed columns and streams batches; lookup Maps avoid repeated scans. Definitions, endpoint/default provenance, projected webhook-run identities and initial threads, pending receipt identities and returned issues/rewritten keys remain resident. Histories use indexed run reads. This bounds event-table memory for the owner-sized store, not a single enormous run or all possible provenance sets.
+- **Template cutover ownership**: steps 26-28 delete configured template instances, their loops, versions, all their runs and dependents before SQL 0012, without an archive. The offline converter still refuses format-3 conversion until those shared stages land; step 09 adds no conversion. Startup never runs 0012 on an older store.
+- **Apply**: one write transaction validates the approved manifest and source hash, archives original rows in batches, applies migrations, converts definitions and one indexed run history at a time, rewrites proven webhook keys and validates the full head before commit. Every referenced rewritten-key run must be visited; a vanished linked run refuses and rolls back. Native statement finalizers receive event-loop turns between batches/runs without releasing the transaction.
+- **Frozen stages in domain**: `upgradeLoopV1` reads a frozen v1 JSON schema captured from commit `2f98219` (`packages/domain/src/upgrade-v1-schema.ts:1`); `upgradeLoopCurrent` composes v1 to v2 with v2 to v3 exit conversion (`packages/domain/src/upgrade-current.ts:94`); history conversion is `upgradeRunHistoryCurrent` (`packages/domain/src/upgrade-history-current.ts:93`). The v2-to-v3 stages now validate against the frozen v3 capture, including the syntax walk, rather than changing current schemas. The web app uses the same converter for device drafts (`apps/web/src/editor/useLoadEditor.ts:43`).
 - **Tooling**: `inventory` opens the stopped store read-only and takes no backup (`tooling/scripts/upgrade.mjs:192`); `apply` first backs up the stopped directory with hash verification (`tooling/scripts/upgrade.mjs:185`, `tooling/scripts/upgrade.mjs:72`), then converts; `pnpm test:upgrade` runs its acceptance script in CI.
 
-Format 4 (#164, #165, #168 on one integration branch) will add a v3 to v4 stage beside these, a new marker value, and a history pass for decision and exit evidence, template subjects and trigger configuration.
+The frozen format-2 parsers (`packages/contracts/src/generated/upgrade-v2`, captured by `tooling/scripts/freeze-upgrade-v2.mjs`) have a format-3 capture beside them (`generated/upgrade-v3`, captured by `tooling/scripts/freeze-upgrade-v3.mjs` from `12e5b87`). Each capture includes source SHA-256 headers and a revision/hash manifest in `provenance.json`. The format-3 closure includes definitions, exports, nodes, evaluation, common/meta, mutations, threads, triggers, events and run records. Its `V3*` exports validate offline definition/history output and the syntax walk independently of later current-contract edits. The v3 script refuses capture once either loop format literal changes from 3 and checks the entire source closure against the existing provenance before writing; a first capture requires HEAD at `12e5b87` and matching committed sources.
+
+Format-3 input, including exports, history and editor device drafts, currently passes through validation with the frozen capture; the format-4 step replaces these passthrough branches with the v3-to-v4 stage. Normal API and storage admission use current contracts. History conversion still calls the current `replayThread` and `applyPatch`, typed on current contracts; the format-4 step must pin replay semantics for format-3 history too.
+
+The coordinated format-4 cutover (#164, #165, #168 on one integration branch) will complete a v3 to v4 stage beside these, a new marker value, and a history pass for decision and exit evidence, template subjects and trigger configuration.
 
 ## 6. API surface
 
@@ -249,11 +256,11 @@ Routes are registered in `apps/api/src/app.ts:83` to `apps/api/src/app.ts:91`.
 
 The engine evaluates one primitive per decision or exit criterion through `evaluatePrimitive` (`packages/engine/src/primitive-evaluator.ts:116`), choosing expression, classifier or LLM by the configured evaluator, with no fallback.
 
-## 9. Template catalogue, instances and support authority (current state; removal by #165)
+## 9. Template catalogue and independent starting points
 
-What stays after #165: the installed catalogue (`apps/api/templates/catalog.json:1`), each template's `draft.json`, and `POST /templates/:id/draft`, which validates the draft asset and creates an ordinary loop (`apps/api/src/routes/templates.ts:36`, `apps/api/src/routes/templates.ts:47`, `packages/domain/src/template-bundle.ts:40`).
+The current catalogue contains the index (`apps/api/templates/catalog.json`), four reduced `manifest.json` files and four self-contained `draft.json` starting graphs. Templates are never runnable. `POST /templates/:id/draft` validates and copies a starting graph into an independent owner-scoped ordinary loop (`apps/api/src/routes/templates.ts`, `packages/domain/src/template-bundle.ts`).
 
-What #165 removes, with its current hooks into generic code:
+The diagram and seam table below record the authority layer at the snapshot commit. Its runtime hooks and services were removed in #165 steps 05-08; configured DTOs and storage are removed in step 09. The seam table and diagram are historical; current composition exposes only `container.templates.catalog`.
 
 ```mermaid
 flowchart TB
@@ -286,9 +293,9 @@ flowchart TB
 | Run listing                            | `apps/api/src/routes/runs.ts:144` pages through `SqliteTemplateInstances.runPage` (`packages/infrastructure/src/sqlite/templates.ts:158`)          |
 | Loop read and editor origin            | `apps/api/src/routes/loops.ts:228`, `apps/web/src/editor/EditorPage.tsx:79`                                                                        |
 | Contracts and domain                   | `packages/contracts/src/template-settings.ts:172`, `packages/contracts/src/template-manifest.ts:149`, `packages/domain/src/template-bundle.ts:213` |
-| Assets and examples                    | configured bundles under `apps/api/templates/*/manifest.json`, `parent.json`; `examples/aidlc` (1.4 MB)                                            |
+| Starting-point assets (current)        | `apps/api/templates/*/manifest.json` and `apps/api/templates/*/draft.json`                                                                         |
 
-The authority layer enforces repository containment, durable attempts and finite budgets for the GitHub implementation, review and QA templates; production QA isolation is reported unavailable (`apps/api/src/templates/github/qa-native.ts:29`). Under the owner's decision these become plain editable graphs whose GitHub effects come from ordinary nodes.
+At the snapshot commit, the authority layer enforced repository containment, durable attempts and finite budgets for the GitHub implementation, review and QA templates; production QA isolation was reported unavailable (`apps/api/src/templates/github/qa-native.ts:29`). The retained starting graphs now use ordinary nodes and grant no GitHub authority or proof isolation. Any later GitHub effects require explicitly authored ordinary nodes.
 
 ## 10. Triggers, admission, receipts and persistence
 

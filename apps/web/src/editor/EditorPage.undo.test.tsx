@@ -101,34 +101,34 @@ describe('EditorPage undo and redo', () => {
     await openEditor();
     const dialog = await editNode('start', 'Edit trigger start');
     const loaded = node('start')!.config;
-    await user.selectOptions(within(dialog).getByLabelText('Subtype'), 'cron');
-    expect(node('start')!.config).toMatchObject({ subtype: 'cron' });
+    await user.selectOptions(within(dialog).getByLabelText('Trigger type'), 'cron');
+    expect(node('start')!.config).toMatchObject({ type: 'cron' });
     focusDone(dialog);
     await user.keyboard(UNDO);
     expect(node('start')!.config).toBe(loaded);
-    expect(within(dialog).getByLabelText('Subtype')).toHaveDisplayValue('manual');
+    expect(within(dialog).getByLabelText('Trigger type')).toHaveDisplayValue('Manual');
     await user.keyboard(REDO);
-    expect(within(dialog).getByLabelText('Subtype')).toHaveDisplayValue('cron');
+    expect(within(dialog).getByLabelText('Trigger type')).toHaveDisplayValue('Cron');
     // From the select itself: it has no text to undo, so the editor's undo applies, and focus
     // stays on the (remounted) select.
-    act(() => within(dialog).getByLabelText('Subtype').focus());
+    act(() => within(dialog).getByLabelText('Trigger type').focus());
     await user.keyboard(UNDO);
-    expect(within(dialog).getByLabelText('Subtype')).toHaveDisplayValue('manual');
-    expect(within(dialog).getByLabelText('Subtype')).toHaveFocus();
+    expect(within(dialog).getByLabelText('Trigger type')).toHaveDisplayValue('Manual');
+    expect(within(dialog).getByLabelText('Trigger type')).toHaveFocus();
     await user.click(within(dialog).getByRole('button', { name: 'Done' }));
 
     const settings = store().definition!.settings;
-    const iterations = screen.getByLabelText('Max iterations');
+    const iterations = screen.getByLabelText('Maximum node visits');
     expect(iterations).toHaveValue(10);
     await user.clear(iterations);
     await user.type(iterations, '4');
-    expect(store().definition!.settings).toMatchObject({ maxIterations: 4 });
+    expect(store().definition!.settings).toMatchObject({ maxNodeVisits: 4 });
     act(() => screen.getByRole('heading', { name: 'Loop settings' }).focus());
     await user.keyboard(UNDO);
     expect(store().definition!.settings).toBe(settings);
-    expect(screen.getByLabelText('Max iterations')).toHaveValue(10);
+    expect(screen.getByLabelText('Maximum node visits')).toHaveValue(10);
     await user.keyboard(REDO);
-    expect(screen.getByLabelText('Max iterations')).toHaveValue(4);
+    expect(screen.getByLabelText('Maximum node visits')).toHaveValue(4);
   });
 
   it('closes the node editor when an undo removes its node, and returns focus to the canvas', async () => {

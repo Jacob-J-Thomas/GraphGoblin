@@ -1,5 +1,19 @@
-import type { ContextThread, RunEvent, RunStatus } from '@graphgoblin/contracts';
+import type { ContextThread, RunEvent, RunStatus, JsonPatch } from '@graphgoblin/contracts';
 import { applyPatch } from './patch.js';
+
+/** Replay consumes only durable thread operations, independently of evaluation evidence shapes. */
+export type ThreadReplayEvent =
+  | { type: 'node.started'; seq: number; nodeId: string }
+  | { type: 'node.finished'; seq: number; nodeId: string; patch: JsonPatch }
+  | { type: 'iteration.incremented'; seq: number; to: number }
+  | { type: 'decision.made'; seq: number; nodeId: string; gate?: { passes: number } | undefined }
+  | {
+      type: Exclude<
+        RunEvent['type'],
+        'node.started' | 'node.finished' | 'iteration.incremented' | 'decision.made'
+      >;
+      seq: number;
+    };
 
 /**
  * Which completions a replay applies. Once the log has shown a `node.started` (every log the
@@ -17,17 +31,20 @@ export interface ReplayState {
 
 /**
  * Rebuild the thread at a point in the event log by replaying node patches. Wake payloads are
- * recorded by the node that consumed them inside its own `node.finished` patch, so patches are
- * the only thing to replay. Every `node.started` counts one visit in `counters.nodeVisits`, as
+ * recorded by the node that consumed them inside its own `node.finished` patch, so patches replay their effects. Decision events also project absolute gate pass counts. Every `node.started` counts one visit in `counters.nodeVisits`, as
  * the executor does. Replaying the events after a checkpoint passes the state at the checkpoint
  * (`replayStateAt`), so the result equals a full replay.
  */
-export function replayThread(
-  initial: ContextThread,
-  events: readonly RunEvent[],
+type ReplayableThread = Pick<ContextThread, 'run' | 'counters'> & {
+  gates?: ContextThread['gates'];
+};
+
+export function replayThread<T extends ReplayableThread>(
+  initial: T,
+  events: readonly ThreadReplayEvent[],
   uptoSeq?: number,
   state: ReplayState = {},
-): ContextThread {
+): T {
   let thread = initial;
   let { openNodeId } = state;
   let strict = state.strict ?? false;
@@ -50,6 +67,12 @@ export function replayThread(
       openNodeId = undefined;
       thread = applyPatch(thread, event.patch);
     }
+    if (event.type === 'decision.made' && event.gate) {
+      thread = {
+        ...thread,
+        gates: { ...thread.gates, [event.nodeId]: { passes: event.gate.passes } },
+      };
+    }
     if (event.type === 'iteration.incremented') {
       thread = { ...thread, run: { ...thread.run, iteration: event.to } };
     }
@@ -58,7 +81,7 @@ export function replayThread(
 }
 
 /** The replay state after the event `seq`, for replaying only the events that follow it. */
-export function replayStateAt(events: readonly RunEvent[], seq: number): ReplayState {
+export function replayStateAt(events: readonly ThreadReplayEvent[], seq: number): ReplayState {
   let openNodeId: string | undefined;
   let strict = false;
   for (const event of events) {

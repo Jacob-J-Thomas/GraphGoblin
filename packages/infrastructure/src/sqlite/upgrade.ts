@@ -1,84 +1,45 @@
-import { inspectTriggerUpgrade, rewriteWebhookThreadKey } from './trigger-upgrade.js';
 import { createHash } from 'node:crypto';
-import { fileURLToPath } from 'node:url';
-import type { Client, Transaction } from '@libsql/client';
+import { createClient, type Client, type Transaction } from '@libsql/client';
 import { readMigrationFiles } from 'drizzle-orm/migrator';
 import {
-  ContextThreadSchema,
+  CURRENT_DEFINITION_FORMAT,
   HarnessDefaultsSchema,
+  HeaderNameSchema,
   LoopDefinitionSchema,
-  RunEventSchema,
-  RunRecordSchema,
-  TimestampSchema,
   type LoopDefinition,
 } from '@graphgoblin/contracts';
 import {
   stableStringify,
   upgradeLoopCurrent,
-  upgradeRunHistoryCurrent,
-  upgradedFailure,
   upgradeDefaultsV1,
-  validateUpgradeCurrentResolutions,
-  type UpgradeIssue,
+  validateLoop,
+  type CurrentUpgradeIssue,
+  type CurrentUpgradeResult,
   type UpgradeCurrentResolutions,
 } from '@graphgoblin/domain';
-
+import {
+  currentStoreReadiness,
+  SHIPPED_MIGRATIONS,
+  storeStructure,
+  normalizeStoreSql,
+} from './readiness.js';
+import {
+  rows,
+  tableNames as tables,
+  tableBatches,
+  hashUpgradeStore,
+  quote,
+} from './upgrade-scan.js';
 type Executor = Pick<Client, 'execute'>;
 type RawRow = Record<string, unknown>;
+const MIGRATIONS = SHIPPED_MIGRATIONS;
+const hash = (value: unknown) => createHash('sha256').update(stableStringify(value)).digest('hex');
 const object = (value: unknown): value is RawRow =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
-function legacyPredicatePaths(value: unknown): string[] {
-  if (!object(value) || !Array.isArray(value.nodes)) return [];
-  return value.nodes.flatMap((node: unknown, index: number) => {
-    if (
-      !object(node) ||
-      node.kind !== 'exit' ||
-      !object(node.config) ||
-      !Array.isArray(node.config.criteria)
-    )
-      return [];
-    return node.config.criteria.flatMap((criterion: unknown, criterionIndex: number) =>
-      object(criterion) && criterion.when === 'predicate' && 'strategy' in criterion
-        ? [`/nodes/${index}/config/criteria/${criterionIndex}`]
-        : [],
-    );
-  });
-}
-function recordedAffectedChild(row: RawRow, affected: Set<string>): boolean {
-  if (row.type !== 'run.queued') return false;
-  try {
-    const payload = json(row.payload);
-    return (
-      object(payload) &&
-      object(payload.subloopVersions) &&
-      Object.values(payload.subloopVersions).some((id) => affected.has(String(id)))
-    );
-  } catch {
-    return false;
-  }
-}
-const MIGRATIONS = fileURLToPath(new URL('../../drizzle', import.meta.url));
-const NONTERMINAL = new Set(['queued', 'running', 'waiting', 'paused']);
-const hash = (value: unknown) => createHash('sha256').update(stableStringify(value)).digest('hex');
 function json(value: unknown): unknown {
   if (typeof value !== 'string') throw new Error('stored JSON column is not text');
   return JSON.parse(value);
 }
-async function rows(client: Executor, sql: string): Promise<RawRow[]> {
-  const result = await client.execute(sql);
-  return result.rows.map((row) =>
-    Object.fromEntries(result.columns.map((column) => [column, row[column]])),
-  );
-}
-async function tables(client: Executor): Promise<string[]> {
-  return (await rows(client, "SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name"))
-    .map((row) => String(row.name))
-    .filter((name) => !name.startsWith('sqlite_'));
-}
-function quote(name: string): string {
-  return '"' + name.replaceAll('"', '""') + '"';
-}
-
 export class DatabaseUpgradeRequiredError extends Error {
   readonly code = 'DATA_UPGRADE_REQUIRED';
   constructor(
@@ -89,7 +50,11 @@ export class DatabaseUpgradeRequiredError extends Error {
   }
 }
 /** Must run before Drizzle migrations, run recovery, catalog seeding or trigger admission. */
-export async function guardDatabaseUpgrade(client: Executor): Promise<'fresh' | 'current'> {
+export async function guardDatabaseUpgrade(
+  client: Executor,
+  migrationsFolder = MIGRATIONS,
+  options: { skipDefinitions?: boolean; phase?: 'baseline' | 'head' } = {},
+): Promise<'fresh' | 'current'> {
   const names = await tables(client);
   const application = names.filter((name) => name !== '__drizzle_migrations');
   if (application.length === 0) {
@@ -102,90 +67,115 @@ export async function guardDatabaseUpgrade(client: Executor): Promise<'fresh' | 
       );
     return 'fresh';
   }
+  const readiness = await currentStoreReadiness(migrationsFolder);
   if (!names.includes('gg_upgrade_state')) throw new DatabaseUpgradeRequiredError();
   const states = await rows(client, 'SELECT * FROM gg_upgrade_state');
-  if (states.length !== 1 || states[0]?.format_version !== 3 || states[0]?.status !== 'complete')
-    throw new DatabaseUpgradeRequiredError(
-      'The offline upgrade is incomplete; restore the backup or finish its approved manifest',
-    );
-  const endpointColumns = names.includes('webhook_endpoints')
-    ? await rows(client, 'PRAGMA table_info(webhook_endpoints)')
-    : [];
-  const receiptColumns = names.includes('webhook_receipts')
-    ? await rows(client, 'PRAGMA table_info(webhook_receipts)')
-    : [];
-  const indexes = await rows(client, "SELECT name FROM sqlite_master WHERE type='index'");
   if (
-    !endpointColumns.some((row) => row.name === 'signature_scheme' && row.notnull === 1) ||
-    !endpointColumns.some((row) => row.name === 'replay_window_seconds' && row.notnull === 0) ||
-    [
-      'id',
-      'owner_id',
-      'loop_id',
-      'trigger_node_id',
-      'content_hash',
-      'inbound_id',
-      'status',
-      'intent',
-      'attempts',
-      'next_attempt_at',
-      'failure_code',
-    ].some((name) => !receiptColumns.some((row) => row.name === name)) ||
-    [
-      'webhook_receipts_content_idx',
-      'webhook_receipts_inbound_idx',
-      'webhook_receipts_due_idx',
-      'runs_trigger_dedupe_idx',
-    ].some((name) => !indexes.some((row) => row.name === name))
+    states.length !== 1 ||
+    states[0]?.id !== 1 ||
+    states[0]?.format_version !== readiness.marker.format_version ||
+    states[0]?.status !== readiness.marker.status
   )
     throw new DatabaseUpgradeRequiredError(
-      'Stored v2 data requires the explicit offline trigger structural upgrade',
+      'The offline upgrade is incomplete; restore the backup or repeat the offline inspection',
     );
-  const ledger = names.includes('__drizzle_migrations')
-    ? await rows(client, 'SELECT created_at FROM __drizzle_migrations')
-    : [];
-  const receiptIndexes = await rows(client, 'PRAGMA index_list(webhook_receipts)');
+  const structure = await storeStructure(client);
   if (
-    !ledger.some((row) => Number(row.created_at) >= 1791396000000) ||
-    ['webhook_receipts_content_idx', 'webhook_receipts_inbound_idx'].some(
-      (name) => !receiptIndexes.some((row) => row.name === name && row.unique === 1),
-    )
+    migrationsFolder === MIGRATIONS &&
+    (names.includes('template_instances') ||
+      structure
+        .find((table) => table.name === 'runs')
+        ?.columns.some((column) => column.name === 'template_subject'))
   )
-    throw new DatabaseUpgradeRequiredError(
-      'The trigger structural migration and unique receipt indexes are incomplete',
-    );
-  const receiptDdl = (
-    await rows(
-      client,
-      "SELECT sql FROM sqlite_master WHERE type='table' AND name='webhook_receipts'",
+    throw new DatabaseUpgradeRequiredError('Retired template storage requires the offline cutover');
+  for (const table of readiness[options.phase ?? 'baseline']) {
+    const actual = structure.find((stored) => stored.name === table.name);
+    if (!actual)
+      throw new DatabaseUpgradeRequiredError('Missing current-store table: ' + table.name);
+    if (
+      table.columns.some(
+        (column) =>
+          !actual.columns.some(
+            (stored) =>
+              stored.name === column.name &&
+              stored.notNull === column.notNull &&
+              stored.pk === column.pk,
+          ),
+      )
     )
-  )[0]?.sql;
-  const normalizedReceiptDdl =
-    typeof receiptDdl === 'string' ? receiptDdl.toLowerCase().replace(/[\s"`]/g, '') : '';
-  if (
-    !normalizedReceiptDdl.includes(
-      "constraintwebhook_receipt_status_checkcheck(statusin('filtered','deduplicated','pending','admitted','failed'))",
-    ) ||
-    !normalizedReceiptDdl.includes(
-      "constraintwebhook_receipt_intent_checkcheck((statusin('filtered','deduplicated')andintentisnull)or(statusnotin('filtered','deduplicated')andintentisnotnull))",
+      throw new DatabaseUpgradeRequiredError('Incomplete current-store columns: ' + table.name);
+    if (
+      table.checks.some((check) => !actual.checks.includes(check)) ||
+      table.constraints.some((constraint) => !actual.constraints.includes(constraint))
     )
-  )
-    throw new DatabaseUpgradeRequiredError('Stored webhook receipt constraints are incomplete');
-  const malformed = await rows(
-    client,
-    "SELECT id FROM webhook_endpoints WHERE signature_scheme IS NULL OR signature_scheme NOT IN ('hmac-sha256','hmac-sha256-body') OR NOT ((signature_scheme='hmac-sha256' AND replay_window_seconds IS NOT NULL AND replay_window_seconds>0) OR (signature_scheme='hmac-sha256-body' AND replay_window_seconds IS NULL))",
-  );
-  if (malformed.length)
-    throw new DatabaseUpgradeRequiredError('Stored webhook signing fields are inconsistent');
-  for (const row of names.includes('loop_versions')
-    ? await rows(client, 'SELECT definition FROM loop_versions')
-    : []) {
-    try {
-      LoopDefinitionSchema.parse(json(row.definition));
-    } catch {
-      throw new DatabaseUpgradeRequiredError('A stored loop version is not strict v3');
-    }
+      throw new DatabaseUpgradeRequiredError('Stored constraints are incomplete: ' + table.name);
+    if (
+      table.indexes.some(
+        (index) =>
+          !actual.indexes.some(
+            (stored) =>
+              stored.name === index.name &&
+              normalizeStoreSql(stored.sql) === normalizeStoreSql(index.sql),
+          ),
+      )
+    )
+      throw new DatabaseUpgradeRequiredError('Stored indexes are incomplete: ' + table.name);
+    if (
+      options.phase === 'head' &&
+      (actual.columns.length !== table.columns.length ||
+        actual.checks.length !== table.checks.length ||
+        actual.constraints.length !== table.constraints.length ||
+        actual.indexes.length !== table.indexes.length)
+    )
+      throw new DatabaseUpgradeRequiredError(
+        'Stored structure differs from the migration head: ' + table.name,
+      );
   }
+  const ledger = names.includes('__drizzle_migrations')
+    ? await rows(client, 'SELECT created_at FROM __drizzle_migrations ORDER BY created_at')
+    : [];
+  if (
+    ledger.length <
+      (options.phase === 'head' ? readiness.ledger.length : readiness.requiredLedgerLength) ||
+    ledger.length > readiness.ledger.length ||
+    ledger.some((entry, index) => Number(entry.created_at) !== readiness.ledger[index]?.created_at)
+  )
+    throw new DatabaseUpgradeRequiredError(
+      'The shipped migration ledger is incomplete or inconsistent',
+    );
+  // An explicitly selected historical SQL catalogue can stop before 0013. The current baseline above
+  // always requires auth_type before this data-level validation can be reached.
+  if (
+    structure
+      .find((table) => table.name === 'webhook_endpoints')
+      ?.columns.some((column) => column.name === 'auth_type')
+  ) {
+    const malformed = await rows(
+      client,
+      `SELECT id FROM webhook_endpoints WHERE auth_type IS NULL OR NOT (("auth_type" = 'none' AND "signature_message" IS NULL AND "signature_header" IS NULL AND "secret_ref" IS NULL AND "window_seconds" IS NULL) OR ("auth_type" = 'hmac-sha256' AND "signature_header" IS NOT NULL AND "secret_ref" IS NOT NULL AND (("signature_message" IS NOT NULL AND "signature_message" = 'body' AND "window_seconds" IS NULL) OR ("signature_message" IS NOT NULL AND "signature_message" = 'timestamp-body' AND "window_seconds" IS NOT NULL AND typeof("window_seconds") = 'integer' AND "window_seconds" BETWEEN 1 AND 86400))))`,
+    );
+    if (malformed.length)
+      throw new DatabaseUpgradeRequiredError('Stored webhook signing fields are inconsistent');
+    const signingHeaders = await rows(
+      client,
+      "SELECT signature_header FROM webhook_endpoints WHERE auth_type = 'hmac-sha256'",
+    );
+    if (signingHeaders.some((row) => !HeaderNameSchema.safeParse(row.signature_header).success))
+      throw new DatabaseUpgradeRequiredError(
+        'Stored webhook signing headers are not lowercase RFC tokens',
+      );
+  }
+  if (!options.skipDefinitions)
+    for await (const batch of tableBatches(client, 'loop_versions'))
+      for (const row of batch) {
+        try {
+          LoopDefinitionSchema.parse(json(row.definition));
+        } catch {
+          throw new DatabaseUpgradeRequiredError(
+            'A stored loop version is not strict current format',
+          );
+        }
+      }
   if (names.includes('settings')) {
     for (const row of await rows(client, 'SELECT key, value FROM settings')) {
       if (row.key === 'defaultModel' || row.key === 'defaultEffort')
@@ -201,270 +191,58 @@ export async function guardDatabaseUpgrade(client: Executor): Promise<'fresh' | 
   }
   return 'current';
 }
+/** After ordinary migrations, require the entire shipped catalogue and ledger. No second parse. */
+export async function verifyDatabaseHead(
+  client: Executor,
+  migrationsFolder = MIGRATIONS,
+): Promise<void> {
+  if (
+    (await guardDatabaseUpgrade(client, migrationsFolder, {
+      phase: 'head',
+      skipDefinitions: true,
+    })) !== 'current'
+  )
+    throw new DatabaseUpgradeRequiredError('Migrations did not produce a current store');
+}
 const STATE_SQL =
   'CREATE TABLE IF NOT EXISTS gg_upgrade_state (id INTEGER PRIMARY KEY CHECK(id=1), format_version INTEGER NOT NULL, status TEXT NOT NULL, source_hash TEXT NOT NULL, manifest_hash TEXT NOT NULL)';
-const ARCHIVE_SQL =
-  'CREATE TABLE IF NOT EXISTS gg_upgrade_archive (kind TEXT NOT NULL, identity TEXT NOT NULL, source_hash TEXT NOT NULL, manifest_hash TEXT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY(kind,identity,manifest_hash))';
-export async function stampFreshDatabase(client: Executor): Promise<void> {
-  await client.execute(STATE_SQL);
-  await client.execute(
-    "INSERT INTO gg_upgrade_state (id,format_version,status,source_hash,manifest_hash) VALUES (1,3,'complete','fresh','fresh')",
-  );
-}
-
-export interface DatabaseUpgradeInventory {
-  sourceHash: string;
-  tables: Record<string, RawRow[]>;
-  versions: {
-    id: string;
-    loopId: string;
-    definitionHash: string;
-    issues: UpgradeIssue[];
-    decisions: string[];
-    predicates: string[];
-  }[];
-  failedRuns: string[];
-  blockedRuns: { id: string; status: string }[];
-  issues: UpgradeIssue[];
-}
-/** Whole stopped database, including hidden/deleted versions, orphaned runs and all owners. */
-export async function inspectDatabaseUpgrade(client: Executor): Promise<DatabaseUpgradeInventory> {
-  const stored: Record<string, RawRow[]> = {};
-  for (const name of await tables(client)) {
-    if (name === 'gg_upgrade_state' || name === 'gg_upgrade_archive') continue;
-    const found = await rows(client, 'SELECT * FROM ' + quote(name));
-    stored[name] = found.sort((a, b) =>
-      stableStringify(a) < stableStringify(b)
-        ? -1
-        : stableStringify(a) > stableStringify(b)
-          ? 1
-          : 0,
-    );
-  }
-  const versions: DatabaseUpgradeInventory['versions'] = [];
-  const issues: UpgradeIssue[] = [];
-  const affected = new Set<string>();
-  for (const row of stored.loop_versions ?? []) {
+/** Schema, migration ledger and complete marker must commit together on first startup. */
+export async function initializeFreshDatabase(
+  client: Client,
+  migrationsFolder = MIGRATIONS,
+): Promise<'fresh' | 'current'> {
+  const tx = await client.transaction('write');
+  try {
+    // Recheck under the write lock: only an empty store may be initialised, even if another
+    // caller changed it after startup's first guard. Never authenticate an unmarked schema.
+    const upgradeState = await guardDatabaseUpgrade(tx);
+    if (upgradeState === 'fresh') {
+      // Drizzle's libsql migrator commits its own batch; use the offline apply's SQL runner
+      // so neither the schema nor its ledger can survive without the complete marker.
+      await structuralMigrations(tx, migrationsFolder);
+      await tx.execute(STATE_SQL);
+      await tx.execute({
+        sql: "INSERT INTO gg_upgrade_state (id,format_version,status,source_hash,manifest_hash) VALUES (1,?,'complete','fresh','fresh')",
+        args: [CURRENT_DEFINITION_FORMAT],
+      });
+    }
+    await tx.commit();
+    return upgradeState;
+  } catch (error) {
     try {
-      const definition = json(row.definition);
-      const result = upgradeLoopCurrent(definition);
-      const predicates = legacyPredicatePaths(definition);
-      const decisions =
-        typeof definition === 'object' &&
-        definition !== null &&
-        'nodes' in definition &&
-        Array.isArray(definition.nodes)
-          ? definition.nodes
-              .filter(
-                (node: unknown) =>
-                  typeof node === 'object' &&
-                  node !== null &&
-                  'kind' in node &&
-                  node.kind === 'decision',
-              )
-              .map((node: { id?: unknown }) => String(node.id))
-          : [];
-      if (
-        predicates.length ||
-        (typeof definition === 'object' &&
-          definition !== null &&
-          'schemaVersion' in definition &&
-          definition.schemaVersion === 1 &&
-          (decisions.length ||
-            (typeof definition === 'object' &&
-              definition !== null &&
-              'nodes' in definition &&
-              Array.isArray(definition.nodes) &&
-              definition.nodes.some(
-                (node: unknown) =>
-                  typeof node === 'object' &&
-                  node !== null &&
-                  'kind' in node &&
-                  node.kind === 'subloop',
-              ))))
-      )
-        affected.add(String(row.id));
-      versions.push({
-        id: String(row.id),
-        loopId: String(row.loop_id),
-        definitionHash: hash(definition),
-        issues: result.ok ? [] : result.issues,
-        decisions,
-        predicates,
-      });
+      await tx.rollback();
     } catch {
-      issues.push({
-        code: 'UPGRADE_STORED_JSON_INVALID',
-        path: '/loop_versions/' + String(row.id),
-        message: 'definition cannot be inventoried',
-      });
+      // A lost connection must not replace the failure that interrupted initialisation.
     }
+    throw error;
+  } finally {
+    tx.close();
   }
-  // A failed parent can replay into an affected child even when the parent's own exit is unchanged.
-  let changed = true;
-  while (changed) {
-    changed = false;
-    for (const row of stored.loop_versions ?? []) {
-      if (affected.has(String(row.id))) continue;
-      try {
-        const definition = json(row.definition);
-        if (!object(definition) || !Array.isArray(definition.nodes)) continue;
-        const reachesAffected = definition.nodes.some((node: unknown) => {
-          if (
-            !object(node) ||
-            node.kind !== 'subloop' ||
-            !object(node.config) ||
-            !object(node.config.loopRef)
-          )
-            return false;
-          const ref = node.config.loopRef;
-          return (stored.loop_versions ?? []).some(
-            (child) =>
-              child.loop_id === ref.loopId &&
-              (ref.version === 'latest'
-                ? child.status === 'published'
-                : child.version === ref.version) &&
-              affected.has(String(child.id)),
-          );
-        });
-        if (reachesAffected) {
-          affected.add(String(row.id));
-          changed = true;
-        }
-      } catch {
-        /* malformed definitions already have an inventory refusal */
-      }
-    }
-  }
-  for (const run of stored.runs ?? [])
-    if (!(stored.loop_versions ?? []).some((version) => version.id === run.version_id))
-      issues.push({
-        code: 'UPGRADE_ORPHAN_RUN_VERSION',
-        path: '/runs/' + String(run.id) + '/version_id',
-        message:
-          'run references no inventoried version; explicit repair is required before classifying historical outputs',
-      });
-  const events = stored.run_events ?? [];
-  const failedRuns = (stored.runs ?? [])
-    .filter(
-      (run) =>
-        run.status === 'failed' &&
-        (affected.has(String(run.version_id)) ||
-          events.some(
-            (event) =>
-              event.run_id === run.id &&
-              (legacyDecisionEvent(event) || recordedAffectedChild(event, affected)),
-          )),
-    )
-    .map((run) => String(run.id));
-  const blockedRuns = (stored.runs ?? [])
-    .filter((run) => NONTERMINAL.has(String(run.status)))
-    .map((run) => ({ id: String(run.id), status: String(run.status) }));
-  for (const event of events)
-    if (!(stored.runs ?? []).some((run) => run.id === event.run_id))
-      issues.push({
-        code: 'UPGRADE_ORPHAN_EVENTS',
-        path: '/run_events/' + String(event.run_id),
-        message: 'events have no run/initial thread; explicit repair is required before upgrade',
-      });
-  issues.push(...inspectTriggerUpgrade(stored).issues);
-  return { sourceHash: hash(stored), tables: stored, versions, failedRuns, blockedRuns, issues };
 }
 
-export interface DatabaseUpgradeManifest {
-  format: 'graphgoblin-upgrade-manifest';
-  targetVersion: 3;
-  sourceHash: string;
-  approvedBy: string;
-  approvedAt: string;
-  versions: Record<string, { definitionHash: string; resolutions: UpgradeCurrentResolutions }>;
-  failedRuns: Record<string, { disposition: 'nonresumable-replay'; reason: string }>;
-}
-function validateManifest(
-  manifest: DatabaseUpgradeManifest,
-  inventory: DatabaseUpgradeInventory,
-): void {
-  const object = (value: unknown): value is Record<string, unknown> =>
-    typeof value === 'object' && value !== null && !Array.isArray(value);
-  const raw: unknown = manifest;
-  if (
-    !object(raw) ||
-    Object.keys(raw).some(
-      (key) =>
-        ![
-          'format',
-          'targetVersion',
-          'sourceHash',
-          'approvedBy',
-          'approvedAt',
-          'versions',
-          'failedRuns',
-        ].includes(key),
-    ) ||
-    typeof raw.approvedBy !== 'string' ||
-    !object(raw.versions) ||
-    !object(raw.failedRuns) ||
-    Object.values(raw.versions).some(
-      (version) =>
-        !object(version) ||
-        Object.keys(version).some((key) => !['definitionHash', 'resolutions'].includes(key)) ||
-        typeof version.definitionHash !== 'string' ||
-        validateUpgradeCurrentResolutions(version.resolutions).length > 0,
-    ) ||
-    Object.values(raw.failedRuns).some(
-      (run) =>
-        !object(run) ||
-        Object.keys(run).some((key) => !['disposition', 'reason'].includes(key)) ||
-        typeof run.reason !== 'string',
-    )
-  )
-    throw new DatabaseUpgradeRequiredError(
-      'The manifest must satisfy the exact documented owner approval shape',
-    );
-  if (
-    manifest.format !== 'graphgoblin-upgrade-manifest' ||
-    manifest.targetVersion !== 3 ||
-    manifest.sourceHash !== inventory.sourceHash ||
-    !manifest.approvedBy.trim() ||
-    !TimestampSchema.safeParse(manifest.approvedAt).success
-  )
-    throw new DatabaseUpgradeRequiredError(
-      'The approved manifest identity, timestamp or source hash is invalid/stale',
-    );
-  if (inventory.blockedRuns.length)
-    throw new DatabaseUpgradeRequiredError(
-      'Drain/cancel every nonterminal run with the old build before upgrade',
-    );
-  if (inventory.issues.length)
-    throw new DatabaseUpgradeRequiredError(
-      'Inventory contains structural refusals; resolve them before upgrade',
-    );
-  const ids = new Set(inventory.versions.map((version) => version.id));
-  for (const version of inventory.versions) {
-    const selected = manifest.versions[version.id];
-    if (!selected || selected.definitionHash !== version.definitionHash)
-      throw new DatabaseUpgradeRequiredError(
-        'Each version requires its exact inventoried definition hash',
-      );
-  }
-  for (const id of Object.keys(manifest.versions))
-    if (!ids.has(id)) throw new DatabaseUpgradeRequiredError('Manifest names an unknown version');
-  for (const id of inventory.failedRuns) {
-    const selected = manifest.failedRuns[id];
-    if (!selected || selected.disposition !== 'nonresumable-replay' || !selected.reason.trim())
-      throw new DatabaseUpgradeRequiredError(
-        'Every affected failed run requires an explicit nonresumable/replay disposition',
-      );
-  }
-  for (const id of Object.keys(manifest.failedRuns))
-    if (!inventory.failedRuns.includes(id))
-      throw new DatabaseUpgradeRequiredError(
-        'Manifest disposition names an unaffected or unknown failed run',
-      );
-}
 async function structuralMigrations(tx: Transaction, folder: string): Promise<void> {
   await tx.execute(
-    'CREATE TABLE IF NOT EXISTS __drizzle_migrations (id SERIAL PRIMARY KEY, hash text NOT NULL, created_at numeric)',
+    'CREATE TABLE IF NOT EXISTS "__drizzle_migrations" (id SERIAL PRIMARY KEY, hash text NOT NULL, created_at numeric)',
   );
   const last = (
     await rows(tx, 'SELECT created_at FROM __drizzle_migrations ORDER BY created_at DESC LIMIT 1')
@@ -479,282 +257,507 @@ async function structuralMigrations(tx: Transaction, folder: string): Promise<vo
     });
   }
 }
-function eventOf(row: RawRow): RawRow {
-  const payload = json(row.payload);
-  if (typeof payload !== 'object' || payload === null || Array.isArray(payload))
-    throw new Error('invalid event JSON');
-  return {
-    ...payload,
-    runId: row.run_id,
-    seq: row.seq,
-    ts: row.ts,
-    type: row.type,
-    ...(row.node_id ? { nodeId: row.node_id } : {}),
-  };
+
+/** All history is removed, including snapshots, child notifications, admission intents and pins
+ * embedded in runs, events and receipts. No historical payload is parsed or archived. */
+export const RUN_HISTORY_TABLES = [
+  'webhook_receipts',
+  'inbound_events',
+  'timers',
+  'harness_sessions',
+  'run_events',
+  'runs',
+] as const;
+export interface DatabaseUpgradeRequest {
+  planHash: string;
+  /** Each published version and draft owns an independent set of namespaced stage maps. */
+  resolutions?: Record<string, UpgradeCurrentResolutions>;
 }
-function legacyDecisionEvent(row: RawRow): boolean {
-  if (row.type !== 'decision.made') return false;
+export interface DefinitionUpgrade {
+  id: string;
+  loopId: string;
+  loopName: string;
+  status: string;
+  definitionHash: string;
+  targetDefinitionHash?: string;
+  conversion: 'automatic' | 'pending' | 'invalid';
+  issues: CurrentUpgradeIssue[];
+  notices: CurrentUpgradeResult<LoopDefinition>['notices'];
+  reviewItems: CurrentUpgradeResult<LoopDefinition>['reviewItems'];
+}
+export interface DisarmedTrigger {
+  versionId: string;
+  loopId: string;
+  nodeId: string;
+  type: 'poll' | 'cron';
+  scheduleId?: string;
+}
+export interface DatabaseUpgradeInventory {
+  status: 'current' | 'upgrade-required';
+  sourceHash: string;
+  planHash: string;
+  tableCounts: Record<string, number>;
+  counts: {
+    loops: number;
+    versions: number;
+    drafts: number;
+    templateInstances: number;
+    templateLoops: number;
+    runs: number;
+    events: number;
+    receipts: number;
+  };
+  definitions: DefinitionUpgrade[];
+  templateLoopIds: string[];
+  blockedRuns: { id: string; loopId: string; status: string }[];
+  blockedReceipts: { id: string; loopId: string; reason: string }[];
+  disarm: DisarmedTrigger[];
+  issues: CurrentUpgradeIssue[];
+}
+const invalid = (path: string, message: string): CurrentUpgradeIssue => ({
+  kind: 'invalid',
+  code: 'UPGRADE_STORE_INVALID',
+  path,
+  message,
+});
+
+/** A recorded shipped prefix must describe the actual store; never skip damaged SQL by
+ * trusting only its last timestamp. Old unmarked stores are accepted here, never at startup. */
+async function sourceStructureIssues(
+  client: Executor,
+  names: string[],
+): Promise<CurrentUpgradeIssue[]> {
+  const issues: CurrentUpgradeIssue[] = [];
+  const migrations = readMigrationFiles({ migrationsFolder: MIGRATIONS });
+  const ledger = names.includes('__drizzle_migrations')
+    ? await rows(client, 'SELECT hash,created_at FROM __drizzle_migrations ORDER BY created_at')
+    : [];
+  if (
+    !ledger.length ||
+    ledger.length > migrations.length ||
+    ledger.some(
+      (entry, index) =>
+        entry.hash !== migrations[index]?.hash ||
+        Number(entry.created_at) !== migrations[index]?.folderMillis,
+    )
+  )
+    return [
+      invalid('/__drizzle_migrations', 'Expected an exact nonempty prefix of shipped migrations'),
+    ];
+  const expected = createClient({ url: ':memory:' });
   try {
-    const payload = json(row.payload);
-    return typeof payload !== 'object' || payload === null || !('answer' in payload);
-  } catch {
-    return true;
+    for (const migration of migrations.slice(0, ledger.length))
+      for (const statement of migration.sql) await expected.execute(statement);
+    const application = (structure: Awaited<ReturnType<typeof storeStructure>>) =>
+      structure.filter(
+        (table) =>
+          !['__drizzle_migrations', 'gg_upgrade_state', 'gg_upgrade_archive'].includes(table.name),
+      );
+    if (
+      hash(application(await storeStructure(client))) !==
+      hash(application(await storeStructure(expected)))
+    )
+      issues.push(
+        invalid(
+          '/',
+          'Stored structure differs from its shipped migration prefix; repair before cutover',
+        ),
+      );
+  } finally {
+    expected.close();
   }
-}
-function recordOf(row: RawRow): RawRow {
-  const record: RawRow = {};
-  const scalar = {
-    id: 'id',
-    ownerId: 'owner_id',
-    loopId: 'loop_id',
-    versionId: 'version_id',
-    parentRunId: 'parent_run_id',
-    invocationId: 'invocation_id',
-    status: 'status',
-    currentNodeId: 'current_node_id',
-    iteration: 'iteration',
-    cancelRequestedAt: 'cancel_requested_at',
-    pausedAt: 'paused_at',
-    outcome: 'outcome',
-    createdAt: 'created_at',
-    startedAt: 'started_at',
-    finishedAt: 'finished_at',
-    lastEventSeq: 'last_event_seq',
-  };
-  for (const [key, column] of Object.entries(scalar))
-    if (row[column] !== null && row[column] !== undefined) record[key] = row[column];
-  for (const [key, column] of Object.entries({
-    waiting: 'waiting',
-    failure: 'failure',
-    result: 'result',
-  }))
-    if (row[column] !== null && row[column] !== undefined) record[key] = json(row[column]);
-  return record;
-}
-async function archive(
-  tx: Transaction,
-  kind: string,
-  identity: string,
-  payload: unknown,
-  sourceHash: string,
-  manifestHash: string,
-): Promise<void> {
-  await tx.execute({
-    sql: 'INSERT INTO gg_upgrade_archive (kind,identity,source_hash,manifest_hash,payload) VALUES (?,?,?,?,?)',
-    args: [kind, identity, sourceHash, manifestHash, JSON.stringify(payload)],
-  });
+  if (names.includes('gg_upgrade_state')) {
+    const state = await rows(client, 'SELECT * FROM gg_upgrade_state');
+    if (
+      state.length !== 1 ||
+      state[0]?.id !== 1 ||
+      state[0]?.status !== 'complete' ||
+      ![1, 2, 3, 4].includes(Number(state[0]?.format_version))
+    )
+      issues.push(
+        invalid(
+          '/gg_upgrade_state',
+          'Incomplete or invalid completion marker; restore or repair first',
+        ),
+      );
+    if (state[0]?.format_version === CURRENT_DEFINITION_FORMAT) {
+      try {
+        await guardDatabaseUpgrade(client, MIGRATIONS, { phase: 'head' });
+      } catch {
+        issues.push(
+          invalid('/gg_upgrade_state', 'Claimed format-4 store is incomplete; repair first'),
+        );
+      }
+    }
+  }
+  return issues;
 }
 
-/** Offline only. Caller owns the stopped directory and a complete backup before calling. */
-export async function applyDatabaseUpgrade(
-  client: Client,
-  manifest: DatabaseUpgradeManifest,
-  options: { migrationsFolder?: string } = {},
-): Promise<{ sourceHash: string; manifestHash: string; versions: number; runs: number }> {
-  const tx = await client.transaction('write');
-  try {
-    const original = await inspectDatabaseUpgrade(tx);
-    validateManifest(manifest, original);
-    const triggerFacts = inspectTriggerUpgrade(original.tables);
-    const manifestHash = hash(manifest);
-    await structuralMigrations(tx, options.migrationsFolder ?? MIGRATIONS);
-    const inventory = await inspectDatabaseUpgrade(tx);
-    const converted = new Map<string, LoopDefinition>();
-    for (const row of inventory.tables.loop_versions ?? []) {
-      const result = upgradeLoopCurrent(
-        json(row.definition),
-        manifest.versions[String(row.id)]?.resolutions ?? {},
+function disarmDefinition(definition: LoopDefinition): LoopDefinition {
+  return {
+    ...definition,
+    nodes: definition.nodes.map((node) =>
+      node.kind === 'trigger' && (node.config.type === 'poll' || node.config.type === 'cron')
+        ? { ...node, config: { ...node.config, enabled: false } }
+        : node,
+    ),
+  };
+}
+async function convert(row: RawRow, resolutions: UpgradeCurrentResolutions = {}, disarm = true) {
+  const result = await upgradeLoopCurrent(
+    json(row.definition),
+    resolutions,
+    'store-version:' + String(row.id),
+  );
+  if (!result.ok) return result;
+  const value = LoopDefinitionSchema.parse(disarm ? disarmDefinition(result.value) : result.value);
+  const errors = validateLoop(value).filter((entry) => entry.severity === 'error');
+  if (errors.length)
+    return {
+      ...result,
+      ok: false as const,
+      issues: errors.map((entry) => invalid('/loop_versions/' + String(row.id), entry.message)),
+    };
+  return { ...result, value };
+}
+
+async function convertedOwnerDefaults(client: Executor) {
+  const stored = await rows(client, 'SELECT * FROM settings ORDER BY owner_id,key');
+  const changes: { ownerId: string; value: unknown; updatedAt: string }[] = [];
+  const issues: CurrentUpgradeIssue[] = [];
+  for (const row of stored)
+    if (row.key === 'defaults') {
+      try {
+        HarnessDefaultsSchema.parse(json(row.value));
+      } catch {
+        issues.push(invalid('/settings/' + String(row.owner_id), 'Invalid owner harness defaults'));
+      }
+    }
+  for (const ownerId of new Set(
+    stored
+      .filter((row) => row.key === 'defaultModel' || row.key === 'defaultEffort')
+      .map((row) => String(row.owner_id)),
+  )) {
+    const selected = stored.filter((row) => row.owner_id === ownerId);
+    try {
+      const old = Object.fromEntries(
+        selected
+          .filter((row) => row.key === 'defaultModel' || row.key === 'defaultEffort')
+          .map((row) => [row.key === 'defaultModel' ? 'model' : 'effort', json(row.value)]),
       );
-      if (!result.ok)
-        throw new DatabaseUpgradeRequiredError('Unresolved version conversion: ' + String(row.id));
-      converted.set(String(row.id), result.value);
+      const result = upgradeDefaultsV1(old);
+      if (!result.ok || selected.some((row) => row.key === 'defaults'))
+        throw new Error('Conflicting defaults');
+      changes.push({ ownerId, value: result.value, updatedAt: String(selected[0]!.updated_at) });
+    } catch {
+      issues.push(invalid('/settings/' + ownerId, 'Owner default conversion refused'));
     }
-    await tx.execute(STATE_SQL);
-    await tx.execute(ARCHIVE_SQL);
-    await archive(tx, 'manifest', manifestHash, manifest, original.sourceHash, manifestHash);
-    for (const [name, values] of Object.entries(original.tables))
-      if (
-        [
-          'loop_versions',
-          'runs',
-          'run_events',
-          'settings',
-          'webhook_endpoints',
-          'inbound_events',
-          'webhook_receipts',
-        ].includes(name)
-      )
-        for (const row of values)
-          await archive(
-            tx,
-            name,
-            name === 'run_events'
-              ? String(row.run_id) + ':' + String(row.seq)
-              : typeof row.id === 'string'
-                ? row.id
-                : stableStringify([row.owner_id, row.key]),
-            row,
-            original.sourceHash,
-            manifestHash,
-          );
-    for (const row of inventory.tables.loop_versions ?? []) {
-      const definition = converted.get(String(row.id))!;
-      await tx.execute({
-        sql: 'UPDATE loop_versions SET definition=? WHERE id=?',
-        args: [JSON.stringify(definition), String(row.id)],
-      });
-    }
-    for (const key of triggerFacts.keys) {
-      await tx.execute({
-        sql: 'UPDATE inbound_events SET dedupe_key=? WHERE id=?',
-        args: [key.next, key.inboundId],
-      });
-      for (const runId of key.runIds) {
-        const run = (inventory.tables.runs ?? []).find((row) => row.id === runId);
-        if (!run)
-          throw new DatabaseUpgradeRequiredError('Linked webhook run vanished during conversion');
-        run.initial_thread = JSON.stringify(
-          rewriteWebhookThreadKey(json(run.initial_thread), key.previous, key.next),
+  }
+  return { changes, issues };
+}
+
+/** Read-only inspection under the caller's stopped-data lock. Large history tables are only
+ * counted and incrementally hashed; conversion retains only the definition working set. */
+export async function inspectDatabaseUpgrade(
+  client: Executor,
+  resolutions: Record<string, UpgradeCurrentResolutions> = {},
+): Promise<DatabaseUpgradeInventory> {
+  const names = await tables(client);
+  const issues = await sourceStructureIssues(client, names);
+  let current = false;
+  try {
+    current = (await guardDatabaseUpgrade(client, MIGRATIONS, { phase: 'head' })) === 'current';
+  } catch {
+    /* old stores require explicit cutover */
+  }
+
+  if (names.includes('settings')) issues.push(...(await convertedOwnerDefaults(client)).issues);
+  const tableCounts: Record<string, number> = {};
+  for (const name of names)
+    tableCounts[name] = Number(
+      (await rows(client, 'SELECT COUNT(*) AS count FROM ' + quote(name)))[0]!.count,
+    );
+  const templateLoops = new Set<string>();
+  if (names.includes('template_instances'))
+    for (const row of await rows(client, 'SELECT * FROM template_instances ORDER BY id')) {
+      try {
+        const instance = json(row.instance);
+        if (
+          !object(instance) ||
+          !Array.isArray(instance.loops) ||
+          instance.loops.some((loop: unknown) => !object(loop) || typeof loop.loopId !== 'string')
+        )
+          throw new Error('Invalid template loop identities');
+        for (const loop of instance.loops as { loopId: string }[]) templateLoops.add(loop.loopId);
+      } catch {
+        issues.push(
+          invalid('/template_instances/' + String(row.id), 'Cannot identify template loops safely'),
         );
-        if (run.thread_snapshot !== null && run.thread_snapshot !== undefined)
-          run.thread_snapshot = JSON.stringify(
-            rewriteWebhookThreadKey(json(run.thread_snapshot), key.previous, key.next),
-          );
-        for (const event of inventory.tables.run_events ?? []) {
-          if (event.run_id !== runId || event.type !== 'run.queued') continue;
-          const payload = json(event.payload);
-          if (typeof payload === 'object' && payload !== null && 'initialThread' in payload) {
-            payload.initialThread = rewriteWebhookThreadKey(
-              payload.initialThread,
-              key.previous,
-              key.next,
-            );
-            event.payload = JSON.stringify(payload);
-          }
+      }
+    }
+  const loopNames = new Map(
+    names.includes('loops')
+      ? (await rows(client, 'SELECT id,name FROM loops')).map((row) => [
+          String(row.id),
+          String(row.name),
+        ])
+      : [],
+  );
+  const definitions: DefinitionUpgrade[] = [];
+  const disarm: DisarmedTrigger[] = [];
+  if (names.includes('loop_versions'))
+    for await (const batch of tableBatches(client, 'loop_versions'))
+      for (const row of batch) {
+        if (templateLoops.has(String(row.loop_id))) continue;
+        try {
+          const input = json(row.definition);
+          const result = await convert(row, resolutions?.[String(row.id)], !current);
+          const errors = result.ok
+            ? result.value.nodes
+                .filter(
+                  (node) =>
+                    node.kind === 'subloop' && templateLoops.has(node.config.loopRef.loopId),
+                )
+                .map((node) =>
+                  invalid(
+                    '/loop_versions/' + String(row.id) + '/nodes/' + node.id,
+                    'Ordinary subloop references a retired template loop; replace the reference in the old build',
+                  ),
+                )
+            : result.issues;
+          definitions.push({
+            id: String(row.id),
+            loopId: String(row.loop_id),
+            loopName: loopNames.get(String(row.loop_id)) ?? String(row.loop_id),
+            status: String(row.status),
+            definitionHash: hash(input),
+            ...(result.ok ? { targetDefinitionHash: hash(result.value) } : {}),
+            conversion: errors.some((entry) => entry.kind === 'invalid')
+              ? 'invalid'
+              : result.ok
+                ? 'automatic'
+                : 'pending',
+            issues: errors,
+            notices: result.notices,
+            reviewItems: result.reviewItems,
+          });
+          const source = result.ok ? result.value : input;
+          if (object(source) && Array.isArray(source.nodes))
+            for (const node of source.nodes as unknown[]) {
+              if (!object(node) || node.kind !== 'trigger' || !object(node.config)) continue;
+              const type = node.config.type ?? node.config.subtype;
+              if (type === 'poll' || type === 'cron')
+                disarm.push({
+                  versionId: String(row.id),
+                  loopId: String(row.loop_id),
+                  nodeId: String(node.id),
+                  type,
+                });
+            }
+        } catch {
+          definitions.push({
+            id: String(row.id),
+            loopId: String(row.loop_id),
+            loopName: loopNames.get(String(row.loop_id)) ?? String(row.loop_id),
+            status: String(row.status),
+            definitionHash: hash(row.definition),
+            conversion: 'invalid',
+            issues: [invalid('/loop_versions/' + String(row.id), 'Invalid stored definition JSON')],
+            notices: [],
+            reviewItems: [],
+          });
         }
       }
-    }
-    const storedEvents = inventory.tables.run_events ?? [];
-    for (const run of inventory.tables.runs ?? []) {
-      const runId = String(run.id);
-      const runEvents = storedEvents
-        .filter((event) => event.run_id === run.id)
-        .sort((a, b) => Number(a.seq) - Number(b.seq));
-      const rawEvents = runEvents.map(eventOf);
-      const decisionNodeIds = new Set(
-        (converted.get(String(run.version_id))?.nodes ?? [])
-          .filter((node) => node.kind === 'decision')
-          .map((node) => node.id),
+  definitions.sort((a, b) => a.id.localeCompare(b.id));
+  if (!object(resolutions))
+    issues.push(invalid('/resolutions', 'Expected a map keyed by version or draft id'));
+  else
+    for (const id of Object.keys(resolutions))
+      if (!definitions.some((entry) => entry.id === id))
+        issues.push(
+          invalid('/resolutions/' + id, 'Unused resolution: unknown or retired version/draft'),
+        );
+  const blockedRuns: DatabaseUpgradeInventory['blockedRuns'] = [];
+  if (names.includes('runs'))
+    for (const run of await rows(
+      client,
+      "SELECT id,loop_id,status FROM runs WHERE status IN ('queued','running','waiting','paused') ORDER BY id",
+    ))
+      if (!templateLoops.has(String(run.loop_id)))
+        blockedRuns.push({
+          id: String(run.id),
+          loopId: String(run.loop_id),
+          status: String(run.status),
+        });
+  const blockedReceipts: DatabaseUpgradeInventory['blockedReceipts'] = [];
+  if (names.includes('webhook_receipts'))
+    for (const receipt of await rows(
+      client,
+      "SELECT id,loop_id FROM webhook_receipts WHERE status='pending' ORDER BY id",
+    ))
+      if (!templateLoops.has(String(receipt.loop_id)))
+        blockedReceipts.push({
+          id: String(receipt.id),
+          loopId: String(receipt.loop_id),
+          reason: 'Pending receipt or frozen admission intent; settle in the old build',
+        });
+  if (names.includes('schedules'))
+    for (const schedule of await rows(
+      client,
+      'SELECT id,loop_id,version_id,trigger_node_id FROM schedules ORDER BY id',
+    ))
+      if (!templateLoops.has(String(schedule.loop_id)))
+        disarm.push({
+          scheduleId: String(schedule.id),
+          versionId: String(schedule.version_id),
+          loopId: String(schedule.loop_id),
+          nodeId: String(schedule.trigger_node_id),
+          type: 'cron',
+        });
+  disarm.sort((a, b) => stableStringify(a).localeCompare(stableStringify(b)));
+  const sourceHash = hash({
+    rows: await hashUpgradeStore(client, names),
+    structure: await storeStructure(client),
+  });
+  const plan = {
+    status: current ? ('current' as const) : ('upgrade-required' as const),
+    sourceHash,
+    tableCounts,
+    counts: {
+      loops: tableCounts.loops ?? 0,
+      versions: definitions.filter((entry) => entry.status === 'published').length,
+      drafts: definitions.filter((entry) => entry.status === 'draft').length,
+      templateInstances: tableCounts.template_instances ?? 0,
+      templateLoops: templateLoops.size,
+      runs: tableCounts.runs ?? 0,
+      events: tableCounts.run_events ?? 0,
+      receipts: tableCounts.webhook_receipts ?? 0,
+    },
+    definitions,
+    templateLoopIds: [...templateLoops].sort(),
+    blockedRuns,
+    blockedReceipts,
+    disarm: current ? [] : disarm,
+    issues,
+  };
+  return {
+    ...plan,
+    planHash: hash({
+      rule: 'format-4-definitions-only-v1',
+      migrations: readMigrationFiles({ migrationsFolder: MIGRATIONS }),
+      resolutions,
+      plan,
+    }),
+  };
+}
+
+/** Offline only. verifySafety must recheck the caller's lock and verified complete backup.
+ * Artifact deletion follows commit in the CLI, never inside this database transaction. */
+export async function applyDatabaseUpgrade(
+  client: Client,
+  request: DatabaseUpgradeRequest,
+  options: { verifySafety?: () => Promise<void> } = {},
+): Promise<{
+  status: 'current' | 'upgraded';
+  sourceHash: string;
+  planHash: string;
+  definitions: number;
+  deletedRuns: number;
+}> {
+  if (!options.verifySafety)
+    throw new DatabaseUpgradeRequiredError(
+      'A held directory lock and verified complete backup are required',
+    );
+  await options.verifySafety();
+  const tx = await client.transaction('write');
+  try {
+    const plan = await inspectDatabaseUpgrade(tx, request.resolutions);
+    if (plan.planHash !== request.planHash)
+      throw new DatabaseUpgradeRequiredError('Plan hash changed; inspect and review again');
+    if (plan.issues.length || plan.definitions.some((entry) => entry.conversion !== 'automatic'))
+      throw new DatabaseUpgradeRequiredError(
+        'Unresolved pending or invalid conversion items; inspect with resolutions',
       );
-      for (const event of rawEvents)
-        if (event.type === 'decision.made' && typeof event.nodeId === 'string')
-          decisionNodeIds.add(event.nodeId);
-      const history = upgradeRunHistoryCurrent({
-        sourceVersion: (
-          json(
-            (inventory.tables.loop_versions ?? []).find((version) => version.id === run.version_id)!
-              .definition,
-          ) as { schemaVersion: 1 | 2 | 3 }
-        ).schemaVersion,
-        initialThread: json(run.initial_thread),
-        events: rawEvents,
-        decisionNodeIds: [...decisionNodeIds],
-        ...(run.thread_snapshot !== null && run.thread_snapshot !== undefined
-          ? { snapshot: json(run.thread_snapshot) }
-          : {}),
-        ...(typeof run.thread_snapshot_seq === 'number'
-          ? { snapshotSeq: run.thread_snapshot_seq }
-          : {}),
-      });
-      if (!history.ok)
-        throw new DatabaseUpgradeRequiredError(
-          'Run history/replay conversion refused: ' + runId + ': ' + history.issues[0]?.message,
-        );
-      let failure = run.failure;
-      if (manifest.failedRuns[runId])
-        failure = JSON.stringify(
-          upgradedFailure(json(run.failure), {
-            approvedAt: manifest.approvedAt,
-            reason: manifest.failedRuns[runId].reason,
-            version: 3,
-          }),
-        );
-      await tx.execute({
-        sql: 'UPDATE runs SET initial_thread=?,thread_snapshot=?,failure=? WHERE id=?',
-        args: [
-          JSON.stringify(history.value.initialThread),
-          history.value.snapshot ? JSON.stringify(history.value.snapshot) : null,
-          failure as string | null,
-          runId,
-        ],
-      });
-      for (const event of history.value.events) {
-        const {
-          runId: _runId,
-          seq,
-          ts: _ts,
-          type: _type,
-          nodeId: _nodeId,
-          ...payload
-        } = event as unknown as RawRow;
-        if (event.type === 'run.failed' && manifest.failedRuns[runId])
-          payload.failure = upgradedFailure(event.failure, {
-            approvedAt: manifest.approvedAt,
-            reason: manifest.failedRuns[runId].reason,
-            version: 3,
-          });
+    if (plan.status === 'current') {
+      await tx.rollback();
+      return {
+        status: 'current',
+        sourceHash: plan.sourceHash,
+        planHash: plan.planHash,
+        definitions: 0,
+        deletedRuns: 0,
+      };
+    }
+    if (plan.blockedRuns.length || plan.blockedReceipts.length)
+      throw new DatabaseUpgradeRequiredError(
+        'Settle ordinary nonterminal runs and pending receipts/admission intents in the old build',
+      );
+    const names = await tables(tx);
+    for (const name of RUN_HISTORY_TABLES)
+      if (names.includes(name)) await tx.execute('DELETE FROM ' + quote(name));
+    for (const id of plan.templateLoopIds) {
+      for (const table of ['schedules', 'webhook_endpoints', 'loop_versions'])
+        await tx.execute({ sql: 'DELETE FROM ' + quote(table) + ' WHERE loop_id=?', args: [id] });
+      await tx.execute({ sql: 'DELETE FROM loops WHERE id=?', args: [id] });
+    }
+    if (names.includes('template_instances')) await tx.execute('DELETE FROM template_instances');
+    if (names.includes('gg_upgrade_archive')) await tx.execute('DROP TABLE gg_upgrade_archive');
+    await structuralMigrations(tx, MIGRATIONS);
+    for await (const batch of tableBatches(tx, 'loop_versions'))
+      for (const row of batch) {
+        const converted = await convert(row, request.resolutions?.[String(row.id)]);
+        if (
+          !converted.ok ||
+          hash(converted.value) !==
+            plan.definitions.find((entry) => entry.id === String(row.id))?.targetDefinitionHash
+        )
+          throw new DatabaseUpgradeRequiredError('Definition conversion changed during apply');
+        // Tokens/config hashes are derived from definitions at read time, not stored columns.
         await tx.execute({
-          sql: 'UPDATE run_events SET payload=? WHERE run_id=? AND seq=?',
-          args: [JSON.stringify(payload), runId, Number(seq)],
+          sql: 'UPDATE loop_versions SET definition=? WHERE id=?',
+          args: [JSON.stringify(converted.value), String(row.id)],
         });
       }
-    }
-    const ownerRows = inventory.tables.settings ?? [];
-    const owners = new Set(
-      ownerRows
-        .filter((row) => row.key === 'defaultModel' || row.key === 'defaultEffort')
-        .map((row) => String(row.owner_id)),
-    );
-    for (const ownerId of owners) {
-      const defaults: Record<string, unknown> = {};
-      for (const row of ownerRows.filter((entry) => entry.owner_id === ownerId)) {
-        if (row.key === 'defaultModel') defaults.model = json(row.value);
-        if (row.key === 'defaultEffort') defaults.effort = json(row.value);
-      }
-      const result = upgradeDefaultsV1(defaults);
-      if (!result.ok || ownerRows.some((row) => row.owner_id === ownerId && row.key === 'defaults'))
-        throw new DatabaseUpgradeRequiredError('Owner default conversion refused');
+    for (const change of (await convertedOwnerDefaults(tx)).changes) {
       await tx.execute({
         sql: 'INSERT INTO settings (owner_id,key,value,updated_at) VALUES (?,?,?,?)',
-        args: [ownerId, 'defaults', JSON.stringify(result.value), manifest.approvedAt],
+        args: [change.ownerId, 'defaults', JSON.stringify(change.value), change.updatedAt],
       });
       await tx.execute({
         sql: "DELETE FROM settings WHERE owner_id=? AND key IN ('defaultModel','defaultEffort')",
-        args: [ownerId],
+        args: [change.ownerId],
       });
     }
+    await tx.execute('UPDATE schedules SET enabled=0');
+    await tx.execute(STATE_SQL);
     await tx.execute({
-      sql: "INSERT OR REPLACE INTO gg_upgrade_state (id,format_version,status,source_hash,manifest_hash) VALUES (1,3,'complete',?,?)",
-      args: [original.sourceHash, manifestHash],
+      sql: "INSERT OR REPLACE INTO gg_upgrade_state (id,format_version,status,source_hash,manifest_hash) VALUES (1,?,'complete',?,?)",
+      args: [CURRENT_DEFINITION_FORMAT, plan.sourceHash, plan.planHash],
     });
     await guardDatabaseUpgrade(tx);
-    // Validate every stored event again through the clean parser before the single atomic commit.
-    for (const row of await rows(tx, 'SELECT * FROM run_events ORDER BY run_id,seq'))
-      RunEventSchema.parse(eventOf(row));
-    for (const row of await rows(tx, 'SELECT * FROM runs')) {
-      RunRecordSchema.parse(recordOf(row));
-      ContextThreadSchema.parse(json(row.initial_thread));
-      if (row.thread_snapshot !== null) ContextThreadSchema.parse(json(row.thread_snapshot));
-    }
+    await verifyDatabaseHead(tx);
+    if (
+      (await rows(tx, 'PRAGMA integrity_check'))[0]?.integrity_check !== 'ok' ||
+      (await rows(tx, 'PRAGMA foreign_key_check')).length
+    )
+      throw new DatabaseUpgradeRequiredError('Final database integrity check failed');
+    await options.verifySafety();
     await tx.commit();
     return {
-      sourceHash: original.sourceHash,
-      manifestHash,
-      versions: converted.size,
-      runs: (inventory.tables.runs ?? []).length,
+      status: 'upgraded',
+      sourceHash: plan.sourceHash,
+      planHash: plan.planHash,
+      definitions: plan.definitions.length,
+      deletedRuns: plan.counts.runs,
     };
   } catch (error) {
-    await tx.rollback();
+    try {
+      await tx.rollback();
+    } catch {
+      /* Preserve the original transaction failure. */
+    }
     throw error;
+  } finally {
+    tx.close();
   }
 }

@@ -1,5 +1,32 @@
 # Configure triggers
 
+## Choose a trigger type
+
+Add the single **Trigger** node and open its editor. **Trigger type** comes first:
+**Manual**, **Cron**, **Poll**, **Event** or **Webhook**. Each choice describes when
+it starts a run and shows its own fields. Manual offers an input schema and start
+surfaces; Cron offers its schedule, timezone, missed-fire policy and enabled flag;
+Poll offers the interval, probe, firing condition, dedupe, optional Items and enabled
+flag. Webhook offers **Authentication recipe** (None, Body HMAC, Timestamp and body HMAC),
+**Body mode** (json, text, bytes) and **Event type source** (Constant, Header, JSON pointer).
+Only the selected recipe fields appear. None establishes no authenticated sender identity.
+Event/Webhook reject `filter`; payload checks belong in downstream decisions, classifiers or scripts. The editor includes a reminder. Route unwanted input to a terminal Success exit with no returns or destinations.
+
+**Start from a preset** is optional and sits after the trigger fields. Choose a
+GitHub recipe, fill in its setup and choose **Preview GitHub preset**. The preview
+shows the current and replacement configurations and names any unfinished input
+that will be replaced. **Cancel preview** changes nothing and returns focus to
+Preview. **Apply GitHub preset** replaces the trigger configuration in one undo
+step and returns focus to Trigger type. Webhook recipes also add an editable check,
+restore and quiet exit, rewiring the former connection through restore. The preview
+lists every node and edge change. All generated fields and nodes remain editable.
+Undo restores the whole graph and unfinished input; redo reapplies it. Reapplying
+explicitly reviews replacement of an existing check/restore/exit fragment, including
+your edits. For webhook recipes, shared or ambiguously rewired nodes are retained
+and the preview says it is inserting another fragment. Changing the graph, held input, load or undo history
+invalidates an open preview. Apply validates graph rules and limits; repair any
+unconnected or multiply connected output before applying. The stored discriminator is `type`.
+
 ## Publish to arm automatic triggers
 
 Edit a trigger's `config`, connect its `out` port, and publish. Cron, webhook, event, and poll triggers use published versions. Publishing replaces the armed version while existing runs keep theirs. Boot re-arms published loops. Every firing creates a new run; overlapping runs can execute in parallel.
@@ -21,15 +48,15 @@ $triggers = Invoke-RestMethod "http://127.0.0.1:4747/loops/$loopId/triggers"
 $triggers.webhooks | Where-Object enabled | Select-Object triggerNodeId, path
 ```
 
-The response contains `schedules`, `webhooks`, and `polls`. Older schedule and endpoint rows remain with `enabled` false; select the enabled rows. Deleting a loop disarms all of its triggers; the API refuses to delete a loop with active runs (409 `LOOP_IN_USE`).
+The response contains `schedules`, `webhooks`, and `polls`. A missing or mismatched pinned webhook configuration is shown as `configurationAvailable: false` in this listing and Events; the row does not break the page. Intake for an enabled mismatched endpoint still refuses with 503 `HOOK_NOT_READY`, and the server logs a safe warning. Older schedule and endpoint rows remain with `enabled` false; select the enabled rows. Deleting a loop removes its schedules, webhook endpoints, receipts and run history, and disarms its polls. The API refuses deletion with 409 `LOOP_IN_USE` while runs are queued, running, waiting or paused, or an active caller or pending webhook admission still needs the loop. Cancel the run or resolve the pending admission first. A refusal leaves triggers unchanged.
 
 ## Start manually
 
-Choose `subtype` of `manual`, optionally set `inputSchema`, and declare `exposeTo`. Start it from **Runs → New run** (the editor's **Open in Runs** link goes there), the API start request, or MCP's `start_run` as shown in [Run and observe](03-run-and-observe.md). Treat exposure declarations as advisory in this build; see the [editor limitation](02-build-a-loop.md#choose-nodes).
+Choose **Manual** in **Trigger type**, optionally set `inputSchema`, and declare `exposeTo`. Start it from **Runs → New run** (the editor's **Open in Runs** link goes there), the API start request, or MCP's `start_run` as shown in [Run and observe](03-run-and-observe.md). Treat exposure declarations as advisory in this build; see the [editor limitation](02-build-a-loop.md#choose-nodes).
 
 ## Schedule with cron
 
-Choose **cron** in the trigger's Subtype, then choose a schedule in **Repeat**:
+Choose **Cron** in **Trigger type**, then choose a schedule in **Repeat**:
 every N minutes, every N hours, daily, weekdays, weekly on chosen days, or monthly
 on day N. Set the time and days where offered. Minute steps restart each hour;
 hour steps restart each day. Months without the selected monthly day are skipped.
@@ -59,7 +86,7 @@ the schedule. The saved config shape is unchanged:
 
 ```json
 {
-  "subtype": "cron",
+  "type": "cron",
   "expression": "0 2 * * *",
   "timezone": "America/Chicago",
   "missedFirePolicy": "run-once",
@@ -81,21 +108,42 @@ Trigger payloads contain `scheduledFor` and `catchUp`. The schedule advances bef
 
 After a long outage `run-once` still starts exactly one catch-up run, for the latest missed slot at or before the restart, however many slots were missed. `run-each` starts at most 100 catch-up runs per schedule: it keeps the latest 100 missed slots, runs them oldest first, drops the older missed slots with a warning in the log naming the number dropped and the first retained slot, and moves the schedule to its next future slot.
 
+## Receive an ordinary POST
+
+A new Webhook defaults to None authentication, JSON body and constant `webhook` event metadata.
+None requires no secret and establishes no sender identity. Text supports XML/form-like content as
+a UTF-8 string, including empty input; Bytes produces `{encoding:"base64",data}`. The raw limit is
+1 MiB for every mode. Interpret text or bytes downstream.
+
+Choose Header extraction with a lowercase header name and fallback, or JSON pointer extraction
+with a fallback. Pointers require JSON mode, allow the empty root pointer, RFC 6901 escapes,
+1,024 characters and 32 segments, and traverse own properties/array indices only. Missing, blank
+or nonscalar values use fallback. Ambiguous headers return 400 `EVENT_TYPE_AMBIGUOUS`;
+control/overlong scalar metadata returns 422 `EVENT_TYPE_INVALID`. Event names and fallbacks must
+be nonblank, control-free and at most 128 characters. This metadata is recorded on the invocation;
+it does not publish to the Event bus.
+
+Authentication, body and extraction changes use the normal editor focus, validation and undo.
+JSON remains strict, nonempty UTF-8 JSON; literal `null` is valid. The flat signing fields are no
+longer accepted. Existing stores/exports need the reviewed format-4 cutover.
+
 ## Receive a timestamp-signed webhook
 
 Create a secret in [Settings](06-settings-and-secrets.md#store-secrets), then reference its name in the trigger:
 
 ```json
 {
-  "subtype": "webhook",
-  "signature": {
-    "scheme": "hmac-sha256",
+  "type": "webhook",
+  "authentication": {
+    "type": "hmac-sha256",
+    "message": "timestamp-body",
     "header": "x-graphgoblin-signature",
-    "secretRef": "incoming-hook"
+    "secretRef": "incoming-hook",
+    "windowSeconds": 300
   },
-  "replayWindowSeconds": 300,
-  "dedupeKey": "deliveryId",
-  "filter": "action = \"opened\""
+  "body": { "type": "json" },
+  "eventType": { "source": "constant", "value": "webhook" },
+  "dedupeKey": "deliveryId"
 }
 ```
 
@@ -107,7 +155,7 @@ POST /hooks/{token}
 
 The token stays stable across versions for the same trigger node ID. Replace or rename that node and publish to obtain a new token. The signing secret is resolved by name on each delivery.
 
-The signature is HMAC-SHA256, keyed with the secret, over the exact UTF-8 bytes of the timestamp, a dot, and the body. It goes in the header named by `signature.header` (default `x-graphgoblin-signature`). The timestamp always goes in `x-graphgoblin-timestamp`.
+The signature is HMAC-SHA256, keyed with the secret, over the exact UTF-8 bytes of the timestamp, a dot, and the body. It goes in the header named by `authentication.header` (default `x-graphgoblin-signature`). The timestamp always goes in `x-graphgoblin-timestamp`.
 
 In Bash, install curl and OpenSSL, then replace the token and secret placeholders:
 
@@ -147,9 +195,13 @@ For a quick check of your signing code, the secret `s3cret-value`, the timestamp
 sha256=1ed6e75a09e5efba80f692ea02ee05a85fb177ec7ed73cfe378758e7f8757c96
 ```
 
-Keep whitespace and newlines identical between signing and sending. Send the timestamp as ISO 8601 or Unix seconds. The server rejects timestamps more than `replayWindowSeconds` away from its clock in either direction; the default is 300 seconds. Send the digest as lowercase hex with the `sha256=` prefix.
+Keep whitespace and newlines identical between signing and sending. Send the timestamp as ISO 8601 or Unix seconds. The server rejects timestamps more than `authentication.windowSeconds` away from its clock in either direction; the default is 300 seconds. Send the digest as lowercase hex with the `sha256=` prefix.
 
-`dedupeKey` and `filter` are JSONata over the parsed body, with lower-case request headers available through `$headers`. The configured signing header is excluded case-insensitively from both expressions; ordinary delivery and timestamp metadata remains available. The example rejects repeated delivery IDs within the replay window. Without a dedupe expression, a hash of the signature identifies the delivery, so a byte-for-byte replay is rejected without storing the signature itself. Accepted requests return HTTP 202 with an event and `runId`; filtered requests return 202 with `filtered` true and no run. The run's trigger payload is the parsed body, so templates read it as `trigger.payload`. Duplicate deliveries return 409 `REPLAYED`. A body that is not JSON returns 400 `BODY_INVALID`, and a filter or dedupe expression that fails returns 422 `EXPRESSION_FAILED`.
+`dedupeKey` is JSONata over the parsed body, with lower-case request headers available through `$headers`. The configured signing header is excluded case-insensitively from the expression; ordinary delivery and timestamp metadata remains available. The example deduplicates authored delivery IDs across signing recipes and versions. Without a dedupe expression, identical raw bodies can start separate runs; raw hashes are audit evidence only. Timestamp freshness authenticates the delivery and does not expire its authored key. Saved and duplicate requests return HTTP 202 `{accepted:true}`. Inspect **Events** for the payload, delivery state and started-run links (old `filtered` rows remain historical). The run's trigger payload is the parsed body, so templates read it as `trigger.payload`. A duplicate returns the same 202 without another run. Empty, whitespace-only, malformed JSON or invalid UTF-8 bodies return 400 `BODY_INVALID` (literal `null` is valid), and a dedupe expression that fails returns 422 `EXPRESSION_FAILED`.
+
+A configured key expression must return a nonempty key: null, undefined and empty string return 422 `KEY_INVALID`, before saving input. Strings stay literal, including whitespace; other values use JSON serialization. Keys longer than 512 characters are refused and never truncated, for all authentication recipes. With no `dedupeKey` expression, no automatic business identity is generated. Fix invalid expressions and resend; no claim was consumed by that refusal. Event and Poll key rules are unchanged.
+
+Explicit webhook keys are permanent in owner/loop/trigger-node scope across versions. Preserved receipt and inbound claims, saved reservations and committed run-envelope keys all count, including keys from earlier trigger kinds and old inbound-only claims with endpoint provenance. Restart, republishing, filter changes or an expired timestamp window do not reopen a key. Timestamp freshness only authenticates the new request. Concurrent repeats and retries after a lost acknowledgement start at most one run for the key.
 
 Bodies are limited to 1 MiB; larger bodies return 413. The in-memory rate limit defaults to 60 deliveries per endpoint per minute, controlled by `GG_HOOK_RATE_LIMIT`; it resets on restart and is checked before the signature. See [Troubleshooting](07-troubleshooting.md) for timestamp and signature failures.
 
@@ -159,20 +211,61 @@ For a GitHub webhook, use body signing instead of the timestamp protocol above:
 
 ```json
 {
-  "subtype": "webhook",
-  "signature": {
-    "scheme": "hmac-sha256-body",
+  "type": "webhook",
+  "authentication": {
+    "type": "hmac-sha256",
+    "message": "body",
     "header": "x-hub-signature-256",
     "secretRef": "github-repo-hook"
   },
-  "dedupeKey": "$headers.\"x-github-delivery\"",
-  "filter": "repository.full_name = \"OWNER/REPO\" and action = \"labeled\" and $exists(issue) and $not($exists(issue.pull_request)) and label.name = \"ready\""
+  "body": { "type": "json" },
+  "eventType": { "source": "header", "name": "x-github-event", "fallback": "webhook" },
+  "dedupeKey": "$headers.\"x-github-delivery\""
 }
 ```
 
-Create the secret in Settings, publish the loop, and use its enabled `/hooks/<token>` URL as the GitHub payload URL. Configure JSON content and the same secret in GitHub. Subscribe to **Issues** for the example above; use **Pull requests** for PR filters. Expose only the hooks path through HTTPS, preserving the original body bytes. GitHub signs the payload in `X-Hub-Signature-256`; see its [signature verification reference](https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries) and [event payload reference](https://docs.github.com/en/webhooks/webhook-events-and-payloads).
+The webhook presets add this editable graph:
 
-Replace the repository and label values deliberately. Body signing has no `replayWindowSeconds` field. Each logical endpoint should have its own signing secret. The delivery ID and event headers are unsigned hints: check repository, object shape and action in the signed body. Useful filter variants are:
+```text
+trigger --> event-check --pass (Continue)--> restore-output --> former successor
+                     --ignore (Ignore)--> quiet-exit (Success, no returns)
+```
+
+For the issue-label example, `event-check` is an Expression decision with routes
+`[{"id":"pass","label":"Continue"},{"id":"ignore","label":"Ignore"}]` and JSONata:
+
+```jsonata
+invocation.trigger.payload.(repository.full_name = "OWNER/REPO" and action = "labeled" and $exists(issue) and $not($exists(issue.pull_request)) and label.name = "ready") ? "pass" : "ignore"
+```
+
+Labels and branches are encoded as JSON strings, including quotes, backslashes,
+newlines and Unicode. The presets extract `x-github-event` metadata with fallback `webhook`. The default authority
+checks remain body-only; event headers are hints, available as `invocation.trigger.eventType`. `restore-output` is an ordinary Mutate node with:
+
+```json
+{
+  "operations": [
+    {
+      "op": "set",
+      "path": "/lastOutput",
+      "value": { "kind": "expression", "jsonata": "$lookup(outputs, \"start\")" }
+    }
+  ]
+}
+```
+
+Use your actual trigger ID in the safely quoted lookup. It restores the whole
+output (`nodeId`, `value`, `at` and optional `schemaRef`), because a decision replaces
+`lastOutput`. The Ignore branch ends at an ordinary terminal Exit configured as
+`{"outcome":"success","returns":"none","destinations":[]}`, with no outgoing edge.
+Edit any generated node directly to change behavior. The poll recipe removes a recognized earlier webhook fragment and reconnects
+its former successor directly to the trigger. Unrecognized, shared or ambiguous
+checks stay in place; the preview warns that they may ignore poll results.
+Removal and reconnection are part of the same undo step.
+
+Create the secret in Settings, publish the loop, and use its enabled `/hooks/<token>` URL as the GitHub payload URL. Configure JSON content and the same secret in GitHub. Subscribe to **Issues** for the example above; use **Pull requests** for PR checks. Expose only the hooks path through HTTPS, preserving the original body bytes. GitHub signs the payload in `X-Hub-Signature-256`; see its [signature verification reference](https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries) and [event payload reference](https://docs.github.com/en/webhooks/webhook-events-and-payloads).
+
+Replace the repository and label values deliberately. Body signing has no `windowSeconds` field. Each logical endpoint should have its own signing secret. The delivery ID and event headers are unsigned hints: check repository, object shape and action in the signed body. The editable decision uses these signed-body checks:
 
 | Intent                       | Signed-body checks after the repository check                                                                                          |
 | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
@@ -180,21 +273,20 @@ Replace the repository and label values deliberately. Body signing has no `repla
 | PR opened or marked ready    | `action in ["opened", "ready_for_review"] and $exists(pull_request) and pull_request.draft = false and pull_request.base.ref = "main"` |
 | PR merged into a branch      | `action = "closed" and $exists(pull_request) and pull_request.merged = true and pull_request.base.ref = "main"`                        |
 
-An authored business key also prevents distinct payload bodies from starting separate runs for the same identity. It is scoped to this owner, loop and trigger node across versions, without expiry. Previous body receipts (including filtered or pending deliveries) and admitted runs consume the key; an older timestamp-signed run can therefore suppress a later body-signed delivery with the same key. A distinct body with a consumed key returns 409 `DUPLICATE_KEY` and is recorded as `deduplicated` with no run. Repeating that exact body returns `REPLAYED`. Timestamp-signed receivers retain their own window semantics.
+An authored business key also prevents distinct payload bodies from starting separate runs for the same identity. It is scoped to this owner, loop and trigger node across versions, without expiry. Previous body receipts (including filtered or pending deliveries) and admitted runs consume the key; an older timestamp-signed run can therefore suppress a later body-signed delivery with the same key. A distinct body with a consumed key returns 202 `{accepted:true}` and is recorded as `deduplicated` with no run. Repeating that exact body returns the same acknowledgement. Timestamp-signed receivers use the same receipt/key admission path.
 
-A ping or unmatched payload returns 202 with `filtered: true`; no run starts. **Filtered content is permanently consumed.** Republishing a corrected filter does not reopen the same body. Exact raw-content replay is blocked across versions even if the delivery ID, signature casing, secret or business dedupe expression changes. This policy makes captured deliveries unusable as repeated run triggers; it is stricter than timestamp signing.
+With these presets, a ping or unmatched payload starts a visible run that ends quietly with Success and no return. The explicit delivery key remains consumed before the downstream decision. Republishing a corrected check does not reopen that key. The raw body does not suppress another delivery: a distinct authored key can start another run for identical bytes, and unkeyed deliveries always follow Allow.
 
-Events shows delivery state and retry attempts. A transient admission failure returns 503 and retains one allocated run; the background sweep retries it without needing GitHub to redeliver. Pending admissions pin the loop and its referenced subloops. Permanent failures remain visible with a safe failure code. A repeated completed receipt returns 409 `REPLAYED`.
+Events shows delivery state and retry attempts. For either signing recipe, the 202 follows a saved claim without waiting for run creation. A transient admission failure retains one allocated run; the background sweep retries it without needing GitHub to redeliver. Pending admissions pin the loop and its referenced subloops. Permanent failures remain visible with a safe failure code. A repeated completed receipt returns 202 `{accepted:true}`. An unconfirmed save or unavailable signing secret returns 503.
 
 ## Receive events and connect loops
 
-Configure an event trigger to match a type and optionally filter or deduplicate its payload:
+Configure an event trigger to match a type and optionally deduplicate its payload; add a downstream decision for payload checks:
 
 ```json
 {
-  "subtype": "event",
+  "type": "event",
   "eventType": "issue-ready",
-  "filter": "approved = true",
   "dedupeKey": "issueId"
 }
 ```
@@ -225,7 +317,7 @@ Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:4747/events' `
 
 Matching published triggers start runs. The response includes `runIds` and `duplicate`. A repeated event type plus request dedupe key returns the earlier event without starting more runs; this dedupe persists without a replay-window expiry. A node's own dedupe expression separately suppresses keys already used by that trigger.
 
-To emit from another loop, add an `event` return channel to its exit. Exit-generated payloads wrap the mapped value under `result`, alongside `runId`, `loopId`, and `outcome`; use those fields in the receiving trigger's filter and dedupe expressions.
+To emit from another loop, add an `event` return channel to its exit. Exit-generated payloads wrap the mapped value under `result`, alongside `runId`, `loopId`, and `outcome`; use those fields in the receiving trigger's dedupe expression and downstream decision checks.
 
 The self-trigger guard skips any loop already in the emitting run's chain, including parent subloops and earlier event callers. The chain stops at eight runs. The event remains recorded and skipped triggers produce warnings. An API-submitted event starts a fresh chain.
 
@@ -241,7 +333,7 @@ Use a poll trigger when a laptop should not accept inbound connections:
 
 ```json
 {
-  "subtype": "poll",
+  "type": "poll",
   "intervalSeconds": 60,
   "probe": {
     "kind": "http",
@@ -265,7 +357,7 @@ Use an authenticated local `gh` installation and Node.js for read-only polling. 
 
 ```json
 {
-  "subtype": "poll",
+  "type": "poll",
   "intervalSeconds": 60,
   "probe": {
     "kind": "script",
@@ -300,6 +392,8 @@ Keep the API bound to localhost. If inbound webhooks are necessary, use a TLS tu
 /hooks/*
 ```
 
-Cloudflare Tunnel and ngrok are examples from the design docs. Configure their proxy or gateway rules to reject every other path; a whole-origin tunnel also exposes the API and UI. Keep HMAC verification and replay protection enabled. Prefer manual or poll triggers when inbound access is unnecessary. Follow [Triggers and integrations](../08-triggers-and-integrations.md) and [Security and distribution](../11-security-and-distribution.md) for the tunnel posture.
+Cloudflare Tunnel and ngrok are examples from the design docs. Configure their proxy or gateway rules to reject every other path; a whole-origin tunnel also exposes the API and UI. Configure HMAC authentication and timestamp freshness when the sender supports them. Prefer manual or poll triggers when inbound access is unnecessary. Follow [Triggers and integrations](../08-triggers-and-integrations.md) and [Security and distribution](../11-security-and-distribution.md) for the tunnel posture.
 
 Continue with [MCP and the Codex plugin](05-mcp-and-codex-plugin.md).
+
+Stored filters require review during the format-4 cutover. Approve the exact version-bound generated check/restore/quiet-exit graph, supply a valid replacement fragment, or explicitly remove the filter with a reason. Formerly ignored input creates quiet runs, errors happen after acknowledgement, keys may already be consumed, and checks add visits. Filters needing headers, clock, randomness or unavailable context require replacement or explicit removal.

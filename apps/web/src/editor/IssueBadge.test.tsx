@@ -14,9 +14,9 @@ const error: EditorIssue = {
   path: 'config.prompt.template',
 };
 const warning: EditorIssue = {
-  code: 'CRITERION_ABOVE_CEILING',
+  code: 'GATE_PASSES_ABOVE_VISIT_CAP',
   severity: 'warning',
-  message: 'criterion is above the loop ceiling',
+  message: 'gate passes exceed the visit cap',
   nodeId: 'prep',
 };
 

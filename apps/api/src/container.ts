@@ -1,8 +1,8 @@
 import { existsSync } from 'node:fs';
 import { validateHarnessDefaults } from '@graphgoblin/domain';
-import { mkdir } from 'node:fs/promises';
+import { mkdir, realpath } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import { dirname } from 'node:path';
+import { dirname, isAbsolute, relative, sep } from 'node:path';
 import { createCodexAdapters } from '@graphgoblin/adapter-codex';
 import { FsArtifactStore, FsWorkspace } from '@graphgoblin/infrastructure/fs';
 import {
@@ -17,7 +17,6 @@ import {
   openReadOnlyDatabaseClient,
   databaseView,
   SqliteApiKeys,
-  SqliteTemplateInstances,
   SqliteEventStore,
   SqliteTriggerAdmission,
   SqliteLoopRepository,
@@ -65,31 +64,6 @@ import { loadMasterKey } from './master-key.js';
 import { PollTriggers } from './triggers/poll.js';
 import { TriggerService } from './triggers/trigger-service.js';
 import { TemplateCatalog } from './templates/catalog.js';
-import { TemplatePrerequisites } from './templates/prerequisites.js';
-import { TemplateInstances } from './templates/instances.js';
-import {
-  TemplateRuntime,
-  templateAdmission,
-  type TemplateAuthoritySource,
-  type TemplateFailureReporter,
-} from './templates/runtime.js';
-import { PrivateTemplateScripts } from './templates/scripts.js';
-import { ReviewAuthority } from './templates/github/review-authority.js';
-import { ReviewReporter } from './templates/github/review-reporter.js';
-import type { ReviewDependenciesFactory } from './templates/github/review.js';
-import { QaAuthority } from './templates/github/qa-authority.js';
-import { QaReporter } from './templates/github/qa-reporter.js';
-import { QaHistory } from './templates/github/qa-history.js';
-import type { QaMetadataFactory } from './templates/github/qa-native.js';
-import {
-  ImplementationAuthority,
-  type SupportDependencies,
-} from './templates/github/authority-source.js';
-import {
-  ImplementationReporter,
-  installImplementationFinalization,
-} from './templates/github/reporter.js';
-
 /** The single owner of a 1.0 installation. Every table carries it so multi-tenancy is a data change, not a schema change. */
 export const LOCAL_OWNER = 'local';
 
@@ -101,12 +75,6 @@ export type SecretChangeHook = (ownerId: string, name: string) => Promise<void>;
 
 export interface ContainerOverrides {
   templateCatalogRoot?: string;
-  templateAuthority?: TemplateAuthoritySource;
-  templateFailureReporter?: TemplateFailureReporter;
-  /** Inject deterministic boundaries for repository-template tests; never an authored setting. */
-  implementationDependencies?: SupportDependencies;
-  reviewDependencies?: ReviewDependenciesFactory;
-  qaMetadata?: QaMetadataFactory;
   clock?: ClockPort;
   ids?: IdPort;
   logger?: Logger;
@@ -124,7 +92,7 @@ export interface ContainerOverrides {
 }
 
 export interface Container {
-  templates: TemplateInstances;
+  templates: { catalog: TemplateCatalog };
   config: ApiConfig;
   handle: DatabaseHandle;
   ports: EnginePorts;
@@ -194,10 +162,12 @@ export async function createContainer(
     const dbFile = databaseFilePath(config.dbUrl);
     // Validate catalog semantics without a mutable SQLite connection or any startup writes.
     let startupCatalog = DEFAULT_MODEL_CATALOG;
+    let startupReadiness: 'fresh' | 'current' | undefined;
     if (dbFile && existsSync(dbFile)) {
       const readonlyClient = openReadOnlyDatabaseClient(dbFile);
       try {
         const state = await guardDatabaseUpgrade(readonlyClient);
+        startupReadiness = state;
         if (state === 'current') {
           const stored = await new SqliteModelCatalog(databaseView(readonlyClient)).list();
           startupCatalog = [
@@ -229,7 +199,16 @@ export async function createContainer(
     const handle = openDatabase({ url: config.dbUrl });
     opened = handle;
     const { db } = handle;
-    await guardDatabaseUpgrade(handle.client);
+    startupReadiness ??= await guardDatabaseUpgrade(handle.client);
+    // A data-directory lock cannot protect a database reached through GG_DB_URL elsewhere.
+    const databaseRelativePath = dbFile
+      ? relative(await realpath(config.dataDir), await realpath(dbFile))
+      : undefined;
+    const preflightProtected =
+      databaseRelativePath !== undefined &&
+      databaseRelativePath !== '..' &&
+      !databaseRelativePath.startsWith('..' + sep) &&
+      !isAbsolute(databaseRelativePath);
     const masterKey =
       overrides.masterKey ??
       (await loadMasterKey({
@@ -237,9 +216,7 @@ export async function createContainer(
         ...(config.masterKey ? { masterKey: config.masterKey } : {}),
       }));
 
-    const runs = new SqliteRunRepository(db, (store, run, changes) =>
-      templateRuntime.beforeTransition(store, run, changes),
-    );
+    const runs = new SqliteRunRepository(db);
     const loops = new SqliteLoopRepository(db, clock, ids);
     const sessions = new SqliteSessionRepository(db);
     const events = new SqliteEventStore(db, clock);
@@ -292,9 +269,7 @@ export async function createContainer(
       logger,
       events,
       runs,
-      admission: new SqliteTriggerAdmission(handle.db, events, (store, input, pollItem) =>
-        templateRuntime.afterRunStaged(store, input, pollItem),
-      ),
+      admission: new SqliteTriggerAdmission(handle.db, events),
       loops,
       sessions,
       harnesses: overrides.harnesses ?? {
@@ -332,133 +307,9 @@ export async function createContainer(
         fileURLToPath(
           new URL(import.meta.url.endsWith('.ts') ? '../templates' : './catalog', import.meta.url),
         ),
-      fileURLToPath(new URL('..', import.meta.url)),
     );
-    const templateStore = new SqliteTemplateInstances(db);
-    const templatePrerequisites = new TemplatePrerequisites({
-      catalog,
-      harnesses: ports.harnesses,
-      scripts: ports.scripts,
-      apiKeys,
-      secretsFor,
-      defaults: config.defaults,
-      ownerDefaults: (ownerId) => readOwnerDefaults(settingsRepo, ownerId),
-      supportAvailable: async (manifest) => {
-        const installed = await templateCatalog.get(manifest.id);
-        return (
-          installed.bundle.manifest.version === manifest.version && installed.support !== undefined
-        );
-      },
-    });
-    const templates = new TemplateInstances(
-      templateCatalog,
-      templatePrerequisites,
-      templateStore,
-      ids,
-      clock,
-    );
-    const implementationReporter = new ImplementationReporter(
-      templates,
-      overrides.implementationDependencies,
-    );
-    const implementationAuthority = new ImplementationAuthority(
-      templates,
-      overrides.implementationDependencies,
-    );
-    const reviewReporter = new ReviewReporter(templates, overrides.reviewDependencies);
-    const qaAuthority = new QaAuthority(templates, overrides.qaMetadata);
-    const qaReporter = new QaReporter(templates, qaAuthority, overrides.qaMetadata);
-    const qaHistory = new QaHistory(
-      templates,
-      async (binding) => {
-        if (!('supportReadKey' in binding.settings))
-          throw new Error('Private QA credential unavailable.');
-        const credential = await secretsFor(binding.ownerId).resolve(
-          binding.settings.supportReadKey,
-        );
-        const key = credential ? await apiKeys.authenticate(credential) : undefined;
-        if (
-          !credential ||
-          !key ||
-          key.ownerId !== binding.ownerId ||
-          key.scopes.length !== 1 ||
-          key.scopes[0] !== 'runs:read'
-        )
-          throw new Error('Private QA credential unavailable.');
-        return credential;
-      },
-      overrides.qaMetadata,
-    );
-    const reviewAuthority = new ReviewAuthority(
-      templates,
-      overrides.reviewDependencies,
-      async (binding) => {
-        if (!('supportReadKey' in binding.settings))
-          throw new Error('Private review credential unavailable.');
-        const credential = await secretsFor(binding.ownerId).resolve(
-          binding.settings.supportReadKey,
-        );
-        const key = credential ? await apiKeys.authenticate(credential) : undefined;
-        if (
-          !credential ||
-          !key ||
-          key.ownerId !== binding.ownerId ||
-          key.scopes.length !== 1 ||
-          key.scopes[0] !== 'runs:read'
-        )
-          throw new Error('Private review credential unavailable.');
-        return credential;
-      },
-    );
-    const templateRuntime = new TemplateRuntime(
-      templates,
-      overrides.templateAuthority ?? {
-        resolve: (binding, payload) =>
-          binding.manifest.kind === 'qa'
-            ? qaAuthority.resolve(binding, payload)
-            : binding.manifest.kind === 'review'
-              ? reviewAuthority.resolve(binding, payload)
-              : implementationAuthority.resolve(binding, payload),
-        recheck: (binding, subject) =>
-          binding.manifest.kind === 'qa'
-            ? qaAuthority.recheck(binding, subject)
-            : binding.manifest.kind === 'review'
-              ? reviewAuthority.recheck(binding, subject)
-              : implementationAuthority.recheck(binding, subject),
-        consumesReviewHead: (binding, history, head) =>
-          binding.manifest.kind === 'review'
-            ? reviewAuthority.consumesReviewHead(binding, history, head)
-            : Promise.resolve(false),
-      },
-      overrides.templateFailureReporter ?? {
-        report: (binding, run, subject, code) =>
-          binding.manifest.kind === 'qa'
-            ? qaReporter.report(binding, run, subject, code)
-            : binding.manifest.kind === 'review'
-              ? reviewReporter.report(binding, run, subject, code)
-              : implementationReporter.report(binding, run, subject, code),
-      },
-    );
-    // Reporting is reconciled before finalization. Failure leaves the durable terminal run
-    // unfinalized, so startup retries the fixed report instead of losing it.
-    installImplementationFinalization(runs, {
-      terminal: async (run) => {
-        await implementationReporter.terminal(run);
-        await reviewReporter.terminal(run);
-        await qaReporter.terminal(run);
-      },
-    });
-    ports.admission = templateAdmission(ports.admission, templateRuntime);
-    ports.scripts = new PrivateTemplateScripts({
-      instances: templates,
-      raw: ports.scripts,
-      apiKeys,
-      secretsFor,
-      qaAuthority,
-      qaHistory,
-    });
+    const templates = { catalog: templateCatalog };
     const settings: EngineSettings = {
-      ...templateRuntime.hooks,
       defaults: config.defaults,
       maxConcurrentRuns: config.maxConcurrentRuns,
       structuredTimeoutMs: 120_000,
@@ -563,7 +414,9 @@ export async function createContainer(
         if (stopping) return Promise.reject(new Error('container has been stopped'));
         starting ??= (async () => {
           try {
-            await handle.migrate();
+            await handle.migrate({
+              skipDefinitionValidation: preflightProtected && startupReadiness === 'current',
+            });
             await classifiers.seedBuiltin(LOCAL_OWNER, BUILTIN_CLASSIFIER);
             if (config.jevApiKey && (await ownerSecrets.resolve(JEV_SECRET)) === undefined) {
               await ownerSecrets.set(JEV_SECRET, config.jevApiKey);

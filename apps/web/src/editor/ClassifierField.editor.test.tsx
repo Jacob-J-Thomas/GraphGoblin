@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
 import type { QueryClient } from '@tanstack/react-query';
 import { act, screen, waitFor, within } from '@testing-library/react';
@@ -12,8 +13,7 @@ import { useEditorStore } from './store.js';
 const UNDO = '{Control>}z{/Control}';
 const store = () => useEditorStore.getState();
 const pick = () => store().definition!.nodes.find((n) => n.id === 'pick')!;
-const evaluationOf = () =>
-  (pick().config as { evaluation: { kind: string; model?: string } }).evaluation;
+const evaluationOf = () => pick().config;
 const nodeBadge = (id: string) =>
   screen
     .getByTestId(`node-${id}`)
@@ -21,15 +21,20 @@ const nodeBadge = (id: string) =>
 
 function decisionLoop(model = 'kev'): LoopDefinitionInput {
   return {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: 'classifier editor',
     nodes: [
-      { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+      { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
       {
         id: 'pick',
         kind: 'decision',
         label: 'Pick',
         config: {
+          recordAlternatives: true,
+          kind: 'classifier',
+          model,
+          question: 'Which?',
+          context: { messages: 'last', includeLastOutput: true },
           answer: {
             type: 'choice',
             options: [
@@ -37,13 +42,6 @@ function decisionLoop(model = 'kev'): LoopDefinitionInput {
               { id: 'no', label: 'No', criteria: 'No' },
             ],
           },
-          evaluation: {
-            kind: 'classifier',
-            model,
-            question: 'Which?',
-            context: { messages: 'last', includeLastOutput: true },
-          },
-          recordAlternatives: true,
         },
       },
       { id: 'done', kind: 'exit', label: 'Done', config: {} },
@@ -203,7 +201,7 @@ describe('the classifier picker in the node editor', () => {
     setup();
     const { dialog, picker } = await openPicker();
     expect(picker).toHaveValue('kev');
-    expect(picker.closest('[data-field]')).toHaveAttribute('data-field', 'evaluation.model');
+    expect(picker.closest('[data-field]')).toHaveAttribute('data-field', 'model');
     await user.selectOptions(picker, 'other');
     expect(evaluationOf()).toMatchObject({ kind: 'classifier', model: 'other' });
     // The same element, now inside the added block, still has focus.

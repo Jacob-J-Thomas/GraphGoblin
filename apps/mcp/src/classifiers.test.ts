@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
@@ -9,32 +10,41 @@ import { createMcpServer, toolError } from './index.js';
 
 function definition(model?: string): LoopDefinitionInput {
   return {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: `MCP classifier ${model ?? 'default'}`,
     nodes: [
-      { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+      { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
       {
         id: 'choose',
         kind: 'decision',
         label: 'Choose',
-        config: {
-          answer: {
-            type: 'choice',
-            options: [
-              { id: 'yes', label: 'Yes', criteria: 'Ready' },
-              { id: 'no', label: 'No', criteria: 'Wait' },
-            ],
-          },
-          evaluation: model
-            ? { kind: 'classifier', model, question: 'Choose a route' }
-            : { kind: 'expression', jsonata: '"no"' },
-        },
+        config: model
+          ? {
+              kind: 'classifier',
+              model,
+              question: 'Choose a route',
+              answer: {
+                type: 'choice',
+                options: [
+                  { id: 'yes', label: 'Yes', criteria: 'Ready' },
+                  { id: 'no', label: 'No', criteria: 'Wait' },
+                ],
+              },
+            }
+          : {
+              kind: 'expression',
+              jsonata: '"no"',
+              routes: [
+                { id: 'yes', label: 'Yes' },
+                { id: 'no', label: 'No' },
+              ],
+            },
       },
       {
         id: 'done',
         kind: 'exit',
         label: 'Done',
-        config: { return: { mapping: 'lastOutput.value.answer.optionId' } },
+        config: { returns: 'lastOutput.value.portId' },
       },
     ],
     edges: [
@@ -105,9 +115,17 @@ describe('MCP classifier consumer regression', () => {
       );
       const chosen = events.items.find((event) => event.type === 'decision.made');
       expect(chosen).toMatchObject({
-        answer: { type: 'choice', optionId: model ? 'yes' : 'no' },
         portId: model ? 'yes' : 'no',
         provenance: { kind: model ? 'classifier' : 'expression', classifierId: model ?? null },
+        observation: model
+          ? {
+              kind: 'classifier',
+              answer: {
+                type: 'choice',
+                optionId: 'yes',
+              },
+            }
+          : { kind: 'route', routeId: 'no' },
       });
       expect(
         output<{ lastOutput: unknown }>(
@@ -133,7 +151,7 @@ describe('MCP classifier consumer regression', () => {
           text: expect.stringContaining('CLASSIFIER_MODEL_NOT_FOUND'),
         }),
       ]);
-      expect(JSON.stringify(result.content)).toContain('config.evaluation.model');
+      expect(JSON.stringify(result.content)).toContain('config.model');
       expect(JSON.stringify(result.content)).toContain('Settings, Classifier models');
     }
   });

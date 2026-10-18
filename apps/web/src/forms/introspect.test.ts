@@ -36,7 +36,7 @@ describe('introspect', () => {
       format: 'expression',
     });
     expect(shapeOf(JsonSchemaSchema.describe('A schema.'))).toEqual({ kind: 'json' });
-    expect(shapeOf(NodeConfigSchemas.decision.shape.evaluation)).toMatchObject({
+    expect(shapeOf(NodeConfigSchemas.decision)).toMatchObject({
       kind: 'union',
       discriminator: 'kind',
     });
@@ -74,7 +74,7 @@ describe('introspect', () => {
     expect(shapeOf(z.record(z.string(), z.number()))).toMatchObject({ kind: 'record' });
     expect(shapeOf(NodeConfigSchemas.trigger)).toMatchObject({
       kind: 'union',
-      discriminator: 'subtype',
+      discriminator: 'type',
     });
     expect(shapeOf(z.union([z.string(), z.number()]))).toMatchObject({ kind: 'union' });
     expect(shapeOf(z.date())).toEqual({ kind: 'json' });
@@ -135,72 +135,42 @@ describe('introspect', () => {
     expect(matchOption([z.literal('a')], Symbol.iterator)).toBe(0);
     const trigger = (NodeConfigSchemas.trigger._zod.def as unknown as { options: z.ZodType[] })
       .options;
-    expect(matchOption(trigger, { subtype: 'cron' }, 'subtype')).toBe(1);
-    expect(matchOption(trigger, 'junk', 'subtype')).toBe(0);
-    expect(optionLabel(z.string(), 'subtype')).toBe('');
-    expect(optionLabel(z.object({ other: z.string() }), 'subtype')).toBe('');
-    expect(optionLabel(z.object({ subtype: z.string() }), 'subtype')).toBe('');
+    expect(matchOption(trigger, { type: 'cron' }, 'type')).toBe(1);
+    expect(matchOption(trigger, 'junk', 'type')).toBe(0);
+    expect(optionLabel(z.string(), 'type')).toBe('');
+    expect(optionLabel(z.object({ other: z.string() }), 'type')).toBe('');
+    expect(optionLabel(z.object({ type: z.string() }), 'type')).toBe('');
   });
 
-  it('keeps a webhook union on its nested signing scheme while required fields are incomplete', () => {
+  it('matches nested authentication recipes while required fields are incomplete', () => {
     const trigger = shapeOf(NodeConfigSchemas.trigger);
-    if (trigger.kind !== 'union' || trigger.discriminator !== 'subtype')
-      throw new Error('Trigger config should expose its subtype union.');
-    const timestamp = trigger.options.findIndex(
-      (option) =>
-        option.safeParse({
-          subtype: 'webhook',
-          signature: { scheme: 'hmac-sha256', secretRef: 'secret' },
-          replayWindowSeconds: 300,
-        }).success,
-    );
-    const body = trigger.options.findIndex(
-      (option) =>
-        option.safeParse({
-          subtype: 'webhook',
-          signature: { scheme: 'hmac-sha256-body', secretRef: 'secret' },
-        }).success,
-    );
-
-    expect(optionLabel(trigger.options[timestamp]!, 'subtype')).toBe('webhook (timestamp)');
-    expect(optionLabel(trigger.options[body]!, 'subtype')).toBe('webhook (body)');
+    if (trigger.kind !== 'union') throw new Error('Expected trigger union');
+    const webhook = trigger.options.find(
+      (option) => option.safeParse({ type: 'webhook' }).success,
+    )!;
+    const shape = shapeOf(webhook);
+    if (shape.kind !== 'object') throw new Error('Expected webhook object');
+    const auth = shapeOf(shape.shape.authentication!);
+    if (auth.kind !== 'union') throw new Error('Expected authentication union');
+    expect(auth.options.map((option) => optionLabel(option))).toEqual([
+      'None',
+      'Body HMAC',
+      'Timestamp and body HMAC',
+    ]);
     expect(
       matchOption(
-        trigger.options,
-        {
-          subtype: 'webhook',
-          signature: {
-            scheme: 'hmac-sha256-body',
-            header: 'x-hub-signature-256',
-            secretRef: '',
-          },
-        },
-        'subtype',
+        auth.options,
+        { type: 'hmac-sha256', message: 'body', secretRef: '' },
+        auth.discriminator,
       ),
-    ).toBe(body);
+    ).toBe(1);
     expect(
       matchOption(
-        trigger.options,
-        {
-          subtype: 'webhook',
-          signature: {
-            scheme: 'hmac-sha256',
-            header: 'x-graphgoblin-signature',
-            secretRef: '',
-          },
-          replayWindowSeconds: 300,
-        },
-        'subtype',
+        auth.options,
+        { type: 'hmac-sha256', message: 'timestamp-body', secretRef: '' },
+        auth.discriminator,
       ),
-    ).toBe(timestamp);
-    // Unknown stored values do not look like a supported branch by their nested literal.
-    expect(
-      matchOption(
-        trigger.options,
-        { subtype: 'webhook', signature: { scheme: 'custom-hmac', secretRef: 'saved' } },
-        'subtype',
-      ),
-    ).toBe(timestamp);
+    ).toBe(2);
   });
 
   it('humanizes keys and strips the unset sentinel', () => {

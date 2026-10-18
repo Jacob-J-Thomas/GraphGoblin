@@ -1,43 +1,12 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import {
-  ExitConfigSchema,
-  LoopDefinitionSchema,
-  type LoopDefinitionInput,
-} from '@graphgoblin/contracts';
+import { LoopDefinitionSchema } from '@graphgoblin/contracts';
+import { minimalLoop } from '@graphgoblin/contracts/testing';
 import { event, FakeApi } from '../__fixtures__/fake-api.js';
 import { renderApp } from '../__fixtures__/render.js';
-import { newLoopDefinition } from '../editor/model.js';
 import { useRunEventStore } from './event-store.js';
-
-function loopWithThreshold(value: number): LoopDefinitionInput {
-  const base = newLoopDefinition('pinned-evidence');
-  const config = ExitConfigSchema.parse({
-    criteria: [
-      {
-        when: 'predicate',
-        answer: {
-          type: 'noul',
-          true: { label: 'True', criteria: 'The answer is true' },
-          false: { label: 'False', criteria: 'The answer is false' },
-        },
-        evaluation: {
-          kind: 'classifier',
-          model: 'jev',
-          question: 'Does the input support the statement?',
-          truthThreshold: value,
-        },
-        match: { type: 'noul', value: true },
-        outcome: 'success',
-      },
-    ],
-  });
-  return {
-    ...base,
-    nodes: base.nodes.map((node) => (node.kind === 'exit' ? { ...node, config } : node)),
-  };
-}
 
 function seedRun(api: FakeApi, overrides: Parameters<FakeApi['addRun']>[0] = {}) {
   const run = api.addRun(overrides);
@@ -87,11 +56,66 @@ function seedRun(api: FakeApi, overrides: Parameters<FakeApi['addRun']>[0] = {})
 }
 
 describe('RunInspectorPage', () => {
-  it('loads the run’s pinned version to show its authored Noul threshold', async () => {
+  it('loads the pinned definition for fallback gate counts before any decision event', async () => {
+    const api = new FakeApi();
+    const base = minimalLoop();
+    const loop = api.addLoop(
+      {
+        ...base,
+        nodes: [
+          ...base.nodes,
+          {
+            id: 'gate',
+            kind: 'decision',
+            label: 'Gate',
+            config: {
+              kind: 'expression',
+              jsonata: '"repeat"',
+              routes: [
+                { id: 'repeat', label: 'Repeat', repeat: true },
+                { id: 'done', label: 'Done' },
+              ],
+              maxPasses: 3,
+            },
+          },
+        ],
+      },
+      { published: true },
+    );
+    const run = api.addRun({
+      loopId: loop.id,
+      versionId: loop.currentVersionId!,
+      status: 'succeeded',
+    });
+    const thread = api.threads.get(run.id)!;
+    api.threads.set(run.id, { ...thread, gates: { gate: { passes: 3 } } });
+    api.pushEvent(run.id, event(run.id, 1, 'run.queued', {}));
+    api.pushEvent(
+      run.id,
+      event(run.id, 2, 'node.started', {
+        nodeId: 'gate',
+        kind: 'decision',
+        attempt: 1,
+        configHash: 'h',
+      }),
+    );
+    renderApp(`/runs/${run.id}`, api);
+    await userEvent.setup().click(await screen.findByText('Full thread JSON'));
+    await waitFor(() =>
+      expect(JSON.parse(screen.getByTestId('thread-json').textContent).gates).toEqual({
+        gate: { passes: 1 },
+      }),
+    );
+    expect(api.callsTo('GET', `/loops/${loop.id}/versions/${loop.currentVersionId}`)).toHaveLength(
+      1,
+    );
+  });
+
+  it('shows loading acceptance until the run’s pinned version resolves with its authored Noul threshold', async () => {
     const api = new FakeApi();
     const definition = (truthThreshold: number) =>
       LoopDefinitionSchema.parse({
-        schemaVersion: 3,
+        schemaVersion: CURRENT_DEFINITION_FORMAT,
         name: 'Pinned threshold',
         nodes: [
           {
@@ -99,16 +123,14 @@ describe('RunInspectorPage', () => {
             kind: 'decision',
             label: 'Check',
             config: {
+              kind: 'classifier',
+              model: 'jev',
+              question: 'Check the evidence.',
+              truthThreshold,
               answer: {
                 type: 'noul',
                 true: { id: 'true', label: 'True', criteria: 'The check passes' },
                 false: { id: 'false', label: 'False', criteria: 'The check fails' },
-              },
-              evaluation: {
-                kind: 'classifier',
-                model: 'jev',
-                question: 'Check the evidence.',
-                truthThreshold,
               },
             },
           },
@@ -124,13 +146,6 @@ describe('RunInspectorPage', () => {
       run.id,
       event(run.id, 1, 'decision.made', {
         nodeId: 'check',
-        answer: {
-          type: 'noul',
-          kind: 'classifier',
-          holds: true,
-          trueProbability: 0.6,
-          confidence: 0.91,
-        },
         portId: 'true',
         provenance: {
           kind: 'classifier',
@@ -140,12 +155,40 @@ describe('RunInspectorPage', () => {
           effort: null,
         },
         diagnostics: [],
+        observation: {
+          kind: 'classifier',
+          answer: {
+            type: 'noul',
+            holds: true,
+            trueProbability: 0.6,
+            confidence: 0.91,
+          },
+        },
       }),
     );
+    let releaseVersion!: () => void;
+    const pending = new Promise<void>((resolve) => {
+      releaseVersion = resolve;
+    });
+    api.override('GET /loops/:id/versions/:versionId', async (call) => {
+      await pending;
+      return api.builtIn(call);
+    });
     renderApp(`/runs/${run.id}`, api);
 
+    expect(await screen.findByText('Loading run-version configuration…')).toBeInTheDocument();
+    expect(
+      screen.queryByText('Not recorded (classifier configuration unavailable)'),
+    ).not.toBeInTheDocument();
+    releaseVersion();
+
     expect(await screen.findByText('True-probability threshold')).toBeInTheDocument();
-    expect(screen.getByText('True-probability threshold').parentElement).toHaveTextContent('0.2');
+    await waitFor(() =>
+      expect(screen.getByText('True-probability threshold').parentElement).toHaveTextContent('0.2'),
+    );
+    expect(screen.getByText('Confidence acceptance').parentElement).toHaveTextContent(
+      'No minimum configured in run version',
+    );
     expect(
       api.calls.some(
         (call) => call.method === 'GET' && call.path === `/loops/${loop.id}/versions/${pinned.id}`,
@@ -176,210 +219,6 @@ describe('RunInspectorPage', () => {
         'claude session fresh; model claude-opus-5-5; requested effort xhigh; effective effort not reported',
       ),
     ).toBeInTheDocument();
-  });
-
-  it.each([
-    {
-      result: { kind: 'completed', reason: 'criterion-matched', outcome: 'failure' },
-      expected: 'Exited: a criterion matched (failure)',
-    },
-    {
-      result: { kind: 'limit-reached', limit: 'max-duration', value: 10, outcome: 'exhausted' },
-      expected: 'Exited: duration limit of 10 seconds reached',
-    },
-  ] as const)(
-    'renders $expected without a criterion index in the timeline and run detail',
-    async ({ result, expected }) => {
-      const api = new FakeApi();
-      const run = api.addRun({ status: 'failed' });
-      api.pushEvent(
-        run.id,
-        event(run.id, 1, 'exit.evaluated', {
-          nodeId: 'done',
-          iteration: 2,
-          maxIterations: 5,
-          criteria: [],
-          result,
-        }),
-      );
-      renderApp(`/runs/${run.id}`, api);
-      const timeline = await screen.findByRole('list', { name: 'Timeline' });
-      expect(await within(timeline).findByText(expected)).toBeInTheDocument();
-      expect(await screen.findAllByText(expected)).toHaveLength(3);
-      expect(screen.queryByText(/default success|loop ceiling/)).not.toBeInTheDocument();
-    },
-  );
-  it('explains exit criteria and decision diagnostics in the timeline and selected detail', async () => {
-    const api = new FakeApi();
-    const run = api.addRun({ status: 'succeeded' });
-    api.pushEvent(run.id, event(run.id, 1, 'run.queued', {}));
-    api.pushEvent(
-      run.id,
-      event(run.id, 2, 'decision.made', {
-        nodeId: 'choose',
-        answer: { type: 'choice', optionId: 'yes', confidence: null, probabilities: null },
-        portId: 'yes',
-        provenance: {
-          kind: 'expression',
-          provider: null,
-          classifierId: null,
-          model: null,
-          effort: null,
-        },
-        diagnostics: [
-          {
-            provenance: {
-              kind: 'classifier',
-              provider: 'jev',
-              classifierId: 'kev',
-              model: 'kev-model',
-              effort: null,
-            },
-            code: 'CLASSIFIER_MODEL_DISABLED',
-            message: 'The selected classifier is disabled',
-          },
-        ],
-      }),
-    );
-    api.pushEvent(
-      run.id,
-      event(run.id, 3, 'exit.evaluated', {
-        nodeId: 'done',
-        iteration: 2,
-        maxIterations: 5,
-        criteria: [
-          {
-            index: 0,
-            strategy: 'classifier',
-            status: 'not-matched',
-            answer: {
-              type: 'noul',
-              kind: 'classifier',
-              holds: false,
-              trueProbability: 0.2,
-              confidence: 0.4,
-            },
-            provenance: {
-              kind: 'classifier',
-              provider: 'typesafe',
-              classifierId: 'jev',
-              model: 'jev-latest',
-              effort: null,
-            },
-            acceptance: {
-              status: 'rejected',
-              code: 'EVALUATION_RESULT_REJECTED',
-              minConfidence: 0.8,
-            },
-            match: { type: 'noul', value: false },
-            configuredMinConfidence: 0.8,
-            rejection: { kind: 'classifier-confidence', minimum: 0.8, confidence: 0.4 },
-          },
-          {
-            index: 1,
-            strategy: 'llm',
-            status: 'matched',
-            answer: {
-              type: 'noul',
-              kind: 'llm',
-              holds: true,
-              confidence: 0.93,
-              reasoning: 'All checks passed',
-            },
-            provenance: {
-              kind: 'llm',
-              provider: 'codex',
-              classifierId: null,
-              model: 'judge-model',
-              effort: 'low',
-            },
-            acceptance: { status: 'accepted' },
-            match: { type: 'noul', value: true, minReportedConfidence: 0.8 },
-          },
-          {
-            index: 2,
-            strategy: 'expression',
-            status: 'skipped',
-            reason: { code: 'EARLIER_CRITERION_MATCHED', message: 'An earlier criterion matched' },
-          },
-        ],
-        result: {
-          kind: 'completed',
-          outcome: 'success',
-          reason: 'criterion-matched',
-          criterionIndex: 1,
-        },
-      }),
-    );
-    renderApp(`/runs/${run.id}`, api);
-    const timeline = await screen.findByRole('list', { name: 'Timeline' });
-    expect(
-      await within(timeline).findByText(/Exited: criterion 2 \(Codex\) matched: Noul true/),
-    ).toBeInTheDocument();
-    expect(
-      within(timeline).getByText(/CLASSIFIER_MODEL_DISABLED: The selected classifier is disabled/),
-    ).toBeInTheDocument();
-    const criteria = await screen.findByRole('list', { name: 'Exit criteria' });
-    expect(criteria).toHaveTextContent('Criterion 1 (Classifier): did not match');
-    expect(criteria).toHaveTextContent('Noul false');
-    expect(criteria).toHaveTextContent('Noul is false');
-    expect(criteria).toHaveTextContent('treated as a nonmatch');
-    expect(criteria).toHaveTextContent('judge-model');
-    expect(criteria).toHaveTextContent('Reasoning excerpt: All checks passed');
-    expect(criteria).toHaveTextContent(
-      'Criterion 3 (Expression): skipped: An earlier criterion matched',
-    );
-    await userEvent.click(within(timeline).getByRole('button', { name: /decision.made/ }));
-    expect(screen.getByRole('list', { name: 'Evaluation diagnostics' })).toHaveTextContent(
-      'CLASSIFIER_MODEL_DISABLED: The selected classifier is disabled',
-    );
-  });
-
-  it('loads evidence settings from the run-pinned loop version, not the current version', async () => {
-    const api = new FakeApi();
-    const loop = api.addLoop(loopWithThreshold(0.2), { published: true, draft: false });
-    const pinned = api.loops.get(loop.id)?.current;
-    if (!pinned) throw new Error('The initial published version is missing.');
-    api.publishVersion(loop.id, loopWithThreshold(0.9));
-
-    const run = api.addRun({ loopId: loop.id, versionId: pinned.id, status: 'succeeded' });
-    api.pushEvent(
-      run.id,
-      event(run.id, 1, 'exit.evaluated', {
-        nodeId: 'done',
-        iteration: 2,
-        maxIterations: 5,
-        criteria: [
-          {
-            index: 0,
-            strategy: 'classifier',
-            status: 'not-matched',
-            answer: {
-              type: 'noul',
-              kind: 'classifier',
-              holds: false,
-              trueProbability: 0.2,
-              confidence: 0.9,
-            },
-            provenance: {
-              kind: 'classifier',
-              provider: 'typesafe',
-              classifierId: 'jev',
-              model: 'jev-latest',
-              effort: null,
-            },
-            acceptance: { status: 'accepted' },
-            match: { type: 'noul', value: true },
-          },
-        ],
-        result: { kind: 'completed', reason: 'default-success', outcome: 'success' },
-      }),
-    );
-
-    renderApp(`/runs/${run.id}`, api);
-    const threshold = await screen.findByText('True-probability threshold');
-    expect(threshold.nextElementSibling).toHaveTextContent('0.2');
-    expect(api.callsTo('GET', `/loops/${loop.id}/versions/${pinned.id}`)).toHaveLength(1);
   });
   it('streams the timeline, replays the thread at any event, and shows the patch diff', async () => {
     const user = userEvent.setup();
@@ -416,7 +255,6 @@ describe('RunInspectorPage', () => {
         run.id,
         event(run.id, 7, 'decision.made', {
           nodeId: 'decide',
-          answer: { type: 'choice', optionId: 'good', confidence: null, probabilities: null },
           portId: 'good',
           provenance: {
             kind: 'expression',
@@ -426,6 +264,12 @@ describe('RunInspectorPage', () => {
             effort: null,
           },
           diagnostics: [],
+          observation: {
+            kind: 'route',
+            routeId: 'good',
+            confidence: null,
+            reasoning: null,
+          },
         }),
       ),
     );
@@ -650,6 +494,50 @@ describe('RunInspectorPage', () => {
     expect(screen.getByRole('button', { name: 'Cancel run' })).toHaveFocus();
   });
 
+  it('explains a deleted child while preserving the parent inspector history', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const parent = seedRun(api, { status: 'succeeded' });
+    const child = api.addRun({ status: 'succeeded', parentRunId: parent.id });
+    api.runs.delete(child.id);
+    api.pushEvent(
+      parent.id,
+      event(parent.id, 7, 'child_run.started', { nodeId: 'sub', childRunId: child.id }),
+    );
+    api.pushEvent(
+      parent.id,
+      event(parent.id, 8, 'run.finished', { status: 'succeeded', outcome: 'success' }),
+    );
+    renderApp(`/runs/${parent.id}`, api);
+    await user.click(await screen.findByRole('button', { name: /child_run.started/ }));
+    expect(await screen.findByText(/Child run .* is no longer available/)).toHaveTextContent(
+      "This parent run's history is preserved.",
+    );
+    expect(screen.getByRole('list', { name: 'Timeline' }).children).toHaveLength(8);
+    expect(screen.queryByRole('link', { name: child.id })).not.toBeInTheDocument();
+  });
+
+  it('links an available child from a child-finished event', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const parent = seedRun(api, { status: 'succeeded' });
+    const child = api.addRun({ status: 'succeeded', parentRunId: parent.id });
+    api.pushEvent(
+      parent.id,
+      event(parent.id, 7, 'child_run.finished', {
+        nodeId: 'sub',
+        childRunId: child.id,
+        status: 'succeeded',
+      }),
+    );
+    renderApp(`/runs/${parent.id}`, api);
+    expect(await screen.findByRole('link', { name: child.id })).toHaveAttribute(
+      'href',
+      `/runs/${child.id}`,
+    );
+    await user.click(screen.getByRole('button', { name: /child_run.finished/ }));
+  });
+
   it('shows failures, results, parent links, and stream errors', async () => {
     const api = new FakeApi();
     const parent = api.addRun({ status: 'succeeded' });
@@ -679,19 +567,26 @@ describe('RunInspectorPage', () => {
     expect(screen.getByText('The thread is not available yet.')).toBeInTheDocument();
   });
 
-  it('does not reopen a finished run stream', async () => {
-    const api = new FakeApi();
-    const run = seedRun(api, { status: 'succeeded' });
-    api.pushEvent(
-      run.id,
-      event(run.id, 7, 'run.finished', { status: 'succeeded', outcome: 'success' }),
-    );
-    const first = renderApp(`/runs/${run.id}`, api);
-    await screen.findByText(/Timeline \(7 events, complete\)/);
-    first.unmount();
-    api.calls.length = 0;
-    renderApp(`/runs/${run.id}`, api);
-    await screen.findByText(/Timeline \(7 events, complete\)/);
-    expect(api.callsTo('GET', `/runs/${run.id}/events`)).toHaveLength(0);
-  });
+  it.each(['succeeded', 'exhausted'] as const)(
+    'does not reopen a finished %s stream and retains the result',
+    async (status) => {
+      const api = new FakeApi();
+      const run = seedRun(api, { status, result: { work: 'kept' } });
+      api.pushEvent(
+        run.id,
+        event(run.id, 7, 'run.finished', {
+          status,
+          outcome: status === 'exhausted' ? 'exhausted' : 'success',
+        }),
+      );
+      const first = renderApp(`/runs/${run.id}`, api);
+      await screen.findByText(/Timeline \(7 events, complete\)/);
+      expect(screen.getByTestId('run-result')).toHaveTextContent('kept');
+      first.unmount();
+      api.calls.length = 0;
+      renderApp(`/runs/${run.id}`, api);
+      await screen.findByText(/Timeline \(7 events, complete\)/);
+      expect(api.callsTo('GET', `/runs/${run.id}/events`)).toHaveLength(0);
+    },
+  );
 });

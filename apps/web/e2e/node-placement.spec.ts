@@ -1,20 +1,21 @@
+import { DecisionConfigSchema } from '@graphgoblin/contracts';
 import type { APIRequestContext, Locator, Page } from '@playwright/test';
 import { approvalLoop, closeNode, expect, openAdvanced, openNode, test } from './fixtures.js';
 
 const choice = {
-  type: 'choice',
+  type: 'choice' as const,
   options: [
     { id: 'out', label: 'Continue', criteria: 'Continue' },
     { id: 'no', label: 'Stop', criteria: 'Stop' },
   ],
 };
 const noul = {
-  type: 'noul',
+  type: 'noul' as const,
   true: { id: 'out', label: 'True', criteria: 'True' },
   false: { id: 'no', label: 'False', criteria: 'False' },
 };
 const score = {
-  type: 'score',
+  type: 'score' as const,
   anchors: ['Low', 'High'],
   bands: [{ id: 'out', label: 'All', min: 0, max: 1 }],
 };
@@ -108,38 +109,47 @@ for (const [kind, answer] of [
     page,
     request,
   }) => {
-    const evaluation =
+    const routes =
+      answer.type === 'choice'
+        ? answer.options.map(({ id, label }) => ({ id, label }))
+        : answer.type === 'noul'
+          ? [answer.true, answer.false].map(({ id, label }) => ({ id, label }))
+          : [];
+    const context = { messages: 'last', vars: ['topic'], includeLastOutput: true };
+    const config = DecisionConfigSchema.parse(
       kind === 'expression'
-        ? { kind, jsonata: answer.type === 'noul' ? 'true' : '"out"' }
-        : kind === 'classifier'
+        ? { kind, jsonata: '"out"', routes }
+        : kind === 'llm'
           ? {
               kind,
-              model: 'jev',
-              question: 'Evaluate',
-              minConfidence: 0.2,
-              ...(answer.type === 'noul' ? { truthThreshold: 0.5 } : {}),
-              context: { messages: 'last', vars: ['topic'], includeLastOutput: true },
-            }
-          : {
-              kind,
+              instructions: 'Evaluate',
+              routes,
               harness: 'codex',
               model: { mode: 'inherit' },
               effort: { mode: 'inherit' },
+              context,
+            }
+          : {
+              kind,
+              model: 'jev',
               question: 'Evaluate',
-              context: { messages: 'last', vars: ['topic'], includeLastOutput: true },
-            };
-    const id = await create(request, 'decision', { answer, evaluation });
+              answer,
+              minConfidence: 0.2,
+              ...(answer.type === 'noul' ? { truthThreshold: 0.5 } : {}),
+              context,
+            },
+    );
+    const id = await create(request, 'decision', config);
     const original = await savedConfig(request, id);
     await page.goto(`/app/loops/${id}/edit`);
     const dialog = await openNode(page, 'approve');
-    await expect(dialog.getByRole('radiogroup', { name: 'Answer type' })).toBeVisible();
-    await expect(dialog.getByRole('radiogroup', { name: 'Evaluation method' })).toBeVisible();
+    await expect(dialog.getByRole('radiogroup', { name: 'Decision kind' })).toBeVisible();
     if (kind === 'expression') await expect(dialog.getByRole('tablist')).toHaveCount(0);
     else {
-      await expect(codeField(dialog, 'evaluation.question')).toBeVisible();
+      await expect(codeField(dialog, kind === 'llm' ? 'instructions' : 'question')).toBeVisible();
       if (kind === 'classifier') {
         await expect(dialog.getByRole('spinbutton', { name: 'Min confidence' })).toBeHidden();
-        await openAdvanced(dialog.locator('[data-field="evaluation"]'));
+        await openAdvanced(dialog);
         await expect(dialog.getByRole('spinbutton', { name: 'Min confidence' })).toBeVisible();
       }
       await dialog.getByRole('tab', { name: /^Context\b/ }).click();
@@ -150,20 +160,19 @@ for (const [kind, answer] of [
       await dialog.getByRole('tab', { name: 'Settings' }).click();
     }
     expect(await savedConfig(request, id)).toEqual(original);
-    const path = kind === 'expression' ? 'evaluation.jsonata' : 'evaluation.question';
-    const text =
-      kind === 'expression' ? (answer.type === 'noul' ? 'false' : '"no"') : 'Updated question';
+    const path = kind === 'expression' ? 'jsonata' : kind === 'llm' ? 'instructions' : 'question';
+    const text = kind === 'expression' ? '"no"' : 'Updated instructions';
     await replaceCode(page, codeField(dialog, path), text);
     await expect
       .poll(() => savedConfig(request, id))
       .toMatchObject({
-        answer,
-        evaluation: { ...evaluation, [kind === 'expression' ? 'jsonata' : 'question']: text },
+        ...config,
+        [path]: text,
       });
     await page.reload();
     const reopened = await openNode(page, 'approve');
     await expect(codeField(reopened, path)).toHaveText(text);
-    await expect(reopened.getByRole('radiogroup', { name: 'Answer type' })).toBeVisible();
+    await expect(reopened.getByRole('radiogroup', { name: 'Decision kind' })).toBeVisible();
   });
 }
 
@@ -172,19 +181,20 @@ test('a Context issue opens its collapsed Advanced group; undo crosses tabs and 
   request,
 }) => {
   const id = await create(request, 'decision', {
-    answer: choice,
-    evaluation: {
-      kind: 'llm',
-      harness: 'codex',
-      model: { mode: 'inherit' },
-      effort: { mode: 'inherit' },
-      question: 'q',
-      context: { vars: ['topic'] },
-    },
+    kind: 'llm',
+    harness: 'codex',
+    model: { mode: 'inherit' },
+    effort: { mode: 'inherit' },
+    context: { vars: ['topic'] },
+    instructions: 'q',
+    routes: [
+      { id: 'out', label: 'Continue' },
+      { id: 'no', label: 'Stop' },
+    ],
   });
   await page.goto(`/app/loops/${id}/edit`);
   const dialog = await openNode(page, 'approve');
-  await replaceCode(page, codeField(dialog, 'evaluation.question'), 'updated');
+  await replaceCode(page, codeField(dialog, 'instructions'), 'updated');
   await dialog.getByRole('tab', { name: /^Context\b/ }).click();
   const last = dialog.getByRole('switch', { name: 'Include last output' });
   await last.click();
@@ -196,13 +206,13 @@ test('a Context issue opens its collapsed Advanced group; undo crosses tabs and 
     'true',
   );
   await page.keyboard.press('Control+z');
-  await expect(codeField(dialog, 'evaluation.question')).toHaveText('q');
+  await expect(codeField(dialog, 'instructions')).toHaveText('q');
   await expect(dialog.getByRole('tab', { name: /^Context\b/ })).toHaveAttribute(
     'aria-selected',
     'true',
   );
   await page.keyboard.press('Control+Shift+z');
-  await expect(codeField(dialog, 'evaluation.question')).toHaveText('updated');
+  await expect(codeField(dialog, 'instructions')).toHaveText('updated');
   const advanced = await openAdvanced(dialog);
   await dialog.getByLabel('Vars 1', { exact: true }).fill('bad value');
   await advanced.click();
@@ -211,7 +221,7 @@ test('a Context issue opens its collapsed Advanced group; undo crosses tabs and 
   await dialog.getByRole('button', { name: /issues? on approve$/ }).click();
   await page
     .getByRole('dialog', { name: 'Issues on approve' })
-    .getByRole('button', { name: /config.evaluation.context.vars.0/ })
+    .getByRole('button', { name: /config.context.vars.0/ })
     .click();
   await expect(dialog.getByRole('tab', { name: /^Context.*1 error$/ })).toHaveAttribute(
     'aria-selected',
@@ -254,15 +264,13 @@ for (const theme of ['dark', 'light']) {
       input: [{ op: 'delete', path: '/vars/topic' }],
     });
     const decisionId = await create(request, 'decision', {
+      kind: 'classifier',
+      model: 'jev',
+      question: 'Evaluate the current state',
+      minConfidence: 0.4,
+      truthThreshold: 0.5,
+      context: { vars: ['topic'] },
       answer: noul,
-      evaluation: {
-        kind: 'classifier',
-        model: 'jev',
-        question: 'Evaluate the current state',
-        minConfidence: 0.4,
-        truthThreshold: 0.5,
-        context: { vars: ['topic'] },
-      },
     });
     for (const [nodeName, id] of [
       ['inference', inferId],

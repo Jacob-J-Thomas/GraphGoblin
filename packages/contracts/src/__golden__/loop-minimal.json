@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "name": "minimal",
   "settings": {
     "workingDirectory": {
@@ -8,7 +8,7 @@
     "defaults": {
       "byHarness": {}
     },
-    "maxIterations": 10,
+    "maxNodeVisits": 10,
     "subloopDepthLimit": 8
   },
   "variables": {},
@@ -22,7 +22,7 @@
       },
       "kind": "trigger",
       "config": {
-        "subtype": "manual",
+        "type": "manual",
         "exposeTo": [
           "ui",
           "api",
@@ -39,16 +39,13 @@
       },
       "kind": "exit",
       "config": {
-        "criteria": [],
-        "default": "success",
-        "return": {
-          "mapping": "none",
-          "channels": [
-            {
-              "kind": "caller"
-            }
-          ]
-        }
+        "outcome": "success",
+        "returns": "none",
+        "destinations": [
+          {
+            "kind": "caller"
+          }
+        ]
       }
     }
   ],

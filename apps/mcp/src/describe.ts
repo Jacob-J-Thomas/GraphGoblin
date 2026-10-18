@@ -8,6 +8,7 @@ import type {
   LoopVersionRecord,
   RunRecord,
 } from '@graphgoblin/contracts';
+import { decisionRouteDeclarations } from '@graphgoblin/domain';
 
 export function summarizeLoop(loop: LoopRecord) {
   return {
@@ -25,19 +26,45 @@ export function describeDefinition(definition: LoopDefinition) {
   const triggers = [];
   const inputWaits = [];
   const exits = [];
+  const decisions = [];
   for (const node of definition.nodes) {
     if (node.kind === 'trigger') {
       const config = node.config;
       triggers.push({
         nodeId: node.id,
         label: node.label,
-        subtype: config.subtype,
-        ...(config.subtype === 'manual'
+        type: config.type,
+        ...(config.type === 'manual'
           ? {
               startableFromMcp: config.exposeTo.includes('mcp'),
               ...(config.inputSchema ? { inputSchema: config.inputSchema } : {}),
             }
           : {}),
+      });
+    } else if (node.kind === 'decision') {
+      const config = node.config;
+      decisions.push({
+        nodeId: node.id,
+        label: node.label,
+        kind: config.kind,
+        routes: decisionRouteDeclarations(config),
+        ...(config.maxPasses !== undefined
+          ? {
+              gate: {
+                maxPasses: config.maxPasses,
+                ...(config.maxRunTimeSeconds !== undefined
+                  ? { maxRunTimeSeconds: config.maxRunTimeSeconds }
+                  : {}),
+                limitPort: 'limit-reached',
+                passCountPath: `gates.${JSON.stringify(node.id)}.passes`,
+              },
+            }
+          : {}),
+        ...(config.kind === 'classifier'
+          ? { answerType: config.answer.type, model: config.model }
+          : config.kind === 'llm'
+            ? { harness: config.harness, model: config.model, effort: config.effort }
+            : {}),
       });
     } else if (node.kind === 'wait' && node.config.mode === 'input') {
       inputWaits.push({
@@ -50,9 +77,9 @@ export function describeDefinition(definition: LoopDefinition) {
       exits.push({
         nodeId: node.id,
         label: node.label,
-        default: node.config.default,
-        returnMapping: node.config.return.mapping,
-        returnChannels: node.config.return.channels.map((c) => c.kind),
+        outcome: node.config.outcome,
+        returns: node.config.returns,
+        destinations: node.config.destinations.map((c) => c.kind),
       });
     }
   }
@@ -63,6 +90,7 @@ export function describeDefinition(definition: LoopDefinition) {
     nodeKinds: [...new Set(definition.nodes.map((n) => n.kind))],
     variables: definition.variables,
     triggers,
+    decisions,
     inputWaits,
     exits,
   };

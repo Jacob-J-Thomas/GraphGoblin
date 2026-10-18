@@ -2,15 +2,25 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Buffer } from 'node:buffer';
 import { runInNewContext } from 'node:vm';
-import { TriggerConfigSchema } from '@graphgoblin/contracts';
-import { evaluatePredicate } from '@graphgoblin/domain';
+import { TriggerConfigSchema, type NodeInput } from '@graphgoblin/contracts';
 import { describe, expect, it, vi } from 'vitest';
-import { TriggerPresets } from './TriggerPresets.js';
-import {
-  canApplyGitHubPreset,
-  makeGitHubTriggerPreset,
-  validGitHubRepository,
-} from './trigger-presets.js';
+import { manualTriggerConfig, triggerConfig } from '../__fixtures__/triggers.js';
+import { TriggerPresets as PresetPanel } from './TriggerPresets.js';
+import { newLoopDefinition } from './model.js';
+import { previewGitHubPreset } from './github-fragment.js';
+import { useMemo, type ComponentProps } from 'react';
+import { canApplyGitHubPreset, validGitHubRepository } from './trigger-presets.js';
+
+function TriggerPresets(
+  props: Omit<ComponentProps<typeof PresetPanel>, 'definition' | 'triggerId'>,
+) {
+  const definition = useMemo(() => {
+    const def = newLoopDefinition('preset');
+    def.nodes[0] = { ...def.nodes[0]!, config: props.config } as NodeInput;
+    return def;
+  }, [props.config]);
+  return <PresetPanel {...props} definition={definition} triggerId="start" />;
+}
 
 interface GhSpawnOptions {
   encoding: string;
@@ -65,159 +75,308 @@ function executeGhProgram(program: string, result: GhSpawnResult) {
 }
 
 describe('TriggerPresets', () => {
-  it('builds an editable body-signed issue-label filter from explicit setup values', async () => {
+  it.each([false, true])(
+    'previews poll removal or retained-check warning (shared: %s)',
+    async (shared) => {
+      const setup = {
+        owner: 'octo',
+        repository: 'service',
+        label: 'ready',
+        baseBranch: '',
+        secretRef: 'hook',
+      };
+      const definition = previewGitHubPreset(
+        newLoopDefinition('poll conversion'),
+        'start',
+        'issues-labeled',
+        setup,
+      ).definition;
+      definition.nodes.find((node) => node.id === 'event-check')!.label = 'Owner edited check';
+      if (shared) {
+        definition.nodes.push({
+          id: 'shared-start',
+          kind: 'trigger',
+          label: 'Shared',
+          config: manualTriggerConfig(),
+        });
+        definition.edges.push({
+          id: 'shared-edge',
+          from: { node: 'shared-start', port: 'out' },
+          to: { node: 'restore-output' },
+        });
+      }
+      const original = JSON.stringify(definition);
+      const onApply = vi.fn();
+      render(
+        <PresetPanel
+          definition={definition}
+          triggerId="start"
+          config={definition.nodes[0]!.config}
+          onApply={onApply}
+        />,
+      );
+      const user = userEvent.setup();
+      await user.click(screen.getByRole('button', { name: 'Start from a preset' }));
+      await user.selectOptions(screen.getByLabelText('Preset'), 'issues-poll');
+      await user.type(screen.getByLabelText('Repository owner'), 'octo');
+      await user.type(screen.getByLabelText('Repository'), 'service');
+      await user.type(screen.getByLabelText('Issue label'), 'ready');
+      const previewButton = screen.getByRole('button', { name: 'Preview GitHub preset' });
+      await user.click(previewButton);
+      const preview = screen.getByRole('region', { name: 'Preset preview' });
+      if (shared) {
+        expect(preview).toHaveTextContent(
+          'existing downstream check stays in place and may ignore poll results',
+        );
+        expect(preview).not.toHaveTextContent('Remove the existing check/restore/exit fragment');
+      } else {
+        expect(preview).toHaveTextContent('Remove the existing check/restore/exit fragment');
+        expect(preview).toHaveTextContent('reconnect its former successor directly to the trigger');
+        expect(preview).toHaveTextContent('Owner edited check');
+      }
+      await user.click(screen.getByRole('button', { name: 'Cancel preview' }));
+      expect(JSON.stringify(definition)).toBe(original);
+      expect(onApply).not.toHaveBeenCalled();
+      await user.click(previewButton);
+      await user.click(screen.getByRole('button', { name: 'Apply GitHub preset' }));
+      expect(onApply).toHaveBeenCalledWith(
+        expect.objectContaining({
+          removedNodes: shared
+            ? []
+            : expect.arrayContaining([expect.objectContaining({ id: 'event-check' })]),
+          rewiredEdges: shared
+            ? []
+            : [expect.objectContaining({ id: 'e1', from: { node: 'start', port: 'out' } })],
+        }),
+      );
+    },
+  );
+
+  it.each(['definition', 'draftInputs', 'generation'] as const)(
+    'invalidates a graph preview when %s changes',
+    async (changed) => {
+      const user = userEvent.setup();
+      const definition = newLoopDefinition('stale graph');
+      const props = {
+        definition,
+        triggerId: 'start',
+        config: definition.nodes[0]!.config,
+        draftInputs: {},
+        generation: 1,
+        onApply: vi.fn(),
+      };
+      const { rerender } = render(<PresetPanel {...props} />);
+      await user.click(screen.getByRole('button', { name: 'Start from a preset' }));
+      await user.selectOptions(screen.getByLabelText('Preset'), 'issues-poll');
+      await user.type(screen.getByLabelText('Repository owner'), 'octo');
+      await user.type(screen.getByLabelText('Repository'), 'service');
+      await user.type(screen.getByLabelText('Issue label'), 'ready');
+      await user.click(screen.getByRole('button', { name: 'Preview GitHub preset' }));
+      rerender(
+        <PresetPanel
+          {...props}
+          definition={changed === 'definition' ? { ...definition, name: 'changed' } : definition}
+          draftInputs={
+            changed === 'draftInputs'
+              ? { 'node:done': { returns: { text: '(', message: 'held' } } }
+              : props.draftInputs
+          }
+          generation={changed === 'generation' ? 2 : 1}
+        />,
+      );
+      expect(screen.queryByRole('button', { name: 'Apply GitHub preset' })).not.toBeInTheDocument();
+    },
+  );
+
+  it('explicitly reviews replacement of owner edits and held text, and surfaces an apply refusal', async () => {
+    const setup = {
+      owner: 'octo',
+      repository: 'service',
+      label: 'ready',
+      baseBranch: '',
+      secretRef: 'hook',
+    };
+    const definition = previewGitHubPreset(
+      newLoopDefinition('replacement'),
+      'start',
+      'issues-labeled',
+      setup,
+    ).definition;
+    definition.nodes.find((node) => node.id === 'event-check')!.label = 'Owner edited check';
+    const onApply = vi.fn(() => 'The draft changed. Preview again.');
+    render(
+      <PresetPanel
+        config={definition.nodes[0]!.config}
+        definition={definition}
+        triggerId="start"
+        draftInputs={{
+          'node:event-check': { jsonata: { text: 'unfinished-owner-expression', message: 'held' } },
+        }}
+        onApply={onApply}
+      />,
+    );
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Start from a preset' }));
+    await user.selectOptions(screen.getByLabelText('Preset'), 'issues-labeled');
+    await user.type(screen.getByLabelText('Repository owner'), 'octo');
+    await user.type(screen.getByLabelText('Repository'), 'service');
+    await user.type(screen.getByLabelText('Issue label'), 'ready');
+    await user.type(screen.getByLabelText('Signing secret name'), 'hook');
+    await user.click(screen.getByRole('button', { name: 'Preview GitHub preset' }));
+    const preview = screen.getByRole('region', { name: 'Preset preview' });
+    expect(preview).toHaveTextContent('including all owner edits');
+    expect(preview).toHaveTextContent('Owner edited check');
+    expect(preview).toHaveTextContent('unfinished-owner-expression');
+    await user.click(screen.getByRole('button', { name: 'Apply GitHub preset' }));
+    expect(screen.getByText('The draft changed. Preview again.')).toHaveAttribute('role', 'alert');
+    expect(definition.nodes).toHaveLength(5);
+    await user.click(screen.getByRole('button', { name: 'Cancel preview' }));
+    expect(onApply).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows editor captions and row numbers for held Poll fields', async () => {
+    const user = userEvent.setup();
+    render(
+      <TriggerPresets
+        config={triggerConfig('poll', {
+          intervalSeconds: 60,
+          probe: { kind: 'none' },
+          fireWhen: 'true',
+        })}
+        heldInputs={{
+          intervalSeconds: {},
+          'items.dedupeKey': {},
+          'items.maxRunsPerPoll': {},
+          'probe.args.0': {},
+        }}
+        onApply={vi.fn()}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: 'Start from a preset' }));
+    await user.selectOptions(screen.getByLabelText('Preset'), 'issues-poll');
+    await user.type(screen.getByLabelText('Repository owner'), 'octo');
+    await user.type(screen.getByLabelText('Repository'), 'service');
+    await user.type(screen.getByLabelText('Issue label'), 'ready');
+    await user.click(screen.getByRole('button', { name: 'Preview GitHub preset' }));
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Unfinished input will be replaced: Interval seconds, Per-item dedupe key, Items Max runs per poll, Probe Args 1.',
+    );
+    expect(screen.getByRole('alert')).not.toHaveTextContent('items.dedupeKey');
+  });
+
+  it.each(['config', 'heldInputs', 'historyEpoch'] as const)(
+    'invalidates a preview after the current %s changes',
+    async (changed) => {
+      const user = userEvent.setup();
+      const onApply = vi.fn();
+      const props = { config: manualTriggerConfig(), heldInputs: {}, historyEpoch: 0, onApply };
+      const { rerender } = render(<TriggerPresets {...props} />);
+      expect(screen.queryByRole('form', { name: 'GitHub preset setup' })).not.toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'Start from a preset' }));
+      await user.selectOptions(screen.getByLabelText('Preset'), 'issues-poll');
+      expect(screen.getByRole('button', { name: 'Preview GitHub preset' })).toBeDisabled();
+      await user.type(screen.getByLabelText('Repository owner'), 'octo');
+      await user.type(screen.getByLabelText('Repository'), 'service');
+      await user.type(screen.getByLabelText('Issue label'), 'ready');
+      await user.click(screen.getByRole('button', { name: 'Preview GitHub preset' }));
+      expect(screen.getByRole('region', { name: 'Preset preview' })).toBeVisible();
+      expect(screen.getByRole('status')).toBeEmptyDOMElement();
+      rerender(
+        <TriggerPresets
+          {...props}
+          {...{
+            config: changed === 'config' ? manualTriggerConfig() : props.config,
+            heldInputs:
+              changed === 'heldInputs'
+                ? { inputSchema: { text: '{unfinished' } }
+                : props.heldInputs,
+            historyEpoch: changed === 'historyEpoch' ? 1 : props.historyEpoch,
+          }}
+        />,
+      );
+      expect(screen.queryByRole('button', { name: 'Apply GitHub preset' })).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Preview GitHub preset' })).toBeEnabled();
+      expect(screen.getByRole('status')).toHaveTextContent(
+        'Preset preview is out of date. Preview the preset again before applying.',
+      );
+      expect(onApply).not.toHaveBeenCalled();
+      await user.click(screen.getByRole('button', { name: 'Preview GitHub preset' }));
+      expect(screen.getByRole('region', { name: 'Preset preview' })).toBeVisible();
+      expect(screen.getByRole('status')).toBeEmptyDOMElement();
+    },
+  );
+
+  it('keeps setup optional and requires explicit branch and signing values for a PR preset', async () => {
     const user = userEvent.setup();
     const onApply = vi.fn();
-    render(<TriggerPresets config={{ subtype: 'manual' }} onApply={onApply} />);
+    render(<TriggerPresets config={manualTriggerConfig()} onApply={onApply} />);
+    const toggle = screen.getByRole('button', { name: 'Start from a preset' });
+    await user.click(toggle);
+    await user.selectOptions(screen.getByLabelText('Preset'), 'pull-request-ready');
+    expect(screen.queryByLabelText('Issue label')).not.toBeInTheDocument();
+    await user.type(screen.getByLabelText('Repository owner'), 'octo');
+    await user.type(screen.getByLabelText('Repository'), 'service');
+    await user.type(screen.getByLabelText('Pull request base branch'), 'main');
+    expect(screen.getByRole('button', { name: 'Preview GitHub preset' })).toBeDisabled();
+    await user.type(screen.getByLabelText('Signing secret name'), 'repo-hook');
+    await user.click(screen.getByRole('button', { name: 'Preview GitHub preset' }));
+    expect(screen.getByRole('region', { name: 'Preset preview' })).toHaveTextContent('repo-hook');
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('region', { name: 'Preset preview' })).not.toBeInTheDocument();
+    expect(onApply).not.toHaveBeenCalled();
+    await user.click(toggle);
+    expect(screen.getByLabelText('Pull request base branch')).toHaveValue('main');
+    expect(screen.queryByRole('button', { name: 'Apply GitHub preset' })).not.toBeInTheDocument();
+  });
 
+  it('previews a signed issue-label graph without changing the trigger until apply', async () => {
+    const user = userEvent.setup();
+    const onApply = vi.fn();
+    render(<TriggerPresets config={manualTriggerConfig()} onApply={onApply} />);
+    await user.click(screen.getByRole('button', { name: 'Start from a preset' }));
     await user.selectOptions(screen.getByLabelText('Preset'), 'issues-labeled');
     await user.type(screen.getByLabelText('Repository owner'), 'octo-team');
     await user.type(screen.getByLabelText('Repository'), 'service_repo');
     await user.type(screen.getByLabelText('Issue label'), 'Ready "now"');
     await user.type(screen.getByLabelText('Signing secret name'), 'github-hook');
-    expect(screen.getByRole('button', { name: 'Apply GitHub preset' })).toBeEnabled();
-    expect(screen.getByText(/signature authenticates the exact request body/i)).toBeVisible();
-    expect(screen.getByText(/raw body independently of that ID/i)).toBeVisible();
-
+    await user.click(screen.getByRole('button', { name: 'Preview GitHub preset' }));
+    expect(onApply).not.toHaveBeenCalled();
+    const preview = screen.getByRole('region', { name: 'Preset preview' });
+    expect(preview).toHaveFocus();
+    expect(preview).toHaveTextContent('event-check');
+    expect(preview).toHaveTextContent('restore-output');
+    expect(preview).toHaveTextContent('quiet-exit');
+    expect(preview).toHaveTextContent('rewireEdges');
     await user.click(screen.getByRole('button', { name: 'Apply GitHub preset' }));
-    expect(onApply).toHaveBeenCalledWith({
-      subtype: 'webhook',
-      signature: {
-        scheme: 'hmac-sha256-body',
-        header: 'x-hub-signature-256',
-        secretRef: 'github-hook',
-      },
+    expect(onApply.mock.calls[0]?.[0].definition.nodes[0].config).toMatchObject({
+      type: 'webhook',
+      authentication: { type: 'hmac-sha256', message: 'body', secretRef: 'github-hook' },
       dedupeKey: '$headers."x-github-delivery"',
-      filter:
-        'repository.full_name = "octo-team/service_repo" and action = "labeled" and $exists(issue) and $not($exists(issue.pull_request)) and label.name = "Ready \\"now\\""',
     });
-  });
-
-  it('parses presets and evaluates issue and pull-request filters against sample payloads', async () => {
-    const setup = {
-      owner: 'octo-team',
-      repository: 'service_repo',
-      label: 'Ready "now"',
-      baseBranch: 'release "candidate"',
-      secretRef: 'github-hook',
-    };
-    const bindings = { bindings: { headers: {} } };
-    const issuePayload = (repository: string, action: string, label: string) => ({
-      repository: { full_name: repository },
-      action,
-      issue: { number: 17, title: 'Synthetic issue' },
-      label: { name: label },
-    });
-    const readyPayload = (action: string, draft: boolean, base: string) => ({
-      repository: { full_name: 'octo-team/service_repo' },
-      action,
-      pull_request: { draft, merged: false, base: { ref: base } },
-    });
-
-    const issue = TriggerConfigSchema.parse(makeGitHubTriggerPreset('issues-labeled', setup));
-    if (issue.subtype !== 'webhook' || !issue.filter)
-      throw new Error('The issue-label preset did not produce a filtered webhook.');
-    expect(issue.signature.scheme).toBe('hmac-sha256-body');
-    expect(issue).not.toHaveProperty('replayWindowSeconds');
-    expect(
-      await evaluatePredicate(
-        issue.filter,
-        issuePayload('octo-team/service_repo', 'labeled', 'Ready "now"'),
-        bindings,
-      ),
-    ).toBe(true);
-    expect(
-      await evaluatePredicate(
-        issue.filter,
-        issuePayload('another-team/service_repo', 'labeled', 'Ready "now"'),
-        bindings,
-      ),
-    ).toBe(false);
-    expect(
-      await evaluatePredicate(
-        issue.filter,
-        issuePayload('octo-team/service_repo', 'labeled', 'other'),
-        bindings,
-      ),
-    ).toBe(false);
-    expect(
-      await evaluatePredicate(
-        issue.filter,
-        issuePayload('octo-team/service_repo', 'ping', 'Ready "now"'),
-        bindings,
-      ),
-    ).toBe(false);
-
-    const ready = TriggerConfigSchema.parse(makeGitHubTriggerPreset('pull-request-ready', setup));
-    if (ready.subtype !== 'webhook' || !ready.filter)
-      throw new Error('The ready pull-request preset did not produce a filtered webhook.');
-    for (const action of ['opened', 'ready_for_review'])
-      expect(
-        await evaluatePredicate(
-          ready.filter,
-          readyPayload(action, false, setup.baseBranch),
-          bindings,
-        ),
-      ).toBe(true);
-    expect(
-      await evaluatePredicate(
-        ready.filter,
-        readyPayload('opened', true, setup.baseBranch),
-        bindings,
-      ),
-    ).toBe(false);
-    expect(
-      await evaluatePredicate(ready.filter, readyPayload('opened', false, 'main'), bindings),
-    ).toBe(false);
-
-    const merged = TriggerConfigSchema.parse(makeGitHubTriggerPreset('pull-request-merged', setup));
-    if (merged.subtype !== 'webhook' || !merged.filter)
-      throw new Error('The merged pull-request preset did not produce a filtered webhook.');
-    expect(
-      await evaluatePredicate(
-        merged.filter,
-        {
-          ...readyPayload('closed', false, setup.baseBranch),
-          pull_request: { draft: false, merged: true, base: { ref: setup.baseBranch } },
-        },
-        bindings,
-      ),
-    ).toBe(true);
-    expect(
-      await evaluatePredicate(
-        merged.filter,
-        readyPayload('closed', false, setup.baseBranch),
-        bindings,
-      ),
-    ).toBe(false);
-    expect(
-      await evaluatePredicate(
-        merged.filter,
-        {
-          ...readyPayload('closed', false, 'main'),
-          pull_request: { draft: false, merged: true, base: { ref: 'main' } },
-        },
-        bindings,
-      ),
-    ).toBe(false);
+    expect(onApply.mock.calls[0]?.[0].definition.nodes[0].config).not.toHaveProperty('filter');
   });
 
   it('creates a bounded GitHub issue poll and encodes the query label as one argument', async () => {
     const user = userEvent.setup();
     const onApply = vi.fn();
-    render(<TriggerPresets config={{ subtype: 'manual' }} onApply={onApply} />);
+    render(<TriggerPresets config={manualTriggerConfig()} onApply={onApply} />);
 
+    await user.click(screen.getByRole('button', { name: 'Start from a preset' }));
     await user.selectOptions(screen.getByLabelText('Preset'), 'issues-poll');
     await user.type(screen.getByLabelText('Repository owner'), 'octo');
     await user.type(screen.getByLabelText('Repository'), 'service');
     await user.type(screen.getByLabelText('Issue label'), 'ready for review');
     expect(screen.queryByLabelText('Signing secret name')).not.toBeInTheDocument();
     expect(screen.getByText(/rejects output over 200 issues or 64 KiB/i)).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Preview GitHub preset' }));
+    expect(onApply).not.toHaveBeenCalled();
+    expect(screen.getByRole('region', { name: 'Preset preview' })).toHaveFocus();
     await user.click(screen.getByRole('button', { name: 'Apply GitHub preset' }));
 
-    const config = onApply.mock.calls[0]?.[0] as Record<string, unknown>;
+    const config = onApply.mock.calls[0]?.[0].definition.nodes[0].config as Record<string, unknown>;
     expect(config).toMatchObject({
-      subtype: 'poll',
+      type: 'poll',
       intervalSeconds: 60,
       fireWhen: 'true',
       items: {
@@ -243,7 +402,7 @@ describe('TriggerPresets', () => {
     expect(program).not.toContain('--slurp');
 
     const parsed = TriggerConfigSchema.parse(config);
-    if (parsed.subtype !== 'poll' || parsed.probe.kind !== 'script')
+    if (parsed.type !== 'poll' || parsed.probe.kind !== 'script')
       throw new Error('The poll preset did not produce a script probe.');
     const curated = [
       {
@@ -292,38 +451,13 @@ describe('TriggerPresets', () => {
     const onApply = vi.fn();
     render(
       <TriggerPresets
-        config={{ subtype: 'webhook', signature: { scheme: 'custom-hmac', secretRef: 'saved' } }}
+        config={{ type: 'webhook', authentication: { type: 'custom-hmac', secretRef: 'saved' } }}
         onApply={onApply}
       />,
     );
     expect(screen.getByRole('alert')).toHaveTextContent('custom-hmac');
     expect(screen.getByRole('alert')).toHaveTextContent('value is preserved');
     expect(onApply).not.toHaveBeenCalled();
-  });
-
-  it('builds body-checked pull request filters and safely quotes the configured branch', () => {
-    const setup = {
-      owner: 'octo-team',
-      repository: 'service',
-      label: '',
-      baseBranch: 'release "candidate"',
-      secretRef: 'pr-hook',
-    };
-    expect(canApplyGitHubPreset('pull-request-ready', setup)).toBe(true);
-    const ready = makeGitHubTriggerPreset('pull-request-ready', setup);
-    const merged = makeGitHubTriggerPreset('pull-request-merged', setup);
-
-    expect(ready['filter']).toContain('action in ["opened", "ready_for_review"]');
-    expect(ready['filter']).toContain('$exists(pull_request)');
-    expect(ready['filter']).toContain('pull_request.draft = false');
-    expect(ready['filter']).toContain(
-      `pull_request.base.ref = ${JSON.stringify(setup.baseBranch)}`,
-    );
-    expect(merged['filter']).toContain('action = "closed"');
-    expect(merged['filter']).toContain('pull_request.merged = true');
-    expect(merged['filter']).toContain(
-      `pull_request.base.ref = ${JSON.stringify(setup.baseBranch)}`,
-    );
   });
 
   it('rejects repository path separators before composing the local gh command', () => {

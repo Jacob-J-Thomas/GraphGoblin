@@ -30,8 +30,12 @@ it('refreshes committed handle ids and order once, including same-height changes
         kind: 'decision',
         label: 'Pick',
         config: {
-          answer: { type: 'choice', options: [] },
-          evaluation: { kind: 'expression', jsonata: '"yes"' },
+          kind: 'expression',
+          jsonata: '"yes"',
+          routes: [
+            { id: 'yes', label: 'Yes' },
+            { id: 'no', label: 'No' },
+          ],
         },
       },
       ports: ['yes', 'no'],
@@ -45,6 +49,7 @@ it('refreshes committed handle ids and order once, including same-height changes
     </StrictMode>
   );
   const view = render(card());
+  expect(screen.getByTestId('node-pick')).toHaveStyle({ width: '184px' });
   expect(update).not.toHaveBeenCalled();
   for (const ports of [
     ['yes', 'no', 'third'],

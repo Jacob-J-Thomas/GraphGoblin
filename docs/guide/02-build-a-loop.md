@@ -11,7 +11,7 @@
 
 Structured edits in the dialog save as you type; section JSON saves when applied, and unfinished text stays in this editing session when closing: use **Done**, the close button, **Esc**, or a click outside it, and focus returns to the node. An ID you are still typing applies when the dialog closes; an ID that cannot apply keeps the dialog open once with the reason, and closing again keeps the old ID. **Delete** and **Backspace** inside the dialog only edit text. While the dialog is open the rest of the editor waits, so close it to reach **Publish** or the palette. Below 768 px wide the dialog is a sheet along the bottom of the window.
 
-**Undo** and **Redo** at the start of the toolbar's buttons take back or repeat a change to the loop: adding, moving, connecting, renaming, or deleting nodes, removing edges, rerouting or resetting a line, and edits to labels, config, the loop's name and description, settings, and variables. Each button's name says what it will change, for example **Undo move start**. **Ctrl+Z** undoes and **Ctrl+Shift+Z** or **Ctrl+Y** redoes (**Cmd+Z** and **Cmd+Shift+Z** on a Mac) with focus anywhere except a text field or a code editor, where the keys undo your typing in that field instead; on a checkbox, an option, a list, or a button they undo the editor. Typing in one field is one step, as is one drag; deleting a node and undoing brings back its edges and any loop-back to it, and discarding held input can be undone like any change. An undo is saved like any other edit. The editor keeps the last 100 steps for as long as it is open; reloading it or choosing **Reload server draft** starts afresh.
+**Undo** and **Redo** at the start of the toolbar's buttons take back or repeat a change to the loop: adding, moving, connecting, renaming, or deleting nodes, removing edges, rerouting or resetting a line, and edits to labels, config, the loop's name and description, settings, and variables. Each button's name says what it will change, for example **Undo move start**. **Ctrl+Z** undoes and **Ctrl+Shift+Z** or **Ctrl+Y** redoes (**Cmd+Z** and **Cmd+Shift+Z** on a Mac) with focus anywhere except a text field or a code editor, where the keys undo your typing in that field instead; on a checkbox, an option, a list, or a button they undo the editor. Typing in one field is one step, as is one drag; deleting a node and undoing brings back its edges and all connections to it, and discarding held input can be undone like any change. An undo is saved like any other edit. The editor keeps the last 100 steps for as long as it is open; reloading it or choosing **Reload server draft** starts afresh.
 
 The **Palette** and **Loop settings** panels each have their own Show and Hide buttons. The browser remembers both choices; until you choose, the palette starts expanded on windows at least 1024 px wide and collapsed below, and the loop panel starts expanded at 1280 px and wider and collapsed below. Each collapsed panel keeps a narrow rail with its Show button. Validation stays in sight either way, on the nodes and beside **Publish** (see [Connect and validate](#connect-and-validate)).
 
@@ -29,7 +29,9 @@ The editor lives at this browser route:
 /app/loops/<loop-id>/edit
 ```
 
-Edits autosave after a short debounce and are mirrored in IndexedDB. A schema-invalid draft stays on the device with **Saved on this device only**; fix it before relying on the server copy. Offline saves retry on reconnect. If another GraphGoblin tab or window from an older version holds the device's draft storage, a notice says so: close the other GraphGoblin tabs and windows. Until then, changes the server has not saved show as **Kept in this window only**, and closing the window loses them; saves to the server still work and show as **All changes saved**. Device drafts saved before the node-only harness change were discarded by a one-off store upgrade. An unsynced local draft takes precedence on reload, unless the server saved a newer draft since; then the server copy is shown and the device copy is offered with **Use this device's copy instead**.
+Edits autosave after a short debounce and are mirrored in IndexedDB. A schema-invalid draft stays on the device with **Saved on this device only**; fix it before relying on the server copy. Offline saves retry on reconnect. If another GraphGoblin tab or window from an older version holds the device's draft storage, a notice says so: close the other GraphGoblin tabs and windows. Until then, changes the server has not saved show as **Kept in this window only**, and closing the window loses them; saves to the server still work and show as **All changes saved**. Device drafts saved before the node-only harness change were discarded by a one-off store upgrade. This device's saved work opens while the server is loading; returning to a loop uses its latest copy in this window even if device storage is slow. The checking notice means editing is available while server saves and Publish wait for reconciliation. If you are offline, keep editing; recovery reconciles before saving. The save indicator claims a device copy only after its durable write succeeds.
+
+If the server saved a newer draft, an untouched editor switches to it and offers **Use this device's copy instead** for the retained device work. Edits made while loading are kept in the editor. A stale base then asks you to reload or explicitly overwrite, rather than replacing those edits. Restore or discard failures keep the backup and offer a meaningful retry notice.
 
 The restored-draft notice and notices about schema-invalid, offline, or failed saves can be dismissed. The toolbar continues to show when changes are kept only on this device or a save has failed. A dismissed restore notice stays hidden while editing that loaded draft and appears again if a later reload restores it. A dismissed save notice stays hidden through edits that end in the same state; it returns after a successful save, a different save problem or message, or a new load.
 
@@ -41,19 +43,21 @@ Choose **Harness** in each inference node's dialog. It defaults to **Codex** whe
 Loop settings offer model and effort defaults under **Defaults → By harness**. Remove `settings.defaults.harness` from older files before importing them.
 If import is refused, the alert lists each invalid field's path and reason, including this removed field.
 
-**Model** is a native dropdown of enabled catalog entries for the inference node's **Harness**, showing each display name and model id. **(loop default)** leaves the node's model unset; loop and owner defaults are scoped to each harness. The decision node's **Codex → Model** and **Effort** remain Codex-only. Claude supports exact models `claude-opus-5-5` and `claude-fable-5-1`. Use **Model catalog in Settings** below the picker to enable an eligible model. A saved model from another harness is kept as a disabled entry labelled with its harness; choose a valid model once preflight passes, or select an inherited default. Switching to Claude resets the sandbox and approval policy to `read-only`/`never`; full access requires a separate explicit choice. Other authored harness options are preserved, with unsupported Claude settings reported for correction. There is no free-text option. Tab reaches the dropdown, then the Settings link; arrow keys change the selection and typing a name finds a matching entry. **Effort** offers the selected model's efforts: Claude supports `low`, `medium`, `high`, `xhigh`, and `max` (not `minimal`); Codex has its own catalog choices. The unset choice gives catalog guidance only; actual model and effort inherit in node, loop, owner, then process order within the selected harness.
+**Model** is a native dropdown of enabled catalog entries for the inference node's **Harness**, showing each display name and model id. **(loop default)** leaves the node's model unset; loop and owner defaults are scoped to each harness. The decision node's **LLM Model** and **Effort** selections remain Codex-only. Claude supports exact models `claude-opus-5-5` and `claude-fable-5-1`. Use **Model catalog in Settings** below the picker to enable an eligible model. A saved model from another harness is kept as a disabled entry labelled with its harness; choose a valid model once preflight passes, or select an inherited default. Switching to Claude resets the sandbox and approval policy to `read-only`/`never`; full access requires a separate explicit choice. Other authored harness options are preserved, with unsupported Claude settings reported for correction. There is no free-text option. Tab reaches the dropdown, then the Settings link; arrow keys change the selection and typing a name finds a matching entry. **Effort** offers the selected model's efforts: Claude supports `low`, `medium`, `high`, `xhigh`, and `max` (not `minimal`); Codex has its own catalog choices. The unset choice gives catalog guidance only; actual model and effort inherit in node, loop, owner, then process order within the selected harness.
 
 A saved model that is missing or disabled stays selected with **not in catalog** or **disabled in the catalog** and a warning. An effort the selected model does not support stays selected and flagged too. Changing the model never changes effort silently. Catalog validation warnings appear beside the model field when they add information and do not block publishing. If the catalog cannot load, the current values remain in read-only dropdowns with one message and **Retry model catalog** beside Model; the pickers recover without changing saved values or dropping keyboard focus. A failed refresh keeps cached choices editable and warns that the catalog may be out of date.
 
-**Trigger (`trigger`).** Choose `subtype`: `manual`, `cron`, `webhook`, `event`, or `poll`. For manual starts, set `inputSchema` to validate input and `exposeTo` to declare intended `ui`, `api`, and `mcp` surfaces. The trigger records its payload as an output and follows `out`. Configure automatic sources in [Triggers](04-triggers.md).
+**Trigger (`trigger`).** Choose **Trigger type**: **Manual**, **Cron**, **Poll**, **Event**, or **Webhook**. For manual starts, set `inputSchema` to validate input and `exposeTo` to declare intended `ui`, `api`, and `mcp` surfaces. The trigger records its payload as an output and follows `out`. Configure automatic sources in [Triggers](04-triggers.md).
 
 > After 1.0: Surface-aware start and input controls. Today `exposeTo` is recorded and described to MCP callers, but the web launcher and engine commands do not enforce it. Use API authentication for access control.
 
-**Decision (`decision`).** Choose an answer: **Noul** for true/false, **Choice** for named options, or **Score** for a position on an ordered rubric. Noul gives both sides criteria and labelled ports; Choice gives each option criteria and a stable ID; Score gives the anchors and complete routing bands. Labels and order can change without moving a connection. Connect every declared route.
+**Decision (`decision`).** Choose **Expression**, **LLM** or **Classifier**. Expression edits one JSONata snippet and 2-64 named routes; it returns a declared route ID, such as `vars.done ? "done" : "retry"`. LLM edits Liquid instructions and the same readable routes, with Codex model/effort inheritance or explicit values. Its checked response names one route; confidence is informational, with no gate, and reasoning is a bounded excerpt.
 
-Choose **Expression**, **Classifier**, or **LLM** to evaluate it. Expression returns a strict boolean for Noul or a declared ID for Choice. LLM uses Codex for those two answers. Score requires a Score-capable classifier and retains fractional values. Classifier Noul separates **Truth threshold** (which side) from **Minimum confidence** (whether to accept the selected side). Score bands include their lower boundary; only the last band includes its upper boundary. Results are under `lastOutput.value.answer`, the selected route is `lastOutput.value.portId`, and provider details are in `lastOutput.value.provenance`.
+Only classifiers choose **Choice**, **Noul** or **Score**. Choice keeps criteria and stable IDs; Noul keeps both sides' criteria and IDs, a true-probability threshold and separate minimum confidence. Score keeps fractional indices and complete routing bands: an interior boundary enters the next band, and the final endpoint is inclusive. Connect each declared route. Route IDs own connections; labels and display order can change independently. Use the up/down buttons to reorder routes, Choice options or Score bands. Changing an ID in the structured form carries its connections, including their manual line layouts. An unfinished or duplicate ID keeps ownership until repaired, including after reopening its device draft or restoring a set-aside copy.
 
-Questions still render against the full thread; the separate context selector keeps its existing behavior and does not limit template exposure. Unsupported capabilities, unavailable configuration, malformed answers and rejected classifier confidence have precise diagnostics. No other evaluator runs as fallback.
+**Changing kind or classifier answer type** opens a review before any edit. It lists fields and unfinished input that will be lost and the new fields to complete. **Cancel change** keeps everything; **Confirm change** makes one undoable edit. Compatible route IDs, labels, connections and provider context are retained, including unfinished route-field text when moving between kinds or classifier answer types. The loss preview names fields and routes; inherited provider defaults are not listed as lost settings. Choice to Noul maps the first route to true and the second to false, retaining their criteria; Noul refuses any route count other than two. New source, classifier selection, criteria and Score rubrics/bounds stay blank until you author them. Blank source or missing provider configuration blocks publication; choose its validation issue to focus the field. LLM model and effort start at **inherit**.
+
+The selected port is `lastOutput.value.portId`, provider details are `lastOutput.value.provenance`, and evidence is `lastOutput.value.observation`. Route observations expose `routeId`; classifier observations expose typed `answer`. Questions/instructions render against the full thread; provider context selection does not restrict Liquid exposure. Invalid configurations have precise diagnostics and no evaluator fallback. Current definitions/exports use format 4; old exports/stores require the integrated cutover.
 
 **Inference (`inference`).** Set `prompt.template` for a Codex or Claude turn. Choose `model`, `effort`, and `session.policy`: `fresh`, `resume-previous`, or `resume-named` with a `key`. Codex supports `read-only`, `workspace-write` (default), and `danger-full-access`. Claude requires native Windows CLI 2.1.285 or newer with required capabilities and an explicit supported `read-only`/`never` or `danger-full-access`/`never` policy. Read-only restricts built-in tools but does not confine filesystem reads or the operating system; full access leaves commands and network unconfined under the API user's account. Claude refuses unsupported pairs, `networkAccess: false`, `webSearch: true`, custom capabilities, and nonempty raw configuration overrides. Use `input` transformations, `contextFiles`, and `output.transforms` to shape context. Set `output.schema.jsonSchema` for structured output and configure its `repair` policy. `output.captureTranscript` defaults to `artifact`, `output.toMessages` to `final`; `timeoutSeconds` is optional. The output goes to `lastOutput.value` and the node follows `out`.
 
@@ -69,15 +73,17 @@ Questions still render against the full thread; the separate context selector ke
 
 **Heartbeat (`heartbeat`).** Set `intervalSeconds` and a `probe` of `http`, `script`, `signal-count`, or `none`. Supply at least one of `until` (JSONata), `maxBeats`, or `deadline` (Liquid timestamp). HTTP probes have method, URL, headers, body, and timeout fields; script probes have command, args, and timeout fields. The condition sees `probe`, `thread`, `beat`, and `now`. The first probe executes on entry; later beats park on timers. Choose `record` of `summary` or `full`, and `onExhausted` of `continue` or `fail-run`; completion follows `out`.
 
-**Exit (`exit`).** Evaluate `criteria` in order using `max-iterations`, `max-duration`, `predicate`, or `last-output-matches`. Choose `default` of `success` or `loop-back`; the latter needs `loopBack.targetNodeId` and a matching edge. Set `return.mapping` to a JSONata expression and choose `return.channels`; `none` omits the payload. A terminal exit has no output port; a configured loop-back exposes `loopBack`. The loop's iteration ceiling is checked when the exit evaluates, so route repeated work through an exit to bound it.
+**Exit (`exit`).** Exits are terminal: `{outcome, returns, destinations}`. `outcome` is `success` (default), `failure` or `exhausted`; `returns` is a JSONata expression or `none` (default); `destinations` defaults to `[{kind:"caller"}]` and supports caller, webhook, file, event and log. Exits have no criteria, predicate, default routing or loop-back, and no output ports.
+
+Success finishes `succeeded`, Failure finishes `failed`, and Exhausted finishes the distinct terminal status `exhausted`. Exhausted means the authored graph gave up further repetition; normally a gate's Limit reached output leads here. It is an outcome, not a resumable node failure. Every outcome evaluates the same return expression and delivers its value unchanged; Exhausted adds no wrapper or implicit last output. Use `outputs.<workNodeId>.value` when returning work output, because the preceding gate replaces `lastOutput`.
 
 ## Connect and validate
 
-Decision outputs are ready to connect as soon as you add or rename a route, by dragging its handle or using **Connections** in the node dialog; no reload is needed. Renaming a connected route keeps its connection and any manual line layout. While editing incomplete labels, each connection stays with its own row, whichever row you finish first. Removing a route removes its connection even if its label is temporarily blank or invalid, and reordering keeps connections with their labels. **Undo** and **Redo** restore the route edit and its connection together. Blank or duplicate labels still need fixing before you can publish.
+Decision outputs connect by stable route **ID**, using the canvas handle or **Connections** in the dialog. Readable labels can be renamed and rows reordered without changing identity. Removing a connected route first lists its connections for confirmation, including when its ID is unfinished; confirmation removes the route and its owned connections in one undoable edit. **Undo** and **Redo** restore the route, unfinished input and connections together. Section JSON matches surviving IDs, so an ID replaced in JSON loses its connections after a separate removal review. Blank or duplicate IDs and labels block publication.
 
-Connect exactly one edge per output port. Multiple inputs may converge on a node, but each run follows one route at a time. Triggers have no input. Ordinary output ports are `out`, decision ports are route labels, script ports include exit-code labels, and exit ports are limited to `loopBack`. Edge targets use `in`.
+Connect exactly one edge per output port. Multiple inputs may converge on a node, but each run follows one route at a time. Triggers have no input. Ordinary output ports are `out`, decision ports are route IDs, script ports include exit-code labels, and gates add `limit-reached` and exits have no outputs. Edge targets use `in`.
 
-For a loop-back, connect the exit handle to a working node, such as inference or mutation. The canvas sets `loopBack.targetNodeId` for you; it cannot target a trigger or another exit. Only this exit transition increments the iteration. A cycle through other nodes does not consume the iteration limit.
+Mark **Repeat route** on the decision route that leads back through work to the same gate. Set **Maximum passes** and optionally **Maximum run time (seconds)**; connect **Limit reached** to an Exhausted exit. A non-repeat choice on the last pass wins. Read `gates.<nodeId>.passes` in expressions. Unmarking previews removal of limits and the Limit reached edge, then applies them together with Undo support.
 
 Loop-backs and connections whose output tip is to the right of the input follow square paths with rounded corners; small moves do not flip their shape. Return lanes sit at least 32 px from cards, with 24 px clearance at rounded corners. Inner spans get lanes first, and connections keep separate vertical trunks. Free lanes with 24 px separation always take priority; crowded gaps compress or share lanes only when those candidates are exhausted, and labels move along the lane to stay apart. Tight neighbours reduce clearance only on the endpoint approaches, keeping the lane and label away from the cards. Leave at least **8 px between facing card bodies** for the protruding handles; there is no 64 px minimum spacing. Moving a card remains one Undo step, and moving it back restores the same route. The loop-back keeps its moving dash, with its label on a straight segment; long names retain their full accessible name and hover title. Click an edge, or focus it and press Enter, then Delete to remove it; Undo restores it. **Port covered by a card; move the card** means another card covers the actual handle; **No clear route; move a card** means the bounded router could not find an escape.
 
@@ -87,13 +93,13 @@ To move a line out of the way, select it (click it, or move to it with **Tab** a
 
 Check validation after every change. A node with problems shows an issue badge in its header: a cross when any of them is an error, a warning triangle when they are all warnings, and the count when there are several. Hover the badge, move to it with **Tab**, or click it to list each issue with its severity, message, and field; the list stays open while the pointer is over it or focus is inside it, a click keeps it open, and **Esc** closes it. Choose an issue to open the node's dialog with that field focused; an issue without a field opens the dialog at its top. The same badge sits beside the dialog's title while you edit. Beside **Publish**, the toolbar shows the loop's error and warning counts; click them for the issues that belong to the whole loop or to an edge, then a row per node with issues, which opens that node. With nothing to list it shows **Ready to publish** once the server has checked the saved draft (cron expressions, subloop references), **Checking…** until then, and **Validation unavailable** when the server could not be asked (offline, say); **Publish** runs the checks again either way. Text that does not parse in a JSON field is an issue too, with **Discard the unparsed text** in its row. An incomplete cron schedule uses **Discard the incomplete schedule**; valid section JSON waiting for Apply says it is **JSON not applied yet**, with **Discard the unapplied JSON** available in its issue row. These actions clear the held input and can be undone.
 
-Fix errors before publishing: missing trigger or exit, unconnected or doubly connected ports, duplicate IDs, invalid targets or ports, unreachable nodes, a trigger with no path to an exit, undeclared variables, and inconsistent loop-backs. Warnings, such as an exit criterion above the loop's iteration ceiling, do not block publishing. The server repeats these checks when you publish, adds cron expression and timezone checks (they show on the trigger's badge once the draft has saved), and rejects errors with HTTP 422 `LOOP_INVALID`.
+Fix errors before publishing: missing trigger or exit, unconnected or doubly connected ports, duplicate IDs, invalid targets or ports, unreachable nodes, a trigger with no path to an exit, undeclared variables, a noncyclic repeat, missing gate limits or an unconnected Limit reached. The server repeats these checks on publication and returns HTTP 422 `LOOP_INVALID`.
 
 ## Set workspace and limits
 
 | Setting             | Configure it                                                                                                                                                                                                   |
 | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `maxIterations`     | Default 10, range 1 to 10,000. It limits exit loop-backs (the run ends `exhausted`) and fresh visits per node (the run fails `MAX_ITERATIONS`).                                                                |
+| `maxNodeVisits`     | Default 10, range 1 to 10,000. Safety cap against unintended cycles; exceeding fresh visits per node fails `MAX_NODE_VISITS`. Intentional repeats use a decision gate.                                         |
 | `workingDirectory`  | `temp` (default), `fixed` with `path`, or `template` with a Liquid `template`. The filesystem adapter creates the resolved directory if needed.                                                                |
 | `subloopDepthLimit` | Default 8, range 1 to 64. A subloop node can replace it with `depthLimitOverride`.                                                                                                                             |
 | `defaults`          | Set optional model and effort under `byHarness.codex` or `byHarness.claude`. Node values override that harness's loop defaults, then owner and API-process defaults. Harness is chosen on each inference node. |
@@ -104,7 +110,7 @@ For a repository workspace, use an absolute path. For a temporary workspace, use
 {
   "workingDirectory": { "kind": "temp" },
   "defaults": { "byHarness": { "codex": { "model": "gpt-6-luna", "effort": "low" } } },
-  "maxIterations": 3,
+  "maxNodeVisits": 3,
   "subloopDepthLimit": 8
 }
 ```
@@ -138,7 +144,7 @@ Use **Export** on the Loops page to download JSON. It exports the published defi
 GET /loops/{id}/export?draft=true
 ```
 
-Each Loops row groups **Edit**, **Export**, and **Delete** as buttons; Edit opens the editor. Export shows **Exporting…** while pending, keeps keyboard focus, and accepts one request at a time. Delete opens a confirmation naming the loop: the loop, all its versions and its triggers are removed, and loops using it as a subloop can no longer start it. This cannot be undone. Choose **Keep** or press Escape to cancel while idle, or **Confirm delete** to remove it. A 409 `LOOP_IN_USE` keeps the API's reason visible in the confirmation until you dismiss it or retry. Confirmation and Keep are disabled while the request is pending; repeated Escape presses cannot dismiss it.
+Each Loops row groups **Edit**, **Export**, and **Delete** as buttons; Edit opens the editor. Export shows **Exporting…** while pending, keeps keyboard focus, and accepts one request at a time. Delete opens a confirmation naming the loop: the loop, all its versions, triggers and runs are deleted, including run history and artifact references (the run count is shown when the listing is complete), and loops using it as a subloop can no longer start it. Cancel queued, running, waiting or paused runs first. Shared artifact files remain on disk. This cannot be undone. Choose **Keep** or press Escape to cancel while idle, or **Confirm delete** to remove it. A 409 `LOOP_IN_USE` keeps the API's reason visible in the confirmation until you dismiss it or retry. Confirmation and Keep are disabled while the request is pending; repeated Escape presses cannot dismiss it.
 
 Use the Loops page's file picker, or `POST /loops/import`, to import an export envelope or a bare definition. Import always creates a new loop with a draft, even if the name matches an existing loop. To update an existing loop, save its draft through the editor or API:
 
@@ -151,10 +157,10 @@ The body wraps your definition:
 ```json
 {
   "definition": {
-    "schemaVersion": 2,
+    "schemaVersion": 4,
     "name": "starter",
     "nodes": [
-      { "id": "start", "kind": "trigger", "label": "Start", "config": { "subtype": "manual" } },
+      { "id": "start", "kind": "trigger", "label": "Start", "config": { "type": "manual" } },
       { "id": "done", "kind": "exit", "label": "Done", "config": {} }
     ],
     "edges": [
@@ -174,13 +180,13 @@ Save this bare definition as a JSON file and import it. It follows the contracts
 
 ```json
 {
-  "schemaVersion": 2,
+  "schemaVersion": 4,
   "name": "first-summary",
   "description": "Ask Codex for a short explanation of a topic.",
   "settings": {
     "workingDirectory": { "kind": "temp" },
     "defaults": { "byHarness": { "codex": { "model": "gpt-6-luna", "effort": "low" } } },
-    "maxIterations": 3,
+    "maxNodeVisits": 3,
     "subloopDepthLimit": 8
   },
   "variables": {},
@@ -191,7 +197,7 @@ Save this bare definition as a JSON file and import it. It follows the contracts
       "label": "Start",
       "ui": { "x": 0, "y": 80 },
       "config": {
-        "subtype": "manual",
+        "type": "manual",
         "exposeTo": ["ui", "api", "mcp"],
         "inputSchema": {
           "type": "object",
@@ -221,12 +227,9 @@ Save this bare definition as a JSON file and import it. It follows the contracts
       "label": "Done",
       "ui": { "x": 560, "y": 80 },
       "config": {
-        "criteria": [],
-        "default": "success",
-        "return": {
-          "mapping": "{ \"summary\": lastOutput.value }",
-          "channels": [{ "kind": "caller" }]
-        }
+        "outcome": "success",
+        "returns": "{ \"summary\": outputs.summarise.value }",
+        "destinations": [{ "kind": "caller" }]
       }
     }
   ],
@@ -247,12 +250,14 @@ Save this bare definition as a JSON file and import it. It follows the contracts
 
 Read [Node catalog](../04-node-catalog.md) for design context. Continue with [Run and observe](03-run-and-observe.md).
 
-## Match an exit answer
+## Author a bounded repeat
 
-Decision and exit **Answer type** cards keep their labels short. Tab reaches the chosen answer once; use the arrow keys to change it. Keyboard focus on a radio shows its explanation without moving focus, and leaving the option or pressing Escape closes it. Clicking or tapping a card selects it without opening help. Hover or tap the help button beside Choice, Noul or Score to read the same explanation; these buttons are outside the Tab order. Tap again to close pinned help without changing the answer. Screen readers can read each option's explanation even while the help is closed.
+A decision becomes a gate when exactly one route is marked `repeat: true`. This marker belongs on an expression/LLM route, Choice option, Noul side or Score band; it is never inferred from canvas direction. Require `maxPasses` (1–10,000); optionally set `maxRunTimeSeconds` (positive integer seconds, at most 31,536,000). Without a repeat marker neither limit is allowed. Reserve the port ID `limit-reached`: authors cannot use it as a route ID. The gate exposes **Limit reached** only while a repeat is marked, and that output must be connected. The repeat route must lead through a cycle back to the gate; exits are terminal and triggers cannot be repeat targets.
 
-An exit criterion can evaluate a Noul, Choice or Score answer and compare it with an explicit rule. Choose true or false for Noul, one or more declared IDs for Choice, or a rubric-index comparison for Score. Provider Noul also needs criteria for each side. Score preserves fractional values; exits do not need routing bands.
+Passes are one-based, available to JSONata as `gates.<nodeId>.passes` (quote an ID with punctuation, for example `gates."my-gate".passes`). Every marked gate starts at 1. Evaluation happens first. An allowed repeat increments its count once; a non-repeat choice or a refused repeat leaves it unchanged. A non-repeat choice on the last allowed pass wins. If the decision chooses repeat at `maxPasses`, or after the optional run-time limit, it takes `limit-reached` instead. Both limits reached together are recorded as `max-passes`.
 
-Choose a classifier that supports the answer type, or Codex LLM for Noul/Choice. Expressions produce strict boolean Noul. A classifier confidence minimum and the optional LLM self-reported confidence minimum can reject an answer before matching. A rejected answer never matches, even if the rule asks for false. Inspect the raw answer, gate and rule separately in the run timeline.
+Maximum run time is elapsed wall time from `run.startedAt` (falling back to `createdAt`), including waits, pauses and recovery downtime. It is checked after evaluation and only on a repeat choice; it does not interrupt running work or override a finishing choice. A replay fork keeps the checkpoint's passes and starts its own run clock.
 
-Criteria run from top to bottom. A match on the final permitted iteration still completes; if none matches, the default either succeeds or takes the single loop-back, subject to the iteration ceiling. Keep explicit duration/iteration criteria in the intended order. Existing question context is unchanged; no new session controls are required.
+Use **Outcome: Exhausted** on the exit connected to Limit reached. A normal Done route can lead to Success or Failure. The inspector keeps the evaluator's choice, actual port and pass count together.
+
+Changing a node ID updates its connections. Update authored references such as `gates."old-id".passes` and `outputs."old-id".value` yourself.

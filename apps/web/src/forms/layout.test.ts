@@ -2,7 +2,7 @@ import { field, JsonSchemaSchema, NodeConfigSchemas, TemplateSchema } from '@gra
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { itemSummary } from './fields.js';
-import { shapeOf, type Schema } from './introspect.js';
+import { discriminatorValue, shapeOf, type Schema } from './introspect.js';
 import {
   formLayout,
   contextLayout,
@@ -75,43 +75,40 @@ describe('formLayout', () => {
   it.each(['expression', 'classifier', 'llm'] as const)(
     'places every %s evaluator field by metadata',
     (kind) => {
-      const decision = shape(NodeConfigSchemas.decision);
-      expect(names(formLayout(decision).basic)).toEqual(['answer', 'evaluation']);
-      expect(sections(formLayout(decision))).toEqual([['Recording', ['recordAlternatives']]]);
-      const evaluation = shapeOf(decision['evaluation']!);
-      if (evaluation.kind !== 'union') throw new Error('not a union');
-      const schema = evaluation.options[['expression', 'classifier', 'llm'].indexOf(kind)]!;
-      const layout = formLayout(shape(schema), 'evaluation', 'kind', true);
+      const schema = NodeConfigSchemas.decision.options.find(
+        (option) => discriminatorValue(option, 'kind') === kind,
+      )!;
+      const layout = formLayout(shape(schema), '', 'kind', true);
       expect(names(layout.basic)).toEqual(
         kind === 'expression'
-          ? ['evaluation.jsonata']
+          ? ['jsonata', 'maxPasses', 'maxRunTimeSeconds', 'routes']
           : kind === 'classifier'
-            ? ['evaluation.model', 'evaluation.question']
+            ? ['model', 'question', 'maxPasses', 'maxRunTimeSeconds', 'answer']
             : [
-                'evaluation.harness',
-                'evaluation.model',
-                'evaluation.effort',
-                'evaluation.question',
+                'instructions',
+                'harness',
+                'model',
+                'effort',
+                'maxPasses',
+                'maxRunTimeSeconds',
+                'routes',
               ],
       );
       expect(sections(layout)).toEqual(
         kind === 'classifier'
-          ? [['Acceptance', ['evaluation.minConfidence', 'evaluation.truthThreshold']]]
+          ? [
+              ['Acceptance', ['minConfidence', 'truthThreshold']],
+              ['Recording', ['recordAlternatives']],
+            ]
           : [],
       );
-      const context = contextLayout(NodeConfigSchemas.decision, { evaluation: { kind } });
-      expect(names(context.basic)).toEqual(kind === 'expression' ? [] : ['evaluation.context']);
+      const context = contextLayout(NodeConfigSchemas.decision, { kind });
+      expect(names(context.basic)).toEqual(kind === 'expression' ? [] : ['context']);
       expect(sections(context)).toEqual([]);
       if (kind !== 'expression') {
-        const provider = formLayout(
-          shape(placementsOf(context.basic)[0]!.schema),
-          'evaluation.context',
-        );
-        expect(names(provider.basic)).toEqual([
-          'evaluation.context.messages',
-          'evaluation.context.includeLastOutput',
-        ]);
-        expect(sections(provider)).toEqual([['Provider context', ['evaluation.context.vars']]]);
+        const provider = formLayout(shape(placementsOf(context.basic)[0]!.schema), 'context');
+        expect(names(provider.basic)).toEqual(['context.messages', 'context.includeLastOutput']);
+        expect(sections(provider)).toEqual([['Provider context', ['context.vars']]]);
       }
     },
   );

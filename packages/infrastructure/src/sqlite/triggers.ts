@@ -1,4 +1,8 @@
-import type { JsonValue } from '@graphgoblin/contracts';
+import {
+  WebhookAuthenticationSchema,
+  type WebhookAuthentication,
+  type JsonValue,
+} from '@graphgoblin/contracts';
 import type { ClockPort, IdPort } from '@graphgoblin/engine';
 import { and, asc, desc, eq, gte, inArray, lt, lte, ne, sql, type SQL } from 'drizzle-orm';
 import type {
@@ -147,10 +151,7 @@ export interface WebhookEndpointRecord {
   versionId: string;
   triggerNodeId: string;
   token: string;
-  secretRef: string;
-  signatureHeader: string;
-  signatureScheme: 'hmac-sha256' | 'hmac-sha256-body';
-  replayWindowSeconds: number | null;
+  authentication: WebhookAuthentication;
   enabled: boolean;
   createdAt: string;
 }
@@ -158,16 +159,32 @@ export interface WebhookEndpointRecord {
 export interface WebhookEndpointDraft {
   ownerId: string;
   triggerNodeId: string;
-  secretRef: string;
-  signatureHeader: string;
-  signatureScheme: 'hmac-sha256' | 'hmac-sha256-body';
-  replayWindowSeconds: number | null;
+  authentication: WebhookAuthentication;
 }
 
 type EndpointRow = typeof webhookEndpoints.$inferSelect;
 
 function toEndpoint(row: EndpointRow): WebhookEndpointRecord {
-  return { ...row };
+  const { authType, signatureMessage, signatureHeader, secretRef, windowSeconds, ...rest } = row;
+  if (
+    authType === 'none' &&
+    [signatureMessage, signatureHeader, secretRef, windowSeconds].some((value) => value !== null)
+  )
+    throw new Error('Stored webhook authentication is inconsistent');
+  if (signatureMessage === 'body' && windowSeconds !== null)
+    throw new Error('Stored webhook authentication is inconsistent');
+  const authentication = WebhookAuthenticationSchema.parse(
+    authType === 'none'
+      ? { type: 'none' }
+      : {
+          type: authType,
+          message: signatureMessage,
+          header: signatureHeader,
+          secretRef,
+          ...(signatureMessage === 'timestamp-body' ? { windowSeconds } : {}),
+        },
+  );
+  return { ...rest, authentication };
 }
 
 /** Webhook receivers in the `webhook_endpoints` table. */
@@ -217,10 +234,14 @@ export class SqliteWebhookEndpoints {
           versionId,
           triggerNodeId: d.triggerNodeId,
           token: tokens.get(d.triggerNodeId) ?? newToken(),
-          secretRef: d.secretRef,
-          signatureHeader: d.signatureHeader,
-          signatureScheme: d.signatureScheme,
-          replayWindowSeconds: d.replayWindowSeconds,
+          authType: d.authentication.type,
+          signatureMessage: d.authentication.type === 'none' ? null : d.authentication.message,
+          signatureHeader: d.authentication.type === 'none' ? null : d.authentication.header,
+          secretRef: d.authentication.type === 'none' ? null : d.authentication.secretRef,
+          windowSeconds:
+            d.authentication.type === 'hmac-sha256' && d.authentication.message === 'timestamp-body'
+              ? d.authentication.windowSeconds
+              : null,
           enabled: true,
           createdAt: now,
         }));
@@ -237,6 +258,11 @@ export class SqliteWebhookEndpoints {
       .where(eq(webhookEndpoints.token, token))
       .orderBy(desc(webhookEndpoints.enabled), desc(webhookEndpoints.createdAt))
       .limit(1);
+    return row ? toEndpoint(row) : undefined;
+  }
+
+  async get(id: string): Promise<WebhookEndpointRecord | undefined> {
+    const [row] = await this.db.select().from(webhookEndpoints).where(eq(webhookEndpoints.id, id));
     return row ? toEndpoint(row) : undefined;
   }
 

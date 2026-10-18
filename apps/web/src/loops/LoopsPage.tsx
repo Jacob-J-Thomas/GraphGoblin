@@ -110,7 +110,7 @@ function ImportLoop() {
   const client = useApi();
   const queryClient = useQueryClient();
   const [message, setMessage] = useState<
-    { tone: 'good' | 'bad'; text: string; issues?: string[] } | undefined
+    { tone: 'good' | 'bad'; text: string; issues?: string[]; notices?: string[] } | undefined
   >();
   const importLoop = useMutation({
     mutationFn: (document: Record<string, unknown>) => loops.import(client, document),
@@ -120,6 +120,7 @@ function ImportLoop() {
         tone: 'good',
         text: `Imported "${created.loop.name}".`,
         issues: created.issues.map((i) => `${i.code}: ${i.message}`),
+        notices: created.notices.map((notice) => `${notice.path}: ${notice.message}`),
       });
     },
     onError: (error) =>
@@ -152,6 +153,16 @@ function ImportLoop() {
       {message ? (
         <div id="import-loop-result">
           <Alert tone={message.tone} title={message.text}>
+            {message.notices && message.notices.length > 0 ? (
+              <div>
+                <p>Automatic changes made during import:</p>
+                <ul className="list-disc pl-4 text-xs">
+                  {message.notices.map((notice, index) => (
+                    <li key={index}>{notice}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
             {message.issues && message.issues.length > 0 ? (
               <ul className="list-disc pl-4 text-xs">
                 {message.issues.map((issue, i) => (
@@ -166,7 +177,7 @@ function ImportLoop() {
   );
 }
 
-function LoopActions({ loop }: { loop: LoopRecord }) {
+function LoopActions({ loop, runCount }: { loop: LoopRecord; runCount: number | undefined }) {
   const client = useApi();
   const queryClient = useQueryClient();
   const exportingRef = useRef(false);
@@ -211,14 +222,17 @@ function LoopActions({ loop }: { loop: LoopRecord }) {
           returnFocusTo="loops-heading"
           consequences={
             <p>
-              The loop, all its versions and its triggers will be removed. Loops using it as a
-              subloop will no longer be able to start it.
+              The loop, all its versions, its triggers and all its runs
+              {runCount === undefined ? '' : ` (${runCount})`} will be deleted, including run
+              history and artifact references. Loops using it as a subloop will no longer be able to
+              start it. Cancel active runs first.
             </p>
           }
           onConfirm={async () => {
             await loops.remove(client, loop.id);
             await clearLocalDraft(loop.id);
             await queryClient.invalidateQueries({ queryKey: keys.loops });
+            await queryClient.invalidateQueries({ queryKey: ['runs'] });
           }}
         />
       </div>
@@ -318,7 +332,14 @@ export function LoopsPage() {
                           )}
                         </Td>
                         <Td>
-                          <LoopActions loop={loop} />
+                          <LoopActions
+                            loop={loop}
+                            runCount={
+                              runsQuery.data && runsQuery.data.length < 500
+                                ? runsQuery.data.filter((run) => run.loopId === loop.id).length
+                                : undefined
+                            }
+                          />
                         </Td>
                       </tr>
                     );

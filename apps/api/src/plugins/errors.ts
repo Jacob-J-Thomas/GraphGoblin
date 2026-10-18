@@ -1,6 +1,7 @@
 import type { FastifyError, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { InvalidStoredRunEventError, LoopNotFoundError } from '@graphgoblin/infrastructure/sqlite';
 import { DomainError } from '@graphgoblin/domain';
+import { TemplateError } from '../templates/errors.js';
 import { EngineRequestError } from '@graphgoblin/engine';
 import {
   hasZodFastifySchemaValidationErrors,
@@ -115,6 +116,14 @@ export function registerErrorHandler(app: FastifyInstance): void {
       }
       if (error instanceof DomainError) {
         return problem(reply, 400, error.code, error.message, error.details);
+      }
+      if (error instanceof TemplateError && error.code === 'TEMPLATE_PACKAGE_INVALID') {
+        return problem(
+          reply,
+          503,
+          'TEMPLATE_PACKAGE_INVALID',
+          'The installed template catalog is invalid; reinstall the package.',
+        );
       }
       const fastifyError = error as FastifyError;
       if (

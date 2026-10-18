@@ -29,7 +29,7 @@ function setup(
       <SchemaForm
         schema={NodeConfigSchemas.trigger}
         value={{
-          subtype: 'cron',
+          type: 'cron',
           expression,
           ...(timezone === undefined ? {} : { timezone }),
           missedFirePolicy: 'skip',
@@ -121,7 +121,7 @@ describe('cron schedule control', () => {
     await waitFor(() =>
       expect(change).toHaveBeenLastCalledWith(
         {
-          subtype: 'cron',
+          type: 'cron',
           expression: '34 12 31 * *',
           timezone: 'UTC',
           missedFirePolicy: 'skip',

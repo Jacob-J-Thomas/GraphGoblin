@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { LoopDefinitionInput, LoopIssue, ModelCatalogEntry } from '@graphgoblin/contracts';
 import { fakeUlid, minimalLoop } from '@graphgoblin/contracts/testing';
@@ -221,22 +222,17 @@ function modelLoop(
           kind: 'decision' as const,
           label: 'Decide',
           config: {
-            answer: {
-              type: 'choice' as const,
-              options: [
-                { id: 'a', label: 'A', criteria: 'A' },
-                { id: 'b', label: 'B', criteria: 'B' },
-              ],
-            },
-            evaluation: {
-              kind: 'llm' as const,
-              harness: 'codex' as const,
-              question: 'Which?',
-              model: model
-                ? { mode: 'explicit' as const, value: model }
-                : { mode: 'inherit' as const },
-              effort: { mode: 'inherit' as const },
-            },
+            kind: 'llm' as const,
+            harness: 'codex' as const,
+            instructions: 'Which?',
+            model: model
+              ? { mode: 'explicit' as const, value: model }
+              : { mode: 'inherit' as const },
+            effort: { mode: 'inherit' as const },
+            routes: [
+              { id: 'a', label: 'A', criteria: 'A' },
+              { id: 'b', label: 'B', criteria: 'B' },
+            ].map(({ id, label }) => ({ id, label })),
           },
         };
   return {
@@ -266,8 +262,12 @@ describe('advisory model validation', () => {
           ? {
               ...node,
               config: {
-                ...node.config,
-                evaluation: { kind: 'expression', jsonata: '"a"' },
+                kind: 'expression',
+                jsonata: '"a"',
+                routes: [
+                  { id: 'a', label: 'A' },
+                  { id: 'b', label: 'B' },
+                ],
               },
             }
           : node,
@@ -348,39 +348,9 @@ describe('advisory model validation', () => {
 
 describe('uniform strict evaluator admission', () => {
   it.each(['disabled model', 'unavailable harness'] as const)(
-    'keeps existing exit predicates subject to publication admission for an %s',
+    'keeps decisions subject to publication admission for an %s',
     async (unavailable) => {
-      const definition: LoopDefinitionInput = {
-        ...minimalLoop(),
-        nodes: minimalLoop().nodes.map((node) =>
-          node.kind === 'exit'
-            ? {
-                ...node,
-                config: {
-                  criteria: [
-                    {
-                      when: 'predicate',
-                      answer: {
-                        type: 'noul',
-                        true: { label: 'Ready', criteria: 'Task is done' },
-                        false: { label: 'Continue', criteria: 'Task is not done' },
-                      },
-                      evaluation: {
-                        kind: 'llm',
-                        harness: 'codex',
-                        model: { mode: 'inherit' },
-                        effort: { mode: 'inherit' },
-                        question: 'Complete?',
-                      },
-                      match: { type: 'noul', value: true },
-                      outcome: 'success',
-                    },
-                  ],
-                },
-              }
-            : node,
-        ),
-      };
+      const definition = modelLoop('decision');
       if (unavailable === 'disabled model')
         await t.container.repos.catalog.setEnabled('codex', 'gpt-6-luna', false);
       else delete t.container.ports.harnesses.codex;
@@ -393,7 +363,7 @@ describe('uniform strict evaluator admission', () => {
       expect(created.statusCode).toBe(201);
       expect(created.json().issues).toEqual(
         expect.arrayContaining([
-          expect.objectContaining({ code, severity: 'warning', nodeId: 'done' }),
+          expect.objectContaining({ code, severity: 'warning', nodeId: 'model-node' }),
         ]),
       );
       const id = created.json<{ loop: { id: string } }>().loop.id;
@@ -440,7 +410,7 @@ describe('uniform strict evaluator admission', () => {
         url: '/loops/import',
         payload: {
           format: 'graphgoblin-loop',
-          formatVersion: 3,
+          formatVersion: CURRENT_DEFINITION_FORMAT,
           exportedAt: '2026-10-02T12:00:00.000Z',
           loop: definition,
         },
@@ -460,9 +430,227 @@ describe('uniform strict evaluator admission', () => {
     ]) {
       const response = await t.app.inject({ method: 'POST', url: '/loops/import', payload });
       expect(response.statusCode).toBe(400);
-      expect(response.json().code).toBe('LOOP_FORMAT_UPGRADE_REQUIRED');
+      expect(response.json().code).toBe('LOOP_IMPORT_SOURCE_INVALID');
+      expect(response.json().errors.issues).toEqual(
+        expect.arrayContaining([expect.objectContaining({ kind: 'invalid' })]),
+      );
       expect(response.body).toContain('graphgoblin-upgrade');
     }
     expect((await t.app.inject('/loops')).json().items).toEqual([]);
   });
+});
+
+it.each([1, 2, 3])('imports an automatic format-%s export as format 4', async (schemaVersion) => {
+  const response = await t.app.inject({
+    method: 'POST',
+    url: '/loops/import',
+    payload: {
+      format: 'graphgoblin-loop',
+      formatVersion: schemaVersion,
+      exportedAt: '2026-10-02T12:00:00.000Z',
+      loop: {
+        schemaVersion,
+        name: 'converted export',
+        nodes: [
+          { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+          { id: 'done', kind: 'exit', label: 'Done', config: {} },
+        ],
+        edges: [{ id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'done' } }],
+      },
+    },
+  });
+  expect(response.statusCode).toBe(201);
+  expect(response.json().notices).toEqual([]);
+  expect(response.json().draft.definition).toMatchObject({
+    schemaVersion: 4,
+    nodes: [{ config: { type: 'manual' } }, { config: { outcome: 'success' } }],
+  });
+});
+
+it('refuses pending export review with item ids, hashes and reasons, and refuses supplied resolutions', async () => {
+  const source = {
+    format: 'graphgoblin-loop',
+    formatVersion: 3,
+    exportedAt: '2026-10-02T12:00:00.000Z',
+    loop: {
+      schemaVersion: 3,
+      name: 'pending export',
+      nodes: [
+        { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+        {
+          id: 'done',
+          kind: 'exit',
+          label: 'Done',
+          config: { criteria: [{ when: 'max-iterations', value: 3 }] },
+        },
+      ],
+      edges: [{ id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'done' } }],
+    },
+  };
+  const response = await t.app.inject({ method: 'POST', url: '/loops/import', payload: source });
+  expect(response.statusCode).toBe(400);
+  expect(response.json()).toMatchObject({
+    code: 'LOOP_FORMAT_UPGRADE_REQUIRED',
+    errors: {
+      reviewItems: expect.arrayContaining([
+        expect.objectContaining({
+          id: '/nodes/1/config:exit-policy',
+          hash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          reason: expect.any(String),
+          status: 'pending',
+        }),
+      ]),
+      issues: expect.arrayContaining([
+        expect.objectContaining({ id: '/nodes/1/config:exit-policy', kind: 'pending' }),
+      ]),
+    },
+  });
+  expect(response.json().detail).toContain('--resolutions resolutions.json');
+  expect(response.json().detail).toContain('"v3":{"<id>":{"hash"');
+  expect(response.json().detail).toContain(
+    'docs/guide/08-offline-upgrade.md#convert-a-portable-export',
+  );
+  const malformed = await t.app.inject({
+    method: 'POST',
+    url: '/loops/import',
+    payload: { ...source, resolutions: { v3: { bad: { hash: 2 } } } },
+  });
+  expect(malformed.statusCode).toBe(400);
+  expect(malformed.json().code).toBe('LOOP_IMPORT_SOURCE_INVALID');
+  expect(malformed.json().errors.issues[0].code).toBe('UPGRADE_EXPORT_INVALID');
+  expect((await t.app.inject('/loops')).json().items).toEqual([]);
+});
+
+it('returns automatic rewrite notices alongside import validation issues', async () => {
+  const response = await t.app.inject({
+    method: 'POST',
+    url: '/loops/import',
+    payload: {
+      schemaVersion: 3,
+      name: 'automatic expression import',
+      nodes: [
+        { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+        {
+          id: 'pick',
+          kind: 'decision',
+          label: 'Pick',
+          config: {
+            answer: {
+              type: 'choice',
+              options: [
+                { id: 'yes', label: 'Yes', criteria: 'Ready' },
+                { id: 'no', label: 'No', criteria: 'Pending' },
+              ],
+            },
+            evaluation: { kind: 'expression', jsonata: '"yes"' },
+            recordAlternatives: true,
+          },
+        },
+        { id: 'done', kind: 'exit', label: 'Done', config: {} },
+      ],
+      edges: [
+        { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'pick' } },
+        ...['yes', 'no'].map((port) => ({
+          id: port,
+          from: { node: 'pick', port },
+          to: { node: 'done' },
+        })),
+      ],
+    },
+  });
+  expect(response.statusCode).toBe(201);
+  expect(response.json().issues).toEqual([]);
+  expect(response.json().notices).toContainEqual({
+    code: 'unused-controls',
+    path: '/nodes/1/config',
+    message:
+      'Remove unused classifier criteria and recording controls from expression/LLM decisions.',
+  });
+});
+
+it('keeps earlier-stage authored choices distinct from invalid source', async () => {
+  const response = await t.app.inject({
+    method: 'POST',
+    url: '/loops/import',
+    payload: {
+      schemaVersion: 2,
+      name: 'earlier review',
+      nodes: [
+        { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+        {
+          id: 'done',
+          kind: 'exit',
+          label: 'Done',
+          config: {
+            criteria: [
+              { when: 'predicate', strategy: 'codex', question: 'Ready?', outcome: 'success' },
+            ],
+          },
+        },
+      ],
+      edges: [{ id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'done' } }],
+    },
+  });
+  expect(response.statusCode).toBe(400);
+  expect(response.json()).toMatchObject({
+    code: 'LOOP_FORMAT_UPGRADE_REQUIRED',
+    errors: {
+      reviewItems: [],
+      issues: expect.arrayContaining([
+        expect.objectContaining({ code: 'UPGRADE_EXIT_CRITERIA_REQUIRED', kind: 'pending' }),
+      ]),
+    },
+  });
+  expect(response.json().detail).toContain('v1/v2 namespaces');
+  expect(response.json().detail).not.toContain('invalid issues');
+});
+
+it('reports both invalid graph issues and pending reviews in one import refusal', async () => {
+  const response = await t.app.inject({
+    method: 'POST',
+    url: '/loops/import',
+    payload: {
+      schemaVersion: 3,
+      name: 'mixed refusal',
+      nodes: [
+        { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+        {
+          id: 'pick',
+          kind: 'decision',
+          label: 'Pick',
+          config: {
+            answer: {
+              type: 'choice',
+              options: [
+                { id: 'yes', label: 'Yes', criteria: 'Ready' },
+                { id: 'no', label: 'No', criteria: 'Pending' },
+              ],
+            },
+            evaluation: {
+              kind: 'llm',
+              harness: 'codex',
+              model: { mode: 'inherit' },
+              effort: { mode: 'inherit' },
+              question: 'Ready?',
+            },
+          },
+        },
+        { id: 'done', kind: 'exit', label: 'Done', config: {} },
+      ],
+      edges: [],
+    },
+  });
+  expect(response.statusCode).toBe(400);
+  expect(response.json()).toMatchObject({
+    code: 'LOOP_FORMAT_UPGRADE_REQUIRED',
+    errors: {
+      issues: expect.arrayContaining([
+        expect.objectContaining({ kind: 'invalid', code: 'TRIGGER_NO_EXIT_PATH' }),
+        expect.objectContaining({ kind: 'pending', code: 'UPGRADE_REVIEW_REQUIRED' }),
+      ]),
+    },
+  });
+  expect(response.json().detail).toContain('Correct the listed invalid issues');
+  expect(response.json().detail).toContain('--resolutions resolutions.json');
+  expect((await t.app.inject('/loops')).json().items).toEqual([]);
 });

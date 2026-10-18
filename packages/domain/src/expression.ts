@@ -196,7 +196,7 @@ export async function evaluateExpression(
   return run(compile(expression), expression, input, options);
 }
 
-/** Evaluate and coerce to boolean using JSONata truthiness. */
+/** Predicate coercion: missing/null are false, nonempty collections pass, scalars use Boolean. */
 export async function evaluatePredicate(
   expression: string,
   input: unknown,

@@ -4,7 +4,7 @@
  */
 import type { ContextThread, Invocation } from '../thread.js';
 import type { RepairPolicyInput } from '../common.js';
-import type { LoopDefinitionInput } from '../loop.js';
+import { CURRENT_DEFINITION_FORMAT, type LoopDefinitionInput } from '../loop.js';
 
 const ULID_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 
@@ -88,6 +88,7 @@ export function sampleThread(overrides: Partial<ContextThread> = {}): ContextThr
     vars: { topic: 'hello', count: 2 },
     artifacts: [],
     outputs: {},
+    gates: {},
     counters: {
       nodeVisits: { start: 1 },
       usage: { inputTokens: 0, outputTokens: 0, cachedInputTokens: 0, reasoningOutputTokens: 0 },
@@ -99,10 +100,10 @@ export function sampleThread(overrides: Partial<ContextThread> = {}): ContextThr
 /** The smallest valid loop: a manual trigger wired to an exit. */
 export function minimalLoop(): LoopDefinitionInput {
   return {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: 'minimal',
     nodes: [
-      { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+      { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
       { id: 'done', kind: 'exit', label: 'Done', config: {} },
     ],
     edges: [{ id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'done' } }],
@@ -110,7 +111,7 @@ export function minimalLoop(): LoopDefinitionInput {
 }
 
 /**
- * A loop that sets every config field of every node kind, every subtype, mode, and operation, so
+ * A loop that sets every config field of every node kind, every type, mode, and operation, so
  * a test can check that parsing it (and exporting and importing it) gives the same value before
  * and after a change to the schemas' metadata. It is schema-valid, not a runnable graph.
  */
@@ -122,13 +123,13 @@ export function everyFieldLoop(): LoopDefinitionInput {
     onFailure: 'continue-raw',
   };
   return {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: 'every-field',
     description: 'Every config field of every node kind, for parse checks.',
     settings: {
       workingDirectory: { kind: 'template', template: '/work/{{ trigger.payload.repo }}' },
       defaults: { byHarness: { codex: { model: 'gpt-6-luna', effort: 'medium' } } },
-      maxIterations: 7,
+      maxNodeVisits: 7,
       subloopDepthLimit: 4,
     },
     variables: { topic: { type: 'string' }, count: { type: 'number' } },
@@ -138,14 +139,14 @@ export function everyFieldLoop(): LoopDefinitionInput {
         kind: 'trigger',
         label: 'Manual',
         ui: { x: 10, y: 20 },
-        config: { subtype: 'manual', inputSchema: { type: 'object' }, exposeTo: ['ui', 'mcp'] },
+        config: { type: 'manual', inputSchema: { type: 'object' }, exposeTo: ['ui', 'mcp'] },
       },
       {
         id: 'cron',
         kind: 'trigger',
         label: 'Cron',
         config: {
-          subtype: 'cron',
+          type: 'cron',
           expression: '*/5 * * * *',
           timezone: 'Europe/Paris',
           missedFirePolicy: 'run-each',
@@ -157,11 +158,17 @@ export function everyFieldLoop(): LoopDefinitionInput {
         kind: 'trigger',
         label: 'Hook',
         config: {
-          subtype: 'webhook',
-          signature: { scheme: 'hmac-sha256', header: 'x-sig', secretRef: 'hook-secret' },
-          replayWindowSeconds: 120,
+          type: 'webhook',
+          authentication: {
+            type: 'hmac-sha256',
+            message: 'timestamp-body',
+            header: 'x-sig',
+            secretRef: 'hook-secret',
+            windowSeconds: 120,
+          },
+          body: { type: 'json' },
+          eventType: { source: 'constant', value: 'webhook' },
           dedupeKey: 'payload.id',
-          filter: 'payload.action = "opened"',
         },
       },
       {
@@ -169,9 +176,8 @@ export function everyFieldLoop(): LoopDefinitionInput {
         kind: 'trigger',
         label: 'Event',
         config: {
-          subtype: 'event',
+          type: 'event',
           eventType: 'build-done',
-          filter: 'payload.ok',
           dedupeKey: 'payload.id',
         },
       },
@@ -180,7 +186,7 @@ export function everyFieldLoop(): LoopDefinitionInput {
         kind: 'trigger',
         label: 'Poller',
         config: {
-          subtype: 'poll',
+          type: 'poll',
           intervalSeconds: 30,
           probe: {
             kind: 'http',
@@ -200,14 +206,14 @@ export function everyFieldLoop(): LoopDefinitionInput {
         kind: 'trigger',
         label: 'GitHub hook',
         config: {
-          subtype: 'webhook',
-          signature: {
-            scheme: 'hmac-sha256-body',
+          type: 'webhook',
+          authentication: {
+            type: 'hmac-sha256',
+            message: 'body',
             header: 'x-hub-signature-256',
             secretRef: 'github-secret',
           },
           dedupeKey: 'issue.number',
-          filter: 'action = "opened"',
         },
       },
       {
@@ -215,7 +221,7 @@ export function everyFieldLoop(): LoopDefinitionInput {
         kind: 'trigger',
         label: 'Items poller',
         config: {
-          subtype: 'poll',
+          type: 'poll',
           intervalSeconds: 30,
           probe: { kind: 'script', command: 'gh', args: ['api'], timeoutSeconds: 10 },
           fireWhen: 'true',
@@ -224,26 +230,58 @@ export function everyFieldLoop(): LoopDefinitionInput {
         },
       },
       {
+        id: 'expression-decision',
+        kind: 'decision',
+        label: 'Expression',
+        config: {
+          kind: 'expression',
+          maxPasses: 7,
+          maxRunTimeSeconds: 3600,
+          jsonata: '"good"',
+          routes: [
+            { id: 'good', label: 'Good' },
+            { id: 'bad', label: 'Bad', repeat: true },
+          ],
+        },
+      },
+      {
+        id: 'classifier-decision',
+        kind: 'decision',
+        label: 'Classifier',
+        config: {
+          kind: 'classifier',
+          maxPasses: 7,
+          maxRunTimeSeconds: 3600,
+          model: 'jev',
+          question: 'Choose',
+          answer: {
+            type: 'noul',
+            true: { id: 'good', label: 'Good', criteria: 'Pass' },
+            false: { id: 'bad', label: 'Bad', criteria: 'Fail', repeat: true },
+          },
+          truthThreshold: 0.7,
+          context: { messages: 'all', vars: ['topic'], includeLastOutput: true },
+          minConfidence: 0.5,
+          recordAlternatives: false,
+        },
+      },
+      {
         id: 'decide',
         kind: 'decision',
         label: 'Decide',
         config: {
-          answer: {
-            type: 'choice',
-            options: [
-              { id: 'good', label: 'good', criteria: 'Looks good' },
-              { id: 'bad', label: 'bad', criteria: 'Needs work' },
-            ],
-          },
-          evaluation: {
-            kind: 'llm',
-            harness: 'codex',
-            model: { mode: 'explicit', value: 'gpt-6-sol' },
-            effort: { mode: 'explicit', value: 'high' },
-            question: 'Is {{ vars.topic }} done?',
-            context: { messages: 3, vars: ['topic'], includeLastOutput: false },
-          },
-          recordAlternatives: false,
+          kind: 'llm',
+          maxPasses: 7,
+          maxRunTimeSeconds: 3600,
+          harness: 'codex',
+          model: { mode: 'explicit', value: 'gpt-6-sol' },
+          effort: { mode: 'explicit', value: 'high' },
+          instructions: 'Is {{ vars.topic }} done?',
+          context: { messages: 3, vars: ['topic'], includeLastOutput: false },
+          routes: [
+            { id: 'good', label: 'good', criteria: 'Looks good' },
+            { id: 'bad', label: 'bad', criteria: 'Needs work', repeat: true },
+          ].map(({ id, label, repeat }) => ({ id, label, ...(repeat ? { repeat } : {}) })),
         },
       },
       {
@@ -425,46 +463,15 @@ export function everyFieldLoop(): LoopDefinitionInput {
         kind: 'exit',
         label: 'Done',
         config: {
-          criteria: [
-            { when: 'max-iterations', value: 5, outcome: 'exhausted' },
-            { when: 'max-duration', seconds: 3600 },
-            {
-              when: 'predicate',
-              answer: {
-                type: 'noul',
-                true: { label: 'Done', criteria: 'Complete' },
-                false: { label: 'Pending', criteria: 'Incomplete' },
-              },
-              evaluation: {
-                kind: 'classifier',
-                model: 'jev',
-                question: 'Done?',
-                minConfidence: 0.5,
-              },
-              match: { type: 'noul', value: true },
-              outcome: 'success',
-            },
-            {
-              when: 'predicate',
-              answer: { type: 'noul' },
-              evaluation: { kind: 'expression', jsonata: 'false' },
-              match: { type: 'noul', value: true },
-              outcome: 'failure',
-            },
-            { when: 'last-output-matches', jsonSchema: { type: 'object' } },
+          outcome: 'success',
+          returns: '{ "topic": vars.topic }',
+          destinations: [
+            { kind: 'caller' },
+            { kind: 'webhook', url: 'https://example.test/done', secretRef: 'hook-secret' },
+            { kind: 'file', path: 'out/result.md', format: 'markdown' },
+            { kind: 'event', eventType: 'loop-done' },
+            { kind: 'log' },
           ],
-          default: 'loop-back',
-          loopBack: { targetNodeId: 'infer' },
-          return: {
-            mapping: '{ "topic": vars.topic }',
-            channels: [
-              { kind: 'caller' },
-              { kind: 'webhook', url: 'https://example.test/done', secretRef: 'hook-secret' },
-              { kind: 'file', path: 'out/result.md', format: 'markdown' },
-              { kind: 'event', eventType: 'loop-done' },
-              { kind: 'log' },
-            ],
-          },
         },
       },
     ],
@@ -479,25 +486,25 @@ export function everyFieldLoop(): LoopDefinitionInput {
   };
 }
 
-/** A loop using every node kind once, with a decision and an exit loop-back. */
+/** A loop using every node kind once, with a decision and terminal exit. */
 export function kitchenSinkLoop(): LoopDefinitionInput {
   return {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: 'kitchen-sink',
     description: 'Every node kind, for tests.',
     settings: {
       workingDirectory: { kind: 'fixed', path: '/tmp/work' },
       defaults: { byHarness: { codex: { model: 'gpt-6-luna', effort: 'low' } } },
-      maxIterations: 3,
+      maxNodeVisits: 3,
     },
     variables: { topic: { type: 'string' } },
     nodes: [
-      { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+      { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
       {
         id: 'nightly',
         kind: 'trigger',
         label: 'Nightly',
-        config: { subtype: 'cron', expression: '0 2 * * *', timezone: 'UTC' },
+        config: { type: 'cron', expression: '0 2 * * *', timezone: 'UTC' },
       },
       {
         id: 'prep',
@@ -539,14 +546,12 @@ export function kitchenSinkLoop(): LoopDefinitionInput {
         kind: 'decision',
         label: 'Decide',
         config: {
-          answer: {
-            type: 'choice',
-            options: [
-              { id: 'good', label: 'good', criteria: 'Looks good' },
-              { id: 'bad', label: 'bad', criteria: 'Needs work' },
-            ],
-          },
-          evaluation: { kind: 'expression', jsonata: 'lastOutput.value.ok ? "good" : "bad"' },
+          kind: 'expression',
+          jsonata: 'lastOutput.value.ok ? "good" : "bad"',
+          routes: [
+            { id: 'good', label: 'good', criteria: 'Looks good' },
+            { id: 'bad', label: 'bad', criteria: 'Needs work' },
+          ].map(({ id, label }) => ({ id, label })),
         },
       },
       {
@@ -572,13 +577,9 @@ export function kitchenSinkLoop(): LoopDefinitionInput {
         kind: 'exit',
         label: 'Done',
         config: {
-          criteria: [{ when: 'max-iterations', value: 3 }],
-          default: 'loop-back',
-          loopBack: { targetNodeId: 'prep' },
-          return: {
-            mapping: '{ "topic": vars.topic }',
-            channels: [{ kind: 'caller' }, { kind: 'log' }],
-          },
+          outcome: 'success',
+          returns: '{ "topic": vars.topic }',
+          destinations: [{ kind: 'caller' }, { kind: 'log' }],
         },
       },
     ],
@@ -594,7 +595,6 @@ export function kitchenSinkLoop(): LoopDefinitionInput {
       { id: 'e8', from: { node: 'sub', port: 'out' }, to: { node: 'poll' } },
       { id: 'e9', from: { node: 'approve', port: 'out' }, to: { node: 'poll' } },
       { id: 'e10', from: { node: 'poll', port: 'out' }, to: { node: 'done' } },
-      { id: 'e11', from: { node: 'done', port: 'loopBack' }, to: { node: 'prep' } },
     ],
   };
 }

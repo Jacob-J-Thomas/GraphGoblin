@@ -1,5 +1,6 @@
 import type {
   ContextThread,
+  DecisionEvidence,
   JsonPatch,
   JsonValue,
   LoopDefinition,
@@ -44,7 +45,7 @@ export interface ChildOutcome {
 export interface HandlerServices {
   /** Render a Liquid template against the thread view plus extras. */
   render(template: string, extras?: Record<string, unknown>): Promise<string>;
-  /** Append events to the run log right away (progress, decisions, usage). */
+  /** Append events to the run log right away (progress and usage). Decision completion is appended atomically by the executor. */
   record(draft: EventDraft): Promise<void>;
   /** Resolve the model and effort for an inferencing or decision step. */
   resolveModel(
@@ -74,8 +75,6 @@ export interface NodeContext<K extends NodeKind = NodeKind> {
   thread: Readonly<ContextThread>;
   run: Readonly<RunRecord>;
   attempt: number;
-  /** Trusted event sequence of this execution; direct handler fixtures may omit it. */
-  startedSeq?: number;
   /** Set when this execution resumes a parked node. */
   wake?: WakeInfo;
   /** The wait spec recorded when this node parked, if it did. */
@@ -88,6 +87,7 @@ export interface NodeContext<K extends NodeKind = NodeKind> {
 
 export type NodeResult =
   | { kind: 'done'; patch: JsonPatch; route: string }
+  | { kind: 'decision'; patch: JsonPatch; route: string; evidence: DecisionEvidence }
   | { kind: 'park'; patch: JsonPatch; wait: WaitSpec }
   | {
       kind: 'exit';
@@ -96,8 +96,7 @@ export type NodeResult =
       reason: string;
       returnPayload?: JsonValue;
       channels: ReturnChannel[];
-    }
-  | { kind: 'loop-back'; patch: JsonPatch; targetNodeId: string };
+    };
 
 export interface NodeHandler<K extends NodeKind = NodeKind> {
   readonly kind: K;

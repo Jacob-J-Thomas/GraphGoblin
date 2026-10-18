@@ -130,6 +130,9 @@ describe('classifier contracts', () => {
   });
   it('requires an explicit classifier selection and preserves its canonical evidence', () => {
     const input = {
+      kind: 'classifier',
+      model: 'kev',
+      question: 'Q',
       answer: {
         type: 'choice',
         options: [
@@ -137,7 +140,6 @@ describe('classifier contracts', () => {
           { id: 'no', label: 'No', criteria: 'No' },
         ],
       },
-      evaluation: { kind: 'classifier', model: 'kev', question: 'Q' },
     };
     const selected = DecisionConfigSchema.parse(input);
     expect(DecisionConfigSchema.parse(JSON.parse(JSON.stringify(selected)))).toEqual(selected);
@@ -153,7 +155,15 @@ describe('classifier contracts', () => {
       ts: FIXTURE_TS,
       type: 'decision.made',
       nodeId: 'choose',
-      answer: { type: 'choice', optionId: 'yes', confidence: 1, probabilities: { yes: 1, no: 0 } },
+      observation: {
+        kind: 'classifier',
+        answer: {
+          type: 'choice',
+          optionId: 'yes',
+          confidence: 1,
+          probabilities: { yes: 1, no: 0 },
+        },
+      },
       portId: 'yes',
       provenance: {
         kind: 'classifier',

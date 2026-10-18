@@ -23,8 +23,8 @@ function LoopSignature({ loopId }: { loopId: string }) {
                 key={t.id}
                 className="rounded-md border border-default bg-code-bg px-2 py-1 whitespace-pre-wrap text-code-fg"
               >
-                {t.id} ({t.config.subtype}):{' '}
-                {t.config.subtype === 'manual' && t.config.inputSchema
+                {t.id} ({t.config.type}):{' '}
+                {t.config.type === 'manual' && t.config.inputSchema
                   ? prettyJson(t.config.inputSchema)
                   : 'any'}
               </pre>
@@ -35,7 +35,7 @@ function LoopSignature({ loopId }: { loopId: string }) {
                 key={e.id}
                 className="rounded-md border border-default bg-code-bg px-2 py-1 whitespace-pre-wrap text-code-fg"
               >
-                {e.id}: {e.config.return.mapping}
+                {e.id}: {e.config.returns}
               </pre>
             ))}
           </div>

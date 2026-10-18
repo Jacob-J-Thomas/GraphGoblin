@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { kitchenSinkLoop, minimalLoop } from '@graphgoblin/contracts/testing';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -51,9 +52,6 @@ describe('LoopsPage', () => {
     const user = userEvent.setup();
     const api = new FakeApi();
     const entry = starterTemplateEntry();
-    entry.defaultSettings = null;
-    entry.prerequisites.canInstantiate = false;
-    entry.prerequisites.canRun = false;
     api.templates = [entry];
     renderApp('/loops', api);
 
@@ -115,29 +113,6 @@ describe('LoopsPage', () => {
     const user = userEvent.setup();
     const api = new FakeApi();
     const entry = starterTemplateEntry();
-    const report = {
-      checks: [
-        {
-          id: 'assistant-model',
-          label: 'Assistant model',
-          status: 'missing' as const,
-          blocking: 'authoring' as const,
-          message: 'No enabled assistant model is available.',
-          remediation: 'Enable an available model in Settings.',
-        },
-        {
-          id: 'run-isolation',
-          label: 'Run isolation',
-          status: 'unavailable' as const,
-          blocking: 'runtime' as const,
-          message: 'This installation cannot enforce evidence-only isolation yet.',
-          remediation: 'Wait for an enforced isolation runner before starting runs.',
-        },
-      ],
-      canInstantiate: false,
-      canRun: false,
-    };
-    entry.prerequisites = report;
     api.templates = [entry];
     renderApp('/loops', api);
 
@@ -187,9 +162,6 @@ describe('LoopsPage', () => {
 
     const withNoDefaults = new FakeApi();
     const entry = starterTemplateEntry();
-    entry.defaultSettings = null;
-    entry.prerequisites.canInstantiate = false;
-    entry.prerequisites.canRun = false;
     withNoDefaults.templates = [entry];
     renderApp('/loops', withNoDefaults);
     await user.click(await screen.findByRole('button', { name: 'New from template' }));
@@ -218,7 +190,7 @@ describe('LoopsPage', () => {
     const input = await screen.findByLabelText('Import an exported loop (JSON)');
     const exported = {
       format: 'graphgoblin-loop',
-      formatVersion: 3,
+      formatVersion: CURRENT_DEFINITION_FORMAT,
       exportedAt: TS,
       loop: kitchenSinkLoop(),
     };
@@ -245,6 +217,7 @@ describe('LoopsPage', () => {
           JSON.stringify({
             loop: { id: 'x', name: 'warned', ownerId: 'local', createdAt: TS, updatedAt: TS },
             issues: [{ code: 'NO_EXIT', severity: 'error', message: 'needs exit' }],
+            notices: [],
           }),
           { status: 201, headers: { 'content-type': 'application/json' } },
         ),
@@ -254,7 +227,7 @@ describe('LoopsPage', () => {
     fireEvent.change(input, { target: { files: [] } });
   });
 
-  it('directs a v1 export to the offline upgrade command', async () => {
+  it('distinguishes invalid old source from pending import reviews', async () => {
     const user = userEvent.setup();
     renderApp('/loops', new FakeApi());
     const document = {
@@ -268,8 +241,55 @@ describe('LoopsPage', () => {
       new File([JSON.stringify(document)], 'old-loop.json', { type: 'application/json' }),
     );
     const alert = await screen.findByRole('alert');
-    expect(alert).toHaveTextContent('LOOP_FORMAT_UPGRADE_REQUIRED');
-    expect(alert).toHaveTextContent('Use the offline graphgoblin-upgrade export command');
+    expect(alert).toHaveTextContent('LOOP_IMPORT_SOURCE_INVALID');
+    expect(alert).toHaveTextContent('graphgoblin-upgrade export');
+  });
+
+  it('shows the automatic changes reported by an old-format import', async () => {
+    const user = userEvent.setup();
+    renderApp('/loops', new FakeApi());
+    const document = {
+      schemaVersion: 3,
+      name: 'automatic expression import',
+      nodes: [
+        { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+        {
+          id: 'pick',
+          kind: 'decision',
+          label: 'Pick',
+          config: {
+            answer: {
+              type: 'choice',
+              options: [
+                { id: 'yes', label: 'Yes', criteria: 'Ready' },
+                { id: 'no', label: 'No', criteria: 'Pending' },
+              ],
+            },
+            evaluation: { kind: 'expression', jsonata: '"yes"' },
+            recordAlternatives: true,
+          },
+        },
+        { id: 'done', kind: 'exit', label: 'Done', config: {} },
+      ],
+      edges: [
+        { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'pick' } },
+        ...['yes', 'no'].map((port) => ({
+          id: port,
+          from: { node: 'pick', port },
+          to: { node: 'done' },
+        })),
+      ],
+    };
+    await user.upload(
+      await screen.findByLabelText('Import an exported loop (JSON)'),
+      new File([JSON.stringify(document)], 'old.json', { type: 'application/json' }),
+    );
+    expect(await screen.findByText('Automatic changes made during import:')).toBeVisible();
+    expect(
+      screen.getByText(
+        '/nodes/1/config: Remove unused classifier criteria and recording controls from expression/LLM decisions.',
+      ),
+    ).toBeVisible();
   });
 
   it('exports the published version or the draft as a download', async () => {
@@ -300,11 +320,18 @@ describe('LoopsPage', () => {
   it('deletes a loop after confirmation and shows refusals', async () => {
     const user = userEvent.setup();
     const api = new FakeApi();
-    api.addLoop({ ...minimalLoop(), name: 'doomed' });
+    const doomed = api.addLoop({ ...minimalLoop(), name: 'doomed' });
+    api.addRun({ loopId: doomed.id, status: 'succeeded' });
+    api.addRun({ loopId: doomed.id, status: 'failed' });
     api.addLoop({ ...minimalLoop(), name: 'busy' });
     renderApp('/loops', api);
     await user.click(await screen.findByRole('button', { name: 'Delete doomed' }));
-    expect(screen.getByRole('alertdialog')).toHaveTextContent('all its versions and its triggers');
+    expect(screen.getByRole('alertdialog')).toHaveTextContent(
+      'all its versions, its triggers and all its runs (2) will be deleted',
+    );
+    expect(screen.getByRole('alertdialog')).toHaveTextContent(
+      'including run history and artifact references',
+    );
     expect(screen.getByRole('alertdialog')).toHaveTextContent('subloop');
     expect(screen.getByRole('button', { name: 'Keep' })).toHaveFocus();
     await user.click(screen.getByRole('button', { name: 'Keep' }));
@@ -319,17 +346,29 @@ describe('LoopsPage', () => {
     );
 
     api.override('DELETE /loops/:id', () =>
-      problem(409, 'LOOP_IN_USE', 'the loop has active runs'),
+      problem(409, 'LOOP_IN_USE', 'the loop has active runs; cancel them first'),
     );
     await user.click(screen.getByRole('button', { name: 'Delete busy' }));
     await user.click(screen.getByRole('button', { name: 'Confirm delete busy' }));
     expect(await screen.findByText(/the loop has active runs/)).toBeInTheDocument();
     expect(screen.getByRole('alert')).toHaveTextContent('LOOP_IN_USE');
+    expect(screen.getByRole('alert')).toHaveTextContent('cancel them first');
     expect(screen.getByRole('alertdialog')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Confirm delete busy' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('the loop has active runs');
     await user.click(screen.getByRole('button', { name: 'Keep' }));
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('omits the run count when the runs listing may be truncated', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const created = api.addLoop({ ...minimalLoop(), name: 'many-runs' });
+    for (let i = 0; i < 500; i++) api.addRun({ loopId: created.id, status: 'succeeded' });
+    renderApp('/loops', api);
+    await user.click(await screen.findByRole('button', { name: 'Delete many-runs' }));
+    expect(screen.getByRole('alertdialog')).toHaveTextContent('all its runs will be deleted');
+    expect(screen.getByRole('alertdialog')).not.toHaveTextContent('(500)');
   });
 
   it('shows export progress and ignores repeated clicks until the request finishes', async () => {

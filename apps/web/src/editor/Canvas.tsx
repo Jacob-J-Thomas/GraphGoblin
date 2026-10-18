@@ -1,3 +1,4 @@
+import { isRepeatPort } from './decision-gates.js';
 import { EdgeRouteSchema, type LoopDefinitionInput, type NodeKind } from '@graphgoblin/contracts';
 import {
   Background,
@@ -14,6 +15,7 @@ import {
   type IsValidConnection,
   type NodeChange,
   type NodeMouseHandler,
+  type OnInit,
   type OnNodeDrag,
   type XYPosition,
 } from '@xyflow/react';
@@ -58,21 +60,30 @@ import { backwardDirection, routeMessage, type RoutingNode, type RoutingPlan } f
 import { useRouting } from './useRouting.js';
 import { createRouteChannels } from './route-channels.js';
 import { portWidthLimits } from './port-targets.js';
+import { NODE_CARD_SIZE } from './routing-geometry.js';
 
 const nodeTypes = { gg: NodeCard };
 const edgeTypes = { orthogonal: OrthogonalEdge };
 
 /** The background's dot spacing; keyboard nudges of a route segment move by it (#44). */
-export const CANVAS_GRID = 22;
+export const CANVAS_GRID = NODE_CARD_SIZE.clearance;
 /** A selected edge draws above the cards, so its segment handles and toolbar are never covered. */
 const SELECTED_EDGE_Z = 2000;
-const MIN_CANVAS_ZOOM = 0.5;
+// Fit View and manual zoom reach 0.1, so a large graph fits even while both side panels are open.
+const MIN_CANVAS_ZOOM = 0.1;
 const MAX_CANVAS_ZOOM = 2;
 
 /** Fit the graph with room on the left for the zoom controls, so they never cover a card. */
 const FIT_VIEW_OPTIONS: FitViewOptions = {
   padding: { top: '8%', right: '8%', bottom: '8%', left: '72px' },
 };
+/**
+ * Opening the editor fits the graph but stays readable; Fit View shows a large graph whole. The fit
+ * is queued from `onInit` because xyflow's `fitView` prop can fit again without its options.
+ */
+const INITIAL_FIT_VIEW_OPTIONS: FitViewOptions<FlowNode> = { ...FIT_VIEW_OPTIONS, minZoom: 0.5 };
+const fitOnOpen: OnInit<FlowNode, Edge> = (instance) =>
+  void instance.fitView(INITIAL_FIT_VIEW_OPTIONS);
 
 /**
  * How far (px) the pointer may move between press and release for a click on a node, which opens
@@ -215,13 +226,28 @@ function buildEdges(
       !!from &&
       !!to &&
       backwardDirection(
-        { id: edge.id, source: edge.from.node, target: edge.to.node, port: edge.from.port },
-        { x: from.position.x + (from.measured?.width ?? 184) + 6, y: 0 },
+        {
+          id: edge.id,
+          source: edge.from.node,
+          target: edge.to.node,
+          port: edge.from.port,
+          repeat: def.nodes.some(
+            (n) =>
+              n.id === edge.from.node &&
+              n.kind === 'decision' &&
+              isRepeatPort(n.config, edge.from.port),
+          ),
+        },
+        { x: from.position.x + (from.measured?.width ?? NODE_CARD_SIZE.width) + 6, y: 0 },
         { x: to.position.x - 6, y: 0 },
         before ? before.type === 'orthogonal' && !beforeData?.forward : undefined,
       );
     const backward = directions.get(edge.id) ?? pendingDirection;
     const isSelected = edge.id === selected;
+    const repeat = def.nodes.some(
+      (n) =>
+        n.id === edge.from.node && n.kind === 'decision' && isRepeatPort(n.config, edge.from.port),
+    );
     const suspended = plan.suspended.has(edge.id);
     const type = route || backward || isSelected ? 'orthogonal' : 'smoothstep';
     const channel = type === 'orthogonal' ? channels.edge(edge.id, route) : undefined;
@@ -253,7 +279,8 @@ function buildEdges(
       before.data === data &&
       before.ariaLabel === ariaLabel &&
       before.type === type &&
-      before.selected === isSelected
+      before.selected === isSelected &&
+      !!before.animated === repeat
     )
       return before;
     return {
@@ -271,7 +298,7 @@ function buildEdges(
       ...(edge.from.port !== 'out'
         ? { label: portLabel, labelBgPadding: [8, 3], labelBgBorderRadius: 9 }
         : {}),
-      ...(edge.from.port === 'loopBack' ? { animated: true, className: 'gg-edge-loop' } : {}),
+      ...(repeat ? { animated: true, className: 'gg-edge-loop' } : {}),
     };
   });
 }
@@ -405,11 +432,17 @@ export function Canvas({
           source: edge.from.node,
           target: edge.to.node,
           port: edge.from.port,
+          repeat: definition.nodes.some(
+            (n) =>
+              n.id === edge.from.node &&
+              n.kind === 'decision' &&
+              isRepeatPort(n.config, edge.from.port),
+          ),
           ...(route ? { route } : {}),
           ...(route && allowed ? { allowCrossing: allowed } : {}),
         };
       }),
-    [definition.edges, routeDrag, nodeDrag, authoredCrossings],
+    [definition.edges, definition.nodes, routeDrag, nodeDrag, authoredCrossings],
   );
   const decisionPorts = useMemo(
     () => new Map([...cardData].filter(([, data]) => data.node.kind === 'decision')),
@@ -695,10 +728,9 @@ export function Canvas({
           nodeClickDistance={CLICK_DISTANCE}
           nodeDragThreshold={CLICK_DISTANCE}
           onPaneClick={onPaneClick}
-          fitView
+          onInit={fitOnOpen}
           minZoom={MIN_CANVAS_ZOOM}
           maxZoom={MAX_CANVAS_ZOOM}
-          fitViewOptions={FIT_VIEW_OPTIONS}
           deleteKeyCode={null}
           ariaLabelConfig={ARIA_LABELS}
         >

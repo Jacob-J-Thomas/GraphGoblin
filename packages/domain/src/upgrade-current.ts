@@ -1,267 +1,233 @@
 import {
+  CURRENT_DEFINITION_FORMAT,
   LoopDefinitionSchema,
   LoopExportSchema,
-  NoulSpecSchema,
   type LoopDefinition,
   type LoopExport,
-  type NoulSpec,
 } from '@graphgoblin/contracts';
-import jsonata from 'jsonata';
-import { syntaxIssues } from './syntax.js';
 import {
-  upgradeLoopV1,
+  upgradeLoopToV3 as upgradeLoopV3,
+  validateUpgradeV3Resolutions as validateV2Resolutions,
+  type ExitPredicateResolution,
+} from './upgrade-v2-v3.js';
+import {
   validateUpgradeResolutions,
   type UpgradeResolutions,
-  type UpgradeResult,
   type UpgradeIssue,
 } from './upgrade.js';
+import {
+  convertDefinitionV3ToV4,
+  definitionReviewHash,
+  type DefinitionResolutions,
+  type DefinitionReviewItem,
+} from './convert-v3-v4/index.js';
 
-type Obj = Record<string, unknown>;
-const object = (value: unknown): value is Obj =>
+/** Each frozen stage owns its keys; v3 keys and hashes belong to the E2 converter. */
+export interface UpgradeCurrentResolutions {
+  v1?: UpgradeResolutions;
+  v2?: { predicates?: Record<string, ExitPredicateResolution> };
+  v3?: DefinitionResolutions;
+}
+export interface CurrentUpgradeIssue extends UpgradeIssue {
+  kind: 'pending' | 'invalid';
+  /** Frozen stages use node IDs for decisions/opaque consumers and pointers for sources/predicates. */
+  resolutionLocations?: {
+    stage: 'v1' | 'v2';
+    map: 'decisions' | 'sources' | 'opaqueConsumers' | 'predicates';
+    key: string;
+  }[];
+}
+export type CurrentUpgradeResult<T> = {
+  notices: UpgradeIssue[];
+  reviewItems: DefinitionReviewItem[];
+} & ({ ok: true; value: T } | { ok: false; issues: CurrentUpgradeIssue[] });
+
+// The frozen stages retain their original result shapes. Classify their explicit review
+// codes at the composition boundary rather than asking consumers to infer from spelling.
+const pendingStageCodes = new Set([
+  'UPGRADE_DECISION_CHOICE_REQUIRED',
+  'UPGRADE_EXPRESSION_CHOICE_REQUIRED',
+  'UPGRADE_OPAQUE_CONSUMER_REVIEW_REQUIRED',
+  'UPGRADE_REFERENCE_CHOICE_REQUIRED',
+  'UPGRADE_EXIT_BOOLEAN_REQUIRED',
+  'UPGRADE_EXIT_CRITERIA_REQUIRED',
+  'V4_EXIT_SCHEMA_POLICY_REQUIRED',
+  'V4_TERMINAL_LIMIT_POLICY_REQUIRED',
+]);
+const classify = (entry: UpgradeIssue): CurrentUpgradeIssue => ({
+  ...entry,
+  kind: pendingStageCodes.has(entry.code) ? 'pending' : 'invalid',
+});
+
+const object = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
-const issue = (code: string, path: string, message: string): UpgradeIssue => ({
+const issue = (code: string, path: string, message: string): CurrentUpgradeIssue => ({
   code,
   path,
   message,
+  kind: 'invalid',
 });
-export interface ExitPredicateResolution {
-  answer?: NoulSpec;
-  jsonata?: string;
-}
-/** Exact source pointers are protected by the enclosing version's definition hash. */
-export interface UpgradeCurrentResolutions extends UpgradeResolutions {
-  predicates?: Record<string, ExitPredicateResolution>;
-}
+const invalid = () => [
+  issue('UPGRADE_RESOLUTION_INVALID', '/', 'expected stage maps v1, v2 and v3'),
+];
+
 export function validateUpgradeCurrentResolutions(value: unknown): UpgradeIssue[] {
-  if (!object(value)) return [issue('UPGRADE_RESOLUTION_INVALID', '/', 'expected resolution maps')];
-  const { predicates, ...v1 } = value;
-  const invalid = validateUpgradeResolutions(v1);
-  if (invalid.length) return invalid;
-  if (predicates === undefined) return [];
-  if (
-    !object(predicates) ||
-    Object.entries(predicates).some(
-      ([path, entry]) =>
-        !/^\/nodes\/\d+\/config\/criteria\/\d+$/.test(path) ||
-        !object(entry) ||
-        !Object.keys(entry).length ||
-        Object.keys(entry).some((key) => !['answer', 'jsonata'].includes(key)) ||
-        (entry.answer !== undefined && !NoulSpecSchema.safeParse(entry.answer).success) ||
-        (entry.jsonata !== undefined &&
-          (typeof entry.jsonata !== 'string' || !entry.jsonata.trim())),
-    )
-  )
-    return [
-      issue(
-        'UPGRADE_RESOLUTION_INVALID',
-        '/predicates',
-        'expected exact predicate pointers with authored Noul sides or a boolean expression rewrite',
-      ),
-    ];
+  if (!object(value) || Object.keys(value).some((key) => !['v1', 'v2', 'v3'].includes(key)))
+    return invalid();
+  if (value.v1 !== undefined) {
+    const errors = validateUpgradeResolutions(value.v1);
+    if (errors.length) return errors;
+  }
+  if (value.v2 !== undefined) {
+    if (!object(value.v2) || Object.keys(value.v2).some((key) => key !== 'predicates'))
+      return invalid();
+    const errors = validateV2Resolutions(value.v2);
+    if (errors.length) return errors;
+  }
+  if (value.v3 !== undefined && !object(value.v3)) return invalid();
   return [];
 }
 
-/** Only results that are syntactically guaranteed booleans avoid an explicit owner rewrite. */
-export function provenBooleanExpression(source: string): boolean {
-  try {
-    const booleanNodeFields: Record<string, readonly string[]> = {
-      value: ['type', 'value', 'position'],
-      binary: ['type', 'value', 'position', 'lhs', 'rhs'],
-      condition: ['type', 'position', 'condition', 'then', 'else'],
-      block: ['type', 'position', 'expressions'],
-    };
-    const prove = (node: unknown): boolean => {
-      if (!object(node)) return false;
-      const fields = typeof node.type === 'string' ? booleanNodeFields[node.type] : undefined;
-      // Filters, grouping and array/sequence modifiers can change even a boolean node's result.
-      if (!fields || Object.keys(node).some((key) => !fields.includes(key))) return false;
-      if (node.type === 'value') return typeof node.value === 'boolean';
-      if (node.type === 'binary')
-        // Relational comparisons can return undefined when either operand is missing.
-        return ['=', '!=', 'in', 'and', 'or'].includes(String(node.value));
-      if (node.type === 'condition') return prove(node.then) && prove(node.else);
-      if (node.type === 'block' && Array.isArray(node.expressions))
-        return prove(node.expressions.at(-1));
-      return false;
-    };
-    return prove(jsonata(source).ast());
-  } catch {
-    return false;
+function legacyIssue(entry: UpgradeIssue, input: unknown): CurrentUpgradeIssue {
+  const classified = classify(entry);
+  if (classified.kind !== 'pending') return classified;
+  const locations: NonNullable<CurrentUpgradeIssue['resolutionLocations']> = [];
+  const index = /^\/nodes\/(\d+)\//.exec(entry.path)?.[1];
+  const node: unknown =
+    object(input) && Array.isArray(input.nodes) && index !== undefined
+      ? input.nodes[Number(index)]
+      : undefined;
+  const nodeId = object(node) && typeof node.id === 'string' ? node.id : undefined;
+  switch (entry.code) {
+    case 'UPGRADE_DECISION_CHOICE_REQUIRED':
+    case 'UPGRADE_EXPRESSION_CHOICE_REQUIRED':
+      if (nodeId) locations.push({ stage: 'v1', map: 'decisions', key: nodeId });
+      if (entry.code === 'UPGRADE_EXPRESSION_CHOICE_REQUIRED')
+        locations.push({ stage: 'v1', map: 'sources', key: entry.path });
+      break;
+    case 'UPGRADE_REFERENCE_CHOICE_REQUIRED':
+      locations.push({ stage: 'v1', map: 'sources', key: entry.path });
+      if (nodeId && object(node) && node.kind === 'decision')
+        locations.push({ stage: 'v1', map: 'decisions', key: nodeId });
+      break;
+    case 'UPGRADE_OPAQUE_CONSUMER_REVIEW_REQUIRED':
+      if (nodeId) locations.push({ stage: 'v1', map: 'opaqueConsumers', key: nodeId });
+      break;
+    case 'UPGRADE_EXIT_BOOLEAN_REQUIRED':
+    case 'UPGRADE_EXIT_CRITERIA_REQUIRED':
+      locations.push({ stage: 'v2', map: 'predicates', key: entry.path.replace(/\/jsonata$/, '') });
+      break;
   }
+  return locations.length ? { ...classified, resolutionLocations: locations } : classified;
 }
 
-/** Composes the retained frozen v1 -> v2 stage with the single current exit cutover. */
-export function upgradeLoopCurrent(
+/** Explicit one-time conversion. No candidate definition escapes while review is pending. */
+export async function upgradeLoopCurrent(
   input: unknown,
   resolutions: UpgradeCurrentResolutions = {},
-): UpgradeResult<LoopDefinition> {
+  sourceIdentity?: string,
+): Promise<CurrentUpgradeResult<LoopDefinition>> {
   const errors = validateUpgradeCurrentResolutions(resolutions);
-  if (errors.length) return { ok: false, issues: errors };
-  const { predicates = {}, ...v1 } = resolutions;
-  if (object(input) && input.schemaVersion === 3) {
-    if (
-      [
-        resolutions.decisions,
-        resolutions.sources,
-        resolutions.opaqueConsumers,
-        resolutions.predicates,
-      ].some((value) => value !== undefined && Object.keys(value).length > 0)
-    )
-      return {
-        ok: false,
-        issues: [
-          issue(
-            'UPGRADE_RESOLUTION_INVALID',
-            '/',
-            'current definitions require no legacy resolutions',
-          ),
-        ],
-      };
+  if (errors.length)
+    return { ok: false, issues: errors.map(classify), notices: [], reviewItems: [] };
+  const version = object(input) ? input.schemaVersion : undefined;
+  const unused = Object.entries(resolutions).some(
+    ([stage, entries]) =>
+      object(entries) &&
+      Object.keys(entries).length > 0 &&
+      (version === CURRENT_DEFINITION_FORMAT ||
+        (stage === 'v1' && version !== 1) ||
+        (stage === 'v2' && version === 3)),
+  );
+  if (unused)
+    return {
+      ok: false,
+      issues: [issue('UPGRADE_RESOLUTION_INVALID', '/', 'unused stage resolutions')],
+      notices: [],
+      reviewItems: [],
+    };
+  if (version === CURRENT_DEFINITION_FORMAT) {
     const parsed = LoopDefinitionSchema.safeParse(input);
-    if (!parsed.success)
-      return {
-        ok: false,
-        issues: [issue('UPGRADE_V3_INVALID', '/', 'current definition violates format 3')],
-      };
-    const syntax = syntaxIssues(parsed.data);
-    return syntax.length
-      ? {
+    return parsed.success
+      ? { ok: true, value: parsed.data, notices: [], reviewItems: [] }
+      : {
           ok: false,
-          issues: syntax.map((error) => issue('UPGRADE_SOURCE_INVALID', error.path, error.message)),
-        }
-      : { ok: true, value: parsed.data, notices: [] };
+          issues: [issue('UPGRADE_CURRENT_INVALID', '/', 'definition violates the current schema')],
+          notices: [],
+          reviewItems: [],
+        };
   }
-  const frozen = upgradeLoopV1(input, v1);
-  if (!frozen.ok) return frozen;
-  const value = JSON.parse(JSON.stringify(frozen.value)) as Obj;
-  const issues: UpgradeIssue[] = [],
-    notices = [...frozen.notices];
-  const used = new Set<string>();
-  (value.nodes as Obj[]).forEach((node, nodeIndex) => {
-    if (node.kind !== 'exit') return;
-    const config = node.config as Obj;
-    (config.criteria as Obj[]).forEach((criterion, criterionIndex) => {
-      if (criterion.when !== 'predicate') return;
-      const path = `/nodes/${nodeIndex}/config/criteria/${criterionIndex}`;
-      const resolution = predicates[path];
-      if (resolution) used.add(path);
-      let answer: unknown, evaluation: unknown;
-      const match: Obj = { type: 'noul', value: true };
-      if (criterion.strategy === 'expression') {
-        const source = resolution?.jsonata ?? criterion.jsonata;
-        if (resolution?.answer || typeof source !== 'string' || !provenBooleanExpression(source)) {
-          issues.push(
-            issue(
-              'UPGRADE_EXIT_BOOLEAN_REQUIRED',
-              path + '/jsonata',
-              'approve an explicit expression whose result is provably boolean; coercing the old value is not automatic',
-            ),
-          );
-          return;
-        }
-        answer = { type: 'noul' };
-        evaluation = { kind: 'expression', jsonata: source };
-        if (resolution)
-          notices.push(issue('UPGRADE_OWNER_EXIT', path, 'approved boolean expression rewrite'));
-      } else {
-        if (!resolution?.answer || resolution.jsonata !== undefined) {
-          issues.push(
-            issue(
-              'UPGRADE_EXIT_CRITERIA_REQUIRED',
-              path,
-              'supply explicit nonblank true and false Noul criteria for this provider predicate',
-            ),
-          );
-          return;
-        }
-        answer = resolution.answer;
-        if (criterion.strategy === 'jev')
-          evaluation = {
-            kind: 'classifier',
-            model: 'jev',
-            question: criterion.question,
-            truthThreshold: 0.5,
-            ...(criterion.minConfidence !== undefined
-              ? { minConfidence: criterion.minConfidence }
-              : {}),
-          };
-        else {
-          evaluation = {
-            kind: 'llm',
-            harness: 'codex',
-            model: { mode: 'inherit' },
-            effort: { mode: 'inherit' },
-            question: criterion.question,
-          };
-          if (criterion.minConfidence !== undefined)
-            match.minReportedConfidence = criterion.minConfidence;
-        }
-        notices.push(
-          issue(
-            'UPGRADE_OWNER_EXIT',
-            path,
-            'approved explicit provider Noul criteria; native judgments can change',
-          ),
-        );
-      }
-      config.criteria = (config.criteria as Obj[]).map((entry, index) =>
-        index === criterionIndex
-          ? { when: 'predicate', answer, evaluation, match, outcome: criterion.outcome }
-          : entry,
-      );
-    });
-  });
-  for (const path of Object.keys(predicates))
-    if (!used.has(path))
-      issues.push(
-        issue('UPGRADE_RESOLUTION_INVALID', path, 'resolution does not name a legacy predicate'),
-      );
-  if (issues.length) return { ok: false, issues };
-  value.schemaVersion = 3;
-  const parsed = LoopDefinitionSchema.safeParse(value);
-  if (!parsed.success)
+  const frozen = upgradeLoopV3(input, { ...resolutions.v1, ...resolutions.v2 });
+  if (!frozen.ok)
+    return {
+      ...frozen,
+      issues: frozen.issues.map((entry) => legacyIssue(entry, input)),
+      notices: [],
+      reviewItems: [],
+    };
+  // Portable inputs have no stored version ID. Bind reviews to their complete parsed content
+  // in a separate namespace; never reuse approvals from a server version's manifest.
+  const identity = sourceIdentity ?? 'portable:' + (await definitionReviewHash(frozen.value));
+  const converted = await convertDefinitionV3ToV4(frozen.value, resolutions.v3, identity);
+  const notices = [
+    ...frozen.notices,
+    ...converted.reviewItems
+      .filter((item) => item.status === 'automatic')
+      .map((item) => ({ code: item.kind, path: item.path, message: item.reason })),
+  ];
+  const pending = converted.reviewItems
+    .filter((item) => item.status === 'pending')
+    .map((item) => ({
+      ...issue('UPGRADE_REVIEW_REQUIRED', item.path, item.reason),
+      kind: 'pending' as const,
+      id: item.id,
+      hash: item.hash,
+    }));
+  if (!converted.ok || !converted.ready)
     return {
       ok: false,
-      issues: parsed.error.issues.map((error) =>
-        issue('UPGRADE_V3_INVALID', '/' + error.path.map(String).join('/'), error.message),
-      ),
+      issues: [...(converted.ok ? [] : converted.issues.map(classify)), ...pending],
+      notices,
+      reviewItems: converted.reviewItems,
     };
-  const syntax = syntaxIssues(parsed.data);
-  if (syntax.length)
-    return {
-      ok: false,
-      issues: syntax.map((error) => issue('UPGRADE_SOURCE_INVALID', error.path, error.message)),
-    };
-  return { ok: true, value: parsed.data, notices };
+  return { ok: true, value: converted.value, notices, reviewItems: converted.reviewItems };
 }
 
-export function upgradeExportCurrent(
+export async function upgradeExportCurrent(
   input: unknown,
   resolutions: UpgradeCurrentResolutions = {},
-): UpgradeResult<LoopExport> {
+): Promise<CurrentUpgradeResult<LoopExport>> {
   if (
     !object(input) ||
     Object.keys(input).some(
       (key) => !['format', 'formatVersion', 'exportedAt', 'loop'].includes(key),
     ) ||
     input.format !== 'graphgoblin-loop' ||
-    ![1, 2, 3].includes(Number(input.formatVersion)) ||
+    ![1, 2, 3, CURRENT_DEFINITION_FORMAT].includes(Number(input.formatVersion)) ||
     !object(input.loop) ||
-    input.loop.schemaVersion !== input.formatVersion
+    input.loop.schemaVersion !== input.formatVersion ||
+    !LoopExportSchema.shape.exportedAt.safeParse(input.exportedAt).success
   )
     return {
       ok: false,
       issues: [
-        issue('UPGRADE_EXPORT_INVALID', '/', 'expected a matching exact loop export envelope'),
+        issue(
+          'UPGRADE_EXPORT_INVALID',
+          '/',
+          'expected a matching exact loop export envelope and timestamp',
+        ),
       ],
+      notices: [],
+      reviewItems: [],
     };
-  const result = upgradeLoopCurrent(input.loop, resolutions);
+  const result = await upgradeLoopCurrent(input.loop, resolutions);
   if (!result.ok) return result;
-  const parsed = LoopExportSchema.safeParse({ ...input, formatVersion: 3, loop: result.value });
-  return parsed.success
-    ? { ok: true, value: parsed.data, notices: result.notices }
-    : {
-        ok: false,
-        issues: [issue('UPGRADE_EXPORT_INVALID', '/', 'export timestamp or envelope is invalid')],
-      };
+  return {
+    ...result,
+    value: LoopExportSchema.parse({
+      ...input,
+      formatVersion: CURRENT_DEFINITION_FORMAT,
+      loop: result.value,
+    }),
+  };
 }

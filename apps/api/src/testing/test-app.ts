@@ -7,6 +7,7 @@ import {
   CapturingLogger,
   FakeClock,
   FakeDecider,
+  FakeClassifier,
   FakeClassifierRegistry,
   FakeHarness,
   FakeStructured,
@@ -25,7 +26,7 @@ export interface TestApp {
   app: ApiInstance;
   container: Container;
   harness: FakeHarness;
-  jev: FakeDecider;
+  jev: FakeClassifier;
   codex: FakeDecider;
   structured: FakeStructured;
   logger: CapturingLogger;
@@ -57,7 +58,7 @@ export async function createTestApp(options: TestAppOptions = {}): Promise<TestA
     ...options.env,
   });
   const harness = new FakeHarness();
-  const jev = new FakeDecider('jev');
+  const jev = new FakeClassifier('jev');
   const codex = new FakeDecider('codex');
   const structured = new FakeStructured();
   const logger = new CapturingLogger();

@@ -35,6 +35,7 @@ import {
   replayStateAt,
   replayThread,
   stableHash,
+  stableStringify,
   threadView,
   validateJson,
 } from '@graphgoblin/domain';
@@ -86,6 +87,7 @@ export interface StartRunInput {
   /** Defaults to the first manual trigger, then the first trigger of any kind. */
   triggerNodeId?: string;
   triggerKind?: TriggerKind;
+  eventType?: string;
   source: InvocationSource;
   caller?: Caller;
   payload?: JsonValue;
@@ -118,7 +120,7 @@ const SYSTEM_ACTOR: Actor = { kind: 'system', id: 'engine' };
 const ACTIVE_STATUSES: readonly RunStatus[] = ['queued', 'running', 'waiting', 'paused'];
 
 function triggerKindOf(node: Extract<Node, { kind: 'trigger' }>): TriggerKind {
-  return node.config.subtype;
+  return node.config.type;
 }
 
 /**
@@ -190,14 +192,14 @@ function exitResult(
         e.type === 'node.finished' && e.seq < terminal.seq,
     );
   const node = exitNode ? nodeById(def, exitNode.nodeId) : undefined;
-  const config = node?.kind === 'exit' ? node.config.return : undefined;
+  const config = node?.kind === 'exit' ? node.config : undefined;
   return {
     kind: 'exit',
     patch: [],
     outcome: terminal.outcome,
     reason: 'recorded in the log',
     ...(terminal.result !== undefined ? { returnPayload: terminal.result } : {}),
-    channels: config && config.mapping !== 'none' ? config.channels : [],
+    channels: config && config.returns !== 'none' ? config.destinations : [],
   };
 }
 
@@ -297,6 +299,7 @@ export class RunManager {
   private stopped = false;
   private webhookSweep: ReturnType<typeof setInterval> | undefined;
   private webhookRecovery: Promise<void> | undefined;
+  private readonly webhookDispatches = new Set<Promise<void>>();
 
   constructor(
     private readonly ports: EnginePorts,
@@ -335,7 +338,8 @@ export class RunManager {
   }
 
   /** Resolves when nothing is queued or executing. */
-  waitForIdle(): Promise<void> {
+  async waitForIdle(): Promise<void> {
+    await this.waitForWebhookRecovery();
     if (this.queue.length === 0 && this.active.size === 0) return Promise.resolve();
     return new Promise((resolve) => this.idleWaiters.push(resolve));
   }
@@ -351,7 +355,7 @@ export class RunManager {
     const def = version.definition;
     const trigger = this.resolveTrigger(def, input.triggerNodeId);
     const payload: JsonValue = input.payload ?? null;
-    if (trigger.config.subtype === 'manual' && trigger.config.inputSchema) {
+    if (trigger.config.type === 'manual' && trigger.config.inputSchema) {
       const validation = validateJson(trigger.config.inputSchema, payload);
       if (!validation.ok) {
         throw new EngineRequestError(
@@ -378,12 +382,18 @@ export class RunManager {
           kind: input.triggerKind ?? triggerKindOf(trigger),
           payload,
           receivedAt: now,
+          ...(input.eventType !== undefined ? { eventType: input.eventType } : {}),
           ...(input.dedupeKey ? { dedupeKey: input.dedupeKey } : {}),
         },
         ...(input.returnDefaults ? { returnDefaults: input.returnDefaults } : {}),
       },
       ...(input.seed ? { seed: input.seed } : {}),
     });
+    thread.gates = Object.fromEntries(
+      version.definition.nodes
+        .filter((node) => node.kind === 'decision' && node.config.maxPasses !== undefined)
+        .map((node) => [node.id, { passes: 1 }]),
+    );
     const run: RunRecord = {
       id: runId,
       ownerId: input.ownerId,
@@ -422,7 +432,7 @@ export class RunManager {
       prepared.version.definition,
       prepared.thread.invocation.trigger.nodeId,
     );
-    if (trigger?.kind !== 'trigger' || trigger.config.subtype !== 'poll' || !trigger.config.items)
+    if (trigger?.kind !== 'trigger' || trigger.config.type !== 'poll' || !trigger.config.items)
       throw new EngineRequestError(
         'INVALID_STATE',
         'Atomic poll admission requires an items-mode trigger',
@@ -457,15 +467,13 @@ export class RunManager {
     };
   }
 
-  /** Body-signature receipts serialize with deletion, retain the frozen start on dispatch failure. */
+  /** Acknowledge the durable claim; dispatch and execution never delay the caller. */
   async receiveWebhook(
     claim: WebhookClaim,
     input: StartRunInput,
-    filtered: boolean,
   ): Promise<{
-    state: 'duplicate' | 'deduplicated' | 'filtered' | 'admitted' | 'pending' | 'failed';
+    state: 'deduplicated' | 'pending';
     receipt: WebhookReceipt;
-    run?: RunRecord;
   }> {
     if (
       claim.ownerId !== input.ownerId ||
@@ -473,45 +481,78 @@ export class RunManager {
       claim.triggerNodeId !== input.triggerNodeId
     )
       throw new AdmissionConflictError();
-    const prepared = await this.prepareStart(input);
     const result = await this.withPinLock(async () => {
+      const prepared = await this.prepareStart(input);
       await this.assertVersionPresent(prepared.version.id, input.loopId);
-      const intent = filtered
-        ? undefined
-        : await this.prepareAdmission(
-            prepared.version.definition,
-            prepared.run,
-            prepared.thread,
-            {},
-          );
-      const { receipt, duplicate } = await this.ports.admission.claim(claim, intent);
-      if (duplicate) return { state: 'duplicate' as const, receipt };
-      if (receipt.status === 'deduplicated') return { state: 'deduplicated' as const, receipt };
-      if (!intent) return { state: 'filtered' as const, receipt };
+      const intent = await this.prepareAdmission(
+        prepared.version.definition,
+        prepared.run,
+        prepared.thread,
+        {},
+      );
+      let claimed;
       try {
-        const run = await this.ports.admission.create(intent, receipt.id);
-        return { state: 'admitted' as const, receipt, run };
+        claimed = await this.ports.admission.claim(claim, intent);
       } catch (error) {
-        // A lost commit acknowledgement may leave an admitted queued run. Reconcile its exact
-        // saved identity before reporting a retry; notification errors never undo a commit.
+        // Confirm a lost claim acknowledgement by its allocated identity. Never acknowledge an
+        // unrelated receipt or manufacture another run after an uncertain storage result.
+        const saved = await this.ports.admission.get(claim.id);
+        if (
+          !saved ||
+          saved.ownerId !== claim.ownerId ||
+          saved.loopId !== claim.loopId ||
+          saved.triggerNodeId !== claim.triggerNodeId ||
+          saved.contentHash !== claim.contentHash ||
+          saved.inboundId !== claim.inbound.id ||
+          saved.status === 'filtered' ||
+          (saved.status !== 'deduplicated' &&
+            stableStringify(saved.intent) !== stableStringify(intent))
+        )
+          throw error;
+        claimed = { receipt: saved };
+      }
+      const { receipt } = claimed;
+      if (receipt.status === 'deduplicated') return { state: 'deduplicated' as const, receipt };
+      return { state: 'pending' as const, receipt };
+    });
+    if (result.state === 'pending') {
+      const dispatch = this.dispatchWebhook(result.receipt).catch(() => {
+        // The claim is already durable. Even retry-metadata failure must not turn it into a
+        // public error; the unchanged pending receipt remains due at boot/the next sweep.
+        this.ports.logger.error({ code: 'WEBHOOK_RECOVERY_FAILED' }, 'webhook dispatch failed');
+      });
+      this.webhookDispatches.add(dispatch);
+      void dispatch.finally(() => this.webhookDispatches.delete(dispatch));
+    }
+    return result;
+  }
+
+  private async dispatchWebhook(receipt: Pick<WebhookReceipt, 'id' | 'attempts'>): Promise<void> {
+    const run = await this.withPinLock(async () => {
+      if (this.stopped) return undefined;
+      let current = receipt;
+      try {
+        const saved = await this.ports.admission.get(receipt.id);
+        if (saved) current = saved;
+        if (!saved || saved.status !== 'pending') return undefined;
+        if (saved.nextAttemptAt && saved.nextAttemptAt > this.now()) return undefined;
+        const intent = saved.intent;
+        if (!intent) throw new AdmissionConflictError();
+        await this.assertVersionPresent(intent.run.versionId, intent.run.loopId);
         try {
-          const saved = await this.ports.admission.get(receipt.id);
-          if (saved?.status === 'admitted') {
-            const run = await this.ports.admission.create(intent, receipt.id);
-            return { state: 'admitted' as const, receipt: saved, run };
-          }
-        } catch {
-          /* Uncertain storage remains recoverable from the durable run/receipt. */
+          return await this.ports.admission.create(intent, receipt.id);
+        } catch (error) {
+          const confirmed = await this.ports.admission.get(receipt.id);
+          if (confirmed?.status === 'admitted')
+            return await this.ports.admission.create(intent, receipt.id);
+          throw error;
         }
-        await this.recordWebhookFailure(receipt, error);
-        const saved = (await this.ports.admission.get(receipt.id)) ?? receipt;
-        return saved.status === 'failed'
-          ? { state: 'failed' as const, receipt: saved }
-          : { state: 'pending' as const, receipt: saved };
+      } catch (error) {
+        await this.recordWebhookFailure(current, error);
+        return undefined;
       }
     });
-    if (result.run) this.enqueue(result.run.id);
-    return result;
+    if (run && !this.stopped) this.enqueue(run.id);
   }
 
   private async recordWebhookFailure(
@@ -539,20 +580,7 @@ export class RunManager {
       const due = await this.ports.admission.due(this.now(), 5);
       for (const receipt of due) {
         if (this.stopped) break;
-        const run = await this.withPinLock(async () => {
-          try {
-            const saved = await this.ports.admission.get(receipt.id);
-            if (!saved || saved.status !== 'pending') return undefined;
-            const intent = saved.intent;
-            if (!intent) throw new AdmissionConflictError();
-            await this.assertVersionPresent(intent.run.versionId, intent.run.loopId);
-            return await this.ports.admission.create(intent, receipt.id);
-          } catch (error) {
-            await this.recordWebhookFailure(receipt, error);
-            return undefined;
-          }
-        });
-        if (run && !this.stopped) this.enqueue(run.id);
+        await this.dispatchWebhook(receipt);
       }
     })().finally(() => {
       this.webhookRecovery = undefined;
@@ -561,6 +589,7 @@ export class RunManager {
   }
 
   async waitForWebhookRecovery(): Promise<void> {
+    while (this.webhookDispatches.size) await Promise.all(this.webhookDispatches);
     await this.webhookRecovery;
   }
 
@@ -683,10 +712,6 @@ export class RunManager {
         ) {
           return undefined;
         }
-        await this.settings.beforeResume?.({
-          run: current,
-          events: await this.ports.events.read(runId),
-        });
         await this.ports.runs.clearFinalized(runId);
         await this.ports.events.append(runId, [{ type: 'run.resumed', actor }]);
         return this.completeResume(runId);
@@ -1166,21 +1191,6 @@ export class RunManager {
       return;
     }
     const def = version.definition;
-    try {
-      await this.settings.beforeExecute?.({ run, definition: def, events });
-    } catch (error) {
-      await this.failRun(
-        runId,
-        error instanceof RunFailureError
-          ? error.toFailure()
-          : {
-              code: 'INTERNAL_ERROR',
-              message: 'The pre-execution policy refused this run.',
-              resumable: false,
-            },
-      );
-      return;
-    }
     // Owner defaults are read at every (re)start, so a change in settings applies to the next run.
     const ownerDefaults = (await this.settings.ownerDefaults?.(run.ownerId)) ?? { byHarness: {} };
     // Read before any recovery marker is appended; a marker does not consume a wake either.
@@ -1313,15 +1323,15 @@ export class RunManager {
       }
       const attempt = attemptFor(events, nodeId);
       // Visit cap (docs/05): a fresh entry (attempt 1; wakes, retries, and resumes re-enter with a
-      // higher attempt) beyond `maxIterations` fails the run, which bounds graph cycles that never
-      // pass through an exit loop-back.
-      if (attempt === 1 && countEntries(events, nodeId) >= def.settings.maxIterations) {
+      // higher attempt) beyond `maxNodeVisits` fails the run, which bounds graph cycles that never
+      // pass through a marked repeat gate.
+      if (attempt === 1 && countEntries(events, nodeId) >= def.settings.maxNodeVisits) {
         await this.failRun(runId, {
-          code: 'MAX_ITERATIONS',
-          message: `node "${nodeId}" would start for visit ${def.settings.maxIterations + 1}, above the loop's maxIterations of ${def.settings.maxIterations}`,
+          code: 'MAX_NODE_VISITS',
+          message: `node "${nodeId}" would start for visit ${def.settings.maxNodeVisits + 1}, above the loop's maxNodeVisits of ${def.settings.maxNodeVisits}`,
           nodeId,
           resumable: false,
-          details: { maxIterations: def.settings.maxIterations },
+          details: { maxNodeVisits: def.settings.maxNodeVisits },
         });
         return;
       }
@@ -1358,7 +1368,6 @@ export class RunManager {
           thread,
           run,
           attempt,
-          startedSeq,
           ...(wake ? { wake } : {}),
           ...(previousWait ? { previousWait } : {}),
           signal: controller.signal,
@@ -1422,7 +1431,7 @@ export class RunManager {
         return;
       }
 
-      // done, loop-back, exit: apply the patch and record the node as finished.
+      // done, decision, exit: apply the patch and record the node as finished.
       try {
         thread = ContextThreadSchema.parse(applyPatch(thread, result.patch));
       } catch (error) {
@@ -1434,12 +1443,7 @@ export class RunManager {
         });
         return;
       }
-      const route =
-        result.kind === 'done'
-          ? result.route
-          : result.kind === 'loop-back'
-            ? 'loopBack'
-            : undefined;
+      const route = result.kind === 'exit' ? undefined : result.route;
       const finishedDraft: EventDraft = {
         type: 'node.finished',
         nodeId,
@@ -1455,6 +1459,7 @@ export class RunManager {
         // evaluate an exit again to learn what it decided.
         const status = outcomeStatus(result.outcome);
         const seq = await appendAll([
+          { type: 'exit.evaluated', nodeId, outcome: result.outcome },
           finishedDraft,
           {
             type: 'run.finished',
@@ -1468,38 +1473,32 @@ export class RunManager {
         return;
       }
 
-      if (result.kind === 'loop-back') {
-        const from = run.iteration;
-        const to = from + 1;
-        thread = { ...thread, run: { ...thread.run, iteration: to } };
-        // The loop-back and its iteration are one append, so neither is ever recorded alone.
-        const seq = await appendAll([
-          finishedDraft,
-          { type: 'iteration.incremented', from, to, targetNodeId: result.targetNodeId },
-        ]);
-        await this.ports.runs.saveThread(runId, thread, seq);
-        nodeId = result.targetNodeId;
-        run = await this.ports.runs.update(runId, {
-          iteration: to,
-          currentNodeId: nodeId,
-          waiting: undefined,
-        });
-      } else {
-        const seq = await appendAll([finishedDraft]);
-        await this.ports.runs.saveThread(runId, thread, seq);
-        const edge = outgoingEdge(def, nodeId, result.route);
-        if (!edge) {
-          await this.failRun(runId, {
-            code: 'INTERNAL_ERROR',
-            message: `node ${nodeId} routed to "${result.route}" but no edge leaves that port`,
-            nodeId,
-            resumable: false,
-          });
-          return;
-        }
-        nodeId = edge.to.node;
-        run = await this.ports.runs.update(runId, { currentNodeId: nodeId, waiting: undefined });
+      if (result.kind === 'decision' && result.evidence.gate) {
+        thread = {
+          ...thread,
+          gates: { ...thread.gates, [nodeId]: { passes: result.evidence.gate.passes } },
+        };
       }
+      // Evaluation evidence, pass count and chosen route are a single durable completion.
+      const seq = await appendAll([
+        ...(result.kind === 'decision'
+          ? [{ type: 'decision.made' as const, nodeId, ...result.evidence }]
+          : []),
+        finishedDraft,
+      ]);
+      await this.ports.runs.saveThread(runId, thread, seq);
+      const edge = outgoingEdge(def, nodeId, result.route);
+      if (!edge) {
+        await this.failRun(runId, {
+          code: 'INTERNAL_ERROR',
+          message: `node ${nodeId} routed to "${result.route}" but no edge leaves that port`,
+          nodeId,
+          resumable: false,
+        });
+        return;
+      }
+      nodeId = edge.to.node;
+      run = await this.ports.runs.update(runId, { currentNodeId: nodeId, waiting: undefined });
 
       const fresh = await this.mustGet(runId);
       if (fresh.status === 'paused') return;
@@ -1840,8 +1839,7 @@ export class RunManager {
   /**
    * Bring the run's cursor up to the log. When the log's last node event is the `node.finished`
    * of the node the cursor still points at, that node completed but the process died before the
-   * cursor moved: advance along the edge it took (or its loop-back, to the iteration recorded
-   * with it) instead of executing it again. A finished exit has its `run.finished` in the same
+   * cursor moved: advance along the recorded edge instead of executing it again. A finished exit has its `run.finished` in the same
    * append and is completed from the log before this runs. Returns the updated run, or undefined
    * when the cursor already agrees with the log.
    */
@@ -1853,26 +1851,7 @@ export class RunManager {
     const last = lastFinishedNode(events);
     const route = last?.event.route;
     if (!last || !route || last.event.nodeId !== run.currentNodeId) return undefined;
-    const { event, index } = last;
-    if (route === 'loopBack') {
-      const node = nodeById(def, event.nodeId);
-      const targetNodeId = node?.kind === 'exit' ? node.config.loopBack?.targetNodeId : undefined;
-      // The loop-back and its iteration are appended together; a log without the iteration
-      // (written before that) re-evaluates the exit instead, whose patch is empty.
-      const recorded = events
-        .slice(index + 1)
-        .find(
-          (e): e is Extract<RunEvent, { type: 'iteration.incremented' }> =>
-            e.type === 'iteration.incremented',
-        );
-      if (!targetNodeId || !recorded) return undefined;
-      const updated = await this.ports.runs.update(run.id, {
-        iteration: recorded.to,
-        currentNodeId: targetNodeId,
-        waiting: undefined,
-      });
-      return { run: updated };
-    }
+    const { event } = last;
     const edge = outgoingEdge(def, event.nodeId, route);
     if (!edge) return undefined;
     const updated = await this.ports.runs.update(run.id, {
@@ -1976,7 +1955,7 @@ export class RunManager {
         );
       return found;
     }
-    const manual = triggers.find((t) => t.config.subtype === 'manual') ?? triggers[0];
+    const manual = triggers.find((t) => t.config.type === 'manual') ?? triggers[0];
     if (!manual) throw new EngineRequestError('TRIGGER_NOT_FOUND', 'loop has no trigger node');
     return manual;
   }

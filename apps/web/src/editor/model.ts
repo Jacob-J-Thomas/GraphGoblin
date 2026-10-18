@@ -4,6 +4,8 @@
  * it with the same `contracts` schemas and `domain` rules the API runs on publish.
  */
 import {
+  ChoiceOptionIdSchema,
+  CURRENT_DEFINITION_FORMAT,
   LoopDefinitionSchema,
   NodeSchema,
   type LoopDefinitionInput,
@@ -11,6 +13,8 @@ import {
   type NodeKind,
 } from '@graphgoblin/contracts';
 import { outputPorts, validateLoop, type ValidationIssue } from '@graphgoblin/domain';
+import { hasRepeatRoute } from './decision-gates.js';
+import { setupInstruction } from '../forms/setup-instructions.js';
 
 /** The drag-and-drop data type that carries a node kind from the palette to the canvas. */
 export const KIND_MIME = 'application/x-graphgoblin-kind';
@@ -39,7 +43,7 @@ export const KIND_INFO: Record<NodeKind, { label: string; description: string; c
     trigger: { label: 'Trigger', description: 'Starts a run', color: 'kind-trigger' },
     decision: {
       label: 'Decision',
-      description: 'Chooses a labelled route',
+      description: 'Chooses a route and can limit repeats',
       color: 'kind-decision',
     },
     inference: {
@@ -56,25 +60,32 @@ export const KIND_INFO: Record<NodeKind, { label: string; description: string; c
       color: 'kind-wait',
     },
     heartbeat: { label: 'Heartbeat', description: 'Polls on an interval', color: 'kind-heartbeat' },
-    exit: { label: 'Exit', description: 'Finishes or loops back', color: 'kind-exit' },
+    exit: {
+      label: 'Exit',
+      description: 'Finishes with an outcome and return value',
+      color: 'kind-exit',
+    },
   };
 
 /** A small, mostly valid starting config for each kind. */
 export function defaultConfig(kind: NodeKind): Record<string, unknown> {
   switch (kind) {
     case 'trigger':
-      return { subtype: 'manual' };
+      return { type: 'manual' };
     case 'decision':
       return {
-        answer: {
-          type: 'choice',
-          options: [
-            { id: 'yes', label: 'Yes', criteria: 'The answer is yes' },
-            { id: 'no', label: 'No', criteria: 'The answer is no' },
-          ],
-        },
-        evaluation: { kind: 'expression', jsonata: '"yes"' },
-        recordAlternatives: true,
+        kind: 'expression',
+        jsonata: '"yes"',
+        routes: [
+          {
+            id: 'yes',
+            label: 'Yes',
+          },
+          {
+            id: 'no',
+            label: 'No',
+          },
+        ],
       };
     case 'inference':
       return { prompt: { template: 'Summarise: {{ lastMessage.content }}' } };
@@ -114,6 +125,9 @@ function record(value: unknown): Record<string, unknown> {
 }
 
 function decisionRows(config: unknown): unknown[] | undefined {
+  const raw = record(config);
+  if (raw['kind'] === 'expression' || raw['kind'] === 'llm')
+    return Array.isArray(raw['routes']) ? raw['routes'] : undefined;
   const answer = record(record(config)['answer']);
   if (answer['type'] === undefined && Array.isArray(answer['options']))
     return answer['options'] as unknown[];
@@ -141,9 +155,14 @@ export function portsOf(node: NodeInput): string[] {
   const config = record(node.config);
   switch (node.kind) {
     case 'decision': {
-      return (decisionRows(node.config) ?? [])
-        .map((option) => record(option)['id'])
-        .filter((id): id is string => typeof id === 'string' && id !== '');
+      return [
+        ...new Set([
+          ...(decisionRows(node.config) ?? [])
+            .map((option) => record(option)['id'])
+            .filter((id): id is string => typeof id === 'string' && id !== ''),
+          ...(hasRepeatRoute(node.config) ? ['limit-reached'] : []),
+        ]),
+      ];
     }
     case 'script': {
       const labels = Object.values(record(config['exitCodeRoutes'])).filter(
@@ -152,31 +171,33 @@ export function portsOf(node: NodeInput): string[] {
       return ['out', ...new Set(labels)];
     }
     case 'exit':
-      return config['loopBack'] ? ['loopBack'] : [];
+      return [];
     default:
       return ['out'];
   }
 }
 
-/** Ports drawn on the canvas: the node's ports, plus the optional `loopBack` port on exits. */
-export function canvasPorts(node: NodeInput): string[] {
-  const ports = portsOf(node);
-  return node.kind === 'exit' && !ports.includes('loopBack') ? [...ports, 'loopBack'] : ports;
-}
+/** Half-authored gates keep their Limit reached handle; exits have no output. */
+export const canvasPorts = portsOf;
 
 /** Display labels for the handles; decision IDs remain the actual connection ports. */
 export function canvasPortLabels(node: NodeInput): Readonly<Record<string, string>> {
   if (node.kind !== 'decision') return {};
   const rows = decisionRows(node.config);
   if (!rows) return {};
-  return Object.fromEntries(
-    rows.flatMap((option) => {
-      const row = record(option);
-      return typeof row['id'] === 'string' && typeof row['label'] === 'string'
-        ? [[row['id'], row['label']]]
-        : [];
-    }),
-  );
+  const gated = hasRepeatRoute(node.config);
+  const labels: Record<string, string> = gated ? { 'limit-reached': 'Limit reached' } : {};
+  for (const option of rows) {
+    const row = record(option);
+    if (
+      typeof row['id'] === 'string' &&
+      !(row['id'] === 'limit-reached' && gated) &&
+      typeof row['label'] === 'string' &&
+      rows.filter((other) => record(other)['id'] === row['id']).length === 1
+    )
+      labels[row['id']] = row['label'];
+  }
+  return labels;
 }
 
 export interface ConnectionRequest {
@@ -196,6 +217,13 @@ export function connectionProblem(
   if (to.kind === 'trigger') return 'triggers have no input';
   const port = conn.sourceHandle ?? 'out';
   if (!canvasPorts(from).includes(port)) return `"${from.id}" has no output port "${port}"`;
+  if (
+    from.kind === 'decision' &&
+    !(port === 'limit-reached' && hasRepeatRoute(from.config)) &&
+    (!ChoiceOptionIdSchema.safeParse(port).success ||
+      (decisionRows(from.config) ?? []).filter((row) => record(row)['id'] === port).length !== 1)
+  )
+    return 'Finish a unique, valid route ID before connecting it';
   if (def.edges.some((e) => e.from.node === from.id && e.from.port === port)) {
     return `port "${port}" of "${from.id}" is already connected`;
   }
@@ -226,7 +254,10 @@ export function validateDraft(def: LoopDefinitionInput): {
       return {
         code: 'SCHEMA',
         severity: 'error',
-        message: issue.message,
+        message:
+          (node && rest[0] === 'config'
+            ? setupInstruction(node.config, rest.slice(1).map(String).join('.'))
+            : undefined) ?? issue.message,
         path: (node || edge ? rest : issue.path).map(String).join('.'),
         ...(node ? { nodeId: node.id } : {}),
         ...(edge ? { edgeId: edge.id } : {}),
@@ -366,14 +397,14 @@ export function sameIssues(a: readonly EditorIssue[], b: readonly EditorIssue[])
 /** A new loop: a manual trigger wired to an exit. */
 export function newLoopDefinition(name: string): LoopDefinitionInput {
   return {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name,
     nodes: [
       {
         id: 'start',
         kind: 'trigger',
         label: 'Start',
-        config: { subtype: 'manual' },
+        config: { type: 'manual' },
         ui: { x: 0, y: 80 },
       },
       { id: 'done', kind: 'exit', label: 'Done', config: {}, ui: { x: 320, y: 80 } },

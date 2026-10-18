@@ -1,6 +1,7 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { createHmac } from 'node:crypto';
 import type { APIRequestContext } from '@playwright/test';
-import { expect, openNode, test } from './fixtures.js';
+import { expect, manualTriggerConfig, openNode, test } from './fixtures.js';
 
 interface DraftNode {
   id: string;
@@ -26,14 +27,14 @@ interface DeliveryEvent {
 
 function triggerLoop(name: string) {
   return {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name,
     nodes: [
       {
         id: 'start',
         kind: 'trigger',
         label: 'Start',
-        config: { subtype: 'manual' },
+        config: manualTriggerConfig(),
         ui: { x: 0, y: 80 },
       },
       { id: 'done', kind: 'exit', label: 'Done', config: {}, ui: { x: 260, y: 80 } },
@@ -87,6 +88,7 @@ test('body-signed GitHub preset saves, admits a matching hook, and deduplicates 
 
   await page.goto(`/app/loops/${loopId}/edit`);
   const dialog = await openNode(page, 'start');
+  await dialog.getByRole('button', { name: 'Start from a preset' }).click();
   const setup = dialog.getByRole('form', { name: 'GitHub preset setup' });
   await setup.getByLabel('Preset', { exact: true }).selectOption('issues-labeled');
   const invalidPatterns = await dialog.locator('input[pattern]').evaluateAll((inputs) =>
@@ -105,25 +107,31 @@ test('body-signed GitHub preset saves, admits a matching hook, and deduplicates 
   await setup.getByLabel('Repository', { exact: true }).fill('fixture-repo');
   await setup.getByLabel('Issue label', { exact: true }).fill('ready');
   await setup.getByLabel('Signing secret name', { exact: true }).fill(`${marker}-initial-secret`);
+  await dialog.getByRole('button', { name: 'Preview GitHub preset' }).click();
+  await expect(dialog.getByRole('region', { name: 'Preset preview' })).toBeFocused();
   await dialog.getByRole('button', { name: 'Apply GitHub preset' }).click();
-  await expect(dialog.getByLabel('Subtype').locator('option:checked')).toHaveText('webhook (body)');
-  await dialog.getByLabel('Secret ref').fill(secretRef);
-  await expect(dialog.getByLabel('Replay window seconds')).toHaveCount(0);
+  await expect(dialog.getByLabel('Trigger type').locator('option:checked')).toHaveText('Webhook');
+  await expect(dialog.getByLabel('Filter', { exact: true })).toHaveCount(0);
+  await expect(dialog.getByText(/Use a downstream decision for payload checks/)).toBeVisible();
+  await dialog.getByLabel('Secret name', { exact: true }).fill(secretRef);
+  await expect(dialog.getByLabel('Timestamp window (seconds)')).toHaveCount(0);
   await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
   await expect
     .poll(() => triggerConfig(request, loopId))
     .toMatchObject({
-      subtype: 'webhook',
-      signature: { scheme: 'hmac-sha256-body', secretRef },
+      type: 'webhook',
+      authentication: { type: 'hmac-sha256', message: 'body', secretRef },
+      body: { type: 'json' },
+      eventType: { source: 'header', name: 'x-github-event', fallback: 'webhook' },
     });
 
   await page.reload();
+  expect(await triggerConfig(request, loopId)).not.toHaveProperty('filter');
   const restored = await openNode(page, 'start');
-  await expect(restored.getByLabel('Subtype').locator('option:checked')).toHaveText(
-    'webhook (body)',
-  );
-  await expect(restored.getByLabel('Secret ref')).toHaveValue(secretRef);
-  await expect(restored.getByLabel('Replay window seconds')).toHaveCount(0);
+  await expect(restored.getByLabel('Trigger type').locator('option:checked')).toHaveText('Webhook');
+  await expect(restored.getByLabel('Secret name', { exact: true })).toHaveValue(secretRef);
+  await expect(restored.getByLabel('Timestamp window (seconds)')).toHaveCount(0);
+  await expect(restored.getByLabel('Filter', { exact: true })).toHaveCount(0);
   expect(patternMessages).toEqual([]);
   await restored.getByRole('button', { name: 'Done', exact: true }).click();
 
@@ -138,11 +146,11 @@ test('body-signed GitHub preset saves, admits a matching hook, and deduplicates 
   const endpointResponse = await request.get(`/loops/${loopId}/triggers`);
   expect(endpointResponse.ok()).toBe(true);
   const endpoints = (await endpointResponse.json()) as {
-    webhooks: { id: string; path: string; signatureScheme: string }[];
+    webhooks: { id: string; path: string; authentication: { type: string; message?: string } }[];
   };
   const endpoint = endpoints.webhooks[0];
   if (!endpoint) throw new Error('Publishing the preset did not create a webhook endpoint.');
-  expect(endpoint.signatureScheme).toBe('hmac-sha256-body');
+  expect(endpoint.authentication).toMatchObject({ type: 'hmac-sha256', message: 'body' });
 
   const deliveryKey = `${marker}-delivery`;
   const firstBody = JSON.stringify({
@@ -170,8 +178,8 @@ test('body-signed GitHub preset saves, admits a matching hook, and deduplicates 
     label: { name: 'ready' },
   });
   const duplicate = await send(secondBody);
-  expect(duplicate.status()).toBe(409);
-  expect(await duplicate.json()).toMatchObject({ code: 'DUPLICATE_KEY' });
+  expect(duplicate.status()).toBe(202);
+  expect(await duplicate.json()).toEqual({ accepted: true });
 
   const source = `webhook:${endpoint.id}`;
   await expect
@@ -215,11 +223,14 @@ test('GitHub issue poll preset keeps bounded item settings editable and reloadab
   const loopId = await createTriggerLoop(request, `GitHub poll ${marker}`);
   await page.goto(`/app/loops/${loopId}/edit`);
   const dialog = await openNode(page, 'start');
+  await dialog.getByRole('button', { name: 'Start from a preset' }).click();
   const setup = dialog.getByRole('form', { name: 'GitHub preset setup' });
   await setup.getByLabel('Preset', { exact: true }).selectOption('issues-poll');
   await setup.getByLabel('Repository owner', { exact: true }).fill('octo-team');
   await setup.getByLabel('Repository', { exact: true }).fill('fixture-repo');
   await setup.getByLabel('Issue label', { exact: true }).fill('ready');
+  await dialog.getByRole('button', { name: 'Preview GitHub preset' }).click();
+  await expect(dialog.getByRole('region', { name: 'Preset preview' })).toBeFocused();
   await dialog.getByRole('button', { name: 'Apply GitHub preset' }).click();
 
   const items = dialog.locator('[data-field="items"]');
@@ -235,7 +246,7 @@ test('GitHub issue poll preset keeps bounded item settings editable and reloadab
   await expect
     .poll(() => triggerConfig(request, loopId))
     .toMatchObject({
-      subtype: 'poll',
+      type: 'poll',
       items: {
         select: 'probe.json',
         dedupeKey: '"octo-team/fixture-repo:issue:" & $string(item.number)',
@@ -254,7 +265,8 @@ test('GitHub issue poll preset keeps bounded item settings editable and reloadab
   await expect(restoredItems.getByLabel('Per-item dedupe key')).toHaveText(
     '"octo-team/fixture-repo:issue:" & $string(item.number)',
   );
-  await expect(restored.getByText('does not call GitHub from this editor')).toBeVisible();
+  await expect(restored.getByText(/Poll probes run on the GraphGoblin server/)).toBeVisible();
+  await expect(restored.getByText(/gh must be installed and authenticated there/)).toBeVisible();
 });
 
 test('Events exposes safe labels for all five webhook delivery dispositions', async ({ page }) => {
@@ -325,6 +337,6 @@ test('Events exposes safe labels for all five webhook delivery dispositions', as
   );
   await expect(row('deduplicated-event')).toContainText('none');
   await expect(row('filtered-event')).toContainText(
-    'No run was started. This authenticated body stays consumed if you later change the filter.',
+    'No run was started. An authored key stays consumed; unkeyed redeliveries are separate deliveries.',
   );
 });

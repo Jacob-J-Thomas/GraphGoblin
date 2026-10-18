@@ -18,6 +18,7 @@ Loops
   GET    /loops/{id}/versions           version history
   GET    /loops/{id}/export             definition as JSON for committing to a repo
   POST   /loops/import                  create or update from exported JSON
+  DELETE /loops/{id}                    delete loop, versions, drafts, triggers and all run history; 204, 404 or 409
 
 Runs
   POST   /loops/{id}/runs               start a run from a manual trigger; body: { triggerNodeId, input?, return?: ReturnChannel[] }
@@ -32,7 +33,7 @@ Runs
 
 Triggers and events
   POST   /triggers/cron/preview         next cron slots without saving or arming; loops:read
-  POST   /hooks/{endpointToken}         signed webhook receiver (public; timestamp/body or raw-body HMAC, scheme-specific replay protection, 1 MiB, rate limit; see 08)
+  POST   /hooks/{endpointToken}         webhook receiver (None or HMAC; JSON/text/bytes); 202 {accepted:true} after atomic receipt claim, asynchronous dispatch (1 MiB, rate limit; see 08)
   GET    /loops/{id}/triggers           schedules, webhook endpoints (path only, never the secret), armed poll triggers
   POST   /events                        inbound event bus; body: { type, payload, dedupeKey? }; fires event triggers, returns runIds and duplicate
   GET    /events?type=&before=&limit=   stored inbound events (API, exit channels, webhooks), newest first
@@ -55,6 +56,27 @@ Settings and catalog
 
 Run and loop lists are paginated with cursors. Loop/run ids are ULIDs; classifier ids are bounded URL-safe names, with `jev` reserved for the built-in.
 
+Webhook endpoint summaries expose nested safe `authentication`, pinned `body`, `eventType`,
+optional `dedupeKey`, and `configurationAvailable`. Secret references are names only. Webhook and Event configs reject `filter`; payload checks belong in downstream decisions. Historical `filtered` receipt states remain readable.
+`GET /events` exposes that summary under optional `webhook` for webhook deliveries, retaining the
+existing delivery state/attempts/retry/failure/run-link fields. Disabled orphans mark configuration
+unavailable. Enabled mismatches log a safe warning while both listings stay readable; intake still
+refuses with `HOOK_NOT_READY`. Events lookups share request-local endpoint/version/loop caches. Public hooks return only
+`202 {accepted:true}` after saving; raw-byte authentication precedes decoding/extraction. See 08
+for `EVENT_TYPE_AMBIGUOUS` (400), `EVENT_TYPE_INVALID` (422), bounds and exact recipes. Invocation
+event metadata does not change `POST /events` or publish anything to the bus.
+
+## Loop deletion
+
+`DELETE /loops/{id}` commits the loop, versions, runs and their dependent rows together
+(see [domain model](03-domain-model.md#deleting-a-loop-decided)). It returns 204 with no body
+on success, 404 `LOOP_NOT_FOUND` for a missing or unowned loop, and 409 `LOOP_IN_USE` while any
+run of the loop is queued, running, waiting or paused, or an active run or pending webhook
+admission can still start it. The problem detail gives the reason and asks the user to cancel
+the run or resolve the pending admission first. Refusals leave the loop, history and triggers
+unchanged. References from other published definitions remain authored; their existence alone
+does not block deletion.
+
 ## Loop definition inputs
 
 Loop settings have model and effort defaults only. Select `config.harness` on each inference
@@ -62,11 +84,25 @@ node; omission defaults to Codex. Create, draft save, and validate request bodie
 canonical `LoopDefinitionSchema`. `settings.defaults.harness` is rejected as an unknown key,
 with its field path, regardless of its value.
 
-`POST /loops/import` delegates to `domain.importLoop`, accepting canonical bare definitions
-and portable export envelopes. Envelope errors retain paths such as
-`loop.settings.defaults.harness`, `formatVersion`, or `exportedAt`, under `LOOP_IMPORT_ERROR`.
-Ordinary bodies use `VALIDATION_FAILED`. Responses and exports use the canonical, encodable
-schemas. The current definition and export formats are version 3. Historical migration `0005` removed loop-level harness selection; the later decision/default cutover requires the stopped-instance [offline upgrade](guide/08-offline-upgrade.md). Old-format imports receive `LOOP_FORMAT_UPGRADE_REQUIRED`, and unconverted stores stop before ordinary migrations or recovery. There is no tolerant runtime read path. See the CHANGELOG upgrade notes.
+`POST /loops/import` explicitly converts old-format bare definitions and portable
+exports before current-schema admission. Its `201` response contains `loop`, `draft`,
+validation `issues` and automatic conversion `notices` (`code`, `path`, `message`).
+Current imports have an empty notices array. The web import result displays these
+changes alongside validation issues.
+
+Pending conversion returns `400 LOOP_FORMAT_UPGRADE_REQUIRED` with `errors.issues`
+and hash-bound `errors.reviewItems`. The detail points to the [portable export
+workflow](guide/08-offline-upgrade.md#convert-a-portable-export) and the offline
+`--resolutions resolutions.json` file with its `v3` item map. Each conversion issue
+is classified as `kind: "pending"` or `kind: "invalid"`. Mixed refusals include both
+kinds and both correction and review instructions. Simply invalid old
+source/envelopes return `LOOP_IMPORT_SOURCE_INVALID`; current envelope errors retain
+paths such as `loop.settings.defaults.harness`, `formatVersion` or `exportedAt`
+under `LOOP_IMPORT_ERROR`. Ordinary bodies use `VALIDATION_FAILED`.
+
+Responses and exports use format 4. The server-store cutover remains separate:
+unconverted stores still stop before ordinary migrations or recovery. No tolerant
+runtime reader is added. See the CHANGELOG upgrade notes.
 
 ## SSE protocol (Decided)
 
@@ -84,10 +120,10 @@ schemas. The current definition and export formats are version 3. Historical mig
 JSON event pages and SSE carry the same strict `RunEvent` contract, also advertised in
 `/openapi.json`. Both preserve execution evidence before the run's terminal event.
 
-| Event            | Evidence                                                                                                                                                                                                                                                                                                                                                                                               |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `exit.evaluated` | Node, iteration, hard ceiling, ordered criteria with zero-based indices, strategy, matched/not-matched verdict, predicate boolean and confidence, resolved Codex model or Jev classifier, bounded Codex reasoning, skipped reasons and safe errors. `result` names completion and its matching criterion, loop-back and its cause, a configured or hard limit and its value, failure, or cancellation. |
-| `decision.made`  | Canonical `answer`, stable `portId`, resolved `provenance`, and bounded `diagnostics` preserving historical pre-cutover skips. Unknown historical facts are null. New decisions evaluate exactly one kind.                                                                                                                                                                                             |
+| Event            | Evidence                                                                                                                                                                                                                                                                                             |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `exit.evaluated` | Terminal `{nodeId,outcome}`; no criteria or routing result. Appended atomically with completion.                                                                                                                                                                                                     |
+| `decision.made`  | Stable `portId`, resolved `provenance`, evaluator-specific `observation`, and at most three factual `diagnostics`. Fresh route/classifier decisions have empty diagnostics. Gates additionally record `gate` with previous/current passes, repeat route, limits, elapsed seconds and stopping limit. |
 
 Skip messages and failure diagnostics use fixed summaries and allowlisted codes; provider
 error bodies, credential values, and raw response payloads are excluded. Codex reasoning
@@ -174,7 +210,7 @@ Tools (each with a Zod input schema; descriptions tell the agent when to call it
 | Tool                                    | Input                                                       | Behaviour                                                                                                                                                                                                   |
 | --------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `list_loops`                            | `query?`                                                    | Loops with `id`, `name`, `description`, `published`, `hasDraft`; `query` filters names and descriptions                                                                                                     |
-| `describe_loop`                         | `loopId` (id or exact name)                                 | The published version (or the draft, with a note): triggers with subtype, `inputSchema`, and `startableFromMcp`; input waits with prompt and schema; exits with `default`, `returnMapping`, channel kinds   |
+| `describe_loop`                         | `loopId` (id or exact name)                                 | The published version (or the draft, with a note): triggers with type, `inputSchema`, and `startableFromMcp`; input waits with prompt and schema; exits with `default`, `returnMapping`, channel kinds      |
 | `start_run`                             | `loopId`, `input?`, `triggerNodeId?`, `allowDraft?`         | Starts a manual trigger and returns `runId` immediately; `allowDraft` runs the draft of an unpublished loop                                                                                                 |
 | `wait_for_run`                          | `runId`, `timeoutSeconds?` (default 60, max 600)            | Returns `{ finished: true, run }` at a terminal status, or `{ finished: false, status, cursor, waiting?, next }`; returns early when the run waits for input or is paused; `cursor` is the last event `seq` |
 | `get_run`                               | `runId`                                                     | Run snapshot                                                                                                                                                                                                |
@@ -262,11 +298,11 @@ PUT requires strict custom HTTP metadata, including provider `http`; it rejects 
 
 Decision events and output now use `{answer:{type:"choice",optionId,confidence,probabilities},portId,provenance:{kind,provider,classifierId,model,effort}}`. Every key is present; inapplicable or unknown historical values are null. The event additionally has `diagnostics`, limited to three entries for preserved pre-cutover skips. Fresh emissions undergo strict per-kind validation. This is a breaking contract; regenerate clients and use the offline upgrade tool for old exports and stored records.
 
-Decision and exit-predicate failures never retain provider raw answers, messages, stacks or secret-bearing error bodies. Decisions use typed `EVALUATION_*` failures with explicit resumability; exit predicates retain their existing failure contract pending #99. Classifier probabilities must cover exactly the submitted stable option IDs. Unknown choices and malformed confidence are invalid responses, not reasons to try another evaluator. Persisted diagnostics contain only fixed safe text and validated identifiers/numbers.
+Decision evaluation failures never retain provider raw answers, messages, stacks or secret-bearing error bodies. Decisions use typed `EVALUATION_*` failures with explicit resumability. Exits only evaluate return mappings. Classifier probabilities must cover exactly the submitted stable option IDs. Unknown choices and malformed confidence are invalid responses, not reasons to try another evaluator. Persisted diagnostics contain only fixed safe text and validated identifiers/numbers.
 
 ## Validation agreement (Decided, WP-D2)
 
-Classifier validation joins the same issue collection for create, import, draft save, validate and publish. It applies to `evaluation.kind: classifier` and its explicit `config.evaluation.model`, requiring Choice capability. Unknown models and unsupported capability are admission errors. Disabled, missing/blank-secret and unreadable-secret selections remain visible as diagnostics and block publication. Runtime rechecks the chosen entry and fails without fallback if it is unavailable.
+Classifier validation joins the same issue collection for create, import, draft save, validate and publish. It applies to `config.kind: classifier` at `config.model`, requiring the declared Choice, Noul or Score capability, without an exit predicate path. Expression source issues identify `config.jsonata`; LLM issues identify `config.instructions`, `config.model.value` or `config.effort.value`. Unknown models and unsupported capability are admission errors. Disabled, missing/blank-secret and unreadable-secret selections remain visible as diagnostics and block publication. Runtime rechecks the chosen entry and fails without fallback if it is unavailable.
 
 `POST /loops`, `POST /loops/import`, `PUT /loops/{id}/draft`, `POST /loops/{id}/validate`, and `POST /loops/{id}/publish` report the same issue list: the `domain` rules (`validateLoop`, which includes Liquid and JSONata syntax checks), trigger checks such as cron syntax, and subloop references, which must name a loop of the same owner with a published version (`SUBLOOP_NOT_FOUND`, `SUBLOOP_NOT_PUBLISHED`; a loop may reference itself). `publishable` from validate is true exactly when publish would accept the draft. The editor runs the `domain` rules locally and adds the API-only issues from validate.
 
@@ -276,8 +312,6 @@ Known limitation: loop-default model warnings always check the Codex catalog, th
 inference harness. Revisit this check when a second harness exists so a model inherited by nodes
 using different harnesses can be checked against each relevant catalog.
 
-Exit predicates whose strategy is `jev` check built-in Jev in the same five admission endpoints. They report `CLASSIFIER_MODEL_DISABLED`, `CLASSIFIER_SECRET_MISSING`, or `CLASSIFIER_SECRET_UNREADABLE` warnings at node-relative `config.criteria.<index>.strategy`, naming the exit, model, and Settings remedy. These warnings block publication, as they do for other selected evaluators. If an already published predicate becomes unavailable and is evaluated, the exit fails with `DECIDER_UNAVAILABLE`. Codex exit predicates also validate their effective inherited model/effort and block publication when the selected model or harness is unavailable; the exit evaluation contract itself is unchanged.
-
 ## Draft conflicts (Decided, WP-F2, ADR-0015)
 
 A draft has a version token, `draftToken`: a hash of the definition the next draft save replaces, which is the draft, or the published version when there is no draft. Equal content gives an equal token, so publishing (which keeps the content) does not change it. `GET /loops/{id}` returns it in the body and as the `ETag` header; `PUT /loops/{id}/draft` returns the new one the same way.
@@ -286,38 +320,40 @@ A draft has a version token, `draftToken`: a hash of the definition the next dra
 
 `PUT /settings` validates the shared `defaults` value (`{byHarness:{codex:{model?,effort?}}}`). Catalog metadata default effort remains guidance, not a hidden resolver layer. Old owner `defaultModel` and `defaultEffort` values are converted offline. Deleting the `defaults` setting restores process defaults.
 
-## Template catalog and instances (#28)
+## Template catalogue and ordinary drafts (#165)
 
-The owner-scoped API exposes `GET /templates`, `GET /templates/{id}`, `POST /templates/{id}/draft`, `POST /templates/{id}/prerequisites`, `POST /templates/{id}/instantiate` and `GET /template-instances/{id}`. Catalog entries contain a manifest, settings schema, current defaults and a structured prerequisite report. Each failed check includes remediation and states whether it blocks authoring or runtime. Reports do not grant authority; instantiation repeats the checks using the submitted settings.
+`GET /templates` and `GET /templates/{id}` require `loops:read` and return entries shaped exactly as `{manifest}`. They perform no prerequisite, provider, GitHub or secret probes. `POST /templates/{id}/draft` requires `loops:write`, accepts only an optional name, and creates one owner-scoped ordinary loop and editable draft. It returns `{loop, draft, issues}` without publication, run, child or binding. Ordinary invalid-configuration admission remains; missing login does not block authoring.
 
-`POST /templates/{id}/draft` accepts an optional name and creates one ordinary editable draft from the installed starting-point asset. It returns `{loop, draft, issues}`, requires `loops:write`, and does not publish, start a run, create children or establish an immutable integration binding. Missing repository configuration or model credentials do not prevent saving the starting point; normal validation and runtime admission still apply.
+The prerequisite, instantiate and template-instance endpoints and their client helpers are removed. Loop detail no longer carries `templateInstanceId`; the editor performs no instance-origin lookup. The remaining client methods are `templates.list/get/createDraft`. Unknown catalogue IDs return 404 `TEMPLATE_NOT_FOUND`; trusted installed-asset failures return the fixed sanitized 503 `TEMPLATE_PACKAGE_INVALID`. Arbitrary server errors remain 500 `INTERNAL_ERROR`.
 
-`GET /loops/{id}` also returns optional `templateInstanceId` for a loop created by a template instance belonging to the requesting owner. Ordinary loops omit it. It identifies the existing `GET /template-instances/{id}` resource under `loops:read`; it grants no runtime authority. Another owner's loop or instance remains unavailable.
+The loader and dormant configured contracts/services are removed in the next bounded #165 split. The four current manifests still carry configured metadata during this integration-only interval. No deployment or stored-data cutover is part of this child.
 
-Instantiation returns `{instance, prerequisites}`. The instance records the installed template ID/version, owner, settings and allocated loop/version map. A single storage transaction creates the complete bundle and its immutable binding. Dependencies are published first; the parent remains a draft and does not start or arm its triggers. All declared subloops are remapped to their allocated child IDs and pinned versions. Separate creations have separate IDs. Settings fill declared literal data slots and role fields, never executable source strings. The generated client exposes `templates.list/get/createDraft/prerequisites/instantiate/instance`.
-
-The production catalog contains starter, implementation, review and QA entries. The gallery uses their editable starting points by default; configured repository automation is a separate explicit action. Repository recipe eligibility and effect authorization belong to the API integration, not the generic engine or domain bundle validator. Unregistered recipes cannot be created by guessing their IDs.
-
-### Template subjects and run pagination
+### Ordinary run listing and pagination
 
 `GET /runs` returns `{items, nextCursor}` in descending creation-time and run-ID order.
 Reuse the returned opaque `cursor` with the same filters; `nextCursor: null` ends the
 listing. Equal creation timestamps do not skip runs. The default page size is 100,
-with `limit` from 1 to 500. A malformed cursor receives `400 INVALID_CURSOR`.
+with `limit` from 1 to 500. The run repository fetches one extra row (at most 501)
+to determine whether another page exists. Cursors are bounded to 256 characters,
+canonical base64url encodings of strict `{createdAt: Timestamp, id: ULID}` JSON.
+A malformed, oversized or noncanonical cursor receives `400 INVALID_CURSOR`.
 The timestamp-only `before` filter is still available, but cannot accompany `cursor`.
+Accepted `before` timestamps are normalized to UTC with milliseconds before comparison,
+so offsets and omitted milliseconds select the same page as the canonical timestamp.
 
-Alongside `loopId`, comma-separated `status`, and `parent` (a run ID or `none`),
-filters include lowercase `repository` (`owner/repository`), positive `issue` and
-`pullRequest` numbers, exact 40-character lowercase `head` and `mergeSha`, and
-`templateInstanceId`. Reads always remain scoped to the authenticated owner.
+Filters are `loopId`, comma-separated `status`, `parent` (a run ID or `none`),
+`before`, `cursor` and `limit`. Strict query validation rejects unknown filters,
+including the removed `repository`, `issue`, `pullRequest`, `head`, `mergeSha`
+and `templateInstanceId`. Reads always remain scoped to the authenticated owner.
+The exclusive `(created_at, id)` boundary keeps newer insertions between requests
+out of subsequent pages. MCP's `before`/`nextBefore` timestamp paging stays separate.
 Both the typed client's `GET('/runs')` and the generated OpenAPI contract expose
 the complete page; the convenience `runs.list` wrapper returns its items only.
 
-Run-list items and `GET /runs/{id}` may include `templateSubject`. This API-owned
-metadata describes a repository workflow's role, template instance/version,
-repository, issue/attempt and relevant PR/head/merge SHA. A worker also names its
-parent run, mapped subloop node and visit. Ordinary runs omit it. The generic
-engine `RunRecord` and context thread do not acquire GitHub-specific fields.
+Run-list items and `GET /runs/{id}` return the canonical `RunRecord`, without
+`templateSubject` or a template-store lookup. Regenerate strict clients for these
+response and query changes. Existing template runtime subjects remain internal
+until the later retirement; this paging change does not delete instances or bindings.
 
 The source is either `{kind: 'implementation', runId}` for an authenticated
 implementation attempt or `{kind: 'external'}` for a trusted standalone PR.
@@ -327,4 +363,14 @@ Linked external originals start at attempt one. The API derives and persists
 these identities during admission; authored run input cannot assert them.
 Repository recipes remain unregistered in this foundation release.
 
-Starter templates keep the ordinary engine resume behavior for resumable inference failures. Every resumed execution rechecks the actual pinned role configuration before another node can run. Repository recipes restrict resume to their original, allowlisted pre-execution prerequisite failure. If a restarted repository run already has a `node.started` event, lost prerequisites or authority require manual recovery; the failure does not claim that earlier effects were absent and no pre-execution explanatory comment is posted.
+Ordinary copied drafts use the ordinary engine resume behavior. The API installs no template admission, execution, resume or reporting policy. Dormant configured runtime modules await deletion in the next #165 split.
+
+## Gate admission and terminal outcomes (#164 E1)
+
+Create, import, draft save, validate and publish share the gate and terminal-exit schemas and graph checks. A missing `maxPasses` points at `nodes.<index>.config.maxPasses`; node-relative issues use `config.maxPasses`. Multiple repeat markers identify the extra `config.routes.<index>.repeat`, `config.answer.options.<index>.repeat`, Noul side or Score band path. A noncyclic repeat is `REPEAT_ROUTE_NOT_CYCLIC`; a missing Limit reached connection is `PORT_UNCONNECTED` at `config.maxPasses`. Reserve `limit-reached` in all authored route IDs.
+
+Exits are terminal: `{outcome, returns, destinations}`. `outcome` is `success` (default), `failure` or `exhausted`; `returns` is a JSONata expression or `none` (default); `destinations` defaults to `[{kind:"caller"}]` and supports caller, webhook, file, event and log. Exits have no criteria, predicate, default routing or loop-back, and no output ports.
+
+Success finishes `succeeded`, Failure finishes `failed`, and Exhausted finishes the distinct terminal status `exhausted`. Exhausted means the authored graph gave up further repetition; normally a gate's Limit reached output leads here. It is an outcome, not a resumable node failure. Every outcome evaluates the same return expression and delivers its value unchanged; Exhausted adds no wrapper or implicit last output. Use `outputs.<workNodeId>.value` when returning work output, because the preceding gate replaces `lastOutput`.
+
+JSON event pages, SSE, generated clients and MCP use the same `exhausted` status. SSE and MCP waiting stop on it. `run.finished` carries status/outcome; `run.result` carries the return value, including on Failure or Exhausted. A failed exit outcome has no resumable failure object. See [ADR-0036](decisions/ADR-0036-decision-gates-terminal-exits.md).

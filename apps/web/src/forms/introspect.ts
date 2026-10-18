@@ -398,7 +398,7 @@ export function matchOption(options: Schema[], value: unknown, discriminator?: s
   return Math.max(loose, 0);
 }
 
-/** "maxIterations" to "Max iterations". */
+/** "maxNodeVisits" to "Max node visits". */
 export function humanize(key: string): string {
   const spaced = key
     .replace(/([a-z0-9])([A-Z])/g, '$1 $2')

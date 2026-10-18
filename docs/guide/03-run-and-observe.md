@@ -96,21 +96,17 @@ Pass the returned `runId` to `wait_for_run`. Repeat until `finished` is true; ha
 | `succeeded` | Read the exit's result.                                                                                            |
 | `failed`    | Read the failure object, or the exit's failure outcome, and decide whether to resume or start a corrected version. |
 | `cancelled` | Inspect completed side effects before starting again.                                                              |
-| `exhausted` | Inspect the last result and the exit's iteration or duration limit.                                                |
+| `exhausted` | The graph gave up repetition. Inspect the gate's stopping limit and returned work value.                           |
 
-The last four statuses are terminal for streaming and waiting. A failed run can be explicitly resumed; the API accepts a resume for any failed run, so check `failure.resumable` first. Each run pins its version, starts at iteration 1, and logs node starts, patches, routing decisions, waits, and completion.
+The last four statuses are terminal for streaming and waiting. Only a node failure with `failure.resumable: true` can resume. A terminal Failure or Exhausted exit cannot resume. Each run pins its version, starts at iteration 1, and logs node starts, patches, routing decisions, waits, and completion.
 
 ## Use the inspector
 
 Select an event in **Timeline** to reconstruct the thread at that sequence. Select a `node.finished` event to see its patch with before/after values. Expand **Node progress** for harness progress, usage, decisions, exit evaluations, and heartbeat events. Read **Result** or the failure banner at the top.
 
-`exit.evaluated` explains each exit visit in plain words, such as **Exited: criterion 2 (Jev)
-matched with confidence 0.93** or **Looped back: no criterion matched, iteration 2 of 5**.
-The latest explanation also appears in **Exit evaluation** near the top of the run.
-Select it to open **Evaluation details**: the ordered predicate results, confidence thresholds,
-model or classifier, short Codex judge reasoning, and reasons later criteria were skipped.
-Limit exits name the configured limit or loop ceiling. A failed predicate shows a safe error
-summary and stops evaluation. The displayed criterion numbers start at 1; API indices start at 0.
+Decision evaluation details show the selected stable port and evaluator-specific observation: a route ID for Expression/LLM, or Choice/Noul/Score evidence for a classifier. LLM confidence is informational. Classifier rejection retains its proposed evidence without claiming a selected route. The corresponding output paths are `portId`, `provenance` and `observation`.
+
+`exit.evaluated` records the terminal outcome: Success, Failure or Exhausted. Read **Result** for its returned value; Exhausted does not wrap or replace it. Gate **Evaluation details** show previous/current passes, maximum passes, optional run time in seconds, elapsed time from run start, and which limit stopped a repeat. The observed choice remains visible even when **Selected port** is `limit-reached`. Passes start at 1 and can be read by expressions at `gates.<nodeId>.passes`.
 
 `decision.made` identifies the evaluator kind, selected option ID, confidence where applicable, and actual resolved provider/model/effort. The option ID is also its output port. LLM confidence is self-reported information, not a calibrated probability. Converted historical events preserve known skip diagnostics; unknown old values display as unknown rather than invented settings. New decisions never try another evaluator.
 
@@ -244,13 +240,13 @@ Read `code`, `message`, `nodeId`, `resumable`, and any `details`. After fixing a
 | `EVALUATION_UNAVAILABLE`                                            | Restore the selected model or credentials before resuming.                                                                                                                 |
 | `EVALUATION_EXPRESSION_FAILED` / `EVALUATION_INVALID_CONFIGURATION` | Correct the expression or configuration and start a replay/new run.                                                                                                        |
 | `EVALUATION_PROVIDER_FAILED`                                        | Restore transient service/network/authentication failures and resume when allowed; deterministic request errors require a corrected new run.                               |
-| `DECIDER_UNAVAILABLE`                                               | Configure Jev's key or use an available strategy in a new version; exit predicates need their selected decider.                                                            |
+| `DECIDER_UNAVAILABLE`                                               | Configure Jev's key or use an available strategy in a new version; classifier decisions need their selected evaluator.                                                     |
 | `SECRET_MISSING`                                                    | Create the named secret on the server, then resume.                                                                                                                        |
 | `TEMPLATE_ERROR`                                                    | Correct Liquid syntax and referenced values; timestamp templates must render valid dates.                                                                                  |
 | `EXPRESSION_ERROR`                                                  | Correct JSONata, its input assumptions, or the patch produced by a mapping.                                                                                                |
 | `WAIT_TIMEOUT`                                                      | Arrange the required input or signal sooner, or revise timeout behaviour in a new version.                                                                                 |
 | `HEARTBEAT_EXHAUSTED`                                               | Check the probe and condition; revise beat/deadline limits or exhaustion behaviour if needed.                                                                              |
-| `MAX_ITERATIONS`                                                    | A node was about to start more often than the loop's `maxIterations`, usually a decision routing back into a cycle without an exit. Fix the routing or raise the limit.    |
+| `MAX_NODE_VISITS`                                                   | A node exceeded the safety cap `maxNodeVisits`. Fix unintended cycles or configure enough visits for intentional gates.                                                    |
 | `RETURN_DELIVERY_FAILED`                                            | Check the destination and signing secret. Current delivery failures use `return.failed` events, rather than this reserved run-failure code; arrange redelivery explicitly. |
 | `INTERNAL_ERROR`                                                    | Preserve the run ID, log, and failure details; investigate or report the defect before retrying side effects.                                                              |
 

@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { describe, expect, it, vi } from 'vitest';
 import type { LoopDefinitionInput, Node, RunEvent } from '@graphgoblin/contracts';
 import { LoopDefinitionSchema } from '@graphgoblin/contracts';
@@ -19,6 +20,7 @@ import {
   CapturingLogger,
   FakeClock,
   FakeDecider,
+  FakeClassifier,
   FakeProbes,
   FakeScripts,
   FakeStructured,
@@ -69,7 +71,7 @@ describe('errors', () => {
       kind: 'exit',
       label: 'E',
       ui: { x: 0, y: 0 },
-      config: { criteria: [], default: 'success', return: { mapping: 'none', channels: [] } },
+      config: { outcome: 'success', returns: 'none', destinations: [] },
     };
     expect(nodeOfKind(node, 'exit').kind).toBe('exit');
     expect(() => nodeOfKind(node, 'wait')).toThrow(/expected node n to be wait/);
@@ -200,7 +202,7 @@ describe('fakes', () => {
     expect((await sessions.latestWithSession('r', 'codex'))?.sessionId).toBe('s2');
     expect((await sessions.byScopeKey('k', 'codex'))?.sessionId).toBe('s2');
 
-    const decider = new FakeDecider('jev');
+    const decider = new FakeClassifier('jev');
     expect(
       await decider.choose(
         { question: 'q', options: [{ id: 'x', label: 'X', criteria: 'X' }], context: null },
@@ -208,19 +210,19 @@ describe('fakes', () => {
       ),
     ).toMatchObject({ optionId: 'x' });
     expect(
-      await decider.noul(
+      await decider.classifyNoul(
         { question: 'q', context: null, criteria: { true: 'Ready', false: 'Continue' } },
         new AbortController().signal,
       ),
-    ).toMatchObject({ holds: true });
+    ).toMatchObject({ trueProbability: 1 });
     const emptyDecider = new FakeDecider('codex');
     expect(
       (
-        await emptyDecider.choose(
-          { question: 'q', options: [], context: null },
+        await emptyDecider.route(
+          { instructions: 'q', routes: [], context: null, model: 'm', effort: 'low' },
           new AbortController().signal,
         )
-      ).optionId,
+      ).route,
     ).toBe('');
 
     expect(
@@ -287,7 +289,7 @@ describe('run manager edge cases', () => {
   it('rejects loops without triggers and fails edges to unknown nodes', async () => {
     const engine = await createTestEngine();
     const noTrigger = engine.publish({
-      schemaVersion: 3,
+      schemaVersion: CURRENT_DEFINITION_FORMAT,
       name: 'nt',
       nodes: [{ id: 'done', kind: 'exit', label: 'D', config: {} }],
       edges: [],
@@ -460,10 +462,8 @@ describe('run manager edge cases', () => {
           config: { operations: [{ op: 'delete', path: '/vars/x' }] },
         },
         {
-          return: {
-            mapping: '{ "a": 1 }',
-            channels: [{ kind: 'file', path: 'out.txt', format: 'text' }],
-          },
+          returns: '{ "a": 1 }',
+          destinations: [{ kind: 'file', path: 'out.txt', format: 'text' }],
         },
       ),
     );
@@ -473,7 +473,7 @@ describe('run manager edge cases', () => {
 });
 
 describe('handler edge cases', () => {
-  it('exit: jev predicates and missing last output', async () => {
+  it('exit: returns no value when its mapping is none', async () => {
     const engine = await createTestEngine();
     const version = engine.publish(
       singleNodeLoop(
@@ -484,27 +484,13 @@ describe('handler edge cases', () => {
           label: 'M',
           config: { operations: [{ op: 'delete', path: '/vars/x' }] },
         },
-        {
-          criteria: [
-            {
-              when: 'predicate',
-              answer: {
-                type: 'noul',
-                true: { label: 'Ready', criteria: 'Task is done' },
-                false: { label: 'Continue', criteria: 'Task is not done' },
-              },
-              evaluation: { kind: 'classifier', model: 'jev', question: 'done?' },
-              match: { type: 'noul', value: true },
-              outcome: 'success',
-            },
-          ],
-        },
+        {},
       ),
     );
     const run = await engine.runToIdle(version.loopId);
     expect(run.status).toBe('succeeded');
-    expect(engine.ports.jev.classifierNouls[0]?.context).toMatchObject({ lastOutput: null });
-    expect(engine.ports.jev.classifierNouls[0]).not.toHaveProperty('model');
+    expect(run.result).toBeUndefined();
+    expect(engine.ports.jev.classifierNouls).toEqual([]);
   });
 
   it('heartbeat: POST probes render headers and bodies', async () => {
@@ -670,24 +656,24 @@ describe('handler edge cases', () => {
   it('subloop: exclusions, fresh injections, default custom patches, and null results', async () => {
     const engine = await createTestEngine();
     const child = engine.publish({
-      schemaVersion: 3,
+      schemaVersion: CURRENT_DEFINITION_FORMAT,
       name: 'child',
       nodes: [
-        { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
+        { id: 'start', kind: 'trigger', label: 'S', config: { type: 'manual' } },
         {
           id: 'done',
           kind: 'exit',
           label: 'D',
-          config: { return: { mapping: '$count(messages) & ":" & $count($keys(vars))' } },
+          config: { returns: '$count(messages) & ":" & $count($keys(vars))' },
         },
       ],
       edges: [{ id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'done' } }],
     });
     const parent = (name: string, sub: Record<string, unknown>): LoopDefinitionInput => ({
-      schemaVersion: 3,
+      schemaVersion: CURRENT_DEFINITION_FORMAT,
       name,
       nodes: [
-        { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
+        { id: 'start', kind: 'trigger', label: 'S', config: { type: 'manual' } },
         {
           id: 'prep',
           kind: 'mutate',
@@ -709,7 +695,7 @@ describe('handler edge cases', () => {
           id: 'done',
           kind: 'exit',
           label: 'D',
-          config: { return: { mapping: '{ "last": lastOutput.value, "vars": vars }' } },
+          config: { returns: '{ "last": lastOutput.value, "vars": vars }' },
         },
       ],
       edges: [

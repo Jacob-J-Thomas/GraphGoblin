@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { describe, expect, it } from 'vitest';
 import {
   LoopDefinitionSchema,
@@ -29,7 +30,7 @@ describe('outputPorts', () => {
     expect(outputPorts(nodeById(def, 'start')!)).toEqual(['out']);
     expect(outputPorts(nodeById(def, 'decide')!)).toEqual(['good', 'bad']);
     expect(outputPorts(nodeById(def, 'check')!)).toEqual(['out', 'retry']);
-    expect(outputPorts(nodeById(def, 'done')!)).toEqual(['loopBack']);
+    expect(outputPorts(nodeById(def, 'done')!)).toEqual([]);
     const minimal = parse(minimalLoop());
     expect(outputPorts(nodeById(minimal, 'done')!)).toEqual([]);
     for (const id of ['infer', 'prep', 'sub', 'approve', 'poll']) {
@@ -48,7 +49,7 @@ describe('validateLoop', () => {
 
   it('reports duplicates, missing endpoints, bad ports, and triggers as targets', () => {
     const input = minimalLoop();
-    input.nodes.push({ id: 'start', kind: 'trigger', label: 'Dup', config: { subtype: 'manual' } });
+    input.nodes.push({ id: 'start', kind: 'trigger', label: 'Dup', config: { type: 'manual' } });
     input.edges.push(
       { id: 'e1', from: { node: 'ghost', port: 'out' }, to: { node: 'done' } },
       { id: 'e2', from: { node: 'done', port: 'nope' }, to: { node: 'start' } },
@@ -70,16 +71,16 @@ describe('validateLoop', () => {
 
   it('requires a trigger and an exit', () => {
     const noTrigger = parse({
-      schemaVersion: 3,
+      schemaVersion: CURRENT_DEFINITION_FORMAT,
       name: 'x',
       nodes: [{ id: 'done', kind: 'exit', label: 'Done', config: {} }],
       edges: [],
     });
     expect(codes(noTrigger)).toContain('NO_TRIGGER');
     const noExit = parse({
-      schemaVersion: 3,
+      schemaVersion: CURRENT_DEFINITION_FORMAT,
       name: 'x',
-      nodes: [{ id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } }],
+      nodes: [{ id: 'start', kind: 'trigger', label: 'S', config: { type: 'manual' } }],
       edges: [],
     });
     expect(codes(noExit)).toEqual(
@@ -100,53 +101,24 @@ describe('validateLoop', () => {
     expect(found).toContain('NODE_UNREACHABLE');
   });
 
-  it('validates exit loop-back targets and edges', () => {
-    const missing = minimalLoop();
-    missing.nodes[1] = {
-      id: 'done',
-      kind: 'exit',
-      label: 'Done',
-      config: { default: 'loop-back', loopBack: { targetNodeId: 'ghost' } },
-    };
-    expect(codes(parse(missing))).toContain('LOOPBACK_TARGET_MISSING');
-
-    const toTrigger = minimalLoop();
-    toTrigger.nodes[1] = {
-      id: 'done',
-      kind: 'exit',
-      label: 'Done',
-      config: { default: 'loop-back', loopBack: { targetNodeId: 'start' } },
-    };
-    toTrigger.edges.push({
-      id: 'lb',
-      from: { node: 'done', port: 'loopBack' },
-      to: { node: 'start' },
-    });
-    expect(codes(parse(toTrigger))).toContain('LOOPBACK_TARGET_INVALID');
-
-    const mismatch = kitchenSinkLoop();
-    const lb = mismatch.edges.find((e) => e.id === 'e11')!;
-    lb.to = { node: 'infer' };
-    expect(codes(parse(mismatch))).toContain('LOOPBACK_EDGE_MISMATCH');
-  });
-
-  it('reports undeclared decision variables and criteria above the ceiling', () => {
+  it('reports undeclared decision variables', () => {
     const input = kitchenSinkLoop();
     const decide = input.nodes.find((n) => n.id === 'decide')!;
     if (decide.kind === 'decision')
-      decide.config.evaluation = {
-        kind: 'classifier',
-        model: 'jev',
-        question: 'Q',
+      decide.config = {
+        routes: [
+          { id: 'good', label: 'Good' },
+          { id: 'bad', label: 'Bad' },
+        ],
+        kind: 'llm',
+        harness: 'codex',
+        model: { mode: 'inherit' },
+        effort: { mode: 'inherit' },
+        instructions: 'Q',
         context: { vars: ['nope'] },
       };
-    const done = input.nodes.find((n) => n.id === 'done')!;
-    if (done.kind === 'exit') done.config.criteria = [{ when: 'max-iterations', value: 99 }];
     const issues = validateLoop(parse(input));
-    expect(issues.map((i) => i.code)).toEqual(
-      expect.arrayContaining(['UNDECLARED_VARIABLE', 'CRITERION_ABOVE_CEILING']),
-    );
-    expect(issues.find((i) => i.code === 'CRITERION_ABOVE_CEILING')?.severity).toBe('warning');
+    expect(issues.map((i) => i.code)).toEqual(expect.arrayContaining(['UNDECLARED_VARIABLE']));
     expect(isPublishable(parse(input))).toBe(false);
   });
 });
@@ -160,7 +132,7 @@ describe('graph helpers', () => {
     const reach = reachableFrom(def, 'approve');
     expect(reach.has('poll')).toBe(true);
     expect(reach.has('done')).toBe(true);
-    expect(reach.has('prep')).toBe(true); // via loop-back
+    expect(reach.has('prep')).toBe(false); // exits are terminal
     expect(reach.has('nightly')).toBe(false);
     expect(nodeById(def, 'ghost')).toBeUndefined();
   });

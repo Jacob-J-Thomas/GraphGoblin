@@ -5,15 +5,20 @@ import { readMigrationFiles } from 'drizzle-orm/migrator';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { schema, type Schema } from './schema.js';
-import { guardDatabaseUpgrade, stampFreshDatabase } from './upgrade.js';
+import { guardDatabaseUpgrade, initializeFreshDatabase, verifyDatabaseHead } from './upgrade.js';
 
 export type Database = LibSQLDatabase<Schema>;
+export type SqliteTransaction = Parameters<Parameters<Database['transaction']>[0]>[0];
 
 export interface DatabaseHandle {
   client: Client;
   db: Database;
-  /** Apply pending migrations from the package's `drizzle/` folder. Idempotent. */
-  migrate(): Promise<void>;
+  /**
+   * Apply pending migrations from the package's `drizzle/` folder. Idempotent. Only the API
+   * container may pass `skipDefinitionValidation`, and only after its own preflight parsed every
+   * stored definition under a data-directory lock that covers this database file.
+   */
+  migrate(options?: { skipDefinitionValidation?: boolean }): Promise<void>;
   /**
    * How many shipped migrations `migrate()` would apply now, by the same rule Drizzle uses (a
    * migration is pending when it is newer than the last one recorded). Read-only; 0 when current.
@@ -194,12 +199,18 @@ export function openDatabase(options: DatabaseOptions): DatabaseHandle {
   return {
     client,
     db,
-    async migrate() {
-      const upgradeState = await guardDatabaseUpgrade(client);
+    async migrate(options = {}) {
+      // Always repeat cheap checks before writes. Only a preflight protected by the database's
+      // data-directory lock may save the strict definition parse.
+      let upgradeState = await guardDatabaseUpgrade(client, migrationsFolder, {
+        skipDefinitions: options.skipDefinitionValidation ?? false,
+      });
       await client.execute('PRAGMA journal_mode = WAL').catch(() => undefined);
       await client.execute('PRAGMA busy_timeout = 5000').catch(() => undefined);
-      await migrate(db, { migrationsFolder });
-      if (upgradeState === 'fresh') await stampFreshDatabase(client);
+      if (upgradeState === 'fresh')
+        upgradeState = await initializeFreshDatabase(client, migrationsFolder);
+      if (upgradeState === 'current') await migrate(db, { migrationsFolder });
+      await verifyDatabaseHead(client, migrationsFolder);
     },
     async pendingMigrations() {
       const shipped = readMigrationFiles({ migrationsFolder });

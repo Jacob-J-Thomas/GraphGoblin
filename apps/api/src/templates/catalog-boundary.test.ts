@@ -1,24 +1,13 @@
-import { createHash } from 'node:crypto';
-import {
-  mkdir,
-  mkdtemp,
-  readFile,
-  realpath,
-  rename,
-  rm,
-  symlink,
-  unlink,
-  writeFile,
-} from 'node:fs/promises';
+import { mkdir, mkdtemp, realpath, rename, rm, symlink, unlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
-import { FIXTURE_TS } from '@graphgoblin/contracts/testing';
+import { CURRENT_DEFINITION_FORMAT, LoopDefinitionSchema } from '@graphgoblin/contracts';
+import { FIXTURE_TS, fakeUlid } from '@graphgoblin/contracts/testing';
 import { installedFile, TemplateCatalog } from './catalog.js';
 
 const sourceRoot = fileURLToPath(new URL('../../templates', import.meta.url));
-const sourcePackage = fileURLToPath(new URL('../..', import.meta.url));
 const dirs: string[] = [];
 const directoryLink = process.platform === 'win32' ? 'junction' : 'dir';
 
@@ -27,48 +16,57 @@ afterEach(async () => {
 });
 
 async function fixture() {
-  const source = await new TemplateCatalog(sourceRoot, sourcePackage).get('starter');
+  const source = await new TemplateCatalog(sourceRoot).get('starter');
   const dir = await realpath(await mkdtemp(join(tmpdir(), 'gg-catalog-boundary-')));
   dirs.push(dir);
   const root = join(dir, 'catalog');
   const packageRoot = join(dir, 'package');
   await mkdir(join(root, 'recipe'), { recursive: true });
   await mkdir(packageRoot);
-  const manifest = { ...structuredClone(source.bundle.manifest), id: 'recipe' };
-  delete manifest.draftFile; // This fixture exercises the optional automation-only capability.
+  const manifest = { ...structuredClone(source.manifest), id: 'recipe' };
+  manifest.draftFile = 'draft.json';
   const exported = {
     format: 'graphgoblin-loop',
-    formatVersion: 3,
+    formatVersion: CURRENT_DEFINITION_FORMAT,
     exportedAt: FIXTURE_TS,
-    loop: structuredClone(source.bundle.loops['parent']!),
+    loop: structuredClone(source.draft),
   };
   await writeFile(join(root, 'catalog.json'), JSON.stringify(['recipe/manifest.json']));
   await writeFile(join(root, 'recipe', 'manifest.json'), JSON.stringify(manifest));
-  await writeFile(join(root, 'recipe', 'loop.json'), JSON.stringify(exported));
+  await writeFile(join(root, 'recipe', 'draft.json'), JSON.stringify(exported));
   return {
     dir,
     root,
     packageRoot,
     manifest,
     exported,
-    catalog: new TemplateCatalog(root, packageRoot),
+    catalog: new TemplateCatalog(root),
   };
 }
 
 describe('installed template catalog boundaries', () => {
-  it('loads declared editable assets and refuses an automation-only template without a fallback', async () => {
+  it('requires a draft asset and never falls back to a configured graph', async () => {
     const f = await fixture();
-    await expect(f.catalog.draft('recipe')).rejects.toMatchObject({
-      code: 'TEMPLATE_DRAFT_UNAVAILABLE',
-    });
     await writeFile(
       join(f.root, 'recipe', 'manifest.json'),
-      JSON.stringify({ ...f.manifest, draftFile: 'draft.json' }),
+      JSON.stringify({ ...f.manifest, draftFile: undefined }),
     );
-    await writeFile(join(f.root, 'recipe', 'draft.json'), JSON.stringify(f.exported));
-    expect(await f.catalog.draft('recipe')).toEqual(f.exported.loop);
-    const source = new TemplateCatalog(sourceRoot, sourcePackage);
-    for (const entry of await source.list()) expect(entry.draft).toBeDefined();
+    await expect(f.catalog.draft('recipe')).rejects.toMatchObject({
+      code: 'TEMPLATE_PACKAGE_INVALID',
+      statusCode: 503,
+    });
+  });
+
+  it('clones every creation even when get returns a shared loaded entry', async () => {
+    const f = await fixture();
+    const entry = await f.catalog.get('recipe');
+    f.catalog.get = () => Promise.resolve(entry);
+    const first = await f.catalog.draft('recipe');
+    const second = await f.catalog.draft('recipe');
+    first.nodes[0]!.label = 'Changed copy';
+    expect(second).toEqual(entry.draft);
+    expect(first).not.toEqual(second);
+    expect(Object.keys(entry)).toEqual(['manifest', 'draft']);
   });
 
   it('applies package bounds, format and graph validation to declared draft files', async () => {
@@ -78,6 +76,7 @@ describe('installed template catalog boundaries', () => {
       join(f.root, 'recipe', 'manifest.json'),
       JSON.stringify({ ...f.manifest, draftFile: 'draft.json' }),
     );
+    await unlink(path);
     await expect(f.catalog.list()).rejects.toMatchObject({ code: 'TEMPLATE_PACKAGE_INVALID' });
     for (const content of [
       Buffer.alloc(1_048_577),
@@ -99,22 +98,26 @@ describe('installed template catalog boundaries', () => {
   });
 
   it('loads the actual source-only starter with current graph format and no repository support', async () => {
-    const catalog = new TemplateCatalog(sourceRoot, sourcePackage);
+    const catalog = new TemplateCatalog(sourceRoot);
     const entries = await catalog.list();
-    expect(entries.map((entry) => entry.bundle.manifest.id)).toEqual([
+    expect(entries.map((entry) => entry.manifest.id)).toEqual([
       'starter',
       'implementation',
       'review',
       'qa',
     ]);
     const starter = await catalog.get('starter');
-    expect(starter.bundle.manifest.kind).toBe('starter');
-    expect(starter.bundle.manifest.requiredSecrets).toEqual([]);
-    expect(starter.support).toBeUndefined();
-    expect(starter.bundle.loops['parent']?.schemaVersion).toBe(3);
-    expect(starter.bundle.loops['parent']?.nodes.some((node) => node.kind === 'inference')).toBe(
-      true,
-    );
+    expect(Object.keys(starter.manifest)).toEqual([
+      'id',
+      'version',
+      'title',
+      'description',
+      'tags',
+      'draftFile',
+    ]);
+    expect('support' in starter).toBe(false);
+    expect(starter.draft.schemaVersion).toBe(CURRENT_DEFINITION_FORMAT);
+    expect(starter.draft?.nodes.some((node) => node.kind === 'inference')).toBe(true);
     await expect(catalog.get('absent-template')).rejects.toMatchObject({
       code: 'TEMPLATE_NOT_FOUND',
       statusCode: 404,
@@ -139,19 +142,19 @@ describe('installed template catalog boundaries', () => {
     });
   });
 
-  it.each(['catalog.json', 'recipe/manifest.json', 'recipe/loop.json'])(
+  it.each(['catalog.json', 'recipe/manifest.json', 'recipe/draft.json'])(
     'refuses the oversized regular asset %s before parsing it',
     async (asset) => {
       const f = await fixture();
       await writeFile(join(f.root, asset), Buffer.alloc(1_048_577, 32));
       await expect(f.catalog.list()).rejects.toMatchObject({
         code: 'TEMPLATE_PACKAGE_INVALID',
-        message: 'Template assets must be bounded regular files.',
+        message: 'The installed template catalog is invalid; reinstall the package.',
       });
     },
   );
 
-  it.each(['catalog.json', 'recipe/manifest.json', 'recipe/loop.json'])(
+  it.each(['catalog.json', 'recipe/manifest.json', 'recipe/draft.json'])(
     'refuses a missing declared asset %s as a safe package failure',
     async (asset) => {
       const f = await fixture();
@@ -181,30 +184,76 @@ describe('installed template catalog boundaries', () => {
     });
   });
 
-  it('refuses manifest traversal and dependencies absent from the bundle', async () => {
+  it('rejects configured manifest fields instead of opening graphs or private support entries', async () => {
     const f = await fixture();
-    const path = join(f.root, 'recipe', 'manifest.json');
     await writeFile(
-      path,
+      join(f.root, 'recipe', 'manifest.json'),
       JSON.stringify({
         ...f.manifest,
-        loops: [{ ...f.manifest.loops[0], file: '../outside.json' }],
+        loops: [{ key: 'parent', file: 'missing.json', dependsOn: ['missing-child'] }],
+        supportEntry: 'dist/missing.mjs',
       }),
     );
-    await expect(f.catalog.list()).rejects.toMatchObject({ code: 'TEMPLATE_PACKAGE_INVALID' });
-    await writeFile(
-      path,
-      JSON.stringify({
-        ...f.manifest,
-        loops: [{ ...f.manifest.loops[0], dependsOn: ['missing-child'] }],
-      }),
-    );
-    await expect(f.catalog.list()).rejects.toMatchObject({ code: 'TEMPLATE_PACKAGE_INVALID' });
+    await expect(f.catalog.get('recipe')).rejects.toMatchObject({
+      code: 'TEMPLATE_PACKAGE_INVALID',
+    });
+  });
+
+  it.each([
+    ['script', { command: 'unavailable-private-support' }],
+    ['subloop', { loopRef: { loopId: fakeUlid('child'), version: 1 } }],
+    ['heartbeat', { intervalSeconds: 1, maxBeats: 1 }],
+  ])('refuses a schema-valid %s node in a shipped draft', async (kind, config) => {
+    const f = await fixture();
+    const loop = LoopDefinitionSchema.parse({
+      ...f.exported.loop,
+      nodes: f.exported.loop.nodes.map((node) =>
+        node.kind === 'inference' ? { id: node.id, label: node.label, kind, config } : node,
+      ),
+    });
+    await writeFile(join(f.root, 'recipe', 'draft.json'), JSON.stringify({ ...f.exported, loop }));
+    await expect(f.catalog.list()).rejects.toMatchObject({
+      code: 'TEMPLATE_PACKAGE_INVALID',
+      statusCode: 503,
+    });
+  });
+
+  it('refuses nonmanual triggers and noncaller return channels', async () => {
+    const f = await fixture();
+    for (const nodes of [
+      f.exported.loop.nodes.map((node) =>
+        node.kind === 'trigger'
+          ? { ...node, config: { type: 'cron', expression: '* * * * *', timezone: 'UTC' } }
+          : node,
+      ),
+      f.exported.loop.nodes.map((node) =>
+        node.kind === 'exit'
+          ? {
+              ...node,
+              config: {
+                ...node.config,
+                returns: 'none',
+                destinations: [{ kind: 'log' }],
+              },
+            }
+          : node,
+      ),
+    ]) {
+      const loop = LoopDefinitionSchema.parse({ ...f.exported.loop, nodes });
+      await writeFile(
+        join(f.root, 'recipe', 'draft.json'),
+        JSON.stringify({ ...f.exported, loop }),
+      );
+      await expect(f.catalog.list()).rejects.toMatchObject({
+        code: 'TEMPLATE_PACKAGE_INVALID',
+        statusCode: 503,
+      });
+    }
   });
 
   it('refuses malformed exports, old format and dangling graph targets', async () => {
     const f = await fixture();
-    const path = join(f.root, 'recipe', 'loop.json');
+    const path = join(f.root, 'recipe', 'draft.json');
     await writeFile(path, '{"private-export-content');
     await expect(f.catalog.list()).rejects.toMatchObject({
       code: 'TEMPLATE_PACKAGE_INVALID',
@@ -228,7 +277,7 @@ describe('installed template catalog boundaries', () => {
     const f = await fixture();
     await mkdir(join(f.root, 'second'));
     await writeFile(join(f.root, 'second', 'manifest.json'), JSON.stringify(f.manifest));
-    await writeFile(join(f.root, 'second', 'loop.json'), JSON.stringify(f.exported));
+    await writeFile(join(f.root, 'second', 'draft.json'), JSON.stringify(f.exported));
     await writeFile(
       join(f.root, 'catalog.json'),
       JSON.stringify(['recipe/manifest.json', 'second/manifest.json']),
@@ -256,9 +305,9 @@ describe('installed template catalog boundaries', () => {
     const f = await fixture();
     const alias = join(f.dir, 'catalog-alias');
     await symlink(f.root, alias, directoryLink);
-    await expect(new TemplateCatalog(alias, f.packageRoot).list()).rejects.toMatchObject({
+    await expect(new TemplateCatalog(alias).list()).rejects.toMatchObject({
       code: 'TEMPLATE_PACKAGE_INVALID',
-      message: 'The installed template root must be a canonical directory.',
+      message: 'The installed template catalog is invalid; reinstall the package.',
     });
   });
 
@@ -279,56 +328,7 @@ describe('installed template catalog boundaries', () => {
     await symlink(target, join(f.root, 'recipe'), directoryLink);
     await expect(f.catalog.list()).rejects.toMatchObject({
       code: 'TEMPLATE_PACKAGE_INVALID',
-      message: 'Template package links are not permitted.',
-    });
-  });
-
-  it.each(['dist', 'templates'])(
-    'accepts and hashes a bounded shipped %s support entry without executing it',
-    async (prefix) => {
-      const f = await fixture();
-      const supportEntry = prefix + '/support/entry.mjs';
-      const path = join(f.packageRoot, prefix, 'support', 'entry.mjs');
-      await mkdir(join(f.packageRoot, prefix, 'support'), { recursive: true });
-      await writeFile(path, '/* synthetic support bytes; never executed */');
-      await writeFile(
-        join(f.root, 'recipe', 'manifest.json'),
-        JSON.stringify({ ...f.manifest, supportEntry }),
-      );
-      const loaded = await f.catalog.get('recipe');
-      expect(loaded.support).toEqual({
-        path,
-        hash: createHash('sha256')
-          .update(await readFile(path))
-          .digest('hex'),
-      });
-    },
-  );
-
-  it('refuses an existing support file outside shipped dist/templates paths', async () => {
-    const f = await fixture();
-    await mkdir(join(f.packageRoot, 'src'));
-    await writeFile(join(f.packageRoot, 'src', 'entry.mjs'), '/* unshipped; never executed */');
-    await writeFile(
-      join(f.root, 'recipe', 'manifest.json'),
-      JSON.stringify({ ...f.manifest, supportEntry: 'src/entry.mjs' }),
-    );
-    await expect(f.catalog.list()).rejects.toMatchObject({
-      code: 'TEMPLATE_PACKAGE_INVALID',
-      message: 'Support entries must belong to the shipped dist/ or templates/ package files.',
-    });
-  });
-
-  it('refuses a missing declared support entry rather than silently omitting support', async () => {
-    const f = await fixture();
-    await writeFile(
-      join(f.root, 'recipe', 'manifest.json'),
-      JSON.stringify({ ...f.manifest, supportEntry: 'dist/missing.mjs' }),
-    );
-    await mkdir(join(f.packageRoot, 'dist'));
-    await expect(f.catalog.list()).rejects.toMatchObject({
-      code: 'TEMPLATE_PACKAGE_INVALID',
-      statusCode: 503,
+      message: 'The installed template catalog is invalid; reinstall the package.',
     });
   });
 });

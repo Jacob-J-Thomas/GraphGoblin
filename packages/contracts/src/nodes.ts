@@ -1,11 +1,5 @@
 import { z } from 'zod';
-import {
-  DecisionConfigSchema,
-  EvaluationSchema,
-  PrimitiveAnswerSpecSchema,
-  PrimitiveEvaluationConfigSchema,
-  ChoiceOptionIdSchema,
-} from './evaluation.js';
+import { DecisionConfigSchema } from './evaluation.js';
 export { DecisionConfigSchema, type DecisionConfig } from './evaluation.js';
 import {
   EffortSchema,
@@ -27,11 +21,7 @@ import {
   MutationListSchema,
 } from './mutations.js';
 import { ReturnChannelSchema } from './thread.js';
-import {
-  BodyWebhookConfigSchema,
-  PollItemsSchema,
-  TimestampWebhookConfigSchema,
-} from './trigger-integrations.js';
+import { PollItemsSchema, WebhookConfigSchema } from './trigger-integrations.js';
 
 export const NodeKindSchema = z.enum([
   'trigger',
@@ -85,13 +75,10 @@ export type Probe = z.infer<typeof ProbeSchema>;
 const DedupeKeySchema = ExpressionSchema.optional().meta(
   field('JSONata producing a key; a repeated key does not start another run.'),
 );
-const PayloadFilterSchema = ExpressionSchema.optional().meta(
-  field('JSONata predicate; payloads that fail it are recorded and ignored.'),
-);
 
 export const TriggerConfigSchema = z.union([
   z.strictObject({
-    subtype: z.literal('manual'),
+    type: z.literal('manual'),
     inputSchema: JsonSchemaSchema.optional().meta(
       field('JSON Schema the manual input must satisfy.'),
     ),
@@ -100,7 +87,7 @@ export const TriggerConfigSchema = z.union([
     ),
   }),
   z.strictObject({
-    subtype: z.literal('cron'),
+    type: z.literal('cron'),
     expression: z
       .string()
       .min(1)
@@ -118,17 +105,15 @@ export const TriggerConfigSchema = z.union([
       .meta(field('What to do with fires missed while the server was down.')),
     enabled: z.boolean().default(true).meta(field('Whether the schedule is armed.')),
   }),
-  TimestampWebhookConfigSchema,
-  BodyWebhookConfigSchema,
+  WebhookConfigSchema,
   z.strictObject({
-    subtype: z.literal('event'),
+    type: z.literal('event'),
     eventType: SlugSchema.meta(field('Inbound event type that fires the trigger.')),
-    filter: PayloadFilterSchema,
     dedupeKey: DedupeKeySchema,
   }),
   z
     .strictObject({
-      subtype: z.literal('poll'),
+      type: z.literal('poll'),
       intervalSeconds: z.number().int().min(5).max(86_400).meta(field('Seconds between probes.')),
       probe: ProbeSchema.meta(
         field('What to call on each poll: HTTP, a script, a signal count, or nothing.'),
@@ -154,13 +139,6 @@ export const TriggerConfigSchema = z.union([
     }),
 ]);
 export type TriggerConfig = z.infer<typeof TriggerConfigSchema>;
-
-// ---------------------------------------------------------------------------
-// Decision
-// ---------------------------------------------------------------------------
-
-export const DecisionStrategySchema = z.enum(['jev', 'codex', 'expression']);
-export type DecisionStrategy = z.infer<typeof DecisionStrategySchema>;
 
 // ---------------------------------------------------------------------------
 // Inference
@@ -661,140 +639,27 @@ export type HeartbeatConfig = z.infer<typeof HeartbeatConfigSchema>;
 export const OutcomeSchema = z.enum(['success', 'failure', 'exhausted']);
 export type Outcome = z.infer<typeof OutcomeSchema>;
 
-export const ExitPredicateMatchSchema = z.discriminatedUnion('type', [
-  z.strictObject({
-    type: z.literal('noul'),
-    value: z.boolean().default(true),
-    minReportedConfidence: z.number().min(0).max(1).optional(),
-  }),
-  z.strictObject({
-    type: z.literal('choice'),
-    optionIds: z.array(ChoiceOptionIdSchema).min(1).max(64),
-    minReportedConfidence: z.number().min(0).max(1).optional(),
-  }),
-  z.strictObject({
-    type: z.literal('score'),
-    operator: z.enum(['lt', 'lte', 'eq', 'gte', 'gt']),
-    value: z.number().min(0),
-  }),
-]);
-export type ExitPredicateMatch = z.infer<typeof ExitPredicateMatchSchema>;
-export const ExitPredicateSchema = z
-  .strictObject({
-    when: z.literal('predicate'),
-    answer: PrimitiveAnswerSpecSchema,
-    evaluation: EvaluationSchema,
-    match: ExitPredicateMatchSchema,
-    outcome: z.enum(['success', 'failure']),
-  })
-  .superRefine((criterion, ctx) => {
-    const pair = PrimitiveEvaluationConfigSchema.safeParse({
-      answer: criterion.answer,
-      evaluation: criterion.evaluation,
-    });
-    if (!pair.success) for (const issue of pair.error.issues) ctx.addIssue({ ...issue });
-    if (criterion.evaluation.kind === 'expression' && criterion.answer.type !== 'noul')
-      ctx.addIssue({
-        code: 'custom',
-        path: ['evaluation', 'kind'],
-        message: 'exit expressions require Noul',
-      });
-    if (criterion.answer.type !== criterion.match.type)
-      ctx.addIssue({
-        code: 'custom',
-        path: ['match', 'type'],
-        message: 'match must use the declared primitive',
-      });
-    if (
-      'minReportedConfidence' in criterion.match &&
-      criterion.match.minReportedConfidence !== undefined &&
-      criterion.evaluation.kind !== 'llm'
-    )
-      ctx.addIssue({
-        code: 'custom',
-        path: ['match', 'minReportedConfidence'],
-        message: 'reported confidence applies only to LLM predicates',
-      });
-    if (criterion.answer.type === 'choice' && criterion.match.type === 'choice') {
-      const ids = new Set(criterion.answer.options.map((option) => option.id));
-      if (
-        new Set(criterion.match.optionIds).size !== criterion.match.optionIds.length ||
-        criterion.match.optionIds.some((id) => !ids.has(id))
-      )
-        ctx.addIssue({
-          code: 'custom',
-          path: ['match', 'optionIds'],
-          message: 'match requires unique declared Choice option ids',
-        });
-    }
-    if (
-      criterion.answer.type === 'score' &&
-      criterion.match.type === 'score' &&
-      criterion.match.value > criterion.answer.anchors.length - 1
-    )
-      ctx.addIssue({
-        code: 'custom',
-        path: ['match', 'value'],
-        message: 'comparison must lie on the rubric index scale',
-      });
-  });
-export type ExitPredicate = z.infer<typeof ExitPredicateSchema>;
-
-export const ExitCriterionSchema = z.discriminatedUnion('when', [
-  z.strictObject({
-    when: z.literal('max-iterations'),
-    value: z.number().int().positive(),
-    outcome: z.literal('exhausted').default('exhausted'),
-  }),
-  z.strictObject({
-    when: z.literal('max-duration'),
-    seconds: z.number().int().positive(),
-    outcome: z.literal('exhausted').default('exhausted'),
-  }),
-  ExitPredicateSchema,
-  z.strictObject({
-    when: z.literal('last-output-matches'),
-    jsonSchema: JsonSchemaSchema,
-    outcome: z.literal('success').default('success'),
-  }),
-]);
-export type ExitCriterion = z.infer<typeof ExitCriterionSchema>;
-
-export const ExitConfigSchema = z
-  .strictObject({
-    criteria: z
-      .array(ExitCriterionSchema)
-      .max(32)
-      .default([])
-      .meta(field('Evaluated in order; the first that matches decides the outcome.')),
-    default: z
-      .enum(['success', 'loop-back'])
-      .default('success')
-      .meta(field('What happens when no criterion matches.')),
-    loopBack: z
-      .strictObject({ targetNodeId: SlugSchema })
-      .optional()
-      .meta(field('The node a loop-back returns to.')),
-    return: z
-      .strictObject({
-        mapping: z.union([z.literal('none'), ExpressionSchema]).default('none'),
-        channels: z
-          .array(ReturnChannelSchema)
-          .max(16)
-          .default([{ kind: 'caller' }]),
-      })
-      .prefault({})
-      .meta(field('JSONata mapping for the return payload and the channels it is delivered to.')),
-  })
-  .superRefine((cfg, ctx) => {
-    if (cfg.default === 'loop-back' && !cfg.loopBack) {
-      ctx.addIssue({
-        code: 'custom',
-        message: 'default "loop-back" requires a loopBack target',
-        path: ['loopBack'],
-      });
-    }
-  });
+/** Exits are terminal. Exhausted records an unsuccessful budget outcome, with authored returns. */
+export const ExitConfigSchema = z.strictObject({
+  outcome: OutcomeSchema.default('success').meta(
+    field(
+      'Terminal outcome; Exhausted produces run status exhausted and preserves the return value.',
+    ),
+  ),
+  returns: z
+    .union([z.literal('none'), ExpressionSchema])
+    .default('none')
+    .meta(
+      field(
+        'JSONata return mapping, or none. Gate decisions replace lastOutput; prefer outputs.<workNode>.value.',
+      ),
+    ),
+  destinations: z
+    .array(ReturnChannelSchema)
+    .max(16)
+    .default([{ kind: 'caller' }])
+    .meta(field('Return destinations; caller by default. No delivery when returns is none.')),
+});
 export type ExitConfig = z.infer<typeof ExitConfigSchema>;
 
 // ---------------------------------------------------------------------------

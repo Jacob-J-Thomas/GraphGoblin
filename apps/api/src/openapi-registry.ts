@@ -10,8 +10,7 @@ import {
   ReturnChannelSchema,
   RunEventSchema,
   EvaluationDiagnosticSchema,
-  ExitCriterionEvaluationSchema,
-  ExitEvaluationOutcomeSchema,
+  GateEvidenceSchema,
   RunFailureSchema,
   RunRecordSchema,
   RunStatusSchema,
@@ -30,7 +29,11 @@ import { z } from 'zod';
  * A dedicated registry, not `z.globalRegistry`, so other `z.toJSONSchema` callers are unaffected.
  * Input-side components get an `Input` suffix (for example `LoopDefinitionInput`).
  */
-export const openApiRegistry = z.registry<{ id: string }>();
+export const openApiRegistry = z.registry<{
+  id?: string;
+  description?: string;
+  maxLength?: number;
+}>();
 
 const COMPONENTS: ReadonlyArray<[z.ZodType, string]> = [
   [ClassifierModelSummarySchema, 'ClassifierModelSummary'],
@@ -46,8 +49,7 @@ const COMPONENTS: ReadonlyArray<[z.ZodType, string]> = [
   [RunRecordSchema, 'RunRecord'],
   [RunEventSchema, 'RunEvent'],
   [EvaluationDiagnosticSchema, 'EvaluationDiagnostic'],
-  [ExitCriterionEvaluationSchema, 'ExitCriterionEvaluation'],
-  [ExitEvaluationOutcomeSchema, 'ExitEvaluationOutcome'],
+  [GateEvidenceSchema, 'GateEvidence'],
   [ReturnChannelSchema, 'ReturnChannel'],
   [ContextThreadSchema, 'ContextThread'],
 ];

@@ -12,14 +12,14 @@ Starts a run. A loop may have several triggers; each produces the same trigger e
 
 Ports: `out`.
 
-### `subtype: "manual"`
+### `type: "manual"`
 
 | Field         | Type                                    | Required | Default              | Description                                                      |
 | ------------- | --------------------------------------- | -------- | -------------------- | ---------------------------------------------------------------- |
 | `inputSchema` | object                                  | no       |                      | JSON Schema the manual input must satisfy.                       |
 | `exposeTo`    | array of (`"ui"` \| `"api"` \| `"mcp"`) | no       | `["ui","api","mcp"]` | Surfaces that may start the run: the web app, the REST API, MCP. |
 
-### `subtype: "cron"`
+### `type: "cron"`
 
 | Field              | Type                                     | Required | Default  | Description                                             |
 | ------------------ | ---------------------------------------- | -------- | -------- | ------------------------------------------------------- |
@@ -28,32 +28,23 @@ Ports: `out`.
 | `missedFirePolicy` | `"skip"` \| `"run-once"` \| `"run-each"` | no       | `"skip"` | What to do with fires missed while the server was down. |
 | `enabled`          | boolean                                  | no       | `true`   | Whether the schedule is armed.                          |
 
-### `subtype: "webhook"`
+### `type: "webhook"`
 
-| Field                 | Type                           | Required | Default | Description                                                         |
-| --------------------- | ------------------------------ | -------- | ------- | ------------------------------------------------------------------- |
-| `signature`           | { scheme, header?, secretRef } | yes      |         | HMAC of the timestamp and body using the selected secret.           |
-| `replayWindowSeconds` | integer                        | no       | `300`   | How far the signed timestamp may be from the server clock.          |
-| `dedupeKey`           | string                         | no       |         | JSONata producing a key; a repeated key does not start another run. |
-| `filter`              | string                         | no       |         | JSONata predicate; payloads that fail it are recorded and ignored.  |
+| Field            | Type                                                              | Required | Default | Description                                                         |
+| ---------------- | ----------------------------------------------------------------- | -------- | ------- | ------------------------------------------------------------------- |
+| `authentication` | one of `"none"` \| `"hmac-sha256"` \| `"hmac-sha256"` by `type`   | no       | `{}`    | How the sender authenticates the raw request.                       |
+| `body`           | { type? }                                                         | no       | `{}`    | Representation of the trigger payload.                              |
+| `eventType`      | one of `"constant"` \| `"header"` \| `"json-pointer"` by `source` | no       | `{}`    | Invocation metadata; does not publish an Event.                     |
+| `dedupeKey`      | string                                                            | no       |         | JSONata producing a key; a repeated key does not start another run. |
 
-### `subtype: "webhook"`
-
-| Field       | Type                           | Required | Default | Description                                                         |
-| ----------- | ------------------------------ | -------- | ------- | ------------------------------------------------------------------- |
-| `signature` | { scheme, header?, secretRef } | yes      |         | HMAC of the exact raw request body using the selected secret.       |
-| `dedupeKey` | string                         | no       |         | JSONata producing a key; a repeated key does not start another run. |
-| `filter`    | string                         | no       |         | JSONata predicate; payloads that fail it are recorded and ignored.  |
-
-### `subtype: "event"`
+### `type: "event"`
 
 | Field       | Type   | Required | Default | Description                                                         |
 | ----------- | ------ | -------- | ------- | ------------------------------------------------------------------- |
 | `eventType` | string | yes      |         | Inbound event type that fires the trigger.                          |
-| `filter`    | string | no       |         | JSONata predicate; payloads that fail it are recorded and ignored.  |
 | `dedupeKey` | string | no       |         | JSONata producing a key; a repeated key does not start another run. |
 
-### `subtype: "poll"`
+### `type: "poll"`
 
 | Field             | Type                                                                    | Required | Default | Description                                                                                 |
 | ----------------- | ----------------------------------------------------------------------- | -------- | ------- | ------------------------------------------------------------------------------------------- |
@@ -66,15 +57,45 @@ Ports: `out`.
 
 ## Decision (`decision`)
 
-Chooses one option using an explicit expression, classifier, or LLM evaluator.
+Chooses a route using an expression, LLM instructions, or a classifier primitive.
 
-Ports: One output per stable option id; labels are display text.
+Ports: Declared route ids for expression/LLM; classifier option, side or band ids.
 
-| Field                | Type                                                         | Required | Default | Advanced | Description                                            |
-| -------------------- | ------------------------------------------------------------ | -------- | ------- | -------- | ------------------------------------------------------ |
-| `answer`             | one of `"choice"` \| `"noul"` \| `"score"` by `type`         | yes      |         |          | Declared answer and stable route identifiers.          |
-| `evaluation`         | one of `"expression"` \| `"classifier"` \| `"llm"` by `kind` | yes      |         |          | Exactly one evaluation method.                         |
-| `recordAlternatives` | boolean                                                      | no       | `true`  | yes      | Retain classifier probabilities in execution evidence. |
+### `kind: "expression"`
+
+| Field               | Type     | Required | Default | Description                                                                                                              |
+| ------------------- | -------- | -------- | ------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `jsonata`           | string   | yes      |         | JSONata source; return a declared route id for decisions.                                                                |
+| `maxPasses`         | integer  | no       |         | Required with a repeat route. One-based passes; a non-repeat choice wins on the last pass.                               |
+| `maxRunTimeSeconds` | integer  | no       |         | Optional maximum elapsed seconds from run start, including waits and pauses. Checked after evaluation, only on a repeat. |
+| `routes`            | object[] | yes      |         | Two to sixty-four stable readable routes.                                                                                |
+
+### `kind: "llm"`
+
+| Field               | Type                                         | Required | Default | Advanced                                | Description                                                                                                              |
+| ------------------- | -------------------------------------------- | -------- | ------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `instructions`      | string                                       | yes      |         |                                         | Liquid instructions rendered against the full thread.                                                                    |
+| `harness`           | `"codex"`                                    | yes      |         |                                         | Implemented structured evaluator harness.                                                                                |
+| `model`             | one of `"inherit"` \| `"explicit"` by `mode` | yes      |         |                                         | Inherit or explicitly select the model.                                                                                  |
+| `effort`            | one of `"inherit"` \| `"explicit"` by `mode` | yes      |         |                                         | Inherit or explicitly select reasoning effort.                                                                           |
+| `maxPasses`         | integer                                      | no       |         |                                         | Required with a repeat route. One-based passes; a non-repeat choice wins on the last pass.                               |
+| `maxRunTimeSeconds` | integer                                      | no       |         |                                         | Optional maximum elapsed seconds from run start, including waits and pauses. Checked after evaluation, only on a repeat. |
+| `routes`            | object[]                                     | yes      |         |                                         | Declared stable route ids and readable labels.                                                                           |
+| `context`           | { messages?, vars?, includeLastOutput? }     | no       | `{}`    | all but `messages`, `includeLastOutput` | Selected provider context.                                                                                               |
+
+### `kind: "classifier"`
+
+| Field                | Type                                                 | Required | Default | Advanced                                | Description                                                                                                              |
+| -------------------- | ---------------------------------------------------- | -------- | ------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `model`              | string                                               | yes      |         |                                         | Explicit classifier catalog id.                                                                                          |
+| `question`           | string                                               | yes      |         |                                         | Liquid classifier question.                                                                                              |
+| `minConfidence`      | number                                               | no       |         | yes                                     | Classifier confidence minimum.                                                                                           |
+| `truthThreshold`     | number                                               | no       |         | yes                                     | Noul true probability threshold; omission means 0.5.                                                                     |
+| `maxPasses`          | integer                                              | no       |         |                                         | Required with a repeat route. One-based passes; a non-repeat choice wins on the last pass.                               |
+| `maxRunTimeSeconds`  | integer                                              | no       |         |                                         | Optional maximum elapsed seconds from run start, including waits and pauses. Checked after evaluation, only on a repeat. |
+| `answer`             | one of `"choice"` \| `"noul"` \| `"score"` by `type` | yes      |         |                                         | Classifier answer and stable ports.                                                                                      |
+| `context`            | { messages?, vars?, includeLastOutput? }             | no       | `{}`    | all but `messages`, `includeLastOutput` | Selected provider context.                                                                                               |
+| `recordAlternatives` | boolean                                              | no       | `true`  | yes                                     | Record classifier probability alternatives.                                                                              |
 
 ## Inferencing (`inference`)
 
@@ -199,9 +220,8 @@ Decides whether the loop is done, what it returns, where that goes, and whether 
 
 Ports: `loopBack`, only when configured.
 
-| Field      | Type                                                                                                           | Required | Default     | Description                                                                 |
-| ---------- | -------------------------------------------------------------------------------------------------------------- | -------- | ----------- | --------------------------------------------------------------------------- |
-| `criteria` | array of (one of `"max-iterations"` \| `"max-duration"` \| `"predicate"` \| `"last-output-matches"` by `when`) | no       | `[]`        | Evaluated in order; the first that matches decides the outcome.             |
-| `default`  | `"success"` \| `"loop-back"`                                                                                   | no       | `"success"` | What happens when no criterion matches.                                     |
-| `loopBack` | { targetNodeId }                                                                                               | no       |             | The node a loop-back returns to.                                            |
-| `return`   | { mapping?, channels? }                                                                                        | no       | `{}`        | JSONata mapping for the return payload and the channels it is delivered to. |
+| Field          | Type                                                                                      | Required | Default               | Description                                                                                          |
+| -------------- | ----------------------------------------------------------------------------------------- | -------- | --------------------- | ---------------------------------------------------------------------------------------------------- |
+| `outcome`      | `"success"` \| `"failure"` \| `"exhausted"`                                               | no       | `"success"`           | Terminal outcome; Exhausted produces run status exhausted and preserves the return value.            |
+| `returns`      | `"none"` \| string                                                                        | no       | `"none"`              | JSONata return mapping, or none. Gate decisions replace lastOutput; prefer outputs.<workNode>.value. |
+| `destinations` | array of (one of `"caller"` \| `"webhook"` \| `"file"` \| `"event"` \| `"log"` by `kind`) | no       | `[{"kind":"caller"}]` | Return destinations; caller by default. No delivery when returns is none.                            |

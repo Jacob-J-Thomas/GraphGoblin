@@ -1,9 +1,14 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { describe, expect, it } from 'vitest';
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
 import type { ChoiceResult } from '../ports.js';
 import { createTestEngine, singleNodeLoop } from '../testing/scenario.js';
 
 type DecisionInput = Extract<LoopDefinitionInput['nodes'][number], { kind: 'decision' }>['config'];
+type DecisionSettings =
+  | Omit<Extract<DecisionInput, { kind: 'expression' }>, 'routes'>
+  | Omit<Extract<DecisionInput, { kind: 'llm' }>, 'routes'>
+  | Omit<Extract<DecisionInput, { kind: 'classifier' }>, 'answer'>;
 const classifier = {
   kind: 'classifier',
   model: 'jev',
@@ -14,39 +19,48 @@ const llm = {
   harness: 'codex',
   model: { mode: 'inherit' },
   effort: { mode: 'inherit' },
-  question: 'Q',
+  instructions: 'Q',
 } as const;
 function decisionLoop(
   name: string,
-  evaluation: DecisionInput['evaluation'],
+  evaluation: DecisionSettings,
   recordAlternatives = true,
 ): LoopDefinitionInput {
   return {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name,
     nodes: [
-      { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+      { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
       {
         id: 'decide',
         kind: 'decision',
         label: 'Choose',
-        config: {
-          answer: {
-            type: 'choice',
-            options: [
-              { id: 'good', label: 'Good outcome', criteria: 'Acceptable' },
-              { id: 'bad', label: 'Bad outcome', criteria: 'Needs work' },
-            ],
-          },
-          evaluation,
-          recordAlternatives,
-        },
+        config:
+          evaluation.kind === 'classifier'
+            ? {
+                ...evaluation,
+                answer: {
+                  type: 'choice',
+                  options: [
+                    { id: 'good', label: 'Good outcome', criteria: 'Acceptable' },
+                    { id: 'bad', label: 'Bad outcome', criteria: 'Needs work' },
+                  ],
+                },
+                recordAlternatives,
+              }
+            : {
+                ...evaluation,
+                routes: [
+                  { id: 'good', label: 'Good outcome' },
+                  { id: 'bad', label: 'Bad outcome' },
+                ],
+              },
       },
       {
         id: 'done',
         kind: 'exit',
         label: 'Done',
-        config: { return: { mapping: 'outputs.decide.value.answer.optionId' } },
+        config: { returns: 'outputs.decide.value.portId' },
       },
     ],
     edges: [
@@ -78,7 +92,7 @@ describe('decision node', () => {
     expect(good.result).toBe('good');
     expect(bad.result).toBe('bad');
     const payload = {
-      answer: { type: 'choice', optionId: 'good', confidence: null, probabilities: null },
+      observation: { kind: 'route', routeId: 'good', confidence: null, reasoning: null },
       portId: 'good',
       provenance: {
         kind: 'expression',
@@ -94,7 +108,7 @@ describe('decision node', () => {
     });
     expect((await e.manager.getThread(good.id))?.outputs['decide']?.value).toEqual(payload);
     expect(e.ports.jev.choices).toEqual([]);
-    expect(e.ports.codexDecider.choices).toEqual([]);
+    expect(e.ports.codexDecider.routes).toEqual([]);
   });
   it.each(['true', '42', 'null', '[]', '{}', '"unknown"'])(
     'does not coerce expression result %s into a route',
@@ -128,7 +142,7 @@ describe('decision node', () => {
       { ownerId: 'local', modelId: 'jev', primitive: 'choice' },
     ]);
     expect(e.events(r.id).find((ev) => ev.type === 'decision.made')).toMatchObject({
-      answer: answer(),
+      observation: { kind: 'classifier', answer: answer() },
       portId: 'good',
       provenance: {
         kind: 'classifier',
@@ -214,7 +228,7 @@ describe('decision node', () => {
       e.publish(decisionLoop('low', { ...classifier, minConfidence: 0.5 })).loopId,
     );
     expect(r.failure).toMatchObject({ code: 'EVALUATION_RESULT_REJECTED', resumable: false });
-    expect(e.ports.codexDecider.choices).toEqual([]);
+    expect(e.ports.codexDecider.routes).toEqual([]);
     expect(e.eventTypes(r.id)).not.toContain('decision.made');
   });
   it('omits rejected Choice alternatives while retaining selected answer, confidence and gate', async () => {
@@ -228,7 +242,10 @@ describe('decision node', () => {
     expect(r.failure).toMatchObject({
       code: 'EVALUATION_RESULT_REJECTED',
       details: {
-        answer: { type: 'choice', optionId: 'bad', confidence: 0.3, probabilities: null },
+        observation: {
+          kind: 'classifier',
+          answer: { type: 'choice', optionId: 'bad', confidence: 0.3, probabilities: null },
+        },
         provenance: { kind: 'classifier', classifierId: 'jev' },
         acceptance: { status: 'rejected', minConfidence: 0.5 },
       },
@@ -236,7 +253,11 @@ describe('decision node', () => {
     expect(e.eventTypes(r.id)).not.toContain('decision.made');
     expect((await e.manager.getThread(r.id))?.outputs['decide']).toBeUndefined();
     const failed = e.events(r.id).find((event) => event.type === 'run.failed');
-    expect(failed).toMatchObject({ failure: { details: { answer: { probabilities: null } } } });
+    expect(failed).toMatchObject({
+      failure: {
+        details: { observation: { kind: 'classifier', answer: { probabilities: null } } },
+      },
+    });
   });
   it.each([
     answer('unknown'),
@@ -262,11 +283,11 @@ describe('decision node', () => {
       e.publish(decisionLoop('no-probabilities', classifier, false)).loopId,
     );
     expect(e.events(r.id).find((ev) => ev.type === 'decision.made')).toMatchObject({
-      answer: { probabilities: null },
+      observation: { kind: 'classifier', answer: { probabilities: null } },
       diagnostics: [],
     });
     expect((await e.manager.getThread(r.id))?.outputs['decide']?.value).toMatchObject({
-      answer: { probabilities: null },
+      observation: { kind: 'classifier', answer: { probabilities: null } },
     });
   });
   it('records resolved LLM provenance and keeps informational confidence separate from probability', async () => {
@@ -281,7 +302,7 @@ describe('decision node', () => {
       ).loopId,
     );
     expect(r.result).toBe('good');
-    expect(e.ports.codexDecider.choices[0]).toMatchObject({ model: 'gpt-6-sol', effort: 'xhigh' });
+    expect(e.ports.codexDecider.routes[0]).toMatchObject({ model: 'gpt-6-sol', effort: 'xhigh' });
     expect(e.events(r.id).find((ev) => ev.type === 'decision.made')).toMatchObject({
       provenance: {
         kind: 'llm',
@@ -290,14 +311,20 @@ describe('decision node', () => {
         model: 'gpt-6-sol',
         effort: 'xhigh',
       },
-      answer: { confidence: 1, probabilities: null },
+      observation: { kind: 'route', confidence: 1, reasoning: 'Selected' },
     });
   });
   it.each([answer(), answer('good', null, null)])(
     'rejects LLM evidence with classifier probabilities or absent confidence',
     async (value) => {
       const e = await createTestEngine();
-      e.ports.codexDecider.choose = () => Promise.resolve(value);
+      e.ports.codexDecider.route = () =>
+        Promise.resolve({
+          ...value,
+          route: value.optionId,
+          reasoning: 'Selected',
+          confidence: value.confidence ?? NaN,
+        });
       const r = await e.runToIdle(e.publish(decisionLoop('bad-llm', llm, false)).loopId);
       expect(r.failure?.code).toBe('EVALUATION_INVALID_RESPONSE');
     },
@@ -368,9 +395,13 @@ describe('decision node', () => {
               : llm,
         );
         const node = definition.nodes[1];
-        if (node?.kind !== 'decision' || node.config.answer.type !== 'choice')
-          throw new Error('Expected Choice decision');
-        node.config.answer.options = reverse ? [...options].reverse() : options;
+        if (node?.kind !== 'decision') throw new Error('Expected Choice decision');
+        if (node.config.kind === 'classifier' && node.config.answer.type === 'choice')
+          node.config.answer.options = reverse ? [...options].reverse() : options;
+        else if (node.config.kind !== 'classifier')
+          node.config.routes = (reverse ? [...options].reverse() : options).map(
+            ({ id, label }) => ({ id, label }),
+          );
         definition.edges = definition.edges.filter((edge) => edge.from.node !== 'decide');
         definition.edges.push(
           ...options.map((option) => ({
@@ -379,30 +410,38 @@ describe('decision node', () => {
             to: { node: 'done' },
           })),
         );
-        const decider = kind === 'classifier' ? e.ports.jev : e.ports.codexDecider;
-        decider.choose = (request) => {
-          decider.choices.push(request);
+        e.ports.jev.choose = (request) => {
+          e.ports.jev.choices.push(request);
           return Promise.resolve(
             answer(
               selectedId,
               1,
-              kind === 'classifier'
-                ? Object.fromEntries(
-                    request.options.map((option) => [option.id, option.id === selectedId ? 1 : 0]),
-                  )
-                : null,
+              Object.fromEntries(
+                request.options.map((option) => [option.id, option.id === selectedId ? 1 : 0]),
+              ),
             ),
           );
+        };
+        e.ports.codexDecider.route = (request) => {
+          e.ports.codexDecider.routes.push(request);
+          return Promise.resolve({ route: selectedId, confidence: 1, reasoning: 'Selected' });
         };
         const r = await e.runToIdle(e.publish(definition).loopId);
         expect(r.result).toBe(selectedId);
         expect(e.events(r.id).find((ev) => ev.type === 'decision.made')).toMatchObject({
           portId: selectedId,
-          answer: { optionId: selectedId },
+          observation:
+            kind === 'classifier'
+              ? { kind: 'classifier', answer: { optionId: selectedId } }
+              : { kind: 'route', routeId: selectedId },
         });
-        if (kind !== 'expression')
-          expect(decider.choices.at(-1)?.options.map((option) => option.id)).toEqual(
-            node.config.answer.options.map((option) => option.id),
+        if (kind === 'classifier')
+          expect(e.ports.jev.choices.at(-1)?.options.map((option) => option.id)).toEqual(
+            (reverse ? [...options].reverse() : options).map((option) => option.id),
+          );
+        if (kind === 'llm')
+          expect(e.ports.codexDecider.routes.at(-1)?.routes.map((route) => route.id)).toEqual(
+            (reverse ? [...options].reverse() : options).map((option) => option.id),
           );
       }
     },
@@ -411,7 +450,7 @@ describe('decision node', () => {
     'applies catalog admission inside the manager (%s)',
     async (problem) => {
       const e = await createTestEngine();
-      let evaluation: DecisionInput['evaluation'] = llm;
+      let evaluation: DecisionSettings = llm;
       if (problem === 'unknown')
         evaluation = { ...llm, model: { mode: 'explicit', value: 'unknown' } };
       if (problem === 'disabled') e.ports.modelCatalog.entries[0]!.enabled = false;
@@ -429,7 +468,7 @@ describe('decision node', () => {
         code: problem === 'effort' ? 'EVALUATION_INVALID_CONFIGURATION' : 'EVALUATION_UNAVAILABLE',
         resumable: problem !== 'effort',
       });
-      expect(e.ports.codexDecider.choices).toEqual([]);
+      expect(e.ports.codexDecider.routes).toEqual([]);
     },
   );
 });
@@ -629,10 +668,10 @@ describe('script node', () => {
   it('routes by exit code, ignores stdout when told, and fails on unmapped codes, timeouts, and missing secrets', async () => {
     const engine = await createTestEngine();
     const loop: LoopDefinitionInput = {
-      schemaVersion: 3,
+      schemaVersion: CURRENT_DEFINITION_FORMAT,
       name: 'codes',
       nodes: [
-        { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
+        { id: 'start', kind: 'trigger', label: 'S', config: { type: 'manual' } },
         {
           id: 'script',
           kind: 'script',
@@ -656,7 +695,7 @@ describe('script node', () => {
             ],
           },
         },
-        { id: 'done', kind: 'exit', label: 'D', config: { return: { mapping: 'vars' } } },
+        { id: 'done', kind: 'exit', label: 'D', config: { returns: 'vars' } },
       ],
       edges: [
         { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'script' } },
@@ -707,135 +746,7 @@ describe('script node', () => {
 });
 
 describe('exit node and return channels', () => {
-  it.each(['jev', 'codex'] as const)(
-    'sanitizes %s predicate failures and preserves cancellation',
-    async (strategy) => {
-      const engine = await createTestEngine();
-      const decider = strategy === 'jev' ? engine.ports.jev : engine.ports.codexDecider;
-      const marker = 'gg-private-predicate-error-regression';
-      decider[strategy === 'jev' ? 'classifyNoul' : 'noul'] = (): Promise<never> =>
-        Promise.reject(
-          Object.assign(new Error(marker), {
-            code: 'DECIDER_HTTP_ERROR',
-            name: 'JevError',
-            status: 400,
-          }),
-        );
-      const version = engine.publish(
-        singleNodeLoop(
-          'exit-error',
-          {
-            id: 'noop',
-            kind: 'mutate',
-            label: 'M',
-            config: { operations: [{ op: 'delete', path: '/vars/x' }] },
-          },
-          {
-            criteria: [
-              {
-                when: 'predicate',
-                answer: {
-                  type: 'noul',
-                  true: { label: 'Ready', criteria: 'Done' },
-                  false: { label: 'Continue', criteria: 'Not done' },
-                },
-                evaluation:
-                  strategy === 'jev'
-                    ? { kind: 'classifier', model: 'jev', question: 'Done?' }
-                    : {
-                        kind: 'llm',
-                        harness: 'codex',
-                        model: { mode: 'inherit' },
-                        effort: { mode: 'inherit' },
-                        question: 'Done?',
-                      },
-                match: { type: 'noul', value: true },
-                outcome: 'success',
-              },
-            ],
-          },
-        ),
-      );
-      const run = await engine.runToIdle(version.loopId);
-      expect(run.failure).toMatchObject({
-        code: 'EVALUATION_PROVIDER_FAILED',
-        message: 'Decision provider request failed',
-        details: {
-          code: 'DECIDER_HTTP_ERROR',
-          provenance: { kind: strategy === 'jev' ? 'classifier' : 'llm' },
-        },
-      });
-      expect(JSON.stringify([run, engine.events(run.id), engine.ports.logger.lines])).not.toContain(
-        marker,
-      );
-      expect(engine.ports.logger.lines).toContainEqual(
-        expect.objectContaining({
-          level: 'warn',
-          obj: expect.objectContaining({
-            name: 'JevError',
-            code: 'DECIDER_HTTP_ERROR',
-            status: 400,
-            kind: strategy === 'jev' ? 'classifier' : 'llm',
-          }),
-        }),
-      );
-      decider[strategy === 'jev' ? 'classifyNoul' : 'noul'] = (): Promise<never> =>
-        Promise.reject(new DOMException('aborted', 'AbortError'));
-      expect((await engine.runToIdle(version.loopId)).status).toBe('cancelled');
-    },
-  );
-  it('loops back until exhausted and reports the iteration count', async () => {
-    const engine = await createTestEngine();
-    const loop: LoopDefinitionInput = {
-      schemaVersion: 3,
-      name: 'loop',
-      settings: { maxIterations: 3 },
-      nodes: [
-        { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
-        {
-          id: 'count',
-          kind: 'mutate',
-          label: 'C',
-          config: {
-            operations: [
-              {
-                op: 'set',
-                path: '/vars/n',
-                value: { kind: 'expression', jsonata: '(vars.n ? vars.n : 0) + 1' },
-              },
-            ],
-          },
-        },
-        {
-          id: 'done',
-          kind: 'exit',
-          label: 'D',
-          config: {
-            default: 'loop-back',
-            loopBack: { targetNodeId: 'count' },
-            return: { mapping: 'vars.n' },
-          },
-        },
-      ],
-      edges: [
-        { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'count' } },
-        { id: 'e2', from: { node: 'count', port: 'out' }, to: { node: 'done' } },
-        { id: 'e3', from: { node: 'done', port: 'loopBack' }, to: { node: 'count' } },
-      ],
-    };
-    const version = engine.publish(loop);
-    const run = await engine.runToIdle(version.loopId);
-    expect(run.status).toBe('exhausted');
-    expect(run.outcome).toBe('exhausted');
-    expect(run.iteration).toBe(3);
-    expect(run.result).toBe(3);
-    expect(engine.eventTypes(run.id).filter((t) => t === 'iteration.incremented')).toHaveLength(2);
-    const thread = await engine.manager.getThread(run.id);
-    expect(thread?.run.iteration).toBe(3);
-    expect(thread?.counters.nodeVisits['count']).toBe(3);
-  });
-
-  it('finishes on a criterion and delivers to every channel, recording failures per channel', async () => {
+  it('finishes at a terminal exit and delivers to every channel, recording failures per channel', async () => {
     const engine = await createTestEngine({}, { secrets: { hook: 'hs' } });
     const version = engine.publish(
       singleNodeLoop(
@@ -851,27 +762,16 @@ describe('exit node and return channels', () => {
           },
         },
         {
-          criteria: [
-            {
-              when: 'predicate',
-              answer: { type: 'noul' },
-              evaluation: { kind: 'expression', jsonata: 'vars.answer = 42' },
-              match: { type: 'noul', value: true },
-              outcome: 'success',
-            },
+          returns: '{ "answer": vars.answer }',
+          destinations: [
+            { kind: 'caller' },
+            { kind: 'log' },
+            { kind: 'file', path: 'out/result.json' },
+            { kind: 'file', path: '/abs/result.md', format: 'markdown' },
+            { kind: 'file', path: 'plain.txt', format: 'text' },
+            { kind: 'webhook', url: 'https://example.test/hook', secretRef: 'hook' },
+            { kind: 'event', eventType: 'answer-ready' },
           ],
-          return: {
-            mapping: '{ "answer": vars.answer }',
-            channels: [
-              { kind: 'caller' },
-              { kind: 'log' },
-              { kind: 'file', path: 'out/result.json' },
-              { kind: 'file', path: '/abs/result.md', format: 'markdown' },
-              { kind: 'file', path: 'plain.txt', format: 'text' },
-              { kind: 'webhook', url: 'https://example.test/hook', secretRef: 'hook' },
-              { kind: 'event', eventType: 'answer-ready' },
-            ],
-          },
         },
       ),
     );
@@ -912,10 +812,8 @@ describe('exit node and return channels', () => {
           config: { operations: [{ op: 'delete', path: '/vars/x' }] },
         },
         {
-          return: {
-            mapping: 'vars',
-            channels: [{ kind: 'webhook', url: 'https://example.test/x' }],
-          },
+          returns: 'vars',
+          destinations: [{ kind: 'webhook', url: 'https://example.test/x' }],
         },
       ),
     );
@@ -940,53 +838,5 @@ describe('exit node and return channels', () => {
     });
     expect(quiet.result).toBeUndefined();
     expect(engine.ports.delivery.logged).toHaveLength(0);
-  });
-
-  it('evaluates Jev and Codex predicates through the deciders and fails when none is available', async () => {
-    const engine = await createTestEngine();
-    const version = engine.publish(
-      singleNodeLoop(
-        'pred',
-        {
-          id: 'noop',
-          kind: 'mutate',
-          label: 'M',
-          config: { operations: [{ op: 'delete', path: '/vars/x' }] },
-        },
-        {
-          criteria: [
-            {
-              when: 'predicate',
-              answer: {
-                type: 'noul',
-                true: { label: 'Ready', criteria: 'Done' },
-                false: { label: 'Continue', criteria: 'Not done' },
-              },
-              evaluation: {
-                kind: 'llm',
-                harness: 'codex',
-                model: { mode: 'inherit' },
-                effort: { mode: 'inherit' },
-                question: 'Done with {{ trigger.payload }}?',
-              },
-              match: { type: 'noul', value: true },
-              outcome: 'failure',
-            },
-          ],
-        },
-      ),
-    );
-    const run = await engine.runToIdle(version.loopId, 'task');
-    expect(run.status).toBe('failed');
-    expect(run.outcome).toBe('failure');
-    expect(engine.ports.codexDecider.nouls[0]).toMatchObject({
-      question: 'Done with task?',
-      model: 'gpt-6-luna',
-      effort: 'low',
-    });
-
-    engine.ports.deciders = [];
-    const none = await engine.runToIdle(version.loopId, 'task');
-    expect(none.failure?.code).toBe('EVALUATION_UNAVAILABLE');
   });
 });

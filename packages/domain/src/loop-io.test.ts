@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { describe, expect, it } from 'vitest';
 import { LoopDefinitionSchema } from '@graphgoblin/contracts';
 import { FIXTURE_TS, minimalLoop } from '@graphgoblin/contracts/testing';
@@ -40,6 +41,10 @@ describe('exportLoop / importLoop', () => {
             kind: 'decision',
             label: 'Choose',
             config: {
+              kind: 'classifier',
+              model,
+              question: '?',
+              context: {},
               answer: {
                 type: 'choice',
                 options: [
@@ -47,7 +52,6 @@ describe('exportLoop / importLoop', () => {
                   { id: 'no', label: 'no', criteria: 'No' },
                 ],
               },
-              evaluation: { kind: 'classifier', model, question: '?', context: {} },
             },
           },
           base.nodes[1],
@@ -66,7 +70,7 @@ describe('exportLoop / importLoop', () => {
     (field) => {
       const input = {
         format: 'graphgoblin-loop',
-        formatVersion: 3,
+        formatVersion: CURRENT_DEFINITION_FORMAT,
         exportedAt: FIXTURE_TS,
         loop: minimalLoop(),
         [field]: null,
@@ -86,7 +90,12 @@ describe('exportLoop / importLoop', () => {
   it.each([false, true])('rejects removed loop defaults with the field path (%j)', (envelope) => {
     const definition = { ...minimalLoop(), settings: { defaults: { harness: 'codex' } } };
     const input = envelope
-      ? { format: 'graphgoblin-loop', formatVersion: 3, exportedAt: FIXTURE_TS, loop: definition }
+      ? {
+          format: 'graphgoblin-loop',
+          formatVersion: CURRENT_DEFINITION_FORMAT,
+          exportedAt: FIXTURE_TS,
+          loop: definition,
+        }
       : definition;
     try {
       importLoop(input);

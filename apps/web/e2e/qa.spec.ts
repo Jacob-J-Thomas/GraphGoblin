@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 /**
  * Regression specs for the WP-D2 adversarial QA pass (docs/qa/2026-10-03-wp-d2.md). They drive
  * the built app against the in-process API; `control()` scripts the fake harness through the E2E
@@ -15,11 +16,11 @@ import {
   test,
 } from './fixtures.js';
 
-const start = { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } };
+const start = { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } };
 const done = { id: 'done', kind: 'exit', label: 'Done', config: {} };
 function chain(name: string, middle: Record<string, unknown> & { id: string }) {
   return {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name,
     nodes: [start, middle, done],
     edges: [
@@ -158,7 +159,7 @@ test('failure reasons are typed and visible: harness failure and decider unavail
   await control(request, '/deciders', { jev: true, codex: true });
   try {
     const decide = {
-      schemaVersion: 3,
+      schemaVersion: CURRENT_DEFINITION_FORMAT,
       name: 'qa decider',
       nodes: [
         start,
@@ -167,20 +168,21 @@ test('failure reasons are typed and visible: harness failure and decider unavail
           kind: 'decision',
           label: 'Pick',
           config: {
-            answer: {
-              type: 'choice',
-              options: [
-                { id: 'a', label: 'A', criteria: 'Choose A' },
-                { id: 'b', label: 'B', criteria: 'Choose B' },
-              ],
-            },
-            evaluation: {
-              kind: 'llm',
-              harness: 'codex',
-              model: { mode: 'inherit' },
-              effort: { mode: 'inherit' },
-              question: 'which?',
-            },
+            kind: 'llm',
+            harness: 'codex',
+            model: { mode: 'inherit' },
+            effort: { mode: 'inherit' },
+            instructions: 'which?',
+            routes: [
+              {
+                id: 'a',
+                label: 'A',
+              },
+              {
+                id: 'b',
+                label: 'B',
+              },
+            ],
           },
         },
         done,

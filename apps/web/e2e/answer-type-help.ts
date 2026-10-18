@@ -90,7 +90,8 @@ export async function checkAnswerTypeHelp(
     await expect(radio).toHaveAccessibleDescription(description.text);
   }
   // Hit the visible label, as users do: the hidden input receives focus only after the click.
-  // Every selection changes the answer; neither mouse clicks nor touch taps open its help.
+  // A selection first opens the conversion review. Confirm returns keyboard focus to the selected
+  // answer and its explanation; Escape dismisses that explanation without changing the answer.
   for (const label of ['Noul', 'Choice', 'Score']) {
     const previousValue = await group.locator('input:checked').inputValue();
     const radio = group.getByRole('radio', { name: label, exact: true });
@@ -98,9 +99,12 @@ export async function checkAnswerTypeHelp(
     const face = radio.locator('..').getByText(label, { exact: true });
     if (hasTouch) await face.tap();
     else await face.click();
+    await dialog.getByRole('button', { name: 'Confirm change', exact: true }).click();
     await expect(radio).toBeChecked();
     await expect(radio).toBeFocused();
     expect(await radio.inputValue()).not.toBe(previousValue);
+    await expect(popup).toBeVisible();
+    await page.keyboard.press('Escape');
     await expect(popup).toHaveCount(0);
     await expect(dialog).toBeVisible();
   }

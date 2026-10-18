@@ -15,7 +15,6 @@ export * from './mutations.js';
 export * from './graph.js';
 export * from './answers.js';
 export * from './syntax.js';
-export * from './exit.js';
 export * from './state-machine.js';
 export * from './loop-io.js';
 export * from './replay.js';
@@ -23,7 +22,12 @@ export * from './regex-safety.js';
 export * from './model-resolution.js';
 export * from './upgrade.js';
 export * from './upgrade-current.js';
-export * from './upgrade-history-current.js';
-export * from './upgrade-history.js';
+export {
+  upgradeLoopToV3,
+  upgradeExportToV3,
+  validateUpgradeV3Resolutions,
+  type UpgradeV3Resolutions,
+} from './upgrade-v2-v3.js';
+export * from './convert-v3-v4/index.js';
 
 export * from './poll-items.js';

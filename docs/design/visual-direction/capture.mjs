@@ -119,7 +119,7 @@ async function call(base, path, method = 'GET', body) {
   return res.status === 204 ? undefined : res.json();
 }
 
-const trigger = { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } };
+const trigger = { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } };
 const done = (x, y) => ({ id: 'done', kind: 'exit', label: 'Done', config: {}, ui: { x, y } });
 
 function chain(name, description, middle) {
@@ -149,7 +149,7 @@ function nightlyTriage(childLoopId) {
     name: 'nightly-triage',
     description: 'Triages new issues every night and opens a fix when one is needed',
     nodes: [
-      n('nightly', 'trigger', 'Nightly', { subtype: 'manual' }, 0, 0),
+      n('nightly', 'trigger', 'Nightly', { type: 'manual' }, 0, 0),
       n(
         'triage',
         'inference',

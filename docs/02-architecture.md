@@ -79,23 +79,24 @@ Post-1.0 packages: `adapter-claude`, `adapter-litellm`, `adapter-postgres`, `app
 
 ## Ports owned by the engine (Draft)
 
-| Port                            | Responsibility                                                             | 1.0 implementation                                                |
-| ------------------------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| `HarnessPort`                   | Start, resume, stream, and cancel a harness session                        | `adapter-codex`                                                   |
-| `DeciderPort`                   | Answer a typed choice or yes/no question with confidence                   | `adapter-jev`, Codex-backed decider over `StructuredPort`         |
-| `StructuredPort`                | One schema-shaped completion: used for schema repair and Codex decisions   | `adapter-codex` (a read-only Codex thread)                        |
-| `ScriptPort`                    | Run a process with stdin, capture stdout and exit code, kill on cancel     | `infrastructure/process` over `node:child_process` with tree kill |
-| `EventStorePort`                | Append and read run events by sequence; notify live subscribers            | `infrastructure/sqlite`                                           |
-| `RunRepository`                 | Runs, thread snapshots, and compare-and-set status transitions             | `infrastructure/sqlite`                                           |
-| `LoopRepository`                | Loop versions by id, latest published, pinned version                      | `infrastructure/sqlite`                                           |
-| `HarnessSessionRepository`      | Session ids per run, node, and attempt; named session scopes               | `infrastructure/sqlite`                                           |
-| `WorkspacePort`                 | Resolve a run's working directory; write context files; write file returns | `infrastructure/fs`                                               |
-| `ArtifactStorePort`             | Store transcripts and other large payloads by reference                    | `infrastructure/fs`                                               |
-| `SecretsPort`                   | Resolve named secrets                                                      | `infrastructure/sqlite` plus `node:crypto`                        |
-| `ClockPort`, `IdPort`, `Logger` | Time, ULIDs, structured logging                                            | real and fake                                                     |
-| `TimerPort`                     | Schedule a wake-up for a run at a time; survives restart                   | `infrastructure/scheduler`                                        |
-| `HttpProbePort`                 | HTTP requests for heartbeat and poll probes                                | `infrastructure/http`                                             |
-| `ReturnDeliveryPort`            | Outbound webhooks, internal event bus, log sink for return channels        | `infrastructure/http` plus the API's event bus                    |
+| Port                                       | Responsibility                                                             | 1.0 implementation                                                |
+| ------------------------------------------ | -------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| `HarnessPort`                              | Start, resume, stream, and cancel a harness session                        | `adapter-codex`                                                   |
+| `DeciderPort`                              | Checked route or boolean completion, with resolved Codex model and effort  | `adapter-codex` over `StructuredPort`                             |
+| `ClassifierPort`, `ClassifierRegistryPort` | Choice, Noul and Score requests; owner catalog resolution                  | `adapter-jev`, `infrastructure/http`                              |
+| `StructuredPort`                           | One schema-shaped completion: used for schema repair and Codex decisions   | `adapter-codex` (a read-only Codex thread)                        |
+| `ScriptPort`                               | Run a process with stdin, capture stdout and exit code, kill on cancel     | `infrastructure/process` over `node:child_process` with tree kill |
+| `EventStorePort`                           | Append and read run events by sequence; notify live subscribers            | `infrastructure/sqlite`                                           |
+| `RunRepository`                            | Runs, thread snapshots, and compare-and-set status transitions             | `infrastructure/sqlite`                                           |
+| `LoopRepository`                           | Loop versions by id, latest published, pinned version                      | `infrastructure/sqlite`                                           |
+| `HarnessSessionRepository`                 | Session ids per run, node, and attempt; named session scopes               | `infrastructure/sqlite`                                           |
+| `WorkspacePort`                            | Resolve a run's working directory; write context files; write file returns | `infrastructure/fs`                                               |
+| `ArtifactStorePort`                        | Store transcripts and other large payloads by reference                    | `infrastructure/fs`                                               |
+| `SecretsPort`                              | Resolve named secrets                                                      | `infrastructure/sqlite` plus `node:crypto`                        |
+| `ClockPort`, `IdPort`, `Logger`            | Time, ULIDs, structured logging                                            | real and fake                                                     |
+| `TimerPort`                                | Schedule a wake-up for a run at a time; survives restart                   | `infrastructure/scheduler`                                        |
+| `HttpProbePort`                            | HTTP requests for heartbeat and poll probes                                | `infrastructure/http`                                             |
+| `ReturnDeliveryPort`                       | Outbound webhooks, internal event bus, log sink for return channels        | `infrastructure/http` plus the API's event bus                    |
 
 Persisted timers are not an engine port. The scheduler folder defines its own `TimerStore` interface and `SqliteTimerStore` in the sqlite folder satisfies it structurally; both live in one package, so nothing in the engine has to connect them.
 

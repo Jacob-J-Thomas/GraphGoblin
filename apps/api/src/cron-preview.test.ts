@@ -91,7 +91,7 @@ describe('cron preview endpoint', () => {
         id: 'start',
         kind: 'trigger',
         label: 'Start',
-        config: { subtype: 'cron', expression, timezone },
+        config: { type: 'cron', expression, timezone },
       };
       const created = await t.app.inject({
         method: 'POST',

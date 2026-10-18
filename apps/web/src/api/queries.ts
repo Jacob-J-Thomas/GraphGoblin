@@ -29,7 +29,6 @@ export type HarnessPreflightItem = z.infer<typeof HarnessPreflightItemSchema>;
 export const keys = {
   loops: ['loops'] as const,
   templates: ['templates'] as const,
-  templateInstance: (id: string) => ['template-instances', id] as const,
   loop: (id: string) => ['loops', id] as const,
   /** Under the loop's key, so invalidating the loop (after a publish) refetches them too. */
   versions: (id: string) => ['loops', id, 'versions'] as const,
@@ -66,15 +65,6 @@ export function useTemplates() {
   return useQuery({ queryKey: keys.templates, queryFn: () => templates.list(client) });
 }
 
-export function useTemplateInstance(id: string) {
-  const client = useApi();
-  return useQuery({
-    queryKey: keys.templateInstance(id),
-    queryFn: () => templates.instance(client, id),
-    enabled: id.length > 0,
-  });
-}
-
 export function useCreateTemplateDraft() {
   const client = useApi();
   return useMutation({
@@ -83,9 +73,13 @@ export function useCreateTemplateDraft() {
   });
 }
 
-export function useLoop(id: string) {
+export function useLoop(id: string, refetchOnMount: boolean | 'always' = true) {
   const client = useApi();
-  return useQuery({ queryKey: keys.loop(id), queryFn: () => loops.get(client, id) });
+  return useQuery({
+    queryKey: keys.loop(id),
+    queryFn: () => loops.get(client, id),
+    refetchOnMount,
+  });
 }
 
 export function useLoopVersions(id: string) {

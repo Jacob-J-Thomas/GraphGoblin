@@ -129,21 +129,21 @@ describe.skipIf(!live)('Codex live smoke', () => {
   );
 
   it('makes a canonical structured Choice with stable ids', async () => {
-    const result = await decider.choose(
+    const result = await decider.route(
       {
         model: 'gpt-6-luna',
         effort: 'low',
-        question: 'Choose the option whose criterion exactly matches context.status.',
-        options: [
-          { id: 'ready', label: '1', criteria: 'The context status is exactly READY' },
-          { id: 'revise', label: '2', criteria: 'The context status is exactly NEEDS_WORK' },
+        instructions: 'Choose ready for READY status; otherwise choose revise.',
+        routes: [
+          { id: 'ready', label: 'Ready' },
+          { id: 'revise', label: 'Needs work' },
         ],
         context: { status: 'READY' },
       },
       new AbortController().signal,
     );
-    expect(result).toMatchObject({ type: 'choice', optionId: 'ready', probabilities: null });
-    expect(Object.keys(result).sort()).toEqual(['confidence', 'optionId', 'probabilities', 'type']);
+    expect(result).toMatchObject({ route: 'ready' });
+    expect(Object.keys(result).sort()).toEqual(['confidence', 'reasoning', 'route']);
     expect(typeof result.confidence).toBe('number');
     expect(Number.isFinite(result.confidence)).toBe(true);
     expect(result.confidence).toBeGreaterThanOrEqual(0);

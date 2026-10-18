@@ -11,31 +11,17 @@ export async function classifierIssues(
   const issues: LoopIssue[] = [];
   for (const node of definition.nodes) {
     const selections =
-      node.kind === 'decision' && node.config.evaluation.kind === 'classifier'
+      node.kind === 'decision' && node.config.kind === 'classifier'
         ? [
             {
-              id: node.config.evaluation.model,
+              id: node.config.model,
               primitive: node.config.answer.type,
-              path: 'config.evaluation.model',
+              path: 'config.model',
               kind: 'Decision',
               unavailable: 'This evaluation is unavailable; publication is blocked.',
             },
           ]
-        : node.kind === 'exit'
-          ? node.config.criteria.flatMap((criterion, index) =>
-              criterion.when === 'predicate' && criterion.evaluation.kind === 'classifier'
-                ? [
-                    {
-                      id: criterion.evaluation.model,
-                      primitive: criterion.answer.type,
-                      path: 'config.criteria.' + index + '.evaluation.model',
-                      kind: 'Exit',
-                      unavailable: 'This evaluation is unavailable; publication is blocked.',
-                    },
-                  ]
-                : [],
-            )
-          : [];
+        : [];
     for (const { id, primitive, path, kind, unavailable } of selections) {
       const entry = entries.find((model) => model.id === id);
       const prefix =

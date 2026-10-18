@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "name": "every-field",
   "description": "Every config field of every node kind, for parse checks.",
   "settings": {
@@ -15,7 +15,7 @@
         }
       }
     },
-    "maxIterations": 7,
+    "maxNodeVisits": 7,
     "subloopDepthLimit": 4
   },
   "variables": {
@@ -36,7 +36,7 @@
       },
       "kind": "trigger",
       "config": {
-        "subtype": "manual",
+        "type": "manual",
         "inputSchema": {
           "type": "object"
         },
@@ -55,7 +55,7 @@
       },
       "kind": "trigger",
       "config": {
-        "subtype": "cron",
+        "type": "cron",
         "expression": "*/5 * * * *",
         "timezone": "Europe/Paris",
         "missedFirePolicy": "run-each",
@@ -71,15 +71,22 @@
       },
       "kind": "trigger",
       "config": {
-        "subtype": "webhook",
-        "signature": {
-          "scheme": "hmac-sha256",
+        "type": "webhook",
+        "authentication": {
+          "type": "hmac-sha256",
+          "message": "timestamp-body",
           "header": "x-sig",
-          "secretRef": "hook-secret"
+          "secretRef": "hook-secret",
+          "windowSeconds": 120
         },
-        "replayWindowSeconds": 120,
-        "dedupeKey": "payload.id",
-        "filter": "payload.action = \"opened\""
+        "body": {
+          "type": "json"
+        },
+        "eventType": {
+          "source": "constant",
+          "value": "webhook"
+        },
+        "dedupeKey": "payload.id"
       }
     },
     {
@@ -91,9 +98,8 @@
       },
       "kind": "trigger",
       "config": {
-        "subtype": "event",
+        "type": "event",
         "eventType": "build-done",
-        "filter": "payload.ok",
         "dedupeKey": "payload.id"
       }
     },
@@ -106,7 +112,7 @@
       },
       "kind": "trigger",
       "config": {
-        "subtype": "poll",
+        "type": "poll",
         "intervalSeconds": 30,
         "probe": {
           "kind": "http",
@@ -132,14 +138,21 @@
       },
       "kind": "trigger",
       "config": {
-        "subtype": "webhook",
-        "signature": {
-          "scheme": "hmac-sha256-body",
+        "type": "webhook",
+        "authentication": {
+          "type": "hmac-sha256",
+          "message": "body",
           "header": "x-hub-signature-256",
           "secretRef": "github-secret"
         },
-        "dedupeKey": "issue.number",
-        "filter": "action = \"opened\""
+        "body": {
+          "type": "json"
+        },
+        "eventType": {
+          "source": "constant",
+          "value": "webhook"
+        },
+        "dedupeKey": "issue.number"
       }
     },
     {
@@ -151,7 +164,7 @@
       },
       "kind": "trigger",
       "config": {
-        "subtype": "poll",
+        "type": "poll",
         "intervalSeconds": 30,
         "probe": {
           "kind": "script",
@@ -171,6 +184,72 @@
       }
     },
     {
+      "id": "expression-decision",
+      "label": "Expression",
+      "ui": {
+        "x": 0,
+        "y": 0
+      },
+      "kind": "decision",
+      "config": {
+        "kind": "expression",
+        "jsonata": "\"good\"",
+        "maxPasses": 7,
+        "maxRunTimeSeconds": 3600,
+        "routes": [
+          {
+            "id": "good",
+            "label": "Good"
+          },
+          {
+            "id": "bad",
+            "label": "Bad",
+            "repeat": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "classifier-decision",
+      "label": "Classifier",
+      "ui": {
+        "x": 0,
+        "y": 0
+      },
+      "kind": "decision",
+      "config": {
+        "kind": "classifier",
+        "model": "jev",
+        "question": "Choose",
+        "minConfidence": 0.5,
+        "truthThreshold": 0.7,
+        "maxPasses": 7,
+        "maxRunTimeSeconds": 3600,
+        "answer": {
+          "type": "noul",
+          "true": {
+            "id": "good",
+            "label": "Good",
+            "criteria": "Pass"
+          },
+          "false": {
+            "id": "bad",
+            "label": "Bad",
+            "repeat": true,
+            "criteria": "Fail"
+          }
+        },
+        "context": {
+          "messages": "all",
+          "vars": [
+            "topic"
+          ],
+          "includeLastOutput": true
+        },
+        "recordAlternatives": false
+      }
+    },
+    {
       "id": "decide",
       "label": "Decide",
       "ui": {
@@ -179,42 +258,37 @@
       },
       "kind": "decision",
       "config": {
-        "answer": {
-          "type": "choice",
-          "options": [
-            {
-              "id": "good",
-              "label": "good",
-              "criteria": "Looks good"
-            },
-            {
-              "id": "bad",
-              "label": "bad",
-              "criteria": "Needs work"
-            }
-          ]
+        "kind": "llm",
+        "instructions": "Is {{ vars.topic }} done?",
+        "harness": "codex",
+        "model": {
+          "mode": "explicit",
+          "value": "gpt-6-sol"
         },
-        "evaluation": {
-          "kind": "llm",
-          "harness": "codex",
-          "model": {
-            "mode": "explicit",
-            "value": "gpt-6-sol"
+        "effort": {
+          "mode": "explicit",
+          "value": "high"
+        },
+        "maxPasses": 7,
+        "maxRunTimeSeconds": 3600,
+        "routes": [
+          {
+            "id": "good",
+            "label": "good"
           },
-          "effort": {
-            "mode": "explicit",
-            "value": "high"
-          },
-          "question": "Is {{ vars.topic }} done?",
-          "context": {
-            "messages": 3,
-            "vars": [
-              "topic"
-            ],
-            "includeLastOutput": false
+          {
+            "id": "bad",
+            "label": "bad",
+            "repeat": true
           }
-        },
-        "recordAlternatives": false
+        ],
+        "context": {
+          "messages": 3,
+          "vars": [
+            "topic"
+          ],
+          "includeLastOutput": false
+        }
       }
     },
     {
@@ -621,94 +695,30 @@
       },
       "kind": "exit",
       "config": {
-        "criteria": [
+        "outcome": "success",
+        "returns": "{ \"topic\": vars.topic }",
+        "destinations": [
           {
-            "when": "max-iterations",
-            "value": 5,
-            "outcome": "exhausted"
+            "kind": "caller"
           },
           {
-            "when": "max-duration",
-            "seconds": 3600,
-            "outcome": "exhausted"
+            "kind": "webhook",
+            "url": "https://example.test/done",
+            "secretRef": "hook-secret"
           },
           {
-            "when": "predicate",
-            "answer": {
-              "type": "noul",
-              "true": {
-                "label": "Done",
-                "criteria": "Complete"
-              },
-              "false": {
-                "label": "Pending",
-                "criteria": "Incomplete"
-              }
-            },
-            "evaluation": {
-              "kind": "classifier",
-              "model": "jev",
-              "question": "Done?",
-              "minConfidence": 0.5
-            },
-            "match": {
-              "type": "noul",
-              "value": true
-            },
-            "outcome": "success"
+            "kind": "file",
+            "path": "out/result.md",
+            "format": "markdown"
           },
           {
-            "when": "predicate",
-            "answer": {
-              "type": "noul"
-            },
-            "evaluation": {
-              "kind": "expression",
-              "jsonata": "false"
-            },
-            "match": {
-              "type": "noul",
-              "value": true
-            },
-            "outcome": "failure"
+            "kind": "event",
+            "eventType": "loop-done"
           },
           {
-            "when": "last-output-matches",
-            "jsonSchema": {
-              "type": "object"
-            },
-            "outcome": "success"
+            "kind": "log"
           }
-        ],
-        "default": "loop-back",
-        "loopBack": {
-          "targetNodeId": "infer"
-        },
-        "return": {
-          "mapping": "{ \"topic\": vars.topic }",
-          "channels": [
-            {
-              "kind": "caller"
-            },
-            {
-              "kind": "webhook",
-              "url": "https://example.test/done",
-              "secretRef": "hook-secret"
-            },
-            {
-              "kind": "file",
-              "path": "out/result.md",
-              "format": "markdown"
-            },
-            {
-              "kind": "event",
-              "eventType": "loop-done"
-            },
-            {
-              "kind": "log"
-            }
-          ]
-        }
+        ]
       }
     }
   ],

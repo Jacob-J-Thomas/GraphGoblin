@@ -1,4 +1,4 @@
-import type { RunEvent } from '@graphgoblin/contracts';
+import { CURRENT_DEFINITION_FORMAT, type RunEvent } from '@graphgoblin/contracts';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
@@ -69,9 +69,14 @@ export const useRunEventStore = create<RunEventStoreState>()(
         }),
     }),
     {
-      // Canonical decision evidence replaces the older v2 decision payload; replay these logs.
-      name: 'graphgoblin-run-events-v3',
-      storage: createJSONStorage(() => quotaSafeSessionStorage),
+      name: `graphgoblin-run-events-v${CURRENT_DEFINITION_FORMAT}`,
+      storage: createJSONStorage(() => {
+        // Once at module initialisation, before hydration. Never read old events or cursors.
+        for (const version of [1, 2, 3])
+          sessionStorage.removeItem(`graphgoblin-run-events-v${version}`);
+        sessionStorage.removeItem('graphgoblin-run-events');
+        return quotaSafeSessionStorage;
+      }),
       partialize: (state) => ({ runs: state.runs }),
     },
   ),

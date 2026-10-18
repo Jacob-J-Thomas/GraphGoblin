@@ -206,7 +206,7 @@ M8 notes (WP-F2, packaging and the last product fixes, 2026-10-03):
 - **Install scripts** (task 1): `scripts/install.ps1` and `scripts/install.sh` check prerequisites, install, build, create the data directory, run the preflight, and print how to start; tested on Windows 11 with Windows PowerShell 5.1 and Git Bash. `pnpm start` at the root runs the built API, which now defaults `GG_DATA_DIR` to `~/.graphgoblin` and serves the checkout's `apps/web/dist` when `GG_WEB_DIST` is unset.
 - **First API key** (D27, question 18): `graphgoblin-api --create-api-key <name> [--scopes a,b]` prints a new key once without starting the server.
 - **Draft conflicts** (D26, question 17): `If-Match` with the draft's `draftToken` on `PUT /loops/{id}/draft`, 409 `DRAFT_CONFLICT`, and a reload-or-overwrite choice in the editor.
-- **Visit cap** (D28, question 16): `maxIterations` also caps fresh visits per node; a cycle outside an exit loop-back fails with `MAX_ITERATIONS`.
+- **Visit cap** (D28, question 16; updated by [ADR-0036](decisions/ADR-0036-decision-gates-terminal-exits.md)): `maxNodeVisits` caps fresh visits per node and fails with `MAX_NODE_VISITS`. Intentional repetition uses decision gates; the retired iteration failure code is absent from current contracts.
 - **User guide**: the "Coming in 1.0" callouts are replaced by documentation; what remains is marked "After 1.0". The cron latest-slot and read-scope callouts were replaced with documentation once WP-G, which implemented both, was merged.
 - Decisions for questions 16 to 18 are ADR-0015. The release notes are `CHANGELOG.md`. The 1.0 tag follows the final sign-off.
 
@@ -272,3 +272,11 @@ Residual risks:
 - The Jev live check is open.
 - `run.queued.initialThread` has no size cap beyond the request body limits.
 - The product gaps and the cosmetic defects D29 and D30 listed above.
+
+## Format-4 server-store cutover (#164 steps 26 and 28)
+
+The owner decision of 2026-10-17 is recorded in [ADR-0039](decisions/ADR-0039-format-four-definitions-only-cutover.md): keep and convert ordinary definitions, delete run history and artifacts, and retire configured templates and their definitions. This supersedes the full-history conversion, archives, replay maps and failed-run manifest portions of the #164 plan; earlier ADR text is preserved.
+
+The offline tool locks a stopped data directory and inspects every published version and draft using the composed asynchronous 1/2/3?4 converter. Per-version/draft resolutions use `v1`/`v2`/`v3` namespaces. Reports include counts, pending/invalid issues and exact review hashes, ordinary active-run/pending-receipt blockers, poll/cron disarms and a source/SQL/resolution/artifact-bound plan hash. Apply verifies a complete independent backup before mutation and rechecks the database plan under one write transaction. History/template deletion, SQL 0012/0013, definition/default rewrites, disabling schedules, completion marker and head verification commit together. Artifact cleanup and readback follow commit; a cleanup failure reports that committed state and the recovery backup.
+
+Acceptance uses populated format-3 fixtures from shipped migrations/frozen definitions, both webhook signing schemes, templates, ordinary terminal history, drafts, settings and secrets. It proves refusals, rollback after structural SQL and rewrites, no-op current stores, complete internal/external WAL backups, startup migration admission, restore and re-upgrade without starting servers. The owner must stop the installed instance, settle ordinary blockers, review every pending item, run the documented inspect/apply commands, start the rebuilt backend/web, and deliberately re-arm polls/crons. Installation and actual-instance rehearsal remain owner actions. See [Offline upgrade](guide/08-offline-upgrade.md).

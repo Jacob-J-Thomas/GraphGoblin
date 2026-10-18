@@ -1,21 +1,18 @@
 import type {
-  ChoiceRequest,
-  ChoiceResult,
   DeciderPort,
-  LlmNoulResult,
-  NoulRequest,
+  LlmRouteRequest,
+  LlmRouteResult,
   StructuredPort,
-  PrimitiveRequest,
 } from '@graphgoblin/engine';
 
 /**
  * `DeciderPort` (`id: 'codex'`) over a structured Codex completion. Schemas follow OpenAI's strict
  * structured-output rules (every property required, `additionalProperties: false`), so numeric
- * bounds are validated locally for Choice and Noul.
+ * bounds are validated locally for routes.
  */
 
-/** Convert trusted harness error categories at the Choice boundary; never retain provider text. */
-function choiceFailure(error: unknown, primitive = 'Choice'): unknown {
+/** Convert trusted harness error categories at the structured completion boundary; never retain provider text. */
+function completionFailure(error: unknown): unknown {
   if (typeof error !== 'object' || error === null || !('code' in error)) return error;
   const code = error.code;
   const mapping: Record<string, string> = {
@@ -32,7 +29,7 @@ function choiceFailure(error: unknown, primitive = 'Choice'): unknown {
           : 'DECIDER_HTTP_ERROR'
         : undefined;
   return selected
-    ? Object.assign(new Error(`Codex ${primitive} completion failed`), { code: selected })
+    ? Object.assign(new Error('Codex route completion failed'), { code: selected })
     : error;
 }
 
@@ -40,47 +37,22 @@ function contextBlock(context: unknown): string {
   return JSON.stringify(context ?? null, null, 2);
 }
 
-export function choicePrompt(request: ChoiceRequest): string {
-  const routes = request.options.map((o) => `- ${o.id} (${o.label}): ${o.criteria}`).join('\n');
+export function routePrompt(request: LlmRouteRequest): string {
   return [
-    'You are the routing step of an automated workflow. Choose exactly one route.',
+    'You are the routing step of an automated workflow. Choose exactly one declared route.',
     '',
-    `Question: ${request.question}`,
+    request.instructions,
     '',
     'Routes:',
-    routes,
+    ...request.routes.map((route) => `- ${route.id}: ${route.label}`),
     '',
     'Context (JSON):',
     contextBlock(request.context),
     '',
-    'Do not run commands or change files. Answer with the chosen stable route id, your confidence between 0 and 1, and one or two sentences of reasoning.',
+    'Do not run commands or change files. Return the route id, confidence between 0 and 1, and short reasoning.',
   ].join('\n');
 }
-
-function verificationPrompt(request: PrimitiveRequest): string {
-  return [
-    'You are a verification step of an automated workflow. Answer the yes-or-no question.',
-    '',
-    `Question: ${request.question}`,
-    '',
-    'Context (JSON):',
-    contextBlock(request.context),
-    '',
-    'Do not run commands or change files. Answer with holds (true for yes, false for no), your confidence between 0 and 1, and one or two sentences of reasoning.',
-  ].join('\n');
-}
-
-export function noulPrompt(request: NoulRequest): string {
-  return [
-    verificationPrompt(request),
-    '',
-    'Authored sides:',
-    `- true: ${request.criteria.true}`,
-    `- false: ${request.criteria.false}`,
-  ].join('\n');
-}
-
-export function choiceSchema(labels: string[]): Record<string, unknown> {
+export function routeSchema(labels: string[]): Record<string, unknown> {
   return {
     type: 'object',
     properties: {
@@ -92,17 +64,6 @@ export function choiceSchema(labels: string[]): Record<string, unknown> {
     additionalProperties: false,
   };
 }
-
-export const NOUL_SCHEMA: Record<string, unknown> = {
-  type: 'object',
-  properties: {
-    holds: { type: 'boolean' },
-    confidence: { type: 'number' },
-    reasoning: { type: 'string' },
-  },
-  required: ['holds', 'confidence', 'reasoning'],
-  additionalProperties: false,
-};
 
 function asRecord(value: unknown, what: string): Record<string, unknown> {
   if (value && typeof value === 'object' && !Array.isArray(value)) {
@@ -123,22 +84,24 @@ export class CodexDecider implements DeciderPort {
     return true;
   }
 
-  async choose(request: ChoiceRequest, signal: AbortSignal): Promise<ChoiceResult> {
-    const labels = request.options.map((o) => o.id);
+  async route(request: LlmRouteRequest, signal: AbortSignal): Promise<LlmRouteResult> {
+    signal.throwIfAborted();
+    const labels = request.routes.map((o) => o.id);
     const { value } = await this.structured
       .complete(
         {
-          prompt: choicePrompt(request),
-          schema: choiceSchema(labels),
-          ...(request.model ? { model: request.model } : {}),
-          ...(request.effort ? { effort: request.effort } : {}),
+          prompt: routePrompt(request),
+          schema: routeSchema(labels),
+          model: request.model,
+          effort: request.effort,
         },
         signal,
       )
       .catch((error: unknown) => {
-        throw choiceFailure(error);
+        throw completionFailure(error);
       });
-    const answer = asRecord(value, 'choice');
+    signal.throwIfAborted();
+    const answer = asRecord(value, 'route');
     if (
       Object.keys(answer).length !== 3 ||
       !Object.keys(answer).every((key) => ['route', 'confidence', 'reasoning'].includes(key)) ||
@@ -150,50 +113,12 @@ export class CodexDecider implements DeciderPort {
       answer.confidence > 1 ||
       typeof answer.reasoning !== 'string'
     ) {
-      throw Object.assign(new Error('Codex choice returned an invalid structured answer'), {
+      throw Object.assign(new Error('Codex route returned an invalid structured answer'), {
         code: 'DECIDER_INVALID_RESPONSE',
       });
     }
     return {
-      type: 'choice',
-      optionId: answer.route,
-      confidence: answer.confidence,
-      probabilities: null,
-    };
-  }
-
-  async noul(request: NoulRequest, signal: AbortSignal): Promise<LlmNoulResult> {
-    signal.throwIfAborted();
-    const { value } = await this.structured
-      .complete(
-        {
-          prompt: noulPrompt(request),
-          schema: NOUL_SCHEMA,
-          ...(request.model ? { model: request.model } : {}),
-          ...(request.effort ? { effort: request.effort } : {}),
-        },
-        signal,
-      )
-      .catch((error: unknown) => {
-        throw choiceFailure(error, 'Noul');
-      });
-    const answer = asRecord(value, 'Noul');
-    if (
-      Object.keys(answer).length !== 3 ||
-      !Object.keys(answer).every((key) => ['holds', 'confidence', 'reasoning'].includes(key)) ||
-      typeof answer.holds !== 'boolean' ||
-      typeof answer.confidence !== 'number' ||
-      !Number.isFinite(answer.confidence) ||
-      answer.confidence < 0 ||
-      answer.confidence > 1 ||
-      typeof answer.reasoning !== 'string'
-    )
-      throw Object.assign(new Error('Codex Noul returned an invalid structured answer'), {
-        code: 'DECIDER_INVALID_RESPONSE',
-      });
-    return {
-      type: 'noul',
-      holds: answer.holds,
+      route: answer.route,
       confidence: answer.confidence,
       reasoning: answer.reasoning.slice(0, 2048),
     };

@@ -1,23 +1,30 @@
-import { useEffect, useRef, useState } from 'react';
-import { upgradeLoopCurrent, type UpgradeIssue } from '@graphgoblin/domain';
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { UpgradeIssue } from '@graphgoblin/domain';
 import { useLoop } from '../api/queries.js';
 import {
+  cachedLocalDraft,
   clearArchivedDraft,
   clearActiveLocalDraft,
   clearSetAsideDraft,
   loadArchivedDrafts,
   loadLocalDraft,
   loadSetAsideDraft,
+  rememberLocalDraft,
   saveArchivedDraft,
   saveLocalDraft,
   saveSetAsideDraft,
+  UNRECONCILED_DEVICE_TOKEN,
   type LocalDraft,
 } from '../drafts/local-drafts.js';
-import { useEditorStore } from './store.js';
+import { useEditorStore, type EditorState } from './store.js';
+import { loadDeviceUpgrader } from './load-device-upgrader.js';
+import { errorMessage, isOfflineError } from '../lib/utils.js';
 
 interface DeviceDraftRead {
   draft?: LocalDraft;
   unconvertible?: LocalDraft & { migrationIssues: UpgradeIssue[] };
+  loadFailed?: true;
 }
 
 export interface RawDeviceCopy extends LocalDraft {
@@ -26,7 +33,7 @@ export interface RawDeviceCopy extends LocalDraft {
 }
 
 /** Current editor drafts may be incomplete; only older formats need the explicit cutover. */
-function readDeviceDraft(draft: LocalDraft | undefined): DeviceDraftRead {
+async function readDeviceDraft(draft: LocalDraft | undefined): Promise<DeviceDraftRead> {
   if (!draft) return {};
   const definition = draft.definition as unknown;
   const current = { ...draft };
@@ -37,12 +44,70 @@ function readDeviceDraft(draft: LocalDraft | undefined): DeviceDraftRead {
     typeof definition === 'object' &&
     definition !== null &&
     'schemaVersion' in definition &&
-    definition.schemaVersion === 3
+    definition.schemaVersion === CURRENT_DEFINITION_FORMAT
   )
     return { draft: current };
-  const result = upgradeLoopCurrent(definition);
+  let upgradeLoopCurrent: Awaited<ReturnType<typeof loadDeviceUpgrader>>['upgradeLoopCurrent'];
+  try {
+    ({ upgradeLoopCurrent } = await loadDeviceUpgrader());
+  } catch {
+    // A stale chunk or failed network request says nothing about the stored definition.
+    // Leave every key untouched so a retry or the next editor load can convert it.
+    return { loadFailed: true };
+  }
+  const result = await upgradeLoopCurrent(definition).catch(() => ({
+    ok: false as const,
+    issues: [
+      {
+        code: 'UPGRADE_CONVERSION_FAILED',
+        path: '/',
+        message: 'Conversion failed; the original device copy is retained.',
+      },
+    ],
+  }));
   if (!result.ok) return { unconvertible: { ...draft, migrationIssues: result.issues } };
-  return { draft: { ...current, definition: result.value } };
+  return {
+    draft: {
+      ...current,
+      definition: result.value,
+      synced: draft.synced,
+      // Discard the old token, including on a clean offline cache: any later edits must
+      // reconcile through DRAFT_CONFLICT. Synced caches themselves do not trigger a save.
+      baseToken: UNRECONCILED_DEVICE_TOKEN,
+    },
+  };
+}
+
+async function preserveOriginal(draft: LocalDraft): Promise<void> {
+  await saveArchivedDraft(draft);
+  const copies = await loadArchivedDrafts(draft.loopId);
+  if (!copies.some((copy) => JSON.stringify(copy) === JSON.stringify(draft)))
+    throw new Error('The original device copy could not be verified.');
+}
+
+function preservationFailure(draft: LocalDraft, source: RawDeviceCopy['source']): RawDeviceCopy {
+  return {
+    ...draft,
+    source,
+    migrationIssues: [
+      {
+        code: 'UPGRADE_PRESERVATION_FAILED',
+        path: '/',
+        message:
+          'The original must be archived and read back before this device copy can be replaced.',
+      },
+    ],
+  };
+}
+
+function untouched(initial: EditorState | undefined, state: EditorState): boolean {
+  return (
+    initial?.generation === state.generation &&
+    initial.revision === state.revision &&
+    initial.fieldErrors === state.fieldErrors &&
+    initial.nodeDialogSession === state.nodeDialogSession &&
+    initial.historyEpoch === state.historyEpoch
+  );
 }
 
 /**
@@ -51,218 +116,434 @@ function readDeviceDraft(draft: LocalDraft | undefined): DeviceDraftRead {
  * alone keeps the editor usable.
  */
 export function useLoadEditor(loopId: string) {
-  const query = useLoop(loopId);
+  const query = useLoop(loopId, 'always');
   const [restoredGeneration, setRestoredGeneration] = useState<number>();
   const [setAside, setSetAside] = useState<LocalDraft | undefined>();
+  const [setAsideIsLate, setSetAsideIsLate] = useState(false);
   const [rawCopies, setRawCopies] = useState<RawDeviceCopy[]>([]);
   const [preservationBlocked, setPreservationBlocked] = useState(false);
+  const [conversionLoadFailed, setConversionLoadFailed] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [ready, setReady] = useState(false);
-  const dataRef = useRef(query.data);
-  dataRef.current = query.data;
+  const [recoveryError, setRecoveryError] = useState<string>();
+  // A failed inspection permits server reconciliation, but cannot authorize device mirrors.
+  const [deviceInspected, setDeviceInspected] = useState(false);
+  const [deviceWritable, setDeviceWritable] = useState(false);
+  const [deviceReadError, setDeviceReadError] = useState<string>();
+  const [serverReconciled, setServerReconciled] = useState(false);
+  const candidate = useRef<LocalDraft | undefined>(undefined);
+  const displayed = useRef<EditorState | undefined>(undefined);
+  const reconciled = useRef(false);
+  const alive = useRef(true);
+
+  const showDevice = useCallback(
+    (local: LocalDraft, durable: boolean) => {
+      useEditorStore.getState().load(loopId, local.definition, {
+        dirty: !local.synced,
+        baseToken: local.baseToken,
+        decisionRoutes: local.decisionRoutes,
+        deviceSaved: durable,
+      });
+      displayed.current = useEditorStore.getState();
+      if (!local.synced) setRestoredGeneration(displayed.current.generation);
+      setReady(true);
+    },
+    [loopId],
+  );
 
   useEffect(() => {
-    // Load once per loop; later refetches (after publish, on focus) must not discard edits. A
-    // failed fetch with no local copy (offline, or a 401 before an API key is entered) leaves the
-    // editor unloaded, and the first successful fetch after it loads it.
-    if (ready || !(query.isSuccess || query.isError)) return;
     let cancelled = false;
+    alive.current = true;
+    const warm = cachedLocalDraft(loopId);
+    if (warm) {
+      candidate.current = warm.draft;
+      if (!displayed.current || useEditorStore.getState().loopId !== loopId)
+        showDevice(warm.draft, warm.durable);
+    }
+    // Start all durable reads alongside the query, even when it has a cached answer.
     void Promise.all([
       loadLocalDraft(loopId),
       loadSetAsideDraft(loopId),
       loadArchivedDrafts(loopId),
-    ]).then(async ([storedLocal, storedSetAside, storedArchive]) => {
-      if (cancelled) return;
-      const localRead = readDeviceDraft(storedLocal);
-      const asideRead = readDeviceDraft(storedSetAside);
-      const local = localRead.draft;
-      const earlierSetAside = asideRead.draft;
-      let rawSetAside: RawDeviceCopy[] = asideRead.unconvertible
-        ? [{ ...asideRead.unconvertible, source: 'set-aside' as const }]
-        : [];
-      const archivedCopies = storedArchive.map((draft) => {
-        const read = readDeviceDraft(draft);
-        return {
-          ...(read.unconvertible ?? {
-            ...draft,
-            migrationIssues: [
-              {
-                code: 'UPGRADE_ARCHIVED_RAW_COPY',
-                path: '/schemaVersion',
-                message: 'This original device copy is retained without conversion.',
-              },
-            ],
-          }),
+    ])
+      .then(async ([storedLocal, storedSetAside, storedArchive]) => {
+        if (cancelled) return;
+        const [localRead, asideRead] = await Promise.all([
+          readDeviceDraft(storedLocal),
+          readDeviceDraft(storedSetAside),
+        ]);
+        if (cancelled) return;
+        if (localRead.loadFailed || asideRead.loadFailed) {
+          if (!useEditorStore.getState().revision) useEditorStore.getState().reset();
+          setConversionLoadFailed(true);
+          return;
+        }
+        setConversionLoadFailed(false);
+        const local = localRead.draft;
+        const earlierSetAside = asideRead.draft;
+        let rawSetAside: RawDeviceCopy[] = asideRead.unconvertible
+          ? [{ ...asideRead.unconvertible, source: 'set-aside' as const }]
+          : [];
+        // Archives are inert originals, not editor candidates. Do not hash/convert them on load.
+        const archivedCopies = storedArchive.map((draft): RawDeviceCopy => ({
+          ...draft,
+          migrationIssues: draft.migrationIssues?.length
+            ? draft.migrationIssues
+            : [
+                {
+                  code:
+                    draft.definition.schemaVersion === CURRENT_DEFINITION_FORMAT
+                      ? 'DEVICE_DRAFT_BACKUP'
+                      : 'UPGRADE_ARCHIVED_RAW_COPY',
+                  path: '/schemaVersion',
+                  message:
+                    draft.definition.schemaVersion === CURRENT_DEFINITION_FORMAT
+                      ? 'This current-format device draft is retained as a backup.'
+                      : 'This original device copy is retained without conversion.',
+                },
+              ],
           source: 'archive' as const,
-        };
-      });
-      if (local && storedLocal && local.definition !== storedLocal.definition) {
-        // Best effort: the pure conversion is already safe in memory, and keeping the old copy
-        // on a storage failure lets the next load retry the same deterministic conversion.
-        try {
-          await saveLocalDraft(local);
-        } catch {
-          /* device storage reports the failure */
+        }));
+        const preservationFailures: RawDeviceCopy[] = [];
+        if (local && storedLocal && local.definition !== storedLocal.definition) {
+          try {
+            await preserveOriginal(storedLocal);
+            if (cancelled) return;
+            // Conversion may finish after a server-first editor was edited. Keep the converted
+            // candidate for recovery without replacing the newer in-memory work.
+            const current = useEditorStore.getState();
+            if (
+              current.loopId !== loopId ||
+              !displayed.current ||
+              untouched(displayed.current, current)
+            )
+              await saveLocalDraft(local);
+          } catch {
+            preservationFailures.push(preservationFailure(storedLocal, 'active'));
+          }
         }
-      }
-      if (
-        asideRead.draft &&
-        storedSetAside &&
-        asideRead.draft.definition !== storedSetAside.definition
-      ) {
-        try {
-          await saveSetAsideDraft(asideRead.draft);
-        } catch {
-          /* preserve the stored source */
+        if (
+          asideRead.draft &&
+          storedSetAside &&
+          asideRead.draft.definition !== storedSetAside.definition
+        ) {
+          try {
+            await preserveOriginal(storedSetAside);
+            if (cancelled) return;
+            await saveSetAsideDraft(asideRead.draft);
+          } catch {
+            preservationFailures.push(preservationFailure(storedSetAside, 'set-aside'));
+          }
         }
-      }
-      let failedToPreserveSetAside = false;
-      if (asideRead.unconvertible && storedSetAside) {
-        try {
-          await saveArchivedDraft(storedSetAside);
-          const savedArchive = await loadArchivedDrafts(loopId);
-          const archived = savedArchive.some(
-            (copy) =>
-              copy.savedAt === storedSetAside.savedAt &&
-              JSON.stringify(copy.definition) === JSON.stringify(storedSetAside.definition),
-          );
-          if (!archived)
-            throw new Error('The original set-aside device copy could not be verified.');
-          await clearSetAsideDraft(loopId);
-          if (await loadSetAsideDraft(loopId))
-            throw new Error('The set-aside key could not be cleared after archiving.');
-          rawSetAside = [{ ...asideRead.unconvertible, source: 'archive' }];
-        } catch {
-          // Do not let a later conflict save replace an unverified original set-aside copy.
-          failedToPreserveSetAside = true;
+        let failedToPreserveSetAside = false;
+        if (asideRead.unconvertible && storedSetAside) {
+          try {
+            await preserveOriginal(storedSetAside);
+            if (cancelled) return;
+            await clearSetAsideDraft(loopId, storedSetAside);
+            if (await loadSetAsideDraft(loopId))
+              throw new Error('The set-aside key could not be cleared after archiving.');
+            rawSetAside = [{ ...asideRead.unconvertible, source: 'archive' }];
+          } catch {
+            // Do not let a later conflict save replace an unverified original set-aside copy.
+            failedToPreserveSetAside = true;
+          }
         }
-      }
-      const server = dataRef.current?.draft?.definition ?? dataRef.current?.current?.definition;
-      const serverToken = dataRef.current?.draftToken;
-      const serverUpdatedAt = dataRef.current?.loop.updatedAt;
-      // The server changed after this device's unsynced copy was written (another tab or
-      // device saved since): keep the newer server copy and set the local one aside, under its
-      // own key so later edits of the server copy cannot overwrite it.
-      const serverIsNewer =
-        local && !local.synced && server && serverUpdatedAt && serverUpdatedAt > local.savedAt;
-      if (failedToPreserveSetAside) {
-        if (server) useEditorStore.getState().load(loopId, server, { baseToken: serverToken });
-        setRawCopies([
+        if (cancelled) return;
+        const notices = [
           ...(localRead.unconvertible
             ? [{ ...localRead.unconvertible, source: 'active' as const }]
             : []),
           ...rawSetAside,
           ...archivedCopies,
-        ]);
-        setPreservationBlocked(true);
-        setReady(true);
-        return;
-      }
-      if (localRead.unconvertible) {
-        // Never put an ambiguous v1 decision or an unknown version into the live editor store.
-        // Archive and verify it before allowing the active autosave key to be reused. Never
-        // replace an existing set-aside copy while doing this migration.
-        let source: RawDeviceCopy['source'] = 'active';
-        let failedToPreserve = false;
-        try {
-          await saveArchivedDraft(storedLocal!);
-          const savedArchive = await loadArchivedDrafts(loopId);
-          const archived = savedArchive.some(
-            (copy) =>
-              copy.savedAt === storedLocal!.savedAt &&
-              JSON.stringify(copy.definition) === JSON.stringify(storedLocal!.definition),
-          );
-          if (!archived) throw new Error('The original device copy could not be verified.');
-          await clearActiveLocalDraft(loopId);
-          if (await loadLocalDraft(loopId))
-            throw new Error('The active device copy could not be cleared after archiving.');
-          source = 'archive';
-        } catch {
-          // Keep the active key untouched and block every edit/autosave path until recovery.
-          failedToPreserve = true;
+          ...preservationFailures,
+        ];
+        if (failedToPreserveSetAside || preservationFailures.length > 0) {
+          setRawCopies(notices);
+          setPreservationBlocked(true);
+          setDeviceInspected(true);
+          setDeviceWritable(true);
+          setReady(true);
+          return;
         }
-        if (server) useEditorStore.getState().load(loopId, server, { baseToken: serverToken });
+        if (localRead.unconvertible) {
+          let source: RawDeviceCopy['source'] = 'active';
+          try {
+            await preserveOriginal(storedLocal!);
+            if (cancelled) return;
+            await clearActiveLocalDraft(loopId, storedLocal);
+            if (await loadLocalDraft(loopId))
+              throw new Error('The active device copy could not be cleared after archiving.');
+            source = 'archive';
+          } catch {
+            if (cancelled) return;
+            setPreservationBlocked(true);
+          }
+          if (cancelled) return;
+          setRawCopies([{ ...localRead.unconvertible, source }, ...rawSetAside, ...archivedCopies]);
+        }
+        if (!localRead.unconvertible) setRawCopies(notices);
         setSetAside(earlierSetAside);
-        setRawCopies([{ ...localRead.unconvertible, source }, ...rawSetAside, ...archivedCopies]);
-        setPreservationBlocked(failedToPreserve);
-        setReady(true);
-        return;
-      }
-      if (local && !local.synced && !serverIsNewer) {
-        // Saved later with the token it was based on: a server draft changed since then is
-        // reported as a conflict rather than overwritten. Copies from before tokens existed
-        // fall back to the server's current token.
-        useEditorStore.getState().load(loopId, local.definition, {
-          dirty: true,
-          baseToken: local.baseToken ?? serverToken,
-        });
-        setRestoredGeneration(useEditorStore.getState().generation);
-      } else if (server) {
-        if (serverIsNewer) await saveSetAsideDraft(local);
-        if (cancelled) return;
-        useEditorStore.getState().load(loopId, server, { baseToken: serverToken });
-      } else if (local) {
-        useEditorStore.getState().load(loopId, local.definition, { baseToken: local.baseToken });
-      } else if (archivedCopies.length > 0 || rawSetAside.length > 0) {
-        setRawCopies([...archivedCopies, ...rawSetAside]);
-        setReady(true);
-        return;
-      } else {
-        return;
-      }
-      setSetAside(serverIsNewer ? local : earlierSetAside);
-      setRawCopies([...archivedCopies, ...rawSetAside]);
-      setReady(true);
-    });
+        setSetAsideIsLate(false);
+        // A write made during the read wins, even if the read returned an older durable copy.
+        const latest = cachedLocalDraft(loopId);
+        const chosen = latest?.draft ?? local;
+        candidate.current = warm?.draft ?? local ?? chosen;
+        if (
+          local &&
+          latest &&
+          local.loopId === loopId &&
+          JSON.stringify(local.definition) !== JSON.stringify(latest.draft.definition) &&
+          (warm || !untouched(displayed.current, useEditorStore.getState()))
+        ) {
+          // The late durable copy is a separate recovery candidate, never an editor replacement.
+          try {
+            if (earlierSetAside) await preserveOriginal(earlierSetAside);
+            if (cancelled) return;
+            await saveSetAsideDraft(local);
+          } catch {
+            if (cancelled) return;
+            setRawCopies((copies) => [...copies, preservationFailure(local, 'active')]);
+            setPreservationBlocked(true);
+            setDeviceInspected(true);
+            setDeviceWritable(true);
+            return;
+          }
+          if (cancelled) return;
+          setSetAside(local);
+          setSetAsideIsLate(true);
+        }
+        if (chosen && (!displayed.current || !warm)) {
+          const state = useEditorStore.getState();
+          if (state.loopId !== loopId) showDevice(chosen, latest?.durable ?? true);
+          else if (untouched(displayed.current, state)) showDevice(chosen, latest?.durable ?? true);
+        }
+        setDeviceInspected(true);
+        setDeviceWritable(true);
+        if (archivedCopies.length || rawSetAside.length || localRead.unconvertible) setReady(true);
+      })
+      .catch((error: unknown) => {
+        // Server saves use a safe read-modify-write and remain available without device storage.
+        // Direct mirrors must wait until a retry inspects and preserves the unread active copy.
+        if (!cancelled) {
+          setDeviceReadError(errorMessage(error));
+          setDeviceInspected(true);
+          setDeviceWritable(false);
+        }
+      });
     return () => {
       cancelled = true;
+      alive.current = false;
     };
-  }, [loopId, ready, query.isSuccess, query.isError]);
+  }, [loopId, loadAttempt, showDevice]);
 
   useEffect(() => () => useEditorStore.getState().reset(), [loopId]);
+
+  useEffect(() => {
+    if (reconciled.current || conversionLoadFailed || preservationBlocked) return;
+    // A cached query may be stale; wait for its active read, including a later offline recovery.
+    if (!query.isSuccess || query.isFetching || !query.isFetchedAfterMount) {
+      if (query.isError && ready)
+        useEditorStore
+          .getState()
+          .setSaveState(
+            isOfflineError(query.error) ? 'offline' : 'error',
+            errorMessage(query.error),
+          );
+      return;
+    }
+    const server = query.data.draft?.definition ?? query.data.current?.definition;
+    if (!server) {
+      if (deviceInspected) {
+        reconciled.current = true;
+        setReady(true);
+        setServerReconciled(true);
+      }
+      return;
+    }
+    const token = query.data.draftToken;
+    const state = useEditorStore.getState();
+    if (state.loopId !== loopId) {
+      useEditorStore.getState().load(loopId, server, { baseToken: token });
+      displayed.current = useEditorStore.getState();
+      setReady(true);
+    }
+    if (!deviceInspected) return;
+    reconciled.current = true;
+    void (async () => {
+      // A previous editor's queued save may have advanced this copy/token since mount.
+      const latest = cachedLocalDraft(loopId);
+      const local = latest?.draft ?? candidate.current;
+      const now = useEditorStore.getState();
+      const unchanged = untouched(displayed.current, now);
+      const serverIsNewer =
+        local &&
+        !local.synced &&
+        (!local.baseToken || local.baseToken !== token) &&
+        query.data.loop.updatedAt > local.savedAt;
+      if (serverIsNewer) {
+        try {
+          // Do not replace an earlier set-aside copy while retaining this one.
+          if (setAside) await preserveOriginal(setAside);
+          await saveSetAsideDraft(local);
+        } catch {
+          if (!alive.current) return;
+          setRawCopies((copies) => [...copies, preservationFailure(local, 'active')]);
+          setPreservationBlocked(true);
+          return;
+        }
+        if (!alive.current) return;
+        setSetAside(local);
+        setSetAsideIsLate(false);
+      }
+      if (!alive.current) return;
+      const current = useEditorStore.getState();
+      const stillUnchanged = unchanged && untouched(now, current);
+      if (stillUnchanged && (!local || local.synced || serverIsNewer)) {
+        if (
+          current.baseToken !== token ||
+          JSON.stringify(current.definition) !== JSON.stringify(server)
+        )
+          current.load(loopId, server, { baseToken: token });
+        // Keep warm navigation on the reconciled copy without claiming a durable write.
+        rememberLocalDraft({
+          loopId,
+          definition: server,
+          savedAt: new Date().toISOString(),
+          synced: true,
+          ...(token ? { baseToken: token } : {}),
+        });
+      } else if (local) {
+        // Never replace edits made while the server or storage was in flight. An old token
+        // remains old; converted copies retain their mandatory explicit-overwrite token.
+        const basedOnLatest =
+          latest && JSON.stringify(latest.draft.definition) === JSON.stringify(current.definition);
+        const base = basedOnLatest
+          ? (local.baseToken ?? current.baseToken)
+          : (current.baseToken ?? local.baseToken);
+        if (current.baseToken !== (base ?? token)) current.setBaseToken(base ?? token);
+        if (
+          serverIsNewer ||
+          (base && base !== token) ||
+          (local.synced && !base && JSON.stringify(current.definition) !== JSON.stringify(server))
+        ) {
+          // A formerly synced cache retained for held input/dialog work can now differ from
+          // the server without a definition edit. Explicit overwrite must save it too.
+          if (current.revision === current.savedRevision)
+            useEditorStore.setState({ revision: current.revision + 1 });
+          current.setConflict({ serverToken: token });
+          current.setSaveState('conflict');
+        }
+      }
+      setServerReconciled(true);
+    })();
+  }, [
+    loopId,
+    query.data,
+    query.isSuccess,
+    query.isError,
+    query.error,
+    query.isFetching,
+    query.isFetchedAfterMount,
+    deviceInspected,
+    ready,
+    conversionLoadFailed,
+    preservationBlocked,
+    setAside,
+  ]);
+
   const restoreSetAside = async () => {
     if (!setAside || setAside.migrationIssues?.length) return;
     const restoredCopy = setAside;
-    const startedIn = useEditorStore.getState().generation;
-    setSetAside(undefined);
-    // Mirror the restored copy as this device's unsynced draft before its backup goes, so
-    // leaving at any point afterwards still finds it on the next load.
-    await saveLocalDraft({
-      loopId,
-      definition: restoredCopy.definition,
-      savedAt: new Date().toISOString(),
-      synced: false,
-    });
-    // Load it only into the editor that asked: after navigating away (the store was reset or
-    // now holds another loop) the durable copy above is restored on the next visit instead.
-    const now = useEditorStore.getState();
-    if (now.loopId === loopId && now.generation === startedIn) {
-      // Choosing this copy over the newer server draft is an explicit overwrite: base it on the
-      // server draft shown now.
-      now.load(loopId, restoredCopy.definition, { dirty: true, baseToken: now.baseToken });
-      setRestoredGeneration(useEditorStore.getState().generation);
+    const started = useEditorStore.getState();
+    const { baseToken, conflict } = started;
+    const token = conflict?.serverToken ?? baseToken;
+    setRecoveryError(undefined);
+    try {
+      // The click authorizes this exact overwrite token. Retain the backup on a failed write.
+      await saveLocalDraft({
+        ...restoredCopy,
+        savedAt: new Date().toISOString(),
+        synced: false,
+        ...(token ? { baseToken: token } : {}),
+      });
+      const now = useEditorStore.getState();
+      if (now.loopId === loopId && untouched(started, now)) {
+        setSetAside(undefined);
+        now.load(loopId, restoredCopy.definition, {
+          dirty: true,
+          baseToken: token,
+          decisionRoutes: restoredCopy.decisionRoutes,
+          deviceSaved: true,
+        });
+        setRestoredGeneration(useEditorStore.getState().generation);
+        await clearSetAsideDraft(loopId, restoredCopy);
+        if (alive.current) setSetAside(undefined);
+      } else if (now.loopId !== loopId) {
+        // Navigation is safe: the persisted active copy will be found on the next visit.
+        await clearSetAsideDraft(loopId, restoredCopy);
+      }
+    } catch {
+      if (alive.current) setSetAside(restoredCopy);
+      if (alive.current)
+        setRecoveryError(
+          'The device copy could not be restored. Its backup is retained; retry when device storage is available.',
+        );
     }
-    await clearSetAsideDraft(loopId);
   };
-  const discardSetAside = () => {
-    setSetAside(undefined);
-    void clearSetAsideDraft(loopId);
+  const discardSetAside = async () => {
+    if (!setAside) return;
+    setRecoveryError(undefined);
+    try {
+      await clearSetAsideDraft(loopId, setAside);
+      if (alive.current) setSetAside(undefined);
+    } catch {
+      if (alive.current)
+        setRecoveryError(
+          'The device copy could not be discarded. It is retained; retry when device storage is available.',
+        );
+    }
   };
   const discardRawCopy = async (copy: RawDeviceCopy) => {
-    if (copy.source === 'active') await clearActiveLocalDraft(loopId);
-    else if (copy.source === 'set-aside') await clearSetAsideDraft(loopId);
-    else await clearArchivedDraft(loopId, copy);
-    const remaining = rawCopies.filter((item) => item !== copy);
-    setRawCopies(remaining);
-    if (!remaining.some((item) => item.source === 'active' || item.source === 'set-aside'))
-      setPreservationBlocked(false);
+    setRecoveryError(undefined);
+    try {
+      if (copy.source === 'active') await clearActiveLocalDraft(loopId, copy);
+      else if (copy.source === 'set-aside') await clearSetAsideDraft(loopId, copy);
+      else await clearArchivedDraft(loopId, copy);
+      if (!alive.current) return;
+      const remaining = rawCopies.filter((item) => item !== copy);
+      setRawCopies(remaining);
+      if (!remaining.some((item) => item.source === 'active' || item.source === 'set-aside'))
+        setPreservationBlocked(false);
+    } catch {
+      if (alive.current)
+        setRecoveryError(
+          'The original device copy could not be discarded. It is retained; retry when device storage is available.',
+        );
+    }
   };
   return {
     query,
     restoredGeneration,
     ready,
+    serverReconciled,
+    deviceInspected,
+    deviceWritable,
+    deviceReadError,
+    retryDeviceRead: () => {
+      setDeviceReadError(undefined);
+      setLoadAttempt((attempt) => attempt + 1);
+    },
     setAside,
+    setAsideIsLate,
     rawCopies,
+    recoveryError,
     preservationBlocked,
+    conversionLoadFailed,
+    retryConversion: () => {
+      setConversionLoadFailed(false);
+      setLoadAttempt((attempt) => attempt + 1);
+    },
     restoreSetAside,
     discardSetAside,
     discardRawCopy,

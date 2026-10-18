@@ -1,8 +1,8 @@
 import {
   ContextThreadSchema,
+  JsonValueSchema,
   RunEventSchema,
   RunRecordSchema,
-  type RunRecord,
 } from '@graphgoblin/contracts';
 import { stableStringify } from '@graphgoblin/domain';
 import {
@@ -18,19 +18,11 @@ import {
   type WebhookReceipt,
   type WebhookFailureCode,
 } from '@graphgoblin/engine';
-import { and, asc, eq, getTableColumns, lte, sql } from 'drizzle-orm';
+import { and, asc, eq, getTableColumns, lte, or, sql } from 'drizzle-orm';
 import type { Database } from './db.js';
-import { inboundEvents, runEvents, runs, webhookReceipts } from './schema.js';
+import { inboundEvents, runEvents, runs, webhookEndpoints, webhookReceipts } from './schema.js';
 import { runInsert, runRecordFromRow } from './runs.js';
 import type { SqliteEventStore } from './events.js';
-import { TemplateTransaction } from './templates.js';
-export type AdmissionPolicyResult =
-  { action: 'keep' } | { action: 'skip' } | { action: 'replace'; run: RunRecord };
-export type AfterRunStaged = (
-  store: TemplateTransaction,
-  input: RunAdmission,
-  pollItem: boolean,
-) => Promise<AdmissionPolicyResult>;
 
 function runKeyScope(ownerId: string, loopId: string, nodeId: string, key: string) {
   return and(
@@ -61,7 +53,6 @@ export class SqliteTriggerAdmission implements TriggerAdmissionPort {
   constructor(
     private readonly db: Database,
     private readonly events: SqliteEventStore,
-    private readonly afterRunStaged?: AfterRunStaged,
   ) {}
   async create(authored: RunAdmission, receiptId?: string) {
     const run = await this.commit(authored, receiptId);
@@ -111,10 +102,35 @@ export class SqliteTriggerAdmission implements TriggerAdmissionPort {
         )
           throw new AdmissionConflictError();
         const [inbound] = await tx
-          .select({ id: inboundEvents.id })
+          .select()
           .from(inboundEvents)
           .where(eq(inboundEvents.id, receipt.inboundId));
         if (!inbound) throw new AdmissionConflictError();
+        if (
+          inbound.runIds.length &&
+          stableStringify(inbound.runIds) !== stableStringify([input.run.id])
+        )
+          throw new AdmissionConflictError();
+        const { dedupeKey, payload, ...metadata } = inbound;
+        let decoded;
+        try {
+          decoded = JsonValueSchema.parse(JSON.parse(payload));
+        } catch {
+          throw new AdmissionConflictError();
+        }
+        assertWebhookClaim(
+          {
+            ...receipt,
+            inbound: {
+              ...metadata,
+              payload: decoded,
+              // An admitted inbound already links this run; claim validation expects no links.
+              runIds: [],
+              ...(dedupeKey !== null ? { dedupeKey } : {}),
+            },
+          },
+          input,
+        );
       }
       const [prior] = await tx.select().from(runs).where(eq(runs.id, input.run.id));
       const [first] = await tx
@@ -150,24 +166,6 @@ export class SqliteTriggerAdmission implements TriggerAdmissionPort {
         const { runId, seq, ts, type, ...payload } = event;
         await tx.insert(runEvents).values({ runId, seq, ts, type, payload });
       }
-      const policy = await this.afterRunStaged?.(new TemplateTransaction(tx), input, pollItem);
-      if (policy && policy.action !== 'keep') {
-        if (prior) throw new AdmissionConflictError();
-        await tx.delete(runEvents).where(eq(runEvents.runId, input.run.id));
-        await tx.delete(runs).where(eq(runs.id, input.run.id));
-        event = undefined;
-        if (policy.action === 'skip') return { run: undefined, event: undefined };
-        const replacement = RunRecordSchema.parse(policy.run);
-        if (
-          replacement.ownerId !== input.run.ownerId ||
-          replacement.loopId !== input.run.loopId ||
-          replacement.versionId !== input.run.versionId ||
-          !input.run.parentRunId ||
-          replacement.parentRunId !== input.run.parentRunId
-        )
-          throw new AdmissionConflictError();
-        run = replacement;
-      }
       if (receiptId) {
         const [receipt] = await tx
           .update(webhookReceipts)
@@ -185,57 +183,68 @@ export class SqliteTriggerAdmission implements TriggerAdmissionPort {
     if (committed.event) this.events.notifyCommitted([committed.event]);
     return committed.run;
   }
-  async claim(
-    input: WebhookClaim,
-    intent?: RunAdmission,
-  ): Promise<{ receipt: WebhookReceipt; duplicate: boolean }> {
-    const frozen = intent ? parseRunAdmission(intent) : undefined;
+  async claim(input: WebhookClaim, intent: RunAdmission): Promise<{ receipt: WebhookReceipt }> {
+    const frozen = parseRunAdmission(intent);
     assertWebhookClaim(input, frozen);
     return this.db.transaction(async (tx) => {
-      const [prior] = await tx
-        .select()
-        .from(webhookReceipts)
-        .where(
-          and(
-            eq(webhookReceipts.ownerId, input.ownerId),
-            eq(webhookReceipts.loopId, input.loopId),
-            eq(webhookReceipts.triggerNodeId, input.triggerNodeId),
-            eq(webhookReceipts.contentHash, input.contentHash),
-          ),
-        );
-      if (prior) return { receipt: receiptOf(prior), duplicate: true };
-      // Raw content is checked first. A new body always gets its own consumed receipt, even
-      // when its authored identity was filtered or failed before any run existed.
       let keySeen = false;
-      if (input.dedupeByKey && input.inbound.dedupeKey) {
+      if (input.inbound.dedupeKey) {
         const [receiptKey] = await tx
           .select({ id: webhookReceipts.id })
           .from(webhookReceipts)
-          .innerJoin(inboundEvents, eq(webhookReceipts.inboundId, inboundEvents.id))
+          .leftJoin(inboundEvents, eq(webhookReceipts.inboundId, inboundEvents.id))
           .where(
             and(
               eq(webhookReceipts.ownerId, input.ownerId),
               eq(webhookReceipts.loopId, input.loopId),
               eq(webhookReceipts.triggerNodeId, input.triggerNodeId),
-              eq(inboundEvents.dedupeKey, input.inbound.dedupeKey),
+              or(
+                eq(inboundEvents.dedupeKey, input.inbound.dedupeKey),
+                sql`json_extract(${webhookReceipts.intent}, '$.initialThread.invocation.trigger.dedupeKey') = ${input.inbound.dedupeKey}`,
+              ),
             ),
           )
           .limit(1);
-        const [runKey] = receiptKey
+        // Earlier deliveries may have an inbound claim without a receipt or a run. Endpoint
+        // provenance supplies its stable owner/loop/node scope, including disabled old versions.
+        const [inboundKey] = receiptKey
           ? []
           : await tx
-              .select({ id: runs.id })
-              .from(runs)
+              .select({ id: inboundEvents.id })
+              .from(webhookEndpoints)
+              .innerJoin(
+                inboundEvents,
+                and(
+                  eq(inboundEvents.ownerId, input.ownerId),
+                  eq(inboundEvents.type, 'webhook'),
+                  sql`${inboundEvents.source} = 'webhook:' || ${webhookEndpoints.id}`,
+                  eq(inboundEvents.dedupeKey, input.inbound.dedupeKey),
+                ),
+              )
               .where(
-                runKeyScope(
-                  input.ownerId,
-                  input.loopId,
-                  input.triggerNodeId,
-                  input.inbound.dedupeKey,
+                and(
+                  eq(webhookEndpoints.ownerId, input.ownerId),
+                  eq(webhookEndpoints.loopId, input.loopId),
+                  eq(webhookEndpoints.triggerNodeId, input.triggerNodeId),
                 ),
               )
               .limit(1);
-        keySeen = receiptKey !== undefined || runKey !== undefined;
+        const [runKey] =
+          receiptKey || inboundKey
+            ? []
+            : await tx
+                .select({ id: runs.id })
+                .from(runs)
+                .where(
+                  runKeyScope(
+                    input.ownerId,
+                    input.loopId,
+                    input.triggerNodeId,
+                    input.inbound.dedupeKey,
+                  ),
+                )
+                .limit(1);
+        keySeen = receiptKey !== undefined || inboundKey !== undefined || runKey !== undefined;
       }
       await tx
         .insert(inboundEvents)
@@ -249,14 +258,14 @@ export class SqliteTriggerAdmission implements TriggerAdmissionPort {
           triggerNodeId: input.triggerNodeId,
           contentHash: input.contentHash,
           inboundId: input.inbound.id,
-          status: keySeen ? 'deduplicated' : frozen ? 'pending' : 'filtered',
-          intent: keySeen ? null : (frozen ?? null),
+          status: keySeen ? 'deduplicated' : 'pending',
+          intent: keySeen ? null : frozen,
           attempts: 0,
-          nextAttemptAt: !keySeen && frozen ? input.inbound.receivedAt : null,
+          nextAttemptAt: !keySeen ? input.inbound.receivedAt : null,
         })
         .returning();
       if (!row) throw new AdmissionConflictError();
-      return { receipt: receiptOf(row), duplicate: false };
+      return { receipt: receiptOf(row) };
     });
   }
   async get(id: string): Promise<WebhookReceipt | undefined> {

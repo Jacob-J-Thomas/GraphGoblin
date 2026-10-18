@@ -1,5 +1,7 @@
 # ADR-0010 - Exit nodes declare a return mapping and return channels
 
+Supersession: [ADR-0036](ADR-0036-decision-gates-terminal-exits.md) replaces this ADR's exit predicates, loop-back and iteration-limit rules where applicable. Historical text below is retained.
+
 Date: 2026-10-02. Status: Accepted.
 
 ## Context

@@ -12,9 +12,9 @@ const options = (...ids: string[]) =>
     criteria: `Criterion ${index + 1}`,
   }));
 const config = (ids = ['yes', 'no', 'third']) => ({
-  answer: { type: 'choice' as const, options: options(...ids) },
-  evaluation: { kind: 'expression' as const, jsonata: '"yes"' },
-  recordAlternatives: true,
+  kind: 'expression' as const,
+  jsonata: '"yes"',
+  routes: options(...ids).map(({ id, label }) => ({ id, label })),
 });
 
 function fixture(): LoopDefinitionInput {
@@ -33,6 +33,42 @@ function fixture(): LoopDefinitionInput {
 }
 
 describe('decision option edits in editor history', () => {
+  it.each(['expression', 'llm'] as const)(
+    'keeps %s route edges through incomplete IDs and repairs',
+    (kind) => {
+      const definition = fixture();
+      const node = definition.nodes.find((node) => node.id === 'pick');
+      if (node?.kind !== 'decision') throw new Error('Decision fixture missing');
+      const branch =
+        kind === 'expression'
+          ? config()
+          : {
+              kind,
+              instructions: 'Choose a declared route.',
+              harness: 'codex' as const,
+              model: { mode: 'inherit' as const },
+              effort: { mode: 'inherit' as const },
+              routes: config().routes,
+            };
+      node.config = branch;
+      store().load('L1', definition);
+      for (const id of ['', 'renamed'])
+        store().updateNode(
+          'pick',
+          {
+            config: {
+              ...branch,
+              routes: branch.routes.map((row, index) => (index === 0 ? { ...row, id } : row)),
+            },
+          },
+          { path: 'routes.0.id', kind: 'typing', id: 910 },
+        );
+      expect(store().definition?.edges.find((edge) => edge.id === 'yes')?.from.port).toBe(
+        'renamed',
+      );
+      expect(store().definition?.edges.find((edge) => edge.id === 'no')?.from.port).toBe('no');
+    },
+  );
   beforeEach(() => store().load('L1', fixture()));
 
   it('scopes JSON replacement to the edited decision, preserving another decision mid-rename', () => {
@@ -48,7 +84,7 @@ describe('decision option edits in editor history', () => {
       'other',
       { config: config(['unfinished!', 'no', 'third']) },
       {
-        path: 'answer.options.0.id',
+        path: 'routes.0.id',
         kind: 'typing',
         id: 300,
       },
@@ -57,7 +93,7 @@ describe('decision option edits in editor history', () => {
       'pick',
       { config: config(['yes', 'no', 'fresh']) },
       {
-        path: 'answer',
+        path: 'routes',
         kind: 'commit',
         id: 301,
         collection: { type: 'replace' },
@@ -131,12 +167,8 @@ describe('decision option edits in editor history', () => {
   it('renames a stable option ID with its edge while preserving target and layout', () => {
     const before = store().definition!;
     const changed = config();
-    changed.answer.options[2]!.id = 'other';
-    store().updateNode(
-      'pick',
-      { config: changed },
-      { path: 'answer.options.2.id', kind: 'typing', id: 1 },
-    );
+    changed.routes[2]!.id = 'other';
+    store().updateNode('pick', { config: changed }, { path: 'routes.2.id', kind: 'typing', id: 1 });
     const after = store().definition!;
     expect(after.edges[3]).toEqual({ ...before.edges[3], from: { node: 'pick', port: 'other' } });
     expect(after.edges.slice(0, 3)).toEqual(before.edges.slice(0, 3));
@@ -151,8 +183,7 @@ describe('decision option edits in editor history', () => {
   it('keeps ports and edges unchanged when only labels, criteria, or order changes', () => {
     const originalEdges = store().definition!.edges;
     const changed = config(['third', 'yes', 'no']);
-    changed.answer.options[0]!.label = 'Numeric label 7';
-    changed.answer.options[0]!.criteria = 'Updated criterion';
+    changed.routes[0]!.label = 'Numeric label 7';
     store().updateNode('pick', { config: changed });
     expect(store().definition!.edges).toBe(originalEdges);
     expect(store().definition!.edges.map((edge) => edge.from.port)).toEqual([
@@ -175,7 +206,7 @@ describe('decision option edits in editor history', () => {
       'pick',
       { config: changed },
       {
-        path: 'answer.options',
+        path: 'routes',
         kind: 'commit',
         id: 1,
         collection: { type: 'remove', index: 1 },
@@ -194,21 +225,17 @@ describe('decision option edits in editor history', () => {
     (id) => {
       const edges = store().definition!.edges;
       const changed = config();
-      changed.answer.options[2]!.id = id;
+      changed.routes[2]!.id = id;
       store().updateNode(
         'pick',
         { config: changed },
-        { path: 'answer.options.2.id', kind: 'typing', id: 1 },
+        { path: 'routes.2.id', kind: 'typing', id: 1 },
       );
       expect(validateDraft(store().definition!).schemaValid).toBe(false);
       expect(store().definition!.edges).toBe(edges);
       const fixed = config();
-      fixed.answer.options[2]!.id = 'restored';
-      store().updateNode(
-        'pick',
-        { config: fixed },
-        { path: 'answer.options.2.id', kind: 'typing', id: 1 },
-      );
+      fixed.routes[2]!.id = 'restored';
+      store().updateNode('pick', { config: fixed }, { path: 'routes.2.id', kind: 'typing', id: 1 });
       expect(store().definition!.edges[3]!.from.port).toBe('restored');
       expect(validateDraft(store().definition!).issues).toEqual([]);
     },
@@ -230,7 +257,7 @@ describe('decision option edits in editor history', () => {
     store().updateNode(
       'pick',
       { config: repaired },
-      { path: 'answer.options.1.id', kind: 'typing', id: 1 },
+      { path: 'routes.1.id', kind: 'typing', id: 1 },
     );
     expect(store().definition!.edges.find((edge) => edge.id === 'no')!.from.port).toBe('other');
     expect(store().definition!.edges.find((edge) => edge.id === 'third')!.from.port).toBe('third');
@@ -240,10 +267,10 @@ describe('decision option edits in editor history', () => {
     const clock = vi.spyOn(historyClock, 'now').mockReturnValue(100);
     try {
       const before = store().definition!;
-      const change = { path: 'answer.options.2.id', kind: 'typing' as const, id: 1 };
+      const change = { path: 'routes.2.id', kind: 'typing' as const, id: 1 };
       for (const id of ['t', 'th', 'three']) {
         const changed = config();
-        changed.answer.options[2]!.id = id;
+        changed.routes[2]!.id = id;
         store().updateNode('pick', { config: changed }, change);
       }
       const after = store().definition!;
@@ -260,18 +287,18 @@ describe('decision option edits in editor history', () => {
 
   it('removes the owned edge when its option is deleted, including after an incomplete ID edit', () => {
     const incomplete = config();
-    incomplete.answer.options[2]!.id = '';
+    incomplete.routes[2]!.id = '';
     store().updateNode(
       'pick',
       { config: incomplete },
-      { path: 'answer.options.2.id', kind: 'typing', id: 1 },
+      { path: 'routes.2.id', kind: 'typing', id: 1 },
     );
     const changed = config(['yes', 'no']);
     store().updateNode(
       'pick',
       { config: changed },
       {
-        path: 'answer.options',
+        path: 'routes',
         kind: 'commit',
         id: 2,
         collection: { type: 'remove', index: 2 },
@@ -283,8 +310,8 @@ describe('decision option edits in editor history', () => {
   it('uses readable labels while retaining IDs as the actual route ports', () => {
     const node = fixture().nodes.find((item) => item.id === 'pick')!;
     if (node.kind !== 'decision') throw new Error('fixture decision missing');
-    if (node.config.answer.type !== 'choice') throw new Error('fixture Choice answer missing');
-    node.config.answer.options[2]!.label = '7';
+    if (node.config.kind !== 'expression') throw new Error('fixture Choice answer missing');
+    node.config.routes[2]!.label = '7';
     expect(canvasPortLabels(node)).toEqual({ yes: 'Label 1', no: 'Label 2', third: '7' });
   });
 
@@ -295,7 +322,7 @@ describe('decision option edits in editor history', () => {
       expect(store().definition!.edges).toBe(edges);
     }
     store().updateNode('pick', { config: config() });
-    store().updateNode('start', { config: { subtype: 'manual' } });
+    store().updateNode('start', { config: { type: 'manual' } });
     store().updateNode('missing', { config: config() });
     store().updateNode('pick', { label: 'Choose' });
     expect(store().definition!.edges).toBe(edges);
@@ -308,12 +335,18 @@ describe('decision option edits in editor history', () => {
       kind: 'decision',
       label: 'Check',
       config: {
-        answer: {
-          type: 'noul',
-          true: { id: 'holds', label: 'Holds', criteria: 'The statement is true' },
-          false: { id: 'fails', label: 'Fails', criteria: 'The statement is false' },
-        },
-        evaluation: { kind: 'expression', jsonata: 'true' },
+        kind: 'expression',
+        routes: [
+          {
+            id: 'holds',
+            label: 'Holds',
+          },
+          {
+            id: 'fails',
+            label: 'Fails',
+          },
+        ],
+        jsonata: '(true) ? "holds" : "fails"',
       },
     });
     definition.edges[0]!.to.node = 'check';
@@ -324,13 +357,18 @@ describe('decision option edits in editor history', () => {
     store().load('L1', definition);
     const before = store().definition!;
     const changed = {
-      answer: {
-        type: 'noul' as const,
-        true: { id: 'affirm', label: 'Holds', criteria: 'The statement is true' },
-        false: { id: 'fails', label: 'Not true', criteria: 'The statement is false' },
-      },
-      evaluation: { kind: 'expression' as const, jsonata: 'true' },
-      recordAlternatives: true,
+      kind: 'expression' as const,
+      routes: [
+        {
+          id: 'affirm',
+          label: 'Holds',
+        },
+        {
+          id: 'fails',
+          label: 'Not true',
+        },
+      ],
+      jsonata: '(true) ? "affirm" : "fails"',
     };
     store().updateNode(
       'check',
@@ -357,6 +395,9 @@ describe('decision option edits in editor history', () => {
       kind: 'decision',
       label: 'Grade',
       config: {
+        kind: 'classifier',
+        model: 'jev',
+        question: 'Score it',
         answer: {
           type: 'score',
           anchors: ['Low', 'Middle', 'High'],
@@ -366,7 +407,6 @@ describe('decision option edits in editor history', () => {
             { id: 'high', label: 'High', min: 1.5, max: 2 },
           ],
         },
-        evaluation: { kind: 'classifier', model: 'jev', question: 'Score it' },
       },
     });
     definition.edges[0]!.to.node = 'grade';
@@ -377,6 +417,10 @@ describe('decision option edits in editor history', () => {
     );
     store().load('L1', definition);
     const changed = {
+      recordAlternatives: true,
+      kind: 'classifier' as const,
+      model: 'jev',
+      question: 'Score it',
       answer: {
         type: 'score' as const,
         anchors: ['Low', 'Middle', 'High'],
@@ -386,8 +430,6 @@ describe('decision option edits in editor history', () => {
           { id: 'high', label: 'High', min: 1.5, max: 2 },
         ],
       },
-      evaluation: { kind: 'classifier' as const, model: 'jev', question: 'Score it' },
-      recordAlternatives: true,
     };
     store().updateNode(
       'grade',

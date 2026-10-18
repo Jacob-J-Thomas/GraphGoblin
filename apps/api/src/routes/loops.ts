@@ -10,8 +10,16 @@ import {
   type LoopDefinition,
   type LoopRecord,
 } from '@graphgoblin/contracts';
-import { exportLoop, importLoop, stableHash } from '@graphgoblin/domain';
+import {
+  exportLoop,
+  importLoop,
+  stableHash,
+  upgradeExportCurrent,
+  upgradeLoopCurrent,
+  type UpgradeIssue,
+} from '@graphgoblin/domain';
 import { EngineRequestError } from '@graphgoblin/engine';
+import { LoopInUseError } from '@graphgoblin/infrastructure/sqlite';
 import type { FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import type { Container } from '../container.js';
@@ -31,10 +39,6 @@ const LoopDetailSchema = z.object({
   current: LoopVersionRecordSchema.optional(),
   draft: LoopVersionRecordSchema.optional(),
   draftToken: DraftTokenSchema.optional(),
-  templateInstanceId: UlidSchema.optional().meta({
-    description:
-      'The owner-scoped template instance that originally created this loop, when present.',
-  }),
 });
 
 /**
@@ -146,21 +150,6 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
   app.post(
     '/loops/import',
     {
-      preValidation: async (request, reply) => {
-        const body: unknown = request.body;
-        if (
-          typeof body === 'object' &&
-          body !== null &&
-          (('formatVersion' in body && [1, 2].includes(Number(body.formatVersion))) ||
-            ('schemaVersion' in body && [1, 2].includes(Number(body.schemaVersion))))
-        )
-          return problem(
-            reply,
-            400,
-            'LOOP_FORMAT_UPGRADE_REQUIRED',
-            'Use the offline graphgoblin-upgrade export command and resolve any authored criteria to convert this document to format 3',
-          );
-      },
       schema: {
         tags: ['loops'],
         summary: 'Create or update a loop from exported JSON',
@@ -170,12 +159,51 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
             loop: LoopRecordSchema,
             draft: LoopVersionRecordSchema,
             issues: z.array(IssueSchema),
+            notices: z.array(z.object({ code: z.string(), path: z.string(), message: z.string() })),
           }),
         },
       },
     },
     async (request, reply) => {
-      const imported = importLoop(request.body);
+      let input: unknown = request.body;
+      let notices: UpgradeIssue[] = [];
+      if (
+        typeof input === 'object' &&
+        input !== null &&
+        (('formatVersion' in input && [1, 2, 3].includes(Number(input.formatVersion))) ||
+          ('schemaVersion' in input && [1, 2, 3].includes(Number(input.schemaVersion))))
+      ) {
+        const result =
+          'formatVersion' in input
+            ? await upgradeExportCurrent(input)
+            : await upgradeLoopCurrent(input);
+        if (!result.ok) {
+          const pending = result.issues.some((issue) => issue.kind === 'pending');
+          const invalid = result.issues.some((issue) => issue.kind === 'invalid');
+          return problem(
+            reply,
+            400,
+            pending ? 'LOOP_FORMAT_UPGRADE_REQUIRED' : 'LOOP_IMPORT_SOURCE_INVALID',
+            [
+              ...(invalid
+                ? [
+                    'The source, export envelope or conversion has invalid issues. Correct the listed invalid issues; graphgoblin-upgrade export cannot convert invalid source.',
+                  ]
+                : []),
+              ...(pending
+                ? [
+                    'Review is required. Run graphgoblin-upgrade export --input old.json --out review.json. For v3 items, create resolutions.json with {"v3":{"<id>":{"hash":"<reported hash>","action":"approve","reason":"Reviewed this exact proposal"}}}, using each reported id/hash. Some items require action "replace" with a value, or allow "remove". Earlier-stage items use the v1/v2 namespaces in the guide. Retry export with --resolutions resolutions.json and a new output path.',
+                  ]
+                : []),
+              'See docs/guide/08-offline-upgrade.md#convert-a-portable-export.',
+            ].join(' '),
+            { issues: result.issues, reviewItems: result.reviewItems },
+          );
+        }
+        input = result.value;
+        notices = result.notices;
+      }
+      const imported = importLoop(input);
       const admission = await publishIssues(request.auth.ownerId, imported.definition);
       if (admission.some((issue) => rejectsDraftAdmission(imported.definition, issue)))
         return problem(
@@ -194,7 +222,7 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
         imported.definition,
         created.loop.id,
       );
-      return { ...created, issues };
+      return { ...created, issues, notices };
     },
   );
 
@@ -210,10 +238,6 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
     },
     async (request, reply) => {
       const loop = await ownedLoop(request, request.params.id);
-      const template = await container.templates.store.bindingForLoop(
-        request.auth.ownerId,
-        loop.id,
-      );
       const current = loop.currentVersionId
         ? await loops.getVersion(loop.currentVersionId)
         : undefined;
@@ -225,7 +249,6 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
         ...(current ? { current } : {}),
         ...(draft ? { draft } : {}),
         ...(draftToken ? { draftToken } : {}),
-        ...(template ? { templateInstanceId: template.instance.id } : {}),
       };
     },
   );
@@ -440,7 +463,9 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
     {
       schema: {
         tags: ['loops'],
-        summary: 'Delete a loop that has no active runs',
+        summary: 'Delete a loop and its run history, unless it has active runs',
+        description:
+          'Deletes all versions, drafts, runs and run-owned rows in one transaction. Returns 204 on success, 404 LOOP_NOT_FOUND, or 409 LOOP_IN_USE when a run is active or a pending admission or active parent can still start this loop. Cancel the runs first.',
         params: IdParams,
         response: { 204: z.null() },
       },
@@ -456,16 +481,25 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
         return problem(reply, 409, 'LOOP_IN_USE', 'the loop has active runs; cancel them first');
       // An active run of another loop may still start this one as a subloop (pinned at its start).
       // The check and the deletion are one critical section with run creation in the engine.
-      const deleted = await container.manager.deleteLoopUnlessInUse(request.params.id, async () => {
-        await container.triggers.disarmLoop(request.params.id);
-        await loops.delete(request.params.id);
-      });
+      let deleted: boolean;
+      try {
+        deleted = await container.manager.deleteLoopUnlessInUse(request.params.id, async () => {
+          await loops.delete(request.params.id);
+          // Persistent triggers were removed in the deletion transaction. Disarm memory only
+          // after commit, so a refusal or rollback leaves all triggers as they were.
+          container.polls.disarm(request.params.id);
+        });
+      } catch (error) {
+        if (error instanceof LoopInUseError)
+          return problem(reply, 409, 'LOOP_IN_USE', error.message);
+        throw error;
+      }
       if (!deleted)
         return problem(
           reply,
           409,
           'LOOP_IN_USE',
-          'an active run can still start this loop as a subloop; cancel it first',
+          'an active run or pending webhook admission can still start this loop; cancel the run or resolve the pending admission first',
         );
       return reply.status(204).send(null);
     },

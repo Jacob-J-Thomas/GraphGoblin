@@ -1,9 +1,9 @@
 {
   "format": "graphgoblin-loop",
-  "formatVersion": 3,
+  "formatVersion": 4,
   "exportedAt": "2026-10-02T12:00:00.000Z",
   "loop": {
-    "schemaVersion": 3,
+    "schemaVersion": 4,
     "name": "kitchen-sink",
     "description": "Every node kind, for tests.",
     "settings": {
@@ -19,7 +19,7 @@
           }
         }
       },
-      "maxIterations": 3,
+      "maxNodeVisits": 3,
       "subloopDepthLimit": 8
     },
     "variables": {
@@ -37,7 +37,7 @@
         },
         "kind": "trigger",
         "config": {
-          "subtype": "manual",
+          "type": "manual",
           "exposeTo": [
             "ui",
             "api",
@@ -54,7 +54,7 @@
         },
         "kind": "trigger",
         "config": {
-          "subtype": "cron",
+          "type": "cron",
           "expression": "0 2 * * *",
           "timezone": "UTC",
           "missedFirePolicy": "skip",
@@ -160,26 +160,18 @@
         },
         "kind": "decision",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "good",
-                "label": "good",
-                "criteria": "Looks good"
-              },
-              {
-                "id": "bad",
-                "label": "bad",
-                "criteria": "Needs work"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "lastOutput.value.ok ? \"good\" : \"bad\""
-          },
-          "recordAlternatives": true
+          "kind": "expression",
+          "jsonata": "lastOutput.value.ok ? \"good\" : \"bad\"",
+          "routes": [
+            {
+              "id": "good",
+              "label": "good"
+            },
+            {
+              "id": "bad",
+              "label": "bad"
+            }
+          ]
         }
       },
       {
@@ -254,28 +246,16 @@
         },
         "kind": "exit",
         "config": {
-          "criteria": [
+          "outcome": "success",
+          "returns": "{ \"topic\": vars.topic }",
+          "destinations": [
             {
-              "when": "max-iterations",
-              "value": 3,
-              "outcome": "exhausted"
+              "kind": "caller"
+            },
+            {
+              "kind": "log"
             }
-          ],
-          "default": "loop-back",
-          "loopBack": {
-            "targetNodeId": "prep"
-          },
-          "return": {
-            "mapping": "{ \"topic\": vars.topic }",
-            "channels": [
-              {
-                "kind": "caller"
-              },
-              {
-                "kind": "log"
-              }
-            ]
-          }
+          ]
         }
       }
     ],
@@ -398,17 +378,6 @@
         },
         "to": {
           "node": "done",
-          "port": "in"
-        }
-      },
-      {
-        "id": "e11",
-        "from": {
-          "node": "done",
-          "port": "loopBack"
-        },
-        "to": {
-          "node": "prep",
           "port": "in"
         }
       }

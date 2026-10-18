@@ -1,5 +1,9 @@
 # ADR-0026: Exit predicates use shared answer primitives
 
+Supersession: [ADR-0036](ADR-0036-decision-gates-terminal-exits.md) replaces this ADR's exit predicates, loop-back and iteration-limit rules where applicable. Historical text below is retained.
+
+Superseded in part by [ADR-0035](ADR-0035-evaluator-specific-decisions.md): evaluator-specific decision configuration, factual observations, the separate temporary exit predicate and format 4. The record below is historical.
+
 Status: Accepted (owner directed the narrowed #99 implementation on 2026-10-08)
 
 ## Context
@@ -19,6 +23,8 @@ Criteria remain ordered: the first match determines the outcome and later criter
 ## Offline cutover
 
 Current definitions/exports and the fresh-store/boot compatibility stamp become format 3 together. Thread schema 1 and session rows do not change. The retained v1-to-v2 converter uses a mechanically captured, self-contained frozen v2 schema/type snapshot; current imports compose that stage with the v2-to-v3 exit converter. Runtime parsing accepts only format 3 and has no legacy exit execution path.
+
+Preparation for the next cutover (#164) also freezes the format-3 import closure from `12e5b87` beside the v2 capture. The v2-to-v3 definition and history stages use those frozen parsers/types and syntax schemas, preserving their behavior when current contracts later change. This capture does not advance the current format or change runtime admission.
 
 Old provider predicates require a manifest entry supplying explicit true/false criteria. The converter cannot reconstruct them from a historical boolean judgment. A syntactically proven boolean expression converts directly; ambiguous/coercing expressions require a reviewed boolean rewrite. Old Jev truth threshold 0.5, configured confidence minimum and Codex inherited defaults/report-confidence gate are preserved. New criteria and stricter malformed-response handling can change native judgments; conversion does not claim otherwise.
 

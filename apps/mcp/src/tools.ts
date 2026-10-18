@@ -138,7 +138,7 @@ export function registerTools(
     {
       title: 'Describe a loop',
       description:
-        'Describe one loop before starting it: its manual triggers with their input JSON schemas, the wait nodes that will ask for input, and each exit node with its return mapping (what the run result will contain). Uses the published version, or the draft when nothing is published. Pass the loop id or exact name. Use the trigger inputSchema to build the input for start_run.',
+        'Describe one loop before starting it: its manual triggers with their input JSON schemas, the wait nodes that will ask for input, and each exit node with its return mapping (what the run result will contain). Uses the published version, or the draft when nothing is published. Pass the loop id or exact name. Use the trigger inputSchema to build the input for start_run. Triggers have no payload filters; use downstream decisions for payload checks.',
       inputSchema: { loopId: loopRef },
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
@@ -242,7 +242,7 @@ export function registerTools(
     {
       title: 'Get a run',
       description:
-        'Get the current snapshot of a run: status, current node, iteration, what it is waiting for, its result (when succeeded), and its failure (when failed). Call this to check a run without waiting; use wait_for_run to wait.',
+        'Get the current snapshot of a run: status, current node, iteration, what it is waiting for, its returned value (including exhausted), and its failure details (for node failures). Call this to check a run without waiting; use wait_for_run to wait.',
       inputSchema: { runId },
       annotations: { readOnlyHint: true, openWorldHint: false },
     },

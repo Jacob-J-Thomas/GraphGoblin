@@ -61,6 +61,9 @@ describe('cursor boundaries, recovered twice', () => {
       const configs: Record<string, unknown> = {
         inference: { prompt: { template: 'hello' } },
         decision: {
+          kind: 'classifier',
+          model: 'jev',
+          question: 'Which?',
           answer: {
             type: 'choice',
             options: [
@@ -68,7 +71,6 @@ describe('cursor boundaries, recovered twice', () => {
               { id: 'no', label: 'No', criteria: 'No' },
             ],
           },
-          evaluation: { kind: 'classifier', model: 'jev', question: 'Which?' },
         },
         mutate: {
           operations: [
@@ -176,119 +178,6 @@ describe('cursor boundaries, recovered twice', () => {
   );
 });
 
-describe('loop-back boundaries, recovered twice', () => {
-  const boundaries = [
-    'finish-return',
-    'before-iteration',
-    'iteration-return',
-    'before-cursor',
-    'after-cursor',
-  ] as const;
-  it.each(boundaries.flatMap((boundary) => [1, 2].map((cap) => ({ boundary, cap }))))(
-    'cap $cap at $boundary',
-    async ({ boundary, cap }) => {
-      const e = await createTestEngine();
-      const def = singleNodeLoop(
-        `loop-${cap}-${boundary}`,
-        {
-          id: 'mut',
-          kind: 'mutate',
-          label: 'Mut',
-          config: {
-            operations: [
-              {
-                op: 'inject',
-                position: 'end',
-                messages: [{ role: 'user', content: 'one per iteration' }],
-              },
-            ],
-          },
-        },
-        { default: 'loop-back', loopBack: { targetNodeId: 'mut' } },
-      );
-      def.settings = { maxIterations: cap };
-      def.edges.push({ id: 'back', from: { node: 'done', port: 'loopBack' }, to: { node: 'mut' } });
-      const append = e.ports.events.append.bind(e.ports.events);
-      const update = e.ports.runs.update.bind(e.ports.runs);
-      let blocked = false;
-      const a = vi
-        .spyOn(e.ports.events, 'append')
-        .mockImplementation(async (id, drafts, options) => {
-          const increment = drafts.some((d) => d.type === 'iteration.incremented');
-          if (cap === 2 && boundary === 'before-iteration' && increment) {
-            blocked = true;
-            return hang();
-          }
-          const out = await append(id, drafts, options);
-          if (
-            (cap === 1 || boundary === 'finish-return') &&
-            drafts.some((d) => d.type === 'node.finished' && d.nodeId === 'done')
-          ) {
-            blocked = true;
-            return hang();
-          }
-          if (boundary === 'iteration-return' && increment) {
-            blocked = true;
-            return hang();
-          }
-          return out;
-        });
-      const u = vi.spyOn(e.ports.runs, 'update').mockImplementation(async (id, changes) => {
-        if (
-          cap === 2 &&
-          changes.iteration === 2 &&
-          (boundary === 'before-cursor' || boundary === 'after-cursor')
-        ) {
-          if (boundary === 'after-cursor') await update(id, changes);
-          blocked = true;
-          return hang();
-        }
-        return update(id, changes);
-      });
-      const r = await e.start(e.publish(def).loopId);
-      await vi.waitFor(() => expect(blocked).toBe(true));
-      e.manager.stop();
-      a.mockRestore();
-      u.mockRestore();
-      await recover(e);
-      await recover(e);
-      expect(await e.ports.runs.get(r.id)).toMatchObject({ status: 'exhausted', iteration: cap });
-      expect(e.eventTypes(r.id).filter((x) => x === 'iteration.incremented')).toHaveLength(cap - 1);
-      expect((await e.ports.runs.getThread(r.id))?.messages).toHaveLength(cap);
-    },
-  );
-
-  it('a self-targeted loop-back does not increment twice after its cursor commit', async () => {
-    const e = await createTestEngine();
-    const def = minimalLoop();
-    def.settings = { maxIterations: 3 };
-    def.nodes[1] = {
-      id: 'done',
-      kind: 'exit',
-      label: 'Done',
-      config: { default: 'loop-back', loopBack: { targetNodeId: 'done' } },
-    };
-    def.edges.push({ id: 'self', from: { node: 'done', port: 'loopBack' }, to: { node: 'done' } });
-    const update = e.ports.runs.update.bind(e.ports.runs);
-    let blocked = false;
-    const spy = vi.spyOn(e.ports.runs, 'update').mockImplementation(async (id, changes) => {
-      const out = await update(id, changes);
-      if (changes.iteration === 2) {
-        blocked = true;
-        return hang();
-      }
-      return out;
-    });
-    const r = await e.start(e.publish(def).loopId);
-    await vi.waitFor(() => expect(blocked).toBe(true));
-    e.manager.stop();
-    spy.mockRestore();
-    await recover(e);
-    expect(await e.ports.runs.get(r.id)).toMatchObject({ status: 'exhausted', iteration: 3 });
-    expect(e.eventTypes(r.id).filter((x) => x === 'iteration.incremented')).toHaveLength(2);
-  });
-});
-
 describe('wakes across crashes (review finding 4)', () => {
   it('an accepted input survives two crashes before its node finishes', async () => {
     const e = await createTestEngine();
@@ -372,7 +261,7 @@ describe('terminal transitions across crashes (review finding 5)', () => {
       id: 'done',
       kind: 'exit',
       label: 'Done',
-      config: { return: { mapping: 'counters.nodeVisits.done', channels: [{ kind: 'caller' }] } },
+      config: { returns: 'counters.nodeVisits.done', destinations: [{ kind: 'caller' }] },
     };
     const transition = e.ports.runs.transition.bind(e.ports.runs);
     let blocked = false;
@@ -402,7 +291,7 @@ describe('terminal transitions across crashes (review finding 5)', () => {
       id: 'done',
       kind: 'exit',
       label: 'Done',
-      config: { return: { mapping: '7', channels: [{ kind: 'log' }] } },
+      config: { returns: '7', destinations: [{ kind: 'log' }] },
     };
     const child = e.publish(childDef);
     const parent = e.publish(subLoop('finish-parent', child.loopId));

@@ -1,285 +1,303 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { TemplateCatalog } from '../templates/catalog.js';
+import { TemplateError } from '../templates/errors.js';
+import { singleNodeLoop } from '@graphgoblin/engine/testing';
+import type { ScriptRunRequest, ScriptRunResult } from '@graphgoblin/engine';
+import { fakeUlid } from '@graphgoblin/contracts/testing';
+import { SqliteRunRepository } from '@graphgoblin/infrastructure/sqlite';
 import { createTestApp, type TestApp } from '../testing/test-app.js';
-import {
-  TemplateInstantiateResponseSchema,
-  TemplateListResponseSchema,
-} from '@graphgoblin/contracts';
-import { LOCAL_OWNER } from '../container.js';
-describe('template catalog and instances', () => {
-  let app: TestApp | undefined;
-  afterEach(async () => {
-    await app?.close();
-  });
-  it('loads the source-only starter, allocates distinct drafts, and preserves the immutable owner binding', async () => {
+
+let app: TestApp | undefined;
+afterEach(async () => {
+  await app?.close();
+  app = undefined;
+});
+
+describe('template API without runtime authority', () => {
+  it('reads only manifests without provider, script or credential probes', async () => {
     app = await createTestApp();
-    const listed = await app.app.inject({ method: 'GET', url: '/templates' });
-    expect(listed.statusCode, listed.body).toBe(200);
-    const { items } = TemplateListResponseSchema.parse(listed.json());
-    expect(items.map((entry) => entry.manifest.id)).toEqual([
+    const preflight = vi.spyOn(app.harness, 'preflight');
+    const script = vi.spyOn(app.container.ports.scripts, 'run');
+    const secret = vi.spyOn(app.container.ports.secrets, 'resolve');
+    const authenticate = vi.spyOn(app.container.repos.apiKeys, 'authenticate');
+    const list = await app.app.inject({ method: 'GET', url: '/templates' });
+    expect(list.statusCode, list.body).toBe(200);
+    const { items } = list.json<{ items: { manifest: { id: string } }[] }>();
+    expect(items.map((item) => item.manifest.id)).toEqual([
       'starter',
       'implementation',
       'review',
       'qa',
     ]);
-    const settings = items[0]?.defaultSettings;
-    expect(settings).not.toBeNull();
-    const created = await app.app.inject({
-      method: 'POST',
-      url: '/templates/starter/instantiate',
-      payload: { settings },
-    });
-    expect(created.statusCode, created.body).toBe(201);
-    const { instance } = TemplateInstantiateResponseSchema.parse(created.json());
-    const repeated = await app.app.inject({
-      method: 'POST',
-      url: '/templates/starter/instantiate',
-      payload: { settings },
-    });
-    expect(repeated.statusCode, repeated.body).toBe(201);
-    expect(TemplateInstantiateResponseSchema.parse(repeated.json()).instance.parentLoopId).not.toBe(
-      instance.parentLoopId,
-    );
-    expect(instance.loops).toHaveLength(1);
-    const parent = await app.container.repos.loops.getLoop(instance.parentLoopId);
-    expect(parent?.draftVersionId).toBe(instance.loops[0]?.versionId);
-    expect(parent?.currentVersionId).toBeUndefined();
-    const stored = await app.container.templates.store.get(LOCAL_OWNER, instance.id);
-    expect(stored?.instance).toEqual(instance);
-    expect(await app.container.templates.store.get('other', instance.id)).toBeUndefined();
-    const received = await app.app.inject({
-      method: 'GET',
-      url: '/template-instances/' + instance.id,
-    });
-    expect(received.statusCode).toBe(200);
-    expect(received.json()).toEqual(instance);
-    const definition = await app.container.repos.loops.getVersion(instance.loops[0]!.versionId);
+    for (const entry of items) {
+      expect(Object.keys(entry)).toEqual(['manifest']);
+      const read = await app.app.inject({ method: 'GET', url: '/templates/' + entry.manifest.id });
+      expect(read.statusCode, read.body).toBe(200);
+      expect(read.json()).toEqual(entry);
+    }
+    expect(preflight).not.toHaveBeenCalled();
+    expect(script).not.toHaveBeenCalled();
+    expect(secret).not.toHaveBeenCalled();
+    expect(authenticate).not.toHaveBeenCalled();
     expect(
-      definition?.definition.nodes.find((node) => node.kind === 'inference')?.config,
-    ).toMatchObject({
-      session: { policy: 'fresh' },
-      harnessOptions: { sandbox: 'read-only', approval: 'never' },
-    });
+      (
+        await app.container.handle.client.execute(
+          "SELECT name FROM sqlite_master WHERE name LIKE 'template_%'",
+        )
+      ).rows,
+    ).toEqual([]);
+    expect(
+      (await app.container.handle.client.execute('PRAGMA table_info(runs)')).rows.map(
+        (row) => row.name,
+      ),
+    ).not.toContain('template_subject');
   });
-  it('refuses missing role prerequisites, invalid settings, and unknown IDs without creating loops', async () => {
+  it('removes configured actions from routing and OpenAPI without allocating state', async () => {
     app = await createTestApp();
-    const settings = {
-      kind: 'starter',
-      instruction: 'Summarize',
-      maxIterations: 10,
-      roles: { assistant: { harness: 'codex', model: 'not-in-catalog', effort: 'low' } },
-    };
-    const checked = await app.app.inject({
-      method: 'POST',
-      url: '/templates/starter/prerequisites',
-      payload: { settings },
-    });
-    expect(checked.statusCode).toBe(200);
-    expect(checked.json()).toMatchObject({ canInstantiate: false, canRun: false });
+    for (const url of ['/templates/starter/prerequisites', '/templates/starter/instantiate']) {
+      const response = await app.app.inject({ method: 'POST', url, payload: { settings: {} } });
+      expect(response.statusCode, response.body).toBe(404);
+      expect(response.json()).toMatchObject({ code: 'NOT_FOUND' });
+    }
     expect(
-      (
-        await app.app.inject({
-          method: 'POST',
-          url: '/templates/starter/instantiate',
-          payload: { settings },
-        })
-      ).statusCode,
-    ).toBe(409);
+      (await app.app.inject({ method: 'GET', url: '/template-instances/' + fakeUlid('retired') }))
+        .statusCode,
+    ).toBe(404);
+    const document = (await app.app.inject({ method: 'GET', url: '/openapi.json' })).json<{
+      paths: Record<string, unknown>;
+    }>();
     expect(
-      (
-        await app.app.inject({
-          method: 'POST',
-          url: '/templates/starter/instantiate',
-          payload: { settings: {} },
-        })
-      ).statusCode,
-    ).toBe(400);
-    expect((await app.app.inject({ method: 'GET', url: '/templates/absent' })).statusCode).toBe(
-      404,
-    );
+      Object.keys(document.paths).filter((path) =>
+        /instantiate|prerequisites|template-instances/.test(path),
+      ),
+    ).toEqual([]);
+    expect(await app.container.repos.loops.listLoops('local')).toEqual([]);
+    expect(await app.container.repos.runs.list()).toEqual([]);
+  });
+  it('keeps catalogue reads scoped and unknown template IDs explicit', async () => {
+    app = await createTestApp({ requireApiKey: true });
+    const denied = await app.container.repos.apiKeys.create('local', 'runs only', ['runs:read']);
+    const reader = await app.container.repos.apiKeys.create('local', 'reader', ['loops:read']);
+    expect((await app.app.inject({ method: 'GET', url: '/templates' })).statusCode).toBe(401);
     expect(
       (
         await app.app.inject({
           method: 'GET',
-          url: '/template-instances/00000000000000000000000000',
-        })
-      ).statusCode,
-    ).toBe(404);
-    expect(await app.container.repos.loops.listLoops(LOCAL_OWNER)).toEqual([]);
-  });
-  it('uses loops read/write scopes and owner isolation without a new template scope', async () => {
-    app = await createTestApp({ requireApiKey: true });
-    const key = await app.container.repos.apiKeys.create(LOCAL_OWNER, 'read only', ['loops:read']);
-    const headers = { authorization: 'Bearer ' + key.token };
-    const listed = await app.app.inject({ method: 'GET', url: '/templates', headers });
-    expect(listed.statusCode).toBe(200);
-    const settings = TemplateListResponseSchema.parse(listed.json()).items[0]!.defaultSettings;
-    expect(
-      (
-        await app.app.inject({
-          method: 'POST',
-          url: '/templates/starter/prerequisites',
-          payload: { settings },
-          headers,
-        })
-      ).statusCode,
-    ).toBe(200);
-    expect(
-      (
-        await app.app.inject({
-          method: 'POST',
-          url: '/templates/starter/instantiate',
-          payload: { settings },
-          headers,
+          url: '/templates',
+          headers: { authorization: 'Bearer ' + denied.token },
         })
       ).statusCode,
     ).toBe(403);
-    expect((await app.app.inject({ method: 'GET', url: '/templates' })).statusCode).toBe(401);
-  });
-});
-
-describe('editable starter execution', () => {
-  let app: TestApp | undefined;
-  afterEach(async () => {
-    await app?.close();
-  });
-  async function editedStarter() {
-    app = await createTestApp();
-    const entry = TemplateListResponseSchema.parse(
-      (await app.app.inject({ method: 'GET', url: '/templates' })).json(),
-    ).items[0]!;
-    const created = TemplateInstantiateResponseSchema.parse(
-      (
-        await app.app.inject({
-          method: 'POST',
-          url: '/templates/starter/instantiate',
-          payload: { settings: entry.defaultSettings },
-        })
-      ).json(),
-    ).instance;
-    const version = await app.container.repos.loops.getVersion(created.loops[0]!.versionId);
-    if (!version) throw new Error('missing starter draft');
-    const current = version.definition.nodes.find((node) => node.kind === 'inference');
-    if (!current || current.kind !== 'inference') throw new Error('missing starter inference');
-    const alternative = (await app.container.repos.catalog.list()).find(
-      (model) => model.harness === 'codex' && model.enabled && model.model !== current.config.model,
+    const headers = { authorization: 'Bearer ' + reader.token };
+    expect((await app.app.inject({ method: 'GET', url: '/templates', headers })).statusCode).toBe(
+      200,
     );
-    if (!alternative) throw new Error('missing alternative fixture model');
-    current.config.model = alternative.model;
-    current.config.effort = alternative.defaultEffort;
-    current.config.prompt.template =
-      'An edited instruction with {{ invocation.trigger.payload | json }}';
-    await app.container.repos.loops.saveDraft(created.parentLoopId, version.definition);
-    const publish = await app.app.inject({
+    const absent = await app.app.inject({ method: 'GET', url: '/templates/absent', headers });
+    expect(absent.statusCode).toBe(404);
+    expect(absent.json()).toMatchObject({ code: 'TEMPLATE_NOT_FOUND' });
+  });
+  it.each([409, 503])('sanitizes trusted catalogue asset faults with status %s', async (status) => {
+    app = await createTestApp();
+    vi.spyOn(app.container.templates.catalog, 'list').mockRejectedValue(
+      new TemplateError('TEMPLATE_PACKAGE_INVALID', 'private/path secret content', status),
+    );
+    for (const [method, url] of [
+      ['GET', '/templates'],
+      ['GET', '/templates/starter'],
+      ['POST', '/templates/starter/draft'],
+    ] as const) {
+      const response = await app.app.inject({
+        method,
+        url,
+        ...(method === 'POST' ? { payload: {} } : {}),
+      });
+      expect(response.statusCode).toBe(503);
+      expect(response.json()).toMatchObject({
+        code: 'TEMPLATE_PACKAGE_INVALID',
+        detail: 'The installed template catalog is invalid; reinstall the package.',
+      });
+      expect(response.body).not.toContain('private/path');
+      expect(response.body).not.toContain('secret content');
+    }
+  });
+  it('keeps arbitrary server errors sanitized as internal errors', async () => {
+    app = await createTestApp();
+    vi.spyOn(app.container.templates.catalog, 'list').mockRejectedValue(
+      Object.assign(new Error('private failure'), {
+        statusCode: 503,
+        code: 'TEMPLATE_PACKAGE_INVALID',
+      }),
+    );
+    const response = await app.app.inject({ method: 'GET', url: '/templates' });
+    expect(response.statusCode).toBe(500);
+    expect(response.json()).toMatchObject({ code: 'INTERNAL_ERROR' });
+    expect(response.body).not.toContain('private failure');
+  });
+  it.each(['missing', 'malformed', 'oversized'])(
+    'maps a real %s catalogue asset to a sanitized package fault without allocating a loop',
+    async (fault) => {
+      app = await createTestApp();
+      app.container.templates.catalog = new TemplateCatalog(app.dataDir);
+      if (fault !== 'missing')
+        await writeFile(
+          join(app.dataDir, 'catalog.json'),
+          fault === 'malformed' ? '{private-installed-content' : Buffer.alloc(1_048_577),
+        );
+      for (const [method, url] of [
+        ['GET', '/templates'],
+        ['GET', '/templates/starter'],
+        ['POST', '/templates/starter/draft'],
+      ] as const) {
+        const response = await app.app.inject({
+          method,
+          url,
+          ...(method === 'POST' ? { payload: {} } : {}),
+        });
+        expect(response.statusCode, response.body).toBe(503);
+        expect(response.json()).toMatchObject({ code: 'TEMPLATE_PACKAGE_INVALID' });
+        expect(response.body).not.toContain('private-installed-content');
+        expect(response.body).not.toContain(app.dataDir);
+      }
+      expect(await app.container.repos.loops.listLoops('local')).toEqual([]);
+    },
+  );
+  it('keeps ordinary returns and the unwrapped durable finalization marker', async () => {
+    app = await createTestApp();
+    expect(app.container.repos.runs.markFinalized).toBe(
+      SqliteRunRepository.prototype.markFinalized,
+    );
+    const draft = await app.app.inject({
       method: 'POST',
-      url: '/loops/' + created.parentLoopId + '/publish',
+      url: '/templates/starter/draft',
+      payload: {},
     });
-    expect(publish.statusCode, publish.body).toBe(200);
-    return { instance: created, model: alternative.model };
-  }
-  it('retains instance metadata while allowing an edited instruction/model and later published versions', async () => {
-    const { instance, model } = await editedStarter();
-    const started = await app!.app.inject({
-      method: 'POST',
-      url: '/loops/' + instance.parentLoopId + '/runs',
-      payload: { input: 'hello' },
-    });
-    expect(started.statusCode, started.body).toBe(202);
-    await app!.idle();
+    const loopId = draft.json<{ loop: { id: string } }>().loop.id;
     expect(
-      await app!.container.repos.runs.get(started.json<{ run: { id: string } }>().run.id),
-    ).toMatchObject({ status: 'succeeded' });
-    expect(app!.harness.started[0]?.model).toBe(model);
-    const retained = await app!.container.templates.get(LOCAL_OWNER, instance.id);
-    expect(retained.settings).toEqual(instance.settings);
-    const published = await app!.container.repos.loops.getLatestPublished(instance.parentLoopId);
-    if (!published) throw new Error('missing published version');
-    published.definition.name = 'Another edited version';
-    await app!.container.repos.loops.saveDraft(instance.parentLoopId, published.definition);
-    expect(
-      (
-        await app!.app.inject({
-          method: 'POST',
-          url: '/loops/' + instance.parentLoopId + '/publish',
-        })
-      ).statusCode,
+      (await app.app.inject({ method: 'POST', url: '/loops/' + loopId + '/publish' })).statusCode,
     ).toBe(200);
-    const newer = await app!.app.inject({
+    app.harness.script([{ finalText: 'ordinary result' }]);
+    const started = await app.app.inject({
       method: 'POST',
-      url: '/loops/' + instance.parentLoopId + '/runs',
-      payload: {},
-    });
-    expect(newer.statusCode, newer.body).toBe(202);
-    await app!.idle();
-    expect(
-      await app!.container.repos.runs.get(newer.json<{ run: { id: string } }>().run.id),
-    ).toMatchObject({ status: 'succeeded' });
-  });
-  it('resumes an ordinary starter inference failure and rechecks repaired readiness before retrying', async () => {
-    const { instance } = await editedStarter();
-    app!.harness.script([
-      { error: { code: 'harness_quota_exhausted', message: 'quota exhausted' } },
-    ]);
-    const started = await app!.app.inject({
-      method: 'POST',
-      url: '/loops/' + instance.parentLoopId + '/runs',
-      payload: {},
+      url: '/loops/' + loopId + '/runs',
+      payload: { input: { task: 'bounded' } },
     });
     expect(started.statusCode, started.body).toBe(202);
-    await app!.idle();
-    const id = started.json<{ run: { id: string } }>().run.id;
-    expect(await app!.container.repos.runs.get(id)).toMatchObject({
-      status: 'failed',
-      failure: { code: 'HARNESS_QUOTA_EXHAUSTED', resumable: true },
+    const runId = started.json<{ run: { id: string } }>().run.id;
+    await app.idle();
+    expect(await app.container.repos.runs.get(runId)).toMatchObject({
+      status: 'succeeded',
+      result: 'ordinary result',
     });
-    expect(app!.harness.started).toHaveLength(1);
-    app!.harness.preflightResult = { ok: false, authenticated: false, problems: ['fixture'] };
-    const unavailable = await app!.app.inject({
-      method: 'POST',
-      url: '/runs/' + id + '/resume',
-      payload: {},
-    });
-    expect(unavailable.statusCode, unavailable.body).toBe(200);
-    await app!.idle();
-    expect(await app!.container.repos.runs.get(id)).toMatchObject({
-      status: 'failed',
-      failure: { code: 'TEMPLATE_PREREQUISITE_UNAVAILABLE', resumable: true },
-    });
-    expect(app!.harness.started).toHaveLength(1);
-    expect(app!.harness.resumed).toHaveLength(0);
-    app!.harness.preflightResult = { ok: true, authenticated: true, problems: [] };
-    app!.harness.script([{ finalText: 'Recovered starter output' }]);
-    const resumed = await app!.app.inject({
-      method: 'POST',
-      url: '/runs/' + id + '/resume',
-      payload: {},
-    });
-    expect(resumed.statusCode, resumed.body).toBe(200);
-    await app!.idle();
-    expect(await app!.container.repos.runs.get(id)).toMatchObject({ id, status: 'succeeded' });
-    expect(app!.harness.started).toHaveLength(1);
-    expect(app!.harness.resumed).toHaveLength(1);
-    expect(
-      (await app!.container.repos.events.read(id)).filter((event) => event.type === 'run.resumed'),
-    ).toHaveLength(2);
+    expect(await app.container.repos.runs.listUnfinalized()).toEqual([]);
+    expect(app.container.settings).not.toHaveProperty('beforeExecute');
+    expect(app.container.settings).not.toHaveProperty('beforeResume');
+    expect(app.container.ports.scripts.constructor.name).toBe('ProcessScripts');
   });
-  it('refuses the actual current harness account before any node or provider turn', async () => {
-    const { instance } = await editedStarter();
-    app!.harness.preflightResult = { ok: false, authenticated: false, problems: ['fixture'] };
-    const started = await app!.app.inject({
+  it('preserves ordinary script environment, stdin and JSON stdout through the container', async () => {
+    app = await createTestApp();
+    await app.container.repos.secretsFor('local').set('script-token', 'ordinary-secret');
+    let observed: ScriptRunRequest | undefined;
+    app.container.ports.scripts = {
+      run: (request) => {
+        observed = request;
+        return Promise.resolve({
+          exitCode: 0,
+          stdout: '{"saved":true}',
+          stderr: '',
+          timedOut: false,
+        });
+      },
+    };
+    const loopId = await app.publishLoop(
+      singleNodeLoop(
+        'ordinary-script',
+        {
+          id: 'script',
+          kind: 'script',
+          label: 'Script',
+          config: {
+            command: 'ordinary-command',
+            args: ['{{ trigger.payload.task }}'],
+            env: { TOKEN: 'secret:script-token', PLAIN: 'ordinary' },
+            stdin: 'thread',
+            timeoutSeconds: 5,
+          },
+        },
+        { returns: 'lastOutput.value' },
+      ),
+    );
+    const response = await app.app.inject({
       method: 'POST',
-      url: '/loops/' + instance.parentLoopId + '/runs',
-      payload: {},
+      url: '/loops/' + loopId + '/runs',
+      payload: { input: { task: 'bounded' } },
     });
-    expect(started.statusCode, started.body).toBe(202);
-    await app!.idle();
-    const id = started.json<{ run: { id: string } }>().run.id;
-    expect(await app!.container.repos.runs.get(id)).toMatchObject({
-      status: 'failed',
-      failure: { code: 'TEMPLATE_PREREQUISITE_UNAVAILABLE' },
+    expect(response.statusCode, response.body).toBe(202);
+    const runId = response.json<{ run: { id: string } }>().run.id;
+    await app.idle();
+    expect(observed).toMatchObject({
+      command: 'ordinary-command',
+      args: ['bounded'],
+      env: { TOKEN: 'ordinary-secret', PLAIN: 'ordinary' },
+      timeoutMs: 5000,
     });
-    expect(app!.harness.started).toHaveLength(0);
-    expect(
-      (await app!.container.repos.events.read(id)).some((event) => event.type === 'node.started'),
-    ).toBe(false);
+    expect(JSON.parse(observed!.stdin!)).toMatchObject({
+      invocation: { trigger: { payload: { task: 'bounded' } } },
+    });
+    expect(await app.container.repos.runs.get(runId)).toMatchObject({
+      status: 'succeeded',
+      result: { saved: true },
+    });
+    expect(await app.container.repos.runs.listUnfinalized()).toEqual([]);
   });
+  it.each(['cancel', 'timeout'] as const)(
+    'preserves ordinary script %s and finalization',
+    async (action) => {
+      app = await createTestApp();
+      let invoked!: (request: ScriptRunRequest) => void;
+      const started = new Promise<ScriptRunRequest>((resolve) => {
+        invoked = resolve;
+      });
+      app.container.ports.scripts = {
+        run: (request) =>
+          new Promise<ScriptRunResult>((resolve) => {
+            invoked(request);
+            request.signal.addEventListener(
+              'abort',
+              () => resolve({ exitCode: null, stdout: '', stderr: '', timedOut: false }),
+              { once: true },
+            );
+          }),
+      };
+      const loopId = await app.publishLoop(
+        singleNodeLoop('ordinary-script-' + action, {
+          id: 'script',
+          kind: 'script',
+          label: 'Script',
+          config: { command: 'ordinary-command', timeoutSeconds: action === 'timeout' ? 1 : 30 },
+        }),
+      );
+      const response = await app.app.inject({
+        method: 'POST',
+        url: '/loops/' + loopId + '/runs',
+        payload: {},
+      });
+      expect(response.statusCode, response.body).toBe(202);
+      const runId = response.json<{ run: { id: string } }>().run.id;
+      const request = await started;
+      if (action === 'cancel')
+        expect(
+          (await app.app.inject({ method: 'POST', url: '/runs/' + runId + '/cancel' })).statusCode,
+        ).toBe(200);
+      await app.idle();
+      expect(request.signal.aborted).toBe(true);
+      expect(await app.container.repos.runs.get(runId)).toMatchObject(
+        action === 'cancel'
+          ? { status: 'cancelled' }
+          : { status: 'failed', failure: { code: 'SCRIPT_TIMEOUT' } },
+      );
+      expect(await app.container.repos.runs.listUnfinalized()).toEqual([]);
+    },
+  );
 });

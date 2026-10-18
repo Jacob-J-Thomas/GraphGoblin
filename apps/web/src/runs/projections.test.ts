@@ -1,5 +1,5 @@
-import type { RunEvent } from '@graphgoblin/contracts';
-import { sampleThread } from '@graphgoblin/contracts/testing';
+import { LoopDefinitionSchema, type RunEvent } from '@graphgoblin/contracts';
+import { minimalLoop, sampleThread } from '@graphgoblin/contracts/testing';
 import { describe, expect, it, vi } from 'vitest';
 import { event } from '../__fixtures__/fake-api.js';
 import { quotaSafeSessionStorage, useRunEventStore } from './event-store.js';
@@ -17,7 +17,6 @@ const actor = { kind: 'user' as const, id: 'local' };
 const channel = { kind: 'log' as const };
 const usage = { inputTokens: 1, outputTokens: 2, cachedInputTokens: 0, reasoningOutputTokens: 0 };
 const expressionEvidence = (optionId: string) => ({
-  answer: { type: 'choice' as const, optionId, confidence: null, probabilities: null },
   portId: optionId,
   provenance: {
     kind: 'expression' as const,
@@ -27,6 +26,7 @@ const expressionEvidence = (optionId: string) => ({
     effort: null,
   },
   diagnostics: [],
+  observation: { kind: 'route' as const, routeId: optionId, confidence: null, reasoning: null },
 });
 
 const ALL: RunEvent[] = [
@@ -72,6 +72,97 @@ const ALL: RunEvent[] = [
 ];
 
 describe('run projections', () => {
+  it.each(['success', 'failure', 'exhausted'] as const)(
+    'describes a terminal %s exit',
+    (outcome) => {
+      expect(describeEvent(event(R, 1, 'exit.evaluated', { nodeId: 'done', outcome }))).toBe(
+        `Exited: ${outcome}`,
+      );
+    },
+  );
+
+  it('replays absolute gate counts and describes the limit separately from the chosen route', () => {
+    const initial = sampleThread();
+    const entry = event(R, 1, 'decision.made', {
+      nodeId: 'check',
+      ...expressionEvidence('repeat'),
+      portId: 'limit-reached',
+      gate: {
+        previousPasses: 3,
+        passes: 3,
+        repeatRouteId: 'repeat',
+        maxPasses: 3,
+        elapsedSeconds: 1,
+        limit: 'max-passes',
+      },
+    });
+    expect(describeEvent(entry)).toContain('passes 3 → 3 of 3; Limit reached (max-passes)');
+    expect(threadAt(initial, [entry], 1).gates['check']).toEqual({ passes: 3 });
+  });
+  it('omits missing optional Score confidence but retains missing required LLM and Choice confidence', () => {
+    const provenance = {
+      kind: 'classifier' as const,
+      provider: 'typesafe',
+      classifierId: 'jev',
+      model: 'jev-latest',
+      effort: null,
+    };
+    const score = describeEvent(
+      event(R, 30, 'decision.made', {
+        nodeId: 'score',
+        portId: 'middle',
+        provenance,
+        diagnostics: [],
+        observation: {
+          kind: 'classifier',
+          answer: {
+            type: 'score',
+            score: 1.25,
+            confidence: null,
+            legend: { '0': 'Low', '1': 'Middle', '2': 'High' },
+            probabilities: null,
+          },
+        },
+      }),
+    );
+    expect(score).toBe('Scored 1.25 to band middle with classifier via typesafe (jev-latest)');
+    expect(
+      describeEvent(
+        event(R, 31, 'decision.made', {
+          nodeId: 'choice',
+          portId: 'yes',
+          provenance,
+          diagnostics: [],
+          observation: {
+            kind: 'classifier',
+            answer: {
+              type: 'choice',
+              optionId: 'yes',
+              confidence: null,
+              probabilities: null,
+            },
+          },
+        }),
+      ),
+    ).toContain('with confidence not recorded');
+    expect(
+      describeEvent(
+        event(R, 32, 'decision.made', {
+          nodeId: 'route',
+          portId: 'yes',
+          diagnostics: [],
+          provenance: {
+            kind: 'llm',
+            provider: 'codex',
+            model: 'alpha',
+            effort: 'low',
+            classifierId: null,
+          },
+          observation: { kind: 'route', routeId: 'yes', confidence: null, reasoning: null },
+        }),
+      ),
+    ).toContain('with self-reported confidence (informational) not recorded');
+  });
   it('describes Noul truth probability and fractional Score output separately', () => {
     const classifier = {
       kind: 'classifier' as const,
@@ -84,16 +175,18 @@ describe('run projections', () => {
       describeEvent(
         event(R, 30, 'decision.made', {
           nodeId: 'noul',
-          answer: {
-            type: 'noul',
-            kind: 'classifier',
-            holds: true,
-            trueProbability: 0.72,
-            confidence: 0.83,
-          },
           portId: 'true',
           provenance: classifier,
           diagnostics: [],
+          observation: {
+            kind: 'classifier',
+            answer: {
+              type: 'noul',
+              holds: true,
+              trueProbability: 0.72,
+              confidence: 0.83,
+            },
+          },
         }),
       ),
     ).toBe(
@@ -103,16 +196,18 @@ describe('run projections', () => {
       describeEvent(
         event(R, 32, 'decision.made', {
           nodeId: 'archived-noul',
-          answer: {
-            type: 'noul',
-            kind: 'classifier',
-            holds: null,
-            trueProbability: null,
-            confidence: null,
-          },
           portId: 'true',
           provenance: classifier,
           diagnostics: [],
+          observation: {
+            kind: 'classifier',
+            answer: {
+              type: 'noul',
+              holds: null,
+              trueProbability: null,
+              confidence: null,
+            },
+          },
         }),
       ),
     ).toBe(
@@ -122,16 +217,19 @@ describe('run projections', () => {
       describeEvent(
         event(R, 31, 'decision.made', {
           nodeId: 'score',
-          answer: {
-            type: 'score',
-            score: 1.25,
-            confidence: 0.91,
-            legend: { '0': 'Low', '1': 'Middle', '2': 'High' },
-            probabilities: { '1': 0.91 },
-          },
           portId: 'middle',
           provenance: classifier,
           diagnostics: [],
+          observation: {
+            kind: 'classifier',
+            answer: {
+              type: 'score',
+              score: 1.25,
+              confidence: 0.91,
+              legend: { '0': 'Low', '1': 'Middle', '2': 'High' },
+              probabilities: { '1': 0.91 },
+            },
+          },
         }),
       ),
     ).toBe(
@@ -139,11 +237,11 @@ describe('run projections', () => {
     );
   });
 
-  it('ignores the v2 event cache and retains decisions replayed with the canonical contract', async () => {
+  it('invalidates old event caches and cursors and retains only current-format replay', async () => {
     useRunEventStore.setState({ runs: {} });
     useRunEventStore.persist.clearStorage();
     sessionStorage.setItem(
-      'graphgoblin-run-events-v2',
+      'graphgoblin-run-events-v3',
       JSON.stringify({
         state: {
           runs: {
@@ -165,169 +263,29 @@ describe('run projections', () => {
         version: 0,
       }),
     );
-    await useRunEventStore.persist.rehydrate();
-    expect(useRunEventStore.getState().runs[R]).toBeUndefined();
+    vi.resetModules();
+    const { useRunEventStore: freshStore, quotaSafeSessionStorage: freshStorage } =
+      await import('./event-store.js');
+    await freshStore.persist.rehydrate();
+    expect(freshStore.getState().runs[R]).toBeUndefined();
+    expect(sessionStorage.getItem('graphgoblin-run-events-v3')).toBeNull();
     const refreshed = event(R, 1, 'decision.made', { nodeId: 'd', ...expressionEvidence('good') });
-    useRunEventStore.getState().append(R, refreshed);
-    expect(useRunEventStore.getState().runs[R]?.events).toEqual([refreshed]);
-    expect(sessionStorage.getItem('graphgoblin-run-events-v3')).toContain('"portId":"good"');
-    useRunEventStore.setState({ runs: {} });
-  });
-  it('describes completion reasons and limits independently of optional criterion indices', () => {
-    for (const criterionIndex of [undefined, 0]) {
-      const index = criterionIndex === undefined ? {} : { criterionIndex };
-      const base = { nodeId: 'done', iteration: 2, maxIterations: 5, criteria: [] };
-      for (const outcome of ['success', 'failure', 'exhausted'] as const) {
-        for (const reason of ['criterion-matched', 'default-success'] as const) {
-          const entry = event(R, 1, 'exit.evaluated', {
-            ...base,
-            result: { kind: 'completed', reason, outcome, ...index },
-          });
-          expect(describeEvent(entry)).toBe(
-            reason === 'default-success'
-              ? `Exited: default ${outcome}, no criterion matched`
-              : `Exited: ${criterionIndex === undefined ? 'a criterion' : 'criterion 1'} matched (${outcome})`,
-          );
-        }
-      }
-      for (const limit of ['max-iterations', 'max-duration', 'iteration-ceiling'] as const) {
-        const entry = event(R, 1, 'exit.evaluated', {
-          ...base,
-          result: { kind: 'limit-reached', limit, value: 5, outcome: 'exhausted', ...index },
-        });
-        expect(describeEvent(entry)).toBe(
-          `Exited: ${limit === 'max-duration' ? 'duration limit of 5 seconds' : 'iteration limit of 5'} reached${limit === 'iteration-ceiling' ? ' (loop ceiling)' : ''}${criterionIndex === undefined ? '' : ' (criterion 1)'}`,
-        );
-      }
-    }
-    const entry = event(R, 1, 'exit.evaluated', {
-      nodeId: 'done',
-      iteration: 1,
-      maxIterations: 5,
-      criteria: [
-        {
-          index: 0,
-          strategy: 'expression',
-          status: 'matched',
-          answer: { type: 'noul', kind: 'expression', holds: true, confidence: null },
-          provenance: {
-            kind: 'expression',
-            provider: null,
-            classifierId: null,
-            model: null,
-            effort: null,
-          },
-          acceptance: { status: 'accepted' },
-          match: { type: 'noul', value: true },
-        },
-      ],
-      result: {
-        kind: 'completed',
-        reason: 'criterion-matched',
-        outcome: 'failure',
-        criterionIndex: 0,
-      },
-    });
-    expect(describeEvent(entry)).toBe(
-      'Exited: criterion 1 (Expression) matched: Noul true (failure)',
+    freshStore.getState().append(R, refreshed);
+    expect(freshStore.getState().runs[R]?.events).toEqual([refreshed]);
+    expect(sessionStorage.getItem('graphgoblin-run-events-v4')).toContain('"portId":"good"');
+    sessionStorage.setItem(
+      'graphgoblin-run-events-v3',
+      'written by an older tab after initialisation',
     );
-    if (entry.type !== 'exit.evaluated') throw new Error('Expected an exit event fixture');
-    expect(
-      describeEvent({
-        ...entry,
-        criteria: [
-          {
-            index: 0,
-            strategy: 'expression',
-            status: 'matched',
-            answer: { type: 'noul', kind: 'expression', holds: true, confidence: null },
-            provenance: {
-              kind: 'expression',
-              provider: null,
-              classifierId: null,
-              model: null,
-              effort: null,
-            },
-            acceptance: { status: 'accepted' },
-            match: { type: 'noul', value: true },
-          },
-        ],
-        result: {
-          kind: 'completed',
-          reason: 'default-success',
-          outcome: 'failure',
-          criterionIndex: 0,
-        },
-      }),
-    ).toBe('Exited: default failure, no criterion matched');
-  });
-  it('describes every exit outcome and keeps exit activity grouped by node', () => {
-    const exit = (fields: Parameters<typeof event<'exit.evaluated'>>[3]) =>
-      event(R, 1, 'exit.evaluated', fields);
-    const base = { nodeId: 'done', iteration: 2, maxIterations: 5, criteria: [] };
-    for (const [result, expected] of [
-      [
-        { kind: 'completed', reason: 'default-success', outcome: 'success' },
-        'Exited: default success',
-      ],
-      [
-        { kind: 'looped-back', reason: 'no-criterion-matched', targetNodeId: 'prep' },
-        'Looped back: no criterion matched, iteration 2 of 5',
-      ],
-      [
-        {
-          kind: 'limit-reached',
-          limit: 'max-duration',
-          value: 10,
-          criterionIndex: 0,
-          outcome: 'exhausted',
-        },
-        'duration limit of 10 seconds reached (criterion 1)',
-      ],
-      [
-        { kind: 'limit-reached', limit: 'iteration-ceiling', value: 5, outcome: 'exhausted' },
-        'iteration limit of 5 reached (loop ceiling)',
-      ],
-      [
-        { kind: 'failed', diagnostic: { code: 'DECIDER_ERROR', message: 'Provider failed' } },
-        'Exit evaluation failed: Provider failed',
-      ],
-      [{ kind: 'cancelled' }, 'Exit evaluation cancelled'],
-    ] as const) {
-      const entry = exit({ ...base, result });
-      expect(describeEvent(entry)).toContain(expected);
-      expect(nodeActivity([entry]).get('done')).toEqual([entry]);
+    const removing = vi.spyOn(Storage.prototype, 'removeItem');
+    try {
+      freshStorage.getItem('graphgoblin-run-events-v4');
+      await freshStore.persist.rehydrate();
+      expect(removing).not.toHaveBeenCalled();
+    } finally {
+      removing.mockRestore();
     }
-    expect(
-      describeEvent(
-        exit({
-          ...base,
-          criteria: [
-            {
-              index: 0,
-              strategy: 'expression',
-              status: 'matched',
-              answer: { type: 'noul', kind: 'expression', holds: true, confidence: null },
-              provenance: {
-                kind: 'expression',
-                provider: null,
-                classifierId: null,
-                model: null,
-                effort: null,
-              },
-              acceptance: { status: 'accepted' },
-              match: { type: 'noul', value: true },
-            },
-          ],
-          result: {
-            kind: 'completed',
-            reason: 'criterion-matched',
-            outcome: 'failure',
-            criterionIndex: 0,
-          },
-        }),
-      ),
-    ).toBe('Exited: criterion 1 (Expression) matched: Noul true (failure)');
+    freshStore.setState({ runs: {} });
   });
   it('describes every event type', () => {
     const lines = ALL.map(describeEvent);
@@ -382,11 +340,54 @@ describe('run projections', () => {
     expect(useRunEventStore.getState().runs['r1']).toBeUndefined();
     clear('bulk20');
     expect(useRunEventStore.getState().runs['bulk20']).toBeUndefined();
-    expect(sessionStorage.getItem('graphgoblin-run-events-v3')).toContain('bulk19');
+    expect(sessionStorage.getItem('graphgoblin-run-events-v4')).toContain('bulk19');
   });
 });
 
 describe('initial thread and replay failures', () => {
+  it('seeds fallback gates from the pinned definition at pass one, while preserving recorded fork seeds', () => {
+    const definition = LoopDefinitionSchema.parse({
+      ...minimalLoop(),
+      nodes: [
+        ...minimalLoop().nodes,
+        {
+          id: 'gate',
+          kind: 'decision',
+          label: 'Gate',
+          config: {
+            kind: 'expression',
+            jsonata: '"repeat"',
+            routes: [
+              { id: 'repeat', label: 'Repeat', repeat: true },
+              { id: 'done', label: 'Done' },
+            ],
+            maxPasses: 3,
+          },
+        },
+        {
+          id: 'ordinary',
+          kind: 'decision',
+          label: 'Ordinary',
+          config: {
+            kind: 'expression',
+            jsonata: '"done"',
+            routes: [
+              { id: 'repeat', label: 'Repeat' },
+              { id: 'done', label: 'Done' },
+            ],
+          },
+        },
+      ],
+    });
+    const current = sampleThread({ gates: { gate: { passes: 3 }, obsolete: { passes: 9 } } });
+    const initial = initialThreadFrom(current, [event(R, 1, 'run.queued', {})], definition);
+    expect(initial.gates).toEqual({ gate: { passes: 1 } });
+    const fork = sampleThread({ gates: { gate: { passes: 2 } } });
+    expect(
+      initialThreadFrom(current, [event(R, 1, 'run.queued', { initialThread: fork })], definition),
+    ).toBe(fork);
+  });
+
   it('starts from the thread recorded on run.queued, seed included', () => {
     const seeded = sampleThread();
     const events = [event(R, 1, 'run.queued', { initialThread: seeded }), ...ALL.slice(1)];

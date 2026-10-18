@@ -1,13 +1,14 @@
 import {
   DecisionEmissionSchema,
+  LIMIT_REACHED_PORT_ID,
   type DecisionContext,
   type DecisionPayload,
   type JsonValue,
 } from '@graphgoblin/contracts';
-import { decisionPortId, threadView } from '@graphgoblin/domain';
+import { decisionPortId, decisionRouteDeclarations, threadView } from '@graphgoblin/domain';
 import { RunFailureError } from '../errors.js';
 import type { NodeContext, NodeHandler } from '../handler.js';
-import { evaluatePrimitive } from '../primitive-evaluator.js';
+import { evaluateClassifier, evaluateRoute } from '../primitive-evaluator.js';
 import { outputPatch, selectMessages, toJson } from './common.js';
 
 async function decisionContext(
@@ -33,53 +34,103 @@ async function decisionContext(
 export const decisionHandler: NodeHandler<'decision'> = {
   kind: 'decision',
   async execute(ctx) {
-    const evaluation = ctx.config.evaluation;
-    // The full-thread question and separately selected provider state remain caller-owned.
-    const prepared =
-      evaluation.kind === 'expression'
-        ? {}
-        : {
-            question: await ctx.services.render(evaluation.question),
-            context: await decisionContext(ctx, evaluation.context),
-          };
-    const result = await evaluatePrimitive({
+    const config = ctx.config;
+    const common = {
       nodeId: ctx.node.id,
       ownerId: ctx.run.ownerId,
-      evaluation,
-      answer: ctx.config.answer,
-      expressionView: threadView(ctx.thread),
-      ...prepared,
       signal: ctx.signal,
       ports: ctx.ports,
-      resolveModel: (...args) => ctx.services.resolveModel(...args),
-    });
-    const rawAnswer = result.answer;
-    const answer =
-      rawAnswer.type === 'choice' || rawAnswer.type === 'score'
-        ? {
-            ...rawAnswer,
-            probabilities: ctx.config.recordAlternatives ? rawAnswer.probabilities : null,
-          }
-        : rawAnswer;
-    if (result.acceptance.status === 'rejected')
-      throw new RunFailureError(
-        result.acceptance.code,
-        'Classifier confidence is below the authored minimum',
-        {
-          nodeId: ctx.node.id,
-          resumable: false,
-          details: {
-            answer,
-            provenance: result.provenance,
-            acceptance: result.acceptance,
-          },
-        },
-      );
-    const payload: DecisionPayload = {
-      answer,
-      portId: decisionPortId(ctx.config.answer, answer),
-      provenance: result.provenance,
+      resolveModel: (...args: Parameters<typeof ctx.services.resolveModel>) =>
+        ctx.services.resolveModel(...args),
     };
+    let payload: DecisionPayload;
+    switch (config.kind) {
+      case 'expression':
+      case 'llm': {
+        const result =
+          config.kind === 'expression'
+            ? await evaluateRoute({ ...common, config, expressionView: threadView(ctx.thread) })
+            : await evaluateRoute({
+                ...common,
+                config,
+                instructions: await ctx.services.render(config.instructions),
+                context: await decisionContext(ctx, config.context),
+              });
+        if (result.observation.kind !== 'route')
+          throw new Error('route evaluator returned a different observation');
+        payload = { ...result, portId: result.observation.routeId };
+        break;
+      }
+      case 'classifier': {
+        const result = await evaluateClassifier({
+          ...common,
+          config,
+          question: await ctx.services.render(config.question),
+          context: await decisionContext(ctx, config.context),
+        });
+        const answer =
+          result.answer.type === 'noul'
+            ? result.answer
+            : {
+                ...result.answer,
+                probabilities: config.recordAlternatives ? result.answer.probabilities : null,
+              };
+        if (result.acceptance.status === 'rejected')
+          throw new RunFailureError(
+            result.acceptance.code,
+            'Classifier confidence is below the authored minimum',
+            {
+              nodeId: ctx.node.id,
+              resumable: false,
+              details: {
+                observation: { kind: 'classifier', answer },
+                provenance: result.provenance,
+                acceptance: result.acceptance,
+              },
+            },
+          );
+        payload = {
+          observation: { kind: 'classifier', answer },
+          provenance: result.provenance,
+          portId: decisionPortId(config.answer, answer),
+        };
+        break;
+      }
+    }
+    const repeat = decisionRouteDeclarations(config).find((route) => route.repeat);
+    if (repeat) {
+      const previousPasses = ctx.thread.gates[ctx.node.id]?.passes ?? 1;
+      const maxPasses = config.maxPasses!;
+      // Run time includes waits, pauses and recovery downtime, and is checked after evaluation.
+      const elapsedSeconds = Math.max(
+        0,
+        (Date.parse(ctx.services.now()) - Date.parse(ctx.run.startedAt ?? ctx.run.createdAt)) /
+          1000,
+      );
+      const limit =
+        payload.portId !== repeat.id
+          ? null
+          : previousPasses >= maxPasses
+            ? 'max-passes'
+            : config.maxRunTimeSeconds !== undefined && elapsedSeconds >= config.maxRunTimeSeconds
+              ? 'max-run-time'
+              : null;
+      payload = {
+        ...payload,
+        portId: limit ? LIMIT_REACHED_PORT_ID : payload.portId,
+        gate: {
+          previousPasses,
+          passes: previousPasses + (payload.portId === repeat.id && !limit ? 1 : 0),
+          repeatRouteId: repeat.id,
+          maxPasses,
+          elapsedSeconds,
+          limit,
+          ...(config.maxRunTimeSeconds !== undefined
+            ? { maxRunTimeSeconds: config.maxRunTimeSeconds }
+            : {}),
+        },
+      };
+    }
     const evidence = DecisionEmissionSchema.safeParse({ ...payload, diagnostics: [] });
     if (!evidence.success)
       throw new RunFailureError(
@@ -87,9 +138,9 @@ export const decisionHandler: NodeHandler<'decision'> = {
         'The evaluator returned evidence inconsistent with its kind',
         { nodeId: ctx.node.id, resumable: false },
       );
-    await ctx.services.record({ type: 'decision.made', nodeId: ctx.node.id, ...evidence.data });
     return {
-      kind: 'done',
+      kind: 'decision',
+      evidence: evidence.data,
       patch: outputPatch(ctx.thread, ctx.node.id, toJson(payload), ctx.services.now()),
       route: payload.portId,
     };

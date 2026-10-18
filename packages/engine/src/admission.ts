@@ -34,8 +34,6 @@ export interface WebhookClaim {
   loopId: string;
   triggerNodeId: string;
   contentHash: string;
-  /** Only an authored, nonempty key activates business dedupe; content replay is unconditional. */
-  dedupeByKey?: true;
   inbound: WebhookInbound;
 }
 export type WebhookFailureCode =
@@ -58,10 +56,7 @@ export interface TriggerAdmissionPort {
   create(input: RunAdmission, receiptId?: string): Promise<RunRecord>;
   /** Atomic items-only key admission. Undefined means consumed/reserved, without ID reuse. */
   createPollItem(input: RunAdmission): Promise<RunRecord | undefined>;
-  claim(
-    input: WebhookClaim,
-    intent?: RunAdmission,
-  ): Promise<{ receipt: WebhookReceipt; duplicate: boolean }>;
+  claim(input: WebhookClaim, intent: RunAdmission): Promise<{ receipt: WebhookReceipt }>;
   get(id: string): Promise<WebhookReceipt | undefined>;
   /** Select retry identities only; each stored intent is validated independently by get(). */
   due(now: string, limit: number): Promise<Pick<WebhookReceipt, 'id' | 'attempts'>[]>;
@@ -143,14 +138,12 @@ export function parseRunAdmission(value: unknown): RunAdmission {
     run: run.data,
     initialThread: initialThread.data,
     queued,
-    pinnedLoopIds: raw.pinnedLoopIds as string[],
+    pinnedLoopIds: [...(raw.pinnedLoopIds as string[])],
   };
 }
 
 export function assertWebhookClaim(input: WebhookClaim, intent?: RunAdmission): void {
   if (
-    (input.dedupeByKey !== undefined && input.dedupeByKey !== true) ||
-    (input.dedupeByKey && !input.inbound.dedupeKey) ||
     input.inbound.ownerId !== input.ownerId ||
     !/^[a-f0-9]{64}$/.test(input.contentHash) ||
     input.inbound.type !== 'webhook' ||

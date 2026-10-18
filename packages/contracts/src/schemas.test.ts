@@ -90,11 +90,11 @@ describe('loop definition', () => {
   });
   it('parses the minimal loop and applies defaults', () => {
     const loop = LoopDefinitionSchema.parse(minimalLoop());
-    expect(loop.settings.maxIterations).toBe(10);
+    expect(loop.settings.maxNodeVisits).toBe(10);
     expect(loop.settings.workingDirectory).toEqual({ kind: 'temp' });
     expect(loop.settings.defaults).not.toHaveProperty('harness');
     const exit = loop.nodes.find((n) => n.kind === 'exit');
-    expect(exit?.kind === 'exit' && exit.config.return.channels).toEqual([{ kind: 'caller' }]);
+    expect(exit?.kind === 'exit' && exit.config.destinations).toEqual([{ kind: 'caller' }]);
     expect(loop.edges[0]?.to.port).toBe('in');
   });
 
@@ -143,7 +143,7 @@ describe('loop definition', () => {
   it('round-trips through the export format', () => {
     const exported = LoopExportSchema.parse({
       format: 'graphgoblin-loop',
-      formatVersion: 3,
+      formatVersion: 4,
       exportedAt: FIXTURE_TS,
       loop: minimalLoop(),
     });
@@ -164,10 +164,10 @@ describe('node config schemas', () => {
         { id: 'b', label: 'B', criteria: 'B criterion' },
       ],
     };
-    const valid = { answer, evaluation: { kind: 'classifier', model: 'jev', question: 'Q' } };
+    const valid = { answer, kind: 'classifier', model: 'jev', question: 'Q' };
     const parsed = DecisionConfigSchema.parse(valid);
-    if (parsed.evaluation.kind !== 'classifier') throw new Error('Expected classifier');
-    expect(parsed.evaluation.context.messages).toBe('last');
+    if (parsed.kind !== 'classifier') throw new Error('Expected classifier');
+    expect(parsed.context.messages).toBe('last');
     expect(parsed.recordAlternatives).toBe(true);
     expect(DecisionConfigSchema.safeParse({ ...valid, strategy: ['jev'] }).success).toBe(false);
     expect(
@@ -241,61 +241,77 @@ describe('node config schemas', () => {
     expect(cfg.onExhausted).toBe('continue');
   });
 
-  it('exit validates loop-back and predicate requirements', () => {
-    expect(ExitConfigSchema.safeParse({ default: 'loop-back' }).success).toBe(false);
-    expect(
-      ExitConfigSchema.safeParse({
-        criteria: [{ when: 'predicate', strategy: 'expression', outcome: 'success' }],
-      }).success,
-    ).toBe(false);
-    expect(
-      ExitConfigSchema.safeParse({
-        criteria: [{ when: 'predicate', strategy: 'jev', outcome: 'success' }],
-      }).success,
-    ).toBe(false);
-    const cfg = ExitConfigSchema.parse({
-      criteria: [
-        {
-          when: 'predicate',
-          answer: {
-            type: 'noul',
-            true: { label: 'Done', criteria: 'Complete' },
-            false: { label: 'Pending', criteria: 'Incomplete' },
-          },
-          evaluation: { kind: 'classifier', model: 'jev', question: 'Done?' },
-          match: { type: 'noul', value: true },
-          outcome: 'success',
-        },
-        { when: 'max-duration', seconds: 60 },
-        { when: 'last-output-matches', jsonSchema: { type: 'object' } },
-      ],
+  it('exit admits terminal outcomes and rejects removed lifecycle fields', () => {
+    for (const outcome of ['success', 'failure', 'exhausted'])
+      expect(ExitConfigSchema.parse({ outcome }).outcome).toBe(outcome);
+    for (const removed of [
+      { default: 'loop-back' },
+      { criteria: [] },
+      { loopBack: { targetNodeId: 'work' } },
+      { predicate: {} },
+      { return: { mapping: 'none' } },
+    ])
+      expect(ExitConfigSchema.safeParse(removed).success).toBe(false);
+    expect(ExitConfigSchema.parse({})).toEqual({
+      outcome: 'success',
+      returns: 'none',
+      destinations: [{ kind: 'caller' }],
     });
-    expect(cfg.default).toBe('success');
-    expect(cfg.return.mapping).toBe('none');
   });
 
-  it('trigger subtypes parse with defaults', () => {
-    const manual = TriggerConfigSchema.parse({ subtype: 'manual' });
-    expect(manual.subtype === 'manual' && manual.exposeTo).toEqual(['ui', 'api', 'mcp']);
-    const cron = TriggerConfigSchema.parse({ subtype: 'cron', expression: '* * * * *' });
-    expect(cron.subtype === 'cron' && cron.missedFirePolicy).toBe('skip');
+  it.each([
+    { type: 'manual' },
+    { type: 'cron', expression: '* * * * *' },
+    {
+      type: 'webhook',
+      authentication: { type: 'hmac-sha256', message: 'timestamp-body', secretRef: 'hook-secret' },
+    },
+    {
+      type: 'webhook',
+      authentication: { type: 'hmac-sha256', message: 'body', secretRef: 'hook-secret' },
+    },
+    { type: 'event', eventType: 'issue-ready' },
+    { type: 'poll', intervalSeconds: 30, probe: { kind: 'none' }, fireWhen: 'true' },
+  ])('requires type and rejects subtype and unknown fields: %j', (config) => {
+    expect(TriggerConfigSchema.parse(config)).toMatchObject(config);
+    const { type, ...fields } = config;
+    expect(TriggerConfigSchema.safeParse({ subtype: type, ...fields }).success).toBe(false);
+    for (const extra of [{ subtype: type }, { unknown: true }])
+      expect(TriggerConfigSchema.safeParse({ ...config, ...extra }).success).toBe(false);
+    const branch = TriggerConfigSchema.options.find((schema) => schema.safeParse(config).success)!;
+    expect(branch.safeParse({ ...config, subtype: type }).error?.issues).toContainEqual({
+      code: 'unrecognized_keys',
+      keys: ['subtype'],
+      path: [],
+      message: 'Unrecognized key: "subtype"',
+    });
+  });
+
+  it('trigger types parse with defaults', () => {
+    const manual = TriggerConfigSchema.parse({ type: 'manual' });
+    expect(manual.type === 'manual' && manual.exposeTo).toEqual(['ui', 'api', 'mcp']);
+    const cron = TriggerConfigSchema.parse({ type: 'cron', expression: '* * * * *' });
+    expect(cron.type === 'cron' && cron.missedFirePolicy).toBe('skip');
     const hook = TriggerConfigSchema.parse({
-      subtype: 'webhook',
-      signature: { scheme: 'hmac-sha256', secretRef: 'hook-secret' },
+      type: 'webhook',
+      authentication: { type: 'hmac-sha256', message: 'timestamp-body', secretRef: 'hook-secret' },
     });
     expect(
-      hook.subtype === 'webhook' && 'replayWindowSeconds' in hook && hook.replayWindowSeconds,
+      hook.type === 'webhook' &&
+        hook.authentication.type === 'hmac-sha256' &&
+        hook.authentication.message === 'timestamp-body' &&
+        hook.authentication.windowSeconds,
     ).toBe(300);
-    expect(TriggerConfigSchema.parse({ subtype: 'event', eventType: 'issue-ready' }).subtype).toBe(
+    expect(TriggerConfigSchema.parse({ type: 'event', eventType: 'issue-ready' }).type).toBe(
       'event',
     );
     const poll = TriggerConfigSchema.parse({
-      subtype: 'poll',
+      type: 'poll',
       intervalSeconds: 30,
       probe: { kind: 'http', url: 'https://example.test/status' },
       fireWhen: 'probe.body.ready',
     });
-    expect(poll.subtype === 'poll' && poll.probe.kind === 'http' && poll.probe.method).toBe('GET');
+    expect(poll.type === 'poll' && poll.probe.kind === 'http' && poll.probe.method).toBe('GET');
   });
 
   it('node envelope defaults ui position', () => {
@@ -399,11 +415,14 @@ describe('thread, run, and events', () => {
         ...base,
         type: 'decision.made',
         nodeId: 'd',
-        answer: {
-          type: 'choice',
-          optionId: 'good',
-          confidence: 0.9,
-          probabilities: { good: 0.9, bad: 0.1 },
+        observation: {
+          kind: 'classifier',
+          answer: {
+            type: 'choice',
+            optionId: 'good',
+            confidence: 0.9,
+            probabilities: { good: 0.9, bad: 0.1 },
+          },
         },
         portId: 'good',
         provenance: {

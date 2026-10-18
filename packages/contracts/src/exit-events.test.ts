@@ -1,195 +1,24 @@
-import { describe, expect, it } from 'vitest';
-import { RunEventSchema } from './events.js';
-import { MAX_MODEL_NAME_LENGTH } from './common.js';
-import { LoopSettingsSchema } from './loop.js';
-import { DecisionConfigSchema, InferenceConfigSchema } from './nodes.js';
-import { fakeUlid, FIXTURE_TS } from './testing/index.js';
+import { describe, it, expect } from 'vitest';
+import { RunEventSchema } from './index.js';
+import { FIXTURE_IDS, FIXTURE_TS } from './testing/index.js';
 
-const base = { runId: fakeUlid('run'), seq: 1, ts: FIXTURE_TS, nodeId: 'done' };
-const exit = {
-  ...base,
-  type: 'exit.evaluated',
-  iteration: 2,
-  maxIterations: 5,
-  criteria: [],
-  result: { kind: 'completed', outcome: 'success', reason: 'default-success' },
-};
-
-describe('exit and decision evidence contracts', () => {
-  it('round-trips the maximum configured model name in exit evidence', () => {
-    const model = 'm'.repeat(MAX_MODEL_NAME_LENGTH);
-    const configured = LoopSettingsSchema.parse({ defaults: { byHarness: { codex: { model } } } })
-      .defaults.byHarness.codex?.model;
+describe('terminal exit evidence', () => {
+  it('records the outcome and rejects predicate or continuation evidence', () => {
     const event = {
-      ...exit,
-      criteria: [
-        {
-          index: 0,
-          strategy: 'llm',
-          status: 'matched',
-          answer: { type: 'noul', kind: 'llm', holds: true, confidence: 0.9, reasoning: 'Done' },
-          provenance: {
-            kind: 'llm',
-            provider: 'codex',
-            classifierId: null,
-            model: configured,
-            effort: 'high',
-          },
-          acceptance: { status: 'accepted' },
-          match: { type: 'noul', value: true },
-        },
-      ],
+      runId: FIXTURE_IDS.run,
+      seq: 1,
+      ts: FIXTURE_TS,
+      type: 'exit.evaluated',
+      nodeId: 'done',
+      outcome: 'exhausted',
     };
-    expect(RunEventSchema.parse(JSON.parse(JSON.stringify(event)))).toEqual(event);
-    const oversized = `${model}m`;
-    expect(
-      LoopSettingsSchema.safeParse({ defaults: { byHarness: { codex: { model: oversized } } } })
-        .success,
-    ).toBe(false);
-    const decision = {
-      answer: {
-        type: 'choice',
-        options: [
-          { id: 'yes', label: 'Yes', criteria: 'Yes' },
-          { id: 'no', label: 'No', criteria: 'No' },
-        ],
-      },
-      evaluation: {
-        kind: 'llm',
-        harness: 'codex',
-        model: { mode: 'explicit', value: model },
-        effort: { mode: 'inherit' },
-        question: 'Done?',
-      },
-    };
-    const inference = { prompt: { template: 'Hello' }, model };
-    expect(DecisionConfigSchema.safeParse(decision).success).toBe(true);
-    expect(InferenceConfigSchema.safeParse(inference).success).toBe(true);
-    expect(
-      DecisionConfigSchema.safeParse({
-        ...decision,
-        evaluation: { ...decision.evaluation, model: { mode: 'explicit', value: oversized } },
-      }).success,
-    ).toBe(false);
-    expect(InferenceConfigSchema.safeParse({ ...inference, model: oversized }).success).toBe(false);
-    expect(
-      RunEventSchema.safeParse({
-        ...event,
-        criteria: [
-          {
-            ...event.criteria[0],
-            provenance: { ...event.criteria[0]?.provenance, model: oversized },
-          },
-        ],
-      }).success,
-    ).toBe(false);
-  });
-  it('accepts all exit outcomes and rejects raw diagnostics and unbounded reasoning', () => {
-    for (const result of [
-      exit.result,
-      { kind: 'completed', outcome: 'failure', reason: 'criterion-matched', criterionIndex: 1 },
-      { kind: 'looped-back', reason: 'no-criterion-matched', targetNodeId: 'prep' },
-      { kind: 'limit-reached', limit: 'iteration-ceiling', value: 5, outcome: 'exhausted' },
-      {
-        kind: 'failed',
-        diagnostic: { code: 'DECIDER_HTTP_ERROR', message: 'Provider failed', status: 503 },
-      },
-      { kind: 'cancelled' },
+    expect(RunEventSchema.parse(event)).toEqual(event);
+    for (const fields of [
+      { criteria: [] },
+      { result: { kind: 'looped-back', targetNodeId: 'work' } },
+      { iteration: 1 },
+      { outcome: 'unknown' },
     ])
-      expect(RunEventSchema.safeParse({ ...exit, result }).success).toBe(true);
-    const criteria = [
-      {
-        index: 0,
-        strategy: 'classifier',
-        status: 'not-matched',
-        answer: {
-          type: 'noul',
-          kind: 'classifier',
-          holds: false,
-          trueProbability: 0.2,
-          confidence: 0.8,
-        },
-        provenance: {
-          kind: 'classifier',
-          provider: 'typesafe',
-          classifierId: 'jev',
-          model: 'jev-latest',
-          effort: null,
-        },
-        acceptance: { status: 'accepted' },
-        match: { type: 'noul', value: true },
-      },
-      {
-        index: 1,
-        strategy: 'llm',
-        status: 'matched',
-        answer: { type: 'noul', kind: 'llm', holds: true, confidence: 0.9, reasoning: 'Done' },
-        provenance: {
-          kind: 'llm',
-          provider: 'codex',
-          classifierId: null,
-          model: 'judge',
-          effort: 'high',
-        },
-        acceptance: { status: 'accepted' },
-        match: { type: 'noul', value: true },
-      },
-      {
-        index: 2,
-        strategy: 'expression',
-        status: 'skipped',
-        reason: { code: 'EARLIER_CRITERION_MATCHED', message: 'Earlier match' },
-      },
-      {
-        index: 3,
-        strategy: 'classifier',
-        status: 'error',
-        diagnostic: { code: 'DECIDER_INVALID_RESPONSE', message: 'Invalid response' },
-      },
-    ];
-    expect(RunEventSchema.safeParse({ ...exit, criteria }).success).toBe(true);
-    for (const entry of [
-      { ...criteria[1], answer: { ...criteria[1]?.answer, reasoning: 'x'.repeat(2049) } },
-      { ...criteria[0], answer: { ...criteria[0]?.answer, confidence: 2 } },
-      { ...criteria[3], diagnostic: { code: 'RAW_PROVIDER_CODE', message: 'Raw' } },
-      { ...criteria[3], raw: { token: 'private' } },
-    ])
-      expect(RunEventSchema.safeParse({ ...exit, criteria: [entry] }).success).toBe(false);
-  });
-  it('requires canonical decision diagnostics and bounds historical messages', () => {
-    const provenance = {
-      kind: 'expression',
-      provider: null,
-      classifierId: null,
-      model: null,
-      effort: null,
-    };
-    const decision = {
-      ...base,
-      type: 'decision.made',
-      answer: { type: 'choice', optionId: 'yes', confidence: null, probabilities: null },
-      portId: 'yes',
-      provenance,
-    };
-    expect(RunEventSchema.safeParse(decision).success).toBe(false);
-    expect(RunEventSchema.safeParse({ ...decision, diagnostics: [] }).success).toBe(true);
-    expect(
-      RunEventSchema.safeParse({
-        ...decision,
-        diagnostics: [
-          {
-            provenance: { ...provenance, kind: 'classifier' },
-            code: 'CLASSIFIER_MODEL_DISABLED',
-            message: 'Classifier disabled',
-          },
-        ],
-      }).success,
-    ).toBe(true);
-    expect(
-      RunEventSchema.safeParse({
-        ...decision,
-        diagnostics: [{ provenance, code: 'UNKNOWN', message: 'x'.repeat(257) }],
-      }).success,
-    ).toBe(false);
+      expect(RunEventSchema.safeParse({ ...event, ...fields }).success).toBe(false);
   });
 });

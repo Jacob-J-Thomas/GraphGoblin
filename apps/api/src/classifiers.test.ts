@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   LoopDefinitionSchema,
@@ -60,7 +61,9 @@ function decisionLoop(model?: string, recordAlternatives = true): LoopDefinition
         kind: 'decision',
         label: 'Choose team',
         config: {
-          recordAlternatives,
+          kind: 'classifier',
+          model: model ?? 'jev',
+          question: 'Which team?',
           answer: {
             type: 'choice',
             options: [
@@ -68,14 +71,14 @@ function decisionLoop(model?: string, recordAlternatives = true): LoopDefinition
               { id: 'no', label: 'No', criteria: 'Reject' },
             ],
           },
-          evaluation: { kind: 'classifier', model: model ?? 'jev', question: 'Which team?' },
+          recordAlternatives,
         },
       },
       {
         id: 'done',
         kind: 'exit',
         label: 'Done',
-        config: { return: { mapping: 'lastOutput.value.answer.optionId' } },
+        config: { returns: 'lastOutput.value.portId' },
       },
     ],
     edges: [
@@ -403,7 +406,7 @@ describe('classifier catalog HTTP API', () => {
 
 describe('classifier publish validation agreement', () => {
   it.each(['disabled', 'missing', 'blank', 'unreadable', 'configured'])(
-    'reports built-in Jev exit predicate warnings on all five endpoints (%s)',
+    'reports built-in Jev decision warnings on all five endpoints (%s)',
     async (state) => {
       if (state !== 'missing')
         await t.container.repos
@@ -414,39 +417,7 @@ describe('classifier publish validation agreement', () => {
         await t.container.handle.client.execute(
           "UPDATE secrets SET ciphertext = 'broken' WHERE name = 'jev-api-key'",
         );
-      const base = minimalLoop();
-      const definition: LoopDefinitionInput = {
-        ...base,
-        nodes: base.nodes.map((node) =>
-          node.kind === 'exit'
-            ? {
-                ...node,
-                config: {
-                  criteria: [
-                    {
-                      when: 'predicate',
-                      answer: { type: 'noul' },
-                      evaluation: { kind: 'expression', jsonata: 'false' },
-                      match: { type: 'noul', value: true },
-                      outcome: 'success',
-                    },
-                    {
-                      when: 'predicate',
-                      answer: {
-                        type: 'noul',
-                        true: { label: 'Ready', criteria: 'Task is done' },
-                        false: { label: 'Continue', criteria: 'Task is not done' },
-                      },
-                      evaluation: { kind: 'classifier', model: 'jev', question: 'Done?' },
-                      match: { type: 'noul', value: true },
-                      outcome: 'success',
-                    },
-                  ],
-                },
-              }
-            : node,
-        ),
-      };
+      const definition = decisionLoop();
       const created = await t.app.inject({
         method: 'POST',
         url: '/loops',
@@ -465,9 +436,11 @@ describe('classifier publish validation agreement', () => {
                   ? 'CLASSIFIER_SECRET_UNREADABLE'
                   : 'CLASSIFIER_SECRET_MISSING',
             severity: 'warning',
-            nodeId: 'done',
-            path: 'config.criteria.1.evaluation.model',
-            message: expect.stringContaining("Exit 'Done' (done), classifier 'Jev' (jev)"),
+            nodeId: 'decide',
+            path: 'config.model',
+            message: expect.stringContaining(
+              "Decision 'Choose team' (decide), classifier 'Jev' (jev)",
+            ),
           }),
         ]);
       if (issues.length) {
@@ -488,7 +461,7 @@ describe('classifier publish validation agreement', () => {
         url: '/loops/import',
         payload: {
           format: 'graphgoblin-loop',
-          formatVersion: 3,
+          formatVersion: CURRENT_DEFINITION_FORMAT,
           exportedAt: FIXTURE_TS,
           loop: definition,
         },
@@ -562,7 +535,7 @@ describe('classifier publish validation agreement', () => {
         url: '/loops/import',
         payload: {
           format: 'graphgoblin-loop',
-          formatVersion: 3,
+          formatVersion: CURRENT_DEFINITION_FORMAT,
           exportedAt: FIXTURE_TS,
           loop: definition,
         },
@@ -589,7 +562,7 @@ describe('classifier publish validation agreement', () => {
       url: '/loops/import',
       payload: {
         format: 'graphgoblin-loop',
-        formatVersion: 3,
+        formatVersion: CURRENT_DEFINITION_FORMAT,
         exportedAt: FIXTURE_TS,
         loop: definition,
       },
@@ -613,7 +586,7 @@ describe('classifier publish validation agreement', () => {
         expect.objectContaining({
           code: expected,
           nodeId: 'decide',
-          path: 'config.evaluation.model',
+          path: 'config.model',
           message: expect.stringContaining('Choose team'),
         }),
       ]);
@@ -635,8 +608,12 @@ describe('classifier publish validation agreement', () => {
           ? {
               ...node,
               config: {
-                ...node.config,
-                evaluation: { kind: 'expression' as const, jsonata: '"yes"' },
+                kind: 'expression' as const,
+                jsonata: '"yes"',
+                routes: [
+                  { id: 'yes', label: 'Yes' },
+                  { id: 'no', label: 'No' },
+                ],
               },
             }
           : node,
@@ -653,7 +630,7 @@ describe('classifier publish validation agreement', () => {
       url: '/loops/import',
       payload: exported,
     });
-    expect(imported.json().draft.definition.nodes[1].config.evaluation).toEqual({
+    expect(imported.json().draft.definition.nodes[1].config).toMatchObject({
       kind: 'expression',
       jsonata: '"yes"',
     });
@@ -682,7 +659,8 @@ describe('classifier runtime hot reload', () => {
     await t.container.repos.secretsFor('local').set('jev-api-key', 'test-key');
     const definition = decisionLoop();
     for (const node of definition.nodes)
-      if (node.kind === 'decision') node.config.recordAlternatives = true;
+      if (node.kind === 'decision' && node.config.kind === 'classifier')
+        node.config.recordAlternatives = true;
     const loopId = await t.publishLoop(definition);
     const started = await t.app.inject({
       method: 'POST',
@@ -702,7 +680,7 @@ describe('classifier runtime hot reload', () => {
     });
   });
 
-  it('keeps real Jev exit HTTP error bodies out of snapshots, events, streams and logs', async () => {
+  it('keeps real Jev decision HTTP error bodies out of snapshots, events, streams and logs', async () => {
     const marker = 'gg-private-exit-error-regression';
     const decider = createJevDecider({
       secrets: { resolve: () => Promise.resolve('test-key') },
@@ -726,24 +704,7 @@ describe('classifier runtime hot reload', () => {
           provenance: { provider: 'typesafe', classifierId: 'jev', model: 'jev-latest' },
         }),
     };
-    const definition = minimalLoop();
-    for (const node of definition.nodes)
-      if (node.kind === 'exit')
-        node.config = {
-          criteria: [
-            {
-              when: 'predicate',
-              answer: {
-                type: 'noul',
-                true: { label: 'Ready', criteria: 'Task is done' },
-                false: { label: 'Continue', criteria: 'Task is not done' },
-              },
-              evaluation: { kind: 'classifier', model: 'jev', question: 'Done?' },
-              match: { type: 'noul', value: true },
-              outcome: 'success',
-            },
-          ],
-        };
+    const definition = decisionLoop();
     const loopId = await t.publishLoop(definition);
     const started = await t.app.inject({
       method: 'POST',
@@ -862,17 +823,21 @@ describe('classifier runtime hot reload', () => {
     const decider = createCodexDecider(
       createCodexStructured(harness, { workingDirectory: t.dataDir }),
     );
-    t.codex.choose = (request, signal) =>
-      decider.choose(request, signal ?? new AbortController().signal);
+    t.codex.route = (request, signal) =>
+      decider.route(request, signal ?? new AbortController().signal);
     const definition = decisionLoop();
     for (const node of definition.nodes)
       if (node.kind === 'decision')
-        node.config.evaluation = {
+        node.config = {
+          routes: [
+            { id: 'yes', label: 'Yes' },
+            { id: 'no', label: 'No' },
+          ],
           kind: 'llm',
           harness: 'codex',
           model: { mode: 'inherit' },
           effort: { mode: 'inherit' },
-          question: 'Which team?',
+          instructions: 'Which team?',
         };
     const loopId = await t.publishLoop(definition);
     const started = await t.app.inject({
@@ -1024,7 +989,7 @@ describe('classifier runtime hot reload', () => {
         (await t.container.repos.events.read(run)).find((event) => event.type === 'decision.made'),
       ).toMatchObject({
         provenance: { classifierId: 'kev', model: 'native-one' },
-        answer: { optionId: 'yes' },
+        observation: { kind: 'classifier', answer: { optionId: 'yes' } },
       });
       expect(fixture.requests[0]).toMatchObject({
         body: { model: 'native-one' },

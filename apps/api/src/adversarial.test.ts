@@ -28,7 +28,7 @@ function triggerLoop(name: string, config: unknown, emit?: string): LoopDefiniti
       id: 'done',
       kind: 'exit',
       label: 'Done',
-      config: { return: { mapping: '42', channels: [{ kind: 'event', eventType: emit }] } },
+      config: { returns: '42', destinations: [{ kind: 'event', eventType: emit }] },
     };
   return def;
 }
@@ -36,9 +36,13 @@ async function hook(t: TestApp) {
   await t.container.repos.secretsFor('local').set('hook', 'secret-marker');
   const id = await t.publishLoop(
     triggerLoop('hook', {
-      subtype: 'webhook',
-      signature: { secretRef: 'hook', scheme: 'hmac-sha256' },
-      replayWindowSeconds: 300,
+      type: 'webhook',
+      authentication: {
+        secretRef: 'hook',
+        type: 'hmac-sha256',
+        message: 'timestamp-body',
+        windowSeconds: 300,
+      },
     }),
   );
   const list = (await t.app.inject(`/loops/${id}/triggers`)).json<{
@@ -161,9 +165,6 @@ describe('adversarial API invariants', () => {
     'GET /templates': 'loops:read',
     'GET /templates/{id}': 'loops:read',
     'POST /templates/{id}/draft': 'loops:write',
-    'POST /templates/{id}/prerequisites': 'loops:read',
-    'POST /templates/{id}/instantiate': 'loops:write',
-    'GET /template-instances/{id}': 'loops:read',
     'PUT /model-catalog/{harness}/{model}': 'settings:write',
     'PATCH /model-catalog/{harness}/{model}': 'settings:write',
     'DELETE /model-catalog/{harness}/{model}': 'settings:write',
@@ -344,7 +345,7 @@ describe('adversarial API invariants', () => {
     ).toBe(202);
     expect(
       (await t.app.inject({ method: 'POST', url: h.path, payload: '{"a":1}', headers })).statusCode,
-    ).toBe(409);
+    ).toBe(202);
     await t.idle();
   });
   it.each([-300001, -299999, 299999, 300001])(
@@ -395,7 +396,7 @@ describe('adversarial API invariants', () => {
         await t.publishLoop(
           triggerLoop(
             `event-${i}`,
-            { subtype: 'event', eventType: `event-${i}` },
+            { type: 'event', eventType: `event-${i}` },
             `event-${(i + 1) % count}`,
           ),
         );
@@ -419,7 +420,7 @@ describe('adversarial API invariants', () => {
       method: 'POST',
       url: '/loops',
       payload: {
-        definition: triggerLoop('draft-cron', { subtype: 'cron', expression: '* * * * *' }),
+        definition: triggerLoop('draft-cron', { type: 'cron', expression: '* * * * *' }),
       },
     });
     const id = response.json<{ loop: { id: string } }>().loop.id;
@@ -630,7 +631,7 @@ describe('adversarial API invariants', () => {
     ).toBe(413);
     for (const definition of [
       { ...minimalLoop(), unknown: 1 },
-      { ...minimalLoop(), settings: { maxIterations: '3' } },
+      { ...minimalLoop(), settings: { maxNodeVisits: '3' } },
     ])
       expect(
         (await t.app.inject({ method: 'POST', url: '/loops', payload: { definition } })).statusCode,
@@ -651,13 +652,13 @@ describe('adversarial API invariants', () => {
       { id: 'c', from: { node: 'sub', port: 'out' }, to: { node: 'done' } },
     ];
     const parent = await t.publishLoop(def);
-    const disarm = t.container.triggers.disarmLoop.bind(t.container.triggers);
+    const remove = t.container.repos.loops.delete.bind(t.container.repos.loops);
     let started: Promise<{ statusCode: number; json: <T>() => T }> | undefined;
     // The parent's start request arrives between the in-use check and the deletion.
-    vi.spyOn(t.container.triggers, 'disarmLoop').mockImplementationOnce(async (id) => {
+    vi.spyOn(t.container.repos.loops, 'delete').mockImplementationOnce(async (id) => {
       started = t.app.inject({ method: 'POST', url: `/loops/${parent}/runs`, payload: {} });
       await new Promise((resolve) => setTimeout(resolve, 20));
-      return disarm(id);
+      return remove(id);
     });
     const deleted = await t.app.inject({ method: 'DELETE', url: `/loops/${child}` });
     expect(deleted.statusCode).toBe(204);

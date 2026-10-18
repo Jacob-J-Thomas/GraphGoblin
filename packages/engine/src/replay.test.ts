@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { describe, expect, it, vi } from 'vitest';
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
 import { fakeUlid } from '@graphgoblin/contracts/testing';
@@ -6,10 +7,10 @@ import { createTestEngine, singleNodeLoop } from './testing/scenario.js';
 /** start -> a (sets vars.a) -> b (sets vars.b) -> done, returning vars. */
 function linearLoop(): LoopDefinitionInput {
   return {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: 'linear',
     nodes: [
-      { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+      { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
       {
         id: 'a',
         kind: 'mutate',
@@ -32,7 +33,7 @@ function linearLoop(): LoopDefinitionInput {
           operations: [{ op: 'set', path: '/vars/b', value: { kind: 'literal', value: 2 } }],
         },
       },
-      { id: 'done', kind: 'exit', label: 'Done', config: { return: { mapping: 'vars' } } },
+      { id: 'done', kind: 'exit', label: 'Done', config: { returns: 'vars' } },
     ],
     edges: [
       { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'a' } },
@@ -230,11 +231,11 @@ describe('replay-at-node', () => {
 
 function minimalChild(): LoopDefinitionInput {
   return {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: 'child',
     nodes: [
-      { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
-      { id: 'done', kind: 'exit', label: 'Done', config: { return: { mapping: '"ok"' } } },
+      { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
+      { id: 'done', kind: 'exit', label: 'Done', config: { returns: '"ok"' } },
     ],
     edges: [{ id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'done' } }],
   };

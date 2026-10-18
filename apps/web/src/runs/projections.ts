@@ -2,17 +2,25 @@
  * Read-only projections of a run's event log for the inspector. Thread reconstruction uses
  * `replayThread` from `domain`, the same function the engine uses for consistency checks.
  */
-import type { ContextThread, JsonPatch, PrimitiveAnswer, RunEvent } from '@graphgoblin/contracts';
+import type {
+  ContextThread,
+  JsonPatch,
+  ClassifierAnswer,
+  EvaluationObservation,
+  RunEvent,
+  LoopDefinition,
+} from '@graphgoblin/contracts';
 import { getAtPointer, replayThread } from '@graphgoblin/domain';
 
 /**
  * The thread as the run started. The engine records it on the first event (`run.queued`),
  * including a subloop child's seed; logs written before that field existed fall back to the
- * immutable `run` and `invocation` from the current thread with every collection empty.
+ * immutable `run` and `invocation` from the current thread and one-based gates from the definition.
  */
 export function initialThreadFrom(
   current: ContextThread,
   events: readonly RunEvent[] = [],
+  definition?: LoopDefinition,
 ): ContextThread {
   const first = events[0];
   if (first?.type === 'run.queued' && first.initialThread) return first.initialThread;
@@ -24,6 +32,11 @@ export function initialThreadFrom(
     vars: {},
     artifacts: [],
     outputs: {},
+    gates: Object.fromEntries(
+      (definition?.nodes ?? [])
+        .filter((node) => node.kind === 'decision' && node.config.maxPasses !== undefined)
+        .map((node) => [node.id, { passes: 1 }]),
+    ),
     counters: {
       nodeVisits: {},
       usage: { inputTokens: 0, outputTokens: 0, cachedInputTokens: 0, reasoningOutputTokens: 0 },
@@ -124,25 +137,8 @@ export function describeEvent(event: RunEvent): string {
     case 'child_run.finished':
     case 'harness.session':
       return 'nodeId' in event ? event.nodeId : '';
-    case 'decision.made': {
-      const answer =
-        event.answer.type === 'choice'
-          ? `Chose ${event.answer.optionId}`
-          : event.answer.type === 'noul'
-            ? `Answered ${event.answer.holds === null ? 'unknown (not recorded)' : event.answer.holds ? 'true' : 'false'}`
-            : `Scored ${event.answer.score} to band ${event.portId}`;
-      const trueProbability =
-        event.answer.type === 'noul' && event.answer.kind === 'classifier'
-          ? ` (true probability ${event.answer.trueProbability ?? 'not recorded'})`
-          : '';
-      const confidence =
-        event.answer.confidence !== null
-          ? ` with confidence ${event.answer.confidence}`
-          : event.answer.type === 'noul' && event.answer.kind !== 'expression'
-            ? ' with confidence not recorded'
-            : '';
-      return `${answer}${trueProbability} with ${event.provenance.kind}${event.provenance.provider ? ` via ${event.provenance.provider}` : ''}${event.provenance.model ? ` (${event.provenance.model})` : ''}${confidence}${event.diagnostics.map((item) => `; ${item.code}: ${item.message}`).join('')}`;
-    }
+    case 'decision.made':
+      return describeDecision(event);
     case 'exit.evaluated':
       return describeExit(event);
     case 'signal.received':
@@ -156,32 +152,53 @@ export function describeEvent(event: RunEvent): string {
   }
 }
 
-function describeExit(event: Extract<RunEvent, { type: 'exit.evaluated' }>): string {
-  const result = event.result;
-  switch (result.kind) {
-    case 'completed': {
-      if (result.reason === 'default-success')
-        return `Exited: default ${result.outcome}, no criterion matched`;
-      const criterion = event.criteria.find((c) => c.index === result.criterionIndex);
-      const label =
-        result.criterionIndex === undefined
-          ? 'a criterion'
-          : `criterion ${result.criterionIndex + 1}`;
-      const detail =
-        criterion?.status === 'matched'
-          ? ` (${strategyName(criterion.strategy)}) matched${'answer' in criterion ? `: ${answerDescription(criterion.answer)}` : ''}`
-          : ' matched';
-      return `Exited: ${label}${detail} (${result.outcome})`;
+function describeDecision(event: Extract<RunEvent, { type: 'decision.made' }>): string {
+  const { observation, provenance } = event;
+  let description: string;
+  let confidence: number | null;
+  switch (observation.kind) {
+    case 'route':
+      description = `Chose ${observation.routeId}`;
+      confidence = observation.confidence;
+      break;
+    case 'boolean':
+      description = `Answered ${observationDescription(observation)}`;
+      confidence = observation.confidence;
+      break;
+    case 'classifier': {
+      const answer = observation.answer;
+      confidence = answer.confidence;
+      switch (answer.type) {
+        case 'choice':
+          description = `Chose ${answer.optionId}`;
+          break;
+        case 'score':
+          description = `Scored ${answer.score} to band ${event.gate?.limit ? event.gate.repeatRouteId : event.portId}`;
+          break;
+        case 'noul':
+          description = `Answered ${answer.holds === null ? 'unknown (not recorded)' : answer.holds} (true probability ${answer.trueProbability ?? 'not recorded'})`;
+          break;
+      }
+      break;
     }
-    case 'looped-back':
-      return `Looped back: no criterion matched, iteration ${event.iteration} of ${event.maxIterations}`;
-    case 'limit-reached':
-      return `Exited: ${result.limit === 'max-duration' ? `duration limit of ${result.value} seconds` : `iteration limit of ${result.value}`} reached${result.limit === 'iteration-ceiling' ? ' (loop ceiling)' : ''}${result.criterionIndex !== undefined ? ` (criterion ${result.criterionIndex + 1})` : ''}`;
-    case 'failed':
-      return `Exit evaluation failed: ${result.diagnostic.message}`;
-    case 'cancelled':
-      return 'Exit evaluation cancelled';
   }
+  const provider = provenance.provider ? ` via ${provenance.provider}` : '';
+  const model = provenance.model ? ` (${provenance.model})` : '';
+  const confidenceLabel =
+    provenance.kind === 'llm' ? 'self-reported confidence (informational)' : 'confidence';
+  const confidenceText =
+    confidence !== null
+      ? ` with ${confidenceLabel} ${confidence}`
+      : provenance.kind === 'llm' ||
+          (observation.kind === 'classifier' && observation.answer.type !== 'score')
+        ? ` with ${confidenceLabel} not recorded`
+        : '';
+  const diagnostics = event.diagnostics.map((item) => `; ${item.code}: ${item.message}`).join('');
+  return `${description} with ${provenance.kind}${provider}${model}${confidenceText}${event.gate ? `; passes ${event.gate.previousPasses} → ${event.gate.passes} of ${event.gate.maxPasses}${event.gate.limit ? `; Limit reached (${event.gate.limit})` : ''}` : ''}${diagnostics}`;
+}
+
+function describeExit(event: Extract<RunEvent, { type: 'exit.evaluated' }>): string {
+  return `Exited: ${event.outcome}`;
 }
 
 export function strategyName(strategy: string): string {
@@ -194,7 +211,7 @@ export function strategyName(strategy: string): string {
         : strategy;
 }
 
-export function answerDescription(answer: PrimitiveAnswer): string {
+export function answerDescription(answer: ClassifierAnswer): string {
   switch (answer.type) {
     case 'choice':
       return `Choice ${answer.optionId}`;
@@ -223,4 +240,15 @@ export function nodeActivity(events: readonly RunEvent[]): Map<string, RunEvent[
     }
   }
   return byNode;
+}
+
+export function observationDescription(observation: EvaluationObservation): string {
+  switch (observation.kind) {
+    case 'route':
+      return `Route ${observation.routeId}`;
+    case 'boolean':
+      return `Boolean ${observation.holds === null ? 'unknown (not recorded)' : observation.holds}`;
+    case 'classifier':
+      return answerDescription(observation.answer);
+  }
 }

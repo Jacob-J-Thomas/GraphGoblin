@@ -53,32 +53,17 @@ async function replace(page: Page, editor: Locator, text: string) {
   await page.keyboard.insertText(text);
 }
 
-for (const [kind, answer] of [
-  ['expression', choice],
-  ['expression', noul],
-  ['classifier', choice],
-  ['classifier', noul],
-  ['classifier', score],
-  ['llm', choice],
-  ['llm', noul],
-] as const) {
-  test(`${kind} ${answer.type}: JSON round trip, validation, multiline text, route removal confirmation and reload`, async ({
+for (const answer of [choice, noul, score]) {
+  test(`classifier ${answer.type}: JSON round trip, validation, multiline text, route removal confirmation and reload`, async ({
     page,
     request,
   }) => {
-    const evaluation =
-      kind === 'expression'
-        ? { kind, jsonata: answer.type === 'noul' ? 'true' : '"out"' }
-        : kind === 'classifier'
-          ? { kind, model: 'jev', question: 'Evaluate' }
-          : {
-              kind,
-              harness: 'codex',
-              model: { mode: 'inherit' },
-              effort: { mode: 'inherit' },
-              question: 'Evaluate',
-            };
-    const id = await create(request, 'decision', { answer, evaluation });
+    const id = await create(request, 'decision', {
+      kind: 'classifier',
+      model: 'jev',
+      question: 'Evaluate',
+      answer,
+    });
     await page.goto(`/app/loops/${id}/edit`);
     let dialog = await openNode(page, 'approve');
     const text =
@@ -137,6 +122,81 @@ for (const [kind, answer] of [
     dialog = await openNode(page, 'approve');
     await expect(dialog.locator('textarea').first()).toHaveValue('First line\nSecond line');
     expect((await config(request, id))['answer']).toEqual(renamed);
+  });
+}
+
+for (const kind of ['expression', 'llm'] as const) {
+  test(`${kind}: Routes JSON validates, matches IDs, confirms removal and reloads with multiline source`, async ({
+    page,
+    request,
+  }) => {
+    const routes = choice.options.map(({ id, label }) => ({ id, label }));
+    const id = await create(
+      request,
+      'decision',
+      kind === 'expression'
+        ? {
+            kind,
+            jsonata: '"out"',
+            routes,
+          }
+        : {
+            kind,
+            instructions: 'Choose Continue or Stop.',
+            routes,
+            harness: 'codex',
+            model: { mode: 'inherit' },
+            effort: { mode: 'inherit' },
+          },
+    );
+    await page.goto(`/app/loops/${id}/edit`);
+    let dialog = await openNode(page, 'approve');
+    const sourcePath = kind === 'expression' ? 'jsonata' : 'instructions';
+    const source = kind === 'expression' ? '(\n  "no"\n)' : 'First line\nSecond line';
+    await dialog.locator(`[data-field="${sourcePath}"] [role="textbox"]`).fill(source);
+    await expect.poll(() => config(request, id)).toMatchObject({ [sourcePath]: source });
+    await dialog.getByRole('button', { name: 'Edit as JSON: Routes' }).click();
+    const json = dialog.getByRole('textbox', { name: 'Routes JSON', exact: true });
+    expect(JSON.parse(await json.innerText())).toEqual(routes);
+    await replace(page, json, '{held');
+    await expect(dialog.getByRole('button', { name: 'Apply JSON', exact: true })).toBeDisabled();
+    await dialog.getByRole('button', { name: 'Use structured editor for Routes' }).click();
+    await expect(dialog.getByText(/before switching editors/)).toBeVisible();
+    expect((await config(request, id))['routes']).toEqual(routes);
+    await dialog.getByRole('button', { name: 'Cancel JSON', exact: true }).click();
+    expect(JSON.parse(await json.innerText())).toEqual(routes);
+    const reordered = [routes[1]!, { ...routes[0]!, label: 'Ready' }];
+    await replace(page, json, JSON.stringify(reordered, null, 2));
+    await dialog.getByRole('button', { name: 'Apply JSON', exact: true }).click();
+    await expect(dialog.getByRole('group', { name: 'Confirm connection removal' })).toHaveCount(0);
+    await expect.poll(() => config(request, id)).toMatchObject({ routes: reordered });
+    expect((await saved(request, id)).edges.find((edge) => edge.id === 'e2')!.from.port).toBe(
+      'out',
+    );
+    const replaced = [reordered[0]!, { ...reordered[1]!, id: 'next' }];
+    await replace(page, json, JSON.stringify(replaced, null, 2));
+    await dialog.getByRole('button', { name: 'Apply JSON', exact: true }).click();
+    const review = dialog.getByRole('group', { name: 'Confirm connection removal' });
+    await expect(review).toContainText('out');
+    await expect(review).toContainText('done');
+    expect((await config(request, id))['routes']).toEqual(reordered);
+    await review.getByRole('button', { name: 'Keep editing JSON' }).click();
+    expect((await saved(request, id)).edges.find((edge) => edge.id === 'e2')).toBeDefined();
+    await dialog.getByRole('button', { name: 'Apply JSON', exact: true }).click();
+    await review.getByRole('button', { name: 'Confirm Apply JSON' }).click();
+    await expect.poll(() => config(request, id)).toMatchObject({ routes: replaced });
+    expect((await saved(request, id)).edges.find((edge) => edge.id === 'e2')).toBeUndefined();
+    await dialog.getByRole('button', { name: 'Use structured editor for Routes' }).click();
+    await expect(dialog.locator('[data-field="routes.1.id"] input')).toHaveValue('next');
+    await page.reload();
+    dialog = await openNode(page, 'approve');
+    // The code editor renders one element per line, so compare its lines rather than its text.
+    await expect(dialog.locator(`[data-field="${sourcePath}"] .cm-line`)).toHaveText(
+      source.split('\n'),
+    );
+    expect((await config(request, id))[sourcePath]).toBe(source);
+    await expect(dialog.locator('[data-field="routes.1.id"] input')).toHaveValue('next');
+    expect((await config(request, id))['routes']).toEqual(replaced);
   });
 }
 
@@ -260,38 +320,32 @@ test('number constraints hold invalid input while provider variables remain sugg
   request,
 }) => {
   const id = await create(request, 'decision', {
+    kind: 'classifier',
+    model: 'jev',
+    question: 'Evaluate',
+    minConfidence: 0.2,
+    context: { vars: ['topic'] },
     answer: noul,
-    evaluation: {
-      kind: 'classifier',
-      model: 'jev',
-      question: 'Evaluate',
-      minConfidence: 0.2,
-      context: { vars: ['topic'] },
-    },
   });
   await page.goto(`/app/loops/${id}/edit`);
   const dialog = await openNode(page, 'approve');
-  await openAdvanced(dialog.locator('[data-field="evaluation"]'));
+  await openAdvanced(dialog);
   const number = dialog.getByRole('spinbutton', { name: 'Min confidence' });
   await expect(number).toHaveAttribute('min', '0');
   await expect(number).toHaveAttribute('max', '1');
   await expect(number).toHaveAttribute('step', 'any');
   await number.fill('1.1');
   await expect(number).toHaveAttribute('aria-invalid', 'true');
-  expect((await config(request, id))['evaluation']).toMatchObject({ minConfidence: 0.2 });
+  expect(await config(request, id)).toMatchObject({ minConfidence: 0.2 });
   await number.fill('0.75');
-  await expect
-    .poll(() => config(request, id))
-    .toMatchObject({ evaluation: { minConfidence: 0.75 } });
+  await expect.poll(() => config(request, id)).toMatchObject({ minConfidence: 0.75 });
   await dialog.getByRole('tab', { name: /^Context\b/ }).click();
   await openAdvanced(dialog);
   const variable = dialog.getByLabel('Vars 1', { exact: true });
   const list = await variable.getAttribute('list');
   await expect(dialog.locator(`datalist[id="${list}"] option`)).toHaveAttribute('value', 'topic');
   await variable.fill('undeclared');
-  await expect
-    .poll(() => config(request, id))
-    .toMatchObject({ evaluation: { context: { vars: ['undeclared'] } } });
+  await expect.poll(() => config(request, id)).toMatchObject({ context: { vars: ['undeclared'] } });
   await dialog.getByRole('button', { name: 'Edit as JSON: Context', exact: true }).click();
   const json = dialog.getByRole('textbox', { name: 'Context JSON', exact: true });
   await replace(page, json, '{"messages":"all","vars":[],"includeLastOutput":false}');
@@ -299,7 +353,7 @@ test('number constraints hold invalid input while provider variables remain sugg
   await expect
     .poll(() => config(request, id))
     .toMatchObject({
-      evaluation: { context: { messages: 'all', vars: [], includeLastOutput: false } },
+      context: { messages: 'all', vars: [], includeLastOutput: false },
     });
 });
 
@@ -308,8 +362,10 @@ test('Answer JSON preserves surviving IDs through reorder and swap; equal-count 
   request,
 }) => {
   const id = await create(request, 'decision', {
+    kind: 'classifier',
+    model: 'jev',
+    question: 'Choose',
     answer: choice,
-    evaluation: { kind: 'expression', jsonata: '"out"' },
   });
   await page.goto(`/app/loops/${id}/edit`);
   const dialog = await openNode(page, 'approve');

@@ -132,7 +132,7 @@ You can also store your Jev API key manually with this exact name:
 jev-api-key
 ```
 
-The Jev decider uses it for decisions. Setting or deleting it refreshes that adapter without a restart. Without it, a decision selecting Jev fails as unavailable and can be resumed after the key is restored. Webhook signing uses the name in `signature.secretRef`; outbound signing uses the return channel's `secretRef`.
+The Jev decider uses it for decisions. Setting or deleting it refreshes that adapter without a restart. Without it, a decision selecting Jev fails as unavailable and can be resumed after the key is restored. Webhook HMAC authentication uses the name in `authentication.secretRef`; None requires no secret. Outbound signing uses the return channel's `secretRef`.
 
 For a script environment variable, use this reference syntax:
 
@@ -286,6 +286,6 @@ Restore into an empty destination with the API stopped; do not overlay a differe
 
 Loop exports are useful for version control but omit runs, secret values, and artifacts; they do not replace a data backup.
 
-> After 1.0: Manual run and loop history purge controls described in the retention plan. They are absent from Settings today; deleting a loop is not a supported substitute for history maintenance.
+> After 1.0: Manual run and loop history purge controls described in the retention plan. They are absent from Settings today. Deleting a loop permanently deletes all its run history; it does not offer selective history maintenance or reclaim shared artifact files.
 
 Read [Security and distribution](../11-security-and-distribution.md) for design context. Continue with [Troubleshooting](07-troubleshooting.md).

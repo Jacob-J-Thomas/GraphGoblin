@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 /**
  * Responsive review (#41): both stored themes, every page and transient state at four widths,
  * all nine node dialogs at 360/768 px, pointer and keyboard authoring at 768 px, coarse-pointer
@@ -180,19 +181,22 @@ const SETTINGS = [
 async function seedDialogs(request: Parameters<typeof publishLoop>[0]) {
   const child = await publishLoop(request, approvalLoop('responsive child'));
   const configs = [
-    ['trigger', { subtype: 'cron', expression: '30 7 * * 1' }],
+    ['trigger', { type: 'cron', expression: '30 7 * * 1' }],
     [
       'decision',
       {
-        answer: {
-          type: 'choice',
-          options: [
-            { id: 'yes', label: 'Continue', criteria: 'Continue the work' },
-            { id: 'no', label: 'Stop', criteria: 'Stop the work' },
-          ],
-        },
-        evaluation: { kind: 'expression', jsonata: '"yes"' },
-        recordAlternatives: true,
+        kind: 'expression',
+        jsonata: '"yes"',
+        routes: [
+          {
+            id: 'yes',
+            label: 'Continue',
+          },
+          {
+            id: 'no',
+            label: 'Stop',
+          },
+        ],
       },
     ],
     ['inference', { prompt: { template: 'Summarise {{ lastMessage.content }}' } }],
@@ -206,7 +210,7 @@ async function seedDialogs(request: Parameters<typeof publishLoop>[0]) {
   const created = await request.post('/loops', {
     data: {
       definition: {
-        schemaVersion: 3,
+        schemaVersion: CURRENT_DEFINITION_FORMAT,
         name: 'responsive dialogs',
         nodes: configs.map(([kind, config], i) => ({
           id: kind,
@@ -870,7 +874,7 @@ for (const theme of ['dark', 'light'] as const) {
             id: 'start',
             kind: 'trigger',
             label: 'Start',
-            config: { subtype: 'manual' },
+            config: { type: 'manual' },
             ui: { x: -260, y: 0 },
           },
           {
@@ -878,16 +882,22 @@ for (const theme of ['dark', 'light'] as const) {
             kind: 'decision',
             label: 'Decide',
             config: {
-              answer: {
-                type: 'choice',
-                options: [
-                  { id: 'yes', label: 'Continue', criteria: 'Continue the work' },
-                  { id: 'no', label: 'Stop', criteria: 'Stop the work' },
-                  { id: 'later', label: 'Wait', criteria: 'Wait before continuing' },
-                ],
-              },
-              evaluation: { kind: 'expression', jsonata: '"yes"' },
-              recordAlternatives: true,
+              kind: 'expression',
+              jsonata: '"yes"',
+              routes: [
+                {
+                  id: 'yes',
+                  label: 'Continue',
+                },
+                {
+                  id: 'no',
+                  label: 'Stop',
+                },
+                {
+                  id: 'later',
+                  label: 'Wait',
+                },
+              ],
             },
             ui: { x: 0, y: 0 },
           },
@@ -902,7 +912,7 @@ for (const theme of ['dark', 'light'] as const) {
             id: 'done',
             kind: 'exit',
             label: 'Done',
-            config: { loopBack: { targetNodeId: 'decide' } },
+            config: {},
             ui: { x: 520, y: 0 },
           },
         ],
@@ -910,7 +920,7 @@ for (const theme of ['dark', 'light'] as const) {
           { id: 'start-decide', from: { node: 'start', port: 'out' }, to: { node: 'decide' } },
           { id: 'decide-peer', from: { node: 'decide', port: 'yes' }, to: { node: 'peer' } },
           { id: 'peer-done', from: { node: 'peer', port: 'out' }, to: { node: 'done' } },
-          { id: 'return', from: { node: 'done', port: 'loopBack' }, to: { node: 'decide' } },
+          { id: 'return', from: { node: 'decide', port: 'no' }, to: { node: 'decide' } },
         ],
       };
       const response = await request.post('/loops', { data: { definition } });

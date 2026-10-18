@@ -1,6 +1,6 @@
 ﻿/** Independent browser QA for #170. Defect references resolve in docs/qa/2026-10-10-issue-170. */
 import { execFileSync } from 'node:child_process';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -12,6 +12,7 @@ import {
   InferenceConfigSchema,
   LoopDefinitionSchema,
   type LoopDefinition,
+  type ClassifierAnswerConfig,
 } from '@graphgoblin/contracts';
 import { everyFieldLoop } from '@graphgoblin/contracts/testing';
 import {
@@ -28,7 +29,6 @@ const baselineCommit = '6976aa90f9c04bdef04b75ba14d297f58cdee8ba';
 let baselineDir: string | undefined;
 let baseline: {
   InferenceConfigSchema: typeof InferenceConfigSchema;
-  DecisionConfigSchema: typeof DecisionConfigSchema;
 };
 test.beforeAll(async () => {
   // A read-only main-schema oracle: transpile tracked sources into this test's private temp
@@ -99,30 +99,38 @@ type Saved = {
   edges: { id: string; from: { node: string; port: string }; to: { node: string } }[];
 };
 function decision(kind = 'classifier', answer: unknown = choice) {
-  return DecisionConfigSchema.parse({
-    answer,
-    recordAlternatives: false,
-    evaluation:
-      kind === 'expression'
-        ? { kind, jsonata: (answer as { type: string }).type === 'noul' ? 'true' : '"out"' }
-        : kind === 'classifier'
-          ? {
-              kind,
-              model: 'jev',
-              question: 'Evaluate {{ vars.topic }}',
-              minConfidence: 0.4,
-              ...((answer as { type: string }).type === 'noul' ? { truthThreshold: 0.6 } : {}),
-              context: { messages: 'all', vars: ['topic'], includeLastOutput: false },
-            }
-          : {
-              kind,
-              harness: 'codex',
-              model: { mode: 'explicit', value: 'gpt-6-luna' },
-              effort: { mode: 'explicit', value: 'low' },
-              question: 'Evaluate {{ vars.topic }}',
-              context: { messages: 'all', vars: ['topic'], includeLastOutput: false },
-            },
-  });
+  const parsedAnswer = answer as ClassifierAnswerConfig;
+  const context = { messages: 'all', vars: ['topic'], includeLastOutput: false };
+  const routes =
+    parsedAnswer.type === 'noul'
+      ? [parsedAnswer.true, parsedAnswer.false].map(({ id, label }) => ({ id, label }))
+      : parsedAnswer.type === 'choice'
+        ? parsedAnswer.options.map(({ id, label }) => ({ id, label }))
+        : [];
+  return DecisionConfigSchema.parse(
+    kind === 'expression'
+      ? { kind, jsonata: '"out"', routes }
+      : kind === 'llm'
+        ? {
+            kind,
+            instructions: 'Choose a declared route for {{ vars.topic }}.',
+            routes,
+            harness: 'codex',
+            model: { mode: 'explicit', value: 'gpt-6-luna' },
+            effort: { mode: 'explicit', value: 'low' },
+            context,
+          }
+        : {
+            kind,
+            answer,
+            model: 'jev',
+            question: 'Evaluate {{ vars.topic }}',
+            minConfidence: 0.4,
+            ...(parsedAnswer.type === 'noul' ? { truthThreshold: 0.6 } : {}),
+            context,
+            recordAlternatives: false,
+          },
+  );
 }
 async function create(request: APIRequestContext, kind: string, config: unknown, origin = '') {
   const loop = approvalLoop(`QA170 ${kind}`);
@@ -226,7 +234,7 @@ function at(value: unknown, path: string): unknown {
     );
 }
 
-test('I1: main golden bytes and complete inference survive placement and edited save/reload', async ({
+test('I1: current golden bytes and main inference survive placement and edited save/reload', async ({
   page,
   request,
 }) => {
@@ -238,9 +246,17 @@ test('I1: main golden bytes and complete inference survive placement and edited 
       { encoding: 'utf8' },
     ),
   ) as LoopDefinition;
-  expect(JSON.stringify(LoopDefinitionSchema.parse(everyFieldLoop()))).toBe(JSON.stringify(golden));
+  const currentGolden: unknown = JSON.parse(
+    await readFile(
+      new URL('../../../packages/contracts/src/__golden__/loop-every-field.json', import.meta.url),
+      'utf8',
+    ),
+  );
+  const current = LoopDefinitionSchema.parse(everyFieldLoop());
+  expect(JSON.stringify(current)).toBe(JSON.stringify(currentGolden));
   const original = golden.nodes.find((n) => n.kind === 'inference')!;
   if (original.kind !== 'inference') throw new Error('Missing golden inference');
+  expect(current.nodes.find((node) => node.kind === 'inference')).toEqual(original);
   const id = await create(request, 'inference', original.config);
   await page.goto(`/app/loops/${id}/edit`);
   const dialog = await openNode(page, 'approve');
@@ -336,162 +352,31 @@ test('I1: main golden bytes and complete inference survive placement and edited 
 });
 
 for (const [kind, answer] of pairs) {
-  test(`I1/I5 decision ${kind}/${answer.type}: nested values, multiline, atomic JSON, routes and reload`, async ({
+  test(`D1 decision ${kind}/${answer.type}: edits applicable source and saves across reload`, async ({
     page,
     request,
   }) => {
-    const original = decision(kind, answer);
-    const id = await create(request, 'decision', original);
+    const original = decision(kind, answer),
+      id = await create(request, 'decision', original);
     await page.goto(`/app/loops/${id}/edit`);
     const dialog = await openNode(page, 'approve');
-    await expect(dialog.getByRole('radiogroup', { name: 'Answer type' })).toBeVisible();
-    await expect(dialog.getByRole('radiogroup', { name: 'Evaluation method' })).toBeVisible();
-    if (kind !== 'expression') {
-      await selectTab(dialog, 'Context');
-      await expandAll(dialog);
-      await expect(dialog.getByLabel('Vars 1', { exact: true })).toHaveValue('topic');
-      await selectTab(dialog, 'Settings');
-    }
-    await expandAll(dialog);
-    expect(JSON.stringify(await config(request, id))).toBe(JSON.stringify(original));
-    const prosePath =
-      answer.type === 'choice'
-        ? 'answer.options.0.criteria'
-        : answer.type === 'noul'
-          ? 'answer.true.criteria'
-          : 'answer.anchors.0';
-    const prose = dialog.locator(`[data-field="${prosePath}"] textarea`);
-    await expect(prose).toBeVisible();
-    await prose.fill('日本語 🧪\nsecond line');
-    await expect.poll(() => config(request, id)).not.toEqual(original);
-    const before = await config(request, id);
-    const editor = await jsonEditor(dialog, 'Answer');
-    expect(JSON.parse(await editor.innerText())).toEqual(before['answer']);
-    // A whole-section schema failure must not partially change any route.
-    const broken = structuredClone(before['answer']) as Config;
-    if (answer.type === 'choice') (broken['options'] as Config[])[1]!['id'] = 'out';
-    else if (answer.type === 'noul') delete broken['false'];
-    else (broken['bands'] as Config[])[0]!['max'] = 2;
-    await replace(page, editor, JSON.stringify(broken));
-    await expect(sectionOf(editor).getByRole('button', { name: 'Apply JSON' })).toBeDisabled();
-    expect(await config(request, id)).toEqual(before);
-    const renamed = structuredClone(before['answer']) as Config;
-    if (answer.type === 'choice') (renamed['options'] as Config[])[0]!['id'] = 'renamed';
-    else if (answer.type === 'noul') (renamed['true'] as Config)['id'] = 'renamed';
-    else (renamed['bands'] as Config[])[0]!['id'] = 'renamed';
-    await replace(page, editor, JSON.stringify(renamed));
-    await apply(editor);
-    await expect(
-      sectionOf(editor).getByRole('group', { name: 'Confirm connection removal' }),
-    ).toContainText('out → done');
-    expect((await saved(request, id)).edges.find((e) => e.id === 'e2')!.from.port).toBe('out');
-    await sectionOf(editor).getByRole('button', { name: 'Confirm Apply JSON' }).click();
-    await expect.poll(async () => (await config(request, id))['answer']).toEqual(renamed);
-    expect((await saved(request, id)).edges.some((e) => e.id === 'e2')).toBe(false);
-    await dialog.getByRole('button', { name: 'Use structured editor for Answer' }).click();
-    await expect(prose).toHaveValue('日本語 🧪\nsecond line');
-    const evaluationPath = kind === 'expression' ? 'evaluation.jsonata' : 'evaluation.question';
-    const updated =
-      kind === 'expression'
-        ? answer.type === 'noul'
-          ? 'false'
-          : '"renamed"'
-        : 'Edited\n{{ vars.topic }}';
-    await replace(page, code(dialog, evaluationPath), updated);
-    await expect.poll(async () => at(await config(request, id), evaluationPath)).toBe(updated);
-    const providerContext = {
-      messages: { where: 'role = "user"' },
-      vars: [],
-      includeLastOutput: true,
-    };
-    if (kind !== 'expression') {
-      if (kind === 'classifier') {
-        await dialog.getByRole('spinbutton', { name: 'Min confidence' }).fill('0.75');
-        if (answer.type === 'noul')
-          await dialog
-            .getByRole('spinbutton', { name: 'Noul true-probability threshold' })
-            .fill('0.25');
-      } else {
-        await dialog
-          .locator('[data-field="evaluation.model.value"] select')
-          .selectOption('gpt-6-sol');
-        await dialog.locator('[data-field="evaluation.effort.value"] select').selectOption('high');
-      }
-      await selectTab(dialog, 'Context');
-      const contextEditor = await jsonEditor(dialog, 'Context');
-      await replace(page, contextEditor, JSON.stringify(providerContext));
-      await apply(contextEditor);
-      await expect
-        .poll(async () => at(await config(request, id), 'evaluation.context'))
-        .toEqual(providerContext);
-      await dialog.getByRole('button', { name: 'Use structured editor for Context' }).click();
-      const contextAgain = await jsonEditor(dialog, 'Context');
-      expect(JSON.parse(await contextAgain.innerText())).toEqual(providerContext);
-    }
-    const final = await config(request, id);
-    // Build the expected edit independently of the browser's saved response. The main schema
-    // normalizes it, so a lost untouched field or nested override cannot make this oracle pass.
-    const expectedAnswer = structuredClone(original.answer);
-    if (expectedAnswer.type === 'choice') {
-      expectedAnswer.options[0]!.id = 'renamed';
-      expectedAnswer.options[0]!.criteria = '日本語 🧪\nsecond line';
-    } else if (expectedAnswer.type === 'noul') {
-      expectedAnswer.true.id = 'renamed';
-      expectedAnswer.true.criteria = '日本語 🧪\nsecond line';
-    } else {
-      expectedAnswer.bands[0]!.id = 'renamed';
-      expectedAnswer.anchors[0] = '日本語 🧪\nsecond line';
-    }
-    const expected = baseline.DecisionConfigSchema.parse({
-      ...original,
-      answer: expectedAnswer,
-      evaluation: {
-        ...original.evaluation,
-        ...(kind === 'expression'
-          ? { jsonata: updated }
-          : { question: updated, context: providerContext }),
-        ...(kind === 'classifier'
-          ? { minConfidence: 0.75, ...(answer.type === 'noul' ? { truthThreshold: 0.25 } : {}) }
-          : kind === 'llm'
-            ? {
-                model: { mode: 'explicit', value: 'gpt-6-sol' },
-                effort: { mode: 'explicit', value: 'high' },
-              }
-            : {}),
-      },
-    });
-    expect(JSON.stringify(final)).toBe(JSON.stringify(expected));
+    await expect(dialog.getByRole('radiogroup', { name: 'Decision kind' })).toBeVisible();
+    const source = kind === 'expression' ? 'jsonata' : kind === 'llm' ? 'instructions' : 'question';
+    const edited = kind === 'expression' ? '"no"' : 'Read all evidence.\n{{ vars.topic }}';
+    await replace(page, code(dialog, source), edited);
+    await expect.poll(async () => at(await config(request, id), source)).toBe(edited);
+    const expected = DecisionConfigSchema.parse({ ...original, [source]: edited });
+    expect(await config(request, id)).toEqual(expected);
     await page.reload();
-    const reopened = await openNode(page, 'approve');
-    expect(JSON.stringify(await config(request, id))).toBe(JSON.stringify(final));
-    // JSON removed the old route's edge; reconnect its replacement explicitly before publishing.
-    await reopened.getByLabel('Output', { exact: true }).selectOption('renamed');
-    await reopened.getByRole('button', { name: 'Connect', exact: true }).click();
-    if (answer.type !== 'score') {
-      await reopened.getByLabel('Output', { exact: true }).selectOption('no');
-      await reopened.getByRole('button', { name: 'Connect', exact: true }).click();
-    }
-    await closeNode(page);
-    if (kind === 'classifier') {
-      expect(
-        (await request.put('/secrets/jev-api-key', { data: { value: 'qa170-fixture-only' } })).ok(),
-      ).toBe(true);
-    }
-    await page.getByRole('button', { name: 'Publish', exact: true }).click();
-    await expect(page.getByText('Published version 1.')).toBeVisible();
-    const published = (await (await request.get(`/loops/${id}`)).json()) as {
-      current: { definition: Saved };
-    };
-    expect(
-      JSON.stringify(published.current.definition.nodes.find((n) => n.id === 'approve')!.config),
-    ).toBe(JSON.stringify(final));
+    await openNode(page, 'approve');
+    expect(await config(request, id)).toEqual(expected);
   });
 }
 
-const deep = Array.from({ length: 24 }).reduce<unknown>((v, _, n) => ({ [`level${n}`]: v }), {
-  value: '雪 🧪\nline',
-  list: [null, false, 0],
-});
+const deep = Array.from({ length: 24 }).reduce<unknown>(
+  (value, _, n) => ({ [`level${n}`]: value }),
+  { value: '雪 🧪\nline', list: [null, false, 0] },
+);
 const sections = [
   {
     label: 'Input',
@@ -608,9 +493,7 @@ test('I5 provider Context: 200 authored vars roundtrip and schema rejection leav
   };
   await replace(page, editor, JSON.stringify(expected));
   await apply(editor);
-  await expect
-    .poll(async () => at(await config(request, id), 'evaluation.context'))
-    .toEqual(expected);
+  await expect.poll(async () => at(await config(request, id), 'context')).toEqual(expected);
   await dialog.getByRole('button', { name: 'Use structured editor for Context' }).click();
   await expandAll(dialog);
   await expect(dialog.getByLabel('Vars 200', { exact: true })).toHaveValue('var-199');
@@ -624,20 +507,15 @@ test('I5 provider Context: 200 authored vars roundtrip and schema rejection leav
   await expect(sectionOf(again).getByRole('button', { name: 'Apply JSON' })).toBeDisabled();
   await expect
     .poll(async () =>
-      at(
-        (await mirror(page, id))?.nodes.find((n) => n.id === 'approve')?.config,
-        'evaluation.context',
-      ),
+      at((await mirror(page, id))?.nodes.find((n) => n.id === 'approve')?.config, 'context'),
     )
     .toEqual(expected);
-  expect(at(await config(request, id), 'evaluation.context')).toEqual(expected);
+  expect(at(await config(request, id), 'context')).toEqual(expected);
   await cancel(again);
   expect(JSON.parse(await editorText(page, again))).toEqual(expected);
   await replace(page, again, '{"messages":"last","vars":[],"includeLastOutput":false}');
   await apply(again);
-  await expect
-    .poll(async () => at(await config(request, id), 'evaluation.context.vars'))
-    .toEqual([]);
+  await expect.poll(async () => at(await config(request, id), 'context.vars')).toEqual([]);
 });
 
 test('I5 bounded lists: 200 mutations, files and Choice options are rejected atomically', async ({
@@ -846,9 +724,7 @@ test('I3 history focus: Context switches and JSON Apply stay reachable through u
     'aria-selected',
     'true',
   );
-  await expect
-    .poll(async () => at(await config(request, id), 'evaluation.minConfidence'))
-    .toBe(0.4);
+  await expect.poll(async () => at(await config(request, id), 'minConfidence')).toBe(0.4);
   await page.keyboard.press('Control+Shift+z');
   await expect(last).toBeFocused();
   await page.keyboard.press('Control+Shift+z');
@@ -1044,9 +920,7 @@ test('I6 schema numbers and variable/pointer suggestions accept authored values 
     }
     for (const value of ['0', '1', '0.123']) {
       await field.fill(value);
-      await expect
-        .poll(async () => at(await config(request, id), `evaluation.${path}`))
-        .toBe(Number(value));
+      await expect.poll(async () => at(await config(request, id), `${path}`)).toBe(Number(value));
     }
   }
   await selectTab(dialog, 'Context');
@@ -1056,7 +930,7 @@ test('I6 schema numbers and variable/pointer suggestions accept authored values 
   await expect(dialog.locator(`datalist[id="${list}"] option`)).toHaveAttribute('value', 'topic');
   await variable.fill('undeclared-valid');
   await expect
-    .poll(async () => at(await config(request, id), 'evaluation.context.vars'))
+    .poll(async () => at(await config(request, id), 'context.vars'))
     .toEqual(['undeclared-valid']);
   await variable.fill('not a slug');
   await expect(variable).toHaveAttribute('aria-invalid', 'true');
@@ -1386,19 +1260,31 @@ for (const kind of ['expression', 'classifier', 'llm']) {
     const id = await create(request, 'decision', decision(kind));
     await page.goto(`/app/loops/${id}/edit`);
     const dialog = await openNode(page, 'approve');
-    const editor = await jsonEditor(dialog, 'Answer');
-    const reordered = { ...choice, options: [...choice.options].reverse() };
+    const section = kind === 'classifier' ? 'Answer' : 'Routes';
+    const editor = await jsonEditor(dialog, section);
+    const routes = [...choice.options].reverse().map(({ id, label }) => ({ id, label }));
+    const reordered =
+      kind === 'classifier' ? { ...choice, options: [...choice.options].reverse() } : routes;
     await replace(page, editor, JSON.stringify(reordered));
     await apply(editor);
-    await expect.poll(async () => (await config(request, id))['answer']).toEqual(reordered);
+    await expect
+      .poll(async () => (await config(request, id))[kind === 'classifier' ? 'answer' : 'routes'])
+      .toEqual(reordered);
     expect((await saved(request, id)).edges.find((e) => e.id === 'e2')!.from.port).toBe('out');
-    const added = {
-      ...reordered,
-      options: [...reordered.options, { id: 'third', label: 'Third', criteria: 'Third' }],
-    };
+    const added =
+      kind === 'classifier'
+        ? {
+            ...choice,
+            options: [...choice.options]
+              .reverse()
+              .concat({ id: 'third', label: 'Third', criteria: 'Third' }),
+          }
+        : [...routes, { id: 'third', label: 'Third' }];
     await replace(page, editor, JSON.stringify(added));
     await apply(editor);
-    const removed = { ...added, options: added.options.filter((row) => row.id !== 'out') };
+    const removed = Array.isArray(added)
+      ? added.filter((row) => row.id !== 'out')
+      : { ...added, options: added.options.filter((row) => row.id !== 'out') };
     await replace(page, editor, JSON.stringify(removed));
     await apply(editor);
     await expect(
@@ -1634,21 +1520,17 @@ test('HTTP catalog evaluator: Choice, Noul and Score select the known model; dis
   ).toBe(true);
   for (const answer of [choice, noul, score]) {
     const initial = decision('classifier', answer);
-    if (initial.evaluation.kind !== 'classifier') throw new Error('Fixture kind');
-    initial.evaluation.model = 'qa170-http';
+    if (initial.kind !== 'classifier') throw new Error('Fixture kind');
+    initial.model = 'qa170-http';
     const id = await create(request, 'decision', initial, url);
     await page.goto(`${url}/app/loops/${id}/edit`);
     const dialog = await openNode(page, 'approve');
     const picker = dialog.getByRole('combobox', { name: 'Model', exact: true });
     await expect(picker).toHaveValue('qa170-http');
     await picker.selectOption('jev');
-    await expect
-      .poll(async () => at(await config(request, id, url), 'evaluation.model'))
-      .toBe('jev');
+    await expect.poll(async () => at(await config(request, id, url), 'model')).toBe('jev');
     await picker.selectOption('qa170-http');
-    await expect
-      .poll(async () => at(await config(request, id, url), 'evaluation.model'))
-      .toBe('qa170-http');
+    await expect.poll(async () => at(await config(request, id, url), 'model')).toBe('qa170-http');
     expect(
       (
         await request.patch(`${url}/classifier-models/qa170-http`, { data: { enabled: false } })

@@ -1,16 +1,16 @@
 {
   "format": "graphgoblin-loop",
-  "formatVersion": 3,
+  "formatVersion": 4,
   "exportedAt": "2026-10-09T00:00:00.000Z",
   "loop": {
-    "schemaVersion": 3,
+    "schemaVersion": 4,
     "name": "Starter assistant",
     "description": "Summarize supplied input and suggest a next step. Edit the workflow instructions, model defaults, or nodes at any time.",
     "settings": {
       "workingDirectory": {
         "kind": "temp"
       },
-      "maxIterations": 10
+      "maxNodeVisits": 10
     },
     "nodes": [
       {
@@ -22,7 +22,7 @@
           "y": 0
         },
         "config": {
-          "subtype": "manual",
+          "type": "manual",
           "exposeTo": ["ui", "api", "mcp"]
         }
       },
@@ -81,16 +81,13 @@
           "y": 0
         },
         "config": {
-          "criteria": [],
-          "default": "success",
-          "return": {
-            "mapping": "outputs.assistant.value",
-            "channels": [
-              {
-                "kind": "caller"
-              }
-            ]
-          }
+          "outcome": "success",
+          "returns": "outputs.assistant.value",
+          "destinations": [
+            {
+              "kind": "caller"
+            }
+          ]
         }
       }
     ],

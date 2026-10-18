@@ -3,13 +3,8 @@ import type { ContextThread, RunRecord, RunStatus } from '@graphgoblin/contracts
 import type { RunRecordChanges, RunRepository } from '@graphgoblin/engine';
 import { and, desc, eq, inArray, isNull, lt, sql, type SQL } from 'drizzle-orm';
 import type { Database } from './db.js';
-import { runs } from './schema.js';
-import { TemplateTransaction } from './templates.js';
-export type BeforeRunTransition = (
-  store: TemplateTransaction,
-  current: RunRecord,
-  changes: RunRecordChanges,
-) => Promise<void>;
+import { loopVersions, loops, runs } from './schema.js';
+import { deleteRuns } from './delete-runs.js';
 
 import { runRecordFromRow } from './run-row.js';
 export { runRecordFromRow } from './run-row.js';
@@ -80,11 +75,27 @@ export interface RunListFilter {
   limit?: number;
 }
 
+export interface RunPageFilter extends RunListFilter {
+  ownerId: string;
+  cursor?: Pick<RunRecord, 'createdAt' | 'id'>;
+}
+
 export class SqliteRunRepository implements RunRepository {
-  constructor(
-    private readonly db: Database,
-    private readonly beforeTransition?: BeforeRunTransition,
-  ) {}
+  constructor(private readonly db: Database) {}
+
+  /**
+   * Offline cutover use only: safe only with the API stopped, because orphan runs are deleted
+   * regardless of status. Repairs old loop deletion; not invoked by ordinary upgrades.
+   */
+  async deleteOrphans(): Promise<number> {
+    return this.db.transaction((tx) =>
+      deleteRuns(
+        tx,
+        sql`NOT EXISTS (SELECT 1 FROM ${loops} WHERE ${loops.id} = ${runs.loopId})
+          OR NOT EXISTS (SELECT 1 FROM ${loopVersions} WHERE ${loopVersions.id} = ${runs.versionId})`,
+      ),
+    );
+  }
 
   async create(run: RunRecord, initialThread: ContextThread): Promise<void> {
     await this.db.insert(runs).values(runInsert(run, initialThread));
@@ -120,7 +131,6 @@ export class SqliteRunRepository implements RunRepository {
       if (!from.includes(current.status)) return undefined;
       const columns = toColumns(changes);
       if (Object.keys(columns).length === 0) return current;
-      await this.beforeTransition?.(new TemplateTransaction(tx), current, changes);
       const [updated] = await tx
         .update(runs)
         .set(columns)
@@ -186,19 +196,44 @@ export class SqliteRunRepository implements RunRepository {
   }
 
   async list(filter: RunListFilter = {}): Promise<RunRecord[]> {
+    return this.listRows(filter, Math.min(filter.limit ?? 50, 500));
+  }
+
+  /** Owner-scoped ordinary paging; a single lookahead row decides whether there is a next page. */
+  async page(filter: RunPageFilter): Promise<{
+    items: RunRecord[];
+    next: Pick<RunRecord, 'createdAt' | 'id'> | null;
+  }> {
+    const limit = Math.max(1, Math.min(filter.limit ?? 100, 500));
+    const rows = await this.listRows(filter, limit + 1, filter.cursor);
+    const items = rows.slice(0, limit);
+    const last = items.at(-1)!;
+    return {
+      items,
+      next: rows.length > limit ? { createdAt: last.createdAt, id: last.id } : null,
+    };
+  }
+
+  private async listRows(
+    filter: RunListFilter,
+    limit: number,
+    cursor?: RunPageFilter['cursor'],
+  ): Promise<RunRecord[]> {
     const conditions: SQL[] = [];
-    if (filter.ownerId) conditions.push(eq(runs.ownerId, filter.ownerId));
+    if (filter.ownerId !== undefined) conditions.push(eq(runs.ownerId, filter.ownerId));
     if (filter.loopId) conditions.push(eq(runs.loopId, filter.loopId));
     if (filter.status?.length) conditions.push(inArray(runs.status, filter.status));
     if (filter.parentRunId === null) conditions.push(sql`${runs.parentRunId} IS NULL`);
     else if (filter.parentRunId) conditions.push(eq(runs.parentRunId, filter.parentRunId));
     if (filter.before) conditions.push(lt(runs.createdAt, filter.before));
+    if (cursor)
+      conditions.push(sql`(${runs.createdAt}, ${runs.id}) < (${cursor.createdAt}, ${cursor.id})`);
     const query = this.db
       .select()
       .from(runs)
       .where(conditions.length ? and(...conditions) : undefined)
       .orderBy(desc(runs.createdAt), desc(runs.id))
-      .limit(Math.min(filter.limit ?? 50, 500));
+      .limit(limit);
     return (await query).map(runRecordFromRow);
   }
 

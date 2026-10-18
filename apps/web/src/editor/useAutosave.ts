@@ -6,8 +6,10 @@ import { keys } from '../api/queries.js';
 import {
   deviceStorageProblem,
   recordServerSave,
+  rememberLocalDraft,
   saveLocalDraft,
   subscribeDeviceStorage,
+  UNRECONCILED_DEVICE_TOKEN,
 } from '../drafts/local-drafts.js';
 import { markApiUnreachable, subscribeApiRecovery } from '../lib/reachability.js';
 import { errorMessage, isOfflineError } from '../lib/utils.js';
@@ -21,16 +23,23 @@ export const AUTOSAVE_DELAY_MS = 600;
  * there once the write succeeds. A refused write leaves the edits in memory; the device storage's
  * state (`deviceStorageProblem`) says why, and the editor reports it.
  */
-function mirror(): void {
-  const { loopId, definition, revision, generation, baseToken } = useEditorStore.getState();
+function mirror(persist = true): void {
+  const { loopId, definition, decisionRoutes, revision, generation, baseToken } =
+    useEditorStore.getState();
   if (!loopId || !definition) return;
-  void saveLocalDraft({
+  const draft = {
     loopId,
     definition,
+    decisionRoutes,
     savedAt: new Date().toISOString(),
     synced: false,
     ...(baseToken ? { baseToken } : {}),
-  }).then(
+  };
+  if (!persist) {
+    rememberLocalDraft(draft);
+    return;
+  }
+  void saveLocalDraft(draft).then(
     () => {
       const now = useEditorStore.getState();
       if (now.loopId === loopId && now.generation === generation) now.setDeviceRevision(revision);
@@ -61,7 +70,8 @@ export function serializeSave<T>(loopId: string, job: () => Promise<T>): Promise
 /**
  * After the server accepted a save: advance the loop's token, whether or not the editor that sent
  * it is still open, and record it on the device copy (`recordServerSave`). A newer edit mirrored
- * since the save started stays unsynced and keeps winning on the next load, now based on `token`.
+ * since the save started takes `token` only when it shares that save's request base; unrelated
+ * or converted device work retains its base and explicit reconciliation requirement.
  * The server holds the draft whether or not this device can record that: a device storage failure
  * is reported as its own notice (`deviceStorageProblem`), never as a save still pending.
  */
@@ -69,9 +79,10 @@ async function recordSaved(
   loopId: string,
   definition: LoopDefinitionInput,
   token: string,
+  baseToken: string | undefined,
 ): Promise<void> {
   latestTokens.set(loopId, token);
-  await recordServerSave(loopId, definition, token).catch(() => undefined);
+  await recordServerSave(loopId, definition, token, baseToken).catch(() => undefined);
 }
 
 /** The server's token from a 409 `DRAFT_CONFLICT`, or false when `error` is something else. */
@@ -83,6 +94,8 @@ export function draftConflict(error: unknown): { serverToken: string | undefined
 
 export const CONFLICT_MESSAGE =
   'The draft changed on the server (another tab or device saved it). Nothing is saved to the server until you choose.';
+export const CONVERSION_CONFLICT_MESSAGE =
+  'This device draft was converted to format 4. Its old server token is no longer valid. Nothing is saved to the server until you reload or explicitly overwrite with this copy.';
 
 /**
  * Debounced autosave. Every edit is mirrored to IndexedDB at once, so nothing is lost offline or
@@ -98,7 +111,15 @@ export const CONFLICT_MESSAGE =
 export function useAutosave(
   client: GraphGoblinClient,
   delayMs = AUTOSAVE_DELAY_MS,
-  enabled = true,
+  {
+    enabled = true,
+    deviceReady = true,
+    serverReconciled = true,
+  }: {
+    enabled?: boolean;
+    deviceReady?: boolean;
+    serverReconciled?: boolean;
+  } = {},
 ): () => Promise<boolean> {
   const queryClient = useQueryClient();
   const recoveryRead = useRef<{ generation: number; revision: number } | undefined>(undefined);
@@ -116,8 +137,10 @@ export function useAutosave(
   const inConflict = useEditorStore((s) => s.conflict !== undefined);
   const latest = useRef({ inConflict });
   latest.current = { inConflict };
-  const enabledRef = useRef(enabled);
-  enabledRef.current = enabled;
+  const enabledRef = useRef(enabled && serverReconciled);
+  enabledRef.current = enabled && serverReconciled;
+  const deviceReadyRef = useRef(enabled && deviceReady);
+  deviceReadyRef.current = enabled && deviceReady;
   useEffect(() => {
     const { loopId } = useEditorStore.getState();
     if (loopId && baseToken) latestTokens.set(loopId, baseToken);
@@ -157,7 +180,12 @@ export function useAutosave(
           const conflict = draftConflict(error);
           if (conflict) {
             now.setConflict(conflict);
-            setSaveState('conflict', CONFLICT_MESSAGE);
+            setSaveState(
+              'conflict',
+              baseToken === UNRECONCILED_DEVICE_TOKEN
+                ? CONVERSION_CONFLICT_MESSAGE
+                : CONFLICT_MESSAGE,
+            );
           } else if (isOfflineError(error)) {
             setSaveState('offline');
             // A save can be the first request to notice an outage. Refresh the active loop
@@ -187,7 +215,7 @@ export function useAutosave(
         };
         // Before the device write, so an edit mirrored from here on carries the new token.
         if (isCurrent()) useEditorStore.getState().setBaseToken(saved.draftToken);
-        await recordSaved(loopId, definition, saved.draftToken);
+        await recordSaved(loopId, definition, saved.draftToken, baseToken);
         if (!isCurrent()) return false;
         if (useEditorStore.getState().revision === rev) {
           setSaveState('saved', undefined, rev);
@@ -209,17 +237,17 @@ export function useAutosave(
     // Mirror the edit to this device at once: navigating away or closing the tab inside the
     // debounce window must not lose it. The server save stays debounced.
     pending.current = { loopId, definition, revision, generation: loadGeneration };
-    mirror();
+    if (useEditorStore.getState().deviceRevision !== revision) mirror(deviceReady);
     clearTimeout(timer.current);
-    timer.current = setTimeout(() => void save(), delayMs);
-  }, [revision, loadGeneration, save, delayMs, enabled]);
+    timer.current = serverReconciled ? setTimeout(() => void save(), delayMs) : undefined;
+  }, [revision, loadGeneration, save, delayMs, enabled, deviceReady, serverReconciled]);
 
   // Device storage that refused the mirror (blocked by another window) works again: put the edits
   // that are only in this window on the device now, rather than on the next edit.
   useEffect(() => {
     if (!enabled) return;
     return subscribeDeviceStorage(() => {
-      if (!enabledRef.current) return;
+      if (!deviceReadyRef.current) return;
       if (deviceStorageProblem()) return;
       const { loopId, revision: rev, savedRevision, deviceRevision } = useEditorStore.getState();
       if (loopId && rev !== savedRevision && deviceRevision !== rev) mirror();
@@ -230,7 +258,10 @@ export function useAutosave(
     () => () => {
       // Leaving the editor with an unsaved edit: send it now, behind any save in flight, best
       // effort. The local copy above already holds it and wins on the next load if this fails.
-      if (!enabledRef.current) return;
+      if (!enabledRef.current) {
+        clearTimeout(timer.current);
+        return;
+      }
       const last = pending.current;
       if (!last || timer.current === undefined) return;
       clearTimeout(timer.current);
@@ -243,7 +274,7 @@ export function useAutosave(
         const saved = await loops.saveDraft(client, last.loopId, last.definition, {
           ...(token ? { ifMatch: token } : {}),
         });
-        await recordSaved(last.loopId, last.definition, saved.draftToken);
+        await recordSaved(last.loopId, last.definition, saved.draftToken, token);
       }).catch(() => undefined);
     },
     [client],

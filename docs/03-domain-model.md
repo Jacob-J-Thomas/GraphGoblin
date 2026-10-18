@@ -26,13 +26,13 @@ Stored as JSON in `loop_versions.definition`, validated by `contracts`.
 
 ```ts
 type LoopDefinition = {
-  schemaVersion: 3;
+  schemaVersion: 4;
   name: string;
   description?: string;
   settings: {
     workingDirectory: WorkingDirectorySpec; // see 04 and 06
     defaults: { byHarness: { codex?: { model?: string; effort?: Effort } } };
-    maxIterations: number; // hard ceiling on loop-backs and on fresh visits per node; exit nodes may set lower
+    maxNodeVisits: number; // independent safety cap on fresh visits per node
     subloopDepthLimit: number; // default 8
   };
   variables: Record<string, JsonSchema>; // declared vars with schemas; the editor uses these
@@ -65,13 +65,17 @@ type NodeKind =
   | 'exit';
 ```
 
-An edge's `ui.route` is canvas layout, like a node's `ui`: the positions of the route's inner segments in canvas coordinates, alternating the x of a vertical segment and the y of a horizontal one (`x, y, ..., x`, so an odd count from 1 to 63). The first and last segments are horizontal and run from the ports' own heights, so the route stays attached when a card moves. The route lives on the edge it draws: deleting the edge deletes it, renaming a node keeps it, and versions pin it with the rest of the definition. The engine ignores it. The route field itself does not change the format. Current definitions and exports use version 3; the offline upgrade preserves these routes.
+An edge's `ui.route` is canvas layout, like a node's `ui`: the positions of the route's inner segments in canvas coordinates, alternating the x of a vertical segment and the y of a horizontal one (`x, y, ..., x`, so an odd count from 1 to 63). The first and last segments are horizontal and run from the ports' own heights, so the route stays attached when a card moves. The route lives on the edge it draws: deleting the edge deletes it, renaming a node keeps it, and versions pin it with the rest of the definition. The engine ignores it. The route field itself does not change the format. Current definitions and exports use version 4; the integrated cutover preserves these routes.
+
+Trigger nodes store `config.type`: `manual`, `cron`, `webhook`, `event`, or `poll`.
+Both webhook signing variants use `type: 'webhook'`. Current configs and exports
+reject `subtype`; old exports are converted only by the format-4 offline upgrade.
 
 Validation rules enforced by `domain` before a version can be published:
 
 - At least one trigger node and at least one exit node.
 - Every trigger connects, directly or through other nodes, to an exit.
-- Every output port of every non-exit node is connected. Exit `loopBack` is optional.
+- Every output port is connected, including a marked gate's `limit-reached`. Exits are terminal and have no outputs.
 - Node configs validate against their kind's schema. Referenced variables exist. Referenced subloops exist and are published (checked by the API, which can see other loops; a loop may reference itself).
 - Every supplied Liquid template parses and every JSONata expression contains non-whitespace source and compiles, in node configs and loop settings (`TEMPLATE_INVALID`, `EXPRESSION_INVALID`, each with the field's `path`: `config.<path>` relative to its node, or `settings.<path>`). Empty and whitespace-only templates are valid and render exactly as authored. Omit optional blank expressions; the editor clears them. For optional templates, only exactly empty input means absent in the form; whitespace is preserved. This authoring rule lives in shared domain validation, so API imports and publishing agree with the editor without changing contracts parsing or fixture defaults.
 - No edge targets a trigger node's input.
@@ -79,7 +83,7 @@ Validation rules enforced by `domain` before a version can be published:
 Harness selection belongs to inference nodes (`config.harness`, default `codex`). Loop defaults
 provide only model and effort. Definitions containing `settings.defaults.harness` are rejected
 as unknown keys; imports and API clients must remove it. There is no compatibility parser.
-Current definition and export format versions are 3. Exit predicates declare an answer, evaluator and matching rule, sharing the primitive evaluator without changing their existing context. [ADR-0026](decisions/ADR-0026-exit-primitives-and-format-three.md) owns the stopped-instance exit cutover. Decision answers include Noul, Choice and Score; the output records the raw answer, stable selected port and evaluator provenance. [ADR-0025](decisions/ADR-0025-answer-primitives.md) adds the new primitives without changing existing Choice evidence or context serialization. Existing format-1 data follows the [offline upgrade workflow](guide/08-offline-upgrade.md). Harness ownership was established in [ADR-0019](decisions/ADR-0019-inference-node-harness.md); the later format cutover is [ADR-0022](decisions/ADR-0022-explicit-decision-evaluation.md).
+Current definitions and exports use format 4. Decisions are a strict union on kind: expressions return a declared route ID, LLMs use Liquid instructions and declared routes, and classifiers retain Choice, Noul and Score. Outputs contain portId, provenance and observation. Decision gates own repeat markers and limits; exits are terminal (ADR-0036). [ADR-0035](decisions/ADR-0035-evaluator-specific-decisions.md) supersedes the earlier decision matrix and output shape. Frozen V3 conversion stages remain format 3; old stores and exports are refused until the integrated cutover adds the 3-to-4 stage. Thread format remains 1.
 
 ## Versioning (Decided)
 
@@ -91,6 +95,34 @@ Current definition and export format versions are 3. Exit predicates declare an 
 - New runs always use the latest published version.
 - A subloop reference resolves to the referenced loop's latest published version at the moment the parent run starts, and the child run pins that version. A reference may instead pin an explicit version number.
   - "Starts" means the parent run is created: the resolution covers every loop reachable through subloop references, at any depth, and is recorded on the parent's `run.queued` event as `subloopVersions` (loop id to version id). Children inherit the map, replay forks copy it, and recovery reads it from the log, so a version published while the parent waits never reaches the parent's tree (05, ADV-004). A loop that an active run can still start (its own runs, or runs whose pins or references reach it) cannot be deleted (409 `LOOP_IN_USE`).
+
+## Deleting a loop (Decided)
+
+Deleting a loop deletes its drafts, published versions and **all of its run history** in one
+transaction. This includes `runs` (initial threads, snapshots, checkpoints, results and artifact
+references), `run_events`, `harness_sessions` and `timers`, plus the loop's `schedules`,
+`webhook_endpoints` and `webhook_receipts`. Configured template-instance bindings containing the
+deleted loop are removed; other member loops remain. Poll triggers are disarmed after commit.
+Shared inbound deliveries remain, with deleted run IDs removed from `run_ids`; their `source`
+strings remain historical provenance. Artifact content is stored as shared content-addressed
+files, not run-owned database rows; deleting references removes run API access, while those
+shared files remain on disk.
+
+Queued, running, waiting or paused runs refuse deletion with 409 `LOOP_IN_USE`; cancel them
+first. Existing protection also refuses deletion while an active run or pending webhook
+admission can still start the loop as a subloop. Refusal or a storage failure changes no rows.
+
+Deleting a child loop leaves parent runs in other loops and their immutable histories intact.
+The inspector identifies a referenced child as no longer available. Children in other loops
+are retained; their live `parent_run_id` association is cleared if the parent was deleted,
+while their initial thread and event history remain unchanged. Published definitions in other
+loops are neither rewritten nor deleted: their authored subloop reference remains, and a
+future attempt to execute it fails with `SUBLOOP_NOT_FOUND`.
+
+`SqliteRunRepository.deleteOrphans()` transactionally deletes runs whose version or loop no
+longer exists, using the same run-owned cleanup. It is an offline maintenance operation for
+the later format-4 cutover; the current offline upgrade is unchanged. See
+[ADR-0033](decisions/ADR-0033-loop-deletion-removes-runs.md).
 
 ## Context thread (Draft - to be co-designed)
 
@@ -104,6 +136,8 @@ type ContextThread = {
   messages: Message[]; // the conversational spine
   vars: Record<string, unknown>; // declared variables, validated by the loop's variable schemas
   artifacts: Artifact[]; // references to large things: transcripts, files, diffs, JSON blobs
+  outputs: Record<string, { value: unknown }>;
+  gates: Record<string, { passes: number }>; // engine-owned, one-based per decision gate
   counters: {
     nodeVisits: Record<string, number>;
     usage: { inputTokens: number; outputTokens: number };
@@ -182,22 +216,23 @@ engine-owned region. Usage roll-up remains an engine operation.
 
 Each event has `runId`, `seq`, `ts`, `type`, optional `nodeId`, and a typed `payload`. Large payloads are stored as artifacts and referenced.
 
-| Type                                                                 | Payload                                                                      |
-| -------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `run.queued`, `run.started`, `run.finished`                          | status, outcome, result reference                                            |
-| `run.paused`, `run.resumed`, `run.cancel_requested`, `run.cancelled` | actor                                                                        |
-| `run.waiting`, `run.woken`                                           | wait spec, wake reason                                                       |
-| `run.failed`                                                         | failure object                                                               |
-| `iteration.incremented`                                              | from, to, loopBack target                                                    |
-| `node.started`, `node.finished`                                      | config hash; patch, route, duration                                          |
-| `node.progress`                                                      | small structured progress from long nodes; harness items are summarised here |
-| `harness.session`                                                    | harness, sessionId, mode (`fresh` or `resumed`), model, effort               |
-| `harness.usage`                                                      | tokens as reported by the harness, informational                             |
-| `decision.made`                                                      | answer, portId, provenance, preserved historical diagnostics                 |
-| `signal.received`, `input.received`                                  | name, payload reference                                                      |
-| `heartbeat.beat`                                                     | beat number, probe result summary                                            |
-| `child_run.started`, `child_run.finished`                            | child run id, outcome                                                        |
-| `return.delivered`, `return.failed`                                  | channel, target, status                                                      |
+| Type                                                                 | Payload                                                                                               |
+| -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `run.queued`, `run.started`, `run.finished`                          | status, outcome, result reference                                                                     |
+| `run.paused`, `run.resumed`, `run.cancel_requested`, `run.cancelled` | actor                                                                                                 |
+| `run.waiting`, `run.woken`                                           | wait spec, wake reason                                                                                |
+| `run.failed`                                                         | failure object                                                                                        |
+| `iteration.incremented`                                              | historical from, to, target; not emitted by new gates                                                 |
+| `node.started`, `node.finished`                                      | config hash; patch, route, duration                                                                   |
+| `node.progress`                                                      | small structured progress from long nodes; harness items are summarised here                          |
+| `harness.session`                                                    | harness, sessionId, mode (`fresh` or `resumed`), model, effort                                        |
+| `harness.usage`                                                      | tokens as reported by the harness, informational                                                      |
+| `decision.made`                                                      | portId, provenance, observation, optional gate pass/limit evidence, at most three factual diagnostics |
+| `exit.evaluated`                                                     | nodeId, terminal outcome                                                                              |
+| `signal.received`, `input.received`                                  | name, payload reference                                                                               |
+| `heartbeat.beat`                                                     | beat number, probe result summary                                                                     |
+| `child_run.started`, `child_run.finished`                            | child run id, outcome                                                                                 |
+| `return.delivered`, `return.failed`                                  | channel, target, status                                                                               |
 
 ## Other entities (Decided)
 
@@ -216,3 +251,17 @@ Each event has `runId`, `seq`, `ts`, `type`, optional `nodeId`, and a typed `pay
 Body-signed webhooks also keep `webhook_receipts`: a unique owner/loop/trigger/content hash, inbound-event link, filtered/deduplicated/pending/admitted/failed state, frozen admission intent, attempts, next-attempt time and safe failure code. Pending admissions retain target pins. The admission port commits run identity, initial thread, subloop pins, queued event and receipt link together; notifications follow commit. See [ADR-0024](decisions/ADR-0024-github-trigger-admission.md).
 
 Every table carries `ownerId`. 1.0 has one owner, `local`.
+
+## Gate and exit invariants (#164 E1)
+
+A decision becomes a gate when exactly one route is marked `repeat: true`. This marker belongs on an expression/LLM route, Choice option, Noul side or Score band; it is never inferred from canvas direction. Require `maxPasses` (1–10,000); optionally set `maxRunTimeSeconds` (positive integer seconds, at most 31,536,000). Without a repeat marker neither limit is allowed. Reserve the port ID `limit-reached`: authors cannot use it as a route ID. The gate exposes **Limit reached** only while a repeat is marked, and that output must be connected. The repeat route must lead through a cycle back to the gate; exits are terminal and triggers cannot be repeat targets.
+
+Passes are one-based, available to JSONata as `gates.<nodeId>.passes` (quote an ID with punctuation, for example `gates."my-gate".passes`). Every marked gate starts at 1. Evaluation happens first. An allowed repeat increments its count once; a non-repeat choice or a refused repeat leaves it unchanged. A non-repeat choice on the last allowed pass wins. If the decision chooses repeat at `maxPasses`, or after the optional run-time limit, it takes `limit-reached` instead. Both limits reached together are recorded as `max-passes`.
+
+Maximum run time is elapsed wall time from `run.startedAt` (falling back to `createdAt`), including waits, pauses and recovery downtime. It is checked after evaluation and only on a repeat choice; it does not interrupt running work or override a finishing choice. A replay fork keeps the checkpoint's passes and starts its own run clock.
+
+Exits are terminal: `{outcome, returns, destinations}`. `outcome` is `success` (default), `failure` or `exhausted`; `returns` is a JSONata expression or `none` (default); `destinations` defaults to `[{kind:"caller"}]` and supports caller, webhook, file, event and log. Exits have no criteria, predicate, default routing or loop-back, and no output ports.
+
+Success finishes `succeeded`, Failure finishes `failed`, and Exhausted finishes the distinct terminal status `exhausted`. Exhausted means the authored graph gave up further repetition; normally a gate's Limit reached output leads here. It is an outcome, not a resumable node failure. Every outcome evaluates the same return expression and delivers its value unchanged; Exhausted adds no wrapper or implicit last output. Use `outputs.<workNodeId>.value` when returning work output, because the preceding gate replaces `lastOutput`.
+
+`/gates` is engine-owned; authored mutation patches cannot alter counts. Graph validation reports a noncyclic repeat at its precise `config.*.repeat` path (`REPEAT_ROUTE_NOT_CYCLIC`), and an unconnected Limit reached at `config.maxPasses` (`PORT_UNCONNECTED`). Schema validation identifies missing limits and extra repeat markers directly.

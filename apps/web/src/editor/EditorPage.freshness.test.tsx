@@ -41,11 +41,7 @@ function withServerChecks(api: FakeApi, beforeAnswer?: () => Promise<void> | voi
     const issues = [...answer.issues];
     for (const node of definition.nodes) {
       const config = node.config as Record<string, unknown>;
-      if (
-        node.kind === 'trigger' &&
-        config['subtype'] === 'cron' &&
-        config['expression'] === 'never'
-      )
+      if (node.kind === 'trigger' && config['type'] === 'cron' && config['expression'] === 'never')
         issues.push({
           code: 'CRON_INVALID',
           severity: 'error',
@@ -119,7 +115,7 @@ describe('freshness of the API checks (phase review F3)', () => {
       ...theirs,
       nodes: theirs.nodes.map((node): NodeInput =>
         node.id === 'start'
-          ? { ...node, kind: 'trigger', config: { subtype: 'cron', expression: 'never' } }
+          ? { ...node, kind: 'trigger', config: { type: 'cron', expression: 'never' } }
           : node,
       ),
     });

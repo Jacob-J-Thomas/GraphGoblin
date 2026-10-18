@@ -77,7 +77,7 @@ describe('EventsPage delivery dispositions', () => {
     expect(await screen.findByText('Filtered')).toBeVisible();
     expect(
       screen.getByText(
-        'No run was started. This authenticated body stays consumed if you later change the filter.',
+        'No run was started. An authored key stays consumed; unkeyed redeliveries are separate deliveries.',
       ),
     ).toBeVisible();
     expect(screen.getByText('Deduplicated')).toBeVisible();
@@ -200,4 +200,58 @@ describe('EventsPage delivery dispositions', () => {
       view.queryClient.clear();
     }
   });
+});
+
+it('shows safe pinned webhook configuration and explains unavailable history', async () => {
+  const api = new FakeApi();
+  const endpoint = {
+    id: 'endpoint',
+    ownerId: 'local',
+    loopId: 'loop',
+    versionId: 'version',
+    triggerNodeId: 'hook',
+    path: '/hooks/token',
+    enabled: false,
+    createdAt: TS,
+    authentication: {
+      type: 'hmac-sha256' as const,
+      message: 'body' as const,
+      header: 'x-hub-signature-256',
+      secretRef: 'secret-name',
+    },
+  };
+  api.inbound = [true, false].map((configurationAvailable, index) => ({
+    id: String(index),
+    ownerId: 'local',
+    type: 'webhook',
+    payload: null,
+    receivedAt: TS,
+    source: 'webhook:endpoint',
+    runIds: [],
+    webhook: {
+      ...endpoint,
+      configurationAvailable,
+      ...(configurationAvailable
+        ? {
+            body: { type: 'json' as const },
+            eventType: { source: 'header' as const, name: 'x-event', fallback: 'webhook' },
+            dedupeKey: 'id',
+          }
+        : {}),
+    },
+  }));
+  renderApp('/events', api);
+  const headings = await screen.findAllByText('Webhook configuration');
+  const available = headings[0]!.closest('details')!;
+  available.open = true;
+  const region = within(available).getByRole('region', { name: 'Webhook configuration' });
+  expect(region).toHaveTextContent('secret-name');
+  expect(region).toHaveTextContent('x-event');
+  expect(region).toHaveTextContent('dedupeKey');
+  expect(region).toHaveAttribute('tabindex', '0');
+  const unavailable = headings[1]!.closest('details')!;
+  unavailable.open = true;
+  expect(
+    within(unavailable).getByText('Configuration unavailable for this delivery.'),
+  ).toBeVisible();
 });

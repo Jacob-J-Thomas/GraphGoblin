@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 /**
  * Regression specs for the issue #7 QA pass (docs/qa/2026-10-04-issue-7-qa.md): reduced motion and
  * long text against the built app.
@@ -11,13 +12,13 @@ declare global {
   }
 }
 
-const start = { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } };
+const start = { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } };
 const done = { id: 'done', kind: 'exit', label: 'Done', config: {} };
 
 /** A loop whose one inference turn takes as long as the harness script says. */
 function slowLoop(name: string, prompt: string) {
   return {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name,
     nodes: [
       start,

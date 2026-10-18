@@ -1,6 +1,7 @@
 import { useWatch } from 'react-hook-form';
 import { DefaultField, type FieldOverrides, type FieldProps } from '../forms/fields.js';
 import { isUnset } from '../forms/unset.js';
+import { GATE_FIELD_OVERRIDES } from './DecisionGateFields.js';
 
 /** Hide the optional Noul-only setting when it is inapplicable and has no value to fix. */
 export function DecisionTruthThresholdField(props: FieldProps) {
@@ -11,5 +12,6 @@ export function DecisionTruthThresholdField(props: FieldProps) {
 }
 
 export const DECISION_FIELD_OVERRIDES = {
-  'evaluation.truthThreshold': DecisionTruthThresholdField,
+  ...GATE_FIELD_OVERRIDES,
+  truthThreshold: DecisionTruthThresholdField,
 } satisfies FieldOverrides;

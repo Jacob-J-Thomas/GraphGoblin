@@ -36,3 +36,11 @@ One file per decision. Status is Accepted unless stated. Supersede by adding a n
 | [0030](ADR-0030-templates-are-starting-points.md)        | Templates are starting points; one-action gallery; instance retirement in #165                 |
 | [0031](ADR-0031-mounted-context-tabs.md)                 | Mounted Context tabs in node forms                                                             |
 | [0032](ADR-0032-section-json-editing.md)                 | Explicit schema-validated section JSON with session-held text                                  |
+| [0033](ADR-0033-loop-deletion-removes-runs.md)           | Loop deletion atomically removes its runs and dependent history                                |
+| [0035](ADR-0035-evaluator-specific-decisions.md)         | Evaluator-specific decisions, factual observations and format 4                                |
+
+[ADR-0036: Decision gates and terminal exits](ADR-0036-decision-gates-terminal-exits.md) supersedes earlier exit loop-back rules.
+
+[ADR-0037: Webhook acknowledgement](ADR-0037-webhook-acknowledgement.md) supersedes ADR-0024's public response and preset-filter rules; T4 has a bounded admission checkpoint and continuation.
+
+[ADR-0038: Downstream payload checks](ADR-0038-downstream-payload-checks.md) removes trigger filters and requires version-bound review of stored filter graphs.

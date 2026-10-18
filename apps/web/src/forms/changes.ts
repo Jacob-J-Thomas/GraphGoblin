@@ -23,7 +23,10 @@ export interface FormChange {
    */
   id: number;
   /** Which array row was removed; labels and row contents cannot identify identical rows. */
-  collection?: { type: 'remove'; index: number } | { type: 'replace' };
+  collection?:
+    | { type: 'remove'; index: number }
+    | { type: 'replace' }
+    | { type: 'move'; from: number; to: number };
 }
 
 /**

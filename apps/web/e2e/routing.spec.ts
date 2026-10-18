@@ -44,7 +44,13 @@ async function openGraph(
   definition: LoopDefinitionInput,
   theme = 'dark',
 ) {
-  await page.addInitScript((value) => localStorage.setItem('graphgoblin-theme', value), theme);
+  await page.addInitScript((value) => {
+    localStorage.setItem('graphgoblin-theme', value);
+    // Both panels start collapsed, so the editor's opening fit (never below 50%) uses the whole
+    // canvas: the viewport every routing test was written for.
+    localStorage.setItem('graphgoblin-palette', 'collapsed');
+    localStorage.setItem('graphgoblin-loop-panel', 'collapsed');
+  }, theme);
   const response = await request.post('/loops', { data: { definition } });
   expect(response.status(), await response.text()).toBe(201);
   const { loop } = (await response.json()) as { loop: { id: string } };
@@ -54,7 +60,6 @@ async function openGraph(
     const button = page.getByRole('button', { name, exact: true });
     if (await button.isVisible()) await button.click();
   }
-  await page.getByRole('button', { name: 'Fit view' }).click();
   await expect(page.locator('.react-flow__edge-orthogonal title').first()).toBeAttached();
   await page.evaluate(() => document.fonts.ready);
   return loop.id;
@@ -131,8 +136,7 @@ for (const theme of ['dark', 'light']) {
   }) => {
     // Keep deletion schema-valid so the cleared config can also be read back from the API.
     const definition = simpleLoop();
-    const done = definition.nodes.find((node) => node.id === 'done')!;
-    if (done.kind === 'exit') done.config.default = 'success';
+
     const loopId = await openGraph(page, request, definition, theme);
     const back = edge(page, 'return');
     const path = back.locator('.react-flow__edge-path');
@@ -167,8 +171,9 @@ for (const theme of ['dark', 'light']) {
     const saved = (await (await request.get(`/loops/${loopId}`)).json()) as {
       draft: { definition: LoopDefinitionInput };
     };
-    expect(saved.draft.definition.nodes.find((n) => n.id === 'done')!.config).not.toHaveProperty(
-      'loopBack',
+    expect(saved.draft.definition.nodes.find((n) => n.id === 'done')!.config).toHaveProperty(
+      'maxPasses',
+      3,
     );
     await page.keyboard.press('Control+z');
     await expect(back).toHaveCount(1);
@@ -217,10 +222,38 @@ test('dragging a card across a return path reroutes clear of its measured box in
   const before = await path.getAttribute('d');
   const card = page.getByTestId('node-check');
   const rect = (await card.boundingBox())!;
+  // Gate return ports moved the automatic lane above the cards. Put the obstacle on
+  // the measured path instead of dragging down toward an obsolete exit return lane.
+  const onPath = await path.evaluate(
+    (element, x) => {
+      const curve = element as SVGPathElement;
+      const matrix = curve.getScreenCTM()!;
+      let nearest = { x: Infinity, y: 0 };
+      for (let at = 0; at <= curve.getTotalLength(); at += 2) {
+        const point = curve.getPointAtLength(at).matrixTransform(matrix);
+        if (Math.abs(point.x - x) < Math.abs(nearest.x - x)) nearest = { x: point.x, y: point.y };
+      }
+      return nearest;
+    },
+    rect.x + rect.width / 2,
+  );
+  const dx = onPath.x - (rect.x + rect.width / 2);
+  const dy = onPath.y - (rect.y + rect.height / 2);
   await page.mouse.move(rect.x + 60, rect.y + 14);
   await page.mouse.down();
-  await page.mouse.move(rect.x + 60, rect.y + 125, { steps: 16 });
+  await page.mouse.move(rect.x + 60 + dx, rect.y + 14 + dy, { steps: 16 });
   await page.mouse.up();
+  await expect
+    .poll(async () => {
+      const moved = (await card.boundingBox())!;
+      return (
+        onPath.x > moved.x &&
+        onPath.x < moved.x + moved.width &&
+        onPath.y > moved.y &&
+        onPath.y < moved.y + moved.height
+      );
+    })
+    .toBe(true);
   await expect(path).not.toHaveAttribute('d', before!);
   const collisions = await path.evaluate((element) => {
     const curve = element as SVGPathElement;
@@ -447,7 +480,7 @@ for (const count of [100, 300])
     expect(definition.edges).toHaveLength(count * 2);
     await openGraph(page, request, definition);
     await expect(page.locator('.react-flow__edge')).toHaveCount(count * 2);
-    // The viewport contains this middle card even at xyflow's minimum fit zoom.
+    // The opening view contains this middle card; the drag starts at its centre.
     const card = page.locator(`.react-flow__node[data-id="n${Math.floor(count / 20) * 10 - 6}"]`);
     await expect(card).toBeVisible();
     await page.waitForTimeout(1000); // Let font measurement, initial validation and fit-view settle.
@@ -480,7 +513,7 @@ for (const count of [100, 300])
     const repetitions = [];
     for (let repetition = 0; repetition < 3; repetition += 1) {
       const rect = (await card.boundingBox())!;
-      const origin = { x: rect.x + 24, y: rect.y + 12 };
+      const origin = { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
       await page.mouse.move(origin.x, origin.y);
       await page.mouse.down();
       await page.mouse.move(origin.x + 5, origin.y);

@@ -6,6 +6,25 @@ import { FakeApi } from '../__fixtures__/fake-api.js';
 import { renderApp } from '../__fixtures__/render.js';
 
 describe('RunsPage', () => {
+  it('lists and filters exhausted runs with their status badge', async () => {
+    const api = new FakeApi(),
+      user = userEvent.setup();
+    const run = api.addRun({ status: 'exhausted', outcome: 'exhausted' });
+    api.addRun({ status: 'succeeded' });
+    renderApp('/runs', api);
+    const row = (await screen.findByRole('link', { name: run.id })).closest('tr')!;
+    expect(within(row).getByText('exhausted').closest('[data-status]')).toHaveAttribute(
+      'data-status',
+      'exhausted',
+    );
+    await user.selectOptions(screen.getByLabelText('Status'), 'exhausted');
+    await waitFor(() =>
+      expect(screen.getByTestId('location')).toHaveTextContent('status=exhausted'),
+    );
+    await waitFor(() =>
+      expect(api.calls.some((call) => call.search.get('status') === 'exhausted')).toBe(true),
+    );
+  });
   it('lists runs with loop names, parents, and children links, and filters through the URL', async () => {
     const user = userEvent.setup();
     const api = new FakeApi();

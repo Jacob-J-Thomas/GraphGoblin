@@ -92,15 +92,16 @@ test('a switch toggles with Space and Enter, and an optional boolean can go back
   await expect.poll(async () => (await savedConfig(request, id))?.['effort']).toBe('minimal');
 
   const decisionId = await createLoop(request, 'decision', {
+    kind: 'classifier',
+    model: 'jev',
+    question: 'Choose whether to continue.',
     answer: {
       type: 'choice',
       options: [
-        { id: 'yes', label: 'yes', criteria: 'Choose yes' },
-        { id: 'no', label: 'no', criteria: 'Choose no' },
+        { id: 'out', label: 'Continue', criteria: 'The work is complete' },
+        { id: 'no', label: 'Stop', criteria: 'The work is incomplete' },
       ],
     },
-    evaluation: { kind: 'expression', jsonata: '"yes"' },
-    recordAlternatives: true,
   });
   await page.goto(`/app/loops/${decisionId}/edit`);
   const decision = await openNode(page, 'approve');
@@ -203,7 +204,7 @@ test('the run form keeps a long choice inside its field and puts each problem be
         ? {
             ...node,
             config: {
-              subtype: 'manual',
+              type: 'manual',
               inputSchema: {
                 type: 'object',
                 required: ['approved', 'next'],

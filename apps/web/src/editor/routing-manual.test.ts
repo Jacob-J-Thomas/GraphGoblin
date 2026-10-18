@@ -137,7 +137,7 @@ describe('manual routes in the router (#44)', () => {
     expect(route.manual).toBe(true);
     expect(route.crossing).toBeUndefined();
     expect(route.points).toEqual(
-      drawnPoints([1120, 420, 260], done.outputs['loopBack']!, work.input!),
+      drawnPoints([1120, 420, 260], done.outputs['repeat']!, work.input!),
     );
     expect(route.lane).toEqual({ y: 420, left: 260, right: 1120 });
     expect(route.label.y).toBe(420);
@@ -148,9 +148,9 @@ describe('manual routes in the router (#44)', () => {
     expect(forward.routes.get('start-work')).toMatchObject({ manual: true });
     expect(forward.directions.get('start-work')).toBe(false);
     // The same description is available for any points.
-    const described = describeRoute(route.points, 'loopBack', nodes);
+    const described = describeRoute(route.points, 'repeat', nodes);
     expect(described).toMatchObject({ lane: route.lane, label: route.label, manual: true });
-    expect(describeRoute(route.points, 'loopBack', [])).toMatchObject({ lane: route.lane });
+    expect(describeRoute(route.points, 'repeat', [])).toMatchObject({ lane: route.lane });
   });
 
   it('keeps a fixed route attached when a card moves: stubs follow the port, segments stay', () => {
@@ -162,8 +162,8 @@ describe('manual routes in the router (#44)', () => {
     const route = after.routes.get('return')!;
     const done = shifted.find((n) => n.id === 'done')!;
     expect(route.manual).toBe(true);
-    expect(route.points[0]).toEqual(done.outputs['loopBack']);
-    expect(route.points[1]).toEqual({ x: 1120, y: done.outputs['loopBack']!.y });
+    expect(route.points[0]).toEqual(done.outputs['repeat']);
+    expect(route.points[1]).toEqual({ x: 1120, y: done.outputs['repeat']!.y });
     expect(route.lane).toEqual({ y: 420, left: 260, right: 1120 });
     expect(after.routes).toEqual(createRoutingPlan(shifted, fixed).routes);
   });

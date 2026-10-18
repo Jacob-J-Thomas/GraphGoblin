@@ -2,7 +2,6 @@ import {
   NodeConfigSchemas,
   SlugSchema,
   type LoopDefinitionInput,
-  type DecisionAnswer,
   type NodeInput,
 } from '@graphgoblin/contracts';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -21,18 +20,32 @@ import { createDisclosureIdentities, type DisclosureStates } from '../forms/disc
 import { SchemaForm } from '../forms/SchemaForm.js';
 import { FieldLabelsContext } from '../forms/fields/shared.js';
 import { VariableSuggestionsContext } from '../forms/fields/suggestions.js';
-import { JsonApplyReviewContext } from '../forms/fields/json.js';
+import { JsonApplyReviewContext, JsonCandidateContext } from '../forms/fields/json.js';
 import { removedAnswerConnections } from './decision-route-edges.js';
-import { nextChangeId } from '../forms/changes.js';
-import { isUnset } from '../forms/unset.js';
+import {
+  FormEditReviewContext,
+  ReorderablePathsContext,
+  type FormEditRequest,
+  type FormEditApply,
+} from '../forms/edit-review.js';
+import { convertDecision, decisionFieldLabel } from './decision-authoring.js';
 import { DecisionKindPicker } from './DecisionKindPicker.js';
 import { DecisionAnswerPicker } from './DecisionAnswerPicker.js';
-import { EXIT_PREDICATE_FIELD_OVERRIDES } from './ExitPredicateFields.js';
+import { EXIT_FIELD_OVERRIDES } from './ExitFields.js';
+
+import { hasRepeatRoute, cleanGateLimits } from './decision-gates.js';
 import { TriggerPresets } from './TriggerPresets.js';
+import {
+  TriggerTypePicker,
+  WebhookAuthenticationPicker,
+  WebhookEventTypePicker,
+} from './TriggerTypePicker.js';
+import { POLL_FIELD_LABELS, WEBHOOK_FIELD_LABELS } from './trigger-field-labels.js';
 import { CatalogWarningsContext } from '../forms/fields/model.js';
+import { GateLimitIssuesContext } from './DecisionGateFields.js';
 import { canvasFocusTarget } from './canvas-focus.js';
 import { DECISION_FIELD_OVERRIDES, NODE_FIELD_CONTROLS } from './field-controls.js';
-import { focusIssuePath } from './focus-field.js';
+import { focusIssuePath, groupFocus } from './focus-field.js';
 import { IssueBadge } from './IssueBadge.js';
 import { KindChip } from './KindChip.js';
 import { KIND_INFO, type EditorIssue } from './model.js';
@@ -42,19 +55,24 @@ import { useEditorStore } from './store.js';
 
 /** Why `draft` cannot become the id of node `nodeId`, or undefined when it can (or is unchanged). */
 const DECISION_UNION_PICKERS = {
+  '': DecisionKindPicker,
   answer: DecisionAnswerPicker,
-  evaluation: DecisionKindPicker,
 };
-const DECISION_FIELD_ORDER = ['answer', 'evaluation'] as const;
+const DECISION_FIELD_ORDER = ['instructions', 'jsonata', 'routes', 'answer'] as const;
+const TRIGGER_UNION_PICKERS = {
+  '': TriggerTypePicker,
+  authentication: WebhookAuthenticationPicker,
+  eventType: WebhookEventTypePicker,
+};
 const DECISION_FIELD_LABELS = {
-  'evaluation.minConfidence': 'Min confidence',
-  'evaluation.truthThreshold': 'Noul true-probability threshold',
-};
-const POLL_FIELD_LABELS = {
-  dedupeKey: 'Whole-probe dedupe key (single-result only)',
-  'items.dedupeKey': 'Per-item dedupe key',
+  minConfidence: 'Min confidence',
+  truthThreshold: 'Noul true-probability threshold',
+  maxPasses: 'Maximum passes',
+  maxRunTimeSeconds: 'Maximum run time (seconds)',
 };
 const DEFAULT_FIELD_LABELS = {};
+const DECISION_REORDERABLE = ['routes', 'answer.options', 'answer.bands'];
+const NO_REORDERABLE: readonly string[] = [];
 
 export function idProblem(
   draft: string,
@@ -79,242 +97,9 @@ function record(value: unknown): Record<string, unknown> {
     : {};
 }
 
-function answerType(config: unknown): DecisionAnswer['type'] | undefined {
+function answerType(config: unknown): 'choice' | 'noul' | 'score' | undefined {
   const type = record(record(config)['answer'])['type'];
   return type === 'choice' || type === 'noul' || type === 'score' ? type : undefined;
-}
-
-const EXIT_ANSWER_DEFAULTS = {
-  choice: {
-    type: 'choice',
-    options: [
-      { id: 'yes', label: 'Yes', criteria: 'The predicate matches' },
-      { id: 'no', label: 'No', criteria: 'The predicate does not match' },
-    ],
-  },
-  noul: {
-    type: 'noul',
-    true: { label: 'True', criteria: 'The predicate is true' },
-    false: { label: 'False', criteria: 'The predicate is false' },
-  },
-  score: {
-    type: 'score',
-    anchors: ['Does not meet the rubric', 'Partly meets the rubric', 'Fully meets the rubric'],
-  },
-} as const;
-
-function answerPrimitive(value: unknown): 'choice' | 'noul' | 'score' | undefined {
-  const type = record(value)['type'];
-  return type === 'choice' || type === 'noul' || type === 'score' ? type : undefined;
-}
-
-function exitMatchDefault(answer: Record<string, unknown>) {
-  const type = answerPrimitive(answer);
-  if (type === 'choice') {
-    const options = Array.isArray(answer['options']) ? answer['options'].map(record) : [];
-    const first = options.find(
-      (option) => typeof option['id'] === 'string' && option['id'] !== '',
-    )?.['id'];
-    return {
-      type,
-      optionIds: typeof first === 'string' ? [first] : [],
-    };
-  }
-  if (type === 'score') return { type, operator: 'gte', value: 0 };
-  return {
-    type: 'noul',
-    value: true,
-  };
-}
-
-/** Keep an exit predicate's answer, evaluator and match variants in a usable combination. */
-function exitPredicateVariantChange(config: unknown, previous: unknown, path?: string): unknown {
-  const changed = /^criteria\.(\d+)(?:\.(answer|evaluation))?$/.exec(path ?? '');
-  if (!changed) return config;
-  const index = Number(changed[1]);
-  const section = changed[2];
-  const currentConfig = record(config);
-  const previousConfig = record(previous);
-  const criteria: unknown[] = Array.isArray(currentConfig['criteria'])
-    ? currentConfig['criteria']
-    : [];
-  const oldCriteria: unknown[] = Array.isArray(previousConfig['criteria'])
-    ? previousConfig['criteria']
-    : [];
-  const row = record(criteria[index]);
-  if (row['when'] !== 'predicate') return config;
-  const oldRow = record(oldCriteria[index]);
-  let answer = { ...record(row['answer']) };
-  let evaluation = { ...record(row['evaluation']) };
-  const oldAnswerType = answerPrimitive(oldRow['answer']);
-  let answerTypeNow = answerPrimitive(answer);
-  const oldEvaluationKind = record(oldRow['evaluation'])['kind'];
-  let evaluationKindNow = evaluation['kind'];
-  let changedRow = { ...row };
-  const newPredicate = section === undefined && oldRow['when'] !== 'predicate';
-  const answerChanged =
-    section === 'answer' && oldAnswerType !== answerTypeNow && answerTypeNow !== undefined;
-  const evaluationChanged =
-    section === 'evaluation' &&
-    oldEvaluationKind !== evaluationKindNow &&
-    (evaluationKindNow === 'expression' ||
-      evaluationKindNow === 'classifier' ||
-      evaluationKindNow === 'llm');
-  if (!newPredicate && !answerChanged && !evaluationChanged) return config;
-
-  if (newPredicate) {
-    // Expression exit predicates are Noul-only, so start with the coherent boolean form.
-    answer = { type: 'noul' };
-    answerTypeNow = 'noul';
-    evaluation = { kind: 'expression', jsonata: 'true' };
-    evaluationKindNow = 'expression';
-  }
-
-  if (answerChanged) {
-    if (answerTypeNow === 'noul') {
-      Object.assign(
-        answer,
-        evaluationKindNow === 'expression' ? { type: 'noul' } : EXIT_ANSWER_DEFAULTS.noul,
-      );
-    } else if (answerTypeNow === 'choice' && !Array.isArray(answer['options'])) {
-      Object.assign(answer, EXIT_ANSWER_DEFAULTS.choice);
-    }
-    if (answerTypeNow === 'score' && evaluationKindNow !== 'classifier') {
-      const question =
-        typeof evaluation['question'] === 'string'
-          ? evaluation['question']
-          : 'Evaluate the current input against the ordered rubric.';
-      evaluation = { kind: 'classifier', model: '', question };
-      evaluationKindNow = 'classifier';
-    } else if (evaluationKindNow === 'expression' && answerTypeNow === 'choice') {
-      evaluation = {
-        kind: 'classifier',
-        model: '',
-        question: 'Evaluate the current input against the declared Choice options.',
-      };
-      evaluationKindNow = 'classifier';
-    } else if (evaluationKindNow === 'expression') {
-      const first = Array.isArray(answer['options'])
-        ? record(answer['options'][0])['id']
-        : undefined;
-      evaluation = {
-        ...evaluation,
-        jsonata:
-          answerTypeNow === 'noul'
-            ? 'true'
-            : JSON.stringify(typeof first === 'string' ? first : 'yes'),
-      };
-    }
-  }
-
-  if (evaluationChanged) {
-    if (answerTypeNow === 'noul') {
-      if (evaluationKindNow === 'expression') answer = { type: 'noul' };
-      else if (!('true' in answer) || !('false' in answer))
-        Object.assign(answer, EXIT_ANSWER_DEFAULTS.noul);
-    }
-  }
-
-  if (
-    (answerChanged || evaluationChanged) &&
-    answerTypeNow === 'score' &&
-    evaluationKindNow !== 'classifier'
-  ) {
-    // Score cannot be authored with expression or Codex. Keep the question when converting LLM.
-    const question =
-      typeof evaluation['question'] === 'string'
-        ? evaluation['question']
-        : 'Evaluate the current input against the ordered rubric.';
-    evaluation = { kind: 'classifier', model: '', question };
-  }
-
-  const priorMatch = record(row['match']);
-  let match = priorMatch;
-  if (newPredicate) {
-    match = { type: 'noul', value: true };
-  } else if (answerChanged && priorMatch['type'] !== answerTypeNow) {
-    const nextMatch = exitMatchDefault(answer);
-    const preserveReportedMinimum =
-      evaluationKindNow === 'llm' &&
-      (oldAnswerType === 'noul' || oldAnswerType === 'choice') &&
-      (answerTypeNow === 'noul' || answerTypeNow === 'choice') &&
-      Object.hasOwn(priorMatch, 'minReportedConfidence') &&
-      !isUnset(priorMatch['minReportedConfidence']);
-    match = preserveReportedMinimum
-      ? { ...nextMatch, minReportedConfidence: priorMatch['minReportedConfidence'] }
-      : nextMatch;
-  }
-  changedRow = { ...row, answer, evaluation, match };
-  const nextCriteria = criteria.map((criterion, rowIndex) =>
-    rowIndex === index ? changedRow : criterion,
-  );
-  return { ...currentConfig, criteria: nextCriteria };
-}
-
-const ANSWER_DEFAULTS = {
-  choice: {
-    type: 'choice',
-    options: [
-      { id: 'yes', label: 'Yes', criteria: 'The answer is yes' },
-      { id: 'no', label: 'No', criteria: 'The answer is no' },
-    ],
-  },
-  noul: {
-    type: 'noul',
-    true: { id: 'true', label: 'True', criteria: 'The statement is true' },
-    false: { id: 'false', label: 'False', criteria: 'The statement is false' },
-  },
-  score: {
-    type: 'score',
-    anchors: ['Does not meet the rubric', 'Partly meets the rubric', 'Fully meets the rubric'],
-    bands: [
-      { id: 'low', label: 'Low', min: 0, max: 0.5 },
-      { id: 'mid', label: 'Middle', min: 0.5, max: 1.5 },
-      { id: 'high', label: 'High', min: 1.5, max: 2 },
-    ],
-  },
-} satisfies Record<DecisionAnswer['type'], DecisionAnswer>;
-
-/** Keep a newly selected primitive usable before the user fills its route-specific fields. */
-function decisionVariantChange(next: unknown, previous: unknown): unknown {
-  const nextConfig = record(next);
-  const oldType = answerType(previous);
-  const nextType = answerType(next);
-  if (!nextType || nextType === oldType) return next;
-
-  const answer = ANSWER_DEFAULTS[nextType];
-  const rawEvaluation = record(nextConfig['evaluation']);
-  const kind = rawEvaluation['kind'];
-  let evaluation: unknown = nextConfig['evaluation'];
-  if (kind === 'classifier') {
-    const classifier = { ...rawEvaluation };
-    if (nextType !== 'noul') delete classifier['truthThreshold'];
-    evaluation = classifier;
-  } else if (kind === 'llm' && nextType === 'score') {
-    evaluation = {
-      kind: 'classifier',
-      model: 'jev',
-      question: Object.hasOwn(rawEvaluation, 'question')
-        ? rawEvaluation['question']
-        : 'Score the input against the ordered rubric.',
-      context: Object.hasOwn(rawEvaluation, 'context')
-        ? rawEvaluation['context']
-        : { messages: 'last', includeLastOutput: true },
-    };
-  } else if (kind === 'expression' && nextType === 'score') {
-    evaluation = {
-      kind: 'classifier',
-      model: 'jev',
-      question: 'Score the input against the ordered rubric.',
-      context: { messages: 'last', includeLastOutput: true },
-    };
-  } else if (kind === 'expression') {
-    evaluation = {
-      ...rawEvaluation,
-      jsonata: nextType === 'noul' ? 'true' : '"yes"',
-    };
-  }
-  return { ...nextConfig, answer, evaluation };
 }
 
 /** The heading of the dialog `from` sits in (it names the dialog). */
@@ -347,13 +132,6 @@ interface IdDraft {
   warned?: string | undefined;
 }
 
-interface PendingAnswerFocus {
-  nodeId: string;
-  answerType: DecisionAnswer['type'];
-  epoch: number;
-  historyEpoch: number;
-}
-
 /**
  * The editor of one node, in a modal dialog named "Edit <kind> <id>": the node's issue badge beside
  * the title (choosing an issue focuses its field), id, label, the subloop picker, the config form
@@ -381,10 +159,33 @@ export function NodeEditorDialog({
   const nodeFocus = useEditorStore((s) => s.nodeFocus);
   // Bumped by undo and redo: the config form remounts with the restored values.
   const historyEpoch = useEditorStore((s) => s.historyEpoch);
+  const generation = useEditorStore((s) => s.generation);
   const bodyRef = useRef<HTMLElement>(null);
   const pendingHarnessFocusRef = useRef(false);
-  const pendingAnswerFocusRef = useRef<PendingAnswerFocus | undefined>(undefined);
   const [epoch, setEpoch] = useState(0);
+  const [review, setReview] = useState<{
+    title: string;
+    lost: string[];
+    incomplete: string[];
+    blocked?: string | undefined;
+    apply: () => void;
+    config: unknown;
+    edges: LoopDefinitionInput['edges'];
+    historyEpoch: number;
+    focusPath: string;
+    routing?: string | undefined;
+  }>();
+  const activeReview =
+    review?.config === node.config &&
+    review?.edges === definition.edges &&
+    review?.historyEpoch === historyEpoch
+      ? review
+      : undefined;
+  const reviewRef = useRef<HTMLDivElement>(null);
+  const reviewReturnRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (review) reviewRef.current?.focus();
+  }, [review]);
   // Which of the config form's disclosures are open (Advanced, collapsed list items). Kept here,
   // not in the form, so the remounts below (undo and redo, a subloop pick) keep what the user
   // opened; the dialog is mounted per node and per opening, so another node starts collapsed.
@@ -413,15 +214,48 @@ export function NodeEditorDialog({
   const info = KIND_INFO[node.kind];
   const nodeIssues = useMemo(() => issues.filter((i) => i.nodeId === node.id), [issues, node.id]);
   const variables = useMemo(() => Object.keys(definition.variables ?? {}), [definition.variables]);
+  const lostGateLimits = () =>
+    ['maxPasses', 'maxRunTimeSeconds'].flatMap((path) => {
+      const held = fieldErrors[`node:${node.id}`]?.[path];
+      return record(node.config)[path] !== undefined || held
+        ? [
+            `${path === 'maxPasses' ? 'Maximum passes' : 'Maximum run time'}${held ? ' (unfinished text)' : ''}`,
+          ]
+        : [];
+    });
+  const normalizeJsonCandidate = useMemo(
+    () => (candidate: unknown) =>
+      node.kind === 'decision' && hasRepeatRoute(node.config)
+        ? cleanGateLimits(candidate)
+        : candidate,
+    [node.kind, node.config],
+  );
   const reviewJsonApply = useMemo(
-    () => (path: string, next: unknown) =>
-      node.kind === 'decision' && path === 'answer'
-        ? removedAnswerConnections(definition.edges, node.id, next).map((edge) => ({
-            id: edge.id,
-            description: `${edge.from.port ?? '(no route)'} → ${edge.to.node}`,
-          }))
-        : [],
-    [definition.edges, node.id, node.kind],
+    () => (path: string, next: unknown) => {
+      if (node.kind !== 'decision' || (path !== 'answer' && path !== 'routes')) return [];
+      const removedGate =
+        hasRepeatRoute(node.config) && !hasRepeatRoute({ ...record(node.config), [path]: next });
+      return [
+        ...(removedGate
+          ? ['maxPasses', 'maxRunTimeSeconds'].flatMap((key) =>
+              record(node.config)[key] !== undefined || fieldErrors[`node:${node.id}`]?.[key]
+                ? [
+                    {
+                      id: key,
+                      description: `${key === 'maxPasses' ? 'Maximum passes' : 'Maximum run time'}${fieldErrors[`node:${node.id}`]?.[key] ? ' (unfinished text)' : ''}`,
+                      kind: 'field' as const,
+                    },
+                  ]
+                : [],
+            )
+          : []),
+        ...removedAnswerConnections(definition.edges, node.id, next).map((edge) => ({
+          id: edge.id,
+          description: `${edge.from.port ?? '(no route)'} → ${edge.to.node}`,
+        })),
+      ];
+    },
+    [definition.edges, node.id, node.kind, node.config, fieldErrors],
   );
   const catalogWarnings = useMemo(
     () =>
@@ -456,27 +290,6 @@ export function NodeEditorDialog({
       ?.focus();
   }, [epoch]);
 
-  useLayoutEffect(() => {
-    const pending = pendingAnswerFocusRef.current;
-    if (!pending) return;
-    pendingAnswerFocusRef.current = undefined;
-    if (
-      pending.nodeId !== node.id ||
-      pending.epoch !== epoch ||
-      pending.historyEpoch !== historyEpoch
-    )
-      return;
-    const dialog = bodyRef.current?.closest('dialog');
-    if (document.activeElement !== document.body && document.activeElement !== dialog) return;
-    const radios = bodyRef.current?.querySelectorAll<HTMLInputElement>(
-      'input[type="radio"][name="answer"]',
-    );
-    const selected = radios
-      ? Array.from(radios).find((radio) => radio.value === pending.answerType)
-      : undefined;
-    selected?.focus();
-  }, [epoch, historyEpoch, node.id]);
-
   const commitId = () => {
     const error = idProblem(id.value, node.id, definition);
     setIdState({ ...id, error });
@@ -484,6 +297,12 @@ export function NodeEditorDialog({
   };
 
   const handleConfigChange = (config: unknown, change: Parameters<typeof updateNode>[2]) => {
+    if (node.kind === 'decision' && hasRepeatRoute(node.config) && !hasRepeatRoute(config)) {
+      config = cleanGateLimits(config);
+      for (const path of ['maxPasses', 'maxRunTimeSeconds'])
+        setFieldError(`node:${node.id}`, path, undefined, undefined, change);
+      setEpoch((current) => current + 1);
+    }
     if (
       node.kind === 'inference' &&
       change?.path === 'harness' &&
@@ -505,34 +324,113 @@ export function NodeEditorDialog({
       setEpoch((current) => current + 1);
     }
     if (node.kind === 'decision' && change?.path === 'answer') {
-      const normalized = decisionVariantChange(config, node.config);
-      if (normalized !== config) {
-        const active = document.activeElement;
-        const radioHadFocus =
-          active instanceof HTMLInputElement && active.type === 'radio' && active.name === 'answer';
-        const selected = answerType(normalized);
-        if (radioHadFocus && selected) {
-          pendingAnswerFocusRef.current = {
-            nodeId: node.id,
-            answerType: selected,
-            epoch: epoch + 1,
-            historyEpoch,
-          };
-        }
-        setEpoch((current) => current + 1);
-      }
+      const raw = record(config);
+      const normalized =
+        answerType(config) !== 'noul' && raw['truthThreshold'] !== undefined
+          ? Object.fromEntries(Object.entries(raw).filter(([key]) => key !== 'truthThreshold'))
+          : config;
+      if (normalized !== config) setEpoch((current) => current + 1);
       updateNode(node.id, { config: normalized }, change);
       return;
     }
-    if (node.kind === 'exit') {
-      updateNode(
-        node.id,
-        { config: exitPredicateVariantChange(config, node.config, change?.path) },
-        change,
-      );
+    updateNode(node.id, { config }, change);
+  };
+
+  const reviewEdit = (request: FormEditRequest, apply: FormEditApply) => {
+    if (node.kind !== 'decision') return apply(request.value);
+    reviewReturnRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    if (request.type === 'gate') {
+      setReview({
+        config: node.config,
+        edges: definition.edges,
+        historyEpoch,
+        focusPath: request.path,
+        title: 'Remove repeat route?',
+        lost: [
+          ...lostGateLimits(),
+          ...definition.edges
+            .filter((e) => e.from.node === node.id && e.from.port === 'limit-reached')
+            .map((e) => `Connection Limit reached → ${e.to.node} (${e.id})`),
+        ],
+        incomplete: [],
+        apply: () => apply(request.value),
+      });
       return;
     }
-    updateNode(node.id, { config }, change);
+    if (request.type === 'variant' && (request.path === '' || request.path === 'answer')) {
+      const converted = convertDecision(
+        node.config,
+        request.path === '' ? record(request.value)['kind'] : 'classifier',
+        request.path === 'answer' ? record(request.value)['type'] : undefined,
+      );
+      const held = Object.keys(fieldErrors[`node:${node.id}`] ?? {}).filter(
+        (path) =>
+          ![...converted.keep, ...converted.moves.map(({ from }) => from)].some(
+            (key) => path === key || path.startsWith(`${key}.`),
+          ),
+      );
+      setReview({
+        config: node.config,
+        edges: definition.edges,
+        historyEpoch,
+        focusPath: request.path || 'kind',
+        title: request.path === '' ? 'Change decision kind?' : 'Change classifier answer type?',
+        lost: [
+          ...converted.lost,
+          ...held.map((path) => `${decisionFieldLabel(node.config, path)} (unfinished text)`),
+        ],
+        incomplete: converted.incomplete,
+        routing:
+          record(converted.config['answer'])['type'] === 'noul' && !converted.blocked
+            ? `True → ${String(record(record(converted.config['answer'])['true'])['label'])} (${String(record(record(converted.config['answer'])['true'])['id'])}); false → ${String(record(record(converted.config['answer'])['false'])['label'])} (${String(record(record(converted.config['answer'])['false'])['id'])}). Review that these sides match your question.`
+            : undefined,
+        blocked: converted.blocked,
+        apply: () =>
+          apply(
+            request.path === '' ? converted.config : converted.config['answer'],
+            converted.keep,
+            converted.moves,
+          ),
+      });
+      return;
+    }
+    if (
+      request.type === 'remove' &&
+      ['routes', 'answer.options', 'answer.bands'].includes(request.path)
+    ) {
+      const owned =
+        useEditorStore.getState().decisionRoutes[node.id]?.rows[request.index!]?.edgeIds ?? [];
+      const rows =
+        request.path === 'routes'
+          ? record(node.config)['routes']
+          : record(record(node.config)['answer'])[
+              request.path === 'answer.options' ? 'options' : 'bands'
+            ];
+      const removedRepeat = Array.isArray(rows) && record(rows[request.index!])['repeat'] === true;
+      const edges = definition.edges.filter(
+        (edge) =>
+          owned.includes(edge.id) ||
+          (removedRepeat && edge.from.node === node.id && edge.from.port === 'limit-reached'),
+      );
+      if (edges.length || removedRepeat) {
+        setReview({
+          config: node.config,
+          edges: definition.edges,
+          historyEpoch,
+          focusPath: request.path,
+          title: 'Remove connected route?',
+          lost: [
+            ...(removedRepeat ? lostGateLimits() : []),
+            ...edges.map((edge) => `Connection ${edge.from.port} → ${edge.to.node} (${edge.id})`),
+          ],
+          incomplete: [],
+          apply: () => apply(request.value),
+        });
+        return;
+      }
+    }
+    apply(request.value);
   };
 
   const requestClose = (reason: DialogCloseReason) => {
@@ -647,74 +545,181 @@ export function NodeEditorDialog({
             `config.<path>` name its fields (focus-field.ts). */}
         <div data-field-scope="config" className="grid min-w-0">
           {node.kind === 'trigger' ? (
-            <TriggerPresets
-              config={node.config}
-              onApply={(config) => {
-                updateNode(node.id, { config }, { path: '', kind: 'commit', id: nextChangeId() });
-                setEpoch((current) => current + 1);
-              }}
-            />
-          ) : null}
-          {node.kind === 'trigger' && node.config?.subtype === 'poll' ? (
             <HelpText>
-              With Items configured, leave Whole-probe dedupe key empty and use Per-item dedupe key.
+              Use a downstream decision for payload checks. Route unwanted input to a quiet success
+              exit with no returns or destinations.
             </HelpText>
           ) : null}
           {node.kind === 'exit' ? (
             <HelpText>
-              Exit predicates run in order. Evaluation produces a typed answer; Match declares which
-              answer exits the loop. A classifier or self-reported confidence gate rejection is
-              always a nonmatch, and the run inspector keeps the raw answer and gate separate.
+              Exits finish the run with Success, Failure or Exhausted. Returns is a JSONata
+              expression, or none. Destinations receive the returned value.
             </HelpText>
           ) : null}
-          <CatalogWarningsContext value={catalogWarnings}>
-            <FieldLabelsContext
-              value={
-                node.kind === 'trigger' && node.config?.subtype === 'poll'
-                  ? POLL_FIELD_LABELS
-                  : node.kind === 'decision'
-                    ? DECISION_FIELD_LABELS
-                    : DEFAULT_FIELD_LABELS
-              }
+          {node.kind === 'decision' && hasRepeatRoute(node.config) ? (
+            <HelpText>
+              Limit reached is taken when a limit stops the chosen repeat route. Connect it to an
+              Exhausted exit. Evaluation happens first: a non-repeat choice wins on the last pass.
+            </HelpText>
+          ) : null}
+          {activeReview ? (
+            <div
+              ref={reviewRef}
+              role="region"
+              aria-label={activeReview.title}
+              tabIndex={-1}
+              className="my-3 grid gap-3 rounded-md border border-default p-4"
             >
-              <VariableSuggestionsContext value={variables}>
-                <JsonApplyReviewContext value={reviewJsonApply}>
-                  <SchemaForm
-                    key={`${node.kind}:${epoch}:${historyEpoch}`}
-                    schema={NodeConfigSchemas[node.kind]}
-                    fieldOrder={node.kind === 'decision' ? DECISION_FIELD_ORDER : undefined}
-                    value={node.config}
-                    label={`${node.id} config`}
-                    controls={NODE_FIELD_CONTROLS}
-                    unionPickers={node.kind === 'decision' ? DECISION_UNION_PICKERS : undefined}
-                    fieldOverrides={
-                      node.kind === 'decision'
-                        ? DECISION_FIELD_OVERRIDES
-                        : node.kind === 'exit'
-                          ? EXIT_PREDICATE_FIELD_OVERRIDES
-                          : undefined
+              <p className="font-semibold">{activeReview.title}</p>
+              {activeReview.blocked ? (
+                <p role="alert">{activeReview.blocked}</p>
+              ) : (
+                <>
+                  <p>
+                    {['Remove connected route?', 'Remove repeat route?'].includes(
+                      activeReview.title,
+                    )
+                      ? 'The repeat settings and listed connections will be removed together in one undoable edit.'
+                      : 'Route IDs, labels and representable connections stay together. This is one undoable edit.'}
+                  </p>
+                  {activeReview.routing ? <p>{activeReview.routing}</p> : null}
+                  {activeReview.lost.length ? (
+                    <>
+                      <p>These fields or connections will be removed:</p>
+                      <ul className="list-disc pl-4">
+                        {activeReview.lost.map((item) => (
+                          <li key={item}>{item}</li>
+                        ))}
+                      </ul>
+                    </>
+                  ) : (
+                    <p>No authored fields will be lost.</p>
+                  )}
+                  {activeReview.incomplete.length ? (
+                    <p>
+                      Complete before saving and publishing: {activeReview.incomplete.join(', ')}.
+                      No source or criteria are generated.
+                    </p>
+                  ) : null}
+                </>
+              )}
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => {
+                    setReview(undefined);
+                    requestAnimationFrame(() => {
+                      const target = reviewReturnRef.current;
+                      if (target && bodyRef.current) groupFocus(target, bodyRef.current).focus();
+                    });
+                  }}
+                >
+                  Cancel change
+                </Button>
+                {!activeReview.blocked ? (
+                  <Button
+                    onClick={() => {
+                      activeReview.apply();
+                      setReview(undefined);
+                      requestAnimationFrame(() => {
+                        focusIssue(bodyRef.current, `config.${activeReview.focusPath}`);
+                      });
+                    }}
+                  >
+                    Confirm change
+                  </Button>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
+          <FormEditReviewContext value={reviewEdit}>
+            <ReorderablePathsContext
+              value={node.kind === 'decision' ? DECISION_REORDERABLE : NO_REORDERABLE}
+            >
+              <CatalogWarningsContext value={catalogWarnings}>
+                <GateLimitIssuesContext value={nodeIssues}>
+                  <FieldLabelsContext
+                    value={
+                      node.kind === 'trigger' && node.config?.type === 'poll'
+                        ? POLL_FIELD_LABELS
+                        : node.kind === 'trigger' && node.config?.type === 'webhook'
+                          ? WEBHOOK_FIELD_LABELS
+                          : node.kind === 'decision'
+                            ? DECISION_FIELD_LABELS
+                            : DEFAULT_FIELD_LABELS
                     }
-                    problems={configProblems}
-                    disclosures={disclosures}
-                    onChange={handleConfigChange}
-                    parseErrors={fieldErrors[`node:${node.id}`]}
-                    onParseError={(path, error, reason, change) =>
-                      setFieldError(`node:${node.id}`, path, error, reason, change)
-                    }
-                  />
-                </JsonApplyReviewContext>
-              </VariableSuggestionsContext>
-            </FieldLabelsContext>
-          </CatalogWarningsContext>
+                  >
+                    <VariableSuggestionsContext value={variables}>
+                      <JsonApplyReviewContext value={reviewJsonApply}>
+                        <JsonCandidateContext value={normalizeJsonCandidate}>
+                          <fieldset
+                            disabled={activeReview !== undefined}
+                            inert={activeReview !== undefined}
+                            className="grid min-w-0 gap-0 border-0 p-0"
+                          >
+                            <SchemaForm
+                              key={`${node.kind}:${epoch}:${historyEpoch}`}
+                              schema={NodeConfigSchemas[node.kind]}
+                              fieldOrder={
+                                node.kind === 'decision' ? DECISION_FIELD_ORDER : undefined
+                              }
+                              value={node.config}
+                              label={`${node.id} config`}
+                              controls={NODE_FIELD_CONTROLS}
+                              unionPickers={
+                                node.kind === 'decision'
+                                  ? DECISION_UNION_PICKERS
+                                  : node.kind === 'trigger'
+                                    ? TRIGGER_UNION_PICKERS
+                                    : undefined
+                              }
+                              fieldOverrides={
+                                node.kind === 'decision'
+                                  ? DECISION_FIELD_OVERRIDES
+                                  : node.kind === 'exit'
+                                    ? EXIT_FIELD_OVERRIDES
+                                    : undefined
+                              }
+                              problems={configProblems}
+                              disclosures={disclosures}
+                              onChange={handleConfigChange}
+                              parseErrors={fieldErrors[`node:${node.id}`]}
+                              onParseError={(path, error, reason, change) =>
+                                setFieldError(`node:${node.id}`, path, error, reason, change)
+                              }
+                            />
+                          </fieldset>
+                        </JsonCandidateContext>
+                      </JsonApplyReviewContext>
+                    </VariableSuggestionsContext>
+                  </FieldLabelsContext>
+                </GateLimitIssuesContext>
+              </CatalogWarningsContext>
+            </ReorderablePathsContext>
+          </FormEditReviewContext>
+          {node.kind === 'trigger' ? (
+            <TriggerPresets
+              config={node.config}
+              definition={definition}
+              triggerId={node.id}
+              draftInputs={fieldErrors}
+              generation={generation}
+              heldInputs={fieldErrors[`node:${node.id}`]}
+              historyEpoch={historyEpoch}
+              onApply={(preview) => {
+                const problem = useEditorStore.getState().applyGitHubPreset(preview, {
+                  fieldErrors,
+                  historyEpoch,
+                  generation,
+                });
+                if (problem) return problem;
+                setEpoch((current) => current + 1);
+                requestAnimationFrame(() => focusIssue(bodyRef.current, 'config.type'));
+                return undefined;
+              }}
+            />
+          ) : null}
         </div>
-        <NodeConnections
-          node={node}
-          definition={definition}
-          onChange={(port) => {
-            // Connecting or removing an exit's loop-back also sets or clears its config.
-            if (port === 'loopBack') setEpoch((e) => e + 1);
-          }}
-        />
+        <NodeConnections node={node} definition={definition} />
       </section>
     </Dialog>
   );

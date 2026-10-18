@@ -1,17 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import jsonata from 'jsonata';
-import { LoopDefinitionSchema, RunEventSchema, type NoulSpec } from '@graphgoblin/contracts';
-import { minimalLoop, sampleThread, FIXTURE_IDS, FIXTURE_TS } from '@graphgoblin/contracts/testing';
 import {
-  upgradeLoopCurrent,
-  upgradeExportCurrent,
-  validateUpgradeCurrentResolutions,
+  V3LoopDefinitionSchema,
+  V3LoopExportSchema,
+  type V3NoulSpec,
+} from '@graphgoblin/contracts';
+import { FIXTURE_TS } from '@graphgoblin/contracts/testing';
+import { minimalLoopV3 as minimalLoop } from './__fixtures__/upgrade-v3.js';
+import {
+  upgradeLoopToV3 as upgradeLoopCurrent,
+  upgradeExportToV3 as upgradeExportCurrent,
+  validateUpgradeV3Resolutions as validateUpgradeCurrentResolutions,
   provenBooleanExpression,
-} from './upgrade-current.js';
-import { upgradeRunHistoryCurrent } from './upgrade-history-current.js';
+} from './upgrade-v2-v3.js';
 import { upgradeLoopV1 } from './upgrade.js';
 
-const sides: NoulSpec = {
+const sides: V3NoulSpec = {
   type: 'noul',
   true: { label: 'Done', criteria: 'All required work is complete' },
   false: { label: 'Pending', criteria: 'Required work remains' },
@@ -51,7 +55,115 @@ const predicate = (strategy: string, extra: Record<string, unknown> = {}) => ({
   ...extra,
 });
 
+// These function names predate format 4; this suite owns their frozen format-3 output.
 describe('one current offline definition cutover', () => {
+  // The first case pays the lazy import of the frozen converters; keep room under coverage load.
+  it.each([1, 2])(
+    'keeps format %i decision conversion on frozen V3 contracts',
+    (version) => {
+      const options = [
+        { id: 'yes', label: 'Yes', criteria: 'Approved' },
+        { id: 'no', label: 'No', criteria: 'Rejected' },
+      ];
+      const config = {
+        answer: { type: 'choice', options },
+        evaluation: { kind: 'expression', jsonata: '"yes"' },
+        recordAlternatives: true,
+      };
+      const base = minimalLoop();
+      const input = {
+        ...base,
+        schemaVersion: version,
+        nodes: [
+          ...base.nodes,
+          {
+            id: 'decide',
+            kind: 'decision',
+            label: 'Decide',
+            config:
+              version === 1
+                ? {
+                    routes: options.map((option) => ({
+                      label: option.id,
+                      description: option.criteria,
+                    })),
+                    strategy: ['expression'],
+                    question: 'Choose',
+                    expression: { jsonata: '"yes"' },
+                  }
+                : config,
+          },
+        ],
+      };
+      const result = upgradeLoopCurrent(input);
+      if (!result.ok) throw new Error(JSON.stringify(result.issues));
+      expect(V3LoopDefinitionSchema.parse(result.value)).toEqual(result.value);
+      expect(result.value.schemaVersion).toBe(3);
+      expect(result.value.nodes[2]).toHaveProperty(
+        'config',
+        version === 1
+          ? {
+              ...config,
+              answer: { type: 'choice', options: options.map((o) => ({ ...o, label: o.id })) },
+            }
+          : config,
+      );
+      const exported = upgradeExportCurrent({
+        format: 'graphgoblin-loop',
+        formatVersion: version,
+        exportedAt: FIXTURE_TS,
+        loop: input,
+      });
+      if (!exported.ok) throw new Error(JSON.stringify(exported.issues));
+      expect(V3LoopExportSchema.parse(exported.value)).toEqual(exported.value);
+      expect(exported.value.formatVersion).toBe(3);
+      expect(exported.value.loop).toEqual(result.value);
+      expect(input.schemaVersion).toBe(version);
+    },
+    20_000,
+  );
+  it('matches the 12e5b87 definition and export golden/refusal results', () => {
+    // Recorded before rebinding: keep these complete results through later cutover stages.
+    const current = minimalLoop();
+    const results = {
+      v1: upgradeLoopCurrent({ ...current, schemaVersion: 1 }),
+      v2: upgradeLoopCurrent(old([predicate('expression')])),
+      v3: upgradeLoopCurrent(current),
+      provider: upgradeLoopCurrent(old([predicate('jev', { minConfidence: 0.8 })]), {
+        predicates: { [path]: { answer: sides } },
+      }),
+      rewrite: upgradeLoopCurrent(old([predicate('expression', { jsonata: 'vars.done' })]), {
+        predicates: { [path]: { jsonata: 'vars.done = true' } },
+      }),
+      missingSides: upgradeLoopCurrent(old([predicate('codex')])),
+      coercion: upgradeLoopCurrent(old([predicate('expression', { jsonata: 'vars.done' })])),
+      unusedResolution: upgradeLoopCurrent(old(), { predicates: { [path]: { answer: sides } } }),
+      invalidV3: upgradeLoopCurrent({ ...current, unknown: true }),
+      invalidExport: upgradeExportCurrent({
+        format: 'graphgoblin-loop',
+        formatVersion: 2,
+        exportedAt: 'invalid',
+        loop: old(),
+      }),
+      exports: [1, 2, 3].map((version) =>
+        upgradeExportCurrent({
+          format: 'graphgoblin-loop',
+          formatVersion: version,
+          exportedAt: FIXTURE_TS,
+          loop: { ...current, schemaVersion: version },
+        }),
+      ),
+    };
+    expect(results).toMatchSnapshot();
+    for (const result of [results.v1, results.v2, results.v3, results.provider, results.rewrite]) {
+      if (!result.ok) throw new Error('golden definition refused');
+      expect(V3LoopDefinitionSchema.parse(result.value)).toEqual(result.value);
+    }
+    for (const result of results.exports) {
+      if (!result.ok) throw new Error('golden export refused');
+      expect(V3LoopExportSchema.parse(result.value)).toEqual(result.value);
+    }
+  });
   it('preserves v2 structure/defaults and converts provably boolean expressions without invented criteria', () => {
     const source = old([
       predicate('expression'),
@@ -64,6 +176,7 @@ describe('one current offline definition cutover', () => {
     expect(result.ok).toBe(true);
     if (!result.ok || !frozen.ok) throw new Error('conversion failed');
     expect(result.value.schemaVersion).toBe(3);
+    expect(V3LoopDefinitionSchema.parse(result.value)).toEqual(result.value);
     expect(result.value.settings).toEqual(frozen.value.settings);
     expect(result.value.edges).toEqual(frozen.value.edges);
     const exit = result.value.nodes[1];
@@ -239,7 +352,7 @@ describe('one current offline definition cutover', () => {
     expect(await jsonata('true[]').evaluate({})).toBe(true);
     expect(provenBooleanExpression('true[]')).toBe(false);
   });
-  it('composes actual v1 conversion, preserves additive decisions, and validates current input', () => {
+  it('composes actual v1 conversion, preserves additive decisions, and validates frozen V3 input', () => {
     const source = { ...minimalLoop(), schemaVersion: 1 };
     expect(upgradeLoopV1(source).ok).toBe(true);
     const upgraded = upgradeLoopCurrent(source);
@@ -273,7 +386,7 @@ describe('one current offline definition cutover', () => {
         frozen.ok && frozen.value.nodes[2],
       );
     }
-    const current = LoopDefinitionSchema.parse(minimalLoop());
+    const current = V3LoopDefinitionSchema.parse(minimalLoop());
     expect(upgradeLoopCurrent(current)).toEqual({ ok: true, value: current, notices: [] });
     expect(upgradeLoopCurrent(current, { predicates: { [path]: { answer: sides } } }).ok).toBe(
       false,
@@ -347,240 +460,5 @@ describe('one current offline definition cutover', () => {
       { ...envelope, loop: old([predicate('jev')]) },
     ])
       expect(upgradeExportCurrent(invalid).ok).toBe(false);
-  });
-});
-
-describe('canonical factual exit history', () => {
-  const initialThread = sampleThread();
-  const event = {
-    runId: FIXTURE_IDS.run,
-    seq: 1,
-    ts: FIXTURE_TS,
-    type: 'exit.evaluated',
-    nodeId: 'done',
-    iteration: 1,
-    maxIterations: 10,
-    result: {
-      kind: 'completed',
-      outcome: 'success',
-      reason: 'criterion-matched',
-      criterionIndex: 1,
-    },
-    criteria: [
-      {
-        index: 0,
-        strategy: 'jev',
-        status: 'not-matched',
-        holds: false,
-        confidence: 0.6,
-        minConfidence: 0.8,
-        classifierModel: 'jev',
-      },
-      {
-        index: 1,
-        strategy: 'codex',
-        status: 'matched',
-        holds: true,
-        confidence: 0.9,
-        model: 'actual-model',
-        reasoning: 'Recorded excerpt',
-        minConfidence: 0.8,
-      },
-      { index: 2, strategy: 'expression', status: 'not-matched' },
-      { index: 3, strategy: 'max-duration', status: 'not-matched' },
-      {
-        index: 4,
-        strategy: 'jev',
-        status: 'skipped',
-        reason: { code: 'EARLIER_CRITERION_MATCHED', message: 'Earlier match' },
-      },
-      {
-        index: 5,
-        strategy: 'codex',
-        status: 'error',
-        diagnostic: { code: 'DECIDER_UNAVAILABLE', message: 'Unavailable' },
-      },
-    ],
-  };
-  it('retains known facts, unknown facts and checkpoint parity without fabricating probabilities or acceptance', () => {
-    const result = upgradeRunHistoryCurrent({
-      initialThread,
-      events: [event],
-      decisionNodeIds: [],
-      snapshot: initialThread,
-      snapshotSeq: 0,
-    });
-    expect(result.ok).toBe(true);
-    if (!result.ok) throw new Error('history failed');
-    const converted = result.value.events[0];
-    if (converted?.type !== 'exit.evaluated') throw new Error('event missing');
-    expect(converted.criteria[0]).toMatchObject({
-      strategy: 'classifier',
-      answer: {
-        type: 'noul',
-        kind: 'classifier',
-        holds: false,
-        confidence: 0.6,
-        trueProbability: null,
-      },
-      acceptance: null,
-      configuredMinConfidence: 0.8,
-    });
-    expect(converted.criteria[1]).toMatchObject({
-      strategy: 'llm',
-      answer: { holds: true, confidence: 0.9, reasoning: 'Recorded excerpt' },
-      provenance: { model: 'actual-model', effort: null },
-      acceptance: null,
-      match: { minReportedConfidence: 0.8 },
-    });
-    expect(converted.criteria[2]).toHaveProperty('answer.holds', null);
-    expect(converted.criteria[3]).toHaveProperty('holds', null);
-    expect(converted.criteria[4]).toMatchObject({ strategy: 'classifier', status: 'skipped' });
-    expect(converted.criteria[5]).toMatchObject({ strategy: 'llm', status: 'error' });
-    expect(result.value.finalThread).toEqual(initialThread);
-    expect(result.value.snapshot).toEqual(initialThread);
-    expect(RunEventSchema.safeParse(converted).success).toBe(true);
-    expect(event.criteria[0]).not.toHaveProperty('answer');
-  });
-  it.each([
-    {
-      strategy: 'jev',
-      classifierModel: 'jev',
-      model: 'recorded-classifier-model',
-      expected: {
-        kind: 'classifier',
-        provider: null,
-        classifierId: 'jev',
-        model: 'recorded-classifier-model',
-        effort: null,
-      },
-    },
-    {
-      strategy: 'codex',
-      model: 'actual-model',
-      expected: {
-        kind: 'llm',
-        provider: 'codex',
-        classifierId: null,
-        model: 'actual-model',
-        effort: null,
-      },
-    },
-    {
-      strategy: 'jev',
-      expected: {
-        kind: 'classifier',
-        provider: null,
-        classifierId: null,
-        model: null,
-        effort: null,
-      },
-    },
-    {
-      strategy: 'codex',
-      expected: { kind: 'llm', provider: 'codex', classifierId: null, model: null, effort: null },
-    },
-  ])(
-    'retains known and unknown $strategy identity on historical errors',
-    ({ expected, ...facts }) => {
-      const diagnostic = { code: 'DECIDER_UNAVAILABLE', message: 'Recorded error' };
-      const oldError = { index: 0, status: 'error', diagnostic, ...facts };
-      const input = { ...event, criteria: [oldError] };
-      const result = upgradeRunHistoryCurrent({
-        initialThread,
-        events: [input],
-        decisionNodeIds: [],
-      });
-      expect(result.ok).toBe(true);
-      if (!result.ok) throw new Error('historical error conversion failed');
-      expect(result.value.events[0]).toHaveProperty('criteria.0', {
-        index: 0,
-        strategy: expected.kind,
-        status: 'error',
-        diagnostic,
-        provenance: expected,
-      });
-      expect(RunEventSchema.safeParse(result.value.events[0]).success).toBe(true);
-      expect(oldError).not.toHaveProperty('provenance');
-    },
-  );
-  it('adds only predicate provenance to expression errors and leaves ordinary limit errors factual', () => {
-    const diagnostic = { code: 'CRITERION_ERROR', message: 'Recorded error' };
-    const input = {
-      ...event,
-      criteria: [
-        { index: 0, strategy: 'expression', status: 'error', diagnostic },
-        { index: 1, strategy: 'max-duration', status: 'error', diagnostic },
-      ],
-    };
-    const result = upgradeRunHistoryCurrent({
-      initialThread,
-      events: [input],
-      decisionNodeIds: [],
-    });
-    expect(result.ok).toBe(true);
-    if (!result.ok) throw new Error('historical error conversion failed');
-    expect(result.value.events[0]).toHaveProperty('criteria.0.provenance', {
-      kind: 'expression',
-      provider: null,
-      classifierId: null,
-      model: null,
-      effort: null,
-    });
-    expect(result.value.events[0]).not.toHaveProperty('criteria.1.provenance');
-  });
-  it('converts missing LLM facts to null and preserves unchanged events without a snapshot', () => {
-    const sparse = { ...event, criteria: [{ index: 0, strategy: 'codex', status: 'not-matched' }] };
-    const result = upgradeRunHistoryCurrent({
-      initialThread,
-      events: [sparse, { runId: FIXTURE_IDS.run, seq: 2, ts: FIXTURE_TS, type: 'run.cancelled' }],
-      decisionNodeIds: [],
-    });
-    expect(result.ok).toBe(true);
-    if (!result.ok) throw new Error('history failed');
-    expect(result.value.events[0]).toHaveProperty('criteria.0.answer', {
-      type: 'noul',
-      kind: 'llm',
-      holds: null,
-      confidence: null,
-      reasoning: null,
-    });
-    expect(result.value.events[1]?.type).toBe('run.cancelled');
-    expect(result.value).not.toHaveProperty('snapshot');
-    expect(
-      upgradeRunHistoryCurrent({
-        initialThread,
-        events: [{ ...event, criteria: [{ index: 0, strategy: 'unknown', status: 'matched' }] }],
-        decisionNodeIds: [],
-      }).ok,
-    ).toBe(false);
-  });
-  it('validates already-current history explicitly, including canonical unknowns, ordered events and exact snapshots', () => {
-    const first = upgradeRunHistoryCurrent({ initialThread, events: [event], decisionNodeIds: [] });
-    if (!first.ok) throw new Error('fixture conversion failed');
-    const input = {
-      sourceVersion: 3 as const,
-      initialThread,
-      events: first.value.events,
-      decisionNodeIds: [],
-    };
-    expect(upgradeRunHistoryCurrent(input)).toEqual(first);
-    expect(
-      upgradeRunHistoryCurrent({ ...input, snapshot: initialThread, snapshotSeq: 0 }),
-    ).toMatchObject({ ok: true });
-    expect(upgradeRunHistoryCurrent({ ...input, snapshot: initialThread })).toMatchObject({
-      ok: true,
-    });
-    const changed = { ...initialThread, vars: { other: 'changed' } };
-    for (const invalid of [
-      { ...input, events: [...input.events, ...input.events] },
-      { ...input, events: [event] },
-      { ...input, initialThread: null },
-      { ...input, snapshot: changed },
-      { ...input, snapshot: initialThread, snapshotSeq: -1 },
-      { ...input, snapshot: initialThread, snapshotSeq: 4 },
-      { ...input, snapshot: changed, snapshotSeq: 1 },
-    ])
-      expect(upgradeRunHistoryCurrent(invalid).ok).toBe(false);
   });
 });

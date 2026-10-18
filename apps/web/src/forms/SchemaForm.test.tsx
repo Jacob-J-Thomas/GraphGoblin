@@ -23,6 +23,22 @@ import type { FieldControls } from './fields.js';
 import { SchemaForm } from './SchemaForm.js';
 import type { Schema } from './introspect.js';
 
+it('keeps errors without a field visible while diagnostic details are collapsed', () => {
+  render(
+    <SchemaForm
+      schema={z.object({ value: z.string() }).refine(() => false, { message: 'Values conflict' })}
+      value={{ value: 'authored' }}
+      label="form"
+      onChange={vi.fn()}
+    />,
+  );
+  expect(screen.getByRole('alert')).toHaveTextContent('Values conflict');
+  expect(screen.getByRole('button', { name: /Validation details/ })).toHaveAttribute(
+    'aria-expanded',
+    'false',
+  );
+});
+
 function Harness({
   schema,
   initial,
@@ -57,51 +73,48 @@ function last(spy: ReturnType<typeof vi.fn>): Record<string, unknown> {
 }
 
 describe('SchemaForm', () => {
-  it('orders top-level fields without changing field paths or untouched values', async () => {
+  it('does not trigger a second resolver pass for each keystroke while schema issues are unchanged', async () => {
     const user = userEvent.setup();
-    const spy = vi.fn();
-    const answer = {
-      type: 'choice' as const,
-      options: [
-        { id: 'ready', label: 'Ready', criteria: 'Choose ready' },
-        { id: 'blocked', label: 'Blocked', criteria: 'Choose blocked' },
-      ],
-    };
+    const parse = vi.fn();
+    const schema = z.object({ value: z.string() }).superRefine(parse);
+    render(<Harness schema={schema} initial={{ value: '' }} spy={vi.fn()} />);
+    await waitFor(() => expect(parse).toHaveBeenCalled());
+    parse.mockClear();
+    await user.type(screen.getByLabelText('Value'), 'abc');
+    // At most one whole-value issue check and RHF's normal resolver per keystroke; an extra
+    // full-form trigger would add a third pass per change.
+    expect(parse.mock.calls.length).toBeLessThanOrEqual(6);
+  });
+  it('orders top-level fields without changing field paths or untouched values', async () => {
+    const user = userEvent.setup(),
+      spy = vi.fn();
     render(
       <Harness
         schema={NodeConfigSchemas.decision}
         initial={{
-          answer,
-          evaluation: {
-            kind: 'llm',
-            harness: 'codex',
-            model: { mode: 'inherit' },
-            effort: { mode: 'inherit' },
-            question: 'Choose one',
-            context: {},
-          },
-          recordAlternatives: true,
+          kind: 'expression',
+          jsonata: '"yes"',
+          routes: [
+            { id: 'yes', label: 'Yes' },
+            { id: 'no', label: 'No' },
+          ],
         }}
         spy={spy}
-        fieldOrder={['evaluation', 'unknown-field', 'answer']}
+        fieldOrder={['routes', 'unknown-field', 'jsonata']}
       />,
     );
-    const form = screen.getByRole('form', { name: 'form' });
-    const evaluation = form.querySelector<HTMLElement>('[data-field="evaluation"]');
-    const answerField = form.querySelector<HTMLElement>('[data-field="answer"]');
-    if (!evaluation || !answerField) throw new Error('Decision fields were not rendered.');
-    expect(
-      evaluation.compareDocumentPosition(answerField) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).not.toBe(0);
-
-    const evaluatorKind = within(evaluation).getAllByLabelText('Kind')[0];
-    if (!evaluatorKind) throw new Error('Evaluation kind selector was not rendered.');
-    await user.selectOptions(evaluatorKind, '0');
-    await waitFor(() => expect(last(spy)['evaluation']).toMatchObject({ kind: 'expression' }));
+    const form = screen.getByRole('form', { name: 'form' }),
+      routes = form.querySelector('[data-field="routes"]')!,
+      source = form.querySelector('[data-field="jsonata"]')!;
+    expect(routes.compareDocumentPosition(source) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+    await user.selectOptions(screen.getByLabelText('Kind'), '1');
     expect(last(spy)).toMatchObject({
-      answer,
-      evaluation: { kind: 'expression' },
+      kind: 'llm',
+      harness: 'codex',
+      model: { mode: 'inherit' },
+      effort: { mode: 'inherit' },
     });
+    expect(last(spy)).not.toHaveProperty('jsonata');
   });
 
   it.each([
@@ -150,40 +163,39 @@ describe('SchemaForm', () => {
       <Harness
         schema={NodeConfigSchemas.decision}
         initial={{
-          answer: {
-            type: 'choice',
-            options: [
-              { id: 'yes', label: 'Yes', criteria: 'old criterion' },
-              { id: 'no', label: 'No', criteria: 'no criterion' },
-            ],
-          },
-          evaluation: {
-            kind: 'llm',
-            harness: 'codex',
-            model: { mode: 'inherit' },
-            effort: { mode: 'inherit' },
-            question: 'choose',
-            context: {},
-          },
+          kind: 'llm',
+          harness: 'codex',
+          model: { mode: 'inherit' },
+          effort: { mode: 'inherit' },
+          context: {},
+          instructions: 'choose',
+          routes: [
+            {
+              id: 'yes',
+              label: 'Yes',
+            },
+            {
+              id: 'no',
+              label: 'No',
+            },
+          ],
         }}
         spy={spy}
       />,
     );
-    const options = screen.getByRole('group', { name: 'Options' });
-    const criteria = within(options).getAllByLabelText('Criteria');
+    const options = screen.getByRole('group', { name: 'Routes' });
+    const criteria = within(options).getAllByLabelText('Label');
     await user.clear(criteria[0]!);
-    await user.type(criteria[0]!, 'edited criterion');
-    await user.click(within(options).getByRole('button', { name: 'Add options' }));
-    expect(((last(spy)['answer'] as Record<string, unknown>)['options'] as unknown[])[0]).toEqual({
+    await user.type(criteria[0]!, 'Edited label');
+    await user.click(within(options).getByRole('button', { name: 'Add routes' }));
+    expect((last(spy)['routes'] as unknown[])[0]).toEqual({
       id: 'yes',
-      label: 'Yes',
-      criteria: 'edited criterion',
+      label: 'Edited label',
     });
-    await user.click(within(options).getByRole('button', { name: 'Remove options 2' }));
-    expect(((last(spy)['answer'] as Record<string, unknown>)['options'] as unknown[])[0]).toEqual({
+    await user.click(within(options).getByRole('button', { name: 'Remove routes 2' }));
+    expect((last(spy)['routes'] as unknown[])[0]).toEqual({
       id: 'yes',
-      label: 'Yes',
-      criteria: 'edited criterion',
+      label: 'Edited label',
     });
   });
 
@@ -281,7 +293,7 @@ describe('SchemaForm', () => {
     render(
       <Harness
         schema={NodeConfigSchemas.trigger}
-        initial={{ subtype: 'manual', inputSchema: { type: 'object' } }}
+        initial={{ type: 'manual', inputSchema: { type: 'object' } }}
         spy={spy}
       />,
     );
@@ -318,14 +330,18 @@ describe('SchemaForm', () => {
     [
       NodeConfigSchemas.decision,
       {
-        answer: {
-          type: 'choice',
-          options: [
-            { id: 'yes', label: 'Yes', criteria: 'Choose yes' },
-            { id: 'no', label: 'No', criteria: 'Choose no' },
-          ],
-        },
-        evaluation: { kind: 'expression', jsonata: '' },
+        kind: 'expression',
+        jsonata: '',
+        routes: [
+          {
+            id: 'yes',
+            label: 'Yes',
+          },
+          {
+            id: 'no',
+            label: 'No',
+          },
+        ],
       },
       'Jsonata',
     ],
@@ -334,7 +350,7 @@ describe('SchemaForm', () => {
       { operations: [{ op: 'set', path: '/vars/x', value: { kind: 'expression', jsonata: '' } }] },
       'Jsonata',
     ],
-    [NodeConfigSchemas.exit, { return: { mapping: '', channels: [{ kind: 'caller' }] } }, 'Value'],
+    [NodeConfigSchemas.exit, { returns: '' }, 'Value'],
   ] as const)(
     'keeps required mapping and decision expression errors',
     async (schema, initial, label) => {
@@ -407,32 +423,36 @@ describe('SchemaForm', () => {
   it('switches a root discriminated union and shows literal and nested object fields', async () => {
     const user = userEvent.setup();
     const spy = vi.fn();
-    render(
-      <Harness schema={NodeConfigSchemas.trigger} initial={{ subtype: 'manual' }} spy={spy} />,
-    );
+    render(<Harness schema={NodeConfigSchemas.trigger} initial={{ type: 'manual' }} spy={spy} />);
     expect(screen.getByRole('group', { name: 'Expose to' })).toBeInTheDocument();
     await user.click(screen.getByRole('checkbox', { name: 'mcp' }));
     expect(last(spy)['exposeTo']).toEqual(['ui', 'api']);
     await user.click(screen.getByRole('checkbox', { name: 'mcp' }));
     expect(last(spy)['exposeTo']).toEqual(['ui', 'api', 'mcp']);
 
-    const subtype = screen.getByLabelText('Subtype');
+    const type = screen.getByLabelText('Type');
     await user.selectOptions(
-      subtype,
-      within(subtype).getByRole('option', { name: 'webhook (timestamp)' }).getAttribute('value')!,
+      type,
+      within(type).getByRole('option', { name: 'webhook' }).getAttribute('value')!,
     );
-    expect(last(spy)).toMatchObject({ subtype: 'webhook', signature: { scheme: 'hmac-sha256' } });
-    expect(screen.getByText('hmac-sha256')).toBeInTheDocument();
+    await user.selectOptions(
+      screen.getByLabelText('Kind'),
+      screen.getByRole('option', { name: 'Timestamp and body HMAC' }),
+    );
+    expect(last(spy)).toMatchObject({
+      type: 'webhook',
+      authentication: { type: 'hmac-sha256', message: 'timestamp-body' },
+    });
     await user.type(screen.getByLabelText('Secret ref'), 'hook-secret');
-    expect(last(spy)).toMatchObject({ signature: { secretRef: 'hook-secret' } });
+    expect(last(spy)).toMatchObject({ authentication: { secretRef: 'hook-secret' } });
 
     await user.selectOptions(
-      subtype,
-      within(subtype).getByRole('option', { name: 'cron' }).getAttribute('value')!,
+      type,
+      within(type).getByRole('option', { name: 'cron' }).getAttribute('value')!,
     );
     await user.type(screen.getByLabelText('Expression'), '0 2 * * *');
     await user.click(screen.getByLabelText('Enabled'));
-    expect(last(spy)).toMatchObject({ subtype: 'cron', expression: '0 2 * * *', enabled: false });
+    expect(last(spy)).toMatchObject({ type: 'cron', expression: '0 2 * * *', enabled: false });
   });
 
   it('retains the selected body-signature branch while its secret is incomplete', async () => {
@@ -442,48 +462,48 @@ describe('SchemaForm', () => {
       <Harness
         schema={NodeConfigSchemas.trigger}
         initial={{
-          subtype: 'webhook',
-          signature: {
-            scheme: 'hmac-sha256-body',
+          type: 'webhook',
+          authentication: {
+            type: 'hmac-sha256',
+            message: 'body',
             header: 'x-hub-signature-256',
             secretRef: '',
           },
-          filter: 'true',
         }}
         spy={spy}
       />,
     );
 
-    const subtype = screen.getByLabelText('Subtype');
-    expect(subtype).toHaveDisplayValue('webhook (body)');
-    expect(screen.getByText('hmac-sha256-body')).toBeInTheDocument();
-    expect(screen.queryByLabelText('Replay window seconds')).not.toBeInTheDocument();
+    const type = screen.getByLabelText('Type');
+    expect(type).toHaveDisplayValue('webhook');
+    expect(screen.getByLabelText('Kind')).toHaveDisplayValue('Body HMAC');
+    expect(screen.queryByLabelText('Window seconds')).not.toBeInTheDocument();
     await user.type(screen.getByLabelText('Secret ref'), 'github-key');
     expect(last(spy)).toMatchObject({
-      subtype: 'webhook',
-      signature: { scheme: 'hmac-sha256-body', secretRef: 'github-key' },
+      type: 'webhook',
+      authentication: { type: 'hmac-sha256', message: 'body', secretRef: 'github-key' },
     });
   });
 
-  it('keeps an unknown stored signing scheme visible in raw form data without coercing it', async () => {
-    const user = userEvent.setup();
+  it('keeps an unknown stored signing scheme visible in raw form data without coercing it', () => {
     const spy = vi.fn();
     render(
       <Harness
         schema={NodeConfigSchemas.trigger}
         initial={{
-          subtype: 'webhook',
-          signature: { scheme: 'custom-hmac', header: 'x-custom', secretRef: 'saved-secret' },
+          type: 'webhook',
+          authentication: { type: 'custom-hmac', header: 'x-custom', secretRef: 'saved-secret' },
         }}
         spy={spy}
       />,
     );
 
-    expect(screen.getByTestId('value')).toHaveTextContent('"scheme":"custom-hmac"');
+    expect(screen.getByTestId('value')).toHaveTextContent('"type":"custom-hmac"');
     expect(spy).not.toHaveBeenCalled();
-    await user.type(screen.getByLabelText('Secret ref'), '-edited');
+    setCode('Dedupe key', 'id');
     expect(last(spy)).toMatchObject({
-      signature: { scheme: 'custom-hmac', secretRef: 'saved-secret-edited' },
+      authentication: { type: 'custom-hmac', secretRef: 'saved-secret' },
+      dedupeKey: 'id',
     });
   });
 
@@ -494,22 +514,22 @@ describe('SchemaForm', () => {
       <Harness
         schema={NodeConfigSchemas.decision}
         initial={{
-          answer: {
-            type: 'choice',
-            options: [
-              { id: 'yes', label: 'Yes', criteria: 'Choose yes' },
-              { id: 'no', label: 'No', criteria: 'Choose no' },
-            ],
-          },
-          evaluation: {
-            kind: 'llm',
-            harness: 'codex',
-            model: { mode: 'inherit' },
-            effort: { mode: 'inherit' },
-            question: 'Is {{ vars.topic }} ok?',
-            context: { messages: 'last' },
-          },
-          recordAlternatives: true,
+          kind: 'llm',
+          harness: 'codex',
+          model: { mode: 'inherit' },
+          effort: { mode: 'inherit' },
+          context: { messages: 'last' },
+          instructions: 'Is {{ vars.topic }} ok?',
+          routes: [
+            {
+              id: 'yes',
+              label: 'Yes',
+            },
+            {
+              id: 'no',
+              label: 'No',
+            },
+          ],
         }}
         spy={spy}
       />,
@@ -518,10 +538,9 @@ describe('SchemaForm', () => {
       expect(screen.getAllByTestId('preview')[0]).toHaveTextContent('Is hello ok?'),
     );
 
-    const evaluationGroup = screen.getByRole('group', { name: 'Evaluation' });
-    const evaluationKind = within(evaluationGroup).getAllByLabelText('Kind')[0]!;
+    const evaluationKind = screen.getAllByLabelText('Kind')[0]!;
     await user.selectOptions(evaluationKind, '0');
-    expect(last(spy)['evaluation']).toMatchObject({ kind: 'expression' });
+    expect(last(spy)).toMatchObject({ kind: 'expression' });
     setCode('Jsonata', 'vars.count + 1');
     await waitFor(() =>
       expect(
@@ -531,30 +550,22 @@ describe('SchemaForm', () => {
       ).toHaveTextContent('3'),
     );
 
-    await user.selectOptions(evaluationKind, '2');
+    await user.selectOptions(evaluationKind, '1');
     await user.click(screen.getByRole('tab', { name: /^Context/ }));
     // The context selector is a nested union with a literal, a number, and an object.
     const kind = within(screen.getByRole('group', { name: 'Messages' })).getByLabelText('Kind');
     await user.selectOptions(kind, '3');
-    expect(
-      ((last(spy)['evaluation'] as Record<string, unknown>)['context'] as Record<string, unknown>)[
-        'messages'
-      ],
-    ).toBe(1);
+    expect((last(spy)['context'] as Record<string, unknown>)['messages']).toBe(1);
     await user.selectOptions(kind, '4');
-    expect(
-      ((last(spy)['evaluation'] as Record<string, unknown>)['context'] as Record<string, unknown>)[
-        'messages'
-      ],
-    ).toEqual({ where: 'true' });
+    expect((last(spy)['context'] as Record<string, unknown>)['messages']).toEqual({
+      where: 'true',
+    });
 
     // The required evaluation changes with its radio; declared options remain independently editable.
     await user.click(screen.getByRole('tab', { name: /^Settings/ }));
-    const options = screen.getByRole('group', { name: 'Options' });
-    await user.click(within(options).getByRole('button', { name: 'Add options' }));
-    expect(((last(spy)['answer'] as Record<string, unknown>)['options'] as unknown[]).length).toBe(
-      3,
-    );
+    const options = screen.getByRole('group', { name: 'Routes' });
+    await user.click(within(options).getByRole('button', { name: 'Add routes' }));
+    expect((last(spy)['routes'] as unknown[]).length).toBe(3);
   });
 
   it('edits JSON fields, optional unions, and tri-state booleans', async () => {
@@ -615,7 +626,7 @@ describe('SchemaForm', () => {
       [NodeConfigSchemas.heartbeat, { intervalSeconds: 5 }],
       [
         NodeConfigSchemas.exit,
-        { criteria: [{ when: 'predicate', strategy: 'expression', outcome: 'success' }] },
+        { outcome: 'success', returns: 'none', destinations: [{ kind: 'caller' }] },
       ],
       [LoopSettingsSchema, {}],
       [z.object({ when: z.date(), tags: z.array(z.enum(['a', 'b'])).optional() }), {}],
@@ -630,13 +641,13 @@ describe('SchemaForm', () => {
   it('clears a field that had an initial value instead of restoring it', async () => {
     const user = userEvent.setup();
     const spy = vi.fn();
-    render(<Harness schema={LoopSettingsSchema} initial={{ maxIterations: 3 }} spy={spy} />);
-    const input = screen.getByLabelText('Max iterations');
+    render(<Harness schema={LoopSettingsSchema} initial={{ maxNodeVisits: 3 }} spy={spy} />);
+    const input = screen.getByLabelText('Max node visits');
     await user.clear(input);
     expect(input).toHaveValue(null);
-    expect(last(spy)).not.toHaveProperty('maxIterations');
+    expect(last(spy)).not.toHaveProperty('maxNodeVisits');
     await user.type(input, '4');
-    expect(last(spy)['maxIterations']).toBe(4);
+    expect(last(spy)['maxNodeVisits']).toBe(4);
   });
 
   it('disables adding past an array maximum and keeps non-object initial values', async () => {

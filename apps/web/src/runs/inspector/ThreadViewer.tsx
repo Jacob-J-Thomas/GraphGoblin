@@ -1,4 +1,4 @@
-import type { ContextThread, RunEvent } from '@graphgoblin/contracts';
+import type { ContextThread, LoopDefinition, RunEvent } from '@graphgoblin/contracts';
 import { useMemo } from 'react';
 import { Alert, Badge, Card, Disclosure } from '../../components/ui/index.js';
 import { prettyJson } from '../../lib/utils.js';
@@ -43,12 +43,17 @@ export function ThreadViewer({
   current,
   events,
   seq,
+  definition,
 }: {
   current: ContextThread;
   events: RunEvent[];
   seq: number;
+  definition?: LoopDefinition | undefined;
 }) {
-  const initial = useMemo(() => initialThreadFrom(current, events), [current, events]);
+  const initial = useMemo(
+    () => initialThreadFrom(current, events, definition),
+    [current, events, definition],
+  );
   const replayed = useMemo(() => tryThreadAt(initial, events, seq), [initial, events, seq]);
   const selected = events.find((e) => e.seq === seq);
   const diff = useMemo(() => {

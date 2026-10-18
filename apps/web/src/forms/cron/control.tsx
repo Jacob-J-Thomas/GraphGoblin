@@ -1,6 +1,7 @@
 import { GraphGoblinApiError } from '@graphgoblin/api-client';
 import { useEffect, useId, useRef, useState } from 'react';
-import { useWatch } from 'react-hook-form';
+import { useFormContext, useWatch } from 'react-hook-form';
+import { isUnset } from '../unset.js';
 import { useCronPreview } from '../../api/queries.js';
 import {
   Button,
@@ -47,8 +48,12 @@ export function CronControl({ name }: FieldProps) {
   const field = useField(name, 'typing');
   const zonePath = name.replace(/expression$/, 'timezone');
   const zone: unknown = useWatch({ name: zonePath });
+  const { setValue } = useFormContext();
   const expression = typeof field.value === 'string' ? field.value : '';
-  const timezone = typeof zone === 'string' ? zone : 'UTC';
+  const timezone = typeof zone === 'string' && !isUnset(zone) ? zone : 'UTC';
+  const authorTimezone = () => {
+    if (zonePath !== name && (zone === undefined || isUnset(zone))) setValue(zonePath, 'UTC');
+  };
   const [draft, setDraft] = useState<{ expression: string; schedule: Schedule }>();
   const parseErrors = useParseErrors();
   const stored = parseErrors.get(name);
@@ -86,6 +91,7 @@ export function CronControl({ name }: FieldProps) {
       }
       parseErrors.report(name, undefined);
       preferencesRef.current = recordPreferences(preferencesRef.current, next);
+      authorTimezone();
       const value = scheduleExpression(next);
       setDraft({ expression: value, schedule: next });
       field.onChange(value);
@@ -246,6 +252,7 @@ export function CronControl({ name }: FieldProps) {
                 onChange={(e) =>
                   change({ path: name, kind: 'typing' }, () => {
                     parseErrors.report(name, undefined);
+                    authorTimezone();
                     setDraft(undefined);
                     preferencesRef.current = recordPreferences(
                       preferencesRef.current,

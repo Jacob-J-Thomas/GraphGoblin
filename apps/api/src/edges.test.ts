@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -26,10 +27,10 @@ afterEach(async () => {
 });
 
 const inferLoop: LoopDefinitionInput = {
-  schemaVersion: 3,
+  schemaVersion: CURRENT_DEFINITION_FORMAT,
   name: 'infer',
   nodes: [
-    { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
+    { id: 'start', kind: 'trigger', label: 'S', config: { type: 'manual' } },
     { id: 'infer', kind: 'inference', label: 'I', config: { prompt: { template: 'hi' } } },
     { id: 'done', kind: 'exit', label: 'D', config: {} },
   ],
@@ -40,12 +41,12 @@ const inferLoop: LoopDefinitionInput = {
 };
 
 const returnLoop: LoopDefinitionInput = {
-  schemaVersion: 3,
+  schemaVersion: CURRENT_DEFINITION_FORMAT,
   name: 'returns',
   nodes: [
-    { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
+    { id: 'start', kind: 'trigger', label: 'S', config: { type: 'manual' } },
     { id: 'wait', kind: 'wait', label: 'W', config: { mode: 'input', prompt: 'Value?' } },
-    { id: 'done', kind: 'exit', label: 'D', config: { return: { mapping: 'lastOutput.value' } } },
+    { id: 'done', kind: 'exit', label: 'D', config: { returns: 'lastOutput.value' } },
   ],
   edges: [
     { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'wait' } },

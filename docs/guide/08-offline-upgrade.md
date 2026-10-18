@@ -1,78 +1,189 @@
-# Upgrade stored loops to format 3
+# Upgrade a stopped server store to format 4
 
-The retained format-2 stage replaces decision strategy chains with one explicit evaluator, introduces stable option IDs and canonical decision evidence, and moves model defaults under their harness. The normal API accepts only the current format. An old portable export returns `LOOP_FORMAT_UPGRADE_REQUIRED`; an old database stops startup with `DATA_UPGRADE_REQUIRED` before migrations, recovery or triggers run. A genuinely empty database is initialized normally. Context-thread schema version remains 1.
+The format-4 cutover **keeps definitions and deletes all run history** ([ADR-0039](../decisions/ADR-0039-format-four-definitions-only-cutover.md)). The verified backup of the complete stopped data directory is the recovery copy. Nothing is archived inside the database.
 
-Use the one-off `graphgoblin-upgrade` command from this checkout after `pnpm.cmd build`. It never guesses which evaluator should replace a mixed chain. Keep the old build, original data, and exports until the upgraded copy has passed your acceptance checks. Architecture approval is separate from approval of the actual conversion manifest.
+Kept: ordinary loops, every published version and server draft, secrets and owner encryption material, settings, API keys, webhook endpoint IDs/tokens and surviving schedule rows. Definitions become format 4. SQL 0013 maps both webhook signing schemes to the current authentication columns without rotating tokens. Old owner default settings, when present, become harness defaults.
+
+Deleted: every run, event, initial thread, snapshot, receipt, inbound event, timer, harness session, child notification, frozen admission intent and subloop pin, plus files under `artifacts/` and temporary run workspaces under `<dataDir>/workspaces/<runId>`. Fixed and templated workspace paths outside the data directory are user directories and are never touched. Configured template instances and all their loops, versions and drafts are deleted under #165. Existing in-database upgrade archives are removed too. Template catalogue starting points remain available for creating new ordinary loops.
+
+Every poll and cron in **every retained published version and draft** becomes `enabled: false`; surviving cron schedule rows are disabled too. History no longer supplies poll dedupe or cron catch-up evidence. Review the reported disarm list and re-arm deliberately after reviewing old external items. Webhooks keep their armed state. Historical webhook claims are gone, so a repeated delivery can be admitted again.
+
+## Stop, inspect and settle blockers
+
+First settle queued, running, waiting and paused runs of ordinary loops in the **old build**, and finish its pending webhook receipts/admission intents. Stop the instance and any service that restarts it. Template-loop runs and receipts are retired and never block. The upgrade tool does not run workflows or settle ordinary work for you.
+
+Build the new checkout with `pnpm.cmd build`. The commands below use placeholder physical paths, never your live installation by default. Set both paths explicitly, including an external database if configured. Keep reports and resolutions in an existing private folder outside the data directory.
+
+```powershell
+pnpm.cmd graphgoblin-upgrade inspect --data-dir C:/GraphGoblin/data --db-url file:C:/GraphGoblin/data/graphgoblin.db --out C:/GraphGoblin/upgrade/inspect.json
+```
+
+Inspect acquires the server's directory lock and opens SQLite natively read-only. It reports table/definition/deletion counts, artifact filenames/hashes, temporary workspace paths/file hashes, every version and draft's conversion state, pending IDs/hashes/reasons and counts by item kind (`pendingByKind`), ordinary blockers, trigger disarms and `planHash`. A complete current store reports `status: "current"`: nothing needs doing. A claimed current marker with incomplete structure is refused; never edit markers to bypass this check.
+
+Inspect does not apply SQL or make rollback-only source writes. A changed source, structure, migration catalogue, resolution, artifact or temporary workspace set changes the plan hash. Use a new output filename on each attempt; outputs are never overwritten.
+
+## Resolve review items
+
+The recommended path is **one explicit owner decision to approve generated proposals**. After inspecting the summary, run:
+
+```powershell
+pnpm.cmd graphgoblin-upgrade resolutions --from C:/GraphGoblin/upgrade/inspect.json --approve-generated --out C:/GraphGoblin/upgrade/resolutions.json
+```
+
+This writes a hash-bound `approve` for every pending item with a generated proposal, including removal proposals such as ignored loop-back configuration. It prints newly approved and preserved choices grouped by item kind and loop name/ID, plus the exact IDs, hashes, paths and reasons of items still requiring manual input. It never overwrites an output file. Use a fresh inspection from this build: `hasGeneratedProposal` distinguishes a generated removal (`proposedValue: null`) from a missing authored graph. Frozen v1/v2 questions without proposals remain manual work too.
+
+**Trade-off:** a generated proposal is mechanically equivalent where the converter proved it, and otherwise a reviewed best effort. `--approve-generated` is the owner's explicit acceptance of all those generated proposals; it does not establish equivalent judgments, dynamic references or opaque consumers. The owner checks the resulting behavior in the running product afterwards, including LLM instructions, return mappings and scripts. Items without a generated proposal stay unresolved and need authored replacements or earlier-stage resolutions before apply.
+
+To preserve existing authored choices, add `--merge`; this is required when the report contains resolved items. Existing resolutions in every namespace are kept exactly and take precedence; even stale/unused choices are preserved for the next inspect to reject rather than silently replaced. Use another new output filename:
+
+```powershell
+pnpm.cmd graphgoblin-upgrade resolutions --from C:/GraphGoblin/upgrade/inspect.json --approve-generated --merge C:/GraphGoblin/upgrade/existing-resolutions.json --out C:/GraphGoblin/upgrade/resolutions.json
+```
+
+If earlier-stage answers expose more proposals, inspect with the current resolutions, then repeat `resolutions --from` with that new report and `--merge` into a new output path. Always reinspect with the final resolutions before using its new `planHash` for apply. The generator reads only the report and optional merge file; it does not open a data directory, modify a store or apply an upgrade.
+
+Server resolution files are keyed by **version or draft ID**, with independent `v1`, `v2` and `v3` namespaces inside each entry. For example:
+
+```json
+{
+  "VERSION_OR_DRAFT_ID": {
+    "v3": {
+      "/nodes/0/config:webhook-json-decoding": {
+        "hash": "EXACT_REPORTED_SHA256",
+        "action": "approve",
+        "reason": "Reviewed strict UTF-8 and nonempty JSON behavior for this endpoint"
+      }
+    }
+  }
+}
+```
+
+Use the exact item IDs and hashes from this store inspection. Reused node IDs need independent resolutions for each version and draft. Approvals from portable exports cannot be reused for stored versions. The stage map shapes are described below. Review complete graphs and external consumers; a proposal hash does not prove equivalent behavior.
+
+Pending and invalid issues can coexist. Ordinary subloop references to retired template loops are invalid and must be replaced. Correct invalid source using the old build or a separately reviewed repair; supply every required review resolution. No candidate escapes while either kind remains. Earlier-stage resolutions can reveal later review items. Reinspect with resolutions until invalid items, pending items and blockers are all zero:
+
+```powershell
+pnpm.cmd graphgoblin-upgrade inspect --data-dir C:/GraphGoblin/data --db-url file:C:/GraphGoblin/data/graphgoblin.db --resolutions C:/GraphGoblin/upgrade/resolutions.json --out C:/GraphGoblin/upgrade/resolved-inspect.json
+```
+
+Malformed, stale, conflicting and unused resolutions are refused. `disarm` lists both definition nodes and schedule rows, so one trigger may have several entries.
+
+## Apply with a complete verified backup
+
+Use `planHash` from the final resolved inspection. Choose a **new** backup directory whose parent already exists, outside the data tree and separate from the database. Omit `--resolutions` if no items needed review.
+
+```powershell
+pnpm.cmd graphgoblin-upgrade apply --data-dir C:/GraphGoblin/data --db-url file:C:/GraphGoblin/data/graphgoblin.db --plan-hash PASTE_FINAL_PLAN_HASH --resolutions C:/GraphGoblin/upgrade/resolutions.json --backup-dir C:/GraphGoblin/backups/before-format-4
+```
+
+Apply takes the same stopped-data lock and rechecks the plan. Before opening a writer it copies the whole data tree to `<backup-dir>/data`, including encrypted secrets, key material, artifacts and temporary run workspaces, and verifies hashes against the source. An external database and its WAL/SHM are copied to `<backup-dir>/database`, `database-wal` and `database-shm` when present. `backup.json` records identities and file hashes. The result and failure messages report `backupDir`/the backup path. Missing or corrupt backup evidence, overlap, reused destinations, linked data roots/database paths and changed sources refuse apply. Ordinary non-database links are copied as links; external targets are not snapshotted. Preserve required external content separately. The database file must be outside both cleanup subtrees. Artifact and temporary workspace roots must be physical directories. Workspace inventories contain every relative file/link/directory path, including empty directories. Cleanup checks physical ancestors and removes nested links as links, without traversing their targets. Only top-level workspace names matching stored run IDs are inventoried for deletion; inspect lists all other names in `workspaceLeftInPlace`, and fixed or templated user directories under those names or outside the data directory remain untouched.
+
+Under one SQLite write transaction apply rechecks the database plan and blockers, deletes all history and template-owned definitions, removes any old database archive, applies structural SQL through 0013, rewrites definitions/defaults, disables schedule rows, stamps format 4 complete, and verifies readiness, head structure, ledger and integrity. A transaction failure rolls back deletions, DDL, ledger, definitions and marker together. Draft tokens and config hashes derive from rewritten definitions; no old token is retained.
+
+After commit, apply deletes the inventoried artifact files and temporary workspace entries, then reads back the store and both cleanup inventories. Workspaces are removed through individual unlinks and empty-directory removals, deepest paths first; there is no recursive deletion. Empty artifact directories and the `workspaces/` root may remain. A changed workspace inventory before commit refuses the transaction; unexpected contents encountered after commit stop cleanup and report the recovery backup. A filesystem/connection failure **after commit cannot roll SQLite back**: the failure says the database committed and reports the recovery backup. Preserve that copy and restore the complete backup before retrying if cleanup/readback did not finish. Do not treat a marker or a failed command as proof of a complete cutover.
+
+## Start and check the new build
+
+Keep the old service stopped, use the upgraded paths, and start the newly built backend/web together. For a foreground source installation:
+
+```powershell
+$env:GG_DATA_DIR = 'C:/GraphGoblin/data'
+$env:GG_DB_URL = 'file:C:/GraphGoblin/data/graphgoblin.db'
+pnpm.cmd start
+```
+
+The ordinary readiness check now passes. Review published definitions and drafts, reload server drafts to obtain new tokens, and deliberately re-arm cron/poll triggers only after accounting for lost dedupe/catch-up history. Webhooks remain armed and can receive new deliveries on startup. If using older environment defaults, replace `GG_DEFAULT_MODEL`/`GG_DEFAULT_EFFORT` with `GG_DEFAULTS`, for example `{"byHarness":{"codex":{"model":"gpt-6-luna","effort":"low"}}}`.
+
+## Restore
+
+Restoration discards every edit and run created since the backup. Stop the new build and its restart service. Preserve the failed upgrade directory for diagnosis. Copy the complete `<backup-dir>/data` tree into a **separate recovery directory**, preserving links and encryption material; for an external database copy `database` and every recorded sidecar to the intended external recovery database path. Verify the copy against `backup.json`. Point the **old build** at those recovered paths and start it only after the complete copy is restored. Never run the old build against the converted database or mix restored base/WAL files with newer sidecars. Settle blockers or correct resolutions, stop again, inspect afresh, then use another new backup directory for re-upgrade.
 
 ## Convert a portable export
 
-Choose a new output path; the tool refuses to overwrite an existing file:
+After `pnpm.cmd build`, choose a new output path; existing files are never overwritten:
 
 ```powershell
 pnpm.cmd graphgoblin-upgrade export --input .\old-loop.json --out .\converted-loop.json
 ```
 
-A successful result is a format-3 export (or a version-3 definition when the input was a bare definition). Format-1 input first passes through a frozen format-2 conversion; both stages must resolve before any output is accepted. Exit code 2 means the output is a refusal report, not an importable loop. Resolve every reported ambiguity in a separate JSON resolutions file, then retry to a different new output path with `--resolutions .\resolutions.json`.
+A successful result is a format-4 export, or a format-4 bare definition when the
+input was bare. Straightforward triggers, classifier decisions, Choice expressions
+and unconditional terminal exits can convert automatically. LLM instructions,
+Noul route expressions, conditional or repeating exits, webhook decoding, trigger
+filters and output consumers may require review. The exact report is authoritative;
+a syntactically valid candidate alone does not establish equivalent behavior.
 
-The resolutions object has four optional fields:
+Exit code 2 produces `graphgoblin-upgrade-refusals` with `issues`, automatic-change
+`notices` and `reviewItems`. Each issue has `kind: "pending"` or `kind: "invalid"`;
+a report can contain both. Items list stable `id`, SHA-256 `hash`, source `path`,
+`reason`, proposed value and status. No candidate definition is included while
+anything is pending or invalid. Resolve every reported item, then retry with a
+new output path and `--resolutions .\resolutions.json`.
 
-- `decisions`: a map from node ID to the complete new decision configuration, including its answer and evaluator. Replacement option IDs must preserve the original route-ID set and edge ports; invalid original IDs need a separately reviewed repair. Mixed chains, invalid old option labels/criteria, and expressions whose string result cannot be proven need an explicit choice.
-- `sources`: a map from a reported JSON pointer to the reviewed replacement Liquid or JSONata source. For a decision output, the old `lastOutput.value.route` becomes `lastOutput.value.answer.optionId`; use the source-specific path from the report. An inference result may independently contain `route` or `confidence`, so inspect its producer rather than replacing every matching string. Whole output values, indirect lookups and dynamic consumers need review too, including subloop return values and captured result variables. Replacements must parse, and final definitions must satisfy the clean contract. Do not also provide a source replacement inside a node covered by a complete `decisions` replacement: overlapping instructions are refused; put that source in the complete replacement instead.
-- `opaqueConsumers`: a map from script node ID to `{reason:"..."}`, recording why the external command receiving the thread or last output works with the new shape. Review and update the script itself first; a reason is an approval record, not an automatic script rewrite.
+Resolution files use three independent optional namespaces:
 
-- `predicates`: a map from an exact exit criterion pointer such as `/nodes/2/config/criteria/0` to a reviewed resolution. Every legacy Jev or Codex predicate needs `answer: {type: "noul", true: {label: "Yes", criteria: "..."}, false: {label: "No", criteria: "..."}}` with criteria describing the actual question. Do not invent them from old judgments. Ambiguous/coercing expressions instead need `jsonata: "..."` whose result is provably boolean. Use the actual per-version pointer from inventory. Unused, overlapping or incompatible resolutions are refused.
+- `v1`: the frozen 1?2 `decisions`, `sources` and `opaqueConsumers` maps. Decision
+  replacements preserve the original route IDs; source replacements name exact
+  pointers. Opaque consumer approvals contain a nonblank reason and require
+  external consumer review.
+- `v2`: the frozen 2?3 `predicates` map, keyed by exact criterion pointers such as
+  `/nodes/2/config/criteria/0`. Provider predicates need authored Noul side criteria;
+  ambiguous expressions need an explicitly boolean `jsonata` rewrite.
+- `v3`: the E2 converter's map from review item ID to
+  `{hash, action: "approve" | "replace" | "remove", reason, value?}`. Use the exact
+  reported hash. Replacement requires `value`; removal is supported only where
+  the item explicitly permits it. Graph and source replacements must respect
+  the converter's overlap rules.
 
-Format 3 replaces legacy exit strategies with explicit answer/evaluation/match contracts. Jev retains its truth threshold of 0.5 and configured confidence minimum; Codex retains inherited defaults and its optional self-reported confidence gate. A failed gate always prevents a match. Added side criteria and stricter malformed-response checks may change future native judgments. Historical answers, confidence and provenance remain factual; missing facts are null. Thread schema 1 and session rows are unchanged. #33 and #38 remain deferred.
+For example, `{ "v1": { "sources": { "/reported/path": "reviewed source" } },
+"v3": { "/reported/path:output-consumer": { "hash": "reported SHA-256",
+"action": "approve", "reason": "Reviewed this exact proposal" } } }`.
+Earlier-stage rewrites can expose further v3 review items on the next attempt.
+Portable v3 reviews use a `portable:` identity derived from the canonical parsed source hash, including filter graph reviews; server-version manifest approvals cannot be reused here.
+Flat legacy resolution keys, malformed, stale, conflicting and unused resolutions
+are refused. Review the complete loop and external consumers; hashes bind a
+proposal to its source, not to the truth of an owner's assessment.
 
-Conversion is deliberately conservative. Review the complete loop and any external consumers, not just the reported lines. The converter cannot establish arbitrary program behavior. The [decision reference](../04-node-catalog.md#decision) describes the new contract.
-
-## Inventory and approve a stopped database
-
-Drain or cancel **every queued, running, waiting and paused run with the old build**, then stop its service. The tool acquires the same data-directory lock as GraphGoblin and refuses a live owner. Identify both the complete data directory and the actual local database URL, including an external database if configured. Do not point the command at a different directory to bypass a lock.
-
-The examples below use placeholder paths. Put inventory, manifest and audit files outside the data directory, in a private local folder. They contain workflow definitions and historical context. Backups also contain encrypted secrets and their local encryption material.
-
-```powershell
-pnpm.cmd graphgoblin-upgrade inventory --data-dir C:/GraphGoblin/data --db-url file:C:/GraphGoblin/data/graphgoblin.db --out C:/GraphGoblin/upgrade/inventory.json
-```
-
-Inventory and audit open the database through a native read-only connection. Inventory reads all stored versions, including hidden or deleted history, and every run/event. It reports nonterminal runs, structural refusals, affected failed runs, per-version conversion issues and a proposed `manifest` object. Copy that object into a separate manifest file. Preserve `sourceHash` and every `definitionHash`; fill `approvedBy`, an ISO `approvedAt`, and each version's resolutions. A reused node ID in another version needs its own reviewed resolution.
-
-Every affected failed run, including an affected failed parent that invokes a subloop, requires an explicit `nonresumable-replay` disposition and a nonblank reason. Conversion preserves its failure and history but prevents continuing the old execution against changed semantics; start a replay or new run after inspecting the upgraded definition. The tool never cancels runs on your behalf. Resolve orphaned or malformed records through a separate reviewed repair before retrying.
-
-Review and approve the **exact manifest** before applying it. If anything changes in the source database, repeat inventory and approval; stale hashes are refused.
-
-## Apply and inspect
-
-Choose a new backup directory outside the data directory. Apply first makes a complete stopped-data copy and, when needed, copies the external database plus its WAL/SHM files. It verifies file hashes before opening the database. Supply the physical data-directory and database paths: linked data roots, database files, database sidecars, or linked database ancestors are refused before backup creation. Backup containment is checked against the physical parent directory, so an alias cannot place a backup inside the source. Ordinary non-database links in the data tree are preserved as links; their external target contents are not snapshotted. Preserve any such external content separately when it is needed for recovery. Schema migrations, definitions, defaults, events, output patches, initial threads and snapshots are then converted in one transaction. Strict final parsing and replay comparison must pass before commit; a failure rolls back the transaction.
-
-```powershell
-pnpm.cmd graphgoblin-upgrade apply --data-dir C:/GraphGoblin/data --db-url file:C:/GraphGoblin/data/graphgoblin.db --manifest C:/GraphGoblin/upgrade/manifest.json --backup-dir C:/GraphGoblin/backups/before-format-3
-pnpm.cmd graphgoblin-upgrade audit --data-dir C:/GraphGoblin/data --db-url file:C:/GraphGoblin/data/graphgoblin.db --out C:/GraphGoblin/upgrade/audit.json
-```
-
-The database keeps the approved manifest and original converted records with source and manifest hashes. Unknown historical model, effort or probability values stay null; old skip diagnostics remain factual event evidence. Audit exports that record for inspection. A canonical value does not invent provider facts that were never recorded.
-
-The frozen history converter also accepts earlier strategy/route decisions without `skipped` and Codex command progress items containing only `id`, `type` and `summary`. Decisions with no recorded skips receive an empty canonical diagnostics list; this does not establish that no strategies were skipped. Statusless command items become generic `other` progress items with their original ID and summary, because current command items require a status that was never recorded. No status or exit code is inferred from the summary. The audit retains the original command classification and complete source event. All other statusless item types (`message`, `file-change`, `reasoning`, `tool-call`, `search`, `error`, `other`) pass through unchanged except that historical error summaries become `Harness reported an error` and tool-call summaries omit the diagnostic text after `failed:`, matching current emission rules. IDs and recorded statuses remain factual; the complete original summaries stay in the upgrade audit. Script progress and commands with recorded lifecycle facts remain unchanged. Runtime event parsing remains strict.
-
-Before restarting, replace `GG_DEFAULT_MODEL` and `GG_DEFAULT_EFFORT` with `GG_DEFAULTS`, for example `{"byHarness":{"codex":{"model":"gpt-6-luna","effort":"low"}}}`. The old environment variables produce `CONFIGURATION_UPGRADE_REQUIRED`. Owner settings are converted from `defaultModel`/`defaultEffort` to `defaults` in the transaction. Review models and efforts against the current catalog.
-
-Test the result in an isolated instance before replacing your working installation. Keep cron, poll and hook triggers disarmed and bind every writable workspace to an independent disposable clone: copying the database does not isolate the paths or external destinations in its loops. Inspect converted drafts and completed/failed run histories, compare full replay with stored checkpoints, then run a bounded example against safe destinations. Do not overwrite the original instance or enable copied triggers as part of this check.
-
-Restoring the pre-upgrade backup discards every edit and run created after that backup. To roll back, stop the new instance and restore the **complete** stopped-data backup and any external database files to a separate recovery location using the old build. Preserve the failed upgrade copy for diagnosis. Never run the old build on a partially restored or converted database. Re-inventory and approve a new attempt after correcting the cause.
+API import converts old exports automatically when no review is pending and returns
+automatic rewrite `notices` alongside validation `issues` in its `201` response.
+The web import result shows these changes. Pending review returns `400 LOOP_FORMAT_UPGRADE_REQUIRED` with `errors.issues` and
+`errors.reviewItems`, including IDs, hashes and reasons. API-supplied resolutions
+are unsupported; use `--resolutions resolutions.json` with the `v3` map described
+above and import the completed format-4 output. Invalid old source or envelopes
+return `LOOP_IMPORT_SOURCE_INVALID` instead of a pending-review code.
+Mixed refusals retain both issue kinds and explain both correction and review.
+The MCP server has no import tool.
 
 ## Browser drafts and converter lifetime
 
-On opening the new app, the same pure converter upgrades unambiguous device drafts. Ambiguous or incomplete drafts in an older format are set aside with their original JSON available for export; resolve them through the offline export command. The editor does not silently select an evaluator. The run-event cache is versioned so old decision events are fetched again from the upgraded server.
+Opening the editor archives and reads back the exact original before replacing an
+active or set-aside key with its converted definition. A synced mirror remains a
+clean cache, available before the server answers. An untouched cache reconciles to the server without a conflict; edits made while waiting are retained and checked against their original token. Unsynced work
+stays unsynced. Older unsynced work is set aside when the server is newer, and
+restoring it is an explicit overwrite choice. While offline or checking the server, the editor remains available but automatic server saves wait for reconciliation.
+
+Old server tokens are invalidated. Saving converted edits requires **Reload server
+draft** or **Overwrite with this copy** using a fresh token; the conflict notice
+explains the format conversion. This also protects edits made from a converted
+synced cache while offline.
+
+If the conversion code cannot load, the notice offers **Retry conversion** or a
+page reload. All device copies stay unchanged, editing and autosave pause, and
+opening the editor again retries the conversion.
+
+Pending, incomplete or failed old conversions remain inert raw copies with review
+issues and **Export original device copy**. Archived originals stay inert and are labelled without reconversion. Failed
+archival or readback blocks overwriting autosave. Incomplete current drafts still
+reopen for editing. The IndexedDB drafts store is preserved across version upgrades. A raw device-copy
+export includes its metadata and tokens; keep that original file and copy its
+`definition` field into a separate input file for the offline export command.
+
+The session-storage run-event cache and SSE cursor use the current format in their
+key; old keys are removed, forcing a fresh replay. There is no old-event reader.
+API responses are not cached by the service worker; React Query state is in memory.
 
 This converter remains available through the cutover release. It can be retired no earlier than the next incompatible release with an upgrade notice. Old exports after retirement require the appropriate older converter/build; runtime parsing does not keep a legacy decision executor.
 
-## Verify the converter
+## Verify the offline workflow
 
-After `pnpm build`, run `pnpm test:upgrade` for the offline command acceptance checks. CI runs these checks after the build. They use disposable stores to verify refusal, original-file preservation, stopped-instance locking, complete backups, rollback, restoration, and re-upgrade. They do not read or convert your installed instance.
-
-## Structural readiness of earlier development stores
-
-The GitHub-trigger cutover extends this same converter with endpoint signing schemes, durable webhook receipts and an indexed trigger dedupe lookup. A store already converted to definition format 2 by an earlier feature-branch build may still lack those structures. Stop that instance and run the inventory, resolution, verified-backup and apply workflow above; changing the version marker or allowing ordinary startup migrations is not a substitute. Normal startup checks structure before migrations, recovery or arming triggers.
-
-The inventory refuses every nonterminal run and pending webhook admission. Existing canonical decision history is preserved. Old default timestamp-signature dedupe keys are converted only when endpoint, version, node and signing configuration prove their origin and no authored dedupe expression overrides the default. Custom keys remain unchanged; missing or ambiguous provenance stops conversion. Disabled endpoints left by ordinary loop deletion may remain unchanged only when the loop, its versions and runs are absent and every retained delivery has an empty, well-formed run-link list. Their keys are not inferred or rewritten. Enabled endpoints, surviving execution references and inconsistent live-loop provenance still refuse conversion. The manifest transaction applies structural and fact changes together, retaining its source audit.
+After the API build, `pnpm.cmd test:upgrade` uses disposable fixtures for export, read-only inspection, review/refusal, locking, verified internal/external backups (including committed WAL), apply, ordinary startup migration admission, restoration and re-upgrade. It starts no server and touches no installed instance. The old `inventory`, manifest and in-database `audit` commands are removed; use `inspect`, per-version `--resolutions`, `--plan-hash` and the external verified backup.

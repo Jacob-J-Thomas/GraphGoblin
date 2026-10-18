@@ -34,12 +34,12 @@ describe('editor model', () => {
   it('allocates unique node and edge ids', () => {
     const def = minimalLoop();
     expect(nextNodeId(def, 'decision')).toBe('decision');
-    def.nodes.push({ id: 'decision', kind: 'trigger', label: 'x', config: { subtype: 'manual' } });
+    def.nodes.push({ id: 'decision', kind: 'trigger', label: 'x', config: { type: 'manual' } });
     def.nodes.push({
       id: 'decision-2',
       kind: 'trigger',
       label: 'x',
-      config: { subtype: 'manual' },
+      config: { type: 'manual' },
     });
     expect(nextNodeId(def, 'decision')).toBe('decision-3');
     expect(nextEdgeId(def)).toBe('e2');
@@ -52,7 +52,7 @@ describe('editor model', () => {
     const byId = (id: string) => sink.nodes.find((n) => n.id === id)!;
     expect(portsOf(byId('decide'))).toEqual(['good', 'bad']);
     expect(portsOf(byId('check'))).toEqual(['out', 'retry']);
-    expect(portsOf(byId('done'))).toEqual(['loopBack']);
+    expect(portsOf(byId('done'))).toEqual([]);
     expect(portsOf(byId('prep'))).toEqual(['out']);
 
     const broken = (kind: NodeInput['kind'], config: unknown): NodeInput =>
@@ -91,13 +91,13 @@ describe('editor model', () => {
       ),
     ).toEqual(['out', 'x']);
     expect(portsOf(broken('script', null))).toEqual(['out']);
-    expect(portsOf(broken('exit', { loopBack: { targetNodeId: 'a' }, default: 'nope' }))).toEqual([
-      'loopBack',
-    ]);
+    expect(portsOf(broken('exit', { loopBack: { targetNodeId: 'a' }, default: 'nope' }))).toEqual(
+      [],
+    );
     expect(portsOf(broken('exit', { default: 'nope' }))).toEqual([]);
     expect(portsOf(broken('wait', { mode: 'nope' }))).toEqual(['out']);
-    expect(canvasPorts(broken('exit', { default: 'nope' }))).toEqual(['loopBack']);
-    expect(canvasPorts(byId('done'))).toEqual(['loopBack']);
+    expect(canvasPorts(broken('exit', { default: 'nope' }))).toEqual([]);
+    expect(canvasPorts(byId('done'))).toEqual([]);
   });
 
   it('refuses connections into triggers, from unknown ports, and from used ports', () => {
@@ -125,7 +125,7 @@ describe('editor model', () => {
     ).toBeNull();
     expect(
       connectionProblem(def, { source: 'done', sourceHandle: 'loopBack', target: 'mid' }),
-    ).toBeNull();
+    ).toContain('no output port');
   });
 
   it('labels Noul sides and Score bands while keeping their stable IDs as ports', () => {
@@ -134,12 +134,18 @@ describe('editor model', () => {
       kind: 'decision',
       label: 'Check',
       config: {
-        answer: {
-          type: 'noul',
-          true: { id: 'holds', label: 'Holds', criteria: 'It holds' },
-          false: { id: 'fails', label: 'Fails', criteria: 'It does not hold' },
-        },
-        evaluation: { kind: 'expression', jsonata: 'true' },
+        kind: 'expression',
+        routes: [
+          {
+            id: 'holds',
+            label: 'Holds',
+          },
+          {
+            id: 'fails',
+            label: 'Fails',
+          },
+        ],
+        jsonata: '(true) ? "holds" : "fails"',
       },
     };
     const score: NodeInput = {
@@ -147,6 +153,9 @@ describe('editor model', () => {
       kind: 'decision',
       label: 'Grade',
       config: {
+        kind: 'classifier',
+        model: 'jev',
+        question: 'Score it',
         answer: {
           type: 'score',
           anchors: ['Low', 'Middle', 'High'],
@@ -155,7 +164,6 @@ describe('editor model', () => {
             { id: 'high', label: 'High', min: 0.5, max: 2 },
           ],
         },
-        evaluation: { kind: 'classifier', model: 'jev', question: 'Score it' },
       },
     };
     expect(portsOf(noul)).toEqual(['holds', 'fails']);
@@ -179,15 +187,16 @@ describe('editor model', () => {
       kind: 'decision',
       label: 'd',
       config: {
-        answer: { type: 'choice', options: [] },
-        evaluation: { kind: 'expression', jsonata: '"a"' },
+        kind: 'expression',
+        jsonata: '"a"',
+        routes: [],
       },
     });
     schema.edges.push({ id: 'bad id!', from: { node: 'start', port: 'out' }, to: { node: 'd' } });
     schema.name = '';
     const invalid = validateDraft(schema);
     expect(invalid.schemaValid).toBe(false);
-    expect(invalid.issues.find((i) => i.nodeId === 'd')?.path).toBe('config.answer.options');
+    expect(invalid.issues.find((i) => i.nodeId === 'd')?.path).toBe('config.routes');
     expect(invalid.issues.find((i) => i.edgeId === 'bad id!')?.path).toBe('id');
     expect(invalid.issues.find((i) => i.path === 'name')).toBeDefined();
   });

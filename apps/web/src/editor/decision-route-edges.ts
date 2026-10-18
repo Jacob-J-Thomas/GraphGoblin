@@ -1,3 +1,4 @@
+import { hasRepeatRoute } from './decision-gates.js';
 import { ChoiceOptionIdSchema, type LoopDefinitionInput } from '@graphgoblin/contracts';
 import type { FormChange } from '../forms/changes.js';
 
@@ -10,7 +11,7 @@ interface RouteRows {
   nextKey: number;
   rows: readonly RouteRow[];
 }
-/** Editor-only answer-port ownership; restored with the definition by undo/redo, never saved. */
+/** Editor-only port ownership; restored by history and device drafts, never part of a definition. */
 export type DecisionRoutes = Readonly<Record<string, RouteRows>>;
 
 function record(value: unknown): Record<string, unknown> {
@@ -26,6 +27,15 @@ interface AnswerRows {
 
 /** The stable route IDs, in the answer's authored order, even while other fields are incomplete. */
 function answerRows(config: unknown): AnswerRows | undefined {
+  const raw = record(config);
+  if ((raw['kind'] === 'expression' || raw['kind'] === 'llm') && Array.isArray(raw['routes']))
+    return {
+      collectionPath: 'routes',
+      rows: raw['routes'].map((value) => {
+        const id = record(value)['id'];
+        return { id: typeof id === 'string' ? id : undefined };
+      }),
+    };
   const answer = record(record(config)['answer']);
   const type = answer['type'];
   if (type === 'choice' || type === 'score') {
@@ -57,7 +67,7 @@ function answerRows(config: unknown): AnswerRows | undefined {
 
 /** The edited stable-ID row, including the fixed true/false slots of Noul. */
 function editedIndex(path: string | undefined): number | undefined {
-  const collection = /^answer\.(?:options|bands)\.(\d+)\.id$/.exec(path ?? '');
+  const collection = /^(?:answer\.(?:options|bands)|routes)\.(\d+)\.id$/.exec(path ?? '');
   if (collection) return Number(collection[1]);
   const side = /^answer\.(true|false)\.id$/.exec(path ?? '')?.[1];
   return side === 'true' ? 0 : side === 'false' ? 1 : undefined;
@@ -69,7 +79,13 @@ export function removedAnswerConnections(
   nodeId: string,
   answer: unknown,
 ): LoopDefinitionInput['edges'] {
-  const ids = new Set(answerRows({ answer })?.rows.map((row) => row.id));
+  const ids = new Set(
+    answerRows(
+      Array.isArray(answer) ? { kind: 'expression', routes: answer } : { answer },
+    )?.rows.map((row) => row.id),
+  );
+  if (hasRepeatRoute(Array.isArray(answer) ? { kind: 'expression', routes: answer } : { answer }))
+    ids.add('limit-reached');
   return edges.filter((edge) => edge.from.node === nodeId && !ids.has(edge.from.port));
 }
 
@@ -128,6 +144,8 @@ export function decisionRouteEdges(
         after.length === before.rows.length - 1
       ) {
         retained.splice(collection.index, 1);
+      } else if (nodeChange?.path === answer?.collectionPath && collection?.type === 'move') {
+        retained.splice(collection.to, 0, retained.splice(collection.from, 1)[0]);
       } else if (
         editedIndex(nodeChange?.path) !== undefined &&
         after.length === before.rows.length
@@ -157,7 +175,12 @@ export function decisionRouteEdges(
         ...(jsonReplacement
           ? {
               edgeIds: definition.edges
-                .filter((edge) => edge.from.node === node.id && edge.from.port === id)
+                .filter(
+                  (edge) =>
+                    edge.from.node === node.id &&
+                    edge.from.port !== 'limit-reached' &&
+                    edge.from.port === id,
+                )
                 .map((edge) => edge.id),
             }
           : {}),
@@ -167,7 +190,7 @@ export function decisionRouteEdges(
         for (const edge of removedAnswerConnections(
           definition.edges,
           node.id,
-          record(node.config)['answer'],
+          record(node.config)['routes'] ?? record(node.config)['answer'],
         ))
           removed.add(edge.id);
       } else {
@@ -175,7 +198,9 @@ export function decisionRouteEdges(
           if (!kept.has(row.key)) for (const edgeId of row.edgeIds) removed.add(edgeId);
       }
     }
-    const outgoing = definition.edges.filter((edge) => edge.from.node === node.id);
+    const outgoing = definition.edges.filter(
+      (edge) => edge.from.node === node.id && edge.from.port !== 'limit-reached',
+    );
     const claimed = new Set(before.rows.flatMap((row) => row.edgeIds));
     rows = rows.map((row) => {
       const unique =

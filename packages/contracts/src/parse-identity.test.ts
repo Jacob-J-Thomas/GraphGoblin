@@ -24,7 +24,7 @@ interface Walkable {
 }
 
 describe('the every-field loop', () => {
-  it('sets every config field of every node kind and subtype', () => {
+  it('sets every config field of every node kind and type', () => {
     const nodes = everyFieldLoop().nodes;
     for (const [kind, schema] of Object.entries(NodeConfigSchemas)) {
       const walkable = schema as unknown as Walkable;
@@ -60,7 +60,7 @@ describe('parsing is unchanged', () => {
   it('parses an export envelope to the golden value', async () => {
     const envelope = {
       format: 'graphgoblin-loop',
-      formatVersion: 3,
+      formatVersion: 4,
       exportedAt: FIXTURE_TS,
       loop: everyFieldLoop(),
     };
@@ -71,22 +71,17 @@ describe('parsing is unchanged', () => {
 
   it('parses each node config left at its defaults to the golden value', async () => {
     const empty: Record<string, unknown> = {
-      trigger: { subtype: 'manual' },
+      trigger: { type: 'manual' },
       decision: {
-        answer: {
-          type: 'choice',
-          options: [
-            { id: 'a', label: 'A', criteria: 'A' },
-            { id: 'b', label: 'B', criteria: 'B' },
-          ],
-        },
-        evaluation: {
-          kind: 'llm',
-          harness: 'codex',
-          model: { mode: 'inherit' },
-          effort: { mode: 'inherit' },
-          question: '',
-        },
+        kind: 'llm',
+        harness: 'codex',
+        model: { mode: 'inherit' },
+        effort: { mode: 'inherit' },
+        instructions: 'Choose A when the check passes; otherwise choose B.',
+        routes: [
+          { id: 'a', label: 'A', criteria: 'A' },
+          { id: 'b', label: 'B', criteria: 'B' },
+        ].map(({ id, label }) => ({ id, label })),
       },
       inference: { prompt: { template: '' } },
       script: { command: 'true' },

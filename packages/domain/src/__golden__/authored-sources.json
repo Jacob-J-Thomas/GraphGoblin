@@ -14,22 +14,12 @@
         "kind": "expression",
         "source": "payload.id",
         "path": "dedupeKey"
-      },
-      {
-        "kind": "expression",
-        "source": "payload.action = \"opened\"",
-        "path": "filter"
       }
     ]
   },
   {
     "node": "event",
     "sources": [
-      {
-        "kind": "expression",
-        "source": "payload.ok",
-        "path": "filter"
-      },
       {
         "kind": "expression",
         "source": "payload.id",
@@ -74,11 +64,6 @@
         "kind": "expression",
         "source": "issue.number",
         "path": "dedupeKey"
-      },
-      {
-        "kind": "expression",
-        "source": "action = \"opened\"",
-        "path": "filter"
       }
     ]
   },
@@ -108,12 +93,32 @@
     ]
   },
   {
+    "node": "expression-decision",
+    "sources": [
+      {
+        "kind": "expression",
+        "source": "\"good\"",
+        "path": "jsonata"
+      }
+    ]
+  },
+  {
+    "node": "classifier-decision",
+    "sources": [
+      {
+        "kind": "template",
+        "source": "Choose",
+        "path": "question"
+      }
+    ]
+  },
+  {
     "node": "decide",
     "sources": [
       {
         "kind": "template",
         "source": "Is {{ vars.topic }} done?",
-        "path": "evaluation.question"
+        "path": "instructions"
       }
     ]
   },
@@ -299,19 +304,9 @@
     "node": "done",
     "sources": [
       {
-        "kind": "template",
-        "source": "Done?",
-        "path": "criteria.2.evaluation.question"
-      },
-      {
-        "kind": "expression",
-        "source": "false",
-        "path": "criteria.3.evaluation.jsonata"
-      },
-      {
         "kind": "expression",
         "source": "{ \"topic\": vars.topic }",
-        "path": "return.mapping"
+        "path": "returns"
       }
     ]
   }

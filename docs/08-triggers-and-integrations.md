@@ -1,5 +1,13 @@
 # 08 - Triggers and integrations
 
+Stored trigger configs use `type`: `manual`, `cron`, `webhook`, `event`, or `poll`.
+Webhooks use one strict `type: 'webhook'` object with nested authentication, body and event-type configuration. Config parsers reject
+`subtype`; current stores and exports using it remain refused until the integrated
+format-4 cutover converts them. The pure V3-to-V4 definition converter automatically
+renames this discriminator. Webhook decoding and stored filters have explicit review items; the installed-store and
+offline-tool cutover is still separate work.
+The invocation envelope continues to record the source as `trigger.kind`.
+
 ## Trigger envelope (Decided)
 
 Every trigger source produces the same envelope, embedded in the invocation and therefore in the thread.
@@ -14,7 +22,7 @@ type TriggerEnvelope = {
 };
 ```
 
-Nothing in the core knows about GitHub, CI systems, or error trackers. Provider-specific behavior is expressed through presets that fill in signature settings, filters, and dedupe keys for a generic webhook.
+Nothing in the core knows about GitHub, CI systems, or error trackers. Provider-specific behavior is expressed through presets that fill in signature settings and dedupe keys for a generic webhook and add editable downstream checks.
 
 ## Manual (Decided)
 
@@ -43,60 +51,105 @@ The `run-each` catch-up cap does not change `run-once` semantics. Even after an
 outage longer than 100 slots, `run-once` uses the latest missed slot at or before
 the recovery clock.
 
-## Timestamp-signed webhook
+## General webhook configuration (#168 T4)
 
-- Each webhook trigger node gets an endpoint token: 32 random bytes, base64url, in the path `/hooks/<token>`. The token stays the same across published versions for the same trigger node id, so publishing does not break a sender's configuration; to rotate it, rename or replace the node. The signing secret is the owner's secret named by the node's `signature.secretRef`, resolved from the secret store on every delivery.
-- `/hooks/` needs no API key because the HMAC signature is the credential. See [Public routes](07-api-and-streaming.md#public-routes-decided-by-implementation-2026-10-03) for the full list.
-- Checks, in order, with the response for each failure:
+A Webhook accepts an ordinary POST at `/hooks/<token>`. Tokens remain stable across versions for the same trigger node. The pinned definition owns `body`, `eventType`, `dedupeKey`. The endpoint row owns its safe authentication recipe; intake requires exact agreement with that pinned definition and owner/loop/version provenance before resolving a secret.
 
-  | Check                                                                                                                                                   | Failure                                              |
-  | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-  | Body at most 1 MB (enforced while reading, before anything else)                                                                                        | 413                                                  |
-  | Token names an enabled endpoint                                                                                                                         | 404 `HOOK_NOT_FOUND`                                 |
-  | Per-endpoint rate limit                                                                                                                                 | 429 `RATE_LIMITED` with `retry-after`                |
-  | `x-graphgoblin-timestamp` present (ISO 8601 or Unix seconds) and within `replayWindowSeconds` of the server clock, in either direction                  | 401 `TIMESTAMP_MISSING` or `TIMESTAMP_OUT_OF_WINDOW` |
-  | The secret exists                                                                                                                                       | 503 `HOOK_NOT_READY`                                 |
-  | `sha256=<hex of HMAC-SHA256(secret, "<timestamp>.<raw body>")>` in the configured header (default `x-graphgoblin-signature`), compared in constant time | 401 `SIGNATURE_INVALID`                              |
-  | Body is empty or JSON                                                                                                                                   | 400 `BODY_INVALID`                                   |
-  | `dedupeKey` and `filter` expressions evaluate                                                                                                           | 422 `EXPRESSION_FAILED`                              |
-  | `(endpoint, dedupeKey)` not seen within the replay window                                                                                               | 409 `REPLAYED`                                       |
-
-- Expressions are JSONata over the parsed body, with request headers bound as `$headers` (lower-case names), excluding the configured signing header case-insensitively for both `dedupeKey` and `filter`. Without a `dedupeKey` expression the dedupe key is a SHA-256 hash of the signature digest (`sig-hash:`), which rejects a byte-for-byte replay inside the window without persisting the signature.
-- Every accepted delivery is recorded in `inbound_events` (`type: 'webhook'`, `source: 'webhook:<endpointId>'`). When the `filter` rejects it the response is 202 with `filtered: true` and no run; otherwise the run starts with `source: 'webhook'`, `triggerKind: 'webhook'`, the parsed body as payload, and the dedupe key, and the response is 202 with the event and `runId`. The run is queued, not finished, when the response is sent.
-- Rate limit: 60 deliveries per endpoint per minute by default (`GG_HOOK_RATE_LIMIT`), a fixed one-minute window counted in memory. It is a guard against a misbehaving sender, not a security boundary: counts reset on restart, a burst at a window edge can reach twice the limit, and the check runs before the signature so an attacker with the token can exhaust it.
-
-Sending a delivery by hand:
-
-```sh
-TOKEN=...                      # from GET /loops/{id}/triggers -> webhooks[].path
-SECRET=...                     # the value stored as the secret named by signature.secretRef
-BODY='{"action":"opened","number":7}'
-TS=$(date -u +%Y-%m-%dT%H:%M:%SZ)   # or Unix seconds: TS=$(date +%s)
-SIG="sha256=$(printf '%s.%s' "$TS" "$BODY" | openssl dgst -sha256 -hmac "$SECRET" | sed 's/^.* //')"
-curl -sS -X POST "http://127.0.0.1:4747/hooks/$TOKEN" \
-  -H 'content-type: application/json' \
-  -H "x-graphgoblin-timestamp: $TS" \
-  -H "x-graphgoblin-signature: $SIG" \
-  --data-binary "$BODY"
+```ts
+{
+  type: 'webhook',
+  authentication: { type: 'none' }, // default
+  body: { type: 'json' },          // default
+  eventType: { source: 'constant', value: 'webhook' }, // default
+  dedupeKey?: Expression,
+}
 ```
 
-Sign exactly the bytes you send (`--data-binary`, not `-d`, which strips newlines). GraphGoblin's own outbound webhook return channel signs the same way, so one GraphGoblin can trigger another.
+All objects are strict; flat `signature` and `replayWindowSeconds` fields are rejected. None establishes no sender identity. The same endpoint lookup, 60/minute default limiter, 1 MiB raw bound (including chunked bodies), decoding, extraction and atomic admission apply to every recipe.
 
-## Body-signed webhook and durable admission (#29)
+| Authentication                                                                     | Fields and signing message                                                                                                             |
+| ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `{type:'none'}`                                                                    | No signing fields or secret lookup; no authenticated sender identity.                                                                  |
+| `{type:'hmac-sha256', message:'body', header, secretRef}`                          | HMAC-SHA256 over exact raw bytes. Header defaults to `x-hub-signature-256`; no timestamp window.                                       |
+| `{type:'hmac-sha256', message:'timestamp-body', header, secretRef, windowSeconds}` | Sign UTF-8 timestamp, a dot and raw bytes. Header defaults to `x-graphgoblin-signature`; integer window 1-86,400 seconds, default 300. |
 
-Select `signature.scheme: hmac-sha256-body` for GitHub-compatible signing. The default header is `x-hub-signature-256`. The digest is `sha256=<hex HMAC-SHA256(secret, exact raw body)>`; no timestamp header is required, and `replayWindowSeconds` is rejected for this branch. Signature validation precedes strict UTF-8 decoding and JSON parsing. The same 1 MiB body limit, enabled-endpoint check and rate limit apply.
+HMAC values retain the `sha256=<hex>` format and constant-time comparison. The fixed timestamp header is `x-graphgoblin-timestamp`, accepting ISO or Unix seconds, within the configured window in either direction. Authenticate raw bytes before decoding, extraction or expressions. Duplicate raw authentication headers are counted case-insensitively and rejected. Header names are lowercase RFC token characters, length 1-128. Only secret names leave the owner's secret store.
 
-A durable receipt consumes `(ownerId, loopId, triggerNodeId, SHA256(raw body))` across published versions, without expiry. The GitHub delivery header is only a business dedupe hint; changing it, the signature's hex case, the signing secret or a filter cannot bypass raw-content replay suppression. Filtered deliveries return 202 and permanently consume their content. A completed repeat returns 409 `REPLAYED`. Correct a filter for future deliveries; resending identical captured bytes will not re-evaluate it.
+### Body and event metadata
 
-An authored nonempty `dedupeKey` also suppresses distinct bodies with the same business identity. In body mode, a key longer than 512 characters returns 422 `EXPRESSION_FAILED` before consuming a receipt; it is never truncated into a permanent collision. The claim transaction checks previous body receipts in every state and admitted runs, scoped to the same owner/loop/trigger across versions, without expiry. This includes an older timestamp-signed run with the same authored key. The new body is consumed as `deduplicated`, starts no run, and returns 409 `DUPLICATE_KEY`; repeating its exact bytes returns `REPLAYED`. The timestamp receiver still uses its existing replay window.
+- JSON uses fatal UTF-8 and nonempty valid JSON. Empty/whitespace JSON returns 400 `BODY_INVALID`; literal `null` is valid.
+- Text yields a JSON string, including empty string. Invalid UTF-8 returns 400 `BODY_INVALID`.
+- Bytes yields `{encoding:'base64', data}` without text decoding. Every mode retains the 1 MiB raw bound.
 
-A matching delivery freezes a run ID, invocation, initial thread and subloop pins. Receipt claim and pending pins share the engine's deletion lock. Run admission commits that state together with the sequence-1 queued event and receipt link, and publishes notifications only after commit. A transient dispatch failure returns 503 while retaining the pending intent. Permanent identity or target failures are saved as failed with a safe code. Startup recovery and a non-overlapping 15-second sweep retry at most five due intents, with persisted backoff capped at five minutes. Recovery reuses only the allocated run ID after immutable identity checks. Pending pins prevent deletion; permanent failures remain visible rather than silently allocating another run.
+`eventType` is one of `{source:'constant', value}`, `{source:'header', name, fallback}` or `{source:'json-pointer', pointer, fallback}`. Value and fallback are EventNames: nonblank, control-free strings of length 1-128; fallback defaults to `webhook`. Missing, blank or nonscalar selected values use fallback. Ambiguous headers return 400 `EVENT_TYPE_AMBIGUOUS`; control characters or overlong scalars return 422 `EVENT_TYPE_INVALID`, including scalars that would otherwise be blank.
 
-`GET /events` can include `delivery: {state, attempts, nextAttemptAt?, failureCode?}`. This exposes disposition without raw signatures, secret headers or the internal frozen intent. Schemes are listed on armed endpoints, with a null replay window for body signing. See [ADR-0024](decisions/ADR-0024-github-trigger-admission.md) and the [GitHub setup guide](guide/04-triggers.md#github-body-signatures).
+Pointers allow 1,024 characters and 32 segments with valid RFC 6901 `~0`/`~1` escapes. They require JSON body mode, follow own properties and array indices only, and may select a scalar root with the empty pointer. A new webhook run records extracted `invocation.trigger.eventType` through StartRunInput, the initial thread and sequence-1 queued event. Trigger output remains the decoded payload. This metadata neither publishes an Event nor establishes repository/sender authority.
+
+### Acknowledgement, repeats and recovery
+
+Every saved delivery returns exactly `202 {accepted:true}` without payloads, run/event IDs or dispositions. Private Events exposes pending/admitted/failed/filtered/deduplicated state, attempts, retry time, safe failure code and run links. Unsaved/unconfirmed admission or signing/configuration readiness may return 503; a saved pending or failed admission cannot change the public acknowledgement. Other errors remain 400 decoding/ambiguous extraction, 401 authentication, 404 unknown/disabled hook, 413 body bound, 422 extraction/expression failure and 429 with Retry-After.
+
+**Allow** is uniform, with no policy switch: identical unkeyed bytes may create distinct receipts and runs. Raw SHA-256 is audit evidence only; it suppresses nothing. An external repeat is a new delivery; recovery reuses the same saved intent and run ID. An authored nonempty key uses the existing owner/loop/trigger claim lookup across both HMAC recipes and None. A duplicate key is saved as `deduplicated` without an executable intent. Payload checks run downstream after admission; current configs reject `filter`. The `filtered` receipt state is historical only.
+
+Claim atomically saves inbound plus receipt, complete frozen intent, pending pins and key reservation under the deletion lock. Dispatch commits run/thread, pins, first queued event, receipt state and inbound link, then notifies. Recovery verifies immutable facts, uses the attempts re-read under the lock for backoff, and retains the nonoverlapping 15-second sweep, five due identities and five-minute backoff cap. The shared D29 runner tests fake/SQLite transactions; SQLite close/reopen supplements parity.
+
+Endpoint summaries expose `authentication`, pinned `body`, `eventType`, optional `dedupeKey` and `configurationAvailable`. Orphan or mismatched summaries mark configuration unavailable; an enabled mismatch logs a safe warning without breaking either listing. Intake still refuses that endpoint with `HOOK_NOT_READY`. Events descriptions cache endpoint, version and loop reads within each request, including repeated missing endpoints; they never cache configuration across requests. Events exposes the same safe pinned configuration under `webhook`; the UI makes it inspectable per delivery. Neither summary exposes the internal admission intent or signing values.
+
+### Permanent explicit keys (#168 T5)
+
+An absent `dedupeKey` creates no business identity or automatic key, including no signature-hash key. A configured expression sees the decoded payload and the current bounded `$headers` binding, excluding the configured signature header case-insensitively. Expression failures remain 422 `EXPRESSION_FAILED`.
+
+For every authentication recipe, a null, undefined or empty-string expression result returns 422 `KEY_INVALID` before claim. Other results use the current string-or-JSON form: strings stay exact and other values use JSON serialization. Reject above 512 characters; never truncate. Whitespace-only strings are literal keys, so `" "` and `"  "` differ. Invalid keys save no receipt or inbound row and start no run. Event and Poll key rules are unchanged.
+
+Explicit keys remain consumed permanently in owner/loop/trigger-node scope across versions and authentication recipes. Atomic claim checks preserved receipt/inbound keys, saved intent reservations and committed run-envelope keys from every trigger kind. Inbound-only historical claims use their preserved endpoint's owner/loop/node provenance, including disabled old versions. Receipt states, elapsed time, endpoint freshness windows and republishing cannot reopen a webhook key; there is no expiry refresh or signature-hash ledger. A concurrent repeat receives a new `deduplicated` receipt without a new executable intent. Lost-acknowledgement recovery reuses the saved identity; an external repeat with the key is acknowledged without another run. A stopped-store restart preserves the claims. Deleting the loop deletes that scope and its history.
+
+### Storage and conversion
+
+SQL `0013_trigger_configuration` stores `auth_type`, `signature_message`, `signature_header`, `secret_ref` and `window_seconds`, preserving endpoint identities/tokens and both indexes. The copy canonicalizes valid mixed-case signing headers to lowercase; startup also validates stored headers as lowercase RFC tokens and refuses invalid names before writes. CHECKs enforce null signing fields for None, header/secret plus null window for body HMAC, and an integer 1-86,400 timestamp window. Body/extraction/key settings stay in the pinned definition. The content-hash receipt index is non-unique. Unreleased format 4 requires the 0013 structure; older stores are refused before automatic migration/recovery.
+
+The frozen V3-to-V4 definition converter maps both old signing recipes to nested authentication, lowercases header names, supplies JSON and constant `webhook` metadata, and preserves key source. Each webhook has a hash-bound `webhook-json-decoding` review item for strict UTF-8/nonempty JSON, including the former timestamp empty-body behavior. Filters use the separate reviewed graph conversion below. Every proposal passes the current schema and graph validation. Definition approval does not perform the integrated installed-store cutover. See [ADR-0037](decisions/ADR-0037-webhook-acknowledgement.md).
+
+### Editable GitHub webhook recipes (#168 T2)
+
+The three webhook presets no longer generate trigger `filter`. They keep body HMAC on
+`x-hub-signature-256`, the chosen secret and `$headers."x-github-delivery"` dedupe.
+They insert ordinary editable nodes: trigger --> expression decision (`event-check`),
+Continue (`pass`) --> mutate (`restore-output`) --> former successor, and Ignore
+(`ignore`) --> terminal Success exit with `returns: "none"`, `destinations: []` and no
+continuation. Non-matching deliveries therefore create visible quiet successful
+runs. These payload checks run downstream of the shared webhook intake and admission path.
+
+Checks read `invocation.trigger.payload` and return route IDs. They preserve the
+repository/action/object/label/draft/merged/base checks and JSON-quote user strings.
+Presets extract `x-github-event` with fallback `webhook`; their authority checks use the
+signed body. The mutate uses `set /lastOutput` with an expression
+`$lookup(outputs, "<triggerId>")`, copying the full `nodeId/value/at/schemaRef`
+record. It does not replace that record with a mutate output.
+
+Preview lists config fields, added/replaced nodes and added/removed/rewired edges.
+Apply checks the current schemas and graph rules, including limits, and records one
+undo step with held input. Existing check/restore/exit topology is explicitly
+reviewed for replacement, including owner edits; ambiguous/shared topology is
+retained and a new fragment is inserted for webhook recipes. The poll recipe
+removes a recognized earlier webhook fragment and reconnects its former successor
+directly to the trigger; otherwise, a retained downstream check is disclosed with
+a warning that it may ignore poll results.
+
+### Reviewed stored filters (#168 T6)
+
+Current Webhook/Event contracts reject `filter`, with no dual reader. Decisions, classifiers and scripts own payload policy. Every frozen filtered version needs a stored version ID and a hash-bound `trigger-filter` resolution: approve the generated graph, replace it with `{nodes, edges}`, or remove with an explicit reason accepting broader behaviour. Header, clock, randomness, dynamic-source, absolute-root (`$$`) and unavailable-context dependencies have no generated proposal and need replacement or explicit removal. Approvals never transfer to another stored version, even with identical definitions.
+
+Filters that read context (`@$x`) or position (`#$i`) bindings conservatively require a reviewed replacement or explicit removal, even when they use those bindings deterministically over the payload. The converter does not prove those binding scopes.
+
+The pure V3-to-V4 converter generates trigger -> expression decision; `pass` -> restore -> former successor and `ignore` -> a new quiet Success exit (`returns: "none"`, no destinations). The decision `$eval`s the JSON-escaped original source once against `invocation.trigger.payload` in a separate block frame, preventing source bindings from replacing the coercion helpers. It then implements `evaluatePredicate` coercion: missing/null false, nonempty arrays/objects true, other values JavaScript Boolean. It does not use JSONata `$boolean`. Sequences collapse according to JSONata evaluation; NaN is classified as object by `$type` and its empty keys yield false. Arithmetic can also produce positive/negative infinity, on which `$type` throws: the completed wrapper first compares `$v` with `1/0` and `-1/0`, assigning type `number` for those values before applying the plan's coercion branches. Lambdas, built-ins and regex functions pass. Guarded eval, unsafe-regex, depth/deadline and Expression bounds remain enforced.
+
+Restore sets `/lastOutput` from `$lookup(outputs, "<triggerId>")`. Trigger and successor-edge IDs stay; the old edge starts at restore, retains its destination and loses any invalid manual route, which the review reports. Generated Slug IDs are deterministic and collision-free. Ambiguous/multiple/missing successors, exhausted IDs and graphs above 500 nodes or 2,000 edges refuse conversion. Effectful exits are never reused. Replacements own new nodes and edges, preserve the original successor edge/destination, and pass current schema, syntax and graph validation.
+
+Review explicitly accepts formerly ignored input creating quiet runs, expression errors occurring after acknowledgement inside an admitted run, keys consumed before the check, and extra visits against the safety cap. This definition rule does not apply SQL, convert device drafts or authorize installation; the shared cutover still composes those operations and binds stored-version review identities.
 
 ## Inbound event bus (Decided, shipped in M6)
 
-- `POST /events` accepts `{ type, payload, dedupeKey? }` from any client with the `events:write` scope. The event is stored in `inbound_events` (`source: 'api'`) and fires every `event` trigger node of the owner's published loops whose `eventType` matches and whose `filter` passes. The response is the stored event with `runIds` and `duplicate`.
+- `POST /events` accepts `{ type, payload, dedupeKey? }` from any client with the `events:write` scope. The event is stored in `inbound_events` (`source: 'api'`) and fires every `event` trigger node of the owner's published loops whose `eventType` matches. The response is the stored event with `runIds` and `duplicate`.
 - Dedupe: an event whose `(type, dedupeKey)` was seen before fires nothing and returns `duplicate: true` with the earlier event's run ids. A trigger node's own `dedupeKey` expression additionally skips the event when that node has already started a run with the same key (looked up in the runs' stored trigger envelopes, so it survives restarts).
 - Exit nodes publish to the same bus through the `event` return channel, which is how loops compose without a parent loop: a triage loop can emit `issue-ready` and an implementation loop can trigger on it. Those events are stored with `source: 'run:<runId>'`, and the runs they start record `caller: { kind: 'run', id: <emitting run> }`.
 - `GET /events` lists stored events newest first (`limit`, `type`, `before`).
@@ -129,7 +182,7 @@ HTTP probe results omit authorization, cookie, set-cookie and API-key response h
 The most secure default for a single-user laptop is to accept nothing inbound and use polling or manual triggers. When inbound webhooks are needed during development:
 
 - Use a tunnel that terminates TLS and authenticates the tunnel itself, such as a Cloudflare Tunnel or an ngrok endpoint with its own auth, pointed only at `/hooks/*`.
-- Keep signature verification and replay protection on. The tunnel is not a substitute.
+- Choose the required signing recipe and timestamp freshness check deliberately. The tunnel is not a substitute.
 - Never expose the whole API through the tunnel. Bind the API to localhost and route only the hooks prefix.
 - For real distribution, the hosted version terminates TLS itself and sits behind the auth provider; webhook endpoints remain signature-gated and unauthenticated by design.
 
@@ -137,8 +190,10 @@ The most secure default for a single-user laptop is to accept nothing inbound an
 
 Every firing starts a run. A per-loop policy, `parallel`, `queue`, `skip`, or `replace`, is post-1.0 and will live in loop settings.
 
-## Bundled implementation workflow (#30)
+## Template starting points and packaging (#165)
 
-The [GitHub issue implementation template](guide/10-implementation-template.md) uses the generic poll-items trigger every 60 seconds and admits at most one eligible issue per poll. Its private support command discovers open issues carrying the configured trigger label. Before generic deduplication, the API derives a stable repository/issue/attempt key from authenticated template run history. Transactional admission independently recomputes that attempt and rejects stale or forged selections. Restarting, relabeling or creating another template instance does not reset a consumed attempt.
+The four shipped templates are manual starting graphs copied with `POST /templates/:id/draft`. Copying creates an independent ordinary loop and draft without publication, runs, children or bindings. The catalogue validates only the declared draft export and its graph. It does not discover GitHub work or consult models, credentials, prerequisites or template storage. Later edits may add ordinary triggers and effects explicitly.
 
-Publishing the parent enables polling; creating its draft does not. Support checks the issue, labels, repository identity and origin before effects, records a durable claim, then prepares local worktrees and labels the issue in progress. Direct work uses one fresh child; split tasks run sequentially in separate child worktrees and merge into the issue branch. The configured native gate must pass on an unchanged, clean commit before support can publish its exact PR intent. Successful completion leaves the PR open for review. Failed progressed attempts retain their state for manual reconciliation; only the documented pre-execution prerequisite failures can resume the same run.
+The API build and distributed image contain no private template support entry modules. There is no configured implementation, review or QA service, reporter, authority dispatch or support-command wrapper. The draft gate checks all shipped starting points and deliberately invalid graph refusal. CI loads the installed catalogue in a container without network access or writable storage, checks independent copies, and verifies that the deleted support modules are absent. Configured JSON assets remain temporarily for step 10; no loader executes them.
+
+The generic GitHub poll-items recipe in the trigger guide remains available to ordinary loops. It uses the owner's explicit CLI credentials, bounded probes, durable deduplication and ordinary admission, without configured-instance discovery or attempt authority.

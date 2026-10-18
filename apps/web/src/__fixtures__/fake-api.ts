@@ -18,21 +18,13 @@ import type {
   RunRecord,
   TemplateCatalogEntry,
   TemplateDraftRequest,
-  TemplateInstance,
-  TemplateInstantiateRequest,
-  TemplatePrerequisiteReport,
 } from '@graphgoblin/contracts';
 import {
   ClassifierModelPutSchema,
-  ImplementationTemplateSettingsSchema,
   LoopDefinitionSchema,
-  ReviewTemplateSettingsSchema,
-  QaTemplateSettingsSchema,
-  StarterTemplateSettingsSchema,
   TemplateCatalogEntrySchema,
 } from '@graphgoblin/contracts';
 import { fakeUlid, minimalLoop, sampleThread } from '@graphgoblin/contracts/testing';
-import { z } from 'zod';
 import {
   exportLoop,
   importLoop,
@@ -40,6 +32,8 @@ import {
   LoopImportError,
   stableHash,
   validateLoop,
+  upgradeExportCurrent,
+  upgradeLoopCurrent,
   type ValidationIssue,
 } from '@graphgoblin/domain';
 
@@ -123,412 +117,67 @@ export function customClassifier(
   };
 }
 
-/** A current-contract, non-GitHub starter entry for gallery tests. */
+/** An independent starting point using the current manifest contract. */
 export function starterTemplateEntry(): TemplateCatalogEntry {
-  const prerequisites: TemplatePrerequisiteReport = {
-    checks: [
-      {
-        id: 'assistant-model',
-        label: 'Assistant model',
-        status: 'ok',
-        blocking: 'authoring',
-        message: 'An enabled assistant model is available.',
-      },
-    ],
-    canInstantiate: true,
-    canRun: true,
-  };
   return TemplateCatalogEntrySchema.parse({
     manifest: {
       id: 'quick-start',
-      version: '1.0.0',
-      kind: 'starter',
+      version: '2.0.0',
       title: 'Quick start',
       description: 'A small loop to try the editor and a first run.',
       tags: ['starter', 'beginner'],
-      roles: [{ id: 'assistant', label: 'Assistant', access: 'read-only' }],
-      prerequisites: [],
-      requiredSecrets: [],
-      parentKey: 'starter',
       draftFile: 'draft.json',
-      loops: [
-        {
-          key: 'starter',
-          file: 'starter.json',
-          dependsOn: [],
-          roleNodes: [],
-          settingsNodes: [],
-          subloops: [],
-        },
-      ],
     },
-    settingsSchema: z.toJSONSchema(StarterTemplateSettingsSchema, { io: 'input' }),
-    defaultSettings: StarterTemplateSettingsSchema.parse({
-      kind: 'starter',
-      roles: { assistant: { harness: 'codex', model: 'test-codex', effort: 'low' } },
-    }),
-    prerequisites,
   });
 }
 
-/** A current-contract repository template with no prefilled checkout identity or role model. */
+/** An independent starting point using the current manifest contract. */
 export function implementationTemplateEntry(): TemplateCatalogEntry {
-  const prerequisites: TemplatePrerequisiteReport = {
-    checks: [
-      {
-        id: 'implementer-model',
-        label: 'Implementer model',
-        status: 'ok',
-        blocking: 'authoring',
-        message: 'An enabled implementation model is available.',
-      },
-      {
-        id: 'repository',
-        label: 'Repository',
-        status: 'ok',
-        blocking: 'authoring',
-        message: 'The repository is available.',
-      },
-      {
-        id: 'github',
-        label: 'GitHub',
-        status: 'ok',
-        blocking: 'authoring',
-        message: 'GitHub is available.',
-      },
-      {
-        id: 'support-key',
-        label: 'Revocable runs:read support key',
-        status: 'ok',
-        blocking: 'authoring',
-        message: 'The support key is configured.',
-      },
-      {
-        id: 'support',
-        label: 'Verified packaged support entry',
-        status: 'ok',
-        blocking: 'authoring',
-        message: 'The support loops are available.',
-      },
-    ],
-    canInstantiate: true,
-    canRun: true,
-  };
   return TemplateCatalogEntrySchema.parse({
     manifest: {
       id: 'implementation-workflow',
-      version: '1.0.0',
-      kind: 'implementation',
+      version: '2.0.0',
       title: 'Implementation workflow',
-      description: 'Plan and complete bounded repository work.',
+      description:
+        'Plan a supplied task, implement a focused change and assess verification with a bounded repair loop of ordinary nodes. No commits, pushes, pull requests or labels.',
       tags: ['implementation', 'repository'],
-      roles: [{ id: 'implementer', label: 'Implementer', access: 'write' }],
-      prerequisites: [
-        { id: 'repository', label: 'Repository', kind: 'repository', blocking: 'authoring' },
-        { id: 'github', label: 'GitHub', kind: 'github', blocking: 'authoring' },
-        {
-          id: 'support-key',
-          label: 'Revocable runs:read support key',
-          kind: 'secret',
-          blocking: 'authoring',
-          secretKey: 'supportReadKey',
-        },
-        {
-          id: 'implementer-model',
-          label: 'Implementer model',
-          kind: 'role',
-          blocking: 'authoring',
-          role: 'implementer',
-        },
-        {
-          id: 'support',
-          label: 'Verified packaged support entry',
-          kind: 'support',
-          blocking: 'authoring',
-        },
-      ],
-      requiredSecrets: [{ key: 'supportReadKey', scopes: ['runs:read'] }],
-      parentKey: 'parent',
       draftFile: 'draft.json',
-      loops: [
-        {
-          key: 'worker',
-          file: 'worker.json',
-          dependsOn: [],
-          roleNodes: [],
-          settingsNodes: [],
-          subloops: [],
-        },
-        {
-          key: 'parent',
-          file: 'parent.json',
-          dependsOn: ['worker'],
-          roleNodes: [],
-          settingsNodes: [],
-          subloops: [],
-        },
-      ],
     },
-    settingsSchema: z.toJSONSchema(ImplementationTemplateSettingsSchema, { io: 'input' }),
-    defaultSettings: null,
-    prerequisites,
   });
 }
 
-/** A current-contract review template with explicit review and fixer roles. */
+/** An independent starting point using the current manifest contract. */
 export function reviewTemplateEntry(): TemplateCatalogEntry {
-  const prerequisites: TemplatePrerequisiteReport = {
-    checks: [
-      {
-        id: 'reviewer-model',
-        label: 'Read-only reviewer model and harness',
-        status: 'ok',
-        blocking: 'authoring',
-        message: 'A current reviewer model is available.',
-      },
-      {
-        id: 'fixer-model',
-        label: 'Independent fixer model and harness',
-        status: 'ok',
-        blocking: 'authoring',
-        message: 'A current fixer model is available.',
-      },
-      {
-        id: 'repository',
-        label: 'Repository',
-        status: 'ok',
-        blocking: 'authoring',
-        message: 'The repository is available.',
-      },
-      {
-        id: 'github',
-        label: 'GitHub',
-        status: 'ok',
-        blocking: 'authoring',
-        message: 'GitHub is available.',
-      },
-      {
-        id: 'support-key',
-        label: 'Revocable runs:read support key',
-        status: 'ok',
-        blocking: 'authoring',
-        message: 'The support key is configured.',
-      },
-      {
-        id: 'support',
-        label: 'Verified packaged support entry',
-        status: 'ok',
-        blocking: 'authoring',
-        message: 'The review support entry is available.',
-      },
-    ],
-    canInstantiate: true,
-    canRun: true,
-  };
   return TemplateCatalogEntrySchema.parse({
     manifest: {
       id: 'review',
-      version: '1.0.0',
-      kind: 'review',
-      title: 'GitHub PR review',
+      version: '2.0.0',
+      title: 'Review workflow',
       description:
-        'Review trusted pull request heads with separate fresh reviewer and fixer sessions.',
-      tags: ['github', 'review', 'human'],
-      roles: [
-        { id: 'reviewer', label: 'Reviewer', access: 'read-only' },
-        { id: 'fixer', label: 'Fixer', access: 'write' },
-      ],
-      prerequisites: [
-        {
-          id: 'reviewer-model',
-          label: 'Reviewer model',
-          kind: 'role',
-          blocking: 'authoring',
-          role: 'reviewer',
-        },
-        {
-          id: 'fixer-model',
-          label: 'Fixer model',
-          kind: 'role',
-          blocking: 'authoring',
-          role: 'fixer',
-        },
-        { id: 'repository', label: 'Repository', kind: 'repository', blocking: 'authoring' },
-        { id: 'github', label: 'GitHub', kind: 'github', blocking: 'authoring' },
-        {
-          id: 'support-key',
-          label: 'Revocable runs:read support key',
-          kind: 'secret',
-          blocking: 'authoring',
-          secretKey: 'supportReadKey',
-        },
-        {
-          id: 'support',
-          label: 'Verified packaged support entry',
-          kind: 'support',
-          blocking: 'authoring',
-        },
-      ],
-      requiredSecrets: [{ key: 'supportReadKey', scopes: ['runs:read'] }],
-      parentKey: 'parent',
+        'Review a supplied change with separate fresh reviewer and fixer turns, then review again within a bounded cycle of ordinary nodes. No pushes, GitHub approvals, labels or merges.',
+      tags: ['review', 'fixes'],
       draftFile: 'draft.json',
-      loops: [
-        {
-          key: 'parent',
-          file: 'parent.json',
-          dependsOn: [],
-          roleNodes: [],
-          settingsNodes: ['settings'],
-          subloops: [],
-        },
-      ],
-      supportEntry: 'dist/templates/github/review-entry.js',
     },
-    settingsSchema: z.toJSONSchema(ReviewTemplateSettingsSchema, { io: 'input' }),
-    defaultSettings: null,
-    prerequisites,
   });
 }
 
-/** A current-contract QA template: authoring is allowed, but run-time isolation is unavailable. */
+/** An independent starting point using the current manifest contract. */
 export function qaTemplateEntry(): TemplateCatalogEntry {
-  const prerequisites: TemplatePrerequisiteReport = {
-    checks: [
-      {
-        id: 'qa-model',
-        label: 'QA model and harness',
-        status: 'ok',
-        blocking: 'authoring',
-        message: 'A current QA model is available.',
-      },
-      {
-        id: 'adversary-model',
-        label: 'Evidence-only adversary model and harness',
-        status: 'ok',
-        blocking: 'authoring',
-        message: 'A current adversary model is available.',
-      },
-      {
-        id: 'repository',
-        label: 'Repository',
-        status: 'ok',
-        blocking: 'authoring',
-        message: 'The repository is available.',
-      },
-      {
-        id: 'github',
-        label: 'Authenticated configured repository',
-        status: 'ok',
-        blocking: 'authoring',
-        message: 'The configured repository is available.',
-      },
-      {
-        id: 'support-key',
-        label: 'Revocable runs:read support key',
-        status: 'ok',
-        blocking: 'authoring',
-        message: 'The support key is configured.',
-      },
-      {
-        id: 'support',
-        label: 'Verified packaged QA support entry',
-        status: 'ok',
-        blocking: 'authoring',
-        message: 'The QA support entry is available.',
-      },
-      {
-        id: 'isolation',
-        label: 'Enforced evidence-only isolation',
-        status: 'unavailable',
-        blocking: 'runtime',
-        message: 'Enforced evidence-only isolation is unavailable; QA work remains blocked.',
-        remediation: 'Wait for an enforced isolation runtime before starting QA work.',
-      },
-    ],
-    canInstantiate: true,
-    canRun: false,
-  };
   return TemplateCatalogEntrySchema.parse({
     manifest: {
       id: 'qa',
-      version: '1.0.0',
-      kind: 'qa',
-      title: 'Post-merge QA',
-      description: 'Draftable QA recipe with saved proof and bounded rework.',
-      tags: ['github', 'qa', 'proof'],
-      roles: [
-        { id: 'qa', label: 'QA', access: 'write' },
-        { id: 'adversary', label: 'Evidence-only adversary', access: 'read-only' },
-      ],
-      prerequisites: [
-        { id: 'qa-model', label: 'QA model', kind: 'role', blocking: 'authoring', role: 'qa' },
-        {
-          id: 'adversary-model',
-          label: 'Evidence-only adversary model',
-          kind: 'role',
-          blocking: 'authoring',
-          role: 'adversary',
-        },
-        { id: 'repository', label: 'Repository', kind: 'repository', blocking: 'authoring' },
-        { id: 'github', label: 'GitHub', kind: 'github', blocking: 'authoring' },
-        {
-          id: 'support-key',
-          label: 'Revocable runs:read support key',
-          kind: 'secret',
-          blocking: 'authoring',
-          secretKey: 'supportReadKey',
-        },
-        { id: 'support', label: 'QA support entry', kind: 'support', blocking: 'authoring' },
-        {
-          id: 'isolation',
-          label: 'Enforced evidence-only isolation is unavailable',
-          kind: 'isolation',
-          blocking: 'runtime',
-          role: 'adversary',
-        },
-      ],
-      requiredSecrets: [{ key: 'supportReadKey', scopes: ['runs:read'] }],
-      parentKey: 'parent',
+      version: '2.0.0',
+      title: 'QA assessment',
+      description:
+        'Define criteria, assess supplied evidence and challenge the assessment with separate fresh turns in ordinary nodes. No GitHub effects, authenticated proof or enforced evidence isolation.',
+      tags: ['qa', 'evidence', 'adversarial'],
       draftFile: 'draft.json',
-      loops: [
-        {
-          key: 'qa-worker',
-          file: 'qa-worker.json',
-          dependsOn: ['adversary'],
-          roleNodes: [{ role: 'qa', nodeId: 'qa' }],
-          settingsNodes: [],
-          subloops: [{ nodeId: 'adversary-call', loopKey: 'adversary' }],
-        },
-        {
-          key: 'adversary',
-          file: 'adversary.json',
-          dependsOn: [],
-          roleNodes: [{ role: 'adversary', nodeId: 'adversary' }],
-          settingsNodes: [],
-          subloops: [],
-        },
-        {
-          key: 'parent',
-          file: 'parent.json',
-          dependsOn: ['qa-worker'],
-          roleNodes: [],
-          settingsNodes: ['settings'],
-          subloops: [{ nodeId: 'qa-call', loopKey: 'qa-worker' }],
-        },
-      ],
-      supportEntry: 'dist/templates/github/qa-entry.js',
     },
-    settingsSchema: z.toJSONSchema(QaTemplateSettingsSchema, { io: 'input' }),
-    defaultSettings: null,
-    prerequisites,
   });
 }
 
 export class FakeApi {
   templates: TemplateCatalogEntry[] = [];
-  templateInstances = new Map<string, TemplateInstance>();
-  /** Static per-template report for focused settings checks; tests may override the route. */
-  templatePrerequisiteReports = new Map<string, TemplatePrerequisiteReport>();
   loops = new Map<
     string,
     {
@@ -701,14 +350,14 @@ export class FakeApi {
    */
   classifierIssues(definition: LoopDefinition): LoopIssue[] {
     return definition.nodes.flatMap((node): LoopIssue[] => {
-      if (node.kind !== 'decision' || node.config.evaluation.kind !== 'classifier') return [];
-      const id = node.config.evaluation.model;
+      if (node.kind !== 'decision' || node.config.kind !== 'classifier') return [];
+      const id = node.config.model;
       const entry = this.classifiers.find((c) => c.id === id);
       const issue = (code: string, severity: 'error' | 'warning', message: string): LoopIssue => ({
         code,
         severity,
         nodeId: node.id,
-        path: 'config.evaluation.model',
+        path: 'config.model',
         message: `Decision '${node.label}' (${node.id}), classifier '${entry?.displayName ?? id}' (${id}): ${message}`,
       });
       if (!entry) return [issue('CLASSIFIER_MODEL_NOT_FOUND', 'error', 'model not found.')];
@@ -803,14 +452,6 @@ export class FakeApi {
       },
     ],
     [
-      'POST /templates/:id/prerequisites',
-      (_call, [templateId]) => {
-        const entry = this.templates.find((item) => item.manifest.id === templateId);
-        if (!entry) return problem(404, 'TEMPLATE_NOT_FOUND', 'template not found');
-        return json(this.templatePrerequisiteReports.get(templateId!) ?? entry.prerequisites);
-      },
-    ],
-    [
       'POST /templates/:id/draft',
       (call, [templateId]) => {
         const entry = this.templates.find((item) => item.manifest.id === templateId);
@@ -824,53 +465,6 @@ export class FakeApi {
         });
         const draft = this.loops.get(loop.id)!.draft!;
         return json({ loop, draft, issues: validateLoop(draft.definition) }, 201);
-      },
-    ],
-    [
-      'POST /templates/:id/instantiate',
-      (call, [templateId]) => {
-        const entry = this.templates.find((item) => item.manifest.id === templateId);
-        if (!entry) return problem(404, 'TEMPLATE_NOT_FOUND', 'template not found');
-        const report = this.templatePrerequisiteReports.get(templateId!) ?? entry.prerequisites;
-        if (!report.canInstantiate)
-          return problem(
-            409,
-            'TEMPLATE_PREREQUISITES_FAILED',
-            'creation requirements are not ready',
-          );
-        const request = call.body as TemplateInstantiateRequest;
-        const loop = this.addLoop({
-          ...minimalLoop(),
-          name: request.name ?? entry.manifest.title,
-        });
-        const draft = this.loops.get(loop.id)!.draft!;
-        const instance: TemplateInstance = {
-          id: id('template-instance'),
-          ownerId: 'local',
-          templateId: templateId!,
-          templateVersion: entry.manifest.version,
-          createdAt: TS,
-          parentLoopId: loop.id,
-          loops: [
-            {
-              key: entry.manifest.parentKey,
-              loopId: loop.id,
-              versionId: draft.id,
-              version: draft.version,
-              status: 'draft',
-            },
-          ],
-          settings: request.settings,
-        };
-        this.templateInstances.set(instance.id, instance);
-        return json({ instance, prerequisites: report }, 201);
-      },
-    ],
-    [
-      'GET /template-instances/:id',
-      (_call, [instanceId]) => {
-        const instance = this.templateInstances.get(instanceId!);
-        return instance ? json(instance) : problem(404, 'TEMPLATE_INSTANCE_NOT_FOUND');
       },
     ],
     ['GET /loops', () => json({ items: [...this.loops.values()].map((l) => l.loop) })],
@@ -892,12 +486,36 @@ export class FakeApi {
     ],
     [
       'POST /loops/import',
-      (call) => {
+      async (call) => {
         try {
-          const imported = importLoop(call.body);
+          let input = call.body;
+          let notices: { code: string; path: string; message: string }[] = [];
+          if (
+            typeof input === 'object' &&
+            input !== null &&
+            (('formatVersion' in input && [1, 2, 3].includes(Number(input.formatVersion))) ||
+              ('schemaVersion' in input && [1, 2, 3].includes(Number(input.schemaVersion))))
+          ) {
+            const converted =
+              'formatVersion' in input
+                ? await upgradeExportCurrent(input)
+                : await upgradeLoopCurrent(input);
+            if (!converted.ok)
+              return problem(
+                400,
+                converted.issues.some((issue) => issue.kind === 'pending')
+                  ? 'LOOP_FORMAT_UPGRADE_REQUIRED'
+                  : 'LOOP_IMPORT_SOURCE_INVALID',
+                'Use graphgoblin-upgrade export with --resolutions resolutions.json and the reported v3 item ids and hashes. See docs/guide/08-offline-upgrade.md#convert-a-portable-export.',
+                { issues: converted.issues, reviewItems: converted.reviewItems },
+              );
+            input = converted.value;
+            notices = converted.notices;
+          }
+          const imported = importLoop(input);
           const loop = this.addLoop(imported.definition);
           return json(
-            { loop, draft: this.loops.get(loop.id)!.draft, issues: imported.issues },
+            { loop, draft: this.loops.get(loop.id)!.draft, issues: imported.issues, notices },
             201,
           );
         } catch (error) {
@@ -913,16 +531,10 @@ export class FakeApi {
       (_call, [loopId]) => {
         const entry = this.loops.get(loopId!);
         const draftToken = this.draftToken(loopId!);
-        const template = [...this.templateInstances.values()].find(
-          (instance) =>
-            instance.ownerId === entry?.loop.ownerId &&
-            instance.loops.some((loop) => loop.loopId === loopId),
-        );
         return entry
           ? json({
               ...entry,
               ...(draftToken ? { draftToken } : {}),
-              ...(template ? { templateInstanceId: template.id } : {}),
             })
           : problem(404, 'LOOP_NOT_FOUND', 'loop not found');
       },

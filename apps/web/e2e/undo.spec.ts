@@ -43,25 +43,42 @@ function draftSaves(page: Page, loopId: string): Request[] {
 }
 
 /** The approval loop, with the exit looping back to the wait node. */
-function loopBackLoop(name: string) {
+function gateLoop(name: string) {
   const loop = approvalLoop(name);
   return {
     ...loop,
-    nodes: loop.nodes.map((node) =>
-      node.id === 'done'
-        ? {
-            ...node,
-            config: {
-              criteria: [{ when: 'max-iterations', value: 3 }],
-              default: 'loop-back',
-              loopBack: { targetNodeId: 'approve' },
-            },
-          }
-        : node,
-    ),
+    nodes: [
+      ...loop.nodes.map((node) =>
+        node.id === 'done'
+          ? {
+              ...node,
+              kind: 'decision',
+              config: {
+                kind: 'expression',
+                jsonata: '"repeat"',
+                routes: [
+                  { id: 'repeat', label: 'Repeat', repeat: true },
+                  { id: 'finish', label: 'Finish' },
+                ],
+                maxPasses: 3,
+              },
+            }
+          : node,
+      ),
+      { id: 'success', kind: 'exit', label: 'Success', config: {}, ui: { x: 800, y: 80 } },
+      {
+        id: 'exhausted',
+        kind: 'exit',
+        label: 'Exhausted',
+        config: { outcome: 'exhausted' },
+        ui: { x: 800, y: 300 },
+      },
+    ],
     edges: [
       ...loop.edges,
-      { id: 'e3', from: { node: 'done', port: 'loopBack' }, to: { node: 'approve' } },
+      { id: 'e3', from: { node: 'done', port: 'repeat' }, to: { node: 'approve' } },
+      { id: 'finish', from: { node: 'done', port: 'finish' }, to: { node: 'success' } },
+      { id: 'limit', from: { node: 'done', port: 'limit-reached' }, to: { node: 'exhausted' } },
     ],
   };
 }
@@ -75,7 +92,7 @@ test('incomplete weekly Monday 07:30 blocks publish, survives dialog remount, an
     ...definition,
     nodes: definition.nodes.map((node) =>
       node.id === 'start'
-        ? { ...node, config: { subtype: 'cron', expression: '30 7 * * 1', timezone: 'UTC' } }
+        ? { ...node, config: { type: 'cron', expression: '30 7 * * 1', timezone: 'UTC' } }
         : node,
     ),
   });
@@ -323,14 +340,14 @@ test('Ctrl+Z from a checkbox or a select undoes and keeps focus on that control'
   await page.keyboard.press('Control+y');
   await expect(start.getByRole('checkbox', { name: 'mcp' })).not.toBeChecked();
 
-  const subtype = start.getByLabel('Subtype');
-  await subtype.selectOption('cron');
+  const triggerType = start.getByLabel('Trigger type');
+  await triggerType.selectOption('cron');
   await expect(start.getByLabel('Repeat')).toBeVisible();
-  await subtype.focus();
+  await triggerType.focus();
   await page.keyboard.press('Control+z');
-  await expect(start.getByLabel('Subtype').locator('option:checked')).toHaveText('manual');
+  await expect(start.getByLabel('Trigger type').locator('option:checked')).toHaveText('Manual');
   await expect(start.getByLabel('Repeat')).toHaveCount(0);
-  await expect(start.getByLabel('Subtype')).toBeFocused();
+  await expect(start.getByLabel('Trigger type')).toBeFocused();
 });
 
 test('model then effort are two undo steps, and undo and redo keep Advanced open (review F5, F6)', async ({
@@ -524,25 +541,25 @@ test('undoing a delete restores the node, its edges, and the exit’s loop-back;
   page,
   request,
 }) => {
-  const loopId = await createLoop(request, loopBackLoop('qa undo delete'));
+  const loopId = await createLoop(request, gateLoop('qa undo delete'));
   await page.goto(`/app/loops/${loopId}/edit`);
-  await expect(page.locator('.react-flow__edge')).toHaveCount(3);
+  await expect(page.locator('.react-flow__edge')).toHaveCount(5);
   let dialog = await openNode(page, 'approve');
   await dialog.getByRole('button', { name: 'Delete node' }).click();
   await expect(card(page, 'approve')).toHaveCount(0);
-  await expect(page.locator('.react-flow__edge')).toHaveCount(0);
+  await expect(page.locator('.react-flow__edge')).toHaveCount(2);
   await expect(page.getByTestId('canvas')).toBeFocused();
   await expect(undoButton(page)).toHaveAccessibleName('Undo delete approve');
 
   await page.keyboard.press('Control+z');
   await expect(card(page, 'approve')).toBeVisible();
-  await expect(page.locator('.react-flow__edge')).toHaveCount(3);
+  await expect(page.locator('.react-flow__edge')).toHaveCount(5);
   await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
   let { draft } = await serverDraft(request, loopId);
-  expect(draft.definition.nodes.find((n) => n.id === 'done')!.config['loopBack']).toEqual({
-    targetNodeId: 'approve',
-  });
-  expect(draft.definition.edges).toHaveLength(3);
+  expect(
+    draft.definition.edges.find((e) => e.from.node === 'done' && e.from.port === 'repeat')?.to.node,
+  ).toBe('approve');
+  expect(draft.definition.edges).toHaveLength(5);
 
   // Rename the node the edges and the loop-back use, then undo it from inside its editor.
   dialog = await openNode(page, 'approve');
@@ -557,11 +574,17 @@ test('undoing a delete restores the node, its edges, and the exit’s loop-back;
   await expect(dialog.getByLabel('Node id')).toHaveValue('approve');
   await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
   ({ draft } = await serverDraft(request, loopId));
-  expect(draft.definition.nodes.map((n) => n.id)).toEqual(['start', 'approve', 'done']);
+  expect(draft.definition.nodes.map((n) => n.id)).toEqual([
+    'start',
+    'approve',
+    'done',
+    'success',
+    'exhausted',
+  ]);
   expect(draft.definition.edges.filter((e) => e.to.node === 'approve')).toHaveLength(2);
-  expect(draft.definition.nodes.find((n) => n.id === 'done')!.config['loopBack']).toEqual({
-    targetNodeId: 'approve',
-  });
+  expect(
+    draft.definition.edges.find((e) => e.from.node === 'done' && e.from.port === 'repeat')?.to.node,
+  ).toBe('approve');
 });
 
 test('an undo after another client saved meets the conflict; a reload clears the history', async ({

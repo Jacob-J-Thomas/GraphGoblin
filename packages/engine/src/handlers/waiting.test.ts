@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { describe, expect, it } from 'vitest';
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
 import { FIXTURE_IDS } from '@graphgoblin/contracts/testing';
@@ -8,7 +9,7 @@ function waitLoop(name: string, config: Record<string, unknown>): LoopDefinition
   return singleNodeLoop(
     name,
     { id: 'wait', kind: 'wait', label: 'W', config },
-    { return: { mapping: 'lastOutput.value' } },
+    { returns: 'lastOutput.value' },
   );
 }
 
@@ -130,7 +131,7 @@ describe('heartbeat node', () => {
     return singleNodeLoop(
       'hb',
       { id: 'hb', kind: 'heartbeat', label: 'H', config },
-      { return: { mapping: 'lastOutput.value' } },
+      { returns: 'lastOutput.value' },
     );
   }
 
@@ -243,10 +244,10 @@ describe('heartbeat node', () => {
 
 describe('subloop node', () => {
   const childDef: LoopDefinitionInput = {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: 'child',
     nodes: [
-      { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
+      { id: 'start', kind: 'trigger', label: 'S', config: { type: 'manual' } },
       {
         id: 'work',
         kind: 'mutate',
@@ -268,7 +269,7 @@ describe('subloop node', () => {
         kind: 'exit',
         label: 'D',
         config: {
-          return: { mapping: '{ "childVar": vars.childVar, "inherited": vars.parentVar }' },
+          returns: '{ "childVar": vars.childVar, "inherited": vars.parentVar }',
         },
       },
     ],
@@ -283,10 +284,10 @@ describe('subloop node', () => {
     childLoopId: string,
   ): LoopDefinitionInput {
     return {
-      schemaVersion: 3,
+      schemaVersion: CURRENT_DEFINITION_FORMAT,
       name: 'parent',
       nodes: [
-        { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
+        { id: 'start', kind: 'trigger', label: 'S', config: { type: 'manual' } },
         {
           id: 'prep',
           kind: 'mutate',
@@ -313,9 +314,7 @@ describe('subloop node', () => {
           kind: 'exit',
           label: 'D',
           config: {
-            return: {
-              mapping: '{ "vars": vars, "last": lastOutput.value, "messages": $count(messages) }',
-            },
+            returns: '{ "vars": vars, "last": lastOutput.value, "messages": $count(messages) }',
           },
         },
       ],

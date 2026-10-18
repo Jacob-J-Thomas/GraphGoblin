@@ -1,9 +1,17 @@
 # Start an implementation workflow
 
-On **Loops**, choose **New from template**, then **Use GitHub issue implementation**. GraphGoblin creates an independent editable loop and opens it immediately. There is no settings form or repository URL to enter in the gallery. See [Start from a template](09-templates.md).
+On **Loops**, choose **New from template**, then **Use Implementation workflow**. GraphGoblin copies the starting graph into an independent ordinary draft and opens the editor. There is no settings form in the gallery. See [Start from a template](09-templates.md).
 
-The starting graph plans a task, implements a focused change, and verifies it with a bounded repair loop. Supply the task, acceptance criteria and relevant repository context in the run input, or customize the graph's instructions and variables in the editor. Configure the loop's working directory when it needs a local checkout. Model and effort selections can inherit normal defaults or be set on inference nodes.
+Supply a task, acceptance criteria and source context in the run input. The default working directory is temporary; configure a checkout in loop settings to edit local source. Inference nodes inherit normal model and effort defaults unless you choose overrides. Creation does not publish or run the copy.
 
-Review the inference nodes, verification steps, repair conditions and iteration limits before publishing. These are ordinary editable loop values; the gallery does not provide a separate gate, label or budget form. Creation neither publishes the loop nor starts a run. Publish after validation, then start work through **Runs** and follow the evidence in the run inspector.
+The starting graph uses these ordinary nodes:
 
-This copy does not poll GitHub issues, install published worker loops, open pull requests through privileged template support, or apply repository labels automatically. Add any needed trigger or integration through ordinary loop authoring. Configured template instances and their privileged GitHub automation are being retired separately in [#165](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/165).
+1. A manual trigger receives input; a mutation sets the workflow instructions.
+2. A fresh read-only planner proposes scope, implementation steps and concrete verification (300-second timeout).
+3. A fresh implementer uses `workspace-write` to edit accessible source, or proposes a patch when only text is supplied (900 seconds).
+4. A fresh read-only verifier assesses the changes and supplied evidence (300 seconds), returning `status`, `summary` and `checks`.
+5. An expression decision routes `passed` to success, `blocked` to failure, or `changes-needed` back to implementation through a loop-back exit. The initial iteration limit is 3; reaching the ceiling exhausts the run. Terminal exits return the verification to the caller.
+
+Review instructions, verification, directory, model choices and limits before publishing. Inspect actual observations in the run inspector: the verifier is a model assessment, not a native command gate or proof that an unchanged commit passed CI.
+
+The graph does not discover GitHub issues, claim work, prepare verified checkouts, create worker subloops or task worktrees, commit, push, create pull requests, change labels or merge. Its prompts prohibit GitHub effects and external services. These instructions do not provide operating-system confinement or proof isolation. Add any later integration explicitly through ordinary loop authoring; a template copy grants no special authority.

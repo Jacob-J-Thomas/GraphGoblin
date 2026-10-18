@@ -17,7 +17,7 @@ import {
 } from '@graphgoblin/domain';
 import type { ClockPort, HttpProbePort, Logger, RunManager, ScriptPort } from '@graphgoblin/engine';
 
-type PollConfig = Extract<Extract<Node, { kind: 'trigger' }>['config'], { subtype: 'poll' }>;
+type PollConfig = Extract<Extract<Node, { kind: 'trigger' }>['config'], { type: 'poll' }>;
 
 export interface PollTarget {
   ownerId: string;
@@ -82,7 +82,7 @@ export class PollTriggers {
     const now = this.deps.clock.now().getTime();
     for (const node of nodesOfKind(version.definition, 'trigger')) {
       const config = node.config;
-      if (config.subtype !== 'poll' || !config.enabled) continue;
+      if (config.type !== 'poll' || !config.enabled) continue;
       this.armed.set(`${loop.id}/${node.id}`, {
         ownerId: loop.ownerId,
         loopId: loop.id,
@@ -142,12 +142,7 @@ export class PollTriggers {
     const context = { loopId: target.loopId, nodeId: target.triggerNodeId };
     try {
       const base = { now: now.toISOString() };
-      const probe = await this.probe(
-        target.config.probe,
-        base,
-        target.config.items !== undefined,
-        target,
-      );
+      const probe = await this.probe(target.config.probe, base, target.config.items !== undefined);
       const view = { ...base, probe };
       if (!(await evaluatePredicate(target.config.fireWhen, view))) return [];
       if (target.config.items) {
@@ -220,7 +215,6 @@ export class PollTriggers {
     spec: Probe,
     view: Record<string, unknown>,
     itemsMode = false,
-    identity?: Pick<PollTarget, 'ownerId' | 'loopId' | 'versionId' | 'triggerNodeId'>,
   ): Promise<JsonValue> {
     switch (spec.kind) {
       case 'http': {
@@ -251,17 +245,6 @@ export class PollTriggers {
         const args: string[] = [];
         for (const arg of spec.args) args.push(await renderTemplate(arg, view));
         const result = await this.deps.scripts.run({
-          ...(identity
-            ? {
-                executionIdentity: {
-                  kind: 'poll' as const,
-                  ownerId: identity.ownerId,
-                  loopId: identity.loopId,
-                  versionId: identity.versionId,
-                  nodeId: identity.triggerNodeId,
-                },
-              }
-            : {}),
           command: spec.command,
           ...(itemsMode ? { maxStdoutBytes: 65_536 } : {}),
           args,

@@ -1,16 +1,16 @@
 {
   "format": "graphgoblin-loop",
-  "formatVersion": 3,
+  "formatVersion": 4,
   "exportedAt": "2026-10-09T00:00:00.000Z",
   "loop": {
-    "schemaVersion": 3,
+    "schemaVersion": 4,
     "name": "Implementation starting point",
     "description": "Plan a task, develop a proposed or local change, and verify its evidence with a finite repair loop. Configure a working directory in the editor when needed.",
     "settings": {
       "workingDirectory": {
         "kind": "temp"
       },
-      "maxIterations": 3
+      "maxNodeVisits": 3
     },
     "nodes": [
       {
@@ -22,7 +22,7 @@
           "y": 0
         },
         "config": {
-          "subtype": "manual",
+          "type": "manual",
           "exposeTo": ["ui", "api", "mcp"]
         }
       },
@@ -164,30 +164,22 @@
           "y": 0
         },
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "passed",
-                "label": "passed",
-                "criteria": "passed"
-              },
-              {
-                "id": "changes-needed",
-                "label": "changes-needed",
-                "criteria": "changes-needed"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.verify.value.status"
-          }
+          "kind": "expression",
+          "jsonata": "outputs.verify.value.status",
+          "routes": [
+            {
+              "id": "passed",
+              "label": "passed"
+            },
+            {
+              "id": "changes-needed",
+              "label": "changes-needed"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -199,16 +191,13 @@
           "y": -160
         },
         "config": {
-          "criteria": [],
-          "default": "success",
-          "return": {
-            "mapping": "outputs.verify.value",
-            "channels": [
-              {
-                "kind": "caller"
-              }
-            ]
-          }
+          "outcome": "success",
+          "returns": "outputs.verify.value",
+          "destinations": [
+            {
+              "kind": "caller"
+            }
+          ]
         }
       },
       {
@@ -220,56 +209,74 @@
           "y": 160
         },
         "config": {
-          "criteria": [
+          "outcome": "failure",
+          "returns": "outputs.verify.value",
+          "destinations": [
             {
-              "when": "predicate",
-              "answer": {
-                "type": "noul"
-              },
-              "evaluation": {
-                "kind": "expression",
-                "jsonata": "true"
-              },
-              "match": {
-                "type": "noul",
-                "value": true
-              },
-              "outcome": "failure"
+              "kind": "caller"
             }
-          ],
-          "default": "success",
-          "return": {
-            "mapping": "outputs.verify.value",
-            "channels": [
-              {
-                "kind": "caller"
-              }
-            ]
-          }
+          ]
         }
       },
       {
         "id": "retry",
-        "kind": "exit",
-        "label": "Retry within the iteration limit",
+        "kind": "decision",
+        "label": "Repeat gate",
         "ui": {
           "x": 1080,
           "y": 300
         },
         "config": {
-          "criteria": [],
-          "default": "loop-back",
-          "return": {
-            "mapping": "outputs.verify.value",
-            "channels": [
-              {
-                "kind": "caller"
-              }
-            ]
-          },
-          "loopBack": {
-            "targetNodeId": "implementer"
-          }
+          "kind": "expression",
+          "jsonata": "\"repeat\"",
+          "routes": [
+            {
+              "id": "repeat",
+              "label": "Repeat",
+              "repeat": true
+            },
+            {
+              "id": "finish",
+              "label": "Finish"
+            }
+          ],
+          "maxPasses": 3
+        }
+      },
+      {
+        "id": "retry-complete",
+        "kind": "exit",
+        "label": "Complete",
+        "ui": {
+          "x": 1350,
+          "y": 300
+        },
+        "config": {
+          "outcome": "success",
+          "returns": "outputs.verify.value",
+          "destinations": [
+            {
+              "kind": "caller"
+            }
+          ]
+        }
+      },
+      {
+        "id": "retry-exhausted",
+        "kind": "exit",
+        "label": "Limit reached",
+        "ui": {
+          "x": 1350,
+          "y": 460
+        },
+        "config": {
+          "outcome": "exhausted",
+          "returns": "outputs.verify.value",
+          "destinations": [
+            {
+              "kind": "caller"
+            }
+          ]
         }
       }
     ],
@@ -363,13 +370,35 @@
         }
       },
       {
-        "id": "retry-loop-back",
+        "id": "retry-repeat",
         "from": {
           "node": "retry",
-          "port": "loopBack"
+          "port": "repeat"
         },
         "to": {
           "node": "implementer",
+          "port": "in"
+        }
+      },
+      {
+        "id": "retry-complete",
+        "from": {
+          "node": "retry",
+          "port": "finish"
+        },
+        "to": {
+          "node": "retry-complete",
+          "port": "in"
+        }
+      },
+      {
+        "id": "retry-exhausted",
+        "from": {
+          "node": "retry",
+          "port": "limit-reached"
+        },
+        "to": {
+          "node": "retry-exhausted",
           "port": "in"
         }
       }

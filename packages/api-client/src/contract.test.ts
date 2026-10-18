@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 /**
  * Contract tests: the client against the real API, booted in-process over an in-memory database
  * with fake harnesses, listening on an ephemeral port.
@@ -27,10 +28,10 @@ import {
 } from './index.js';
 
 const waitLoop: ContractLoopDefinition = {
-  schemaVersion: 3,
+  schemaVersion: CURRENT_DEFINITION_FORMAT,
   name: 'wait-for-input',
   nodes: [
-    { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
+    { id: 'start', kind: 'trigger', label: 'S', config: { type: 'manual' } },
     { id: 'wait', kind: 'wait', label: 'W', config: { mode: 'input', prompt: 'go?' } },
     { id: 'done', kind: 'exit', label: 'D', config: {} },
   ],
@@ -117,6 +118,7 @@ describe('against the in-process API (local trusted mode)', () => {
 
     const imported = await loops.import(client, exported);
     expect(imported.loop.id).not.toBe(loopId);
+    expect(imported.notices).toEqual([]);
 
     await loops.remove(client, imported.loop.id);
     await expect(loops.get(client, imported.loop.id)).rejects.toMatchObject({
@@ -124,6 +126,48 @@ describe('against the in-process API (local trusted mode)', () => {
       status: 404,
       code: 'LOOP_NOT_FOUND',
     });
+  });
+
+  it('returns typed automatic conversion notices on an old import', async () => {
+    const imported = await loops.import(client, {
+      schemaVersion: 3,
+      name: 'automatic expression import',
+      nodes: [
+        { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+        {
+          id: 'pick',
+          kind: 'decision',
+          label: 'Pick',
+          config: {
+            answer: {
+              type: 'choice',
+              options: [
+                { id: 'yes', label: 'Yes', criteria: 'Ready' },
+                { id: 'no', label: 'No', criteria: 'Pending' },
+              ],
+            },
+            evaluation: { kind: 'expression', jsonata: '"yes"' },
+            recordAlternatives: true,
+          },
+        },
+        { id: 'done', kind: 'exit', label: 'Done', config: {} },
+      ],
+      edges: [
+        { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'pick' } },
+        ...['yes', 'no'].map((port) => ({
+          id: port,
+          from: { node: 'pick', port },
+          to: { node: 'done' },
+        })),
+      ],
+    });
+    expect(imported.notices).toContainEqual({
+      code: 'unused-controls',
+      path: '/nodes/1/config',
+      message:
+        'Remove unused classifier criteria and recording controls from expression/LLM decisions.',
+    });
+    expect(imported.issues).toEqual([]);
   });
 
   it('turns problem details into GraphGoblinApiError, including validation errors', async () => {
@@ -156,6 +200,26 @@ describe('against the in-process API (local trusted mode)', () => {
     expect(page.items).toHaveLength(2);
     expect(page.nextAfter).toBe(page.items[1]?.seq);
     expect(await runs.sessions(client, run.id)).toEqual([]);
+  });
+
+  it('preserves typed run pages and the items-only wrapper', async () => {
+    const { loop } = await loops.create(client, minimalLoop());
+    await loops.publish(client, loop.id);
+    await runs.start(client, loop.id);
+    await runs.start(client, loop.id);
+    await t.idle();
+    const query = { loopId: loop.id, limit: 1 };
+    const first = await client.GET('/runs', { params: { query } });
+    if (!first.data?.nextCursor) throw new Error('expected a next page');
+    expect(first.data.items).toHaveLength(1);
+    expect(first.data.items[0]).not.toHaveProperty('templateSubject');
+    expect(await runs.list(client, query)).toEqual(first.data.items);
+    const last = await client.GET('/runs', {
+      params: { query: { ...query, cursor: first.data.nextCursor } },
+    });
+    expect(last.data?.items).toHaveLength(1);
+    expect(last.data?.nextCursor).toBeNull();
+    expect(last.data?.items[0]?.id).not.toBe(first.data.items[0]?.id);
   });
 
   it('drives a waiting run: input, signals, pause, resume, cancel', async () => {

@@ -136,25 +136,19 @@ describe('the same edits save the same config', () => {
     };
     await expectSaved(
       'decision',
-      { answer, evaluation, recordAlternatives: true },
+      { answer, ...evaluation, recordAlternatives: true },
       async (user) => {
         await user.click(within(fieldAt('recordAlternatives')).getByRole('switch'));
         await user.click(screen.getByRole('tab', { name: /^Context/ }));
         await revealAll(user);
-        await user.click(
-          within(fieldAt('evaluation.context.includeLastOutput')).getByRole('switch'),
-        );
-        await user.click(
-          within(fieldAt('evaluation.context.vars')).getByRole('button', { name: 'Add vars' }),
-        );
+        await user.click(within(fieldAt('context.includeLastOutput')).getByRole('switch'));
+        await user.click(within(fieldAt('context.vars')).getByRole('button', { name: 'Add vars' }));
         await user.type(screen.getByLabelText('Vars 1'), 'topic');
       },
       {
         answer,
-        evaluation: {
-          ...evaluation,
-          context: { vars: ['topic'], includeLastOutput: false },
-        },
+        ...evaluation,
+        context: { vars: ['topic'], includeLastOutput: false },
         recordAlternatives: false,
       },
     );
@@ -209,11 +203,11 @@ describe('the same edits save the same config', () => {
   it('trigger, wait, heartbeat, and exit', async () => {
     await expectSaved(
       'trigger',
-      { subtype: 'manual' },
+      { type: 'manual' },
       async (user) => {
         await user.click(within(fieldAt('exposeTo')).getByRole('checkbox', { name: 'mcp' }));
       },
-      { subtype: 'manual', exposeTo: ['ui', 'api'] },
+      { type: 'manual', exposeTo: ['ui', 'api'] },
     );
     await expectSaved(
       'wait',
@@ -237,9 +231,9 @@ describe('the same edits save the same config', () => {
       'exit',
       {},
       async (user) => {
-        await user.click(radio('default', 'loop-back'));
+        await user.click(radio('outcome', 'exhausted'));
       },
-      { default: 'loop-back', return: {} },
+      { outcome: 'exhausted' },
     );
   });
 });

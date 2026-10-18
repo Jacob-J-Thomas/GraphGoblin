@@ -26,6 +26,13 @@ describe('editable template starting points', () => {
       app.harness.preflightResult = { ok: false, authenticated: false, problems: ['unavailable'] };
       const preflight = vi.spyOn(app.harness, 'preflight');
       const created = await createDraft(kind);
+      expect(
+        (
+          await app.container.handle.client.execute(
+            "SELECT name FROM sqlite_master WHERE name='template_instances'",
+          )
+        ).rows,
+      ).toEqual([]);
       expect(created.loop).not.toHaveProperty('currentVersionId');
       expect(created.draft.status).toBe('draft');
       expect(created.issues).toContainEqual(expect.objectContaining({ code: 'MODEL_UNRESOLVED' }));
@@ -35,7 +42,7 @@ describe('editable template starting points', () => {
       ).not.toHaveLength(0);
       for (const node of created.draft.definition.nodes) {
         expect(['script', 'subloop', 'heartbeat']).not.toContain(node.kind);
-        if (node.kind === 'trigger') expect(node.config.subtype).toBe('manual');
+        if (node.kind === 'trigger') expect(node.config.type).toBe('manual');
         if (node.kind === 'inference') {
           expect(node.config.model).toBeUndefined();
           expect(node.config.effort).toBeUndefined();
@@ -50,9 +57,6 @@ describe('editable template starting points', () => {
         created.draft,
       ]);
       expect(
-        await app.container.templates.store.bindingForLoop('local', created.loop.id),
-      ).toBeUndefined();
-      expect(
         (await app.app.inject({ method: 'GET', url: '/loops/' + created.loop.id })).json(),
       ).not.toHaveProperty('templateInstanceId');
       expect((await app.app.inject({ method: 'GET', url: '/runs' })).json()).toMatchObject({
@@ -63,34 +67,41 @@ describe('editable template starting points', () => {
     },
   );
 
-  it('creates independent copies, keeps supplied names literal, and does not alter the package', async () => {
-    app = await createTestApp();
-    const packaged = await app.container.templates.catalog.draft('implementation');
-    const name = 'Literal {{ vars.private }}; $(not-a-command)';
-    const first = await createDraft('implementation', name);
-    const second = await createDraft('implementation', name);
-    expect(first.loop.id).not.toBe(second.loop.id);
-    expect(first.draft.id).not.toBe(second.draft.id);
-    expect(first.draft.definition.name).toBe(name);
-    first.draft.definition.nodes[1]!.label = 'A user edit';
-    const save = await app.app.inject({
-      method: 'PUT',
-      url: '/loops/' + first.loop.id + '/draft',
-      payload: { definition: first.draft.definition },
-    });
-    expect(save.statusCode, save.body).toBe(200);
-    const readFirst = await app.app.inject({ method: 'GET', url: '/loops/' + first.loop.id });
-    const readSecond = await app.app.inject({ method: 'GET', url: '/loops/' + second.loop.id });
-    expect(readFirst.statusCode, readFirst.body).toBe(200);
-    expect(readSecond.statusCode, readSecond.body).toBe(200);
-    expect(
-      LoopVersionRecordSchema.parse(readFirst.json<{ draft: unknown }>().draft).definition,
-    ).toEqual(first.draft.definition);
-    expect(
-      LoopVersionRecordSchema.parse(readSecond.json<{ draft: unknown }>().draft).definition,
-    ).toEqual(second.draft.definition);
-    expect(await app.container.templates.catalog.draft('implementation')).toEqual(packaged);
-  });
+  it.each(['starter', 'implementation', 'review', 'qa'])(
+    'creates independent %s copies, keeps supplied names literal, and does not alter the package',
+    async (kind) => {
+      app = await createTestApp();
+      const packaged = await app.container.templates.catalog.draft(kind);
+      const name = 'Literal {{ vars.private }}; $(not-a-command)';
+      const first = await createDraft(kind, name);
+      const second = await createDraft(kind, name);
+      expect(first.loop.id).not.toBe(second.loop.id);
+      expect(first.draft.id).not.toBe(second.draft.id);
+      expect(first.draft.definition.name).toBe(name);
+      first.draft.definition.nodes[1]!.label = 'A user edit';
+      const save = await app.app.inject({
+        method: 'PUT',
+        url: '/loops/' + first.loop.id + '/draft',
+        payload: { definition: first.draft.definition },
+      });
+      expect(save.statusCode, save.body).toBe(200);
+      const readFirst = await app.app.inject({ method: 'GET', url: '/loops/' + first.loop.id });
+      const readSecond = await app.app.inject({ method: 'GET', url: '/loops/' + second.loop.id });
+      expect(readFirst.statusCode, readFirst.body).toBe(200);
+      expect(readSecond.statusCode, readSecond.body).toBe(200);
+      expect(
+        LoopVersionRecordSchema.parse(readFirst.json<{ draft: unknown }>().draft).definition,
+      ).toEqual(first.draft.definition);
+      expect(
+        LoopVersionRecordSchema.parse(readSecond.json<{ draft: unknown }>().draft).definition,
+      ).toEqual(second.draft.definition);
+      const third = await createDraft(kind);
+      expect(third.loop.id).not.toBe(first.loop.id);
+      expect(third.loop.id).not.toBe(second.loop.id);
+      expect(third.draft.definition).toEqual(packaged);
+      expect(await app.container.templates.catalog.draft(kind)).toEqual(packaged);
+    },
+  );
 
   it.each(['missing', 'disabled', 'no-harness'])(
     'retains truthful %s model readiness issues without blocking draft creation',
@@ -189,6 +200,10 @@ describe('editable template starting points', () => {
       ['absent-template', {}, 404],
       ['starter', { name: ' ' }, 400],
       ['starter', { settings: {} }, 400],
+      ['starter', { settings: { kind: 'starter', instruction: 'Retired settings' } }, 400],
+      ['starter', { instance: { templateId: 'starter' } }, 400],
+      ['starter', { prerequisites: { checks: [], canInstantiate: true, canRun: true } }, 400],
+      ['starter', { manifest: { id: 'starter' }, loops: {} }, 400],
     ] as const) {
       const response = await app.app.inject({
         method: 'POST',
@@ -200,43 +215,51 @@ describe('editable template starting points', () => {
     expect(await app.container.repos.loops.listLoops('local')).toEqual([]);
   });
 
-  it('uses loops:write and keeps the newly created draft owner scoped', async () => {
-    app = await createTestApp({ requireApiKey: true });
-    const reader = await app.container.repos.apiKeys.create('local', 'reader', ['loops:read']);
-    const author = await app.container.repos.apiKeys.create('other', 'author', ['loops:write']);
-    expect(
-      (await app.app.inject({ method: 'POST', url: '/templates/starter/draft', payload: {} }))
-        .statusCode,
-    ).toBe(401);
-    expect(
-      (
-        await app.app.inject({
-          method: 'POST',
-          url: '/templates/starter/draft',
-          payload: {},
-          headers: { authorization: 'Bearer ' + reader.token },
-        })
-      ).statusCode,
-    ).toBe(403);
-    const response = await app.app.inject({
-      method: 'POST',
-      url: '/templates/starter/draft',
-      payload: {},
-      headers: { authorization: 'Bearer ' + author.token },
-    });
-    expect(response.statusCode, response.body).toBe(201);
-    const created = TemplateDraftResponseSchema.parse(response.json());
-    expect(created.loop.ownerId).toBe('other');
-    expect(
-      (
-        await app.app.inject({
-          method: 'GET',
-          url: '/loops/' + created.loop.id,
-          headers: { authorization: 'Bearer ' + reader.token },
-        })
-      ).statusCode,
-    ).toBe(404);
-  });
+  it.each(['starter', 'implementation', 'review', 'qa'])(
+    'uses loops:write and keeps the newly created %s draft owner scoped',
+    async (kind) => {
+      app = await createTestApp({ requireApiKey: true });
+      const reader = await app.container.repos.apiKeys.create('local', 'reader', ['loops:read']);
+      const author = await app.container.repos.apiKeys.create('other', 'author', ['loops:write']);
+      expect(
+        (
+          await app.app.inject({
+            method: 'POST',
+            url: '/templates/' + kind + '/draft',
+            payload: {},
+          })
+        ).statusCode,
+      ).toBe(401);
+      expect(
+        (
+          await app.app.inject({
+            method: 'POST',
+            url: '/templates/' + kind + '/draft',
+            payload: {},
+            headers: { authorization: 'Bearer ' + reader.token },
+          })
+        ).statusCode,
+      ).toBe(403);
+      const response = await app.app.inject({
+        method: 'POST',
+        url: '/templates/' + kind + '/draft',
+        payload: {},
+        headers: { authorization: 'Bearer ' + author.token },
+      });
+      expect(response.statusCode, response.body).toBe(201);
+      const created = TemplateDraftResponseSchema.parse(response.json());
+      expect(created.loop.ownerId).toBe('other');
+      expect(
+        (
+          await app.app.inject({
+            method: 'GET',
+            url: '/loops/' + created.loop.id,
+            headers: { authorization: 'Bearer ' + reader.token },
+          })
+        ).statusCode,
+      ).toBe(404);
+    },
+  );
 });
 
 describe('bounded manual starting-point execution', () => {
@@ -286,7 +309,8 @@ describe('bounded manual starting-point execution', () => {
       'Added guard',
       { status: 'approved', summary: 'Guard verified', findings: [] },
     ]);
-    expect(run).toMatchObject({ status: 'succeeded', outcome: 'success', iteration: 2 });
+    expect(run).toMatchObject({ status: 'succeeded', outcome: 'success', iteration: 1 });
+    expect((await app!.container.manager.getThread(run!.id))?.gates.retry?.passes).toBe(2);
     expect(app!.harness.started).toHaveLength(3);
     expect(app!.harness.started[1]?.turn.prompt).toContain('Guard empty input');
     expect(app!.harness.started[2]?.turn.prompt).toContain('Added guard');
@@ -306,7 +330,9 @@ describe('bounded manual starting-point execution', () => {
       finding,
       'Third attempt',
     ]);
-    expect(run).toMatchObject({ status: 'exhausted', outcome: 'exhausted', iteration: 3 });
+    expect(run).toMatchObject({ status: 'exhausted', outcome: 'exhausted', iteration: 1 });
+    expect((await app!.container.manager.getThread(run!.id))?.gates.retry?.passes).toBe(3);
+    expect(run?.result).toEqual(finding);
     expect(app!.harness.started).toHaveLength(6);
   });
 
@@ -325,7 +351,9 @@ describe('bounded manual starting-point execution', () => {
     const qa = { status: 'pass', summary: 'Proposed result', evidence: ['Insufficient assertion'] };
     const challenge = { assessment: 'unsound', summary: 'Evidence insufficient' };
     const run = await execute('qa', ['Acceptance criterion', qa, challenge, qa, challenge]);
-    expect(run).toMatchObject({ status: 'exhausted', outcome: 'exhausted', iteration: 2 });
+    expect(run).toMatchObject({ status: 'exhausted', outcome: 'exhausted', iteration: 1 });
+    expect((await app!.container.manager.getThread(run!.id))?.gates.retry?.passes).toBe(2);
+    expect(run?.result).toEqual({ qa, challenge });
     expect(app!.harness.started).toHaveLength(5);
   });
 });

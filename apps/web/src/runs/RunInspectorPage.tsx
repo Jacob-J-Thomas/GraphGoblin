@@ -1,4 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
+import { GraphGoblinApiError } from '@graphgoblin/api-client';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { keys, useLoopVersion, useRun, useRunThread } from '../api/queries.js';
@@ -16,6 +17,31 @@ import { useRunEvents } from './useRunEvents.js';
 import { describeEvent } from './projections.js';
 
 const META_LINK = 'touch-target font-medium text-link underline-offset-[3px] hover:underline';
+
+function ChildRunDetails({ runId }: { runId: string }) {
+  const query = useRun(runId);
+  return (
+    <Card title="Child run">
+      {query.error instanceof GraphGoblinApiError && query.error.status === 404 ? (
+        <p className="text-sm text-muted">
+          Child run {runId} is no longer available. Its loop may have been deleted. This parent
+          run's history is preserved.
+        </p>
+      ) : (
+        <QueryState query={query} what="Child run">
+          {(run) => (
+            <p>
+              <Link to={`/runs/${run.id}`} className={META_LINK}>
+                {run.id}
+              </Link>{' '}
+              <RunStatusBadge status={run.status} />
+            </p>
+          )}
+        </QueryState>
+      )}
+    </Card>
+  );
+}
 
 /**
  * One run: its status and controls, failure or result, the waiting-for-input form, then the
@@ -36,10 +62,11 @@ export function RunInspectorPage() {
   const [selectedSeq, setSelectedSeq] = useState<number | undefined>();
   const seq = selectedSeq ?? log.lastSeq;
   const selectedEvent = log.events.find((event) => event.seq === seq);
+  const firstEvent = log.events[0];
   const needsPinnedDefinition =
-    selectedEvent?.type === 'exit.evaluated' ||
     selectedEvent?.type === 'decision.made' ||
-    selectedEvent?.type === 'run.failed';
+    selectedEvent?.type === 'run.failed' ||
+    (firstEvent !== undefined && (firstEvent.type !== 'run.queued' || !firstEvent.initialThread));
   const versionQuery = useLoopVersion(
     runQuery.data?.loopId ?? '',
     runQuery.data?.versionId ?? '',
@@ -65,7 +92,6 @@ export function RunInspectorPage() {
                 <RunStatusBadge status={run.status} />
               </div>
               <div className="col-start-1 row-start-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted">
-                <span>iteration {run.iteration}</span>
                 {run.currentNodeId ? <span>at {run.currentNodeId}</span> : null}
                 <Link to={`/loops/${run.loopId}/edit`} className={META_LINK}>
                   loop
@@ -117,9 +143,22 @@ export function RunInspectorPage() {
           onSelect={setSelectedSeq}
         />
         <div className="grid min-w-0 gap-section">
-          <EvaluationDetails event={selectedEvent} definition={versionQuery.data?.definition} />
+          {selectedEvent?.type === 'child_run.started' ||
+          selectedEvent?.type === 'child_run.finished' ? (
+            <ChildRunDetails runId={selectedEvent.childRunId} />
+          ) : null}
+          <EvaluationDetails
+            event={selectedEvent}
+            definition={versionQuery.data?.definition}
+            definitionLoading={versionQuery.isPending}
+          />
           {threadQuery.data ? (
-            <ThreadViewer current={threadQuery.data} events={log.events} seq={seq} />
+            <ThreadViewer
+              current={threadQuery.data}
+              events={log.events}
+              seq={seq}
+              definition={versionQuery.data?.definition}
+            />
           ) : (
             <p className="text-sm text-muted">The thread is not available yet.</p>
           )}

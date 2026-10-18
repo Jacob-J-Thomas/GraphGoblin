@@ -21,61 +21,10 @@ it('round-trips large mixed evaluation pages and measures read validation overhe
       payload:
         index % 2 === 0
           ? {
-              iteration: 2,
-              maxIterations: 5,
-              criteria: [
-                {
-                  index: 0,
-                  strategy: 'classifier',
-                  status: 'not-matched',
-                  answer: {
-                    type: 'noul',
-                    kind: 'classifier',
-                    holds: false,
-                    trueProbability: 0.2,
-                    confidence: 0.8,
-                  },
-                  provenance: {
-                    kind: 'classifier',
-                    provider: 'typesafe',
-                    classifierId: 'jev',
-                    model: 'jev-latest',
-                    effort: null,
-                  },
-                  acceptance: { status: 'accepted' },
-                  match: { type: 'noul', value: true },
-                },
-                {
-                  index: 1,
-                  strategy: 'llm',
-                  status: 'matched',
-                  answer: {
-                    type: 'noul',
-                    kind: 'llm',
-                    holds: true,
-                    confidence: 0.93,
-                    reasoning: 'Done. '.repeat(100),
-                  },
-                  provenance: {
-                    kind: 'llm',
-                    provider: 'codex',
-                    classifierId: null,
-                    model: 'gpt-6-luna',
-                    effort: 'medium',
-                  },
-                  acceptance: { status: 'accepted' },
-                  match: { type: 'noul', value: true },
-                },
-              ],
-              result: {
-                kind: 'completed',
-                reason: 'criterion-matched',
-                outcome: 'success',
-                criterionIndex: 1,
-              },
+              outcome: 'success',
             }
           : {
-              answer: { type: 'choice', optionId: 'yes', confidence: null, probabilities: null },
+              observation: { kind: 'route', routeId: 'yes', confidence: null, reasoning: null },
               portId: 'yes',
               provenance: {
                 kind: 'expression',

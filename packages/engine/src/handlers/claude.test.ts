@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { describe, expect, it, vi } from 'vitest';
 import type { HarnessId, LoopDefinitionInput } from '@graphgoblin/contracts';
 import { FakeHarness } from '../testing/fakes.js';
@@ -53,7 +54,7 @@ describe('mixed native harness families', () => {
         id: 'start',
         kind: 'trigger' as const,
         label: 'Start',
-        config: { subtype: 'manual' as const },
+        config: { type: 'manual' as const },
       },
       infer('c1', 'codex', 'fresh'),
       infer('a1', 'claude', 'resume-previous'),
@@ -62,7 +63,7 @@ describe('mixed native harness families', () => {
       { id: 'done', kind: 'exit' as const, label: 'Done', config: {} },
     ];
     const loop: LoopDefinitionInput = {
-      schemaVersion: 3,
+      schemaVersion: CURRENT_DEFINITION_FORMAT,
       name: 'mixed',
       nodes,
       edges: nodes.slice(0, -1).map((node, i) => ({
@@ -94,13 +95,13 @@ describe('mixed native harness families', () => {
   it('keeps named keys unchanged while selecting the family across runs', async () => {
     const { engine, claude } = await engineWithClaude();
     const nodes: LoopDefinitionInput['nodes'] = [
-      { id: 'start', kind: 'trigger' as const, label: 'S', config: { subtype: 'manual' as const } },
+      { id: 'start', kind: 'trigger' as const, label: 'S', config: { type: 'manual' as const } },
       infer('c', 'codex', 'resume-named'),
       infer('a', 'claude', 'resume-named'),
       { id: 'done', kind: 'exit' as const, label: 'D', config: {} },
     ];
     const loop: LoopDefinitionInput = {
-      schemaVersion: 3,
+      schemaVersion: CURRENT_DEFINITION_FORMAT,
       name: 'named-families',
       nodes,
       edges: nodes.slice(0, -1).map((node, i) => ({

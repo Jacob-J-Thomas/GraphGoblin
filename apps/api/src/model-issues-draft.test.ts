@@ -1,10 +1,11 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { describe, expect, it } from 'vitest';
 import { LoopDefinitionSchema, type LoopIssue } from '@graphgoblin/contracts';
 import { blocksPublication, rejectsDraftAdmission } from './model-issues.js';
 
 const definition = () =>
   LoopDefinitionSchema.parse({
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: 'Authoring',
     nodes: [
       { id: 'work', kind: 'inference', label: 'Work', config: { prompt: { template: 'Work' } } },
@@ -57,10 +58,7 @@ describe('definition-aware draft admission', () => {
       ),
     ).toBe(true);
     expect(
-      rejectsDraftAdmission(
-        input,
-        issue('CLASSIFIER_MODEL_NOT_FOUND', 'config.evaluation.modelRef', 'work'),
-      ),
+      rejectsDraftAdmission(input, issue('CLASSIFIER_MODEL_NOT_FOUND', 'config.modelRef', 'work')),
     ).toBe(true);
     expect(
       rejectsDraftAdmission(input, {
@@ -69,47 +67,31 @@ describe('definition-aware draft admission', () => {
       }),
     ).toBe(false);
   });
-  it.each(['decision', 'exit'] as const)(
+  it.each(['decision'] as const)(
     'distinguishes inherited and explicit %s evaluator values',
     (kind) => {
       const evaluation = {
         kind: 'llm',
         harness: 'codex',
-        question: '?',
+        instructions: '?',
         model: { mode: 'inherit' },
         effort: { mode: 'inherit' },
-      };
-      const answer = {
-        type: 'noul',
-        true: { label: 'Yes', criteria: 'Ready' },
-        false: { label: 'No', criteria: 'Not ready' },
       };
       const config =
         kind === 'decision'
           ? {
-              answer: {
-                ...answer,
-                true: { ...answer.true, id: 'yes' },
-                false: { ...answer.false, id: 'no' },
-              },
-              evaluation,
-            }
-          : {
-              criteria: [
-                {
-                  when: 'predicate',
-                  answer,
-                  evaluation,
-                  match: { type: 'noul', value: true },
-                  outcome: 'success',
-                },
+              ...evaluation,
+              routes: [
+                { id: 'yes', label: 'Yes' },
+                { id: 'no', label: 'No' },
               ],
-            };
+            }
+          : {};
       const input = LoopDefinitionSchema.parse({
         ...definition(),
         nodes: [{ id: 'work', kind, label: 'Work', config }],
       });
-      const path = kind === 'decision' ? 'config.evaluation.' : 'config.criteria.0.evaluation.';
+      const path = 'config.';
       expect(rejectsDraftAdmission(input, issue('MODEL_UNRESOLVED', path + 'model', 'work'))).toBe(
         false,
       );
@@ -117,12 +99,7 @@ describe('definition-aware draft admission', () => {
         rejectsDraftAdmission(input, issue('EFFORT_UNRESOLVED', path + 'effort', 'work')),
       ).toBe(false);
       const node = input.nodes[0]!;
-      const actual =
-        node.kind === 'decision'
-          ? node.config.evaluation
-          : node.kind === 'exit' && node.config.criteria[0]?.when === 'predicate'
-            ? node.config.criteria[0].evaluation
-            : undefined;
+      const actual = node.kind === 'decision' ? node.config : undefined;
       if (!actual || actual.kind !== 'llm') throw new Error('missing evaluator');
       actual.model = { mode: 'explicit', value: 'unknown-model' };
       actual.effort = { mode: 'explicit', value: 'high' };
@@ -133,10 +110,7 @@ describe('definition-aware draft admission', () => {
         rejectsDraftAdmission(input, issue('EFFORT_UNSUPPORTED', path + 'effort', 'work')),
       ).toBe(true);
       expect(
-        rejectsDraftAdmission(
-          input,
-          issue('MODEL_NOT_IN_CATALOG', 'config.criteria.10.evaluation.model', 'work'),
-        ),
+        rejectsDraftAdmission(input, issue('MODEL_NOT_IN_CATALOG', 'config.unknown.model', 'work')),
       ).toBe(true);
     },
   );

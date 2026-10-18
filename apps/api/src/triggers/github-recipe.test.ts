@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
@@ -38,20 +39,20 @@ async function recipe() {
     .map((result) => result.data);
   const selected = configs.find(
     (config) =>
-      config?.subtype === 'poll' &&
+      config?.type === 'poll' &&
       config.items &&
       config.probe.kind === 'script' &&
       config.probe.command === 'node',
   );
-  if (!selected || selected.subtype !== 'poll' || selected.probe.kind !== 'script')
+  if (!selected || selected.type !== 'poll' || selected.probe.kind !== 'script')
     throw new Error('documented gh items recipe missing');
   return selected;
 }
 function definition(
-  config: Extract<ReturnType<typeof TriggerConfigSchema.parse>, { subtype: 'poll' }>,
+  config: Extract<ReturnType<typeof TriggerConfigSchema.parse>, { type: 'poll' }>,
 ): LoopDefinitionInput {
   return {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: 'offline-gh-recipe',
     nodes: [
       { id: 'issues', kind: 'trigger', label: 'GitHub issues', config },
@@ -59,7 +60,7 @@ function definition(
         id: 'done',
         kind: 'exit',
         label: 'Done',
-        config: { return: { mapping: 'trigger.payload' } },
+        config: { returns: 'trigger.payload' },
       },
     ],
     edges: [{ id: 'out', from: { node: 'issues', port: 'out' }, to: { node: 'done' } }],

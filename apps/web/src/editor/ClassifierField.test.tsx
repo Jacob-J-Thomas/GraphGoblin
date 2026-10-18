@@ -9,6 +9,11 @@ import { SchemaForm } from '../forms/SchemaForm.js';
 import { NODE_FIELD_CONTROLS } from './field-controls.js';
 
 const decision = (model = 'kev') => ({
+  recordAlternatives: true,
+  kind: 'classifier',
+  model,
+  question: 'Which?',
+  context: { messages: 'last', includeLastOutput: true },
   answer: {
     type: 'choice',
     options: [
@@ -16,13 +21,6 @@ const decision = (model = 'kev') => ({
       { id: 'no', label: 'No', criteria: 'The answer is no' },
     ],
   },
-  evaluation: {
-    kind: 'classifier',
-    model,
-    question: 'Which?',
-    context: { messages: 'last', includeLastOutput: true },
-  },
-  recordAlternatives: true,
 });
 
 function api(): FakeApi {
@@ -86,7 +84,7 @@ describe('ClassifierField', () => {
     const { picker, changes } = setup();
     await waitFor(() => expect(picker()).toHaveValue('kev'));
     await user.selectOptions(picker(), 'keyed');
-    expect(changes.at(-1)).toMatchObject({ evaluation: { kind: 'classifier', model: 'keyed' } });
+    expect(changes.at(-1)).toMatchObject({ kind: 'classifier', model: 'keyed' });
   });
 
   it.each([

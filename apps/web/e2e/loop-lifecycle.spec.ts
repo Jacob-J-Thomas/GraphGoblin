@@ -28,7 +28,7 @@ test('draw a loop in the editor, publish it, run it, watch events, and provide i
   await expect(page.getByText('Ready to publish')).toBeVisible();
 
   // A connection into a trigger is refused by the canvas.
-  await handle(page, 'done', 'loopBack').dragTo(page.getByTestId('node-start'));
+  await expect(handle(page, 'done', 'out')).toHaveCount(0);
   await expect(page.getByText('Ready to publish')).toBeVisible();
 
   await page.getByRole('button', { name: 'Publish' }).click();

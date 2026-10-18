@@ -476,21 +476,22 @@ describe('catalog field controls', () => {
       <SchemaForm
         schema={NodeConfigSchemas.decision}
         value={{
-          answer: {
-            type: 'choice',
-            options: [
-              { id: 'yes', label: 'Yes', criteria: 'Choose yes' },
-              { id: 'no', label: 'No', criteria: 'Choose no' },
-            ],
-          },
-          evaluation: {
-            kind: 'llm',
-            harness: 'codex',
-            model: { mode: 'explicit', value: 'alpha' },
-            effort: { mode: 'explicit', value: 'max' },
-            question: 'q',
-            context: {},
-          },
+          kind: 'llm',
+          harness: 'codex',
+          model: { mode: 'explicit', value: 'alpha' },
+          effort: { mode: 'explicit', value: 'max' },
+          context: {},
+          instructions: 'q',
+          routes: [
+            {
+              id: 'yes',
+              label: 'Yes',
+            },
+            {
+              id: 'no',
+              label: 'No',
+            },
+          ],
         }}
         label="Decision"
         onChange={change}
@@ -499,7 +500,7 @@ describe('catalog field controls', () => {
       '/',
       api,
     );
-    const group = screen.getByRole('group', { name: 'Evaluation' });
+    const group = screen.getByRole('form', { name: 'Decision' });
     // Explicit selections are controls nested within the active model and effort unions.
     const modelGroup = within(group).getByRole('group', { name: 'Model' });
     const effortGroup = within(group).getByRole('group', { name: 'Effort' });
@@ -513,12 +514,10 @@ describe('catalog field controls', () => {
     await userEvent.setup().selectOptions(effort, 'low');
     expect(change).toHaveBeenLastCalledWith(
       expect.objectContaining({
-        evaluation: expect.objectContaining({
-          model: { mode: 'explicit', value: 'alpha' },
-          effort: { mode: 'explicit', value: 'low' },
-        }),
+        model: { mode: 'explicit', value: 'alpha' },
+        effort: { mode: 'explicit', value: 'low' },
       }),
-      expect.objectContaining({ path: 'evaluation.effort.value', kind: 'commit' }),
+      expect.objectContaining({ path: 'effort.value', kind: 'commit' }),
     );
   });
   it('shows an empty catalog with only the inherited choice and a Settings link', async () => {

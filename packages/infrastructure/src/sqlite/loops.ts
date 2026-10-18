@@ -1,8 +1,16 @@
 import type { LoopDefinition, LoopRecord, LoopVersionRecord } from '@graphgoblin/contracts';
 import type { ClockPort, IdPort, LoopRepository } from '@graphgoblin/engine';
-import { and, asc, desc, eq, isNotNull } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, isNotNull } from 'drizzle-orm';
 import type { Database } from './db.js';
-import { loopVersions, loops } from './schema.js';
+import { deleteRuns } from './delete-runs.js';
+import {
+  loopVersions,
+  loops,
+  runs,
+  schedules,
+  webhookEndpoints,
+  webhookReceipts,
+} from './schema.js';
 
 type LoopRow = typeof loops.$inferSelect;
 type VersionRow = typeof loopVersions.$inferSelect;
@@ -36,6 +44,13 @@ export class LoopNotFoundError extends Error {
   constructor(loopId: string) {
     super(`loop ${loopId} not found`);
     this.name = 'LoopNotFoundError';
+  }
+}
+
+export class LoopInUseError extends Error {
+  constructor(loopId: string) {
+    super(`loop ${loopId} has active runs (queued, running, waiting or paused); cancel them first`);
+    this.name = 'LoopInUseError';
   }
 }
 
@@ -219,6 +234,21 @@ export class SqliteLoopRepository implements LoopRepository {
 
   async delete(loopId: string): Promise<boolean> {
     const deleted = await this.db.transaction(async (tx) => {
+      const [active] = await tx
+        .select({ id: runs.id })
+        .from(runs)
+        .where(
+          and(
+            eq(runs.loopId, loopId),
+            inArray(runs.status, ['queued', 'running', 'waiting', 'paused']),
+          ),
+        )
+        .limit(1);
+      if (active) throw new LoopInUseError(loopId);
+      await deleteRuns(tx, eq(runs.loopId, loopId));
+      await tx.delete(schedules).where(eq(schedules.loopId, loopId));
+      await tx.delete(webhookEndpoints).where(eq(webhookEndpoints.loopId, loopId));
+      await tx.delete(webhookReceipts).where(eq(webhookReceipts.loopId, loopId));
       await tx.delete(loopVersions).where(eq(loopVersions.loopId, loopId));
       return tx.delete(loops).where(eq(loops.id, loopId)).returning({ id: loops.id });
     });

@@ -1,7 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { memo, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { memo, use, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { FormEditReviewContext } from './edit-review.js';
 import { FormProvider, useForm, type FieldValues, type Resolver } from 'react-hook-form';
-import { FieldGroup, Label, Select } from '../components/ui/index.js';
+import { Disclosure, FieldGroup, Label, Select } from '../components/ui/index.js';
+import { setupInstruction } from './setup-instructions.js';
 import { FormChangeContext, nextChangeId, type ChangeScope, type FormChange } from './changes.js';
 import {
   CollectionIdentitiesContext,
@@ -76,7 +78,7 @@ export interface SchemaFormProps {
   controls?: FieldControls | undefined;
   /** Whole-field renderers selected by exact or wildcard dotted paths relative to this form. */
   fieldOverrides?: FieldOverrides | undefined;
-  /** Custom discriminated-union pickers by relative dotted field path. */
+  /** Custom discriminated-union pickers by relative dotted field path; the empty key is the root. */
   unionPickers?: UnionPickers | undefined;
   /**
    * Paths, relative to the form's value, of errors found outside the form (the loop's validation:
@@ -101,6 +103,7 @@ const NO_PROBLEMS: readonly string[] = [];
 interface Issue {
   path: string;
   message: string;
+  instruction?: string | undefined;
 }
 
 function issuesOf(schema: Schema, value: unknown): Issue[] {
@@ -109,6 +112,7 @@ function issuesOf(schema: Schema, value: unknown): Issue[] {
   return result.error.issues.map((issue) => ({
     path: issue.path.map(String).join('.'),
     message: issue.message,
+    instruction: setupInstruction(value, issue.path.map(String).join('.')),
   }));
 }
 
@@ -201,10 +205,12 @@ const SchemaFormBindings = memo(function SchemaFormBindings({
   }, [schema]);
   const form = useForm<FieldValues>({ resolver, defaultValues: asValues(value), mode: 'onChange' });
   const [issues, setIssues] = useState<Issue[]>(() => issuesOf(schema, value));
+  const issuesSnapshotRef = useRef(JSON.stringify(issues));
   // The first issue at each path, for the fields react-hook-form does not control (record values).
   const issuesByPath = useMemo(() => {
     const byPath = new Map<string, string>();
-    for (const issue of issues) if (!byPath.has(issue.path)) byPath.set(issue.path, issue.message);
+    for (const issue of issues)
+      if (!byPath.has(issue.path)) byPath.set(issue.path, issue.instruction ?? issue.message);
     return byPath;
   }, [issues]);
   // The change under way (`ChangeScope`): its writes are reported with it.
@@ -262,10 +268,14 @@ const SchemaFormBindings = memo(function SchemaFormBindings({
     const subscription = form.watch((values, { name }) => {
       const next = stripUnset(values);
       collections.remember(next);
-      setIssues((previous) => {
-        const found = issuesOf(schema, next);
-        return JSON.stringify(previous) === JSON.stringify(found) ? previous : found;
-      });
+      const found = issuesOf(schema, next);
+      const snapshot = JSON.stringify(found);
+      if (snapshot !== issuesSnapshotRef.current) {
+        issuesSnapshotRef.current = snapshot;
+        setIssues(found);
+        // Refresh sibling refinements only when schema issues change, not on each keystroke.
+        void form.trigger();
+      }
       // Every field describes its changes; a write that does not is a step of its own.
       const change = pendingChangeRef.current ?? {
         path: name ?? '',
@@ -282,6 +292,8 @@ const SchemaFormBindings = memo(function SchemaFormBindings({
   );
   const variantSchema = shape.kind === 'union' ? (shape.options[unionIndex] as Schema) : schema;
   const discriminator = shape.kind === 'union' ? shape.discriminator : undefined;
+  const RootPicker = unionPickers?.[''];
+  const reviewEdit = use(FormEditReviewContext);
   const layout = useMemo(() => {
     const variant = shapeOf(variantSchema);
     return variant.kind === 'object'
@@ -290,17 +302,38 @@ const SchemaFormBindings = memo(function SchemaFormBindings({
   }, [variantSchema, discriminator, fieldOrder]);
 
   // A choice: one undo step, with the unparsed text of the fields it replaces.
-  const switchVariant = (index: number) =>
-    changeScope({ path: '', kind: 'commit' }, () => {
-      if (shape.kind !== 'union') return;
-      repathParseErrors(parseErrorChannel, [{ from: '' }]);
-      const next = asValues(initialValue(shape.options[index] as Schema));
-      collections.remember(next);
-      setUnionIndex(index);
-      form.reset(asValues(withUnsetFields(shape.options[index] as Schema, next)));
-      setIssues(issuesOf(schema, next));
-      onChangeRef.current(next, pendingChangeRef.current!);
-    });
+  const switchVariant = (index: number) => {
+    if (shape.kind !== 'union' || index === unionIndex) return;
+    reviewEdit(
+      { type: 'variant', path: '', value: initialValue(shape.options[index] as Schema) },
+      (value, keep = [], moves = []) =>
+        changeScope({ path: '', kind: 'commit' }, () => {
+          repathParseErrors(
+            parseErrorChannel,
+            Object.keys(parseErrorChannel.errors ?? {})
+              .filter((path) => !keep.some((key) => path === key || path.startsWith(`${key}.`)))
+              .map((from) => {
+                const move = moves.find(
+                  ({ from: path }) => from === path || from.startsWith(`${path}.`),
+                );
+                return {
+                  from,
+                  ...(move ? { to: move.to + from.slice(move.from.length) } : {}),
+                  exact: true,
+                };
+              }),
+          );
+          const next = asValues(value);
+          collections.remember(next);
+          setUnionIndex(index);
+          form.reset(asValues(withUnsetFields(shape.options[index] as Schema, next)));
+          const found = issuesOf(schema, next);
+          issuesSnapshotRef.current = JSON.stringify(found);
+          setIssues(found);
+          onChangeRef.current(next, pendingChangeRef.current!);
+        }),
+    );
+  };
 
   return (
     <FormChangeContext value={changeScope}>
@@ -320,8 +353,25 @@ const SchemaFormBindings = memo(function SchemaFormBindings({
                             onSubmit={(e) => e.preventDefault()}
                             className="grid gap-field"
                           >
-                            {shape.kind === 'union' ? (
-                              <FieldGroup>
+                            {shape.kind === 'union' && RootPicker ? (
+                              <div data-field={shape.discriminator ?? 'kind'}>
+                                <RootPicker
+                                  name={shape.discriminator ?? 'kind'}
+                                  label={humanize(shape.discriminator ?? 'kind')}
+                                  required
+                                  options={shape.options.map((option, index) => ({
+                                    value: String(index),
+                                    label: optionLabel(option, shape.discriminator),
+                                    schema: option,
+                                  }))}
+                                  value={String(unionIndex)}
+                                  onChange={(value) => switchVariant(Number(value))}
+                                />
+                              </div>
+                            ) : shape.kind === 'union' ? (
+                              <FieldGroup
+                                data-field={shape.discriminator === 'kind' ? 'kind' : undefined}
+                              >
                                 <Label htmlFor={id}>
                                   {humanize(shape.discriminator ?? 'kind')}
                                 </Label>
@@ -347,12 +397,18 @@ const SchemaFormBindings = memo(function SchemaFormBindings({
                                 Field={Field}
                               />
                             ) : null}
+                            {issues
+                              .filter((issue) => issue.path === '')
+                              .map((issue, index) => (
+                                <p key={index} role="alert" className="text-sm text-status-bad-fg">
+                                  {issue.message}
+                                </p>
+                              ))}
                             {issues.length > 0 ? (
-                              <div
-                                className="grid gap-1 rounded-md border-l-4 border-status-bad-border bg-status-bad-bg px-3 py-2 text-xs leading-snug"
-                                aria-label="Config issues"
+                              <Disclosure
+                                label="Validation details"
+                                summary={`${issues.length} config issue${issues.length === 1 ? '' : 's'}`}
                               >
-                                <p className="font-semibold text-status-bad-fg">Config issues</p>
                                 <ul className="list-disc pl-4">
                                   {issues.map((issue, index) => (
                                     <li key={index}>
@@ -361,7 +417,7 @@ const SchemaFormBindings = memo(function SchemaFormBindings({
                                     </li>
                                   ))}
                                 </ul>
-                              </div>
+                              </Disclosure>
                             ) : null}
                           </form>
                         </FormProvider>

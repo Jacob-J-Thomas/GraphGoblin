@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import {
   test as base,
   expect,
@@ -5,6 +6,9 @@ import {
   type Locator,
   type Page,
 } from '@playwright/test';
+import { manualTriggerConfig } from '../src/__fixtures__/triggers.js';
+export type { TriggerFields } from '../src/__fixtures__/triggers.js';
+export { triggerConfig, manualTriggerConfig } from '../src/__fixtures__/triggers.js';
 
 /** Tests run against the server global-setup started; its URL arrives through the environment. */
 export const test = base.extend({
@@ -22,14 +26,14 @@ export { expect };
 /** A manual trigger, a wait-for-input node, and an exit. */
 export function approvalLoop(name: string) {
   return {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name,
     nodes: [
       {
         id: 'start',
         kind: 'trigger',
         label: 'Start',
-        config: { subtype: 'manual' },
+        config: manualTriggerConfig(),
         ui: { x: 0, y: 80 },
       },
       {
@@ -100,7 +104,7 @@ export async function openItem(scope: Page | Locator, name: string) {
 
 /** Close the open node editor with its Done button. */
 export async function closeNode(page: Page): Promise<void> {
-  await page.getByRole('dialog').getByRole('button', { name: 'Done' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Done', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
 }
 
