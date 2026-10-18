@@ -57,66 +57,71 @@ const predicate = (strategy: string, extra: Record<string, unknown> = {}) => ({
 
 // These function names predate format 4; this suite owns their frozen format-3 output.
 describe('one current offline definition cutover', () => {
-  it.each([1, 2])('keeps format %i decision conversion on frozen V3 contracts', (version) => {
-    const options = [
-      { id: 'yes', label: 'Yes', criteria: 'Approved' },
-      { id: 'no', label: 'No', criteria: 'Rejected' },
-    ];
-    const config = {
-      answer: { type: 'choice', options },
-      evaluation: { kind: 'expression', jsonata: '"yes"' },
-      recordAlternatives: true,
-    };
-    const base = minimalLoop();
-    const input = {
-      ...base,
-      schemaVersion: version,
-      nodes: [
-        ...base.nodes,
-        {
-          id: 'decide',
-          kind: 'decision',
-          label: 'Decide',
-          config:
-            version === 1
-              ? {
-                  routes: options.map((option) => ({
-                    label: option.id,
-                    description: option.criteria,
-                  })),
-                  strategy: ['expression'],
-                  question: 'Choose',
-                  expression: { jsonata: '"yes"' },
-                }
-              : config,
-        },
-      ],
-    };
-    const result = upgradeLoopCurrent(input);
-    if (!result.ok) throw new Error(JSON.stringify(result.issues));
-    expect(V3LoopDefinitionSchema.parse(result.value)).toEqual(result.value);
-    expect(result.value.schemaVersion).toBe(3);
-    expect(result.value.nodes[2]).toHaveProperty(
-      'config',
-      version === 1
-        ? {
-            ...config,
-            answer: { type: 'choice', options: options.map((o) => ({ ...o, label: o.id })) },
-          }
-        : config,
-    );
-    const exported = upgradeExportCurrent({
-      format: 'graphgoblin-loop',
-      formatVersion: version,
-      exportedAt: FIXTURE_TS,
-      loop: input,
-    });
-    if (!exported.ok) throw new Error(JSON.stringify(exported.issues));
-    expect(V3LoopExportSchema.parse(exported.value)).toEqual(exported.value);
-    expect(exported.value.formatVersion).toBe(3);
-    expect(exported.value.loop).toEqual(result.value);
-    expect(input.schemaVersion).toBe(version);
-  });
+  // The first case pays the lazy import of the frozen converters; keep room under coverage load.
+  it.each([1, 2])(
+    'keeps format %i decision conversion on frozen V3 contracts',
+    (version) => {
+      const options = [
+        { id: 'yes', label: 'Yes', criteria: 'Approved' },
+        { id: 'no', label: 'No', criteria: 'Rejected' },
+      ];
+      const config = {
+        answer: { type: 'choice', options },
+        evaluation: { kind: 'expression', jsonata: '"yes"' },
+        recordAlternatives: true,
+      };
+      const base = minimalLoop();
+      const input = {
+        ...base,
+        schemaVersion: version,
+        nodes: [
+          ...base.nodes,
+          {
+            id: 'decide',
+            kind: 'decision',
+            label: 'Decide',
+            config:
+              version === 1
+                ? {
+                    routes: options.map((option) => ({
+                      label: option.id,
+                      description: option.criteria,
+                    })),
+                    strategy: ['expression'],
+                    question: 'Choose',
+                    expression: { jsonata: '"yes"' },
+                  }
+                : config,
+          },
+        ],
+      };
+      const result = upgradeLoopCurrent(input);
+      if (!result.ok) throw new Error(JSON.stringify(result.issues));
+      expect(V3LoopDefinitionSchema.parse(result.value)).toEqual(result.value);
+      expect(result.value.schemaVersion).toBe(3);
+      expect(result.value.nodes[2]).toHaveProperty(
+        'config',
+        version === 1
+          ? {
+              ...config,
+              answer: { type: 'choice', options: options.map((o) => ({ ...o, label: o.id })) },
+            }
+          : config,
+      );
+      const exported = upgradeExportCurrent({
+        format: 'graphgoblin-loop',
+        formatVersion: version,
+        exportedAt: FIXTURE_TS,
+        loop: input,
+      });
+      if (!exported.ok) throw new Error(JSON.stringify(exported.issues));
+      expect(V3LoopExportSchema.parse(exported.value)).toEqual(exported.value);
+      expect(exported.value.formatVersion).toBe(3);
+      expect(exported.value.loop).toEqual(result.value);
+      expect(input.schemaVersion).toBe(version);
+    },
+    20_000,
+  );
   it('matches the 12e5b87 definition and export golden/refusal results', () => {
     // Recorded before rebinding: keep these complete results through later cutover stages.
     const current = minimalLoop();

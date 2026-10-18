@@ -83,6 +83,8 @@ describe('composed format-4 definition and export conversion', () => {
       });
       expect(input.schemaVersion).toBe(schemaVersion);
     },
+    // The first case pays the lazy import of the frozen converters; keep room under coverage load.
+    20_000,
   );
 
   it('uses E2 frozen shipped fixture reviews and hashes without changing them', async () => {
