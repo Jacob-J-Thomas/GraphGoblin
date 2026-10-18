@@ -55,6 +55,17 @@ async function openGraph(
     if (await button.isVisible()) await button.click();
   }
   await page.getByRole('button', { name: 'Fit view' }).click();
+  // Fit View may zoom below 50% to show a large graph whole. Measure at the editor's readable
+  // opening zoom instead, so every routing test keeps the viewport it was written for.
+  for (let step = 0; step < 20; step += 1) {
+    const zoom = await page.evaluate(
+      () =>
+        new DOMMatrix(getComputedStyle(document.querySelector('.react-flow__viewport')!).transform)
+          .a,
+    );
+    if (zoom >= 0.5) break;
+    await page.getByRole('button', { name: /zoom in/i }).click();
+  }
   await expect(page.locator('.react-flow__edge-orthogonal title').first()).toBeAttached();
   await page.evaluate(() => document.fonts.ready);
   return loop.id;
@@ -475,8 +486,7 @@ for (const count of [100, 300])
     expect(definition.edges).toHaveLength(count * 2);
     await openGraph(page, request, definition);
     await expect(page.locator('.react-flow__edge')).toHaveCount(count * 2);
-    // Fit View shows this middle card at any zoom; the drag starts at its centre, so it lands on
-    // the card however far Fit View had to zoom out.
+    // openGraph leaves this middle card in view at the readable zoom; the drag starts at its centre.
     const card = page.locator(`.react-flow__node[data-id="n${Math.floor(count / 20) * 10 - 6}"]`);
     await expect(card).toBeVisible();
     await page.waitForTimeout(1000); // Let font measurement, initial validation and fit-view settle.
