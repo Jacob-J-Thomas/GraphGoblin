@@ -266,11 +266,40 @@ describe('autosave on API recovery', () => {
   });
 });
 
-it.each(['flush', 'browser reconnect', 'API recovery'] as const)(
-  "re-review F1: %s carries the request base when rebasing this editor's newer mirror",
-  async (savePath) => {
+it.each([
+  ['flush', false],
+  ['browser reconnect', false],
+  ['API recovery', false],
+  ['flush', true],
+] as const)(
+  "second review F1: %s keeps this editor's newer mirror safe (queued after response=%s)",
+  async (savePath, afterResponse) => {
     const view = await mountAutosave();
     const recording = vi.spyOn(drafts, 'recordServerSave');
+    const mirrors = vi.spyOn(drafts, 'saveLocalDraft');
+    let queued = false;
+    if (afterResponse) {
+      const get = IDBObjectStore.prototype.get;
+      vi.spyOn(IDBObjectStore.prototype, 'get').mockImplementation(function (
+        this: IDBObjectStore,
+        key,
+      ) {
+        const request = get.call(this, key);
+        if (key === view.loop.id && useEditorStore.getState().baseToken !== view.token)
+          request.addEventListener(
+            'success',
+            () => {
+              if (queued) return;
+              queued = true;
+              act(() =>
+                useEditorStore.getState().updateMeta({ description: 'newer mirrored edit' }),
+              );
+            },
+            { once: true },
+          );
+        return request;
+      });
+    }
     let releaseFirst = () => {};
     let releaseSecond = () => {};
     const first = new Promise<void>((resolve) => {
@@ -297,13 +326,15 @@ it.each(['flush', 'browser reconnect', 'API recovery'] as const)(
         else notifyRecovery();
       });
       await waitFor(() => expect(view.requests('PUT')).toHaveLength(1));
-      act(() => useEditorStore.getState().updateMeta({ description: 'newer mirrored edit' }));
-      await waitFor(async () =>
-        expect(await drafts.loadLocalDraft(view.loop.id)).toMatchObject({
-          definition: { description: 'newer mirrored edit' },
-          baseToken: view.token,
-        }),
-      );
+      if (!afterResponse) {
+        act(() => useEditorStore.getState().updateMeta({ description: 'newer mirrored edit' }));
+        await waitFor(async () =>
+          expect(await drafts.loadLocalDraft(view.loop.id)).toMatchObject({
+            definition: { description: 'newer mirrored edit' },
+            baseToken: view.token,
+          }),
+        );
+      }
       act(releaseFirst);
       await waitFor(() => expect(view.requests('PUT')).toHaveLength(2));
       expect(recording).toHaveBeenNthCalledWith(
@@ -313,11 +344,22 @@ it.each(['flush', 'browser reconnect', 'API recovery'] as const)(
         firstToken,
         view.token,
       );
-      expect(await drafts.loadLocalDraft(view.loop.id)).toMatchObject({
-        synced: false,
-        definition: { description: 'newer mirrored edit' },
-        baseToken: firstToken,
-      });
+      await waitFor(async () =>
+        expect(await drafts.loadLocalDraft(view.loop.id)).toMatchObject({
+          synced: false,
+          definition: { description: 'newer mirrored edit' },
+          baseToken: firstToken,
+        }),
+      );
+      if (afterResponse) {
+        expect(queued).toBe(true);
+        expect(mirrors).toHaveBeenLastCalledWith(
+          expect.objectContaining({
+            definition: expect.objectContaining({ description: 'newer mirrored edit' }),
+            baseToken: firstToken,
+          }),
+        );
+      }
       expect(drafts.cachedLocalDraft(view.loop.id)?.durable).toBe(true);
       await act(async () => {
         releaseSecond();

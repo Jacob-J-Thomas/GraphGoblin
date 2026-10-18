@@ -167,6 +167,16 @@ it.each([false, true])(
     if (edited)
       expect(view.result.current.definition?.description).toBe('new work in reopened editor');
     expect(api.callsTo('PUT', `/loops/${loop.id}/draft`)).toHaveLength(1);
+    if (edited) {
+      expect((await drafts.loadLocalDraft(loop.id))?.baseToken).toBe(acceptedToken);
+      view.unmount();
+      const reopened = mount(api, loop.id);
+      await waitFor(() => expect(reopened.result.current.serverReconciled).toBe(true));
+      expect(reopened.result.current.definition?.description).toBe('new work in reopened editor');
+      expect(useEditorStore.getState().baseToken).toBe(acceptedToken);
+      expect(useEditorStore.getState().conflict).toBeUndefined();
+      expect(reopened.result.current.setAside).toBeUndefined();
+    }
   },
 );
 
@@ -400,9 +410,14 @@ it('F4: read failure stays visible after other storage succeeds, and retry prese
   expect(useEditorStore.getState().fieldErrors.settings?.json?.text).toBe('{');
 });
 
-it.each(['autosave', 'navigation'] as const)(
-  're-review F1: failed-read %s leaves a foreign token unchanged and reopening requires a choice',
-  async (savePath) => {
+it.each([
+  ['autosave', false],
+  ['navigation', false],
+  ['autosave', true],
+  ['navigation', true],
+] as const)(
+  'second review F1: failed-read %s preserves unread work and requires a choice on reopening (same base=%s)',
+  async (savePath, sameBase) => {
     const api = new FakeApi();
     const loop = api.addLoop(newLoopDefinition('server'));
     const unread = {
@@ -410,7 +425,7 @@ it.each(['autosave', 'navigation'] as const)(
       definition: newLoopDefinition('unread earlier-session work'),
       savedAt: '2999',
       synced: false,
-      baseToken: 'earlier-session-token',
+      baseToken: sameBase ? api.draftToken(loop.id)! : 'earlier-session-token',
     };
     await drafts.saveLocalDraft(unread);
     // A fresh window has no memory cache, including on reopening after the server save.

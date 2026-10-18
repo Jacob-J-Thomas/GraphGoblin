@@ -265,9 +265,9 @@ function sharesSaveBase(draft: LocalDraft, baseToken: string | undefined): boole
 /**
  * Record that the server accepted `definition` with `token`, in one IndexedDB transaction so a
  * concurrent mirror write is never lost. A device copy of that exact definition becomes synced. A
- * newer device copy stays unsynced and advances to `token` only if its base matches this save's
- * request base. Unread work from a different or unknown base retains its token for explicit
- * reconciliation; converted work always retains its mandatory overwrite token.
+ * newer device copy advances only if its base matches this save's request base and its definition
+ * and decision routes match this editor's latest mirror inside the transaction. Unread work keeps
+ * its base even when it shares the request token; converted work keeps its mandatory overwrite token.
  */
 export async function recordServerSave(
   loopId: string,
@@ -326,9 +326,16 @@ async function persistServerSave(
       loopId,
       (local) => {
         requirePreserved(local, original, definition);
+        // A shared base alone cannot identify this editor's work. A queued mirror can also
+        // supersede the copy seen when the save started, so inspect the latest cache here.
+        const mirror = latest.get(loopId)?.draft;
+        const isOwnMirror =
+          mirror !== undefined &&
+          JSON.stringify(local?.definition) === JSON.stringify(mirror.definition) &&
+          JSON.stringify(local?.decisionRoutes) === JSON.stringify(mirror.decisionRoutes);
         stored =
           local && JSON.stringify(local.definition) !== JSON.stringify(definition)
-            ? sharesSaveBase(local, baseToken)
+            ? sharesSaveBase(local, baseToken) && isOwnMirror
               ? { ...local, baseToken: token }
               : local
             : synced;

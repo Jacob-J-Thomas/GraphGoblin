@@ -453,3 +453,65 @@ it('re-review F1: a matching memory base cannot claim a foreign durable base was
     durable: false,
   });
 });
+
+it.each(['definition', 'decision routes'] as const)(
+  'second review F1: a same-base stored %s mismatch with the latest mirror is not rebased',
+  async (mismatch) => {
+    const saved = minimalLoop();
+    const unread = {
+      loopId: 'same-base-unread',
+      definition: { ...saved, description: 'unread work' },
+      decisionRoutes: { choice: { nextKey: 1, rows: [{ key: 0, id: 'old', edgeIds: ['edge'] }] } },
+      savedAt: 'earlier',
+      synced: false,
+      baseToken: 'save-base',
+    };
+    await drafts.saveLocalDraft(unread);
+    drafts.rememberLocalDraft({
+      ...unread,
+      ...(mismatch === 'definition'
+        ? { definition: { ...saved, description: 'this editor newest work' } }
+        : { decisionRoutes: { choice: { nextKey: 2, rows: [] } } }),
+    });
+    await drafts.recordServerSave(unread.loopId, saved, 'accepted-token', 'save-base');
+    expect(await drafts.loadLocalDraft(unread.loopId)).toEqual(unread);
+    expect(drafts.cachedLocalDraft(unread.loopId)?.durable).toBe(false);
+  },
+);
+
+it('second review F1: a mirror queued after the save replaces the old copy with its already accepted token', async () => {
+  const saved = minimalLoop();
+  const earlier = {
+    loopId: 'queued-mirror',
+    definition: { ...saved, description: 'earlier mirror' },
+    savedAt: 'earlier',
+    synced: false,
+    baseToken: 'save-base',
+  };
+  await drafts.saveLocalDraft(earlier);
+  const originalPut = IDBObjectStore.prototype.put;
+  const stored: unknown[] = [];
+  const writing = vi.spyOn(IDBObjectStore.prototype, 'put').mockImplementation(function (
+    this: IDBObjectStore,
+    value: unknown,
+    key,
+  ) {
+    if (key === earlier.loopId) stored.push(value);
+    return originalPut.call(this, value, key);
+  });
+  try {
+    const recording = drafts.recordServerSave(earlier.loopId, saved, 'accepted-token', 'save-base');
+    const newest = {
+      ...earlier,
+      definition: { ...saved, description: 'mirror queued after save' },
+      baseToken: 'accepted-token',
+    };
+    const mirrored = drafts.saveLocalDraft(newest);
+    await Promise.all([recording, mirrored]);
+    expect(stored).toEqual([earlier, newest]);
+    expect(await drafts.loadLocalDraft(earlier.loopId)).toEqual(newest);
+    expect(drafts.cachedLocalDraft(earlier.loopId)).toEqual({ draft: newest, durable: true });
+  } finally {
+    writing.mockRestore();
+  }
+});
