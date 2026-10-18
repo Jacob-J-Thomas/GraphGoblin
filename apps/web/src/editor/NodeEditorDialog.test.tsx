@@ -309,7 +309,7 @@ describe('NodeEditorDialog webhook receiver', () => {
         expect(scope.getByRole('region', { name: 'Receiver' })).toBeVisible();
         expect(
           await scope.findByText(
-            'The receiver URL appears after publishing an enabled webhook trigger.',
+            'This node has no published receiver yet. The URL appears after you publish an enabled webhook trigger.',
           ),
         ).toBeVisible();
       } else {

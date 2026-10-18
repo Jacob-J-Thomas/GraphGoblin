@@ -1,6 +1,6 @@
 import { unwrap } from '@graphgoblin/api-client';
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useApi } from '../api/context.js';
 import { keys } from '../api/queries.js';
 import { Button, HelpText } from '../components/ui/index.js';
@@ -8,6 +8,7 @@ import { Button, HelpText } from '../components/ui/index.js';
 /** The published receiver is authoritative even when the draft has newer edits. */
 export function WebhookReceiver({ loopId, nodeId }: { loopId: string; nodeId: string }) {
   const client = useApi();
+  const headingId = useId();
   const [revealed, setRevealed] = useState<string>();
   const [status, setStatus] = useState('');
   const query = useQuery({
@@ -24,7 +25,8 @@ export function WebhookReceiver({ loopId, nodeId }: { loopId: string; nodeId: st
   const endpoint = query.data?.webhooks.find(
     (item) => item.triggerNodeId === nodeId && item.enabled,
   );
-  const url = endpoint ? new URL(endpoint.path, client.config.baseUrl).href : undefined;
+  // Joined like other API URLs, so a base URL with a path prefix keeps it.
+  const url = endpoint ? `${client.config.baseUrl.replace(/\/$/, '')}${endpoint.path}` : undefined;
   const copy = async (value: string) => {
     try {
       await navigator.clipboard.writeText(value);
@@ -35,8 +37,13 @@ export function WebhookReceiver({ loopId, nodeId }: { loopId: string; nodeId: st
   };
 
   return (
-    <section aria-label="Receiver" className="grid gap-3 rounded-md border border-default p-4">
-      <h3 className="font-semibold">Receiver</h3>
+    <section
+      aria-labelledby={headingId}
+      className="grid gap-3 rounded-md border border-default p-4"
+    >
+      <h3 id={headingId} className="font-semibold">
+        Receiver
+      </h3>
       {query.isPending ? (
         <HelpText>Loading receiver…</HelpText>
       ) : query.isError ? (
@@ -70,7 +77,10 @@ export function WebhookReceiver({ loopId, nodeId }: { loopId: string; nodeId: st
           </div>
         </>
       ) : (
-        <HelpText>The receiver URL appears after publishing an enabled webhook trigger.</HelpText>
+        <HelpText>
+          This node has no published receiver yet. The URL appears after you publish an enabled
+          webhook trigger.
+        </HelpText>
       )}
       <p role="status" aria-live="polite" className="text-sm">
         {status}

@@ -87,7 +87,7 @@ it.each([
   setup(api);
   expect(
     await screen.findByText(
-      'The receiver URL appears after publishing an enabled webhook trigger.',
+      'This node has no published receiver yet. The URL appears after you publish an enabled webhook trigger.',
     ),
   ).toBeVisible();
   expect(screen.queryByLabelText('Receiver URL')).toBeNull();
