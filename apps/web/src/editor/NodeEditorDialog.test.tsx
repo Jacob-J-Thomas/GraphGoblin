@@ -294,6 +294,39 @@ describe('NodeEditorDialog evaluator-specific decisions', () => {
   });
 });
 
+describe('NodeEditorDialog webhook receiver', () => {
+  it('shows Receiver only while the trigger type is Webhook', async () => {
+    const user = userEvent.setup();
+    const dialog = await openDialog(
+      { id: 'receiver', kind: 'trigger', label: 'Receiver', config: manualTriggerConfig() },
+      'Edit trigger receiver',
+    );
+    const scope = within(dialog);
+    expect(scope.queryByRole('region', { name: 'Receiver' })).toBeNull();
+    for (const type of ['cron', 'poll', 'event', 'webhook', 'manual']) {
+      await user.selectOptions(scope.getByLabelText('Trigger type'), type);
+      if (type === 'webhook') {
+        expect(scope.getByRole('region', { name: 'Receiver' })).toBeVisible();
+        expect(
+          await scope.findByText(
+            'This node has no published receiver yet. The URL appears after you publish an enabled webhook trigger.',
+          ),
+        ).toBeVisible();
+      } else {
+        expect(scope.queryByRole('region', { name: 'Receiver' })).toBeNull();
+      }
+    }
+  });
+
+  it('does not show Receiver for other node kinds', async () => {
+    const dialog = await openDialog(
+      { id: 'finish', kind: 'exit', label: 'Finish', config: {} },
+      'Edit exit finish',
+    );
+    expect(within(dialog).queryByRole('region', { name: 'Receiver' })).toBeNull();
+  });
+});
+
 describe('NodeEditorDialog GitHub trigger presets', () => {
   it('applies an editable body-signed fragment as one undoable graph change', async () => {
     const user = userEvent.setup();

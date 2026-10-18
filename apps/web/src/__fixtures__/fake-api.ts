@@ -467,6 +467,7 @@ export class FakeApi {
         return json({ loop, draft, issues: validateLoop(draft.definition) }, 201);
       },
     ],
+    ['GET /loops/:id/triggers', () => json({ schedules: [], webhooks: [], polls: [] })],
     ['GET /loops', () => json({ items: [...this.loops.values()].map((l) => l.loop) })],
     [
       'POST /loops',

@@ -110,6 +110,17 @@ After a long outage `run-once` still starts exactly one catch-up run, for the la
 
 ## Receive an ordinary POST
 
+For a Webhook trigger, the node dialog's **Receiver** section shows the published receiver URL.
+Other programs send POST requests to this URL to start the loop. The address contains a secret
+token: treat it like a password. It starts masked; **Reveal** shows the full URL and **Hide** masks
+it again. **Copy receiver URL** copies the full address without revealing it on screen and reports
+whether copying succeeded. If loading fails, use **Retry** to fetch it again.
+
+The URL appears after publishing an enabled webhook trigger. It shows the published receiver;
+publish again to apply draft changes. This section provides the address only; signing instructions
+remain in this guide. Scripts can instead read the enabled webhook's `path` from
+`GET /loops/{id}/triggers` and resolve it against the API base URL.
+
 A new Webhook defaults to None authentication, JSON body and constant `webhook` event metadata.
 None requires no secret and establishes no sender identity. Text supports XML/form-like content as
 a UTF-8 string, including empty input; Bytes produces `{encoding:"base64",data}`. The raw limit is
@@ -147,7 +158,8 @@ Create a secret in [Settings](06-settings-and-secrets.md#store-secrets), then re
 }
 ```
 
-Publish, then fetch the trigger listing. Copy the enabled webhook's `path`; its receiver has this shape:
+Publish, then use **Receiver** in the trigger dialog. Scripts can also read the enabled webhook's
+`path` from `GET /loops/{id}/triggers`; its receiver has this shape:
 
 ```http
 POST /hooks/{token}
