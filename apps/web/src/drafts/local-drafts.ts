@@ -23,6 +23,25 @@ export interface LocalDraft {
   migrationIssues?: { code: string; path: string; message: string; id?: string; hash?: string }[];
 }
 
+/** Latest work in this window. Presence in memory does not imply a durable write succeeded. */
+export interface CachedDraft {
+  draft: LocalDraft;
+  durable: boolean;
+}
+const latest = new Map<string, CachedDraft>();
+const writes = new Map<string, Promise<void>>();
+
+export function rememberLocalDraft(draft: LocalDraft): CachedDraft {
+  const entry = { draft, durable: false };
+  latest.set(draft.loopId, entry);
+  return entry;
+}
+
+export function cachedLocalDraft(loopId: string): CachedDraft | undefined {
+  const cached = latest.get(loopId);
+  return cached?.draft.definition.schemaVersion === CURRENT_DEFINITION_FORMAT ? cached : undefined;
+}
+
 /**
  * Why device storage refused its last operation. `blocked`: another GraphGoblin window still holds
  * an older version's connection, so the store upgrade cannot run (it clears by itself when that
@@ -152,7 +171,18 @@ async function run<T>(operation: (store: UseStore) => Promise<T>): Promise<T> {
 }
 
 export async function saveLocalDraft(draft: LocalDraft): Promise<void> {
-  await saveDraft(draft.loopId, draft);
+  const entry = rememberLocalDraft(draft);
+  // Even a slow or refused write leaves the newest copy available for warm navigation.
+  const writing = (writes.get(draft.loopId) ?? Promise.resolve())
+    .catch(() => undefined)
+    .then(() => saveDraft(draft.loopId, draft));
+  writes.set(draft.loopId, writing);
+  try {
+    await writing;
+    entry.durable = true;
+  } finally {
+    if (writes.get(draft.loopId) === writing) writes.delete(draft.loopId);
+  }
 }
 
 /** Also protects copies first discovered after a blocked database upgrade finishes. */
@@ -202,7 +232,15 @@ async function saveDraft(key: string, draft: LocalDraft): Promise<void> {
 }
 
 export async function loadLocalDraft(loopId: string): Promise<LocalDraft | undefined> {
-  return loadDraft(loopId);
+  const before = latest.get(loopId);
+  const draft = await loadDraft(loopId);
+  if (
+    !before &&
+    !latest.has(loopId) &&
+    draft?.definition?.schemaVersion === CURRENT_DEFINITION_FORMAT
+  )
+    latest.set(loopId, { draft, durable: true });
+  return draft;
 }
 
 /** A blocked store reads as no copy, so the editor opens on the server's; the state says why. */
@@ -215,37 +253,98 @@ async function loadDraft(key: string): Promise<LocalDraft | undefined> {
   }
 }
 
+/** A missing or conversion-only token cannot establish descent from the accepted save. */
+function sharesSaveBase(draft: LocalDraft, baseToken: string | undefined): boolean {
+  return (
+    baseToken !== undefined &&
+    baseToken !== UNRECONCILED_DEVICE_TOKEN &&
+    draft.baseToken === baseToken
+  );
+}
+
 /**
  * Record that the server accepted `definition` with `token`, in one IndexedDB transaction so a
  * concurrent mirror write is never lost. A device copy of that exact definition becomes synced. A
- * newer device copy (edited since the save started) keeps its definition and stays unsynced, but
- * is now based on `token`: its next save must not conflict with the write it descends from.
+ * newer device copy advances only if its base matches this save's request base and its definition
+ * and decision routes match this editor's latest mirror inside the transaction. Unread work keeps
+ * its base even when it shares the request token; converted work keeps its mandatory overwrite token.
  */
 export async function recordServerSave(
   loopId: string,
   definition: LoopDefinitionInput,
   token: string,
+  baseToken: string | undefined,
 ): Promise<void> {
+  const cached = latest.get(loopId);
+  const differs =
+    cached !== undefined && JSON.stringify(cached.draft.definition) !== JSON.stringify(definition);
+  const rebase = differs && sharesSaveBase(cached.draft, baseToken);
+  const draft: LocalDraft = differs
+    ? rebase
+      ? { ...cached.draft, baseToken: token }
+      : cached.draft
+    : { loopId, definition, savedAt: new Date().toISOString(), synced: true, baseToken: token };
+  const entry = { draft, durable: false };
+  latest.set(loopId, entry);
+  let stored: LocalDraft | undefined;
+  const writing = (writes.get(loopId) ?? Promise.resolve())
+    .catch(() => undefined)
+    .then(async () => {
+      stored = await persistServerSave(loopId, definition, token, baseToken);
+    });
+  writes.set(loopId, writing);
+  try {
+    await writing;
+    entry.durable =
+      (!differs || rebase) &&
+      stored !== undefined &&
+      draft.baseToken === stored.baseToken &&
+      JSON.stringify(draft.definition) === JSON.stringify(stored.definition) &&
+      JSON.stringify(draft.decisionRoutes) === JSON.stringify(stored.decisionRoutes);
+  } finally {
+    if (writes.get(loopId) === writing) writes.delete(loopId);
+  }
+}
+
+async function persistServerSave(
+  loopId: string,
+  definition: LoopDefinitionInput,
+  token: string,
+  baseToken: string | undefined,
+): Promise<LocalDraft> {
   const original = await preserveLegacyDraft(loopId, definition);
+  const synced: LocalDraft = {
+    loopId,
+    definition,
+    savedAt: new Date().toISOString(),
+    synced: true,
+    baseToken: token,
+  };
+  let stored = synced;
   await run((store) =>
     update<LocalDraft>(
       loopId,
       (local) => {
         requirePreserved(local, original, definition);
-        if (local && JSON.stringify(local.definition) !== JSON.stringify(definition)) {
-          return { ...local, baseToken: token };
-        }
-        return {
-          loopId,
-          definition,
-          savedAt: new Date().toISOString(),
-          synced: true,
-          baseToken: token,
-        };
+        // A shared base alone cannot identify this editor's work. A queued mirror can also
+        // supersede the copy seen when the save started, so inspect the latest cache here.
+        const mirror = latest.get(loopId)?.draft;
+        const isOwnMirror =
+          mirror !== undefined &&
+          JSON.stringify(local?.definition) === JSON.stringify(mirror.definition) &&
+          JSON.stringify(local?.decisionRoutes) === JSON.stringify(mirror.decisionRoutes);
+        stored =
+          local && JSON.stringify(local.definition) !== JSON.stringify(definition)
+            ? sharesSaveBase(local, baseToken) && isOwnMirror
+              ? { ...local, baseToken: token }
+              : local
+            : synced;
+        return stored;
       },
       store,
     ),
   );
+  return stored;
 }
 
 export async function clearLocalDraft(loopId: string): Promise<void> {
@@ -254,6 +353,7 @@ export async function clearLocalDraft(loopId: string): Promise<void> {
     await del(setAsideKey(loopId), store);
     await del(archiveKey(loopId), store);
   });
+  latest.delete(loopId);
 }
 
 /** Compare content and metadata, excluding the raw notice's generated migration issues. */
@@ -293,6 +393,8 @@ async function clearDraft(key: string, expected?: LocalDraft): Promise<void> {
 /** Remove only the verified live mirror; a concurrent edit is never cleared. */
 export async function clearActiveLocalDraft(loopId: string, expected?: LocalDraft): Promise<void> {
   await clearDraft(loopId, expected);
+  const cached = latest.get(loopId);
+  if (!expected || (cached && sameCopy(cached.draft, expected))) latest.delete(loopId);
 }
 
 /**

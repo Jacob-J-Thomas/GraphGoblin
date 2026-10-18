@@ -160,7 +160,7 @@ describe('draft conflicts (If-Match)', () => {
     expect(api.callsTo('PUT', `/loops/${loop.id}/draft`)).toHaveLength(puts);
   });
 
-  it('sends the token a restored device copy was based on, so a newer server draft conflicts', async () => {
+  it("keeps a restored device copy's stale token and requires explicit reconciliation before any save", async () => {
     const user = userEvent.setup();
     const api = new FakeApi();
     const loop = api.addLoop(newLoopDefinition('mine'));
@@ -178,9 +178,8 @@ describe('draft conflicts (If-Match)', () => {
     ).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Dismiss notice' }));
     expect(await screen.findByText(TITLE, undefined, SAVE_WAIT)).toBeInTheDocument();
-    expect(api.callsTo('PUT', `/loops/${loop.id}/draft`)[0]!.headers.get('if-match')).toBe(
-      '"stale-token"',
-    );
+    expect(useEditorStore.getState().baseToken).toBe('stale-token');
+    expect(api.callsTo('PUT', `/loops/${loop.id}/draft`)).toHaveLength(0);
 
     await user.click(screen.getByRole('button', { name: 'Reload server draft' }));
     expect(await screen.findByRole('heading', { name: 'mine' })).toBeInTheDocument();

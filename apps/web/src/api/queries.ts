@@ -73,9 +73,13 @@ export function useCreateTemplateDraft() {
   });
 }
 
-export function useLoop(id: string) {
+export function useLoop(id: string, refetchOnMount: boolean | 'always' = true) {
   const client = useApi();
-  return useQuery({ queryKey: keys.loop(id), queryFn: () => loops.get(client, id) });
+  return useQuery({
+    queryKey: keys.loop(id),
+    queryFn: () => loops.get(client, id),
+    refetchOnMount,
+  });
 }
 
 export function useLoopVersions(id: string) {

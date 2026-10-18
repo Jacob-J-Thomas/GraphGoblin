@@ -44,7 +44,13 @@ async function openGraph(
   definition: LoopDefinitionInput,
   theme = 'dark',
 ) {
-  await page.addInitScript((value) => localStorage.setItem('graphgoblin-theme', value), theme);
+  await page.addInitScript((value) => {
+    localStorage.setItem('graphgoblin-theme', value);
+    // Both panels start collapsed, so the editor's opening fit (never below 50%) uses the whole
+    // canvas: the viewport every routing test was written for.
+    localStorage.setItem('graphgoblin-palette', 'collapsed');
+    localStorage.setItem('graphgoblin-loop-panel', 'collapsed');
+  }, theme);
   const response = await request.post('/loops', { data: { definition } });
   expect(response.status(), await response.text()).toBe(201);
   const { loop } = (await response.json()) as { loop: { id: string } };
@@ -54,7 +60,6 @@ async function openGraph(
     const button = page.getByRole('button', { name, exact: true });
     if (await button.isVisible()) await button.click();
   }
-  await page.getByRole('button', { name: 'Fit view' }).click();
   await expect(page.locator('.react-flow__edge-orthogonal title').first()).toBeAttached();
   await page.evaluate(() => document.fonts.ready);
   return loop.id;
@@ -475,8 +480,7 @@ for (const count of [100, 300])
     expect(definition.edges).toHaveLength(count * 2);
     await openGraph(page, request, definition);
     await expect(page.locator('.react-flow__edge')).toHaveCount(count * 2);
-    // Fit View shows this middle card at any zoom; the drag starts at its centre, so it lands on
-    // the card however far Fit View had to zoom out.
+    // The opening view contains this middle card; the drag starts at its centre.
     const card = page.locator(`.react-flow__node[data-id="n${Math.floor(count / 20) * 10 - 6}"]`);
     await expect(card).toBeVisible();
     await page.waitForTimeout(1000); // Let font measurement, initial validation and fit-view settle.

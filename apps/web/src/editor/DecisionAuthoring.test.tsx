@@ -522,7 +522,10 @@ describe('decision authoring checkpoint', () => {
     act(() => store().reset());
     renderApp(`/loops/${loop.id}/edit`, api);
     await screen.findByRole('heading', { name: 'Decision authoring' });
-    expect(pick().config).toEqual(saved.nodes.find((node) => node.id === 'pick')!.config);
+    // Device-first loading may show the unnormalized warm copy before reconciliation.
+    await waitFor(() =>
+      expect(pick().config).toEqual(saved.nodes.find((node) => node.id === 'pick')!.config),
+    );
     expect(store().definition!.edges).toEqual(saved.edges);
   });
 
