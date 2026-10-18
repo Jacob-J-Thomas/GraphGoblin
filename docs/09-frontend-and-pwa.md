@@ -31,7 +31,7 @@ A React single-page application built with Vite, served by the API process in 1.
 - Undo and redo: every change of the draft, from the toolbar or with Ctrl+Z and Ctrl+Shift+Z (see "Undo and redo" below).
 - Edge routes: a selected connection's segments can be dragged or nudged out of the way, and the route is saved with the edge (see "Manual edge routes" below).
 
-**Fit View** fits the whole graph into the canvas between the open panels, with room for the zoom controls. The canvas zooms from 0.1 to 2, so a long graph fits even with both panels open.
+**Fit View** fits the whole graph into the canvas between the open panels, with room for the zoom controls. The canvas zooms from 0.1 to 2, so a long graph fits even with both panels open. Opening the editor fits the graph too, but never below 50%, so cards stay readable; a larger graph may then extend past the canvas until Fit View is used.
 
 ### Editing decision routes
 
