@@ -59,6 +59,7 @@ const DECISION_UNION_PICKERS = {
   answer: DecisionAnswerPicker,
 };
 const DECISION_FIELD_ORDER = ['instructions', 'jsonata', 'routes', 'answer'] as const;
+const CLASSIFIER_FIELD_ORDER = ['question', 'model', 'answer'] as const;
 const TRIGGER_UNION_PICKERS = {
   '': TriggerTypePicker,
   authentication: WebhookAuthenticationPicker,
@@ -660,7 +661,11 @@ export function NodeEditorDialog({
                               key={`${node.kind}:${epoch}:${historyEpoch}`}
                               schema={NodeConfigSchemas[node.kind]}
                               fieldOrder={
-                                node.kind === 'decision' ? DECISION_FIELD_ORDER : undefined
+                                node.kind === 'decision'
+                                  ? node.config.kind === 'classifier'
+                                    ? CLASSIFIER_FIELD_ORDER
+                                    : DECISION_FIELD_ORDER
+                                  : undefined
                               }
                               value={node.config}
                               label={`${node.id} config`}

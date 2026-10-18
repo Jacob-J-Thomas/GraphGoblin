@@ -230,6 +230,30 @@ describe('NodeEditorDialog evaluator-specific decisions', () => {
         : config.kind === 'llm'
           ? 'instructions'
           : 'question';
+    const fields = [...dialog.querySelectorAll('[data-field]')].map((field) =>
+      field.getAttribute('data-field'),
+    );
+    // Identity, then the evaluator picker, before any evaluator-specific fields.
+    expect(fields.slice(0, 3)).toEqual(['id', 'label', 'kind']);
+    const sourceField = dialog.querySelector(`[data-field="${source}"]`)!;
+    const method = within(dialog).getByRole('radiogroup', { name: 'Decision kind' });
+    expect(
+      method.compareDocumentPosition(sourceField) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    if (config.kind === 'classifier') {
+      const model = dialog.querySelector('[data-field="model"]')!;
+      const answer = dialog.querySelector('[data-field="answer"]')!;
+      expect(
+        sourceField.compareDocumentPosition(model) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      expect(model.compareDocumentPosition(answer) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      act(() => store().openNode('pick', { field: 'config.model' }));
+      await waitFor(() => expect(model).toContainElement(document.activeElement as HTMLElement));
+      act(() => store().openNode('pick', { field: 'config.question' }));
+      await waitFor(() =>
+        expect(sourceField).toContainElement(document.activeElement as HTMLElement),
+      );
+    }
     const text = config.kind === 'expression' ? '"no"' : 'Use the complete evidence.';
     setCode(
       source === 'jsonata' ? 'Jsonata' : source === 'instructions' ? 'Instructions' : 'Question',
