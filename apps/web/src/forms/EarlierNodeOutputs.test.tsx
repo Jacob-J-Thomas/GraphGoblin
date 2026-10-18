@@ -111,7 +111,7 @@ describe('handler-derived notes', () => {
     ],
     [
       { id: 'i', label: 'Inference', kind: 'inference', config: { prompt: { template: 'hello' } } },
-      'Schema output candidate (raw on continue-raw); otherwise final text, parsed as JSON when possible. Output transforms may change it.',
+      'With an output schema, the structured result; otherwise the final reply text, parsed as JSON when possible. Output transforms may change it.',
     ],
     [
       script('s'),

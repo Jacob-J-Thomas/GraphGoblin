@@ -58,7 +58,7 @@ export function outputNote(node: NodeInput): string | undefined {
     case 'trigger':
       return 'The trigger payload.';
     case 'inference':
-      return 'Schema output candidate (raw on continue-raw); otherwise final text, parsed as JSON when possible. Output transforms may change it.';
+      return 'With an output schema, the structured result; otherwise the final reply text, parsed as JSON when possible. Output transforms may change it.';
     case 'script':
       return (node.config.stdout ?? 'last-output') === 'last-output'
         ? 'Standard output itself, parsed as JSON when possible; otherwise text (no stdout wrapper).'
@@ -120,8 +120,8 @@ export function EarlierNodeOutputs({
   return (
     <Disclosure label={`Earlier node outputs (${rows.length})`} variant="row" className="mt-2">
       <HelpText>
-        Help, not validation. A branch may not run; a previous visit has no value on the first
-        visit. Renaming a node does not update references already in your fields.
+        Nodes that can run before this one. A branch may not run, and a previous visit has no value
+        the first time through. Renaming a node doesn't update references you've already typed.
       </HelpText>
       <ul className="grid min-w-0 gap-3">
         {rows.map(({ node, note, reference }) => (
