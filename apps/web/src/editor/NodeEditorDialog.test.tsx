@@ -63,6 +63,14 @@ async function openDialog(
 const advanced = (dialog: HTMLElement) =>
   within(dialog).getByRole('button', { name: /^Advanced\b/ });
 
+/** Asserts that the named config fields render in this order, ignoring any others. */
+function expectFieldOrder(dialog: HTMLElement, expected: readonly string[]) {
+  const rendered = [...dialog.querySelectorAll('[data-field]')]
+    .map((field) => field.getAttribute('data-field') ?? '')
+    .filter((path) => expected.includes(path));
+  expect([...new Set(rendered)]).toEqual(expected);
+}
+
 describe('NodeEditorDialog evaluator-specific decisions', () => {
   it.each(['success', 'failure', 'exhausted'] as const)(
     'authors terminal %s exits with returns and destinations',
@@ -287,6 +295,7 @@ describe('NodeEditorDialog evaluator-specific decisions', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Confirm change' }));
     expect(dialog.querySelector('[data-field="instructions"]')).toBeInTheDocument();
     expect(dialog.querySelector('[data-field="jsonata"]')).not.toBeInTheDocument();
+    expectFieldOrder(dialog, ['kind', 'instructions', 'routes', 'model']);
     act(() => store().openNode('pick', { field: 'config.instructions' }));
     await waitFor(() =>
       expect(dialog.querySelector('[data-field="instructions"]')).toContainElement(
@@ -296,8 +305,10 @@ describe('NodeEditorDialog evaluator-specific decisions', () => {
     await user.click(within(dialog).getByRole('radio', { name: 'classifier' }));
     await user.click(within(dialog).getByRole('button', { name: 'Confirm change' }));
     expect(within(dialog).getByRole('radiogroup', { name: 'Answer type' })).toBeVisible();
+    expectFieldOrder(dialog, ['kind', 'question', 'model', 'answer']);
     await user.click(within(dialog).getByRole('radio', { name: 'Noul' }));
     await user.click(within(dialog).getByRole('button', { name: 'Confirm change' }));
+    expectFieldOrder(dialog, ['kind', 'question', 'model', 'answer']);
     const node = store().definition?.nodes.find((node) => node.id === 'pick');
     expect(node?.config).toMatchObject({ kind: 'classifier', answer: { type: 'noul' } });
     await user.click(advanced(dialog));
@@ -309,9 +320,11 @@ describe('NodeEditorDialog evaluator-specific decisions', () => {
     expect(
       within(dialog).queryByLabelText('Noul true-probability threshold', { exact: true }),
     ).not.toBeInTheDocument();
+    expectFieldOrder(dialog, ['kind', 'question', 'model', 'answer']);
     await user.click(within(dialog).getByRole('radio', { name: 'expression' }));
     await user.click(within(dialog).getByRole('button', { name: 'Confirm change' }));
     expect(dialog.querySelector('[data-field="jsonata"]')).toBeInTheDocument();
+    expectFieldOrder(dialog, ['kind', 'jsonata', 'routes']);
     expect(
       within(dialog).queryByRole('radiogroup', { name: 'Answer type' }),
     ).not.toBeInTheDocument();
