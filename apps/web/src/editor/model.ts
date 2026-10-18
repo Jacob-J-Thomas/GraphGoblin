@@ -14,6 +14,7 @@ import {
 } from '@graphgoblin/contracts';
 import { outputPorts, validateLoop, type ValidationIssue } from '@graphgoblin/domain';
 import { hasRepeatRoute } from './decision-gates.js';
+import { setupInstruction } from '../forms/setup-instructions.js';
 
 /** The drag-and-drop data type that carries a node kind from the palette to the canvas. */
 export const KIND_MIME = 'application/x-graphgoblin-kind';
@@ -253,7 +254,10 @@ export function validateDraft(def: LoopDefinitionInput): {
       return {
         code: 'SCHEMA',
         severity: 'error',
-        message: issue.message,
+        message:
+          (node && rest[0] === 'config'
+            ? setupInstruction(node.config, rest.slice(1).map(String).join('.'))
+            : undefined) ?? issue.message,
         path: (node || edge ? rest : issue.path).map(String).join('.'),
         ...(node ? { nodeId: node.id } : {}),
         ...(edge ? { edgeId: edge.id } : {}),

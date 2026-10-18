@@ -9,9 +9,11 @@ export interface DefinitionReviewItem {
   kind: string;
   oldValue: unknown;
   proposedValue: unknown;
+  /** Includes generated removal (null); false when an authored replacement is required. */
+  hasGeneratedProposal: boolean;
   reason: string;
   status: 'automatic' | 'pending' | 'resolved';
-  /** SHA-256 of canonical [rule version, entire frozen definition, item without status/hash]. */
+  /** SHA-256 of rule version, entire frozen definition and semantic proposal fields. */
   hash: string;
 }
 export interface DefinitionResolution {
@@ -106,7 +108,7 @@ export class DefinitionReview {
         if (resolution.action === 'remove') value = null;
       }
     }
-    this.items.push({ ...item, hash, status });
+    this.items.push({ ...item, hash, status, hasGeneratedProposal: !replacementRequired });
     return value;
   }
 

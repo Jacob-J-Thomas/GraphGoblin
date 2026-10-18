@@ -884,6 +884,7 @@ describe('E2 review regressions', () => {
         id: '/nodes/2/config:exit-policy',
         status: 'pending',
         proposedValue: null,
+        hasGeneratedProposal: false,
       });
       if (!refused.ok)
         expect(refused.issues.find((entry) => entry.code === code)?.message).toContain(item.id);
@@ -981,6 +982,8 @@ describe('E2 review regressions', () => {
       const result = candidate(await convertDefinitionV3ToV4(source));
       const item = result.reviewItems.find((entry) => entry.kind === 'ignored-loop-back')!;
       expect(item.status).toBe('pending');
+      expect(item.hasGeneratedProposal).toBe(true);
+      expect(item.proposedValue).toBeNull();
       expect(item.oldValue).toMatchObject({
         loopBack: { targetNodeId: 'work' },
         edges: [{ id: 'ignored-continuation' }],
