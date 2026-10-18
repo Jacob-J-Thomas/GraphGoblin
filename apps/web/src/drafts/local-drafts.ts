@@ -271,13 +271,19 @@ export async function recordServerSave(
       : { loopId, definition, savedAt: new Date().toISOString(), synced: true, baseToken: token };
   const entry = { draft, durable: false };
   latest.set(loopId, entry);
+  let stored: LocalDraft | undefined;
   const writing = (writes.get(loopId) ?? Promise.resolve())
     .catch(() => undefined)
-    .then(() => persistServerSave(loopId, definition, token));
+    .then(async () => {
+      stored = await persistServerSave(loopId, definition, token);
+    });
   writes.set(loopId, writing);
   try {
     await writing;
-    entry.durable = true;
+    entry.durable =
+      stored !== undefined &&
+      JSON.stringify(draft.definition) === JSON.stringify(stored.definition) &&
+      JSON.stringify(draft.decisionRoutes) === JSON.stringify(stored.decisionRoutes);
   } finally {
     if (writes.get(loopId) === writing) writes.delete(loopId);
   }
@@ -287,27 +293,31 @@ async function persistServerSave(
   loopId: string,
   definition: LoopDefinitionInput,
   token: string,
-): Promise<void> {
+): Promise<LocalDraft> {
   const original = await preserveLegacyDraft(loopId, definition);
+  const synced: LocalDraft = {
+    loopId,
+    definition,
+    savedAt: new Date().toISOString(),
+    synced: true,
+    baseToken: token,
+  };
+  let stored = synced;
   await run((store) =>
     update<LocalDraft>(
       loopId,
       (local) => {
         requirePreserved(local, original, definition);
-        if (local && JSON.stringify(local.definition) !== JSON.stringify(definition)) {
-          return { ...local, baseToken: token };
-        }
-        return {
-          loopId,
-          definition,
-          savedAt: new Date().toISOString(),
-          synced: true,
-          baseToken: token,
-        };
+        stored =
+          local && JSON.stringify(local.definition) !== JSON.stringify(definition)
+            ? { ...local, baseToken: token }
+            : synced;
+        return stored;
       },
       store,
     ),
   );
+  return stored;
 }
 
 export async function clearLocalDraft(loopId: string): Promise<void> {

@@ -127,7 +127,7 @@ function mount(
       const definition = useEditorStore((s) => s.definition);
       const flush = useAutosave(client, 20, {
         enabled: loaded.ready && !loaded.preservationBlocked && !loaded.conversionLoadFailed,
-        deviceReady: loaded.deviceRead,
+        deviceReady: loaded.deviceWritable,
         serverReconciled: loaded.serverReconciled,
       });
       return { ...loaded, definition, flush };
@@ -318,22 +318,24 @@ it.each([false, true])(
   },
 );
 
-it('a failed storage read leaves a usable server editor and truthful memory-only work', async () => {
+it('a failed storage read permits reconciliation and keeps device mirrors memory-only until retry', async () => {
   const api = new FakeApi();
   const loop = api.addLoop(newLoopDefinition('server'));
   vi.spyOn(drafts, 'loadLocalDraft').mockRejectedValue(new Error('read failed'));
+  const writes = vi.spyOn(drafts, 'saveLocalDraft');
   const view = mount(api, loop.id);
+  await waitFor(() => expect(view.result.current.deviceReadError).toBe('read failed'));
+  await waitFor(() => expect(view.result.current.definition?.name).toBe('server'));
+  expect(view.result.current.deviceInspected).toBe(true);
+  expect(view.result.current.deviceWritable).toBe(false);
   await waitFor(() => expect(view.result.current.serverReconciled).toBe(true));
-  vi.spyOn(drafts, 'saveLocalDraft').mockImplementation((copy) => {
-    drafts.rememberLocalDraft(copy);
-    return Promise.reject(new Error('write failed'));
-  });
   act(() => useEditorStore.getState().updateMeta({ description: 'memory edit' }));
   expect(drafts.cachedLocalDraft(loop.id)).toMatchObject({
     durable: false,
     draft: { definition: { description: 'memory edit' } },
   });
   expect(useEditorStore.getState().deviceRevision).toBeUndefined();
+  expect(writes).not.toHaveBeenCalled();
 });
 
 it('ignores a late response for an editor that has been replaced by another loop', async () => {
@@ -508,7 +510,7 @@ it('keeps a different durable copy discovered behind a stale warm cache as expli
   vi.spyOn(drafts, 'loadLocalDraft').mockResolvedValue(durable);
   slowServer(api);
   const view = mount(api, loop.id);
-  await waitFor(() => expect(view.result.current.deviceRead).toBe(true));
+  await waitFor(() => expect(view.result.current.deviceWritable).toBe(true));
   expect(view.result.current.definition?.name).toBe('warm work');
   expect(view.result.current.setAsideIsLate).toBe(true);
   expect(await drafts.loadSetAsideDraft(loop.id)).toEqual(durable);

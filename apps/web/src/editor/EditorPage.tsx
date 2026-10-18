@@ -68,7 +68,9 @@ export function EditorPage() {
     query,
     restoredGeneration,
     ready,
-    deviceRead,
+    deviceWritable,
+    deviceReadError,
+    retryDeviceRead,
     serverReconciled,
     setAside,
     setAsideIsLate,
@@ -99,7 +101,7 @@ export function EditorPage() {
   );
   const flush = useAutosave(client, AUTOSAVE_DELAY_MS, {
     enabled: ready && !preservationBlocked && !conversionLoadFailed,
-    deviceReady: deviceRead,
+    deviceReady: deviceWritable,
     serverReconciled,
   });
   useUndoShortcuts();
@@ -227,7 +229,10 @@ export function EditorPage() {
   >();
   // Where the edits are besides the server: on this device once the mirror write of this revision
   // succeeded, in this window only when device storage refused it (`save-status.ts`).
-  const storageProblem = useDeviceStorageProblem();
+  const reportedStorageProblem = useDeviceStorageProblem();
+  const storageProblem = deviceReadError
+    ? { kind: 'failed' as const, message: deviceReadError }
+    : reportedStorageProblem;
   const deviceRevision = useEditorStore((s) => s.deviceRevision);
   const device = deviceCopyOf(revision, deviceRevision, storageProblem);
   const notice = saveNotice(saveState, saveMessage, device);
@@ -238,35 +243,47 @@ export function EditorPage() {
     const { migrationIssues: _migrationIssues, source: _source, ...original } = copy;
     downloadJson(`${fileSlug(loopId)}-original-device-copy.json`, original);
   };
-  const rawCopyWarnings = rawCopies.map((copy, index) => (
-    <Alert
-      key={`${copy.source}-${copy.savedAt}-${index}`}
-      tone="warn"
-      title={
-        copy.migrationIssues[0]?.code === 'UPGRADE_ARCHIVED_RAW_COPY'
-          ? 'Original device copy preserved'
-          : 'This device copy could not be migrated safely'
-      }
-    >
-      Its original contents remain available on this device as an inert copy. Export the original
-      JSON before deleting the device copy if you need to recover it elsewhere.
-      <ul className="mt-2 list-disc pl-5">
-        {copy.migrationIssues.map((issue, issueIndex) => (
-          <li key={`${issue.code}-${issueIndex}`}>
-            <code>{issue.id ?? (issue.path || '/')}</code>: {issue.message}
-          </li>
-        ))}
-      </ul>
-      <span className="mt-2 flex flex-wrap gap-2">
-        <Button size="sm" variant="outline" onClick={() => exportRawCopy(copy)}>
-          {index === 0 ? 'Export original device copy' : `Export original device copy ${index + 1}`}
-        </Button>
-        <Button size="sm" variant="ghost" onClick={() => void discardRawCopy(copy)}>
-          Discard this device copy
-        </Button>
-      </span>
-    </Alert>
-  ));
+  const rawCopyWarnings = rawCopies.map((copy, index) => {
+    const backup = copy.migrationIssues[0]?.code === 'DEVICE_DRAFT_BACKUP';
+    return (
+      <Alert
+        key={`${copy.source}-${copy.savedAt}-${index}`}
+        tone="warn"
+        title={
+          backup
+            ? 'Saved device backup'
+            : copy.migrationIssues[0]?.code === 'UPGRADE_ARCHIVED_RAW_COPY'
+              ? 'Original device copy preserved'
+              : 'This device copy could not be migrated safely'
+        }
+      >
+        {backup
+          ? 'This saved device draft is kept as a backup. Export it before discarding it if you need to recover it later.'
+          : 'Its original contents remain available on this device as an inert copy. Export the original JSON before deleting the device copy if you need to recover it elsewhere.'}
+        {!backup ? (
+          <ul className="mt-2 list-disc pl-5">
+            {copy.migrationIssues.map((issue, issueIndex) => (
+              <li key={`${issue.code}-${issueIndex}`}>
+                <code>{issue.id ?? (issue.path || '/')}</code>: {issue.message}
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        <span className="mt-2 flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" onClick={() => exportRawCopy(copy)}>
+            {backup
+              ? 'Export device backup'
+              : index === 0
+                ? 'Export original device copy'
+                : `Export original device copy ${index + 1}`}
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => void discardRawCopy(copy)}>
+            Discard this device copy
+          </Button>
+        </span>
+      </Alert>
+    );
+  });
 
   // Pending and saving are transient parts of an edit. Keep a dismissal until saving settles on
   // a different state/message or a new editor load starts.
@@ -359,7 +376,18 @@ export function EditorPage() {
 
   const notices = [
     ...rawCopyWarnings,
-    !serverReconciled && !query.isError ? (
+    deviceReadError ? (
+      <Alert key="device-read" tone="warn" title="Device drafts could not be read">
+        Changes are saved to the server; this window keeps a copy only in memory until device
+        storage can be read.
+        <span className="mt-2 flex gap-2">
+          <Button size="sm" variant="outline" onClick={retryDeviceRead}>
+            Retry device read
+          </Button>
+        </span>
+      </Alert>
+    ) : null,
+    !serverReconciled && !query.isError && !deviceReadError ? (
       <Alert key="reconciling" tone="info">
         The editor is available. Checking the server and this device before saving changes.
       </Alert>

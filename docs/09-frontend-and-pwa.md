@@ -268,11 +268,18 @@ original archival described below; archives are never converted or activated.
 Loading has two independent milestones: **editor available** means a device or server
 copy can be edited; **server reconciled** means this opening's fresh server request and
 device reads have settled safely. A cached query alone cannot authorize saves. While
-checking, edits enter the per-loop memory copy immediately; durable mirrors wait for the
-initial device inspection, and all server saves (debounce, flush, leaving, reconnect and
+checking, edits enter the per-loop memory copy immediately; durable mirrors wait for a
+successful device inspection, and all server saves (debounce, flush, leaving, reconnect and
 recovery) wait for reconciliation. Offline work remains editable and reconciles when the
 server returns. A failed storage read reports the storage problem and permits a usable
-server editor; preservation or conversion failures keep their stronger pause.
+server editor. Inspection is complete even on failure, so server reconciliation and saves
+continue normally. Device mirrors stay memory-only until storage is successfully inspected;
+a server save may still attempt its safe read-modify-write, which preserves differing device work
+and reports durability only for the exact copy stored.
+**Retry device read** inspects and preserves unread work before durable mirrors resume;
+retrying preserves edits, held input and the current editor generation. Successful
+independent storage operations do not clear this unresolved read notice.
+Preservation or conversion failures keep their stronger pause.
 
 A late response may replace only an untouched displayed copy. Edits, held field input,
 undo/redo or opening a node dialog prevent replacement. If the server is newer, the original
@@ -291,6 +298,15 @@ server response. It also exercises cold and warm openings. Browser regressions i
 `e2e/device-first.spec.ts` cover a slow server, two-loop warm navigation, edits before a
 late response, offline reload/recovery and explicit conflict overwrite; two-tab 409 and
 conversion cases remain in `e2e/drafts.spec.ts`.
+
+A completed save from a previous editor advances the cached base token before
+reconciliation chooses a device copy. A matching server token prevents that accepted
+save from producing a newer-server prompt, including when newer edits remain in memory.
+Server-save recording marks only the definition actually stored as durable; a different
+memory-only definition stays memory-only. Current-format recovery copies retained in
+the archive are labelled **Saved device backup**, separately from unconverted originals.
+A successful server read with no draft or published definition finishes checking: device
+work remains available, or the editor explains that no definition is available.
 
 ### Device format conversion
 

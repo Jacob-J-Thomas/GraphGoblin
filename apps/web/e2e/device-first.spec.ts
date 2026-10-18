@@ -173,3 +173,57 @@ test('offline API reload restores device work; recovery saves only after reconci
   await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
   await expect(page.getByText('The draft changed on the server', { exact: true })).toBeHidden();
 });
+
+test('server saves continue after a device read failure and retry preserves unread work', async ({
+  page,
+  request,
+}) => {
+  const { loop } = await create(request, 'read failure server');
+  await page.goto('/app/loops');
+  await seed(page, loop.id, 'unread device work', await token(request, loop.id));
+  await page.addInitScript((loopId) => {
+    const get = IDBObjectStore.prototype.get;
+    let failed = false;
+    IDBObjectStore.prototype.get = function (this: IDBObjectStore, key) {
+      if (this.name === 'drafts' && key === loopId && !failed) {
+        failed = true;
+        throw new DOMException('Transient device read failure', 'UnknownError');
+      }
+      return get.call(this, key);
+    };
+  }, loop.id);
+  let puts = 0;
+  page.on('request', (r) => {
+    if (r.method() === 'PUT' && r.url().endsWith(`/loops/${loop.id}/draft`)) puts += 1;
+  });
+  await page.goto(`/app/loops/${loop.id}/edit`);
+  await expect(page.getByText('Device drafts could not be read', { exact: true })).toBeVisible();
+  await showLoopPanel(page);
+  await page.getByLabel('Description').fill('work entered before retry');
+  await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
+  expect(puts).toBeGreaterThan(0);
+  await expect(page.getByText('Device drafts could not be read', { exact: true })).toBeVisible();
+  const savedName = await page.evaluate(async (loopId) => {
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const opening = indexedDB.open('graphgoblin', 2);
+      opening.onsuccess = () => resolve(opening.result);
+      opening.onerror = () => reject(opening.error ?? new Error('Device read failed'));
+    });
+    try {
+      return await new Promise<string>((resolve, reject) => {
+        const reading = db.transaction('drafts', 'readonly').objectStore('drafts').get(loopId);
+        reading.onsuccess = () =>
+          resolve((reading.result as { definition: { name: string } }).definition.name);
+        reading.onerror = () => reject(reading.error ?? new Error('Device read failed'));
+      });
+    } finally {
+      db.close();
+    }
+  }, loop.id);
+  expect(savedName).toBe('unread device work');
+  await page.getByRole('button', { name: 'Retry device read' }).click();
+  await expect(page.getByText('Device drafts could not be read', { exact: true })).toBeHidden();
+  await expect(page.getByText('Another device copy is available', { exact: true })).toBeVisible();
+  await expect(page.getByLabel('Description')).toHaveValue('work entered before retry');
+  await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
+});

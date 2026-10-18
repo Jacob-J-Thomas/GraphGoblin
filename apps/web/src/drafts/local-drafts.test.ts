@@ -367,3 +367,23 @@ describe('per-loop memory copies and durable status', () => {
     });
   });
 });
+
+it('F3: recording a server save never marks a different memory-only definition durable', async () => {
+  const stored = { loopId: 'review-f3', definition: minimalLoop(), savedAt: 'old', synced: false };
+  await drafts.saveLocalDraft(stored);
+  const memory = {
+    ...stored,
+    definition: { ...stored.definition, description: 'never persisted' },
+  };
+  drafts.rememberLocalDraft(memory);
+  await drafts.recordServerSave(stored.loopId, stored.definition, 'accepted-token');
+  expect(await drafts.loadLocalDraft(stored.loopId)).toMatchObject({
+    definition: stored.definition,
+    synced: true,
+    baseToken: 'accepted-token',
+  });
+  expect(drafts.cachedLocalDraft(stored.loopId)).toMatchObject({
+    draft: { definition: memory.definition, synced: false, baseToken: 'accepted-token' },
+    durable: false,
+  });
+});

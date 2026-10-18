@@ -126,7 +126,10 @@ export function useLoadEditor(loopId: string) {
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [ready, setReady] = useState(false);
   const [recoveryError, setRecoveryError] = useState<string>();
-  const [deviceRead, setDeviceRead] = useState(false);
+  // A failed inspection permits server reconciliation, but cannot authorize device mirrors.
+  const [deviceInspected, setDeviceInspected] = useState(false);
+  const [deviceWritable, setDeviceWritable] = useState(false);
+  const [deviceReadError, setDeviceReadError] = useState<string>();
   const [serverReconciled, setServerReconciled] = useState(false);
   const candidate = useRef<LocalDraft | undefined>(undefined);
   const displayed = useRef<EditorState | undefined>(undefined);
@@ -154,7 +157,8 @@ export function useLoadEditor(loopId: string) {
     const warm = cachedLocalDraft(loopId);
     if (warm) {
       candidate.current = warm.draft;
-      showDevice(warm.draft, warm.durable);
+      if (!displayed.current || useEditorStore.getState().loopId !== loopId)
+        showDevice(warm.draft, warm.durable);
     }
     // Start all durable reads alongside the query, even when it has a cached answer.
     void Promise.all([
@@ -187,9 +191,15 @@ export function useLoadEditor(loopId: string) {
             ? draft.migrationIssues
             : [
                 {
-                  code: 'UPGRADE_ARCHIVED_RAW_COPY',
+                  code:
+                    draft.definition.schemaVersion === CURRENT_DEFINITION_FORMAT
+                      ? 'DEVICE_DRAFT_BACKUP'
+                      : 'UPGRADE_ARCHIVED_RAW_COPY',
                   path: '/schemaVersion',
-                  message: 'This original device copy is retained without conversion.',
+                  message:
+                    draft.definition.schemaVersion === CURRENT_DEFINITION_FORMAT
+                      ? 'This current-format device draft is retained as a backup.'
+                      : 'This original device copy is retained without conversion.',
                 },
               ],
           source: 'archive' as const,
@@ -251,7 +261,8 @@ export function useLoadEditor(loopId: string) {
         if (failedToPreserveSetAside || preservationFailures.length > 0) {
           setRawCopies(notices);
           setPreservationBlocked(true);
-          setDeviceRead(true);
+          setDeviceInspected(true);
+          setDeviceWritable(true);
           setReady(true);
           return;
         }
@@ -294,7 +305,8 @@ export function useLoadEditor(loopId: string) {
             if (cancelled) return;
             setRawCopies((copies) => [...copies, preservationFailure(local, 'active')]);
             setPreservationBlocked(true);
-            setDeviceRead(true);
+            setDeviceInspected(true);
+            setDeviceWritable(true);
             return;
           }
           if (cancelled) return;
@@ -306,19 +318,26 @@ export function useLoadEditor(loopId: string) {
           if (state.loopId !== loopId) showDevice(chosen, latest?.durable ?? true);
           else if (untouched(displayed.current, state)) showDevice(chosen, latest?.durable ?? true);
         }
-        setDeviceRead(true);
+        setDeviceInspected(true);
+        setDeviceWritable(true);
         if (archivedCopies.length || rawSetAside.length || localRead.unconvertible) setReady(true);
       })
-      .catch(() => {
-        // Storage reports its own problem. A usable server or memory copy can still be edited.
-        if (!cancelled) setDeviceRead(true);
+      .catch((error: unknown) => {
+        // Server saves use a safe read-modify-write and remain available without device storage.
+        // Direct mirrors must wait until a retry inspects and preserves the unread active copy.
+        if (!cancelled) {
+          setDeviceReadError(errorMessage(error));
+          setDeviceInspected(true);
+          setDeviceWritable(false);
+        }
       });
     return () => {
       cancelled = true;
       alive.current = false;
-      useEditorStore.getState().reset();
     };
   }, [loopId, loadAttempt, showDevice]);
+
+  useEffect(() => () => useEditorStore.getState().reset(), [loopId]);
 
   useEffect(() => {
     if (reconciled.current || conversionLoadFailed || preservationBlocked) return;
@@ -334,7 +353,14 @@ export function useLoadEditor(loopId: string) {
       return;
     }
     const server = query.data.draft?.definition ?? query.data.current?.definition;
-    if (!server) return;
+    if (!server) {
+      if (deviceInspected) {
+        reconciled.current = true;
+        setReady(true);
+        setServerReconciled(true);
+      }
+      return;
+    }
     const token = query.data.draftToken;
     const state = useEditorStore.getState();
     if (state.loopId !== loopId) {
@@ -342,13 +368,19 @@ export function useLoadEditor(loopId: string) {
       displayed.current = useEditorStore.getState();
       setReady(true);
     }
-    if (!deviceRead) return;
+    if (!deviceInspected) return;
     reconciled.current = true;
     void (async () => {
-      const local = candidate.current;
+      // A previous editor's queued save may have advanced this copy/token since mount.
+      const latest = cachedLocalDraft(loopId);
+      const local = latest?.draft ?? candidate.current;
       const now = useEditorStore.getState();
       const unchanged = untouched(displayed.current, now);
-      const serverIsNewer = local && !local.synced && query.data.loop.updatedAt > local.savedAt;
+      const serverIsNewer =
+        local &&
+        !local.synced &&
+        local.baseToken !== token &&
+        query.data.loop.updatedAt > local.savedAt;
       if (serverIsNewer) {
         try {
           // Do not replace an earlier set-aside copy while retaining this one.
@@ -384,8 +416,12 @@ export function useLoadEditor(loopId: string) {
       } else if (local) {
         // Never replace edits made while the server or storage was in flight. An old token
         // remains old; converted copies retain their mandatory explicit-overwrite token.
-        const base = current.baseToken ?? local.baseToken;
-        if (!current.baseToken) current.setBaseToken(base ?? token);
+        const basedOnLatest =
+          latest && JSON.stringify(latest.draft.definition) === JSON.stringify(current.definition);
+        const base = basedOnLatest
+          ? (local.baseToken ?? current.baseToken)
+          : (current.baseToken ?? local.baseToken);
+        if (current.baseToken !== (base ?? token)) current.setBaseToken(base ?? token);
         if (
           serverIsNewer ||
           (base && base !== token) ||
@@ -409,7 +445,7 @@ export function useLoadEditor(loopId: string) {
     query.error,
     query.isFetching,
     query.isFetchedAfterMount,
-    deviceRead,
+    deviceInspected,
     ready,
     conversionLoadFailed,
     preservationBlocked,
@@ -491,7 +527,13 @@ export function useLoadEditor(loopId: string) {
     restoredGeneration,
     ready,
     serverReconciled,
-    deviceRead,
+    deviceInspected,
+    deviceWritable,
+    deviceReadError,
+    retryDeviceRead: () => {
+      setDeviceReadError(undefined);
+      setLoadAttempt((attempt) => attempt + 1);
+    },
     setAside,
     setAsideIsLate,
     rawCopies,
