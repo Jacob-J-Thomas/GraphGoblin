@@ -122,7 +122,7 @@ for (const viewport of [
     await page.getByRole('link', { name: 'Open in Runs' }).first().click();
     await page.getByRole('button', { name: 'Start run' }).click();
     await expect(page.locator('[data-status="succeeded"]').first()).toBeVisible();
-    const runId = page.url().split('/').at(-1)!;
+    const runId = new URL(page.url()).pathname.split('/').at(-1)!;
     const response = await request.get(`/runs/${runId}/thread`);
     expect(response.ok()).toBe(true);
     const thread = (await response.json()) as ContextThread;

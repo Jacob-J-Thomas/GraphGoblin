@@ -329,8 +329,16 @@ describe('field rendering and clipboard', () => {
         screen.getByRole('button', { name: 'Copy reference for Script old-id (old-id)' }),
       );
       expect(await navigator.clipboard.readText()).toBe(outputReference('old-id', kind));
-      expect(screen.getByRole('status')).toHaveTextContent('Copied');
+      expect(screen.getByRole('status')).toHaveTextContent(
+        `Copied ${outputReference('old-id', kind)}`,
+      );
       expect(screen.getByRole('status')).toHaveAttribute('aria-live', 'polite');
+      // A second row re-announces with its own reference.
+      await user.click(screen.getByRole('button', { name: /^Copy reference for .*\(current\)$/ }));
+      expect(await navigator.clipboard.readText()).toBe(outputReference('current', kind));
+      expect(screen.getByRole('status')).toHaveTextContent(
+        `Copied ${outputReference('current', kind)}`,
+      );
     },
   );
   it('announces clipboard failure and leaves the full reference selectable', async () => {

@@ -217,6 +217,8 @@ export function NodeEditorDialog({
   const info = KIND_INFO[node.kind];
   const nodeIssues = useMemo(() => issues.filter((i) => i.nodeId === node.id), [issues, node.id]);
   const variables = useMemo(() => Object.keys(definition.variables ?? {}), [definition.variables]);
+  // A stable value, so the earlier-outputs lists only recompute when the node or graph changes.
+  const nodeOutputs = useMemo(() => ({ node, definition }), [node, definition]);
   const lostGateLimits = () =>
     ['maxPasses', 'maxRunTimeSeconds'].flatMap((path) => {
       const held = fieldErrors[`node:${node.id}`]?.[path];
@@ -659,7 +661,7 @@ export function NodeEditorDialog({
                             inert={activeReview !== undefined}
                             className="grid min-w-0 gap-0 border-0 p-0"
                           >
-                            <NodeOutputsContext value={{ node, definition }}>
+                            <NodeOutputsContext value={nodeOutputs}>
                               <SchemaForm
                                 key={`${node.kind}:${epoch}:${historyEpoch}`}
                                 schema={NodeConfigSchemas[node.kind]}

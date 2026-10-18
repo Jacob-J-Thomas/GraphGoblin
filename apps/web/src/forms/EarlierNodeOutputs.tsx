@@ -112,7 +112,8 @@ export function EarlierNodeOutputs({
     setStatus('');
     try {
       await navigator.clipboard.writeText(reference);
-      setStatus('Copied');
+      // Named, so a second copy is announced and an older announcement stays true.
+      setStatus(`Copied ${reference}`);
     } catch {
       setStatus('Copy failed. Select the reference and copy it manually.');
     }
