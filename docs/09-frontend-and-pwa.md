@@ -245,8 +245,8 @@ The adversarial QA report is `docs/qa/2026-10-03-wp-d2.md`. Behaviour that chang
 
 ## Draft conflicts (Decided, WP-F2)
 
-- The editor keeps the server `draftToken` its copy is based on (from `GET /loops/{id}` at load, then from each save's response) and sends it as `If-Match` on every draft save, including the save sent when leaving the editor. The IndexedDB mirror stores it with the device copy (`baseToken`), so a copy restored after a reload is saved against the token it was based on; copies written before tokens existed use the server's current token.
-- Every accepted save advances the loop's token, even when the editor that sent it has closed, so the save sent on leaving the editor (queued behind it) is based on it. The device copy is updated in one IndexedDB transaction: a copy of exactly the saved definition becomes synced, and a newer unsynced copy keeps its definition but takes the new token as its base.
+- The editor keeps the server `draftToken` its copy is based on (from `GET /loops/{id}` at load, then from each save's response) and sends it as `If-Match` on every draft save, including the save sent when leaving the editor. The IndexedDB mirror stores it with the device copy (`baseToken`), so a copy restored after a reload is saved against the token it was based on; a missing token means the base is unknown, so loading still compares server and device timestamps.
+- Every accepted save advances the loop's token, even when the editor that sent it has closed, so the save sent on leaving the editor (queued behind it) is based on it. The device copy is updated in one IndexedDB transaction: a copy of exactly the saved definition becomes synced. A differing unsynced copy takes the new token only when its defined base matches the request's `If-Match` token. Unread foreign copies, unknown bases and the mandatory conversion token retain their original base for explicit reconciliation; an unchanged foreign copy is not marked durable for this save.
 - Reload and overwrite act only on the editor that asked: each step after an await re-checks the loop id, editor generation and revision, so a slow answer never lands in another loop's editor.
 - A 409 `DRAFT_CONFLICT` stops autosave and shows "The draft changed on the server" with two buttons: **Reload server draft** (load the server draft and mark it synced on the device, dropping this editor's unsaved changes) and **Overwrite with this copy** (save again with the server's token from the conflict). Nothing is overwritten without one of these clicks. Edits made meanwhile stay on the device, the save state reads "Draft changed elsewhere", leaving the editor sends nothing, and Publish refuses until the conflict is resolved.
 - Choosing "Use this device's copy instead" for a set-aside copy is an explicit overwrite of the server draft shown.
@@ -274,8 +274,9 @@ recovery) wait for reconciliation. Offline work remains editable and reconciles 
 server returns. A failed storage read reports the storage problem and permits a usable
 server editor. Inspection is complete even on failure, so server reconciliation and saves
 continue normally. Device mirrors stay memory-only until storage is successfully inspected;
-a server save may still attempt its safe read-modify-write, which preserves differing device work
-and reports durability only for the exact copy stored.
+a server save may still attempt its safe read-modify-write, which preserves unrelated device work and its original base token
+and reports durability only for the exact copy stored. Only a defined, matching request base
+authorizes rebasing a differing mirror; a conversion token never does.
 **Retry device read** inspects and preserves unread work before durable mirrors resume;
 retrying preserves edits, held input and the current editor generation. Successful
 independent storage operations do not clear this unresolved read notice.
@@ -287,7 +288,8 @@ unsynced copy is retained separately; any earlier set-aside copy is archived and
 before that slot is reused. An untouched editor then shows the server with **Use this
 device's copy instead**. An editor changed during loading keeps its work and, when its base
 is stale, asks **Reload server draft** or **Overwrite with this copy**. Old base tokens
-remain old until explicit resolution or a successful save advances them. A different durable copy found behind a warm cache is retained with **Another device copy is available**, without replacing the editor. A failed restore
+remain old until explicit resolution or an accepted save from that same base advances them.
+Two absent tokens do not prove a shared base; the server's `updatedAt` comparison still applies. A different durable copy found behind a warm cache is retained with **Another device copy is available**, without replacing the editor. A failed restore
 or discard retains the backup and reports a retryable notice.
 
 The timed regression in `editor/useLoadEditor.test.tsx` distinguishes this set-aside

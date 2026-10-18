@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { FakeApi } from '../__fixtures__/fake-api.js';
 import { ApiProvider, createAppClient } from '../api/context.js';
 import { keys, useLoop } from '../api/queries.js';
-import { clearLocalDraft, loadLocalDraft } from '../drafts/local-drafts.js';
+import * as drafts from '../drafts/local-drafts.js';
 import { startReachability, useReachability } from '../lib/reachability.js';
 import type * as Reachability from '../lib/reachability.js';
 import { isOfflineError } from '../lib/utils.js';
@@ -86,7 +86,7 @@ async function failSave(view: Awaited<ReturnType<typeof mountAutosave>>) {
   expect(navigator.onLine).toBe(true);
   expect(view.requests('PUT')).toHaveLength(1);
   await waitFor(async () =>
-    expect(await loadLocalDraft(view.loop.id)).toMatchObject({
+    expect(await drafts.loadLocalDraft(view.loop.id)).toMatchObject({
       synced: false,
       definition: { description: 'kept while unreachable' },
       baseToken: view.token,
@@ -98,7 +98,7 @@ afterEach(async () => {
   cleanup();
   expect(recoveryListeners.size).toBe(0);
   for (const queryClient of queryClients.splice(0)) queryClient.clear();
-  for (const loopId of loopIds.splice(0)) await clearLocalDraft(loopId);
+  for (const loopId of loopIds.splice(0)) await drafts.clearLocalDraft(loopId);
   useEditorStore.getState().reset();
   useReachability.setState({ apiReachable: true });
   vi.restoreAllMocks();
@@ -124,7 +124,7 @@ describe('autosave on API recovery', () => {
       expect(saved.headers.get('if-match')).toBe(`"${view.token}"`);
       expect(saved.body).toMatchObject({ definition: { description: 'kept while unreachable' } });
       expect(useEditorStore.getState().baseToken).toBe(view.api.draftToken(view.loop.id));
-      expect(await loadLocalDraft(view.loop.id)).toMatchObject({ synced: true });
+      expect(await drafts.loadLocalDraft(view.loop.id)).toMatchObject({ synced: true });
     },
   );
 
@@ -151,7 +151,7 @@ describe('autosave on API recovery', () => {
     });
     expect(view.requests('PUT')).toHaveLength(2);
     view.unmount();
-    expect(await loadLocalDraft(view.loop.id)).toMatchObject({
+    expect(await drafts.loadLocalDraft(view.loop.id)).toMatchObject({
       synced: false,
       baseToken: view.token,
     });
@@ -248,7 +248,7 @@ describe('autosave on API recovery', () => {
       expect(view.requests('GET')).toHaveLength(2); // Load and the one recovery read.
       expect(useReachability.getState().apiReachable).toBe(true);
       expect(useEditorStore.getState().saveState).toBe('offline');
-      expect(await loadLocalDraft(view.loop.id)).toMatchObject({ synced: false });
+      expect(await drafts.loadLocalDraft(view.loop.id)).toMatchObject({ synced: false });
     } finally {
       stop();
     }
@@ -262,6 +262,78 @@ describe('autosave on API recovery', () => {
     act(notifyRecovery);
     expect(view.requests('PUT')).toHaveLength(1);
     expect(recoveryListeners.size).toBe(0);
-    expect(await loadLocalDraft(view.loop.id)).toMatchObject({ synced: false });
+    expect(await drafts.loadLocalDraft(view.loop.id)).toMatchObject({ synced: false });
   });
 });
+
+it.each(['flush', 'browser reconnect', 'API recovery'] as const)(
+  "re-review F1: %s carries the request base when rebasing this editor's newer mirror",
+  async (savePath) => {
+    const view = await mountAutosave();
+    const recording = vi.spyOn(drafts, 'recordServerSave');
+    let releaseFirst = () => {};
+    let releaseSecond = () => {};
+    const first = new Promise<void>((resolve) => {
+      releaseFirst = resolve;
+    });
+    const second = new Promise<void>((resolve) => {
+      releaseSecond = resolve;
+    });
+    let requests = 0;
+    let firstToken: string | undefined;
+    view.api.override('PUT /loops/:id/draft', async (call) => {
+      const number = ++requests;
+      await (number === 1 ? first : second);
+      const response = await view.api.builtIn(call);
+      if (number === 1) firstToken = view.api.draftToken(view.loop.id);
+      return response;
+    });
+    let flushing: Promise<boolean> | undefined;
+    try {
+      act(() => {
+        useEditorStore.getState().updateMeta({ description: 'sent edit' });
+        if (savePath === 'flush') flushing = view.result.current();
+        else if (savePath === 'browser reconnect') window.dispatchEvent(new Event('online'));
+        else notifyRecovery();
+      });
+      await waitFor(() => expect(view.requests('PUT')).toHaveLength(1));
+      act(() => useEditorStore.getState().updateMeta({ description: 'newer mirrored edit' }));
+      await waitFor(async () =>
+        expect(await drafts.loadLocalDraft(view.loop.id)).toMatchObject({
+          definition: { description: 'newer mirrored edit' },
+          baseToken: view.token,
+        }),
+      );
+      act(releaseFirst);
+      await waitFor(() => expect(view.requests('PUT')).toHaveLength(2));
+      expect(recording).toHaveBeenNthCalledWith(
+        1,
+        view.loop.id,
+        expect.objectContaining({ description: 'sent edit' }),
+        firstToken,
+        view.token,
+      );
+      expect(await drafts.loadLocalDraft(view.loop.id)).toMatchObject({
+        synced: false,
+        definition: { description: 'newer mirrored edit' },
+        baseToken: firstToken,
+      });
+      expect(drafts.cachedLocalDraft(view.loop.id)?.durable).toBe(true);
+      await act(async () => {
+        releaseSecond();
+        await flushing;
+      });
+      await waitFor(() => expect(useEditorStore.getState().saveState).toBe('saved'));
+      expect(recording).toHaveBeenNthCalledWith(
+        2,
+        view.loop.id,
+        expect.objectContaining({ description: 'newer mirrored edit' }),
+        view.api.draftToken(view.loop.id),
+        firstToken,
+      );
+    } finally {
+      releaseFirst();
+      releaseSecond();
+    }
+  },
+);

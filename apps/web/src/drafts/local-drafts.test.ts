@@ -4,6 +4,7 @@ import { IDBFactory } from 'fake-indexeddb';
 import { createStore, promisifyRequest, set } from 'idb-keyval';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type * as LocalDrafts from './local-drafts.js';
+import { UNRECONCILED_DEVICE_TOKEN } from './local-drafts.js';
 
 let drafts: typeof LocalDrafts;
 
@@ -65,7 +66,7 @@ describe('local drafts in IndexedDB', () => {
       expect(
         await Promise.all([
           settled(drafts.saveLocalDraft(draft)),
-          settled(drafts.recordServerSave(draft.loopId, draft.definition, 'token')),
+          settled(drafts.recordServerSave(draft.loopId, draft.definition, 'token', undefined)),
           settled(drafts.clearSetAsideDraft(draft.loopId)),
         ]),
       ).toEqual([
@@ -185,7 +186,12 @@ describe('local drafts in IndexedDB', () => {
       const save = kind === 'set-aside' ? drafts.saveSetAsideDraft : drafts.saveLocalDraft;
       await save(original);
       if (kind === 'server-save')
-        await drafts.recordServerSave(original.loopId, minimalLoop(), 'new-token');
+        await drafts.recordServerSave(
+          original.loopId,
+          minimalLoop(),
+          'new-token',
+          original.baseToken,
+        );
       else await save({ ...original, definition: minimalLoop() });
       expect(await drafts.loadArchivedDrafts(original.loopId)).toEqual([original]);
     },
@@ -346,6 +352,7 @@ describe('per-loop memory copies and durable status', () => {
   it('advances the newest cached edit to the accepted token while keeping it unsynced', async () => {
     const copy = {
       loopId: 'record-cache',
+      baseToken: 'save-base',
       definition: minimalLoop(),
       savedAt: 'old',
       synced: false,
@@ -353,7 +360,12 @@ describe('per-loop memory copies and durable status', () => {
     await drafts.saveLocalDraft(copy);
     const edited = { ...copy, definition: { ...copy.definition, description: 'new edit' } };
     await drafts.saveLocalDraft(edited);
-    const recording = drafts.recordServerSave(copy.loopId, copy.definition, 'next-token');
+    const recording = drafts.recordServerSave(
+      copy.loopId,
+      copy.definition,
+      'next-token',
+      copy.baseToken,
+    );
     expect(drafts.cachedLocalDraft(copy.loopId)).toMatchObject({
       durable: false,
       draft: { synced: false, baseToken: 'next-token', definition: { description: 'new edit' } },
@@ -369,14 +381,25 @@ describe('per-loop memory copies and durable status', () => {
 });
 
 it('F3: recording a server save never marks a different memory-only definition durable', async () => {
-  const stored = { loopId: 'review-f3', definition: minimalLoop(), savedAt: 'old', synced: false };
+  const stored = {
+    loopId: 'review-f3',
+    baseToken: 'save-base',
+    definition: minimalLoop(),
+    savedAt: 'old',
+    synced: false,
+  };
   await drafts.saveLocalDraft(stored);
   const memory = {
     ...stored,
     definition: { ...stored.definition, description: 'never persisted' },
   };
   drafts.rememberLocalDraft(memory);
-  await drafts.recordServerSave(stored.loopId, stored.definition, 'accepted-token');
+  await drafts.recordServerSave(
+    stored.loopId,
+    stored.definition,
+    'accepted-token',
+    stored.baseToken,
+  );
   expect(await drafts.loadLocalDraft(stored.loopId)).toMatchObject({
     definition: stored.definition,
     synced: true,
@@ -384,6 +407,49 @@ it('F3: recording a server save never marks a different memory-only definition d
   });
   expect(drafts.cachedLocalDraft(stored.loopId)).toMatchObject({
     draft: { definition: memory.definition, synced: false, baseToken: 'accepted-token' },
+    durable: false,
+  });
+});
+
+it.each([
+  ['foreign', 'earlier-session-base', 'save-base'],
+  ['unknown', undefined, undefined],
+  ['missing', undefined, 'save-base'],
+  ['converted', UNRECONCILED_DEVICE_TOKEN, 'save-base'],
+  ['converted matching', UNRECONCILED_DEVICE_TOKEN, UNRECONCILED_DEVICE_TOKEN],
+] as const)(
+  're-review F1: a differing %s copy keeps its base in storage and memory without a durability claim',
+  async (_kind, baseToken, saveBase) => {
+    const saved = minimalLoop();
+    const unread = {
+      loopId: 'unrelated-base',
+      definition: { ...saved, description: 'work from a different base' },
+      savedAt: 'earlier',
+      synced: false,
+      ...(baseToken ? { baseToken } : {}),
+    };
+    await drafts.saveLocalDraft(unread);
+    await drafts.recordServerSave(unread.loopId, saved, 'accepted-token', saveBase);
+    expect(await drafts.loadLocalDraft(unread.loopId)).toEqual(unread);
+    expect(drafts.cachedLocalDraft(unread.loopId)).toEqual({ draft: unread, durable: false });
+  },
+);
+
+it('re-review F1: a matching memory base cannot claim a foreign durable base was advanced', async () => {
+  const saved = minimalLoop();
+  const foreign = {
+    loopId: 'durable-base-mismatch',
+    definition: { ...saved, description: 'newer work' },
+    savedAt: 'earlier',
+    synced: false,
+    baseToken: 'foreign-base',
+  };
+  await drafts.saveLocalDraft(foreign);
+  drafts.rememberLocalDraft({ ...foreign, baseToken: 'save-base' });
+  await drafts.recordServerSave(foreign.loopId, saved, 'accepted-token', 'save-base');
+  expect(await drafts.loadLocalDraft(foreign.loopId)).toEqual(foreign);
+  expect(drafts.cachedLocalDraft(foreign.loopId)).toMatchObject({
+    draft: { baseToken: 'accepted-token' },
     durable: false,
   });
 });

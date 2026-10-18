@@ -70,7 +70,8 @@ export function serializeSave<T>(loopId: string, job: () => Promise<T>): Promise
 /**
  * After the server accepted a save: advance the loop's token, whether or not the editor that sent
  * it is still open, and record it on the device copy (`recordServerSave`). A newer edit mirrored
- * since the save started stays unsynced and keeps winning on the next load, now based on `token`.
+ * since the save started takes `token` only when it shares that save's request base; unrelated
+ * or converted device work retains its base and explicit reconciliation requirement.
  * The server holds the draft whether or not this device can record that: a device storage failure
  * is reported as its own notice (`deviceStorageProblem`), never as a save still pending.
  */
@@ -78,9 +79,10 @@ async function recordSaved(
   loopId: string,
   definition: LoopDefinitionInput,
   token: string,
+  baseToken: string | undefined,
 ): Promise<void> {
   latestTokens.set(loopId, token);
-  await recordServerSave(loopId, definition, token).catch(() => undefined);
+  await recordServerSave(loopId, definition, token, baseToken).catch(() => undefined);
 }
 
 /** The server's token from a 409 `DRAFT_CONFLICT`, or false when `error` is something else. */
@@ -213,7 +215,7 @@ export function useAutosave(
         };
         // Before the device write, so an edit mirrored from here on carries the new token.
         if (isCurrent()) useEditorStore.getState().setBaseToken(saved.draftToken);
-        await recordSaved(loopId, definition, saved.draftToken);
+        await recordSaved(loopId, definition, saved.draftToken, baseToken);
         if (!isCurrent()) return false;
         if (useEditorStore.getState().revision === rev) {
           setSaveState('saved', undefined, rev);
@@ -272,7 +274,7 @@ export function useAutosave(
         const saved = await loops.saveDraft(client, last.loopId, last.definition, {
           ...(token ? { ifMatch: token } : {}),
         });
-        await recordSaved(last.loopId, last.definition, saved.draftToken);
+        await recordSaved(last.loopId, last.definition, saved.draftToken, token);
       }).catch(() => undefined);
     },
     [client],

@@ -127,10 +127,11 @@ it.each([false, true])(
       await reading.promise;
       return api.builtIn(call);
     });
+    const initialToken = api.draftToken(loop.id);
     const previousSave = loops
       .saveDraft(client, loop.id, work, { ifMatch: api.draftToken(loop.id)! })
       .then(async (accepted) => {
-        await drafts.recordServerSave(loop.id, work, accepted.draftToken);
+        await drafts.recordServerSave(loop.id, work, accepted.draftToken, initialToken);
         return accepted.draftToken;
       });
     const view = mount(api, loop.id);
@@ -270,10 +271,7 @@ it('F4: a transient active-read failure keeps mirrors memory-only and preserves 
   await waitFor(() =>
     expect(api.loops.get(loop.id)?.draft?.definition.description).toBe('new work in memory'),
   );
-  expect(await drafts.loadLocalDraft(loop.id)).toEqual({
-    ...unread,
-    baseToken: api.draftToken(loop.id),
-  });
+  expect(await drafts.loadLocalDraft(loop.id)).toEqual(unread);
   expect(drafts.cachedLocalDraft(loop.id)).toMatchObject({
     durable: false,
     draft: { definition: { description: 'new work in memory' } },
@@ -401,3 +399,102 @@ it('F4: read failure stays visible after other storage succeeds, and retry prese
   expect(useEditorStore.getState().definition?.description).toBe('typed before retry');
   expect(useEditorStore.getState().fieldErrors.settings?.json?.text).toBe('{');
 });
+
+it.each(['autosave', 'navigation'] as const)(
+  're-review F1: failed-read %s leaves a foreign token unchanged and reopening requires a choice',
+  async (savePath) => {
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('server'));
+    const unread = {
+      loopId: loop.id,
+      definition: newLoopDefinition('unread earlier-session work'),
+      savedAt: '2999',
+      synced: false,
+      baseToken: 'earlier-session-token',
+    };
+    await drafts.saveLocalDraft(unread);
+    // A fresh window has no memory cache, including on reopening after the server save.
+    vi.spyOn(drafts, 'cachedLocalDraft').mockReturnValue(undefined);
+    const recording = vi.spyOn(drafts, 'recordServerSave');
+    const saveBase = api.draftToken(loop.id);
+    const get = IDBObjectStore.prototype.get;
+    let failed = false;
+    vi.spyOn(IDBObjectStore.prototype, 'get').mockImplementation(function (
+      this: IDBObjectStore,
+      key,
+    ) {
+      if (key === loop.id && !failed) {
+        failed = true;
+        throw new Error('transient device read failure');
+      }
+      return get.call(this, key);
+    });
+    const first = mount(api, loop.id, true);
+    await waitFor(() => expect(first.result.current.serverReconciled).toBe(true));
+    expect(first.result.current.deviceWritable).toBe(false);
+    act(() => useEditorStore.getState().updateMeta({ description: 'new server work' }));
+    if (savePath === 'navigation') first.unmount();
+    await waitFor(() => expect(recording).toHaveBeenCalledOnce());
+    await act(async () => {
+      await recording.mock.results[0]!.value;
+    });
+    expect(api.loops.get(loop.id)?.draft?.definition.description).toBe('new server work');
+    expect(recording).toHaveBeenCalledWith(
+      loop.id,
+      expect.objectContaining({ description: 'new server work' }),
+      api.draftToken(loop.id),
+      saveBase,
+    );
+    expect(await drafts.loadLocalDraft(loop.id)).toEqual(unread);
+    first.unmount();
+    const reading = gate();
+    api.override('GET /loops/:id', async (call) => {
+      await reading.promise;
+      return api.builtIn(call);
+    });
+    const reopened = mount(api, loop.id, true);
+    await waitFor(() =>
+      expect(reopened.result.current.definition?.name).toBe(unread.definition.name),
+    );
+    act(reading.release);
+    await waitFor(() => expect(reopened.result.current.serverReconciled).toBe(true));
+    expect(useEditorStore.getState().conflict?.serverToken).toBe(api.draftToken(loop.id));
+    expect(useEditorStore.getState().baseToken).toBe(unread.baseToken);
+    expect(api.callsTo('PUT', `/loops/${loop.id}/draft`)).toHaveLength(1);
+    expect(api.loops.get(loop.id)?.draft?.definition.description).toBe('new server work');
+  },
+);
+
+it.each([true, false])(
+  're-review F2: absent tokens leave the timestamp comparison in control (server newer=%s)',
+  async (serverNewer) => {
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('published server'), {
+      published: true,
+      draft: false,
+    });
+    api.override('GET /loops/:id', async (call) => {
+      const response = await api.builtIn(call);
+      const detail = (await response.json()) as Record<string, unknown>;
+      delete detail['draftToken'];
+      return new Response(JSON.stringify(detail), {
+        headers: { 'Content-Type': 'application/json' },
+      });
+    });
+    const local = {
+      loopId: loop.id,
+      definition: newLoopDefinition('device without a base'),
+      savedAt: serverNewer ? '2000' : '2999',
+      synced: false,
+    };
+    await drafts.saveLocalDraft(local);
+    const view = mount(api, loop.id);
+    await waitFor(() => expect(view.result.current.serverReconciled).toBe(true));
+    expect(view.result.current.definition?.name).toBe(
+      serverNewer ? 'published server' : local.definition.name,
+    );
+    expect(view.result.current.setAside).toEqual(serverNewer ? local : undefined);
+    expect(useEditorStore.getState().conflict).toBeUndefined();
+    expect(api.callsTo('PUT', `/loops/${loop.id}/draft`)).toHaveLength(0);
+  },
+);

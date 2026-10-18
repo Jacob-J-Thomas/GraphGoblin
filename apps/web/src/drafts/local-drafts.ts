@@ -253,35 +253,52 @@ async function loadDraft(key: string): Promise<LocalDraft | undefined> {
   }
 }
 
+/** A missing or conversion-only token cannot establish descent from the accepted save. */
+function sharesSaveBase(draft: LocalDraft, baseToken: string | undefined): boolean {
+  return (
+    baseToken !== undefined &&
+    baseToken !== UNRECONCILED_DEVICE_TOKEN &&
+    draft.baseToken === baseToken
+  );
+}
+
 /**
  * Record that the server accepted `definition` with `token`, in one IndexedDB transaction so a
  * concurrent mirror write is never lost. A device copy of that exact definition becomes synced. A
- * newer device copy (edited since the save started) keeps its definition and stays unsynced, but
- * is now based on `token`: its next save must not conflict with the write it descends from.
+ * newer device copy stays unsynced and advances to `token` only if its base matches this save's
+ * request base. Unread work from a different or unknown base retains its token for explicit
+ * reconciliation; converted work always retains its mandatory overwrite token.
  */
 export async function recordServerSave(
   loopId: string,
   definition: LoopDefinitionInput,
   token: string,
+  baseToken: string | undefined,
 ): Promise<void> {
   const cached = latest.get(loopId);
-  const draft: LocalDraft =
-    cached && JSON.stringify(cached.draft.definition) !== JSON.stringify(definition)
+  const differs =
+    cached !== undefined && JSON.stringify(cached.draft.definition) !== JSON.stringify(definition);
+  const rebase = differs && sharesSaveBase(cached.draft, baseToken);
+  const draft: LocalDraft = differs
+    ? rebase
       ? { ...cached.draft, baseToken: token }
-      : { loopId, definition, savedAt: new Date().toISOString(), synced: true, baseToken: token };
+      : cached.draft
+    : { loopId, definition, savedAt: new Date().toISOString(), synced: true, baseToken: token };
   const entry = { draft, durable: false };
   latest.set(loopId, entry);
   let stored: LocalDraft | undefined;
   const writing = (writes.get(loopId) ?? Promise.resolve())
     .catch(() => undefined)
     .then(async () => {
-      stored = await persistServerSave(loopId, definition, token);
+      stored = await persistServerSave(loopId, definition, token, baseToken);
     });
   writes.set(loopId, writing);
   try {
     await writing;
     entry.durable =
+      (!differs || rebase) &&
       stored !== undefined &&
+      draft.baseToken === stored.baseToken &&
       JSON.stringify(draft.definition) === JSON.stringify(stored.definition) &&
       JSON.stringify(draft.decisionRoutes) === JSON.stringify(stored.decisionRoutes);
   } finally {
@@ -293,6 +310,7 @@ async function persistServerSave(
   loopId: string,
   definition: LoopDefinitionInput,
   token: string,
+  baseToken: string | undefined,
 ): Promise<LocalDraft> {
   const original = await preserveLegacyDraft(loopId, definition);
   const synced: LocalDraft = {
@@ -310,7 +328,9 @@ async function persistServerSave(
         requirePreserved(local, original, definition);
         stored =
           local && JSON.stringify(local.definition) !== JSON.stringify(definition)
-            ? { ...local, baseToken: token }
+            ? sharesSaveBase(local, baseToken)
+              ? { ...local, baseToken: token }
+              : local
             : synced;
         return stored;
       },

@@ -379,7 +379,7 @@ export function useLoadEditor(loopId: string) {
       const serverIsNewer =
         local &&
         !local.synced &&
-        local.baseToken !== token &&
+        (!local.baseToken || local.baseToken !== token) &&
         query.data.loop.updatedAt > local.savedAt;
       if (serverIsNewer) {
         try {
