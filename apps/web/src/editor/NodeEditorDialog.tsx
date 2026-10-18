@@ -35,6 +35,7 @@ import { EXIT_FIELD_OVERRIDES } from './ExitFields.js';
 
 import { hasRepeatRoute, cleanGateLimits } from './decision-gates.js';
 import { TriggerPresets } from './TriggerPresets.js';
+import { WebhookReceiver } from './WebhookReceiver.js';
 import {
   TriggerTypePicker,
   WebhookAuthenticationPicker,
@@ -719,6 +720,9 @@ export function NodeEditorDialog({
             />
           ) : null}
         </div>
+        {node.kind === 'trigger' && node.config?.type === 'webhook' ? (
+          <WebhookReceiver loopId={loopId} nodeId={node.id} />
+        ) : null}
         <NodeConnections node={node} definition={definition} />
       </section>
     </Dialog>

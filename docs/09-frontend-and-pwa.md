@@ -25,6 +25,7 @@ A React single-page application built with Vite, served by the API process in 1.
 - Canvas: `@xyflow/react` with custom node components per kind, labelled output handles for decision routes and exit loop-back, and edge validation that refuses connections into triggers or out of unknown ports.
 - Palette: the nine node kinds, drag to add.
 - Node editor: a modal dialog opened from the canvas, generated from the node kind's Zod schema with react-hook-form (see "Node editor, loop panel, and New run" below). Templates and expressions use CodeMirror with Liquid and JSONata modes and a preview that renders against a sample thread.
+- Webhook receiver: webhook trigger dialogs show a **Receiver** section with the published, enabled endpoint URL from `GET /loops/{id}/triggers`, resolved against the API base URL. The secret token is absent from the DOM while masked; Reveal/Hide and Copy receiver URL control access to the address, with polite copy feedback and Retry after a failed load. Publish again to apply draft changes. The section provides the address only; signing instructions stay in the [trigger guide](guide/04-triggers.md).
 - Validation: the same `domain` validation the backend runs, surfaced live as an issue badge on each node and the counts beside Publish (see "Validation badges" below), so publish never fails by surprise.
 - Subloop picker: searches published loops and shows their trigger input schema and return shape.
 - Variables: the loop's declared variables with schemas, edited in the loop panel.
