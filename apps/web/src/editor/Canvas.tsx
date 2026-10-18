@@ -15,6 +15,7 @@ import {
   type IsValidConnection,
   type NodeChange,
   type NodeMouseHandler,
+  type OnInit,
   type OnNodeDrag,
   type XYPosition,
 } from '@xyflow/react';
@@ -68,13 +69,21 @@ const edgeTypes = { orthogonal: OrthogonalEdge };
 export const CANVAS_GRID = NODE_CARD_SIZE.clearance;
 /** A selected edge draws above the cards, so its segment handles and toolbar are never covered. */
 const SELECTED_EDGE_Z = 2000;
-const MIN_CANVAS_ZOOM = 0.5;
+// Fit View and manual zoom reach 0.1, so a large graph fits even while both side panels are open.
+const MIN_CANVAS_ZOOM = 0.1;
 const MAX_CANVAS_ZOOM = 2;
 
 /** Fit the graph with room on the left for the zoom controls, so they never cover a card. */
 const FIT_VIEW_OPTIONS: FitViewOptions = {
   padding: { top: '8%', right: '8%', bottom: '8%', left: '72px' },
 };
+/**
+ * Opening the editor fits the graph but stays readable; Fit View shows a large graph whole. The fit
+ * is queued from `onInit` because xyflow's `fitView` prop can fit again without its options.
+ */
+const INITIAL_FIT_VIEW_OPTIONS: FitViewOptions<FlowNode> = { ...FIT_VIEW_OPTIONS, minZoom: 0.5 };
+const fitOnOpen: OnInit<FlowNode, Edge> = (instance) =>
+  void instance.fitView(INITIAL_FIT_VIEW_OPTIONS);
 
 /**
  * How far (px) the pointer may move between press and release for a click on a node, which opens
@@ -719,10 +728,9 @@ export function Canvas({
           nodeClickDistance={CLICK_DISTANCE}
           nodeDragThreshold={CLICK_DISTANCE}
           onPaneClick={onPaneClick}
-          fitView
+          onInit={fitOnOpen}
           minZoom={MIN_CANVAS_ZOOM}
           maxZoom={MAX_CANVAS_ZOOM}
-          fitViewOptions={FIT_VIEW_OPTIONS}
           deleteKeyCode={null}
           ariaLabelConfig={ARIA_LABELS}
         >

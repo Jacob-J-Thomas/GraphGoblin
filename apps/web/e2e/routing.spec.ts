@@ -475,7 +475,8 @@ for (const count of [100, 300])
     expect(definition.edges).toHaveLength(count * 2);
     await openGraph(page, request, definition);
     await expect(page.locator('.react-flow__edge')).toHaveCount(count * 2);
-    // The viewport contains this middle card even at xyflow's minimum fit zoom.
+    // Fit View shows this middle card at any zoom; the drag starts at its centre, so it lands on
+    // the card however far Fit View had to zoom out.
     const card = page.locator(`.react-flow__node[data-id="n${Math.floor(count / 20) * 10 - 6}"]`);
     await expect(card).toBeVisible();
     await page.waitForTimeout(1000); // Let font measurement, initial validation and fit-view settle.
@@ -508,7 +509,7 @@ for (const count of [100, 300])
     const repetitions = [];
     for (let repetition = 0; repetition < 3; repetition += 1) {
       const rect = (await card.boundingBox())!;
-      const origin = { x: rect.x + 24, y: rect.y + 12 };
+      const origin = { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
       await page.mouse.move(origin.x, origin.y);
       await page.mouse.down();
       await page.mouse.move(origin.x + 5, origin.y);

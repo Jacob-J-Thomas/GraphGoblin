@@ -17,8 +17,7 @@ const current = () => store().definition!.nodes[0]!.config;
 const UNDO = '{Control>}z{/Control}';
 const REDO = '{Control>}{Shift>}z{/Shift}{/Control}';
 
-async function openTrigger() {
-  const api = new FakeApi();
+async function openTrigger(api = new FakeApi()) {
   const definition = newLoopDefinition('trigger types');
   definition.nodes[0]!.config = triggerConfig('manual', { inputSchema: { type: 'object' } });
   const loop = api.addLoop(definition);
@@ -313,4 +312,50 @@ it('edits authentication, body and extraction by keyboard with one-step undo and
   expect(source()).toHaveDisplayValue('JSON pointer');
   expect(source()).toHaveFocus();
   expect(within(dialog).getByLabelText('JSON pointer')).toHaveValue('/kind');
+});
+
+it('authors the displayed UTC default on an untouched daily cron schedule', async () => {
+  const user = userEvent.setup();
+  const api = new FakeApi();
+  api.override(
+    'POST /triggers/cron/preview',
+    () =>
+      new Response(
+        JSON.stringify({
+          next: [
+            '2026-10-18T09:00:00.000Z',
+            '2026-10-19T09:00:00.000Z',
+            '2026-10-20T09:00:00.000Z',
+            '2026-10-21T09:00:00.000Z',
+            '2026-10-22T09:00:00.000Z',
+          ],
+        }),
+      ),
+  );
+  const dialog = await openTrigger(api);
+  await user.selectOptions(within(dialog).getByLabelText('Trigger type'), 'cron');
+  await user.selectOptions(within(dialog).getByLabelText('Repeat'), 'daily');
+  expect(within(dialog).getByLabelText('Timezone')).toHaveValue('UTC');
+  expect(current()).toMatchObject({ type: 'cron', timezone: 'UTC', expression: '0 9 * * *' });
+  expect(dialog.textContent).not.toContain('graphgoblin:unset');
+  await waitFor(() => expect(dialog.querySelectorAll('time')).toHaveLength(5));
+  expect(api.callsTo('POST', '/triggers/cron/preview')[0]?.body).toEqual({
+    expression: '0 9 * * *',
+    timezone: 'UTC',
+    count: 5,
+  });
+});
+
+it('gives an empty Event type a field instruction and retains the raw diagnostic', async () => {
+  const user = userEvent.setup();
+  const dialog = await openTrigger();
+  await user.selectOptions(within(dialog).getByLabelText('Trigger type'), 'event');
+  expect(within(dialog).getByLabelText('Event type')).toHaveAccessibleDescription(
+    expect.stringContaining('Enter an event type'),
+  );
+  const details = within(dialog).getByRole('button', { name: /Validation details/ });
+  expect(details).toHaveAttribute('aria-expanded', 'false');
+  await user.click(details);
+  expect(dialog.textContent).toContain('eventType');
+  expect(dialog.textContent).toContain('must start with a letter');
 });
