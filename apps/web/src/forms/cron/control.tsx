@@ -52,7 +52,7 @@ export function CronControl({ name }: FieldProps) {
   const expression = typeof field.value === 'string' ? field.value : '';
   const timezone = typeof zone === 'string' && !isUnset(zone) ? zone : 'UTC';
   const authorTimezone = () => {
-    if (zone === undefined || isUnset(zone)) setValue(zonePath, 'UTC');
+    if (zonePath !== name && (zone === undefined || isUnset(zone))) setValue(zonePath, 'UTC');
   };
   const [draft, setDraft] = useState<{ expression: string; schedule: Schedule }>();
   const parseErrors = useParseErrors();
