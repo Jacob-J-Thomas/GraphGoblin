@@ -18,6 +18,7 @@ import {
 } from '../components/ui/index.js';
 import { createDisclosureIdentities, type DisclosureStates } from '../forms/disclosures.js';
 import { SchemaForm } from '../forms/SchemaForm.js';
+import { NodeOutputsContext } from '../forms/EarlierNodeOutputs.js';
 import { FieldLabelsContext } from '../forms/fields/shared.js';
 import { VariableSuggestionsContext } from '../forms/fields/suggestions.js';
 import { JsonApplyReviewContext, JsonCandidateContext } from '../forms/fields/json.js';
@@ -658,41 +659,43 @@ export function NodeEditorDialog({
                             inert={activeReview !== undefined}
                             className="grid min-w-0 gap-0 border-0 p-0"
                           >
-                            <SchemaForm
-                              key={`${node.kind}:${epoch}:${historyEpoch}`}
-                              schema={NodeConfigSchemas[node.kind]}
-                              fieldOrder={
-                                node.kind === 'decision'
-                                  ? node.config.kind === 'classifier'
-                                    ? CLASSIFIER_FIELD_ORDER
-                                    : DECISION_FIELD_ORDER
-                                  : undefined
-                              }
-                              value={node.config}
-                              label={`${node.id} config`}
-                              controls={NODE_FIELD_CONTROLS}
-                              unionPickers={
-                                node.kind === 'decision'
-                                  ? DECISION_UNION_PICKERS
-                                  : node.kind === 'trigger'
-                                    ? TRIGGER_UNION_PICKERS
+                            <NodeOutputsContext value={{ node, definition }}>
+                              <SchemaForm
+                                key={`${node.kind}:${epoch}:${historyEpoch}`}
+                                schema={NodeConfigSchemas[node.kind]}
+                                fieldOrder={
+                                  node.kind === 'decision'
+                                    ? node.config.kind === 'classifier'
+                                      ? CLASSIFIER_FIELD_ORDER
+                                      : DECISION_FIELD_ORDER
                                     : undefined
-                              }
-                              fieldOverrides={
-                                node.kind === 'decision'
-                                  ? DECISION_FIELD_OVERRIDES
-                                  : node.kind === 'exit'
-                                    ? EXIT_FIELD_OVERRIDES
-                                    : undefined
-                              }
-                              problems={configProblems}
-                              disclosures={disclosures}
-                              onChange={handleConfigChange}
-                              parseErrors={fieldErrors[`node:${node.id}`]}
-                              onParseError={(path, error, reason, change) =>
-                                setFieldError(`node:${node.id}`, path, error, reason, change)
-                              }
-                            />
+                                }
+                                value={node.config}
+                                label={`${node.id} config`}
+                                controls={NODE_FIELD_CONTROLS}
+                                unionPickers={
+                                  node.kind === 'decision'
+                                    ? DECISION_UNION_PICKERS
+                                    : node.kind === 'trigger'
+                                      ? TRIGGER_UNION_PICKERS
+                                      : undefined
+                                }
+                                fieldOverrides={
+                                  node.kind === 'decision'
+                                    ? DECISION_FIELD_OVERRIDES
+                                    : node.kind === 'exit'
+                                      ? EXIT_FIELD_OVERRIDES
+                                      : undefined
+                                }
+                                problems={configProblems}
+                                disclosures={disclosures}
+                                onChange={handleConfigChange}
+                                parseErrors={fieldErrors[`node:${node.id}`]}
+                                onParseError={(path, error, reason, change) =>
+                                  setFieldError(`node:${node.id}`, path, error, reason, change)
+                                }
+                              />
+                            </NodeOutputsContext>
                           </fieldset>
                         </JsonCandidateContext>
                       </JsonApplyReviewContext>

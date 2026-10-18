@@ -3,6 +3,7 @@ import { HelpText } from '../components/ui/index.js';
 import { cn } from '../lib/utils.js';
 import { CodeEditor, type CodeLanguage } from './CodeEditor.js';
 import { renderPreview, type PreviewKind, type PreviewResult } from './preview.js';
+import { EarlierNodeOutputs } from './EarlierNodeOutputs.js';
 
 /** The language a code field takes (Liquid, JSONata, JSON), as a small tag beside its label. */
 export function LanguageTag({ children }: { children: string }) {
@@ -58,6 +59,7 @@ export function CodeField({
   requiredMessage,
   describedBy,
   invalid = false,
+  path,
 }: {
   kind: PreviewKind;
   value: string;
@@ -69,6 +71,7 @@ export function CodeField({
   requiredMessage?: string | undefined;
   describedBy?: string | undefined;
   invalid?: boolean | undefined;
+  path?: string | undefined;
 }) {
   const language: CodeLanguage = kind === 'template' ? 'liquid' : 'jsonata';
   const [edited, setEdited] = useState(false);
@@ -98,6 +101,7 @@ export function CodeField({
         </HelpText>
       ) : null}
       {showPreview ? <Preview kind={kind} source={value} /> : null}
+      <EarlierNodeOutputs kind={kind} path={path} />
     </div>
   );
 }
