@@ -2,7 +2,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { memo, use, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { FormEditReviewContext } from './edit-review.js';
 import { FormProvider, useForm, type FieldValues, type Resolver } from 'react-hook-form';
-import { FieldGroup, Label, Select } from '../components/ui/index.js';
+import { Disclosure, FieldGroup, Label, Select } from '../components/ui/index.js';
+import { setupInstruction } from './setup-instructions.js';
 import { FormChangeContext, nextChangeId, type ChangeScope, type FormChange } from './changes.js';
 import {
   CollectionIdentitiesContext,
@@ -102,6 +103,7 @@ const NO_PROBLEMS: readonly string[] = [];
 interface Issue {
   path: string;
   message: string;
+  instruction?: string | undefined;
 }
 
 function issuesOf(schema: Schema, value: unknown): Issue[] {
@@ -110,6 +112,7 @@ function issuesOf(schema: Schema, value: unknown): Issue[] {
   return result.error.issues.map((issue) => ({
     path: issue.path.map(String).join('.'),
     message: issue.message,
+    instruction: setupInstruction(value, issue.path.map(String).join('.')),
   }));
 }
 
@@ -206,7 +209,8 @@ const SchemaFormBindings = memo(function SchemaFormBindings({
   // The first issue at each path, for the fields react-hook-form does not control (record values).
   const issuesByPath = useMemo(() => {
     const byPath = new Map<string, string>();
-    for (const issue of issues) if (!byPath.has(issue.path)) byPath.set(issue.path, issue.message);
+    for (const issue of issues)
+      if (!byPath.has(issue.path)) byPath.set(issue.path, issue.instruction ?? issue.message);
     return byPath;
   }, [issues]);
   // The change under way (`ChangeScope`): its writes are reported with it.
@@ -393,12 +397,18 @@ const SchemaFormBindings = memo(function SchemaFormBindings({
                                 Field={Field}
                               />
                             ) : null}
+                            {issues
+                              .filter((issue) => issue.path === '')
+                              .map((issue, index) => (
+                                <p key={index} role="alert" className="text-sm text-status-bad-fg">
+                                  {issue.message}
+                                </p>
+                              ))}
                             {issues.length > 0 ? (
-                              <div
-                                className="grid gap-1 rounded-md border-l-4 border-status-bad-border bg-status-bad-bg px-3 py-2 text-xs leading-snug"
-                                aria-label="Config issues"
+                              <Disclosure
+                                label="Validation details"
+                                summary={`${issues.length} config issue${issues.length === 1 ? '' : 's'}`}
                               >
-                                <p className="font-semibold text-status-bad-fg">Config issues</p>
                                 <ul className="list-disc pl-4">
                                   {issues.map((issue, index) => (
                                     <li key={index}>
@@ -407,7 +417,7 @@ const SchemaFormBindings = memo(function SchemaFormBindings({
                                     </li>
                                   ))}
                                 </ul>
-                              </div>
+                              </Disclosure>
                             ) : null}
                           </form>
                         </FormProvider>

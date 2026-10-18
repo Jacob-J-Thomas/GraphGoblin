@@ -23,6 +23,22 @@ import type { FieldControls } from './fields.js';
 import { SchemaForm } from './SchemaForm.js';
 import type { Schema } from './introspect.js';
 
+it('keeps errors without a field visible while diagnostic details are collapsed', () => {
+  render(
+    <SchemaForm
+      schema={z.object({ value: z.string() }).refine(() => false, { message: 'Values conflict' })}
+      value={{ value: 'authored' }}
+      label="form"
+      onChange={vi.fn()}
+    />,
+  );
+  expect(screen.getByRole('alert')).toHaveTextContent('Values conflict');
+  expect(screen.getByRole('button', { name: /Validation details/ })).toHaveAttribute(
+    'aria-expanded',
+    'false',
+  );
+});
+
 function Harness({
   schema,
   initial,

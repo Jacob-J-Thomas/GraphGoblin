@@ -51,6 +51,46 @@ async function setup(config: unknown = { kind: 'expression', jsonata: '"ship"', 
 const confirm = async (user: ReturnType<typeof userEvent.setup>, dialog: HTMLElement) =>
   user.click(within(dialog).getByRole('button', { name: 'Confirm change' }));
 
+it('guides Expression to Classifier setup with field instructions and diagnostic details', async () => {
+  const user = userEvent.setup();
+  const { dialog } = await setup();
+  await user.click(within(dialog).getByRole('radio', { name: 'classifier' }));
+  await confirm(user, dialog);
+  expect(within(dialog).getByLabelText('Model', { exact: true })).toHaveAccessibleDescription(
+    expect.stringContaining('Choose a classifier'),
+  );
+  expect(within(dialog).getAllByText('Describe this option').length).toBe(3);
+  expect(within(dialog).getByRole('button', { name: /Validation details/ })).toHaveAttribute(
+    'aria-expanded',
+    'false',
+  );
+  await user.click(within(dialog).getByRole('button', { name: /Validation details/ }));
+  expect(dialog.textContent).toContain('answer.options.0.criteria');
+});
+
+it('guides Noul to Score setup without raw bounds errors in the ordinary form', async () => {
+  const user = userEvent.setup();
+  const { dialog } = await setup({
+    kind: 'classifier',
+    model: 'jev',
+    question: 'Check.',
+    answer: {
+      type: 'noul',
+      true: options[0],
+      false: options[1],
+    },
+  });
+  await user.click(within(dialog).getByRole('radio', { name: /Score/ }));
+  await confirm(user, dialog);
+  expect(within(dialog).getAllByText("Set each band's lower and upper bound").length).toBe(4);
+  expect(within(dialog).getByRole('button', { name: /Validation details/ })).toHaveAttribute(
+    'aria-expanded',
+    'false',
+  );
+  await user.click(within(dialog).getByRole('button', { name: /Validation details/ }));
+  expect(dialog.textContent).toContain('answer.bands.0.min');
+});
+
 describe('decision gates', () => {
   it('surfaces a visit-cap warning and focuses Maximum passes without blocking publication', async () => {
     const { dialog } = await setup({

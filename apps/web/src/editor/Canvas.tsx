@@ -68,7 +68,8 @@ const edgeTypes = { orthogonal: OrthogonalEdge };
 export const CANVAS_GRID = NODE_CARD_SIZE.clearance;
 /** A selected edge draws above the cards, so its segment handles and toolbar are never covered. */
 const SELECTED_EDGE_Z = 2000;
-const MIN_CANVAS_ZOOM = 0.5;
+// Large graphs must fit the canvas even while both side panels are open.
+const MIN_CANVAS_ZOOM = 0.1;
 const MAX_CANVAS_ZOOM = 2;
 
 /** Fit the graph with room on the left for the zoom controls, so they never cover a card. */
