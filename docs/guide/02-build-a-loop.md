@@ -261,3 +261,7 @@ Maximum run time is elapsed wall time from `run.startedAt` (falling back to `cre
 Use **Outcome: Exhausted** on the exit connected to Limit reached. A normal Done route can lead to Success or Failure. The inspector keeps the evaluator's choice, actual port and pass count together.
 
 Changing a node ID updates its connections. Update authored references such as `gates."old-id".passes` and `outputs."old-id".value` yourself.
+
+To find a reference, expand **Earlier node outputs (N)** under a template or expression field in the node dialog. It lists the nodes that can run before this one, nearest first, each with its reference in that field's syntax, a **Copy** button and a note on what it outputs. For example, a script's default output is its stdout itself, parsed as JSON when possible: `42`, not `{stdout: 42}`. IDs with a hyphen are quoted for you: `{{ outputs["old-id"].value }}` in Liquid and `outputs."old-id".value` in JSONata.
+
+The list is help, not validation. A branch may not run, and a node marked **previous visit** has no value the first time through. Nodes that write no output, such as Mutate and Exit, are left out. Fields evaluated against something other than the run thread show no list; these include trigger fields, a wait's signal filter, a heartbeat's stop condition, subloop output mappings, and the `where` predicates of message and artifact selectors and mutations, which see one item at a time.

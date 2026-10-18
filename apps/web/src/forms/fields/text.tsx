@@ -74,6 +74,7 @@ export function StringControl({
         {(control) => (
           <CodeField
             kind={format}
+            path={name}
             value={displayed}
             onChange={set}
             label={label}

@@ -7,7 +7,8 @@ import { DISCLOSURE_PANEL_SELECTOR } from '../../components/ui/index.js';
  */
 function rowScope(collection: HTMLElement | null, row: number): Element | null | undefined {
   const element = collection?.querySelector(`:scope > [data-collection-row="${row}"]`);
-  return element?.querySelector(DISCLOSURE_PANEL_SELECTOR) ?? element;
+  // Only the row's own disclosure wraps its controls. Nested field help may also disclose a panel.
+  return element?.querySelector(`:scope > * > ${DISCLOSURE_PANEL_SELECTOR}`) ?? element;
 }
 
 /** Focus only after the new controls have mounted, and keep repeated actions announceable. */
