@@ -101,29 +101,38 @@ Finding fixed while measuring: libsql's local client does its work in native cod
 ## Disposable API process lifecycle (#317)
 
 `apps/api/src/main.test.ts` uses `src/testing/api-subprocess.ts` against the built
-`apps/api/dist/main.js`. Run `pnpm build` first. Each fixture owns a temporary
-`gg-api-process-*` directory and a free loopback port from 5600 to 5699, clears
-inherited `GG_*` configuration, and creates its API key through the binary. CLI
-exit codes and V8 entry coverage, corrupt SQLite refusal, occupied-port cleanup,
-and Linux native signal shutdown are distinct evidence. The corrupt database
-fails before HTTP setup; a literal `*` static asset supplies a separate real
-post-container route-registration fault on POSIX.
+`apps/api/dist/main.js`. API subprocess tests build the API first through Turbo's
+`test` and `test:coverage` task dependencies. Direct package test commands bypass
+Turbo, so run `pnpm build` first; a missing entry reports that command explicitly.
+Each fixture owns a temporary `gg-api-process-*` directory and a free loopback port
+from 5600 to 5699, clears inherited `GG_*` configuration, and creates its API key
+through the binary. CLI dispatch is proved by exit codes 0/1/2. Corrupt SQLite
+refusal, occupied-port cleanup and Linux native signal shutdown are distinct
+evidence. The corrupt database fails before HTTP setup; a literal `*` static asset
+supplies a separate real post-container route-registration fault on POSIX.
 
-Signal cases explicitly skip win32: Node force-kills children on SIGINT/SIGTERM
-there and does not execute JavaScript handlers. The literal wildcard asset also
+Signal cases run only on Linux. Node force-kills children on SIGINT/SIGTERM on
+win32 and does not execute JavaScript handlers. The literal wildcard asset also
 skips win32 because Windows rejects that filename. CI on `ubuntu-latest` supplies
 those native cases; captured process callbacks establish none of these claims.
-Child V8 reports stay separate from Vitest package coverage; the helper remains
-in the normal source denominator, with no exclusion or threshold adjustment.
-An external SQLite writer gates startup for the ownership-ordering test. A POSIX
-FIFO at the supported master-key file path keeps startup asynchronously pending
-while both signals are handled: native SQLite busy waits alone can block the JS
-event loop. The fixture uses Ubuntu coreutils `mkfifo`; it changes no production
-shutdown grace period or timeout.
+A Linux FIFO at the supported master-key file path keeps startup asynchronously
+pending while a real signal is handled: the shutdown log must precede readiness,
+ownership remains held, and after releasing the FIFO startup completes before a
+clean exit releases the lock and closes the listener. The fixture uses Ubuntu
+coreutils `mkfifo`; native SQLite busy waits alone can block the JS event loop.
 The harness proves listener closure, lock release, one shutdown and exit codes;
 #224 extends drain/force behavior later. Forced child termination in fixture
 cleanup is never counted as graceful shutdown evidence.
 
-Disposable process directories (including raw V8 coverage) and uniquely named
-`gg-publish-*.db` interleaving fixtures are retained for orchestrator cleanup after
-worker exit. No owner process, store, or port is used.
+Subprocess waits, lifecycle cases and fixture cleanup have 60-second budgets for loaded hosts; the rest of
+the API suite retains its defaults. Child V8 coverage is off by default, including
+inherited `NODE_V8_COVERAGE`; `GG_API_SUBPROCESS_V8_COVERAGE=1` opts into diagnostic
+reports inside the disposable directory, separate from Vitest package coverage.
+The helper remains in the normal source denominator, with no exclusion or
+threshold adjustment.
+
+Process fixtures stop their children and best-effort remove their temporary
+stores and reports, retrying native handle release. The `gg-publish-*` fixtures
+use separate real SQLite connections to arrange draft/publish interleavings,
+then close both clients and best-effort remove their temporary database directory.
+No owner process, store, or port is used.

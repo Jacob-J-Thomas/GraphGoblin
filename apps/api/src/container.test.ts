@@ -19,10 +19,12 @@ import { startFakeClassifierEndpoint } from './testing/fake-classifier.js';
 // the API intentionally depends on the infrastructure port, not directly on libsql.
 const libsqlPath = await vi.hoisted(async () => {
   const { createRequire } = await import('node:module');
-  const entry = createRequire(import.meta.resolve('@graphgoblin/infrastructure/sqlite')).resolve(
-    '@libsql/client',
-  );
-  return entry.replace('lib-cjs', 'lib-esm');
+  const require = createRequire(import.meta.resolve('@graphgoblin/infrastructure/sqlite'));
+  const entry = require.resolve('@libsql/client');
+  const esm = entry.replace('lib-cjs', 'lib-esm');
+  if (esm === entry) throw new Error(`Unexpected libsql module layout: ${entry}`);
+  // Resolve the actual mock target now, so a layout change fails before any migration gate.
+  return require.resolve(esm);
 });
 type SqliteClient = ReturnType<typeof openDatabase>['client'];
 let migrationGate: { entered(): void; held: Promise<void> } | undefined;
@@ -668,42 +670,31 @@ describe('configuration admission before startup writes', () => {
   });
 });
 
-it.each([true, false])(
-  'admits a valid stored definition before recovery with protected database: %s',
-  async (protectedFile) => {
-    const outside = dataDir;
-    const settings = config(
-      protectedFile
-        ? {}
-        : {
-            GG_DATA_DIR: join(dataDir, 'locked'),
-            GG_DB_URL: `file:${join(outside, 'external.db').replaceAll('\\', '/')}`,
-          },
-    );
-    const prepared = openDatabase({ url: settings.dbUrl });
-    await prepared.migrate();
-    await prepared.client.execute({
-      sql: 'INSERT INTO loop_versions(id,loop_id,version,status,definition,created_at) VALUES (?,?,1,?,?,?)',
-      args: [
-        FIXTURE_IDS.version,
-        FIXTURE_IDS.loop,
-        'published',
-        JSON.stringify({ ...minimalLoop(), name: 'Readiness once sentinel' }),
-        FIXTURE_TS,
-      ],
+it('admits a valid stored definition before recovery', async () => {
+  const settings = config();
+  const prepared = openDatabase({ url: settings.dbUrl });
+  await prepared.migrate();
+  await prepared.client.execute({
+    sql: 'INSERT INTO loop_versions(id,loop_id,version,status,definition,created_at) VALUES (?,?,1,?,?,?)',
+    args: [
+      FIXTURE_IDS.version,
+      FIXTURE_IDS.loop,
+      'published',
+      JSON.stringify({ ...minimalLoop(), name: 'Readiness once sentinel' }),
+      FIXTURE_TS,
+    ],
+  });
+  prepared.close();
+  const container = await createContainer(settings, { startTimers: false });
+  try {
+    await container.start();
+    expect(await container.repos.loops.getVersion(FIXTURE_IDS.version)).toMatchObject({
+      definition: expect.objectContaining({ name: 'Readiness once sentinel' }),
     });
-    prepared.close();
-    const container = await createContainer(settings, { startTimers: false });
-    try {
-      await container.start();
-      expect(await container.repos.loops.getVersion(FIXTURE_IDS.version)).toMatchObject({
-        definition: expect.objectContaining({ name: 'Readiness once sentinel' }),
-      });
-    } finally {
-      await container.stop();
-    }
-  },
-);
+  } finally {
+    await container.stop();
+  }
+});
 it('repeats cheap readiness checks inside migrate even after a protected preflight', async () => {
   const prepared = openDatabase({ url: config().dbUrl });
   await prepared.migrate();

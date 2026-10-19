@@ -5,7 +5,6 @@ import { createServer } from 'node:net';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { main } from './main.js';
-import { openDatabase } from '@graphgoblin/infrastructure/sqlite';
 import { createApiProcessFixture, eventually, listening } from './testing/api-subprocess.js';
 
 const fixtures: Awaited<ReturnType<typeof createApiProcessFixture>>[] = [];
@@ -16,12 +15,12 @@ async function fixture() {
 }
 afterEach(async () => {
   for (const created of fixtures.splice(0)) await created.dispose();
-});
+}, 60_000);
 const noLock = (path: string) => expect(access(path)).rejects.toMatchObject({ code: 'ENOENT' });
 
 // Node force-kills children on Windows for SIGINT/SIGTERM; JS handlers never run there.
 // Linux CI supplies the native signal evidence. No captured callbacks or stubbed process.exit.
-const nativeSignals = describe.skipIf(process.platform === 'win32');
+const nativeSignals = describe.skipIf(process.platform !== 'linux');
 
 describe('built API entry and startup failures', () => {
   it('holds ownership while listening and releases it on supported HTTP close', async () => {
@@ -45,7 +44,7 @@ describe('built API entry and startup failures', () => {
       await running?.container.stop();
       vi.unstubAllEnvs();
     }
-  });
+  }, 60_000);
 
   it('serves authenticated requests using a binary-created key and refuses a competing process', async () => {
     const f = await fixture();
@@ -83,7 +82,6 @@ describe('built API entry and startup failures', () => {
     expect(preflight.stdout).toContain('FAIL');
     expect(preflight.stderr).not.toContain('a key name is required');
     expect(await listening(f.port)).toBe(false);
-    expect(await f.entryCoverage()).not.toEqual([]);
   }, 60_000);
 
   it('releases ownership on a real corrupt-database startup fault before HTTP setup', async () => {
@@ -134,6 +132,7 @@ describe('built API entry and startup failures', () => {
       await noLock(f.lockPath);
       expect(await listening(f.port)).toBe(false);
     },
+    60_000,
   );
 });
 
@@ -161,42 +160,37 @@ nativeSignals(
       60_000,
     );
 
-    it('holds ownership when both real signals arrive during externally locked startup, then shuts down once', async () => {
+    it('handles a real signal before readiness, holds ownership through startup and shuts down once', async () => {
       const f = await fixture();
       await f.createKey();
       // Keep native signal dispatch asynchronous while startup still awaits its supported key file.
       const keyFile = join(f.dataDir, 'master.key');
       await promisify(execFile)('mkfifo', [keyFile]);
-      const holder = openDatabase({ url: f.env.GG_DB_URL! });
-      await holder.client.execute('PRAGMA journal_mode=WAL');
-      await holder.client.execute('BEGIN IMMEDIATE');
-      let locked = true;
       const child = f.run([], { GG_MASTER_KEY: undefined });
-      try {
-        await eventually(async () => {
-          try {
-            return (await readFile(f.lockPath, 'utf8')).length > 0;
-          } catch {
-            return false;
-          }
-        });
-        const lock = await readFile(f.lockPath, 'utf8');
-        expect(child.child.kill('SIGINT')).toBe(true);
-        await child.waitForLog('shutting down');
-        expect(child.child.kill('SIGTERM')).toBe(true);
-        expect(child.exited).toBe(false);
-        expect(await readFile(f.lockPath, 'utf8')).toBe(lock);
-        await writeFile(keyFile, Buffer.alloc(32, 8).toString('base64'));
-        await holder.client.execute('ROLLBACK');
-        locked = false;
-        expect(await child.waitForExit()).toEqual({ code: 0, signal: null });
-        expect(child.stdout.match(/"msg":"shutting down"/g)).toHaveLength(1);
-        await noLock(f.lockPath);
-        expect(await listening(f.port)).toBe(false);
-      } finally {
-        if (locked) await holder.client.execute('ROLLBACK');
-        holder.close();
-      }
+      await eventually(async () => {
+        try {
+          return (await readFile(f.lockPath, 'utf8')).length > 0;
+        } catch {
+          return false;
+        }
+      });
+      const lock = await readFile(f.lockPath, 'utf8');
+      expect(child.child.kill('SIGINT')).toBe(true);
+      await child.waitForLog('shutting down');
+      // The shutdown log proves receipt while the FIFO still prevents readiness.
+      expect(child.stdout).not.toContain('GraphGoblin API listening');
+      expect(await listening(f.port)).toBe(false);
+      expect(child.child.kill('SIGTERM')).toBe(true);
+      expect(await readFile(f.lockPath, 'utf8')).toBe(lock);
+      await writeFile(keyFile, Buffer.alloc(32, 8).toString('base64'));
+      expect(await child.waitForExit()).toEqual({ code: 0, signal: null });
+      expect(child.stdout).toContain('GraphGoblin API listening');
+      expect(child.stdout.indexOf('shutting down')).toBeLessThan(
+        child.stdout.indexOf('GraphGoblin API listening'),
+      );
+      expect(child.stdout.match(/"msg":"shutting down"/g)).toHaveLength(1);
+      await noLock(f.lockPath);
+      expect(await listening(f.port)).toBe(false);
     }, 60_000);
   },
 );

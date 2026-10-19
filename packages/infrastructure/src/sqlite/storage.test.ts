@@ -1,6 +1,6 @@
 import type { Client } from '@libsql/client';
 import type * as Libsql from '@libsql/client';
-import { randomUUID } from 'node:crypto';
+import { rm } from 'node:fs/promises';
 import { SqliteTriggerAdmission } from './admission.js';
 import { applyShippedSqlToHistoricalTestFixture } from './testing/shipped-migrations.js';
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -421,20 +421,21 @@ describe('SqliteEventStore', () => {
 describe('SqliteLoopRepository draft and publish interleaving', () => {
   let competing: DatabaseHandle;
   let databasePath: string;
+  let directory: string;
   beforeEach(async () => {
     // Separate connections let the publisher commit while the saver holds a SELECT result.
     // A single serialized client would correctly block every competing call behind that read.
     handle.close();
-    databasePath = join(tmpdir(), `gg-publish-${randomUUID()}.db`);
+    directory = mkdtempSync(join(tmpdir(), 'gg-publish-'));
+    databasePath = join(directory, 'store.db');
     handle = openDatabase({ url: `file:${databasePath.replaceAll('\\', '/')}` });
     await handle.migrate();
     competing = openDatabase({ url: `file:${databasePath.replaceAll('\\', '/')}` });
   });
-  afterEach(() => {
+  afterEach(async () => {
     handle.close();
     competing.close();
-    // Retain these uniquely named temp files until the worker exits: Windows libsql may
-    // retain native handles after close. The report identifies the cleanup prefix.
+    await rm(directory, { recursive: true, force: true, maxRetries: 10 }).catch(() => undefined);
   });
 
   it('never modifies a version that was published after a draft save read the loop', async () => {

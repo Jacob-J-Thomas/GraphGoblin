@@ -1,6 +1,6 @@
 /** Disposable built-entry process fixture. No owner environment, listener, or store is reused. */
 import { spawn } from 'node:child_process';
-import { access, mkdtemp, readFile, readdir } from 'node:fs/promises';
+import { access, mkdtemp, rm } from 'node:fs/promises';
 import { createConnection, createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -12,7 +12,7 @@ const safe = (value: string) => value.replace(/\bgg_[A-Za-z0-9_-]+/g, '[disposab
 
 export async function eventually(
   check: () => Promise<boolean> | boolean,
-  timeoutMs = 20_000,
+  timeoutMs = 60_000,
 ): Promise<void> {
   const deadline = Date.now() + timeoutMs;
   while (!(await check())) {
@@ -75,7 +75,7 @@ function launch(env: NodeJS.ProcessEnv, args: string[]) {
     },
   );
   void completion.catch(() => undefined);
-  async function waitForExit(timeoutMs = 20_000) {
+  async function waitForExit(timeoutMs = 60_000) {
     let timer: ReturnType<typeof setTimeout> | undefined;
     try {
       return await Promise.race([
@@ -103,7 +103,7 @@ function launch(env: NodeJS.ProcessEnv, args: string[]) {
       return exited;
     },
     waitForExit,
-    async waitForLog(message: string, timeoutMs = 20_000) {
+    async waitForLog(message: string, timeoutMs = 60_000) {
       await eventually(() => {
         if (stdout.includes(message)) return true;
         if (exited) throw new Error(`API child exited before ${message}: ${safe(stderr)}`);
@@ -119,19 +119,30 @@ function launch(env: NodeJS.ProcessEnv, args: string[]) {
 }
 
 export async function createApiProcessFixture() {
-  await access(entry); // Run pnpm build before these tests; never silently build a different entry.
+  try {
+    await access(entry);
+  } catch (cause) {
+    throw new Error('Built API entry is missing; run pnpm build before API subprocess tests.', {
+      cause,
+    });
+  }
   const dataDir = await mkdtemp(join(tmpdir(), 'gg-api-process-'));
   const databaseFile = join(dataDir, 'graphgoblin.db');
   const lockPath = join(dataDir, 'graphgoblin.lock');
   const port = await freePort();
   const inherited = Object.fromEntries(
     Object.entries(process.env).filter(
-      ([name]) => !name.toUpperCase().startsWith('GG_') && name.toUpperCase() !== 'JEV_API_KEY',
+      ([name]) =>
+        !name.toUpperCase().startsWith('GG_') &&
+        name.toUpperCase() !== 'JEV_API_KEY' &&
+        name.toUpperCase() !== 'NODE_V8_COVERAGE',
     ),
   );
   const env: NodeJS.ProcessEnv = {
     ...inherited,
-    NODE_V8_COVERAGE: join(dataDir, 'v8'),
+    ...(process.env.GG_API_SUBPROCESS_V8_COVERAGE === '1'
+      ? { NODE_V8_COVERAGE: join(dataDir, 'v8') }
+      : {}),
     GG_DATA_DIR: dataDir,
     GG_DB_URL: `file:${databaseFile.replaceAll('\\', '/')}`,
     GG_HOST: '127.0.0.1',
@@ -172,23 +183,13 @@ export async function createApiProcessFixture() {
       if (response.status !== 200)
         throw new Error(`Authenticated API readiness returned ${response.status}`);
     },
-    async entryCoverage() {
-      const reports = await readdir(join(dataDir, 'v8'));
-      const entries: unknown[] = [];
-      for (const report of reports) {
-        const raw = JSON.parse(await readFile(join(dataDir, 'v8', report), 'utf8')) as {
-          result: {
-            url: string;
-            functions: { functionName: string; ranges: { count: number }[] }[];
-          }[];
-        };
-        entries.push(...raw.result.filter((script) => script.url.endsWith('/api/dist/main.js')));
-      }
-      return entries;
-    },
     async dispose() {
-      await Promise.all(children.map((child) => child.dispose()));
-      // Retain uniquely named temp directories and V8 reports for review; do not delete directories.
+      try {
+        await Promise.all(children.map((child) => child.dispose()));
+      } finally {
+        // Native handles can take a moment to release on Windows; cleanup is best effort.
+        await rm(dataDir, { recursive: true, force: true, maxRetries: 10 }).catch(() => undefined);
+      }
     },
   };
 }

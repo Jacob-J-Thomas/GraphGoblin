@@ -2181,14 +2181,14 @@ describe('general webhook configuration and unsigned intake', () => {
     'admits unsigned $body.type through saved intent, queued metadata and recovery',
     async (config) => {
       const { id, path } = await setup({ body: config.body, eventType: config.eventType });
-      const resolve = vi.spyOn(t.container.ports.secrets, 'resolve');
+      // All owner-scoped secret instances share this real storage boundary.
+      await t.container.handle.client.execute('DROP TABLE secrets');
       vi.spyOn(t.container.ports.admission, 'create').mockRejectedValueOnce(new Error('transient'));
       const bus = vi.spyOn(t.container.bus, 'publish');
       const response = await post(path, config.raw, { 'x-event': 'order.created' });
       expect(response.statusCode).toBe(202);
       expect(response.json()).toEqual({ accepted: true });
       await t.container.manager.waitForWebhookRecovery();
-      expect(resolve).not.toHaveBeenCalled();
       expect(bus).not.toHaveBeenCalled();
       expect(await runsOf(id)).toEqual([]);
       const rows = (await t.container.handle.client.execute('SELECT intent FROM webhook_receipts'))
@@ -2214,6 +2214,22 @@ describe('general webhook configuration and unsigned intake', () => {
       });
     },
   );
+  it('refuses signed intake when the real secret storage boundary is unavailable', async () => {
+    await setSecret();
+    const { id, path } = await setup({
+      authentication: { type: 'hmac-sha256', message: 'body', secretRef: 'hook-secret' },
+    });
+    await t.container.handle.client.execute('DROP TABLE secrets');
+    const raw = Buffer.from('{"id":1}');
+    const response = await post(path, raw, {
+      'x-hub-signature-256': signRawBody('shh', raw),
+    });
+    expect(response.statusCode).toBe(500);
+    expect(await runsOf(id)).toEqual([]);
+    expect(
+      (await t.container.handle.client.execute('SELECT intent FROM webhook_receipts')).rows,
+    ).toEqual([]);
+  });
   it('applies the limiter/bound/decoding to None without accepting an authenticated identity', async () => {
     const { path } = await setup();
     expect((await post(path, '')).json()).toMatchObject({ code: 'BODY_INVALID' });

@@ -14,6 +14,13 @@
     "test:coverage": {
       "outputs": ["coverage/**"]
     },
+    "@graphgoblin/api#test": {
+      "dependsOn": ["@graphgoblin/api#build"]
+    },
+    "@graphgoblin/api#test:coverage": {
+      "dependsOn": ["@graphgoblin/api#build"],
+      "outputs": ["coverage/**"]
+    },
     "@graphgoblin/tooling#test:coverage": {
       "outputs": []
     }
