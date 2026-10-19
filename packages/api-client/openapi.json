@@ -4287,6 +4287,7 @@
               "HEARTBEAT_EXHAUSTED",
               "RETURN_DELIVERY_FAILED",
               "MAX_NODE_VISITS",
+              "EVENT_INVALID",
               "INTERNAL_ERROR"
             ]
           },
@@ -11524,6 +11525,7 @@
               "HEARTBEAT_EXHAUSTED",
               "RETURN_DELIVERY_FAILED",
               "MAX_NODE_VISITS",
+              "EVENT_INVALID",
               "INTERNAL_ERROR"
             ]
           },
@@ -16067,6 +16069,58 @@
         "responses": {
           "200": {
             "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/runs/diagnostics": {
+      "get": {
+        "summary": "Identify unreadable run history for manual repair or explicit deletion",
+        "tags": [
+          "runs"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "runId": {
+                            "type": "string"
+                          },
+                          "code": {
+                            "type": "string",
+                            "enum": [
+                              "HISTORY_UNREADABLE"
+                            ]
+                          },
+                          "reason": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "runId",
+                          "code",
+                          "reason"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
           }
         }
       }

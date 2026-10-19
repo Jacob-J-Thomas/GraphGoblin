@@ -139,11 +139,24 @@ Success finishes `succeeded`, Failure finishes `failed`, and Exhausted finishes 
 
 Validation reports `GATE_PASSES_ABOVE_VISIT_CAP` at `config.maxPasses` when a gate's maximum passes exceeds the visit cap. The warning names both numbers and all nodes on repeat-target paths back to that gate (excluding paths after the gate and exit branches). Continued repetition cannot reach the maximum-pass Limit reached output before the safety cap fails the run. This is a warning rather than an error because an earlier non-repeat choice or maximum run time can still finish the run as intended. All admission endpoints return the same warning, and the editor shows it beside Maximum passes.
 
+Every generated durable event is validated against the current `RunEventSchema` before
+persistence. SQLite validates the entire append before inserting any rows, moving the sequence,
+or notifying subscribers; atomic admission already validates its initial event. A rejected
+event fails the run with `EVENT_INVALID`, `resumable: false`. Successful values are never
+silently truncated. Wait prompts and terminal failure messages are bounded at 10,000
+JavaScript string characters (UTF-16 code units); progress summaries have their separate
+2,000-character contract bound. Literal and rendered templates obey the same event bound.
+
+Failure reporting validates its own metadata and bounds oversized messages with a visible
+`[truncated; original N characters]` suffix within that bound. The same valid failure is
+stored in the terminal event and run record. A restart sees the durable failure and does
+not automatically repeat the node that produced the rejected event.
+
 SQLite event reads enforce the current contract. A non-conforming row rejects the whole
 read page with an error naming its run, sequence, and type, without exposing its payload.
 Recovery cannot consume a partial invalid page. JSON pages and SSE replay use this same
-reader; SSE validates replay before sending any frames (07). Stored data repairs belong
-to migrations, including `0007` for historical decisions without `skipped`.
+reader; SSE validates replay before sending any frames (07). Existing damaged history requires explicit manual repair or deletion; recovery does not
+repair it automatically.
 
 Every new `decision.made` event contains `{portId, provenance, observation}` and empty diagnostics. Expression and LLM observations have kind `route`, with the declared routeId, nullable confidence and nullable reasoning; classifier observations have kind `classifier` with a typed answer. Boolean observations retain factual history; current decisions use routes or classifier answers. Fresh events pass per-kind validation before append. Diagnostics preserve at most three historical facts; provider error bodies remain excluded.
 
@@ -194,6 +207,20 @@ and need offline review. See the [offline guide](guide/08-offline-upgrade.md).
 The offline server-store tool uses the same composition for each retained version and draft. Portable export and device conversion do not authorize or perform a server cutover.
 
 ## Crash recovery (Decided)
+
+Recovery enumerates raw run identities and decodes each candidate separately. A malformed
+JSON field, invalid current-contract run record/thread, or unreadable event page is isolated
+to its run: startup logs `HISTORY_UNREADABLE` with the run ID and reason, skips its work,
+and continues healthy recovery. `GET /runs/diagnostics` (owner-scoped, `runs:read`) lists
+unreadable histories, including rows that cannot supply a run snapshot. This is a read-only
+diagnostic, not a new lifecycle status: a damaged snapshot may still say queued, running,
+or waiting. Recovery leaves its rows and events unchanged. Store-level schema, format,
+and I/O failures still fail startup; they are not reclassified as damaged runs.
+
+The operator must explicitly repair the named row by hand or explicitly delete the
+containing loop through the existing deletion path after all of its runs are terminal.
+There is no automatic repair, quarantine archive, history reconstruction, deletion, or
+whole-store reset. See the troubleshooting guide for the manual disposition procedure.
 
 Before run recovery, fresh SQLite initialisation commits the schema migrations, their ledger and the complete stored-format marker in one write transaction. An interruption before commit rolls all of them back, so the next ordinary startup can initialise the empty store again without duplicate migration effects. Freshness requires no application tables and no recorded migrations; an empty migration-ledger table alone is allowed. Empty user tables do not establish freshness. An existing unmarked schema, a marker table without its complete row, an incomplete upgrade state or recorded migrations without application tables still stop startup with `DATA_UPGRADE_REQUIRED`. Preserve those stores for the [offline upgrade and recovery workflow](guide/08-offline-upgrade.md); startup does not stamp or repair them by inference.
 

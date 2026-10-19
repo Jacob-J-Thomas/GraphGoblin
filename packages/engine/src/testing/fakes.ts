@@ -272,6 +272,11 @@ export class InMemoryRunRepository implements RunRepository {
     this.runs.set(current.id, record);
     return record;
   }
+  async listRecoveryCandidates(): Promise<{ id: string; terminal: boolean }[]> {
+    const terminal = await this.listUnfinalized();
+    const active = await this.listByStatus(['queued', 'running', 'waiting', 'paused']);
+    return [...terminal, ...active].map((r) => ({ id: r.id, terminal: isTerminal(r.status) }));
+  }
   listByStatus(statuses: readonly RunStatus[]): Promise<RunRecord[]> {
     return Promise.resolve([...this.runs.values()].filter((r) => statuses.includes(r.status)));
   }

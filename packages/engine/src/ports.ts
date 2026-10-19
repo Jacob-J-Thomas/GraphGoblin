@@ -94,6 +94,8 @@ export interface RunRepository {
     from: readonly RunStatus[],
     at: string,
   ): Promise<RunRecord | undefined>;
+  /** Raw identities for per-run recovery; must not decode run JSON while enumerating. */
+  listRecoveryCandidates(): Promise<{ id: string; terminal: boolean }[]>;
   listByStatus(statuses: readonly RunStatus[]): Promise<RunRecord[]>;
   /**
    * Record that everything after the run's terminal status is done: timers dropped, children

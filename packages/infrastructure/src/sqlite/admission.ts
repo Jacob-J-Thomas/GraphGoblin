@@ -12,6 +12,7 @@ import {
   parseRunAdmission,
   pollAdmissionIdentity,
   queuedEvent,
+  validateGeneratedEvent,
   type RunAdmission,
   type TriggerAdmissionPort,
   type WebhookClaim,
@@ -161,7 +162,7 @@ export class SqliteTriggerAdmission implements TriggerAdmissionPort {
       } else {
         if (first) throw new AdmissionConflictError();
         run = { ...input.run, lastEventSeq: 1 };
-        event = queuedEvent(input);
+        event = validateGeneratedEvent(queuedEvent(input));
         await tx.insert(runs).values(runInsert(run, input.initialThread));
         const { runId, seq, ts, type, ...payload } = event;
         await tx.insert(runEvents).values({ runId, seq, ts, type, payload });

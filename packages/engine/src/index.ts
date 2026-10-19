@@ -11,3 +11,5 @@ export * from './handler.js';
 export * from './handlers/index.js';
 export * from './run-manager.js';
 export * from './admission.js';
+
+export * from './event-validation.js';

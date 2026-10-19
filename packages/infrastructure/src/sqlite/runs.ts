@@ -1,7 +1,8 @@
+import { rawRunColumns, decodeRunRecord, decodeStoredThread } from './run-decoding.js';
 import { TERMINAL_RUN_STATUSES } from '@graphgoblin/contracts';
 import type { ContextThread, RunRecord, RunStatus } from '@graphgoblin/contracts';
 import type { RunRecordChanges, RunRepository } from '@graphgoblin/engine';
-import { and, desc, eq, inArray, isNull, lt, sql, type SQL } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNull, lt, or, sql, type SQL } from 'drizzle-orm';
 import type { Database } from './db.js';
 import { loopVersions, loops, runs } from './schema.js';
 import { deleteRuns } from './delete-runs.js';
@@ -102,8 +103,8 @@ export class SqliteRunRepository implements RunRepository {
   }
 
   async get(runId: string): Promise<RunRecord | undefined> {
-    const row = await this.db.query.runs.findFirst({ where: eq(runs.id, runId) });
-    return row ? runRecordFromRow(row) : undefined;
+    const [row] = await this.db.select(rawRunColumns).from(runs).where(eq(runs.id, runId)).limit(1);
+    return row ? decodeRunRecord(row) : undefined;
   }
 
   async update(runId: string, changes: RunRecordChanges): Promise<RunRecord> {
@@ -165,6 +166,33 @@ export class SqliteRunRepository implements RunRepository {
 
   async clearFinalized(runId: string): Promise<void> {
     await this.db.update(runs).set({ finalizedAt: null }).where(eq(runs.id, runId));
+  }
+
+  /** Raw identities keep one malformed JSON column from aborting the recovery scan. */
+  async listRecoveryCandidates(): Promise<{ id: string; terminal: boolean }[]> {
+    const rows = await this.db
+      .select({ id: runs.id, status: runs.status })
+      .from(runs)
+      .where(
+        or(
+          isNull(runs.finalizedAt),
+          inArray(runs.status, ['queued', 'running', 'waiting', 'paused']),
+        ),
+      )
+      .orderBy(runs.createdAt);
+    return rows.map(({ id, status }) => ({
+      id,
+      terminal: TERMINAL_RUN_STATUSES.some((s) => s === status),
+    }));
+  }
+
+  /** Minimal owner-scoped identities remain readable even when a run row is damaged. */
+  async listIdentities(ownerId: string): Promise<{ id: string }[]> {
+    return this.db
+      .select({ id: runs.id })
+      .from(runs)
+      .where(eq(runs.ownerId, ownerId))
+      .orderBy(runs.createdAt);
   }
 
   async listUnfinalized(): Promise<RunRecord[]> {
@@ -238,19 +266,23 @@ export class SqliteRunRepository implements RunRepository {
   }
 
   async getInitialThread(runId: string): Promise<ContextThread | undefined> {
-    const row = await this.db.query.runs.findFirst({
-      where: eq(runs.id, runId),
-      columns: { initialThread: true },
-    });
-    return row?.initialThread ?? undefined;
+    const [row] = await this.db
+      .select({ value: sql<string>`${runs.initialThread}` })
+      .from(runs)
+      .where(eq(runs.id, runId))
+      .limit(1);
+    return row ? decodeStoredThread(runId, 'initial_thread', row.value) : undefined;
   }
 
   async getThread(runId: string): Promise<ContextThread | undefined> {
-    const row = await this.db.query.runs.findFirst({
-      where: eq(runs.id, runId),
-      columns: { threadSnapshot: true },
-    });
-    return row?.threadSnapshot ?? undefined;
+    const [row] = await this.db
+      .select({ value: sql<string | null>`${runs.threadSnapshot}` })
+      .from(runs)
+      .where(eq(runs.id, runId))
+      .limit(1);
+    return row?.value !== null && row?.value !== undefined
+      ? decodeStoredThread(runId, 'thread_snapshot', row.value)
+      : undefined;
   }
 
   async saveThread(runId: string, thread: ContextThread, seq?: number): Promise<void> {
@@ -263,12 +295,16 @@ export class SqliteRunRepository implements RunRepository {
   async getThreadCheckpoint(
     runId: string,
   ): Promise<{ thread: ContextThread; seq: number } | undefined> {
-    const row = await this.db.query.runs.findFirst({
-      where: eq(runs.id, runId),
-      columns: { threadSnapshot: true, threadSnapshotSeq: true },
-    });
-    return row?.threadSnapshot && row.threadSnapshotSeq !== null
-      ? { thread: row.threadSnapshot, seq: row.threadSnapshotSeq }
+    const [row] = await this.db
+      .select({
+        thread: sql<string | null>`${runs.threadSnapshot}`,
+        seq: runs.threadSnapshotSeq,
+      })
+      .from(runs)
+      .where(eq(runs.id, runId))
+      .limit(1);
+    return row?.thread !== null && row?.thread !== undefined && row.seq !== null
+      ? { thread: decodeStoredThread(runId, 'thread_snapshot', row.thread), seq: row.seq }
       : undefined;
   }
 

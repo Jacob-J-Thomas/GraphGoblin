@@ -1,3 +1,4 @@
+import { registerRunDiagnosticRoutes } from './routes/run-diagnostics.js';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import Fastify, { type FastifyBaseLogger, type FastifyServerOptions } from 'fastify';
@@ -84,6 +85,7 @@ export async function buildApp(
   registerSystemRoutes(app, container);
   registerLoopRoutes(app, container);
   registerRunRoutes(app, container);
+  registerRunDiagnosticRoutes(app, container);
   registerTemplateRoutes(app, container);
   registerSettingsRoutes(app, container);
   registerClassifierRoutes(app, container);
