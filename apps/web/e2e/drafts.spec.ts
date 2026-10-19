@@ -4,7 +4,7 @@
  * editor asks before reloading or overwriting.
  */
 import type { APIRequestContext, Page } from '@playwright/test';
-import { approvalLoop, expect, showLoopPanel, test } from './fixtures.js';
+import { approvalLoop, expect, openDraftTab, showLoopPanel, test } from './fixtures.js';
 
 async function serverDescription(request: APIRequestContext, loopId: string) {
   const res = await request.get(`/loops/${loopId}`);
@@ -31,13 +31,11 @@ test('two tabs editing one draft: the stale tab is asked to reload or overwrite'
   expect(created.status()).toBe(201);
   const loopId = ((await created.json()) as { loop: { id: string } }).loop.id;
 
-  // Let each tab finish foreground initialization before opening the next one.
+  // Activate and reconcile each tab before it captures the draft used by conflict assertions.
   const a = await context.newPage();
-  await a.goto(`/app/loops/${loopId}/edit`);
-  await expect(a.getByRole('heading', { name: 'qa conflict' })).toBeVisible();
+  await openDraftTab(a, loopId, 'qa conflict');
   const b = await context.newPage();
-  await b.goto(`/app/loops/${loopId}/edit`);
-  await expect(b.getByRole('heading', { name: 'qa conflict' })).toBeVisible();
+  await openDraftTab(b, loopId, 'qa conflict');
 
   // Tab A saves first.
   await describeLoop(a, 'from tab A');
