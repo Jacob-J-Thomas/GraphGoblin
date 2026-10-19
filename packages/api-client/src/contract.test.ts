@@ -229,9 +229,19 @@ describe('against the in-process API (local trusted mode)', () => {
 
     const first = await runs.start(client, loop.id, { input: { topic: 'x' } });
     await until(async () => (await runs.get(client, first.id)).status === 'waiting');
-    const pending = await waitForRun(client, first.id, { timeoutMs: 30, pollMs: 10 });
-    expect(pending.finished).toBe(false);
-    if (pending.run) expect(pending.run.status).toBe('waiting');
+    // The first snapshot uses the real API; the injected poll advances the observation
+    // clock to its deadline so the snapshot assertion does not depend on network timing.
+    let clock = 0;
+    const pending = await waitForRun(client, first.id, {
+      timeoutMs: 60_000,
+      pollMs: 60_000,
+      now: () => clock,
+      sleep: (ms) => {
+        clock += ms;
+        return Promise.resolve();
+      },
+    });
+    expect(pending).toMatchObject({ finished: false, run: { status: 'waiting' } });
     expect((await runs.get(client, first.id)).status).toBe('waiting');
     expect((await runs.signal(client, first.id, 'nudge')).woke).toBe(false);
     expect((await runs.signal(client, first.id, 'nudge', { n: 1 })).woke).toBe(false);

@@ -176,16 +176,18 @@ export function registerTools(
     'wait_for_run',
     {
       title: 'Wait for a run',
-      description: `Wait for a run to finish, polling for up to timeoutSeconds (default ${DEFAULT_WAIT_SECONDS}, max ${MAX_WAIT_SECONDS}). If the run finished (succeeded, failed, cancelled, exhausted) it returns { finished: true, run } with run.result holding the loop's return value and run.failure explaining a failure. Otherwise it returns { finished: false, status, cursor, next }: follow "next". It returns early when the run needs you: waiting for input (call provide_input) or paused (call resume_run). For a long run, keep calling wait_for_run with the same runId. cursor is the last event sequence, usable as "after" in read_run_events. If the deadline expires before any snapshot arrives, status is omitted and cursor is 0. A zero budget makes no request. Deadlines and request cancellation stop observation only; they never cancel the run.`,
+      description: `Wait for a run to finish, polling for up to timeoutSeconds (min 1, default ${DEFAULT_WAIT_SECONDS}, max ${MAX_WAIT_SECONDS} seconds). If the run finished (succeeded, failed, cancelled, exhausted) it returns { finished: true, run } with run.result holding the loop's return value and run.failure explaining a failure. Otherwise it returns { finished: false, status?, cursor?, next }: follow "next". It returns early when the run needs you: waiting for input (call provide_input) or paused (call resume_run). For a long run, keep calling wait_for_run with the same runId. cursor is the last event sequence, usable as "after" in read_run_events. If the deadline expires before any snapshot arrives, status, waiting and cursor are omitted. Deadlines and request cancellation stop observation only; they never cancel the run.`,
       inputSchema: {
         runId,
         timeoutSeconds: z
           .number()
           .int()
-          .min(0)
+          .min(1)
           .max(MAX_WAIT_SECONDS)
           .optional()
-          .describe(`How long to wait. Default ${DEFAULT_WAIT_SECONDS}, max ${MAX_WAIT_SECONDS}.`),
+          .describe(
+            `How long to wait, from 1 to 600 seconds. Default ${DEFAULT_WAIT_SECONDS}, max ${MAX_WAIT_SECONDS}.`,
+          ),
       },
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
@@ -220,7 +222,6 @@ export function registerTools(
         if (!run) {
           return {
             finished: false,
-            cursor: 0,
             next: 'No run snapshot arrived before the observation deadline. Call wait_for_run again with the same runId, or get_run to check its status.',
           };
         }

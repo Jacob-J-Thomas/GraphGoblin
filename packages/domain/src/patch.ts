@@ -11,10 +11,10 @@ export const MUTABLE_REGIONS = [
   '/lastOutput',
 ] as const;
 
-export function assertMutablePath(path: string): void {
+export function assertMutablePath(path: string, location: 'path' | 'from' = 'path'): void {
   if (!MUTABLE_REGIONS.some((region) => pointerStartsWith(path, region))) {
     throw new MutationError(
-      `path "${path}" is not in a mutable region (${MUTABLE_REGIONS.join(', ')})`,
+      `${location} "${path}" is not in a mutable region (${MUTABLE_REGIONS.join(', ')})`,
     );
   }
 }
@@ -24,7 +24,7 @@ export function assertMutablePatch(patch: JsonPatch): void {
   for (const op of patch) {
     if (op.op === 'test') continue;
     assertMutablePath(op.path);
-    if (op.op === 'move') assertMutablePath(op.from);
+    if (op.op === 'move') assertMutablePath(op.from, 'from');
   }
 }
 

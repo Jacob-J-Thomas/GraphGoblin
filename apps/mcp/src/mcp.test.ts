@@ -311,15 +311,10 @@ describe('MCP server against the in-process API', () => {
     );
   });
 
-  it('times out with a cursor while a run is busy, reports progress, then succeeds', async () => {
+  it('reports progress while a run is busy, then succeeds', async () => {
     t.harness.script([{ finalText: 'pondered', delayMs: 400 }]);
     const loopId = await t.publishLoop(slowLoop);
     const { runId } = body(await call('start_run', { loopId }));
-    const pending = body(await call('wait_for_run', { runId, timeoutSeconds: 0 }));
-    expect(pending).toMatchObject({ finished: false, cursor: expect.any(Number) });
-    expect(pending).not.toHaveProperty('status');
-    expect(pending.next).toMatch(/call wait_for_run again/i);
-
     const progress: number[] = [];
     const done = await client.callTool({ name: 'wait_for_run', arguments: { runId } }, undefined, {
       onprogress: (p) => progress.push(p.progress),

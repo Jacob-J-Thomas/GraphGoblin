@@ -422,18 +422,49 @@ describe('adversarial engine invariants', () => {
     await e.manager.waitForIdle();
   });
 
-  it.each([
-    '[{"op":"replace","path":"/counters/nodeVisits","value":{}}]',
-    '[{"op":"move","from":"/counters/nodeVisits/start","path":"/vars/stolen"}]',
-  ])('ADV-014: custom mapping rejects engine-owned writes: %s', async (patch) => {
+  it('ADV-014: custom mapping allows a protected test read', async () => {
     const e = await createTestEngine({ maxConcurrentRuns: 1 });
     const child = e.publish(minimalLoop());
     const parent = e.publish(
-      subLoop('custom-counter', child.loopId, { mode: 'custom', custom: { patch } }),
+      subLoop('custom-read', child.loopId, {
+        mode: 'custom',
+        custom: {
+          patch:
+            '[{"op":"test","path":"/run/id","value":parent.run.id},{"op":"copy","from":"/invocation/source","path":"/vars/source"}]',
+        },
+      }),
     );
-    const r = await e.runToIdle(parent.loopId);
-    expect(r.failure?.code).toBe('EXPRESSION_ERROR');
+    const run = await e.runToIdle(parent.loopId);
+    expect(run.status).toBe('succeeded');
+    const thread = await e.manager.getThread(run.id);
+    expect(thread?.run.id).toBe(run.id);
+    expect(thread?.invocation.source).toBe('manual.api');
+    expect(thread?.vars['source']).toBe('manual.api');
   });
+
+  it.each([
+    {
+      patch: '[{"op":"replace","path":"/counters/nodeVisits","value":{}}]',
+      location: 'path "/counters/nodeVisits"',
+    },
+    {
+      patch: '[{"op":"move","from":"/counters/nodeVisits/start","path":"/vars/stolen"}]',
+      location: 'from "/counters/nodeVisits/start"',
+    },
+  ])(
+    'ADV-014: custom mapping rejects engine-owned writes at $location',
+    async ({ patch, location }) => {
+      const e = await createTestEngine({ maxConcurrentRuns: 1 });
+      const child = e.publish(minimalLoop());
+      const parent = e.publish(
+        subLoop('custom-counter', child.loopId, { mode: 'custom', custom: { patch } }),
+      );
+      const r = await e.runToIdle(parent.loopId);
+      expect(r.failure?.code).toBe('EXPRESSION_ERROR');
+      expect(r.failure?.message).toMatch(/outside the mutable regions/);
+      expect(r.failure?.message).toContain(location);
+    },
+  );
 
   it('ADV-012: a cancel that loses to the run finishing reports the terminal state', async () => {
     const e = await createTestEngine();

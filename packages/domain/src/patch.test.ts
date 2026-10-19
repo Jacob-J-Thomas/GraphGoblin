@@ -1,8 +1,8 @@
-import type { JsonPatch, PatchOperation } from '@graphgoblin/contracts';
+import { ContextThreadSchema, type JsonPatch, type PatchOperation } from '@graphgoblin/contracts';
 import { sampleThread } from '@graphgoblin/contracts/testing';
 import { describe, expect, it } from 'vitest';
 import { MutationError, PatchError } from './errors.js';
-import { applyPatch, assertMutablePatch, cloneJson, jsonEquals } from './patch.js';
+import { applyPatch, assertMutablePatch, cloneJson, jsonEquals, MUTABLE_REGIONS } from './patch.js';
 
 describe('jsonEquals', () => {
   it('compares deeply', () => {
@@ -87,6 +87,21 @@ describe('applyPatch', () => {
 });
 
 describe('authored patch boundaries', () => {
+  it('classifies every context thread root as writable or protected', () => {
+    const protectedRoots = ['/schemaVersion', '/run', '/invocation', '/counters', '/gates'];
+    expect([...MUTABLE_REGIONS, ...protectedRoots].sort()).toEqual(
+      Object.keys(ContextThreadSchema.shape)
+        .map((key) => `/${key}`)
+        .sort(),
+    );
+  });
+
+  it('names the protected move source as from instead of path', () => {
+    expect(() =>
+      assertMutablePatch([{ op: 'move', from: '/run/id', path: '/vars/stolen' }]),
+    ).toThrow(/from "\/run\/id" is not in a mutable region/);
+  });
+
   const protectedPaths = [
     '',
     '/schemaVersion',

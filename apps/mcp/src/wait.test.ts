@@ -32,6 +32,30 @@ function payload(result: unknown): Record<string, unknown> {
 describe('MCP observation deadlines', () => {
   afterEach(() => vi.useRealTimers());
 
+  it('advertises a minimum one-second budget and refuses zero without a GET', async () => {
+    const requests: Request[] = [];
+    const session = await connect((request) => {
+      requests.push(request);
+      return Promise.resolve(Response.json({ status: 'running' }));
+    });
+    try {
+      const { tools } = await session.client.listTools();
+      expect(tools.find((tool) => tool.name === 'wait_for_run')?.inputSchema).toMatchObject({
+        properties: { timeoutSeconds: { minimum: 1, maximum: 600 } },
+      });
+      const result = CallToolResultSchema.parse(
+        await session.client.callTool({
+          name: 'wait_for_run',
+          arguments: { runId: FIXTURE_IDS.run, timeoutSeconds: 0 },
+        }),
+      );
+      expect(result.isError).toBe(true);
+      expect(requests).toEqual([]);
+    } finally {
+      await session.close();
+    }
+  });
+
   it('ends a stalled GET at the deadline, ignores its late success, and never cancels the run', async () => {
     const requests: Request[] = [];
     let respond!: (response: Response) => void;
@@ -51,13 +75,10 @@ describe('MCP observation deadlines', () => {
       expect(requests).toHaveLength(1);
       await vi.advanceTimersByTimeAsync(1000);
       const result = payload(await pending);
-      expect(result).toMatchObject({ finished: false, cursor: 0 });
-      expect(result).not.toHaveProperty('status');
-      expect(result.next).toMatch(/No run snapshot/);
+      expect(result).toEqual({ finished: false, next: expect.stringMatching(/No run snapshot/) });
       expect(requests[0]!.signal.aborted).toBe(true);
       respond(Response.json({ status: 'succeeded' }));
       await vi.advanceTimersByTimeAsync(0);
-      expect(payload(await pending)).toEqual(result);
       expect(requests.map((request) => [request.method, new URL(request.url).pathname])).toEqual([
         ['GET', `/runs/${FIXTURE_IDS.run}`],
       ]);

@@ -1,6 +1,6 @@
 import type { PatchOperation } from '@graphgoblin/contracts';
 import { JsonPatchSchema, SCRIPT_PROGRESS_STDERR_MAX } from '@graphgoblin/contracts';
-import { assertMutablePatch, MutationError, threadView } from '@graphgoblin/domain';
+import { assertMutablePatch, threadView, type MutationError } from '@graphgoblin/domain';
 import { RunCancelledError, RunFailureError } from '../errors.js';
 import type { NodeHandler } from '../handler.js';
 import { jsonOrText, outputPatch, withTimeout } from './common.js';
@@ -116,10 +116,9 @@ export const scriptHandler: NodeHandler<'script'> = {
       try {
         assertMutablePatch(checked.data);
       } catch (error) {
-        if (!(error instanceof MutationError)) throw error;
         throw new RunFailureError(
           'SCRIPT_EXIT_CODE',
-          `script patch is outside the mutable regions: ${error.message}`,
+          `script patch is outside the mutable regions: ${(error as MutationError).message}`,
           { nodeId: ctx.node.id },
         );
       }

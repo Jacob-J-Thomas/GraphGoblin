@@ -30,16 +30,22 @@ function statuses(...sequence: string[]): { fetch: FetchLike; calls: () => numbe
 describe('waitForRun', () => {
   afterEach(() => vi.useRealTimers());
 
-  it('interrupts a stalled request on caller abort with the exact reason', async () => {
+  it('interrupts a stalled request on caller abort with the exact reason before any timer fires', async () => {
+    vi.useFakeTimers();
     const requests: Request[] = [];
     const controller = new AbortController();
     const reason = { stop: 'observation only' };
+    let requested!: (request: Request) => void;
+    const entered = new Promise<Request>((resolve) => {
+      requested = resolve;
+    });
     let respond!: (response: Response) => void;
     const pending = waitForRun(
       createGraphGoblinClient({
         baseUrl: 'http://api',
         fetch: (request) => {
           requests.push(request);
+          requested(request);
           return new Promise<Response>((resolve) => {
             respond = resolve;
           });
@@ -57,16 +63,18 @@ describe('waitForRun', () => {
         outcome = error;
       },
     );
-    await vi.waitFor(() => expect(requests).toHaveLength(1));
+    const request = await entered;
+    let timerFired = false;
+    setTimeout(() => {
+      timerFired = true;
+    }, 0);
     controller.abort(reason);
-    // Drain reactions without waiting for the deliberately stalled fetch.
-    for (let i = 0; i < 20; i += 1) await Promise.resolve();
-    const promptOutcome = outcome;
-    const requestAborted = requests[0]!.signal.aborted;
-    respond(Response.json(snapshot('succeeded')));
     await settled;
-    expect(promptOutcome).toBe(reason);
-    expect(requestAborted).toBe(true);
+    expect(request.signal.aborted).toBe(true);
+    expect(outcome).toBe(reason);
+    expect(timerFired).toBe(false);
+    respond(Response.json(snapshot('succeeded')));
+    await vi.advanceTimersByTimeAsync(0);
     expect(outcome).toBe(reason);
     expect(requests.map((request) => request.method)).toEqual(['GET']);
   });
@@ -376,6 +384,44 @@ it('keeps long deadlines within the JavaScript timer limit and cleans up after a
     expect(vi.getTimerCount()).toBe(1);
     controller.abort(reason);
     expect(await observed).toBe(reason);
+    expect(vi.getTimerCount()).toBe(0);
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+it('resolves a long deadline at timeoutMs rather than the timer chunk boundary', async () => {
+  vi.useFakeTimers();
+  try {
+    const timeoutMs = 2_147_483_747;
+    const started = Date.now();
+    const requests: Request[] = [];
+    const pending = waitForRun(
+      createGraphGoblinClient({
+        baseUrl: 'http://api',
+        fetch: (request) => {
+          requests.push(request);
+          return new Promise<Response>(() => undefined);
+        },
+      }),
+      FIXTURE_IDS.run,
+      { timeoutMs },
+    );
+    let outcome: unknown = 'pending';
+    const settled = pending.then((result) => {
+      outcome = result;
+    });
+    await vi.advanceTimersByTimeAsync(2_147_483_647);
+    expect(outcome).toBe('pending');
+    await vi.advanceTimersByTimeAsync(99);
+    expect(outcome).toBe('pending');
+    expect(requests[0]!.signal.aborted).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    await settled;
+    expect(Date.now() - started).toBe(timeoutMs);
+    expect(outcome).toEqual({ finished: false });
+    expect(requests).toHaveLength(1);
+    expect(requests[0]!.signal.aborted).toBe(true);
     expect(vi.getTimerCount()).toBe(0);
   } finally {
     vi.useRealTimers();

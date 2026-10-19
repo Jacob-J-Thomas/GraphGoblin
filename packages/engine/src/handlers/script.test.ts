@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { ContextThreadSchema, type JsonPatch, type RunEvent } from '@graphgoblin/contracts';
+import {
+  ContextThreadSchema,
+  type JsonPatch,
+  type PatchOperation,
+  type RunEvent,
+} from '@graphgoblin/contracts';
 import { stableHash } from '@graphgoblin/domain';
 import { createTestEngine, singleNodeLoop } from '../testing/scenario.js';
 
@@ -126,10 +131,12 @@ describe('authored handler mutations', () => {
         before = engine.manager.getThread(
           ContextThreadSchema.parse(JSON.parse(request.stdin!)).run.id,
         );
-        const operation =
+        const operation: PatchOperation =
           op === 'move' || op === 'copy'
             ? { op, from: '/vars/marker', path: '/invocation/caller' }
-            : { op, path: '/invocation/caller', value: null };
+            : op === 'remove'
+              ? { op, path: '/invocation/caller' }
+              : { op, path: '/invocation/caller', value: null };
         return {
           exitCode: 0,
           stdout: JSON.stringify([{ op: 'add', path: '/vars/marker', value: 1 }, operation]),
@@ -149,6 +156,7 @@ describe('authored handler mutations', () => {
         caller: { kind: 'user', id: 'owner' },
       });
       expect(run.failure?.code).toBe('SCRIPT_EXIT_CODE');
+      expect(run.failure?.message).toMatch(/outside the mutable regions/);
       expect(await engine.manager.getThread(run.id)).toEqual(await before);
     },
   );

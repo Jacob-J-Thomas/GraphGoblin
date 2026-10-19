@@ -4,8 +4,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
-- Script patches check every mutated location, including a move's source, before applying any operation. Protected reads and copies into writable context remain permitted; rejected patches leave the thread unchanged. (#227)
-- Client and MCP waits interrupt pending requests and sleeps on caller cancellation or the total observation deadline, ignore late responses, and leave the run running. **Upgrade:** `WaitForRunResult` is now a discriminated union: a deadline returns `finished: false` with optional `run` when no snapshot arrived. Handle that case; zero-budget waits make no request, and MCP omits unknown status fields with cursor 0. Wait options are unchanged. (#233)
+- Script and custom subloop patches share validation of every mutated location, including a move's source, before applying any operation. Errors identify the offending `path` or `from`. Protected tests and copies into writable context are permitted; rejected patches leave the thread unchanged. (#227)
+- Client and MCP waits interrupt pending requests and sleeps on caller cancellation or the total observation deadline, ignore late responses, and leave the run running. **Upgrade:** `WaitForRunResult` is now a discriminated union: a deadline returns `finished: false` with optional `run` when no snapshot arrived. Handle that case; client zero-budget waits make no request. MCP `timeoutSeconds` must be an integer from 1 to 600 (default 60); when no snapshot arrived, status, waiting details and cursor are omitted. Client wait options are unchanged. (#233)
 
 - Template and expression fields in the node dialog have a collapsed **Earlier node outputs (N)** list: the nodes that can run before this one, each with its reference in the field's syntax, a **Copy** button and a note on what it outputs. It is interim help, not validation, and it is hidden where a field isn't evaluated against the run thread or no earlier node writes an output. (#341)
 
