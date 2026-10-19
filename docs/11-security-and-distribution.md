@@ -42,6 +42,8 @@
 
 1.0 keeps all runs, events, and artifacts, matching the harness defaults, which keep sessions on disk indefinitely. Settings has no purge action. Retention policies, scheduled purges, and the manual run and loop purge controls are post-1.0 work (12, "Residual risks and post-1.0 backlog").
 
+Artifacts use unchanged `artifact:<kind>/<sha256>` references. Publication writes a unique temporary file in the final file's directory, flushes its bytes with `fsync`, closes it, then atomically renames it over the final path. Readers verify SHA-256 over the raw bytes before UTF-8 decoding; a mismatch throws typed `ArtifactStoreError` with code `ARTIFACT_CORRUPT` (HTTP 500 on download), while missing content remains `undefined` (HTTP 404). A repeated `put` verifies existing content and atomically replaces a corrupt file; concurrent writers of identical content converge on the same verified bytes. Windows replacement retries only `EPERM`/`EBUSY`, with five delays of 10, 20, 40, 80 and 160 ms (six attempts); persistent locks and other errors fail explicitly as `ARTIFACT_WRITE_FAILED`, without unlinking the final file. Interrupted temporary files are ignored by reference reads. This protects publication from interrupted writes; it does not promise power-loss durability of the directory entry or change retention.
+
 ## Distribution (Decided)
 
 - The product ships as a container image and as a plain Node application installed with pnpm. Both serve the PWA from the API process.

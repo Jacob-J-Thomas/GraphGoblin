@@ -4,7 +4,6 @@ import type {
   ClassifierModelEntry,
   ContextThread,
   Effort,
-  JsonValue,
   LoopDefinition,
   RunFailure,
   WaitSpec,
@@ -71,7 +70,8 @@ export const runs = sqliteTable(
     pausedAt: text('paused_at'),
     failure: text('failure', { mode: 'json' }).$type<RunFailure>(),
     outcome: text('outcome'),
-    result: text('result', { mode: 'json' }).$type<JsonValue>(),
+    /** SQL NULL is absence; JSON text `null` is a present result. Encode explicitly. */
+    result: text('result'),
     createdAt: text('created_at').notNull(),
     startedAt: text('started_at'),
     finishedAt: text('finished_at'),
@@ -172,7 +172,8 @@ export const settings = sqliteTable(
   {
     ownerId: text('owner_id').notNull(),
     key: text('key').notNull(),
-    value: text('value', { mode: 'json' }).$type<JsonValue>().notNull(),
+    /** JSON text, including `null`; Drizzle's json mode would write SQL NULL for it. */
+    value: text('value').notNull(),
     updatedAt: text('updated_at').notNull(),
   },
   (t) => [primaryKey({ columns: [t.ownerId, t.key] })],

@@ -200,7 +200,7 @@ reclassified as damaged runs.
 
 `GET /runs/{id}` and MCP `get_run` decode only the run row. A readable row returns its
 stored snapshot even when its events or thread checkpoint are damaged; an unreadable row
-returns `500 STORED_RUN_INVALID`. Event reads (`GET /runs/{id}/events`, MCP
+returns `500 STORED_RUN_INVALID`, including on `/events` and `/thread`, which check the owned run row first. Event reads (`GET /runs/{id}/events`, MCP
 `read_run_events`) decode the requested event page and return `500 STORED_EVENT_INVALID`
 when it is unreadable. Thread reads (`GET /runs/{id}/thread`, MCP `get_run_thread`)
 decode the stored snapshot or, when it is absent, the initial thread and replay events.
@@ -265,6 +265,7 @@ Optional `timeoutSeconds` exists on inferencing and script nodes and on wait and
 - Replay also counts `node.started` events, including resumed attempts, in `counters.nodeVisits`. Recovery reconstructs a pending wake before appending its new `run.started`, so an accepted input is still available to the resumed node.
 - The SSE stream (07) is a tail of the same log, which is why reconnecting clients can resume from a sequence number without loss.
 - Large payloads such as transcripts, full probe responses, and return payloads above a size threshold are stored as artifacts on disk, keyed by content hash, and referenced from events.
+- The filesystem artifact store publishes flushed temporary files by atomic same-directory rename and verifies content hashes on reads (11). A corrupt artifact raises `ARTIFACT_CORRUPT`; failed publication raises `ARTIFACT_WRITE_FAILED`. Inference maps a typed artifact-store error to a node failure carrying its reference and publishes no transcript/output patch. These failures are nonresumable because the provider turn has already completed and repeating it may repeat external effects; inspect/repair storage before deliberately starting or replaying work.
 
 ### Durable event validation
 

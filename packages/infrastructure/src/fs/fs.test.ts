@@ -1,4 +1,13 @@
-import { mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs';
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
+import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { isAbsolute, join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -49,6 +58,59 @@ describe('FsWorkspace', () => {
 });
 
 describe('FsArtifactStore', () => {
+  it('rejects corrupted final bytes and atomically repairs a pre-existing partial file', async () => {
+    const store = new FsArtifactStore(dataDir);
+    const content = 'complete transcript: 世界 🧙';
+    const hash = createHash('sha256').update(content).digest('hex');
+    const dir = join(dataDir, 'artifacts', 'transcript');
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, hash), 'complete');
+    const ref = `artifact:transcript/${hash}`;
+    await expect(store.get(ref)).rejects.toMatchObject({ code: 'ARTIFACT_CORRUPT', ref });
+    const repaired = await store.put('transcript', content);
+    expect(repaired.ref).toBe(ref);
+    expect(readFileSync(join(dir, hash)).equals(Buffer.from(content))).toBe(true);
+    expect(await store.get(ref)).toBe(content);
+    expect(readdirSync(dir)).toEqual([hash]);
+  });
+
+  it('does not accept truncated bytes on a repeated put', async () => {
+    const store = new FsArtifactStore(dataDir);
+    const { ref } = await store.put('transcript', 'a complete transcript');
+    const hash = ref.split('/')[1]!;
+    writeFileSync(join(dataDir, 'artifacts', 'transcript', hash), 'a');
+    expect(await store.put('transcript', 'a complete transcript')).toMatchObject({ ref });
+    expect(await store.get(ref)).toBe('a complete transcript');
+  });
+
+  it('ignores interrupted temporary writes and converges under identical and different concurrent puts', async () => {
+    const store = new FsArtifactStore(dataDir);
+    const dir = join(dataDir, 'artifacts', 'transcript');
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, '.interrupted.tmp'), 'partial');
+    const contents = ['', '世界 🧙\u0000\r\n'.repeat(200_000), 'other content'];
+    const stored = await Promise.all(
+      contents.flatMap((content) => [
+        store.put('transcript', content),
+        new FsArtifactStore(dataDir).put('transcript', content),
+      ]),
+    );
+    for (const [i, content] of contents.entries()) {
+      const a = stored[i * 2]!;
+      expect(stored[i * 2 + 1]).toEqual(a);
+      expect(a.bytes).toBe(Buffer.byteLength(content));
+      expect(await store.get(a.ref.toUpperCase())).toBe(content);
+      expect(readFileSync(join(dir, a.ref.split('/')[1]!)).equals(Buffer.from(content))).toBe(true);
+    }
+    expect(new Set(stored.map((item) => item.ref)).size).toBe(contents.length);
+    expect(readdirSync(dir).sort()).toEqual(
+      [
+        '.interrupted.tmp',
+        ...stored.filter((_, i) => i % 2 === 0).map((item) => item.ref.split('/')[1]!),
+      ].sort(),
+    );
+  });
+
   it('stores content once by hash and reads it back by reference', async () => {
     const store = new FsArtifactStore(dataDir);
     const first = await store.put('transcript', 'hello world');
@@ -61,6 +123,22 @@ describe('FsArtifactStore', () => {
     expect(weird.ref.startsWith('artifact:kind_with_spaces_and_slashes/')).toBe(true);
     const empty = await store.put('', 'y');
     expect(empty.ref.startsWith('artifact:blob/')).toBe(true);
+  });
+
+  it('verifies raw bytes before UTF-8 decoding', async () => {
+    const store = new FsArtifactStore(dataDir);
+    const { ref } = await store.put('text', '\ufffd');
+    const hash = ref.split('/')[1]!;
+    writeFileSync(join(dataDir, 'artifacts', 'text', hash), Buffer.from([0xff]));
+    await expect(store.get(ref)).rejects.toMatchObject({ code: 'ARTIFACT_CORRUPT' });
+  });
+
+  it('reports a typed publication failure without a final artifact when storage is unavailable', async () => {
+    const store = new FsArtifactStore(dataDir);
+    writeFileSync(join(dataDir, 'artifacts'), 'a file blocks the artifact directory');
+    await expect(store.put('transcript', 'complete')).rejects.toMatchObject({
+      code: 'ARTIFACT_WRITE_FAILED',
+    });
   });
 
   it('returns undefined for malformed or missing references', async () => {

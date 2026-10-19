@@ -10,7 +10,13 @@ import {
   type Usage,
 } from '@graphgoblin/contracts';
 import { applyPatch, renderTemplate, threadView, validateJson } from '@graphgoblin/domain';
-import { RunCancelledError, RunFailureError, describeError, isAbortError } from '../errors.js';
+import {
+  ArtifactStoreError,
+  RunCancelledError,
+  RunFailureError,
+  describeError,
+  isAbortError,
+} from '../errors.js';
 import type { NodeContext, NodeHandler } from '../handler.js';
 import type {
   HarnessItem,
@@ -425,7 +431,16 @@ export const inferenceHandler: NodeHandler<'inference'> = {
       await ctx.ports.sessions.upsert({ ...row });
       return { kind: 'done', patch, route: 'out' };
     } catch (error) {
-      let failure = error;
+      // The provider turn has already completed. Do not silently lose its transcript or
+      // automatically repeat work that may have external effects after an artifact failure.
+      let failure: unknown =
+        error instanceof ArtifactStoreError
+          ? new RunFailureError(error.code, error.message, {
+              nodeId: ctx.node.id,
+              resumable: false,
+              details: { ref: error.ref },
+            })
+          : error;
       const unconfirmed = (value: unknown): boolean =>
         value instanceof RunFailureError && value.code === 'HARNESS_TERMINATION_UNCONFIRMED';
       if (session && !unconfirmed(failure)) {

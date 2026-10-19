@@ -1,9 +1,9 @@
-import type { RunRecord, RunStatus } from '@graphgoblin/contracts';
+import type { JsonValue, RunRecord, RunStatus } from '@graphgoblin/contracts';
 import type { runs } from './schema.js';
 export type RunRecordRow = Omit<
   typeof runs.$inferSelect,
-  'initialThread' | 'threadSnapshot' | 'threadSnapshotSeq' | 'finalizedAt'
->;
+  'initialThread' | 'threadSnapshot' | 'threadSnapshotSeq' | 'finalizedAt' | 'result'
+> & { result: JsonValue | undefined };
 
 export function runRecordFromRow(row: RunRecordRow): RunRecord {
   return {
@@ -21,7 +21,7 @@ export function runRecordFromRow(row: RunRecordRow): RunRecord {
     ...(row.pausedAt ? { pausedAt: row.pausedAt } : {}),
     ...(row.failure !== null ? { failure: row.failure } : {}),
     ...(row.outcome ? { outcome: row.outcome as RunRecord['outcome'] } : {}),
-    ...(row.result !== null && row.result !== undefined ? { result: row.result } : {}),
+    ...(row.result !== undefined ? { result: row.result } : {}),
     createdAt: row.createdAt,
     ...(row.startedAt ? { startedAt: row.startedAt } : {}),
     ...(row.finishedAt ? { finishedAt: row.finishedAt } : {}),

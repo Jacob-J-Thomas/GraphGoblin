@@ -212,6 +212,8 @@ engine-owned region. Usage roll-up remains an engine operation.
 | `outcome?`                                             | `success`, `failure`, `exhausted`                                                         |
 | `startedAt`, `finishedAt?`, `lastEventSeq`             | Bookkeeping                                                                               |
 
+A missing run `result` means no payload was returned, whereas `result: null` is a present JSON value, preserved distinctly from `false`, `0`, `""`, `[]` and `{}` across storage and restart.
+
 ## Run events (Decided kinds, Draft payloads)
 
 Each event has `runId`, `seq`, `ts`, `type`, optional `nodeId`, and a typed `payload`. Large payloads are stored as artifacts and referenced.

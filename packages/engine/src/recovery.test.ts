@@ -1052,7 +1052,7 @@ describe('deletion against replay and root resolution (fourth round)', () => {
       fork = e.manager.replay({ runId: source.id, nodeId: 'wait' });
       await new Promise((resolve) => setTimeout(resolve, 20));
       registeredDuring =
-        (await e.ports.runs.listByStatus(['queued', 'running', 'waiting'])).length > 0;
+        (await e.ports.runs.listRunReferences(['queued', 'running', 'waiting'])).length > 0;
       e.ports.loops.versions.delete(child.id);
     });
     expect(deleted).toBe(true);
@@ -1108,6 +1108,6 @@ describe('deletion against replay and root resolution (fourth round)', () => {
     ).toBe(true);
     unblock();
     await expect(start).rejects.toMatchObject({ code: 'LOOP_NOT_FOUND' });
-    expect(await e.ports.runs.listByStatus(['queued'])).toHaveLength(0);
+    expect(await e.ports.runs.listRunReferences(['queued'])).toHaveLength(0);
   });
 });

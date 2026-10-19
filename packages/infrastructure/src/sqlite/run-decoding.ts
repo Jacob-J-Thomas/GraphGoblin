@@ -55,7 +55,7 @@ export function decodeRunRecord(row: RawRun): RunRecord {
     ...row,
     waiting: row.waiting === null ? null : decode(row.id, 'waiting', row.waiting),
     failure: row.failure === null ? null : decode(row.id, 'failure', row.failure),
-    result: row.result === null ? null : decode(row.id, 'result', row.result),
+    result: row.result === null ? undefined : decode(row.id, 'result', row.result),
   } as RunRecordRow;
   const parsed = RunRecordSchema.safeParse(runRecordFromRow(decoded));
   if (!parsed.success)

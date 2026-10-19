@@ -280,11 +280,11 @@ describe('SqliteRunRepository', () => {
     });
     for (const r of [parent, child, other]) await repo.create(r, sampleThread());
 
-    expect((await repo.listByStatus(['waiting', 'queued'])).map((r) => r.id)).toEqual([
+    expect((await repo.listRunReferences(['waiting', 'queued'])).map((r) => r.id)).toEqual([
       parent.id,
       other.id,
     ]);
-    expect(await repo.listByStatus([])).toEqual([]);
+    expect(await repo.listRunReferences([])).toEqual([]);
     expect((await repo.listChildren(parent.id)).map((r) => r.id)).toEqual([child.id]);
     expect((await repo.list()).map((r) => r.id)).toEqual([other.id, child.id, parent.id]);
     expect((await repo.list({ ownerId: 'local' })).map((r) => r.id)).toEqual([child.id, parent.id]);
