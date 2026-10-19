@@ -314,11 +314,11 @@ describe('durable webhook admission', () => {
     await engine.manager.waitForWebhookRecovery();
     engine.manager.stop();
     engine.ports.clock.advance(5000);
-    const original = engine.ports.runs.listByStatus.bind(engine.ports.runs);
+    const original = engine.ports.runs.listRecoveryCandidates.bind(engine.ports.runs);
     const ordinaryRecoverySawFreshRun: boolean[] = [];
-    vi.spyOn(engine.ports.runs, 'listByStatus').mockImplementation((statuses) => {
+    vi.spyOn(engine.ports.runs, 'listRecoveryCandidates').mockImplementation(() => {
       ordinaryRecoverySawFreshRun.push(engine.ports.runs.runs.has(runId));
-      return original(statuses);
+      return original();
     });
     const restarted = new RunManager(engine.ports, DEFAULT_TEST_SETTINGS);
     managers.push(restarted);

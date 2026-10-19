@@ -170,14 +170,18 @@ describe('SqliteRunRepository', () => {
     const repo = new SqliteRunRepository(handle.db);
     const run = runRecord();
     await repo.create(run, sampleThread());
-    expect(await repo.listUnfinalized()).toEqual([]);
+    expect((await repo.listRecoveryCandidates()).filter((r) => r.terminal)).toEqual([]);
     await repo.update(run.id, { status: 'succeeded' });
-    expect((await repo.listUnfinalized()).map((r) => r.id)).toEqual([run.id]);
+    expect(
+      (await repo.listRecoveryCandidates()).filter((r) => r.terminal).map((r) => r.id),
+    ).toEqual([run.id]);
     await repo.markFinalized(run.id);
-    expect(await repo.listUnfinalized()).toEqual([]);
+    expect((await repo.listRecoveryCandidates()).filter((r) => r.terminal)).toEqual([]);
     // A resume clears it, so the next terminal outcome is finalized again.
     await repo.clearFinalized(run.id);
-    expect((await repo.listUnfinalized()).map((r) => r.id)).toEqual([run.id]);
+    expect(
+      (await repo.listRecoveryCandidates()).filter((r) => r.terminal).map((r) => r.id),
+    ).toEqual([run.id]);
   });
 
   it('migration 0002 marks runs that were already terminal as finalized', async () => {
@@ -222,9 +226,11 @@ describe('SqliteRunRepository', () => {
       await expect(current.migrate()).rejects.toMatchObject({ code: 'STORE_UNSUPPORTED' });
       await applyShippedSqlToHistoricalTestFixture(current);
       const repo = new SqliteRunRepository(current.db);
-      expect(await repo.listUnfinalized()).toEqual([]);
+      expect((await repo.listRecoveryCandidates()).filter((r) => r.terminal)).toEqual([]);
       await repo.update(fakeUlid('old-wait'), { status: 'failed' });
-      expect((await repo.listUnfinalized()).map((r) => r.id)).toEqual([fakeUlid('old-wait')]);
+      expect(
+        (await repo.listRecoveryCandidates()).filter((r) => r.terminal).map((r) => r.id),
+      ).toEqual([fakeUlid('old-wait')]);
     } finally {
       current.close();
       try {
@@ -254,16 +260,20 @@ describe('SqliteRunRepository', () => {
 
   it('lists by status, children, and filters', async () => {
     const repo = new SqliteRunRepository(handle.db);
-    const parent = runRecord({ id: 'p', status: 'waiting', createdAt: '2026-10-02T10:00:00.000Z' });
+    const parent = runRecord({
+      id: fakeUlid('p'),
+      status: 'waiting',
+      createdAt: '2026-10-02T10:00:00.000Z',
+    });
     const child = runRecord({
-      id: 'c',
+      id: fakeUlid('c'),
       parentRunId: parent.id,
       status: 'succeeded',
       createdAt: '2026-10-02T11:00:00.000Z',
       loopId: fakeUlid('loop:child'),
     });
     const other = runRecord({
-      id: 'o',
+      id: fakeUlid('o'),
       ownerId: 'someone-else',
       status: 'queued',
       createdAt: '2026-10-02T12:00:00.000Z',

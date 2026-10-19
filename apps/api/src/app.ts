@@ -21,6 +21,7 @@ import { registerClassifierRoutes } from './routes/classifiers.js';
 import { registerSystemRoutes } from './routes/system.js';
 import { registerTriggerRoutes } from './routes/triggers.js';
 import { API_VERSION, type ApiInstance } from './types.js';
+import { registerRunDiagnosticRoutes } from './routes/run-diagnostics.js';
 
 export interface BuildAppOptions {
   /** Fastify logger option; a pino instance for production, `false` in tests. */
@@ -84,6 +85,7 @@ export async function buildApp(
   registerSystemRoutes(app, container);
   registerLoopRoutes(app, container);
   registerRunRoutes(app, container);
+  registerRunDiagnosticRoutes(app, container);
   registerTemplateRoutes(app, container);
   registerSettingsRoutes(app, container);
   registerClassifierRoutes(app, container);
