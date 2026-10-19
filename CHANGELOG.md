@@ -4,6 +4,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Replace invasive tests with supported component, transport, storage and disposable process boundaries, and real service-worker update evidence. **Upgrade:** internal test/tool consumers must stop using `hasPath`, `window.graphgoblinPwa`, `ICON_NAMES`, `EMPTY_HISTORY`, `describeRoute`, `routeBackwardEdges`, `labelOf`, and `historyClock`; these test-only/dead seams were removed. (#317)
+
 - Add repeatable sustained-run measurement tooling for cyclic execution, growing context, replay, artifacts, readiness, populated stores, and Edge, with JSON summaries and CPU profiles (#190).
 
 - Recover healthy current-format runs beside damaged history; log HISTORY_UNREADABLE and expose owner-scoped diagnostics for explicit manual repair or deletion without changing damaged data. MCP `list_runs` preserves the server cursor even on pages with no readable runs. **Upgrade:** Check `GET /runs/diagnostics` after upgrading and explicitly repair or delete damaged history. MCP callers must pass `cursor` and read `nextCursor` instead of `before` and `nextBefore`. (#318)

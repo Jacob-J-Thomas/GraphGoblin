@@ -57,13 +57,12 @@ describe('installed template catalog boundaries', () => {
     });
   });
 
-  it('clones every creation even when get returns a shared loaded entry', async () => {
+  it('returns independent drafts across public creation calls', async () => {
     const f = await fixture();
     const entry = await f.catalog.get('recipe');
-    f.catalog.get = () => Promise.resolve(entry);
     const first = await f.catalog.draft('recipe');
-    const second = await f.catalog.draft('recipe');
     first.nodes[0]!.label = 'Changed copy';
+    const second = await f.catalog.draft('recipe');
     expect(second).toEqual(entry.draft);
     expect(first).not.toEqual(second);
     expect(Object.keys(entry)).toEqual(['manifest', 'draft']);
