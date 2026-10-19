@@ -51,21 +51,21 @@ const inventory = {
     'failure-shape',
   ],
 };
-const examples = new Map<string, string>();
-for (const [file, ids] of Object.entries(inventory)) {
+const guides = Object.entries(inventory).map(([file, ids]) => {
   const source = readFileSync(new URL(`../../../docs/guide/${file}.md`, import.meta.url), 'utf8');
-  const fences = [...source.matchAll(/^```[^\r\n]*\r?\n([\s\S]*?)^```/gm)];
-  const marked = [
-    ...source.matchAll(/<!-- guide-example: ([a-z-]+) -->\r?\n\r?\n```\w+\r?\n([\s\S]*?)^```/gm),
-  ];
-  expect(marked.map((match) => match[1])).toEqual(ids);
-  expect(marked).toHaveLength(fences.length);
-  for (const match of marked) {
-    const id = match[1] as string;
-    expect(examples.has(id)).toBe(false);
-    examples.set(id, (match[2] as string).trim());
-  }
-}
+  return {
+    ids,
+    fences: [...source.matchAll(/^```[^\r\n]*\r?\n([\s\S]*?)^```/gm)],
+    marked: [
+      ...source.matchAll(/<!-- guide-example: ([a-z-]+) -->\r?\n\r?\n```\w+\r?\n([\s\S]*?)^```/gm),
+    ],
+  };
+});
+const examples = new Map<string, string>(
+  guides.flatMap(({ marked }) =>
+    marked.map((match): [string, string] => [match[1] as string, (match[2] as string).trim()]),
+  ),
+);
 function block(id: string): string {
   const value = examples.get(id);
   if (!value) throw new Error(`Missing guide example ${id}`);
@@ -164,6 +164,19 @@ function command(id: string, loopId: string, runId = '') {
 }
 
 describe('executable guide examples', () => {
+  it('inventories every fence in guides 02 and 03', () => {
+    const seen = new Set<string>();
+    for (const { ids, fences, marked } of guides) {
+      expect(marked.map((match) => match[1])).toEqual(ids);
+      expect(marked).toHaveLength(fences.length);
+      for (const match of marked) {
+        const id = match[1] as string;
+        expect(seen.has(id), `Duplicate guide example ${id}`).toBe(false);
+        seen.add(id);
+      }
+    }
+  });
+
   it('validates settings, imports the draft definition, saves, exports, publishes and executes it', async () => {
     const settings = LoopSettingsSchema.parse(json('temp-settings'));
     const payload = json('draft-body') as { definition: LoopDefinition };
@@ -298,6 +311,7 @@ describe('executable guide examples', () => {
     const id = await summaryLoop();
     const run = await startSummary(id);
     const request = command(example, id, run.id);
+    if (example === 'reconnect-bash') expect(request.headers['last-event-id']).toBe('12');
     const response = await t.app.inject(request);
     expect(response.statusCode, response.body).toBe(200);
     if (request.headers.accept) {
@@ -316,12 +330,13 @@ describe('executable guide examples', () => {
   });
 
   it('runs the bounded-repeat example to exactly three passes and an Exhausted exit', async () => {
+    expect(LoopDefinitionSchema.parse(json('bounded-repeat')).settings.maxNodeVisits).toBe(10);
     const id = await importExample(json('bounded-repeat'));
     await publish(id);
     const started = await t.app.inject({
       method: 'POST',
       url: route('start-request', id),
-      payload: {},
+      payload: { triggerNodeId: 'start', input: {} },
     });
     expect(started.statusCode, started.body).toBe(202);
     const run = await runSnapshot(started.json<{ run: RunRecord }>().run.id);

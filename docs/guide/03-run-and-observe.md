@@ -216,7 +216,7 @@ The query's `after` overrides the header when both are supplied. Replay includes
 
 ## Read returns and child runs
 
-Set the exit's `returns` JSONata expression to produce a payload, and `destinations` to select channels. The default `none` produces no result or deliveries. Choose these channels:
+Set the exit's `returns` JSONata expression to produce a payload, and `destinations` to select channels. `returns` defaults to `none` (no result or deliveries); `destinations` defaults to `caller`. Choose these channels:
 
 | Channel kind | Delivery                                                                                                                                  |
 | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |

@@ -154,7 +154,7 @@ GET /loops/{id}/export?draft=true
 
 Each Loops row groups **Edit**, **Export**, and **Delete** as buttons; Edit opens the editor. Export shows **Exporting…** while pending, keeps keyboard focus, and accepts one request at a time. Delete opens a confirmation naming the loop: the loop, all its versions, triggers and runs are deleted, including run history and artifact references (the run count is shown when the listing is complete), and loops using it as a subloop can no longer start it. Cancel queued, running, waiting or paused runs first. Shared artifact files remain on disk. This cannot be undone. Choose **Keep** or press Escape to cancel while idle, or **Confirm delete** to remove it. A 409 `LOOP_IN_USE` keeps the API's reason visible in the confirmation until you dismiss it or retry. Confirmation and Keep are disabled while the request is pending; repeated Escape presses cannot dismiss it.
 
-Import a bare definition or export envelope with this endpoint (use the complete first loop below as the JSON body):
+Use the Loops page's file picker, or `POST /loops/import`, to import an export envelope or a bare definition.
 
 <!-- guide-example: import-request -->
 
@@ -162,7 +162,7 @@ Import a bare definition or export envelope with this endpoint (use the complete
 POST /loops/import
 ```
 
-Use the Loops page's file picker, or `POST /loops/import`, to import an export envelope or a bare definition. Import always creates a new loop with a draft, even if the name matches an existing loop. To update an existing loop, save its draft through the editor or API:
+Import always creates a new loop with a draft, even if the name matches an existing loop. To update an existing loop, save its draft through the editor or API:
 
 <!-- guide-example: draft-request -->
 
@@ -204,7 +204,7 @@ POST /loops/{id}/publish
 
 ## Import a complete first loop
 
-Save this bare definition as a JSON file and import it. **Paid variant:** running its inference node on an installed instance uses the authenticated Codex provider and consumes account usage. Automated guide tests execute this exact graph with a scripted fake harness; real provider execution is excluded because it requires an installed authenticated provider and paid usage. It follows the contracts' minimal trigger-to-exit fixture with an inference node inserted, and uses the fields and defaults of `LoopDefinitionSchema`. Publish it, select **Open in Runs**, and supply a topic. Replace the model if your Codex account uses another ID.
+Save this bare definition as a JSON file and import it. It follows the contracts' minimal trigger-to-exit fixture with an inference node inserted, and uses the fields and defaults of `LoopDefinitionSchema`. Publish it, select **Open in Runs**, and supply a topic. Replace the model if your Codex account uses another ID. Running it uses your authenticated Codex account and consumes usage.
 
 <!-- guide-example: first-summary -->
 
@@ -290,7 +290,7 @@ Maximum run time is elapsed wall time from `run.startedAt` (falling back to `cre
 
 Use **Outcome: Exhausted** on the exit connected to Limit reached. A normal Done route can lead to Success or Failure. The inspector keeps the evaluator's choice, actual port and pass count together.
 
-Save and import this complete deterministic example as `bounded-repeat.json`, then publish and start it with `{}` input. It appends a note on each of three passes, always requests another pass, then takes `limit-reached`. The documented result is status `exhausted`, outcome `exhausted`, and result `{ "passes": 3 }`. It needs no provider. The per-node visit cap is 3 so each work/gate visit fits within the authored bound.
+Save and import this complete deterministic example as `bounded-repeat.json`, then publish it and send `{ "triggerNodeId": "start", "input": {} }` as the JSON request body to `POST /loops/{id}/runs`. It appends a note on each of three passes, always requests another pass, then takes `limit-reached`. The documented result is status `exhausted`, outcome `exhausted`, and result `{ "passes": 3 }`. It needs no provider.
 
 <!-- guide-example: bounded-repeat -->
 
@@ -298,7 +298,7 @@ Save and import this complete deterministic example as `bounded-repeat.json`, th
 {
   "schemaVersion": 4,
   "name": "bounded-repeat",
-  "settings": { "workingDirectory": { "kind": "temp" }, "maxNodeVisits": 3 },
+  "settings": { "workingDirectory": { "kind": "temp" } },
   "nodes": [
     { "id": "start", "kind": "trigger", "label": "Start", "config": { "type": "manual" } },
     {
