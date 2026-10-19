@@ -4,11 +4,14 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
-- **Upgrade:** run the local instance, installation, builds and development gates under Node 22 LTS (22.x). Select Node 22 on PATH before updating or starting GraphGoblin; version-manager, CI, engine, installer and preflight declarations now agree. API consumers use `SUPPORTED_NODE_MAJOR` in place of `MIN_NODE_MAJOR`. (#263)
+- Aligned installation, gates, CI, container, installers and API preflight on Node 22 LTS (22.x), with root `devEngines.runtime` enforcing the project runtime without enforcing every dependency engine range. **Upgrade:** every pnpm command (install, build, start) refuses Node 23; restart the running instance from a Node 22 shell. Settings → Preflight shows Node as failed under any other major. API consumers use `SUPPORTED_NODE_MAJOR` in place of `MIN_NODE_MAJOR`. (#263)
 
-- Workspace test, coverage, typecheck and lint caches now include direct and transitive dependency sources through Turbo transit tasks while retaining unrelated-package cache reuse. (#127)
+- Workspace test, coverage, typecheck and lint caches include dependency sources, declared guide/template inputs and shared root configs; repository-wide tooling tests are uncached. Unrelated-package cache reuse remains. (#127)
 
-- Reconfirmed the remaining moderate esbuild development-server advisory in Drizzle Kit's legacy development loader. The installed stable parent is current; its esbuild range has no compatible patched release. The finding remains unresolved, with dependency paths and production-only audit evidence recorded in the WP-A1 report. (#114)
+- Removed the unused, deprecated `@esbuild-kit/esm-loader` dependency from Drizzle Kit and its affected esbuild 0.18.20 subtree. The package was never loaded by Drizzle Kit; patched esbuild versions remain. Evidence is in `docs/qa/2026-10-18-wp-a1-runtime-gates.md`. (#114)
+
+- The licence gate parses grouped SPDX expressions with AND/OR/WITH precedence, rejects malformed and guessed metadata with specific reasons, and reports package/version/expression provenance. WITH pairs require exact explicit approval. (#274)
+- Guide 02/03 examples are checked against current contracts and executed through a disposable API with the fake harness. Replay now targets `summarise`, return guidance names `returns`/`destinations`, and a complete deterministic bounded-repeat example demonstrates exhaustion; paid provider execution is explicitly excluded. (#250)
 
 - Template and expression fields in the node dialog have a collapsed **Earlier node outputs (N)** list: the nodes that can run before this one, each with its reference in the field's syntax, a **Copy** button and a note on what it outputs. It is interim help, not validation, and it is hidden where a field isn't evaluated against the run thread or no earlier node writes an output. (#341)
 

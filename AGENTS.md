@@ -14,7 +14,7 @@ GraphGoblin is a pnpm + Turborepo monorepo in TypeScript. Read `docs/README.md` 
 
 Layer rules are enforced by `pnpm check:layers` (declared workspace dependencies) and `pnpm check:deps` (dependency-cruiser). Reach other packages only through their `@graphgoblin/*` entry points.
 
-Node 22 LTS is the supported runtime for installation, development, gates and built apps; other majors are unsupported. Select it for the whole shell before running commands: `$env:PATH = "$env:APPDATA\nvm\v22.14.0;$env:PATH"` in PowerShell, or `export PATH="$APPDATA/nvm/v22.14.0:$PATH"` in Git Bash on this Windows host. Confirm `node --version` reports `v22.x`. `.nvmrc`, CI and the container use this major; root `engines.node` and `pnpm-workspace.yaml`'s `engineStrict: true` refuse unsupported installations. See ADR-0040 for the decision and verification.
+Node 22 LTS is the supported runtime for installation, development, gates and built apps; other majors are unsupported. Select it for the whole shell before running commands: `$env:PATH = "$env:APPDATA\nvm\v22.14.0;$env:PATH"` in PowerShell, or `export PATH="$APPDATA/nvm/v22.14.0:$PATH"` in Git Bash on this Windows host. Confirm `node --version` reports `v22.x`. `.nvmrc`, CI and the container use this major; root `engines.node` and `devEngines.runtime` declare `^22`, with `onFail: error` refusing every pnpm command on other majors. Run gates through pnpm: calling `node_modules/.bin/turbo` directly bypasses this check, and Turbo's cache key ignores the running Node version. See ADR-0040 for the decision, verification and dependency patch-floor qualification gap.
 
 ## Rules
 

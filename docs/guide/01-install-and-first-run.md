@@ -15,7 +15,7 @@ codex login status
 
 PowerShell blocks in this guide call `pnpm.cmd`, because Windows PowerShell's default execution policy blocks the `pnpm.ps1` shim. If it blocks `codex.ps1` too, call `codex.cmd`. Bash blocks use `pnpm` and `codex`.
 
-Select Node 22 on PATH for the whole shell before installing, building or starting GraphGoblin. Confirm `node --version` reports `v22.x`; other majors are unsupported and installation refuses them. `.nvmrc` selects 22 for version managers; see [ADR-0040](../decisions/ADR-0040-node-22-runtime-baseline.md) for the verified baseline.
+Select Node 22 on PATH for the whole shell before installing, building or starting GraphGoblin. Confirm `node --version` reports `v22.x`; root `devEngines.runtime` enforces `^22` with `onFail: error`, so every pnpm command refuses other majors. Restart a running instance from a Node 22 shell; Settings → Preflight reports Node as failed under any other major. `.nvmrc` selects 22 for version managers; CI uses the latest 22.x. See [ADR-0040](../decisions/ADR-0040-node-22-runtime-baseline.md) for the baseline and dependency patch-floor qualification gap.
 
 Run the API as the same operating-system user who logged into Codex. GraphGoblin uses that login and stores no Codex credentials.
 
