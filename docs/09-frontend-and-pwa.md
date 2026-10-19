@@ -266,8 +266,8 @@ Eligible current-format device work renders before a slow server answers. Warm n
 uses the latest per-loop in-memory copy, including edits whose durable write is still pending
 or failed; it never borrows another loop's copy. Memory presence and successful durable
 persistence are separate facts. Active writes are ordered per loop; an older completion
-cannot mark a newer copy durable. Format-3 copies still use the lazy converter and verified
-original archival described below; archives are never converted or activated.
+cannot mark a newer copy durable. Copies in another format are listed as unsupported and
+never loaded (below); archives are never activated.
 
 Loading has two independent milestones: **editor available** means a device or server
 copy can be edited; **server reconciled** means this opening's fresh server request and

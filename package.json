@@ -26,8 +26,6 @@
     "check": "pnpm typecheck && pnpm lint && pnpm check:layers && pnpm check:migrations && pnpm check:tokens && pnpm check:deps && pnpm test:coverage && pnpm check:templates && pnpm check:licenses && pnpm check:docs && pnpm check:contrast",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "graphgoblin-upgrade": "node tooling/scripts/upgrade.mjs",
-    "test:upgrade": "node --expose-gc --test tooling/scripts/upgrade.acceptance.mjs",
     "test:reset": "node --test tooling/scripts/reset.acceptance.mjs",
     "check:templates": "pnpm --filter @graphgoblin/api exec tsx --conditions=development scripts/check-templates.mjs",
     "check:migrations": "node tooling/scripts/check-migrations.mjs"

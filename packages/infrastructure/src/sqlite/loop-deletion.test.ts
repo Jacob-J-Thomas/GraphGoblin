@@ -15,7 +15,6 @@ import {
   webhookEndpoints,
   webhookReceipts,
 } from './schema.js';
-import { inspectDatabaseUpgrade } from './upgrade.js';
 
 let handle: DatabaseHandle;
 let loops: SqliteLoopRepository;
@@ -157,7 +156,7 @@ async function snapshot() {
 }
 
 describe('loop deletion', () => {
-  it('deletes terminal runs and every dependent table, with no upgrade orphan (D5)', async () => {
+  it('deletes terminal runs and every dependent table, leaving no orphan run (D5)', async () => {
     const identity = await published('delete');
     const sibling = await published('unrelated');
     await loops.saveDraft(identity.loopId, LoopDefinitionSchema.parse(minimalLoop()));
@@ -186,9 +185,7 @@ describe('loop deletion', () => {
     expect(await handle.db.select().from(inboundEvents)).toMatchObject([{ runIds: [] }]);
     expect(await repo.getThread(terminal[0]!.id)).toBeUndefined();
     expect(await repo.getThreadCheckpoint(terminal[0]!.id)).toBeUndefined();
-    expect(JSON.stringify(await inspectDatabaseUpgrade(handle.client))).not.toContain(
-      'UPGRADE_ORPHAN_RUN_VERSION',
-    );
+    expect(await repo.deleteOrphans()).toBe(0);
   });
 
   it('prunes only the deleted loop run from a shared inbound event', async () => {

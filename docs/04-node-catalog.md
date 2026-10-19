@@ -47,7 +47,7 @@ Source templates render against the full thread. Provider context selection sepa
 
 The output is `{portId,provenance,observation}`. Route observations contain `kind: "route"`, `routeId`, confidence and reasoning (both null for expressions). Classifier observations contain `kind: "classifier"` and typed `answer`. `decision.made` adds at most three historical diagnostics; fresh emissions have none. A rejected classifier retains validated evidence in failure details and selects no route or output patch. Typed failures, resumability and cancellation retain their existing boundaries.
 
-Current definitions/exports use format 4. Old exports and stores require the integrated cutover; no temporary 3-to-4 converter exists. The generated [node reference](reference/nodes.md) lists exact fields.
+Current definitions/exports use format 4. Older exports, stores and device drafts are refused, never converted ([ADR-0040](decisions/ADR-0040-explicit-resets-replace-conversion.md)). The generated [node reference](reference/nodes.md) lists exact fields.
 
 ### Gates and repeat limits (#164 E1)
 

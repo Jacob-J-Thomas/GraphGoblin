@@ -5,7 +5,6 @@ import { rm } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { LoopDefinitionSchema, type LoopDefinition } from '@graphgoblin/contracts';
 import { fakeUlid, FIXTURE_TS, minimalLoop } from '@graphgoblin/contracts/testing';
-import { inspectDatabaseUpgrade, applyDatabaseUpgrade } from '@graphgoblin/infrastructure/sqlite';
 import { createTestApp, type TestApp } from './testing/test-app.js';
 
 let t: TestApp;
@@ -39,87 +38,7 @@ function inferenceLoop(): LoopDefinition {
   });
 }
 
-/** Seed genuine pre-upgrade stored JSON, then run the shipped migration on that database. */
-async function seedVersion(status: 'draft' | 'published', definition = inferenceLoop()) {
-  const loopId = fakeUlid(`legacy-${status}`);
-  const versionId = fakeUlid(`legacy-version-${status}`);
-  const raw = JSON.stringify({
-    ...definition,
-    schemaVersion: 1,
-    settings: {
-      ...definition.settings,
-      defaults: { harness: 'codex' },
-    },
-  });
-  await t.container.handle.client.batch(
-    [
-      {
-        sql: 'INSERT INTO loops (id, owner_id, name, current_version_id, draft_version_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        args: [
-          loopId,
-          'local',
-          definition.name,
-          status === 'published' ? versionId : null,
-          status === 'draft' ? versionId : null,
-          FIXTURE_TS,
-          FIXTURE_TS,
-        ],
-      },
-      {
-        sql: 'INSERT INTO loop_versions (id, loop_id, version, status, definition, created_at, published_at) VALUES (?, ?, 1, ?, ?, ?, ?)',
-        args: [
-          versionId,
-          loopId,
-          status,
-          raw,
-          FIXTURE_TS,
-          status === 'published' ? FIXTURE_TS : null,
-        ],
-      },
-    ],
-    'write',
-  );
-  // Reconstruct the historical schema before clearing its migration ledger. This database was
-  // created with all current migrations by createTestApp, so remove later structural additions.
-  await t.container.handle.client.execute('DROP TABLE classifier_models');
-  await t.container.handle.client.execute('DROP TABLE webhook_receipts');
-  await t.container.handle.client.execute('DROP INDEX runs_trigger_dedupe_idx');
-  await t.container.handle.client.execute(
-    'DELETE FROM __drizzle_migrations WHERE created_at > 1791136800000',
-  );
-  expect(await t.container.handle.pendingMigrations()).toBe(9);
-  await expect(t.container.handle.migrate()).rejects.toMatchObject({
-    code: 'STORE_UNSUPPORTED',
-  });
-  const inventory = await inspectDatabaseUpgrade(t.container.handle.client);
-  // The API alone cannot cut over: apply needs the offline tool's held lock and verified backup.
-  await expect(
-    applyDatabaseUpgrade(t.container.handle.client, { planHash: inventory.planHash }),
-  ).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
-  expect((await inspectDatabaseUpgrade(t.container.handle.client)).sourceHash).toBe(
-    inventory.sourceHash,
-  );
-  return { loopId, versionId, raw };
-}
-
-describe('migrated SQLite versions through the API', () => {
-  it.each(['draft', 'published'] as const)(
-    'preserves an old %s version and refuses startup or cutover until format 4 is available',
-    async (status) => {
-      const { versionId, raw } = await seedVersion(status);
-      const stored = (
-        await t.container.handle.client.execute({
-          sql: 'SELECT definition FROM loop_versions WHERE id=?',
-          args: [versionId],
-        })
-      ).rows[0]?.definition;
-      expect(stored).toBe(raw);
-      await expect(t.container.handle.migrate()).rejects.toMatchObject({
-        code: 'STORE_UNSUPPORTED',
-      });
-    },
-  );
-
+describe('current-format runs through the API', () => {
   it('recovers a current-format pinned run across restart mid-run without migration', async () => {
     await t.app.close();
     await t.container.stop();
