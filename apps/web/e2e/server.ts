@@ -66,6 +66,7 @@ const ClassifierReplySchema = z.discriminatedUnion('type', [
 const classifierReplies = new Map<string, z.infer<typeof ClassifierReplySchema>[]>();
 const claudeEfforts = ['low', 'medium', 'high', 'xhigh', 'max'] as const;
 const readyClaudePreflight = HarnessPreflightSchema.parse({
+  state: 'ready',
   ok: true,
   version: '2.1.285 (E2E fake)',
   authenticated: true,
@@ -104,6 +105,7 @@ const readyClaudePreflight = HarnessPreflightSchema.parse({
 });
 const notReadyClaudePreflight: HarnessPreflight = {
   ...readyClaudePreflight,
+  state: 'unknown',
   ok: false,
   authenticated: false,
   problems: ['Claude CLI is not signed in.'],

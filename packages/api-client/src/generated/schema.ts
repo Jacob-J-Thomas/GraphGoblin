@@ -114,6 +114,8 @@ export interface paths {
                         "application/json": {
                             ok: boolean;
                             checks: {
+                                /** @enum {string} */
+                                state?: ("checking" | "unknown" | "ready" | "cli-missing" | "cli-incompatible" | "auth" | "quota" | "transport") | undefined;
                                 id: string;
                                 label: string;
                                 /** @enum {string} */
@@ -158,6 +160,8 @@ export interface paths {
                     content: {
                         "application/json": {
                             items: {
+                                /** @enum {string} */
+                                state: "checking" | "unknown" | "ready" | "cli-missing" | "cli-incompatible" | "auth" | "quota" | "transport";
                                 ok: boolean;
                                 version?: string | undefined;
                                 authenticated: boolean;

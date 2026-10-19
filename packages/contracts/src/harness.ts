@@ -17,8 +17,21 @@ export const ClaudeModelCapabilitySchema = z.strictObject({
   efforts: z.array(EffortSchema).min(1).max(6),
 });
 export type ClaudeModelCapability = z.infer<typeof ClaudeModelCapabilitySchema>;
+/** Prerequisite health, never a provider model entitlement or availability result. */
+export const HarnessReadinessStateSchema = z.enum([
+  'checking',
+  'unknown',
+  'ready',
+  'cli-missing',
+  'cli-incompatible',
+  'auth',
+  'quota',
+  'transport',
+]);
+export type HarnessReadinessState = z.infer<typeof HarnessReadinessStateSchema>;
 /** Safe public preflight facts; raw provider/auth status is never part of this response. */
 export const HarnessPreflightSchema = z.strictObject({
+  state: HarnessReadinessStateSchema,
   ok: z.boolean(),
   version: z.string().optional(),
   authenticated: z.boolean(),

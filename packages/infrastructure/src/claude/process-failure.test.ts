@@ -101,3 +101,22 @@ describe('bounded native transport failure outcomes', () => {
     },
   );
 });
+
+it.each(['stdout', 'stderr'] as const)(
+  'classifies %s without mining model/turn content',
+  async (stream) => {
+    const result = runClaudeProcess(request());
+    child[stream]?.emit(
+      'data',
+      Buffer.from(
+        stream === 'stdout'
+          ? 'A response discussing quota and authentication'
+          : 'Usage limit: quota exhausted PRIVATE_BODY',
+      ),
+    );
+    child.emit('close', 1);
+    if (stream === 'stderr') expect(await result).toMatchObject({ failureState: 'quota' });
+    else expect(await result).not.toHaveProperty('failureState');
+    expect(JSON.stringify(await result)).not.toContain('PRIVATE_BODY');
+  },
+);

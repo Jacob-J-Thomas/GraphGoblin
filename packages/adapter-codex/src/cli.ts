@@ -1,4 +1,8 @@
 import { spawn } from 'node:child_process';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { cliFailureState, readinessFailure } from '@graphgoblin/domain';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import type { HarnessPreflight } from '@graphgoblin/engine';
@@ -11,6 +15,8 @@ export interface CliCommand {
   command: string;
   /** Arguments placed before the subcommand, e.g. the launcher script when running through node. */
   prefix: string[];
+  cwd?: string;
+  env?: NodeJS.ProcessEnv;
 }
 
 export interface CliResult {
@@ -58,6 +64,8 @@ export const runCli: CliRunner = (cli, args, timeoutMs) =>
     };
     const child = spawn(cli.command, [...cli.prefix, ...args], {
       windowsHide: true,
+      ...(cli.cwd ? { cwd: cli.cwd } : {}),
+      ...(cli.env ? { env: cli.env } : {}),
       stdio: ['ignore', 'pipe', 'pipe'],
       shell: false,
     });
@@ -74,48 +82,79 @@ export const runCli: CliRunner = (cli, args, timeoutMs) =>
     child.on('close', (code) => finish({ code, output }));
   });
 
-/** `codex --version` and `codex login status`, folded into a preflight result. Never throws. */
+/** Version/help/login only: no prompt, session, or provider model request. */
 export async function preflightCli(
   cli: CliCommand | undefined,
   run: CliRunner,
   timeoutMs: number,
 ): Promise<HarnessPreflight> {
-  if (!cli) {
-    return {
-      ok: false,
-      authenticated: false,
-      problems: [
-        'Codex CLI not found: @openai/codex is not installed with its platform binary; reinstall dependencies or set codexBinary',
-      ],
-    };
+  if (!cli) return readinessFailure('codex', 'cli-missing');
+  const cwd = await mkdtemp(join(tmpdir(), 'gg-codex-probe-'));
+  let result: HarnessPreflight;
+  try {
+    result = await inspectCli({ ...cli, cwd }, run, timeoutMs);
+  } catch {
+    result = readinessFailure('codex', 'unknown');
   }
-  const problems: string[] = [];
-  const versionRun = await run(cli, ['--version'], timeoutMs);
-  if (versionRun.spawnError !== undefined || versionRun.code !== 0) {
-    const reason =
-      versionRun.spawnError ?? (versionRun.output.trim() || `exit ${String(versionRun.code)}`);
-    return {
-      ok: false,
-      authenticated: false,
-      problems: [`Codex CLI could not be run (${cli.command}): ${reason}`],
-    };
+  try {
+    await rm(cwd, { recursive: true, force: true });
+  } catch {
+    // Preserve a typed failed probe if Windows still holds its directory. This is not evidence
+    // of an orphan, and does not alter process termination. Leave that disposable directory.
+    if (result.state === 'ready') return readinessFailure('codex', 'unknown');
   }
-  const match = /(\d+\.\d+\.\d+\S*)/.exec(versionRun.output);
-  const version = match?.[1] ?? versionRun.output.trim();
+  return result;
+}
 
-  const loginRun = await run(cli, ['login', 'status'], timeoutMs);
-  const text = loginRun.output;
-  const authenticated =
-    loginRun.spawnError === undefined &&
-    loginRun.code === 0 &&
-    /logged in/i.test(text) &&
-    !/not logged in/i.test(text);
-  if (!authenticated) {
-    problems.push(
-      loginRun.spawnError !== undefined
-        ? `codex login status failed: ${loginRun.spawnError}`
-        : 'Codex CLI is not logged in; run `codex login`',
-    );
-  }
-  return { ok: problems.length === 0, version, authenticated, problems };
+async function inspectCli(
+  cli: CliCommand,
+  run: CliRunner,
+  timeoutMs: number,
+): Promise<HarnessPreflight> {
+  const probe = cli;
+  const execute = async (args: string[]) => {
+    const result = await run(probe, args, timeoutMs);
+    if (result.spawnError || result.code !== 0) {
+      // A failed start or deadline never makes partial diagnostic output authoritative.
+      const state =
+        result.spawnError !== undefined
+          ? /enoent/i.test(result.spawnError)
+            ? 'cli-missing'
+            : 'unknown'
+          : cliFailureState(result.output);
+      return { failure: readinessFailure('codex', state === 'ready' ? 'unknown' : state) };
+    }
+    return { output: result.output };
+  };
+  const versionRun = await execute(['--version']);
+  if (versionRun.failure) return versionRun.failure;
+  const version = /(?:^|\s)(\d+\.\d+\.\d+)(?:\s|$)/.exec(versionRun.output)?.[1];
+  // 0.160.0 is the SDK baseline; newer binaries must also advertise the SDK's flags.
+  const parts = version?.split('.').map(Number);
+  if (!parts || (parts[0] === 0 && parts[1]! < 160))
+    return { ...readinessFailure('codex', 'cli-incompatible'), ...(version ? { version } : {}) };
+  const help = await execute(['exec', '--help']);
+  if (help.failure) return { ...help.failure, version };
+  const flags = help.output.split(/\s+/).map((token) => token.replace(/,$/, ''));
+  const required = [
+    '--json',
+    '--model',
+    '--sandbox',
+    '--cd',
+    '--skip-git-repo-check',
+    '--output-schema',
+    '--config',
+  ];
+  if (required.some((flag) => !flags.includes(flag)))
+    return { ...readinessFailure('codex', 'cli-incompatible'), version };
+  // --help terminates parsing without executing a resumed turn or creating a session.
+  const resume = await execute(['exec', 'resume', '--help']);
+  if (resume.failure) return { ...resume.failure, version };
+  if (!/--json\b/.test(resume.output))
+    return { ...readinessFailure('codex', 'cli-incompatible'), version };
+  const login = await execute(['login', 'status']);
+  if (login.failure) return { ...login.failure, version };
+  if (!/logged in/i.test(login.output) || /not logged in/i.test(login.output))
+    return { ...readinessFailure('codex', 'auth'), version };
+  return { state: 'ready', ok: true, version, authenticated: true, problems: [] };
 }

@@ -85,13 +85,21 @@ export function DefaultsSection() {
                 const capability = preflight?.models?.find((item) => item.model === selectedModel);
                 const claudeUnknown =
                   harness === 'claude' &&
-                  (!preflightQuery.data ||
+                  (preflightQuery.isFetching ||
+                    preflightQuery.isError ||
+                    preflightQuery.fetchStatus === 'paused' ||
+                    !preflightQuery.data ||
+                    preflight?.state !== 'ready' ||
                     !preflight?.ok ||
                     !preflight.authenticated ||
                     !preflight.models ||
-                    !capability);
+                    (selectedModel !== '' && !capability));
                 const stale = Boolean(
-                  selectedModel && catalogQuery.data && (!selectedEntry?.enabled || claudeUnknown),
+                  selectedModel &&
+                  (catalogQuery.isError ||
+                    !catalogQuery.data ||
+                    !selectedEntry?.enabled ||
+                    claudeUnknown),
                 );
                 const helpId = `default-model-${harness}-help`;
                 const effortHelpId = `default-effort-${harness}-help`;
@@ -100,13 +108,28 @@ export function DefaultsSection() {
                 const effortLabel =
                   harness === 'codex' ? 'Default effort' : `Default effort (${harness})`;
                 const staleMessage =
-                  harness === 'claude' && claudeUnknown
-                    ? 'Claude CLI preflight is not ready. Keep this saved value or choose (server default) until it passes.'
-                    : 'This saved model is unavailable. Choose an enabled catalog model or (server default) before publishing or running.';
+                  !catalogQuery.data || catalogQuery.isError
+                    ? 'Model catalog unknown. Keep this saved value and retry the lookup.'
+                    : selectedEntry?.enabled === false || (selectedModel && !selectedEntry)
+                      ? 'This saved model is unavailable. Choose an enabled catalog model or (server default) before publishing or running.'
+                      : harness === 'claude' && claudeUnknown
+                        ? preflightQuery.isFetching
+                          ? 'Checking Claude CLI prerequisites. Keep this saved value while the probe completes.'
+                          : preflight?.problems.join('; ') ||
+                            'Claude readiness is unknown. Retry preflight; the saved value is kept.'
+                        : 'This saved model is unavailable. Choose an enabled catalog model or (server default) before publishing or running.';
                 const availableEntries = entries.filter((entry) => {
                   if (!entry.enabled) return false;
                   if (harness !== 'claude') return true;
-                  if (preflight?.ok !== true || !preflight.authenticated) return false;
+                  if (
+                    preflightQuery.isFetching ||
+                    preflightQuery.isError ||
+                    preflightQuery.fetchStatus === 'paused' ||
+                    preflight?.state !== 'ready' ||
+                    preflight?.ok !== true ||
+                    !preflight.authenticated
+                  )
+                    return false;
                   return preflight?.models?.some((model) => model.model === entry.model);
                 });
                 const effortOptions =
@@ -138,8 +161,8 @@ export function DefaultsSection() {
                             !selectedEntry?.enabled) ? (
                             <option value={selectedModel}>
                               {selectedEntry
-                                ? `${selectedEntry.displayName} (${claudeUnknown ? 'access not verified' : selectedEntry.enabled ? 'unavailable' : 'disabled'})`
-                                : catalogQuery.data
+                                ? `${selectedEntry.displayName} (${!selectedEntry.enabled ? 'disabled' : claudeUnknown ? 'readiness unknown' : 'unavailable'})`
+                                : catalogQuery.data && !catalogQuery.isError
                                   ? `${selectedModel} (not in catalog)`
                                   : selectedModel}
                             </option>

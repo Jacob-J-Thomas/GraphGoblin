@@ -123,7 +123,11 @@ function useCatalogField(name: string, kind: 'model' | 'effort', value: unknown)
   const modelCapabilities = harnessPreflight?.models;
   const hasClaudeAdmission =
     harnessId !== 'claude' ||
-    (harnessPreflight?.ok === true &&
+    (!preflightQuery.isFetching &&
+      !preflightQuery.isError &&
+      preflightQuery.fetchStatus !== 'paused' &&
+      harnessPreflight?.state === 'ready' &&
+      harnessPreflight.ok === true &&
       harnessPreflight.authenticated &&
       modelCapabilities !== undefined);
   const availableEntries = entries.filter((entry) => {
@@ -193,7 +197,15 @@ function CatalogField({
       ? query.data?.find((candidate) => candidate.model === value)?.harness
       : undefined;
   const wrongHarness = savedHarness !== undefined && savedHarness !== harnessId;
-  const missing = kind === 'model' && value !== '' && !entry && !wrongHarness;
+  const missing =
+    kind === 'model' &&
+    value !== '' &&
+    query.data !== undefined &&
+    !query.isError &&
+    !query.isFetching &&
+    query.fetchStatus !== 'paused' &&
+    !entry &&
+    !wrongHarness;
   const savedHarnessLabel =
     savedHarness === 'codex' ? 'Codex' : savedHarness === 'claude' ? 'Claude' : savedHarness;
   const admissionUnknown =
@@ -203,11 +215,13 @@ function CatalogField({
     ? `Saved model belongs to ${savedHarnessLabel}`
     : missing
       ? 'not in catalog'
-      : admissionUnknown
-        ? 'availability not verified'
-        : disabled
-          ? 'disabled in the catalog'
+      : disabled
+        ? 'disabled in the catalog'
+        : admissionUnknown
+          ? 'readiness unknown'
           : undefined;
+  const modelLookupUnknown =
+    kind === 'model' && value !== '' && !entry && !wrongHarness && !missing;
   const localCode = missing ? 'MODEL_NOT_IN_CATALOG' : disabled ? 'MODEL_DISABLED' : undefined;
   const warnings = use(CatalogWarningsContext).filter(
     (warning) =>
@@ -226,14 +240,34 @@ function CatalogField({
                 ? 'Loading the model catalog. The current values are read-only.'
                 : preflightQuery.isError || preflightQuery.fetchStatus === 'paused'
                   ? 'Claude model availability could not be checked; model choices are read-only until preflight recovers.'
-                  : preflightQuery.data === undefined
+                  : preflightQuery.data === undefined || preflightQuery.isFetching
                     ? 'Checking Claude model availability. Model choices are read-only until preflight completes.'
                     : !harnessPreflight?.ok || !harnessPreflight.authenticated
-                      ? 'Claude CLI preflight is not ready; model choices are read-only until it passes.'
+                      ? harnessPreflight?.problems.join('; ') ||
+                        'Claude CLI readiness is unknown; retry preflight.'
                       : 'Claude model availability was not returned by preflight; model choices are read-only.',
           ]
         : []
       : [
+          ...(modelLookupUnknown
+            ? [
+                query.isFetching
+                  ? 'Checking model catalog. Its saved value is kept.'
+                  : 'Model support is unknown because the catalog lookup could not complete. Its saved value is kept.',
+              ]
+            : []),
+          ...(kind === 'model' &&
+          harnessId === 'codex' &&
+          (preflightQuery.isFetching ||
+            preflightQuery.isError ||
+            harnessPreflight?.state !== 'ready')
+            ? [
+                preflightQuery.isFetching
+                  ? 'Checking codex CLI prerequisites; wait for the probe to finish.'
+                  : harnessPreflight?.problems.join('; ') ||
+                    'Codex readiness is unknown; retry preflight. Catalog choices do not confirm account model access.',
+              ]
+            : []),
           ...(kind === 'model' && query.isError
             ? [
                 'The model catalog may be out of date. Cached choices are still available; retry to refresh them.',
@@ -333,13 +367,13 @@ function CatalogField({
                 value !== '' ? (
                   <option value={value} disabled>
                     {value}
-                    {status ? ` (${status})` : ' (saved; unavailable)'}
+                    {status ? ` (${status})` : ' (saved; readiness unknown)'}
                   </option>
                 ) : null
-              ) : status || unsupported ? (
+              ) : status || unsupported || modelLookupUnknown ? (
                 <option value={value} disabled>
                   {kind === 'model' && entry ? `${entry.displayName} (${value})` : value}
-                  {` (${status ?? 'not supported by this model'})`}
+                  {` (${status ?? (modelLookupUnknown ? (query.isFetching ? 'checking model catalog' : 'model support unknown') : 'not supported by this model')})`}
                 </option>
               ) : null}
               {!unavailable &&

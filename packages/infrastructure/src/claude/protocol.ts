@@ -174,6 +174,11 @@ function usageFrom(value: unknown): Usage {
 function nativeFailure(category: unknown, status?: unknown): ClaudeHarnessError {
   if (category === 'authentication_failed' || status === 401 || status === 403)
     return new ClaudeHarnessError('HARNESS_NOT_AUTHENTICATED', 'Claude authentication failed');
+  if (category === 'quota_exceeded' || category === 'usage_limit')
+    return new ClaudeHarnessError(
+      'HARNESS_QUOTA_EXHAUSTED',
+      'Claude account quota exhausted; check the account allowance and retry when it resets',
+    );
   if (category === 'rate_limit' || status === 429)
     return new ClaudeHarnessError(
       'HARNESS_QUOTA_EXHAUSTED',
@@ -183,7 +188,13 @@ function nativeFailure(category: unknown, status?: unknown): ClaudeHarnessError 
   const transient =
     category === 'server_error' ||
     (typeof status === 'number' && Number.isInteger(status) && status >= 500 && status <= 599);
-  return new ClaudeHarnessError('HARNESS_TURN_FAILED', 'Claude turn failed', transient);
+  return new ClaudeHarnessError(
+    transient ? 'HARNESS_TRANSPORT_FAILED' : 'HARNESS_TURN_FAILED',
+    transient
+      ? 'Claude connection or provider service failed; check connectivity and retry'
+      : 'Claude turn failed',
+    transient,
+  );
 }
 export interface ClaudePolicyEvidence extends ClaudePolicy {
   advertisedPluginCount: number;

@@ -92,6 +92,31 @@ http://127.0.0.1:4749/app/
 $env:GG_API_URL = 'http://127.0.0.1:4749'
 ```
 
+## Read harness readiness
+
+Settings, Harness preflight and `GET /harness/preflight` report these no-turn states:
+
+| State              | What to do                                                                                                                                        |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `checking`         | Wait for the pending probe. A previous success is not the current result.                                                                         |
+| `unknown`          | The check timed out, was cancelled or could not interpret its result. Check the selected CLI and retry. Do not change models based on this state. |
+| `ready`            | CLI version, required flags and local login passed. This does not verify account access to any model.                                             |
+| `cli-missing`      | Install the CLI or correct `GG_CLAUDE_BINARY` / `GG_CODEX_BINARY`, then retry.                                                                    |
+| `cli-incompatible` | Update that installed CLI to a version advertising the required flags, then retry.                                                                |
+| `auth`             | Run `claude auth login` / `codex login` for the API's Windows account, then retry.                                                                |
+| `quota`            | Check that account's allowance/reset time. Retry when it permits requests; keep the selected model.                                               |
+| `transport`        | Check the connection and provider service status, then retry; keep the selected model.                                                            |
+
+Model unavailable is reserved for a disabled model or an identity removed from GraphGoblin's
+supported catalog. Enable a deliberately disabled entry or choose a supported entry. A failed
+catalog lookup says unknown and preserves the saved choice. Catalog listings and requested effort
+choices do not establish provider entitlement. Each authoring request probes afresh and shares
+one result per harness across its nodes and validation passes. Saving a draft remains possible
+when prerequisites are not ready; publication is blocked with the specific readiness reason.
+
+No readiness check starts a model turn. Native no-turn process evidence and disposable QA steps
+are recorded in the [WP-F1 report](../qa/2026-10-19-wp-f1-readiness.md).
+
 ## Recover a disconnected stream
 
 Reconnect with the last event ID, using your actual run ID and cursor. In Bash:

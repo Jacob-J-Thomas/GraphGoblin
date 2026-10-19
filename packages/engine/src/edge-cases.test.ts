@@ -597,7 +597,8 @@ describe('handler edge cases', () => {
     // A harness whose session rejects without emitting an error event or a session id.
     const silent: HarnessPort = {
       id: 'codex',
-      preflight: () => Promise.resolve({ ok: true, authenticated: true, problems: [] }),
+      preflight: () =>
+        Promise.resolve({ state: 'ready', ok: true, authenticated: true, problems: [] }),
       start: (): HarnessSession => ({
         sessionId: Promise.resolve('never'),
         events: asyncIterableOf([{ type: 'turn-complete' as const }]),

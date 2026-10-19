@@ -160,6 +160,7 @@ describe('Claude existing harness contract', () => {
   it('checks the installed capability/auth prerequisites and exposes explicit model support and policies', async () => {
     const { harness, calls } = fixture();
     expect(await harness.preflight()).toMatchObject({
+      state: 'ready',
       ok: true,
       authenticated: true,
       version: '2.1.285',
@@ -680,7 +681,7 @@ describe('Claude preflight and transport failure matrix', () => {
   it.each([
     { timedOut: true, code: 'HARNESS_TIMEOUT' },
     { overflow: true, code: 'HARNESS_OUTPUT_LIMIT' },
-    { spawnCode: 'EACCES' as const, code: 'HARNESS_NOT_INSTALLED' },
+    { spawnCode: 'EACCES' as const, code: 'HARNESS_TURN_FAILED' },
     { stdinFailed: true, code: 'HARNESS_TURN_FAILED' },
   ])('maps transport disposition $code safely', async ({ code, ...exit }) => {
     const { harness } = fixture({ exit });

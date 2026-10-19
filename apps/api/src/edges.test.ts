@@ -213,7 +213,9 @@ describe('loop and run route branches', () => {
     const failed = (await t.app.inject('/harness/preflight')).json<{
       items: { problems: string[] }[];
     }>();
-    expect(failed.items[0]?.problems).toEqual(['plain failure']);
+    expect(failed.items[0]?.problems).toEqual([
+      expect.stringMatching(/readiness could not be confirmed/),
+    ]);
   });
 });
 

@@ -1,6 +1,8 @@
 import { mkdtemp, rm } from 'node:fs/promises';
 import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { cliFailureState, readinessFailure, readinessMessage } from '@graphgoblin/domain';
+import type { HarnessReadinessState } from '@graphgoblin/contracts';
 import type {
   HarnessEvent,
   HarnessPreflight,
@@ -45,6 +47,25 @@ export interface ClaudeHarnessPreflight extends HarnessPreflight {
   authMethod: 'claude.ai' | null;
   supportedPolicies: ClaudePolicy[];
 }
+function failureState(error: unknown): Exclude<HarnessReadinessState, 'ready'> {
+  const failure = error;
+  if (!(failure instanceof ClaudeHarnessError)) return 'unknown';
+  switch (failure.code) {
+    case 'HARNESS_NOT_INSTALLED':
+      return 'cli-missing';
+    case 'HARNESS_CLI_INCOMPATIBLE':
+    case 'HARNESS_UNSUPPORTED_POLICY':
+      return 'cli-incompatible';
+    case 'HARNESS_NOT_AUTHENTICATED':
+      return 'auth';
+    case 'HARNESS_QUOTA_EXHAUSTED':
+      return 'quota';
+    case 'HARNESS_TRANSPORT_FAILED':
+      return 'transport';
+    default:
+      return 'unknown';
+  }
+}
 function checkOutcome(result: ClaudeProcessResult, signal: AbortSignal): void {
   if (result.terminationUnconfirmed)
     throw new ClaudeHarnessError(
@@ -54,8 +75,8 @@ function checkOutcome(result: ClaudeProcessResult, signal: AbortSignal): void {
   if (signal.aborted || result.aborted) throw abortError();
   if (result.spawnCode)
     throw new ClaudeHarnessError(
-      'HARNESS_NOT_INSTALLED',
-      'The installed Claude executable could not be started',
+      result.spawnCode === 'ENOENT' ? 'HARNESS_NOT_INSTALLED' : 'HARNESS_TURN_FAILED',
+      'The installed Claude executable could not be started; check its path and permissions',
     );
   if (result.timedOut)
     throw new ClaudeHarnessError('HARNESS_TIMEOUT', 'Claude process timed out', true);
@@ -65,6 +86,21 @@ function checkOutcome(result: ClaudeProcessResult, signal: AbortSignal): void {
       'Claude process output exceeded the configured limit',
     );
   if (result.callbackError) throw result.callbackError;
+  if (result.exitCode !== 0 && result.failureState && result.failureState !== 'unknown') {
+    const codes: Partial<
+      Record<HarnessReadinessState, ConstructorParameters<typeof ClaudeHarnessError>[0]>
+    > = {
+      auth: 'HARNESS_NOT_AUTHENTICATED',
+      quota: 'HARNESS_QUOTA_EXHAUSTED',
+      transport: 'HARNESS_TRANSPORT_FAILED',
+      'cli-incompatible': 'HARNESS_CLI_INCOMPATIBLE',
+    };
+    throw new ClaudeHarnessError(
+      codes[result.failureState] ?? 'HARNESS_TURN_FAILED',
+      readinessMessage('claude', result.failureState),
+      result.failureState === 'transport',
+    );
+  }
   if (result.stdinFailed || result.exitCode !== 0)
     throw new ClaudeHarnessError('HARNESS_TURN_FAILED', 'Claude turn failed');
 }
@@ -109,6 +145,7 @@ export class ClaudeHarness implements HarnessPort {
     failures: unknown[];
   }> {
     const facts: ClaudeHarnessPreflight = {
+      state: 'checking',
       ok: false,
       authenticated: false,
       problems: [],
@@ -131,7 +168,11 @@ export class ClaudeHarness implements HarnessPort {
         timeoutMs: this.options.preflightTimeoutMs ?? 15000,
         maxOutputBytes: 128 * 1024,
       });
-      checkOutcome(result, signal);
+      // This path runs version/help/auth only; stdout cannot be a model response.
+      checkOutcome(
+        { ...result, failureState: result.failureState ?? cliFailureState(result.stdout) },
+        signal,
+      );
       return result.stdout;
     };
     try {
@@ -181,6 +222,7 @@ export class ClaudeHarness implements HarnessPort {
         );
     }
     facts.ok = failures.length === 0;
+    facts.state = facts.ok ? 'ready' : failureState(failures[0]);
     facts.problems = [
       ...new Set(
         failures.map((error) =>
@@ -188,6 +230,10 @@ export class ClaudeHarness implements HarnessPort {
         ),
       ),
     ];
+    if (!facts.ok)
+      facts.problems = facts.problems.map((problem, index) =>
+        index === 0 ? `${problem} ${readinessMessage('claude', facts.state)}` : problem,
+      );
     return { facts, failures };
   }
   async preflight(): Promise<ClaudeHarnessPreflight> {
@@ -195,9 +241,7 @@ export class ClaudeHarness implements HarnessPort {
       return (await this.inspect(new AbortController().signal)).facts;
     } catch (error) {
       return {
-        ok: false,
-        authenticated: false,
-        problems: [error instanceof ClaudeHarnessError ? error.message : 'Claude preflight failed'],
+        ...readinessFailure('claude', failureState(error)),
         authMethod: null,
         models: claudeModelCapabilities(),
         supportedPolicies: this.platform === 'win32' ? this.supportedPolicies() : [],

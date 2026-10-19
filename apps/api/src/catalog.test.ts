@@ -354,7 +354,8 @@ describe('uniform strict evaluator admission', () => {
       if (unavailable === 'disabled model')
         await t.container.repos.catalog.setEnabled('codex', 'gpt-6-luna', false);
       else delete t.container.ports.harnesses.codex;
-      const code = unavailable === 'disabled model' ? 'MODEL_DISABLED' : 'HARNESS_UNAVAILABLE';
+      const code =
+        unavailable === 'disabled model' ? 'MODEL_DISABLED' : 'HARNESS_READINESS_CLI_MISSING';
       const created = await t.app.inject({
         method: 'POST',
         url: '/loops',
@@ -393,7 +394,7 @@ describe('uniform strict evaluator admission', () => {
     expect(created.json().errors).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ code: 'MODEL_NOT_IN_CATALOG', severity: 'error' }),
-        expect.objectContaining({ code: 'HARNESS_UNAVAILABLE', severity: 'warning' }),
+        expect.objectContaining({ code: 'HARNESS_READINESS_CLI_MISSING', severity: 'warning' }),
       ]),
     );
     const baseId = await t.publishLoop(minimalLoop());

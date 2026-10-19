@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   LlmDecisionConfigSchema,
   HarnessPreflightSchema,
+  HarnessReadinessStateSchema,
   ClaudeModelCapabilitySchema,
   HarnessDefaultsSchema,
   HarnessIdSchema,
@@ -91,10 +92,27 @@ describe('Claude inference contract', () => {
 });
 
 describe('Claude public readiness contracts', () => {
+  it('requires a typed prerequisite state independently of static model listings', () => {
+    for (const state of HarnessReadinessStateSchema.options) {
+      expect(
+        HarnessPreflightSchema.parse({
+          state,
+          ok: state === 'ready',
+          authenticated: state === 'ready',
+          problems: [],
+        }).state,
+      ).toBe(state);
+    }
+    expect(
+      HarnessPreflightSchema.safeParse({ ok: false, authenticated: false, problems: [] }).success,
+    ).toBe(false);
+    expect(HarnessReadinessStateSchema.safeParse('model-unavailable').success).toBe(false);
+  });
   it('exposes technical model capabilities and rejects removed fields on current responses', () => {
     const model = { model: 'claude-fable-5-1', efforts: ['high'] };
     expect(ClaudeModelCapabilitySchema.parse(model)).toEqual(model);
     const preflight = {
+      state: 'unknown',
       ok: false,
       version: '2.1.287',
       authenticated: true,

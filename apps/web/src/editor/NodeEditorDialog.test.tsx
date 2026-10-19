@@ -875,6 +875,7 @@ describe('NodeEditorDialog inference harness changes', () => {
           });
           api.preflight.push({
             harness: 'claude',
+            state: ready ? 'ready' : 'cli-incompatible',
             ok: ready,
             authenticated: true,
             problems: ready ? [] : ['Missing capability'],

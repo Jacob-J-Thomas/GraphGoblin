@@ -1,3 +1,4 @@
+import { readinessOperation, type ReadinessOperation } from './readiness-operation.js';
 import type { Effort, HarnessId, LoopDefinition, LoopIssue } from '@graphgoblin/contracts';
 import { resolveHarnessModel, validateHarnessDefaults } from '@graphgoblin/domain';
 import type { Container } from './container.js';
@@ -8,6 +9,7 @@ export async function modelIssues(
   container: Container,
   ownerId: string,
   definition: LoopDefinition,
+  readiness: ReadinessOperation = readinessOperation(container.ports.harnesses),
 ): Promise<LoopIssue[]> {
   const catalog = await container.repos.catalog.list();
   const ownerDefaults = await readOwnerDefaults(container.repos.settings, ownerId);
@@ -30,8 +32,6 @@ export async function modelIssues(
         resolution.path,
     }),
   );
-  let claudePreflight:
-    ReturnType<NonNullable<typeof container.ports.harnesses.claude>['preflight']> | undefined;
   async function check(
     harness: HarnessId,
     model: string | undefined,
@@ -39,46 +39,23 @@ export async function modelIssues(
     nodeId: string,
     path: string,
   ) {
-    if (!container.ports.harnesses[harness]) {
-      issues.push({
-        code: 'HARNESS_UNAVAILABLE',
-        severity: 'warning',
-        nodeId,
-        path,
-        message: 'The selected harness is not configured; configure it before publication.',
-      });
-    }
     const resolution = resolveHarnessModel({
       ...shared,
       harness,
       ...(model !== undefined ? { model } : {}),
       ...(effort !== undefined ? { effort } : {}),
     });
-    if (harness === 'claude' && resolution.status === 'ready') {
-      if (container.ports.harnesses.claude) {
-        try {
-          claudePreflight ??= container.ports.harnesses.claude.preflight();
-          const preflight = await claudePreflight;
-          if (!preflight.ok)
-            issues.push({
-              code: 'HARNESS_UNAVAILABLE',
-              severity: 'warning',
-              nodeId,
-              path: path + '.harness',
-              message:
-                preflight.problems.join('; ') ||
-                'Claude installation or account login is unavailable',
-            });
-        } catch {
-          issues.push({
-            code: 'HARNESS_UNAVAILABLE',
-            severity: 'warning',
-            nodeId,
-            path: path + '.harness',
-            message: 'Claude preflight is unavailable',
-          });
-        }
-      }
+    if (resolution.status === 'ready' || !container.ports.harnesses[harness]) {
+      const preflight = await readiness.probe(harness);
+      if (preflight.state !== 'ready')
+        issues.push({
+          code: 'HARNESS_READINESS_' + preflight.state.toUpperCase().replaceAll('-', '_'),
+          severity: 'warning',
+          nodeId,
+          path: path + '.harness',
+          message:
+            preflight.problems.join('; ') || 'Harness readiness is unknown; retry preflight.',
+        });
     }
     if (resolution.status !== 'ready')
       issues.push({
@@ -108,9 +85,9 @@ export async function modelIssues(
 export function blocksPublication(issue: LoopIssue): boolean {
   return (
     issue.severity === 'error' ||
+    issue.code.startsWith('HARNESS_READINESS_') ||
     [
       'MODEL_DISABLED',
-      'HARNESS_UNAVAILABLE',
       'CLASSIFIER_MODEL_DISABLED',
       'CLASSIFIER_SECRET_MISSING',
       'CLASSIFIER_SECRET_UNREADABLE',

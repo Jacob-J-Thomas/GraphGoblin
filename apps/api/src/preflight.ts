@@ -1,9 +1,10 @@
+import { readinessMessage } from '@graphgoblin/domain';
 import { randomUUID } from 'node:crypto';
 import { open, readFile, stat, unlink } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { ClaudeHarness } from '@graphgoblin/infrastructure/claude';
 import { createCodexAdapters } from '@graphgoblin/adapter-codex';
-import type { HarnessId } from '@graphgoblin/contracts';
+import { HarnessReadinessStateSchema, type HarnessId } from '@graphgoblin/contracts';
 import type { HarnessPort } from '@graphgoblin/engine';
 import {
   DEFAULT_MODEL_CATALOG,
@@ -29,6 +30,7 @@ export const PreflightStatusSchema = z.enum(['ok', 'warn', 'fail']);
 export type PreflightStatus = z.infer<typeof PreflightStatusSchema>;
 
 export const PreflightCheckSchema = z.object({
+  state: HarnessReadinessStateSchema.optional(),
   id: z.string(),
   label: z.string(),
   status: PreflightStatusSchema,
@@ -182,25 +184,22 @@ async function checkHarnesses(
     try {
       const result = await harness.preflight();
       const version = result.version ? ` ${result.version}` : '';
-      checks.push(
-        result.ok
+      checks.push({
+        state: result.state,
+        ...(result.ok
           ? check(`harness.${id}`, label, 'ok', `${id}${version} is installed and logged in`)
           : check(
               `harness.${id}`,
               label,
               unavailableStatus,
-              result.problems.join('; ') || `${id} is not ready`,
-            ),
-      );
-    } catch (error) {
-      checks.push(
-        check(
-          `harness.${id}`,
-          label,
-          unavailableStatus,
-          id === 'claude' ? 'Claude preflight failed' : message(error),
-        ),
-      );
+              result.problems.join('; ') || readinessMessage(id, 'unknown'),
+            )),
+      });
+    } catch {
+      checks.push({
+        state: 'unknown',
+        ...check(`harness.${id}`, label, unavailableStatus, readinessMessage(id, 'unknown')),
+      });
     }
   }
   if (checks.length === 0) {

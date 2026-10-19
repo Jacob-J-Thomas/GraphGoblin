@@ -1,3 +1,4 @@
+import { readinessOperation } from '../readiness-operation.js';
 import { z } from 'zod';
 import { HarnessPreflightSchema, HarnessIdSchema } from '@graphgoblin/contracts';
 import type { Container } from '../container.js';
@@ -55,30 +56,16 @@ export function registerSystemRoutes(app: ApiInstance, container: Container): vo
     },
     async () => {
       const items: z.infer<typeof PreflightSchema>[] = [];
-      for (const [id, harness] of Object.entries(container.ports.harnesses)) {
-        if (!harness) continue;
-        const harnessId = HarnessIdSchema.parse(id);
-        try {
-          const result = await harness.preflight();
-          items.push({ harness: harnessId, ...result });
-        } catch (error) {
-          items.push({
-            harness: harnessId,
-            ok: false,
-            authenticated: false,
-            problems: [
-              id === 'claude'
-                ? 'Claude preflight failed'
-                : error instanceof Error
-                  ? error.message
-                  : String(error),
-            ],
-          });
-        }
+      const readiness = readinessOperation(container.ports.harnesses);
+      for (const [id, adapter] of Object.entries(container.ports.harnesses)) {
+        if (!adapter) continue;
+        const harness = HarnessIdSchema.parse(id);
+        items.push({ harness, ...(await readiness.probe(harness)) });
       }
       if (items.length === 0)
         items.push({
           harness: 'codex',
+          state: 'cli-missing',
           ok: false,
           authenticated: false,
           problems: ['no harness adapter is configured'],

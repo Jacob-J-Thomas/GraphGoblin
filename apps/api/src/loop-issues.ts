@@ -1,3 +1,4 @@
+import { readinessOperation, type ReadinessOperation } from './readiness-operation.js';
 import { nodesOfKind, validateLoop, type ValidationIssue } from '@graphgoblin/domain';
 import type { LoopDefinition, LoopIssue } from '@graphgoblin/contracts';
 import type { Container } from './container.js';
@@ -10,6 +11,7 @@ export async function loopPublicationIssues(
   ownerId: string,
   definition: LoopDefinition,
   selfId?: string,
+  readiness: ReadinessOperation = readinessOperation(container.ports.harnesses),
 ): Promise<LoopIssue[]> {
   const { loops } = container.repos;
   const issues: ValidationIssue[] = [];
@@ -54,7 +56,7 @@ export async function loopPublicationIssues(
     ...validateLoop(definition),
     ...container.triggers.checkDefinition(definition),
     ...issues,
-    ...(await modelIssues(container, ownerId, definition)),
+    ...(await modelIssues(container, ownerId, definition, readiness)),
     ...(await classifierIssues(container, ownerId, definition)),
   ];
 }

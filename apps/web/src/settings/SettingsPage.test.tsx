@@ -42,8 +42,22 @@ function seeded(source: 'harness' | 'litellm' = 'harness'): FakeApi {
     },
   ];
   api.preflight = [
-    { harness: 'codex', ok: true, version: '1.2', authenticated: true, problems: [] },
-    { harness: 'other', ok: false, version: '', authenticated: false, problems: ['not logged in'] },
+    {
+      harness: 'codex',
+      state: 'ready',
+      ok: true,
+      version: '1.2',
+      authenticated: true,
+      problems: [],
+    },
+    {
+      harness: 'other',
+      state: 'unknown',
+      ok: false,
+      version: '',
+      authenticated: false,
+      problems: ['not logged in'],
+    },
   ];
   return api;
 }
@@ -573,6 +587,7 @@ describe('SettingsPage', () => {
       );
       api.preflight.push({
         harness: 'claude',
+        state: 'ready',
         ok: true,
         authenticated: true,
         problems: [],
@@ -662,9 +677,10 @@ describe('SettingsPage', () => {
       },
     );
     api.preflight = [
-      { harness: 'codex', ok: true, authenticated: true, problems: [] },
+      { harness: 'codex', state: 'ready', ok: true, authenticated: true, problems: [] },
       {
         harness: 'claude',
+        state: 'ready',
         ok: true,
         version: '2.1.285',
         authenticated: true,
@@ -735,6 +751,7 @@ describe('SettingsPage', () => {
     });
     api.preflight.push({
       harness: 'claude',
+      state: 'ready',
       ok: true,
       version: '2.1.285',
       authenticated: true,
@@ -821,6 +838,7 @@ describe('SettingsPage', () => {
     });
     api.preflight.push({
       harness: 'claude',
+      state: 'unknown',
       ok: false,
       version: '2.1.285',
       authenticated: false,
@@ -837,9 +855,9 @@ describe('SettingsPage', () => {
     const preflight = await screen.findByRole('region', { name: 'Harness preflight' });
     expect(await within(preflight).findByText('Claude CLI is not signed in.')).toBeInTheDocument();
     const claudePreflight = within(preflight).getByText('claude').closest('li')!;
-    expect(await within(claudePreflight).findByText('not ready')).toBeInTheDocument();
+    expect(await within(claudePreflight).findByText('unknown')).toBeInTheDocument();
     const support = within(preflight).getByRole('list', { name: 'Claude model support' });
-    expect(within(support).getByText('supported by adapter')).toBeInTheDocument();
+    expect(within(support).getByText('listed by adapter')).toBeInTheDocument();
     expect(within(support).queryByText('available')).toBeNull();
 
     const model = await screen.findByLabelText('Default model (claude)');
@@ -892,7 +910,7 @@ describe('SettingsPage', () => {
   it('shows harness preflight status and the install hint', async () => {
     renderApp('/settings', seeded());
     expect(await screen.findByText('ready')).toBeInTheDocument();
-    expect(screen.getByText('not ready')).toBeInTheDocument();
+    expect(screen.getByText('unknown')).toBeInTheDocument();
     expect(screen.getByText('not logged in')).toBeInTheDocument();
     expect(screen.getByText(/Install app/)).toBeInTheDocument();
   });
@@ -1002,6 +1020,7 @@ describe('Claude catalog enablement and readiness', () => {
       });
       api.preflight.push({
         harness: 'claude',
+        state: 'unknown',
         ok: false,
         version: '2.1.287',
         authenticated,

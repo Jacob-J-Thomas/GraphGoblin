@@ -222,7 +222,14 @@ export class FakeApi {
     };
   }[] = [];
   preflight: ({ harness: string } & HarnessPreflight)[] = [
-    { harness: 'codex', ok: true, version: '1.0', authenticated: true, problems: [] },
+    {
+      harness: 'codex',
+      state: 'ready',
+      ok: true,
+      version: '1.0',
+      authenticated: true,
+      problems: [],
+    },
   ];
   calls: RecordedCall[] = [];
   /** When true every request fails like a dropped network. */

@@ -14455,6 +14455,19 @@
                       "items": {
                         "type": "object",
                         "properties": {
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "checking",
+                              "unknown",
+                              "ready",
+                              "cli-missing",
+                              "cli-incompatible",
+                              "auth",
+                              "quota",
+                              "transport"
+                            ]
+                          },
                           "id": {
                             "type": "string"
                           },
@@ -14514,6 +14527,19 @@
                       "items": {
                         "type": "object",
                         "properties": {
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "checking",
+                              "unknown",
+                              "ready",
+                              "cli-missing",
+                              "cli-incompatible",
+                              "auth",
+                              "quota",
+                              "transport"
+                            ]
+                          },
                           "ok": {
                             "type": "boolean"
                           },
@@ -14651,6 +14677,7 @@
                           }
                         },
                         "required": [
+                          "state",
                           "ok",
                           "authenticated",
                           "problems",

@@ -14,11 +14,14 @@ function ClaudePreflight({ item }: { item: HarnessPreflightItem }) {
         <ul aria-label="Claude model support" className="grid gap-1">
           {item.models.map((model) => (
             <li key={model.model}>
-              <code>{model.model}</code> <Badge tone="good">supported by adapter</Badge>
+              <code>{model.model}</code> <Badge tone="good">listed by adapter</Badge>
             </li>
           ))}
         </ul>
       ) : null}
+      <p>
+        Adapter model listings do not confirm account access. Preflight never starts a model turn.
+      </p>
     </div>
   );
 }
@@ -28,16 +31,29 @@ export function PreflightSection() {
   const query = usePreflight();
   return (
     <Card title="Harness preflight">
+      {query.isFetching ? <p role="status">Checking harness readiness.</p> : null}
+      {query.isError ? <p role="status">Harness readiness unknown. Retry preflight.</p> : null}
       <QueryState query={query} what="Preflight">
         {(items) => (
           <ul className="grid gap-2 text-sm">
             {items.map((p) => {
-              const ready = p.ok && p.authenticated;
+              const state = query.isFetching
+                ? 'checking'
+                : query.isError || query.fetchStatus === 'paused'
+                  ? 'unknown'
+                  : p.state;
+              const ready = state === 'ready';
               return (
                 <li key={p.harness}>
-                  <Badge tone={ready ? 'good' : 'bad'}>
-                    <Icon name={ready ? 'succeeded' : 'failed'} />
-                    {ready ? 'ready' : 'not ready'}
+                  <Badge
+                    tone={
+                      ready ? 'good' : state === 'checking' || state === 'unknown' ? 'warn' : 'bad'
+                    }
+                  >
+                    <Icon
+                      name={ready ? 'succeeded' : state === 'checking' ? 'running' : 'failed'}
+                    />
+                    {state}
                   </Badge>{' '}
                   <code>{p.harness}</code> {p.version ? `v${p.version}` : ''}
                   {p.problems.length > 0 ? (

@@ -65,6 +65,7 @@ describe('catalog field controls', () => {
       api.preflight = [
         {
           harness: 'claude',
+          state: state === 'not-ready' ? 'unknown' : state === 'signed-out' ? 'auth' : 'ready',
           ok: state !== 'not-ready',
           authenticated: state !== 'signed-out',
           problems: [],
@@ -99,7 +100,7 @@ describe('catalog field controls', () => {
           ? /Checking Claude model availability/
           : state === 'failed'
             ? /availability could not be checked/
-            : /CLI preflight is not ready/;
+            : /readiness is unknown|not signed in|missing|not ready/i;
       await waitFor(() => expect(model()).toHaveAccessibleDescription(notice));
       expect(effort()).toHaveValue('xhigh');
       expect(effort()).toHaveAttribute('aria-readonly', 'true');
@@ -129,6 +130,7 @@ describe('catalog field controls', () => {
       api.preflight = [
         {
           harness: 'claude',
+          state: 'ready',
           ok: true,
           authenticated: true,
           authMethod: 'claude.ai',
@@ -198,6 +200,7 @@ describe('catalog field controls', () => {
     api.preflight = [
       {
         harness: 'claude',
+        state: 'ready',
         ok: true,
         authenticated: true,
         authMethod: 'claude.ai',
@@ -251,6 +254,7 @@ describe('catalog field controls', () => {
     api.preflight = [
       {
         harness: 'claude',
+        state: 'ready',
         ok: true,
         authenticated: true,
         authMethod: 'claude.ai',
@@ -383,6 +387,7 @@ describe('catalog field controls', () => {
     api.catalog = [entry('alpha', true, 'claude')];
     api.preflight.push({
       harness: 'claude',
+      state: 'ready',
       ok: true,
       authenticated: true,
       problems: [],
@@ -571,6 +576,7 @@ describe('catalog field controls', () => {
       api.catalog = [entry('gpt-6-astra'), entry('claude-opus-5-5', true, 'claude')];
       api.preflight.push({
         harness: 'claude',
+        state: ready ? 'ready' : 'cli-incompatible',
         ok: ready,
         authenticated: true,
         problems: ready ? [] : ['Missing capability'],
@@ -606,7 +612,9 @@ describe('catalog field controls', () => {
           model: 'claude-opus-5-5',
         });
       } else {
-        expect(model()).toHaveAccessibleDescription(/CLI preflight is not ready/);
+        expect(model()).toHaveAccessibleDescription(
+          /readiness is unknown|not signed in|missing|not ready/i,
+        );
         expect(screen.getByRole('button', { name: 'Retry Claude preflight' })).toBeEnabled();
         expect(screen.getByRole('link', { name: 'Model catalog in Settings' })).toBeInTheDocument();
       }
@@ -624,6 +632,7 @@ describe('catalog field controls', () => {
     ];
     api.preflight.push({
       harness: 'claude',
+      state: 'ready',
       ok: true,
       authenticated: true,
       problems: [],
@@ -857,9 +866,10 @@ describe('catalog field controls', () => {
       },
     ];
     api.preflight = [
-      { harness: 'codex', ok: true, authenticated: true, problems: [] },
+      { harness: 'codex', state: 'ready', ok: true, authenticated: true, problems: [] },
       {
         harness: 'claude',
+        state: 'ready',
         ok: true,
         version: '2.1.285',
         authenticated: true,
@@ -922,6 +932,7 @@ describe('catalog field controls', () => {
     api.preflight = [
       {
         harness: 'claude',
+        state: 'unknown',
         ok: false,
         version: '2.1.285',
         authenticated: false,
@@ -946,7 +957,51 @@ describe('catalog field controls', () => {
       api,
     );
     await waitFor(() => expect(model()).toHaveAttribute('aria-readonly', 'true'));
-    expect(model()).toHaveAccessibleDescription(/Claude CLI preflight is not ready/);
+    expect(model()).toHaveAccessibleDescription(
+      /readiness is unknown|not signed in|missing|not ready/i,
+    );
     expect(within(model()).queryByRole('option', { name: /claude-opus-5-5/ })).toBeNull();
   });
+});
+
+it('keeps saved selection while cached lookup is pending or fails', async () => {
+  const api = new FakeApi();
+  api.catalog = [entry('alpha')];
+  const change = vi.fn();
+  const { queryClient } = renderWith(
+    <SchemaForm
+      schema={InferenceConfigSchema}
+      value={{ model: 'saved-model', prompt: { template: 'hi' } }}
+      label="Inference"
+      onChange={change}
+      controls={NODE_FIELD_CONTROLS}
+    />,
+    '/',
+    api,
+  );
+  await ready();
+  expect(model()).toHaveValue('saved-model');
+  let finish!: (response: Response) => void;
+  api.override(
+    'GET /model-catalog',
+    () =>
+      new Promise<Response>((resolve) => {
+        finish = resolve;
+      }),
+  );
+  let refresh!: Promise<void>;
+  act(() => {
+    refresh = queryClient.refetchQueries({ queryKey: keys.catalog });
+  });
+  await waitFor(() => expect(queryClient.isFetching({ queryKey: keys.catalog })).toBe(1));
+  await waitFor(() => expect(model()).toHaveAccessibleDescription(/checking model catalog/i));
+  expect(model()).toHaveValue('saved-model');
+  await act(async () => {
+    finish(problem(503, 'FAILED', 'Synthetic lookup failure'));
+    await refresh;
+  });
+  expect(model()).toHaveValue('saved-model');
+  await waitFor(() => expect(model()).toHaveAccessibleDescription(/model support is unknown/i));
+  expect(model()).not.toHaveAccessibleDescription(/not in the catalog/);
+  expect(change).not.toHaveBeenCalled();
 });

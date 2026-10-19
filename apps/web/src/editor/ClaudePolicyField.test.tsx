@@ -53,6 +53,7 @@ describe('Claude saved policy readiness', () => {
       api.preflight = [
         {
           harness: 'claude',
+          state: 'unknown',
           ok: state !== 'not-ready',
           authenticated: state !== 'signed-out',
           problems: [],
@@ -89,6 +90,7 @@ describe('Claude saved policy readiness', () => {
       api.preflight = [
         {
           harness: 'claude',
+          state: 'ready',
           ok: true,
           authenticated: true,
           problems: [],

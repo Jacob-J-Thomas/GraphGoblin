@@ -12,6 +12,7 @@ Decision routes and temporary boolean predicates use the Codex decider; structur
 interface HarnessPort {
   id: 'codex' | 'claude'; // LiteLLM is a recorded later adapter idea
   preflight(): Promise<{
+    state: HarnessReadinessState;
     ok: boolean;
     version?: string;
     authenticated: boolean;
@@ -57,6 +58,53 @@ type HarnessResult = {
 ```
 
 Adapters translate native events into this model. The engine never sees SDK types.
+
+## No-turn readiness (#179)
+
+Readiness describes CLI prerequisites, independently of catalog enablement. `ready` confirms
+version, required CLI flags and local login only; it never promises account access to a model.
+The `models` field lists adapter identities and efforts, even when the CLI is not ready.
+No probe sends a prompt, creates a session, or checks entitlement through inference.
+
+| State              | Meaning and next action                                                                                                                   |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `checking`         | A probe is pending. Wait for completion; cached success is not a fresh result.                                                            |
+| `unknown`          | Timeout, cancellation, malformed/unrecognized output or an unexpected probe failure. Check the CLI and retry; model support is undecided. |
+| `ready`            | Required CLI capabilities and local authentication passed; account model access remains untested.                                         |
+| `cli-missing`      | Executable not found. Install it or correct the configured binary path, then retry.                                                       |
+| `cli-incompatible` | Version or required CLI capability failed verification. Update the installed CLI and retry.                                               |
+| `auth`             | Authentication failed. Run `claude auth login` or `codex login`, then retry.                                                              |
+| `quota`            | Explicit allowance/rate-limit diagnostic. Check account allowance and retry when permitted; preserve the model.                           |
+| `transport`        | Explicit connection or temporary provider-service failure. Check connectivity/service status and retry; preserve the model.               |
+
+Only user-disabled models (`model-disabled`, issue `MODEL_DISABLED`) or identities removed from
+GraphGoblin support (`model-unsupported`, issue `MODEL_NOT_IN_CATALOG`) mean model unavailable.
+A failed catalog fetch is unknown, not removal. An effort or wrong-harness configuration error
+is reported separately. This change adds no retirement, substitution or usage-recovery behavior.
+
+Claude probes its configured executable (default `%USERPROFILE%\.local\bin\claude.exe`) in a
+fresh empty directory: version (minimum 2.1.285), help with the hidden `--max-turns` parser check,
+and local auth status. Help must advertise every launch flag, including `--model` and `--effort`.
+Codex probes the SDK-bundled CLI or `GG_CODEX_BINARY`: version (minimum SDK baseline 0.160.0),
+`exec --help`, `exec resume --help`, then `login status`, also in a fresh empty directory.
+The exec help must advertise `--json`, `--model`, `--sandbox`, `--cd`, `--skip-git-repo-check`,
+`--output-schema`, and `--config` (the SDK uses the latter for reasoning effort and policy).
+Each command has a 15-second deadline; neither command includes a prompt. Advertised flags
+establish syntax only; runtime verification still owns model/effort execution truth.
+
+Authoring routes pass an operation-owned memo through all validation passes. Each harness is
+probed once per create/import/save/validate/publish request, including failed probes and multiple
+nodes. Concurrent requests own separate memos; nothing is retained on the container or module.
+Readiness issues use `HARNESS_READINESS_<STATE>` (hyphens become underscores), allow saving a
+draft and block publication. Catalog/configuration issues retain their existing codes.
+`/harness/preflight` exposes `state`; harness checks in `/system/preflight` carry the same state
+alongside the system's `ok`/`warn`/`fail` severity. Web queries retain their existing two-second
+stale interval and focus refresh; an in-flight/error refresh displays checking/unknown.
+
+Process lifetime was measured with installed no-turn commands under the product runners on
+native Windows. No surviving new native process was observed in the recorded before/after
+listings; no orphan-process fix is prescribed. This bounded observation does not prove general
+turn or descendant lifetime. See the [WP-F1 evidence](qa/2026-10-19-wp-f1-readiness.md).
 
 ## Codex adapter for 1.0 (Decided)
 
@@ -114,7 +162,7 @@ Composition: `apps/api` builds the Codex adapters from the Codex entry of the ha
 | `turn.completed`                                                  | `usage` (`input_tokens`, `cached_input_tokens`, `output_tokens`, `reasoning_output_tokens`), then `turn-complete`                                                                                                                                                                                       |
 | `turn.failed`, thrown SDK error, stream ending without completion | `error { code, message, retriable }`, and `result` rejects with the same `code`                                                                                                                                                                                                                         |
 
-An `error` item, such as a configuration deprecation warning, is an ordinary item and never fails a turn. A top-level `error` event only counts if the turn then fails. Codes: `HARNESS_QUOTA_EXHAUSTED` (HTTP 429, usage limit, quota; retriable only for plain rate limits), `HARNESS_NOT_AUTHENTICATED` (401, 403, not logged in), `HARNESS_NOT_INSTALLED` (binary not found), and `HARNESS_TURN_FAILED` (everything else; retriable for 5xx and stream disconnects). The engine's `classifyHarnessError` maps the first two by substring.
+An `error` item, such as a configuration deprecation warning, is an ordinary item and never fails a turn. A top-level `error` event only counts if the turn then fails. Codes: `HARNESS_QUOTA_EXHAUSTED` (HTTP 429, usage limit, quota; retriable only for plain rate limits), `HARNESS_NOT_AUTHENTICATED` (401, 403, not logged in), `HARNESS_NOT_INSTALLED` (binary not found), `HARNESS_TRANSPORT_FAILED` (5xx and stream disconnects), and `HARNESS_TURN_FAILED` (other failures). The engine's `classifyHarnessError` maps the first two by substring.
 
 Inference `node.progress` uses a strict item variant for each normalized type (`message`, `reasoning`, `command`, `file-change`, `tool-call`, `search`, `error`, and `other`): each has an id, summary (max 2,000 chars), and only allowlisted fields. Commands include a required `status` (`ok`, `failed`, or `running`), optional bounded `commandPreview` (max `COMMAND_PREVIEW_MAX`, currently 160 chars), and optional integer `exitCode`. Other item types may include the normalized status when the SDK supplies one. Error summaries are replaced with a fixed label, tool-call diagnostics are omitted, and progress never includes `detail` or command output. Script progress is a separate strict shape: integer `exitCode`, `stderr` capped at 2,000 chars, and nonnegative integer `stdoutBytes`. Command items recorded before the strict progress contract, which have no status, appear after the offline upgrade as `other` items with their original id and summary, and the original event is kept in the upgrade audit.
 

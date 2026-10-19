@@ -419,6 +419,7 @@ export class FakeHarness implements HarnessPort {
   readonly resumed: { sessionId: string; request: HarnessStartRequest }[] = [];
   readonly cancelled: string[] = [];
   preflightResult: HarnessPreflight = {
+    state: 'ready',
     ok: true,
     version: 'fake',
     authenticated: true,

@@ -1,3 +1,4 @@
+import { readinessOperation, type ReadinessOperation } from '../readiness-operation.js';
 import { blocksPublication, rejectsDraftAdmission } from '../model-issues.js';
 import {
   LoopDefinitionSchema,
@@ -94,8 +95,9 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
     ownerId: string,
     def: LoopDefinition,
     selfId?: string,
+    readiness?: ReadinessOperation,
   ): Promise<LoopIssue[]> {
-    return loopPublicationIssues(container, ownerId, def, selfId);
+    return loopPublicationIssues(container, ownerId, def, selfId, readiness);
   }
 
   app.get(
@@ -129,7 +131,13 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       },
     },
     async (request, reply) => {
-      const admission = await publishIssues(request.auth.ownerId, request.body.definition);
+      const readiness = readinessOperation(container.ports.harnesses);
+      const admission = await publishIssues(
+        request.auth.ownerId,
+        request.body.definition,
+        undefined,
+        readiness,
+      );
       if (admission.some((issue) => rejectsDraftAdmission(request.body.definition, issue)))
         return problem(
           reply,
@@ -142,7 +150,12 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       reply.status(201);
       return {
         ...created,
-        issues: await publishIssues(request.auth.ownerId, request.body.definition, created.loop.id),
+        issues: await publishIssues(
+          request.auth.ownerId,
+          request.body.definition,
+          created.loop.id,
+          readiness,
+        ),
       };
     },
   );
@@ -204,7 +217,13 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
         notices = result.notices;
       }
       const imported = importLoop(input);
-      const admission = await publishIssues(request.auth.ownerId, imported.definition);
+      const readiness = readinessOperation(container.ports.harnesses);
+      const admission = await publishIssues(
+        request.auth.ownerId,
+        imported.definition,
+        undefined,
+        readiness,
+      );
       if (admission.some((issue) => rejectsDraftAdmission(imported.definition, issue)))
         return problem(
           reply,
@@ -221,6 +240,7 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
         request.auth.ownerId,
         imported.definition,
         created.loop.id,
+        readiness,
       );
       return { ...created, issues, notices };
     },
@@ -275,7 +295,13 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
     },
     async (request, reply) => {
       const loopId = request.params.id;
-      const admission = await publishIssues(request.auth.ownerId, request.body.definition, loopId);
+      const readiness = readinessOperation(container.ports.harnesses);
+      const admission = await publishIssues(
+        request.auth.ownerId,
+        request.body.definition,
+        loopId,
+        readiness,
+      );
       if (admission.some((issue) => rejectsDraftAdmission(request.body.definition, issue)))
         return problem(
           reply,
@@ -317,7 +343,12 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       return {
         draft: saved.draft,
         draftToken,
-        issues: await publishIssues(request.auth.ownerId, request.body.definition, loopId),
+        issues: await publishIssues(
+          request.auth.ownerId,
+          request.body.definition,
+          loopId,
+          readiness,
+        ),
       };
     },
   );
