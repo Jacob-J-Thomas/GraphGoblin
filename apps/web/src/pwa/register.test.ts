@@ -3,8 +3,15 @@ import { GraphGoblinApiError } from '@graphgoblin/api-client';
 import { QueryClient, QueryObserver } from '@tanstack/react-query';
 import { createAppClient } from '../api/context.js';
 import { startReachability, useReachability } from '../lib/reachability.js';
-import { registerPwa } from './register.js';
+import { registerPwa as registerPwaComponent, type RegisterPwaOptions } from './register.js';
 import { usePwaStore } from './store.js';
+
+const lifecycles: ReturnType<typeof registerPwaComponent>[] = [];
+function registerPwa(options: RegisterPwaOptions = {}) {
+  const lifecycle = registerPwaComponent(options);
+  lifecycles.push(lifecycle);
+  return lifecycle;
+}
 
 type Listener = (event: { isUpdate?: boolean }) => void;
 
@@ -33,10 +40,9 @@ function fakeWorkbox() {
 }
 
 afterEach(() => {
-  window.graphgoblinPwa?.dispose();
+  for (const lifecycle of lifecycles.splice(0)) lifecycle.dispose();
   usePwaStore.setState({ needRefresh: false, applyUpdate: undefined, offlineReady: false });
   useReachability.setState({ apiReachable: true });
-  delete window.graphgoblinPwa;
   vi.useRealTimers();
   vi.restoreAllMocks();
 });
@@ -347,13 +353,12 @@ describe('registerPwa', () => {
   it('prompts on a waiting worker and activates it only after confirmation', () => {
     const wb = fakeWorkbox();
     const reload = vi.fn();
-    const hook = registerPwa({
+    registerPwa({
       createWorkbox: () => wb as never,
       reload,
       serviceWorkerSupported: true,
     });
     expect(wb.register).toHaveBeenCalled();
-    expect(window.graphgoblinPwa).toBe(hook);
 
     wb.emit('activated', { isUpdate: false });
     expect(usePwaStore.getState().offlineReady).toBe(true);
@@ -364,20 +369,22 @@ describe('registerPwa', () => {
     expect(wb.messageSkipWaiting).not.toHaveBeenCalled();
     usePwaStore.getState().confirm();
     expect(wb.messageSkipWaiting).toHaveBeenCalledTimes(1);
-    expect(hook.appliedUpdates).toBe(1);
+    usePwaStore.getState().confirm();
+    expect(wb.messageSkipWaiting).toHaveBeenCalledTimes(1);
     expect(reload).not.toHaveBeenCalled();
     wb.emit('controlling');
     expect(reload).toHaveBeenCalledTimes(1);
   });
 
-  it('exposes a test hook that drives the same prompt, even without service workers', () => {
-    const hook = registerPwa({ serviceWorkerSupported: false });
-    hook.simulateUpdate();
-    expect(usePwaStore.getState().needRefresh).toBe(true);
+  it('does no worker work on unsupported browsers and disposes safely', () => {
+    const createWorkbox = vi.fn();
+    const lifecycle = registerPwa({ createWorkbox, serviceWorkerSupported: false });
+    expect(createWorkbox).not.toHaveBeenCalled();
+    expect(usePwaStore.getState().needRefresh).toBe(false);
+    lifecycle.dispose();
     usePwaStore.getState().confirm();
-    expect(hook.appliedUpdates).toBe(1);
     usePwaStore.getState().confirm();
-    expect(hook.appliedUpdates).toBe(1);
+    expect(createWorkbox).not.toHaveBeenCalled();
   });
 
   it('logs a failed registration', async () => {

@@ -1,14 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { denseGraph, routingInput, simpleLoop } from '../__fixtures__/routing.js';
 import { drawnPoints } from './manual-route.js';
-import {
-  createRoutingPlan,
-  describeRoute,
-  intersectsBox,
-  routeBackwardEdges,
-  type RoutingEdge,
-  type RoutingNode,
-} from './routing.js';
+import { createRoutingPlan, intersectsBox, type RoutingEdge, type RoutingNode } from './routing.js';
+
+const routesOf = (...args: Parameters<typeof createRoutingPlan>) =>
+  createRoutingPlan(...args).routes;
 
 /** simpleLoop's cards and edges: start, work, check, done in a row; done loops back to work. */
 function loop() {
@@ -147,10 +143,18 @@ describe('manual routes in the router (#44)', () => {
     const forward = createRoutingPlan(nodes, withRoute(edges, 'start-work', [240, 40, 270]));
     expect(forward.routes.get('start-work')).toMatchObject({ manual: true });
     expect(forward.directions.get('start-work')).toBe(false);
-    // The same description is available for any points.
-    const described = describeRoute(route.points, 'repeat', nodes);
-    expect(described).toMatchObject({ lane: route.lane, label: route.label, manual: true });
-    expect(describeRoute(route.points, 'repeat', [])).toMatchObject({ lane: route.lane });
+    // The live plan supplies the same lane, label and rounded manual geometry.
+    const isolated = createRoutingPlan(
+      nodes,
+      fixed.filter((edge) => edge.id === 'return'),
+    );
+    expect(isolated.routes.get('return')).toMatchObject({
+      lane: route.lane,
+      label: route.label,
+      manual: true,
+      radii: route.radii,
+    });
+    expect(createRoutingPlan([], fixed).routes.size).toBe(0);
   });
 
   it('keeps a fixed route attached when a card moves: stubs follow the port, segments stay', () => {
@@ -284,7 +288,7 @@ describe('manual routes in the router (#44)', () => {
   it('makes automatic routes reserve around a fixed route’s lanes and trunks', () => {
     const { nodes, edges } = loop();
     const twin: RoutingEdge = { ...edges.find((e) => e.id === 'return')!, id: 'twin' };
-    const automatic = routeBackwardEdges(nodes, [...edges, twin]).get('twin')!;
+    const automatic = routesOf(nodes, [...edges, twin]).get('twin')!;
     const lane = automatic.lane!;
     // Fix the original return exactly on the twin's automatic lane and trunks.
     const fixedRoute = [automatic.points[1]!.x, lane.y, automatic.points.at(-2)!.x];

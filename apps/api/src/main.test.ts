@@ -1,124 +1,202 @@
-import { randomUUID } from 'node:crypto';
-import { access, readFile, readdir, unlink } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:net';
-import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import * as appModule from './app.js';
-import * as containerModule from './container.js';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { main } from './main.js';
+import { openDatabase } from '@graphgoblin/infrastructure/sqlite';
+import { createApiProcessFixture, eventually, listening } from './testing/api-subprocess.js';
 
-let dataDir: string;
-let lockPath: string;
-let running: Awaited<ReturnType<typeof main>> | undefined;
-
-beforeEach(() => {
-  dataDir = join(tmpdir(), `gg-main-${randomUUID()}`);
-  lockPath = join(dataDir, 'graphgoblin.lock');
-  vi.stubEnv('GG_DATA_DIR', dataDir);
-  vi.stubEnv('GG_DB_URL', `file:${join(dataDir, 'graphgoblin.db').replace(/\\/g, '/')}`);
-  vi.stubEnv('GG_HOST', '127.0.0.1');
-  vi.stubEnv('GG_PORT', '0');
-  vi.stubEnv('GG_LOG_LEVEL', 'silent');
-  vi.stubEnv('GG_WEB_DIST', '');
-  vi.stubEnv('GG_SWAGGER_UI', 'false');
-  vi.stubEnv('GG_MASTER_KEY', Buffer.alloc(32, 8).toString('base64'));
-});
-
+const fixtures: Awaited<ReturnType<typeof createApiProcessFixture>>[] = [];
+async function fixture() {
+  const created = await createApiProcessFixture();
+  fixtures.push(created);
+  return created;
+}
 afterEach(async () => {
-  await running?.app.close();
-  await running?.container.stop();
-  running = undefined;
-  vi.restoreAllMocks();
-  vi.unstubAllEnvs();
-  // Remove only test-created files, leaving the temporary directory intact.
-  for (const file of await readdir(dataDir).catch(() => [] as string[])) {
-    await unlink(join(dataDir, file)).catch(() => undefined);
-  }
+  for (const created of fixtures.splice(0)) await created.dispose();
 });
+const noLock = (path: string) => expect(access(path)).rejects.toMatchObject({ code: 'ENOENT' });
 
-describe('API process lifecycle', () => {
-  it('holds ownership while listening, refuses another start, and releases on clean HTTP close', async () => {
-    running = await main();
-    const original = await readFile(lockPath, 'utf8');
-    await expect(main()).rejects.toThrow(`another GraphGoblin process holds ${lockPath}`);
-    expect(await readFile(lockPath, 'utf8')).toBe(original);
-    expect((await running.app.inject('/healthz')).statusCode).toBe(200);
-    await running.app.close();
-    await expect(access(lockPath)).rejects.toMatchObject({ code: 'ENOENT' });
-  });
+// Node force-kills children on Windows for SIGINT/SIGTERM; JS handlers never run there.
+// Linux CI supplies the native signal evidence. No captured callbacks or stubbed process.exit.
+const nativeSignals = describe.skipIf(process.platform === 'win32');
 
-  it('stops the container and releases ownership if HTTP setup fails', async () => {
-    vi.spyOn(appModule, 'buildApp').mockRejectedValueOnce(new Error('HTTP setup failed'));
-    await expect(main()).rejects.toThrow('HTTP setup failed');
-    await expect(access(lockPath)).rejects.toMatchObject({ code: 'ENOENT' });
-  });
-
-  it('releases ownership if the port is occupied', async () => {
-    const server = createServer();
-    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
-    const address = server.address();
-    if (!address || typeof address === 'string') throw new Error('missing test port');
-    vi.stubEnv('GG_PORT', String(address.port));
+describe('built API entry and startup failures', () => {
+  it('holds ownership while listening and releases it on supported HTTP close', async () => {
+    const f = await fixture();
+    for (const name of Object.keys(process.env))
+      if (name.toUpperCase().startsWith('GG_')) vi.stubEnv(name, undefined);
+    for (const [name, value] of Object.entries(f.env))
+      if (name.toUpperCase().startsWith('GG_')) vi.stubEnv(name, value);
+    let running: Awaited<ReturnType<typeof main>> | undefined;
     try {
-      await expect(main()).rejects.toMatchObject({ code: 'EADDRINUSE' });
-      await expect(access(lockPath)).rejects.toMatchObject({ code: 'ENOENT' });
+      running = await main();
+      const lock = await readFile(f.lockPath, 'utf8');
+      await expect(main()).rejects.toThrow('another GraphGoblin process holds');
+      expect(await readFile(f.lockPath, 'utf8')).toBe(lock);
+      expect((await running.app.inject('/healthz')).statusCode).toBe(200);
+      await running.app.close();
+      await noLock(f.lockPath);
+      expect(await listening(f.port)).toBe(false);
     } finally {
-      await new Promise<void>((resolve, reject) =>
-        server.close((error) => (error ? reject(error) : resolve())),
-      );
+      await running?.app.close();
+      await running?.container.stop();
+      vi.unstubAllEnvs();
     }
   });
 
-  it.each(['SIGINT', 'SIGTERM'] as const)(
-    'releases ownership before exiting on %s',
-    async (signal) => {
-      const previous = new Set(process.listeners(signal));
-      const exit = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
-      running = await main();
-      const listener = process.listeners(signal).find((candidate) => !previous.has(candidate));
-      expect(listener).toBeDefined();
-      listener!(signal);
-      listener!(signal); // Repeated signals still perform one shutdown.
-      await vi.waitFor(() => expect(exit).toHaveBeenCalledExactlyOnceWith(0));
-      await expect(access(lockPath)).rejects.toMatchObject({ code: 'ENOENT' });
-      expect(process.listeners(signal)).not.toContain(listener);
+  it('serves authenticated requests using a binary-created key and refuses a competing process', async () => {
+    const f = await fixture();
+    const token = await f.createKey();
+    const child = f.run();
+    try {
+      await f.ready(child, token);
+      const lock = await readFile(f.lockPath, 'utf8');
+      const contender = f.run();
+      expect(await contender.waitForExit()).toEqual({ code: 1, signal: null });
+      expect(contender.stderr).toContain('another GraphGoblin process holds');
+      expect(await readFile(f.lockPath, 'utf8')).toBe(lock);
+    } finally {
+      // Cross-platform forced fixture cleanup; graceful shutdown is asserted only below on POSIX.
+      await child.dispose();
+    }
+    expect(await listening(f.port)).toBe(false);
+  }, 60_000);
+
+  it('dispatches the API-key and preflight CLIs with their real exit codes', async () => {
+    const f = await fixture();
+    const token = await f.createKey();
+    expect(token).toMatch(/^gg_/);
+    await noLock(f.lockPath);
+    const usage = f.run(['--create-api-key']);
+    expect(await usage.waitForExit()).toEqual({ code: 2, signal: null });
+    expect(usage.stderr).toContain('a key name is required');
+    const invalidKeyConfig = f.run(['--create-api-key', 'invalid config'], { GG_PORT: 'invalid' });
+    expect(await invalidKeyConfig.waitForExit()).toEqual({ code: 1, signal: null });
+    // Preflight wins dispatch even if the other command is present. Invalid config also ensures
+    // this fixture performs no installed-provider readiness probe or session.
+    const preflight = f.run(['--preflight', '--create-api-key'], { GG_PORT: 'invalid' });
+    expect(await preflight.waitForExit()).toEqual({ code: 1, signal: null });
+    expect(preflight.stdout).toContain('GraphGoblin preflight');
+    expect(preflight.stdout).toContain('FAIL');
+    expect(preflight.stderr).not.toContain('a key name is required');
+    expect(await listening(f.port)).toBe(false);
+    expect(await f.entryCoverage()).not.toEqual([]);
+  }, 60_000);
+
+  it('releases ownership on a real corrupt-database startup fault before HTTP setup', async () => {
+    const f = await fixture();
+    await f.createKey();
+    // A fresh file has no WAL that could legitimately restore a damaged main-file header.
+    const corrupt = join(f.dataDir, 'corrupt.db');
+    await writeFile(corrupt, 'This is deliberately not a SQLite database');
+    const child = f.run([], { GG_DB_URL: `file:${corrupt.replaceAll('\\', '/')}` });
+    expect(await child.waitForExit()).toEqual({ code: 1, signal: null });
+    expect(child.stderr).toMatch(/not a database|SQLITE_NOTADB/i);
+    expect(child.stdout).not.toContain('GraphGoblin API listening');
+    await noLock(f.lockPath);
+    expect(await listening(f.port)).toBe(false);
+  }, 60_000);
+
+  it('releases ownership after a real occupied-port listen failure', async () => {
+    const f = await fixture();
+    await f.createKey();
+    const server = createServer();
+    await new Promise<void>((resolve) => server.listen(f.port, '127.0.0.1', resolve));
+    try {
+      const child = f.run();
+      expect(await child.waitForExit()).toEqual({ code: 1, signal: null });
+      expect(child.stderr).toContain('EADDRINUSE');
+      await noLock(f.lockPath);
+    } finally {
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
+    expect(await listening(f.port)).toBe(false);
+  }, 60_000);
+
+  // POSIX permits a literal '*' asset name; Win32 rejects it. Static registration then collides
+  // with the SPA wildcard, producing a real post-container buildApp failure, unlike corrupt SQL.
+  it.skipIf(process.platform === 'win32')(
+    'releases ownership when real static route registration fails during HTTP setup (POSIX filename fixture)',
+    async () => {
+      const f = await fixture();
+      await f.createKey();
+      const web = join(f.dataDir, 'web');
+      await mkdir(web);
+      await writeFile(join(web, 'index.html'), '<html>fixture</html>');
+      await writeFile(join(web, '*'), 'literal wildcard asset');
+      const child = f.run([], { GG_WEB_DIST: web });
+      expect(await child.waitForExit()).toEqual({ code: 1, signal: null });
+      expect(child.stderr).toMatch(/FST_ERR_DUPLICATED_ROUTE|already declared/);
+      expect(child.stdout).not.toContain('GraphGoblin API listening');
+      await noLock(f.lockPath);
+      expect(await listening(f.port)).toBe(false);
     },
   );
-
-  it('keeps ownership during startup when SIGINT arrives', async () => {
-    const previous = new Set(process.listeners('SIGINT'));
-    const exit = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
-    let resume!: () => void;
-    const gate = new Promise<void>((resolve) => {
-      resume = resolve;
-    });
-    const create = containerModule.createContainer;
-    vi.spyOn(containerModule, 'createContainer').mockImplementationOnce(
-      async (config, overrides) => {
-        const container = await create(config, overrides);
-        const start = container.start;
-        vi.spyOn(container, 'start').mockImplementationOnce(async () => {
-          await gate;
-          await start();
-        });
-        return container;
-      },
-    );
-    const starting = main();
-    try {
-      await vi.waitFor(async () => {
-        await access(lockPath);
-      });
-      const listener = process.listeners('SIGINT').find((candidate) => !previous.has(candidate));
-      listener!('SIGINT');
-      expect(exit).not.toHaveBeenCalled();
-      await expect(access(lockPath)).resolves.toBeUndefined();
-    } finally {
-      resume();
-      running = await starting;
-    }
-    await vi.waitFor(() => expect(exit).toHaveBeenCalledExactlyOnceWith(0));
-    await expect(access(lockPath)).rejects.toMatchObject({ code: 'ENOENT' });
-  });
 });
+
+nativeSignals(
+  'native API shutdown: Linux CI; win32 force-kills children without JS handlers',
+  () => {
+    it.each(['SIGINT', 'SIGTERM'] as const)(
+      'closes its listener, releases ownership and exits once on %s',
+      async (signal) => {
+        const f = await fixture();
+        const token = await f.createKey();
+        const child = f.run();
+        await f.ready(child, token);
+        const lock = await readFile(f.lockPath, 'utf8');
+        const contender = f.run();
+        expect(await contender.waitForExit()).toEqual({ code: 1, signal: null });
+        expect(contender.stderr).toContain('another GraphGoblin process holds');
+        expect(await readFile(f.lockPath, 'utf8')).toBe(lock);
+        expect(child.child.kill(signal)).toBe(true);
+        expect(await child.waitForExit()).toEqual({ code: 0, signal: null });
+        expect(child.stdout.match(/"msg":"shutting down"/g)).toHaveLength(1);
+        await noLock(f.lockPath);
+        expect(await listening(f.port)).toBe(false);
+      },
+      60_000,
+    );
+
+    it('holds ownership when both real signals arrive during externally locked startup, then shuts down once', async () => {
+      const f = await fixture();
+      await f.createKey();
+      // Keep native signal dispatch asynchronous while startup still awaits its supported key file.
+      const keyFile = join(f.dataDir, 'master.key');
+      await promisify(execFile)('mkfifo', [keyFile]);
+      const holder = openDatabase({ url: f.env.GG_DB_URL! });
+      await holder.client.execute('PRAGMA journal_mode=WAL');
+      await holder.client.execute('BEGIN IMMEDIATE');
+      let locked = true;
+      const child = f.run([], { GG_MASTER_KEY: undefined });
+      try {
+        await eventually(async () => {
+          try {
+            return (await readFile(f.lockPath, 'utf8')).length > 0;
+          } catch {
+            return false;
+          }
+        });
+        const lock = await readFile(f.lockPath, 'utf8');
+        expect(child.child.kill('SIGINT')).toBe(true);
+        await child.waitForLog('shutting down');
+        expect(child.child.kill('SIGTERM')).toBe(true);
+        expect(child.exited).toBe(false);
+        expect(await readFile(f.lockPath, 'utf8')).toBe(lock);
+        await writeFile(keyFile, Buffer.alloc(32, 8).toString('base64'));
+        await holder.client.execute('ROLLBACK');
+        locked = false;
+        expect(await child.waitForExit()).toEqual({ code: 0, signal: null });
+        expect(child.stdout.match(/"msg":"shutting down"/g)).toHaveLength(1);
+        await noLock(f.lockPath);
+        expect(await listening(f.port)).toBe(false);
+      } finally {
+        if (locked) await holder.client.execute('ROLLBACK');
+        holder.close();
+      }
+    }, 60_000);
+  },
+);

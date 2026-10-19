@@ -18,13 +18,13 @@ import {
   FakeScripts,
 } from '@graphgoblin/engine/testing';
 import { AdmissionConflictError, parseRunAdmission, RunManager } from '@graphgoblin/engine';
-import { SqliteSecrets } from '@graphgoblin/infrastructure/sqlite';
 import { signPayload, signRawBody } from '@graphgoblin/infrastructure/http';
 import { buildApp } from './app.js';
 import { loadConfig } from './config.js';
 import { createContainer, type Container } from './container.js';
 import { createTestApp, type TestApp } from './testing/test-app.js';
 import { FixedWindowRateLimiter } from './triggers/rate-limit.js';
+import { PollTriggers } from './triggers/poll.js';
 import { MAX_EVENT_CHAIN } from './triggers/trigger-service.js';
 
 let t: TestApp;
@@ -1733,11 +1733,30 @@ describe('body signing and durable admission', () => {
       gate = new Promise<void>((resolve) => {
         release = resolve;
       });
-    const receive = t.container.manager.receiveWebhook.bind(t.container.manager);
-    vi.spyOn(t.container.manager, 'receiveWebhook').mockImplementationOnce(async (...args) => {
+    // Controlled race at the exposed admission collaborator, after authentication.
+    let authenticatedClaimId = '';
+    const claim = t.container.ports.admission.claim.bind(t.container.ports.admission);
+    vi.spyOn(t.container.ports.admission, 'claim').mockImplementationOnce(async (...args) => {
+      authenticatedClaimId = args[0].id;
       entered();
       await gate;
-      return receive(...args);
+      return claim(...args);
+    });
+    // A second public engine/poll component shares the real admission port. One manager's
+    // pin mutex deliberately serializes poll admission behind a held claim; separate component
+    // callers let storage see this interleaving without patching the webhook execution chain.
+    const competingManager = new RunManager(t.container.ports, t.container.settings);
+    await competingManager.start();
+    const polls = new PollTriggers({
+      probes: t.container.ports.probes,
+      scripts: t.container.ports.scripts,
+      manager: competingManager,
+      clock: t.clock,
+      logger: t.logger,
+      scriptCwd: t.dataDir,
+      hasDedupe: (loop, node, key) => t.container.repos.runs.hasTriggerDedupe(loop, node, key),
+      findSeen: (loop, node, keys) =>
+        t.container.repos.runs.findTriggerDedupeKeys(loop, node, keys),
     });
     const delivery = bodyDelivery(path, '{"key":"same"}');
     try {
@@ -1764,18 +1783,30 @@ describe('body signing and durable admission', () => {
         timedOut: false,
         stdoutOverflow: false,
       });
+      const loop = await t.container.repos.loops.getLoop(id);
+      const version = await t.container.repos.loops.getLatestPublished(id);
+      if (!loop || !version) throw new Error('missing current poll fixture');
+      polls.arm(loop, version);
       t.clock.advance(5000);
-      expect(await t.container.polls.poll()).toHaveLength(1);
+      const polled = await polls.poll();
+      expect(polled).toHaveLength(1);
       release();
       const response = await delivery;
       expect(response.statusCode).toBe(202);
       expect(response.json()).toMatchObject({ accepted: true });
       await t.idle();
-      expect(await runsOf(id)).toHaveLength(1);
+      await competingManager.waitForIdle();
+      expect((await runsOf(id)).map((run) => run.id)).toEqual([polled[0]!.id]);
+      expect((await t.container.ports.admission.get(authenticatedClaimId))?.status).toBe(
+        'deduplicated',
+      );
       expect(await t.container.ports.admission.hasPendingPin(id)).toBe(false);
     } finally {
       release();
       await delivery;
+      await competingManager.waitForIdle();
+      competingManager.stop();
+      polls.stop();
     }
   });
   it('does not activate business dedupe for generated signature hints', async () => {
@@ -2150,7 +2181,7 @@ describe('general webhook configuration and unsigned intake', () => {
     'admits unsigned $body.type through saved intent, queued metadata and recovery',
     async (config) => {
       const { id, path } = await setup({ body: config.body, eventType: config.eventType });
-      const resolve = vi.spyOn(SqliteSecrets.prototype, 'resolve');
+      const resolve = vi.spyOn(t.container.ports.secrets, 'resolve');
       vi.spyOn(t.container.ports.admission, 'create').mockRejectedValueOnce(new Error('transient'));
       const bus = vi.spyOn(t.container.bus, 'publish');
       const response = await post(path, config.raw, { 'x-event': 'order.created' });

@@ -97,3 +97,33 @@ It prints a `PERF { ... }` JSON summary. Baseline on the development machine (Wi
 | SSE live tail of a run started as the client connects                | first event 20 ms, all 1,011 events and stream end 747 ms (the run's own duration)         |
 
 Finding fixed while measuring: libsql's local client does its work in native code and settles its promises without returning to the event loop, so a run appending events back to back starved every socket and timer. Before the fix the live tail's first event arrived after 755 ms, at the end of the run, and a 5 ms interval timer fired 3 times in an 800 ms run. The serialised database client (`packages/infrastructure/src/sqlite/db.ts`) now yields with `setImmediate` before a statement whenever 10 ms have passed since its last yield; throughput is unchanged. Appends cost about 0.7 ms each (one transaction per event: max `seq`, insert, update `last_event_seq`), which is far above what a real harness streams; batching appends is the lever if that ever matters.
+
+## Disposable API process lifecycle (#317)
+
+`apps/api/src/main.test.ts` uses `src/testing/api-subprocess.ts` against the built
+`apps/api/dist/main.js`. Run `pnpm build` first. Each fixture owns a temporary
+`gg-api-process-*` directory and a free loopback port from 5600 to 5699, clears
+inherited `GG_*` configuration, and creates its API key through the binary. CLI
+exit codes and V8 entry coverage, corrupt SQLite refusal, occupied-port cleanup,
+and Linux native signal shutdown are distinct evidence. The corrupt database
+fails before HTTP setup; a literal `*` static asset supplies a separate real
+post-container route-registration fault on POSIX.
+
+Signal cases explicitly skip win32: Node force-kills children on SIGINT/SIGTERM
+there and does not execute JavaScript handlers. The literal wildcard asset also
+skips win32 because Windows rejects that filename. CI on `ubuntu-latest` supplies
+those native cases; captured process callbacks establish none of these claims.
+Child V8 reports stay separate from Vitest package coverage; the helper remains
+in the normal source denominator, with no exclusion or threshold adjustment.
+An external SQLite writer gates startup for the ownership-ordering test. A POSIX
+FIFO at the supported master-key file path keeps startup asynchronously pending
+while both signals are handled: native SQLite busy waits alone can block the JS
+event loop. The fixture uses Ubuntu coreutils `mkfifo`; it changes no production
+shutdown grace period or timeout.
+The harness proves listener closure, lock release, one shutdown and exit codes;
+#224 extends drain/force behavior later. Forced child termination in fixture
+cleanup is never counted as graceful shutdown evidence.
+
+Disposable process directories (including raw V8 coverage) and uniquely named
+`gg-publish-*.db` interleaving fixtures are retained for orchestrator cleanup after
+worker exit. No owner process, store, or port is used.

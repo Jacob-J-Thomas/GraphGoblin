@@ -1,3 +1,4 @@
+import { observeSkipWaiting, showWaitingWorker } from './pwa-helpers.js';
 import { approvalLoop, control, expect, publishLoop, showLoopPanel, test } from './fixtures.js';
 
 declare global {
@@ -193,6 +194,7 @@ test('an open window detects a changed worker on focus, prompts, and updates onl
   request,
 }) => {
   test.setTimeout(100_000);
+  const messages = await observeSkipWaiting(page);
   await page.addInitScript(() => {
     const stats = (window.pwaChecks = { calls: 0, found: 0, pending: 0, activity: Date.now() });
     const watched = new WeakSet<ServiceWorkerRegistration>();
@@ -265,7 +267,7 @@ test('an open window detects a changed worker on focus, prompts, and updates onl
     expect(await page.evaluate(() => navigator.serviceWorker.controller?.scriptURL)).toBe(
       initialWorker,
     );
-    expect(await page.evaluate(() => window.graphgoblinPwa?.appliedUpdates)).toBe(0);
+    expect(messages).toHaveLength(0);
     expect(
       await page.evaluate(async () =>
         Boolean((await navigator.serviceWorker.getRegistration('/app/'))?.waiting),
@@ -283,7 +285,7 @@ test('an open window detects a changed worker on focus, prompts, and updates onl
     expect(await page.evaluate(() => window.pwaChecks.calls)).toBe(baseline.calls + 2);
     expect(await page.evaluate(() => window.pwaChecks.found)).toBe(baseline.found + 2);
     expect(navigation).toHaveLength(0);
-    expect(await page.evaluate(() => window.graphgoblinPwa?.appliedUpdates)).toBe(0);
+    expect(messages).toHaveLength(0);
 
     await toast.getByRole('button', { name: 'Later' }).click();
     // The previous external update makes Workbox detach its own updatefound listener.
@@ -298,6 +300,7 @@ test('an open window detects a changed worker on focus, prompts, and updates onl
     // Fresh registration sees the existing waiting worker immediately, without a second interaction.
     await page.reload();
     await expect(toast).toBeVisible();
+    const beforeConfirm = navigation.length;
     const reloaded = page.waitForEvent('framenavigated', (frame) => frame === page.mainFrame());
     await toast.getByRole('button', { name: 'Update', exact: true }).click();
     await reloaded;
@@ -310,12 +313,19 @@ test('an open window detects a changed worker on focus, prompts, and updates onl
         ),
       )
       .toBe(true);
+    await expect.poll(() => messages.length).toBe(1);
+    expect(messages).toEqual([{ type: 'SKIP_WAITING' }]);
+    expect(navigation).toHaveLength(beforeConfirm + 1);
   } finally {
     await control(request, '/worker/reset');
   }
 });
 
-test('registers the service worker and asks before applying an update', async ({ page }) => {
+test('registers the service worker and asks before applying an update', async ({
+  page,
+  request,
+}) => {
+  const messages = await observeSkipWaiting(page);
   await page.goto('/app/');
   await expect(page.getByRole('heading', { name: 'Loops' })).toBeVisible();
 
@@ -336,14 +346,31 @@ test('registers the service worker and asks before applying an update', async ({
   for (const icon of body.icons)
     expect((await page.request.get(`/app/${icon.src}`)).ok()).toBe(true);
 
-  // A new worker is waiting: the toast appears and nothing activates until the user confirms.
-  await page.evaluate(() => window.graphgoblinPwa?.simulateUpdate());
-  const toast = page.getByRole('status').filter({ hasText: 'A new version is available' });
-  await expect(toast).toBeVisible();
-  expect(await page.evaluate(() => window.graphgoblinPwa?.appliedUpdates)).toBe(0);
-  await toast.getByRole('button', { name: 'Update' }).click();
-  await expect(toast).toBeHidden();
-  expect(await page.evaluate(() => window.graphgoblinPwa?.appliedUpdates)).toBe(1);
+  try {
+    const toast = await showWaitingWorker(page, request);
+    expect(messages).toHaveLength(0);
+    const navigation: string[] = [];
+    page.on('framenavigated', (frame) => {
+      if (frame === page.mainFrame()) navigation.push(frame.url());
+    });
+    const reloaded = page.waitForEvent('framenavigated', (frame) => frame === page.mainFrame());
+    await toast.getByRole('button', { name: 'Update', exact: true }).click();
+    await reloaded;
+    await expect(page.getByRole('heading', { name: 'Loops', exact: true })).toBeVisible();
+    await expect(toast).toBeHidden();
+    await expect
+      .poll(() =>
+        page.evaluate(
+          async () => (await navigator.serviceWorker.getRegistration('/app/'))?.waiting === null,
+        ),
+      )
+      .toBe(true);
+    await expect.poll(() => messages.length).toBe(1);
+    expect(messages).toEqual([{ type: 'SKIP_WAITING' }]);
+    expect(navigation).toHaveLength(1);
+  } finally {
+    await control(request, '/worker/reset');
+  }
 });
 
 test('cold offline Loops reload recovers on reconnect without navigating', async ({
