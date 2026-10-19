@@ -102,6 +102,7 @@ function inputs() {
       name: 'Contract',
       label: 'Contract v1',
       defaults: NO_DEFAULTS,
+      classifiers: {},
     },
     invocationId: ids.next(),
     status: 'queued',
@@ -185,7 +186,7 @@ function draftStart(): ReturnType<typeof inputs> & { snapshot: LoopVersionRecord
     createdAt: now,
   };
   const snapshot = freezeDraft(draft, ids.next(), now);
-  const pin = pinnedFields(snapshot, NO_DEFAULTS);
+  const pin = pinnedFields(snapshot, { defaults: NO_DEFAULTS, classifiers: {} });
   repin(intent, pin.versionId);
   intent.run.pinned = pin.pinned;
   intent.queued.pinned = pin.pinned;

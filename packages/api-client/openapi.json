@@ -4508,6 +4508,59 @@
                   "process"
                 ],
                 "additionalProperties": false
+              },
+              "classifiers": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9_.-]{0,63}$"
+                },
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "provider": {
+                      "type": "string",
+                      "enum": [
+                        "typesafe",
+                        "http"
+                      ]
+                    },
+                    "providerModel": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 256
+                    },
+                    "primitives": {
+                      "minItems": 1,
+                      "maxItems": 3,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "choice",
+                          "noul",
+                          "score"
+                        ]
+                      }
+                    },
+                    "endpoint": {
+                      "type": "string",
+                      "maxLength": 4096,
+                      "format": "uri"
+                    },
+                    "secretRef": {
+                      "type": "string",
+                      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$"
+                    }
+                  },
+                  "required": [
+                    "provider",
+                    "providerModel",
+                    "primitives",
+                    "endpoint"
+                  ],
+                  "additionalProperties": false
+                }
               }
             },
             "required": [
@@ -4515,7 +4568,8 @@
               "version",
               "name",
               "label",
-              "defaults"
+              "defaults",
+              "classifiers"
             ],
             "additionalProperties": false
           },
@@ -4740,6 +4794,59 @@
                       "process"
                     ],
                     "additionalProperties": false
+                  },
+                  "classifiers": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_.-]{0,63}$"
+                    },
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "provider": {
+                          "type": "string",
+                          "enum": [
+                            "typesafe",
+                            "http"
+                          ]
+                        },
+                        "providerModel": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 256
+                        },
+                        "primitives": {
+                          "minItems": 1,
+                          "maxItems": 3,
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": [
+                              "choice",
+                              "noul",
+                              "score"
+                            ]
+                          }
+                        },
+                        "endpoint": {
+                          "type": "string",
+                          "maxLength": 4096,
+                          "format": "uri"
+                        },
+                        "secretRef": {
+                          "type": "string",
+                          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$"
+                        }
+                      },
+                      "required": [
+                        "provider",
+                        "providerModel",
+                        "primitives",
+                        "endpoint"
+                      ],
+                      "additionalProperties": false
+                    }
                   }
                 },
                 "required": [
@@ -4747,7 +4854,8 @@
                   "version",
                   "name",
                   "label",
-                  "defaults"
+                  "defaults",
+                  "classifiers"
                 ],
                 "additionalProperties": false
               },
@@ -12005,6 +12113,59 @@
                   "process"
                 ],
                 "additionalProperties": false
+              },
+              "classifiers": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9_.-]{0,63}$"
+                },
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "provider": {
+                      "type": "string",
+                      "enum": [
+                        "typesafe",
+                        "http"
+                      ]
+                    },
+                    "providerModel": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 256
+                    },
+                    "primitives": {
+                      "minItems": 1,
+                      "maxItems": 3,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "choice",
+                          "noul",
+                          "score"
+                        ]
+                      }
+                    },
+                    "endpoint": {
+                      "type": "string",
+                      "maxLength": 4096,
+                      "format": "uri"
+                    },
+                    "secretRef": {
+                      "type": "string",
+                      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$"
+                    }
+                  },
+                  "required": [
+                    "provider",
+                    "providerModel",
+                    "primitives",
+                    "endpoint"
+                  ],
+                  "additionalProperties": false
+                }
               }
             },
             "required": [
@@ -12012,7 +12173,8 @@
               "version",
               "name",
               "label",
-              "defaults"
+              "defaults",
+              "classifiers"
             ],
             "additionalProperties": false
           },
@@ -12243,6 +12405,59 @@
                       "process"
                     ],
                     "additionalProperties": false
+                  },
+                  "classifiers": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_.-]{0,63}$"
+                    },
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "provider": {
+                          "type": "string",
+                          "enum": [
+                            "typesafe",
+                            "http"
+                          ]
+                        },
+                        "providerModel": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 256
+                        },
+                        "primitives": {
+                          "minItems": 1,
+                          "maxItems": 3,
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": [
+                              "choice",
+                              "noul",
+                              "score"
+                            ]
+                          }
+                        },
+                        "endpoint": {
+                          "type": "string",
+                          "maxLength": 4096,
+                          "format": "uri"
+                        },
+                        "secretRef": {
+                          "type": "string",
+                          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$"
+                        }
+                      },
+                      "required": [
+                        "provider",
+                        "providerModel",
+                        "primitives",
+                        "endpoint"
+                      ],
+                      "additionalProperties": false
+                    }
                   }
                 },
                 "required": [
@@ -12250,7 +12465,8 @@
                   "version",
                   "name",
                   "label",
-                  "defaults"
+                  "defaults",
+                  "classifiers"
                 ],
                 "additionalProperties": false
               },

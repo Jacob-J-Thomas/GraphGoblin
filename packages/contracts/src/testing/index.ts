@@ -68,6 +68,7 @@ export function samplePin(overrides: Partial<RunPin> = {}): RunPin {
     name: 'Minimal',
     label: 'Minimal v1',
     defaults: { owner: { byHarness: {} }, process: { byHarness: {} } },
+    classifiers: {},
     ...overrides,
   };
 }

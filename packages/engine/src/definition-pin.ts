@@ -1,11 +1,17 @@
-import type { LoopVersionRecord, PinnedDefaults, RunPin, RunRecord } from '@graphgoblin/contracts';
+import type { LoopDefinition, LoopVersionRecord, RunPin, RunRecord } from '@graphgoblin/contracts';
+import { nodesOfKind } from '@graphgoblin/domain';
+import type { ClassifierRegistryPort } from './ports.js';
 
 /**
  * Run definition pins (ADR-0041). Every run executes one immutable definition record for its whole
  * life, through waits, wakes, resume, replay forks and process restart: a published version, or a
  * snapshot of the draft frozen when the run was created. The engine reads the definition only
- * through the run's `versionId`, and the inherited model defaults only from `run.pinned`.
+ * through the run's `versionId`, and the inherited model defaults and classifier bindings only from
+ * `run.pinned`.
  */
+
+/** What a start pins besides the definition record: inherited defaults and classifier bindings. */
+export type PinnedSelections = Pick<RunPin, 'defaults' | 'classifiers'>;
 
 /** `<name> v<n>` for a published version, `<name> draft v<n>` for a draft snapshot. */
 export function pinLabel(source: RunPin['source'], name: string, version: number): string {
@@ -13,7 +19,7 @@ export function pinLabel(source: RunPin['source'], name: string, version: number
 }
 
 /** The pin of a run that executes `record` (a published version or a draft snapshot). */
-export function pinOf(record: LoopVersionRecord, defaults: PinnedDefaults): RunPin {
+export function pinOf(record: LoopVersionRecord, selections: PinnedSelections): RunPin {
   const source = record.status === 'published' ? 'published' : 'draft';
   const { name } = record.definition;
   return {
@@ -21,8 +27,34 @@ export function pinOf(record: LoopVersionRecord, defaults: PinnedDefaults): RunP
     version: record.version,
     name,
     label: pinLabel(source, name, record.version),
-    defaults,
+    defaults: selections.defaults,
+    classifiers: selections.classifiers,
   };
+}
+
+/**
+ * The classifier bindings a run of `def` pins: one per catalog id its decisions reference. An id the
+ * parent already pinned keeps the parent's binding, so one run tree calls one classifier
+ * configuration; any other id is bound to the catalog entry as it is now, and an id with no entry
+ * stays unbound (its decision then fails explicitly).
+ */
+export async function bindClassifiers(
+  def: LoopDefinition,
+  ownerId: string,
+  registry: Pick<ClassifierRegistryPort, 'bind'>,
+  inherited: RunPin['classifiers'] = {},
+): Promise<RunPin['classifiers']> {
+  const ids = new Set(
+    nodesOfKind(def, 'decision').flatMap((node) =>
+      node.config.kind === 'classifier' ? [node.config.model] : [],
+    ),
+  );
+  const bindings: RunPin['classifiers'] = {};
+  for (const id of [...ids].sort()) {
+    const binding = inherited[id] ?? (await registry.bind(ownerId, id));
+    if (binding) bindings[id] = binding;
+  }
+  return bindings;
 }
 
 /**
@@ -43,7 +75,7 @@ export function freezeDraft(draft: LoopVersionRecord, id: string, at: string): L
 /** The run fields a definition pin sets: what the run executes and how it is described. */
 export function pinnedFields(
   record: LoopVersionRecord,
-  defaults: PinnedDefaults,
+  selections: PinnedSelections,
 ): Pick<RunRecord, 'versionId' | 'pinned'> {
-  return { versionId: record.id, pinned: pinOf(record, defaults) };
+  return { versionId: record.id, pinned: pinOf(record, selections) };
 }

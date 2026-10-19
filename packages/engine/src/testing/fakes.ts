@@ -4,6 +4,7 @@
  */
 import type {
   ContextThread,
+  ClassifierBinding,
   ClassifierPrimitive,
   HarnessId,
   ModelCatalogEntry,
@@ -767,21 +768,43 @@ export const DEFAULT_TEST_SETTINGS: EngineSettings = {
 };
 
 export class FakeClassifierRegistry implements ClassifierRegistryPort {
-  readonly requests: { ownerId: string; modelId: string; primitive: ClassifierPrimitive }[] = [];
+  readonly requests: {
+    ownerId: string;
+    modelId: string;
+    primitive: ClassifierPrimitive;
+    binding: ClassifierBinding;
+  }[] = [];
   readonly models = new Map<string, ClassifierPort & Partial<Pick<DeciderPort, 'available'>>>();
   readonly unavailable = new Map<
     string,
     Extract<ClassifierResolution, { status: 'unavailable' }>
   >();
+  /** Catalog metadata per id; ids registered in `models` or `unavailable` get a default entry. */
+  readonly bindings = new Map<string, ClassifierBinding>();
   constructor(builtin?: ClassifierPort & Partial<Pick<DeciderPort, 'available'>>) {
     if (builtin) this.models.set('jev', builtin);
+  }
+  bind(_ownerId: string, modelId: string): Promise<ClassifierBinding | undefined> {
+    const known = this.models.has(modelId) || this.unavailable.has(modelId);
+    return Promise.resolve(
+      this.bindings.get(modelId) ??
+        (known
+          ? {
+              provider: modelId === 'jev' ? 'typesafe' : 'http',
+              providerModel: modelId === 'jev' ? 'jev-latest' : modelId,
+              primitives: ['choice', 'noul', 'score'],
+              endpoint: 'https://classifier.test',
+            }
+          : undefined),
+    );
   }
   resolve(
     ownerId: string,
     modelId: string,
     primitive: ClassifierPrimitive,
+    binding: ClassifierBinding,
   ): Promise<ClassifierResolution> {
-    this.requests.push({ ownerId, modelId, primitive });
+    this.requests.push({ ownerId, modelId, primitive, binding });
     const unavailable = this.unavailable.get(modelId);
     if (unavailable) return Promise.resolve(unavailable);
     const classifier = this.models.get(modelId);
@@ -801,9 +824,9 @@ export class FakeClassifierRegistry implements ClassifierRegistryPort {
       status: 'ready',
       classifier,
       provenance: {
-        provider: modelId === 'jev' ? 'typesafe' : 'http',
+        provider: binding.provider,
         classifierId: modelId,
-        model: modelId === 'jev' ? 'jev-latest' : modelId,
+        model: binding.providerModel,
       },
     });
   }

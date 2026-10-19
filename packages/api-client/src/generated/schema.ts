@@ -3585,6 +3585,17 @@ export interface components {
                         } | undefined;
                     };
                 };
+                classifiers: {
+                    [key: string]: {
+                        /** @enum {string} */
+                        provider: "typesafe" | "http";
+                        providerModel: string;
+                        primitives: ("choice" | "noul" | "score")[];
+                        /** Format: uri */
+                        endpoint: string;
+                        secretRef?: string | undefined;
+                    };
+                };
             };
             parentRunId?: string | undefined;
             invocationId: string;
@@ -3642,6 +3653,17 @@ export interface components {
                                 effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
                             };
                         } | undefined;
+                    };
+                };
+                classifiers: {
+                    [key: string]: {
+                        /** @enum {string} */
+                        provider: "typesafe" | "http";
+                        providerModel: string;
+                        primitives: ("choice" | "noul" | "score")[];
+                        /** Format: uri */
+                        endpoint: string;
+                        secretRef?: string | undefined;
                     };
                 };
             };
@@ -5367,6 +5389,17 @@ export interface components {
                         };
                     };
                 };
+                classifiers: {
+                    [key: string]: {
+                        /** @enum {string} */
+                        provider: "typesafe" | "http";
+                        providerModel: string;
+                        primitives: ("choice" | "noul" | "score")[];
+                        /** Format: uri */
+                        endpoint: string;
+                        secretRef?: string | undefined;
+                    };
+                };
             };
             parentRunId?: string | undefined;
             invocationId: string;
@@ -5424,6 +5457,17 @@ export interface components {
                                 effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
                             };
                         };
+                    };
+                };
+                classifiers: {
+                    [key: string]: {
+                        /** @enum {string} */
+                        provider: "typesafe" | "http";
+                        providerModel: string;
+                        primitives: ("choice" | "noul" | "score")[];
+                        /** Format: uri */
+                        endpoint: string;
+                        secretRef?: string | undefined;
                     };
                 };
             };

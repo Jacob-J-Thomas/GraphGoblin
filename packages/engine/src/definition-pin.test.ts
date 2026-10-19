@@ -119,6 +119,7 @@ describe('draft runs pin a snapshot of the draft', () => {
       name: 'Pinned',
       label: 'Pinned draft v1',
       defaults: { owner: { byHarness: {} }, process: engine.settings.defaults },
+      classifiers: {},
     });
     const thread = await engine.manager.getThread(run.id);
     expect(thread?.run.versionId).toBe(run.versionId);
@@ -405,6 +406,155 @@ describe('triggered starts pin like manual ones', () => {
       versionId: polled.id,
       pinned: item!.pinned,
     });
+  });
+});
+
+describe('classifier bindings are pinned at start', () => {
+  /** start -> ask (input) -> decide (classifier `custom`) -> yes | no. */
+  function waitThenClassify(model = 'custom'): LoopDefinitionInput {
+    return {
+      schemaVersion: CURRENT_DEFINITION_FORMAT,
+      name: 'Classified',
+      nodes: [
+        { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
+        { id: 'ask', kind: 'wait', label: 'Ask', config: { mode: 'input', prompt: 'Go?' } },
+        {
+          id: 'decide',
+          kind: 'decision',
+          label: 'Decide',
+          config: {
+            kind: 'classifier',
+            model,
+            question: 'Which?',
+            answer: {
+              type: 'choice',
+              options: [
+                { id: 'yes', label: 'Yes', criteria: 'Yes' },
+                { id: 'no', label: 'No', criteria: 'No' },
+              ],
+            },
+          },
+        },
+        { id: 'yes', kind: 'exit', label: 'Yes', config: { returns: '"yes"' } },
+        { id: 'no', kind: 'exit', label: 'No', config: { returns: '"no"' } },
+      ],
+      edges: [
+        { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'ask' } },
+        { id: 'e2', from: { node: 'ask', port: 'out' }, to: { node: 'decide' } },
+        { id: 'e3', from: { node: 'decide', port: 'yes' }, to: { node: 'yes' } },
+        { id: 'e4', from: { node: 'decide', port: 'no' }, to: { node: 'no' } },
+      ],
+    };
+  }
+  const binding = (providerModel: string) => ({
+    provider: 'http' as const,
+    providerModel,
+    primitives: ['choice' as const],
+    endpoint: 'https://classifier.test',
+  });
+
+  it('calls the binding pinned at start after a catalog edit while waiting and a restart', async () => {
+    const engine = await createTestEngine();
+    const registry = engine.ports.classifiers;
+    registry.models.set('custom', engine.ports.jev);
+    registry.bindings.set('custom', binding('model-original'));
+    const v1 = engine.publish(waitThenClassify());
+    const run = await engine.settle((await engine.start(v1.loopId)).id);
+    expect(run.pinned.classifiers).toEqual({ custom: binding('model-original') });
+    // The owner edits the catalog entry while the run waits, then the process restarts.
+    registry.bindings.set('custom', binding('model-edited'));
+    engine.manager.stop();
+    const restarted = new RunManager(engine.ports, engine.settings);
+    await restarted.start();
+    expect(await answer(engine, run, restarted)).toMatchObject({ status: 'succeeded' });
+    expect(registry.requests.map((request) => request.binding.providerModel)).toEqual([
+      'model-original',
+    ]);
+    expect(engine.events(run.id).find((event) => event.type === 'decision.made')).toMatchObject({
+      provenance: { classifierId: 'custom', model: 'model-original' },
+    });
+    // A new run pins the edited entry; a replay fork keeps the source's binding.
+    const next = await restarted.startRun({
+      ownerId: 'local',
+      loopId: v1.loopId,
+      source: 'manual.api',
+    });
+    expect(next.pinned.classifiers).toEqual({ custom: binding('model-edited') });
+    const fork = await restarted.replay({ runId: run.id, nodeId: 'decide' });
+    await restarted.waitForIdle();
+    expect(fork.pinned.classifiers).toEqual({ custom: binding('model-original') });
+    expect(registry.requests.at(-1)?.binding.providerModel).toBe('model-original');
+    restarted.stop();
+  });
+
+  it('keeps availability live: a disabled classifier fails explicitly, and nothing is substituted', async () => {
+    const engine = await createTestEngine();
+    const registry = engine.ports.classifiers;
+    registry.models.set('custom', engine.ports.jev);
+    registry.bindings.set('custom', binding('model-original'));
+    const run = await engine.settle(
+      (await engine.start(engine.publish(waitThenClassify()).loopId)).id,
+    );
+    registry.unavailable.set('custom', {
+      status: 'unavailable',
+      reason: 'CLASSIFIER_MODEL_DISABLED',
+      message: 'disabled',
+    });
+    expect(await answer(engine, run)).toMatchObject({
+      status: 'failed',
+      failure: { code: 'EVALUATION_UNAVAILABLE', resumable: true },
+    });
+    expect(engine.ports.jev.choices).toEqual([]);
+  });
+
+  it('never looks up a classifier that was missing when the run started', async () => {
+    const engine = await createTestEngine();
+    const run = await engine.settle(
+      (await engine.start(engine.publish(waitThenClassify('later')).loopId)).id,
+    );
+    expect(run.pinned.classifiers).toEqual({});
+    // Created afterwards: a catalog change, so it reaches new runs only.
+    engine.ports.classifiers.models.set('later', engine.ports.jev);
+    expect(await answer(engine, run)).toMatchObject({
+      status: 'failed',
+      failure: {
+        code: 'EVALUATION_UNAVAILABLE',
+        resumable: false,
+        details: { reason: 'CLASSIFIER_MODEL_NOT_FOUND' },
+      },
+    });
+    expect(engine.ports.classifiers.requests).toEqual([]);
+  });
+
+  it('gives a child its parent binding for a shared classifier', async () => {
+    const engine = await createTestEngine({ maxConcurrentRuns: 2 });
+    const registry = engine.ports.classifiers;
+    registry.models.set('custom', engine.ports.jev);
+    registry.bindings.set('custom', binding('model-original'));
+    const child = engine.publish({ ...waitThenClassify(), name: 'Child classifier' });
+    const parent: LoopDefinitionInput = {
+      ...waitThenClassify(),
+      name: 'Parent classifier',
+      nodes: [
+        ...waitThenClassify().nodes.filter((node) => node.id !== 'yes'),
+        {
+          id: 'yes',
+          kind: 'subloop',
+          label: 'Child',
+          config: { loopRef: { loopId: child.loopId } },
+        },
+        { id: 'done', kind: 'exit', label: 'Done', config: {} },
+      ],
+      edges: [
+        ...waitThenClassify().edges,
+        { id: 'e5', from: { node: 'yes', port: 'out' }, to: { node: 'done' } },
+      ],
+    };
+    const top = await engine.settle((await engine.start(engine.publish(parent).loopId)).id);
+    registry.bindings.set('custom', binding('model-edited'));
+    await answer(engine, top);
+    const [started] = await engine.ports.runs.listChildren(top.id);
+    expect(started?.pinned.classifiers).toEqual({ custom: binding('model-original') });
   });
 });
 

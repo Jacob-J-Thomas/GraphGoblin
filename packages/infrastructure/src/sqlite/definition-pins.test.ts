@@ -36,6 +36,7 @@ function admissionFor(record: LoopVersionRecord, seed: string): RunAdmission {
     name: record.definition.name,
     label: `${record.definition.name} ${source === 'draft' ? 'draft ' : ''}v${record.version}`,
     defaults: NO_DEFAULTS,
+    classifiers: {},
   };
   const run: RunRecord = {
     id: fakeUlid(`run:${seed}`),
@@ -313,6 +314,7 @@ describe('migration 0014 pins existing runs', () => {
           name: 'Release',
           label: 'Release v1',
           defaults: { owner, process: { byHarness: {} } },
+          classifiers: {},
         },
       });
       // The draft run now pins a frozen copy named by its own id, everywhere it is recorded.
@@ -358,6 +360,249 @@ describe('migration 0014 pins existing runs', () => {
           args: [runIds.draft],
         }),
       ).rejects.toThrow(/LOOP_VERSION_SNAPSHOT_IMMUTABLE/);
+    } finally {
+      handle.close();
+    }
+  });
+
+  /** A loop whose decisions use the classifiers `custom`, `keyed` and `gone` (never catalogued). */
+  function classifierLoop(name: string): LoopDefinition {
+    const decision = (id: string, model: string) => ({
+      id,
+      kind: 'decision',
+      label: id,
+      config: {
+        kind: 'classifier',
+        model,
+        question: 'Which?',
+        answer: {
+          type: 'choice',
+          options: [
+            { id: 'yes', label: 'Yes', criteria: 'Yes' },
+            { id: 'no', label: 'No', criteria: 'No' },
+          ],
+        },
+      },
+    });
+    const chain = [
+      ['first', 'custom', 'second'],
+      ['second', 'keyed', 'third'],
+      ['third', 'gone', 'done'],
+    ] as const;
+    return LoopDefinitionSchema.parse({
+      ...minimalLoop(),
+      name,
+      nodes: [
+        { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
+        ...chain.map(([id, model]) => decision(id, model)),
+        { id: 'done', kind: 'exit', label: 'Done', config: {} },
+      ],
+      edges: [
+        { id: 'e0', from: { node: 'start', port: 'out' }, to: { node: 'first' } },
+        ...chain.flatMap(([id, , next]) =>
+          ['yes', 'no'].map((port) => ({
+            id: `${id}-${port}`,
+            from: { node: id, port },
+            to: { node: next },
+          })),
+        ),
+      ],
+    });
+  }
+
+  it('pins healthy history and leaves damaged JSON untouched for unreadable-history reports', async () => {
+    const handle = await storeBeforePins();
+    try {
+      const loopId = fakeUlid('d:loop');
+      const published = fakeUlid('d:v1');
+      const draft = fakeUlid('d:v2');
+      await insert(
+        handle,
+        'INSERT INTO loops (id, owner_id, name, current_version_id, draft_version_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [loopId, 'local', 'Mixed', published, draft, FIXTURE_TS, FIXTURE_TS],
+      );
+      for (const [id, version, status] of [
+        [published, 1, 'published'],
+        [draft, 2, 'draft'],
+      ] as const)
+        await insert(
+          handle,
+          'INSERT INTO loop_versions (id, loop_id, version, status, definition, created_at, published_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          [
+            id,
+            loopId,
+            version,
+            status,
+            JSON.stringify(classifierLoop('Mixed')),
+            FIXTURE_TS,
+            status === 'published' ? FIXTURE_TS : null,
+          ],
+        );
+      for (const [id, model, endpoint, secretRef] of [
+        ['custom', 'model-original', 'http://127.0.0.1:9', null],
+        ['keyed', 'model-keyed', 'https://classifier.test', 'classifier-key'],
+        ['unused', 'model-unused', 'https://classifier.test', null],
+      ] as const)
+        await insert(
+          handle,
+          'INSERT INTO classifier_models (owner_id, id, display_name, source, provider, provider_model, primitives, endpoint, secret_ref, enabled) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)',
+          ['local', id, id, 'custom', 'http', model, '["choice"]', endpoint, secretRef],
+        );
+      const ids = {
+        healthy: fakeUlid('d:healthy'),
+        healthyDraft: fakeUlid('d:healthy-draft'),
+        damagedDraft: fakeUlid('d:damaged-draft'),
+        damagedEvent: fakeUlid('d:damaged-event'),
+      };
+      const damaged = '{"run": not json';
+      for (const [key, versionId, snapshot, payload] of [
+        ['healthy', published, 'valid', 'valid'],
+        ['healthyDraft', draft, 'valid', 'valid'],
+        ['damagedDraft', draft, damaged, damaged],
+        ['damagedEvent', published, 'valid', damaged],
+      ] as const) {
+        const runId = ids[key];
+        const thread = JSON.stringify(
+          sampleThread({ run: { id: runId, loopId, versionId, iteration: 1 } }),
+        );
+        await insert(
+          handle,
+          'INSERT INTO runs (id, owner_id, loop_id, version_id, invocation_id, status, iteration, created_at, last_event_seq, initial_thread, thread_snapshot) VALUES (?, ?, ?, ?, ?, ?, 1, ?, 1, ?, ?)',
+          [
+            runId,
+            'local',
+            loopId,
+            versionId,
+            fakeUlid(`d:invocation:${key}`),
+            'succeeded',
+            FIXTURE_TS,
+            thread,
+            snapshot === 'valid' ? thread : snapshot,
+          ],
+        );
+        await insert(
+          handle,
+          'INSERT INTO run_events (run_id, seq, ts, type, node_id, payload) VALUES (?, 1, ?, ?, NULL, ?)',
+          [
+            runId,
+            FIXTURE_TS,
+            'run.queued',
+            payload === 'valid' ? JSON.stringify({ initialThread: JSON.parse(thread) }) : payload,
+          ],
+        );
+      }
+      const receipt = (seed: string, intent: string) =>
+        insert(
+          handle,
+          'INSERT INTO webhook_receipts (id, owner_id, loop_id, trigger_node_id, content_hash, inbound_id, status, intent, attempts, next_attempt_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?)',
+          [
+            fakeUlid(`d:receipt:${seed}`),
+            'local',
+            loopId,
+            'start',
+            seed.padEnd(64, '0'),
+            fakeUlid(`d:inbound:${seed}`),
+            'pending',
+            intent,
+            FIXTURE_TS,
+          ],
+        );
+      const pendingRun = fakeUlid('d:pending-run');
+      const pendingThread = createInitialThread({
+        runId: pendingRun,
+        loopId,
+        versionId: published,
+        invocation: {
+          id: fakeUlid('d:pending-invocation'),
+          source: 'webhook',
+          trigger: { nodeId: 'start', kind: 'webhook', payload: {}, receivedAt: FIXTURE_TS },
+        },
+      });
+      await receipt(
+        'a',
+        JSON.stringify({
+          run: {
+            id: pendingRun,
+            ownerId: 'local',
+            loopId,
+            versionId: published,
+            invocationId: pendingThread.invocation.id,
+            status: 'queued',
+            iteration: 1,
+            createdAt: FIXTURE_TS,
+            lastEventSeq: 0,
+          },
+          initialThread: pendingThread,
+          queued: { type: 'run.queued', initialThread: pendingThread },
+          pinnedLoopIds: [loopId],
+        }),
+      );
+      await receipt('b', damaged);
+      const raw = async (sql: string, args: string[]) =>
+        (await handle.client.execute({ sql, args })).rows[0];
+      const payloads = () =>
+        Promise.all(
+          [ids.damagedDraft, ids.damagedEvent].map((id) =>
+            raw('SELECT payload FROM run_events WHERE run_id = ?', [id]),
+          ),
+        );
+      const before = {
+        thread: await raw('SELECT thread_snapshot FROM runs WHERE id = ?', [ids.damagedDraft]),
+        events: await payloads(),
+        intent: await raw('SELECT intent FROM webhook_receipts WHERE id = ?', [
+          fakeUlid('d:receipt:b'),
+        ]),
+      };
+
+      // One malformed value used to abort the whole migration; now it completes.
+      await applyShippedSqlToHistoricalTestFixture(handle);
+
+      const bindings = {
+        custom: {
+          provider: 'http',
+          providerModel: 'model-original',
+          primitives: ['choice'],
+          endpoint: 'http://127.0.0.1:9',
+        },
+        keyed: {
+          provider: 'http',
+          providerModel: 'model-keyed',
+          primitives: ['choice'],
+          endpoint: 'https://classifier.test',
+          secretRef: 'classifier-key',
+        },
+      };
+      const repo = new SqliteRunRepository(handle.db);
+      const events = new SqliteEventStore(handle.db, new FakeClock());
+      for (const id of [ids.healthy, ids.healthyDraft]) {
+        const run = RunRecordSchema.parse(await repo.get(id));
+        expect(run.pinned.classifiers).toEqual(bindings);
+        expect(RunEventSchema.parse((await events.read(id))[0])).toMatchObject({
+          versionId: run.versionId,
+          pinned: run.pinned,
+        });
+      }
+      // Damaged rows keep every malformed byte; their run rows are still pinned.
+      expect(
+        await raw('SELECT thread_snapshot FROM runs WHERE id = ?', [ids.damagedDraft]),
+      ).toEqual(before.thread);
+      expect(await payloads()).toEqual(before.events);
+      for (const id of [ids.damagedDraft, ids.damagedEvent]) {
+        const row = await raw('SELECT version_id, pinned FROM runs WHERE id = ?', [id]);
+        const pinned = row?.['pinned'];
+        if (typeof pinned !== 'string') throw new Error('the migration pins every run row');
+        expect(RunPinSchema.parse(JSON.parse(pinned))).toMatchObject({
+          classifiers: bindings,
+        });
+        if (id === ids.damagedDraft) expect(row?.['version_id']).toBe(id);
+      }
+      expect(
+        await raw('SELECT intent FROM webhook_receipts WHERE id = ?', [fakeUlid('d:receipt:b')]),
+      ).toEqual(before.intent);
+      const admission = new SqliteTriggerAdmission(handle.db, events);
+      const saved = await admission.get(fakeUlid('d:receipt:a'));
+      expect(saved?.intent?.run.pinned).toMatchObject({ label: 'Mixed v1', classifiers: bindings });
+      expect(saved?.intent?.queued).toMatchObject({ versionId: published });
     } finally {
       handle.close();
     }

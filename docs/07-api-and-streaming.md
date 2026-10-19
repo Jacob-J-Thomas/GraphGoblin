@@ -355,7 +355,9 @@ the complete page; the convenience `runs.list` wrapper returns its items only.
 
 Every run, draft runs included, executes one immutable definition record for its whole life.
 `RunRecord.versionId` names it and `RunRecord.pinned` describes it:
-`{ source: 'published' | 'draft', version, name, label, defaults: { owner, process } }`.
+`{ source: 'published' | 'draft', version, name, label, defaults: { owner, process }, classifiers }`,
+where `classifiers` maps each classifier id the definition uses to the catalog binding it calls
+(`provider`, `providerModel`, `endpoint`, `primitives`, `secretRef?`; never the secret value).
 The start responses (`POST /loops/{id}/runs`, `POST /runs/{id}/replay`, MCP `start_run`) return it,
 and the first event of every run, `run.queued`, carries the same `versionId` and `pinned`, so the
 SSE stream identifies the definition before anything runs. A draft start

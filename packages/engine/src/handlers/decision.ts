@@ -65,6 +65,7 @@ export const decisionHandler: NodeHandler<'decision'> = {
         const result = await evaluateClassifier({
           ...common,
           config,
+          binding: ctx.run.pinned.classifiers[config.model],
           question: await ctx.services.render(config.question),
           context: await decisionContext(ctx, config.context),
         });

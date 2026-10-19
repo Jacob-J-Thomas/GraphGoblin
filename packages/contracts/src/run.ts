@@ -6,6 +6,7 @@ import {
   TimestampSchema,
   UlidSchema,
 } from './common.js';
+import { ClassifierBindingSchema, ClassifierModelIdSchema } from './classifiers.js';
 import { HarnessDefaultsSchema } from './evaluation.js';
 import { OutcomeSchema, WaitKindSchema } from './nodes.js';
 
@@ -127,6 +128,12 @@ export const RunPinSchema = z.strictObject({
   /** Readable label: `<name> v<version>`, or `<name> draft v<version>` for a draft snapshot. */
   label: z.string().min(1).max(160),
   defaults: PinnedDefaultsSchema,
+  /**
+   * The execution binding of every classifier the pinned definition references, by catalog id,
+   * taken at start (a child inherits its parent's for the ids they share). A classifier missing at
+   * start has no binding, and its decision fails without consulting the current catalog.
+   */
+  classifiers: z.record(ClassifierModelIdSchema, ClassifierBindingSchema),
 });
 export type RunPin = z.infer<typeof RunPinSchema>;
 

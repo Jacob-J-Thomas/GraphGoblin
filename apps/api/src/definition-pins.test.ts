@@ -18,6 +18,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { buildApp } from './app.js';
 import { loadConfig } from './config.js';
 import { createContainer, type Container } from './container.js';
+import { startFakeClassifierEndpoint } from './testing/test-app.js';
 import type { ApiInstance } from './types.js';
 
 /**
@@ -82,8 +83,14 @@ afterEach(async () => {
   await rm(dataDir, { recursive: true, force: true }).catch(() => undefined);
 });
 
-/** Open the API over the file store in `dataDir`: a fresh process each time, with recovery. */
-async function open(env: Record<string, string> = {}): Promise<ApiInstance> {
+/**
+ * Open the API over the file store in `dataDir`: a fresh process each time, with recovery. With
+ * `realClassifiers` the container composes its own catalog-backed classifier registry.
+ */
+async function open(
+  env: Record<string, string> = {},
+  realClassifiers = false,
+): Promise<ApiInstance> {
   const config = loadConfig({
     GG_DATA_DIR: dataDir,
     GG_DB_URL: `file:${join(dataDir, 'gg.db').replace(/\\/g, '/')}`,
@@ -94,7 +101,9 @@ async function open(env: Record<string, string> = {}): Promise<ApiInstance> {
   container = await createContainer(config, {
     harnesses: { codex: harness },
     deciders: [new FakeDecider('codex')],
-    classifiers: new FakeClassifierRegistry(new FakeClassifier('jev')),
+    ...(realClassifiers
+      ? {}
+      : { classifiers: new FakeClassifierRegistry(new FakeClassifier('jev')) }),
     startTimers: false,
   });
   await container.start();
@@ -111,7 +120,7 @@ async function close(): Promise<void> {
 }
 
 async function call<T>(
-  method: 'GET' | 'POST' | 'PUT',
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH',
   url: string,
   payload?: unknown,
   status = method === 'POST' && url.endsWith('/runs')
@@ -272,6 +281,116 @@ describe('runs pin their definition across edits, Settings changes and a restart
       expect(fork).toMatchObject({ versionId: drafted.versionId, pinned: drafted.pinned });
       await idle();
       expect(await run(fork.id)).toMatchObject({ status: 'succeeded', result: 'old' });
+    },
+  );
+});
+
+describe('classifier bindings are pinned at start', () => {
+  /** start -> ask (input) -> decide (classifier `custom`) -> done, returning the chosen route. */
+  const classified: LoopDefinitionInput = {
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
+    name: 'Classified',
+    nodes: [
+      { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
+      { id: 'ask', kind: 'wait', label: 'Ask', config: { mode: 'input', prompt: 'Go?' } },
+      {
+        id: 'decide',
+        kind: 'decision',
+        label: 'Decide',
+        config: {
+          kind: 'classifier',
+          model: 'custom',
+          question: 'Which?',
+          answer: {
+            type: 'choice',
+            options: [
+              { id: 'yes', label: 'Yes', criteria: 'Yes' },
+              { id: 'no', label: 'No', criteria: 'No' },
+            ],
+          },
+        },
+      },
+      { id: 'yes', kind: 'exit', label: 'Yes', config: { returns: '"yes"' } },
+      { id: 'no', kind: 'exit', label: 'No', config: { returns: '"no"' } },
+    ],
+    edges: [
+      { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'ask' } },
+      { id: 'e2', from: { node: 'ask', port: 'out' }, to: { node: 'decide' } },
+      { id: 'e3', from: { node: 'decide', port: 'yes' }, to: { node: 'yes' } },
+      { id: 'e4', from: { node: 'decide', port: 'no' }, to: { node: 'no' } },
+    ],
+  };
+
+  it(
+    'calls the provider model a waiting run pinned, after a catalog edit and a restart',
+    { timeout: 180_000 },
+    async () => {
+      const fixture = await startFakeClassifierEndpoint();
+      const entry = (providerModel: string) => ({
+        displayName: 'Custom',
+        provider: 'http',
+        providerModel,
+        primitives: ['choice'],
+        endpoint: fixture.endpoint,
+      });
+      try {
+        await open({}, true);
+        await call('PUT', '/classifier-models/custom', entry('model-original'));
+        await call('PATCH', '/classifier-models/custom', { enabled: true });
+        const { loop } = await call<{ loop: { id: string } }>('POST', '/loops', {
+          definition: classified,
+        });
+        await call('POST', `/loops/${loop.id}/publish`);
+        const started = (await call<{ run: RunRecord }>('POST', `/loops/${loop.id}/runs`, {})).run;
+        expect(started.pinned.classifiers).toEqual({
+          custom: {
+            provider: 'http',
+            providerModel: 'model-original',
+            primitives: ['choice'],
+            endpoint: fixture.endpoint,
+          },
+        });
+        await idle();
+        expect((await run(started.id)).status).toBe('waiting');
+
+        // The owner edits the classifier while the run waits; the process restarts.
+        await call('PUT', '/classifier-models/custom', entry('model-edited'));
+        await close();
+        await open({}, true);
+        await call('POST', `/runs/${started.id}/input`, { input: true });
+        await idle();
+        expect(await run(started.id)).toMatchObject({
+          status: 'succeeded',
+          result: 'yes',
+          pinned: started.pinned,
+        });
+        expect(fixture.requests.map((request) => request.body.model)).toEqual(['model-original']);
+
+        // A new run binds the edited entry.
+        const next = (await call<{ run: RunRecord }>('POST', `/loops/${loop.id}/runs`, {})).run;
+        expect(next.pinned.classifiers['custom']?.providerModel).toBe('model-edited');
+        await idle();
+        await call('POST', `/runs/${next.id}/input`, { input: true });
+        await idle();
+        expect(fixture.requests.map((request) => request.body.model)).toEqual([
+          'model-original',
+          'model-edited',
+        ]);
+
+        // Disabling stays live for pinned runs: the next one fails explicitly, nothing else runs.
+        const held = (await call<{ run: RunRecord }>('POST', `/loops/${loop.id}/runs`, {})).run;
+        await idle();
+        await call('PATCH', '/classifier-models/custom', { enabled: false });
+        await call('POST', `/runs/${held.id}/input`, { input: true });
+        await idle();
+        expect(await run(held.id)).toMatchObject({
+          status: 'failed',
+          failure: { code: 'EVALUATION_UNAVAILABLE', resumable: true },
+        });
+        expect(fixture.requests).toHaveLength(2);
+      } finally {
+        await fixture.close();
+      }
     },
   );
 });

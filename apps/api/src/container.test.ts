@@ -33,10 +33,15 @@ function config(env: Record<string, string> = {}) {
   });
 }
 
+/** Resolve Jev as a run started now would: bind the current entry, then resolve that binding. */
+async function resolveJev(container: Container, primitive: 'choice' | 'noul') {
+  const binding = await container.classifierRegistry.bind(LOCAL_OWNER, 'jev');
+  if (!binding) throw new Error('the built-in classifier is always catalogued');
+  return container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', primitive, binding);
+}
+
 async function jevAvailable(container: Container): Promise<boolean> {
-  return (
-    (await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', 'noul')).status === 'ready'
-  );
+  return (await resolveJev(container, 'noul')).status === 'ready';
 }
 
 describe('default adapters', () => {
@@ -107,17 +112,17 @@ describe('default adapters', () => {
       url: `/secrets/${JEV_SECRET}`,
       payload: { value: 'first-key' },
     });
-    const first = await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', 'choice');
+    const first = await resolveJev(container, 'choice');
     expect(first.status).toBe('ready');
     if (first.status !== 'ready') throw new Error('expected configured Jev');
     expect(first.classifier).toBeInstanceOf(JevDecider);
-    expect(await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', 'choice')).toEqual(first);
+    expect(await resolveJev(container, 'choice')).toEqual(first);
     await app.inject({
       method: 'PUT',
       url: `/secrets/${JEV_SECRET}`,
       payload: { value: 'second-key' },
     });
-    const next = await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', 'choice');
+    const next = await resolveJev(container, 'choice');
     expect(next.status).toBe('ready');
     if (next.status !== 'ready') throw new Error('expected configured Jev');
     expect(next.classifier).not.toBe(first.classifier);
@@ -153,7 +158,7 @@ describe('default adapters', () => {
       payload: { enabled: false },
     });
     expect(await jevAvailable(container)).toBe(false);
-    expect(await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', 'choice')).toMatchObject({
+    expect(await resolveJev(container, 'choice')).toMatchObject({
       reason: 'CLASSIFIER_MODEL_DISABLED',
     });
     await app.inject({
@@ -164,7 +169,7 @@ describe('default adapters', () => {
     expect(await jevAvailable(container)).toBe(true);
     await app.inject({ method: 'DELETE', url: `/secrets/${JEV_SECRET}` });
     expect(await jevAvailable(container)).toBe(false);
-    expect(await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', 'choice')).toMatchObject({
+    expect(await resolveJev(container, 'choice')).toMatchObject({
       reason: 'CLASSIFIER_SECRET_MISSING',
     });
   });

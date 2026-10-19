@@ -2,6 +2,7 @@ import type { TriggerAdmissionPort } from './admission.js';
 import type {
   ChoiceAnswer,
   ChoiceOption,
+  ClassifierBinding,
   RouteDeclaration,
   ClassifierPrimitive,
   ScoreAnswer,
@@ -290,10 +291,21 @@ export type ClassifierResolution =
   | { status: 'unavailable'; reason: ClassifierUnavailableReason; message: string };
 
 export interface ClassifierRegistryPort {
+  /**
+   * The execution binding a new run pins for the catalog entry `modelId` (ADR-0041), or undefined
+   * when the owner has no such entry.
+   */
+  bind(ownerId: string, modelId: string): Promise<ClassifierBinding | undefined>;
+  /**
+   * A client for the binding a run pinned. Provider, model, endpoint, primitives and secret name
+   * come from the binding; the entry's existence, its enabled switch and the secret's value are
+   * checked now, so a removed or disabled classifier is unavailable and never substituted.
+   */
   resolve(
     ownerId: string,
     modelId: string,
     primitive: ClassifierPrimitive,
+    binding: ClassifierBinding,
   ): Promise<ClassifierResolution>;
 }
 

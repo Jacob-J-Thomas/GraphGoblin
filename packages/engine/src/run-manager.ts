@@ -15,6 +15,7 @@ import type {
   Outcome,
   PinnedDefaults,
   ReturnChannel,
+  RunPin,
   RunEvent,
   RunFailure,
   RunRecord,
@@ -60,7 +61,7 @@ import type {
   TimerPort,
 } from './ports.js';
 import { createInitialThread, type InitialThreadInput } from './thread.js';
-import { freezeDraft, pinnedFields } from './definition-pin.js';
+import { bindClassifiers, freezeDraft, pinnedFields } from './definition-pin.js';
 
 /** API-facing errors: bad requests against the run manager, never engine bugs. */
 export class EngineRequestError extends Error {
@@ -103,6 +104,8 @@ export interface StartRunInput {
   subloopVersions?: Record<string, string>;
   /** Inherited model defaults already pinned by the parent run; a child inherits them. */
   pinnedDefaults?: PinnedDefaults;
+  /** Classifier bindings already pinned by the parent run; a child keeps them for shared ids. */
+  pinnedClassifiers?: RunPin['classifiers'];
 }
 
 /** A run start prepared outside the pin lock, admitted inside it. */
@@ -387,7 +390,15 @@ export class RunManager {
     const snapshot =
       source.status === 'draft' ? freezeDraft(source, this.ports.ids.next(), now) : undefined;
     const version = snapshot ?? source;
-    const pinned = pinnedFields(version, input.pinnedDefaults ?? (await this.startDefaults(input)));
+    const pinned = pinnedFields(version, {
+      defaults: input.pinnedDefaults ?? (await this.startDefaults(input)),
+      classifiers: await bindClassifiers(
+        def,
+        input.ownerId,
+        this.ports.classifiers,
+        input.pinnedClassifiers,
+      ),
+    });
     const thread = createInitialThread({
       runId,
       loopId: version.loopId,
@@ -1212,8 +1223,9 @@ export class RunManager {
       return;
     }
     const def = version.definition;
-    // Inherited defaults are the ones pinned when the run was created (ADR-0041): a Settings or
-    // process change reaches new runs only, never a run that waits, resumes or recovers.
+    // Inherited defaults (and classifier bindings, read by the decision handler) are the ones
+    // pinned when the run was created (ADR-0041): a Settings or process change reaches new runs
+    // only, never a run that waits, resumes or recovers.
     const { owner: ownerDefaults, process: processDefaults } = run.pinned.defaults;
     // Read before any recovery marker is appended; a marker does not consume a wake either.
     const pendingWake = findPendingWake(events);
@@ -1820,6 +1832,7 @@ export class RunManager {
       seed: request.seed,
       subloopVersions: pins,
       pinnedDefaults: parent.pinned.defaults,
+      pinnedClassifiers: parent.pinned.classifiers,
     });
     return child.id;
   }
