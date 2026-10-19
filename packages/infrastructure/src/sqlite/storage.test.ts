@@ -432,10 +432,14 @@ describe('SqliteLoopRepository draft and publish interleaving', () => {
     await handle.migrate();
     competing = openDatabase({ url: `file:${databasePath.replaceAll('\\', '/')}` });
   });
-  afterEach(async () => {
+  afterEach(() => {
     handle.close();
     competing.close();
-    await rm(directory, { recursive: true, force: true, maxRetries: 10 }).catch(() => undefined);
+    // libsql keeps files open after close on Windows: this pre-existing native leak cannot
+    // be cured here, so the directory may survive. Cleanup must never hold up the test.
+    void rm(directory, { recursive: true, force: true, maxRetries: 2, retryDelay: 10 }).catch(
+      () => undefined,
+    );
   });
 
   it('never modifies a version that was published after a draft save read the loop', async () => {

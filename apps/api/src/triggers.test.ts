@@ -2225,6 +2225,7 @@ describe('general webhook configuration and unsigned intake', () => {
       'x-hub-signature-256': signRawBody('shh', raw),
     });
     expect(response.statusCode).toBe(500);
+    expect(response.json()).toMatchObject({ code: 'INTERNAL_ERROR' });
     expect(await runsOf(id)).toEqual([]);
     expect(
       (await t.container.handle.client.execute('SELECT intent FROM webhook_receipts')).rows,
