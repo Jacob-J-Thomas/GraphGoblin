@@ -8,7 +8,9 @@ import {
 import { createContext, use, useId } from 'react';
 import { useWatch } from 'react-hook-form';
 import { Link } from 'react-router';
+import { harnessDisplayName } from '@graphgoblin/domain';
 import { useModelCatalog, usePreflight } from '../../api/queries.js';
+import { harnessReadiness, readinessLine } from '../../api/readiness.js';
 import { Icon } from '../../components/icons/index.js';
 import { Button, HelpText, Select } from '../../components/ui/index.js';
 import { shapeOf, unwrap, type FieldShape, type Schema } from '../introspect.js';
@@ -119,17 +121,12 @@ function useCatalogField(name: string, kind: 'model' | 'effort', value: unknown)
           ? defaultHarness
           : InferenceConfigSchema.shape.harness.parse(undefined)));
   const entries = query.data?.filter((entry) => entry.harness === harnessId) ?? [];
-  const harnessPreflight = preflightQuery.data?.find((item) => item.harness === harnessId);
+  // A background recheck keeps the last result: a ready Claude field stays editable meanwhile.
+  const readiness = harnessReadiness(preflightQuery, harnessId);
+  const harnessPreflight = readiness.item;
   const modelCapabilities = harnessPreflight?.models;
   const hasClaudeAdmission =
-    harnessId !== 'claude' ||
-    (!preflightQuery.isFetching &&
-      !preflightQuery.isError &&
-      preflightQuery.fetchStatus !== 'paused' &&
-      harnessPreflight?.state === 'ready' &&
-      harnessPreflight.ok === true &&
-      harnessPreflight.authenticated &&
-      modelCapabilities !== undefined);
+    harnessId !== 'claude' || (readiness.state === 'ready' && modelCapabilities !== undefined);
   const availableEntries = entries.filter((entry) => {
     if (!entry.enabled) return false;
     if (harnessId !== 'claude') return true;
@@ -150,6 +147,7 @@ function useCatalogField(name: string, kind: 'model' | 'effort', value: unknown)
     harnessId,
     entries,
     availableEntries,
+    readiness,
     harnessPreflight,
     modelCapabilities,
     hasClaudeAdmission,
@@ -172,12 +170,14 @@ function CatalogField({
     preflightQuery,
     harnessId,
     availableEntries,
+    readiness,
     harnessPreflight,
     modelCapabilities,
     hasClaudeAdmission,
     entry,
     catalogNoticeId,
   } = useCatalogField(name, kind, field.value);
+  const harnessName = harnessDisplayName(harnessId);
   const id = useId();
   const noticeId = kind === 'model' ? catalogNoticeId : `${id}-effort`;
   const value = typeof field.value === 'string' ? field.value : '';
@@ -206,10 +206,14 @@ function CatalogField({
     query.fetchStatus !== 'paused' &&
     !entry &&
     !wrongHarness;
-  const savedHarnessLabel =
-    savedHarness === 'codex' ? 'Codex' : savedHarness === 'claude' ? 'Claude' : savedHarness;
-  const admissionUnknown =
-    kind === 'model' && harnessId === 'claude' && value !== '' && !capability;
+  const savedHarnessLabel = savedHarness && harnessDisplayName(savedHarness);
+  // Claude is ready but its adapter does not list this catalog entry.
+  const notListed =
+    kind === 'model' &&
+    harnessId === 'claude' &&
+    hasClaudeAdmission &&
+    entry !== undefined &&
+    !capability;
   const disabled = kind === 'model' && entry?.enabled === false;
   const status = wrongHarness
     ? `Saved model belongs to ${savedHarnessLabel}`
@@ -217,8 +221,8 @@ function CatalogField({
       ? 'not in catalog'
       : disabled
         ? 'disabled in the catalog'
-        : admissionUnknown
-          ? 'readiness unknown'
+        : notListed
+          ? 'not listed by adapter'
           : undefined;
   const modelLookupUnknown =
     kind === 'model' && value !== '' && !entry && !wrongHarness && !missing;
@@ -230,6 +234,18 @@ function CatalogField({
       (unavailable || warning.code !== localCode),
   );
   const noEnabled = kind === 'model' && availableEntries.length === 0 && hasClaudeAdmission;
+  // Codex choices stay editable whatever its readiness; a known failure is noted, never the
+  // first check or a background recheck.
+  const harnessNote =
+    kind === 'model' &&
+    harnessId !== 'claude' &&
+    readiness.state !== 'ready' &&
+    readiness.state !== 'checking'
+      ? readiness.lookupFailed
+        ? readinessLine(harnessId, readiness)
+        : (harnessPreflight?.problems[0] ?? readinessLine(harnessId, readiness))
+      : undefined;
+  const kept = 'The saved choice stays until you change it.';
   const messages = (
     unavailable
       ? kind === 'model'
@@ -238,36 +254,24 @@ function CatalogField({
               ? 'Cannot load the model catalog. The current values are read-only until it recovers.'
               : query.data === undefined
                 ? 'Loading the model catalog. The current values are read-only.'
-                : preflightQuery.isError || preflightQuery.fetchStatus === 'paused'
-                  ? 'Claude model availability could not be checked; model choices are read-only until preflight recovers.'
-                  : preflightQuery.data === undefined || preflightQuery.isFetching
-                    ? 'Checking Claude model availability. Model choices are read-only until preflight completes.'
-                    : !harnessPreflight?.ok || !harnessPreflight.authenticated
-                      ? harnessPreflight?.problems.join('; ') ||
-                        'Claude CLI readiness is unknown; retry preflight.'
-                      : 'Claude model availability was not returned by preflight; model choices are read-only.',
+                : readiness.lookupFailed
+                  ? 'Could not check Claude readiness. Model choices are read-only until a retry succeeds.'
+                  : readiness.state === 'checking'
+                    ? 'Checking Claude readiness. Model choices are read-only until the check finishes.'
+                    : readiness.state !== 'ready'
+                      ? `${harnessPreflight?.problems[0] ?? readinessLine('claude', readiness)} Model choices are read-only until Claude is ready.`
+                      : 'Claude preflight listed no models. Model choices are read-only.',
           ]
         : []
       : [
           ...(modelLookupUnknown
             ? [
                 query.isFetching
-                  ? 'Checking model catalog. Its saved value is kept.'
-                  : 'Model support is unknown because the catalog lookup could not complete. Its saved value is kept.',
+                  ? `Checking the model catalog. ${kept}`
+                  : `Model support is unknown because the catalog lookup could not complete. ${kept}`,
               ]
             : []),
-          ...(kind === 'model' &&
-          harnessId === 'codex' &&
-          (preflightQuery.isFetching ||
-            preflightQuery.isError ||
-            harnessPreflight?.state !== 'ready')
-            ? [
-                preflightQuery.isFetching
-                  ? 'Checking codex CLI prerequisites; wait for the probe to finish.'
-                  : harnessPreflight?.problems.join('; ') ||
-                    'Codex readiness is unknown; retry preflight. Catalog choices do not confirm account model access.',
-              ]
-            : []),
+          ...(harnessNote ? [harnessNote] : []),
           ...(kind === 'model' && query.isError
             ? [
                 'The model catalog may be out of date. Cached choices are still available; retry to refresh them.',
@@ -275,20 +279,16 @@ function CatalogField({
             : []),
           ...(status && !wrongHarness
             ? [
-                missing
-                  ? 'This model is not in the catalog. Its saved value is kept.'
-                  : admissionUnknown
-                    ? 'Claude model availability could not be verified. Its saved value is kept.'
-                    : `This model is ${missing ? 'not in the catalog' : status}. Its saved value is kept.`,
+                notListed
+                  ? `The Claude adapter does not list this model. ${kept}`
+                  : `This model is ${status === 'not in catalog' ? 'not in the catalog' : status}. ${kept}`,
               ]
             : []),
-          ...(unsupported
-            ? ['This effort is not supported by the selected model. Its saved value is kept.']
-            : []),
+          ...(unsupported ? [`This effort is not supported by the selected model. ${kept}`] : []),
           ...(noEnabled
             ? [
                 harnessId === 'claude'
-                  ? 'No available Claude model is verified. Choose an inherited default or retry preflight.'
+                  ? 'No enabled Claude model is listed by the adapter. Enable one in Settings or keep the inherited default.'
                   : 'No enabled models for this harness. Enable a model in Settings or keep the inherited default.',
               ]
             : []),
@@ -297,7 +297,7 @@ function CatalogField({
     .concat(
       wrongHarness
         ? [
-            `Saved model belongs to ${savedHarnessLabel}. Choose a ${harnessId === 'claude' ? 'Claude' : harnessId} model or an inherited default from this picker when the harness is ready.`,
+            `Saved model belongs to ${savedHarnessLabel}. Choose a ${harnessName} model or an inherited default from this picker when the harness is ready.`,
           ]
         : [],
     )
@@ -307,6 +307,7 @@ function CatalogField({
     warnings.length > 0 ||
     query.isError ||
     query.fetchStatus === 'paused' ||
+    harnessNote !== undefined ||
     (!unavailable && (Boolean(status) || unsupported || noEnabled));
   const options =
     kind === 'model'
@@ -367,7 +368,7 @@ function CatalogField({
                 value !== '' ? (
                   <option value={value} disabled>
                     {value}
-                    {status ? ` (${status})` : ' (saved; readiness unknown)'}
+                    {` (${status ?? 'saved'})`}
                   </option>
                 ) : null
               ) : status || unsupported || modelLookupUnknown ? (
@@ -401,14 +402,15 @@ function CatalogField({
                 Retry model catalog
               </Button>
             ) : null}
-            {kind === 'model' && harnessId === 'claude' && !hasClaudeAdmission ? (
+            {kind === 'model' &&
+            ((harnessId === 'claude' && !hasClaudeAdmission) || harnessNote !== undefined) ? (
               <Button
                 size="sm"
                 variant="outline"
                 disabled={preflightQuery.isFetching}
                 onClick={() => void preflightQuery.refetch()}
               >
-                Retry Claude preflight
+                {`Retry ${harnessName} preflight`}
               </Button>
             ) : null}
           </>

@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRef, useState, type FormEvent } from 'react';
 import { useApi } from '../../api/context.js';
 import { keys, refreshCatalogState, useModelCatalog, usePreflight } from '../../api/queries.js';
+import { harnessReadiness, readinessLine } from '../../api/readiness.js';
 import { Icon } from '../../components/icons/index.js';
 import { QueryState } from '../../components/status.js';
 import {
@@ -190,12 +191,13 @@ export function ModelCatalogSection() {
               </thead>
               <tbody>
                 {items.map((entry) => {
-                  const preflight = preflightQuery.data?.find(
-                    (item) => item.harness === entry.harness,
-                  );
-                  const claudeNotReady =
-                    entry.harness === 'claude' &&
-                    (preflight?.ok !== true || !preflight.authenticated);
+                  // Catalog enablement and harness readiness are separate facts; a row says both
+                  // once the harness has a result other than ready (never during the first check).
+                  const readiness = harnessReadiness(preflightQuery, entry.harness);
+                  const notReady =
+                    readiness.state !== 'ready' && readiness.state !== 'checking'
+                      ? readinessLine(entry.harness, readiness)
+                      : undefined;
                   return (
                     <tr key={`${entry.harness}/${entry.model}`}>
                       <Td>
@@ -252,10 +254,10 @@ export function ModelCatalogSection() {
                             await refresh;
                           }}
                         />
-                        {claudeNotReady ? (
+                        {notReady ? (
                           <p className="mt-1 max-w-[30ch] text-xs text-muted">
-                            {entry.enabled ? 'Enabled' : 'Disabled'} in catalog; Claude harness not
-                            ready. Check Harness preflight below.
+                            {entry.enabled ? 'Enabled' : 'Disabled'} in catalog. {notReady} See
+                            Harness preflight below.
                           </p>
                         ) : null}
                       </Td>

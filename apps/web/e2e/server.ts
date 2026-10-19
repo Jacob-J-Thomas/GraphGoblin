@@ -16,6 +16,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildApp, createContainer, loadConfig } from '@graphgoblin/api';
+import { readinessMessage } from '@graphgoblin/domain';
 import { createTestApp, startFakeClassifierEndpoint, type TestApp } from '@graphgoblin/api/testing';
 import type { HarnessEvent, HarnessStartRequest, HarnessSession } from '@graphgoblin/engine';
 import { FakeHarness, type ScriptedTurn } from '@graphgoblin/engine/testing';
@@ -105,10 +106,10 @@ const readyClaudePreflight = HarnessPreflightSchema.parse({
 });
 const notReadyClaudePreflight: HarnessPreflight = {
   ...readyClaudePreflight,
-  state: 'unknown',
+  state: 'auth',
   ok: false,
   authenticated: false,
-  problems: ['Claude CLI is not signed in.'],
+  problems: [readinessMessage('claude', 'auth', 'Claude is not signed in.')],
   supportedPolicies: [],
 };
 

@@ -74,6 +74,17 @@ describe('Claude saved policy readiness', () => {
       );
       expect(policy()).toHaveAttribute('aria-readonly', 'true');
       expect(policy()).not.toHaveTextContent(/unsupported/);
+      expect(
+        screen.getByText(
+          {
+            pending: 'Claude readiness: Checking… The saved policy is unchanged.',
+            failed: 'Could not check Claude readiness. The saved policy is unchanged.',
+            'not-ready': 'Claude readiness: Unknown. The saved policy is unchanged.',
+            'signed-out': 'Claude readiness: Unknown. The saved policy is unchanged.',
+          }[state],
+        ),
+      ).toHaveAttribute('role', 'status');
+      expect(screen.queryByText(/preflight is not ready/)).toBeNull();
       fireEvent.change(policy(), { target: { value: '1' } });
       expect(change).not.toHaveBeenCalled();
       expect(policy()).toHaveValue('unsupported');
@@ -82,6 +93,27 @@ describe('Claude saved policy readiness', () => {
       ).toBeInTheDocument();
     },
   );
+
+  it('says when ready Claude offers no policy on this platform', async () => {
+    const api = new FakeApi();
+    api.preflight = [
+      {
+        harness: 'claude',
+        state: 'ready',
+        ok: true,
+        authenticated: true,
+        problems: [],
+        supportedPolicies: [],
+      },
+    ];
+    renderPolicy(api);
+    expect(
+      await screen.findByText(
+        'No supported Claude policy is available on this platform. The saved policy is unchanged.',
+      ),
+    ).toBeInTheDocument();
+    expect(policy()).toHaveAttribute('aria-readonly', 'true');
+  });
 
   it.each(['read-only', 'workspace-write'])(
     'keeps saved %s policy unchanged until an explicit verified choice',

@@ -627,11 +627,39 @@ Every use creates an owner-scoped ordinary loop with an independent definition. 
 
 Settings separates owner catalog enablement from prerequisite health. The seven server states are
 `unknown`, `ready`, `cli-missing`, `cli-incompatible`, `auth`, `quota` and `transport`; `checking`
-is client-only while a request is pending. Pending/failed refreshes override cached success.
-Adapter model listings do not establish account access, and failed catalog fetches do not prove
-removal. Saved selections remain visible; `MODEL_DISABLED` and `MODEL_NOT_IN_CATALOG` are catalog
-facts independent of auth, quota or transport failures. Omitted `authenticated` means login could
-not be established. Reload the page for a fresh check.
+is client-only while no result exists yet. Every view reads one shared rule
+(`api/readiness.ts`): a background refetch (window focus, Retry) keeps the last result, a failed or
+offline lookup is `unknown` and never the cached success, and no result yet is `checking`.
+
+**Harness preflight** shows one badge per harness with a label, never the enum, which stays in
+`data-state`: Ready, Checking…, Unknown, CLI not found, CLI update needed, Sign-in needed, Usage
+limit, Connection failed. Missing, outdated and signed-out CLIs use the failure tone; unknown,
+usage limit and connection failures the warning tone. Under it are the server's problems, each one
+detail sentence and one action (for example "Claude is not signed in. Run claude auth login, then
+retry preflight."). Claude rows add the adapter's model listing ("listed by adapter", neutral tone)
+and state that listings do not confirm account access. **Retry preflight** in the card head
+refetches and is disabled while a check runs; during a recheck the last result stays and a muted
+"Rechecking…" sits beside the button ("Offline; showing the last check." when the request is
+paused offline). The first load shows "Loading preflight…"; a failed request replaces the list with
+the card's error message.
+
+**Defaults** gives each harness, Codex and Claude alike, at most one short line under its fields:
+"Checking…" while the catalog first loads, the saved model's catalog problem (not in the catalog,
+disabled), or "<Harness> readiness: <label>. See Harness preflight below." for a harness that is
+not ready. A saved model the list does not offer stays selected as "<name> (saved)", "(disabled)"
+or "(not in catalog)"; the full problem stays in Harness preflight. Catalog rows of a harness that
+is not ready say "Enabled in catalog. <Harness> readiness: <label>." for Claude and Codex rows
+alike; nothing is shown during the first check.
+
+The **model picker** keeps a ready Claude field editable, with its label, through a background
+recheck. While Claude is not ready its choices are read-only; the note is the server's first
+problem followed by "Model choices are read-only until Claude is ready.", a saved model reads
+"<id> (saved)", and **Retry Claude preflight** refetches. A known Codex failure adds the server's
+problem as a warning and **Retry Codex preflight**; Codex choices stay editable, and neither the
+first check nor a recheck adds a note. The Claude policy field uses the same "Claude readiness:
+<label>." line. Adapter model listings do not establish account access, and failed catalog fetches
+do not prove removal. `MODEL_DISABLED` and `MODEL_NOT_IN_CATALOG` are catalog facts independent of
+auth, quota or transport failures. Omitted `authenticated` means login could not be established.
 
 Draft create, import and 600 ms idle autosaves never probe readiness. The editor fetches it
 independently. Explicit validate, publish and manual API/MCP run admission probe once per harness

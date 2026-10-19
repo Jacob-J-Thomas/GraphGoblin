@@ -7,6 +7,7 @@ import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
+import { readinessMessage } from '@graphgoblin/domain';
 import { FakeApi, problem } from '../../__fixtures__/fake-api.js';
 import { renderWith as renderBase } from '../../__fixtures__/render.js';
 import { openAdvanced } from '../../__fixtures__/advanced.js';
@@ -51,6 +52,8 @@ function setup(value: object = {}, catalog = [entry('alpha')]) {
 }
 
 const model = () => screen.getByLabelText('Model', { exact: true });
+/** The field's own notice comes last in its description, after the schema help. */
+const endsWith = (text: string) => new RegExp(`${text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`);
 const effort = () => screen.getByLabelText('Effort', { exact: true });
 async function ready() {
   await waitFor(() => expect(model()).not.toHaveAttribute('aria-readonly'));
@@ -95,16 +98,19 @@ describe('catalog field controls', () => {
         '/',
         api,
       );
-      const notice =
-        state === 'pending'
-          ? /Checking Claude model availability/
-          : state === 'failed'
-            ? /availability could not be checked/
-            : /readiness is unknown|not signed in|missing|not ready/i;
-      await waitFor(() => expect(model()).toHaveAccessibleDescription(notice));
+      const notice = {
+        pending: 'Checking Claude readiness. Model choices are read-only until the check finishes.',
+        failed:
+          'Could not check Claude readiness. Model choices are read-only until a retry succeeds.',
+        'not-ready':
+          'Claude readiness: Unknown. Model choices are read-only until Claude is ready.',
+        'signed-out':
+          'Claude readiness: Sign-in needed. Model choices are read-only until Claude is ready.',
+      }[state];
+      await waitFor(() => expect(model()).toHaveAccessibleDescription(endsWith(notice)));
       expect(effort()).toHaveValue('xhigh');
       expect(effort()).toHaveAttribute('aria-readonly', 'true');
-      expect(effort()).toHaveAccessibleDescription(notice);
+      expect(effort()).toHaveAccessibleDescription(endsWith(notice));
       expect(within(effort()).getByRole('option', { name: /^xhigh/ })).toBeInTheDocument();
       expect(effort()).not.toHaveAccessibleDescription(/not supported/);
       expect(screen.queryByText(/This effort is not supported/)).toBeNull();
@@ -176,7 +182,11 @@ describe('catalog field controls', () => {
         expect(
           within(effort()).getByRole('option', { name: /minimal.*not supported/ }),
         ).toBeDisabled();
-        expect(effort()).toHaveAccessibleDescription(/saved value is kept/);
+        expect(effort()).toHaveAccessibleDescription(
+          endsWith(
+            'This effort is not supported by the selected model. The saved choice stays until you change it.',
+          ),
+        );
       } else {
         expect(within(effort()).queryByRole('option', { name: /^minimal$/ })).toBeNull();
       }
@@ -579,7 +589,7 @@ describe('catalog field controls', () => {
         state: ready ? 'ready' : 'cli-incompatible',
         ok: ready,
         authenticated: true,
-        problems: ready ? [] : ['Missing capability'],
+        problems: ready ? [] : [readinessMessage('claude', 'cli-incompatible')],
         models: [{ model: 'claude-opus-5-5', efforts: ['low', 'high'] }],
       });
       const change = vi.fn();
@@ -613,7 +623,9 @@ describe('catalog field controls', () => {
         });
       } else {
         expect(model()).toHaveAccessibleDescription(
-          /readiness is unknown|not signed in|missing|not ready/i,
+          endsWith(
+            'Claude CLI lacks a required capability. Update the Claude CLI, then retry preflight. Model choices are read-only until Claude is ready. Saved model belongs to Codex. Choose a Claude model or an inherited default from this picker when the harness is ready.',
+          ),
         );
         expect(screen.getByRole('button', { name: 'Retry Claude preflight' })).toBeEnabled();
         expect(screen.getByRole('link', { name: 'Model catalog in Settings' })).toBeInTheDocument();
@@ -932,11 +944,11 @@ describe('catalog field controls', () => {
     api.preflight = [
       {
         harness: 'claude',
-        state: 'unknown',
+        state: 'auth',
         ok: false,
         version: '2.1.285',
         authenticated: false,
-        problems: ['Claude CLI is not signed in.'],
+        problems: [readinessMessage('claude', 'auth', 'Claude is not signed in.')],
         models: [
           {
             model: 'claude-opus-5-5',
@@ -958,7 +970,9 @@ describe('catalog field controls', () => {
     );
     await waitFor(() => expect(model()).toHaveAttribute('aria-readonly', 'true'));
     expect(model()).toHaveAccessibleDescription(
-      /readiness is unknown|not signed in|missing|not ready/i,
+      endsWith(
+        'Claude is not signed in. Run claude auth login, then retry preflight. Model choices are read-only until Claude is ready.',
+      ),
     );
     expect(within(model()).queryByRole('option', { name: /claude-opus-5-5/ })).toBeNull();
   });
@@ -994,14 +1008,224 @@ it('keeps saved selection while cached lookup is pending or fails', async () => 
     refresh = queryClient.refetchQueries({ queryKey: keys.catalog });
   });
   await waitFor(() => expect(queryClient.isFetching({ queryKey: keys.catalog })).toBe(1));
-  await waitFor(() => expect(model()).toHaveAccessibleDescription(/checking model catalog/i));
+  await waitFor(() =>
+    expect(model()).toHaveAccessibleDescription(
+      endsWith('Checking the model catalog. The saved choice stays until you change it.'),
+    ),
+  );
   expect(model()).toHaveValue('saved-model');
   await act(async () => {
     finish(problem(503, 'FAILED', 'Synthetic lookup failure'));
     await refresh;
   });
   expect(model()).toHaveValue('saved-model');
-  await waitFor(() => expect(model()).toHaveAccessibleDescription(/model support is unknown/i));
+  await waitFor(() =>
+    expect(model()).toHaveAccessibleDescription(
+      endsWith(
+        'Model support is unknown because the catalog lookup could not complete. The saved choice stays until you change it. The model catalog may be out of date. Cached choices are still available; retry to refresh them.',
+      ),
+    ),
+  );
   expect(model()).not.toHaveAccessibleDescription(/not in the catalog/);
   expect(change).not.toHaveBeenCalled();
+});
+
+describe('readiness in the model picker', () => {
+  const claudeReady = (models = ['claude-opus-5-5']): FakeApi['preflight'][number] => ({
+    harness: 'claude',
+    state: 'ready',
+    ok: true,
+    authenticated: true,
+    authMethod: 'claude.ai',
+    problems: [],
+    models: models.map((name) => ({ model: name, efforts: ['low', 'high'] })),
+  });
+  function renderField(api: FakeApi, value: object) {
+    return renderWith(
+      <SchemaForm
+        schema={InferenceConfigSchema}
+        value={{ prompt: { template: 'hello' }, ...value }}
+        label="Inference"
+        onChange={vi.fn()}
+        controls={NODE_FIELD_CONTROLS}
+      />,
+      '/',
+      api,
+    );
+  }
+  /** Hold the next preflight response until the test releases it. */
+  function hold(api: FakeApi) {
+    let finish!: (response: Response) => void;
+    api.override(
+      'GET /harness/preflight',
+      () =>
+        new Promise<Response>((resolve) => {
+          finish = resolve;
+        }),
+    );
+    return (response: Response) => finish(response);
+  }
+
+  it('keeps a ready Claude field editable and labelled during a background recheck', async () => {
+    const api = new FakeApi();
+    api.catalog = [entry('claude-opus-5-5', true, 'claude')];
+    api.preflight = [claudeReady()];
+    const { queryClient } = renderField(api, { harness: 'claude', model: 'claude-opus-5-5' });
+    await ready();
+    const selected = () => within(model()).getByRole('option', { selected: true });
+    expect(selected()).toHaveTextContent('Display claude-opus-5-5 (claude-opus-5-5)');
+    const description = model().getAttribute('aria-describedby');
+    const release = hold(api);
+    let refresh!: Promise<void>;
+    act(() => {
+      // A window-focus refetch is this same background refetch of the shared query.
+      refresh = queryClient.refetchQueries({ queryKey: keys.preflight });
+    });
+    await waitFor(() => expect(queryClient.isFetching({ queryKey: keys.preflight })).toBe(1));
+    expect(model()).not.toHaveAttribute('aria-readonly');
+    expect(selected()).toHaveTextContent('Display claude-opus-5-5 (claude-opus-5-5)');
+    expect(model().getAttribute('aria-describedby')).toBe(description);
+    expect(model()).not.toHaveAccessibleDescription(/Checking|read-only|saved/);
+    expect(screen.queryByRole('button', { name: /^Retry .* preflight$/ })).toBeNull();
+    await act(async () => {
+      release(Response.json({ items: [claudeReady()] }));
+      await refresh;
+    });
+    expect(model()).not.toHaveAttribute('aria-readonly');
+  });
+
+  it('labels a saved Claude model "(saved)" when readiness is known but not ready', async () => {
+    const api = new FakeApi();
+    api.catalog = [entry('claude-opus-5-5', true, 'claude')];
+    api.preflight = [
+      {
+        ...claudeReady(),
+        state: 'quota',
+        ok: false,
+        problems: [readinessMessage('claude', 'quota')],
+      },
+    ];
+    renderField(api, { harness: 'claude', model: 'claude-opus-5-5' });
+    await waitFor(() =>
+      expect(model()).toHaveAccessibleDescription(
+        endsWith(
+          'Claude account usage limit reached. Wait for the usage limit to reset, then retry preflight. Model choices are read-only until Claude is ready.',
+        ),
+      ),
+    );
+    expect(model()).toHaveAttribute('aria-readonly', 'true');
+    expect(within(model()).getByRole('option', { name: 'claude-opus-5-5 (saved)' })).toBeDisabled();
+    expect(screen.queryByText(/readiness unknown|model availability/)).toBeNull();
+    expect(screen.getByRole('button', { name: 'Retry Claude preflight' })).toBeEnabled();
+  });
+
+  it('names a Claude catalog entry the adapter does not list', async () => {
+    const api = new FakeApi();
+    api.catalog = [
+      entry('claude-opus-5-5', true, 'claude'),
+      entry('claude-legacy', true, 'claude'),
+    ];
+    api.preflight = [claudeReady()];
+    renderField(api, { harness: 'claude', model: 'claude-legacy' });
+    await ready();
+    expect(
+      within(model()).getByRole('option', {
+        name: 'Display claude-legacy (claude-legacy) (not listed by adapter)',
+      }),
+    ).toBeDisabled();
+    expect(model()).toHaveAccessibleDescription(
+      endsWith(
+        'The Claude adapter does not list this model. The saved choice stays until you change it.',
+      ),
+    );
+  });
+
+  it('says when ready Claude offers no enabled listed model', async () => {
+    const api = new FakeApi();
+    api.catalog = [entry('claude-opus-5-5', false, 'claude')];
+    api.preflight = [claudeReady()];
+    renderField(api, { harness: 'claude' });
+    await ready();
+    expect(model()).toHaveAccessibleDescription(
+      endsWith(
+        'No enabled Claude model is listed by the adapter. Enable one in Settings or keep the inherited default.',
+      ),
+    );
+  });
+
+  it('says when ready Claude preflight lists no models', async () => {
+    const api = new FakeApi();
+    api.catalog = [entry('claude-opus-5-5', true, 'claude')];
+    api.preflight = [
+      { harness: 'claude', state: 'ready', ok: true, authenticated: true, problems: [] },
+    ];
+    renderField(api, { harness: 'claude' });
+    await waitFor(() =>
+      expect(model()).toHaveAccessibleDescription(
+        endsWith('Claude preflight listed no models. Model choices are read-only.'),
+      ),
+    );
+  });
+
+  it('notes a known Codex failure with its own Retry button and keeps it while rechecking', async () => {
+    const api = new FakeApi();
+    api.catalog = [entry('alpha')];
+    api.preflight = [
+      {
+        harness: 'codex',
+        state: 'auth',
+        ok: false,
+        version: '0.160.0',
+        authenticated: false,
+        problems: [readinessMessage('codex', 'auth', 'Codex is not signed in.')],
+      },
+    ];
+    const { queryClient } = renderField(api, { harness: 'codex', model: 'alpha' });
+    const note = 'Codex is not signed in. Run codex login, then retry preflight.';
+    await waitFor(() => expect(model()).toHaveAccessibleDescription(endsWith(note)));
+    // Codex choices stay editable; the note is a warning, with Codex capitalised.
+    expect(model()).not.toHaveAttribute('aria-readonly');
+    expect(screen.getByText(note)).toHaveClass('text-status-warn-fg');
+    expect(screen.queryByText(/codex CLI|Checking codex/)).toBeNull();
+    const retry = screen.getByRole('button', { name: 'Retry Codex preflight' });
+    expect(retry).toBeEnabled();
+
+    const release = hold(api);
+    await userEvent.setup().click(retry);
+    await waitFor(() => expect(retry).toBeDisabled());
+    expect(model()).toHaveAccessibleDescription(endsWith(note));
+    await act(async () => {
+      release(
+        Response.json({
+          items: [
+            { harness: 'codex', state: 'ready', ok: true, authenticated: true, problems: [] },
+          ],
+        }),
+      );
+      await waitFor(() => expect(queryClient.isFetching({ queryKey: keys.preflight })).toBe(0));
+    });
+    await waitFor(() => expect(screen.queryByText(note)).toBeNull());
+    expect(screen.queryByRole('button', { name: 'Retry Codex preflight' })).toBeNull();
+  });
+
+  it('shows no Codex note during the first check', async () => {
+    const api = new FakeApi();
+    api.catalog = [entry('alpha')];
+    api.override('GET /harness/preflight', () => new Promise<Response>(() => undefined));
+    renderField(api, { harness: 'codex', model: 'alpha' });
+    await ready();
+    expect(model()).not.toHaveAccessibleDescription(/codex/i);
+    expect(screen.queryByRole('button', { name: 'Retry Codex preflight' })).toBeNull();
+  });
+
+  it('says when Codex readiness could not be checked', async () => {
+    const api = new FakeApi();
+    api.catalog = [entry('alpha')];
+    api.override('GET /harness/preflight', () => problem(503, 'FAILED', 'down'));
+    renderField(api, { harness: 'codex', model: 'alpha' });
+    await waitFor(() =>
+      expect(model()).toHaveAccessibleDescription(endsWith('Could not check Codex readiness.')),
+    );
+    expect(screen.getByRole('button', { name: 'Retry Codex preflight' })).toBeEnabled();
+  });
 });

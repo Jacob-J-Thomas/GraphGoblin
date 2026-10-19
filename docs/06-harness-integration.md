@@ -68,7 +68,7 @@ No probe sends a prompt, creates a session, or checks entitlement through infere
 
 | State                 | Meaning and next action                                                                                                                   |
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `checking` (web only) | A request is pending. Wait for completion; this is not a server readiness result.                                                         |
+| `checking` (web only) | No result exists yet. A recheck keeps the last result instead; this is not a server readiness result.                                     |
 | `unknown`             | Timeout, cancellation, malformed/unrecognized output or an unexpected probe failure. Check the CLI and retry; model support is undecided. |
 | `ready`               | Required CLI capabilities and local authentication passed; account model access remains untested.                                         |
 | `cli-missing`         | Executable not found. Install it or correct the configured binary path, then retry.                                                       |
@@ -107,8 +107,13 @@ positive signed-out evidence. Claude parses auth-status JSON even on exit 1 (`lo
 or a non-Claude.ai auth method). Connection diagnostics take precedence over incidental auth
 words during no-turn checks. Turn stderr never determines a cause or retry eligibility.
 Harness checks in `/system/preflight` carry state alongside the system's `ok`/`warn`/`fail`
-severity. Web queries retain their existing two-second stale interval and focus refresh;
-an in-flight/error refresh displays checking/unknown. Reload the page for a fresh check.
+severity. Each problem is one detail sentence and one action ending "then retry preflight"
+(`readinessMessage` in the domain package); a specific detail, such as the CLI version below the
+minimum or the missing option, replaces the generic one rather than being followed by it.
+Web queries retain their existing two-second stale interval and focus refresh. A background
+refresh keeps the last result on screen; a failed lookup shows unknown. Settings, Harness
+preflight has a **Retry preflight** control for a fresh check, and the model picker offers Retry
+Claude preflight or Retry Codex preflight next to a readiness problem (see docs/09).
 
 Process lifetime was measured with installed no-turn commands under the product runners on
 native Windows. No surviving new native process was observed in the recorded before/after
