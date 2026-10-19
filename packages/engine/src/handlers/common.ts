@@ -276,8 +276,8 @@ export async function runMutations<K extends NodeKind>(
   }
 }
 
-/** Whether a JSON pointer resolves inside a document. Exported for tests. */
-export function hasPath(doc: unknown, pointer: string): boolean {
+/** Whether a JSON pointer resolves inside a document. */
+function hasPath(doc: unknown, pointer: string): boolean {
   let current: unknown = doc;
   for (const token of pointer
     .split('/')

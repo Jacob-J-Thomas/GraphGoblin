@@ -1,7 +1,8 @@
 import type { JsonValue } from '@graphgoblin/contracts';
 import { evaluatePredicate, renderTemplate, threadView } from '@graphgoblin/domain';
-import { RunFailureError } from '../errors.js';
+import { ProbeBodyOverflowError, RunFailureError } from '../errors.js';
 import type { NodeContext, NodeHandler } from '../handler.js';
+import { PROBE_MAX_BODY_BYTES, type ProbeResponse } from '../ports.js';
 import { jsonOrText, outputPatch, toJson } from './common.js';
 
 async function probe(
@@ -16,20 +17,31 @@ async function probe(
       const headers: Record<string, string> = {};
       for (const [k, v] of Object.entries(spec.headers ?? {}))
         headers[k] = await renderTemplate(v, view);
-      const response = await ctx.ports.probes.fetch(
-        {
-          method: spec.method,
-          url: await renderTemplate(spec.url, view),
-          headers,
-          ...(spec.body !== undefined ? { body: await renderTemplate(spec.body, view) } : {}),
-          timeoutMs: spec.timeoutSeconds * 1000,
-        },
-        ctx.signal,
-      );
+      let response: ProbeResponse;
+      try {
+        response = await ctx.ports.probes.fetch(
+          {
+            method: spec.method,
+            url: await renderTemplate(spec.url, view),
+            headers,
+            ...(spec.body !== undefined ? { body: await renderTemplate(spec.body, view) } : {}),
+            timeoutMs: spec.timeoutSeconds * 1000,
+          },
+          ctx.signal,
+        );
+      } catch (error) {
+        if (error instanceof ProbeBodyOverflowError)
+          throw new RunFailureError(
+            error.code,
+            `HTTP heartbeat probe body exceeds the ${PROBE_MAX_BODY_BYTES}-byte limit; narrow the response or use a script probe`,
+            { nodeId: ctx.node.id },
+          );
+        throw error;
+      }
       return toJson({
         status: response.status,
         headers: response.headers,
-        body: response.body.slice(0, 65_536),
+        body: response.body,
         json: response.json ?? jsonOrText(response.body),
       });
     }
@@ -46,7 +58,8 @@ async function probe(
       });
       return toJson({
         exitCode: result.exitCode,
-        stdout: result.stdout.slice(0, 65_536),
+        // This UTF-16 display slice is not a byte cap.
+        stdout: result.stdout.slice(0, PROBE_MAX_BODY_BYTES),
         stderr: result.stderr.slice(-4000),
         json: jsonOrText(result.stdout),
         timedOut: result.timedOut,

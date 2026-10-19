@@ -1,0 +1,196 @@
+{
+  "run": {
+    "id": "01M5ANAH8W0GRRRGVDRZX8BWD1",
+    "ownerId": "local",
+    "loopId": "01M5ANAH6MMVFPZJPEK1CD1JET",
+    "versionId": "01M5ANAH6MTPBH4EJXNJG90TTZ",
+    "invocationId": "01M5ANAH8WWG8W4FPDGK6WZ4MF",
+    "status": "failed",
+    "currentNodeId": "work",
+    "iteration": 1,
+    "failure": {
+      "code": "INTERNAL_ERROR",
+      "message": "HTTP probe failed",
+      "nodeId": "work",
+      "resumable": true,
+      "details": {
+        "name": "HttpProbeError",
+        "stack": "HttpProbeError: HTTP probe failed\n    at HttpProbes.fetch (file:///<local-path>/packages/infrastructure/dist/http/probes.js:117:19)\n    at async probe (file:///<local-path>/packages/engine/dist/handlers/heartbeat.js:16:28)\n    at async Object.execute (file:///<local-path>/packages/engine/dist/handlers/heartbeat.js:77:24)\n    at async RunManager.execute (file:///<local-path>/packages/engine/dist/run-manager.js:1157:26)"
+      }
+    },
+    "createdAt": "2026-10-19T18:03:34.044Z",
+    "startedAt": "2026-10-19T18:03:34.074Z",
+    "finishedAt": "2026-10-19T18:03:34.162Z",
+    "lastEventSeq": 6
+  },
+  "events": {
+    "items": [
+      {
+        "runId": "01M5ANAH8W0GRRRGVDRZX8BWD1",
+        "seq": 1,
+        "ts": "2026-10-19T18:03:34.044Z",
+        "type": "run.queued",
+        "initialThread": {
+          "schemaVersion": 1,
+          "run": {
+            "id": "01M5ANAH8W0GRRRGVDRZX8BWD1",
+            "loopId": "01M5ANAH6MMVFPZJPEK1CD1JET",
+            "versionId": "01M5ANAH6MTPBH4EJXNJG90TTZ",
+            "iteration": 1
+          },
+          "invocation": {
+            "id": "01M5ANAH8WWG8W4FPDGK6WZ4MF",
+            "source": "manual.api",
+            "caller": {
+              "kind": "api-key",
+              "id": "01M5AN9PH1GFBKZWJF3C0PYJA2"
+            },
+            "trigger": {
+              "nodeId": "start",
+              "kind": "manual",
+              "payload": null,
+              "receivedAt": "2026-10-19T18:03:34.044Z"
+            }
+          },
+          "messages": [],
+          "vars": {},
+          "artifacts": [],
+          "outputs": {},
+          "gates": {},
+          "counters": {
+            "nodeVisits": {},
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          }
+        }
+      },
+      {
+        "runId": "01M5ANAH8W0GRRRGVDRZX8BWD1",
+        "seq": 2,
+        "ts": "2026-10-19T18:03:34.079Z",
+        "type": "run.started",
+        "attempt": 1
+      },
+      {
+        "runId": "01M5ANAH8W0GRRRGVDRZX8BWD1",
+        "seq": 3,
+        "ts": "2026-10-19T18:03:34.088Z",
+        "type": "node.started",
+        "nodeId": "start",
+        "kind": "trigger",
+        "attempt": 1,
+        "configHash": "527dee9c4254fe4e"
+      },
+      {
+        "runId": "01M5ANAH8W0GRRRGVDRZX8BWD1",
+        "seq": 4,
+        "ts": "2026-10-19T18:03:34.095Z",
+        "type": "node.finished",
+        "nodeId": "start",
+        "patch": [
+          {
+            "op": "add",
+            "path": "/outputs/start",
+            "value": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-19T18:03:34.095Z"
+            }
+          },
+          {
+            "op": "add",
+            "path": "/lastOutput",
+            "value": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-19T18:03:34.095Z"
+            }
+          }
+        ],
+        "route": "out",
+        "durationMs": 0
+      },
+      {
+        "runId": "01M5ANAH8W0GRRRGVDRZX8BWD1",
+        "seq": 5,
+        "ts": "2026-10-19T18:03:34.119Z",
+        "type": "node.started",
+        "nodeId": "work",
+        "kind": "heartbeat",
+        "attempt": 1,
+        "configHash": "2ecc62f01add72bc"
+      },
+      {
+        "runId": "01M5ANAH8W0GRRRGVDRZX8BWD1",
+        "seq": 6,
+        "ts": "2026-10-19T18:03:34.156Z",
+        "type": "run.failed",
+        "failure": {
+          "code": "INTERNAL_ERROR",
+          "message": "HTTP probe failed",
+          "nodeId": "work",
+          "resumable": true,
+          "details": {
+            "name": "HttpProbeError",
+            "stack": "HttpProbeError: HTTP probe failed\n    at HttpProbes.fetch (file:///<local-path>/packages/infrastructure/dist/http/probes.js:117:19)\n    at async probe (file:///<local-path>/packages/engine/dist/handlers/heartbeat.js:16:28)\n    at async Object.execute (file:///<local-path>/packages/engine/dist/handlers/heartbeat.js:77:24)\n    at async RunManager.execute (file:///<local-path>/packages/engine/dist/run-manager.js:1157:26)"
+          }
+        }
+      }
+    ],
+    "nextAfter": 6
+  },
+  "thread": {
+    "schemaVersion": 1,
+    "run": {
+      "id": "01M5ANAH8W0GRRRGVDRZX8BWD1",
+      "loopId": "01M5ANAH6MMVFPZJPEK1CD1JET",
+      "versionId": "01M5ANAH6MTPBH4EJXNJG90TTZ",
+      "iteration": 1
+    },
+    "invocation": {
+      "id": "01M5ANAH8WWG8W4FPDGK6WZ4MF",
+      "source": "manual.api",
+      "caller": {
+        "kind": "api-key",
+        "id": "01M5AN9PH1GFBKZWJF3C0PYJA2"
+      },
+      "trigger": {
+        "nodeId": "start",
+        "kind": "manual",
+        "payload": null,
+        "receivedAt": "2026-10-19T18:03:34.044Z"
+      }
+    },
+    "messages": [],
+    "vars": {},
+    "artifacts": [],
+    "outputs": {
+      "start": {
+        "nodeId": "start",
+        "value": null,
+        "at": "2026-10-19T18:03:34.095Z"
+      }
+    },
+    "lastOutput": {
+      "nodeId": "start",
+      "value": null,
+      "at": "2026-10-19T18:03:34.095Z"
+    },
+    "gates": {},
+    "counters": {
+      "nodeVisits": {
+        "start": 1
+      },
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedInputTokens": 0,
+        "reasoningOutputTokens": 0
+      }
+    }
+  }
+}

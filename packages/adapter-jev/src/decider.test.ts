@@ -423,35 +423,49 @@ describe('errors', () => {
     expect(fetch).toHaveBeenCalledTimes(2);
   });
 
-  it('wraps an unexpected SDK failure', async () => {
-    const decider = await ready({ fetch: stubFetch().fetch });
-    const client = (decider as unknown as { client: { systemOne: () => never } }).client;
-    client.systemOne = () => {
-      throw new Error('weird');
-    };
-    await expect(decider.choose(choiceRequest, signal())).rejects.toMatchObject({
+  it('safely wraps an unexpected response-read failure from the transport', async () => {
+    const response = json(200, {});
+    vi.spyOn(response, 'text').mockRejectedValue(new Error('private transport body marker'));
+    const { fetch } = stubFetch(response);
+    const decider = await ready({ fetch });
+    const error = await decider.choose(choiceRequest, signal()).catch((error: unknown) => error);
+    expect(error).toBeInstanceOf(JevError);
+    expect(error).toMatchObject({
       code: 'DECIDER_HTTP_ERROR',
       message: 'Jev request failed',
     });
+    expect(String(error)).not.toContain('private transport body marker');
+    expect(fetch).toHaveBeenCalledOnce();
   });
 
   it('routes SDK logs to the engine logger', async () => {
     const log = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
-    const { fetch } = stubFetch(json(200, { answers: { answer: { type: 'noul', noul: 0.5 } } }));
-    const decider = await ready({ fetch, logger: log });
-    await decider.classifyNoul(
-      { question: 'q', context: {}, criteria: { true: 'Complete', false: 'Incomplete' } },
-      signal(),
+    const { fetch } = stubFetch(
+      json(
+        503,
+        { error: 'private body marker' },
+        {
+          'x-provider-private': 'private header value',
+        },
+      ),
     );
-    expect(log.debug).toHaveBeenCalledWith({}, expect.stringMatching(/^jev: /));
-    const sdkLogger = (
-      decider as unknown as { client: { logger: Record<'warn' | 'error', (m: string) => void> } }
-    ).client.logger;
-    sdkLogger.warn('w');
-    sdkLogger.error('e');
-    expect(log.warn).toHaveBeenCalledWith({}, 'jev: SDK warning');
-    expect(log.warn).toHaveBeenCalledWith({}, 'jev: SDK error');
-    expect(JSON.stringify(log.warn.mock.calls)).not.toMatch(/jev: [we]"/);
+    const decider = await ready({ fetch, logger: log });
+    await expect(
+      decider.classifyNoul(
+        { question: 'q', context: {}, criteria: { true: 'Complete', false: 'Incomplete' } },
+        signal(),
+      ),
+    ).rejects.toMatchObject({ code: 'DECIDER_HTTP_ERROR', status: 503 });
+    expect(log.debug).toHaveBeenCalledWith({}, 'jev: SDK debug event');
+    expect(log.debug).toHaveBeenCalledWith({}, 'jev: SDK information event');
+    for (const [fields, message] of log.debug.mock.calls) {
+      expect(fields).toEqual({});
+      expect(['jev: SDK debug event', 'jev: SDK information event']).toContain(message);
+    }
+    const logged = JSON.stringify(Object.values(log).flatMap((method) => method.mock.calls));
+    expect(logged).not.toMatch(/sk-test|private header value|private body marker/);
+    expect(log.info).not.toHaveBeenCalled();
+    expect(log.warn).not.toHaveBeenCalled();
     expect(log.error).not.toHaveBeenCalled();
   });
 });

@@ -1,7 +1,7 @@
 import { kitchenSinkLoop } from '@graphgoblin/contracts/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FormChange } from '../forms/changes.js';
-import { COALESCE_MS, HISTORY_LIMIT, historyClock } from './history.js';
+import { COALESCE_MS, HISTORY_LIMIT } from './history.js';
 import { newLoopDefinition } from './model.js';
 import { useEditorStore } from './store.js';
 
@@ -200,17 +200,18 @@ describe('editor store', () => {
 });
 
 describe('undo and redo', () => {
-  let clock = 0;
   beforeEach(() => {
     store().reset();
-    clock = 0;
-    vi.spyOn(historyClock, 'now').mockImplementation(() => clock);
+    vi.useFakeTimers({ toFake: ['performance'] });
   });
-  afterEach(() => vi.restoreAllMocks());
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
 
   /** Let the merge window pass, so the next change is a step of its own. */
   const pause = () => {
-    clock += COALESCE_MS;
+    vi.advanceTimersByTime(COALESCE_MS);
   };
   const snapshot = () => ({ definition: store().definition, fieldErrors: store().fieldErrors });
   const node = (id: string) => store().definition!.nodes.find((n) => n.id === id);
@@ -309,7 +310,7 @@ describe('undo and redo', () => {
     store().load('L1', newLoopDefinition('a'));
     for (const label of ['h', 'he', 'hel', 'hell', 'hello']) {
       store().updateNode('start', { label });
-      clock += 200;
+      vi.advanceTimersByTime(200);
     }
     expect(store().past).toHaveLength(1);
     store().undo();
@@ -328,7 +329,7 @@ describe('undo and redo', () => {
     // Arrow-key nudges in quick succession: one step.
     pause();
     store().moveNode('start', { x: 5, y: 80 });
-    clock += 100;
+    vi.advanceTimersByTime(100);
     store().moveNode('start', { x: 10, y: 80 });
     expect(store().past.map((entry) => entry.label)).toEqual([
       'edit label of start',
@@ -360,9 +361,9 @@ describe('undo and redo', () => {
     store().setEdgeRoute(id, [160]);
     expect(edge().ui).toEqual({ route: [160] });
     // Arrow-key nudges of one edge in quick succession are one step, like a node's.
-    clock += 100;
+    vi.advanceTimersByTime(100);
     store().setEdgeRoute(id, [182]);
-    clock += 100;
+    vi.advanceTimersByTime(100);
     store().setEdgeRoute(id, [204]);
     expect(store().past.map((entry) => entry.label)).toEqual(['reroute start to done']);
     // A drag closes the step before it and on release, so a following nudge starts a new step.
@@ -416,9 +417,9 @@ describe('undo and redo', () => {
     store().closeStep();
     store().setEdgeRoute(id, dragged);
     store().closeStep();
-    clock += 100;
+    vi.advanceTimersByTime(100);
     store().setEdgeRoute(id, [240, 322, 260]);
-    clock += 100;
+    vi.advanceTimersByTime(100);
     store().setEdgeRoute(id, [240, 344, 260]);
     expect(store().past.map((step) => step.label)).toEqual([
       'reroute start to done',
@@ -470,12 +471,12 @@ describe('undo and redo', () => {
       store().updateNode('start', { config: { ...config(), ...changes } }, change);
     // Model, then effort, well inside the merge window: two steps.
     set({ model: 'alpha' }, commit('model'));
-    clock += 100;
+    vi.advanceTimersByTime(100);
     set({ effort: 'high' }, commit('effort'));
     expect(store().past).toHaveLength(2);
     // Three keystrokes in one field: one step.
     for (const text of ['h', 'hi', 'hi!']) {
-      clock += 100;
+      vi.advanceTimersByTime(100);
       set({ note: text }, typing('note'));
     }
     expect(store().past).toHaveLength(3);

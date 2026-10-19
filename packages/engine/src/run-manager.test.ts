@@ -382,6 +382,10 @@ describe('failure and recovery', () => {
       exitCode: 1,
       stdout: '',
       stderr: 'boom',
+      stdoutBytes: 0,
+      stdoutOverflow: false,
+      stderrBytes: 4,
+      stderrOverflow: false,
       timedOut: false,
     }));
     const version = engine.publish(
@@ -398,6 +402,10 @@ describe('failure and recovery', () => {
       exitCode: 0,
       stdout: '"fixed"',
       stderr: '',
+      stdoutBytes: 7,
+      stdoutOverflow: false,
+      stderrBytes: 0,
+      stderrOverflow: false,
       timedOut: false,
     }));
     await engine.manager.resume(run.id);

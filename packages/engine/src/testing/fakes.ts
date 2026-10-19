@@ -636,6 +636,10 @@ export class FakeScripts implements ScriptPort {
       exitCode: 0,
       stdout: '',
       stderr: '',
+      stdoutBytes: 0,
+      stderrBytes: 0,
+      stdoutOverflow: false,
+      stderrOverflow: false,
       timedOut: false,
     }),
   ) {}

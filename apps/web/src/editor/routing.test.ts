@@ -7,9 +7,9 @@ import {
   simpleLoop,
 } from '../__fixtures__/routing.js';
 import {
+  createRoutingPlan,
   intersectsBox,
   roundedPath,
-  routeBackwardEdges,
   routeText,
   ROUTING_CLEARANCE,
   simplify,
@@ -17,6 +17,9 @@ import {
   type RoutingEdge,
   type RoutingNode,
 } from './routing.js';
+
+const routesOf = (...args: Parameters<typeof createRoutingPlan>) =>
+  createRoutingPlan(...args).routes;
 
 const box = (id: string, x: number, y: number, width = 184, height = 122): RoutingNode => ({
   id,
@@ -40,7 +43,7 @@ const edge = (source: string, target: string, port = 'out'): RoutingEdge => ({
 
 /** Independently check the public clearance, including own boxes except the two straight stubs. */
 function assertGeometry(nodes: RoutingNode[], edges: RoutingEdge[], clearance = ROUTING_CLEARANCE) {
-  const routes = routeBackwardEdges(nodes, edges, clearance);
+  const routes = routesOf(nodes, edges, clearance);
   for (const [id, route] of routes) {
     expect(route.blocked || route.unavailable, id).toBe(false);
     const effectiveClearance = Math.min(clearance, route.padding - route.radius);
@@ -90,18 +93,18 @@ describe('backward routing geometry', () => {
       const { nodes, edges } = routingInput(fixture());
       const routes = assertGeometry(nodes, edges);
       expect(routes.size).toBeGreaterThan(0);
-      expect(routes).toEqual(routeBackwardEdges([...nodes].reverse(), [...edges].reverse()));
+      expect(routes).toEqual(routesOf([...nodes].reverse(), [...edges].reverse()));
     },
   );
 
   it('keeps forward edges unchanged, including a script out, but always routes repeat', () => {
     const nodes = [box('a', 0, 0), box('b', 400, 0)];
-    expect(routeBackwardEdges(nodes, [edge('a', 'b')]).size).toBe(0);
+    expect(routesOf(nodes, [edge('a', 'b')]).size).toBe(0);
     expect(assertGeometry(nodes, [edge('a', 'b', 'repeat')]).size).toBe(1);
-    expect(routeBackwardEdges(nodes, [edge('missing', 'b'), edge('a', 'missing')]).size).toBe(0);
-    expect(routeBackwardEdges(nodes, [edge('b', 'a', 'unknown')]).size).toBe(0);
+    expect(routesOf(nodes, [edge('missing', 'b'), edge('a', 'missing')]).size).toBe(0);
+    expect(routesOf(nodes, [edge('b', 'a', 'unknown')]).size).toBe(0);
     const { input: _input, ...noInput } = nodes[0]!;
-    expect(routeBackwardEdges([noInput, nodes[1]!], [edge('b', 'a')]).size).toBe(0);
+    expect(routesOf([noInput, nodes[1]!], [edge('b', 'a')]).size).toBe(0);
   });
 
   it.each([-320, 320])('handles targets directly above/below (%s), plus self-loops', (y) => {
@@ -123,10 +126,7 @@ describe('backward routing geometry', () => {
 
   it('reports a covered source or target port without inventing a colliding route', () => {
     for (const overlap of [box('cover', 850, 0), box('cover', -60, 0)]) {
-      const routes = routeBackwardEdges(
-        [box('a', 700, 0), box('b', 0, 0), overlap],
-        [edge('a', 'b')],
-      );
+      const routes = routesOf([box('a', 700, 0), box('b', 0, 0), overlap], [edge('a', 'b')]);
       const route = routes.get('a-b')!;
       expect(route).toMatchObject({ blocked: true, points: [] });
       // The warning pill reserves its whole text and sits clear of every card, so no card paints
@@ -181,7 +181,7 @@ describe('backward routing geometry', () => {
     const before = structuredClone(input);
     assertGeometry(input.nodes, input.edges, 40);
     expect(input).toEqual(before);
-    expect(routeBackwardEdges([], [], -1).size).toBe(0);
+    expect(routesOf([], [], -1).size).toBe(0);
   });
 
   it('rounds corners with bounded radii and simplifies redundant points', () => {

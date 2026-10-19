@@ -61,11 +61,6 @@ export const HISTORY_LIMIT = 100;
 /** Changes with the same key less than this far apart (ms) merge into one step. */
 export const COALESCE_MS = 1000;
 
-/** The clock the merge window is measured with; tests replace `now`. */
-export const historyClock = { now: (): number => performance.now() };
-
-export const EMPTY_HISTORY: History = { past: [], future: [], openStep: undefined };
-
 /**
  * Whether two JSON-like values are equal. A property holding `undefined` counts as absent, as it
  * does once the draft is saved, so an edit that only spells a value differently changes nothing.
