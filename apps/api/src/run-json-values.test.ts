@@ -15,33 +15,43 @@ afterEach(async () => {
     await rm(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
 });
 
+async function fileApp() {
+  const dir = await mkdtemp(join(tmpdir(), 'gg-api-json-values-'));
+  directories.push(dir);
+  const env = { GG_DB_URL: `file:${join(dir, 'store.db').replaceAll('\\', '/')}` };
+  const t = await createTestApp({ env });
+  apps.push(t);
+  return {
+    t,
+    reopen: async () => {
+      await t.close();
+      apps.splice(apps.indexOf(t), 1);
+      const next = await createTestApp({ env });
+      apps.push(next);
+      return next;
+    },
+  };
+}
+
+const cases: { name: string; returns: string; value: JsonValue | undefined }[] = [
+  { name: 'absent', returns: 'none', value: undefined },
+  { name: 'null', returns: 'null', value: null },
+  { name: 'false', returns: 'false', value: false },
+  { name: 'zero', returns: '0', value: 0 },
+  { name: 'empty string', returns: "''", value: '' },
+  { name: 'array', returns: '[]', value: [] },
+  { name: 'object', returns: '{}', value: {} },
+  { name: 'nested null', returns: '{"inner": null}', value: { inner: null } },
+];
+
 describe('run result snapshots over file SQLite', () => {
-  it('keeps absent and every JSON result distinct after execution, rejected updates and reopen', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'gg-api-json-values-'));
-    directories.push(dir);
-    const env = { GG_DB_URL: `file:${join(dir, 'store.db').replaceAll('\\', '/')}` };
-    const t = await createTestApp({ env });
-    apps.push(t);
-    const cases: { returns: string; value: JsonValue | undefined }[] = [
-      { returns: 'none', value: undefined },
-      { returns: 'null', value: null },
-      { returns: 'false', value: false },
-      { returns: '0', value: 0 },
-      { returns: "''", value: '' },
-      { returns: '[]', value: [] },
-      { returns: '{}', value: {} },
-      { returns: '{"inner": null}', value: { inner: null } },
-    ];
-    const runs: { id: string; value: JsonValue | undefined }[] = [];
-    for (const [index, entry] of cases.entries()) {
+  it.each(cases)(
+    'preserves $name through execution, rejected updates and reopen',
+    async ({ name, returns, value }) => {
+      const { t, reopen } = await fileApp();
       const definition = minimalLoop();
-      definition.name = `JSON result ${index}`;
-      definition.nodes[1] = {
-        id: 'done',
-        kind: 'exit',
-        label: 'Done',
-        config: { returns: entry.returns },
-      };
+      definition.name = `JSON result ${name}`;
+      definition.nodes[1] = { id: 'done', kind: 'exit', label: 'Done', config: { returns } };
       const loopId = await t.publishLoop(definition);
       const response = await t.app.inject({
         method: 'POST',
@@ -50,34 +60,30 @@ describe('run result snapshots over file SQLite', () => {
       });
       expect(response.statusCode).toBe(202);
       const { run } = response.json<{ run: RunRecord }>();
-      runs.push({ id: run.id, value: entry.value });
-    }
-    await t.idle();
-    const verify = async (app: TestApp) => {
-      for (const { id, value } of runs) {
-        const snapshot = await app.app.inject({ method: 'GET', url: `/runs/${id}` });
+      await t.idle();
+      const verify = async (app: TestApp) => {
+        const snapshot = await app.app.inject({ method: 'GET', url: `/runs/${run.id}` });
         expect(snapshot.statusCode).toBe(200);
-        const run = snapshot.json<RunRecord>();
-        expect(run.status).toBe('succeeded');
-        expect(run.result).toEqual(value);
-        expect(Object.hasOwn(run, 'result')).toBe(value !== undefined);
-      }
-    };
+        const stored = snapshot.json<RunRecord>();
+        expect(stored.status).toBe('succeeded');
+        expect(stored.result).toEqual(value);
+        expect(Object.hasOwn(stored, 'result')).toBe(value !== undefined);
+      };
+      await verify(t);
+      await expect(
+        t.container.repos.runs.update(run.id, { iteration: 0, result: 'rejected' }),
+      ).rejects.toThrow();
+      await verify(t);
+      await verify(await reopen());
+    },
+  );
+
+  it('preserves settings null and falsy JSON values across reopen', async () => {
+    const { t, reopen } = await fileApp();
     const settings = { nil: null, no: false, zero: 0, empty: '', array: [], object: {} };
     const saved = await t.app.inject({ method: 'PUT', url: '/settings', payload: settings });
     expect(saved.statusCode).toBe(200);
     expect((await t.app.inject('/settings')).json()).toMatchObject(settings);
-    await verify(t);
-    const id = runs[1]!.id;
-    await expect(
-      t.container.repos.runs.update(id, { iteration: 0, result: 'rejected' }),
-    ).rejects.toThrow();
-    await verify(t);
-    await t.close();
-    apps.splice(apps.indexOf(t), 1);
-    const reopened = await createTestApp({ env });
-    apps.push(reopened);
-    await verify(reopened);
-    expect((await reopened.app.inject('/settings')).json()).toMatchObject(settings);
+    expect((await (await reopen()).app.inject('/settings')).json()).toMatchObject(settings);
   });
 });

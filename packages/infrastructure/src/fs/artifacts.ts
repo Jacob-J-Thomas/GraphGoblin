@@ -36,7 +36,13 @@ export class FsArtifactStore implements ArtifactStorePort {
       } finally {
         await handle.close();
       }
-      await publish(temporary, file);
+      try {
+        await publish(temporary, file);
+      } catch (error) {
+        // An identical writer may have won while a reader/scanner blocks replacement.
+        // Trust only hash-verified final bytes; absence, corruption and I/O errors still fail.
+        if ((await this.get(ref)) === undefined) throw error;
+      }
       return stored;
     } catch (cause) {
       throw new ArtifactStoreError('ARTIFACT_WRITE_FAILED', ref, { cause });

@@ -70,6 +70,10 @@ The owner-scoped `GET /runs/diagnostics` endpoint (`runs:read`) identifies unrea
 
 Diagnostics are paged by `nextCursor`; pass it back as `?cursor=...` until null. Each request checks at most 20 runs, two threads per run and 100 events per run (at most 2,000 events total). A long event history resumes within the same run. Ordinary run lists skip unreadable rows while advancing their cursor; diagnostics identifies those rows. A direct unreadable snapshot returns `STORED_RUN_INVALID` with its run ID; unreadable event pages retain `STORED_EVENT_INVALID`. Unrelated loop deletion continues to work; active run references still protect their own and reachable loops.
 
+## Artifact downloads
+
+`GET /runs/{id}/artifacts/{artifactId}` returns the artifact's verified content, with SHA-256 checked before decoding. Missing artifact metadata or content returns `404 ARTIFACT_NOT_FOUND`; bytes that do not match the reference return `500 ARTIFACT_CORRUPT`, without serving partial or corrupt content. `ARTIFACT_CORRUPT` is an API problem code, not a run failure code.
+
 ## Loop deletion
 
 `DELETE /loops/{id}` commits the loop, versions, runs and their dependent rows together

@@ -3,7 +3,7 @@ import type { RunErrorCode, RunFailure } from '@graphgoblin/contracts';
 /** Artifact I/O failed explicitly; missing content is represented separately by undefined. */
 export class ArtifactStoreError extends Error {
   constructor(
-    readonly code: Extract<RunErrorCode, 'ARTIFACT_CORRUPT' | 'ARTIFACT_WRITE_FAILED'>,
+    readonly code: 'ARTIFACT_CORRUPT' | 'ARTIFACT_WRITE_FAILED',
     readonly ref: string,
     options?: ErrorOptions,
   ) {

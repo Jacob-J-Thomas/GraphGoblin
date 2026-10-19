@@ -1,10 +1,13 @@
 import {
+  closeSync,
   mkdirSync,
   mkdtempSync,
+  openSync,
   readFileSync,
   readdirSync,
   rmSync,
   statSync,
+  watch,
   writeFileSync,
 } from 'node:fs';
 import { createHash } from 'node:crypto';
@@ -58,6 +61,52 @@ describe('FsWorkspace', () => {
 });
 
 describe('FsArtifactStore', () => {
+  // POSIX permits replacement while the destination is open; this exercises Windows sharing.
+  it.skipIf(process.platform !== 'win32')(
+    'accepts verified bytes published by another writer while a read handle blocks replacement',
+    async () => {
+      const content = 'x'.repeat(32 * 1024 * 1024);
+      const bytes = Buffer.from(content);
+      const hash = createHash('sha256').update(bytes).digest('hex');
+      const ref = `artifact:transcript/${hash}`;
+      const dir = join(dataDir, 'artifacts', 'transcript');
+      const final = join(dir, hash);
+      mkdirSync(dir, { recursive: true });
+      let readHandle: number | undefined;
+      let injected = false;
+      let setupError: unknown;
+      const observer = watch(dir, (_event, name) => {
+        if (injected || !name?.startsWith(`.${hash}.`) || !name.endsWith('.tmp')) return;
+        injected = true;
+        try {
+          // A .tmp proves put already checked the missing destination. Synchronous setup keeps
+          // this callback ahead of put's remaining asynchronous write/fsync/rename continuations.
+          statSync(join(dir, name));
+          writeFileSync(final, bytes);
+          readHandle = openSync(final, 'r');
+        } catch (error) {
+          setupError = error;
+        }
+      });
+      const store = new FsArtifactStore(dataDir);
+      try {
+        await expect(store.put('transcript', content)).resolves.toEqual({
+          ref,
+          bytes: bytes.length,
+        });
+        expect(injected).toBe(true);
+        expect(setupError).toBeUndefined();
+        expect(readHandle).toBeDefined();
+        expect(await store.get(ref)).toBe(content);
+        expect(readFileSync(final).equals(bytes)).toBe(true);
+        expect(readdirSync(dir)).toEqual([hash]);
+      } finally {
+        observer.close();
+        if (readHandle !== undefined) closeSync(readHandle);
+      }
+    },
+  );
+
   it('rejects corrupted final bytes and atomically repairs a pre-existing partial file', async () => {
     const store = new FsArtifactStore(dataDir);
     const content = 'complete transcript: 世界 🧙';

@@ -28,7 +28,7 @@ Stored as JSON in `loop_versions.definition`, validated by `contracts`.
 type LoopDefinition = {
   schemaVersion: 4;
   name: string;
-  description?: string;
+  description?: string; // an empty string is distinct from absence
   settings: {
     workingDirectory: WorkingDirectorySpec; // see 04 and 06
     defaults: { byHarness: { codex?: { model?: string; effort?: Effort } } };

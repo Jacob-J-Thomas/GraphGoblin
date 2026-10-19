@@ -431,13 +431,12 @@ export const inferenceHandler: NodeHandler<'inference'> = {
       await ctx.ports.sessions.upsert({ ...row });
       return { kind: 'done', patch, route: 'out' };
     } catch (error) {
-      // The provider turn has already completed. Do not silently lose its transcript or
-      // automatically repeat work that may have external effects after an artifact failure.
+      // Storage faults remain operator-fixable. Explicit resume continues the recorded
+      // provider session with CONTINUATION_PROMPT rather than resending the authored prompt.
       let failure: unknown =
-        error instanceof ArtifactStoreError
+        error instanceof ArtifactStoreError && error.code === 'ARTIFACT_WRITE_FAILED'
           ? new RunFailureError(error.code, error.message, {
               nodeId: ctx.node.id,
-              resumable: false,
               details: { ref: error.ref },
             })
           : error;

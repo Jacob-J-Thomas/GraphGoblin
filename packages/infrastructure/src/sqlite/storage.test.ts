@@ -425,6 +425,19 @@ describe('SqliteLoopRepository draft and publish interleaving', () => {
 });
 
 describe('SqliteLoopRepository', () => {
+  it('preserves an empty description distinctly from absence on create, list and draft save', async () => {
+    const repo = new SqliteLoopRepository(handle.db, clock, ids);
+    const definition = LoopDefinitionSchema.parse({ ...minimalLoop(), description: '' });
+    const { loop } = await repo.create('local', definition);
+    expect(loop.description).toBe('');
+    expect((await repo.getLoop(loop.id))?.description).toBe('');
+    expect((await repo.listLoops('local'))[0]?.description).toBe('');
+    await repo.saveDraft(loop.id, LoopDefinitionSchema.parse(minimalLoop()));
+    expect(Object.hasOwn((await repo.getLoop(loop.id))!, 'description')).toBe(false);
+    await repo.saveDraft(loop.id, definition);
+    expect((await repo.getLoop(loop.id))?.description).toBe('');
+  });
+
   it('creates loops with drafts, publishes, and resolves versions', async () => {
     const repo = new SqliteLoopRepository(handle.db, clock, ids);
     const definition = LoopDefinitionSchema.parse(minimalLoop());
