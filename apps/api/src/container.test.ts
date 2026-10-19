@@ -1,4 +1,4 @@
-import { LoopDefinitionSchema } from '@graphgoblin/contracts';
+import { LoopDefinitionSchema, type RunRecord } from '@graphgoblin/contracts';
 import { minimalLoop, FIXTURE_IDS, FIXTURE_TS } from '@graphgoblin/contracts/testing';
 import { access, mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -6,13 +6,117 @@ import { join } from 'node:path';
 import { CodexHarness } from '@graphgoblin/adapter-codex';
 import { JevDecider } from '@graphgoblin/adapter-jev';
 import { openDatabase, openReadOnlyDatabaseClient } from '@graphgoblin/infrastructure/sqlite';
-import { CapturingLogger } from '@graphgoblin/engine/testing';
+import { createInitialThread } from '@graphgoblin/engine';
+import { CapturingLogger, singleNodeLoop } from '@graphgoblin/engine/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildApp } from './app.js';
 import { loadConfig } from './config.js';
 import { JEV_SECRET, LOCAL_OWNER, createContainer, type Container } from './container.js';
 import { StoreRefusedError } from './store-refusal.js';
 import type { ApiInstance } from './types.js';
+import { startFakeClassifierEndpoint } from './testing/fake-classifier.js';
+
+// Interpose only on the external libsql client. Resolve from its declaring package:
+// the API intentionally depends on the infrastructure port, not directly on libsql.
+const libsqlPath = await vi.hoisted(async () => {
+  const { createRequire } = await import('node:module');
+  const require = createRequire(import.meta.resolve('@graphgoblin/infrastructure/sqlite'));
+  const entry = require.resolve('@libsql/client');
+  const esm = entry.replace('lib-cjs', 'lib-esm');
+  if (esm === entry) throw new Error(`Unexpected libsql module layout: ${entry}`);
+  // Resolve the actual mock target now, so a layout change fails before any migration gate.
+  return require.resolve(esm);
+});
+type SqliteClient = ReturnType<typeof openDatabase>['client'];
+let migrationGate: { entered(): void; held: Promise<void> } | undefined;
+vi.mock(libsqlPath, async (importOriginal) => {
+  const actual = await importOriginal<{ createClient(options: { url: string }): SqliteClient }>();
+  return {
+    ...actual,
+    createClient: (options: { url: string }) => {
+      const client = actual.createClient(options);
+      return new Proxy(client, {
+        get(target, key) {
+          if (key === 'transaction')
+            return async (...args: Parameters<SqliteClient['transaction']>) => {
+              const gate = migrationGate;
+              if (gate) {
+                migrationGate = undefined;
+                gate.entered();
+                await gate.held;
+              }
+              return client.transaction(...args);
+            };
+          const value: unknown = Reflect.get(target, key, target);
+          const forwarded: unknown = typeof value === 'function' ? value.bind(target) : value;
+          return forwarded;
+        },
+      });
+    },
+  };
+});
+
+function holdMigrationTransaction() {
+  let release!: () => void;
+  let entered!: () => void;
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const reached = new Promise<void>((resolve) => {
+    entered = resolve;
+  });
+  migrationGate = { entered, held };
+  return { reached, release };
+}
+
+async function queueRecoveryWork(container: Container) {
+  const { loop } = await container.repos.loops.create(
+    LOCAL_OWNER,
+    LoopDefinitionSchema.parse(
+      singleNodeLoop('seed before recovery', {
+        id: 'work',
+        kind: 'script',
+        label: 'Work',
+        config: { command: 'fixture' },
+      }),
+    ),
+  );
+  const version = await container.repos.loops.publish(loop.id);
+  if (!version) throw new Error('expected published fixture');
+  const run: RunRecord = {
+    id: FIXTURE_IDS.run,
+    ownerId: LOCAL_OWNER,
+    loopId: loop.id,
+    versionId: version.id,
+    invocationId: FIXTURE_IDS.invocation,
+    status: 'queued',
+    iteration: 1,
+    createdAt: FIXTURE_TS,
+    lastEventSeq: 0,
+  };
+  const initialThread = createInitialThread({
+    runId: run.id,
+    loopId: loop.id,
+    versionId: version.id,
+    invocation: {
+      id: run.invocationId,
+      source: 'manual.api',
+      trigger: {
+        kind: 'manual',
+        nodeId: 'start',
+        payload: null,
+        receivedAt: FIXTURE_TS,
+      },
+    },
+  });
+  // Real durable admission without dispatch: only the next container's recovery can run it.
+  return container.ports.admission.create({
+    run,
+    initialThread,
+    pinnedLoopIds: [loop.id],
+    queued: { type: 'run.queued', initialThread, subloopVersions: {} },
+  });
+}
 
 let dataDir: string;
 
@@ -21,6 +125,7 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
+  migrationGate = undefined;
   await rm(dataDir, { recursive: true, force: true }).catch(() => undefined);
 });
 
@@ -88,12 +193,20 @@ describe('default adapters', () => {
   });
 
   it('ignores other secrets and other owners', async () => {
-    const refresh = vi.spyOn(JevDecider.prototype, 'refresh');
+    await app.inject({
+      method: 'PUT',
+      url: `/secrets/${JEV_SECRET}`,
+      payload: { value: 'configured-key' },
+    });
+    const before = await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', 'noul');
+    if (before.status !== 'ready') throw new Error('expected configured Jev');
     await app.inject({ method: 'PUT', url: '/secrets/other', payload: { value: 'x' } });
     await container.onSecretChanged('someone-else', JEV_SECRET);
-    expect(refresh).not.toHaveBeenCalled();
+    const after = await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', 'noul');
+    if (after.status !== 'ready') throw new Error('expected unchanged Jev availability');
+    expect(after.classifier).toBe(before.classifier);
+    expect(await jevAvailable(container)).toBe(true);
     expect(hook).toHaveBeenCalledWith(LOCAL_OWNER, 'other');
-    refresh.mockRestore();
   });
 
   it('does not notify when deleting a secret that does not exist', async () => {
@@ -103,71 +216,128 @@ describe('default adapters', () => {
   });
 
   it('shares configured Noul and Choice classifier snapshots and invalidates them after key and enable changes', async () => {
-    await app.inject({
-      method: 'PUT',
-      url: `/secrets/${JEV_SECRET}`,
-      payload: { value: 'first-key' },
-    });
-    const first = await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', 'choice');
-    expect(first.status).toBe('ready');
-    if (first.status !== 'ready') throw new Error('expected configured Jev');
-    expect(first.classifier).toBeInstanceOf(JevDecider);
-    expect(await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', 'choice')).toEqual(first);
-    await app.inject({
-      method: 'PUT',
-      url: `/secrets/${JEV_SECRET}`,
-      payload: { value: 'second-key' },
-    });
-    const next = await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', 'choice');
-    expect(next.status).toBe('ready');
-    if (next.status !== 'ready') throw new Error('expected configured Jev');
-    expect(next.classifier).not.toBe(first.classifier);
-    const noul = vi
-      .spyOn(JevDecider.prototype, 'classifyNoul')
-      .mockResolvedValue({ type: 'noul', trueProbability: 1 });
-    const choose = vi.spyOn(JevDecider.prototype, 'choose').mockResolvedValue({
-      type: 'choice',
-      optionId: 'yes',
-      confidence: 1,
-      probabilities: { yes: 1 },
-    });
+    const fake = await startFakeClassifierEndpoint();
     try {
+      const entry = await container.repos.classifiers.findOne(LOCAL_OWNER, 'jev');
+      if (!entry) throw new Error('missing built-in Jev');
+      await container.repos.classifiers.seedBuiltin(LOCAL_OWNER, {
+        ...entry,
+        endpoint: fake.endpoint,
+      });
+      await container.onClassifierChanged(LOCAL_OWNER, 'jev');
+      await app.inject({
+        method: 'PUT',
+        url: `/secrets/${JEV_SECRET}`,
+        payload: { value: 'first-key' },
+      });
+      const first = await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', 'choice');
+      expect(first.status).toBe('ready');
+      if (first.status !== 'ready') throw new Error('expected configured Jev');
+      expect(first.classifier).toBeInstanceOf(JevDecider);
+      expect(await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', 'choice')).toEqual(
+        first,
+      );
+      await app.inject({
+        method: 'PUT',
+        url: `/secrets/${JEV_SECRET}`,
+        payload: { value: 'second-key' },
+      });
+      const next = await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', 'choice');
+      expect(next.status).toBe('ready');
+      if (next.status !== 'ready') throw new Error('expected configured Jev');
+      expect(next.classifier).not.toBe(first.classifier);
+      const noul = await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', 'noul');
+      if (noul.status !== 'ready') throw new Error('expected configured Noul');
+      expect(noul.classifier).toBe(next.classifier);
       expect(
         await next.classifier.classifyNoul(
-          { question: 'Done?', context: {}, criteria: { true: 'Ready', false: 'Continue' } },
+          {
+            question: 'Done?',
+            context: { change: 1 },
+            criteria: { true: 'Ready', false: 'Continue' },
+          },
           new AbortController().signal,
         ),
       ).toEqual({ type: 'noul', trueProbability: 1 });
-      await next.classifier.choose(
-        { question: '?', context: {}, options: [{ id: 'yes', label: 'Yes', criteria: 'Approve' }] },
-        new AbortController().signal,
-      );
-      expect(noul).toHaveBeenCalledOnce();
-      expect(choose).toHaveBeenCalledOnce();
+      expect(
+        await next.classifier.choose(
+          {
+            question: 'Route?',
+            context: { change: 2 },
+            options: [
+              { id: 'yes', label: 'Yes', criteria: 'Approve' },
+              { id: 'no', label: 'No', criteria: 'Revise' },
+            ],
+          },
+          new AbortController().signal,
+        ),
+      ).toEqual({
+        type: 'choice',
+        optionId: 'yes',
+        confidence: 1,
+        probabilities: { yes: 1, no: 0 },
+      });
+      expect(fake.requests).toEqual([
+        {
+          method: 'POST',
+          url: '/v1/systemone',
+          authorization: 'Bearer second-key',
+          body: {
+            model: entry.providerModel,
+            state: { change: 1 },
+            questions: {
+              answer: {
+                type: 'noul',
+                instructions: 'Done?',
+                criteria: { true: 'Ready', false: 'Continue' },
+              },
+            },
+          },
+        },
+        {
+          method: 'POST',
+          url: '/v1/systemone',
+          authorization: 'Bearer second-key',
+          body: {
+            model: entry.providerModel,
+            state: { change: 2 },
+            questions: {
+              answer: {
+                type: 'choice',
+                instructions: 'Route?',
+                criteria: { yes: 'Approve', no: 'Revise' },
+              },
+            },
+          },
+        },
+      ]);
+      await app.inject({
+        method: 'PATCH',
+        url: '/classifier-models/jev',
+        payload: { enabled: false },
+      });
+      expect(await jevAvailable(container)).toBe(false);
+      expect(
+        await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', 'choice'),
+      ).toMatchObject({
+        reason: 'CLASSIFIER_MODEL_DISABLED',
+      });
+      await app.inject({
+        method: 'PATCH',
+        url: '/classifier-models/jev',
+        payload: { enabled: true },
+      });
+      expect(await jevAvailable(container)).toBe(true);
+      await app.inject({ method: 'DELETE', url: `/secrets/${JEV_SECRET}` });
+      expect(await jevAvailable(container)).toBe(false);
+      expect(
+        await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', 'choice'),
+      ).toMatchObject({
+        reason: 'CLASSIFIER_SECRET_MISSING',
+      });
     } finally {
-      noul.mockRestore();
-      choose.mockRestore();
+      await fake.close();
     }
-    await app.inject({
-      method: 'PATCH',
-      url: '/classifier-models/jev',
-      payload: { enabled: false },
-    });
-    expect(await jevAvailable(container)).toBe(false);
-    expect(await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', 'choice')).toMatchObject({
-      reason: 'CLASSIFIER_MODEL_DISABLED',
-    });
-    await app.inject({
-      method: 'PATCH',
-      url: '/classifier-models/jev',
-      payload: { enabled: true },
-    });
-    expect(await jevAvailable(container)).toBe(true);
-    await app.inject({ method: 'DELETE', url: `/secrets/${JEV_SECRET}` });
-    expect(await jevAvailable(container)).toBe(false);
-    expect(await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', 'choice')).toMatchObject({
-      reason: 'CLASSIFIER_SECRET_MISSING',
-    });
   });
 });
 
@@ -179,17 +349,27 @@ describe('Jev key at boot', () => {
     await first.handle.client.execute(
       "UPDATE classifier_models SET display_name = 'stale' WHERE id = 'jev'",
     );
+    const queued = await queueRecoveryWork(first);
     await first.stop();
-    const second = await createContainer(config(), { startTimers: false });
-    const recover = vi.spyOn(second.manager, 'start').mockImplementation(async () => {
-      expect(await second.repos.classifiers.findOne(LOCAL_OWNER, 'jev')).toMatchObject({
-        displayName: 'Jev',
-        enabled: false,
-      });
+    let observed = false;
+    const second = await createContainer(config(), {
+      startTimers: false,
+      scripts: {
+        run: async () => {
+          expect(await second.repos.classifiers.findOne(LOCAL_OWNER, 'jev')).toMatchObject({
+            displayName: 'Jev',
+            enabled: false,
+          });
+          observed = true;
+          return { exitCode: 0, stdout: 'recovered', stderr: '', timedOut: false };
+        },
+      },
     });
     try {
       await second.start();
-      expect(recover).toHaveBeenCalledOnce();
+      await second.manager.waitForIdle();
+      expect(observed).toBe(true);
+      expect((await second.repos.runs.get(queued.id))?.status).toBe('succeeded');
       expect(await jevAvailable(second)).toBe(false);
     } finally {
       await second.stop();
@@ -342,9 +522,9 @@ describe('container directory ownership', () => {
     await expect(access(lockPath)).rejects.toMatchObject({ code: 'ENOENT' });
     const next = await createContainer(config(), { startTimers: false });
     await next.start();
-    const recovery = vi.spyOn(first.manager, 'start');
+    const lockOfNext = await readFile(lockPath, 'utf8');
     await expect(first.start()).rejects.toThrow('container has been stopped');
-    expect(recovery).not.toHaveBeenCalled();
+    expect(await readFile(lockPath, 'utf8')).toBe(lockOfNext);
     await next.stop();
   });
 
@@ -357,37 +537,57 @@ describe('container directory ownership', () => {
     });
   });
 
-  it('releases ownership when startup fails before recovery', async () => {
-    const container = await createContainer(config());
-    vi.spyOn(container.handle, 'migrate').mockRejectedValueOnce(new Error('migration failed'));
-    const recover = vi.spyOn(container.manager, 'start');
-    await expect(container.start()).rejects.toThrow('migration failed');
-    expect(recover).not.toHaveBeenCalled();
+  it('releases ownership without recovery or writes when readiness fails during migration', async () => {
+    const first = await createContainer(config(), { startTimers: false });
+    await first.start();
+    const queued = await queueRecoveryWork(first);
+    await first.stop();
+    const container = await createContainer(config(), { startTimers: false });
+    await container.handle.client.execute('UPDATE gg_upgrade_state SET format_version=99');
+    const tables = [
+      'runs',
+      'run_events',
+      'classifier_models',
+      'model_catalog',
+      'settings',
+      '__drizzle_migrations',
+    ];
+    const before = await Promise.all(
+      tables.map((table) => container.handle.client.execute(`SELECT * FROM "${table}"`)),
+    );
+    await expect(container.start()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
     await expect(access(join(dataDir, 'graphgoblin.lock'))).rejects.toMatchObject({
       code: 'ENOENT',
     });
-    await container.stop();
+    const inspection = openReadOnlyDatabaseClient(join(dataDir, 'gg.db'));
+    try {
+      for (const [index, table] of tables.entries())
+        expect((await inspection.execute(`SELECT * FROM "${table}"`)).rows).toEqual(
+          before[index]!.rows,
+        );
+      expect(
+        (await inspection.execute({ sql: 'SELECT status FROM runs WHERE id=?', args: [queued.id] }))
+          .rows,
+      ).toEqual([expect.objectContaining({ status: 'queued' })]);
+    } finally {
+      inspection.close();
+      await container.stop();
+    }
   });
 
-  it('serializes repeated starts and keeps the lock when stopped during migration', async () => {
+  it('serializes repeated starts and holds ownership until a stop during migration finishes', async () => {
     const container = await createContainer(config(), { startTimers: false });
-    const migrate = container.handle.migrate;
-    let resume!: () => void;
-    const gate = new Promise<void>((resolve) => {
-      resume = resolve;
-    });
-    const migration = vi.spyOn(container.handle, 'migrate').mockImplementationOnce(async () => {
-      await gate;
-      await migrate();
-    });
+    const gate = holdMigrationTransaction();
     const starting = container.start();
     const repeated = container.start();
     const stopping = container.stop();
     try {
+      await gate.reached;
+      expect(repeated).toBe(starting);
+      await expect(access(join(dataDir, 'graphgoblin.lock'))).resolves.toBeUndefined();
       await expect(createContainer(config())).rejects.toThrow('another GraphGoblin process holds');
-      expect(migration).toHaveBeenCalledTimes(1);
     } finally {
-      resume();
+      gate.release();
       await Promise.all([starting, repeated, stopping]);
     }
     await expect(access(join(dataDir, 'graphgoblin.lock'))).rejects.toMatchObject({
@@ -486,49 +686,31 @@ describe('configuration admission before startup writes', () => {
   });
 });
 
-it.each([true, false])(
-  'reuses only the definition parse when the database is covered by the data-directory lock: %s',
-  async (protectedFile) => {
-    const outside = dataDir;
-    const settings = config(
-      protectedFile
-        ? {}
-        : {
-            GG_DATA_DIR: join(dataDir, 'locked'),
-            GG_DB_URL: `file:${join(outside, 'external.db').replaceAll('\\', '/')}`,
-          },
-    );
-    const prepared = openDatabase({ url: settings.dbUrl });
-    await prepared.migrate();
-    await prepared.client.execute({
-      sql: 'INSERT INTO loop_versions(id,loop_id,version,status,definition,created_at) VALUES (?,?,1,?,?,?)',
-      args: [
-        FIXTURE_IDS.version,
-        FIXTURE_IDS.loop,
-        'published',
-        JSON.stringify({ ...minimalLoop(), name: 'Readiness once sentinel' }),
-        FIXTURE_TS,
-      ],
+it('admits a valid stored definition before recovery', async () => {
+  const settings = config();
+  const prepared = openDatabase({ url: settings.dbUrl });
+  await prepared.migrate();
+  await prepared.client.execute({
+    sql: 'INSERT INTO loop_versions(id,loop_id,version,status,definition,created_at) VALUES (?,?,1,?,?,?)',
+    args: [
+      FIXTURE_IDS.version,
+      FIXTURE_IDS.loop,
+      'published',
+      JSON.stringify({ ...minimalLoop(), name: 'Readiness once sentinel' }),
+      FIXTURE_TS,
+    ],
+  });
+  prepared.close();
+  const container = await createContainer(settings, { startTimers: false });
+  try {
+    await container.start();
+    expect(await container.repos.loops.getVersion(FIXTURE_IDS.version)).toMatchObject({
+      definition: expect.objectContaining({ name: 'Readiness once sentinel' }),
     });
-    prepared.close();
-    const parse = vi.spyOn(LoopDefinitionSchema, 'parse');
-    const container = await createContainer(settings, { startTimers: false });
-    try {
-      await container.start();
-      expect(
-        parse.mock.calls.filter(
-          ([input]) =>
-            typeof input === 'object' &&
-            input !== null &&
-            'name' in input &&
-            input.name === 'Readiness once sentinel',
-        ),
-      ).toHaveLength(protectedFile ? 1 : 2);
-    } finally {
-      await container.stop();
-    }
-  },
-);
+  } finally {
+    await container.stop();
+  }
+});
 it('repeats cheap readiness checks inside migrate even after a protected preflight', async () => {
   const prepared = openDatabase({ url: config().dbUrl });
   await prepared.migrate();

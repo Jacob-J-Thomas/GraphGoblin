@@ -2,7 +2,47 @@ import { NodeKindSchema, RunStatusSchema } from '@graphgoblin/contracts';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { RunStatusBadge } from '../status.js';
-import { GoblinMark, Icon, ICON_NAMES, KindIcon, Logo, StatusIcon } from './index.js';
+import { GoblinMark, Icon, type IconName, KindIcon, Logo, StatusIcon } from './index.js';
+
+const glyphNames = {
+  trigger: true,
+  decision: true,
+  inference: true,
+  script: true,
+  mutate: true,
+  subloop: true,
+  wait: true,
+  heartbeat: true,
+  exit: true,
+  queued: true,
+  running: true,
+  paused: true,
+  succeeded: true,
+  failed: true,
+  cancelled: true,
+  exhausted: true,
+  menu: true,
+  close: true,
+  chevron: true,
+  plus: true,
+  check: true,
+  'check-circle': true,
+  alert: true,
+  info: true,
+  offline: true,
+  sliders: true,
+  send: true,
+  export: true,
+  edit: true,
+  upload: true,
+  trash: true,
+  panel: true,
+  'arrow-right': true,
+  loop: true,
+  undo: true,
+  redo: true,
+} satisfies Record<IconName, true>;
+const ICON_NAMES = Object.keys(glyphNames) as IconName[];
 
 describe('icons', () => {
   it('draws every glyph as a decorative, currentColor stroke icon', () => {
