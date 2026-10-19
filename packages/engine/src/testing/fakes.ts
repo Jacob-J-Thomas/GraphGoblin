@@ -65,6 +65,7 @@ import type {
   WorkspacePort,
 } from '../ports.js';
 import { AppendConflictError } from '../errors.js';
+import { validateGeneratedEvent } from '../event-validation.js';
 import {
   AdmissionConflictError,
   assertAdmissionIdentity,
@@ -145,7 +146,7 @@ export class InMemoryEventStore implements EventStorePort {
   private readonly listeners = new Map<string, Set<(event: RunEvent) => void>>();
   constructor(private readonly clock: ClockPort) {}
 
-  append(
+  async append(
     runId: string,
     drafts: readonly EventDraft[],
     options: { expectedLastSeq?: number } = {},
@@ -154,17 +155,15 @@ export class InMemoryEventStore implements EventStorePort {
     if (options.expectedLastSeq !== undefined && options.expectedLastSeq !== log.length) {
       return Promise.reject(new AppendConflictError(runId, options.expectedLastSeq, log.length));
     }
-    const stored: RunEvent[] = [];
-    for (const draft of drafts) {
-      const event = {
+    const stored = drafts.map((draft, index) =>
+      validateGeneratedEvent({
         ...draft,
         runId,
-        seq: log.length + 1,
+        seq: log.length + index + 1,
         ts: this.clock.now().toISOString(),
-      };
-      log.push(event);
-      stored.push(event);
-    }
+      }),
+    );
+    log.push(...stored);
     this.logs.set(runId, log);
     for (const event of stored) {
       for (const listener of this.listeners.get(runId) ?? []) listener(event);
@@ -273,6 +272,13 @@ export class InMemoryRunRepository implements RunRepository {
     this.runs.set(current.id, record);
     return record;
   }
+  listRecoveryCandidates(): Promise<{ id: string; terminal: boolean }[]> {
+    return Promise.resolve(
+      [...this.runs.values()]
+        .filter((r) => !isTerminal(r.status) || !this.finalized.has(r.id))
+        .map((r) => ({ id: r.id, terminal: isTerminal(r.status) })),
+    );
+  }
   listByStatus(statuses: readonly RunStatus[]): Promise<RunRecord[]> {
     return Promise.resolve([...this.runs.values()].filter((r) => statuses.includes(r.status)));
   }
@@ -284,10 +290,14 @@ export class InMemoryRunRepository implements RunRepository {
     this.finalized.delete(runId);
     return Promise.resolve();
   }
-  listUnfinalized(): Promise<RunRecord[]> {
-    return Promise.resolve(
-      [...this.runs.values()].filter((r) => isTerminal(r.status) && !this.finalized.has(r.id)),
-    );
+  async listRunReferences(
+    statuses: readonly RunStatus[],
+  ): Promise<Pick<RunRecord, 'id' | 'loopId' | 'versionId'>[]> {
+    return (await this.listByStatus(statuses)).map(({ id, loopId, versionId }) => ({
+      id,
+      loopId,
+      versionId,
+    }));
   }
   listChildren(parentRunId: string): Promise<RunRecord[]> {
     return Promise.resolve([...this.runs.values()].filter((r) => r.parentRunId === parentRunId));

@@ -6,7 +6,7 @@ For a source-referenced snapshot of the code as it stands at `c379f80`, includin
 
 | Layer                | Choice                                                                                                                 | Notes                                                                                      |
 | -------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| Language and runtime | TypeScript on Node 22 LTS, everywhere                                                                                  | Shared schemas end to end. Codex has a TypeScript SDK only.                                |
+| Language and runtime | TypeScript on Node 22 LTS (22.x), everywhere ([ADR-0040](decisions/ADR-0040-node-22-runtime-baseline.md))              | Shared schemas end to end. Codex has a TypeScript SDK only.                                |
 | Monorepo             | pnpm workspaces, Turborepo, TS project references                                                                      | Packages only at real boundaries. See ADR-0014.                                            |
 | Layer enforcement    | Declared package dependencies, package `exports` maps, dependency-cruiser and lint rules for folders inside a package  | Violations fail CI.                                                                        |
 | HTTP                 | Fastify 5, Zod type provider, OpenAPI 3.1 generation                                                                   | Plain, fast, testable.                                                                     |

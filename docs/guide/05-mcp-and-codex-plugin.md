@@ -55,7 +55,7 @@ HTTP accepts POST only and is stateless, with a fresh transport per request; GET
 | `wait_for_run`    | Wait for completion, or return early for input or a pause.                                  |
 | `get_run`         | Read status, current node, waiting spec, result, and failure.                               |
 | `get_run_thread`  | Read current messages, variables, outputs, artifacts, and usage.                            |
-| `list_runs`       | Find recent runs by loop, status, or parent; page with `nextBefore`.                        |
+| `list_runs`       | Find recent runs by loop, status, or parent; page with `nextCursor`.                        |
 | `read_run_events` | Read an event page after a sequence cursor and continue with `nextAfter`.                   |
 | `cancel_run`      | Request cancellation and then check that the run stops.                                     |
 | `pause_run`       | Hold execution at a node boundary.                                                          |
@@ -64,6 +64,8 @@ HTTP accepts POST only and is stateless, with a fresh transport per request; GET
 | `send_signal`     | Send a named signal with an optional payload; inspect `woke`.                               |
 
 `describe_loop` and `start_run` accept a loop ID or an exact, case-insensitive name. Use IDs when names are duplicated. `start_run` accepts `input`, optional `triggerNodeId`, and `allowDraft` for an unpublished loop; a draft run keeps a snapshot of the draft as it was at start. Its result includes `definition`, the pinned label (for example `Review draft v2`), and the full `pinned` object.
+
+`list_runs` returns `{ items, nextCursor }`. Pass a non-null `nextCursor` as `cursor` with the same filters, even when `items` is empty; stop when `nextCursor` is null.
 
 `wait_for_run` defaults to 60 seconds and accepts up to 600. A timeout returns `finished` false, the status, a cursor, and a suggested next action; call it again with the same run ID. For an input wait, read the prompt and schema, call `provide_input`, then wait again. For a paused run, resume when authorised. A terminal result has `finished` true and the run snapshot.
 

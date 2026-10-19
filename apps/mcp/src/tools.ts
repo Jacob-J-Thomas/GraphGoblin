@@ -2,7 +2,13 @@
  * The MCP tools. Each one is a thin call through `@graphgoblin/api-client`; descriptions are
  * written for the calling agent: when to call it, what to pass, and what to do with the result.
  */
-import { GraphGoblinApiError, loops, runs, type GraphGoblinClient } from '@graphgoblin/api-client';
+import {
+  GraphGoblinApiError,
+  loops,
+  runs,
+  unwrap,
+  type GraphGoblinClient,
+} from '@graphgoblin/api-client';
 import {
   TERMINAL_RUN_STATUSES,
   UlidSchema,
@@ -270,7 +276,7 @@ export function registerTools(
     {
       title: 'List runs',
       description:
-        'List runs, newest first, optionally filtered by loop and status. Use it to find a run the user refers to ("the last run of X"). To page, pass nextBefore from the previous page as "before".',
+        'List runs, newest first, optionally filtered by loop and status. Use it to find a run the user refers to ("the last run of X"). Returns { items, nextCursor }. Pass a non-null nextCursor as "cursor" with the same filters, even when items is empty; null ends the listing.',
       inputSchema: {
         loopId: z.string().optional().describe('Only runs of this loop id.'),
         status: z
@@ -292,28 +298,30 @@ export function registerTools(
           .string()
           .optional()
           .describe('Only child runs of this run; pass "none" for top-level runs only.'),
-        before: z
+        cursor: z
           .string()
           .optional()
-          .describe('Paging cursor: nextBefore from a previous page (a creation timestamp).'),
+          .describe('Opaque nextCursor from the previous page; keep the same filters.'),
         limit: z.number().int().min(1).max(500).optional().describe('Page size. Default 20.'),
       },
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
-    ({ loopId, status, parentRunId, before, limit }) =>
+    ({ loopId, status, parentRunId, cursor, limit }) =>
       guard(async () => {
-        const size = limit ?? 20;
-        const items = (
-          await runs.list(client, {
-            ...(loopId ? { loopId } : {}),
-            ...(status?.length ? { status: status.join(',') } : {}),
-            ...(parentRunId ? { parent: parentRunId } : {}),
-            ...(before ? { before } : {}),
-            limit: size,
-          })
-        ).map((r) => summarizeRun(r));
-        const last = items.at(-1);
-        return { items, ...(items.length === size && last ? { nextBefore: last.createdAt } : {}) };
+        const page = unwrap(
+          await client.GET('/runs', {
+            params: {
+              query: {
+                ...(loopId ? { loopId } : {}),
+                ...(status?.length ? { status: status.join(',') } : {}),
+                ...(parentRunId ? { parent: parentRunId } : {}),
+                ...(cursor !== undefined ? { cursor } : {}),
+                limit: limit ?? 20,
+              },
+            },
+          }),
+        );
+        return { items: page.items.map((r) => summarizeRun(r)), nextCursor: page.nextCursor };
       }),
   );
 

@@ -1,0 +1,24 @@
+{
+  "method": "POST",
+  "path": "/loops/import",
+  "requestBody": {
+    "broken": true
+  },
+  "status": 400,
+  "body": {
+    "type": "https://graphgoblin.dev/problems/loop-import-error",
+    "title": "loop import error",
+    "status": 400,
+    "code": "LOOP_IMPORT_ERROR",
+    "detail": "document is neither a loop export nor a loop definition",
+    "errors": {
+      "errors": [
+        "schemaVersion: Invalid input: expected 4",
+        "name: Invalid input: expected string, received undefined",
+        "nodes: Invalid input: expected array, received undefined",
+        "edges: Invalid input: expected array, received undefined",
+        "broken: Unrecognized key: \"broken\""
+      ]
+    }
+  }
+}

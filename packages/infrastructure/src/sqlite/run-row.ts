@@ -1,17 +1,11 @@
 import type { RunRecord, RunStatus } from '@graphgoblin/contracts';
 import type { runs } from './schema.js';
-type Row = typeof runs.$inferSelect;
+export type RunRecordRow = Omit<
+  typeof runs.$inferSelect,
+  'initialThread' | 'threadSnapshot' | 'threadSnapshotSeq' | 'finalizedAt'
+>;
 
-/** A stored run without a definition pin is corrupt: nothing writes one, and 0014 pinned them all. */
-export class RunPinMissingError extends Error {
-  constructor(runId: string) {
-    super(`run ${runId} has no definition pin; the store needs repair`);
-    this.name = 'RunPinMissingError';
-  }
-}
-
-export function runRecordFromRow(row: Row): RunRecord {
-  if (!row.pinned) throw new RunPinMissingError(row.id);
+export function runRecordFromRow(row: RunRecordRow): RunRecord {
   return {
     id: row.id,
     ownerId: row.ownerId,
@@ -23,10 +17,10 @@ export function runRecordFromRow(row: Row): RunRecord {
     status: row.status as RunStatus,
     ...(row.currentNodeId ? { currentNodeId: row.currentNodeId } : {}),
     iteration: row.iteration,
-    ...(row.waiting ? { waiting: row.waiting } : {}),
+    ...(row.waiting !== null ? { waiting: row.waiting } : {}),
     ...(row.cancelRequestedAt ? { cancelRequestedAt: row.cancelRequestedAt } : {}),
     ...(row.pausedAt ? { pausedAt: row.pausedAt } : {}),
-    ...(row.failure ? { failure: row.failure } : {}),
+    ...(row.failure !== null ? { failure: row.failure } : {}),
     ...(row.outcome ? { outcome: row.outcome as RunRecord['outcome'] } : {}),
     ...(row.result !== null && row.result !== undefined ? { result: row.result } : {}),
     createdAt: row.createdAt,

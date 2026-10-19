@@ -21,7 +21,7 @@ Codex copies an installed plugin into its cache (`~/.codex/plugins/cache/<market
 
 ## Install
 
-Requires Node 22+, the Codex CLI (0.117.0 or later; verified with 0.160.0), and a built repository.
+Requires Node 22 LTS (22.x), the Codex CLI (0.117.0 or later; verified with 0.160.0), and a built repository.
 
 ```
 pnpm install

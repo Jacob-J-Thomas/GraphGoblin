@@ -67,6 +67,7 @@ export const RunErrorCodeSchema = z.enum([
   'HEARTBEAT_EXHAUSTED',
   'RETURN_DELIVERY_FAILED',
   'MAX_NODE_VISITS',
+  'EVENT_INVALID',
   'INTERNAL_ERROR',
 ]);
 export type RunErrorCode = z.infer<typeof RunErrorCodeSchema>;
