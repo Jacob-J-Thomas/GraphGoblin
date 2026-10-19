@@ -393,4 +393,46 @@ describe('classifier bindings are pinned at start', () => {
       }
     },
   );
+
+  it(
+    'starts and runs a classifier whose catalog id is an Object property name',
+    { timeout: 180_000 },
+    async () => {
+      const fixture = await startFakeClassifierEndpoint();
+      try {
+        await open({}, true);
+        await call('PUT', '/classifier-models/constructor', {
+          displayName: 'Constructor',
+          provider: 'http',
+          providerModel: 'model-constructor',
+          primitives: ['choice'],
+          endpoint: fixture.endpoint,
+        });
+        await call('PATCH', '/classifier-models/constructor', { enabled: true });
+        const definition = JSON.parse(
+          JSON.stringify(classified).replace('"model":"custom"', '"model":"constructor"'),
+        ) as LoopDefinitionInput;
+        const { loop } = await call<{ loop: { id: string } }>('POST', '/loops', { definition });
+        await call('POST', `/loops/${loop.id}/publish`);
+        const started = (await call<{ run: RunRecord }>('POST', `/loops/${loop.id}/runs`, {})).run;
+        expect(started.pinned.classifiers).toEqual({
+          constructor: {
+            provider: 'http',
+            providerModel: 'model-constructor',
+            primitives: ['choice'],
+            endpoint: fixture.endpoint,
+          },
+        });
+        await idle();
+        await call('POST', `/runs/${started.id}/input`, { input: true });
+        await idle();
+        expect(await run(started.id)).toMatchObject({ status: 'succeeded', result: 'yes' });
+        expect(fixture.requests.map((request) => request.body.model)).toEqual([
+          'model-constructor',
+        ]);
+      } finally {
+        await fixture.close();
+      }
+    },
+  );
 });

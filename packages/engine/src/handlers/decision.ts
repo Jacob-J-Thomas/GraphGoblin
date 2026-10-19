@@ -8,6 +8,7 @@ import {
 import { decisionPortId, decisionRouteDeclarations, threadView } from '@graphgoblin/domain';
 import { RunFailureError } from '../errors.js';
 import type { NodeContext, NodeHandler } from '../handler.js';
+import { pinnedBinding } from '../definition-pin.js';
 import { evaluateClassifier, evaluateRoute } from '../primitive-evaluator.js';
 import { outputPatch, selectMessages, toJson } from './common.js';
 
@@ -65,7 +66,7 @@ export const decisionHandler: NodeHandler<'decision'> = {
         const result = await evaluateClassifier({
           ...common,
           config,
-          binding: ctx.run.pinned.classifiers[config.model],
+          binding: pinnedBinding(ctx.run.pinned.classifiers, config.model),
           question: await ctx.services.render(config.question),
           context: await decisionContext(ctx, config.context),
         });

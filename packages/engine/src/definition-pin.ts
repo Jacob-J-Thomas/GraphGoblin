@@ -1,4 +1,10 @@
-import type { LoopDefinition, LoopVersionRecord, RunPin, RunRecord } from '@graphgoblin/contracts';
+import type {
+  ClassifierBinding,
+  LoopDefinition,
+  LoopVersionRecord,
+  RunPin,
+  RunRecord,
+} from '@graphgoblin/contracts';
 import { nodesOfKind } from '@graphgoblin/domain';
 import type { ClassifierRegistryPort } from './ports.js';
 
@@ -33,6 +39,17 @@ export function pinOf(record: LoopVersionRecord, selections: PinnedSelections): 
 }
 
 /**
+ * The binding a pin holds for classifier `id`. Catalog ids such as `constructor` are valid, and the
+ * map is plain JSON, so only the map's own entries count, never what an object inherits.
+ */
+export function pinnedBinding(
+  classifiers: RunPin['classifiers'],
+  id: string,
+): ClassifierBinding | undefined {
+  return Object.hasOwn(classifiers, id) ? classifiers[id] : undefined;
+}
+
+/**
  * The classifier bindings a run of `def` pins: one per catalog id its decisions reference. An id the
  * parent already pinned keeps the parent's binding, so one run tree calls one classifier
  * configuration; any other id is bound to the catalog entry as it is now, and an id with no entry
@@ -51,7 +68,7 @@ export async function bindClassifiers(
   );
   const bindings: RunPin['classifiers'] = {};
   for (const id of [...ids].sort()) {
-    const binding = inherited[id] ?? (await registry.bind(ownerId, id));
+    const binding = pinnedBinding(inherited, id) ?? (await registry.bind(ownerId, id));
     if (binding) bindings[id] = binding;
   }
   return bindings;

@@ -526,6 +526,39 @@ describe('classifier bindings are pinned at start', () => {
     expect(engine.ports.classifiers.requests).toEqual([]);
   });
 
+  it('binds and calls a classifier whose catalog id is an Object property name', async () => {
+    const engine = await createTestEngine();
+    const registry = engine.ports.classifiers;
+    registry.models.set('constructor', engine.ports.jev);
+    registry.bindings.set('constructor', binding('model-original'));
+    const run = await engine.settle(
+      (await engine.start(engine.publish(waitThenClassify('constructor')).loopId)).id,
+    );
+    expect(run.pinned.classifiers).toEqual({ constructor: binding('model-original') });
+    expect(await answer(engine, run)).toMatchObject({ status: 'succeeded', result: 'yes' });
+    expect(registry.requests).toEqual([
+      expect.objectContaining({ modelId: 'constructor', binding: binding('model-original') }),
+    ]);
+  });
+
+  it('treats an unbound Object property name as missing, not as an inherited binding', async () => {
+    const engine = await createTestEngine();
+    const run = await engine.settle(
+      (await engine.start(engine.publish(waitThenClassify('constructor')).loopId)).id,
+    );
+    expect(run.pinned.classifiers).toEqual({});
+    expect(Object.keys(run.pinned.classifiers)).toEqual([]);
+    expect(await answer(engine, run)).toMatchObject({
+      status: 'failed',
+      failure: {
+        code: 'EVALUATION_UNAVAILABLE',
+        resumable: false,
+        details: { reason: 'CLASSIFIER_MODEL_NOT_FOUND' },
+      },
+    });
+    expect(engine.ports.classifiers.requests).toEqual([]);
+  });
+
   it('gives a child its parent binding for a shared classifier', async () => {
     const engine = await createTestEngine({ maxConcurrentRuns: 2 });
     const registry = engine.ports.classifiers;
