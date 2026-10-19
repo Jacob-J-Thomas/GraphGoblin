@@ -4,6 +4,10 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Bind input and signals to the observed `waiting.waitId`; stale, unknown and consumed waits reject without mutation with 409 `WAIT_MISMATCH`. **Upgrade:** input bodies are now `{ waitId, input }`, signal bodies are `{ waitId, payload? }`, and MCP/client callers must supply the identity from the snapshot or `run.waiting` event they observed. Reset pre-change run history containing wait specs before opening it; no legacy wait-contract path is supported. (#272)
+- Arm durable timers only after parking; recover interrupted parks using their original deadlines, retain early/paused deliveries, fence delayed status acknowledgements to their wait, and queue a committed wake after a lost status response. Past deadlines wake once after restart or resume. (#226)
+- Scope heartbeat signal observations and beat counts to a logical node visit: retain them across beats, retries and restart, reset after completion, and reject signals for an earlier observed park. (#257)
+
 - Template and expression fields in the node dialog have a collapsed **Earlier node outputs (N)** list: the nodes that can run before this one, each with its reference in the field's syntax, a **Copy** button and a note on what it outputs. It is interim help, not validation, and it is hidden where a field isn't evaluated against the run thread or no earlier node writes an output. (#341)
 
 - Webhook trigger dialogs show the published receiver URL, masked by default, with Reveal/Hide, Copy receiver URL and Retry after a failed load. Signing instructions remain in the guide. (#166 F4)

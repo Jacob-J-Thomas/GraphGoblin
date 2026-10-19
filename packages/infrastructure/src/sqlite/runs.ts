@@ -123,18 +123,26 @@ export class SqliteRunRepository implements RunRepository {
     runId: string,
     from: readonly RunStatus[],
     changes: RunRecordChanges,
+    guard?: { waitId: string },
   ): Promise<RunRecord | undefined> {
     return this.db.transaction(async (tx) => {
       const [row] = await tx.select().from(runs).where(eq(runs.id, runId)).limit(1);
       if (!row) throw new Error(`run ${runId} not found`);
       const current = runRecordFromRow(row);
-      if (!from.includes(current.status)) return undefined;
+      if (!from.includes(current.status) || (guard && current.waiting?.waitId !== guard.waitId))
+        return undefined;
       const columns = toColumns(changes);
       if (Object.keys(columns).length === 0) return current;
       const [updated] = await tx
         .update(runs)
         .set(columns)
-        .where(and(eq(runs.id, runId), inArray(runs.status, [...from])))
+        .where(
+          and(
+            eq(runs.id, runId),
+            inArray(runs.status, [...from]),
+            guard ? sql`json_extract(${runs.waiting}, '$.waitId') = ${guard.waitId}` : undefined,
+          ),
+        )
         .returning();
       return updated ? runRecordFromRow(updated) : undefined;
     });

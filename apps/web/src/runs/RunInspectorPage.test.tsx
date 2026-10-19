@@ -399,6 +399,7 @@ describe('RunInspectorPage', () => {
     const run = seedRun(api, {
       status: 'waiting',
       waiting: {
+        waitId: 'fixture-wait',
         nodeId: 'approve',
         kind: 'input',
         prompt: 'Approve the plan?',
@@ -419,6 +420,7 @@ describe('RunInspectorPage', () => {
     await user.click(screen.getByRole('button', { name: 'Submit input' }));
     await waitFor(() => expect(api.callsTo('POST', `/runs/${run.id}/input`)).toHaveLength(1));
     expect(api.callsTo('POST', `/runs/${run.id}/input`)[0]!.body).toEqual({
+      waitId: run.waiting!.waitId,
       input: { approved: true, note: 'ship it' },
     });
     await waitFor(() => expect(screen.queryByText('Approve the plan?')).not.toBeInTheDocument());
@@ -429,17 +431,23 @@ describe('RunInspectorPage', () => {
     const api = new FakeApi();
     const run = seedRun(api, {
       status: 'waiting',
-      waiting: { nodeId: 'gate', kind: 'signal', signalName: 'go' },
+      waiting: { waitId: 'fixture-wait', nodeId: 'gate', kind: 'signal', signalName: 'go' },
     });
     const timer = seedRun(api, {
       status: 'waiting',
-      waiting: { nodeId: 'nap', kind: 'timer', until: '2026-10-03T00:00:00.000Z' },
+      waiting: {
+        waitId: 'fixture-wait',
+        nodeId: 'nap',
+        kind: 'timer',
+        until: '2026-10-03T00:00:00.000Z',
+      },
     });
     const view = renderApp(`/runs/${run.id}`, api);
     await user.type(await screen.findByLabelText('Input (JSON)'), '{{"ok": true}');
     await user.click(screen.getByRole('button', { name: 'Send signal' }));
     await waitFor(() => expect(api.callsTo('POST', `/runs/${run.id}/signals/go`)).toHaveLength(1));
     expect(api.callsTo('POST', `/runs/${run.id}/signals/go`)[0]!.body).toEqual({
+      waitId: run.waiting!.waitId,
       payload: { ok: true },
     });
     view.unmount();

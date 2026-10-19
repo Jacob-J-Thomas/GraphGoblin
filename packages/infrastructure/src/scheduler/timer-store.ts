@@ -10,6 +10,8 @@ export interface TimerStore {
    * already have re-armed the same key for a later time, which must survive.
    */
   acknowledge(runId: string, key: string, at: Date): Promise<void>;
+  /** Requeue only the fired row; never overwrite a concurrent re-arm. */
+  defer(runId: string, key: string, at: Date, retryAt: Date): Promise<void>;
   /** Timers due at or before `now`, oldest first. */
   listDue(now: Date, limit?: number): Promise<{ runId: string; key: string; at: Date }[]>;
   list(runId: string): Promise<{ runId: string; key: string; at: Date }[]>;

@@ -391,7 +391,7 @@ describe('thread, run, and events', () => {
       invocationId: FIXTURE_IDS.invocation,
       status: 'waiting',
       iteration: 1,
-      waiting: { nodeId: 'approve', kind: 'input', prompt: 'Approve?' },
+      waiting: { waitId: 'fixture-wait', nodeId: 'approve', kind: 'input', prompt: 'Approve?' },
       createdAt: FIXTURE_TS,
       lastEventSeq: 4,
     });

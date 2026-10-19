@@ -339,7 +339,9 @@ describe('MCP server against the in-process API', () => {
       waiting: { kind: 'input', prompt: 'Proceed?' },
     });
     expect(waiting.next).toMatch(/provide_input/);
-    const answered = body(await call('provide_input', { runId, input: true }));
+    const answered = body(
+      await call('provide_input', { runId, waitId: waiting.waiting.waitId, input: true }),
+    );
     expect(answered.id).toBe(runId);
     const finished = body(await call('wait_for_run', { runId, timeoutSeconds: 5 }));
     expect(finished.run).toMatchObject({ status: 'succeeded', result: { value: true } });
@@ -355,9 +357,13 @@ describe('MCP server against the in-process API', () => {
     const notReached = await call('replay_run', { runId, nodeId: 'nowhere' });
     expect(text(notReached)).toMatch(/^GraphGoblin API error REPLAY_NODE_NOT_REACHED \(HTTP 409\)/);
 
-    const again = await call('provide_input', { runId, input: false });
+    const again = await call('provide_input', {
+      runId,
+      waitId: waiting.waiting.waitId,
+      input: false,
+    });
     expect(again.isError).toBe(true);
-    expect(text(again)).toMatch(/^GraphGoblin API error [A-Z_]+ \(HTTP 409\)/);
+    expect(text(again)).toContain('GraphGoblin API error WAIT_MISMATCH (HTTP 409)');
 
     const signalId = await t.publishLoop(signalLoop);
     const described = body(await call('describe_loop', { loopId: signalId }));
@@ -366,8 +372,18 @@ describe('MCP server against the in-process API', () => {
     await until(async () => (await status(held)) === 'waiting');
     const notYet = body(await call('wait_for_run', { runId: held, timeoutSeconds: 0 }));
     expect(notYet.next).toMatch(/signal "go"/);
-    expect(body(await call('send_signal', { runId: held, name: 'other' })).woke).toBe(false);
-    const sent = body(await call('send_signal', { runId: held, name: 'go', payload: { n: 1 } }));
+    expect(
+      body(await call('send_signal', { runId: held, waitId: notYet.waiting.waitId, name: 'other' }))
+        .woke,
+    ).toBe(false);
+    const sent = body(
+      await call('send_signal', {
+        runId: held,
+        waitId: notYet.waiting.waitId,
+        name: 'go',
+        payload: { n: 1 },
+      }),
+    );
     expect(sent.woke).toBe(true);
     expect(body(await call('wait_for_run', { runId: held })).run.status).toBe('succeeded');
 
@@ -418,9 +434,9 @@ describe('MCP server against the in-process API', () => {
         `GraphGoblin API error RUN_NOT_FOUND (HTTP 404): run ${MISSING_RUN} not found`,
       );
     }
-    const signal = await call('send_signal', { runId: MISSING_RUN, name: 'go' });
+    const signal = await call('send_signal', { runId: MISSING_RUN, waitId: 'unknown', name: 'go' });
     expect(text(signal)).toContain('RUN_NOT_FOUND');
-    const input = await call('provide_input', { runId: MISSING_RUN, input: 1 });
+    const input = await call('provide_input', { runId: MISSING_RUN, waitId: 'unknown', input: 1 });
     expect(text(input)).toContain('RUN_NOT_FOUND');
     // A malformed id is a typed request error, not a lookup.
     const malformed = await call('get_run', { runId: 'not-a-ulid' });

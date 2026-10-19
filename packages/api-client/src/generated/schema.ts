@@ -1036,6 +1036,7 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
+                        waitId: string;
                         input: components["schemas"]["JsonValueInput"];
                     };
                 };
@@ -1048,6 +1049,15 @@ export interface paths {
                     };
                     content: {
                         "application/json": components["schemas"]["RunRecord"];
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["WaitMismatch"];
                     };
                 };
             };
@@ -1081,6 +1091,7 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
+                        waitId: string;
                         payload?: components["schemas"]["JsonValueInput"] | undefined;
                     };
                 };
@@ -1096,6 +1107,15 @@ export interface paths {
                             run: components["schemas"]["RunRecord"];
                             woke: boolean;
                         };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["WaitMismatch"];
                     };
                 };
             };
@@ -2395,6 +2415,15 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        WaitMismatchInput: {
+            type: string;
+            title: string;
+            /** @constant */
+            status: 409;
+            /** @constant */
+            code: "WAIT_MISMATCH";
+            detail?: string | undefined;
+        };
         ClassifierModelSummaryInput: {
             id: string;
             displayName: string;
@@ -3536,6 +3565,7 @@ export interface components {
             details?: components["schemas"]["JsonValueInput"] | undefined;
         };
         WaitSpecInput: {
+            waitId: string;
             nodeId: string;
             /** @enum {string} */
             kind: "input" | "timer" | "signal" | "heartbeat" | "child";
@@ -4134,6 +4164,15 @@ export interface components {
                     reasoningOutputTokens?: number | undefined;
                 };
             };
+        };
+        WaitMismatch: {
+            type: string;
+            title: string;
+            /** @constant */
+            status: 409;
+            /** @constant */
+            code: "WAIT_MISMATCH";
+            detail?: string | undefined;
         };
         ClassifierModelSummary: {
             id: string;
@@ -5259,6 +5298,7 @@ export interface components {
             details?: components["schemas"]["JsonValue"] | undefined;
         };
         WaitSpec: {
+            waitId: string;
             nodeId: string;
             /** @enum {string} */
             kind: "input" | "timer" | "signal" | "heartbeat" | "child";

@@ -1,7 +1,7 @@
 import type { ClockPort, Logger, TimerPort } from '@graphgoblin/engine';
 import type { TimerStore } from './timer-store.js';
 
-type Listener = (runId: string, key: string) => void | Promise<void>;
+type Listener = (runId: string, key: string) => void | boolean | Promise<void | boolean>;
 
 export interface TimerServiceOptions {
   /** How often to look for due timers. Default 1000 ms. */
@@ -76,7 +76,7 @@ export class TimerService implements TimerPort {
         let delivered = true;
         for (const listener of this.listeners) {
           try {
-            await listener(timer.runId, timer.key);
+            if ((await listener(timer.runId, timer.key)) === false) delivered = false;
           } catch (error) {
             delivered = false;
             this.logger?.error(
@@ -90,6 +90,12 @@ export class TimerService implements TimerPort {
           }
         }
         if (delivered) await this.store.acknowledge(timer.runId, timer.key, timer.at);
+        else {
+          // One configured poll interval avoids a hot loop and lets other overdue rows
+          // progress past a batch full of pauses. The wait spec retains the real deadline.
+          const retryAt = new Date(this.clock.now().getTime() + this.pollIntervalMs);
+          await this.store.defer(timer.runId, timer.key, timer.at, retryAt);
+        }
       }
       return due.length;
     } catch (error) {

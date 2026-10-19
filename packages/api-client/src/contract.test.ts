@@ -230,12 +230,19 @@ describe('against the in-process API (local trusted mode)', () => {
     await until(async () => (await runs.get(client, first.id)).status === 'waiting');
     const pending = await waitForRun(client, first.id, { timeoutMs: 30, pollMs: 10 });
     expect(pending).toMatchObject({ finished: false, run: { status: 'waiting' } });
-    expect((await runs.signal(client, first.id, 'nudge')).woke).toBe(false);
-    expect((await runs.signal(client, first.id, 'nudge', { n: 1 })).woke).toBe(false);
-    await runs.provideInput(client, first.id, { ok: true });
+    expect((await runs.signal(client, first.id, 'nudge', pending.run.waiting!.waitId)).woke).toBe(
+      false,
+    );
+    expect(
+      (await runs.signal(client, first.id, 'nudge', pending.run.waiting!.waitId, { n: 1 })).woke,
+    ).toBe(false);
+    await runs.provideInput(client, first.id, pending.run.waiting!.waitId, { ok: true });
     expect((await waitForRun(client, first.id, { timeoutMs: 5000, pollMs: 10 })).run.status).toBe(
       'succeeded',
     );
+    await expect(
+      runs.provideInput(client, first.id, pending.run.waiting!.waitId, { ok: false }),
+    ).rejects.toMatchObject({ status: 409, code: 'WAIT_MISMATCH' });
     const fork = await runs.replay(client, first.id, 'start');
     expect(fork.id).not.toBe(first.id);
     await until(async () => (await runs.get(client, fork.id)).status === 'waiting');
@@ -267,7 +274,8 @@ describe('against the in-process API (local trusted mode)', () => {
       runId: run.id,
       onEvent: (event) => {
         seen.push(event);
-        if (event.type === 'run.waiting') void runs.provideInput(client, run.id, 'go');
+        if (event.type === 'run.waiting')
+          void runs.provideInput(client, run.id, event.wait.waitId, 'go');
       },
     });
     await subscription.done;

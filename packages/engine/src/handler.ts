@@ -88,7 +88,7 @@ export interface NodeContext<K extends NodeKind = NodeKind> {
 export type NodeResult =
   | { kind: 'done'; patch: JsonPatch; route: string }
   | { kind: 'decision'; patch: JsonPatch; route: string; evidence: DecisionEvidence }
-  | { kind: 'park'; patch: JsonPatch; wait: WaitSpec }
+  | { kind: 'park'; patch: JsonPatch; wait: Omit<WaitSpec, 'waitId'> }
   | {
       kind: 'exit';
       patch: JsonPatch;

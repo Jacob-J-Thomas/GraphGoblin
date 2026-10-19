@@ -245,10 +245,12 @@ export class InMemoryRunRepository implements RunRepository {
     runId: string,
     from: readonly RunStatus[],
     changes: RunRecordChanges,
+    guard?: { waitId: string },
   ): Promise<RunRecord | undefined> {
     const current = this.runs.get(runId);
     if (!current) return Promise.reject(new Error(`run ${runId} not found`));
-    if (!from.includes(current.status)) return Promise.resolve(undefined);
+    if (!from.includes(current.status) || (guard && current.waiting?.waitId !== guard.waitId))
+      return Promise.resolve(undefined);
     return Promise.resolve(this.apply(current, changes));
   }
   claimCancel(
@@ -659,7 +661,8 @@ export class FakeWorkspace implements WorkspacePort {
 
 export class FakeTimers implements TimerPort {
   readonly scheduled: { runId: string; key: string; at: Date }[] = [];
-  private listeners: ((runId: string, key: string) => void | Promise<void>)[] = [];
+  private listeners: ((runId: string, key: string) => void | boolean | Promise<void | boolean>)[] =
+    [];
   /** An upsert, like the real store: one timer per run and key. */
   schedule(runId: string, key: string, at: Date): Promise<void> {
     const existing = this.scheduled.find((t) => t.runId === runId && t.key === key);
@@ -674,7 +677,9 @@ export class FakeTimers implements TimerPort {
     }
     return Promise.resolve();
   }
-  onFire(listener: (runId: string, key: string) => void | Promise<void>): () => void {
+  onFire(
+    listener: (runId: string, key: string) => void | boolean | Promise<void | boolean>,
+  ): () => void {
     this.listeners.push(listener);
     return () => {
       this.listeners = this.listeners.filter((l) => l !== listener);
@@ -684,8 +689,13 @@ export class FakeTimers implements TimerPort {
   async fireDue(now: Date): Promise<number> {
     const due = this.scheduled.filter((t) => t.at.getTime() <= now.getTime());
     for (const t of due) {
-      this.scheduled.splice(this.scheduled.indexOf(t), 1);
-      for (const listener of this.listeners) await listener(t.runId, t.key);
+      const firedAt = t.at.getTime();
+      let delivered = true;
+      for (const listener of this.listeners) {
+        if ((await listener(t.runId, t.key)) === false) delivered = false;
+      }
+      const index = this.scheduled.indexOf(t);
+      if (delivered && index >= 0 && t.at.getTime() === firedAt) this.scheduled.splice(index, 1);
     }
     return due.length;
   }
@@ -697,8 +707,15 @@ export class FakeTimers implements TimerPort {
       (t) => t.runId === runId && (t.key === key || t.key.startsWith(`${key}@`)),
     );
     const fired = index >= 0 ? (this.scheduled[index] as { key: string }).key : key;
-    if (index >= 0) this.scheduled.splice(index, 1);
-    for (const listener of this.listeners) await listener(runId, fired);
+    const timer = this.scheduled[index];
+    const firedAt = timer?.at.getTime();
+    let delivered = true;
+    for (const listener of this.listeners) {
+      if ((await listener(runId, fired)) === false) delivered = false;
+    }
+    const remaining = timer ? this.scheduled.indexOf(timer) : -1;
+    if (delivered && remaining >= 0 && timer?.at.getTime() === firedAt)
+      this.scheduled.splice(remaining, 1);
   }
 }
 

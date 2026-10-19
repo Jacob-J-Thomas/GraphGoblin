@@ -35,6 +35,15 @@ export const openApiRegistry = z.registry<{
   maxLength?: number;
 }>();
 
+export const WaitMismatchSchema = z.object({
+  type: z.string(),
+  title: z.string(),
+  status: z.literal(409),
+  code: z.literal('WAIT_MISMATCH'),
+  detail: z.string().optional(),
+});
+openApiRegistry.add(WaitMismatchSchema, { id: 'WaitMismatch' });
+
 const COMPONENTS: ReadonlyArray<[z.ZodType, string]> = [
   [ClassifierModelSummarySchema, 'ClassifierModelSummary'],
   [ClassifierModelPutSchema, 'ClassifierModelPut'],

@@ -331,7 +331,13 @@ describe('run control', () => {
   it('reports unknown runs', async () => {
     const engine = await createTestEngine();
     await expect(engine.manager.cancel(FIXTURE_IDS.run)).rejects.toBeInstanceOf(EngineRequestError);
-    await expect(engine.manager.provideInput(FIXTURE_IDS.run, 1)).rejects.toMatchObject({
+    await expect(
+      engine.manager.provideInput(
+        FIXTURE_IDS.run,
+        (await engine.manager.getRun(FIXTURE_IDS.run))?.waiting?.waitId ?? 'unknown',
+        1,
+      ),
+    ).rejects.toMatchObject({
       code: 'RUN_NOT_FOUND',
     });
     expect(await engine.manager.getRun(FIXTURE_IDS.run)).toBeUndefined();
@@ -537,7 +543,7 @@ describe('failure and recovery', () => {
         id: cancelledId,
         status: 'waiting',
         cancelRequestedAt: FIXTURE_TS,
-        waiting: { nodeId: 'x', kind: 'input' },
+        waiting: { waitId: 'fixture-wait', nodeId: 'x', kind: 'input' },
       },
       createInitialThread({
         runId: cancelledId,
@@ -591,7 +597,13 @@ describe('event helpers', () => {
         attempt: 1,
         configHash: 'h',
       },
-      { ...base, seq: 3, type: 'run.waiting', nodeId: 'w', wait: { nodeId: 'w', kind: 'input' } },
+      {
+        ...base,
+        seq: 3,
+        type: 'run.waiting',
+        nodeId: 'w',
+        wait: { waitId: 'fixture-wait', nodeId: 'w', kind: 'input' },
+      },
     ];
     expect(findPendingWake(events)).toBeUndefined();
     events.push({
@@ -761,7 +773,11 @@ describe('the visit cap and re-entries of one visit', () => {
     expect(inputRun.status).toBe('waiting');
     await engine.manager.pause(inputRun.id);
     await engine.manager.resume(inputRun.id);
-    await engine.manager.provideInput(inputRun.id, { ok: true });
+    await engine.manager.provideInput(
+      inputRun.id,
+      (await engine.manager.getRun(inputRun.id))?.waiting?.waitId ?? 'unknown',
+      { ok: true },
+    );
     expect((await engine.settle(inputRun.id)).status).toBe('succeeded');
 
     const timer = singleNodeLoop('cap-timer', {

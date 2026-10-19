@@ -406,13 +406,17 @@ export function registerTools(
     {
       title: 'Provide input to a waiting run',
       description:
-        'Answer a run that is waiting for input (wait_for_run or get_run shows status "waiting" with waiting.kind "input"). Pass a value matching waiting.inputSchema; read waiting.prompt to know what is being asked, and ask the user when the answer is theirs to give. Then call wait_for_run again.',
-      inputSchema: { runId, input: json },
+        'Answer a run that is waiting for input (wait_for_run or get_run shows status "waiting" with waiting.kind "input"). Pass waitId from waiting.waitId in that observed snapshot and a value matching waiting.inputSchema; read waiting.prompt to know what is being asked, and ask the user when the answer is theirs to give. Then call wait_for_run again.',
+      inputSchema: {
+        runId,
+        waitId: z.string().min(1).describe('The waiting.waitId shown by get_run or wait_for_run.'),
+        input: json,
+      },
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
     },
-    ({ runId: id, input }) =>
+    ({ runId: id, waitId, input }) =>
       guard(async () =>
-        summarizeRun(await runs.provideInput(client, id, (input ?? null) as never)),
+        summarizeRun(await runs.provideInput(client, id, waitId, (input ?? null) as never)),
       ),
   );
 
@@ -421,17 +425,18 @@ export function registerTools(
     {
       title: 'Send a signal to a run',
       description:
-        'Deliver a named signal to a run, for wait nodes in signal mode (waiting.kind "signal", waiting.signalName) and heartbeat probes that count signals. Returns woke: true when a waiting node consumed it. Then call wait_for_run to follow the run.',
+        'Deliver a named signal to a run, for wait nodes in signal mode (waiting.kind "signal", waiting.signalName) and heartbeat probes that count signals. Pass the waiting.waitId from get_run or wait_for_run as waitId. Returns woke: true when a waiting node consumed it. Then call wait_for_run to follow the run.',
       inputSchema: {
         runId,
         name: z.string().min(1).describe('The signal name, for example waiting.signalName.'),
+        waitId: z.string().min(1).describe('The waiting.waitId shown by get_run or wait_for_run.'),
         payload: json.optional(),
       },
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
     },
-    ({ runId: id, name, payload }) =>
+    ({ runId: id, name, waitId, payload }) =>
       guard(async () => {
-        const result = await runs.signal(client, id, name, payload as never);
+        const result = await runs.signal(client, id, name, waitId, payload as never);
         return { woke: result.woke, run: summarizeRun(result.run) };
       }),
   );
