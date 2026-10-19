@@ -1,27 +1,125 @@
-/**
- * Licence policy evaluation, kept free of process execution so it can be unit tested.
- */
+/** Licence metadata policy evaluation; no process execution or legal certification. */
 
 /**
- * @typedef {{ allowed: string[]; exceptions: Record<string, string> }} LicensePolicy
+ * @typedef {{ allowed: string[]; exceptions: Record<string, string>; allowGuessed?: boolean }} LicensePolicy
  * @typedef {{ name: string; versions?: string[]; license: string }} LicensedPackage
- * @typedef {{ name: string; license: string; reason: string }} LicenseViolation
+ * @typedef {LicensedPackage & { reason: string }} LicenseViolation
+ * @typedef {{ kind: 'license'; id: string; exception?: string } | { kind: 'and' | 'or'; left: Expression; right: Expression }} Expression
  */
 
+/** Parse the entire expression before evaluating any alternative. @param {string} source */
+function parseExpression(source) {
+  const tokens = source.match(/\(|\)|[^\s()]+/g) ?? [];
+  let position = 0;
+  const guessed = [];
+  const identifier = /^[A-Za-z0-9][A-Za-z0-9.-]*\+?\*?$/;
+  /** @param {string} expected @returns {never} */
+  function fail(expected) {
+    throw new SyntaxError(
+      `expected ${expected} at token ${position + 1}, found ${JSON.stringify(tokens[position] ?? 'end of expression')}`,
+    );
+  }
+  /** @returns {Expression} */
+  function primary() {
+    if (tokens[position] === '(') {
+      position++;
+      const expression = or();
+      if (tokens[position] !== ')') fail('closing parenthesis');
+      position++;
+      return expression;
+    }
+    const token = tokens[position];
+    if (!token || ['AND', 'OR', 'WITH', ')'].includes(token) || !identifier.test(token)) {
+      fail('licence ID or opening parenthesis');
+    }
+    position++;
+    const id = token.endsWith('*') ? token.slice(0, -1) : token;
+    if (token.endsWith('*')) guessed.push(token);
+    if (tokens[position] !== 'WITH') return { kind: 'license', id };
+    position++;
+    const exception = tokens[position];
+    if (
+      !exception ||
+      ['AND', 'OR', 'WITH'].includes(exception) ||
+      !/^[A-Za-z0-9][A-Za-z0-9.-]*$/.test(exception)
+    ) {
+      fail('exception ID after WITH');
+    }
+    position++;
+    return { kind: 'license', id, exception };
+  }
+  /** AND binds more tightly than OR; WITH is parsed only on a licence ID. @returns {Expression} */
+  function and() {
+    let left = primary();
+    while (tokens[position] === 'AND') {
+      position++;
+      left = { kind: 'and', left, right: primary() };
+    }
+    return left;
+  }
+  /** @returns {Expression} */
+  function or() {
+    let left = and();
+    while (tokens[position] === 'OR') {
+      position++;
+      left = { kind: 'or', left, right: and() };
+    }
+    return left;
+  }
+  const expression = or();
+  if (position !== tokens.length) fail('AND, OR or end of expression');
+  return { expression, guessed };
+}
+
 /**
- * Decide whether an SPDX expression is satisfied by the allowlist.
- * Handles simple expressions: "MIT", "(MIT OR Apache-2.0)", "MIT AND BSD-3-Clause", "MIT*".
+ * @param {Expression} expression
+ * @param {Set<string>} allowed
+ * @param {boolean} packageException
+ * @returns {string[]}
+ */
+function disallowedReasons(expression, allowed, packageException) {
+  if (expression.kind === 'license') {
+    if (expression.exception) {
+      const pair = `${expression.id} WITH ${expression.exception}`;
+      return allowed.has(pair) ? [] : [`WITH pair "${pair}" requires an explicit allowlist entry`];
+    }
+    return allowed.has(expression.id) || packageException
+      ? []
+      : [`licence "${expression.id}" is not in the allowlist`];
+  }
+  const left = disallowedReasons(expression.left, allowed, packageException);
+  const right = disallowedReasons(expression.right, allowed, packageException);
+  return expression.kind === 'or' && (left.length === 0 || right.length === 0)
+    ? []
+    : [...left, ...right];
+}
+
+/**
+ * @param {string} source
+ * @param {Set<string>} allowed
+ * @param {boolean} allowGuessed
+ * @param {boolean} packageException
+ */
+function violationReason(source, allowed, allowGuessed, packageException) {
+  try {
+    const { expression, guessed } = parseExpression(source);
+    if (guessed.length > 0 && !allowGuessed) {
+      return `guessed licence marker requires allowGuessed: true (${guessed.join(', ')})`;
+    }
+    return disallowedReasons(expression, allowed, packageException).join('; ');
+  } catch (error) {
+    return `parse error: ${error instanceof Error ? error.message : String(error)}`;
+  }
+}
+
+/**
+ * Decide whether a complete SPDX expression satisfies metadata policy.
  * @param {string} expression
  * @param {Set<string>} allowed
+ * @param {{ allowGuessed?: boolean }} options
  */
-export function isLicenseAllowed(expression, allowed) {
-  const normalised = expression.replace(/[()]/g, ' ').replace(/\*/g, '').trim();
-  if (normalised === '') return false;
-  const orParts = normalised.split(/\s+OR\s+/i);
-  return orParts.some((orPart) => {
-    const andParts = orPart.split(/\s+AND\s+/i).map((s) => s.trim());
-    return andParts.every((part) => allowed.has(part));
-  });
+export function isLicenseAllowed(expression, allowed, options = {}) {
+  return violationReason(expression, allowed, options.allowGuessed === true, false) === '';
 }
 
 /**
@@ -34,14 +132,13 @@ export function evaluateLicenses(policy, packages) {
   /** @type {LicenseViolation[]} */
   const violations = [];
   for (const pkg of packages) {
-    if (Object.prototype.hasOwnProperty.call(policy.exceptions, pkg.name)) continue;
-    if (!isLicenseAllowed(pkg.license, allowed)) {
-      violations.push({
-        name: pkg.name,
-        license: pkg.license,
-        reason: `licence "${pkg.license}" is not in the allowlist`,
-      });
-    }
+    const reason = violationReason(
+      pkg.license,
+      allowed,
+      policy.allowGuessed === true,
+      Object.prototype.hasOwnProperty.call(policy.exceptions, pkg.name),
+    );
+    if (reason) violations.push({ ...pkg, reason });
   }
   return violations;
 }

@@ -134,8 +134,14 @@ test('Tab and Shift+Tab leave a code field', async ({ page, request }) => {
   const args = dialog.locator('.cm-content').and(dialog.getByLabel('Args 1', { exact: true }));
   await args.click();
   await expect(args).toBeFocused();
+  const outputs = dialog.getByRole('button', { name: 'Earlier node outputs (1)', exact: true });
+  // The outputs disclosure follows CodeMirror before the array item's Remove button (#341).
+  await page.keyboard.press('Tab');
+  await expect(outputs).toBeFocused();
   await page.keyboard.press('Tab');
   expect(await focusedName(page)).toBe('Remove args 1');
+  await page.keyboard.press('Shift+Tab');
+  await expect(outputs).toBeFocused();
   await page.keyboard.press('Shift+Tab');
   await expect(args).toBeFocused();
   await page.keyboard.press('Shift+Tab');

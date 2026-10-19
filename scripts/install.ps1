@@ -17,7 +17,7 @@
 param()
 
 Set-StrictMode -Version Latest
-$MinNodeMajor = 22
+$SupportedNodeMajor = 22
 $Root = Split-Path -Parent $PSScriptRoot
 
 function Write-Step([string]$Text) { Write-Host "==> $Text" -ForegroundColor Cyan }
@@ -37,10 +37,10 @@ function Resolve-Tool([string]$Name) {
 
 Write-Step 'Checking Node.js'
 $node = Resolve-Tool 'node'
-if ($null -eq $node) { Fail "Node.js $MinNodeMajor or newer is required: https://nodejs.org/" }
+if ($null -eq $node) { Fail "Node.js $SupportedNodeMajor LTS is required. Select Node $SupportedNodeMajor on PATH: https://nodejs.org/" }
 $nodeVersion = (& $node --version).Trim()
 $nodeMajor = [int]($nodeVersion.TrimStart('v').Split('.')[0])
-if ($nodeMajor -lt $MinNodeMajor) { Fail "Node.js $nodeVersion is too old; install $MinNodeMajor or newer." }
+if ($nodeMajor -ne $SupportedNodeMajor) { Fail "Node.js $nodeVersion is unsupported; GraphGoblin needs Node $SupportedNodeMajor LTS. Select Node $SupportedNodeMajor on PATH and rerun this script." }
 Write-Host "    Node.js $nodeVersion"
 
 Write-Step 'Checking pnpm'

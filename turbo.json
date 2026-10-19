@@ -1,20 +1,80 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "agentGuidance": false,
+  "globalDependencies": ["eslint.config.js", "tsconfig.base.json"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]
     },
-    "typecheck": {
-      "dependsOn": ["^build"]
+    "transit": {
+      "dependsOn": ["^transit"]
     },
-    "lint": {},
-    "test": {},
+    "typecheck": {
+      "dependsOn": ["^build", "transit"]
+    },
+    "lint": {
+      "dependsOn": ["transit"]
+    },
+    "test": {
+      "dependsOn": ["transit"]
+    },
     "test:coverage": {
+      "dependsOn": ["transit"],
       "outputs": ["coverage/**"]
     },
+    "@graphgoblin/api#test": {
+      "dependsOn": ["transit"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/docs/guide/02-build-a-loop.md",
+        "$TURBO_ROOT$/docs/guide/03-run-and-observe.md",
+        "$TURBO_ROOT$/docs/guide/04-triggers.md"
+      ]
+    },
+    "@graphgoblin/api#test:coverage": {
+      "dependsOn": ["transit"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/docs/guide/02-build-a-loop.md",
+        "$TURBO_ROOT$/docs/guide/03-run-and-observe.md",
+        "$TURBO_ROOT$/docs/guide/04-triggers.md"
+      ],
+      "outputs": ["coverage/**"]
+    },
+    "@graphgoblin/mcp#test": {
+      "dependsOn": ["transit"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/docs/guide/02-build-a-loop.md",
+        "$TURBO_ROOT$/docs/guide/03-run-and-observe.md"
+      ]
+    },
+    "@graphgoblin/mcp#test:coverage": {
+      "dependsOn": ["transit"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/docs/guide/02-build-a-loop.md",
+        "$TURBO_ROOT$/docs/guide/03-run-and-observe.md"
+      ],
+      "outputs": ["coverage/**"]
+    },
+    "@graphgoblin/domain#test": {
+      "dependsOn": ["transit"],
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/apps/api/templates/**"]
+    },
+    "@graphgoblin/domain#test:coverage": {
+      "dependsOn": ["transit"],
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/apps/api/templates/**"],
+      "outputs": ["coverage/**"]
+    },
+    "@graphgoblin/tooling#test": {
+      "dependsOn": ["transit"],
+      "cache": false
+    },
     "@graphgoblin/tooling#test:coverage": {
+      "dependsOn": ["transit"],
+      "cache": false,
       "outputs": []
     }
   }
