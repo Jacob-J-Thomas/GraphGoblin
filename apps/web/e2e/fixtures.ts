@@ -23,6 +23,23 @@ export const test = base.extend({
 
 export { expect };
 
+/** Initialize an explicitly active editor tab before another tab can edit its draft. */
+export async function openDraftTab(page: Page, loopId: string, name: string): Promise<void> {
+  // Multi-page traces show renderer work stalled until explicit activation, even while the
+  // headless page reports visible/focused. A heading alone can also precede reconciliation.
+  // These are state synchronization waits; their timeouts are failure budgets, not delays
+  // or assertions about how fast the editor must render.
+  await page.bringToFront();
+  await page.goto(`/app/loops/${loopId}/edit`);
+  await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
+  await expect(
+    page.getByText(
+      'The editor is available. Checking the server and this device before saving changes.',
+      { exact: true },
+    ),
+  ).toBeHidden();
+}
+
 /** A manual trigger, a wait-for-input node, and an exit. */
 export function approvalLoop(name: string) {
   return {
