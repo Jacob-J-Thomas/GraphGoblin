@@ -11,6 +11,7 @@ import { CURRENT_DEFINITION_FORMAT, LoopDefinitionSchema } from '@graphgoblin/co
 import { fakeUlid } from '@graphgoblin/contracts/testing';
 import { RunManager, type StartRunInput } from '../run-manager.js';
 import type { EngineSettings } from '../ports.js';
+import type { HandlerRegistry } from '../handler.js';
 import { DEFAULT_TEST_SETTINGS, createFakePorts, type FakePorts } from './fakes.js';
 
 /** A run manager over fake ports with helpers for scenario tests. */
@@ -40,11 +41,11 @@ export interface TestEngine {
 
 export async function createTestEngine(
   overrides: Partial<EngineSettings> = {},
-  portOptions: { secrets?: Record<string, string> } = {},
+  portOptions: { secrets?: Record<string, string>; handlers?: HandlerRegistry } = {},
 ): Promise<TestEngine> {
   const ports = createFakePorts(portOptions);
   const settings: EngineSettings = { ...DEFAULT_TEST_SETTINGS, ...overrides };
-  const manager = new RunManager(ports, settings);
+  const manager = new RunManager(ports, settings, portOptions.handlers);
   await manager.start();
   const loopId = (name: string): string => fakeUlid(`loop:${name}`);
   const engine: TestEngine = {

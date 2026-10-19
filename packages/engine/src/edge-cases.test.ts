@@ -7,7 +7,6 @@ import { RunCancelledError, RunFailureError, describeError, isAbortError } from 
 import { nodeOfKind } from './handler.js';
 import {
   addUsage,
-  hasPath,
   jsonOrText,
   outputPatch,
   selectCollection,
@@ -142,14 +141,63 @@ describe('handler helpers', () => {
     none.dispose();
   });
 
-  it('hasPath walks objects and arrays', () => {
-    const doc = { a: [1, { b: 2 }], s: 'str' };
-    expect(hasPath(doc, '/a/1/b')).toBe(true);
-    expect(hasPath(doc, '/a/5')).toBe(false);
-    expect(hasPath(doc, '/a/x')).toBe(false);
-    expect(hasPath(doc, '/s/0')).toBe(false);
-    expect(hasPath(doc, '/missing')).toBe(false);
-    expect(hasPath(doc, '')).toBe(true);
+  it.each([
+    ['/vars/a/1/b', 'replace', true],
+    ['/vars/missing', 'add', true],
+    ['/vars/a/5', 'add', false],
+    ['/vars/a/x', 'add', false],
+    ['/vars/a/01/b', 'replace', false],
+    ['/vars/s/0', 'add', false],
+  ] as const)('inference raw repair handles target %s safely', async (target, op, valid) => {
+    const engine = await createTestEngine();
+    const version = engine.publish(
+      singleNodeLoop('raw repair target', {
+        id: 'infer',
+        kind: 'inference',
+        label: 'Infer',
+        config: {
+          prompt: { template: 'go' },
+          output: {
+            transforms: [
+              { op: 'set', path: '/vars/a', value: { kind: 'literal', value: [1, { b: 2 }] } },
+              { op: 'set', path: '/vars/s', value: { kind: 'literal', value: 'str' } },
+              {
+                op: 'coerce',
+                source: '/vars/absent',
+                target,
+                jsonSchema: { type: 'number' },
+                repair: { enabled: false, onFailure: 'continue-raw' },
+              },
+            ],
+          },
+        },
+      }),
+    );
+    try {
+      const run = await engine.runToIdle(version.loopId);
+      if (valid) {
+        expect(run.status).toBe('succeeded');
+        const finished = engine
+          .events(run.id)
+          .find((event) => event.type === 'node.finished' && event.nodeId === 'infer');
+        expect(finished).toMatchObject({
+          patch: expect.arrayContaining([{ op, path: target, value: null }]),
+        });
+        const thread = await engine.manager.getThread(run.id);
+        if (op === 'replace') expect(thread?.vars['a']).toEqual([1, { b: null }]);
+        else expect(thread?.vars['missing']).toBeNull();
+      } else {
+        expect(run.status).toBe('failed');
+        expect(run.failure?.code).toBe('INTERNAL_ERROR');
+        expect(engine.events(run.id)).not.toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ type: 'node.finished', nodeId: 'infer' }),
+          ]),
+        );
+      }
+    } finally {
+      engine.manager.stop();
+    }
   });
 });
 

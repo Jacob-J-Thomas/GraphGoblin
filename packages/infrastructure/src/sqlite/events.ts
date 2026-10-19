@@ -1,6 +1,10 @@
 import { EventEmitter } from 'node:events';
 import { RunEventSchema, type RunEvent } from '@graphgoblin/contracts';
-import { AppendConflictError } from '@graphgoblin/engine';
+import {
+  AppendConflictError,
+  UnreadableRunHistoryError,
+  validateGeneratedEvent,
+} from '@graphgoblin/engine';
 import type { ClockPort, EventDraft, EventStorePort } from '@graphgoblin/engine';
 import { and, asc, eq, gt, sql } from 'drizzle-orm';
 import type { Database } from './db.js';
@@ -9,13 +13,13 @@ import { runEvents, runs } from './schema.js';
 type Row = Omit<typeof runEvents.$inferSelect, 'payload'> & { payload: string };
 
 /** A stored row violates the current contract. Reject the entire page without exposing payloads. */
-export class InvalidStoredRunEventError extends Error {
+export class InvalidStoredRunEventError extends UnreadableRunHistoryError {
   constructor(
-    readonly runId: string,
+    runId: string,
     readonly seq: number,
     readonly eventType: string,
   ) {
-    super(`Stored run event does not conform: run ${runId}, seq ${seq}, type ${eventType}`);
+    super(runId, `Stored run event does not conform: run ${runId}, seq ${seq}, type ${eventType}`);
     this.name = 'InvalidStoredRunEventError';
   }
 }
@@ -76,27 +80,12 @@ export class SqliteEventStore implements EventStorePort {
       const rows: (typeof runEvents.$inferInsert)[] = [];
       for (const draft of drafts) {
         seq += 1;
-        const { type, ...rest } = draft as { type: string; nodeId?: string } & Record<
-          string,
-          unknown
-        >;
-        const { nodeId, ...payload } = rest;
-        rows.push({
-          runId,
-          seq,
-          ts,
-          type,
-          nodeId: typeof nodeId === 'string' ? nodeId : null,
-          payload,
-        });
-        events.push({
-          ...payload,
-          runId,
-          seq,
-          ts,
-          type,
-          ...(typeof nodeId === 'string' ? { nodeId } : {}),
-        } as RunEvent);
+        const event = validateGeneratedEvent({ ...draft, runId, seq, ts });
+        const nodeId = 'nodeId' in event ? event.nodeId : undefined;
+        const { type, runId: _runId, seq: _seq, ts: _ts, ...rest } = event;
+        const { nodeId: _nodeId, ...payload } = { ...rest, nodeId };
+        rows.push({ runId, seq, ts, type, nodeId: nodeId ?? null, payload });
+        events.push(event);
       }
       await tx.insert(runEvents).values(rows);
       await tx.update(runs).set({ lastEventSeq: seq }).where(eq(runs.id, runId));

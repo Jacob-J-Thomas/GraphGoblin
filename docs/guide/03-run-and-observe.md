@@ -263,6 +263,7 @@ Read `code`, `message`, `nodeId`, `resumable`, and any `details`. After fixing a
 
 | `RunErrorCode`                                                      | Action                                                                                                                                                                     |
 | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `EVENT_INVALID`                                                     | Generated event violates a contract bound. Read the failure, correct its source, then start or replay. Successful values are never trimmed.                                |
 | `HARNESS_NOT_INSTALLED`                                             | Install Codex or correct the executable setting; check harness preflight. Missing executable errors during a turn can also appear as `HARNESS_TURN_FAILED`.                |
 | `HARNESS_NOT_AUTHENTICATED`                                         | Log into Codex as the API process user, then resume.                                                                                                                       |
 | `HARNESS_QUOTA_EXHAUSTED`                                           | Wait for quota or rate-limit recovery, or resolve account access, then resume.                                                                                             |

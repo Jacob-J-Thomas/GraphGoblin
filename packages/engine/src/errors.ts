@@ -83,3 +83,15 @@ export class AppendConflictError extends Error {
     this.name = 'AppendConflictError';
   }
 }
+
+/** A specific run's current-format stored data cannot be decoded. Store failures stay distinct. */
+export class UnreadableRunHistoryError extends Error {
+  readonly code = 'HISTORY_UNREADABLE';
+  constructor(
+    readonly runId: string,
+    reason: string,
+  ) {
+    super(reason);
+    this.name = 'UnreadableRunHistoryError';
+  }
+}
