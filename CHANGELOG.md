@@ -4,6 +4,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- The Claude harness now offers **Claude Sonnet 5.5** (`claude-sonnet-5-5`) and **Claude Haiku 5.5** (`claude-haiku-5-5`), each with `low`, `medium`, `high`, `xhigh` and `max`, beside Opus 5.5 and Fable 5.1. Both ids were verified on 2026-10-18 with bounded real turns through installed Claude Code 2.1.292 and a Claude.ai login, which reported exactly the requested model. They use the same exact-model, effort, readiness and catalog checks; aliases and the older `claude-haiku-4-5-20251001` (no effort control in the CLI) are not admitted. `LIVE_CLAUDE=1` runs a separate one-turn live smoke per new model. **Upgrade:** none; the next start adds both catalog rows enabled and keeps every existing enable switch. Claude Code's documentation names 2.1.293 as the minimum for Haiku 5.5; update the CLI if a Haiku run fails. (#206)
+
 - Template and expression fields in the node dialog have a collapsed **Earlier node outputs (N)** list: the nodes that can run before this one, each with its reference in the field's syntax, a **Copy** button and a note on what it outputs. It is interim help, not validation, and it is hidden where a field isn't evaluated against the run thread or no earlier node writes an output. (#341)
 
 - Webhook trigger dialogs show the published receiver URL, masked by default, with Reveal/Hide, Copy receiver URL and Retry after a failed load. Signing instructions remain in the guide. (#166 F4)

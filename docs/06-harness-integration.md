@@ -261,11 +261,44 @@ response exposes that category, never raw login output, account identity, or cre
 GraphGoblin secret stores Claude credentials. Preflight reports the detected CLI version and
 missing capabilities, and checks authentication independently even if those checks fail.
 
-The exact supported models are `claude-opus-5-5` and `claude-fable-5-1`. Both use the same
-technical readiness, model identity, effort and owner catalog enablement checks (ADR-0029).
-Supported requested efforts are `low`, `medium`, `high`, `xhigh`, and `max`. `minimal` is not
-accepted. The CLI does not report the effective effort, so GraphGoblin records and displays the
-requested effort and keeps `effectiveEffort` null.
+The supported models are exact ids; CLI aliases such as `sonnet` or `haiku` are refused. All four
+use the same technical readiness, model identity, effort and owner catalog enablement checks
+(ADR-0029), and all four seed enabled in the catalog:
+
+| Model id            | Catalog name      | Requested efforts                       | Verification                                                                                           |
+| ------------------- | ----------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `claude-opus-5-5`   | Claude Opus 5.5   | `low`, `medium`, `high`, `xhigh`, `max` | Bounded native fresh/resume turns on CLI 2.1.285 ([#26 QA report](qa/2026-10-07-issue-26.md))          |
+| `claude-fable-5-1`  | Claude Fable 5.1  | `low`, `medium`, `high`, `xhigh`, `max` | Same technical checks as Opus (ADR-0029)                                                               |
+| `claude-sonnet-5-5` | Claude Sonnet 5.5 | `low`, `medium`, `high`, `xhigh`, `max` | 2026-10-18 on CLI 2.1.292 (#206): direct turns at `low` and `max`; one product turn at `high`          |
+| `claude-haiku-5-5`  | Claude Haiku 5.5  | `low`, `medium`, `high`, `xhigh`, `max` | 2026-10-18 on CLI 2.1.292 (#206): direct turns at `low`, `xhigh` and `max`; one product turn at `high` |
+
+`minimal` is not accepted for any Claude model. The CLI does not report the effective effort, so
+GraphGoblin records and displays the requested effort and keeps `effectiveEffort` null. Claude
+Code documents that a level a model does not support runs at the highest supported level at or
+below it; GraphGoblin offers only levels documented for each model, so it expects no such
+fallback, but it cannot observe one.
+
+**Sonnet 5.5 and Haiku 5.5 verification (2026-10-18, #206).** Installed CLI 2.1.292 with a
+`claude.ai` login. Each direct turn ran `--print` with a one-line prompt, the adapter's restricted
+environment and suppression flags, read-only tools, `--max-turns 1` and `--no-session-persistence`
+in a fresh empty temporary directory. Every turn succeeded, and the init record, the assistant
+message and the result `modelUsage` all reported exactly the requested id. The product turns ran
+one trigger, inference and exit loop per model through the API container's own Claude adapter
+(`LIVE_CLAUDE=1 pnpm --filter @graphgoblin/api exec vitest run src/live.test.ts`) with a
+disposable data directory; both runs succeeded with `harness.session` recording the requested
+model and `high` effort, and the CLI's own session records reported the requested model. The
+efforts not exercised by a turn rest on the CLI and its documentation: the 2.1.292 model registry
+lists effort, `xhigh` and `max` capabilities for `claude-sonnet-5-5`, and Claude Code's model
+configuration documentation lists all five levels for Sonnet 5.5 and Haiku 5.5.
+
+CLI 2.1.292 does not yet list `claude-haiku-5-5` in its model registry. It prints an
+`unrecognized_model` notice on stderr, which the adapter does not read, and treats the model as a
+first-party model with every effort level. Claude Code's documentation names 2.1.293 as the
+minimum for Haiku 5.5; the turns above passed on 2.1.292, and GraphGoblin keeps its single CLI
+minimum (2.1.285) rather than a per-model one. Not admitted: `claude-haiku-4-5-20251001`, whose
+registry entry has no effort capability, so the CLI drops any requested effort (a direct turn at
+`max` ran without error, which shows only that the flag is ignored); and `claude-sonnet-5`, the
+previous Sonnet.
 
 ### Native Windows policy
 
