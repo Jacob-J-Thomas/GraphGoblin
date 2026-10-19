@@ -157,4 +157,37 @@ GET /runs/{id}/artifacts/{artifactId}
 
 MCP writes diagnostics to stderr; inspect your MCP client's captured server logs. Include the failure details and relevant event sequences when reporting a defect. Check output for sensitive values before sharing it.
 
+## Unreadable run history
+
+Startup can log `HISTORY_UNREADABLE` with a run ID and a reason such as a malformed
+JSON field or the sequence and type of an invalid event. Healthy current-format runs
+continue recovery. Startup checks active runs and terminal runs awaiting finalization,
+so its log names damaged recovery candidates only. `GET /runs/diagnostics` also checks
+finalized terminal history.
+
+`GET /runs/:id` and MCP `get_run` decode only the run row, so a snapshot can look normal
+while its events or thread are damaged. An unreadable run row or stored thread yields
+`500 STORED_RUN_INVALID`; an unreadable event page yields `500 STORED_EVENT_INVALID`
+(MCP reports the same codes as tool errors). If events or thread reads fail this way,
+query `GET /runs/diagnostics` with a key holding `runs:read` to identify the damaged
+history, then repair or delete it explicitly as described below. Diagnostics covers
+all runs belonging to that key's owner. Follow `nextCursor` until null; each request
+checks at most 20 runs and 2,000 events. The diagnostic does not change a stored status;
+a damaged run's snapshot may still say queued, running, or waiting. No execution is
+recovered for that damaged run.
+
+**Manual disposition:** Stop the API before editing SQLite. Repair the specifically named
+row by hand to match the current contract, then restart and check `GET /runs/diagnostics`
+again. Deletion of unrelated loops works while the damaged run is isolated. The damaged
+run's own loop is deletable once its runs are terminal or repaired. Alternatively,
+explicitly delete the containing loop using the existing
+`DELETE /loops/:id` path once all its runs are terminal. That deletion removes the loop
+and all its history, not just the damaged run; there is currently no individual-run
+deletion endpoint. If a damaged row still represents active work, manually repair it to
+a valid terminal run record before choosing loop deletion. Recovery never repairs,
+archives, reconstructs, deletes, or resets damaged data automatically.
+
+An unsupported whole-store format or a database/schema/I/O failure is a separate startup
+error. Do not reset the whole store to dispose of one damaged run.
+
 Return to the [User guide](README.md), or read [API, streaming, and MCP](../07-api-and-streaming.md) and [Frontend and PWA](../09-frontend-and-pwa.md) for design context.

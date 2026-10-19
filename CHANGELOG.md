@@ -6,6 +6,11 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 - Replace invasive tests with supported component, transport, storage and disposable process boundaries, and real service-worker update evidence. **Upgrade:** internal test/tool consumers must stop using `hasPath`, `window.graphgoblinPwa`, `ICON_NAMES`, `EMPTY_HISTORY`, `describeRoute`, `routeBackwardEdges`, `labelOf`, and `historyClock`; these test-only/dead seams were removed. (#317)
 
+- Add repeatable sustained-run measurement tooling for cyclic execution, growing context, replay, artifacts, readiness, populated stores, and Edge, with JSON summaries and CPU profiles (#190).
+
+- Recover healthy current-format runs beside damaged history; log HISTORY_UNREADABLE and expose owner-scoped diagnostics for explicit manual repair or deletion without changing damaged data. MCP `list_runs` preserves the server cursor even on pages with no readable runs. **Upgrade:** Check `GET /runs/diagnostics` after upgrading and explicitly repair or delete damaged history. MCP callers must pass `cursor` and read `nextCursor` instead of `before` and `nextBefore`. (#318)
+- Validate generated durable events before persistence, bound terminal failure diagnostics visibly, and fail rejected success events with nonresumable EVENT_INVALID so restart does not repeat uncertain work. **Upgrade:** Check `GET /runs/diagnostics` after upgrading; invalid events written before this fix now surface as `HISTORY_UNREADABLE`. (#223)
+
 - Aligned installation, gates, CI, container, installers and API preflight on Node 22 LTS (22.x), with root `devEngines.runtime` enforcing the project runtime without enforcing every dependency engine range. **Upgrade:** every pnpm command (install, build, start) refuses Node 23; restart the running instance from a Node 22 shell. Settings → Preflight shows Node as failed under any other major. API consumers use `SUPPORTED_NODE_MAJOR` in place of `MIN_NODE_MAJOR`. (#263)
 
 - Workspace test, coverage, typecheck and lint caches include dependency sources, declared guide/template inputs and shared root configs; repository-wide tooling tests are uncached. Unrelated-package cache reuse remains. (#127)
