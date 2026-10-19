@@ -1,0 +1,158 @@
+{
+  "classification": "Controlled external fault injection. SQL against stopped disposable store only.",
+  "damage": {
+    "damage-event": "run_events.payload at seq 1 = {broken",
+    "damage-row": "runs.waiting = {broken",
+    "damage-thread": "runs.thread_snapshot = {broken",
+    "damage-child": "runs.waiting = {broken; genuine subloop child",
+    "damage-terminal-finalized": "run_events.payload at seq 1 = {broken; finalized_at preserved",
+    "damage-terminal-pending": "run_events.payload at seq 1 = {broken; finalized_at=NULL"
+  },
+  "recoveryFixturePreparation": {
+    "healthy-queued": "reset to original seq 1; queued snapshot; initial checkpoint",
+    "cancel-parent": "reset to queued seq 1 with cancel_requested_at; genuine child relation preserved"
+  },
+  "fixtures": {
+    "damage-event": {
+      "loopId": "01M59JBVN9EYMRXYVEWPBF5R6K",
+      "runId": "01M59JBVPMB4RJRRJ9G57RMAGW"
+    },
+    "damage-row": {
+      "loopId": "01M59JBVT0MCYEQ9JTMRNHFTME",
+      "runId": "01M59JBVV17VXYD018Y5N5EK95"
+    },
+    "damage-thread": {
+      "loopId": "01M59JBW03KWNQMVRXQXDV002P",
+      "runId": "01M59JBW11B9J7KDP4PGG5M1DP"
+    },
+    "cancel-child-loop": {
+      "loopId": "01M59JBW34T28F5YXGHY7PP2SV"
+    },
+    "cancel-parent": {
+      "loopId": "01M59JBW4B1T1NW4AM1Z8TVZ8A",
+      "runId": "01M59JBW5C696MN47K88X29Z6K"
+    },
+    "damage-child": {
+      "runId": "01M59JBW6SA1N7C9JX38XAZK0X",
+      "loopId": "01M59JBW34T28F5YXGHY7PP2SV"
+    },
+    "damage-terminal-finalized": {
+      "loopId": "01M59JBW9ER825G5RNBHP5CH15",
+      "runId": "01M59JBWANQD4NPVTRMS0Y2SJ9"
+    },
+    "damage-terminal-pending": {
+      "loopId": "01M59JBWCVXVX7THPXZCX8C143",
+      "runId": "01M59JBWDWHXPQE604XXH73007"
+    },
+    "healthy-queued": {
+      "loopId": "01M59JBWGBQRAPGRDPBGGCCT5Y",
+      "runId": "01M59JBWHJ1H0HV19JWZM8Z329"
+    },
+    "healthy-wait": {
+      "loopId": "01M59JBWKNPJTD9AXF5100BRWG",
+      "runId": "01M59JBWMQPMF4B15DMHMB51EC"
+    },
+    "unrelated-delete": {
+      "loopId": "01M59JBWPNZ9F93H3SJ23WHSY3"
+    },
+    "padding": {
+      "loopId": "01M59JBWQMB0Z6MKAQ909FF08D"
+    },
+    "padding-0": {
+      "loopId": "01M59JBWQMB0Z6MKAQ909FF08D",
+      "runId": "01M59JBWRK530R87ADVFATAN3B"
+    },
+    "padding-1": {
+      "loopId": "01M59JBWQMB0Z6MKAQ909FF08D",
+      "runId": "01M59JBWVGC4KFS2QNETSHK6ME"
+    },
+    "padding-2": {
+      "loopId": "01M59JBWQMB0Z6MKAQ909FF08D",
+      "runId": "01M59JBWXHW27318X82P53JRX1"
+    },
+    "padding-3": {
+      "loopId": "01M59JBWQMB0Z6MKAQ909FF08D",
+      "runId": "01M59JBX03GFD5RQP06HBXVSDP"
+    },
+    "padding-4": {
+      "loopId": "01M59JBWQMB0Z6MKAQ909FF08D",
+      "runId": "01M59JBX2QB76TY80B0VWBHYTH"
+    },
+    "padding-5": {
+      "loopId": "01M59JBWQMB0Z6MKAQ909FF08D",
+      "runId": "01M59JBX4TQWFMX3K7Q0Y3PK25"
+    },
+    "padding-6": {
+      "loopId": "01M59JBWQMB0Z6MKAQ909FF08D",
+      "runId": "01M59JBX6WW133XDGMNMH9YJ2K"
+    },
+    "padding-7": {
+      "loopId": "01M59JBWQMB0Z6MKAQ909FF08D",
+      "runId": "01M59JBX8VEVNZCZH7CTWYQK8X"
+    },
+    "padding-8": {
+      "loopId": "01M59JBWQMB0Z6MKAQ909FF08D",
+      "runId": "01M59JBXB8J6XRY7GT1J2YZJX8"
+    },
+    "padding-9": {
+      "loopId": "01M59JBWQMB0Z6MKAQ909FF08D",
+      "runId": "01M59JBXD7YPM9629BBZJ62Q6Y"
+    },
+    "padding-10": {
+      "loopId": "01M59JBWQMB0Z6MKAQ909FF08D",
+      "runId": "01M59JBXF7WKDASTMH8BWX3W2P"
+    },
+    "padding-11": {
+      "loopId": "01M59JBWQMB0Z6MKAQ909FF08D",
+      "runId": "01M59JBXH5CEMK1E7JCKFD0G60"
+    },
+    "padding-12": {
+      "loopId": "01M59JBWQMB0Z6MKAQ909FF08D",
+      "runId": "01M59JBXK304CSKR2NFQ0GD28Q"
+    },
+    "padding-13": {
+      "loopId": "01M59JBWQMB0Z6MKAQ909FF08D",
+      "runId": "01M59JBXN26H0PD4P4A1QDKJPY"
+    },
+    "padding-14": {
+      "loopId": "01M59JBWQMB0Z6MKAQ909FF08D",
+      "runId": "01M59JBXQ0SRRZAKKG4TW2A6CZ"
+    },
+    "padding-15": {
+      "loopId": "01M59JBWQMB0Z6MKAQ909FF08D",
+      "runId": "01M59JBXS0FHHPWTDMBZ78YQC4"
+    },
+    "padding-16": {
+      "loopId": "01M59JBWQMB0Z6MKAQ909FF08D",
+      "runId": "01M59JBXV23E0625Z2X1EF2Y4A"
+    },
+    "padding-17": {
+      "loopId": "01M59JBWQMB0Z6MKAQ909FF08D",
+      "runId": "01M59JBXXFAC9445FCDF8NQDG9"
+    },
+    "padding-18": {
+      "loopId": "01M59JBWQMB0Z6MKAQ909FF08D",
+      "runId": "01M59JBXZEQDGQ2RC005CWVR2B"
+    },
+    "padding-19": {
+      "loopId": "01M59JBWQMB0Z6MKAQ909FF08D",
+      "runId": "01M59JBY1FDC20FE1T6E1C7N0Y"
+    },
+    "padding-20": {
+      "loopId": "01M59JBWQMB0Z6MKAQ909FF08D",
+      "runId": "01M59JBY3AMETC48XG0X2RDTXS"
+    },
+    "padding-21": {
+      "loopId": "01M59JBWQMB0Z6MKAQ909FF08D",
+      "runId": "01M59JBY5DD7T1SHQGB6R23DBB"
+    },
+    "padding-22": {
+      "loopId": "01M59JBWQMB0Z6MKAQ909FF08D",
+      "runId": "01M59JBY7FZGZRCT18KZ2852A6"
+    },
+    "padding-23": {
+      "loopId": "01M59JBWQMB0Z6MKAQ909FF08D",
+      "runId": "01M59JBY9PZFV3WQMMKKMQBXD4"
+    }
+  }
+}

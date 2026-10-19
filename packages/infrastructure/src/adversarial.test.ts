@@ -421,7 +421,7 @@ describe('finalization on SQLite (review of WP-G, fourth round)', () => {
     });
     await manager.waitForIdle();
     expect((await runs.get(r.id))?.failure?.resumable).toBe(true);
-    expect(await runs.listUnfinalized()).toHaveLength(0);
+    expect((await runs.listRecoveryCandidates()).filter((r) => r.terminal)).toHaveLength(0);
     const transition = runs.transition.bind(runs);
     let blocked = false;
     const spy = vi.spyOn(runs, 'transition').mockImplementation(async (id, from, changes) => {
@@ -442,7 +442,7 @@ describe('finalization on SQLite (review of WP-G, fourth round)', () => {
     second.stop();
     expect((await runs.get(r.id))?.status).toBe('succeeded');
     expect(e.ports.delivery.logged).toHaveLength(1);
-    expect(await runs.listUnfinalized()).toHaveLength(0);
+    expect((await runs.listRecoveryCandidates()).filter((r) => r.terminal)).toHaveLength(0);
   });
 
   it.each(['next success', 'durable resume'] as const)(
@@ -523,7 +523,7 @@ describe('finalization on SQLite (review of WP-G, fourth round)', () => {
       second.stop();
       expect((await runs.get(r.id))?.status).toBe('succeeded');
       expect(e.ports.delivery.logged).toHaveLength(1);
-      expect(await runs.listUnfinalized()).toHaveLength(0);
+      expect((await runs.listRecoveryCandidates()).filter((r) => r.terminal)).toHaveLength(0);
     },
   );
 
