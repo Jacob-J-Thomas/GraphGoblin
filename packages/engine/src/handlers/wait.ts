@@ -22,7 +22,7 @@ export const waitHandler: NodeHandler<'wait'> = {
     const now = Date.parse(ctx.services.now());
 
     if (!ctx.wake) {
-      let wait: Omit<WaitSpec, 'waitId'>;
+      let wait: Omit<WaitSpec, 'waitId' | 'startedSeq'>;
       switch (config.mode) {
         case 'input':
           wait = {

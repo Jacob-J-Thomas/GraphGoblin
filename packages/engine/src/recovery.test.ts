@@ -154,17 +154,17 @@ describe('cursor boundaries, recovered twice', () => {
       });
       const t = vi
         .spyOn(e.ports.runs, 'transition')
-        .mockImplementation(async (id, from, changes) => {
+        .mockImplementation(async (id, from, changes, ...rest) => {
           if (
             nodeKind === 'exit' &&
             boundary !== 'append-return' &&
             changes.status === 'succeeded'
           ) {
-            if (boundary === 'after-cursor') await transition(id, from, changes);
+            if (boundary === 'after-cursor') await transition(id, from, changes, ...rest);
             blocked = true;
             return hang();
           }
-          return transition(id, from, changes);
+          return transition(id, from, changes, ...rest);
         });
       const r = await e.start(e.publish(def).loopId);
       if (nodeKind === 'wait') {
@@ -236,13 +236,13 @@ describe('wakes across crashes (review finding 4)', () => {
       let blocked = false;
       const spy = vi
         .spyOn(e.ports.runs, 'transition')
-        .mockImplementation(async (id, from, changes) => {
+        .mockImplementation(async (id, from, changes, ...rest) => {
           if (from.includes('waiting') && changes.status === 'running') {
-            if (when === 'after') await transition(id, from, changes);
+            if (when === 'after') await transition(id, from, changes, ...rest);
             blocked = true;
             return hang();
           }
-          return transition(id, from, changes);
+          return transition(id, from, changes, ...rest);
         });
       void e.manager.provideInput(
         r.id,
@@ -293,13 +293,15 @@ describe('terminal transitions across crashes (review finding 5)', () => {
     };
     const transition = e.ports.runs.transition.bind(e.ports.runs);
     let blocked = false;
-    const spy = vi.spyOn(e.ports.runs, 'transition').mockImplementation((id, from, changes) => {
-      if (changes.status === 'succeeded') {
-        blocked = true;
-        return hang();
-      }
-      return transition(id, from, changes);
-    });
+    const spy = vi
+      .spyOn(e.ports.runs, 'transition')
+      .mockImplementation((id, from, changes, ...rest) => {
+        if (changes.status === 'succeeded') {
+          blocked = true;
+          return hang();
+        }
+        return transition(id, from, changes, ...rest);
+      });
     const r = await e.start(e.publish(def).loopId);
     await vi.waitFor(() => expect(blocked).toBe(true));
     e.manager.stop();
@@ -325,13 +327,15 @@ describe('terminal transitions across crashes (review finding 5)', () => {
     const parent = e.publish(subLoop('finish-parent', child.loopId));
     const transition = e.ports.runs.transition.bind(e.ports.runs);
     let blocked = false;
-    const spy = vi.spyOn(e.ports.runs, 'transition').mockImplementation((id, from, changes) => {
-      if (changes.status === 'succeeded' && changes.result === 7) {
-        blocked = true;
-        return hang();
-      }
-      return transition(id, from, changes);
-    });
+    const spy = vi
+      .spyOn(e.ports.runs, 'transition')
+      .mockImplementation((id, from, changes, ...rest) => {
+        if (changes.status === 'succeeded' && changes.result === 7) {
+          blocked = true;
+          return hang();
+        }
+        return transition(id, from, changes, ...rest);
+      });
     const r = await e.start(parent.loopId);
     await vi.waitFor(() => expect(blocked).toBe(true));
     e.manager.stop();
@@ -381,12 +385,12 @@ describe('subloops (review finding 3)', () => {
     const pv = e.publish(subLoop('pause-parent', cv.loopId));
     const transition = e.ports.runs.transition.bind(e.ports.runs);
     let once = true;
-    vi.spyOn(e.ports.runs, 'transition').mockImplementation(async (id, from, changes) => {
+    vi.spyOn(e.ports.runs, 'transition').mockImplementation(async (id, from, changes, ...rest) => {
       if (once && changes.waiting?.kind === 'child') {
         once = false;
         await e.manager.pause(id);
       }
-      return transition(id, from, changes);
+      return transition(id, from, changes, ...rest);
     });
     const r = await e.runToIdle(pv.loopId);
     expect(r.status).toBe('paused');
@@ -491,8 +495,8 @@ describe('subloops (review finding 3)', () => {
     const pv = e.publish(subLoop('after-park-parent', cv.loopId));
     const transition = e.ports.runs.transition.bind(e.ports.runs);
     let sawRace = false;
-    vi.spyOn(e.ports.runs, 'transition').mockImplementation(async (id, from, changes) => {
-      const parked = await transition(id, from, changes);
+    vi.spyOn(e.ports.runs, 'transition').mockImplementation(async (id, from, changes, ...rest) => {
+      const parked = await transition(id, from, changes, ...rest);
       if (changes.status === 'waiting' && changes.waiting?.kind === 'child') {
         const child = changes.waiting.childRunId!;
         await vi.waitFor(async () =>
@@ -677,7 +681,7 @@ describe('wake and timer edges', () => {
         }),
       ).loopId,
     );
-    const seq = r.waiting!.startedSeq!;
+    const seq = r.waiting!.startedSeq;
     await e.ports.timers.fire(r.id, `timer@${seq + 100}`);
     expect((await e.ports.runs.get(r.id))?.status).toBe('waiting');
     await e.ports.timers.fire(r.id, 'timer');
@@ -720,11 +724,11 @@ describe('wake and timer edges', () => {
     const transition = e.ports.runs.transition.bind(e.ports.runs);
     const spy = vi
       .spyOn(e.ports.runs, 'transition')
-      .mockImplementation(async (id, from, changes) => {
+      .mockImplementation(async (id, from, changes, ...rest) => {
         if (changes.status === 'running' && from.includes('waiting')) {
           await e.manager.pause(id);
         }
-        return transition(id, from, changes);
+        return transition(id, from, changes, ...rest);
       });
     const paused = await e.manager.provideInput(
       r.id,
@@ -831,8 +835,10 @@ describe('wake and timer edges', () => {
     const transition = e.ports.runs.transition.bind(e.ports.runs);
     const spy = vi
       .spyOn(e.ports.runs, 'transition')
-      .mockImplementation((id, from, changes) =>
-        changes.status === 'running' ? Promise.resolve(undefined) : transition(id, from, changes),
+      .mockImplementation((id, from, changes, ...rest) =>
+        changes.status === 'running'
+          ? Promise.resolve(undefined)
+          : transition(id, from, changes, ...rest),
       );
     await recover(e);
     spy.mockRestore();
@@ -955,7 +961,7 @@ describe('pins and timers (review probes)', () => {
       const recovered = new RunManager(e.ports, e.settings);
       await recovered.start();
       expect(e.ports.timers.scheduled).toHaveLength(1);
-      const seq = r.waiting!.startedSeq!;
+      const seq = r.waiting!.startedSeq;
       await e.ports.timers.fire(r.id, `${kind === 'timer' ? 'heartbeat' : 'timer'}@${seq}`);
       expect((await recovered.getRun(r.id))?.status).toBe('waiting');
       await e.ports.timers.fireDue(e.ports.clock.now());

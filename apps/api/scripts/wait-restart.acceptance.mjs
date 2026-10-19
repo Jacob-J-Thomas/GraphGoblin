@@ -4,10 +4,10 @@ import { Buffer } from 'node:buffer';
 import console from 'node:console';
 import process from 'node:process';
 import { spawn } from 'node:child_process';
-import { mkdtemp } from 'node:fs/promises';
+import { mkdtemp, rm } from 'node:fs/promises';
 import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath, URL } from 'node:url';
 import { performance } from 'node:perf_hooks';
 const { fetch, AbortSignal } = globalThis;
@@ -59,9 +59,17 @@ function definition(name, kind, config) {
     ],
   };
 }
+async function removeFixtureDir(dataDir) {
+  assert.equal(dirname(dataDir), resolve(tmpdir()));
+  assert.ok(basename(dataDir).startsWith('gg-c2-native-'));
+  await rm(dataDir, { recursive: true, force: true });
+}
 for (const poll of [50, 1000]) {
   const dataDir = await mkdtemp(join(tmpdir(), 'gg-c2-native-'));
-  const port = await freePort();
+  const port = await freePort().catch(async (error) => {
+    await removeFixtureDir(dataDir);
+    throw error;
+  });
   const base = 'http://127.0.0.1:' + port;
   let child;
   let output = '';
@@ -92,6 +100,10 @@ for (const poll of [50, 1000]) {
       },
       stdio: ['ignore', 'pipe', 'pipe'],
     });
+    let bootError;
+    child.once('error', (error) => {
+      bootError = error;
+    });
     child.stdout.on('data', (b) => {
       output = (output + b).slice(-10000);
     });
@@ -100,7 +112,8 @@ for (const poll of [50, 1000]) {
     });
     try {
       await until(async () => {
-        if (child.exitCode !== null) throw Error(output);
+        if (bootError) throw bootError;
+        if (child.exitCode !== null || child.signalCode !== null) throw Error(output);
         return fetch(base + '/healthz', { signal: AbortSignal.timeout(2000) }).then(
           (r) => r.ok,
           () => false,
@@ -119,7 +132,7 @@ for (const poll of [50, 1000]) {
     }
   }
   async function stop() {
-    if (!child || child.exitCode !== null) return;
+    if (!child?.pid || child.exitCode !== null || child.signalCode !== null) return;
     const exited = new Promise((ok) => child.once('exit', ok));
     child.kill('SIGKILL');
     await exited;
@@ -245,5 +258,6 @@ for (const poll of [50, 1000]) {
     );
   } finally {
     await stop();
+    await removeFixtureDir(dataDir);
   }
 }

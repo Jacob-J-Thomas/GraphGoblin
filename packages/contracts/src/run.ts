@@ -97,7 +97,7 @@ export const WaitSpecSchema = z.strictObject({
    * The `node.started` sequence that produced this park, used to bound event reads.
    * `waitId` is the identity returned by callers and carried in timer keys.
    */
-  startedSeq: z.number().int().positive().optional(),
+  startedSeq: z.number().int().positive(),
 });
 export type WaitSpec = z.infer<typeof WaitSpecSchema>;
 

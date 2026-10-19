@@ -1,12 +1,13 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, inject, it } from 'vitest';
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
 import { mkdtemp } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { FakeClock } from '@graphgoblin/engine/testing';
 import { SqliteRunRepository, SqliteTimerStore } from '@graphgoblin/infrastructure/sqlite';
 import { RunManager } from '@graphgoblin/engine';
+import { TimerService } from '@graphgoblin/infrastructure/scheduler';
 import { createTestApp, type TestApp, type TestAppOptions } from './testing/test-app.js';
+import { buildApp } from './app.js';
 
 const opened: TestApp[] = [];
 afterEach(async () => {
@@ -187,7 +188,7 @@ async function closeForRestart(t: TestApp) {
   await t.close();
 }
 async function diskEnv() {
-  const dir = await mkdtemp(join(tmpdir(), 'gg-wp-c2-'));
+  const dir = await mkdtemp(join(inject('waitStorageRoot'), 'gg-wp-c2-'));
   return { GG_DATA_DIR: dir, GG_DB_URL: 'file:' + join(dir, 'store.db') };
 }
 describe('durable wait boundaries', () => {
@@ -264,7 +265,7 @@ describe('durable wait boundaries', () => {
       ).toHaveLength(1);
     },
   );
-  it('retains a due timer while paused across reopen and consumes its wake once on resume', async () => {
+  it('acknowledges a due timer while paused and re-arms its original deadline after reopen and resume', async () => {
     const env = await diskEnv();
     const first = await setup({ env });
     const r = await start(
@@ -275,7 +276,7 @@ describe('durable wait boundaries', () => {
     first.clock.advance(5000);
     await first.container.timers.poll();
     const store = new SqliteTimerStore(first.container.handle.db);
-    expect(await store.list(r.id)).toHaveLength(1);
+    expect(await store.list(r.id)).toHaveLength(0);
     expect((await first.container.manager.getRun(r.id))?.status).toBe('paused');
     const waitId = await observed(first, r.id);
     await closeForRestart(first);
@@ -581,6 +582,208 @@ it('redelivery queues a durable wake after its committed status response was los
       (await t.container.ports.events.read(r.id)).filter((e) => e.type === 'run.woken'),
     ).toHaveLength(1);
   } finally {
+    manager.stop();
+  }
+});
+
+it.each(['input', 'signal'] as const)(
+  'retry repairs a durable %s answer after its status transition failed',
+  async (mode) => {
+    const t = await setup();
+    t.container.manager.stop();
+    let failOnce = true;
+    class FailedWakeRepository extends SqliteRunRepository {
+      override async transition(...args: Parameters<SqliteRunRepository['transition']>) {
+        if (failOnce && args[1].includes('waiting') && args[2].status === 'running') {
+          failOnce = false;
+          throw Error('waiting-to-running write failed');
+        }
+        return super.transition(...args);
+      }
+    }
+    const manager = new RunManager(
+      { ...t.container.ports, runs: new FailedWakeRepository(t.container.handle.db) },
+      t.container.settings,
+    );
+    const app = await buildApp({ ...t.container, manager }, { logger: false });
+    await app.ready();
+    await manager.start();
+    try {
+      const loopId = await t.publishLoop(
+        singleWait(
+          mode === 'input'
+            ? { mode: 'input', prompt: 'Durable answer' }
+            : { mode: 'signal', name: 'go' },
+        ),
+      );
+      const r = await manager.startRun({ ownerId: 'local', loopId, source: 'manual.api' });
+      await manager.waitForIdle();
+      const waitId = (await manager.getRun(r.id))!.waiting!.waitId;
+      const answer = (value: string) =>
+        app.inject({
+          method: 'POST',
+          url: '/runs/' + r.id + (mode === 'input' ? '/input' : '/signals/go'),
+          payload: mode === 'input' ? { waitId, input: value } : { waitId, payload: value },
+        });
+      expect((await answer('accepted')).statusCode).toBe(500);
+      expect((await manager.getRun(r.id))?.status).toBe('waiting');
+      const committed = await t.container.ports.events.read(r.id);
+      expect(committed.filter((e) => e.type === 'run.woken')).toHaveLength(1);
+      const retry = await answer('retry must not replace the accepted payload');
+      expect(retry.statusCode).toBe(409);
+      expect(retry.json()).toMatchObject({ code: 'WAIT_MISMATCH' });
+      await manager.waitForIdle();
+      expect((await manager.getRun(r.id))?.status).toBe('succeeded');
+      expect((await manager.getRun(r.id))?.result).toBe('accepted');
+      const events = await t.container.ports.events.read(r.id);
+      expect(events.filter((e) => e.type === 'run.woken')).toHaveLength(1);
+      expect(
+        events.filter((e) => e.type === (mode === 'input' ? 'input.received' : 'signal.received')),
+      ).toHaveLength(1);
+    } finally {
+      await manager.waitForIdle();
+      manager.stop();
+      await app.close();
+    }
+  },
+);
+
+it.each(['event', 'row'] as const)(
+  'acknowledges timers for unreadable %s history and keeps healthy work available',
+  async (damage) => {
+    const t = await setup();
+    const bad = await start(t, singleWait({ mode: 'duration', seconds: 1 }));
+    const healthy = await start(t, singleWait({ mode: 'input', prompt: 'Healthy' }));
+    t.container.manager.stop();
+    await t.container.handle.client.execute({
+      sql:
+        damage === 'event'
+          ? "UPDATE run_events SET payload = json_remove(payload, '$.wait.waitId') WHERE run_id = ? AND type = 'run.waiting'"
+          : "UPDATE runs SET waiting = json_remove(waiting, '$.waitId') WHERE id = ?",
+      args: [bad.id],
+    });
+    const manager = new RunManager(t.container.ports, t.container.settings);
+    try {
+      await expect(manager.start()).resolves.toBeUndefined();
+      const diagnostics = await t.app.inject('/runs/diagnostics');
+      expect(diagnostics.statusCode).toBe(200);
+      expect(diagnostics.json()).toMatchObject({
+        items: [{ runId: bad.id, code: 'HISTORY_UNREADABLE' }],
+      });
+      t.clock.advance(1000);
+      await t.container.timers.poll();
+      expect(await new SqliteTimerStore(t.container.handle.db).list(bad.id)).toHaveLength(0);
+      const logs = t.logger.lines.length;
+      await t.container.timers.poll();
+      expect(t.logger.lines).toHaveLength(logs);
+      await manager.provideInput(healthy.id, healthy.waiting!.waitId, 'healthy');
+      await manager.waitForIdle();
+      expect((await manager.getRun(healthy.id))?.status).toBe('succeeded');
+    } finally {
+      manager.stop();
+    }
+  },
+);
+
+it.each(['input', 'signal'] as const)(
+  'reports a paused %s wait as INVALID_STATE without consuming its identity',
+  async (mode) => {
+    const t = await setup();
+    const r = await start(
+      t,
+      singleWait(
+        mode === 'input' ? { mode: 'input', prompt: 'Paused' } : { mode: 'signal', name: 'go' },
+      ),
+    );
+    const waitId = r.waiting!.waitId;
+    await t.container.manager.pause(r.id);
+    const before = await t.container.ports.events.read(r.id);
+    const send = (token: string) =>
+      t.app.inject({
+        method: 'POST',
+        url: '/runs/' + r.id + (mode === 'input' ? '/input' : '/signals/go'),
+        payload: mode === 'input' ? { waitId: token, input: 'accepted' } : { waitId: token },
+      });
+    expect((await send(waitId)).json()).toMatchObject({
+      code: 'INVALID_STATE',
+      detail: expect.stringContaining('paused'),
+    });
+    expect((await send('old-wait')).json()).toMatchObject({ code: 'WAIT_MISMATCH' });
+    expect(await t.container.ports.events.read(r.id)).toEqual(before);
+    await t.container.manager.resume(r.id);
+    expect((await send(waitId)).statusCode).toBe(200);
+    await t.idle();
+    expect((await t.container.manager.getRun(r.id))?.status).toBe('succeeded');
+  },
+);
+
+it('a paused timer acknowledgement cannot delete a resume re-arm at the same deadline', async () => {
+  const t = await setup();
+  t.container.manager.stop();
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let acknowledgeEntered!: () => void;
+  const acknowledging = new Promise<void>((resolve) => {
+    acknowledgeEntered = resolve;
+  });
+  class DelayedAcknowledgementStore extends SqliteTimerStore {
+    override async acknowledge(...args: Parameters<SqliteTimerStore['acknowledge']>) {
+      acknowledgeEntered();
+      await gate;
+      return super.acknowledge(...args);
+    }
+  }
+  let observeRearm = false;
+  let rearmEntered!: () => void;
+  const rearming = new Promise<void>((resolve) => {
+    rearmEntered = resolve;
+  });
+  const timers = new TimerService(new DelayedAcknowledgementStore(t.container.handle.db), t.clock);
+  const manager = new RunManager(
+    {
+      ...t.container.ports,
+      timers: {
+        schedule: (...args: Parameters<TimerService['schedule']>) => {
+          const pending = timers.schedule(...args);
+          if (observeRearm) rearmEntered();
+          return pending;
+        },
+        cancel: (...args: Parameters<TimerService['cancel']>) => timers.cancel(...args),
+        onFire: (...args: Parameters<TimerService['onFire']>) => timers.onFire(...args),
+      },
+    },
+    t.container.settings,
+  );
+  await manager.start();
+  let polling: Promise<number> | undefined;
+  let resumed: ReturnType<RunManager['resume']> | undefined;
+  try {
+    const loopId = await t.publishLoop(singleWait({ mode: 'duration', seconds: 1 }));
+    const r = await manager.startRun({ ownerId: 'local', loopId, source: 'manual.api' });
+    await manager.waitForIdle();
+    await manager.pause(r.id);
+    t.clock.advance(1000);
+    polling = timers.poll();
+    await acknowledging;
+    observeRearm = true;
+    resumed = manager.resume(r.id);
+    await rearming;
+    // Flush already-issued SQL writes while the old acknowledgement remains interrupted.
+    await t.container.handle.client.execute('SELECT 1');
+    release();
+    await Promise.all([polling, resumed]);
+    await timers.poll();
+    await manager.waitForIdle();
+    expect((await manager.getRun(r.id))?.status).toBe('succeeded');
+    expect(
+      (await t.container.ports.events.read(r.id)).filter((e) => e.type === 'run.woken'),
+    ).toHaveLength(1);
+  } finally {
+    release();
+    await Promise.allSettled([polling, resumed]);
+    await manager.waitForIdle();
     manager.stop();
   }
 });

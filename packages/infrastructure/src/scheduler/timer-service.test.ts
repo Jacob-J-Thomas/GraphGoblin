@@ -143,7 +143,7 @@ describe('TimerService', () => {
 
 describe('deferred timer delivery', () => {
   it.each([50, 1000])(
-    'retains an early or paused delivery until a listener accepts it (%i ms)',
+    'retains an early delivery until a listener accepts it (%i ms)',
     async (pollIntervalMs) => {
       const store = new MemoryTimerStore();
       const clock = new FakeClock();
@@ -171,21 +171,72 @@ it('moves deferred rows out of a full batch without replacing a listener re-arm'
   const store = new MemoryTimerStore();
   const clock = new FakeClock();
   const timer = new TimerService(store, clock, { batchSize: 1, pollIntervalMs: 50 });
-  await timer.schedule('paused', 'timer@a', clock.now());
+  await timer.schedule('early', 'timer@a', clock.now());
   await timer.schedule('ready', 'timer@b', clock.now());
   const accepted: string[] = [];
   timer.onFire((id) => {
-    if (id === 'paused') return false;
+    if (id === 'early') return false;
     accepted.push(id);
     return true;
   });
   await timer.poll();
   await timer.poll();
   expect(accepted).toEqual(['ready']);
-  const deferred = (await store.list('paused'))[0]!;
+  const deferred = (await store.list('early'))[0]!;
   const later = new Date(clock.now().getTime() + 10000);
-  await store.upsert('paused', 'timer@a', later);
-  await store.defer('paused', 'timer@a', deferred.at, new Date(0));
-  expect((await store.list('paused'))[0]?.at).toEqual(later);
+  await store.upsert('early', 'timer@a', later);
+  await store.defer('early', 'timer@a', deferred.at, new Date(0));
+  expect((await store.list('early'))[0]?.at).toEqual(later);
   await store.defer('missing', 'timer@none', new Date(0), later);
+});
+
+it('keeps an identical-deadline re-arm requested by a delivery listener', async () => {
+  const store = new MemoryTimerStore();
+  const clock = new FakeClock();
+  const timer = new TimerService(store, clock);
+  let calls = 0;
+  timer.onFire(async () => {
+    calls += 1;
+    if (calls === 1) await timer.schedule('run', 'timer@same', clock.now());
+  });
+  await timer.schedule('run', 'timer@same', clock.now());
+  await timer.poll();
+  expect(await store.list('run')).toHaveLength(1);
+  await timer.poll();
+  expect(calls).toBe(2);
+  expect(await store.list('run')).toHaveLength(0);
+});
+
+it('preserves mutation order and recovers the queue after a failed schedule', async () => {
+  class FailedScheduleStore extends MemoryTimerStore {
+    private fail = true;
+    override async upsert(...args: Parameters<MemoryTimerStore['upsert']>) {
+      if (this.fail) {
+        this.fail = false;
+        throw Error('schedule write failed');
+      }
+      return super.upsert(...args);
+    }
+  }
+  const store = new FailedScheduleStore();
+  const clock = new FakeClock();
+  const timer = new TimerService(store, clock);
+  let delivered = 0;
+  timer.onFire(() => {
+    delivered += 1;
+  });
+  await expect(timer.schedule('run', 'timer@same', clock.now())).rejects.toThrow(
+    'schedule write failed',
+  );
+  const scheduled = timer.schedule('run', 'timer@same', clock.now());
+  const cancelled = timer.cancel('run');
+  await Promise.all([scheduled, cancelled]);
+  expect(await store.list('run')).toHaveLength(0);
+  await Promise.all([
+    timer.schedule('run', 'timer@same', clock.now()),
+    timer.schedule('run', 'timer@same', clock.now()),
+  ]);
+  await timer.poll();
+  expect(delivered).toBe(1);
+  expect(await store.list('run')).toHaveLength(0);
 });

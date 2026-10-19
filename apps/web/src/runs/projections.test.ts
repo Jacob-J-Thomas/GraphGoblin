@@ -37,7 +37,7 @@ const ALL: RunEvent[] = [
   event(R, 5, 'run.cancel_requested', { actor }),
   event(R, 6, 'run.waiting', {
     nodeId: 'w',
-    wait: { waitId: 'fixture-wait', nodeId: 'w', kind: 'input' },
+    wait: { waitId: 'fixture-wait', startedSeq: 1, nodeId: 'w', kind: 'input' },
   }),
   event(R, 7, 'run.woken', { nodeId: 'w', reason: 'input' }),
   event(R, 8, 'iteration.incremented', { from: 1, to: 2, targetNodeId: 'a' }),

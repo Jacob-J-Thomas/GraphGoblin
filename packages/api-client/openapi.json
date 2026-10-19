@@ -13,7 +13,7 @@
       }
     },
     "schemas": {
-      "WaitMismatchInput": {
+      "WaitConflictInput": {
         "type": "object",
         "properties": {
           "type": {
@@ -28,7 +28,10 @@
           },
           "code": {
             "type": "string",
-            "const": "WAIT_MISMATCH"
+            "enum": [
+              "WAIT_MISMATCH",
+              "INVALID_STATE"
+            ]
           },
           "detail": {
             "type": "string"
@@ -4406,7 +4409,8 @@
         "required": [
           "waitId",
           "nodeId",
-          "kind"
+          "kind",
+          "startedSeq"
         ],
         "additionalProperties": false
       },
@@ -7149,7 +7153,7 @@
         ],
         "additionalProperties": false
       },
-      "WaitMismatch": {
+      "WaitConflict": {
         "type": "object",
         "properties": {
           "type": {
@@ -7164,7 +7168,10 @@
           },
           "code": {
             "type": "string",
-            "const": "WAIT_MISMATCH"
+            "enum": [
+              "WAIT_MISMATCH",
+              "INVALID_STATE"
+            ]
           },
           "detail": {
             "type": "string"
@@ -11679,7 +11686,8 @@
         "required": [
           "waitId",
           "nodeId",
-          "kind"
+          "kind",
+          "startedSeq"
         ],
         "additionalProperties": false
       },
@@ -15906,7 +15914,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/WaitMismatch"
+                  "$ref": "#/components/schemas/WaitConflict"
                 }
               }
             }
@@ -15993,7 +16001,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/WaitMismatch"
+                  "$ref": "#/components/schemas/WaitConflict"
                 }
               }
             }

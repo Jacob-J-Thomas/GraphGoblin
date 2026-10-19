@@ -392,6 +392,7 @@ describe('MCP server against the in-process API', () => {
       waiting: { kind: 'input', prompt: 'Proceed?' },
     });
     expect(waiting.next).toMatch(/provide_input/);
+    expect(waiting.next).toContain('waiting.waitId');
     const answered = body(
       await call('provide_input', { runId, waitId: waiting.waiting.waitId, input: true }),
     );
@@ -425,6 +426,7 @@ describe('MCP server against the in-process API', () => {
     await until(async () => (await status(held)) === 'waiting');
     const notYet = body(await call('wait_for_run', { runId: held, timeoutSeconds: 0 }));
     expect(notYet.next).toMatch(/signal "go"/);
+    expect(notYet.next).toContain('waiting.waitId');
     expect(
       body(await call('send_signal', { runId: held, waitId: notYet.waiting.waitId, name: 'other' }))
         .woke,
@@ -446,6 +448,13 @@ describe('MCP server against the in-process API', () => {
     const paused = body(await call('wait_for_run', { runId: second, timeoutSeconds: 30 }));
     expect(paused).toMatchObject({ finished: false, status: 'paused' });
     expect(paused.next).toMatch(/resume_run/);
+    const heldSignal = await call('send_signal', {
+      runId: second,
+      waitId: paused.waiting.waitId,
+      name: 'go',
+    });
+    expect(text(heldSignal)).toContain('GraphGoblin API error INVALID_STATE (HTTP 409)');
+    expect(text(heldSignal)).toContain('paused');
     expect(body(await call('resume_run', { runId: second })).status).toBe('waiting'); // paused while parked: back to its wait
     await until(async () => (await status(second)) === 'waiting');
     await call('cancel_run', { runId: second });

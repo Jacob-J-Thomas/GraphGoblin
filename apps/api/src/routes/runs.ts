@@ -20,7 +20,7 @@ import { problem } from '../plugins/errors.js';
 import { streamRunEvents } from '../sse.js';
 import type { ApiInstance } from '../types.js';
 import { decodeRunCursor, encodeRunCursor } from '../run-cursor.js';
-import { openApiRegistry, WaitMismatchSchema } from '../openapi-registry.js';
+import { openApiRegistry, WaitConflictSchema } from '../openapi-registry.js';
 
 const IdParams = z.object({ id: UlidSchema });
 
@@ -247,7 +247,7 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
         summary: 'Answer a wait node in input mode',
         params: IdParams,
         body: z.strictObject({ waitId: z.string().min(1).max(64), input: JsonValueSchema }),
-        response: { 200: RunRecordSchema, 409: WaitMismatchSchema },
+        response: { 200: RunRecordSchema, 409: WaitConflictSchema },
       },
     },
     async (request) => {
@@ -274,7 +274,7 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
         }),
         response: {
           200: z.object({ run: RunRecordSchema, woke: z.boolean() }),
-          409: WaitMismatchSchema,
+          409: WaitConflictSchema,
         },
       },
     },

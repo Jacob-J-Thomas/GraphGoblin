@@ -400,6 +400,7 @@ describe('RunInspectorPage', () => {
       status: 'waiting',
       waiting: {
         waitId: 'fixture-wait',
+        startedSeq: 1,
         nodeId: 'approve',
         kind: 'input',
         prompt: 'Approve the plan?',
@@ -431,12 +432,19 @@ describe('RunInspectorPage', () => {
     const api = new FakeApi();
     const run = seedRun(api, {
       status: 'waiting',
-      waiting: { waitId: 'fixture-wait', nodeId: 'gate', kind: 'signal', signalName: 'go' },
+      waiting: {
+        waitId: 'fixture-wait',
+        startedSeq: 1,
+        nodeId: 'gate',
+        kind: 'signal',
+        signalName: 'go',
+      },
     });
     const timer = seedRun(api, {
       status: 'waiting',
       waiting: {
         waitId: 'fixture-wait',
+        startedSeq: 1,
         nodeId: 'nap',
         kind: 'timer',
         until: '2026-10-03T00:00:00.000Z',

@@ -93,7 +93,7 @@ describe('SqliteRunRepository', () => {
     const thread = sampleThread();
     const run = runRecord({
       parentRunId: fakeUlid('parent'),
-      waiting: { waitId: 'fixture-wait', nodeId: 'w', kind: 'input' },
+      waiting: { waitId: 'fixture-wait', startedSeq: 1, nodeId: 'w', kind: 'input' },
     });
     await repo.create(run, thread);
     expect(await repo.get(run.id)).toEqual(run);
@@ -151,14 +151,16 @@ describe('SqliteRunRepository', () => {
     const repo = new SqliteRunRepository(handle.db);
     const run = runRecord({
       status: 'waiting',
-      waiting: { waitId: 'A', nodeId: 'w', kind: 'input' },
+      waiting: { waitId: 'A', startedSeq: 1, nodeId: 'w', kind: 'input' },
     });
     await repo.create(run, sampleThread());
     expect(
       await repo.transition(run.id, ['waiting'], { status: 'running' }, { waitId: 'unknown' }),
     ).toBeUndefined();
     expect(await repo.get(run.id)).toEqual(run);
-    await repo.update(run.id, { waiting: { waitId: 'B', nodeId: 'w', kind: 'input' } });
+    await repo.update(run.id, {
+      waiting: { waitId: 'B', startedSeq: 2, nodeId: 'w', kind: 'input' },
+    });
     expect(
       await repo.transition(run.id, ['waiting'], { status: 'running' }, { waitId: 'A' }),
     ).toBeUndefined();

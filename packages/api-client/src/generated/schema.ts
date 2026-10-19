@@ -1057,7 +1057,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["WaitMismatch"];
+                        "application/json": components["schemas"]["WaitConflict"];
                     };
                 };
             };
@@ -1115,7 +1115,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["WaitMismatch"];
+                        "application/json": components["schemas"]["WaitConflict"];
                     };
                 };
             };
@@ -2461,13 +2461,13 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        WaitMismatchInput: {
+        WaitConflictInput: {
             type: string;
             title: string;
             /** @constant */
             status: 409;
-            /** @constant */
-            code: "WAIT_MISMATCH";
+            /** @enum {string} */
+            code: "WAIT_MISMATCH" | "INVALID_STATE";
             detail?: string | undefined;
         };
         ClassifierModelSummaryInput: {
@@ -3626,7 +3626,7 @@ export interface components {
             beat?: number | undefined;
             /** Format: date-time */
             timeoutAt?: string | undefined;
-            startedSeq?: number | undefined;
+            startedSeq: number;
         };
         RunRecordInput: {
             id: string;
@@ -4211,13 +4211,13 @@ export interface components {
                 };
             };
         };
-        WaitMismatch: {
+        WaitConflict: {
             type: string;
             title: string;
             /** @constant */
             status: 409;
-            /** @constant */
-            code: "WAIT_MISMATCH";
+            /** @enum {string} */
+            code: "WAIT_MISMATCH" | "INVALID_STATE";
             detail?: string | undefined;
         };
         ClassifierModelSummary: {
@@ -5359,7 +5359,7 @@ export interface components {
             beat?: number | undefined;
             /** Format: date-time */
             timeoutAt?: string | undefined;
-            startedSeq?: number | undefined;
+            startedSeq: number;
         };
         RunRecord: {
             id: string;

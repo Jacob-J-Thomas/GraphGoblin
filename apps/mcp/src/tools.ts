@@ -93,10 +93,10 @@ type LoopDetail = { loop: LoopRecord; current?: LoopVersionRecord; draft?: LoopV
 /** What the agent should do next for a run that has not finished. */
 function nextStep(run: RunRecord): string {
   if (run.status === 'waiting' && run.waiting?.kind === 'input') {
-    return 'The run is waiting for input. Ask the user if needed, then call provide_input with a value matching waiting.inputSchema, and call wait_for_run again.';
+    return 'The run is waiting for input. Ask the user if needed, then call provide_input with waitId from the observed waiting.waitId and a value matching waiting.inputSchema, and call wait_for_run again.';
   }
   if (run.status === 'waiting' && run.waiting?.kind === 'signal') {
-    return `The run is waiting for the signal "${run.waiting.signalName ?? ''}". Call send_signal if you are the one expected to send it; otherwise call wait_for_run again.`;
+    return `The run is waiting for the signal "${run.waiting.signalName ?? ''}". Call send_signal with waitId from the observed waiting.waitId if you are the one expected to send it; otherwise call wait_for_run again.`;
   }
   if (run.status === 'paused') return 'The run is paused. Call resume_run to continue it.';
   return 'The run is still in progress. Call wait_for_run again with the same runId; use read_run_events with after=cursor to see what happened so far.';

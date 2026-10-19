@@ -391,6 +391,10 @@ describe('runs', () => {
       },
     });
     expect(conflict.statusCode).toBe(409);
+    expect(conflict.json()).toMatchObject({
+      code: 'INVALID_STATE',
+      detail: expect.stringContaining('paused'),
+    });
     expect(
       (await t.app.inject({ method: 'POST', url: `/runs/${run.id}/resume` })).json<RunRecord>()
         .status,

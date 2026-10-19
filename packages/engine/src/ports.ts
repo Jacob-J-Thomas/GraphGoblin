@@ -370,7 +370,7 @@ export interface TimerPort {
   /**
    * Listeners may return a promise. Implementations await it and remove the fired timer only
    * afterwards, so delivery is at-least-once: a fire interrupted by a crash fires again after a
-   * restart. Returning false defers acknowledgement (early delivery or a pause).
+   * restart. Returning false defers acknowledgement (for example, an early delivery).
    * Listeners must therefore be idempotent.
    */
   onFire(

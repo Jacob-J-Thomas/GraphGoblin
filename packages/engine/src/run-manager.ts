@@ -283,9 +283,16 @@ export class RunManager {
   /** Arm timers and recover runs left active by a previous process. */
   async start(): Promise<void> {
     this.stopped = false;
-    // A failed wake is rethrown so the timer port keeps the timer and delivers it again.
+    // Transient wake failures retain the row; unreadable history is diagnosed and acknowledged.
     this.unsubscribeTimers ??= this.ports.timers.onFire((runId, key) =>
       this.onTimer(runId, key).catch((error: unknown) => {
+        if (error instanceof UnreadableRunHistoryError) {
+          this.ports.logger.error(
+            { runId, key, code: error.code },
+            'timer acknowledged for unreadable history; inspect run diagnostics',
+          );
+          return true;
+        }
         this.ports.logger.error({ runId, key, error: describeError(error) }, 'timer wake failed');
         throw error;
       }),
@@ -728,6 +735,12 @@ export class RunManager {
     actor: Actor = SYSTEM_ACTOR,
   ): Promise<RunRecord> {
     const run = await this.mustGet(runId);
+    if (run.status === 'paused' && run.waiting?.waitId === waitId) {
+      throw new EngineRequestError(
+        'INVALID_STATE',
+        'The run is paused; resume it before providing input',
+      );
+    }
     if (
       run.status !== 'waiting' ||
       run.waiting?.kind !== 'input' ||
@@ -759,6 +772,12 @@ export class RunManager {
     // Match wake's bounded ten conflict retries; a saturated caller must refresh its snapshot.
     for (let attempt = 0; attempt < 10; attempt += 1) {
       const run = await this.mustGet(runId);
+      if (run.status === 'paused' && run.waiting?.waitId === waitId) {
+        throw new EngineRequestError(
+          'INVALID_STATE',
+          'The run is paused; resume it before sending a signal',
+        );
+      }
       if (
         run.status !== 'waiting' ||
         !run.waiting ||
@@ -770,8 +789,11 @@ export class RunManager {
           'The observed signal wait is no longer active',
         );
       }
-      const events = await this.ports.events.read(runId, (run.waiting.startedSeq ?? 1) - 1);
+      const events = await this.ports.events.read(runId, run.waiting.startedSeq - 1);
       if (parkedWait(events)?.wait.waitId !== waitId) {
+        // A retry must also complete an earlier durable signal answer's lost status write.
+        // wake repairs that acknowledgement, then rejects without appending this signal.
+        if (findPendingWake(events)) await this.wake(runId, { reason: 'signal', payload }, waitId);
         throw new EngineRequestError(
           'WAIT_MISMATCH',
           'The observed signal wait is already answered',
@@ -1128,13 +1150,13 @@ export class RunManager {
       await this.notifyParent(child, child.status, child.outcome);
   }
 
-  /** False defers acknowledgement: early delivery and pauses retain the durable timer. */
+  /** False retains an early delivery. Paused runs re-arm their original deadline on resume. */
   private async onTimer(runId: string, key: string): Promise<boolean> {
     const [name, waitId] = key.split('@');
     if (!waitId || (name !== 'timer' && name !== 'heartbeat' && name !== 'timeout')) return true;
     const run = await this.ports.runs.get(runId);
     if (!run || isTerminal(run.status) || run.cancelRequestedAt) return true;
-    if (run.status === 'paused') return false;
+    if (run.status === 'paused') return true;
     if (run.waiting && run.waiting.waitId !== waitId) return true;
     if (run.status !== 'waiting' || !run.waiting) {
       // A row can already exist when a process is interrupted around parking. Never
@@ -1146,7 +1168,7 @@ export class RunManager {
       return pending;
     }
     if (name !== 'timeout' && name !== run.waiting.kind) return true;
-    const events = await this.ports.events.read(runId, (run.waiting.startedSeq ?? 1) - 1);
+    const events = await this.ports.events.read(runId, run.waiting.startedSeq - 1);
     if (findPendingWake(events)) {
       // A previous delivery committed the wake but lost the status acknowledgement.
       if (await this.ports.runs.transition(runId, ['waiting'], { status: 'running' }, { waitId }))
@@ -1160,9 +1182,11 @@ export class RunManager {
         waitId,
       );
     } catch (error) {
-      if (!(error instanceof EngineRequestError && error.code === 'WAIT_MISMATCH')) throw error;
-      // A pause may win between the read and the conditional wake. Keep its deadline.
-      if ((await this.mustGet(runId)).status === 'paused') return false;
+      if (!(error instanceof EngineRequestError)) throw error;
+      // A pause can win after the read. Acknowledge its row; resume/recovery re-arm the deadline.
+      if (error.code === 'INVALID_STATE' && (await this.mustGet(runId)).status === 'paused')
+        return true;
+      if (error.code !== 'WAIT_MISMATCH') throw error;
     }
     return true;
   }
@@ -1188,6 +1212,12 @@ export class RunManager {
       );
     for (let attempt = 0; attempt < 10; attempt += 1) {
       const run = await this.mustGet(runId);
+      if (run.status === 'paused' && (waitId === undefined || run.waiting?.waitId === waitId)) {
+        throw new EngineRequestError(
+          'INVALID_STATE',
+          'The run is paused; resume it before answering',
+        );
+      }
       if (
         run.status !== 'waiting' ||
         !run.waiting ||
@@ -1196,9 +1226,20 @@ export class RunManager {
       ) {
         throw mismatch();
       }
-      const after = run.waiting.startedSeq !== undefined ? run.waiting.startedSeq - 1 : 0;
+      const after = run.waiting.startedSeq - 1;
       const events = await this.ports.events.read(runId, after);
       const parked = parkedWait(events);
+      if (!parked && findPendingWake(events)) {
+        // Complete the accepted answer, never the retry payload. The identity guard prevents
+        // a delayed repair from changing a later park. The retry still rejects below.
+        const repaired = await this.ports.runs.transition(
+          runId,
+          ['waiting'],
+          { status: 'running' },
+          { waitId: run.waiting.waitId },
+        );
+        if (repaired) this.enqueue(runId);
+      }
       if (
         !parked ||
         parked.wait.waitId !== run.waiting.waitId ||

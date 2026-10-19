@@ -543,7 +543,7 @@ describe('failure and recovery', () => {
         id: cancelledId,
         status: 'waiting',
         cancelRequestedAt: FIXTURE_TS,
-        waiting: { waitId: 'fixture-wait', nodeId: 'x', kind: 'input' },
+        waiting: { waitId: 'fixture-wait', startedSeq: 1, nodeId: 'x', kind: 'input' },
       },
       createInitialThread({
         runId: cancelledId,
@@ -602,7 +602,7 @@ describe('event helpers', () => {
         seq: 3,
         type: 'run.waiting',
         nodeId: 'w',
-        wait: { waitId: 'fixture-wait', nodeId: 'w', kind: 'input' },
+        wait: { waitId: 'fixture-wait', startedSeq: 1, nodeId: 'w', kind: 'input' },
       },
     ];
     expect(findPendingWake(events)).toBeUndefined();
