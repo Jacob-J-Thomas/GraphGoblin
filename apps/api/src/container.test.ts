@@ -361,7 +361,16 @@ describe('Jev key at boot', () => {
             enabled: false,
           });
           observed = true;
-          return { exitCode: 0, stdout: 'recovered', stderr: '', timedOut: false };
+          return {
+            exitCode: 0,
+            stdout: 'recovered',
+            stderr: '',
+            timedOut: false,
+            stdoutBytes: 9,
+            stderrBytes: 0,
+            stdoutOverflow: false,
+            stderrOverflow: false,
+          };
         },
       },
     });

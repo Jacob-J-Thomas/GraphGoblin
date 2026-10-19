@@ -17,7 +17,12 @@ import {
   FakeProbes,
   FakeScripts,
 } from '@graphgoblin/engine/testing';
-import { AdmissionConflictError, parseRunAdmission, RunManager } from '@graphgoblin/engine';
+import {
+  AdmissionConflictError,
+  parseRunAdmission,
+  PROBE_MAX_BODY_BYTES,
+  RunManager,
+} from '@graphgoblin/engine';
 import { signPayload, signRawBody } from '@graphgoblin/infrastructure/http';
 import { buildApp } from './app.js';
 import { loadConfig } from './config.js';
@@ -1022,7 +1027,16 @@ describe('poll triggers', () => {
         enabled: false,
       }),
     );
-    scripts.respondWith(() => ({ exitCode: 0, stdout: 'all good', stderr: '', timedOut: false }));
+    scripts.respondWith(() => ({
+      exitCode: 0,
+      stdout: 'all good',
+      stderr: '',
+      stdoutBytes: 8,
+      stdoutOverflow: false,
+      stderrBytes: 0,
+      stderrOverflow: false,
+      timedOut: false,
+    }));
     clock.advance(5_000);
     const first = await container.polls.poll();
     expect(first).toHaveLength(1);
@@ -1035,7 +1049,16 @@ describe('poll triggers', () => {
     expect(thread?.invocation.trigger.dedupeKey).toBeUndefined();
     expect(logger.lines.some((l) => l.msg === 'poll trigger failed')).toBe(true);
 
-    scripts.respondWith(() => ({ exitCode: 0, stdout: '', stderr: '', timedOut: false }));
+    scripts.respondWith(() => ({
+      exitCode: 0,
+      stdout: '',
+      stderr: '',
+      stdoutBytes: 0,
+      stdoutOverflow: false,
+      stderrBytes: 0,
+      stderrOverflow: false,
+      timedOut: false,
+    }));
     clock.advance(5_000);
     expect(await container.polls.poll()).toHaveLength(1);
     await container.stop();
@@ -1696,6 +1719,9 @@ describe('body signing and durable admission', () => {
         exitCode: 0,
         stdout: '[{"key":"same"},{"key":"next"}]',
         stderr: '',
+        stdoutBytes: 31,
+        stderrBytes: 0,
+        stderrOverflow: false,
         timedOut: false,
         stdoutOverflow: false,
       });
@@ -1780,6 +1806,9 @@ describe('body signing and durable admission', () => {
         exitCode: 0,
         stdout: '[{"key":"same"}]',
         stderr: '',
+        stdoutBytes: 16,
+        stderrBytes: 0,
+        stderrOverflow: false,
         timedOut: false,
         stdoutOverflow: false,
       });
@@ -1881,6 +1910,9 @@ describe('bounded items-mode poll integration', () => {
     exitCode: 0,
     stdout,
     stderr: 'credential-marker',
+    stdoutBytes: new TextEncoder().encode(stdout).byteLength,
+    stderrBytes: 17,
+    stderrOverflow: false,
     timedOut: false,
     stdoutOverflow: false,
     ...extra,
@@ -1921,7 +1953,7 @@ describe('bounded items-mode poll integration', () => {
       }),
     );
   });
-  it('refuses failed/timeout/overflow/unbounded/invalid JSON probes only in new items mode', async () => {
+  it('refuses failed/timeout/overflow-flag/oversized-byte-count/invalid JSON probes only in new items mode', async () => {
     await t.publishLoop(triggerLoop('items-probe', config()));
     const script = vi.spyOn(t.container.ports.scripts, 'run');
     const lookup = vi.spyOn(t.container.repos.runs, 'findTriggerDedupeKeys');
@@ -1929,6 +1961,7 @@ describe('bounded items-mode poll integration', () => {
       result('[]', { exitCode: 1 }),
       result('[]', { timedOut: true }),
       result('[]', { stdoutOverflow: true }),
+      result('[]', { stdoutBytes: PROBE_MAX_BODY_BYTES + 1, stdoutOverflow: false }),
       result('broken'),
     ]) {
       script.mockResolvedValue(output);
@@ -1943,6 +1976,9 @@ describe('bounded items-mode poll integration', () => {
         'POLL_STDOUT_OVERFLOW',
         'POLL_JSON_INVALID',
       ]),
+    );
+    expect(t.logger.lines.filter((line) => line.obj.code === 'POLL_STDOUT_OVERFLOW')).toHaveLength(
+      2,
     );
   });
   it('skips overlapping sweeps even after republish, and admission failure leaves the unseen tail', async () => {
