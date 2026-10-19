@@ -357,7 +357,7 @@ test('Settings separates Claude adapter support from CLI readiness and supports 
     ['claude-fable-5-1', 'Claude Fable 5.1'],
     ['claude-sonnet-5-5', 'Claude Sonnet 5.5'],
     ['claude-haiku-5-5', 'Claude Haiku 5.5'],
-  ]) {
+  ] as const) {
     const row = support.getByRole('listitem').filter({ hasText: model });
     await expect(row.getByText('supported by adapter')).toBeVisible();
     await expect(catalog.getByRole('switch', { name: 'Enable ' + displayName })).toBeChecked();
