@@ -40,24 +40,42 @@ This process complements, and never replaces, the coverage gate.
 
 The first pass (WP-D2, 2026-10-03) drove the built app with Playwright on Microsoft Edge and attacked the API directly; its defects, fixes, and open gaps are in `qa/2026-10-03-wp-d2.md`. Its regressions live in `apps/web/e2e/qa.spec.ts` and `apps/api/src/qa.test.ts`. The E2E server (`apps/web/e2e/server.ts`) has a loopback control port, published to specs as `GG_E2E_CONTROL_URL`, that scripts the fake harness (`POST /harness/script`, with `items` as a count for long streams), toggles decider availability, sets structured responses, reads the model and effort of harness requests, polls timers, and starts extra API instances (`POST /apps` with `requireApiKey`, which also mints a key; `POST /apps/live` with the real adapters). `apps/web/e2e/live.spec.ts` builds, publishes, and runs a one-turn inference loop against Codex through the UI and is skipped unless `LIVE=1`.
 
-## CI gates (Decided, in order)
+## CI gates (Decided)
+
+`.github/workflows/ci.yml` runs three jobs on pushes to `main` and pull requests; a failure in any job fails the workflow. Jobs run independently; the steps below describe their execution order within each job.
+
+The `gates` job runs:
 
 1. Install with a frozen lockfile.
-2. Typecheck every package, test files included.
-3. Lint.
-4. dependency-cruiser: layer rules and no circular imports.
-5. Migration generation is a no-op (`pnpm check:migrations`): generate against a temporary copy of shipped migrations and fail if Drizzle writes SQL.
-6. Design token guard: no palette classes or colour literals in web components (`pnpm check:tokens`).
-7. Unit tests with coverage thresholds.
-8. Licence allowlist check over the full dependency tree.
-9. Generated reference docs are current (`pnpm check:docs`).
-10. Design token contrast table is current and every enforced pair passes (`pnpm check:contrast`).
-11. Dependency audit for known vulnerabilities, failing on high and critical.
-12. Build every package and app.
-13. Playwright E2E on the built app.
-14. Build the container image on the default branch.
+2. Build every package and app (`pnpm build`).
+3. Offline upgrade acceptance (`pnpm test:upgrade`).
+4. Typecheck every package, test files included (`pnpm typecheck`).
+5. Lint and formatting (`pnpm lint`, `pnpm format:check`).
+6. Declared workspace layer rules (`pnpm check:layers`).
+7. Migration generation is a no-op (`pnpm check:migrations`): generate against a temporary copy of shipped migrations and fail if Drizzle writes SQL.
+8. Design token guard: no palette classes or colour literals in web components (`pnpm check:tokens`).
+9. dependency-cruiser: dependency rules and no circular imports (`pnpm check:deps`).
+10. Shipped templates and deliberate-invalid refusal (`pnpm check:templates`).
+11. Unit tests with coverage thresholds, with one package at a time (`pnpm exec turbo run test:coverage --concurrency=1`).
+12. Licence allowlist check over the full dependency tree (`pnpm check:licenses`).
+13. Generated reference docs are current (`pnpm check:docs`).
+14. Design token contrast table is current and every enforced pair passes (`pnpm check:contrast`).
+15. Dependency audit for known vulnerabilities, failing on high and critical (`pnpm audit --audit-level=high`).
 
-Nightly: live smoke suite, and the test matrix against both SQLite and Postgres once `adapter-postgres` exists.
+The `browser` job installs pnpm and Node 22, installs the frozen dependencies and Edge (`playwright install --with-deps msedge`), builds the app, then runs `pnpm exec playwright test --retries=0` from `apps/web`. `GG_E2E_BROWSER_CHANNEL=msedge` matches Windows development and the existing Ubuntu routing-performance job. Windows still defaults to installed Edge; other platforms default to Playwright's bundled Chromium unless a channel is explicitly selected. Retries default to zero everywhere, so a first-attempt failure fails the job. The 40-minute job budget allows setup/build and the roughly 10–15-minute functional suite. On failure, `browser-failure` contains `apps/web/test-results/` (including retained failure traces) and the HTML report at `apps/web/playwright-report/`.
+
+Two-tab conflict checks explicitly activate each editor before navigation, wait for its heading and for the existing server/device reconciliation notice to clear, then assert the stored draft and each conflict resolution. These waits synchronize observable state; they are not sleeps or render-speed assertions.
+
+Browser exclusions and conditional modes, also written to the job summary on every run:
+
+- `live.spec.ts`, test `LIVE: build, publish, and run an inference loop against Codex from the UI`, is skipped unless `LIVE=1`. It requires an installed Codex CLI, provider login and subscription quota. CI explicitly sets `LIVE=0`.
+- No other functional spec or test is skipped or conditional on an installed provider CLI or login. The real API runs with disposable storage and scripted harness/classifier boundaries; these checks do not prove live-provider behavior.
+- `GG_FORMS_QA_PHASE=before|after` enables historical captures (the `before` mode also expects the historical heartbeat preview); `GG_ROUTING_SCREENSHOTS=1` enables captures; `GG_ROUTING_PROFILE=1` enables profiling; `GG_ROUTING_STRICT_PERF=1` selects stricter manual performance bounds. These optional modes are off in CI; their ordinary tests still run, including the default routing performance checks.
+- `screens.capture.ts` is a manual screenshot utility and does not match the functional suite's `*.spec.ts` pattern.
+
+The `template-image` job builds the distributed container and checks installed template contents without network or writable storage. It runs on pull requests as well as pushes to `main`.
+
+Live/paid smoke checks remain separate, manually authorized checks. CI schedules no recurring paid-provider job or Postgres matrix.
 
 `pnpm check:migrations` runs Drizzle Kit against the current schema and a disposable copy of the shipped migration ledger and snapshots. It never changes shipped SQL, snapshots, or the ledger. Additive schema drift is covered by a tooling regression test.
 
