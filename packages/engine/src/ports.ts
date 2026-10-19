@@ -342,10 +342,13 @@ export interface ScriptRunResult {
   exitCode: number | null;
   stdout: string;
   stderr: string;
+  /** Captured raw bytes, before UTF-8 decoding; excludes synthetic spawn diagnostics. */
+  stdoutBytes: number;
+  stderrBytes: number;
   timedOut: boolean;
-  /** Present whenever maxStdoutBytes was requested; true means stdout was truncated. */
-  stdoutOverflow?: boolean;
-  stderrOverflow?: boolean;
+  /** True when the stream exceeded its raw-byte capture cap, including the default cap. */
+  stdoutOverflow: boolean;
+  stderrOverflow: boolean;
 }
 
 export interface ScriptPort {
@@ -378,6 +381,9 @@ export interface TimerPort {
   ): () => void;
 }
 
+/** Shared byte bound for HTTP probe bodies and items-mode script stdout (64 KiB). */
+export const PROBE_MAX_BODY_BYTES = 65_536;
+
 export interface ProbeRequest {
   method: 'GET' | 'POST' | 'HEAD';
   url: string;
@@ -394,6 +400,11 @@ export interface ProbeResponse {
 }
 
 export interface HttpProbePort {
+  /**
+   * Accepts at most PROBE_MAX_BODY_BYTES (64 KiB) of decompressed body bytes.
+   * Rejects overflow with ProbeBodyOverflowError before decoding or JSON parsing.
+   * Body-less responses retain their representation-length metadata without a body read.
+   */
   fetch(request: ProbeRequest, signal: AbortSignal): Promise<ProbeResponse>;
 }
 

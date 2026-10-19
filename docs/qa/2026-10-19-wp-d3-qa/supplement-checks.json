@@ -1,0 +1,66 @@
+[
+  {
+    "id": "single-result-script-above-http-cap",
+    "pass": true,
+    "detail": {
+      "run": "01M5ANVTKCAKGJQF9ANZW506C0",
+      "jsonStringLength": 70000,
+      "stdoutPreviewLength": 65536
+    }
+  },
+  {
+    "id": "heartbeat-script-above-http-cap",
+    "pass": true,
+    "detail": {
+      "run": "01M5ANVTWFBRCHD97NWW0AQ7ZD",
+      "status": "succeeded",
+      "jsonStringLength": 70000
+    }
+  },
+  {
+    "id": "content-length-refused-before-body",
+    "pass": true,
+    "detail": {
+      "code": "HTTP_PROBE_BODY_OVERFLOW",
+      "route": "/header",
+      "mode": "header",
+      "sent": 0,
+      "closed": true,
+      "started": 1792433581352,
+      "closedAt": 1792433581364
+    }
+  },
+  {
+    "id": "poll-heartbeat-actual-overlap",
+    "pass": true,
+    "detail": {
+      "measuredRequestOverlap": true,
+      "heartbeats": [
+        {
+          "route": "/hb-good",
+          "run": "01M5ANW1FVDWN684VRYT19687X",
+          "status": "succeeded"
+        },
+        {
+          "route": "/hb-over",
+          "run": "01M5ANW1H8XA7J9DWWRSKYTZBP",
+          "status": "failed",
+          "code": "HTTP_PROBE_BODY_OVERFLOW"
+        },
+        {
+          "route": "/hb-good-2",
+          "run": "01M5ANW1H9MG12R5RY9PVQGWAJ",
+          "status": "succeeded"
+        },
+        {
+          "route": "/hb-over-2",
+          "run": "01M5ANW1HAX9YYDJQS8P033CFK",
+          "status": "failed",
+          "code": "HTTP_PROBE_BODY_OVERFLOW"
+        }
+      ],
+      "overflowPollAdmitted": 0,
+      "pollDispatch": "serial within poller, concurrent with heartbeat probes"
+    }
+  }
+]

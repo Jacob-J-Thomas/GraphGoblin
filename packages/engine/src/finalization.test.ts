@@ -227,6 +227,10 @@ for (const source of [
         exitCode: source === 'script' ? 5 : 0,
         stdout: '',
         stderr: '',
+        stdoutBytes: 0,
+        stderrBytes: 0,
+        stdoutOverflow: false,
+        stderrOverflow: false,
         timedOut: source === 'script-timeout',
       });
       def = singleNodeLoop(source, {
