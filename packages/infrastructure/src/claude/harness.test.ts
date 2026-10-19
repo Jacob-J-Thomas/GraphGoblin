@@ -180,29 +180,57 @@ describe('Claude existing harness contract', () => {
       '--json',
     ]);
   });
-  it('executes Fable through strict native model verification with its requested effort', async () => {
-    const model = 'claude-fable-5-1';
-    const { harness, calls } = fixture({
-      records: [
-        { ...init, model },
-        { ...final, modelUsage: { [model]: {} } },
-      ],
-    });
-    const session = harness.start(
-      { ...request, model, effort: 'max' },
-      new AbortController().signal,
-    );
-    expect(await session.sessionId).toBe(id);
-    expect(await session.result).toMatchObject({ finalText: 'finished' });
-    expect(calls[3]?.args).toEqual(expect.arrayContaining(['--model', model, '--effort', 'max']));
-    const mismatched = fixture({ records: [init, final] }).harness;
-    await expect(
-      mismatched.start({ ...request, model }, new AbortController().signal).result,
-    ).rejects.toMatchObject({
-      code: 'HARNESS_UNSUPPORTED_POLICY',
-      message: expect.stringMatching(/Claude CLI 2\.1\.285.*launch policy.*model/),
-    });
-  });
+  it.each(['claude-fable-5-1', 'claude-sonnet-5-5', 'claude-haiku-5-5'])(
+    'executes %s through strict native model verification with its requested effort',
+    async (model) => {
+      for (const effort of ['low', 'max'] as const) {
+        const { harness, calls } = fixture({
+          records: [
+            { ...init, model },
+            { ...final, modelUsage: { [model]: {} } },
+          ],
+        });
+        const session = harness.start({ ...request, model, effort }, new AbortController().signal);
+        expect(await session.sessionId).toBe(id);
+        expect(await session.result).toMatchObject({ finalText: 'finished' });
+        expect(calls[3]?.args).toEqual(
+          expect.arrayContaining(['--model', model, '--effort', effort]),
+        );
+        const policy = (await drain(session.events)).find((event) => event.type === 'item');
+        expect(policy).toMatchObject({
+          item: {
+            detail: { requestedModel: model, requestedEffort: effort, effectiveEffort: null },
+          },
+        });
+      }
+      // The reported model must be the requested one in both init and result usage.
+      const mismatched = fixture({ records: [init, final] }).harness;
+      await expect(
+        mismatched.start({ ...request, model }, new AbortController().signal).result,
+      ).rejects.toMatchObject({
+        code: 'HARNESS_UNSUPPORTED_POLICY',
+        message: expect.stringMatching(/Claude CLI 2\.1\.285.*launch policy.*model/),
+      });
+      const otherUsage = fixture({
+        records: [
+          { ...init, model },
+          { ...final, modelUsage: { [model]: {}, 'claude-opus-5-5': {} } },
+        ],
+      }).harness;
+      await expect(
+        otherUsage.start({ ...request, model }, new AbortController().signal).result,
+      ).rejects.toMatchObject({ code: 'HARNESS_UNSUPPORTED_POLICY' });
+      // An unsupported effort is refused before any CLI process starts.
+      const refused = fixture();
+      await expect(
+        refused.harness.start(
+          { ...request, model, effort: 'minimal' },
+          new AbortController().signal,
+        ).result,
+      ).rejects.toMatchObject({ code: 'HARNESS_INVALID_CONFIGURATION' });
+      expect(refused.calls).toHaveLength(0);
+    },
+  );
   it('checks auth before every start and resume, uses the same env, and maps current port events/result', async () => {
     const { harness, calls } = fixture();
     const first = harness.start(request, new AbortController().signal);

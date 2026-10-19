@@ -104,6 +104,48 @@ describe('model catalog source migration and repository', () => {
       );
     }
   });
+  it('adds Sonnet 5.5 and Haiku 5.5 enabled to an existing store and keeps every owner switch', async () => {
+    const handle = await openMemoryDatabase();
+    try {
+      const catalog = new SqliteModelCatalog(handle.db);
+      const added = ['claude-sonnet-5-5', 'claude-haiku-5-5'];
+      // A store seeded before #206 holds only the earlier Claude rows, with owner choices.
+      const earlier = DEFAULT_MODEL_CATALOG.filter((entry) => !added.includes(entry.model));
+      expect(await catalog.seed(earlier)).toBe(earlier.length);
+      await catalog.setEnabled('claude', 'claude-opus-5-5', false);
+      await catalog.setEnabled('codex', 'gpt-6-luna', false);
+      const before = await catalog.list();
+
+      expect(await catalog.seed()).toBe(added.length);
+      const after = await catalog.list();
+      for (const model of added)
+        expect(after.find((entry) => entry.model === model)).toEqual({
+          harness: 'claude',
+          model,
+          source: 'harness',
+          displayName: model === 'claude-sonnet-5-5' ? 'Claude Sonnet 5.5' : 'Claude Haiku 5.5',
+          efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+          defaultEffort: 'high',
+          enabled: true,
+        });
+      expect(after.filter((entry) => !added.includes(entry.model))).toEqual(before);
+
+      // Later owner disablement of a new model survives the next startup seed.
+      await catalog.setEnabled('claude', 'claude-haiku-5-5', false);
+      expect(await catalog.seed()).toBe(0);
+      expect(await catalog.findOne('claude', 'claude-haiku-5-5')).toMatchObject({
+        enabled: false,
+      });
+      expect(await catalog.findOne('claude', 'claude-sonnet-5-5')).toMatchObject({
+        enabled: true,
+      });
+      expect(await catalog.findOne('claude', 'claude-opus-5-5')).toMatchObject({
+        enabled: false,
+      });
+    } finally {
+      handle.close();
+    }
+  });
   it('adds source on a fresh database and defaults direct legacy inserts to harness', async () => {
     const handle = await openMemoryDatabase();
     try {
