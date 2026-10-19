@@ -79,7 +79,7 @@ export const scriptHandler: NodeHandler<'script'> = {
       progress: {
         exitCode,
         stderr: result.stderr.slice(-SCRIPT_PROGRESS_STDERR_MAX),
-        stdoutBytes: result.stdout.length,
+        stdoutBytes: result.stdoutBytes,
       },
     });
     if (!route) {

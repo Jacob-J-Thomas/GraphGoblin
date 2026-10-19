@@ -132,9 +132,12 @@ Stdout and stderr use independent streaming UTF-8 decoders, so two-, three- and
 four-byte characters survive arbitrary subprocess chunk boundaries. Capture is
 limited to 10 MiB of raw bytes per stream by default (`ProcessScripts.maxOutputBytes`);
 probe callers may request stricter byte caps. A character split by a capture cap
-is omitted; an incomplete trailing sequence at clean end of stream becomes U+FFFD
-(the replacement character). Opt-in `stdoutOverflow`/`stderrOverflow` flags still
-report raw-byte truncation. Timeout and cancellation retain process-tree termination.
+is omitted; an incomplete trailing sequence at end of stream becomes U+FFFD
+(the replacement character), including after timeout or cancellation.
+`stdoutBytes`/`stderrBytes` count captured raw bytes before decoding, and
+`stdoutOverflow`/`stderrOverflow` report truncation for default and explicit caps.
+The counts exclude synthetic spawn diagnostics and replacement-character encoding.
+Timeout and cancellation retain process-tree termination.
 
 Ports: `out` plus any labels in `exitCodeRoutes`.
 

@@ -2,11 +2,7 @@ import { JsonValueSchema, type JsonValue } from '@graphgoblin/contracts';
 import type { ProbeResponse, ScriptRunResult } from '@graphgoblin/engine';
 
 export type PollProbeFailure =
-  | 'POLL_PROBE_FAILED'
-  | 'POLL_PROBE_TIMED_OUT'
-  | 'POLL_STDOUT_OVERFLOW'
-  | 'POLL_STDOUT_UNBOUNDED'
-  | 'POLL_JSON_INVALID';
+  'POLL_PROBE_FAILED' | 'POLL_PROBE_TIMED_OUT' | 'POLL_STDOUT_OVERFLOW' | 'POLL_JSON_INVALID';
 export class PollProbeError extends Error {
   constructor(readonly code: PollProbeFailure) {
     super(code);
@@ -29,7 +25,6 @@ export function itemsScriptProbe(result: ScriptRunResult): JsonValue {
   if (result.timedOut) throw new PollProbeError('POLL_PROBE_TIMED_OUT');
   if (result.exitCode !== 0) throw new PollProbeError('POLL_PROBE_FAILED');
   if (result.stdoutOverflow === true) throw new PollProbeError('POLL_STDOUT_OVERFLOW');
-  if (result.stdoutOverflow !== false) throw new PollProbeError('POLL_STDOUT_UNBOUNDED');
   return {
     exitCode: result.exitCode,
     stdout: result.stdout,

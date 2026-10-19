@@ -19,7 +19,7 @@ export class BoundedOutputCapture {
     if (chunk.byteLength > remaining) this.exceeded = true;
     if (remaining === 0 || chunk.byteLength === 0) return;
     const kept = chunk.subarray(0, remaining);
-    const text = this.decoder.write(Buffer.from(kept));
+    const text = this.decoder.write(Buffer.from(kept.buffer, kept.byteOffset, kept.byteLength));
     if (text) this.chunks.push(text);
     this.captured += kept.byteLength;
   }
@@ -31,7 +31,7 @@ export class BoundedOutputCapture {
     return this.exceeded;
   }
 
-  /** Final read: replace incomplete clean-EOF bytes, but omit a suffix split by the byte cap. */
+  /** Final read: replace incomplete EOF bytes (also after interruption), but omit a cap-split suffix. */
   text(): string {
     this.finished ??= this.chunks.join('') + (this.exceeded ? '' : this.decoder.end());
     return this.finished;

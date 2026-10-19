@@ -206,6 +206,10 @@ describe('template API without runtime authority', () => {
           exitCode: 0,
           stdout: '{"saved":true}',
           stderr: '',
+          stdoutBytes: 14,
+          stdoutOverflow: false,
+          stderrBytes: 0,
+          stderrOverflow: false,
           timedOut: false,
         });
       },
@@ -265,7 +269,17 @@ describe('template API without runtime authority', () => {
             invoked(request);
             request.signal.addEventListener(
               'abort',
-              () => resolve({ exitCode: null, stdout: '', stderr: '', timedOut: false }),
+              () =>
+                resolve({
+                  exitCode: null,
+                  stdout: '',
+                  stderr: '',
+                  stdoutBytes: 0,
+                  stdoutOverflow: false,
+                  stderrBytes: 0,
+                  stderrOverflow: false,
+                  timedOut: false,
+                }),
               { once: true },
             );
           }),

@@ -95,12 +95,14 @@ export class ProcessScripts implements ScriptPort {
           exitCode,
           timedOut,
           stdout: stdout.text(),
+          stdoutBytes: stdout.byteLength,
+          stderrBytes: stderr.byteLength,
           stderr:
             spawnFailed && request.maxStderrBytes === undefined
               ? `${errorText}${errorText ? '\n' : ''}spawn failed: PROCESS_START_FAILED`
               : errorText,
-          ...(request.maxStderrBytes !== undefined ? { stderrOverflow: stderr.overflow } : {}),
-          ...(request.maxStdoutBytes !== undefined ? { stdoutOverflow: stdout.overflow } : {}),
+          stderrOverflow: stderr.overflow,
+          stdoutOverflow: stdout.overflow,
         });
       };
 

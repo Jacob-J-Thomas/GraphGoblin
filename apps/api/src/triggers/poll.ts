@@ -16,7 +16,7 @@ import {
   renderTemplate,
 } from '@graphgoblin/domain';
 import type { ClockPort, HttpProbePort, Logger, RunManager, ScriptPort } from '@graphgoblin/engine';
-import { ProbeBodyOverflowError } from '@graphgoblin/engine';
+import { HTTP_PROBE_MAX_BODY_BYTES, ProbeBodyOverflowError } from '@graphgoblin/engine';
 
 type PollConfig = Extract<Extract<Node, { kind: 'trigger' }>['config'], { type: 'poll' }>;
 
@@ -249,7 +249,7 @@ export class PollTriggers {
         for (const arg of spec.args) args.push(await renderTemplate(arg, view));
         const result = await this.deps.scripts.run({
           command: spec.command,
-          ...(itemsMode ? { maxStdoutBytes: 65_536 } : {}),
+          ...(itemsMode ? { maxStdoutBytes: HTTP_PROBE_MAX_BODY_BYTES } : {}),
           args,
           cwd: this.deps.scriptCwd,
           env: {},
@@ -259,7 +259,7 @@ export class PollTriggers {
         if (itemsMode) return itemsScriptProbe(result);
         return {
           exitCode: result.exitCode,
-          stdout: result.stdout.slice(0, 65_536),
+          stdout: result.stdout.slice(0, HTTP_PROBE_MAX_BODY_BYTES),
           stderr: result.stderr.slice(-4000),
           json: jsonOrText(result.stdout),
           timedOut: result.timedOut,

@@ -30,10 +30,17 @@ async function boundedBody(response: Response, signal: AbortSignal): Promise<str
   signal.addEventListener('abort', onAbort, { once: true });
   try {
     signal.throwIfAborted();
-    const length = response.headers.get('content-length');
-    if (length !== null && /^\d+$/.test(length) && Number(length) > HTTP_PROBE_MAX_BODY_BYTES)
-      throw new ProbeBodyOverflowError();
     if (!reader) return '';
+    const length = response.headers.get('content-length');
+    const encoding = response.headers.get('content-encoding');
+    // Encoded Content-Length counts wire bytes; the stream budget counts decompressed bytes.
+    if (
+      (encoding === null || encoding.trim().toLowerCase() === 'identity') &&
+      length !== null &&
+      /^\d+$/.test(length) &&
+      Number(length) > HTTP_PROBE_MAX_BODY_BYTES
+    )
+      throw new ProbeBodyOverflowError();
     // One fixed buffer also bounds bookkeeping for streams of tiny chunks.
     const bytes = new Uint8Array(HTTP_PROBE_MAX_BODY_BYTES);
     let size = 0;

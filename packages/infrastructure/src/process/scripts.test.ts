@@ -17,30 +17,94 @@ function request(overrides: Partial<Parameters<ProcessScripts['run']>[0]>) {
 }
 
 describe('ProcessScripts', () => {
+  function observeChunks(maxOutputBytes: number | undefined, offset: number) {
+    const sizes: Record<'stdout' | 'stderr', number[]> = { stdout: [], stderr: [] };
+    const scripts = new ProcessScripts({
+      ...(maxOutputBytes !== undefined ? { maxOutputBytes } : {}),
+      spawnImpl: new Proxy(spawn, {
+        apply(target, _receiver, args: Parameters<typeof spawn>) {
+          const child = target(args[0], args[1], {
+            ...args[2],
+            stdio: ['pipe', 'pipe', 'pipe', 'ipc'],
+          });
+          let acknowledged = false;
+          for (const [name, stream] of [
+            ['stdout', child.stdout],
+            ['stderr', child.stderr],
+          ] as const)
+            stream?.on('data', (chunk: Buffer) => {
+              sizes[name].push(chunk.byteLength);
+              if (
+                offset > 0 &&
+                !acknowledged &&
+                sizes.stdout.length > 0 &&
+                sizes.stderr.length > 0
+              ) {
+                acknowledged = true;
+                child.send?.('continue');
+              }
+            });
+          return child;
+        },
+      }),
+    });
+    return { scripts, sizes };
+  }
+
+  it('returns raw captured byte counts and truncation for default capture, including incomplete EOF', async () => {
+    const result = await new ProcessScripts({ maxOutputBytes: 4 }).run(
+      request({
+        args: [
+          '-e',
+          'process.stdout.write(Buffer.from([240,159,166,142,120]));process.stderr.write(Buffer.from([240,159]));',
+        ],
+      }),
+    );
+    expect(result).toMatchObject({
+      exitCode: 0,
+      stdout: '\u{1f98e}',
+      stdoutBytes: 4,
+      stdoutOverflow: true,
+      stderr: '\ufffd',
+      stderrBytes: 2,
+      stderrOverflow: false,
+    });
+  });
   const unicode = 'A\u00e9\u96ea\u{1f98e}Z';
   const bytes = Buffer.from(unicode);
   const splitScript = (offset: number, suffix = ''): string => `
     const bytes = Buffer.from(${JSON.stringify([...bytes])});
-    for (const stream of [process.stdout, process.stderr]) stream.write(bytes.subarray(0, ${offset}));
-    setTimeout(() => {
+    const finish = () => {
       for (const stream of [process.stdout, process.stderr]) {
         stream.write(bytes.subarray(${offset}));
         ${suffix}
       }
-    }, 60);
+      process.disconnect();
+    };
+    if (${offset} > 0) {
+      process.once('message', finish);
+      for (const stream of [process.stdout, process.stderr]) stream.write(bytes.subarray(0, ${offset}));
+    } else finish();
   `;
 
   it.each(Array.from({ length: bytes.length + 1 }, (_, offset) => offset))(
     'preserves both UTF-8 streams split at byte offset %i with default and explicit bounds',
     async (offset) => {
       for (const limits of [{}, { maxStdoutBytes: bytes.length, maxStderrBytes: bytes.length }]) {
-        const result = await new ProcessScripts().run(
-          request({ args: ['-e', splitScript(offset)], ...limits }),
-        );
+        const { scripts, sizes } = observeChunks(undefined, offset);
+        const result = await scripts.run(request({ args: ['-e', splitScript(offset)], ...limits }));
         expect(result).toMatchObject({ stdout: unicode, stderr: unicode, exitCode: 0 });
-        if ('maxStdoutBytes' in limits) {
-          expect(result.stdoutOverflow).toBe(false);
-          expect(result.stderrOverflow).toBe(false);
+        expect(result).toMatchObject({
+          stdoutBytes: bytes.length,
+          stderrBytes: bytes.length,
+          stdoutOverflow: false,
+          stderrOverflow: false,
+        });
+        for (const stream of ['stdout', 'stderr'] as const) {
+          expect(sizes[stream][0]).toBe(offset === 0 ? bytes.length : offset);
+          expect(sizes[stream].length).toBeGreaterThanOrEqual(
+            offset > 0 && offset < bytes.length ? 2 : 1,
+          );
         }
       }
     },
@@ -52,14 +116,21 @@ describe('ProcessScripts', () => {
       const prefix = new TextDecoder().decode(bytes.subarray(0, cap));
       const text = prefix.endsWith('\ufffd') ? prefix.slice(0, -1) : prefix;
       for (const limits of [{}, { maxStdoutBytes: cap, maxStderrBytes: cap }]) {
-        const result = await new ProcessScripts({ maxOutputBytes: cap }).run(
+        const { scripts, sizes } = observeChunks(cap, 4);
+        const result = await scripts.run(
           request({ args: ['-e', splitScript(4, 'stream.write("!");')], ...limits }),
         );
         expect(result).toMatchObject({ stdout: text, stderr: text, exitCode: 0 });
         expect(Buffer.byteLength(result.stdout)).toBeLessThanOrEqual(cap);
-        if ('maxStdoutBytes' in limits) {
-          expect(result.stdoutOverflow).toBe(true);
-          expect(result.stderrOverflow).toBe(true);
+        expect(result).toMatchObject({
+          stdoutBytes: cap,
+          stderrBytes: cap,
+          stdoutOverflow: true,
+          stderrOverflow: true,
+        });
+        for (const stream of ['stdout', 'stderr'] as const) {
+          expect(sizes[stream][0]).toBe(4);
+          expect(sizes[stream].length).toBeGreaterThanOrEqual(2);
         }
       }
     },
@@ -220,7 +291,7 @@ describe('ProcessScripts', () => {
     expect(Buffer.byteLength(bounded.stdout)).toBe(65_536);
     expect(bounded.stdout).toBe('é'.repeat(32768));
     const legacy = await scripts.run(request({ args }));
-    expect(legacy.stdoutOverflow).toBeUndefined();
+    expect(legacy.stdoutOverflow).toBe(false);
     expect(legacy.stdout).toBe('é'.repeat(32769));
   });
 

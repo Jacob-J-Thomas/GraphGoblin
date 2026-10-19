@@ -535,6 +535,10 @@ describe('handler edge cases', () => {
       exitCode: null,
       stdout: '',
       stderr: '',
+      stdoutBytes: 0,
+      stdoutOverflow: false,
+      stderrBytes: 0,
+      stderrOverflow: false,
       timedOut: false,
     }));
     const version = engine.publish(

@@ -2,9 +2,10 @@ import { createServer, type RequestListener, type Server } from 'node:http';
 import type { AddressInfo, Socket } from 'node:net';
 import { gzipSync } from 'node:zlib';
 import { afterEach, describe, expect, it } from 'vitest';
+import { HTTP_PROBE_MAX_BODY_BYTES } from '@graphgoblin/engine';
 import { HttpProbes } from './probes.js';
 
-const cap = 65_536;
+const cap = HTTP_PROBE_MAX_BODY_BYTES;
 let server: Server | undefined;
 const sockets = new Set<Socket>();
 async function serve(handler: RequestListener): Promise<string> {
@@ -31,6 +32,32 @@ const probe = (
 ) => new HttpProbes().fetch({ method, url, timeoutMs: 10_000 }, signal);
 
 describe('HTTP probe body bounds over real sockets', () => {
+  it.each([304, 204])(
+    'accepts body-less %i metadata with a large declared representation length',
+    async (status) => {
+      const url = await serve((_req, res) => {
+        res.writeHead(status, { 'content-length': 100_000 });
+        res.end();
+      });
+      expect(await probe(url)).toMatchObject({
+        status,
+        body: '',
+        headers: { 'content-length': '100000' },
+      });
+    },
+  );
+
+  it('accepts gzip at the decompressed cap when its wire length exceeds the cap', async () => {
+    const body = 'x'.repeat(cap);
+    const compressed = gzipSync(body, { level: 0 });
+    expect(compressed.length).toBeGreaterThan(cap);
+    const url = await serve((_req, res) => {
+      res.writeHead(200, { 'content-encoding': 'gzip', 'content-length': compressed.length });
+      res.end(compressed);
+    });
+    expect(await probe(url)).toMatchObject({ body });
+  });
+
   it('bounds decompressed bytes even when the compressed Content-Length fits', async () => {
     const compressed = gzipSync('x'.repeat(cap + 1));
     expect(compressed.length).toBeLessThan(cap);

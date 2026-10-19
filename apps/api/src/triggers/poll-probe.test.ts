@@ -5,8 +5,11 @@ const result: ScriptRunResult = {
   exitCode: 0,
   stdout: '[{"number":7}]',
   stderr: 'private process detail',
+  stdoutBytes: 14,
+  stderrBytes: 22,
   timedOut: false,
   stdoutOverflow: false,
+  stderrOverflow: false,
 };
 describe('items-only strict probe admission', () => {
   it('accepts complete JSON without persisting process diagnostics', () => {
@@ -18,7 +21,7 @@ describe('items-only strict probe admission', () => {
       timedOut: false,
     });
   });
-  it('rejects failures, timeouts, overflows, unconfirmed byte bounds and invalid JSON with fixed codes', () => {
+  it('rejects failures, timeouts, overflows and invalid JSON with fixed codes', () => {
     for (const [change, code] of [
       [{ exitCode: 1 }, 'POLL_PROBE_FAILED'],
       [{ exitCode: null }, 'POLL_PROBE_FAILED'],
@@ -26,11 +29,11 @@ describe('items-only strict probe admission', () => {
       [{ stdoutOverflow: true }, 'POLL_STDOUT_OVERFLOW'],
       [{ stdout: 'private invalid json' }, 'POLL_JSON_INVALID'],
       [{ stdout: '1e999' }, 'POLL_JSON_INVALID'],
-    ] as const)
-      expect(() => itemsScriptProbe({ ...result, ...change })).toThrow(code);
-    const unbounded = { ...result };
-    delete unbounded.stdoutOverflow;
-    expect(() => itemsScriptProbe(unbounded)).toThrow('POLL_STDOUT_UNBOUNDED');
+    ] as const) {
+      const output = { ...result, ...change };
+      output.stdoutBytes = new TextEncoder().encode(output.stdout).byteLength;
+      expect(() => itemsScriptProbe(output)).toThrow(code);
+    }
   });
   it('accepts provided or parsed HTTP JSON and rejects bad statuses or non-JSON responses', () => {
     expect(itemsHttpProbe({ status: 200, headers: {}, body: '[1]' })).toMatchObject({ json: [1] });

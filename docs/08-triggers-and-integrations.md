@@ -175,12 +175,21 @@ fixed-size buffer before UTF-8 decoding or JSON parsing. Exact-cap bodies are
 accepted without truncation; the first chunk crossing the cap cancels the reader
 and throws `ProbeBodyOverflowError` with safe code `HTTP_PROBE_BODY_OVERFLOW`.
 No partial body reaches expressions or dispatch. Poll warnings preserve that code.
-An advertised `Content-Length` above the cap is rejected before any body read;
-chunked/no-length and compressed responses still undergo streamed byte counting.
-HEAD returns an empty body and accepts representation-length metadata above the
-cap. Accepted UTF-8 survives split chunks; caller abort or timeout cancels the
+An advertised `Content-Length` above the cap is rejected before any body read only
+for identity-encoded responses with a body. Encoded wire lengths do not describe
+the decompressed size; chunked/no-length and compressed responses undergo streamed
+byte counting. HEAD and body-less responses (including 204 and 304) return an empty
+body and accept representation-length metadata above the cap. Accepted UTF-8
+survives split chunks; caller abort or timeout cancels the
 reader and releases its lock and connection. Partition larger queries by repository,
 label or time range; the cap is a code-level parameter, not a new trigger setting.
+
+Single-result HTTP polls and heartbeats previously sliced the displayed body while
+parsing the entire JSON. They now fail above the cap. API warnings named
+`poll trigger failed` identify affected poll targets with `HTTP_PROBE_BODY_OVERFLOW`;
+heartbeat runs fail with that same typed code. Narrow the remote query or use a
+single-result script probe, retaining its 10 MiB capture and full JSON parsing.
+Items-mode scripts keep their stricter 64 KiB budget.
 
 ### Bounded items mode
 

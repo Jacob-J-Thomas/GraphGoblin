@@ -1022,7 +1022,16 @@ describe('poll triggers', () => {
         enabled: false,
       }),
     );
-    scripts.respondWith(() => ({ exitCode: 0, stdout: 'all good', stderr: '', timedOut: false }));
+    scripts.respondWith(() => ({
+      exitCode: 0,
+      stdout: 'all good',
+      stderr: '',
+      stdoutBytes: 8,
+      stdoutOverflow: false,
+      stderrBytes: 0,
+      stderrOverflow: false,
+      timedOut: false,
+    }));
     clock.advance(5_000);
     const first = await container.polls.poll();
     expect(first).toHaveLength(1);
@@ -1035,7 +1044,16 @@ describe('poll triggers', () => {
     expect(thread?.invocation.trigger.dedupeKey).toBeUndefined();
     expect(logger.lines.some((l) => l.msg === 'poll trigger failed')).toBe(true);
 
-    scripts.respondWith(() => ({ exitCode: 0, stdout: '', stderr: '', timedOut: false }));
+    scripts.respondWith(() => ({
+      exitCode: 0,
+      stdout: '',
+      stderr: '',
+      stdoutBytes: 0,
+      stdoutOverflow: false,
+      stderrBytes: 0,
+      stderrOverflow: false,
+      timedOut: false,
+    }));
     clock.advance(5_000);
     expect(await container.polls.poll()).toHaveLength(1);
     await container.stop();
@@ -1696,6 +1714,9 @@ describe('body signing and durable admission', () => {
         exitCode: 0,
         stdout: '[{"key":"same"},{"key":"next"}]',
         stderr: '',
+        stdoutBytes: 31,
+        stderrBytes: 0,
+        stderrOverflow: false,
         timedOut: false,
         stdoutOverflow: false,
       });
@@ -1761,6 +1782,9 @@ describe('body signing and durable admission', () => {
         exitCode: 0,
         stdout: '[{"key":"same"}]',
         stderr: '',
+        stdoutBytes: 16,
+        stderrBytes: 0,
+        stderrOverflow: false,
         timedOut: false,
         stdoutOverflow: false,
       });
@@ -1850,6 +1874,9 @@ describe('bounded items-mode poll integration', () => {
     exitCode: 0,
     stdout,
     stderr: 'credential-marker',
+    stdoutBytes: new TextEncoder().encode(stdout).byteLength,
+    stderrBytes: 17,
+    stderrOverflow: false,
     timedOut: false,
     stdoutOverflow: false,
     ...extra,
@@ -1890,7 +1917,7 @@ describe('bounded items-mode poll integration', () => {
       }),
     );
   });
-  it('refuses failed/timeout/overflow/unbounded/invalid JSON probes only in new items mode', async () => {
+  it('refuses failed/timeout/overflow/invalid JSON probes only in new items mode', async () => {
     await t.publishLoop(triggerLoop('items-probe', config()));
     const script = vi.spyOn(t.container.ports.scripts, 'run');
     const lookup = vi.spyOn(t.container.repos.runs, 'findTriggerDedupeKeys');

@@ -42,11 +42,12 @@
 
 Outbound HTTP probes retain at most 65,536 decompressed body bytes before decoding
 or JSON parsing (`HTTP_PROBE_MAX_BODY_BYTES` in `packages/engine/src/ports.ts`).
-Oversized declared lengths refuse before reading; streamed/no-length bodies stop
+Oversized identity-encoded declared lengths refuse before reading; encoded wire
+lengths are not compared with the decompressed cap. Streamed/no-length bodies stop
 on the first over-limit chunk. The reader is cancelled and its lock released on
 overflow, abort or timeout. Overflow is the safe typed `HTTP_PROBE_BODY_OVERFLOW`
-failure, never a successful truncated response. HEAD metadata is exempt because
-there is no response body. This budget matches strict poll-script stdout and also
+failure, never a successful truncated response. HEAD and body-less 204/304 metadata
+are exempt because there is no response body. This budget matches strict poll-script stdout and also
 applies to heartbeat and single-result HTTP probes (08).
 
 ## Retention (Decided)
