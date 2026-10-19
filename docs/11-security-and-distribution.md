@@ -7,6 +7,8 @@
 - Agent harnesses are external engines. Codex CLI is Apache-2.0 and the owner installs it; it is not bundled. Claude Code is an owner-installed external CLI used directly by the native-Windows adapter. GraphGoblin does not bundle it or add an Anthropic SDK dependency; Claude Code's own terms apply. See [ADR-0023](decisions/ADR-0023-installed-claude-code.md).
 - The full audit of the proposed dependencies is in `research/licenses.md`.
 
+`pnpm check:licenses` evaluates the reported production dependency metadata against `tooling/license-allowlist.json`: parentheses preserve grouping, `WITH` binds before `AND`, and `AND` before `OR`; an alternative needs one allowed branch, while a conjunction needs both. A `WITH` pair requires that exact `licence WITH exception` entry in `allowed`; approving the base licence alone, or a package metadata exception, does not approve the pair. Any `*`-suffixed guessed licence is a distinct violation unless `allowGuessed` is explicitly true, including markers on unused alternatives. Malformed expressions always fail with a parse-error reason. Operators must be uppercase and IDs match case-sensitively; the gate fails closed on anything else. Package exceptions apply only to unallowlisted licence IDs. Failures retain package name, reported versions and original expression. This is a metadata policy check, not legal certification.
+
 ## Credentials (Decided)
 
 - Codex: GraphGoblin relies on the machine's `codex login` state. It never stores, reads, or proxies Codex credentials. Subscription login is the expected mode for 1.0.
