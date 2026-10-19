@@ -1,14 +1,21 @@
-import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
+import { CURRENT_DEFINITION_FORMAT, LoopDefinitionSchema } from '@graphgoblin/contracts';
 /**
  * End-to-end tests: an MCP client connected over the SDK's in-memory transport to the server,
  * which calls the real API booted in-process (in-memory database, fake harness) on an ephemeral port.
  */
+import { readFileSync } from 'node:fs';
 import type { AddressInfo } from 'node:net';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import type { LoopDefinitionInput } from '@graphgoblin/contracts';
+import type {
+  ContextThread,
+  LoopDefinitionInput,
+  LoopRecord,
+  RunRecord,
+} from '@graphgoblin/contracts';
+import { z } from 'zod';
 import { fakeUlid, minimalLoop } from '@graphgoblin/contracts/testing';
 import { createTestApp, type TestApp } from '@graphgoblin/api/testing';
 import { createGraphGoblinClient } from '@graphgoblin/api-client';
@@ -112,6 +119,15 @@ async function until(predicate: () => Promise<boolean>, timeoutMs = 5000): Promi
     if (Date.now() > deadline) throw new Error('condition not met in time');
     await new Promise((resolve) => setTimeout(resolve, 10));
   }
+}
+
+function guideExample(file: string, id: string): unknown {
+  const source = readFileSync(new URL(`../../../docs/guide/${file}.md`, import.meta.url), 'utf8');
+  const example = source
+    .split(`<!-- guide-example: ${id} -->`)[1]
+    ?.match(/```json\r?\n([\s\S]*?)^```/m)?.[1];
+  if (!example) throw new Error(`Missing JSON guide example ${id}`);
+  return JSON.parse(example);
 }
 
 describe('MCP server against the in-process API', () => {
@@ -245,9 +261,46 @@ describe('MCP server against the in-process API', () => {
 
     const runs = body(await call('list_runs', { loopId }));
     expect((runs.items as { id: string }[]).map((r) => r.id)).toEqual([started.runId]);
-    expect(runs.nextBefore).toBeUndefined();
+    expect(runs.nextCursor).toBeNull();
     const everything = body(await call('list_runs'));
     expect((everything.items as { id: string }[]).map((r) => r.id)).toContain(started.runId);
+  });
+
+  it('starts the start-mcp guide example through start_run with the exact loop name', async () => {
+    const source = guideExample('02-build-a-loop', 'first-summary');
+    const definition = LoopDefinitionSchema.parse(source);
+    const imported = await t.app.inject({
+      method: 'POST',
+      url: '/loops/import',
+      headers: { 'content-type': 'application/json' },
+      payload: JSON.stringify(source),
+    });
+    expect(imported.statusCode, imported.body).toBe(201);
+    const loopId = imported.json<{ loop: LoopRecord }>().loop.id;
+    const published = await t.app.inject({ method: 'POST', url: `/loops/${loopId}/publish` });
+    expect(published.statusCode, published.body).toBe(200);
+    const args = z
+      .record(z.string(), z.unknown())
+      .parse(guideExample('03-run-and-observe', 'start-mcp'));
+    expect(args.loopId).toBe('first-summary');
+    expect(args.loopId).toBe(definition.name);
+    const summary = 'First sentence. Second sentence. Third sentence.';
+    t.harness.script([{ finalText: summary }]);
+    const started = body<{ runId: string; loopId: string }>(await call('start_run', args));
+    expect(started.loopId).toBe(loopId);
+    await t.idle();
+    const done = body<{ finished: boolean; run: RunRecord }>(
+      await call('wait_for_run', { runId: started.runId, timeoutSeconds: 0 }),
+    );
+    expect(done).toMatchObject({
+      finished: true,
+      run: { status: 'succeeded', result: { summary } },
+    });
+    expect(t.harness.started.at(-1)?.turn.prompt).toBe(
+      'Explain event-sourced workflows in three sentences.',
+    );
+    const thread = body<ContextThread>(await call('get_run_thread', { runId: started.runId }));
+    expect(thread.invocation.source).toBe('manual.mcp');
   });
 
   it('stops waiting on exhausted, preserving the return value and recorded gate evidence', async () => {
@@ -398,20 +451,25 @@ describe('MCP server against the in-process API', () => {
     await call('cancel_run', { runId: second });
     expect(body(await call('wait_for_run', { runId: second })).run.status).toBe('cancelled');
 
-    const page = body(await call('list_runs', { loopId: signalId, limit: 1 }));
+    const filters = {
+      loopId: signalId,
+      status: ['succeeded', 'cancelled'],
+      parentRunId: 'none',
+      limit: 1,
+    };
+    const page = body(await call('list_runs', filters));
     expect(page.items).toHaveLength(1);
-    expect(page.nextBefore).toBe(page.items[0].createdAt);
+    expect(page.nextCursor).toEqual(expect.any(String));
     const next = body(
       await call('list_runs', {
-        loopId: signalId,
-        status: ['succeeded', 'cancelled'],
-        parentRunId: 'none',
-        before: page.nextBefore,
-        limit: 1,
+        ...filters,
+        cursor: page.nextCursor,
       }),
     );
-    // The fake clock gives every run the same creation time, so nothing is strictly before it.
-    expect(next.items).toEqual([]);
+    // The server cursor includes the run id, so tied creation times do not skip runs.
+    expect(next.items).toHaveLength(1);
+    expect(new Set([page.items[0].id, next.items[0].id])).toEqual(new Set([held, second]));
+    expect(next.nextCursor).toBeNull();
     const filtered = body(
       await call('list_runs', { loopId: signalId, status: ['cancelled'], parentRunId: 'none' }),
     );

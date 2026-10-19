@@ -476,7 +476,7 @@ it('a resumed failed run is finalized again after a crash on its next terminal s
   );
   const r = await e.runToIdle(e.publish(def).loopId);
   expect(r.failure?.resumable).toBe(true);
-  expect(await e.ports.runs.listUnfinalized()).toHaveLength(0);
+  expect((await e.ports.runs.listRecoveryCandidates()).filter((r) => r.terminal)).toHaveLength(0);
   const transition = e.ports.runs.transition.bind(e.ports.runs);
   let blocked = false;
   const spy = vi.spyOn(e.ports.runs, 'transition').mockImplementation(async (id, from, changes) => {
@@ -491,11 +491,13 @@ it('a resumed failed run is finalized again after a crash on its next terminal s
   await vi.waitFor(() => expect(blocked).toBe(true));
   e.manager.stop();
   spy.mockRestore();
-  expect((await e.ports.runs.listUnfinalized()).map((x) => x.id)).toEqual([r.id]);
+  expect(
+    (await e.ports.runs.listRecoveryCandidates()).filter((r) => r.terminal).map((x) => x.id),
+  ).toEqual([r.id]);
   await recover(e);
   expect((await e.ports.runs.get(r.id))?.status).toBe('succeeded');
   expect(e.ports.delivery.logged).toHaveLength(1);
-  expect(await e.ports.runs.listUnfinalized()).toHaveLength(0);
+  expect((await e.ports.runs.listRecoveryCandidates()).filter((r) => r.terminal)).toHaveLength(0);
 });
 
 it('a child cancellation error leaves the parent finalization pending for the next recovery', async () => {
@@ -524,10 +526,12 @@ it('a child cancellation error leaves the parent finalization pending for the ne
   e.manager.stop();
   spy.mockRestore();
   expect((await e.ports.runs.get(child.id))?.status).toBe('waiting');
-  expect((await e.ports.runs.listUnfinalized()).map((x) => x.id)).toEqual([r.id]);
+  expect(
+    (await e.ports.runs.listRecoveryCandidates()).filter((r) => r.terminal).map((x) => x.id),
+  ).toEqual([r.id]);
   await recover(e);
   expect((await e.ports.runs.get(child.id))?.status).toBe('cancelled');
-  expect(await e.ports.runs.listUnfinalized()).toHaveLength(0);
+  expect((await e.ports.runs.listRecoveryCandidates()).filter((r) => r.terminal)).toHaveLength(0);
 });
 
 it.each(['durable', 'not durable'] as const)(
@@ -568,7 +572,7 @@ it.each(['durable', 'not durable'] as const)(
     expect((await e.ports.runs.get(r.id))?.status).toBe(
       durable === 'durable' ? 'succeeded' : 'failed',
     );
-    expect(await e.ports.runs.listUnfinalized()).toHaveLength(0);
+    expect((await e.ports.runs.listRecoveryCandidates()).filter((r) => r.terminal)).toHaveLength(0);
   },
 );
 
@@ -638,7 +642,7 @@ it.each(['next success', 'durable resume'] as const)(
     await recover(e);
     expect((await e.ports.runs.get(r.id))?.status).toBe('succeeded');
     expect(e.ports.delivery.logged).toHaveLength(1);
-    expect(await e.ports.runs.listUnfinalized()).toHaveLength(0);
+    expect((await e.ports.runs.listRecoveryCandidates()).filter((r) => r.terminal)).toHaveLength(0);
   },
 );
 

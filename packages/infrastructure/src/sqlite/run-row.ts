@@ -1,8 +1,11 @@
 import type { RunRecord, RunStatus } from '@graphgoblin/contracts';
 import type { runs } from './schema.js';
-type Row = typeof runs.$inferSelect;
+export type RunRecordRow = Omit<
+  typeof runs.$inferSelect,
+  'initialThread' | 'threadSnapshot' | 'threadSnapshotSeq' | 'finalizedAt'
+>;
 
-export function runRecordFromRow(row: Row): RunRecord {
+export function runRecordFromRow(row: RunRecordRow): RunRecord {
   return {
     id: row.id,
     ownerId: row.ownerId,
@@ -13,10 +16,10 @@ export function runRecordFromRow(row: Row): RunRecord {
     status: row.status as RunStatus,
     ...(row.currentNodeId ? { currentNodeId: row.currentNodeId } : {}),
     iteration: row.iteration,
-    ...(row.waiting ? { waiting: row.waiting } : {}),
+    ...(row.waiting !== null ? { waiting: row.waiting } : {}),
     ...(row.cancelRequestedAt ? { cancelRequestedAt: row.cancelRequestedAt } : {}),
     ...(row.pausedAt ? { pausedAt: row.pausedAt } : {}),
-    ...(row.failure ? { failure: row.failure } : {}),
+    ...(row.failure !== null ? { failure: row.failure } : {}),
     ...(row.outcome ? { outcome: row.outcome as RunRecord['outcome'] } : {}),
     ...(row.result !== null && row.result !== undefined ? { result: row.result } : {}),
     createdAt: row.createdAt,

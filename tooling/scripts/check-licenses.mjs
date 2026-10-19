@@ -38,7 +38,11 @@ if (packages.length === 0) {
 const violations = evaluateLicenses(policy, packages);
 if (violations.length > 0) {
   console.error(`Licence violations (${violations.length}):`);
-  for (const v of violations) console.error(`  ${v.name}: ${v.reason}`);
+  for (const v of violations) {
+    console.error(
+      `  ${v.name}@${v.versions?.join(', ') ?? 'unknown version'}: ${JSON.stringify(v.license)}: ${v.reason}`,
+    );
+  }
   console.error('Add an exception to tooling/license-allowlist.json only with a justification.');
   process.exit(1);
 }

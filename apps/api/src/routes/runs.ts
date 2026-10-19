@@ -1,5 +1,6 @@
 import {
   ContextThreadSchema,
+  SlugSchema,
   JsonValueSchema,
   ReturnChannelSchema,
   RunEventSchema,
@@ -266,7 +267,7 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
       schema: {
         tags: ['runs'],
         summary: 'Deliver a named signal',
-        params: z.object({ id: UlidSchema, name: z.string() }),
+        params: z.object({ id: UlidSchema, name: SlugSchema }),
         body: z.strictObject({
           waitId: z.string().min(1).max(64),
           payload: JsonValueSchema.optional(),
