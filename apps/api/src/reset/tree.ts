@@ -60,18 +60,6 @@ export async function listEntry(root: string, path: string): Promise<TreeEntry[]
   return [...below, entry];
 }
 
-async function removeLink(full: string): Promise<void> {
-  try {
-    await unlink(full);
-  } catch (error) {
-    // Windows removes a directory junction or directory symlink with RemoveDirectory, which never
-    // traverses the link.
-    if (process.platform === 'win32' && (hasCode(error, 'EPERM') || hasCode(error, 'EISDIR')))
-      await rmdir(full);
-    else throw error;
-  }
-}
-
 /**
  * Remove one listed entry. Immediately before the change, every ancestor up to `root` must still
  * be a physical directory and the entry must still be what was listed, so a directory swapped for
@@ -88,7 +76,8 @@ export async function removeEntry(root: string, entry: TreeEntry): Promise<void>
   const now = kindOf(await lstat(full));
   if (now !== entry.kind)
     throw new Error(`${entry.path} changed from a ${entry.kind} to a ${now} during the reset`);
+  // `unlink` removes a symbolic link or Windows junction itself (libuv uses RemoveDirectory for a
+  // directory link), never its target.
   if (entry.kind === 'directory') await rmdir(full);
-  else if (entry.kind === 'link') await removeLink(full);
   else await unlink(full);
 }

@@ -2,7 +2,9 @@ import { execFile } from 'node:child_process';
 import { copyFile, mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
+import { openDatabase } from '@graphgoblin/infrastructure/sqlite';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   defaultReaderArguments,
@@ -101,6 +103,25 @@ describe('reading a store for a reset', () => {
       await rm(directory, { recursive: true, force: true }).catch(() => undefined);
     }
   }, 120_000);
+
+  it('ignores a malformed marker and run IDs that are not text', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'gg-store-facts-odd-'));
+    try {
+      const file = join(directory, 'odd.db');
+      const writer = openDatabase({ url: pathToFileURL(file).href });
+      await writer.client.execute('CREATE TABLE gg_upgrade_state (id, format_version, status)');
+      await writer.client.execute("INSERT INTO gg_upgrade_state VALUES (1, 'four', 7)");
+      await writer.client.execute('CREATE TABLE runs (id)');
+      await writer.client.execute("INSERT INTO runs VALUES (42), ('01JTEXTRUNID0000000000000A')");
+      writer.close();
+      expect(await readStoreFactsFromFile(file)).toEqual({
+        readable: true,
+        runIds: ['01JTEXTRUNID0000000000000A'],
+      });
+    } finally {
+      await rm(directory, { recursive: true, force: true }).catch(() => undefined);
+    }
+  });
 
   it('runs the built reader beside this module by default', () => {
     const [entry] = defaultReaderArguments();

@@ -599,6 +599,73 @@ describe('refused resets change nothing', () => {
   });
 });
 
+describe('data directory layouts', () => {
+  it('lists an empty data directory as nothing but the lock', async () => {
+    const base = await mkdtemp(join(tmpdir(), 'gg-reset-empty-'));
+    bases.push(base);
+    const result = await reset(['--reset'], { GG_DATA_DIR: base });
+    expect(result.code).toBe(0);
+    expect(result.out).toContain(
+      "  nothing but the lock file\n  graphgoblin.lock                       the reset's own lock     removed last, on release\n\nKeeps:\n  nothing else is in the data directory\n",
+    );
+    expect(result.out).toContain('Total removed: 0 files, 0 B in 0 items.');
+    expect(await snapshotTree(base)).toEqual([]);
+  });
+
+  it('removes a database configured in a subdirectory and keeps that directory', async () => {
+    const { dataDir } = await prepare('none');
+    await mkdir(join(dataDir, 'db'));
+    await writeFile(join(dataDir, 'db', 'store.db'), 'database bytes');
+    await writeFile(join(dataDir, 'db', 'store.db-wal'), 'wal bytes');
+    await writeFile(join(dataDir, 'db', 'readme.txt'), 'kept');
+    const env = {
+      GG_DATA_DIR: dataDir,
+      GG_DB_URL: `file:${join(dataDir, 'db', 'store.db').replaceAll('\\', '/')}`,
+    };
+    const result = await reset(['--reset', '--yes', '--data-dir', dataDir], env);
+    expect(result.code).toBe(0);
+    expect(result.out).toMatch(row('db/store.db', 'database', '1 file, 14 B'));
+    expect(result.out).toMatch(row('db/store.db-wal', 'SQLite write-ahead log', '1 file, 9 B'));
+    expect(result.out).not.toMatch(/\n {2}db +/);
+    const after = (await snapshotTree(dataDir)).map((record) => record.path);
+    expect(after).toContain('db/readme.txt');
+    expect(after).not.toContain('db/store.db');
+    expect(after).not.toContain('db/store.db-wal');
+  });
+
+  it('follows a link that is the data directory itself, and says where it leads', async () => {
+    const { base, dataDir } = await prepare('none');
+    const alias = join(base, 'alias');
+    await linkDirectory(dataDir, alias);
+    const result = await reset(['--reset'], { GG_DATA_DIR: alias });
+    expect(result.code).toBe(0);
+    expect(result.out).toContain(`Data directory: ${alias} (physical path `);
+    expect(result.out).toContain(`--reset --yes --data-dir "${alias}"`);
+  });
+
+  it('refuses a plan entry outside the data directory', async () => {
+    const { dataDir } = await prepare('none');
+    await expect(
+      executeReset(
+        {
+          dataDir,
+          database: 'graphgoblin.db',
+          store: { readable: false, reason: 'unused' },
+          targets: [
+            {
+              path: '../outside-repo',
+              what: 'artifacts',
+              entries: [{ path: '../outside-repo', kind: 'directory', bytes: 0 }],
+            },
+          ],
+          kept: [],
+        },
+        () => undefined,
+      ),
+    ).rejects.toThrow('../outside-repo is not inside the data directory');
+  });
+});
+
 describe('formatting', () => {
   it.each([
     [0, '0 B'],
