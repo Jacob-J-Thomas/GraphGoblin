@@ -308,6 +308,12 @@ function CatalogField({
     query.isError ||
     query.fetchStatus === 'paused' ||
     harnessNote !== undefined ||
+    // A known Claude failure is a warning like the policy field's; the first check is not.
+    (kind === 'model' &&
+      unavailable &&
+      query.data !== undefined &&
+      !hasClaudeAdmission &&
+      readiness.state !== 'checking') ||
     (!unavailable && (Boolean(status) || unsupported || noEnabled));
   const options =
     kind === 'model'
@@ -396,6 +402,7 @@ function CatalogField({
               <Button
                 size="sm"
                 variant="outline"
+                className="justify-self-start"
                 disabled={query.isFetching}
                 onClick={() => void query.refetch()}
               >
@@ -407,6 +414,7 @@ function CatalogField({
               <Button
                 size="sm"
                 variant="outline"
+                className="justify-self-start"
                 disabled={preflightQuery.isFetching}
                 onClick={() => void preflightQuery.refetch()}
               >

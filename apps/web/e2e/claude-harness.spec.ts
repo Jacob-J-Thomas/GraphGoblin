@@ -328,10 +328,7 @@ test('Settings separates Claude adapter support from CLI readiness and supports 
   const catalog = page.getByRole('region', { name: 'Model catalog' });
   await expect(catalog.getByRole('switch', { name: 'Enable Claude Fable 5.1' })).toBeChecked();
   await expect(
-    catalog.getByText(
-      'Enabled in catalog. Claude readiness: Sign-in needed. See Harness preflight below.',
-      { exact: true },
-    ),
+    catalog.getByText('Enabled in catalog. Claude readiness: Sign-in needed.', { exact: true }),
   ).toHaveCount(2);
 
   const model = page.getByLabel('Default model (claude)', { exact: true });

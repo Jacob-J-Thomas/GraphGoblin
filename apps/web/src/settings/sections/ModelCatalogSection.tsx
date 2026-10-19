@@ -255,9 +255,10 @@ export function ModelCatalogSection() {
                           }}
                         />
                         {notReady ? (
-                          <p className="mt-1 max-w-[30ch] text-xs text-muted">
-                            {entry.enabled ? 'Enabled' : 'Disabled'} in catalog. {notReady} See
-                            Harness preflight below.
+                          // Two short lines; every row of that harness repeats them, so the
+                          // full problem and Retry stay in Harness preflight.
+                          <p className="mt-1 max-w-[36ch] text-xs whitespace-pre-line text-muted">
+                            {`${entry.enabled ? 'Enabled' : 'Disabled'} in catalog.\n${notReady}`}
                           </p>
                         ) : null}
                       </Td>

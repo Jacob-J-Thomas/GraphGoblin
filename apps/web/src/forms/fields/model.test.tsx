@@ -108,6 +108,10 @@ describe('catalog field controls', () => {
           'Claude readiness: Sign-in needed. Model choices are read-only until Claude is ready.',
       }[state];
       await waitFor(() => expect(model()).toHaveAccessibleDescription(endsWith(notice)));
+      // Only the first check is neutral; every known or failed lookup is a warning.
+      expect(screen.getByText(notice).closest('p')).toHaveClass(
+        state === 'pending' ? 'text-muted' : 'text-status-warn-fg',
+      );
       expect(effort()).toHaveValue('xhigh');
       expect(effort()).toHaveAttribute('aria-readonly', 'true');
       expect(effort()).toHaveAccessibleDescription(endsWith(notice));
@@ -1116,6 +1120,10 @@ describe('readiness in the model picker', () => {
     expect(model()).toHaveAttribute('aria-readonly', 'true');
     expect(within(model()).getByRole('option', { name: 'claude-opus-5-5 (saved)' })).toBeDisabled();
     expect(screen.queryByText(/readiness unknown|model availability/)).toBeNull();
+    // A known failure is a warning, like the policy field's line.
+    expect(screen.getByText(/until Claude is ready/).closest('p')).toHaveClass(
+      'text-status-warn-fg',
+    );
     expect(screen.getByRole('button', { name: 'Retry Claude preflight' })).toBeEnabled();
   });
 

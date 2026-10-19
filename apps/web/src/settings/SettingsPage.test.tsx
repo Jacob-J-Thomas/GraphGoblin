@@ -1045,9 +1045,7 @@ describe('Claude catalog enablement and readiness', () => {
       });
       renderApp('/settings', api);
       expect(
-        await screen.findByText(
-          'Enabled in catalog. Claude readiness: CLI update needed. See Harness preflight below.',
-        ),
+        await screen.findByText('Enabled in catalog. Claude readiness: CLI update needed.'),
       ).toBeInTheDocument();
       const toggle = await screen.findByRole('switch', { name: 'Enable Fable 5.1' });
       expect(toggle).toBeChecked();
@@ -1057,9 +1055,7 @@ describe('Claude catalog enablement and readiness', () => {
       await userEvent.setup().click(toggle);
       await waitFor(() => expect(toggle).not.toBeChecked());
       expect(
-        screen.getByText(
-          'Disabled in catalog. Claude readiness: CLI update needed. See Harness preflight below.',
-        ),
+        screen.getByText('Disabled in catalog. Claude readiness: CLI update needed.'),
       ).toBeInTheDocument();
     },
   );
@@ -1088,14 +1084,10 @@ describe('Codex catalog rows and readiness', () => {
     renderApp('/settings', api);
     const catalog = await screen.findByRole('region', { name: 'Model catalog' });
     expect(
-      await within(catalog).findByText(
-        'Enabled in catalog. Codex readiness: Connection failed. See Harness preflight below.',
-      ),
+      await within(catalog).findByText('Enabled in catalog. Codex readiness: Connection failed.'),
     ).toBeInTheDocument();
     expect(
-      within(catalog).getByText(
-        'Disabled in catalog. Codex readiness: Connection failed. See Harness preflight below.',
-      ),
+      within(catalog).getByText('Disabled in catalog. Codex readiness: Connection failed.'),
     ).toBeInTheDocument();
   });
 });
