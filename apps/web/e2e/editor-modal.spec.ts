@@ -8,6 +8,7 @@ import {
   approvalLoop,
   closeNode,
   expect,
+  openDraftTab,
   openNode,
   publishLoop,
   showLoopPanel,
@@ -362,10 +363,8 @@ test('a draft conflict is answered from inside an open node editor', async ({
   const loopId = await createLoop(request, approvalLoop('qa modal conflict'));
   const a = await context.newPage();
   const b = await context.newPage();
-  await a.goto(`/app/loops/${loopId}/edit`);
-  await expect(a.getByRole('heading', { name: 'qa modal conflict' })).toBeVisible();
-  await b.goto(`/app/loops/${loopId}/edit`);
-  await expect(b.getByRole('heading', { name: 'qa modal conflict' })).toBeVisible();
+  await openDraftTab(a, loopId, 'qa modal conflict');
+  await openDraftTab(b, loopId, 'qa modal conflict');
 
   // Tab B opens a node; tab A saves first.
   const dialog = await openNode(b, 'approve');
