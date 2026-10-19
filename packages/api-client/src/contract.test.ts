@@ -192,6 +192,7 @@ describe('against the in-process API (local trusted mode)', () => {
       pollMs: 10,
     });
     expect(finished).toBe(true);
+    if (!finished) throw new Error('the run did not finish within the observation budget');
     expect(run.status).toBe('succeeded');
 
     expect((await runs.list(client, { loopId: loop.id })).map((r) => r.id)).toEqual([run.id]);
@@ -229,11 +230,13 @@ describe('against the in-process API (local trusted mode)', () => {
     const first = await runs.start(client, loop.id, { input: { topic: 'x' } });
     await until(async () => (await runs.get(client, first.id)).status === 'waiting');
     const pending = await waitForRun(client, first.id, { timeoutMs: 30, pollMs: 10 });
-    expect(pending).toMatchObject({ finished: false, run: { status: 'waiting' } });
+    expect(pending.finished).toBe(false);
+    if (pending.run) expect(pending.run.status).toBe('waiting');
+    expect((await runs.get(client, first.id)).status).toBe('waiting');
     expect((await runs.signal(client, first.id, 'nudge')).woke).toBe(false);
     expect((await runs.signal(client, first.id, 'nudge', { n: 1 })).woke).toBe(false);
     await runs.provideInput(client, first.id, { ok: true });
-    expect((await waitForRun(client, first.id, { timeoutMs: 5000, pollMs: 10 })).run.status).toBe(
+    expect((await waitForRun(client, first.id, { timeoutMs: 5000, pollMs: 10 })).run?.status).toBe(
       'succeeded',
     );
     const fork = await runs.replay(client, first.id, 'start');
@@ -250,9 +253,43 @@ describe('against the in-process API (local trusted mode)', () => {
     expect((await runs.resume(client, second.id)).status).toBe('waiting'); // paused while parked: back to waiting (docs/05)
     await until(async () => (await runs.get(client, second.id)).status === 'waiting');
     await runs.cancel(client, second.id);
-    expect((await waitForRun(client, second.id, { timeoutMs: 5000, pollMs: 10 })).run.status).toBe(
+    expect((await waitForRun(client, second.id, { timeoutMs: 5000, pollMs: 10 })).run?.status).toBe(
       'cancelled',
     );
+  });
+
+  it('cancels observation independently of the running operation', async () => {
+    const { loop } = await loops.create(client, { ...waitLoop, name: 'observation-only' });
+    await loops.publish(client, loop.id);
+    const run = await runs.start(client, loop.id);
+    await until(async () => (await runs.get(client, run.id)).status === 'waiting');
+    const noSnapshot = await waitForRun(client, run.id, { timeoutMs: 0 });
+    expect(noSnapshot).toEqual({ finished: false });
+    const controller = new AbortController();
+    const reason = new Error('stop observing');
+    let sleeping!: () => void;
+    const entered = new Promise<void>((resolve) => {
+      sleeping = resolve;
+    });
+    const pending = waitForRun(client, run.id, {
+      timeoutMs: 5000,
+      signal: controller.signal,
+      sleep: () => {
+        sleeping();
+        return new Promise<void>(() => undefined);
+      },
+    });
+    await entered;
+    controller.abort(reason);
+    await expect(pending).rejects.toBe(reason);
+    expect((await runs.get(client, run.id)).status).toBe('waiting');
+    await runs.provideInput(client, run.id, true);
+    await expect(
+      waitForRun(client, run.id, { timeoutMs: 5000, pollMs: 10 }),
+    ).resolves.toMatchObject({
+      finished: true,
+      run: { status: 'succeeded' },
+    });
   });
 
   it('streams run events over SSE until the run finishes, and resumes from a sequence', async () => {

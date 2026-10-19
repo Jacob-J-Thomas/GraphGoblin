@@ -122,8 +122,8 @@ export const runs = {
     unwrap(await client.POST('/loops/{id}/runs', { ...id(loopId), body })).run,
   list: async (client: GraphGoblinClient, query: ListRunsQuery = {}) =>
     unwrap(await client.GET('/runs', { params: { query } })).items,
-  get: async (client: GraphGoblinClient, runId: string) =>
-    unwrap(await client.GET('/runs/{id}', id(runId))),
+  get: async (client: GraphGoblinClient, runId: string, options: { signal?: AbortSignal } = {}) =>
+    unwrap(await client.GET('/runs/{id}', { ...id(runId), ...options })),
   thread: async (client: GraphGoblinClient, runId: string) =>
     unwrap(await client.GET('/runs/{id}/thread', id(runId))),
   /** One page of the persisted event log after `after`; use `subscribeRunEvents` for a live tail. */

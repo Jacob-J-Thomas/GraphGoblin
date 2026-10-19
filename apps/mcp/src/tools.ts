@@ -2,9 +2,14 @@
  * The MCP tools. Each one is a thin call through `@graphgoblin/api-client`; descriptions are
  * written for the calling agent: when to call it, what to pass, and what to do with the result.
  */
-import { GraphGoblinApiError, loops, runs, type GraphGoblinClient } from '@graphgoblin/api-client';
 import {
-  TERMINAL_RUN_STATUSES,
+  GraphGoblinApiError,
+  loops,
+  observeRun,
+  runs,
+  type GraphGoblinClient,
+} from '@graphgoblin/api-client';
+import {
   UlidSchema,
   type LoopRecord,
   type LoopVersionRecord,
@@ -25,8 +30,6 @@ export interface ToolOptions {
 export const DEFAULT_WAIT_SECONDS = 60;
 export const MAX_WAIT_SECONDS = 600;
 
-const TERMINAL = new Set<string>(TERMINAL_RUN_STATUSES);
-
 const runId = z.string().min(1).describe('The run id (a ULID) returned by start_run or list_runs.');
 const loopRef = z
   .string()
@@ -35,25 +38,6 @@ const loopRef = z
 const json = z
   .unknown()
   .describe('Any JSON value. Match the inputSchema reported by describe_loop or the waiting spec.');
-
-/** Wait for `ms` or until `signal` aborts. */
-function sleep(ms: number, signal: AbortSignal): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (signal.aborted) {
-      reject(signal.reason as Error);
-      return;
-    }
-    const timer = setTimeout(() => {
-      signal.removeEventListener('abort', onAbort);
-      resolve();
-    }, ms);
-    const onAbort = (): void => {
-      clearTimeout(timer);
-      reject(signal.reason as Error);
-    };
-    signal.addEventListener('abort', onAbort, { once: true });
-  });
-}
 
 /** Find a loop by id, or by exact name when no loop has that id. */
 export async function resolveLoop(client: GraphGoblinClient, ref: string) {
@@ -192,7 +176,7 @@ export function registerTools(
     'wait_for_run',
     {
       title: 'Wait for a run',
-      description: `Wait for a run to finish, polling for up to timeoutSeconds (default ${DEFAULT_WAIT_SECONDS}, max ${MAX_WAIT_SECONDS}). If the run finished (succeeded, failed, cancelled, exhausted) it returns { finished: true, run } with run.result holding the loop's return value and run.failure explaining a failure. Otherwise it returns { finished: false, status, cursor, next }: follow "next". It returns early when the run needs you: waiting for input (call provide_input) or paused (call resume_run). For a long run, keep calling wait_for_run with the same runId. cursor is the last event sequence, usable as "after" in read_run_events.`,
+      description: `Wait for a run to finish, polling for up to timeoutSeconds (default ${DEFAULT_WAIT_SECONDS}, max ${MAX_WAIT_SECONDS}). If the run finished (succeeded, failed, cancelled, exhausted) it returns { finished: true, run } with run.result holding the loop's return value and run.failure explaining a failure. Otherwise it returns { finished: false, status, cursor, next }: follow "next". It returns early when the run needs you: waiting for input (call provide_input) or paused (call resume_run). For a long run, keep calling wait_for_run with the same runId. cursor is the last event sequence, usable as "after" in read_run_events. If the deadline expires before any snapshot arrives, status is omitted and cursor is 0. A zero budget makes no request. Deadlines and request cancellation stop observation only; they never cancel the run.`,
       inputSchema: {
         runId,
         timeoutSeconds: z
@@ -207,33 +191,47 @@ export function registerTools(
     },
     ({ runId: id, timeoutSeconds }, extra) =>
       guard(async () => {
-        const deadline = now() + (timeoutSeconds ?? DEFAULT_WAIT_SECONDS) * 1000;
         const progressToken = extra._meta?.progressToken;
-        for (let polls = 1; ; polls += 1) {
-          const run = await runs.get(client, id);
-          if (TERMINAL.has(run.status)) return { finished: true, run };
-          const needsCaller =
-            run.status === 'paused' || (run.status === 'waiting' && run.waiting?.kind === 'input');
-          const remaining = deadline - now();
-          if (needsCaller || remaining <= 0) {
-            return {
-              finished: false,
-              status: run.status,
-              cursor: run.lastEventSeq,
-              ...(run.currentNodeId ? { currentNodeId: run.currentNodeId } : {}),
-              ...(run.waiting ? { waiting: run.waiting } : {}),
-              next: nextStep(run),
-            };
-          }
-          if (progressToken !== undefined) {
-            // Progress notifications let clients that support it extend their request timeout.
-            await extra.sendNotification({
-              method: 'notifications/progress',
-              params: { progressToken, progress: polls, message: `run is ${run.status}` },
-            });
-          }
-          await sleep(Math.min(pollMs, remaining), extra.signal);
+        const result = await observeRun(
+          client,
+          id,
+          {
+            timeoutMs: (timeoutSeconds ?? DEFAULT_WAIT_SECONDS) * 1000,
+            pollMs,
+            now,
+            signal: extra.signal,
+          },
+          {
+            stopWhen: (run) =>
+              run.status === 'paused' ||
+              (run.status === 'waiting' && run.waiting?.kind === 'input'),
+            onPoll: async (run, polls) => {
+              if (progressToken !== undefined) {
+                await extra.sendNotification({
+                  method: 'notifications/progress',
+                  params: { progressToken, progress: polls, message: `run is ${run.status}` },
+                });
+              }
+            },
+          },
+        );
+        if (result.finished) return result;
+        const { run } = result;
+        if (!run) {
+          return {
+            finished: false,
+            cursor: 0,
+            next: 'No run snapshot arrived before the observation deadline. Call wait_for_run again with the same runId, or get_run to check its status.',
+          };
         }
+        return {
+          finished: false,
+          status: run.status,
+          cursor: run.lastEventSeq,
+          ...(run.currentNodeId ? { currentNodeId: run.currentNodeId } : {}),
+          ...(run.waiting ? { waiting: run.waiting } : {}),
+          next: nextStep(run),
+        };
       }),
   );
 

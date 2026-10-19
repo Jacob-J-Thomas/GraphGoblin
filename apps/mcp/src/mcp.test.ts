@@ -317,7 +317,7 @@ describe('MCP server against the in-process API', () => {
     const { runId } = body(await call('start_run', { loopId }));
     const pending = body(await call('wait_for_run', { runId, timeoutSeconds: 0 }));
     expect(pending).toMatchObject({ finished: false, cursor: expect.any(Number) });
-    expect(['queued', 'running']).toContain(pending.status);
+    expect(pending).not.toHaveProperty('status');
     expect(pending.next).toMatch(/call wait_for_run again/i);
 
     const progress: number[] = [];
@@ -364,7 +364,7 @@ describe('MCP server against the in-process API', () => {
     expect(described.triggers[0]).toMatchObject({ startableFromMcp: false });
     const held = body(await call('start_run', { loopId: signalId })).runId as string;
     await until(async () => (await status(held)) === 'waiting');
-    const notYet = body(await call('wait_for_run', { runId: held, timeoutSeconds: 0 }));
+    const notYet = body(await call('wait_for_run', { runId: held, timeoutSeconds: 1 }));
     expect(notYet.next).toMatch(/signal "go"/);
     expect(body(await call('send_signal', { runId: held, name: 'other' })).woke).toBe(false);
     const sent = body(await call('send_signal', { runId: held, name: 'go', payload: { n: 1 } }));

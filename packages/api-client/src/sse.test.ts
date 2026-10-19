@@ -403,6 +403,60 @@ describe('subscribeRunEvents', () => {
     expect(errors).toEqual([]);
   });
 
+  it.each(['headers', 'body'] as const)(
+    'aborts a stalled real HTTP stream while awaiting %s without cancelling the run',
+    async (phase) => {
+      const paths: string[] = [];
+      let requested!: () => void;
+      let disconnected!: () => void;
+      const received = new Promise<void>((resolve) => {
+        requested = resolve;
+      });
+      const closed = new Promise<void>((resolve) => {
+        disconnected = resolve;
+      });
+      const server = createServer((req, res) => {
+        paths.push(`${req.method} ${req.url}`);
+        res.on('close', disconnected);
+        if (phase === 'body') {
+          res.writeHead(200, { 'content-type': 'text/event-stream' });
+          res.write(': connected\n\n');
+        }
+        requested();
+      });
+      await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+      const controller = new AbortController();
+      try {
+        const baseUrl = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+        let opened!: () => void;
+        const ready = new Promise<void>((resolve) => {
+          opened = resolve;
+        });
+        const seen: RunEvent[] = [];
+        const subscription = subscribeRunEvents({
+          client: createGraphGoblinClient({ baseUrl }),
+          runId,
+          signal: controller.signal,
+          onOpen: opened,
+          onEvent: (event) => {
+            seen.push(event);
+          },
+        });
+        await received;
+        if (phase === 'body') await ready;
+        controller.abort(new Error('stop observing'));
+        await subscription.done;
+        await closed;
+        expect(paths).toEqual([`GET /runs/${runId}/events?after=0`]);
+        expect(seen).toEqual([]);
+      } finally {
+        controller.abort();
+        server.closeAllConnections();
+        await new Promise<void>((resolve) => server.close(() => resolve()));
+      }
+    },
+  );
+
   it('reconnects over real HTTP after the server drops the connection', async () => {
     const afters: string[] = [];
     const server: Server = createServer((req, res) => {

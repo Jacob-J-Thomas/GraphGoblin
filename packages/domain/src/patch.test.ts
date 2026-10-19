@@ -1,6 +1,8 @@
+import type { JsonPatch, PatchOperation } from '@graphgoblin/contracts';
+import { sampleThread } from '@graphgoblin/contracts/testing';
 import { describe, expect, it } from 'vitest';
-import { PatchError } from './errors.js';
-import { applyPatch, cloneJson, jsonEquals } from './patch.js';
+import { MutationError, PatchError } from './errors.js';
+import { applyPatch, assertMutablePatch, cloneJson, jsonEquals } from './patch.js';
 
 describe('jsonEquals', () => {
   it('compares deeply', () => {
@@ -82,4 +84,80 @@ describe('applyPatch', () => {
     };
     expect(() => applyPatch(poison, [{ op: 'add', path: '/vars/x', value: 1 }])).toThrow(TypeError);
   });
+});
+
+describe('authored patch boundaries', () => {
+  const protectedPaths = [
+    '',
+    '/schemaVersion',
+    '/run',
+    '/run/id',
+    '/invocation',
+    '/invocation/caller',
+    '/counters/usage',
+    '/gates',
+    '/varsOther',
+  ];
+  const operations: Array<(path: string) => PatchOperation> = [
+    (path) => ({ op: 'add', path, value: null }),
+    (path) => ({ op: 'replace', path, value: null }),
+    (path) => ({ op: 'remove', path }),
+    (path) => ({ op: 'copy', path, from: '/vars/topic' }),
+    (path) => ({ op: 'move', path, from: '/vars/topic' }),
+    (from) => ({ op: 'move', path: '/vars/stolen', from }),
+  ];
+  it.each(protectedPaths)(
+    'rejects every mutated location at %j before applying the patch',
+    (path) => {
+      const thread = sampleThread();
+      const before = structuredClone(thread);
+      for (const operation of operations) {
+        const patch: JsonPatch = [
+          { op: 'add', path: '/vars/marker', value: true },
+          operation(path),
+        ];
+        expect(() => {
+          assertMutablePatch(patch);
+          applyPatch(thread, patch);
+        }).toThrow(MutationError);
+        expect(thread).toEqual(before);
+      }
+    },
+  );
+
+  it('permits protected reads and moves between writable locations including escaped keys', () => {
+    const thread = sampleThread();
+    const patch: JsonPatch = [
+      { op: 'test', path: '/run/id', value: thread.run.id },
+      { op: 'copy', from: '/invocation', path: '/vars/provenance' },
+      { op: 'add', path: '/vars/a~1b', value: { nested: true } },
+      { op: 'move', from: '/vars/a~1b', path: '/vars/~0moved' },
+      { op: 'add', path: '/vars/deleted', value: 0 },
+      { op: 'replace', path: '/vars/deleted', value: 1 },
+      { op: 'remove', path: '/vars/deleted' },
+    ];
+    expect(() => assertMutablePatch(patch)).not.toThrow();
+    const result = applyPatch(thread, patch);
+    expect(result.invocation).toEqual(thread.invocation);
+    expect(result.vars['provenance']).toEqual(thread.invocation);
+    expect(result.vars['~moved']).toEqual({ nested: true });
+    expect(result.vars).not.toHaveProperty('a/b');
+    expect(result.vars).not.toHaveProperty('deleted');
+    expect(thread.vars).not.toHaveProperty('provenance');
+  });
+
+  it.each(['/vars', '/messages', '/artifacts', '/outputs', '/lastOutput'])(
+    'allows mutations inside %s',
+    (path) => {
+      expect(() =>
+        assertMutablePatch([
+          { op: 'add', path, value: null },
+          { op: 'replace', path: `${path}/child`, value: null },
+          { op: 'remove', path },
+          { op: 'copy', from: '/run', path },
+          { op: 'move', from: path, path: '/vars/moved' },
+        ]),
+      ).not.toThrow();
+    },
+  );
 });

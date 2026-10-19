@@ -1,6 +1,32 @@
 import type { JsonPatch, PatchOperation } from '@graphgoblin/contracts';
-import { PatchError } from './errors.js';
+import { MutationError, PatchError } from './errors.js';
 import { getAtPointer, pointerStartsWith, updateAtPointer } from './pointer.js';
+
+/** Regions authored patches may mutate. Engine patches use unrestricted applyPatch instead. */
+export const MUTABLE_REGIONS = [
+  '/vars',
+  '/messages',
+  '/artifacts',
+  '/outputs',
+  '/lastOutput',
+] as const;
+
+export function assertMutablePath(path: string): void {
+  if (!MUTABLE_REGIONS.some((region) => pointerStartsWith(path, region))) {
+    throw new MutationError(
+      `path "${path}" is not in a mutable region (${MUTABLE_REGIONS.join(', ')})`,
+    );
+  }
+}
+
+/** Validate the entire authored patch before applying anything. Copy sources are read-only. */
+export function assertMutablePatch(patch: JsonPatch): void {
+  for (const op of patch) {
+    if (op.op === 'test') continue;
+    assertMutablePath(op.path);
+    if (op.op === 'move') assertMutablePath(op.from);
+  }
+}
 
 /** Deep structural equality for JSON values. */
 export function jsonEquals(a: unknown, b: unknown): boolean {
