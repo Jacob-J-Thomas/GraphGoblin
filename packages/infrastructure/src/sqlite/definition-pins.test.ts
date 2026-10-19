@@ -14,13 +14,18 @@ import {
   type RunRecord,
 } from '@graphgoblin/contracts';
 import { fakeUlid, FIXTURE_TS, minimalLoop, sampleThread } from '@graphgoblin/contracts/testing';
-import { createInitialThread, parseRunAdmission, type RunAdmission } from '@graphgoblin/engine';
+import {
+  createInitialThread,
+  parseRunAdmission,
+  UnreadableRunHistoryError,
+  type RunAdmission,
+} from '@graphgoblin/engine';
 import { FakeClock, FakeIds } from '@graphgoblin/engine/testing';
 import { SqliteTriggerAdmission } from './admission.js';
 import { openDatabase, openMemoryDatabase, type DatabaseHandle } from './db.js';
 import { SqliteEventStore } from './events.js';
 import { SqliteLoopRepository } from './loops.js';
-import { RunPinMissingError, SqliteRunRepository } from './runs.js';
+import { SqliteRunRepository } from './runs.js';
 import { applyShippedSqlToHistoricalTestFixture } from './testing/shipped-migrations.js';
 
 const NO_DEFAULTS = { owner: { byHarness: {} }, process: { byHarness: {} } };
@@ -153,14 +158,29 @@ describe('draft snapshots', () => {
     expect(await runs.get(fork.run.id)).toBeUndefined();
   });
 
-  it('a stored run without a pin is reported as corrupt', async () => {
-    const { run } = await draftRun('corrupt');
-    await handle.client.execute({
-      sql: 'UPDATE runs SET pinned = NULL WHERE id = ?',
-      args: [run.id],
-    });
-    await expect(runs.get(run.id)).rejects.toBeInstanceOf(RunPinMissingError);
-  });
+  it.each([
+    ['missing', null, /has no definition pin/],
+    ['malformed', '{"source": not json', /malformed JSON in pinned/],
+    ['schema-invalid', '{"source":"published"}', /does not conform to the run record contract/],
+  ] as const)(
+    'reports a %s pin as unreadable history for that run only',
+    async (_kind, pinned, reason) => {
+      const { run } = await draftRun('corrupt');
+      const healthy = await draftRun('healthy');
+      await handle.client.execute({
+        sql: 'UPDATE runs SET pinned = ? WHERE id = ?',
+        args: [pinned, run.id],
+      });
+      const error = await runs.get(run.id).catch((caught: unknown) => caught);
+      expect(error).toBeInstanceOf(UnreadableRunHistoryError);
+      expect(error).toMatchObject({
+        code: 'HISTORY_UNREADABLE',
+        runId: run.id,
+        message: expect.stringMatching(reason),
+      });
+      expect((await runs.get(healthy.run.id))?.pinned).toEqual(healthy.run.pinned);
+    },
+  );
 });
 
 describe('migration 0014 pins existing runs', () => {

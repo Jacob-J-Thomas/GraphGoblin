@@ -1,9 +1,10 @@
-import type { RunRecord, RunStatus } from '@graphgoblin/contracts';
+import type { RunPin, RunRecord, RunStatus } from '@graphgoblin/contracts';
 import type { runs } from './schema.js';
+/** A decoded run row. Its definition pin is present: the decoder refuses rows without one. */
 export type RunRecordRow = Omit<
   typeof runs.$inferSelect,
-  'initialThread' | 'threadSnapshot' | 'threadSnapshotSeq' | 'finalizedAt'
->;
+  'initialThread' | 'threadSnapshot' | 'threadSnapshotSeq' | 'finalizedAt' | 'pinned'
+> & { pinned: RunPin };
 
 export function runRecordFromRow(row: RunRecordRow): RunRecord {
   return {

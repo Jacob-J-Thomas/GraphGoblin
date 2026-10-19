@@ -198,8 +198,8 @@ The offline server-store tool uses the same composition for each retained versio
 Recovery enumerates raw run identities and decodes each candidate separately. Candidates
 are active runs and terminal runs awaiting finalization; startup checks and logs damaged
 candidates only. Finalized terminal history is checked through `GET /runs/diagnostics`.
-A malformed JSON field, invalid current-contract run record/thread, or unreadable event
-page is isolated to its run: startup logs `HISTORY_UNREADABLE` with the run ID and reason,
+A malformed JSON field, invalid current-contract run record/thread (including a missing,
+malformed or invalid definition pin, ADR-0041), or unreadable event page is isolated to its run: startup logs `HISTORY_UNREADABLE` with the run ID and reason,
 skips its work, and continues healthy recovery. Recovery leaves its rows and events
 unchanged. Store-level schema, format, and I/O failures still fail startup; they are not
 reclassified as damaged runs.
