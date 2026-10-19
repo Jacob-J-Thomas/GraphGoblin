@@ -16,6 +16,7 @@ import {
   renderTemplate,
 } from '@graphgoblin/domain';
 import type { ClockPort, HttpProbePort, Logger, RunManager, ScriptPort } from '@graphgoblin/engine';
+import { PROBE_MAX_BODY_BYTES, ProbeBodyOverflowError } from '@graphgoblin/engine';
 
 type PollConfig = Extract<Extract<Node, { kind: 'trigger' }>['config'], { type: 'poll' }>;
 
@@ -198,7 +199,9 @@ export class PollTriggers {
         {
           ...context,
           code:
-            error instanceof PollProbeError || error instanceof PollItemsError
+            error instanceof PollProbeError ||
+            error instanceof PollItemsError ||
+            error instanceof ProbeBodyOverflowError
               ? error.code
               : 'POLL_TRIGGER_FAILED',
           ...(error instanceof PollItemsError
@@ -233,7 +236,7 @@ export class PollTriggers {
           AbortSignal.timeout(spec.timeoutSeconds * 1000),
         );
         if (itemsMode) return itemsHttpProbe(response);
-        const body = response.body.slice(0, 65_536);
+        const body = response.body;
         return {
           status: response.status,
           headers: response.headers,
@@ -246,7 +249,7 @@ export class PollTriggers {
         for (const arg of spec.args) args.push(await renderTemplate(arg, view));
         const result = await this.deps.scripts.run({
           command: spec.command,
-          ...(itemsMode ? { maxStdoutBytes: 65_536 } : {}),
+          ...(itemsMode ? { maxStdoutBytes: PROBE_MAX_BODY_BYTES } : {}),
           args,
           cwd: this.deps.scriptCwd,
           env: {},
@@ -256,7 +259,8 @@ export class PollTriggers {
         if (itemsMode) return itemsScriptProbe(result);
         return {
           exitCode: result.exitCode,
-          stdout: result.stdout.slice(0, 65_536),
+          // This UTF-16 display slice is not a byte cap.
+          stdout: result.stdout.slice(0, PROBE_MAX_BODY_BYTES),
           stderr: result.stderr.slice(-4000),
           json: jsonOrText(result.stdout),
           timedOut: result.timedOut,
