@@ -555,7 +555,19 @@ describe('container directory ownership', () => {
     const before = await Promise.all(
       tables.map((table) => container.handle.client.execute(`SELECT * FROM "${table}"`)),
     );
-    await expect(container.start()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
+    const refusal = await container.start().then(
+      () => undefined,
+      (error: unknown) => error,
+    );
+    expect(refusal).toBeInstanceOf(StoreRefusedError);
+    expect(refusal).toMatchObject({
+      code: 'STORE_UNSUPPORTED',
+      refusal: {
+        foundFormat: 99,
+        requiredFormat: 4,
+        reason: 'The store is format 99; this build reads only format 4',
+      },
+    });
     await expect(access(join(dataDir, 'graphgoblin.lock'))).rejects.toMatchObject({
       code: 'ENOENT',
     });
