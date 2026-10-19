@@ -107,6 +107,10 @@ describe('Claude public readiness contracts', () => {
       HarnessPreflightSchema.safeParse({ ok: false, authenticated: false, problems: [] }).success,
     ).toBe(false);
     expect(HarnessReadinessStateSchema.safeParse('model-unavailable').success).toBe(false);
+    expect(HarnessReadinessStateSchema.safeParse('checking').success).toBe(false);
+    expect(
+      HarnessPreflightSchema.parse({ state: 'cli-incompatible', ok: false, problems: [] }),
+    ).not.toHaveProperty('authenticated');
   });
   it('exposes technical model capabilities and rejects removed fields on current responses', () => {
     const model = { model: 'claude-fable-5-1', efforts: ['high'] };

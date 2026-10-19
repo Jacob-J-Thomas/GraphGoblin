@@ -4,6 +4,12 @@ import { cliFailureState, readinessFailure, readinessMessage } from './readiness
 
 describe('no-turn readiness diagnostics', () => {
   it.each([
+    ['Failed to connect to authentication server: ECONNREFUSED', 'transport'],
+    ['stream disconnected before completion: authentication token refresh timed out', 'transport'],
+    ['Invalid API key ? Please run /login', 'auth'],
+    ['API Error: 500 Internal server error', 'transport'],
+    ['ETIMEDOUT', 'transport'],
+    ['EAI_AGAIN', 'transport'],
     ['quota exhausted', 'quota'],
     ['HTTP/1.1 429', 'quota'],
     ['status:403', 'auth'],

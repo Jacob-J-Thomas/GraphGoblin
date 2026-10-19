@@ -1,4 +1,5 @@
-﻿// Disposable no-turn executable for owner QA. It cannot accept a model turn.
+// Owner QA tooling; build with Windows PowerShell 5.1 only.
+// Disposable no-turn executable for owner QA. It cannot accept a model turn.
 using System;
 using System.IO;
 using System.Threading;
@@ -21,7 +22,8 @@ public static class ReadinessCli {
     }
     if (Array.IndexOf(args, "status") >= 0 && (Array.IndexOf(args, "auth") >= 0 || Array.IndexOf(args, "login") >= 0)) {
       if (scenario == "hang") Thread.Sleep(Timeout.Infinite);
-      var failure = scenario == "auth" ? "Authentication failed: not logged in" : scenario == "quota" ? "Usage limit reached: quota exhausted" : scenario == "transport" ? "Network connection failed: ECONNRESET" : scenario == "unknown" ? "Unrecognized diagnostic" : null;
+      if (scenario == "auth" && harness == "claude") { Console.WriteLine("{\"loggedIn\":false,\"authMethod\":\"none\"}"); return 1; }
+      var failure = scenario == "auth" ? "Not logged in" : scenario == "quota" ? "Usage limit reached: quota exhausted" : scenario == "transport" ? "Network connection failed: ECONNRESET" : scenario == "unknown" ? "Unrecognized diagnostic" : null;
       if (failure != null) { Console.Error.WriteLine(failure); return 1; }
       Console.WriteLine(harness == "claude" ? "{\"authMethod\":\"claude.ai\"}" : "Logged in using ChatGPT");
       return 0;

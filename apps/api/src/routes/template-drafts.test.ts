@@ -116,16 +116,13 @@ describe('editable template starting points', () => {
       if (state === 'disabled')
         await app.container.repos.catalog.setEnabled('codex', 'gpt-6-luna', false);
       const created = await createDraft('starter');
-      expect(created.issues).toContainEqual(
-        expect.objectContaining({
-          code:
-            state === 'missing'
-              ? 'MODEL_NOT_IN_CATALOG'
-              : state === 'disabled'
-                ? 'MODEL_DISABLED'
-                : 'HARNESS_READINESS_CLI_MISSING',
-        }),
-      );
+      if (state === 'no-harness') expect(created.issues).toEqual([]);
+      else
+        expect(created.issues).toContainEqual(
+          expect.objectContaining({
+            code: state === 'missing' ? 'MODEL_NOT_IN_CATALOG' : 'MODEL_DISABLED',
+          }),
+        );
       expect(
         (await app.app.inject({ method: 'POST', url: '/loops/' + created.loop.id + '/publish' }))
           .statusCode,

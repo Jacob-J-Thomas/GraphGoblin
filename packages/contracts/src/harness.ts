@@ -19,7 +19,6 @@ export const ClaudeModelCapabilitySchema = z.strictObject({
 export type ClaudeModelCapability = z.infer<typeof ClaudeModelCapabilitySchema>;
 /** Prerequisite health, never a provider model entitlement or availability result. */
 export const HarnessReadinessStateSchema = z.enum([
-  'checking',
   'unknown',
   'ready',
   'cli-missing',
@@ -34,7 +33,8 @@ export const HarnessPreflightSchema = z.strictObject({
   state: HarnessReadinessStateSchema,
   ok: z.boolean(),
   version: z.string().optional(),
-  authenticated: z.boolean(),
+  /** Absent when login could not be checked; false means a confirmed signed-out result. */
+  authenticated: z.boolean().optional(),
   problems: z.array(z.string()),
   authMethod: z.literal('claude.ai').nullable().optional(),
   supportedPolicies: z.array(ClaudePolicySchema).max(2).optional(),

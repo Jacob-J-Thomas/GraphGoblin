@@ -1,5 +1,4 @@
 import { fileURLToPath } from 'node:url';
-import { HarnessReadinessStateSchema } from '@graphgoblin/contracts';
 import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { bundledCli, cliFor, preflightCli, runCli } from './cli.js';
@@ -70,6 +69,9 @@ describe('Codex no-turn executable boundaries', () => {
     ['ready', 'ready'],
     ['old', 'cli-incompatible'],
     ['missing-model', 'cli-incompatible'],
+    ['missing-effort', 'cli-incompatible'],
+    ['missing-resume-json', 'cli-incompatible'],
+    ['prerelease', 'ready'],
     ['auth', 'auth'],
     ['quota', 'quota'],
     ['transport', 'transport'],
@@ -85,6 +87,11 @@ describe('Codex no-turn executable boundaries', () => {
       const result = await preflightCli(cli, runCli, scenario === 'hang' ? 1000 : 15000);
       expect(result).toMatchObject({ state, ok: state === 'ready' });
       expect(JSON.stringify(result)).not.toContain('PRIVATE_MARKER');
+      if (scenario === 'old') expect(result.problems.join(' ')).toContain('0.100.0');
+      if (scenario === 'missing-model') expect(result.problems.join(' ')).toContain('--model');
+      if (scenario === 'missing-effort') expect(result.problems.join(' ')).toContain('--config');
+      if (scenario === 'missing-resume-json') expect(result.problems.join(' ')).toContain('--json');
+      if (state === 'cli-incompatible') expect(result).not.toHaveProperty('authenticated');
     },
     75000,
   );
@@ -99,8 +106,14 @@ describe('Codex no-turn executable boundaries', () => {
       context.skip('Codex platform binary missing');
       return;
     }
-    expect(HarnessReadinessStateSchema.safeParse(result.state).success).toBe(true);
-    expect(result.version).toMatch(/^\d+\.\d+\.\d+$/);
+    if (result.state === 'auth') {
+      context.skip(
+        'Installed Codex has no accessible login in this environment (sandbox may hide owner login)',
+      );
+      return;
+    }
+    expect(result).toMatchObject({ state: 'ready', ok: true, authenticated: true });
+    expect(result.version).toMatch(/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/);
   }, 60000);
 });
 
@@ -127,4 +140,28 @@ it('keeps a timed-out lookup unknown even when partial output mentions quota', a
   );
   expect(result).toMatchObject({ state: 'unknown', ok: false });
   expect(JSON.stringify(result)).not.toContain('PRIVATE_PARTIAL_BODY');
+});
+
+it('leaves login unknown if a pre-login command reports an auth diagnostic', async () => {
+  const result = await preflightCli(
+    { command: process.execPath, prefix: [] },
+    () => Promise.resolve({ code: 1, output: 'Invalid API key ? Please run /login' }),
+    1000,
+  );
+  expect(result).toMatchObject({ state: 'auth', ok: false });
+  expect(result).not.toHaveProperty('authenticated');
+});
+
+it.each([
+  { code: 1, output: 'unknown option --version' },
+  { code: 0, output: 'unparseable version' },
+])('names the version probe when version syntax cannot be established: %j', async (response) => {
+  const result = await preflightCli(
+    { command: process.execPath, prefix: [] },
+    () => Promise.resolve(response),
+    1000,
+  );
+  expect(result.state).toBe('cli-incompatible');
+  expect(result.problems.join(' ')).toContain('--version');
+  expect(result).not.toHaveProperty('authenticated');
 });

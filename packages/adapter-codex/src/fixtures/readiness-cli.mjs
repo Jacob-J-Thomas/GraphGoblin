@@ -4,14 +4,25 @@ const print = (text) => process.stdout.write(text + '\n');
 // Controlled no-turn CLI; receiving any turn command is a fixture failure.
 const [scenario, ...args] = process.argv.slice(2);
 if (args.includes('--version'))
-  print(scenario === 'old' ? 'codex-cli 0.100.0' : 'codex-cli 0.160.0');
-else if (args.includes('--help'))
+  print(
+    scenario === 'old'
+      ? 'codex-cli 0.100.0'
+      : scenario === 'prerelease'
+        ? 'codex-cli 0.161.0-alpha'
+        : 'codex-cli 0.160.0',
+  );
+else if (args.includes('--help')) {
+  const flags = '--json --model --sandbox --cd --skip-git-repo-check --output-schema --config';
   print(
     scenario === 'missing-model'
-      ? '--json'
-      : '--json --model --sandbox --cd --skip-git-repo-check --output-schema --config',
+      ? flags.replace('--model', '')
+      : scenario === 'missing-effort'
+        ? flags.replace('--config', '')
+        : scenario === 'missing-resume-json' && args.includes('resume')
+          ? flags.replace('--json', '')
+          : flags,
   );
-else if (args.join(' ') === 'login status') {
+} else if (args.join(' ') === 'login status') {
   const failures = {
     auth: 'Not logged in',
     quota: 'quota exhausted',

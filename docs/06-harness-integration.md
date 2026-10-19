@@ -15,7 +15,7 @@ interface HarnessPort {
     state: HarnessReadinessState;
     ok: boolean;
     version?: string;
-    authenticated: boolean;
+    authenticated?: boolean;
     problems: string[];
     authMethod?: 'claude.ai' | null;
     supportedPolicies?: ClaudePolicy[];
@@ -66,19 +66,19 @@ version, required CLI flags and local login only; it never promises account acce
 The `models` field lists adapter identities and efforts, even when the CLI is not ready.
 No probe sends a prompt, creates a session, or checks entitlement through inference.
 
-| State              | Meaning and next action                                                                                                                   |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `checking`         | A probe is pending. Wait for completion; cached success is not a fresh result.                                                            |
-| `unknown`          | Timeout, cancellation, malformed/unrecognized output or an unexpected probe failure. Check the CLI and retry; model support is undecided. |
-| `ready`            | Required CLI capabilities and local authentication passed; account model access remains untested.                                         |
-| `cli-missing`      | Executable not found. Install it or correct the configured binary path, then retry.                                                       |
-| `cli-incompatible` | Version or required CLI capability failed verification. Update the installed CLI and retry.                                               |
-| `auth`             | Authentication failed. Run `claude auth login` or `codex login`, then retry.                                                              |
-| `quota`            | Explicit allowance/rate-limit diagnostic. Check account allowance and retry when permitted; preserve the model.                           |
-| `transport`        | Explicit connection or temporary provider-service failure. Check connectivity/service status and retry; preserve the model.               |
+| State                 | Meaning and next action                                                                                                                   |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `checking` (web only) | A request is pending. Wait for completion; this is not a server readiness result.                                                         |
+| `unknown`             | Timeout, cancellation, malformed/unrecognized output or an unexpected probe failure. Check the CLI and retry; model support is undecided. |
+| `ready`               | Required CLI capabilities and local authentication passed; account model access remains untested.                                         |
+| `cli-missing`         | Executable not found. Install it or correct the configured binary path, then retry.                                                       |
+| `cli-incompatible`    | Version or required CLI capability failed verification. Update the installed CLI and retry.                                               |
+| `auth`                | Authentication failed. Run `claude auth login` or `codex login`, then retry.                                                              |
+| `quota`               | Explicit allowance/rate-limit diagnostic. Check account allowance and retry when permitted; preserve the model.                           |
+| `transport`           | Explicit connection or temporary provider-service failure. Check connectivity/service status and retry; preserve the model.               |
 
-Only user-disabled models (`model-disabled`, issue `MODEL_DISABLED`) or identities removed from
-GraphGoblin support (`model-unsupported`, issue `MODEL_NOT_IN_CATALOG`) mean model unavailable.
+Only user-disabled models (`MODEL_DISABLED`) or identities absent from GraphGoblin support
+(`MODEL_NOT_IN_CATALOG`) mean model unavailable.
 A failed catalog fetch is unknown, not removal. An effort or wrong-harness configuration error
 is reported separately. This change adds no retirement, substitution or usage-recovery behavior.
 
@@ -92,19 +92,28 @@ The exec help must advertise `--json`, `--model`, `--sandbox`, `--cd`, `--skip-g
 Each command has a 15-second deadline; neither command includes a prompt. Advertised flags
 establish syntax only; runtime verification still owns model/effort execution truth.
 
-Authoring routes pass an operation-owned memo through all validation passes. Each harness is
-probed once per create/import/save/validate/publish request, including failed probes and multiple
-nodes. Concurrent requests own separate memos; nothing is retained on the container or module.
-Readiness issues use `HARNESS_READINESS_<STATE>` (hyphens become underscores), allow saving a
-draft and block publication. Catalog/configuration issues retain their existing codes.
-`/harness/preflight` exposes `state`; harness checks in `/system/preflight` carry the same state
-alongside the system's `ok`/`warn`/`fail` severity. Web queries retain their existing two-second
-stale interval and focus refresh; an in-flight/error refresh displays checking/unknown.
+Draft create, template-draft create, import and save validate catalog/configuration only: they
+never probe CLI readiness or wait for a provider prerequisite. Readiness cannot reject a draft.
+The editor obtains readiness separately from `/harness/preflight`.
+Explicit validate, publish, preflight and manual API/MCP run admission use an operation-owned memo.
+Each referenced harness is probed once per operation, including failures and multiple nodes;
+distinct harnesses are probed concurrently. Concurrent requests own separate memos; nothing is
+retained on the container or module. Run admission pins the checked version and rejects failed
+prerequisites before starting a turn. Readiness issues use `HARNESS_READINESS_<STATE>` (hyphens
+become underscores); catalog/configuration issues retain their existing codes.
+`/harness/preflight` exposes seven server states. `checking` is a web-only request state.
+`authenticated` is absent if login was not checked or could not be established; false requires
+positive signed-out evidence. Claude parses auth-status JSON even on exit 1 (`loggedIn:false`
+or a non-Claude.ai auth method). Connection diagnostics take precedence over incidental auth
+words during no-turn checks. Turn stderr never determines a cause or retry eligibility.
+Harness checks in `/system/preflight` carry state alongside the system's `ok`/`warn`/`fail`
+severity. Web queries retain their existing two-second stale interval and focus refresh;
+an in-flight/error refresh displays checking/unknown. Reload the page for a fresh check.
 
 Process lifetime was measured with installed no-turn commands under the product runners on
 native Windows. No surviving new native process was observed in the recorded before/after
 listings; no orphan-process fix is prescribed. This bounded observation does not prove general
-turn or descendant lifetime. See the [WP-F1 evidence](qa/2026-10-19-wp-f1-readiness.md).
+turn or descendant lifetime. See the [WP-F1 evidence](qa/2026-10-19-wp-f1-readiness/README.md).
 
 ## Codex adapter for 1.0 (Decided)
 

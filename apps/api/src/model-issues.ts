@@ -9,7 +9,7 @@ export async function modelIssues(
   container: Container,
   ownerId: string,
   definition: LoopDefinition,
-  readiness: ReadinessOperation = readinessOperation(container.ports.harnesses),
+  readiness: ReadinessOperation | false = readinessOperation(container.ports.harnesses),
 ): Promise<LoopIssue[]> {
   const catalog = await container.repos.catalog.list();
   const ownerDefaults = await readOwnerDefaults(container.repos.settings, ownerId);
@@ -45,42 +45,49 @@ export async function modelIssues(
       ...(model !== undefined ? { model } : {}),
       ...(effort !== undefined ? { effort } : {}),
     });
-    if (resolution.status === 'ready' || !container.ports.harnesses[harness]) {
+    const selectionIssues: LoopIssue[] = [];
+    if (readiness && (resolution.status === 'ready' || !container.ports.harnesses[harness])) {
       const preflight = await readiness.probe(harness);
       if (preflight.state !== 'ready')
-        issues.push({
+        selectionIssues.push({
           code: 'HARNESS_READINESS_' + preflight.state.toUpperCase().replaceAll('-', '_'),
           severity: 'warning',
           nodeId,
           path: path + '.harness',
           message:
-            preflight.problems.join('; ') || 'Harness readiness is unknown; retry preflight.',
+            preflight.problems.join('; ') || 'Harness readiness is unknown; reload the page.',
         });
     }
     if (resolution.status !== 'ready')
-      issues.push({
+      selectionIssues.push({
         code: resolution.code,
         severity: resolution.status === 'invalid' ? 'error' : 'warning',
         nodeId,
         path: path + '.' + resolution.path,
         message: resolution.message,
       });
+    return selectionIssues;
   }
+  const selections: Promise<LoopIssue[]>[] = [];
   for (const node of definition.nodes) {
     if (node.kind === 'inference')
-      await check(node.config.harness, node.config.model, node.config.effort, node.id, 'config');
+      selections.push(
+        check(node.config.harness, node.config.model, node.config.effort, node.id, 'config'),
+      );
     if (node.kind === 'decision' && node.config.kind === 'llm') {
       const evaluation = node.config;
-      await check(
-        evaluation.harness,
-        evaluation.model.mode === 'explicit' ? evaluation.model.value : undefined,
-        evaluation.effort.mode === 'explicit' ? evaluation.effort.value : undefined,
-        node.id,
-        'config',
+      selections.push(
+        check(
+          evaluation.harness,
+          evaluation.model.mode === 'explicit' ? evaluation.model.value : undefined,
+          evaluation.effort.mode === 'explicit' ? evaluation.effort.value : undefined,
+          node.id,
+          'config',
+        ),
       );
     }
   }
-  return issues;
+  return [...issues, ...(await Promise.all(selections)).flat()];
 }
 export function blocksPublication(issue: LoopIssue): boolean {
   return (

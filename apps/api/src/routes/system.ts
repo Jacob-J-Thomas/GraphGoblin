@@ -55,19 +55,20 @@ export function registerSystemRoutes(app: ApiInstance, container: Container): vo
       },
     },
     async () => {
-      const items: z.infer<typeof PreflightSchema>[] = [];
       const readiness = readinessOperation(container.ports.harnesses);
-      for (const [id, adapter] of Object.entries(container.ports.harnesses)) {
-        if (!adapter) continue;
-        const harness = HarnessIdSchema.parse(id);
-        items.push({ harness, ...(await readiness.probe(harness)) });
-      }
+      const items = await Promise.all(
+        Object.entries(container.ports.harnesses)
+          .filter(([, adapter]) => adapter !== undefined)
+          .map(async ([id]) => {
+            const harness = HarnessIdSchema.parse(id);
+            return { harness, ...(await readiness.probe(harness)) };
+          }),
+      );
       if (items.length === 0)
         items.push({
           harness: 'codex',
           state: 'cli-missing',
           ok: false,
-          authenticated: false,
           problems: ['no harness adapter is configured'],
         });
       return { items };

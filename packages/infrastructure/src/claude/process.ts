@@ -12,6 +12,8 @@ export interface ClaudeProcessRequest {
   signal: AbortSignal;
   timeoutMs: number;
   maxOutputBytes: number;
+  /** Ephemeral diagnostic inference is permitted only for no-turn prerequisite probes. */
+  classifyDiagnostics?: true;
 }
 export interface ClaudeProcessResult {
   exitCode: number | null;
@@ -77,7 +79,9 @@ export const runClaudeProcess = (
         ...(spawnCode ? { spawnCode } : {}),
         ...(stdinFailed ? { stdinFailed } : {}),
         ...(callbackError ? { callbackError } : {}),
-        ...(exitCode !== 0 && diagnostic ? { failureState: cliFailureState(diagnostic) } : {}),
+        ...(request.classifyDiagnostics && exitCode !== 0 && diagnostic
+          ? { failureState: cliFailureState(diagnostic) }
+          : {}),
       });
     };
     const kill = (): void => {
@@ -102,7 +106,8 @@ export const runClaudeProcess = (
       try {
         // Keep only stderr in this ephemeral window. Turn stdout can contain authored/model text.
         // No-turn probe stdout is classified separately by the harness inspection path.
-        if (!output) diagnostic = (diagnostic + chunk.toString('utf8')).slice(-8192);
+        if (!output && request.classifyDiagnostics)
+          diagnostic = (diagnostic + chunk.toString('utf8')).slice(-8192);
         if (output) {
           stdout += chunk.toString('utf8');
           onStdout?.(chunk);

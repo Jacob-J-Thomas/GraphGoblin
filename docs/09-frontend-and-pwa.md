@@ -625,4 +625,17 @@ Every use creates an owner-scoped ordinary loop with an independent definition. 
 
 ### Claude readiness and saved selections
 
-Settings separates owner catalog enablement from installed-harness readiness. Opus 5.5 and Fable 5.1 have ordinary enable switches; an enabled row with failed preflight says "Enabled in catalog; Claude harness not ready". Preflight shows login independently of CLI version/capability failures. The inference picker keeps a saved model from another harness as a disabled, labelled option, including while preflight fails, and directs the user to a valid model or inherited default. Switching an inference node to Claude resets its policy to `read-only`/`never`, avoiding Codex's unsupported `workspace-write` default; full access remains an explicit choice. Other authored harness options are preserved, with unsupported Claude settings reported for correction. Models retain exact identity and effort checks (ADR-0029).
+Settings separates owner catalog enablement from prerequisite health. The seven server states are
+`unknown`, `ready`, `cli-missing`, `cli-incompatible`, `auth`, `quota` and `transport`; `checking`
+is client-only while a request is pending. Pending/failed refreshes override cached success.
+Adapter model listings do not establish account access, and failed catalog fetches do not prove
+removal. Saved selections remain visible; `MODEL_DISABLED` and `MODEL_NOT_IN_CATALOG` are catalog
+facts independent of auth, quota or transport failures. Omitted `authenticated` means login could
+not be established. Reload the page for a fresh check.
+
+Draft create, import and 600 ms idle autosaves never probe readiness. The editor fetches it
+independently. Explicit validate, publish and manual API/MCP run admission probe once per harness
+per operation, concurrently across harnesses. These failures preserve authored model/effort values.
+Switching an inference node to Claude resets its policy to `read-only`/`never`; full access remains
+explicit. Other authored harness options remain, with unsupported settings reported for correction.
+Models retain exact identity and effort checks (ADR-0029).

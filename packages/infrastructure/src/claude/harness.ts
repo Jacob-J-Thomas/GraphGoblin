@@ -66,7 +66,7 @@ function failureState(error: unknown): Exclude<HarnessReadinessState, 'ready'> {
       return 'unknown';
   }
 }
-function checkOutcome(result: ClaudeProcessResult, signal: AbortSignal): void {
+function checkOutcome(result: ClaudeProcessResult, signal: AbortSignal, probe = false): void {
   if (result.terminationUnconfirmed)
     throw new ClaudeHarnessError(
       'HARNESS_TERMINATION_UNCONFIRMED',
@@ -86,7 +86,7 @@ function checkOutcome(result: ClaudeProcessResult, signal: AbortSignal): void {
       'Claude process output exceeded the configured limit',
     );
   if (result.callbackError) throw result.callbackError;
-  if (result.exitCode !== 0 && result.failureState && result.failureState !== 'unknown') {
+  if (probe && result.exitCode !== 0 && result.failureState && result.failureState !== 'unknown') {
     const codes: Partial<
       Record<HarnessReadinessState, ConstructorParameters<typeof ClaudeHarnessError>[0]>
     > = {
@@ -145,9 +145,8 @@ export class ClaudeHarness implements HarnessPort {
     failures: unknown[];
   }> {
     const facts: ClaudeHarnessPreflight = {
-      state: 'checking',
+      state: 'unknown',
       ok: false,
-      authenticated: false,
       problems: [],
       authMethod: null,
       models: claudeModelCapabilities(),
@@ -157,7 +156,7 @@ export class ClaudeHarness implements HarnessPort {
     // Unsupported platforms cannot execute this native Windows adapter.
     facts.supportedPolicies = this.supportedPolicies();
     const cwd = await mkdtemp(join(tmpdir(), 'gg-claude-probe-'));
-    const run = async (args: string[]): Promise<string> => {
+    const run = async (args: string[], authStatus = false): Promise<string> => {
       if (signal.aborted) throw abortError();
       const result = await this.runner({
         binary: this.binary,
@@ -167,11 +166,36 @@ export class ClaudeHarness implements HarnessPort {
         signal,
         timeoutMs: this.options.preflightTimeoutMs ?? 15000,
         maxOutputBytes: 128 * 1024,
+        classifyDiagnostics: true,
       });
+      // Signed-out status is structured stdout with exit 1 and no stderr on real Claude.
+      // Parse it before generic exit handling, but keep timeout/start/termination failures authoritative.
+      let auth: unknown;
+      if (authStatus) {
+        try {
+          auth = JSON.parse(result.stdout);
+        } catch {
+          /* No structured status. */
+        }
+      }
+      if (
+        typeof auth === 'object' &&
+        auth !== null &&
+        (('loggedIn' in auth && auth.loggedIn === false) ||
+          ('authMethod' in auth && auth.authMethod !== 'claude.ai'))
+      ) {
+        checkOutcome({ ...result, exitCode: 0 }, signal, true);
+        facts.authenticated = false;
+        throw new ClaudeHarnessError(
+          'HARNESS_NOT_AUTHENTICATED',
+          'Claude account login is required; run claude auth login',
+        );
+      }
       // This path runs version/help/auth only; stdout cannot be a model response.
       checkOutcome(
         { ...result, failureState: result.failureState ?? cliFailureState(result.stdout) },
         signal,
+        true,
       );
       return result.stdout;
     };
@@ -198,7 +222,7 @@ export class ClaudeHarness implements HarnessPort {
     }
     // Login is a separate fact, even when the CLI version or policy flags are unsupported.
     try {
-      const auth = await run([...SUPPRESSION_ARGS, 'auth', 'status', '--json']);
+      const auth = await run([...SUPPRESSION_ARGS, 'auth', 'status', '--json'], true);
       facts.authMethod = authCategory(auth);
       facts.authenticated = facts.authMethod === 'claude.ai';
       if (!facts.authenticated)
@@ -207,6 +231,7 @@ export class ClaudeHarness implements HarnessPort {
           'Claude account login is required; run claude auth login',
         );
     } catch (error) {
+      if (failureState(error) === 'auth') facts.authenticated = false;
       failures.push(error);
     }
     try {

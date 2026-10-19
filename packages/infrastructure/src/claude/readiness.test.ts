@@ -1,7 +1,8 @@
+import { mkdtemp } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import { HarnessReadinessStateSchema } from '@graphgoblin/contracts';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { ClaudeHarness } from './harness.js';
@@ -12,6 +13,7 @@ describe('Claude no-turn executable boundary', () => {
     ['ready', 'ready'],
     ['old', 'cli-incompatible'],
     ['missing-model', 'cli-incompatible'],
+    ['missing-effort', 'cli-incompatible'],
     ['auth', 'auth'],
     ['quota', 'quota'],
     ['transport', 'transport'],
@@ -49,7 +51,11 @@ it('probes the actual installed native Claude without a model turn', async (cont
     return;
   }
   const result = await new ClaudeHarness({ binary }).preflight();
-  expect(HarnessReadinessStateSchema.safeParse(result.state).success).toBe(true);
+  if (result.state === 'auth') {
+    context.skip('Installed Claude has no accessible login');
+    return;
+  }
+  expect(result).toMatchObject({ state: 'ready', ok: true, authenticated: true });
   expect(result.version).toMatch(/^\d+\.\d+\.\d+$/);
 }, 60000);
 
@@ -61,3 +67,17 @@ it('reports a missing Claude executable as cli-missing', async () => {
     }).preflight(),
   ).toMatchObject({ state: 'cli-missing', ok: false });
 });
+
+it('classifies a real installed signed-out Claude in a disposable home as auth', async (context) => {
+  const binary = join(homedir(), '.local', 'bin', 'claude.exe');
+  if (process.platform !== 'win32' || !existsSync(binary)) {
+    context.skip('Native Windows Claude binary missing');
+    return;
+  }
+  const home = await mkdtemp(join(tmpdir(), 'gg-claude-signed-out-'));
+  const result = await new ClaudeHarness({
+    binary,
+    env: { ...process.env, USERPROFILE: home, HOME: home },
+  }).preflight();
+  expect(result).toMatchObject({ state: 'auth', ok: false, authenticated: false });
+}, 60000);

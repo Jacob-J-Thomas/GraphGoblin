@@ -826,3 +826,17 @@ describe('Claude native structured repair through the engine', () => {
     },
   );
 });
+
+it.each(['auth', 'quota', 'transport'] as const)(
+  'does not infer a real turn failure from %s stderr classification',
+  async (failureState) => {
+    const { harness } = fixture({ exit: { exitCode: 1, failureState } });
+    const session = harness.start(request, new AbortController().signal);
+    const events = drain(session.events);
+    await expect(session.result).rejects.toMatchObject({
+      code: 'HARNESS_TURN_FAILED',
+      retriable: false,
+    });
+    await events;
+  },
+);

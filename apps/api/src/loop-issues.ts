@@ -11,7 +11,7 @@ export async function loopPublicationIssues(
   ownerId: string,
   definition: LoopDefinition,
   selfId?: string,
-  readiness: ReadinessOperation = readinessOperation(container.ports.harnesses),
+  readiness: ReadinessOperation | false = readinessOperation(container.ports.harnesses),
 ): Promise<LoopIssue[]> {
   const { loops } = container.repos;
   const issues: ValidationIssue[] = [];

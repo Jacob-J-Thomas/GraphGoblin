@@ -443,7 +443,7 @@ describe('preflight', () => {
     expect(await harness.preflight()).toMatchObject({
       state: 'unknown',
       ok: false,
-      problems: [expect.stringMatching(/retry preflight/)],
+      problems: [expect.stringMatching(/reload the page/)],
     });
   });
 
@@ -453,7 +453,8 @@ describe('preflight', () => {
       cliRunner: runner({ '--version': { code: null, output: '', spawnError: 'spawn ENOENT' } }),
     });
     const result = await harness.preflight();
-    expect(result).toMatchObject({ state: 'cli-missing', ok: false, authenticated: false });
+    expect(result).toMatchObject({ state: 'cli-missing', ok: false });
+    expect(result).not.toHaveProperty('authenticated');
     const failing = new CodexHarness({
       codexBinary: 'codex.mjs',
       cliRunner: runner({ '--version': { code: 2, output: '' } }),
@@ -470,7 +471,6 @@ describe('preflight', () => {
     expect(await harness.preflight()).toEqual({
       state: 'unknown',
       ok: false,
-      authenticated: false,
       problems: [expect.stringMatching(/could not be confirmed/)],
     });
   });

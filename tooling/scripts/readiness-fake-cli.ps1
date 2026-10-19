@@ -1,4 +1,5 @@
-﻿param(
+﻿# Owner-QA tooling: Windows PowerShell 5.1 only (powershell.exe, not pwsh).
+param(
   [Parameter(Mandatory = $true)][string]$Directory,
   [Parameter(Mandatory = $true)][ValidateSet('claude', 'codex')][string]$Harness,
   [ValidateSet('ready', 'old', 'missing-model', 'missing-effort', 'hang', 'auth', 'quota', 'transport', 'unknown')][string]$Scenario = 'ready'

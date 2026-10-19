@@ -105,7 +105,7 @@ describe('bounded native transport failure outcomes', () => {
 it.each(['stdout', 'stderr'] as const)(
   'classifies %s without mining model/turn content',
   async (stream) => {
-    const result = runClaudeProcess(request());
+    const result = runClaudeProcess({ ...request(), classifyDiagnostics: true });
     child[stream]?.emit(
       'data',
       Buffer.from(
@@ -120,3 +120,11 @@ it.each(['stdout', 'stderr'] as const)(
     expect(JSON.stringify(await result)).not.toContain('PRIVATE_BODY');
   },
 );
+
+it('does not infer turn causes from stderr', async () => {
+  const result = runClaudeProcess(request());
+  child.stderr?.emit('data', Buffer.from('quota network authentication PRIVATE_BODY'));
+  child.emit('close', 1);
+  expect(await result).not.toHaveProperty('failureState');
+  expect(JSON.stringify(await result)).not.toContain('PRIVATE_BODY');
+});

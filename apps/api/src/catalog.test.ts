@@ -362,11 +362,13 @@ describe('uniform strict evaluator admission', () => {
         payload: { definition },
       });
       expect(created.statusCode).toBe(201);
-      expect(created.json().issues).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ code, severity: 'warning', nodeId: 'model-node' }),
-        ]),
-      );
+      if (unavailable === 'disabled model')
+        expect(created.json().issues).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ code, severity: 'warning', nodeId: 'model-node' }),
+          ]),
+        );
+      else expect(created.json().issues).toEqual([]);
       const id = created.json<{ loop: { id: string } }>().loop.id;
       const validated = await t.app.inject({
         method: 'POST',
@@ -375,6 +377,7 @@ describe('uniform strict evaluator admission', () => {
       });
       expect(validated.statusCode).toBe(200);
       expect(validated.json().publishable).toBe(false);
+      expect(validated.body).toContain(code);
       expect((await t.app.inject({ method: 'POST', url: `/loops/${id}/publish` })).statusCode).toBe(
         422,
       );
@@ -394,7 +397,6 @@ describe('uniform strict evaluator admission', () => {
     expect(created.json().errors).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ code: 'MODEL_NOT_IN_CATALOG', severity: 'error' }),
-        expect.objectContaining({ code: 'HARNESS_READINESS_CLI_MISSING', severity: 'warning' }),
       ]),
     );
     const baseId = await t.publishLoop(minimalLoop());

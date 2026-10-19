@@ -127,14 +127,37 @@ async function inspectCli(
     return { output: result.output };
   };
   const versionRun = await execute(['--version']);
-  if (versionRun.failure) return versionRun.failure;
-  const version = /(?:^|\s)(\d+\.\d+\.\d+)(?:\s|$)/.exec(versionRun.output)?.[1];
+  if (versionRun.failure)
+    return versionRun.failure.state === 'cli-incompatible'
+      ? {
+          ...versionRun.failure,
+          problems: [
+            'Codex CLI --version syntax failed. Update the installed CLI and reload the page.',
+          ],
+        }
+      : versionRun.failure;
+  const version = /(?:^|\s)(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?)(?=\s|$)/.exec(
+    versionRun.output,
+  )?.[1];
   // 0.160.0 is the SDK baseline; newer binaries must also advertise the SDK's flags.
-  const parts = version?.split('.').map(Number);
-  if (!parts || (parts[0] === 0 && parts[1]! < 160))
-    return { ...readinessFailure('codex', 'cli-incompatible'), ...(version ? { version } : {}) };
+  const parts = version?.split(/[.+-]/).slice(0, 3).map(Number);
+  const incompatible = (detail: string): HarnessPreflight => ({
+    ...readinessFailure('codex', 'cli-incompatible'),
+    ...(version ? { version } : {}),
+    problems: [
+      `Codex CLI ${version ?? 'unknown version'}: ${detail}. Update the installed CLI and reload the page.`,
+    ],
+  });
+  if (!parts)
+    return incompatible(
+      'could not read the numeric version from --version; requires 0.160.0 or newer',
+    );
+  if (parts[0] === 0 && parts[1]! < 160) return incompatible('requires version 0.160.0 or newer');
   const help = await execute(['exec', '--help']);
-  if (help.failure) return { ...help.failure, version };
+  if (help.failure)
+    return help.failure.state === 'cli-incompatible'
+      ? incompatible('required exec --help syntax failed')
+      : { ...help.failure, version };
   const flags = help.output.split(/\s+/).map((token) => token.replace(/,$/, ''));
   const required = [
     '--json',
@@ -145,16 +168,23 @@ async function inspectCli(
     '--output-schema',
     '--config',
   ];
-  if (required.some((flag) => !flags.includes(flag)))
-    return { ...readinessFailure('codex', 'cli-incompatible'), version };
+  const missing = required.filter((flag) => !flags.includes(flag));
+  if (missing.length) return incompatible('exec --help is missing ' + missing.join(', '));
   // --help terminates parsing without executing a resumed turn or creating a session.
   const resume = await execute(['exec', 'resume', '--help']);
-  if (resume.failure) return { ...resume.failure, version };
-  if (!/--json\b/.test(resume.output))
-    return { ...readinessFailure('codex', 'cli-incompatible'), version };
+  if (resume.failure)
+    return resume.failure.state === 'cli-incompatible'
+      ? incompatible('required exec resume --help syntax failed')
+      : { ...resume.failure, version };
+  if (!/--json\b/.test(resume.output)) return incompatible('exec resume --help is missing --json');
   const login = await execute(['login', 'status']);
-  if (login.failure) return { ...login.failure, version };
+  if (login.failure)
+    return {
+      ...login.failure,
+      ...(login.failure.state === 'auth' ? { authenticated: false } : {}),
+      version,
+    };
   if (!/logged in/i.test(login.output) || /not logged in/i.test(login.output))
-    return { ...readinessFailure('codex', 'auth'), version };
+    return { ...readinessFailure('codex', 'auth'), authenticated: false, version };
   return { state: 'ready', ok: true, version, authenticated: true, problems: [] };
 }
