@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { HarnessDefaults, LoopDefinitionInput, RunRecord } from '@graphgoblin/contracts';
 import { CURRENT_DEFINITION_FORMAT, LoopDefinitionSchema } from '@graphgoblin/contracts';
+import { minimalLoop } from '@graphgoblin/contracts/testing';
 import { RunManager } from './run-manager.js';
 import { pinLabel } from './definition-pin.js';
 import { createTestEngine, type TestEngine } from './testing/scenario.js';
@@ -323,6 +324,87 @@ describe('children keep their own pins', () => {
     await answer(engine, later);
     const [fresh] = await engine.ports.runs.listChildren(later.id);
     expect(fresh?.pinned).toMatchObject({ version: 3, defaults: { owner: sol() } });
+  });
+});
+
+describe('triggered starts pin like manual ones', () => {
+  it('pins a webhook admission at claim time and a poll item at admission', async () => {
+    let owner: HarnessDefaults = luna;
+    const engine = await createTestEngine({ ownerDefaults: () => Promise.resolve(owner) });
+    const hook = minimalLoop();
+    hook.name = 'Hooked';
+    hook.nodes[0]!.config = { type: 'webhook' };
+    const hooked = engine.publish(hook);
+    // The receipt's admission is retried later; it keeps the pin it was claimed with.
+    const create = vi
+      .spyOn(engine.ports.admission, 'create')
+      .mockRejectedValueOnce(new Error('later'));
+    const now = engine.ports.clock.now().toISOString();
+    const pending = await engine.manager.receiveWebhook(
+      {
+        id: engine.ports.ids.next(),
+        ownerId: 'local',
+        loopId: hooked.loopId,
+        triggerNodeId: 'start',
+        contentHash: 'b'.repeat(64),
+        inbound: {
+          id: engine.ports.ids.next(),
+          ownerId: 'local',
+          type: 'webhook',
+          payload: { n: 1 },
+          source: 'webhook:endpoint',
+          receivedAt: now,
+          runIds: [],
+        },
+      },
+      {
+        ownerId: 'local',
+        loopId: hooked.loopId,
+        versionId: hooked.id,
+        triggerNodeId: 'start',
+        triggerKind: 'webhook',
+        source: 'webhook',
+        payload: { n: 1 },
+      },
+    );
+    await engine.manager.waitForWebhookRecovery();
+    expect(create).toHaveBeenCalledOnce();
+    owner = sol();
+    engine.ports.clock.advance(10_000);
+    await engine.manager.retryPendingWebhooks();
+    await engine.manager.waitForIdle();
+    const [webhookRun] = [...engine.ports.runs.runs.values()];
+    expect(pending.receipt.intent?.run.pinned).toEqual(webhookRun?.pinned);
+    expect(webhookRun).toMatchObject({
+      status: 'succeeded',
+      versionId: hooked.id,
+      pinned: { source: 'published', label: 'Hooked v1', defaults: { owner: luna } },
+    });
+
+    const poll = minimalLoop();
+    poll.name = 'Polled';
+    poll.nodes[0]!.config = {
+      type: 'poll',
+      intervalSeconds: 5,
+      probe: { kind: 'script', command: 'fake' },
+      fireWhen: 'true',
+      items: { select: 'probe.json', dedupeKey: 'item.key' },
+    };
+    const polled = engine.publish(poll);
+    const item = await engine.manager.startPollItem({
+      ownerId: 'local',
+      loopId: polled.loopId,
+      versionId: polled.id,
+      triggerNodeId: 'start',
+      triggerKind: 'poll',
+      source: 'poll',
+      dedupeKey: 'one',
+    });
+    expect(item?.pinned).toMatchObject({ label: 'Polled v1', defaults: { owner: sol() } });
+    expect(engine.events(item!.id)[0]).toMatchObject({
+      versionId: polled.id,
+      pinned: item!.pinned,
+    });
   });
 });
 
