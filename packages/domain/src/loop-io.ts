@@ -16,7 +16,7 @@ export class LoopImportError extends DomainError {
 
 /**
  * The document is a loop export or definition in a format this build does not read. Older
- * formats are refused, never converted (ADR-0040); `details` names the found and required format.
+ * formats are refused, never converted (ADR-0042); `details` names the found and required format.
  */
 export class LoopFormatUnsupportedError extends DomainError {
   constructor(

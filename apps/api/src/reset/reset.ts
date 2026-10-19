@@ -9,7 +9,7 @@ import { readStoreFacts, type StoreFacts } from './store-facts.js';
 import { isInside, listEntry, removeEntry, statEntry, type TreeEntry } from './tree.js';
 
 /**
- * `graphgoblin-api --reset` (ADR-0040): the explicit fresh start for a pre-1.0 store this build
+ * `graphgoblin-api --reset` (ADR-0042): the explicit fresh start for a pre-1.0 store this build
  * cannot open. Without `--yes` it only lists what a reset would remove (a dry run, which reads and
  * changes nothing). With `--yes --data-dir <path>` naming the configured data directory it takes
  * the data-directory lock, lists the same manifest and removes exactly that: the database and its

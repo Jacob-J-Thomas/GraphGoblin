@@ -2,7 +2,7 @@ import type { APIRequestContext, Page } from '@playwright/test';
 import { approvalLoop, expect, test } from './fixtures.js';
 
 /**
- * A device draft an older build left in this browser (#266, ADR-0040): the editor refuses it
+ * A device draft an older build left in this browser (#266, ADR-0042): the editor refuses it
  * clearly, never converts or saves it, and only an explicit discard of that one copy opens the
  * editor again.
  */

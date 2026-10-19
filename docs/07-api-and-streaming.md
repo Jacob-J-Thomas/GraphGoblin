@@ -89,7 +89,7 @@ with its field path, regardless of its value.
 declares another format (an export's `formatVersion`, its loop's `schemaVersion`, or a
 bare definition's `schemaVersion`) is refused with `400 LOOP_FORMAT_UNSUPPORTED`,
 `errors: { foundFormat, requiredFormat }` and a detail saying it is not converted;
-nothing is saved ([ADR-0040](decisions/ADR-0040-explicit-resets-replace-conversion.md),
+nothing is saved ([ADR-0042](decisions/ADR-0042-explicit-resets-replace-conversion.md),
 [old exports](guide/08-offline-upgrade.md#old-exports)). Other envelope errors retain
 paths such as `loop.settings.defaults.harness`, `formatVersion` or `exportedAt` under
 `LOOP_IMPORT_ERROR`. Ordinary bodies use `VALIDATION_FAILED`.

@@ -3,7 +3,7 @@ import { lstat, readdir, rmdir, unlink } from 'node:fs/promises';
 import { dirname, isAbsolute, join, relative, sep } from 'node:path';
 
 /**
- * Filesystem entries of a reset, read and removed without following links (ADR-0040). A symbolic
+ * Filesystem entries of a reset, read and removed without following links (ADR-0042). A symbolic
  * link or Windows junction is an entry of its own: listing never descends into it and removal
  * removes the link, never its target.
  */

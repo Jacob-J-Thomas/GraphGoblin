@@ -19,7 +19,7 @@ function exportCopy(loopId: string, copy: DeviceCopy, what: string): void {
 type Discard = (copy: DeviceCopy) => Promise<void>;
 
 /**
- * A device copy written by an older build (ADR-0040). It is never converted, loaded or
+ * A device copy written by an older build (ADR-0042). It is never converted, loaded or
  * overwritten; the notice says which copy of which loop a discard removes, and that only this
  * browser's copy goes.
  */

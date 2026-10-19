@@ -19,7 +19,7 @@ import {
 } from './readiness.js';
 
 /**
- * The current-format store contract (ADR-0040): an empty store is initialised in one transaction;
+ * The current-format store contract (ADR-0042): an empty store is initialised in one transaction;
  * a store marked with the current format and complete structure is reopened; anything else is
  * refused before any write. There is no conversion: an operator resets an unsupported store
  * explicitly (`--reset` on the API binary) or repairs it by hand.

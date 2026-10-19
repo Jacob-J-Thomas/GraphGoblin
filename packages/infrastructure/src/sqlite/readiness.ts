@@ -24,7 +24,7 @@ export async function rows(
 
 export const SHIPPED_MIGRATIONS = fileURLToPath(new URL('../../drizzle', import.meta.url));
 // The shipped migration that completes the current format's structure. Changing the format is an
-// explicit decision that moves this baseline; older stores are reset, not converted (ADR-0040).
+// explicit decision that moves this baseline; older stores are reset, not converted (ADR-0042).
 export const FORMAT_BASELINES = {
   4: '0013_trigger_configuration',
 } satisfies Record<typeof CURRENT_DEFINITION_FORMAT, string>;

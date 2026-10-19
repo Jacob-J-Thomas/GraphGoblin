@@ -1,4 +1,4 @@
-// Disposable end-to-end check of the explicit reset (ADR-0040) through the built API binary:
+// Disposable end-to-end check of the explicit reset (ADR-0042) through the built API binary:
 // startup refuses an older store and names the reset; the dry run changes nothing; a confirmation
 // naming another directory is refused; the confirmed reset removes exactly its manifest without
 // following links; the next start initializes a fresh store. Run `pnpm build` first, then

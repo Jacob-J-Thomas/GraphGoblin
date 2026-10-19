@@ -3,7 +3,7 @@
 Stored trigger configs use `type`: `manual`, `cron`, `webhook`, `event`, or `poll`.
 Webhooks use one strict `type: 'webhook'` object with nested authentication, body and event-type configuration. Config parsers reject
 `subtype`; stores and exports that still use it are in an older format and are refused,
-not converted ([ADR-0040](decisions/ADR-0040-explicit-resets-replace-conversion.md)).
+not converted ([ADR-0042](decisions/ADR-0042-explicit-resets-replace-conversion.md)).
 The invocation envelope continues to record the source as `trigger.kind`.
 
 ## Trigger envelope (Decided)
@@ -105,7 +105,7 @@ Explicit keys remain consumed permanently in owner/loop/trigger-node scope acros
 
 SQL `0013_trigger_configuration` stores `auth_type`, `signature_message`, `signature_header`, `secret_ref` and `window_seconds`, preserving endpoint identities/tokens and both indexes. The copy canonicalizes valid mixed-case signing headers to lowercase; startup also validates stored headers as lowercase RFC tokens and refuses invalid names before writes. CHECKs enforce null signing fields for None, header/secret plus null window for body HMAC, and an integer 1-86,400 timestamp window. Body/extraction/key settings stay in the pinned definition. The content-hash receipt index is non-unique. Unreleased format 4 requires the 0013 structure; older stores are refused before automatic migration/recovery.
 
-The format-4 cutover converted the old signing recipes once to nested authentication with lowercase header names ([ADR-0037](decisions/ADR-0037-webhook-acknowledgement.md)); that converter is retired, and older definitions are refused, not converted ([ADR-0040](decisions/ADR-0040-explicit-resets-replace-conversion.md)).
+The format-4 cutover converted the old signing recipes once to nested authentication with lowercase header names ([ADR-0037](decisions/ADR-0037-webhook-acknowledgement.md)); that converter is retired, and older definitions are refused, not converted ([ADR-0042](decisions/ADR-0042-explicit-resets-replace-conversion.md)).
 
 ### Editable GitHub webhook recipes (#168 T2)
 
@@ -135,7 +135,7 @@ a warning that it may ignore poll results.
 
 ### Reviewed stored filters (#168 T6)
 
-Current Webhook/Event contracts reject `filter`, with no dual reader. Decisions, classifiers and scripts own payload policy. The format-4 cutover converted stored filters once into reviewed downstream graphs (an expression decision, a restore of the trigger output and a quiet Success exit for ignored input; [ADR-0038](decisions/ADR-0038-downstream-payload-checks.md)). That converter is retired: a definition that still carries a filter is in an older format and is refused, not converted ([ADR-0040](decisions/ADR-0040-explicit-resets-replace-conversion.md)).
+Current Webhook/Event contracts reject `filter`, with no dual reader. Decisions, classifiers and scripts own payload policy. The format-4 cutover converted stored filters once into reviewed downstream graphs (an expression decision, a restore of the trigger output and a quiet Success exit for ignored input; [ADR-0038](decisions/ADR-0038-downstream-payload-checks.md)). That converter is retired: a definition that still carries a filter is in an older format and is refused, not converted ([ADR-0042](decisions/ADR-0042-explicit-resets-replace-conversion.md)).
 
 ## Inbound event bus (Decided, shipped in M6)
 

@@ -21,7 +21,7 @@ The Codex plugin assembly tests use a fresh temporary directory per test and ret
 
 The infrastructure HTTP tests use a local server with an unanswered route for timeout checks and destroy all accepted sockets in teardown. They assert `TimeoutError` and use a pre-aborted caller signal to check `AbortError`, avoiding races between response and abort timers. Ordinary probe and webhook requests allow 20 s for machine load; the timeout test also has a 20 s test budget.
 
-Historical conversion tests, their frozen `V2*`/`V3*` contracts and the offline upgrade acceptance were retired on 2026-10-18 with the converters ([ADR-0040](decisions/ADR-0040-explicit-resets-replace-conversion.md)); the explicit reset is checked end to end by `pnpm test:reset` after `pnpm build`.
+Historical conversion tests, their frozen `V2*`/`V3*` contracts and the offline upgrade acceptance were retired on 2026-10-18 with the converters ([ADR-0042](decisions/ADR-0042-explicit-resets-replace-conversion.md)); the explicit reset is checked end to end by `pnpm test:reset` after `pnpm build`.
 
 ## Fake harness (Decided)
 

@@ -1,4 +1,4 @@
-# ADR-0040: Explicit resets replace pre-1.0 conversion
+# ADR-0042: Explicit resets replace pre-1.0 conversion
 
 - Status: Accepted
 - Date: 2026-10-18

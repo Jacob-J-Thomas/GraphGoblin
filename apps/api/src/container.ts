@@ -162,7 +162,7 @@ export async function createContainer(
     // GG_DB_URL may point outside the data directory; create the database file's directory too.
     const dbFile = databaseFilePath(config.dbUrl);
     // An unsupported store stops startup with the data directory, the found and required formats
-    // and the explicit reset command; nothing is converted or removed (ADR-0040).
+    // and the explicit reset command; nothing is converted or removed (ADR-0042).
     const refuseStore = explainStoreRefusal({
       dataDir: config.dataDir,
       ...(dbFile ? { databaseFile: dbFile } : {}),

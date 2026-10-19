@@ -46,7 +46,7 @@ function untouched(initial: EditorState | undefined, state: EditorState): boolea
  * alone keeps the editor usable.
  *
  * A device copy in another format (written by an older build) is never converted, loaded or
- * overwritten (ADR-0040): it is listed as unsupported with an explicit discard. While one is held
+ * overwritten (ADR-0042): it is listed as unsupported with an explicit discard. While one is held
  * under the active or set-aside key, editing and device writes wait for that discard.
  */
 export function useLoadEditor(loopId: string) {

@@ -20,7 +20,7 @@ export interface LocalDraft {
 
 /**
  * Whether a stored device copy is in the current definition format. A copy written by an older
- * build is unsupported: it is shown with an explicit discard and never converted (ADR-0040).
+ * build is unsupported: it is shown with an explicit discard and never converted (ADR-0042).
  */
 export function isCurrentDeviceDraft(draft: LocalDraft): boolean {
   // Stored records are external data: an older build's record may lack any definition at all.

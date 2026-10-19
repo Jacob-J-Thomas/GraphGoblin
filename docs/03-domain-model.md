@@ -69,7 +69,7 @@ An edge's `ui.route` is canvas layout, like a node's `ui`: the positions of the 
 
 Trigger nodes store `config.type`: `manual`, `cron`, `webhook`, `event`, or `poll`.
 Both webhook signing variants use `type: 'webhook'`. Current configs and exports
-reject `subtype`; exports in an older format are refused, not converted (ADR-0040).
+reject `subtype`; exports in an older format are refused, not converted (ADR-0042).
 
 Validation rules enforced by `domain` before a version can be published:
 

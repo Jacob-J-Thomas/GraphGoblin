@@ -320,7 +320,7 @@ work remains available, or the editor explains that no definition is available.
 
 A device copy written by an older build (its definition's `schemaVersion` is not the
 current format, or it has no definition) is never converted, loaded into the editor or
-overwritten ([ADR-0040](decisions/ADR-0040-explicit-resets-replace-conversion.md)).
+overwritten ([ADR-0042](decisions/ADR-0042-explicit-resets-replace-conversion.md)).
 `useLoadEditor` lists it as **Unsupported device draft (format N)**, naming the loop,
 which copy it is (an unsaved draft, a set-aside draft or an archived copy) and when it
 was saved. While such a copy sits under the active or set-aside key, the editor shows only

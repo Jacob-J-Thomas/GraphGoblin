@@ -175,13 +175,13 @@ Templates are catalogue assets copied into ordinary loops, never runnable instan
 
 `FORMAT_BASELINES[4]` requires `0013_trigger_configuration` in the migration ledger and its resulting structure before any startup writes. Startup refuses older stores, including a format-4 marker at 0011; it never applies this cutover SQL to them. Fresh initialization executes all migrations, ledger entries and the format-4 marker in one transaction.
 
-The format-4 cutover kept ordinary loop versions and drafts and deleted run history, artifact files and configured template instances with their definitions ([ADR-0039](decisions/ADR-0039-format-four-definitions-only-cutover.md)); it converted the owner's store once on 2026-10-18. Its offline tool is retired ([ADR-0040](decisions/ADR-0040-explicit-resets-replace-conversion.md)): an older store is refused and reset explicitly.
+The format-4 cutover kept ordinary loop versions and drafts and deleted run history, artifact files and configured template instances with their definitions ([ADR-0039](decisions/ADR-0039-format-four-definitions-only-cutover.md)); it converted the owner's store once on 2026-10-18. Its offline tool is retired ([ADR-0042](decisions/ADR-0042-explicit-resets-replace-conversion.md)): an older store is refused and reset explicitly.
 
 ## Offline definitions and portable exports
 
 Stores, portable exports and browser device drafts have one format,
 `CURRENT_DEFINITION_FORMAT` (4); nothing older is converted
-([ADR-0040](decisions/ADR-0040-explicit-resets-replace-conversion.md)).
+([ADR-0042](decisions/ADR-0042-explicit-resets-replace-conversion.md)).
 `guardCurrentStore` runs before any startup write: an empty store is initialised, a
 complete current-format store is reopened, and anything else is refused with
 `UnsupportedStoreError` (`STORE_UNSUPPORTED`, carrying `foundFormat`, `requiredFormat`
@@ -306,4 +306,4 @@ An error port makes every loop author responsible for failure handling and sprea
 
 ## Definition conversion from format 3 (retired)
 
-The format-3-to-4 definition rule (`convertDefinitionV3ToV4`, #164 E2), composed with the frozen format-1 and format-2 stages and the offline store tool, converted the owner's store once on 2026-10-18 (#280). It was removed on 2026-10-18 under [ADR-0040](decisions/ADR-0040-explicit-resets-replace-conversion.md); its rules remain in [ADR-0035](decisions/ADR-0035-evaluator-specific-decisions.md), [ADR-0036](decisions/ADR-0036-decision-gates-terminal-exits.md), [ADR-0038](decisions/ADR-0038-downstream-payload-checks.md), [ADR-0039](decisions/ADR-0039-format-four-definitions-only-cutover.md) and the git history before that change.
+The format-3-to-4 definition rule (`convertDefinitionV3ToV4`, #164 E2), composed with the frozen format-1 and format-2 stages and the offline store tool, converted the owner's store once on 2026-10-18 (#280). It was removed on 2026-10-18 under [ADR-0042](decisions/ADR-0042-explicit-resets-replace-conversion.md); its rules remain in [ADR-0035](decisions/ADR-0035-evaluator-specific-decisions.md), [ADR-0036](decisions/ADR-0036-decision-gates-terminal-exits.md), [ADR-0038](decisions/ADR-0038-downstream-payload-checks.md), [ADR-0039](decisions/ADR-0039-format-four-definitions-only-cutover.md) and the git history before that change.
