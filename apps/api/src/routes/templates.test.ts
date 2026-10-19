@@ -190,7 +190,9 @@ describe('template API without runtime authority', () => {
       status: 'succeeded',
       result: 'ordinary result',
     });
-    expect(await app.container.repos.runs.listUnfinalized()).toEqual([]);
+    expect(
+      (await app.container.repos.runs.listRecoveryCandidates()).filter((r) => r.terminal),
+    ).toEqual([]);
     expect(app.container.settings).not.toHaveProperty('beforeExecute');
     expect(app.container.settings).not.toHaveProperty('beforeResume');
     expect(app.container.ports.scripts.constructor.name).toBe('ProcessScripts');
@@ -249,7 +251,9 @@ describe('template API without runtime authority', () => {
       status: 'succeeded',
       result: { saved: true },
     });
-    expect(await app.container.repos.runs.listUnfinalized()).toEqual([]);
+    expect(
+      (await app.container.repos.runs.listRecoveryCandidates()).filter((r) => r.terminal),
+    ).toEqual([]);
   });
   it.each(['cancel', 'timeout'] as const)(
     'preserves ordinary script %s and finalization',
@@ -297,7 +301,9 @@ describe('template API without runtime authority', () => {
           ? { status: 'cancelled' }
           : { status: 'failed', failure: { code: 'SCRIPT_TIMEOUT' } },
       );
-      expect(await app.container.repos.runs.listUnfinalized()).toEqual([]);
+      expect(
+        (await app.container.repos.runs.listRecoveryCandidates()).filter((r) => r.terminal),
+      ).toEqual([]);
     },
   );
 });

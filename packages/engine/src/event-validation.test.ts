@@ -2,9 +2,31 @@ import { describe, expect, it } from 'vitest';
 import { RunFailureSchema, WaitSpecSchema, PROGRESS_SUMMARY_MAX } from '@graphgoblin/contracts';
 import { fakeUlid, FIXTURE_TS } from '@graphgoblin/contracts/testing';
 import { boundedFailure, validateGeneratedEvent } from './event-validation.js';
+import { FakeClock, InMemoryEventStore } from './testing/fakes.js';
 
 const base = { runId: fakeUlid('validation'), seq: 1, ts: FIXTURE_TS };
 describe('generated event validation', () => {
+  it('rejects an invalid fake-store batch before changing the log or notifying listeners', async () => {
+    const store = new InMemoryEventStore(new FakeClock());
+    const observed: unknown[] = [];
+    store.subscribe(base.runId, (event) => observed.push(event));
+    await expect(
+      store.append(base.runId, [
+        { type: 'run.cancelled' },
+        {
+          type: 'run.failed',
+          failure: {
+            code: 'INTERNAL_ERROR',
+            message: 'x'.repeat(RunFailureSchema.shape.message.maxLength! + 1),
+            resumable: false,
+          },
+        },
+      ]),
+    ).rejects.toMatchObject({ code: 'EVENT_INVALID' });
+    expect(await store.read(base.runId)).toEqual([]);
+    expect(observed).toEqual([]);
+    expect(await store.append(base.runId, [{ type: 'run.cancelled' }])).toMatchObject([{ seq: 1 }]);
+  });
   it.each(['run.failed', 'run.waiting', 'node.progress'])(
     'validates the exact bound of %s and rejects one character over',
     (type) => {

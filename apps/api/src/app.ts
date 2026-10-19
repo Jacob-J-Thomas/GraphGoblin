@@ -1,4 +1,3 @@
-import { registerRunDiagnosticRoutes } from './routes/run-diagnostics.js';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import Fastify, { type FastifyBaseLogger, type FastifyServerOptions } from 'fastify';
@@ -22,6 +21,7 @@ import { registerClassifierRoutes } from './routes/classifiers.js';
 import { registerSystemRoutes } from './routes/system.js';
 import { registerTriggerRoutes } from './routes/triggers.js';
 import { API_VERSION, type ApiInstance } from './types.js';
+import { registerRunDiagnosticRoutes } from './routes/run-diagnostics.js';
 
 export interface BuildAppOptions {
   /** Fastify logger option; a pino instance for production, `false` in tests. */

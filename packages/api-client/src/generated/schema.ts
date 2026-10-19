@@ -1250,7 +1250,9 @@ export interface paths {
         /** Identify unreadable run history for manual repair or explicit deletion */
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    cursor?: string;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -1270,6 +1272,7 @@ export interface paths {
                                 code: "HISTORY_UNREADABLE";
                                 reason: string;
                             }[];
+                            nextCursor: string | null;
                         };
                     };
                 };

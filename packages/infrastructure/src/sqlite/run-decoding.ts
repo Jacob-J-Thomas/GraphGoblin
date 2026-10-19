@@ -5,25 +5,36 @@ import {
   type RunRecord,
 } from '@graphgoblin/contracts';
 import { UnreadableRunHistoryError } from '@graphgoblin/engine';
-import { getTableColumns, sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import { runs } from './schema.js';
+import { runRecordFromRow, type RunRecordRow } from './run-row.js';
 
 /** Bypass Drizzle's eager JSON decoder so corruption is attributed to a single run. */
 export const rawRunColumns = {
-  ...getTableColumns(runs),
+  id: runs.id,
+  ownerId: runs.ownerId,
+  loopId: runs.loopId,
+  versionId: runs.versionId,
+  parentRunId: runs.parentRunId,
+  invocationId: runs.invocationId,
+  status: runs.status,
+  currentNodeId: runs.currentNodeId,
+  iteration: runs.iteration,
   waiting: sql<string | null>`${runs.waiting}`,
   failure: sql<string | null>`${runs.failure}`,
   result: sql<string | null>`${runs.result}`,
-  initialThread: sql<string>`${runs.initialThread}`,
-  threadSnapshot: sql<string | null>`${runs.threadSnapshot}`,
+  cancelRequestedAt: runs.cancelRequestedAt,
+  pausedAt: runs.pausedAt,
+  outcome: runs.outcome,
+  createdAt: runs.createdAt,
+  startedAt: runs.startedAt,
+  finishedAt: runs.finishedAt,
+  lastEventSeq: runs.lastEventSeq,
 };
-type RawRun = {
-  id: string;
+type RawRun = Omit<RunRecordRow, 'waiting' | 'failure' | 'result'> & {
   waiting: string | null;
   failure: string | null;
   result: string | null;
-  initialThread: string;
-  threadSnapshot: string | null;
 };
 
 function decode(runId: string, field: string, value: string): unknown {
@@ -38,19 +49,15 @@ function decode(runId: string, field: string, value: string): unknown {
 }
 
 export function decodeRunRecord(row: RawRun): RunRecord {
-  decodeStoredThread(row.id, 'initial_thread', row.initialThread);
-  if (row.threadSnapshot !== null)
-    decodeStoredThread(row.id, 'thread_snapshot', row.threadSnapshot);
-  const { initialThread: _initial, threadSnapshot: _snapshot, ...columns } = row;
-  const candidate: Record<string, unknown> = Object.fromEntries(
-    Object.entries(columns).filter(
-      ([key, value]) => value !== null && key !== 'threadSnapshotSeq' && key !== 'finalizedAt',
-    ),
-  );
-  for (const field of ['waiting', 'failure', 'result'] as const) {
-    if (row[field] !== null) candidate[field] = decode(row.id, field, row[field]);
-  }
-  const parsed = RunRecordSchema.safeParse(candidate);
+  // Decode raw JSON before the one named-field mapper. Internal columns never become
+  // contract fields, and mapper invariants (including definition pins) stay authoritative.
+  const decoded = {
+    ...row,
+    waiting: row.waiting === null ? null : decode(row.id, 'waiting', row.waiting),
+    failure: row.failure === null ? null : decode(row.id, 'failure', row.failure),
+    result: row.result === null ? null : decode(row.id, 'result', row.result),
+  } as RunRecordRow;
+  const parsed = RunRecordSchema.safeParse(runRecordFromRow(decoded));
   if (!parsed.success)
     throw new UnreadableRunHistoryError(
       row.id,

@@ -139,25 +139,6 @@ Success finishes `succeeded`, Failure finishes `failed`, and Exhausted finishes 
 
 Validation reports `GATE_PASSES_ABOVE_VISIT_CAP` at `config.maxPasses` when a gate's maximum passes exceeds the visit cap. The warning names both numbers and all nodes on repeat-target paths back to that gate (excluding paths after the gate and exit branches). Continued repetition cannot reach the maximum-pass Limit reached output before the safety cap fails the run. This is a warning rather than an error because an earlier non-repeat choice or maximum run time can still finish the run as intended. All admission endpoints return the same warning, and the editor shows it beside Maximum passes.
 
-Every generated durable event is validated against the current `RunEventSchema` before
-persistence. SQLite validates the entire append before inserting any rows, moving the sequence,
-or notifying subscribers; atomic admission already validates its initial event. A rejected
-event fails the run with `EVENT_INVALID`, `resumable: false`. Successful values are never
-silently truncated. Wait prompts and terminal failure messages are bounded at 10,000
-JavaScript string characters (UTF-16 code units); progress summaries have their separate
-2,000-character contract bound. Literal and rendered templates obey the same event bound.
-
-Failure reporting validates its own metadata and bounds oversized messages with a visible
-`[truncated; original N characters]` suffix within that bound. The same valid failure is
-stored in the terminal event and run record. A restart sees the durable failure and does
-not automatically repeat the node that produced the rejected event.
-
-SQLite event reads enforce the current contract. A non-conforming row rejects the whole
-read page with an error naming its run, sequence, and type, without exposing its payload.
-Recovery cannot consume a partial invalid page. JSON pages and SSE replay use this same
-reader; SSE validates replay before sending any frames (07). Existing damaged history requires explicit manual repair or deletion; recovery does not
-repair it automatically.
-
 Every new `decision.made` event contains `{portId, provenance, observation}` and empty diagnostics. Expression and LLM observations have kind `route`, with the declared routeId, nullable confidence and nullable reasoning; classifier observations have kind `classifier` with a typed answer. Boolean observations retain factual history; current decisions use routes or classifier answers. Fresh events pass per-kind validation before append. Diagnostics preserve at most three historical facts; provider error bodies remain excluded.
 
 ### Explicit decision failures (#98)
@@ -269,6 +250,28 @@ Optional `timeoutSeconds` exists on inferencing and script nodes and on wait and
 - Replay also counts `node.started` events, including resumed attempts, in `counters.nodeVisits`. Recovery reconstructs a pending wake before appending its new `run.started`, so an accepted input is still available to the resumed node.
 - The SSE stream (07) is a tail of the same log, which is why reconnecting clients can resume from a sequence number without loss.
 - Large payloads such as transcripts, full probe responses, and return payloads above a size threshold are stored as artifacts on disk, keyed by content hash, and referenced from events.
+
+### Durable event validation
+
+Every generated durable event is validated against the current `RunEventSchema` before
+persistence. SQLite validates the entire append before inserting any rows, moving the sequence,
+or notifying subscribers; atomic admission already validates its initial event. A rejected
+event fails the run with `EVENT_INVALID`, `resumable: false`. Successful values are never
+silently truncated. Wait prompts and terminal failure messages are bounded at 10,000
+JavaScript string characters (UTF-16 code units); progress summaries have their separate
+2,000-character contract bound. Literal and rendered templates obey the same event bound.
+
+Failure reporting validates its own metadata and bounds oversized messages with a visible
+`[truncated; original N characters]` suffix within that bound. The same valid failure is
+stored in the terminal event and run record. A restart sees the durable failure and does
+not automatically repeat the node that produced the rejected event.
+
+SQLite event reads enforce the current contract. A non-conforming row rejects the whole
+read page with an error naming its run, sequence, and type, without exposing its payload.
+Recovery cannot consume a partial invalid page. JSON pages and SSE replay use this same
+reader; SSE validates replay before sending any frames (07). Stored data repairs belong
+to migrations, including `0007` for historical decisions without `skipped`. Existing damaged
+history requires explicit manual repair or deletion; recovery does not repair it automatically.
 
 ## General webhook admission (#168 T4)
 

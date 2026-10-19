@@ -66,6 +66,10 @@ refuses with `HOOK_NOT_READY`. Events lookups share request-local endpoint/versi
 for `EVENT_TYPE_AMBIGUOUS` (400), `EVENT_TYPE_INVALID` (422), bounds and exact recipes. Invocation
 event metadata does not change `POST /events` or publish anything to the bus.
 
+The owner-scoped `GET /runs/diagnostics` endpoint (`runs:read`) identifies unreadable run rows or event history with `HISTORY_UNREADABLE`, a run ID, and a readable reason. It changes no persisted status or history; see the crash-recovery and troubleshooting procedures.
+
+Diagnostics are paged by `nextCursor`; pass it back as `?cursor=...` until null. Each request checks at most 20 runs, two threads per run and 100 events per run (at most 2,000 events total). A long event history resumes within the same run. Ordinary run lists skip unreadable rows while advancing their cursor; diagnostics identifies those rows. A direct unreadable snapshot returns `STORED_RUN_INVALID` with its run ID; unreadable event pages retain `STORED_EVENT_INVALID`. Unrelated loop deletion continues to work; active run references still protect their own and reachable loops.
+
 ## Loop deletion
 
 `DELETE /loops/{id}` commits the loop, versions, runs and their dependent rows together
@@ -374,5 +378,3 @@ Exits are terminal: `{outcome, returns, destinations}`. `outcome` is `success` (
 Success finishes `succeeded`, Failure finishes `failed`, and Exhausted finishes the distinct terminal status `exhausted`. Exhausted means the authored graph gave up further repetition; normally a gate's Limit reached output leads here. It is an outcome, not a resumable node failure. Every outcome evaluates the same return expression and delivers its value unchanged; Exhausted adds no wrapper or implicit last output. Use `outputs.<workNodeId>.value` when returning work output, because the preceding gate replaces `lastOutput`.
 
 JSON event pages, SSE, generated clients and MCP use the same `exhausted` status. SSE and MCP waiting stop on it. `run.finished` carries status/outcome; `run.result` carries the return value, including on Failure or Exhausted. A failed exit outcome has no resumable failure object. See [ADR-0036](decisions/ADR-0036-decision-gates-terminal-exits.md).
-
-The owner-scoped `GET /runs/diagnostics` endpoint (`runs:read`) identifies unreadable run rows or event history with `HISTORY_UNREADABLE`, a run ID, and a readable reason. It changes no persisted status or history; see the crash-recovery and troubleshooting procedures.

@@ -56,6 +56,8 @@ export interface EventStorePort {
    * Append in order, atomically, assigning strictly increasing `seq` per run. Returns the stored
    * events. With `expectedLastSeq`, the append happens only if the run's last `seq` is exactly
    * that (0 for an empty log); otherwise nothing is written and `AppendConflictError` is thrown.
+   * Implementations must validate every complete event against RunEventSchema before persisting
+   * any part of the batch. Invalid generated records throw RunFailureError(EVENT_INVALID).
    */
   append(
     runId: string,
@@ -97,15 +99,17 @@ export interface RunRepository {
   /** Raw identities for per-run recovery; must not decode run JSON while enumerating. */
   listRecoveryCandidates(): Promise<{ id: string; terminal: boolean }[]>;
   listByStatus(statuses: readonly RunStatus[]): Promise<RunRecord[]>;
+  /** Active-use checks need only references; damaged run JSON must not block unrelated loops. */
+  listRunReferences(
+    statuses: readonly RunStatus[],
+  ): Promise<Pick<RunRecord, 'id' | 'loopId' | 'versionId'>[]>;
   /**
    * Record that everything after the run's terminal status is done: timers dropped, children
-   * cancelled, returns delivered, parent woken. Until then the run is listed by `listUnfinalized`.
+   * cancelled, returns delivered, parent woken. Until then recovery enumerates the terminal run.
    */
   markFinalized(runId: string): Promise<void>;
   /** Forget a finalization: the run is leaving its terminal status (a resume of a failure). */
   clearFinalized(runId: string): Promise<void>;
-  /** Terminal runs whose finalization was never recorded (the process died part-way). */
-  listUnfinalized(): Promise<RunRecord[]>;
   listChildren(parentRunId: string): Promise<RunRecord[]>;
   getInitialThread(runId: string): Promise<ContextThread | undefined>;
   getThread(runId: string): Promise<ContextThread | undefined>;

@@ -15862,7 +15862,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
             },
             "in": "path",
             "name": "name",
@@ -16079,6 +16080,17 @@
         "tags": [
           "runs"
         ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 48
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false
+          }
+        ],
         "responses": {
           "200": {
             "description": "Default Response",
@@ -16112,10 +16124,17 @@
                         ],
                         "additionalProperties": false
                       }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     }
                   },
                   "required": [
-                    "items"
+                    "items",
+                    "nextCursor"
                   ],
                   "additionalProperties": false
                 }

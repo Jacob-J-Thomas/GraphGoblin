@@ -1,13 +1,13 @@
-import { rawRunColumns, decodeRunRecord, decodeStoredThread } from './run-decoding.js';
 import { TERMINAL_RUN_STATUSES } from '@graphgoblin/contracts';
 import type { ContextThread, RunRecord, RunStatus } from '@graphgoblin/contracts';
 import type { RunRecordChanges, RunRepository } from '@graphgoblin/engine';
-import { and, desc, eq, inArray, isNull, lt, or, sql, type SQL } from 'drizzle-orm';
+import { UnreadableRunHistoryError } from '@graphgoblin/engine';
+import { and, desc, eq, gte, inArray, isNull, lt, or, sql, type SQL } from 'drizzle-orm';
 import type { Database } from './db.js';
 import { loopVersions, loops, runs } from './schema.js';
 import { deleteRuns } from './delete-runs.js';
 
-import { runRecordFromRow } from './run-row.js';
+import { rawRunColumns, decodeRunRecord, decodeStoredThread } from './run-decoding.js';
 export { runRecordFromRow } from './run-row.js';
 
 /** Map record changes onto column values; `undefined` becomes NULL so fields can be cleared. */
@@ -114,10 +114,14 @@ export class SqliteRunRepository implements RunRepository {
       if (!current) throw new Error(`run ${runId} not found`);
       return current;
     }
-    const updated = await this.db.update(runs).set(columns).where(eq(runs.id, runId)).returning();
+    const updated = await this.db
+      .update(runs)
+      .set(columns)
+      .where(eq(runs.id, runId))
+      .returning(rawRunColumns);
     const row = updated[0];
     if (!row) throw new Error(`run ${runId} not found`);
-    return runRecordFromRow(row);
+    return decodeRunRecord(row);
   }
 
   async transition(
@@ -126,9 +130,9 @@ export class SqliteRunRepository implements RunRepository {
     changes: RunRecordChanges,
   ): Promise<RunRecord | undefined> {
     return this.db.transaction(async (tx) => {
-      const [row] = await tx.select().from(runs).where(eq(runs.id, runId)).limit(1);
+      const [row] = await tx.select(rawRunColumns).from(runs).where(eq(runs.id, runId)).limit(1);
       if (!row) throw new Error(`run ${runId} not found`);
-      const current = runRecordFromRow(row);
+      const current = decodeRunRecord(row);
       if (!from.includes(current.status)) return undefined;
       const columns = toColumns(changes);
       if (Object.keys(columns).length === 0) return current;
@@ -136,8 +140,8 @@ export class SqliteRunRepository implements RunRepository {
         .update(runs)
         .set(columns)
         .where(and(eq(runs.id, runId), inArray(runs.status, [...from])))
-        .returning();
-      return updated ? runRecordFromRow(updated) : undefined;
+        .returning(rawRunColumns);
+      return updated ? decodeRunRecord(updated) : undefined;
     });
   }
 
@@ -152,9 +156,9 @@ export class SqliteRunRepository implements RunRepository {
       .where(
         and(eq(runs.id, runId), isNull(runs.cancelRequestedAt), inArray(runs.status, [...from])),
       )
-      .returning();
+      .returning(rawRunColumns);
     const row = updated[0];
-    return row ? runRecordFromRow(row) : undefined;
+    return row ? decodeRunRecord(row) : undefined;
   }
 
   async markFinalized(runId: string): Promise<void> {
@@ -187,40 +191,32 @@ export class SqliteRunRepository implements RunRepository {
   }
 
   /** Minimal owner-scoped identities remain readable even when a run row is damaged. */
-  async listIdentities(ownerId: string): Promise<{ id: string }[]> {
+  async listIdentities(ownerId: string, atOrAfter?: string): Promise<{ id: string }[]> {
     return this.db
       .select({ id: runs.id })
       .from(runs)
-      .where(eq(runs.ownerId, ownerId))
-      .orderBy(runs.createdAt);
-  }
-
-  async listUnfinalized(): Promise<RunRecord[]> {
-    const rows = await this.db
-      .select()
-      .from(runs)
-      .where(and(isNull(runs.finalizedAt), inArray(runs.status, [...TERMINAL_RUN_STATUSES])))
-      .orderBy(runs.createdAt);
-    return rows.map(runRecordFromRow);
+      .where(and(eq(runs.ownerId, ownerId), atOrAfter ? gte(runs.id, atOrAfter) : undefined))
+      .orderBy(runs.id)
+      .limit(21);
   }
 
   async listByStatus(statuses: readonly RunStatus[]): Promise<RunRecord[]> {
     if (statuses.length === 0) return [];
     const rows = await this.db
-      .select()
+      .select(rawRunColumns)
       .from(runs)
       .where(inArray(runs.status, [...statuses]))
       .orderBy(runs.createdAt);
-    return rows.map(runRecordFromRow);
+    return rows.map(decodeRunRecord);
   }
 
   async listChildren(parentRunId: string): Promise<RunRecord[]> {
     const rows = await this.db
-      .select()
+      .select(rawRunColumns)
       .from(runs)
       .where(eq(runs.parentRunId, parentRunId))
       .orderBy(runs.createdAt);
-    return rows.map(runRecordFromRow);
+    return rows.map(decodeRunRecord);
   }
 
   async list(filter: RunListFilter = {}): Promise<RunRecord[]> {
@@ -233,20 +229,47 @@ export class SqliteRunRepository implements RunRepository {
     next: Pick<RunRecord, 'createdAt' | 'id'> | null;
   }> {
     const limit = Math.max(1, Math.min(filter.limit ?? 100, 500));
-    const rows = await this.listRows(filter, limit + 1, filter.cursor);
-    const items = rows.slice(0, limit);
-    const last = items.at(-1)!;
+    const rows = await this.rawListRows(filter, limit + 1, filter.cursor);
+    const page = rows.slice(0, limit);
+    const items = this.readableRows(page);
+    const last = page.at(-1)!;
     return {
       items,
       next: rows.length > limit ? { createdAt: last.createdAt, id: last.id } : null,
     };
   }
 
-  private async listRows(
+  private readableRows(rows: Parameters<typeof decodeRunRecord>[0][]): RunRecord[] {
+    return rows.flatMap((row) => {
+      try {
+        return [decodeRunRecord(row)];
+      } catch (error) {
+        if (!(error instanceof UnreadableRunHistoryError)) throw error;
+        // The diagnostics endpoint reports the skipped row; never hide database/I/O errors.
+        return [];
+      }
+    });
+  }
+
+  private async listRows(filter: RunListFilter, limit: number): Promise<RunRecord[]> {
+    return this.readableRows(await this.rawListRows(filter, limit));
+  }
+
+  async listRunReferences(
+    statuses: readonly RunStatus[],
+  ): Promise<Pick<RunRecord, 'id' | 'loopId' | 'versionId'>[]> {
+    if (!statuses.length) return [];
+    return this.db
+      .select({ id: runs.id, loopId: runs.loopId, versionId: runs.versionId })
+      .from(runs)
+      .where(inArray(runs.status, [...statuses]));
+  }
+
+  private async rawListRows(
     filter: RunListFilter,
     limit: number,
     cursor?: RunPageFilter['cursor'],
-  ): Promise<RunRecord[]> {
+  ): Promise<Parameters<typeof decodeRunRecord>[0][]> {
     const conditions: SQL[] = [];
     if (filter.ownerId !== undefined) conditions.push(eq(runs.ownerId, filter.ownerId));
     if (filter.loopId) conditions.push(eq(runs.loopId, filter.loopId));
@@ -257,12 +280,12 @@ export class SqliteRunRepository implements RunRepository {
     if (cursor)
       conditions.push(sql`(${runs.createdAt}, ${runs.id}) < (${cursor.createdAt}, ${cursor.id})`);
     const query = this.db
-      .select()
+      .select(rawRunColumns)
       .from(runs)
       .where(conditions.length ? and(...conditions) : undefined)
       .orderBy(desc(runs.createdAt), desc(runs.id))
       .limit(limit);
-    return (await query).map(runRecordFromRow);
+    return await query;
   }
 
   async getInitialThread(runId: string): Promise<ContextThread | undefined> {
@@ -303,9 +326,9 @@ export class SqliteRunRepository implements RunRepository {
       .from(runs)
       .where(eq(runs.id, runId))
       .limit(1);
-    return row?.thread !== null && row?.thread !== undefined && row.seq !== null
-      ? { thread: decodeStoredThread(runId, 'thread_snapshot', row.thread), seq: row.seq }
-      : undefined;
+    if (row?.thread === null || row?.thread === undefined) return undefined;
+    const thread = decodeStoredThread(runId, 'thread_snapshot', row.thread);
+    return row.seq === null ? undefined : { thread, seq: row.seq };
   }
 
   /**

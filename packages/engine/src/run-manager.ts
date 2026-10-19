@@ -1,5 +1,3 @@
-import { boundedFailure } from './event-validation.js';
-import { UnreadableRunHistoryError } from './errors.js';
 import {
   AdmissionConflictError,
   type RunAdmission,
@@ -41,7 +39,13 @@ import {
   threadView,
   validateJson,
 } from '@graphgoblin/domain';
-import { AppendConflictError, RunFailureError, describeError, isAbortError } from './errors.js';
+import {
+  AppendConflictError,
+  RunFailureError,
+  UnreadableRunHistoryError,
+  describeError,
+  isAbortError,
+} from './errors.js';
 import { deciderFailure, isDeciderError } from './decider-errors.js';
 import type {
   ChildOutcome,
@@ -61,6 +65,7 @@ import type {
   TimerPort,
 } from './ports.js';
 import { createInitialThread, type InitialThreadInput } from './thread.js';
+import { boundedFailure } from './event-validation.js';
 
 /** API-facing errors: bad requests against the run manager, never engine bugs. */
 export class EngineRequestError extends Error {
@@ -908,10 +913,21 @@ export class RunManager {
    */
   async loopInUse(loopId: string): Promise<boolean> {
     if (await this.ports.admission.hasPendingPin(loopId)) return true;
-    for (const run of await this.ports.runs.listByStatus(ACTIVE_STATUSES)) {
+    for (const run of await this.ports.runs.listRunReferences(ACTIVE_STATUSES)) {
       if (run.loopId === loopId) return true;
       // Pins are on run.queued, the first event: read that one, not the run's whole history.
-      const pins = pinnedSubloops(await this.ports.events.read(run.id, 0, 1));
+      let pins: Record<string, string> = {};
+      try {
+        pins = pinnedSubloops(await this.ports.events.read(run.id, 0, 1));
+      } catch (error) {
+        if (!(error instanceof UnreadableRunHistoryError)) throw error;
+        // The owning loop was checked above. Its stored definition still protects reachable
+        // subloops even when the queued event cannot supply its pins.
+        this.ports.logger.error(
+          { runId: error.runId, code: error.code, reason: error.message },
+          'run history unreadable during loop-use check',
+        );
+      }
       if (loopId in pins) return true;
       const version = await this.ports.loops.getVersion(run.versionId);
       const reached = new Set<string>();
@@ -967,7 +983,7 @@ export class RunManager {
       const controller = new AbortController();
       this.active.set(runId, controller);
       void this.execute(runId, controller)
-        .catch((error: unknown) => {
+        .catch(async (error: unknown) => {
           this.ports.logger.error(
             { runId, error: describeError(error) },
             'executor crashed outside node execution',
@@ -975,7 +991,7 @@ export class RunManager {
           return this.failRun(
             runId,
             error instanceof RunFailureError
-              ? error.toFailure()
+              ? error.toFailure((await this.ports.runs.get(runId))?.currentNodeId)
               : {
                   code: 'INTERNAL_ERROR',
                   message: describeError(error),
@@ -1018,6 +1034,8 @@ export class RunManager {
       try {
         const run = await this.ports.runs.get(candidate.id);
         if (!run) continue;
+        await this.ports.runs.getInitialThread(run.id);
+        await this.ports.runs.getThreadCheckpoint(run.id);
         const events = await this.ports.events.read(run.id);
         if (candidate.terminal) {
           if (run.status === 'failed' && pendingResume(events)) {

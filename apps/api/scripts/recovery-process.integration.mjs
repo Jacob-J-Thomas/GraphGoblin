@@ -5,7 +5,7 @@ import { log } from 'node:console';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
-import { mkdtemp } from 'node:fs/promises';
+import { mkdtemp, rm } from 'node:fs/promises';
 import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -105,6 +105,7 @@ test(
     const headers = { authorization: `Bearer ${token}` };
     let child;
     let output = '';
+    let succeeded = false;
     async function stop() {
       if (child && child.exitCode === null && child.signalCode === null) {
         const exited = once(child, 'exit');
@@ -225,9 +226,13 @@ test(
         assert.equal((await recoveredSnapshot(run.id)).status, 'waiting');
       }
       log('manual column repair: both formerly damaged runs recover; diagnostics empty');
+      succeeded = true;
     } finally {
       await stop();
-      log(`disposable fixture retained: ${dataDir}`);
+      if (succeeded) {
+        await rm(dataDir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+        log('disposable fixture removed');
+      } else log(`failed disposable fixture retained: ${dataDir}`);
     }
   },
 );

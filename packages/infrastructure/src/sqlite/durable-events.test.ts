@@ -2,7 +2,12 @@ import { mkdtemp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { LoopDefinitionSchema, RunFailureSchema, WaitSpecSchema } from '@graphgoblin/contracts';
+import {
+  LoopDefinitionSchema,
+  RunFailureSchema,
+  WaitSpecSchema,
+  ProgressItemSchema,
+} from '@graphgoblin/contracts';
 import { RunManager } from '@graphgoblin/engine';
 import {
   createFakePorts,
@@ -79,7 +84,7 @@ describe('generated durable event boundaries with SQLite', () => {
         else
           expect(record).toMatchObject({
             status: 'failed',
-            failure: { code: 'EVENT_INVALID', resumable: false },
+            failure: { code: 'EVENT_INVALID', resumable: false, nodeId: 'work' },
           });
         await expect(t.events.read(run.id)).resolves.toBeDefined();
       }
@@ -108,11 +113,16 @@ describe('generated durable event boundaries with SQLite', () => {
     await handle.migrate();
     const t = await fixture(handle);
     await t.manager.start();
-    const run = await t.start(
-      await t.publish('wait', { mode: 'input', prompt: 'x'.repeat(promptBound + 1) }),
-    );
+    const itemIdBound = ProgressItemSchema.options[0].shape.id.maxLength!;
+    t.fake.harness.script([
+      {
+        items: [{ id: 'x'.repeat(itemIdBound + 1), type: 'message', summary: 'oversized item id' }],
+      },
+    ]);
+    const run = await t.start(await t.publish('inference', { prompt: { template: 'hello' } }));
     await t.manager.waitForIdle();
     expect(await t.runs.get(run.id)).toMatchObject({ status: 'failed' });
+    expect(t.fake.harness.started).toHaveLength(1);
     const before = await t.events.read(run.id);
     t.manager.stop();
     handle.close();
@@ -121,61 +131,171 @@ describe('generated durable event boundaries with SQLite', () => {
     await reopened.manager.start();
     await reopened.manager.waitForIdle();
     expect(await reopened.events.read(run.id)).toEqual(before);
+    expect(reopened.fake.harness.started).toHaveLength(0);
+    expect(reopened.fake.harness.resumed).toHaveLength(0);
     expect(await reopened.runs.get(run.id)).toMatchObject({
       status: 'failed',
       failure: { code: 'EVENT_INVALID' },
     });
   });
 
-  it.each(['json', 'schema', 'row', 'row-schema', 'snapshot', 'terminal'])(
-    'recovers healthy queued work beside unreadable %s history',
-    async (damage) => {
+  it.each([
+    'json',
+    'schema',
+    'row',
+    'row-schema',
+    'snapshot',
+    'snapshot-schema',
+    'initial-schema',
+    'terminal',
+  ])('recovers healthy queued work beside unreadable %s history', async (damage) => {
+    const t = await fixture();
+    t.manager.stop();
+    const loopId = await t.publish('wait', { mode: 'input', prompt: 'healthy' });
+    const bad = await t.start(loopId);
+    const healthy = await t.start(loopId);
+    if (damage === 'terminal')
+      await t.runs.transition(bad.id, ['queued'], {
+        status: 'failed',
+        failure: { code: 'INTERNAL_ERROR', message: 'previous failure', resumable: false },
+      });
+    if (damage === 'initial-schema')
+      await t.handle.client.execute({
+        sql: 'UPDATE runs SET initial_thread = ? WHERE id = ?',
+        args: ['{}', bad.id],
+      });
+    else if (damage === 'snapshot' || damage === 'snapshot-schema')
+      await t.handle.client.execute({
+        sql: 'UPDATE runs SET thread_snapshot = ?, thread_snapshot_seq = 1 WHERE id = ?',
+        args: [damage === 'snapshot' ? '{broken' : '{}', bad.id],
+      });
+    else if (damage === 'row-schema')
+      await t.handle.client.execute({
+        sql: 'UPDATE runs SET waiting = ? WHERE id = ?',
+        args: ['{}', bad.id],
+      });
+    else if (damage === 'row')
+      await t.handle.client.execute({
+        sql: 'UPDATE runs SET waiting = ? WHERE id = ?',
+        args: ['{broken', bad.id],
+      });
+    else
+      await t.handle.client.execute({
+        sql: 'UPDATE run_events SET payload = ? WHERE run_id = ?',
+        args: [damage === 'json' ? '{broken' : '{"extra":true}', bad.id],
+      });
+    await expect(t.manager.start()).resolves.toBeUndefined();
+    await t.manager.waitForIdle();
+    expect(await t.runs.get(healthy.id)).toMatchObject({
+      status: 'waiting',
+      waiting: { prompt: 'healthy' },
+    });
+    expect(await t.events.read(healthy.id)).toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: 'run.waiting' })]),
+    );
+    expect(t.fake.logger.lines).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          obj: expect.objectContaining({ runId: bad.id, code: 'HISTORY_UNREADABLE' }),
+        }),
+      ]),
+    );
+  });
+
+  it.each(['get', 'listByStatus', 'listChildren', 'transition', 'update', 'claimCancel'] as const)(
+    'attributes damaged JSON to its run through %s',
+    async (reader) => {
       const t = await fixture();
       t.manager.stop();
-      const loopId = await t.publish('wait', { mode: 'input', prompt: 'healthy' });
-      const bad = await t.start(loopId);
-      const healthy = await t.start(loopId);
-      if (damage === 'terminal')
-        await t.runs.transition(bad.id, ['queued'], {
-          status: 'failed',
-          failure: { code: 'INTERNAL_ERROR', message: 'previous failure', resumable: false },
-        });
-      if (damage === 'snapshot')
-        await t.handle.client.execute({
-          sql: 'UPDATE runs SET thread_snapshot = ?, thread_snapshot_seq = 1 WHERE id = ?',
-          args: ['{broken', bad.id],
-        });
-      else if (damage === 'row-schema')
-        await t.handle.client.execute({
-          sql: 'UPDATE runs SET waiting = ? WHERE id = ?',
-          args: ['{}', bad.id],
-        });
-      else if (damage === 'row')
-        await t.handle.client.execute({
-          sql: 'UPDATE runs SET waiting = ? WHERE id = ?',
-          args: ['{broken', bad.id],
-        });
-      else
-        await t.handle.client.execute({
-          sql: 'UPDATE run_events SET payload = ? WHERE run_id = ?',
-          args: [damage === 'json' ? '{broken' : '{"extra":true}', bad.id],
-        });
-      await expect(t.manager.start()).resolves.toBeUndefined();
-      await t.manager.waitForIdle();
-      expect(await t.runs.get(healthy.id)).toMatchObject({
-        status: 'waiting',
-        waiting: { prompt: 'healthy' },
+      const run = await t.start(await t.publish('wait', { mode: 'input', prompt: 'hello' }));
+      await t.runs.update(run.id, { parentRunId: run.id });
+      await t.handle.client.execute({
+        sql: 'UPDATE runs SET failure = ? WHERE id = ?',
+        args: ['{broken', run.id],
       });
-      expect(await t.events.read(healthy.id)).toEqual(
-        expect.arrayContaining([expect.objectContaining({ type: 'run.waiting' })]),
-      );
-      expect(t.fake.logger.lines).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            obj: expect.objectContaining({ runId: bad.id, code: 'HISTORY_UNREADABLE' }),
-          }),
-        ]),
-      );
+      const read = () => {
+        switch (reader) {
+          case 'get':
+            return t.runs.get(run.id);
+          case 'listByStatus':
+            return t.runs.listByStatus(['queued']);
+          case 'listChildren':
+            return t.runs.listChildren(run.id);
+          case 'transition':
+            return t.runs.transition(run.id, ['queued'], { iteration: 2 });
+          case 'update':
+            return t.runs.update(run.id, { iteration: 2 });
+          case 'claimCancel':
+            return t.runs.claimCancel(run.id, ['queued'], t.fake.clock.now().toISOString());
+        }
+      };
+      await expect(read()).rejects.toMatchObject({
+        name: 'UnreadableRunHistoryError',
+        code: 'HISTORY_UNREADABLE',
+        runId: run.id,
+      });
     },
   );
+
+  it('recovers healthy work beside a cancel-requested parent with a damaged child row', async () => {
+    const t = await fixture();
+    t.manager.stop();
+    const loopId = await t.publish('wait', { mode: 'input', prompt: 'healthy' });
+    const parent = await t.start(loopId);
+    const child = await t.start(loopId);
+    const healthy = await t.start(loopId);
+    await t.runs.update(child.id, { parentRunId: parent.id });
+    await t.runs.claimCancel(parent.id, ['queued'], t.fake.clock.now().toISOString());
+    await t.handle.client.execute({
+      sql: 'UPDATE runs SET waiting = ? WHERE id = ?',
+      args: ['{broken', child.id],
+    });
+    await expect(t.manager.start()).resolves.toBeUndefined();
+    await t.manager.waitForIdle();
+    expect(await t.runs.get(healthy.id)).toMatchObject({ status: 'waiting' });
+    expect(t.fake.logger.lines).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          obj: expect.objectContaining({ runId: child.id, code: 'HISTORY_UNREADABLE' }),
+        }),
+      ]),
+    );
+  });
+
+  it('reads metadata without touching damaged thread snapshots, but isolates them at recovery', async () => {
+    const t = await fixture();
+    t.manager.stop();
+    const run = await t.start(await t.publish('wait', { mode: 'input', prompt: 'hello' }));
+    await t.handle.client.execute({
+      sql: 'UPDATE runs SET thread_snapshot = ? WHERE id = ?',
+      args: ['{}', run.id],
+    });
+    await expect(t.runs.get(run.id)).resolves.toMatchObject({ id: run.id, status: 'queued' });
+    await t.manager.start();
+    await t.manager.waitForIdle();
+    expect(t.fake.logger.lines).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          obj: expect.objectContaining({
+            runId: run.id,
+            code: 'HISTORY_UNREADABLE',
+            reason: expect.stringContaining('thread_snapshot'),
+          }),
+        }),
+      ]),
+    );
+    expect(await t.runs.get(run.id)).toMatchObject({ status: 'queued' });
+  });
+
+  it('maps only named run fields when storage adds an internal column', async () => {
+    const t = await fixture();
+    t.manager.stop();
+    const run = await t.start(await t.publish('wait', { mode: 'input', prompt: 'hello' }));
+    await t.handle.client.execute(
+      "ALTER TABLE runs ADD COLUMN internal_diagnostic TEXT DEFAULT '{broken'",
+    );
+    await expect(t.runs.get(run.id)).resolves.toMatchObject({ id: run.id, status: 'queued' });
+    await expect(t.runs.listByStatus(['queued'])).resolves.toHaveLength(1);
+    await expect(t.runs.listRunReferences([])).resolves.toEqual([]);
+  });
 });
