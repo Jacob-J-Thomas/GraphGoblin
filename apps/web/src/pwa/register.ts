@@ -2,22 +2,6 @@ import { Workbox } from 'workbox-window';
 import { subscribeApiRecovery, useReachability } from '../lib/reachability.js';
 import { usePwaStore } from './store.js';
 
-/** The hook the app exposes so tests and tools can drive the update flow (docs/09). */
-export interface PwaTestHook {
-  /** Behave as if a new service worker were waiting: shows the update toast. */
-  simulateUpdate(): void;
-  /** How many times an update was applied (the user confirmed). */
-  readonly appliedUpdates: number;
-  /** Remove scheduled checks and listeners when the app unmounts or the page unloads. */
-  dispose(this: void): void;
-}
-
-declare global {
-  interface Window {
-    graphgoblinPwa?: PwaTestHook;
-  }
-}
-
 export interface RegisterPwaOptions {
   /** Service worker URL. Default `/app/sw.js`. */
   url?: string;
@@ -36,32 +20,23 @@ export interface RegisterPwaOptions {
  * raises the "A new version is available" toast; only the user's confirmation sends SKIP_WAITING,
  * and the page reloads once the new worker controls it. Nothing activates automatically.
  */
-export function registerPwa(options: RegisterPwaOptions = {}): PwaTestHook {
+export function registerPwa(options: RegisterPwaOptions = {}): { dispose(this: void): void } {
   const url = options.url ?? '/app/sw.js';
   const scope = options.scope ?? '/app/';
   const reload = options.reload ?? (() => window.location.reload());
   const supported = options.serviceWorkerSupported ?? 'serviceWorker' in navigator;
-  let applied = 0;
   let disposed = false;
   let cleanup = () => undefined;
   const store = usePwaStore.getState();
 
-  const hook: PwaTestHook = {
-    simulateUpdate: () =>
-      store.promptUpdate(() => {
-        applied += 1;
-      }),
-    get appliedUpdates() {
-      return applied;
-    },
+  const lifecycle = {
     dispose: () => {
       disposed = true;
       cleanup();
     },
   };
-  window.graphgoblinPwa = hook;
 
-  if (!supported) return hook;
+  if (!supported) return lifecycle;
   const create =
     options.createWorkbox ??
     ((swUrl: string, swScope: string) => new Workbox(swUrl, { scope: swScope }));
@@ -71,7 +46,6 @@ export function registerPwa(options: RegisterPwaOptions = {}): PwaTestHook {
     if (disposed || (worker && promptedWorkers.has(worker))) return;
     if (worker) promptedWorkers.add(worker);
     store.promptUpdate(() => {
-      applied += 1;
       wb.addEventListener('controlling', () => reload());
       wb.messageSkipWaiting();
     });
@@ -149,7 +123,7 @@ export function registerPwa(options: RegisterPwaOptions = {}): PwaTestHook {
   const focus = () => void check(true);
   const pageHide = (event: PageTransitionEvent) => {
     // A cached page may be restored with the same JS state; keep its lifecycle intact.
-    if (!event.persisted) hook.dispose();
+    if (!event.persisted) lifecycle.dispose();
   };
   const unsubscribe = subscribeApiRecovery(trigger);
   const interval = setInterval(trigger, 60 * 60 * 1_000);
@@ -183,5 +157,5 @@ export function registerPwa(options: RegisterPwaOptions = {}): PwaTestHook {
     },
     (error: unknown) => console.warn('service worker registration failed', error),
   );
-  return hook;
+  return lifecycle;
 }

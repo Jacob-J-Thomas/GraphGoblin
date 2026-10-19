@@ -1,0 +1,2977 @@
+{
+  "schema": 2,
+  "columns": {
+    "specification": [
+      "passes",
+      "items",
+      "itemBytes",
+      "contextBytes",
+      "inference",
+      "grow",
+      "artifacts",
+      "delayMs"
+    ],
+    "correctness": [
+      "ok",
+      "succeeded",
+      "nodeCountsOk",
+      "unexpectedAttempts",
+      "storedEvents",
+      "progress",
+      "expectedProgress",
+      "gates",
+      "passes",
+      "history",
+      "historyValuesOk",
+      "terminal",
+      "replayOk",
+      "browserOk"
+    ],
+    "portTimings": ["portIndex", "count", "totalMs", "meanMs", "p95UpperMs", "maxMs"],
+    "checkpoints": [
+      "pass",
+      "elapsedMs",
+      "snapshotBytes",
+      "getThreadMs",
+      "snapshotSerializeMs",
+      "heapUsed"
+    ],
+    "browserSamples": [
+      "elapsedMs",
+      "nodes",
+      "sessionStorageBytes",
+      "heapUsed",
+      "longTasks",
+      "longTaskMs"
+    ],
+    "flightSamples": [
+      "replayElapsedMs",
+      "socketBytesWritten",
+      "wireBytesConsumed",
+      "bytesInFlight"
+    ],
+    "topCpuFrames": ["cpuLocationIndex", "samples"]
+  },
+  "ports": [
+    "runs.get",
+    "events.read",
+    "runs.transition",
+    "events.append",
+    "runs.update",
+    "runs.saveThread",
+    "sessions.upsert",
+    "artifacts.put"
+  ],
+  "cpuLocations": [
+    "node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:327 run",
+    ":0 (idle)",
+    "node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:126 prepare",
+    "packages/engine/dist/run-manager.js:971 execute",
+    "node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:371 next",
+    ":0 libsql_js::statement::Rows::js_next",
+    "node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/drizzle-orm/entity.js:3 is",
+    "node_modules/.pnpm/libsql@0.5.29/node_modules/libsql/index.js:305 raw",
+    "node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/drizzle-orm/sqlite-core/columns/text.js:48 mapFromDriverValue",
+    ":0 libsql_js::database::Database::js_open",
+    ":0 libsql_js::database::Database::js_prepare_sync",
+    ":0 libsql_js::statement::Statement::js_safe_integers",
+    ":0 libsql_js::database::Database::js_max_write_replication_index"
+  ],
+  "measurements": [
+    {
+      "workload": "long",
+      "aged": 0,
+      "instrumentationRevision": 1,
+      "cpuProfileSamples": 519989,
+      "environment": {
+        "timestamp": "2026-10-19T02:02:42.430Z",
+        "cpu": "AMD Ryzen 5 3600 6-Core Processor              ",
+        "logicalCpus": 12,
+        "ramBytes": 68662202368,
+        "node": "v22.14.0",
+        "platform": "win32",
+        "osRelease": "10.0.26300",
+        "commit": "4608440c0c4528a998d7974bb16a90b59102a2a2",
+        "hostBusyFraction": 0.999,
+        "freeRamBefore": 34730549248,
+        "freeRamAfter": 36606824448
+      },
+      "failed": false,
+      "cases": [0, 1, 2]
+    },
+    {
+      "workload": "context",
+      "aged": 0,
+      "instrumentationRevision": 1,
+      "cpuProfileSamples": 578984,
+      "environment": {
+        "timestamp": "2026-10-19T03:00:37.517Z",
+        "cpu": "AMD Ryzen 5 3600 6-Core Processor              ",
+        "logicalCpus": 12,
+        "ramBytes": 68662202368,
+        "node": "v22.14.0",
+        "profileMode": "inspector",
+        "platform": "win32",
+        "osRelease": "10.0.26300",
+        "commit": "4608440c0c4528a998d7974bb16a90b59102a2a2",
+        "hostBusyFraction": 0.996,
+        "freeRamBefore": 36344864768,
+        "freeRamAfter": 31575097344
+      },
+      "failed": false,
+      "cases": [3, 4, 5]
+    },
+    {
+      "workload": "replay",
+      "aged": 0,
+      "instrumentationRevision": 1,
+      "cpuProfileSamples": 86790,
+      "environment": {
+        "timestamp": "2026-10-19T03:35:36.104Z",
+        "cpu": "AMD Ryzen 5 3600 6-Core Processor              ",
+        "logicalCpus": 12,
+        "ramBytes": 68662202368,
+        "node": "v22.14.0",
+        "profileMode": "inspector",
+        "platform": "win32",
+        "osRelease": "10.0.26300",
+        "commit": "4608440c0c4528a998d7974bb16a90b59102a2a2",
+        "hostBusyFraction": 1,
+        "freeRamBefore": 31349342208,
+        "freeRamAfter": 30881083392
+      },
+      "failed": false,
+      "cases": [6]
+    },
+    {
+      "workload": "artifacts",
+      "aged": 0,
+      "instrumentationRevision": 1,
+      "cpuProfileSamples": 52242,
+      "environment": {
+        "timestamp": "2026-10-19T03:39:21.649Z",
+        "cpu": "AMD Ryzen 5 3600 6-Core Processor              ",
+        "logicalCpus": 12,
+        "ramBytes": 68662202368,
+        "node": "v22.14.0",
+        "profileMode": "inspector",
+        "platform": "win32",
+        "osRelease": "10.0.26300",
+        "commit": "4608440c0c4528a998d7974bb16a90b59102a2a2",
+        "hostBusyFraction": 1,
+        "freeRamBefore": 31012507648,
+        "freeRamAfter": 32260149248
+      },
+      "failed": false,
+      "cases": [7, 8]
+    },
+    {
+      "workload": "readiness",
+      "aged": 0,
+      "instrumentationRevision": 1,
+      "cpuProfileSamples": 4354,
+      "environment": {
+        "timestamp": "2026-10-19T03:43:15.495Z",
+        "cpu": "AMD Ryzen 5 3600 6-Core Processor              ",
+        "logicalCpus": 12,
+        "ramBytes": 68662202368,
+        "node": "v22.14.0",
+        "profileMode": "inspector",
+        "platform": "win32",
+        "osRelease": "10.0.26300",
+        "commit": "4608440c0c4528a998d7974bb16a90b59102a2a2",
+        "hostBusyFraction": 1,
+        "freeRamBefore": 31756292096,
+        "freeRamAfter": 35480457216
+      },
+      "failed": false,
+      "cases": [9]
+    },
+    {
+      "workload": "browser",
+      "aged": 0,
+      "instrumentationRevision": 1,
+      "cpuProfileSamples": 60793,
+      "environment": {
+        "timestamp": "2026-10-19T03:58:53.364Z",
+        "cpu": "AMD Ryzen 5 3600 6-Core Processor              ",
+        "logicalCpus": 12,
+        "ramBytes": 68662202368,
+        "node": "v22.14.0",
+        "profileMode": "inspector",
+        "platform": "win32",
+        "osRelease": "10.0.26300",
+        "commit": "4608440c0c4528a998d7974bb16a90b59102a2a2",
+        "hostBusyFraction": 1,
+        "freeRamBefore": 34766839808,
+        "freeRamAfter": 35692568576
+      },
+      "failed": false,
+      "cases": [10]
+    },
+    {
+      "workload": "long",
+      "aged": 2000,
+      "instrumentationRevision": 1,
+      "cpuProfileSamples": 297562,
+      "environment": {
+        "timestamp": "2026-10-19T03:43:52.049Z",
+        "cpu": "AMD Ryzen 5 3600 6-Core Processor              ",
+        "logicalCpus": 12,
+        "ramBytes": 68662202368,
+        "node": "v22.14.0",
+        "profileMode": "inspector",
+        "platform": "win32",
+        "osRelease": "10.0.26300",
+        "commit": "4608440c0c4528a998d7974bb16a90b59102a2a2",
+        "hostBusyFraction": 0.996,
+        "freeRamBefore": 36160507904,
+        "freeRamAfter": 34382049280
+      },
+      "failed": false,
+      "population": {
+        "runs": 2000,
+        "wallMs": 84170.403,
+        "admission": {
+          "count": 2000,
+          "totalMs": 30314.228,
+          "meanMs": 15.157,
+          "p50UpperMs": 15.159,
+          "p95UpperMs": 24.413,
+          "maxMs": 63.91
+        },
+        "createdToStarted": {
+          "count": 2000,
+          "totalMs": 1483723,
+          "meanMs": 741.862,
+          "p50UpperMs": 830.145,
+          "p95UpperMs": 1336.957,
+          "maxMs": 1688
+        },
+        "disk": {
+          "bytes": 13045554,
+          "files": 4
+        }
+      },
+      "cases": [11, 12, 13]
+    },
+    {
+      "workload": "context",
+      "aged": 2000,
+      "instrumentationRevision": 1,
+      "cpuProfileSamples": 522471,
+      "environment": {
+        "timestamp": "2026-10-19T03:55:53.539Z",
+        "cpu": "AMD Ryzen 5 3600 6-Core Processor              ",
+        "logicalCpus": 12,
+        "ramBytes": 68662202368,
+        "node": "v22.14.0",
+        "profileMode": "inspector",
+        "platform": "win32",
+        "osRelease": "10.0.26300",
+        "commit": "4608440c0c4528a998d7974bb16a90b59102a2a2",
+        "hostBusyFraction": 0.984,
+        "freeRamBefore": 34125303808,
+        "freeRamAfter": 38209396736
+      },
+      "failed": false,
+      "population": {
+        "runs": 2000,
+        "wallMs": 83720.326,
+        "admission": {
+          "count": 2000,
+          "totalMs": 33417.46,
+          "meanMs": 16.709,
+          "p50UpperMs": 16.675,
+          "p95UpperMs": 24.413,
+          "maxMs": 507.517
+        },
+        "createdToStarted": {
+          "count": 2000,
+          "totalMs": 1448325,
+          "meanMs": 724.163,
+          "p50UpperMs": 754.677,
+          "p95UpperMs": 1215.415,
+          "maxMs": 2936
+        },
+        "disk": {
+          "bytes": 13029123,
+          "files": 4
+        }
+      },
+      "cases": [14, 15, 16]
+    },
+    {
+      "workload": "replay",
+      "aged": 2000,
+      "instrumentationRevision": 1,
+      "cpuProfileSamples": 151581,
+      "environment": {
+        "timestamp": "2026-10-19T04:10:37.199Z",
+        "cpu": "AMD Ryzen 5 3600 6-Core Processor              ",
+        "logicalCpus": 12,
+        "ramBytes": 68662202368,
+        "node": "v22.14.0",
+        "profileMode": "inspector",
+        "platform": "win32",
+        "osRelease": "10.0.26300",
+        "commit": "4608440c0c4528a998d7974bb16a90b59102a2a2",
+        "hostBusyFraction": 0.85,
+        "freeRamBefore": 38293602304,
+        "freeRamAfter": 38830972928
+      },
+      "failed": false,
+      "population": {
+        "runs": 2000,
+        "wallMs": 99839.589,
+        "admission": {
+          "count": 2000,
+          "totalMs": 37127.331,
+          "meanMs": 18.564,
+          "p50UpperMs": 16.675,
+          "p95UpperMs": 43.249,
+          "maxMs": 317.837
+        },
+        "createdToStarted": {
+          "count": 2000,
+          "totalMs": 1771163,
+          "meanMs": 885.582,
+          "p50UpperMs": 830.145,
+          "p95UpperMs": 2153.182,
+          "maxMs": 5878
+        },
+        "disk": {
+          "bytes": 13045579,
+          "files": 4
+        }
+      },
+      "cases": [17]
+    },
+    {
+      "workload": "artifacts",
+      "aged": 2000,
+      "instrumentationRevision": 1,
+      "cpuProfileSamples": 79412,
+      "environment": {
+        "timestamp": "2026-10-19T04:15:13.170Z",
+        "cpu": "AMD Ryzen 5 3600 6-Core Processor              ",
+        "logicalCpus": 12,
+        "ramBytes": 68662202368,
+        "node": "v22.14.0",
+        "profileMode": "inspector",
+        "platform": "win32",
+        "osRelease": "10.0.26300",
+        "commit": "4608440c0c4528a998d7974bb16a90b59102a2a2",
+        "hostBusyFraction": 0.714,
+        "freeRamBefore": 38877761536,
+        "freeRamAfter": 38468837376
+      },
+      "failed": false,
+      "population": {
+        "runs": 2000,
+        "wallMs": 64365.633,
+        "admission": {
+          "count": 2000,
+          "totalMs": 23947.186,
+          "meanMs": 11.974,
+          "p50UpperMs": 12.528,
+          "p95UpperMs": 22.194,
+          "maxMs": 76.877
+        },
+        "createdToStarted": {
+          "count": 2000,
+          "totalMs": 1105450,
+          "meanMs": 552.725,
+          "p50UpperMs": 623.7,
+          "p95UpperMs": 1004.475,
+          "maxMs": 1143
+        },
+        "disk": {
+          "bytes": 13041507,
+          "files": 4
+        }
+      },
+      "cases": [18, 19]
+    },
+    {
+      "workload": "readiness",
+      "aged": 2000,
+      "instrumentationRevision": 1,
+      "cpuProfileSamples": 68026,
+      "environment": {
+        "timestamp": "2026-10-19T04:17:24.617Z",
+        "cpu": "AMD Ryzen 5 3600 6-Core Processor              ",
+        "logicalCpus": 12,
+        "ramBytes": 68662202368,
+        "node": "v22.14.0",
+        "profileMode": "inspector",
+        "platform": "win32",
+        "osRelease": "10.0.26300",
+        "commit": "4608440c0c4528a998d7974bb16a90b59102a2a2",
+        "hostBusyFraction": 0.711,
+        "freeRamBefore": 38463979520,
+        "freeRamAfter": 38276120576
+      },
+      "failed": false,
+      "population": {
+        "runs": 2000,
+        "wallMs": 102367.798,
+        "admission": {
+          "count": 2000,
+          "totalMs": 38149.103,
+          "meanMs": 19.075,
+          "p50UpperMs": 15.159,
+          "p95UpperMs": 52.332,
+          "maxMs": 735.398
+        },
+        "createdToStarted": {
+          "count": 2000,
+          "totalMs": 1811012,
+          "meanMs": 905.506,
+          "p50UpperMs": 754.677,
+          "p95UpperMs": 3152.474,
+          "maxMs": 7505
+        },
+        "disk": {
+          "bytes": 13049651,
+          "files": 4
+        }
+      },
+      "cases": [20]
+    },
+    {
+      "workload": "browser",
+      "aged": 2000,
+      "instrumentationRevision": 1,
+      "cpuProfileSamples": 101343,
+      "environment": {
+        "timestamp": "2026-10-19T04:19:17.762Z",
+        "cpu": "AMD Ryzen 5 3600 6-Core Processor              ",
+        "logicalCpus": 12,
+        "ramBytes": 68662202368,
+        "node": "v22.14.0",
+        "profileMode": "inspector",
+        "platform": "win32",
+        "osRelease": "10.0.26300",
+        "commit": "4608440c0c4528a998d7974bb16a90b59102a2a2",
+        "hostBusyFraction": 0.566,
+        "freeRamBefore": 38280142848,
+        "freeRamAfter": 39000936448
+      },
+      "failed": false,
+      "population": {
+        "runs": 2000,
+        "wallMs": 63352.662,
+        "admission": {
+          "count": 2000,
+          "totalMs": 23453.461,
+          "meanMs": 11.727,
+          "p50UpperMs": 12.528,
+          "p95UpperMs": 20.176,
+          "maxMs": 44.031
+        },
+        "createdToStarted": {
+          "count": 2000,
+          "totalMs": 1090507,
+          "meanMs": 545.254,
+          "p50UpperMs": 567,
+          "p95UpperMs": 1004.475,
+          "maxMs": 1202
+        },
+        "disk": {
+          "bytes": 13033291,
+          "files": 4
+        }
+      },
+      "cases": [21]
+    },
+    {
+      "workload": "replay",
+      "aged": 0,
+      "instrumentationRevision": 2,
+      "cpuProfileSamples": 7159,
+      "environment": {
+        "timestamp": "2026-10-19T12:57:43.230Z",
+        "cpu": "AMD Ryzen 5 3600 6-Core Processor              ",
+        "logicalCpus": 12,
+        "ramBytes": 68662202368,
+        "node": "v22.14.0",
+        "profileMode": "inspector",
+        "platform": "win32",
+        "osRelease": "10.0.26300",
+        "commit": "d5e0478f39c7694674e1f59cfb3644d23b1917cb",
+        "hostBusyFraction": 1,
+        "freeRamBefore": 32879996928,
+        "freeRamAfter": 32788287488
+      },
+      "failed": false,
+      "cases": [22]
+    },
+    {
+      "workload": "browser",
+      "aged": 0,
+      "instrumentationRevision": 2,
+      "cpuProfileSamples": 21844,
+      "environment": {
+        "timestamp": "2026-10-19T12:58:10.294Z",
+        "cpu": "AMD Ryzen 5 3600 6-Core Processor              ",
+        "logicalCpus": 12,
+        "ramBytes": 68662202368,
+        "node": "v22.14.0",
+        "profileMode": "inspector",
+        "platform": "win32",
+        "osRelease": "10.0.26300",
+        "commit": "d5e0478f39c7694674e1f59cfb3644d23b1917cb",
+        "hostBusyFraction": 1,
+        "freeRamBefore": 33051213824,
+        "freeRamAfter": 33113128960
+      },
+      "failed": false,
+      "cases": [23]
+    },
+    {
+      "workload": "readiness",
+      "aged": 0,
+      "instrumentationRevision": 2,
+      "cpuProfileSamples": 8782,
+      "environment": {
+        "timestamp": "2026-10-19T12:59:04.698Z",
+        "cpu": "AMD Ryzen 5 3600 6-Core Processor              ",
+        "logicalCpus": 12,
+        "ramBytes": 68662202368,
+        "node": "v22.14.0",
+        "profileMode": "inspector",
+        "platform": "win32",
+        "osRelease": "10.0.26300",
+        "commit": "d5e0478f39c7694674e1f59cfb3644d23b1917cb",
+        "hostBusyFraction": 1,
+        "freeRamBefore": 33162125312,
+        "freeRamAfter": 34025897984
+      },
+      "failed": false,
+      "cases": [24]
+    }
+  ],
+  "cases": [
+    {
+      "specification": [100, 2, 120, 128, true, null, false, 0],
+      "wallMs": 12100.91,
+      "msPerPass": 121.009,
+      "cpu": {
+        "user": 3234000,
+        "system": 750000
+      },
+      "awaitedPortMs": 10423.397,
+      "observationMs": 5.973,
+      "residualMs": 1671.54,
+      "maxConcurrentPortCalls": 1,
+      "eventLoopDelayMs": {
+        "mean": 25.736,
+        "max": 1089.47,
+        "p99": 102.433
+      },
+      "artifacts": {
+        "bytes": 0,
+        "files": 0
+      },
+      "portTimings": [
+        [0, 406, 1077.818, 2.655, 10.354, 45.645],
+        [1, 2, 1142.99, 571.495, 1215.415, 1130.04],
+        [2, 2, 7.844, 3.922, 4.83, 4.541],
+        [3, 805, 4549.864, 5.652, 24.413, 189.672],
+        [4, 403, 1008.708, 2.503, 5.844, 68.198],
+        [5, 202, 308.4, 1.527, 3.299, 8.141],
+        [6, 300, 1323.338, 4.411, 22.194, 74.604]
+      ],
+      "otherPorts": {
+        "calls": 207,
+        "totalMs": 1004.435
+      },
+      "checkpoints": [
+        [10, 1793.358, 1193, 0.745, 0.075, 44029000],
+        [30, 3933.837, 1195, 0.519, 0.029, 47980784],
+        [50, 5674.071, 1195, 0.476, 0.027, 48387568],
+        [60, 6423.919, 1195, 0.406, 0.028, 48351624],
+        [80, 8848.699, 1195, 0.395, 0.025, 48133360],
+        [100, 10866.465, 1199, 0.419, 0.038, 46915592]
+      ],
+      "correctness": [true, true, null, null, 908, 200, 200, 100, 100, 0, null, 1, null, null],
+      "posthocVerified": true,
+      "eventSerialization": {
+        "totalMs": 28.249,
+        "bytes": 340510
+      },
+      "cpuSamples": 3289,
+      "topCpuFrames": [
+        [0, 1153],
+        [1, 269],
+        [2, 239]
+      ],
+      "storeGrowthBytes": 4322592,
+      "measurement": 0,
+      "nodeVisits": {
+        "start": 1,
+        "work": 100,
+        "gate": 100,
+        "done": 1
+      }
+    },
+    {
+      "specification": [1000, 2, 120, 128, true, null, false, 0],
+      "wallMs": 143372.685,
+      "msPerPass": 143.373,
+      "cpu": {
+        "user": 27156000,
+        "system": 6750000
+      },
+      "awaitedPortMs": 127009.999,
+      "observationMs": 7.238,
+      "residualMs": 16355.448,
+      "maxConcurrentPortCalls": 1,
+      "eventLoopDelayMs": {
+        "mean": 31.165,
+        "max": 4366.27,
+        "p99": 166.199
+      },
+      "artifacts": {
+        "bytes": 0,
+        "files": 0
+      },
+      "portTimings": [
+        [0, 4006, 10848.184, 2.708, 5.844, 243.997],
+        [1, 2, 4331.316, 2165.658, 4615.538, 4330.512],
+        [2, 2, 61.587, 30.794, 63.322, 58.476],
+        [3, 8005, 68672.081, 8.579, 43.249, 918.686],
+        [4, 4003, 10844.732, 2.709, 5.313, 233.821],
+        [5, 2002, 4301.444, 2.149, 4.391, 173.454],
+        [6, 3000, 15269.417, 5.09, 26.855, 349.208]
+      ],
+      "otherPorts": {
+        "calls": 2007,
+        "totalMs": 12681.239
+      },
+      "checkpoints": [
+        [100, 15565.479, 1200, 0.349, 0.019, 48161976],
+        [300, 46915.391, 1201, 3.168, 0.024, 53413184],
+        [500, 78479.657, 1202, 0.353, 0.023, 51964616],
+        [600, 93053.384, 1202, 0.415, 0.024, 54267984],
+        [800, 116530.412, 1203, 0.395, 0.023, 59316056],
+        [1000, 138962.784, 1206, 0.437, 0.025, 54876464]
+      ],
+      "correctness": [true, true, null, null, 9008, 2000, 2000, 1000, 1000, 0, null, 1, null, null],
+      "posthocVerified": true,
+      "eventSerialization": {
+        "totalMs": 265.688,
+        "bytes": 3412221
+      },
+      "cpuSamples": 29155,
+      "topCpuFrames": [
+        [0, 10724],
+        [1, 2523],
+        [2, 2269]
+      ],
+      "storeGrowthBytes": 3629128,
+      "measurement": 0,
+      "nodeVisits": {
+        "start": 1,
+        "work": 1000,
+        "gate": 1000,
+        "done": 1
+      }
+    },
+    {
+      "specification": [10000, 2, 120, 128, true, null, false, 0],
+      "wallMs": 3245214.056,
+      "msPerPass": 324.521,
+      "cpu": {
+        "user": 318109000,
+        "system": 76625000
+      },
+      "awaitedPortMs": 1913449.746,
+      "observationMs": 5.71,
+      "residualMs": 1331758.6,
+      "maxConcurrentPortCalls": 1,
+      "eventLoopDelayMs": {
+        "mean": 60.839,
+        "max": 40869.298,
+        "p99": 467.403
+      },
+      "artifacts": {
+        "bytes": 0,
+        "files": 0
+      },
+      "portTimings": [
+        [0, 40006, 101582.709, 2.539, 4.391, 355.586],
+        [1, 2, 40857.882, 20428.941, 41328.921, 40856.432],
+        [2, 2, 114.042, 57.021, 112.178, 105.423],
+        [3, 80005, 1182725.279, 14.783, 76.619, 1439.044],
+        [4, 40003, 137544.828, 3.438, 7.779, 693.952],
+        [5, 20002, 66947.285, 3.347, 15.159, 375.019],
+        [6, 30000, 230904.252, 7.697, 39.318, 1451.387]
+      ],
+      "otherPorts": {
+        "calls": 20007,
+        "totalMs": 152773.469
+      },
+      "checkpoints": [
+        [1000, 203599.512, 1207, 0.638, 0.052, 47649432],
+        [3000, 499039.157, 1209, 0.647, 0.022, 57189560],
+        [5000, 1003586.591, 1210, 0.628, 0.022, 64668648],
+        [6000, 1129881.706, 1210, 0.614, 0.023, 76130016],
+        [8000, 2116665.26, 1210, 0.368, 0.021, 73942592],
+        [10000, 3203529.161, 1213, 0.427, 0.024, 91497464]
+      ],
+      "correctness": [
+        true,
+        true,
+        null,
+        null,
+        90008,
+        20000,
+        20000,
+        10000,
+        10000,
+        0,
+        null,
+        1,
+        null,
+        null
+      ],
+      "posthocVerified": true,
+      "eventSerialization": {
+        "totalMs": 2567.865,
+        "bytes": 34349163
+      },
+      "cpuSamples": 476039,
+      "topCpuFrames": [
+        [0, 196615],
+        [3, 85129],
+        [4, 25815]
+      ],
+      "storeGrowthBytes": 44384328,
+      "measurement": 0,
+      "nodeVisits": {
+        "start": 1,
+        "work": 10000,
+        "gate": 10000,
+        "done": 1
+      }
+    },
+    {
+      "specification": [100, 2, 120, 128, false, false, false, 0],
+      "wallMs": 9432.434,
+      "msPerPass": 94.324,
+      "cpu": {
+        "user": 2313000,
+        "system": 453000
+      },
+      "durableAdmissionToStartMs": 254,
+      "awaitedPortMs": 7967.87,
+      "observationMs": 7.832,
+      "residualMs": 1456.733,
+      "maxConcurrentPortCalls": 1,
+      "eventLoopDelayMs": {
+        "mean": 29.832,
+        "max": 158.466,
+        "p99": 111.739
+      },
+      "threadRequest": {
+        "status": 200,
+        "bytes": 14606,
+        "wallMs": 85.986
+      },
+      "artifacts": {
+        "bytes": 0,
+        "files": 0
+      },
+      "portTimings": [
+        [0, 408, 935.325, 2.292, 5.844, 93.762],
+        [1, 2, 154.832, 77.416, 149.309, 138.934],
+        [2, 2, 11.697, 5.849, 8.557, 8.462],
+        [3, 407, 5237.122, 12.868, 47.574, 156.333],
+        [4, 405, 940.215, 2.322, 5.844, 31.401],
+        [5, 203, 649.926, 3.202, 7.779, 67.922]
+      ],
+      "otherPorts": {
+        "calls": 6,
+        "totalMs": 38.754
+      },
+      "checkpoints": [
+        [10, 1935.51, 2765, 0.643, 0.087, 48924008],
+        [30, 3424.505, 5388, 0.954, 0.044, 48101464],
+        [50, 5133.34, 8008, 0.545, 0.13, 47849152],
+        [60, 5999.892, 9318, 0.824, 0.052, 41475232],
+        [80, 7700.101, 11938, 0.607, 0.052, 42905040],
+        [100, 9239.879, 14562, 0.682, 0.065, 44589416]
+      ],
+      "correctness": [true, true, null, null, 510, 0, 0, 100, 100, 100, true, 1, null, null],
+      "posthocVerified": true,
+      "eventSerialization": {
+        "totalMs": 19.98,
+        "bytes": 217318,
+        "sha256": "ab1329c3c739eb094580071d9181338a9723a41113b6b812efc21c21f7416bf3",
+        "lateAfter": 459,
+        "lateSha256": "df24f2bd0872f7a09aad1c9f40a4160e6a4c7505f2ac204cf97d61f7626814ba"
+      },
+      "cpuSamples": 2748,
+      "topCpuFrames": [
+        [5, 1474],
+        [1, 248],
+        [6, 69]
+      ],
+      "storeGrowthBytes": 4187400,
+      "measurement": 1,
+      "nodeVisits": {
+        "start": 1,
+        "init": 1,
+        "work": 100,
+        "gate": 100,
+        "done": 1
+      }
+    },
+    {
+      "specification": [1000, 2, 120, 128, false, false, false, 0],
+      "wallMs": 109071.259,
+      "msPerPass": 109.071,
+      "cpu": {
+        "user": 20344000,
+        "system": 4359000
+      },
+      "durableAdmissionToStartMs": 71,
+      "awaitedPortMs": 90968.592,
+      "observationMs": 8.803,
+      "residualMs": 18093.864,
+      "maxConcurrentPortCalls": 1,
+      "eventLoopDelayMs": {
+        "mean": 35.138,
+        "max": 2056.258,
+        "p99": 174.719
+      },
+      "threadRequest": {
+        "status": 200,
+        "bytes": 132519,
+        "wallMs": 114.669
+      },
+      "artifacts": {
+        "bytes": 0,
+        "files": 0
+      },
+      "portTimings": [
+        [0, 4008, 11725.045, 2.925, 8.557, 189.546],
+        [1, 2, 2084.135, 1042.068, 2153.182, 2069.007],
+        [2, 2, 79.393, 39.697, 57.565, 57.23],
+        [3, 4007, 59972.678, 14.967, 63.322, 442.382],
+        [4, 4005, 10872.434, 2.715, 4.83, 266.398],
+        [5, 2003, 6096.595, 3.044, 5.844, 166.883]
+      ],
+      "otherPorts": {
+        "calls": 6,
+        "totalMs": 138.311
+      },
+      "checkpoints": [
+        [100, 9111.565, 14564, 0.554, 0.062, 49513752],
+        [300, 26323.299, 40769, 0.589, 0.105, 52451584],
+        [500, 45993.571, 66969, 0.675, 0.406, 51696232],
+        [600, 51413.926, 80069, 0.67, 0.174, 43545560],
+        [800, 77746.121, 106269, 0.628, 0.2, 53731976],
+        [1000, 106263.549, 132475, 1.061, 0.343, 55399168]
+      ],
+      "correctness": [true, true, null, null, 5010, 0, 0, 1000, 1000, 1000, true, 1, null, null],
+      "posthocVerified": true,
+      "eventSerialization": {
+        "totalMs": 298.283,
+        "bytes": 2168162,
+        "sha256": "a63ba86cb473e971c3430e6441059d7bd26b8ff040e5fcb0443cfd027a038cb3",
+        "lateAfter": 4509,
+        "lateSha256": "34bea40a39cee115694f97896980b72d43efbaca65b3355c650bc9d6eaac451b"
+      },
+      "cpuSamples": 23759,
+      "topCpuFrames": [
+        [5, 11205],
+        [1, 2522],
+        [7, 1034]
+      ],
+      "storeGrowthBytes": 2642616,
+      "measurement": 1,
+      "nodeVisits": {
+        "start": 1,
+        "init": 1,
+        "work": 1000,
+        "gate": 1000,
+        "done": 1
+      }
+    },
+    {
+      "specification": [10000, 2, 120, 128, false, false, false, 0],
+      "wallMs": 1914523.138,
+      "msPerPass": 191.452,
+      "cpu": {
+        "user": 460328000,
+        "system": 224735000
+      },
+      "durableAdmissionToStartMs": 410,
+      "awaitedPortMs": 1599159.283,
+      "observationMs": 72.582,
+      "residualMs": 315291.273,
+      "maxConcurrentPortCalls": 1,
+      "eventLoopDelayMs": {
+        "mean": 32.691,
+        "max": 12834.57,
+        "p99": 247.857
+      },
+      "threadRequest": {
+        "status": 200,
+        "bytes": 1311528,
+        "wallMs": 359.926
+      },
+      "artifacts": {
+        "bytes": 0,
+        "files": 0
+      },
+      "portTimings": [
+        [0, 40008, 265046.018, 6.625, 22.194, 544.854],
+        [1, 2, 12851.195, 6425.598, 13168.668, 12824.063],
+        [2, 2, 150.604, 75.302, 135.735, 134.644],
+        [3, 40007, 500143.726, 12.501, 47.574, 2464.252],
+        [4, 40005, 363549.943, 9.088, 24.413, 2777.586],
+        [5, 20003, 455807.809, 22.787, 76.619, 6361.927]
+      ],
+      "otherPorts": {
+        "calls": 6,
+        "totalMs": 1609.989
+      },
+      "checkpoints": [
+        [1000, 76054.759, 132475, 0.977, 0.304, 60664720],
+        [3000, 466856.811, 394480, 1.526, 9.117, 61251672],
+        [5000, 1064509.793, 656482, 3.131, 1.383, 77035400],
+        [6000, 1149201.461, 787482, 2.513, 4.508, 67013936],
+        [8000, 1405627.35, 1049480, 4, 2.864, 79490920],
+        [10000, 1899515.871, 1311486, 6.635, 3.509, 75094000]
+      ],
+      "correctness": [
+        true,
+        true,
+        null,
+        null,
+        50010,
+        0,
+        0,
+        10000,
+        10000,
+        10000,
+        true,
+        1,
+        null,
+        null
+      ],
+      "posthocVerified": true,
+      "eventSerialization": {
+        "totalMs": 4410.547,
+        "bytes": 21843449,
+        "sha256": "52b5e6b23c9607eed9291ca4f6cbb6ca36d6865bea122b189b81c2301ab61cc9",
+        "lateAfter": 45009,
+        "lateSha256": "d44b61916106e47a8d1523f19e006877b663608336a00ea5ff9c7bcba75bce62"
+      },
+      "cpuSamples": 548972,
+      "topCpuFrames": [
+        [5, 348960],
+        [8, 32640],
+        [3, 32359]
+      ],
+      "storeGrowthBytes": 26426112,
+      "measurement": 1,
+      "nodeVisits": {
+        "start": 1,
+        "init": 1,
+        "work": 10000,
+        "gate": 10000,
+        "done": 1
+      }
+    },
+    {
+      "specification": [1000, 32, 256, 128, true, false, false, 0],
+      "wallMs": 104567.836,
+      "msPerPass": 104.568,
+      "cpu": {
+        "user": 48657000,
+        "system": 20734000
+      },
+      "durableAdmissionToStartMs": 25,
+      "awaitedPortMs": 95455.545,
+      "observationMs": 5.546,
+      "residualMs": 9106.745,
+      "maxConcurrentPortCalls": 2,
+      "eventLoopDelayMs": {
+        "mean": 13.486,
+        "max": 4731.175,
+        "p99": 24.314
+      },
+      "threadRequest": {
+        "status": 200,
+        "bytes": 1567,
+        "wallMs": 261.97
+      },
+      "artifacts": {
+        "bytes": 0,
+        "files": 0
+      },
+      "portTimings": [
+        [0, 4006, 4676.021, 1.167, 1.539, 11.943],
+        [1, 2, 4725.563, 2362.781, 5077.092, 4724.073],
+        [2, 2, 6.596, 3.298, 3.629, 3.584],
+        [3, 38005, 71560.286, 1.883, 2.479, 112.454],
+        [4, 4003, 6561.39, 1.639, 2.253, 930.471],
+        [5, 2002, 2263.314, 1.131, 1.693, 16.661],
+        [6, 3000, 4290.619, 1.43, 1.862, 70.202]
+      ],
+      "otherPorts": {
+        "calls": 2016,
+        "totalMs": 1371.756
+      },
+      "checkpoints": [
+        [100, 10352.988, 1200, 0.5, 0.075, 46815288],
+        [300, 29541.694, 1202, 0.518, 0.053, 66095520],
+        [500, 49901.848, 1202, 0.485, 0.031, 73098656],
+        [600, 59814.192, 1202, 0.518, 0.03, 70875056],
+        [800, 79879.173, 1202, 0.441, 0.029, 89718280],
+        [1000, 99781.073, 1205, 0.38, 0.035, 96385528]
+      ],
+      "correctness": [true, true, true, 0, 39008, 32000, 32000, 1000, 1000, 0, true, 1, true, null],
+      "eventSerialization": {
+        "totalMs": 217.49,
+        "bytes": 17260086,
+        "sha256": "4159d84d52af890313baf3efd36b7c3f4ea73155a00ea464d93de77445a26690",
+        "lateAfter": 35107,
+        "lateSha256": "fa851ed89321becf5510be46bbbbb60c8dcedd57091c4671d9d71a679f36c7d4"
+      },
+      "cpuSamples": 43979,
+      "topCpuFrames": [
+        [5, 28446],
+        [7, 2797],
+        [1, 2372]
+      ],
+      "replays": {
+        "first": 0,
+        "late": 1,
+        "slow": 2,
+        "reconnect": {
+          "ok": true,
+          "interrupted": 3,
+          "reconnected": 4
+        }
+      },
+      "storeGrowthBytes": 22807960,
+      "measurement": 2,
+      "nodeVisits": {
+        "start": 1,
+        "work": 1000,
+        "gate": 1000,
+        "done": 1
+      }
+    },
+    {
+      "specification": [100, 8, 4096, 128, true, false, true, 0],
+      "wallMs": 8103.671,
+      "msPerPass": 81.037,
+      "cpu": {
+        "user": 4032000,
+        "system": 1125000
+      },
+      "durableAdmissionToStartMs": 39,
+      "awaitedPortMs": 7244.628,
+      "observationMs": 7.869,
+      "residualMs": 851.175,
+      "maxConcurrentPortCalls": 2,
+      "eventLoopDelayMs": {
+        "mean": 16.066,
+        "max": 180.355,
+        "p99": 59.474
+      },
+      "threadRequest": {
+        "status": 200,
+        "bytes": 22055,
+        "wallMs": 377.868
+      },
+      "artifacts": {
+        "bytes": 3320036,
+        "files": 100
+      },
+      "portTimings": [
+        [0, 406, 558.554, 1.376, 1.862, 8.628],
+        [1, 2, 179.985, 89.992, 180.664, 178.046],
+        [2, 2, 7.387, 3.693, 3.992, 3.697],
+        [3, 1405, 3707.251, 2.639, 3.992, 59.75],
+        [4, 403, 668.83, 1.66, 2.726, 6.633],
+        [5, 202, 361.7, 1.791, 2.253, 36.718],
+        [6, 300, 560.501, 1.868, 2.253, 34.824],
+        [7, 100, 1011.822, 10.118, 24.413, 193.1]
+      ],
+      "otherPorts": {
+        "calls": 210,
+        "totalMs": 188.598
+      },
+      "checkpoints": [
+        [10, 1452.107, 3242, 0.943, 0.096, 46821392],
+        [30, 3075.542, 7344, 0.582, 0.052, 40330696],
+        [50, 4606.217, 11444, 0.588, 0.106, 44810992],
+        [60, 5280.02, 13494, 0.827, 0.072, 48489576],
+        [80, 6539.625, 17594, 0.529, 0.139, 45950752],
+        [100, 7881.124, 21697, 0.746, 0.108, 47117392]
+      ],
+      "correctness": [true, true, true, 0, 1508, 800, 800, 100, 100, 0, true, 1, null, null],
+      "eventSerialization": {
+        "totalMs": 12.1,
+        "bytes": 2057559,
+        "sha256": "80138efcdbbb68c4b45309348dfc0a3fa3a8bc2bffb8b03b8fb49b71deeaacd5",
+        "lateAfter": 1357,
+        "lateSha256": "f3befee8ce71de9c13114401363595ca7e45d3ea473d8c4465f2326b3caf7b76"
+      },
+      "cpuSamples": 4837,
+      "topCpuFrames": [
+        [5, 2315],
+        [1, 808],
+        [7, 132]
+      ],
+      "storeGrowthBytes": 10452532,
+      "measurement": 3,
+      "nodeVisits": {
+        "start": 1,
+        "work": 100,
+        "gate": 100,
+        "done": 1
+      }
+    },
+    {
+      "specification": [1000, 8, 4096, 128, true, false, true, 0],
+      "wallMs": 83288.108,
+      "msPerPass": 83.288,
+      "cpu": {
+        "user": 42985000,
+        "system": 12094000
+      },
+      "durableAdmissionToStartMs": 10,
+      "awaitedPortMs": 74183.736,
+      "observationMs": 15.415,
+      "residualMs": 9088.957,
+      "maxConcurrentPortCalls": 2,
+      "eventLoopDelayMs": {
+        "mean": 18.018,
+        "max": 12960.399,
+        "p99": 26.575
+      },
+      "threadRequest": {
+        "status": 200,
+        "bytes": 206566,
+        "wallMs": 1745.715
+      },
+      "artifacts": {
+        "bytes": 36529844,
+        "files": 1100
+      },
+      "portTimings": [
+        [0, 4006, 7192.864, 1.796, 2.479, 18.031],
+        [1, 2, 12956.76, 6478.38, 13168.668, 12956.012],
+        [2, 2, 9.186, 4.593, 6.429, 6.296],
+        [3, 14005, 28432.754, 2.03, 2.479, 179.776],
+        [4, 4003, 8440.978, 2.109, 3.299, 12.34],
+        [5, 2002, 5410.452, 2.703, 4.83, 131.373],
+        [6, 3000, 4293.742, 1.431, 1.862, 19.692],
+        [7, 1000, 6127.098, 6.127, 18.342, 81.395]
+      ],
+      "otherPorts": {
+        "calls": 2014,
+        "totalMs": 1319.902
+      },
+      "checkpoints": [
+        [100, 6406.909, 21698, 0.51, 0.099, 49705960],
+        [300, 19388.914, 62701, 0.805, 0.231, 76302648],
+        [500, 32592.269, 103701, 0.972, 0.343, 97689112],
+        [600, 39968.096, 124201, 1.086, 0.416, 86039896],
+        [800, 54727.518, 165201, 1.433, 0.696, 130651560],
+        [1000, 70265.391, 206204, 1.612, 0.828, 173586456]
+      ],
+      "correctness": [true, true, true, 0, 15008, 8000, 8000, 1000, 1000, 0, true, 1, null, null],
+      "eventSerialization": {
+        "totalMs": 105.856,
+        "bytes": 20594395,
+        "sha256": "870aac1410cc474bbe93d3aee95be4585d4fd8f88c3adf735ae80c358f65cadc",
+        "lateAfter": 13507,
+        "lateSha256": "66f0535065070c3787c3d73fed6bbb6da10ce9d299c8e57cbad7983257df47d6"
+      },
+      "cpuSamples": 42798,
+      "topCpuFrames": [
+        [5, 19028],
+        [1, 5789],
+        [8, 3037]
+      ],
+      "storeGrowthBytes": 67412512,
+      "measurement": 3,
+      "nodeVisits": {
+        "start": 1,
+        "work": 1000,
+        "gate": 1000,
+        "done": 1
+      }
+    },
+    {
+      "preflight": {
+        "wallMs": 9945.192,
+        "exitCode": 1,
+        "databaseReady": true
+      },
+      "cold": {
+        "entryPoint": "tooling/perf/worker.mjs (round 1)",
+        "startupToListeningMs": 6088.182,
+        "firstRequestMs": 65.042,
+        "startupToFirstResponseMs": 6153.231
+      },
+      "warm": {
+        "bootMs": 214.616,
+        "firstRequestMs": 21.898
+      },
+      "measurement": 4
+    },
+    {
+      "specification": [1000, 2, 120, 512, true, true, false, 50],
+      "wallMs": 130502.464,
+      "msPerPass": 130.502,
+      "cpu": {
+        "user": 40109000,
+        "system": 20578000
+      },
+      "durableAdmissionToStartMs": 116,
+      "awaitedPortMs": 77491.937,
+      "observationMs": 24.185,
+      "residualMs": 52986.342,
+      "maxConcurrentPortCalls": 3,
+      "eventLoopDelayMs": {
+        "mean": 15.799,
+        "max": 3621.782,
+        "p99": 33.751
+      },
+      "threadRequest": {
+        "status": 200,
+        "bytes": 516601,
+        "wallMs": 15.216
+      },
+      "artifacts": {
+        "bytes": 0,
+        "files": 0
+      },
+      "portTimings": [
+        [0, 6052, 11570.647, 1.912, 3.299, 40.087],
+        [1, 3, 1031.138, 343.713, 686.07, 638.738],
+        [2, 2, 23.507, 11.753, 20.176, 19.313],
+        [3, 10007, 24546.215, 2.453, 4.391, 215.742],
+        [4, 6005, 16137.516, 2.687, 5.313, 85.93],
+        [5, 3003, 13429.26, 4.472, 12.528, 189.401],
+        [6, 3000, 8941.619, 2.981, 3.299, 3607.021]
+      ],
+      "otherPorts": {
+        "calls": 2047,
+        "totalMs": 1812.035
+      },
+      "checkpoints": [
+        [100, 10559.907, 52215, 0.563, 0.204, 50152968],
+        [300, 32520.184, 155218, 0.788, 0.41, 59599288],
+        [500, 61754.821, 258218, 1.229, 0.511, 69776664],
+        [600, 74803.418, 309718, 1.168, 0.612, 57217440],
+        [800, 101469.985, 412719, 1.219, 4.258, 73904472],
+        [1000, 129720.243, 515722, 1.31, 2.527, 82073960]
+      ],
+      "correctness": [
+        true,
+        true,
+        true,
+        0,
+        11010,
+        2000,
+        2000,
+        1000,
+        1000,
+        1000,
+        true,
+        1,
+        null,
+        true
+      ],
+      "eventSerialization": {
+        "totalMs": 53.59,
+        "bytes": 4311361,
+        "sha256": "b9d1bf91be5e206ddda02fc0cd4e64d6d7b8c85707049df5fa3ed6c4ffe3ebc6",
+        "lateAfter": 9909,
+        "lateSha256": "20d134bbb7fc8ab87fe96ceacc2e45994f35d85f2b2dc0079ad7e1cb974f8bbc"
+      },
+      "cpuSamples": 58953,
+      "topCpuFrames": [
+        [1, 22102],
+        [5, 20534],
+        [8, 2057]
+      ],
+      "browser": {
+        "browser": "155.0.4283.62",
+        "channel": "msedge",
+        "headless": true,
+        "warmup": {
+          "passes": 250,
+          "wallMs": 27648.381
+        },
+        "inbound": {
+          "events": 50,
+          "payloadValueBytes": 32768
+        },
+        "pages": [0, 1, 2]
+      },
+      "storeGrowthBytes": 11747496,
+      "measurement": 5,
+      "nodeVisits": {
+        "start": 1,
+        "init": 1,
+        "work": 1000,
+        "grow": 1000,
+        "gate": 1000,
+        "done": 1
+      }
+    },
+    {
+      "specification": [100, 2, 120, 128, true, false, false, 0],
+      "wallMs": 4260.948,
+      "msPerPass": 42.609,
+      "cpu": {
+        "user": 3016000,
+        "system": 594000
+      },
+      "durableAdmissionToStartMs": 15,
+      "awaitedPortMs": 3574.878,
+      "observationMs": 5.653,
+      "residualMs": 680.416,
+      "maxConcurrentPortCalls": 1,
+      "eventLoopDelayMs": {
+        "mean": 15.31,
+        "max": 118.161,
+        "p99": 25.461
+      },
+      "threadRequest": {
+        "status": 200,
+        "bytes": 1556,
+        "wallMs": 58.863
+      },
+      "artifacts": {
+        "bytes": 0,
+        "files": 0
+      },
+      "portTimings": [
+        [0, 406, 502.098, 1.237, 1.862, 4.168],
+        [1, 2, 50.643, 25.322, 52.332, 49.81],
+        [2, 2, 5.846, 2.923, 3.299, 3.045],
+        [3, 805, 1541.026, 1.914, 2.726, 9.965],
+        [4, 403, 577.835, 1.434, 2.253, 4.231],
+        [5, 202, 333.444, 1.651, 1.539, 110.869],
+        [6, 300, 412.692, 1.376, 2.048, 4.821]
+      ],
+      "otherPorts": {
+        "calls": 209,
+        "totalMs": 151.294
+      },
+      "checkpoints": [
+        [10, 482.057, 1193, 0.629, 0.075, 44527200],
+        [30, 1341.068, 1195, 0.646, 0.029, 44851568],
+        [50, 2153.252, 1195, 0.387, 0.025, 44135848],
+        [60, 2650.777, 1195, 0.418, 0.026, 56565440],
+        [80, 3433.682, 1195, 0.526, 0.026, 53997328],
+        [100, 4180.304, 1197, 0.441, 0.036, 51516120]
+      ],
+      "correctness": [true, true, true, 0, 908, 200, 200, 100, 100, 0, true, 1, null, null],
+      "eventSerialization": {
+        "totalMs": 4.114,
+        "bytes": 340479,
+        "sha256": "e7ba9cd5ec64bba2030d95331db44fa8b2d5af2126457a44c275a963a08baced",
+        "lateAfter": 817,
+        "lateSha256": "6505f7fe3af204a9ea73c65922aae68fe0ade17718dff032f1ff193df6ff2ef3"
+      },
+      "cpuSamples": 1957,
+      "topCpuFrames": [
+        [9, 1070],
+        [1, 284],
+        [6, 68]
+      ],
+      "storeGrowthBytes": 348160,
+      "measurement": 6,
+      "nodeVisits": {
+        "start": 1,
+        "work": 100,
+        "gate": 100,
+        "done": 1
+      }
+    },
+    {
+      "specification": [1000, 2, 120, 128, true, false, false, 0],
+      "wallMs": 39825.109,
+      "msPerPass": 39.825,
+      "cpu": {
+        "user": 24047000,
+        "system": 5578000
+      },
+      "durableAdmissionToStartMs": 9,
+      "awaitedPortMs": 33200.64,
+      "observationMs": 4.759,
+      "residualMs": 6619.71,
+      "maxConcurrentPortCalls": 2,
+      "eventLoopDelayMs": {
+        "mean": 14.775,
+        "max": 406.061,
+        "p99": 24.658
+      },
+      "threadRequest": {
+        "status": 200,
+        "bytes": 1567,
+        "wallMs": 6.266
+      },
+      "artifacts": {
+        "bytes": 0,
+        "files": 0
+      },
+      "portTimings": [
+        [0, 4006, 4337.352, 1.083, 1.272, 23.644],
+        [1, 2, 405.303, 202.652, 425.996, 404.573],
+        [2, 2, 7.183, 3.591, 4.391, 4.161],
+        [3, 8005, 15267.504, 1.907, 2.479, 102.821],
+        [4, 4003, 5479.423, 1.369, 2.048, 24.656],
+        [5, 2002, 2289.257, 1.143, 1.539, 47.337],
+        [6, 3000, 4220.583, 1.407, 1.862, 117.152]
+      ],
+      "otherPorts": {
+        "calls": 2012,
+        "totalMs": 1194.036
+      },
+      "checkpoints": [
+        [100, 3977.679, 1199, 0.487, 0.024, 46074824],
+        [300, 11755.284, 1202, 0.427, 0.023, 57382584],
+        [500, 19599.021, 1202, 0.383, 0.019, 47041016],
+        [600, 23389.667, 1202, 0.39, 0.021, 58774352],
+        [800, 31423.477, 1202, 0.391, 0.024, 55381968],
+        [1000, 39383.833, 1205, 0.431, 0.024, 57000208]
+      ],
+      "correctness": [true, true, true, 0, 9008, 2000, 2000, 1000, 1000, 0, true, 1, null, null],
+      "eventSerialization": {
+        "totalMs": 69.04,
+        "bytes": 3410476,
+        "sha256": "9d6982b3df69c35424996b3aad23c7f1716129e2d9fa4369346448539ca6c2f7",
+        "lateAfter": 8107,
+        "lateSha256": "c1a263f9203cda59be51d4841e31ce759a30687ccb4d97ca8701a3dd40645999"
+      },
+      "cpuSamples": 18749,
+      "topCpuFrames": [
+        [9, 10620],
+        [1, 2704],
+        [7, 717]
+      ],
+      "storeGrowthBytes": 3706880,
+      "measurement": 6,
+      "nodeVisits": {
+        "start": 1,
+        "work": 1000,
+        "gate": 1000,
+        "done": 1
+      }
+    },
+    {
+      "specification": [10000, 2, 120, 128, true, false, false, 0],
+      "wallMs": 570279.278,
+      "msPerPass": 57.028,
+      "cpu": {
+        "user": 281875000,
+        "system": 55563000
+      },
+      "durableAdmissionToStartMs": 121,
+      "awaitedPortMs": 435022.232,
+      "observationMs": 4.589,
+      "residualMs": 135252.456,
+      "maxConcurrentPortCalls": 2,
+      "eventLoopDelayMs": {
+        "mean": 17.912,
+        "max": 12171.87,
+        "p99": 74.056
+      },
+      "threadRequest": {
+        "status": 200,
+        "bytes": 1578,
+        "wallMs": 9.212
+      },
+      "artifacts": {
+        "bytes": 0,
+        "files": 0
+      },
+      "portTimings": [
+        [0, 40006, 44083.695, 1.102, 1.399, 111.699],
+        [1, 2, 12169.619, 6084.81, 13168.668, 12168.379],
+        [2, 2, 12.768, 6.384, 10.354, 9.55],
+        [3, 80005, 204487.212, 2.556, 3.299, 1060.502],
+        [4, 40003, 67763.425, 1.694, 2.253, 533.965],
+        [5, 20002, 33251.152, 1.662, 2.048, 489.742],
+        [6, 30000, 60220.221, 2.007, 2.479, 833.168]
+      ],
+      "otherPorts": {
+        "calls": 20047,
+        "totalMs": 13034.141
+      },
+      "checkpoints": [
+        [1000, 64304.965, 1206, 0.447, 0.023, 53468688],
+        [3000, 157300.956, 1209, 0.414, 0.021, 56456696],
+        [5000, 247806.804, 1209, 0.422, 0.023, 74676416],
+        [6000, 346007.69, 1209, 0.423, 0.021, 73387944],
+        [8000, 447177.91, 1209, 0.39, 0.021, 79867136],
+        [10000, 558021.931, 1212, 0.412, 0.024, 96491776]
+      ],
+      "correctness": [
+        true,
+        true,
+        true,
+        0,
+        90008,
+        20000,
+        20000,
+        10000,
+        10000,
+        0,
+        true,
+        1,
+        null,
+        null
+      ],
+      "eventSerialization": {
+        "totalMs": 1049.495,
+        "bytes": 34328584,
+        "sha256": "d14711382705496e8c1c4e970b90698202c5939810eed1d25c9bd5c1a4198dca",
+        "lateAfter": 81007,
+        "lateSha256": "ce789fa639555072692c1083a05e353e89d021cdbe1cc04250e4a93c6f9cabaa"
+      },
+      "cpuSamples": 234289,
+      "topCpuFrames": [
+        [9, 136652],
+        [3, 24488],
+        [1, 23906]
+      ],
+      "storeGrowthBytes": 44245040,
+      "measurement": 6,
+      "nodeVisits": {
+        "start": 1,
+        "work": 10000,
+        "gate": 10000,
+        "done": 1
+      }
+    },
+    {
+      "specification": [100, 2, 120, 128, false, false, false, 0],
+      "wallMs": 2687.54,
+      "msPerPass": 26.875,
+      "cpu": {
+        "user": 1641000,
+        "system": 515000
+      },
+      "durableAdmissionToStartMs": 10,
+      "awaitedPortMs": 2130.273,
+      "observationMs": 5.634,
+      "residualMs": 551.633,
+      "maxConcurrentPortCalls": 1,
+      "eventLoopDelayMs": {
+        "mean": 13.028,
+        "max": 45.941,
+        "p99": 19.71
+      },
+      "threadRequest": {
+        "status": 200,
+        "bytes": 14606,
+        "wallMs": 82.147
+      },
+      "artifacts": {
+        "bytes": 0,
+        "files": 0
+      },
+      "portTimings": [
+        [0, 408, 467.625, 1.146, 1.399, 3.815],
+        [1, 2, 32.206, 16.103, 32.494, 31.588],
+        [2, 2, 6.088, 3.044, 3.299, 3.292],
+        [3, 407, 771.853, 1.896, 2.479, 10.027],
+        [4, 405, 591.139, 1.46, 2.253, 6.82],
+        [5, 203, 250.359, 1.233, 1.862, 3.817]
+      ],
+      "otherPorts": {
+        "calls": 8,
+        "totalMs": 11.003
+      },
+      "checkpoints": [
+        [10, 318.271, 2765, 0.57, 0.09, 48644000],
+        [30, 823.482, 5388, 0.45, 0.037, 45613432],
+        [50, 1350.529, 8008, 0.657, 0.045, 43374304],
+        [60, 1603.498, 9316, 0.363, 0.041, 49424920],
+        [80, 2113.613, 11938, 0.472, 0.052, 48097560],
+        [100, 2620.914, 14562, 0.462, 0.057, 47858592]
+      ],
+      "correctness": [true, true, true, 0, 510, 0, 0, 100, 100, 100, true, 1, null, null],
+      "eventSerialization": {
+        "totalMs": 5.378,
+        "bytes": 217317,
+        "sha256": "77fae84499187d4ed1f1fd933bc13a6af106cdc032106313371183c673c909df",
+        "lateAfter": 459,
+        "lateSha256": "9a18411dddf1c3a6673e925a1ff82bc85a645c39833fb8e15fad2d0ad0e5301d"
+      },
+      "cpuSamples": 1675,
+      "topCpuFrames": [
+        [5, 633],
+        [1, 294],
+        [6, 87]
+      ],
+      "storeGrowthBytes": 311296,
+      "measurement": 7,
+      "nodeVisits": {
+        "start": 1,
+        "init": 1,
+        "work": 100,
+        "gate": 100,
+        "done": 1
+      }
+    },
+    {
+      "specification": [1000, 2, 120, 128, false, false, false, 0],
+      "wallMs": 30742.983,
+      "msPerPass": 30.743,
+      "cpu": {
+        "user": 15813000,
+        "system": 4484000
+      },
+      "durableAdmissionToStartMs": 10,
+      "awaitedPortMs": 25224.231,
+      "observationMs": 7.847,
+      "residualMs": 5510.906,
+      "maxConcurrentPortCalls": 2,
+      "eventLoopDelayMs": {
+        "mean": 15.128,
+        "max": 2797.601,
+        "p99": 22.217
+      },
+      "threadRequest": {
+        "status": 200,
+        "bytes": 132517,
+        "wallMs": 9.258
+      },
+      "artifacts": {
+        "bytes": 0,
+        "files": 0
+      },
+      "portTimings": [
+        [0, 4008, 5003.312, 1.248, 1.539, 37.712],
+        [1, 2, 2584.801, 1292.4, 2605.351, 2583.856],
+        [2, 2, 10.063, 5.031, 7.779, 7.261],
+        [3, 4007, 7717.547, 1.926, 2.479, 60.663],
+        [4, 4005, 6339.328, 1.583, 2.479, 21.44],
+        [5, 2003, 3201.932, 1.599, 2.479, 16.729]
+      ],
+      "otherPorts": {
+        "calls": 10,
+        "totalMs": 367.248
+      },
+      "checkpoints": [
+        [100, 2596.107, 14564, 0.414, 0.048, 44262408],
+        [300, 7751.933, 40767, 0.546, 0.095, 53705008],
+        [500, 13121.907, 66969, 0.506, 0.147, 56470488],
+        [600, 15885.839, 80069, 0.574, 0.196, 56586408],
+        [800, 21610.581, 106269, 0.653, 0.186, 61446064],
+        [1000, 27708.32, 132473, 0.77, 0.31, 53254672]
+      ],
+      "correctness": [true, true, true, 0, 5010, 0, 0, 1000, 1000, 1000, true, 1, null, null],
+      "eventSerialization": {
+        "totalMs": 20.173,
+        "bytes": 2167140,
+        "sha256": "28784956975a96346013cdfd0f0971a4673f0347a02e6a095bd48361fcabf327",
+        "lateAfter": 4509,
+        "lateSha256": "bce0e5e523bb7c63620a9d521feb1480bb8b14f57f3f0a9c2b1539286218cc3d"
+      },
+      "cpuSamples": 17046,
+      "topCpuFrames": [
+        [5, 7184],
+        [1, 2693],
+        [3, 786]
+      ],
+      "storeGrowthBytes": 2621944,
+      "measurement": 7,
+      "nodeVisits": {
+        "start": 1,
+        "init": 1,
+        "work": 1000,
+        "gate": 1000,
+        "done": 1
+      }
+    },
+    {
+      "specification": [10000, 2, 120, 128, false, false, false, 0],
+      "wallMs": 745636.177,
+      "msPerPass": 74.564,
+      "cpu": {
+        "user": 384484000,
+        "system": 224860000
+      },
+      "durableAdmissionToStartMs": 11,
+      "awaitedPortMs": 636426.559,
+      "observationMs": 41.987,
+      "residualMs": 109167.63,
+      "maxConcurrentPortCalls": 2,
+      "eventLoopDelayMs": {
+        "mean": 18.423,
+        "max": 2669.674,
+        "p99": 61.014
+      },
+      "threadRequest": {
+        "status": 200,
+        "bytes": 1311528,
+        "wallMs": 36.019
+      },
+      "artifacts": {
+        "bytes": 0,
+        "files": 0
+      },
+      "portTimings": [
+        [0, 40008, 122015.435, 3.05, 5.844, 43.522],
+        [1, 2, 2663.958, 1331.979, 2865.886, 2663.048],
+        [2, 2, 28.757, 14.379, 22.194, 20.429],
+        [3, 40007, 121877.296, 3.046, 5.313, 527.297],
+        [4, 40005, 189755.9, 4.743, 9.412, 664.963],
+        [5, 20003, 199656.329, 9.981, 43.249, 1874.312]
+      ],
+      "otherPorts": {
+        "calls": 58,
+        "totalMs": 428.885
+      },
+      "checkpoints": [
+        [1000, 27324.641, 132475, 0.66, 0.29, 51324816],
+        [3000, 106769.31, 394480, 1.539, 0.95, 85388768],
+        [5000, 225719.359, 656480, 2.083, 1.558, 62616112],
+        [6000, 301882.465, 787480, 3.874, 2.009, 84144088],
+        [8000, 506970.242, 1049480, 3.814, 1.684, 93371392],
+        [10000, 742753.078, 1311482, 4.384, 3.051, 82504200]
+      ],
+      "correctness": [true, true, true, 0, 50010, 0, 0, 10000, 10000, 10000, true, 1, null, null],
+      "eventSerialization": {
+        "totalMs": 209.645,
+        "bytes": 21821575,
+        "sha256": "c2fffeec5f4e29aa81d75cd51033eb6935bf1e9e6b5c0edb21da9423ff136d3e",
+        "lateAfter": 45009,
+        "lateSha256": "a8d73dde5961c05f71e90d432d74f9beec2c59825d0ffc93141f030b87a2a2d5"
+      },
+      "cpuSamples": 448933,
+      "topCpuFrames": [
+        [5, 239150],
+        [8, 40594],
+        [3, 30792]
+      ],
+      "storeGrowthBytes": 26413872,
+      "measurement": 7,
+      "nodeVisits": {
+        "start": 1,
+        "init": 1,
+        "work": 10000,
+        "gate": 10000,
+        "done": 1
+      }
+    },
+    {
+      "specification": [1000, 32, 256, 128, true, false, false, 0],
+      "wallMs": 93202.92,
+      "msPerPass": 93.203,
+      "cpu": {
+        "user": 47969000,
+        "system": 18687000
+      },
+      "durableAdmissionToStartMs": 10,
+      "awaitedPortMs": 85177.966,
+      "observationMs": 5.16,
+      "residualMs": 8019.794,
+      "maxConcurrentPortCalls": 2,
+      "eventLoopDelayMs": {
+        "mean": 12.716,
+        "max": 1198.522,
+        "p99": 22.249
+      },
+      "threadRequest": {
+        "status": 200,
+        "bytes": 1567,
+        "wallMs": 54.569
+      },
+      "artifacts": {
+        "bytes": 0,
+        "files": 0
+      },
+      "portTimings": [
+        [0, 4006, 4032.801, 1.007, 1.272, 4.599],
+        [1, 2, 1197.214, 598.607, 1215.415, 1196.52],
+        [2, 2, 6.598, 3.299, 3.992, 3.694],
+        [3, 38005, 67203.758, 1.768, 2.253, 320.127],
+        [4, 4003, 5336.912, 1.333, 2.048, 19.057],
+        [5, 2002, 2247.553, 1.123, 1.693, 16.069],
+        [6, 3000, 3983.564, 1.328, 1.862, 16.375]
+      ],
+      "otherPorts": {
+        "calls": 2015,
+        "totalMs": 1169.567
+      },
+      "checkpoints": [
+        [100, 9578.453, 1199, 0.603, 0.064, 48806376],
+        [300, 28676.334, 1202, 0.427, 0.03, 58218768],
+        [500, 46699.668, 1200, 0.375, 0.024, 62711624],
+        [600, 55819.967, 1201, 0.463, 0.031, 60829032],
+        [800, 73965.73, 1202, 0.335, 0.024, 61994576],
+        [1000, 91962.74, 1205, 0.671, 0.038, 66567760]
+      ],
+      "correctness": [true, true, true, 0, 39008, 32000, 32000, 1000, 1000, 0, true, 1, true, null],
+      "eventSerialization": {
+        "totalMs": 99.284,
+        "bytes": 17260033,
+        "sha256": "d04e72d153c4d924afc09e4434edb0dfafc5e62abdd3f5337e771828f9af668b",
+        "lateAfter": 35107,
+        "lateSha256": "976934f8190c96715e2a17586a289de1623dc0a90ce4653d0c0bdcfc05cfb158"
+      },
+      "cpuSamples": 56518,
+      "topCpuFrames": [
+        [10, 34169],
+        [7, 4134],
+        [1, 2816]
+      ],
+      "replays": {
+        "first": 5,
+        "late": 6,
+        "slow": 7,
+        "reconnect": {
+          "ok": true,
+          "interrupted": 8,
+          "reconnected": 9
+        }
+      },
+      "storeGrowthBytes": 18919424,
+      "measurement": 8,
+      "nodeVisits": {
+        "start": 1,
+        "work": 1000,
+        "gate": 1000,
+        "done": 1
+      }
+    },
+    {
+      "specification": [100, 8, 4096, 128, true, false, true, 0],
+      "wallMs": 4806.338,
+      "msPerPass": 48.063,
+      "cpu": {
+        "user": 3062000,
+        "system": 1203000
+      },
+      "durableAdmissionToStartMs": 8,
+      "awaitedPortMs": 4228.354,
+      "observationMs": 5.604,
+      "residualMs": 572.38,
+      "maxConcurrentPortCalls": 1,
+      "eventLoopDelayMs": {
+        "mean": 13.224,
+        "max": 69.206,
+        "p99": 22.528
+      },
+      "threadRequest": {
+        "status": 200,
+        "bytes": 22053,
+        "wallMs": 45.81
+      },
+      "artifacts": {
+        "bytes": 3320036,
+        "files": 100
+      },
+      "portTimings": [
+        [0, 406, 404.673, 0.997, 1.399, 3.611],
+        [1, 2, 57.555, 28.778, 57.565, 56.898],
+        [2, 2, 4.976, 2.488, 2.726, 2.49],
+        [3, 1405, 2290.39, 1.63, 2.253, 14.499],
+        [4, 403, 518.331, 1.286, 2.253, 10.209],
+        [5, 202, 241.094, 1.194, 1.693, 5.135],
+        [6, 300, 383.575, 1.279, 1.862, 4.634],
+        [7, 100, 208.959, 2.09, 3.992, 5.153]
+      ],
+      "otherPorts": {
+        "calls": 209,
+        "totalMs": 118.801
+      },
+      "checkpoints": [
+        [10, 501.034, 3242, 0.367, 0.056, 52506008],
+        [30, 1417.625, 7344, 0.55, 0.045, 45070152],
+        [50, 2390.244, 11444, 0.512, 0.068, 50910064],
+        [60, 2870.8, 13494, 0.568, 0.061, 48050808],
+        [80, 3794.767, 17594, 0.322, 0.06, 56625512],
+        [100, 4719.326, 21697, 0.518, 0.151, 49619480]
+      ],
+      "correctness": [true, true, true, 0, 1508, 800, 800, 100, 100, 0, true, 1, null, null],
+      "eventSerialization": {
+        "totalMs": 8.454,
+        "bytes": 2057567,
+        "sha256": "219d90b5d7d46126d57fcdea5074e8936025d47fcbd2d9d42a7602fd4f5c5abf",
+        "lateAfter": 1357,
+        "lateSha256": "bf38b75b9abcf749154245448e446ecf2c0bd9dbce9b5e1d50cd1bc0651c2ae5"
+      },
+      "cpuSamples": 2997,
+      "topCpuFrames": [
+        [11, 1516],
+        [1, 372],
+        [6, 119]
+      ],
+      "storeGrowthBytes": 6613220,
+      "measurement": 9,
+      "nodeVisits": {
+        "start": 1,
+        "work": 100,
+        "gate": 100,
+        "done": 1
+      }
+    },
+    {
+      "specification": [1000, 8, 4096, 128, true, false, true, 0],
+      "wallMs": 57630.756,
+      "msPerPass": 57.631,
+      "cpu": {
+        "user": 33828000,
+        "system": 13953000
+      },
+      "durableAdmissionToStartMs": 7,
+      "awaitedPortMs": 49391.786,
+      "observationMs": 12.981,
+      "residualMs": 8225.989,
+      "maxConcurrentPortCalls": 2,
+      "eventLoopDelayMs": {
+        "mean": 14.975,
+        "max": 462.684,
+        "p99": 25.231
+      },
+      "threadRequest": {
+        "status": 200,
+        "bytes": 206566,
+        "wallMs": 11.308
+      },
+      "artifacts": {
+        "bytes": 36529844,
+        "files": 1100
+      },
+      "portTimings": [
+        [0, 4006, 5848.516, 1.46, 2.253, 18.201],
+        [1, 2, 454.5, 227.25, 468.595, 454.078],
+        [2, 2, 9.357, 4.679, 6.429, 6.246],
+        [3, 14005, 23890.367, 1.706, 2.253, 20.321],
+        [4, 4003, 7277.631, 1.818, 2.999, 20.425],
+        [5, 2002, 4690.712, 2.343, 3.992, 25.976],
+        [6, 3000, 3812.297, 1.271, 1.693, 11.576],
+        [7, 1000, 2336.143, 2.336, 4.391, 38.239]
+      ],
+      "otherPorts": {
+        "calls": 2013,
+        "totalMs": 1072.262
+      },
+      "checkpoints": [
+        [100, 5027.438, 21697, 0.478, 0.109, 49953112],
+        [300, 15133.482, 62701, 0.502, 0.181, 57354872],
+        [500, 26069.523, 103701, 1.035, 0.4, 72889376],
+        [600, 31909.74, 124201, 0.719, 0.367, 79449808],
+        [800, 44097.648, 165201, 1.098, 0.595, 83733040],
+        [1000, 57123.814, 206204, 1.08, 0.54, 90244936]
+      ],
+      "correctness": [true, true, true, 0, 15008, 8000, 8000, 1000, 1000, 0, true, 1, null, null],
+      "eventSerialization": {
+        "totalMs": 68.404,
+        "bytes": 20594218,
+        "sha256": "8dfb8fc90234e5c76cfa6247340ad8a796e6833b4649e141713ee8e3e644ceb9",
+        "lateAfter": 13507,
+        "lateSha256": "9ddc66a30b309ca70d69273db26db0ee16ef01aa2f2a4fea9821ac0d526aab1c"
+      },
+      "cpuSamples": 35150,
+      "topCpuFrames": [
+        [11, 16889],
+        [1, 3685],
+        [8, 2242]
+      ],
+      "storeGrowthBytes": 67367240,
+      "measurement": 9,
+      "nodeVisits": {
+        "start": 1,
+        "work": 1000,
+        "gate": 1000,
+        "done": 1
+      }
+    },
+    {
+      "preflight": {
+        "wallMs": 2833.5,
+        "exitCode": 1,
+        "databaseReady": true
+      },
+      "cold": {
+        "entryPoint": "tooling/perf/worker.mjs (round 1)",
+        "startupToListeningMs": 3486.786,
+        "firstRequestMs": 101.336,
+        "startupToFirstResponseMs": 3588.13
+      },
+      "warm": {
+        "bootMs": 114.887,
+        "firstRequestMs": 44.971
+      },
+      "measurement": 10
+    },
+    {
+      "specification": [1000, 2, 120, 512, true, true, false, 50],
+      "wallMs": 98022.531,
+      "msPerPass": 98.023,
+      "cpu": {
+        "user": 25984000,
+        "system": 17500000
+      },
+      "durableAdmissionToStartMs": 7,
+      "awaitedPortMs": 46694.642,
+      "observationMs": 10.048,
+      "residualMs": 51317.841,
+      "maxConcurrentPortCalls": 2,
+      "eventLoopDelayMs": {
+        "mean": 12.767,
+        "max": 268.173,
+        "p99": 23.708
+      },
+      "threadRequest": {
+        "status": 200,
+        "bytes": 516599,
+        "wallMs": 7.213
+      },
+      "artifacts": {
+        "bytes": 0,
+        "files": 0
+      },
+      "portTimings": [
+        [0, 6071, 7128.669, 1.174, 2.048, 7.067],
+        [1, 3, 366.612, 122.204, 290.961, 266.279],
+        [2, 2, 7.745, 3.872, 5.844, 5.589],
+        [3, 10007, 15687.116, 1.568, 2.253, 16.8],
+        [4, 6005, 10078.315, 1.678, 2.999, 10.483],
+        [5, 3003, 8884.734, 2.959, 7.779, 29.828],
+        [6, 3000, 3596.382, 1.199, 1.693, 24.361]
+      ],
+      "otherPorts": {
+        "calls": 2039,
+        "totalMs": 945.069
+      },
+      "checkpoints": [
+        [100, 8340.029, 52214, 0.277, 0.171, 50275632],
+        [300, 26413.85, 155218, 0.523, 0.283, 60352896],
+        [500, 45662.647, 258217, 0.722, 0.282, 51202720],
+        [600, 55459.451, 309718, 0.656, 0.365, 72421440],
+        [800, 75849.166, 412718, 0.604, 0.468, 54396000],
+        [1000, 97689.802, 515721, 0.782, 0.536, 64822488]
+      ],
+      "correctness": [
+        true,
+        true,
+        true,
+        0,
+        11010,
+        2000,
+        2000,
+        1000,
+        1000,
+        1000,
+        true,
+        1,
+        null,
+        true
+      ],
+      "eventSerialization": {
+        "totalMs": 25.837,
+        "bytes": 4310565,
+        "sha256": "ce19a7f0a074356fdbe2e1bdabf16ac299d974cb673836a73a90d42855efd4f8",
+        "lateAfter": 9909,
+        "lateSha256": "179ac1984c4ae5427c02498e6f0bfd3441686bd623a49a04d9865da851ab6826"
+      },
+      "cpuSamples": 61512,
+      "topCpuFrames": [
+        [1, 31239],
+        [5, 17352],
+        [8, 1422]
+      ],
+      "browser": {
+        "browser": "155.0.4283.62",
+        "channel": "msedge",
+        "headless": true,
+        "warmup": {
+          "passes": 250,
+          "wallMs": 22339.941
+        },
+        "inbound": {
+          "events": 50,
+          "payloadValueBytes": 32768
+        },
+        "pages": [3, 4, 5]
+      },
+      "storeGrowthBytes": 7797400,
+      "measurement": 11,
+      "nodeVisits": {
+        "start": 1,
+        "init": 1,
+        "work": 1000,
+        "grow": 1000,
+        "gate": 1000,
+        "done": 1
+      }
+    },
+    {
+      "specification": [100, 32, 256, 128, true, false, false, 0],
+      "wallMs": 10132.421,
+      "msPerPass": 101.324,
+      "cpu": {
+        "user": 5656000,
+        "system": 1734000
+      },
+      "durableAdmissionToStartMs": 29,
+      "awaitedPortMs": 9327.814,
+      "observationMs": 5.204,
+      "residualMs": 799.403,
+      "maxConcurrentPortCalls": 1,
+      "eventLoopDelayMs": {
+        "mean": 13.171,
+        "max": 194.249,
+        "p99": 23.118
+      },
+      "threadRequest": {
+        "status": 200,
+        "bytes": 1556,
+        "wallMs": 54.479
+      },
+      "artifacts": {
+        "bytes": 0,
+        "files": 0
+      },
+      "portTimings": [
+        [0, 406, 507.21, 1.249, 1.693, 17.597],
+        [1, 2, 163.742, 81.871, 164.24, 162.232],
+        [2, 2, 8.225, 4.112, 4.83, 4.47],
+        [3, 3805, 7247.352, 1.905, 2.726, 194.109],
+        [4, 403, 565.742, 1.404, 2.253, 5.881],
+        [5, 202, 273.058, 1.352, 1.399, 58.092],
+        [6, 300, 408.896, 1.363, 1.693, 22.195]
+      ],
+      "otherPorts": {
+        "calls": 209,
+        "totalMs": 153.588
+      },
+      "checkpoints": [
+        [10, 1186.033, 1193, 0.573, 0.069, 48428744],
+        [30, 3168.207, 1195, 0.386, 0.025, 42011880],
+        [50, 5054.163, 1195, 0.35, 0.022, 46214048],
+        [60, 6015.81, 1195, 0.606, 0.028, 46658352],
+        [80, 7808.527, 1195, 0.462, 0.023, 47528312],
+        [100, 9934.863, 1198, 0.388, 0.03, 47816824]
+      ],
+      "correctness": [true, true, true, 0, 3908, 3200, 3200, 100, 100, 0, true, 1, true, null],
+      "eventSerialization": {
+        "totalMs": 12.495,
+        "bytes": 1719558,
+        "sha256": "81a704597f11b8265ac108ff35c7f9a9de12278058a121c845528bc1d9f77217",
+        "lateAfter": 3517,
+        "lateSha256": "05b4f28a6c5e9af49dca52a0ac623c40566f33b9d5db23150e596fa509064cc3"
+      },
+      "cpuSamples": 4682,
+      "topCpuFrames": [
+        [5, 3121],
+        [1, 251],
+        [7, 234]
+      ],
+      "replays": {
+        "first": 10,
+        "late": 11,
+        "slow": 12,
+        "reconnect": {
+          "ok": true,
+          "interrupted": 13,
+          "reconnected": 14
+        }
+      },
+      "storeGrowthBytes": 5805392,
+      "measurement": 12,
+      "nodeVisits": {
+        "start": 1,
+        "work": 100,
+        "gate": 100,
+        "done": 1
+      }
+    },
+    {
+      "specification": [100, 2, 120, 512, true, true, false, 350],
+      "wallMs": 42967.491,
+      "msPerPass": 429.675,
+      "cpu": {
+        "user": 5313000,
+        "system": 1828000
+      },
+      "durableAdmissionToStartMs": 25,
+      "awaitedPortMs": 5317.726,
+      "observationMs": 6.967,
+      "residualMs": 37642.798,
+      "maxConcurrentPortCalls": 2,
+      "eventLoopDelayMs": {
+        "mean": 11.945,
+        "max": 121.242,
+        "p99": 22.069
+      },
+      "threadRequest": {
+        "status": 200,
+        "bytes": 53089,
+        "wallMs": 4.719
+      },
+      "artifacts": {
+        "bytes": 0,
+        "files": 0
+      },
+      "portTimings": [
+        [0, 644, 820.227, 1.274, 1.693, 5.083],
+        [1, 3, 105.36, 35.12, 69.654, 64.338],
+        [2, 2, 7.356, 3.678, 4.391, 4.022],
+        [3, 1007, 2054.982, 2.041, 2.999, 17.176],
+        [4, 605, 965.146, 1.595, 2.479, 8.308],
+        [5, 303, 449.115, 1.482, 2.479, 6.018],
+        [6, 300, 738.926, 2.463, 3.629, 89.644]
+      ],
+      "otherPorts": {
+        "calls": 223,
+        "totalMs": 176.614
+      },
+      "checkpoints": [
+        [10, 4133.498, 5857, 0.519, 0.101, 42100672],
+        [30, 12081.725, 16161, 0.446, 0.056, 45314152],
+        [50, 20187.698, 26461, 0.482, 0.079, 52694096],
+        [60, 24244.81, 31611, 0.473, 0.091, 55553072],
+        [80, 32286.893, 41911, 0.47, 0.103, 52441064],
+        [100, 40303.756, 52214, 0.601, 0.394, 55091984]
+      ],
+      "correctness": [true, true, true, 0, 1110, 200, 200, 100, 100, 100, true, 1, null, true],
+      "eventSerialization": {
+        "totalMs": 4.899,
+        "bytes": 431013,
+        "sha256": "aaceacbfd526c921e9007f654b6301bf060930c61074599e3c8de1ac349abe4f",
+        "lateAfter": 999,
+        "lateSha256": "b1d94d2f550316ae38b8808eaa76dc614a4c47a06ad11db4d3ed0420e742f0a7"
+      },
+      "cpuSamples": 21355,
+      "topCpuFrames": [
+        [1, 18677],
+        [12, 1583],
+        [6, 90]
+      ],
+      "browser": {
+        "browser": "155.0.4283.62",
+        "channel": "msedge",
+        "headless": true,
+        "warmup": {
+          "passes": 25,
+          "wallMs": 10220.838
+        },
+        "inbound": {
+          "events": 50,
+          "payloadValueBytes": 32768
+        },
+        "pages": [6, 7, 8]
+      },
+      "storeGrowthBytes": 6223400,
+      "measurement": 13,
+      "nodeVisits": {
+        "start": 1,
+        "init": 1,
+        "work": 100,
+        "grow": 100,
+        "gate": 100,
+        "done": 1
+      }
+    },
+    {
+      "preflight": {
+        "wallMs": 6983.173,
+        "exitCode": 1,
+        "databaseReady": true
+      },
+      "cold": {
+        "entryPoint": "apps/api/dist/main.js",
+        "firstRequestMs": 24.942,
+        "startupToFirstResponseMs": 6717.303,
+        "pollMs": 100,
+        "polls": 58,
+        "exitCode": null,
+        "signal": "SIGTERM"
+      },
+      "warm": {
+        "bootMs": 127.512,
+        "firstRequestMs": 21.198
+      },
+      "measurement": 14
+    }
+  ],
+  "browserPages": [
+    {
+      "case": 10,
+      "name": "events-empty",
+      "durationMs": 1000,
+      "executionContinued": true,
+      "runningThroughout": true,
+      "shellReadyMs": 686.95,
+      "historyReadyMs": null,
+      "pageErrorCount": 0,
+      "serverSeqBefore": 3498,
+      "serverSeqAfter": 3655,
+      "longTasks": 1,
+      "longTaskMs": 188,
+      "peakHeapUsed": 8540168,
+      "peakNodes": 54,
+      "peakSessionStorageBytes": 0,
+      "samples": [
+        [692.166, 54, 0, 8540168, 1, 188],
+        [692.166, 54, 0, 8540168, 1, 188]
+      ],
+      "cdp": {
+        "ScriptDuration": 0.231,
+        "TaskDuration": 0.292,
+        "LayoutDuration": 0.008,
+        "RecalcStyleDuration": 0.004
+      }
+    },
+    {
+      "case": 10,
+      "name": "inspector",
+      "durationMs": 5000,
+      "executionContinued": true,
+      "runningThroughout": true,
+      "shellReadyMs": 1773.621,
+      "historyReadyMs": null,
+      "pageErrorCount": 0,
+      "serverSeqBefore": 3707,
+      "serverSeqAfter": 4026,
+      "longTasks": 4,
+      "longTaskMs": 795,
+      "peakHeapUsed": 18203784,
+      "peakNodes": 22968,
+      "peakSessionStorageBytes": 3032428,
+      "samples": [
+        [1777.958, 110, 0, 9520052, 2, 405],
+        [3043.281, 110, 0, 9542552, 2, 405],
+        [4054.656, 110, 0, 9563620, 2, 405],
+        [6426.41, 22968, 3032428, 18203784, 4, 795]
+      ],
+      "cdp": {
+        "ScriptDuration": 0.739,
+        "TaskDuration": 1.632,
+        "LayoutDuration": 0.325,
+        "RecalcStyleDuration": 0.102
+      }
+    },
+    {
+      "case": 10,
+      "name": "events",
+      "durationMs": 5000,
+      "executionContinued": true,
+      "runningThroughout": true,
+      "shellReadyMs": 1381.626,
+      "historyReadyMs": null,
+      "pageErrorCount": 0,
+      "serverSeqBefore": 4106,
+      "serverSeqAfter": 4653,
+      "longTasks": 2,
+      "longTaskMs": 301,
+      "peakHeapUsed": 12281336,
+      "peakNodes": 716,
+      "peakSessionStorageBytes": 0,
+      "samples": [
+        [1385.491, 716, 0, 12197420, 2, 301],
+        [2393.414, 716, 0, 12219504, 2, 301],
+        [3409.833, 716, 0, 12248904, 2, 301],
+        [4415.569, 716, 0, 12265120, 2, 301],
+        [5424.025, 716, 0, 12281336, 2, 301]
+      ],
+      "cdp": {
+        "ScriptDuration": 0.256,
+        "TaskDuration": 0.7,
+        "LayoutDuration": 0.24,
+        "RecalcStyleDuration": 0.011
+      }
+    },
+    {
+      "case": 21,
+      "name": "events-empty",
+      "durationMs": 1000,
+      "executionContinued": true,
+      "runningThroughout": true,
+      "shellReadyMs": 452.23,
+      "historyReadyMs": null,
+      "pageErrorCount": 0,
+      "serverSeqBefore": 3036,
+      "serverSeqAfter": 3212,
+      "longTasks": 1,
+      "longTaskMs": 139,
+      "peakHeapUsed": 8560628,
+      "peakNodes": 54,
+      "peakSessionStorageBytes": 0,
+      "samples": [
+        [455.638, 54, 0, 8560628, 1, 139],
+        [455.638, 54, 0, 8560628, 1, 139]
+      ],
+      "cdp": {
+        "ScriptDuration": 0.169,
+        "TaskDuration": 0.222,
+        "LayoutDuration": 0.005,
+        "RecalcStyleDuration": 0.004
+      }
+    },
+    {
+      "case": 21,
+      "name": "inspector",
+      "durationMs": 5000,
+      "executionContinued": true,
+      "runningThroughout": true,
+      "shellReadyMs": 509.23,
+      "historyReadyMs": null,
+      "pageErrorCount": 0,
+      "serverSeqBefore": 3234,
+      "serverSeqAfter": 3859,
+      "longTasks": 7,
+      "longTaskMs": 521,
+      "peakHeapUsed": 117015200,
+      "peakNodes": 22120,
+      "peakSessionStorageBytes": 2914338,
+      "samples": [
+        [518.54, 112, 0, 11366092, 2, 184],
+        [1531.896, 20071, 2645462, 40990156, 4, 367],
+        [2545.795, 20786, 2740494, 49884164, 5, 419],
+        [3562.626, 21436, 2826902, 68881256, 5, 419],
+        [4615.4, 22120, 2914338, 117015200, 7, 521],
+        [4615.4, 22120, 2914338, 117015200, 7, 521]
+      ],
+      "cdp": {
+        "ScriptDuration": 1.748,
+        "TaskDuration": 3.136,
+        "LayoutDuration": 0.583,
+        "RecalcStyleDuration": 0.084
+      }
+    },
+    {
+      "case": 21,
+      "name": "events",
+      "durationMs": 5000,
+      "executionContinued": true,
+      "runningThroughout": true,
+      "shellReadyMs": 552.67,
+      "historyReadyMs": null,
+      "pageErrorCount": 0,
+      "serverSeqBefore": 3927,
+      "serverSeqAfter": 4599,
+      "longTasks": 1,
+      "longTaskMs": 125,
+      "peakHeapUsed": 12333616,
+      "peakNodes": 716,
+      "peakSessionStorageBytes": 0,
+      "samples": [
+        [555.201, 716, 0, 12269636, 1, 125],
+        [1571.324, 716, 0, 12283008, 1, 125],
+        [2578.349, 716, 0, 12307112, 1, 125],
+        [3590.077, 716, 0, 12320364, 1, 125],
+        [4597.42, 716, 0, 12333616, 1, 125],
+        [4597.42, 716, 0, 12333616, 1, 125]
+      ],
+      "cdp": {
+        "ScriptDuration": 0.161,
+        "TaskDuration": 0.451,
+        "LayoutDuration": 0.155,
+        "RecalcStyleDuration": 0.007
+      }
+    },
+    {
+      "case": 23,
+      "name": "events-empty",
+      "durationMs": 1000,
+      "historyReadyMs": null,
+      "historyTargetSeq": null,
+      "historyReadyCount": null,
+      "executionContinued": true,
+      "runningThroughout": true,
+      "shellReadyMs": 651.671,
+      "pageErrorCount": 0,
+      "serverSeqBefore": 385,
+      "serverSeqAfter": 429,
+      "longTasks": 1,
+      "longTaskMs": 157,
+      "peakHeapUsed": 8674716,
+      "peakNodes": 54,
+      "peakSessionStorageBytes": 0,
+      "samples": [
+        [587.439, 54, 0, 8199820, 1, 157],
+        [785.482, 54, 0, 8613664, 1, 157],
+        [1045.563, 54, 0, 8633276, 1, 157],
+        [1307.61, 54, 0, 8647028, 1, 157],
+        [1569.405, 54, 0, 8660780, 1, 157],
+        [1667.842, 54, 0, 8674716, 1, 157],
+        [1667.842, 54, 0, 8674716, 1, 157]
+      ],
+      "cdp": {
+        "ScriptDuration": 0.192,
+        "TaskDuration": 0.256,
+        "LayoutDuration": 0.006,
+        "RecalcStyleDuration": 0.005
+      }
+    },
+    {
+      "case": 23,
+      "name": "inspector",
+      "durationMs": 5000,
+      "historyReadyMs": 761.89,
+      "historyTargetSeq": 440,
+      "historyReadyCount": 457,
+      "executionContinued": true,
+      "runningThroughout": true,
+      "shellReadyMs": 678.386,
+      "pageErrorCount": 0,
+      "serverSeqBefore": 440,
+      "serverSeqAfter": 605,
+      "longTasks": 2,
+      "longTaskMs": 221,
+      "peakHeapUsed": 19578768,
+      "peakNodes": 3626,
+      "peakSessionStorageBytes": 461280,
+      "samples": [
+        [431.179, 68, 0, 8248532, 1, 165],
+        [640.578, 112, 0, 11985092, 1, 165],
+        [889.194, 2846, 358104, 16052488, 2, 221],
+        [1168.241, 2911, 366702, 18529904, 2, 221],
+        [1427.751, 2911, 366702, 13219544, 2, 221],
+        [1669.011, 2976, 375300, 15710532, 2, 221],
+        [1976.125, 3041, 383898, 18182220, 2, 221],
+        [2192.858, 3041, 383898, 18210368, 2, 221],
+        [2455.418, 3106, 392496, 13576616, 2, 221],
+        [2708.353, 3106, 392496, 13697220, 2, 221],
+        [2961.812, 3171, 401094, 16241872, 2, 221],
+        [3225.903, 3236, 409692, 18680772, 2, 221],
+        [3486.004, 3236, 409692, 18793056, 2, 221],
+        [3747.04, 3301, 418290, 13977548, 2, 221],
+        [4001.205, 3366, 426888, 16507704, 2, 221],
+        [4247.491, 3366, 426888, 16606336, 2, 221],
+        [4504.94, 3431, 435486, 19102808, 2, 221],
+        [4781.781, 3496, 444084, 14163380, 2, 221],
+        [5806.554, 3626, 461280, 19578768, 2, 221]
+      ],
+      "cdp": {
+        "ScriptDuration": 0.473,
+        "TaskDuration": 0.925,
+        "LayoutDuration": 0.137,
+        "RecalcStyleDuration": 0.031
+      }
+    },
+    {
+      "case": 23,
+      "name": "events",
+      "durationMs": 5000,
+      "historyReadyMs": null,
+      "historyTargetSeq": null,
+      "historyReadyCount": null,
+      "executionContinued": true,
+      "runningThroughout": true,
+      "shellReadyMs": 887.37,
+      "pageErrorCount": 0,
+      "serverSeqBefore": 619,
+      "serverSeqAfter": 792,
+      "longTasks": 1,
+      "longTaskMs": 218,
+      "peakHeapUsed": 12530168,
+      "peakNodes": 716,
+      "peakSessionStorageBytes": 0,
+      "samples": [
+        [553.838, 54, 0, 9990792, 1, 218],
+        [884.432, 716, 0, 12222296, 1, 218],
+        [1009.29, 716, 0, 12251780, 1, 218],
+        [1267.426, 716, 0, 12265532, 1, 218],
+        [1531.595, 716, 0, 12279284, 1, 218],
+        [1773.048, 716, 0, 12293220, 1, 218],
+        [2033.024, 716, 0, 12307036, 1, 218],
+        [2297.23, 716, 0, 12320992, 1, 218],
+        [2547.534, 716, 0, 12335056, 1, 218],
+        [2796.339, 716, 0, 12363448, 1, 218],
+        [3057.527, 716, 0, 12377340, 1, 218],
+        [3321.565, 716, 0, 12391124, 1, 218],
+        [3596.12, 716, 0, 12404908, 1, 218],
+        [3849.028, 716, 0, 12418692, 1, 218],
+        [4117.298, 716, 0, 12433648, 1, 218],
+        [4484.975, 716, 0, 12447460, 1, 218],
+        [4651.39, 716, 0, 12461244, 1, 218],
+        [5966.743, 716, 0, 12530168, 1, 218]
+      ],
+      "cdp": {
+        "ScriptDuration": 0.264,
+        "TaskDuration": 0.653,
+        "LayoutDuration": 0.204,
+        "RecalcStyleDuration": 0.007
+      }
+    }
+  ],
+  "replays": [
+    {
+      "case": 6,
+      "variant": "first",
+      "after": 0,
+      "pauseMs": 0,
+      "events": 39008,
+      "lastSeq": 39008,
+      "gaps": 0,
+      "sha256": "4159d84d52af890313baf3efd36b7c3f4ea73155a00ea464d93de77445a26690",
+      "firstMs": 5221.529,
+      "totalMs": 9128.136,
+      "reads": 1163,
+      "receivedBytes": 18770298,
+      "sampleScope": "round-1 post-replay samples; lag buffering unmeasured",
+      "heapUsedBefore": 40084584,
+      "heapUsedSampledMax": 156486552,
+      "writableBytesSampledMax": 0,
+      "flightSamples": [],
+      "readMs": 4938.469
+    },
+    {
+      "case": 6,
+      "variant": "late",
+      "after": 35107,
+      "pauseMs": 0,
+      "events": 3901,
+      "lastSeq": 39008,
+      "gaps": 0,
+      "sha256": "fa851ed89321becf5510be46bbbbb60c8dcedd57091c4671d9d71a679f36c7d4",
+      "firstMs": 581.354,
+      "totalMs": 701.112,
+      "reads": 117,
+      "receivedBytes": 1879354,
+      "sampleScope": "round-1 post-replay samples; lag buffering unmeasured",
+      "heapUsedBefore": 40181016,
+      "heapUsedSampledMax": 54573648,
+      "writableBytesSampledMax": 0,
+      "flightSamples": [],
+      "readMs": 527.368
+    },
+    {
+      "case": 6,
+      "variant": "slow",
+      "after": 0,
+      "pauseMs": 50,
+      "events": 39008,
+      "lastSeq": 39008,
+      "gaps": 0,
+      "sha256": "4159d84d52af890313baf3efd36b7c3f4ea73155a00ea464d93de77445a26690",
+      "firstMs": 6685.249,
+      "totalMs": 79972.383,
+      "reads": 1091,
+      "receivedBytes": 18770298,
+      "sampleScope": "round-1 post-replay samples; lag buffering unmeasured",
+      "heapUsedBefore": 40173112,
+      "heapUsedSampledMax": 149377000,
+      "writableBytesSampledMax": 0,
+      "flightSamples": [],
+      "readMs": 4762.412
+    },
+    {
+      "case": 6,
+      "variant": "interrupted",
+      "after": 0,
+      "pauseMs": 0,
+      "events": 13031,
+      "lastSeq": 13031,
+      "gaps": 0,
+      "sha256": "fa17c14c00ec62704bf267ba0af0a35367cfda98c0a1c5b33fc15973dd8793a2",
+      "firstMs": 3554.972,
+      "totalMs": 4921.39,
+      "reads": 387,
+      "receivedBytes": 6252472,
+      "sampleScope": "round-1 post-replay samples; lag buffering unmeasured",
+      "heapUsedBefore": 39447776,
+      "heapUsedSampledMax": 119661696,
+      "writableBytesSampledMax": 0,
+      "flightSamples": [],
+      "readMs": 3230.188
+    },
+    {
+      "case": 6,
+      "variant": "reconnected",
+      "after": 13031,
+      "pauseMs": 0,
+      "events": 25977,
+      "lastSeq": 39008,
+      "gaps": 0,
+      "sha256": "4159d84d52af890313baf3efd36b7c3f4ea73155a00ea464d93de77445a26690",
+      "firstMs": 1570.962,
+      "totalMs": 4559.893,
+      "reads": 775,
+      "receivedBytes": 12517839,
+      "sampleScope": "round-1 post-replay samples; lag buffering unmeasured",
+      "heapUsedBefore": 37863016,
+      "heapUsedSampledMax": 112689592,
+      "writableBytesSampledMax": 0,
+      "flightSamples": [],
+      "readMs": 1380.357
+    },
+    {
+      "case": 17,
+      "variant": "first",
+      "after": 0,
+      "pauseMs": 0,
+      "events": 39008,
+      "lastSeq": 39008,
+      "gaps": 0,
+      "sha256": "d04e72d153c4d924afc09e4434edb0dfafc5e62abdd3f5337e771828f9af668b",
+      "firstMs": 1322.259,
+      "totalMs": 1714.885,
+      "reads": 1163,
+      "receivedBytes": 18770245,
+      "sampleScope": "round-1 post-replay samples; lag buffering unmeasured",
+      "heapUsedBefore": 39113728,
+      "heapUsedSampledMax": 151051040,
+      "writableBytesSampledMax": 0,
+      "flightSamples": [],
+      "readMs": 1086.862
+    },
+    {
+      "case": 17,
+      "variant": "late",
+      "after": 35107,
+      "pauseMs": 0,
+      "events": 3901,
+      "lastSeq": 39008,
+      "gaps": 0,
+      "sha256": "976934f8190c96715e2a17586a289de1623dc0a90ce4653d0c0bdcfc05cfb158",
+      "firstMs": 132.782,
+      "totalMs": 173.356,
+      "reads": 117,
+      "receivedBytes": 1879360,
+      "sampleScope": "round-1 post-replay samples; lag buffering unmeasured",
+      "heapUsedBefore": 39042648,
+      "heapUsedSampledMax": 53913272,
+      "writableBytesSampledMax": 0,
+      "flightSamples": [],
+      "readMs": 100.342
+    },
+    {
+      "case": 17,
+      "variant": "slow",
+      "after": 0,
+      "pauseMs": 50,
+      "events": 39008,
+      "lastSeq": 39008,
+      "gaps": 0,
+      "sha256": "d04e72d153c4d924afc09e4434edb0dfafc5e62abdd3f5337e771828f9af668b",
+      "firstMs": 1284.255,
+      "totalMs": 69729.46,
+      "reads": 1091,
+      "receivedBytes": 18770245,
+      "sampleScope": "round-1 post-replay samples; lag buffering unmeasured",
+      "heapUsedBefore": 39002480,
+      "heapUsedSampledMax": 119597104,
+      "writableBytesSampledMax": 0,
+      "flightSamples": [],
+      "readMs": 974.977
+    },
+    {
+      "case": 17,
+      "variant": "interrupted",
+      "after": 0,
+      "pauseMs": 0,
+      "events": 13031,
+      "lastSeq": 13031,
+      "gaps": 0,
+      "sha256": "71cbefb4018cd9fa96bd9a0c3f5f0b19c26f255251c4bc35e5a268dcf54f5a97",
+      "firstMs": 1018.851,
+      "totalMs": 1116.397,
+      "reads": 387,
+      "receivedBytes": 6252385,
+      "sampleScope": "round-1 post-replay samples; lag buffering unmeasured",
+      "heapUsedBefore": 39142424,
+      "heapUsedSampledMax": 124988192,
+      "writableBytesSampledMax": 0,
+      "flightSamples": [],
+      "readMs": 826.511
+    },
+    {
+      "case": 17,
+      "variant": "reconnected",
+      "after": 13031,
+      "pauseMs": 0,
+      "events": 25977,
+      "lastSeq": 39008,
+      "gaps": 0,
+      "sha256": "d04e72d153c4d924afc09e4434edb0dfafc5e62abdd3f5337e771828f9af668b",
+      "firstMs": 625.703,
+      "totalMs": 820.664,
+      "reads": 775,
+      "receivedBytes": 12517873,
+      "sampleScope": "round-1 post-replay samples; lag buffering unmeasured",
+      "heapUsedBefore": 39184656,
+      "heapUsedSampledMax": 111938072,
+      "writableBytesSampledMax": 0,
+      "flightSamples": [],
+      "readMs": 489.427
+    },
+    {
+      "case": 22,
+      "variant": "first",
+      "after": 0,
+      "pauseMs": 0,
+      "initialPauseMs": 0,
+      "reader": "raw HTTP/1.1 socket, 64 KiB high-water mark",
+      "events": 3908,
+      "lastSeq": 3908,
+      "gaps": 0,
+      "sha256": "81a704597f11b8265ac108ff35c7f9a9de12278058a121c845528bc1d9f77217",
+      "firstMs": 410.14,
+      "totalMs": 468.785,
+      "reads": 29,
+      "receivedBytes": 1866961,
+      "wireBytesConsumed": 1894238,
+      "socketBytesWritten": 1894238,
+      "maxBytesInFlight": 0,
+      "eventLoopDelayMs": {
+        "mean": 50.962,
+        "p99": 364.38,
+        "max": 364.38
+      },
+      "sampleScope": "replay interval",
+      "heapUsedBefore": 39393872,
+      "heapUsedSampledMax": 54862424,
+      "writableBytesSampledMax": 0,
+      "flightSamples": [[471.318, 0, 1894238, 0]],
+      "readMs": 355.019
+    },
+    {
+      "case": 22,
+      "variant": "late",
+      "after": 3517,
+      "pauseMs": 0,
+      "initialPauseMs": 0,
+      "reader": "raw HTTP/1.1 socket, 64 KiB high-water mark",
+      "events": 391,
+      "lastSeq": 3908,
+      "gaps": 0,
+      "sha256": "05b4f28a6c5e9af49dca52a0ac623c40566f33b9d5db23150e596fa509064cc3",
+      "firstMs": 26.726,
+      "totalMs": 31.176,
+      "reads": 3,
+      "receivedBytes": 186622,
+      "wireBytesConsumed": 189554,
+      "socketBytesWritten": 189554,
+      "maxBytesInFlight": 0,
+      "eventLoopDelayMs": {
+        "mean": 12.178,
+        "p99": 20.496,
+        "max": 20.496
+      },
+      "sampleScope": "replay interval",
+      "heapUsedBefore": 39557072,
+      "heapUsedSampledMax": 44613544,
+      "writableBytesSampledMax": 0,
+      "flightSamples": [],
+      "readMs": 14.352
+    },
+    {
+      "case": 22,
+      "variant": "slow",
+      "after": 0,
+      "pauseMs": 50,
+      "initialPauseMs": 1000,
+      "reader": "raw HTTP/1.1 socket, 64 KiB high-water mark",
+      "events": 3908,
+      "lastSeq": 3908,
+      "gaps": 0,
+      "sha256": "81a704597f11b8265ac108ff35c7f9a9de12278058a121c845528bc1d9f77217",
+      "firstMs": 1009.171,
+      "totalMs": 2749.469,
+      "reads": 29,
+      "receivedBytes": 1866961,
+      "wireBytesConsumed": 1894238,
+      "socketBytesWritten": 1894238,
+      "maxBytesInFlight": 1894238,
+      "eventLoopDelayMs": {
+        "mean": 11.891,
+        "p99": 20.414,
+        "max": 140.247
+      },
+      "sampleScope": "replay interval",
+      "heapUsedBefore": 39562192,
+      "heapUsedSampledMax": 56211544,
+      "writableBytesSampledMax": 0,
+      "flightSamples": [
+        [176.905, 0, 0, 0],
+        [464.236, 1894238, 0, 1894238],
+        [745.398, 1894238, 0, 1894238],
+        [1024.655, 1894238, 65536, 1828702],
+        [1351.192, 1894238, 393216, 1501022],
+        [1603.585, 1894238, 655360, 1238878],
+        [1880.356, 1894238, 983040, 911198],
+        [2158.78, 1894238, 1245184, 649054],
+        [2440.454, 1894238, 1572864, 321374],
+        [2719.609, 1894238, 1835008, 59230]
+      ],
+      "readMs": 133.932
+    },
+    {
+      "case": 22,
+      "variant": "interrupted",
+      "after": 0,
+      "pauseMs": 0,
+      "initialPauseMs": 0,
+      "reader": "raw HTTP/1.1 socket, 64 KiB high-water mark",
+      "events": 1355,
+      "lastSeq": 1355,
+      "gaps": 0,
+      "sha256": "a3f4d07da5073e04ebcccc507627e008cefcdf8ed9fc4831a10b01d4d96ce91e",
+      "firstMs": 187.899,
+      "totalMs": 211.454,
+      "reads": 10,
+      "receivedBytes": 645497,
+      "wireBytesConsumed": 655360,
+      "socketBytesWritten": 1894238,
+      "maxBytesInFlight": 1238878,
+      "eventLoopDelayMs": {
+        "mean": 27.422,
+        "p99": 130.613,
+        "max": 130.613
+      },
+      "sampleScope": "replay interval",
+      "heapUsedBefore": 39627536,
+      "heapUsedSampledMax": 54653344,
+      "writableBytesSampledMax": 0,
+      "flightSamples": [[212.071, 0, 655360, 0]],
+      "readMs": 124.895
+    },
+    {
+      "case": 22,
+      "variant": "reconnected",
+      "after": 1355,
+      "pauseMs": 0,
+      "initialPauseMs": 0,
+      "reader": "raw HTTP/1.1 socket, 64 KiB high-water mark",
+      "events": 2553,
+      "lastSeq": 3908,
+      "gaps": 0,
+      "sha256": "81a704597f11b8265ac108ff35c7f9a9de12278058a121c845528bc1d9f77217",
+      "firstMs": 121.602,
+      "totalMs": 146.915,
+      "reads": 19,
+      "receivedBytes": 1221477,
+      "wireBytesConsumed": 1239375,
+      "socketBytesWritten": 1239375,
+      "maxBytesInFlight": 0,
+      "eventLoopDelayMs": {
+        "mean": 24.595,
+        "p99": 101.515,
+        "max": 101.515
+      },
+      "sampleScope": "replay interval",
+      "heapUsedBefore": 39804200,
+      "heapUsedSampledMax": 53314304,
+      "writableBytesSampledMax": 0,
+      "flightSamples": [[147.791, 0, 1239375, 0]],
+      "readMs": 90.6
+    }
+  ]
+}

@@ -261,7 +261,7 @@ describe('MCP server against the in-process API', () => {
 
     const runs = body(await call('list_runs', { loopId }));
     expect((runs.items as { id: string }[]).map((r) => r.id)).toEqual([started.runId]);
-    expect(runs.nextBefore).toBeUndefined();
+    expect(runs.nextCursor).toBeNull();
     const everything = body(await call('list_runs'));
     expect((everything.items as { id: string }[]).map((r) => r.id)).toContain(started.runId);
   });
@@ -435,20 +435,24 @@ describe('MCP server against the in-process API', () => {
     await call('cancel_run', { runId: second });
     expect(body(await call('wait_for_run', { runId: second })).run.status).toBe('cancelled');
 
-    const page = body(await call('list_runs', { loopId: signalId, limit: 1 }));
+    const filters = {
+      loopId: signalId,
+      status: ['succeeded', 'cancelled'],
+      parentRunId: 'none',
+      limit: 1,
+    };
+    const page = body(await call('list_runs', filters));
     expect(page.items).toHaveLength(1);
-    expect(page.nextCursor).toBeTypeOf('string');
+    expect(page.nextCursor).toEqual(expect.any(String));
     const next = body(
       await call('list_runs', {
-        loopId: signalId,
-        status: ['succeeded', 'cancelled'],
-        parentRunId: 'none',
+        ...filters,
         cursor: page.nextCursor,
-        limit: 1,
       }),
     );
+    // The server cursor includes the run id, so tied creation times do not skip runs.
     expect(next.items).toHaveLength(1);
-    expect(next.items[0].id).not.toBe(page.items[0].id);
+    expect(new Set([page.items[0].id, next.items[0].id])).toEqual(new Set([held, second]));
     expect(next.nextCursor).toBeNull();
     const filtered = body(
       await call('list_runs', { loopId: signalId, status: ['cancelled'], parentRunId: 'none' }),

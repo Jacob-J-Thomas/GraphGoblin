@@ -8,7 +8,6 @@ import { closePopovers, Popover } from '../components/ui/index.js';
 import { buildCardData, Canvas, canvasFocusTarget } from './Canvas.js';
 import type { EditorIssue } from './model.js';
 import type { FlowNode } from './NodeCard.js';
-import { historyClock } from './history.js';
 import { useEditorStore } from './store.js';
 import { decisionBackRoute, routingInput, simpleLoop } from '../__fixtures__/routing.js';
 import { OrthogonalEdge, type OrthogonalEdgeData } from './OrthogonalEdge.js';
@@ -483,7 +482,6 @@ describe('Canvas handlers', () => {
 });
 
 describe('manual edge routes (#44)', () => {
-  let clock = 0;
   beforeEach(() => {
     // jsdom does not lay out SVG text; xyflow measures label pills with getBBox.
     Object.defineProperty(SVGElement.prototype, 'getBBox', {
@@ -491,14 +489,14 @@ describe('manual edge routes (#44)', () => {
       value: () => ({ x: 0, y: 0, width: 56, height: 11 }),
     });
     drawEdges = true;
-    clock = 0;
-    vi.spyOn(historyClock, 'now').mockImplementation(() => clock);
+    vi.useFakeTimers({ toFake: ['performance'] });
     const definition = simpleLoop();
     geometry = geometryOf(routingInput(definition).nodes);
     store().load('L1', definition);
   });
   afterEach(() => {
     drawEdges = false;
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -581,11 +579,11 @@ describe('manual edge routes (#44)', () => {
     fireEvent.keyDown(lane(), { key: 'ArrowDown' });
     expect(route('return')).toEqual([1116, 264, 268]);
     expect(screen.getByText('Segment at y 264.')).toBeInTheDocument();
-    clock += 100;
+    vi.advanceTimersByTime(100);
     fireEvent.keyDown(lane(), { key: 'ArrowUp' });
     expect(route('return')![1]).toBe(242);
     // Up again runs the lane through the row of cards: kept, drawn dotted, and announced.
-    clock += 100;
+    vi.advanceTimersByTime(100);
     fireEvent.keyDown(lane(), { key: 'ArrowUp' });
     expect(route('return')![1]).toBe(220);
     expect(screen.getByText('Segment at y 220. It crosses a card.')).toBeInTheDocument();
@@ -594,10 +592,10 @@ describe('manual edge routes (#44)', () => {
     );
     expect(screen.getByText('Crosses a card')).toBeInTheDocument();
     // Shift moves five grid lines: out above the cards again.
-    clock += 100;
+    vi.advanceTimersByTime(100);
     fireEvent.keyDown(lane(), { key: 'ArrowUp', shiftKey: true });
     expect(route('return')![1]).toBe(110);
-    clock += 100;
+    vi.advanceTimersByTime(100);
     fireEvent.keyDown(lane(), { key: 'ArrowUp' });
     expect(route('return')![1]).toBe(88);
     // Arrows across the segment do nothing; the whole run of nudges is one step.
@@ -958,7 +956,7 @@ describe('manual edge routes (#44)', () => {
     const dragged = route('return');
     expect(dragged).toBeDefined();
     expect(store().openStep).toBeUndefined();
-    clock += 100;
+    vi.advanceTimersByTime(100);
     fireEvent.keyDown(lane(), { key: 'ArrowDown' });
     expect(route('return')).not.toEqual(dragged);
     expect(labels()).toEqual(['reroute done repeat to work', 'reroute done repeat to work']);

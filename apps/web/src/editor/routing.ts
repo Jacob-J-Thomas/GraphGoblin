@@ -907,24 +907,6 @@ function manualRoute(
 }
 
 /**
- * The route description of given orthogonal points (#44's manual routes, or any caller's): lane,
- * label position and envelope, corner radii, crossing, and bounds, among the given cards.
- */
-export function describeRoute(
-  points: readonly Point[],
-  port: string,
-  nodes: readonly RoutingNode[],
-): RoutedEdge {
-  const work = {
-    edge: { id: '', source: '', target: '', port },
-    from: points[0]!,
-    to: points.at(-1)!,
-  };
-  const index = new BoxIndex(nodes.flatMap(nodeBoxes));
-  return manualRoute(work, points, crossesAnyCard(points, index), index, new Reservations());
-}
-
-/**
  * Pure route planning with an optional prior plan. Replaying the deterministic order consults
  * the same predecessors as a fresh plan, even when a move changes span order. Recorded query
  * footprints include rejected alternatives, so freeing a better lane invalidates its dependants.
@@ -1130,14 +1112,6 @@ export function createRoutingPlan(
   statistics.checks = index.checks;
   for (const [id, route] of routes) if (route.suspended) suspended.add(id);
   return { nodes, edges, routes, directions, suspended, dependencies, statistics, clearance };
-}
-
-export function routeBackwardEdges(
-  nodes: readonly RoutingNode[],
-  edges: readonly RoutingEdge[],
-  clearance = ROUTING_CLEARANCE,
-): ReadonlyMap<string, RoutedEdge> {
-  return createRoutingPlan(nodes, edges, clearance).routes;
 }
 
 /** Draw ordered orthogonal points with rounded corners: one radius, or one per point. */

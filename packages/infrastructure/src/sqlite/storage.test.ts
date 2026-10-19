@@ -1,10 +1,13 @@
+import type { Client } from '@libsql/client';
+import type * as Libsql from '@libsql/client';
+import { rm } from 'node:fs/promises';
 import { SqliteTriggerAdmission } from './admission.js';
 import { applyShippedSqlToHistoricalTestFixture } from './testing/shipped-migrations.js';
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RunEvent, RunRecord } from '@graphgoblin/contracts';
 import { LoopDefinitionSchema } from '@graphgoblin/contracts';
 import {
@@ -34,6 +37,56 @@ import {
 import type { TimerStore } from '../scheduler/timer-store.js';
 import { SqliteTimerStore } from './timers.js';
 
+// Controlled external-client scheduling: execute the real SELECT, then hold its result.
+// The repository and its transaction implementation remain intact.
+let afterLoopSelect: (() => Promise<void>) | undefined;
+vi.mock('@libsql/client', async (importOriginal) => {
+  const actual = await importOriginal<typeof Libsql>();
+  return {
+    ...actual,
+    createClient: (options: Libsql.Config) => {
+      const client = actual.createClient(options);
+      const execute: Client['execute'] = async (
+        statement: Libsql.InStatement,
+        args?: Libsql.InArgs,
+      ) => {
+        const result =
+          typeof statement === 'string'
+            ? await client.execute(statement, args)
+            : await client.execute(statement);
+        const sql = typeof statement === 'string' ? statement : statement.sql;
+        if (/^select\b.*\bfrom "loops"/i.test(sql)) await afterLoopSelect?.();
+        return result;
+      };
+      return new Proxy(client, {
+        get(target, key) {
+          if (key === 'execute') return execute;
+          const value: unknown = Reflect.get(target, key, target);
+          const forwarded: unknown = typeof value === 'function' ? value.bind(target) : value;
+          return forwarded;
+        },
+      });
+    },
+  };
+});
+
+function holdNextLoopSelect() {
+  let release!: () => void;
+  let reached!: () => void;
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const selected = new Promise<void>((resolve) => {
+    reached = resolve;
+  });
+  afterLoopSelect = async () => {
+    afterLoopSelect = undefined;
+    reached();
+    await held;
+  };
+  return { selected, release };
+}
+
 let handle: DatabaseHandle;
 let clock: FakeClock;
 let ids: FakeIds;
@@ -45,6 +98,7 @@ beforeEach(async () => {
 });
 
 afterEach(() => {
+  afterLoopSelect = undefined;
   handle.close();
 });
 
@@ -170,14 +224,18 @@ describe('SqliteRunRepository', () => {
     const repo = new SqliteRunRepository(handle.db);
     const run = runRecord();
     await repo.create(run, sampleThread());
-    expect(await repo.listUnfinalized()).toEqual([]);
+    expect((await repo.listRecoveryCandidates()).filter((r) => r.terminal)).toEqual([]);
     await repo.update(run.id, { status: 'succeeded' });
-    expect((await repo.listUnfinalized()).map((r) => r.id)).toEqual([run.id]);
+    expect(
+      (await repo.listRecoveryCandidates()).filter((r) => r.terminal).map((r) => r.id),
+    ).toEqual([run.id]);
     await repo.markFinalized(run.id);
-    expect(await repo.listUnfinalized()).toEqual([]);
+    expect((await repo.listRecoveryCandidates()).filter((r) => r.terminal)).toEqual([]);
     // A resume clears it, so the next terminal outcome is finalized again.
     await repo.clearFinalized(run.id);
-    expect((await repo.listUnfinalized()).map((r) => r.id)).toEqual([run.id]);
+    expect(
+      (await repo.listRecoveryCandidates()).filter((r) => r.terminal).map((r) => r.id),
+    ).toEqual([run.id]);
   });
 
   it('migration 0002 marks runs that were already terminal as finalized', async () => {
@@ -222,9 +280,11 @@ describe('SqliteRunRepository', () => {
       await expect(current.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
       await applyShippedSqlToHistoricalTestFixture(current);
       const repo = new SqliteRunRepository(current.db);
-      expect(await repo.listUnfinalized()).toEqual([]);
+      expect((await repo.listRecoveryCandidates()).filter((r) => r.terminal)).toEqual([]);
       await repo.update(fakeUlid('old-wait'), { status: 'failed' });
-      expect((await repo.listUnfinalized()).map((r) => r.id)).toEqual([fakeUlid('old-wait')]);
+      expect(
+        (await repo.listRecoveryCandidates()).filter((r) => r.terminal).map((r) => r.id),
+      ).toEqual([fakeUlid('old-wait')]);
     } finally {
       current.close();
       try {
@@ -254,16 +314,20 @@ describe('SqliteRunRepository', () => {
 
   it('lists by status, children, and filters', async () => {
     const repo = new SqliteRunRepository(handle.db);
-    const parent = runRecord({ id: 'p', status: 'waiting', createdAt: '2026-10-02T10:00:00.000Z' });
+    const parent = runRecord({
+      id: fakeUlid('p'),
+      status: 'waiting',
+      createdAt: '2026-10-02T10:00:00.000Z',
+    });
     const child = runRecord({
-      id: 'c',
+      id: fakeUlid('c'),
       parentRunId: parent.id,
       status: 'succeeded',
       createdAt: '2026-10-02T11:00:00.000Z',
       loopId: fakeUlid('loop:child'),
     });
     const other = runRecord({
-      id: 'o',
+      id: fakeUlid('o'),
       ownerId: 'someone-else',
       status: 'queued',
       createdAt: '2026-10-02T12:00:00.000Z',
@@ -365,28 +429,43 @@ describe('SqliteEventStore', () => {
 });
 
 describe('SqliteLoopRepository draft and publish interleaving', () => {
+  let competing: DatabaseHandle;
+  let databasePath: string;
+  let directory: string;
+  beforeEach(async () => {
+    // Separate connections let the publisher commit while the saver holds a SELECT result.
+    // A single serialized client would correctly block every competing call behind that read.
+    handle.close();
+    directory = mkdtempSync(join(tmpdir(), 'gg-publish-'));
+    databasePath = join(directory, 'store.db');
+    handle = openDatabase({ url: `file:${databasePath.replaceAll('\\', '/')}` });
+    await handle.migrate();
+    competing = openDatabase({ url: `file:${databasePath.replaceAll('\\', '/')}` });
+  });
+  afterEach(() => {
+    handle.close();
+    competing.close();
+    // libsql keeps files open after close on Windows: this pre-existing native leak cannot
+    // be cured here, so the directory may survive. Cleanup must never hold up the test.
+    void rm(directory, { recursive: true, force: true, maxRetries: 2, retryDelay: 10 }).catch(
+      () => undefined,
+    );
+  });
+
   it('never modifies a version that was published after a draft save read the loop', async () => {
     const repo = new SqliteLoopRepository(handle.db, clock, ids);
     const definition = LoopDefinitionSchema.parse(minimalLoop());
     const { loop, draft } = await repo.create('local', definition);
     // The save reads the loop (draft still current), pauses; a publish lands; the save resumes.
-    const getLoop = repo.getLoop.bind(repo);
-    let release!: () => void;
-    const paused = new Promise<void>((resolve) => (release = resolve));
-    let lookedUp!: () => void;
-    const lookupDone = new Promise<void>((resolve) => (lookedUp = resolve));
-    repo.getLoop = async (id) => {
-      const snapshot = await getLoop(id);
-      repo.getLoop = getLoop;
-      lookedUp();
-      await paused;
-      return snapshot;
-    };
+    const gate = holdNextLoopSelect();
     const saving = repo.saveDraft(loop.id, { ...definition, description: 'late edit' });
-    await lookupDone;
-    const published = await repo.publish(loop.id);
-    expect(published?.id).toBe(draft.id);
-    release();
+    await gate.selected;
+    try {
+      const published = await new SqliteLoopRepository(competing.db, clock, ids).publish(loop.id);
+      expect(published?.id).toBe(draft.id);
+    } finally {
+      gate.release();
+    }
     const saved = await saving;
 
     expect(saved.id).not.toBe(draft.id);
@@ -404,12 +483,20 @@ describe('SqliteLoopRepository draft and publish interleaving', () => {
   it('publishes a draft once even when two publishes read the same draft', async () => {
     const repo = new SqliteLoopRepository(handle.db, clock, ids);
     const { loop, draft } = await repo.create('local', LoopDefinitionSchema.parse(minimalLoop()));
-    const getLoop = repo.getLoop.bind(repo);
-    const stale = await getLoop(loop.id);
-    expect(await repo.publish(loop.id)).toMatchObject({ id: draft.id });
-    repo.getLoop = () => Promise.resolve(stale);
-    expect(await repo.publish(loop.id)).toBeUndefined();
-    repo.getLoop = getLoop;
+    const gate = holdNextLoopSelect();
+    const first = repo.publish(loop.id);
+    await gate.selected;
+    try {
+      expect(
+        await new SqliteLoopRepository(competing.db, clock, ids).publish(loop.id),
+      ).toMatchObject({ id: draft.id });
+    } finally {
+      gate.release();
+    }
+    expect(await first).toBeUndefined();
+    expect(await repo.listVersions(loop.id)).toEqual([
+      expect.objectContaining({ id: draft.id, status: 'published', version: 1 }),
+    ]);
     expect((await repo.getLoop(loop.id))?.currentVersionId).toBe(draft.id);
   });
 });

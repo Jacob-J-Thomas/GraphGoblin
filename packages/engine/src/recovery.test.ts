@@ -40,6 +40,18 @@ async function recover(e: TestEngine): Promise<RunManager> {
   return manager;
 }
 
+it('refuses startup when recovery encounters a store I/O failure', async () => {
+  const e = await createTestEngine();
+  e.manager.stop();
+  const version = e.publish(inputLoop('I/O failure'));
+  await e.start(version.loopId);
+  const failure = new Error('injected storage I/O failure');
+  vi.spyOn(e.ports.runs, 'get').mockRejectedValueOnce(failure);
+  const restarted = new RunManager(e.ports, e.settings);
+  await expect(restarted.start()).rejects.toBe(failure);
+  restarted.stop();
+});
+
 describe('cursor boundaries, recovered twice', () => {
   const kinds = [
     'inference',

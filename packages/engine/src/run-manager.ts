@@ -39,7 +39,13 @@ import {
   threadView,
   validateJson,
 } from '@graphgoblin/domain';
-import { AppendConflictError, RunFailureError, describeError, isAbortError } from './errors.js';
+import {
+  AppendConflictError,
+  RunFailureError,
+  UnreadableRunHistoryError,
+  describeError,
+  isAbortError,
+} from './errors.js';
 import { deciderFailure, isDeciderError } from './decider-errors.js';
 import type {
   ChildOutcome,
@@ -59,6 +65,7 @@ import type {
   TimerPort,
 } from './ports.js';
 import { createInitialThread, type InitialThreadInput } from './thread.js';
+import { boundedFailure } from './event-validation.js';
 
 /** API-facing errors: bad requests against the run manager, never engine bugs. */
 export class EngineRequestError extends Error {
@@ -906,10 +913,21 @@ export class RunManager {
    */
   async loopInUse(loopId: string): Promise<boolean> {
     if (await this.ports.admission.hasPendingPin(loopId)) return true;
-    for (const run of await this.ports.runs.listByStatus(ACTIVE_STATUSES)) {
+    for (const run of await this.ports.runs.listRunReferences(ACTIVE_STATUSES)) {
       if (run.loopId === loopId) return true;
       // Pins are on run.queued, the first event: read that one, not the run's whole history.
-      const pins = pinnedSubloops(await this.ports.events.read(run.id, 0, 1));
+      let pins: Record<string, string> = {};
+      try {
+        pins = pinnedSubloops(await this.ports.events.read(run.id, 0, 1));
+      } catch (error) {
+        if (!(error instanceof UnreadableRunHistoryError)) throw error;
+        // The owning loop was checked above. Its stored definition still protects reachable
+        // subloops even when the queued event cannot supply its pins.
+        this.ports.logger.error(
+          { runId: error.runId, code: error.code, reason: error.message },
+          'run history unreadable during loop-use check',
+        );
+      }
       if (loopId in pins) return true;
       const version = await this.ports.loops.getVersion(run.versionId);
       const reached = new Set<string>();
@@ -965,16 +983,21 @@ export class RunManager {
       const controller = new AbortController();
       this.active.set(runId, controller);
       void this.execute(runId, controller)
-        .catch((error: unknown) => {
+        .catch(async (error: unknown) => {
           this.ports.logger.error(
             { runId, error: describeError(error) },
             'executor crashed outside node execution',
           );
-          return this.failRun(runId, {
-            code: 'INTERNAL_ERROR',
-            message: describeError(error),
-            resumable: true,
-          }).catch(() => undefined);
+          return this.failRun(
+            runId,
+            error instanceof RunFailureError
+              ? error.toFailure((await this.ports.runs.get(runId))?.currentNodeId)
+              : {
+                  code: 'INTERNAL_ERROR',
+                  message: describeError(error),
+                  resumable: true,
+                },
+          ).catch(() => undefined);
         })
         .then(() => this.afterExecute(runId))
         .catch((error: unknown) => {
@@ -1002,59 +1025,82 @@ export class RunManager {
   }
 
   private async recover(): Promise<void> {
-    // Terminal runs whose finalization (timers, children, returns, parent) never completed.
-    for (const run of await this.ports.runs.listUnfinalized()) {
-      // A failed run whose `run.resumed` is durable but whose status write was lost: resume it.
-      if (run.status === 'failed' && pendingResume(await this.ports.events.read(run.id))) {
-        await this.completeResume(run.id);
-        continue;
-      }
-      await this.finalizeTerminal(run.id).catch((error: unknown) => {
-        this.ports.logger.error({ runId: run.id, error: describeError(error) }, 'finalize failed');
-      });
-    }
-    const runs = await this.ports.runs.listByStatus(['queued', 'running', 'waiting', 'paused']);
-    for (const run of runs) {
-      const events = await this.ports.events.read(run.id);
-      if (terminalEvent(events)) {
-        // The terminal event is durable but the status write was lost: the executor completes it.
-        this.recovering.add(run.id);
-        this.enqueue(run.id);
-        continue;
-      }
-      if (run.cancelRequestedAt) {
-        await this.finalizeCancel(run.id);
-        continue;
-      }
-      if (run.status === 'queued' || run.status === 'running') {
-        if (run.status === 'running') this.recovering.add(run.id);
-        this.enqueue(run.id);
-      } else if (run.status === 'waiting' && run.waiting) {
-        if (findPendingWake(events)) {
-          // A wake is durable but the waiting-to-running write was lost: finish accepting it.
-          if (await this.ports.runs.transition(run.id, ['waiting'], { status: 'running' })) {
-            this.enqueue(run.id);
+    const candidates = await this.ports.runs.listRecoveryCandidates();
+    // Complete terminal bookkeeping before scheduling active work, as before.
+    for (const candidate of [
+      ...candidates.filter((r) => r.terminal),
+      ...candidates.filter((r) => !r.terminal),
+    ]) {
+      try {
+        const run = await this.ports.runs.get(candidate.id);
+        if (!run) continue;
+        await this.ports.runs.getInitialThread(run.id);
+        await this.ports.runs.getThreadCheckpoint(run.id);
+        const events = await this.ports.events.read(run.id);
+        if (candidate.terminal) {
+          if (run.status === 'failed' && pendingResume(events)) {
+            await this.completeResume(run.id);
+            continue;
           }
+          await this.finalizeTerminal(run.id).catch((error: unknown) => {
+            if (error instanceof UnreadableRunHistoryError) throw error;
+            this.ports.logger.error(
+              { runId: run.id, error: describeError(error) },
+              'finalize failed',
+            );
+          });
           continue;
         }
-        // A wait recorded before waits had an identity: give it one (the seq of the node.started
-        // that parked, from the log) and replace its bare timer keys, so a stale bare timer can
-        // never wake a later wait.
-        let waiting = run.waiting;
-        if (waiting.startedSeq === undefined) {
-          const parked = parkedWait(events);
-          const startedSeq = parked ? waitIdentity(events, parked) : undefined;
-          if (startedSeq !== undefined) {
-            waiting = { ...waiting, startedSeq };
-            await this.ports.runs.update(run.id, { waiting });
-            await this.ports.timers.cancel(run.id);
-          }
+        if (terminalEvent(events)) {
+          // The terminal event is durable but the status write was lost: the executor completes it.
+          this.recovering.add(run.id);
+          this.enqueue(run.id);
+          continue;
         }
-        // Waiting runs are woken by timers, inputs, signals, or finishing children. Re-arm the
-        // wait's timers from its spec in case a fire was lost (an upsert, so an armed timer stays
-        // as it is), and deliver a child outcome that finished while this process was down.
-        await this.rearmTimers(run.id, waiting);
-        await this.reconcileChild(run);
+        if (run.cancelRequestedAt) {
+          await this.finalizeCancel(run.id);
+          continue;
+        }
+        if (run.status === 'queued' || run.status === 'running') {
+          if (run.status === 'running') this.recovering.add(run.id);
+          this.enqueue(run.id);
+        } else if (run.status === 'waiting' && run.waiting) {
+          if (findPendingWake(events)) {
+            // A wake is durable but the waiting-to-running write was lost: finish accepting it.
+            if (await this.ports.runs.transition(run.id, ['waiting'], { status: 'running' })) {
+              this.enqueue(run.id);
+            }
+            continue;
+          }
+          // A wait recorded before waits had an identity: give it one (the seq of the node.started
+          // that parked, from the log) and replace its bare timer keys, so a stale bare timer can
+          // never wake a later wait.
+          let waiting = run.waiting;
+          if (waiting.startedSeq === undefined) {
+            const parked = parkedWait(events);
+            const startedSeq = parked ? waitIdentity(events, parked) : undefined;
+            if (startedSeq !== undefined) {
+              waiting = { ...waiting, startedSeq };
+              await this.ports.runs.update(run.id, { waiting });
+              await this.ports.timers.cancel(run.id);
+            }
+          }
+          // Waiting runs are woken by timers, inputs, signals, or finishing children. Re-arm the
+          // wait's timers from its spec in case a fire was lost (an upsert, so an armed timer stays
+          // as it is), and deliver a child outcome that finished while this process was down.
+          await this.rearmTimers(run.id, waiting);
+          await this.reconcileChild(run);
+        }
+      } catch (error) {
+        // Only identified record decoding failures are run-local. Store/schema/I/O failures
+        // retain startup refusal; no history is rewritten, removed, or reconstructed here.
+        if (!(error instanceof UnreadableRunHistoryError)) throw error;
+        this.dequeue(candidate.id);
+        this.recovering.delete(candidate.id);
+        this.ports.logger.error(
+          { runId: error.runId, code: error.code, reason: error.message },
+          'run history unreadable; skipped recovery; repair manually or explicitly delete',
+        );
       }
     }
   }
@@ -1703,7 +1749,8 @@ export class RunManager {
     }
   }
 
-  private async failRun(runId: string, failure: RunFailure): Promise<void> {
+  private async failRun(runId: string, authoredFailure: RunFailure): Promise<void> {
+    const failure = boundedFailure(authoredFailure);
     const run = await this.ports.runs.get(runId);
     if (!run || isTerminal(run.status)) return;
     // Event first, status second: a crash in between is completed from the log at recovery. A

@@ -24,7 +24,7 @@
       "outputs": ["coverage/**"]
     },
     "@graphgoblin/api#test": {
-      "dependsOn": ["transit"],
+      "dependsOn": ["transit", "@graphgoblin/api#build"],
       "inputs": [
         "$TURBO_DEFAULT$",
         "$TURBO_ROOT$/docs/guide/02-build-a-loop.md",
@@ -33,7 +33,7 @@
       ]
     },
     "@graphgoblin/api#test:coverage": {
-      "dependsOn": ["transit"],
+      "dependsOn": ["transit", "@graphgoblin/api#build"],
       "inputs": [
         "$TURBO_DEFAULT$",
         "$TURBO_ROOT$/docs/guide/02-build-a-loop.md",
