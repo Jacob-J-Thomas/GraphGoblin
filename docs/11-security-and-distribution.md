@@ -41,7 +41,7 @@
 ## Probe resource bounds (#117)
 
 Outbound HTTP probes retain at most 65,536 decompressed body bytes before decoding
-or JSON parsing (`HTTP_PROBE_MAX_BODY_BYTES` in `packages/engine/src/ports.ts`).
+or JSON parsing (`PROBE_MAX_BODY_BYTES` in `packages/engine/src/ports.ts`).
 Oversized identity-encoded declared lengths refuse before reading; encoded wire
 lengths are not compared with the decompressed cap. Streamed/no-length bodies stop
 on the first over-limit chunk. The reader is cancelled and its lock released on

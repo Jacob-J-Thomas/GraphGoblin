@@ -2,7 +2,7 @@ import type { JsonValue } from '@graphgoblin/contracts';
 import { evaluatePredicate, renderTemplate, threadView } from '@graphgoblin/domain';
 import { ProbeBodyOverflowError, RunFailureError } from '../errors.js';
 import type { NodeContext, NodeHandler } from '../handler.js';
-import { HTTP_PROBE_MAX_BODY_BYTES, type ProbeResponse } from '../ports.js';
+import { PROBE_MAX_BODY_BYTES, type ProbeResponse } from '../ports.js';
 import { jsonOrText, outputPatch, toJson } from './common.js';
 
 async function probe(
@@ -33,7 +33,7 @@ async function probe(
         if (error instanceof ProbeBodyOverflowError)
           throw new RunFailureError(
             error.code,
-            `HTTP heartbeat probe body exceeds the ${HTTP_PROBE_MAX_BODY_BYTES}-byte limit; narrow the response or use a script probe`,
+            `HTTP heartbeat probe body exceeds the ${PROBE_MAX_BODY_BYTES}-byte limit; narrow the response or use a script probe`,
             { nodeId: ctx.node.id },
           );
         throw error;
@@ -58,7 +58,8 @@ async function probe(
       });
       return toJson({
         exitCode: result.exitCode,
-        stdout: result.stdout.slice(0, HTTP_PROBE_MAX_BODY_BYTES),
+        // This UTF-16 display slice is not a byte cap.
+        stdout: result.stdout.slice(0, PROBE_MAX_BODY_BYTES),
         stderr: result.stderr.slice(-4000),
         json: jsonOrText(result.stdout),
         timedOut: result.timedOut,

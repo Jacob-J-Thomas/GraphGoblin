@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { ScriptRunResult } from '@graphgoblin/engine';
+import { PROBE_MAX_BODY_BYTES, type ScriptRunResult } from '@graphgoblin/engine';
 import { itemsScriptProbe, itemsHttpProbe } from './poll-probe.js';
 const result: ScriptRunResult = {
   exitCode: 0,
@@ -34,6 +34,20 @@ describe('items-only strict probe admission', () => {
       output.stdoutBytes = new TextEncoder().encode(output.stdout).byteLength;
       expect(() => itemsScriptProbe(output)).toThrow(code);
     }
+  });
+  it('accepts script stdout at the exact raw-byte cap', () => {
+    const stdout = JSON.stringify('x'.repeat(PROBE_MAX_BODY_BYTES - 2));
+    const stdoutBytes = new TextEncoder().encode(stdout).byteLength;
+    expect(stdoutBytes).toBe(PROBE_MAX_BODY_BYTES);
+    expect(itemsScriptProbe({ ...result, stdout, stdoutBytes })).toMatchObject({ stdout });
+  });
+  it('rejects 65,537 raw stdout bytes even when the overflow flag is false', () => {
+    const stdout = JSON.stringify('x'.repeat(PROBE_MAX_BODY_BYTES - 1));
+    const stdoutBytes = new TextEncoder().encode(stdout).byteLength;
+    expect(stdoutBytes).toBe(65_537);
+    expect(() =>
+      itemsScriptProbe({ ...result, stdout, stdoutBytes, stdoutOverflow: false }),
+    ).toThrow('POLL_STDOUT_OVERFLOW');
   });
   it('accepts provided or parsed HTTP JSON and rejects bad statuses or non-JSON responses', () => {
     expect(itemsHttpProbe({ status: 200, headers: {}, body: '[1]' })).toMatchObject({ json: [1] });

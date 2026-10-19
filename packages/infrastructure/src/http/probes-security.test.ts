@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { HttpProbes } from './probes.js';
-import { HTTP_PROBE_MAX_BODY_BYTES, ProbeBodyOverflowError } from '@graphgoblin/engine';
+import { PROBE_MAX_BODY_BYTES, ProbeBodyOverflowError } from '@graphgoblin/engine';
 
 const request = { method: 'GET' as const, url: 'https://example.invalid/probe', timeoutMs: 10_000 };
 
@@ -26,7 +26,7 @@ describe('probe credential boundaries', () => {
       new ReadableStream<Uint8Array>(
         {
           pull(controller) {
-            controller.enqueue(new Uint8Array(HTTP_PROBE_MAX_BODY_BYTES + 1));
+            controller.enqueue(new Uint8Array(PROBE_MAX_BODY_BYTES + 1));
           },
           cancel() {
             throw new Error('private transport failure');
@@ -57,7 +57,7 @@ describe('probe credential boundaries', () => {
         },
         { highWaterMark: 0 },
       ),
-      { headers: { 'content-length': String(HTTP_PROBE_MAX_BODY_BYTES + 1) } },
+      { headers: { 'content-length': String(PROBE_MAX_BODY_BYTES + 1) } },
     );
     const probes = new HttpProbes(() => Promise.resolve(response));
     await expect(probes.fetch(request, new AbortController().signal)).rejects.toBeInstanceOf(

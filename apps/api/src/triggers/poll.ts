@@ -16,7 +16,7 @@ import {
   renderTemplate,
 } from '@graphgoblin/domain';
 import type { ClockPort, HttpProbePort, Logger, RunManager, ScriptPort } from '@graphgoblin/engine';
-import { HTTP_PROBE_MAX_BODY_BYTES, ProbeBodyOverflowError } from '@graphgoblin/engine';
+import { PROBE_MAX_BODY_BYTES, ProbeBodyOverflowError } from '@graphgoblin/engine';
 
 type PollConfig = Extract<Extract<Node, { kind: 'trigger' }>['config'], { type: 'poll' }>;
 
@@ -249,7 +249,7 @@ export class PollTriggers {
         for (const arg of spec.args) args.push(await renderTemplate(arg, view));
         const result = await this.deps.scripts.run({
           command: spec.command,
-          ...(itemsMode ? { maxStdoutBytes: HTTP_PROBE_MAX_BODY_BYTES } : {}),
+          ...(itemsMode ? { maxStdoutBytes: PROBE_MAX_BODY_BYTES } : {}),
           args,
           cwd: this.deps.scriptCwd,
           env: {},
@@ -259,7 +259,8 @@ export class PollTriggers {
         if (itemsMode) return itemsScriptProbe(result);
         return {
           exitCode: result.exitCode,
-          stdout: result.stdout.slice(0, HTTP_PROBE_MAX_BODY_BYTES),
+          // This UTF-16 display slice is not a byte cap.
+          stdout: result.stdout.slice(0, PROBE_MAX_BODY_BYTES),
           stderr: result.stderr.slice(-4000),
           json: jsonOrText(result.stdout),
           timedOut: result.timedOut,

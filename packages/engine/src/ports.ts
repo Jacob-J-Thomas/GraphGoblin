@@ -370,8 +370,8 @@ export interface TimerPort {
   onFire(listener: (runId: string, key: string) => void | Promise<void>): () => void;
 }
 
-/** Shared HTTP probe bound, matching the strict poll-script stdout budget (64 KiB). */
-export const HTTP_PROBE_MAX_BODY_BYTES = 65_536;
+/** Shared byte bound for HTTP probe bodies and items-mode script stdout (64 KiB). */
+export const PROBE_MAX_BODY_BYTES = 65_536;
 
 export interface ProbeRequest {
   method: 'GET' | 'POST' | 'HEAD';
@@ -390,7 +390,7 @@ export interface ProbeResponse {
 
 export interface HttpProbePort {
   /**
-   * Accepts at most HTTP_PROBE_MAX_BODY_BYTES (64 KiB) of decompressed body bytes.
+   * Accepts at most PROBE_MAX_BODY_BYTES (64 KiB) of decompressed body bytes.
    * Rejects overflow with ProbeBodyOverflowError before decoding or JSON parsing.
    * Body-less responses retain their representation-length metadata without a body read.
    */

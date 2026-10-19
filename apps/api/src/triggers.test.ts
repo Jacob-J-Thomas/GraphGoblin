@@ -17,7 +17,12 @@ import {
   FakeProbes,
   FakeScripts,
 } from '@graphgoblin/engine/testing';
-import { AdmissionConflictError, parseRunAdmission, RunManager } from '@graphgoblin/engine';
+import {
+  AdmissionConflictError,
+  parseRunAdmission,
+  PROBE_MAX_BODY_BYTES,
+  RunManager,
+} from '@graphgoblin/engine';
 import { SqliteSecrets } from '@graphgoblin/infrastructure/sqlite';
 import { signPayload, signRawBody } from '@graphgoblin/infrastructure/http';
 import { buildApp } from './app.js';
@@ -1917,7 +1922,7 @@ describe('bounded items-mode poll integration', () => {
       }),
     );
   });
-  it('refuses failed/timeout/overflow/invalid JSON probes only in new items mode', async () => {
+  it('refuses failed/timeout/overflow-flag/oversized-byte-count/invalid JSON probes only in new items mode', async () => {
     await t.publishLoop(triggerLoop('items-probe', config()));
     const script = vi.spyOn(t.container.ports.scripts, 'run');
     const lookup = vi.spyOn(t.container.repos.runs, 'findTriggerDedupeKeys');
@@ -1925,6 +1930,7 @@ describe('bounded items-mode poll integration', () => {
       result('[]', { exitCode: 1 }),
       result('[]', { timedOut: true }),
       result('[]', { stdoutOverflow: true }),
+      result('[]', { stdoutBytes: PROBE_MAX_BODY_BYTES + 1, stdoutOverflow: false }),
       result('broken'),
     ]) {
       script.mockResolvedValue(output);
@@ -1939,6 +1945,9 @@ describe('bounded items-mode poll integration', () => {
         'POLL_STDOUT_OVERFLOW',
         'POLL_JSON_INVALID',
       ]),
+    );
+    expect(t.logger.lines.filter((line) => line.obj.code === 'POLL_STDOUT_OVERFLOW')).toHaveLength(
+      2,
     );
   });
   it('skips overlapping sweeps even after republish, and admission failure leaves the unseen tail', async () => {

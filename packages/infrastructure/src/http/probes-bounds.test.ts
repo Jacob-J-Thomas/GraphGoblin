@@ -2,10 +2,10 @@ import { createServer, type RequestListener, type Server } from 'node:http';
 import type { AddressInfo, Socket } from 'node:net';
 import { gzipSync } from 'node:zlib';
 import { afterEach, describe, expect, it } from 'vitest';
-import { HTTP_PROBE_MAX_BODY_BYTES } from '@graphgoblin/engine';
+import { PROBE_MAX_BODY_BYTES } from '@graphgoblin/engine';
 import { HttpProbes } from './probes.js';
 
-const cap = HTTP_PROBE_MAX_BODY_BYTES;
+const cap = PROBE_MAX_BODY_BYTES;
 let server: Server | undefined;
 const sockets = new Set<Socket>();
 async function serve(handler: RequestListener): Promise<string> {

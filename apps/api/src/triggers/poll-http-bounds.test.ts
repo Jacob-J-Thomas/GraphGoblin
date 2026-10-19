@@ -2,7 +2,7 @@ import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CURRENT_DEFINITION_FORMAT, LoopDefinitionSchema } from '@graphgoblin/contracts';
-import { HTTP_PROBE_MAX_BODY_BYTES } from '@graphgoblin/engine';
+import { PROBE_MAX_BODY_BYTES } from '@graphgoblin/engine';
 import { CapturingLogger, FakeClock, FakeScripts } from '@graphgoblin/engine/testing';
 import { HttpProbes } from '@graphgoblin/infrastructure/http';
 import { PollTriggers } from './poll.js';
@@ -23,7 +23,7 @@ describe('poll HTTP overflow diagnostics', () => {
       let oversized = true;
       server = createServer((_req, res) => {
         res.writeHead(200, { 'content-type': 'application/json' });
-        res.write(oversized ? ' '.repeat(HTTP_PROBE_MAX_BODY_BYTES) : '');
+        res.write(oversized ? ' '.repeat(PROBE_MAX_BODY_BYTES) : '');
         res.end(JSON.stringify({ ready: oversized, items: [1] }));
       });
       await new Promise<void>((resolve) => server!.listen(0, '127.0.0.1', resolve));

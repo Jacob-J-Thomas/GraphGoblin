@@ -1,5 +1,5 @@
 import type { HttpProbePort, ProbeRequest, ProbeResponse } from '@graphgoblin/engine';
-import { HTTP_PROBE_MAX_BODY_BYTES, ProbeBodyOverflowError } from '@graphgoblin/engine';
+import { PROBE_MAX_BODY_BYTES, ProbeBodyOverflowError } from '@graphgoblin/engine';
 
 export type FetchLike = (input: string, init: RequestInit) => Promise<Response>;
 
@@ -38,11 +38,11 @@ async function boundedBody(response: Response, signal: AbortSignal): Promise<str
       (encoding === null || encoding.trim().toLowerCase() === 'identity') &&
       length !== null &&
       /^\d+$/.test(length) &&
-      Number(length) > HTTP_PROBE_MAX_BODY_BYTES
+      Number(length) > PROBE_MAX_BODY_BYTES
     )
       throw new ProbeBodyOverflowError();
     // One fixed buffer also bounds bookkeeping for streams of tiny chunks.
-    const bytes = new Uint8Array(HTTP_PROBE_MAX_BODY_BYTES);
+    const bytes = new Uint8Array(PROBE_MAX_BODY_BYTES);
     let size = 0;
     while (true) {
       const part = await reader.read();
