@@ -317,7 +317,9 @@ for (const source of [
         ]),
       );
       expect(e.events(r.id).filter((event) => event.type === 'node.finished')).toHaveLength(0);
-      expect((await e.ports.runs.listUnfinalized()).map((run) => run.id)).not.toContain(r.id);
+      expect(
+        (await e.ports.runs.listRecoveryCandidates()).filter((c) => c.terminal).map((c) => c.id),
+      ).not.toContain(r.id);
     }
     if (source.startsWith('exit')) expect(final.result).toBe(1);
     expect(e.events(r.id).filter(terminal)).toHaveLength(1);
