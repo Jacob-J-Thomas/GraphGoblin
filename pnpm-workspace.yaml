@@ -3,6 +3,10 @@ packages:
   - apps/*
   - tooling
 
+# Drizzle Kit does not import this deprecated loader; remove its unused esbuild chain.
+overrides:
+  '@esbuild-kit/esm-loader': '-'
+
 # Dependency lifecycle scripts allowed to run (pnpm blocks all others). esbuild only validates its binary.
 allowBuilds:
   esbuild: true

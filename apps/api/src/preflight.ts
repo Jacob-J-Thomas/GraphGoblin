@@ -43,7 +43,7 @@ export const PreflightReportSchema = z.object({
 });
 export type PreflightReport = z.infer<typeof PreflightReportSchema>;
 
-export const MIN_NODE_MAJOR = 22;
+export const SUPPORTED_NODE_MAJOR = 22;
 
 /** Where the checks read their facts from: the running container, or the configuration alone. */
 export interface PreflightSources {
@@ -71,13 +71,13 @@ function check(id: string, label: string, status: PreflightStatus, text: string)
 
 export function checkNode(version: string): PreflightCheck {
   const major = Number(/^v?(\d+)/.exec(version)?.[1] ?? NaN);
-  return major >= MIN_NODE_MAJOR
+  return major === SUPPORTED_NODE_MAJOR
     ? check('node', 'Node.js', 'ok', `Node ${version}`)
     : check(
         'node',
         'Node.js',
         'fail',
-        `Node ${version} is too old; GraphGoblin needs Node ${String(MIN_NODE_MAJOR)} or newer`,
+        `Node ${version} is unsupported; GraphGoblin needs Node ${String(SUPPORTED_NODE_MAJOR)} LTS. Select Node ${String(SUPPORTED_NODE_MAJOR)} on PATH`,
       );
 }
 
