@@ -15,7 +15,7 @@
 | Unit: `apps/api`                      | Vitest with Fastify inject and in-memory SQLite                                         | Every route, validation errors, auth, SSE framing and resume                                                        |
 | Unit: `apps/web`                      | Vitest with Testing Library and the browser mode where DOM APIs matter; MSW for the API | Components, hooks, stores, thread projection, editor validation, update toast                                       |
 | End to end                            | Playwright against a built app with a seeded database and a fake harness                | Draw a loop, publish, run, watch events, provide input, cancel                                                      |
-| Live smoke                            | Nightly, behind an environment flag                                                     | A tiny Codex session and a Jev call to detect SDK drift                                                             |
+| Live smoke                            | Manual, separately authorized `LIVE=1` checks                                           | Small provider calls to detect SDK drift; outside the provider-free CI gate                                         |
 
 The Codex plugin assembly tests use a fresh temporary directory per test and retry temporary-directory cleanup on Windows. MCP entry fixtures and a fake package layout keep these tests independent of build output. The three tests that copy plugin directories have a 20 s timeout: repository-wide parallel runs can exceed Vitest's 5 s default for filesystem I/O. The other tests in `plugin.test.ts` retain the default timeout.
 
@@ -42,24 +42,44 @@ This process complements, and never replaces, the coverage gate.
 
 The first pass (WP-D2, 2026-10-03) drove the built app with Playwright on Microsoft Edge and attacked the API directly; its defects, fixes, and open gaps are in `qa/2026-10-03-wp-d2.md`. Its regressions live in `apps/web/e2e/qa.spec.ts` and `apps/api/src/qa.test.ts`. The E2E server (`apps/web/e2e/server.ts`) has a loopback control port, published to specs as `GG_E2E_CONTROL_URL`, that scripts the fake harness (`POST /harness/script`, with `items` as a count for long streams), toggles decider availability, sets structured responses, reads the model and effort of harness requests, polls timers, and starts extra API instances (`POST /apps` with `requireApiKey`, which also mints a key; `POST /apps/live` with the real adapters). `apps/web/e2e/live.spec.ts` builds, publishes, and runs a one-turn inference loop against Codex through the UI and is skipped unless `LIVE=1`.
 
-## CI gates (Decided, in order)
+## CI gates (Decided)
+
+`.github/workflows/ci.yml` runs three jobs on pushes to `main` and pull requests; a failure in any job fails the workflow. Jobs run independently; the steps below describe their execution order within each job.
+
+The `gates` job runs:
 
 1. Install with a frozen lockfile.
-2. Typecheck every package, test files included.
-3. Lint.
-4. dependency-cruiser: layer rules and no circular imports.
-5. Migration generation is a no-op (`pnpm check:migrations`): generate against a temporary copy of shipped migrations and fail if Drizzle writes SQL.
-6. Design token guard: no palette classes or colour literals in web components (`pnpm check:tokens`).
-7. Unit tests with coverage thresholds.
-8. Licence allowlist check over the full dependency tree.
-9. Generated reference docs are current (`pnpm check:docs`).
-10. Design token contrast table is current and every enforced pair passes (`pnpm check:contrast`).
-11. Dependency audit for known vulnerabilities, failing on high and critical.
-12. Build every package and app.
-13. Playwright E2E on the built app.
-14. Build the container image on the default branch.
+2. Build every package and app (`pnpm build`).
+3. Offline upgrade acceptance (`pnpm test:upgrade`).
+4. Typecheck every package, test files included (`pnpm typecheck`).
+5. Lint and formatting (`pnpm lint`, `pnpm format:check`).
+6. Declared workspace layer rules (`pnpm check:layers`).
+7. Migration generation is a no-op (`pnpm check:migrations`): generate against a temporary copy of shipped migrations and fail if Drizzle writes SQL.
+8. Design token guard: no palette classes or colour literals in web components (`pnpm check:tokens`).
+9. dependency-cruiser: dependency rules and no circular imports (`pnpm check:deps`).
+10. Shipped templates and deliberate-invalid refusal (`pnpm check:templates`).
+11. Unit tests with coverage thresholds, with one package at a time (`pnpm exec turbo run test:coverage --concurrency=1`).
+12. Licence allowlist check over the full dependency tree (`pnpm check:licenses`).
+13. Generated reference docs are current (`pnpm check:docs`).
+14. Design token contrast table is current and every enforced pair passes (`pnpm check:contrast`).
+15. Dependency audit for known vulnerabilities, failing on high and critical (`pnpm audit --audit-level=high`).
 
-Nightly: live smoke suite, and the test matrix against both SQLite and Postgres once `adapter-postgres` exists.
+The `browser` job installs pnpm and Node 22 from the shared `.nvmrc` pin, installs the frozen dependencies and Edge (`playwright install --with-deps msedge`), builds the app, then runs `pnpm exec playwright test --retries=0` from `apps/web`. This job depends on WP-A1 changing `.nvmrc` to 22 and must be integrated after that change. `GG_E2E_BROWSER_CHANNEL=msedge` matches Windows development and the existing Ubuntu routing-performance job. Windows still defaults to installed Edge; other platforms default to Playwright's bundled Chromium unless a channel is explicitly selected. Retries default to zero everywhere, so a first-attempt failure fails the job. The functional step has a 30-minute timeout inside the 40-minute job budget, leaving time for setup/build and failure evidence upload; duration to be recorded from the first Ubuntu run. A step timeout fails the step, allowing the upload with `failure() || cancelled()` to run; exhausting the whole job budget can still prevent later steps. The `browser-failure` artifact contains available `apps/web/test-results/` evidence and the HTML report at `apps/web/playwright-report/` on failure or cancellation. The default trace mode retains failure traces where tracing is enabled: `routing.spec.ts` sets `trace: 'off'`, and the custom contexts in `responsive.spec.ts` attach no trace. A failure does not guarantee a trace ZIP.
+
+The performance assertions in `routing.spec.ts:472` and the 90-second and 120-second budgets in `responsive.spec.ts` are intentional timing assertions and stay in the gate. They are distinct from synchronization waits for editor state and are not skipped or relaxed for CI.
+
+Two-tab conflict checks explicitly activate each editor before navigation, wait for its heading and for the existing server/device reconciliation notice to clear, then assert the stored draft and each conflict resolution. These waits synchronize observable state; they are not sleeps or render-speed assertions. The [WP-A2 QA report](qa/2026-10-18-wp-a2-browser-gates.md) records the pre-change modal failure, single activation A/B diagnostic and bounded repeated checks; the historical second-tab failure remains not reproduced, not disproven.
+
+Browser exclusions and conditional modes, also written to the job summary on every run:
+
+- `live.spec.ts`, test `LIVE: build, publish, and run an inference loop against Codex from the UI`, is skipped unless `LIVE=1`. It requires an installed Codex CLI, provider login and subscription quota. CI explicitly sets `LIVE=0`.
+- No other functional spec or test is skipped or conditional on an installed provider CLI or login. The real API runs with disposable storage and scripted harness/classifier boundaries; these checks do not prove live-provider behavior.
+- `GG_FORMS_QA_PHASE=before|after` enables historical captures (the `before` mode also expects the historical heartbeat preview); `GG_ROUTING_SCREENSHOTS=1` enables captures; `GG_ROUTING_PROFILE=1` enables profiling; `GG_ROUTING_STRICT_PERF=1` selects stricter manual performance bounds. These optional modes are off in CI; their ordinary tests still run, including the default routing performance checks.
+- `screens.capture.ts` is a manual screenshot utility and does not match the functional suite's `*.spec.ts` pattern.
+
+The `template-image` job builds the distributed container and checks installed template contents without network or writable storage. It runs on pull requests as well as pushes to `main`.
+
+Live/paid smoke checks remain separate, manually authorized checks. CI schedules no recurring paid-provider job or Postgres matrix.
 
 `pnpm check:migrations` runs Drizzle Kit against the current schema and a disposable copy of the shipped migration ledger and snapshots. It never changes shipped SQL, snapshots, or the ledger. Additive schema drift is covered by a tooling regression test.
 
@@ -71,7 +91,7 @@ Storage readiness tests distinguish the format baseline from the migration head.
 
 ## Fixture and SDK drift management (Decided)
 
-- `@openai/codex-sdk` and `@typesafe-ai/sdk` are pinned to exact versions. Renovate opens upgrade PRs; the nightly live job and the recorded fixtures tell us whether the event shapes changed.
+- `@openai/codex-sdk` and `@typesafe-ai/sdk` are pinned to exact versions. Renovate opens upgrade PRs; manual, separately authorized `LIVE=1` checks and the recorded fixtures tell us whether the event shapes changed. CI schedules no recurring paid-provider job.
 - A fixture is re-recorded with a small script in the adapter package, never hand-edited.
 
 ## Definition of done for any change (Decided)
