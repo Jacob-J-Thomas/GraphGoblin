@@ -44,11 +44,11 @@ describe('items-mode byte capture', () => {
   it('handles empty output and a zero cap while refusing invalid limits', () => {
     const empty = new BoundedOutputCapture(0);
     empty.append(new Uint8Array());
-    expect(empty.text()).toBe('');
     expect(empty.overflow).toBe(false);
     empty.append(Uint8Array.of(1));
     expect(empty.byteLength).toBe(0);
     expect(empty.overflow).toBe(true);
+    expect(empty.text()).toBe('');
     for (const invalid of [
       -1,
       1.5,
@@ -57,5 +57,14 @@ describe('items-mode byte capture', () => {
       Number.MAX_SAFE_INTEGER + 1,
     ])
       expect(() => new BoundedOutputCapture(invalid)).toThrow(RangeError);
+  });
+
+  it('replaces incomplete clean-EOF sequences and returns a stable final read', () => {
+    const capture = new BoundedOutputCapture(3);
+    capture.append(Uint8Array.of(65, 240, 159));
+    expect(capture.overflow).toBe(false);
+    expect(capture.text()).toBe('A\ufffd');
+    expect(capture.text()).toBe('A\ufffd');
+    expect(() => capture.append(Uint8Array.of(152, 128))).toThrow('already finished');
   });
 });

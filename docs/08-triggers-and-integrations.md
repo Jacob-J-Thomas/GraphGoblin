@@ -167,6 +167,21 @@ Skipped triggers are logged as warnings; the event itself is still recorded. Eve
 
 A `poll` trigger runs a probe every `intervalSeconds` and starts a run when `fireWhen` holds and, if the node has a `dedupeKey`, the key is new for that trigger node. It shares the `Probe` model with the heartbeat node: an HTTP request with templated URL, headers, and body, or a script run in the data directory. Expressions and templates see `{ now, probe }`, where `probe` is `{ status, headers, body, json }` or `{ exitCode, stdout, stderr, json, timedOut }`; the run's payload is the probe result. `signal-count` and `none` probes produce `null`. Poll targets are armed in memory with the version (the first probe is one interval after arming or boot); seen dedupe keys live in the runs they started. Runs carry `triggerKind: 'poll'` and `source: 'poll'`. This is the trigger to recommend when a laptop should not accept inbound connections at all.
 
+All HTTP probes, including heartbeat and single-result polls, accept at most
+65,536 body bytes. The engineering parameter `HTTP_PROBE_MAX_BODY_BYTES` is defined
+in `packages/engine/src/ports.ts`, matching strict poll-script stdout's 64 KiB
+budget. `HttpProbes` counts bytes from fetch's decompressed response stream into a
+fixed-size buffer before UTF-8 decoding or JSON parsing. Exact-cap bodies are
+accepted without truncation; the first chunk crossing the cap cancels the reader
+and throws `ProbeBodyOverflowError` with safe code `HTTP_PROBE_BODY_OVERFLOW`.
+No partial body reaches expressions or dispatch. Poll warnings preserve that code.
+An advertised `Content-Length` above the cap is rejected before any body read;
+chunked/no-length and compressed responses still undergo streamed byte counting.
+HEAD returns an empty body and accepts representation-length metadata above the
+cap. Accepted UTF-8 survives split chunks; caller abort or timeout cancels the
+reader and releases its lock and connection. Partition larger queries by repository,
+label or time range; the cap is a code-level parameter, not a new trigger setting.
+
 ### Bounded items mode
 
 A poll may add `items: {select, dedupeKey, maxRunsPerPoll}`. `select` evaluates over `{now,probe}` and returns at most 200 curated items. The per-item key evaluates over `{now,probe,item,index}` and must be a unique nonblank string of at most 512 characters. Every candidate and key is validated before one indexed dedupe lookup or any admission. Single-result `dedupeKey` and items mode cannot be combined.

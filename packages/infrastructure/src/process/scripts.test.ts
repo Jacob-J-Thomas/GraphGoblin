@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events';
-import type { ChildProcess, spawn } from 'node:child_process';
+import { spawn, type ChildProcess } from 'node:child_process';
 import { describe, expect, it } from 'vitest';
 import { ProcessScripts, killTree } from './scripts.js';
 
@@ -17,6 +17,118 @@ function request(overrides: Partial<Parameters<ProcessScripts['run']>[0]>) {
 }
 
 describe('ProcessScripts', () => {
+  const unicode = 'A\u00e9\u96ea\u{1f98e}Z';
+  const bytes = Buffer.from(unicode);
+  const splitScript = (offset: number, suffix = ''): string => `
+    const bytes = Buffer.from(${JSON.stringify([...bytes])});
+    for (const stream of [process.stdout, process.stderr]) stream.write(bytes.subarray(0, ${offset}));
+    setTimeout(() => {
+      for (const stream of [process.stdout, process.stderr]) {
+        stream.write(bytes.subarray(${offset}));
+        ${suffix}
+      }
+    }, 60);
+  `;
+
+  it.each(Array.from({ length: bytes.length + 1 }, (_, offset) => offset))(
+    'preserves both UTF-8 streams split at byte offset %i with default and explicit bounds',
+    async (offset) => {
+      for (const limits of [{}, { maxStdoutBytes: bytes.length, maxStderrBytes: bytes.length }]) {
+        const result = await new ProcessScripts().run(
+          request({ args: ['-e', splitScript(offset)], ...limits }),
+        );
+        expect(result).toMatchObject({ stdout: unicode, stderr: unicode, exitCode: 0 });
+        if ('maxStdoutBytes' in limits) {
+          expect(result.stdoutOverflow).toBe(false);
+          expect(result.stderrOverflow).toBe(false);
+        }
+      }
+    },
+  );
+
+  it.each(Array.from({ length: bytes.length + 1 }, (_, cap) => cap))(
+    'counts raw bytes and drops only a cap-split suffix at cap %i on both streams',
+    async (cap) => {
+      const prefix = new TextDecoder().decode(bytes.subarray(0, cap));
+      const text = prefix.endsWith('\ufffd') ? prefix.slice(0, -1) : prefix;
+      for (const limits of [{}, { maxStdoutBytes: cap, maxStderrBytes: cap }]) {
+        const result = await new ProcessScripts({ maxOutputBytes: cap }).run(
+          request({ args: ['-e', splitScript(4, 'stream.write("!");')], ...limits }),
+        );
+        expect(result).toMatchObject({ stdout: text, stderr: text, exitCode: 0 });
+        expect(Buffer.byteLength(result.stdout)).toBeLessThanOrEqual(cap);
+        if ('maxStdoutBytes' in limits) {
+          expect(result.stdoutOverflow).toBe(true);
+          expect(result.stderrOverflow).toBe(true);
+        }
+      }
+    },
+  );
+
+  it('replaces an incomplete trailing sequence at clean EOF on both streams', async () => {
+    for (const limits of [{}, { maxStdoutBytes: 3, maxStderrBytes: 3 }]) {
+      const result = await new ProcessScripts().run(
+        request({
+          args: [
+            '-e',
+            'process.stdout.write(Buffer.from([65,240,159]));process.stderr.write(Buffer.from([66,226,130]));',
+          ],
+          ...limits,
+        }),
+      );
+      expect(result).toMatchObject({ stdout: 'A\ufffd', stderr: 'B\ufffd', exitCode: 0 });
+    }
+  });
+
+  it('kills and closes a real process cancelled with incomplete UTF-8 pending on both streams', async () => {
+    const controller = new AbortController();
+    let pid: number | undefined;
+    let streamsReady = 0;
+    let ownedChild: ChildProcess | undefined;
+    const scripts = new ProcessScripts({
+      spawnImpl: new Proxy(spawn, {
+        apply(target, _receiver, args: Parameters<typeof spawn>) {
+          const child = target(...args);
+          if (args[0] === node) {
+            ownedChild = child;
+            pid = child.pid;
+            for (const stream of [child.stdout, child.stderr])
+              stream?.once('data', () => {
+                if (++streamsReady === 2) setImmediate(() => controller.abort());
+              });
+          }
+          return child;
+        },
+      }),
+    });
+    let cleanupRequired = false;
+    const cleanup = setTimeout(() => {
+      cleanupRequired = true;
+      ownedChild?.kill();
+    }, 8000);
+    const result = await scripts
+      .run(
+        request({
+          args: [
+            '-e',
+            'process.stdout.write(Buffer.from([65,240,159]));process.stderr.write(Buffer.from([66,226,130]));setInterval(()=>{},1000);',
+          ],
+          signal: controller.signal,
+        }),
+      )
+      .finally(() => clearTimeout(cleanup));
+    expect(
+      cleanupRequired,
+      'native process-tree cancellation must finish before fixture cleanup',
+    ).toBe(false);
+    expect(streamsReady).toBe(2);
+    expect(result).toMatchObject({ stdout: 'A\ufffd', stderr: 'B\ufffd', timedOut: false });
+    expect(result.exitCode).not.toBe(0);
+    if (pid === undefined) throw new Error('child did not start');
+    const childPid = pid;
+    expect(() => process.kill(childPid, 0)).toThrow();
+  });
+
   it('captures stdout, stderr, exit code, env, args, and stdin', async () => {
     const scripts = new ProcessScripts({ baseEnv: { PATH: process.env['PATH'] ?? '' } });
     const result = await scripts.run(

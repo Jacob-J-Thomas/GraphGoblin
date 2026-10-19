@@ -16,6 +16,7 @@ import {
   renderTemplate,
 } from '@graphgoblin/domain';
 import type { ClockPort, HttpProbePort, Logger, RunManager, ScriptPort } from '@graphgoblin/engine';
+import { ProbeBodyOverflowError } from '@graphgoblin/engine';
 
 type PollConfig = Extract<Extract<Node, { kind: 'trigger' }>['config'], { type: 'poll' }>;
 
@@ -198,7 +199,9 @@ export class PollTriggers {
         {
           ...context,
           code:
-            error instanceof PollProbeError || error instanceof PollItemsError
+            error instanceof PollProbeError ||
+            error instanceof PollItemsError ||
+            error instanceof ProbeBodyOverflowError
               ? error.code
               : 'POLL_TRIGGER_FAILED',
           ...(error instanceof PollItemsError
@@ -233,7 +236,7 @@ export class PollTriggers {
           AbortSignal.timeout(spec.timeoutSeconds * 1000),
         );
         if (itemsMode) return itemsHttpProbe(response);
-        const body = response.body.slice(0, 65_536);
+        const body = response.body;
         return {
           status: response.status,
           headers: response.headers,

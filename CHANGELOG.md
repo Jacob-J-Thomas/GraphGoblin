@@ -4,6 +4,9 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Script stdout and stderr preserve UTF-8 across subprocess chunks with independent streaming decoders and raw-byte limits. Cap-split characters are omitted; incomplete clean-EOF sequences become U+FFFD. Existing output fields and opt-in overflow flags remain intact. (#232)
+- HTTP probe bodies are bounded to 65,536 decompressed bytes before decoding or JSON parsing. Oversized declared lengths and streamed bodies fail explicitly with `HTTP_PROBE_BODY_OVERFLOW`; abort/timeout cancels the reader, exact-cap Unicode remains intact, and HEAD retains representation metadata. **Upgrade:** partition HTTP probe queries whose responses exceed 64 KiB. (#117)
+
 - The licence gate parses grouped SPDX expressions with AND/OR/WITH precedence, rejects malformed and guessed metadata with specific reasons, and reports package/version/expression provenance. WITH pairs require exact explicit approval. (#274)
 - Guide 02/03 examples are checked against current contracts and executed through a disposable API with the fake harness. Replay now targets `summarise`, return guidance names `returns`/`destinations`, and a complete deterministic bounded-repeat example demonstrates exhaustion; paid provider execution is explicitly excluded. (#250)
 

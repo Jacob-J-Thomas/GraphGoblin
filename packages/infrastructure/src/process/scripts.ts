@@ -52,14 +52,8 @@ export class ProcessScripts implements ScriptPort {
   }
 
   run(request: ScriptRunRequest): Promise<ScriptRunResult> {
-    const bounded =
-      request.maxStdoutBytes === undefined
-        ? undefined
-        : new BoundedOutputCapture(request.maxStdoutBytes);
-    const boundedStderr =
-      request.maxStderrBytes === undefined
-        ? undefined
-        : new BoundedOutputCapture(request.maxStderrBytes);
+    const stdout = new BoundedOutputCapture(request.maxStdoutBytes ?? this.maxOutputBytes);
+    const stderr = new BoundedOutputCapture(request.maxStderrBytes ?? this.maxOutputBytes);
     return new Promise((resolve) => {
       const child = this.spawnImpl(request.command, request.args, {
         cwd: request.cwd,
@@ -70,21 +64,13 @@ export class ProcessScripts implements ScriptPort {
         shell: false,
       });
 
-      let stdout = '';
-      let stderr = '';
       let timedOut = false;
       let settled = false;
-      const collect = (current: string, chunk: Buffer): string => {
-        if (current.length >= this.maxOutputBytes) return current;
-        return (current + chunk.toString('utf8')).slice(0, this.maxOutputBytes);
-      };
       child.stdout?.on('data', (chunk: Buffer) => {
-        if (bounded) bounded.append(chunk);
-        else stdout = collect(stdout, chunk);
+        if (!settled) stdout.append(chunk);
       });
       child.stderr?.on('data', (chunk: Buffer) => {
-        if (boundedStderr) boundedStderr.append(chunk);
-        else stderr = collect(stderr, chunk);
+        if (!settled) stderr.append(chunk);
       });
 
       const kill = (): void => killTree(child, this.platform, this.spawnImpl);
@@ -99,30 +85,30 @@ export class ProcessScripts implements ScriptPort {
       if (request.signal.aborted) onAbort();
       else request.signal.addEventListener('abort', onAbort, { once: true });
 
-      const finish = (result: ScriptRunResult): void => {
+      const finish = (exitCode: number | null, spawnFailed = false): void => {
         if (settled) return;
         settled = true;
         if (timer) clearTimeout(timer);
         request.signal.removeEventListener('abort', onAbort);
+        const errorText = stderr.text();
         resolve({
-          ...result,
-          stdout: bounded?.text() ?? result.stdout,
-          stderr: boundedStderr?.text() ?? result.stderr,
-          ...(boundedStderr ? { stderrOverflow: boundedStderr.overflow } : {}),
-          ...(bounded ? { stdoutOverflow: bounded.overflow } : {}),
+          exitCode,
+          timedOut,
+          stdout: stdout.text(),
+          stderr:
+            spawnFailed && request.maxStderrBytes === undefined
+              ? `${errorText}${errorText ? '\n' : ''}spawn failed: PROCESS_START_FAILED`
+              : errorText,
+          ...(request.maxStderrBytes !== undefined ? { stderrOverflow: stderr.overflow } : {}),
+          ...(request.maxStdoutBytes !== undefined ? { stdoutOverflow: stdout.overflow } : {}),
         });
       };
 
       child.on('error', () => {
-        finish({
-          exitCode: null,
-          stdout,
-          stderr: `${stderr}${stderr ? '\n' : ''}spawn failed: PROCESS_START_FAILED`,
-          timedOut,
-        });
+        finish(null, true);
       });
       child.on('close', (code) => {
-        finish({ exitCode: code, stdout, stderr, timedOut });
+        finish(code);
       });
 
       if (child.stdin) {

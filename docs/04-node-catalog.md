@@ -128,6 +128,14 @@ type ScriptConfig = {
 
 Behaviour: non-zero exit codes without a configured route fail the run with `SCRIPT_EXIT_CODE`, which is resumable after the script is fixed. Scripts should be idempotent because crash recovery may run them again (05).
 
+Stdout and stderr use independent streaming UTF-8 decoders, so two-, three- and
+four-byte characters survive arbitrary subprocess chunk boundaries. Capture is
+limited to 10 MiB of raw bytes per stream by default (`ProcessScripts.maxOutputBytes`);
+probe callers may request stricter byte caps. A character split by a capture cap
+is omitted; an incomplete trailing sequence at clean end of stream becomes U+FFFD
+(the replacement character). Opt-in `stdoutOverflow`/`stderrOverflow` flags still
+report raw-byte truncation. Timeout and cancellation retain process-tree termination.
+
 Ports: `out` plus any labels in `exitCodeRoutes`.
 
 ## Context mutation (Decided operations)

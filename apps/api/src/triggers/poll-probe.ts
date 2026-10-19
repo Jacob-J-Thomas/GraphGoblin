@@ -52,7 +52,7 @@ export function itemsHttpProbe(response: ProbeResponse): JsonValue {
   return {
     status: response.status,
     headers: response.headers,
-    body: response.body.slice(0, 65_536),
+    body: response.body,
     json: value,
   };
 }
