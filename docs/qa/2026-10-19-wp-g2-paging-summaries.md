@@ -3,7 +3,7 @@
 ## 1. Branch and worktree
 
 Branch: `codex-wp-g2-paging-summaries`.
-Worktree: `C:/Users/98jak/source/repos/GraphGoblin/.claude/worktrees/codex-wp-g2-paging-summaries`.
+Worktree: `<local>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-g2-paging-summaries`.
 Starting commit: `11f32322c284905f07f847102bf995080db33b8c`.
 Uncommitted; no index operations, commits, GitHub writes, or owner-instance actions.
 Uncommitted; ready for orchestrator review. Commit/closure readiness still requires Opus review,
