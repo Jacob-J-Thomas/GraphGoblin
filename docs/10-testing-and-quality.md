@@ -48,6 +48,8 @@ The first pass (WP-D2, 2026-10-03) drove the built app with Playwright on Micros
 
 Two-tab conflict checks explicitly activate each editor before navigation, wait for its heading and for the existing server/device reconciliation notice to clear, then assert the stored draft and each conflict resolution. These waits synchronize observable state; they are not sleeps or render-speed assertions. The [WP-A2 QA report](qa/2026-10-18-wp-a2-browser-gates.md) records the pre-change modal failure, single activation A/B diagnostic and bounded repeated checks; the historical second-tab failure remains not reproduced, not disproven.
 
+The [WP-B3 QA record](qa/2026-10-19-wp-b3-reset/README.md) holds the owner's manual check of the current-format refusals and the explicit reset (#266, #188) on port 5650 with disposable directories, its seed helper `seed-format3-store.mjs` (QA tooling that writes a format-3 store; nothing in the build or the gates imports it), and a summary of the automated evidence: the real-filesystem reset tests, the device-draft Edge spec and `pnpm test:reset`.
+
 ## CI gates (Decided, in order)
 
 1. Install with a frozen lockfile.
