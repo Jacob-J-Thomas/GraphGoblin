@@ -1,11 +1,18 @@
-import { LoopDefinitionSchema, type RunEvent } from '@graphgoblin/contracts';
+import {
+  LoopDefinitionSchema,
+  type JsonValue,
+  type ReturnChannel,
+  type RunEvent,
+} from '@graphgoblin/contracts';
 import { minimalLoop, sampleThread } from '@graphgoblin/contracts/testing';
 import { describe, expect, it, vi } from 'vitest';
 import { event } from '../__fixtures__/fake-api.js';
 import { quotaSafeSessionStorage, useRunEventStore } from './event-store.js';
 import {
   describeEvent,
+  exitReturnSummary,
   initialThreadFrom,
+  lastGateSummary,
   nodeActivity,
   patchDiff,
   threadAt,
@@ -341,6 +348,101 @@ describe('run projections', () => {
     clear('bulk20');
     expect(useRunEventStore.getState().runs['bulk20']).toBeUndefined();
     expect(sessionStorage.getItem('graphgoblin-run-events-v4')).toContain('bulk19');
+  });
+});
+
+/** Gate and return evidence at the top of the run (#129). */
+describe('exit evidence summaries', () => {
+  const gate = (
+    portId: string,
+    previousPasses: number,
+    limit: 'max-passes' | 'max-run-time' | null,
+  ) =>
+    event(R, previousPasses, 'decision.made', {
+      ...expressionEvidence(limit ? 'again' : portId),
+      portId: limit ? 'limit-reached' : portId,
+      nodeId: 'gate',
+      gate: {
+        previousPasses,
+        passes: previousPasses + (portId === 'again' && !limit ? 1 : 0),
+        repeatRouteId: 'again',
+        maxPasses: 3,
+        maxRunTimeSeconds: 60,
+        elapsedSeconds: limit === 'max-run-time' ? 61 : 1,
+        limit,
+      },
+    });
+
+  it('summarizes the latest gate decision, its pass and any stopping limit', () => {
+    expect(
+      lastGateSummary([
+        event(R, 1, 'decision.made', { nodeId: 'pick', ...expressionEvidence('a') }),
+      ]),
+    ).toBeUndefined();
+    expect(lastGateSummary([gate('again', 1, null)])).toBe(
+      'Last gate decision: gate chose again on pass 1 of 3.',
+    );
+    expect(lastGateSummary([gate('again', 1, null), gate('done', 2, null)])).toBe(
+      'Last gate decision: gate chose done on pass 2 of 3.',
+    );
+    expect(lastGateSummary([gate('again', 1, null), gate('again', 3, 'max-passes')])).toBe(
+      'Last gate decision: gate chose again on pass 3 of 3; maximum passes stopped the repeat, so it took Limit reached.',
+    );
+    expect(lastGateSummary([gate('again', 2, 'max-run-time')])).toBe(
+      'Last gate decision: gate chose again on pass 2 of 3; maximum run time stopped the repeat, so it took Limit reached.',
+    );
+  });
+
+  const exitDefinition = (destinations: ReturnChannel[]) =>
+    LoopDefinitionSchema.parse({
+      ...minimalLoop(),
+      nodes: minimalLoop().nodes.map((node) =>
+        node.kind === 'exit' ? { ...node, config: { returns: 'none', destinations } } : node,
+      ),
+    });
+  const finishedRun = (result?: JsonValue) => [
+    event(R, 1, 'exit.evaluated', { nodeId: 'done', outcome: 'success' }),
+    event(R, 2, 'run.finished', {
+      status: 'succeeded',
+      outcome: 'success',
+      ...(result === undefined ? {} : { result }),
+    }),
+  ];
+
+  it('stays silent until an exit finished the run, and when it returned a value, null included', () => {
+    expect(exitReturnSummary([], undefined)).toBeUndefined();
+    expect(exitReturnSummary(finishedRun().slice(0, 1), undefined)).toBeUndefined();
+    expect(exitReturnSummary(finishedRun('done'), exitDefinition([]))).toBeUndefined();
+    expect(exitReturnSummary(finishedRun(null), exitDefinition([]))).toBeUndefined();
+  });
+
+  it('explains a None return by configuration, naming the destinations that received nothing', () => {
+    const configuration = 'This is the exit’s configuration, not a failure.';
+    expect(exitReturnSummary(finishedRun(), undefined)).toBe(
+      `No value was returned: this exit’s Returns is None. ${configuration}`,
+    );
+    expect(exitReturnSummary(finishedRun(), exitDefinition([]))).toBe(
+      `Quiet exit: Returns is None and there are no destinations, so nothing was returned or delivered. ${configuration}`,
+    );
+    expect(
+      exitReturnSummary(finishedRun(), exitDefinition([{ kind: 'caller' }, { kind: 'log' }])),
+    ).toBe(
+      `No value was returned: Returns is None, so no destination received anything (caller, log from the exit). ${configuration}`,
+    );
+    // The start request's extra destinations are skipped too; a duplicate is named once.
+    expect(
+      exitReturnSummary(finishedRun(), exitDefinition([{ kind: 'caller' }]), [
+        { kind: 'caller' },
+        { kind: 'webhook', url: 'https://example.test/hook' },
+      ]),
+    ).toBe(
+      `No value was returned: Returns is None, so no destination received anything (caller from the exit; webhook from the start request). ${configuration}`,
+    );
+    expect(
+      exitReturnSummary(finishedRun(), exitDefinition([]), [{ kind: 'event', eventType: 'done' }]),
+    ).toBe(
+      `No value was returned: Returns is None, so no destination received anything (event from the start request). ${configuration}`,
+    );
   });
 });
 

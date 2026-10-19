@@ -1,3 +1,4 @@
+import type { RunEvent } from '@graphgoblin/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { GraphGoblinApiError } from '@graphgoblin/api-client';
 import { useState } from 'react';
@@ -14,7 +15,7 @@ import { ThreadViewer } from './inspector/ThreadViewer.js';
 import { Timeline } from './inspector/Timeline.js';
 import { WaitPanel } from './inspector/WaitPanel.js';
 import { useRunEvents } from './useRunEvents.js';
-import { describeEvent } from './projections.js';
+import { describeEvent, exitReturnSummary, lastGateSummary } from './projections.js';
 
 const META_LINK = 'touch-target font-medium text-link underline-offset-[3px] hover:underline';
 
@@ -63,7 +64,13 @@ export function RunInspectorPage() {
   const seq = selectedSeq ?? log.lastSeq;
   const selectedEvent = log.events.find((event) => event.seq === seq);
   const firstEvent = log.events[0];
+  const latestExit = log.events.filter((event) => event.type === 'exit.evaluated').at(-1);
+  const finished = log.events.findLast(
+    (event): event is Extract<RunEvent, { type: 'run.finished' }> => event.type === 'run.finished',
+  );
+  // The exit's configuration explains a run that returned nothing, so a finished exit needs it too.
   const needsPinnedDefinition =
+    latestExit !== undefined ||
     selectedEvent?.type === 'decision.made' ||
     selectedEvent?.type === 'run.failed' ||
     (firstEvent !== undefined && (firstEvent.type !== 'run.queued' || !firstEvent.initialThread));
@@ -72,7 +79,13 @@ export function RunInspectorPage() {
     runQuery.data?.versionId ?? '',
     needsPinnedDefinition,
   );
-  const latestExit = log.events.filter((event) => event.type === 'exit.evaluated').at(-1);
+  const definition = versionQuery.data?.definition;
+  const gateSummary = lastGateSummary(log.events);
+  const returnSummary = exitReturnSummary(
+    log.events,
+    definition,
+    threadQuery.data?.invocation.returnDefaults,
+  );
 
   return (
     <Page wide>
@@ -118,15 +131,18 @@ export function RunInspectorPage() {
             {latestExit ? (
               <Card title="Exit evaluation">
                 <p>{describeEvent(latestExit)}</p>
+                {gateSummary ? <p>{gateSummary}</p> : null}
+                {returnSummary ? <p data-testid="exit-returns">{returnSummary}</p> : null}
               </Card>
             ) : null}
-            {run.result !== undefined ? (
+            {/* A null return is a value: the snapshot drops it, so read it from the finish. */}
+            {run.result !== undefined || finished?.result !== undefined ? (
               <Card title="Result">
                 <pre
                   className="overflow-auto rounded-md border border-default bg-code-bg px-3 py-2 text-[12.5px] text-code-fg"
                   data-testid="run-result"
                 >
-                  {prettyJson(run.result)}
+                  {prettyJson(run.result !== undefined ? run.result : finished?.result)}
                 </pre>
               </Card>
             ) : null}
@@ -149,15 +165,16 @@ export function RunInspectorPage() {
           ) : null}
           <EvaluationDetails
             event={selectedEvent}
-            definition={versionQuery.data?.definition}
+            definition={definition}
             definitionLoading={versionQuery.isPending}
+            exitReturns={returnSummary}
           />
           {threadQuery.data ? (
             <ThreadViewer
               current={threadQuery.data}
               events={log.events}
               seq={seq}
-              definition={versionQuery.data?.definition}
+              definition={definition}
             />
           ) : (
             <p className="text-sm text-muted">The thread is not available yet.</p>

@@ -109,6 +109,74 @@ describe('NodeEditorDialog evaluator-specific decisions', () => {
       );
     },
   );
+  it('says what destinations receive while Returns is None, and names a quiet exit (#129)', async () => {
+    const user = userEvent.setup();
+    const dialog = await openDialog(
+      {
+        id: 'finish',
+        kind: 'exit',
+        label: 'Finish',
+        config: { destinations: [{ kind: 'caller' }, { kind: 'log' }] },
+      },
+      'Edit exit finish',
+    );
+    expect(
+      within(dialog).getByText(
+        'No returned value. The run finishes without a result, and destinations receive nothing.',
+      ),
+    ).toBeInTheDocument();
+    const destinations = within(dialog).getByRole('group', { name: 'Destinations' });
+    expect(destinations).toHaveAccessibleDescription(
+      'Returns is None, so these 2 destinations receive nothing. Choose a JSONata expression to deliver a value, or remove destinations for a quiet exit.',
+    );
+    await user.click(within(destinations).getByRole('button', { name: 'Remove destinations 2' }));
+    await waitFor(() =>
+      expect(destinations).toHaveAccessibleDescription(
+        /^Returns is None, so this destination receives nothing\./,
+      ),
+    );
+    await user.click(within(destinations).getByRole('button', { name: 'Remove destinations 1' }));
+    await waitFor(() =>
+      expect(destinations).toHaveAccessibleDescription(
+        'Quiet exit: nothing is returned or delivered. The run still finishes with its outcome.',
+      ),
+    );
+    expect(store().definition!.nodes.find((n) => n.id === 'finish')!.config).toMatchObject({
+      destinations: [],
+    });
+    await user.click(within(dialog).getByRole('radio', { name: 'JSONata expression' }));
+    expect(destinations).toHaveAccessibleDescription(
+      'Return destinations; caller by default. No delivery when returns is none. With returns none and no destinations, the exit is quiet.',
+    );
+    expect(
+      within(dialog).getByText(/^Its value becomes the run result and goes to every destination\./),
+    ).toBeInTheDocument();
+  });
+
+  it('explains route IDs as output ports and labels as unique, beside the list rule (#129)', async () => {
+    const dialog = await openDialog(
+      {
+        id: 'pick',
+        kind: 'decision',
+        label: 'Pick',
+        config: DecisionConfigSchema.parse(defaultConfig('decision')),
+      },
+      'Edit decision pick',
+    );
+    const routes = within(dialog).getByRole('group', { name: 'Routes' });
+    expect(routes).toHaveAccessibleDescription(
+      'At least 2 items. Two to sixty-four routes with unique ids and unique labels; the expression returns one id.',
+    );
+    expect(within(routes).getAllByRole('textbox', { name: 'Id' })[0]).toHaveAccessibleDescription(
+      'Stable route id and output port; changing display order does not change the route.',
+    );
+    expect(
+      within(routes).getAllByRole('textbox', { name: 'Label' })[0],
+    ).toHaveAccessibleDescription(
+      'Unique readable route label, shown on the canvas and in Connections.',
+    );
+  });
+
   it.each(['expression', 'llm', 'classifier'] as const)(
     'authors and saves a new %s decision from the default editor fields',
     async (kind) => {

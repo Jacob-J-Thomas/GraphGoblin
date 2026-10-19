@@ -2,7 +2,7 @@ import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { LoopDefinitionSchema } from '@graphgoblin/contracts';
+import { LoopDefinitionSchema, type JsonValue, type RunEvent } from '@graphgoblin/contracts';
 import { minimalLoop } from '@graphgoblin/contracts/testing';
 import { event, FakeApi } from '../__fixtures__/fake-api.js';
 import { renderApp } from '../__fixtures__/render.js';
@@ -176,7 +176,10 @@ describe('RunInspectorPage', () => {
     });
     renderApp(`/runs/${run.id}`, api);
 
-    expect(await screen.findByText('Loading run-version configuration…')).toBeInTheDocument();
+    const row = (term: string) => screen.getByText(term, { selector: 'dt' }).nextElementSibling;
+    expect(await screen.findByText('Confidence acceptance')).toBeInTheDocument();
+    expect(row('Confidence acceptance')).toHaveTextContent('Loading run-version configuration…');
+    expect(row('Label')).toHaveTextContent('Loading run-version configuration…');
     expect(
       screen.queryByText('Not recorded (classifier configuration unavailable)'),
     ).not.toBeInTheDocument();
@@ -186,6 +189,9 @@ describe('RunInspectorPage', () => {
     await waitFor(() =>
       expect(screen.getByText('True-probability threshold').parentElement).toHaveTextContent('0.2'),
     );
+    // The chosen side's label and criterion, as the run version authored them.
+    expect(row('Label')).toHaveTextContent('True');
+    expect(row('Criterion')).toHaveTextContent('The check passes');
     expect(screen.getByText('Confidence acceptance').parentElement).toHaveTextContent(
       'No minimum configured in run version',
     );
@@ -589,4 +595,128 @@ describe('RunInspectorPage', () => {
       expect(api.callsTo('GET', `/runs/${run.id}/events`)).toHaveLength(0);
     },
   );
+});
+
+/** What a finished exit returned, and the last gate's passes, at the top of the run (#129). */
+describe('RunInspectorPage exit evidence', () => {
+  function exitRun(
+    api: FakeApi,
+    exit: Record<string, unknown>,
+    options: { result?: JsonValue; decisions?: (runId: string) => RunEvent[] } = {},
+  ) {
+    const base = minimalLoop();
+    const loop = api.addLoop(
+      {
+        ...base,
+        nodes: base.nodes.map((node) => (node.kind === 'exit' ? { ...node, config: exit } : node)),
+      },
+      { published: true },
+    );
+    const run = api.addRun({
+      loopId: loop.id,
+      versionId: loop.currentVersionId!,
+      status: 'succeeded',
+      ...(options.result !== undefined && options.result !== null
+        ? { result: options.result }
+        : {}),
+    });
+    const events = [event(run.id, 1, 'run.queued', {}), ...(options.decisions?.(run.id) ?? [])];
+    const next = events.length + 1;
+    events.push(
+      event(run.id, next, 'exit.evaluated', { nodeId: 'done', outcome: 'success' }),
+      event(run.id, next + 1, 'run.finished', {
+        status: 'succeeded',
+        outcome: 'success',
+        ...(options.result === undefined ? {} : { result: options.result }),
+      }),
+    );
+    for (const item of events) api.pushEvent(run.id, item);
+    return run;
+  }
+
+  it('says a quiet exit returned nothing by configuration, at the top and in its details', async () => {
+    const api = new FakeApi();
+    const run = exitRun(api, { returns: 'none', destinations: [] });
+    renderApp(`/runs/${run.id}`, api);
+    const quiet =
+      'Quiet exit: Returns is None and there are no destinations, so nothing was returned or delivered. This is the exit’s configuration, not a failure.';
+    await waitFor(() => expect(screen.getByTestId('exit-returns')).toHaveTextContent(quiet));
+    expect(screen.queryByTestId('run-result')).toBeNull();
+    await userEvent.setup().click(screen.getByRole('button', { name: /exit\.evaluated/ }));
+    expect(screen.getByText(/Exit outcome:/)).toHaveTextContent(quiet);
+    expect(screen.queryByText(/See the run result/)).toBeNull();
+  });
+
+  it('names the exit and start-request destinations that a None return left empty', async () => {
+    const api = new FakeApi();
+    const run = exitRun(api, {
+      returns: 'none',
+      destinations: [{ kind: 'caller' }, { kind: 'log' }],
+    });
+    const thread = api.threads.get(run.id)!;
+    api.threads.set(run.id, {
+      ...thread,
+      invocation: {
+        ...thread.invocation,
+        returnDefaults: [{ kind: 'webhook', url: 'https://example.test/hook' }],
+      },
+    });
+    renderApp(`/runs/${run.id}`, api);
+    await waitFor(() =>
+      expect(screen.getByTestId('exit-returns')).toHaveTextContent(
+        'No value was returned: Returns is None, so no destination received anything (caller, log from the exit; webhook from the start request). This is the exit’s configuration, not a failure.',
+      ),
+    );
+  });
+
+  it('shows a null return as the result rather than as nothing', async () => {
+    const api = new FakeApi();
+    const run = exitRun(api, { returns: 'vars.missing' }, { result: null });
+    renderApp(`/runs/${run.id}`, api);
+    await waitFor(() => expect(screen.getByTestId('run-result')).toHaveTextContent('null'));
+    expect(screen.queryByTestId('exit-returns')).toBeNull();
+  });
+
+  it('keeps the last gate pass and stopping limit beside the exit outcome', async () => {
+    const api = new FakeApi();
+    const run = exitRun(
+      api,
+      { outcome: 'exhausted', returns: '"work"' },
+      {
+        result: 'work',
+        decisions: (runId) =>
+          [1, 2, 3].map((pass) =>
+            event(runId, pass + 1, 'decision.made', {
+              nodeId: 'gate',
+              portId: pass === 3 ? 'limit-reached' : 'again',
+              diagnostics: [],
+              provenance: {
+                kind: 'expression',
+                provider: null,
+                classifierId: null,
+                model: null,
+                effort: null,
+              },
+              observation: { kind: 'route', routeId: 'again', confidence: null, reasoning: null },
+              gate: {
+                previousPasses: pass,
+                passes: pass === 3 ? 3 : pass + 1,
+                repeatRouteId: 'again',
+                maxPasses: 3,
+                elapsedSeconds: 1,
+                limit: pass === 3 ? 'max-passes' : null,
+              },
+            }),
+          ),
+      },
+    );
+    renderApp(`/runs/${run.id}`, api);
+    expect(
+      await screen.findByText(
+        'Last gate decision: gate chose again on pass 3 of 3; maximum passes stopped the repeat, so it took Limit reached.',
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('run-result')).toHaveTextContent('work');
+    expect(screen.queryByTestId('exit-returns')).toBeNull();
+  });
 });

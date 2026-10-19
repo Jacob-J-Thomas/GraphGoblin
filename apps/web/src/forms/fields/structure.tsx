@@ -407,9 +407,14 @@ function ArrayField({
   if (!Array.isArray(field.value) && Array.isArray(defaultValue) && defaultValue.length > 0) {
     // Item fields bind to paths inside the value; drawing them over a default the value does not
     // hold yet would make them validate `undefined`. Show the default and copy it on request.
+    // The help still says what the list is for, as it does once the list is customized.
     return (
-      <Fieldset data-field={name}>
+      <Fieldset
+        data-field={name}
+        aria-describedby={help !== undefined ? group.ids.help : undefined}
+      >
         <Legend>{label}</Legend>
+        <FieldHelp id={group.ids.help} help={help} />
         <p className="text-xs text-muted">
           Default: <code className="text-default">{JSON.stringify(defaultValue)}</code>
         </p>

@@ -68,7 +68,7 @@ Ports: Declared route ids for expression/LLM; classifier option, side or band id
 | `jsonata`           | string   | yes      |         | JSONata source; return a declared route id for decisions.                                                                |
 | `maxPasses`         | integer  | no       |         | Required with a repeat route. One-based passes; a non-repeat choice wins on the last pass.                               |
 | `maxRunTimeSeconds` | integer  | no       |         | Optional maximum elapsed seconds from run start, including waits and pauses. Checked after evaluation, only on a repeat. |
-| `routes`            | object[] | yes      |         | Two to sixty-four stable readable routes.                                                                                |
+| `routes`            | object[] | yes      |         | Two to sixty-four routes with unique ids and unique labels; the expression returns one id.                               |
 
 ### `kind: "llm"`
 
@@ -80,7 +80,7 @@ Ports: Declared route ids for expression/LLM; classifier option, side or band id
 | `effort`            | one of `"inherit"` \| `"explicit"` by `mode` | yes      |         |                                         | Inherit or explicitly select reasoning effort.                                                                           |
 | `maxPasses`         | integer                                      | no       |         |                                         | Required with a repeat route. One-based passes; a non-repeat choice wins on the last pass.                               |
 | `maxRunTimeSeconds` | integer                                      | no       |         |                                         | Optional maximum elapsed seconds from run start, including waits and pauses. Checked after evaluation, only on a repeat. |
-| `routes`            | object[]                                     | yes      |         |                                         | Declared stable route ids and readable labels.                                                                           |
+| `routes`            | object[]                                     | yes      |         |                                         | Two to sixty-four routes with unique ids and unique labels; Codex chooses one id.                                        |
 | `context`           | { messages?, vars?, includeLastOutput? }     | no       | `{}`    | all but `messages`, `includeLastOutput` | Selected provider context.                                                                                               |
 
 ### `kind: "classifier"`
@@ -220,8 +220,8 @@ Decides whether the loop is done, what it returns, where that goes, and whether 
 
 Ports: `loopBack`, only when configured.
 
-| Field          | Type                                                                                      | Required | Default               | Description                                                                                          |
-| -------------- | ----------------------------------------------------------------------------------------- | -------- | --------------------- | ---------------------------------------------------------------------------------------------------- |
-| `outcome`      | `"success"` \| `"failure"` \| `"exhausted"`                                               | no       | `"success"`           | Terminal outcome; Exhausted produces run status exhausted and preserves the return value.            |
-| `returns`      | `"none"` \| string                                                                        | no       | `"none"`              | JSONata return mapping, or none. Gate decisions replace lastOutput; prefer outputs.<workNode>.value. |
-| `destinations` | array of (one of `"caller"` \| `"webhook"` \| `"file"` \| `"event"` \| `"log"` by `kind`) | no       | `[{"kind":"caller"}]` | Return destinations; caller by default. No delivery when returns is none.                            |
+| Field          | Type                                                                                      | Required | Default               | Description                                                                                                                                                                            |
+| -------------- | ----------------------------------------------------------------------------------------- | -------- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `outcome`      | `"success"` \| `"failure"` \| `"exhausted"`                                               | no       | `"success"`           | Terminal outcome; Exhausted produces run status exhausted and preserves the return value.                                                                                              |
+| `returns`      | `"none"` \| string                                                                        | no       | `"none"`              | JSONata return mapping, or none. None returns nothing: the run has no result and no destination receives anything. Gate decisions replace lastOutput; prefer outputs.<workNode>.value. |
+| `destinations` | array of (one of `"caller"` \| `"webhook"` \| `"file"` \| `"event"` \| `"log"` by `kind`) | no       | `[{"kind":"caller"}]` | Return destinations; caller by default. No delivery when returns is none. With returns none and no destinations, the exit is quiet.                                                    |
