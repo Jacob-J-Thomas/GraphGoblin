@@ -44,3 +44,5 @@ One file per decision. Status is Accepted unless stated. Supersede by adding a n
 [ADR-0037: Webhook acknowledgement](ADR-0037-webhook-acknowledgement.md) supersedes ADR-0024's public response and preset-filter rules; T4 has a bounded admission checkpoint and continuation.
 
 [ADR-0038: Downstream payload checks](ADR-0038-downstream-payload-checks.md) removes trigger filters and requires version-bound review of stored filter graphs.
+
+[ADR-0040: Explicit resets replace pre-1.0 conversion](ADR-0040-explicit-resets-replace-conversion.md) retires historical conversion; unsupported stores, imports and device drafts refuse, and `--reset` is the explicit fresh start. It supersedes the conversion mechanics of ADR-0039 and, for format changes, ADR-0020's one-off migrations.

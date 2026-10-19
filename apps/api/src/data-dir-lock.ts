@@ -26,17 +26,22 @@ function pidIsAlive(pid: number): boolean {
 
 const held = (path: string): Error => new Error(`another GraphGoblin process holds ${path}`);
 
-async function removeStale(path: string): Promise<void> {
+/**
+ * Who owns a lock file, read-only: `absent`, `stale` (its recorded PID is dead, or is this
+ * process's own PID without an in-process hold), or `held`. Malformed records and PIDs that cannot
+ * be checked count as held: they cannot establish that the owner died.
+ */
+async function lockFileState(path: string): Promise<'absent' | 'stale' | 'held'> {
   let owner: unknown;
   try {
     const existing = await readFile(path, 'utf8');
     try {
       owner = JSON.parse(existing);
     } catch {
-      throw held(path);
+      return 'held';
     }
   } catch (error) {
-    if (hasCode(error, 'ENOENT')) return;
+    if (hasCode(error, 'ENOENT')) return 'absent';
     throw error;
   }
   if (
@@ -48,8 +53,28 @@ async function removeStale(path: string): Promise<void> {
     owner.pid <= 0 ||
     (owner.pid === process.pid ? heldPaths.has(path) : pidIsAlive(owner.pid))
   )
-    throw held(path);
-  await unlink(path);
+    return 'held';
+  return 'stale';
+}
+
+async function removeStale(path: string): Promise<void> {
+  const state = await lockFileState(path);
+  if (state === 'held') throw held(path);
+  if (state === 'stale') await unlink(path);
+}
+
+/**
+ * Whether acquiring the data-directory lock now would be refused, without creating, reclaiming or
+ * removing anything. `held` names the lock (or its reclamation guard) a live owner holds.
+ */
+export async function dataDirLockState(
+  dataDir: string,
+): Promise<{ state: 'free' } | { state: 'held'; path: string }> {
+  const path = resolve(dataDir, 'graphgoblin.lock');
+  for (const file of [`${path}.reclaim`, path])
+    if (heldPaths.has(file) || acquiringPaths.has(path) || (await lockFileState(file)) === 'held')
+      return { state: 'held', path: file };
+  return { state: 'free' };
 }
 
 async function acquireFile(path: string, record: string): Promise<DataDirLock> {

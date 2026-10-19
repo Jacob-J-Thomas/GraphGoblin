@@ -29,8 +29,8 @@ import { acquireDataDirLock } from '../../apps/api/dist/data-dir-lock.js';
 import {
   openDatabase,
   openReadOnlyDatabaseClient,
-  guardDatabaseUpgrade,
-  verifyDatabaseHead,
+  guardCurrentStore as guardDatabaseUpgrade,
+  verifyStoreHead as verifyDatabaseHead,
 } from '../../packages/infrastructure/dist/sqlite/index.js';
 import { FIXTURE_TS } from '../../packages/contracts/dist/testing/index.js';
 import {

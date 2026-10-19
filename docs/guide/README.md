@@ -26,7 +26,7 @@ The context thread holds messages, variables, artifacts, per-node outputs, and u
 5. [Use MCP and the Codex plugin](05-mcp-and-codex-plugin.md)
 6. [Manage settings and secrets](06-settings-and-secrets.md)
 7. [Troubleshoot](07-troubleshooting.md)
-8. [Upgrade stored loops to format 3](08-offline-upgrade.md)
+8. [Reset and start fresh](08-offline-upgrade.md)
 9. [Start from a template](09-templates.md)
 10. [Start an implementation workflow](10-implementation-template.md)
 11. [Start a review workflow](11-review-template.md)

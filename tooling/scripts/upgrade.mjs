@@ -22,8 +22,8 @@ import {
   databaseFilePath,
   inspectDatabaseUpgrade,
   applyDatabaseUpgrade,
-  guardDatabaseUpgrade,
-  verifyDatabaseHead,
+  guardCurrentStore as guardDatabaseUpgrade,
+  verifyStoreHead as verifyDatabaseHead,
   RUN_HISTORY_TABLES,
 } from '../../packages/infrastructure/dist/sqlite/index.js';
 import { generatedResolutions, pendingSummary } from './upgrade-resolutions.mjs';

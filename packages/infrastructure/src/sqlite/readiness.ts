@@ -1,17 +1,33 @@
 import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
-import { createClient } from '@libsql/client';
+import { createClient, type Client, type InValue } from '@libsql/client';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { readMigrationFiles } from 'drizzle-orm/migrator';
 import { fileURLToPath } from 'node:url';
-import { rows, quote, type UpgradeReader } from './upgrade-scan.js';
+
+export type StoreReader = Pick<Client, 'execute'>;
+export type StoreRow = Record<string, unknown>;
+
+export const quote = (name: string): string => '"' + name.replaceAll('"', '""') + '"';
+
+/** Plain row objects keyed by column name. */
+export async function rows(
+  client: StoreReader,
+  sql: string,
+  args: InValue[] = [],
+): Promise<StoreRow[]> {
+  const result = await client.execute({ sql, args });
+  return result.rows.map((row) =>
+    Object.fromEntries(result.columns.map((column) => [column, row[column]])),
+  );
+}
 
 export const SHIPPED_MIGRATIONS = fileURLToPath(new URL('../../drizzle', import.meta.url));
-// Moving the current format also requires an explicit format/SQL baseline decision.
+// The shipped migration that completes the current format's structure. Changing the format is an
+// explicit decision that moves this baseline; older stores are reset, not converted (ADR-0040).
 export const FORMAT_BASELINES = {
-  3: '0008_github_triggers',
   4: '0013_trigger_configuration',
-} satisfies Record<typeof CURRENT_DEFINITION_FORMAT | 3, string>;
+} satisfies Record<typeof CURRENT_DEFINITION_FORMAT, string>;
 export const normalizeStoreSql = (sql: string) =>
   sql
     .toLowerCase()
@@ -41,7 +57,7 @@ function checks(sql: string): string[] {
   }
   return found;
 }
-export async function storeStructure(client: UpgradeReader) {
+export async function storeStructure(client: StoreReader) {
   const tables = [];
   for (const table of await rows(
     client,

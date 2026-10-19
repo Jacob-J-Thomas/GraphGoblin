@@ -11,6 +11,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildApp } from './app.js';
 import { loadConfig } from './config.js';
 import { JEV_SECRET, LOCAL_OWNER, createContainer, type Container } from './container.js';
+import { StoreRefusedError } from './store-refusal.js';
 import type { ApiInstance } from './types.js';
 
 let dataDir: string;
@@ -451,8 +452,23 @@ describe('configuration admission before startup writes', () => {
     const handle = openDatabase({ url: config().dbUrl });
     await handle.client.execute('CREATE TABLE old_data(id TEXT)');
     handle.close();
-    await expect(createContainer(config(), { startTimers: false })).rejects.toMatchObject({
-      code: 'DATA_UPGRADE_REQUIRED',
+    const refusal = await createContainer(config(), { startTimers: false }).then(
+      () => undefined,
+      (error: unknown) => error,
+    );
+    expect(refusal).toBeInstanceOf(StoreRefusedError);
+    expect(refusal).toMatchObject({
+      code: 'STORE_UNSUPPORTED',
+      message: [
+        `GraphGoblin did not start: this build cannot open the store in data directory ${dataDir}.`,
+        `  Database: ${join(dataDir, 'gg.db')}`,
+        '  Found:    no valid format marker',
+        '  Requires: format 4',
+        '  Reason:   The store has no format marker; an older GraphGoblin build wrote it',
+        'Nothing was changed. This build does not convert stores from other formats.',
+        'To keep that data, run the GraphGoblin build that wrote it. To start fresh, stop every GraphGoblin process using the data directory, then list what a reset would remove (this removes nothing):',
+        `  node apps/api/dist/main.js --reset --data-dir "${dataDir}"`,
+      ].join('\n'),
     });
     await expect(access(join(dataDir, 'master.key'))).rejects.toThrow();
     const inspection = openDatabase({ url: config().dbUrl });
@@ -518,9 +534,26 @@ it('repeats cheap readiness checks inside migrate even after a protected preflig
   await prepared.migrate();
   prepared.close();
   const container = await createContainer(config(), { startTimers: false });
-  await container.handle.client.execute('UPDATE gg_upgrade_state SET format_version=99');
-  await expect(container.start()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
+  await container.handle.client.execute('UPDATE gg_upgrade_state SET format_version=3');
+  await expect(container.start()).rejects.toMatchObject({
+    code: 'STORE_UNSUPPORTED',
+    message: expect.stringContaining(
+      '  Found:    format 3\n  Requires: format 4\n  Reason:   The store is format 3; this build reads only format 4\n',
+    ),
+  });
   await container.stop();
+});
+it('names a damaged current-format store and offers repair or a fresh start', async () => {
+  const prepared = openDatabase({ url: config().dbUrl });
+  await prepared.migrate();
+  await prepared.client.execute('DROP INDEX runs_parent_idx');
+  prepared.close();
+  await expect(createContainer(config(), { startTimers: false })).rejects.toMatchObject({
+    code: 'STORE_UNSUPPORTED',
+    message: expect.stringMatching(
+      /Found: {4}format 4, but the store is damaged or unfinished\n.*\n {2}Reason: {3}The format-4 store is damaged: incomplete indexes in runs\nNothing was changed\..*\nRepair the store by hand, or start fresh: /,
+    ),
+  });
 });
 it('reparses external database definitions changed after construction before startup writes', async () => {
   const outside = dataDir;
@@ -553,7 +586,7 @@ it('reparses external database definitions changed after construction before sta
     const before = await Promise.all(
       tables.map((table) => container.handle.client.execute('SELECT * FROM "' + table + '"')),
     );
-    await expect(container.start()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
+    await expect(container.start()).rejects.toMatchObject({ code: 'STORE_UNSUPPORTED' });
     // Closing a writer may checkpoint the WAL. Compare stored rows through a fresh read-only
     // connection, including all startup seed targets, rather than SQLite file layout.
     const inspection = openReadOnlyDatabaseClient(join(outside, 'external.db'));
@@ -588,7 +621,7 @@ it('refuses malformed current definitions before master-key creation or database
   const before = await readFile(join(dataDir, 'gg.db'));
   const { masterKey: _masterKey, ...withoutMasterKey } = config();
   await expect(createContainer(withoutMasterKey, { startTimers: false })).rejects.toMatchObject({
-    code: 'DATA_UPGRADE_REQUIRED',
+    code: 'STORE_UNSUPPORTED',
   });
   expect(await readFile(join(dataDir, 'gg.db'))).toEqual(before);
   await expect(access(join(dataDir, 'master.key'))).rejects.toThrow();

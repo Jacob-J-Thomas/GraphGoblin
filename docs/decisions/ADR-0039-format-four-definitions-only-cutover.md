@@ -1,6 +1,6 @@
 # ADR-0039: Format-4 cutover keeps definitions and deletes run history
 
-- Status: Accepted
+- Status: Accepted; its conversion mechanics are superseded by [ADR-0040](ADR-0040-explicit-resets-replace-conversion.md) (explicit resets, 2026-10-18)
 - Date: 2026-10-17
 - Decision: Owner-approved definitions-only server-store cutover for #164 steps 26 and 28.
 

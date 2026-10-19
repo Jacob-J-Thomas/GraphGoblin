@@ -2,12 +2,7 @@ import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { describe, expect, it } from 'vitest';
 import { LoopDefinitionSchema } from '@graphgoblin/contracts';
 import { FIXTURE_TS, minimalLoop } from '@graphgoblin/contracts/testing';
-import {
-  exportLoop,
-  importLoop,
-  LoopImportError,
-  LoopFormatUpgradeRequiredError,
-} from './loop-io.js';
+import { exportLoop, importLoop, LoopImportError, LoopFormatUnsupportedError } from './loop-io.js';
 
 describe('exportLoop / importLoop', () => {
   it('carries manual edge routes (#44) through export and import unchanged', () => {
@@ -138,18 +133,44 @@ describe('exportLoop / importLoop', () => {
   });
 });
 
-it('requires the offline converter for explicit v1 exports and bare definitions, never parsing legacy at runtime', () => {
-  for (const input of [
-    { format: 'graphgoblin-loop', formatVersion: 1, exportedAt: 'old', loop: {} },
-    { schemaVersion: 1 },
-  ]) {
-    expect(() => importLoop(input)).toThrow(LoopFormatUpgradeRequiredError);
-    try {
-      importLoop(input);
-    } catch (error) {
-      expect(error).toMatchObject({ code: 'LOOP_FORMAT_UPGRADE_REQUIRED' });
-    }
+it.each([
+  [{ format: 'graphgoblin-loop', formatVersion: 1, exportedAt: 'old', loop: {} }, 1, 'export'],
+  [{ format: 'graphgoblin-loop', formatVersion: 3, exportedAt: 'old', loop: {} }, 3, 'export'],
+  [{ format: 'graphgoblin-loop', formatVersion: 5, exportedAt: 'new', loop: {} }, 5, 'export'],
+  [
+    {
+      format: 'graphgoblin-loop',
+      formatVersion: CURRENT_DEFINITION_FORMAT,
+      exportedAt: 'mixed',
+      loop: { ...minimalLoop(), schemaVersion: 3 },
+    },
+    3,
+    'export',
+  ],
+  [{ ...minimalLoop(), schemaVersion: 3 }, 3, 'definition'],
+  [{ schemaVersion: 1 }, 1, 'definition'],
+])('refuses a document in another format without converting it: %j', (input, found, document) => {
+  let refusal: unknown;
+  try {
+    importLoop(input);
+  } catch (error) {
+    refusal = error;
   }
-  for (const input of [{ format: 'other', formatVersion: 9 }, null])
+  expect(refusal).toBeInstanceOf(LoopFormatUnsupportedError);
+  expect(refusal).toMatchObject({
+    code: 'LOOP_FORMAT_UNSUPPORTED',
+    foundFormat: found,
+    message: `This loop ${document} is format ${String(found)}; this build reads only format ${String(CURRENT_DEFINITION_FORMAT)} and does not convert other formats. Re-create the loop in this build, or export it again from a build that writes format ${String(CURRENT_DEFINITION_FORMAT)}.`,
+    details: { foundFormat: found, requiredFormat: CURRENT_DEFINITION_FORMAT },
+  });
+});
+
+it('reports documents without a recognisable format as invalid imports', () => {
+  for (const input of [
+    { format: 'other', formatVersion: 9 },
+    { format: 'graphgoblin-loop', formatVersion: CURRENT_DEFINITION_FORMAT, loop: 'not a loop' },
+    { schemaVersion: 'four' },
+    null,
+  ])
     expect(() => importLoop(input)).toThrow(LoopImportError);
 });

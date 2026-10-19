@@ -10,13 +10,16 @@ import {
   SqliteModelCatalog,
   SqliteClassifierModels,
   SqliteSecrets,
+  UnsupportedStoreError,
   databaseFilePath,
+  guardCurrentStore,
   openDatabase,
   type ModelCatalogEntry,
 } from '@graphgoblin/infrastructure/sqlite';
 import { z } from 'zod';
 import { loadConfig, type ApiConfig } from './config.js';
 import { JEV_SECRET, LOCAL_OWNER, type Container } from './container.js';
+import { dataDirArgument, RESET_COMMAND } from './store-refusal.js';
 
 /**
  * First-run preflight (docs/11): is this machine ready to run GraphGoblin? Each check reports
@@ -268,7 +271,16 @@ export async function runPreflight(sources: PreflightSources): Promise<Preflight
       checks.push(check('database', 'Database', 'ok', 'reachable and migrated'));
     }
   } catch (error) {
-    checks.push(check('database', 'Database', 'fail', `not reachable: ${message(error)}`));
+    checks.push(
+      check(
+        'database',
+        'Database',
+        'fail',
+        error instanceof UnsupportedStoreError
+          ? `${error.reason}. Start refuses this store and converts nothing; to start fresh, list what a reset removes with ${RESET_COMMAND} ${dataDirArgument(config.dataDir)}`
+          : `not reachable: ${message(error)}`,
+      ),
+    );
   }
 
   checks.push(...(await checkHarnesses(sources.harnesses, config)));
@@ -464,7 +476,11 @@ export async function configPreflightSources(
   const { handle } = database;
   return {
     ...base,
-    pendingMigrations: () => handle.pendingMigrations(),
+    // A store start would refuse is reported as such, never as migrations it would apply.
+    pendingMigrations: async () => {
+      await guardCurrentStore(handle.client);
+      return handle.pendingMigrations();
+    },
     jevKey: () =>
       key
         ? new SqliteSecrets(handle.db, { now: () => new Date() }, key, LOCAL_OWNER).resolve(

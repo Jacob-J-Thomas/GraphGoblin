@@ -4,13 +4,11 @@ import { minimalLoop } from '@graphgoblin/contracts/testing';
 import { validateLoop, type UpgradeCurrentResolutions } from '@graphgoblin/domain';
 import type { Client } from '@libsql/client';
 import { openDatabase, openMemoryDatabase, type DatabaseHandle } from './db.js';
+import { applyDatabaseUpgrade, inspectDatabaseUpgrade, RUN_HISTORY_TABLES } from './upgrade.js';
 import {
-  applyDatabaseUpgrade,
-  guardDatabaseUpgrade,
-  inspectDatabaseUpgrade,
-  verifyDatabaseHead,
-  RUN_HISTORY_TABLES,
-} from './upgrade.js';
+  guardCurrentStore as guardDatabaseUpgrade,
+  verifyStoreHead as verifyDatabaseHead,
+} from './store-format.js';
 import { fixtureId, frozenDefinition, seedFormatThreeStore } from './testing/format-three-store.js';
 import { tableNames, rows } from './upgrade-scan.js';
 const handles: DatabaseHandle[] = [];
@@ -113,7 +111,7 @@ describe('definitions-only format-4 cutover', () => {
     expect(plan.planHash).toMatch(/^[a-f0-9]{64}$/);
     expect((await inspectDatabaseUpgrade(handle.client)).planHash).toBe(plan.planHash);
     expect(await snapshot(handle.client)).toEqual(before);
-    await expect(handle.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
+    await expect(handle.migrate()).rejects.toMatchObject({ code: 'STORE_UNSUPPORTED' });
   });
   it('deletes all history and configured templates, converts definitions, retains signing identities/secrets/settings, and starts through ordinary migrations', async () => {
     const handle = await fixture();
@@ -434,34 +432,6 @@ describe('definitions-only format-4 cutover', () => {
     await handle.client.execute(sql);
     expect((await inspectDatabaseUpgrade(handle.client)).issues.length).toBeGreaterThan(0);
     await refuses(handle, await request(handle), /Unresolved/);
-  });
-  it.each([
-    "UPDATE gg_upgrade_state SET status='pending'",
-    'DELETE FROM gg_upgrade_state',
-    'DROP INDEX runs_parent_idx',
-    'CREATE TABLE template_instances (id TEXT)',
-    'ALTER TABLE runs ADD COLUMN template_subject TEXT',
-    'DELETE FROM __drizzle_migrations WHERE created_at=(SELECT max(created_at) FROM __drizzle_migrations)',
-    'UPDATE gg_upgrade_state SET format_version=3',
-  ])('refuses damaged or old completion state before ordinary startup writes: %s', async (sql) => {
-    const handle = await openMemoryDatabase();
-    handles.push(handle);
-    await handle.client.execute(sql);
-    const before = await snapshot(handle.client);
-    await expect(handle.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
-    expect(await snapshot(handle.client)).toEqual(before);
-  });
-  it('refuses a recorded ledger without application tables and permits a truly empty ledger', async () => {
-    const handle = openDatabase({ url: ':memory:' });
-    handles.push(handle);
-    await handle.client.execute(
-      'CREATE TABLE __drizzle_migrations (id INTEGER PRIMARY KEY,hash TEXT,created_at NUMERIC)',
-    );
-    expect(await guardDatabaseUpgrade(handle.client)).toBe('fresh');
-    await handle.client.execute("INSERT INTO __drizzle_migrations VALUES(1,'old',1)");
-    await expect(guardDatabaseUpgrade(handle.client)).rejects.toMatchObject({
-      code: 'DATA_UPGRADE_REQUIRED',
-    });
   });
   it('treats a genuinely fresh format-4 store as a no-op', async () => {
     const handle = await openMemoryDatabase();

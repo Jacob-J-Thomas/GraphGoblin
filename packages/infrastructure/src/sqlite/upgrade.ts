@@ -4,7 +4,6 @@ import { readMigrationFiles } from 'drizzle-orm/migrator';
 import {
   CURRENT_DEFINITION_FORMAT,
   HarnessDefaultsSchema,
-  HeaderNameSchema,
   LoopDefinitionSchema,
   type LoopDefinition,
 } from '@graphgoblin/contracts';
@@ -17,12 +16,11 @@ import {
   type CurrentUpgradeResult,
   type UpgradeCurrentResolutions,
 } from '@graphgoblin/domain';
+import { SHIPPED_MIGRATIONS, storeStructure } from './readiness.js';
 import {
-  currentStoreReadiness,
-  SHIPPED_MIGRATIONS,
-  storeStructure,
-  normalizeStoreSql,
-} from './readiness.js';
+  guardCurrentStore as guardDatabaseUpgrade,
+  verifyStoreHead as verifyDatabaseHead,
+} from './store-format.js';
 import {
   rows,
   tableNames as tables,
@@ -40,206 +38,16 @@ function json(value: unknown): unknown {
   if (typeof value !== 'string') throw new Error('stored JSON column is not text');
   return JSON.parse(value);
 }
+/** Offline-tool refusals only; startup refuses with UnsupportedStoreError. */
 export class DatabaseUpgradeRequiredError extends Error {
   readonly code = 'DATA_UPGRADE_REQUIRED';
-  constructor(
-    message = 'Stored data requires the offline graphgoblin-upgrade tool before startup',
-  ) {
+  constructor(message: string) {
     super(message);
     this.name = 'DatabaseUpgradeRequiredError';
   }
 }
-/** Must run before Drizzle migrations, run recovery, catalog seeding or trigger admission. */
-export async function guardDatabaseUpgrade(
-  client: Executor,
-  migrationsFolder = MIGRATIONS,
-  options: { skipDefinitions?: boolean; phase?: 'baseline' | 'head' } = {},
-): Promise<'fresh' | 'current'> {
-  const names = await tables(client);
-  const application = names.filter((name) => name !== '__drizzle_migrations');
-  if (application.length === 0) {
-    if (
-      names.includes('__drizzle_migrations') &&
-      (await rows(client, 'SELECT * FROM __drizzle_migrations')).length
-    )
-      throw new DatabaseUpgradeRequiredError(
-        'Recorded migration history without application tables requires explicit repair',
-      );
-    return 'fresh';
-  }
-  const readiness = await currentStoreReadiness(migrationsFolder);
-  if (!names.includes('gg_upgrade_state')) throw new DatabaseUpgradeRequiredError();
-  const states = await rows(client, 'SELECT * FROM gg_upgrade_state');
-  if (
-    states.length !== 1 ||
-    states[0]?.id !== 1 ||
-    states[0]?.format_version !== readiness.marker.format_version ||
-    states[0]?.status !== readiness.marker.status
-  )
-    throw new DatabaseUpgradeRequiredError(
-      'The offline upgrade is incomplete; restore the backup or repeat the offline inspection',
-    );
-  const structure = await storeStructure(client);
-  if (
-    migrationsFolder === MIGRATIONS &&
-    (names.includes('template_instances') ||
-      structure
-        .find((table) => table.name === 'runs')
-        ?.columns.some((column) => column.name === 'template_subject'))
-  )
-    throw new DatabaseUpgradeRequiredError('Retired template storage requires the offline cutover');
-  for (const table of readiness[options.phase ?? 'baseline']) {
-    const actual = structure.find((stored) => stored.name === table.name);
-    if (!actual)
-      throw new DatabaseUpgradeRequiredError('Missing current-store table: ' + table.name);
-    if (
-      table.columns.some(
-        (column) =>
-          !actual.columns.some(
-            (stored) =>
-              stored.name === column.name &&
-              stored.notNull === column.notNull &&
-              stored.pk === column.pk,
-          ),
-      )
-    )
-      throw new DatabaseUpgradeRequiredError('Incomplete current-store columns: ' + table.name);
-    if (
-      table.checks.some((check) => !actual.checks.includes(check)) ||
-      table.constraints.some((constraint) => !actual.constraints.includes(constraint))
-    )
-      throw new DatabaseUpgradeRequiredError('Stored constraints are incomplete: ' + table.name);
-    if (
-      table.indexes.some(
-        (index) =>
-          !actual.indexes.some(
-            (stored) =>
-              stored.name === index.name &&
-              normalizeStoreSql(stored.sql) === normalizeStoreSql(index.sql),
-          ),
-      )
-    )
-      throw new DatabaseUpgradeRequiredError('Stored indexes are incomplete: ' + table.name);
-    if (
-      options.phase === 'head' &&
-      (actual.columns.length !== table.columns.length ||
-        actual.checks.length !== table.checks.length ||
-        actual.constraints.length !== table.constraints.length ||
-        actual.indexes.length !== table.indexes.length)
-    )
-      throw new DatabaseUpgradeRequiredError(
-        'Stored structure differs from the migration head: ' + table.name,
-      );
-  }
-  const ledger = names.includes('__drizzle_migrations')
-    ? await rows(client, 'SELECT created_at FROM __drizzle_migrations ORDER BY created_at')
-    : [];
-  if (
-    ledger.length <
-      (options.phase === 'head' ? readiness.ledger.length : readiness.requiredLedgerLength) ||
-    ledger.length > readiness.ledger.length ||
-    ledger.some((entry, index) => Number(entry.created_at) !== readiness.ledger[index]?.created_at)
-  )
-    throw new DatabaseUpgradeRequiredError(
-      'The shipped migration ledger is incomplete or inconsistent',
-    );
-  // An explicitly selected historical SQL catalogue can stop before 0013. The current baseline above
-  // always requires auth_type before this data-level validation can be reached.
-  if (
-    structure
-      .find((table) => table.name === 'webhook_endpoints')
-      ?.columns.some((column) => column.name === 'auth_type')
-  ) {
-    const malformed = await rows(
-      client,
-      `SELECT id FROM webhook_endpoints WHERE auth_type IS NULL OR NOT (("auth_type" = 'none' AND "signature_message" IS NULL AND "signature_header" IS NULL AND "secret_ref" IS NULL AND "window_seconds" IS NULL) OR ("auth_type" = 'hmac-sha256' AND "signature_header" IS NOT NULL AND "secret_ref" IS NOT NULL AND (("signature_message" IS NOT NULL AND "signature_message" = 'body' AND "window_seconds" IS NULL) OR ("signature_message" IS NOT NULL AND "signature_message" = 'timestamp-body' AND "window_seconds" IS NOT NULL AND typeof("window_seconds") = 'integer' AND "window_seconds" BETWEEN 1 AND 86400))))`,
-    );
-    if (malformed.length)
-      throw new DatabaseUpgradeRequiredError('Stored webhook signing fields are inconsistent');
-    const signingHeaders = await rows(
-      client,
-      "SELECT signature_header FROM webhook_endpoints WHERE auth_type = 'hmac-sha256'",
-    );
-    if (signingHeaders.some((row) => !HeaderNameSchema.safeParse(row.signature_header).success))
-      throw new DatabaseUpgradeRequiredError(
-        'Stored webhook signing headers are not lowercase RFC tokens',
-      );
-  }
-  if (!options.skipDefinitions)
-    for await (const batch of tableBatches(client, 'loop_versions'))
-      for (const row of batch) {
-        try {
-          LoopDefinitionSchema.parse(json(row.definition));
-        } catch {
-          throw new DatabaseUpgradeRequiredError(
-            'A stored loop version is not strict current format',
-          );
-        }
-      }
-  if (names.includes('settings')) {
-    for (const row of await rows(client, 'SELECT key, value FROM settings')) {
-      if (row.key === 'defaultModel' || row.key === 'defaultEffort')
-        throw new DatabaseUpgradeRequiredError('Owner defaults require offline conversion');
-      if (row.key === 'defaults') {
-        try {
-          HarnessDefaultsSchema.parse(json(row.value));
-        } catch {
-          throw new DatabaseUpgradeRequiredError('Owner harness defaults are invalid');
-        }
-      }
-    }
-  }
-  return 'current';
-}
-/** After ordinary migrations, require the entire shipped catalogue and ledger. No second parse. */
-export async function verifyDatabaseHead(
-  client: Executor,
-  migrationsFolder = MIGRATIONS,
-): Promise<void> {
-  if (
-    (await guardDatabaseUpgrade(client, migrationsFolder, {
-      phase: 'head',
-      skipDefinitions: true,
-    })) !== 'current'
-  )
-    throw new DatabaseUpgradeRequiredError('Migrations did not produce a current store');
-}
 const STATE_SQL =
   'CREATE TABLE IF NOT EXISTS gg_upgrade_state (id INTEGER PRIMARY KEY CHECK(id=1), format_version INTEGER NOT NULL, status TEXT NOT NULL, source_hash TEXT NOT NULL, manifest_hash TEXT NOT NULL)';
-/** Schema, migration ledger and complete marker must commit together on first startup. */
-export async function initializeFreshDatabase(
-  client: Client,
-  migrationsFolder = MIGRATIONS,
-): Promise<'fresh' | 'current'> {
-  const tx = await client.transaction('write');
-  try {
-    // Recheck under the write lock: only an empty store may be initialised, even if another
-    // caller changed it after startup's first guard. Never authenticate an unmarked schema.
-    const upgradeState = await guardDatabaseUpgrade(tx);
-    if (upgradeState === 'fresh') {
-      // Drizzle's libsql migrator commits its own batch; use the offline apply's SQL runner
-      // so neither the schema nor its ledger can survive without the complete marker.
-      await structuralMigrations(tx, migrationsFolder);
-      await tx.execute(STATE_SQL);
-      await tx.execute({
-        sql: "INSERT INTO gg_upgrade_state (id,format_version,status,source_hash,manifest_hash) VALUES (1,?,'complete','fresh','fresh')",
-        args: [CURRENT_DEFINITION_FORMAT],
-      });
-    }
-    await tx.commit();
-    return upgradeState;
-  } catch (error) {
-    try {
-      await tx.rollback();
-    } catch {
-      // A lost connection must not replace the failure that interrupted initialisation.
-    }
-    throw error;
-  } finally {
-    tx.close();
-  }
-}
-
 async function structuralMigrations(tx: Transaction, folder: string): Promise<void> {
   await tx.execute(
     'CREATE TABLE IF NOT EXISTS "__drizzle_migrations" (id SERIAL PRIMARY KEY, hash text NOT NULL, created_at numeric)',

@@ -89,7 +89,7 @@ async function seedVersion(status: 'draft' | 'published', definition = inference
   );
   expect(await t.container.handle.pendingMigrations()).toBe(9);
   await expect(t.container.handle.migrate()).rejects.toMatchObject({
-    code: 'DATA_UPGRADE_REQUIRED',
+    code: 'STORE_UNSUPPORTED',
   });
   const inventory = await inspectDatabaseUpgrade(t.container.handle.client);
   // The API alone cannot cut over: apply needs the offline tool's held lock and verified backup.
@@ -115,7 +115,7 @@ describe('migrated SQLite versions through the API', () => {
       ).rows[0]?.definition;
       expect(stored).toBe(raw);
       await expect(t.container.handle.migrate()).rejects.toMatchObject({
-        code: 'DATA_UPGRADE_REQUIRED',
+        code: 'STORE_UNSUPPORTED',
       });
     },
   );

@@ -47,7 +47,7 @@ async function upgrade(check: (db: DatabaseHandle) => Promise<void>) {
   try {
     // Includes 0013_trigger_configuration after the three historical catalog migrations.
     expect(await current.pendingMigrations()).toBe(11);
-    await expect(current.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
+    await expect(current.migrate()).rejects.toMatchObject({ code: 'STORE_UNSUPPORTED' });
     await applyShippedSqlToHistoricalTestFixture(current);
     await check(current);
     expect(await current.pendingMigrations()).toBe(0);
@@ -83,7 +83,7 @@ describe('model catalog source migration and repository', () => {
       const catalog = new SqliteModelCatalog(current.db);
       const before = await catalog.list();
       expect(await current.pendingMigrations()).toBe(3);
-      await expect(current.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
+      await expect(current.migrate()).rejects.toMatchObject({ code: 'STORE_UNSUPPORTED' });
       // Exercise the historical SQL in isolation; format-4 startup cannot admit a pre-baseline store.
       await applyShippedSqlToHistoricalTestFixture(current);
       expect(await catalog.list()).toEqual(
@@ -271,7 +271,7 @@ describe('model catalog source migration and repository', () => {
         'DELETE FROM __drizzle_migrations WHERE created_at >= 1791136800000',
       );
       expect(await handle.pendingMigrations()).toBe(10);
-      await expect(handle.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
+      await expect(handle.migrate()).rejects.toMatchObject({ code: 'STORE_UNSUPPORTED' });
       await applyShippedSqlToHistoricalTestFixture(handle);
       expect(await catalog.list()).toEqual(rows.map((row) => ({ ...row, source: 'harness' })));
     } finally {

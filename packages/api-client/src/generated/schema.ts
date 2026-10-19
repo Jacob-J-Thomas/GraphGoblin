@@ -283,7 +283,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Create or update a loop from exported JSON */
+        /**
+         * Create or update a loop from exported JSON
+         * @description Imports a current-format export or bare definition. A document in another format is refused with `400 LOOP_FORMAT_UNSUPPORTED` (`errors.foundFormat`, `errors.requiredFormat`); it is never converted.
+         */
         post: {
             parameters: {
                 query?: never;
@@ -316,11 +319,6 @@ export interface paths {
                                 nodeId?: string | undefined;
                                 edgeId?: string | undefined;
                                 path?: string | undefined;
-                            }[];
-                            notices: {
-                                code: string;
-                                path: string;
-                                message: string;
                             }[];
                         };
                     };

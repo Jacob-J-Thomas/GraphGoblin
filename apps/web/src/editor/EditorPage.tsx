@@ -18,16 +18,14 @@ import { ErrorState } from '../components/status.js';
 import { Alert, Button, useSidePanelState } from '../components/ui/index.js';
 import { deviceStorageProblem } from '../drafts/local-drafts.js';
 import { focusFallback } from '../lib/focus.js';
-import {
-  downloadJson,
-  errorMessage,
-  fileSlug,
-  formatDateTime,
-  isOfflineError,
-  problemIssues,
-} from '../lib/utils.js';
+import { errorMessage, formatDateTime, isOfflineError, problemIssues } from '../lib/utils.js';
 import { Canvas } from './Canvas.js';
 import { ConflictNotice } from './ConflictNotice.js';
+import {
+  DeviceBackup,
+  UnpreservedDeviceCopy,
+  UnsupportedDeviceDraft,
+} from './DeviceCopyNotices.js';
 import { EditorToolbar, OpenInRuns } from './EditorToolbar.js';
 import {
   fieldErrorIssues,
@@ -74,14 +72,15 @@ export function EditorPage() {
     serverReconciled,
     setAside,
     setAsideIsLate,
-    rawCopies,
-    recoveryError,
+    unsupportedCopies,
+    unsupportedBlocked,
+    backups,
+    preservationFailures,
     preservationBlocked,
-    conversionLoadFailed,
-    retryConversion,
+    recoveryError,
     restoreSetAside,
     discardSetAside,
-    discardRawCopy,
+    discardDeviceCopy,
   } = useLoadEditor(loopId);
   const definition = useEditorStore((s) => s.definition);
   const saveState = useEditorStore((s) => s.saveState);
@@ -100,7 +99,7 @@ export function EditorPage() {
     palettePanelDefault,
   );
   const flush = useAutosave(client, AUTOSAVE_DELAY_MS, {
-    enabled: ready && !preservationBlocked && !conversionLoadFailed,
+    enabled: ready && !preservationBlocked && !unsupportedBlocked,
     deviceReady: deviceWritable,
     serverReconciled,
   });
@@ -239,51 +238,32 @@ export function EditorPage() {
   const [dismissalAnnouncement, setDismissalAnnouncement] = useState(0);
   const noticeContainerRef = useRef<HTMLDivElement>(null);
   const saveStatusRef = useRef<HTMLSpanElement>(null);
-  const exportRawCopy = (copy: (typeof rawCopies)[number]) => {
-    const { migrationIssues: _migrationIssues, source: _source, ...original } = copy;
-    downloadJson(`${fileSlug(loopId)}-original-device-copy.json`, original);
-  };
-  const rawCopyWarnings = rawCopies.map((copy, index) => {
-    const backup = copy.migrationIssues[0]?.code === 'DEVICE_DRAFT_BACKUP';
-    return (
-      <Alert
-        key={`${copy.source}-${copy.savedAt}-${index}`}
-        tone="warn"
-        title={
-          backup
-            ? 'Saved device backup'
-            : copy.migrationIssues[0]?.code === 'UPGRADE_ARCHIVED_RAW_COPY'
-              ? 'Original device copy preserved'
-              : 'This device copy could not be migrated safely'
-        }
-      >
-        {backup
-          ? 'This saved device draft is kept as a backup. Export it before discarding it if you need to recover it later.'
-          : 'Its original contents remain available on this device as an inert copy. Export the original JSON before deleting the device copy if you need to recover it elsewhere.'}
-        {!backup ? (
-          <ul className="mt-2 list-disc pl-5">
-            {copy.migrationIssues.map((issue, issueIndex) => (
-              <li key={`${issue.code}-${issueIndex}`}>
-                <code>{issue.id ?? (issue.path || '/')}</code>: {issue.message}
-              </li>
-            ))}
-          </ul>
-        ) : null}
-        <span className="mt-2 flex flex-wrap gap-2">
-          <Button size="sm" variant="outline" onClick={() => exportRawCopy(copy)}>
-            {backup
-              ? 'Export device backup'
-              : index === 0
-                ? 'Export original device copy'
-                : `Export original device copy ${index + 1}`}
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => void discardRawCopy(copy)}>
-            Discard this device copy
-          </Button>
-        </span>
-      </Alert>
-    );
-  });
+  const deviceCopyNotices = [
+    ...preservationFailures.map((copy, index) => (
+      <UnpreservedDeviceCopy
+        key={`unpreserved-${copy.source}-${copy.savedAt}-${String(index)}`}
+        loopId={loopId}
+        copy={copy}
+        onDiscard={discardDeviceCopy}
+      />
+    )),
+    ...unsupportedCopies.map((copy, index) => (
+      <UnsupportedDeviceDraft
+        key={`unsupported-${copy.source}-${copy.savedAt}-${String(index)}`}
+        loopId={loopId}
+        copy={copy}
+        onDiscard={discardDeviceCopy}
+      />
+    )),
+    ...backups.map((copy, index) => (
+      <DeviceBackup
+        key={`backup-${copy.savedAt}-${String(index)}`}
+        loopId={loopId}
+        copy={copy}
+        onDiscard={discardDeviceCopy}
+      />
+    )),
+  ];
 
   // Pending and saving are transient parts of an edit. Keep a dismissal until saving settles on
   // a different state/message or a new editor load starts.
@@ -303,17 +283,16 @@ export function EditorPage() {
     [],
   );
 
-  if (conversionLoadFailed) {
+  if (unsupportedBlocked) {
     return (
       <main className="grid gap-3 p-page">
-        <Alert tone="warn" title="Device draft conversion could not load">
-          Your device copies are unchanged. Retry conversion or reload this page.
-          <span className="mt-2 flex gap-2">
-            <Button size="sm" variant="outline" onClick={retryConversion}>
-              Retry conversion
-            </Button>
-          </span>
+        <Alert tone="warn" title="This browser holds a device draft this build cannot open">
+          Editing and autosave are paused so that draft is not overwritten. GraphGoblin does not
+          convert device drafts from older formats. Export it if you want to keep its contents, then
+          discard it to open the editor.
         </Alert>
+        {recoveryError ? <Alert tone="warn">{recoveryError}</Alert> : null}
+        {deviceCopyNotices}
       </main>
     );
   }
@@ -328,10 +307,10 @@ export function EditorPage() {
       <main className="grid gap-3 p-page">
         <Alert tone="bad" title="Device copy preservation failed">
           Editing and autosave are paused because the original device copy could not be safely
-          archived. Export it or discard the blocked copy, then reload the editor.
+          archived. Export it or discard the blocked copy to continue editing.
         </Alert>
         {recoveryError ? <Alert tone="warn">{recoveryError}</Alert> : null}
-        {rawCopyWarnings}
+        {deviceCopyNotices}
       </main>
     );
   }
@@ -339,8 +318,8 @@ export function EditorPage() {
     return (
       <main className="grid gap-3 p-page">
         {recoveryError ? <Alert tone="warn">{recoveryError}</Alert> : null}
-        {rawCopyWarnings.length > 0 ? (
-          rawCopyWarnings
+        {deviceCopyNotices.length > 0 ? (
+          deviceCopyNotices
         ) : (
           <p className="text-sm text-muted">No loop definition is available to edit.</p>
         )}
@@ -375,7 +354,7 @@ export function EditorPage() {
   };
 
   const notices = [
-    ...rawCopyWarnings,
+    ...deviceCopyNotices,
     deviceReadError ? (
       <Alert key="device-read" tone="warn" title="Device drafts could not be read">
         Changes are saved to the server; this window keeps a copy only in memory until device

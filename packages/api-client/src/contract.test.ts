@@ -118,7 +118,7 @@ describe('against the in-process API (local trusted mode)', () => {
 
     const imported = await loops.import(client, exported);
     expect(imported.loop.id).not.toBe(loopId);
-    expect(imported.notices).toEqual([]);
+    expect(imported.issues).toEqual([]);
 
     await loops.remove(client, imported.loop.id);
     await expect(loops.get(client, imported.loop.id)).rejects.toMatchObject({
@@ -128,46 +128,24 @@ describe('against the in-process API (local trusted mode)', () => {
     });
   });
 
-  it('returns typed automatic conversion notices on an old import', async () => {
-    const imported = await loops.import(client, {
-      schemaVersion: 3,
-      name: 'automatic expression import',
-      nodes: [
-        { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
-        {
-          id: 'pick',
-          kind: 'decision',
-          label: 'Pick',
-          config: {
-            answer: {
-              type: 'choice',
-              options: [
-                { id: 'yes', label: 'Yes', criteria: 'Ready' },
-                { id: 'no', label: 'No', criteria: 'Pending' },
-              ],
-            },
-            evaluation: { kind: 'expression', jsonata: '"yes"' },
-            recordAlternatives: true,
-          },
-        },
-        { id: 'done', kind: 'exit', label: 'Done', config: {} },
-      ],
-      edges: [
-        { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'pick' } },
-        ...['yes', 'no'].map((port) => ({
-          id: port,
-          from: { node: 'pick', port },
-          to: { node: 'done' },
-        })),
-      ],
+  it('refuses an old-format import with a typed error and its found format', async () => {
+    const error = await loops
+      .import(client, {
+        schemaVersion: 3,
+        name: 'old import',
+        nodes: [
+          { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+          { id: 'done', kind: 'exit', label: 'Done', config: {} },
+        ],
+        edges: [{ id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'done' } }],
+      })
+      .catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(GraphGoblinApiError);
+    expect(error).toMatchObject({
+      status: 400,
+      code: 'LOOP_FORMAT_UNSUPPORTED',
+      errors: { foundFormat: 3, requiredFormat: 4 },
     });
-    expect(imported.notices).toContainEqual({
-      code: 'unused-controls',
-      path: '/nodes/1/config',
-      message:
-        'Remove unused classifier criteria and recording controls from expression/LLM decisions.',
-    });
-    expect(imported.issues).toEqual([]);
   });
 
   it('turns problem details into GraphGoblinApiError, including validation errors', async () => {

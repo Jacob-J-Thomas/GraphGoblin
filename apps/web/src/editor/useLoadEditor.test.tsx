@@ -10,8 +10,11 @@ import { useEditorStore } from './store.js';
 import { useLoadEditor } from './useLoadEditor.js';
 import { useAutosave } from './useAutosave.js';
 import { keys } from '../api/queries.js';
-import * as deviceUpgrader from './load-device-upgrader.js';
-import type { LoopDefinitionInput } from '@graphgoblin/contracts';
+import {
+  deviceKeys,
+  formatThreeDraft,
+  storeRawDeviceRecord,
+} from '../__fixtures__/device-drafts.js';
 
 function deferred() {
   let resolve = () => {};
@@ -126,7 +129,7 @@ function mount(
       const loaded = useLoadEditor(loopId);
       const definition = useEditorStore((s) => s.definition);
       const flush = useAutosave(client, 20, {
-        enabled: loaded.ready && !loaded.preservationBlocked && !loaded.conversionLoadFailed,
+        enabled: loaded.ready && !loaded.preservationBlocked && !loaded.unsupportedBlocked,
         deviceReady: loaded.deviceWritable,
         serverReconciled: loaded.serverReconciled,
       });
@@ -428,41 +431,38 @@ it('does not reset held field input when a late server cache is reconciled', asy
   expect(api.loops.get(loop.id)?.draft?.definition.name).toBe('cached');
 });
 
-it('a late format-3 conversion preserves new edits and archives the raw original exactly once', async () => {
+it('a late unsupported device draft pauses device writes, is neither converted nor replaced, and only a discard resumes', async () => {
   const api = new FakeApi();
   const loop = api.addLoop(newLoopDefinition('server'));
-  const original = {
-    loopId: loop.id,
-    definition: {
-      schemaVersion: 3,
-      name: 'legacy device',
-      nodes: [
-        { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
-        { id: 'done', kind: 'exit', label: 'Done', config: {} },
-      ],
-      edges: [{ id: 'edge', from: { node: 'start', port: 'out' }, to: { node: 'done' } }],
-    } as unknown as LoopDefinitionInput,
-    savedAt: '2999',
-    synced: false,
-    baseToken: 'old-token',
-  };
-  await drafts.saveLocalDraft(original);
-  const conversion = deferred();
-  const load = deviceUpgrader.loadDeviceUpgrader;
-  const loading = vi.spyOn(deviceUpgrader, 'loadDeviceUpgrader').mockImplementation(async () => {
-    await conversion.promise;
-    return load();
+  const original = formatThreeDraft(loop.id, 'legacy device', '2999-01-01T00:00:00.000Z');
+  await storeRawDeviceRecord(deviceKeys(loop.id).active, original);
+  const storage = deferred();
+  const read = drafts.loadLocalDraft;
+  vi.spyOn(drafts, 'loadLocalDraft').mockImplementation(async (id) => {
+    await storage.promise;
+    return read(id);
   });
   const view = mount(api, loop.id);
   await waitFor(() => expect(view.result.current.definition?.name).toBe('server'));
   act(() => useEditorStore.getState().updateMeta({ description: 'new current work' }));
-  act(() => conversion.resolve());
-  await waitFor(() => expect(view.result.current.serverReconciled).toBe(true));
+  act(() => storage.resolve());
+  await waitFor(() => expect(view.result.current.unsupportedBlocked).toBe(true));
+  expect(view.result.current.unsupportedCopies).toEqual([{ ...original, source: 'active' }]);
+  expect(view.result.current.deviceWritable).toBe(false);
+  await act(() => new Promise((resolve) => setTimeout(resolve, 80)));
+  expect(await read(loop.id)).toEqual(original);
+  expect(await drafts.loadArchivedDrafts(loop.id)).toEqual([]);
+  expect(await drafts.loadSetAsideDraft(loop.id)).toBeUndefined();
+  expect(api.callsTo('PUT', `/loops/${loop.id}/draft`)).toHaveLength(0);
   expect(view.result.current.definition?.description).toBe('new current work');
-  expect(drafts.cachedLocalDraft(loop.id)?.draft.definition.description).toBe('new current work');
-  expect(await drafts.loadArchivedDrafts(loop.id)).toEqual([original]);
-  expect((await drafts.loadSetAsideDraft(loop.id))?.definition.schemaVersion).toBe(4);
-  expect(loading).toHaveBeenCalledTimes(1);
+
+  await act(() => view.result.current.discardDeviceCopy(view.result.current.unsupportedCopies[0]!));
+  await waitFor(() => expect(view.result.current.unsupportedBlocked).toBe(false));
+  await waitFor(() => expect(view.result.current.deviceWritable).toBe(true));
+  expect(view.result.current.unsupportedCopies).toEqual([]);
+  expect(view.result.current.definition?.description).toBe('new current work');
+  const stored = await read(loop.id);
+  expect(stored === undefined || drafts.isCurrentDeviceDraft(stored)).toBe(true);
 });
 
 it('blocks mirror replacement when a late device recovery copy cannot be preserved', async () => {

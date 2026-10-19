@@ -179,23 +179,23 @@ The offline server-store cutover keeps ordinary loop versions and drafts and del
 
 ## Offline definitions and portable exports
 
-`upgradeLoopCurrent` and `upgradeExportCurrent` are async, explicit definition-only
-converters to format 4. They compose frozen 1?2?3 stages with
-`convertDefinitionV3ToV4`, or validate already-current input. Resolutions have
-separate `v1`, `v2` and `v3` namespaces. Results always report `notices` and
-`reviewItems`; success supplies `value`, while pending/invalid conversion supplies
-`issues` and withholds the candidate. Each issue has an explicit `kind` of `pending`
-or `invalid`; a refusal can contain both. Review items retain E2 IDs, source-bound
-hashes, reasons and statuses. Stale and unused resolutions refuse.
-
-The export CLI and API import use this composition. Automatic old exports import
-normally; pending imports return a structured `LOOP_FORMAT_UPGRADE_REQUIRED` problem
-and need offline review. See the [offline guide](guide/08-offline-upgrade.md).
-The offline server-store tool uses the same composition for each retained version and draft. Portable export and device conversion do not authorize or perform a server cutover.
+Stores, portable exports and browser device drafts have one format,
+`CURRENT_DEFINITION_FORMAT` (4); nothing older is converted
+([ADR-0040](decisions/ADR-0040-explicit-resets-replace-conversion.md)).
+`guardCurrentStore` runs before any startup write: an empty store is initialised, a
+complete current-format store is reopened, and anything else is refused with
+`UnsupportedStoreError` (`STORE_UNSUPPORTED`, carrying `foundFormat`, `requiredFormat`
+and `reason`). The API turns that refusal into an operator message naming the data
+directory, the database, both formats and the reset command. `importLoop` refuses a
+document that declares another format with `LoopFormatUnsupportedError`, which
+`POST /loops/import` returns as `400 LOOP_FORMAT_UNSUPPORTED`. The editor shows an
+older device draft as unsupported and removes it only on an explicit discard. The
+explicit fresh start is `--reset` on the API binary (11, "Retention"; the
+[reset guide](guide/08-offline-upgrade.md)).
 
 ## Crash recovery (Decided)
 
-Before run recovery, fresh SQLite initialisation commits the schema migrations, their ledger and the complete stored-format marker in one write transaction. An interruption before commit rolls all of them back, so the next ordinary startup can initialise the empty store again without duplicate migration effects. Freshness requires no application tables and no recorded migrations; an empty migration-ledger table alone is allowed. Empty user tables do not establish freshness. An existing unmarked schema, a marker table without its complete row, an incomplete upgrade state or recorded migrations without application tables still stop startup with `DATA_UPGRADE_REQUIRED`. Preserve those stores for the [offline upgrade and recovery workflow](guide/08-offline-upgrade.md); startup does not stamp or repair them by inference.
+Before run recovery, fresh SQLite initialisation commits the schema migrations, their ledger and the complete stored-format marker in one write transaction. An interruption before commit rolls all of them back, so the next ordinary startup can initialise the empty store again without duplicate migration effects. Freshness requires no application tables and no recorded migrations; an empty migration-ledger table alone is allowed. Empty user tables do not establish freshness. An existing unmarked schema, a marker table without its complete row, an incomplete marker status or recorded migrations without application tables still stop startup with `STORE_UNSUPPORTED`. Startup does not stamp or repair them by inference; they are left as they are for repair by hand or an explicit [reset](guide/08-offline-upgrade.md).
 
 If another initialiser completes before this startup acquires its write lock, the recheck recognises the current store and startup still applies any pending ordinary migrations. If initialisation fails and rollback also fails, startup preserves the original initialisation error.
 

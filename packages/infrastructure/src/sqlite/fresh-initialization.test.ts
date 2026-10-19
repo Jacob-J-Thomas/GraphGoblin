@@ -11,7 +11,7 @@ import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { openDatabase, type DatabaseHandle } from './db.js';
-import { guardDatabaseUpgrade, initializeFreshDatabase } from './upgrade.js';
+import { guardCurrentStore, initializeFreshStore } from './store-format.js';
 
 vi.mock('@libsql/client', async (importOriginal) => {
   const actual = await importOriginal<typeof Libsql>();
@@ -152,7 +152,7 @@ describe('atomic fresh SQLite initialisation', () => {
     const restarted = open(url);
     expect(await tableNames(restarted.client)).toEqual([]);
     await restarted.migrate();
-    expect(await guardDatabaseUpgrade(restarted.client)).toBe('current');
+    expect(await guardCurrentStore(restarted.client)).toBe('current');
     expect((await restarted.client.execute('SELECT * FROM gg_upgrade_state')).rows).toMatchObject([
       {
         id: 1,
@@ -208,7 +208,7 @@ describe('atomic fresh SQLite initialisation', () => {
               // this one acquires its write lock, leaving a later ordinary migration pending.
               races += 1;
               const winner = open(url);
-              await expect(initializeFreshDatabase(winner.client)).resolves.toBe('fresh');
+              await expect(initializeFreshStore(winner.client)).resolves.toBe('fresh');
               return target.transaction(mode);
             };
           const value: unknown = Reflect.get(target, prop, receiver);
@@ -246,7 +246,7 @@ describe('atomic fresh SQLite initialisation', () => {
     interrupted.close();
     const restarted = open(url);
     await restarted.migrate();
-    expect(await guardDatabaseUpgrade(restarted.client)).toBe('current');
+    expect(await guardCurrentStore(restarted.client)).toBe('current');
   });
 
   it('initialises once and preserves schema, ledger, marker and data across repeated starts', async () => {
@@ -261,7 +261,7 @@ describe('atomic fresh SQLite initialisation', () => {
     const completed = await snapshot(first.client);
     await first.migrate();
     // A second initializer that observed freshness before the first committed must do nothing.
-    await expect(initializeFreshDatabase(first.client)).resolves.toBe('current');
+    await expect(initializeFreshStore(first.client)).resolves.toBe('current');
     expect(await snapshot(first.client)).toEqual(completed);
     first.close();
     const restarted = open(url);
@@ -276,18 +276,38 @@ describe('atomic fresh SQLite initialisation', () => {
       'CREATE TABLE __drizzle_migrations (id SERIAL PRIMARY KEY, hash text NOT NULL, created_at numeric)',
     );
     await handle.migrate();
-    expect(await guardDatabaseUpgrade(handle.client)).toBe('current');
+    expect(await guardCurrentStore(handle.client)).toBe('current');
     expect(await handle.pendingMigrations()).toBe(0);
   });
 
   it.each([
-    'unmarked schema with empty application tables',
-    'populated unmarked store',
-    'marker table without its row',
-    'incomplete upgrade state',
-    'old complete format marker',
-    'recorded migration-only damaged store',
-  ])('refuses a %s without changing it on either start', async (state) => {
+    [
+      'unmarked schema with empty application tables',
+      undefined,
+      'The store has no format marker; an older GraphGoblin build wrote it',
+    ],
+    [
+      'populated unmarked store',
+      undefined,
+      'The store has no format marker; an older GraphGoblin build wrote it',
+    ],
+    ['marker table without its row', undefined, 'The store format marker is missing or malformed'],
+    [
+      'incomplete upgrade state',
+      CURRENT_DEFINITION_FORMAT,
+      'The store format marker records an unfinished change (status "applying")',
+    ],
+    [
+      'old complete format marker',
+      2,
+      'The store is format 2; this build reads only format ' + String(CURRENT_DEFINITION_FORMAT),
+    ],
+    [
+      'recorded migration-only damaged store',
+      undefined,
+      'The store records applied migrations but has no application tables',
+    ],
+  ] as const)('refuses a %s without changing it on either start', async (state, found, reason) => {
     const url = storeUrl();
     const prepared = open(url);
     if (state === 'recorded migration-only damaged store') {
@@ -318,21 +338,28 @@ describe('atomic fresh SQLite initialisation', () => {
         );
     }
     const original = await snapshot(prepared.client);
-    await expect(prepared.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
+    const refusal = {
+      code: 'STORE_UNSUPPORTED',
+      reason,
+      message: reason,
+      foundFormat: found,
+      requiredFormat: CURRENT_DEFINITION_FORMAT,
+    };
+    await expect(prepared.migrate()).rejects.toMatchObject(refusal);
     expect(await snapshot(prepared.client)).toEqual(original);
     prepared.close();
     const restarted = open(url);
-    await expect(restarted.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
+    await expect(restarted.migrate()).rejects.toMatchObject(refusal);
     expect(await snapshot(restarted.client)).toEqual(original);
   });
 
   it('rechecks freshness under the write lock and refuses an unmarked schema', async () => {
     const handle = open(storeUrl());
-    expect(await guardDatabaseUpgrade(handle.client)).toBe('fresh');
+    expect(await guardCurrentStore(handle.client)).toBe('fresh');
     await handle.client.execute('CREATE TABLE unknown_store (value TEXT)');
     const original = await snapshot(handle.client);
-    await expect(initializeFreshDatabase(handle.client)).rejects.toMatchObject({
-      code: 'DATA_UPGRADE_REQUIRED',
+    await expect(initializeFreshStore(handle.client)).rejects.toMatchObject({
+      code: 'STORE_UNSUPPORTED',
     });
     expect(await snapshot(handle.client)).toEqual(original);
   });

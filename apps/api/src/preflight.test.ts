@@ -4,7 +4,10 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { FakeHarness } from '@graphgoblin/engine/testing';
-import { DEFAULT_MODEL_CATALOG } from '@graphgoblin/infrastructure/sqlite';
+import {
+  DEFAULT_MODEL_CATALOG,
+  openReadOnlyDatabaseClient,
+} from '@graphgoblin/infrastructure/sqlite';
 import { loadConfig, type ApiConfig } from './config.js';
 import { JEV_SECRET, LOCAL_OWNER, createContainer } from './container.js';
 import {
@@ -377,6 +380,32 @@ describe('graphgoblin-api --preflight', () => {
     expect(report.out).toMatch(/ok\s+Database\s+reachable and migrated/);
     expect(report.out).toMatch(/ok\s+Jev\s+API key set/);
     expect(report.out).toMatch(/ok\s+Default model\s+.*is in the model catalog/);
+  });
+
+  it('fails on a store start would refuse, naming it and the reset, without changing it', async () => {
+    const env = { GG_DATA_DIR: dir, GG_SWAGGER_UI: 'false' };
+    const container = await createContainer(loadConfig(env), {
+      harnesses: { codex: new FakeHarness() },
+      deciders: [],
+      startTimers: false,
+    });
+    await container.start();
+    await container.handle.client.execute('UPDATE gg_upgrade_state SET format_version = 3');
+    await container.stop();
+    const report = await cli(env);
+    expect(report.code).toBe(1);
+    expect(report.out).toContain(
+      `The store is format 3; this build reads only format 4. Start refuses this store and converts nothing; to start fresh, list what a reset removes with node apps/api/dist/main.js --reset --data-dir "${dir}"`,
+    );
+    expect(report.out).toMatch(/FAIL\s+Database\s+The store is format 3/);
+    const inspection = openReadOnlyDatabaseClient(join(dir, 'graphgoblin.db'));
+    try {
+      expect(
+        (await inspection.execute('SELECT format_version FROM gg_upgrade_state')).rows[0],
+      ).toMatchObject({ format_version: 3 });
+    } finally {
+      inspection.close();
+    }
   });
 
   it('reports an in-memory database as unmigrated and bad configuration as a failure', async () => {

@@ -1,10 +1,13 @@
-import type { LoopDefinitionInput } from '@graphgoblin/contracts';
 import { minimalLoop } from '@graphgoblin/contracts/testing';
 import { IDBFactory } from 'fake-indexeddb';
 import { createStore, promisifyRequest, set } from 'idb-keyval';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type * as LocalDrafts from './local-drafts.js';
-import { UNRECONCILED_DEVICE_TOKEN } from './local-drafts.js';
+import {
+  deviceKeys,
+  formatThreeDraft,
+  storeRawDeviceRecord,
+} from '../__fixtures__/device-drafts.js';
 
 let drafts: typeof LocalDrafts;
 
@@ -174,68 +177,42 @@ describe('local drafts in IndexedDB', () => {
   });
 
   it.each(['active', 'set-aside', 'server-save'] as const)(
-    'preserves a late-discovered old %s copy before any current write',
+    'never replaces a late-discovered %s copy in another format, and converts nothing',
     async (kind) => {
-      const original = {
-        loopId: 'late-old-copy',
-        definition: { ...minimalLoop(), schemaVersion: 3 } as unknown as LoopDefinitionInput,
-        savedAt: 'old',
+      const loopId = `late-old-copy-${kind}`;
+      const original = formatThreeDraft(loopId, 'written by an older build', 'old');
+      const keys = deviceKeys(loopId);
+      await storeRawDeviceRecord(kind === 'set-aside' ? keys.setAside : keys.active, original);
+      const attempt =
+        kind === 'server-save'
+          ? drafts.recordServerSave(loopId, minimalLoop(), 'new-token', original.baseToken)
+          : (kind === 'set-aside' ? drafts.saveSetAsideDraft : drafts.saveLocalDraft)({
+              loopId,
+              definition: minimalLoop(),
+              savedAt: 'now',
+              synced: false,
+            });
+      await expect(attempt).rejects.toThrow(drafts.UnsupportedDeviceDraftError);
+      expect(drafts.deviceStorageProblem()).toEqual({
+        kind: 'failed',
+        message:
+          'This device holds a draft of this loop in an unsupported format. Discard it in the editor before saving here.',
+      });
+      const load = kind === 'set-aside' ? drafts.loadSetAsideDraft : drafts.loadLocalDraft;
+      expect(await load(loopId)).toEqual(original);
+      expect(await drafts.loadArchivedDrafts(loopId)).toEqual([]);
+      expect(drafts.cachedLocalDraft(loopId)?.draft.definition).not.toEqual(original.definition);
+      // An explicit discard removes it; the next write is then accepted.
+      await drafts.clearLocalDraft(loopId);
+      await drafts.saveLocalDraft({
+        loopId,
+        definition: minimalLoop(),
+        savedAt: 'later',
         synced: false,
-        baseToken: 'old-token',
-      };
-      const save = kind === 'set-aside' ? drafts.saveSetAsideDraft : drafts.saveLocalDraft;
-      await save(original);
-      if (kind === 'server-save')
-        await drafts.recordServerSave(
-          original.loopId,
-          minimalLoop(),
-          'new-token',
-          original.baseToken,
-        );
-      else await save({ ...original, definition: minimalLoop() });
-      expect(await drafts.loadArchivedDrafts(original.loopId)).toEqual([original]);
+      });
+      expect(drafts.isCurrentDeviceDraft((await drafts.loadLocalDraft(loopId))!)).toBe(true);
     },
   );
-
-  it('refuses to replace an old copy edited by another tab during preservation', async () => {
-    const original = {
-      loopId: 'concurrent-original',
-      definition: { ...minimalLoop(), schemaVersion: 3 } as unknown as LoopDefinitionInput,
-      savedAt: 'old',
-      synced: false,
-    };
-    const latest = {
-      ...original,
-      definition: { ...original.definition, name: 'another tab edit' },
-    };
-    await drafts.saveLocalDraft(original);
-    const originalGet = IDBObjectStore.prototype.get;
-    let interleaved = false;
-    const reading = vi.spyOn(IDBObjectStore.prototype, 'get').mockImplementation(function (
-      this: IDBObjectStore,
-      key,
-    ) {
-      const request = originalGet.call(this, key);
-      if (key === `${original.loopId}:raw-archive` && !interleaved)
-        request.addEventListener('success', () => {
-          if (interleaved) return;
-          interleaved = true;
-          const tx = this.transaction.db.transaction('drafts', 'readwrite');
-          tx.objectStore('drafts').put(latest, original.loopId);
-        });
-      return request;
-    });
-    try {
-      await expect(
-        drafts.saveLocalDraft({ ...original, definition: minimalLoop() }),
-      ).rejects.toThrow('changed while being preserved');
-      expect(interleaved).toBe(true);
-      expect(await drafts.loadLocalDraft(original.loopId)).toEqual(latest);
-      expect(await drafts.loadArchivedDrafts(original.loopId)).toEqual([original]);
-    } finally {
-      reading.mockRestore();
-    }
-  });
 
   it.each(['active', 'set-aside'] as const)(
     'never clears a changed %s source after archiving an earlier copy',
@@ -415,8 +392,6 @@ it.each([
   ['foreign', 'earlier-session-base', 'save-base'],
   ['unknown', undefined, undefined],
   ['missing', undefined, 'save-base'],
-  ['converted', UNRECONCILED_DEVICE_TOKEN, 'save-base'],
-  ['converted matching', UNRECONCILED_DEVICE_TOKEN, UNRECONCILED_DEVICE_TOKEN],
 ] as const)(
   're-review F1: a differing %s copy keeps its base in storage and memory without a durability claim',
   async (_kind, baseToken, saveBase) => {
