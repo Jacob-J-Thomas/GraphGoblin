@@ -11,6 +11,7 @@ import {
   system,
   templates,
   type ListRunsQuery,
+  type ListEventsQuery,
 } from '@graphgoblin/api-client';
 import type {
   ClassifierModelSummary,
@@ -18,7 +19,7 @@ import type {
   ModelCatalogEntry,
 } from '@graphgoblin/contracts';
 import { HarnessPreflightSchema } from '@graphgoblin/contracts';
-import { useMutation, useQuery, type QueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, type QueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { useApi } from './context.js';
 
@@ -55,9 +56,9 @@ export const keys = {
     ['cron-preview', expression, timezone] as const,
 };
 
-export function useLoops() {
+export function useLoops(refetchInterval: number | false = false) {
   const client = useApi();
-  return useQuery({ queryKey: keys.loops, queryFn: () => loops.list(client) });
+  return useQuery({ queryKey: keys.loops, queryFn: () => loops.list(client), refetchInterval });
 }
 
 export function useTemplates() {
@@ -99,9 +100,20 @@ export function useLoopVersion(loopId: string, versionId: string, enabled = true
 
 export function useRuns(query: ListRunsQuery = {}, refetchInterval: number | false = false) {
   const client = useApi();
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: keys.runs(query),
-    queryFn: () => runs.list(client, query),
+    initialPageParam: query.cursor,
+    queryFn: ({ pageParam, signal }) =>
+      runs.list(
+        client,
+        {
+          ...query,
+          ...(pageParam !== undefined ? { cursor: pageParam } : {}),
+        },
+        { signal },
+      ),
+    getNextPageParam: (page) => page.nextCursor ?? undefined,
+    select: (data) => data.pages.flatMap((page) => page.items),
     refetchInterval,
   });
 }
@@ -253,13 +265,26 @@ export function usePreflight() {
 
 const PENDING_EVENT_REFRESH_MS = 2_000;
 
-export function useInboundEvents() {
+export function useInboundEvents(query: ListEventsQuery = {}) {
   const client = useApi();
-  return useQuery({
-    queryKey: keys.events,
-    queryFn: () => events.list(client),
+  return useInfiniteQuery({
+    queryKey: [...keys.events, query],
+    initialPageParam: query.cursor,
+    queryFn: ({ pageParam, signal }) =>
+      events.list(
+        client,
+        {
+          ...query,
+          ...(pageParam !== undefined ? { cursor: pageParam } : {}),
+        },
+        { signal },
+      ),
+    getNextPageParam: (page) => page.nextCursor ?? undefined,
+    select: (data) => data.pages.flatMap((page) => page.items),
     refetchInterval: (query) =>
-      query.state.data?.some((event) => event.delivery?.state === 'pending')
+      query.state.data?.pages.some((page) =>
+        page.items.some((event) => event.delivery?.state === 'pending'),
+      )
         ? PENDING_EVENT_REFRESH_MS
         : false,
   });

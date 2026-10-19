@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { apiKeys, cron, createGraphGoblinClient } from './index.js';
+import { apiKeys, cron, events, runs, createGraphGoblinClient } from './index.js';
 
 it('forwards list cancellation to the request without requiring it from existing callers', async () => {
   const requests: Request[] = [];
@@ -51,5 +51,47 @@ it('previews through the generated endpoint and forwards body and cancellation',
   expect(await requests[0]!.json()).toEqual(body);
   controller.abort();
   expect(requests[0]!.signal.aborted).toBe(true);
+  expect(requests[1]!.signal.aborted).toBe(false);
+});
+
+it('exposes opaque cursors and carries every unchanged filter into following history requests', async () => {
+  const requests: Request[] = [];
+  const client = createGraphGoblinClient({
+    baseUrl: 'http://graphgoblin.test',
+    fetch: (request) => {
+      requests.push(request);
+      return Promise.resolve(
+        new Response(JSON.stringify({ items: [], nextCursor: 'opaque_cursor' }), {
+          headers: { 'content-type': 'application/json' },
+        }),
+      );
+    },
+  });
+  const controller = new AbortController();
+  const filters = {
+    loopId: 'loop',
+    status: 'succeeded,failed',
+    parent: 'none',
+    before: '2026-10-03T00:00:00.000Z',
+    limit: 1,
+  };
+  const first = await runs.list(client, filters, { signal: controller.signal });
+  expect(first.nextCursor).toBe('opaque_cursor');
+  await runs.list(client, { ...filters, cursor: first.nextCursor! });
+  const eventFilters = { type: 'chosen', before: filters.before, limit: 1 };
+  const eventPage = await events.list(client, eventFilters, { signal: controller.signal });
+  await events.list(client, { ...eventFilters, cursor: eventPage.nextCursor! });
+  for (const [index, expected] of [
+    [1, filters],
+    [3, eventFilters],
+  ] as const) {
+    const search = new URL(requests[index]!.url).searchParams;
+    for (const [key, value] of Object.entries(expected))
+      expect(search.get(key)).toBe(String(value));
+    expect(search.get('cursor')).toBe('opaque_cursor');
+  }
+  controller.abort();
+  expect(requests[0]!.signal.aborted).toBe(true);
+  expect(requests[2]!.signal.aborted).toBe(true);
   expect(requests[1]!.signal.aborted).toBe(false);
 });

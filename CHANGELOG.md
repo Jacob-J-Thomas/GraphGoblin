@@ -4,6 +4,9 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Runs and Events append complete, filtered history through opaque cursors; MCP event pages use authoritative tail metadata, and valid run filters compose with cursors. **Upgrade:** `runs.list` and `events.list` now return `{ items, nextCursor }`; MCP `list_runs` replaces `nextBefore` timestamp paging with `cursor`/`nextCursor` (repeat filters), while `before` is only a time filter. Regenerate clients for inbound-event cursors and run-event `hasMore`. (#231)
+- Loops show their true latest run and exact run count from an owner-scoped SQL summary, including beyond 500 unrelated runs and tied creation times. `GET /loops` items now include `latestRun` and `runCount`; no stored-data migration is needed. (#236)
+
 - Aligned installation, gates, CI, container, installers and API preflight on Node 22 LTS (22.x), with root `devEngines.runtime` enforcing the project runtime without enforcing every dependency engine range. **Upgrade:** every pnpm command (install, build, start) refuses Node 23; restart the running instance from a Node 22 shell. Settings → Preflight shows Node as failed under any other major. API consumers use `SUPPORTED_NODE_MAJOR` in place of `MIN_NODE_MAJOR`. (#263)
 
 - Workspace test, coverage, typecheck and lint caches include dependency sources, declared guide/template inputs and shared root configs; repository-wide tooling tests are uncached. Unrelated-package cache reuse remains. (#127)

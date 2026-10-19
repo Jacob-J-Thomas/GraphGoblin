@@ -266,7 +266,7 @@ export function registerTools(
     {
       title: 'List runs',
       description:
-        'List runs, newest first, optionally filtered by loop and status. Use it to find a run the user refers to ("the last run of X"). To page, pass nextBefore from the previous page as "before".',
+        'List runs, newest first, optionally filtered by loop and status. Use it to find a run the user refers to ("the last run of X"). To page, pass nextCursor unchanged as "cursor" and repeat the same filters. A null nextCursor ends the listing.',
       inputSchema: {
         loopId: z.string().optional().describe('Only runs of this loop id.'),
         status: z
@@ -291,25 +291,24 @@ export function registerTools(
         before: z
           .string()
           .optional()
-          .describe('Paging cursor: nextBefore from a previous page (a creation timestamp).'),
+          .describe('Only runs created before this ISO timestamp; keep this filter on every page.'),
+        cursor: z.string().optional().describe('Opaque nextCursor from the previous page.'),
         limit: z.number().int().min(1).max(500).optional().describe('Page size. Default 20.'),
       },
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
-    ({ loopId, status, parentRunId, before, limit }) =>
+    ({ loopId, status, parentRunId, before, cursor, limit }) =>
       guard(async () => {
         const size = limit ?? 20;
-        const items = (
-          await runs.list(client, {
-            ...(loopId ? { loopId } : {}),
-            ...(status?.length ? { status: status.join(',') } : {}),
-            ...(parentRunId ? { parent: parentRunId } : {}),
-            ...(before ? { before } : {}),
-            limit: size,
-          })
-        ).map((r) => summarizeRun(r));
-        const last = items.at(-1);
-        return { items, ...(items.length === size && last ? { nextBefore: last.createdAt } : {}) };
+        const page = await runs.list(client, {
+          ...(loopId ? { loopId } : {}),
+          ...(status?.length ? { status: status.join(',') } : {}),
+          ...(parentRunId ? { parent: parentRunId } : {}),
+          ...(before ? { before } : {}),
+          ...(cursor !== undefined ? { cursor } : {}),
+          limit: size,
+        });
+        return { items: page.items.map((r) => summarizeRun(r)), nextCursor: page.nextCursor };
       }),
   );
 
@@ -335,7 +334,7 @@ export function registerTools(
       guard(async () => {
         const size = limit ?? 100;
         const page = await runs.events(client, id, { after: after ?? 0, limit: size });
-        return { ...page, hasMore: page.items.length === size };
+        return page;
       }),
   );
 

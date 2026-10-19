@@ -136,6 +136,51 @@ describe('ordinary run paging', () => {
     expect(await page('?before=' + encodeURIComponent(before) + '&limit=1')).toEqual(canonical);
   });
 
+  it.each([
+    '',
+    'loopId=' + fakeUlid('page-loop'),
+    'status=succeeded',
+    'status=succeeded,failed',
+    'parent=none',
+    'parent=' + fakeUlid('parent'),
+    'before=2026-10-03T00:00:00.000Z',
+    'loopId=' +
+      fakeUlid('page-loop') +
+      '&status=failed&parent=' +
+      fakeUlid('parent') +
+      '&before=2026-10-03T00:00:00.000Z',
+  ])('keeps filter %s unchanged across every limit-one page', async (filters) => {
+    for (let i = 0; i < 8; i++)
+      await seed(i, {
+        status: i % 2 ? 'failed' : 'succeeded',
+        ...(i > 3 ? { parentRunId: fakeUlid('parent') } : {}),
+      });
+    await seed(10, { ownerId: 'other' });
+    const unpaged = await page('?' + filters + '&limit=500');
+    const seen: string[] = [];
+    let cursor: string | null = null;
+    do {
+      const next: Page = await page(
+        '?' + filters + '&limit=1' + (cursor ? '&cursor=' + cursor : ''),
+      );
+      seen.push(...next.items.map((run) => run.id));
+      cursor = next.nextCursor;
+    } while (cursor);
+    expect(seen).toEqual(unpaged.items.map((run) => run.id));
+    expect(new Set(seen).size).toBe(seen.length);
+  });
+
+  it('keeps the already-landed invalid-status response typed and readable', async () => {
+    const response = await t.app.inject({ url: '/runs?status=unknown', headers });
+    expect(response.statusCode).toBe(400);
+    expect(response.headers['content-type']).toContain('application/problem+json');
+    expect(response.json()).toMatchObject({
+      code: 'VALIDATION_FAILED',
+      status: 400,
+      errors: [{ path: '/status', message: 'Use comma-separated run statuses.' }],
+    });
+  });
+
   it('publishes the cursor description and bound in OpenAPI', async () => {
     const response = await t.app.inject({ method: 'GET', url: '/openapi.json' });
     expect(response.statusCode).toBe(200);
@@ -247,10 +292,8 @@ describe('ordinary run paging', () => {
     });
   });
 
-  it('rejects before with cursor and invalid ordinary filters or limits', async () => {
-    const cursor = encodeRunCursor({ createdAt: FIXTURE_TS, id: fakeUlid('cursor') });
+  it('rejects invalid ordinary filters or limits', async () => {
     for (const query of [
-      'cursor=' + cursor + '&before=' + FIXTURE_TS,
       'limit=0',
       'limit=501',
       'limit=1.5',

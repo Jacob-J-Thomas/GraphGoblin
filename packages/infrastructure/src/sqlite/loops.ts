@@ -1,6 +1,12 @@
-import type { LoopDefinition, LoopRecord, LoopVersionRecord } from '@graphgoblin/contracts';
+import { RunStatusSchema } from '@graphgoblin/contracts';
+import type {
+  LoopDefinition,
+  LoopRecord,
+  LoopVersionRecord,
+  RunRecord,
+} from '@graphgoblin/contracts';
 import type { ClockPort, IdPort, LoopRepository } from '@graphgoblin/engine';
-import { and, asc, desc, eq, inArray, isNotNull } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, isNotNull, sql, getTableColumns } from 'drizzle-orm';
 import type { Database } from './db.js';
 import { deleteRuns } from './delete-runs.js';
 import {
@@ -135,6 +141,41 @@ export class SqliteLoopRepository implements LoopRepository {
       .where(eq(loops.ownerId, ownerId))
       .orderBy(desc(loops.updatedAt));
     return rows.map(toLoop);
+  }
+
+  /** One statement gives each owner loop an exact count and deterministic latest run. */
+  async listWithRunSummaries(ownerId: string): Promise<
+    (LoopRecord & {
+      latestRun: Pick<RunRecord, 'id' | 'status' | 'createdAt'> | null;
+      runCount: number;
+    })[]
+  > {
+    const rows = await this.db
+      .select({
+        ...getTableColumns(loops),
+        latestRun: { id: runs.id, status: runs.status, createdAt: runs.createdAt },
+        runCount:
+          sql<number>`(SELECT count(*) FROM runs r WHERE r.loop_id = ${loops.id} AND r.owner_id = ${loops.ownerId})`.mapWith(
+            Number,
+          ),
+      })
+      .from(loops)
+      .leftJoin(
+        runs,
+        sql`${runs.id} = (
+      SELECT r.id FROM runs r WHERE r.loop_id = ${loops.id} AND r.owner_id = ${loops.ownerId}
+      ORDER BY r.created_at DESC, r.id DESC LIMIT 1
+    )`,
+      )
+      .where(eq(loops.ownerId, ownerId))
+      .orderBy(desc(loops.updatedAt));
+    return rows.map((row) => ({
+      ...toLoop(row),
+      runCount: row.runCount,
+      latestRun: row.latestRun
+        ? { ...row.latestRun, status: RunStatusSchema.parse(row.latestRun.status) }
+        : null,
+    }));
   }
 
   /** Every loop with a published version, across owners; used to re-arm triggers at boot. */

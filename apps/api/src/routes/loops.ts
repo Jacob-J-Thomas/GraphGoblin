@@ -3,6 +3,7 @@ import {
   LoopDefinitionSchema,
   LoopExportSchema,
   LoopRecordSchema,
+  RunRecordSchema,
   LoopVersionRecordSchema,
   LoopIssueSchema,
   type LoopIssue,
@@ -104,11 +105,24 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       schema: {
         tags: ['loops'],
         summary: 'List loops',
-        response: { 200: z.object({ items: z.array(LoopRecordSchema) }) },
+        response: {
+          200: z.object({
+            items: z.array(
+              LoopRecordSchema.extend({
+                latestRun: RunRecordSchema.pick({
+                  id: true,
+                  status: true,
+                  createdAt: true,
+                }).nullable(),
+                runCount: z.number().int().nonnegative(),
+              }),
+            ),
+          }),
+        },
       },
     },
     async (request) => ({
-      items: await loops.listLoops(request.auth.ownerId),
+      items: await loops.listWithRunSummaries(request.auth.ownerId),
     }),
   );
 

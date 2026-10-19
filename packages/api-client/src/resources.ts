@@ -47,6 +47,7 @@ export type LoopDefinitionBody = RequestBody<'/loops', 'post'>['definition'];
 export type StartRunBody = RequestBody<'/loops/{id}/runs', 'post'>;
 export type ListRunsQuery = QueryParams<'/runs', 'get'>;
 export type RunSnapshot = ResponseBody<'/runs/{id}', 'get'>;
+export type ListEventsQuery = QueryParams<'/events', 'get'>;
 export type RunEventsPage = ResponseBody<'/runs/{id}/events', 'get'>;
 
 const id = (value: string) => ({ params: { path: { id: value } } });
@@ -120,8 +121,11 @@ export const runs = {
   /** Start a run from a manual trigger. Returns the queued run; it executes in the background. */
   start: async (client: GraphGoblinClient, loopId: string, body: StartRunBody = {}) =>
     unwrap(await client.POST('/loops/{id}/runs', { ...id(loopId), body })).run,
-  list: async (client: GraphGoblinClient, query: ListRunsQuery = {}) =>
-    unwrap(await client.GET('/runs', { params: { query } })).items,
+  list: async (
+    client: GraphGoblinClient,
+    query: ListRunsQuery = {},
+    options: { signal?: AbortSignal } = {},
+  ) => unwrap(await client.GET('/runs', { params: { query }, ...options })),
   get: async (client: GraphGoblinClient, runId: string) =>
     unwrap(await client.GET('/runs/{id}', id(runId))),
   thread: async (client: GraphGoblinClient, runId: string) =>
@@ -257,7 +261,11 @@ export const events = {
   /** Publish an inbound event on the bus. */
   publish: async (client: GraphGoblinClient, event: RequestBody<'/events', 'post'>) =>
     unwrap(await client.POST('/events', { body: event })),
-  list: async (client: GraphGoblinClient) => unwrap(await client.GET('/events')).items,
+  list: async (
+    client: GraphGoblinClient,
+    query: ListEventsQuery = {},
+    options: { signal?: AbortSignal } = {},
+  ) => unwrap(await client.GET('/events', { params: { query }, ...options })),
 };
 
 export const system = {

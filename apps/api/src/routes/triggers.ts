@@ -1,3 +1,4 @@
+import { decodeEventCursor, encodeEventCursor } from '../event-cursor.js';
 import {
   WebhookAuthenticationSchema,
   WebhookBodySchema,
@@ -6,6 +7,7 @@ import {
   CronPreviewResponseSchema,
   JsonValueSchema,
   UlidSchema,
+  TimestampSchema,
 } from '@graphgoblin/contracts';
 import { EngineRequestError } from '@graphgoblin/engine';
 import { CronScheduler } from '@graphgoblin/infrastructure/scheduler';
@@ -183,24 +185,32 @@ export function registerTriggerRoutes(app: ApiInstance, container: Container): v
     {
       schema: {
         tags: ['events'],
-        summary: 'Stored inbound events, newest first',
-        querystring: z.object({
+        summary: 'Stored inbound events, newest first with stable paging',
+        querystring: z.strictObject({
           type: z.string().max(128).optional(),
-          before: z.string().optional(),
+          before: TimestampSchema.optional(),
+          cursor: z.string().optional(),
           limit: z.coerce.number().int().min(1).max(500).optional(),
         }),
-        response: { 200: z.object({ items: z.array(InboundEventSchema) }) },
+        response: {
+          200: z.object({ items: z.array(InboundEventSchema), nextCursor: z.string().nullable() }),
+        },
       },
     },
-    async (request) => ({
-      items: await triggers.describeInbound(
-        await repos.inbound.list(request.auth.ownerId, {
-          limit: request.query.limit ?? 100,
-          ...(request.query.type ? { type: request.query.type } : {}),
-          ...(request.query.before ? { before: request.query.before } : {}),
-        }),
-      ),
-    }),
+    async (request) => {
+      const page = await repos.inbound.page(request.auth.ownerId, {
+        limit: request.query.limit ?? 100,
+        ...(request.query.type ? { type: request.query.type } : {}),
+        ...(request.query.before ? { before: new Date(request.query.before).toISOString() } : {}),
+        ...(request.query.cursor !== undefined
+          ? { cursor: decodeEventCursor(request.query.cursor) }
+          : {}),
+      });
+      return {
+        items: await triggers.describeInbound(page.items),
+        nextCursor: page.next ? encodeEventCursor(page.next) : null,
+      };
+    },
   );
 
   app.get(

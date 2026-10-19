@@ -437,18 +437,19 @@ describe('MCP server against the in-process API', () => {
 
     const page = body(await call('list_runs', { loopId: signalId, limit: 1 }));
     expect(page.items).toHaveLength(1);
-    expect(page.nextBefore).toBe(page.items[0].createdAt);
+    expect(page.nextCursor).toBeTypeOf('string');
     const next = body(
       await call('list_runs', {
         loopId: signalId,
         status: ['succeeded', 'cancelled'],
         parentRunId: 'none',
-        before: page.nextBefore,
+        cursor: page.nextCursor,
         limit: 1,
       }),
     );
-    // The fake clock gives every run the same creation time, so nothing is strictly before it.
-    expect(next.items).toEqual([]);
+    expect(next.items).toHaveLength(1);
+    expect(next.items[0].id).not.toBe(page.items[0].id);
+    expect(next.nextCursor).toBeNull();
     const filtered = body(
       await call('list_runs', { loopId: signalId, status: ['cancelled'], parentRunId: 'none' }),
     );

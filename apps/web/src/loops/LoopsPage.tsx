@@ -1,10 +1,10 @@
 import { loops } from '@graphgoblin/api-client';
-import type { LoopRecord, RunRecord } from '@graphgoblin/contracts';
+import type { LoopRecord } from '@graphgoblin/contracts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useApi } from '../api/context.js';
-import { keys, useCreateTemplateDraft, useLoops, useRuns, useTemplates } from '../api/queries.js';
+import { keys, useCreateTemplateDraft, useLoops, useTemplates } from '../api/queries.js';
 import { Icon } from '../components/icons/index.js';
 import { Page, PageHeader } from '../components/layout/index.js';
 import { QueryState, RunStatusBadge } from '../components/status.js';
@@ -44,16 +44,6 @@ function PublishState({ loop }: { loop: LoopRecord }) {
   if (!loop.currentVersionId) return <Badge>draft only</Badge>;
   if (loop.draftVersionId) return <Badge tone="warn">published, unpublished changes</Badge>;
   return <Badge tone="good">published</Badge>;
-}
-
-/** The most recent run per loop, from one runs listing. */
-function latestRuns(runs: RunRecord[]): Map<string, RunRecord> {
-  const latest = new Map<string, RunRecord>();
-  for (const run of runs) {
-    const seen = latest.get(run.loopId);
-    if (!seen || run.createdAt > seen.createdAt) latest.set(run.loopId, run);
-  }
-  return latest;
 }
 
 function CreateLoop() {
@@ -177,7 +167,7 @@ function ImportLoop() {
   );
 }
 
-function LoopActions({ loop, runCount }: { loop: LoopRecord; runCount: number | undefined }) {
+function LoopActions({ loop, runCount }: { loop: LoopRecord; runCount: number }) {
   const client = useApi();
   const queryClient = useQueryClient();
   const exportingRef = useRef(false);
@@ -223,9 +213,9 @@ function LoopActions({ loop, runCount }: { loop: LoopRecord; runCount: number | 
           consequences={
             <p>
               The loop, all its versions, its triggers and all its runs
-              {runCount === undefined ? '' : ` (${runCount})`} will be deleted, including run
-              history and artifact references. Loops using it as a subloop will no longer be able to
-              start it. Cancel active runs first.
+              {` (${runCount})`} will be deleted, including run history and artifact references.
+              Loops using it as a subloop will no longer be able to start it. Cancel active runs
+              first.
             </p>
           }
           onConfirm={async () => {
@@ -244,13 +234,11 @@ function LoopActions({ loop, runCount }: { loop: LoopRecord; runCount: number | 
 }
 
 export function LoopsPage() {
-  const loopsQuery = useLoops();
-  const runsQuery = useRuns({ limit: 500 }, 5000);
+  const loopsQuery = useLoops(5000);
   const templatesQuery = useTemplates();
   const createTemplateDraft = useCreateTemplateDraft();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const latest = latestRuns(runsQuery.data ?? []);
   return (
     <Page>
       <PageHeader title="Loops" titleId="loops-heading" />
@@ -301,7 +289,7 @@ export function LoopsPage() {
                 </thead>
                 <tbody>
                   {items.map((loop) => {
-                    const run = latest.get(loop.id);
+                    const run = loop.latestRun;
                     return (
                       <tr key={loop.id}>
                         <Td className="min-w-56 wrap-anywhere">
@@ -332,14 +320,7 @@ export function LoopsPage() {
                           )}
                         </Td>
                         <Td>
-                          <LoopActions
-                            loop={loop}
-                            runCount={
-                              runsQuery.data && runsQuery.data.length < 500
-                                ? runsQuery.data.filter((run) => run.loopId === loop.id).length
-                                : undefined
-                            }
-                          />
+                          <LoopActions loop={loop} runCount={loop.runCount} />
                         </Td>
                       </tr>
                     );

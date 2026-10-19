@@ -222,7 +222,25 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            items: components["schemas"]["LoopRecord"][];
+                            items: {
+                                id: string;
+                                ownerId: string;
+                                name: string;
+                                description?: string | undefined;
+                                currentVersionId?: string | undefined;
+                                draftVersionId?: string | undefined;
+                                /** Format: date-time */
+                                createdAt: string;
+                                /** Format: date-time */
+                                updatedAt: string;
+                                latestRun: {
+                                    id: string;
+                                    status: components["schemas"]["RunStatus"];
+                                    /** Format: date-time */
+                                    createdAt: string;
+                                } | null;
+                                runCount: number;
+                            }[];
                         };
                     };
                 };
@@ -887,6 +905,7 @@ export interface paths {
                         "application/json": {
                             items: components["schemas"]["RunEvent"][];
                             nextAfter: number;
+                            hasMore: boolean;
                         };
                     };
                 };
@@ -1997,12 +2016,13 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Stored inbound events, newest first */
+        /** Stored inbound events, newest first with stable paging */
         get: {
             parameters: {
                 query?: {
                     type?: string;
                     before?: string;
+                    cursor?: string;
                     limit?: number;
                 };
                 header?: never;
@@ -2100,6 +2120,7 @@ export interface paths {
                                     failureCode?: string | undefined;
                                 } | undefined;
                             }[];
+                            nextCursor: string | null;
                         };
                     };
                 };

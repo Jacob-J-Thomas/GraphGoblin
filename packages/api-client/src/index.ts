@@ -35,6 +35,7 @@ export {
   system,
   templates,
   type ListRunsQuery,
+  type ListEventsQuery,
   type LoopDefinitionBody,
   type QueryParams,
   type RequestBody,

@@ -626,3 +626,11 @@ Every use creates an owner-scoped ordinary loop with an independent definition. 
 ### Claude readiness and saved selections
 
 Settings separates owner catalog enablement from installed-harness readiness. Opus 5.5 and Fable 5.1 have ordinary enable switches; an enabled row with failed preflight says "Enabled in catalog; Claude harness not ready". Preflight shows login independently of CLI version/capability failures. The inference picker keeps a saved model from another harness as a disabled, labelled option, including while preflight fails, and directs the user to a valid model or inherited default. Switching an inference node to Claude resets its policy to `read-only`/`never`, avoiding Codex's unsupported `workspace-write` default; full access remains an explicit choice. Other authored harness options are preserved, with unsupported Claude settings reported for correction. Models retain exact identity and effort checks (ADR-0029).
+
+### Loop history summaries
+
+The Loops page reads each loop's `latestRun` and exact `runCount` from `GET /loops`,
+refreshed every five seconds. Last run links to the latest run by creation time, breaking
+ties by descending run ID. Only a null summary says "never run"; unrelated loops filling
+a global history page cannot hide older history. Deletion confirmation shows the exact
+server count, including above 500 runs. A failed listing shows its error.

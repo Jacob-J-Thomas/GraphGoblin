@@ -1,8 +1,8 @@
 import { minimalLoop } from '@graphgoblin/contracts/testing';
-import { screen, waitFor, within } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { FakeApi } from '../__fixtures__/fake-api.js';
+import { FakeApi, problem } from '../__fixtures__/fake-api.js';
 import { renderApp } from '../__fixtures__/render.js';
 
 describe('RunsPage', () => {
@@ -80,6 +80,72 @@ describe('RunsPage', () => {
       expect(screen.queryByRole('link', { name: parent.id })).not.toBeInTheDocument(),
     );
     expect(screen.getByRole('link', { name: child.id })).toBeInTheDocument();
+  });
+
+  it('appends filtered pages, retains loaded rows on failure, retries, and resets on filter changes', async () => {
+    const api = new FakeApi();
+    const user = userEvent.setup();
+    const loop = api.addLoop(minimalLoop());
+    for (let i = 0; i < 101; i++) api.addRun({ loopId: loop.id, status: 'succeeded' });
+    api.addRun({ loopId: loop.id, status: 'failed' });
+    renderApp(`/runs?loop=${loop.id}&status=succeeded&parent=none`, api);
+    const more = await screen.findByRole('button', { name: 'Load more' });
+    expect(screen.getAllByRole('row')).toHaveLength(101);
+    const loaded = screen.getAllByRole('row')[1]!;
+    let fail = true;
+    api.override('GET /runs', (call) =>
+      call.search.has('cursor') && fail
+        ? problem(503, 'UNAVAILABLE', 'Try again')
+        : api.builtIn(call),
+    );
+    await user.click(more);
+    expect(await screen.findByText(/Try again/)).toBeVisible();
+    expect(loaded).toBeInTheDocument();
+    fail = false;
+    await user.click(screen.getByRole('button', { name: 'Load more' }));
+    await waitFor(() => expect(screen.getAllByRole('row')).toHaveLength(102));
+    expect(screen.queryByRole('button', { name: 'Load more' })).not.toBeInTheDocument();
+    const pageCalls = api.callsTo('GET', '/runs').filter((call) => call.search.has('cursor'));
+    expect(pageCalls.length).toBeGreaterThan(0);
+    for (const call of pageCalls) {
+      expect(call.search.get('loopId')).toBe(loop.id);
+      expect(call.search.get('status')).toBe('succeeded');
+      expect(call.search.get('parent')).toBe('none');
+    }
+    await user.selectOptions(screen.getByLabelText('Status'), 'failed');
+    await waitFor(() => expect(screen.getAllByRole('row')).toHaveLength(2));
+    expect(api.callsTo('GET', '/runs').at(-1)!.search.has('cursor')).toBe(false);
+  });
+
+  it('guards repeated next-page clicks and cancels that request on unmount', async () => {
+    const api = new FakeApi();
+    const user = userEvent.setup();
+    for (let i = 0; i < 101; i++) api.addRun();
+    let finish!: (response: Response) => void;
+    let nextSignal: AbortSignal | undefined;
+    api.override('GET /runs', (call) => {
+      if (!call.search.has('cursor')) return api.builtIn(call);
+      nextSignal = call.signal;
+      return new Promise<Response>((resolve) => {
+        finish = resolve;
+      });
+    });
+    const view = renderApp('/runs', api);
+    await user.click(await screen.findByRole('button', { name: 'Load more' }));
+    const busy = await screen.findByRole('button', { name: 'Loading more...' });
+    expect(busy).toHaveAttribute('aria-disabled', 'true');
+    await user.click(busy);
+    expect(api.callsTo('GET', '/runs')).toHaveLength(2);
+    view.unmount();
+    expect(nextSignal?.aborted).toBe(true);
+    act(() =>
+      finish(
+        new Response(JSON.stringify({ items: [], nextCursor: null }), {
+          headers: { 'content-type': 'application/json' },
+        }),
+      ),
+    );
+    view.queryClient.clear();
   });
 
   it('says when nothing matches', async () => {

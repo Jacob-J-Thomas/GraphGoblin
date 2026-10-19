@@ -1,7 +1,8 @@
+import { useSearchParams } from 'react-router';
+import { HistoryState } from '../components/HistoryState.js';
 import { Link } from 'react-router';
 import { useInboundEvents } from '../api/queries.js';
 import { Page, PageHeader } from '../components/layout/index.js';
-import { QueryState } from '../components/status.js';
 import { Badge, Card, Table, Td, Th, type Tone } from '../components/ui/index.js';
 import { formatDateTime, prettyJson } from '../lib/utils.js';
 
@@ -102,11 +103,14 @@ function WebhookConfiguration({ webhook }: { webhook: InboundEvent['webhook'] })
  * of other runs, with the runs each one started.
  */
 export function EventsPage() {
-  const query = useInboundEvents();
+  const [params] = useSearchParams();
+  const type = params.get('type');
+  const before = params.get('before');
+  const query = useInboundEvents({ ...(type ? { type } : {}), ...(before ? { before } : {}) });
   return (
     <Page>
       <PageHeader title="Events" />
-      <QueryState query={query} what="Events">
+      <HistoryState query={query} what="Events">
         {(items) =>
           items.length === 0 ? (
             <p className="text-sm text-muted">No inbound events yet.</p>
@@ -170,7 +174,7 @@ export function EventsPage() {
             </Card>
           )
         }
-      </QueryState>
+      </HistoryState>
     </Page>
   );
 }

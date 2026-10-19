@@ -614,6 +614,7 @@ describe('settings, secrets, api keys, catalog, events', () => {
       dedupeKey: 'k',
       ownerId: 'local',
     });
+    t.clock.advance(1);
     await t.app.inject({ method: 'POST', url: '/events', payload: { type: 'second' } });
     const list = (await t.app.inject('/events')).json<{ items: { type: string }[] }>();
     expect(list.items.map((e) => e.type)).toEqual(['second', 'issue-ready']);

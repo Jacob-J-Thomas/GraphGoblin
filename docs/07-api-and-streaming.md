@@ -54,7 +54,7 @@ Settings and catalog
   GET    /openapi.json   GET /healthz   GET /version   (all public; Swagger UI at /docs when enabled)
 ```
 
-Run and loop lists are paginated with cursors. Loop/run ids are ULIDs; classifier ids are bounded URL-safe names, with `jev` reserved for the built-in.
+Run and inbound-event lists are paginated with opaque cursors. Loop listings return every owner loop with its latest-run summary and exact run count. Loop/run ids are ULIDs; classifier ids are bounded URL-safe names, with `jev` reserved for the built-in.
 
 Webhook endpoint summaries expose nested safe `authentication`, pinned `body`, `eventType`,
 optional `dedupeKey`, and `configurationAvailable`. Secret references are names only. Webhook and Event configs reject `filter`; payload checks belong in downstream decisions. Historical `filtered` receipt states remain readable.
@@ -207,20 +207,20 @@ Other channels, webhook, file, event, and log, are delivered by the engine after
 
 Tools (each with a Zod input schema; descriptions tell the agent when to call it and what to do next):
 
-| Tool                                    | Input                                                       | Behaviour                                                                                                                                                                                                   |
-| --------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `list_loops`                            | `query?`                                                    | Loops with `id`, `name`, `description`, `published`, `hasDraft`; `query` filters names and descriptions                                                                                                     |
-| `describe_loop`                         | `loopId` (id or exact name)                                 | The published version (or the draft, with a note): triggers with type, `inputSchema`, and `startableFromMcp`; input waits with prompt and schema; exits with `default`, `returnMapping`, channel kinds      |
-| `start_run`                             | `loopId`, `input?`, `triggerNodeId?`, `allowDraft?`         | Starts a manual trigger and returns `runId` immediately; `allowDraft` runs the draft of an unpublished loop                                                                                                 |
-| `wait_for_run`                          | `runId`, `timeoutSeconds?` (default 60, max 600)            | Returns `{ finished: true, run }` at a terminal status, or `{ finished: false, status, cursor, waiting?, next }`; returns early when the run waits for input or is paused; `cursor` is the last event `seq` |
-| `get_run`                               | `runId`                                                     | Run snapshot                                                                                                                                                                                                |
-| `get_run_thread`                        | `runId`                                                     | Context thread                                                                                                                                                                                              |
-| `list_runs`                             | `loopId?`, `status[]?`, `parentRunId?`, `before?`, `limit?` | Compact runs, newest first; `nextBefore` (a `createdAt`) pages                                                                                                                                              |
-| `read_run_events`                       | `runId`, `after?`, `limit?` (default 100)                   | `{ items, nextAfter, hasMore }`                                                                                                                                                                             |
-| `cancel_run`, `pause_run`, `resume_run` | `runId`                                                     | Control; return the compact run. A run paused while parked resumes to `waiting` on the same wait, otherwise to `running` (05)                                                                               |
-| `provide_input`                         | `runId`, `input`                                            | Answers a wait node in input mode                                                                                                                                                                           |
-| `send_signal`                           | `runId`, `name`, `payload?`                                 | `{ woke, run }`                                                                                                                                                                                             |
-| `replay_run`                            | `runId`, `nodeId`                                           | Forks a new run at `nodeId` with the thread from just before that node (`POST /runs/{id}/replay`); returns the compact fork with `replayOf` and a hint to call `wait_for_run`                               |
+| Tool                                    | Input                                                                  | Behaviour                                                                                                                                                                                                   |
+| --------------------------------------- | ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `list_loops`                            | `query?`                                                               | Loops with `id`, `name`, `description`, `published`, `hasDraft`; `query` filters names and descriptions                                                                                                     |
+| `describe_loop`                         | `loopId` (id or exact name)                                            | The published version (or the draft, with a note): triggers with type, `inputSchema`, and `startableFromMcp`; input waits with prompt and schema; exits with `default`, `returnMapping`, channel kinds      |
+| `start_run`                             | `loopId`, `input?`, `triggerNodeId?`, `allowDraft?`                    | Starts a manual trigger and returns `runId` immediately; `allowDraft` runs the draft of an unpublished loop                                                                                                 |
+| `wait_for_run`                          | `runId`, `timeoutSeconds?` (default 60, max 600)                       | Returns `{ finished: true, run }` at a terminal status, or `{ finished: false, status, cursor, waiting?, next }`; returns early when the run waits for input or is paused; `cursor` is the last event `seq` |
+| `get_run`                               | `runId`                                                                | Run snapshot                                                                                                                                                                                                |
+| `get_run_thread`                        | `runId`                                                                | Context thread                                                                                                                                                                                              |
+| `list_runs`                             | `loopId?`, `status[]?`, `parentRunId?`, `before?`, `cursor?`, `limit?` | Compact runs, newest first; repeat filters and pass opaque `nextCursor` as `cursor`; null ends the listing                                                                                                  |
+| `read_run_events`                       | `runId`, `after?`, `limit?` (default 100)                              | `{ items, nextAfter, hasMore }`                                                                                                                                                                             |
+| `cancel_run`, `pause_run`, `resume_run` | `runId`                                                                | Control; return the compact run. A run paused while parked resumes to `waiting` on the same wait, otherwise to `running` (05)                                                                               |
+| `provide_input`                         | `runId`, `input`                                                       | Answers a wait node in input mode                                                                                                                                                                           |
+| `send_signal`                           | `runId`, `name`, `payload?`                                            | `{ woke, run }`                                                                                                                                                                                             |
+| `replay_run`                            | `runId`, `nodeId`                                                      | Forks a new run at `nodeId` with the thread from just before that node (`POST /runs/{id}/replay`); returns the compact fork with `replayOf` and a hint to call `wait_for_run`                               |
 
 `wait_for_run` polls `GET /runs/{id}` once a second rather than calling the client's `waitForRun`, so it can return early, and it sends MCP progress notifications between polls when the caller supplies a progress token. MCP clients have their own tool timeouts (the plugin sets Codex's `tool_timeout_sec` to 660); agents keep calling it until `finished` is true.
 
@@ -337,7 +337,7 @@ with `limit` from 1 to 500. The run repository fetches one extra row (at most 50
 to determine whether another page exists. Cursors are bounded to 256 characters,
 canonical base64url encodings of strict `{createdAt: Timestamp, id: ULID}` JSON.
 A malformed, oversized or noncanonical cursor receives `400 INVALID_CURSOR`.
-The timestamp-only `before` filter is still available, but cannot accompany `cursor`.
+The timestamp-only `before` filter is an exclusive time bound, not a paging cursor; it composes with `cursor` and stays unchanged on every page.
 Accepted `before` timestamps are normalized to UTC with milliseconds before comparison,
 so offsets and omitted milliseconds select the same page as the canonical timestamp.
 
@@ -346,9 +346,29 @@ Filters are `loopId`, comma-separated `status`, `parent` (a run ID or `none`),
 including the removed `repository`, `issue`, `pullRequest`, `head`, `mergeSha`
 and `templateInstanceId`. Reads always remain scoped to the authenticated owner.
 The exclusive `(created_at, id)` boundary keeps newer insertions between requests
-out of subsequent pages. MCP's `before`/`nextBefore` timestamp paging stays separate.
-Both the typed client's `GET('/runs')` and the generated OpenAPI contract expose
-the complete page; the convenience `runs.list` wrapper returns its items only.
+out of subsequent pages. Both `runs.list(client, query)` and MCP `list_runs` expose
+`{items, nextCursor}`. Consumers never decode or reconstruct a cursor; repeat the active
+filters and copy `nextCursor` unchanged into `cursor`. Invalid statuses (including empty
+or partly invalid comma-separated lists) receive `400 VALIDATION_FAILED`, with a
+`/status` error explaining: "Use comma-separated run statuses."
+
+`GET /events` and `events.list(client, query)` return `{items, nextCursor}`, ordered by
+`receivedAt DESC, id DESC`, using one lookahead row and the same 100 default / 500 maximum.
+The opaque inbound cursor is distinct from a run-list cursor; malformed, oversized and
+noncanonical values receive `400 INVALID_CURSOR`. The `type` and exclusive `before`
+filters compose with `cursor`; keep them unchanged on subsequent pages. A cursor is a
+position, not a snapshot: concurrent insertions ahead of it do not appear in older pages.
+
+`GET /runs/{id}/events` retains its sequence-number continuation, returning
+`{items, nextAfter, hasMore}`. One lookahead event determines `hasMore`; an exactly full
+final page returns false. `read_run_events` forwards that authoritative API result.
+This sequence cursor remains a number; it is not interchangeable with list cursors.
+
+Runs and Events append older rows through the existing outline **Load more** button.
+Filters remain part of the query key and every page request; changing a filter selects
+its own history. Next-page failures retain the loaded rows and expanded details and
+show an error with a retry through the same button. Runs retain their five-second polling;
+Events retain pending-delivery polling. No manual Events refresh is added here.
 
 Run-list items and `GET /runs/{id}` return the canonical `RunRecord`, without
 `templateSubject` or a template-store lookup. Regenerate strict clients for these
@@ -364,6 +384,17 @@ these identities during admission; authored run input cannot assert them.
 Repository recipes remain unregistered in this foundation release.
 
 Ordinary copied drafts use the ordinary engine resume behavior. The API installs no template admission, execution, resume or reporting policy. Dormant configured runtime modules await deletion in the next #165 split.
+
+### Loop listing summaries
+
+`GET /loops` returns `{items}` with `latestRun: {id, status, createdAt} | null` and an
+exact `runCount` on each loop. One SQL statement selects each authenticated owner's
+loops, joins its latest run through a correlated `ORDER BY created_at DESC, id DESC LIMIT 1`
+subquery, and counts that loop's owner-scoped runs. The existing loop/time index supports
+per-loop lookup and counting; there is no global history-page limit or N+1 API fan-out.
+Null means no history, never a failed or incomplete global lookup. A read failure remains
+an error. Loops refresh their summaries every five seconds; deletion confirmation uses
+the exact server count.
 
 ## Gate admission and terminal outcomes (#164 E1)
 

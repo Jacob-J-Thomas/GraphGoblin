@@ -32,6 +32,35 @@ describe('LoopsPage', () => {
     void draft;
   });
 
+  it('uses loop summaries for old history and deterministic ties without a global run query', async () => {
+    const api = new FakeApi();
+    const old = api.addLoop({ ...minimalLoop(), name: 'old history' });
+    const empty = api.addLoop({ ...minimalLoop(), name: 'empty history' });
+    api.addRun({
+      id: 'A'.repeat(26),
+      loopId: old.id,
+      status: 'failed',
+      createdAt: '2026-09-01T00:00:00.000Z',
+    });
+    const latest = api.addRun({
+      id: 'Z'.repeat(26),
+      loopId: old.id,
+      status: 'cancelled',
+      createdAt: '2026-09-01T00:00:00.000Z',
+    });
+    for (let i = 0; i < 501; i++) api.addRun({ loopId: 'unrelated', status: 'succeeded' });
+    renderApp('/loops', api);
+    const row = (await screen.findByRole('link', { name: old.name })).closest('tr')!;
+    expect(within(row).getByRole('link', { name: 'cancelled' })).toHaveAttribute(
+      'href',
+      `/runs/${latest.id}`,
+    );
+    expect(
+      within(screen.getByRole('link', { name: empty.name }).closest('tr')!).getByText('never run'),
+    ).toBeVisible();
+    expect(api.callsTo('GET', '/runs')).toHaveLength(0);
+  });
+
   it('creates a loop and opens it in the editor', async () => {
     const user = userEvent.setup();
     const api = new FakeApi();
@@ -360,15 +389,15 @@ describe('LoopsPage', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
-  it('omits the run count when the runs listing may be truncated', async () => {
+  it('shows the exact server count beyond the global page limit', async () => {
     const user = userEvent.setup();
     const api = new FakeApi();
     const created = api.addLoop({ ...minimalLoop(), name: 'many-runs' });
-    for (let i = 0; i < 500; i++) api.addRun({ loopId: created.id, status: 'succeeded' });
+    for (let i = 0; i < 501; i++) api.addRun({ loopId: created.id, status: 'succeeded' });
     renderApp('/loops', api);
     await user.click(await screen.findByRole('button', { name: 'Delete many-runs' }));
-    expect(screen.getByRole('alertdialog')).toHaveTextContent('all its runs will be deleted');
-    expect(screen.getByRole('alertdialog')).not.toHaveTextContent('(500)');
+    expect(screen.getByRole('alertdialog')).toHaveTextContent('all its runs (501) will be deleted');
+    expect(screen.getByRole('alertdialog')).toHaveTextContent('(501)');
   });
 
   it('shows export progress and ignores repeated clicks until the request finishes', async () => {

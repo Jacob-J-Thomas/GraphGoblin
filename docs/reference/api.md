@@ -94,10 +94,10 @@ Keys for other applications and the MCP server.
 
 The inbound event bus.
 
-| Method | Path      | Summary                                                 | Parameters                                                                 | Request body                     | Responses |
-| ------ | --------- | ------------------------------------------------------- | -------------------------------------------------------------------------- | -------------------------------- | --------- |
-| GET    | `/events` | Stored inbound events, newest first                     | `type`: string (query), `before`: string (query), `limit`: integer (query) | -                                | 200       |
-| POST   | `/events` | Publish an inbound event; fires matching event triggers | -                                                                          | `{ type, payload?, dedupeKey? }` | 202       |
+| Method | Path      | Summary                                                 | Parameters                                                                                           | Request body                     | Responses |
+| ------ | --------- | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | -------------------------------- | --------- |
+| GET    | `/events` | Stored inbound events, newest first with stable paging  | `type`: string (query), `before`: string (query), `cursor`: string (query), `limit`: integer (query) | -                                | 200       |
+| POST   | `/events` | Publish an inbound event; fires matching event triggers | -                                                                                                    | `{ type, payload?, dedupeKey? }` | 202       |
 
 ## triggers
 
