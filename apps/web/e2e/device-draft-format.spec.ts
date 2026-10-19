@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import type { APIRequestContext, Page } from '@playwright/test';
 import { approvalLoop, expect, test } from './fixtures.js';
 
@@ -30,6 +31,12 @@ async function storeOldDraft(page: Page, loopId: string) {
     synced: false,
     baseToken: 'format-3-token',
   };
+  await storeRecord(page, record);
+  return record;
+}
+
+/** Put one raw record under its loop's active device-draft key. */
+async function storeRecord(page: Page, record: { loopId: string }) {
   await page.evaluate(async (copy) => {
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
       const request = indexedDB.open('graphgoblin', 2);
@@ -46,7 +53,6 @@ async function storeOldDraft(page: Page, loopId: string) {
     });
     db.close();
   }, record);
-  return record;
 }
 
 async function storedDraft(page: Page, loopId: string): Promise<unknown> {
@@ -105,3 +111,29 @@ test('an older device draft is refused, never converted or saved, and discarded 
   };
   expect(server.draft?.definition.name).toBe('server work');
 });
+
+for (const [kind, extra] of [
+  ['no definition', {}],
+  ['a null definition', { definition: null }],
+] as const) {
+  test(`a device record with ${kind} keeps export and discard instead of failing to render`, async ({
+    page,
+    request,
+  }) => {
+    const { loop } = await create(request, 'server work');
+    await page.goto('/app/loops');
+    const record = { loopId: loop.id, savedAt: 'long ago', synced: false, ...extra };
+    await storeRecord(page, record);
+    await page.goto(`/app/loops/${loop.id}/edit`);
+    await expect(page.getByText('Unsupported device draft (an unknown format)')).toBeVisible();
+    await expect(page.getByText('This screen failed to render')).toBeHidden();
+    const downloadReady = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'Export this device draft' }).click();
+    const path = await (await downloadReady).path();
+    if (!path) throw new Error('Expected local download');
+    expect(JSON.parse(await readFile(path, 'utf8'))).toEqual(record);
+    await page.getByRole('button', { name: 'Discard this device draft' }).click();
+    await expect(page.getByRole('heading', { name: 'server work' })).toBeVisible();
+    expect(await storedDraft(page, loop.id)).toBeUndefined();
+  });
+}

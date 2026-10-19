@@ -157,6 +157,41 @@ describe('unsupported device drafts', () => {
     expect(await drafts.loadLocalDraft(loop.id)).toEqual(odd);
   });
 
+  it.each([
+    ['no definition', {}],
+    ['a null definition', { definition: null }],
+    ['a text definition', { definition: 'not a definition' }],
+  ])(
+    'keeps export and discard for a record with %s instead of failing to render',
+    async (_name, extra) => {
+      const user = userEvent.setup();
+      const api = new FakeApi();
+      const loop = api.addLoop(newLoopDefinition('server copy'));
+      const record = { loopId: loop.id, savedAt: 'then', synced: false, ...extra };
+      await storeRawDeviceRecord(deviceKeys(loop.id).active, record);
+      renderApp(`/loops/${loop.id}/edit`, api);
+      expect(await screen.findByText(BLOCKED)).toBeVisible();
+      expect(
+        screen.getByText('Unsupported device draft (an unknown format)').closest('[role]'),
+      ).toHaveTextContent(
+        `This browser holds an unsaved draft of this loop (loop ${loop.id}), saved then, in an unknown format.`,
+      );
+      const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:record');
+      const click = vi
+        .spyOn(HTMLAnchorElement.prototype, 'click')
+        .mockImplementation(() => undefined);
+      await user.click(screen.getByRole('button', { name: 'Export this device draft' }));
+      const exported = createObjectURL.mock.calls[0]?.[0];
+      if (!(exported instanceof Blob)) throw new Error('Expected the export to be a Blob.');
+      expect(JSON.parse(await exported.text())).toEqual(record);
+      createObjectURL.mockRestore();
+      click.mockRestore();
+      await user.click(screen.getByRole('button', { name: 'Discard this device draft' }));
+      expect(await screen.findByRole('heading', { name: 'server copy' })).toBeInTheDocument();
+      expect(await drafts.loadLocalDraft(loop.id)).toBeUndefined();
+    },
+  );
+
   it('keeps the copy and says so when a discard cannot be written', async () => {
     const user = userEvent.setup();
     const api = new FakeApi();

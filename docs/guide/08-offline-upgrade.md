@@ -14,12 +14,12 @@ GraphGoblin did not start: this build cannot open the store in data directory C:
   Found:    format 3
   Requires: format 4
   Reason:   The store is format 3; this build reads only format 4
-Nothing was changed. This build does not convert stores from other formats.
+No stored data was changed. This build does not convert stores from other formats.
 To keep that data, run the GraphGoblin build that wrote it. To start fresh, stop every GraphGoblin process using the data directory, then list what a reset would remove (this removes nothing):
   node apps/api/dist/main.js --reset --data-dir "C:\Users\you\.graphgoblin"
 ```
 
-`Found` is `format N` for an older store, `no valid format marker` for a store written before format markers existed (or with a damaged marker), and `format 4, but the store is damaged or unfinished` when a format-4 store fails a structure, ledger or data check; `Reason` names the check. Nothing is changed in any case. `node apps/api/dist/main.js --preflight` reports the same store as a failed **Database** check.
+`Found` is `format N` for an older store, `no valid format marker` for a store written before format markers existed (or with a damaged marker), and `format 4, but the store is damaged or unfinished` when a format-4 store fails a structure, ledger or data check; `Reason` names the check. No stored data is changed in any case (SQLite may refresh its `-shm` index file while reading). `node apps/api/dist/main.js --preflight` reports the same store as a failed **Database** check.
 
 A damaged format-4 store can be repaired by hand if you know what broke (the reason names the table or check). Otherwise, reset it.
 

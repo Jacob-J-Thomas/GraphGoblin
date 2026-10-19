@@ -70,7 +70,7 @@ export function serializeSave<T>(loopId: string, job: () => Promise<T>): Promise
  * After the server accepted a save: advance the loop's token, whether or not the editor that sent
  * it is still open, and record it on the device copy (`recordServerSave`). A newer edit mirrored
  * since the save started takes `token` only when it shares that save's request base; unrelated
- * or converted device work retains its base and explicit reconciliation requirement.
+ * device work retains its base and explicit reconciliation requirement.
  * The server holds the draft whether or not this device can record that: a device storage failure
  * is reported as its own notice (`deviceStorageProblem`), never as a save still pending.
  */

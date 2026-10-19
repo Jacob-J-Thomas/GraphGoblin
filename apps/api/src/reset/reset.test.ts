@@ -1,4 +1,4 @@
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 import { mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -469,6 +469,63 @@ describe('refused resets change nothing', () => {
     );
     return child;
   }
+
+  it.each([
+    ['a directory named graphgoblin.db', {}, 'graphgoblin.db is a directory, not a database file'],
+    [
+      'a database reached through a link',
+      { GG_DB_URL: '<linked-db>' },
+      'the database path passes through linked-db',
+    ],
+    [
+      'a database inside the artifact directory',
+      { GG_DB_URL: '<artifact-db>' },
+      'is inside artifacts/, which a reset removes',
+    ],
+    [
+      'a database outside the data directory',
+      { GG_DB_URL: '<outside-db>' },
+      'is outside the data directory',
+    ],
+    [
+      'a database that is not a local file',
+      { GG_DB_URL: ':memory:' },
+      'GG_DB_URL does not name a local database file',
+    ],
+    ['another directory named by --data-dir', { '--data-dir': '<other>' }, '--data-dir names'],
+    ['invalid configuration', { GG_PORT: 'not a port' }, 'invalid configuration'],
+  ] as const)(
+    'refuses a confirmed reset with %s and leaves a stale lock and every other byte in place',
+    async (_name, setup, error) => {
+      const { base, dataDir, outside } = await prepare('none');
+      await mkdir(join(dataDir, 'graphgoblin.db'));
+      await linkDirectory(outside, join(dataDir, 'linked-db'));
+      await mkdir(join(base, 'other'));
+      // A lock left by a process that has exited: acquiring the lock would reclaim it.
+      const dead = spawnSync(process.execPath, ['-e', '']);
+      await writeFile(join(dataDir, 'graphgoblin.lock'), JSON.stringify({ pid: dead.pid }));
+      const substitute = (value: string): string =>
+        ({
+          '<other>': join(base, 'other'),
+          '<outside-db>': `file:${join(base, 'elsewhere.db').replaceAll('\\', '/')}`,
+          '<artifact-db>': `file:${join(dataDir, 'artifacts', 'store.db').replaceAll('\\', '/')}`,
+          '<linked-db>': `file:${join(dataDir, 'linked-db', 'store.db').replaceAll('\\', '/')}`,
+        })[value] ?? value;
+      const env: Record<string, string> = { GG_DATA_DIR: dataDir };
+      let target = dataDir;
+      for (const [key, value] of Object.entries(setup))
+        if (key === '--data-dir') target = substitute(value);
+        else env[key] = substitute(value);
+      const before = await snapshotTree(base);
+      expect(before.map((record) => record.path)).toContain('data/graphgoblin.lock');
+      const result = await reset(['--reset', '--yes', '--data-dir', target], env);
+      expect(result.code).toBe(1);
+      expect(result.out).toBe('');
+      expect(result.err).toContain(error);
+      expect(result.err).toMatch(/Nothing was changed\.\n$/);
+      expect(await snapshotTree(base)).toEqual(before);
+    },
+  );
 
   it.each([
     ['dry run', ['--reset']],

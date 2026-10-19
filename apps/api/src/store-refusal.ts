@@ -37,7 +37,7 @@ export function describeStoreRefusal({
     `  Found:    ${found(refusal)}`,
     `  Requires: format ${String(refusal.requiredFormat)}`,
     `  Reason:   ${refusal.reason}`,
-    'Nothing was changed. This build does not convert stores from other formats.',
+    'No stored data was changed. This build does not convert stores from other formats.',
     damaged
       ? 'Repair the store by hand, or start fresh: stop every GraphGoblin process using the data directory, then list what a reset would remove (this removes nothing):'
       : 'To keep that data, run the GraphGoblin build that wrote it. To start fresh, stop every GraphGoblin process using the data directory, then list what a reset would remove (this removes nothing):',

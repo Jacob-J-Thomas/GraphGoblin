@@ -193,7 +193,7 @@ PR #178 (commit `21eec52`) removed `billingMode` and `billingStatus` from the Cl
 
 ## 5. Offline upgrade path
 
-> Retired on 2026-10-18 by [ADR-0042](../decisions/ADR-0042-explicit-resets-replace-conversion.md): older stores, exports and device drafts are refused and reset explicitly with `--reset`; the converters, frozen contracts and `graphgoblin-upgrade` tool described below are removed. The rest of this section is the `c379f80` snapshot.
+> Retired on 2026-10-18 by [ADR-0042](../decisions/ADR-0042-explicit-resets-replace-conversion.md): older stores, exports and device drafts are refused, never converted. An older server store is reset explicitly with `--reset` (server storage only); an older export is re-created, and an older browser device draft is discarded in the editor. The converters, frozen contracts and `graphgoblin-upgrade` tool described below are removed. The rest of this section is the `c379f80` snapshot.
 
 ```mermaid
 flowchart LR

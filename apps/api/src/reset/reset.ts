@@ -367,14 +367,16 @@ export async function resetDataDirectory(
     );
   const dataDir = await realpath(configured);
   const database = relative(configured, databaseFile).split(sep).join('/');
+  // Check the lock and plan the whole reset read-only first: every refusal happens here, before
+  // the lock (or a stale lock file left by a dead process) is touched.
+  const state = await dataDirLockState(dataDir);
+  if (state.state === 'held')
+    throw new ResetRefusedError(
+      `another GraphGoblin process holds ${state.path}; stop it before resetting`,
+    );
+  const preview = await planReset({ dataDir, database, readStore: io.readStore });
   if (!args.confirmed) {
-    const lock = await dataDirLockState(dataDir);
-    if (lock.state === 'held')
-      throw new ResetRefusedError(
-        `another GraphGoblin process holds ${lock.path}; stop it before resetting`,
-      );
-    const plan = await planReset({ dataDir, database, readStore: io.readStore });
-    io.write(formatPlan(plan, { dryRun: true, configured }));
+    io.write(formatPlan(preview, { dryRun: true, configured }));
     io.write(
       [
         'Nothing was removed. To reset, stop every GraphGoblin process using this data directory and run:',
@@ -392,6 +394,7 @@ export async function resetDataDirectory(
   }
   let failure: unknown;
   try {
+    // Plan again under the lock, so the manifest removed is the one no other process can change.
     const plan = await planReset({ dataDir, database, readStore: io.readStore });
     io.write(formatPlan(plan, { dryRun: false, configured }));
     io.write('Removing:\n');
@@ -401,7 +404,7 @@ export async function resetDataDirectory(
       failure = error;
     }
   } catch (error) {
-    // Planning failed under the lock: nothing has been removed.
+    // The store changed between the read-only plan and the lock: nothing has been removed.
     await lock.release();
     throw new ResetRefusedError(message(error));
   }

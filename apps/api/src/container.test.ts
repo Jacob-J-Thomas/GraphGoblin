@@ -465,7 +465,7 @@ describe('configuration admission before startup writes', () => {
         '  Found:    no valid format marker',
         '  Requires: format 4',
         '  Reason:   The store has no format marker; an older GraphGoblin build wrote it',
-        'Nothing was changed. This build does not convert stores from other formats.',
+        'No stored data was changed. This build does not convert stores from other formats.',
         'To keep that data, run the GraphGoblin build that wrote it. To start fresh, stop every GraphGoblin process using the data directory, then list what a reset would remove (this removes nothing):',
         `  node apps/api/dist/main.js --reset --data-dir "${dataDir}"`,
       ].join('\n'),
@@ -551,7 +551,7 @@ it('names a damaged current-format store and offers repair or a fresh start', as
   await expect(createContainer(config(), { startTimers: false })).rejects.toMatchObject({
     code: 'STORE_UNSUPPORTED',
     message: expect.stringMatching(
-      /Found: {4}format 4, but the store is damaged or unfinished\n.*\n {2}Reason: {3}The format-4 store is damaged: incomplete indexes in runs\nNothing was changed\..*\nRepair the store by hand, or start fresh: /,
+      /Found: {4}format 4, but the store is damaged or unfinished\n.*\n {2}Reason: {3}The format-4 store is damaged: incomplete indexes in runs\nNo stored data was changed\..*\nRepair the store by hand, or start fresh: /,
     ),
   });
 });

@@ -33,15 +33,14 @@ export function UnsupportedDeviceDraft({
   onDiscard: Discard;
 }) {
   const id = useId();
-  const definition = copy.definition as { schemaVersion?: unknown; name?: unknown };
-  const format =
-    typeof definition.schemaVersion === 'number'
-      ? `format ${String(definition.schemaVersion)}`
-      : 'an unknown format';
-  const name =
-    typeof definition.name === 'string' && definition.name !== ''
-      ? `“${definition.name}”`
-      : 'this loop';
+  // The stored record comes from an older build: its definition may be missing, null or any
+  // other value, and is read only through checks, so the notice and both actions always render.
+  const definition: unknown = copy.definition;
+  const record = typeof definition === 'object' && definition !== null ? definition : {};
+  const version = 'schemaVersion' in record ? record.schemaVersion : undefined;
+  const loopName = 'name' in record ? record.name : undefined;
+  const format = typeof version === 'number' ? `format ${String(version)}` : 'an unknown format';
+  const name = typeof loopName === 'string' && loopName !== '' ? `“${loopName}”` : 'this loop';
   return (
     <Alert tone="warn" title={`Unsupported device draft (${format})`}>
       <span id={id}>

@@ -141,7 +141,7 @@ test(
           '  Found:    format 3',
           '  Requires: format 4',
           '  Reason:   The store is format 3; this build reads only format 4',
-          'Nothing was changed. This build does not convert stores from other formats.',
+          'No stored data was changed. This build does not convert stores from other formats.',
           'To keep that data, run the GraphGoblin build that wrote it. To start fresh, stop every GraphGoblin process using the data directory, then list what a reset would remove (this removes nothing):',
           `  node apps/api/dist/main.js --reset --data-dir "${dataDir}"`,
           '',
