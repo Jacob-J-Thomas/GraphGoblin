@@ -353,7 +353,7 @@ Sources: `apps/web/src/runs/inspector/ThreadViewer.tsx:28-31,62` and
 `apps/web/src/runs/projections.ts:97-107` (reads the literal append pointer on both sides).
 No product fix is included.
 
-## Review-fix smoke verification ? 2026-10-19
+## Instrumentation smoke verification (2026-10-19)
 
 Only the changed workloads were rerun, on fresh disposable stores with Inspector
 profiling. No 10,000-pass workload or official paired rerun was executed. Portable

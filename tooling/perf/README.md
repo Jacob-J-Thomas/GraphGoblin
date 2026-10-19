@@ -65,7 +65,7 @@ node tooling/perf/summary.mjs --out=summary.json first-raw-summary.json second-r
 A successful measurement prints `PERF {...}`; progress and its private evidence
 path go to stderr. A measurement/correctness/profile failure exits nonzero.
 Output directories are **never deleted** and cannot be reused. Budget at least
-24?59 MB for typical round-1 long-run store data per output directory, with
+24 to 59 MB for typical round-1 long-run store data per output directory, with
 additional space for profiles, traces and artifacts; artifact cases can exceed
 that range. Small smokes use less space. The ten-minute import/setup and one-hour
 IPC ceilings are measurement recovery limits, not product SLAs.
@@ -100,7 +100,7 @@ foreach ($taskTrial in 1,2) {
 
 Use a new output directory per invocation (omitting `--out` allocates one).
 Keep sizes, pacing and profiler settings identical within a pair. Preserve all
-individual trials. Round 1 ran fresh first at 99.6?100% load and aged later under
+individual trials. Round 1 ran fresh first at 99.6 to 100% load and aged later under
 changing load; its rows are **not comparable paired trials**. The controlled
 large-workload protocol is for the official rerun; review-fix verification uses
 only `replay --passes=100`, `browser --passes=100`, and `readiness`.
