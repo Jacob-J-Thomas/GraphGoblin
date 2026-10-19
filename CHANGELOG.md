@@ -6,6 +6,14 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 - Recover healthy current-format runs beside damaged history; log HISTORY_UNREADABLE and expose owner-scoped diagnostics for explicit manual repair or deletion without changing damaged data. MCP `list_runs` preserves the server cursor even on pages with no readable runs. **Upgrade:** Check `GET /runs/diagnostics` after upgrading and explicitly repair or delete damaged history. MCP callers must pass `cursor` and read `nextCursor` instead of `before` and `nextBefore`. (#318)
 - Validate generated durable events before persistence, bound terminal failure diagnostics visibly, and fail rejected success events with nonresumable EVENT_INVALID so restart does not repeat uncertain work. **Upgrade:** Check `GET /runs/diagnostics` after upgrading; invalid events written before this fix now surface as `HISTORY_UNREADABLE`. (#223)
+
+- Aligned installation, gates, CI, container, installers and API preflight on Node 22 LTS (22.x), with root `devEngines.runtime` enforcing the project runtime without enforcing every dependency engine range. **Upgrade:** every pnpm command (install, build, start) refuses Node 23; restart the running instance from a Node 22 shell. Settings → Preflight shows Node as failed under any other major. API consumers use `SUPPORTED_NODE_MAJOR` in place of `MIN_NODE_MAJOR`. (#263)
+
+- Workspace test, coverage, typecheck and lint caches include dependency sources, declared guide/template inputs and shared root configs; repository-wide tooling tests are uncached. Unrelated-package cache reuse remains. (#127)
+
+- Removed the unused, deprecated `@esbuild-kit/esm-loader` dependency from Drizzle Kit and its affected esbuild 0.18.20 subtree. The package was never loaded by Drizzle Kit; patched esbuild versions remain. Evidence is in `docs/qa/2026-10-18-wp-a1-runtime-gates.md`. (#114)
+
+- Two-tab conflict checks explicitly activate each editor tab and wait for draft reconciliation before editing; reload, overwrite and stored-value assertions remain intact. Two browser expectations now match the accepted earlier-node-outputs behaviour (named copy status; disclosure in the Tab order). (#67, #341)
 - The licence gate parses grouped SPDX expressions with AND/OR/WITH precedence, rejects malformed and guessed metadata with specific reasons, and reports package/version/expression provenance. WITH pairs require exact explicit approval. (#274)
 - Guide 02/03 examples are checked against current contracts and executed through a disposable API with the fake harness. Replay now targets `summarise`, return guidance names `returns`/`destinations`, and a complete deterministic bounded-repeat example demonstrates exhaustion; paid provider execution is explicitly excluded. (#250)
 

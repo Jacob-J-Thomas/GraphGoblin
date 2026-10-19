@@ -4,7 +4,7 @@ Milestones are sequential. Each has a goal, the packages it touches, the tasks, 
 
 ## M0 - Repository and gates (S) - DONE 2026-10-02
 
-Notes: TypeScript 6.x (typescript-eslint does not yet support 7.x), ESLint 10, Vitest 5, Zod 4, pnpm 12. dependency-cruiser requires Node 22 or 24 locally; the development machine runs Node 23, so `pnpm check:deps` runs in CI only until Node is upgraded (`.nvmrc` says 24).
+Notes: TypeScript 6.x (typescript-eslint does not yet support 7.x), ESLint 10, Vitest 5, Zod 4, pnpm 12. Installation, development, gates and built apps use Node 22 LTS; select it for the whole shell before running commands (ADR-0040).
 
 Goal: an empty monorepo where every CI gate already runs and passes.
 

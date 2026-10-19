@@ -11,7 +11,7 @@
 # variable the server reads (docs/guide/01-install-and-first-run.md).
 set -euo pipefail
 
-MIN_NODE_MAJOR=22
+SUPPORTED_NODE_MAJOR=22
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 step() { printf '==> %s\n' "$1"; }
@@ -22,12 +22,12 @@ fail() {
 }
 
 step 'Checking Node.js'
-command -v node >/dev/null 2>&1 || fail "Node.js ${MIN_NODE_MAJOR} or newer is required: https://nodejs.org/"
+command -v node >/dev/null 2>&1 || fail "Node.js ${SUPPORTED_NODE_MAJOR} LTS is required. Select Node ${SUPPORTED_NODE_MAJOR} on PATH: https://nodejs.org/"
 node_version="$(node --version)"
 node_major="${node_version#v}"
 node_major="${node_major%%.*}"
-if [ "${node_major}" -lt "${MIN_NODE_MAJOR}" ]; then
-  fail "Node.js ${node_version} is too old; install ${MIN_NODE_MAJOR} or newer."
+if [ "${node_major}" -ne "${SUPPORTED_NODE_MAJOR}" ]; then
+  fail "Node.js ${node_version} is unsupported; GraphGoblin needs Node ${SUPPORTED_NODE_MAJOR} LTS. Select Node ${SUPPORTED_NODE_MAJOR} on PATH and rerun this script."
 fi
 printf '    Node.js %s\n' "${node_version}"
 

@@ -23,6 +23,8 @@ The Codex plugin assembly tests use a fresh temporary directory per test and ret
 
 The infrastructure HTTP tests use a local server with an unanswered route for timeout checks and destroy all accepted sockets in teardown. They assert `TimeoutError` and use a pre-aborted caller signal to check `AbortError`, avoiding races between response and abort timers. Ordinary probe and webhook requests allow 20 s for machine load; the timeout test also has a 20 s test budget.
 
+Domain adversarial probes run untrusted expressions in disposable native Node processes. Their shared TypeScript source loader uses `node:module.register`, available on the verified Node 22.14 baseline, and requires no prior build. Heap caps, external watchdogs, evaluator deadlines and rejection assertions remain enforced; the loader does not patch the evaluated component.
+
 Historical conversion tests use frozen contracts: the v1-to-v2 stage uses `V2*`, and the v2-to-v3 stage uses `V3*`. Their minimal-loop and thread factories stay pinned to the `12e5b87` capture, independently of current authoring fixtures. Complete parser-result hashes and conversion snapshots remain unchanged when current contracts move. These tests prove historical-stage output, not conversion to format 4; the final offline cutover owns that stage.
 
 `apps/api/src/guide-examples.test.ts` extracts the visible `guide-example` markers in guides 02 and 03, validates their JSON with current contracts, then imports, saves, publishes and executes the loops through Fastify inject over disposable in-memory SQLite and the fake harness. It also exercises the HTTP requests represented by the command examples; it does not launch a shell. Every fenced block is inventoried in a named test. The MCP suite in `apps/mcp/src/mcp.test.ts` also extracts `start-mcp` and starts it by its exact loop name over the SDK transport against the disposable API, with the fake harness. The first-summary graph runs with a scripted fake response; its paid Codex variant is explicitly excluded from provider execution because it needs an installed authenticated provider and consumes usage. Run the check with `pnpm --filter @graphgoblin/api exec vitest run src/guide-examples.test.ts`.
@@ -43,6 +45,8 @@ The owner's chosen strategy for UI quality is heavy evaluation by adversarial QA
 This process complements, and never replaces, the coverage gate.
 
 The first pass (WP-D2, 2026-10-03) drove the built app with Playwright on Microsoft Edge and attacked the API directly; its defects, fixes, and open gaps are in `qa/2026-10-03-wp-d2.md`. Its regressions live in `apps/web/e2e/qa.spec.ts` and `apps/api/src/qa.test.ts`. The E2E server (`apps/web/e2e/server.ts`) has a loopback control port, published to specs as `GG_E2E_CONTROL_URL`, that scripts the fake harness (`POST /harness/script`, with `items` as a count for long streams), toggles decider availability, sets structured responses, reads the model and effort of harness requests, polls timers, and starts extra API instances (`POST /apps` with `requireApiKey`, which also mints a key; `POST /apps/live` with the real adapters). `apps/web/e2e/live.spec.ts` builds, publishes, and runs a one-turn inference loop against Codex through the UI and is skipped unless `LIVE=1`.
+
+Two-tab conflict checks explicitly activate each editor before navigation, wait for its heading and for the existing server/device reconciliation notice to clear, then assert the stored draft and each conflict resolution. These waits synchronize observable state; they are not sleeps or render-speed assertions. The [WP-A2 QA report](qa/2026-10-18-wp-a2-browser-gates.md) records the pre-change modal failure, single activation A/B diagnostic and bounded repeated checks; the historical second-tab failure remains not reproduced, not disproven.
 
 ## CI gates (Decided, in order)
 
@@ -70,6 +74,18 @@ Storage readiness tests distinguish the format baseline from the migration head.
 `pnpm check` also runs `check:tokens` after `check:layers` and `check:contrast` at the end. The token guard checks web source (`.ts`, `.tsx`, `.css`), `index.html`, and `vite.config.ts` for Tailwind palette colour utilities and colour literals in CSS declarations, style/colour properties, and arbitrary colour utilities. CSS named colours are checked only in these colour-setting contexts; prose, identifiers, URLs, and non-colour hex data are permitted. `transparent`, `current`, `currentColor`, and token references are permitted. This static check does not evaluate computed JavaScript values. Tests and `__fixtures__` are skipped. `src/styles/` is the only directory allowlist; there are no inline suppressions. The explicit `CONFIG_EXCEPTIONS` list in the script starts empty and may contain one named, exact palette declaration per config file (a theme-colour meta tag in HTML or a named constant in Vite), never a whole-file or whole-value exemption.
 
 `pnpm docs:contrast` generates `docs/qa/design-contrast.md` from `apps/web/src/styles/tokens.css` and `tooling/scripts/design-contrast.pairs.json`; `check:contrast` rejects a missing/stale table or an enforced pair below 4.5:1 for text or 3:1 for non-text, in either theme. Focus-ring pairs cover every declared surface; decorative pairs are reported without enforcement. The approved palette uses opaque sRGB hex values; unsupported colours fail clearly. Use `--tokens <css>` or `GG_DESIGN_TOKENS` to override the input and `--output <md>` for a temporary test table. Node's built-in runner discovers the tooling unit and CLI fixture tests through the existing `tooling` test commands.
+
+### Dependency-aware task caching (#127)
+
+`transit` has no package script; its recursive `^transit` edges hash direct and transitive workspace sources. `test`, `test:coverage`, `lint` and `typecheck` depend on local `transit`; typecheck retains `^build`. Root `eslint.config.js` and `tsconfig.base.json` are global inputs. This follows [Turbo's transit-node pattern](https://turborepo.com/docs/crafting-your-repository/configuring-tasks#dependent-tasks-that-can-be-run-in-parallel).
+
+A test that reads files outside its package declares them as `$TURBO_ROOT$` inputs alongside `$TURBO_DEFAULT$`. API and MCP guide tests declare their guides; domain conversion tests declare API templates. Tooling tests read the whole repository, so their test and coverage tasks are uncached. Package-specific task definitions restate their transit dependencies and coverage outputs.
+
+Run gates through pnpm: calling `node_modules/.bin/turbo` directly bypasses the runtime check, and Turbo's cache key ignores the running Node version. CI retains coverage `--concurrency=1`; transit adds hash traversal without running dependency suites. Correct dependency invalidation causes more work when inputs change, while unrelated packages retain reuse.
+
+1. Warm a selected cacheable task, then repeat it to confirm a hit.
+2. Change a dependency source or declared external input; repeat the same task and confirm a miss. A covered behavioral regression must fail.
+3. Restore that input, change an unrelated package and confirm the healthy task still hits. Restore the unrelated change.
 
 ## Fixture and SDK drift management (Decided)
 
