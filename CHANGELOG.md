@@ -4,6 +4,9 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- The licence gate parses grouped SPDX expressions with AND/OR/WITH precedence, rejects malformed and guessed metadata with specific reasons, and reports package/version/expression provenance. WITH pairs require exact explicit approval. (#274)
+- Guide 02/03 examples are checked against current contracts and executed through a disposable API with the fake harness, including save/publish/start, replay, events and bounded repetition; paid provider execution is explicitly excluded. (#250)
+
 - Template and expression fields in the node dialog have a collapsed **Earlier node outputs (N)** list: the nodes that can run before this one, each with its reference in the field's syntax, a **Copy** button and a note on what it outputs. It is interim help, not validation, and it is hidden where a field isn't evaluated against the run thread or no earlier node writes an output. (#341)
 
 - Webhook trigger dialogs show the published receiver URL, masked by default, with Reveal/Hide, Copy receiver URL and Retry after a failed load. Signing instructions remain in the guide. (#166 F4)
