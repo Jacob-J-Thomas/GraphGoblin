@@ -8,7 +8,6 @@ import {
   contextLayout,
   isCustomized,
   isOwned,
-  labelOf,
   placementsOf,
   type FormLayout,
   type LayoutItem,
@@ -194,10 +193,14 @@ describe('formLayout', () => {
   });
 
   it('reads labels from titles', () => {
-    expect(labelOf('maxIterations', z.number())).toBe('Max iterations');
-    expect(labelOf('mode', z.string().meta(field('M.', { title: 'Input mode' })))).toBe(
-      'Input mode',
-    );
+    const layout = formLayout({
+      maxIterations: z.number(),
+      mode: z.string().meta(field('M.', { title: 'Input mode' })),
+    });
+    expect(placementsOf(layout.basic).map(({ name, label }) => ({ name, label }))).toEqual([
+      { name: 'maxIterations', label: 'Max iterations' },
+      { name: 'mode', label: 'Input mode' },
+    ]);
   });
 });
 

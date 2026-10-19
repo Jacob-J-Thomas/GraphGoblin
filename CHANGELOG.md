@@ -8,6 +8,10 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 - Arm durable timers only after parking; recover interrupted parks using their original deadlines, defer early deliveries, preserve paused deadlines and protect identical-deadline re-arms from old acknowledgements, fence delayed status acknowledgements to their wait, and queue a committed wake after a lost status response. Past deadlines wake once after restart or resume. (#226)
 - Scope heartbeat signal observations and beat counts to a logical node visit: retain them across beats, retries and restart, reset after completion, and reject signals for an earlier observed park. (#257)
 
+- Replace invasive tests with supported component, transport, storage and disposable process boundaries, and real service-worker update evidence. **Upgrade:** internal test/tool consumers must stop using `hasPath`, `window.graphgoblinPwa`, `ICON_NAMES`, `EMPTY_HISTORY`, `describeRoute`, `routeBackwardEdges`, `labelOf`, and `historyClock`; these test-only/dead seams were removed. (#317)
+
+- Add repeatable sustained-run measurement tooling for cyclic execution, growing context, replay, artifacts, readiness, populated stores, and Edge, with JSON summaries and CPU profiles (#190).
+
 - Recover healthy current-format runs beside damaged history; log HISTORY_UNREADABLE and expose owner-scoped diagnostics for explicit manual repair or deletion without changing damaged data. MCP `list_runs` preserves the server cursor even on pages with no readable runs. **Upgrade:** Check `GET /runs/diagnostics` after upgrading and explicitly repair or delete damaged history. MCP callers must pass `cursor` and read `nextCursor` instead of `before` and `nextBefore`. (#318)
 - Validate generated durable events before persistence, bound terminal failure diagnostics visibly, and fail rejected success events with nonresumable EVENT_INVALID so restart does not repeat uncertain work. **Upgrade:** Check `GET /runs/diagnostics` after upgrading; invalid events written before this fix now surface as `HISTORY_UNREADABLE`. (#223)
 

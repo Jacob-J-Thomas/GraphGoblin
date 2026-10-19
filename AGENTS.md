@@ -21,6 +21,7 @@ Node 22 LTS is the supported runtime for installation, development, gates and bu
 - Every package must keep unit-test coverage above 90% of lines and branches. `pnpm test:coverage` fails otherwise. Do not lower thresholds or add exclusions beyond generated code.
 - `pnpm typecheck` runs `tsc -b tsconfig.build.json && tsc -p tsconfig.json` in every package, so test files and fixtures are type-checked too; fix their types rather than casting to `any`.
 - Tests, lint, and typechecking need no prior build: every workspace package lists a `development` export condition pointing at its TypeScript source, which TypeScript, Vitest, and ESLint resolve. Node at runtime loads `dist/`, so run `pnpm build` before starting an app. A new workspace package must follow the same export-map shape.
+- API subprocess tests build the API first through Turbo's `test` and `test:coverage` task dependencies.
 - Only permissive licences (MIT, Apache-2.0, BSD, ISC). `pnpm check:licenses` enforces the allowlist in `tooling/license-allowlist.json`; add a line to `docs/research/licenses.md` for every new dependency.
 - Relative imports use explicit `.js` extensions (NodeNext). Zod 4: use `.prefault({})` for object defaults whose fields have defaults.
 - Keep docs in sync: a behaviour change updates the relevant numbered doc; a decision change adds an ADR.
