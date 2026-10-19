@@ -1,0 +1,1186 @@
+[
+  {
+    "name": "environment",
+    "status": "info",
+    "detail": {
+      "base": "http://127.0.0.1:53890",
+      "controlUrl": "http://127.0.0.1:53888",
+      "serverPid": 34100,
+      "node": "v22.14.0"
+    }
+  },
+  {
+    "name": "Owner default model and effort inherited for both new models",
+    "status": "pass",
+    "detail": [
+      {
+        "settings": {
+          "defaults": {
+            "byHarness": {
+              "claude": {
+                "model": "claude-sonnet-5-5",
+                "effort": "high"
+              }
+            }
+          }
+        },
+        "request": {
+          "model": "claude-sonnet-5-5",
+          "effort": "high",
+          "harness": "claude",
+          "options": {
+            "sandbox": "read-only",
+            "approval": "never"
+          }
+        },
+        "runId": "01M3Y7RKG0HDPW3SZ0BRXC0S9Q"
+      },
+      {
+        "settings": {
+          "defaults": {
+            "byHarness": {
+              "claude": {
+                "model": "claude-haiku-5-5",
+                "effort": "high"
+              }
+            }
+          }
+        },
+        "request": {
+          "model": "claude-haiku-5-5",
+          "effort": "high",
+          "harness": "claude",
+          "options": {
+            "sandbox": "read-only",
+            "approval": "never"
+          }
+        },
+        "runId": "01M3Y7RKG044DFGZ331EPQSBE6"
+      }
+    ]
+  },
+  {
+    "name": "Export import exact definition round trip both new models",
+    "status": "pass",
+    "detail": [
+      {
+        "exported": {
+          "format": "graphgoblin-loop",
+          "formatVersion": 4,
+          "exportedAt": "2026-10-02T12:00:00.000Z",
+          "loop": {
+            "schemaVersion": 4,
+            "name": "Follow-up claude-sonnet-5-5",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "infer",
+                "label": "Infer",
+                "ui": {
+                  "x": 260,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "claude",
+                  "model": "claude-sonnet-5-5",
+                  "effort": "high",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "Synthetic QA result."
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "read-only",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 520,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e1",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e2",
+                "from": {
+                  "node": "infer",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          }
+        },
+        "imported": {
+          "loop": {
+            "id": "01M3Y7RKG0V6V7Z22MJWPCAC12",
+            "ownerId": "local",
+            "name": "Follow-up claude-sonnet-5-5",
+            "draftVersionId": "01M3Y7RKG0VBZ41N953ZPFQDDD",
+            "createdAt": "2026-10-02T12:00:00.000Z",
+            "updatedAt": "2026-10-02T12:00:00.000Z"
+          },
+          "draft": {
+            "id": "01M3Y7RKG0VBZ41N953ZPFQDDD",
+            "loopId": "01M3Y7RKG0V6V7Z22MJWPCAC12",
+            "version": 1,
+            "status": "draft",
+            "definition": {
+              "schemaVersion": 4,
+              "name": "Follow-up claude-sonnet-5-5",
+              "settings": {
+                "workingDirectory": {
+                  "kind": "temp"
+                },
+                "defaults": {
+                  "byHarness": {}
+                },
+                "maxNodeVisits": 10,
+                "subloopDepthLimit": 8
+              },
+              "variables": {},
+              "nodes": [
+                {
+                  "id": "start",
+                  "label": "Start",
+                  "ui": {
+                    "x": 0,
+                    "y": 80
+                  },
+                  "kind": "trigger",
+                  "config": {
+                    "type": "manual",
+                    "exposeTo": [
+                      "ui",
+                      "api",
+                      "mcp"
+                    ]
+                  }
+                },
+                {
+                  "id": "infer",
+                  "label": "Infer",
+                  "ui": {
+                    "x": 260,
+                    "y": 80
+                  },
+                  "kind": "inference",
+                  "config": {
+                    "harness": "claude",
+                    "model": "claude-sonnet-5-5",
+                    "effort": "high",
+                    "session": {
+                      "policy": "fresh"
+                    },
+                    "prompt": {
+                      "template": "Synthetic QA result."
+                    },
+                    "input": [],
+                    "harnessOptions": {
+                      "sandbox": "read-only",
+                      "approval": "never"
+                    },
+                    "output": {
+                      "captureTranscript": "artifact",
+                      "toMessages": "final",
+                      "transforms": []
+                    }
+                  }
+                },
+                {
+                  "id": "done",
+                  "label": "Done",
+                  "ui": {
+                    "x": 520,
+                    "y": 80
+                  },
+                  "kind": "exit",
+                  "config": {
+                    "outcome": "success",
+                    "returns": "none",
+                    "destinations": [
+                      {
+                        "kind": "caller"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "id": "e1",
+                  "from": {
+                    "node": "start",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "infer",
+                    "port": "in"
+                  }
+                },
+                {
+                  "id": "e2",
+                  "from": {
+                    "node": "infer",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "done",
+                    "port": "in"
+                  }
+                }
+              ]
+            },
+            "createdAt": "2026-10-02T12:00:00.000Z"
+          },
+          "issues": [],
+          "notices": []
+        }
+      },
+      {
+        "exported": {
+          "format": "graphgoblin-loop",
+          "formatVersion": 4,
+          "exportedAt": "2026-10-02T12:00:00.000Z",
+          "loop": {
+            "schemaVersion": 4,
+            "name": "Follow-up claude-haiku-5-5",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "infer",
+                "label": "Infer",
+                "ui": {
+                  "x": 260,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "claude",
+                  "model": "claude-haiku-5-5",
+                  "effort": "high",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "Synthetic QA result."
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "read-only",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 520,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e1",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e2",
+                "from": {
+                  "node": "infer",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          }
+        },
+        "imported": {
+          "loop": {
+            "id": "01M3Y7RKG0HXE4XJRTFQG1JW7C",
+            "ownerId": "local",
+            "name": "Follow-up claude-haiku-5-5",
+            "draftVersionId": "01M3Y7RKG00TP0HF949EX09W4C",
+            "createdAt": "2026-10-02T12:00:00.000Z",
+            "updatedAt": "2026-10-02T12:00:00.000Z"
+          },
+          "draft": {
+            "id": "01M3Y7RKG00TP0HF949EX09W4C",
+            "loopId": "01M3Y7RKG0HXE4XJRTFQG1JW7C",
+            "version": 1,
+            "status": "draft",
+            "definition": {
+              "schemaVersion": 4,
+              "name": "Follow-up claude-haiku-5-5",
+              "settings": {
+                "workingDirectory": {
+                  "kind": "temp"
+                },
+                "defaults": {
+                  "byHarness": {}
+                },
+                "maxNodeVisits": 10,
+                "subloopDepthLimit": 8
+              },
+              "variables": {},
+              "nodes": [
+                {
+                  "id": "start",
+                  "label": "Start",
+                  "ui": {
+                    "x": 0,
+                    "y": 80
+                  },
+                  "kind": "trigger",
+                  "config": {
+                    "type": "manual",
+                    "exposeTo": [
+                      "ui",
+                      "api",
+                      "mcp"
+                    ]
+                  }
+                },
+                {
+                  "id": "infer",
+                  "label": "Infer",
+                  "ui": {
+                    "x": 260,
+                    "y": 80
+                  },
+                  "kind": "inference",
+                  "config": {
+                    "harness": "claude",
+                    "model": "claude-haiku-5-5",
+                    "effort": "high",
+                    "session": {
+                      "policy": "fresh"
+                    },
+                    "prompt": {
+                      "template": "Synthetic QA result."
+                    },
+                    "input": [],
+                    "harnessOptions": {
+                      "sandbox": "read-only",
+                      "approval": "never"
+                    },
+                    "output": {
+                      "captureTranscript": "artifact",
+                      "toMessages": "final",
+                      "transforms": []
+                    }
+                  }
+                },
+                {
+                  "id": "done",
+                  "label": "Done",
+                  "ui": {
+                    "x": 520,
+                    "y": 80
+                  },
+                  "kind": "exit",
+                  "config": {
+                    "outcome": "success",
+                    "returns": "none",
+                    "destinations": [
+                      {
+                        "kind": "caller"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "id": "e1",
+                  "from": {
+                    "node": "start",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "infer",
+                    "port": "in"
+                  }
+                },
+                {
+                  "id": "e2",
+                  "from": {
+                    "node": "infer",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "done",
+                    "port": "in"
+                  }
+                }
+              ]
+            },
+            "createdAt": "2026-10-02T12:00:00.000Z"
+          },
+          "issues": [],
+          "notices": []
+        }
+      }
+    ]
+  },
+  {
+    "name": "MCP new-model describe/start and disabled failure without fake request",
+    "status": "pass",
+    "detail": {
+      "observed": [
+        {
+          "model": "claude-sonnet-5-5",
+          "described": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\n  \"loop\": {\n    \"id\": \"01M3Y7RKG0RV5DAVWTDY4XZE3V\",\n    \"name\": \"Follow-up claude-sonnet-5-5\",\n    \"published\": true,\n    \"hasDraft\": false,\n    \"updatedAt\": \"2026-10-02T12:00:00.000Z\"\n  },\n  \"version\": {\n    \"id\": \"01M3Y7RKG0J8GZFMY50YZYWGF1\",\n    \"number\": 1,\n    \"status\": \"published\",\n    \"publishedAt\": \"2026-10-02T12:00:00.000Z\"\n  },\n  \"name\": \"Follow-up claude-sonnet-5-5\",\n  \"nodeCount\": 3,\n  \"nodeKinds\": [\n    \"trigger\",\n    \"inference\",\n    \"exit\"\n  ],\n  \"variables\": {},\n  \"triggers\": [\n    {\n      \"nodeId\": \"start\",\n      \"label\": \"Start\",\n      \"type\": \"manual\",\n      \"startableFromMcp\": true\n    }\n  ],\n  \"decisions\": [],\n  \"inputWaits\": [],\n  \"exits\": [\n    {\n      \"nodeId\": \"done\",\n      \"label\": \"Done\",\n      \"outcome\": \"success\",\n      \"returns\": \"none\",\n      \"destinations\": [\n        \"caller\"\n      ]\n    }\n  ]\n}"
+              }
+            ],
+            "structuredContent": {
+              "loop": {
+                "id": "01M3Y7RKG0RV5DAVWTDY4XZE3V",
+                "name": "Follow-up claude-sonnet-5-5",
+                "published": true,
+                "hasDraft": false,
+                "updatedAt": "2026-10-02T12:00:00.000Z"
+              },
+              "version": {
+                "id": "01M3Y7RKG0J8GZFMY50YZYWGF1",
+                "number": 1,
+                "status": "published",
+                "publishedAt": "2026-10-02T12:00:00.000Z"
+              },
+              "name": "Follow-up claude-sonnet-5-5",
+              "nodeCount": 3,
+              "nodeKinds": [
+                "trigger",
+                "inference",
+                "exit"
+              ],
+              "variables": {},
+              "triggers": [
+                {
+                  "nodeId": "start",
+                  "label": "Start",
+                  "type": "manual",
+                  "startableFromMcp": true
+                }
+              ],
+              "decisions": [],
+              "inputWaits": [],
+              "exits": [
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    "caller"
+                  ]
+                }
+              ]
+            }
+          },
+          "start": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\n  \"runId\": \"01M3Y7RKG049QPDM58TNVD3YV2\",\n  \"loopId\": \"01M3Y7RKG0RV5DAVWTDY4XZE3V\",\n  \"versionId\": \"01M3Y7RKG0J8GZFMY50YZYWGF1\",\n  \"status\": \"queued\",\n  \"next\": \"Call wait_for_run with this runId to wait for the result.\"\n}"
+              }
+            ],
+            "structuredContent": {
+              "runId": "01M3Y7RKG049QPDM58TNVD3YV2",
+              "loopId": "01M3Y7RKG0RV5DAVWTDY4XZE3V",
+              "versionId": "01M3Y7RKG0J8GZFMY50YZYWGF1",
+              "status": "queued",
+              "next": "Call wait_for_run with this runId to wait for the result."
+            }
+          },
+          "request": {
+            "model": "claude-sonnet-5-5",
+            "effort": "high",
+            "harness": "claude",
+            "options": {
+              "sandbox": "read-only",
+              "approval": "never"
+            }
+          }
+        },
+        {
+          "model": "claude-haiku-5-5",
+          "described": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\n  \"loop\": {\n    \"id\": \"01M3Y7RKG02A550R302P0V53DE\",\n    \"name\": \"Follow-up claude-haiku-5-5\",\n    \"published\": true,\n    \"hasDraft\": false,\n    \"updatedAt\": \"2026-10-02T12:00:00.000Z\"\n  },\n  \"version\": {\n    \"id\": \"01M3Y7RKG098242W7P1A881N65\",\n    \"number\": 1,\n    \"status\": \"published\",\n    \"publishedAt\": \"2026-10-02T12:00:00.000Z\"\n  },\n  \"name\": \"Follow-up claude-haiku-5-5\",\n  \"nodeCount\": 3,\n  \"nodeKinds\": [\n    \"trigger\",\n    \"inference\",\n    \"exit\"\n  ],\n  \"variables\": {},\n  \"triggers\": [\n    {\n      \"nodeId\": \"start\",\n      \"label\": \"Start\",\n      \"type\": \"manual\",\n      \"startableFromMcp\": true\n    }\n  ],\n  \"decisions\": [],\n  \"inputWaits\": [],\n  \"exits\": [\n    {\n      \"nodeId\": \"done\",\n      \"label\": \"Done\",\n      \"outcome\": \"success\",\n      \"returns\": \"none\",\n      \"destinations\": [\n        \"caller\"\n      ]\n    }\n  ]\n}"
+              }
+            ],
+            "structuredContent": {
+              "loop": {
+                "id": "01M3Y7RKG02A550R302P0V53DE",
+                "name": "Follow-up claude-haiku-5-5",
+                "published": true,
+                "hasDraft": false,
+                "updatedAt": "2026-10-02T12:00:00.000Z"
+              },
+              "version": {
+                "id": "01M3Y7RKG098242W7P1A881N65",
+                "number": 1,
+                "status": "published",
+                "publishedAt": "2026-10-02T12:00:00.000Z"
+              },
+              "name": "Follow-up claude-haiku-5-5",
+              "nodeCount": 3,
+              "nodeKinds": [
+                "trigger",
+                "inference",
+                "exit"
+              ],
+              "variables": {},
+              "triggers": [
+                {
+                  "nodeId": "start",
+                  "label": "Start",
+                  "type": "manual",
+                  "startableFromMcp": true
+                }
+              ],
+              "decisions": [],
+              "inputWaits": [],
+              "exits": [
+                {
+                  "nodeId": "done",
+                  "label": "Done",
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    "caller"
+                  ]
+                }
+              ]
+            }
+          },
+          "start": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\n  \"runId\": \"01M3Y7RKG00702QC2QKAAB8DSC\",\n  \"loopId\": \"01M3Y7RKG02A550R302P0V53DE\",\n  \"versionId\": \"01M3Y7RKG098242W7P1A881N65\",\n  \"status\": \"queued\",\n  \"next\": \"Call wait_for_run with this runId to wait for the result.\"\n}"
+              }
+            ],
+            "structuredContent": {
+              "runId": "01M3Y7RKG00702QC2QKAAB8DSC",
+              "loopId": "01M3Y7RKG02A550R302P0V53DE",
+              "versionId": "01M3Y7RKG098242W7P1A881N65",
+              "status": "queued",
+              "next": "Call wait_for_run with this runId to wait for the result."
+            }
+          },
+          "request": {
+            "model": "claude-haiku-5-5",
+            "effort": "high",
+            "harness": "claude",
+            "options": {
+              "sandbox": "read-only",
+              "approval": "never"
+            }
+          }
+        }
+      ],
+      "missing": {
+        "content": [
+          {
+            "type": "text",
+            "text": "LOOP_NOT_FOUND: no loop has the id or name \"qa-no-such-loop\"; call list_loops to see the available loops"
+          }
+        ],
+        "isError": true
+      },
+      "disabled": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"runId\": \"01M3Y7RKG0XCBGSA2DPRKMJAV5\",\n  \"loopId\": \"01M3Y7RKG02A550R302P0V53DE\",\n  \"versionId\": \"01M3Y7RKG098242W7P1A881N65\",\n  \"status\": \"queued\",\n  \"next\": \"Call wait_for_run with this runId to wait for the result.\"\n}"
+          }
+        ],
+        "structuredContent": {
+          "runId": "01M3Y7RKG0XCBGSA2DPRKMJAV5",
+          "loopId": "01M3Y7RKG02A550R302P0V53DE",
+          "versionId": "01M3Y7RKG098242W7P1A881N65",
+          "status": "queued",
+          "next": "Call wait_for_run with this runId to wait for the result."
+        }
+      },
+      "blocked": {
+        "id": "01M3Y7RKG0XCBGSA2DPRKMJAV5",
+        "ownerId": "local",
+        "loopId": "01M3Y7RKG02A550R302P0V53DE",
+        "versionId": "01M3Y7RKG098242W7P1A881N65",
+        "invocationId": "01M3Y7RKG01NZMJ1TFGH4S76A6",
+        "status": "failed",
+        "currentNodeId": "infer",
+        "iteration": 1,
+        "failure": {
+          "code": "EVALUATION_UNAVAILABLE",
+          "message": "The selected model is disabled",
+          "nodeId": "infer",
+          "resumable": true,
+          "details": {
+            "code": "MODEL_DISABLED",
+            "path": "model"
+          }
+        },
+        "createdAt": "2026-10-02T12:00:00.000Z",
+        "startedAt": "2026-10-02T12:00:00.000Z",
+        "finishedAt": "2026-10-02T12:00:00.000Z",
+        "lastEventSeq": 6
+      },
+      "requestCount": 4
+    }
+  },
+  {
+    "name": "Rapid UI toggle serialized and disabled picker publication/run refusal",
+    "status": "pass",
+    "detail": {
+      "rapidFinalState": true,
+      "patches": [
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200,
+        200
+      ],
+      "disabledDraft": {
+        "status": 201,
+        "data": {
+          "loop": {
+            "id": "01M3Y7RKG0V3D86FJ0T1B5Y9KS",
+            "ownerId": "local",
+            "name": "Disabled authored",
+            "draftVersionId": "01M3Y7RKG0NDQA6RNHZEB6SE67",
+            "createdAt": "2026-10-02T12:00:00.000Z",
+            "updatedAt": "2026-10-02T12:00:00.000Z"
+          },
+          "draft": {
+            "id": "01M3Y7RKG0NDQA6RNHZEB6SE67",
+            "loopId": "01M3Y7RKG0V3D86FJ0T1B5Y9KS",
+            "version": 1,
+            "status": "draft",
+            "definition": {
+              "schemaVersion": 4,
+              "name": "Disabled authored",
+              "settings": {
+                "workingDirectory": {
+                  "kind": "temp"
+                },
+                "defaults": {
+                  "byHarness": {}
+                },
+                "maxNodeVisits": 10,
+                "subloopDepthLimit": 8
+              },
+              "variables": {},
+              "nodes": [
+                {
+                  "id": "start",
+                  "label": "Start",
+                  "ui": {
+                    "x": 0,
+                    "y": 80
+                  },
+                  "kind": "trigger",
+                  "config": {
+                    "type": "manual",
+                    "exposeTo": [
+                      "ui",
+                      "api",
+                      "mcp"
+                    ]
+                  }
+                },
+                {
+                  "id": "infer",
+                  "label": "Infer",
+                  "ui": {
+                    "x": 260,
+                    "y": 80
+                  },
+                  "kind": "inference",
+                  "config": {
+                    "harness": "claude",
+                    "model": "claude-haiku-5-5",
+                    "effort": "high",
+                    "session": {
+                      "policy": "fresh"
+                    },
+                    "prompt": {
+                      "template": "Synthetic QA result."
+                    },
+                    "input": [],
+                    "harnessOptions": {
+                      "sandbox": "read-only",
+                      "approval": "never"
+                    },
+                    "output": {
+                      "captureTranscript": "artifact",
+                      "toMessages": "final",
+                      "transforms": []
+                    }
+                  }
+                },
+                {
+                  "id": "done",
+                  "label": "Done",
+                  "ui": {
+                    "x": 520,
+                    "y": 80
+                  },
+                  "kind": "exit",
+                  "config": {
+                    "outcome": "success",
+                    "returns": "none",
+                    "destinations": [
+                      {
+                        "kind": "caller"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "id": "e1",
+                  "from": {
+                    "node": "start",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "infer",
+                    "port": "in"
+                  }
+                },
+                {
+                  "id": "e2",
+                  "from": {
+                    "node": "infer",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "done",
+                    "port": "in"
+                  }
+                }
+              ]
+            },
+            "createdAt": "2026-10-02T12:00:00.000Z"
+          },
+          "issues": [
+            {
+              "code": "MODEL_DISABLED",
+              "severity": "warning",
+              "message": "The selected model is disabled",
+              "nodeId": "infer",
+              "path": "config.model"
+            }
+          ]
+        }
+      },
+      "publish": {
+        "status": 422,
+        "data": {
+          "type": "https://graphgoblin.dev/problems/loop-invalid",
+          "title": "loop invalid",
+          "status": 422,
+          "code": "LOOP_INVALID",
+          "detail": "the draft has structural errors",
+          "errors": [
+            {
+              "code": "MODEL_DISABLED",
+              "severity": "warning",
+              "nodeId": "infer",
+              "path": "config.model",
+              "message": "The selected model is disabled"
+            }
+          ]
+        }
+      },
+      "restored": true
+    }
+  },
+  {
+    "name": "Stale same-context browser tabs model edits conflict without overwrite",
+    "status": "fail",
+    "error": "Error: expect(locator).toContainText(expected) failed\n\nLocator: getByTestId('save-state')\nExpected substring: \"All changes saved\"\nReceived string:    \"Saving…\"\nTimeout: 5000ms\n\nCall log:\n  - Expect \"toContainText\" getByTestId('save-state') with timeout 5000ms\n  - waiting for getByTestId('save-state')\n    3 × locator resolved to <span data-testid=\"save-state\" class=\"inline-flex items-center gap-1.5 rounded-sm text-sm text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus\">Unsaved changes</span>\n      - unexpected value \"Unsaved changes\"\n    2 × locator resolved to <span data-testid=\"save-state\" class=\"inline-flex items-center gap-1.5 rounded-sm text-sm text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus\">Saving…</span>\n      - unexpected value \"Saving…\"\n\n    at captureRawStack (C:\\Users\\98jak\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-f2a\\node_modules\\.pnpm\\playwright-core@1.63.0\\node_modules\\playwright-core\\lib\\coreBundle.js:8588:17)\n    at callMatcherAsStep (C:\\Users\\98jak\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-f2a\\node_modules\\.pnpm\\playwright@1.63.0\\node_modules\\playwright\\lib\\matchers\\expect.js:13310:57)\n    at Object.toContainText (C:\\Users\\98jak\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-f2a\\node_modules\\.pnpm\\playwright@1.63.0\\node_modules\\playwright\\lib\\matchers\\expect.js:13302:23)\n    at C:\\Users\\98jak\\AppData\\Local\\Temp\\wp-f2a-followup.mjs:117:209\n    at async check (C:\\Users\\98jak\\AppData\\Local\\Temp\\wp-f2a-followup.mjs:23:24)\n    at async file:///C:/Users/98jak/AppData/Local/Temp/wp-f2a-followup.mjs:115:3"
+  },
+  {
+    "name": "390px controls fit and keyboard selects model and effort",
+    "status": "pass",
+    "detail": {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "bounds": [
+        {
+          "x": 37,
+          "y": 742.5625,
+          "width": 316,
+          "height": 36
+        },
+        {
+          "x": 37,
+          "y": 442.828125,
+          "width": 316,
+          "height": 36
+        }
+      ],
+      "tabOrder": [
+        {
+          "tag": "SELECT",
+          "text": "(loop default)Claude Fable 5.1 (claude-fable-5-1)Claude Haiku 5.5 (claude-haiku-5-5)Claude Opus 5.5 (claude-opus-5-5)Cla",
+          "id": "_r_k_"
+        },
+        {
+          "tag": "A",
+          "text": "Model catalog in Settings",
+          "id": ""
+        },
+        {
+          "tag": "SELECT",
+          "text": "(inherited; the catalog suggests high)lowmediumhighxhighmax",
+          "id": "_r_m_"
+        }
+      ],
+      "saved": {
+        "harness": "claude",
+        "model": "claude-sonnet-5-5",
+        "effort": "max",
+        "session": {
+          "policy": "fresh"
+        },
+        "prompt": {
+          "template": "Synthetic QA result."
+        },
+        "input": [],
+        "harnessOptions": {
+          "sandbox": "read-only",
+          "approval": "never"
+        },
+        "output": {
+          "captureTranscript": "artifact",
+          "toMessages": "final",
+          "transforms": []
+        }
+      }
+    }
+  },
+  {
+    "name": "Real built API process restart preserves Settings Haiku disable and owner defaults",
+    "status": "pass",
+    "detail": {
+      "dataDir": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-wp-f2a-restart-buXWv5",
+      "port": 5600,
+      "pids": [
+        37264,
+        52656
+      ],
+      "exit1": {
+        "pid": 37264,
+        "code": null,
+        "signal": "SIGTERM"
+      },
+      "before": [
+        {
+          "harness": "claude",
+          "model": "claude-fable-5-1",
+          "source": "harness",
+          "displayName": "Claude Fable 5.1",
+          "efforts": [
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ],
+          "defaultEffort": "high",
+          "enabled": true
+        },
+        {
+          "harness": "claude",
+          "model": "claude-haiku-5-5",
+          "source": "harness",
+          "displayName": "Claude Haiku 5.5",
+          "efforts": [
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ],
+          "defaultEffort": "high",
+          "enabled": false
+        },
+        {
+          "harness": "claude",
+          "model": "claude-opus-5-5",
+          "source": "harness",
+          "displayName": "Claude Opus 5.5",
+          "efforts": [
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ],
+          "defaultEffort": "high",
+          "enabled": true
+        },
+        {
+          "harness": "claude",
+          "model": "claude-sonnet-5-5",
+          "source": "harness",
+          "displayName": "Claude Sonnet 5.5",
+          "efforts": [
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ],
+          "defaultEffort": "high",
+          "enabled": true
+        }
+      ],
+      "after": [
+        {
+          "harness": "claude",
+          "model": "claude-fable-5-1",
+          "source": "harness",
+          "displayName": "Claude Fable 5.1",
+          "efforts": [
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ],
+          "defaultEffort": "high",
+          "enabled": true
+        },
+        {
+          "harness": "claude",
+          "model": "claude-haiku-5-5",
+          "source": "harness",
+          "displayName": "Claude Haiku 5.5",
+          "efforts": [
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ],
+          "defaultEffort": "high",
+          "enabled": false
+        },
+        {
+          "harness": "claude",
+          "model": "claude-opus-5-5",
+          "source": "harness",
+          "displayName": "Claude Opus 5.5",
+          "efforts": [
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ],
+          "defaultEffort": "high",
+          "enabled": true
+        },
+        {
+          "harness": "claude",
+          "model": "claude-sonnet-5-5",
+          "source": "harness",
+          "displayName": "Claude Sonnet 5.5",
+          "efforts": [
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ],
+          "defaultEffort": "high",
+          "enabled": true
+        }
+      ],
+      "persisted": {
+        "defaults": {
+          "byHarness": {
+            "claude": {
+              "model": "claude-sonnet-5-5",
+              "effort": "max"
+            }
+          }
+        }
+      },
+      "publish": {
+        "status": 422,
+        "data": {
+          "type": "https://graphgoblin.dev/problems/loop-invalid",
+          "title": "loop invalid",
+          "status": 422,
+          "code": "LOOP_INVALID",
+          "detail": "the draft has structural errors",
+          "errors": [
+            {
+              "code": "MODEL_DISABLED",
+              "severity": "warning",
+              "nodeId": "infer",
+              "path": "config.model",
+              "message": "The selected model is disabled"
+            }
+          ]
+        }
+      },
+      "restored": {
+        "harness": "claude",
+        "model": "claude-haiku-5-5",
+        "source": "harness",
+        "displayName": "Claude Haiku 5.5",
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "defaultEffort": "high",
+        "enabled": true
+      },
+      "providerBinaries": "explicit nonexistent paths; no provider CLI invoked"
+    }
+  }
+]
