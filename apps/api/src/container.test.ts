@@ -1,5 +1,5 @@
 import { LoopDefinitionSchema, type RunRecord } from '@graphgoblin/contracts';
-import { minimalLoop, FIXTURE_IDS, FIXTURE_TS } from '@graphgoblin/contracts/testing';
+import { minimalLoop, samplePin, FIXTURE_IDS, FIXTURE_TS } from '@graphgoblin/contracts/testing';
 import { access, mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -82,11 +82,18 @@ async function queueRecoveryWork(container: Container) {
   );
   const version = await container.repos.loops.publish(loop.id);
   if (!version) throw new Error('expected published fixture');
+  // Pinned as a start would pin it (ADR-0041): the published version, no defaults or classifiers.
+  const pinned = samplePin({
+    version: version.version,
+    name: version.definition.name,
+    label: `${version.definition.name} v${version.version}`,
+  });
   const run: RunRecord = {
     id: FIXTURE_IDS.run,
     ownerId: LOCAL_OWNER,
     loopId: loop.id,
     versionId: version.id,
+    pinned,
     invocationId: FIXTURE_IDS.invocation,
     status: 'queued',
     iteration: 1,
@@ -113,7 +120,13 @@ async function queueRecoveryWork(container: Container) {
     run,
     initialThread,
     pinnedLoopIds: [loop.id],
-    queued: { type: 'run.queued', initialThread, subloopVersions: {} },
+    queued: {
+      type: 'run.queued',
+      versionId: version.id,
+      pinned,
+      initialThread,
+      subloopVersions: {},
+    },
   });
 }
 
