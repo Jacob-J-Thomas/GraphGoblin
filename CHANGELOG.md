@@ -4,6 +4,12 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- **Upgrade:** run the local instance, installation, builds and development gates under Node 22 LTS (22.x). Select Node 22 on PATH before updating or starting GraphGoblin; version-manager, CI, engine, installer and preflight declarations now agree. API consumers use `SUPPORTED_NODE_MAJOR` in place of `MIN_NODE_MAJOR`. (#263)
+
+- Workspace test, coverage, typecheck and lint caches now include direct and transitive dependency sources through Turbo transit tasks while retaining unrelated-package cache reuse. (#127)
+
+- Reconfirmed the remaining moderate esbuild development-server advisory in Drizzle Kit's legacy development loader. The installed stable parent is current; its esbuild range has no compatible patched release. The finding remains unresolved, with dependency paths and production-only audit evidence recorded in the WP-A1 report. (#114)
+
 - Template and expression fields in the node dialog have a collapsed **Earlier node outputs (N)** list: the nodes that can run before this one, each with its reference in the field's syntax, a **Copy** button and a note on what it outputs. It is interim help, not validation, and it is hidden where a field isn't evaluated against the run thread or no earlier node writes an output. (#341)
 
 - Webhook trigger dialogs show the published receiver URL, masked by default, with Reveal/Hide, Copy receiver URL and Retry after a failed load. Signing instructions remain in the guide. (#166 F4)

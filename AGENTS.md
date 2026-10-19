@@ -14,7 +14,7 @@ GraphGoblin is a pnpm + Turborepo monorepo in TypeScript. Read `docs/README.md` 
 
 Layer rules are enforced by `pnpm check:layers` (declared workspace dependencies) and `pnpm check:deps` (dependency-cruiser). Reach other packages only through their `@graphgoblin/*` entry points.
 
-dependency-cruiser 18 refuses Node 23. Where the default Node is 23, run `check:deps` with the nvm Node 22 binary without switching versions: `& "$env:APPDATA\nvm\v22.14.0\node.exe" node_modules/dependency-cruiser/bin/dependency-cruiser.mjs packages apps --config .dependency-cruiser.cjs` (PowerShell; from Git Bash use `"$APPDATA/nvm/v22.14.0/node.exe"`).
+Node 22 LTS is the supported runtime for installation, development, gates and built apps; other majors are unsupported. Select it for the whole shell before running commands: `$env:PATH = "$env:APPDATA\nvm\v22.14.0;$env:PATH"` in PowerShell, or `export PATH="$APPDATA/nvm/v22.14.0:$PATH"` in Git Bash on this Windows host. Confirm `node --version` reports `v22.x`. `.nvmrc`, CI and the container use this major; root `engines.node` and `pnpm-workspace.yaml`'s `engineStrict: true` refuse unsupported installations. See ADR-0040 for the decision and verification.
 
 ## Rules
 

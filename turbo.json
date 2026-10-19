@@ -6,12 +6,20 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]
     },
-    "typecheck": {
-      "dependsOn": ["^build"]
+    "transit": {
+      "dependsOn": ["^transit"]
     },
-    "lint": {},
-    "test": {},
+    "typecheck": {
+      "dependsOn": ["^build", "transit"]
+    },
+    "lint": {
+      "dependsOn": ["transit"]
+    },
+    "test": {
+      "dependsOn": ["transit"]
+    },
     "test:coverage": {
+      "dependsOn": ["transit"],
       "outputs": ["coverage/**"]
     },
     "@graphgoblin/tooling#test:coverage": {
