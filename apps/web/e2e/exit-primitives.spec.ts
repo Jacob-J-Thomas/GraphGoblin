@@ -186,5 +186,111 @@ for (const finalChoice of ['repeat', 'done'] as const) {
         .locator('xpath=following-sibling::dd[1]'),
     ).toContainText(finalChoice === 'repeat' ? 'Maximum passes' : 'None');
     await expect(page.getByTestId('run-result')).toContainText('synthetic work');
+    // Where a loop-back exit said "iteration 3 of 3", the run's top keeps the last gate's pass and
+    // stopping limit beside the exit outcome; a returned value needs no configuration note (#129).
+    await expect(
+      page.getByText(
+        finalChoice === 'repeat'
+          ? 'Last gate decision: gate chose repeat on pass 3 of 3; maximum passes stopped the repeat, so it took Limit reached.'
+          : 'Last gate decision: gate chose done on pass 3 of 3.',
+        { exact: true },
+      ),
+    ).toBeVisible();
+    await expect(page.getByTestId('exit-returns')).toHaveCount(0);
+  });
+}
+
+/**
+ * Exits that return nothing (#129, #258): while Returns is None, destinations receive nothing,
+ * and an exit without destinations is a valid quiet exit. The editor says so before publishing,
+ * and the finished run says it returned nothing by configuration, not by failure.
+ */
+for (const shape of ['suppressed', 'quiet'] as const) {
+  test(`an exit that returns None is understandable: ${shape}`, async ({ page, request }) => {
+    const instance = await control(request, '/apps');
+    const url = String(instance['url']);
+    const definition: LoopDefinitionInput = {
+      schemaVersion: CURRENT_DEFINITION_FORMAT,
+      name: `Returns none ${shape}`,
+      nodes: [
+        {
+          id: 'start',
+          kind: 'trigger',
+          label: 'Start',
+          config: { type: 'manual' },
+          ui: { x: 0, y: 80 },
+        },
+        {
+          id: 'done',
+          kind: 'exit',
+          label: 'Done',
+          config: { returns: 'none', destinations: [{ kind: 'caller' }, { kind: 'log' }] },
+          ui: { x: 300, y: 80 },
+        },
+      ],
+      edges: [{ id: 'start-done', from: { node: 'start', port: 'out' }, to: { node: 'done' } }],
+    };
+    const created = await request.post(url + '/loops', { data: { definition } });
+    expect(created.status()).toBe(201);
+    const { loop } = (await created.json()) as { loop: { id: string } };
+    await page.goto(url + '/app/loops/' + loop.id + '/edit');
+    const dialog = await openNode(page, 'done');
+    await expect(
+      dialog.getByText(
+        'No returned value. The run finishes without a result, and destinations receive nothing.',
+      ),
+    ).toBeVisible();
+    const destinations = dialog.getByRole('group', { name: 'Destinations', exact: true });
+    await expect(destinations).toHaveAccessibleDescription(
+      'Returns is None, so these 2 destinations receive nothing. Choose a JSONata expression to deliver a value, or remove destinations for a quiet exit.',
+    );
+    if (shape === 'quiet') {
+      for (const row of [2, 1])
+        await destinations
+          .getByRole('button', { name: `Remove destinations ${row}`, exact: true })
+          .click();
+      await expect(destinations).toHaveAccessibleDescription(
+        'Quiet exit: nothing is returned or delivered. The run still finishes with its outcome.',
+      );
+    }
+    await closeNode(page);
+    await expect(page.getByText('Ready to publish')).toBeVisible();
+    await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
+    await page.getByRole('button', { name: 'Publish', exact: true }).click();
+    await expect(page.getByText('Published version 1.')).toBeVisible();
+
+    const started = await request.post(url + '/loops/' + loop.id + '/runs', {
+      data: { input: {} },
+    });
+    expect(started.status()).toBe(202);
+    const runId = RunRecordSchema.parse(((await started.json()) as { run: unknown }).run).id;
+    await expect
+      .poll(
+        async () =>
+          RunRecordSchema.parse(await (await request.get(url + '/runs/' + runId)).json()).status,
+      )
+      .toBe('succeeded');
+    const run = RunRecordSchema.parse(await (await request.get(url + '/runs/' + runId)).json());
+    expect(run.result).toBeUndefined();
+    const events = RunEventSchema.array().parse(
+      (
+        (await (await request.get(url + '/runs/' + runId + '/events')).json()) as {
+          items: unknown[];
+        }
+      ).items,
+    );
+    expect(events.filter((e) => e.type.startsWith('return.'))).toEqual([]);
+
+    await page.goto(url + '/app/runs/' + runId);
+    const reason =
+      shape === 'quiet'
+        ? 'Quiet exit: Returns is None and there are no destinations, so nothing was returned or delivered. This is the exit’s configuration, not a failure.'
+        : 'No value was returned: Returns is None, so no destination received anything (caller, log from the exit). This is the exit’s configuration, not a failure.';
+    await expect(page.getByTestId('exit-returns')).toHaveText(reason);
+    await expect(page.getByTestId('run-result')).toHaveCount(0);
+    await page.getByRole('list', { name: 'Timeline' }).getByText('exit.evaluated').click();
+    await expect(page.getByText(/^Exit outcome:/)).toHaveText(
+      `Exit outcome: success. This exit is terminal. ${reason}`,
+    );
   });
 }
