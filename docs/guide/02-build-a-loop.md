@@ -25,6 +25,8 @@ For Answer JSON, retained route IDs keep their connections through reordering or
 
 The editor lives at this browser route:
 
+<!-- guide-example: editor-url -->
+
 ```text
 /app/loops/<loop-id>/edit
 ```
@@ -106,6 +108,8 @@ Fix errors before publishing: missing trigger or exit, unconnected or doubly con
 
 For a repository workspace, use an absolute path. For a temporary workspace, use:
 
+<!-- guide-example: temp-settings -->
+
 ```json
 {
   "workingDirectory": { "kind": "temp" },
@@ -133,6 +137,8 @@ Use Left/Right, Home and End on the tabs; Tab leaves the tablist for the selecte
 
 Click **Publish** to save the draft and freeze a numbered version. Runs pin a version; later edits and publications do not change runs already started. Publishing also arms automatic triggers for the new version. The editor shows the current published version; the API exposes version history:
 
+<!-- guide-example: version-requests -->
+
 ```http
 GET /loops/{id}/versions
 GET /loops/{id}/versions/{versionId}
@@ -140,19 +146,33 @@ GET /loops/{id}/versions/{versionId}
 
 Use **Export** on the Loops page to download JSON. It exports the published definition when one exists, otherwise the draft. To export unpublished changes explicitly, request:
 
+<!-- guide-example: export-request -->
+
 ```http
 GET /loops/{id}/export?draft=true
 ```
 
 Each Loops row groups **Edit**, **Export**, and **Delete** as buttons; Edit opens the editor. Export shows **Exporting…** while pending, keeps keyboard focus, and accepts one request at a time. Delete opens a confirmation naming the loop: the loop, all its versions, triggers and runs are deleted, including run history and artifact references (the run count is shown when the listing is complete), and loops using it as a subloop can no longer start it. Cancel queued, running, waiting or paused runs first. Shared artifact files remain on disk. This cannot be undone. Choose **Keep** or press Escape to cancel while idle, or **Confirm delete** to remove it. A 409 `LOOP_IN_USE` keeps the API's reason visible in the confirmation until you dismiss it or retry. Confirmation and Keep are disabled while the request is pending; repeated Escape presses cannot dismiss it.
 
-Use the Loops page's file picker, or `POST /loops/import`, to import an export envelope or a bare definition. Import always creates a new loop with a draft, even if the name matches an existing loop. To update an existing loop, save its draft through the editor or API:
+Use the Loops page's file picker, or `POST /loops/import`, to import an export envelope or a bare definition.
+
+<!-- guide-example: import-request -->
+
+```http
+POST /loops/import
+```
+
+Import always creates a new loop with a draft, even if the name matches an existing loop. To update an existing loop, save its draft through the editor or API:
+
+<!-- guide-example: draft-request -->
 
 ```http
 PUT /loops/{id}/draft
 ```
 
 The body wraps your definition:
+
+<!-- guide-example: draft-body -->
 
 ```json
 {
@@ -174,9 +194,19 @@ The body wraps your definition:
 }
 ```
 
+After saving the draft, publish it with this bodyless request. Omit `Content-Type` when there is no body:
+
+<!-- guide-example: publish-request -->
+
+```http
+POST /loops/{id}/publish
+```
+
 ## Import a complete first loop
 
-Save this bare definition as a JSON file and import it. It follows the contracts' minimal trigger-to-exit fixture with an inference node inserted, and uses the fields and defaults of `LoopDefinitionSchema`. Publish it, select **Open in Runs**, and supply a topic. Replace the model if your Codex account uses another ID.
+Save this bare definition as a JSON file and import it. It follows the contracts' minimal trigger-to-exit fixture with an inference node inserted, and uses the fields and defaults of `LoopDefinitionSchema`. Publish it, select **Open in Runs**, and supply a topic. Replace the model if your Codex account uses another ID. Running it uses your authenticated Codex account and consumes usage.
+
+<!-- guide-example: first-summary -->
 
 ```json
 {
@@ -259,6 +289,81 @@ Passes are one-based, available to JSONata as `gates.<nodeId>.passes` (quote an 
 Maximum run time is elapsed wall time from `run.startedAt` (falling back to `createdAt`), including waits, pauses and recovery downtime. It is checked after evaluation and only on a repeat choice; it does not interrupt running work or override a finishing choice. A replay fork keeps the checkpoint's passes and starts its own run clock.
 
 Use **Outcome: Exhausted** on the exit connected to Limit reached. A normal Done route can lead to Success or Failure. The inspector keeps the evaluator's choice, actual port and pass count together.
+
+Save and import this complete deterministic example as `bounded-repeat.json`, then publish it and send `{ "triggerNodeId": "start", "input": {} }` as the JSON request body to `POST /loops/{id}/runs`. It appends a note on each of three passes, always requests another pass, then takes `limit-reached`. The documented result is status `exhausted`, outcome `exhausted`, and result `{ "passes": 3 }`. It needs no provider.
+
+<!-- guide-example: bounded-repeat -->
+
+```json
+{
+  "schemaVersion": 4,
+  "name": "bounded-repeat",
+  "settings": { "workingDirectory": { "kind": "temp" } },
+  "nodes": [
+    { "id": "start", "kind": "trigger", "label": "Start", "config": { "type": "manual" } },
+    {
+      "id": "work",
+      "kind": "mutate",
+      "label": "Record pass",
+      "config": {
+        "operations": [{ "op": "append-message", "role": "note", "content": "One pass" }]
+      }
+    },
+    {
+      "id": "gate",
+      "kind": "decision",
+      "label": "Repeat at most three passes",
+      "config": {
+        "kind": "expression",
+        "jsonata": "\"repeat\"",
+        "routes": [
+          { "id": "repeat", "label": "Repeat", "repeat": true },
+          { "id": "done", "label": "Done" }
+        ],
+        "maxPasses": 3
+      }
+    },
+    { "id": "done", "kind": "exit", "label": "Done", "config": {} },
+    {
+      "id": "exhausted",
+      "kind": "exit",
+      "label": "Exhausted",
+      "config": {
+        "outcome": "exhausted",
+        "returns": "{ \"passes\": gates.gate.passes }",
+        "destinations": [{ "kind": "caller" }]
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": { "node": "start", "port": "out" },
+      "to": { "node": "work", "port": "in" }
+    },
+    {
+      "id": "e2",
+      "from": { "node": "work", "port": "out" },
+      "to": { "node": "gate", "port": "in" }
+    },
+    {
+      "id": "e3",
+      "from": { "node": "gate", "port": "repeat" },
+      "to": { "node": "work", "port": "in" }
+    },
+    {
+      "id": "e4",
+      "from": { "node": "gate", "port": "done" },
+      "to": { "node": "done", "port": "in" }
+    },
+    {
+      "id": "e5",
+      "from": { "node": "gate", "port": "limit-reached" },
+      "to": { "node": "exhausted", "port": "in" }
+    }
+  ]
+}
+```
 
 Changing a node ID updates its connections. Update authored references such as `gates."old-id".passes` and `outputs."old-id".value` yourself.
 
