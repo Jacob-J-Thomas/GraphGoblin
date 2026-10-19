@@ -99,7 +99,8 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          # WP-A1 pins this shared runtime file to Node 22 before this job is integrated.
+          node-version-file: .nvmrc
           cache: pnpm
 
       - name: Install (frozen lockfile)
@@ -112,6 +113,7 @@ jobs:
         run: pnpm build
 
       - name: Functional browser suite (no retries)
+        timeout-minutes: 30
         working-directory: apps/web
         run: pnpm exec playwright test --retries=0
 
@@ -138,7 +140,7 @@ jobs:
           SUMMARY
 
       - name: Upload browser failure evidence
-        if: failure()
+        if: failure() || cancelled()
         uses: actions/upload-artifact@v4
         with:
           name: browser-failure

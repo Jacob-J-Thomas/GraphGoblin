@@ -6,7 +6,7 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 - Two-tab conflict checks explicitly activate each editor tab and wait for draft reconciliation before editing; reload, overwrite and stored-value assertions remain intact. (#67)
 
-- CI now runs the built app's functional browser suite on Edge with zero retries, publishes its live-check exclusion in the job summary, and retains traces and the HTML report on failure. (#241)
+- CI now runs the built app's functional browser suite on Edge with zero retries, publishes its live-check exclusion in the job summary, and uploads available test evidence and the HTML report on failure or cancellation; trace availability depends on each spec's tracing mode. (#241)
 
 - Template and expression fields in the node dialog have a collapsed **Earlier node outputs (N)** list: the nodes that can run before this one, each with its reference in the field's syntax, a **Copy** button and a note on what it outputs. It is interim help, not validation, and it is hidden where a field isn't evaluated against the run thread or no earlier node writes an output. (#341)
 
