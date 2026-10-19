@@ -9,10 +9,12 @@ export interface ClaudeCatalogModel extends ClaudeModelCapability {
 }
 const ALL_EFFORTS: ClaudeModelCapability['efforts'] = ['low', 'medium', 'high', 'xhigh', 'max'];
 /**
- * Exact identities admitted through the same model and effort checks. Sonnet 5.5 and Haiku 5.5
- * were verified on 2026-10-18 with bounded real turns through installed CLI 2.1.292 and a
- * Claude.ai login: the init record and result usage reported exactly these ids. The verified
- * efforts and their evidence are recorded in docs/06-harness-integration.md.
+ * Exact identities admitted through the same model and effort checks, each with its supported
+ * efforts. The Sonnet 5.5 and Haiku 5.5 ids were verified on 2026-10-18 with bounded real turns
+ * through installed CLI 2.1.292 and a Claude.ai login: the init record and result usage reported
+ * exactly these ids. Real turns exercised Sonnet at low, high and max and Haiku at low, high,
+ * xhigh and max; medium for both and xhigh for Sonnet rest on Claude Code's documentation (see
+ * docs/06-harness-integration.md).
  */
 const CLAUDE_MODELS: readonly ClaudeCatalogModel[] = [
   { model: CLAUDE_MODEL, displayName: 'Claude Opus 5.5', efforts: ALL_EFFORTS },

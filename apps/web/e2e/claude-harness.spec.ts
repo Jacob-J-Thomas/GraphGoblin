@@ -182,7 +182,7 @@ for (const [model, displayName, effort] of [
     await modelField.selectOption(model);
     await expect(modelField).toHaveValue(model);
     const effortField = dialog.getByLabel('Effort', { exact: true });
-    // Exactly the efforts verified for this model; minimal is never offered for Claude.
+    // Exactly the catalog's supported efforts for this model; minimal is never offered for Claude.
     await expect(effortField.locator('option')).toHaveText([
       '(inherited; the catalog suggests high)',
       'low',

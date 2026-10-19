@@ -192,7 +192,7 @@ describe('Claude public integration', () => {
     expect(corrected.json()).toMatchObject({ publishable: true });
   });
   it.each([CLAUDE_SONNET_MODEL, CLAUDE_HAIKU_MODEL])(
-    'keeps the saved %s model and each verified effort identical through reopen and the harness request',
+    'keeps the saved %s model and each supported effort identical through reopen and the harness request',
     async (model) => {
       const catalogEntry = await t.container.repos.catalog.findOne('claude', model);
       expect(catalogEntry).toMatchObject({ enabled: true, source: 'harness' });

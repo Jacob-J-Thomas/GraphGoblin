@@ -287,14 +287,21 @@ one trigger, inference and exit loop per model through the API container's own C
 (`LIVE_CLAUDE=1 pnpm --filter @graphgoblin/api exec vitest run src/live.test.ts`) with a
 disposable data directory; both runs succeeded with `harness.session` recording the requested
 model and `high` effort, and the CLI's own session records reported the requested model. The
-efforts not exercised by a turn rest on the CLI and its documentation: the 2.1.292 model registry
-lists effort, `xhigh` and `max` capabilities for `claude-sonnet-5-5`, and Claude Code's model
-configuration documentation lists all five levels for Sonnet 5.5 and Haiku 5.5.
+turn-by-turn results are in the [#206 QA record](qa/2026-10-18-issue-206.md).
+
+Real turns exercised Sonnet 5.5 at `low`, `high` and `max`, and Haiku 5.5 at `low`, `high`,
+`xhigh` and `max`. The remaining supported levels, `medium` for both and `xhigh` for Sonnet, rest on
+documentation rather than a turn: the CLI 2.1.292 model registry lists effort, `xhigh` and `max`
+capabilities for `claude-sonnet-5-5`, and Claude Code's
+[model configuration page](https://code.claude.com/docs/en/model-config), checked on 2026-10-18,
+lists `low`, `medium`, `high`, `xhigh` and `max` for both Sonnet 5.5 and Haiku 5.5. The same page
+describes the fallback rule quoted above.
 
 CLI 2.1.292 does not yet list `claude-haiku-5-5` in its model registry. It prints an
 `unrecognized_model` notice on stderr, which the adapter does not read, and treats the model as a
-first-party model with every effort level. Claude Code's documentation names 2.1.293 as the
-minimum for Haiku 5.5; the turns above passed on 2.1.292, and GraphGoblin keeps its single CLI
+first-party model with every effort level. The
+[model configuration page](https://code.claude.com/docs/en/model-config), checked on 2026-10-18,
+names Claude Code 2.1.293 as the minimum for Haiku 5.5; the turns above passed on 2.1.292, and GraphGoblin keeps its single CLI
 minimum (2.1.285) rather than a per-model one. Not admitted: `claude-haiku-4-5-20251001`, whose
 registry entry has no effort capability, so the CLI drops any requested effort (a direct turn at
 `max` ran without error, which shows only that the flag is ignored); and `claude-sonnet-5`, the

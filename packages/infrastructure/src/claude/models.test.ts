@@ -10,7 +10,9 @@ import {
 } from './models.js';
 import { resolvedClaudeSettings } from './policy.js';
 
-const VERIFIED_EFFORTS = ['low', 'medium', 'high', 'xhigh', 'max'];
+// Supported, not all turn-tested: docs/06-harness-integration.md records which levels a real
+// turn exercised for each model and which rest on Claude Code's documentation.
+const SUPPORTED_EFFORTS = ['low', 'medium', 'high', 'xhigh', 'max'];
 
 describe('exact Claude model capabilities', () => {
   it('admits every exact identity through the same model and effort checks', () => {
@@ -40,19 +42,19 @@ describe('exact Claude model capabilities', () => {
     expect(claudeModelCapabilities()[0]!.efforts).toHaveLength(5);
   });
 
-  it('declares the current Sonnet and Haiku ids with the efforts verified on the installed CLI', () => {
+  it('declares the current Sonnet and Haiku ids with their supported efforts', () => {
     expect(CLAUDE_SONNET_MODEL).toBe('claude-sonnet-5-5');
     expect(CLAUDE_HAIKU_MODEL).toBe('claude-haiku-5-5');
     const byModel = new Map(claudeCatalogModels().map((entry) => [entry.model, entry]));
     expect(byModel.get(CLAUDE_SONNET_MODEL)).toEqual({
       model: CLAUDE_SONNET_MODEL,
       displayName: 'Claude Sonnet 5.5',
-      efforts: VERIFIED_EFFORTS,
+      efforts: SUPPORTED_EFFORTS,
     });
     expect(byModel.get(CLAUDE_HAIKU_MODEL)).toEqual({
       model: CLAUDE_HAIKU_MODEL,
       displayName: 'Claude Haiku 5.5',
-      efforts: VERIFIED_EFFORTS,
+      efforts: SUPPORTED_EFFORTS,
     });
     // The older Haiku has no effort control in the installed CLI, and aliases are not exact ids.
     for (const model of ['claude-haiku-4-5-20251001', 'claude-haiku-4-5', 'sonnet', 'haiku'])
@@ -69,7 +71,7 @@ describe('exact Claude model capabilities', () => {
     rows[0]!.displayName = 'changed';
     expect(claudeCatalogModels()[0]).toMatchObject({
       displayName: 'Claude Opus 5.5',
-      efforts: VERIFIED_EFFORTS,
+      efforts: SUPPORTED_EFFORTS,
     });
   });
 });
