@@ -6,6 +6,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 - Recover healthy current-format runs beside damaged history; log HISTORY_UNREADABLE and expose owner-scoped diagnostics for explicit manual repair or deletion without changing damaged data. **Upgrade:** Check `GET /runs/diagnostics` after upgrading and explicitly repair or delete damaged history. (#318)
 - Validate generated durable events before persistence, bound terminal failure diagnostics visibly, and fail rejected success events with nonresumable EVENT_INVALID so restart does not repeat uncertain work. **Upgrade:** Check `GET /runs/diagnostics` after upgrading; invalid events written before this fix now surface as `HISTORY_UNREADABLE`. (#223)
+- The licence gate parses grouped SPDX expressions with AND/OR/WITH precedence, rejects malformed and guessed metadata with specific reasons, and reports package/version/expression provenance. WITH pairs require exact explicit approval. (#274)
+- Guide 02/03 examples are checked against current contracts and executed through a disposable API with the fake harness. Replay now targets `summarise`, return guidance names `returns`/`destinations`, and a complete deterministic bounded-repeat example demonstrates exhaustion; paid provider execution is explicitly excluded. (#250)
 
 - Template and expression fields in the node dialog have a collapsed **Earlier node outputs (N)** list: the nodes that can run before this one, each with its reference in the field's syntax, a **Copy** button and a note on what it outputs. It is interim help, not validation, and it is hidden where a field isn't evaluated against the run thread or no earlier node writes an output. (#341)
 
