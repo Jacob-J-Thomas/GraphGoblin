@@ -219,7 +219,7 @@ Tools (each with a Zod input schema; descriptions tell the agent when to call it
 | `wait_for_run`                          | `runId`, `timeoutSeconds?` (default 60, max 600)            | Returns `{ finished: true, run }` at a terminal status, or `{ finished: false, status, cursor, waiting?, next }`; returns early when the run waits for input or is paused; `cursor` is the last event `seq` |
 | `get_run`                               | `runId`                                                     | Run snapshot                                                                                                                                                                                                |
 | `get_run_thread`                        | `runId`                                                     | Context thread                                                                                                                                                                                              |
-| `list_runs`                             | `loopId?`, `status[]?`, `parentRunId?`, `before?`, `limit?` | Compact runs, newest first; `nextBefore` (a `createdAt`) pages                                                                                                                                              |
+| `list_runs`                             | `loopId?`, `status[]?`, `parentRunId?`, `cursor?`, `limit?` | `{ items, nextCursor }`: compact runs, newest first; pass the opaque `nextCursor` as `cursor` with the same filters, even when `items` is empty; null ends the listing                                      |
 | `read_run_events`                       | `runId`, `after?`, `limit?` (default 100)                   | `{ items, nextAfter, hasMore }`                                                                                                                                                                             |
 | `cancel_run`, `pause_run`, `resume_run` | `runId`                                                     | Control; return the compact run. A run paused while parked resumes to `waiting` on the same wait, otherwise to `running` (05)                                                                               |
 | `provide_input`                         | `runId`, `input`                                            | Answers a wait node in input mode                                                                                                                                                                           |
@@ -350,7 +350,9 @@ Filters are `loopId`, comma-separated `status`, `parent` (a run ID or `none`),
 including the removed `repository`, `issue`, `pullRequest`, `head`, `mergeSha`
 and `templateInstanceId`. Reads always remain scoped to the authenticated owner.
 The exclusive `(created_at, id)` boundary keeps newer insertions between requests
-out of subsequent pages. MCP's `before`/`nextBefore` timestamp paging stays separate.
+out of subsequent pages. MCP `list_runs` uses this same server cursor and returns
+`{ items, nextCursor }`; pass `nextCursor` as `cursor` with the same filters, even when
+`items` is empty because damaged rows were skipped. Stop when `nextCursor` is null.
 Both the typed client's `GET('/runs')` and the generated OpenAPI contract expose
 the complete page; the convenience `runs.list` wrapper returns its items only.
 

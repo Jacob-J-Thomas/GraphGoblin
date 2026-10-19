@@ -189,14 +189,29 @@ The offline server-store tool uses the same composition for each retained versio
 
 ## Crash recovery (Decided)
 
-Recovery enumerates raw run identities and decodes each candidate separately. A malformed
-JSON field, invalid current-contract run record/thread, or unreadable event page is isolated
-to its run: startup logs `HISTORY_UNREADABLE` with the run ID and reason, skips its work,
-and continues healthy recovery. `GET /runs/diagnostics` (owner-scoped, `runs:read`) lists
-unreadable histories, including rows that cannot supply a run snapshot. This is a read-only
-diagnostic, not a new lifecycle status: a damaged snapshot may still say queued, running,
-or waiting. Recovery leaves its rows and events unchanged. Store-level schema, format,
-and I/O failures still fail startup; they are not reclassified as damaged runs.
+Recovery enumerates raw run identities and decodes each candidate separately. Candidates
+are active runs and terminal runs awaiting finalization; startup checks and logs damaged
+candidates only. Finalized terminal history is checked through `GET /runs/diagnostics`.
+A malformed JSON field, invalid current-contract run record/thread, or unreadable event
+page is isolated to its run: startup logs `HISTORY_UNREADABLE` with the run ID and reason,
+skips its work, and continues healthy recovery. Recovery leaves its rows and events
+unchanged. Store-level schema, format, and I/O failures still fail startup; they are not
+reclassified as damaged runs.
+
+`GET /runs/{id}` and MCP `get_run` decode only the run row. A readable row returns its
+stored snapshot even when its events or thread checkpoint are damaged; an unreadable row
+returns `500 STORED_RUN_INVALID`. Event reads (`GET /runs/{id}/events`, MCP
+`read_run_events`) decode the requested event page and return `500 STORED_EVENT_INVALID`
+when it is unreadable. Thread reads (`GET /runs/{id}/thread`, MCP `get_run_thread`)
+decode the stored snapshot or, when it is absent, the initial thread and replay events.
+Unreadable thread data returns `500 STORED_RUN_INVALID`, and unreadable replay events
+return `500 STORED_EVENT_INVALID`. MCP exposes the same problem codes as tool errors.
+
+`GET /runs/diagnostics` (owner-scoped, `runs:read`) is the identification path for damaged
+history across all runs, including finalized terminal runs and rows that cannot supply a
+snapshot. Follow its `nextCursor` until null; each request checks at most 20 runs and 2,000
+events. This read-only diagnostic does not change lifecycle status: a damaged snapshot
+may still say queued, running, or waiting.
 
 The operator must explicitly repair the named row by hand or explicitly delete the
 containing loop through the existing deletion path after all of its runs are terminal.

@@ -161,11 +161,20 @@ MCP writes diagnostics to stderr; inspect your MCP client's captured server logs
 
 Startup can log `HISTORY_UNREADABLE` with a run ID and a reason such as a malformed
 JSON field or the sequence and type of an invalid event. Healthy current-format runs
-continue recovery. Query `GET /runs/diagnostics` with a key holding `runs:read` to list
-damaged histories belonging to that key's owner. Follow `nextCursor` until null; each
-request checks at most 20 runs and 2,000 events. The diagnostic does not change a stored
-status; a damaged run's snapshot may still say queued, running, or waiting. No execution
-is recovered for that damaged run. Event reads remain strict and reject an invalid page.
+continue recovery. Startup checks active runs and terminal runs awaiting finalization,
+so its log names damaged recovery candidates only. `GET /runs/diagnostics` also checks
+finalized terminal history.
+
+`GET /runs/:id` and MCP `get_run` decode only the run row, so a snapshot can look normal
+while its events or thread are damaged. An unreadable run row or stored thread yields
+`500 STORED_RUN_INVALID`; an unreadable event page yields `500 STORED_EVENT_INVALID`
+(MCP reports the same codes as tool errors). If events or thread reads fail this way,
+query `GET /runs/diagnostics` with a key holding `runs:read` to identify the damaged
+history, then repair or delete it explicitly as described below. Diagnostics covers
+all runs belonging to that key's owner. Follow `nextCursor` until null; each request
+checks at most 20 runs and 2,000 events. The diagnostic does not change a stored status;
+a damaged run's snapshot may still say queued, running, or waiting. No execution is
+recovered for that damaged run.
 
 **Manual disposition:** Stop the API before editing SQLite. Repair the specifically named
 row by hand to match the current contract, then restart and check `GET /runs/diagnostics`
