@@ -8,27 +8,27 @@ pnpm.cmd build
 ```
 
 Run from the repository root. Each command starts its own API on a free loopback port,
-uses a new temporary file-backed store and a scripted fake harness, and makes no
+uses a new temporary file-backed store and fake execution (plus native main.js for readiness), and makes no
 provider calls. Edge runs headlessly using the installed Microsoft Edge channel.
 No owner instance, home store, browser profile, or service worker is modified.
 
-| Workload                  | One command                                                 | Default size                                                                                                           |
-| ------------------------- | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| Cyclic streaming          | `node tooling/perf/measure.mjs long`                        | 100, 1,000, 10,000 passes; 2 items/turn                                                                                |
-| Growing context           | `node tooling/perf/measure.mjs context`                     | 100, 1,000, 10,000 passes; append 128 bytes/pass                                                                       |
-| Finished-run SSE replay   | `node tooling/perf/measure.mjs replay`                      | 1,000 passes; 32 items/turn, 256 bytes/item                                                                            |
-| Transcript artifacts      | `node tooling/perf/measure.mjs artifacts --passes=100,1000` | 8 items/turn, 4,096 bytes/item; unique transcripts                                                                     |
-| Readiness                 | `node tooling/perf/measure.mjs readiness`                   | Real CLI preflight, reopen, cold-process first GET /runs, then warm reopen                                             |
-| Edge inspector and Events | `node tooling/perf/measure.mjs browser`                     | 1,000 streaming + mutation passes; 2 items/turn; 512 bytes/pass; 50 ms fake completion delay; 50 inbound 32 KiB values |
+| Workload                  | One command                                                 | Default size                                                                                                                   |
+| ------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Cyclic streaming          | `node tooling/perf/measure.mjs long`                        | 100, 1,000, 10,000 passes; 2 items/turn                                                                                        |
+| Growing context           | `node tooling/perf/measure.mjs context`                     | 100, 1,000, 10,000 passes; append 128 bytes/pass                                                                               |
+| Finished-run SSE replay   | `node tooling/perf/measure.mjs replay`                      | 1,000 passes; 32 items/turn, 256 bytes/item                                                                                    |
+| Transcript artifacts      | `node tooling/perf/measure.mjs artifacts --passes=100,1000` | 8 items/turn, 4,096 bytes/item; unique transcripts                                                                             |
+| Readiness                 | `node tooling/perf/measure.mjs readiness`                   | Real CLI preflight, native main.js cold first GET /runs, then warm harness reopen                                              |
+| Edge inspector and Events | `node tooling/perf/measure.mjs browser`                     | 1,000 streaming + mutation passes; 2 items/turn; 512 bytes/pass; 50 ms minimum fake completion delay; 50 inbound 32 KiB values |
 
 Append `--aged=2000` to any command for the aged comparison. Population runs real
 trigger-to-exit graphs through API admission and the engine, in batches of 50 with
 one execution slot. The measured population time includes those batches draining.
 It is a populated current-format store, not a simulation of months of fragmentation.
 
-Sizes can be changed with `--passes=100,1000,10000`, `--items=2`,
+Execution sizes can be changed with `--passes=100,1000,10000`, `--items=2`,
 `--item-bytes=120`, `--context-bytes=128`, `--pause-ms=50` (between SSE reads,
-and before the first read), and `--browser-ms=5000` (per page). `--setup-timeout-ms=600000` is the API import/setup ceiling, adjustable separately from workload sizing.
+with an initial hold of at least 1,000 ms), and `--browser-ms=5000` (per page). `--setup-timeout-ms=600000` is the API import/setup ceiling, adjustable separately from workload sizing.
 `--out=.tmp/my-measurement` selects an evidence directory; otherwise it is a new
 directory under the system temp folder. Use a **new output directory for each invocation**.
 The gate and per-node visit limits remain at or below 10,000. Initialization runs
@@ -49,13 +49,26 @@ the after-load mode avoids profiling that initialization phase. Both modes sampl
 the real API process at 1 ms, and the mode is recorded in the JSON. Cold-request
 wall time always includes imports; inspector CPU profiles exclude them.
 
-Every invocation writes `invocation.json` immediately, `summary.json` as work completes,
-`memory.jsonl`, `memory-live.jsonl` (streamed to the parent during execution), `api.cpuprofile`, and its disposable store. Browser runs also write
-`browser.json` and screenshots. A successful command prints one machine-readable
-`PERF {...}` line (sample arrays are compacted to counts/endpoints/peaks there; the JSON files retain the full arrays); progress and the evidence path go to stderr. A measurement or
-correctness failure exits nonzero, preserving existing evidence. Data and artifacts
-are intentionally retained; reusing an evidence directory is rejected; the harness does not delete directories. The 10-minute setup ceiling and 1-hour IPC
-command ceiling is a tooling timeout, not a product SLA.
+Every invocation directly writes a portable `summary.json` and a complete,
+untracked `raw-summary.json`, plus `invocation.json`, `memory.jsonl`,
+`memory-live.jsonl`, `api.cpuprofile`, the disposable store and artifacts.
+Browser runs also write `browser.json` and screenshots. The portable summary
+uses shared port/CPU-location dictionaries and root case/page/replay arrays, specification/correctness row columns, primary port spans plus other-port
+totals, up to six checkpoints, three top CPU frames and bounded replay/browser
+curves. It excludes absolute paths, command arguments and preflight stdout.
+Aggregate raw invocation records with:
+
+```powershell
+node tooling/perf/summary.mjs --out=summary.json first-raw-summary.json second-raw-summary.json
+```
+
+A successful measurement prints `PERF {...}`; progress and its private evidence
+path go to stderr. A measurement/correctness/profile failure exits nonzero.
+Output directories are **never deleted** and cannot be reused. Budget at least
+24?59 MB for typical round-1 long-run store data per output directory, with
+additional space for profiles, traces and artifacts; artifact cases can exceed
+that range. Small smokes use less space. The ten-minute import/setup and one-hour
+IPC ceilings are measurement recovery limits, not product SLAs.
 
 The script automatically restarts itself with Node 22's experimental
 `import.meta.resolve` parent-resolution flag. This resolves public package entry
@@ -67,6 +80,30 @@ product instrumentation is added.
 Browser warmup polls once per second for up to ten minutes; page locators and the
 post-run thread HTTP read have two-minute limits. These bounds preserve a finite
 failed measurement on a stalled host; they do not set product latency targets.
+
+## Controlled rerun protocol
+
+Use **inspector mode throughout**, a quiet host, and at least two trials per
+workload. Run each fresh/aged pair back to back, reversing order for trial 2:
+
+```powershell
+foreach ($taskTrial in 1,2) {
+  $taskAges = if ($taskTrial -eq 1) { @(0,2000) } else { @(2000,0) }
+  foreach ($taskWorkload in @('long','context','replay','artifacts','readiness','browser')) {
+    foreach ($taskAge in $taskAges) {
+      node tooling/perf/measure.mjs $taskWorkload --aged=$taskAge --profile=inspector --load-conditions="quiet host; trial $taskTrial"
+      if ($LASTEXITCODE -ne 0) { throw "Measurement failed" }
+    }
+  }
+}
+```
+
+Use a new output directory per invocation (omitting `--out` allocates one).
+Keep sizes, pacing and profiler settings identical within a pair. Preserve all
+individual trials. Round 1 ran fresh first at 99.6?100% load and aged later under
+changing load; its rows are **not comparable paired trials**. The controlled
+large-workload protocol is for the official rerun; review-fix verification uses
+only `replay --passes=100`, `browser --passes=100`, and `readiness`.
 
 ## Interpretation
 
@@ -93,18 +130,32 @@ failed measurement on a stalled host; they do not set product latency targets.
   lock wait/native/yield cost, not pure mutex wait or steady-state queue depth.
 - CPU profiles cover the API process only. Per-case summaries filter samples to
   the execution window, excluding import/startup/population and final correctness
-  reads. Self-sample counts identify candidates, not causal speedup percentages.
-- SSE clients run in the parent process. First-event time includes any deliberate
-  reader pause. Server memory and `ServerResponse.writableLength` are sampled every
-  25 ms; sampled maxima are lower bounds and exclude kernel/socket buffers.
-  Reconnect interrupts after at least one third of the history at an actual
-  received cursor. Counts, ordering, and SHA-256 payload hashes are checked against the durable log, including the combined reconnect prefix and suffix. Repository read time is reported separately from total replay time; lag samples record bytes/events consumed.
-- Browser history warms to one quarter of the configured passes before Edge opens. An empty Events-page control precedes the inspector and populated Events page. The fake completion delay keeps the stream active during observation. Browser TTI is an operational proxy: visible h1 plus an actionable inspector
-  loop link, or the Events empty state/table, followed by two animation frames. It is not a
-  standardized Web Vitals TTI score. CDP Performance metrics, PerformanceObserver
-  long tasks, DOM counts, session-storage bytes, and browser heap are retained.
-  Each page uses its own isolated context. The empty Events control lasts at most one second; other observations use the configured duration. Run records before/after show whether
-  execution continued during observation; screenshots show the measured views.
+  reads. Filtered sample counts must be positive and at most the profile total. Self-sample counts identify candidates, not causal speedup percentages.
+- SSE clients use a raw HTTP/1.1 socket with a 64 KiB high-water mark. The slow
+  reader pauses for at least one second initially, then `--pause-ms` between
+  reads; no Fetch body prebuffering hides lag. Replay enables the API event-loop
+  histogram and records mean/p99/max. Public socket bytes written minus raw wire
+  bytes consumed estimates outstanding bytes, including kernel/client buffers;
+  it is not an isolated JS queue measurement. At most one 25 ms memory RPC is
+  outstanding. Post-replay samples remain labeled separately. Round-1 buffering
+  growth with lag was not measurable; full-history materialization was observed.
+  Counts, ordering and hashes cover first/late/slow/reconnect payloads exactly.
+- Browser `shellReadyMs` checks the heading/actionable link or Events state.
+  Inspector `historyReadyMs` additionally waits for the Timeline list/heading to
+  reach the pre-navigation server cursor. CDP/heap/DOM/storage/long tasks are
+  sampled every 250 ms during loading and observation, plus a final sample.
+  Browser contexts are isolated; process IDs come from public CDP SystemInfo for
+  scoped cleanup checks. Run cursors before/after show execution continued.
+  Fake completion delay is `max(50, ceil((3*browserMs+20000)/passes))` ms, allowing
+  small smokes to span all page observations. Defaults remain 50 ms for 1,000
+  passes. The 20 s margin is a measurement parameter, not a latency target.
+- Readiness cold start spawns the real `apps/api/dist/main.js`, an alternate free
+  port and the disposable store, with absent harness binaries, then polls /runs
+  every 100 ms. It is unprofiled; Inspector mode covers the measurement worker.
+  First-response time includes polling granularity. The owned native child is
+  terminated and awaited; warm reopen is separately labeled. No `--passes`
+  argument applies to readiness. CLI preflight exit 1 is expected for absent
+  providers; the database-ready result is retained without stdout in the summary.
 - Correctness checks include contiguous stored sequences, progress count,
   gate/pass/visit counters, exact growing-array length and values, one terminal event and
   replay/reconnect completeness. Fake-harness results establish no provider behavior.

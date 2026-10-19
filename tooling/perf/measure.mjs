@@ -1,4 +1,4 @@
-/* global process, performance, fetch, TextDecoder, AbortController, setInterval, clearInterval, setTimeout, clearTimeout, URL, AbortSignal */
+/* global process, performance, fetch, setInterval, clearInterval, setTimeout, clearTimeout, URL, AbortSignal */
 import { Buffer } from 'node:buffer';
 import { createHash } from 'node:crypto';
 import { spawn, fork, spawnSync } from 'node:child_process';
@@ -8,7 +8,10 @@ import { join, resolve } from 'node:path';
 import { once } from 'node:events';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { root, sleep, Frames, json } from './common.mjs';
+import { createServer } from 'node:net';
+import { root, sleep, json, assertSampleCount } from './common.mjs';
+import { readReplay } from './replay.mjs';
+import { summarize } from './summary.mjs';
 
 if (!process.execArgv.includes('--experimental-import-meta-resolve')) {
   const task = spawnSync(
@@ -56,13 +59,20 @@ function integer(name, fallback, min, max) {
   if (!Number.isInteger(value) || value < min || value > max) throw new Error('Invalid ' + name);
   return value;
 }
+if (workload === 'readiness' && flags.passes !== undefined)
+  throw new Error('readiness has no pass-size argument');
 const profileMode = flags.profile ?? (process.platform === 'win32' ? 'inspector' : 'node');
 if (!['node', 'inspector'].includes(profileMode))
   throw new Error('profile must be node or inspector');
 const setupTimeoutMs = integer('setup-timeout-ms', 600_000, 1000, 3_600_000);
 const aged = integer('aged', 0, 0, 100_000);
 const passes = (
-  flags.passes ?? (['long', 'context', 'artifacts'].includes(workload) ? '100,1000,10000' : '1000')
+  flags.passes ??
+  (['long', 'context'].includes(workload)
+    ? '100,1000,10000'
+    : workload === 'artifacts'
+      ? '100,1000'
+      : '1000')
 )
   .split(',')
   .map(Number);
@@ -80,13 +90,15 @@ const dataDir = await mkdtemp(join(output, 'store-'));
 const options = { dataDir, output, profileMode, webDist: join(root, 'apps/web/dist') };
 const hostBefore = cpus().map((cpu) => cpu.times);
 const summary = {
-  schema: 1,
+  schema: 2,
   workload,
   command: process.argv.slice(1),
   output,
   dataDir,
   aged,
   environment: {
+    measurePid: process.pid,
+    launcherPid: process.ppid,
     timestamp: new Date().toISOString(),
     cpu: cpus()[0]?.model,
     logicalCpus: cpus().length,
@@ -196,125 +208,129 @@ function call(command, args) {
   });
 }
 async function save() {
-  await writeFile(join(output, 'summary.json'), JSON.stringify(summary, null, 2));
+  await writeFile(join(output, 'raw-summary.json'), JSON.stringify(summary, null, 2));
+  await writeFile(join(output, 'summary.json'), JSON.stringify(summarize([summary]), null, 2));
 }
 async function replay(base, runId, { after = 0, pauseMs = 0, stopAfter = Infinity, hasher } = {}) {
-  const before = await call('resetMemory'),
+  const before = await call('startReplay'),
     start = performance.now();
-  const controller = new AbortController(),
-    parser = new Frames(after, hasher),
-    decoder = new TextDecoder();
-  const observations = [],
-    timer = setInterval(() => {
-      void call('memory')
-        .then((sample) =>
-          observations.push({
-            ...sample,
-            replayElapsedMs: performance.now() - start,
-            receivedBytes,
-            receivedEvents: parser.count,
-          }),
-        )
-        .catch(() => {});
-    }, 25);
-  let firstMs = null,
-    receivedBytes = 0,
-    reads = 0;
-  try {
-    const response = await fetch(base + '/runs/' + runId + '/events', {
-      headers: { accept: 'text/event-stream', 'last-event-id': String(after) },
-      signal: AbortSignal.any([controller.signal, AbortSignal.timeout(3_600_000)]),
+  const observations = [];
+  let progress = { receivedBytes: 0, wireBytesConsumed: 0, receivedEvents: 0 },
+    inFlight;
+  const sample = async () => {
+    const memory = await call('memory');
+    observations.push({
+      ...memory,
+      ...progress,
+      replayElapsedMs: performance.now() - start,
+      bytesInFlight: Math.max(0, memory.socketBytesWritten - progress.wireBytesConsumed),
     });
-    if (!response.ok || !response.body) throw new Error('Replay HTTP ' + response.status);
-    const reader = response.body.getReader();
-    // Stall before reading to create lag; then pause between every network chunk.
-    if (pauseMs) await sleep(pauseMs);
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      reads++;
-      receivedBytes += value.byteLength;
-      parser.push(decoder.decode(value, { stream: true }));
-      if (firstMs === null && parser.count) firstMs = performance.now() - start;
-      if (parser.count >= stopAfter) {
-        controller.abort();
-        break;
-      }
-      if (pauseMs) await sleep(pauseMs);
-    }
-    await reader.cancel().catch(() => {});
-    return {
+  };
+  // At most one RPC is outstanding while a synchronous replay blocks the API event loop.
+  const timer = setInterval(() => {
+    if (!inFlight)
+      inFlight = sample()
+        .catch(() => {})
+        .finally(() => {
+          inFlight = undefined;
+        });
+  }, 25);
+  try {
+    const result = await readReplay(base, runId, {
       after,
       pauseMs,
-      firstMs,
-      totalMs: performance.now() - start,
-      sha256: parser.digest(),
-      events: parser.count,
-      lastSeq: parser.last,
-      gaps: parser.gaps,
-      receivedBytes,
-      reads,
+      stopAfter,
+      hasher,
+      progress: (value) => {
+        progress = value;
+      },
+    });
+    clearInterval(timer);
+    await inFlight;
+    const afterMemory = await call('endReplay');
+    const finalFlight = Math.max(0, afterMemory.socketBytesWritten - result.wireBytesConsumed);
+    return {
+      ...result,
       before,
-      afterMemory: await call('memory'),
+      afterMemory,
       observations,
+      eventLoopDelayMs: afterMemory.eventLoopDelayMs,
+      socketBytesWritten: afterMemory.socketBytesWritten,
+      maxBytesInFlight: Math.max(finalFlight, 0, ...observations.map((p) => p.bytesInFlight)),
     };
   } finally {
     clearInterval(timer);
-    controller.abort();
   }
 }
 async function coldFirstRequest() {
+  const reservation = createServer();
+  reservation.listen(0, '127.0.0.1');
+  await once(reservation, 'listening');
+  const port = reservation.address().port;
+  await new Promise((resolve, reject) =>
+    reservation.close((error) => (error ? reject(error) : resolve())),
+  );
+  const env = Object.fromEntries(
+    Object.entries(process.env).filter(([name]) => !name.startsWith('GG_')),
+  );
+  Object.assign(env, {
+    GG_DATA_DIR: dataDir,
+    GG_HOST: '127.0.0.1',
+    GG_PORT: String(port),
+    GG_REQUIRE_API_KEY: 'false',
+    GG_MASTER_KEY: Buffer.alloc(32, 9).toString('base64'),
+    GG_SWAGGER_UI: 'false',
+    GG_CODEX_BINARY: join(output, 'absent-codex'),
+    GG_CLAUDE_BINARY: join(output, 'absent-claude'),
+  });
   const at = performance.now();
-  const server = fork(fileURLToPath(new URL('./worker.mjs', import.meta.url)), [], {
+  const server = spawn(process.execPath, ['apps/api/dist/main.js'], {
     cwd: root,
-    env: {
-      ...process.env,
-      GG_PERF_OPTIONS: JSON.stringify({ ...options, profileName: 'readiness-cold.cpuprofile' }),
-    },
+    env,
     windowsHide: true,
-    execArgv: [
-      '--experimental-import-meta-resolve',
-      '--expose-gc',
-      ...(profileMode === 'node'
-        ? [
-            '--cpu-prof',
-            '--cpu-prof-interval=1000',
-            '--cpu-prof-dir=' + output,
-            '--cpu-prof-name=readiness-cold.cpuprofile',
-          ]
-        : []),
-    ],
-    stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
+    stdio: ['ignore', 'pipe', 'pipe'],
   });
   server.stdout.on('data', (chunk) => process.stderr.write(chunk));
   server.stderr.on('data', (chunk) => process.stderr.write(chunk));
-  const response = () => once(server, 'message', { signal: AbortSignal.timeout(setupTimeoutMs) });
-  let opened;
+  const exited = once(server, 'exit');
+  const pollMs = 100;
+  let polls = 0,
+    result;
   try {
-    const [ready] = await response();
-    if (!ready.ready) throw new Error('cold worker did not initialize');
-    server.send({ id: 1, command: 'boot' });
-    const [boot] = await response();
-    if (boot.error) throw new Error(boot.error);
-    opened = boot.result;
-    const startupToListeningMs = performance.now() - at;
-    const requested = performance.now();
-    await json(opened.base, '/runs?limit=100');
-    return {
-      startupToListeningMs,
-      firstRequestMs: performance.now() - requested,
-      startupToFirstResponseMs: performance.now() - at,
-      boot: opened,
-    };
-  } finally {
-    if (server.connected) {
-      server.send({ id: 2, command: 'close' });
-      await response();
-      const exited = once(server, 'exit');
-      server.disconnect();
-      await exited;
+    while (performance.now() - at < setupTimeoutMs) {
+      if (server.exitCode !== null || server.signalCode !== null)
+        throw new Error('Cold main.js exited before first response');
+      const requested = performance.now();
+      polls++;
+      try {
+        const response = await fetch(`http://127.0.0.1:${port}/runs?limit=100`, {
+          signal: AbortSignal.timeout(1000),
+        });
+        if (response.ok) {
+          await response.arrayBuffer();
+          result = {
+            entryPoint: 'apps/api/dist/main.js',
+            pid: server.pid,
+            port,
+            pollMs,
+            polls,
+            firstRequestMs: performance.now() - requested,
+            startupToFirstResponseMs: performance.now() - at,
+          };
+          break;
+        }
+      } catch {
+        /* connection refused while the native entry point starts */
+      }
+      await sleep(pollMs);
     }
+    if (!result) throw new Error('Cold main.js startup timed out');
+  } finally {
+    if (server.exitCode === null && server.signalCode === null) server.kill('SIGTERM');
+    const [exitCode, signal] = await exited;
+    if (result) Object.assign(result, { exitCode, signal });
   }
+  return result;
 }
 
 async function preflight() {
@@ -380,7 +396,14 @@ try {
       inference: workload !== 'context',
       grow: workload === 'browser',
       artifacts: workload === 'artifacts',
-      delayMs: workload === 'browser' ? 50 : 0,
+      // Small browser smoke runs still span all three page observations.
+      delayMs:
+        workload === 'browser'
+          ? Math.max(
+              50,
+              Math.ceil((3 * integer('browser-ms', 5000, 100, 120_000) + 20_000) / count),
+            )
+          : 0,
     };
     if (workload === 'readiness') {
       await call('close');
@@ -531,6 +554,7 @@ try {
         caseHits.set(key, (caseHits.get(key) ?? 0) + 1);
         count++;
       }
+      assertSampleCount(count, profile.samples?.length ?? 0);
       result.cpuSamples = { count, top: [...caseHits].sort((a, b) => b[1] - a[1]).slice(0, 25) };
     }
     summary.cpuProfile = {

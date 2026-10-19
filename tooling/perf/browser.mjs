@@ -1,4 +1,4 @@
-/* global performance, window, PerformanceObserver, requestAnimationFrame, document, sessionStorage, process */
+/* global performance, window, PerformanceObserver, requestAnimationFrame, document, sessionStorage, process, setInterval, clearInterval */
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { dependency, sleep, json } from './common.mjs';
@@ -18,11 +18,21 @@ export async function measureBrowser({ base, runId, output, durationMs, warmupPa
     browser: browser.version(),
     channel: 'msedge',
     headless: true,
-    ttiDefinition:
-      'navigation start to visible heading, actionable loop link (inspector) or empty state/table (Events), then two animation frames',
+    shellDefinition:
+      'navigation start to visible heading and actionable link or Events state, then two animation frames',
+    historyDefinition:
+      'navigation start until Timeline items or heading count reaches the pre-navigation server cursor',
+    sampleIntervalMs: 250,
+    processIds: [],
     pages: [],
   };
+  const browserSession = await browser.newBrowserCDPSession();
+  const recordProcesses = async () => {
+    const { processInfo } = await browserSession.send('SystemInfo.getProcessInfo');
+    results.processIds = [...new Set([...results.processIds, ...processInfo.map((p) => p.id)])];
+  };
   try {
+    await recordProcesses();
     results.warmup = { passes: warmupPass, wallMs: warmupMs };
     results.inbound = { events: 50, payloadValueBytes: 32_768 };
     // Independent contexts avoid carrying inspector event logs into the Events-page heap.
@@ -55,24 +65,15 @@ export async function measureBrowser({ base, runId, output, durationMs, warmupPa
       const beforeRun = await json(base, '/runs/' + runId);
       const began = performance.now();
       await page.goto(base + path, { waitUntil: 'domcontentloaded' });
-      await page.getByRole('heading', { level: 1 }).waitFor();
-      if (name === 'inspector')
-        await page.getByRole('link', { name: 'loop', exact: true }).click({ trial: true });
-      else if (name === 'events-empty')
-        await page.getByText('No inbound events yet.', { exact: true }).waitFor();
-      else await page.getByRole('table').waitFor();
-      await page.evaluate(
-        () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
-      );
-      const ttiMs = performance.now() - began;
       const metrics = [];
-      const observedMs = name === 'events-empty' ? Math.min(1000, durationMs) : durationMs;
-      const frames = Math.max(1, Math.ceil(observedMs / 1000));
-      for (let index = 0; index < frames; index++) {
+      let inFlight;
+      const metricErrors = [];
+      const collect = async () => {
         const at = performance.now();
         const probe = await page.evaluate(() => ({
           entries: window.__perf.longTasks,
           nodes: document.querySelectorAll('*').length,
+          timelineItems: document.querySelector('ol[aria-label="Timeline"]')?.children.length ?? 0,
           sessionStorageBytes: Object.values(sessionStorage).reduce(
             (sum, value) => sum + value.length * 2,
             0,
@@ -88,15 +89,66 @@ export async function measureBrowser({ base, runId, output, durationMs, warmupPa
           ...probe,
           cdp: Object.fromEntries(cdp.metrics.map(({ name, value }) => [name, value])),
         });
-        await sleep(observedMs / frames);
+      };
+      const tick = () => {
+        if (!inFlight)
+          inFlight = collect()
+            .catch((error) => metricErrors.push(error.message))
+            .finally(() => {
+              inFlight = undefined;
+            });
+      };
+      const timer = setInterval(tick, 250);
+      tick();
+      let shellReadyMs,
+        historyReadyMs = null,
+        historyReadyCount = null;
+      const observedMs = name === 'events-empty' ? Math.min(1000, durationMs) : durationMs;
+      try {
+        await page.getByRole('heading', { level: 1 }).waitFor();
+        if (name === 'inspector')
+          await page.getByRole('link', { name: 'loop', exact: true }).click({ trial: true });
+        else if (name === 'events-empty')
+          await page.getByText('No inbound events yet.', { exact: true }).waitFor();
+        else await page.getByRole('table').waitFor();
+        await page.evaluate(
+          () =>
+            new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+        );
+        shellReadyMs = performance.now() - began;
+        if (name === 'inspector') {
+          await page.waitForFunction((target) => {
+            const count = document.querySelector('ol[aria-label="Timeline"]')?.children.length ?? 0;
+            const heading = [...document.querySelectorAll('h1,h2,h3')]
+              .map((h) => h.textContent)
+              .find((text) => /^Timeline \(/.test(text ?? ''));
+            const reported = Number(/^Timeline \((\d+) events/.exec(heading ?? '')?.[1] ?? 0);
+            return Math.max(count, reported) >= target;
+          }, beforeRun.lastEventSeq);
+          historyReadyMs = performance.now() - began;
+          historyReadyCount = await page
+            .getByRole('list', { name: 'Timeline', exact: true })
+            .getByRole('listitem')
+            .count();
+        }
+        await sleep(observedMs);
+      } finally {
+        clearInterval(timer);
+        await inFlight;
       }
+      await collect();
+      if (metricErrors.length)
+        throw new Error('Browser metric sampling failed: ' + metricErrors.join('; '));
       const screenshot = join(output, 'browser-' + name + '.png');
       await page.screenshot({ path: screenshot });
       const afterRun = await json(base, '/runs/' + runId);
       const result = {
         name,
         path,
-        ttiMs,
+        shellReadyMs,
+        historyReadyMs,
+        historyTargetSeq: name === 'inspector' ? beforeRun.lastEventSeq : null,
+        historyReadyCount,
         durationMs: observedMs,
         executionContinued:
           beforeRun.status === 'running' && afterRun.lastEventSeq > beforeRun.lastEventSeq,
@@ -112,7 +164,11 @@ export async function measureBrowser({ base, runId, output, durationMs, warmupPa
       await context.close();
     }
   } finally {
-    await browser.close();
+    try {
+      await recordProcesses();
+    } finally {
+      await browser.close();
+    }
   }
   await writeFile(join(output, 'browser.json'), JSON.stringify(results, null, 2));
   process.stderr.write('PERF_BROWSER complete\n');

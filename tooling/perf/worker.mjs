@@ -1,4 +1,4 @@
-/* global Buffer, process, performance, global, setInterval, clearInterval */
+/* global Buffer, process, performance, global, setInterval, clearInterval, setTimeout */
 import { Session } from 'node:inspector';
 import { createHash } from 'node:crypto';
 import { stat, appendFile, writeFile } from 'node:fs/promises';
@@ -104,6 +104,7 @@ function timedPort(port, name) {
 }
 let isClosed = true;
 const responses = new Set();
+const replaySockets = new Map();
 let maxWritableBytes = 0,
   maxRss = 0,
   maxHeap = 0;
@@ -149,6 +150,10 @@ async function boot() {
   );
   app.addHook('onRequest', async (_request, reply) => {
     responses.add(reply.raw);
+    if (/^\/runs\/[^/]+\/events/.test(_request.url)) {
+      const socket = reply.raw.socket;
+      replaySockets.set(socket, socket.bytesWritten);
+    }
     const forget = () => responses.delete(reply.raw);
     reply.raw.once('finish', forget);
     reply.raw.once('close', forget);
@@ -175,6 +180,10 @@ async function memory(label = 'sample') {
     elapsedMs: caseStarted ? performance.now() - caseStarted : 0,
     ...usage,
     writableBytes,
+    socketBytesWritten: [...replaySockets].reduce(
+      (sum, [socket, baseline]) => sum + socket.bytesWritten - baseline,
+      0,
+    ),
     openResponses: responses.size,
     dbBytes: await size('graphgoblin.db'),
     walBytes: await size('graphgoblin.db-wal'),
@@ -275,6 +284,8 @@ async function begin(spec) {
 async function finish() {
   await manager.waitForIdle();
   const profileEndUs = Number(process.hrtime.bigint() / 1000n);
+  if (profileEndUs <= runStarted.profileStartUs)
+    throw new Error('Empty or reversed CPU profile window');
   const wallMs = performance.now() - caseStarted,
     cpu = process.cpuUsage(runStarted.cpu);
   clearInterval(sampling);
@@ -467,18 +478,30 @@ const commands = {
       maxWritableBytes,
       maxRss,
       maxHeap,
+      eventLoopDelayMs: { mean: lag.mean / 1e6, p99: lag.percentile(99) / 1e6, max: lag.max / 1e6 },
       repositoryTimings: Object.fromEntries(
         Object.entries(stats).map(([key, value]) => [key, value.json()]),
       ),
     };
   },
-  resetMemory: async () => {
+  startReplay: async () => {
     stats = {};
     global.gc();
     maxWritableBytes = 0;
     maxRss = 0;
     maxHeap = 0;
+    replaySockets.clear();
+    lag.reset();
+    lag.enable();
+    // Arm the histogram before the request, including synchronous replay reads/writes.
+    await new Promise((resolve) => setTimeout(resolve, 20));
     return memory('baseline');
+  },
+  endReplay: async () => {
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    const result = await commands.memory();
+    lag.disable();
+    return result;
   },
   close,
 };

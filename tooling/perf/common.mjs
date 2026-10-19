@@ -12,6 +12,10 @@ export async function dependency(name, app = 'api') {
 }
 export const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 export const bytes = (value) => Buffer.byteLength(JSON.stringify(value));
+export function assertSampleCount(count, total) {
+  if (!Number.isInteger(count) || count <= 0 || count > total)
+    throw new Error(`Invalid CPU profile window: ${count} of ${total} samples`);
+}
 // Fixed-size logarithmic histogram; percentile upper bounds are within 10% above 1 us.
 export class Timings {
   count = 0;
