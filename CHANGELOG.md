@@ -10,6 +10,7 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 - Removed the unused, deprecated `@esbuild-kit/esm-loader` dependency from Drizzle Kit and its affected esbuild 0.18.20 subtree. The package was never loaded by Drizzle Kit; patched esbuild versions remain. Evidence is in `docs/qa/2026-10-18-wp-a1-runtime-gates.md`. (#114)
 
+- Two-tab conflict checks explicitly activate each editor tab and wait for draft reconciliation before editing; reload, overwrite and stored-value assertions remain intact. Two browser expectations now match the accepted earlier-node-outputs behaviour (named copy status; disclosure in the Tab order). (#67, #341)
 - The licence gate parses grouped SPDX expressions with AND/OR/WITH precedence, rejects malformed and guessed metadata with specific reasons, and reports package/version/expression provenance. WITH pairs require exact explicit approval. (#274)
 - Guide 02/03 examples are checked against current contracts and executed through a disposable API with the fake harness. Replay now targets `summarise`, return guidance names `returns`/`destinations`, and a complete deterministic bounded-repeat example demonstrates exhaustion; paid provider execution is explicitly excluded. (#250)
 
