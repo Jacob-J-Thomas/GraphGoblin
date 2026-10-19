@@ -4,6 +4,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Completion evidence that loop-back exits used to give is kept under decision gates and terminal exits. **Exit evaluation** at the top of a run shows the last gate decision: route, pass, and the limit that stopped a repeat. When the exit's Returns is None, it says nothing was returned by configuration, not by failure, and names the exit and start-request destinations that received nothing, or identifies a quiet exit. Result shows a `null` return. Decision details name the chosen route's authored label and, for classifiers, its criterion. The exit editor says destinations receive nothing while Returns is None and names a quiet exit. Route, Choice option, Noul side and Score band help states the count and uniqueness rules and describes IDs as output ports. Behaviour and stored data are unchanged. The inventory is in `docs/qa/2026-10-18-exit-evidence-inventory.md`. (#129)
+
 - Aligned installation, gates, CI, container, installers and API preflight on Node 22 LTS (22.x), with root `devEngines.runtime` enforcing the project runtime without enforcing every dependency engine range. **Upgrade:** every pnpm command (install, build, start) refuses Node 23; restart the running instance from a Node 22 shell. Settings → Preflight shows Node as failed under any other major. API consumers use `SUPPORTED_NODE_MAJOR` in place of `MIN_NODE_MAJOR`. (#263)
 
 - Workspace test, coverage, typecheck and lint caches include dependency sources, declared guide/template inputs and shared root configs; repository-wide tooling tests are uncached. Unrelated-package cache reuse remains. (#127)
