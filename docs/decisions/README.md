@@ -44,3 +44,5 @@ One file per decision. Status is Accepted unless stated. Supersede by adding a n
 [ADR-0037: Webhook acknowledgement](ADR-0037-webhook-acknowledgement.md) supersedes ADR-0024's public response and preset-filter rules; T4 has a bounded admission checkpoint and continuation.
 
 [ADR-0038: Downstream payload checks](ADR-0038-downstream-payload-checks.md) removes trigger filters and requires version-bound review of stored filter graphs.
+
+[ADR-0041: Runs pin an immutable definition, drafts included](ADR-0041-runs-pin-immutable-definitions.md) supersedes ADR-0008's draft-run gap: draft runs pin a frozen snapshot, and inherited model defaults are pinned at start.

@@ -3518,7 +3518,7 @@ export interface components {
             loopId: string;
             version: number;
             /** @enum {string} */
-            status: "draft" | "published";
+            status: "draft" | "published" | "snapshot";
             definition: components["schemas"]["LoopDefinitionInput"];
             /** Format: date-time */
             createdAt: string;
@@ -3557,6 +3557,35 @@ export interface components {
             ownerId: string;
             loopId: string;
             versionId: string;
+            pinned: {
+                /** @enum {string} */
+                source: "published" | "draft";
+                version: number;
+                name: string;
+                label: string;
+                defaults: {
+                    owner: {
+                        /** @default {} */
+                        byHarness?: {
+                            [key: string]: {
+                                model?: string | undefined;
+                                /** @enum {string} */
+                                effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                            };
+                        } | undefined;
+                    };
+                    process: {
+                        /** @default {} */
+                        byHarness?: {
+                            [key: string]: {
+                                model?: string | undefined;
+                                /** @enum {string} */
+                                effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                            };
+                        } | undefined;
+                    };
+                };
+            };
             parentRunId?: string | undefined;
             invocationId: string;
             status: components["schemas"]["RunStatusInput"];
@@ -3586,6 +3615,36 @@ export interface components {
             ts: string;
             /** @constant */
             type: "run.queued";
+            versionId: string;
+            pinned: {
+                /** @enum {string} */
+                source: "published" | "draft";
+                version: number;
+                name: string;
+                label: string;
+                defaults: {
+                    owner: {
+                        /** @default {} */
+                        byHarness?: {
+                            [key: string]: {
+                                model?: string | undefined;
+                                /** @enum {string} */
+                                effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                            };
+                        } | undefined;
+                    };
+                    process: {
+                        /** @default {} */
+                        byHarness?: {
+                            [key: string]: {
+                                model?: string | undefined;
+                                /** @enum {string} */
+                                effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                            };
+                        } | undefined;
+                    };
+                };
+            };
             replayOf?: {
                 runId: string;
                 nodeId: string;
@@ -5241,7 +5300,7 @@ export interface components {
             loopId: string;
             version: number;
             /** @enum {string} */
-            status: "draft" | "published";
+            status: "draft" | "published" | "snapshot";
             definition: components["schemas"]["LoopDefinition"];
             /** Format: date-time */
             createdAt: string;
@@ -5280,6 +5339,35 @@ export interface components {
             ownerId: string;
             loopId: string;
             versionId: string;
+            pinned: {
+                /** @enum {string} */
+                source: "published" | "draft";
+                version: number;
+                name: string;
+                label: string;
+                defaults: {
+                    owner: {
+                        /** @default {} */
+                        byHarness: {
+                            [key: string]: {
+                                model?: string | undefined;
+                                /** @enum {string} */
+                                effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                            };
+                        };
+                    };
+                    process: {
+                        /** @default {} */
+                        byHarness: {
+                            [key: string]: {
+                                model?: string | undefined;
+                                /** @enum {string} */
+                                effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                            };
+                        };
+                    };
+                };
+            };
             parentRunId?: string | undefined;
             invocationId: string;
             status: components["schemas"]["RunStatus"];
@@ -5309,6 +5397,36 @@ export interface components {
             ts: string;
             /** @constant */
             type: "run.queued";
+            versionId: string;
+            pinned: {
+                /** @enum {string} */
+                source: "published" | "draft";
+                version: number;
+                name: string;
+                label: string;
+                defaults: {
+                    owner: {
+                        /** @default {} */
+                        byHarness: {
+                            [key: string]: {
+                                model?: string | undefined;
+                                /** @enum {string} */
+                                effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                            };
+                        };
+                    };
+                    process: {
+                        /** @default {} */
+                        byHarness: {
+                            [key: string]: {
+                                model?: string | undefined;
+                                /** @enum {string} */
+                                effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                            };
+                        };
+                    };
+                };
+            };
             replayOf?: {
                 runId: string;
                 nodeId: string;

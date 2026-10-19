@@ -828,6 +828,7 @@ export class FakeModelCatalog {
 export type AdmissionWrite =
   | 'claim.inbound'
   | 'claim.receipt'
+  | 'create.snapshot'
   | 'create.run'
   | 'create.event'
   | 'create.receipt'
@@ -844,6 +845,7 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
   constructor(
     private readonly runs: InMemoryRunRepository,
     private readonly events: InMemoryEventStore,
+    private readonly loops: InMemoryLoopRepository,
     private readonly beforeWrite: (write: AdmissionWrite) => void = () => {},
   ) {}
   async create(authored: RunAdmission, receiptId?: string): Promise<RunRecord> {
@@ -868,13 +870,18 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
     }
     let run = this.runs.runs.get(input.run.id);
     const created = !run;
+    // A draft snapshot is immutable: the same id may only ever hold the same record.
+    const existing = input.snapshot ? this.loops.versions.get(input.snapshot.id) : undefined;
+    if (existing && stableStringify(existing) !== stableStringify(input.snapshot))
+      throw new AdmissionConflictError();
     if (run) {
       const thread = await this.runs.getInitialThread(run.id);
-      if (!thread) throw new AdmissionConflictError();
+      if (!thread || (input.snapshot && !existing)) throw new AdmissionConflictError();
       assertAdmissionIdentity(input, run, thread, this.events.all(run.id)[0]);
     } else {
       if (this.events.all(input.run.id).length) throw new AdmissionConflictError();
       run = { ...input.run, lastEventSeq: 1 };
+      if (input.snapshot && !existing) this.beforeWrite('create.snapshot');
       this.beforeWrite('create.run');
       this.beforeWrite('create.event');
     }
@@ -891,6 +898,7 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
       this.beforeWrite('create.link');
     }
     if (created) {
+      if (input.snapshot && !existing) this.loops.add(structuredClone(input.snapshot));
       this.runs.commitCreated(run, input.initialThread);
       this.events.commitQueued(queuedEvent(input));
     }
@@ -1052,7 +1060,8 @@ export function createFakePorts(options: { secrets?: Record<string, string> } = 
   const clock = new FakeClock();
   const events = new InMemoryEventStore(clock);
   const runs = new InMemoryRunRepository();
-  const admission = new InMemoryTriggerAdmission(runs, events);
+  const loops = new InMemoryLoopRepository();
+  const admission = new InMemoryTriggerAdmission(runs, events, loops);
   const harness = new FakeHarness();
   const jev = new FakeClassifier('jev');
   const codexDecider = new FakeDecider('codex');
@@ -1065,7 +1074,7 @@ export function createFakePorts(options: { secrets?: Record<string, string> } = 
     events,
     runs,
     admission,
-    loops: new InMemoryLoopRepository(),
+    loops,
     sessions: new InMemorySessionRepository(),
     harnesses: { codex: harness },
     harness,

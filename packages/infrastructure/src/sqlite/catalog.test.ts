@@ -45,8 +45,9 @@ async function upgrade(check: (db: DatabaseHandle) => Promise<void>) {
   }
   const current = openDatabase({ url });
   try {
-    // Includes 0013_trigger_configuration after the three historical catalog migrations.
-    expect(await current.pendingMigrations()).toBe(11);
+    // Includes 0013_trigger_configuration and 0014_run_definition_pins after the three
+    // historical catalog migrations.
+    expect(await current.pendingMigrations()).toBe(12);
     await expect(current.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
     await applyShippedSqlToHistoricalTestFixture(current);
     await check(current);
@@ -82,7 +83,7 @@ describe('model catalog source migration and repository', () => {
     try {
       const catalog = new SqliteModelCatalog(current.db);
       const before = await catalog.list();
-      expect(await current.pendingMigrations()).toBe(3);
+      expect(await current.pendingMigrations()).toBe(4);
       await expect(current.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
       // Exercise the historical SQL in isolation; format-4 startup cannot admit a pre-baseline store.
       await applyShippedSqlToHistoricalTestFixture(current);
@@ -267,10 +268,18 @@ describe('model catalog source migration and repository', () => {
         'CREATE TABLE webhook_endpoints(id text PRIMARY KEY,owner_id text NOT NULL,loop_id text NOT NULL,version_id text NOT NULL,trigger_node_id text NOT NULL,token text NOT NULL,secret_ref text NOT NULL,signature_header text NOT NULL,replay_window_seconds integer NOT NULL,enabled integer NOT NULL,created_at text NOT NULL)',
       );
       await handle.client.execute('DROP INDEX runs_trigger_dedupe_idx');
+      // Roll back 0014 too, so replaying it re-adds the run pins.
+      for (const statement of [
+        'DROP TRIGGER loop_versions_snapshot_immutable',
+        'DROP TRIGGER loop_versions_snapshot_pinned',
+        'DROP INDEX runs_version_idx',
+        'ALTER TABLE runs DROP COLUMN pinned',
+      ])
+        await handle.client.execute(statement);
       await handle.client.execute(
         'DELETE FROM __drizzle_migrations WHERE created_at >= 1791136800000',
       );
-      expect(await handle.pendingMigrations()).toBe(10);
+      expect(await handle.pendingMigrations()).toBe(11);
       await expect(handle.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
       await applyShippedSqlToHistoricalTestFixture(handle);
       expect(await catalog.list()).toEqual(rows.map((row) => ({ ...row, source: 'harness' })));

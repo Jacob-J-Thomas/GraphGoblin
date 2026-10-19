@@ -1,7 +1,7 @@
 import { LoopDefinitionSchema, type RunEvent } from '@graphgoblin/contracts';
 import { minimalLoop, sampleThread } from '@graphgoblin/contracts/testing';
 import { describe, expect, it, vi } from 'vitest';
-import { event } from '../__fixtures__/fake-api.js';
+import { event, queuedFields } from '../__fixtures__/fake-api.js';
 import { quotaSafeSessionStorage, useRunEventStore } from './event-store.js';
 import {
   describeEvent,
@@ -30,7 +30,7 @@ const expressionEvidence = (optionId: string) => ({
 });
 
 const ALL: RunEvent[] = [
-  event(R, 1, 'run.queued', {}),
+  event(R, 1, 'run.queued', queuedFields()),
   event(R, 2, 'run.started', { attempt: 1 }),
   event(R, 3, 'run.paused', { actor }),
   event(R, 4, 'run.resumed', { actor }),
@@ -380,17 +380,28 @@ describe('initial thread and replay failures', () => {
       ],
     });
     const current = sampleThread({ gates: { gate: { passes: 3 }, obsolete: { passes: 9 } } });
-    const initial = initialThreadFrom(current, [event(R, 1, 'run.queued', {})], definition);
+    const initial = initialThreadFrom(
+      current,
+      [event(R, 1, 'run.queued', queuedFields())],
+      definition,
+    );
     expect(initial.gates).toEqual({ gate: { passes: 1 } });
     const fork = sampleThread({ gates: { gate: { passes: 2 } } });
     expect(
-      initialThreadFrom(current, [event(R, 1, 'run.queued', { initialThread: fork })], definition),
+      initialThreadFrom(
+        current,
+        [event(R, 1, 'run.queued', queuedFields({ initialThread: fork }))],
+        definition,
+      ),
     ).toBe(fork);
   });
 
   it('starts from the thread recorded on run.queued, seed included', () => {
     const seeded = sampleThread();
-    const events = [event(R, 1, 'run.queued', { initialThread: seeded }), ...ALL.slice(1)];
+    const events = [
+      event(R, 1, 'run.queued', queuedFields({ initialThread: seeded })),
+      ...ALL.slice(1),
+    ];
     expect(initialThreadFrom(sampleThread({ messages: [] }), events)).toBe(seeded);
     // Without the field (older logs) it falls back to empty collections.
     expect(initialThreadFrom(seeded, ALL).messages).toEqual([]);
@@ -399,7 +410,7 @@ describe('initial thread and replay failures', () => {
   it('reports a patch that does not apply instead of throwing', () => {
     const current = sampleThread();
     const bad = [
-      event(R, 1, 'run.queued', {}),
+      event(R, 1, 'run.queued', queuedFields()),
       event(R, 2, 'node.finished', {
         nodeId: 'a',
         patch: [{ op: 'replace', path: '/outputs/missing', value: 1 }],

@@ -7,7 +7,7 @@ import { loopVersions, loops, runs } from './schema.js';
 import { deleteRuns } from './delete-runs.js';
 
 import { runRecordFromRow } from './run-row.js';
-export { runRecordFromRow } from './run-row.js';
+export { RunPinMissingError, runRecordFromRow } from './run-row.js';
 
 /** Map record changes onto column values; `undefined` becomes NULL so fields can be cleared. */
 function toColumns(changes: RunRecordChanges): Partial<typeof runs.$inferInsert> {
@@ -17,6 +17,7 @@ function toColumns(changes: RunRecordChanges): Partial<typeof runs.$inferInsert>
     ownerId: 'ownerId',
     loopId: 'loopId',
     versionId: 'versionId',
+    pinned: 'pinned',
     parentRunId: 'parentRunId',
     invocationId: 'invocationId',
     status: 'status',
@@ -45,6 +46,7 @@ export function runInsert(run: RunRecord, initialThread: ContextThread): typeof 
     ownerId: run.ownerId,
     loopId: run.loopId,
     versionId: run.versionId,
+    pinned: run.pinned,
     parentRunId: run.parentRunId ?? null,
     invocationId: run.invocationId,
     status: run.status,

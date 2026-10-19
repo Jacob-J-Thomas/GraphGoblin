@@ -441,7 +441,8 @@ describe('definitions-only format-4 cutover', () => {
     'DROP INDEX runs_parent_idx',
     'CREATE TABLE template_instances (id TEXT)',
     'ALTER TABLE runs ADD COLUMN template_subject TEXT',
-    'DELETE FROM __drizzle_migrations WHERE created_at=(SELECT max(created_at) FROM __drizzle_migrations)',
+    // The format-4 baseline (0013_trigger_configuration); later migrations are ordinary pending ones.
+    'DELETE FROM __drizzle_migrations WHERE created_at=1791828000000',
     'UPDATE gg_upgrade_state SET format_version=3',
   ])('refuses damaged or old completion state before ordinary startup writes: %s', async (sql) => {
     const handle = await openMemoryDatabase();
