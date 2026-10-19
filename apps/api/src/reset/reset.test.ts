@@ -163,13 +163,12 @@ describe('reset dry run', () => {
       'Removes:',
     ]);
     // Removal order: run workspaces, artifacts, the database and its sidecars, the lock last.
-    expect(lines.slice(6, 13).map((line) => line.trim().split(/ {2,}/)[0])).toEqual([
+    expect(lines.slice(6, 12).map((line) => line.trim().split(/ {2,}/)[0])).toEqual([
       `workspaces/${RUN_A}`,
       `workspaces/${RUN_B}`,
       'artifacts',
       'graphgoblin.db',
       'graphgoblin.db-wal',
-      'graphgoblin.db-shm',
       'graphgoblin.lock',
     ]);
     expect(result.out).toMatch(
@@ -183,7 +182,6 @@ describe('reset dry run', () => {
     );
     expect(result.out).toMatch(/\n {2}graphgoblin\.db +database +1 file, [\d.]+ KB\n/);
     expect(result.out).toMatch(/\n {2}graphgoblin\.db-wal +SQLite write-ahead log +1 file, /);
-    expect(result.out).toMatch(/\n {2}graphgoblin\.db-shm +SQLite shared memory +1 file, /);
     expect(result.out).toMatch(
       row('graphgoblin.lock', "the reset's own lock", 'removed last, on release'),
     );
@@ -196,7 +194,7 @@ describe('reset dry run', () => {
           ' {2}workspaces/my-notes +not a stored run ID',
           ' {2}Browser device drafts stay in each browser; discard them from the loop editor\\.',
           '',
-          'Total removed: 6 files, 6 directories, 2 links, [\\d.]+ KB in 6 items\\.',
+          'Total removed: 5 files, 6 directories, 2 links, [\\d.]+ KB in 5 items\\.',
           '',
           'Nothing was removed\\. To reset, stop every GraphGoblin process using this data directory and run:',
           ` {2}${escape(`node apps/api/dist/main.js --reset --yes --data-dir "${dataDir}"`)}`,
@@ -306,7 +304,6 @@ describe('confirmed reset', () => {
           ' {2}removed artifacts \\(1 file, 2 directories, 1 link, 13 B\\)',
           ' {2}removed graphgoblin\\.db \\(1 file, [\\d.]+ KB\\)',
           ' {2}removed graphgoblin\\.db-wal \\(1 file, [\\d.]+ (KB|B)\\)',
-          ' {2}removed graphgoblin\\.db-shm \\(1 file, [\\d.]+ (KB|B)\\)',
           ' {2}removed graphgoblin\\.lock',
           `Reset complete\\. The next start creates a new, empty format-4 store in ${escape(dataDir)}\\.`,
           '$',
@@ -389,7 +386,7 @@ describe('confirmed reset', () => {
           '^Reset stopped: could not remove artifacts/text: .*ENOTEMPTY.*',
           ` {2}Removed: {8}workspaces/${RUN_A}, workspaces/${RUN_B}`,
           ' {2}Partly removed: artifacts \\(2 of 4 entries\\)',
-          ' {2}Not removed: {4}graphgoblin\\.db, graphgoblin\\.db-wal, graphgoblin\\.db-shm',
+          ' {2}Not removed: {4}graphgoblin\\.db, graphgoblin\\.db-wal',
           ' {2}Released graphgoblin\\.lock\\.',
           'Do not start GraphGoblin on this data directory until the reset finishes: fix the cause and run the reset again; it lists and removes what is left\\.',
           '$',
@@ -401,7 +398,6 @@ describe('confirmed reset', () => {
       'artifacts/text',
       'artifacts/text/late',
       'graphgoblin.db',
-      'graphgoblin.db-shm',
       'graphgoblin.db-wal',
       'master.key',
       'notes.txt',
