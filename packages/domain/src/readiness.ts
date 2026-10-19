@@ -35,32 +35,73 @@ export function cliFailureState(text: string): HarnessReadinessState {
   return 'unknown';
 }
 
-export function readinessMessage(harness: string, state: HarnessReadinessState): string {
+/** The product name in user-facing text: `Claude`, `Codex`, otherwise the capitalised id. */
+export function harnessDisplayName(harness: string): string {
+  if (harness === 'claude') return 'Claude';
+  if (harness === 'codex') return 'Codex';
+  return harness.charAt(0).toUpperCase() + harness.slice(1);
+}
+
+/** One sentence saying what the no-turn check found, used when no more specific detail is known. */
+export function readinessDetail(harness: string, state: HarnessReadinessState): string {
+  const name = harnessDisplayName(harness);
   switch (state) {
     case 'ready':
-      return `${harness} CLI capabilities and local login passed. Account model access is not tested.`;
+      return `${name} CLI version, required options and sign-in passed; account model access is not tested.`;
     case 'cli-missing':
-      return `${harness} CLI could not be found. Install it or configure its binary path, then reload the page.`;
+      return `${name} CLI was not found.`;
     case 'cli-incompatible':
-      return `${harness} CLI lacks a required capability. Update the installed CLI and reload the page.`;
+      return `${name} CLI lacks a required capability.`;
     case 'auth':
-      return `${harness} authentication failed. Run ${harness === 'claude' ? 'claude auth login' : 'codex login'}, then reload the page.`;
+      return `${name} sign-in is missing or invalid.`;
     case 'quota':
-      return `${harness} account usage limit reached. Check the account allowance and retry when it resets. The model selection is unchanged.`;
+      return `${name} account usage limit reached.`;
     case 'transport':
-      return `${harness} connection or provider service failed. Check connectivity and service status, then retry. The model selection is unchanged.`;
+      return `${name} could not reach its provider service.`;
     case 'unknown':
-      return `${harness} readiness could not be confirmed. Check the installed CLI and reload the page; no model availability conclusion was made.`;
+      return `${name} readiness could not be confirmed.`;
   }
+}
+
+/** The one next step for a failed state; each ends with retrying preflight, the check that clears it. */
+export function readinessAction(
+  harness: string,
+  state: Exclude<HarnessReadinessState, 'ready'>,
+): string {
+  const name = harnessDisplayName(harness);
+  switch (state) {
+    case 'cli-missing':
+      return `Install the ${name} CLI or set ${harness === 'claude' || harness === 'codex' ? `GG_${harness.toUpperCase()}_BINARY` : 'its binary path'}, then retry preflight.`;
+    case 'cli-incompatible':
+      return `Update the ${name} CLI, then retry preflight.`;
+    case 'auth':
+      return `Run ${harness === 'claude' ? 'claude auth login' : harness === 'codex' ? 'codex login' : `the ${name} login command`}, then retry preflight.`;
+    case 'quota':
+      return 'Wait for the usage limit to reset, then retry preflight.';
+    case 'transport':
+      return "Check the network connection and the provider's service status, then retry preflight.";
+    case 'unknown':
+      return `Check that the ${name} CLI starts and responds, then retry preflight.`;
+  }
+}
+
+/** Problem text: one detail sentence (the given one, or the state's) and one action, never repeated. */
+export function readinessMessage(
+  harness: string,
+  state: HarnessReadinessState,
+  detail = readinessDetail(harness, state),
+): string {
+  return state === 'ready' ? detail : `${detail} ${readinessAction(harness, state)}`;
 }
 
 export function readinessFailure(
   harness: string,
   state: Exclude<HarnessReadinessState, 'ready'>,
+  detail?: string,
 ): HarnessPreflight {
   return {
     state,
     ok: false,
-    problems: [readinessMessage(harness, state)],
+    problems: [readinessMessage(harness, state, detail)],
   };
 }

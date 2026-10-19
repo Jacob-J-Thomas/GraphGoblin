@@ -39,6 +39,25 @@ describe('Claude no-turn executable boundary', () => {
       const result = await harness.preflight();
       expect(result).toMatchObject({ state, ok: state === 'ready' });
       expect(JSON.stringify(result)).not.toContain('PRIVATE_');
+      // Each problem is one detail sentence and one action, with no repeated sentence.
+      const update = ' Update the Claude CLI, then retry preflight.';
+      const check = ' Check that the Claude CLI starts and responds, then retry preflight.';
+      const problems: Record<string, string[]> = {
+        ready: [],
+        old: ['Claude CLI 2.1.284 is older than the minimum version 2.1.285.' + update],
+        'missing-model': ['Claude CLI 2.1.287 does not list required options: --model.' + update],
+        'missing-effort': ['Claude CLI 2.1.287 does not list required options: --effort.' + update],
+        auth: ['Claude is not signed in. Run claude auth login, then retry preflight.'],
+        quota: [
+          'Claude account usage limit reached. Wait for the usage limit to reset, then retry preflight.',
+        ],
+        transport: [
+          "Claude could not reach its provider service. Check the network connection and the provider's service status, then retry preflight.",
+        ],
+        unknown: ['Claude CLI check exited with code 1.' + check],
+        hang: ['Claude CLI did not answer before the check deadline.' + check],
+      };
+      expect(result.problems).toEqual(problems[scenario]);
     },
     60000,
   );

@@ -1,7 +1,12 @@
 import { mkdtemp, rm } from 'node:fs/promises';
 import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { cliFailureState, readinessFailure, readinessMessage } from '@graphgoblin/domain';
+import {
+  cliFailureState,
+  readinessDetail,
+  readinessFailure,
+  readinessMessage,
+} from '@graphgoblin/domain';
 import type { HarnessReadinessState } from '@graphgoblin/contracts';
 import type {
   HarnessEvent,
@@ -66,24 +71,40 @@ function failureState(error: unknown): Exclude<HarnessReadinessState, 'ready'> {
       return 'unknown';
   }
 }
+/**
+ * Turns and no-turn probes share the failure order. A probe's messages are single detail
+ * sentences about the check (preflight adds the one next step); turn messages are unchanged.
+ */
 function checkOutcome(result: ClaudeProcessResult, signal: AbortSignal, probe = false): void {
   if (result.terminationUnconfirmed)
     throw new ClaudeHarnessError(
       'HARNESS_TERMINATION_UNCONFIRMED',
-      'Claude process termination was not confirmed; stop the installed CLI before retrying',
+      probe
+        ? 'Claude CLI check process did not confirm that it stopped.'
+        : 'Claude process termination was not confirmed; stop the installed CLI before retrying',
     );
   if (signal.aborted || result.aborted) throw abortError();
   if (result.spawnCode)
     throw new ClaudeHarnessError(
       result.spawnCode === 'ENOENT' ? 'HARNESS_NOT_INSTALLED' : 'HARNESS_TURN_FAILED',
-      'The installed Claude executable could not be started; check its path and permissions',
+      !probe
+        ? 'The installed Claude executable could not be started; check its path and permissions'
+        : result.spawnCode === 'ENOENT'
+          ? 'Claude CLI was not found at the configured path.'
+          : `Claude CLI could not be started (${result.spawnCode}).`,
     );
   if (result.timedOut)
-    throw new ClaudeHarnessError('HARNESS_TIMEOUT', 'Claude process timed out', true);
+    throw new ClaudeHarnessError(
+      'HARNESS_TIMEOUT',
+      probe ? 'Claude CLI did not answer before the check deadline.' : 'Claude process timed out',
+      true,
+    );
   if (result.overflow)
     throw new ClaudeHarnessError(
       'HARNESS_OUTPUT_LIMIT',
-      'Claude process output exceeded the configured limit',
+      probe
+        ? 'Claude CLI printed more output than the check accepts.'
+        : 'Claude process output exceeded the configured limit',
     );
   if (result.callbackError) throw result.callbackError;
   if (probe && result.exitCode !== 0 && result.failureState && result.failureState !== 'unknown') {
@@ -97,10 +118,17 @@ function checkOutcome(result: ClaudeProcessResult, signal: AbortSignal, probe = 
     };
     throw new ClaudeHarnessError(
       codes[result.failureState] ?? 'HARNESS_TURN_FAILED',
-      readinessMessage('claude', result.failureState),
+      readinessDetail('claude', result.failureState),
       result.failureState === 'transport',
     );
   }
+  if (probe && (result.stdinFailed || result.exitCode !== 0))
+    throw new ClaudeHarnessError(
+      'HARNESS_TURN_FAILED',
+      result.exitCode === null
+        ? 'Claude CLI check stopped without an exit code.'
+        : `Claude CLI check exited with code ${result.exitCode}.`,
+    );
   if (result.stdinFailed || result.exitCode !== 0)
     throw new ClaudeHarnessError('HARNESS_TURN_FAILED', 'Claude turn failed');
 }
@@ -188,7 +216,9 @@ export class ClaudeHarness implements HarnessPort {
         facts.authenticated = false;
         throw new ClaudeHarnessError(
           'HARNESS_NOT_AUTHENTICATED',
-          'Claude account login is required; run claude auth login',
+          'loggedIn' in auth && auth.loggedIn === false
+            ? 'Claude is not signed in.'
+            : 'Claude is not signed in with a Claude.ai account.',
         );
       }
       // This path runs version/help/auth only; stdout cannot be a model response.
@@ -208,10 +238,14 @@ export class ClaudeHarness implements HarnessPort {
       try {
         help = await run([...SUPPRESSION_ARGS, '--max-turns', '1', '--help']);
       } catch (error) {
-        if (error instanceof ClaudeHarnessError)
+        // A rejected or failing option check names the version; timeouts and causes keep their detail.
+        if (
+          error instanceof ClaudeHarnessError &&
+          (error.code === 'HARNESS_CLI_INCOMPATIBLE' || error.code === 'HARNESS_TURN_FAILED')
+        )
           throw new ClaudeHarnessError(
             error.code,
-            `Claude CLI ${version ?? 'unknown'}: required capability --max-turns/--help probe failed: ${error.message}`,
+            `Claude CLI ${version ?? '(unknown version)'} failed the --max-turns/--help check.`,
             error.retriable,
           );
         throw error;
@@ -228,7 +262,7 @@ export class ClaudeHarness implements HarnessPort {
       if (!facts.authenticated)
         throw new ClaudeHarnessError(
           'HARNESS_NOT_AUTHENTICATED',
-          'Claude account login is required; run claude auth login',
+          'Claude did not report a Claude.ai sign-in.',
         );
     } catch (error) {
       if (failureState(error) === 'auth') facts.authenticated = false;
@@ -242,23 +276,25 @@ export class ClaudeHarness implements HarnessPort {
         failures.push(
           new ClaudeHarnessError(
             'HARNESS_TURN_FAILED',
-            'Claude prerequisite workspace cleanup failed',
+            'Claude readiness check could not remove its temporary folder.',
           ),
         );
     }
     facts.ok = failures.length === 0;
     facts.state = facts.ok ? 'ready' : failureState(failures[0]);
+    // One problem per failure: its own detail sentence and the action for its state.
+    // Anything other than a typed harness error keeps the generic detail, never its message.
     facts.problems = [
       ...new Set(
         failures.map((error) =>
-          error instanceof ClaudeHarnessError ? error.message : 'Claude preflight failed',
+          readinessMessage(
+            'claude',
+            failureState(error),
+            error instanceof ClaudeHarnessError ? error.message : undefined,
+          ),
         ),
       ),
     ];
-    if (!facts.ok)
-      facts.problems = facts.problems.map((problem, index) =>
-        index === 0 ? `${problem} ${readinessMessage('claude', facts.state)}` : problem,
-      );
     return { facts, failures };
   }
   async preflight(): Promise<ClaudeHarnessPreflight> {

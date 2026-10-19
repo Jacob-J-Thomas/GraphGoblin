@@ -196,7 +196,7 @@ async function checkHarnesses(
                 `harness.${id}`,
                 label,
                 unavailableStatus,
-                result.problems.join('; ') || readinessMessage(id, 'unknown'),
+                result.problems.join(' ') || readinessMessage(id, result.state),
               )),
         });
       } catch {

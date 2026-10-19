@@ -60,7 +60,9 @@ describe('preflightCli', () => {
   it('reports a missing bundled CLI', async () => {
     const result = await preflightCli(undefined, () => Promise.reject(new Error('unused')), 1);
     expect(result.ok).toBe(false);
-    expect(result.problems[0]).toMatch(/codex CLI could not be found/);
+    expect(result.problems).toEqual([
+      'Codex CLI was not found. Install the Codex CLI or set GG_CODEX_BINARY, then retry preflight.',
+    ]);
   });
 });
 
@@ -87,10 +89,17 @@ describe('Codex no-turn executable boundaries', () => {
       const result = await preflightCli(cli, runCli, scenario === 'hang' ? 1000 : 15000);
       expect(result).toMatchObject({ state, ok: state === 'ready' });
       expect(JSON.stringify(result)).not.toContain('PRIVATE_MARKER');
-      if (scenario === 'old') expect(result.problems.join(' ')).toContain('0.100.0');
-      if (scenario === 'missing-model') expect(result.problems.join(' ')).toContain('--model');
-      if (scenario === 'missing-effort') expect(result.problems.join(' ')).toContain('--config');
-      if (scenario === 'missing-resume-json') expect(result.problems.join(' ')).toContain('--json');
+      const update = ' Update the Codex CLI, then retry preflight.';
+      const expected: Record<string, string> = {
+        old: 'Codex CLI 0.100.0 is older than the minimum version 0.160.0.' + update,
+        'missing-model': 'Codex CLI 0.160.0 does not list required exec options: --model.' + update,
+        'missing-effort':
+          'Codex CLI 0.160.0 does not list required exec options: --config.' + update,
+        'missing-resume-json': 'Codex CLI 0.160.0 does not list --json for exec resume.' + update,
+        auth: 'Codex sign-in is missing or invalid. Run codex login, then retry preflight.',
+      };
+      // One detail sentence that names the version and flag, then one action; never repeated.
+      if (expected[scenario]) expect(result.problems).toEqual([expected[scenario]]);
       if (state === 'cli-incompatible') expect(result).not.toHaveProperty('authenticated');
     },
     75000,
@@ -162,6 +171,8 @@ it.each([
     1000,
   );
   expect(result.state).toBe('cli-incompatible');
-  expect(result.problems.join(' ')).toContain('--version');
+  expect(result.problems).toEqual([
+    `${response.code === 1 ? 'Codex CLI rejected the --version option.' : 'Codex CLI --version did not print a version number; 0.160.0 or newer is required.'} Update the Codex CLI, then retry preflight.`,
+  ]);
   expect(result).not.toHaveProperty('authenticated');
 });

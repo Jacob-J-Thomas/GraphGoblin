@@ -1,6 +1,10 @@
 import { readinessOperation, type ReadinessOperation } from './readiness-operation.js';
 import type { Effort, HarnessId, LoopDefinition, LoopIssue } from '@graphgoblin/contracts';
-import { resolveHarnessModel, validateHarnessDefaults } from '@graphgoblin/domain';
+import {
+  readinessMessage,
+  resolveHarnessModel,
+  validateHarnessDefaults,
+} from '@graphgoblin/domain';
 import type { Container } from './container.js';
 import { readOwnerDefaults } from './container.js';
 
@@ -54,8 +58,7 @@ export async function modelIssues(
           severity: 'warning',
           nodeId,
           path: path + '.harness',
-          message:
-            preflight.problems.join('; ') || 'Harness readiness is unknown; reload the page.',
+          message: preflight.problems.join(' ') || readinessMessage(harness, preflight.state),
         });
     }
     if (resolution.status !== 'ready')

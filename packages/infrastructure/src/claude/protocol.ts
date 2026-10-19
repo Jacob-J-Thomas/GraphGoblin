@@ -51,10 +51,11 @@ export function installedClaudeVersion(text: string): string | undefined {
 /** Newer releases must still advertise every capability required by the launch policy. */
 export function verifyInstalledCapabilities(versionText: string, helpText: string): string {
   const version = installedClaudeVersion(versionText);
+  // Each message is one detail sentence; preflight appends the next step.
   if (!version)
     throw new ClaudeHarnessError(
       'HARNESS_UNSUPPORTED_POLICY',
-      'Claude CLI version unknown: required capability version identification is unavailable',
+      'Claude CLI version could not be identified.',
     );
   const parts = version.split('.').map(Number);
   const minimum = MINIMUM_CLAUDE_VERSION.split('.').map(Number);
@@ -62,14 +63,14 @@ export function verifyInstalledCapabilities(versionText: string, helpText: strin
   if (difference !== undefined && difference < 0)
     throw new ClaudeHarnessError(
       'HARNESS_UNSUPPORTED_POLICY',
-      `Claude CLI ${version}: required capability minimum version ${MINIMUM_CLAUDE_VERSION} is unavailable`,
+      `Claude CLI ${version} is older than the minimum version ${MINIMUM_CLAUDE_VERSION}.`,
     );
   const advertisedFlags = helpText.split(/\s+/).map((token) => token.replace(/,$/, ''));
   const missing = REQUIRED_FLAGS.filter((flag) => !advertisedFlags.includes(flag));
   if (missing.length)
     throw new ClaudeHarnessError(
       'HARNESS_UNSUPPORTED_POLICY',
-      `Claude CLI ${version}: required capabilities unavailable: ${missing.join(', ')}`,
+      `Claude CLI ${version} does not list required options: ${missing.join(', ')}.`,
     );
   return version;
 }

@@ -96,7 +96,7 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
             reply,
             422,
             'HARNESS_NOT_READY',
-            'Harness prerequisites failed; reload the page to check readiness.',
+            'Harness readiness checks failed. Fix the listed problems, then start the run again.',
             issues,
           );
       }

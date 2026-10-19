@@ -119,7 +119,7 @@ describe('strict Claude auth/capability parsing', () => {
       );
     for (const text of ['PRIVATE', '2.1', '2.1.287-beta', '9999999.1.1'])
       expect(() => verifyInstalledCapabilities(text, flags.join(' '))).toThrow(
-        /version unknown.*version identification/,
+        /^Claude CLI version could not be identified\.$/,
       );
     for (const removed of flags)
       expect(() =>
@@ -127,7 +127,7 @@ describe('strict Claude auth/capability parsing', () => {
           '2.1.285 (Claude Code)',
           flags.filter((flag) => flag !== removed).join(' '),
         ),
-      ).toThrow(new RegExp(`2\\.1\\.285.*capabilities unavailable: ${removed}`));
+      ).toThrow(`Claude CLI 2.1.285 does not list required options: ${removed}.`);
   });
 });
 describe('bounded JSONL parser', () => {

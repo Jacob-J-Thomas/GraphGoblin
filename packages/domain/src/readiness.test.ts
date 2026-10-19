@@ -29,6 +29,37 @@ describe('no-turn readiness diagnostics', () => {
         expect(readinessFailure('codex', state)).toMatchObject({ state, ok: false });
     }
   });
+  it('writes one capitalised detail sentence and one action for each failed state', () => {
+    for (const state of HarnessReadinessStateSchema.options) {
+      if (state === 'ready') continue;
+      for (const [harness, name] of [
+        ['claude', 'Claude'],
+        ['codex', 'Codex'],
+        ['litellm', 'Litellm'],
+      ] as const) {
+        const [problem] = readinessFailure(harness, state).problems;
+        // Two sentences: the detail names the harness, the action ends with retrying preflight.
+        expect(problem?.match(/[.!?](?:\s|$)/g)).toHaveLength(2);
+        expect(problem).toMatch(new RegExp(`^${name} `));
+        expect(problem).toMatch(/retry preflight\.$/);
+        expect(problem).not.toMatch(/reload the page|\bclaude (?!auth login)|\bcodex (?!login)/);
+      }
+    }
+    expect(readinessMessage('claude', 'auth')).toBe(
+      'Claude sign-in is missing or invalid. Run claude auth login, then retry preflight.',
+    );
+    expect(readinessMessage('codex', 'cli-missing')).toBe(
+      'Codex CLI was not found. Install the Codex CLI or set GG_CODEX_BINARY, then retry preflight.',
+    );
+    expect(readinessMessage('litellm', 'auth')).toMatch(/Run the Litellm login command/);
+    expect(readinessMessage('litellm', 'cli-missing')).toMatch(/set its binary path/);
+    expect(readinessMessage('claude', 'ready')).not.toMatch(/retry/);
+    expect(readinessFailure('codex', 'cli-incompatible', 'Codex CLI 0.150.0 is too old.')).toEqual({
+      state: 'cli-incompatible',
+      ok: false,
+      problems: ['Codex CLI 0.150.0 is too old. Update the Codex CLI, then retry preflight.'],
+    });
+  });
 });
 
 it('does not treat CLI version numbers as HTTP failure codes', () => {

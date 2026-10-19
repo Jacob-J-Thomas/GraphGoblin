@@ -443,7 +443,9 @@ describe('preflight', () => {
     expect(await harness.preflight()).toMatchObject({
       state: 'unknown',
       ok: false,
-      problems: [expect.stringMatching(/reload the page/)],
+      problems: [
+        'Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight.',
+      ],
     });
   });
 
