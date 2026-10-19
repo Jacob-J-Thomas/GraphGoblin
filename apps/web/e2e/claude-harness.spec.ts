@@ -1,6 +1,6 @@
 import { LoopDefinitionSchema } from '@graphgoblin/contracts';
 import { minimalLoop } from '@graphgoblin/contracts/testing';
-import { control, expect, openNode, test } from './fixtures.js';
+import { control, expect, openAdvanced, openNode, test } from './fixtures.js';
 
 const baseClaudeConfig = {
   harness: 'claude',
@@ -247,7 +247,9 @@ test('a ready Claude model field stays editable while a focus refetch rechecks r
   });
   await page.goto(instance.url + '/app/loops/' + loop.id + '/edit');
   const dialog = await openNode(page, 'infer');
+  await openAdvanced(dialog);
   const model = dialog.getByLabel('Model', { exact: true });
+  await expect(model).toBeVisible();
   await expect(model).toHaveValue('claude-opus-5-5');
   await expect(model).not.toHaveAttribute('aria-readonly');
   const label = await model.locator('option:checked').textContent();
