@@ -12,7 +12,7 @@ Sources for "before": [ADR-0010](../decisions/ADR-0010-exit-return-channels.md),
 - the `exit.evaluated` event schema
 - the #129 comment of 2026-10-08 on the PR #126 exit-local Choice options array
 
-Sources for "after": current `main` (`f157fc1`), reproduced in the built product, then this branch.
+Sources for "after": current `main` (`f157fc1`), reproduced in the built product, then this branch. The owner review steps, with their three loops, are in [2026-10-19-wp-g4-exit-evidence](2026-10-19-wp-g4-exit-evidence/README.md).
 
 ## Inventory
 

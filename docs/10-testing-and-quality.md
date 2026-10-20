@@ -48,6 +48,8 @@ The first pass (WP-D2, 2026-10-03) drove the built app with Playwright on Micros
 
 Two-tab conflict checks explicitly activate each editor before navigation, wait for its heading and for the existing server/device reconciliation notice to clear, then assert the stored draft and each conflict resolution. These waits synchronize observable state; they are not sleeps or render-speed assertions. The [WP-A2 QA report](qa/2026-10-18-wp-a2-browser-gates.md) records the pre-change modal failure, single activation A/B diagnostic and bounded repeated checks; the historical second-tab failure remains not reproduced, not disproven.
 
+Exit evidence after the decision-gate redesign (#129) has a [capability inventory](qa/2026-10-18-exit-evidence-inventory.md) and a [self-contained owner review](qa/2026-10-19-wp-g4-exit-evidence/README.md). The review builds an isolated instance on port 5641 with disposable data and imports three loops from the same folder. Its browser regressions are in `apps/web/e2e/exit-primitives.spec.ts` and `apps/web/e2e/classifiers.spec.ts`.
+
 ## CI gates (Decided, in order)
 
 1. Install with a frozen lockfile.

@@ -1,0 +1,66 @@
+{
+  "definition": {
+    "schemaVersion": 4,
+    "name": "QA 129 gate repeat",
+    "nodes": [
+      {
+        "id": "start",
+        "kind": "trigger",
+        "label": "Start",
+        "config": { "type": "manual" },
+        "ui": { "x": 0, "y": 80 }
+      },
+      {
+        "id": "work",
+        "kind": "mutate",
+        "label": "Work",
+        "config": {
+          "operations": [
+            { "op": "append-message", "role": "note", "content": "pass {{ gates.gate.passes }}" }
+          ]
+        },
+        "ui": { "x": 260, "y": 80 }
+      },
+      {
+        "id": "gate",
+        "kind": "decision",
+        "label": "Gate",
+        "config": {
+          "kind": "expression",
+          "jsonata": "\"again\"",
+          "maxPasses": 3,
+          "routes": [
+            { "id": "again", "label": "Again", "repeat": true },
+            { "id": "done", "label": "Done" }
+          ]
+        },
+        "ui": { "x": 520, "y": 80 }
+      },
+      {
+        "id": "finished",
+        "kind": "exit",
+        "label": "Finished",
+        "config": { "returns": "gates.gate.passes" },
+        "ui": { "x": 800, "y": 0 }
+      },
+      {
+        "id": "gave-up",
+        "kind": "exit",
+        "label": "Gave up",
+        "config": { "outcome": "exhausted", "returns": "gates.gate.passes" },
+        "ui": { "x": 800, "y": 220 }
+      }
+    ],
+    "edges": [
+      { "id": "e1", "from": { "node": "start", "port": "out" }, "to": { "node": "work" } },
+      { "id": "e2", "from": { "node": "work", "port": "out" }, "to": { "node": "gate" } },
+      { "id": "e3", "from": { "node": "gate", "port": "again" }, "to": { "node": "work" } },
+      { "id": "e4", "from": { "node": "gate", "port": "done" }, "to": { "node": "finished" } },
+      {
+        "id": "e5",
+        "from": { "node": "gate", "port": "limit-reached" },
+        "to": { "node": "gave-up" }
+      }
+    ]
+  }
+}
