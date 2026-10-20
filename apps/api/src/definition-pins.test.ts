@@ -143,6 +143,11 @@ async function idle(): Promise<void> {
 }
 
 const run = (id: string) => call<RunRecord>('GET', `/runs/${id}`);
+/** Answer the run's current input wait with `true`, binding the answer to the observed wait identity. */
+const answer = async (id: string) => {
+  const waiting = await run(id);
+  await call('POST', `/runs/${id}/input`, { waitId: waiting.waiting!.waitId, input: true });
+};
 const events = async (id: string) =>
   (await call<{ items: RunEvent[] }>('GET', `/runs/${id}/events`)).items;
 
@@ -235,7 +240,7 @@ describe('runs pin their definition across edits, Settings changes and a restart
         }),
       });
       for (const started of [published, drafted]) {
-        await call('POST', `/runs/${started.id}/input`, { input: true });
+        await answer(started.id);
         await idle();
         const finished = await run(started.id);
         expect(finished).toMatchObject({
@@ -264,7 +269,7 @@ describe('runs pin their definition across edits, Settings changes and a restart
         },
       });
       await idle();
-      await call('POST', `/runs/${next.id}/input`, { input: true });
+      await answer(next.id);
       await idle();
       expect(await run(next.id)).toMatchObject({ status: 'succeeded', result: 'new' });
       expect(harness.started.at(-1)).toMatchObject({ model: 'gpt-6-sol', effort: 'high' });
@@ -357,7 +362,7 @@ describe('classifier bindings are pinned at start', () => {
         await call('PUT', '/classifier-models/custom', entry('model-edited'));
         await close();
         await open({}, true);
-        await call('POST', `/runs/${started.id}/input`, { input: true });
+        await answer(started.id);
         await idle();
         expect(await run(started.id)).toMatchObject({
           status: 'succeeded',
@@ -370,7 +375,7 @@ describe('classifier bindings are pinned at start', () => {
         const next = (await call<{ run: RunRecord }>('POST', `/loops/${loop.id}/runs`, {})).run;
         expect(next.pinned.classifiers['custom']?.providerModel).toBe('model-edited');
         await idle();
-        await call('POST', `/runs/${next.id}/input`, { input: true });
+        await answer(next.id);
         await idle();
         expect(fixture.requests.map((request) => request.body.model)).toEqual([
           'model-original',
@@ -381,7 +386,7 @@ describe('classifier bindings are pinned at start', () => {
         const held = (await call<{ run: RunRecord }>('POST', `/loops/${loop.id}/runs`, {})).run;
         await idle();
         await call('PATCH', '/classifier-models/custom', { enabled: false });
-        await call('POST', `/runs/${held.id}/input`, { input: true });
+        await answer(held.id);
         await idle();
         expect(await run(held.id)).toMatchObject({
           status: 'failed',
@@ -424,7 +429,7 @@ describe('classifier bindings are pinned at start', () => {
           },
         });
         await idle();
-        await call('POST', `/runs/${started.id}/input`, { input: true });
+        await answer(started.id);
         await idle();
         expect(await run(started.id)).toMatchObject({ status: 'succeeded', result: 'yes' });
         expect(fixture.requests.map((request) => request.body.model)).toEqual([
