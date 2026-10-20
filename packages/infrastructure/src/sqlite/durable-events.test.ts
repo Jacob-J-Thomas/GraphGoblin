@@ -202,7 +202,7 @@ describe('generated durable event boundaries with SQLite', () => {
     );
   });
 
-  it.each(['get', 'listByStatus', 'listChildren', 'transition', 'update', 'claimCancel'] as const)(
+  it.each(['get', 'listChildren', 'transition', 'update', 'claimCancel'] as const)(
     'attributes damaged JSON to its run through %s',
     async (reader) => {
       const t = await fixture();
@@ -217,8 +217,6 @@ describe('generated durable event boundaries with SQLite', () => {
         switch (reader) {
           case 'get':
             return t.runs.get(run.id);
-          case 'listByStatus':
-            return t.runs.listByStatus(['queued']);
           case 'listChildren':
             return t.runs.listChildren(run.id);
           case 'transition':
@@ -295,7 +293,7 @@ describe('generated durable event boundaries with SQLite', () => {
       "ALTER TABLE runs ADD COLUMN internal_diagnostic TEXT DEFAULT '{broken'",
     );
     await expect(t.runs.get(run.id)).resolves.toMatchObject({ id: run.id, status: 'queued' });
-    await expect(t.runs.listByStatus(['queued'])).resolves.toHaveLength(1);
+    await expect(t.runs.list({ status: ['queued'] })).resolves.toHaveLength(1);
     await expect(t.runs.listRunReferences([])).resolves.toEqual([]);
   });
 });

@@ -1,0 +1,137 @@
+{
+  "revision": "5aadc90",
+  "runtime": "Node 22.14.0",
+  "gates": [
+    {
+      "command": "pnpm.cmd build",
+      "exitCode": 0,
+      "classification": "passed, 11 tasks; 9 cached; two Turbo access-denied warnings while caching; no failed build task"
+    },
+    {
+      "command": "pnpm.cmd typecheck",
+      "exitCode": 0,
+      "classification": "passed; typecheck/lint used Turbo cache",
+      "excerpts": []
+    },
+    {
+      "command": "pnpm.cmd lint",
+      "exitCode": 0,
+      "classification": "passed; typecheck/lint used Turbo cache",
+      "excerpts": []
+    },
+    {
+      "command": "pnpm.cmd format:check",
+      "exitCode": 0,
+      "classification": "passed",
+      "excerpts": []
+    },
+    {
+      "command": "pnpm.cmd check:docs",
+      "exitCode": 0,
+      "classification": "passed",
+      "excerpts": []
+    },
+    {
+      "command": "pnpm.cmd check:migrations",
+      "exitCode": 0,
+      "classification": "passed",
+      "excerpts": []
+    },
+    {
+      "command": "pnpm.cmd check:layers",
+      "exitCode": 0,
+      "classification": "passed",
+      "excerpts": []
+    },
+    {
+      "command": "pnpm.cmd check:deps",
+      "exitCode": 0,
+      "classification": "passed",
+      "excerpts": []
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/infrastructure test:coverage",
+      "exitCode": 1,
+      "classification": "native process sandbox artefacts D-015 plus unresolved upgrade timeouts",
+      "excerpts": []
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/engine test:coverage",
+      "exitCode": 0,
+      "classification": "passed uncached",
+      "excerpts": []
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/api test:coverage",
+      "exitCode": 1,
+      "classification": "timeouts; each failing file passed alone, original coverage gate remains failed",
+      "excerpts": []
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/api-client test:coverage",
+      "exitCode": 1,
+      "classification": "template tests and cleanup hooks time out in both full and isolated runs; unresolved",
+      "excerpts": []
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/contracts test:coverage",
+      "exitCode": 0,
+      "classification": "passed uncached, additional WP brief gate",
+      "excerpts": []
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/adversarial.test.ts",
+      "exitCode": 1,
+      "classification": "D-015",
+      "excerpts": []
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/claude/process.test.ts",
+      "exitCode": 1,
+      "classification": "D-015",
+      "excerpts": []
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/process/scripts.test.ts",
+      "exitCode": 1,
+      "classification": "D-015",
+      "excerpts": []
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/sqlite/upgrade.test.ts",
+      "exitCode": 1,
+      "classification": "unresolved timeouts; 7 failed and 19 passed alone",
+      "excerpts": []
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/container.test.ts",
+      "exitCode": 0,
+      "classification": "passed alone; original full coverage failure retained",
+      "excerpts": []
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/main.test.ts",
+      "exitCode": 0,
+      "classification": "passed alone; original full coverage failure retained",
+      "excerpts": []
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/version-migration.test.ts",
+      "exitCode": 0,
+      "classification": "passed alone; original full coverage failure retained",
+      "excerpts": []
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/templates/catalog-package.test.ts",
+      "exitCode": 0,
+      "classification": "passed alone; original full coverage failure retained",
+      "excerpts": []
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/api-client exec vitest run src/templates.test.ts",
+      "exitCode": 1,
+      "classification": "repeated test and cleanup timeouts; unresolved",
+      "excerpts": []
+    }
+  ]
+}

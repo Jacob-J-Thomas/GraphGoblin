@@ -4,6 +4,9 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Publish flushed artifact bytes by atomic rename, verify hashes on reads and repeated writes, and replace corrupted files safely under concurrent retries. After a failed rename, accept verified bytes already published by an identical writer. Downloads report `ARTIFACT_CORRUPT`; publication failures remain resumable as `ARTIFACT_WRITE_FAILED`, and explicit resume continues the recorded provider session with a continuation prompt. (#234)
+- Preserve absent run results separately from JSON `null` and all other JSON values across SQLite writes, reads and restart; settings now accept JSON `null`, empty loop descriptions remain present, and rejected run/settings updates preserve prior values. **Upgrade:** No schema migration or reset is needed; already-collapsed historical null run results cannot be reconstructed. `RunRepository.listByStatus` was removed; use `listRunReferences` for identity-only active-use checks. (#230)
+
 - Script and custom subloop patches share validation of every mutated location, including a move's source, before applying any operation. Errors identify the offending `path` or `from`. Protected tests and copies into writable context are permitted; rejected patches leave the thread unchanged. (#227)
 - Client and MCP waits interrupt pending requests and sleeps on caller cancellation or the total observation deadline, ignore late responses, and leave the run running. **Upgrade:** `WaitForRunResult` is now a discriminated union: a deadline returns `finished: false` with optional `run` when no snapshot arrived. Handle that case; client zero-budget waits make no request. MCP `timeoutSeconds` must be an integer from 1 to 600 (default 60); when no snapshot arrived, status, waiting details and cursor are omitted. Client wait options are unchanged. (#233)
 
