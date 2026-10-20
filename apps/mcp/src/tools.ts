@@ -7,7 +7,6 @@ import {
   loops,
   observeRun,
   runs,
-  unwrap,
   type GraphGoblinClient,
 } from '@graphgoblin/api-client';
 import {
