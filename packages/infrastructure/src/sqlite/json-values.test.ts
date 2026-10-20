@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import type { JsonValue, RunRecord } from '@graphgoblin/contracts';
-import { fakeUlid, FIXTURE_TS, sampleThread } from '@graphgoblin/contracts/testing';
+import { fakeUlid, FIXTURE_TS, samplePin, sampleThread } from '@graphgoblin/contracts/testing';
 import { FakeClock } from '@graphgoblin/engine/testing';
 import { openDatabase, type DatabaseHandle } from './db.js';
 import { SqliteRunRepository } from './runs.js';
@@ -55,6 +55,7 @@ function record(id: string, result: JsonValue | undefined): RunRecord {
     ownerId: 'local',
     loopId: fakeUlid('loop'),
     versionId: fakeUlid('version'),
+    pinned: samplePin(),
     invocationId: fakeUlid('invocation'),
     status: 'queued',
     iteration: 1,

@@ -36,7 +36,7 @@ it('still attempts post-execution bookkeeping when recording an executor crash c
   }
   const events = new CrashingEvents(ports.clock);
   const manager = new RunManager(
-    { ...ports, runs, events, admission: new InMemoryTriggerAdmission(runs, events) },
+    { ...ports, runs, events, admission: new InMemoryTriggerAdmission(runs, events, ports.loops) },
     DEFAULT_TEST_SETTINGS,
   );
   const loopId = fakeUlid('crash-loop');
