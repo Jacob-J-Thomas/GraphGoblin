@@ -1,0 +1,31 @@
+[
+  {
+    "name": "natural waiter over real hard restart",
+    "pass": false,
+    "observation": {
+      "error": {
+        "name": "GraphGoblinApiError",
+        "message": "NETWORK_ERROR: fetch failed",
+        "status": 0
+      }
+    },
+    "settlements": 1,
+    "requests": 2,
+    "recoveredStatus": "waiting",
+    "finalStatus": "succeeded",
+    "expected": "a terminal success or finished:false as requested; no stale or duplicate result"
+  },
+  {
+    "name": "MCP abort in pending HTTP request",
+    "pass": true,
+    "answer": {
+      "error": "McpError: MCP error -32001: Error: QA cancel pending MCP"
+    },
+    "signalAborted": true,
+    "socketClosed": true,
+    "requests": 1,
+    "ms": 58,
+    "stillStatus": "running",
+    "finalStatus": "succeeded"
+  }
+]
