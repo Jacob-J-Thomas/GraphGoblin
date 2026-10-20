@@ -147,11 +147,11 @@ Restore sets `/lastOutput` from `$lookup(outputs, "<triggerId>")`. Trigger and s
 
 Review explicitly accepts formerly ignored input creating quiet runs, expression errors occurring after acknowledgement inside an admitted run, keys consumed before the check, and extra visits against the safety cap. This definition rule does not apply SQL, convert device drafts or authorize installation; the shared cutover still composes those operations and binds stored-version review identities.
 
-## Inbound Events (Decided, shipped in M6; exit chaining retired by ADR-0042)
+## Inbound Events (Decided, shipped in M6; exit chaining retired by ADR-0044)
 
 - `POST /events` accepts `{ type, payload, dedupeKey? }` from any client with the `events:write` scope. The event is stored in `inbound_events` (`source: 'api'`) and fires every `event` trigger node of the owner's published loops whose `eventType` matches. The response is the stored event with `runIds` and `duplicate`. The runs it starts record `caller: { kind: 'system', id: 'event:<eventId>' }`.
 - Dedupe: an event whose `(type, dedupeKey)` was seen before fires nothing and returns `duplicate: true` with the earlier event's run ids. A trigger node's own `dedupeKey` expression additionally skips the event when that node has already started a run with the same key (looked up in the runs' stored trigger envelopes, so it survives restarts).
-- Events come only from outside the engine. Exits do not publish Events and there is no in-process event bus: a loop that needs another loop's work calls it as an awaited subloop, which returns the child's configured output to the parent ([ADR-0042](decisions/ADR-0042-awaited-subloops.md), docs/05). The former `event` return channel, its `source: 'run:<runId>'` Events and the run-chain guard (`MAX_EVENT_CHAIN`) are removed. Inputs and signals for a waiting run go to that run's observed wait by identity (07).
+- Events come only from outside the engine. Exits do not publish Events and there is no in-process event bus: a loop that needs another loop's work calls it as an awaited subloop, which returns the child's configured output to the parent ([ADR-0044](decisions/ADR-0044-awaited-subloops.md), docs/05). The former `event` return channel, its `source: 'run:<runId>'` Events and the run-chain guard (`MAX_EVENT_CHAIN`) are removed. Inputs and signals for a waiting run go to that run's observed wait by identity (07).
 - `GET /events` lists stored events newest first (`limit`, `type`, `before`).
 
 ## Polling trigger (Shipped in M6 as the stretch)

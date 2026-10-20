@@ -1,4 +1,4 @@
-# ADR-0042 - Loops compose only as awaited subloops
+# ADR-0044 - Loops compose only as awaited subloops
 
 Date: 2026-10-20. Status: Accepted. Supersedes the `event` return channel and "Loops compose through the `event` channel without a parent loop" in [ADR-0010](ADR-0010-exit-return-channels.md); the rest of ADR-0010 and [ADR-0009](ADR-0009-subloops-by-reference.md) stand.
 

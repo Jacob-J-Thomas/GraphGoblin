@@ -205,7 +205,7 @@ The `caller` return channel resolves at delivery time:
 | `manual.mcp`                                          | Also returned as the MCP tool result when the client waited; otherwise fetched with `get_run` |
 | `subloop`                                             | Handed to the parent run's subloop output mapping                                             |
 
-Other channels, webhook, file and log, are delivered by the engine after the run finishes, with one `return.delivered` or `return.failed` event each. There is no Event channel: a loop that needs another loop's result calls it as an awaited subloop (ADR-0042).
+Other channels, webhook, file and log, are delivered by the engine after the run finishes, with one `return.delivered` or `return.failed` event each. There is no Event channel: a loop that needs another loop's result calls it as an awaited subloop (ADR-0044).
 
 ## MCP server (Decided)
 
@@ -408,7 +408,7 @@ Ordinary copied drafts use the ordinary engine resume behavior. The API installs
 
 Create, import, draft save, validate and publish share the gate and terminal-exit schemas and graph checks. A missing `maxPasses` points at `nodes.<index>.config.maxPasses`; node-relative issues use `config.maxPasses`. Multiple repeat markers identify the extra `config.routes.<index>.repeat`, `config.answer.options.<index>.repeat`, Noul side or Score band path. A noncyclic repeat is `REPEAT_ROUTE_NOT_CYCLIC`; a missing Limit reached connection is `PORT_UNCONNECTED` at `config.maxPasses`. Reserve `limit-reached` in all authored route IDs.
 
-Exits are terminal: `{outcome, returns, destinations}`. `outcome` is `success` (default), `failure` or `exhausted`; `returns` is a JSONata expression or `none` (default); `destinations` defaults to `[{kind:"caller"}]` and supports caller, webhook, file and log (no Event channel; loops compose as awaited subloops, ADR-0042). Exits have no criteria, predicate, default routing or loop-back, and no output ports.
+Exits are terminal: `{outcome, returns, destinations}`. `outcome` is `success` (default), `failure` or `exhausted`; `returns` is a JSONata expression or `none` (default); `destinations` defaults to `[{kind:"caller"}]` and supports caller, webhook, file and log (no Event channel; loops compose as awaited subloops, ADR-0044). Exits have no criteria, predicate, default routing or loop-back, and no output ports.
 
 Success finishes `succeeded`, Failure finishes `failed`, and Exhausted finishes the distinct terminal status `exhausted`. Exhausted means the authored graph gave up further repetition; normally a gate's Limit reached output leads here. It is an outcome, not a resumable node failure. Every outcome evaluates the same return expression and delivers its value unchanged; Exhausted adds no wrapper or implicit last output. Use `outputs.<workNodeId>.value` when returning work output, because the preceding gate replaces `lastOutput`.
 

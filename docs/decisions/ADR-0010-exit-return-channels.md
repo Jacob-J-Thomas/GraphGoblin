@@ -1,6 +1,6 @@
 # ADR-0010 - Exit nodes declare a return mapping and return channels
 
-Supersession: [ADR-0036](ADR-0036-decision-gates-terminal-exits.md) replaces this ADR's exit predicates, loop-back and iteration-limit rules where applicable. [ADR-0042](ADR-0042-awaited-subloops.md) removes the `event` channel: loops compose only as awaited subloops. Historical text below is retained.
+Supersession: [ADR-0036](ADR-0036-decision-gates-terminal-exits.md) replaces this ADR's exit predicates, loop-back and iteration-limit rules where applicable. [ADR-0044](ADR-0044-awaited-subloops.md) removes the `event` channel: loops compose only as awaited subloops. Historical text below is retained.
 
 Date: 2026-10-02. Status: Accepted.
 

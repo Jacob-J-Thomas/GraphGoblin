@@ -47,4 +47,4 @@ One file per decision. Status is Accepted unless stated. Supersede by adding a n
 
 [ADR-0041: Runs pin an immutable definition, drafts included](ADR-0041-runs-pin-immutable-definitions.md) supersedes ADR-0008's draft-run gap: draft runs pin a frozen snapshot, and inherited model defaults are pinned at start.
 
-[ADR-0042: Loops compose only as awaited subloops](ADR-0042-awaited-subloops.md) supersedes ADR-0010's `event` channel: child wakes are bound to the observed park, a child returns its configured output or none, child execution failures and cancellations follow the inline rules, and exit-to-Event chaining is retired while external Event intake stays.
+[ADR-0044: Loops compose only as awaited subloops](ADR-0044-awaited-subloops.md) supersedes ADR-0010's `event` channel: child wakes are bound to the observed park, a child returns its configured output or none, child execution failures and cancellations follow the inline rules, and exit-to-Event chaining is retired while external Event intake stays.
