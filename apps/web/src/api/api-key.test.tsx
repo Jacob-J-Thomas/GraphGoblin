@@ -2,7 +2,7 @@ import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { event, FakeApi } from '../__fixtures__/fake-api.js';
+import { event, FakeApi, queuedFields } from '../__fixtures__/fake-api.js';
 import { renderApp } from '../__fixtures__/render.js';
 import { API_KEY_STORAGE, syncApiKeyAcrossTabs, useApiKeyStore } from './api-key.js';
 
@@ -81,7 +81,7 @@ describe('API key entry', () => {
     const api = new FakeApi();
     api.requiredKey = 'gg_good';
     const run = api.addRun();
-    api.pushEvent(run.id, event(run.id, 1, 'run.queued', {}));
+    api.pushEvent(run.id, event(run.id, 1, 'run.queued', queuedFields()));
     api.pushEvent(run.id, event(run.id, 2, 'run.started', { attempt: 1 }));
     renderApp(`/runs/${run.id}`, api);
     expect(await screen.findByText('API key required')).toBeInTheDocument();

@@ -84,7 +84,14 @@ async function seedVersion(status: 'draft' | 'published', definition = inference
   await t.container.handle.client.execute('DROP TABLE classifier_models');
   await t.container.handle.client.execute('DROP TABLE webhook_receipts');
   await t.container.handle.client.execute('DROP INDEX runs_trigger_dedupe_idx');
-  await t.container.handle.client.execute('DROP INDEX runs_loop_owner_history_idx');
+  for (const statement of [
+    'DROP INDEX runs_loop_owner_history_idx',
+    'DROP TRIGGER loop_versions_snapshot_immutable',
+    'DROP TRIGGER loop_versions_snapshot_pinned',
+    'DROP INDEX runs_version_idx',
+    'ALTER TABLE runs DROP COLUMN pinned',
+  ])
+    await t.container.handle.client.execute(statement);
   const removed = await t.container.handle.client.execute(
     'DELETE FROM __drizzle_migrations WHERE created_at > 1791136800000',
   );

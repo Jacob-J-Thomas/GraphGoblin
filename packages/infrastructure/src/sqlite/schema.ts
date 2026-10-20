@@ -6,7 +6,9 @@ import type {
   Effort,
   JsonValue,
   LoopDefinition,
+  LoopVersionStatus,
   RunFailure,
+  RunPin,
   WaitSpec,
 } from '@graphgoblin/contracts';
 import {
@@ -46,7 +48,10 @@ export const loopVersions = sqliteTable(
     id: text('id').primaryKey(),
     loopId: text('loop_id').notNull(),
     version: integer('version').notNull(),
-    status: text('status', { enum: ['draft', 'published'] }).notNull(),
+    /** `snapshot` rows are draft copies pinned by draft runs; triggers keep them immutable. */
+    status: text('status', { enum: ['draft', 'published', 'snapshot'] })
+      .$type<LoopVersionStatus>()
+      .notNull(),
     definition: text('definition', { mode: 'json' }).$type<LoopDefinition>().notNull(),
     createdAt: text('created_at').notNull(),
     publishedAt: text('published_at'),
@@ -82,6 +87,11 @@ export const runs = sqliteTable(
     threadSnapshotSeq: integer('thread_snapshot_seq'),
     /** Set when everything after the terminal status (timers, children, returns, parent) is done. */
     finalizedAt: text('finalized_at'),
+    /**
+     * What `version_id` pins (ADR-0041). Nullable only because SQLite cannot add a NOT NULL column
+     * without a default; every run is written with one and migration 0014 pinned the runs before it.
+     */
+    pinned: text('pinned', { mode: 'json' }).$type<RunPin>(),
   },
   (t) => [
     index('runs_owner_status_idx').on(t.ownerId, t.status),
@@ -94,6 +104,8 @@ export const runs = sqliteTable(
       sql`json_extract(${t.initialThread}, '$.invocation.trigger.dedupeKey')`,
     ),
     index('runs_parent_idx').on(t.parentRunId),
+    // Which runs pin a definition record: snapshot clean-up and the snapshot delete guard (0014).
+    index('runs_version_idx').on(t.versionId),
   ],
 );
 

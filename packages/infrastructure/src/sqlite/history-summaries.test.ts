@@ -1,7 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { LoopDefinitionSchema } from '@graphgoblin/contracts';
 import type { RunRecord } from '@graphgoblin/contracts';
-import { fakeUlid, FIXTURE_TS, minimalLoop, sampleThread } from '@graphgoblin/contracts/testing';
+import {
+  fakeUlid,
+  FIXTURE_TS,
+  minimalLoop,
+  samplePin,
+  sampleThread,
+} from '@graphgoblin/contracts/testing';
 import { FakeClock, FakeIds } from '@graphgoblin/engine/testing';
 import { openMemoryDatabase, type DatabaseHandle } from './db.js';
 import { SqliteLoopRepository } from './loops.js';
@@ -50,6 +56,7 @@ describe('SQLite history queries', () => {
         ownerId,
         loopId,
         versionId: old.draft.id,
+        pinned: samplePin(),
         invocationId: fakeUlid(`summary-inv:${index}`),
         status: 'succeeded',
         iteration: 1,
@@ -95,6 +102,7 @@ describe('SQLite history queries', () => {
           ownerId: 'local',
           loopId,
           versionId: damaged.draft.id,
+          pinned: samplePin(),
           invocationId: fakeUlid(`${tag}:inv`),
           status: 'succeeded',
           iteration: 1,

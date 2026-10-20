@@ -7,6 +7,7 @@ import {
   fakeUlid,
   minimalLoop,
   sampleInvocation,
+  samplePin,
   sampleThread,
 } from '@graphgoblin/contracts/testing';
 import { LoopDefinitionSchema } from '@graphgoblin/contracts';
@@ -226,6 +227,7 @@ describe('trigger lookups on runs and loops', () => {
       ownerId: 'local',
       loopId: a.loop.id,
       versionId: a.draft.id,
+      pinned: samplePin(),
       invocationId: fakeUlid('inv:dedupe'),
       status: 'queued',
       iteration: 1,

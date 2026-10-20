@@ -233,6 +233,14 @@ describe('damaged history diagnostics', () => {
     };
     const badEvent = await start();
     const badRow = await start();
+    // Kept to repair the event afterwards: run.queued carries the run's definition pin.
+    const queued = (
+      await t.container.handle.client.execute({
+        sql: 'SELECT payload FROM run_events WHERE run_id = ? AND seq = 1',
+        args: [badEvent.id],
+      })
+    ).rows[0]?.['payload'];
+    if (typeof queued !== 'string') throw new Error('expected the stored run.queued payload');
     await t.container.handle.client.execute({
       sql: 'UPDATE run_events SET payload = ? WHERE run_id = ? AND seq = 1',
       args: ['{broken', badEvent.id],
@@ -270,7 +278,7 @@ describe('damaged history diagnostics', () => {
     });
     await t.container.handle.client.execute({
       sql: 'UPDATE run_events SET payload = ? WHERE run_id = ? AND seq = 1',
-      args: ['{}', badEvent.id],
+      args: [queued, badEvent.id],
     });
     expect((await t.app.inject({ method: 'GET', url: '/runs/diagnostics' })).json()).toEqual({
       items: [],

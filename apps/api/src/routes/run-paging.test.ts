@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { RunRecord } from '@graphgoblin/contracts';
-import { FIXTURE_TS, fakeUlid, sampleThread } from '@graphgoblin/contracts/testing';
+import { FIXTURE_TS, fakeUlid, samplePin, sampleThread } from '@graphgoblin/contracts/testing';
 import { createTestApp, type TestApp } from '../testing/test-app.js';
 import { decodeRunCursor, encodeRunCursor } from '../run-cursor.js';
 
@@ -25,6 +25,7 @@ describe('ordinary run paging', () => {
       ownerId: 'local',
       loopId: fakeUlid('page-loop'),
       versionId: fakeUlid('page-version'),
+      pinned: samplePin(),
       invocationId: fakeUlid('page-invocation:' + index),
       status: 'succeeded',
       iteration: 1,

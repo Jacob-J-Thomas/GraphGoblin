@@ -697,6 +697,7 @@ describe('classifier runtime hot reload', () => {
     await decider.init();
     await t.container.repos.secretsFor('local').set('jev-api-key', 'test-key');
     t.container.ports.classifiers = {
+      bind: (ownerId, modelId) => t.container.classifierRegistry.bind(ownerId, modelId),
       resolve: () =>
         Promise.resolve({
           status: 'ready',
@@ -938,7 +939,14 @@ describe('classifier runtime hot reload', () => {
     );
     vi.stubGlobal('fetch', fetch);
     await t.container.repos.secretsFor('local').set('jev-api-key', 'dummy-key');
-    const resolved = await t.container.classifierRegistry.resolve('local', 'jev', 'choice');
+    const binding = await t.container.classifierRegistry.bind('local', 'jev');
+    if (!binding) throw new Error('expected the built-in classifier');
+    const resolved = await t.container.classifierRegistry.resolve(
+      'local',
+      'jev',
+      'choice',
+      binding,
+    );
     expect(resolved.status).toBe('ready');
     if (resolved.status !== 'ready') throw new Error('expected configured Jev');
     await resolved.classifier.choose(
@@ -1055,9 +1063,15 @@ describe('classifier runtime hot reload', () => {
       await t.app.inject({ method: 'DELETE', url: '/classifier-models/kev' });
       const deleted = await start();
       await t.idle();
+      // Started without the entry, the run pinned no binding for it (ADR-0041): restoring the
+      // entry later reaches new runs only, so this failure is not resumable.
       expect(await t.container.repos.runs.get(deleted)).toMatchObject({
         status: 'failed',
-        failure: { code: 'EVALUATION_UNAVAILABLE', resumable: true },
+        failure: {
+          code: 'EVALUATION_UNAVAILABLE',
+          resumable: false,
+          details: { reason: 'CLASSIFIER_MODEL_NOT_FOUND' },
+        },
       });
       expect(
         (await t.container.repos.events.read(deleted)).some(

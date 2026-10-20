@@ -2,7 +2,7 @@ import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { describe, expect, it } from 'vitest';
 import type { RunEvent } from '@graphgoblin/contracts';
-import { FIXTURE_IDS, FIXTURE_TS } from '@graphgoblin/contracts/testing';
+import { FIXTURE_IDS, FIXTURE_TS, samplePin } from '@graphgoblin/contracts/testing';
 import {
   createGraphGoblinClient,
   GraphGoblinApiError,
@@ -16,7 +16,9 @@ import { defaultSleep } from './sse.js';
 const runId = FIXTURE_IDS.run;
 
 function event(seq: number, type: 'run.queued' | 'run.cancelled' = 'run.queued'): RunEvent {
-  return { runId, seq, ts: FIXTURE_TS, type };
+  return type === 'run.queued'
+    ? { runId, seq, ts: FIXTURE_TS, type, versionId: FIXTURE_IDS.version, pinned: samplePin() }
+    : { runId, seq, ts: FIXTURE_TS, type };
 }
 
 function frame(e: RunEvent): string {

@@ -12,6 +12,7 @@ import {
   everyFieldLoop,
   kitchenSinkLoop,
   minimalLoop,
+  samplePin,
 } from '@graphgoblin/contracts/testing';
 import { createInitialThread } from '@graphgoblin/engine';
 import { createTestApp, type TestApp } from './testing/test-app.js';
@@ -455,6 +456,7 @@ describe('runs', () => {
         ownerId: 'someone-else',
         loopId: id,
         versionId: version!.id,
+        pinned: samplePin(),
         invocationId,
         status: 'succeeded',
         iteration: 1,

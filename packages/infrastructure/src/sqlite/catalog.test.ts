@@ -270,7 +270,15 @@ describe('model catalog source migration and repository', () => {
         'CREATE TABLE webhook_endpoints(id text PRIMARY KEY,owner_id text NOT NULL,loop_id text NOT NULL,version_id text NOT NULL,trigger_node_id text NOT NULL,token text NOT NULL,secret_ref text NOT NULL,signature_header text NOT NULL,replay_window_seconds integer NOT NULL,enabled integer NOT NULL,created_at text NOT NULL)',
       );
       await handle.client.execute('DROP INDEX runs_trigger_dedupe_idx');
-      await handle.client.execute('DROP INDEX runs_loop_owner_history_idx');
+      // Roll back 0015 and 0014 too, so replaying them re-adds the owner/history index and the run pins.
+      for (const statement of [
+        'DROP INDEX runs_loop_owner_history_idx',
+        'DROP TRIGGER loop_versions_snapshot_immutable',
+        'DROP TRIGGER loop_versions_snapshot_pinned',
+        'DROP INDEX runs_version_idx',
+        'ALTER TABLE runs DROP COLUMN pinned',
+      ])
+        await handle.client.execute(statement);
       await handle.client.execute(
         'DELETE FROM __drizzle_migrations WHERE created_at >= 1791136800000',
       );

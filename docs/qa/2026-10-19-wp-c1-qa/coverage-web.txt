@@ -1,0 +1,161 @@
+pnpm.cmd : $ vitest run --coverage
+At line:2 char:73
++ ...  $env:PATH; pnpm.cmd --filter @graphgoblin/web test:coverage *> "$env ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --coverage:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 <worktree>/apps/web
+      Coverage enabled with v8
+
+ ❯ src/editor/routing-review.test.ts (23 tests | 1 failed) 157412ms
+   ❯ routing review regressions (23)
+     × seeded sparse graphs preserve geometry and keep detours below twelve bends 84157ms
+ ❯ src/editor/NodeEditorDialog.test.tsx (30 tests | 3 failed) 259671ms
+   ❯ NodeEditorDialog evaluator-specific decisions (12)
+     × authors and saves a new classifier decision from the default editor fields 20225ms
+     × selects each kind with only its applicable fields and keeps source issue focus 20731ms
+   ❯ NodeEditorDialog disclosures across undo and redo (11)
+     × keeps Advanced open through an undo and a redo of a basic picker, with focus restored 21452ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog evaluator-specific decisions > authors and saves a new 
+classifier decision from the default editor fields
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/NodeEditorDialog.test.tsx:112:56
+    110|     },
+    111|   );
+    112|   it.each(['expression', 'llm', 'classifier'] as const)(
+       |                                                        ^
+    113|     'authors and saves a new %s decision from the default editor field…
+    114|     async (kind) => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog evaluator-specific decisions > selects each kind with 
+only its applicable fields and keeps source issue focus
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/NodeEditorDialog.test.tsx:283:3
+    281|     );
+    282|   });
+    283|   it('selects each kind with only its applicable fields and keeps sour…
+       |   ^
+    284|     const user = userEvent.setup();
+    285|     const dialog = await openDialog(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog disclosures across undo and redo > keeps Advanced open 
+through an undo and a redo of a basic picker, with focus restored
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/NodeEditorDialog.test.tsx:521:3
+    519|   });
+    520|
+    521|   it('keeps Advanced open through an undo and a redo of a basic picker…
+       |   ^
+    522|     const user = userEvent.setup();
+    523|     const dialog = await openDialog(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/editor/routing-review.test.ts > routing review regressions > seeded sparse graphs preserve geometry and 
+keep detours below twelve bends
+Error: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/routing-review.test.ts:660:3
+    658|   });
+    659|
+    660|   it('seeded sparse graphs preserve geometry and keep detours below tw…
+       |   ^
+    661|     let seed = 0x182026;
+    662|     const random = () => (seed = (Math.imul(seed, 1664525) + 101390422…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 4 unhandled errors during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Failed to start forks worker for test files 
+<worktree>/apps/web/src/components/ui/controls.test.tsx.
+ ❯ ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_2caa917191dc6e72d0fc3df6921eeb21/node_modules/vitest/dist/chunk
+s/index.DpLw24bj.js:11538:94
+ ❯ Pool.schedule ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_2caa917191dc6e72d0fc3df6921eeb21/node_modules/vit
+est/dist/chunks/index.DpLw24bj.js:11538:5
+
+Caused by: Error: [vitest-pool-runner]: Timeout waiting for worker to respond
+ ❯ Timeout.<anonymous> ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_2caa917191dc6e72d0fc3df6921eeb21/node_modul
+es/vitest/dist/chunks/index.DpLw24bj.js:11035:58
+ ❯ listOnTimeout node:internal/timers:594:17
+ ❯ processTimers node:internal/timers:529:7
+
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Failed to start forks worker for test files 
+<worktree>/apps/web/src/editor/model.test.ts.
+ ❯ ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_2caa917191dc6e72d0fc3df6921eeb21/node_modules/vitest/dist/chunk
+s/index.DpLw24bj.js:11538:94
+ ❯ Pool.schedule ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_2caa917191dc6e72d0fc3df6921eeb21/node_modules/vit
+est/dist/chunks/index.DpLw24bj.js:11538:5
+
+Caused by: Error: [vitest-pool-runner]: Timeout waiting for worker to respond
+ ❯ Timeout.<anonymous> ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_2caa917191dc6e72d0fc3df6921eeb21/node_modul
+es/vitest/dist/chunks/index.DpLw24bj.js:11035:58
+ ❯ listOnTimeout node:internal/timers:594:17
+ ❯ processTimers node:internal/timers:529:7
+
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Failed to start forks worker for test files 
+<worktree>/apps/web/src/editor/useRouting.test.ts.
+ ❯ ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_2caa917191dc6e72d0fc3df6921eeb21/node_modules/vitest/dist/chunk
+s/index.DpLw24bj.js:11538:94
+ ❯ Pool.schedule ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_2caa917191dc6e72d0fc3df6921eeb21/node_modules/vit
+est/dist/chunks/index.DpLw24bj.js:11538:5
+
+Caused by: Error: [vitest-pool-runner]: Timeout waiting for worker to respond
+ ❯ Timeout.<anonymous> ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_2caa917191dc6e72d0fc3df6921eeb21/node_modul
+es/vitest/dist/chunks/index.DpLw24bj.js:11035:58
+ ❯ listOnTimeout node:internal/timers:594:17
+ ❯ processTimers node:internal/timers:529:7
+
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Failed to start forks worker for test files <user-home>/source/repos/GraphGoblin/.claude/workt
+rees/codex-qa-wp-c1/apps/web/src/settings/sections/AppearanceSection.test.tsx.
+ ❯ ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_2caa917191dc6e72d0fc3df6921eeb21/node_modules/vitest/dist/chunk
+s/index.DpLw24bj.js:11538:94
+ ❯ Pool.schedule ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_2caa917191dc6e72d0fc3df6921eeb21/node_modules/vit
+est/dist/chunks/index.DpLw24bj.js:11538:5
+
+Caused by: Error: [vitest-pool-runner]: Timeout waiting for worker to respond
+ ❯ Timeout.<anonymous> ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_2caa917191dc6e72d0fc3df6921eeb21/node_modul
+es/vitest/dist/chunks/index.DpLw24bj.js:11035:58
+ ❯ listOnTimeout node:internal/timers:594:17
+ ❯ processTimers node:internal/timers:529:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  2 failed | 110 passed (112)
+      Tests  4 failed | 1428 passed (1432)
+     Errors  4 errors
+   Start at  17:50:18
+   Duration  701.43s (environment 38%, tests 31%, setup 14%, import 12%, transform 6%, worker 1%)
+
+Environment  jsdom was created 112 times · 2575.86s total, 38% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in <wrapped workspace path redacted>
+

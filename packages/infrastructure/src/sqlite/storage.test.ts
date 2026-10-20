@@ -19,6 +19,7 @@ import {
   kitchenSinkLoop,
   minimalLoop,
   sampleInvocation,
+  samplePin,
   sampleThread,
 } from '@graphgoblin/contracts/testing';
 import { createInitialThread } from '@graphgoblin/engine';
@@ -111,6 +112,7 @@ function runRecord(overrides: Partial<RunRecord> = {}): RunRecord {
     ownerId: 'local',
     loopId: fakeUlid('loop:x'),
     versionId: fakeUlid('version:x'),
+    pinned: samplePin(),
     invocationId: fakeUlid('inv:x'),
     status: 'queued',
     iteration: 1,
@@ -283,6 +285,17 @@ describe('SqliteRunRepository', () => {
     const old = openDatabase({ url, migrationsFolder: migrations });
     await old.migrate();
     const thread = JSON.stringify(sampleThread());
+    // The runs' version exists, so migration 0014 can pin them.
+    await old.client.execute({
+      sql: "INSERT INTO loop_versions (id, loop_id, version, status, definition, created_at, published_at) VALUES (?, ?, 1, 'published', ?, ?, ?)",
+      args: [
+        fakeUlid('v'),
+        fakeUlid('loop'),
+        JSON.stringify(LoopDefinitionSchema.parse(minimalLoop())),
+        '2026-10-01T00:00:00.000Z',
+        '2026-10-01T00:00:00.000Z',
+      ],
+    });
     for (const [id, status] of [
       [fakeUlid('old-done'), 'succeeded'],
       [fakeUlid('old-wait'), 'waiting'],
@@ -397,7 +410,7 @@ describe('SqliteEventStore', () => {
 
     expect(await store.append(run.id, [])).toEqual([]);
     const first = await store.append(run.id, [
-      { type: 'run.queued' },
+      { type: 'run.queued', versionId: run.versionId, pinned: run.pinned },
       { type: 'run.started', attempt: 1 },
     ]);
     expect(first.map((e) => e.seq)).toEqual([1, 2]);
@@ -440,7 +453,13 @@ describe('SqliteEventStore', () => {
     const store = new SqliteEventStore(handle.db, clock);
     const run = runRecord();
     await runs.create(run, sampleThread());
-    await store.append(run.id, [{ type: 'run.queued' }], { expectedLastSeq: 0 });
+    await store.append(
+      run.id,
+      [{ type: 'run.queued', versionId: run.versionId, pinned: run.pinned }],
+      {
+        expectedLastSeq: 0,
+      },
+    );
     const results = await Promise.allSettled([
       store.append(run.id, [{ type: 'run.woken', nodeId: 'w', reason: 'input' }], {
         expectedLastSeq: 1,

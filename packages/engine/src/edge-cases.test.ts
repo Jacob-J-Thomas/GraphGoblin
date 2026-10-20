@@ -2,7 +2,13 @@ import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { describe, expect, it, vi } from 'vitest';
 import type { LoopDefinitionInput, Node, RunEvent } from '@graphgoblin/contracts';
 import { LoopDefinitionSchema } from '@graphgoblin/contracts';
-import { FIXTURE_IDS, FIXTURE_TS, minimalLoop, sampleThread } from '@graphgoblin/contracts/testing';
+import {
+  FIXTURE_IDS,
+  FIXTURE_TS,
+  minimalLoop,
+  samplePin,
+  sampleThread,
+} from '@graphgoblin/contracts/testing';
 import { RunCancelledError, RunFailureError, describeError, isAbortError } from './errors.js';
 import { nodeOfKind } from './handler.js';
 import {
@@ -216,7 +222,9 @@ describe('fakes', () => {
     const store = new InMemoryEventStore(clock);
     const seen: RunEvent[] = [];
     const unsubscribe = store.subscribe(FIXTURE_IDS.run, (e) => seen.push(e));
-    await store.append(FIXTURE_IDS.run, [{ type: 'run.queued' }]);
+    await store.append(FIXTURE_IDS.run, [
+      { type: 'run.queued', versionId: FIXTURE_IDS.version, pinned: samplePin() },
+    ]);
     unsubscribe();
     await store.append(FIXTURE_IDS.run, [{ type: 'run.started', attempt: 1 }]);
     expect(seen).toHaveLength(1);
