@@ -45,7 +45,13 @@ Harness models offer only the enable switch. Local models served through LiteLLM
 
 Toggle and model-form refusals use plain sentences: **Harness models can only be enabled or disabled.** (`MODEL_MANAGED_BY_HARNESS`); **LiteLLM is not configured. Adding local models is not available yet.** (`LITELLM_NOT_CONFIGURED`); and **This model is no longer in the catalog.** (`MODEL_NOT_FOUND`). A toggle refused with 404 refreshes the catalog, announces the reason in the section, and focuses its heading if the focused row disappears. LiteLLM creation remains unavailable until the adapter ships.
 
-On upgrade, every old row becomes `harness`, including hand-added rows. Hand-added rows keep their values but cannot be edited/deleted; disable them if unwanted. User-edited seeded names, efforts, and default efforts re-sync from the shipped catalog at startup, while enabled is preserved. Codex entries list `minimal`, `low`, `medium`, `high`, `xhigh`, and `max`; Codex maps `max` to `xhigh`. Claude's supported models are `claude-opus-5-5` and `claude-fable-5-1` with `low`, `medium`, `high`, `xhigh`, or `max`. Both seed enabled. Migration `0011_enable_claude_fable` enables existing Fable rows once; subsequent owner disablement is preserved. Catalogue enablement is an owner preference, separate from CLI readiness. When a harness is not ready, each of its rows (Claude or Codex) says "Enabled in catalog." (or "Disabled") and "<Harness> readiness: <label>.", for example "Claude readiness: Sign-in needed."; Harness preflight below has the full problem and **Retry preflight**. Enabled entries with a ready harness populate Settings defaults. The engine checks catalog membership and supported effort before publication and execution.
+On upgrade, every old row becomes `harness`, including hand-added rows. Hand-added rows keep their values but cannot be edited/deleted; disable them if unwanted. User-edited seeded names, efforts, and default efforts re-sync from the shipped catalog at startup, while enabled is preserved. Codex entries list `minimal`, `low`, `medium`, `high`, `xhigh`, and `max`; Codex maps `max` to `xhigh`. Claude's supported models are `claude-opus-5-5` and `claude-fable-5-1` with `low`, `medium`, `high`, `xhigh`, or `max`. Both seed enabled. Migration `0011_enable_claude_fable` enables existing Fable rows once; subsequent owner disablement is preserved. Catalogue enablement is an owner preference, separate from CLI readiness. When a harness is not ready, each of its rows (Claude or Codex) says "Enabled in catalog." (or "Disabled") and "<Harness> readiness: <label>.", for example "Claude readiness: Sign-in needed."; Harness preflight below has the full problem and **Retry preflight**. The engine checks catalog membership and supported effort before publication and execution.
+
+In Settings **Defaults**, Claude choices are gated by readiness: when Claude is not ready, the
+saved choice stays selected as "<name> (saved)" with the short help line "Claude readiness:
+<label>. See Harness preflight below." Codex keeps its enabled catalog choices and shows the
+same help line for Codex when it is not ready. This asymmetry is recorded for a later owner
+decision in the [delivery register, section 9](../delivery/2026-10-18-i01-i07-register.md#9-pending-owner-decisions-and-acceptance).
 
 Scripts that PUT an entry to toggle it must switch to PATCH. For example (replace the base URL with your gateway):
 
@@ -79,10 +85,9 @@ Owner defaults in **Settings** are stored under `defaults`, with the same `{byHa
 
 The editor's Model dropdowns use this same catalog: inference nodes filter by their Harness, and loop defaults and decision Codex settings use Codex. Enabled entries show both display name and id; disabled entries are hidden unless already selected. Missing, disabled, or wrong-harness saved models and unsupported saved efforts stay in place with a field warning. Use **Model catalog in Settings** below a picker to return here. Choose **(loop default)** in a node or **(owner default)** in loop settings to leave its model unset. Effort choices follow the selected catalog model, with its default effort shown in the unset choice as guidance only. Leaving effort unset preserves the resolution order above. Without a catalog model selected, the picker offers that harness's supported effort choices. For Claude, the inspector labels effort as requested and reports effective effort as not reported. An unavailable catalog or a Claude harness that is not ready makes the current choices read-only until recovery, with the reason and **Retry Claude preflight** under the field; saved values are never substituted and show as "(saved)". A background recheck, such as returning to the window, keeps a ready field editable. A Codex readiness problem appears under the field with **Retry Codex preflight**; Codex choices stay editable.
 
-Transport detail says "Claude reported a connection or provider service error." (or Codex),
-followed by "Check the network connection and the provider's service status, then retry preflight."
-It covers provider HTTP 500 responses as well as connection failures; it does not establish a
-connectivity diagnosis.
+See [readiness lookup behavior](../09-frontend-and-pwa.md#claude-readiness-and-saved-selections)
+for first load, background rechecks, offline pauses, completed lookup failures, transport wording
+and which operations probe readiness.
 
 ## Configure classifier models
 

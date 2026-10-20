@@ -627,21 +627,23 @@ Every use creates an owner-scoped ordinary loop with an independent definition. 
 
 Settings separates owner catalog enablement from prerequisite health. The seven server states are
 `unknown`, `ready`, `cli-missing`, `cli-incompatible`, `auth`, `quota` and `transport`; `checking`
-is client-only while no result exists yet. Every view reads one shared rule
-(`api/readiness.ts`): a background refetch (window focus, Retry) keeps the last result, a failed or
-offline lookup is `unknown` and never the cached success, and no result yet is `checking`.
+is client-only while no result exists yet.
 
-**Harness preflight** shows one badge per harness with a label, never the enum, which stays in
-`data-state`: Ready, Checking…, Unknown, CLI not found, CLI update needed, Sign-in needed, Usage
+On first load, readiness is `checking` until a result arrives; the Settings preflight card shows
+"Loading preflight…". A background recheck (window focus or Retry preflight) keeps the last result
+on screen. The card announces "Rechecking…" in a muted live region; when its request is paused
+offline, it keeps the last result and announces "Offline; showing the last check." A completed
+lookup failure or timeout replaces the card's badge list with "Could not load preflight", with no
+state badge; the model picker and policy field show `unknown` instead of cached success.
+
+After a successful lookup, **Harness preflight** shows one badge per harness with a label, never
+the enum, which stays in `data-state`: Ready, Unknown, CLI not found, CLI update needed, Sign-in needed, Usage
 limit, Connection failed. Missing, outdated and signed-out CLIs use the failure tone; unknown,
 usage limit and connection failures the warning tone. Under it are the server's problems, each one
 detail sentence and one action (for example "Claude is not signed in. Run claude auth login, then
 retry preflight."). Claude rows add the adapter's model listing ("listed by adapter", neutral tone)
 and state that listings do not confirm account access. **Retry preflight** in the card head
-refetches and is disabled while a check runs; during a recheck the last result stays and a muted
-"Rechecking…" sits beside the button ("Offline; showing the last check." when the request is
-paused offline). The first load shows "Loading preflight…"; a failed request replaces the list with
-the card's error message.
+refetches and is disabled while a check runs.
 
 **Defaults** gives each harness, Codex and Claude alike, at most one short line under its fields:
 "Checking…" while the catalog first loads, the saved model's catalog problem (not in the catalog,
@@ -667,9 +669,12 @@ followed by "Check the network connection and the provider's service status, the
 It covers provider HTTP 500 responses as well as connection failures; it does not establish a
 connectivity diagnosis.
 
-Draft create, import and 600 ms idle autosaves never probe readiness. The editor fetches it
-independently. Explicit validate, publish and manual API/MCP run admission probe once per harness
-per operation, concurrently across harnesses. These failures preserve authored model/effort values.
+Draft create, import, template draft and save (including 600 ms idle autosaves) never probe
+readiness (D-017). The editor fetches readiness independently from `/harness/preflight`. Validate,
+publish, preflight and run start probe once per referenced harness at request admission, sharing
+the result within that operation and probing distinct harnesses concurrently. Each new operation
+probes afresh; a later Claude turn-launch inspection is a separate check. These failures preserve
+authored model/effort values.
 Switching an inference node to Claude resets its policy to `read-only`/`never`; full access remains
 explicit. Other authored harness options remain, with unsupported settings reported for correction.
 Models retain exact identity and effort checks (ADR-0029).

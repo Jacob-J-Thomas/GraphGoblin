@@ -432,7 +432,6 @@ export interface HttpProbePort {
 
 export interface ReturnDeliveryPort {
   webhook(url: string, payload: JsonValue, secret?: string): Promise<void>;
-  publishEvent(eventType: string, payload: JsonValue): Promise<void>;
   log(runId: string, payload: JsonValue): void;
 }
 

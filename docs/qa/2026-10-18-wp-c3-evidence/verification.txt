@@ -1,0 +1,98 @@
+WP-C3 command record, executed 2026-10-19
+Baseline: 9070207ee11b86c31aee54a911ff3d16992fc67f
+Branch: codex-wp-c3-wake-poll-research
+Worktree: <local>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c3-wake-poll-research
+
+Every command below selected Node 22 first:
+$env:PATH = '<local>\AppData\Roaming\nvm\v22.14.0;' + $env:PATH
+node --version -> v22.14.0
+
+These are results transcribed from this run's tool output, not full console transcripts.
+
+pnpm.cmd typecheck
+  Exit 0; 20 tasks successful, all 20 Turbo cache hits. Required dependency verification.
+
+pnpm.cmd build
+  Exit 0; 11 tasks successful, all 11 Turbo cache hits. Built modules used by the research drivers.
+
+pnpm.cmd --filter @graphgoblin/engine exec vitest run src/handlers/waiting.test.ts src/adversarial.test.ts --reporter=dot
+  Exit 0; 2 files, 57 tests passed. Existing controls unchanged.
+
+pnpm.cmd --filter @graphgoblin/api exec vitest run src/triggers/poll-items.test.ts src/triggers/poll.test.ts src/wait-identity.test.ts --reporter=dot
+  Exit 1; 2 files, 39 tests passed (5 poll-items, 34 wait-identity).
+  src/triggers/poll.test.ts does not exist; it did not run a third file.
+  Teardown error, quoted:
+  error during close [Error: EBUSY: resource busy or locked, unlink '%TEMP%\gg-wp-c2-tests-VtxUQP\gg-wp-c2-DlXOcN\store.db']
+  ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+  No assertion failure was reported. Command was not retried. No manual deletion attempted.
+
+pnpm.cmd --filter @graphgoblin/api exec vitest run src/triggers/poll-probe.test.ts src/triggers/poll-http-bounds.test.ts --reporter=dot
+  Exit 0; 2 files, 7 tests passed. Additional distinct probe/bounds controls, not a rerun of the failed cleanup command.
+
+node apps/api/.tmp/wp-c3-investigate.mjs
+  Exit 0; {passed:30, stores:14}. Scenario groups and per-attempt observations in results.json.
+  12 fresh child processes: 4 wake/heartbeat restarts, 8 poll restarts.
+
+node apps/api/.tmp/wp-c3-fast-child.mjs
+  Exit 0; {passed:100}. 50 immediate-child parents at each polling setting, five batches of ten.
+  Two additional disposable stores. Observations in fast-child.json.
+
+Post-run payload audit (Node reads results.json)
+  Exit 0. Every recorded input/signal result equals the winning wake payload;
+  timeout results equal {timedOut:true}. No tests rerun.
+
+node apps/api/.tmp/wp-c3-audit.mjs
+  Exit 0; {orderAudit:'passed', closedStores:16, pollFamilies:8}.
+  Read-only SQLite lookup maps each admitted ID to the persisted key in storage-audit.json.
+  Writes only evidence/source copies and environment.json, not the inspected databases.
+
+Replaying the research:
+  After Node 22 pnpm install/build, copy driver.mjs.txt to apps/api/.tmp/wp-c3-investigate.mjs
+  and fast-child.mjs.txt to apps/api/.tmp/wp-c3-fast-child.mjs. Run the two node commands
+  from the repository root. The evidence directory must exist; port 5663 must be free.
+  All restart subprocesses reuse this worktree's built modules and the same disposable stores.
+  Drivers deliberately retain closed stores for orchestrator cleanup. Their paths are in environment.json.
+  Sources use public manager, timer and container APIs; no private access or engine pauses.
+
+Pre-C2 comparison:
+  git show aef7efd:packages/engine/src/run-manager.ts
+  Source comparison only, supplemented by docs/qa/2026-10-19-wp-c2-qa.md.
+  No pre-C2 runtime, comparison worktree, owner app, owner store or provider turn used.
+
+Only QA documents/evidence are delivered. No production, maintained-test, package,
+dependency, coverage-threshold or exclusion changes. COMMON's package-code gates
+(lint, layers, deps, changed-package coverage, licenses, generated docs, tokens and
+browser suites) are not required for this documents-only result and were not run.
+Formatting results are recorded after their commands finish below.
+
+pnpm.cmd --version
+  12.8.1
+
+pnpm.cmd format
+  Exit 0. Root formatter completed. No tracked baseline file changed.
+
+
+Outside research scope: the observed API teardown error is at the recursive rm
+in apps/api/wait-storage.global-setup.ts:12. No attribution beyond the observed
+Windows EBUSY is claimed, and no cleanup implementation was changed.
+
+git diff --check
+  Exit 0. No tracked baseline files modified; nine new QA document/evidence files.
+
+Local Markdown link audit
+  Exit 0. Every relative link in both new investigation reports resolves.
+
+
+Read-only completion audit, via public SQLite read-only client
+  Exit 0; {"stores":16,"totalRuns":432,"duplicateNodeCompletions":0}.
+  SQL: SELECT run_id, json_extract(payload, '$.nodeId'), count(*) FROM run_events
+  WHERE type = 'node.finished' GROUP BY run_id, json_extract(payload, '$.nodeId') HAVING count(*) > 1
+  Every probe graph is acyclic; no node should complete twice within a run.
+
+pnpm.cmd format:check
+  Exit 0. All matched files use Prettier code style!
+
+Final scope: only the two QA reports and seven supporting evidence files are new.
+No tracked baseline files changed; no Git index operations or commits performed.
+Independent Claude Opus 5.5 review remains with the orchestrator.
+

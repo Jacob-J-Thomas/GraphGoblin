@@ -4302,6 +4302,7 @@
               "ARTIFACT_WRITE_FAILED",
               "SUBLOOP_DEPTH_EXCEEDED",
               "SUBLOOP_NOT_FOUND",
+              "LOOP_UPGRADE_REQUIRED",
               "DECISION_NO_ROUTE",
               "EVALUATION_UNAVAILABLE",
               "EVALUATION_PROVIDER_FAILED",
@@ -7243,24 +7244,6 @@
             "required": [
               "kind",
               "path"
-            ],
-            "additionalProperties": false
-          },
-          {
-            "type": "object",
-            "properties": {
-              "kind": {
-                "type": "string",
-                "const": "event"
-              },
-              "eventType": {
-                "type": "string",
-                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
-              }
-            },
-            "required": [
-              "kind",
-              "eventType"
             ],
             "additionalProperties": false
           },
@@ -12124,6 +12107,7 @@
               "ARTIFACT_WRITE_FAILED",
               "SUBLOOP_DEPTH_EXCEEDED",
               "SUBLOOP_NOT_FOUND",
+              "LOOP_UPGRADE_REQUIRED",
               "DECISION_NO_ROUTE",
               "EVALUATION_UNAVAILABLE",
               "EVALUATION_PROVIDER_FAILED",
@@ -15084,24 +15068,6 @@
               "kind",
               "path",
               "format"
-            ],
-            "additionalProperties": false
-          },
-          {
-            "type": "object",
-            "properties": {
-              "kind": {
-                "type": "string",
-                "const": "event"
-              },
-              "eventType": {
-                "type": "string",
-                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
-              }
-            },
-            "required": [
-              "kind",
-              "eventType"
             ],
             "additionalProperties": false
           },
@@ -19910,7 +19876,7 @@
     },
     {
       "name": "events",
-      "description": "The inbound event bus"
+      "description": "Inbound Events and the event triggers they start"
     },
     {
       "name": "triggers",

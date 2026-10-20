@@ -12,6 +12,18 @@ const result: ScriptRunResult = {
   stderrOverflow: false,
 };
 describe('items-only strict probe admission', () => {
+  it('passes deeply nested valid probe JSON to candidate classification without a stack overflow', () => {
+    const stdout = '['.repeat(15000) + '1' + ']'.repeat(15000);
+    expect(itemsScriptProbe({ ...result, stdout, stdoutBytes: stdout.length })).toHaveProperty(
+      'json',
+    );
+    expect(itemsHttpProbe({ status: 200, headers: {}, body: stdout })).toHaveProperty('json');
+    const json: unknown = JSON.parse(stdout);
+    expect(itemsHttpProbe({ status: 200, headers: {}, body: '', json })).toHaveProperty(
+      'json',
+      json,
+    );
+  });
   it('accepts complete JSON without persisting process diagnostics', () => {
     expect(itemsScriptProbe(result)).toEqual({
       exitCode: 0,
