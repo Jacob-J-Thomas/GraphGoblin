@@ -16,8 +16,16 @@ import {
 } from '@graphgoblin/engine';
 import { and, asc, eq, getTableColumns, lte, or, sql } from 'drizzle-orm';
 import type { Database } from './db.js';
-import { inboundEvents, runEvents, runs, webhookEndpoints, webhookReceipts } from './schema.js';
+import {
+  inboundEvents,
+  loopVersions,
+  runEvents,
+  runs,
+  webhookEndpoints,
+  webhookReceipts,
+} from './schema.js';
 import { runInsert } from './runs.js';
+import { loopVersionFromRow } from './loops.js';
 import { rawRunColumns, decodeRunRecord, decodeStoredThread } from './run-decoding.js';
 import type { SqliteEventStore } from './events.js';
 
@@ -129,6 +137,15 @@ export class SqliteTriggerAdmission implements TriggerAdmissionPort {
           input,
         );
       }
+      // A draft snapshot is immutable: its id may only ever hold the same record (ADR-0041).
+      const [existing] = input.snapshot
+        ? await tx.select().from(loopVersions).where(eq(loopVersions.id, input.snapshot.id))
+        : [];
+      if (
+        existing &&
+        stableStringify(loopVersionFromRow(existing)) !== stableStringify(input.snapshot)
+      )
+        throw new AdmissionConflictError();
       const [prior] = await tx
         .select({ ...rawRunColumns, initialThread: sql<string>`${runs.initialThread}` })
         .from(runs)
@@ -154,13 +171,14 @@ export class SqliteTriggerAdmission implements TriggerAdmissionPort {
           : undefined;
         const record = decodeRunRecord(prior);
         const thread = decodeStoredThread(prior.id, 'initial_thread', prior.initialThread);
-        if (!stored?.success) throw new AdmissionConflictError();
+        if (!stored?.success || (input.snapshot && !existing)) throw new AdmissionConflictError();
         run = record;
         assertAdmissionIdentity(input, run, thread, stored.data);
       } else {
         if (first) throw new AdmissionConflictError();
         run = { ...input.run, lastEventSeq: 1 };
         event = validateGeneratedEvent(queuedEvent(input));
+        if (input.snapshot && !existing) await tx.insert(loopVersions).values(input.snapshot);
         await tx.insert(runs).values(runInsert(run, input.initialThread));
         const { runId, seq, ts, type, ...payload } = event;
         await tx.insert(runEvents).values({ runId, seq, ts, type, payload });

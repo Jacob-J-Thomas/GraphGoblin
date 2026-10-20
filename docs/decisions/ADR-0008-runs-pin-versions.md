@@ -1,6 +1,6 @@
 # ADR-0008 - Runs pin a loop version; new runs follow the latest published version
 
-Date: 2026-10-02. Status: Accepted.
+Date: 2026-10-02. Status: Accepted; its draft-run gap is superseded by [ADR-0041](ADR-0041-runs-pin-immutable-definitions.md), under which draft runs pin a frozen snapshot of the draft and inherited model defaults are pinned at start.
 
 ## Decision
 
