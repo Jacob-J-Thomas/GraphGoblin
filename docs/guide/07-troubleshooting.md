@@ -110,10 +110,12 @@ $env:GG_API_URL = 'http://127.0.0.1:4749'
 
 ## Read harness readiness
 
-Settings, Harness preflight and `GET /harness/preflight` report these no-turn states. Settings shows
-the label on each harness badge, then the problem with its next step. After fixing the cause, choose
+`GET /harness/preflight` reports the seven server states below; `checking` is client-only while
+no result exists yet. Settings shows the label on each returned harness badge, then the problem
+with its next step. After fixing the cause, choose
 **Retry preflight** in that card (or **Retry Claude preflight** / **Retry Codex preflight** in the
-node editor); a recheck keeps the last result on screen and says "Rechecking…".
+node editor). See [readiness lookup behavior](../09-frontend-and-pwa.md#claude-readiness-and-saved-selections)
+for first load, background rechecks, offline pauses, completed lookup failures and transport wording.
 
 | State              | Label             | What to do                                                                                     |
 | ------------------ | ----------------- | ---------------------------------------------------------------------------------------------- |
@@ -126,17 +128,16 @@ node editor); a recheck keeps the last result on screen and says "Rechecking…"
 | `quota`            | Usage limit       | Wait for the account allowance to reset, then retry preflight; keep the selected model.        |
 | `transport`        | Connection failed | Check the connection and provider service status, then retry preflight; keep the model.        |
 
-Transport detail says "Claude reported a connection or provider service error." (or Codex),
-followed by "Check the network connection and the provider's service status, then retry preflight."
-It covers provider HTTP 500 responses as well as connection failures; it does not establish a
-connectivity diagnosis.
-
 Model unavailable is reserved for a disabled model or an identity removed from GraphGoblin's
 supported catalog. Enable a deliberately disabled entry or choose a supported entry. A failed
 catalog lookup says unknown and preserves the saved choice. Catalog listings and requested effort
-choices do not establish provider entitlement. Each authoring request probes afresh and shares
-one result per harness across its nodes and validation passes. Saving a draft remains possible
-when prerequisites are not ready; publication is blocked with the specific readiness reason.
+choices do not establish provider entitlement. Draft create, import, template draft and save do
+not probe readiness; validate, publish, preflight and run start do, sharing one probe per harness
+within the operation and checking distinct harnesses concurrently (D-017). Publication is blocked
+with the specific readiness reason when prerequisites are not ready.
+
+`authenticated` omitted from a preflight response means login was not established, rather than
+signed out. A confirmed signed-out Claude status is `auth`, including JSON on stdout with exit 1.
 
 No readiness check starts a model turn. Native no-turn process evidence and disposable QA steps
 are recorded in the [WP-F1 report](../qa/2026-10-19-wp-f1-readiness/README.md).
@@ -239,11 +240,3 @@ An unsupported whole-store format or a database/schema/I/O failure is a separate
 error. Do not reset the whole store to dispose of one damaged run.
 
 Return to the [User guide](README.md), or read [API, streaming, and MCP](../07-api-and-streaming.md) and [Frontend and PWA](../09-frontend-and-pwa.md) for design context.
-
-Draft create, import and autosave do not run readiness probes. They still check catalog and
-configuration issues, so editing does not wait for a CLI. Explicit validation, publication and
-manual run admission check fresh readiness; distinct harnesses are checked concurrently.
-Settings obtains readiness separately. While that request is pending the web shows `checking`;
-a timeout or failed request shows `unknown`. Neither changes whether a model is in the catalog.
-`authenticated` omitted from a preflight response means login was not established, rather than
-signed out. A confirmed signed-out Claude status is `auth`, including JSON on stdout with exit 1.
