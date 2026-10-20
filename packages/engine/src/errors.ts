@@ -35,7 +35,12 @@ export class RunFailureError extends Error {
   constructor(
     readonly code: RunErrorCode,
     message: string,
-    readonly options: { resumable?: boolean; details?: unknown; nodeId?: string } = {},
+    readonly options: {
+      resumable?: boolean;
+      details?: unknown;
+      nodeId?: string;
+      inference?: RunFailure['inference'];
+    } = {},
   ) {
     super(message);
     this.name = 'RunFailureError';
@@ -48,6 +53,7 @@ export class RunFailureError extends Error {
       message: this.message,
       resumable: this.options.resumable ?? true,
       ...(id ? { nodeId: id } : {}),
+      ...(this.options.inference ? { inference: this.options.inference } : {}),
       ...(this.options.details !== undefined
         ? { details: toJsonDetails(this.options.details) }
         : {}),

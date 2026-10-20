@@ -237,12 +237,47 @@ At boot the run manager loads every run in `queued`, `running`, `waiting`, or `p
 - `waiting` with a durable wake in the log: moved to running, so the woken node runs.
 - Any active run with a durable `run.waiting` and no later wake or node execution: complete the park from that event, including an interrupted snapshot/status write. Keep its original `waitId` and deadlines. Paused runs retain their pause. Re-arm both `until` (timer or heartbeat) and `timeoutAt` with keys containing the recorded `waitId`, then reconcile a completed child for runs that are waiting.
 - `running`: the executor starts from the log. The thread is the last verified checkpoint plus the events after it (see "Event log and projections"), and the cursor is checked against the log: when the log's last node event is the `node.finished` of the node the run record still points at, that node completed and only the cursor write was lost, so the cursor advances along the route it recorded (a gate follows its recorded actual port, with passes in the same append) without running the node again. Otherwise the last `node.started` without a matching `node.finished` identifies the interrupted node. Recovery depends on its kind.
-  - Inferencing: the `harness_sessions` row was written before the subprocess started, so the handler resumes that session and asks it to continue. If the session was never started, it starts fresh.
+  - Inferencing: reconstruct the open logical visit and its pending turn from the event log. A proven refusal resends the exact saved task with its original policy selection; uncertain work continues the recorded session, or stops non-resumably if no session exists. A missing session stops for an explicit owner choice. See below.
   - Script: re-executed. Scripts are documented as at-least-once.
   - Decision, mutation, exit: re-executed. They are deterministic given the thread, except Jev and Codex-backed decisions, which are simply asked again. (An exit whose `run.finished` is durable is completed from the log instead.)
   - Subloop: if the visit already recorded `child_run.started`, the handler re-parks on that child, or maps its outcome if it has finished; otherwise it creates the child. A crash between creating the child and recording `child_run.started` can still leave an orphan child and start a second one; closing that needs the child id allocated before the child is created.
 
 Recovery is automatic and silent apart from a `node.started` event with `attempt` incremented.
+
+## Inference submission and recovery
+
+One logical visit begins at the first `node.started` after that node last finished. Its identity
+is `<runId>:<first-start-seq>`, retained across retries and restarts until `node.finished`.
+Each initial, repair or continuation turn records `harness.turn` before adapter invocation,
+including its exact rendered `prompt`, `promptKind`, `turnId`, harness and selected
+`resumeSessionId`. Refused retries retain the saved prompt and policy selection, even if init
+announced a different ID. They do not rerender against a changed thread. Repair refusals retain
+the repair task. These authored prompts are part of private run history, with the same access
+and deletion boundary as its context thread.
+
+| Classification (`failure.inference.submission`) | Failure code                                                                                                                                               | Resume behavior                                                                                                                                                           |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `definitely-not-submitted`                      | Original cause, such as `HARNESS_NOT_INSTALLED`, `HARNESS_NOT_AUTHENTICATED`, `HARNESS_TURN_FAILED` or `INFERENCE_TIMEOUT`                                 | After fixing a resumable cause, submit the saved task with the original fresh/previous/named selection. Init alone cannot change that selection.                          |
+| `delivery-uncertain`                            | `HARNESS_DELIVERY_UNCERTAIN` for generic turn failures; specific causes such as `INFERENCE_TIMEOUT`, quota, artifact or termination failures remain intact | Continue the recorded session with the continuation prompt. No session means `resumable: false`: owner choice is required. Unconfirmed termination is also non-resumable. |
+| `session-missing`                               | `HARNESS_SESSION_MISSING`                                                                                                                                  | Non-resumable. Do not silently start fresh or repeat the invalid session. Explicit fresh-session recovery is deferred to #265.                                            |
+
+`failure.inference` also contains `visitId`, `turnId`, `promptKind` and the session ID when
+known. `harness.submission` records each classified outcome and positive acceptance marker.
+The crash window between durable intent and adapter invocation is conservatively uncertain:
+absence of an acceptance marker, even init-only output, never proves non-submission. Adapters
+may assert definite refusal only with positive pre-send/startup/refusal evidence. Once accepted,
+a later authentication/refusal error cannot downgrade the turn to safe resubmission.
+
+The continuation prompt is: "The previous turn was interrupted before GraphGoblin recorded its
+result. Continue the task from where you left off and finish it." A new continuation has its own
+turn ID within the same visit. Successful provider work followed by transcript storage failure
+uses this same continuation path. Engine persistence faults preserve their original failure
+cause; durable intent still governs subsequent recovery.
+
+Each repeated visit starts new provenance. Replay forks and child runs have their own logs and
+inherit no pending turn or submission state; an explicitly authored named-session policy keeps
+its existing lookup semantics. This bolt adds no own-session policy (#33) or fresh-session
+recovery action (#265). Provider turns are never automatically retried by GraphGoblin.
 
 ## Resiliency model (Decided)
 
@@ -339,7 +374,7 @@ Because every node input is reconstructible, the API offers "re-run this node wi
 - **Subloop results land in `lastOutput` as `{ status, outcome, result, childRunId }`**, so a following decision node can branch on the child's outcome, not only its payload. `resultTo.var` stores the bare result.
 - **Wait inputs become `user` messages tagged `input`; signals become `note` messages tagged `signal`.** Timeouts that continue set `lastOutput` to `{ timedOut: true }`.
 - **Heartbeat outputs** are `{ beat, probe, satisfied: true }` when the condition holds and `{ beat, probe, exhausted: true }` when it runs out and is configured to continue.
-- **Inference recovery resumes the recorded session** with a continuation prompt when a node is re-executed with `attempt > 1` and a session id is on file.
+- **Inference recovery follows visit submission provenance**, rather than attempt numbers or a session row alone. Proven refusal retains the authored task; uncertainty never blindly resends it.
 - **Return channels merge** the exit node's list with any `returnDefaults` the caller supplied on the invocation, de-duplicated.
 
 ## Implementation notes from WP-D2 (Decided by implementation, 2026-10-03)

@@ -45,6 +45,7 @@ describe('CodexHarness.start', () => {
     expect(events.map((e) => e.type)).toEqual([
       'session',
       'item',
+      'submitted',
       'item',
       'usage',
       'turn-complete',
@@ -136,6 +137,7 @@ describe('CodexHarness.start', () => {
     expect(types).toEqual([
       'session',
       'error',
+      'submitted',
       'command',
       'file-change',
       'message',
@@ -171,7 +173,7 @@ describe('CodexHarness.start', () => {
     const harness = new CodexHarness({ clientFactory: codex.factory, logger: log });
     const session = harness.start(request(), new AbortController().signal);
     const events = await drain(session);
-    expect(events.map((e) => e.type)).toEqual(['session', 'item', 'item', 'error']);
+    expect(events.map((e) => e.type)).toEqual(['session', 'item', 'item', 'submitted', 'error']);
     expect(events.at(-1)).toMatchObject({
       type: 'error',
       code: 'HARNESS_TURN_FAILED',

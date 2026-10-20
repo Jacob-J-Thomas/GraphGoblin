@@ -1,0 +1,36 @@
+import process from 'node:process';
+import { log } from 'node:console';
+const [scenario, ...args] = process.argv.slice(2);
+const print = (value) => process.stdout.write(JSON.stringify(value) + '\n');
+if (args.includes('--version')) log('2.1.287');
+else if (args.includes('--help'))
+  log(
+    '--safe-mode --restricted --setting-sources --strict-mcp-config --tools --allowedTools --permission-mode --permission-prompts --effort --json-schema --output-format --input-format --model --verbose --print --no-session-persistence --resume',
+  );
+else if (args.includes('auth')) print({ authMethod: 'claude.ai' });
+else {
+  // Drain the synthetic prompt before a controlled refusal or stream cut; no provider is invoked.
+  for await (const chunk of process.stdin) void chunk;
+  if (scenario === 'missing')
+    process.stderr.write(
+      'No conversation found with session ID: 11111111-1111-4111-8111-111111111111',
+    );
+  else if (scenario === 'arguments') process.stderr.write('error: unknown option --synthetic');
+  else {
+    print({
+      type: 'system',
+      subtype: 'init',
+      session_id: '11111111-1111-4111-8111-111111111111',
+      tools: ['Read', 'Glob', 'Grep'],
+      permissionMode: 'dontAsk',
+      model: 'claude-opus-5-5',
+      apiKeySource: 'none',
+      mcp_servers: [],
+      plugins: [],
+      skills: [],
+    });
+    if (scenario === 'assistant')
+      print({ type: 'assistant', message: { content: [{ type: 'text', text: 'working' }] } });
+  }
+  process.exitCode = 1;
+}

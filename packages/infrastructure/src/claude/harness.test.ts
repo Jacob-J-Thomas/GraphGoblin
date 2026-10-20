@@ -111,6 +111,20 @@ async function drain(events: AsyncIterable<HarnessEvent>) {
   return values;
 }
 describe('Claude existing harness contract', () => {
+  it('does not let a refusal diagnostic conceal unconfirmed native termination', async () => {
+    const { harness } = fixture({
+      records: [init],
+      exit: { exitCode: null, terminationUnconfirmed: true, turnRejection: 'session-missing' },
+    });
+    const session = harness.resume(id, request, new AbortController().signal);
+    await expect(session.result).rejects.toMatchObject({ code: 'HARNESS_TERMINATION_UNCONFIRMED' });
+    expect((await drain(session.events)).at(-1)).toMatchObject({
+      type: 'error',
+      code: 'HARNESS_TERMINATION_UNCONFIRMED',
+      submission: 'delivery-uncertain',
+    });
+  });
+
   it('uses a fresh empty prerequisite directory and removes it after inspection', async () => {
     const directories = new Set<string>();
     const runner: ClaudeCliRunner = async (command) => {
@@ -302,6 +316,7 @@ describe('Claude existing harness contract', () => {
     expect((await drain(first.events)).map((event) => event.type)).toEqual([
       'session',
       'item',
+      'submitted',
       'usage',
       'turn-complete',
     ]);
@@ -433,6 +448,7 @@ describe('Claude existing harness contract', () => {
     expect(events.map((event) => event.type)).toEqual([
       'session',
       'item',
+      'submitted',
       'item',
       'item',
       'usage',

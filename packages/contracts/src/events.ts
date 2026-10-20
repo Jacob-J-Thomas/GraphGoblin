@@ -10,7 +10,13 @@ import {
 } from './common.js';
 import { OutcomeSchema } from './nodes.js';
 import { JsonPatchSchema } from './patch.js';
-import { RunFailureSchema, RunPinSchema, RunStatusSchema, WaitSpecSchema } from './run.js';
+import {
+  PromptSubmissionSchema,
+  RunFailureSchema,
+  RunPinSchema,
+  RunStatusSchema,
+  WaitSpecSchema,
+} from './run.js';
 import {
   ContextThreadSchema,
   ReplayOriginSchema,
@@ -159,6 +165,30 @@ export const RunEventSchema = z.discriminatedUnion('type', [
     type: z.literal('node.progress'),
     nodeId: SlugSchema,
     progress: NodeProgressSchema,
+  }),
+  z.strictObject({
+    ...Base,
+    type: z.literal('harness.turn'),
+    nodeId: SlugSchema,
+    visitId: z.string().min(1).max(64),
+    turnId: UlidSchema,
+    harness: HarnessIdSchema,
+    promptKind: z.enum(['authored', 'repair', 'continuation']),
+    // Exact rendered task, durable before invoking the adapter. No rerender on retry.
+    prompt: z.string(),
+    resumeSessionId: z.string().min(1).max(256).optional(),
+  }),
+  z.strictObject({
+    ...Base,
+    type: z.literal('harness.submission'),
+    nodeId: SlugSchema,
+    visitId: z.string().min(1).max(64),
+    turnId: UlidSchema,
+    submission: PromptSubmissionSchema,
+    // Positive acceptance evidence; absence is never evidence of non-submission.
+    marker: z
+      .enum(['claude.assistant', 'claude.result', 'codex.turn.started', 'fake.accepted'])
+      .optional(),
   }),
   z.strictObject({
     ...Base,

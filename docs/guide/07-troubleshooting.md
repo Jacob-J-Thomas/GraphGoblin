@@ -2,6 +2,17 @@
 
 Read the run's failure banner and event log first. Record the run ID, failing node, code, and message before changing anything. Use the [failure-code reference](03-run-and-observe.md#act-on-failure-reasons) for every contract code.
 
+## Inference prompt delivery
+
+Inspect `failure.inference.submission` and the visit's `harness.turn` / `harness.submission`
+events. A session ID or init announcement alone proves no prompt acceptance.
+
+| Case                                                                                                                   | Action                                                                                                                                                                                                                        |
+| ---------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Definitely not submitted (`definitely-not-submitted`)                                                                  | Fix the reported startup, argument, login or readiness cause. Resume a resumable failure: the exact saved authored/repair task is submitted with its original session selection.                                              |
+| Delivery uncertain (`HARNESS_DELIVERY_UNCERTAIN`, or a specific timeout/quota/storage cause with `delivery-uncertain`) | With a recorded session, resume continues that conversation. Without one, the run is non-resumable and requires an explicit owner decision; no automatic fresh start. Stop an unconfirmed native process before any recovery. |
+| Session missing (`HARNESS_SESSION_MISSING`)                                                                            | Preserve the failed run and inspect the recorded session. Resume is refused. The explicit fresh-session recovery choice belongs to #265; this release does not silently discard the conversation.                             |
+
 ## Find the symptom
 
 | Symptom                                                                                | Likely cause                                                                                                                                                   | Fix                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |

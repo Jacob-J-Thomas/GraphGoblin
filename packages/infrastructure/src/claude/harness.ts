@@ -8,7 +8,7 @@ import {
   readinessFailure,
   readinessMessage,
 } from '@graphgoblin/domain';
-import type { HarnessReadinessState } from '@graphgoblin/contracts';
+import type { HarnessReadinessState, PromptSubmission } from '@graphgoblin/contracts';
 import type {
   HarnessEvent,
   HarnessPreflight,
@@ -360,6 +360,8 @@ export class ClaudeHarness implements HarnessPort {
     sessionId.catch(() => undefined);
     const pump = async (): Promise<HarnessResult> => {
       let detectedVersion: string | undefined;
+      let delivery: PromptSubmission = 'definitely-not-submitted';
+      let accepted = false;
       try {
         if (controller.signal.aborted) throw abortError();
         if (resumeId !== undefined && !validClaudeSessionId(resumeId))
@@ -384,6 +386,7 @@ export class ClaudeHarness implements HarnessPort {
         let completionEvents: HarnessEvent[] = [];
         const accept = (record: Record<string, unknown>): void => {
           const events = accumulator.push(record);
+          if (events.some((event) => event.type === 'submitted')) accepted = true;
           if (record.type === 'result') {
             completionEvents = events;
             return;
@@ -412,6 +415,7 @@ export class ClaudeHarness implements HarnessPort {
           'text',
           '--print',
         ];
+        delivery = 'delivery-uncertain';
         const result = await this.runner(
           {
             binary: this.binary,
@@ -427,6 +431,32 @@ export class ClaudeHarness implements HarnessPort {
             for (const record of parser.push(chunk)) accept(record);
           },
         );
+        if (result.spawnCode) delivery = 'definitely-not-submitted';
+        // Refusal diagnostics must never conceal an unconfirmed process or a transport cutoff.
+        if (
+          result.terminationUnconfirmed ||
+          result.aborted ||
+          result.timedOut ||
+          result.overflow ||
+          result.callbackError
+        )
+          checkOutcome(result, controller.signal);
+        if (!accepted && result.turnRejection) {
+          delivery =
+            result.turnRejection === 'session-missing'
+              ? 'session-missing'
+              : 'definitely-not-submitted';
+          if (result.turnRejection === 'session-missing')
+            throw new ClaudeHarnessError(
+              'HARNESS_SESSION_MISSING',
+              'The recorded Claude conversation was not found',
+            );
+          if (result.turnRejection === 'auth')
+            throw new ClaudeHarnessError(
+              'HARNESS_NOT_AUTHENTICATED',
+              'Claude requires authentication before submitting this turn',
+            );
+        }
         checkOutcome(result, controller.signal);
         for (const record of parser.finish()) accept(record);
         const completed = accumulator.finish();
@@ -460,6 +490,7 @@ export class ClaudeHarness implements HarnessPort {
             code: failure.code,
             message: failure.message,
             retriable: failure.retriable,
+            submission: delivery,
           });
         throw failure;
       } finally {

@@ -205,7 +205,14 @@ describe('TurnAccumulator', () => {
   it('replays the plain message fixture', () => {
     const acc = new TurnAccumulator('fresh');
     const out = loadFixture('message').events.flatMap((e) => acc.push(e));
-    expect(out.map((e) => e.type)).toEqual(['session', 'item', 'item', 'usage', 'turn-complete']);
+    expect(out.map((e) => e.type)).toEqual([
+      'session',
+      'item',
+      'submitted',
+      'item',
+      'usage',
+      'turn-complete',
+    ]);
     expect(out[0]).toEqual({ type: 'session', sessionId: acc.sessionId, mode: 'fresh' });
     // The configuration deprecation warning is an ordinary error item, not a failure.
     expect(out[1]).toMatchObject({ type: 'item', item: { type: 'error' } });
@@ -231,7 +238,7 @@ describe('TurnAccumulator', () => {
   it('turns turn.failed into a classified failure and ignores the preceding stream error', () => {
     const acc = new TurnAccumulator('fresh');
     const out = loadFixture('failed-invalid-model').events.flatMap((e) => acc.push(e));
-    expect(out.map((e) => e.type)).toEqual(['session', 'item', 'item']);
+    expect(out.map((e) => e.type)).toEqual(['session', 'item', 'item', 'submitted']);
     const outcome = acc.finish();
     expect(outcome.completed).toBe(false);
     expect(outcome.failure?.code).toBe('HARNESS_TURN_FAILED');

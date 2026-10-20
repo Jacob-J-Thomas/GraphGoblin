@@ -209,8 +209,9 @@ export interface ClaudeAccumulatorOptions {
   resumeId?: string;
   schema?: JsonSchema;
 }
-/** Only verified init metadata can announce a session; no new delivery-proof/recovery contract. */
+/** Init identifies the session; only assistant content or a successful result proves consumption. */
 export class ClaudeAccumulator {
+  private submitted = false;
   private id: string | undefined;
   private bootstrapId: string | undefined;
   private completed: HarnessResult | undefined;
@@ -241,7 +242,10 @@ export class ClaudeAccumulator {
     if (!this.id) throw protocolError(record);
     if (record.type === 'assistant' && record.error !== undefined)
       throw nativeFailure(record.error);
-    if (record.type === 'assistant') return this.assistant(record);
+    if (record.type === 'assistant') {
+      const events = this.assistant(record);
+      return events.length ? [...this.accepted('claude.assistant'), ...events] : events;
+    }
     if (record.type === 'user') return this.toolResults(record);
     if (record.type === 'result') return this.complete(record);
     // Other post-init records carry no stored execution evidence, including future status events.
@@ -376,7 +380,7 @@ export class ClaudeAccumulator {
         structuredOutputCarrier: this.options.schema === undefined ? null : 'StructuredOutput',
         authMethod: this.evidence.authMethod,
         inputTransport: 'text',
-        promptDeliveryProof: 'unsupported',
+        promptDeliveryProof: 'assistant-or-result',
         requestedModel: this.options.model,
         requestedEffort: this.options.effort ?? null,
         effectiveEffort: null,
@@ -391,6 +395,11 @@ export class ClaudeAccumulator {
       { type: 'session', sessionId: this.id, mode: this.options.mode },
       { type: 'item', item },
     ];
+  }
+  private accepted(marker: 'claude.assistant' | 'claude.result'): HarnessEvent[] {
+    if (this.submitted) return [];
+    this.submitted = true;
+    return [{ type: 'submitted', marker }];
   }
   private item(item: Omit<HarnessItem, 'id'>, id?: string): HarnessEvent {
     if (this.items.length >= 10000)
@@ -561,6 +570,6 @@ export class ClaudeAccumulator {
       items: this.items,
       ...(this.options.schema ? { structured } : {}),
     };
-    return [{ type: 'usage', usage }, { type: 'turn-complete' }];
+    return [...this.accepted('claude.result'), { type: 'usage', usage }, { type: 'turn-complete' }];
   }
 }

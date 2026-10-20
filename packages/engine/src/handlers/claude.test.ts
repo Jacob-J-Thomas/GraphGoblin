@@ -122,7 +122,7 @@ describe('mixed native harness families', () => {
     );
   });
   it.each([false, true])(
-    'guards interrupted row family (foreign=%s) without changing recovery policy',
+    'uses visit provenance instead of mutable session rows (foreign=%s)',
     async (foreign) => {
       const { engine, claude } = await engineWithClaude();
       claude.script([
@@ -140,17 +140,9 @@ describe('mixed native harness families', () => {
       if (foreign) engine.ports.sessions.rows[0]!.harness = 'codex';
       await engine.manager.resume(run.id);
       const resumed = await engine.settle(run.id);
-      if (foreign) {
-        expect(resumed.failure).toMatchObject({
-          code: 'HARNESS_TURN_FAILED',
-          resumable: false,
-          details: { adapterCode: 'HARNESS_SESSION_FAMILY_MISMATCH' },
-        });
-        expect(claude.resumed).toEqual([]);
-      } else {
-        expect(resumed.status).toBe('succeeded');
-        expect(claude.resumed[0]?.request.turn.prompt).toContain('previous turn was interrupted');
-      }
+      // Session rows are lookup hints. This visit's durable turn/session events are authoritative.
+      expect(resumed.status).toBe('succeeded');
+      expect(claude.resumed[0]?.request.turn.prompt).toContain('previous turn was interrupted');
     },
   );
 });
@@ -176,6 +168,7 @@ class UnconfirmedHarness extends FakeHarness {
           code: error.code,
           message: error.message,
           retriable: false,
+          submission: 'delivery-uncertain' as const,
         };
       })(),
       result,
@@ -222,12 +215,12 @@ describe('unconfirmed native cancellation', () => {
     ['HARNESS_NOT_AUTHENTICATED', 'HARNESS_NOT_AUTHENTICATED', true],
     ['HARNESS_QUOTA_EXHAUSTED', 'HARNESS_QUOTA_EXHAUSTED', true],
     ['HARNESS_TIMEOUT', 'INFERENCE_TIMEOUT', true],
-    ['HARNESS_PROTOCOL_ERROR', 'HARNESS_TURN_FAILED', false],
-    ['HARNESS_OUTPUT_INVALID', 'HARNESS_TURN_FAILED', false],
-    ['HARNESS_UNSUPPORTED_POLICY', 'HARNESS_TURN_FAILED', false],
-    ['HARNESS_OUTPUT_LIMIT', 'HARNESS_TURN_FAILED', false],
-    ['HARNESS_INVALID_CONFIGURATION', 'HARNESS_TURN_FAILED', false],
-    ['HARNESS_TURN_FAILED', 'HARNESS_TURN_FAILED', false],
+    ['HARNESS_PROTOCOL_ERROR', 'HARNESS_DELIVERY_UNCERTAIN', true],
+    ['HARNESS_OUTPUT_INVALID', 'HARNESS_DELIVERY_UNCERTAIN', true],
+    ['HARNESS_UNSUPPORTED_POLICY', 'HARNESS_DELIVERY_UNCERTAIN', true],
+    ['HARNESS_OUTPUT_LIMIT', 'HARNESS_DELIVERY_UNCERTAIN', true],
+    ['HARNESS_INVALID_CONFIGURATION', 'HARNESS_DELIVERY_UNCERTAIN', true],
+    ['HARNESS_TURN_FAILED', 'HARNESS_DELIVERY_UNCERTAIN', true],
   ])('maps fixed %s without substring inference', async (code, expected, resumable) => {
     const { engine, claude } = await engineWithClaude();
     claude.script([{ error: { code, message: 'Safe adapter diagnostic' } }]);
@@ -349,8 +342,8 @@ describe('inference consumption keeps engine failures and cleans up both harness
       });
       const v = engine.publish(singleNodeLoop('stream-' + family, infer('a', family, 'fresh')));
       expect((await engine.runToIdle(v.loopId)).failure).toMatchObject({
-        code: 'HARNESS_TURN_FAILED',
-        resumable: family === 'codex',
+        code: 'HARNESS_DELIVERY_UNCERTAIN',
+        resumable: true,
         details: { adapterCode: 'HARNESS_PROTOCOL_ERROR' },
       });
       expect(harness.cancelled).toHaveLength(1);

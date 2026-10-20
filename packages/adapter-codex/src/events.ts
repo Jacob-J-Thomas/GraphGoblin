@@ -192,6 +192,22 @@ function unwrap(raw: string): { status?: number; type?: string; message: string 
 export function classifyCodexError(raw: string): ClassifiedError {
   const { status, type, message } = unwrap(raw);
   const text = `${type ?? ''} ${message}`.toLowerCase();
+  if (/error: (?:unexpected argument|unknown option|invalid value)/.test(text))
+    return {
+      code: 'HARNESS_ARGUMENTS_REJECTED',
+      message: 'Codex rejected the turn arguments',
+      retriable: false,
+    };
+  if (
+    /(?:no rollout found|session (?:not found|does not exist)|thread (?:not found|does not exist)|failed to (?:load|find) (?:session|rollout))/.test(
+      text,
+    )
+  )
+    return {
+      code: 'HARNESS_SESSION_MISSING',
+      message: 'The recorded Codex conversation was not found',
+      retriable: false,
+    };
   if (
     status === 429 ||
     /usage[_ ]limit|quota|rate[_ ]limit|too many requests|insufficient_quota/.test(text)
@@ -245,6 +261,7 @@ export interface TurnOutcome {
  *   counts as the failure if the turn never completes (Codex also emits it before `turn.failed`).
  */
 export class TurnAccumulator {
+  private submitted = false;
   private finalText = '';
   private usage: Usage = ZERO_USAGE;
   private readonly items: HarnessItem[] = [];
@@ -261,6 +278,10 @@ export class TurnAccumulator {
       case 'thread.started':
         this.sessionId = ev.thread_id;
         return [{ type: 'session', sessionId: ev.thread_id, mode: this.mode }];
+      case 'turn.started':
+        if (this.submitted) return [];
+        this.submitted = true;
+        return [{ type: 'submitted', marker: 'codex.turn.started' }];
       case 'item.completed': {
         const item = normalizeItem(ev.item);
         this.items.push(item);

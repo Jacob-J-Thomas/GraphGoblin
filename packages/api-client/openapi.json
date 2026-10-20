@@ -4291,6 +4291,8 @@
               "HARNESS_NOT_AUTHENTICATED",
               "HARNESS_QUOTA_EXHAUSTED",
               "HARNESS_TURN_FAILED",
+              "HARNESS_DELIVERY_UNCERTAIN",
+              "HARNESS_SESSION_MISSING",
               "HARNESS_TERMINATION_UNCONFIRMED",
               "WORKING_DIRECTORY_MISSING",
               "SCRIPT_EXIT_CODE",
@@ -4338,6 +4340,48 @@
           },
           "details": {
             "$ref": "#/components/schemas/JsonValueInput"
+          },
+          "inference": {
+            "type": "object",
+            "properties": {
+              "visitId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "turnId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "submission": {
+                "type": "string",
+                "enum": [
+                  "definitely-not-submitted",
+                  "delivery-uncertain",
+                  "session-missing"
+                ]
+              },
+              "promptKind": {
+                "type": "string",
+                "enum": [
+                  "authored",
+                  "repair",
+                  "continuation"
+                ]
+              },
+              "sessionId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              }
+            },
+            "required": [
+              "visitId",
+              "turnId",
+              "submission",
+              "promptKind"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -5971,6 +6015,142 @@
               "type",
               "nodeId",
               "progress"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "runId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "seq": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "ts": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "type": {
+                "type": "string",
+                "const": "harness.turn"
+              },
+              "nodeId": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+              },
+              "visitId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "turnId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "harness": {
+                "type": "string",
+                "enum": [
+                  "codex",
+                  "claude"
+                ]
+              },
+              "promptKind": {
+                "type": "string",
+                "enum": [
+                  "authored",
+                  "repair",
+                  "continuation"
+                ]
+              },
+              "prompt": {
+                "type": "string"
+              },
+              "resumeSessionId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              }
+            },
+            "required": [
+              "runId",
+              "seq",
+              "ts",
+              "type",
+              "nodeId",
+              "visitId",
+              "turnId",
+              "harness",
+              "promptKind",
+              "prompt"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "runId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "seq": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "ts": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "type": {
+                "type": "string",
+                "const": "harness.submission"
+              },
+              "nodeId": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+              },
+              "visitId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "turnId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "submission": {
+                "type": "string",
+                "enum": [
+                  "definitely-not-submitted",
+                  "delivery-uncertain",
+                  "session-missing"
+                ]
+              },
+              "marker": {
+                "type": "string",
+                "enum": [
+                  "claude.assistant",
+                  "claude.result",
+                  "codex.turn.started",
+                  "fake.accepted"
+                ]
+              }
+            },
+            "required": [
+              "runId",
+              "seq",
+              "ts",
+              "type",
+              "nodeId",
+              "visitId",
+              "turnId",
+              "submission"
             ],
             "additionalProperties": false
           },
@@ -11932,6 +12112,8 @@
               "HARNESS_NOT_AUTHENTICATED",
               "HARNESS_QUOTA_EXHAUSTED",
               "HARNESS_TURN_FAILED",
+              "HARNESS_DELIVERY_UNCERTAIN",
+              "HARNESS_SESSION_MISSING",
               "HARNESS_TERMINATION_UNCONFIRMED",
               "WORKING_DIRECTORY_MISSING",
               "SCRIPT_EXIT_CODE",
@@ -11979,6 +12161,48 @@
           },
           "details": {
             "$ref": "#/components/schemas/JsonValue"
+          },
+          "inference": {
+            "type": "object",
+            "properties": {
+              "visitId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "turnId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "submission": {
+                "type": "string",
+                "enum": [
+                  "definitely-not-submitted",
+                  "delivery-uncertain",
+                  "session-missing"
+                ]
+              },
+              "promptKind": {
+                "type": "string",
+                "enum": [
+                  "authored",
+                  "repair",
+                  "continuation"
+                ]
+              },
+              "sessionId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              }
+            },
+            "required": [
+              "visitId",
+              "turnId",
+              "submission",
+              "promptKind"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -13624,6 +13848,142 @@
               "type",
               "nodeId",
               "progress"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "runId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "seq": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "ts": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "type": {
+                "type": "string",
+                "const": "harness.turn"
+              },
+              "nodeId": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+              },
+              "visitId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "turnId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "harness": {
+                "type": "string",
+                "enum": [
+                  "codex",
+                  "claude"
+                ]
+              },
+              "promptKind": {
+                "type": "string",
+                "enum": [
+                  "authored",
+                  "repair",
+                  "continuation"
+                ]
+              },
+              "prompt": {
+                "type": "string"
+              },
+              "resumeSessionId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              }
+            },
+            "required": [
+              "runId",
+              "seq",
+              "ts",
+              "type",
+              "nodeId",
+              "visitId",
+              "turnId",
+              "harness",
+              "promptKind",
+              "prompt"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "runId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "seq": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "ts": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "type": {
+                "type": "string",
+                "const": "harness.submission"
+              },
+              "nodeId": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+              },
+              "visitId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "turnId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "submission": {
+                "type": "string",
+                "enum": [
+                  "definitely-not-submitted",
+                  "delivery-uncertain",
+                  "session-missing"
+                ]
+              },
+              "marker": {
+                "type": "string",
+                "enum": [
+                  "claude.assistant",
+                  "claude.result",
+                  "codex.turn.started",
+                  "fake.accepted"
+                ]
+              }
+            },
+            "required": [
+              "runId",
+              "seq",
+              "ts",
+              "type",
+              "nodeId",
+              "visitId",
+              "turnId",
+              "submission"
             ],
             "additionalProperties": false
           },

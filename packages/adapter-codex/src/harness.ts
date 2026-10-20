@@ -157,6 +157,7 @@ export class CodexHarness implements HarnessPort {
     // The engine reads ids from events; nobody may await this promise, so never leave it unhandled.
     sessionId.catch(() => undefined);
 
+    let accepted = false;
     let announced: string | undefined;
     const announce = (id: string): void => {
       if (announced === id) return;
@@ -176,6 +177,7 @@ export class CodexHarness implements HarnessPort {
         });
         for await (const event of streamed.events) {
           for (const out of accumulator.push(event)) {
+            if (out.type === 'submitted') accepted = true;
             if (out.type === 'session') announce(out.sessionId);
             else queue.push(out);
           }
@@ -196,7 +198,18 @@ export class CodexHarness implements HarnessPort {
       if (outcome.failure) {
         const { code, message, retriable } = outcome.failure;
         logger?.warn({ code, retriable, sessionId: announced }, `codex turn failed: ${message}`);
-        queue.push({ type: 'error', code, message, retriable });
+        const submission =
+          code === 'HARNESS_SESSION_MISSING'
+            ? 'session-missing'
+            : !accepted &&
+                [
+                  'HARNESS_NOT_INSTALLED',
+                  'HARNESS_NOT_AUTHENTICATED',
+                  'HARNESS_ARGUMENTS_REJECTED',
+                ].includes(code)
+              ? 'definitely-not-submitted'
+              : 'delivery-uncertain';
+        queue.push({ type: 'error', code, message, retriable, submission });
         queue.close();
         const error = Object.assign(new Error(message), { code, retriable });
         rejectId(error);

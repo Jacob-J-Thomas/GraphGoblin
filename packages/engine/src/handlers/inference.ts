@@ -28,6 +28,13 @@ import type {
   HarnessTurnRequest,
 } from '../ports.js';
 import {
+  visitTurn,
+  provenance,
+  submission,
+  recoveryFailure,
+  type PendingTurn,
+} from './inference-turn.js';
+import {
   DEFAULT_REPAIR_PROMPT,
   addUsage,
   jsonOrText,
@@ -108,6 +115,7 @@ async function consume(
   ctx: NodeContext<'inference'>,
   session: HarnessSession,
   row: HarnessSessionRecord,
+  pending: PendingTurn,
 ): Promise<HarnessResult> {
   let lastError: { code: string; message: string; retriable: boolean } | undefined;
   const rethrow = (error: unknown): never => {
@@ -129,6 +137,7 @@ async function consume(
     switch (event.type) {
       case 'session':
         row.sessionId = event.sessionId;
+        pending.sessionId = event.sessionId;
         row.status = 'active';
         row.updatedAt = ctx.services.now();
         await ctx.ports.sessions.upsert({ ...row });
@@ -141,6 +150,9 @@ async function consume(
           ...(row.model ? { model: row.model } : {}),
           ...(row.effort ? { effort: row.effort } : {}),
         });
+        break;
+      case 'submitted':
+        await submission(ctx, pending, 'delivery-uncertain', event.marker);
         break;
       case 'item':
         await ctx.services.record({
@@ -158,6 +170,7 @@ async function consume(
         break;
       case 'error':
         lastError = { code: event.code, message: event.message, retriable: event.retriable };
+        await submission(ctx, pending, event.submission);
         break;
       case 'turn-complete':
         break;
@@ -235,13 +248,6 @@ export const inferenceHandler: NodeHandler<'inference'> = {
   async execute(ctx) {
     const { config } = ctx;
     const harness: HarnessPort | undefined = ctx.ports.harnesses[config.harness];
-    if (!harness) {
-      throw new RunFailureError(
-        'HARNESS_NOT_INSTALLED',
-        `harness "${config.harness}" is not configured`,
-        { nodeId: ctx.node.id },
-      );
-    }
     const { model, effort } = await ctx.services.resolveModel(
       config.harness,
       config.model,
@@ -263,12 +269,14 @@ export const inferenceHandler: NodeHandler<'inference'> = {
       );
     }
 
-    // Session resolution: crash recovery first, then the configured policy.
-    const existing = await ctx.ports.sessions.forNode(ctx.run.id, ctx.node.id);
+    // Provenance comes from this run's open logical visit, never a session repository row.
+    const visit = visitTurn(await ctx.services.events(), ctx.node.id);
+    let pending = visit.pending;
     let resumeId: string | undefined;
     let prompt: string;
-    if (ctx.attempt > 1 && existing?.sessionId && existing.status !== 'finished') {
-      if (existing.harness !== config.harness)
+    let promptKind: PendingTurn['turn']['promptKind'] = 'authored';
+    if (pending) {
+      if (pending.turn.harness !== config.harness)
         throw new RunFailureError(
           'HARNESS_TURN_FAILED',
           'Interrupted session belongs to another harness family',
@@ -278,8 +286,20 @@ export const inferenceHandler: NodeHandler<'inference'> = {
             details: { adapterCode: 'HARNESS_SESSION_FAMILY_MISMATCH' },
           },
         );
-      resumeId = existing.sessionId;
-      prompt = CONTINUATION_PROMPT;
+      if (
+        pending.submission === 'session-missing' ||
+        (pending.submission === 'delivery-uncertain' && !pending.sessionId)
+      )
+        throw recoveryFailure(pending, ctx.node.id);
+      if (pending.submission === 'definitely-not-submitted') {
+        prompt = pending.turn.prompt;
+        promptKind = pending.turn.promptKind;
+        resumeId = pending.turn.resumeSessionId;
+      } else {
+        resumeId = pending.sessionId;
+        prompt = CONTINUATION_PROMPT;
+        promptKind = 'continuation';
+      }
     } else {
       prompt = await renderTemplate(config.prompt.template, view);
       if (config.session.policy === 'resume-previous') {
@@ -293,6 +313,42 @@ export const inferenceHandler: NodeHandler<'inference'> = {
           )
         )?.sessionId;
       }
+    }
+    const beginTurn = async (
+      text: string,
+      kind: PendingTurn['turn']['promptKind'],
+      id?: string,
+    ): Promise<PendingTurn> => {
+      const turn = {
+        visitId: visit.visitId,
+        turnId: ctx.services.newId(),
+        harness: config.harness,
+        prompt: text,
+        promptKind: kind,
+        ...(id ? { resumeSessionId: id } : {}),
+      };
+      // A crash after this append may occur on either side of adapter invocation: uncertain by default.
+      await ctx.services.record({ type: 'harness.turn', nodeId: ctx.node.id, ...turn });
+      return {
+        turn,
+        submission: 'delivery-uncertain',
+        accepted: false,
+        ...(id ? { sessionId: id } : {}),
+      };
+    };
+    // A safe retry retains the original turn identity and exact rendered prompt.
+    if (!pending || pending.submission !== 'definitely-not-submitted')
+      pending = await beginTurn(prompt, promptKind, resumeId);
+    else {
+      // Re-record the same task intent before another invocation. This resets any init-only ID
+      // from the refused invocation, so a fresh retry cannot recover into that unused session.
+      await ctx.services.record({ type: 'harness.turn', nodeId: ctx.node.id, ...pending.turn });
+      pending = {
+        turn: pending.turn,
+        submission: 'delivery-uncertain',
+        accepted: false,
+        ...(resumeId ? { sessionId: resumeId } : {}),
+      };
     }
 
     const row: HarnessSessionRecord = {
@@ -309,8 +365,6 @@ export const inferenceHandler: NodeHandler<'inference'> = {
         ? { scopeKey: `${ctx.thread.run.loopId}:${config.session.key}` }
         : {}),
     };
-    await ctx.ports.sessions.upsert({ ...row });
-
     const schema = config.output.schema;
     const turn: HarnessTurnRequest = {
       prompt,
@@ -332,12 +386,22 @@ export const inferenceHandler: NodeHandler<'inference'> = {
 
     let result: HarnessResult;
     let session: HarnessSession | undefined;
+    let invoking = false;
     let usage: Usage = ZERO_USAGE;
     try {
+      await ctx.ports.sessions.upsert({ ...row });
+      if (!harness) {
+        throw new RunFailureError(
+          'HARNESS_NOT_INSTALLED',
+          `harness "${config.harness}" is not configured`,
+          { nodeId: ctx.node.id },
+        );
+      }
+      invoking = true;
       session = resumeId
         ? harness.resume(resumeId, sessionRequest(turn), timeout.signal)
         : harness.start(sessionRequest(turn), timeout.signal);
-      result = await consume(ctx, session, row);
+      result = await consume(ctx, session, row, pending);
       usage = addUsage(usage, result.usage);
 
       // Structured output: validate, then repair on the same session as the policy allows.
@@ -357,12 +421,13 @@ export const inferenceHandler: NodeHandler<'inference'> = {
             errors: validation.errors,
             attempt: attempts,
           });
+          pending = await beginTurn(repairPrompt, 'repair', sessionId);
           session = harness.resume(
             sessionId,
             sessionRequest({ prompt: repairPrompt, outputSchema: schema.jsonSchema }),
             timeout.signal,
           );
-          const repairResult = await consume(ctx, session, row);
+          const repairResult = await consume(ctx, session, row, pending);
           usage = addUsage(usage, repairResult.usage);
           result = {
             ...result,
@@ -431,15 +496,20 @@ export const inferenceHandler: NodeHandler<'inference'> = {
       await ctx.ports.sessions.upsert({ ...row });
       return { kind: 'done', patch, route: 'out' };
     } catch (error) {
-      // Storage faults remain operator-fixable. Explicit resume continues the recorded
-      // provider session with CONTINUATION_PROMPT rather than resending the authored prompt.
+      // Storage faults remain operator-fixable; turn provenance still controls recovery.
+      if (!session) await submission(ctx, pending, 'definitely-not-submitted');
       let failure: unknown =
-        error instanceof ArtifactStoreError && error.code === 'ARTIFACT_WRITE_FAILED'
-          ? new RunFailureError(error.code, error.message, {
-              nodeId: ctx.node.id,
-              details: { ref: error.ref },
-            })
-          : error;
+        !session &&
+        invoking &&
+        !(error instanceof RunFailureError) &&
+        !(error instanceof RunCancelledError)
+          ? mapHarnessFailure(error, undefined, ctx.node.id, config.harness)
+          : error instanceof ArtifactStoreError && error.code === 'ARTIFACT_WRITE_FAILED'
+            ? new RunFailureError(error.code, error.message, {
+                nodeId: ctx.node.id,
+                details: { ref: error.ref },
+              })
+            : error;
       const unconfirmed = (value: unknown): boolean =>
         value instanceof RunFailureError && value.code === 'HARNESS_TERMINATION_UNCONFIRMED';
       if (session && !unconfirmed(failure)) {
@@ -481,6 +551,36 @@ export const inferenceHandler: NodeHandler<'inference'> = {
             'failed harness status could not be persisted',
           );
         }
+      }
+      if (!(failure instanceof RunFailureError) && !(failure instanceof RunCancelledError))
+        failure = new RunFailureError('INTERNAL_ERROR', describeError(failure), {
+          nodeId: ctx.node.id,
+        });
+      if (failure instanceof RunFailureError) {
+        // Preserve actionable causes; uncertainty is typed separately from the adapter cause.
+        const uncertain = pending.submission === 'delivery-uncertain';
+        const missing = pending.submission === 'session-missing';
+        const code = missing
+          ? 'HARNESS_SESSION_MISSING'
+          : uncertain && failure.code === 'HARNESS_TURN_FAILED'
+            ? 'HARNESS_DELIVERY_UNCERTAIN'
+            : failure.code;
+        failure = new RunFailureError(
+          code,
+          missing
+            ? recoveryFailure(pending, ctx.node.id).message
+            : uncertain && !pending.sessionId
+              ? failure.message + '. ' + recoveryFailure(pending, ctx.node.id).message
+              : failure.message,
+          {
+            ...failure.options,
+            inference: provenance(pending),
+            resumable:
+              !missing &&
+              (!uncertain || !!pending.sessionId) &&
+              (failure.code === 'HARNESS_TURN_FAILED' ? true : failure.options.resumable !== false),
+          },
+        );
       }
       throw failure;
     } finally {

@@ -162,7 +162,7 @@ describe('Claude stream contract and honest execution evidence', () => {
           summary: expect.stringContaining('Claude account login'),
           detail: expect.objectContaining({
             inputTransport: 'text',
-            promptDeliveryProof: 'unsupported',
+            promptDeliveryProof: 'assistant-or-result',
           }),
         }),
       },
@@ -183,7 +183,7 @@ describe('Claude stream contract and honest execution evidence', () => {
         ],
       },
     });
-    expect(events.map((event) => event.type)).toEqual(['item', 'item', 'item']);
+    expect(events.map((event) => event.type)).toEqual(['submitted', 'item', 'item', 'item']);
     expect(JSON.stringify(events)).not.toContain('PRIVATE');
     acc.push({
       type: 'user',
@@ -207,7 +207,7 @@ describe('Claude stream contract and honest execution evidence', () => {
           id: 'claude-policy',
           detail: expect.objectContaining({
             inputTransport: 'text',
-            promptDeliveryProof: 'unsupported',
+            promptDeliveryProof: 'assistant-or-result',
           }),
         }),
       ]),
@@ -353,6 +353,7 @@ describe('conditional native structured-output carrier', () => {
         carrier({ ok: 'invalid candidate', file_path: 'PRIVATE_FILE', command: 'PRIVATE_COMMAND' }),
       );
       expect(progress).toEqual([
+        { type: 'submitted', marker: 'claude.assistant' },
         {
           type: 'item',
           item: {
@@ -660,6 +661,7 @@ describe('Claude transcript and error evidence limits', () => {
       },
     });
     expect(events).toMatchObject([
+      { type: 'submitted', marker: 'claude.assistant' },
       { type: 'item', item: { type: 'command', commandPreview: expect.any(String) } },
       { type: 'item', item: { type: 'file-change' } },
     ]);
@@ -756,6 +758,7 @@ describe('Claude CLI 2.1.287 captured stream', () => {
       { type: 'item', item: { detail: { requestedModel: 'claude-opus-5-5' } } },
     ]);
     expect(acc.push(records[2]!)).toMatchObject([
+      { type: 'submitted', marker: 'claude.assistant' },
       { type: 'item', item: { type: 'message', summary: 'QA_OK' } },
     ]);
     expect(acc.push(records[3]!)).toEqual([]);

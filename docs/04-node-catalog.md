@@ -99,7 +99,15 @@ type RepairPolicy = {
 };
 ```
 
-Behaviour: the engine writes the harness session row, renders the prompt and context files, starts or resumes the session, streams events into `node.progress`, stores the transcript as an artifact, applies output transforms, validates against the schema if present, runs the configurable repair turns on the same session if validation fails, then patches `messages`, `lastOutput`, and `counters.usage`.
+Behaviour: the engine renders the prompt and context files, persists the pending turn and harness session row, starts or resumes the session, streams events into `node.progress`, stores the transcript as an artifact, applies output transforms, validates against the schema if present, runs the configurable repair turns on the same session if validation fails, then patches `messages`, `lastOutput`, and `counters.usage`.
+
+Before invoking the harness, the engine durably records `harness.turn`: the exact rendered
+prompt, selected resume ID, prompt kind and logical visit/turn identities. `harness.submission`
+records refusal, uncertainty, missing-session status and any positive acceptance marker.
+A definitely-not-submitted turn retries that saved task with its original session-policy
+selection. Uncertain work continues only the recorded session; without a session it fails
+non-resumably for an owner choice. A missing session also fails non-resumably. Neither case
+silently starts fresh. See [submission recovery](05-execution-engine.md#inference-submission-and-recovery).
 
 Claude Code accepts only the explicit `read-only`/`never` or `danger-full-access`/`never` policy
 pairs. `workspace-write`, `on-request`, explicit `networkAccess: false`, `webSearch: true`,
