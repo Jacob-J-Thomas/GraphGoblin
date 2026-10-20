@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import * as probeFs from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { HarnessOptionsSchema } from '@graphgoblin/contracts';
 import { createTestEngine, singleNodeLoop } from '@graphgoblin/engine/testing';
 import type { HarnessEvent, HarnessStartRequest } from '@graphgoblin/engine';
@@ -154,6 +156,88 @@ describe('Claude existing harness contract', () => {
         cleanup.mockRestore();
         for (const directory of directories)
           await probeFs.rm(directory, { recursive: true, force: true });
+      }
+    },
+  );
+  it('creates the prerequisite directory under a system temporary directory of 226 characters (#102)', async () => {
+    // Windows `fs.mkdtemp` refused the 249-character probe path here (ENAMETOOLONG), although the
+    // directory can be created and the CLI started in it; see docs/qa/2026-10-19-wp-f5-launch-diagnosis.md.
+    const root = await probeFs.mkdtemp(join(tmpdir(), 'gg-long-temp-'));
+    let longTemp = root;
+    while (longTemp.length < 226 - 21) longTemp = join(longTemp, 'segment-abcdefghij');
+    longTemp = join(longTemp, 'x'.repeat(226 - longTemp.length - 1));
+    expect(longTemp).toHaveLength(226);
+    await probeFs.mkdir(longTemp, { recursive: true });
+    const directories: string[] = [];
+    const runner: ClaudeCliRunner = async (command) => {
+      directories.push(command.cwd);
+      expect(await probeFs.readdir(command.cwd)).toEqual([]);
+      if (command.args.includes('--version')) return outcome('2.1.285');
+      if (command.args.includes('--help')) return outcome(help);
+      return outcome('{"authMethod":"claude.ai"}');
+    };
+    for (const name of ['TEMP', 'TMP', 'TMPDIR']) vi.stubEnv(name, longTemp);
+    try {
+      const harness = new ClaudeHarness({ runner, platform: 'win32' });
+      expect(await harness.preflight()).toMatchObject({ ok: true, problems: [] });
+      expect(directories).toHaveLength(3);
+      expect(new Set(directories).size).toBe(1);
+      expect(directories[0]?.startsWith(longTemp)).toBe(true);
+      expect(directories[0]?.length).toBeGreaterThan(248);
+      await expect(probeFs.access(directories[0] ?? '')).rejects.toMatchObject({ code: 'ENOENT' });
+    } finally {
+      vi.unstubAllEnvs();
+      await probeFs.rm(root, { recursive: true, force: true });
+    }
+  });
+  it('tries a fresh prerequisite directory name after a name collision and never removes the existing one', async () => {
+    const collision = Object.assign(new Error('Synthetic name collision'), { code: 'EEXIST' });
+    const create = vi.spyOn(probeFs, 'mkdir').mockRejectedValueOnce(collision);
+    const remove = vi.spyOn(probeFs, 'rm');
+    const directories = new Set<string>();
+    const runner: ClaudeCliRunner = (command) => {
+      directories.add(command.cwd);
+      if (command.args.includes('--version')) return Promise.resolve(outcome('2.1.285'));
+      if (command.args.includes('--help')) return Promise.resolve(outcome(help));
+      return Promise.resolve(outcome('{"authMethod":"claude.ai"}'));
+    };
+    try {
+      const harness = new ClaudeHarness({ runner, platform: 'win32' });
+      expect(await harness.preflight()).toMatchObject({ ok: true, problems: [] });
+      const attempted = create.mock.calls.map(([path]) => String(path));
+      expect(attempted).toHaveLength(2);
+      expect(attempted[0]).not.toBe(attempted[1]);
+      expect([...directories]).toEqual([attempted[1]]);
+      expect(remove.mock.calls.map(([path]) => String(path))).toEqual([attempted[1]]);
+    } finally {
+      create.mockRestore();
+      remove.mockRestore();
+    }
+  });
+  it.each([
+    ['four name collisions', 'EEXIST', 4],
+    ['a creation fault', 'EACCES', 1],
+  ])(
+    'fails the check without starting the CLI or removing anything after %s',
+    async (_case, code, attempts) => {
+      const fault = Object.assign(new Error('Synthetic creation fault'), { code });
+      const create = vi.spyOn(probeFs, 'mkdir').mockRejectedValue(fault);
+      const remove = vi.spyOn(probeFs, 'rm');
+      const runner = vi.fn<ClaudeCliRunner>();
+      try {
+        const harness = new ClaudeHarness({ runner, platform: 'win32' });
+        expect(await harness.preflight()).toMatchObject({
+          ok: false,
+          problems: ['Claude preflight failed'],
+        });
+        const attempted = create.mock.calls.map(([path]) => String(path));
+        expect(attempted).toHaveLength(attempts);
+        expect(new Set(attempted).size).toBe(attempts);
+        expect(runner).not.toHaveBeenCalled();
+        expect(remove).not.toHaveBeenCalled();
+      } finally {
+        create.mockRestore();
+        remove.mockRestore();
       }
     },
   );
