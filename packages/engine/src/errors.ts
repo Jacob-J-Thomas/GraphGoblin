@@ -1,5 +1,22 @@
 import type { RunErrorCode, RunFailure } from '@graphgoblin/contracts';
 
+/** Artifact I/O failed explicitly; missing content is represented separately by undefined. */
+export class ArtifactStoreError extends Error {
+  constructor(
+    readonly code: 'ARTIFACT_CORRUPT' | 'ARTIFACT_WRITE_FAILED',
+    readonly ref: string,
+    options?: ErrorOptions,
+  ) {
+    super(
+      code === 'ARTIFACT_CORRUPT'
+        ? 'Artifact content does not match its reference'
+        : 'Artifact could not be published',
+      options,
+    );
+    this.name = 'ArtifactStoreError';
+  }
+}
+
 /** Safe, transport-independent failure: an HTTP probe body exceeded its byte budget. */
 export class ProbeBodyOverflowError extends Error {
   readonly code = 'HTTP_PROBE_BODY_OVERFLOW';
@@ -38,11 +55,44 @@ export class RunFailureError extends Error {
   }
 }
 
+/**
+ * A stored definition the current contract refuses: an exit that publishes an Event, retired by
+ * ADR-0044 but still present in a version, draft or draft-run snapshot saved before. Thrown
+ * before the definition is served or executed. As a run failure it is not resumable: the pinned
+ * definition never changes, so resuming cannot help.
+ */
+export class LoopUpgradeRequiredError extends RunFailureError {
+  constructor(
+    readonly loopId: string,
+    readonly versionId: string,
+    readonly version: number,
+    readonly paths: string[],
+    message: string,
+  ) {
+    super('LOOP_UPGRADE_REQUIRED', message, {
+      resumable: false,
+      details: { loopId, versionId, version, paths },
+    });
+    this.name = 'LoopUpgradeRequiredError';
+  }
+}
+
 /** Thrown when a handler observes its abort signal. */
 export class RunCancelledError extends Error {
   constructor() {
     super('run cancelled');
     this.name = 'RunCancelledError';
+  }
+}
+
+/**
+ * Thrown by the subloop handler when the child it awaits was cancelled. The run is cancelled in
+ * turn, at the child's request, as cancelling inline work cancels the run that does it (#251).
+ */
+export class ChildCancelledError extends Error {
+  constructor(readonly childRunId: string) {
+    super(`subloop child ${childRunId} was cancelled`);
+    this.name = 'ChildCancelledError';
   }
 }
 

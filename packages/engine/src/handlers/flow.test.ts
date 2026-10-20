@@ -821,7 +821,6 @@ describe('exit node and return channels', () => {
             { kind: 'file', path: '/abs/result.md', format: 'markdown' },
             { kind: 'file', path: 'plain.txt', format: 'text' },
             { kind: 'webhook', url: 'https://example.test/hook', secretRef: 'hook' },
-            { kind: 'event', eventType: 'answer-ready' },
           ],
         },
       ),
@@ -837,17 +836,17 @@ describe('exit node and return channels', () => {
     ).toBe(true);
     expect(engine.ports.workspace.files.get('/abs/result.md')).toMatch(/Outcome: success/);
     expect([...engine.ports.workspace.files.values()]).toContain('{"answer":42}');
-    expect(engine.ports.delivery.webhooks.map((w) => w.url)).toEqual([
-      'https://example.test/hook',
+    // Webhook deliveries run concurrently in the background, so their order is not part of the
+    // contract: the signed one resolves its secret first.
+    expect(engine.ports.delivery.webhooks.map((w) => w.url).sort()).toEqual([
       'https://example.test/default',
+      'https://example.test/hook',
     ]);
-    expect(engine.ports.delivery.webhooks[0]?.secret).toBe('hs');
-    expect(engine.ports.delivery.events[0]).toMatchObject({
-      eventType: 'answer-ready',
-      payload: { result: { answer: 42 }, outcome: 'success' },
-    });
+    expect(
+      engine.ports.delivery.webhooks.find((w) => w.url === 'https://example.test/hook')?.secret,
+    ).toBe('hs');
     const delivered = engine.events(run.id).filter((e) => e.type === 'return.delivered');
-    expect(delivered).toHaveLength(6);
+    expect(delivered).toHaveLength(5);
     expect(engine.events(run.id).filter((e) => e.type === 'delivery.finished')).toHaveLength(2);
   });
 

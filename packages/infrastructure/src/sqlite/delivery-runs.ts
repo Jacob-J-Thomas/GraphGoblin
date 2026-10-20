@@ -1,4 +1,4 @@
-import type { RunRecord, RunStatus } from '@graphgoblin/contracts';
+import type { RunRecord } from '@graphgoblin/contracts';
 import { RunEventSchema } from '@graphgoblin/contracts';
 import { UnreadableRunHistoryError } from '@graphgoblin/engine';
 import { asc, inArray, and, sql } from 'drizzle-orm';
@@ -101,8 +101,5 @@ export class SqliteDeliveryRunRepository extends SqliteRunRepository {
   }
   override async listChildren(id: string): Promise<RunRecord[]> {
     return this.project(await super.listChildren(id));
-  }
-  override async listByStatus(statuses: readonly RunStatus[]): Promise<RunRecord[]> {
-    return this.project(await super.listByStatus(statuses));
   }
 }

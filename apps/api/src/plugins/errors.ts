@@ -2,7 +2,12 @@ import type { FastifyError, FastifyInstance, FastifyReply, FastifyRequest } from
 import { InvalidStoredRunEventError, LoopNotFoundError } from '@graphgoblin/infrastructure/sqlite';
 import { DomainError } from '@graphgoblin/domain';
 import { TemplateError } from '../templates/errors.js';
-import { EngineRequestError, UnreadableRunHistoryError } from '@graphgoblin/engine';
+import {
+  ArtifactStoreError,
+  EngineRequestError,
+  LoopUpgradeRequiredError,
+  UnreadableRunHistoryError,
+} from '@graphgoblin/engine';
 import {
   hasZodFastifySchemaValidationErrors,
   isResponseSerializationError,
@@ -108,6 +113,20 @@ export function registerErrorHandler(app: FastifyInstance): void {
       }
       if (error instanceof EngineRequestError) {
         return problem(reply, ENGINE_STATUS[error.code], error.code, error.message, error.details);
+      }
+      if (error instanceof LoopUpgradeRequiredError) {
+        // A stored definition that predates ADR-0044 (an exit publishing an Event): per-loop and
+        // actionable, never a generic response-validation 500.
+        const { loopId, versionId, version, paths } = error;
+        return problem(reply, 409, error.code, error.message, undefined, {
+          loopId,
+          versionId,
+          version,
+          paths,
+        });
+      }
+      if (error instanceof ArtifactStoreError) {
+        return problem(reply, 500, error.code, error.message);
       }
       if (error instanceof InvalidStoredRunEventError) {
         return problem(reply, 500, 'STORED_EVENT_INVALID', error.message);

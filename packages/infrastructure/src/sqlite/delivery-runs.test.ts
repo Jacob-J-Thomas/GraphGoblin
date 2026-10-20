@@ -119,7 +119,7 @@ it('projects a whole page in one indexed delivery query', async () => {
         typeof row['detail'] === 'string' && row['detail'].includes('run_events_delivery_idx'),
     ),
   ).toBe(true);
-  expect(await measured.listByStatus([])).toEqual([]);
+  expect(await measured.listChildren('no-such-parent')).toEqual([]);
 });
 
 it('projects the same journal state through detail, lists, child reads and pages', async () => {
@@ -137,7 +137,6 @@ it('projects the same journal state through detail, lists, child reads and pages
   expect((await repo.list())[0]?.deliveries).toEqual([final]);
   expect((await repo.page({ ownerId: 'local' })).items[0]?.deliveries).toEqual([final]);
   expect((await repo.listChildren(run.parentRunId!))[0]?.deliveries).toEqual([final]);
-  expect((await repo.listByStatus(['succeeded']))[0]?.deliveries).toEqual([final]);
 });
 
 it.each(['{broken', '{}', 'null'])(

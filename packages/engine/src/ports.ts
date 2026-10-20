@@ -105,7 +105,6 @@ export interface RunRepository {
   ): Promise<RunRecord | undefined>;
   /** Raw identities for per-run recovery; must not decode run JSON while enumerating. */
   listRecoveryCandidates(): Promise<{ id: string; terminal: boolean }[]>;
-  listByStatus(statuses: readonly RunStatus[]): Promise<RunRecord[]>;
   /** Active-use checks need only references; damaged run JSON must not block unrelated loops. */
   listRunReferences(
     statuses: readonly RunStatus[],
@@ -431,12 +430,13 @@ export interface ReturnDeliveryPort {
     secret: string | undefined,
     deliveryId: string,
   ): Promise<WebhookAttemptResult>;
-  publishEvent(eventType: string, payload: JsonValue): Promise<void>;
   log(runId: string, payload: JsonValue): void;
 }
 
 export interface ArtifactStorePort {
+  /** Publish complete bytes, or throw ArtifactStoreError(ARTIFACT_WRITE_FAILED). */
   put(kind: string, content: string): Promise<{ ref: string; bytes: number }>;
+  /** Undefined means missing/invalid reference; corrupt bytes throw ArtifactStoreError(ARTIFACT_CORRUPT). */
   get(ref: string): Promise<string | undefined>;
 }
 

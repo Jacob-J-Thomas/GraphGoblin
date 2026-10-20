@@ -178,17 +178,14 @@ export class HttpWebhookDelivery {
 
 export interface ReturnDeliveryDeps {
   webhooks: Pick<HttpWebhookDelivery, 'webhook'>;
-  /** Publishes onto the gateway's inbound event bus. */
-  publishEvent: (eventType: string, payload: JsonValue) => Promise<void>;
   logger: Logger;
 }
 
-/** Compose the engine's return-delivery port from its three sinks. */
+/** Compose the engine's return-delivery port from its two sinks. */
 export function createReturnDelivery(deps: ReturnDeliveryDeps): ReturnDeliveryPort {
   return {
     webhook: (url, payload, secret, deliveryId) =>
       deps.webhooks.webhook(url, payload, secret, deliveryId),
-    publishEvent: (eventType, payload) => deps.publishEvent(eventType, payload),
     log: (runId, payload) => deps.logger.info({ runId, result: payload }, 'loop returned'),
   };
 }

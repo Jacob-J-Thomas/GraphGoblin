@@ -45,8 +45,11 @@ export const RunErrorCodeSchema = z.enum([
   'SCRIPT_TIMEOUT',
   'INFERENCE_TIMEOUT',
   'OUTPUT_SCHEMA_MISMATCH',
+  'ARTIFACT_WRITE_FAILED',
   'SUBLOOP_DEPTH_EXCEEDED',
   'SUBLOOP_NOT_FOUND',
+  // A stored definition the current contract refuses (an exit that publishes an Event, ADR-0044).
+  'LOOP_UPGRADE_REQUIRED',
   // Factual historical failures retain their original cause during the offline cutover.
   'DECISION_NO_ROUTE',
   'EVALUATION_UNAVAILABLE',

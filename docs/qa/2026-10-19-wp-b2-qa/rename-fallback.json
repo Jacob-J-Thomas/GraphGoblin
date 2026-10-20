@@ -1,0 +1,15 @@
+{
+  "revision": "5aadc90",
+  "check": "identical-writer fallback after real Windows rename denial",
+  "pass": true,
+  "initialFile": "corrupt; held open with FileAccess.ReadWrite and FileShare.Read (no Delete)",
+  "coordination": "filesystem watch sees unique .tmp; the other file handle then writes and flushes identical correct bytes while still denying rename",
+  "temporaryObserved": true,
+  "publishedByOtherHandle": true,
+  "result": {
+    "ref": "artifact:race/3488450c56577a74e94b4b78ad0e93211f3cefb207f32f53b4a98846296d6218",
+    "bytes": 102500
+  },
+  "exactBytes": true,
+  "limitation": "models the identical writer using a real external file writer; does not monkey-patch FsArtifactStore"
+}

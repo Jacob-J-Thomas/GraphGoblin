@@ -59,7 +59,6 @@ import type { ApiConfig } from './config.js';
 import { BUILTIN_CLASSIFIER, ClassifierRegistry } from './classifier-registry.js';
 import { acquireDataDirLock } from './data-dir-lock.js';
 import { ClaudeHarness } from '@graphgoblin/infrastructure/claude';
-import { InboundEventBus } from './event-bus.js';
 import { UlidIds } from './ids.js';
 import { loadMasterKey } from './master-key.js';
 import { PollTriggers } from './triggers/poll.js';
@@ -103,7 +102,6 @@ export interface Container {
   cron: CronScheduler;
   triggers: TriggerService;
   polls: PollTriggers;
-  bus: InboundEventBus;
   masterKey: Buffer;
   classifierRegistry: ClassifierRegistry;
   repos: {
@@ -231,7 +229,6 @@ export async function createContainer(
       pollIntervalMs: config.timerPollMs,
       logger,
     });
-    const bus = new InboundEventBus();
     const schedules = new SqliteScheduleStore(db, clock, ids);
     const endpoints = new SqliteWebhookEndpoints(db, clock, ids);
     const inbound = new SqliteInboundEvents(db);
@@ -290,14 +287,6 @@ export async function createContainer(
       probes: overrides.probes ?? new HttpProbes(),
       delivery: createReturnDelivery({
         webhooks: new HttpWebhookDelivery(clock),
-        publishEvent: (eventType, payload) =>
-          bus.publish({
-            id: ids.next(),
-            ownerId: LOCAL_OWNER,
-            type: eventType,
-            payload,
-            receivedAt: clock.now().toISOString(),
-          }),
         logger,
       }),
       artifacts: new FsArtifactStore(config.dataDir),
@@ -337,7 +326,6 @@ export async function createContainer(
       inbound,
       manager,
       cron,
-      bus,
       secretsFor,
       clock,
       ids,
@@ -387,7 +375,6 @@ export async function createContainer(
       cron,
       triggers,
       polls,
-      bus,
       masterKey,
       classifierRegistry,
       repos: {

@@ -1,0 +1,20 @@
+
+ RUN  v5.0.3 <worktree>/packages/domain
+
+ ✓ src/json-value.test.ts > iterative JSON validation > accepts JSON scalars, arrays, records, null prototypes and shared acyclic values 3ms
+ ✓ src/json-value.test.ts > iterative JSON validation > refuses non-JSON leaves, sparse arrays, class instances and cycles 1ms
+ ✓ src/json-value.test.ts > iterative JSON validation > validates very deep parsed JSON without a recursive schema or call-stack limit 20ms
+ ✓ src/poll-items.test.ts > complete poll-items preparation > classifies depth at the exact initial_thread SQLite boundary without dropping later items 9ms
+ ✓ src/poll-items.test.ts > complete poll-items preparation > keeps invalid or duplicate deep-item keys as whole-batch refusals 10ms
+ ✓ src/poll-items.test.ts > complete poll-items preparation > keeps every curated item and stable key in order without applying the dispatch cap early 6ms
+ ✓ src/poll-items.test.ts > complete poll-items preparation > evaluates selectors with now/probe and keys with the original item/index 2ms
+ ✓ src/poll-items.test.ts > complete poll-items preparation > refuses nonarrays and overlarge unpartitioned results, without silently selecting their first items 1ms
+ ✓ src/poll-items.test.ts > complete poll-items preparation > refuses every invalid key, including one past the default5 dispatch cap, before returning a partial plan 2ms
+ ✓ src/poll-items.test.ts > complete poll-items preparation > refuses repeated keys and replaces raw selector/key evaluator diagnostics with safe codes 11ms
+ ✓ src/poll-items.test.ts > complete poll-items preparation > refuses selected non-JSON functions instead of carrying executable values into trigger input 1ms
+
+ Test Files  2 passed (2)
+      Tests  11 passed (11)
+   Start at  23:57:40
+   Duration  1.63s (import 51%, transform 43%, tests 5%, worker 1%)
+

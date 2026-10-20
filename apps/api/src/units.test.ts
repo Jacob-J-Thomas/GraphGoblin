@@ -6,7 +6,6 @@ import { FakeClock } from '@graphgoblin/engine/testing';
 import { MAX_MODEL_NAME_LENGTH } from '@graphgoblin/contracts';
 import { loadConfig } from './config.js';
 import { emitOpenApi } from './emit-openapi.js';
-import { InboundEventBus } from './event-bus.js';
 import { UlidIds } from './ids.js';
 import { loadMasterKey } from './master-key.js';
 import { main } from './main.js';
@@ -114,31 +113,6 @@ describe('loadMasterKey', () => {
     expect((await readFile(join(dir, 'nested', 'master.key'), 'utf8')).length).toBeGreaterThan(40);
     await writeFile(join(dir, 'nested', 'master.key'), 'bad', 'utf8');
     await expect(loadMasterKey({ dataDir: join(dir, 'nested') })).rejects.toThrow(/32-byte/);
-  });
-});
-
-describe('InboundEventBus', () => {
-  it('fans out to subscribers, keeps a bounded recent list per owner, and unsubscribes', async () => {
-    const bus = new InboundEventBus(2);
-    const seen: string[] = [];
-    const off = bus.subscribe((e) => {
-      seen.push(e.type);
-    });
-    for (const [i, type] of ['a', 'b', 'c'].entries()) {
-      await bus.publish({
-        id: String(i),
-        ownerId: i === 1 ? 'other' : 'local',
-        type,
-        payload: null,
-        receivedAt: 'now',
-      });
-    }
-    expect(seen).toEqual(['a', 'b', 'c']);
-    expect(bus.list('local').map((e) => e.type)).toEqual(['c']);
-    expect(bus.list('other').map((e) => e.type)).toEqual(['b']);
-    off();
-    await bus.publish({ id: '9', ownerId: 'local', type: 'd', payload: null, receivedAt: 'now' });
-    expect(seen).toHaveLength(3);
   });
 });
 

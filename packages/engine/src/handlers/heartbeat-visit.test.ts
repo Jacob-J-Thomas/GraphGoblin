@@ -57,6 +57,7 @@ describe('heartbeat public handler visit evidence', () => {
         resolveModel: unused,
         startChild: unused,
         childOutcome: unused,
+        resumeChild: unused,
         events: () => e.ports.events.read(run.id),
         depth: () => Promise.resolve(0),
         workingDirectory: () => Promise.resolve('.'),
