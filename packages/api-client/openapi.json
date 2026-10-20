@@ -13,6 +13,37 @@
       }
     },
     "schemas": {
+      "WaitConflictInput": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "number",
+            "const": 409
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "WAIT_MISMATCH",
+              "INVALID_STATE"
+            ]
+          },
+          "detail": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ]
+      },
       "ClassifierModelSummaryInput": {
         "type": "object",
         "properties": {
@@ -4285,8 +4316,10 @@
               "EXPRESSION_ERROR",
               "WAIT_TIMEOUT",
               "HEARTBEAT_EXHAUSTED",
+              "HTTP_PROBE_BODY_OVERFLOW",
               "RETURN_DELIVERY_FAILED",
               "MAX_NODE_VISITS",
+              "EVENT_INVALID",
               "INTERNAL_ERROR"
             ]
           },
@@ -4315,6 +4348,11 @@
       "WaitSpecInput": {
         "type": "object",
         "properties": {
+          "waitId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
           "nodeId": {
             "type": "string",
             "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
@@ -4370,8 +4408,10 @@
           }
         },
         "required": [
+          "waitId",
           "nodeId",
-          "kind"
+          "kind",
+          "startedSeq"
         ],
         "additionalProperties": false
       },
@@ -7111,6 +7151,38 @@
           "artifacts",
           "outputs",
           "counters"
+        ],
+        "additionalProperties": false
+      },
+      "WaitConflict": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "number",
+            "const": 409
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "WAIT_MISMATCH",
+              "INVALID_STATE"
+            ]
+          },
+          "detail": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
         ],
         "additionalProperties": false
       },
@@ -11522,8 +11594,10 @@
               "EXPRESSION_ERROR",
               "WAIT_TIMEOUT",
               "HEARTBEAT_EXHAUSTED",
+              "HTTP_PROBE_BODY_OVERFLOW",
               "RETURN_DELIVERY_FAILED",
               "MAX_NODE_VISITS",
+              "EVENT_INVALID",
               "INTERNAL_ERROR"
             ]
           },
@@ -11552,6 +11626,11 @@
       "WaitSpec": {
         "type": "object",
         "properties": {
+          "waitId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
           "nodeId": {
             "type": "string",
             "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
@@ -11607,8 +11686,10 @@
           }
         },
         "required": [
+          "waitId",
           "nodeId",
-          "kind"
+          "kind",
+          "startedSeq"
         ],
         "additionalProperties": false
       },
@@ -15790,13 +15871,20 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "waitId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
                   "input": {
                     "$ref": "#/components/schemas/JsonValueInput"
                   }
                 },
                 "required": [
+                  "waitId",
                   "input"
-                ]
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -15822,6 +15910,16 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WaitConflict"
+                }
+              }
+            }
           }
         }
       }
@@ -15837,13 +15935,21 @@
           "content": {
             "application/json": {
               "schema": {
-                "default": {},
                 "type": "object",
                 "properties": {
+                  "waitId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
                   "payload": {
                     "$ref": "#/components/schemas/JsonValueInput"
                   }
-                }
+                },
+                "required": [
+                  "waitId"
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -15860,7 +15966,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
             },
             "in": "path",
             "name": "name",
@@ -15887,6 +15994,16 @@
                     "woke"
                   ],
                   "additionalProperties": false
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WaitConflict"
                 }
               }
             }
@@ -16067,6 +16184,76 @@
         "responses": {
           "200": {
             "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/runs/diagnostics": {
+      "get": {
+        "summary": "Identify unreadable run history for manual repair or explicit deletion",
+        "tags": [
+          "runs"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 48
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "runId": {
+                            "type": "string"
+                          },
+                          "code": {
+                            "type": "string",
+                            "enum": [
+                              "HISTORY_UNREADABLE"
+                            ]
+                          },
+                          "reason": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "runId",
+                          "code",
+                          "reason"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
           }
         }
       }

@@ -39,6 +39,7 @@ export interface TestApp {
 }
 
 export interface TestAppOptions {
+  clock?: FakeClock;
   harnesses?: Partial<Record<HarnessId, HarnessPort>>;
   requireApiKey?: boolean;
   env?: Record<string, string>;
@@ -62,7 +63,7 @@ export async function createTestApp(options: TestAppOptions = {}): Promise<TestA
   const codex = new FakeDecider('codex');
   const structured = new FakeStructured();
   const logger = new CapturingLogger();
-  const clock = new FakeClock();
+  const clock = options.clock ?? new FakeClock();
   const container = await createContainer(config, {
     harnesses: options.harnesses ?? { codex: harness },
     deciders: [codex],

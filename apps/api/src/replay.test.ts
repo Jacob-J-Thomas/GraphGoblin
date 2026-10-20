@@ -68,7 +68,14 @@ async function finishedRun(): Promise<RunRecord> {
     })
   ).json<{ run: RunRecord }>();
   await t.idle();
-  await t.app.inject({ method: 'POST', url: `/runs/${run.id}/input`, payload: { input: 'yes' } });
+  await t.app.inject({
+    method: 'POST',
+    url: `/runs/${run.id}/input`,
+    payload: {
+      waitId: (await t.container.manager.getRun(run.id))?.waiting?.waitId ?? 'unknown',
+      input: 'yes',
+    },
+  });
   await t.idle();
   const finished = (await t.app.inject(`/runs/${run.id}`)).json<RunRecord>();
   expect(finished.result).toEqual({ prepared: 'loops', answer: 'yes' });
@@ -106,7 +113,14 @@ describe('POST /runs/{id}/replay', () => {
     });
     expect(events.items.filter((e) => e.type === 'node.started')).toHaveLength(1);
 
-    await t.app.inject({ method: 'POST', url: `/runs/${fork.id}/input`, payload: { input: 'no' } });
+    await t.app.inject({
+      method: 'POST',
+      url: `/runs/${fork.id}/input`,
+      payload: {
+        waitId: (await t.container.manager.getRun(fork.id))?.waiting?.waitId ?? 'unknown',
+        input: 'no',
+      },
+    });
     await t.idle();
     const done = (await t.app.inject(`/runs/${fork.id}`)).json<RunRecord>();
     expect(done.status).toBe('succeeded');

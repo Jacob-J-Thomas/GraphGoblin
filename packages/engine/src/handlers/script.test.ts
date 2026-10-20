@@ -30,6 +30,10 @@ describe('ordinary script resume', () => {
       exitCode: 1,
       stdout: '',
       stderr: 'retry needed',
+      stdoutBytes: 0,
+      stdoutOverflow: false,
+      stderrBytes: 12,
+      stderrOverflow: false,
       timedOut: false,
     }));
     const pinned = engine.publish(scriptLoop());
@@ -44,6 +48,10 @@ describe('ordinary script resume', () => {
       exitCode: 0,
       stdout: '{"saved":true}',
       stderr: '',
+      stdoutBytes: 14,
+      stdoutOverflow: false,
+      stderrBytes: 0,
+      stderrOverflow: false,
       timedOut: false,
     }));
 

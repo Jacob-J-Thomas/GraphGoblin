@@ -164,7 +164,7 @@ describe('migrated SQLite versions through the API', () => {
       try {
         await second.start();
         app = await buildApp(second, { logger: false });
-        const answered = await app.inject({ method: 'POST', url: '/runs/' + runId + '/input', payload: { input: true } });
+        const answered = await app.inject({ method: 'POST', url: '/runs/' + runId + '/input', payload: { waitId: (await second.repos.runs.get(runId)).waiting.waitId, input: true } });
         assert.equal(answered.statusCode, 200, answered.body);
         await second.manager.waitForIdle();
         const finished = await second.repos.runs.get(runId);

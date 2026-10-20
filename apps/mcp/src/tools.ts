@@ -7,6 +7,7 @@ import {
   loops,
   observeRun,
   runs,
+  unwrap,
   type GraphGoblinClient,
 } from '@graphgoblin/api-client';
 import {
@@ -71,10 +72,10 @@ type LoopDetail = { loop: LoopRecord; current?: LoopVersionRecord; draft?: LoopV
 /** What the agent should do next for a run that has not finished. */
 function nextStep(run: RunRecord): string {
   if (run.status === 'waiting' && run.waiting?.kind === 'input') {
-    return 'The run is waiting for input. Ask the user if needed, then call provide_input with a value matching waiting.inputSchema, and call wait_for_run again.';
+    return 'The run is waiting for input. Ask the user if needed, then call provide_input with waitId from the observed waiting.waitId and a value matching waiting.inputSchema, and call wait_for_run again.';
   }
   if (run.status === 'waiting' && run.waiting?.kind === 'signal') {
-    return `The run is waiting for the signal "${run.waiting.signalName ?? ''}". Call send_signal if you are the one expected to send it; otherwise call wait_for_run again.`;
+    return `The run is waiting for the signal "${run.waiting.signalName ?? ''}". Call send_signal with waitId from the observed waiting.waitId if you are the one expected to send it; otherwise call wait_for_run again.`;
   }
   if (run.status === 'paused') return 'The run is paused. Call resume_run to continue it.';
   return 'The run is still in progress. Call wait_for_run again with the same runId; use read_run_events with after=cursor to see what happened so far.';
@@ -265,7 +266,7 @@ export function registerTools(
     {
       title: 'List runs',
       description:
-        'List runs, newest first, optionally filtered by loop and status. Use it to find a run the user refers to ("the last run of X"). To page, pass nextBefore from the previous page as "before".',
+        'List runs, newest first, optionally filtered by loop and status. Use it to find a run the user refers to ("the last run of X"). Returns { items, nextCursor }. Pass a non-null nextCursor as "cursor" with the same filters, even when items is empty; null ends the listing.',
       inputSchema: {
         loopId: z.string().optional().describe('Only runs of this loop id.'),
         status: z
@@ -287,28 +288,30 @@ export function registerTools(
           .string()
           .optional()
           .describe('Only child runs of this run; pass "none" for top-level runs only.'),
-        before: z
+        cursor: z
           .string()
           .optional()
-          .describe('Paging cursor: nextBefore from a previous page (a creation timestamp).'),
+          .describe('Opaque nextCursor from the previous page; keep the same filters.'),
         limit: z.number().int().min(1).max(500).optional().describe('Page size. Default 20.'),
       },
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
-    ({ loopId, status, parentRunId, before, limit }) =>
+    ({ loopId, status, parentRunId, cursor, limit }) =>
       guard(async () => {
-        const size = limit ?? 20;
-        const items = (
-          await runs.list(client, {
-            ...(loopId ? { loopId } : {}),
-            ...(status?.length ? { status: status.join(',') } : {}),
-            ...(parentRunId ? { parent: parentRunId } : {}),
-            ...(before ? { before } : {}),
-            limit: size,
-          })
-        ).map((r) => summarizeRun(r));
-        const last = items.at(-1);
-        return { items, ...(items.length === size && last ? { nextBefore: last.createdAt } : {}) };
+        const page = unwrap(
+          await client.GET('/runs', {
+            params: {
+              query: {
+                ...(loopId ? { loopId } : {}),
+                ...(status?.length ? { status: status.join(',') } : {}),
+                ...(parentRunId ? { parent: parentRunId } : {}),
+                ...(cursor !== undefined ? { cursor } : {}),
+                limit: limit ?? 20,
+              },
+            },
+          }),
+        );
+        return { items: page.items.map((r) => summarizeRun(r)), nextCursor: page.nextCursor };
       }),
   );
 
@@ -405,13 +408,17 @@ export function registerTools(
     {
       title: 'Provide input to a waiting run',
       description:
-        'Answer a run that is waiting for input (wait_for_run or get_run shows status "waiting" with waiting.kind "input"). Pass a value matching waiting.inputSchema; read waiting.prompt to know what is being asked, and ask the user when the answer is theirs to give. Then call wait_for_run again.',
-      inputSchema: { runId, input: json },
+        'Answer a run that is waiting for input (wait_for_run or get_run shows status "waiting" with waiting.kind "input"). Pass waitId from waiting.waitId in that observed snapshot and a value matching waiting.inputSchema; read waiting.prompt to know what is being asked, and ask the user when the answer is theirs to give. Then call wait_for_run again.',
+      inputSchema: {
+        runId,
+        waitId: z.string().min(1).describe('The waiting.waitId shown by get_run or wait_for_run.'),
+        input: json,
+      },
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
     },
-    ({ runId: id, input }) =>
+    ({ runId: id, waitId, input }) =>
       guard(async () =>
-        summarizeRun(await runs.provideInput(client, id, (input ?? null) as never)),
+        summarizeRun(await runs.provideInput(client, id, waitId, (input ?? null) as never)),
       ),
   );
 
@@ -420,17 +427,18 @@ export function registerTools(
     {
       title: 'Send a signal to a run',
       description:
-        'Deliver a named signal to a run, for wait nodes in signal mode (waiting.kind "signal", waiting.signalName) and heartbeat probes that count signals. Returns woke: true when a waiting node consumed it. Then call wait_for_run to follow the run.',
+        'Deliver a named signal to a run, for wait nodes in signal mode (waiting.kind "signal", waiting.signalName) and heartbeat probes that count signals. Pass the waiting.waitId from get_run or wait_for_run as waitId. Returns woke: true when a waiting node consumed it. Then call wait_for_run to follow the run.',
       inputSchema: {
         runId,
         name: z.string().min(1).describe('The signal name, for example waiting.signalName.'),
+        waitId: z.string().min(1).describe('The waiting.waitId shown by get_run or wait_for_run.'),
         payload: json.optional(),
       },
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
     },
-    ({ runId: id, name, payload }) =>
+    ({ runId: id, name, waitId, payload }) =>
       guard(async () => {
-        const result = await runs.signal(client, id, name, payload as never);
+        const result = await runs.signal(client, id, name, waitId, payload as never);
         return { woke: result.woke, run: summarizeRun(result.run) };
       }),
   );

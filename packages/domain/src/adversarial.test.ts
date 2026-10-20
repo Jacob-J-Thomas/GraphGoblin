@@ -13,6 +13,23 @@ import { checkExpression, evaluateExpression } from './expression.js';
 const ctx = { nodeId: 'attack', newId: () => 'test', now: () => '2026-10-03T00:00:00.000Z' };
 const op = (input: unknown) => MutationOperationSchema.parse(input);
 
+// Node 22.14 provides register(), while synchronous registerHooks() starts at 22.15.
+// Keep these native probes source-based, including when no package has been built.
+const compiler = pathToFileURL(createRequire(import.meta.url).resolve('typescript')).href;
+const sourceLoader = `data:text/javascript,${encodeURIComponent(`
+  import ts from ${JSON.stringify(compiler)};
+  import { readFileSync } from 'node:fs';
+  export function resolve(s,c,n) {
+    return n(s.startsWith('.') && s.endsWith('.js') ? s.slice(0,-3)+'.ts' : s,c);
+  }
+  export function load(u,c,n) {
+    return u.endsWith('.ts') ? {format:'module', shortCircuit:true,
+      source:ts.transpile(readFileSync(new URL(u),'utf8'), {module:ts.ModuleKind.ESNext})} : n(u,c);
+  }
+`)}`;
+const sourceBootstrap = `import { register } from 'node:module';
+  register(${JSON.stringify(sourceLoader)}, import.meta.url);`;
+
 describe('adversarial domain invariants', () => {
   it('9: escaped pointers, array append and failed tests are atomic', () => {
     const doc = { 'a/b': { '~key': [1] } };
@@ -87,11 +104,7 @@ describe('adversarial domain invariants', () => {
     // never return and only a separate watchdog could stop it.
     const module = new URL('./expression.ts', import.meta.url).href;
     const expression = '$match("' + 'a'.repeat(32) + '!", /^(a+)+$/)';
-    const compiler = pathToFileURL(createRequire(import.meta.url).resolve('typescript')).href;
-    const code = `import ts from ${JSON.stringify(compiler)};
-      import { readFileSync } from 'node:fs'; import { registerHooks } from 'node:module';
-      registerHooks({ resolve(s,c,n) { return n(s.startsWith('.') && s.endsWith('.js') ? s.slice(0,-3)+'.ts' : s,c); },
-        load(u,c,n) { return u.endsWith('.ts') ? {format:'module', shortCircuit:true, source:ts.transpile(readFileSync(new URL(u),'utf8'), {module:ts.ModuleKind.ESNext})} : n(u,c); } });
+    const code = `${sourceBootstrap}
       const { evaluateExpression } = await import(${JSON.stringify(module)});
       try { await evaluateExpression(${JSON.stringify(expression)}, {}, {timeoutMs: 2_000}); process.exit(2); }
       catch (error) { process.stderr.write(String(error.message)); process.exit(0); }`;
@@ -206,11 +219,7 @@ describe('adversarial domain invariants', () => {
     'ADV-007 review: %i nested failing $evals stay small in a 128 MB process',
     (depth) => {
       const module = new URL('./expression.ts', import.meta.url).href;
-      const compiler = pathToFileURL(createRequire(import.meta.url).resolve('typescript')).href;
-      const code = `import ts from ${JSON.stringify(compiler)};
-        import { readFileSync } from 'node:fs'; import { registerHooks } from 'node:module';
-        registerHooks({ resolve(s,c,n) { return n(s.startsWith('.') && s.endsWith('.js') ? s.slice(0,-3)+'.ts' : s,c); },
-          load(u,c,n) { return u.endsWith('.ts') ? {format:'module', shortCircuit:true, source:ts.transpile(readFileSync(new URL(u),'utf8'), {module:ts.ModuleKind.ESNext})} : n(u,c); } });
+      const code = `${sourceBootstrap}
         const { evaluateExpression } = await import(${JSON.stringify(module)});
         let input = { expr: '$error("small failure")' };
         for (let i = 0; i < ${depth}; i++) input = { expr: '$eval(expr,next)', next: input };
@@ -272,11 +281,7 @@ describe('adversarial domain invariants', () => {
     'ADV-007 review: %s is rejected in an isolated process',
     (_kind, expression) => {
       const module = new URL('./expression.ts', import.meta.url).href;
-      const compiler = pathToFileURL(createRequire(import.meta.url).resolve('typescript')).href;
-      const code = `import ts from ${JSON.stringify(compiler)};
-      import { readFileSync } from 'node:fs'; import { registerHooks } from 'node:module';
-      registerHooks({ resolve(s,c,n) { return n(s.startsWith('.') && s.endsWith('.js') ? s.slice(0,-3)+'.ts' : s,c); },
-        load(u,c,n) { return u.endsWith('.ts') ? {format:'module', shortCircuit:true, source:ts.transpile(readFileSync(new URL(u),'utf8'), {module:ts.ModuleKind.ESNext})} : n(u,c); } });
+      const code = `${sourceBootstrap}
       const { evaluateExpression } = await import(${JSON.stringify(module)});
       try { await evaluateExpression(${JSON.stringify(expression)}, {}, { timeoutMs: 2_000 }); process.stdout.write('accepted'); }
       catch (e) { process.stdout.write('rejected:' + e.message); }`;

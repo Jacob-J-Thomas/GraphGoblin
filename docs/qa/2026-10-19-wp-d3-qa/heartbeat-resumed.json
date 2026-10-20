@@ -1,0 +1,363 @@
+{
+  "run": {
+    "id": "01M5ANAH84FSS0BY8QM1DVGHYB",
+    "ownerId": "local",
+    "loopId": "01M5ANAH626T0MM6HHX5HDC0F6",
+    "versionId": "01M5ANAH621YKSQJF494K9SSV7",
+    "invocationId": "01M5ANAH84243KR3MWFKB27MER",
+    "status": "succeeded",
+    "iteration": 1,
+    "outcome": "success",
+    "createdAt": "2026-10-19T18:03:34.020Z",
+    "startedAt": "2026-10-19T18:03:34.035Z",
+    "finishedAt": "2026-10-19T18:03:34.322Z",
+    "lastEventSeq": 14
+  },
+  "events": {
+    "items": [
+      {
+        "runId": "01M5ANAH84FSS0BY8QM1DVGHYB",
+        "seq": 1,
+        "ts": "2026-10-19T18:03:34.020Z",
+        "type": "run.queued",
+        "initialThread": {
+          "schemaVersion": 1,
+          "run": {
+            "id": "01M5ANAH84FSS0BY8QM1DVGHYB",
+            "loopId": "01M5ANAH626T0MM6HHX5HDC0F6",
+            "versionId": "01M5ANAH621YKSQJF494K9SSV7",
+            "iteration": 1
+          },
+          "invocation": {
+            "id": "01M5ANAH84243KR3MWFKB27MER",
+            "source": "manual.api",
+            "caller": {
+              "kind": "api-key",
+              "id": "01M5AN9PH1GFBKZWJF3C0PYJA2"
+            },
+            "trigger": {
+              "nodeId": "start",
+              "kind": "manual",
+              "payload": null,
+              "receivedAt": "2026-10-19T18:03:34.020Z"
+            }
+          },
+          "messages": [],
+          "vars": {},
+          "artifacts": [],
+          "outputs": {},
+          "gates": {},
+          "counters": {
+            "nodeVisits": {},
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          }
+        }
+      },
+      {
+        "runId": "01M5ANAH84FSS0BY8QM1DVGHYB",
+        "seq": 2,
+        "ts": "2026-10-19T18:03:34.038Z",
+        "type": "run.started",
+        "attempt": 1
+      },
+      {
+        "runId": "01M5ANAH84FSS0BY8QM1DVGHYB",
+        "seq": 3,
+        "ts": "2026-10-19T18:03:34.057Z",
+        "type": "node.started",
+        "nodeId": "start",
+        "kind": "trigger",
+        "attempt": 1,
+        "configHash": "527dee9c4254fe4e"
+      },
+      {
+        "runId": "01M5ANAH84FSS0BY8QM1DVGHYB",
+        "seq": 4,
+        "ts": "2026-10-19T18:03:34.061Z",
+        "type": "node.finished",
+        "nodeId": "start",
+        "patch": [
+          {
+            "op": "add",
+            "path": "/outputs/start",
+            "value": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-19T18:03:34.061Z"
+            }
+          },
+          {
+            "op": "add",
+            "path": "/lastOutput",
+            "value": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-19T18:03:34.061Z"
+            }
+          }
+        ],
+        "route": "out",
+        "durationMs": 0
+      },
+      {
+        "runId": "01M5ANAH84FSS0BY8QM1DVGHYB",
+        "seq": 5,
+        "ts": "2026-10-19T18:03:34.088Z",
+        "type": "node.started",
+        "nodeId": "work",
+        "kind": "heartbeat",
+        "attempt": 1,
+        "configHash": "70b43ab038db517a"
+      },
+      {
+        "runId": "01M5ANAH84FSS0BY8QM1DVGHYB",
+        "seq": 6,
+        "ts": "2026-10-19T18:03:34.110Z",
+        "type": "run.failed",
+        "failure": {
+          "code": "HTTP_PROBE_BODY_OVERFLOW",
+          "message": "HTTP heartbeat probe body exceeds the 65536-byte limit; narrow the response or use a script probe",
+          "nodeId": "work",
+          "resumable": true
+        }
+      },
+      {
+        "runId": "01M5ANAH84FSS0BY8QM1DVGHYB",
+        "seq": 7,
+        "ts": "2026-10-19T18:03:34.282Z",
+        "type": "run.resumed",
+        "actor": {
+          "kind": "api-key",
+          "id": "01M5AN9PH1GFBKZWJF3C0PYJA2"
+        }
+      },
+      {
+        "runId": "01M5ANAH84FSS0BY8QM1DVGHYB",
+        "seq": 8,
+        "ts": "2026-10-19T18:03:34.299Z",
+        "type": "node.started",
+        "nodeId": "work",
+        "kind": "heartbeat",
+        "attempt": 2,
+        "configHash": "70b43ab038db517a"
+      },
+      {
+        "runId": "01M5ANAH84FSS0BY8QM1DVGHYB",
+        "seq": 9,
+        "ts": "2026-10-19T18:03:34.304Z",
+        "type": "heartbeat.beat",
+        "nodeId": "work",
+        "beat": 1,
+        "result": {
+          "status": 200,
+          "headers": {
+            "connection": "keep-alive",
+            "content-length": "20",
+            "content-type": "application/json",
+            "date": "Mon, 19 Oct 2026 18:03:34 GMT",
+            "keep-alive": "timeout=5"
+          },
+          "body": "{\"ok\":\"Aé雪🦎Z\"}",
+          "json": {
+            "ok": "Aé雪🦎Z"
+          }
+        }
+      },
+      {
+        "runId": "01M5ANAH84FSS0BY8QM1DVGHYB",
+        "seq": 10,
+        "ts": "2026-10-19T18:03:34.306Z",
+        "type": "node.finished",
+        "nodeId": "work",
+        "patch": [
+          {
+            "op": "add",
+            "path": "/outputs/work",
+            "value": {
+              "nodeId": "work",
+              "value": {
+                "beat": 1,
+                "probe": {
+                  "status": 200,
+                  "headers": {
+                    "connection": "keep-alive",
+                    "content-length": "20",
+                    "content-type": "application/json",
+                    "date": "Mon, 19 Oct 2026 18:03:34 GMT",
+                    "keep-alive": "timeout=5"
+                  },
+                  "body": "{\"ok\":\"Aé雪🦎Z\"}",
+                  "json": {
+                    "ok": "Aé雪🦎Z"
+                  }
+                },
+                "exhausted": true
+              },
+              "at": "2026-10-19T18:03:34.302Z"
+            }
+          },
+          {
+            "op": "replace",
+            "path": "/lastOutput",
+            "value": {
+              "nodeId": "work",
+              "value": {
+                "beat": 1,
+                "probe": {
+                  "status": 200,
+                  "headers": {
+                    "connection": "keep-alive",
+                    "content-length": "20",
+                    "content-type": "application/json",
+                    "date": "Mon, 19 Oct 2026 18:03:34 GMT",
+                    "keep-alive": "timeout=5"
+                  },
+                  "body": "{\"ok\":\"Aé雪🦎Z\"}",
+                  "json": {
+                    "ok": "Aé雪🦎Z"
+                  }
+                },
+                "exhausted": true
+              },
+              "at": "2026-10-19T18:03:34.302Z"
+            }
+          }
+        ],
+        "route": "out",
+        "durationMs": 5
+      },
+      {
+        "runId": "01M5ANAH84FSS0BY8QM1DVGHYB",
+        "seq": 11,
+        "ts": "2026-10-19T18:03:34.316Z",
+        "type": "node.started",
+        "nodeId": "done",
+        "kind": "exit",
+        "attempt": 1,
+        "configHash": "caacd31f1376b30f"
+      },
+      {
+        "runId": "01M5ANAH84FSS0BY8QM1DVGHYB",
+        "seq": 12,
+        "ts": "2026-10-19T18:03:34.319Z",
+        "type": "exit.evaluated",
+        "nodeId": "done",
+        "outcome": "success"
+      },
+      {
+        "runId": "01M5ANAH84FSS0BY8QM1DVGHYB",
+        "seq": 13,
+        "ts": "2026-10-19T18:03:34.319Z",
+        "type": "node.finished",
+        "nodeId": "done",
+        "patch": [],
+        "durationMs": 0
+      },
+      {
+        "runId": "01M5ANAH84FSS0BY8QM1DVGHYB",
+        "seq": 14,
+        "ts": "2026-10-19T18:03:34.319Z",
+        "type": "run.finished",
+        "status": "succeeded",
+        "outcome": "success"
+      }
+    ],
+    "nextAfter": 14
+  },
+  "thread": {
+    "schemaVersion": 1,
+    "run": {
+      "id": "01M5ANAH84FSS0BY8QM1DVGHYB",
+      "loopId": "01M5ANAH626T0MM6HHX5HDC0F6",
+      "versionId": "01M5ANAH621YKSQJF494K9SSV7",
+      "iteration": 1
+    },
+    "invocation": {
+      "id": "01M5ANAH84243KR3MWFKB27MER",
+      "source": "manual.api",
+      "caller": {
+        "kind": "api-key",
+        "id": "01M5AN9PH1GFBKZWJF3C0PYJA2"
+      },
+      "trigger": {
+        "nodeId": "start",
+        "kind": "manual",
+        "payload": null,
+        "receivedAt": "2026-10-19T18:03:34.020Z"
+      }
+    },
+    "messages": [],
+    "vars": {},
+    "artifacts": [],
+    "outputs": {
+      "start": {
+        "nodeId": "start",
+        "value": null,
+        "at": "2026-10-19T18:03:34.061Z"
+      },
+      "work": {
+        "nodeId": "work",
+        "value": {
+          "beat": 1,
+          "probe": {
+            "status": 200,
+            "headers": {
+              "connection": "keep-alive",
+              "content-length": "20",
+              "content-type": "application/json",
+              "date": "Mon, 19 Oct 2026 18:03:34 GMT",
+              "keep-alive": "timeout=5"
+            },
+            "body": "{\"ok\":\"Aé雪🦎Z\"}",
+            "json": {
+              "ok": "Aé雪🦎Z"
+            }
+          },
+          "exhausted": true
+        },
+        "at": "2026-10-19T18:03:34.302Z"
+      }
+    },
+    "lastOutput": {
+      "nodeId": "work",
+      "value": {
+        "beat": 1,
+        "probe": {
+          "status": 200,
+          "headers": {
+            "connection": "keep-alive",
+            "content-length": "20",
+            "content-type": "application/json",
+            "date": "Mon, 19 Oct 2026 18:03:34 GMT",
+            "keep-alive": "timeout=5"
+          },
+          "body": "{\"ok\":\"Aé雪🦎Z\"}",
+          "json": {
+            "ok": "Aé雪🦎Z"
+          }
+        },
+        "exhausted": true
+      },
+      "at": "2026-10-19T18:03:34.302Z"
+    },
+    "gates": {},
+    "counters": {
+      "nodeVisits": {
+        "start": 1,
+        "work": 2,
+        "done": 1
+      },
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedInputTokens": 0,
+        "reasoningOutputTokens": 0
+      }
+    }
+  }
+}

@@ -1,12 +1,12 @@
 import { JsonValueSchema, type JsonValue } from '@graphgoblin/contracts';
-import type { ProbeResponse, ScriptRunResult } from '@graphgoblin/engine';
+import {
+  PROBE_MAX_BODY_BYTES,
+  type ProbeResponse,
+  type ScriptRunResult,
+} from '@graphgoblin/engine';
 
 export type PollProbeFailure =
-  | 'POLL_PROBE_FAILED'
-  | 'POLL_PROBE_TIMED_OUT'
-  | 'POLL_STDOUT_OVERFLOW'
-  | 'POLL_STDOUT_UNBOUNDED'
-  | 'POLL_JSON_INVALID';
+  'POLL_PROBE_FAILED' | 'POLL_PROBE_TIMED_OUT' | 'POLL_STDOUT_OVERFLOW' | 'POLL_JSON_INVALID';
 export class PollProbeError extends Error {
   constructor(readonly code: PollProbeFailure) {
     super(code);
@@ -28,8 +28,8 @@ function json(text: string): JsonValue {
 export function itemsScriptProbe(result: ScriptRunResult): JsonValue {
   if (result.timedOut) throw new PollProbeError('POLL_PROBE_TIMED_OUT');
   if (result.exitCode !== 0) throw new PollProbeError('POLL_PROBE_FAILED');
-  if (result.stdoutOverflow === true) throw new PollProbeError('POLL_STDOUT_OVERFLOW');
-  if (result.stdoutOverflow !== false) throw new PollProbeError('POLL_STDOUT_UNBOUNDED');
+  if (result.stdoutOverflow || result.stdoutBytes > PROBE_MAX_BODY_BYTES)
+    throw new PollProbeError('POLL_STDOUT_OVERFLOW');
   return {
     exitCode: result.exitCode,
     stdout: result.stdout,
@@ -52,7 +52,7 @@ export function itemsHttpProbe(response: ProbeResponse): JsonValue {
   return {
     status: response.status,
     headers: response.headers,
-    body: response.body.slice(0, 65_536),
+    body: response.body,
     json: value,
   };
 }

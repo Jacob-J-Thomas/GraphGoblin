@@ -12,6 +12,8 @@ Use the `graphgoblin` MCP tools. Do not change the run (no cancel, pause, input,
 - If the user gave a run id, use it.
 - Otherwise call `list_runs` (filter by `loopId` from `list_loops`, and by `status`, for example `["failed"]` for "the last failure"). Runs come newest first. Ask if more than one could be meant.
 
+`list_runs` returns `{ items, nextCursor }`. Pass a non-null `nextCursor` as `cursor` with the same filters, even when `items` is empty; stop when `nextCursor` is null.
+
 ## 2. Collect the facts
 
 1. `get_run`: status, outcome, iteration, current node, `waiting`, `result`, `failure`.

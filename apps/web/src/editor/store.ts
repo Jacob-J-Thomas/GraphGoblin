@@ -13,7 +13,6 @@ import { cleanGateLimits, hasRepeatRoute } from './decision-gates.js';
 import { decisionRouteEdges, type DecisionRoutes } from './decision-route-edges.js';
 import type { GitHubPresetPreview } from './github-fragment.js';
 import {
-  historyClock,
   recordStep,
   sameValue,
   travel,
@@ -309,7 +308,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
         { definition: def, fieldErrors, decisionRoutes: s.decisionRoutes },
         { definition, fieldErrors, decisionRoutes },
         step,
-        historyClock.now(),
+        performance.now(),
       ),
     });
   };
@@ -488,7 +487,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
           before,
           after,
           { label: `apply GitHub preset to ${preview.triggerId}` },
-          historyClock.now(),
+          performance.now(),
         ),
       });
       return undefined;
@@ -674,7 +673,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
               { definition, fieldErrors: s.fieldErrors, decisionRoutes: s.decisionRoutes },
               { definition, fieldErrors, decisionRoutes: s.decisionRoutes },
               fieldErrorStep(scope, path, reason, change),
-              historyClock.now(),
+              performance.now(),
             )
           : {}),
       });

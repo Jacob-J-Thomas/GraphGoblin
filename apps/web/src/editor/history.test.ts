@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   COALESCE_MS,
-  EMPTY_HISTORY,
   HISTORY_LIMIT,
   recordStep,
   sameValue,
@@ -10,6 +9,8 @@ import {
   type Snapshot,
 } from './history.js';
 import { newLoopDefinition } from './model.js';
+
+const EMPTY_HISTORY: History = { past: [], future: [], openStep: undefined };
 
 /** A snapshot of a loop named `name`, with no unparsed text. */
 const at = (name: string): Snapshot => ({

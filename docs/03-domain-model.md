@@ -209,17 +209,17 @@ engine-owned region. Usage roll-up remains an engine operation.
 
 ## Run (Decided)
 
-| Field                                                  | Notes                                                                                     |
-| ------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
-| `id`, `ownerId`, `loopId`, `versionId`, `parentRunId?` | Identity and pinning                                                                      |
-| `status`                                               | `queued`, `running`, `waiting`, `paused`, `succeeded`, `failed`, `cancelled`, `exhausted` |
-| `currentNodeId?`, `iteration`                          | Where the token is                                                                        |
-| `waiting?`                                             | `{ nodeId, kind: 'input'                                                                  | 'timer' | 'signal' | 'heartbeat', until?: string, timeoutAt?: string, startedSeq?: number, prompt?: string, inputSchema?: JsonSchema }` |
-| `cancelRequestedAt?`, `pausedAt?`                      | Persisted intent, honoured after restart                                                  |
-| `failure?`                                             | `{ code: RunErrorCode; message: string; nodeId?: string; resumable: boolean }`            |
-| `result?`                                              | The exit node's return payload                                                            |
-| `outcome?`                                             | `success`, `failure`, `exhausted`                                                         |
-| `startedAt`, `finishedAt?`, `lastEventSeq`             | Bookkeeping                                                                               |
+| Field                                                  | Notes                                                                                                                                                                                                            |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`, `ownerId`, `loopId`, `versionId`, `parentRunId?` | Identity and pinning                                                                                                                                                                                             |
+| `status`                                               | `queued`, `running`, `waiting`, `paused`, `succeeded`, `failed`, `cancelled`, `exhausted`                                                                                                                        |
+| `currentNodeId?`, `iteration`                          | Where the token is                                                                                                                                                                                               |
+| `waiting?`                                             | `{ waitId: string, startedSeq: number, nodeId: string, kind: WaitKind, until?: string, timeoutAt?: string, prompt?: string, inputSchema?: JsonSchema, signalName?: string, childRunId?: string, beat?: number }` |
+| `cancelRequestedAt?`, `pausedAt?`                      | Persisted intent, honoured after restart                                                                                                                                                                         |
+| `failure?`                                             | `{ code: RunErrorCode; message: string; nodeId?: string; resumable: boolean }`                                                                                                                                   |
+| `result?`                                              | The exit node's return payload                                                                                                                                                                                   |
+| `outcome?`                                             | `success`, `failure`, `exhausted`                                                                                                                                                                                |
+| `startedAt`, `finishedAt?`, `lastEventSeq`             | Bookkeeping                                                                                                                                                                                                      |
 
 ## Run events (Decided kinds, Draft payloads)
 
@@ -251,7 +251,7 @@ Each event has `runId`, `seq`, `ts`, `type`, optional `nodeId`, and a typed `pay
 | `schedules`         | One per cron trigger node per published version: loop, version, and trigger node ids, expression, timezone, missed-fire policy, enabled, `next_fire_at`, `last_fired_at`. Rows of earlier versions are disabled, not deleted.                                                            |
 | `webhook_endpoints` | One per webhook trigger node per published version: loop, version, and trigger node ids, path token (kept across versions for the same node), `secret_ref` naming the signing secret in `secrets`, signature header and scheme, nullable replay window (null for body signing), enabled. |
 | `inbound_events`    | Every event from `POST /events`, exit-node `event` channels, and webhook deliveries: type, JSON payload, dedupe key, source (`api`, `run:<runId>`, `webhook:<endpointId>`), received time, and the ids of the runs it started.                                                           |
-| `timers`            | Persisted wake-ups for wait and heartbeat nodes. Keyed by run and `<name>@<startedSeq>` (the wait that armed it). Delivered at least once: a row is removed only after the wake is handled, and recovery re-arms both deadlines from the waiting run's wait spec (05).                   |
+| `timers`            | Persisted wake-ups for wait and heartbeat nodes. Keyed by run and `<kind>@<waitId>` (the wait that armed it). Delivered at least once: a row is removed only after the wake is handled, and recovery re-arms both deadlines from the waiting run's wait spec (05).                       |
 | `secrets`           | Name, ciphertext, key id, owner.                                                                                                                                                                                                                                                         |
 | `model_catalog`     | Harness, model id, display name, allowed efforts, default effort, enabled.                                                                                                                                                                                                               |
 | `api_keys`          | Hashed keys with labels and scopes.                                                                                                                                                                                                                                                      |

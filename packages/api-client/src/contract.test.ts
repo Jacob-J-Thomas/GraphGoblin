@@ -242,13 +242,18 @@ describe('against the in-process API (local trusted mode)', () => {
       },
     });
     expect(pending).toMatchObject({ finished: false, run: { status: 'waiting' } });
-    expect((await runs.get(client, first.id)).status).toBe('waiting');
-    expect((await runs.signal(client, first.id, 'nudge')).woke).toBe(false);
-    expect((await runs.signal(client, first.id, 'nudge', { n: 1 })).woke).toBe(false);
-    await runs.provideInput(client, first.id, { ok: true });
+    const waiting = await runs.get(client, first.id);
+    expect(waiting.status).toBe('waiting');
+    const waitId = waiting.waiting!.waitId;
+    expect((await runs.signal(client, first.id, 'nudge', waitId)).woke).toBe(false);
+    expect((await runs.signal(client, first.id, 'nudge', waitId, { n: 1 })).woke).toBe(false);
+    await runs.provideInput(client, first.id, waitId, { ok: true });
     expect((await waitForRun(client, first.id, { timeoutMs: 5000, pollMs: 10 })).run?.status).toBe(
       'succeeded',
     );
+    await expect(
+      runs.provideInput(client, first.id, pending.run.waiting!.waitId, { ok: false }),
+    ).rejects.toMatchObject({ status: 409, code: 'WAIT_MISMATCH' });
     const fork = await runs.replay(client, first.id, 'start');
     expect(fork.id).not.toBe(first.id);
     await until(async () => (await runs.get(client, fork.id)).status === 'waiting');
@@ -259,7 +264,11 @@ describe('against the in-process API (local trusted mode)', () => {
 
     const second = await runs.start(client, loop.id);
     await until(async () => (await runs.get(client, second.id)).status === 'waiting');
-    expect((await runs.pause(client, second.id)).status).toBe('paused');
+    const paused = await runs.pause(client, second.id);
+    expect(paused.status).toBe('paused');
+    await expect(
+      runs.provideInput(client, second.id, paused.waiting!.waitId, { ok: true }),
+    ).rejects.toMatchObject({ status: 409, code: 'INVALID_STATE' });
     expect((await runs.resume(client, second.id)).status).toBe('waiting'); // paused while parked: back to waiting (docs/05)
     await until(async () => (await runs.get(client, second.id)).status === 'waiting');
     await runs.cancel(client, second.id);
@@ -314,7 +323,8 @@ describe('against the in-process API (local trusted mode)', () => {
       runId: run.id,
       onEvent: (event) => {
         seen.push(event);
-        if (event.type === 'run.waiting') void runs.provideInput(client, run.id, 'go');
+        if (event.type === 'run.waiting')
+          void runs.provideInput(client, run.id, event.wait.waitId, 'go');
       },
     });
     await subscription.done;

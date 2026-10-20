@@ -4,7 +4,7 @@ Milestones are sequential. Each has a goal, the packages it touches, the tasks, 
 
 ## M0 - Repository and gates (S) - DONE 2026-10-02
 
-Notes: TypeScript 6.x (typescript-eslint does not yet support 7.x), ESLint 10, Vitest 5, Zod 4, pnpm 12. dependency-cruiser requires Node 22 or 24 locally; the development machine runs Node 23, so `pnpm check:deps` runs in CI only until Node is upgraded (`.nvmrc` says 24).
+Notes: TypeScript 6.x (typescript-eslint does not yet support 7.x), ESLint 10, Vitest 5, Zod 4, pnpm 12. Installation, development, gates and built apps use Node 22 LTS; select it for the whole shell before running commands (ADR-0040).
 
 Goal: an empty monorepo where every CI gate already runs and passes.
 
@@ -164,7 +164,7 @@ Tasks:
 
 Acceptance: the scenario above recorded as an E2E test with the fake harness and verified live once.
 
-M7 notes: `apps/mcp` uses `@modelcontextprotocol/sdk` 1.31 (1.32 was inside pnpm's minimum release age on the day) over `@graphgoblin/api-client` and sends `x-graphgoblin-client: mcp`, so MCP-started runs record `manual.mcp`. `wait_for_run` uses the api-client's shared `observeRun` poller with early returns when the run needs the caller (waiting for input, or paused) and MCP progress notifications between polls. Streamable HTTP runs stateless (a server and transport per POST) and refuses non-loopback `Host` headers when bound to loopback. The E2E suite (`apps/mcp/src/mcp.test.ts`) drives every tool, including input, signals, pause, resume, and cancel, through the SDK's in-memory transport against the in-process API with the fake harness. The plugin layout was verified against Codex CLI 0.160.0 (see 07 and `research/codex-sdk.md`); because Codex copies installed plugins into its cache, `apps/plugin-codex` assembles a local marketplace with the absolute MCP server path at build time. The live check (`LIVE=1`, `apps/plugin-codex/src/live.test.ts`) ran one `codex exec --json` session with `gpt-6-luna` at `low` effort that called `list_loops`, `start_run`, and `wait_for_run` and reported the run as succeeded; the input path is covered by the E2E suite rather than live. `GET /runs?before=` takes a creation timestamp, so `list_runs` pages with `nextBefore` (a `createdAt`); runs created in the same millisecond can be skipped across a page boundary.
+M7 notes: `apps/mcp` uses `@modelcontextprotocol/sdk` 1.31 (1.32 was inside pnpm's minimum release age on the day) over `@graphgoblin/api-client` and sends `x-graphgoblin-client: mcp`, so MCP-started runs record `manual.mcp`. `wait_for_run` uses the api-client's shared `observeRun` poller with early returns when the run needs the caller (waiting for input, or paused) and MCP progress notifications between polls. Streamable HTTP runs stateless (a server and transport per POST) and refuses non-loopback `Host` headers when bound to loopback. The E2E suite (`apps/mcp/src/mcp.test.ts`) drives every tool, including input, signals, pause, resume, and cancel, through the SDK's in-memory transport against the in-process API with the fake harness. The plugin layout was verified against Codex CLI 0.160.0 (see 07 and `research/codex-sdk.md`); because Codex copies installed plugins into its cache, `apps/plugin-codex` assembles a local marketplace with the absolute MCP server path at build time. The live check (`LIVE=1`, `apps/plugin-codex/src/live.test.ts`) ran one `codex exec --json` session with `gpt-6-luna` at `low` effort that called `list_loops`, `start_run`, and `wait_for_run` and reported the run as succeeded; the input path is covered by the E2E suite rather than live. `list_runs` returns `{ items, nextCursor }` using the REST server's opaque cursor; pass `nextCursor` as `cursor` with the same filters, including on empty pages. The cursor preserves continuation past damaged rows and runs with equal creation timestamps.
 
 ## M8 - Hardening and 1.0 (M) - DONE 2026-10-03
 
@@ -235,7 +235,6 @@ Product gaps known at 1.0 (each marked "After 1.0" in the guide or recorded in a
 - The Events screen does not list webhook endpoints; they are on `GET /loops/{id}/triggers` (WP-D2 gap).
 - Editor: CodeMirror modes for Liquid and JSONata are stand-ins with no completion against a sample thread; no keyboard shortcuts for add, connect, or fit beyond the palette buttons and the Connect form; variables are edited in the Loop tab, not a side sheet (WP-D2 gaps).
 - `run.queued.initialThread` has no size cap; offloading large seeds to the artifact store is the follow-up (05).
-- `list_runs` pages by creation timestamp, so runs created in the same millisecond can be skipped across a page boundary (M7 notes).
 
 Open defects (WP-D2 report; D26 to D28 are fixed in WP-F2):
 

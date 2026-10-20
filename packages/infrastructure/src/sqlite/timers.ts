@@ -30,6 +30,13 @@ export class SqliteTimerStore {
       .where(and(eq(timers.runId, runId), eq(timers.key, key), eq(timers.at, at.toISOString())));
   }
 
+  async defer(runId: string, key: string, at: Date, retryAt: Date): Promise<void> {
+    await this.db
+      .update(timers)
+      .set({ at: retryAt.toISOString() })
+      .where(and(eq(timers.runId, runId), eq(timers.key, key), eq(timers.at, at.toISOString())));
+  }
+
   async listDue(now: Date, limit = 100): Promise<{ runId: string; key: string; at: Date }[]> {
     const rows = await this.db
       .select()

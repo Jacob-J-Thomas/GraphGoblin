@@ -8,6 +8,8 @@ In the editor, **Open in Runs** (in the toolbar, and in the notice after a publi
 
 The Runs screen lists runs across loops and filters by loop, status, and parent; with a loop filter set, **New run** starts with that loop chosen. The chosen loop is part of the address, so a link or a reload keeps it. Its browser routes are:
 
+<!-- guide-example: run-urls -->
+
 ```text
 /app/runs
 /app/runs/new
@@ -19,15 +21,21 @@ The Runs screen lists runs across loops and filters by loop, status, and parent;
 
 Start under the loop ID using this implemented route:
 
+<!-- guide-example: start-request -->
+
 ```http
 POST /loops/{id}/runs
 ```
 
 Save this request body in a file:
 
+<!-- guide-example: start-filename -->
+
 ```text
 start.json
 ```
+
+<!-- guide-example: start-body -->
 
 ```json
 {
@@ -39,6 +47,8 @@ start.json
 
 Send it, replacing the loop ID with the ID of your imported [first loop](02-build-a-loop.md#import-a-complete-first-loop). The ID is the 26-character value in the editor's URL. In Bash:
 
+<!-- guide-example: start-bash -->
+
 ```bash
 LOOP_ID='<loop-id>'
 curl -sS -X POST "http://127.0.0.1:4747/loops/$LOOP_ID/runs" \
@@ -47,6 +57,8 @@ curl -sS -X POST "http://127.0.0.1:4747/loops/$LOOP_ID/runs" \
 ```
 
 In PowerShell:
+
+<!-- guide-example: start-powershell -->
 
 ```powershell
 $loopId = '<loop-id>'
@@ -61,11 +73,15 @@ The response is HTTP 202 with a `run` object. Save `run.id`; execution continues
 
 In API-key mode, add the bearer header to each API request. In Bash, add this option to `curl`:
 
+<!-- guide-example: auth-bash -->
+
 ```bash
 -H "Authorization: Bearer $GG_API_KEY"
 ```
 
 In PowerShell, add this parameter to `Invoke-RestMethod`:
+
+<!-- guide-example: auth-powershell -->
 
 ```powershell
 -Headers @{ Authorization = "Bearer $env:GG_API_KEY" }
@@ -75,6 +91,8 @@ In PowerShell, add this parameter to `Invoke-RestMethod`:
 
 Configure [MCP](05-mcp-and-codex-plugin.md), then call `list_loops`, `describe_loop`, and `start_run`. The start input for the example loop is:
 
+<!-- guide-example: start-mcp -->
+
 ```json
 {
   "loopId": "first-summary",
@@ -83,7 +101,7 @@ Configure [MCP](05-mcp-and-codex-plugin.md), then call `list_loops`, `describe_l
 }
 ```
 
-Pass the returned `runId` to `wait_for_run`. Repeat until `finished` is true; handle input waits with `provide_input`. These starts record `manual.mcp`.
+Pass the returned `runId` to `wait_for_run`. Repeat until `finished` is true; handle input waits with `provide_input` using the observed `waiting.waitId` as `waitId`. These starts record `manual.mcp`.
 
 ## Read the lifecycle
 
@@ -116,12 +134,16 @@ Use **Pause** to request a hold; an executing node can finish before the next no
 
 The current UI hides controls on terminal runs. After fixing an external cause of a resumable failure, use `resume_run` through MCP or this API request. In Bash:
 
+<!-- guide-example: resume-bash -->
+
 ```bash
 RUN_ID='<run-id>'
 curl -sS -X POST "http://127.0.0.1:4747/runs/$RUN_ID/resume"
 ```
 
 In PowerShell:
+
+<!-- guide-example: resume-powershell -->
 
 ```powershell
 $runId = '<run-id>'
@@ -138,18 +160,22 @@ Child runs reconstruct like any other run: their first event, `run.queued`, carr
 
 To debug a node, fork a new run at it with the same input it had: the new run starts from the thread as it was just before that node first started, on the same pinned version, and nothing before the node runs again. The source run is never changed and may be in any status. In Bash:
 
+<!-- guide-example: replay-bash -->
+
 ```bash
 RUN_ID='<run-id>'
 curl -sS -X POST "http://127.0.0.1:4747/runs/$RUN_ID/replay" \
-  -H 'Content-Type: application/json' -d '{"nodeId":"ask"}'
+  -H 'Content-Type: application/json' -d '{"nodeId":"summarise"}'
 ```
 
 In PowerShell:
 
+<!-- guide-example: replay-powershell -->
+
 ```powershell
 $runId = '<run-id>'
 Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:4747/runs/$runId/replay" `
-  -ContentType 'application/json' -Body '{"nodeId":"ask"}'
+  -ContentType 'application/json' -Body '{"nodeId":"summarise"}'
 ```
 
 The response is 202 with the new `run`; open it at `/app/runs/<new-run-id>`. Its invocation and first event record `replayOf` (source run and node). MCP callers use the `replay_run` tool with `runId` and `nodeId`, then `wait_for_run`. A node the source never reached answers 409 `REPLAY_NODE_NOT_REACHED`. The fork does not carry the source's Codex session or working directory, and a subloop node in the fork starts a new child run. See [Execution engine](../05-execution-engine.md#replay-and-debugging-decided-by-implementation-2026-10-03) for the exact rules.
@@ -160,6 +186,8 @@ The response is 202 with the new `run`; open it at `/app/runs/<new-run-id>`. Its
 
 Use curl's no-buffer option. In Bash:
 
+<!-- guide-example: events-bash -->
+
 ```bash
 RUN_ID='<run-id>'
 curl -N -H 'Accept: text/event-stream' \
@@ -168,12 +196,16 @@ curl -N -H 'Accept: text/event-stream' \
 
 In PowerShell:
 
+<!-- guide-example: events-powershell -->
+
 ```powershell
 $runId = '<run-id>'
 curl.exe -N -H 'Accept: text/event-stream' "http://127.0.0.1:4747/runs/$runId/events?after=0"
 ```
 
 Each frame carries `id` (the event sequence), `event` (the type), and `data` (the JSON event). Heartbeat comments arrive every 15 seconds. After a disconnect, reconnect using the last received ID, for example 12:
+
+<!-- guide-example: reconnect-bash -->
 
 ```bash
 curl -N -H 'Accept: text/event-stream' -H 'Last-Event-ID: 12' \
@@ -184,7 +216,7 @@ The query's `after` overrides the header when both are supplied. Replay includes
 
 ## Read returns and child runs
 
-Set the exit's `return.mapping` to produce a payload. The default `none` produces no result or deliveries. Choose these channels:
+Set the exit's `returns` JSONata expression to produce a payload, and `destinations` to select channels. `returns` defaults to `none` (no result or deliveries); `destinations` defaults to `caller`. Choose these channels:
 
 | Channel kind | Delivery                                                                                                                                  |
 | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
@@ -196,9 +228,13 @@ Set the exit's `return.mapping` to produce a payload. The default `none` produce
 
 Webhook and event channels wrap the mapped result with `runId`, `loopId`, and `outcome`. Delivery happens after `run.finished`; a delivery failure records `return.failed` and does not change the finished status. SSE closes at the terminal event, so read a subsequent JSON event page to check delivery events:
 
+<!-- guide-example: returns-bash -->
+
 ```bash
 curl -sS "http://127.0.0.1:4747/runs/$RUN_ID/events?after=0&limit=1000"
 ```
+
+<!-- guide-example: returns-powershell -->
 
 ```powershell
 (Invoke-RestMethod "http://127.0.0.1:4747/runs/$runId/events?after=0&limit=1000").items |
@@ -210,6 +246,8 @@ A subloop creates a separate child run with its own version, thread, and log. Th
 ## Act on failure reasons
 
 A handler failure looks like this inside the run snapshot's `failure` field:
+
+<!-- guide-example: failure-shape -->
 
 ```json
 {
@@ -225,6 +263,7 @@ Read `code`, `message`, `nodeId`, `resumable`, and any `details`. After fixing a
 
 | `RunErrorCode`                                                      | Action                                                                                                                                                                     |
 | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `EVENT_INVALID`                                                     | Generated event violates a contract bound. Read the failure, correct its source, then start or replay. Successful values are never trimmed.                                |
 | `HARNESS_NOT_INSTALLED`                                             | Install Codex or correct the executable setting; check harness preflight. Missing executable errors during a turn can also appear as `HARNESS_TURN_FAILED`.                |
 | `HARNESS_NOT_AUTHENTICATED`                                         | Log into Codex as the API process user, then resume.                                                                                                                       |
 | `HARNESS_QUOTA_EXHAUSTED`                                           | Wait for quota or rate-limit recovery, or resolve account access, then resume.                                                                                             |
@@ -246,6 +285,7 @@ Read `code`, `message`, `nodeId`, `resumable`, and any `details`. After fixing a
 | `EXPRESSION_ERROR`                                                  | Correct JSONata, its input assumptions, or the patch produced by a mapping.                                                                                                |
 | `WAIT_TIMEOUT`                                                      | Arrange the required input or signal sooner, or revise timeout behaviour in a new version.                                                                                 |
 | `HEARTBEAT_EXHAUSTED`                                               | Check the probe and condition; revise beat/deadline limits or exhaustion behaviour if needed.                                                                              |
+| `HTTP_PROBE_BODY_OVERFLOW`                                          | An HTTP heartbeat response exceeded 64 KiB. Narrow the response or use a script probe; no successful beat or partial JSON was recorded.                                    |
 | `MAX_NODE_VISITS`                                                   | A node exceeded the safety cap `maxNodeVisits`. Fix unintended cycles or configure enough visits for intentional gates.                                                    |
 | `RETURN_DELIVERY_FAILED`                                            | Check the destination and signing secret. Current delivery failures use `return.failed` events, rather than this reserved run-failure code; arrange redelivery explicitly. |
 | `INTERNAL_ERROR`                                                    | Preserve the run ID, log, and failure details; investigate or report the defect before retrying side effects.                                                              |
