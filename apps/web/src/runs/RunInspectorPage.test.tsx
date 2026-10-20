@@ -639,7 +639,10 @@ describe('RunInspectorPage exit evidence', () => {
         ? { result: options.result }
         : {}),
     });
-    const events = [event(run.id, 1, 'run.queued', {}), ...(options.decisions?.(run.id) ?? [])];
+    const events = [
+      event(run.id, 1, 'run.queued', queuedFields()),
+      ...(options.decisions?.(run.id) ?? []),
+    ];
     const next = events.length + 1;
     events.push(
       event(run.id, next, 'exit.evaluated', { nodeId: 'done', outcome: 'success' }),
