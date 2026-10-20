@@ -1,4 +1,5 @@
-import { mkdtemp, rm } from 'node:fs/promises';
+import { randomBytes } from 'node:crypto';
+import { mkdir, rm } from 'node:fs/promises';
 import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type {
@@ -44,6 +45,17 @@ export interface ClaudeHarnessOptions {
 export interface ClaudeHarnessPreflight extends HarnessPreflight {
   authMethod: 'claude.ai' | null;
   supportedPolicies: ClaudePolicy[];
+}
+/**
+ * A fresh, exclusively created, empty directory for the version, help and auth checks. Not
+ * `fs.mkdtemp`: on Windows it hands its prefix to the OS without the long-path namespace and fails
+ * with ENAMETOOLONG from 249 characters, while `mkdir` and starting the CLI there still work up to
+ * the 258-character working-directory limit (#102, docs/qa/2026-10-19-wp-f5-launch-diagnosis.md).
+ */
+async function probeDirectory(): Promise<string> {
+  const directory = join(tmpdir(), `gg-claude-probe-${randomBytes(4).toString('hex')}`);
+  await mkdir(directory, { mode: 0o700 });
+  return directory;
 }
 function checkOutcome(result: ClaudeProcessResult, signal: AbortSignal): void {
   if (result.terminationUnconfirmed)
@@ -119,7 +131,7 @@ export class ClaudeHarness implements HarnessPort {
     const failures: unknown[] = [];
     // Unsupported platforms cannot execute this native Windows adapter.
     facts.supportedPolicies = this.supportedPolicies();
-    const cwd = await mkdtemp(join(tmpdir(), 'gg-claude-probe-'));
+    const cwd = await probeDirectory();
     const run = async (args: string[]): Promise<string> => {
       if (signal.aborted) throw abortError();
       const result = await this.runner({
