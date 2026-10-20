@@ -1,7 +1,13 @@
 import { LoopDefinitionSchema } from '@graphgoblin/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { RunRecord } from '@graphgoblin/contracts';
-import { FIXTURE_TS, fakeUlid, minimalLoop, sampleThread } from '@graphgoblin/contracts/testing';
+import {
+  FIXTURE_TS,
+  fakeUlid,
+  minimalLoop,
+  samplePin,
+  sampleThread,
+} from '@graphgoblin/contracts/testing';
 import { createTestApp, type TestApp } from '../testing/test-app.js';
 
 describe('loop-specific run summaries over real SQLite', () => {
@@ -64,6 +70,7 @@ describe('loop-specific run summaries over real SQLite', () => {
         ownerId: 'local',
         loopId,
         versionId: old.draft.id,
+        pinned: samplePin(),
         invocationId: fakeUlid(`summary-inv:${i}`),
         status: 'succeeded',
         iteration: 1,

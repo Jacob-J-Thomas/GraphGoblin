@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { createTestApp, type TestApp } from '@graphgoblin/api/testing';
-import { fakeUlid, FIXTURE_TS, sampleThread } from '@graphgoblin/contracts/testing';
+import { fakeUlid, FIXTURE_TS, samplePin, sampleThread } from '@graphgoblin/contracts/testing';
 import type { RunRecord } from '@graphgoblin/contracts';
 import { createGraphGoblinClient, type GraphGoblinClient } from '@graphgoblin/api-client';
 import { createMcpServer, readAllEvents } from './index.js';
@@ -37,6 +37,7 @@ describe('MCP history paging against real SQLite and API', () => {
       ownerId: 'local',
       loopId: fakeUlid('paged-loop'),
       versionId: fakeUlid('version'),
+      pinned: samplePin(),
       invocationId: fakeUlid(`inv:${index}`),
       status: 'succeeded',
       iteration: 1,
