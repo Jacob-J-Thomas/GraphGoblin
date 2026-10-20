@@ -846,7 +846,7 @@ describe('NodeEditorDialog inference harness changes', () => {
   });
 
   it.each([true, false])(
-    'keeps the saved model and resets to a supported policy with readiness %s',
+    'selects a compatible model only when ready and resets the policy (ready: %s)',
     async (ready) => {
       const user = userEvent.setup();
       const dialog = await openDialog(
@@ -899,7 +899,7 @@ describe('NodeEditorDialog inference harness changes', () => {
         expect(store().definition?.nodes.find((node) => node.id === 'infer')?.config).toMatchObject(
           {
             harness: 'claude',
-            model: 'alpha',
+            model: ready ? 'claude-opus-5-5' : 'alpha',
             effort: 'high',
             harnessOptions: { sandbox: 'read-only', approval: 'never' },
           },
@@ -908,19 +908,15 @@ describe('NodeEditorDialog inference harness changes', () => {
       expect(within(dialog).getByRole('radio', { name: 'claude' })).toHaveFocus();
       await user.click(advanced(dialog));
       const model = within(dialog).getByLabelText('Model', { exact: true });
-      await waitFor(() =>
-        expect(
-          within(model).getByRole('option', { name: /Saved model belongs to Codex/ }),
-        ).toBeDisabled(),
-      );
-      expect(model).toHaveValue('alpha');
-      if (ready) {
-        await user.selectOptions(model, 'claude-opus-5-5');
-        expect(store().definition?.nodes.find((node) => node.id === 'infer')?.config).toMatchObject(
-          { model: 'claude-opus-5-5' },
+      expect(model).toHaveValue(ready ? 'claude-opus-5-5' : 'alpha');
+      if (!ready) {
+        await waitFor(() =>
+          expect(
+            within(model).getByRole('option', { name: /Saved model belongs to Codex/ }),
+          ).toBeDisabled(),
         );
-        act(() => store().undo());
-      } else expect(model).toHaveAttribute('aria-readonly', 'true');
+        expect(model).toHaveAttribute('aria-readonly', 'true');
+      }
       act(() => store().undo());
       expect(store().definition?.nodes.find((node) => node.id === 'infer')?.config).toMatchObject({
         harness: 'codex',

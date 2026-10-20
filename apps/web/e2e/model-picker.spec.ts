@@ -1,6 +1,14 @@
 import { LoopDefinitionSchema, ModelCatalogEntrySchema } from '@graphgoblin/contracts';
 import { minimalLoop } from '@graphgoblin/contracts/testing';
-import { closeNode, control, expect, openNode, showLoopPanel, test } from './fixtures.js';
+import {
+  closeNode,
+  control,
+  expect,
+  openAdvanced,
+  openNode,
+  showLoopPanel,
+  test,
+} from './fixtures.js';
 
 function inferenceLoop(name: string, model?: string) {
   const source = minimalLoop();
@@ -353,4 +361,61 @@ test('following a model issue keeps focus through a delayed catalog and a failed
   await expect(dialog.getByRole('button', { name: 'Retry model catalog' })).toBeFocused();
   await page.keyboard.press('Tab');
   await expect(dialog.getByRole('link', { name: 'Model catalog in Settings' })).toBeFocused();
+});
+
+test('explicit Claude to Codex switch persists the owner default and sends the exact request', async ({
+  page,
+  request,
+}) => {
+  const instance = await control(request, '/apps', { claude: true });
+  const url = String(instance['url']);
+  const instanceId = String(instance['instanceId']);
+  expect(
+    (
+      await request.put(url + '/settings', {
+        data: { defaults: { byHarness: { codex: { model: 'gpt-6.1-sol', effort: 'low' } } } },
+      })
+    ).status(),
+  ).toBe(200);
+  const definition = inferenceLoop('Reverse explicit harness switch');
+  Object.assign(definition.nodes.find((node) => node.id === 'infer')!.config, {
+    harness: 'claude',
+    model: 'claude-opus-5-5',
+    effort: 'high',
+    harnessOptions: { sandbox: 'read-only', approval: 'never' },
+  });
+  const created = await request.post(url + '/loops', { data: { definition } });
+  expect(created.status()).toBe(201);
+  const { loop } = (await created.json()) as { loop: { id: string } };
+  await page.goto(url + '/app/loops/' + loop.id + '/edit');
+  const settingsLoaded = page.waitForResponse(
+    (response) => response.url() === url + '/settings' && response.ok(),
+  );
+  const dialog = await openNode(page, 'infer');
+  await openAdvanced(dialog);
+  await settingsLoaded;
+  const model = dialog.getByLabel('Model', { exact: true });
+  await expect(model).not.toHaveAttribute('aria-readonly', 'true');
+  await dialog.getByRole('radio', { name: 'codex', exact: true }).focus();
+  await page.keyboard.press('Space');
+  await expect(model).toHaveValue('gpt-6.1-sol');
+  await expect(dialog.getByLabel('Effort', { exact: true })).toHaveValue('high');
+  await closeNode(page);
+  await page.getByRole('button', { name: 'Publish', exact: true }).click();
+  await expect(page.getByText('Published version 1.')).toBeVisible();
+  await page.reload();
+  const reopened = await openNode(page, 'infer');
+  await openAdvanced(reopened);
+  await expect(reopened.getByLabel('Model', { exact: true })).toHaveValue('gpt-6.1-sol');
+  await expect(reopened.getByLabel('Effort', { exact: true })).toHaveValue('high');
+  await closeNode(page);
+  expect(
+    (await request.post(url + '/loops/' + loop.id + '/runs', { data: { input: null } })).status(),
+  ).toBe(202);
+  await expect
+    .poll(
+      async () =>
+        (await control(request, '/harness/requests', { instanceId, harness: 'codex' }))['started'],
+    )
+    .toMatchObject([{ model: 'gpt-6.1-sol', effort: 'high' }]);
 });

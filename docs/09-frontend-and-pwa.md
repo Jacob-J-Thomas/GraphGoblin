@@ -538,7 +538,7 @@ Choosing a schedule when no time zone was supplied authors the displayed UTC def
 
 The metadata controls `model` and `effort` are registered together in `editor/field-controls.ts` for node configs and loop defaults. The inference, decision Codex, and loop-default fields carry this metadata in the contracts; every form uses its canonical contract schema. `forms/fields/model.tsx` binds through `useField` and watches the sibling harness and model through react-hook-form. The inference harness selects the catalog partition, using the sibling schema's default when unset; groups without a harness use the inference contract's Codex default. `FormScopeContext` supplies the active form schema and unique scope for sibling notice IDs. Model uses the shared native `Select`, with enabled entries labelled by display name and id and an unset **(loop default)** choice (**(owner default)** for loop defaults). Native keyboard navigation and typeahead remain available, and the shared tokens cover both themes. The **Model catalog in Settings** link follows the control and help text in Tab order; there is no free-text model entry.
 
-Effort offers the selected model's efforts, or every canonical effort when its metadata is unavailable or no model is selected. Its unset option says **(inherited; the catalog suggests low)** when low is suggested; the engine's node → loop → owner → process resolution is unchanged and the effective inherited effort may differ. Changing model or harness never rewrites model or effort. A current missing/disabled model or unsupported effort stays selected as an unavailable option with a warning glyph and `HelpText`'s `warn` tone. Catalog validation warnings (`MODEL_DISABLED`, `MODEL_NOT_IN_CATALOG`) are passed by exact relative field path through `CatalogWarningsContext` from the editor's merged validation list. A server warning matching the local catalog status is omitted from the field notice while catalog data is available; unavailable data or a different warning keeps it visible. They remain warnings.
+Effort offers the selected model's efforts, or every canonical effort when its metadata is unavailable or no model is selected. Its unset option says **(inherited; the catalog suggests low)** when low is suggested; the engine's node → loop → owner → process resolution is unchanged and the effective inherited effort may differ. Changing the model alone never rewrites effort. Explicit harness changes follow the authoring rule below (#204). A current missing/disabled model or unsupported effort stays selected as an unavailable option with a warning glyph and `HelpText`'s `warn` tone. Catalog validation warnings (`MODEL_DISABLED`, `MODEL_NOT_IN_CATALOG`) are passed by exact relative field path through `CatalogWarningsContext` from the editor's merged validation list. A server warning matching the local catalog status is omitted from the field notice while catalog data is available; unavailable data or a different warning keeps it visible. They remain warnings.
 
 The editor loads the catalog on mount (`useModelCatalog`, which also keys its API checks; see "Freshness" under the classifier models). While no catalog data is available, the same native selects retain their current values and focus, expose `aria-readonly`, and ignore changes. One loading/unavailable notice and **Retry model catalog** appear on Model; Effort's description points to that notice. Successful retry or automatic query recovery makes the existing controls editable. Checks may show issue badges before the catalog arrives, so following a model issue remains possible during loading; a clean answer under an unknown catalog never claims readiness. With no issues the indicator says **Checking…** while the catalog loads and **Validation unavailable** if it fails, until a check under the resolved catalog state completes. A failed refresh with cached data keeps choices editable and shows a notice that the catalog may be out of date. No fetch, refresh, or recovery writes form values. Unit cases cover catalog sizes, harness filtering and schema defaults, retained values, dependent effort, warning deduplication, focus, and failure/recovery; Edge checks cover publication and execution with the selected options, and focus through a delayed catalog and failed refresh.
 
@@ -673,3 +673,23 @@ per operation, concurrently across harnesses. These failures preserve authored m
 Switching an inference node to Claude resets its policy to `read-only`/`never`; full access remains
 explicit. Other authored harness options remain, with unsupported settings reported for correction.
 Models retain exact identity and effort checks (ADR-0029).
+
+## Explicit node harness changes (#204)
+
+Changing an inference node's Harness is an authoring action. With successful catalog, Settings
+and readiness lookups, it writes an enabled compatible model explicitly: the owner's Settings
+default for the destination harness, then its loop default, then the supported ecosystem default
+(Codex `gpt-6-luna`, Claude `claude-opus-5-5`). Disabled, missing and adapter-incompatible
+configured models are skipped. If the ecosystem default is also unavailable, the authored
+model and effort stay visible with a notice; no arbitrary catalog entry is chosen or enabled.
+Claude model and effort compatibility uses its readiness capability listing as well as the catalog.
+
+A supported existing effort stays. Otherwise, the switch writes the first supported effort from
+Settings, loop defaults, then the chosen catalog entry's `defaultEffort`. These values are saved
+on the node and reopen identically. This authoring precedence does not change runtime inheritance:
+unset node values still resolve through loop, owner and process defaults. Runs never substitute
+models. A failed/paused catalog or Settings lookup, or unready/unknown harness, preserves both
+authored values and shows the problem. Recovery alone never changes them: choose a model or
+explicitly switch again after retrying. Saved incompatible values loaded without a switch also
+stay visible and labelled; validation reports their incompatibility. Existing stored values are
+not migrated. Model and effort remain under Advanced until the separate #205 change.

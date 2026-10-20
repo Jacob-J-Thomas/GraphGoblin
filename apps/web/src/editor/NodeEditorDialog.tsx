@@ -1,5 +1,6 @@
 import {
   NodeConfigSchemas,
+  HarnessIdSchema,
   SlugSchema,
   type LoopDefinitionInput,
   type NodeInput,
@@ -43,7 +44,7 @@ import {
   WebhookEventTypePicker,
 } from './TriggerTypePicker.js';
 import { POLL_FIELD_LABELS, WEBHOOK_FIELD_LABELS } from './trigger-field-labels.js';
-import { CatalogWarningsContext } from '../forms/fields/model.js';
+import { CatalogWarningsContext, useHarnessSwitch } from '../forms/fields/model.js';
 import { GateLimitIssuesContext } from './DecisionGateFields.js';
 import { canvasFocusTarget } from './canvas-focus.js';
 import { DECISION_FIELD_OVERRIDES, NODE_FIELD_CONTROLS } from './field-controls.js';
@@ -164,7 +165,9 @@ export function NodeEditorDialog({
   const historyEpoch = useEditorStore((s) => s.historyEpoch);
   const generation = useEditorStore((s) => s.generation);
   const bodyRef = useRef<HTMLElement>(null);
-  const pendingHarnessFocusRef = useRef(false);
+  const pendingHarnessFocusRef = useRef<string | undefined>(undefined);
+  const switchHarness = useHarnessSwitch();
+  const [harnessSwitchNotice, setHarnessSwitchNotice] = useState<string>();
   const [epoch, setEpoch] = useState(0);
   const [review, setReview] = useState<{
     title: string;
@@ -289,9 +292,10 @@ export function NodeEditorDialog({
 
   useLayoutEffect(() => {
     if (!pendingHarnessFocusRef.current) return;
-    pendingHarnessFocusRef.current = false;
+    const harness = pendingHarnessFocusRef.current;
+    pendingHarnessFocusRef.current = undefined;
     bodyRef.current
-      ?.querySelector<HTMLInputElement>('input[type="radio"][value="claude"]')
+      ?.querySelector<HTMLInputElement>(`input[type="radio"][value="${harness}"]`)
       ?.focus();
   }, [epoch]);
 
@@ -302,6 +306,7 @@ export function NodeEditorDialog({
   };
 
   const handleConfigChange = (config: unknown, change: Parameters<typeof updateNode>[2]) => {
+    if (change?.path === 'model' || change?.path === 'effort') setHarnessSwitchNotice(undefined);
     if (node.kind === 'decision' && hasRepeatRoute(node.config) && !hasRepeatRoute(config)) {
       config = cleanGateLimits(config);
       for (const path of ['maxPasses', 'maxRunTimeSeconds'])
@@ -311,20 +316,33 @@ export function NodeEditorDialog({
     if (
       node.kind === 'inference' &&
       change?.path === 'harness' &&
-      record(config)['harness'] === 'claude' &&
-      node.config.harness !== 'claude'
+      record(config)['harness'] !== node.config.harness
     ) {
-      // Switching harness is explicit; start with Claude's least-privileged supported policy.
+      const harness = HarnessIdSchema.parse(record(config)['harness']);
+      const selection = switchHarness(
+        harness,
+        record(config)['effort'],
+        definition.settings?.defaults,
+      );
+      setHarnessSwitchNotice(selection.message);
       pendingHarnessFocusRef.current =
         document.activeElement instanceof HTMLInputElement &&
-        document.activeElement.type === 'radio';
+        document.activeElement.type === 'radio'
+          ? harness
+          : undefined;
       config = {
         ...record(config),
-        harnessOptions: {
-          ...record(record(config)['harnessOptions']),
-          sandbox: 'read-only',
-          approval: 'never',
-        },
+        ...('model' in selection ? { model: selection.model, effort: selection.effort } : {}),
+        // Switching to Claude explicitly starts with its least-privileged supported policy.
+        ...(harness === 'claude'
+          ? {
+              harnessOptions: {
+                ...record(record(config)['harnessOptions']),
+                sandbox: 'read-only',
+                approval: 'never',
+              },
+            }
+          : {}),
       };
       setEpoch((current) => current + 1);
     }
@@ -549,6 +567,11 @@ export function NodeEditorDialog({
         {/* Not keyed by the node id: a rename keeps the form (and focus) where it is. Issue paths
             `config.<path>` name its fields (focus-field.ts). */}
         <div data-field-scope="config" className="grid min-w-0">
+          {harnessSwitchNotice ? (
+            <HelpText role="status" tone="warn">
+              {harnessSwitchNotice}
+            </HelpText>
+          ) : null}
           {node.kind === 'trigger' ? (
             <HelpText>
               Use a downstream decision for payload checks. Route unwanted input to a quiet success

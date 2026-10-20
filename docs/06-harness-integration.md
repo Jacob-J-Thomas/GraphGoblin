@@ -424,3 +424,23 @@ that this adapter does not use.
 ### LiteLLM
 
 A `LiteLLMPort` would provide plain completion calls for decision, coerce, and summarise operations against local or alternative models. It is not a harness: it has no tools or workspace. It would plug in as a `DeciderPort` and as the provider for the post-1.0 `summarise` operation.
+
+## Explicit node harness changes (#204)
+
+Changing an inference node's Harness is an authoring action. With successful catalog, Settings
+and readiness lookups, it writes an enabled compatible model explicitly: the owner's Settings
+default for the destination harness, then its loop default, then the supported ecosystem default
+(Codex `gpt-6-luna`, Claude `claude-opus-5-5`). Disabled, missing and adapter-incompatible
+configured models are skipped. If the ecosystem default is also unavailable, the authored
+model and effort stay visible with a notice; no arbitrary catalog entry is chosen or enabled.
+Claude model and effort compatibility uses its readiness capability listing as well as the catalog.
+
+A supported existing effort stays. Otherwise, the switch writes the first supported effort from
+Settings, loop defaults, then the chosen catalog entry's `defaultEffort`. These values are saved
+on the node and reopen identically. This authoring precedence does not change runtime inheritance:
+unset node values still resolve through loop, owner and process defaults. Runs never substitute
+models. A failed/paused catalog or Settings lookup, or unready/unknown harness, preserves both
+authored values and shows the problem. Recovery alone never changes them: choose a model or
+explicitly switch again after retrying. Saved incompatible values loaded without a switch also
+stay visible and labelled; validation reports their incompatibility. Existing stored values are
+not migrated. Model and effort remain under Advanced until the separate #205 change.
