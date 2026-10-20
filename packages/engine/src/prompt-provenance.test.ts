@@ -35,7 +35,7 @@ async function scenario(
         code:
           classification === 'session-missing' ? 'HARNESS_SESSION_MISSING' : 'HARNESS_TURN_FAILED',
         message: 'controlled failure',
-        retriable: true,
+        retriable: false,
       },
     },
   ]);
@@ -229,12 +229,12 @@ describe('prompt provenance through RunManager and the fake harness', () => {
     e.ports.harness.script([
       {
         submission: 'definitely-not-submitted',
-        error: { code: 'HARNESS_TURN_FAILED', message: 'refused', retriable: true },
+        error: { code: 'HARNESS_TURN_FAILED', message: 'refused', retriable: false },
       },
       { finalText: 'first visit' },
       {
         submission: 'definitely-not-submitted',
-        error: { code: 'HARNESS_TURN_FAILED', message: 'second refusal', retriable: true },
+        error: { code: 'HARNESS_TURN_FAILED', message: 'second refusal', retriable: false },
       },
     ]);
     const run = await e.runToIdle(v.loopId);
@@ -272,7 +272,7 @@ describe('prompt provenance through RunManager and the fake harness', () => {
       { finalText: 'invalid' },
       {
         submission: 'definitely-not-submitted',
-        error: { code: 'HARNESS_TURN_FAILED', message: 'repair refused', retriable: true },
+        error: { code: 'HARNESS_TURN_FAILED', message: 'repair refused', retriable: false },
       },
     ]);
     const run = await e.runToIdle(v.loopId);

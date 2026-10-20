@@ -504,7 +504,7 @@ it('domain status prediction and replay summary match resume of a parked run', a
 
 it('a resumed failed run is finalized again after a crash on its next terminal status', async () => {
   const e = await createTestEngine();
-  e.ports.harness.script([{ error: { code: 'transient', message: 'retry me', retriable: true } }]);
+  e.ports.harness.script([{ error: { code: 'transient', message: 'retry me', retriable: false } }]);
   const def = singleNodeLoop(
     'resumed-finalization',
     { id: 'infer', kind: 'inference', label: 'I', config: { prompt: { template: 'go' } } },
@@ -574,7 +574,7 @@ it.each(['durable', 'not durable'] as const)(
   'a resume of a failed run whose run.resumed is %s when the process dies',
   async (durable) => {
     const e = await createTestEngine();
-    e.ports.harness.script([{ error: { code: 'temporary', message: 'retry', retriable: true } }]);
+    e.ports.harness.script([{ error: { code: 'temporary', message: 'retry', retriable: false } }]);
     const v = e.publish(
       singleNodeLoop('resume-audit', {
         id: 'infer',
@@ -618,7 +618,7 @@ it.each(['next success', 'durable resume'] as const)(
   async (crashPoint) => {
     const e = await createTestEngine();
     e.ports.harness.script([
-      { error: { code: 'transient', message: 'retry me', retriable: true } },
+      { error: { code: 'transient', message: 'retry me', retriable: false } },
     ]);
     const def = singleNodeLoop(
       'stale-finalizer',
@@ -690,7 +690,7 @@ it.each(['same failure', 'newer non-resumable failure'] as const)(
   async (scenario) => {
     const e = await createTestEngine();
     e.ports.harness.script([
-      { error: { code: 'transient', message: 'retry me', retriable: true } },
+      { error: { code: 'transient', message: 'retry me', retriable: false } },
     ]);
     const exitFailure = scenario === 'newer non-resumable failure';
     const def = singleNodeLoop(

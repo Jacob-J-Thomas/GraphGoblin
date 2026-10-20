@@ -51,7 +51,7 @@ describe('D-022 inherited-session recovery', () => {
           error: {
             code: 'HARNESS_TURN_FAILED',
             message: 'output lost before acceptance',
-            retriable: true,
+            retriable: false,
           },
         },
       ]);
@@ -184,7 +184,7 @@ describe('D-022 inherited-session recovery', () => {
           error: {
             code: 'HARNESS_TURN_FAILED',
             message: 'transient pre-send refusal',
-            retriable: true,
+            retriable: false,
           },
         },
       ]);
@@ -194,7 +194,7 @@ describe('D-022 inherited-session recovery', () => {
         {
           announceSession: false,
           items: [],
-          error: { code: 'HARNESS_TURN_FAILED', message: 'lost retry', retriable: true },
+          error: { code: 'HARNESS_TURN_FAILED', message: 'lost retry', retriable: false },
         },
       ]);
       await e.manager.resume(run.id);
@@ -290,7 +290,7 @@ describe('D-022 inherited-session recovery', () => {
         accepted: false,
         announceSession: false,
         items: [],
-        error: { code: 'HARNESS_TURN_FAILED', message: 'repair interrupted', retriable: true },
+        error: { code: 'HARNESS_TURN_FAILED', message: 'repair interrupted', retriable: false },
       },
     ]);
     const run = await e.runToIdle(v.loopId);
@@ -319,7 +319,7 @@ describe('D-022 inherited-session recovery', () => {
     e.ports.harness.script([
       {
         accepted: true,
-        error: { code: 'HARNESS_TURN_FAILED', message: 'authored interrupted', retriable: true },
+        error: { code: 'HARNESS_TURN_FAILED', message: 'authored interrupted', retriable: false },
       },
       {
         accepted: false,
@@ -328,7 +328,7 @@ describe('D-022 inherited-session recovery', () => {
         error: {
           code: 'HARNESS_TURN_FAILED',
           message: 'continuation interrupted',
-          retriable: true,
+          retriable: false,
         },
       },
     ]);

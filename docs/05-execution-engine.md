@@ -256,11 +256,11 @@ the repair task. These authored prompts are part of private run history, with th
 and deletion boundary as its context thread. The entire prompt is stored inline with no schema
 size limit or automatic artifact offloading; large prompts therefore enlarge the event log.
 
-| Classification (`failure.inference.submission`) | Failure code                                                                                                                                               | Resume behavior                                                                                                                                                                                                |
-| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `definitely-not-submitted`                      | Original cause, such as `HARNESS_NOT_INSTALLED`, `HARNESS_NOT_AUTHENTICATED`, `HARNESS_TURN_FAILED` or `INFERENCE_TIMEOUT`                                 | After fixing a resumable cause, submit the saved task with the original fresh/previous/named selection. Init alone cannot change that selection.                                                               |
-| `delivery-uncertain`                            | `HARNESS_DELIVERY_UNCERTAIN` for generic turn failures; specific causes such as `INFERENCE_TIMEOUT`, quota, artifact or termination failures remain intact | Continue only a usable session with the continuation prompt. No usable session means `resumable: false`; use Replay from the node for a deliberate new attempt. Unconfirmed termination is also non-resumable. |
-| `session-missing`                               | `HARNESS_SESSION_MISSING`                                                                                                                                  | Non-resumable. Do not silently start fresh or repeat the invalid session. Explicit fresh-session recovery is deferred to #265.                                                                                 |
+| Classification (`failure.inference.submission`) | Failure code                                                                                                                                               | Resume behavior                                                                                                                                                                                                                                            |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `definitely-not-submitted`                      | Original cause, such as `HARNESS_NOT_INSTALLED`, `HARNESS_NOT_AUTHENTICATED`, `HARNESS_TURN_FAILED` or `INFERENCE_TIMEOUT`                                 | After fixing a resumable cause, submit the saved task with the original fresh/previous/named selection. Init alone cannot change that selection.                                                                                                           |
+| `delivery-uncertain`                            | `HARNESS_DELIVERY_UNCERTAIN` for generic turn failures; specific causes such as `INFERENCE_TIMEOUT`, quota, artifact or termination failures remain intact | When eligible under the harness rule below, continue only a usable session with the continuation prompt. No usable session means `resumable: false`; use Replay from the node for a deliberate new attempt. Unconfirmed termination is also non-resumable. |
+| `session-missing`                               | `HARNESS_SESSION_MISSING`                                                                                                                                  | Non-resumable. Do not silently start fresh or repeat the invalid session. Explicit fresh-session recovery is deferred to #265.                                                                                                                             |
 
 `failure.inference` also contains `visitId`, `turnId`, `promptKind` and the session ID when
 known. `harness.submission` records `submitted` on positive acceptance, with its marker, or
@@ -275,8 +275,11 @@ Under previous/named policy, an authored or retried authored turn with no durabl
 cannot use its inherited `resumeSessionId` alone for continuation (ADR-0045, D-022). It fails
 non-resumably on explicit failure and at visit-start recovery. A different newly announced
 session, an accepted turn, or a repair/continuation on the visit's own session can continue.
-Generic turn failures respect the adapter's `retriable` evidence; unsupported policy, invalid
-configuration and rejected arguments remain non-resumable because the definition is pinned.
+For non-pinned generic failures, Codex permits Resume even when its adapter reports
+`retriable: false` for an exit or lost stream. Claude permits Resume only with the adapter's
+`retriable` evidence. Unsupported policy, invalid configuration and rejected arguments remain
+non-resumable for both harnesses because the definition is pinned. Continuation safety is
+checked separately: uncertain delivery must still have a usable session under D-022.
 Restorable login, installation and quota failures retain their specific eligibility. Resume
 is still unavailable if delivery is uncertain and no usable session exists.
 

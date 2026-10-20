@@ -2,6 +2,7 @@ import {
   COMMAND_PREVIEW_MAX,
   PROGRESS_SUMMARY_MAX,
   type ContextThread,
+  type HarnessId,
   type JsonValue,
   type NodeProgress,
   type PatchOperation,
@@ -120,7 +121,7 @@ async function consume(
   let lastError: { code: string; message: string; retriable: boolean } | undefined;
   const rethrow = (error: unknown): never => {
     if (error instanceof RunFailureError || error instanceof RunCancelledError) throw error;
-    const failure = mapHarnessFailure(error, lastError, ctx.node.id);
+    const failure = mapHarnessFailure(error, lastError, ctx.node.id, ctx.config.harness);
     if (failure.code === 'HARNESS_TERMINATION_UNCONFIRMED') throw failure;
     if (isAbortError(error) || ctx.signal.aborted) throw new RunCancelledError();
     throw failure;
@@ -192,6 +193,7 @@ function mapHarnessFailure(
   error: unknown,
   lastError: { code: string; message: string; retriable: boolean } | undefined,
   nodeId: string,
+  harness: HarnessId,
 ): RunFailureError {
   const info = typeof error === 'object' && error !== null ? error : {};
   const reportedCode =
@@ -223,14 +225,16 @@ function mapHarnessFailure(
     return new RunFailureError('INFERENCE_TIMEOUT', message, { nodeId, resumable: true });
   return new RunFailureError('HARNESS_TURN_FAILED', 'harness turn failed: ' + message, {
     nodeId,
-    // A pinned request refusal cannot be repaired by repeating this run. Other generic
-    // failures require positive transient evidence; continuation safety is checked separately.
+    // Pinned refusals cannot be repaired within this run. Codex's generic exit/stream
+    // failures remain resumable even when its SDK says not retriable; Claude requires
+    // positive retry evidence. Submission/session safety is checked separately.
     resumable:
       ![
         'harness_unsupported_policy',
         'harness_invalid_configuration',
         'harness_arguments_rejected',
-      ].includes(code) && reportedRetriable,
+      ].includes(code) &&
+      (harness === 'codex' || reportedRetriable),
     details: { adapterCode: reportedCode ?? null },
   });
 }
@@ -498,7 +502,7 @@ export const inferenceHandler: NodeHandler<'inference'> = {
         invoking &&
         !(error instanceof RunFailureError) &&
         !(error instanceof RunCancelledError)
-          ? mapHarnessFailure(error, undefined, ctx.node.id)
+          ? mapHarnessFailure(error, undefined, ctx.node.id, config.harness)
           : error instanceof ArtifactStoreError && error.code === 'ARTIFACT_WRITE_FAILED'
             ? new RunFailureError(error.code, error.message, {
                 nodeId: ctx.node.id,
@@ -511,7 +515,7 @@ export const inferenceHandler: NodeHandler<'inference'> = {
         try {
           await session.cancel();
         } catch (cancelError) {
-          const cleanup = mapHarnessFailure(cancelError, undefined, ctx.node.id);
+          const cleanup = mapHarnessFailure(cancelError, undefined, ctx.node.id, config.harness);
           if (unconfirmed(cleanup)) failure = cleanup;
           else {
             // Native Codex cancellation resolves; Claude rejects only for unconfirmed termination.

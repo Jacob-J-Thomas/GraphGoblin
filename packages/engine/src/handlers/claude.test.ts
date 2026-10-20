@@ -214,9 +214,17 @@ describe('unconfirmed native cancellation', () => {
         expect(types.filter((t) => t === 'run.cancel_requested')).toHaveLength(1);
     },
   );
-  it.each(['codex', 'claude'] as const)(
-    'keeps pinned %s request refusals non-resumable even if marked transient',
-    async (family) => {
+  it.each(
+    (['codex', 'claude'] as const).flatMap((family) =>
+      [
+        'HARNESS_UNSUPPORTED_POLICY',
+        'HARNESS_INVALID_CONFIGURATION',
+        'HARNESS_ARGUMENTS_REJECTED',
+      ].map((code) => ({ family, code })),
+    ),
+  )(
+    'keeps pinned $family $code non-resumable even if marked transient',
+    async ({ family, code }) => {
       const { engine, claude } = await engineWithClaude();
       const harness = family === 'claude' ? claude : engine.ports.harness;
       harness.script([
@@ -225,8 +233,9 @@ describe('unconfirmed native cancellation', () => {
           announceSession: false,
           submission: 'definitely-not-submitted',
           error: {
-            code: 'HARNESS_INVALID_CONFIGURATION',
+            code,
             message: 'Pinned configuration cannot execute',
+            // Deliberate misreport: the pinned-refusal guard must override this flag.
             retriable: true,
           },
         },
@@ -387,7 +396,7 @@ describe('inference consumption keeps engine failures and cleans up both harness
       const v = engine.publish(singleNodeLoop('stream-' + family, infer('a', family, 'fresh')));
       expect((await engine.runToIdle(v.loopId)).failure).toMatchObject({
         code: 'HARNESS_DELIVERY_UNCERTAIN',
-        resumable: false,
+        resumable: family === 'codex',
         details: { adapterCode: 'HARNESS_PROTOCOL_ERROR' },
       });
       expect(harness.cancelled).toHaveLength(1);

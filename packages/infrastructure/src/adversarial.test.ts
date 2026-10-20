@@ -412,7 +412,7 @@ describe('finalization on SQLite (review of WP-G, fourth round)', () => {
     const manager = new RunManager(ports, e.settings);
     await manager.start();
     e.ports.harness.script([
-      { error: { code: 'transient', message: 'retry me', retriable: true } },
+      { error: { code: 'transient', message: 'retry me', retriable: false } },
     ]);
     const def = singleNodeLoop(
       'resumed-finalization',
@@ -466,7 +466,7 @@ describe('finalization on SQLite (review of WP-G, fourth round)', () => {
       const manager = new RunManager(ports, e.settings);
       await manager.start();
       e.ports.harness.script([
-        { error: { code: 'transient', message: 'retry me', retriable: true } },
+        { error: { code: 'transient', message: 'retry me', retriable: false } },
       ]);
       const def = singleNodeLoop(
         'stale-finalizer',
@@ -547,7 +547,7 @@ describe('finalization on SQLite (review of WP-G, fourth round)', () => {
       );
       await manager.start();
       e.ports.harness.script([
-        { error: { code: 'transient', message: 'retry me', retriable: true } },
+        { error: { code: 'transient', message: 'retry me', retriable: false } },
       ]);
       const exitFailure = scenario === 'newer non-resumable failure';
       const def = singleNodeLoop(

@@ -336,7 +336,7 @@ describe('inference node', () => {
     engine.ports.harness.script([{ error: { code: 'weird', message: 'something else' } }]);
     expect((await engine.runToIdle(missing.loopId)).failure).toMatchObject({
       code: 'HARNESS_DELIVERY_UNCERTAIN',
-      resumable: false,
+      resumable: true,
     });
   });
 

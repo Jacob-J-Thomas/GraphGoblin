@@ -463,8 +463,9 @@ and `No conversation found with session ID:`. Raw diagnostics are discarded. Cla
 missing-session stderr refusal. Before init/acceptance this native refusal result is deferred
 until process outcome: the fixed stderr refusal yields `HARNESS_SESSION_MISSING`, ahead of
 the otherwise missing-init protocol error. Termination-unconfirmed, abort, timeout and overflow
-still take precedence. Without a recognized refusal the incomplete stream remains a protocol
-fault. An init/result mismatch also remains a protocol fault. Once assistant acceptance was
+still take precedence. Without a recognized refusal, a nonzero exit is a generic uncertain
+`HARNESS_TURN_FAILED`; an otherwise successful process with an incomplete stream remains a
+protocol fault. An init/result mismatch also remains a protocol fault. Once assistant acceptance was
 observed, later refusal text cannot make the turn definitely unsubmitted.
 
 Codex reports startup/auth/argument refusals as definitely unsubmitted and positively identified
@@ -474,8 +475,11 @@ An authored/retried authored turn with only an inherited previous/named handle a
 acceptance is non-resumable when delivery is uncertain (ADR-0045). Accepted turns and
 repair/continuation turns on the visit's own session retain continuation recovery. Unsupported
 policy, invalid configuration and argument refusals remain non-resumable even if a generic
-adapter error incorrectly advertises retryability; other generic failures require the
-adapter's `retriable` evidence. Login, installation and quota retain their restorable causes.
+adapter error incorrectly advertises retryability. Non-pinned generic Codex failures permit
+Resume even when the adapter reports `retriable: false` for a CLI exit or lost stream; generic
+Claude failures require the adapter's `retriable` evidence. These eligibility rules do not
+override D-022's usable-session requirement. Login, installation and quota retain their
+restorable causes.
 An abort during readiness probes is conservatively uncertain: the aborted/unknown probe
 does not positively identify a pre-send refusal. It does not authorize a blind authored retry.
 No readiness probes, probe directories, model selection or fallback policy changed.
