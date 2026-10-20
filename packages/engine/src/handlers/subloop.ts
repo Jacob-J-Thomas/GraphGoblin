@@ -13,7 +13,7 @@ import {
   threadView,
   type MutationError,
 } from '@graphgoblin/domain';
-import { RunFailureError } from '../errors.js';
+import { ChildCancelledError, RunFailureError } from '../errors.js';
 import type { ChildOutcome, NodeContext, NodeHandler, NodeResult } from '../handler.js';
 import {
   addUsage,
@@ -182,7 +182,11 @@ export const subloopHandler: NodeHandler<'subloop'> = {
     // second one is never started (docs/05, crash recovery).
     const awaited = ctx.previousWait?.childRunId ?? (await childOfThisVisit(ctx));
     if (awaited) {
-      const child = await ctx.services.childOutcome(awaited);
+      let child = await ctx.services.childOutcome(awaited);
+      // This run failed with its child's resumable failure and was explicitly resumed: resume the
+      // child in place, as resuming an inline failure re-executes the failed node (#251).
+      if (child.failure?.resumable && failedSinceAwaiting(await ctx.services.events(), ctx.node.id))
+        child = await ctx.services.resumeChild(awaited);
       // The parent continues only after its child has finished: an unfinished child (one resumed
       // after it notified, say) is awaited again rather than mapped.
       if (!isTerminal(child.status)) {
@@ -231,8 +235,41 @@ async function finishWithChild(
     status: child.status,
     ...(child.outcome ? { outcome: child.outcome } : {}),
   });
+  // Ordinary failure rules (#251): the child's execution error or cancellation is the parent's,
+  // exactly as if the failing work had run inline. An authored outcome (Success, Failure or
+  // Exhausted exit) is data for the output mapping.
+  if (child.status === 'cancelled') throw new ChildCancelledError(child.runId);
+  if (child.failure) {
+    const { code, message, resumable, nodeId, details } = child.failure;
+    throw new RunFailureError(code, `subloop child ${child.runId} failed: ${message}`, {
+      nodeId: ctx.node.id,
+      resumable,
+      details: {
+        childRunId: child.runId,
+        ...(nodeId ? { childNodeId: nodeId } : {}),
+        ...(details !== undefined ? { childDetails: details } : {}),
+      },
+    });
+  }
   const patch = await outputMapping(ctx, child);
   return { kind: 'done', patch, route: 'out' };
+}
+
+/**
+ * Whether this run failed after it parked on (or started) this node's child: it is executing
+ * again, so it was explicitly resumed from that failure.
+ */
+function failedSinceAwaiting(events: readonly RunEvent[], nodeId: string): boolean {
+  for (let i = events.length - 1; i >= 0; i -= 1) {
+    const event = events[i] as RunEvent;
+    if (event.type === 'run.failed') return true;
+    if (
+      (event.type === 'run.waiting' || event.type === 'child_run.started') &&
+      event.nodeId === nodeId
+    )
+      return false;
+  }
+  return false;
 }
 
 /** The child this node started during its current, unfinished visit, from the run's log. */

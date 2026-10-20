@@ -227,6 +227,8 @@ A missing run `result` means no payload was returned, whereas `result: null` is 
 
 A child run's `waiting` parent is woken only through the park it observed: the wake carries the parent's `waiting.waitId` and is accepted only while that park, of kind `child` and on that `childRunId`, is current (05).
 
+A `failure` carried up from a subloop child has the child's `code` and `resumable`, the parent's subloop node as `nodeId`, and `details: { childRunId, childNodeId?, childDetails? }` naming where it happened (#251, 05). A child that finished through a Failure exit has `outcome: failure` and no `failure`; its parent receives it as data.
+
 ## Run events (Decided kinds, Draft payloads)
 
 Each event has `runId`, `seq`, `ts`, `type`, optional `nodeId`, and a typed `payload`. Large payloads are stored as artifacts and referenced.

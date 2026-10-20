@@ -553,8 +553,18 @@ describe('adversarial engine invariants', () => {
         });
       const r = await e.runToIdle(parent.loopId);
       spy.mockRestore();
-      expect(r.status).toBe('succeeded');
-      expect((await e.manager.getThread(r.id))?.lastOutput?.value).toMatchObject({ status });
+      // The parent learns of the child exactly once, and then follows ordinary rules (#251): a
+      // finished child is data, a failed child fails the parent, a cancelled one cancels it.
+      expect(r.status).toBe(status);
+      expect(
+        e
+          .events(r.id)
+          .flatMap((event) => (event.type === 'child_run.finished' ? [event.status] : [])),
+      ).toEqual([status]);
+      if (status === 'succeeded')
+        expect((await e.manager.getThread(r.id))?.lastOutput?.value).toMatchObject({ status });
+      if (status === 'failed')
+        expect(r.failure).toMatchObject({ code: 'INTERNAL_ERROR', resumable: true });
       expect(e.eventTypes(r.id).filter((t) => t === 'run.woken')).toHaveLength(1);
     },
   );

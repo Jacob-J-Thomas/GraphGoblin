@@ -63,6 +63,17 @@ export class RunCancelledError extends Error {
   }
 }
 
+/**
+ * Thrown by the subloop handler when the child it awaits was cancelled. The run is cancelled in
+ * turn, at the child's request, as cancelling inline work cancels the run that does it (#251).
+ */
+export class ChildCancelledError extends Error {
+  constructor(readonly childRunId: string) {
+    super(`subloop child ${childRunId} was cancelled`);
+    this.name = 'ChildCancelledError';
+  }
+}
+
 function toJsonDetails(details: unknown): RunFailure['details'] {
   try {
     return JSON.parse(JSON.stringify(details)) as RunFailure['details'];

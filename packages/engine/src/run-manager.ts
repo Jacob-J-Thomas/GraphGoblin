@@ -43,6 +43,7 @@ import {
 } from '@graphgoblin/domain';
 import {
   AppendConflictError,
+  ChildCancelledError,
   RunFailureError,
   UnreadableRunHistoryError,
   describeError,
@@ -1458,6 +1459,7 @@ export class RunManager {
       },
       startChild: (request) => this.startChild(run, request, pinnedSubloops(events)),
       childOutcome: (childRunId) => this.childOutcome(childRunId),
+      resumeChild: (childRunId) => this.resumeChild(run, childRunId),
       events: () => Promise.resolve(events),
       depth: () => this.depthOf(run),
       workingDirectory: () => this.workingDirectory(run, def, thread),
@@ -1542,6 +1544,10 @@ export class RunManager {
         };
         result = await (handler as { execute(c: NodeContext): Promise<NodeResult> }).execute(ctx);
       } catch (error) {
+        if (error instanceof ChildCancelledError) {
+          await this.cancelForChild(runId, error.childRunId);
+          return;
+        }
         const terminationUnconfirmed =
           error instanceof RunFailureError && error.code === 'HARNESS_TERMINATION_UNCONFIRMED';
         if (!terminationUnconfirmed && (isAbortError(error) || controller.signal.aborted)) {
@@ -2044,8 +2050,34 @@ export class RunManager {
       status: child.status,
       ...(child.outcome ? { outcome: child.outcome } : {}),
       ...(child.result !== undefined ? { result: child.result } : {}),
+      ...(child.failure ? { failure: child.failure } : {}),
       ...(thread ? { thread } : {}),
     };
+  }
+
+  /**
+   * An explicit resume of `parent` resumes its failed child in place (#251). A child that is no
+   * longer in a resumable failure (resumed or finished meanwhile) is left as it is.
+   */
+  private async resumeChild(parent: RunRecord, childRunId: string): Promise<ChildOutcome> {
+    try {
+      await this.resume(childRunId, { kind: 'run', id: parent.id });
+    } catch (error) {
+      if (!(error instanceof EngineRequestError)) throw error;
+    }
+    return this.childOutcome(childRunId);
+  }
+
+  /**
+   * The child this run awaited was cancelled: cancel this run too, as cancelling inline work
+   * cancels the run doing it (#251). The request is recorded as the child's.
+   */
+  private async cancelForChild(runId: string, childRunId: string): Promise<void> {
+    if (await this.ports.runs.claimCancel(runId, ACTIVE_STATUSES, this.now()))
+      await this.ports.events.append(runId, [
+        { type: 'run.cancel_requested', actor: { kind: 'run', id: childRunId } },
+      ]);
+    await this.finalizeCancel(runId);
   }
 
   private async depthOf(run: RunRecord): Promise<number> {
