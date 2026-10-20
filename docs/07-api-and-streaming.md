@@ -27,8 +27,8 @@ Runs
   GET    /runs/{id}/thread              current context thread projection
   GET    /runs/{id}/events?after=N      page of events; with Accept: text/event-stream, a live tail
   POST   /runs/{id}/cancel | pause | resume
-  POST   /runs/{id}/input               for a wait node in input mode; validated against its inputSchema
-  POST   /runs/{id}/signals/{name}      deliver a named signal
+  POST   /runs/{id}/input               body: { waitId, input }; observed identity and inputSchema validated
+  POST   /runs/{id}/signals/{name}      body: { waitId, payload? }; deliver to the observed wait
   POST   /runs/{id}/replay              fork a new run at a node; body: { nodeId }; 202 { run }; 409 REPLAY_NODE_NOT_REACHED (see 05)
 
 Triggers and events
@@ -65,6 +65,10 @@ refuses with `HOOK_NOT_READY`. Events lookups share request-local endpoint/versi
 `202 {accepted:true}` after saving; raw-byte authentication precedes decoding/extraction. See 08
 for `EVENT_TYPE_AMBIGUOUS` (400), `EVENT_TYPE_INVALID` (422), bounds and exact recipes. Invocation
 event metadata does not change `POST /events` or publish anything to the bus.
+
+The owner-scoped `GET /runs/diagnostics` endpoint (`runs:read`) identifies unreadable run rows or event history with `HISTORY_UNREADABLE`, a run ID, and a readable reason. It changes no persisted status or history; see the crash-recovery and troubleshooting procedures.
+
+Diagnostics are paged by `nextCursor`; pass it back as `?cursor=...` until null. Each request checks at most 20 runs, two threads per run and 100 events per run (at most 2,000 events total). A long event history resumes within the same run. Ordinary run lists skip unreadable rows while advancing their cursor; diagnostics identifies those rows. A direct unreadable snapshot returns `STORED_RUN_INVALID` with its run ID; unreadable event pages retain `STORED_EVENT_INVALID`. Unrelated loop deletion continues to work; active run references still protect their own and reachable loops.
 
 ## Loop deletion
 
@@ -215,11 +219,11 @@ Tools (each with a Zod input schema; descriptions tell the agent when to call it
 | `wait_for_run`                          | `runId`, `timeoutSeconds?` (default 60, max 600)            | Returns `{ finished: true, run }` at a terminal status, or `{ finished: false, status, cursor, waiting?, next }`; returns early when the run waits for input or is paused; `cursor` is the last event `seq` |
 | `get_run`                               | `runId`                                                     | Run snapshot                                                                                                                                                                                                |
 | `get_run_thread`                        | `runId`                                                     | Context thread                                                                                                                                                                                              |
-| `list_runs`                             | `loopId?`, `status[]?`, `parentRunId?`, `before?`, `limit?` | Compact runs, newest first; `nextBefore` (a `createdAt`) pages                                                                                                                                              |
+| `list_runs`                             | `loopId?`, `status[]?`, `parentRunId?`, `cursor?`, `limit?` | `{ items, nextCursor }`: compact runs, newest first; pass the opaque `nextCursor` as `cursor` with the same filters, even when `items` is empty; null ends the listing                                      |
 | `read_run_events`                       | `runId`, `after?`, `limit?` (default 100)                   | `{ items, nextAfter, hasMore }`                                                                                                                                                                             |
 | `cancel_run`, `pause_run`, `resume_run` | `runId`                                                     | Control; return the compact run. A run paused while parked resumes to `waiting` on the same wait, otherwise to `running` (05)                                                                               |
-| `provide_input`                         | `runId`, `input`                                            | Answers a wait node in input mode                                                                                                                                                                           |
-| `send_signal`                           | `runId`, `name`, `payload?`                                 | `{ woke, run }`                                                                                                                                                                                             |
+| `provide_input`                         | `runId`, `waitId`, `input`                                  | Answers the observed input wait                                                                                                                                                                             |
+| `send_signal`                           | `runId`, `name`, `waitId`, `payload?`                       | `{ woke, run }`                                                                                                                                                                                             |
 | `replay_run`                            | `runId`, `nodeId`                                           | Forks a new run at `nodeId` with the thread from just before that node (`POST /runs/{id}/replay`); returns the compact fork with `replayOf` and a hint to call `wait_for_run`                               |
 
 `wait_for_run` polls `GET /runs/{id}` once a second rather than calling the client's `waitForRun`, so it can return early, and it sends MCP progress notifications between polls when the caller supplies a progress token. MCP clients have their own tool timeouts (the plugin sets Codex's `tool_timeout_sec` to 660); agents keep calling it until `finished` is true.
@@ -264,6 +268,8 @@ Codex installs a plugin by copying it into `~/.codex/plugins/cache/<marketplace>
 - **Resource wrappers.** `loops`, `runs`, `settings`, `secrets`, `apiKeys`, `modelCatalog`, `classifierModels`, `events`, and `system` take the client first and return the response body, for example `await runs.start(client, loopId, { input })` or `await runs.replay(client, runId, nodeId)`. Classifier helpers are `list(client)`, `upsert(client, id, metadata)`, `create(client, id, metadata)` (the same PUT with `If-None-Match: *`, refused with `CLASSIFIER_EXISTS` when the id exists), `setEnabled(client, id, enabled)`, and `remove(client, id)`; ids are encoded and API problems propagate unchanged.
 - **Live events.** `subscribeRunEvents({ client, runId, after?, onEvent, signal? })` reads `GET /runs/{id}/events` as SSE, validates each frame with `RunEventSchema`, and calls `onEvent` in `seq` order. It remembers the last delivered `seq`; if the connection drops before `run.finished`, `run.failed`, or `run.cancelled`, it reconnects with `after=<lastSeq>` after an exponential backoff (500 ms doubling, capped at 30 s, reset after a connection that makes progress) and discards replayed events it has already delivered. 408, 425, 429, 5xx, and network errors are retried; other statuses reject `done`. A frame that fails validation is reported through `onError` and skipped. It returns `{ close(), done, lastSeq }`.
 - **Waiting.** `waitForRun(client, runId, { timeoutMs, pollMs?, signal? })` polls `GET /runs/{id}` until a terminal status or the timeout and returns `{ run, finished }`; the MCP `wait_for_run` tool is built on it.
+
+Both input and signal paths require the opaque `waitId` from `GET /runs/{id}` at `waiting.waitId`, or the `run.waiting` event at `wait.waitId`. The matching input or signal-mode answer is consumed once. Stale, unknown or already consumed identities return RFC 9457 409 `WAIT_MISMATCH` without appending another answer or replacing the accepted payload. A retry can finish the status acknowledgement and enqueue an earlier durable answer. A matching identity on a paused run returns 409 `INVALID_STATE` with a paused-run message; resume first, then answer the same observed wait. Missing identities are 400 validation errors. Input and signal acceptance retry at most ten conditional-append conflicts; a saturated caller receives `WAIT_MISMATCH` and must refresh its observed snapshot. Heartbeat signals are observations within the current logical visit; every accepted signal is counted once, and each new park has a new identity. The browser submits the identity associated with its displayed form. MCP callers obtain it from `get_run` or `wait_for_run`.
 
 ## Error responses (Decided)
 
@@ -346,7 +352,9 @@ Filters are `loopId`, comma-separated `status`, `parent` (a run ID or `none`),
 including the removed `repository`, `issue`, `pullRequest`, `head`, `mergeSha`
 and `templateInstanceId`. Reads always remain scoped to the authenticated owner.
 The exclusive `(created_at, id)` boundary keeps newer insertions between requests
-out of subsequent pages. MCP's `before`/`nextBefore` timestamp paging stays separate.
+out of subsequent pages. MCP `list_runs` uses this same server cursor and returns
+`{ items, nextCursor }`; pass `nextCursor` as `cursor` with the same filters, even when
+`items` is empty because damaged rows were skipped. Stop when `nextCursor` is null.
 Both the typed client's `GET('/runs')` and the generated OpenAPI contract expose
 the complete page; the convenience `runs.list` wrapper returns its items only.
 

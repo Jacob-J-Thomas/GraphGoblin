@@ -1,0 +1,223 @@
+{
+  "method": "POST",
+  "path": "/loops/import",
+  "requestBody": {
+    "format": "graphgoblin-loop",
+    "formatVersion": 4,
+    "exportedAt": "2026-10-19T07:52:55.558Z",
+    "loop": {
+      "schemaVersion": 4,
+      "name": "healthy-wait",
+      "settings": {
+        "workingDirectory": {
+          "kind": "temp"
+        },
+        "defaults": {
+          "byHarness": {}
+        },
+        "maxNodeVisits": 10,
+        "subloopDepthLimit": 8
+      },
+      "variables": {},
+      "nodes": [
+        {
+          "id": "start",
+          "label": "Start",
+          "ui": {
+            "x": 0,
+            "y": 0
+          },
+          "kind": "trigger",
+          "config": {
+            "type": "manual",
+            "exposeTo": ["ui", "api", "mcp"]
+          }
+        },
+        {
+          "id": "work",
+          "label": "Work",
+          "ui": {
+            "x": 0,
+            "y": 0
+          },
+          "kind": "wait",
+          "config": {
+            "mode": "input",
+            "prompt": "Give an answer",
+            "inputSchema": {
+              "type": "object",
+              "required": ["answer"],
+              "properties": {
+                "answer": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            "exposeTo": ["ui", "api", "mcp"],
+            "onTimeout": "continue"
+          }
+        },
+        {
+          "id": "done",
+          "label": "Done",
+          "ui": {
+            "x": 0,
+            "y": 0
+          },
+          "kind": "exit",
+          "config": {
+            "outcome": "success",
+            "returns": "none",
+            "destinations": [
+              {
+                "kind": "caller"
+              }
+            ]
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "e1",
+          "from": {
+            "node": "start",
+            "port": "out"
+          },
+          "to": {
+            "node": "work",
+            "port": "in"
+          }
+        },
+        {
+          "id": "e2",
+          "from": {
+            "node": "work",
+            "port": "out"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          }
+        }
+      ]
+    }
+  },
+  "status": 201,
+  "body": {
+    "loop": {
+      "id": "01M59JCDGMKCB26EHGKSTRDDHG",
+      "ownerId": "local",
+      "name": "healthy-wait",
+      "draftVersionId": "01M59JCDGMAPT2078Q6EADMY03",
+      "createdAt": "2026-10-19T07:52:55.572Z",
+      "updatedAt": "2026-10-19T07:52:55.572Z"
+    },
+    "draft": {
+      "id": "01M59JCDGMAPT2078Q6EADMY03",
+      "loopId": "01M59JCDGMKCB26EHGKSTRDDHG",
+      "version": 1,
+      "status": "draft",
+      "definition": {
+        "schemaVersion": 4,
+        "name": "healthy-wait",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "start",
+            "label": "Start",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "manual",
+              "exposeTo": ["ui", "api", "mcp"]
+            }
+          },
+          {
+            "id": "work",
+            "label": "Work",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "wait",
+            "config": {
+              "mode": "input",
+              "prompt": "Give an answer",
+              "inputSchema": {
+                "type": "object",
+                "required": ["answer"],
+                "properties": {
+                  "answer": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "exposeTo": ["ui", "api", "mcp"],
+              "onTimeout": "continue"
+            }
+          },
+          {
+            "id": "done",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "e1",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "work",
+              "port": "in"
+            }
+          },
+          {
+            "id": "e2",
+            "from": {
+              "node": "work",
+              "port": "out"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          }
+        ]
+      },
+      "createdAt": "2026-10-19T07:52:55.572Z"
+    },
+    "issues": [],
+    "notices": []
+  }
+}

@@ -1,0 +1,129 @@
+{
+  "revision": "02ec16d6034e14cf7683b19619baa5c272be0591",
+  "dataDir": "%TEMP%/gg-c2-qa-callers-8APH8p",
+  "port": 5700,
+  "results": [
+    {
+      "name": "api-client wrong schema, prior visit, consumed identity and race",
+      "result": "pass",
+      "details": {
+        "runId": "01M5B7QC9WNTSJAZNC9TK7PZQE",
+        "raceRun": "01M5B7QCTAK0XF33GCJ4S7TVSR",
+        "invalid": {
+          "accepted": false,
+          "status": 400,
+          "code": "INVALID_INPUT"
+        },
+        "stale": {
+          "accepted": false,
+          "status": 409,
+          "code": "WAIT_MISMATCH"
+        },
+        "consumed": {
+          "accepted": false,
+          "status": 409,
+          "code": "WAIT_MISMATCH"
+        },
+        "answers": [
+          {
+            "accepted": true
+          },
+          {
+            "accepted": false,
+            "status": 409,
+            "code": "WAIT_MISMATCH"
+          }
+        ],
+        "eventLogUnchangedForRefusals": true,
+        "raceWakes": 1
+      }
+    },
+    {
+      "name": "MCP wrong schema, prior visit, consumed identity and race",
+      "result": "pass",
+      "details": {
+        "runId": "01M5B7QD3E41CK0Q8Z0EQJ98MG",
+        "raceRun": "01M5B7QDG728K55V88FKNHCQPN",
+        "invalid": {
+          "accepted": false,
+          "error": [
+            {
+              "type": "text",
+              "text": "GraphGoblin API error INVALID_INPUT (HTTP 400): input is invalid: / must be integer\nerrors: {\n  \"errors\": [\n    \"/ must be integer\"\n  ]\n}"
+            }
+          ]
+        },
+        "stale": {
+          "accepted": false,
+          "error": [
+            {
+              "type": "text",
+              "text": "GraphGoblin API error WAIT_MISMATCH (HTTP 409): The observed input wait is no longer active"
+            }
+          ]
+        },
+        "consumed": {
+          "accepted": false,
+          "error": [
+            {
+              "type": "text",
+              "text": "GraphGoblin API error WAIT_MISMATCH (HTTP 409): The observed input wait is no longer active"
+            }
+          ]
+        },
+        "answers": [
+          {
+            "accepted": true
+          },
+          {
+            "accepted": false,
+            "error": [
+              {
+                "type": "text",
+                "text": "GraphGoblin API error WAIT_MISMATCH (HTTP 409): The observed input wait is no longer active"
+              }
+            ]
+          }
+        ],
+        "eventLogUnchangedForRefusals": true,
+        "raceWakes": 1
+      }
+    },
+    {
+      "name": "parent input identity from earlier visit cannot answer next parent input",
+      "result": "pass",
+      "details": {
+        "parent": "01M5B7QDQM3QTN5HQ9HND5VXKM",
+        "childRuns": ["01M5B7QDRMJK9AM6TW79MV7PNT", "01M5B7QE0JMY9QH59FMWBHGDYT"],
+        "parentInputIds": ["01M5B7QDQM3QTN5HQ9HND5VXKM:12", "01M5B7QDQM3QTN5HQ9HND5VXKM:28"],
+        "staleChild": {
+          "type": "https://graphgoblin.dev/problems/wait-mismatch",
+          "title": "wait mismatch",
+          "status": 409,
+          "code": "WAIT_MISMATCH",
+          "detail": "The observed input wait is no longer active"
+        },
+        "staleParentInput": {
+          "type": "https://graphgoblin.dev/problems/wait-mismatch",
+          "title": "wait mismatch",
+          "status": 409,
+          "code": "WAIT_MISMATCH",
+          "detail": "The observed input wait is no longer active"
+        },
+        "wakes": 4
+      }
+    }
+  ],
+  "processes": [
+    {
+      "pid": 17576,
+      "role": "key CLI",
+      "stopped": true
+    },
+    {
+      "pid": 27568,
+      "role": "built API",
+      "stopped": true
+    }
+  ]
+}

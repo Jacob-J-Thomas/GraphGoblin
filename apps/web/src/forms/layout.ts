@@ -54,11 +54,6 @@ export function placementsOf(items: readonly LayoutItem[]): Placement[] {
   return items.flatMap((item) => (isOwned(item) ? item.fields : [item]));
 }
 
-/** The form's label for a field: its metadata's title, else its humanized key. */
-export function labelOf(key: string, schema: Schema): string {
-  return fieldMeta(schema).title ?? humanize(key);
-}
-
 /** The fields of an always-present object some of whose fields say whether they are advanced. */
 function splitFields(schema: Schema): Record<string, Schema> | undefined {
   if (fieldMeta(schema).jsonEditor) return undefined;

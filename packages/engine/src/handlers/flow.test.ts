@@ -588,6 +588,16 @@ describe('script node', () => {
         hasStdin: typeof req.stdin === 'string',
       }),
       stderr: '',
+      stdoutBytes: new TextEncoder().encode(
+        JSON.stringify({
+          got: req.args,
+          env: req.env['TOKEN'],
+          hasStdin: typeof req.stdin === 'string',
+        }),
+      ).byteLength,
+      stdoutOverflow: false,
+      stderrBytes: 0,
+      stderrOverflow: false,
       timedOut: false,
     }));
     const version = engine.publish(
@@ -624,6 +634,12 @@ describe('script node', () => {
       exitCode: 0,
       stdout: JSON.stringify([{ op: 'add', path: '/vars/fromScript', value: 1 }]),
       stderr: '',
+      stdoutBytes: new TextEncoder().encode(
+        JSON.stringify([{ op: 'add', path: '/vars/fromScript', value: 1 }]),
+      ).byteLength,
+      stdoutOverflow: false,
+      stderrBytes: 0,
+      stderrOverflow: false,
       timedOut: false,
     }));
     const version = engine.publish(
@@ -642,6 +658,12 @@ describe('script node', () => {
       exitCode: 0,
       stdout: JSON.stringify([{ op: 'add', path: '/run/id', value: 1 }]),
       stderr: '',
+      stdoutBytes: new TextEncoder().encode(
+        JSON.stringify([{ op: 'add', path: '/run/id', value: 1 }]),
+      ).byteLength,
+      stdoutOverflow: false,
+      stderrBytes: 0,
+      stderrOverflow: false,
       timedOut: false,
     }));
     expect((await engine.runToIdle(version.loopId)).failure?.message).toMatch(
@@ -651,6 +673,10 @@ describe('script node', () => {
       exitCode: 0,
       stdout: 'not json',
       stderr: '',
+      stdoutBytes: 8,
+      stdoutOverflow: false,
+      stderrBytes: 0,
+      stderrOverflow: false,
       timedOut: false,
     }));
     expect((await engine.runToIdle(version.loopId)).failure?.message).toMatch(/not a JSON patch/);
@@ -658,6 +684,10 @@ describe('script node', () => {
       exitCode: 0,
       stdout: JSON.stringify([{ op: 'explode' }]),
       stderr: '',
+      stdoutBytes: new TextEncoder().encode(JSON.stringify([{ op: 'explode' }])).byteLength,
+      stdoutOverflow: false,
+      stderrBytes: 0,
+      stderrOverflow: false,
       timedOut: false,
     }));
     expect((await engine.runToIdle(version.loopId)).failure?.message).toMatch(
@@ -713,6 +743,10 @@ describe('script node', () => {
       exitCode: 3,
       stdout: '',
       stderr: '',
+      stdoutBytes: 0,
+      stdoutOverflow: false,
+      stderrBytes: 0,
+      stderrOverflow: false,
       timedOut: false,
     }));
     expect((await withSecret.runToIdle(v2.loopId)).result).toEqual({ retried: true });
@@ -720,6 +754,10 @@ describe('script node', () => {
       exitCode: 0,
       stdout: 'ignored',
       stderr: '',
+      stdoutBytes: 7,
+      stdoutOverflow: false,
+      stderrBytes: 0,
+      stderrOverflow: false,
       timedOut: false,
     }));
     const plain = await withSecret.runToIdle(v2.loopId);
@@ -728,6 +766,10 @@ describe('script node', () => {
       exitCode: 7,
       stdout: '',
       stderr: 'bad',
+      stdoutBytes: 0,
+      stdoutOverflow: false,
+      stderrBytes: 3,
+      stderrOverflow: false,
       timedOut: false,
     }));
     expect((await withSecret.runToIdle(v2.loopId)).failure).toMatchObject({
@@ -738,6 +780,10 @@ describe('script node', () => {
       exitCode: null,
       stdout: '',
       stderr: '',
+      stdoutBytes: 0,
+      stdoutOverflow: false,
+      stderrBytes: 0,
+      stderrOverflow: false,
       timedOut: true,
     }));
     expect((await withSecret.runToIdle(v2.loopId)).failure?.code).toBe('SCRIPT_TIMEOUT');

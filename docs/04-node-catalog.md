@@ -128,6 +128,17 @@ type ScriptConfig = {
 
 Behaviour: non-zero exit codes without a configured route fail the run with `SCRIPT_EXIT_CODE`, which is resumable after the script is fixed. Scripts should be idempotent because crash recovery may run them again (05).
 
+Stdout and stderr use independent streaming UTF-8 decoders, so two-, three- and
+four-byte characters survive arbitrary subprocess chunk boundaries. Capture is
+limited to 10 MiB of raw bytes per stream by default (`ProcessScripts.maxOutputBytes`);
+probe callers may request stricter byte caps. A character split by a capture cap
+is omitted; an incomplete trailing sequence at end of stream becomes U+FFFD
+(the replacement character), including after timeout or cancellation.
+`stdoutBytes`/`stderrBytes` count captured raw bytes before decoding, and
+`stdoutOverflow`/`stderrOverflow` report truncation for default and explicit caps.
+The counts exclude synthetic spawn diagnostics and replacement-character encoding.
+Timeout and cancellation retain process-tree termination.
+
 Ports: `out` plus any labels in `exitCodeRoutes`.
 
 ## Context mutation (Decided operations)
@@ -197,7 +208,7 @@ Parks the run until something happens. In engine terms the run stops and is late
 
 Common fields: `timeoutSeconds?`, `onTimeout: 'continue' | 'fail-run'` (default `continue`, with `lastOutput = { timedOut: true }` so a decision node can branch).
 
-Behaviour: the node emits `run.waiting` and the run releases its worker. On wake, the received input or signal payload is appended as a message with role `user` or `note` and set as `lastOutput`.
+Behaviour: the node emits `run.waiting` with a required `wait.waitId`, also exposed as `waiting.waitId` in the run snapshot, and the run releases its worker. Input and signal callers must return that observed identity. Stale, unknown and already answered identities reject with 409 `WAIT_MISMATCH` without changing the run or log. On wake, the received input or signal payload is appended as a message with role `user` or `note` and set as `lastOutput`.
 
 Ports: `out`.
 
@@ -216,6 +227,8 @@ type HeartbeatConfig = {
   record: 'summary' | 'full';
 };
 ```
+
+A logical visit lasts until this node records `node.finished`. Signal observations and recorded beat numbers persist across beats, retries and restart within that visit; a gate returning to the completed node starts from zero observations and beat 1. Each park exposes a new `waiting.waitId`: send signals with the identity observed in that snapshot. Signals for earlier parks or visits reject with 409 `WAIT_MISMATCH` and cannot increase the count. Two separately accepted signals are two observations, even if their payloads match.
 
 Two readings of "heartbeat" fit this node. The first is "poll until a condition is true", such as waiting for an external job to finish. The second is "emit a periodic keep-alive to another system while the loop is paused", which is the same node with a `probe` that performs the ping and no `until`. If the owner meant something else, this section changes.
 

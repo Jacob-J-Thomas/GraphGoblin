@@ -1,0 +1,44 @@
+[
+  {
+    "name": "complete",
+    "accepted": true
+  },
+  {
+    "name": "missing waitId",
+    "accepted": false,
+    "issues": [
+      {
+        "expected": "string",
+        "code": "invalid_type",
+        "path": ["waitId"],
+        "message": "Invalid input: expected string, received undefined"
+      }
+    ]
+  },
+  {
+    "name": "missing startedSeq",
+    "accepted": false,
+    "issues": [
+      {
+        "expected": "number",
+        "code": "invalid_type",
+        "path": ["startedSeq"],
+        "message": "Invalid input: expected number, received undefined"
+      }
+    ]
+  },
+  {
+    "name": "zero startedSeq",
+    "accepted": false,
+    "issues": [
+      {
+        "origin": "number",
+        "code": "too_small",
+        "minimum": 0,
+        "inclusive": false,
+        "path": ["startedSeq"],
+        "message": "Too small: expected number to be >0"
+      }
+    ]
+  }
+]

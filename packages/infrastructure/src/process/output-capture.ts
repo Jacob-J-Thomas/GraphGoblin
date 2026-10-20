@@ -1,10 +1,12 @@
 import { StringDecoder } from 'node:string_decoder';
 
-/** Raw-byte bounded process output for items-mode probes; overflow is an explicit failure signal. */
+/** Raw-byte bounded UTF-8 output. Each capture owns an independent streaming decoder. */
 export class BoundedOutputCapture {
-  private readonly chunks: Buffer[] = [];
+  private readonly chunks: string[] = [];
+  private readonly decoder = new StringDecoder('utf8');
   private captured = 0;
   private exceeded = false;
+  private finished: string | undefined;
 
   constructor(private readonly maxBytes: number) {
     if (!Number.isSafeInteger(maxBytes) || maxBytes < 0)
@@ -12,11 +14,13 @@ export class BoundedOutputCapture {
   }
 
   append(chunk: Uint8Array): void {
+    if (this.finished !== undefined) throw new Error('output capture is already finished');
     const remaining = this.maxBytes - this.captured;
     if (chunk.byteLength > remaining) this.exceeded = true;
     if (remaining === 0 || chunk.byteLength === 0) return;
     const kept = chunk.subarray(0, remaining);
-    this.chunks.push(Buffer.from(kept));
+    const text = this.decoder.write(Buffer.from(kept.buffer, kept.byteOffset, kept.byteLength));
+    if (text) this.chunks.push(text);
     this.captured += kept.byteLength;
   }
 
@@ -27,10 +31,9 @@ export class BoundedOutputCapture {
     return this.exceeded;
   }
 
-  /** Streaming decode avoids manufacturing a replacement character for a cap-split UTF-8 suffix. */
+  /** Final read: replace incomplete EOF bytes (also after interruption), but omit a cap-split suffix. */
   text(): string {
-    const decoder = new StringDecoder('utf8');
-    const prefix = decoder.write(Buffer.concat(this.chunks, this.captured));
-    return this.exceeded ? prefix : prefix + decoder.end();
+    this.finished ??= this.chunks.join('') + (this.exceeded ? '' : this.decoder.end());
+    return this.finished;
   }
 }

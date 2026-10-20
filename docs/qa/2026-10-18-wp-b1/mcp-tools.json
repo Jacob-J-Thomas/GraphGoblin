@@ -1,0 +1,419 @@
+{
+  "tools": [
+    {
+      "name": "list_loops",
+      "title": "List loops",
+      "description": "List the GraphGoblin loops you can run. Call this first when the user names a loop or asks what is available. Returns id, name, description, and whether each loop is published (only published loops can be started without allowDraft). Pass a loop id or exact name to describe_loop before starting it.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "description": "Optional case-insensitive substring to filter loop names and descriptions.",
+            "type": "string"
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "describe_loop",
+      "title": "Describe a loop",
+      "description": "Describe one loop before starting it: its manual triggers with their input JSON schemas, the wait nodes that will ask for input, and each exit node with its return mapping (what the run result will contain). Uses the published version, or the draft when nothing is published. Pass the loop id or exact name. Use the trigger inputSchema to build the input for start_run. Triggers have no payload filters; use downstream decisions for payload checks.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "loopId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The loop id from list_loops, or the exact loop name (case-insensitive)."
+          }
+        },
+        "required": ["loopId"],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "start_run",
+      "title": "Start a run",
+      "description": "Start a run of a loop from a manual trigger. Returns immediately with the runId; the run executes in the background. Then call wait_for_run with that runId to get the result. Pass input matching the trigger inputSchema from describe_loop. triggerNodeId is only needed when the loop has more than one manual trigger.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "loopId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The loop id from list_loops, or the exact loop name (case-insensitive)."
+          },
+          "input": {
+            "description": "Any JSON value. Match the inputSchema reported by describe_loop or the waiting spec."
+          },
+          "triggerNodeId": {
+            "description": "The manual trigger node to start from, when the loop has several.",
+            "type": "string"
+          },
+          "allowDraft": {
+            "description": "Run the draft version when the loop has no published version. Default false.",
+            "type": "boolean"
+          }
+        },
+        "required": ["loopId"],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": true
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "wait_for_run",
+      "title": "Wait for a run",
+      "description": "Wait for a run to finish, polling for up to timeoutSeconds (default 60, max 600). If the run finished (succeeded, failed, cancelled, exhausted) it returns { finished: true, run } with run.result holding the loop's return value and run.failure explaining a failure. Otherwise it returns { finished: false, status, cursor, next }: follow \"next\". It returns early when the run needs you: waiting for input (call provide_input) or paused (call resume_run). For a long run, keep calling wait_for_run with the same runId. cursor is the last event sequence, usable as \"after\" in read_run_events.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "runId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The run id (a ULID) returned by start_run or list_runs."
+          },
+          "timeoutSeconds": {
+            "description": "How long to wait. Default 60, max 600.",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 600
+          }
+        },
+        "required": ["runId"],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "get_run",
+      "title": "Get a run",
+      "description": "Get the current snapshot of a run: status, current node, iteration, what it is waiting for, its returned value (including exhausted), and its failure details (for node failures). Call this to check a run without waiting; use wait_for_run to wait.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "runId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The run id (a ULID) returned by start_run or list_runs."
+          }
+        },
+        "required": ["runId"],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "get_run_thread",
+      "title": "Get a run thread",
+      "description": "Get a run's context thread: the messages, variables, artifacts, per-node outputs, last output, and usage counters the loop has accumulated. Use it to explain what a run did or to find an intermediate value. It can be large; prefer get_run when you only need the status or result.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "runId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The run id (a ULID) returned by start_run or list_runs."
+          }
+        },
+        "required": ["runId"],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "list_runs",
+      "title": "List runs",
+      "description": "List runs, newest first, optionally filtered by loop and status. Use it to find a run the user refers to (\"the last run of X\"). To page, pass nextBefore from the previous page as \"before\".",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "loopId": {
+            "description": "Only runs of this loop id.",
+            "type": "string"
+          },
+          "status": {
+            "description": "Only runs in one of these statuses.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "queued",
+                "running",
+                "waiting",
+                "paused",
+                "succeeded",
+                "failed",
+                "cancelled",
+                "exhausted"
+              ]
+            }
+          },
+          "parentRunId": {
+            "description": "Only child runs of this run; pass \"none\" for top-level runs only.",
+            "type": "string"
+          },
+          "before": {
+            "description": "Paging cursor: nextBefore from a previous page (a creation timestamp).",
+            "type": "string"
+          },
+          "limit": {
+            "description": "Page size. Default 20.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 500
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "read_run_events",
+      "title": "Read run events",
+      "description": "Read a page of a run's event log in sequence order: node entries and exits, harness items, decisions, waits, and the final run event. Pass after (a sequence number, default 0) and read again with after=nextAfter while hasMore is true. Use it to explain step by step what a run did.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "runId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The run id (a ULID) returned by start_run or list_runs."
+          },
+          "after": {
+            "description": "Return events with a sequence number greater than this. Default 0.",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "limit": {
+            "description": "Page size. Default 100.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
+          }
+        },
+        "required": ["runId"],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "cancel_run",
+      "title": "Cancel a run",
+      "description": "Cancel a run that is queued, running, waiting, or paused. Only do this when the user asks to stop it. Returns the run; the status becomes cancelled once the engine stops it, so call wait_for_run to confirm.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "runId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The run id (a ULID) returned by start_run or list_runs."
+          }
+        },
+        "required": ["runId"],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "pause_run",
+      "title": "Pause a run",
+      "description": "Pause a run at the next node boundary when the user asks to hold it. It keeps its state; call resume_run to continue it.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "runId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The run id (a ULID) returned by start_run or list_runs."
+          }
+        },
+        "required": ["runId"],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "resume_run",
+      "title": "Resume a run",
+      "description": "Resume a paused run from where it stopped: a run paused while waiting (for input, a signal, a timer, or a child run) goes back to waiting, anything else continues running. Then call wait_for_run to follow it.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "runId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The run id (a ULID) returned by start_run or list_runs."
+          }
+        },
+        "required": ["runId"],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "replay_run",
+      "title": "Replay a run from a node",
+      "description": "Debug a run by re-running it from one node: starts a new run (a fork) on the same loop version with the same input, whose context thread is the original run as it was just before that node first started. The original run is not changed. nodeId must be a node the original run reached (see read_run_events for node.started events). Returns the new run; call wait_for_run with its id to follow it.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "runId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The run id (a ULID) returned by start_run or list_runs."
+          },
+          "nodeId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The node to start the fork at, for example a nodeId from read_run_events."
+          }
+        },
+        "required": ["runId", "nodeId"],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": true
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "provide_input",
+      "title": "Provide input to a waiting run",
+      "description": "Answer a run that is waiting for input (wait_for_run or get_run shows status \"waiting\" with waiting.kind \"input\"). Pass a value matching waiting.inputSchema; read waiting.prompt to know what is being asked, and ask the user when the answer is theirs to give. Then call wait_for_run again.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "runId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The run id (a ULID) returned by start_run or list_runs."
+          },
+          "input": {
+            "description": "Any JSON value. Match the inputSchema reported by describe_loop or the waiting spec."
+          }
+        },
+        "required": ["runId", "input"],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    },
+    {
+      "name": "send_signal",
+      "title": "Send a signal to a run",
+      "description": "Deliver a named signal to a run, for wait nodes in signal mode (waiting.kind \"signal\", waiting.signalName) and heartbeat probes that count signals. Returns woke: true when a waiting node consumed it. Then call wait_for_run to follow the run.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "runId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The run id (a ULID) returned by start_run or list_runs."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The signal name, for example waiting.signalName."
+          },
+          "payload": {
+            "description": "Any JSON value. Match the inputSchema reported by describe_loop or the waiting spec."
+          }
+        },
+        "required": ["runId", "name"],
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "openWorldHint": false
+      },
+      "execution": {
+        "taskSupport": "forbidden"
+      }
+    }
+  ]
+}

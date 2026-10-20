@@ -1,5 +1,7 @@
 # 10 - Testing and quality
 
+The separate-process recovery check runs with `pnpm build` followed by `pnpm test:recovery-process`. It starts the built API against disposable mixed healthy/damaged SQLite history and removes its temporary data directory on success.
+
 ## Coverage policy (Decided)
 
 - Unit tests must cover more than 90% of lines and more than 90% of branches in every package, including `apps/web`. Thresholds are set in each package's Vitest config and enforced in CI. A package below threshold fails the build.
@@ -99,6 +101,8 @@ Run gates through pnpm: calling `node_modules/.bin/turbo` directly bypasses the 
 
 ## Performance baseline (Decided by measurement, 2026-10-03)
 
+The sustained, file-backed baseline for #190 is recorded in [2026-10-18 sustained-run measurements](qa/2026-10-18-sustained-run-measurements.md). [The repeatable scripts](../tooling/perf/README.md) cover cyclic work, growing context, SSE replay and slow readers, transcripts, readiness, populated stores, and headless Edge. They run separately from coverage and preserve their disposable stores, JSON summaries, memory samples, and API CPU profiles. The earlier in-memory baseline below remains historical evidence.
+
 `apps/api/src/perf.test.ts` boots the API in-process over the in-memory database with the fake harness, whose scripted turn streams 1,000 items, so one run of `trigger -> inference -> exit` appends 1,011 events (one `node.progress` per item). It is skipped unless `PERF=1`:
 
 ```
@@ -115,3 +119,42 @@ It prints a `PERF { ... }` JSON summary. Baseline on the development machine (Wi
 | SSE live tail of a run started as the client connects                | first event 20 ms, all 1,011 events and stream end 747 ms (the run's own duration)         |
 
 Finding fixed while measuring: libsql's local client does its work in native code and settles its promises without returning to the event loop, so a run appending events back to back starved every socket and timer. Before the fix the live tail's first event arrived after 755 ms, at the end of the run, and a 5 ms interval timer fired 3 times in an 800 ms run. The serialised database client (`packages/infrastructure/src/sqlite/db.ts`) now yields with `setImmediate` before a statement whenever 10 ms have passed since its last yield; throughput is unchanged. Appends cost about 0.7 ms each (one transaction per event: max `seq`, insert, update `last_event_seq`), which is far above what a real harness streams; batching appends is the lever if that ever matters.
+
+## Disposable API process lifecycle (#317)
+
+`apps/api/src/main.test.ts` uses `src/testing/api-subprocess.ts` against the built
+`apps/api/dist/main.js`. API subprocess tests build the API first through Turbo's
+`test` and `test:coverage` task dependencies. Direct package test commands bypass
+Turbo, so run `pnpm build` first; a missing entry reports that command explicitly.
+Each fixture owns a temporary `gg-api-process-*` directory and a free loopback port
+from 5600 to 5699, clears inherited `GG_*` configuration, and creates its API key
+through the binary. CLI dispatch is proved by exit codes 0/1/2. Corrupt SQLite
+refusal, occupied-port cleanup and Linux native signal shutdown are distinct
+evidence. The corrupt database fails before HTTP setup; a literal `*` static asset
+supplies a separate real post-container route-registration fault on POSIX.
+
+Signal cases run only on Linux. Node force-kills children on SIGINT/SIGTERM on
+win32 and does not execute JavaScript handlers. The literal wildcard asset also
+skips win32 because Windows rejects that filename. CI on `ubuntu-latest` supplies
+those native cases; captured process callbacks establish none of these claims.
+A Linux FIFO at the supported master-key file path keeps startup asynchronously
+pending while a real signal is handled: the shutdown log must precede readiness,
+ownership remains held, and after releasing the FIFO startup completes before a
+clean exit releases the lock and closes the listener. The fixture uses Ubuntu
+coreutils `mkfifo`; native SQLite busy waits alone can block the JS event loop.
+The harness proves listener closure, lock release, one shutdown and exit codes;
+#224 extends drain/force behavior later. Forced child termination in fixture
+cleanup is never counted as graceful shutdown evidence.
+
+Subprocess waits, lifecycle cases and fixture cleanup have 60-second budgets for loaded hosts; the rest of
+the API suite retains its defaults. Child V8 coverage is off by default, including
+inherited `NODE_V8_COVERAGE`; `GG_API_SUBPROCESS_V8_COVERAGE=1` opts into diagnostic
+reports inside the disposable directory, separate from Vitest package coverage.
+The helper remains in the normal source denominator, with no exclusion or
+threshold adjustment.
+
+Process fixtures stop their children and best-effort remove their temporary
+stores and reports, retrying native handle release. The `gg-publish-*` fixtures
+use separate real SQLite connections to arrange draft/publish interleavings,
+then close both clients and best-effort remove their temporary database directory.
+No owner process, store, or port is used.

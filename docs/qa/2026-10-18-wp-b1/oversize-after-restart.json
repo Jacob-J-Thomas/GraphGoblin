@@ -1,0 +1,121 @@
+{
+  "method": "GET",
+  "path": "/runs/01M59J7K8CDS319AA4GM21HA8E/events?after=0&limit=1000",
+  "status": 200,
+  "body": {
+    "items": [
+      {
+        "runId": "01M59J7K8CDS319AA4GM21HA8E",
+        "seq": 1,
+        "ts": "2026-10-19T07:50:17.612Z",
+        "type": "run.queued",
+        "initialThread": {
+          "schemaVersion": 1,
+          "run": {
+            "id": "01M59J7K8CDS319AA4GM21HA8E",
+            "loopId": "01M59J7K6EF8V9PGBXB4R19KZY",
+            "versionId": "01M59J7K6E7FWZA5589WSZEP41",
+            "iteration": 1
+          },
+          "invocation": {
+            "id": "01M59J7K8CYTMKWFDV76H7SKA8",
+            "source": "manual.api",
+            "caller": {
+              "kind": "api-key",
+              "id": "01M59J7BQJ2WH99T2N9JYG0DRS"
+            },
+            "trigger": {
+              "nodeId": "start",
+              "kind": "manual",
+              "payload": null,
+              "receivedAt": "2026-10-19T07:50:17.612Z"
+            }
+          },
+          "messages": [],
+          "vars": {},
+          "artifacts": [],
+          "outputs": {},
+          "gates": {},
+          "counters": {
+            "nodeVisits": {},
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          }
+        }
+      },
+      {
+        "runId": "01M59J7K8CDS319AA4GM21HA8E",
+        "seq": 2,
+        "ts": "2026-10-19T07:50:17.649Z",
+        "type": "run.started",
+        "attempt": 1
+      },
+      {
+        "runId": "01M59J7K8CDS319AA4GM21HA8E",
+        "seq": 3,
+        "ts": "2026-10-19T07:50:17.656Z",
+        "type": "node.started",
+        "nodeId": "start",
+        "kind": "trigger",
+        "attempt": 1,
+        "configHash": "527dee9c4254fe4e"
+      },
+      {
+        "runId": "01M59J7K8CDS319AA4GM21HA8E",
+        "seq": 4,
+        "ts": "2026-10-19T07:50:17.673Z",
+        "type": "node.finished",
+        "nodeId": "start",
+        "patch": [
+          {
+            "op": "add",
+            "path": "/outputs/start",
+            "value": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-19T07:50:17.672Z"
+            }
+          },
+          {
+            "op": "add",
+            "path": "/lastOutput",
+            "value": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-19T07:50:17.672Z"
+            }
+          }
+        ],
+        "route": "out",
+        "durationMs": 0
+      },
+      {
+        "runId": "01M59J7K8CDS319AA4GM21HA8E",
+        "seq": 5,
+        "ts": "2026-10-19T07:50:17.692Z",
+        "type": "node.started",
+        "nodeId": "work",
+        "kind": "wait",
+        "attempt": 1,
+        "configHash": "14f7c0a05f16f928"
+      },
+      {
+        "runId": "01M59J7K8CDS319AA4GM21HA8E",
+        "seq": 6,
+        "ts": "2026-10-19T07:50:17.705Z",
+        "type": "run.failed",
+        "failure": {
+          "code": "EVENT_INVALID",
+          "message": "Generated run event could not be recorded: wait.prompt: Too big: expected string to have <=10000 characters",
+          "nodeId": "work",
+          "resumable": false
+        }
+      }
+    ],
+    "nextAfter": 6
+  }
+}

@@ -33,7 +33,7 @@ type NodeContext<K> = {
 
 type NodeResult =
   | { kind: 'done'; patch: JsonPatch; route: string }
-  | { kind: 'park'; patch: []; wait: WaitSpec } // wait, heartbeat, subloop: the run stops here and resumes later
+  | { kind: 'park'; patch: []; wait: Omit<WaitSpec, 'waitId' | 'startedSeq'> } // wait, heartbeat, subloop: the run stops here and resumes later
   | {
       kind: 'exit';
       patch: JsonPatch;
@@ -139,12 +139,6 @@ Success finishes `succeeded`, Failure finishes `failed`, and Exhausted finishes 
 
 Validation reports `GATE_PASSES_ABOVE_VISIT_CAP` at `config.maxPasses` when a gate's maximum passes exceeds the visit cap. The warning names both numbers and all nodes on repeat-target paths back to that gate (excluding paths after the gate and exit branches). Continued repetition cannot reach the maximum-pass Limit reached output before the safety cap fails the run. This is a warning rather than an error because an earlier non-repeat choice or maximum run time can still finish the run as intended. All admission endpoints return the same warning, and the editor shows it beside Maximum passes.
 
-SQLite event reads enforce the current contract. A non-conforming row rejects the whole
-read page with an error naming its run, sequence, and type, without exposing its payload.
-Recovery cannot consume a partial invalid page. JSON pages and SSE replay use this same
-reader; SSE validates replay before sending any frames (07). Stored data repairs belong
-to migrations, including `0007` for historical decisions without `skipped`.
-
 Every new `decision.made` event contains `{portId, provenance, observation}` and empty diagnostics. Expression and LLM observations have kind `route`, with the declared routeId, nullable confidence and nullable reasoning; classifier observations have kind `classifier` with a typed answer. Boolean observations retain factual history; current decisions use routes or classifier answers. Fresh events pass per-kind validation before append. Diagnostics preserve at most three historical facts; provider error bodies remain excluded.
 
 ### Explicit decision failures (#98)
@@ -195,6 +189,35 @@ The offline server-store tool uses the same composition for each retained versio
 
 ## Crash recovery (Decided)
 
+Recovery enumerates raw run identities and decodes each candidate separately. Candidates
+are active runs and terminal runs awaiting finalization; startup checks and logs damaged
+candidates only. Finalized terminal history is checked through `GET /runs/diagnostics`.
+A malformed JSON field, invalid current-contract run record/thread, or unreadable event
+page is isolated to its run: startup logs `HISTORY_UNREADABLE` with the run ID and reason,
+skips its work, and continues healthy recovery. Recovery leaves its rows and events
+unchanged. Store-level schema, format, and I/O failures still fail startup; they are not
+reclassified as damaged runs.
+
+`GET /runs/{id}` and MCP `get_run` decode only the run row. A readable row returns its
+stored snapshot even when its events or thread checkpoint are damaged; an unreadable row
+returns `500 STORED_RUN_INVALID`. Event reads (`GET /runs/{id}/events`, MCP
+`read_run_events`) decode the requested event page and return `500 STORED_EVENT_INVALID`
+when it is unreadable. Thread reads (`GET /runs/{id}/thread`, MCP `get_run_thread`)
+decode the stored snapshot or, when it is absent, the initial thread and replay events.
+Unreadable thread data returns `500 STORED_RUN_INVALID`, and unreadable replay events
+return `500 STORED_EVENT_INVALID`. MCP exposes the same problem codes as tool errors.
+
+`GET /runs/diagnostics` (owner-scoped, `runs:read`) is the identification path for damaged
+history across all runs, including finalized terminal runs and rows that cannot supply a
+snapshot. Follow its `nextCursor` until null; each request checks at most 20 runs and 2,000
+events. This read-only diagnostic does not change lifecycle status: a damaged snapshot
+may still say queued, running, or waiting.
+
+The operator must explicitly repair the named row by hand or explicitly delete the
+containing loop through the existing deletion path after all of its runs are terminal.
+There is no automatic repair, quarantine archive, history reconstruction, deletion, or
+whole-store reset. See the troubleshooting guide for the manual disposition procedure.
+
 Before run recovery, fresh SQLite initialisation commits the schema migrations, their ledger and the complete stored-format marker in one write transaction. An interruption before commit rolls all of them back, so the next ordinary startup can initialise the empty store again without duplicate migration effects. Freshness requires no application tables and no recorded migrations; an empty migration-ledger table alone is allowed. Empty user tables do not establish freshness. An existing unmarked schema, a marker table without its complete row, an incomplete upgrade state or recorded migrations without application tables still stop startup with `DATA_UPGRADE_REQUIRED`. Preserve those stores for the [offline upgrade and recovery workflow](guide/08-offline-upgrade.md); startup does not stamp or repair them by inference.
 
 If another initialiser completes before this startup acquires its write lock, the recheck recognises the current store and startup still applies any pending ordinary migrations. If initialisation fails and rollback also fails, startup preserves the original initialisation error.
@@ -206,7 +229,7 @@ At boot the run manager loads every run in `queued`, `running`, `waiting`, or `p
 - Terminal runs never marked finalized: finalized now (timers, children, returns per channel, parent; see "Finalization is recorded").
 - Any of them whose log ends in a terminal event: completed from the log (above), nothing executed.
 - `waiting` with a durable wake in the log: moved to running, so the woken node runs.
-- Other `waiting` runs: re-arm the wait's timers from its wait spec, both of them when a wait has two (`until` under key `timer` or `heartbeat`, `timeoutAt` under key `timeout`; an input or signal wait written before `timeoutAt` existed uses `until`), as an upsert so an armed timer is unchanged; and wake a parent whose child is already terminal. Signals and inputs need nothing.
+- Any active run with a durable `run.waiting` and no later wake or node execution: complete the park from that event, including an interrupted snapshot/status write. Keep its original `waitId` and deadlines. Paused runs retain their pause. Re-arm both `until` (timer or heartbeat) and `timeoutAt` with keys containing the recorded `waitId`, then reconcile a completed child for runs that are waiting.
 - `running`: the executor starts from the log. The thread is the last verified checkpoint plus the events after it (see "Event log and projections"), and the cursor is checked against the log: when the log's last node event is the `node.finished` of the node the run record still points at, that node completed and only the cursor write was lost, so the cursor advances along the route it recorded (a gate follows its recorded actual port, with passes in the same append) without running the node again. Otherwise the last `node.started` without a matching `node.finished` identifies the interrupted node. Recovery depends on its kind.
   - Inferencing: the `harness_sessions` row was written before the subprocess started, so the handler resumes that session and asks it to continue. If the session was never started, it starts fresh.
   - Script: re-executed. Scripts are documented as at-least-once.
@@ -232,6 +255,12 @@ Resuming a failed run re-executes the failed node using the crash-recovery rules
 
 ## Timeouts (Decided minimal)
 
+Wait and heartbeat handlers describe their deadlines without arming timers. The manager first appends `run.waiting`, saves its thread and parks the run; only then does it upsert the timers. Recovery completes an interrupted park from the recorded spec before arming its timers, so downtime never restarts a duration or extends a recorded wall-clock deadline. A past deadline is immediately eligible on the next poll (supported polling settings include 50 ms and 1,000 ms).
+
+Timer keys are `<kind>@<waitId>`. The opaque `waitId` combines the run ID and the durable `node.started` sequence for this park; it is recorded in the event and snapshot, rather than kept in memory. A due delivery before parking is visible returns a deferred acknowledgement: the row is conditionally requeued one configured polling interval later. A paused run acknowledges its timer without waking; resume and recovery re-arm its recorded deadline. Timers for unreadable run history are also acknowledged, leaving that history for diagnostics and explicit deletion rather than logging on every poll. This prevents deferred rows from starving other overdue timers in a full batch. The original deadline stays in the wait spec. Resume re-arms the original deadline and the next poll wakes a passed deadline. A stale timer cannot wake a later park. Wake events are conditional appends. Their status acknowledgements also compare the recorded `waitId`, so a delayed acknowledgement cannot move a later wait to running. Redelivery after a lost status response completes or queues the durable wake without appending it twice, including when the running status committed before its response was lost. The scheduler acknowledges only after all listeners accept delivery and only while the row still has the fired deadline. It also serializes same-run timer mutations and preserves any re-arm overlapping delivery, including an identical deadline on resume; an old acknowledgement cannot delete that resumed timer.
+
+After `pnpm build`, `pnpm test:wait-restart` checks observed input identities, passed deadlines, paused waits and heartbeat counts through real API process restarts at 50 ms and 1,000 ms polling. CI runs it next to `pnpm test:recovery-process`; neither command makes provider calls.
+
 Optional `timeoutSeconds` exists on inferencing and script nodes and on wait and heartbeat nodes through their own fields. Defaults are none. A timed-out inferencing or script node is an unavoidable failure. A timed-out wait or heartbeat follows its `onTimeout` setting.
 
 ## Event log and projections (Decided)
@@ -242,6 +271,28 @@ Optional `timeoutSeconds` exists on inferencing and script nodes and on wait and
 - Replay also counts `node.started` events, including resumed attempts, in `counters.nodeVisits`. Recovery reconstructs a pending wake before appending its new `run.started`, so an accepted input is still available to the resumed node.
 - The SSE stream (07) is a tail of the same log, which is why reconnecting clients can resume from a sequence number without loss.
 - Large payloads such as transcripts, full probe responses, and return payloads above a size threshold are stored as artifacts on disk, keyed by content hash, and referenced from events.
+
+### Durable event validation
+
+Every generated durable event is validated against the current `RunEventSchema` before
+persistence. SQLite validates the entire append before inserting any rows, moving the sequence,
+or notifying subscribers; atomic admission already validates its initial event. A rejected
+event fails the run with `EVENT_INVALID`, `resumable: false`. Successful values are never
+silently truncated. Wait prompts and terminal failure messages are bounded at 10,000
+JavaScript string characters (UTF-16 code units); progress summaries have their separate
+2,000-character contract bound. Literal and rendered templates obey the same event bound.
+
+Failure reporting validates its own metadata and bounds oversized messages with a visible
+`[truncated; original N characters]` suffix within that bound. The same valid failure is
+stored in the terminal event and run record. A restart sees the durable failure and does
+not automatically repeat the node that produced the rejected event.
+
+SQLite event reads enforce the current contract. A non-conforming row rejects the whole
+read page with an error naming its run, sequence, and type, without exposing its payload.
+Recovery cannot consume a partial invalid page. JSON pages and SSE replay use this same
+reader; SSE validates replay before sending any frames (07). Stored data repairs belong
+to migrations, including `0007` for historical decisions without `skipped`. Existing damaged
+history requires explicit manual repair or deletion; recovery does not repair it automatically.
 
 ## General webhook admission (#168 T4)
 
@@ -294,7 +345,7 @@ Because every node input is reconstructible, the API offers "re-run this node wi
 The adversarial design review (`docs/qa/2026-10-03-adversarial-design-review.md`) found eight open defects; WP-G closed them. The rules they settle are in the sections above; in short:
 
 - **Subloop versions are pinned at parent creation** (ADV-004), transitively, and recorded on `run.queued` as `subloopVersions`.
-- **Timers are delivered at least once** (ADV-011). `TimerService` removes a timer only after every listener handled it without throwing, and only while the row still has the fired time (a listener that re-armed the key keeps its new timer); a listener error leaves it for the next poll, and a service with no listener consumes nothing. Timer keys carry the wait identity (`timer@<startedSeq>`, where `startedSeq` is the seq of the `node.started` that parked, recorded on the wait spec), and the wake is a conditional append checked against that wait, so a stale or repeated fire cannot wake a later wait. Recovery and resume re-arm both deadlines of a wait (`until`, `timeoutAt`). A bare key (armed before identities existed) only wakes a wait without an identity; at recovery such a wait gets its identity from the log (the `node.started` before its `run.waiting`), the record is updated, and its bare timers are replaced by keyed ones. Residual: a pre-upgrade duration wait with a separate timeout has no `timeoutAt`, so only its own timer is re-armed.
+- **Timers are delivered at least once** (ADV-011, #226). Timer arming, observed identities, deferred acknowledgement and restart reconciliation are described under "Timeouts" above.
 - **Cancel requests are claimed once** (ADV-012).
 - **A fast child cannot orphan its parent** (ADV-015).
 - **The log is the source of truth** (ADV-016 and the WP-G review): events are written before status, wakes and terminal outcomes are completed from the log at recovery, the cursor follows a durable `node.finished`, and the thread comes from a verified checkpoint plus the events after it.

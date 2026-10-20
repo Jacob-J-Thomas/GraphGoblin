@@ -1,0 +1,63 @@
+[
+  {
+    "package": "contracts",
+    "testFiles": "Test Files  18 passed (18)",
+    "tests": "Tests  256 passed (256)",
+    "lines": "99.72% ( 369/370 )",
+    "branches": "94.89% ( 186/196 )",
+    "failureLines": []
+  },
+  {
+    "package": "engine",
+    "testFiles": "Test Files  21 passed (21)",
+    "tests": "Tests  462 passed (462)",
+    "lines": "98.05% ( 2016/2056 )",
+    "branches": "92.74% ( 1586/1710 )",
+    "failureLines": []
+  },
+  {
+    "package": "infrastructure",
+    "testFiles": "Test Files  4 failed | 36 passed (40)",
+    "tests": "Tests  14 failed | 505 passed (519)",
+    "failureLines": [
+      " FAIL  src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild",
+      "Error: Test timed out in 30000ms.",
+      " FAIL  src/claude/process.test.ts > owned native Claude process transport > streams stdout, sends stdin and never retains stderr content",
+      "AssertionError: expected { exitCode: +0, …(4) } to match object { exitCode: +0, …(4) }",
+      " FAIL  src/claude/process.test.ts > owned native Claude process transport > kills on deadline and output overflow",
+      "Error: EBUSY: resource busy or locked, rmdir '%TEMP%\\gg-claude-process-Sopeoc'",
+      " FAIL  src/claude/process.test.ts > owned native Claude process transport > does not spawn for an already aborted signal and cancels a running process",
+      "Error: EBUSY: resource busy or locked, rmdir '%TEMP%\\gg-claude-process-UvgHAd'",
+      " FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived child started",
+      "AssertionError: expected 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' to be 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' // Object.is equality",
+      " FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived child started",
+      "Error: EBUSY: resource busy or locked, rmdir '%TEMP%\\gg-claude-process-140y1N'",
+      " FAIL  src/process/scripts.test.ts > ProcessScripts > kills the process tree on timeout",
+      "Error: Test timed out in 15000ms.",
+      " FAIL  src/process/scripts.test.ts > ProcessScripts > kills the process when the signal aborts, including when already aborted",
+      "Error: Test timed out in 15000ms.",
+      " FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > deletes all history and configured templates, converts definitions, retains signing identities/secrets/settings, and starts through ordinary migrations",
+      "Error: Test timed out in 20000ms.",
+      " FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > blocks ordinary queued runs without cancelling them",
+      " FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > blocks ordinary running runs without cancelling them",
+      "Error: Test timed out in 20000ms.",
+      " FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > blocks a pending ordinary receipt and its frozen admission intent",
+      "Error: Test timed out in 20000ms.",
+      " FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > requires every hash-bound review, binds repeated nodes to their stored version, and rejects stale/unused resolutions",
+      "Error: Test timed out in 20000ms.",
+      " FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses changed source, damaged SQL/ledger, malformed template identities and invalid definitions",
+      "Error: Test timed out in 20000ms.",
+      " FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > rolls back deletions, DDL, ledger, rewrites and marker on a failure after structural SQL",
+      "Error: Test timed out in 20000ms.",
+      "Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL"
+    ]
+  },
+  {
+    "package": "api",
+    "testFiles": "Test Files  40 passed | 2 skipped (42)",
+    "tests": "Tests  632 passed | 2 skipped (634)",
+    "lines": "98.5% ( 1715/1741 )",
+    "branches": "93.54% ( 1246/1332 )",
+    "failureLines": []
+  }
+]

@@ -1,0 +1,189 @@
+{
+  "run": {
+    "id": "01M5ANB5N962JD5Q7V1BNMQMCX",
+    "ownerId": "local",
+    "loopId": "01M5ANB5KXSVZ02F6Y5GHETWS0",
+    "versionId": "01M5ANB5KXGBCKZ2WBHG69HGCK",
+    "invocationId": "01M5ANB5N94SRVH9RR9BKW78BE",
+    "status": "cancelled",
+    "currentNodeId": "work",
+    "iteration": 1,
+    "cancelRequestedAt": "2026-10-19T18:03:55.599Z",
+    "createdAt": "2026-10-19T18:03:54.921Z",
+    "startedAt": "2026-10-19T18:03:54.929Z",
+    "finishedAt": "2026-10-19T18:03:59.703Z",
+    "lastEventSeq": 7
+  },
+  "events": {
+    "items": [
+      {
+        "runId": "01M5ANB5N962JD5Q7V1BNMQMCX",
+        "seq": 1,
+        "ts": "2026-10-19T18:03:54.921Z",
+        "type": "run.queued",
+        "initialThread": {
+          "schemaVersion": 1,
+          "run": {
+            "id": "01M5ANB5N962JD5Q7V1BNMQMCX",
+            "loopId": "01M5ANB5KXSVZ02F6Y5GHETWS0",
+            "versionId": "01M5ANB5KXGBCKZ2WBHG69HGCK",
+            "iteration": 1
+          },
+          "invocation": {
+            "id": "01M5ANB5N94SRVH9RR9BKW78BE",
+            "source": "manual.api",
+            "caller": {
+              "kind": "api-key",
+              "id": "01M5AN9PH1GFBKZWJF3C0PYJA2"
+            },
+            "trigger": {
+              "nodeId": "start",
+              "kind": "manual",
+              "payload": null,
+              "receivedAt": "2026-10-19T18:03:54.921Z"
+            }
+          },
+          "messages": [],
+          "vars": {},
+          "artifacts": [],
+          "outputs": {},
+          "gates": {},
+          "counters": {
+            "nodeVisits": {},
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          }
+        }
+      },
+      {
+        "runId": "01M5ANB5N962JD5Q7V1BNMQMCX",
+        "seq": 2,
+        "ts": "2026-10-19T18:03:54.932Z",
+        "type": "run.started",
+        "attempt": 1
+      },
+      {
+        "runId": "01M5ANB5N962JD5Q7V1BNMQMCX",
+        "seq": 3,
+        "ts": "2026-10-19T18:03:54.954Z",
+        "type": "node.started",
+        "nodeId": "start",
+        "kind": "trigger",
+        "attempt": 1,
+        "configHash": "527dee9c4254fe4e"
+      },
+      {
+        "runId": "01M5ANB5N962JD5Q7V1BNMQMCX",
+        "seq": 4,
+        "ts": "2026-10-19T18:03:54.960Z",
+        "type": "node.finished",
+        "nodeId": "start",
+        "patch": [
+          {
+            "op": "add",
+            "path": "/outputs/start",
+            "value": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-19T18:03:54.960Z"
+            }
+          },
+          {
+            "op": "add",
+            "path": "/lastOutput",
+            "value": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-19T18:03:54.960Z"
+            }
+          }
+        ],
+        "route": "out",
+        "durationMs": 0
+      },
+      {
+        "runId": "01M5ANB5N962JD5Q7V1BNMQMCX",
+        "seq": 5,
+        "ts": "2026-10-19T18:03:54.978Z",
+        "type": "node.started",
+        "nodeId": "work",
+        "kind": "script",
+        "attempt": 1,
+        "configHash": "2770d4ae46cda4f6"
+      },
+      {
+        "runId": "01M5ANB5N962JD5Q7V1BNMQMCX",
+        "seq": 6,
+        "ts": "2026-10-19T18:03:55.601Z",
+        "type": "run.cancel_requested",
+        "actor": {
+          "kind": "api-key",
+          "id": "01M5AN9PH1GFBKZWJF3C0PYJA2"
+        }
+      },
+      {
+        "runId": "01M5ANB5N962JD5Q7V1BNMQMCX",
+        "seq": 7,
+        "ts": "2026-10-19T18:03:59.701Z",
+        "type": "run.cancelled"
+      }
+    ],
+    "nextAfter": 7
+  },
+  "thread": {
+    "schemaVersion": 1,
+    "run": {
+      "id": "01M5ANB5N962JD5Q7V1BNMQMCX",
+      "loopId": "01M5ANB5KXSVZ02F6Y5GHETWS0",
+      "versionId": "01M5ANB5KXGBCKZ2WBHG69HGCK",
+      "iteration": 1
+    },
+    "invocation": {
+      "id": "01M5ANB5N94SRVH9RR9BKW78BE",
+      "source": "manual.api",
+      "caller": {
+        "kind": "api-key",
+        "id": "01M5AN9PH1GFBKZWJF3C0PYJA2"
+      },
+      "trigger": {
+        "nodeId": "start",
+        "kind": "manual",
+        "payload": null,
+        "receivedAt": "2026-10-19T18:03:54.921Z"
+      }
+    },
+    "messages": [],
+    "vars": {},
+    "artifacts": [],
+    "outputs": {
+      "start": {
+        "nodeId": "start",
+        "value": null,
+        "at": "2026-10-19T18:03:54.960Z"
+      }
+    },
+    "lastOutput": {
+      "nodeId": "start",
+      "value": null,
+      "at": "2026-10-19T18:03:54.960Z"
+    },
+    "gates": {},
+    "counters": {
+      "nodeVisits": {
+        "start": 1
+      },
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedInputTokens": 0,
+        "reasoningOutputTokens": 0
+      }
+    }
+  },
+  "assistedCleanup": true,
+  "pid": 35084
+}

@@ -9,7 +9,6 @@ import {
   backwardDirection,
   createRoutingPlan,
   intersectsBox,
-  routeBackwardEdges,
   routeMessage,
   ROUTING_RADIUS,
   SearchWorkspace,
@@ -19,6 +18,9 @@ import {
 } from './routing.js';
 import { detour, SEARCH_LIMIT } from './routing-search.js';
 import { BoxIndex, distance, Reservations } from './routing-geometry.js';
+
+const routesOf = (...args: Parameters<typeof createRoutingPlan>) =>
+  createRoutingPlan(...args).routes;
 
 const box = (
   id: string,
@@ -339,7 +341,7 @@ describe('routing review regressions', () => {
       );
       expect(search.points.length).toBeGreaterThan(0);
       expect(search.expansions).toBeLessThan(100);
-      const route = routeBackwardEdges(nodes, [e]).get(e.id)!;
+      const route = routesOf(nodes, [e]).get(e.id)!;
       geometry(nodes, e, route);
       expect(labelGeometry([route], nodes)).toBe(1);
     },
@@ -348,12 +350,12 @@ describe('routing review regressions', () => {
     const e = connection('source', 'target');
     for (let gap = 0; gap <= 80; gap += 1) {
       const nodes = [box('source', 400, 0), box('target', 0, 0), box('neighbour', 584 + gap, 0)];
-      const route = routeBackwardEdges(nodes, [e]).get(e.id)!;
+      const route = routesOf(nodes, [e]).get(e.id)!;
       geometry(nodes, e, route);
       if (gap < 64) expect(route.padding).toBeLessThan(32);
       // Real handles protrude 6 px: only the first six gaps actually cover the measured tip.
       nodes[0] = box('source', 400, 0, 184, 122, 6);
-      const measured = routeBackwardEdges(nodes, [e]).get(e.id)!;
+      const measured = routesOf(nodes, [e]).get(e.id)!;
       if (gap < 6) expect(measured.blocked).toBe(true);
       else geometry(nodes, e, measured);
     }
@@ -369,7 +371,7 @@ describe('routing review regressions', () => {
         box('neighbour', 584 + gap, 0, 184, 122, 6),
       ];
       const e = connection('source', 'target');
-      const route = routeBackwardEdges(nodes, [e]).get(e.id)!;
+      const route = routesOf(nodes, [e]).get(e.id)!;
       geometry(nodes, e, route);
       expect(route.radii).toHaveLength(route.points.length);
       expect([route.radii[0], route.radii.at(-1)]).toEqual([0, 0]);
@@ -418,7 +420,7 @@ describe('routing review regressions', () => {
           box('floor', 100, 440, 1200, 400, 6),
         ];
         const e = connection('source', 'target');
-        const route = routeBackwardEdges(nodes, [e]).get(e.id)!;
+        const route = routesOf(nodes, [e]).get(e.id)!;
         // geometry() keeps the handle strips min(padding, 12) px away whenever padding allows.
         geometry(nodes, e, route);
         checked += 1;
@@ -431,7 +433,7 @@ describe('routing review regressions', () => {
     fixture.edges.find((e) => e.id === 'outer-return')!.id = 'a-outer';
     fixture.edges.find((e) => e.id === 'inner-return')!.id = 'z-inner';
     const { nodes, edges } = routingInput(fixture);
-    const routes = routeBackwardEdges(nodes, edges);
+    const routes = routesOf(nodes, edges);
     expect(routes.get('a-outer')!.lane!.y - routes.get('z-inner')!.lane!.y).toBeGreaterThanOrEqual(
       24,
     );
@@ -440,7 +442,7 @@ describe('routing review regressions', () => {
 
   it('prefers free 24 px lanes for six returns, independent of their distance cost', () => {
     const { nodes, edges } = routingInput(sixReturnDecision());
-    const routes = routeBackwardEdges(nodes, edges);
+    const routes = routesOf(nodes, edges);
     expect(routes.size).toBe(6);
     expect(labelGeometry(routes.values(), nodes)).toBe(6);
     const lanes = [...routes.values()].map((r) => r.lane!);
@@ -455,7 +457,7 @@ describe('routing review regressions', () => {
       source.outputs = { back: source.outputs['out']! };
       const nodes = [source, box('target', 0, 0), box('neighbour', 784 + gap, 0)];
       const e = { ...connection('source', 'target'), port: 'back' };
-      const route = routeBackwardEdges(nodes, [e]).get(e.id)!;
+      const route = routesOf(nodes, [e]).get(e.id)!;
       geometry(nodes, e, route);
       expect(route.padding).toBeLessThan(32);
       expect(route.lanePadding).toBe(32);
@@ -473,7 +475,7 @@ describe('routing review regressions', () => {
       port: 'repeat',
       repeat: true,
     }));
-    const routes = [...routeBackwardEdges(nodes, edges).values()].filter((r) => r.points.length);
+    const routes = [...routesOf(nodes, edges).values()].filter((r) => r.points.length);
     expect(routes.length).toBeGreaterThanOrEqual(40);
     expect(labelGeometry(routes, nodes)).toBe(routes.length);
     distinctTrunks(routes);
@@ -482,7 +484,7 @@ describe('routing review regressions', () => {
 
   it('separates shared-card vertical trunks in the dense graph and on two decision ports', () => {
     const { nodes, edges } = routingInput(denseGraph());
-    const routes = routeBackwardEdges(nodes, edges);
+    const routes = routesOf(nodes, edges);
     for (const e of edges) {
       const route = routes.get(e.id);
       if (route) geometry(nodes, e, route);
@@ -494,7 +496,7 @@ describe('routing review regressions', () => {
       ...connection('decision', 'target', port),
       port,
     }));
-    const two = routeBackwardEdges([decision, box('target', 0, 0)], es);
+    const two = routesOf([decision, box('target', 0, 0)], es);
     distinctTrunks(two.values());
     expect(two.get('first')!.points[1]!.x).not.toBe(two.get('second')!.points[1]!.x);
   });
