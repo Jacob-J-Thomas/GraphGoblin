@@ -2,12 +2,14 @@ import { describe, it } from 'vitest';
 import {
   admissionContractCases,
   FakeClock,
+  FakeIds,
   type AdmissionContractFixture,
   type AdmissionWrite,
 } from '@graphgoblin/engine/testing';
 import { SqliteTriggerAdmission } from './admission.js';
 import { openMemoryDatabase } from './db.js';
 import { SqliteEventStore } from './events.js';
+import { SqliteLoopRepository } from './loops.js';
 import { SqliteRunRepository } from './runs.js';
 import { SqliteInboundEvents } from './triggers.js';
 
@@ -16,10 +18,12 @@ export async function createSqliteAdmissionFixture(): Promise<AdmissionContractF
   const handle = await openMemoryDatabase();
   const events = new SqliteEventStore(handle.db, new FakeClock());
   const runs = new SqliteRunRepository(handle.db);
+  const loops = new SqliteLoopRepository(handle.db, new FakeClock(), new FakeIds());
   const inbound = new SqliteInboundEvents(handle.db);
   const faults: Record<AdmissionWrite, string> = {
     'claim.inbound': 'BEFORE INSERT ON inbound_events',
     'claim.receipt': 'BEFORE INSERT ON webhook_receipts',
+    'create.snapshot': 'BEFORE INSERT ON loop_versions',
     'create.run': 'BEFORE INSERT ON runs',
     'create.event': 'BEFORE INSERT ON run_events',
     'create.receipt': 'BEFORE UPDATE ON webhook_receipts',
@@ -30,6 +34,7 @@ export async function createSqliteAdmissionFixture(): Promise<AdmissionContractF
     run: (id) => runs.get(id),
     thread: (id) => runs.getInitialThread(id),
     events: (id) => events.read(id),
+    version: (id) => loops.getVersion(id),
     inbound: (id) => inbound.get(id),
     subscribe: (id, listener) => events.subscribe(id, listener),
     async failAt(write) {

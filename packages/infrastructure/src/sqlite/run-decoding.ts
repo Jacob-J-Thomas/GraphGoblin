@@ -30,11 +30,13 @@ export const rawRunColumns = {
   startedAt: runs.startedAt,
   finishedAt: runs.finishedAt,
   lastEventSeq: runs.lastEventSeq,
+  pinned: sql<string | null>`${runs.pinned}`,
 };
-type RawRun = Omit<RunRecordRow, 'waiting' | 'failure' | 'result'> & {
+type RawRun = Omit<RunRecordRow, 'waiting' | 'failure' | 'result' | 'pinned'> & {
   waiting: string | null;
   failure: string | null;
   result: string | null;
+  pinned: string | null;
 };
 
 function decode(runId: string, field: string, value: string): unknown {
@@ -49,6 +51,10 @@ function decode(runId: string, field: string, value: string): unknown {
 }
 
 export function decodeRunRecord(row: RawRun): RunRecord {
+  // Every run is written with a definition pin and 0014 pinned the runs before it (ADR-0041),
+  // so a missing one is damaged history, like malformed or schema-invalid pin JSON.
+  if (row.pinned === null)
+    throw new UnreadableRunHistoryError(row.id, `Stored run ${row.id} has no definition pin`);
   // Decode raw JSON before the one named-field mapper. Internal columns never become
   // contract fields, and mapper invariants (including definition pins) stay authoritative.
   const decoded = {
@@ -56,6 +62,7 @@ export function decodeRunRecord(row: RawRun): RunRecord {
     waiting: row.waiting === null ? null : decode(row.id, 'waiting', row.waiting),
     failure: row.failure === null ? null : decode(row.id, 'failure', row.failure),
     result: row.result === null ? undefined : decode(row.id, 'result', row.result),
+    pinned: decode(row.id, 'pinned', row.pinned),
   } as RunRecordRow;
   const parsed = RunRecordSchema.safeParse(runRecordFromRow(decoded));
   if (!parsed.success)

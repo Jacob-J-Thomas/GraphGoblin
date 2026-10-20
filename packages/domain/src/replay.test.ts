@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { RunEvent } from '@graphgoblin/contracts';
-import { FIXTURE_IDS, FIXTURE_TS, sampleThread } from '@graphgoblin/contracts/testing';
+import { FIXTURE_IDS, FIXTURE_TS, samplePin, sampleThread } from '@graphgoblin/contracts/testing';
 import { replayStateAt, replayThread, summarizeRun } from './replay.js';
 
 function ev<T extends RunEvent['type']>(
@@ -12,7 +12,7 @@ function ev<T extends RunEvent['type']>(
 }
 
 const events: RunEvent[] = [
-  ev(1, 'run.queued', {}),
+  ev(1, 'run.queued', { versionId: FIXTURE_IDS.version, pinned: samplePin() }),
   ev(2, 'run.started', { attempt: 1 }),
   ev(3, 'node.started', { nodeId: 'prep', kind: 'mutate', attempt: 1, configHash: 'h' }),
   ev(4, 'node.finished', {

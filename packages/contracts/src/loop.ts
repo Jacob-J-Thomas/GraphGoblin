@@ -83,11 +83,19 @@ export const LoopRecordSchema = z.strictObject({
 });
 export type LoopRecord = z.infer<typeof LoopRecordSchema>;
 
+/**
+ * `draft`: the loop's one editable definition. `published`: an immutable released version.
+ * `snapshot`: an immutable copy of the draft frozen when a draft run started, carrying the draft's
+ * number; runs pin it, it is never published, listed in the version history, or edited (ADR-0041).
+ */
+export const LoopVersionStatusSchema = z.enum(['draft', 'published', 'snapshot']);
+export type LoopVersionStatus = z.infer<typeof LoopVersionStatusSchema>;
+
 export const LoopVersionRecordSchema = z.strictObject({
   id: UlidSchema,
   loopId: UlidSchema,
   version: z.number().int().positive(),
-  status: z.enum(['draft', 'published']),
+  status: LoopVersionStatusSchema,
   definition: LoopDefinitionSchema,
   createdAt: TimestampSchema,
   publishedAt: TimestampSchema.optional(),

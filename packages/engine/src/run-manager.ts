@@ -13,7 +13,9 @@ import type {
   LoopVersionRecord,
   Node,
   Outcome,
+  PinnedDefaults,
   ReturnChannel,
+  RunPin,
   RunEvent,
   RunFailure,
   RunRecord,
@@ -59,6 +61,7 @@ import type {
 import { defaultHandlers } from './handlers/index.js';
 import type { EngineSettings, EnginePorts, EventDraft, RunRecordChanges } from './ports.js';
 import { createInitialThread, type InitialThreadInput } from './thread.js';
+import { bindClassifiers, freezeDraft, pinnedFields } from './definition-pin.js';
 import { boundedFailure } from './event-validation.js';
 
 /** API-facing errors: bad requests against the run manager, never engine bugs. */
@@ -97,10 +100,26 @@ export interface StartRunInput {
   returnDefaults?: ReturnChannel[];
   parentRunId?: string;
   seed?: InitialThreadInput['seed'];
-  /** Allow running a draft version (test runs). */
+  /** Allow running a draft version (test runs). The run pins a snapshot of it (ADR-0041). */
   allowDraft?: boolean;
   /** Subloop versions already pinned by the parent run; a child inherits them. */
   subloopVersions?: Record<string, string>;
+  /** Inherited model defaults already pinned by the parent run; a child inherits them. */
+  pinnedDefaults?: PinnedDefaults;
+  /** Classifier bindings already pinned by the parent run; a child keeps them for shared ids. */
+  pinnedClassifiers?: RunPin['classifiers'];
+}
+
+/** A run start prepared outside the pin lock, admitted inside it. */
+interface PreparedStart {
+  /** The immutable record the run executes: a published version or the draft snapshot. */
+  version: LoopVersionRecord;
+  /** The record the start read: the published version or the draft row, checked under the lock. */
+  sourceId: string;
+  run: RunRecord;
+  thread: ContextThread;
+  /** A draft start's frozen draft, committed with the run. */
+  snapshot?: LoopVersionRecord;
 }
 
 export interface ReplayRunInput {
@@ -328,11 +347,9 @@ export class RunManager {
   // Commands
   // ---------------------------------------------------------------------------
 
-  private async prepareStart(
-    input: StartRunInput,
-  ): Promise<{ version: LoopVersionRecord; run: RunRecord; thread: ContextThread }> {
-    const version = await this.resolveVersion(input);
-    const def = version.definition;
+  private async prepareStart(input: StartRunInput): Promise<PreparedStart> {
+    const source = await this.resolveVersion(input);
+    const def = source.definition;
     const trigger = this.resolveTrigger(def, input.triggerNodeId);
     const payload: JsonValue = input.payload ?? null;
     if (trigger.config.type === 'manual' && trigger.config.inputSchema) {
@@ -348,6 +365,20 @@ export class RunManager {
     const now = this.now();
     const runId = this.ports.ids.next();
     const invocationId = this.ports.ids.next();
+    // The run's definition is immutable for its whole life (ADR-0041): a draft start pins a frozen
+    // copy of exactly the draft read and validated above, committed with the run.
+    const snapshot =
+      source.status === 'draft' ? freezeDraft(source, this.ports.ids.next(), now) : undefined;
+    const version = snapshot ?? source;
+    const pinned = pinnedFields(version, {
+      defaults: input.pinnedDefaults ?? (await this.startDefaults(input)),
+      classifiers: await bindClassifiers(
+        def,
+        input.ownerId,
+        this.ports.classifiers,
+        input.pinnedClassifiers,
+      ),
+    });
     const thread = createInitialThread({
       runId,
       loopId: version.loopId,
@@ -378,7 +409,7 @@ export class RunManager {
       id: runId,
       ownerId: input.ownerId,
       loopId: version.loopId,
-      versionId: version.id,
+      ...pinned,
       ...(input.parentRunId ? { parentRunId: input.parentRunId } : {}),
       invocationId,
       status: 'queued',
@@ -386,19 +417,22 @@ export class RunManager {
       createdAt: now,
       lastEventSeq: 0,
     };
-    return { version, run, thread };
+    return { version, sourceId: source.id, run, thread, ...(snapshot ? { snapshot } : {}) };
+  }
+
+  /** The defaults a new top-level run inherits, read once at its start and pinned (ADR-0041). */
+  private async startDefaults(input: StartRunInput): Promise<PinnedDefaults> {
+    return {
+      owner: (await this.settings.ownerDefaults?.(input.ownerId)) ?? { byHarness: {} },
+      process: this.settings.defaults,
+    };
   }
 
   async startRun(input: StartRunInput): Promise<RunRecord> {
-    const { version, run, thread } = await this.prepareStart(input);
+    const prepared = await this.prepareStart(input);
     const admitted = await this.withPinLock(async () => {
-      await this.assertVersionPresent(version.id, input.loopId);
-      const intent = await this.prepareAdmission(
-        version.definition,
-        run,
-        thread,
-        input.subloopVersions ?? {},
-      );
+      await this.assertVersionPresent(prepared.sourceId, input.loopId);
+      const intent = await this.prepareAdmission(prepared, input.subloopVersions ?? {});
       return this.ports.admission.create(intent);
     });
     this.enqueue(admitted.id);
@@ -418,32 +452,31 @@ export class RunManager {
         'Atomic poll admission requires an items-mode trigger',
       );
     const run = await this.withPinLock(async () => {
-      await this.assertVersionPresent(prepared.version.id, input.loopId);
-      return this.ports.admission.createPollItem(
-        await this.prepareAdmission(prepared.version.definition, prepared.run, prepared.thread, {}),
-      );
+      await this.assertVersionPresent(prepared.sourceId, input.loopId);
+      return this.ports.admission.createPollItem(await this.prepareAdmission(prepared, {}));
     });
     if (run) this.enqueue(run.id);
     return run;
   }
 
   private async prepareAdmission(
-    def: LoopDefinition,
-    run: RunRecord,
-    initialThread: ContextThread,
+    { version, run, thread: initialThread, snapshot }: PreparedStart,
     inherited: Record<string, string>,
   ): Promise<RunAdmission> {
     const reached = new Set<string>([run.loopId]);
-    const subloopVersions = await this.pinSubloops(def, inherited, reached);
+    const subloopVersions = await this.pinSubloops(version.definition, inherited, reached);
     return {
       run,
       initialThread,
       pinnedLoopIds: [...reached],
       queued: {
         type: 'run.queued',
+        versionId: run.versionId,
+        pinned: run.pinned,
         initialThread,
         ...(Object.keys(subloopVersions).length ? { subloopVersions } : {}),
       },
+      ...(snapshot ? { snapshot } : {}),
     };
   }
 
@@ -463,13 +496,8 @@ export class RunManager {
       throw new AdmissionConflictError();
     const result = await this.withPinLock(async () => {
       const prepared = await this.prepareStart(input);
-      await this.assertVersionPresent(prepared.version.id, input.loopId);
-      const intent = await this.prepareAdmission(
-        prepared.version.definition,
-        prepared.run,
-        prepared.thread,
-        {},
-      );
+      await this.assertVersionPresent(prepared.sourceId, input.loopId);
+      const intent = await this.prepareAdmission(prepared, {});
       let claimed;
       try {
         claimed = await this.ports.admission.claim(claim, intent);
@@ -885,11 +913,13 @@ export class RunManager {
         replayOf,
       },
     };
+    // The fork executes the source's pinned definition with the source's inherited defaults.
     const run: RunRecord = {
       id: runId,
       ownerId: source.ownerId,
       loopId: source.loopId,
       versionId: source.versionId,
+      pinned: source.pinned,
       invocationId,
       status: 'queued',
       currentNodeId: input.nodeId,
@@ -910,6 +940,8 @@ export class RunManager {
         pinnedLoopIds: [...new Set([source.loopId, ...Object.keys(subloopVersions)])],
         queued: {
           type: 'run.queued',
+          versionId: run.versionId,
+          pinned: run.pinned,
           replayOf,
           ...(Object.keys(subloopVersions).length > 0 ? { subloopVersions } : {}),
         },
@@ -1318,8 +1350,10 @@ export class RunManager {
       return;
     }
     const def = version.definition;
-    // Owner defaults are read at every (re)start, so a change in settings applies to the next run.
-    const ownerDefaults = (await this.settings.ownerDefaults?.(run.ownerId)) ?? { byHarness: {} };
+    // Inherited defaults (and classifier bindings, read by the decision handler) are the ones
+    // pinned when the run was created (ADR-0041): a Settings or process change reaches new runs
+    // only, never a run that waits, resumes or recovers.
+    const { owner: ownerDefaults, process: processDefaults } = run.pinned.defaults;
     // Read before any recovery marker is appended; a marker does not consume a wake either.
     const pendingWake = findPendingWake(events);
     let thread = await this.loadThread(run, events);
@@ -1385,7 +1419,7 @@ export class RunManager {
         const issues = validateHarnessDefaults({
           loopDefaults: def.settings.defaults,
           ownerDefaults,
-          processDefaults: this.settings.defaults,
+          processDefaults,
           catalog,
         });
         if (issues.length) {
@@ -1404,7 +1438,7 @@ export class RunManager {
           ...(effort !== undefined ? { effort } : {}),
           loopDefaults: def.settings.defaults,
           ownerDefaults,
-          processDefaults: this.settings.defaults,
+          processDefaults,
           catalog,
         });
         if (resolution.status !== 'ready') {
@@ -1930,6 +1964,8 @@ export class RunManager {
       parentRunId: parent.id,
       seed: request.seed,
       subloopVersions: pins,
+      pinnedDefaults: parent.pinned.defaults,
+      pinnedClassifiers: parent.pinned.classifiers,
     });
     return child.id;
   }
@@ -2066,6 +2102,13 @@ export class RunManager {
       throw new EngineRequestError(
         'LOOP_NOT_FOUND',
         `loop ${input.loopId} has no ${input.versionId ? `version ${input.versionId}` : 'published version'}`,
+      );
+    }
+    if (version.status === 'snapshot') {
+      // A snapshot belongs to the draft runs that pinned it; it is never started again.
+      throw new EngineRequestError(
+        'VERSION_NOT_PUBLISHED',
+        `version ${version.id} is a draft run's snapshot; start the loop's draft or a published version`,
       );
     }
     if (version.status !== 'published' && !input.allowDraft) {

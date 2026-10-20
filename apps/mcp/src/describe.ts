@@ -127,6 +127,8 @@ export function summarizeRun(run: RunRecord) {
   return {
     id: run.id,
     loopId: run.loopId,
+    /** The definition the run executes for its whole life, e.g. "Review v3" or "Review draft v4". */
+    definition: run.pinned.label,
     status: run.status,
     ...(run.currentNodeId ? { currentNodeId: run.currentNodeId } : {}),
     iteration: run.iteration,
