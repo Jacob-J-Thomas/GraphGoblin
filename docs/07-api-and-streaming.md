@@ -404,8 +404,10 @@ removing the destination from its stored JSON by hand with GraphGoblin stopped; 
 snapshot cannot be edited even then (migration 0014's immutability trigger), so delete the loop
 once its runs are terminal (`DELETE /loops/{id}` still works and removes its runs and snapshots)
 or reset the store. The store-level startup check does not refuse a definition whose only
-departure from the current contract is such a destination, so the API starts and the refusal
-stays per loop.
+departure from the current contract is such a destination (in the former channel's exact shape,
+`{ kind: "event", eventType: <slug> }`), so the API starts and the refusal stays per loop. The
+offline format cutover (`inspect`/`apply`) still converts every definition strictly: a store
+holding such a destination needs explicit repair, loop deletion or a reset before a cutover.
 
 Run-list items and `GET /runs/{id}` return the canonical `RunRecord`, without
 `templateSubject` or a template-store lookup. Regenerate strict clients for these

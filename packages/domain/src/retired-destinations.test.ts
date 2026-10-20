@@ -76,6 +76,15 @@ describe('retiredEventDestinations (#242, ADR-0044)', () => {
       expect(withoutRetiredEventDestinations(value)).toBe(value);
   });
 
+  it.each(['', 'loop done', '1-done', 'd' + 'x'.repeat(64), 'loop\ndone', 7])(
+    'keeps an Event destination whose event type %j was never a valid slug',
+    (eventType) => {
+      const destinations = [{ kind: 'event', eventType }];
+      const definition = { nodes: [{ id: 'done', kind: 'exit', config: { destinations } }] };
+      expect(withoutRetiredEventDestinations(definition)).toEqual(definition);
+    },
+  );
+
   it('finds nothing in a current definition or in shapes that are not definitions', () => {
     expect(retiredEventDestinations(minimalLoop())).toEqual([]);
     for (const value of [undefined, null, 'loop', [], {}, { nodes: 'none' }])

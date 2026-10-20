@@ -5,16 +5,21 @@
  * executing it, rather than dropping the destination silently.
  */
 
+import { SlugSchema } from '@graphgoblin/contracts';
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-/** The retired channel exactly as the earlier contract stored it: `{ kind: 'event', eventType }`. */
+/**
+ * The retired channel exactly as the earlier contract accepted it: `{ kind: 'event', eventType }`
+ * with nothing else, and `eventType` a slug (the former channel's own schema).
+ */
 function isRetiredEventChannel(destination: unknown): boolean {
   return (
     isRecord(destination) &&
     destination['kind'] === 'event' &&
-    typeof destination['eventType'] === 'string' &&
+    SlugSchema.safeParse(destination['eventType']).success &&
     Object.keys(destination).length === 2
   );
 }

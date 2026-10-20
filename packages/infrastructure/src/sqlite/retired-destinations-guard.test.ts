@@ -77,6 +77,31 @@ describe('startup guard and retired Event destinations (#242)', () => {
     });
   });
 
+  // The former channel required a slug event type; anything else was never a valid destination.
+  it.each([
+    ['an empty', ''],
+    ['a space-containing', 'loop done'],
+    ['a digit-leading', '1-done'],
+    ['an overlong', 'd' + 'x'.repeat(64)],
+    ['a newline-containing', 'loop\ndone'],
+  ])(
+    'still refuses the store for an Event destination with %s event type',
+    async (_name, eventType) => {
+      const { handle } = await storeWithExit(exitWith([{ kind: 'event', eventType }]));
+      await expect(guardDatabaseUpgrade(handle.client)).rejects.toMatchObject({
+        code: 'DATA_UPGRADE_REQUIRED',
+        message: expect.stringContaining('not strict current format'),
+      });
+    },
+  );
+
+  it('accepts the longest slug event type the former channel allowed', async () => {
+    const { handle } = await storeWithExit(
+      exitWith([{ kind: 'event', eventType: 'd' + 'x'.repeat(63) }]),
+    );
+    expect(await guardDatabaseUpgrade(handle.client)).toBe('current');
+  });
+
   it('still refuses a stored definition that is not JSON', async () => {
     const handle = await openMemoryDatabase();
     handles.push(handle);
