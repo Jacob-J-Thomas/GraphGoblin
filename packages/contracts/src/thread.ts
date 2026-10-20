@@ -43,13 +43,14 @@ export const CallerSchema = z.strictObject({
 export type Caller = z.infer<typeof CallerSchema>;
 
 /** Return channels are declared on exit nodes; callers may also supply defaults. */
-export const ReturnChannelSchema = z.discriminatedUnion('kind', [
+export const WebhookReturnChannelSchema = z.strictObject({
+  kind: z.literal('webhook'),
+  url: z.url(),
+  secretRef: z.string().max(128).optional(),
+});
+
+export const NonWebhookReturnChannelSchema = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('caller') }),
-  z.strictObject({
-    kind: z.literal('webhook'),
-    url: z.url(),
-    secretRef: z.string().max(128).optional(),
-  }),
   z.strictObject({
     kind: z.literal('file'),
     path: z.string().min(1).max(4096),
@@ -57,6 +58,12 @@ export const ReturnChannelSchema = z.discriminatedUnion('kind', [
   }),
   z.strictObject({ kind: z.literal('event'), eventType: SlugSchema }),
   z.strictObject({ kind: z.literal('log') }),
+]);
+const [callerReturnChannel, ...otherReturnChannels] = NonWebhookReturnChannelSchema.options;
+export const ReturnChannelSchema = z.discriminatedUnion('kind', [
+  callerReturnChannel,
+  WebhookReturnChannelSchema,
+  ...otherReturnChannels,
 ]);
 export type ReturnChannel = z.infer<typeof ReturnChannelSchema>;
 

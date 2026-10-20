@@ -138,10 +138,13 @@ describe('HttpWebhookDelivery', () => {
   it('posts signed JSON and throws on non-2xx responses', async () => {
     const clock = new FakeClock();
     const delivery = new HttpWebhookDelivery(clock, { timeoutMs: 20_000 });
-    await delivery.webhook(`${base}/hook`, { result: 1 }, 'hs');
+    await expect(
+      delivery.webhook(`${base}/hook`, { result: 1 }, 'hs', 'stable-id'),
+    ).resolves.toEqual({ ok: true });
     const call = captured[0]!;
     expect(call.method).toBe('POST');
     expect(call.headers['content-type']).toBe('application/json');
+    expect(call.headers['idempotency-key']).toBe('stable-id');
     expect(call.headers[TIMESTAMP_HEADER]).toBe(clock.now().toISOString());
     expect(
       verifySignature(
@@ -151,23 +154,28 @@ describe('HttpWebhookDelivery', () => {
         String(call.headers[SIGNATURE_HEADER]),
       ),
     ).toBe(true);
-    await delivery.webhook(`${base}/hook`, { result: 2 });
+    await delivery.webhook(`${base}/hook`, { result: 2 }, undefined, 'stable-id');
     expect(captured[1]?.headers[SIGNATURE_HEADER]).toBeUndefined();
-    await expect(delivery.webhook(`${base}/fail`, {})).rejects.toThrow(/returned 503/);
+    await expect(
+      delivery.webhook(`${base}/fail`, {}, undefined, 'stable-id'),
+    ).resolves.toMatchObject({
+      ok: false,
+      error: { code: 'http', retryable: true, httpStatus: 503, acknowledgement: 'unknown' },
+    });
   });
 
   it('composes the return-delivery port', async () => {
     const logger = new CapturingLogger();
     const events: { eventType: string; payload: unknown }[] = [];
     const port = createReturnDelivery({
-      webhooks: { webhook: () => Promise.resolve() },
+      webhooks: { webhook: () => Promise.resolve({ ok: true }) },
       publishEvent: (eventType, payload) => {
         events.push({ eventType, payload });
         return Promise.resolve();
       },
       logger,
     });
-    await port.webhook('http://x', {}, undefined);
+    await port.webhook('http://x', {}, undefined, 'stable-id');
     await port.publishEvent('done', { a: 1 });
     port.log('run-1', { b: 2 });
     expect(events).toEqual([{ eventType: 'done', payload: { a: 1 } }]);

@@ -847,7 +847,8 @@ describe('exit node and return channels', () => {
       payload: { result: { answer: 42 }, outcome: 'success' },
     });
     const delivered = engine.events(run.id).filter((e) => e.type === 'return.delivered');
-    expect(delivered).toHaveLength(8);
+    expect(delivered).toHaveLength(6);
+    expect(engine.events(run.id).filter((e) => e.type === 'delivery.finished')).toHaveLength(2);
   });
 
   it('records webhook failures and skips delivery when mapping is none', async () => {
@@ -870,8 +871,10 @@ describe('exit node and return channels', () => {
     );
     const run = await engine.runToIdle(failing.loopId);
     expect(run.status).toBe('succeeded');
-    const failed = engine.events(run.id).find((e) => e.type === 'return.failed');
-    expect(failed).toMatchObject({ error: 'webhook endpoint returned 503' });
+    const failed = engine.events(run.id).find((e) => e.type === 'delivery.finished');
+    expect(failed).toMatchObject({
+      delivery: { status: 'failed', attempts: 1, lastError: { httpStatus: 400 } },
+    });
 
     const silent = engine.publish(
       singleNodeLoop('silent', {

@@ -4,6 +4,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Webhook returns now use a stable `Idempotency-Key`, five bounded attempts and durable typed delivery outcomes, exposed separately from execution in REST, api-client, MCP and the inspector. **Upgrade:** migration 0015 rewrites historical webhook returns once; old failures stay final, while unfinished old returns consume one unknown attempt with four retries and a newly allocated identity that cannot deduplicate a pre-upgrade request. Receivers must implement key deduplication. Regenerate clients for `deliveries` and `delivery.*` events. (#246)
+
 - Script and custom subloop patches share validation of every mutated location, including a move's source, before applying any operation. Errors identify the offending `path` or `from`. Protected tests and copies into writable context are permitted; rejected patches leave the thread unchanged. (#227)
 - Client and MCP waits interrupt pending requests and sleeps on caller cancellation or the total observation deadline, ignore late responses, and leave the run running. **Upgrade:** `WaitForRunResult` is now a discriminated union: a deadline returns `finished: false` with optional `run` when no snapshot arrived. Handle that case; client zero-budget waits make no request. MCP `timeoutSeconds` must be an integer from 1 to 600 (default 60); when no snapshot arrived, status, waiting details and cursor are omitted. Client wait options are unchanged. (#233)
 

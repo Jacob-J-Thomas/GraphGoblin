@@ -380,7 +380,7 @@ describe('adversarial engine invariants', () => {
       };
       if (kind === 'file') vi.spyOn(e.ports.workspace, 'writeFile').mockImplementation(fail);
       if (kind === 'log') vi.spyOn(e.ports.delivery, 'log').mockImplementation(fail);
-      if (kind === 'webhook') vi.spyOn(e.ports.delivery, 'webhook').mockImplementation(fail);
+      if (kind === 'webhook') e.ports.delivery.failWebhooks = true;
       if (kind === 'event') vi.spyOn(e.ports.delivery, 'publishEvent').mockImplementation(fail);
       const channel =
         kind === 'file'
@@ -404,9 +404,15 @@ describe('adversarial engine invariants', () => {
       );
       const r = await e.runToIdle(v.loopId);
       expect(r).toMatchObject({ status: 'succeeded', result: 42 });
-      expect(e.events(r.id).filter((x) => x.type === 'return.failed')).toMatchObject([
-        { error: 'delivery unavailable' },
-      ]);
+      if (kind === 'webhook') {
+        expect(e.events(r.id).filter((x) => x.type === 'delivery.finished')).toMatchObject([
+          { delivery: { status: 'failed', attempts: 1, lastError: { httpStatus: 400 } } },
+        ]);
+      } else {
+        expect(e.events(r.id).filter((x) => x.type === 'return.failed')).toMatchObject([
+          { error: 'delivery unavailable' },
+        ]);
+      }
       expect(e.eventTypes(r.id).filter((x) => x === 'run.finished')).toHaveLength(1);
     },
   );

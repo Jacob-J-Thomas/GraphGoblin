@@ -46,3 +46,5 @@ One file per decision. Status is Accepted unless stated. Supersede by adding a n
 [ADR-0038: Downstream payload checks](ADR-0038-downstream-payload-checks.md) removes trigger filters and requires version-bound review of stored filter graphs.
 
 [ADR-0041: Runs pin an immutable definition, drafts included](ADR-0041-runs-pin-immutable-definitions.md) supersedes ADR-0008's draft-run gap: draft runs pin a frozen snapshot, and inherited model defaults are pinned at start.
+
+[ADR-0043: Bounded durable webhook return delivery](ADR-0043-bounded-webhook-return-delivery.md) records identity, ambiguity, finite recovery and independent delivery outcomes.

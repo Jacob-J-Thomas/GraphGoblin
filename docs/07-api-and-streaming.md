@@ -193,6 +193,15 @@ following a timezone issue focuses the time zone control.
 
 ## Return delivery (Decided)
 
+Run snapshots include optional `deliveries` for outbound webhooks, with separate pending,
+delivered or failed state, stable identity, attempts/budget, next attempt and typed last error.
+REST run detail/list, the generated api-client, MCP `get_run` and `wait_for_run` preserve it.
+`wait_for_run.finished` means execution finished, even with pending or failed delivery; call
+`get_run` again to observe delivery. The inspector polls once per second while delivery is
+pending. SSE still closes on execution's terminal event; subsequent JSON event pages expose
+`delivery.queued`, `delivery.attempted`, `delivery.attempt_finished` and `delivery.finished`.
+Unknown acknowledgement is never represented as non-delivery. See ADR-0043.
+
 The `caller` return channel resolves at delivery time:
 
 | Invocation source                                     | Delivery                                                                                      |

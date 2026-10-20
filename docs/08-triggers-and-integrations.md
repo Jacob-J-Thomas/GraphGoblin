@@ -210,6 +210,23 @@ The most secure default for a single-user laptop is to accept nothing inbound an
 - Never expose the whole API through the tunnel. Bind the API to localhost and route only the hooks prefix.
 - For real distribution, the hosted version terminates TLS itself and sits behind the auth provider; webhook endpoints remain signature-gated and unauthenticated by design.
 
+## Outbound webhook returns
+
+An exit webhook destination sends a JSON POST containing `runId`, `loopId`, `outcome` and
+`result`. `Idempotency-Key` carries one durable delivery identity across all attempts. Receivers
+must implement their own deduplication if duplicate effects are unacceptable; GraphGoblin
+does not assume they do. Signing still covers each attempt's timestamp and body.
+
+Five attempts have 10-second acknowledgement deadlines, separated by 2/5/10/20 seconds.
+Connection refusal, timeout, HTTP 408/429/5xx and unknown acknowledgement are eligible;
+other 4xx, redirects and invalid destinations stop once. Redirects are never followed.
+The complete 2xx acknowledgement is bounded to 64 KiB. Timeouts and truncated/lost responses
+mean the effect may have happened. `run.deliveries` and durable `delivery.*` events expose
+pending, delivered or failed after N attempts and the last typed error, separately from
+execution. Restart retains identity and consumed attempts. See
+[ADR-0043](decisions/ADR-0043-bounded-webhook-return-delivery.md). These engineering values are
+proposals awaiting review. This outbound journal does not implement targeted Event intake.
+
 ## Concurrency (Decided)
 
 Every firing starts a run. A per-loop policy, `parallel`, `queue`, `skip`, or `replace`, is post-1.0 and will live in loop settings.

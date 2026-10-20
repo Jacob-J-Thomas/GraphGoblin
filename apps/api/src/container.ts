@@ -22,7 +22,8 @@ import {
   SqliteLoopRepository,
   SqliteModelCatalog,
   SqliteClassifierModels,
-  SqliteRunRepository,
+  type SqliteRunRepository,
+  SqliteDeliveryRunRepository,
   SqliteSecrets,
   SqliteSessionRepository,
   SqliteSettings,
@@ -216,7 +217,7 @@ export async function createContainer(
         ...(config.masterKey ? { masterKey: config.masterKey } : {}),
       }));
 
-    const runs = new SqliteRunRepository(db);
+    const runs = new SqliteDeliveryRunRepository(db);
     const loops = new SqliteLoopRepository(db, clock, ids);
     const sessions = new SqliteSessionRepository(db);
     const events = new SqliteEventStore(db, clock);

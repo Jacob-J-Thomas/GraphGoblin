@@ -125,6 +125,18 @@ longer exists, using the same run-owned cleanup. It is an offline maintenance op
 the later format-4 cutover; the current offline upgrade is unchanged. See
 [ADR-0033](decisions/ADR-0033-loop-deletion-removes-runs.md).
 
+## Webhook delivery records (#246)
+
+The run record's optional `deliveries` array tracks outbound webhooks independently of
+execution status. Each item carries `id`, webhook `channel`, `status` (pending/delivered/failed),
+`attempts`, `maxAttempts`, `inFlight`, `acknowledgement`, `effectMayHaveHappened`, optional
+`nextAttemptAt` and typed `lastError`. The journal's `delivery.queued`, `delivery.attempted`,
+`delivery.attempt_finished` and `delivery.finished` events each contain a complete snapshot.
+The API projects the latest snapshot per identity from these durable events, without a second
+status column or table. An absent array means no webhook has been queued. Interrupted or timed
+out acknowledgements are unknown; a later success cannot erase earlier uncertainty. Migration
+0015 converts completed historical webhook return events once (ADR-0043).
+
 ## Context thread (Draft - to be co-designed)
 
 The product owner and the architect will design this together before M1 closes. The shape below is the starting point. Everything in it is negotiable except these three properties: it is a plain JSON document, nodes change it only through patches, and every patch is recorded in the event log.

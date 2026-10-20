@@ -16,6 +16,7 @@ import type {
   RunStatus,
   Usage,
   WorkingDirectorySpec,
+  WebhookAttemptResult,
 } from '@graphgoblin/contracts';
 import { isTerminal, stableStringify } from '@graphgoblin/domain';
 import type {
@@ -753,14 +754,41 @@ export class FakeProbes implements HttpProbePort {
 }
 
 export class FakeDelivery implements ReturnDeliveryPort {
-  readonly webhooks: { url: string; payload: JsonValue; secret?: string }[] = [];
+  readonly webhooks: { url: string; payload: JsonValue; secret?: string; deliveryId: string }[] =
+    [];
   readonly events: { eventType: string; payload: JsonValue }[] = [];
   readonly logged: { runId: string; payload: JsonValue }[] = [];
   failWebhooks = false;
-  webhook(url: string, payload: JsonValue, secret?: string): Promise<void> {
-    if (this.failWebhooks) return Promise.reject(new Error('webhook endpoint returned 503'));
-    this.webhooks.push({ url, payload, ...(secret ? { secret } : {}) });
-    return Promise.resolve();
+  responder?: (
+    deliveryId: string,
+    attempt: number,
+  ) => WebhookAttemptResult | Promise<WebhookAttemptResult>;
+  webhook(
+    url: string,
+    payload: JsonValue,
+    secret: string | undefined,
+    deliveryId: string,
+  ): Promise<WebhookAttemptResult> {
+    this.webhooks.push({ url, payload, ...(secret ? { secret } : {}), deliveryId });
+    if (this.responder)
+      return Promise.resolve(
+        this.responder(
+          deliveryId,
+          this.webhooks.filter((call) => call.deliveryId === deliveryId).length,
+        ),
+      );
+    if (this.failWebhooks)
+      return Promise.resolve({
+        ok: false,
+        error: {
+          code: 'http',
+          message: 'Webhook returned HTTP 400.',
+          httpStatus: 400,
+          retryable: false,
+          acknowledgement: 'rejected',
+        },
+      });
+    return Promise.resolve({ ok: true });
   }
   publishEvent(eventType: string, payload: JsonValue): Promise<void> {
     this.events.push({ eventType, payload });

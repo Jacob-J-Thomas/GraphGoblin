@@ -23,6 +23,7 @@ import type {
   RunStatus,
   Usage,
   WorkingDirectorySpec,
+  WebhookAttemptResult,
 } from '@graphgoblin/contracts';
 
 /**
@@ -71,7 +72,9 @@ export interface EventStorePort {
 }
 
 /** Field-level changes to a run record; `undefined` clears a field. */
-export type RunRecordChanges = { [K in keyof RunRecord]?: RunRecord[K] | undefined };
+export type RunRecordChanges = {
+  [K in Exclude<keyof RunRecord, 'deliveries'>]?: RunRecord[K] | undefined;
+};
 
 export interface RunRepository {
   create(run: RunRecord, initialThread: ContextThread): Promise<void>;
@@ -421,7 +424,12 @@ export interface HttpProbePort {
 }
 
 export interface ReturnDeliveryPort {
-  webhook(url: string, payload: JsonValue, secret?: string): Promise<void>;
+  webhook(
+    url: string,
+    payload: JsonValue,
+    secret: string | undefined,
+    deliveryId: string,
+  ): Promise<WebhookAttemptResult>;
   publishEvent(eventType: string, payload: JsonValue): Promise<void>;
   log(runId: string, payload: JsonValue): void;
 }
