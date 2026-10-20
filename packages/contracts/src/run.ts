@@ -84,6 +84,8 @@ export type RunFailure = z.infer<typeof RunFailureSchema>;
 
 /** Why a run is parked and what wakes it. */
 export const WaitSpecSchema = z.strictObject({
+  /** Opaque identity of this recorded park. Return it with input and signals. */
+  waitId: z.string().min(1).max(64),
   nodeId: SlugSchema,
   kind: WaitKindSchema,
   until: TimestampSchema.optional(),
@@ -95,10 +97,10 @@ export const WaitSpecSchema = z.strictObject({
   /** When a wait with a timeout times out; `until` is its own deadline (a timer or next beat). */
   timeoutAt: TimestampSchema.optional(),
   /**
-   * The `seq` of the `node.started` that parked: the wait's identity. Its timers are keyed with
-   * it, so a timer armed by an earlier wait can never wake a later one.
+   * The `node.started` sequence that produced this park, used to bound event reads.
+   * `waitId` is the identity returned by callers and carried in timer keys.
    */
-  startedSeq: z.number().int().positive().optional(),
+  startedSeq: z.number().int().positive(),
 });
 export type WaitSpec = z.infer<typeof WaitSpecSchema>;
 

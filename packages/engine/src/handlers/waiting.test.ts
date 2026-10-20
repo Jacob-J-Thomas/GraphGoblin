@@ -26,11 +26,28 @@ describe('wait node', () => {
     const run = await engine.runToIdle(version.loopId, { title: 'PR 7' });
     expect(run.status).toBe('waiting');
     expect(run.waiting).toMatchObject({ nodeId: 'wait', kind: 'input', prompt: 'Approve PR 7?' });
-    await expect(engine.manager.provideInput(run.id, { nope: true })).rejects.toMatchObject({
+    await expect(
+      engine.manager.provideInput(
+        run.id,
+        (await engine.manager.getRun(run.id))?.waiting?.waitId ?? 'unknown',
+        { nope: true },
+      ),
+    ).rejects.toMatchObject({
       code: 'INVALID_INPUT',
     });
-    await expect(engine.manager.signal(run.id, 'go')).resolves.toMatchObject({ woke: false });
-    await engine.manager.provideInput(run.id, { approved: true }, { kind: 'user', id: 'u' });
+    await expect(
+      engine.manager.signal(
+        run.id,
+        'go',
+        (await engine.manager.getRun(run.id))?.waiting?.waitId ?? 'unknown',
+      ),
+    ).resolves.toMatchObject({ woke: false });
+    await engine.manager.provideInput(
+      run.id,
+      (await engine.manager.getRun(run.id))?.waiting?.waitId ?? 'unknown',
+      { approved: true },
+      { kind: 'user', id: 'u' },
+    );
     const done = await engine.settle(run.id);
     expect(done.status).toBe('succeeded');
     expect(done.result).toEqual({ approved: true });
@@ -43,8 +60,14 @@ describe('wait node', () => {
     expect(engine.eventTypes(run.id)).toEqual(
       expect.arrayContaining(['run.waiting', 'input.received', 'run.woken']),
     );
-    await expect(engine.manager.provideInput(run.id, {})).rejects.toMatchObject({
-      code: 'INVALID_STATE',
+    await expect(
+      engine.manager.provideInput(
+        run.id,
+        (await engine.manager.getRun(run.id))?.waiting?.waitId ?? 'unknown',
+        {},
+      ),
+    ).rejects.toMatchObject({
+      code: 'WAIT_MISMATCH',
     });
   });
 
@@ -55,14 +78,47 @@ describe('wait node', () => {
     );
     const run = await engine.runToIdle(version.loopId);
     expect(run.waiting).toMatchObject({ kind: 'signal', signalName: 'deploy' });
-    expect((await engine.manager.signal(run.id, 'other', {})).woke).toBe(false);
-    expect((await engine.manager.signal(run.id, 'deploy', { env: 'staging' })).woke).toBe(false);
-    expect((await engine.manager.signal(run.id, 'deploy', { env: 'prod' })).woke).toBe(true);
+    expect(
+      (
+        await engine.manager.signal(
+          run.id,
+          'other',
+          (await engine.manager.getRun(run.id))?.waiting?.waitId ?? 'unknown',
+          {},
+        )
+      ).woke,
+    ).toBe(false);
+    expect(
+      (
+        await engine.manager.signal(
+          run.id,
+          'deploy',
+          (await engine.manager.getRun(run.id))?.waiting?.waitId ?? 'unknown',
+          { env: 'staging' },
+        )
+      ).woke,
+    ).toBe(false);
+    expect(
+      (
+        await engine.manager.signal(
+          run.id,
+          'deploy',
+          (await engine.manager.getRun(run.id))?.waiting?.waitId ?? 'unknown',
+          { env: 'prod' },
+        )
+      ).woke,
+    ).toBe(true);
     const done = await engine.settle(run.id);
     expect(done.result).toEqual({ env: 'prod' });
     expect(engine.events(run.id).filter((e) => e.type === 'signal.received')).toHaveLength(3);
-    await expect(engine.manager.signal(run.id, 'deploy')).rejects.toMatchObject({
-      code: 'INVALID_STATE',
+    await expect(
+      engine.manager.signal(
+        run.id,
+        'deploy',
+        (await engine.manager.getRun(run.id))?.waiting?.waitId ?? 'unknown',
+      ),
+    ).rejects.toMatchObject({
+      code: 'WAIT_MISMATCH',
     });
   });
 
@@ -73,7 +129,7 @@ describe('wait node', () => {
     expect(run.waiting?.kind).toBe('timer');
     expect(engine.ports.timers.scheduled[0]).toMatchObject({
       runId: run.id,
-      key: `timer@${run.waiting?.startedSeq}`,
+      key: `timer@${run.waiting?.waitId}`,
     });
     expect(engine.ports.timers.scheduled[0]?.at.toISOString()).toBe('2026-10-02T12:00:30.000Z');
     engine.ports.clock.advance(30_000);
@@ -214,8 +270,16 @@ describe('heartbeat node', () => {
       }),
     );
     let run = await engine.runToIdle(version.loopId);
-    await engine.manager.signal(run.id, 'tick');
-    await engine.manager.signal(run.id, 'tick');
+    await engine.manager.signal(
+      run.id,
+      'tick',
+      (await engine.manager.getRun(run.id))?.waiting?.waitId ?? 'unknown',
+    );
+    await engine.manager.signal(
+      run.id,
+      'tick',
+      (await engine.manager.getRun(run.id))?.waiting?.waitId ?? 'unknown',
+    );
     await engine.ports.timers.fire(run.id, 'heartbeat');
     run = await engine.settle(run.id);
     expect(run.status).toBe('succeeded');

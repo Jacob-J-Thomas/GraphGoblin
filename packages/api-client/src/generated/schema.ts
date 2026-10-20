@@ -1036,6 +1036,7 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
+                        waitId: string;
                         input: components["schemas"]["JsonValueInput"];
                     };
                 };
@@ -1048,6 +1049,15 @@ export interface paths {
                     };
                     content: {
                         "application/json": components["schemas"]["RunRecord"];
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["WaitConflict"];
                     };
                 };
             };
@@ -1081,6 +1091,7 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
+                        waitId: string;
                         payload?: components["schemas"]["JsonValueInput"] | undefined;
                     };
                 };
@@ -1096,6 +1107,15 @@ export interface paths {
                             run: components["schemas"]["RunRecord"];
                             woke: boolean;
                         };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["WaitConflict"];
                     };
                 };
             };
@@ -2441,6 +2461,15 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        WaitConflictInput: {
+            type: string;
+            title: string;
+            /** @constant */
+            status: 409;
+            /** @enum {string} */
+            code: "WAIT_MISMATCH" | "INVALID_STATE";
+            detail?: string | undefined;
+        };
         ClassifierModelSummaryInput: {
             id: string;
             displayName: string;
@@ -3582,6 +3611,7 @@ export interface components {
             details?: components["schemas"]["JsonValueInput"] | undefined;
         };
         WaitSpecInput: {
+            waitId: string;
             nodeId: string;
             /** @enum {string} */
             kind: "input" | "timer" | "signal" | "heartbeat" | "child";
@@ -3596,7 +3626,7 @@ export interface components {
             beat?: number | undefined;
             /** Format: date-time */
             timeoutAt?: string | undefined;
-            startedSeq?: number | undefined;
+            startedSeq: number;
         };
         RunRecordInput: {
             id: string;
@@ -4261,6 +4291,15 @@ export interface components {
                     reasoningOutputTokens?: number | undefined;
                 };
             };
+        };
+        WaitConflict: {
+            type: string;
+            title: string;
+            /** @constant */
+            status: 409;
+            /** @enum {string} */
+            code: "WAIT_MISMATCH" | "INVALID_STATE";
+            detail?: string | undefined;
         };
         ClassifierModelSummary: {
             id: string;
@@ -5386,6 +5425,7 @@ export interface components {
             details?: components["schemas"]["JsonValue"] | undefined;
         };
         WaitSpec: {
+            waitId: string;
             nodeId: string;
             /** @enum {string} */
             kind: "input" | "timer" | "signal" | "heartbeat" | "child";
@@ -5400,7 +5440,7 @@ export interface components {
             beat?: number | undefined;
             /** Format: date-time */
             timeoutAt?: string | undefined;
-            startedSeq?: number | undefined;
+            startedSeq: number;
         };
         RunRecord: {
             id: string;

@@ -361,7 +361,10 @@ describe('runs', () => {
     const badInput = await t.app.inject({
       method: 'POST',
       url: `/runs/${run.id}/input`,
-      payload: { input: { nope: 1 } },
+      payload: {
+        waitId: (await t.container.manager.getRun(run.id))?.waiting?.waitId ?? 'unknown',
+        input: { nope: 1 },
+      },
     });
     expect(badInput.statusCode).toBe(400);
     expect(badInput.json()).toMatchObject({ code: 'INVALID_INPUT' });
@@ -369,7 +372,10 @@ describe('runs', () => {
       await t.app.inject({
         method: 'POST',
         url: `/runs/${run.id}/signals/go`,
-        payload: { payload: { x: 1 } },
+        payload: {
+          waitId: (await t.container.manager.getRun(run.id))?.waiting?.waitId ?? 'unknown',
+          payload: { x: 1 },
+        },
       })
     ).json<{ woke: boolean }>();
     expect(signal.woke).toBe(false);
@@ -380,9 +386,16 @@ describe('runs', () => {
     const conflict = await t.app.inject({
       method: 'POST',
       url: `/runs/${run.id}/input`,
-      payload: { input: { ok: true } },
+      payload: {
+        waitId: (await t.container.manager.getRun(run.id))?.waiting?.waitId ?? 'unknown',
+        input: { ok: true },
+      },
     });
     expect(conflict.statusCode).toBe(409);
+    expect(conflict.json()).toMatchObject({
+      code: 'INVALID_STATE',
+      detail: expect.stringContaining('paused'),
+    });
     expect(
       (await t.app.inject({ method: 'POST', url: `/runs/${run.id}/resume` })).json<RunRecord>()
         .status,
@@ -391,7 +404,10 @@ describe('runs', () => {
     const provided = await t.app.inject({
       method: 'POST',
       url: `/runs/${run.id}/input`,
-      payload: { input: { ok: true } },
+      payload: {
+        waitId: (await t.container.manager.getRun(run.id))?.waiting?.waitId ?? 'unknown',
+        input: { ok: true },
+      },
     });
     expect(provided.statusCode).toBe(200);
     await t.idle();

@@ -336,7 +336,11 @@ describe('run manager edge cases', () => {
     );
     const run = await engine.runToIdle(version.loopId, null, { dedupeKey: 'dk-1' });
     expect((await engine.manager.getThread(run.id))?.invocation.trigger.dedupeKey).toBe('dk-1');
-    await engine.manager.provideInput(run.id, 'free text');
+    await engine.manager.provideInput(
+      run.id,
+      (await engine.manager.getRun(run.id))?.waiting?.waitId ?? 'unknown',
+      'free text',
+    );
     const done = await engine.settle(run.id);
     expect(done.status).toBe('succeeded');
     expect((await engine.manager.getThread(done.id))?.messages.at(-1)?.content).toBe('free text');
@@ -472,7 +476,9 @@ describe('run manager edge cases', () => {
     await second.waitForIdle();
     expect((await engine.ports.runs.get(run.id))?.status).toBe('waiting');
     engine.ports.runs.dropThreadSnapshot(run.id);
-    await second.provideInput(run.id, { ok: true });
+    await second.provideInput(run.id, (await second.getRun(run.id))?.waiting?.waitId ?? 'unknown', {
+      ok: true,
+    });
     await second.waitForIdle();
     const done = await engine.ports.runs.get(run.id);
     expect(done?.status).toBe('succeeded');
@@ -617,7 +623,7 @@ describe('handler edge cases', () => {
     const run = await engine.runToIdle(version.loopId);
     expect(run.waiting?.until).toBe('2026-10-02T12:00:05.000Z');
     expect(run.waiting?.timeoutAt).toBe('2026-10-02T12:01:00.000Z');
-    const seq = run.waiting?.startedSeq;
+    const seq = run.waiting?.waitId;
     expect(engine.ports.timers.scheduled.map((t) => t.key).sort()).toEqual([
       `timeout@${seq}`,
       `timer@${seq}`,
