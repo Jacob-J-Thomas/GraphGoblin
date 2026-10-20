@@ -8,6 +8,12 @@ export function cliFailureState(text: string): HarnessReadinessState {
       text,
     );
   const status = Number(match?.[1] ?? match?.[2] ?? match?.[3]);
+  if (
+    /unknown (option|argument)|unexpected argument|unrecognized (option|argument)|unsupported (option|flag)/i.test(
+      text,
+    )
+  )
+    return 'cli-incompatible';
   // Connection evidence takes precedence over auth words in server/refresh diagnostics.
   if (
     /\beconn\w*\b|\benotfound\b|\betimedout\b|\beai_again\b|network|failed to connect|connection failed|stream disconnected|overloaded|temporarily unavailable/i.test(
@@ -26,12 +32,6 @@ export function cliFailureState(text: string): HarnessReadinessState {
     )
   )
     return 'auth';
-  if (
-    /unknown (option|argument)|unexpected argument|unrecognized (option|argument)|unsupported (option|flag)/i.test(
-      text,
-    )
-  )
-    return 'cli-incompatible';
   return 'unknown';
 }
 
@@ -57,7 +57,7 @@ export function readinessDetail(harness: string, state: HarnessReadinessState): 
     case 'quota':
       return `${name} account usage limit reached.`;
     case 'transport':
-      return `${name} could not reach its provider service.`;
+      return `${name} reported a connection or provider service error.`;
     case 'unknown':
       return `${name} readiness could not be confirmed.`;
   }

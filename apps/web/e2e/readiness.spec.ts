@@ -32,6 +32,13 @@ for (const state of HarnessReadinessStateSchema.options) {
     const region = page.getByRole('region', { name: 'Harness preflight' });
     const badge = region.locator(`[data-state="${state}"]`);
     await expect(badge).toHaveText(LABELS[state]);
+    if (state === 'transport')
+      await expect(
+        region.getByText(
+          "Claude reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight.",
+          { exact: true },
+        ),
+      ).toBeVisible();
     await expect(region.getByText('listed by adapter', { exact: true })).toBeVisible();
     await expect(region.getByText(/do not confirm account access/)).toBeVisible();
     await expect(region.getByText(/supported by adapter|model unavailable/)).toHaveCount(0);

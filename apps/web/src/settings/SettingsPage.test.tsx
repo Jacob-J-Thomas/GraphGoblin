@@ -1077,7 +1077,7 @@ describe('Codex catalog rows and readiness', () => {
         state: 'transport',
         ok: false,
         problems: [
-          "Codex could not reach its provider service. Check the network connection and the provider's service status, then retry preflight.",
+          "Codex reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight.",
         ],
       },
     ];

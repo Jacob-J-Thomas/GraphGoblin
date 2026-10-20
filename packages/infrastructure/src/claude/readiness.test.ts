@@ -1,4 +1,4 @@
-import { mkdtemp } from 'node:fs/promises';
+import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -52,7 +52,7 @@ describe('Claude no-turn executable boundary', () => {
           'Claude account usage limit reached. Wait for the usage limit to reset, then retry preflight.',
         ],
         transport: [
-          "Claude could not reach its provider service. Check the network connection and the provider's service status, then retry preflight.",
+          "Claude reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight.",
         ],
         unknown: ['Claude CLI check exited with code 1.' + check],
         hang: ['Claude CLI did not answer before the check deadline.' + check],
@@ -94,9 +94,13 @@ it('classifies a real installed signed-out Claude in a disposable home as auth',
     return;
   }
   const home = await mkdtemp(join(tmpdir(), 'gg-claude-signed-out-'));
-  const result = await new ClaudeHarness({
-    binary,
-    env: { ...process.env, USERPROFILE: home, HOME: home },
-  }).preflight();
-  expect(result).toMatchObject({ state: 'auth', ok: false, authenticated: false });
+  try {
+    const result = await new ClaudeHarness({
+      binary,
+      env: { ...process.env, USERPROFILE: home, HOME: home },
+    }).preflight();
+    expect(result).toMatchObject({ state: 'auth', ok: false, authenticated: false });
+  } finally {
+    await rm(home, { recursive: true, force: true });
+  }
 }, 60000);

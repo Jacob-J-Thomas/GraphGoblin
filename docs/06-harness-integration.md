@@ -115,6 +115,11 @@ refresh keeps the last result on screen; a failed lookup shows unknown. Settings
 preflight has a **Retry preflight** control for a fresh check, and the model picker offers Retry
 Claude preflight or Retry Codex preflight next to a readiness problem (see docs/09).
 
+Transport detail says "Claude reported a connection or provider service error." (or Codex),
+followed by "Check the network connection and the provider's service status, then retry preflight."
+It covers provider HTTP 500 responses as well as connection failures; it does not establish a
+connectivity diagnosis.
+
 Process lifetime was measured with installed no-turn commands under the product runners on
 native Windows. No surviving new native process was observed in the recorded before/after
 listings; no orphan-process fix is prescribed. This bounded observation does not prove general

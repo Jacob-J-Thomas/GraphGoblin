@@ -110,6 +110,11 @@ node editor); a recheck keeps the last result on screen and says "Rechecking…"
 | `quota`            | Usage limit       | Wait for the account allowance to reset, then retry preflight; keep the selected model.        |
 | `transport`        | Connection failed | Check the connection and provider service status, then retry preflight; keep the model.        |
 
+Transport detail says "Claude reported a connection or provider service error." (or Codex),
+followed by "Check the network connection and the provider's service status, then retry preflight."
+It covers provider HTTP 500 responses as well as connection failures; it does not establish a
+connectivity diagnosis.
+
 Model unavailable is reserved for a disabled model or an identity removed from GraphGoblin's
 supported catalog. Enable a deliberately disabled entry or choose a supported entry. A failed
 catalog lookup says unknown and preserves the saved choice. Catalog listings and requested effort

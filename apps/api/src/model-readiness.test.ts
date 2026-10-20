@@ -67,6 +67,10 @@ describe('public authoring readiness', () => {
           code: 'HARNESS_READINESS_' + state.toUpperCase().replaceAll('-', '_'),
         }),
       );
+      if (state === 'transport')
+        expect(validated.body).toContain(
+          "Claude reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight.",
+        );
       expect(body.issues.some((i) => i.code.startsWith('MODEL_'))).toBe(false);
       expect(harness.probes).toBe(1);
       const published = await app.app.inject({
@@ -295,5 +299,51 @@ it('checks published readiness when an empty versionId uses the normal published
   });
   expect(run.statusCode).toBe(422);
   expect(harness.probes).toBe(probesBeforeRun + 1);
+  expect(harness.started).toEqual([]);
+});
+
+it('preserves quota detail with empty probe problems through validation, system preflight and run rejection', async () => {
+  const harness = new CountingHarness([], 'claude');
+  harness.preflightResult = { state: 'quota', ok: false, problems: [] };
+  app = await createTestApp({ harnesses: { claude: harness } });
+  const value = definition();
+  const created = await app.app.inject({
+    method: 'POST',
+    url: '/loops',
+    payload: { definition: value },
+  });
+  expect(created.statusCode).toBe(201);
+  const { loop, draft } = created.json<{ loop: { id: string }; draft: { id: string } }>();
+  const quotaMessage =
+    'Claude account usage limit reached. Wait for the usage limit to reset, then retry preflight.';
+  const quotaIssue = { code: 'HARNESS_READINESS_QUOTA', message: quotaMessage };
+  const validated = await app.app.inject({
+    method: 'POST',
+    url: '/loops/' + loop.id + '/validate',
+    payload: { definition: value },
+  });
+  expect(validated.statusCode).toBe(200);
+  expect(validated.json()).toMatchObject({
+    publishable: false,
+    issues: expect.arrayContaining([expect.objectContaining(quotaIssue)]),
+  });
+  const preflight = await app.app.inject({ method: 'GET', url: '/system/preflight' });
+  expect(preflight.statusCode).toBe(200);
+  expect(preflight.json()).toMatchObject({
+    checks: expect.arrayContaining([
+      expect.objectContaining({ id: 'harness.claude', state: 'quota', message: quotaMessage }),
+    ]),
+  });
+  const rejected = await app.app.inject({
+    method: 'POST',
+    url: '/loops/' + loop.id + '/runs',
+    payload: { versionId: draft.id, allowDraft: true },
+  });
+  expect(rejected.statusCode).toBe(422);
+  expect(rejected.json()).toMatchObject({
+    code: 'HARNESS_NOT_READY',
+    detail: 'Harness readiness checks failed. Fix the listed problems, then start the run again.',
+    errors: expect.arrayContaining([expect.objectContaining(quotaIssue)]),
+  });
   expect(harness.started).toEqual([]);
 });

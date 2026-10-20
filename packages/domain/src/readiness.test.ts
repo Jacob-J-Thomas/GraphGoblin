@@ -16,6 +16,8 @@ describe('no-turn readiness diagnostics', () => {
     ['{"status_code":503}', 'transport'],
     ['401 unauthorized', 'auth'],
     ['unknown option --effort', 'cli-incompatible'],
+    ["error: unknown option '--network-access'", 'cli-incompatible'],
+    ["error: unexpected argument '--network' found", 'cli-incompatible'],
     ['ECONNRESET network', 'transport'],
     ['unrecognized failure', 'unknown'],
   ])('classifies %s without returning its body', (text, state) => {
@@ -65,4 +67,11 @@ describe('no-turn readiness diagnostics', () => {
 it('does not treat CLI version numbers as HTTP failure codes', () => {
   for (const patch of [401, 403, 429, 503])
     expect(cliFailureState(`CLI 2.1.${patch}: unrecognized diagnostic`)).toBe('unknown');
+});
+
+it('describes transport without assuming a connection failure', () => {
+  for (const name of ['Claude', 'Codex'])
+    expect(readinessMessage(name.toLowerCase(), 'transport')).toBe(
+      `${name} reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight.`,
+    );
 });

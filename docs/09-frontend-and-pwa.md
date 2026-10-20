@@ -656,10 +656,16 @@ recheck. While Claude is not ready its choices are read-only; the note is the se
 problem followed by "Model choices are read-only until Claude is ready.", a saved model reads
 "<id> (saved)", and **Retry Claude preflight** refetches. A known Codex failure adds the server's
 problem as a warning and **Retry Codex preflight**; Codex choices stay editable, and neither the
-first check nor a recheck adds a note. The Claude policy field uses the same "Claude readiness:
+first check nor a previously ready recheck adds a new failure note; an existing Codex failure
+note stays visible while Retry rechecks it. The Claude policy field uses the same "Claude readiness:
 <label>." line. Adapter model listings do not establish account access, and failed catalog fetches
 do not prove removal. `MODEL_DISABLED` and `MODEL_NOT_IN_CATALOG` are catalog facts independent of
 auth, quota or transport failures. Omitted `authenticated` means login could not be established.
+
+Transport detail says "Claude reported a connection or provider service error." (or Codex),
+followed by "Check the network connection and the provider's service status, then retry preflight."
+It covers provider HTTP 500 responses as well as connection failures; it does not establish a
+connectivity diagnosis.
 
 Draft create, import and 600 ms idle autosaves never probe readiness. The editor fetches it
 independently. Explicit validate, publish and manual API/MCP run admission probe once per harness
