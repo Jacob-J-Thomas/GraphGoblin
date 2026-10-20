@@ -147,7 +147,7 @@ describe('SqliteRunRepository', () => {
     const thread = sampleThread();
     const run = runRecord({
       parentRunId: fakeUlid('parent'),
-      waiting: { nodeId: 'w', kind: 'input' },
+      waiting: { waitId: 'fixture-wait', startedSeq: 1, nodeId: 'w', kind: 'input' },
     });
     await repo.create(run, thread);
     expect(await repo.get(run.id)).toEqual(run);
@@ -199,6 +199,32 @@ describe('SqliteRunRepository', () => {
     await expect(repo.transition('missing', ['queued'], { status: 'running' })).rejects.toThrow(
       /not found/,
     );
+  });
+
+  it('fences a delayed transition by the observed waiting identity', async () => {
+    const repo = new SqliteRunRepository(handle.db);
+    const run = runRecord({
+      status: 'waiting',
+      waiting: { waitId: 'A', startedSeq: 1, nodeId: 'w', kind: 'input' },
+    });
+    await repo.create(run, sampleThread());
+    expect(
+      await repo.transition(run.id, ['waiting'], { status: 'running' }, { waitId: 'unknown' }),
+    ).toBeUndefined();
+    expect(await repo.get(run.id)).toEqual(run);
+    await repo.update(run.id, {
+      waiting: { waitId: 'B', startedSeq: 2, nodeId: 'w', kind: 'input' },
+    });
+    expect(
+      await repo.transition(run.id, ['waiting'], { status: 'running' }, { waitId: 'A' }),
+    ).toBeUndefined();
+    expect((await repo.get(run.id))?.waiting?.waitId).toBe('B');
+    expect(
+      await repo.transition(run.id, ['waiting'], { status: 'running' }, { waitId: 'B' }),
+    ).toMatchObject({ status: 'running' });
+    expect(
+      await repo.transition(run.id, ['waiting'], { status: 'running' }, { waitId: 'B' }),
+    ).toBeUndefined();
   });
 
   it('rolls back a failed ordinary transition and allows only one concurrent resume', async () => {
@@ -622,6 +648,20 @@ describe('SqliteTimerStore', () => {
     expect((await store.list(run)).map((t) => t.key)).toEqual(['timeout']);
     await store.remove(run);
     expect(await store.list(run)).toEqual([]);
+  });
+});
+
+describe('conditional timer deferral', () => {
+  it('requeues only the fired SQLite row and preserves a concurrent re-arm', async () => {
+    const store = new SqliteTimerStore(handle.db);
+    const at = new Date('2026-10-02T12:00:00.000Z');
+    const retryAt = new Date('2026-10-02T12:00:01.000Z');
+    await store.upsert('r', 'timer@wait', at);
+    await store.defer('r', 'timer@wait', at, retryAt);
+    expect(await store.listDue(at)).toEqual([]);
+    expect(await store.list('r')).toEqual([{ runId: 'r', key: 'timer@wait', at: retryAt }]);
+    await store.defer('r', 'timer@wait', at, new Date(0));
+    expect((await store.list('r'))[0]?.at).toEqual(retryAt);
   });
 });
 

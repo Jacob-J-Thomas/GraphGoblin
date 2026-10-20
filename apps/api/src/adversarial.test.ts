@@ -295,8 +295,8 @@ describe('adversarial API invariants', () => {
         if (path === '/loops' || path.endsWith('/draft')) payload = { definition: minimalLoop() };
         else if (path.endsWith('/import') || path === '/settings' || path.endsWith('/runs'))
           payload = {};
-        else if (path.endsWith('/input')) payload = { input: null };
-        else if (path.includes('/signals/')) payload = { payload: null };
+        else if (path.endsWith('/input')) payload = { waitId: 'unknown', input: null };
+        else if (path.includes('/signals/')) payload = { waitId: 'unknown', payload: null };
         else if (path.startsWith('/secrets/') && method === 'put')
           payload = { value: 'scope-test' };
         else if (path === '/api-keys' && method === 'post') payload = { label: 'scope-test' };
@@ -449,7 +449,11 @@ describe('adversarial API invariants', () => {
       payload: { definition: minimalLoop() },
     });
     await t.app.inject({ method: 'POST', url: `/loops/${id}/publish` });
-    await t.container.manager.provideInput(r.id, 'original');
+    await t.container.manager.provideInput(
+      r.id,
+      (await t.container.manager.getRun(r.id))?.waiting?.waitId ?? 'unknown',
+      'original',
+    );
     await t.idle();
     expect((await t.container.manager.getRun(r.id))?.versionId).toBe(r.versionId);
     expect((await t.container.manager.getThread(r.id))?.outputs['wait']?.value).toBe('original');
@@ -669,7 +673,11 @@ describe('adversarial API invariants', () => {
     const [queued] = await t.container.repos.events.read(runId, 0, 1);
     expect(queued).not.toHaveProperty('subloopVersions');
     await t.idle();
-    await t.container.manager.provideInput(runId, null);
+    await t.container.manager.provideInput(
+      runId,
+      (await t.container.manager.getRun(runId))?.waiting?.waitId ?? 'unknown',
+      null,
+    );
     await t.idle();
     // It started after the deletion: nothing was pinned, and the subloop fails as for any
     // reference to a deleted loop, instead of a pinned version vanishing underneath it.
@@ -695,7 +703,11 @@ describe('adversarial API invariants', () => {
     const refused = await t.app.inject({ method: 'DELETE', url: `/loops/${child}` });
     expect(refused.statusCode).toBe(409);
     expect(refused.json()).toMatchObject({ code: 'LOOP_IN_USE' });
-    await t.container.manager.provideInput(run.id, null);
+    await t.container.manager.provideInput(
+      run.id,
+      (await t.container.manager.getRun(run.id))?.waiting?.waitId ?? 'unknown',
+      null,
+    );
     await t.idle();
     expect((await t.container.manager.getRun(run.id))?.status).toBe('succeeded');
     expect((await t.app.inject({ method: 'DELETE', url: `/loops/${child}` })).statusCode).toBe(204);

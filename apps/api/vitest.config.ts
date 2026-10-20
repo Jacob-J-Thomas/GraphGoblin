@@ -6,5 +6,10 @@ import { createVitestConfig } from '@graphgoblin/tooling/vitest';
 // Some tests spawn processes or generate key files and have timed out at 5 s under full-parallel
 // load on the development machine, so this package allows 20 s per test and hook.
 export default createVitestConfig({
-  test: { pool: 'forks', testTimeout: 20_000, hookTimeout: 20_000 },
+  test: {
+    pool: 'forks',
+    testTimeout: 20_000,
+    hookTimeout: 20_000,
+    globalSetup: ['./wait-storage.global-setup.ts'],
+  },
 });

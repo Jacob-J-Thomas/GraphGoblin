@@ -1,4 +1,4 @@
-import type { JsonValue } from '@graphgoblin/contracts';
+import type { JsonValue, RunEvent } from '@graphgoblin/contracts';
 import { evaluatePredicate, renderTemplate, threadView } from '@graphgoblin/domain';
 import { ProbeBodyOverflowError, RunFailureError } from '../errors.js';
 import type { NodeContext, NodeHandler } from '../handler.js';
@@ -8,6 +8,7 @@ import { jsonOrText, outputPatch, toJson } from './common.js';
 async function probe(
   ctx: NodeContext<'heartbeat'>,
   view: Record<string, unknown>,
+  visitEvents: readonly RunEvent[],
 ): Promise<JsonValue> {
   const { probe: spec } = ctx.config;
   switch (spec.kind) {
@@ -66,20 +67,7 @@ async function probe(
       });
     }
     case 'signal-count': {
-      const events = await ctx.services.events();
-      const startIndex = events
-        .map((e) => e.type === 'node.started' && e.nodeId === ctx.node.id)
-        .lastIndexOf(true);
-      const since = events.slice(
-        Math.max(
-          0,
-          events.findIndex(
-            (e, i) => i >= 0 && e.type === 'node.started' && e.nodeId === ctx.node.id,
-          ),
-        ),
-      );
-      void startIndex;
-      const count = since.filter(
+      const count = visitEvents.filter(
         (e) => e.type === 'signal.received' && e.name === spec.name,
       ).length;
       return toJson({ name: spec.name, count });
@@ -92,11 +80,28 @@ export const heartbeatHandler: NodeHandler<'heartbeat'> = {
   async execute(ctx) {
     const { config } = ctx;
     const view = threadView(ctx.thread) as unknown as Record<string, unknown>;
-    const beat = (ctx.previousWait?.beat ?? 0) + 1;
+    const events = await ctx.services.events();
+    // Finishing ends a logical visit; beats, retries and recovery starts do not.
+    const finished = events.findLastIndex(
+      (event) => event.type === 'node.finished' && event.nodeId === ctx.node.id,
+    );
+    const afterFinish = events.slice(finished + 1);
+    const start = afterFinish.findIndex(
+      (event) => event.type === 'node.started' && event.nodeId === ctx.node.id,
+    );
+    const visitEvents = start < 0 ? [] : afterFinish.slice(start);
+    const recordedBeat = visitEvents.reduce(
+      (last, event) =>
+        event.type === 'heartbeat.beat' && event.nodeId === ctx.node.id
+          ? Math.max(last, event.beat)
+          : last,
+      ctx.previousWait?.beat ?? 0,
+    );
+    const beat = recordedBeat + 1;
     const nowIso = ctx.services.now();
     const now = Date.parse(nowIso);
 
-    const result = await probe(ctx, view);
+    const result = await probe(ctx, view, visitEvents);
     await ctx.services.record({
       type: 'heartbeat.beat',
       nodeId: ctx.node.id,
@@ -154,7 +159,6 @@ export const heartbeatHandler: NodeHandler<'heartbeat'> = {
     }
 
     const next = new Date(now + config.intervalSeconds * 1000);
-    await ctx.ports.timers.schedule(ctx.run.id, 'heartbeat', next);
     return {
       kind: 'park',
       patch: [],

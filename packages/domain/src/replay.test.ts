@@ -22,7 +22,10 @@ const events: RunEvent[] = [
     durationMs: 1,
   }),
   ev(5, 'node.started', { nodeId: 'approve', kind: 'wait', attempt: 1, configHash: 'h' }),
-  ev(6, 'run.waiting', { nodeId: 'approve', wait: { nodeId: 'approve', kind: 'input' } }),
+  ev(6, 'run.waiting', {
+    nodeId: 'approve',
+    wait: { waitId: 'fixture-wait', startedSeq: 1, nodeId: 'approve', kind: 'input' },
+  }),
   ev(7, 'run.woken', { nodeId: 'approve', reason: 'input' }),
   ev(8, 'node.finished', {
     nodeId: 'approve',

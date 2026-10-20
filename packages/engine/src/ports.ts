@@ -78,13 +78,15 @@ export interface RunRepository {
   update(runId: string, changes: RunRecordChanges): Promise<RunRecord>;
   /**
    * Compare-and-set: apply `changes` only if the run's status is one of `from`.
-   * Returns the updated record, or undefined when the status did not match. Lifecycle transitions
-   * go through this so concurrent commands cannot clobber each other.
+   * An optional wait guard also requires that exact recorded wait, atomically with the status.
+   * Returns the updated record, or undefined when either precondition did not match. Lifecycle
+   * transitions go through this so delayed acknowledgements cannot clobber a later wait.
    */
   transition(
     runId: string,
     from: readonly RunStatus[],
     changes: RunRecordChanges,
+    guard?: { waitId: string },
   ): Promise<RunRecord | undefined>;
   /**
    * Record a cancel request once: set `cancelRequestedAt` only when it is unset and the status is
@@ -371,9 +373,12 @@ export interface TimerPort {
   /**
    * Listeners may return a promise. Implementations await it and remove the fired timer only
    * afterwards, so delivery is at-least-once: a fire interrupted by a crash fires again after a
-   * restart. Listeners must therefore be idempotent.
+   * restart. Returning false defers acknowledgement (for example, an early delivery).
+   * Listeners must therefore be idempotent.
    */
-  onFire(listener: (runId: string, key: string) => void | Promise<void>): () => void;
+  onFire(
+    listener: (runId: string, key: string) => void | boolean | Promise<void | boolean>,
+  ): () => void;
 }
 
 /** Shared byte bound for HTTP probe bodies and items-mode script stdout (64 KiB). */

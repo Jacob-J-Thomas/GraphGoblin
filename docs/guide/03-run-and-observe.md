@@ -101,7 +101,7 @@ Configure [MCP](05-mcp-and-codex-plugin.md), then call `list_loops`, `describe_l
 }
 ```
 
-Pass the returned `runId` to `wait_for_run`. Repeat until `finished` is true; handle input waits with `provide_input`. These starts record `manual.mcp`.
+Pass the returned `runId` to `wait_for_run`. Repeat until `finished` is true; handle input waits with `provide_input` using the observed `waiting.waitId` as `waitId`. These starts record `manual.mcp`.
 
 ## Read the lifecycle
 

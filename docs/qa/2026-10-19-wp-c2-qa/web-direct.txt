@@ -1,0 +1,80 @@
+pnpm.cmd : $ vitest run --coverage
+At line:2 char:50
++ ... $env:PATH"; pnpm.cmd --filter @graphgoblin/web test:coverage *> "$env ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --coverage:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 <worktree>/apps/web
+      Coverage enabled with v8
+
+ ❯ src/editor/TriggerEditor.test.tsx (13 tests | 2 failed) 101691ms
+   ❯ trigger authoring (4)
+     × previews, cancels and applies issues-labeled as one undo step including graph and held input 22650ms
+   × edits authentication, body and extraction by keyboard with one-step undo and field validation 20331ms
+ ❯ src/editor/NodeEditorDialog.test.tsx (30 tests | 1 failed) 247859ms
+   ❯ NodeEditorDialog evaluator-specific decisions (12)
+     × authors and saves a new classifier decision from the default editor fields 20080ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog evaluator-specific decisions > authors and saves a new 
+classifier decision from the default editor fields
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/NodeEditorDialog.test.tsx:112:56
+    110|     },
+    111|   );
+    112|   it.each(['expression', 'llm', 'classifier'] as const)(
+       |                                                        ^
+    113|     'authors and saves a new %s decision from the default editor field…
+    114|     async (kind) => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/editor/TriggerEditor.test.tsx > trigger authoring > previews, cancels and applies issues-labeled as one 
+undo step including graph and held input
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/TriggerEditor.test.tsx:174:54
+    172|   });
+    173|
+    174|   it.each(['issues-poll', 'issues-labeled'] as const)(
+       |                                                      ^
+    175|     'previews, cancels and applies %s as one undo step including graph…
+    176|     async (preset) => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/editor/TriggerEditor.test.tsx > edits authentication, body and extraction by keyboard with one-step undo 
+and field validation
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/TriggerEditor.test.tsx:241:1
+    239| });
+    240|
+    241| it('edits authentication, body and extraction by keyboard with one-ste…
+       | ^
+    242|   const user = userEvent.setup();
+    243|   const dialog = await openTrigger();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed | 114 passed (116)
+      Tests  3 failed | 1470 passed (1473)
+   Start at  18:13:48
+   Duration  632.35s (environment 35%, tests 35%, setup 13%, import 10%, transform 5%, worker 1%)
+
+Environment  jsdom was created 116 times · 2100.59s total, 35% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in <drive>:
+  │ \Users\<user-name>\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-
+  │ c2\apps\web
+

@@ -13,6 +13,37 @@
       }
     },
     "schemas": {
+      "WaitConflictInput": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "number",
+            "const": 409
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "WAIT_MISMATCH",
+              "INVALID_STATE"
+            ]
+          },
+          "detail": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ]
+      },
       "ClassifierModelSummaryInput": {
         "type": "object",
         "properties": {
@@ -4317,6 +4348,11 @@
       "WaitSpecInput": {
         "type": "object",
         "properties": {
+          "waitId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
           "nodeId": {
             "type": "string",
             "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
@@ -4372,8 +4408,10 @@
           }
         },
         "required": [
+          "waitId",
           "nodeId",
-          "kind"
+          "kind",
+          "startedSeq"
         ],
         "additionalProperties": false
       },
@@ -7113,6 +7151,38 @@
           "artifacts",
           "outputs",
           "counters"
+        ],
+        "additionalProperties": false
+      },
+      "WaitConflict": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "number",
+            "const": 409
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "WAIT_MISMATCH",
+              "INVALID_STATE"
+            ]
+          },
+          "detail": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
         ],
         "additionalProperties": false
       },
@@ -11556,6 +11626,11 @@
       "WaitSpec": {
         "type": "object",
         "properties": {
+          "waitId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
           "nodeId": {
             "type": "string",
             "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
@@ -11611,8 +11686,10 @@
           }
         },
         "required": [
+          "waitId",
           "nodeId",
-          "kind"
+          "kind",
+          "startedSeq"
         ],
         "additionalProperties": false
       },
@@ -15794,13 +15871,20 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "waitId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
                   "input": {
                     "$ref": "#/components/schemas/JsonValueInput"
                   }
                 },
                 "required": [
+                  "waitId",
                   "input"
-                ]
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -15826,6 +15910,16 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WaitConflict"
+                }
+              }
+            }
           }
         }
       }
@@ -15841,13 +15935,21 @@
           "content": {
             "application/json": {
               "schema": {
-                "default": {},
                 "type": "object",
                 "properties": {
+                  "waitId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
                   "payload": {
                     "$ref": "#/components/schemas/JsonValueInput"
                   }
-                }
+                },
+                "required": [
+                  "waitId"
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -15892,6 +15994,16 @@
                     "woke"
                   ],
                   "additionalProperties": false
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WaitConflict"
                 }
               }
             }
