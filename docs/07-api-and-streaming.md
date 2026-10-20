@@ -72,7 +72,7 @@ Diagnostics are paged by `nextCursor`; pass it back as `?cursor=...` until null.
 
 ## Artifact downloads
 
-`GET /runs/{id}/artifacts/{artifactId}` returns the artifact's verified content, with SHA-256 checked before decoding. Missing artifact metadata or content returns `404 ARTIFACT_NOT_FOUND`; bytes that do not match the reference return `500 ARTIFACT_CORRUPT`, without serving partial or corrupt content. `ARTIFACT_CORRUPT` is an API problem code, not a run failure code.
+`GET /runs/{id}/artifacts/{artifactId}` returns the artifact's verified content, with SHA-256 checked before decoding. Missing artifact metadata or content returns `404 ARTIFACT_NOT_FOUND`; bytes that do not match the reference return `500 ARTIFACT_CORRUPT`, without serving partial or corrupt content. `ARTIFACT_CORRUPT` is an API problem code, not a run failure code. A publication failure during a run is the resumable run failure `ARTIFACT_WRITE_FAILED`, with the artifact `ref` in its details; resuming the run continues the recorded provider session (docs/05).
 
 ## Loop deletion
 

@@ -1,0 +1,332 @@
+{
+  "revision": "5aadc90",
+  "evidenceTier": "built public repositories, real SQLite file and close/reopen",
+  "checks": [
+    {
+      "name": "create absent",
+      "pass": true,
+      "details": {
+        "resultPresent": false
+      }
+    },
+    {
+      "name": "updates and rejected absent",
+      "pass": true,
+      "details": {
+        "rejected": [true, true],
+        "unchanged": true
+      }
+    },
+    {
+      "name": "create null",
+      "pass": true,
+      "details": {
+        "resultPresent": true,
+        "result": null
+      }
+    },
+    {
+      "name": "updates and rejected null",
+      "pass": true,
+      "details": {
+        "rejected": [true, true],
+        "unchanged": true
+      }
+    },
+    {
+      "name": "create false",
+      "pass": true,
+      "details": {
+        "resultPresent": true,
+        "result": false
+      }
+    },
+    {
+      "name": "updates and rejected false",
+      "pass": true,
+      "details": {
+        "rejected": [true, true],
+        "unchanged": true
+      }
+    },
+    {
+      "name": "create zero",
+      "pass": true,
+      "details": {
+        "resultPresent": true,
+        "result": 0
+      }
+    },
+    {
+      "name": "updates and rejected zero",
+      "pass": true,
+      "details": {
+        "rejected": [true, true],
+        "unchanged": true
+      }
+    },
+    {
+      "name": "create empty",
+      "pass": true,
+      "details": {
+        "resultPresent": true,
+        "result": ""
+      }
+    },
+    {
+      "name": "updates and rejected empty",
+      "pass": true,
+      "details": {
+        "rejected": [true, true],
+        "unchanged": true
+      }
+    },
+    {
+      "name": "create array",
+      "pass": true,
+      "details": {
+        "resultPresent": true,
+        "result": []
+      }
+    },
+    {
+      "name": "updates and rejected array",
+      "pass": true,
+      "details": {
+        "rejected": [true, true],
+        "unchanged": true
+      }
+    },
+    {
+      "name": "create object",
+      "pass": true,
+      "details": {
+        "resultPresent": true,
+        "result": {}
+      }
+    },
+    {
+      "name": "updates and rejected object",
+      "pass": true,
+      "details": {
+        "rejected": [true, true],
+        "unchanged": true
+      }
+    },
+    {
+      "name": "create nested",
+      "pass": true,
+      "details": {
+        "resultPresent": true,
+        "result": {
+          "a": null
+        }
+      }
+    },
+    {
+      "name": "updates and rejected nested",
+      "pass": true,
+      "details": {
+        "rejected": [true, true],
+        "unchanged": true
+      }
+    },
+    {
+      "name": "SQL NULL differs from JSON null text",
+      "pass": true,
+      "details": {
+        "rows": [
+          {
+            "id": "17VG4QABDRKDTV1M97Q4G8FSPR",
+            "result": "[]",
+            "sql_null": 0,
+            "sql_type": "text"
+          },
+          {
+            "id": "72JPB78F39V3YRCQZKRQZDBGNP",
+            "result": "{}",
+            "sql_null": 0,
+            "sql_type": "text"
+          },
+          {
+            "id": "9HT0TWJR56XYZ6JJ3MSK5FD61V",
+            "result": "null",
+            "sql_null": 0,
+            "sql_type": "text"
+          },
+          {
+            "id": "BATW38M5QXP2BTPDJTS57MR7N1",
+            "result": "0",
+            "sql_null": 0,
+            "sql_type": "text"
+          },
+          {
+            "id": "C9TZYFP76TXCWNBSBZF3ETRK7V",
+            "result": null,
+            "sql_null": 1,
+            "sql_type": "null"
+          },
+          {
+            "id": "KBEZY2REPNX3EP8H4R7BHCRYPP",
+            "result": "false",
+            "sql_null": 0,
+            "sql_type": "text"
+          },
+          {
+            "id": "NF3A0B1Q65PQEGJ91Y9W5QZ8JJ",
+            "result": "{\"a\":null}",
+            "sql_null": 0,
+            "sql_type": "text"
+          },
+          {
+            "id": "RJEXKVH50NZ6ZHGZBGQY9J88NP",
+            "result": "\"\"",
+            "sql_null": 0,
+            "sql_type": "text"
+          }
+        ]
+      }
+    },
+    {
+      "name": "reopen absent",
+      "pass": true,
+      "details": {
+        "id": "C9TZYFP76TXCWNBSBZF3ETRK7V",
+        "resultPresent": false
+      }
+    },
+    {
+      "name": "reopen null",
+      "pass": true,
+      "details": {
+        "id": "9HT0TWJR56XYZ6JJ3MSK5FD61V",
+        "resultPresent": true,
+        "result": null
+      }
+    },
+    {
+      "name": "reopen false",
+      "pass": true,
+      "details": {
+        "id": "KBEZY2REPNX3EP8H4R7BHCRYPP",
+        "resultPresent": true,
+        "result": false
+      }
+    },
+    {
+      "name": "reopen zero",
+      "pass": true,
+      "details": {
+        "id": "BATW38M5QXP2BTPDJTS57MR7N1",
+        "resultPresent": true,
+        "result": 0
+      }
+    },
+    {
+      "name": "reopen empty",
+      "pass": true,
+      "details": {
+        "id": "RJEXKVH50NZ6ZHGZBGQY9J88NP",
+        "resultPresent": true,
+        "result": ""
+      }
+    },
+    {
+      "name": "reopen array",
+      "pass": true,
+      "details": {
+        "id": "17VG4QABDRKDTV1M97Q4G8FSPR",
+        "resultPresent": true,
+        "result": []
+      }
+    },
+    {
+      "name": "reopen object",
+      "pass": true,
+      "details": {
+        "id": "72JPB78F39V3YRCQZKRQZDBGNP",
+        "resultPresent": true,
+        "result": {}
+      }
+    },
+    {
+      "name": "reopen nested",
+      "pass": true,
+      "details": {
+        "id": "NF3A0B1Q65PQEGJ91Y9W5QZ8JJ",
+        "resultPresent": true,
+        "result": {
+          "a": null
+        }
+      }
+    },
+    {
+      "name": "settings/inbound reopen null",
+      "pass": true,
+      "details": {
+        "settings": null,
+        "inboundPayload": null
+      }
+    },
+    {
+      "name": "settings/inbound reopen false",
+      "pass": true,
+      "details": {
+        "settings": false,
+        "inboundPayload": false
+      }
+    },
+    {
+      "name": "settings/inbound reopen zero",
+      "pass": true,
+      "details": {
+        "settings": 0,
+        "inboundPayload": 0
+      }
+    },
+    {
+      "name": "settings/inbound reopen empty",
+      "pass": true,
+      "details": {
+        "settings": "",
+        "inboundPayload": ""
+      }
+    },
+    {
+      "name": "settings/inbound reopen array",
+      "pass": true,
+      "details": {
+        "settings": [],
+        "inboundPayload": []
+      }
+    },
+    {
+      "name": "settings/inbound reopen object",
+      "pass": true,
+      "details": {
+        "settings": {},
+        "inboundPayload": {}
+      }
+    },
+    {
+      "name": "settings/inbound reopen nested",
+      "pass": true,
+      "details": {
+        "settings": {
+          "a": null
+        },
+        "inboundPayload": {
+          "a": null
+        }
+      }
+    },
+    {
+      "name": "removed repository method",
+      "pass": true,
+      "details": {
+        "listByStatus": false,
+        "listRunReferences": "function"
+      }
+    }
+  ]
+}
