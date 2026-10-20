@@ -87,8 +87,10 @@ async function startDraft(engine: TestEngine, mark = 'old') {
   return { draft, run: await engine.settle(run.id) };
 }
 
+/** Answer the run's current input wait; `run` may be a stale record, so the wait id is read afresh. */
 async function answer(engine: TestEngine, run: RunRecord, manager = engine.manager) {
-  await manager.provideInput(run.id, true);
+  const parked = (await engine.ports.runs.get(run.id))!;
+  await manager.provideInput(run.id, parked.waiting!.waitId, true);
   await manager.waitForIdle();
   return (await engine.ports.runs.get(run.id))!;
 }
