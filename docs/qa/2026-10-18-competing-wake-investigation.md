@@ -36,8 +36,8 @@ payloads, refusals and restart process IDs are in
 | Two matching signals                                   | Park named-signal wait; send payloads 1 and 2 concurrently, then reverse their invocation order. 10 runs each.                                                                                    | One accepted signal and one `WAIT_MISMATCH` per run; one `signal.received`, one wake; result equals winner's payload.                                                                                                                                                                 |
 | Nonmatching/filtered signals, negative control         | Send wrong name, matching name with failing filter, then passing signal. 1 run.                                                                                                                   | First two recorded without waking; third wakes once; all three signal events retained.                                                                                                                                                                                                |
 | Old visit after a new wait                             | Answer input A; await input B at a different node; send A's input and signal identities; advance A's old deadline and poll; finally answer B. 1 run.                                              | Both stale commands refuse with `WAIT_MISMATCH`; event log unchanged by refusals/poll; B requires its own answer. Old timer was cancelled, so this does **not** claim a stale timer delivery occurred.                                                                                |
-| Timeout race followed by child timer/completion        | Parent input wait with 1 s timeout; race input/poll at deadline; parent parks on duration-wait child; advance child's 1 s deadline; race poll with a non-waking signal append to parent. 20 runs. | Initial input wins 20/20; child timer completes child; parent has exactly one input wake and one child wake, one child run, and succeeds.                                                                                                                                             |
-| Immediate child / post-park reconciliation             | Child is trigger directly to exit; parent subloop leads to input wait. Five batches of ten concurrent parents under default global capacity 4.                                                    | All 50 parents stay at the input wait with exactly one child wake and one child. Real input then succeeds with exactly two total wakes and the supplied result. No old child wake consumed the input visit.                                                                           |
+| Timeout race followed by child timer/completion        | Parent input wait with 1 s timeout; race input/poll at deadline; parent parks on duration-wait child; advance child's 1 s deadline; race poll with a non-waking signal append to parent. 20 runs. | Initial input wins 20/20; child timer completes child; parent has exactly one input wake and one child wake, one child run, and succeeds. No conflicting non-waking signal append was demonstrated.                                                                                   |
+| Immediate-child control (winner unobserved)            | Child is trigger directly to exit; parent subloop leads to input wait. Five batches of ten concurrent parents under default global capacity 4.                                                    | All 50 parents stay at the input wait with exactly one child wake and one child. Real input then succeeds with exactly two total wakes and the supplied result. No old child wake consumed the input visit. This does not establish that post-park reconciliation won.                |
 | Restart, due timer and caller-pending signal           | Persist a named-signal wait with 1 s timeout; close store; fresh process starts at +2 s; race public timer poll with signal carrying the persisted identity. 1 run.                               | Timeout wins; pending caller receives `WAIT_MISMATCH`; one wake and no accepted signal event. There is no durable matching-signal inbox here: “pending” means held by the caller until restart.                                                                                       |
 | Restart with durable signal observation                | Park signal-count heartbeat; record one non-waking signal; close store; fresh process starts at +2 s and polls its overdue timer. 1 run.                                                          | Signal event survives; heartbeat condition `probe.count >= 1` completes; one timer wake, no duplicate signal.                                                                                                                                                                         |
 | Child completion plus timer **on the same child park** | Source admission check, not an executed race.                                                                                                                                                     | Current subloop parks have `childRunId` but no authored `until`/`timeoutAt`. Ordinary handlers cannot arm a timer for that park. The adjacent-visit/child-timer scenarios above are the available production paths; no parent timer was fabricated to claim a same-park reproduction. |
@@ -88,10 +88,38 @@ the guarded status transition, not a lock around all wake callers.
 before calling `wake` at line 1884, but omits the parent's `waitId`. A delayed
 notification/conditional-append retry is consequently not bound end-to-end to
 the park it inspected. The immediate-child runs did not reproduce a crossing.
-Per `FOLLOWUPS.md`, bind this in the awaited-subloop work; no speculative repair
-is made here. Matching-signal idempotency keys and exhaustively forced internal
-interleavings are also outside this result. Hard-kill and paused-run coverage
-remain qualified by the C2 record, not by this orderly-restart experiment.
+#242 (awaited subloops) owns the identity-bound child wake; no speculative repair
+is made here. Matching-signal idempotency keys are outside this result. The
+independent review's natural and constructed evidence is distinguished below.
+
+## Independent review evidence
+
+Source: the independent Claude Opus 5.5 review, findings N2–N5, supplied in the
+round-two brief. These are reviewer observations, not experiments rerun by this
+worker. The review approved #225 as bounded closing evidence with these
+corrections, not as proof that the child-wake path is fully fenced.
+
+| Natural review scenario | Workload                                                                  | Result              |
+| ----------------------- | ------------------------------------------------------------------------- | ------------------- |
+| H1                      | 180 parents looping back to one subloop node; 820 child completions       | No natural crossing |
+| H2                      | 60 parents; 874 signals and 874 mismatched inputs during child completion | No natural crossing |
+| H3                      | 32 hard kills over 192 parents and 512 child visits                       | No natural crossing |
+| H4                      | 60 parents through 4,308 pause/resume cycles                              | No natural crossing |
+| H5                      | 40 runs; 240 concurrent answers carrying an earlier wait ID               | No natural crossing |
+
+Across approximately 1,572 child completions, the review observed no natural
+crossing. In its 420 inspected parks, child completion followed the park event
+every time: the immediate-child experiment does not establish that post-park
+reconciliation ever won. The timed-child experiment likewise does not establish
+that its non-waking signal append conflicted with the child notification's wake.
+
+**Constructed only:** delaying one parent re-read inside `wake()` called from
+`notifyParent` let a stale child wake reach a later input park or the next visit
+of the same subloop node. That forced internal delay is not a natural production
+reproduction. The review requires #242 to pass the parent's observed `waitId`
+from `notifyParent`, require a child wake to match `parked.wait.kind === 'child'`
+and `childRunId`, and have the subloop handler refuse an outcome from a child
+that has not finished.
 
 ## Reproduction and delivery
 
@@ -99,7 +127,7 @@ remain qualified by the C2 record, not by this orderly-restart experiment.
 [fast-child driver](2026-10-18-wp-c3-evidence/fast-child.mjs.txt),
 [commands/results](2026-10-18-wp-c3-evidence/verification.txt), and the
 [environment/store manifest](2026-10-18-wp-c3-evidence/environment.json) are
-retained. Only QA documents/evidence are delivered. No production code,
-maintained tests, dependencies, coverage policy, numbered behavior docs, ADR or
-CHANGELOG entry changed. Disposable stores are closed and retained for
+retained. For #225, only QA documents/evidence are delivered; engine wake code
+and its maintained tests remain unchanged. The separate #140 round-two fix
+changes poll validation/admission and its tests and docs. Disposable stores are closed and retained for
 orchestrator cleanup; the owner app/store was not used.
