@@ -304,7 +304,7 @@ describe('MCP server against the in-process API', () => {
     expect(started.loopId).toBe(loopId);
     await t.idle();
     const done = body<{ finished: boolean; run: RunRecord }>(
-      await call('wait_for_run', { runId: started.runId, timeoutSeconds: 0 }),
+      await call('wait_for_run', { runId: started.runId }),
     );
     expect(done).toMatchObject({
       finished: true,
@@ -378,15 +378,10 @@ describe('MCP server against the in-process API', () => {
     );
   });
 
-  it('times out with a cursor while a run is busy, reports progress, then succeeds', async () => {
+  it('reports progress while a run is busy, then succeeds', async () => {
     t.harness.script([{ finalText: 'pondered', delayMs: 400 }]);
     const loopId = await t.publishLoop(slowLoop);
     const { runId } = body(await call('start_run', { loopId }));
-    const pending = body(await call('wait_for_run', { runId, timeoutSeconds: 0 }));
-    expect(pending).toMatchObject({ finished: false, cursor: expect.any(Number) });
-    expect(['queued', 'running']).toContain(pending.status);
-    expect(pending.next).toMatch(/call wait_for_run again/i);
-
     const progress: number[] = [];
     const done = await client.callTool({ name: 'wait_for_run', arguments: { runId } }, undefined, {
       onprogress: (p) => progress.push(p.progress),
@@ -438,7 +433,7 @@ describe('MCP server against the in-process API', () => {
     expect(described.triggers[0]).toMatchObject({ startableFromMcp: false });
     const held = body(await call('start_run', { loopId: signalId })).runId as string;
     await until(async () => (await status(held)) === 'waiting');
-    const notYet = body(await call('wait_for_run', { runId: held, timeoutSeconds: 0 }));
+    const notYet = body(await call('wait_for_run', { runId: held, timeoutSeconds: 1 }));
     expect(notYet.next).toMatch(/signal "go"/);
     expect(notYet.next).toContain('waiting.waitId');
     expect(

@@ -164,6 +164,15 @@ type Artifact = {
 };
 ```
 
+Authored patches may mutate only `/messages`, `/vars`, `/artifacts`, `/outputs` and
+`/lastOutput`, including their descendants. The document root, `/schemaVersion`, `/run`,
+`/invocation`, `/counters` and `/gates` are protected. Every mutating destination is checked
+before the patch is applied: `add`, `replace`, `remove`, `move` and `copy` check `path`,
+and `move` also checks `from` because it removes its source. `copy` may read protected
+context into a writable destination; `test` may read any location. Rejecting any operation
+rejects the entire patch without changing the thread. Engine-owned bookkeeping uses its
+own patches and can update protected locations.
+
 Questions to settle together, tracked in 13:
 
 1. Are messages the right spine, or should the thread be variables plus artifacts with messages as one artifact kind?

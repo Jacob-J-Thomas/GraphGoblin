@@ -67,7 +67,7 @@ HTTP accepts POST only and is stateless, with a fresh transport per request; GET
 
 `list_runs` returns `{ items, nextCursor }`. Pass a non-null `nextCursor` as `cursor` with the same filters, even when `items` is empty; stop when `nextCursor` is null.
 
-`wait_for_run` defaults to 60 seconds and accepts up to 600. A timeout returns `finished` false, the status, a cursor, and a suggested next action; call it again with the same run ID. For an input wait, read the prompt and schema, call `provide_input`, then wait again. For a paused run, resume when authorised. A terminal result has `finished` true and the run snapshot.
+`wait_for_run` accepts an integer from 1 to 600 seconds and defaults to 60. A timeout returns `finished` false and a suggested next action; call it again with the same run ID. It includes the last observed status and cursor when a snapshot arrived; otherwise status, waiting details and cursor are omitted. For an input wait, read the prompt and schema, call `provide_input`, then wait again. For a paused run, resume when authorised. A terminal result has `finished` true and the run snapshot.
 
 Resources expose the log and thread through these templates:
 
