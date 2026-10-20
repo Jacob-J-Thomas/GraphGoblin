@@ -8,7 +8,6 @@
 export * from './config.js';
 export * from './container.js';
 export * from './app.js';
-export * from './event-bus.js';
 export * from './ids.js';
 export * from './master-key.js';
 export * from './types.js';

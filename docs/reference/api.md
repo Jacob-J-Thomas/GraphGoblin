@@ -93,7 +93,7 @@ Keys for other applications and the MCP server.
 
 ## events
 
-The inbound event bus.
+Inbound Events and the event triggers they start.
 
 | Method | Path      | Summary                                                 | Parameters                                                                 | Request body                     | Responses |
 | ------ | --------- | ------------------------------------------------------- | -------------------------------------------------------------------------- | -------------------------------- | --------- |

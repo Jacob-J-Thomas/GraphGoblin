@@ -42,7 +42,11 @@ export const CallerSchema = z.strictObject({
 });
 export type Caller = z.infer<typeof CallerSchema>;
 
-/** Return channels are declared on exit nodes; callers may also supply defaults. */
+/**
+ * Return channels are declared on exit nodes; callers may also supply defaults. There is no
+ * loop-to-loop channel: a loop that needs another loop's result calls it as an awaited subloop
+ * (ADR-0042).
+ */
 export const ReturnChannelSchema = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('caller') }),
   z.strictObject({
@@ -55,7 +59,6 @@ export const ReturnChannelSchema = z.discriminatedUnion('kind', [
     path: z.string().min(1).max(4096),
     format: z.enum(['json', 'markdown', 'text']).default('json'),
   }),
-  z.strictObject({ kind: z.literal('event'), eventType: SlugSchema }),
   z.strictObject({ kind: z.literal('log') }),
 ]);
 export type ReturnChannel = z.infer<typeof ReturnChannelSchema>;

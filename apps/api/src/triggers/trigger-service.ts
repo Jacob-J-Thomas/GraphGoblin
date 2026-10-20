@@ -31,20 +31,12 @@ import type {
   WebhookEndpointDraft,
   WebhookEndpointRecord,
 } from '@graphgoblin/infrastructure/sqlite';
-import type { InboundEvent, InboundEventBus } from '../event-bus.js';
 import type { PollTarget, PollTriggers } from './poll.js';
 import { FixedWindowRateLimiter } from './rate-limit.js';
 import { extractWebhookEventType, verifyWebhookBody } from './webhook-body.js';
 
 type TriggerNode = Extract<Node, { kind: 'trigger' }>;
 type Config<S extends TriggerNode['config']['type']> = Extract<TriggerNode['config'], { type: S }>;
-
-/**
- * An event may start at most this many runs in a row through event triggers. Together with the
- * loop-chain rule (an event never starts a loop that is already in the chain that emitted it) it
- * keeps loops that publish what they listen for from running forever.
- */
-export const MAX_EVENT_CHAIN = 8;
 
 /** Webhook bodies above this size are rejected with 413 before any work is done. */
 export const WEBHOOK_BODY_LIMIT = 1024 * 1024;
@@ -57,7 +49,6 @@ export interface TriggerServiceDeps {
   inbound: SqliteInboundEvents;
   manager: Pick<RunManager, 'startRun' | 'receiveWebhook'>;
   cron: CronScheduler;
-  bus: InboundEventBus;
   secretsFor(ownerId: string): Pick<SecretsPort, 'resolve'>;
   clock: ClockPort;
   ids: IdPort;
@@ -81,10 +72,8 @@ export interface EventIngest {
   type: string;
   payload: JsonValue;
   dedupeKey?: string;
-  /** `api` for `POST /events`, `run:<runId>` for an exit node's `event` return channel. */
+  /** Where the event came from: `api` for `POST /events`. */
   source: string;
-  /** The run whose exit published the event, for the chain guard. */
-  emitterRunId?: string;
 }
 
 export interface EventIngestResult {
@@ -155,14 +144,13 @@ export class TriggerService {
     this.limiter = new FixedWindowRateLimiter(deps.clock, deps.webhookRateLimit ?? 60);
   }
 
-  /** Subscribe to cron fires and the inbound event bus. Idempotent. */
+  /** Subscribe to cron fires. Idempotent. */
   start(): void {
     if (this.unsubscribe.length > 0) return;
     this.unsubscribe = [
       this.deps.cron.onFire(async (fire) => {
         await this.onCronFire(fire);
       }),
-      this.deps.bus.subscribe((event) => this.onBusEvent(event)),
     ];
   }
 
@@ -529,20 +517,9 @@ export class TriggerService {
       return { event: inserted.duplicate, runIds: inserted.duplicate.runIds, duplicate: true };
     }
 
-    const chain = input.emitterRunId
-      ? await this.chainOf(input.emitterRunId)
-      : { loopIds: new Set<string>(), length: 0 };
     const runIds: string[] = [];
     for (const { loop, version, node } of await this.eventTriggers(input.ownerId, input.type)) {
       const context = { loopId: loop.id, nodeId: node.id, eventId: record.id };
-      if (chain.loopIds.has(loop.id)) {
-        this.deps.logger.warn(context, 'event trigger skipped: loop is already in the chain');
-        continue;
-      }
-      if (chain.length >= MAX_EVENT_CHAIN) {
-        this.deps.logger.warn(context, 'event trigger skipped: chain limit reached');
-        continue;
-      }
       try {
         const config = node.config as Config<'event'>;
         const nodeKey = config.dedupeKey
@@ -559,9 +536,7 @@ export class TriggerService {
           triggerNodeId: node.id,
           triggerKind: 'event',
           source: 'event',
-          caller: input.emitterRunId
-            ? { kind: 'run', id: input.emitterRunId }
-            : { kind: 'system', id: `event:${record.id}` },
+          caller: { kind: 'system', id: `event:${record.id}` },
           payload: input.payload,
           ...(dedupeKey ? { dedupeKey } : {}),
         });
@@ -572,54 +547,6 @@ export class TriggerService {
     }
     if (runIds.length > 0) await this.deps.inbound.setRunIds(record.id, runIds);
     return { event: { ...record, runIds }, runIds, duplicate: false };
-  }
-
-  private async onBusEvent(event: InboundEvent): Promise<void> {
-    const payload = event.payload;
-    const emitter =
-      payload !== null &&
-      typeof payload === 'object' &&
-      !Array.isArray(payload) &&
-      typeof payload['runId'] === 'string'
-        ? payload['runId']
-        : undefined;
-    try {
-      await this.ingestEvent({
-        ownerId: event.ownerId,
-        type: event.type,
-        payload,
-        ...(event.dedupeKey ? { dedupeKey: event.dedupeKey } : {}),
-        source: emitter ? `run:${emitter}` : 'bus',
-        ...(emitter ? { emitterRunId: emitter } : {}),
-      });
-    } catch (error) {
-      this.deps.logger.error({ type: event.type, error: describe(error) }, 'event ingest failed');
-    }
-  }
-
-  /**
-   * The loops of the run chain that ends at `runId`: the run itself, then whichever run started it
-   * through an event trigger, or its parent for a subloop, and so on.
-   */
-  private async chainOf(runId: string): Promise<{ loopIds: Set<string>; length: number }> {
-    const loopIds = new Set<string>();
-    let length = 0;
-    let current: string | undefined = runId;
-    const seen = new Set<string>();
-    while (current && !seen.has(current) && length <= MAX_EVENT_CHAIN) {
-      seen.add(current);
-      const run = await this.deps.runs.get(current);
-      if (!run) break;
-      loopIds.add(run.loopId);
-      length += 1;
-      const thread = await this.deps.runs.getInitialThread(current);
-      const caller = thread?.invocation.caller;
-      current =
-        thread?.invocation.source === 'event' && caller?.kind === 'run'
-          ? caller.id
-          : run.parentRunId;
-    }
-    return { loopIds, length };
   }
 
   private async eventTriggers(

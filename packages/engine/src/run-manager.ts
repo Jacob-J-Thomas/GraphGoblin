@@ -1236,13 +1236,15 @@ export class RunManager {
    * one (`waitId`, when given), and nothing woke it yet. That conditional append is the
    * compare-and-set: of concurrent wakes exactly one is recorded, payload and all. The status then
    * moves from waiting to running; if the process dies in between, recovery finds the durable wake
-   * and completes the move.
+   * and completes the move. A child wake (`childRunId`) is accepted only by a park of kind `child`
+   * on that same child run.
    */
   private async wake(
     runId: string,
     wake: WakeInfo,
     waitId?: string,
     preceding: EventDraft[] = [],
+    childRunId?: string,
   ): Promise<RunRecord> {
     const mismatch = () =>
       new EngineRequestError(
@@ -1282,7 +1284,9 @@ export class RunManager {
       if (
         !parked ||
         parked.wait.waitId !== run.waiting.waitId ||
-        (waitId !== undefined && parked.wait.waitId !== waitId)
+        (waitId !== undefined && parked.wait.waitId !== waitId) ||
+        (wake.reason === 'child' &&
+          (parked.wait.kind !== 'child' || parked.wait.childRunId !== childRunId))
       ) {
         throw mismatch();
       }
@@ -1848,15 +1852,6 @@ export class RunManager {
             target = channel.url;
             break;
           }
-          case 'event':
-            await this.ports.delivery.publishEvent(channel.eventType, {
-              runId: run.id,
-              loopId: run.loopId,
-              outcome: result.outcome,
-              result: payload,
-            });
-            target = channel.eventType;
-            break;
         }
         await append({ type: 'return.delivered', channel, ...(target ? { target } : {}) });
       } catch (error) {
@@ -1907,6 +1902,11 @@ export class RunManager {
     return updated;
   }
 
+  /**
+   * Wake the parent parked on this finished child. The wake is bound to the park this read
+   * observed (its `waitId` and child run), so a notification delayed past that park can never
+   * answer a later one: another wait, or the next visit of the same subloop node.
+   */
   private async notifyParent(
     run: RunRecord,
     status: RunStatus,
@@ -1914,22 +1914,28 @@ export class RunManager {
   ): Promise<void> {
     if (!run.parentRunId) return;
     const parent = await this.ports.runs.get(run.parentRunId);
+    const awaited = parent?.waiting;
     if (
       !parent ||
       parent.status !== 'waiting' ||
-      parent.waiting?.kind !== 'child' ||
-      parent.waiting.childRunId !== run.id
+      awaited?.kind !== 'child' ||
+      awaited.childRunId !== run.id
     )
       return;
     try {
-      await this.wake(parent.id, {
-        reason: 'child',
-        payload: { childRunId: run.id, status, outcome: outcome ?? null },
-      });
+      await this.wake(
+        parent.id,
+        { reason: 'child', payload: { childRunId: run.id, status, outcome: outcome ?? null } },
+        awaited.waitId,
+        [],
+        run.id,
+      );
     } catch (error) {
       // The child's own completion and the parent's post-park check can race. The wake is a
-      // compare-and-set, so the loser finds the parent already running and has nothing to do.
-      if (!(error instanceof EngineRequestError && error.code === 'INVALID_STATE')) throw error;
+      // compare-and-set on the observed park, so the loser (or a notification delayed past that
+      // park) finds it answered, gone or paused and has nothing to do: a paused parent is
+      // reconciled with its child when it resumes.
+      if (!(error instanceof EngineRequestError)) throw error;
     }
   }
 

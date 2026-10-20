@@ -4190,10 +4190,6 @@ export interface components {
             format?: ("json" | "markdown" | "text") | undefined;
         } | {
             /** @constant */
-            kind: "event";
-            eventType: string;
-        } | {
-            /** @constant */
             kind: "log";
         };
         ContextThreadInput: {
@@ -6002,10 +5998,6 @@ export interface components {
              * @enum {string}
              */
             format: "json" | "markdown" | "text";
-        } | {
-            /** @constant */
-            kind: "event";
-            eventType: string;
         } | {
             /** @constant */
             kind: "log";

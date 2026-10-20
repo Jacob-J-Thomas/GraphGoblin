@@ -1,0 +1,24 @@
+# ADR-0042 - Loops compose only as awaited subloops
+
+Date: 2026-10-20. Status: Accepted. Supersedes the `event` return channel and "Loops compose through the `event` channel without a parent loop" in [ADR-0010](ADR-0010-exit-return-channels.md); the rest of ADR-0010 and [ADR-0009](ADR-0009-subloops-by-reference.md) stand.
+
+## Context
+
+Two ways existed for one loop to use another. A subloop node started a child run and parked its parent until the child finished. An exit could also publish an Event onto the API's in-process bus, which started every loop whose Event trigger matched; a run-chain guard (at most eight runs, no loop twice in one chain) kept such chains from running forever. The second way had no caller: nothing awaited the started loops, their failures reached nobody, and the result travelled only as the next loop's trigger payload.
+
+The owner's settled rule (#278, "Child composition"; #248): always await child completion and pass the child's configured exit output back to the parent, or no output when none is configured. A child exit is not a parent exit. Independent loop-to-loop Event chaining is replaced by the awaited parent/subloop call; targeted external Event intake stays.
+
+Awaiting also had a gap of its own. A finished child woke its parent with an unbound wake: the child's notification checked that the parent was parked on it, then re-read the parent inside the wake. When the child's completion and the parent's own post-park check both saw the park, and the losing notification was delayed on that re-read while the winner woke the parent, the late wake landed on whatever the parent parked on next. On the code before this decision a constructed single delayed read made it answer a later input wait (the wait finished with `{reason: "child"}` and no input) and the next visit of the same subloop node (its live child was recorded `child_run.finished status=running` and orphaned). The same review measured no natural occurrence in about 1,572 child completions; timeouts on child parks, parallel joins or a store shared between processes would widen the window.
+
+## Decision
+
+- **A subloop is an awaited call.** The parent parks on its child and continues only once that child is terminal. The child's exit returns its configured output to the parent's output mapping, or no output: a child whose exit returns `none` leaves `result` absent in the parent's summary and custom mapping, and removes the parent's `resultTo.var` variable, while a child that returns JSON `null` passes `null`. The child's outcome is data for the parent; a child exit never finishes its parent, which continues to its own exit.
+- **Child wakes are identity-bound.** A child's notification carries the `waitId` of the parent park it observed. The wake is accepted only by that park, of kind `child` and on that child run, through the same conditional append as every other wake; a notification delayed past that park finds a different `waitId` and does nothing. The subloop handler never maps a child that has not finished: woken for a child that is no longer terminal (resumed after it notified), it parks on it again.
+- **No exit-to-Event chaining.** The exit `event` destination, the return-delivery port's `publishEvent`, the API's in-process event bus, the run-chain guard (`MAX_EVENT_CHAIN`) and Events with `source: run:<id>` are removed. A loop that needs another loop's work calls it as a subloop.
+- **External Event intake stays.** `POST /events` still records an Event and starts every matching Event trigger of the owner's published loops, with its dedupe rules (#343 later narrows it to one stable loop identity). Signals and inputs still reach a run's observed wait by identity through the REST and MCP routes.
+
+## Consequences
+
+- Exit `destinations` (and caller-supplied return defaults) accept caller, webhook, file and log. A definition, import or start request with an `event` destination fails schema validation; the offline format-3 converter refuses such an exit with `V4_DEFINITION_INVALID` at its destination path.
+- Stored data is not rewritten (#278 "Pre-1.0 data": explicit operator action over historical conversion). Removing a destination silently would change what an authored loop does, draft-run snapshots are immutable by design (ADR-0041), and recorded Event deliveries are historical facts. The CHANGELOG upgrade note gives the queries that find affected definitions and history and the manual steps; a stored definition that still holds an Event destination fails its loop's reads, and run history whose events record an Event delivery is reported by `GET /runs/diagnostics` like other unreadable history.
+- Recovery of a child that finished while its parent's process was down, or of a parent whose wake was durable when the process died, produces exactly one parent continuation, nested children included; the built API is tested with real kills and restarts around child completion.

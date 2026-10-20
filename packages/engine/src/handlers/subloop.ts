@@ -78,10 +78,12 @@ async function outputMapping(
   const childView = child.thread
     ? (threadView(child.thread) as unknown as Record<string, unknown>)
     : undefined;
+  // A child that returned no output passes none: `result` stays absent, never `null` (docs/03).
+  const result = child.result !== undefined ? { result: child.result } : {};
   const summary = toJson({
     status: child.status,
     outcome: child.outcome ?? null,
-    result: child.result ?? null,
+    ...result,
     childRunId: child.runId,
   });
   const patch: PatchOperation[] = [];
@@ -90,7 +92,7 @@ async function outputMapping(
     const value = await evaluateExpression(output.custom?.patch ?? '[]', {
       parent: parentView,
       child: childView ?? null,
-      result: child.result ?? null,
+      ...result,
       outcome: child.outcome ?? null,
       status: child.status,
     });
@@ -121,8 +123,13 @@ async function outputMapping(
   // Variables are merged into one replacement so the result variable and the merge strategy compose.
   let vars: Record<string, JsonValue> = { ...parent.vars };
   let varsChanged = false;
-  if (output.resultTo.var) {
-    vars[output.resultTo.var] = child.result ?? null;
+  const resultVar = output.resultTo.var;
+  if (resultVar && child.result !== undefined) {
+    vars[resultVar] = child.result;
+    varsChanged = true;
+  } else if (resultVar && Object.hasOwn(vars, resultVar)) {
+    // No output this visit: the variable no longer holds a result (an earlier visit's, say).
+    vars = Object.fromEntries(Object.entries(vars).filter(([name]) => name !== resultVar));
     varsChanged = true;
   }
 
@@ -170,54 +177,46 @@ export const subloopHandler: NodeHandler<'subloop'> = {
   kind: 'subloop',
   async execute(ctx) {
     const { config } = ctx;
-    // A visit that already started its child (the process died before the park was recorded, or
-    // the node runs again without a wake) re-parks on that child, or maps its outcome if it has
-    // finished, instead of starting a second one (docs/05, crash recovery).
-    const existing = ctx.wake ? undefined : await childOfThisVisit(ctx);
-    if (existing) {
-      const child = await ctx.services.childOutcome(existing);
+    // The child this visit awaits: the child of its recorded park (woken or not), or one this
+    // visit already started before the park was recorded (the process died in between), so a
+    // second one is never started (docs/05, crash recovery).
+    const awaited = ctx.previousWait?.childRunId ?? (await childOfThisVisit(ctx));
+    if (awaited) {
+      const child = await ctx.services.childOutcome(awaited);
+      // The parent continues only after its child has finished: an unfinished child (one resumed
+      // after it notified, say) is awaited again rather than mapped.
       if (!isTerminal(child.status)) {
         return {
           kind: 'park',
           patch: [],
-          wait: { nodeId: ctx.node.id, kind: 'child', childRunId: existing },
+          wait: { nodeId: ctx.node.id, kind: 'child', childRunId: awaited },
         };
       }
       return finishWithChild(ctx, child);
     }
-    if (!ctx.wake) {
-      const depth = await ctx.services.depth();
-      const limit = config.depthLimitOverride ?? ctx.definition.settings.subloopDepthLimit;
-      if (depth + 1 > limit) {
-        throw new RunFailureError(
-          'SUBLOOP_DEPTH_EXCEEDED',
-          `subloop depth ${depth + 1} exceeds the limit ${limit}`,
-          { nodeId: ctx.node.id, resumable: false },
-        );
-      }
-      const seed = await buildSeed(ctx);
-      const view = threadView(ctx.thread) as unknown as Record<string, unknown>;
-      const triggerPayload = config.input.trigger
-        ? toJson(await evaluateExpression(config.input.trigger.payload, view))
-        : ctx.thread.invocation.trigger.payload;
-      const childRunId = await ctx.services.startChild({
-        loopId: config.loopRef.loopId,
-        version: config.loopRef.version,
-        seed,
-        triggerPayload,
-        depthLimit: limit,
-      });
-      await ctx.services.record({ type: 'child_run.started', nodeId: ctx.node.id, childRunId });
-      return { kind: 'park', patch: [], wait: { nodeId: ctx.node.id, kind: 'child', childRunId } };
+    const depth = await ctx.services.depth();
+    const limit = config.depthLimitOverride ?? ctx.definition.settings.subloopDepthLimit;
+    if (depth + 1 > limit) {
+      throw new RunFailureError(
+        'SUBLOOP_DEPTH_EXCEEDED',
+        `subloop depth ${depth + 1} exceeds the limit ${limit}`,
+        { nodeId: ctx.node.id, resumable: false },
+      );
     }
-
-    const childRunId = ctx.previousWait?.childRunId;
-    if (!childRunId) {
-      throw new RunFailureError('INTERNAL_ERROR', 'subloop woke without a child run id', {
-        nodeId: ctx.node.id,
-      });
-    }
-    return finishWithChild(ctx, await ctx.services.childOutcome(childRunId));
+    const seed = await buildSeed(ctx);
+    const view = threadView(ctx.thread) as unknown as Record<string, unknown>;
+    const triggerPayload = config.input.trigger
+      ? toJson(await evaluateExpression(config.input.trigger.payload, view))
+      : ctx.thread.invocation.trigger.payload;
+    const childRunId = await ctx.services.startChild({
+      loopId: config.loopRef.loopId,
+      version: config.loopRef.version,
+      seed,
+      triggerPayload,
+      depthLimit: limit,
+    });
+    await ctx.services.record({ type: 'child_run.started', nodeId: ctx.node.id, childRunId });
+    return { kind: 'park', patch: [], wait: { nodeId: ctx.node.id, kind: 'child', childRunId } };
   },
 };
 

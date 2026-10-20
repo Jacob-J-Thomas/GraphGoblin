@@ -371,7 +371,7 @@ describe('adversarial engine invariants', () => {
     expect((await e.ports.runs.listChildren(fork.id))[0]?.versionId).toBe(middle.id);
   });
 
-  it.each(['log', 'file', 'webhook', 'event'] as const)(
+  it.each(['log', 'file', 'webhook'] as const)(
     '5: failing %s delivery retains outcome and records failure',
     async (kind) => {
       const e = await createTestEngine();
@@ -381,15 +381,12 @@ describe('adversarial engine invariants', () => {
       if (kind === 'file') vi.spyOn(e.ports.workspace, 'writeFile').mockImplementation(fail);
       if (kind === 'log') vi.spyOn(e.ports.delivery, 'log').mockImplementation(fail);
       if (kind === 'webhook') vi.spyOn(e.ports.delivery, 'webhook').mockImplementation(fail);
-      if (kind === 'event') vi.spyOn(e.ports.delivery, 'publishEvent').mockImplementation(fail);
       const channel =
         kind === 'file'
           ? { kind, path: 'out.json' }
           : kind === 'webhook'
             ? { kind, url: 'https://example.invalid' }
-            : kind === 'event'
-              ? { kind, eventType: 'out' }
-              : { kind };
+            : { kind };
       const v = e.publish(
         singleNodeLoop(
           'return',

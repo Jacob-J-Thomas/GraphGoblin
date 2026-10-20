@@ -225,10 +225,9 @@ Set the exit's `returns` JSONata expression to produce a payload, and `destinati
 | `caller`     | The run snapshot's `result`; MCP callers read it through waiting or fetching; a parent receives it through its subloop mapping.           |
 | `webhook`    | JSON POST to `url`; `secretRef` supplies HMAC signing when the secret resolves.                                                           |
 | `file`       | Write `path` in `json`, `markdown`, or `text` format. Relative paths resolve against the run workspace; absolute paths are used as given. |
-| `event`      | Publish `eventType` on the inbound bus, starting matching event triggers subject to chain guards.                                         |
 | `log`        | Write the result to the API's logger.                                                                                                     |
 
-Webhook and event channels wrap the mapped result with `runId`, `loopId`, and `outcome`. Delivery happens after `run.finished`; a delivery failure records `return.failed` and does not change the finished status. SSE closes at the terminal event, so read a subsequent JSON event page to check delivery events:
+Exits do not publish Events; to use one loop's result in another, call it with a Subloop node. Webhook channels wrap the mapped result with `runId`, `loopId`, and `outcome`. Delivery happens after `run.finished`; a delivery failure records `return.failed` and does not change the finished status. SSE closes at the terminal event, so read a subsequent JSON event page to check delivery events:
 
 <!-- guide-example: returns-bash -->
 
@@ -243,7 +242,7 @@ curl -sS "http://127.0.0.1:4747/runs/$RUN_ID/events?after=0&limit=1000"
   Where-Object { $_.type -like 'return.*' }
 ```
 
-A subloop creates a separate child run with its own version, thread, and log. The parent waits with kind `child`. Use **parent run** and **child runs** links to move between them. By default the parent gets `lastOutput.value` containing `status`, `outcome`, `result`, and `childRunId`; a downstream decision can branch on that status. A failed or cancelled child does not automatically fail the parent. Cancelling the parent cancels active children.
+A subloop creates a separate child run with its own version, thread, and log. The parent waits with kind `child` and continues only after the child finishes; the child's exit ends the child, not the parent, which goes on to its own next node and exit. Use **parent run** and **child runs** links to move between them. By default the parent gets `lastOutput.value` containing `status`, `outcome`, `result`, and `childRunId`; a downstream decision can branch on that status. A child whose exit returns `none` gives no `result` (the field is absent, not `null`). A failed or cancelled child does not automatically fail the parent. Cancelling the parent cancels active children.
 
 ## Act on failure reasons
 

@@ -36,8 +36,8 @@ Triggers and events
   POST   /triggers/cron/preview         next cron slots without saving or arming; loops:read
   POST   /hooks/{endpointToken}         webhook receiver (None or HMAC; JSON/text/bytes); 202 {accepted:true} after atomic receipt claim, asynchronous dispatch (1 MiB, rate limit; see 08)
   GET    /loops/{id}/triggers           schedules, webhook endpoints (path only, never the secret), armed poll triggers
-  POST   /events                        inbound event bus; body: { type, payload, dedupeKey? }; fires event triggers, returns runIds and duplicate
-  GET    /events?type=&before=&limit=   stored inbound events (API, exit channels, webhooks), newest first
+  POST   /events                        inbound Event intake; body: { type, payload, dedupeKey? }; fires event triggers, returns runIds and duplicate
+  GET    /events?type=&before=&limit=   stored inbound events (API, webhooks), newest first
 
 Settings and catalog
   CRUD   /secrets  /api-keys  /settings   (schedules follow publish; read them at /loops/{id}/triggers)
@@ -205,7 +205,7 @@ The `caller` return channel resolves at delivery time:
 | `manual.mcp`                                          | Also returned as the MCP tool result when the client waited; otherwise fetched with `get_run` |
 | `subloop`                                             | Handed to the parent run's subloop output mapping                                             |
 
-Other channels, webhook, file, event, and log, are delivered by the engine after the run finishes, with one `return.delivered` or `return.failed` event each.
+Other channels, webhook, file and log, are delivered by the engine after the run finishes, with one `return.delivered` or `return.failed` event each. There is no Event channel: a loop that needs another loop's result calls it as an awaited subloop (ADR-0042).
 
 ## MCP server (Decided)
 
@@ -408,7 +408,7 @@ Ordinary copied drafts use the ordinary engine resume behavior. The API installs
 
 Create, import, draft save, validate and publish share the gate and terminal-exit schemas and graph checks. A missing `maxPasses` points at `nodes.<index>.config.maxPasses`; node-relative issues use `config.maxPasses`. Multiple repeat markers identify the extra `config.routes.<index>.repeat`, `config.answer.options.<index>.repeat`, Noul side or Score band path. A noncyclic repeat is `REPEAT_ROUTE_NOT_CYCLIC`; a missing Limit reached connection is `PORT_UNCONNECTED` at `config.maxPasses`. Reserve `limit-reached` in all authored route IDs.
 
-Exits are terminal: `{outcome, returns, destinations}`. `outcome` is `success` (default), `failure` or `exhausted`; `returns` is a JSONata expression or `none` (default); `destinations` defaults to `[{kind:"caller"}]` and supports caller, webhook, file, event and log. Exits have no criteria, predicate, default routing or loop-back, and no output ports.
+Exits are terminal: `{outcome, returns, destinations}`. `outcome` is `success` (default), `failure` or `exhausted`; `returns` is a JSONata expression or `none` (default); `destinations` defaults to `[{kind:"caller"}]` and supports caller, webhook, file and log (no Event channel; loops compose as awaited subloops, ADR-0042). Exits have no criteria, predicate, default routing or loop-back, and no output ports.
 
 Success finishes `succeeded`, Failure finishes `failed`, and Exhausted finishes the distinct terminal status `exhausted`. Exhausted means the authored graph gave up further repetition; normally a gate's Limit reached output leads here. It is an outcome, not a resumable node failure. Every outcome evaluates the same return expression and delivers its value unchanged; Exhausted adds no wrapper or implicit last output. Use `outputs.<workNodeId>.value` when returning work output, because the preceding gate replaces `lastOutput`.
 
