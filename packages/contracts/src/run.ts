@@ -44,6 +44,7 @@ export const RunErrorCodeSchema = z.enum([
   'SCRIPT_TIMEOUT',
   'INFERENCE_TIMEOUT',
   'OUTPUT_SCHEMA_MISMATCH',
+  'ARTIFACT_WRITE_FAILED',
   'SUBLOOP_DEPTH_EXCEEDED',
   'SUBLOOP_NOT_FOUND',
   // Factual historical failures retain their original cause during the offline cutover.
