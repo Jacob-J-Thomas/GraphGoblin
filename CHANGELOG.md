@@ -4,6 +4,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Refuse poll items that exceed SQLite's stored nesting limit with bounded `POLL_ITEM_REJECTED` / `NESTING_DEPTH_EXCEEDED` diagnostics, leave their keys unconsumed, and admit later eligible items in the same poll. Already consumed keys remain silent even if their current payload exceeds the depth bound. Iterative validation handles deep JSON without relying on stack overflow. Malformed batches and unclassified/storage failures retain their existing refusal policy. (#140)
+
 - The Claude CLI readiness check creates its empty working directory with `mkdir` instead of `fs.mkdtemp`, which on Windows refused check paths of 248 characters or more although the CLI starts there. A name that already exists is never reused or removed; up to four fresh names are tried. The check, which also runs before every turn, now passes with a system temporary directory of up to 233 characters. The Codex `CreateProcessWithLogonW failed: 267` command failures reported in #102 came from worker-supplied working directories that did not exist, not from GraphGoblin; evidence is in `docs/qa/2026-10-19-wp-f5-launch-diagnosis.md`. (#102)
 
 - Publish flushed artifact bytes by atomic rename, verify hashes on reads and repeated writes, and replace corrupted files safely under concurrent retries. After a failed rename, accept verified bytes already published by an identical writer. Downloads report `ARTIFACT_CORRUPT`; publication failures remain resumable as `ARTIFACT_WRITE_FAILED`, and explicit resume continues the recorded provider session with a continuation prompt. (#234)
