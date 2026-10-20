@@ -145,9 +145,16 @@ Ports: `out` plus any labels in `exitCodeRoutes`.
 
 Applies an ordered list of operations to the thread. No LLM calls in 1.0.
 
+Authored operations write only `/vars`, `/messages`, `/artifacts`, `/outputs` and
+`/lastOutput` and their descendants. Protected context remains readable. Script JSON
+Patch stdout obeys the same boundary: every mutating `path` is checked, and a `move`
+also checks `from`. A `copy` from protected context into a writable destination and a
+read-only `test` of protected context are permitted. A protected write or move source
+rejects the entire patch; earlier operations in that patch are not retained.
+
 | Operation              | Parameters                                                                                            | Effect                                                                         |
 | ---------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `set`                  | `path`, `value` (Liquid or JSONata)                                                                   | Set a var or any thread path                                                   |
+| `set`                  | `path`, `value` (Liquid or JSONata)                                                                   | Set a var or another writable thread path                                      |
 | `delete`               | `path`                                                                                                | Remove a var, message, or artifact                                             |
 | `append-message`       | `role`, `content` template, `tags`                                                                    | Inject additional context                                                      |
 | `inject`               | `position: 'start' \| 'end' \| index`, `messages[]`                                                   | Insert templated messages                                                      |

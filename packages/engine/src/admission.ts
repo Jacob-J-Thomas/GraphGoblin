@@ -1,11 +1,13 @@
 import {
   ContextThreadSchema,
   JsonValueSchema,
+  LoopVersionRecordSchema,
   UlidSchema,
   RunRecordSchema,
   RunEventSchema,
   type ContextThread,
   type JsonValue,
+  type LoopVersionRecord,
   type RunEvent,
   type RunRecord,
 } from '@graphgoblin/contracts';
@@ -17,6 +19,11 @@ export interface RunAdmission {
   initialThread: ContextThread;
   queued: Omit<Extract<RunEvent, { type: 'run.queued' }>, 'runId' | 'seq' | 'ts'>;
   pinnedLoopIds: string[];
+  /**
+   * A draft start's frozen draft (ADR-0041): status `snapshot`, id `run.versionId`. Storage commits
+   * it with the run, so a run never references a snapshot that does not exist.
+   */
+  snapshot?: LoopVersionRecord;
 }
 export interface WebhookInbound {
   id: string;
@@ -85,6 +92,7 @@ export function assertAdmissionIdentity(
     ownerId: value.ownerId,
     loopId: value.loopId,
     versionId: value.versionId,
+    pinned: value.pinned,
     parentRunId: value.parentRunId ?? null,
     invocationId: value.invocationId,
     createdAt: value.createdAt,
@@ -129,17 +137,38 @@ export function parseRunAdmission(value: unknown): RunAdmission {
   if (
     !event.success ||
     event.data.type !== 'run.queued' ||
+    event.data.versionId !== run.data.versionId ||
+    stableStringify(event.data.pinned) !== stableStringify(run.data.pinned) ||
     (event.data.initialThread &&
       stableStringify(event.data.initialThread) !== stableStringify(initialThread.data))
   )
     throw new AdmissionConflictError();
+  const snapshot = raw.snapshot === undefined ? undefined : parseSnapshot(raw.snapshot, run.data);
   const { runId: _id, seq: _seq, ts: _ts, ...queued } = event.data;
   return {
     run: run.data,
     initialThread: initialThread.data,
     queued,
     pinnedLoopIds: [...(raw.pinnedLoopIds as string[])],
+    ...(snapshot ? { snapshot } : {}),
   };
+}
+
+/** A draft snapshot belongs to its run's loop and is exactly what the run's pin describes. */
+function parseSnapshot(value: unknown, run: RunRecord): LoopVersionRecord {
+  const parsed = LoopVersionRecordSchema.safeParse(value);
+  if (
+    !parsed.success ||
+    parsed.data.status !== 'snapshot' ||
+    parsed.data.id !== run.versionId ||
+    parsed.data.loopId !== run.loopId ||
+    parsed.data.publishedAt !== undefined ||
+    run.pinned.source !== 'draft' ||
+    run.pinned.version !== parsed.data.version ||
+    run.pinned.name !== parsed.data.definition.name
+  )
+    throw new AdmissionConflictError();
+  return parsed.data;
 }
 
 export function assertWebhookClaim(input: WebhookClaim, intent?: RunAdmission): void {

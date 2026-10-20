@@ -1,0 +1,235 @@
+[
+  {
+    "id": "C07-primitives-pinned-and-replay-reexecutes-original-binding",
+    "status": "PASS",
+    "evidence": {
+      "original": {
+        "id": "01M5B5MFD0HKT8TWBHMFGJDSZS",
+        "ownerId": "local",
+        "loopId": "01M5B5MFBHZ7Z4KR0T3FRWZZ98",
+        "versionId": "01M5B5MFBHBAP778AQJCT1E38P",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA primitives",
+          "label": "QA primitives v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {
+            "qa-primitive": {
+              "provider": "http",
+              "providerModel": "primitive-A",
+              "primitives": ["choice"],
+              "endpoint": "http://127.0.0.1:51544"
+            }
+          }
+        },
+        "invocationId": "01M5B5MFD0ZXHXPH4X3PRQ03DA",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "result": "classified",
+        "createdAt": "2026-10-19T22:48:37.024Z",
+        "startedAt": "2026-10-19T22:48:37.056Z",
+        "finishedAt": "2026-10-19T22:48:37.285Z",
+        "lastEventSeq": 18
+      },
+      "replay": {
+        "id": "01M5B5MFP3D9S8HECAF9Z1HYHJ",
+        "ownerId": "local",
+        "loopId": "01M5B5MFBHZ7Z4KR0T3FRWZZ98",
+        "versionId": "01M5B5MFBHBAP778AQJCT1E38P",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA primitives",
+          "label": "QA primitives v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {
+            "qa-primitive": {
+              "provider": "http",
+              "providerModel": "primitive-A",
+              "primitives": ["choice"],
+              "endpoint": "http://127.0.0.1:51544"
+            }
+          }
+        },
+        "invocationId": "01M5B5MFP3G6P11B9Q7DP8NQ09",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "result": "classified",
+        "createdAt": "2026-10-19T22:48:37.315Z",
+        "startedAt": "2026-10-19T22:48:37.327Z",
+        "finishedAt": "2026-10-19T22:48:37.374Z",
+        "lastEventSeq": 10
+      },
+      "livePrimitives": ["noul"],
+      "calledPinnedPrimitive": "choice",
+      "endpointACalls": 2,
+      "endpointBCalls": 0
+    }
+  },
+  {
+    "id": "CH02-later-parent-visit-retains-child-target-and-shared-binding",
+    "status": "PASS",
+    "evidence": {
+      "firstChild": {
+        "id": "01M5B5MG1KEKQSTFXS88Q9V5NH",
+        "ownerId": "local",
+        "loopId": "01M5B5MFTAZSPB3AKFKJMKXTXM",
+        "versionId": "01M5B5MFTAB3KK2CRNTHW922JQ",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA repeated child",
+          "label": "QA repeated child v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {
+            "qa-repeat": {
+              "provider": "http",
+              "providerModel": "repeat-A",
+              "primitives": ["choice"],
+              "endpoint": "http://127.0.0.1:51544"
+            }
+          }
+        },
+        "parentRunId": "01M5B5MFWEKJGHACM5YW04KR1X",
+        "invocationId": "01M5B5MG1KAVHX5ZZ2QPAESZPY",
+        "status": "waiting",
+        "currentNodeId": "ask",
+        "iteration": 1,
+        "waiting": {
+          "nodeId": "ask",
+          "kind": "input",
+          "prompt": "Continue?",
+          "startedSeq": 5
+        },
+        "createdAt": "2026-10-19T22:48:37.683Z",
+        "startedAt": "2026-10-19T22:48:37.704Z",
+        "lastEventSeq": 6
+      },
+      "secondChild": {
+        "id": "01M5B5MGG54Y2XRPX646C4F71V",
+        "ownerId": "local",
+        "loopId": "01M5B5MFTAZSPB3AKFKJMKXTXM",
+        "versionId": "01M5B5MFTAB3KK2CRNTHW922JQ",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA repeated child",
+          "label": "QA repeated child v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {
+            "qa-repeat": {
+              "provider": "http",
+              "providerModel": "repeat-A",
+              "primitives": ["choice"],
+              "endpoint": "http://127.0.0.1:51544"
+            }
+          }
+        },
+        "parentRunId": "01M5B5MFWEKJGHACM5YW04KR1X",
+        "invocationId": "01M5B5MGG58R58PH67HHK1WPFK",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "result": "child-old",
+        "createdAt": "2026-10-19T22:48:38.149Z",
+        "startedAt": "2026-10-19T22:48:38.168Z",
+        "finishedAt": "2026-10-19T22:48:38.342Z",
+        "lastEventSeq": 18
+      },
+      "parent": {
+        "id": "01M5B5MFWEKJGHACM5YW04KR1X",
+        "ownerId": "local",
+        "loopId": "01M5B5MFVFFFZT4GZXNX0H0ZVD",
+        "versionId": "01M5B5MFVFSM19R6SN7SJWPMTF",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA repeated parent",
+          "label": "QA repeated parent v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {
+            "qa-repeat": {
+              "provider": "http",
+              "providerModel": "repeat-A",
+              "primitives": ["choice"],
+              "endpoint": "http://127.0.0.1:51544"
+            }
+          }
+        },
+        "invocationId": "01M5B5MFWESMM9QHSH083Z7N6X",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "result": "classified",
+        "createdAt": "2026-10-19T22:48:37.518Z",
+        "startedAt": "2026-10-19T22:48:37.528Z",
+        "finishedAt": "2026-10-19T22:48:38.444Z",
+        "lastEventSeq": 50
+      },
+      "newPublishedChildVersion": "01M5B5MGDJKVEAXP87KPTRD2SJ"
+    }
+  }
+]

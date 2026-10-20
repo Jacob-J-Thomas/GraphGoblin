@@ -3593,7 +3593,7 @@ export interface components {
             loopId: string;
             version: number;
             /** @enum {string} */
-            status: "draft" | "published";
+            status: "draft" | "published" | "snapshot";
             definition: components["schemas"]["LoopDefinitionInput"];
             /** Format: date-time */
             createdAt: string;
@@ -3604,7 +3604,7 @@ export interface components {
         RunStatusInput: "queued" | "running" | "waiting" | "paused" | "succeeded" | "failed" | "cancelled" | "exhausted";
         RunFailureInput: {
             /** @enum {string} */
-            code: "HARNESS_NOT_INSTALLED" | "HARNESS_NOT_AUTHENTICATED" | "HARNESS_QUOTA_EXHAUSTED" | "HARNESS_TURN_FAILED" | "HARNESS_TERMINATION_UNCONFIRMED" | "WORKING_DIRECTORY_MISSING" | "SCRIPT_EXIT_CODE" | "SCRIPT_TIMEOUT" | "INFERENCE_TIMEOUT" | "OUTPUT_SCHEMA_MISMATCH" | "SUBLOOP_DEPTH_EXCEEDED" | "SUBLOOP_NOT_FOUND" | "DECISION_NO_ROUTE" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED" | "DECIDER_UNAVAILABLE" | "SECRET_MISSING" | "TEMPLATE_ERROR" | "TEMPLATE_PREREQUISITE_UNAVAILABLE" | "TEMPLATE_ISOLATION_UNAVAILABLE" | "TEMPLATE_REPORT_UNAVAILABLE" | "TEMPLATE_AUTHORITY_REFUSED" | "TEMPLATE_BINDING_CHANGED" | "EXPRESSION_ERROR" | "WAIT_TIMEOUT" | "HEARTBEAT_EXHAUSTED" | "HTTP_PROBE_BODY_OVERFLOW" | "RETURN_DELIVERY_FAILED" | "MAX_NODE_VISITS" | "EVENT_INVALID" | "INTERNAL_ERROR";
+            code: "HARNESS_NOT_INSTALLED" | "HARNESS_NOT_AUTHENTICATED" | "HARNESS_QUOTA_EXHAUSTED" | "HARNESS_TURN_FAILED" | "HARNESS_TERMINATION_UNCONFIRMED" | "WORKING_DIRECTORY_MISSING" | "SCRIPT_EXIT_CODE" | "SCRIPT_TIMEOUT" | "INFERENCE_TIMEOUT" | "OUTPUT_SCHEMA_MISMATCH" | "ARTIFACT_WRITE_FAILED" | "SUBLOOP_DEPTH_EXCEEDED" | "SUBLOOP_NOT_FOUND" | "DECISION_NO_ROUTE" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED" | "DECIDER_UNAVAILABLE" | "SECRET_MISSING" | "TEMPLATE_ERROR" | "TEMPLATE_PREREQUISITE_UNAVAILABLE" | "TEMPLATE_ISOLATION_UNAVAILABLE" | "TEMPLATE_REPORT_UNAVAILABLE" | "TEMPLATE_AUTHORITY_REFUSED" | "TEMPLATE_BINDING_CHANGED" | "EXPRESSION_ERROR" | "WAIT_TIMEOUT" | "HEARTBEAT_EXHAUSTED" | "HTTP_PROBE_BODY_OVERFLOW" | "RETURN_DELIVERY_FAILED" | "MAX_NODE_VISITS" | "EVENT_INVALID" | "INTERNAL_ERROR";
             message: string;
             nodeId?: string | undefined;
             resumable: boolean;
@@ -3633,6 +3633,46 @@ export interface components {
             ownerId: string;
             loopId: string;
             versionId: string;
+            pinned: {
+                /** @enum {string} */
+                source: "published" | "draft";
+                version: number;
+                name: string;
+                label: string;
+                defaults: {
+                    owner: {
+                        /** @default {} */
+                        byHarness?: {
+                            [key: string]: {
+                                model?: string | undefined;
+                                /** @enum {string} */
+                                effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                            };
+                        } | undefined;
+                    };
+                    process: {
+                        /** @default {} */
+                        byHarness?: {
+                            [key: string]: {
+                                model?: string | undefined;
+                                /** @enum {string} */
+                                effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                            };
+                        } | undefined;
+                    };
+                };
+                classifiers: {
+                    [key: string]: {
+                        /** @enum {string} */
+                        provider: "typesafe" | "http";
+                        providerModel: string;
+                        primitives: ("choice" | "noul" | "score")[];
+                        /** Format: uri */
+                        endpoint: string;
+                        secretRef?: string | undefined;
+                    };
+                };
+            };
             parentRunId?: string | undefined;
             invocationId: string;
             status: components["schemas"]["RunStatusInput"];
@@ -3662,6 +3702,47 @@ export interface components {
             ts: string;
             /** @constant */
             type: "run.queued";
+            versionId: string;
+            pinned: {
+                /** @enum {string} */
+                source: "published" | "draft";
+                version: number;
+                name: string;
+                label: string;
+                defaults: {
+                    owner: {
+                        /** @default {} */
+                        byHarness?: {
+                            [key: string]: {
+                                model?: string | undefined;
+                                /** @enum {string} */
+                                effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                            };
+                        } | undefined;
+                    };
+                    process: {
+                        /** @default {} */
+                        byHarness?: {
+                            [key: string]: {
+                                model?: string | undefined;
+                                /** @enum {string} */
+                                effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                            };
+                        } | undefined;
+                    };
+                };
+                classifiers: {
+                    [key: string]: {
+                        /** @enum {string} */
+                        provider: "typesafe" | "http";
+                        providerModel: string;
+                        primitives: ("choice" | "noul" | "score")[];
+                        /** Format: uri */
+                        endpoint: string;
+                        secretRef?: string | undefined;
+                    };
+                };
+            };
             replayOf?: {
                 runId: string;
                 nodeId: string;
@@ -5326,7 +5407,7 @@ export interface components {
             loopId: string;
             version: number;
             /** @enum {string} */
-            status: "draft" | "published";
+            status: "draft" | "published" | "snapshot";
             definition: components["schemas"]["LoopDefinition"];
             /** Format: date-time */
             createdAt: string;
@@ -5337,7 +5418,7 @@ export interface components {
         RunStatus: "queued" | "running" | "waiting" | "paused" | "succeeded" | "failed" | "cancelled" | "exhausted";
         RunFailure: {
             /** @enum {string} */
-            code: "HARNESS_NOT_INSTALLED" | "HARNESS_NOT_AUTHENTICATED" | "HARNESS_QUOTA_EXHAUSTED" | "HARNESS_TURN_FAILED" | "HARNESS_TERMINATION_UNCONFIRMED" | "WORKING_DIRECTORY_MISSING" | "SCRIPT_EXIT_CODE" | "SCRIPT_TIMEOUT" | "INFERENCE_TIMEOUT" | "OUTPUT_SCHEMA_MISMATCH" | "SUBLOOP_DEPTH_EXCEEDED" | "SUBLOOP_NOT_FOUND" | "DECISION_NO_ROUTE" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED" | "DECIDER_UNAVAILABLE" | "SECRET_MISSING" | "TEMPLATE_ERROR" | "TEMPLATE_PREREQUISITE_UNAVAILABLE" | "TEMPLATE_ISOLATION_UNAVAILABLE" | "TEMPLATE_REPORT_UNAVAILABLE" | "TEMPLATE_AUTHORITY_REFUSED" | "TEMPLATE_BINDING_CHANGED" | "EXPRESSION_ERROR" | "WAIT_TIMEOUT" | "HEARTBEAT_EXHAUSTED" | "HTTP_PROBE_BODY_OVERFLOW" | "RETURN_DELIVERY_FAILED" | "MAX_NODE_VISITS" | "EVENT_INVALID" | "INTERNAL_ERROR";
+            code: "HARNESS_NOT_INSTALLED" | "HARNESS_NOT_AUTHENTICATED" | "HARNESS_QUOTA_EXHAUSTED" | "HARNESS_TURN_FAILED" | "HARNESS_TERMINATION_UNCONFIRMED" | "WORKING_DIRECTORY_MISSING" | "SCRIPT_EXIT_CODE" | "SCRIPT_TIMEOUT" | "INFERENCE_TIMEOUT" | "OUTPUT_SCHEMA_MISMATCH" | "ARTIFACT_WRITE_FAILED" | "SUBLOOP_DEPTH_EXCEEDED" | "SUBLOOP_NOT_FOUND" | "DECISION_NO_ROUTE" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED" | "DECIDER_UNAVAILABLE" | "SECRET_MISSING" | "TEMPLATE_ERROR" | "TEMPLATE_PREREQUISITE_UNAVAILABLE" | "TEMPLATE_ISOLATION_UNAVAILABLE" | "TEMPLATE_REPORT_UNAVAILABLE" | "TEMPLATE_AUTHORITY_REFUSED" | "TEMPLATE_BINDING_CHANGED" | "EXPRESSION_ERROR" | "WAIT_TIMEOUT" | "HEARTBEAT_EXHAUSTED" | "HTTP_PROBE_BODY_OVERFLOW" | "RETURN_DELIVERY_FAILED" | "MAX_NODE_VISITS" | "EVENT_INVALID" | "INTERNAL_ERROR";
             message: string;
             nodeId?: string | undefined;
             resumable: boolean;
@@ -5366,6 +5447,46 @@ export interface components {
             ownerId: string;
             loopId: string;
             versionId: string;
+            pinned: {
+                /** @enum {string} */
+                source: "published" | "draft";
+                version: number;
+                name: string;
+                label: string;
+                defaults: {
+                    owner: {
+                        /** @default {} */
+                        byHarness: {
+                            [key: string]: {
+                                model?: string | undefined;
+                                /** @enum {string} */
+                                effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                            };
+                        };
+                    };
+                    process: {
+                        /** @default {} */
+                        byHarness: {
+                            [key: string]: {
+                                model?: string | undefined;
+                                /** @enum {string} */
+                                effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                            };
+                        };
+                    };
+                };
+                classifiers: {
+                    [key: string]: {
+                        /** @enum {string} */
+                        provider: "typesafe" | "http";
+                        providerModel: string;
+                        primitives: ("choice" | "noul" | "score")[];
+                        /** Format: uri */
+                        endpoint: string;
+                        secretRef?: string | undefined;
+                    };
+                };
+            };
             parentRunId?: string | undefined;
             invocationId: string;
             status: components["schemas"]["RunStatus"];
@@ -5395,6 +5516,47 @@ export interface components {
             ts: string;
             /** @constant */
             type: "run.queued";
+            versionId: string;
+            pinned: {
+                /** @enum {string} */
+                source: "published" | "draft";
+                version: number;
+                name: string;
+                label: string;
+                defaults: {
+                    owner: {
+                        /** @default {} */
+                        byHarness: {
+                            [key: string]: {
+                                model?: string | undefined;
+                                /** @enum {string} */
+                                effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                            };
+                        };
+                    };
+                    process: {
+                        /** @default {} */
+                        byHarness: {
+                            [key: string]: {
+                                model?: string | undefined;
+                                /** @enum {string} */
+                                effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                            };
+                        };
+                    };
+                };
+                classifiers: {
+                    [key: string]: {
+                        /** @enum {string} */
+                        provider: "typesafe" | "http";
+                        providerModel: string;
+                        primitives: ("choice" | "noul" | "score")[];
+                        /** Format: uri */
+                        endpoint: string;
+                        secretRef?: string | undefined;
+                    };
+                };
+            };
             replayOf?: {
                 runId: string;
                 nodeId: string;

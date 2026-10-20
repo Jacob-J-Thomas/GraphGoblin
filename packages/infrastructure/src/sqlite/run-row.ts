@@ -1,9 +1,10 @@
-import type { RunRecord, RunStatus } from '@graphgoblin/contracts';
+import type { JsonValue, RunPin, RunRecord, RunStatus } from '@graphgoblin/contracts';
 import type { runs } from './schema.js';
+/** A decoded run row. Its definition pin is present: the decoder refuses rows without one. */
 export type RunRecordRow = Omit<
   typeof runs.$inferSelect,
-  'initialThread' | 'threadSnapshot' | 'threadSnapshotSeq' | 'finalizedAt'
->;
+  'initialThread' | 'threadSnapshot' | 'threadSnapshotSeq' | 'finalizedAt' | 'result' | 'pinned'
+> & { result: JsonValue | undefined; pinned: RunPin };
 
 export function runRecordFromRow(row: RunRecordRow): RunRecord {
   return {
@@ -11,6 +12,7 @@ export function runRecordFromRow(row: RunRecordRow): RunRecord {
     ownerId: row.ownerId,
     loopId: row.loopId,
     versionId: row.versionId,
+    pinned: row.pinned,
     ...(row.parentRunId ? { parentRunId: row.parentRunId } : {}),
     invocationId: row.invocationId,
     status: row.status as RunStatus,
@@ -21,7 +23,7 @@ export function runRecordFromRow(row: RunRecordRow): RunRecord {
     ...(row.pausedAt ? { pausedAt: row.pausedAt } : {}),
     ...(row.failure !== null ? { failure: row.failure } : {}),
     ...(row.outcome ? { outcome: row.outcome as RunRecord['outcome'] } : {}),
-    ...(row.result !== null && row.result !== undefined ? { result: row.result } : {}),
+    ...(row.result !== undefined ? { result: row.result } : {}),
     createdAt: row.createdAt,
     ...(row.startedAt ? { startedAt: row.startedAt } : {}),
     ...(row.finishedAt ? { finishedAt: row.finishedAt } : {}),

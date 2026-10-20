@@ -1,0 +1,230 @@
+{
+  "revision": "5aadc90",
+  "runtime": "v22.14.0",
+  "evidenceTier": "real filesystem and HTTP; fake provider turns",
+  "checks": [
+    {
+      "name": "real storage fault fails resumably before node.finished",
+      "pass": true,
+      "details": {
+        "run": {
+          "id": "01M3Y7RKG08Y6G6RJ632C1ZTDK",
+          "ownerId": "local",
+          "loopId": "01M3Y7RKG0NC5TY9RGE4SNDDVQ",
+          "versionId": "01M3Y7RKG0YNEBYY0BCC0C825C",
+          "invocationId": "01M3Y7RKG0ZCD9CEQC95F7MFZ9",
+          "status": "failed",
+          "currentNodeId": "infer",
+          "iteration": 1,
+          "failure": {
+            "code": "ARTIFACT_WRITE_FAILED",
+            "message": "Artifact could not be published",
+            "nodeId": "infer",
+            "resumable": true,
+            "details": {
+              "ref": "artifact:transcript/bb5db17aac6801f83bded4d112830326276fb11a88addac2bdb249386e85de32"
+            }
+          },
+          "createdAt": "2026-10-02T12:00:00.000Z",
+          "startedAt": "2026-10-02T12:00:00.000Z",
+          "finishedAt": "2026-10-02T12:00:00.000Z",
+          "lastEventSeq": 9
+        },
+        "artifacts": [],
+        "sessions": [
+          {
+            "runId": "01M3Y7RKG08Y6G6RJ632C1ZTDK",
+            "nodeId": "infer",
+            "attempt": 1,
+            "harness": "codex",
+            "sessionId": "fake-session-1",
+            "status": "failed",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "updatedAt": "2026-10-02T12:00:00.000Z"
+          }
+        ],
+        "nodeFinished": ["start"]
+      }
+    },
+    {
+      "name": "explicit resume succeeds with exactly one verified artifact",
+      "pass": true,
+      "details": {
+        "runId": "01M3Y7RKG08Y6G6RJ632C1ZTDK",
+        "artifact": {
+          "id": "01M3Y7RKG0SNNW2PR48C8GYAW5",
+          "kind": "transcript",
+          "ref": "artifact:transcript/bb5db17aac6801f83bded4d112830326276fb11a88addac2bdb249386e85de32",
+          "nodeId": "infer",
+          "label": "transcript infer",
+          "bytes": 68
+        },
+        "downloadHash": "bb5db17aac6801f83bded4d112830326276fb11a88addac2bdb249386e85de32",
+        "exactBytes": true,
+        "startCount": 1,
+        "sessionBefore": [
+          {
+            "runId": "01M3Y7RKG08Y6G6RJ632C1ZTDK",
+            "nodeId": "infer",
+            "attempt": 1,
+            "harness": "codex",
+            "sessionId": "fake-session-1",
+            "status": "failed",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "updatedAt": "2026-10-02T12:00:00.000Z"
+          }
+        ],
+        "sessionAfter": [
+          {
+            "runId": "01M3Y7RKG08Y6G6RJ632C1ZTDK",
+            "nodeId": "infer",
+            "attempt": 1,
+            "harness": "codex",
+            "sessionId": "fake-session-1",
+            "status": "failed",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "updatedAt": "2026-10-02T12:00:00.000Z"
+          },
+          {
+            "runId": "01M3Y7RKG08Y6G6RJ632C1ZTDK",
+            "nodeId": "infer",
+            "attempt": 2,
+            "harness": "codex",
+            "sessionId": "fake-session-1",
+            "status": "finished",
+            "model": "gpt-6-luna",
+            "effort": "low",
+            "updatedAt": "2026-10-02T12:00:00.000Z"
+          }
+        ],
+        "limitation": "e2e control endpoint omits resumed requests and prompts"
+      }
+    },
+    {
+      "name": "six concurrent runs converge on identical ref",
+      "pass": true,
+      "details": {
+        "runs": [
+          "01M3Y7RKG0ZBT119TH0N5PKNT7",
+          "01M3Y7RKG0QDBEYJ0DK5Y6HR2F",
+          "01M3Y7RKG0CEB17C8B63BRZWR6",
+          "01M3Y7RKG0KM7KP2GB23E0H59H",
+          "01M3Y7RKG0TJ2DXVX4SGVKQJS5",
+          "01M3Y7RKG0QPV6H0HGAQWVTAG4"
+        ],
+        "refs": [
+          "artifact:transcript/bb5db17aac6801f83bded4d112830326276fb11a88addac2bdb249386e85de32"
+        ],
+        "files": 1
+      }
+    },
+    {
+      "name": "six concurrent distinct artifacts verify on download",
+      "pass": true,
+      "details": {
+        "allHashesVerified": [true, true, true, true, true, true],
+        "files": 7
+      }
+    },
+    {
+      "name": "byte flip after process stop reports ARTIFACT_CORRUPT after restart",
+      "pass": true,
+      "details": {
+        "problem": {
+          "status": 500,
+          "body": {
+            "type": "https://graphgoblin.dev/problems/artifact-corrupt",
+            "title": "artifact corrupt",
+            "status": 500,
+            "code": "ARTIFACT_CORRUPT",
+            "detail": "Artifact content does not match its reference"
+          },
+          "raw": "{\"type\":\"https://graphgoblin.dev/problems/artifact-corrupt\",\"title\":\"artifact corrupt\",\"status\":500,\"code\":\"ARTIFACT_CORRUPT\",\"detail\":\"Artifact content does not match its reference\"}"
+        },
+        "runRecordUnchanged": true
+      }
+    },
+    {
+      "name": "missing artifact remains 404",
+      "pass": true,
+      "details": {
+        "status": 404,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/artifact-not-found",
+          "title": "artifact not found",
+          "status": 404,
+          "code": "ARTIFACT_NOT_FOUND",
+          "detail": "artifact nonexistent not found"
+        },
+        "raw": "{\"type\":\"https://graphgoblin.dev/problems/artifact-not-found\",\"title\":\"artifact not found\",\"status\":404,\"code\":\"ARTIFACT_NOT_FOUND\",\"detail\":\"artifact nonexistent not found\"}"
+      }
+    },
+    {
+      "name": "component corrupt reads fail explicitly",
+      "pass": true,
+      "details": {
+        "error": {
+          "code": "ARTIFACT_CORRUPT",
+          "ref": "artifact:qa/a1a6d10ace8b0429062280bc72a13f60b0df3417481a85afb73047861517bb6d"
+        }
+      }
+    },
+    {
+      "name": "twelve concurrent repairs converge with exact large UTF-8 bytes",
+      "pass": true,
+      "details": {
+        "bytes": 2880000,
+        "sha256": "a1a6d10ace8b0429062280bc72a13f60b0df3417481a85afb73047861517bb6d",
+        "writers": 12,
+        "interruptedTempIgnored": true
+      }
+    },
+    {
+      "name": "different bytes cannot share content ref",
+      "pass": true,
+      "details": {
+        "first": "artifact:qa/a1a6d10ace8b0429062280bc72a13f60b0df3417481a85afb73047861517bb6d",
+        "second": "artifact:qa/1fb54396eb2b5bff3fe576a1acf023a5fc297ad85993ede0c139bf31e62a4977",
+        "reason": "public put derives ref from bytes; caller cannot supply ref"
+      }
+    },
+    {
+      "name": "correct file held by Windows reader accepts identical write",
+      "pass": true,
+      "details": {
+        "ref": "artifact:qa/a1a6d10ace8b0429062280bc72a13f60b0df3417481a85afb73047861517bb6d",
+        "share": "Read, no Delete"
+      }
+    },
+    {
+      "name": "locked corrupt final fails publication explicitly",
+      "pass": true,
+      "details": {
+        "error": {
+          "code": "ARTIFACT_WRITE_FAILED",
+          "ref": "artifact:qa/a1a6d10ace8b0429062280bc72a13f60b0df3417481a85afb73047861517bb6d"
+        },
+        "corruptBytesRetained": true
+      }
+    },
+    {
+      "name": "retry repairs final after Windows lock release",
+      "pass": true,
+      "details": {
+        "ref": "artifact:qa/a1a6d10ace8b0429062280bc72a13f60b0df3417481a85afb73047861517bb6d"
+      }
+    },
+    {
+      "name": "cleanup",
+      "pass": true,
+      "details": {
+        "allChildrenStopped": true,
+        "temporaryFilesRemoved": true,
+        "emptyDirectoriesRetained": true
+      }
+    }
+  ]
+}

@@ -2,6 +2,7 @@ import type { TriggerAdmissionPort } from './admission.js';
 import type {
   ChoiceAnswer,
   ChoiceOption,
+  ClassifierBinding,
   RouteDeclaration,
   ClassifierPrimitive,
   ScoreAnswer,
@@ -100,7 +101,6 @@ export interface RunRepository {
   ): Promise<RunRecord | undefined>;
   /** Raw identities for per-run recovery; must not decode run JSON while enumerating. */
   listRecoveryCandidates(): Promise<{ id: string; terminal: boolean }[]>;
-  listByStatus(statuses: readonly RunStatus[]): Promise<RunRecord[]>;
   /** Active-use checks need only references; damaged run JSON must not block unrelated loops. */
   listRunReferences(
     statuses: readonly RunStatus[],
@@ -298,10 +298,21 @@ export type ClassifierResolution =
   | { status: 'unavailable'; reason: ClassifierUnavailableReason; message: string };
 
 export interface ClassifierRegistryPort {
+  /**
+   * The execution binding a new run pins for the catalog entry `modelId` (ADR-0041), or undefined
+   * when the owner has no such entry.
+   */
+  bind(ownerId: string, modelId: string): Promise<ClassifierBinding | undefined>;
+  /**
+   * A client for the binding a run pinned. Provider, model, endpoint, primitives and secret name
+   * come from the binding; the entry's existence, its enabled switch and the secret's value are
+   * checked now, so a removed or disabled classifier is unavailable and never substituted.
+   */
   resolve(
     ownerId: string,
     modelId: string,
     primitive: ClassifierPrimitive,
+    binding: ClassifierBinding,
   ): Promise<ClassifierResolution>;
 }
 
@@ -415,7 +426,9 @@ export interface ReturnDeliveryPort {
 }
 
 export interface ArtifactStorePort {
+  /** Publish complete bytes, or throw ArtifactStoreError(ARTIFACT_WRITE_FAILED). */
   put(kind: string, content: string): Promise<{ ref: string; bytes: number }>;
+  /** Undefined means missing/invalid reference; corrupt bytes throw ArtifactStoreError(ARTIFACT_CORRUPT). */
   get(ref: string): Promise<string | undefined>;
 }
 

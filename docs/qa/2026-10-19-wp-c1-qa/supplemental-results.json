@@ -1,0 +1,621 @@
+[
+  {
+    "id": "T01-webhook-start-and-republish",
+    "status": "PASS",
+    "evidence": {
+      "receipt": {
+        "accepted": true
+      },
+      "old": {
+        "id": "01M5B587B18MV3XYP0W0B4DJDJ",
+        "ownerId": "local",
+        "loopId": "01M5B586Q53F2V81WZANQZNDP4",
+        "versionId": "01M5B586Q55HNSQWPG0GM2ZHA0",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA webhook",
+          "label": "QA webhook v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5B587B24RA6G6A36290QZBE",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "result": "webhook-old",
+        "createdAt": "2026-10-19T22:41:55.553Z",
+        "startedAt": "2026-10-19T22:41:55.896Z",
+        "finishedAt": "2026-10-19T22:41:57.801Z",
+        "lastEventSeq": 14
+      },
+      "new": {
+        "id": "01M5B589MZ131RA4MKEYEH9JTK",
+        "ownerId": "local",
+        "loopId": "01M5B586Q53F2V81WZANQZNDP4",
+        "versionId": "01M5B588S40APWFK155TKD7CN3",
+        "pinned": {
+          "source": "published",
+          "version": 2,
+          "name": "QA webhook",
+          "label": "QA webhook v2",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5B589MZBQQ2A38HBM00FQ5A",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "result": "webhook-new",
+        "createdAt": "2026-10-19T22:41:57.919Z",
+        "startedAt": "2026-10-19T22:41:58.023Z",
+        "finishedAt": "2026-10-19T22:41:58.943Z",
+        "lastEventSeq": 15
+      },
+      "firstEvent": {
+        "runId": "01M5B587B18MV3XYP0W0B4DJDJ",
+        "seq": 1,
+        "ts": "2026-10-19T22:41:55.553Z",
+        "type": "run.queued",
+        "versionId": "01M5B586Q55HNSQWPG0GM2ZHA0",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA webhook",
+          "label": "QA webhook v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {}
+        },
+        "initialThread": {
+          "schemaVersion": 1,
+          "run": {
+            "id": "01M5B587B18MV3XYP0W0B4DJDJ",
+            "loopId": "01M5B586Q53F2V81WZANQZNDP4",
+            "versionId": "01M5B586Q55HNSQWPG0GM2ZHA0",
+            "iteration": 1
+          },
+          "invocation": {
+            "id": "01M5B587B24RA6G6A36290QZBE",
+            "source": "webhook",
+            "caller": {
+              "kind": "system",
+              "id": "webhook:01M5B5878AF4KMV7YA1E5ZE34T"
+            },
+            "trigger": {
+              "nodeId": "start",
+              "kind": "webhook",
+              "payload": {
+                "hello": "old"
+              },
+              "receivedAt": "2026-10-19T22:41:55.553Z",
+              "eventType": "webhook"
+            }
+          },
+          "messages": [],
+          "vars": {},
+          "artifacts": [],
+          "outputs": {},
+          "gates": {},
+          "counters": {
+            "nodeVisits": {},
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "T02-native-http-poll-item-starts-and-dedupe",
+    "status": "PASS",
+    "evidence": {
+      "old": {
+        "id": "01M5B58FS3GQQJEAYZXB9H7GGZ",
+        "ownerId": "local",
+        "loopId": "01M5B58AQ498ZZ24H6FBV0SF77",
+        "versionId": "01M5B58AQ4V1ZRW4BMB9170X71",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA poll",
+          "label": "QA poll v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5B58FS3DNHW7XR7ERW1PJJ7",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "result": "poll-old",
+        "createdAt": "2026-10-19T22:42:04.195Z",
+        "startedAt": "2026-10-19T22:42:04.205Z",
+        "finishedAt": "2026-10-19T22:42:04.398Z",
+        "lastEventSeq": 15
+      },
+      "new": {
+        "id": "01M5B58MVSNK4DAYCB04SHV24N",
+        "ownerId": "local",
+        "loopId": "01M5B58AQ498ZZ24H6FBV0SF77",
+        "versionId": "01M5B58FWSR8X53K1W36N0A410",
+        "pinned": {
+          "source": "published",
+          "version": 2,
+          "name": "QA poll",
+          "label": "QA poll v2",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5B58MVSQPHNPA1TNMK72M4B",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "result": "poll-new",
+        "createdAt": "2026-10-19T22:42:09.401Z",
+        "startedAt": "2026-10-19T22:42:09.410Z",
+        "finishedAt": "2026-10-19T22:42:09.618Z",
+        "lastEventSeq": 15
+      },
+      "pollQueued": {
+        "runId": "01M5B58FS3GQQJEAYZXB9H7GGZ",
+        "seq": 1,
+        "ts": "2026-10-19T22:42:04.195Z",
+        "type": "run.queued",
+        "versionId": "01M5B58AQ4V1ZRW4BMB9170X71",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA poll",
+          "label": "QA poll v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {}
+        },
+        "initialThread": {
+          "schemaVersion": 1,
+          "run": {
+            "id": "01M5B58FS3GQQJEAYZXB9H7GGZ",
+            "loopId": "01M5B58AQ498ZZ24H6FBV0SF77",
+            "versionId": "01M5B58AQ4V1ZRW4BMB9170X71",
+            "iteration": 1
+          },
+          "invocation": {
+            "id": "01M5B58FS3DNHW7XR7ERW1PJJ7",
+            "source": "poll",
+            "caller": {
+              "kind": "system",
+              "id": "poll:01M5B58AQ498ZZ24H6FBV0SF77/start"
+            },
+            "trigger": {
+              "nodeId": "start",
+              "kind": "poll",
+              "payload": {
+                "id": "item-0"
+              },
+              "receivedAt": "2026-10-19T22:42:04.195Z",
+              "dedupeKey": "item-0"
+            }
+          },
+          "messages": [],
+          "vars": {},
+          "artifacts": [],
+          "outputs": {},
+          "gates": {},
+          "counters": {
+            "nodeVisits": {},
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          }
+        }
+      },
+      "admittedItems": 2
+    }
+  },
+  {
+    "id": "A01-MCP-draft-published-pins-and-projections",
+    "status": "PASS",
+    "evidence": [
+      {
+        "started": {
+          "runId": "01M5B58N7GDERTTJ0RG706ZQBK",
+          "loopId": "01M5B58N6172PRFPT5KX84AMJH",
+          "versionId": "01M5B58N61D0Y03P2ZQGZPT8H1",
+          "definition": "QA MCP false v1",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA MCP false",
+            "label": "QA MCP false v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "classifiers": {}
+          },
+          "status": "queued",
+          "next": "Call wait_for_run with this runId to wait for the result."
+        },
+        "got": {
+          "id": "01M5B58N7GDERTTJ0RG706ZQBK",
+          "ownerId": "local",
+          "loopId": "01M5B58N6172PRFPT5KX84AMJH",
+          "versionId": "01M5B58N61D0Y03P2ZQGZPT8H1",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA MCP false",
+            "label": "QA MCP false v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5B58N7G7WMH4EDGBZK18V6V",
+          "status": "succeeded",
+          "iteration": 1,
+          "outcome": "success",
+          "result": "mcp-old",
+          "createdAt": "2026-10-19T22:42:09.776Z",
+          "startedAt": "2026-10-19T22:42:09.785Z",
+          "finishedAt": "2026-10-19T22:42:09.944Z",
+          "lastEventSeq": 15
+        },
+        "queued": {
+          "runId": "01M5B58N7GDERTTJ0RG706ZQBK",
+          "seq": 1,
+          "ts": "2026-10-19T22:42:09.776Z",
+          "type": "run.queued",
+          "versionId": "01M5B58N61D0Y03P2ZQGZPT8H1",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA MCP false",
+            "label": "QA MCP false v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "classifiers": {}
+          },
+          "initialThread": {
+            "schemaVersion": 1,
+            "run": {
+              "id": "01M5B58N7GDERTTJ0RG706ZQBK",
+              "loopId": "01M5B58N6172PRFPT5KX84AMJH",
+              "versionId": "01M5B58N61D0Y03P2ZQGZPT8H1",
+              "iteration": 1
+            },
+            "invocation": {
+              "id": "01M5B58N7G7WMH4EDGBZK18V6V",
+              "source": "manual.mcp",
+              "caller": {
+                "kind": "api-key",
+                "id": "01M5B57KS17D5X1KDHEJ800VWX"
+              },
+              "trigger": {
+                "nodeId": "start",
+                "kind": "manual",
+                "payload": null,
+                "receivedAt": "2026-10-19T22:42:09.776Z"
+              }
+            },
+            "messages": [],
+            "vars": {},
+            "artifacts": [],
+            "outputs": {},
+            "gates": {},
+            "counters": {
+              "nodeVisits": {},
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "started": {
+          "runId": "01M5B58NF8M09636APSEETA3BQ",
+          "loopId": "01M5B58NEQQ26KVYKVFMQY0MQX",
+          "versionId": "01M5B58NF8KB7T5PVF60V4DBFE",
+          "definition": "QA MCP true draft v1",
+          "pinned": {
+            "source": "draft",
+            "version": 1,
+            "name": "QA MCP true",
+            "label": "QA MCP true draft v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "classifiers": {}
+          },
+          "status": "queued",
+          "next": "Call wait_for_run with this runId to wait for the result."
+        },
+        "got": {
+          "id": "01M5B58NF8M09636APSEETA3BQ",
+          "ownerId": "local",
+          "loopId": "01M5B58NEQQ26KVYKVFMQY0MQX",
+          "versionId": "01M5B58NF8KB7T5PVF60V4DBFE",
+          "pinned": {
+            "source": "draft",
+            "version": 1,
+            "name": "QA MCP true",
+            "label": "QA MCP true draft v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "classifiers": {}
+          },
+          "invocationId": "01M5B58NF8GTEYVT4F09BD5D8V",
+          "status": "succeeded",
+          "iteration": 1,
+          "outcome": "success",
+          "result": "mcp-old",
+          "createdAt": "2026-10-19T22:42:10.024Z",
+          "startedAt": "2026-10-19T22:42:10.033Z",
+          "finishedAt": "2026-10-19T22:42:10.164Z",
+          "lastEventSeq": 15
+        },
+        "queued": {
+          "runId": "01M5B58NF8M09636APSEETA3BQ",
+          "seq": 1,
+          "ts": "2026-10-19T22:42:10.024Z",
+          "type": "run.queued",
+          "versionId": "01M5B58NF8KB7T5PVF60V4DBFE",
+          "pinned": {
+            "source": "draft",
+            "version": 1,
+            "name": "QA MCP true",
+            "label": "QA MCP true draft v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "classifiers": {}
+          },
+          "initialThread": {
+            "schemaVersion": 1,
+            "run": {
+              "id": "01M5B58NF8M09636APSEETA3BQ",
+              "loopId": "01M5B58NEQQ26KVYKVFMQY0MQX",
+              "versionId": "01M5B58NF8KB7T5PVF60V4DBFE",
+              "iteration": 1
+            },
+            "invocation": {
+              "id": "01M5B58NF8GTEYVT4F09BD5D8V",
+              "source": "manual.mcp",
+              "caller": {
+                "kind": "api-key",
+                "id": "01M5B57KS17D5X1KDHEJ800VWX"
+              },
+              "trigger": {
+                "nodeId": "start",
+                "kind": "manual",
+                "payload": null,
+                "receivedAt": "2026-10-19T22:42:10.024Z"
+              }
+            },
+            "messages": [],
+            "vars": {},
+            "artifacts": [],
+            "outputs": {},
+            "gates": {},
+            "counters": {
+              "nodeVisits": {},
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "X01-pause-resume-after-edit",
+    "status": "PASS",
+    "evidence": {
+      "id": "01M5B58NNZN2KFHNDN0NZH8D61",
+      "ownerId": "local",
+      "loopId": "01M5B58NNNS3615X6WZZH03KRA",
+      "versionId": "01M5B58NNZRBEJDYKH7FV0JX73",
+      "pinned": {
+        "source": "draft",
+        "version": 1,
+        "name": "QA pause",
+        "label": "QA pause draft v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5B58NNZ3MTHHXH4X5JK58DS",
+      "status": "succeeded",
+      "iteration": 1,
+      "outcome": "success",
+      "result": "paused-old",
+      "createdAt": "2026-10-19T22:42:10.239Z",
+      "startedAt": "2026-10-19T22:42:10.251Z",
+      "finishedAt": "2026-10-19T22:42:10.412Z",
+      "lastEventSeq": 17
+    }
+  },
+  {
+    "id": "M01-migration0014-native-startup-diagnostics-resume",
+    "status": "PASS",
+    "evidence": {
+      "healthyRunsResumed": 2,
+      "damagedCellsByteIdentical": true,
+      "diagnostics": [
+        {
+          "runId": "01M5B58P4J7GYD5QRBC75PXTPM",
+          "code": "HISTORY_UNREADABLE",
+          "reason": "Stored run 01M5B58P4J7GYD5QRBC75PXTPM has malformed JSON in thread_snapshot"
+        },
+        {
+          "runId": "01M5B58P83P4HSE7Z0X3MAAV9W",
+          "code": "HISTORY_UNREADABLE",
+          "reason": "Stored run event does not conform: run 01M5B58P83P4HSE7Z0X3MAAV9W, seq 1, type run.queued"
+        },
+        {
+          "runId": "01M5B58PBH0065TNZQW6F7DRAG",
+          "code": "HISTORY_UNREADABLE",
+          "reason": "Stored run 01M5B58PBH0065TNZQW6F7DRAG has no definition pin"
+        }
+      ],
+      "appliedMigrations": 15
+    }
+  }
+]

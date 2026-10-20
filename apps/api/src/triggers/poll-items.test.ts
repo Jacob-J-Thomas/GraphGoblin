@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { PollItemsSchema, type JsonValue, type RunRecord } from '@graphgoblin/contracts';
+import { samplePin } from '@graphgoblin/contracts/testing';
 import { admitPollItems } from './poll-items.js';
 const config = PollItemsSchema.parse({ select: 'probe', dedupeKey: '$string(item)' });
 const view = (probe: JsonValue) => ({ now: '2026-10-02T12:00:00.000Z', probe });
@@ -8,6 +9,7 @@ const run = (key: string): RunRecord => ({
   ownerId: 'local',
   loopId: 'loop',
   versionId: 'version',
+  pinned: samplePin(),
   invocationId: key,
   status: 'queued',
   iteration: 1,

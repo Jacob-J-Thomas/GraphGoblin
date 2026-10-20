@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { claudeModelCapabilities, CLAUDE_MODEL } from '../claude/models.js';
+import { JsonValueSchema } from '@graphgoblin/contracts';
 import type { Effort, JsonValue, ModelCatalogEntry } from '@graphgoblin/contracts';
 import type { ClockPort, IdPort } from '@graphgoblin/engine';
 import { and, eq, isNull } from 'drizzle-orm';
@@ -20,20 +21,24 @@ export class SqliteSettings {
     const row = await this.db.query.settings.findFirst({
       where: and(eq(settings.ownerId, ownerId), eq(settings.key, key)),
     });
-    return row?.value;
+    return row === undefined ? undefined : JsonValueSchema.parse(JSON.parse(row.value));
   }
 
   async getAll(ownerId: string): Promise<Record<string, JsonValue>> {
     const rows = await this.db.select().from(settings).where(eq(settings.ownerId, ownerId));
-    return Object.fromEntries(rows.map((r) => [r.key, r.value]));
+    return Object.fromEntries(rows.map((r) => [r.key, JsonValueSchema.parse(JSON.parse(r.value))]));
   }
 
   async set(ownerId: string, key: string, value: JsonValue): Promise<void> {
     const updatedAt = this.clock.now().toISOString();
+    const encoded = JSON.stringify(JsonValueSchema.parse(value));
     await this.db
       .insert(settings)
-      .values({ ownerId, key, value, updatedAt })
-      .onConflictDoUpdate({ target: [settings.ownerId, settings.key], set: { value, updatedAt } });
+      .values({ ownerId, key, value: encoded, updatedAt })
+      .onConflictDoUpdate({
+        target: [settings.ownerId, settings.key],
+        set: { value: encoded, updatedAt },
+      });
   }
 
   async delete(ownerId: string, key: string): Promise<boolean> {

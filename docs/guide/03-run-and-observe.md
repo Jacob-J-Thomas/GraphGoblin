@@ -69,7 +69,9 @@ $started.run.id
 
 The Bash examples in this guide use `curl`. In Windows PowerShell, `curl` is an alias for `Invoke-WebRequest`, so call `curl.exe` there and quote arguments that start with `@`.
 
-The response is HTTP 202 with a `run` object. Save `run.id`; execution continues in the background. Specify `triggerNodeId` when selecting among several triggers. `input` must match the manual trigger's schema, or the request fails with 400 `INVALID_INPUT`. `return` adds channels to the exit's channels. Optional `versionId` pins a particular version. A loop with no published version returns 404 `LOOP_NOT_FOUND`, and a draft `versionId` without `allowDraft` returns 409 `VERSION_NOT_PUBLISHED`. To try an unpublished draft, supply the draft's `versionId` (from `GET /loops/{id}`) and set `allowDraft` true. The UI runs published versions.
+The response is HTTP 202 with a `run` object. Save `run.id`; execution continues in the background. Specify `triggerNodeId` when selecting among several triggers. `input` must match the manual trigger's schema, or the request fails with 400 `INVALID_INPUT`. `return` adds channels to the exit's channels. Optional `versionId` pins a particular version. A loop with no published version returns 404 `LOOP_NOT_FOUND`, and a draft `versionId` without `allowDraft` returns 409 `VERSION_NOT_PUBLISHED`. To try an unpublished draft, supply the draft's `versionId` (from `GET /loops/{id}`) and set `allowDraft` true. The run answers with a new `versionId`: a snapshot of the draft taken at start, which later draft edits never change. The UI runs published versions.
+
+Every run keeps the definition it started with until it finishes, through waits, pauses, restarts and replays. `run.pinned` names it: `label` reads like `Review v3` or `Review draft v4`, and `defaults` holds the Settings and process model defaults the run inherited at start. Editing the loop, publishing a new version or changing Settings affects only runs started afterwards.
 
 In API-key mode, add the bearer header to each API request. In Bash, add this option to `curl`:
 
@@ -116,7 +118,7 @@ Pass the returned `runId` to `wait_for_run`. Repeat until `finished` is true; ha
 | `cancelled` | Inspect completed side effects before starting again.                                                              |
 | `exhausted` | The graph gave up repetition. Inspect the gate's stopping limit and returned work value.                           |
 
-The last four statuses are terminal for streaming and waiting. Only a node failure with `failure.resumable: true` can resume. A terminal Failure or Exhausted exit cannot resume. Each run pins its version, starts at iteration 1, and logs node starts, patches, routing decisions, waits, and completion.
+The last four statuses are terminal for streaming and waiting. Only a node failure with `failure.resumable: true` can resume. A terminal Failure or Exhausted exit cannot resume. Each run pins its definition (its `versionId` and `pinned`), starts at iteration 1, and logs node starts, patches, routing decisions, waits, and completion.
 
 ## Use the inspector
 
@@ -158,7 +160,7 @@ Child runs reconstruct like any other run: their first event, `run.queued`, carr
 
 ## Replay from a node
 
-To debug a node, fork a new run at it with the same input it had: the new run starts from the thread as it was just before that node first started, on the same pinned version, and nothing before the node runs again. The source run is never changed and may be in any status. In Bash:
+To debug a node, fork a new run at it with the same input it had: the new run starts from the thread as it was just before that node first started, on the same pinned definition (a draft run's snapshot included), and nothing before the node runs again. The source run is never changed and may be in any status. In Bash:
 
 <!-- guide-example: replay-bash -->
 
@@ -263,7 +265,6 @@ Read `code`, `message`, `nodeId`, `resumable`, and any `details`. After fixing a
 
 | `RunErrorCode`                                                      | Action                                                                                                                                                                     |
 | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `EVENT_INVALID`                                                     | Generated event violates a contract bound. Read the failure, correct its source, then start or replay. Successful values are never trimmed.                                |
 | `HARNESS_NOT_INSTALLED`                                             | Install Codex or correct the executable setting; check harness preflight. Missing executable errors during a turn can also appear as `HARNESS_TURN_FAILED`.                |
 | `HARNESS_NOT_AUTHENTICATED`                                         | Log into Codex as the API process user, then resume.                                                                                                                       |
 | `HARNESS_QUOTA_EXHAUSTED`                                           | Wait for quota or rate-limit recovery, or resolve account access, then resume.                                                                                             |
@@ -273,6 +274,7 @@ Read `code`, `message`, `nodeId`, `resumable`, and any `details`. After fixing a
 | `SCRIPT_TIMEOUT`                                                    | Resolve the slow program, or increase its timeout in a new version.                                                                                                        |
 | `INFERENCE_TIMEOUT`                                                 | Resolve slow harness work, or increase the node timeout in a new version.                                                                                                  |
 | `OUTPUT_SCHEMA_MISMATCH`                                            | Inspect raw output and repair attempts; correct the prompt, schema, or repair policy in a new version.                                                                     |
+| `ARTIFACT_WRITE_FAILED`                                             | Repair artifact storage, then explicitly resume to continue the recorded provider session with a continuation prompt.                                                      |
 | `SUBLOOP_DEPTH_EXCEEDED`                                            | Reduce nesting or revise the depth setting in a new version.                                                                                                               |
 | `SUBLOOP_NOT_FOUND`                                                 | Publish the referenced child or correct its loop/version reference, then start an appropriate version.                                                                     |
 | `EVALUATION_INVALID_RESPONSE` / `EVALUATION_RESULT_REJECTED`        | Correct the provider response, declared option IDs or classifier threshold, then replay or start a new run; no other kind is tried.                                        |
@@ -288,6 +290,7 @@ Read `code`, `message`, `nodeId`, `resumable`, and any `details`. After fixing a
 | `HTTP_PROBE_BODY_OVERFLOW`                                          | An HTTP heartbeat response exceeded 64 KiB. Narrow the response or use a script probe; no successful beat or partial JSON was recorded.                                    |
 | `MAX_NODE_VISITS`                                                   | A node exceeded the safety cap `maxNodeVisits`. Fix unintended cycles or configure enough visits for intentional gates.                                                    |
 | `RETURN_DELIVERY_FAILED`                                            | Check the destination and signing secret. Current delivery failures use `return.failed` events, rather than this reserved run-failure code; arrange redelivery explicitly. |
+| `EVENT_INVALID`                                                     | Generated event violates a contract bound. Read the failure, correct its source, then start or replay. Successful values are never trimmed.                                |
 | `INTERNAL_ERROR`                                                    | Preserve the run ID, log, and failure details; investigate or report the defect before retrying side effects.                                                              |
 
 Use [Troubleshooting](07-troubleshooting.md) for concrete checks. See [Execution engine](../05-execution-engine.md) and [API, streaming, and MCP](../07-api-and-streaming.md) for design context.

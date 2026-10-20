@@ -232,8 +232,17 @@ describe('MCP server against the in-process API', () => {
     expect(unpublished.isError).toBe(true);
     expect(text(unpublished)).toMatch(/^GraphGoblin API error [A-Z_]+ \(HTTP 4\d\d\)/);
     const fromDraft = body(await call('start_run', { loopId: draftId, allowDraft: true }));
+    // The draft run pins a snapshot of the draft, not the editable draft itself.
+    expect(fromDraft).toMatchObject({
+      definition: 'draft-only draft v1',
+      pinned: { source: 'draft', version: 1, name: 'draft-only' },
+    });
+    expect(fromDraft.versionId).not.toBe(described.version.id);
     const done = body(await call('wait_for_run', { runId: fromDraft.runId, timeoutSeconds: 5 }));
-    expect(done).toMatchObject({ finished: true, run: { status: 'succeeded' } });
+    expect(done).toMatchObject({
+      finished: true,
+      run: { status: 'succeeded', versionId: fromDraft.versionId, pinned: fromDraft.pinned },
+    });
   });
 
   it('starts a run, waits for it, and records the manual.mcp source', async () => {
@@ -241,7 +250,12 @@ describe('MCP server against the in-process API', () => {
     const started = body(
       await call('start_run', { loopId, input: { topic: 'x' }, triggerNodeId: 'start' }),
     );
-    expect(started).toMatchObject({ loopId, next: expect.stringContaining('wait_for_run') });
+    expect(started).toMatchObject({
+      loopId,
+      definition: 'quick v1',
+      pinned: { source: 'published', version: 1, name: 'quick', label: 'quick v1' },
+      next: expect.stringContaining('wait_for_run'),
+    });
     const done = body(await call('wait_for_run', { runId: started.runId }));
     expect(done.finished).toBe(true);
     expect(done.run).toMatchObject({ id: started.runId, status: 'succeeded' });
@@ -290,7 +304,7 @@ describe('MCP server against the in-process API', () => {
     expect(started.loopId).toBe(loopId);
     await t.idle();
     const done = body<{ finished: boolean; run: RunRecord }>(
-      await call('wait_for_run', { runId: started.runId, timeoutSeconds: 0 }),
+      await call('wait_for_run', { runId: started.runId }),
     );
     expect(done).toMatchObject({
       finished: true,
@@ -364,15 +378,10 @@ describe('MCP server against the in-process API', () => {
     );
   });
 
-  it('times out with a cursor while a run is busy, reports progress, then succeeds', async () => {
+  it('reports progress while a run is busy, then succeeds', async () => {
     t.harness.script([{ finalText: 'pondered', delayMs: 400 }]);
     const loopId = await t.publishLoop(slowLoop);
     const { runId } = body(await call('start_run', { loopId }));
-    const pending = body(await call('wait_for_run', { runId, timeoutSeconds: 0 }));
-    expect(pending).toMatchObject({ finished: false, cursor: expect.any(Number) });
-    expect(['queued', 'running']).toContain(pending.status);
-    expect(pending.next).toMatch(/call wait_for_run again/i);
-
     const progress: number[] = [];
     const done = await client.callTool({ name: 'wait_for_run', arguments: { runId } }, undefined, {
       onprogress: (p) => progress.push(p.progress),
@@ -424,7 +433,7 @@ describe('MCP server against the in-process API', () => {
     expect(described.triggers[0]).toMatchObject({ startableFromMcp: false });
     const held = body(await call('start_run', { loopId: signalId })).runId as string;
     await until(async () => (await status(held)) === 'waiting');
-    const notYet = body(await call('wait_for_run', { runId: held, timeoutSeconds: 0 }));
+    const notYet = body(await call('wait_for_run', { runId: held, timeoutSeconds: 1 }));
     expect(notYet.next).toMatch(/signal "go"/);
     expect(notYet.next).toContain('waiting.waitId');
     expect(

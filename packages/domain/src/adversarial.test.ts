@@ -4,9 +4,9 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { describe, expect, it, vi } from 'vitest';
 import { MutationOperationSchema } from '@graphgoblin/contracts';
 import { sampleThread } from '@graphgoblin/contracts/testing';
-import { applyPatch } from './patch.js';
+import { applyPatch, MUTABLE_REGIONS } from './patch.js';
 import { getAtPointer } from './pointer.js';
-import { applyMutations, planMutation, MUTABLE_REGIONS } from './mutations.js';
+import { applyMutations, planMutation } from './mutations.js';
 import { renderTemplate } from './template.js';
 import { checkExpression, evaluateExpression } from './expression.js';
 

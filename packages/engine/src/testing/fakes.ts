@@ -4,6 +4,7 @@
  */
 import type {
   ContextThread,
+  ClassifierBinding,
   ClassifierPrimitive,
   HarnessId,
   ModelCatalogEntry,
@@ -280,9 +281,6 @@ export class InMemoryRunRepository implements RunRepository {
         .map((r) => ({ id: r.id, terminal: isTerminal(r.status) })),
     );
   }
-  listByStatus(statuses: readonly RunStatus[]): Promise<RunRecord[]> {
-    return Promise.resolve([...this.runs.values()].filter((r) => statuses.includes(r.status)));
-  }
   markFinalized(runId: string): Promise<void> {
     this.finalized.add(runId);
     return Promise.resolve();
@@ -291,14 +289,18 @@ export class InMemoryRunRepository implements RunRepository {
     this.finalized.delete(runId);
     return Promise.resolve();
   }
-  async listRunReferences(
+  listRunReferences(
     statuses: readonly RunStatus[],
   ): Promise<Pick<RunRecord, 'id' | 'loopId' | 'versionId'>[]> {
-    return (await this.listByStatus(statuses)).map(({ id, loopId, versionId }) => ({
-      id,
-      loopId,
-      versionId,
-    }));
+    return Promise.resolve(
+      [...this.runs.values()]
+        .filter((run) => statuses.includes(run.status))
+        .map(({ id, loopId, versionId }) => ({
+          id,
+          loopId,
+          versionId,
+        })),
+    );
   }
   listChildren(parentRunId: string): Promise<RunRecord[]> {
     return Promise.resolve([...this.runs.values()].filter((r) => r.parentRunId === parentRunId));
@@ -798,21 +800,43 @@ export const DEFAULT_TEST_SETTINGS: EngineSettings = {
 };
 
 export class FakeClassifierRegistry implements ClassifierRegistryPort {
-  readonly requests: { ownerId: string; modelId: string; primitive: ClassifierPrimitive }[] = [];
+  readonly requests: {
+    ownerId: string;
+    modelId: string;
+    primitive: ClassifierPrimitive;
+    binding: ClassifierBinding;
+  }[] = [];
   readonly models = new Map<string, ClassifierPort & Partial<Pick<DeciderPort, 'available'>>>();
   readonly unavailable = new Map<
     string,
     Extract<ClassifierResolution, { status: 'unavailable' }>
   >();
+  /** Catalog metadata per id; ids registered in `models` or `unavailable` get a default entry. */
+  readonly bindings = new Map<string, ClassifierBinding>();
   constructor(builtin?: ClassifierPort & Partial<Pick<DeciderPort, 'available'>>) {
     if (builtin) this.models.set('jev', builtin);
+  }
+  bind(_ownerId: string, modelId: string): Promise<ClassifierBinding | undefined> {
+    const known = this.models.has(modelId) || this.unavailable.has(modelId);
+    return Promise.resolve(
+      this.bindings.get(modelId) ??
+        (known
+          ? {
+              provider: modelId === 'jev' ? 'typesafe' : 'http',
+              providerModel: modelId === 'jev' ? 'jev-latest' : modelId,
+              primitives: ['choice', 'noul', 'score'],
+              endpoint: 'https://classifier.test',
+            }
+          : undefined),
+    );
   }
   resolve(
     ownerId: string,
     modelId: string,
     primitive: ClassifierPrimitive,
+    binding: ClassifierBinding,
   ): Promise<ClassifierResolution> {
-    this.requests.push({ ownerId, modelId, primitive });
+    this.requests.push({ ownerId, modelId, primitive, binding });
     const unavailable = this.unavailable.get(modelId);
     if (unavailable) return Promise.resolve(unavailable);
     const classifier = this.models.get(modelId);
@@ -832,9 +856,9 @@ export class FakeClassifierRegistry implements ClassifierRegistryPort {
       status: 'ready',
       classifier,
       provenance: {
-        provider: modelId === 'jev' ? 'typesafe' : 'http',
+        provider: binding.provider,
         classifierId: modelId,
-        model: modelId === 'jev' ? 'jev-latest' : modelId,
+        model: binding.providerModel,
       },
     });
   }
@@ -859,6 +883,7 @@ export class FakeModelCatalog {
 export type AdmissionWrite =
   | 'claim.inbound'
   | 'claim.receipt'
+  | 'create.snapshot'
   | 'create.run'
   | 'create.event'
   | 'create.receipt'
@@ -875,6 +900,7 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
   constructor(
     private readonly runs: InMemoryRunRepository,
     private readonly events: InMemoryEventStore,
+    private readonly loops: InMemoryLoopRepository,
     private readonly beforeWrite: (write: AdmissionWrite) => void = () => {},
   ) {}
   async create(authored: RunAdmission, receiptId?: string): Promise<RunRecord> {
@@ -899,13 +925,18 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
     }
     let run = this.runs.runs.get(input.run.id);
     const created = !run;
+    // A draft snapshot is immutable: the same id may only ever hold the same record.
+    const existing = input.snapshot ? this.loops.versions.get(input.snapshot.id) : undefined;
+    if (existing && stableStringify(existing) !== stableStringify(input.snapshot))
+      throw new AdmissionConflictError();
     if (run) {
       const thread = await this.runs.getInitialThread(run.id);
-      if (!thread) throw new AdmissionConflictError();
+      if (!thread || (input.snapshot && !existing)) throw new AdmissionConflictError();
       assertAdmissionIdentity(input, run, thread, this.events.all(run.id)[0]);
     } else {
       if (this.events.all(input.run.id).length) throw new AdmissionConflictError();
       run = { ...input.run, lastEventSeq: 1 };
+      if (input.snapshot && !existing) this.beforeWrite('create.snapshot');
       this.beforeWrite('create.run');
       this.beforeWrite('create.event');
     }
@@ -922,6 +953,7 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
       this.beforeWrite('create.link');
     }
     if (created) {
+      if (input.snapshot && !existing) this.loops.add(structuredClone(input.snapshot));
       this.runs.commitCreated(run, input.initialThread);
       this.events.commitQueued(queuedEvent(input));
     }
@@ -1083,7 +1115,8 @@ export function createFakePorts(options: { secrets?: Record<string, string> } = 
   const clock = new FakeClock();
   const events = new InMemoryEventStore(clock);
   const runs = new InMemoryRunRepository();
-  const admission = new InMemoryTriggerAdmission(runs, events);
+  const loops = new InMemoryLoopRepository();
+  const admission = new InMemoryTriggerAdmission(runs, events, loops);
   const harness = new FakeHarness();
   const jev = new FakeClassifier('jev');
   const codexDecider = new FakeDecider('codex');
@@ -1096,7 +1129,7 @@ export function createFakePorts(options: { secrets?: Record<string, string> } = 
     events,
     runs,
     admission,
-    loops: new InMemoryLoopRepository(),
+    loops,
     sessions: new InMemorySessionRepository(),
     harnesses: { codex: harness },
     harness,
