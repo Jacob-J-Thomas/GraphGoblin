@@ -190,7 +190,8 @@ function ChosenRoute({
   return (
     <>
       <dt>Label</dt>
-      <dd>
+      {/* Labels may be 120 characters without a break opportunity: wrap them, never widen. */}
+      <dd className="min-w-0 wrap-anywhere">
         {!definition && definitionLoading
           ? 'Loading run-version configuration…'
           : !config
@@ -200,7 +201,7 @@ function ChosenRoute({
       {row?.criteria !== undefined ? (
         <>
           <dt>Criterion</dt>
-          <dd className="whitespace-pre-wrap">{row.criteria}</dd>
+          <dd className="min-w-0 whitespace-pre-wrap wrap-anywhere">{row.criteria}</dd>
         </>
       ) : null}
     </>
@@ -278,7 +279,7 @@ export function EvaluationDetails({
         </p>
       ) : event.type === 'decision.made' ? (
         <>
-          <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
+          <dl className="mt-2 grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 text-sm">
             <dt>
               {event.observation.kind === 'route'
                 ? 'Route ID'
@@ -383,7 +384,7 @@ export function EvaluationDetails({
               Classifier result rejected by the confidence gate. No decision was accepted and no
               route was selected.
             </p>
-            <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+            <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1">
               <dt>Proposed answer</dt>
               <dd>{answerDescription(rejection.answer)}</dd>
               <ObservationDetails
