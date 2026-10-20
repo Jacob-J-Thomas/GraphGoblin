@@ -57,9 +57,9 @@ Ports: `out`.
 
 ## Decision (`decision`)
 
-Chooses a route using an expression, LLM instructions, or a classifier primitive.
+Chooses a route using an expression, LLM instructions, or a classifier primitive. Marking one route as repeat makes it a gate with pass limits.
 
-Ports: Declared route ids for expression/LLM; classifier option, side or band ids.
+Ports: Declared route ids for expression/LLM; classifier option, side or band ids. A gate adds `limit-reached`.
 
 ### `kind: "expression"`
 
@@ -216,9 +216,9 @@ Ports: `out`.
 
 ## Exit (`exit`)
 
-Decides whether the loop is done, what it returns, where that goes, and whether to go around again.
+Finishes the run with an outcome, evaluates what it returns, and delivers that value to its destinations. With returns none the run has no result and no destination receives anything; with no destinations as well, the exit is quiet. Exits never loop back: repetition belongs to decision gates.
 
-Ports: `loopBack`, only when configured.
+Ports: None; exits are terminal.
 
 | Field          | Type                                                                                      | Required | Default               | Description                                                                                                                                                                            |
 | -------------- | ----------------------------------------------------------------------------------------- | -------- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

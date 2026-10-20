@@ -149,8 +149,11 @@ In PowerShell:
 
 ```powershell
 $runId = '<run-id>'
-Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:4747/runs/$runId/resume"
+Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:4747/runs/$runId/resume" `
+  -ContentType 'application/json' -Body '{}'
 ```
+
+Windows PowerShell gives a POST without a body a form content type, which the API refuses with 415 `UNSUPPORTED_MEDIA_TYPE`. The example therefore sends an empty JSON object.
 
 Pausing, resuming, or answering a run in the wrong status returns 409 `INVALID_STATE`.
 

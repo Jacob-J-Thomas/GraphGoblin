@@ -4,11 +4,11 @@ These steps cover the human-in-the-loop review for #129, which absorbs report #2
 
 The capability inventory and the before/after quotes are in [2026-10-18-exit-evidence-inventory.md](../2026-10-18-exit-evidence-inventory.md). This folder holds three loops that need no model turns:
 
-| File                   | Loop                                  | What it exercises                                                                                    |
-| ---------------------- | ------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `gate-loop.json`       | QA 129 gate repeat                    | An expression gate that always repeats, with maximum passes 3, Limit reached and an Exhausted exit   |
-| `suppressed-loop.json` | QA 129 returns none with destinations | An exit with Returns None and two destinations (caller, log)                                         |
-| `quiet-loop.json`      | QA 129 quiet exit                     | A payload check that routes to a quiet exit (Returns None, no destinations) and another that returns |
+| File                   | Loop                                  | What it exercises                                                                                                                                               |
+| ---------------------- | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `gate-loop.json`       | QA 129 gate repeat                    | An expression gate that always repeats, with maximum passes 3, Limit reached and an Exhausted exit                                                              |
+| `suppressed-loop.json` | QA 129 returns none with destinations | An exit with Returns None and two destinations (caller, log)                                                                                                    |
+| `quiet-loop.json`      | QA 129 quiet exit                     | An expression decision that always takes its Ignore route to a quiet exit (Returns None, no destinations); its Keep route leads to an exit that returns a value |
 
 ## 1. Build and start an isolated instance
 
