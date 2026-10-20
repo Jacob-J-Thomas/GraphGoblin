@@ -1,0 +1,37 @@
+import assert from 'node:assert/strict';
+import { writeFile } from 'node:fs/promises';
+import { setup, loop, node, edge, publish, snapshot, stores } from './wp-c3-investigate.mjs';
+const results = [];
+try {
+  for (const ms of [50, 1000]) {
+    const t = await setup(ms);
+    try {
+      const child = { schemaVersion: 4, name: 'Immediate child', nodes: [node('start', 'trigger', { type: 'manual' }), node('done', 'exit', {})], edges: [edge('start', 'done')] };
+      const childId = await publish(t, child);
+      const parent = loop({ mode: 'input', prompt: 'Only a real answer should wake this visit' });
+      parent.nodes.splice(1, 0, node('sub', 'subloop', { loopRef: { loopId: childId } }));
+      parent.edges = [edge('start', 'sub'), edge('sub', 'work'), edge('work', 'done')];
+      const parentId = await publish(t, parent);
+      const row = { ms, attempts: [] };
+      for (let batch = 0; batch < 5; batch++) {
+        const runs = await Promise.all(Array.from({ length: 10 }, () => t.c.manager.startRun({ ownerId: 'local', loopId: parentId, source: 'manual.api' })));
+        await t.c.manager.waitForIdle();
+        for (const r of runs) {
+          const state = await snapshot(t, r.id);
+          row.attempts.push(state);
+          assert.equal(state.status, 'waiting'); assert.equal(state.wait.nodeId, 'work');
+          assert.equal(state.wakes.length, 1); assert.equal(state.wakes[0].reason, 'child');
+          assert.equal((await t.c.ports.runs.listChildren(r.id)).length, 1);
+          await t.c.manager.provideInput(r.id, state.wait.waitId, 'real answer');
+        }
+        await t.c.manager.waitForIdle();
+        for (const r of runs) {
+          const state = await snapshot(t, r.id);
+          assert.equal(state.status, 'succeeded'); assert.equal(state.wakes.length, 2); assert.equal(state.result, 'real answer');
+        }
+      }
+      results.push(row);
+    } finally { await t.close(); }
+  }
+} finally { await writeFile('docs/qa/2026-10-18-wp-c3-evidence/fast-child.json', JSON.stringify({ runtime: process.version, stores, results }, null, 2) + '\n'); }
+console.log(JSON.stringify({ passed: results.reduce((n, r) => n + r.attempts.length, 0) }));
