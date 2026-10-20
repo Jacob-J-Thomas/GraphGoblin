@@ -152,7 +152,7 @@ describe.each(recipes)('uniform webhook keys: $type $message', (auth) => {
     await t.idle();
     expect(await t.container.repos.runs.list({ loopId: id })).toHaveLength(1);
     expect(
-      (await t.container.repos.inbound.list('local')).filter(
+      (await t.container.repos.inbound.page('local')).items.filter(
         (event) => event.delivery?.state === 'deduplicated',
       ),
     ).toHaveLength(2);

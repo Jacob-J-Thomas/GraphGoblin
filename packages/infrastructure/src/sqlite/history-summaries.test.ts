@@ -14,6 +14,23 @@ describe('SQLite history queries', () => {
     handle = await openMemoryDatabase();
   });
   afterEach(() => handle.close());
+  it('applies the history index to an existing current-format store and reruns idempotently', async () => {
+    await handle.client.execute('DROP INDEX runs_loop_owner_history_idx');
+    await handle.client.execute(
+      'DELETE FROM __drizzle_migrations WHERE created_at=(SELECT max(created_at) FROM __drizzle_migrations)',
+    );
+    expect(await handle.pendingMigrations()).toBe(1);
+    await handle.migrate();
+    expect(await handle.pendingMigrations()).toBe(0);
+    await handle.migrate();
+    const columns = await handle.client.execute("PRAGMA index_info('runs_loop_owner_history_idx')");
+    expect(columns.rows.map((row) => row.name)).toEqual([
+      'loop_id',
+      'owner_id',
+      'created_at',
+      'id',
+    ]);
+  });
   it('summarizes each owner loop beyond 500 unrelated runs, with ties and no-history controls', async () => {
     const loops = new SqliteLoopRepository(handle.db, new FakeClock(), new FakeIds());
     const runs = new SqliteRunRepository(handle.db);
@@ -64,6 +81,52 @@ describe('SQLite history queries', () => {
       (await loops.listWithRunSummaries('local')).find((loop) => loop.id === old.loop.id)?.latestRun
         ?.status,
     ).toBe('failed');
+  });
+  it('isolates a damaged latest status while counting its row and preserving healthy summaries', async () => {
+    const loops = new SqliteLoopRepository(handle.db, new FakeClock(), new FakeIds());
+    const damaged = await loops.create('local', LoopDefinitionSchema.parse(minimalLoop()));
+    const healthy = await loops.create('local', LoopDefinitionSchema.parse(minimalLoop()));
+    const runs = new SqliteRunRepository(handle.db);
+    const seed = async (tag: string, loopId: string) => {
+      const id = fakeUlid(tag);
+      await runs.create(
+        {
+          id,
+          ownerId: 'local',
+          loopId,
+          versionId: damaged.draft.id,
+          invocationId: fakeUlid(`${tag}:inv`),
+          status: 'succeeded',
+          iteration: 1,
+          lastEventSeq: 0,
+          createdAt: FIXTURE_TS,
+        },
+        sampleThread(),
+      );
+      return id;
+    };
+    const badId = await seed('bad-summary', damaged.loop.id);
+    const goodId = await seed('good-summary', healthy.loop.id);
+    await handle.client.execute({
+      sql: 'UPDATE runs SET status = ? WHERE id = ?',
+      args: ['damaged-status', badId],
+    });
+    const summaries = await loops.listWithRunSummaries('local');
+    expect(summaries.find((loop) => loop.id === damaged.loop.id)).toMatchObject({
+      runCount: 1,
+      latestRun: null,
+    });
+    expect(summaries.find((loop) => loop.id === healthy.loop.id)).toMatchObject({
+      runCount: 1,
+      latestRun: { id: goodId, status: 'succeeded' },
+    });
+    const columns = await handle.client.execute("PRAGMA index_info('runs_loop_owner_history_idx')");
+    expect(columns.rows.map((row) => row.name)).toEqual([
+      'loop_id',
+      'owner_id',
+      'created_at',
+      'id',
+    ]);
   });
   it('pages inbound timestamp ties, applies every filter before the boundary, and detects exhaustion', async () => {
     const repo = new SqliteInboundEvents(handle.db);

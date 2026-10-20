@@ -1,4 +1,4 @@
-import { RunStatusSchema } from '@graphgoblin/contracts';
+import { RunRecordSchema } from '@graphgoblin/contracts';
 import type {
   LoopDefinition,
   LoopRecord,
@@ -17,6 +17,8 @@ import {
   webhookEndpoints,
   webhookReceipts,
 } from './schema.js';
+
+const LatestRunSchema = RunRecordSchema.pick({ id: true, status: true, createdAt: true });
 
 type LoopRow = typeof loops.$inferSelect;
 type VersionRow = typeof loopVersions.$inferSelect;
@@ -169,13 +171,15 @@ export class SqliteLoopRepository implements LoopRepository {
       )
       .where(eq(loops.ownerId, ownerId))
       .orderBy(desc(loops.updatedAt));
-    return rows.map((row) => ({
-      ...toLoop(row),
-      runCount: row.runCount,
-      latestRun: row.latestRun
-        ? { ...row.latestRun, status: RunStatusSchema.parse(row.latestRun.status) }
-        : null,
-    }));
+    return rows.map((row) => {
+      const latest = LatestRunSchema.safeParse(row.latestRun);
+      return {
+        ...toLoop(row),
+        runCount: row.runCount,
+        // A positive count with no readable latest summary means unavailable, not never run.
+        latestRun: latest.success ? latest.data : null,
+      };
+    });
   }
 
   /** Every loop with a published version, across owners; used to re-arm triggers at boot. */

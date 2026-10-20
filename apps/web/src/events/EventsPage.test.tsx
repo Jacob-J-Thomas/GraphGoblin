@@ -5,7 +5,7 @@ import { FakeApi, TS } from '../__fixtures__/fake-api.js';
 import { renderApp } from '../__fixtures__/render.js';
 
 describe('EventsPage delivery dispositions', () => {
-  it('appends an exactly full final event page and preserves the type filter and expanded content', async () => {
+  it('appends an exactly full final event page and preserves expanded content and keyboard focus', async () => {
     const api = new FakeApi();
     const user = userEvent.setup();
     api.inbound = Array.from({ length: 200 }, (_, i) => ({
@@ -17,7 +17,6 @@ describe('EventsPage delivery dispositions', () => {
       source: 'api',
       runIds: [],
     }));
-    api.inbound.push({ ...api.inbound[0]!, id: 'other', type: 'other' });
     api.inbound = api.inbound.map((event, i) => ({
       ...event,
       ...(i === 0
@@ -28,16 +27,20 @@ describe('EventsPage delivery dispositions', () => {
           }
         : {}),
     }));
-    renderApp('/events?type=chosen', api);
+    renderApp('/events?type=ignored&before=invalid', api);
     const disclosure = await screen.findByText('Webhook configuration');
     await user.click(disclosure);
     const expanded = disclosure.closest('details')!;
     expect(expanded).toHaveAttribute('open');
-    await user.click(await screen.findByRole('button', { name: 'Load more' }));
+    const more = await screen.findByRole('button', { name: 'Load more' });
+    more.focus();
+    await user.keyboard('{Enter}');
     await waitFor(() => expect(screen.getAllByRole('row')).toHaveLength(201));
+    await waitFor(() => expect(screen.getByText('All events loaded.')).toHaveFocus());
     expect(screen.queryByRole('button', { name: 'Load more' })).not.toBeInTheDocument();
     const call = api.callsTo('GET', '/events').at(-1)!;
-    expect(call.search.get('type')).toBe('chosen');
+    expect(call.search.has('type')).toBe(false);
+    expect(call.search.has('before')).toBe(false);
     expect(call.search.get('cursor')).toBe('event-99');
     expect(expanded).toBeInTheDocument();
     expect(expanded).toHaveAttribute('open');

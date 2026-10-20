@@ -64,7 +64,6 @@ describe('MCP history paging against real SQLite and API', () => {
       loopId: records[0]!.loopId,
       status: ['succeeded'],
       parentRunId: 'none',
-      before: '2026-10-03T00:00:00.000Z',
       limit: 1,
     };
     const ids: string[] = [];
@@ -85,14 +84,20 @@ describe('MCP history paging against real SQLite and API', () => {
         .reverse(),
     );
   });
-  it('treats before as a time filter, never as a substitute for a tied run cursor', async () => {
+  it('keeps before on REST only and reports invalid MCP cursors', async () => {
     const a = await seed(0);
     await seed(1);
     await seed(2);
-    expect(await call('list_runs', { loopId: a.loopId, before: FIXTURE_TS, limit: 1 })).toEqual({
+    const rest = await api.GET('/runs', {
+      params: { query: { loopId: a.loopId, before: FIXTURE_TS, limit: 1 } },
+    });
+    expect(rest.data).toEqual({
       items: [],
       nextCursor: null,
     });
+    const listing = (await client.listTools()).tools.find((tool) => tool.name === 'list_runs')!;
+    expect(listing.inputSchema.properties).not.toHaveProperty('before');
+    expect(listing.inputSchema.properties).toHaveProperty('cursor');
     const invalid = CallToolResultSchema.parse(
       await client.callTool({ name: 'list_runs', arguments: { cursor: '!' } }),
     );

@@ -2,13 +2,7 @@
  * The MCP tools. Each one is a thin call through `@graphgoblin/api-client`; descriptions are
  * written for the calling agent: when to call it, what to pass, and what to do with the result.
  */
-import {
-  GraphGoblinApiError,
-  loops,
-  runs,
-  unwrap,
-  type GraphGoblinClient,
-} from '@graphgoblin/api-client';
+import { GraphGoblinApiError, loops, runs, type GraphGoblinClient } from '@graphgoblin/api-client';
 import {
   TERMINAL_RUN_STATUSES,
   UlidSchema,

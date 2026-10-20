@@ -113,7 +113,6 @@ export function useRuns(query: ListRunsQuery = {}, refetchInterval: number | fal
         { signal },
       ),
     getNextPageParam: (page) => page.nextCursor ?? undefined,
-    select: (data) => data.pages.flatMap((page) => page.items),
     refetchInterval,
   });
 }
@@ -280,7 +279,6 @@ export function useInboundEvents(query: ListEventsQuery = {}) {
         { signal },
       ),
     getNextPageParam: (page) => page.nextCursor ?? undefined,
-    select: (data) => data.pages.flatMap((page) => page.items),
     refetchInterval: (query) =>
       query.state.data?.pages.some((page) =>
         page.items.some((event) => event.delivery?.state === 'pending'),

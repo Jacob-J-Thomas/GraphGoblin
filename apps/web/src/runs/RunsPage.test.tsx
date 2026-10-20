@@ -132,7 +132,7 @@ describe('RunsPage', () => {
     });
     const view = renderApp('/runs', api);
     await user.click(await screen.findByRole('button', { name: 'Load more' }));
-    const busy = await screen.findByRole('button', { name: 'Loading more...' });
+    const busy = await screen.findByRole('button', { name: 'Loading more\u2026' });
     expect(busy).toHaveAttribute('aria-disabled', 'true');
     await user.click(busy);
     expect(api.callsTo('GET', '/runs')).toHaveLength(2);
@@ -146,6 +146,87 @@ describe('RunsPage', () => {
       ),
     );
     view.queryClient.clear();
+  });
+
+  it('continues from an empty readable page with a cursor instead of claiming no matches', async () => {
+    const api = new FakeApi();
+    const user = userEvent.setup();
+    const run = api.addRun();
+    api.override('GET /runs', (call) =>
+      call.search.has('cursor')
+        ? new Response(JSON.stringify({ items: [run], nextCursor: null }), {
+            headers: { 'content-type': 'application/json' },
+          })
+        : new Response(JSON.stringify({ items: [], nextCursor: 'opaque-position' }), {
+            headers: { 'content-type': 'application/json' },
+          }),
+    );
+    renderApp('/runs', api);
+    const more = await screen.findByRole('button', { name: 'Load more' });
+    expect(screen.queryByText('No runs match.')).not.toBeInTheDocument();
+    await user.click(more);
+    expect(await screen.findByRole('link', { name: run.id })).toBeVisible();
+    expect(await screen.findByText('All runs loaded.')).toBeVisible();
+  });
+
+  it('omits the exhaustion message on an initial page and focuses it after a keyboard append', async () => {
+    const api = new FakeApi();
+    const user = userEvent.setup();
+    for (let i = 0; i < 101; i++) api.addRun();
+    renderApp('/runs', api);
+    const more = await screen.findByRole('button', { name: 'Load more' });
+    expect(screen.queryByText('All runs loaded.')).not.toBeInTheDocument();
+    more.focus();
+    await user.keyboard('{Enter}');
+    const end = await screen.findByText('All runs loaded.');
+    await waitFor(() => expect(end).toHaveFocus());
+    expect(end).toHaveAttribute('tabindex', '-1');
+  });
+
+  it('keeps Load more enabled during a background refresh and lets it replace that refresh', async () => {
+    const api = new FakeApi();
+    const user = userEvent.setup();
+    for (let i = 0; i < 101; i++) api.addRun();
+    const view = renderApp('/runs', api);
+    const more = await screen.findByRole('button', { name: 'Load more' });
+    let release!: (response: Response) => void;
+    let background: AbortSignal | undefined;
+    api.override('GET /runs', (call) => {
+      if (call.search.has('cursor')) return api.builtIn(call);
+      background = call.signal;
+      return new Promise<Response>((resolve) => {
+        release = resolve;
+      });
+    });
+    let refreshing!: Promise<void>;
+    act(() => {
+      refreshing = view.queryClient.invalidateQueries({ queryKey: ['runs'] });
+    });
+    await waitFor(() => expect(background).toBeDefined());
+    expect(more).toHaveAttribute('aria-disabled', 'false');
+    expect(more).toHaveAttribute('aria-busy', 'false');
+    await user.click(more);
+    expect(background?.aborted).toBe(true);
+    expect(await screen.findByText('All runs loaded.')).toBeVisible();
+    await act(async () => {
+      release(
+        new Response(JSON.stringify({ items: [], nextCursor: null }), {
+          headers: { 'content-type': 'application/json' },
+        }),
+      );
+      await refreshing;
+    });
+    view.unmount();
+    view.queryClient.clear();
+  });
+
+  it('does not show exhaustion for an initial single page or forward a hidden before filter', async () => {
+    const api = new FakeApi();
+    const run = api.addRun();
+    renderApp('/runs?before=invalid-hidden-filter', api);
+    expect(await screen.findByRole('link', { name: run.id })).toBeVisible();
+    expect(screen.queryByText('All runs loaded.')).not.toBeInTheDocument();
+    expect(api.callsTo('GET', '/runs')[0]!.search.has('before')).toBe(false);
   });
 
   it('says when nothing matches', async () => {

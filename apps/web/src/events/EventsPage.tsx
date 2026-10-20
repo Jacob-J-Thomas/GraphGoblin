@@ -1,4 +1,3 @@
-import { useSearchParams } from 'react-router';
 import { HistoryState } from '../components/HistoryState.js';
 import { Link } from 'react-router';
 import { useInboundEvents } from '../api/queries.js';
@@ -7,7 +6,9 @@ import { Badge, Card, Table, Td, Th, type Tone } from '../components/ui/index.js
 import { formatDateTime, prettyJson } from '../lib/utils.js';
 
 const LINK = 'touch-target text-link underline-offset-[3px] hover:underline';
-type InboundEvent = NonNullable<Awaited<ReturnType<typeof useInboundEvents>>['data']>[number];
+type InboundEvent = NonNullable<
+  ReturnType<typeof useInboundEvents>['data']
+>['pages'][number]['items'][number];
 type EventDelivery = NonNullable<InboundEvent['delivery']>;
 
 const DELIVERY: Record<EventDelivery['state'], { label: string; tone: Tone; explanation: string }> =
@@ -103,10 +104,7 @@ function WebhookConfiguration({ webhook }: { webhook: InboundEvent['webhook'] })
  * of other runs, with the runs each one started.
  */
 export function EventsPage() {
-  const [params] = useSearchParams();
-  const type = params.get('type');
-  const before = params.get('before');
-  const query = useInboundEvents({ ...(type ? { type } : {}), ...(before ? { before } : {}) });
+  const query = useInboundEvents();
   return (
     <Page>
       <PageHeader title="Events" />

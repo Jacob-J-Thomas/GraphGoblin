@@ -2068,6 +2068,7 @@ export interface paths {
                 query?: {
                     type?: string;
                     before?: string;
+                    /** @description Opaque inbound-event cursor, at most 256 base64url characters. */
                     cursor?: string;
                     limit?: number;
                 };

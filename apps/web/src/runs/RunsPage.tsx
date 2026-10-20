@@ -34,9 +34,7 @@ export function RunsPage() {
   const loopId = params.get('loop') ?? '';
   const status = params.get('status') ?? '';
   const parent = params.get('parent') ?? '';
-  const before = params.get('before') ?? '';
   const query: ListRunsQuery = {
-    ...(before ? { before } : {}),
     ...(loopId ? { loopId } : {}),
     ...(status ? { status } : {}),
     ...(parent ? { parent } : {}),

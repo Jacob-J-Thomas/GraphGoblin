@@ -335,8 +335,8 @@ The loader and dormant configured contracts/services are removed in the next bou
 ### Ordinary run listing and pagination
 
 `GET /runs` returns `{items, nextCursor}` in descending creation-time and run-ID order.
-Reuse the returned opaque `cursor` with the same filters; `nextCursor: null` ends the
-listing. Equal creation timestamps do not skip runs. The default page size is 100,
+Reuse the returned opaque `nextCursor` as `cursor` with the same filters; `nextCursor: null` ends the
+listing. Equal timestamps are ordered by ID; IDs follow creation order within one process through a monotonic ULID generator, so ties do not skip runs. The default page size is 100,
 with `limit` from 1 to 500. The run repository fetches one extra row (at most 501)
 to determine whether another page exists. Cursors are bounded to 256 characters,
 canonical base64url encodings of strict `{createdAt: Timestamp, id: ULID}` JSON.
@@ -352,11 +352,11 @@ and `templateInstanceId`. Reads always remain scoped to the authenticated owner.
 The exclusive `(created_at, id)` boundary keeps newer insertions between requests
 out of subsequent pages. Both `runs.list(client, query)` and MCP `list_runs` expose
 `{items, nextCursor}`. Consumers never decode or reconstruct a cursor; repeat the active
-filters and copy `nextCursor` unchanged into `cursor`. Invalid statuses (including empty
-Pass `nextCursor` as `cursor` even when `items` is empty because damaged rows were
-skipped; stop when `nextCursor` is null.
-or partly invalid comma-separated lists) receive `400 VALIDATION_FAILED`, with a
-`/status` error explaining: "Use comma-separated run statuses."
+filters and copy `nextCursor` unchanged into `cursor`. Pass it even when `items` is empty
+because damaged rows were skipped; stop when `nextCursor` is null. Invalid statuses
+(including empty or partly invalid comma-separated lists) receive `400 VALIDATION_FAILED`,
+with a `/status` error explaining: "Use comma-separated run statuses."
+MCP `list_runs` accepts `cursor` and its loop/status/parent filters; its parameters do not include `before`.
 
 `GET /events` and `events.list(client, query)` return `{items, nextCursor}`, ordered by
 `receivedAt DESC, id DESC`, using one lookahead row and the same 100 default / 500 maximum.
@@ -364,15 +364,22 @@ The opaque inbound cursor is distinct from a run-list cursor; malformed, oversiz
 noncanonical values receive `400 INVALID_CURSOR`. The `type` and exclusive `before`
 filters compose with `cursor`; keep them unchanged on subsequent pages. A cursor is a
 position, not a snapshot: concurrent insertions ahead of it do not appear in older pages.
+It encodes only a position; reusing it with different filters continues from that position
+under the new filters. Inbound rows sharing a timestamp are ordered by ID, which follows
+creation order within one process. Unknown query parameters return 400, and `before` must
+be a timestamp. The inbound cursor has the same 256-character bound as the run cursor.
 
 `GET /runs/{id}/events` retains its sequence-number continuation, returning
 `{items, nextAfter, hasMore}`. One lookahead event determines `hasMore`; an exactly full
 final page returns false. `read_run_events` forwards that authoritative API result.
 This sequence cursor remains a number; it is not interchangeable with list cursors.
 
-Runs and Events append older rows through the existing outline **Load more** button.
+Runs and Events append older rows through a new outline **Load more** button.
 Filters remain part of the query key and every page request; changing a filter selects
-its own history. Next-page failures retain the loaded rows and expanded details and
+its own history. Runs expose loop/status/parent selects; Events has no hidden URL-only
+filters. The control is busy only during a next-page fetch, so background polling does
+not block it. End-of-list text appears after an append and receives keyboard focus
+when that user-initiated load exhausts the list. Next-page failures retain the loaded rows and expanded details and
 show an error with a retry through the same button. Runs retain their five-second polling;
 Events retain pending-delivery polling. No manual Events refresh is added here.
 
@@ -396,10 +403,13 @@ Ordinary copied drafts use the ordinary engine resume behavior. The API installs
 `GET /loops` returns `{items}` with `latestRun: {id, status, createdAt} | null` and an
 exact `runCount` on each loop. One SQL statement selects each authenticated owner's
 loops, joins its latest run through a correlated `ORDER BY created_at DESC, id DESC LIMIT 1`
-subquery, and counts that loop's owner-scoped runs. The existing loop/time index supports
-per-loop lookup and counting; there is no global history-page limit or N+1 API fan-out.
-Null means no history, never a failed or incomplete global lookup. A read failure remains
-an error. Loops refresh their summaries every five seconds; deletion confirmation uses
+subquery, and counts that loop's owner-scoped runs. The covering
+`runs_loop_owner_history_idx (loop_id, owner_id, created_at, id)` index supports both
+lookup and counting (migration `0015_loop_owner_history`). There is no global
+history-page limit or N+1 API fan-out. A null summary with `runCount: 0` means no history.
+A damaged latest summary is omitted while its row remains counted: the UI says
+"latest run unavailable" and the operator can find the row through `/runs/diagnostics`.
+Healthy loops remain available; database read failures remain errors. Loops refresh their summaries every five seconds; deletion confirmation uses
 the exact server count.
 
 ## Gate admission and terminal outcomes (#164 E1)

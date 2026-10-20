@@ -2,7 +2,10 @@ import type { Client } from '@libsql/client';
 import type * as Libsql from '@libsql/client';
 import { rm } from 'node:fs/promises';
 import { SqliteTriggerAdmission } from './admission.js';
-import { applyShippedSqlToHistoricalTestFixture } from './testing/shipped-migrations.js';
+import {
+  applyShippedSqlToHistoricalTestFixture,
+  shippedSqlMigrationCount,
+} from './testing/shipped-migrations.js';
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -275,8 +278,8 @@ describe('SqliteRunRepository', () => {
     old.close();
     const current = openDatabase({ url });
     try {
-      // Fourteen shipped migrations minus this fixture's two historical ledger entries.
-      expect(await current.pendingMigrations()).toBe(12);
+      // All shipped SQL minus this fixture's two historical ledger entries.
+      expect(await current.pendingMigrations()).toBe(shippedSqlMigrationCount() - 2);
       await expect(current.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
       await applyShippedSqlToHistoricalTestFixture(current);
       const repo = new SqliteRunRepository(current.db);
@@ -788,8 +791,8 @@ describe('migration 0003 model catalog max effort', () => {
     }
     const current = openDatabase({ url });
     try {
-      // Includes 0013_trigger_configuration after the three historical catalog migrations.
-      expect(await current.pendingMigrations()).toBe(11);
+      // All shipped SQL after the fixture's three historical catalog migrations.
+      expect(await current.pendingMigrations()).toBe(shippedSqlMigrationCount() - 3);
       await expect(current.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
       await applyShippedSqlToHistoricalTestFixture(current);
       expect(await current.pendingMigrations()).toBe(0);

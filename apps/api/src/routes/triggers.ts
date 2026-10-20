@@ -1,3 +1,4 @@
+import { openApiRegistry } from '../openapi-registry.js';
 import { decodeEventCursor, encodeEventCursor } from '../event-cursor.js';
 import {
   WebhookAuthenticationSchema,
@@ -189,7 +190,10 @@ export function registerTriggerRoutes(app: ApiInstance, container: Container): v
         querystring: z.strictObject({
           type: z.string().max(128).optional(),
           before: TimestampSchema.optional(),
-          cursor: z.string().optional(),
+          cursor: z.string().optional().register(openApiRegistry, {
+            description: 'Opaque inbound-event cursor, at most 256 base64url characters.',
+            maxLength: 256,
+          }),
           limit: z.coerce.number().int().min(1).max(500).optional(),
         }),
         response: {

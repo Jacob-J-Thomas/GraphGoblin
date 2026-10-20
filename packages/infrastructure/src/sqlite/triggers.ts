@@ -369,14 +369,6 @@ export class SqliteInboundEvents {
     return (await this.withDelivery([toInboundEvent(row)]))[0];
   }
 
-  /** Newest first, owner-scoped, with deterministic timestamp ties. */
-  async list(
-    ownerId: string,
-    options: { limit?: number; type?: string; before?: string } = {},
-  ): Promise<InboundEventRecord[]> {
-    return this.withDelivery(await this.listRows(ownerId, options, options.limit ?? 100));
-  }
-
   async page(
     ownerId: string,
     options: {
