@@ -106,7 +106,16 @@ describe('script patch boundaries', () => {
       before = engine.manager.getThread(
         ContextThreadSchema.parse(JSON.parse(request.stdin!)).run.id,
       );
-      return { exitCode: 0, stdout: JSON.stringify(patch), stderr: '', timedOut: false };
+      return {
+        exitCode: 0,
+        stdout: JSON.stringify(patch),
+        stderr: '',
+        timedOut: false,
+        stdoutBytes: 0,
+        stderrBytes: 0,
+        stdoutOverflow: false,
+        stderrOverflow: false,
+      };
     });
     const version = engine.publish(
       singleNodeLoop('protected-source', {
@@ -150,6 +159,10 @@ describe('authored handler mutations', () => {
           stdout: JSON.stringify([{ op: 'add', path: '/vars/marker', value: 1 }, operation]),
           stderr: '',
           timedOut: false,
+          stdoutBytes: 0,
+          stderrBytes: 0,
+          stdoutOverflow: false,
+          stderrOverflow: false,
         };
       });
       const version = engine.publish(
@@ -180,6 +193,10 @@ describe('authored handler mutations', () => {
       ]),
       stderr: '',
       timedOut: false,
+      stdoutBytes: 0,
+      stderrBytes: 0,
+      stdoutOverflow: false,
+      stderrOverflow: false,
     }));
     const version = engine.publish(
       singleNodeLoop('permitted-patch', {
