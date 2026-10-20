@@ -1,0 +1,194 @@
+[
+  {
+    "test": "poll-large-admitted",
+    "admissionOrder": [["first", "good-1", "good-2"], []],
+    "rows": [
+      {
+        "id": "01M3Y7RRC82YTDY9M6N5N11CFG",
+        "status": "failed",
+        "dedupe_key": "first",
+        "text_length": 12000
+      },
+      {
+        "id": "01M3Y7RRC88VH59TD7119TG8X4",
+        "status": "waiting",
+        "dedupe_key": "good-1",
+        "text_length": 2
+      },
+      {
+        "id": "01M3Y7RRC8Q9BKPF79XBA4H5VM",
+        "status": "waiting",
+        "dedupe_key": "good-2",
+        "text_length": 2
+      }
+    ]
+  },
+  {
+    "test": "poll-invalid-key",
+    "admissionOrder": [[], []],
+    "rows": [
+      {
+        "id": "01M3Y7S24RS83TZZ2DFCCTGEPS",
+        "status": "waiting",
+        "dedupe_key": "first",
+        "text_length": 5
+      },
+      {
+        "id": "01M3Y7S24RX1X70EM61C9T9KQ6",
+        "status": "waiting",
+        "dedupe_key": "good-1",
+        "text_length": 2
+      },
+      {
+        "id": "01M3Y7S24RQYKKYS8FW4Y4WX4F",
+        "status": "waiting",
+        "dedupe_key": "good-2",
+        "text_length": 2
+      }
+    ]
+  },
+  {
+    "test": "poll-duplicate-key",
+    "admissionOrder": [[], []],
+    "rows": [
+      {
+        "id": "01M3Y7S24RRCX20YMY57WB0FAS",
+        "status": "waiting",
+        "dedupe_key": "first",
+        "text_length": 5
+      },
+      {
+        "id": "01M3Y7S24R3HS4CF4F621VGVA8",
+        "status": "waiting",
+        "dedupe_key": "good-1",
+        "text_length": 2
+      },
+      {
+        "id": "01M3Y7S24R7B9E4R90185P1Z45",
+        "status": "waiting",
+        "dedupe_key": "good-2",
+        "text_length": 2
+      }
+    ]
+  },
+  {
+    "test": "poll-overflow",
+    "admissionOrder": [[], []],
+    "rows": [
+      {
+        "id": "01M3Y7S24R4V08679DP0FR35RW",
+        "status": "waiting",
+        "dedupe_key": "first",
+        "text_length": 5
+      },
+      {
+        "id": "01M3Y7S24RFXH0F2NJNBGE856P",
+        "status": "waiting",
+        "dedupe_key": "good-1",
+        "text_length": 2
+      },
+      {
+        "id": "01M3Y7S24RSE6189Z7C1Q412VQ",
+        "status": "waiting",
+        "dedupe_key": "good-2",
+        "text_length": 2
+      }
+    ]
+  },
+  {
+    "test": "poll-malformed-json",
+    "admissionOrder": [[], []],
+    "rows": [
+      {
+        "id": "01M3Y7S24R4NSMVFA4BE0ERZR1",
+        "status": "waiting",
+        "dedupe_key": "first",
+        "text_length": 5
+      },
+      {
+        "id": "01M3Y7S24R2D6TN0V8P0YWFF5R",
+        "status": "waiting",
+        "dedupe_key": "good-1",
+        "text_length": 2
+      },
+      {
+        "id": "01M3Y7S24R4TTZXQ2PX4TD7T5P",
+        "status": "waiting",
+        "dedupe_key": "good-2",
+        "text_length": 2
+      }
+    ]
+  },
+  {
+    "test": "poll-network-503",
+    "admissionOrder": [[], []],
+    "rows": [
+      {
+        "id": "01M3Y7S24RG4ETGJ9K7K7AN5KT",
+        "status": "waiting",
+        "dedupe_key": "first",
+        "text_length": 5
+      },
+      {
+        "id": "01M3Y7S24RB1KTWYQWWFG98401",
+        "status": "waiting",
+        "dedupe_key": "good-1",
+        "text_length": 2
+      },
+      {
+        "id": "01M3Y7S24RENK1QQ6EHPBSJGXG",
+        "status": "waiting",
+        "dedupe_key": "good-2",
+        "text_length": 2
+      }
+    ]
+  },
+  {
+    "test": "poll-storage-failure",
+    "admissionOrder": [[], []],
+    "rows": [
+      {
+        "id": "01M3Y7S24RQGWJ2RWEQY2N19GT",
+        "status": "waiting",
+        "dedupe_key": "first",
+        "text_length": 5
+      },
+      {
+        "id": "01M3Y7S24RZAETNPC0TSD6MKR8",
+        "status": "waiting",
+        "dedupe_key": "good-1",
+        "text_length": 2
+      },
+      {
+        "id": "01M3Y7S24RTDB4V4XDSM97Q7D4",
+        "status": "waiting",
+        "dedupe_key": "good-2",
+        "text_length": 2
+      }
+    ]
+  },
+  {
+    "test": "poll-cap-order",
+    "admissionOrder": [["first", "good-1"], ["good-2"]],
+    "rows": [
+      {
+        "id": "01M3Y7RRC86CNJCVGJ6TJCYHS0",
+        "status": "waiting",
+        "dedupe_key": "first",
+        "text_length": 2
+      },
+      {
+        "id": "01M3Y7RRC8EB33CZ4Y39YSY0PF",
+        "status": "waiting",
+        "dedupe_key": "good-1",
+        "text_length": 2
+      },
+      {
+        "id": "01M3Y7RX8G6ZXQMFT6DK1BZ3W0",
+        "status": "waiting",
+        "dedupe_key": "good-2",
+        "text_length": 2
+      }
+    ]
+  }
+]

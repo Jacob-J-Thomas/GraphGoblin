@@ -1,4 +1,5 @@
-import { JsonValueSchema, type JsonValue } from '@graphgoblin/contracts';
+import type { JsonValue } from '@graphgoblin/contracts';
+import { isJsonValue } from '@graphgoblin/domain';
 import {
   PROBE_MAX_BODY_BYTES,
   type ProbeResponse,
@@ -20,9 +21,8 @@ function json(text: string): JsonValue {
   } catch {
     throw new PollProbeError('POLL_JSON_INVALID');
   }
-  const parsed = JsonValueSchema.safeParse(value);
-  if (!parsed.success) throw new PollProbeError('POLL_JSON_INVALID');
-  return parsed.data;
+  if (!isJsonValue(value)) throw new PollProbeError('POLL_JSON_INVALID');
+  return value;
 }
 /** Only new items-mode polls select these stricter rules; legacy text/exit-code probes stay intact. */
 export function itemsScriptProbe(result: ScriptRunResult): JsonValue {
@@ -45,9 +45,8 @@ export function itemsHttpProbe(response: ProbeResponse): JsonValue {
   let value: JsonValue;
   if (response.json === undefined) value = json(response.body);
   else {
-    const parsed = JsonValueSchema.safeParse(response.json);
-    if (!parsed.success) throw new PollProbeError('POLL_JSON_INVALID');
-    value = parsed.data;
+    if (!isJsonValue(response.json)) throw new PollProbeError('POLL_JSON_INVALID');
+    value = response.json;
   }
   return {
     status: response.status,
