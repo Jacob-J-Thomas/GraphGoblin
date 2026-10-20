@@ -120,18 +120,9 @@ async function outputMapping(
   if (output.resultTo.lastOutput)
     patch.push(...outputPatch(parent, ctx.node.id, summary, ctx.services.now()));
 
-  // Variables are merged into one replacement so the result variable and the merge strategy compose.
+  // Variables are merged into one replacement so the merge strategy and the result variable compose.
   let vars: Record<string, JsonValue> = { ...parent.vars };
   let varsChanged = false;
-  const resultVar = output.resultTo.var;
-  if (resultVar && child.result !== undefined) {
-    vars[resultVar] = child.result;
-    varsChanged = true;
-  } else if (resultVar && Object.hasOwn(vars, resultVar)) {
-    // No output this visit: the variable no longer holds a result (an earlier visit's, say).
-    vars = Object.fromEntries(Object.entries(vars).filter(([name]) => name !== resultVar));
-    varsChanged = true;
-  }
 
   if (output.mode === 'merge' && child.thread) {
     const childThread = child.thread;
@@ -160,6 +151,17 @@ async function outputMapping(
     );
     for (const artifact of artifacts)
       patch.push({ op: 'add', path: '/artifacts/-', value: toJson(artifact) });
+  }
+  // The result variable is applied after any merge, so it holds exactly what the child returned:
+  // a merged variable of the same name (the child's inherited copy, say) never overrides it.
+  const resultVar = output.resultTo.var;
+  if (resultVar && child.result !== undefined) {
+    vars[resultVar] = child.result;
+    varsChanged = true;
+  } else if (resultVar && Object.hasOwn(vars, resultVar)) {
+    // No output: the variable no longer holds a result (an earlier visit's, or a merged copy).
+    vars = Object.fromEntries(Object.entries(vars).filter(([name]) => name !== resultVar));
+    varsChanged = true;
   }
   if (varsChanged) patch.push({ op: 'replace', path: '/vars', value: toJson(vars) });
 

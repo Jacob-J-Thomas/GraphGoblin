@@ -252,6 +252,71 @@ describe('child results (#242)', () => {
     expect((await e.manager.getThread(parent.id))?.vars).toHaveProperty('got', null);
   });
 
+  describe.each(['parent-wins', 'child-wins'] as const)(
+    'with a %s variable merge, the result variable holds only what the child returned',
+    (strategy) => {
+      /** start -> prep (`vars.answer` = "old result", inherited by the child) -> sub -> done. */
+      function merging(name: string, childLoopId: string): LoopDefinitionInput {
+        return {
+          schemaVersion: CURRENT_DEFINITION_FORMAT,
+          name,
+          nodes: [
+            { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
+            {
+              id: 'prep',
+              kind: 'mutate',
+              label: 'Prep',
+              config: {
+                operations: [
+                  {
+                    op: 'set',
+                    path: '/vars/answer',
+                    value: { kind: 'literal', value: 'old result' },
+                  },
+                ],
+              },
+            },
+            subNode(childLoopId, {
+              output: { mode: 'merge', resultTo: { var: 'answer' }, vars: { strategy } },
+            }),
+            {
+              id: 'done',
+              kind: 'exit',
+              label: 'Done',
+              config: {
+                returns: '{ "has": $exists(vars.answer), "answer": vars.answer, "x": vars.x }',
+              },
+            },
+          ],
+          edges: [
+            { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'prep' } },
+            { id: 'e2', from: { node: 'prep', port: 'out' }, to: { node: 'sub' } },
+            { id: 'e3', from: { node: 'sub', port: 'out' }, to: { node: 'done' } },
+          ],
+        };
+      }
+      const run = async (returns: string) => {
+        const e = await createTestEngine({ maxConcurrentRuns: 2 });
+        const child = e.publish(returning(`merge-${strategy}-${returns}`, returns));
+        const parent = e.publish(merging(`merge-parent-${strategy}-${returns}`, child.loopId));
+        return (await e.runToIdle(parent.loopId)).result as Record<string, unknown>;
+      };
+
+      it('no output: the inherited stale value is not restored by the merge', async () => {
+        // The child's own variables still merge (`x` comes from the child either way).
+        expect(await run('none')).toEqual({ has: false, x: 1 });
+      });
+
+      it('JSON null: the variable holds null', async () => {
+        expect(await run('null')).toEqual({ has: true, answer: null, x: 1 });
+      });
+
+      it('data: the variable holds the returned data, not the merged stale value', async () => {
+        expect(await run('{ "n": 1 }')).toEqual({ has: true, answer: { n: 1 }, x: 1 });
+      });
+    },
+  );
+
   it('a later visit without output removes the result an earlier visit stored, and a custom mapping sees no result', async () => {
     const e = await createTestEngine({ maxConcurrentRuns: 2 });
     // The child returns data on its first call and nothing on its second.

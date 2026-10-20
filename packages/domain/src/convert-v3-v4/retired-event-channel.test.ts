@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { V3LoopDefinitionSchema } from '@graphgoblin/contracts';
 import { convertDefinitionV3ToV4 } from './index.js';
 
-describe('retired exit-to-Event chaining (#242, ADR-0042)', () => {
+describe('retired exit-to-Event chaining (#242, ADR-0044)', () => {
   it('refuses an old exit that publishes an Event, naming the destination', async () => {
     const result = await convertDefinitionV3ToV4(
       V3LoopDefinitionSchema.parse({

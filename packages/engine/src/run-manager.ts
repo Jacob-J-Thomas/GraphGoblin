@@ -64,6 +64,7 @@ import type { EngineSettings, EnginePorts, EventDraft, RunRecordChanges } from '
 import { createInitialThread, type InitialThreadInput } from './thread.js';
 import { bindClassifiers, freezeDraft, pinnedFields } from './definition-pin.js';
 import { boundedFailure } from './event-validation.js';
+import { assertCurrentDefinition, definitionUpgradeRequired } from './stored-definition.js';
 
 /** API-facing errors: bad requests against the run manager, never engine bugs. */
 export class EngineRequestError extends Error {
@@ -887,6 +888,7 @@ export class RunManager {
         `node ${input.nodeId} is not in loop version ${source.versionId}`,
       );
     }
+    assertCurrentDefinition(version);
     const initial = await this.ports.runs.getInitialThread(source.id);
     if (!initial) {
       throw new EngineRequestError('INVALID_STATE', `run ${source.id} has no initial thread`);
@@ -1352,6 +1354,13 @@ export class RunManager {
         message: `loop version ${run.versionId} not found`,
         resumable: false,
       });
+      return;
+    }
+    // A run admitted before ADR-0044 can be pinned to a definition whose exit publishes an Event:
+    // fail it explicitly before any node runs, instead of running to an exit it cannot deliver.
+    const refused = definitionUpgradeRequired(version);
+    if (refused) {
+      await this.failRun(runId, refused.toFailure());
       return;
     }
     const def = version.definition;
@@ -2152,6 +2161,8 @@ export class RunManager {
     if (version.status !== 'published' && !input.allowDraft) {
       throw new EngineRequestError('VERSION_NOT_PUBLISHED', `version ${version.id} is a draft`);
     }
+    // A definition stored before ADR-0044 can still publish an Event: refuse it at admission.
+    assertCurrentDefinition(version);
     return version;
   }
 

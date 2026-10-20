@@ -389,6 +389,20 @@ listed in the version history. Starting a snapshot directly answers 409 `VERSION
 `label` and `name` are those of the pinned definition, so renaming or editing the loop later does
 not change them. MCP compact runs (`list_runs`, control tools) include `definition`, the label.
 
+**Stored definitions that predate ADR-0044 (#242).** A version, draft or draft-run snapshot saved
+before exits stopped publishing Events can still hold an exit destination `{ kind: "event" }`.
+It is refused before it is served or run, never dropped silently: `GET /loops/{id}`,
+`GET /loops/{id}/versions`, `GET /loops/{id}/versions/{versionId}`, `GET /loops/{id}/export`,
+`POST /loops/{id}/publish`, `POST /loops/{id}/runs` and `POST /runs/{id}/replay` answer 409
+`LOOP_UPGRADE_REQUIRED` with the extension members `loopId`, `versionId`, `version` and `paths`
+(JSON Pointers to each such destination); the `detail` explains the repair. A run already pinned
+to such a definition fails before its next node with `failure.code` `LOOP_UPGRADE_REQUIRED`
+(`resumable: false`, the same identity in `details`), and a parent whose subloop would start or
+awaits such a loop fails with it at its subloop node. Repair: replace the destination with a
+Subloop call and publish; versions and snapshots that still hold one stay refused, so delete the
+loop once its runs are terminal (`DELETE /loops/{id}` still works), remove the destination from
+the stored JSON by hand with GraphGoblin stopped, or reset the store.
+
 Run-list items and `GET /runs/{id}` return the canonical `RunRecord`, without
 `templateSubject` or a template-store lookup. Regenerate strict clients for these
 response and query changes. Existing template runtime subjects remain internal
