@@ -188,12 +188,65 @@ The [round-3 report](round-3.md) records the classification, wording, regression
 
 ### Owner QA (disposable instance, no turns)
 
-1. Build using Node 22. Use a new data directory and an unused port in 5624-5629; never use the owner app at 4747/4748 or its store. Point GG_WEB_DIST at this worktree's built web output. Use a separate PowerShell terminal for all environment overrides.
-2. Native fake CLIs: run `powershell.exe -NoProfile -ExecutionPolicy Bypass -File tooling/scripts/readiness-fake-cli.ps1 -Directory <new-empty-directory> -Harness claude` and again for codex in a different directory. **Windows PowerShell 5.1 only.** Execution-policy bypass is process-local. Prepend both directories to PATH and set GG_CLAUDE_BINARY=claude.exe and GG_CODEX_BINARY=codex.exe explicitly; PATH alone does not override normal installed/bundled defaults.
-3. Start the built disposable API and open Settings. Change each fake's scenario.txt, then choose **Retry preflight** in the Harness preflight card (it is disabled while a check runs, and "Rechecking…" appears beside it while the previous result stays on screen). Expected badge label and `data-state` per scenario: ready -> Ready (`ready`); old/missing-model/missing-effort -> CLI update needed (`cli-incompatible`), with one problem naming the version or the missing option; hang -> the previous result with "Rechecking…" until the command deadline and bounded shutdown confirmation finish, then Unknown (`unknown`); auth -> Sign-in needed (`auth`), problem "Claude is not signed in. Run claude auth login, then retry preflight." (Codex: "Codex sign-in is missing or invalid. Run codex login, then retry preflight."); quota -> Usage limit (`quota`); transport -> Connection failed (`transport`); unknown -> Unknown. For cli-missing (CLI not found), configure a nonexistent binary. For the hanging Claude auth-status scenario, allow the 15-second command deadline plus up to 5 seconds of bounded shutdown confirmation (20 seconds for that command); earlier version/help commands add their own elapsed time. Codex has a 15-second per-command deadline and returns its timeout without a separate shutdown-confirmation wait. Transport detail is "Claude reported a connection or provider service error." (or Codex), followed by the existing network/service-status action. Every problem is one detail sentence and one action, with no repeated sentence and Claude/Codex capitalised. The Claude auth fixture must print signed-out JSON on stdout, exit 1, empty stderr. No fixture accepts turns.
+1. From this worktree, use a separate **Windows PowerShell 5.1** terminal for all three blocks below. Select Node 22, build, and create a new directory under `%TEMP%` for this instance's data and fake CLIs. Never use the owner app at 4747/4748 or its store.
+
+   ```powershell
+   $env:PATH = "$env:APPDATA\nvm\v22.14.0;$env:PATH"
+   node --version
+   pnpm.cmd build
+   if ($LASTEXITCODE -ne 0) { throw 'Build failed; do not start the API.' }
+   $qaTemp = (Resolve-Path $env:TEMP).Path
+   $qaRoot = Join-Path $qaTemp ("gg-wp-f1-owner-" + [guid]::NewGuid().ToString('N'))
+   New-Item -ItemType Directory -Path $qaRoot | Out-Null
+   $claudeFake = Join-Path $qaRoot 'claude'
+   $codexFake = Join-Path $qaRoot 'codex'
+   Write-Output $qaRoot
+   ```
+
+2. Compile both native fake CLIs in that same terminal. The builder is **Windows PowerShell 5.1 only** (`powershell.exe`, not `pwsh`); execution-policy bypass is process-local. Each fake starts in the `ready` scenario and refuses turns.
+
+   ```powershell
+   powershell.exe -NoProfile -ExecutionPolicy Bypass -File tooling/scripts/readiness-fake-cli.ps1 -Directory $claudeFake -Harness claude
+   if ($LASTEXITCODE -ne 0) { throw 'Claude fixture build failed.' }
+   powershell.exe -NoProfile -ExecutionPolicy Bypass -File tooling/scripts/readiness-fake-cli.ps1 -Directory $codexFake -Harness codex
+   if ($LASTEXITCODE -ne 0) { throw 'Codex fixture build failed.' }
+   ```
+
+3. Start the built API in the same terminal, using an unused port in **5624-5629** (the block selects 5624). Both binary overrides point directly at the fakes; PATH alone does not override normal installed/bundled defaults. The API generates a new master key in this disposable data directory; no existing key or database is used. Keep the printed paths for changing scenarios from another terminal or a text editor while this foreground server runs.
+
+   ```powershell
+   $env:GG_DATA_DIR = Join-Path $qaRoot 'store'
+   $env:GG_PORT = '5624'
+   $env:GG_HOST = '127.0.0.1'
+   $env:GG_WEB_DIST = (Resolve-Path 'apps/web/dist').Path
+   $env:GG_REQUIRE_API_KEY = 'false'
+   Remove-Item Env:GG_DB_URL, Env:GG_MASTER_KEY, Env:GG_JEV_API_KEY -ErrorAction SilentlyContinue
+   $env:GG_CLAUDE_BINARY = Join-Path $claudeFake 'claude.exe'
+   $env:GG_CODEX_BINARY = Join-Path $codexFake 'codex.exe'
+   $env:PATH = "$claudeFake;$codexFake;$env:PATH"
+   Write-Output (Join-Path $claudeFake 'scenario.txt')
+   Write-Output (Join-Path $codexFake 'scenario.txt')
+   Write-Output "http://127.0.0.1:$env:GG_PORT/app/settings"
+   node apps/api/dist/main.js
+   ```
+
+   Open the printed Settings URL. Change each fake's scenario.txt, then choose **Retry preflight** in the Harness preflight card (it is disabled while a check runs, and "Rechecking…" appears beside it while the previous result stays on screen). Expected badge label and `data-state` per scenario: ready -> Ready (`ready`); old/missing-model/missing-effort -> CLI update needed (`cli-incompatible`), with one problem naming the version or the missing option; hang -> the previous result with "Rechecking…" until the command deadline and bounded shutdown confirmation finish, then Unknown (`unknown`); auth -> Sign-in needed (`auth`), problem "Claude is not signed in. Run claude auth login, then retry preflight." (Codex: "Codex sign-in is missing or invalid. Run codex login, then retry preflight."); quota -> Usage limit (`quota`); transport -> Connection failed (`transport`); unknown -> Unknown. For cli-missing (CLI not found), configure a nonexistent binary. For the hanging Claude auth-status scenario, allow the 15-second command deadline plus up to 5 seconds of bounded shutdown confirmation (20 seconds for that command); earlier version/help commands add their own elapsed time. Codex has a 15-second per-command deadline and returns its timeout without a separate shutdown-confirmation wait. Transport detail is "Claude reported a connection or provider service error." (or Codex), followed by the existing network/service-status action. Every problem is one detail sentence and one action, with no repeated sentence and Claude/Codex capitalised. The Claude auth fixture must print signed-out JSON on stdout, exit 1, empty stderr. No fixture accepts turns.
+
 4. For a real signed-out scenario, first retain the real installed claude.exe path while the original USERPROFILE is still set. In another disposable API terminal set USERPROFILE and HOME to a new empty profile directory, CODEX_HOME to a separate empty directory, GG_CLAUDE_BINARY to the real executable, and clear any fake GG_CODEX_BINARY override so the SDK CLI is used. Set a fresh GG_DATA_DIR and a free 5624-5629 port. Do not copy/export credentials. Open Settings and inspect GET /harness/preflight: expect auth for each inaccessible login, with authenticated false only when signed-out status is established. Claude's command is auth status --json, never a prompt or turn. Ordinary installed probes should show ready when that API user has login.
 5. Time a Codex draft save: with the fake scenario hang or with the ordinary installed Codex, create a disposable Codex loop and edit a prompt. Measure PUT /loops/:id/draft in the browser network panel or an HTTP stopwatch; it should not wait for a CLI. For probe-count checks, close GraphGoblin pages and issue the draft requests over HTTP; independent editor/focus preflight requests would otherwise add their own probes. Count new --version entries in the fake's probes.log: create/import/save/template create add zero. Run POST /loops/:id/validate and inspect one probe per referenced harness, even for multiple nodes. The next validation must see a changed scenario. Mixed harnesses begin concurrently. Do not start a real model run.
 6. With ready fixtures, disable a model in Settings: saves retain MODEL_DISABLED without probing; validation/publication reports it. Re-enable afterward. Validate a copied definition with model removed-model: MODEL_NOT_IN_CATALOG. Actual supported harness-row deletion is prohibited by the public API and retirement remains out of scope.
 7. Inspect /system/preflight and /harness/preflight for cause/state versus severity; preserve authored model and effort during auth/quota/transport failures. Use **Retry preflight** (Settings) or **Retry Claude preflight** / **Retry Codex preflight** (node editor) for a new check.
 8. Focus refetch: with both fakes on ready, open a loop with a Claude inference node whose model is set, and open the node. Expand **Advanced** before inspecting **Model**. Set the Claude fake to hang, switch to another window for a few seconds and back (the browser refetches readiness on focus after two seconds). While that check is pending, the Model field must stay editable with the same option label, without "Checking…", "(saved)" or a Retry button. After the 15-second command deadline plus up to 5 seconds of shutdown confirmation (20 seconds for this hanging Claude auth-status command), the result becomes Unknown and only then does the field turn read-only with a Retry Claude preflight button. Do the same with the Codex fake on auth: the Codex field shows "Codex sign-in is missing or invalid. Run codex login, then retry preflight." with Retry Codex preflight, and that existing Codex failure note stays visible while Retry rechecks it. No new failure note appears during the first check, or while a previously ready Codex result is being rechecked.
-9. Settings, Defaults: save a Claude default while Claude is ready, then set the Claude fake to auth and retry preflight. The option reads "<name> (saved)" and the one line under the fields reads "Claude readiness: Sign-in needed. See Harness preflight below."; the Codex section shows the same kind of line when only Codex fails. Catalog rows of the failing harness read "Enabled in catalog." then "<Harness> readiness: <label>." Stop only the disposable API afterward.
+9. Settings, Defaults: save a Claude default while Claude is ready, then set the Claude fake to auth and retry preflight. The option reads "<name> (saved)" and the one line under the fields reads "Claude readiness: Sign-in needed. See Harness preflight below."; the Codex section shows the same kind of line when only Codex fails. Catalog rows of the failing harness read "Enabled in catalog." then "<Harness> readiness: <label>."
+
+When finished, press **Ctrl+C** in the server terminal and wait for that disposable API to exit.
+In that same terminal, verify and remove only the new QA directory, including its store and fakes:
+
+```powershell
+$qaRoot = (Resolve-Path -LiteralPath $qaRoot).Path
+if ((Split-Path -Parent $qaRoot) -ne $qaTemp -or
+    (Split-Path -Leaf $qaRoot) -notlike 'gg-wp-f1-owner-*') {
+  throw 'Cleanup target is not the disposable WP-F1 directory.'
+}
+Remove-Item -LiteralPath $qaRoot -Recurse -Force
+```

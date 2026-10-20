@@ -1,0 +1,83 @@
+
+ RUN  v5.0.3 <worktree>/apps/api
+
+ ✓ src/triggers/poll-items.test.ts > bounded poll item admission > does no lookup or admission for entirely depth-refused items and does not count them toward the cap 9ms
+ ✓ src/triggers/poll-items.test.ts > bounded poll item admission > validates every key before the single lookup and admits unseen candidates sequentially up to the default cap 3ms
+ ✓ src/triggers/poll-items.test.ts > bounded poll item admission > does no I/O for an empty set or any invalid key beyond the dispatch cap 3ms
+ ✓ src/triggers/poll-items.test.ts > bounded poll item admission > stops at the first admission failure while preserving prior runs and leaves the tail for a later poll 1ms
+ ✓ src/triggers/poll-items.test.ts > bounded poll item admission > does not consume the dispatch cap for an atomic key reservation found after lookup 0ms
+ ✓ src/triggers/poll-items.test.ts > bounded poll item admission > reports safe lookup failure without starting a run and skips fully seen sets 2ms
+ ✓ src/triggers/poll-probe.test.ts > items-only strict probe admission > passes deeply nested valid probe JSON to candidate classification without a stack overflow 39ms
+ ✓ src/triggers/poll-probe.test.ts > items-only strict probe admission > accepts complete JSON without persisting process diagnostics 1ms
+ ✓ src/triggers/poll-probe.test.ts > items-only strict probe admission > rejects failures, timeouts, overflows and invalid JSON with fixed codes 2ms
+ ✓ src/triggers/poll-probe.test.ts > items-only strict probe admission > accepts script stdout at the exact raw-byte cap 1ms
+ ✓ src/triggers/poll-probe.test.ts > items-only strict probe admission > rejects 65,537 raw stdout bytes even when the overflow flag is false 0ms
+ ✓ src/triggers/poll-probe.test.ts > items-only strict probe admission > accepts provided or parsed HTTP JSON and rejects bad statuses or non-JSON responses 1ms
+ ✓ src/triggers/poll-depth.test.ts > structurally refused poll candidates over HTTP and real SQLite > admits both later candidates when the first has 1100 nested arrays 735ms
+ × src/triggers/poll-depth.test.ts > structurally refused poll candidates over HTTP and real SQLite > admits both later candidates when the first has 3000 nested arrays 20018ms
+   → Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ✓ src/triggers/poll-depth.test.ts > structurally refused poll candidates over HTTP and real SQLite > admits the SQLite boundary and refuses the next depth without blocking the tail 249ms
+ ✓ src/triggers/poll-depth.test.ts > structurally refused poll candidates over HTTP and real SQLite > keeps middle refusals unconsumed and successful keys deduplicated across store reopen 352ms
+pnpm.cmd : 
+At line:2 char:73
++ ...  $env:PATH; pnpm.cmd --filter @graphgoblin/api exec vitest run src/tr ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/triggers/poll-depth.test.ts > structurally refused poll candidates over HTTP and real SQLite > admits both 
+later candidates when the first has 3000 nested arrays
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/triggers/poll-depth.test.ts:74:24
+     72|
+     73| describe('structurally refused poll candidates over HTTP and real SQLi…
+     74|   it.each([1100, 3000])('admits both later candidates when the first h…
+       |                        ^
+     75|     const { t } = await setup();
+     76|     candidates = [deep(depth), { key: 's-a' }, { key: 's-b' }];
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+RangeError: Maximum call stack size exceeded
+ ❯ Server.<anonymous> src/triggers/poll-depth.test.ts:38:18
+     36|   source = createServer((_req, res) => {
+     37|     res.writeHead(200, { 'content-type': 'application/json' });
+     38|     res.end(JSON.stringify(candidates));
+       |                  ^
+     39|   });
+     40|   await new Promise<void>((resolve, reject) => {
+ ❯ Server.emit node:events:518:28
+ ❯ parserOnIncoming node:_http_server:1153:12
+ ❯ HTTPParser.parserOnHeadersComplete node:_http_common:117:17
+
+This error originated in "src/triggers/poll-depth.test.ts" test file. It doesn't mean the error was thrown inside the 
+file itself, but while it was running.
+The last test to run before this error was "admits both later candidates when the first has 3000 nested arrays". This 
+means either:
+- the error was thrown while Vitest was running this test, or
+- the error was thrown after the test completed, and this was the most recent test at that point.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 15 passed (16)
+     Errors  1 error
+   Start at  23:57:11
+   Duration  27.52s (tests 66%, import 20%, transform 13%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ \Users\<local>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c3-wake-
+  │ poll-research\apps\api
+
