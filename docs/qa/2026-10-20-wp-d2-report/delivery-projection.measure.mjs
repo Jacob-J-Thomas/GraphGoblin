@@ -1,4 +1,4 @@
-// File-backed, repeatable projection benchmark (#246). Build before running.
+// Archived file-backed projection benchmark (#246). Build first; see README.md for API scope.
 import assert from 'node:assert/strict';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';

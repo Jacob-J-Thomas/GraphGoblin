@@ -11,5 +11,4 @@ export * from './handler.js';
 export * from './handlers/index.js';
 export * from './run-manager.js';
 export * from './admission.js';
-export { WEBHOOK_TIMEOUT_MS } from './webhook-returns.js';
 export { validateGeneratedEvent } from './event-validation.js';

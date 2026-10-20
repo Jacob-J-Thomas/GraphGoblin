@@ -2,7 +2,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { DeliveryError, WebhookDelivery } from '@graphgoblin/contracts';
 import { createTestEngine, singleNodeLoop } from './testing/scenario.js';
 import { WebhookReturns, webhookStates } from './webhook-returns.js';
-import { InMemoryEventStore } from './testing/fakes.js';
+import { InMemoryEventStore, InMemoryRunRepository } from './testing/fakes.js';
+import type { EventStorePort } from './ports.js';
 
 const transient: DeliveryError = {
   code: 'http',
@@ -259,4 +260,164 @@ it('reports persistence failure distinctly, sends nothing, and leaves recovery p
   expect(webhookStates(engine.events(run.id))).toMatchObject([
     { status: 'delivered', attempts: 1 },
   ]);
+});
+
+async function boundaryFixture() {
+  const engine = await createTestEngine();
+  const version = engine.publish(singleNodeLoop('delivery boundary', work));
+  const run = await engine.runToIdle(version.loopId);
+  engine.manager.stop();
+  const state: WebhookDelivery = {
+    id: 'boundary-delivery',
+    channel: { kind: 'webhook', url: 'https://example.test', secretRef: 'token' },
+    status: 'pending',
+    attempts: 0,
+    maxAttempts: 5,
+    inFlight: false,
+    acknowledgement: 'not_sent',
+    effectMayHaveHappened: false,
+  };
+  return { engine, run, state };
+}
+
+it.each(['after append', 'during secret resolution'])(
+  'retains an unsent durable attempt conservatively when stop lands %s',
+  async (phase) => {
+    const { engine, run, state } = await boundaryFixture();
+    vi.useFakeTimers();
+    await engine.ports.events.append(run.id, [{ type: 'delivery.queued', delivery: state }]);
+    const component: WebhookReturns = new WebhookReturns({
+      ...engine.ports,
+      secrets: {
+        resolve: () => {
+          expect(webhookStates(engine.events(run.id))).toMatchObject([
+            { attempts: 1, inFlight: true },
+          ]);
+          if (phase === 'during secret resolution') component.stop();
+          return Promise.resolve('secret');
+        },
+      },
+    });
+    const unsubscribe = engine.ports.events.subscribe(run.id, (event) => {
+      if (phase === 'after append' && event.type === 'delivery.attempted') component.stop();
+    });
+    let completions = 0;
+    const finished = () => {
+      completions++;
+      return Promise.resolve();
+    };
+    component.start(run.id, state, {}, finished);
+    await component.waitForIdle();
+    unsubscribe();
+    const interrupted = webhookStates(engine.events(run.id))[0]!;
+    expect(interrupted).toMatchObject({
+      id: state.id,
+      status: 'pending',
+      attempts: 1,
+      inFlight: true,
+      acknowledgement: 'unknown',
+      effectMayHaveHappened: true,
+    });
+    expect(interrupted.nextAttemptAt).toBe(
+      new Date(engine.ports.clock.now().getTime() + 12000).toISOString(),
+    );
+    expect(engine.ports.delivery.webhooks).toHaveLength(0);
+    expect(completions).toBe(0);
+    component.start(run.id, interrupted, {}, finished);
+    await component.waitForIdle();
+    expect(webhookStates(engine.events(run.id))).toEqual([interrupted]);
+
+    const recovered = new WebhookReturns({
+      ...engine.ports,
+      secrets: { resolve: () => Promise.resolve('secret') },
+    });
+    recovered.start(run.id, interrupted, {}, finished);
+    await vi.advanceTimersByTimeAsync(12000);
+    await recovered.waitForIdle();
+    expect(completions).toBe(1);
+    expect(engine.ports.delivery.webhooks).toMatchObject([{ deliveryId: state.id }]);
+    expect(webhookStates(engine.events(run.id))).toMatchObject([
+      {
+        id: state.id,
+        status: 'delivered',
+        attempts: 2,
+        inFlight: false,
+        effectMayHaveHappened: true,
+        lastError: { code: 'interrupted', acknowledgement: 'unknown' },
+      },
+    ]);
+    expect(
+      engine.events(run.id).filter((event) => event.type === 'delivery.attempted'),
+    ).toHaveLength(2);
+  },
+);
+
+it.each([
+  'before attempt',
+  'during recovery',
+  'during secret resolution',
+  'during response',
+  'at journal append',
+])('stops a deleted run without further sends or journal writes (%s)', async (phase) => {
+  const { engine, run, state } = await boundaryFixture();
+  // Model a repository whose public get observes deletion; no private fake state is accessed.
+  const runs = new (class extends InMemoryRunRepository {
+    deleted = false;
+    override get(id: string) {
+      return this.deleted ? Promise.resolve(undefined) : super.get(id);
+    }
+  })();
+  const thread = await engine.ports.runs.getInitialThread(run.id);
+  expect(thread).toBeDefined();
+  await runs.create(run, thread!);
+  const events = new InMemoryEventStore(engine.ports.clock, runs);
+  const initial = phase === 'during recovery' ? { ...state, attempts: 1, inFlight: true } : state;
+  await events.append(run.id, [
+    { type: initial.inFlight ? 'delivery.attempted' : 'delivery.queued', delivery: initial },
+  ]);
+  let journalAtDeletion = events.all(run.id);
+  const remove = () => {
+    journalAtDeletion = events.all(run.id);
+    runs.deleted = true;
+  };
+  const journal: EventStorePort = {
+    append: (id, drafts, options) => {
+      if (phase === 'at journal append') remove();
+      return events.append(id, drafts, options);
+    },
+    read: (id, after, limit) => events.read(id, after, limit),
+    subscribe: (id, listener) => events.subscribe(id, listener),
+  };
+  const component = new WebhookReturns({
+    ...engine.ports,
+    runs,
+    events: journal,
+    secrets: {
+      resolve: () => {
+        if (phase === 'during secret resolution') remove();
+        return Promise.resolve('secret');
+      },
+    },
+  });
+  engine.ports.delivery.responder = () => {
+    remove();
+    return { ok: false, error: transient };
+  };
+  if (phase === 'before attempt' || phase === 'during recovery') remove();
+  let completions = 0;
+  component.start(run.id, initial, {}, () => {
+    completions++;
+    return Promise.resolve();
+  });
+  await component.waitForIdle();
+  expect(engine.ports.delivery.webhooks).toHaveLength(phase === 'during response' ? 1 : 0);
+  expect(events.all(run.id)).toEqual(journalAtDeletion);
+  expect(completions).toBe(0);
+  expect(engine.ports.logger.lines).toContainEqual(
+    expect.objectContaining({
+      level: 'info',
+      msg: 'webhook delivery stopped: run deleted',
+    }),
+  );
+  expect(engine.ports.logger.lines.filter((line) => line.level === 'error')).toEqual([]);
 });

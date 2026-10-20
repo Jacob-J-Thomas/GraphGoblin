@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { afterEach, beforeEach, expect, it } from 'vitest';
 import type { RunRecord, WebhookDelivery } from '@graphgoblin/contracts';
-import { LoopDefinitionSchema, WEBHOOK_DELIVERY_POLICY } from '@graphgoblin/contracts';
+import { LoopDefinitionSchema } from '@graphgoblin/contracts';
 import { FIXTURE_TS, fakeUlid, samplePin, sampleThread } from '@graphgoblin/contracts/testing';
 import { FakeClock } from '@graphgoblin/engine/testing';
 import { drizzle } from 'drizzle-orm/libsql';
@@ -44,14 +44,13 @@ beforeEach(async () => {
 });
 afterEach(() => handle.close());
 
-it('freezes the named retry budget in migration 0015', async () => {
+it('freezes the historical import budget in migration 0015', async () => {
   const migration = await readFile(
     new URL('../../drizzle/0015_webhook_delivery_journal.sql', import.meta.url),
     'utf8',
   );
-  expect(migration).toContain(
-    `'attempts', 1, 'maxAttempts', ${WEBHOOK_DELIVERY_POLICY.maxAttempts},`,
-  );
+  // #246 fixed the historical import budget at five; runtime policy changes must not rewrite it.
+  expect(migration).toContain("'attempts', 1, 'maxAttempts', 5,");
 });
 
 it.each([

@@ -37,8 +37,9 @@ run-existence check also closes the read/delete/append race; no orphan journal r
 
 These implementation parameters passed independent review. Five attempts maximum, each
 with a 10-second request-and-acknowledgement deadline. `WEBHOOK_DELIVERY_POLICY` is the named
-source for the contract, worker and HTTP adapter; `pnpm generate:webhook-policy` freezes its
-retry budget in migration 0015, checked by a migration conformance test.
+source for the contract, worker and HTTP adapter. Migration 0015 permanently fixes the
+historical import budget at five; a literal assertion protects it independently of runtime
+policy changes. Shipped migrations must not be regenerated or rewritten when policy changes.
 After failures 1-4, wait 2, 5, 10 and 20 seconds respectively. Nominal uninterrupted bound:
 87 seconds plus local scheduling/storage overhead. Fixed delays make the single-process local
 schedule reproducible; jitter is unnecessary at this scale. Downtime can extend elapsed time,

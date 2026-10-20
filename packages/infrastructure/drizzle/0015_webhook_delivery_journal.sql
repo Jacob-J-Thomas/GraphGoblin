@@ -22,7 +22,6 @@ WHERE type IN ('return.delivered', 'return.failed')
 --> statement-breakpoint
 -- Allocate identities once for old unfinalized terminal runs that have not recorded a return.
 -- The old first attempt may have happened: conservatively consume it as unknown, never not_sent.
--- Policy value generated from WEBHOOK_DELIVERY_POLICY by pnpm generate:webhook-policy.
 WITH finished AS (
   SELECT r.id, r.initial_thread, v.definition, COALESCE(r.finished_at, r.created_at) AS ts,
     (SELECT node_id FROM run_events WHERE run_id = r.id AND type = 'exit.evaluated' ORDER BY seq DESC LIMIT 1) AS exit_id

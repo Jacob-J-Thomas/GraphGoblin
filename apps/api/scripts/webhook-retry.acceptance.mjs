@@ -12,7 +12,7 @@ import process from 'node:process';
 import console from 'node:console';
 import { Buffer } from 'node:buffer';
 const { fetch, AbortSignal } = globalThis;
-const dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-d2-'));
+const dataDir = await mkdtemp(join(tmpdir(), 'gg-webhook-retry-'));
 let base;
 const received = [];
 let child;
@@ -304,6 +304,6 @@ try {
   receiver.closeAllConnections();
   await new Promise((ok) => receiver.close(ok));
   assert.equal(dirname(dataDir), resolve(tmpdir()));
-  assert.ok(basename(dataDir).startsWith('gg-wp-d2-'));
+  assert.ok(basename(dataDir).startsWith('gg-webhook-retry-'));
   await rm(dataDir, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
 }
