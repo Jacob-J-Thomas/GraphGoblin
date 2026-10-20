@@ -1,5 +1,6 @@
 import { createJevDecider, DEFAULT_BASE_URL, DEFAULT_MODEL } from '@graphgoblin/adapter-jev';
 import type {
+  ClassifierBinding,
   ClassifierModelEntry,
   ClassifierModelSummary,
   ClassifierPrimitive,
@@ -26,6 +27,17 @@ export const BUILTIN_CLASSIFIER: ClassifierModelEntry = {
   enabled: true,
 };
 
+/** The part of a catalog entry a run pins: what it calls, not whether it may call it now. */
+export function bindingOf(entry: ClassifierModelEntry): ClassifierBinding {
+  return {
+    provider: entry.provider,
+    providerModel: entry.providerModel,
+    primitives: [...entry.primitives],
+    endpoint: entry.endpoint,
+    ...(entry.secretRef !== undefined ? { secretRef: entry.secretRef } : {}),
+  };
+}
+
 type Configuration =
   | { configured: true; secret?: string }
   | {
@@ -36,12 +48,13 @@ type Configuration =
 
 /** Composed here, where both the optional SDK and infrastructure HTTP transport are allowed. */
 export class ClassifierRegistry implements ClassifierRegistryPort {
+  /** Clients per owner, catalog id and pinned binding, rebuilt when the secret value changes. */
   private readonly clients = new Map<
     string,
     {
       ownerId: string;
-      entry: ClassifierModelEntry;
-      signature: string;
+      modelId: string;
+      binding: ClassifierBinding;
       secret?: string;
       classifier: ClassifierPort;
     }
@@ -55,7 +68,7 @@ export class ClassifierRegistry implements ClassifierRegistryPort {
 
   private async configuration(
     ownerId: string,
-    entry: ClassifierModelEntry,
+    entry: Pick<ClassifierModelEntry, 'secretRef'>,
   ): Promise<Configuration> {
     if (!entry.secretRef) return { configured: true };
     try {
@@ -105,18 +118,31 @@ export class ClassifierRegistry implements ClassifierRegistryPort {
   }
 
   invalidate(ownerId: string, id: string): void {
-    this.clients.delete(JSON.stringify([ownerId, id]));
+    for (const [key, client] of this.clients) {
+      if (client.ownerId === ownerId && client.modelId === id) this.clients.delete(key);
+    }
   }
   secretChanged(ownerId: string, name: string): void {
     for (const [key, client] of this.clients) {
-      if (client.ownerId === ownerId && client.entry.secretRef === name) this.clients.delete(key);
+      if (client.ownerId === ownerId && client.binding.secretRef === name) this.clients.delete(key);
     }
   }
 
+  async bind(ownerId: string, modelId: string): Promise<ClassifierBinding | undefined> {
+    const entry = await this.repo.findOne(ownerId, modelId);
+    return entry ? bindingOf(entry) : undefined;
+  }
+
+  /**
+   * A client for a run's pinned binding (ADR-0041). The entry must still exist and be enabled, and
+   * the pinned secret name must resolve now; provider, model, endpoint and primitives are the
+   * pinned ones, so editing the entry reaches only runs started afterwards.
+   */
   async resolve(
     ownerId: string,
     modelId: string,
     primitive: ClassifierPrimitive,
+    binding: ClassifierBinding,
   ): Promise<ClassifierResolution> {
     const entry = await this.repo.findOne(ownerId, modelId);
     if (!entry)
@@ -125,7 +151,7 @@ export class ClassifierRegistry implements ClassifierRegistryPort {
         reason: 'CLASSIFIER_MODEL_NOT_FOUND',
         message: `Classifier '${modelId}' not found`,
       };
-    if (!entry.primitives.includes(primitive))
+    if (!binding.primitives.includes(primitive))
       return {
         status: 'unavailable',
         reason: 'CLASSIFIER_PRIMITIVE_UNSUPPORTED',
@@ -137,56 +163,48 @@ export class ClassifierRegistry implements ClassifierRegistryPort {
         reason: 'CLASSIFIER_MODEL_DISABLED',
         message: `Classifier '${modelId}' is disabled`,
       };
-    const state = await this.configuration(ownerId, entry);
+    const state = await this.configuration(ownerId, binding);
     if (!state.configured)
       return {
         status: 'unavailable',
         reason: state.reason,
         message: `Classifier '${modelId}': ${state.message}`,
       };
-    const key = JSON.stringify([ownerId, modelId]);
-    const signature = JSON.stringify(entry);
+    const provenance = {
+      provider: binding.provider,
+      classifierId: modelId,
+      model: binding.providerModel,
+    };
+    const key = JSON.stringify([ownerId, modelId, binding]);
     const cached = this.clients.get(key);
-    if (cached?.signature === signature && cached.secret === state.secret)
-      return {
-        status: 'ready',
-        classifier: cached.classifier,
-        provenance: {
-          provider: entry.provider,
-          classifierId: entry.id,
-          model: entry.providerModel,
-        },
-      };
+    if (cached && cached.secret === state.secret)
+      return { status: 'ready', classifier: cached.classifier, provenance };
     let classifier: ClassifierPort;
-    if (entry.provider === 'typesafe') {
+    if (binding.provider === 'typesafe') {
       // Each cached classifier uses an immutable owner-scoped credential snapshot.
       const jev = createJevDecider({
         secrets: { resolve: () => Promise.resolve(state.secret) },
-        ...(entry.secretRef !== undefined ? { secretName: entry.secretRef } : {}),
-        baseUrl: entry.endpoint,
-        model: entry.providerModel,
+        ...(binding.secretRef !== undefined ? { secretName: binding.secretRef } : {}),
+        baseUrl: binding.endpoint,
+        model: binding.providerModel,
         logger: this.logger,
       });
       await jev.init();
       classifier = jev;
     } else {
       classifier = new HttpClassifier({
-        endpoint: entry.endpoint,
-        providerModel: entry.providerModel,
+        endpoint: binding.endpoint,
+        providerModel: binding.providerModel,
         ...(state.secret !== undefined ? { bearer: state.secret } : {}),
       });
     }
     this.clients.set(key, {
       ownerId,
-      entry,
-      signature,
+      modelId,
+      binding,
       classifier,
       ...(state.secret !== undefined ? { secret: state.secret } : {}),
     });
-    return {
-      status: 'ready',
-      classifier,
-      provenance: { provider: entry.provider, classifierId: entry.id, model: entry.providerModel },
-    };
+    return { status: 'ready', classifier, provenance };
   }
 }

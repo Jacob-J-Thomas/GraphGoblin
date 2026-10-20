@@ -1,0 +1,612 @@
+[
+  {
+    "id": "N01-published-draft-classifier-restart",
+    "status": "PASS",
+    "evidence": {
+      "publishedResult": "published-old",
+      "draftResult": "draft-old",
+      "newPublished": "published-new",
+      "newDraft": "draft-new",
+      "oldClassifierModel": "model-A",
+      "newClassifierModel": "model-B",
+      "secretValueLive": true,
+      "secretNamePinned": true,
+      "pinIdentity": "RunRecord.versionId plus RunRecord.pinned",
+      "restart": "native process terminated and new process started"
+    }
+  },
+  {
+    "id": "N02-disabled-deleted-missing-classifiers",
+    "status": "PASS",
+    "evidence": {
+      "disabledFailure": {
+        "code": "EVALUATION_UNAVAILABLE",
+        "message": "The selected classifier is disabled",
+        "nodeId": "decide",
+        "resumable": true,
+        "details": {
+          "reason": "CLASSIFIER_MODEL_DISABLED"
+        }
+      },
+      "disabledRequests": 0,
+      "resumed": {
+        "id": "01M5B4YXE4H4Q2GGBQM21HWP37",
+        "ownerId": "local",
+        "loopId": "01M5B4YA4WRJ8PR9Z1GE05GYD3",
+        "versionId": "01M5B4YA4WRRPQ5DPQ5G42MDYA",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA classifier",
+          "label": "QA classifier v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {
+            "qa-pin": {
+              "provider": "http",
+              "providerModel": "model-B",
+              "primitives": ["choice"],
+              "endpoint": "http://127.0.0.1:63081",
+              "secretRef": "qa-b"
+            }
+          }
+        },
+        "invocationId": "01M5B4YXE49X1JXR91KQX2PGCD",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "result": "classified",
+        "createdAt": "2026-10-19T22:36:50.500Z",
+        "startedAt": "2026-10-19T22:36:50.512Z",
+        "finishedAt": "2026-10-19T22:36:53.433Z",
+        "lastEventSeq": 20
+      },
+      "deletedFailure": {
+        "code": "EVALUATION_UNAVAILABLE",
+        "message": "The selected classifier is not in the catalog",
+        "nodeId": "decide",
+        "resumable": true,
+        "details": {
+          "reason": "CLASSIFIER_MODEL_NOT_FOUND"
+        }
+      },
+      "deletedRequests": 0,
+      "deletedResumed": {
+        "id": "01M5B4Z0FFJJ6DFWMSBV7PY5NH",
+        "ownerId": "local",
+        "loopId": "01M5B4YA4WRJ8PR9Z1GE05GYD3",
+        "versionId": "01M5B4YA4WRRPQ5DPQ5G42MDYA",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA classifier",
+          "label": "QA classifier v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {
+            "qa-pin": {
+              "provider": "http",
+              "providerModel": "model-B",
+              "primitives": ["choice"],
+              "endpoint": "http://127.0.0.1:63081",
+              "secretRef": "qa-b"
+            }
+          }
+        },
+        "invocationId": "01M5B4Z0FF97Z0Q4C2KXA2CNFT",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "result": "classified",
+        "createdAt": "2026-10-19T22:36:53.615Z",
+        "startedAt": "2026-10-19T22:36:53.664Z",
+        "finishedAt": "2026-10-19T22:37:00.101Z",
+        "lastEventSeq": 21
+      },
+      "missingAtStart": {
+        "id": "01M5B4Z2K5PD30N0K7JXMG4YC6",
+        "ownerId": "local",
+        "loopId": "01M5B4YA4WRJ8PR9Z1GE05GYD3",
+        "versionId": "01M5B4YA4WRRPQ5DPQ5G42MDYA",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA classifier",
+          "label": "QA classifier v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5B4Z2K57BDDYZZXPS0A9H57",
+        "status": "failed",
+        "currentNodeId": "decide",
+        "iteration": 1,
+        "failure": {
+          "code": "EVALUATION_UNAVAILABLE",
+          "message": "The selected classifier is not in the catalog when this run started; start a new run",
+          "nodeId": "decide",
+          "resumable": false,
+          "details": {
+            "reason": "CLASSIFIER_MODEL_NOT_FOUND"
+          }
+        },
+        "createdAt": "2026-10-19T22:36:55.781Z",
+        "startedAt": "2026-10-19T22:36:55.842Z",
+        "finishedAt": "2026-10-19T22:36:58.303Z",
+        "lastEventSeq": 12
+      },
+      "badResume": {
+        "type": "https://graphgoblin.dev/problems/invalid-state",
+        "title": "invalid state",
+        "status": 409,
+        "code": "INVALID_STATE",
+        "detail": "cannot resume a run that is failed"
+      }
+    }
+  },
+  {
+    "id": "N03-constructor-classifier",
+    "status": "PASS",
+    "evidence": {
+      "id": "01M5B4Z6Z2BAT20E2WETH4DDTH",
+      "ownerId": "local",
+      "loopId": "01M5B4Z6Y3CETR4WCMK61C4ZN4",
+      "versionId": "01M5B4Z6Y349063491BQAYTSV8",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "QA constructor",
+        "label": "QA constructor v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "classifiers": {
+          "constructor": {
+            "provider": "http",
+            "providerModel": "model-constructor",
+            "primitives": ["choice"],
+            "endpoint": "http://127.0.0.1:63080"
+          }
+        }
+      },
+      "invocationId": "01M5B4Z6Z2JG7NRA06WH5EZ1C2",
+      "status": "succeeded",
+      "iteration": 1,
+      "outcome": "success",
+      "result": "classified",
+      "createdAt": "2026-10-19T22:37:00.258Z",
+      "startedAt": "2026-10-19T22:37:00.267Z",
+      "finishedAt": "2026-10-19T22:37:00.462Z",
+      "lastEventSeq": 18
+    }
+  },
+  {
+    "id": "N04-replay-original-published-draft-classifier-pins",
+    "status": "PASS",
+    "evidence": [
+      {
+        "id": "01M5B4Z78791B1RPZ08M9AMCV9",
+        "ownerId": "local",
+        "loopId": "01M5B4Y9KDNFKAMRY3V9ANTN95",
+        "versionId": "01M5B4Y9KD14P416P64BJF7GB9",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA published",
+          "label": "QA published v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5B4Z7873VPN24GCZ8ZRJDE6",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "result": "published-old",
+        "createdAt": "2026-10-19T22:37:00.551Z",
+        "startedAt": "2026-10-19T22:37:00.564Z",
+        "finishedAt": "2026-10-19T22:37:00.582Z",
+        "lastEventSeq": 7
+      },
+      {
+        "id": "01M5B4Z7AS5CY1ZVVZ89WMQWVR",
+        "ownerId": "local",
+        "loopId": "01M5B4Y9YF1KZ1PKBCK2A9FPF2",
+        "versionId": "01M5B4Y9YXWNS80VS6SP50SNA8",
+        "pinned": {
+          "source": "draft",
+          "version": 1,
+          "name": "QA draft",
+          "label": "QA draft draft v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M5B4Z7ATHWB5AE6K3YNCGR3Y",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "result": "draft-old",
+        "createdAt": "2026-10-19T22:37:00.634Z",
+        "startedAt": "2026-10-19T22:37:00.641Z",
+        "finishedAt": "2026-10-19T22:37:00.657Z",
+        "lastEventSeq": 7
+      },
+      {
+        "id": "01M5B4Z7DHGK7BW1MR3GE6BW59",
+        "ownerId": "local",
+        "loopId": "01M5B4YA4WRJ8PR9Z1GE05GYD3",
+        "versionId": "01M5B4YA4WRRPQ5DPQ5G42MDYA",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA classifier",
+          "label": "QA classifier v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {
+            "qa-pin": {
+              "provider": "http",
+              "providerModel": "model-A",
+              "primitives": ["choice"],
+              "endpoint": "http://127.0.0.1:63080",
+              "secretRef": "qa-a"
+            }
+          }
+        },
+        "invocationId": "01M5B4Z7DHWYXZP76ZX5PPQK1T",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "result": "classified",
+        "createdAt": "2026-10-19T22:37:00.721Z",
+        "startedAt": "2026-10-19T22:37:00.729Z",
+        "finishedAt": "2026-10-19T22:37:00.745Z",
+        "lastEventSeq": 7
+      }
+    ]
+  },
+  {
+    "id": "N05-concurrent-draft-start-save-cancel",
+    "status": "PASS",
+    "evidence": {
+      "count": 12,
+      "uniqueSnapshots": 12,
+      "cleanedRows": true,
+      "runs": [
+        {
+          "runId": "01M5B4Z7GVXK6VZTZ9BYTB6ZWX",
+          "snapshot": "01M5B4Z7GVS0C0ENTXCY4EX7XZ",
+          "expected": "revision-0",
+          "status": "cancelled"
+        },
+        {
+          "runId": "01M5B4Z7HPP32KXS1X2WWR9CAM",
+          "snapshot": "01M5B4Z7HPY2GQZ2F625NXTSKQ",
+          "expected": "revision-0",
+          "result": "revision-0"
+        },
+        {
+          "runId": "01M5B4Z7HQ3EDEYF6HFGXM3KXH",
+          "snapshot": "01M5B4Z7HQ2GZV0SA82Z7CDQ2C",
+          "expected": "revision-0",
+          "result": "revision-0"
+        },
+        {
+          "runId": "01M5B4Z7KYAERRKN78889194QM",
+          "snapshot": "01M5B4Z7KYXGN2WCAT2Y5MFCDT",
+          "expected": "revision-1",
+          "result": "revision-1"
+        },
+        {
+          "runId": "01M5B4Z7KZPT0RA6Z0V2NYF2A4",
+          "snapshot": "01M5B4Z7KZ78HHGY6Z98T67VCP",
+          "expected": "revision-1",
+          "status": "cancelled"
+        },
+        {
+          "runId": "01M5B4Z7MFQ4PZG57EV0PG52B5",
+          "snapshot": "01M5B4Z7MFF9ESCQAS6JBBE3ES",
+          "expected": "revision-1",
+          "result": "revision-1"
+        },
+        {
+          "runId": "01M5B4Z7PZXSHTJ1M8P177A268",
+          "snapshot": "01M5B4Z7PZ4N9WM22ZVY935PA9",
+          "expected": "revision-2",
+          "result": "revision-2"
+        },
+        {
+          "runId": "01M5B4Z7Q39SBNZQ1KYENZVA5P",
+          "snapshot": "01M5B4Z7Q499YGJKQA1FQCCNG2",
+          "expected": "revision-2",
+          "result": "revision-2"
+        },
+        {
+          "runId": "01M5B4Z7Q4H3EW5R6281VXR6X2",
+          "snapshot": "01M5B4Z7Q4S3FNG0568A0F3KA2",
+          "expected": "revision-2",
+          "status": "cancelled"
+        },
+        {
+          "runId": "01M5B4Z7T25QQJ6JZ86ZE5NWR5",
+          "snapshot": "01M5B4Z7T2G3Y1NE35XF9MGFTP",
+          "expected": "revision-3",
+          "result": "revision-3"
+        },
+        {
+          "runId": "01M5B4Z7TH6R75BXNJJAJSD40N",
+          "snapshot": "01M5B4Z7THQ1M58W5D22A1MX21",
+          "expected": "revision-3",
+          "result": "revision-3"
+        },
+        {
+          "runId": "01M5B4Z7TJYFKPWMANEDZP3YJC",
+          "snapshot": "01M5B4Z7TJRRK4H94C0CNDWD39",
+          "expected": "revision-3",
+          "result": "revision-3"
+        }
+      ]
+    }
+  },
+  {
+    "id": "N06-snapshot-storage-guards-and-lifecycle",
+    "status": "PASS",
+    "evidence": {
+      "refused": [
+        "SQLITE_CONSTRAINT: LOOP_VERSION_SNAPSHOT_IMMUTABLE: a draft snapshot never changes",
+        "SQLITE_CONSTRAINT: LOOP_VERSION_SNAPSHOT_PINNED: a run still pins this draft snapshot"
+      ],
+      "active": {
+        "type": "https://graphgoblin.dev/problems/loop-in-use",
+        "title": "loop in use",
+        "status": 409,
+        "code": "LOOP_IN_USE",
+        "detail": "the loop has active runs; cancel them first"
+      },
+      "snapshotRowsAfterLoopDeletion": 0
+    }
+  },
+  {
+    "id": "N07-child-own-pin-parent-shared-binding-selection",
+    "status": "PASS",
+    "evidence": {
+      "parent": {
+        "id": "01M5B4Z9D011Q6VCCNMTEFMJEQ",
+        "ownerId": "local",
+        "loopId": "01M5B4Z9C5D96WSG5P0B2YQ0DJ",
+        "versionId": "01M5B4Z9C59005TS9GCHYGJWE7",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA parent",
+          "label": "QA parent v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {
+            "qa-shared": {
+              "provider": "http",
+              "providerModel": "tree-model-A",
+              "primitives": ["choice"],
+              "endpoint": "http://127.0.0.1:63080"
+            }
+          }
+        },
+        "invocationId": "01M5B4Z9D0E5VPFZJTJ2SGXSPA",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "result": "classified",
+        "createdAt": "2026-10-19T22:37:02.752Z",
+        "startedAt": "2026-10-19T22:37:02.764Z",
+        "finishedAt": "2026-10-19T22:37:03.286Z",
+        "lastEventSeq": 25
+      },
+      "child": {
+        "id": "01M5B4Z9PEQGRKJXS56SJD6WK9",
+        "ownerId": "local",
+        "loopId": "01M5B4Z9B255BPHQ9G74T3H39Z",
+        "versionId": "01M5B4Z9B2TZCGT9WR1H9VB0Z2",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA child",
+          "label": "QA child v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {
+            "qa-shared": {
+              "provider": "http",
+              "providerModel": "tree-model-A",
+              "primitives": ["choice"],
+              "endpoint": "http://127.0.0.1:63080"
+            }
+          }
+        },
+        "parentRunId": "01M5B4Z9D011Q6VCCNMTEFMJEQ",
+        "invocationId": "01M5B4Z9PE8NCBFP83FB6Y5CKM",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "result": "classified",
+        "createdAt": "2026-10-19T22:37:03.054Z",
+        "startedAt": "2026-10-19T22:37:03.080Z",
+        "finishedAt": "2026-10-19T22:37:03.225Z",
+        "lastEventSeq": 18
+      },
+      "snapshotNotSelected": "01M5B4Z9GCV9NF7AMC669XZHEG",
+      "queued": {
+        "runId": "01M5B4Z9D011Q6VCCNMTEFMJEQ",
+        "seq": 1,
+        "ts": "2026-10-19T22:37:02.752Z",
+        "type": "run.queued",
+        "versionId": "01M5B4Z9C59005TS9GCHYGJWE7",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA parent",
+          "label": "QA parent v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {
+            "qa-shared": {
+              "provider": "http",
+              "providerModel": "tree-model-A",
+              "primitives": ["choice"],
+              "endpoint": "http://127.0.0.1:63080"
+            }
+          }
+        },
+        "initialThread": {
+          "schemaVersion": 1,
+          "run": {
+            "id": "01M5B4Z9D011Q6VCCNMTEFMJEQ",
+            "loopId": "01M5B4Z9C5D96WSG5P0B2YQ0DJ",
+            "versionId": "01M5B4Z9C59005TS9GCHYGJWE7",
+            "iteration": 1
+          },
+          "invocation": {
+            "id": "01M5B4Z9D0E5VPFZJTJ2SGXSPA",
+            "source": "manual.api",
+            "caller": {
+              "kind": "api-key",
+              "id": "01M5B4Y0P18ZWFRESA2AQ0GTR7"
+            },
+            "trigger": {
+              "nodeId": "start",
+              "kind": "manual",
+              "payload": null,
+              "receivedAt": "2026-10-19T22:37:02.752Z"
+            }
+          },
+          "messages": [],
+          "vars": {},
+          "artifacts": [],
+          "outputs": {},
+          "gates": {},
+          "counters": {
+            "nodeVisits": {},
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          }
+        },
+        "subloopVersions": {
+          "01M5B4Z9B255BPHQ9G74T3H39Z": "01M5B4Z9B2TZCGT9WR1H9VB0Z2"
+        }
+      }
+    }
+  }
+]

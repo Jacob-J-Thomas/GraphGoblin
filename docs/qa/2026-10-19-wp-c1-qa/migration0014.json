@@ -1,0 +1,94 @@
+{
+  "factory": "openDatabase with a copy of shipped migrations 0000-0013 and truncated journal, matching infrastructure storeBeforePins; rows captured from public API waiting starts and projected to pre-pin storage",
+  "beforeMigration": 14,
+  "afterMigration": 15,
+  "healthy": [
+    {
+      "id": "01M5B58NXETTXJ71DJ51EW3FCF",
+      "ownerId": "local",
+      "loopId": "01M5B58NWKS621V68CHBGTQK1Q",
+      "versionId": "01M5B58NWKD3FPJSKRYBY7ZTG3",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "QA migration published",
+        "label": "QA migration published v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {}
+          }
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5B58NXEJMEKFP6VZBTAHJD6",
+      "status": "succeeded",
+      "iteration": 1,
+      "outcome": "success",
+      "result": "migration-published",
+      "createdAt": "2026-10-19T22:42:10.478Z",
+      "startedAt": "2026-10-19T22:42:10.487Z",
+      "finishedAt": "2026-10-19T22:42:20.396Z",
+      "lastEventSeq": 14
+    },
+    {
+      "id": "01M5B58P0P3Q7ACSA6NE9S2CAH",
+      "ownerId": "local",
+      "loopId": "01M5B58P0BN754129MQT9EWXA9",
+      "versionId": "01M5B58P0P3Q7ACSA6NE9S2CAH",
+      "pinned": {
+        "source": "draft",
+        "version": 1,
+        "name": "QA migration draft",
+        "label": "QA migration draft draft v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {}
+          }
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5B58P0P2XQEHX4E49PQYST1",
+      "status": "succeeded",
+      "iteration": 1,
+      "outcome": "success",
+      "result": "migration-draft",
+      "createdAt": "2026-10-19T22:42:10.582Z",
+      "startedAt": "2026-10-19T22:42:10.591Z",
+      "finishedAt": "2026-10-19T22:42:20.484Z",
+      "lastEventSeq": 15
+    }
+  ],
+  "damagedBefore": {
+    "snapshot": "{ broken thread snapshot",
+    "queued": "{\"initialThread\": malformed queued payload"
+  },
+  "damagedAfter": {
+    "snapshot": "{ broken thread snapshot",
+    "queued": "{\"initialThread\": malformed queued payload"
+  },
+  "byteIdentical": true,
+  "nullPinIntroduced": "after 0014 added the column, then a second native restart",
+  "diagnostics": [
+    {
+      "runId": "01M5B58P4J7GYD5QRBC75PXTPM",
+      "code": "HISTORY_UNREADABLE",
+      "reason": "Stored run 01M5B58P4J7GYD5QRBC75PXTPM has malformed JSON in thread_snapshot"
+    },
+    {
+      "runId": "01M5B58P83P4HSE7Z0X3MAAV9W",
+      "code": "HISTORY_UNREADABLE",
+      "reason": "Stored run event does not conform: run 01M5B58P83P4HSE7Z0X3MAAV9W, seq 1, type run.queued"
+    },
+    {
+      "runId": "01M5B58PBH0065TNZQW6F7DRAG",
+      "code": "HISTORY_UNREADABLE",
+      "reason": "Stored run 01M5B58PBH0065TNZQW6F7DRAG has no definition pin"
+    }
+  ]
+}

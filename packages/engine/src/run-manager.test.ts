@@ -7,6 +7,7 @@ import {
   fakeUlid,
   kitchenSinkLoop,
   minimalLoop,
+  samplePin,
 } from '@graphgoblin/contracts/testing';
 import {
   EngineRequestError,
@@ -459,6 +460,7 @@ describe('failure and recovery', () => {
         ownerId: 'local',
         loopId,
         versionId,
+        pinned: samplePin(),
         invocationId,
         status: 'running',
         currentNodeId: 'infer',
@@ -470,7 +472,7 @@ describe('failure and recovery', () => {
       thread,
     );
     await ports.events.append(runId, [
-      { type: 'run.queued' },
+      { type: 'run.queued', versionId, pinned: samplePin() },
       { type: 'run.started', attempt: 1 },
       { type: 'node.started', nodeId: 'start', kind: 'trigger', attempt: 1, configHash: 'h' },
       { type: 'node.finished', nodeId: 'start', patch: [], route: 'out', durationMs: 1 },
@@ -526,6 +528,7 @@ describe('failure and recovery', () => {
       ownerId: 'local',
       loopId: version.loopId,
       versionId: version.id,
+      pinned: samplePin(),
       invocationId,
       iteration: 1,
       createdAt: FIXTURE_TS,
@@ -638,7 +641,17 @@ describe('event helpers', () => {
     expect(
       findPendingWake([{ ...base, seq: 1, type: 'run.woken', nodeId: 'w', reason: 'timer' }]),
     ).toEqual({ reason: 'timer' });
-    expect(findPendingWake([{ ...base, seq: 1, type: 'run.queued' }])).toBeUndefined();
+    expect(
+      findPendingWake([
+        {
+          ...base,
+          seq: 1,
+          type: 'run.queued',
+          versionId: FIXTURE_IDS.version,
+          pinned: samplePin(),
+        },
+      ]),
+    ).toBeUndefined();
   });
 
   it('counts attempts since the last finish of the node', () => {

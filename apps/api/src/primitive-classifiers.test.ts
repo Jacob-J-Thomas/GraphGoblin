@@ -174,8 +174,15 @@ describe('primitive classifier API admission and execution', () => {
           }),
         );
         expect(fixture.requests).toEqual([]);
+        const binding = await t.container.classifierRegistry.bind('local', 'local-primitive');
+        if (!binding) throw new Error('expected the registered classifier');
         expect(
-          await t.container.classifierRegistry.resolve('local', 'local-primitive', primitive),
+          await t.container.classifierRegistry.resolve(
+            'local',
+            'local-primitive',
+            primitive,
+            binding,
+          ),
         ).toMatchObject({ status: 'unavailable', reason: 'CLASSIFIER_PRIMITIVE_UNSUPPORTED' });
       } finally {
         await fixture.close();

@@ -185,10 +185,10 @@ for (const source of [
       code = 'INTERNAL_ERROR';
     }
     if (source === 'executor-error') {
-      e.settings.ownerDefaults = vi
-        .fn()
-        .mockRejectedValueOnce(new Error('owner store failed'))
-        .mockResolvedValue({ byHarness: {} });
+      // The executor reads the checkpoint before any node runs: a failure there is executor-level.
+      vi.spyOn(e.ports.runs, 'getThreadCheckpoint').mockRejectedValueOnce(
+        new Error('checkpoint store failed'),
+      );
       code = 'INTERNAL_ERROR';
     }
     if (source === 'subloop-missing') {

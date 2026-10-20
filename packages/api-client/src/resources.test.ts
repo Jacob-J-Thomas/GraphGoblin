@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { apiKeys, cron, createGraphGoblinClient } from './index.js';
+import { apiKeys, cron, createGraphGoblinClient, runs } from './index.js';
 
 it('forwards list cancellation to the request without requiring it from existing callers', async () => {
   const requests: Request[] = [];
@@ -50,6 +50,24 @@ it('previews through the generated endpoint and forwards body and cancellation',
   expect(requests[0]!.url).toBe('http://graphgoblin.test/triggers/cron/preview');
   expect(await requests[0]!.json()).toEqual(body);
   controller.abort();
+  expect(requests[0]!.signal.aborted).toBe(true);
+  expect(requests[1]!.signal.aborted).toBe(false);
+});
+
+it('forwards run observation cancellation to GET without cancelling the run', async () => {
+  const requests: Request[] = [];
+  const client = createGraphGoblinClient({
+    baseUrl: 'http://api',
+    fetch: (request) => {
+      requests.push(request);
+      return Promise.resolve(Response.json({ status: 'running' }));
+    },
+  });
+  const controller = new AbortController();
+  await runs.get(client, 'run', { signal: controller.signal });
+  await runs.get(client, 'run');
+  controller.abort();
+  expect(requests.map((request) => request.method)).toEqual(['GET', 'GET']);
   expect(requests[0]!.signal.aborted).toBe(true);
   expect(requests[1]!.signal.aborted).toBe(false);
 });
