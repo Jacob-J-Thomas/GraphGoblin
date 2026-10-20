@@ -46,16 +46,30 @@ export interface ClaudeHarnessPreflight extends HarnessPreflight {
   authMethod: 'claude.ai' | null;
   supportedPolicies: ClaudePolicy[];
 }
+/** Fresh names tried before a run of name collisions fails the check. */
+const PROBE_DIRECTORY_ATTEMPTS = 4;
 /**
  * A fresh, exclusively created, empty directory for the version, help and auth checks. Not
  * `fs.mkdtemp`: on Windows it hands its prefix to the OS without the long-path namespace and fails
- * with ENAMETOOLONG from 249 characters, while `mkdir` and starting the CLI there still work up to
- * the 258-character working-directory limit (#102, docs/qa/2026-10-19-wp-f5-launch-diagnosis.md).
+ * with ENAMETOOLONG from 248 characters (247 still works), while `mkdir` and starting the CLI there
+ * still work up to the 258-character working-directory limit (#102,
+ * docs/qa/2026-10-19-wp-f5-launch-diagnosis.md). A name that already exists is never reused or
+ * removed; a few fresh names are tried instead.
  */
 async function probeDirectory(): Promise<string> {
-  const directory = join(tmpdir(), `gg-claude-probe-${randomBytes(4).toString('hex')}`);
-  await mkdir(directory, { mode: 0o700 });
-  return directory;
+  for (let attempt = 1; ; attempt += 1) {
+    const directory = join(tmpdir(), `gg-claude-probe-${randomBytes(4).toString('hex')}`);
+    try {
+      await mkdir(directory, { mode: 0o700 });
+      return directory;
+    } catch (error) {
+      if (
+        (error as NodeJS.ErrnoException).code !== 'EEXIST' ||
+        attempt === PROBE_DIRECTORY_ATTEMPTS
+      )
+        throw error;
+    }
+  }
 }
 function checkOutcome(result: ClaudeProcessResult, signal: AbortSignal): void {
   if (result.terminationUnconfirmed)

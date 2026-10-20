@@ -190,6 +190,57 @@ describe('Claude existing harness contract', () => {
       await probeFs.rm(root, { recursive: true, force: true });
     }
   });
+  it('tries a fresh prerequisite directory name after a name collision and never removes the existing one', async () => {
+    const collision = Object.assign(new Error('Synthetic name collision'), { code: 'EEXIST' });
+    const create = vi.spyOn(probeFs, 'mkdir').mockRejectedValueOnce(collision);
+    const remove = vi.spyOn(probeFs, 'rm');
+    const directories = new Set<string>();
+    const runner: ClaudeCliRunner = async (command) => {
+      directories.add(command.cwd);
+      if (command.args.includes('--version')) return outcome('2.1.285');
+      if (command.args.includes('--help')) return outcome(help);
+      return outcome('{"authMethod":"claude.ai"}');
+    };
+    try {
+      const harness = new ClaudeHarness({ runner, platform: 'win32' });
+      expect(await harness.preflight()).toMatchObject({ ok: true, problems: [] });
+      const attempted = create.mock.calls.map(([path]) => String(path));
+      expect(attempted).toHaveLength(2);
+      expect(attempted[0]).not.toBe(attempted[1]);
+      expect([...directories]).toEqual([attempted[1]]);
+      expect(remove.mock.calls.map(([path]) => String(path))).toEqual([attempted[1]]);
+    } finally {
+      create.mockRestore();
+      remove.mockRestore();
+    }
+  });
+  it.each([
+    ['four name collisions', 'EEXIST', 4],
+    ['a creation fault', 'EACCES', 1],
+  ])(
+    'fails the check without starting the CLI or removing anything after %s',
+    async (_case, code, attempts) => {
+      const fault = Object.assign(new Error('Synthetic creation fault'), { code });
+      const create = vi.spyOn(probeFs, 'mkdir').mockRejectedValue(fault);
+      const remove = vi.spyOn(probeFs, 'rm');
+      const runner = vi.fn<ClaudeCliRunner>();
+      try {
+        const harness = new ClaudeHarness({ runner, platform: 'win32' });
+        expect(await harness.preflight()).toMatchObject({
+          ok: false,
+          problems: ['Claude preflight failed'],
+        });
+        const attempted = create.mock.calls.map(([path]) => String(path));
+        expect(attempted).toHaveLength(attempts);
+        expect(new Set(attempted).size).toBe(attempts);
+        expect(runner).not.toHaveBeenCalled();
+        expect(remove).not.toHaveBeenCalled();
+      } finally {
+        create.mockRestore();
+        remove.mockRestore();
+      }
+    },
+  );
   it('checks the installed capability/auth prerequisites and exposes explicit model support and policies', async () => {
     const { harness, calls } = fixture();
     expect(await harness.preflight()).toMatchObject({
