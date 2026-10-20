@@ -422,20 +422,10 @@ A `LiteLLMPort` would provide plain completion calls for decision, coerce, and s
 
 ## Explicit node harness changes (#204)
 
-Changing an inference node's Harness is an authoring action. With successful catalog, Settings
-and readiness lookups, it writes an enabled compatible model explicitly: the owner's Settings
-default for the destination harness, then its loop default, then the supported ecosystem default
-(Codex `gpt-6-luna`, Claude `claude-opus-5-5`). Disabled, missing and adapter-incompatible
-configured models are skipped. If the ecosystem default is also unavailable, the authored
-model and effort stay visible with a notice; no arbitrary catalog entry is chosen or enabled.
-Claude model and effort compatibility uses its readiness capability listing as well as the catalog.
-
-A supported existing effort stays. Otherwise, the switch writes the first supported effort from
-Settings, loop defaults, then the chosen catalog entry's `defaultEffort`. These values are saved
-on the node and reopen identically. This authoring precedence does not change runtime inheritance:
-unset node values still resolve through loop, owner and process defaults. Runs never substitute
-models. A failed/paused catalog or Settings lookup, or unready/unknown harness, preserves both
-authored values and shows the problem. Recovery alone never changes them: choose a model or
-explicitly switch again after retrying. Saved incompatible values loaded without a switch also
-stay visible and labelled; validation reports their incompatibility. Existing stored values are
-not migrated. Model and effort remain under Advanced until the separate #205 change.
+An explicit Harness change preserves unset node model/effort inheritance. For an explicit model,
+the editor chooses an enabled compatible loop default, then Settings default, then the adapter's
+ecosystem default (D-023). It waits for first-time checks already in flight; failed checks preserve
+authored selections. A failed catalog lookup shows **Validation unavailable**; a blocked switch
+leaves an incompatible draft that cannot be saved until corrected. See [the editor's harness-change rule](09-frontend-and-pwa.md#explicit-node-harness-changes-204)
+for compatibility, effort, notices and persistence. Runtime resolution is unchanged; stored values
+need no migration.

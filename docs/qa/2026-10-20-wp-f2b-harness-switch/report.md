@@ -1,120 +1,249 @@
-# WP-F2b delivery report (#204)
+# WP-F2b round 2 delivery report (#204)
 
-Implementation and verification are recorded below. Independent review, independent QA and owner acceptance remain required before merge.
-
-## 1. Branch and worktree
+## 1. Branch, worktree and base
 
 - Branch: `codex-wp-f2b-harness-switch`.
-- Worktree: `C:\Users\98jak\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f2b-harness-switch`.
-- Base/unchanged HEAD: `453aee676882f188429080e948dcd7918f09adfd`, stacked on `codex-wp-f1-readiness-precision` per D-009. WP-F1 is pending owner acceptance.
-- Uncommitted; ready for orchestrator commit after review. No commit, index mutation, push, merge, rebase, stash or branch switch was performed.
+- Worktree: `<local>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f2b-harness-switch`.
+- Unchanged HEAD: `f6650ce9884576a014bfb27b7990cba6bc1391f7`, with parents
+  `cbfdd42ffe4af1056a03b8b13994e79620c778d4` (original #204 implementation) and
+  `6f21ff8b51ac48a2dd971574428a2deadded6b18` (current WP-F1), stacked under D-009.
+- Changes remain uncommitted for the orchestrator's review/commit. The index is empty. No commit,
+  push, merge, rebase, stash, branch switch, dependency installation, directory deletion or external
+  symbolic link/junction creation was performed.
 
-## 2. Per bolt
+## 2. Acceptance evidence for #204 / #305 / I06 #288
 
-### #204 / B42: confirmed baseline and implemented authoring correction
+B1-B3 and N1-N8 are implemented. [before.md](before.md) records the built baseline;
+[round2-before.json](round2-before.json) and [round2-after.json](round2-after.json) preserve the
+observations. These use Edge, native fake CLIs, fresh `%TEMP%/gg-wp-f2b-*` stores and port 5832.
 
-1. **Explicit switches choose compatible defaults.** `useHarnessSwitch` is called only by the node editor's explicit `harness` action. It writes model and effort in the same undoable node update, retains focus on either destination harness radio, and preserves the existing safe Claude policy reset. Ten component direction/default cases cover Settings, loop, absent, disabled and disabled-Settings-with-loop defaults. Separate cases cover supported effort preservation, unavailable defaults, missing compatible effort, invalid defaults and lookup failures. The browser covers both switch directions and the actual save/reload/publish/run flow.
-2. **Disabled preferences and failure truth.** Only enabled catalog rows are candidates; Claude candidates also intersect the ready adapter's listed model/effort capabilities. Missing, failed and paused lookups preserve authored model/effort and show a notice. The event reads the query cache itself so a just-failed cached refetch cannot use an older successful render. Recovery alone never changes authored fields. Both native disabled cases read back the disabled preference before fixture restoration. Separate ready/unready browser GET fixtures retain a loaded incompatible saved model without a harness action; normal API writes correctly reject explicit wrong-harness values.
-3. **Persistence and request agreement.** The component cases save and reopen; Edge reloads a real saved/published definition; both API tests save, GET the draft, validate without issues, publish and inspect the destination FakeHarness's exact request. The built-app native collector confirms eight scenarios, six successful published/reopened executions and six matching real adapter-to-fake-CLI requests. See [native-after.json](native-after.json). This is controlled native process evidence, not provider entitlement or a paid turn.
+| Required fix     | Built baseline                                                                            | Corrected product                                                                                                                                                         |
+| ---------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| B1 inheritance   | Both directions pinned absent overrides to Settings models/high effort                    | Both fields remain `(loop default)`; saved config has neither property; requests resolve the selected harness's configured model/effort                                   |
+| B2 precedence    | Claude loop Fable/low lost to Settings Opus/high; Codex loop Astra lost to Settings Luna  | Fable/low and Astra/high win respectively; high stays in the reverse case because it is supported                                                                         |
+| B3 initial loads | Both early switches retained the old provider's explicit model and issued a Reload notice | A loading notice appears under Harness; the first checks finish and the action applies compatible values without another click; save/reopen/publication/request all agree |
 
-[before.md](before.md) and [native-before.json](native-before.json) record the built baseline: all configured/absent/disabled switches kept the previous provider's ID; HTTP 503 catalog failures correctly kept authored values. The production correction was made only after this reproduction.
+The final collector passes **16 scenarios**, both directions for configured, absent, disabled,
+failed, inherited, effort-only, competing loop/Settings defaults and early loading. **14 successful
+runs** reach the native fake executable with exactly the expected model and effort. Both disabled
+preferences stay off during the switch check. The two failed-catalog cases keep the authored values
+and stable failure notice, with no switch-triggered refetch. The successful directory is
+`%TEMP%/gg-wp-f2b-native-69l9Yv` (`results.json`, `api.log`, `bin/requests.jsonl`). The 14-case baseline
+is extended by two effort-only checks in the corrected evidence.
 
-## 3. Files changed
+B1 restores `claude-harness.spec.ts` assertions that the published node has no model/effort
+properties, and the fields remain unset after reopening. Component checks cover pending and
+successful lookups and both switch directions. An effort-only node retains model inheritance;
+known unsupported effort is replaced or cleared to inherit, while failed checks retain its authored
+effort. Native save/reopen and request checks cover this case in both directions too.
 
-All shared-file edits are listed below using final worktree line ranges. The picker, editor, readiness-neighbor browser files, numbered docs, guide and CHANGELOG are integration surfaces; no F1 readiness vocabulary/refetch code, F2a model membership/efforts, or F4 engine/turn path was changed.
+B2 has a test with three distinct Codex models: loop Astra/low overrides Settings Sol/high and
+ecosystem Luna. The owner README uses the same distinct models and starts with a switch to Codex.
+B3 removes pre-switch waits from the component setup, reverse browser case and collector; explicit
+first-response delays prove waiting. A known failure is never queued behind another lookup, an
+in-flight retry is not treated as the first load, and a first lookup's rejection ends that action
+without a later rewrite on recovery.
 
-| Shared file                                     | Changed line ranges                                                                         |
-| ----------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `CHANGELOG.md`                                  | 7-8                                                                                         |
-| `apps/web/src/forms/fields/model.tsx`           | 3-3, 8-8, 11-11, 15-15, 23-99                                                               |
-| `apps/web/src/editor/NodeEditorDialog.tsx`      | 3-3, 47-47, 168-170, 295-296, 298-298, 309-309, 319-319, 321-327, 330-332, 335-345, 570-574 |
-| `apps/web/src/editor/NodeEditorDialog.test.tsx` | 849-849, 902-902, 911-916, 918-919                                                          |
-| `apps/web/e2e/claude-harness.spec.ts`           | 102-102, 107-108, 121-131, 168-168, 193-193, 199-199, 201-203, 219-228, 580-622             |
-| `apps/web/e2e/model-picker.spec.ts`             | 3-11, 365-421                                                                               |
-| `docs/06-harness-integration.md`                | 427-446                                                                                     |
-| `docs/09-frontend-and-pwa.md`                   | 541-541, 676-695                                                                            |
-| `docs/guide/06-settings-and-secrets.md`         | 297-316                                                                                     |
+N1: the catalog response identifies the adapter ecosystem defaults, with a test tied to those
+constants. N2: only inference Harness fields mount the switch hook; the editor warms Settings and
+preflight, and actions read shared state without fetching or remounting. The policy query observer
+also stays mounted across switches. Trigger/exit dialog tests show no additional lookups. N3/N4:
+notices sit under Harness with the alert icon, clear on history changes, keep focus and use F1's
+retry names; failed catalogs no longer flicker due to a remount. N5: docs and notices explain
+**Validation unavailable** and that an incompatible draft cannot be saved. N6: failed preflight
+and invalid loop defaults are covered. N7/N8: the portable install/build/QA README, explicit collector
+port and disposable output are complete; docs 09 holds the full rule with short references in docs
+06/guide 06, and the guide section precedes its closing link.
 
-New files by package:
+Existing API model validation agrees with the selected values; no production edit to
+`model-issues.ts` or node admission routes was necessary. No runtime selection, readiness vocabulary,
+Claude policy capabilities, catalog membership or effort capabilities changed.
 
-- Web: `apps/web/src/editor/harness-switch.test.tsx` (19 component cases); `apps/web/e2e/harness-switch-native.mjs` (retained reproducible collector).
-- API: `apps/api/src/harness-switch.test.ts` (two public-route/FakeHarness integration cases). Existing `model-issues.ts` and catalog/default/loop routes already agree with explicit compatible values; regression evidence required no API production change.
-- Tooling: `tooling/fixtures/model-switch-cli.cs` and `tooling/scripts/model-switch-fake-cli.ps1` (Windows PowerShell 5.1 builder; local synthetic CLIs, no provider calls).
-- QA: this report, [owner README](README.md), [before record](before.md), and before/after native JSON under this directory.
+## 3. Files and shared-file edit ranges
 
-## 4. Tests
+All edits are named below. Ranges are old HEAD lines -> current lines; removed ranges name their
+new anchor. New files show their whole range. The Codex adapter edit only exports its existing
+default constant, outside the turn path. `EditorPage.freshness.test.tsx` only adjusts the expected
+catalog response for the new metadata. The former report is retained as historical
+[round1-report.md](round1-report.md).
 
-**Before/after regression:** the before component run produced nine behavior failures and one lookup-notice synchronization failure (10 failed / 1 passed). Example: `Expected ... claude-fable-5-1; Received ... gpt-6-astra`; the reverse direction likewise retained the old Claude ID. The synchronization assertion was corrected to await the completed lookup after the form remount. The final expanded component suite passes 19/19. Its cached-refetch case then exposed a real stale-render action window (expected preserved `gpt-6-astra`, received `claude-opus-5-5`); the event-time cache guard closes it and the case passes.
+| File                                                          | Edited ranges                                                                                                                                                                                                                                                                                |
+| ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CHANGELOG.md`                                                | 7 -> 7                                                                                                                                                                                                                                                                                       |
+| `apps/api/src/catalog.test.ts`                                | 1 -> 2-3; 17 -> 20-32                                                                                                                                                                                                                                                                        |
+| `apps/api/src/routes/settings.ts`                             | 1 -> 2-3; 271 -> 273-277; 274 -> 280-287                                                                                                                                                                                                                                                     |
+| `apps/web/e2e/claude-harness.spec.ts`                         | 107-108 -> 107-108; 121-125 -> 121-123; 129-130 -> 127-128                                                                                                                                                                                                                                   |
+| `apps/web/e2e/harness-switch-native.mjs`                      | 9 -> 9; 30 -> 30-33; 36 -> 39; 63 -> 67; 78 -> 82; 86 -> 90-99; 89 -> 102-110; 97 -> 118-123; 112-113 -> 138-143; 130 -> 161-174; 136-143 -> 180-183; 145 -> 186-202; 149 -> 207; 152 -> 211; 157 removed at 215; 164 -> 223-231; 192 -> 259-263; 197 -> 268; 210-217 -> 281-283; 218 -> 285 |
+| `apps/web/e2e/model-picker.spec.ts`                           | 391-393 removed at 390; 396 removed at 392; 398 removed at 393                                                                                                                                                                                                                               |
+| `apps/web/src/__fixtures__/fake-api.ts`                       | 760 -> 760-771                                                                                                                                                                                                                                                                               |
+| `apps/web/src/editor/ClaudePolicyField.tsx`                   | 5 -> 5; 28 -> 29; 30 -> 31; 36 -> 37-41; 48 removed at 52                                                                                                                                                                                                                                    |
+| `apps/web/src/editor/EditorPage.freshness.test.tsx`           | 247 -> 247-251                                                                                                                                                                                                                                                                               |
+| `apps/web/src/editor/EditorPage.tsx`                          | 15 -> 16-17; 122 -> 125-127                                                                                                                                                                                                                                                                  |
+| `apps/web/src/editor/HarnessField.tsx`                        | new 1-116                                                                                                                                                                                                                                                                                    |
+| `apps/web/src/editor/NodeEditorDialog.tsx`                    | 3 removed at 2; 8 -> 7; 47 -> 46-47; 168-170 removed at 167; 293-301 removed at 289; 309 removed at 296; 316-348 removed at 302; 570-574 removed at 523; 709-713 -> 658-664                                                                                                                  |
+| `apps/web/src/editor/harness-switch.test.tsx`                 | 5 -> 6; 12 -> 13-18; 39 -> 45; 60 -> 67-70; 66-67 -> 76-77; 79-80 -> 89; 95 -> 105; 101-109 removed at 110; 114 -> 115-122; 122 -> 130-132; 127 -> 137; 129 -> 139; 188-190 -> 198-202; 216 -> 229-341                                                                                       |
+| `apps/web/src/forms/fields/harness-switch.test.tsx`           | new 1-265                                                                                                                                                                                                                                                                                    |
+| `apps/web/src/forms/fields/model.tsx`                         | 11 -> 11; 15 -> 15-20; 23-30 -> 28; 32-34 removed at 29; 36 -> 31-40; 38-40 -> 42-70; 42-43 -> 72-83; 45 -> 85; 47 -> 87; 49 -> 89; 51-52 -> 91; 54 -> 93; 56 -> 95; 58 -> 97; 64 -> 103; 66 -> 105; 76-78 -> 115-120; 82 -> 124; 87-92 -> 129-136; 94 -> 138; 96 -> 140-144                 |
+| `docs/06-harness-integration.md`                              | 425-441 -> 425-431                                                                                                                                                                                                                                                                           |
+| `docs/09-frontend-and-pwa.md`                                 | 684-700 -> 684-723                                                                                                                                                                                                                                                                           |
+| `docs/guide/06-settings-and-secrets.md`                       | 301 -> 301-310; 303-321 -> 312                                                                                                                                                                                                                                                               |
+| `docs/qa/2026-10-20-wp-f2b-harness-switch/README.md`          | 11 -> 11; 15 -> 15; 18 -> 18-19; 50 -> 51-54; 54 -> 58; 72-86 -> 76-94; 93-95 -> 101-103; 97 -> 105; 99-108 -> 107-108; 110-118 -> 110-122; 120-124 -> 124-146; 131-132 -> 153-155; 139 -> 162-164; 141 -> 167-168; 144 -> 172; 147-148 -> 175-178; 185 -> 216-218                           |
+| `docs/qa/2026-10-20-wp-f2b-harness-switch/before.md`          | 11 -> 12-32                                                                                                                                                                                                                                                                                  |
+| `docs/qa/2026-10-20-wp-f2b-harness-switch/report.md`          | whole report, 1-249                                                                                                                                                                                                                                                                          |
+| `docs/qa/2026-10-20-wp-f2b-harness-switch/round1-report.md`   | new 1-125                                                                                                                                                                                                                                                                                    |
+| `docs/qa/2026-10-20-wp-f2b-harness-switch/round2-after.json`  | new 1-533                                                                                                                                                                                                                                                                                    |
+| `docs/qa/2026-10-20-wp-f2b-harness-switch/round2-before.json` | new 1-185                                                                                                                                                                                                                                                                                    |
+| `packages/adapter-codex/src/harness.ts`                       | 62 -> 62                                                                                                                                                                                                                                                                                     |
+| `packages/adapter-codex/src/index.ts`                         | 7 -> 8                                                                                                                                                                                                                                                                                       |
+| `packages/api-client/openapi.json`                            | 17776 -> 17777-17779; 17786 -> 17789-17790                                                                                                                                                                                                                                                   |
+| `packages/api-client/src/generated/schema.ts`                 | 1736 -> 1737                                                                                                                                                                                                                                                                                 |
 
-- `harness-switch.test.tsx`: 19/19 passed after the final production guard.
-- API `harness-switch.test.ts`: 2/2 passed in isolation and included in the coverage run.
-- Native collector: 8/8 scenarios; 6/6 succeeded runs, save/reopen checks and exact model/effort requests; 2/2 disabled preferences retained.
-- Edge (installed `msedge`, retries zero): 21 passed / 4 known #205 failures, reproduced again after the final production build. Both rewritten explicit-switch cases and both loaded-incompatible cases pass.
+## 4. Tests and coverage
 
-| Known #205 failure                                         | Brief/baseline coordinate  | Final coordinate           |
-| ---------------------------------------------------------- | -------------------------- | -------------------------- |
-| Catalog model/effort publish and reach harness, dark       | `model-picker.spec.ts:28`  | `model-picker.spec.ts:36`  |
-| Catalog model/effort publish and reach harness, light      | `model-picker.spec.ts:28`  | `model-picker.spec.ts:36`  |
-| Saved model removed from catalog / explicit unknown import | `model-picker.spec.ts:94`  | `model-picker.spec.ts:102` |
-| Catalog failure / loop defaults share picker               | `model-picker.spec.ts:151` | `model-picker.spec.ts:159` |
+Final full runs: **Web 1,541 passed**, 120/120 files; **API 711 passed, 6 skipped**, 48 files passed
+and 2 skipped (717 tests, 50 files). Every coverage threshold remains unchanged and passes.
 
-These remain unchanged functional failures concerning controls under Advanced; they are not accepted by retry. The earlier two `claude-harness.spec.ts:159` failures are resolved by the rewritten #204 rule (now line 168).
+| Package | Lines              | Branches           | Statements         | Functions          |
+| ------- | ------------------ | ------------------ | ------------------ | ------------------ |
+| Web     | 98.95% (7083/7158) | 95.00% (7265/7647) | 98.04% (8126/8288) | 98.55% (2189/2221) |
+| API     | 97.88% (1806/1845) | 93.01% (1291/1388) | 96.40% (1983/2057) | 94.08% (398/423)   |
 
-| Package | Full-run result                                                | Lines              | Branches           |
-| ------- | -------------------------------------------------------------- | ------------------ | ------------------ |
-| API     | 701 passed, 1 failed, 6 skipped; one native worker error       | 97.17% (1790/1842) | 91.89% (1270/1382) |
-| Web     | 1518 passed, 1 failed (1519); 118 passed files / 1 failed file | 98.96% (7055/7129) | 95.03% (7232/7610) |
+Dedicated switch tests: **41 passed** (28 editor/component, 13 helper). Native collector: **16
+scenarios passed**, including 14 saved/published/reopened/request-matched runs. The final full web
+run also passes the earlier timed-out Undo/Redo case in 5.064 seconds.
 
-Coverage thresholds and exclusions are unchanged. API skip guards are existing LIVE/PERF/platform guards; no paid turn was enabled.
+Fail-before and individual triage evidence:
 
-**Individual failure triage:** API `adversarial.test.ts:184` (ADV-008 scope matrix) exceeded its unchanged 20 s limit under full coverage/load, then passed alone (test time within the existing limit). `qa.test.ts` had worker exit `3221225477` (native access violation); the same whole file passed 10/10 alone. These are recorded as load/native-worker environment classes; the full run stays failed. This is not a claim that an isolated pass makes that gate green. D-015's native tree-kill denial is a separate established class and was not a demonstrated cause of this worker access violation.
-
-An early web coverage attempt was interrupted because the production cached-refetch guard had changed during the run; the final complete run used the final production logic. Its two failures, `DecisionAuthoring.test.tsx:127` and `:197`, each passed alone. The final full run reported only `EditorPage.test.tsx:1042` (assertion at line 1077): the `The server has a newer draft` notice was still present immediately after Discard it. That case passed alone without a timeout or code change. This is a timing/load symptom; the root cause is not established by an isolated pass. Full-run outcomes remain recorded rather than retried away.
+- Initial component run: **19 passed, 5 failed**: both loop-over-Settings cases, both disabled-loop
+  effort-order cases, and early loading. Native baseline separately proves B1 inheritance pinning.
+- Three additional failure/loading regressions failed individually before correction: a known
+  failed catalog queued behind another first check, an initial-catalog retry treated as a first
+  load, and an initial failure hidden by recovery while another check remained pending. Each
+  formerly substituted `destination` / `high`; all now preserve the authored choice.
+- Three effort-only regressions failed before correction: unknown or failed catalog cleared an
+  authored effort, and initial Settings loading was not awaited for effort compatibility. All now
+  retain effort on failure and keep the model unset on success.
+- The first broad web attempt exposed an omitted-harness bug in the new field. It was stopped and
+  fixed to use the contract's Codex default. `EditorPage.test.tsx:292` and `:330` each passed alone
+  (1 passed/36 skipped), then passed in the final full run.
+- First API coverage: **710 passed, 1 failed, 6 skipped**. Its sole failure was the new catalog
+  test expecting Codex before Claude in the sorted response. It failed alone, was corrected and
+  passed alone (1 passed/26 skipped), then passed in the final full API run.
+- A broad web run had **1535 passed, 1 failed**: `EditorPage.freshness.test.tsx:201` expected raw
+  catalog rows without the new `ecosystemDefault` response property. It failed alone at line 247;
+  only that expected response was corrected. It passed alone (1 passed/7 skipped) and in the final
+  full run. Freshness/validation logic and assertions remain intact.
+- An intermediate broad run was stopped for the additional source correction after
+  `NodeEditorDialog.test.tsx:521` exceeded its original 20-second limit (20.417 seconds). It passed
+  alone with that same limit (1 passed/29 skipped; roughly 5-second body), and in the final full
+  run. This load-class observation is retained; neither the timeout nor the assertion was weakened.
+- One final coverage invocation ran zero tests because its default report directory had a stale
+  Vitest lock. The PID had been reused by Bash, so the diagnostic did not identify a running Vitest.
+  The final full run used a fresh report directory with identical test/coverage settings; see below.
 
 ## 5. Gates
 
-All commands used Node 22.14.0 first on PATH and `pnpm.cmd`. Direct package coverage avoids Turbo cache reuse. Shared Turbo cache writes emitted sandbox access-denied warnings; commands still executed.
+All commands select Node **v22.14.0** on PATH and use `pnpm.cmd` in PowerShell.
 
-| Command                                                                                                                                                                       | Result                                                                                                                                                                                          |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm.cmd typecheck --concurrency=2`                                                                                                                                          | PASS, 20 tasks                                                                                                                                                                                  |
-| `pnpm.cmd --filter @graphgoblin/web typecheck`                                                                                                                                | PASS after the typed browser fixture correction                                                                                                                                                 |
-| `pnpm.cmd lint --concurrency=2`                                                                                                                                               | PASS, 11 tasks                                                                                                                                                                                  |
-| `pnpm.cmd format:check`                                                                                                                                                       | PASS, all matched files                                                                                                                                                                         |
-| `pnpm.cmd check:docs`                                                                                                                                                         | PASS; generated references up to date                                                                                                                                                           |
-| `pnpm.cmd check:tokens`                                                                                                                                                       | PASS, 162 files                                                                                                                                                                                 |
-| `pnpm.cmd check:layers`                                                                                                                                                       | PASS                                                                                                                                                                                            |
-| `pnpm.cmd check:deps`                                                                                                                                                         | PASS, 804 modules / 3202 dependencies, zero errors; existing `drizzle.config.ts` orphan warning. Initial concurrent scan raced changing Playwright trace resources (ENOENT); stable scan passed |
-| `pnpm.cmd --filter @graphgoblin/api test:coverage --maxWorkers 1 --coverage.reportOnFailure`                                                                                  | FAIL as recorded above; both coverage thresholds pass                                                                                                                                           |
-| `pnpm.cmd --filter @graphgoblin/web test:coverage --maxWorkers 2 --coverage.reportOnFailure`                                                                                  | FAIL, one timing-sensitive device-draft assertion; both coverage thresholds pass                                                                                                                |
-| `pnpm.cmd build --concurrency=2`                                                                                                                                              | PASS, 11 tasks after final production changes                                                                                                                                                   |
-| `GG_E2E_BROWSER_CHANNEL=msedge pnpm.cmd --filter @graphgoblin/web exec playwright test e2e/claude-harness.spec.ts e2e/model-picker.spec.ts e2e/readiness.spec.ts --retries=0` | 21 passed / the four known #205 failures                                                                                                                                                        |
-| `GG_SWITCH_EXPECT_FIXED=1 pnpm.cmd --filter @graphgoblin/web exec tsx --conditions=development e2e/harness-switch-native.mjs`                                                 | PASS, controlled built-app native evidence above                                                                                                                                                |
+| Exact command                                                                                                                                               | Final result                                                                   |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `pnpm.cmd typecheck`                                                                                                                                        | PASS, 20 tasks; changed web files checked again after the final guard          |
+| `pnpm.cmd --filter @graphgoblin/web typecheck`                                                                                                              | PASS on final source and all its tests/fixtures                                |
+| `pnpm.cmd lint`                                                                                                                                             | PASS, 11 tasks; initial lint findings corrected                                |
+| `pnpm.cmd --filter @graphgoblin/web lint`                                                                                                                   | PASS after final source and collector changes                                  |
+| `pnpm.cmd format:check`                                                                                                                                     | PASS; report formatting rechecked at handoff                                   |
+| `pnpm.cmd check:docs`                                                                                                                                       | PASS, generated references current                                             |
+| `pnpm.cmd check:tokens`                                                                                                                                     | PASS, 163 files                                                                |
+| `pnpm.cmd check:layers`                                                                                                                                     | PASS                                                                           |
+| `pnpm.cmd check:deps`                                                                                                                                       | PASS, 0 errors; existing drizzle orphan warning, 809 modules/3228 dependencies |
+| `pnpm.cmd build`                                                                                                                                            | PASS, 11 tasks, before final Edge/native checks                                |
+| `pnpm.cmd test:coverage --filter=@graphgoblin/api -- --maxWorkers=1 --coverage.reportOnFailure=true`                                                        | PASS, 711 passed/6 skipped, all thresholds pass                                |
+| `pnpm.cmd test:coverage --filter=@graphgoblin/web -- --maxWorkers=2 --coverage.reportOnFailure=true "--coverage.reportsDirectory=$qaCoverageDir"`           | PASS, 1541 passed, all thresholds pass                                         |
+| `pnpm.cmd --filter @graphgoblin/web exec tsx --conditions=development e2e/harness-switch-native.mjs` with `GG_SWITCH_PORT=5832`, `GG_SWITCH_EXPECT_FIXED=1` | PASS, 16 scenarios and 14 exact fake requests                                  |
 
-Every observed coverage failure is triaged individually with `vitest run <file>:<line> --maxWorkers 1`, or the whole `qa.test.ts` file for its native worker crash. No timeouts, thresholds or assertions were weakened. No dependency changed, so license checking was not required. Node schema and route contracts did not change, so no regenerated contract/client/reference artifacts were needed.
+`$qaCoverageDir` was a new `%TEMP%/gg-wp-f2b-web-coverage-*` directory. The final web JSON/LCOV
+reports are at `%TEMP%\gg-wp-f2b-web-coverage-27d3e0eff3ea4be186f0e30117032e75`; API reports are in
+`apps/api/coverage`. Command logs remain under `%TEMP%/gg-wp-f2b-round2-*.log`.
 
-## 6. Docs
+After the final build, with `GG_E2E_BROWSER_CHANNEL=msedge`:
 
-- Docs 06/09 and guide 06 describe the explicit switch, Settings-before-loop authoring precedence, ecosystem sources, compatible effort preservation and failure/recovery behavior. Docs/09's former claim that harness changes never rewrite fields is corrected.
-- CHANGELOG has one new Unreleased bullet ending `(#204)`. No stored value changes or upgrade/reset are required.
-- [README.md](README.md) is a self-contained owner acceptance procedure: Node 22, build, disposable `%TEMP%/gg-wp-f2b-*` data, ports 5830-5839, fake binary environment variables, exact clicks, expected model/effort values, save/reload/publish/run checks, real-CLI differences, stop and cleanup.
-- No new ADR: this implements the already decided #204 rule and D-009 stacking rule, without changing runtime inheritance.
+```powershell
+pnpm.cmd --filter @graphgoblin/web exec playwright test e2e/claude-harness.spec.ts e2e/model-picker.spec.ts e2e/readiness.spec.ts --workers=1 --reporter=line
+```
+
+**21 passed, exactly 4 known #205 failures** (25 total, 3.1 minutes):
+
+- `model-picker.spec.ts:36:3`: catalog model and effort publish and reach the harness (dark).
+- `model-picker.spec.ts:36:3`: catalog model and effort publish and reach the harness (light).
+- `model-picker.spec.ts:102:1`: a saved model removed from the catalog stays selected and explicit unknown import is rejected.
+- `model-picker.spec.ts:159:1`: catalog failure preserves the current values until retry and loop defaults share the picker.
+
+These are the first brief's `model-picker.spec.ts:28` twice, `:94` and `:151`, shifted by the
+existing imports. All 9 Claude-harness and all 8 readiness cases pass, including both
+loaded-incompatible cases and restored absent-property assertions. No browser failure is counted
+as a pass. Model and effort remain in Advanced for the separate #205 work.
+
+## 6. Docs, contracts and owner acceptance
+
+Docs 06/09, guide 06 and the CHANGELOG use **loop, Settings, ecosystem** for explicit-model
+switching (D-023), preserve unset inheritance and explain initial waiting/failure retention. A blocked
+switch's incompatible draft cannot be saved; catalog failure shows **Validation unavailable**.
+No stored value changes or migration/upgrade steps are required. The additive catalog response
+property regenerates `packages/api-client/openapi.json` and `src/generated/schema.ts`.
+`pnpm.cmd docs:generate` ran; reference rendering has no content change. This implements the settled
+D-023 decision without another architectural change, so no new ADR is needed.
+
+[README.md](README.md) is self-contained: checkout-relative start, Node 22, install/build, a fresh
+store and permitted port, fake CLI variables, exact clicks and expected models/efforts, early
+loading, full/effort-only inheritance, save/reopen/publication/run, real-CLI differences and stop /
+retained cleanup. The collector uses `GG_SWITCH_PORT` from the README variable and writes only
+its fresh disposable output. The report JSON was copied deliberately after inspection; the
+collector never overwrites tracked `native-after.json` or other repository evidence.
 
 ## 7. Decisions and parameters
 
-- Configured model preference is **Settings, then loop**, independently for the destination harness, as this brief specifies. Settings is fetched through the existing public owner-settings query and parsed with `HarnessDefaultsSchema`; loop defaults come from the current editor definition.
-- Ecosystem model IDs mirror the supported adapter defaults: Codex `gpt-6-luna` (`adapter-codex/src/harness.ts`), Claude `claude-opus-5-5` (`infrastructure/src/claude/models.ts`). They must still be enabled members of the fetched catalog. No catalog order or arbitrary first enabled entry is used.
-- A supported authored effort stays. Otherwise effort preference is compatible Settings, compatible loop, then selected catalog `defaultEffort`; Claude also checks the adapter's listed efforts. A missing compatible effort preserves both authored values and explains the problem.
-- Snapshot selection happens only at the explicit action. The cache is read at action time to refuse a just-failed lookup; preflight vocabulary and background-refetch behavior stay F1-owned. No queued action runs after recovery.
-- Runtime node/loop/owner/process inheritance is unchanged. There is no engine or adapter fallback change, stored migration, disabled-entry re-enablement, model addition or effort-catalog change.
-- Native collector startup/run observation budgets are 600 checks at 100 ms (up to 60 s plus request time), with a 15 s browser action budget; they are fixture observation limits, not product defaults or owner-approved execution limits. The collector asserts successful completion rather than treating observation expiry as a pass.
+- **D-023:** configured preference is loop defaults from the current definition, then owner Settings,
+  then the supported ecosystem model identified by the catalog response. Compatible effort order
+  is loop, Settings, selected catalog suggestion. Supported authored effort stays; absent effort
+  stays absent.
+- The adapters remain the default identity sources: exported Codex `DEFAULT_MODEL` (public alias
+  `CODEX_DEFAULT_MODEL`) and existing Claude `CLAUDE_MODEL`. The API annotates catalog rows without
+  changing membership, efforts or enabled preferences. The web repeats no default model IDs.
+- A fully inheriting node switches without reading/waiting for these lookups. An authored model or
+  effort shares the already-running first checks; an effort-only node keeps its model inherited.
+  The action starts no fetch. Known failures, retries after a failure, and first-check rejection
+  cannot queue a later rewrite on recovery. Failed checks retain all authored model/effort values.
+- Harness, dependent values and Claude's `read-only` / `never` policy update in one undo scope,
+  without a form remount. Pending actions cancel on dismissal/history or a concurrent form edit.
+  Successful recovery alone never authors values. Runtime still resolves node, loop, owner,
+  process; no execution fallback changed.
+- Native observation limits are 60 seconds for app/run polling and 15 seconds for browser
+  expectations; these are fixture observation budgets, not product execution limits. Deliberate
+  first-response delays are 1.5 seconds. Fixed-mode waits for observed values, and route teardown
+  waits for handlers. Manual native app runs used port 5832; standard API/Edge suites retain their
+  documented automatic free-port selection.
 
 ## 8. Caveats and open items
 
-- Independent cross-provider review, bounded real provider turns (D-005), independent QA and owner running-product acceptance remain outstanding. This is implementation evidence, not acceptance or merge authorization.
-- #205 is separate; its four browser failures remain exactly as listed. Model/effort remain under Advanced in this worktree.
-- WP-F2a catalog membership is intentionally untouched. This base contains Opus/Fable; it does not claim Sonnet/Haiku verification or integration.
-- Full coverage failures are retained with isolated triage evidence and are not called green. API has the scope-matrix timeout and native worker error; web has the device-draft notice assertion. Each affected case/file passed alone; authoritative review/CI must still assess the full-run failures.
-- The named paging QA example was absent in this base; the owner README follows the existing readiness QA handoff structure and includes its own complete startup/acceptance/stop procedure.
-- Manual/native work used port 5830 and prefixed disposable data. Existing API/E2E fixtures retained their standard automatic isolated ports/temp paths. The owner's ports 4747/4748, store and checkout were never operated on.
-- Disposable directories, coverage and Playwright result directories are retained for owner/orchestrator cleanup; no manual directory deletion or dependency symlink/junction was attempted.
+- Owner running-product acceptance remains required before merge. The earlier Opus review and
+  bounded real provider turns (D-005) are prior evidence. This round used fake CLIs only, made no
+  paid turns and did not touch the owner's app/store or ports 4747/4748.
+- N9 stays with the Defaults-asymmetry owner note: switching to Codex checks readiness while its
+  picker remains editable. Wrong-provider explicit Luna on Claude is the mismatched state the
+  switch repairs, not a separate disablement defect.
+- #205's four browser failures remain exactly as listed. WP-F2a membership/efforts/policy and WP-F4
+  execution paths were not edited. No Sonnet/Haiku integration or effective Claude effort is claimed.
+- Earlier full-run failures and stopped runs remain in the triage record above. The final web/API
+  full suites pass; this is not a retry-to-green claim about those earlier runs. Each repetition
+  followed a source/test correction, or the distinct zero-test stale-lock failure.
+- Vitest's default-output lock `%TEMP%/vitest-coverage-5024a91c194686f7.lock` dates to 09:53:24 and
+  names PID 19336. `Get-Process` identified that PID as `bash.exe`, started at 10:24:47. The stale
+  lock and earlier report directory were retained; no unrelated process was stopped. CIM process
+  enumeration was denied by the host. The final run's separate report directory avoids this
+  environment issue without changing thresholds, exclusions, timeout or test isolation.
+- Expanded collector attempts exposed fixed sampling-delay and route-teardown issues in the QA
+  script; both were corrected before the final complete 16-case pass. Its own isolated processes
+  were stopped, and disposable artifacts remain for review.
+- Dependency cruising retains its existing `drizzle.config.ts` orphan warning, with zero errors.
+  Turbo emits Windows cache access-denied warnings even on successful commands. These diagnostics
+  are retained separately from product test results.

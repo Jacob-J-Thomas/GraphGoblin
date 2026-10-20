@@ -13,6 +13,8 @@ import {
   keys,
   useClassifierModels,
   useModelCatalog,
+  usePreflight,
+  useSettings,
 } from '../api/queries.js';
 import { ErrorState } from '../components/status.js';
 import { Alert, Button, useSidePanelState } from '../components/ui/index.js';
@@ -120,6 +122,9 @@ export function EditorPage() {
   // them changes. Loading the model catalog here also has it ready before a node dialog or the
   // loop settings form needs it, and its refetch (on focus, say) finds another tab's change.
   const models = useModelCatalog();
+  // Start the first no-turn check and defaults load before an inference dialog is opened.
+  usePreflight();
+  useSettings();
   const classifiers = useClassifierModels();
   const catalogsResolved = models.data !== undefined && classifiers.data !== undefined;
   const catalogState = useMemo(

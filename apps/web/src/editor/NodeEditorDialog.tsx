@@ -1,11 +1,10 @@
 import {
   NodeConfigSchemas,
-  HarnessIdSchema,
   SlugSchema,
   type LoopDefinitionInput,
   type NodeInput,
 } from '@graphgoblin/contracts';
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Icon } from '../components/icons/index.js';
 import {
   Button,
@@ -44,7 +43,8 @@ import {
   WebhookEventTypePicker,
 } from './TriggerTypePicker.js';
 import { POLL_FIELD_LABELS, WEBHOOK_FIELD_LABELS } from './trigger-field-labels.js';
-import { CatalogWarningsContext, useHarnessSwitch } from '../forms/fields/model.js';
+import { CatalogWarningsContext } from '../forms/fields/model.js';
+import { INFERENCE_FIELD_OVERRIDES } from './HarnessField.js';
 import { GateLimitIssuesContext } from './DecisionGateFields.js';
 import { canvasFocusTarget } from './canvas-focus.js';
 import { DECISION_FIELD_OVERRIDES, NODE_FIELD_CONTROLS } from './field-controls.js';
@@ -165,9 +165,6 @@ export function NodeEditorDialog({
   const historyEpoch = useEditorStore((s) => s.historyEpoch);
   const generation = useEditorStore((s) => s.generation);
   const bodyRef = useRef<HTMLElement>(null);
-  const pendingHarnessFocusRef = useRef<string | undefined>(undefined);
-  const switchHarness = useHarnessSwitch();
-  const [harnessSwitchNotice, setHarnessSwitchNotice] = useState<string>();
   const [epoch, setEpoch] = useState(0);
   const [review, setReview] = useState<{
     title: string;
@@ -290,15 +287,6 @@ export function NodeEditorDialog({
     return () => clearTimeout(timer);
   }, [nodeFocus, node.id]);
 
-  useLayoutEffect(() => {
-    if (!pendingHarnessFocusRef.current) return;
-    const harness = pendingHarnessFocusRef.current;
-    pendingHarnessFocusRef.current = undefined;
-    bodyRef.current
-      ?.querySelector<HTMLInputElement>(`input[type="radio"][value="${harness}"]`)
-      ?.focus();
-  }, [epoch]);
-
   const commitId = () => {
     const error = idProblem(id.value, node.id, definition);
     setIdState({ ...id, error });
@@ -306,44 +294,10 @@ export function NodeEditorDialog({
   };
 
   const handleConfigChange = (config: unknown, change: Parameters<typeof updateNode>[2]) => {
-    if (change?.path === 'model' || change?.path === 'effort') setHarnessSwitchNotice(undefined);
     if (node.kind === 'decision' && hasRepeatRoute(node.config) && !hasRepeatRoute(config)) {
       config = cleanGateLimits(config);
       for (const path of ['maxPasses', 'maxRunTimeSeconds'])
         setFieldError(`node:${node.id}`, path, undefined, undefined, change);
-      setEpoch((current) => current + 1);
-    }
-    if (
-      node.kind === 'inference' &&
-      change?.path === 'harness' &&
-      record(config)['harness'] !== node.config.harness
-    ) {
-      const harness = HarnessIdSchema.parse(record(config)['harness']);
-      const selection = switchHarness(
-        harness,
-        record(config)['effort'],
-        definition.settings?.defaults,
-      );
-      setHarnessSwitchNotice(selection.message);
-      pendingHarnessFocusRef.current =
-        document.activeElement instanceof HTMLInputElement &&
-        document.activeElement.type === 'radio'
-          ? harness
-          : undefined;
-      config = {
-        ...record(config),
-        ...('model' in selection ? { model: selection.model, effort: selection.effort } : {}),
-        // Switching to Claude explicitly starts with its least-privileged supported policy.
-        ...(harness === 'claude'
-          ? {
-              harnessOptions: {
-                ...record(record(config)['harnessOptions']),
-                sandbox: 'read-only',
-                approval: 'never',
-              },
-            }
-          : {}),
-      };
       setEpoch((current) => current + 1);
     }
     if (node.kind === 'decision' && change?.path === 'answer') {
@@ -567,11 +521,6 @@ export function NodeEditorDialog({
         {/* Not keyed by the node id: a rename keeps the form (and focus) where it is. Issue paths
             `config.<path>` name its fields (focus-field.ts). */}
         <div data-field-scope="config" className="grid min-w-0">
-          {harnessSwitchNotice ? (
-            <HelpText role="status" tone="warn">
-              {harnessSwitchNotice}
-            </HelpText>
-          ) : null}
           {node.kind === 'trigger' ? (
             <HelpText>
               Use a downstream decision for payload checks. Route unwanted input to a quiet success
@@ -706,11 +655,13 @@ export function NodeEditorDialog({
                                       : undefined
                                 }
                                 fieldOverrides={
-                                  node.kind === 'decision'
-                                    ? DECISION_FIELD_OVERRIDES
-                                    : node.kind === 'exit'
-                                      ? EXIT_FIELD_OVERRIDES
-                                      : undefined
+                                  node.kind === 'inference'
+                                    ? INFERENCE_FIELD_OVERRIDES
+                                    : node.kind === 'decision'
+                                      ? DECISION_FIELD_OVERRIDES
+                                      : node.kind === 'exit'
+                                        ? EXIT_FIELD_OVERRIDES
+                                        : undefined
                                 }
                                 problems={configProblems}
                                 disclosures={disclosures}

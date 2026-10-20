@@ -8,11 +8,16 @@ import {
   type HarnessId,
 } from '@graphgoblin/contracts';
 import { createContext, use, useId } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { QueryObserver, useQueryClient } from '@tanstack/react-query';
 import { useWatch } from 'react-hook-form';
 import { Link } from 'react-router';
 import { harnessDisplayName } from '@graphgoblin/domain';
-import { keys, useModelCatalog, usePreflight, useSettings } from '../../api/queries.js';
+import {
+  keys,
+  useModelCatalog,
+  usePreflight,
+  type HarnessPreflightItem,
+} from '../../api/queries.js';
 import { harnessReadiness, readinessLine } from '../../api/readiness.js';
 import { Icon } from '../../components/icons/index.js';
 import { Button, HelpText, Select } from '../../components/ui/index.js';
@@ -20,50 +25,84 @@ import { shapeOf, unwrap, type FieldShape, type Schema } from '../introspect.js'
 import { isUnset } from '../unset.js';
 import { fieldMeta, FormScopeContext, Row, useField, type FieldProps } from './shared.js';
 
-// These are the supported adapter defaults, not the first enabled catalog row. Catalog
-// membership/enablement and Claude's no-turn capability listing still admit every selection.
-const ECOSYSTEM_MODEL: Record<HarnessId, string> = {
-  codex: 'gpt-6-luna',
-  claude: 'claude-opus-5-5',
-};
-
-/** Called only by the editor's explicit harness action; query recovery never writes a field. */
+/** Read the shared queries at action time; this hook never starts or refetches a lookup. */
 export function useHarnessSwitch() {
-  useModelCatalog();
-  useSettings();
-  const preflight = usePreflight();
   const queryClient = useQueryClient();
-  return (harness: HarnessId, effort: unknown, loopDefaults: unknown) => {
+  return async (
+    harness: HarnessId,
+    model: unknown,
+    effort: unknown,
+    loopDefaults: unknown,
+    waiting: () => void,
+  ) => {
+    // An unset model already inherits within the selected harness. An entirely inheriting
+    // node needs no catalog, Settings or readiness lookup, even when those are unavailable.
+    if (model === undefined && effort === undefined) return { message: undefined };
     const unchanged = (message: string) => ({ message });
-    // Read the cache at the action, including a just-failed refetch whose observer notification
-    // has not rendered yet. An older successful render must never authorize substitution.
-    const catalog = queryClient.getQueryState<ModelCatalogEntry[]>(keys.catalog);
+    let firstLookupFailed = false;
+    const queries = [keys.catalog, keys.settings, keys.preflight].map((queryKey) =>
+      queryClient.getQueryCache().find({ queryKey }),
+    );
+    // A known failure must be reported in this action, never queued behind another lookup.
+    const failed = queries.some(
+      (query) => query?.state.status === 'error' || query?.state.fetchStatus === 'paused',
+    );
+    const firstLoads = failed
+      ? []
+      : queries.flatMap((query) => {
+          return query?.state.status === 'pending' &&
+            query.state.fetchStatus === 'fetching' &&
+            query.state.errorUpdatedAt === 0 &&
+            query.promise !== undefined
+            ? [query.promise]
+            : [];
+        });
+    if (firstLoads.length) {
+      waiting();
+      try {
+        await Promise.all(firstLoads);
+      } catch {
+        firstLookupFailed = true;
+      }
+    }
+    const catalog = queryClient.getQueryState<
+      (ModelCatalogEntry & { ecosystemDefault: boolean })[]
+    >(keys.catalog);
     const settings = queryClient.getQueryState<Record<string, unknown>>(keys.settings);
-    const preflightState = queryClient.getQueryState(keys.preflight);
-    if (!catalog?.data || catalog.status === 'error' || catalog.fetchStatus === 'paused')
+    const observer = new QueryObserver<HarnessPreflightItem[]>(queryClient, {
+      queryKey: keys.preflight,
+      enabled: false,
+    });
+    const readiness = harnessReadiness(observer.getCurrentResult(), harness);
+    observer.destroy();
+    // Failed checks preserve an authored effort even when the model itself is inherited.
+    if (catalog?.status === 'error' || catalog?.fetchStatus === 'paused')
       return unchanged(
-        'The harness changed, but model and effort are unchanged until the model catalog can be checked. Retry the catalog, then choose a model or switch harness again.',
+        'The harness changed, but model and effort are unchanged. Retry model catalog, then choose a model or switch harness again. Validation is unavailable while the catalog cannot be loaded. An incompatible draft cannot be saved.',
       );
-    if (!settings?.data || settings.status === 'error' || settings.fetchStatus === 'paused')
+    if (settings?.status === 'error' || settings?.fetchStatus === 'paused')
       return unchanged(
-        'The harness changed, but model and effort are unchanged until Settings defaults can be checked. Reload, then choose a model or switch harness again.',
+        'The harness changed, but model and effort are unchanged until Settings defaults can be checked. Reload the editor, then choose a model or switch harness again.',
       );
-    const readiness = harnessReadiness(preflight, harness);
-    if (preflightState?.status === 'error' || preflightState?.fetchStatus === 'paused')
+    if (readiness.state !== 'ready' && readiness.state !== 'checking')
       return unchanged(
-        `${readinessLine(harness, { ...readiness, state: 'unknown', lookupFailed: true })} Model and effort are unchanged. Retry preflight, then choose a model or switch harness again.`,
+        `${readinessLine(harness, readiness)} Model and effort are unchanged. Retry ${harnessDisplayName(harness)} preflight, then choose a model or switch harness again.`,
       );
-    if (readiness.state !== 'ready')
+    if (firstLookupFailed)
       return unchanged(
-        `${readinessLine(harness, readiness)} Model and effort are unchanged. Retry preflight, then choose a model or switch harness again.`,
+        'A first lookup failed during this harness change. Model and effort are unchanged; review the catalog and readiness results, then choose a model or switch harness again.',
+      );
+    if (!catalog?.data || !settings?.data || readiness.state === 'checking')
+      return unchanged(
+        'A catalog, Settings or readiness check is still loading. Model and effort are unchanged; wait for the checks to finish, then choose a model or switch harness again.',
       );
     const owner = HarnessDefaultsSchema.safeParse(settings.data['defaults'] ?? {});
     const loop = HarnessDefaultsSchema.safeParse(loopDefaults ?? {});
     if (!owner.success || !loop.success)
       return unchanged(
-        'The harness changed, but its defaults are invalid. Model and effort are unchanged; correct the defaults before choosing a model.',
+        'The harness changed, but model and effort are unchanged because the configured defaults are invalid. Correct the defaults, then choose a model or switch harness again.',
       );
-    const defaults = [owner.data.byHarness[harness], loop.data.byHarness[harness]];
+    const defaults = [loop.data.byHarness[harness], owner.data.byHarness[harness]];
     const entries = catalog.data.filter((entry) => entry.harness === harness && entry.enabled);
     const supportedEfforts = (entry: ModelCatalogEntry) =>
       entry.efforts.filter(
@@ -73,27 +112,36 @@ export function useHarnessSwitch() {
             (capability) => capability.model === entry.model && capability.efforts.includes(value),
           ),
       );
-    const candidates = [...defaults.map((value) => value?.model), ECOSYSTEM_MODEL[harness]];
-    const entry = candidates.flatMap((model) =>
-      entries.filter((entry) => entry.model === model && supportedEfforts(entry).length > 0),
+    const candidates = [
+      ...defaults.map((value) => value?.model),
+      entries.find((entry) => entry.ecosystemDefault)?.model,
+    ];
+    const entry = candidates.flatMap((candidate) =>
+      entries.filter((item) => item.model === candidate && supportedEfforts(item).length > 0),
     )[0];
     if (!entry)
       return unchanged(
-        'No enabled compatible configured or ecosystem default is available. Model and effort are unchanged; choose an enabled model or correct Settings.',
+        'No enabled compatible configured or ecosystem default is available for the new harness. Model and effort are unchanged; choose an enabled model explicitly or correct the default.',
       );
     const efforts = supportedEfforts(entry);
     const current = EffortSchema.safeParse(effort);
     const nextEffort =
-      current.success && efforts.includes(current.data)
-        ? current.data
-        : [...defaults.map((value) => value?.effort), entry.defaultEffort].find(
-            (value) => value !== undefined && efforts.includes(value),
-          );
-    if (!nextEffort)
+      effort === undefined
+        ? undefined
+        : current.success && efforts.includes(current.data)
+          ? current.data
+          : [...defaults.map((value) => value?.effort), entry.defaultEffort].find(
+              (value) => value !== undefined && efforts.includes(value),
+            );
+    if (effort !== undefined && !nextEffort && model !== undefined)
       return unchanged(
-        'No compatible default effort is available. Model and effort are unchanged; correct the defaults or choose an effort.',
+        'No compatible default effort is available for the new model. Model and effort are unchanged; choose them explicitly.',
       );
-    return { model: entry.model, effort: nextEffort, message: undefined };
+    return {
+      ...(model === undefined ? {} : { model: entry.model }),
+      effort: nextEffort,
+      message: undefined,
+    };
   };
 }
 

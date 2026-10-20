@@ -681,20 +681,43 @@ Models retain exact identity and effort checks (ADR-0029).
 
 ## Explicit node harness changes (#204)
 
-Changing an inference node's Harness is an authoring action. With successful catalog, Settings
-and readiness lookups, it writes an enabled compatible model explicitly: the owner's Settings
-default for the destination harness, then its loop default, then the supported ecosystem default
-(Codex `gpt-6-luna`, Claude `claude-opus-5-5`). Disabled, missing and adapter-incompatible
-configured models are skipped. If the ecosystem default is also unavailable, the authored
-model and effort stay visible with a notice; no arbitrary catalog entry is chosen or enabled.
-Claude model and effort compatibility uses its readiness capability listing as well as the catalog.
+Changing an inference node's Harness is one undoable authoring action. An unset model stays unset
+(**(loop default)**); an unset effort also stays unset. Inheritance remains within the selected
+harness, so a fully inheriting node switches without a catalog, Settings or readiness lookup.
+For an explicit model, choose the first enabled compatible destination model from the **loop
+default, Settings default, then ecosystem default** (D-023), matching runtime default precedence.
+The catalog response identifies ecosystem defaults from the adapters' own constants (currently
+Codex `gpt-6-luna`, Claude `claude-opus-5-5`); the web does not repeat those identities. Disabled,
+missing or adapter-incompatible configured models are skipped. No arbitrary catalog entry is
+chosen and no disabled entry is enabled. Claude compatibility includes its preflight capabilities.
 
-A supported existing effort stays. Otherwise, the switch writes the first supported effort from
-Settings, loop defaults, then the chosen catalog entry's `defaultEffort`. These values are saved
-on the node and reopen identically. This authoring precedence does not change runtime inheritance:
-unset node values still resolve through loop, owner and process defaults. Runs never substitute
-models. A failed/paused catalog or Settings lookup, or unready/unknown harness, preserves both
-authored values and shows the problem. Recovery alone never changes them: choose a model or
-explicitly switch again after retrying. Saved incompatible values loaded without a switch also
-stay visible and labelled; validation reports their incompatibility. Existing stored values are
-not migrated. Model and effort remain under Advanced until the separate #205 change.
+A supported explicit effort stays. An unsupported one uses the first compatible loop effort,
+Settings effort, then the selected entry's suggested effort. An effort-only node keeps model
+inheritance and checks its authored effort against the destination's effective model. A known
+unsupported effort can be replaced or cleared to inherit; failed checks keep the authored effort.
+The action starts no new lookup and shares the editor's already running first checks.
+
+The editor starts Settings and no-turn readiness checks when it mounts, alongside the catalog.
+A switch with an authored model or effort waits for first-time lookups already in flight, showing a loading notice
+under Harness; it applies the harness and dependent fields together when those checks finish.
+Failed lookups are reported immediately rather than retried by the action. A known failure is not
+queued behind another loading check, and a retry after failure does not count as the first load. The field reads shared
+query state at action time and does not remount the form or refetch after a switch. Opening a
+trigger or exit dialog adds no harness lookups. Undo/Redo clears the switch notice; a pending
+switch is cancelled by dismissal, history changes or a concurrent field edit.
+
+A failed/paused catalog or Settings lookup, unready/unknown harness, or unavailable compatible
+default retains explicit authored values and shows a warning under Harness, with an alert icon.
+Use **Retry model catalog** or **Retry Claude preflight** / **Retry Codex preflight** on the
+corresponding field. Recovery alone never authors a replacement: choose a model or switch again.
+During a catalog failure the editor shows **Validation unavailable**. A blocked switch leaves an
+incompatible draft that cannot be saved: resolve the lookup, then choose compatible values before
+saving or publishing. Loaded incompatible values without a
+switch remain visible and labelled incompatible, and ordinary validation reports their problems
+when the catalog is available.
+
+Successful changes save and reopen identically, and the adapter request uses those saved values.
+Switching to Claude also starts its supported `read-only`/`never` policy; other authored harness
+options remain for correction when unsupported. Runs never substitute models. Runtime resolution
+still uses node, loop, owner and process defaults; this action adds no runtime fallback or stored
+value migration. Model and effort remain under Advanced until the separate #205 change.

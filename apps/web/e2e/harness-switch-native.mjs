@@ -6,7 +6,7 @@ import { once } from 'node:events';
 import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
-import { chromium } from '@playwright/test';
+import { chromium, expect } from '@playwright/test';
 import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { manualTriggerConfig } from '../src/__fixtures__/triggers.js';
 
@@ -27,13 +27,16 @@ const compile = spawn(
   { stdio: 'inherit', windowsHide: true },
 );
 if ((await once(compile, 'exit'))[0] !== 0) throw new Error('fixture build failed');
-const url = 'http://127.0.0.1:5830';
+const port = Number(process.env.GG_SWITCH_PORT);
+if (!Number.isInteger(port) || port < 5830 || port > 5839)
+  throw new Error('Set GG_SWITCH_PORT to an unused port from 5830 through 5839');
+const url = `http://127.0.0.1:${port}`;
 const server = spawn(process.execPath, [join(root, 'apps/api/dist/main.js')], {
   cwd: root,
   windowsHide: true,
   env: {
     ...process.env,
-    GG_PORT: '5830',
+    GG_PORT: String(port),
     GG_HOST: '127.0.0.1',
     GG_DATA_DIR: join(directory, 'data'),
     GG_CODEX_BINARY: join(binaries, 'codex.exe'),
@@ -61,6 +64,7 @@ async function api(path, method = 'GET', data) {
   return text ? JSON.parse(text) : undefined;
 }
 let browser;
+let page;
 try {
   let listening = false;
   for (let i = 0; i < 600; i++) {
@@ -75,7 +79,7 @@ try {
   if (!listening) throw new Error('The disposable API did not start: ' + log);
   console.log(JSON.stringify({ directory, preflight: await api('/harness/preflight') }));
   browser = await chromium.launch({ channel: 'msedge', headless: true });
-  const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   page.setDefaultTimeout(15_000);
   const results = [];
   for (const from of ['codex', 'claude']) {
@@ -83,10 +87,27 @@ try {
     const oldModel = from === 'codex' ? 'gpt-6-astra' : 'claude-fable-5-1';
     const configured = to === 'claude' ? 'claude-fable-5-1' : 'gpt-6-astra';
     const ecosystem = to === 'claude' ? 'claude-opus-5-5' : 'gpt-6-luna';
-    for (const scenario of ['configured', 'absent', 'disabled', 'failed']) {
+    for (const scenario of [
+      'configured',
+      'absent',
+      'disabled',
+      'failed',
+      'inherited',
+      'effort-only',
+      'loop-over-owner',
+      'early',
+    ]) {
       await api('/settings', 'PUT', {
         defaults: {
-          byHarness: scenario === 'absent' ? {} : { [to]: { model: configured, effort: 'high' } },
+          byHarness:
+            scenario === 'absent'
+              ? {}
+              : {
+                  [to]: {
+                    model: scenario === 'loop-over-owner' ? ecosystem : configured,
+                    effort: 'high',
+                  },
+                },
         },
       });
       if (scenario === 'disabled')
@@ -94,7 +115,12 @@ try {
       const definition = {
         schemaVersion: CURRENT_DEFINITION_FORMAT,
         name: `${from} ${scenario}`,
-        settings: { defaults: { byHarness: {} } },
+        settings: {
+          defaults: {
+            byHarness:
+              scenario === 'loop-over-owner' ? { [to]: { model: configured, effort: 'low' } } : {},
+          },
+        },
         nodes: [
           {
             id: 'start',
@@ -109,8 +135,12 @@ try {
             label: 'Infer',
             config: {
               harness: from,
-              model: oldModel,
-              effort: from === 'codex' ? 'minimal' : 'high',
+              ...(scenario === 'inherited'
+                ? {}
+                : {
+                    ...(scenario === 'effort-only' ? {} : { model: oldModel }),
+                    effort: from === 'codex' ? 'minimal' : 'high',
+                  }),
               prompt: { template: 'Synthetic switch QA' },
               harnessOptions: { sandbox: 'read-only', approval: 'never' },
             },
@@ -128,33 +158,61 @@ try {
         await page.route('**/model-catalog', (route) =>
           route.fulfill({ status: 503, json: { code: 'FIXTURE_CATALOG_FAILED' } }),
         );
+      if (scenario === 'early') {
+        for (const path of ['settings', 'harness/preflight'])
+          await page.route('**/' + path, async (route) => {
+            await new Promise((done) => setTimeout(done, 1500));
+            await route.continue();
+          });
+      }
+      const inheritedLoads = ['inherited', 'loop-over-owner'].includes(scenario)
+        ? Promise.all(
+            ['settings', 'harness/preflight'].map((path) =>
+              page.waitForResponse((response) => response.url() === url + '/' + path),
+            ),
+          )
+        : undefined;
       await page.goto(url + '/app/loops/' + loop.id + '/edit');
       await page.getByTestId('node-infer').click({ position: { x: 60, y: 12 } });
       const dialog = page.getByRole('dialog');
       await dialog.getByRole('button', { name: /^Advanced/ }).click();
       const model = dialog.getByLabel('Model', { exact: true });
-      if (scenario === 'failed')
-        await dialog.getByRole('button', { name: 'Retry model catalog' }).waitFor();
-      else await model.locator(`option[value="${oldModel}"]`).waitFor({ state: 'attached' });
-      await page.waitForLoadState('networkidle');
-      // Wait on actual shared query responses before the explicit authoring action.
-      await page.waitForFunction(
-        () => !globalThis.document.body.textContent.includes('Checking Claude readiness.'),
-      );
+      if (scenario === 'failed') await dialog.getByText(/Cannot load the model catalog/).waitFor();
+      else if (!['inherited', 'effort-only'].includes(scenario))
+        await model.locator(`option[value="${oldModel}"]`).waitFor({ state: 'attached' });
+      await inheritedLoads;
       await dialog.getByRole('radio', { name: to, exact: true }).focus();
       await page.keyboard.press('Space');
+      const waitedForFirstCheck = await dialog.getByText(/Waiting for the first/).isVisible();
+      const expected =
+        scenario === 'failed'
+          ? oldModel
+          : ['inherited', 'effort-only'].includes(scenario)
+            ? ''
+            : ['configured', 'loop-over-owner', 'early'].includes(scenario)
+              ? configured
+              : ecosystem;
+      if (process.env.GG_SWITCH_EXPECT_FIXED === '1') {
+        await expect(dialog.getByRole('radio', { name: to, exact: true })).toBeChecked({
+          timeout: 15000,
+        });
+        await expect(model).toHaveValue(expected, { timeout: 15000 });
+        if (scenario === 'early' && !waitedForFirstCheck)
+          throw new Error('Early switch did not display loading');
+      } else await page.waitForTimeout(scenario === 'early' ? 2500 : 600);
       const result = {
         from,
         to,
         scenario,
+        waitedForFirstCheck,
         model: await model.inputValue(),
         effort: await dialog.getByLabel('Effort', { exact: true }).inputValue(),
         label: await model.locator('option:checked').textContent(),
+        notices: await dialog.getByRole('status').allTextContents(),
       };
       results.push(result);
       console.log(JSON.stringify(result));
       if (process.env.GG_SWITCH_EXPECT_FIXED === '1' && scenario !== 'failed') {
-        const expected = scenario === 'configured' ? configured : ecosystem;
         if (result.model !== expected) console.log(await dialog.innerText());
         if (result.model !== expected)
           throw new Error(`Expected ${expected}: ${JSON.stringify(result)}`);
@@ -162,6 +220,15 @@ try {
         // Publication waits for pending autosave through the product toolbar.
         await page.getByRole('button', { name: 'Publish', exact: true }).click();
         await page.getByText('Published version 1.').waitFor();
+        const detail = await api('/loops/' + loop.id);
+        result.authored = detail.current.definition.nodes.find(
+          (node) => node.id === 'infer',
+        ).config;
+        if (
+          (['inherited', 'effort-only'].includes(scenario) && 'model' in result.authored) ||
+          (scenario === 'inherited' && 'effort' in result.authored)
+        )
+          throw new Error('Inheritance was pinned on the saved node');
         await page.reload();
         await page.getByTestId('node-infer').click({ position: { x: 60, y: 12 } });
         await dialog.getByRole('button', { name: /^Advanced/ }).click();
@@ -189,12 +256,16 @@ try {
           .split('\n')
           .map((line) => JSON.parse(line));
         const actual = requests.at(-1);
-        if (actual.model !== expected || actual.effort !== result.effort)
+        const expectedRequestModel = ['inherited', 'effort-only'].includes(scenario)
+          ? configured
+          : expected;
+        const expectedRequestEffort = scenario === 'inherited' ? 'high' : result.effort;
+        if (actual.model !== expectedRequestModel || actual.effort !== expectedRequestEffort)
           throw new Error('Fake CLI request differs: ' + JSON.stringify(actual));
         result.request = actual;
         console.log('FAKE_REQUEST ' + JSON.stringify(actual));
       }
-      await page.unroute('**/model-catalog');
+      await page.unrouteAll({ behavior: 'wait' });
       if (scenario === 'disabled') {
         const catalog = await api('/model-catalog');
         if (
@@ -207,15 +278,11 @@ try {
       }
     }
   }
-  await writeFile(
-    join(
-      root,
-      'docs/qa/2026-10-20-wp-f2b-harness-switch',
-      process.env.GG_SWITCH_EXPECT_FIXED === '1' ? 'native-after.json' : 'native-before.json',
-    ),
-    JSON.stringify(results, null, 2) + '\n',
-  );
+  const evidencePath = join(directory, 'results.json');
+  await writeFile(evidencePath, JSON.stringify(results, null, 2) + '\n');
+  console.log('Evidence: ' + evidencePath);
 } finally {
+  await page?.unrouteAll({ behavior: 'wait' });
   await browser?.close();
   if (server.exitCode === null) {
     const stopped = once(server, 'exit');

@@ -757,7 +757,18 @@ export class FakeApi {
         return new Response(null, { status: 204 });
       },
     ],
-    ['GET /model-catalog', () => json({ items: this.catalog })],
+    [
+      'GET /model-catalog',
+      () =>
+        json({
+          items: this.catalog.map((entry) => ({
+            ...entry,
+            ecosystemDefault:
+              (entry.harness === 'codex' && entry.model === 'gpt-6-luna') ||
+              (entry.harness === 'claude' && entry.model === 'claude-opus-5-5'),
+          })),
+        }),
+    ],
     [
       'PATCH /model-catalog/:harness/:model',
       (call, [harness, model]) => {

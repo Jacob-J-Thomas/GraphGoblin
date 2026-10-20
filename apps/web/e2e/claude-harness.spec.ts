@@ -104,8 +104,8 @@ test('Claude inference selection stays family-specific through publish and run',
   await claude.focus();
   await page.keyboard.press('Space');
   await expect(claude).toBeChecked();
-  await expect(dialog.getByLabel('Model', { exact: true })).toHaveValue('claude-opus-5-5');
-  await expect(dialog.getByLabel('Effort', { exact: true })).toHaveValue('xhigh');
+  await expect(dialog.getByLabel('Model', { exact: true })).toHaveValue('');
+  await expect(dialog.getByLabel('Effort', { exact: true })).toHaveValue('');
   await expect(dialog.getByLabel('Sandbox and approval policy', { exact: true })).toHaveValue('0');
   await dialog.getByRole('button', { name: 'Done' }).click();
 
@@ -118,16 +118,14 @@ test('Claude inference selection stays family-specific through publish and run',
   );
   expect(authored?.kind).toBe('inference');
   if (authored?.kind !== 'inference') throw new Error('expected an inference node');
-  expect(authored.config).toMatchObject({
-    harness: 'claude',
-    model: 'claude-opus-5-5',
-    effort: 'xhigh',
-  });
+  expect(authored.config.harness).toBe('claude');
+  expect(authored.config).not.toHaveProperty('model');
+  expect(authored.config).not.toHaveProperty('effort');
   await page.reload();
   const reopened = await openNode(page, 'infer');
   await openAdvanced(reopened);
-  await expect(reopened.getByLabel('Model', { exact: true })).toHaveValue('claude-opus-5-5');
-  await expect(reopened.getByLabel('Effort', { exact: true })).toHaveValue('xhigh');
+  await expect(reopened.getByLabel('Model', { exact: true })).toHaveValue('');
+  await expect(reopened.getByLabel('Effort', { exact: true })).toHaveValue('');
   await reopened.getByRole('button', { name: 'Done', exact: true }).click();
 
   await control(request, '/harness/script', {

@@ -1734,6 +1734,7 @@ export interface paths {
                                 /** @enum {string} */
                                 defaultEffort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
                                 enabled: boolean;
+                                ecosystemDefault: boolean;
                             }[];
                         };
                     };

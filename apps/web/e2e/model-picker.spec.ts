@@ -388,14 +388,9 @@ test('explicit Claude to Codex switch persists the owner default and sends the e
   expect(created.status()).toBe(201);
   const { loop } = (await created.json()) as { loop: { id: string } };
   await page.goto(url + '/app/loops/' + loop.id + '/edit');
-  const settingsLoaded = page.waitForResponse(
-    (response) => response.url() === url + '/settings' && response.ok(),
-  );
   const dialog = await openNode(page, 'infer');
   await openAdvanced(dialog);
-  await settingsLoaded;
   const model = dialog.getByLabel('Model', { exact: true });
-  await expect(model).not.toHaveAttribute('aria-readonly', 'true');
   await dialog.getByRole('radio', { name: 'codex', exact: true }).focus();
   await page.keyboard.press('Space');
   await expect(model).toHaveValue('gpt-6.1-sol');
