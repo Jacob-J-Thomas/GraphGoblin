@@ -28,7 +28,7 @@ function toLoop(row: LoopRow): LoopRecord {
     id: row.id,
     ownerId: row.ownerId,
     name: row.name,
-    ...(row.description ? { description: row.description } : {}),
+    ...(row.description !== null ? { description: row.description } : {}),
     ...(row.currentVersionId ? { currentVersionId: row.currentVersionId } : {}),
     ...(row.draftVersionId ? { draftVersionId: row.draftVersionId } : {}),
     createdAt: row.createdAt,

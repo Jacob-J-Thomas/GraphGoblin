@@ -95,3 +95,21 @@ it('exposes opaque cursors and carries every unchanged filter into following his
   expect(requests[2]!.signal.aborted).toBe(true);
   expect(requests[1]!.signal.aborted).toBe(false);
 });
+
+it('forwards run observation cancellation to GET without cancelling the run', async () => {
+  const requests: Request[] = [];
+  const client = createGraphGoblinClient({
+    baseUrl: 'http://api',
+    fetch: (request) => {
+      requests.push(request);
+      return Promise.resolve(Response.json({ status: 'running' }));
+    },
+  });
+  const controller = new AbortController();
+  await runs.get(client, 'run', { signal: controller.signal });
+  await runs.get(client, 'run');
+  controller.abort();
+  expect(requests.map((request) => request.method)).toEqual(['GET', 'GET']);
+  expect(requests[0]!.signal.aborted).toBe(true);
+  expect(requests[1]!.signal.aborted).toBe(false);
+});

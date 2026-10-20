@@ -54,4 +54,10 @@ export {
   type SseFrame,
   type SubscribeRunEventsOptions,
 } from './sse.js';
-export { waitForRun, type WaitForRunOptions, type WaitForRunResult } from './wait.js';
+export {
+  observeRun,
+  waitForRun,
+  type RunObserver,
+  type WaitForRunOptions,
+  type WaitForRunResult,
+} from './wait.js';

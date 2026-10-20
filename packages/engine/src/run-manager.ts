@@ -1044,22 +1044,29 @@ export class RunManager {
             { runId, error: describeError(error) },
             'executor crashed outside node execution',
           );
-          return this.failRun(
-            runId,
-            error instanceof RunFailureError
-              ? error.toFailure((await this.ports.runs.get(runId))?.currentNodeId)
-              : {
-                  code: 'INTERNAL_ERROR',
-                  message: describeError(error),
-                  resumable: true,
-                },
-          ).catch(() => undefined);
+          try {
+            await this.failRun(
+              runId,
+              error instanceof RunFailureError
+                ? error.toFailure((await this.ports.runs.get(runId))?.currentNodeId)
+                : {
+                    code: 'INTERNAL_ERROR',
+                    message: describeError(error),
+                    resumable: true,
+                  },
+            );
+          } catch (recordError) {
+            this.ports.logger.error(
+              { runId, error: describeError(recordError) },
+              'executor crash could not be recorded',
+            );
+          }
         })
         .then(() => this.afterExecute(runId))
         .catch((error: unknown) => {
           this.ports.logger.error(
             { runId, error: describeError(error) },
-            'post-execution cancellation failed',
+            'post-execution bookkeeping failed',
           );
         })
         .finally(() => {
