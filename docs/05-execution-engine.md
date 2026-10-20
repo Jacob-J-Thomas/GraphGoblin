@@ -33,7 +33,7 @@ type NodeContext<K> = {
 
 type NodeResult =
   | { kind: 'done'; patch: JsonPatch; route: string }
-  | { kind: 'park'; patch: []; wait: WaitSpec } // wait, heartbeat, subloop: the run stops here and resumes later
+  | { kind: 'park'; patch: []; wait: Omit<WaitSpec, 'waitId' | 'startedSeq'> } // wait, heartbeat, subloop: the run stops here and resumes later
   | {
       kind: 'exit';
       patch: JsonPatch;
@@ -119,6 +119,12 @@ outcome is not a resumable node failure. A run paused while parked (or while par
 to `waiting` on the same wait, not by re-running its node: a wait keeps its deadline, a subloop
 keeps its child. Its timers are re-armed and a child that finished meanwhile is delivered.
 
+## Which definition a run executes (Decided, ADR-0041)
+
+A run executes one immutable definition record for its whole life: the record its `versionId` names. Every executor start (the first, a wake after a wait, a resume, crash recovery) and every replay fork loads that record, never the loop's live draft. A published start pins the published version. A draft start (`allowDraft`, a test run) freezes the draft it read and validated into a `snapshot` record with its own id and the draft's number; the admission port commits the snapshot, the run, its initial thread and its `run.queued` event in one transaction. Editing, saving or publishing the draft afterwards never reaches the run. A snapshot cannot be started directly (`VERSION_NOT_PUBLISHED`), is not part of the version history, and storage triggers refuse its change, or its deletion while a run pins it.
+
+`run.pinned` (on the run record and on `run.queued`, with `versionId`) describes the pin: `source`, version number, the loop name in the pinned definition, a readable `label` and the inherited defaults. Model and effort resolve node, loop (in the pinned definition), `pinned.defaults.owner` (the owner's Settings when the run was created), then `pinned.defaults.process` (`GG_DEFAULTS` when the run was created). Changing Settings, restarting with other process defaults, or editing a model selection in the loop therefore reaches new runs only. The model catalog stays live: a model disabled or removed meanwhile fails the node explicitly and is never substituted. Classifier decisions call `pinned.classifiers[<id>]`, the catalog entry's provider, model, endpoint, primitives and secret name as they were at start; the entry's existence, enabled switch and secret value are checked when the decision runs, so editing the entry reaches new runs only, and a removed or disabled classifier fails explicitly. A classifier that had no entry at start fails non-resumably without a catalog lookup. Subloop children get their own pins, inherit the parent's pinned defaults and keep the parent's binding for shared classifier ids; replay forks keep the source's `versionId` and `pinned`.
+
 ## Decision gates, passes and terminal exits
 
 A decision becomes a gate when exactly one route is marked `repeat: true`. This marker belongs on an expression/LLM route, Choice option, Noul side or Score band; it is never inferred from canvas direction. Require `maxPasses` (1–10,000); optionally set `maxRunTimeSeconds` (positive integer seconds, at most 31,536,000). Without a repeat marker neither limit is allowed. Reserve the port ID `limit-reached`: authors cannot use it as a route ID. The gate exposes **Limit reached** only while a repeat is marked, and that output must be connected. The repeat route must lead through a cycle back to the gate; exits are terminal and triggers cannot be repeat targets.
@@ -139,12 +145,6 @@ Success finishes `succeeded`, Failure finishes `failed`, and Exhausted finishes 
 
 Validation reports `GATE_PASSES_ABOVE_VISIT_CAP` at `config.maxPasses` when a gate's maximum passes exceeds the visit cap. The warning names both numbers and all nodes on repeat-target paths back to that gate (excluding paths after the gate and exit branches). Continued repetition cannot reach the maximum-pass Limit reached output before the safety cap fails the run. This is a warning rather than an error because an earlier non-repeat choice or maximum run time can still finish the run as intended. All admission endpoints return the same warning, and the editor shows it beside Maximum passes.
 
-SQLite event reads enforce the current contract. A non-conforming row rejects the whole
-read page with an error naming its run, sequence, and type, without exposing its payload.
-Recovery cannot consume a partial invalid page. JSON pages and SSE replay use this same
-reader; SSE validates replay before sending any frames (07). Stored data repairs belong
-to migrations, including `0007` for historical decisions without `skipped`.
-
 Every new `decision.made` event contains `{portId, provenance, observation}` and empty diagnostics. Expression and LLM observations have kind `route`, with the declared routeId, nullable confidence and nullable reasoning; classifier observations have kind `classifier` with a typed answer. Boolean observations retain factual history; current decisions use routes or classifier answers. Fresh events pass per-kind validation before append. Diagnostics preserve at most three historical facts; provider error bodies remain excluded.
 
 ### Explicit decision failures (#98)
@@ -155,7 +155,7 @@ A decision never substitutes another evaluator. `EVALUATION_UNAVAILABLE` is resu
 
 A subloop node creates a child run with the mapped input thread and parks the parent with wait kind `child`. The child is a normal run: it has its own event log, pins its own version, can itself contain subloops up to the depth limit, and is visible in the run list with a parent link. When it finishes, the parent is woken with the child's outcome and return payload, and the subloop handler applies the output mapping. Cancelling a parent cancels its children. Cancelling a child alone wakes the parent with outcome `cancelled`.
 
-**Which version a child runs (Decided, WP-G).** A `latest` reference resolves when the parent run is _created_, not when the subloop node runs. `startRun` walks every subloop reference reachable from the run's version, through the referenced loops' own subloop nodes at any depth, pins each `latest` loop to the version published at that moment, and records the map (loop id to version id) on the run's `run.queued` event as `subloopVersions`. Numbered references are immutable and need no pin, but are walked for their own references. Every child the run starts uses its pin, so a version published while the parent waits never reaches it. A child inherits its parent's pins and records them on its own `run.queued`, so a whole tree of runs sees one snapshot; a replay fork copies its source's pins; recovery reads them from the log like everything else. A reference that does not resolve at creation is left unpinned and fails with `SUBLOOP_NOT_FOUND` when the child would start, as before; a run whose log predates pinning resolves `latest` when the child starts. A pinned version that is gone or no longer published fails the subloop with `SUBLOOP_NOT_FOUND`; it never falls back to latest. Deleting a loop is refused (409 `LOOP_IN_USE`) while any active run (queued, running, waiting, or paused) can still start it: a run of that loop, or one whose pins or subloop references reach it (`RunManager.loopInUse`). The check and the deletion run in one critical section with the subloop pinning in `startRun` (`RunManager.deleteLoopUnlessInUse`), together with replay-fork admission and a re-check that a new run's own version still exists, so a parent or fork created concurrently either pins the loop first (the deletion then refuses) or is created after it (and fails at that subloop like any reference to a deleted loop). A run or fork whose own version was deleted meanwhile is refused with `LOOP_NOT_FOUND`. The check reads only the first event (`run.queued`, with the pins) of each active run, plus the versions its pins reach.
+**Which version a child runs (Decided, WP-G).** A `latest` reference resolves when the parent run is _created_, not when the subloop node runs. `startRun` walks every subloop reference reachable from the run's version, through the referenced loops' own subloop nodes at any depth, pins each `latest` loop to the version published at that moment, and records the map (loop id to version id) on the run's `run.queued` event as `subloopVersions`. Numbered references are immutable and need no pin, but are walked for their own references. Every child the run starts uses its pin, so a version published while the parent waits never reaches it. A child inherits its parent's pins and records them on its own `run.queued`, so a whole tree of runs sees one snapshot (it also inherits the parent's pinned model defaults, ADR-0041); every later visit of the parent's subloop node starts its new child on the same pinned selection; a replay fork copies its source's pins; recovery reads them from the log like everything else. A reference that does not resolve at creation is left unpinned and fails with `SUBLOOP_NOT_FOUND` when the child would start, as before; a run whose log predates pinning resolves `latest` when the child starts. A pinned version that is gone or no longer published fails the subloop with `SUBLOOP_NOT_FOUND`; it never falls back to latest. Deleting a loop is refused (409 `LOOP_IN_USE`) while any active run (queued, running, waiting, or paused) can still start it: a run of that loop, or one whose pins or subloop references reach it (`RunManager.loopInUse`). The check and the deletion run in one critical section with the subloop pinning in `startRun` (`RunManager.deleteLoopUnlessInUse`), together with replay-fork admission and a re-check that a new run's own version still exists, so a parent or fork created concurrently either pins the loop first (the deletion then refuses) or is created after it (and fails at that subloop like any reference to a deleted loop). A run or fork whose own version was deleted meanwhile is refused with `LOOP_NOT_FOUND`. The check reads only the first event (`run.queued`, with the pins) of each active run, plus the versions its pins reach.
 
 **A child that finishes before its parent parks (Decided, WP-G).** The parent records its `waiting/child` state after the subloop handler has started the child, so a fast child can finish while the parent is still `running`; its notification then finds no waiting parent. After the parent's park transition the run manager therefore checks the child, and wakes the parent at once if the child is already terminal; recovery does the same for every parent waiting on a child. Both paths and the child's own notification go through the waiting-to-running compare-and-set, so exactly one wins. A wake that lands while the parent's executor is still returning is queued until it has returned rather than dropped.
 
@@ -195,6 +195,35 @@ The offline server-store tool uses the same composition for each retained versio
 
 ## Crash recovery (Decided)
 
+Recovery enumerates raw run identities and decodes each candidate separately. Candidates
+are active runs and terminal runs awaiting finalization; startup checks and logs damaged
+candidates only. Finalized terminal history is checked through `GET /runs/diagnostics`.
+A malformed JSON field, invalid current-contract run record/thread (including a missing,
+malformed or invalid definition pin, ADR-0041), or unreadable event page is isolated to its run: startup logs `HISTORY_UNREADABLE` with the run ID and reason,
+skips its work, and continues healthy recovery. Recovery leaves its rows and events
+unchanged. Store-level schema, format, and I/O failures still fail startup; they are not
+reclassified as damaged runs.
+
+`GET /runs/{id}` and MCP `get_run` decode only the run row. A readable row returns its
+stored snapshot even when its events or thread checkpoint are damaged; an unreadable row
+returns `500 STORED_RUN_INVALID`, including on `/events` and `/thread`, which check the owned run row first. Event reads (`GET /runs/{id}/events`, MCP
+`read_run_events`) decode the requested event page and return `500 STORED_EVENT_INVALID`
+when it is unreadable. Thread reads (`GET /runs/{id}/thread`, MCP `get_run_thread`)
+decode the stored snapshot or, when it is absent, the initial thread and replay events.
+Unreadable thread data returns `500 STORED_RUN_INVALID`, and unreadable replay events
+return `500 STORED_EVENT_INVALID`. MCP exposes the same problem codes as tool errors.
+
+`GET /runs/diagnostics` (owner-scoped, `runs:read`) is the identification path for damaged
+history across all runs, including finalized terminal runs and rows that cannot supply a
+snapshot. Follow its `nextCursor` until null; each request checks at most 20 runs and 2,000
+events. This read-only diagnostic does not change lifecycle status: a damaged snapshot
+may still say queued, running, or waiting.
+
+The operator must explicitly repair the named row by hand or explicitly delete the
+containing loop through the existing deletion path after all of its runs are terminal.
+There is no automatic repair, quarantine archive, history reconstruction, deletion, or
+whole-store reset. See the troubleshooting guide for the manual disposition procedure.
+
 Before run recovery, fresh SQLite initialisation commits the schema migrations, their ledger and the complete stored-format marker in one write transaction. An interruption before commit rolls all of them back, so the next ordinary startup can initialise the empty store again without duplicate migration effects. Freshness requires no application tables and no recorded migrations; an empty migration-ledger table alone is allowed. Empty user tables do not establish freshness. An existing unmarked schema, a marker table without its complete row, an incomplete upgrade state or recorded migrations without application tables still stop startup with `DATA_UPGRADE_REQUIRED`. Preserve those stores for the [offline upgrade and recovery workflow](guide/08-offline-upgrade.md); startup does not stamp or repair them by inference.
 
 If another initialiser completes before this startup acquires its write lock, the recheck recognises the current store and startup still applies any pending ordinary migrations. If initialisation fails and rollback also fails, startup preserves the original initialisation error.
@@ -206,7 +235,7 @@ At boot the run manager loads every run in `queued`, `running`, `waiting`, or `p
 - Terminal runs never marked finalized: finalized now (timers, children, returns per channel, parent; see "Finalization is recorded").
 - Any of them whose log ends in a terminal event: completed from the log (above), nothing executed.
 - `waiting` with a durable wake in the log: moved to running, so the woken node runs.
-- Other `waiting` runs: re-arm the wait's timers from its wait spec, both of them when a wait has two (`until` under key `timer` or `heartbeat`, `timeoutAt` under key `timeout`; an input or signal wait written before `timeoutAt` existed uses `until`), as an upsert so an armed timer is unchanged; and wake a parent whose child is already terminal. Signals and inputs need nothing.
+- Any active run with a durable `run.waiting` and no later wake or node execution: complete the park from that event, including an interrupted snapshot/status write. Keep its original `waitId` and deadlines. Paused runs retain their pause. Re-arm both `until` (timer or heartbeat) and `timeoutAt` with keys containing the recorded `waitId`, then reconcile a completed child for runs that are waiting.
 - `running`: the executor starts from the log. The thread is the last verified checkpoint plus the events after it (see "Event log and projections"), and the cursor is checked against the log: when the log's last node event is the `node.finished` of the node the run record still points at, that node completed and only the cursor write was lost, so the cursor advances along the route it recorded (a gate follows its recorded actual port, with passes in the same append) without running the node again. Otherwise the last `node.started` without a matching `node.finished` identifies the interrupted node. Recovery depends on its kind.
   - Inferencing: the `harness_sessions` row was written before the subprocess started, so the handler resumes that session and asks it to continue. If the session was never started, it starts fresh.
   - Script: re-executed. Scripts are documented as at-least-once.
@@ -232,6 +261,12 @@ Resuming a failed run re-executes the failed node using the crash-recovery rules
 
 ## Timeouts (Decided minimal)
 
+Wait and heartbeat handlers describe their deadlines without arming timers. The manager first appends `run.waiting`, saves its thread and parks the run; only then does it upsert the timers. Recovery completes an interrupted park from the recorded spec before arming its timers, so downtime never restarts a duration or extends a recorded wall-clock deadline. A past deadline is immediately eligible on the next poll (supported polling settings include 50 ms and 1,000 ms).
+
+Timer keys are `<kind>@<waitId>`. The opaque `waitId` combines the run ID and the durable `node.started` sequence for this park; it is recorded in the event and snapshot, rather than kept in memory. A due delivery before parking is visible returns a deferred acknowledgement: the row is conditionally requeued one configured polling interval later. A paused run acknowledges its timer without waking; resume and recovery re-arm its recorded deadline. Timers for unreadable run history are also acknowledged, leaving that history for diagnostics and explicit deletion rather than logging on every poll. This prevents deferred rows from starving other overdue timers in a full batch. The original deadline stays in the wait spec. Resume re-arms the original deadline and the next poll wakes a passed deadline. A stale timer cannot wake a later park. Wake events are conditional appends. Their status acknowledgements also compare the recorded `waitId`, so a delayed acknowledgement cannot move a later wait to running. Redelivery after a lost status response completes or queues the durable wake without appending it twice, including when the running status committed before its response was lost. The scheduler acknowledges only after all listeners accept delivery and only while the row still has the fired deadline. It also serializes same-run timer mutations and preserves any re-arm overlapping delivery, including an identical deadline on resume; an old acknowledgement cannot delete that resumed timer.
+
+After `pnpm build`, `pnpm test:wait-restart` checks observed input identities, passed deadlines, paused waits and heartbeat counts through real API process restarts at 50 ms and 1,000 ms polling. CI runs it next to `pnpm test:recovery-process`; neither command makes provider calls.
+
 Optional `timeoutSeconds` exists on inferencing and script nodes and on wait and heartbeat nodes through their own fields. Defaults are none. A timed-out inferencing or script node is an unavoidable failure. A timed-out wait or heartbeat follows its `onTimeout` setting.
 
 ## Event log and projections (Decided)
@@ -242,6 +277,29 @@ Optional `timeoutSeconds` exists on inferencing and script nodes and on wait and
 - Replay also counts `node.started` events, including resumed attempts, in `counters.nodeVisits`. Recovery reconstructs a pending wake before appending its new `run.started`, so an accepted input is still available to the resumed node.
 - The SSE stream (07) is a tail of the same log, which is why reconnecting clients can resume from a sequence number without loss.
 - Large payloads such as transcripts, full probe responses, and return payloads above a size threshold are stored as artifacts on disk, keyed by content hash, and referenced from events.
+- The filesystem artifact store publishes flushed temporary files by atomic same-directory rename and verifies content hashes on reads (11). Failed publication raises the resumable node failure `ARTIFACT_WRITE_FAILED`, carrying its reference and publishing no transcript/output patch. After repairing storage, explicitly resume: inference continues the recorded provider session with the continuation prompt instead of resending the authored prompt. Corrupt downloads return the API problem `ARTIFACT_CORRUPT` (07); it is not a run failure code.
+
+### Durable event validation
+
+Every generated durable event is validated against the current `RunEventSchema` before
+persistence. SQLite validates the entire append before inserting any rows, moving the sequence,
+or notifying subscribers; atomic admission already validates its initial event. A rejected
+event fails the run with `EVENT_INVALID`, `resumable: false`. Successful values are never
+silently truncated. Wait prompts and terminal failure messages are bounded at 10,000
+JavaScript string characters (UTF-16 code units); progress summaries have their separate
+2,000-character contract bound. Literal and rendered templates obey the same event bound.
+
+Failure reporting validates its own metadata and bounds oversized messages with a visible
+`[truncated; original N characters]` suffix within that bound. The same valid failure is
+stored in the terminal event and run record. A restart sees the durable failure and does
+not automatically repeat the node that produced the rejected event.
+
+SQLite event reads enforce the current contract. A non-conforming row rejects the whole
+read page with an error naming its run, sequence, and type, without exposing its payload.
+Recovery cannot consume a partial invalid page. JSON pages and SSE replay use this same
+reader; SSE validates replay before sending any frames (07). Stored data repairs belong
+to migrations, including `0007` for historical decisions without `skipped`. Existing damaged
+history requires explicit manual repair or deletion; recovery does not repair it automatically.
 
 ## General webhook admission (#168 T4)
 
@@ -265,10 +323,10 @@ attempts re-read under the deletion lock, rather than the due-list snapshot. See
 
 Because every node input is reconstructible, the API offers "re-run this node with the same input", producing a new run forked at that node. This is the intended debugging tool, in place of error nodes. `RunManager.replay({ runId, nodeId, source?, caller? })`, exposed as `POST /runs/{id}/replay` and the MCP tool `replay_run`:
 
-- **The source may be in any status**, including running or waiting; it is never modified. It must have a `node.started` event for `nodeId`, otherwise the request fails with `REPLAY_NODE_NOT_REACHED` (409). The node must still exist in the pinned version (drafts are edited in place), otherwise `INVALID_STATE`.
+- **The source may be in any status**, including running or waiting; it is never modified. It must have a `node.started` event for `nodeId`, otherwise the request fails with `REPLAY_NODE_NOT_REACHED` (409). The node must exist in the source's pinned definition, otherwise `INVALID_STATE`; pins never change, so a node the source started is always there.
 - **The fork's thread** is the source's initial thread replayed (`replayThread`) up to the event just before the node's _first_ `node.started`: every earlier `node.finished` patch, gate count and historical `iteration.incremented`, with `counters.nodeVisits` counted from the earlier `node.started` events. `run.id` is the fork's id; `run.parentRunId` is dropped, so forking a child run gives a top-level run that never wakes the original parent.
 - **The invocation** keeps the trigger envelope (node, kind, payload, `receivedAt`, dedupe key) and gets a fresh id and `replayOf: { runId, nodeId }`. Source and caller are those of whoever asked for the replay (the API passes them; the engine keeps the source's when none are given). The source's `returnDefaults` are dropped: they belong to the source's caller. Return channels declared on exit nodes still deliver.
-- **The fork** is a new run on the same loop version with its own id and event log, created `queued` with `currentNodeId` set to the node and `iteration` from the thread, so the executor starts there. Its first event is `run.queued` with `replayOf`. Nothing before the node is re-executed, and the source's child runs are not copied: a subloop node in the fork starts a new child.
+- **The fork** is a new run on the source's pinned definition record (a draft run's snapshot included) with the source's `pinned`, its own id and event log, created `queued` with `currentNodeId` set to the node and `iteration` from the thread, so the executor starts there. Its first event is `run.queued` with `replayOf`. Nothing before the node is re-executed, and the source's child runs are not copied: a subloop node in the fork starts a new child.
 - **Harness sessions are not carried over.** A node that resumes "the previous session" of its run finds none in the fork and starts fresh; named sessions (`resume-named`) are looked up by scope key and still resume. Files the source wrote into a per-run working directory are not copied.
 
 ## Implementation notes from M2 (Decided by implementation, 2026-10-02)
@@ -286,7 +344,7 @@ Because every node input is reconstructible, the API offers "re-run this node wi
 
 ## Implementation notes from WP-D2 (Decided by implementation, 2026-10-03)
 
-- **Model and effort resolve within the selected harness: node, loop, owner, process.** Loop and owner defaults use `defaults.byHarness`; the process supplies the same shape through `GG_DEFAULTS`. A decision LLM explicitly selects inheritance or a value. Unknown catalog models, wrong-harness models and unsupported effective effort are errors; invalid explicit selections are never bypassed. Disabled or unconfigured selections block publication and are checked again at execution. In-flight provider calls retain their starting selection. Old `GG_DEFAULT_MODEL` and `GG_DEFAULT_EFFORT` variables are rejected with upgrade guidance.
+- **Model and effort resolve within the selected harness: node, loop, owner, process.** Loop and owner defaults use `defaults.byHarness`; the process supplies the same shape through `GG_DEFAULTS`. A decision LLM explicitly selects inheritance or a value. Unknown catalog models, wrong-harness models and unsupported effective effort are errors; invalid explicit selections are never bypassed. Disabled or unconfigured selections block publication and are checked again at execution. In-flight provider calls retain their starting selection. Owner and process defaults are the ones pinned when the run was created (ADR-0041), not re-read at each executor start. Old `GG_DEFAULT_MODEL` and `GG_DEFAULT_EFFORT` variables are rejected with upgrade guidance.
 - **The executor yields to the event loop between nodes** (one `setTimeout(0)` per node). With fast ports every await settles as a microtask, and a graph cycle (a decision routing back to itself) used to starve timers, API requests, and the cancel request that could stop it. Such a cycle is now bounded by the per-node visit cap under `maxNodeVisits` (see "Decision gates, passes and terminal exits").
 
 ## Implementation notes from WP-G (Decided by implementation, 2026-10-03)
@@ -294,7 +352,7 @@ Because every node input is reconstructible, the API offers "re-run this node wi
 The adversarial design review (`docs/qa/2026-10-03-adversarial-design-review.md`) found eight open defects; WP-G closed them. The rules they settle are in the sections above; in short:
 
 - **Subloop versions are pinned at parent creation** (ADV-004), transitively, and recorded on `run.queued` as `subloopVersions`.
-- **Timers are delivered at least once** (ADV-011). `TimerService` removes a timer only after every listener handled it without throwing, and only while the row still has the fired time (a listener that re-armed the key keeps its new timer); a listener error leaves it for the next poll, and a service with no listener consumes nothing. Timer keys carry the wait identity (`timer@<startedSeq>`, where `startedSeq` is the seq of the `node.started` that parked, recorded on the wait spec), and the wake is a conditional append checked against that wait, so a stale or repeated fire cannot wake a later wait. Recovery and resume re-arm both deadlines of a wait (`until`, `timeoutAt`). A bare key (armed before identities existed) only wakes a wait without an identity; at recovery such a wait gets its identity from the log (the `node.started` before its `run.waiting`), the record is updated, and its bare timers are replaced by keyed ones. Residual: a pre-upgrade duration wait with a separate timeout has no `timeoutAt`, so only its own timer is re-armed.
+- **Timers are delivered at least once** (ADV-011, #226). Timer arming, observed identities, deferred acknowledgement and restart reconciliation are described under "Timeouts" above.
 - **Cancel requests are claimed once** (ADV-012).
 - **A fast child cannot orphan its parent** (ADV-015).
 - **The log is the source of truth** (ADV-016 and the WP-G review): events are written before status, wakes and terminal outcomes are completed from the log at recovery, the cursor follows a durable `node.finished`, and the thread comes from a verified checkpoint plus the events after it.

@@ -1,6 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { LoopDefinitionSchema, type RunRecord, type RunStatus } from '@graphgoblin/contracts';
-import { fakeUlid, FIXTURE_TS, minimalLoop, sampleThread } from '@graphgoblin/contracts/testing';
+import {
+  fakeUlid,
+  FIXTURE_TS,
+  minimalLoop,
+  samplePin,
+  sampleThread,
+} from '@graphgoblin/contracts/testing';
 import { FakeClock, FakeIds } from '@graphgoblin/engine/testing';
 import { openMemoryDatabase, type DatabaseHandle } from './db.js';
 import { LoopInUseError, SqliteLoopRepository } from './loops.js';
@@ -46,6 +52,7 @@ async function storedRun(
     id: fakeUlid(seed),
     ownerId: 'local',
     ...identity,
+    pinned: samplePin(),
     invocationId: fakeUlid(seed + ':inv'),
     status,
     iteration: 1,
@@ -122,7 +129,12 @@ async function triggers(
     intent: {
       run,
       initialThread: sampleThread(),
-      queued: { type: 'run.queued', initialThread: sampleThread() },
+      queued: {
+        type: 'run.queued',
+        versionId: run.versionId,
+        pinned: run.pinned,
+        initialThread: sampleThread(),
+      },
       pinnedLoopIds: [identity.loopId],
     },
   });

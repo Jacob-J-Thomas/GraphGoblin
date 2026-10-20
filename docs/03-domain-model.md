@@ -5,13 +5,13 @@
 | Term             | Meaning                                                                                                            |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------ |
 | Loop             | A named, owned graph definition with a history of versions.                                                        |
-| Loop version     | An immutable snapshot of a loop's definition. Runs pin one.                                                        |
+| Loop version     | A record of a loop's definition: the editable draft, or an immutable published version or draft snapshot.          |
 | Node             | A unit of behaviour in the graph with a kind, a config validated by that kind's schema, and ports.                 |
 | Port             | A named connection point. Inputs are `in`. Outputs are `out` by default; decisions and exits add labelled outputs. |
 | Edge             | A directed connection from a node's output port to another node's input port.                                      |
 | Trigger envelope | The normalised payload that starts a run, whatever the source.                                                     |
 | Invocation       | Who or what started a run, and how its return should be delivered.                                                 |
-| Run              | One execution of a loop version. Owns a context thread and an event log.                                           |
+| Run              | One execution of an immutable loop version it pins for life. Owns a context thread and an event log.               |
 | Child run        | A run started by a subloop node. Has a parent run id.                                                              |
 | Run event        | One append-only record in a run's log, with a sequence number.                                                     |
 | Context thread   | The run's shared state: messages, variables, artifacts, counters, last output.                                     |
@@ -28,7 +28,7 @@ Stored as JSON in `loop_versions.definition`, validated by `contracts`.
 type LoopDefinition = {
   schemaVersion: 4;
   name: string;
-  description?: string;
+  description?: string; // an empty string is distinct from absence
   settings: {
     workingDirectory: WorkingDirectorySpec; // see 04 and 06
     defaults: { byHarness: { codex?: { model?: string; effort?: Effort } } };
@@ -91,9 +91,10 @@ Current definitions and exports use format 4. Decisions are a strict union on ki
   `settings.defaults.harness`. Existing inference nodes already carry their explicit harness.
   Version ids, numbers, creation and publication timestamps, and run pins stay unchanged.
 - Editing creates or updates a **draft** version. Publishing freezes it as the loop's current version.
-- A run pins the version it started with and finishes on it, even if a newer version is published meanwhile.
-- New runs always use the latest published version.
-- A subloop reference resolves to the referenced loop's latest published version at the moment the parent run starts, and the child run pins that version. A reference may instead pin an explicit version number.
+- A run pins an immutable definition record and finishes on it, through waits, resume, replay forks and restarts, even if the loop is edited or a newer version is published meanwhile ([ADR-0041](decisions/ADR-0041-runs-pin-immutable-definitions.md)). A published start pins that version. A draft start (a test run, `allowDraft`) pins a **draft snapshot**: a `loop_versions` row with status `snapshot`, a new id, the draft's number and the definition exactly as the start read it, committed with the run. A snapshot is never published, never latest, not the loop's draft, not listed in `GET /loops/{id}/versions` and never started directly; `GET /loops/{id}/versions/{versionId}` still returns it. Storage triggers refuse any change to a snapshot and its deletion while a run pins it; run deletion removes snapshots no run pins.
+- The run's `versionId` is that record, and `run.pinned` describes it: `source` (`published` or `draft`), the version number, the loop name in the pinned definition, a readable `label` (`Review v3`, `Review draft v4`) and the inherited model defaults pinned at start (`defaults.owner` from Settings, `defaults.process` from `GG_DEFAULTS`) and `classifiers`, the catalog binding (provider, provider model, endpoint, primitives, secret name) of every classifier the definition uses. None of it changes during the run; a classifier's existence, enabled switch and secret value are still checked when it is called.
+- New runs always use the latest published version, or freeze the current draft, with the defaults current at their start.
+- A subloop reference resolves to the referenced loop's latest published version at the moment the parent run starts, and the child run pins that version. A reference may instead pin an explicit version number. A child has its own pin and inherits its parent's pinned defaults, so later Settings changes do not reach a running tree either.
   - "Starts" means the parent run is created: the resolution covers every loop reachable through subloop references, at any depth, and is recorded on the parent's `run.queued` event as `subloopVersions` (loop id to version id). Children inherit the map, replay forks copy it, and recovery reads it from the log, so a version published while the parent waits never reaches the parent's tree (05, ADV-004). A loop that an active run can still start (its own runs, or runs whose pins or references reach it) cannot be deleted (409 `LOOP_IN_USE`).
 
 ## Deleting a loop (Decided)
@@ -163,6 +164,15 @@ type Artifact = {
 };
 ```
 
+Authored patches may mutate only `/messages`, `/vars`, `/artifacts`, `/outputs` and
+`/lastOutput`, including their descendants. The document root, `/schemaVersion`, `/run`,
+`/invocation`, `/counters` and `/gates` are protected. Every mutating destination is checked
+before the patch is applied: `add`, `replace`, `remove`, `move` and `copy` check `path`,
+and `move` also checks `from` because it removes its source. `copy` may read protected
+context into a writable destination; `test` may read any location. Rejecting any operation
+rejects the entire patch without changing the thread. Engine-owned bookkeeping uses its
+own patches and can update protected locations.
+
 Questions to settle together, tracked in 13:
 
 1. Are messages the right spine, or should the thread be variables plus artifacts with messages as one artifact kind?
@@ -200,17 +210,20 @@ engine-owned region. Usage roll-up remains an engine operation.
 
 ## Run (Decided)
 
-| Field                                                  | Notes                                                                                     |
-| ------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
-| `id`, `ownerId`, `loopId`, `versionId`, `parentRunId?` | Identity and pinning                                                                      |
-| `status`                                               | `queued`, `running`, `waiting`, `paused`, `succeeded`, `failed`, `cancelled`, `exhausted` |
-| `currentNodeId?`, `iteration`                          | Where the token is                                                                        |
-| `waiting?`                                             | `{ nodeId, kind: 'input'                                                                  | 'timer' | 'signal' | 'heartbeat', until?: string, timeoutAt?: string, startedSeq?: number, prompt?: string, inputSchema?: JsonSchema }` |
-| `cancelRequestedAt?`, `pausedAt?`                      | Persisted intent, honoured after restart                                                  |
-| `failure?`                                             | `{ code: RunErrorCode; message: string; nodeId?: string; resumable: boolean }`            |
-| `result?`                                              | The exit node's return payload                                                            |
-| `outcome?`                                             | `success`, `failure`, `exhausted`                                                         |
-| `startedAt`, `finishedAt?`, `lastEventSeq`             | Bookkeeping                                                                               |
+| Field                                                  | Notes                                                                                                                                                                                                            |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`, `ownerId`, `loopId`, `versionId`, `parentRunId?` | Identity; `versionId` is the immutable definition record the run executes                                                                                                                                        |
+| `pinned`                                               | `{ source, version, name, label, defaults: { owner, process }, classifiers }`, at start                                                                                                                          |
+| `status`                                               | `queued`, `running`, `waiting`, `paused`, `succeeded`, `failed`, `cancelled`, `exhausted`                                                                                                                        |
+| `currentNodeId?`, `iteration`                          | Where the token is                                                                                                                                                                                               |
+| `waiting?`                                             | `{ waitId: string, startedSeq: number, nodeId: string, kind: WaitKind, until?: string, timeoutAt?: string, prompt?: string, inputSchema?: JsonSchema, signalName?: string, childRunId?: string, beat?: number }` |
+| `cancelRequestedAt?`, `pausedAt?`                      | Persisted intent, honoured after restart                                                                                                                                                                         |
+| `failure?`                                             | `{ code: RunErrorCode; message: string; nodeId?: string; resumable: boolean }`                                                                                                                                   |
+| `result?`                                              | The exit node's return payload                                                                                                                                                                                   |
+| `outcome?`                                             | `success`, `failure`, `exhausted`                                                                                                                                                                                |
+| `startedAt`, `finishedAt?`, `lastEventSeq`             | Bookkeeping                                                                                                                                                                                                      |
+
+A missing run `result` means no payload was returned, whereas `result: null` is a present JSON value, preserved distinctly from `false`, `0`, `""`, `[]` and `{}` across storage and restart.
 
 ## Run events (Decided kinds, Draft payloads)
 
@@ -218,7 +231,8 @@ Each event has `runId`, `seq`, `ts`, `type`, optional `nodeId`, and a typed `pay
 
 | Type                                                                 | Payload                                                                                               |
 | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `run.queued`, `run.started`, `run.finished`                          | status, outcome, result reference                                                                     |
+| `run.queued`                                                         | `versionId` and `pinned` as on the run, initial thread, subloop pins, replay origin                   |
+| `run.started`, `run.finished`                                        | status, outcome, result reference                                                                     |
 | `run.paused`, `run.resumed`, `run.cancel_requested`, `run.cancelled` | actor                                                                                                 |
 | `run.waiting`, `run.woken`                                           | wait spec, wake reason                                                                                |
 | `run.failed`                                                         | failure object                                                                                        |
@@ -242,7 +256,7 @@ Each event has `runId`, `seq`, `ts`, `type`, optional `nodeId`, and a typed `pay
 | `schedules`         | One per cron trigger node per published version: loop, version, and trigger node ids, expression, timezone, missed-fire policy, enabled, `next_fire_at`, `last_fired_at`. Rows of earlier versions are disabled, not deleted.                                                            |
 | `webhook_endpoints` | One per webhook trigger node per published version: loop, version, and trigger node ids, path token (kept across versions for the same node), `secret_ref` naming the signing secret in `secrets`, signature header and scheme, nullable replay window (null for body signing), enabled. |
 | `inbound_events`    | Every event from `POST /events`, exit-node `event` channels, and webhook deliveries: type, JSON payload, dedupe key, source (`api`, `run:<runId>`, `webhook:<endpointId>`), received time, and the ids of the runs it started.                                                           |
-| `timers`            | Persisted wake-ups for wait and heartbeat nodes. Keyed by run and `<name>@<startedSeq>` (the wait that armed it). Delivered at least once: a row is removed only after the wake is handled, and recovery re-arms both deadlines from the waiting run's wait spec (05).                   |
+| `timers`            | Persisted wake-ups for wait and heartbeat nodes. Keyed by run and `<kind>@<waitId>` (the wait that armed it). Delivered at least once: a row is removed only after the wake is handled, and recovery re-arms both deadlines from the waiting run's wait spec (05).                       |
 | `secrets`           | Name, ciphertext, key id, owner.                                                                                                                                                                                                                                                         |
 | `model_catalog`     | Harness, model id, display name, allowed efforts, default effort, enabled.                                                                                                                                                                                                               |
 | `api_keys`          | Hashed keys with labels and scopes.                                                                                                                                                                                                                                                      |

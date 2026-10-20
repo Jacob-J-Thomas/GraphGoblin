@@ -1,6 +1,7 @@
 import {
   ClassifierAnswerEmissionSchema,
   EvaluationEmissionSchema,
+  type ClassifierBinding,
   type ClassifierDecisionConfig,
   type ExpressionDecisionConfig,
   type LlmDecisionConfig,
@@ -27,6 +28,8 @@ export interface ClassifierEvaluationRequest extends EvaluationRequest {
   config: ClassifierDecisionConfig;
   question: string;
   context: JsonValue;
+  /** The run's pinned binding for `config.model` (ADR-0041); absent when it had none at start. */
+  binding: ClassifierBinding | undefined;
 }
 export type RouteEvaluationRequest = EvaluationRequest &
   (
@@ -133,10 +136,21 @@ export async function evaluateClassifier(
       ? { true: answer.true.criteria, false: answer.false.criteria }
       : undefined;
   let result: ClassifierAnswer;
+  // The run calls what it pinned at start; a classifier missing then is never looked up again, so
+  // no later catalog edit reaches this run and a resume cannot help.
+  if (!request.binding)
+    fail(
+      request,
+      'EVALUATION_UNAVAILABLE',
+      `${CLASSIFIER_MESSAGES.CLASSIFIER_MODEL_NOT_FOUND} when this run started; start a new run`,
+      false,
+      { reason: 'CLASSIFIER_MODEL_NOT_FOUND' },
+    );
   const selection = await request.ports.classifiers.resolve(
     request.ownerId,
     evaluation.model,
     answer.type,
+    request.binding,
   );
   request.signal.throwIfAborted();
   if (selection.status === 'unavailable') {

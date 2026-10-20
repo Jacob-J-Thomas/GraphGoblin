@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { fakeUlid, FIXTURE_IDS, FIXTURE_TS } from '@graphgoblin/contracts/testing';
+import { fakeUlid, FIXTURE_IDS, FIXTURE_TS, samplePin } from '@graphgoblin/contracts/testing';
 import {
   AdmissionConflictError,
   createInitialThread,
@@ -33,6 +33,7 @@ function intent(): RunAdmission {
     ownerId: 'local',
     loopId: FIXTURE_IDS.loop,
     versionId: FIXTURE_IDS.version,
+    pinned: samplePin(),
     invocationId: FIXTURE_IDS.invocation,
     status: 'queued' as const,
     iteration: 1,
@@ -54,6 +55,8 @@ function intent(): RunAdmission {
     initialThread,
     queued: {
       type: 'run.queued',
+      versionId: run.versionId,
+      pinned: run.pinned,
       initialThread,
       subloopVersions: { [fakeUlid('child')]: fakeUlid('child-version') },
     },

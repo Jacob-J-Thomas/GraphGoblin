@@ -122,8 +122,8 @@ export const runs = {
     unwrap(await client.POST('/loops/{id}/runs', { ...id(loopId), body })).run,
   list: async (client: GraphGoblinClient, query: ListRunsQuery = {}) =>
     unwrap(await client.GET('/runs', { params: { query } })).items,
-  get: async (client: GraphGoblinClient, runId: string) =>
-    unwrap(await client.GET('/runs/{id}', id(runId))),
+  get: async (client: GraphGoblinClient, runId: string, options: { signal?: AbortSignal } = {}) =>
+    unwrap(await client.GET('/runs/{id}', { ...id(runId), ...options })),
   thread: async (client: GraphGoblinClient, runId: string) =>
     unwrap(await client.GET('/runs/{id}/thread', id(runId))),
   /** One page of the persisted event log after `after`; use `subscribeRunEvents` for a live tail. */
@@ -138,23 +138,25 @@ export const runs = {
     unwrap(await client.POST('/runs/{id}/pause', id(runId))),
   resume: async (client: GraphGoblinClient, runId: string) =>
     unwrap(await client.POST('/runs/{id}/resume', id(runId))),
-  /** Answer a wait node in input mode. */
+  /** Answer the observed input wait; take waitId from runs.get(...).waiting.waitId. */
   provideInput: async (
     client: GraphGoblinClient,
     runId: string,
+    waitId: string,
     input: RequestBody<'/runs/{id}/input', 'post'>['input'],
-  ) => unwrap(await client.POST('/runs/{id}/input', { ...id(runId), body: { input } })),
+  ) => unwrap(await client.POST('/runs/{id}/input', { ...id(runId), body: { waitId, input } })),
   /** Deliver a named signal; `woke` says whether a waiting node consumed it. */
   signal: async (
     client: GraphGoblinClient,
     runId: string,
     name: string,
+    waitId: string,
     payload?: RequestBody<'/runs/{id}/signals/{name}', 'post'>['payload'],
   ) =>
     unwrap(
       await client.POST('/runs/{id}/signals/{name}', {
         params: { path: { id: runId, name } },
-        body: payload === undefined ? {} : { payload },
+        body: payload === undefined ? { waitId } : { waitId, payload },
       }),
     ),
   sessions: async (client: GraphGoblinClient, runId: string) =>

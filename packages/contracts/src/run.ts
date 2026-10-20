@@ -6,6 +6,8 @@ import {
   TimestampSchema,
   UlidSchema,
 } from './common.js';
+import { ClassifierBindingSchema, ClassifierModelIdSchema } from './classifiers.js';
+import { HarnessDefaultsSchema } from './evaluation.js';
 import { OutcomeSchema, WaitKindSchema } from './nodes.js';
 
 export const RunStatusSchema = z.enum([
@@ -42,6 +44,7 @@ export const RunErrorCodeSchema = z.enum([
   'SCRIPT_TIMEOUT',
   'INFERENCE_TIMEOUT',
   'OUTPUT_SCHEMA_MISMATCH',
+  'ARTIFACT_WRITE_FAILED',
   'SUBLOOP_DEPTH_EXCEEDED',
   'SUBLOOP_NOT_FOUND',
   // Factual historical failures retain their original cause during the offline cutover.
@@ -63,8 +66,10 @@ export const RunErrorCodeSchema = z.enum([
   'EXPRESSION_ERROR',
   'WAIT_TIMEOUT',
   'HEARTBEAT_EXHAUSTED',
+  'HTTP_PROBE_BODY_OVERFLOW',
   'RETURN_DELIVERY_FAILED',
   'MAX_NODE_VISITS',
+  'EVENT_INVALID',
   'INTERNAL_ERROR',
 ]);
 export type RunErrorCode = z.infer<typeof RunErrorCodeSchema>;
@@ -80,6 +85,8 @@ export type RunFailure = z.infer<typeof RunFailureSchema>;
 
 /** Why a run is parked and what wakes it. */
 export const WaitSpecSchema = z.strictObject({
+  /** Opaque identity of this recorded park. Return it with input and signals. */
+  waitId: z.string().min(1).max(64),
   nodeId: SlugSchema,
   kind: WaitKindSchema,
   until: TimestampSchema.optional(),
@@ -91,18 +98,60 @@ export const WaitSpecSchema = z.strictObject({
   /** When a wait with a timeout times out; `until` is its own deadline (a timer or next beat). */
   timeoutAt: TimestampSchema.optional(),
   /**
-   * The `seq` of the `node.started` that parked: the wait's identity. Its timers are keyed with
-   * it, so a timer armed by an earlier wait can never wake a later one.
+   * The `node.started` sequence that produced this park, used to bound event reads.
+   * `waitId` is the identity returned by callers and carried in timer keys.
    */
-  startedSeq: z.number().int().positive().optional(),
+  startedSeq: z.number().int().positive(),
 });
 export type WaitSpec = z.infer<typeof WaitSpecSchema>;
+
+/**
+ * The model and effort defaults a run inherits below its own loop's defaults, resolved when the
+ * run is created and kept for its whole life (ADR-0041): later Settings or `GG_DEFAULTS` changes
+ * reach new runs only. A subloop child inherits its parent's; a replay fork keeps its source's.
+ */
+export const PinnedDefaultsSchema = z.strictObject({
+  /** The owner's Settings defaults when the run was created. */
+  owner: HarnessDefaultsSchema,
+  /** The process defaults (`GG_DEFAULTS`) when the run was created. */
+  process: HarnessDefaultsSchema,
+});
+export type PinnedDefaults = z.infer<typeof PinnedDefaultsSchema>;
+
+/**
+ * What a run's `versionId` pins: an immutable definition record (ADR-0041). A published start pins
+ * that published version; a draft start pins a snapshot of the draft frozen when the run was
+ * created, so later draft edits never reach it.
+ */
+export const RunPinSchema = z.strictObject({
+  /** `published`: a published loop version. `draft`: the snapshot of the draft taken at start. */
+  source: z.enum(['published', 'draft']),
+  /** The loop version number: the published number, or the draft's number when it was frozen. */
+  version: z.number().int().positive(),
+  /** The loop name in the pinned definition; renaming the loop later does not change it. */
+  name: z.string().min(1).max(120),
+  /** Readable label: `<name> v<version>`, or `<name> draft v<version>` for a draft snapshot. */
+  label: z.string().min(1).max(160),
+  defaults: PinnedDefaultsSchema,
+  /**
+   * The execution binding of every classifier the pinned definition references, by catalog id,
+   * taken at start (a child inherits its parent's for the ids they share). A classifier missing at
+   * start has no binding, and its decision fails without consulting the current catalog.
+   */
+  classifiers: z.record(ClassifierModelIdSchema, ClassifierBindingSchema),
+});
+export type RunPin = z.infer<typeof RunPinSchema>;
 
 export const RunRecordSchema = z.strictObject({
   id: UlidSchema,
   ownerId: z.string().min(1).max(128),
   loopId: UlidSchema,
+  /**
+   * The immutable definition record the run executes for its whole life: a published version, or
+   * the draft snapshot taken when the run was created (ADR-0041). `pinned` describes it.
+   */
   versionId: UlidSchema,
+  pinned: RunPinSchema,
   parentRunId: UlidSchema.optional(),
   invocationId: UlidSchema,
   status: RunStatusSchema,

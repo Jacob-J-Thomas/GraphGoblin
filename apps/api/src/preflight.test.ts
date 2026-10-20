@@ -85,12 +85,20 @@ it('allows read-only CLI preflight alongside a container without changing its lo
 });
 
 describe('individual checks', () => {
-  it('requires Node 22 or newer', () => {
-    expect(checkNode('23.10.0').status).toBe('ok');
+  it('accepts Node 22 LTS', () => {
     expect(checkNode('v22.0.0').status).toBe('ok');
-    expect(checkNode('20.11.1')).toMatchObject({ status: 'fail', message: /too old/ });
-    expect(checkNode('garbage').status).toBe('fail');
+    expect(checkNode('22.14.0').status).toBe('ok');
   });
+
+  it.each(['20.11.1', '23.10.0', '24.0.0', 'garbage'])(
+    'refuses unsupported Node %s with the supported baseline',
+    (version) => {
+      const result = checkNode(version);
+      expect(result.status).toBe('fail');
+      expect(result.message).toContain('GraphGoblin needs Node 22 LTS');
+      expect(result.message).toContain('Select Node 22 on PATH');
+    },
+  );
 
   it('checks the data directory without creating it', async () => {
     expect((await checkDataDir(dir)).status).toBe('ok');

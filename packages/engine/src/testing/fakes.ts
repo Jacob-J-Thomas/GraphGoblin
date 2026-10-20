@@ -4,6 +4,7 @@
  */
 import type {
   ContextThread,
+  ClassifierBinding,
   ClassifierPrimitive,
   HarnessId,
   ModelCatalogEntry,
@@ -64,6 +65,7 @@ import type {
   WorkspacePort,
 } from '../ports.js';
 import { AppendConflictError } from '../errors.js';
+import { validateGeneratedEvent } from '../event-validation.js';
 import {
   AdmissionConflictError,
   assertAdmissionIdentity,
@@ -144,7 +146,7 @@ export class InMemoryEventStore implements EventStorePort {
   private readonly listeners = new Map<string, Set<(event: RunEvent) => void>>();
   constructor(private readonly clock: ClockPort) {}
 
-  append(
+  async append(
     runId: string,
     drafts: readonly EventDraft[],
     options: { expectedLastSeq?: number } = {},
@@ -153,17 +155,15 @@ export class InMemoryEventStore implements EventStorePort {
     if (options.expectedLastSeq !== undefined && options.expectedLastSeq !== log.length) {
       return Promise.reject(new AppendConflictError(runId, options.expectedLastSeq, log.length));
     }
-    const stored: RunEvent[] = [];
-    for (const draft of drafts) {
-      const event = {
+    const stored = drafts.map((draft, index) =>
+      validateGeneratedEvent({
         ...draft,
         runId,
-        seq: log.length + 1,
+        seq: log.length + index + 1,
         ts: this.clock.now().toISOString(),
-      };
-      log.push(event);
-      stored.push(event);
-    }
+      }),
+    );
+    log.push(...stored);
     this.logs.set(runId, log);
     for (const event of stored) {
       for (const listener of this.listeners.get(runId) ?? []) listener(event);
@@ -245,10 +245,12 @@ export class InMemoryRunRepository implements RunRepository {
     runId: string,
     from: readonly RunStatus[],
     changes: RunRecordChanges,
+    guard?: { waitId: string },
   ): Promise<RunRecord | undefined> {
     const current = this.runs.get(runId);
     if (!current) return Promise.reject(new Error(`run ${runId} not found`));
-    if (!from.includes(current.status)) return Promise.resolve(undefined);
+    if (!from.includes(current.status) || (guard && current.waiting?.waitId !== guard.waitId))
+      return Promise.resolve(undefined);
     return Promise.resolve(this.apply(current, changes));
   }
   claimCancel(
@@ -272,8 +274,12 @@ export class InMemoryRunRepository implements RunRepository {
     this.runs.set(current.id, record);
     return record;
   }
-  listByStatus(statuses: readonly RunStatus[]): Promise<RunRecord[]> {
-    return Promise.resolve([...this.runs.values()].filter((r) => statuses.includes(r.status)));
+  listRecoveryCandidates(): Promise<{ id: string; terminal: boolean }[]> {
+    return Promise.resolve(
+      [...this.runs.values()]
+        .filter((r) => !isTerminal(r.status) || !this.finalized.has(r.id))
+        .map((r) => ({ id: r.id, terminal: isTerminal(r.status) })),
+    );
   }
   markFinalized(runId: string): Promise<void> {
     this.finalized.add(runId);
@@ -283,9 +289,17 @@ export class InMemoryRunRepository implements RunRepository {
     this.finalized.delete(runId);
     return Promise.resolve();
   }
-  listUnfinalized(): Promise<RunRecord[]> {
+  listRunReferences(
+    statuses: readonly RunStatus[],
+  ): Promise<Pick<RunRecord, 'id' | 'loopId' | 'versionId'>[]> {
     return Promise.resolve(
-      [...this.runs.values()].filter((r) => isTerminal(r.status) && !this.finalized.has(r.id)),
+      [...this.runs.values()]
+        .filter((run) => statuses.includes(run.status))
+        .map(({ id, loopId, versionId }) => ({
+          id,
+          loopId,
+          versionId,
+        })),
     );
   }
   listChildren(parentRunId: string): Promise<RunRecord[]> {
@@ -626,6 +640,10 @@ export class FakeScripts implements ScriptPort {
       exitCode: 0,
       stdout: '',
       stderr: '',
+      stdoutBytes: 0,
+      stderrBytes: 0,
+      stdoutOverflow: false,
+      stderrOverflow: false,
       timedOut: false,
     }),
   ) {}
@@ -660,7 +678,8 @@ export class FakeWorkspace implements WorkspacePort {
 
 export class FakeTimers implements TimerPort {
   readonly scheduled: { runId: string; key: string; at: Date }[] = [];
-  private listeners: ((runId: string, key: string) => void | Promise<void>)[] = [];
+  private listeners: ((runId: string, key: string) => void | boolean | Promise<void | boolean>)[] =
+    [];
   /** An upsert, like the real store: one timer per run and key. */
   schedule(runId: string, key: string, at: Date): Promise<void> {
     const existing = this.scheduled.find((t) => t.runId === runId && t.key === key);
@@ -675,7 +694,9 @@ export class FakeTimers implements TimerPort {
     }
     return Promise.resolve();
   }
-  onFire(listener: (runId: string, key: string) => void | Promise<void>): () => void {
+  onFire(
+    listener: (runId: string, key: string) => void | boolean | Promise<void | boolean>,
+  ): () => void {
     this.listeners.push(listener);
     return () => {
       this.listeners = this.listeners.filter((l) => l !== listener);
@@ -685,8 +706,13 @@ export class FakeTimers implements TimerPort {
   async fireDue(now: Date): Promise<number> {
     const due = this.scheduled.filter((t) => t.at.getTime() <= now.getTime());
     for (const t of due) {
-      this.scheduled.splice(this.scheduled.indexOf(t), 1);
-      for (const listener of this.listeners) await listener(t.runId, t.key);
+      const firedAt = t.at.getTime();
+      let delivered = true;
+      for (const listener of this.listeners) {
+        if ((await listener(t.runId, t.key)) === false) delivered = false;
+      }
+      const index = this.scheduled.indexOf(t);
+      if (delivered && index >= 0 && t.at.getTime() === firedAt) this.scheduled.splice(index, 1);
     }
     return due.length;
   }
@@ -698,8 +724,15 @@ export class FakeTimers implements TimerPort {
       (t) => t.runId === runId && (t.key === key || t.key.startsWith(`${key}@`)),
     );
     const fired = index >= 0 ? (this.scheduled[index] as { key: string }).key : key;
-    if (index >= 0) this.scheduled.splice(index, 1);
-    for (const listener of this.listeners) await listener(runId, fired);
+    const timer = this.scheduled[index];
+    const firedAt = timer?.at.getTime();
+    let delivered = true;
+    for (const listener of this.listeners) {
+      if ((await listener(runId, fired)) === false) delivered = false;
+    }
+    const remaining = timer ? this.scheduled.indexOf(timer) : -1;
+    if (delivered && remaining >= 0 && timer?.at.getTime() === firedAt)
+      this.scheduled.splice(remaining, 1);
   }
 }
 
@@ -768,21 +801,43 @@ export const DEFAULT_TEST_SETTINGS: EngineSettings = {
 };
 
 export class FakeClassifierRegistry implements ClassifierRegistryPort {
-  readonly requests: { ownerId: string; modelId: string; primitive: ClassifierPrimitive }[] = [];
+  readonly requests: {
+    ownerId: string;
+    modelId: string;
+    primitive: ClassifierPrimitive;
+    binding: ClassifierBinding;
+  }[] = [];
   readonly models = new Map<string, ClassifierPort & Partial<Pick<DeciderPort, 'available'>>>();
   readonly unavailable = new Map<
     string,
     Extract<ClassifierResolution, { status: 'unavailable' }>
   >();
+  /** Catalog metadata per id; ids registered in `models` or `unavailable` get a default entry. */
+  readonly bindings = new Map<string, ClassifierBinding>();
   constructor(builtin?: ClassifierPort & Partial<Pick<DeciderPort, 'available'>>) {
     if (builtin) this.models.set('jev', builtin);
+  }
+  bind(_ownerId: string, modelId: string): Promise<ClassifierBinding | undefined> {
+    const known = this.models.has(modelId) || this.unavailable.has(modelId);
+    return Promise.resolve(
+      this.bindings.get(modelId) ??
+        (known
+          ? {
+              provider: modelId === 'jev' ? 'typesafe' : 'http',
+              providerModel: modelId === 'jev' ? 'jev-latest' : modelId,
+              primitives: ['choice', 'noul', 'score'],
+              endpoint: 'https://classifier.test',
+            }
+          : undefined),
+    );
   }
   resolve(
     ownerId: string,
     modelId: string,
     primitive: ClassifierPrimitive,
+    binding: ClassifierBinding,
   ): Promise<ClassifierResolution> {
-    this.requests.push({ ownerId, modelId, primitive });
+    this.requests.push({ ownerId, modelId, primitive, binding });
     const unavailable = this.unavailable.get(modelId);
     if (unavailable) return Promise.resolve(unavailable);
     const classifier = this.models.get(modelId);
@@ -802,9 +857,9 @@ export class FakeClassifierRegistry implements ClassifierRegistryPort {
       status: 'ready',
       classifier,
       provenance: {
-        provider: modelId === 'jev' ? 'typesafe' : 'http',
+        provider: binding.provider,
         classifierId: modelId,
-        model: modelId === 'jev' ? 'jev-latest' : modelId,
+        model: binding.providerModel,
       },
     });
   }
@@ -829,6 +884,7 @@ export class FakeModelCatalog {
 export type AdmissionWrite =
   | 'claim.inbound'
   | 'claim.receipt'
+  | 'create.snapshot'
   | 'create.run'
   | 'create.event'
   | 'create.receipt'
@@ -845,6 +901,7 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
   constructor(
     private readonly runs: InMemoryRunRepository,
     private readonly events: InMemoryEventStore,
+    private readonly loops: InMemoryLoopRepository,
     private readonly beforeWrite: (write: AdmissionWrite) => void = () => {},
   ) {}
   async create(authored: RunAdmission, receiptId?: string): Promise<RunRecord> {
@@ -869,13 +926,18 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
     }
     let run = this.runs.runs.get(input.run.id);
     const created = !run;
+    // A draft snapshot is immutable: the same id may only ever hold the same record.
+    const existing = input.snapshot ? this.loops.versions.get(input.snapshot.id) : undefined;
+    if (existing && stableStringify(existing) !== stableStringify(input.snapshot))
+      throw new AdmissionConflictError();
     if (run) {
       const thread = await this.runs.getInitialThread(run.id);
-      if (!thread) throw new AdmissionConflictError();
+      if (!thread || (input.snapshot && !existing)) throw new AdmissionConflictError();
       assertAdmissionIdentity(input, run, thread, this.events.all(run.id)[0]);
     } else {
       if (this.events.all(input.run.id).length) throw new AdmissionConflictError();
       run = { ...input.run, lastEventSeq: 1 };
+      if (input.snapshot && !existing) this.beforeWrite('create.snapshot');
       this.beforeWrite('create.run');
       this.beforeWrite('create.event');
     }
@@ -892,6 +954,7 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
       this.beforeWrite('create.link');
     }
     if (created) {
+      if (input.snapshot && !existing) this.loops.add(structuredClone(input.snapshot));
       this.runs.commitCreated(run, input.initialThread);
       this.events.commitQueued(queuedEvent(input));
     }
@@ -1053,7 +1116,8 @@ export function createFakePorts(options: { secrets?: Record<string, string> } = 
   const clock = new FakeClock();
   const events = new InMemoryEventStore(clock);
   const runs = new InMemoryRunRepository();
-  const admission = new InMemoryTriggerAdmission(runs, events);
+  const loops = new InMemoryLoopRepository();
+  const admission = new InMemoryTriggerAdmission(runs, events, loops);
   const harness = new FakeHarness();
   const jev = new FakeClassifier('jev');
   const codexDecider = new FakeDecider('codex');
@@ -1066,7 +1130,7 @@ export function createFakePorts(options: { secrets?: Record<string, string> } = 
     events,
     runs,
     admission,
-    loops: new InMemoryLoopRepository(),
+    loops,
     sessions: new InMemorySessionRepository(),
     harnesses: { codex: harness },
     harness,

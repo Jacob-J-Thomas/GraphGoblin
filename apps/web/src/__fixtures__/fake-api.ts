@@ -24,7 +24,7 @@ import {
   LoopDefinitionSchema,
   TemplateCatalogEntrySchema,
 } from '@graphgoblin/contracts';
-import { fakeUlid, minimalLoop, sampleThread } from '@graphgoblin/contracts/testing';
+import { fakeUlid, minimalLoop, samplePin, sampleThread } from '@graphgoblin/contracts/testing';
 import {
   exportLoop,
   importLoop,
@@ -78,6 +78,7 @@ export function runRecord(overrides: Partial<RunRecord> = {}): RunRecord {
     ownerId: 'local',
     loopId: id('loop'),
     versionId: id('version'),
+    pinned: samplePin(),
     invocationId: id('invocation'),
     status: 'running',
     iteration: 1,
@@ -667,7 +668,16 @@ export class FakeApi {
         const asked = (call.body as { versionId?: string } | undefined)?.versionId;
         const version = asked ? entry.history.find((v) => v.id === asked) : entry.current;
         if (!version) return problem(404, 'VERSION_NOT_FOUND', `version ${asked} not found`);
-        const run = this.addRun({ loopId: loopId!, versionId: version.id, status: 'queued' });
+        const run = this.addRun({
+          loopId: loopId!,
+          versionId: version.id,
+          pinned: samplePin({
+            version: version.version,
+            name: version.definition.name,
+            label: `${version.definition.name} v${version.version}`,
+          }),
+          status: 'queued',
+        });
         return json({ run }, 202);
       },
     ],
@@ -942,6 +952,13 @@ function match(route: string, call: RecordedCall): string[] | undefined {
     else if (want[i] !== got[i]) return undefined;
   }
   return params;
+}
+
+/** The fields every `run.queued` carries: the pinned definition record and its description. */
+export function queuedFields(
+  extra: { initialThread?: ContextThread } = {},
+): Omit<Extract<RunEvent, { type: 'run.queued' }>, 'runId' | 'seq' | 'ts' | 'type'> {
+  return { versionId: fakeUlid('version'), pinned: samplePin(), ...extra };
 }
 
 /** Build a run event with defaults for the base fields. */

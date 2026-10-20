@@ -1,8 +1,9 @@
-import { inArray, sql, type SQL } from 'drizzle-orm';
+import { and, eq, inArray, sql, type SQL } from 'drizzle-orm';
 import type { SqliteTransaction } from './db.js';
 import {
   harnessSessions,
   inboundEvents,
+  loopVersions,
   runEvents,
   runs,
   timers,
@@ -30,5 +31,14 @@ export async function deleteRuns(tx: SqliteTransaction, where: SQL): Promise<num
   // A surviving child keeps its thread and event history, but no live parent-row association.
   await tx.update(runs).set({ parentRunId: null }).where(inArray(runs.parentRunId, selected));
   const deleted = await tx.delete(runs).where(where).returning({ id: runs.id });
+  // A draft snapshot is run history: it goes with the last run that pins it (ADR-0041).
+  await tx
+    .delete(loopVersions)
+    .where(
+      and(
+        eq(loopVersions.status, 'snapshot'),
+        sql`NOT EXISTS (SELECT 1 FROM ${runs} WHERE ${runs.versionId} = ${loopVersions.id})`,
+      ),
+    );
   return deleted.length;
 }

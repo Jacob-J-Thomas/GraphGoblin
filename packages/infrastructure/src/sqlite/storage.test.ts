@@ -1,10 +1,13 @@
+import type { Client } from '@libsql/client';
+import type * as Libsql from '@libsql/client';
+import { rm } from 'node:fs/promises';
 import { SqliteTriggerAdmission } from './admission.js';
 import { applyShippedSqlToHistoricalTestFixture } from './testing/shipped-migrations.js';
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RunEvent, RunRecord } from '@graphgoblin/contracts';
 import { LoopDefinitionSchema } from '@graphgoblin/contracts';
 import {
@@ -13,6 +16,7 @@ import {
   kitchenSinkLoop,
   minimalLoop,
   sampleInvocation,
+  samplePin,
   sampleThread,
 } from '@graphgoblin/contracts/testing';
 import { createInitialThread } from '@graphgoblin/engine';
@@ -34,6 +38,56 @@ import {
 import type { TimerStore } from '../scheduler/timer-store.js';
 import { SqliteTimerStore } from './timers.js';
 
+// Controlled external-client scheduling: execute the real SELECT, then hold its result.
+// The repository and its transaction implementation remain intact.
+let afterLoopSelect: (() => Promise<void>) | undefined;
+vi.mock('@libsql/client', async (importOriginal) => {
+  const actual = await importOriginal<typeof Libsql>();
+  return {
+    ...actual,
+    createClient: (options: Libsql.Config) => {
+      const client = actual.createClient(options);
+      const execute: Client['execute'] = async (
+        statement: Libsql.InStatement,
+        args?: Libsql.InArgs,
+      ) => {
+        const result =
+          typeof statement === 'string'
+            ? await client.execute(statement, args)
+            : await client.execute(statement);
+        const sql = typeof statement === 'string' ? statement : statement.sql;
+        if (/^select\b.*\bfrom "loops"/i.test(sql)) await afterLoopSelect?.();
+        return result;
+      };
+      return new Proxy(client, {
+        get(target, key) {
+          if (key === 'execute') return execute;
+          const value: unknown = Reflect.get(target, key, target);
+          const forwarded: unknown = typeof value === 'function' ? value.bind(target) : value;
+          return forwarded;
+        },
+      });
+    },
+  };
+});
+
+function holdNextLoopSelect() {
+  let release!: () => void;
+  let reached!: () => void;
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const selected = new Promise<void>((resolve) => {
+    reached = resolve;
+  });
+  afterLoopSelect = async () => {
+    afterLoopSelect = undefined;
+    reached();
+    await held;
+  };
+  return { selected, release };
+}
+
 let handle: DatabaseHandle;
 let clock: FakeClock;
 let ids: FakeIds;
@@ -45,6 +99,7 @@ beforeEach(async () => {
 });
 
 afterEach(() => {
+  afterLoopSelect = undefined;
   handle.close();
 });
 
@@ -54,6 +109,7 @@ function runRecord(overrides: Partial<RunRecord> = {}): RunRecord {
     ownerId: 'local',
     loopId: fakeUlid('loop:x'),
     versionId: fakeUlid('version:x'),
+    pinned: samplePin(),
     invocationId: fakeUlid('inv:x'),
     status: 'queued',
     iteration: 1,
@@ -93,7 +149,7 @@ describe('SqliteRunRepository', () => {
     const thread = sampleThread();
     const run = runRecord({
       parentRunId: fakeUlid('parent'),
-      waiting: { nodeId: 'w', kind: 'input' },
+      waiting: { waitId: 'fixture-wait', startedSeq: 1, nodeId: 'w', kind: 'input' },
     });
     await repo.create(run, thread);
     expect(await repo.get(run.id)).toEqual(run);
@@ -147,6 +203,32 @@ describe('SqliteRunRepository', () => {
     );
   });
 
+  it('fences a delayed transition by the observed waiting identity', async () => {
+    const repo = new SqliteRunRepository(handle.db);
+    const run = runRecord({
+      status: 'waiting',
+      waiting: { waitId: 'A', startedSeq: 1, nodeId: 'w', kind: 'input' },
+    });
+    await repo.create(run, sampleThread());
+    expect(
+      await repo.transition(run.id, ['waiting'], { status: 'running' }, { waitId: 'unknown' }),
+    ).toBeUndefined();
+    expect(await repo.get(run.id)).toEqual(run);
+    await repo.update(run.id, {
+      waiting: { waitId: 'B', startedSeq: 2, nodeId: 'w', kind: 'input' },
+    });
+    expect(
+      await repo.transition(run.id, ['waiting'], { status: 'running' }, { waitId: 'A' }),
+    ).toBeUndefined();
+    expect((await repo.get(run.id))?.waiting?.waitId).toBe('B');
+    expect(
+      await repo.transition(run.id, ['waiting'], { status: 'running' }, { waitId: 'B' }),
+    ).toMatchObject({ status: 'running' });
+    expect(
+      await repo.transition(run.id, ['waiting'], { status: 'running' }, { waitId: 'B' }),
+    ).toBeUndefined();
+  });
+
   it('rolls back a failed ordinary transition and allows only one concurrent resume', async () => {
     const repo = new SqliteRunRepository(handle.db);
     const run = runRecord({ status: 'failed' });
@@ -170,14 +252,18 @@ describe('SqliteRunRepository', () => {
     const repo = new SqliteRunRepository(handle.db);
     const run = runRecord();
     await repo.create(run, sampleThread());
-    expect(await repo.listUnfinalized()).toEqual([]);
+    expect((await repo.listRecoveryCandidates()).filter((r) => r.terminal)).toEqual([]);
     await repo.update(run.id, { status: 'succeeded' });
-    expect((await repo.listUnfinalized()).map((r) => r.id)).toEqual([run.id]);
+    expect(
+      (await repo.listRecoveryCandidates()).filter((r) => r.terminal).map((r) => r.id),
+    ).toEqual([run.id]);
     await repo.markFinalized(run.id);
-    expect(await repo.listUnfinalized()).toEqual([]);
+    expect((await repo.listRecoveryCandidates()).filter((r) => r.terminal)).toEqual([]);
     // A resume clears it, so the next terminal outcome is finalized again.
     await repo.clearFinalized(run.id);
-    expect((await repo.listUnfinalized()).map((r) => r.id)).toEqual([run.id]);
+    expect(
+      (await repo.listRecoveryCandidates()).filter((r) => r.terminal).map((r) => r.id),
+    ).toEqual([run.id]);
   });
 
   it('migration 0002 marks runs that were already terminal as finalized', async () => {
@@ -196,6 +282,17 @@ describe('SqliteRunRepository', () => {
     const old = openDatabase({ url, migrationsFolder: migrations });
     await old.migrate();
     const thread = JSON.stringify(sampleThread());
+    // The runs' version exists, so migration 0014 can pin them.
+    await old.client.execute({
+      sql: "INSERT INTO loop_versions (id, loop_id, version, status, definition, created_at, published_at) VALUES (?, ?, 1, 'published', ?, ?, ?)",
+      args: [
+        fakeUlid('v'),
+        fakeUlid('loop'),
+        JSON.stringify(LoopDefinitionSchema.parse(minimalLoop())),
+        '2026-10-01T00:00:00.000Z',
+        '2026-10-01T00:00:00.000Z',
+      ],
+    });
     for (const [id, status] of [
       [fakeUlid('old-done'), 'succeeded'],
       [fakeUlid('old-wait'), 'waiting'],
@@ -217,14 +314,16 @@ describe('SqliteRunRepository', () => {
     old.close();
     const current = openDatabase({ url });
     try {
-      // Fourteen shipped migrations minus this fixture's two historical ledger entries.
-      expect(await current.pendingMigrations()).toBe(12);
+      // Fifteen shipped migrations minus this fixture's two historical ledger entries.
+      expect(await current.pendingMigrations()).toBe(13);
       await expect(current.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
       await applyShippedSqlToHistoricalTestFixture(current);
       const repo = new SqliteRunRepository(current.db);
-      expect(await repo.listUnfinalized()).toEqual([]);
+      expect((await repo.listRecoveryCandidates()).filter((r) => r.terminal)).toEqual([]);
       await repo.update(fakeUlid('old-wait'), { status: 'failed' });
-      expect((await repo.listUnfinalized()).map((r) => r.id)).toEqual([fakeUlid('old-wait')]);
+      expect(
+        (await repo.listRecoveryCandidates()).filter((r) => r.terminal).map((r) => r.id),
+      ).toEqual([fakeUlid('old-wait')]);
     } finally {
       current.close();
       try {
@@ -254,27 +353,31 @@ describe('SqliteRunRepository', () => {
 
   it('lists by status, children, and filters', async () => {
     const repo = new SqliteRunRepository(handle.db);
-    const parent = runRecord({ id: 'p', status: 'waiting', createdAt: '2026-10-02T10:00:00.000Z' });
+    const parent = runRecord({
+      id: fakeUlid('p'),
+      status: 'waiting',
+      createdAt: '2026-10-02T10:00:00.000Z',
+    });
     const child = runRecord({
-      id: 'c',
+      id: fakeUlid('c'),
       parentRunId: parent.id,
       status: 'succeeded',
       createdAt: '2026-10-02T11:00:00.000Z',
       loopId: fakeUlid('loop:child'),
     });
     const other = runRecord({
-      id: 'o',
+      id: fakeUlid('o'),
       ownerId: 'someone-else',
       status: 'queued',
       createdAt: '2026-10-02T12:00:00.000Z',
     });
     for (const r of [parent, child, other]) await repo.create(r, sampleThread());
 
-    expect((await repo.listByStatus(['waiting', 'queued'])).map((r) => r.id)).toEqual([
+    expect((await repo.listRunReferences(['waiting', 'queued'])).map((r) => r.id)).toEqual([
       parent.id,
       other.id,
     ]);
-    expect(await repo.listByStatus([])).toEqual([]);
+    expect(await repo.listRunReferences([])).toEqual([]);
     expect((await repo.listChildren(parent.id)).map((r) => r.id)).toEqual([child.id]);
     expect((await repo.list()).map((r) => r.id)).toEqual([other.id, child.id, parent.id]);
     expect((await repo.list({ ownerId: 'local' })).map((r) => r.id)).toEqual([child.id, parent.id]);
@@ -304,7 +407,7 @@ describe('SqliteEventStore', () => {
 
     expect(await store.append(run.id, [])).toEqual([]);
     const first = await store.append(run.id, [
-      { type: 'run.queued' },
+      { type: 'run.queued', versionId: run.versionId, pinned: run.pinned },
       { type: 'run.started', attempt: 1 },
     ]);
     expect(first.map((e) => e.seq)).toEqual([1, 2]);
@@ -347,7 +450,13 @@ describe('SqliteEventStore', () => {
     const store = new SqliteEventStore(handle.db, clock);
     const run = runRecord();
     await runs.create(run, sampleThread());
-    await store.append(run.id, [{ type: 'run.queued' }], { expectedLastSeq: 0 });
+    await store.append(
+      run.id,
+      [{ type: 'run.queued', versionId: run.versionId, pinned: run.pinned }],
+      {
+        expectedLastSeq: 0,
+      },
+    );
     const results = await Promise.allSettled([
       store.append(run.id, [{ type: 'run.woken', nodeId: 'w', reason: 'input' }], {
         expectedLastSeq: 1,
@@ -365,28 +474,43 @@ describe('SqliteEventStore', () => {
 });
 
 describe('SqliteLoopRepository draft and publish interleaving', () => {
+  let competing: DatabaseHandle;
+  let databasePath: string;
+  let directory: string;
+  beforeEach(async () => {
+    // Separate connections let the publisher commit while the saver holds a SELECT result.
+    // A single serialized client would correctly block every competing call behind that read.
+    handle.close();
+    directory = mkdtempSync(join(tmpdir(), 'gg-publish-'));
+    databasePath = join(directory, 'store.db');
+    handle = openDatabase({ url: `file:${databasePath.replaceAll('\\', '/')}` });
+    await handle.migrate();
+    competing = openDatabase({ url: `file:${databasePath.replaceAll('\\', '/')}` });
+  });
+  afterEach(() => {
+    handle.close();
+    competing.close();
+    // libsql keeps files open after close on Windows: this pre-existing native leak cannot
+    // be cured here, so the directory may survive. Cleanup must never hold up the test.
+    void rm(directory, { recursive: true, force: true, maxRetries: 2, retryDelay: 10 }).catch(
+      () => undefined,
+    );
+  });
+
   it('never modifies a version that was published after a draft save read the loop', async () => {
     const repo = new SqliteLoopRepository(handle.db, clock, ids);
     const definition = LoopDefinitionSchema.parse(minimalLoop());
     const { loop, draft } = await repo.create('local', definition);
     // The save reads the loop (draft still current), pauses; a publish lands; the save resumes.
-    const getLoop = repo.getLoop.bind(repo);
-    let release!: () => void;
-    const paused = new Promise<void>((resolve) => (release = resolve));
-    let lookedUp!: () => void;
-    const lookupDone = new Promise<void>((resolve) => (lookedUp = resolve));
-    repo.getLoop = async (id) => {
-      const snapshot = await getLoop(id);
-      repo.getLoop = getLoop;
-      lookedUp();
-      await paused;
-      return snapshot;
-    };
+    const gate = holdNextLoopSelect();
     const saving = repo.saveDraft(loop.id, { ...definition, description: 'late edit' });
-    await lookupDone;
-    const published = await repo.publish(loop.id);
-    expect(published?.id).toBe(draft.id);
-    release();
+    await gate.selected;
+    try {
+      const published = await new SqliteLoopRepository(competing.db, clock, ids).publish(loop.id);
+      expect(published?.id).toBe(draft.id);
+    } finally {
+      gate.release();
+    }
     const saved = await saving;
 
     expect(saved.id).not.toBe(draft.id);
@@ -404,17 +528,38 @@ describe('SqliteLoopRepository draft and publish interleaving', () => {
   it('publishes a draft once even when two publishes read the same draft', async () => {
     const repo = new SqliteLoopRepository(handle.db, clock, ids);
     const { loop, draft } = await repo.create('local', LoopDefinitionSchema.parse(minimalLoop()));
-    const getLoop = repo.getLoop.bind(repo);
-    const stale = await getLoop(loop.id);
-    expect(await repo.publish(loop.id)).toMatchObject({ id: draft.id });
-    repo.getLoop = () => Promise.resolve(stale);
-    expect(await repo.publish(loop.id)).toBeUndefined();
-    repo.getLoop = getLoop;
+    const gate = holdNextLoopSelect();
+    const first = repo.publish(loop.id);
+    await gate.selected;
+    try {
+      expect(
+        await new SqliteLoopRepository(competing.db, clock, ids).publish(loop.id),
+      ).toMatchObject({ id: draft.id });
+    } finally {
+      gate.release();
+    }
+    expect(await first).toBeUndefined();
+    expect(await repo.listVersions(loop.id)).toEqual([
+      expect.objectContaining({ id: draft.id, status: 'published', version: 1 }),
+    ]);
     expect((await repo.getLoop(loop.id))?.currentVersionId).toBe(draft.id);
   });
 });
 
 describe('SqliteLoopRepository', () => {
+  it('preserves an empty description distinctly from absence on create, list and draft save', async () => {
+    const repo = new SqliteLoopRepository(handle.db, clock, ids);
+    const definition = LoopDefinitionSchema.parse({ ...minimalLoop(), description: '' });
+    const { loop } = await repo.create('local', definition);
+    expect(loop.description).toBe('');
+    expect((await repo.getLoop(loop.id))?.description).toBe('');
+    expect((await repo.listLoops('local'))[0]?.description).toBe('');
+    await repo.saveDraft(loop.id, LoopDefinitionSchema.parse(minimalLoop()));
+    expect(Object.hasOwn((await repo.getLoop(loop.id))!, 'description')).toBe(false);
+    await repo.saveDraft(loop.id, definition);
+    expect((await repo.getLoop(loop.id))?.description).toBe('');
+  });
+
   it('creates loops with drafts, publishes, and resolves versions', async () => {
     const repo = new SqliteLoopRepository(handle.db, clock, ids);
     const definition = LoopDefinitionSchema.parse(minimalLoop());
@@ -535,6 +680,20 @@ describe('SqliteTimerStore', () => {
     expect((await store.list(run)).map((t) => t.key)).toEqual(['timeout']);
     await store.remove(run);
     expect(await store.list(run)).toEqual([]);
+  });
+});
+
+describe('conditional timer deferral', () => {
+  it('requeues only the fired SQLite row and preserves a concurrent re-arm', async () => {
+    const store = new SqliteTimerStore(handle.db);
+    const at = new Date('2026-10-02T12:00:00.000Z');
+    const retryAt = new Date('2026-10-02T12:00:01.000Z');
+    await store.upsert('r', 'timer@wait', at);
+    await store.defer('r', 'timer@wait', at, retryAt);
+    expect(await store.listDue(at)).toEqual([]);
+    expect(await store.list('r')).toEqual([{ runId: 'r', key: 'timer@wait', at: retryAt }]);
+    await store.defer('r', 'timer@wait', at, new Date(0));
+    expect((await store.list('r'))[0]?.at).toEqual(retryAt);
   });
 });
 
@@ -701,8 +860,9 @@ describe('migration 0003 model catalog max effort', () => {
     }
     const current = openDatabase({ url });
     try {
-      // Includes 0013_trigger_configuration after the three historical catalog migrations.
-      expect(await current.pendingMigrations()).toBe(11);
+      // Includes 0013_trigger_configuration and 0014_run_definition_pins after the three
+      // historical catalog migrations.
+      expect(await current.pendingMigrations()).toBe(12);
       await expect(current.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
       await applyShippedSqlToHistoricalTestFixture(current);
       expect(await current.pendingMigrations()).toBe(0);

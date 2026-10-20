@@ -363,6 +363,24 @@ Replace the probe URL with your service. `intervalSeconds` ranges from 5 to 86,4
 
 Polling starts one interval after publish or boot and is armed in memory; it does not catch up missed polls. Trigger dedupe history is stored in the runs and survives restarts. Polling is implemented even though the older node catalog labels it a stretch feature.
 
+HTTP probe responses are limited to 64 KiB (65,536 decompressed bytes), including
+single-result polls. Above that bound the whole probe fails; no partial JSON or
+truncated success reaches `fireWhen`. A GitHub REST list page with 30–100 issues
+can exceed this budget. Find affected targets in API log warnings named
+`poll trigger failed` with code `HTTP_PROBE_BODY_OVERFLOW`. Narrow query parameters
+(for example the page size), or use a single-result script probe, which keeps its
+10 MiB capture and full JSON parsing. Items-mode scripts retain their 64 KiB bound.
+
+### Heartbeat probes
+
+Heartbeat nodes use the same HTTP probe limit: 64 KiB of decompressed body bytes.
+An over-limit response fails the run with `HTTP_PROBE_BODY_OVERFLOW` before
+recording a successful beat or evaluating `until`. Find these runs by their failure
+code in the inspector. Narrow the response or choose a script probe; a heartbeat
+script retains the default 10 MiB capture and full JSON parsing. These HTTP probes
+previously parsed the full JSON while slicing its body preview; oversized responses
+now fail explicitly. HEAD and body-less 204/304 responses have no body to cap.
+
 ### Drain a GitHub backlog with items mode
 
 Use an authenticated local `gh` installation and Node.js for read-only polling. GraphGoblin does not install `gh` or store its login. This example lists open issues carrying `ready`, excludes pull requests, and emits only the fields needed by the loop. [GitHub CLI pagination](https://cli.github.com/manual/gh_api) applies the query to each page. The bounded Node wrapper collects those compact JSON lines into one array; it avoids the unsupported combination of `--slurp` and `--jq`, limits the child to 55 seconds and 65,536 output bytes, and reports only a fixed failure message.

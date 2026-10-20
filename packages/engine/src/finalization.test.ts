@@ -51,7 +51,25 @@ for (const source of [
   'mutate-error',
 ] as const) {
   it(`terminal append survives crash before status: ${source}`, async () => {
-    const e = await createTestEngine();
+    const e = await createTestEngine(
+      {},
+      source === 'invalid-patch'
+        ? {
+            handlers: {
+              ...defaultHandlers(),
+              trigger: {
+                kind: 'trigger',
+                execute: () =>
+                  Promise.resolve({
+                    kind: 'done',
+                    route: 'out',
+                    patch: [{ op: 'replace', path: '/schemaVersion', value: 999 }],
+                  }),
+              },
+            },
+          }
+        : {},
+    );
     let def: LoopDefinitionInput = minimalLoop();
     let code: string | undefined;
     if (source.startsWith('exit'))
@@ -164,18 +182,13 @@ for (const source of [
       code = source === 'harness-uninstalled' ? 'HARNESS_NOT_INSTALLED' : 'INFERENCE_TIMEOUT';
     }
     if (source === 'invalid-patch') {
-      vi.spyOn(defaultHandlers().trigger, 'execute').mockResolvedValue({
-        kind: 'done',
-        route: 'out',
-        patch: [{ op: 'replace', path: '/schemaVersion', value: 999 }],
-      });
       code = 'INTERNAL_ERROR';
     }
     if (source === 'executor-error') {
-      e.settings.ownerDefaults = vi
-        .fn()
-        .mockRejectedValueOnce(new Error('owner store failed'))
-        .mockResolvedValue({ byHarness: {} });
+      // The executor reads the checkpoint before any node runs: a failure there is executor-level.
+      vi.spyOn(e.ports.runs, 'getThreadCheckpoint').mockRejectedValueOnce(
+        new Error('checkpoint store failed'),
+      );
       code = 'INTERNAL_ERROR';
     }
     if (source === 'subloop-missing') {
@@ -214,6 +227,10 @@ for (const source of [
         exitCode: source === 'script' ? 5 : 0,
         stdout: '',
         stderr: '',
+        stdoutBytes: 0,
+        stderrBytes: 0,
+        stdoutOverflow: false,
+        stderrOverflow: false,
         timedOut: source === 'script-timeout',
       });
       def = singleNodeLoop(source, {
@@ -289,6 +306,25 @@ for (const source of [
           : 'failed';
     expect(final.status).toBe(expected);
     if (code) expect(final.failure?.code).toBe(code);
+    if (source === 'invalid-patch') {
+      expect(e.events(r.id)).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ type: 'node.started', nodeId: 'start' }),
+          expect.objectContaining({
+            type: 'run.failed',
+            failure: expect.objectContaining({
+              code: 'INTERNAL_ERROR',
+              nodeId: 'start',
+              resumable: false,
+            }),
+          }),
+        ]),
+      );
+      expect(e.events(r.id).filter((event) => event.type === 'node.finished')).toHaveLength(0);
+      expect(
+        (await e.ports.runs.listRecoveryCandidates()).filter((c) => c.terminal).map((c) => c.id),
+      ).not.toContain(r.id);
+    }
     if (source.startsWith('exit')) expect(final.result).toBe(1);
     expect(e.events(r.id).filter(terminal)).toHaveLength(1);
   });
@@ -476,7 +512,7 @@ it('a resumed failed run is finalized again after a crash on its next terminal s
   );
   const r = await e.runToIdle(e.publish(def).loopId);
   expect(r.failure?.resumable).toBe(true);
-  expect(await e.ports.runs.listUnfinalized()).toHaveLength(0);
+  expect((await e.ports.runs.listRecoveryCandidates()).filter((r) => r.terminal)).toHaveLength(0);
   const transition = e.ports.runs.transition.bind(e.ports.runs);
   let blocked = false;
   const spy = vi.spyOn(e.ports.runs, 'transition').mockImplementation(async (id, from, changes) => {
@@ -491,11 +527,13 @@ it('a resumed failed run is finalized again after a crash on its next terminal s
   await vi.waitFor(() => expect(blocked).toBe(true));
   e.manager.stop();
   spy.mockRestore();
-  expect((await e.ports.runs.listUnfinalized()).map((x) => x.id)).toEqual([r.id]);
+  expect(
+    (await e.ports.runs.listRecoveryCandidates()).filter((r) => r.terminal).map((x) => x.id),
+  ).toEqual([r.id]);
   await recover(e);
   expect((await e.ports.runs.get(r.id))?.status).toBe('succeeded');
   expect(e.ports.delivery.logged).toHaveLength(1);
-  expect(await e.ports.runs.listUnfinalized()).toHaveLength(0);
+  expect((await e.ports.runs.listRecoveryCandidates()).filter((r) => r.terminal)).toHaveLength(0);
 });
 
 it('a child cancellation error leaves the parent finalization pending for the next recovery', async () => {
@@ -524,10 +562,12 @@ it('a child cancellation error leaves the parent finalization pending for the ne
   e.manager.stop();
   spy.mockRestore();
   expect((await e.ports.runs.get(child.id))?.status).toBe('waiting');
-  expect((await e.ports.runs.listUnfinalized()).map((x) => x.id)).toEqual([r.id]);
+  expect(
+    (await e.ports.runs.listRecoveryCandidates()).filter((r) => r.terminal).map((x) => x.id),
+  ).toEqual([r.id]);
   await recover(e);
   expect((await e.ports.runs.get(child.id))?.status).toBe('cancelled');
-  expect(await e.ports.runs.listUnfinalized()).toHaveLength(0);
+  expect((await e.ports.runs.listRecoveryCandidates()).filter((r) => r.terminal)).toHaveLength(0);
 });
 
 it.each(['durable', 'not durable'] as const)(
@@ -568,7 +608,7 @@ it.each(['durable', 'not durable'] as const)(
     expect((await e.ports.runs.get(r.id))?.status).toBe(
       durable === 'durable' ? 'succeeded' : 'failed',
     );
-    expect(await e.ports.runs.listUnfinalized()).toHaveLength(0);
+    expect((await e.ports.runs.listRecoveryCandidates()).filter((r) => r.terminal)).toHaveLength(0);
   },
 );
 
@@ -638,7 +678,7 @@ it.each(['next success', 'durable resume'] as const)(
     await recover(e);
     expect((await e.ports.runs.get(r.id))?.status).toBe('succeeded');
     expect(e.ports.delivery.logged).toHaveLength(1);
-    expect(await e.ports.runs.listUnfinalized()).toHaveLength(0);
+    expect((await e.ports.runs.listRecoveryCandidates()).filter((r) => r.terminal)).toHaveLength(0);
   },
 );
 

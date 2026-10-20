@@ -1,0 +1,133 @@
+{
+  "method": "GET",
+  "path": "/runs/01M59J7KSTDMX4HDGJPETPAGZG/events?after=0&limit=1000",
+  "status": 200,
+  "body": {
+    "items": [
+      {
+        "runId": "01M59J7KSTDMX4HDGJPETPAGZG",
+        "seq": 1,
+        "ts": "2026-10-19T07:50:18.170Z",
+        "type": "run.queued",
+        "initialThread": {
+          "schemaVersion": 1,
+          "run": {
+            "id": "01M59J7KSTDMX4HDGJPETPAGZG",
+            "loopId": "01M59J7KQKDEQNXYQPMJ5PTAVZ",
+            "versionId": "01M59J7KQK6ZSY7W2XRYKS0J1T",
+            "iteration": 1
+          },
+          "invocation": {
+            "id": "01M59J7KST26QMPMBA4HPCHW30",
+            "source": "manual.api",
+            "caller": {
+              "kind": "api-key",
+              "id": "01M59J7BQJ2WH99T2N9JYG0DRS"
+            },
+            "trigger": {
+              "nodeId": "start",
+              "kind": "manual",
+              "payload": null,
+              "receivedAt": "2026-10-19T07:50:18.170Z"
+            }
+          },
+          "messages": [],
+          "vars": {},
+          "artifacts": [],
+          "outputs": {},
+          "gates": {},
+          "counters": {
+            "nodeVisits": {},
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          }
+        }
+      },
+      {
+        "runId": "01M59J7KSTDMX4HDGJPETPAGZG",
+        "seq": 2,
+        "ts": "2026-10-19T07:50:18.182Z",
+        "type": "run.started",
+        "attempt": 1
+      },
+      {
+        "runId": "01M59J7KSTDMX4HDGJPETPAGZG",
+        "seq": 3,
+        "ts": "2026-10-19T07:50:18.202Z",
+        "type": "node.started",
+        "nodeId": "start",
+        "kind": "trigger",
+        "attempt": 1,
+        "configHash": "527dee9c4254fe4e"
+      },
+      {
+        "runId": "01M59J7KSTDMX4HDGJPETPAGZG",
+        "seq": 4,
+        "ts": "2026-10-19T07:50:18.221Z",
+        "type": "node.finished",
+        "nodeId": "start",
+        "patch": [
+          {
+            "op": "add",
+            "path": "/outputs/start",
+            "value": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-19T07:50:18.220Z"
+            }
+          },
+          {
+            "op": "add",
+            "path": "/lastOutput",
+            "value": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-19T07:50:18.220Z"
+            }
+          }
+        ],
+        "route": "out",
+        "durationMs": 0
+      },
+      {
+        "runId": "01M59J7KSTDMX4HDGJPETPAGZG",
+        "seq": 5,
+        "ts": "2026-10-19T07:50:18.234Z",
+        "type": "node.started",
+        "nodeId": "work",
+        "kind": "script",
+        "attempt": 1,
+        "configHash": "9c9f7c80b12954b2"
+      },
+      {
+        "runId": "01M59J7KSTDMX4HDGJPETPAGZG",
+        "seq": 6,
+        "ts": "2026-10-19T07:50:18.342Z",
+        "type": "node.progress",
+        "nodeId": "work",
+        "progress": {
+          "exitCode": 0,
+          "stderr": "",
+          "stdoutBytes": 90001
+        }
+      },
+      {
+        "runId": "01M59J7KSTDMX4HDGJPETPAGZG",
+        "seq": 7,
+        "ts": "2026-10-19T07:50:18.366Z",
+        "type": "run.failed",
+        "failure": {
+          "code": "SCRIPT_EXIT_CODE",
+          "message": "script stdout is not a valid JSON patch: Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test'; Invalid discriminator value. Expected ' [truncated; original 190039 characters]",
+          "nodeId": "work",
+          "resumable": true
+        }
+      }
+    ],
+    "nextAfter": 7
+  }
+}

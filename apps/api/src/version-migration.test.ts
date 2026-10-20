@@ -84,10 +84,17 @@ async function seedVersion(status: 'draft' | 'published', definition = inference
   await t.container.handle.client.execute('DROP TABLE classifier_models');
   await t.container.handle.client.execute('DROP TABLE webhook_receipts');
   await t.container.handle.client.execute('DROP INDEX runs_trigger_dedupe_idx');
+  for (const statement of [
+    'DROP TRIGGER loop_versions_snapshot_immutable',
+    'DROP TRIGGER loop_versions_snapshot_pinned',
+    'DROP INDEX runs_version_idx',
+    'ALTER TABLE runs DROP COLUMN pinned',
+  ])
+    await t.container.handle.client.execute(statement);
   await t.container.handle.client.execute(
     'DELETE FROM __drizzle_migrations WHERE created_at > 1791136800000',
   );
-  expect(await t.container.handle.pendingMigrations()).toBe(9);
+  expect(await t.container.handle.pendingMigrations()).toBe(10);
   await expect(t.container.handle.migrate()).rejects.toMatchObject({
     code: 'DATA_UPGRADE_REQUIRED',
   });
@@ -164,7 +171,7 @@ describe('migrated SQLite versions through the API', () => {
       try {
         await second.start();
         app = await buildApp(second, { logger: false });
-        const answered = await app.inject({ method: 'POST', url: '/runs/' + runId + '/input', payload: { input: true } });
+        const answered = await app.inject({ method: 'POST', url: '/runs/' + runId + '/input', payload: { waitId: (await second.repos.runs.get(runId)).waiting.waitId, input: true } });
         assert.equal(answered.statusCode, 200, answered.body);
         await second.manager.waitForIdle();
         const finished = await second.repos.runs.get(runId);

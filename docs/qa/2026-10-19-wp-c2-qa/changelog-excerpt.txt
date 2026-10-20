@@ -1,0 +1,10 @@
+# Changelog
+
+All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); the user guide is [docs/guide/](docs/guide/README.md).
+
+## Unreleased
+
+- Bind input and signals to the observed `waiting.waitId`; stale, unknown and consumed waits reject with 409 `WAIT_MISMATCH` without appending another answer. A retry can finish the status acknowledgement of an earlier durable answer. **Upgrade:** every run whose log contains a `run.waiting` event becomes unreadable history because `RunEventSchema` now requires `waitId`: this includes finished runs and every run that ever parked on a wait, heartbeat or subloop node. `GET /runs/diagnostics` lists these runs; they cannot be answered, resumed or inspected. Finish or cancel waiting and paused runs on the old build before upgrading, or accept them as lost. Delete their loops with `DELETE /loops/:id` once their runs are terminal (this removes all of that loop's history), or reset the store (WP-B3's `--reset` command when it lands; until then, by hand: the `runs`, `run_events` and `timers` rows). Input bodies are now `{ waitId, input }`, signal bodies are `{ waitId, payload? }`, and MCP/client callers supply the identity from the observed snapshot or `run.waiting` event. No conversion is offered. (#272)
+- Arm durable timers only after parking; recover interrupted parks using their original deadlines, defer early deliveries, preserve paused deadlines and protect identical-deadline re-arms from old acknowledgements, fence delayed status acknowledgements to their wait, and queue a committed wake after a lost status response. Past deadlines wake once after restart or resume. (#226)
+- Scope heartbeat signal observations and beat counts to a logical node visit: retain them across beats, retries and restart, reset after completion, and reject signals for an earlier observed park. (#257)
+

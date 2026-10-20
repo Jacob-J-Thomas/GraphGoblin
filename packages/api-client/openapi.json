@@ -13,6 +13,37 @@
       }
     },
     "schemas": {
+      "WaitConflictInput": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "number",
+            "const": 409
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "WAIT_MISMATCH",
+              "INVALID_STATE"
+            ]
+          },
+          "detail": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ]
+      },
       "ClassifierModelSummaryInput": {
         "type": "object",
         "properties": {
@@ -4209,7 +4240,8 @@
             "type": "string",
             "enum": [
               "draft",
-              "published"
+              "published",
+              "snapshot"
             ]
           },
           "definition": {
@@ -4265,6 +4297,7 @@
               "SCRIPT_TIMEOUT",
               "INFERENCE_TIMEOUT",
               "OUTPUT_SCHEMA_MISMATCH",
+              "ARTIFACT_WRITE_FAILED",
               "SUBLOOP_DEPTH_EXCEEDED",
               "SUBLOOP_NOT_FOUND",
               "DECISION_NO_ROUTE",
@@ -4285,8 +4318,10 @@
               "EXPRESSION_ERROR",
               "WAIT_TIMEOUT",
               "HEARTBEAT_EXHAUSTED",
+              "HTTP_PROBE_BODY_OVERFLOW",
               "RETURN_DELIVERY_FAILED",
               "MAX_NODE_VISITS",
+              "EVENT_INVALID",
               "INTERNAL_ERROR"
             ]
           },
@@ -4315,6 +4350,11 @@
       "WaitSpecInput": {
         "type": "object",
         "properties": {
+          "waitId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
           "nodeId": {
             "type": "string",
             "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
@@ -4370,8 +4410,10 @@
           }
         },
         "required": [
+          "waitId",
           "nodeId",
-          "kind"
+          "kind",
+          "startedSeq"
         ],
         "additionalProperties": false
       },
@@ -4394,6 +4436,183 @@
           "versionId": {
             "type": "string",
             "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "pinned": {
+            "type": "object",
+            "properties": {
+              "source": {
+                "type": "string",
+                "enum": [
+                  "published",
+                  "draft"
+                ]
+              },
+              "version": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 160
+              },
+              "defaults": {
+                "type": "object",
+                "properties": {
+                  "owner": {
+                    "type": "object",
+                    "properties": {
+                      "byHarness": {
+                        "default": {},
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string",
+                          "enum": [
+                            "codex",
+                            "claude"
+                          ]
+                        },
+                        "additionalProperties": {
+                          "type": "object",
+                          "properties": {
+                            "model": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "effort": {
+                              "type": "string",
+                              "enum": [
+                                "minimal",
+                                "low",
+                                "medium",
+                                "high",
+                                "xhigh",
+                                "max"
+                              ]
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "process": {
+                    "type": "object",
+                    "properties": {
+                      "byHarness": {
+                        "default": {},
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string",
+                          "enum": [
+                            "codex",
+                            "claude"
+                          ]
+                        },
+                        "additionalProperties": {
+                          "type": "object",
+                          "properties": {
+                            "model": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "effort": {
+                              "type": "string",
+                              "enum": [
+                                "minimal",
+                                "low",
+                                "medium",
+                                "high",
+                                "xhigh",
+                                "max"
+                              ]
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "owner",
+                  "process"
+                ],
+                "additionalProperties": false
+              },
+              "classifiers": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9_.-]{0,63}$"
+                },
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "provider": {
+                      "type": "string",
+                      "enum": [
+                        "typesafe",
+                        "http"
+                      ]
+                    },
+                    "providerModel": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 256
+                    },
+                    "primitives": {
+                      "minItems": 1,
+                      "maxItems": 3,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "choice",
+                          "noul",
+                          "score"
+                        ]
+                      }
+                    },
+                    "endpoint": {
+                      "type": "string",
+                      "maxLength": 4096,
+                      "format": "uri"
+                    },
+                    "secretRef": {
+                      "type": "string",
+                      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$"
+                    }
+                  },
+                  "required": [
+                    "provider",
+                    "providerModel",
+                    "primitives",
+                    "endpoint"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "source",
+              "version",
+              "name",
+              "label",
+              "defaults",
+              "classifiers"
+            ],
+            "additionalProperties": false
           },
           "parentRunId": {
             "type": "string",
@@ -4468,6 +4687,7 @@
           "ownerId",
           "loopId",
           "versionId",
+          "pinned",
           "invocationId",
           "status",
           "iteration",
@@ -4498,6 +4718,187 @@
               "type": {
                 "type": "string",
                 "const": "run.queued"
+              },
+              "versionId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "pinned": {
+                "type": "object",
+                "properties": {
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "published",
+                      "draft"
+                    ]
+                  },
+                  "version": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "label": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 160
+                  },
+                  "defaults": {
+                    "type": "object",
+                    "properties": {
+                      "owner": {
+                        "type": "object",
+                        "properties": {
+                          "byHarness": {
+                            "default": {},
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string",
+                              "enum": [
+                                "codex",
+                                "claude"
+                              ]
+                            },
+                            "additionalProperties": {
+                              "type": "object",
+                              "properties": {
+                                "model": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                },
+                                "effort": {
+                                  "type": "string",
+                                  "enum": [
+                                    "minimal",
+                                    "low",
+                                    "medium",
+                                    "high",
+                                    "xhigh",
+                                    "max"
+                                  ]
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          }
+                        },
+                        "additionalProperties": false
+                      },
+                      "process": {
+                        "type": "object",
+                        "properties": {
+                          "byHarness": {
+                            "default": {},
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string",
+                              "enum": [
+                                "codex",
+                                "claude"
+                              ]
+                            },
+                            "additionalProperties": {
+                              "type": "object",
+                              "properties": {
+                                "model": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                },
+                                "effort": {
+                                  "type": "string",
+                                  "enum": [
+                                    "minimal",
+                                    "low",
+                                    "medium",
+                                    "high",
+                                    "xhigh",
+                                    "max"
+                                  ]
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          }
+                        },
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "owner",
+                      "process"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "classifiers": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_.-]{0,63}$"
+                    },
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "provider": {
+                          "type": "string",
+                          "enum": [
+                            "typesafe",
+                            "http"
+                          ]
+                        },
+                        "providerModel": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 256
+                        },
+                        "primitives": {
+                          "minItems": 1,
+                          "maxItems": 3,
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": [
+                              "choice",
+                              "noul",
+                              "score"
+                            ]
+                          }
+                        },
+                        "endpoint": {
+                          "type": "string",
+                          "maxLength": 4096,
+                          "format": "uri"
+                        },
+                        "secretRef": {
+                          "type": "string",
+                          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$"
+                        }
+                      },
+                      "required": [
+                        "provider",
+                        "providerModel",
+                        "primitives",
+                        "endpoint"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "source",
+                  "version",
+                  "name",
+                  "label",
+                  "defaults",
+                  "classifiers"
+                ],
+                "additionalProperties": false
               },
               "replayOf": {
                 "type": "object",
@@ -4536,7 +4937,9 @@
               "runId",
               "seq",
               "ts",
-              "type"
+              "type",
+              "versionId",
+              "pinned"
             ],
             "additionalProperties": false
           },
@@ -7111,6 +7514,38 @@
           "artifacts",
           "outputs",
           "counters"
+        ],
+        "additionalProperties": false
+      },
+      "WaitConflict": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "number",
+            "const": 409
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "WAIT_MISMATCH",
+              "INVALID_STATE"
+            ]
+          },
+          "detail": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
         ],
         "additionalProperties": false
       },
@@ -11446,7 +11881,8 @@
             "type": "string",
             "enum": [
               "draft",
-              "published"
+              "published",
+              "snapshot"
             ]
           },
           "definition": {
@@ -11502,6 +11938,7 @@
               "SCRIPT_TIMEOUT",
               "INFERENCE_TIMEOUT",
               "OUTPUT_SCHEMA_MISMATCH",
+              "ARTIFACT_WRITE_FAILED",
               "SUBLOOP_DEPTH_EXCEEDED",
               "SUBLOOP_NOT_FOUND",
               "DECISION_NO_ROUTE",
@@ -11522,8 +11959,10 @@
               "EXPRESSION_ERROR",
               "WAIT_TIMEOUT",
               "HEARTBEAT_EXHAUSTED",
+              "HTTP_PROBE_BODY_OVERFLOW",
               "RETURN_DELIVERY_FAILED",
               "MAX_NODE_VISITS",
+              "EVENT_INVALID",
               "INTERNAL_ERROR"
             ]
           },
@@ -11552,6 +11991,11 @@
       "WaitSpec": {
         "type": "object",
         "properties": {
+          "waitId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
           "nodeId": {
             "type": "string",
             "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
@@ -11607,8 +12051,10 @@
           }
         },
         "required": [
+          "waitId",
           "nodeId",
-          "kind"
+          "kind",
+          "startedSeq"
         ],
         "additionalProperties": false
       },
@@ -11631,6 +12077,189 @@
           "versionId": {
             "type": "string",
             "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "pinned": {
+            "type": "object",
+            "properties": {
+              "source": {
+                "type": "string",
+                "enum": [
+                  "published",
+                  "draft"
+                ]
+              },
+              "version": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 160
+              },
+              "defaults": {
+                "type": "object",
+                "properties": {
+                  "owner": {
+                    "type": "object",
+                    "properties": {
+                      "byHarness": {
+                        "default": {},
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string",
+                          "enum": [
+                            "codex",
+                            "claude"
+                          ]
+                        },
+                        "additionalProperties": {
+                          "type": "object",
+                          "properties": {
+                            "model": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "effort": {
+                              "type": "string",
+                              "enum": [
+                                "minimal",
+                                "low",
+                                "medium",
+                                "high",
+                                "xhigh",
+                                "max"
+                              ]
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": [
+                      "byHarness"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "process": {
+                    "type": "object",
+                    "properties": {
+                      "byHarness": {
+                        "default": {},
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string",
+                          "enum": [
+                            "codex",
+                            "claude"
+                          ]
+                        },
+                        "additionalProperties": {
+                          "type": "object",
+                          "properties": {
+                            "model": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "effort": {
+                              "type": "string",
+                              "enum": [
+                                "minimal",
+                                "low",
+                                "medium",
+                                "high",
+                                "xhigh",
+                                "max"
+                              ]
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": [
+                      "byHarness"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "owner",
+                  "process"
+                ],
+                "additionalProperties": false
+              },
+              "classifiers": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9_.-]{0,63}$"
+                },
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "provider": {
+                      "type": "string",
+                      "enum": [
+                        "typesafe",
+                        "http"
+                      ]
+                    },
+                    "providerModel": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 256
+                    },
+                    "primitives": {
+                      "minItems": 1,
+                      "maxItems": 3,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "choice",
+                          "noul",
+                          "score"
+                        ]
+                      }
+                    },
+                    "endpoint": {
+                      "type": "string",
+                      "maxLength": 4096,
+                      "format": "uri"
+                    },
+                    "secretRef": {
+                      "type": "string",
+                      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$"
+                    }
+                  },
+                  "required": [
+                    "provider",
+                    "providerModel",
+                    "primitives",
+                    "endpoint"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "source",
+              "version",
+              "name",
+              "label",
+              "defaults",
+              "classifiers"
+            ],
+            "additionalProperties": false
           },
           "parentRunId": {
             "type": "string",
@@ -11705,6 +12334,7 @@
           "ownerId",
           "loopId",
           "versionId",
+          "pinned",
           "invocationId",
           "status",
           "iteration",
@@ -11735,6 +12365,193 @@
               "type": {
                 "type": "string",
                 "const": "run.queued"
+              },
+              "versionId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "pinned": {
+                "type": "object",
+                "properties": {
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "published",
+                      "draft"
+                    ]
+                  },
+                  "version": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "label": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 160
+                  },
+                  "defaults": {
+                    "type": "object",
+                    "properties": {
+                      "owner": {
+                        "type": "object",
+                        "properties": {
+                          "byHarness": {
+                            "default": {},
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string",
+                              "enum": [
+                                "codex",
+                                "claude"
+                              ]
+                            },
+                            "additionalProperties": {
+                              "type": "object",
+                              "properties": {
+                                "model": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                },
+                                "effort": {
+                                  "type": "string",
+                                  "enum": [
+                                    "minimal",
+                                    "low",
+                                    "medium",
+                                    "high",
+                                    "xhigh",
+                                    "max"
+                                  ]
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          }
+                        },
+                        "required": [
+                          "byHarness"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "process": {
+                        "type": "object",
+                        "properties": {
+                          "byHarness": {
+                            "default": {},
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string",
+                              "enum": [
+                                "codex",
+                                "claude"
+                              ]
+                            },
+                            "additionalProperties": {
+                              "type": "object",
+                              "properties": {
+                                "model": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                },
+                                "effort": {
+                                  "type": "string",
+                                  "enum": [
+                                    "minimal",
+                                    "low",
+                                    "medium",
+                                    "high",
+                                    "xhigh",
+                                    "max"
+                                  ]
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          }
+                        },
+                        "required": [
+                          "byHarness"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "owner",
+                      "process"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "classifiers": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_.-]{0,63}$"
+                    },
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "provider": {
+                          "type": "string",
+                          "enum": [
+                            "typesafe",
+                            "http"
+                          ]
+                        },
+                        "providerModel": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 256
+                        },
+                        "primitives": {
+                          "minItems": 1,
+                          "maxItems": 3,
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": [
+                              "choice",
+                              "noul",
+                              "score"
+                            ]
+                          }
+                        },
+                        "endpoint": {
+                          "type": "string",
+                          "maxLength": 4096,
+                          "format": "uri"
+                        },
+                        "secretRef": {
+                          "type": "string",
+                          "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$"
+                        }
+                      },
+                      "required": [
+                        "provider",
+                        "providerModel",
+                        "primitives",
+                        "endpoint"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "source",
+                  "version",
+                  "name",
+                  "label",
+                  "defaults",
+                  "classifiers"
+                ],
+                "additionalProperties": false
               },
               "replayOf": {
                 "type": "object",
@@ -11773,7 +12590,9 @@
               "runId",
               "seq",
               "ts",
-              "type"
+              "type",
+              "versionId",
+              "pinned"
             ],
             "additionalProperties": false
           },
@@ -15814,13 +16633,20 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "waitId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
                   "input": {
                     "$ref": "#/components/schemas/JsonValueInput"
                   }
                 },
                 "required": [
+                  "waitId",
                   "input"
-                ]
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -15846,6 +16672,16 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WaitConflict"
+                }
+              }
+            }
           }
         }
       }
@@ -15861,13 +16697,21 @@
           "content": {
             "application/json": {
               "schema": {
-                "default": {},
                 "type": "object",
                 "properties": {
+                  "waitId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
                   "payload": {
                     "$ref": "#/components/schemas/JsonValueInput"
                   }
-                }
+                },
+                "required": [
+                  "waitId"
+                ],
+                "additionalProperties": false
               }
             }
           }
@@ -15884,7 +16728,8 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
             },
             "in": "path",
             "name": "name",
@@ -15911,6 +16756,16 @@
                     "woke"
                   ],
                   "additionalProperties": false
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WaitConflict"
                 }
               }
             }
@@ -16091,6 +16946,76 @@
         "responses": {
           "200": {
             "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/runs/diagnostics": {
+      "get": {
+        "summary": "Identify unreadable run history for manual repair or explicit deletion",
+        "tags": [
+          "runs"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 48
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "runId": {
+                            "type": "string"
+                          },
+                          "code": {
+                            "type": "string",
+                            "enum": [
+                              "HISTORY_UNREADABLE"
+                            ]
+                          },
+                          "reason": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "runId",
+                          "code",
+                          "reason"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
           }
         }
       }

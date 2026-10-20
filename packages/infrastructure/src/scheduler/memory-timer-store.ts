@@ -22,6 +22,14 @@ export class MemoryTimerStore implements TimerStore {
     return Promise.resolve();
   }
 
+  defer(runId: string, key: string, at: Date, retryAt: Date): Promise<void> {
+    const id = runId + '\u0000' + key;
+    if (this.rows.get(id)?.at.getTime() === at.getTime()) {
+      this.rows.set(id, { runId, key, at: retryAt });
+    }
+    return Promise.resolve();
+  }
+
   listDue(now: Date, limit = 100): Promise<{ runId: string; key: string; at: Date }[]> {
     const due = [...this.rows.values()]
       .filter((r) => r.at.getTime() <= now.getTime())

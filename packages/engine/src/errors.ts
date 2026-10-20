@@ -1,5 +1,31 @@
 import type { RunErrorCode, RunFailure } from '@graphgoblin/contracts';
 
+/** Artifact I/O failed explicitly; missing content is represented separately by undefined. */
+export class ArtifactStoreError extends Error {
+  constructor(
+    readonly code: 'ARTIFACT_CORRUPT' | 'ARTIFACT_WRITE_FAILED',
+    readonly ref: string,
+    options?: ErrorOptions,
+  ) {
+    super(
+      code === 'ARTIFACT_CORRUPT'
+        ? 'Artifact content does not match its reference'
+        : 'Artifact could not be published',
+      options,
+    );
+    this.name = 'ArtifactStoreError';
+  }
+}
+
+/** Safe, transport-independent failure: an HTTP probe body exceeded its byte budget. */
+export class ProbeBodyOverflowError extends Error {
+  readonly code = 'HTTP_PROBE_BODY_OVERFLOW';
+  constructor() {
+    super('HTTP probe body exceeds byte limit');
+    this.name = 'ProbeBodyOverflowError';
+  }
+}
+
 /**
  * Thrown by handlers and the executor for the "unavoidable" failure class in the resiliency
  * model (docs/05-execution-engine.md). Everything else that escapes a handler is a bug and is
@@ -72,5 +98,17 @@ export class AppendConflictError extends Error {
   ) {
     super(`run ${runId} log is at ${actualLastSeq}, not ${expectedLastSeq}`);
     this.name = 'AppendConflictError';
+  }
+}
+
+/** A specific run's current-format stored data cannot be decoded. Store failures stay distinct. */
+export class UnreadableRunHistoryError extends Error {
+  readonly code = 'HISTORY_UNREADABLE';
+  constructor(
+    readonly runId: string,
+    reason: string,
+  ) {
+    super(reason);
+    this.name = 'UnreadableRunHistoryError';
   }
 }

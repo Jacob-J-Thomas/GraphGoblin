@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events';
-import type { ChildProcess, spawn } from 'node:child_process';
+import { spawn, type ChildProcess } from 'node:child_process';
 import { describe, expect, it } from 'vitest';
 import { ProcessScripts, killTree } from './scripts.js';
 
@@ -17,6 +17,189 @@ function request(overrides: Partial<Parameters<ProcessScripts['run']>[0]>) {
 }
 
 describe('ProcessScripts', () => {
+  function observeChunks(maxOutputBytes: number | undefined, offset: number) {
+    const sizes: Record<'stdout' | 'stderr', number[]> = { stdout: [], stderr: [] };
+    const scripts = new ProcessScripts({
+      ...(maxOutputBytes !== undefined ? { maxOutputBytes } : {}),
+      spawnImpl: new Proxy(spawn, {
+        apply(target, _receiver, args: Parameters<typeof spawn>) {
+          const child = target(args[0], args[1], {
+            ...args[2],
+            stdio: ['pipe', 'pipe', 'pipe', 'ipc'],
+          });
+          let acknowledged = false;
+          for (const [name, stream] of [
+            ['stdout', child.stdout],
+            ['stderr', child.stderr],
+          ] as const)
+            stream?.on('data', (chunk: Buffer) => {
+              sizes[name].push(chunk.byteLength);
+              if (
+                offset > 0 &&
+                !acknowledged &&
+                sizes.stdout.length > 0 &&
+                sizes.stderr.length > 0
+              ) {
+                acknowledged = true;
+                child.send?.('continue');
+              }
+            });
+          return child;
+        },
+      }),
+    });
+    return { scripts, sizes };
+  }
+
+  it('returns raw captured byte counts and truncation for default capture, including incomplete EOF', async () => {
+    const result = await new ProcessScripts({ maxOutputBytes: 4 }).run(
+      request({
+        args: [
+          '-e',
+          'process.stdout.write(Buffer.from([240,159,166,142,120]));process.stderr.write(Buffer.from([240,159]));',
+        ],
+      }),
+    );
+    expect(result).toMatchObject({
+      exitCode: 0,
+      stdout: '\u{1f98e}',
+      stdoutBytes: 4,
+      stdoutOverflow: true,
+      stderr: '\ufffd',
+      stderrBytes: 2,
+      stderrOverflow: false,
+    });
+  });
+  const unicode = 'A\u00e9\u96ea\u{1f98e}Z';
+  const bytes = Buffer.from(unicode);
+  const splitScript = (offset: number, suffix = ''): string => `
+    const bytes = Buffer.from(${JSON.stringify([...bytes])});
+    const finish = () => {
+      for (const stream of [process.stdout, process.stderr]) {
+        stream.write(bytes.subarray(${offset}));
+        ${suffix}
+      }
+      process.disconnect();
+    };
+    if (${offset} > 0) {
+      process.once('message', finish);
+      for (const stream of [process.stdout, process.stderr]) stream.write(bytes.subarray(0, ${offset}));
+    } else finish();
+  `;
+
+  it.each(Array.from({ length: bytes.length + 1 }, (_, offset) => offset))(
+    'preserves both UTF-8 streams split at byte offset %i with default and explicit bounds',
+    async (offset) => {
+      for (const limits of [{}, { maxStdoutBytes: bytes.length, maxStderrBytes: bytes.length }]) {
+        const { scripts, sizes } = observeChunks(undefined, offset);
+        const result = await scripts.run(request({ args: ['-e', splitScript(offset)], ...limits }));
+        expect(result).toMatchObject({ stdout: unicode, stderr: unicode, exitCode: 0 });
+        expect(result).toMatchObject({
+          stdoutBytes: bytes.length,
+          stderrBytes: bytes.length,
+          stdoutOverflow: false,
+          stderrOverflow: false,
+        });
+        for (const stream of ['stdout', 'stderr'] as const) {
+          expect(sizes[stream][0]).toBe(offset === 0 ? bytes.length : offset);
+          expect(sizes[stream].length).toBeGreaterThanOrEqual(
+            offset > 0 && offset < bytes.length ? 2 : 1,
+          );
+        }
+      }
+    },
+  );
+
+  it.each(Array.from({ length: bytes.length + 1 }, (_, cap) => cap))(
+    'counts raw bytes and drops only a cap-split suffix at cap %i on both streams',
+    async (cap) => {
+      const prefix = new TextDecoder().decode(bytes.subarray(0, cap));
+      const text = prefix.endsWith('\ufffd') ? prefix.slice(0, -1) : prefix;
+      for (const limits of [{}, { maxStdoutBytes: cap, maxStderrBytes: cap }]) {
+        const { scripts, sizes } = observeChunks(cap, 4);
+        const result = await scripts.run(
+          request({ args: ['-e', splitScript(4, 'stream.write("!");')], ...limits }),
+        );
+        expect(result).toMatchObject({ stdout: text, stderr: text, exitCode: 0 });
+        expect(Buffer.byteLength(result.stdout)).toBeLessThanOrEqual(cap);
+        expect(result).toMatchObject({
+          stdoutBytes: cap,
+          stderrBytes: cap,
+          stdoutOverflow: true,
+          stderrOverflow: true,
+        });
+        for (const stream of ['stdout', 'stderr'] as const) {
+          expect(sizes[stream][0]).toBe(4);
+          expect(sizes[stream].length).toBeGreaterThanOrEqual(2);
+        }
+      }
+    },
+  );
+
+  it('replaces an incomplete trailing sequence at clean EOF on both streams', async () => {
+    for (const limits of [{}, { maxStdoutBytes: 3, maxStderrBytes: 3 }]) {
+      const result = await new ProcessScripts().run(
+        request({
+          args: [
+            '-e',
+            'process.stdout.write(Buffer.from([65,240,159]));process.stderr.write(Buffer.from([66,226,130]));',
+          ],
+          ...limits,
+        }),
+      );
+      expect(result).toMatchObject({ stdout: 'A\ufffd', stderr: 'B\ufffd', exitCode: 0 });
+    }
+  });
+
+  it('kills and closes a real process cancelled with incomplete UTF-8 pending on both streams', async () => {
+    const controller = new AbortController();
+    let pid: number | undefined;
+    let streamsReady = 0;
+    let ownedChild: ChildProcess | undefined;
+    const scripts = new ProcessScripts({
+      spawnImpl: new Proxy(spawn, {
+        apply(target, _receiver, args: Parameters<typeof spawn>) {
+          const child = target(...args);
+          if (args[0] === node) {
+            ownedChild = child;
+            pid = child.pid;
+            for (const stream of [child.stdout, child.stderr])
+              stream?.once('data', () => {
+                if (++streamsReady === 2) setImmediate(() => controller.abort());
+              });
+          }
+          return child;
+        },
+      }),
+    });
+    let cleanupRequired = false;
+    const cleanup = setTimeout(() => {
+      cleanupRequired = true;
+      ownedChild?.kill();
+    }, 8000);
+    const result = await scripts
+      .run(
+        request({
+          args: [
+            '-e',
+            'process.stdout.write(Buffer.from([65,240,159]));process.stderr.write(Buffer.from([66,226,130]));setInterval(()=>{},1000);',
+          ],
+          signal: controller.signal,
+        }),
+      )
+      .finally(() => clearTimeout(cleanup));
+    expect(
+      cleanupRequired,
+      'native process-tree cancellation must finish before fixture cleanup',
+    ).toBe(false);
+    expect(streamsReady).toBe(2);
+    expect(result).toMatchObject({ stdout: 'A\ufffd', stderr: 'B\ufffd', timedOut: false });
+    expect(result.exitCode).not.toBe(0);
+    if (pid === undefined) throw new Error('child did not start');
+    const childPid = pid;
+    expect(() => process.kill(childPid, 0)).toThrow();
+  });
+
   it('captures stdout, stderr, exit code, env, args, and stdin', async () => {
     const scripts = new ProcessScripts({ baseEnv: { PATH: process.env['PATH'] ?? '' } });
     const result = await scripts.run(
@@ -108,7 +291,7 @@ describe('ProcessScripts', () => {
     expect(Buffer.byteLength(bounded.stdout)).toBe(65_536);
     expect(bounded.stdout).toBe('é'.repeat(32768));
     const legacy = await scripts.run(request({ args }));
-    expect(legacy.stdoutOverflow).toBeUndefined();
+    expect(legacy.stdoutOverflow).toBe(false);
     expect(legacy.stdout).toBe('é'.repeat(32769));
   });
 

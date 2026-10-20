@@ -1,5 +1,6 @@
 import {
   ContextThreadSchema,
+  SlugSchema,
   JsonValueSchema,
   ReturnChannelSchema,
   RunEventSchema,
@@ -21,7 +22,7 @@ import { readinessOperation } from '../readiness-operation.js';
 import { streamRunEvents } from '../sse.js';
 import type { ApiInstance } from '../types.js';
 import { decodeRunCursor, encodeRunCursor } from '../run-cursor.js';
-import { openApiRegistry } from '../openapi-registry.js';
+import { openApiRegistry, WaitConflictSchema } from '../openapi-registry.js';
 
 const IdParams = z.object({ id: UlidSchema });
 
@@ -268,13 +269,18 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
         tags: ['runs'],
         summary: 'Answer a wait node in input mode',
         params: IdParams,
-        body: z.object({ input: JsonValueSchema }),
-        response: { 200: RunRecordSchema },
+        body: z.strictObject({ waitId: z.string().min(1).max(64), input: JsonValueSchema }),
+        response: { 200: RunRecordSchema, 409: WaitConflictSchema },
       },
     },
     async (request) => {
       await ownedRun(request, request.params.id);
-      return manager.provideInput(request.params.id, request.body.input, request.auth.actor);
+      return manager.provideInput(
+        request.params.id,
+        request.body.waitId,
+        request.body.input,
+        request.auth.actor,
+      );
     },
   );
 
@@ -284,14 +290,25 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
       schema: {
         tags: ['runs'],
         summary: 'Deliver a named signal',
-        params: z.object({ id: UlidSchema, name: z.string() }),
-        body: z.object({ payload: JsonValueSchema.optional() }).default({}),
-        response: { 200: z.object({ run: RunRecordSchema, woke: z.boolean() }) },
+        params: z.object({ id: UlidSchema, name: SlugSchema }),
+        body: z.strictObject({
+          waitId: z.string().min(1).max(64),
+          payload: JsonValueSchema.optional(),
+        }),
+        response: {
+          200: z.object({ run: RunRecordSchema, woke: z.boolean() }),
+          409: WaitConflictSchema,
+        },
       },
     },
     async (request) => {
       await ownedRun(request, request.params.id);
-      return manager.signal(request.params.id, request.params.name, request.body.payload ?? null);
+      return manager.signal(
+        request.params.id,
+        request.params.name,
+        request.body.waitId,
+        request.body.payload ?? null,
+      );
     },
   );
 

@@ -7,11 +7,11 @@ import type {
 } from '@graphgoblin/contracts';
 import { JsonPatchSchema } from '@graphgoblin/contracts';
 import {
-  MUTABLE_REGIONS,
+  assertMutablePatch,
   evaluateExpression,
   isTerminal,
-  pointerStartsWith,
   threadView,
+  type MutationError,
 } from '@graphgoblin/domain';
 import { RunFailureError } from '../errors.js';
 import type { ChildOutcome, NodeContext, NodeHandler, NodeResult } from '../handler.js';
@@ -102,17 +102,14 @@ async function outputMapping(
         { nodeId: ctx.node.id },
       );
     }
-    for (const op of checked.data) {
-      if (
-        !MUTABLE_REGIONS.some((r) => pointerStartsWith(op.path, r)) ||
-        (op.op === 'move' && !MUTABLE_REGIONS.some((r) => pointerStartsWith(op.from, r)))
-      ) {
-        throw new RunFailureError(
-          'EXPRESSION_ERROR',
-          `custom output mapping touches "${op.path}", outside the mutable regions`,
-          { nodeId: ctx.node.id },
-        );
-      }
+    try {
+      assertMutablePatch(checked.data);
+    } catch (error) {
+      throw new RunFailureError(
+        'EXPRESSION_ERROR',
+        `custom output mapping is outside the mutable regions: ${(error as MutationError).message}`,
+        { nodeId: ctx.node.id },
+      );
     }
     patch.push(...checked.data);
     return patch;

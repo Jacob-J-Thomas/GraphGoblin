@@ -32,7 +32,7 @@ Read the run's failure banner and event log first. Record the run ID, failing no
 | A run fails with `MAX_ITERATIONS`                                                      | A node was about to start more often than the loop's `maxIterations`, usually a decision routing back without an exit.                                         | Fix the routing, or raise `maxIterations` in a new version if the repeats are intended.                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | The editor says "The draft changed on the server"                                      | Another tab, device, or API client saved this loop's draft after the editor loaded it.                                                                         | Choose **Reload server draft** to take theirs or **Overwrite with this copy** to keep yours.                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | Loops and runs are missing after an update                                             | The default data directory moved from `./data` to `~/.graphgoblin`.                                                                                            | Set `GG_DATA_DIR` to the old directory, or stop the API and move its contents.                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| `--preflight` or the install script reports `FAIL`                                     | A check that blocks runs failed: Node too old, data directory not writable, broken master key or database, or Codex missing or logged out.                     | Read the check's detail, fix it, and run the command again; `WARN` lines do not block a start.                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `--preflight` or the install script reports `FAIL`                                     | A check that blocks runs failed: Node is not 22.x, data directory not writable, broken master key or database, or Codex missing or logged out.                 | Read the check's detail, fix it, and run the command again; `WARN` lines do not block a start.                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | PowerShell reports that `pnpm.ps1` cannot be loaded                                    | The execution policy blocks npm's PowerShell shims.                                                                                                            | Call `pnpm.cmd` (or `codex.cmd`) instead.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | `another GraphGoblin process holds <path>`                                             | An API or key-creation command owns the data-directory lock; a malformed lock or unverifiable PID may also refuse startup.                                     | Stop the owning process and let shutdown finish before starting again or using `--create-api-key`; changing ports does not bypass the lock. Locks and `.reclaim` sidecars with a dead PID, or this process's own PID without an in-process hold, are reclaimed automatically. For a malformed or unverifiable file, inspect its PID and remove only that file after verifying that all GraphGoblin processes using this directory have stopped. Compose forwards signals through an init and allows 90 seconds for shutdown. |
 | API fails with `EADDRINUSE`                                                            | Another process occupies `GG_PORT`, often an existing API.                                                                                                     | Stop the older process or choose a free port and update your UI URL and `GG_API_URL` for MCP.                                                                                                                                                                                                                                                                                                                                                                                                                                |
@@ -41,6 +41,20 @@ Read the run's failure banner and event log first. Record the run ID, failing no
 | The UI asks for an API key                                                             | `GG_REQUIRE_API_KEY=true`; this browser has no key, or its key was revoked.                                                                                    | Paste a key. For the first key, stop the API, run `node apps/api/dist/main.js --create-api-key <name>` with the server's environment, then restart (see [Settings](06-settings-and-secrets.md#the-first-key-from-the-command-line)).                                                                                                                                                                                                                                                                                         |
 | The UI returns 404                                                                     | `GG_WEB_DIST` is empty or points at a missing build, or the checkout was not built.                                                                            | Run `pnpm build`, or set `GG_WEB_DIST` to a built web directory containing `index.html`.                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | Settings defaults change but a run uses another model                                  | A node value or loop default wins over the owner default.                                                                                                      | Clear the node or loop value, or change it; owner defaults apply from the next run start or resume.                                                                                                                                                                                                                                                                                                                                                                                                                          |
+
+## HTTP probe exceeds 64 KiB
+
+HTTP polls and heartbeat probes fail above 65,536 decompressed response bytes with
+`HTTP_PROBE_BODY_OVERFLOW`; partial JSON is never presented as success. Find polls
+in API log warnings named `poll trigger failed` with that code and the loop/trigger
+identity. Find heartbeat failures by the same run failure code in the inspector.
+
+Single-result HTTP probes formerly parsed the full JSON while slicing the body
+preview, so a previously working query can now fail. GitHub REST pages containing
+30–100 issues can exceed the cap. Narrow query parameters such as the page size,
+or use a single-result script probe, which keeps its 10 MiB capture and full JSON
+parsing. Items-mode script probes remain limited to 64 KiB. See
+[Polling and heartbeat probes](04-triggers.md#poll-without-inbound-access).
 
 ## Check harnesses and the gateway
 
@@ -189,6 +203,38 @@ GET /runs/{id}/artifacts/{artifactId}
 ```
 
 MCP writes diagnostics to stderr; inspect your MCP client's captured server logs. Include the failure details and relevant event sequences when reporting a defect. Check output for sensitive values before sharing it.
+
+## Unreadable run history
+
+Startup can log `HISTORY_UNREADABLE` with a run ID and a reason such as a malformed
+JSON field or the sequence and type of an invalid event. Healthy current-format runs
+continue recovery. Startup checks active runs and terminal runs awaiting finalization,
+so its log names damaged recovery candidates only. `GET /runs/diagnostics` also checks
+finalized terminal history. The ordinary `GET /runs` list and the web Runs page silently omit unreadable run rows; if an expected run is missing, check diagnostics.
+
+`GET /runs/:id` and MCP `get_run` decode only the run row, so a snapshot can look normal
+while its events or thread are damaged. An unreadable run row or stored thread yields
+`500 STORED_RUN_INVALID`; an unreadable event page yields `500 STORED_EVENT_INVALID`
+(MCP reports the same codes as tool errors). If events or thread reads fail this way,
+query `GET /runs/diagnostics` with a key holding `runs:read` to identify the damaged
+history, then repair or delete it explicitly as described below. Diagnostics covers
+all runs belonging to that key's owner. Follow `nextCursor` until null; each request
+checks at most 20 runs and 2,000 events. The diagnostic does not change a stored status;
+a damaged run's snapshot may still say queued, running, or waiting. No execution is
+recovered for that damaged run.
+
+**Manual disposition:** Stop the API before editing SQLite. Repair the specifically named
+row by hand to match the current contract, then restart and check `GET /runs/diagnostics`
+again. Deletion of unrelated loops works while the damaged run is isolated. Alternatively,
+explicitly delete the containing loop using the existing
+`DELETE /loops/:id` path once all its runs are terminal. That deletion removes the loop
+and all its history, not just the damaged run; there is currently no individual-run
+deletion endpoint. If a damaged row still represents active work, manually repair it to
+a valid terminal run record before choosing loop deletion. Recovery never repairs,
+archives, reconstructs, deletes, or resets damaged data automatically.
+
+An unsupported whole-store format or a database/schema/I/O failure is a separate startup
+error. Do not reset the whole store to dispose of one damaged run.
 
 Return to the [User guide](README.md), or read [API, streaming, and MCP](../07-api-and-streaming.md) and [Frontend and PWA](../09-frontend-and-pwa.md) for design context.
 
