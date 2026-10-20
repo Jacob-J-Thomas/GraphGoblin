@@ -195,11 +195,11 @@ describe('Claude existing harness contract', () => {
     const create = vi.spyOn(probeFs, 'mkdir').mockRejectedValueOnce(collision);
     const remove = vi.spyOn(probeFs, 'rm');
     const directories = new Set<string>();
-    const runner: ClaudeCliRunner = async (command) => {
+    const runner: ClaudeCliRunner = (command) => {
       directories.add(command.cwd);
-      if (command.args.includes('--version')) return outcome('2.1.285');
-      if (command.args.includes('--help')) return outcome(help);
-      return outcome('{"authMethod":"claude.ai"}');
+      if (command.args.includes('--version')) return Promise.resolve(outcome('2.1.285'));
+      if (command.args.includes('--help')) return Promise.resolve(outcome(help));
+      return Promise.resolve(outcome('{"authMethod":"claude.ai"}'));
     };
     try {
       const harness = new ClaudeHarness({ runner, platform: 'win32' });
