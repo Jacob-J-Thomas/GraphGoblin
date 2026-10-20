@@ -228,7 +228,10 @@ describe('Claude existing harness contract', () => {
         const harness = new ClaudeHarness({ runner, platform: 'win32' });
         expect(await harness.preflight()).toMatchObject({
           ok: false,
-          problems: ['Claude preflight failed'],
+          state: 'unknown',
+          problems: [
+            'Claude readiness could not be confirmed. Check that the Claude CLI starts and responds, then retry preflight.',
+          ],
         });
         const attempted = create.mock.calls.map(([path]) => String(path));
         expect(attempted).toHaveLength(attempts);

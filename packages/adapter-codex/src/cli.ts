@@ -1,5 +1,6 @@
 import { spawn } from 'node:child_process';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { randomBytes } from 'node:crypto';
+import { mkdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { cliFailureState, readinessFailure } from '@graphgoblin/domain';
@@ -82,6 +83,31 @@ export const runCli: CliRunner = (cli, args, timeoutMs) =>
     child.on('close', (code) => finish({ code, output }));
   });
 
+/** Fresh names tried before collisions fail a no-turn check. */
+const PROBE_DIRECTORY_ATTEMPTS = 4;
+
+/**
+ * Exclusively create an empty directory for the version/help/login checks. On Windows,
+ * `fs.mkdtemp` fails from 248 characters although `mkdir` and CLI working directories still
+ * work through 258 characters (docs/qa/2026-10-19-wp-f5-launch-diagnosis.md). An existing name
+ * is never reused or removed; try up to four fresh names instead.
+ */
+async function probeDirectory(): Promise<string> {
+  for (let attempt = 1; ; attempt += 1) {
+    const directory = join(tmpdir(), `gg-codex-probe-${randomBytes(4).toString('hex')}`);
+    try {
+      await mkdir(directory, { mode: 0o700 });
+      return directory;
+    } catch (error) {
+      if (
+        (error as NodeJS.ErrnoException).code !== 'EEXIST' ||
+        attempt === PROBE_DIRECTORY_ATTEMPTS
+      )
+        throw error;
+    }
+  }
+}
+
 /** Version/help/login only: no prompt, session, or provider model request. */
 export async function preflightCli(
   cli: CliCommand | undefined,
@@ -89,7 +115,7 @@ export async function preflightCli(
   timeoutMs: number,
 ): Promise<HarnessPreflight> {
   if (!cli) return readinessFailure('codex', 'cli-missing');
-  const cwd = await mkdtemp(join(tmpdir(), 'gg-codex-probe-'));
+  const cwd = await probeDirectory();
   let result: HarnessPreflight;
   try {
     result = await inspectCli({ ...cli, cwd }, run, timeoutMs);
