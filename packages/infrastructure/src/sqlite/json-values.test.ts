@@ -121,6 +121,8 @@ describe('JSON values in real SQLite', () => {
         prompt: '',
         beat: 0,
         inputSchema: { const: null },
+        waitId: 'fixture-wait',
+        startedSeq: 1,
       },
       failure: { code: 'INTERNAL_ERROR' as const, message: '', resumable: false, details: null },
     };
