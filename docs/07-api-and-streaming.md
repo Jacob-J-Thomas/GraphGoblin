@@ -15,15 +15,16 @@ Loops
   GET    /loops/{id}                    loop with current published version and draft
   PUT    /loops/{id}/draft              save draft definition (validated, may be unpublishable; If-Match)
   POST   /loops/{id}/publish            validate and freeze draft as a new version
-  GET    /loops/{id}/versions           version history
+  GET    /loops/{id}/versions           version history: published versions and the draft (no draft snapshots)
+  GET    /loops/{id}/versions/{vid}     one version, draft or draft snapshot, with its definition (a run's versionId)
   GET    /loops/{id}/export             definition as JSON for committing to a repo
   POST   /loops/import                  create or update from exported JSON
   DELETE /loops/{id}                    delete loop, versions, drafts, triggers and all run history; 204, 404 or 409
 
 Runs
-  POST   /loops/{id}/runs               start a run from a manual trigger; body: { triggerNodeId, input?, return?: ReturnChannel[] }
+  POST   /loops/{id}/runs               start a run from a manual trigger; body: { triggerNodeId?, input?, return?: ReturnChannel[], versionId?, allowDraft? }; 202 { run } with its pin
   GET    /runs                          owner-scoped list with run/template filters and a stable nextCursor
-  GET    /runs/{id}                     snapshot: status, current node, iteration, waiting spec, result, failure
+  GET    /runs/{id}                     snapshot: pinned definition, status, current node, iteration, waiting spec, result, failure
   GET    /runs/{id}/thread              current context thread projection
   GET    /runs/{id}/events?after=N      page of events; with Accept: text/event-stream, a live tail
   POST   /runs/{id}/cancel | pause | resume
@@ -215,7 +216,7 @@ Tools (each with a Zod input schema; descriptions tell the agent when to call it
 | --------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `list_loops`                            | `query?`                                                    | Loops with `id`, `name`, `description`, `published`, `hasDraft`; `query` filters names and descriptions                                                                                                       |
 | `describe_loop`                         | `loopId` (id or exact name)                                 | The published version (or the draft, with a note): triggers with type, `inputSchema`, and `startableFromMcp`; input waits with prompt and schema; exits with `default`, `returnMapping`, channel kinds        |
-| `start_run`                             | `loopId`, `input?`, `triggerNodeId?`, `allowDraft?`         | Starts a manual trigger and returns `runId` immediately; `allowDraft` runs the draft of an unpublished loop                                                                                                   |
+| `start_run`                             | `loopId`, `input?`, `triggerNodeId?`, `allowDraft?`         | Starts a manual trigger and returns `runId`, `versionId`, `definition` (the pin label) and `pinned` immediately; `allowDraft` runs a snapshot of the draft of an unpublished loop                             |
 | `wait_for_run`                          | `runId`, `timeoutSeconds?` (1 to 600, default 60)           | Returns `{ finished: true, run }` at a terminal status, or `{ finished: false, status?, cursor?, waiting?, next }`; returns early when the run waits for input or is paused; `cursor` is the last event `seq` |
 | `get_run`                               | `runId`                                                     | Run snapshot                                                                                                                                                                                                  |
 | `get_run_thread`                        | `runId`                                                     | Context thread                                                                                                                                                                                                |
@@ -367,6 +368,22 @@ out of subsequent pages. MCP `list_runs` uses this same server cursor and return
 `items` is empty because damaged rows were skipped. Stop when `nextCursor` is null.
 Both the typed client's `GET('/runs')` and the generated OpenAPI contract expose
 the complete page; the convenience `runs.list` wrapper returns its items only.
+
+### Pinned definitions (ADR-0041)
+
+Every run, draft runs included, executes one immutable definition record for its whole life.
+`RunRecord.versionId` names it and `RunRecord.pinned` describes it:
+`{ source: 'published' | 'draft', version, name, label, defaults: { owner, process }, classifiers }`,
+where `classifiers` maps each classifier id the definition uses to the catalog binding it calls
+(`provider`, `providerModel`, `endpoint`, `primitives`, `secretRef?`; never the secret value).
+The start responses (`POST /loops/{id}/runs`, `POST /runs/{id}/replay`, MCP `start_run`) return it,
+and the first event of every run, `run.queued`, carries the same `versionId` and `pinned`, so the
+SSE stream identifies the definition before anything runs. A draft start
+(`{ versionId: <draft id>, allowDraft: true }`) answers with a new `versionId`: the draft snapshot
+taken at start, readable at `GET /loops/{id}/versions/{versionId}` (status `snapshot`) and never
+listed in the version history. Starting a snapshot directly answers 409 `VERSION_NOT_PUBLISHED`.
+`label` and `name` are those of the pinned definition, so renaming or editing the loop later does
+not change them. MCP compact runs (`list_runs`, control tools) include `definition`, the label.
 
 Run-list items and `GET /runs/{id}` return the canonical `RunRecord`, without
 `templateSubject` or a template-store lookup. Regenerate strict clients for these

@@ -232,8 +232,17 @@ describe('MCP server against the in-process API', () => {
     expect(unpublished.isError).toBe(true);
     expect(text(unpublished)).toMatch(/^GraphGoblin API error [A-Z_]+ \(HTTP 4\d\d\)/);
     const fromDraft = body(await call('start_run', { loopId: draftId, allowDraft: true }));
+    // The draft run pins a snapshot of the draft, not the editable draft itself.
+    expect(fromDraft).toMatchObject({
+      definition: 'draft-only draft v1',
+      pinned: { source: 'draft', version: 1, name: 'draft-only' },
+    });
+    expect(fromDraft.versionId).not.toBe(described.version.id);
     const done = body(await call('wait_for_run', { runId: fromDraft.runId, timeoutSeconds: 5 }));
-    expect(done).toMatchObject({ finished: true, run: { status: 'succeeded' } });
+    expect(done).toMatchObject({
+      finished: true,
+      run: { status: 'succeeded', versionId: fromDraft.versionId, pinned: fromDraft.pinned },
+    });
   });
 
   it('starts a run, waits for it, and records the manual.mcp source', async () => {
@@ -241,7 +250,12 @@ describe('MCP server against the in-process API', () => {
     const started = body(
       await call('start_run', { loopId, input: { topic: 'x' }, triggerNodeId: 'start' }),
     );
-    expect(started).toMatchObject({ loopId, next: expect.stringContaining('wait_for_run') });
+    expect(started).toMatchObject({
+      loopId,
+      definition: 'quick v1',
+      pinned: { source: 'published', version: 1, name: 'quick', label: 'quick v1' },
+      next: expect.stringContaining('wait_for_run'),
+    });
     const done = body(await call('wait_for_run', { runId: started.runId }));
     expect(done.finished).toBe(true);
     expect(done.run).toMatchObject({ id: started.runId, status: 'succeeded' });

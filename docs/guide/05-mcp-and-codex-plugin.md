@@ -63,7 +63,7 @@ HTTP accepts POST only and is stateless, with a fresh transport per request; GET
 | `provide_input`   | Supply the observed `waiting.waitId` and schema-valid input to an input wait.                   |
 | `send_signal`     | Send the observed `waiting.waitId` and a named signal with an optional payload; inspect `woke`. |
 
-`describe_loop` and `start_run` accept a loop ID or an exact, case-insensitive name. Use IDs when names are duplicated. `start_run` accepts `input`, optional `triggerNodeId`, and `allowDraft` for an unpublished loop.
+`describe_loop` and `start_run` accept a loop ID or an exact, case-insensitive name. Use IDs when names are duplicated. `start_run` accepts `input`, optional `triggerNodeId`, and `allowDraft` for an unpublished loop; a draft run keeps a snapshot of the draft as it was at start. Its result includes `definition`, the pinned label (for example `Review draft v2`), and the full `pinned` object.
 
 `list_runs` returns `{ items, nextCursor }`. Pass a non-null `nextCursor` as `cursor` with the same filters, even when `items` is empty; stop when `nextCursor` is null.
 

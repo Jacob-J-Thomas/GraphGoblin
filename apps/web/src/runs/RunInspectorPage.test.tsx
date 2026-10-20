@@ -4,14 +4,14 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { LoopDefinitionSchema } from '@graphgoblin/contracts';
 import { minimalLoop } from '@graphgoblin/contracts/testing';
-import { event, FakeApi } from '../__fixtures__/fake-api.js';
+import { event, FakeApi, queuedFields } from '../__fixtures__/fake-api.js';
 import { renderApp } from '../__fixtures__/render.js';
 import { useRunEventStore } from './event-store.js';
 
 function seedRun(api: FakeApi, overrides: Parameters<FakeApi['addRun']>[0] = {}) {
   const run = api.addRun(overrides);
   const r = run.id;
-  api.pushEvent(r, event(r, 1, 'run.queued', {}));
+  api.pushEvent(r, event(r, 1, 'run.queued', queuedFields()));
   api.pushEvent(r, event(r, 2, 'run.started', { attempt: 1 }));
   api.pushEvent(
     r,
@@ -89,7 +89,7 @@ describe('RunInspectorPage', () => {
     });
     const thread = api.threads.get(run.id)!;
     api.threads.set(run.id, { ...thread, gates: { gate: { passes: 3 } } });
-    api.pushEvent(run.id, event(run.id, 1, 'run.queued', {}));
+    api.pushEvent(run.id, event(run.id, 1, 'run.queued', queuedFields()));
     api.pushEvent(
       run.id,
       event(run.id, 2, 'node.started', {
@@ -336,7 +336,10 @@ describe('RunInspectorPage', () => {
     const api = new FakeApi();
     const seeded = api.addRun({ parentRunId: '01ARZ3NDEKTSV4RRFFQ69G5FAZ' });
     const seed = { ...api.threads.get(seeded.id)!, vars: { fromParent: 'yes' } };
-    api.pushEvent(seeded.id, event(seeded.id, 1, 'run.queued', { initialThread: seed }));
+    api.pushEvent(
+      seeded.id,
+      event(seeded.id, 1, 'run.queued', queuedFields({ initialThread: seed })),
+    );
     api.pushEvent(
       seeded.id,
       event(seeded.id, 2, 'node.finished', {
@@ -353,7 +356,7 @@ describe('RunInspectorPage', () => {
 
     // A log whose patch cannot apply to its start shows an explanation, not a blank page.
     const broken = api.addRun();
-    api.pushEvent(broken.id, event(broken.id, 1, 'run.queued', {}));
+    api.pushEvent(broken.id, event(broken.id, 1, 'run.queued', queuedFields()));
     api.pushEvent(
       broken.id,
       event(broken.id, 2, 'node.finished', {

@@ -136,7 +136,7 @@ export function registerTools(
     {
       title: 'Start a run',
       description:
-        'Start a run of a loop from a manual trigger. Returns immediately with the runId; the run executes in the background. Then call wait_for_run with that runId to get the result. Pass input matching the trigger inputSchema from describe_loop. triggerNodeId is only needed when the loop has more than one manual trigger.',
+        'Start a run of a loop from a manual trigger. Returns immediately with the runId; the run executes in the background. Then call wait_for_run with that runId to get the result. Pass input matching the trigger inputSchema from describe_loop. triggerNodeId is only needed when the loop has more than one manual trigger. The run keeps the definition it starts with (definition and pinned in the result) even if the loop is edited or published again while it runs.',
       inputSchema: {
         loopId: loopRef,
         input: json.optional(),
@@ -147,7 +147,9 @@ export function registerTools(
         allowDraft: z
           .boolean()
           .optional()
-          .describe('Run the draft version when the loop has no published version. Default false.'),
+          .describe(
+            'Run the draft version when the loop has no published version: the run pins a snapshot of the draft as it is now. Default false.',
+          ),
       },
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
     },
@@ -167,6 +169,8 @@ export function registerTools(
           runId: run.id,
           loopId: run.loopId,
           versionId: run.versionId,
+          definition: run.pinned.label,
+          pinned: run.pinned,
           status: run.status,
           next: 'Call wait_for_run with this runId to wait for the result.',
         };

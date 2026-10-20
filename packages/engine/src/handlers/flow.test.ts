@@ -139,7 +139,12 @@ describe('decision node', () => {
     });
     expect(r.result).toBe('good');
     expect(e.ports.classifiers.requests).toEqual([
-      { ownerId: 'local', modelId: 'jev', primitive: 'choice' },
+      {
+        ownerId: 'local',
+        modelId: 'jev',
+        primitive: 'choice',
+        binding: expect.objectContaining({ provider: 'typesafe', providerModel: 'jev-latest' }),
+      },
     ]);
     expect(e.events(r.id).find((ev) => ev.type === 'decision.made')).toMatchObject({
       observation: { kind: 'classifier', answer: answer() },

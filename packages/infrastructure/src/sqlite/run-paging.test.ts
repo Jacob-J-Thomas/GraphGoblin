@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { RunRecord } from '@graphgoblin/contracts';
-import { FIXTURE_TS, fakeUlid, sampleThread } from '@graphgoblin/contracts/testing';
+import { FIXTURE_TS, fakeUlid, samplePin, sampleThread } from '@graphgoblin/contracts/testing';
 import { openMemoryDatabase, type DatabaseHandle } from './db.js';
 import { SqliteRunRepository } from './runs.js';
 
@@ -19,6 +19,7 @@ describe('SqliteRunRepository ordinary paging', () => {
       ownerId: 'local',
       loopId: fakeUlid('loop'),
       versionId: fakeUlid('version'),
+      pinned: samplePin(),
       invocationId: fakeUlid('inv:' + index),
       status: 'succeeded',
       iteration: 1,

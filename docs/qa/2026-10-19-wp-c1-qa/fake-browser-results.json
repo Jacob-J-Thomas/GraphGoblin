@@ -1,0 +1,113 @@
+[
+  {
+    "id": "F01-fake-harness-defaults-across-store-reopen",
+    "status": "PASS",
+    "evidence": {
+      "tier": "fake harness, real SQLite, composition close/reopen; native restart covered separately",
+      "requests": [
+        {
+          "model": "gpt-6-luna",
+          "effort": "low"
+        },
+        {
+          "model": "gpt-6-luna",
+          "effort": "low"
+        },
+        {
+          "model": "gpt-6-sol",
+          "effort": "high"
+        }
+      ],
+      "oldPins": [
+        {
+          "source": "published",
+          "version": 1,
+          "name": "QA defaults",
+          "label": "QA defaults v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {}
+        },
+        {
+          "source": "draft",
+          "version": 2,
+          "name": "QA defaults",
+          "label": "QA defaults draft v2",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {}
+        }
+      ],
+      "newPin": {
+        "source": "published",
+        "version": 2,
+        "name": "QA defaults",
+        "label": "QA defaults v2",
+        "defaults": {
+          "owner": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-sol",
+                "effort": "high"
+              }
+            }
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-astra",
+                "effort": "max"
+              }
+            }
+          }
+        },
+        "classifiers": {}
+      }
+    }
+  },
+  {
+    "id": "F02-disabled-selected-model-no-substitution",
+    "status": "PASS",
+    "evidence": {
+      "failure": {
+        "code": "EVALUATION_UNAVAILABLE",
+        "message": "The selected model is disabled",
+        "nodeId": "think",
+        "resumable": true,
+        "details": {
+          "code": "MODEL_DISABLED",
+          "path": "model"
+        }
+      },
+      "requestsWhileDisabled": 0,
+      "resumedModel": "gpt-6-sol"
+    }
+  },
+  {
+    "id": "UI02-Edge-reload-two-views-narrow-keyboard-input",
+    "status": "FAIL",
+    "error": "TypeError: Cannot read properties of undefined (reading 'launch')\n    at file:///<user-home>/AppData/Local/Temp/wp-c1-qa-fake-browser.mjs:42:76\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async check (file:///<user-home>/AppData/Local/Temp/wp-c1-qa-fake-browser.mjs:22:48)\n    at async file:///<user-home>/AppData/Local/Temp/wp-c1-qa-fake-browser.mjs:40:2"
+  }
+]

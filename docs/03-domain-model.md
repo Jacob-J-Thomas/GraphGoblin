@@ -5,13 +5,13 @@
 | Term             | Meaning                                                                                                            |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------ |
 | Loop             | A named, owned graph definition with a history of versions.                                                        |
-| Loop version     | An immutable snapshot of a loop's definition. Runs pin one.                                                        |
+| Loop version     | A record of a loop's definition: the editable draft, or an immutable published version or draft snapshot.          |
 | Node             | A unit of behaviour in the graph with a kind, a config validated by that kind's schema, and ports.                 |
 | Port             | A named connection point. Inputs are `in`. Outputs are `out` by default; decisions and exits add labelled outputs. |
 | Edge             | A directed connection from a node's output port to another node's input port.                                      |
 | Trigger envelope | The normalised payload that starts a run, whatever the source.                                                     |
 | Invocation       | Who or what started a run, and how its return should be delivered.                                                 |
-| Run              | One execution of a loop version. Owns a context thread and an event log.                                           |
+| Run              | One execution of an immutable loop version it pins for life. Owns a context thread and an event log.               |
 | Child run        | A run started by a subloop node. Has a parent run id.                                                              |
 | Run event        | One append-only record in a run's log, with a sequence number.                                                     |
 | Context thread   | The run's shared state: messages, variables, artifacts, counters, last output.                                     |
@@ -91,9 +91,10 @@ Current definitions and exports use format 4. Decisions are a strict union on ki
   `settings.defaults.harness`. Existing inference nodes already carry their explicit harness.
   Version ids, numbers, creation and publication timestamps, and run pins stay unchanged.
 - Editing creates or updates a **draft** version. Publishing freezes it as the loop's current version.
-- A run pins the version it started with and finishes on it, even if a newer version is published meanwhile.
-- New runs always use the latest published version.
-- A subloop reference resolves to the referenced loop's latest published version at the moment the parent run starts, and the child run pins that version. A reference may instead pin an explicit version number.
+- A run pins an immutable definition record and finishes on it, through waits, resume, replay forks and restarts, even if the loop is edited or a newer version is published meanwhile ([ADR-0041](decisions/ADR-0041-runs-pin-immutable-definitions.md)). A published start pins that version. A draft start (a test run, `allowDraft`) pins a **draft snapshot**: a `loop_versions` row with status `snapshot`, a new id, the draft's number and the definition exactly as the start read it, committed with the run. A snapshot is never published, never latest, not the loop's draft, not listed in `GET /loops/{id}/versions` and never started directly; `GET /loops/{id}/versions/{versionId}` still returns it. Storage triggers refuse any change to a snapshot and its deletion while a run pins it; run deletion removes snapshots no run pins.
+- The run's `versionId` is that record, and `run.pinned` describes it: `source` (`published` or `draft`), the version number, the loop name in the pinned definition, a readable `label` (`Review v3`, `Review draft v4`) and the inherited model defaults pinned at start (`defaults.owner` from Settings, `defaults.process` from `GG_DEFAULTS`) and `classifiers`, the catalog binding (provider, provider model, endpoint, primitives, secret name) of every classifier the definition uses. None of it changes during the run; a classifier's existence, enabled switch and secret value are still checked when it is called.
+- New runs always use the latest published version, or freeze the current draft, with the defaults current at their start.
+- A subloop reference resolves to the referenced loop's latest published version at the moment the parent run starts, and the child run pins that version. A reference may instead pin an explicit version number. A child has its own pin and inherits its parent's pinned defaults, so later Settings changes do not reach a running tree either.
   - "Starts" means the parent run is created: the resolution covers every loop reachable through subloop references, at any depth, and is recorded on the parent's `run.queued` event as `subloopVersions` (loop id to version id). Children inherit the map, replay forks copy it, and recovery reads it from the log, so a version published while the parent waits never reaches the parent's tree (05, ADV-004). A loop that an active run can still start (its own runs, or runs whose pins or references reach it) cannot be deleted (409 `LOOP_IN_USE`).
 
 ## Deleting a loop (Decided)
@@ -211,7 +212,8 @@ engine-owned region. Usage roll-up remains an engine operation.
 
 | Field                                                  | Notes                                                                                                                                                                                                            |
 | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `id`, `ownerId`, `loopId`, `versionId`, `parentRunId?` | Identity and pinning                                                                                                                                                                                             |
+| `id`, `ownerId`, `loopId`, `versionId`, `parentRunId?` | Identity; `versionId` is the immutable definition record the run executes                                                                                                                                        |
+| `pinned`                                               | `{ source, version, name, label, defaults: { owner, process }, classifiers }`, at start                                                                                                                          |
 | `status`                                               | `queued`, `running`, `waiting`, `paused`, `succeeded`, `failed`, `cancelled`, `exhausted`                                                                                                                        |
 | `currentNodeId?`, `iteration`                          | Where the token is                                                                                                                                                                                               |
 | `waiting?`                                             | `{ waitId: string, startedSeq: number, nodeId: string, kind: WaitKind, until?: string, timeoutAt?: string, prompt?: string, inputSchema?: JsonSchema, signalName?: string, childRunId?: string, beat?: number }` |
@@ -227,7 +229,8 @@ Each event has `runId`, `seq`, `ts`, `type`, optional `nodeId`, and a typed `pay
 
 | Type                                                                 | Payload                                                                                               |
 | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `run.queued`, `run.started`, `run.finished`                          | status, outcome, result reference                                                                     |
+| `run.queued`                                                         | `versionId` and `pinned` as on the run, initial thread, subloop pins, replay origin                   |
+| `run.started`, `run.finished`                                        | status, outcome, result reference                                                                     |
 | `run.paused`, `run.resumed`, `run.cancel_requested`, `run.cancelled` | actor                                                                                                 |
 | `run.waiting`, `run.woken`                                           | wait spec, wake reason                                                                                |
 | `run.failed`                                                         | failure object                                                                                        |

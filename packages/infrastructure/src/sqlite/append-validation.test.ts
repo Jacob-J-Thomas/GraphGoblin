@@ -1,6 +1,6 @@
 import { afterEach, expect, it } from 'vitest';
 import { RunFailureSchema } from '@graphgoblin/contracts';
-import { fakeUlid } from '@graphgoblin/contracts/testing';
+import { fakeUlid, FIXTURE_IDS, samplePin } from '@graphgoblin/contracts/testing';
 import { FakeClock } from '@graphgoblin/engine/testing';
 import { openMemoryDatabase, type DatabaseHandle } from './db.js';
 import { SqliteEventStore } from './events.js';
@@ -12,7 +12,9 @@ it('rejects the entire generated append before insert, sequence changes or publi
   handle = await openMemoryDatabase();
   const store = new SqliteEventStore(handle.db, new FakeClock());
   const id = fakeUlid('atomic-validation');
-  const first = await store.append(id, [{ type: 'run.queued' }]);
+  const first = await store.append(id, [
+    { type: 'run.queued', versionId: FIXTURE_IDS.version, pinned: samplePin() },
+  ]);
   const notifications: unknown[] = [];
   store.subscribe(id, (event) => notifications.push(event));
   await expect(
