@@ -135,7 +135,7 @@ Regression test: `packages/infrastructure/src/claude/harness.test.ts`, "creates 
 - Access-control failures other than one deny entry for `CodexSandboxUsers`, which did not prevent the launch.
 - Codex versions other than 0.160.0, including the four unanalysed 0.162.0-alpha Desktop occurrences; Claude Code versions other than 2.1.304.
 - Machines with `LongPathsEnabled = 0`, consoles not using UTF-8, and non-Windows hosts.
-- The same `fs.mkdtemp` limit in other temporary directories GraphGoblin creates (for example the Codex structured-completion directory), which need a model turn to reach.
+- The same `fs.mkdtemp` limit in other temporary directories GraphGoblin creates (for example the Codex structured-completion directory, which the review reproduced through its public interface with zero harness starts; filed as #363).
 - Derived, not launched: a run's temporary workspace is `<data dir>\workspaces\<run id>`, 38 characters longer than the data directory, so a data directory deeper than 220 characters would give Codex and script nodes a working directory past the 258-character limit.
 
 ## Follow-ups recorded separately
