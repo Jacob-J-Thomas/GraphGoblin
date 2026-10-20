@@ -179,7 +179,7 @@ Startup can log `HISTORY_UNREADABLE` with a run ID and a reason such as a malfor
 JSON field or the sequence and type of an invalid event. Healthy current-format runs
 continue recovery. Startup checks active runs and terminal runs awaiting finalization,
 so its log names damaged recovery candidates only. `GET /runs/diagnostics` also checks
-finalized terminal history.
+finalized terminal history. The ordinary `GET /runs` list and the web Runs page silently omit unreadable run rows; if an expected run is missing, check diagnostics.
 
 `GET /runs/:id` and MCP `get_run` decode only the run row, so a snapshot can look normal
 while its events or thread are damaged. An unreadable run row or stored thread yields
@@ -194,8 +194,7 @@ recovered for that damaged run.
 
 **Manual disposition:** Stop the API before editing SQLite. Repair the specifically named
 row by hand to match the current contract, then restart and check `GET /runs/diagnostics`
-again. Deletion of unrelated loops works while the damaged run is isolated. The damaged
-run's own loop is deletable once its runs are terminal or repaired. Alternatively,
+again. Deletion of unrelated loops works while the damaged run is isolated. Alternatively,
 explicitly delete the containing loop using the existing
 `DELETE /loops/:id` path once all its runs are terminal. That deletion removes the loop
 and all its history, not just the damaged run; there is currently no individual-run

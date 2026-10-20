@@ -281,9 +281,6 @@ export class InMemoryRunRepository implements RunRepository {
         .map((r) => ({ id: r.id, terminal: isTerminal(r.status) })),
     );
   }
-  listByStatus(statuses: readonly RunStatus[]): Promise<RunRecord[]> {
-    return Promise.resolve([...this.runs.values()].filter((r) => statuses.includes(r.status)));
-  }
   markFinalized(runId: string): Promise<void> {
     this.finalized.add(runId);
     return Promise.resolve();
@@ -292,14 +289,18 @@ export class InMemoryRunRepository implements RunRepository {
     this.finalized.delete(runId);
     return Promise.resolve();
   }
-  async listRunReferences(
+  listRunReferences(
     statuses: readonly RunStatus[],
   ): Promise<Pick<RunRecord, 'id' | 'loopId' | 'versionId'>[]> {
-    return (await this.listByStatus(statuses)).map(({ id, loopId, versionId }) => ({
-      id,
-      loopId,
-      versionId,
-    }));
+    return Promise.resolve(
+      [...this.runs.values()]
+        .filter((run) => statuses.includes(run.status))
+        .map(({ id, loopId, versionId }) => ({
+          id,
+          loopId,
+          versionId,
+        })),
+    );
   }
   listChildren(parentRunId: string): Promise<RunRecord[]> {
     return Promise.resolve([...this.runs.values()].filter((r) => r.parentRunId === parentRunId));

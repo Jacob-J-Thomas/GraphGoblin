@@ -28,7 +28,7 @@ Stored as JSON in `loop_versions.definition`, validated by `contracts`.
 type LoopDefinition = {
   schemaVersion: 4;
   name: string;
-  description?: string;
+  description?: string; // an empty string is distinct from absence
   settings: {
     workingDirectory: WorkingDirectorySpec; // see 04 and 06
     defaults: { byHarness: { codex?: { model?: string; effort?: Effort } } };
@@ -222,6 +222,8 @@ engine-owned region. Usage roll-up remains an engine operation.
 | `result?`                                              | The exit node's return payload                                                                                                                                                                                   |
 | `outcome?`                                             | `success`, `failure`, `exhausted`                                                                                                                                                                                |
 | `startedAt`, `finishedAt?`, `lastEventSeq`             | Bookkeeping                                                                                                                                                                                                      |
+
+A missing run `result` means no payload was returned, whereas `result: null` is a present JSON value, preserved distinctly from `false`, `0`, `""`, `[]` and `{}` across storage and restart.
 
 ## Run events (Decided kinds, Draft payloads)
 

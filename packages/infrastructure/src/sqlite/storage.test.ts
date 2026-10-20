@@ -373,11 +373,11 @@ describe('SqliteRunRepository', () => {
     });
     for (const r of [parent, child, other]) await repo.create(r, sampleThread());
 
-    expect((await repo.listByStatus(['waiting', 'queued'])).map((r) => r.id)).toEqual([
+    expect((await repo.listRunReferences(['waiting', 'queued'])).map((r) => r.id)).toEqual([
       parent.id,
       other.id,
     ]);
-    expect(await repo.listByStatus([])).toEqual([]);
+    expect(await repo.listRunReferences([])).toEqual([]);
     expect((await repo.listChildren(parent.id)).map((r) => r.id)).toEqual([child.id]);
     expect((await repo.list()).map((r) => r.id)).toEqual([other.id, child.id, parent.id]);
     expect((await repo.list({ ownerId: 'local' })).map((r) => r.id)).toEqual([child.id, parent.id]);
@@ -547,6 +547,19 @@ describe('SqliteLoopRepository draft and publish interleaving', () => {
 });
 
 describe('SqliteLoopRepository', () => {
+  it('preserves an empty description distinctly from absence on create, list and draft save', async () => {
+    const repo = new SqliteLoopRepository(handle.db, clock, ids);
+    const definition = LoopDefinitionSchema.parse({ ...minimalLoop(), description: '' });
+    const { loop } = await repo.create('local', definition);
+    expect(loop.description).toBe('');
+    expect((await repo.getLoop(loop.id))?.description).toBe('');
+    expect((await repo.listLoops('local'))[0]?.description).toBe('');
+    await repo.saveDraft(loop.id, LoopDefinitionSchema.parse(minimalLoop()));
+    expect(Object.hasOwn((await repo.getLoop(loop.id))!, 'description')).toBe(false);
+    await repo.saveDraft(loop.id, definition);
+    expect((await repo.getLoop(loop.id))?.description).toBe('');
+  });
+
   it('creates loops with drafts, publishes, and resolves versions', async () => {
     const repo = new SqliteLoopRepository(handle.db, clock, ids);
     const definition = LoopDefinitionSchema.parse(minimalLoop());
