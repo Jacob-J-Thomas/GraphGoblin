@@ -272,7 +272,7 @@ may assert definite refusal only with positive pre-send/startup/refusal evidence
 a later authentication/refusal error cannot downgrade the turn to safe resubmission.
 
 Under previous/named policy, an authored or retried authored turn with no durable acceptance
-cannot use its inherited `resumeSessionId` alone for continuation (ADR-0042, D-022). It fails
+cannot use its inherited `resumeSessionId` alone for continuation (ADR-0045, D-022). It fails
 non-resumably on explicit failure and at visit-start recovery. A different newly announced
 session, an accepted turn, or a repair/continuation on the visit's own session can continue.
 Generic turn failures respect the adapter's `retriable` evidence; unsupported policy, invalid

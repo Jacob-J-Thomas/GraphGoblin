@@ -47,4 +47,4 @@ One file per decision. Status is Accepted unless stated. Supersede by adding a n
 
 [ADR-0041: Runs pin an immutable definition, drafts included](ADR-0041-runs-pin-immutable-definitions.md) supersedes ADR-0008's draft-run gap: draft runs pin a frozen snapshot, and inherited model defaults are pinned at start.
 
-[ADR-0042: Inherited session IDs do not establish authored-task acceptance](ADR-0042-inference-inherited-session-recovery.md) records D-022: uncertain authored work cannot continue an inherited conversation without acceptance evidence.
+[ADR-0045: Inherited session IDs do not establish authored-task acceptance](ADR-0045-inference-inherited-session-recovery.md) records D-022: uncertain authored work cannot continue an inherited conversation without acceptance evidence.

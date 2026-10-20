@@ -1,4 +1,4 @@
-# ADR-0042 - Inherited session IDs do not establish authored-task acceptance
+# ADR-0045 - Inherited session IDs do not establish authored-task acceptance
 
 Date: 2026-10-20. Status: Accepted. Records the orchestrator's D-022 decision in the #244 Round 2 brief.
 

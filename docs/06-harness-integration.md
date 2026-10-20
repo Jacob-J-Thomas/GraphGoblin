@@ -471,7 +471,7 @@ Codex reports startup/auth/argument refusals as definitely unsubmitted and posit
 missing-rollout/thread/session refusals as session missing. Other stream/process failures are
 uncertain. The engine prevents later refusal from downgrading already observed acceptance.
 An authored/retried authored turn with only an inherited previous/named handle and no durable
-acceptance is non-resumable when delivery is uncertain (ADR-0042). Accepted turns and
+acceptance is non-resumable when delivery is uncertain (ADR-0045). Accepted turns and
 repair/continuation turns on the visit's own session retain continuation recovery. Unsupported
 policy, invalid configuration and argument refusals remain non-resumable even if a generic
 adapter error incorrectly advertises retryability; other generic failures require the
