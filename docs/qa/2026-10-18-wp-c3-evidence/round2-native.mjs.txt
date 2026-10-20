@@ -5,6 +5,10 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { spawn } from 'node:child_process';
 
+// Inherit only OS launch paths. In particular, never seed a replay store with
+// the caller's JEV_* credentials or GG_* configuration under this dummy key.
+const launchEnvironment = Object.fromEntries(Object.entries(process.env).filter(([name]) =>
+  ['PATH', 'SYSTEMROOT', 'TEMP', 'TMP', 'USERPROFILE', 'APPDATA', 'LOCALAPPDATA'].includes(name.toUpperCase())));
 const evidence = 'docs/qa/2026-10-18-wp-c3-evidence/';
 const dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-c3-'));
 const base = 'http://127.0.0.1:5780';
@@ -46,7 +50,7 @@ async function request(path, body) {
 }
 async function boot() {
   child = spawn(process.execPath, [resolve('apps/api/dist/main.js')], {
-    env: { ...process.env, GG_HOST: '127.0.0.1', GG_PORT: '5780', GG_DATA_DIR: dataDir,
+    env: { ...launchEnvironment, GG_HOST: '127.0.0.1', GG_PORT: '5780', GG_DATA_DIR: dataDir,
       GG_DB_URL: 'file:' + join(dataDir, 'store.db'), GG_TIMER_POLL_MS: '50',
       GG_MASTER_KEY: Buffer.alloc(32, 29).toString('base64'), GG_REQUIRE_API_KEY: 'false',
       GG_LOG_LEVEL: 'warn', GG_SWAGGER_UI: 'false', GG_WEB_DIST: '' },

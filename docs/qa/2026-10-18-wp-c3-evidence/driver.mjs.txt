@@ -10,6 +10,9 @@ import { createContainer } from '../dist/container.js';
 import { loadConfig } from '../dist/config.js';
 import { buildApp } from '../dist/app.js';
 
+// Restart children inherit only OS launch paths; setup() supplies its own GG_*.
+const launchEnvironment = Object.fromEntries(Object.entries(process.env).filter(([name]) =>
+  ['PATH', 'SYSTEMROOT', 'TEMP', 'TMP', 'USERPROFILE', 'APPDATA', 'LOCALAPPDATA'].includes(name.toUpperCase())));
 const output = resolve('docs/qa/2026-10-18-wp-c3-evidence/results.json');
 const script = fileURLToPath(import.meta.url);
 const records = [];
@@ -55,7 +58,7 @@ async function snapshot(t, id) {
 const settled = values => values.map(x => x.status === 'fulfilled' ? { status: 'fulfilled' } : { status: 'rejected', code: x.reason.code ?? x.reason.message });
 async function restart(spec) {
   return new Promise((yes, no) => {
-    const child = spawn(process.execPath, [script, '--restart', JSON.stringify(spec)], { stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
+    const child = spawn(process.execPath, [script, '--restart', JSON.stringify(spec)], { env: launchEnvironment, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
     let stdout = '', stderr = '';
     child.stdout.on('data', x => stdout += x);
     child.stderr.on('data', x => stderr += x);

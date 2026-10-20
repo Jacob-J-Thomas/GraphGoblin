@@ -1,12 +1,12 @@
 import { createServer, type Server } from 'node:http';
-import { mkdtemp } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdtemp, rm } from 'node:fs/promises';
 import { join } from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, inject, it } from 'vitest';
 import type { JsonValue, LoopDefinitionInput } from '@graphgoblin/contracts';
 import { createTestApp, type TestApp } from '../testing/test-app.js';
 
 const opened: TestApp[] = [];
+const stores: string[] = [];
 let source: Server | undefined;
 let candidates: JsonValue[] = [];
 let responseBody: string | undefined;
@@ -19,6 +19,15 @@ afterEach(async () => {
   });
   source = undefined;
   responseBody = undefined;
+  for (const dir of stores.splice(0)) {
+    try {
+      await rm(dir, { recursive: true, force: true, maxRetries: 2, retryDelay: 10 });
+    } catch (error) {
+      // Windows SQLite handles can survive close() until this fork exits. The existing
+      // parent-owned waitStorageRoot removes these directories after all workers exit.
+      if (!(error instanceof Error) || !('code' in error) || error.code !== 'EBUSY') throw error;
+    }
+  }
 });
 function deep(levels: number, key = 'deep'): JsonValue {
   let v: JsonValue = 'private candidate value';
@@ -27,7 +36,8 @@ function deep(levels: number, key = 'deep'): JsonValue {
 }
 async function setup(env?: Record<string, string>) {
   if (!env) {
-    const dir = await mkdtemp(join(tmpdir(), 'gg-wp-c3-'));
+    const dir = await mkdtemp(join(inject('waitStorageRoot'), 'gg-wp-c3-'));
+    stores.push(dir);
     env = { GG_DATA_DIR: dir, GG_DB_URL: 'file:' + join(dir, 'store.db') };
   }
   const t = await createTestApp({ env });
@@ -41,8 +51,10 @@ async function publish(t: TestApp) {
   });
   await new Promise<void>((resolve, reject) => {
     source!.once('error', reject);
-    source!.listen(5788, '127.0.0.1', resolve);
+    source!.listen(0, '127.0.0.1', resolve);
   });
+  const address = source.address();
+  if (!address || typeof address === 'string') throw new Error('Missing probe address');
   const definition: LoopDefinitionInput = {
     schemaVersion: 4,
     name: 'Depth refusal',
@@ -54,7 +66,7 @@ async function publish(t: TestApp) {
         config: {
           type: 'poll',
           intervalSeconds: 5,
-          probe: { kind: 'http', url: 'http://127.0.0.1:5788' },
+          probe: { kind: 'http', url: `http://127.0.0.1:${address.port}` },
           fireWhen: 'true',
           items: { select: 'probe.json', dedupeKey: 'item.key', maxRunsPerPoll: 5 },
         },
@@ -117,6 +129,17 @@ describe('structurally refused poll candidates over HTTP and real SQLite', () =>
     expect(
       t.logger.lines.find((line) => line.obj.code === 'POLL_ITEM_REJECTED')?.obj,
     ).toMatchObject({ itemIndex: 1 });
+  });
+  it('silently skips a consumed key even when its payload later exceeds the depth bound', async () => {
+    const { t } = await setup();
+    candidates = [{ key: 'consumed' }];
+    const loopId = await publish(t);
+    expect(await poll(t)).toEqual(['consumed']);
+    candidates = [deep(1100, 'consumed'), { key: 'new' }];
+    expect(await poll(t)).toEqual(['new']);
+    expect(await poll(t)).toEqual([]);
+    expect(await t.container.repos.runs.list({ loopId })).toHaveLength(2);
+    expect(t.logger.lines.filter((line) => line.level === 'warn')).toEqual([]);
   });
   it('keeps middle refusals unconsumed and successful keys deduplicated across store reopen', async () => {
     const { t, env } = await setup();

@@ -16,7 +16,7 @@ const run = (key: string): RunRecord => ({
 });
 
 describe('bounded poll item admission', () => {
-  it('does no lookup or admission for entirely depth-refused items and does not count them toward the cap', async () => {
+  it('looks up depth-refused keys without admitting them or counting them toward the cap', async () => {
     let deep: JsonValue = 1;
     for (let i = 0; i < 1100; i += 1) deep = [deep];
     const findSeen = vi.fn(() => Promise.resolve(new Set<string>()));
@@ -31,16 +31,22 @@ describe('bounded poll item admission', () => {
       runs: [],
       rejections: [{ code: 'POLL_ITEM_REJECTED', reason: 'NESTING_DEPTH_EXCEEDED', itemIndex: 0 }],
     });
-    expect(findSeen).not.toHaveBeenCalled();
+    expect(findSeen).toHaveBeenCalledWith(['deep']);
     expect(start).not.toHaveBeenCalled();
     const mixed = await admitPollItems(
       keyed,
       view([{ key: 'deep', deep }, { key: 'ok' }, { key: 'tail' }]),
       { findSeen, start },
     );
-    expect(findSeen).toHaveBeenCalledWith(['ok', 'tail']);
+    expect(findSeen).toHaveBeenCalledWith(['deep', 'ok', 'tail']);
     expect(mixed.runs.map((r) => r.id)).toEqual(['ok']);
     expect(mixed.rejections).toEqual(only.rejections);
+    const consumed = await admitPollItems(keyed, view([{ key: 'deep', deep }]), {
+      findSeen: () => Promise.resolve(new Set(['deep'])),
+      start,
+    });
+    expect(consumed).toEqual({ runs: [], rejections: [] });
+    expect(start).toHaveBeenCalledOnce();
   });
   it('validates every key before the single lookup and admits unseen candidates sequentially up to the default cap', async () => {
     const calls: string[] = [];

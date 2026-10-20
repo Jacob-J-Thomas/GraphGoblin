@@ -94,7 +94,7 @@ independent review's natural and constructed evidence is distinguished below.
 
 ## Independent review evidence
 
-Source: the independent Claude Opus 5.5 review, findings N2–N5, supplied in the
+Source: the independent Claude Opus 5.5 review, Task 2 (natural scenarios), supplied in the
 round-two brief. These are reviewer observations, not experiments rerun by this
 worker. The review approved #225 as bounded closing evidence with these
 corrections, not as proof that the child-wake path is fully fenced.
@@ -113,7 +113,7 @@ every time: the immediate-child experiment does not establish that post-park
 reconciliation ever won. The timed-child experiment likewise does not establish
 that its non-waking signal append conflicted with the child notification's wake.
 
-**Constructed only:** delaying one parent re-read inside `wake()` called from
+**Constructed only (review finding N1):** delaying one parent re-read inside `wake()` called from
 `notifyParent` let a stale child wake reach a later input park or the next visit
 of the same subloop node. That forced internal delay is not a natural production
 reproduction. The review requires #242 to pass the parent's observed `waitId`
