@@ -4016,7 +4016,7 @@ export interface components {
             visitId: string;
             turnId: string;
             /** @enum {string} */
-            submission: "definitely-not-submitted" | "delivery-uncertain" | "session-missing";
+            submission: "definitely-not-submitted" | "delivery-uncertain" | "session-missing" | "submitted";
             /** @enum {string} */
             marker?: ("claude.assistant" | "claude.result" | "codex.turn.started" | "fake.accepted") | undefined;
         } | {
@@ -5869,7 +5869,7 @@ export interface components {
             visitId: string;
             turnId: string;
             /** @enum {string} */
-            submission: "definitely-not-submitted" | "delivery-uncertain" | "session-missing";
+            submission: "definitely-not-submitted" | "delivery-uncertain" | "session-missing" | "submitted";
             /** @enum {string} */
             marker?: ("claude.assistant" | "claude.result" | "codex.turn.started" | "fake.accepted") | undefined;
         } | {

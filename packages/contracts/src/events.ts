@@ -11,7 +11,7 @@ import {
 import { OutcomeSchema } from './nodes.js';
 import { JsonPatchSchema } from './patch.js';
 import {
-  PromptSubmissionSchema,
+  TurnSubmissionSchema,
   RunFailureSchema,
   RunPinSchema,
   RunStatusSchema,
@@ -184,7 +184,7 @@ export const RunEventSchema = z.discriminatedUnion('type', [
     nodeId: SlugSchema,
     visitId: z.string().min(1).max(64),
     turnId: UlidSchema,
-    submission: PromptSubmissionSchema,
+    submission: TurnSubmissionSchema,
     // Positive acceptance evidence; absence is never evidence of non-submission.
     marker: z
       .enum(['claude.assistant', 'claude.result', 'codex.turn.started', 'fake.accepted'])

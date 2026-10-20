@@ -424,7 +424,10 @@ included. Only bounded name-shaped metadata is included, never prompt, response,
 rate-limit bodies. A green preflight verifies prerequisites; it does not run a model turn or
 guarantee that a future CLI stream will pass runtime verification.
 
-Prompt delivery proof is unsupported for the current text-input transport. Session init and stdin delivery do not acknowledge a particular prompt; no proof event is emitted. The context and recovery decisions remain with #38/#33.
+The text-input transport supplies no acknowledgement tied to the exact prompt bytes. Session
+init and writing stdin are not proof. The adapter does emit `submitted` on validated evidence
+that a turn was consumed (below); it does not claim an exact-byte receipt. Context-delivery
+proof and own-session continuity remain with #38/#33.
 
 The earlier [Claude Agent SDK research](research/claude-code-agent-sdk.md) records an alternative
 that this adapter does not use.
@@ -439,6 +442,8 @@ A `LiteLLMPort` would provide plain completion calls for decision, coerce, and s
 
 Initialization is session identity, not input acceptance. The engine persists exact pending
 prompts and visit provenance before invoking either adapter; see [recovery](05-execution-engine.md#inference-submission-and-recovery).
+The run event `harness.submission` says `submitted` with a marker on positive acceptance;
+only failed or interrupted turns use the three failure classifications.
 
 | Adapter            | Positive `submitted` marker                                                                                                                                                                                          | What does not prove acceptance                                                                                     |
 | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
@@ -453,12 +458,24 @@ kill before the marker is durably recorded remains uncertain too.
 Claude local policy/config/auth/readiness failures and confirmed spawn failures are definitely
 unsubmitted. Turn stderr is bounded in memory and recognizes only fixed CLI refusal forms:
 `error: unknown option` / `error: unexpected argument`, authentication-required diagnostics,
-and `No conversation found with session ID:`. Raw diagnostics are discarded. A missing-session
-refusal produces `HARNESS_SESSION_MISSING`; an init/result mismatch remains a protocol fault,
-not an inferred missing session. Once assistant acceptance was observed, later refusal text
-cannot make the turn definitely unsubmitted.
+and `No conversation found with session ID:`. Raw diagnostics are discarded. Claude CLI
+2.1.304 can emit a pre-init `result` with `is_error: true` and `num_turns: 0` alongside the
+missing-session stderr refusal. Before init/acceptance this native refusal result is deferred
+until process outcome: the fixed stderr refusal yields `HARNESS_SESSION_MISSING`, ahead of
+the otherwise missing-init protocol error. Termination-unconfirmed, abort, timeout and overflow
+still take precedence. Without a recognized refusal the incomplete stream remains a protocol
+fault. An init/result mismatch also remains a protocol fault. Once assistant acceptance was
+observed, later refusal text cannot make the turn definitely unsubmitted.
 
 Codex reports startup/auth/argument refusals as definitely unsubmitted and positively identified
 missing-rollout/thread/session refusals as session missing. Other stream/process failures are
 uncertain. The engine prevents later refusal from downgrading already observed acceptance.
+An authored/retried authored turn with only an inherited previous/named handle and no durable
+acceptance is non-resumable when delivery is uncertain (ADR-0042). Accepted turns and
+repair/continuation turns on the visit's own session retain continuation recovery. Unsupported
+policy, invalid configuration and argument refusals remain non-resumable even if a generic
+adapter error incorrectly advertises retryability; other generic failures require the
+adapter's `retriable` evidence. Login, installation and quota retain their restorable causes.
+An abort during readiness probes is conservatively uncertain: the aborted/unknown probe
+does not positively identify a pre-send refusal. It does not authorize a blind authored retry.
 No readiness probes, probe directories, model selection or fallback policy changed.

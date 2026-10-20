@@ -35,6 +35,7 @@ async function scenario(
         code:
           classification === 'session-missing' ? 'HARNESS_SESSION_MISSING' : 'HARNESS_TURN_FAILED',
         message: 'controlled failure',
+        retriable: true,
       },
     },
   ]);
@@ -54,6 +55,22 @@ async function scenario(
 }
 
 describe('prompt provenance through RunManager and the fake harness', () => {
+  it('records observed submission truthfully on a successful turn', async () => {
+    const e = await createTestEngine();
+    const v = e.publish(
+      singleNodeLoop('successful submission', {
+        id: 'infer',
+        kind: 'inference',
+        label: 'Infer',
+        config: { prompt: { template: 'task' } },
+      }),
+    );
+    const run = await e.runToIdle(v.loopId);
+    expect(e.events(run.id).filter((x) => x.type === 'harness.submission')).toEqual([
+      expect.objectContaining({ submission: 'submitted', marker: 'fake.accepted' }),
+    ]);
+    e.manager.stop();
+  });
   it.each(policies)(
     'resends the exact authored task after proven refusal under %s',
     async (policy) => {
@@ -212,12 +229,12 @@ describe('prompt provenance through RunManager and the fake harness', () => {
     e.ports.harness.script([
       {
         submission: 'definitely-not-submitted',
-        error: { code: 'HARNESS_TURN_FAILED', message: 'refused' },
+        error: { code: 'HARNESS_TURN_FAILED', message: 'refused', retriable: true },
       },
       { finalText: 'first visit' },
       {
         submission: 'definitely-not-submitted',
-        error: { code: 'HARNESS_TURN_FAILED', message: 'second refusal' },
+        error: { code: 'HARNESS_TURN_FAILED', message: 'second refusal', retriable: true },
       },
     ]);
     const run = await e.runToIdle(v.loopId);
@@ -255,7 +272,7 @@ describe('prompt provenance through RunManager and the fake harness', () => {
       { finalText: 'invalid' },
       {
         submission: 'definitely-not-submitted',
-        error: { code: 'HARNESS_TURN_FAILED', message: 'repair refused' },
+        error: { code: 'HARNESS_TURN_FAILED', message: 'repair refused', retriable: true },
       },
     ]);
     const run = await e.runToIdle(v.loopId);
@@ -328,6 +345,10 @@ describe('prompt provenance through RunManager and the fake harness', () => {
     expect((await e.ports.runs.get(run.id))?.failure).toMatchObject({
       code: 'INTERNAL_ERROR',
       inference: { submission: 'definitely-not-submitted' },
+      details: {
+        name: 'Error',
+        stack: expect.stringContaining('storage unavailable before launch'),
+      },
     });
     expect(e.ports.harness.started).toHaveLength(0);
     await manager.resume(run.id);

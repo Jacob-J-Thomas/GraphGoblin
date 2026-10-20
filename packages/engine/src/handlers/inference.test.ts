@@ -336,7 +336,7 @@ describe('inference node', () => {
     engine.ports.harness.script([{ error: { code: 'weird', message: 'something else' } }]);
     expect((await engine.runToIdle(missing.loopId)).failure).toMatchObject({
       code: 'HARNESS_DELIVERY_UNCERTAIN',
-      resumable: true,
+      resumable: false,
     });
   });
 
@@ -364,6 +364,15 @@ describe('inference node', () => {
     expect(run.failure?.code).toBe('INFERENCE_TIMEOUT');
     expect(Date.now() - started).toBeLessThan(1900);
     expect(engine.ports.harness.cancelled).toHaveLength(1);
+    expect(run.failure?.inference).toMatchObject({
+      submission: 'delivery-uncertain',
+      promptKind: 'authored',
+    });
+    await engine.manager.resume(run.id);
+    expect((await engine.settle(run.id)).status).toBe('succeeded');
+    expect(engine.ports.harness.resumed.at(-1)?.request.turn.prompt).toContain(
+      'previous turn was interrupted',
+    );
   }, 10_000);
 
   it('applies output transforms after the message is appended', async () => {

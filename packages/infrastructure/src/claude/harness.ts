@@ -362,6 +362,7 @@ export class ClaudeHarness implements HarnessPort {
       let detectedVersion: string | undefined;
       let delivery: PromptSubmission = 'definitely-not-submitted';
       let accepted = false;
+      let initialized = false;
       try {
         if (controller.signal.aborted) throw abortError();
         if (resumeId !== undefined && !validClaudeSessionId(resumeId))
@@ -385,7 +386,18 @@ export class ClaudeHarness implements HarnessPort {
         const parser = new JsonLines();
         let completionEvents: HarnessEvent[] = [];
         const accept = (record: Record<string, unknown>): void => {
+          // Native missing-session refusals can precede init (CLI 2.1.304). They are not
+          // turn output. Await the fixed stderr refusal; never retain the provider error body.
+          if (
+            !initialized &&
+            !accepted &&
+            record.type === 'result' &&
+            record.is_error === true &&
+            record.num_turns === 0
+          )
+            return;
           const events = accumulator.push(record);
+          if (events.some((event) => event.type === 'session')) initialized = true;
           if (events.some((event) => event.type === 'submitted')) accepted = true;
           if (record.type === 'result') {
             completionEvents = events;

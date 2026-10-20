@@ -111,6 +111,27 @@ async function drain(events: AsyncIterable<HarnessEvent>) {
   return values;
 }
 describe('Claude existing harness contract', () => {
+  it.each([
+    { terminationUnconfirmed: true as const, code: 'HARNESS_TERMINATION_UNCONFIRMED' },
+    { timedOut: true, code: 'HARNESS_TIMEOUT' },
+    { overflow: true, code: 'HARNESS_OUTPUT_LIMIT' },
+  ])('preserves $code over a native zero-turn refusal envelope', async ({ code, ...transport }) => {
+    const { harness } = fixture({
+      records: [
+        {
+          type: 'result',
+          subtype: 'error_during_execution',
+          is_error: true,
+          num_turns: 0,
+          session_id: id,
+        },
+      ],
+      exit: { exitCode: 1, turnRejection: 'session-missing', ...transport },
+    });
+    await expect(
+      harness.resume(id, request, new AbortController().signal).result,
+    ).rejects.toMatchObject({ code });
+  });
   it('does not let a refusal diagnostic conceal unconfirmed native termination', async () => {
     const { harness } = fixture({
       records: [init],

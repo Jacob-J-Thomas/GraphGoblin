@@ -105,9 +105,12 @@ Before invoking the harness, the engine durably records `harness.turn`: the exac
 prompt, selected resume ID, prompt kind and logical visit/turn identities. `harness.submission`
 records refusal, uncertainty, missing-session status and any positive acceptance marker.
 A definitely-not-submitted turn retries that saved task with its original session-policy
-selection. Uncertain work continues only the recorded session; without a session it fails
-non-resumably for an owner choice. A missing session also fails non-resumably. Neither case
-silently starts fresh. See [submission recovery](05-execution-engine.md#inference-submission-and-recovery).
+selection when the cause is resumable. Uncertain authored work cannot continue a previous/named
+conversation on its inherited ID alone: this visit needs durable acceptance or a newly
+established session. Repairs and continuations can use the visit's own session. Without a
+usable session, or with a missing session, the run fails non-resumably; Replay from the node
+is the available deliberate new attempt. Named-session lookup still applies on replay.
+See [submission recovery](05-execution-engine.md#inference-submission-and-recovery).
 
 Claude Code accepts only the explicit `read-only`/`never` or `danger-full-access`/`never` policy
 pairs. `workspace-write`, `on-request`, explicit `networkAccess: false`, `webSearch: true`,

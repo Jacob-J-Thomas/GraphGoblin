@@ -7,7 +7,7 @@ import { runClaudeProcess } from './process.js';
 
 const id = '11111111-1111-4111-8111-111111111111';
 describe('Claude submission evidence through a fake CLI process', () => {
-  it.each(['pre-start', 'arguments', 'init', 'assistant', 'missing'] as const)(
+  it.each(['pre-start', 'arguments', 'auth', 'init', 'assistant', 'missing'] as const)(
     '%s reports only truthful delivery evidence',
     async (scenario) => {
       const harness = new ClaudeHarness({
@@ -51,10 +51,16 @@ describe('Claude submission evidence through a fake CLI process', () => {
         submission:
           scenario === 'missing'
             ? 'session-missing'
-            : ['pre-start', 'arguments'].includes(scenario)
+            : ['pre-start', 'arguments', 'auth'].includes(scenario)
               ? 'definitely-not-submitted'
               : 'delivery-uncertain',
       });
+      if (scenario === 'missing') {
+        expect(events.at(-1)).toMatchObject({ code: 'HARNESS_SESSION_MISSING' });
+        expect(events.some((x) => x.type === 'session')).toBe(false);
+      }
+      if (scenario === 'auth')
+        expect(events.at(-1)).toMatchObject({ code: 'HARNESS_NOT_AUTHENTICATED' });
       if (['init', 'assistant'].includes(scenario))
         expect(events.some((x) => x.type === 'session')).toBe(true);
     },

@@ -11,10 +11,20 @@ else if (args.includes('auth')) print({ authMethod: 'claude.ai' });
 else {
   // Drain the synthetic prompt before a controlled refusal or stream cut; no provider is invoked.
   for await (const chunk of process.stdin) void chunk;
-  if (scenario === 'missing')
-    process.stderr.write(
-      'No conversation found with session ID: 11111111-1111-4111-8111-111111111111',
-    );
+  if (scenario === 'missing') {
+    const diagnostic =
+      'No conversation found with session ID: 11111111-1111-4111-8111-111111111111';
+    print({
+      type: 'result',
+      subtype: 'error_during_execution',
+      is_error: true,
+      num_turns: 0,
+      duration_api_ms: 0,
+      session_id: '11111111-1111-4111-8111-111111111111',
+      errors: [diagnostic],
+    });
+    process.stderr.write(diagnostic);
+  } else if (scenario === 'auth') process.stderr.write('Authentication required');
   else if (scenario === 'arguments') process.stderr.write('error: unknown option --synthetic');
   else {
     print({

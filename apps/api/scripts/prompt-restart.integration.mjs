@@ -5,9 +5,9 @@ import { setTimeout, clearTimeout } from 'node:timers';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
-import { mkdtemp } from 'node:fs/promises';
+import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath, URL } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
 import { createServer } from 'node:net';
@@ -66,11 +66,14 @@ function message(child, type) {
   });
 }
 
-test(
-  'a real kill of the built API continues an uncertain turn from durable visit events',
-  { timeout: 180000 },
-  async () => {
-    const dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-f4-restart-'));
+async function withApiFixture(task) {
+  const dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-f4-restart-'));
+  const children = new Map();
+  const kill = async (child) => {
+    if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL');
+    await children.get(child);
+  };
+  try {
     const port = await freePort();
     const env = Object.fromEntries(
       Object.entries(process.env).filter(
@@ -87,17 +90,19 @@ test(
       GG_WEB_DIST: '',
       GG_MASTER_KEY: Buffer.alloc(32, 7).toString('base64'),
     });
-    const children = [];
     const start = (hold) => {
       const child = spawn(process.execPath, [fixture], {
-        env: { ...env, WP_F4_HOLD: hold ? '1' : '0' },
+        env: { ...env, WP_F4_HOLD: hold },
         windowsHide: true,
         stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
       });
-      children.push(child);
+      const closed = once(child, 'close');
+      closed.catch(() => undefined);
+      children.set(child, closed);
+      child.stdout.resume();
       let output = '';
       child.stderr.on('data', (chunk) => {
-        output += chunk;
+        output = (output + chunk).slice(-8192);
       });
       child.on('exit', (code) => {
         if (code) reportError(output);
@@ -105,7 +110,7 @@ test(
       return child;
     };
     const origin = `http://127.0.0.1:${port}`;
-    const api = async (path, body) => {
+    const api = async (path, body, status) => {
       const response = await fetch(
         origin + path,
         body === undefined
@@ -116,11 +121,35 @@ test(
               body: JSON.stringify(body),
             },
       );
-      assert.equal(response.ok, true, `${path}: ${response.status}`);
+      if (status !== undefined) assert.equal(response.status, status, path);
+      else assert.equal(response.ok, true, `${path}: ${response.status}`);
       return response.json();
     };
+    const inspect = async (child) => {
+      const received = message(child, 'calls');
+      child.send({ type: 'inspect' });
+      return received;
+    };
+    await task({ dataDir, port, start, kill, api, inspect });
+  } finally {
     try {
-      let child = start(true);
+      for (const child of children.keys()) await kill(child);
+    } finally {
+      // Only this exclusively created disposable store may be removed. Never follow an arbitrary path.
+      const target = resolve(dataDir);
+      assert.equal(dirname(target), resolve(tmpdir()));
+      assert.ok(basename(target).startsWith('gg-wp-f4-restart-'));
+      await rm(target, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+    }
+  }
+}
+
+test(
+  'a real kill of the built API continues accepted work from durable visit evidence',
+  { timeout: 180000 },
+  () =>
+    withApiFixture(async ({ dataDir, port, start, kill, api, inspect }) => {
+      let child = start('1');
       await message(child, 'ready');
       const created = await api('/loops', {
         definition: singleNodeLoop('prompt restart', {
@@ -132,31 +161,29 @@ test(
       });
       const loopId = created.loop.id;
       await api(`/loops/${loopId}/publish`, {});
-      const run = await api(`/loops/${loopId}/runs`, {});
-      const runId = run.run.id;
+      const { run } = await api(`/loops/${loopId}/runs`, {});
+      const runId = run.id;
       let before;
       await eventually(async () => {
-        const response = await api(`/runs/${runId}/events`);
-        before = Array.isArray(response) ? response : response.items;
-        return before.some((event) => event.type === 'harness.submission' && event.marker);
+        before = (await api(`/runs/${runId}/events`)).items;
+        return before.some(
+          (event) =>
+            event.type === 'harness.submission' && event.submission === 'submitted' && event.marker,
+        );
       });
       const original = before.find((event) => event.type === 'harness.turn');
-      const exit = once(child, 'exit');
-      child.kill('SIGKILL');
-      await exit;
-      child = start(false);
+      await kill(child);
+      child = start('0');
       await message(child, 'ready');
       await eventually(async () => (await api(`/runs/${runId}`)).status === 'succeeded');
-      const received = message(child, 'calls');
-      child.send({ type: 'inspect' });
-      const calls = await received;
+      const calls = await inspect(child);
       assert.equal(calls.started.length, 0);
       assert.equal(calls.resumed.length, 1);
       assert.equal(calls.resumed[0].sessionId, 'fake-session-1');
       assert.match(calls.resumed[0].request.turn.prompt, /previous turn was interrupted/);
-      const response = await api(`/runs/${runId}/events`);
-      const events = Array.isArray(response) ? response : response.items;
-      const turns = events.filter((event) => event.type === 'harness.turn');
+      const turns = (await api(`/runs/${runId}/events`)).items.filter(
+        (event) => event.type === 'harness.turn',
+      );
       assert.equal(turns.length, 2);
       assert.equal(turns[1].visitId, original.visitId);
       assert.equal(turns[1].promptKind, 'continuation');
@@ -166,18 +193,75 @@ test(
           port,
           runId,
           visitId: original.visitId,
-          turns: turns.length,
           recovered: 'same session, continuation only',
         }),
       );
-    } finally {
-      for (const child of children)
-        if (child.exitCode === null && child.signalCode === null) {
-          const exit = once(child, 'exit');
-          child.kill('SIGKILL');
-          await exit;
-        }
-      // Preserve disposable evidence for orchestrator cleanup; never remove directories here.
-    }
-  },
+    }),
 );
+
+for (const policy of ['resume-previous', 'resume-named']) {
+  test(
+    `a real restart blocks unaccepted authored work with only an inherited ${policy} handle`,
+    { timeout: 180000 },
+    () =>
+      withApiFixture(async ({ dataDir, port, start, kill, api, inspect }) => {
+        let child = start('unaccepted');
+        await message(child, 'ready');
+        const definition = singleNodeLoop('unaccepted restart-' + policy, {
+          id: 'a',
+          kind: 'inference',
+          label: 'A',
+          config: {
+            prompt: { template: 'Task A' },
+            session: { policy: 'resume-named', key: 'shared' },
+          },
+        });
+        definition.nodes.splice(2, 0, {
+          id: 'b',
+          kind: 'inference',
+          label: 'B',
+          config: {
+            prompt: { template: 'Task B' },
+            session: policy === 'resume-named' ? { policy, key: 'shared' } : { policy },
+          },
+        });
+        definition.edges[1].to.node = 'b';
+        definition.edges.push({
+          id: 'b-out',
+          from: { node: 'b', port: 'out' },
+          to: { node: 'done' },
+        });
+        const created = await api('/loops', { definition });
+        const loopId = created.loop.id;
+        await api(`/loops/${loopId}/publish`, {});
+        const { run } = await api(`/loops/${loopId}/runs`, {});
+        const runId = run.id;
+        await eventually(async () =>
+          (await api(`/runs/${runId}/events`)).items.some(
+            (event) => event.type === 'harness.turn' && event.nodeId === 'b',
+          ),
+        );
+        await kill(child);
+        child = start('0');
+        await message(child, 'ready');
+        await eventually(async () => (await api(`/runs/${runId}`)).status === 'failed');
+        const failed = await api(`/runs/${runId}`);
+        assert.equal(failed.failure.code, 'HARNESS_DELIVERY_UNCERTAIN');
+        assert.equal(failed.failure.resumable, false);
+        await api(`/runs/${runId}/resume`, {}, 409);
+        const calls = await inspect(child);
+        assert.equal(calls.started.length + calls.resumed.length, 0);
+        const thread = await api(`/runs/${runId}/thread`);
+        assert.equal(thread.outputs.b, undefined);
+        log(
+          JSON.stringify({
+            dataDir,
+            port,
+            runId,
+            policy,
+            recovered: 'blocked inherited conversation; no provider call',
+          }),
+        );
+      }),
+  );
+}

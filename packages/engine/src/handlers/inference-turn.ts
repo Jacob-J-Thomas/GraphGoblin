@@ -1,4 +1,4 @@
-import type { PromptProvenance, RunEvent } from '@graphgoblin/contracts';
+import type { PromptProvenance, RunEvent, TurnSubmission } from '@graphgoblin/contracts';
 import type { NodeContext } from '../handler.js';
 import type { HarnessEvent } from '../ports.js';
 import { RunFailureError } from '../errors.js';
@@ -42,7 +42,8 @@ export function visitTurn(
     }
     if (pending && event.type === 'harness.session') pending.sessionId = event.sessionId;
     if (pending && event.type === 'harness.submission' && event.turnId === pending.turn.turnId) {
-      pending.submission = event.submission;
+      pending.submission =
+        event.submission === 'submitted' ? 'delivery-uncertain' : event.submission;
       pending.accepted ||= event.marker !== undefined;
     }
   }
@@ -62,21 +63,34 @@ export function provenance(pending: PendingTurn): PromptProvenance {
 export async function submission(
   ctx: NodeContext<'inference'>,
   pending: PendingTurn,
-  state: PromptProvenance['submission'],
+  state: TurnSubmission,
   marker?: Extract<HarnessEvent, { type: 'submitted' }>['marker'],
 ): Promise<void> {
   // Once accepted, a later refusal cannot make resending this turn safe.
   pending.submission =
-    pending.accepted && state === 'definitely-not-submitted' ? 'delivery-uncertain' : state;
-  pending.accepted ||= marker !== undefined;
+    state === 'submitted' || (pending.accepted && state === 'definitely-not-submitted')
+      ? 'delivery-uncertain'
+      : state;
   await ctx.services.record({
     type: 'harness.submission',
     nodeId: ctx.node.id,
     visitId: pending.turn.visitId,
     turnId: pending.turn.turnId,
-    submission: pending.submission,
+    submission: state === 'submitted' ? 'submitted' : pending.submission,
     ...(marker ? { marker } : {}),
   });
+  // Recovery eligibility must use durable acceptance, including if this append fails.
+  pending.accepted ||= marker !== undefined;
+}
+
+/** An inherited handle alone cannot establish this authored task's conversation (D-022). */
+export function canContinueTurn(pending: PendingTurn): boolean {
+  return (
+    !!pending.sessionId &&
+    (pending.accepted ||
+      pending.turn.promptKind !== 'authored' ||
+      pending.sessionId !== pending.turn.resumeSessionId)
+  );
 }
 
 export function recoveryFailure(pending: PendingTurn, nodeId: string): RunFailureError {
@@ -85,7 +99,7 @@ export function recoveryFailure(pending: PendingTurn, nodeId: string): RunFailur
     missing ? 'HARNESS_SESSION_MISSING' : 'HARNESS_DELIVERY_UNCERTAIN',
     missing
       ? 'The recorded provider session is missing or refused. An explicit fresh-session choice is required.'
-      : 'Prompt delivery is uncertain and no provider session was recorded. An explicit owner recovery choice is required.',
+      : 'Prompt delivery is uncertain and no usable session was established for this task. An inherited conversation without durable acceptance cannot be continued. Use Replay from the node for a deliberate new attempt.',
     { nodeId, resumable: false, inference: provenance(pending) },
   );
 }

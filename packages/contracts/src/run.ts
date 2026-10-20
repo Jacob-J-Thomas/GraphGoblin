@@ -82,6 +82,9 @@ export const PromptSubmissionSchema = z.enum([
   'session-missing',
 ]);
 export type PromptSubmission = z.infer<typeof PromptSubmissionSchema>;
+/** Current turn evidence, including positively observed submission before an outcome is known. */
+export const TurnSubmissionSchema = z.enum([...PromptSubmissionSchema.options, 'submitted']);
+export type TurnSubmission = z.infer<typeof TurnSubmissionSchema>;
 export const PromptProvenanceSchema = z.strictObject({
   visitId: z.string().min(1).max(64),
   turnId: UlidSchema,

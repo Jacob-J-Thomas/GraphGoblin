@@ -26,6 +26,7 @@ describe('inference recovery contract over the API', () => {
                   ? 'HARNESS_SESSION_MISSING'
                   : 'HARNESS_TURN_FAILED',
               message: 'fixture',
+              retriable: true,
             },
           },
         ]);

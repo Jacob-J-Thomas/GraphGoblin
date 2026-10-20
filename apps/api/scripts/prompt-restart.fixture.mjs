@@ -8,7 +8,12 @@ import { FakeHarness } from '@graphgoblin/engine/testing';
 const harness = new FakeHarness(
   process.env.WP_F4_HOLD === '1'
     ? [{ finalText: 'held', delayMs: 600000 }]
-    : [{ finalText: 'recovered' }],
+    : process.env.WP_F4_HOLD === 'unaccepted'
+      ? [
+          { finalText: 'A completed' },
+          { items: [], accepted: false, announceSession: false, delayMs: 600000 },
+        ]
+      : [{ finalText: 'recovered' }],
 );
 const container = await createContainer(loadConfig(process.env), {
   harnesses: { codex: harness },
