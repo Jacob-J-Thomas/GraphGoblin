@@ -18,6 +18,38 @@ const run = (key: string): RunRecord => ({
 });
 
 describe('bounded poll item admission', () => {
+  it('looks up depth-refused keys without admitting them or counting them toward the cap', async () => {
+    let deep: JsonValue = 1;
+    for (let i = 0; i < 1100; i += 1) deep = [deep];
+    const findSeen = vi.fn(() => Promise.resolve(new Set<string>()));
+    const start = vi.fn((item: { dedupeKey: string }) => Promise.resolve(run(item.dedupeKey)));
+    const keyed = PollItemsSchema.parse({
+      select: 'probe',
+      dedupeKey: 'item.key',
+      maxRunsPerPoll: 1,
+    });
+    const only = await admitPollItems(keyed, view([{ key: 'deep', deep }]), { findSeen, start });
+    expect(only).toEqual({
+      runs: [],
+      rejections: [{ code: 'POLL_ITEM_REJECTED', reason: 'NESTING_DEPTH_EXCEEDED', itemIndex: 0 }],
+    });
+    expect(findSeen).toHaveBeenCalledWith(['deep']);
+    expect(start).not.toHaveBeenCalled();
+    const mixed = await admitPollItems(
+      keyed,
+      view([{ key: 'deep', deep }, { key: 'ok' }, { key: 'tail' }]),
+      { findSeen, start },
+    );
+    expect(findSeen).toHaveBeenCalledWith(['deep', 'ok', 'tail']);
+    expect(mixed.runs.map((r) => r.id)).toEqual(['ok']);
+    expect(mixed.rejections).toEqual(only.rejections);
+    const consumed = await admitPollItems(keyed, view([{ key: 'deep', deep }]), {
+      findSeen: () => Promise.resolve(new Set(['deep'])),
+      start,
+    });
+    expect(consumed).toEqual({ runs: [], rejections: [] });
+    expect(start).toHaveBeenCalledOnce();
+  });
   it('validates every key before the single lookup and admits unseen candidates sequentially up to the default cap', async () => {
     const calls: string[] = [];
     const findSeen = vi.fn((keys: readonly string[]) => {
@@ -40,7 +72,10 @@ describe('bounded poll item admission', () => {
   it('does no I/O for an empty set or any invalid key beyond the dispatch cap', async () => {
     const findSeen = vi.fn(() => Promise.resolve(new Set<string>()));
     const start = vi.fn(() => Promise.resolve(run('never')));
-    expect(await admitPollItems(config, view([]), { findSeen, start })).toEqual({ runs: [] });
+    expect(await admitPollItems(config, view([]), { findSeen, start })).toEqual({
+      runs: [],
+      rejections: [],
+    });
     await expect(
       admitPollItems(
         { ...config, dedupeKey: 'index = 6 ? "" : $string(item)' },
@@ -104,7 +139,7 @@ describe('bounded poll item admission', () => {
         findSeen: () => Promise.resolve(new Set(['1'])),
         start,
       }),
-    ).toEqual({ runs: [] });
+    ).toEqual({ runs: [], rejections: [] });
     expect(start).not.toHaveBeenCalled();
   });
 });

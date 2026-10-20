@@ -162,6 +162,9 @@ export class PollTriggers {
               dedupeKey: candidate.dedupeKey,
             }),
         });
+        // At most 200 fixed-shape diagnostics: never include candidate values or exceptions.
+        for (const rejection of result.rejections)
+          this.deps.logger.warn({ ...context, ...rejection }, 'poll item rejected');
         if (result.failedItemIndex !== undefined)
           this.deps.logger.warn(
             { ...context, code: 'POLL_ADMISSION_FAILED', itemIndex: result.failedItemIndex },
