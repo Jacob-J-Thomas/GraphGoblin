@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { fakeUlid, FIXTURE_TS } from '@graphgoblin/contracts/testing';
+import { fakeUlid, FIXTURE_IDS, FIXTURE_TS, samplePin } from '@graphgoblin/contracts/testing';
 import { FakeClock } from '@graphgoblin/engine/testing';
 import { openMemoryDatabase, type DatabaseHandle } from './db.js';
 import { SqliteEventStore } from './events.js';
@@ -35,7 +35,9 @@ describe('strict stored event reads', () => {
     'rejects a whole page for invalid $type / $payload without revealing data',
     async ({ type, payload, nodeId }) => {
       const store = new SqliteEventStore(handle.db, new FakeClock());
-      await store.append(runId, [{ type: 'run.queued' }]);
+      await store.append(runId, [
+        { type: 'run.queued', versionId: FIXTURE_IDS.version, pinned: samplePin() },
+      ]);
       await handle.client.execute({
         sql: 'INSERT INTO run_events (run_id, seq, ts, type, node_id, payload) VALUES (?, ?, ?, ?, ?, ?)',
         args: [

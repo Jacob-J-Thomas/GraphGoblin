@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FIXTURE_IDS, FIXTURE_TS } from '@graphgoblin/contracts/testing';
+import { FIXTURE_IDS, FIXTURE_TS, samplePin } from '@graphgoblin/contracts/testing';
 import { createGraphGoblinClient, waitForRun, type FetchLike } from './index.js';
 
 function snapshot(status: string) {
@@ -8,6 +8,7 @@ function snapshot(status: string) {
     ownerId: 'local',
     loopId: FIXTURE_IDS.loop,
     versionId: FIXTURE_IDS.version,
+    pinned: samplePin(),
     invocationId: FIXTURE_IDS.invocation,
     status,
     iteration: 1,

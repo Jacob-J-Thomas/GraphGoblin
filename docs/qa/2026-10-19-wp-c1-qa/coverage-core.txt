@@ -1,0 +1,255 @@
+packages/contracts test:coverage$ vitest run --coverage
+packages/contracts test:coverage: 
+packages/contracts test:coverage:  RUN  v5.0.3 <worktree>/packages/contracts
+packages/contracts test:coverage:       Coverage enabled with v8
+packages/contracts test:coverage: 
+packages/contracts test:coverage: 
+packages/contracts test:coverage:  Test Files  18 passed (18)
+packages/contracts test:coverage:       Tests  257 passed (257)
+packages/contracts test:coverage:    Start at  17:37:31
+packages/contracts test:coverage:    Duration  8.23s (transform 49%, import 46%, worker 3%, tests 2%)
+packages/contracts test:coverage: 
+packages/contracts test:coverage:   Transform  transforming modules took 22.75s · 49% of tracked time, re-done on every run
+packages/contracts test:coverage:              persist transforms across runs with fsModuleCache: true
+packages/contracts test:coverage:              learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+packages/contracts test:coverage: 
+packages/contracts test:coverage:  % Coverage report from v8
+packages/contracts test:coverage: 
+packages/contracts test:coverage: =============================== Coverage summary ===============================
+packages/contracts test:coverage: Statements   : 99.48% ( 388/390 )
+packages/contracts test:coverage: Branches     : 94.92% ( 187/197 )
+packages/contracts test:coverage: Functions    : 100% ( 58/58 )
+packages/contracts test:coverage: Lines        : 99.73% ( 374/375 )
+packages/contracts test:coverage: ================================================================================
+packages/contracts test:coverage: Done
+packages/engine test:coverage$ vitest run --coverage
+packages/engine test:coverage: 
+packages/engine test:coverage:  RUN  v5.0.3 <worktree>/packages/engine
+packages/engine test:coverage:       Coverage enabled with v8
+packages/engine test:coverage: 
+packages/engine test:coverage: 
+packages/engine test:coverage:  Test Files  22 passed (22)
+packages/engine test:coverage:       Tests  478 passed (478)
+packages/engine test:coverage:    Start at  17:37:42
+packages/engine test:coverage:    Duration  26.19s (import 41%, tests 30%, transform 28%, worker 1%)
+packages/engine test:coverage: 
+packages/engine test:coverage:   Transform  transforming modules took 52.80s · 28% of tracked time, re-done on every run
+packages/engine test:coverage:              persist transforms across runs with fsModuleCache: true
+packages/engine test:coverage:              learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+packages/engine test:coverage: 
+packages/engine test:coverage:  % Coverage report from v8
+packages/engine test:coverage: 
+packages/engine test:coverage: =============================== Coverage summary ===============================
+packages/engine test:coverage: Statements   : 97.06% ( 2281/2350 )
+packages/engine test:coverage: Branches     : 92.96% ( 1651/1776 )
+packages/engine test:coverage: Functions    : 97.73% ( 432/442 )
+packages/engine test:coverage: Lines        : 98.12% ( 2091/2131 )
+packages/engine test:coverage: ================================================================================
+packages/engine test:coverage: Done
+packages/infrastructure test:coverage$ vitest run --coverage
+packages/infrastructure test:coverage: 
+packages/infrastructure test:coverage:  RUN  v5.0.3 <worktree>/packages/infrastructure
+packages/infrastructure test:coverage:       Coverage enabled with v8
+packages/infrastructure test:coverage: 
+packages/infrastructure test:coverage:  ❯ src/adversarial.test.ts (20 tests | 1 failed) 38338ms
+packages/infrastructure test:coverage:    ❯ adversarial infrastructure invariants (forks pool) (11)
+packages/infrastructure test:coverage:      × 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild 30522ms
+packages/infrastructure test:coverage:  ❯ src/claude/process.test.ts (5 tests | 3 failed) 34630ms
+packages/infrastructure test:coverage:    ❯ owned native Claude process transport (5)
+packages/infrastructure test:coverage:      × kills on deadline and output overflow 17212ms
+packages/infrastructure test:coverage:      × does not spawn for an already aborted signal and cancels a running process 5352ms
+packages/infrastructure test:coverage:      × kills the descendant that a long-lived child started 10725ms
+packages/infrastructure test:coverage:  ❯ src/process/scripts.test.ts (12 tests | 2 failed) 45257ms
+packages/infrastructure test:coverage:    ❯ ProcessScripts (9)
+packages/infrastructure test:coverage:      × kills the process tree on timeout 15104ms
+packages/infrastructure test:coverage:      × kills the process when the signal aborts, including when already aborted 15016ms
+packages/infrastructure test:coverage:  ❯ src/sqlite/upgrade.test.ts (26 tests | 8 failed) 275138ms
+packages/infrastructure test:coverage:    ❯ definitions-only format-4 cutover (26)
+packages/infrastructure test:coverage:      × inspects every published version and draft without writes, excludes active template work, and reports disarms/counts 20021ms
+packages/infrastructure test:coverage:      × deletes all history and configured templates, converts definitions, retains signing identities/secrets/settings, and starts through ordinary migrations 20092ms
+packages/infrastructure test:coverage:      × blocks ordinary running runs without cancelling them 20002ms
+packages/infrastructure test:coverage:      × blocks ordinary waiting runs without cancelling them 20028ms
+packages/infrastructure test:coverage:      × blocks a pending ordinary receipt and its frozen admission intent 20039ms
+packages/infrastructure test:coverage:      × requires every hash-bound review, binds repeated nodes to their stored version, and rejects stale/unused resolutions 20086ms
+packages/infrastructure test:coverage:      × refuses changed source, damaged SQL/ledger, malformed template identities and invalid definitions 20066ms
+packages/infrastructure test:coverage:      × rolls back deletions, DDL, ledger, rewrites and marker on a failure after structural SQL 20148ms
+packages/infrastructure test:coverage: 
+packages/infrastructure test:coverage: ⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+packages/infrastructure test:coverage: 
+packages/infrastructure test:coverage:  FAIL  src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild
+packages/infrastructure test:coverage: Error: Test timed out in 30000ms.
+packages/infrastructure test:coverage: If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+packages/infrastructure test:coverage:  ❯ src/adversarial.test.ts:225:3
+packages/infrastructure test:coverage:     223|     expect(() => decryptSecret(Buffer.alloc(32, 5), ciphertext as stri…
+packages/infrastructure test:coverage:     224|   });
+packages/infrastructure test:coverage:     225|   it('6/QA-LIMIT-001: ProcessScripts abort kills a real child and its …
+packages/infrastructure test:coverage:        |   ^
+packages/infrastructure test:coverage:     226|     const dir = await mkdtemp(join(tmpdir(), 'gg-process-tree-'));
+packages/infrastructure test:coverage:     227|     const pidFile = join(dir, 'grandchild.pid');
+packages/infrastructure test:coverage: 
+packages/infrastructure test:coverage: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/15]⎯
+packages/infrastructure test:coverage: 
+packages/infrastructure test:coverage:  FAIL  src/claude/process.test.ts > owned native Claude process transport > kills on deadline and output overflow
+packages/infrastructure test:coverage: Error: EBUSY: resource busy or locked, rmdir '<user-home>\AppData\Local\Temp\gg-claude-process-bAWFSY'
+packages/infrastructure test:coverage: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/15]⎯
+packages/infrastructure test:coverage: 
+packages/infrastructure test:coverage:  FAIL  src/claude/process.test.ts > owned native Claude process transport > does not spawn for an already aborted signal and cancels a running process
+packages/infrastructure test:coverage: Error: EBUSY: resource busy or locked, rmdir '<user-home>\AppData\Local\Temp\gg-claude-process-PZXR7S'
+packages/infrastructure test:coverage: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/15]⎯
+packages/infrastructure test:coverage: 
+packages/infrastructure test:coverage:  FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived child started
+packages/infrastructure test:coverage: AssertionError: expected 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…' to be 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…' // Object.is equality
+packages/infrastructure test:coverage: 
+packages/infrastructure test:coverage: Expected: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+packages/infrastructure test:coverage: Received: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+packages/infrastructure test:coverage: 
+packages/infrastructure test:coverage:  ❯ src/claude/process.test.ts:146:46
+packages/infrastructure test:coverage:     144|       const stopped = await readFile(marker, 'utf8');
+packages/infrastructure test:coverage:     145|       await new Promise((resolve) => setTimeout(resolve, 100));
+packages/infrastructure test:coverage:     146|       expect(await readFile(marker, 'utf8')).toBe(stopped);
+packages/infrastructure test:coverage:        |                                              ^
+packages/infrastructure test:coverage:     147|     } finally {
+packages/infrastructure test:coverage:     148|       controller.abort();
+packages/infrastructure test:coverage: 
+packages/infrastructure test:coverage: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/15]⎯
+packages/infrastructure test:coverage: 
+packages/infrastructure test:coverage:  FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived child started
+packages/infrastructure test:coverage: Error: EBUSY: resource busy or locked, rmdir '<user-home>\AppData\Local\Temp\gg-claude-process-xUz2qw'
+packages/infrastructure test:coverage: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/15]⎯
+packages/infrastructure test:coverage: 
+packages/infrastructure test:coverage:  FAIL  src/process/scripts.test.ts > ProcessScripts > kills the process tree on timeout
+packages/infrastructure test:coverage: Error: Test timed out in 15000ms.
+packages/infrastructure test:coverage: If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+packages/infrastructure test:coverage:  ❯ src/process/scripts.test.ts:54:3
+packages/infrastructure test:coverage:      52|   });
+packages/infrastructure test:coverage:      53|
+packages/infrastructure test:coverage:      54|   it('kills the process tree on timeout', async () => {
+packages/infrastructure test:coverage:        |   ^
+packages/infrastructure test:coverage:      55|     const scripts = new ProcessScripts();
+packages/infrastructure test:coverage:      56|     const started = Date.now();
+packages/infrastructure test:coverage: 
+packages/infrastructure test:coverage: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/15]⎯
+packages/infrastructure test:coverage: 
+packages/infrastructure test:coverage:  FAIL  src/process/scripts.test.ts > ProcessScripts > kills the process when the signal aborts, including when already aborted
+packages/infrastructure test:coverage: Error: Test timed out in 15000ms.
+packages/infrastructure test:coverage: If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+packages/infrastructure test:coverage:  ❯ src/process/scripts.test.ts:65:3
+packages/infrastructure test:coverage:      63|   }, 15_000);
+packages/infrastructure test:coverage:      64|
+packages/infrastructure test:coverage:      65|   it('kills the process when the signal aborts, including when already…
+packages/infrastructure test:coverage:        |   ^
+packages/infrastructure test:coverage:      66|     const scripts = new ProcessScripts();
+packages/infrastructure test:coverage:      67|     const controller = new AbortController();
+packages/infrastructure test:coverage: 
+packages/infrastructure test:coverage: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/15]⎯
+packages/infrastructure test:coverage: 
+packages/infrastructure test:coverage:  FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > inspects every published version and draft without writes, excludes active template work, and reports disarms/counts
+packages/infrastructure test:coverage: Error: Test timed out in 20000ms.
+packages/infrastructure test:coverage: If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+packages/infrastructure test:coverage:  ❯ src/sqlite/upgrade.test.ts:87:3
+packages/infrastructure test:coverage:      85| }
+packages/infrastructure test:coverage:      86| describe('definitions-only format-4 cutover', () => {
+packages/infrastructure test:coverage:      87|   it('inspects every published version and draft without writes, exclu…
+packages/infrastructure test:coverage:        |   ^
+packages/infrastructure test:coverage:      88|     const handle = await fixture(),
+packages/infrastructure test:coverage:      89|       before = await snapshot(handle.client);
+packages/infrastructure test:coverage: 
+packages/infrastructure test:coverage: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/15]⎯
+packages/infrastructure test:coverage: 
+packages/infrastructure test:coverage:  FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > deletes all history and configured templates, converts definitions, retains signing identities/secrets/settings, and starts through ordinary migrations
+packages/infrastructure test:coverage: Error: Test timed out in 20000ms.
+packages/infrastructure test:coverage: If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+packages/infrastructure test:coverage:  ❯ src/sqlite/upgrade.test.ts:118:3
+packages/infrastructure test:coverage:     116|     await expect(handle.migrate()).rejects.toMatchObject({ code: 'DATA…
+packages/infrastructure test:coverage:     117|   });
+packages/infrastructure test:coverage:     118|   it('deletes all history and configured templates, converts definitio…
+packages/infrastructure test:coverage:        |   ^
+packages/infrastructure test:coverage:     119|     const handle = await fixture();
+packages/infrastructure test:coverage:     120|     const retained = await Promise.all(
+packages/infrastructure test:coverage: 
+packages/infrastructure test:coverage: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/15]⎯
+packages/infrastructure test:coverage: 
+packages/infrastructure test:coverage:  FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > blocks ordinary running runs without cancelling them
+packages/infrastructure test:coverage:  FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > blocks ordinary waiting runs without cancelling them
+packages/infrastructure test:coverage: Error: Test timed out in 20000ms.
+packages/infrastructure test:coverage: If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+packages/infrastructure test:coverage:  ❯ src/sqlite/upgrade.test.ts:205:54
+packages/infrastructure test:coverage:     203|     expect(await snapshot(handle.client)).toEqual(before);
+packages/infrastructure test:coverage:     204|   });
+packages/infrastructure test:coverage:     205|   it.each(['queued', 'running', 'waiting', 'paused'])(
+packages/infrastructure test:coverage:        |                                                      ^
+packages/infrastructure test:coverage:     206|     'blocks ordinary %s runs without cancelling them',
+packages/infrastructure test:coverage:     207|     async (status) => {
+packages/infrastructure test:coverage: 
+packages/infrastructure test:coverage: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/15]⎯
+packages/infrastructure test:coverage: 
+packages/infrastructure test:coverage:  FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > blocks a pending ordinary receipt and its frozen admission intent
+packages/infrastructure test:coverage: Error: Test timed out in 20000ms.
+packages/infrastructure test:coverage: If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+packages/infrastructure test:coverage:  ❯ src/sqlite/upgrade.test.ts:220:3
+packages/infrastructure test:coverage:     218|     },
+packages/infrastructure test:coverage:     219|   );
+packages/infrastructure test:coverage:     220|   it('blocks a pending ordinary receipt and its frozen admission inten…
+packages/infrastructure test:coverage:        |   ^
+packages/infrastructure test:coverage:     221|     const handle = await fixture();
+packages/infrastructure test:coverage:     222|     await handle.client.execute(
+packages/infrastructure test:coverage: 
+packages/infrastructure test:coverage: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/15]⎯
+packages/infrastructure test:coverage: 
+packages/infrastructure test:coverage:  FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > requires every hash-bound review, binds repeated nodes to their stored version, and rejects stale/unused resolutions
+packages/infrastructure test:coverage: Error: Test timed out in 20000ms.
+packages/infrastructure test:coverage: If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+packages/infrastructure test:coverage:  ❯ src/sqlite/upgrade.test.ts:230:3
+packages/infrastructure test:coverage:     228|     await refuses(handle, await request(handle), /admission intents/);
+packages/infrastructure test:coverage:     229|   });
+packages/infrastructure test:coverage:     230|   it('requires every hash-bound review, binds repeated nodes to their …
+packages/infrastructure test:coverage:        |   ^
+packages/infrastructure test:coverage:     231|     const handle = await fixture();
+packages/infrastructure test:coverage:     232|     const definition = frozenDefinition('llm', {
+packages/infrastructure test:coverage: 
+packages/infrastructure test:coverage: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/15]⎯
+packages/infrastructure test:coverage: 
+packages/infrastructure test:coverage:  FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses changed source, damaged SQL/ledger, malformed template identities and invalid definitions
+packages/infrastructure test:coverage: Error: Test timed out in 20000ms.
+packages/infrastructure test:coverage: If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+packages/infrastructure test:coverage:  ❯ src/sqlite/upgrade.test.ts:302:3
+packages/infrastructure test:coverage:     300|     expect(await guardDatabaseUpgrade(handle.client)).toBe('current');
+packages/infrastructure test:coverage:     301|   });
+packages/infrastructure test:coverage:     302|   it('refuses changed source, damaged SQL/ledger, malformed template i…
+packages/infrastructure test:coverage:        |   ^
+packages/infrastructure test:coverage:     303|     const handle = await fixture();
+packages/infrastructure test:coverage:     304|     const selected = await request(handle);
+packages/infrastructure test:coverage: 
+packages/infrastructure test:coverage: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/15]⎯
+packages/infrastructure test:coverage: 
+packages/infrastructure test:coverage:  FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > rolls back deletions, DDL, ledger, rewrites and marker on a failure after structural SQL
+packages/infrastructure test:coverage: Error: Test timed out in 20000ms.
+packages/infrastructure test:coverage: If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+packages/infrastructure test:coverage:  ❯ src/sqlite/upgrade.test.ts:323:3
+packages/infrastructure test:coverage:     321|     }
+packages/infrastructure test:coverage:     322|   });
+packages/infrastructure test:coverage:     323|   it('rolls back deletions, DDL, ledger, rewrites and marker on a fail…
+packages/infrastructure test:coverage:        |   ^
+packages/infrastructure test:coverage:     324|     const handle = await fixture(),
+packages/infrastructure test:coverage:     325|       before = await snapshot(handle.client),
+packages/infrastructure test:coverage: 
+packages/infrastructure test:coverage: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/15]⎯
+packages/infrastructure test:coverage: 
+packages/infrastructure test:coverage: 
+packages/infrastructure test:coverage:  Test Files  4 failed | 37 passed (41)
+packages/infrastructure test:coverage:       Tests  14 failed | 514 passed (528)
+packages/infrastructure test:coverage:    Start at  17:38:14
+packages/infrastructure test:coverage:    Duration  298.64s (tests 58%, import 24%, transform 16%, worker 1%)
+packages/infrastructure test:coverage: 
+packages/infrastructure test:coverage: Failed
+pnpm.cmd : [ELIFECYCLE] Command failed with exit code 1.
+At line:2 char:73
++ ...  $env:PATH; pnpm.cmd --workspace-concurrency=2 -r --filter @graphgobl ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([ELIFECYCLE] Co...th exit code 1.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in <wrapped workspace path redacted>
+

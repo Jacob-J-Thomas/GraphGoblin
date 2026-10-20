@@ -1,5 +1,5 @@
 import type { RunRecord } from '@graphgoblin/contracts';
-import { fakeUlid } from '@graphgoblin/contracts/testing';
+import { fakeUlid, samplePin } from '@graphgoblin/contracts/testing';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
@@ -20,6 +20,7 @@ it('list_runs follows the server cursor past an empty damaged-row page to a read
     ownerId: 'local',
     loopId: fakeUlid('loop'),
     versionId: fakeUlid('version'),
+    pinned: samplePin(),
     invocationId: fakeUlid('invocation'),
     status: 'succeeded',
     iteration: 1,
