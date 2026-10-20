@@ -290,7 +290,7 @@ describe('MCP server against the in-process API', () => {
     expect(started.loopId).toBe(loopId);
     await t.idle();
     const done = body<{ finished: boolean; run: RunRecord }>(
-      await call('wait_for_run', { runId: started.runId, timeoutSeconds: 0 }),
+      await call('wait_for_run', { runId: started.runId }),
     );
     expect(done).toMatchObject({
       finished: true,

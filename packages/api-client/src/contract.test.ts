@@ -251,9 +251,10 @@ describe('against the in-process API (local trusted mode)', () => {
     expect((await waitForRun(client, first.id, { timeoutMs: 5000, pollMs: 10 })).run?.status).toBe(
       'succeeded',
     );
-    await expect(
-      runs.provideInput(client, first.id, pending.run.waiting!.waitId, { ok: false }),
-    ).rejects.toMatchObject({ status: 409, code: 'WAIT_MISMATCH' });
+    await expect(runs.provideInput(client, first.id, waitId, { ok: false })).rejects.toMatchObject({
+      status: 409,
+      code: 'WAIT_MISMATCH',
+    });
     const fork = await runs.replay(client, first.id, 'start');
     expect(fork.id).not.toBe(first.id);
     await until(async () => (await runs.get(client, fork.id)).status === 'waiting');
@@ -301,8 +302,9 @@ describe('against the in-process API (local trusted mode)', () => {
     await entered;
     controller.abort(reason);
     await expect(pending).rejects.toBe(reason);
-    expect((await runs.get(client, run.id)).status).toBe('waiting');
-    await runs.provideInput(client, run.id, true);
+    const parked = await runs.get(client, run.id);
+    expect(parked.status).toBe('waiting');
+    await runs.provideInput(client, run.id, parked.waiting!.waitId, true);
     await expect(
       waitForRun(client, run.id, { timeoutMs: 5000, pollMs: 10 }),
     ).resolves.toMatchObject({
