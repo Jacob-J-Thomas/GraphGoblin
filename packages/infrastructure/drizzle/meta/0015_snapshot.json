@@ -67,9 +67,7 @@
       "indexes": {
         "api_keys_hash_idx": {
           "name": "api_keys_hash_idx",
-          "columns": [
-            "hash"
-          ],
+          "columns": ["hash"],
           "isUnique": false
         }
       },
@@ -157,10 +155,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {
         "classifier_models_owner_id_id_pk": {
-          "columns": [
-            "owner_id",
-            "id"
-          ],
+          "columns": ["owner_id", "id"],
           "name": "classifier_models_owner_id_id_pk"
         }
       },
@@ -244,20 +239,14 @@
       "indexes": {
         "harness_sessions_scope_idx": {
           "name": "harness_sessions_scope_idx",
-          "columns": [
-            "scope_key"
-          ],
+          "columns": ["scope_key"],
           "isUnique": false
         }
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
         "harness_sessions_run_id_node_id_attempt_pk": {
-          "columns": [
-            "run_id",
-            "node_id",
-            "attempt"
-          ],
+          "columns": ["run_id", "node_id", "attempt"],
           "name": "harness_sessions_run_id_node_id_attempt_pk"
         }
       },
@@ -327,28 +316,17 @@
       "indexes": {
         "inbound_events_owner_idx": {
           "name": "inbound_events_owner_idx",
-          "columns": [
-            "owner_id",
-            "received_at"
-          ],
+          "columns": ["owner_id", "received_at"],
           "isUnique": false
         },
         "inbound_events_type_dedupe_idx": {
           "name": "inbound_events_type_dedupe_idx",
-          "columns": [
-            "owner_id",
-            "type",
-            "dedupe_key"
-          ],
+          "columns": ["owner_id", "type", "dedupe_key"],
           "isUnique": false
         },
         "inbound_events_source_dedupe_idx": {
           "name": "inbound_events_source_dedupe_idx",
-          "columns": [
-            "owner_id",
-            "source",
-            "dedupe_key"
-          ],
+          "columns": ["owner_id", "source", "dedupe_key"],
           "isUnique": false
         }
       },
@@ -413,10 +391,7 @@
       "indexes": {
         "loop_versions_loop_idx": {
           "name": "loop_versions_loop_idx",
-          "columns": [
-            "loop_id",
-            "version"
-          ],
+          "columns": ["loop_id", "version"],
           "isUnique": false
         }
       },
@@ -488,9 +463,7 @@
       "indexes": {
         "loops_owner_idx": {
           "name": "loops_owner_idx",
-          "columns": [
-            "owner_id"
-          ],
+          "columns": ["owner_id"],
           "isUnique": false
         }
       },
@@ -558,10 +531,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {
         "model_catalog_harness_model_pk": {
-          "columns": [
-            "harness",
-            "model"
-          ],
+          "columns": ["harness", "model"],
           "name": "model_catalog_harness_model_pk"
         }
       },
@@ -618,10 +588,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {
         "run_events_run_id_seq_pk": {
-          "columns": [
-            "run_id",
-            "seq"
-          ],
+          "columns": ["run_id", "seq"],
           "name": "run_events_run_id_seq_pk"
         }
       },
@@ -804,28 +771,17 @@
       "indexes": {
         "runs_owner_status_idx": {
           "name": "runs_owner_status_idx",
-          "columns": [
-            "owner_id",
-            "status"
-          ],
+          "columns": ["owner_id", "status"],
           "isUnique": false
         },
         "runs_loop_idx": {
           "name": "runs_loop_idx",
-          "columns": [
-            "loop_id",
-            "created_at"
-          ],
+          "columns": ["loop_id", "created_at"],
           "isUnique": false
         },
         "runs_loop_owner_history_idx": {
           "name": "runs_loop_owner_history_idx",
-          "columns": [
-            "loop_id",
-            "owner_id",
-            "created_at",
-            "id"
-          ],
+          "columns": ["loop_id", "owner_id", "created_at", "id"],
           "isUnique": false
         },
         "runs_trigger_dedupe_idx": {
@@ -839,16 +795,12 @@
         },
         "runs_parent_idx": {
           "name": "runs_parent_idx",
-          "columns": [
-            "parent_run_id"
-          ],
+          "columns": ["parent_run_id"],
           "isUnique": false
         },
         "runs_version_idx": {
           "name": "runs_version_idx",
-          "columns": [
-            "version_id"
-          ],
+          "columns": ["version_id"],
           "isUnique": false
         }
       },
@@ -948,18 +900,12 @@
       "indexes": {
         "schedules_due_idx": {
           "name": "schedules_due_idx",
-          "columns": [
-            "enabled",
-            "next_fire_at"
-          ],
+          "columns": ["enabled", "next_fire_at"],
           "isUnique": false
         },
         "schedules_loop_idx": {
           "name": "schedules_loop_idx",
-          "columns": [
-            "loop_id",
-            "version_id"
-          ],
+          "columns": ["loop_id", "version_id"],
           "isUnique": false
         }
       },
@@ -1011,10 +957,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {
         "secrets_owner_id_name_pk": {
-          "columns": [
-            "owner_id",
-            "name"
-          ],
+          "columns": ["owner_id", "name"],
           "name": "secrets_owner_id_name_pk"
         }
       },
@@ -1057,10 +1000,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {
         "settings_owner_id_key_pk": {
-          "columns": [
-            "owner_id",
-            "key"
-          ],
+          "columns": ["owner_id", "key"],
           "name": "settings_owner_id_key_pk"
         }
       },
@@ -1095,19 +1035,14 @@
       "indexes": {
         "timers_at_idx": {
           "name": "timers_at_idx",
-          "columns": [
-            "at"
-          ],
+          "columns": ["at"],
           "isUnique": false
         }
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
         "timers_run_id_key_pk": {
-          "columns": [
-            "run_id",
-            "key"
-          ],
+          "columns": ["run_id", "key"],
           "name": "timers_run_id_key_pk"
         }
       },
@@ -1212,17 +1147,12 @@
       "indexes": {
         "webhook_endpoints_token_idx": {
           "name": "webhook_endpoints_token_idx",
-          "columns": [
-            "token"
-          ],
+          "columns": ["token"],
           "isUnique": false
         },
         "webhook_endpoints_loop_idx": {
           "name": "webhook_endpoints_loop_idx",
-          "columns": [
-            "loop_id",
-            "version_id"
-          ],
+          "columns": ["loop_id", "version_id"],
           "isUnique": false
         }
       },
@@ -1321,27 +1251,17 @@
       "indexes": {
         "webhook_receipts_content_idx": {
           "name": "webhook_receipts_content_idx",
-          "columns": [
-            "owner_id",
-            "loop_id",
-            "trigger_node_id",
-            "content_hash"
-          ],
+          "columns": ["owner_id", "loop_id", "trigger_node_id", "content_hash"],
           "isUnique": false
         },
         "webhook_receipts_inbound_idx": {
           "name": "webhook_receipts_inbound_idx",
-          "columns": [
-            "inbound_id"
-          ],
+          "columns": ["inbound_id"],
           "isUnique": true
         },
         "webhook_receipts_due_idx": {
           "name": "webhook_receipts_due_idx",
-          "columns": [
-            "status",
-            "next_attempt_at"
-          ],
+          "columns": ["status", "next_attempt_at"],
           "isUnique": false
         }
       },
