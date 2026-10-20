@@ -193,22 +193,30 @@ describe('a stored definition with an Event destination (#242)', () => {
     async (pin) => {
       t = await createTestApp();
       const loopId = await t.publishLoop(waitingLoop);
-      if (pin === 'draft-run snapshot')
+      let draftId: string | undefined;
+      if (pin === 'draft-run snapshot') {
         await t.app.inject({
           method: 'PUT',
           url: `/loops/${loopId}/draft`,
           payload: { definition: { ...waitingLoop, name: 'Emits after input (draft)' } },
         });
+        draftId = (await t.container.repos.loops.getLoop(loopId))!.draftVersionId!;
+      }
       const started = await t.app.inject({
         method: 'POST',
         url: `/loops/${loopId}/runs`,
-        payload: pin === 'draft-run snapshot' ? { allowDraft: true } : {},
+        payload: draftId ? { versionId: draftId, allowDraft: true } : {},
       });
       await t.idle();
       const waiting = (
         await t.app.inject(`/runs/${started.json<{ run: RunRecord }>().run.id}`)
       ).json<RunRecord>();
       expect(waiting.status).toBe('waiting');
+      // The run pins exactly what this case names: a published version, or a draft-run snapshot.
+      expect(waiting.pinned.source).toBe(draftId ? 'draft' : 'published');
+      expect((await t.container.repos.loops.getVersion(waiting.versionId))?.status).toBe(
+        draftId ? 'snapshot' : 'published',
+      );
       // The run was admitted before the upgrade; its pinned definition holds the destination.
       await storeWithEventDestination(t, waiting.versionId);
 
@@ -244,4 +252,49 @@ describe('a stored definition with an Event destination (#242)', () => {
       ).toMatchObject({ status: 409, code: 'LOOP_UPGRADE_REQUIRED' });
     },
   );
+
+  it('refuses a webhook delivery deterministically and logs the diagnostic, saving nothing', async () => {
+    t = await createTestApp();
+    const hooked: LoopDefinitionInput = {
+      ...directLoop,
+      name: 'Hooked emitter',
+      nodes: [
+        { id: 'start', kind: 'trigger', label: 'Hook', config: { type: 'webhook' } },
+        ...directLoop.nodes.slice(1),
+      ],
+    };
+    const { loopId, version } = await publishStored(t, hooked);
+    const path = (await t.app.inject(`/loops/${loopId}/triggers`)).json<{
+      webhooks: { path: string }[];
+    }>().webhooks[0]!.path;
+    const delivered = await t.app.inject({
+      method: 'POST',
+      url: path,
+      payload: '{"n":1}',
+      headers: { 'content-type': 'application/json' },
+    });
+    expect(delivered.statusCode).toBe(409);
+    const body = delivered.json<Record<string, unknown>>();
+    expect(body).toMatchObject({ code: 'LOOP_UPGRADE_REQUIRED' });
+    // The public sender learns nothing about the loop.
+    expect(JSON.stringify(body)).not.toContain(loopId);
+    expect(t.logger.lines).toContainEqual(
+      expect.objectContaining({
+        level: 'error',
+        msg: 'webhook admission refused: the loop needs an upgrade',
+        obj: expect.objectContaining({
+          loopId,
+          versionId: version.id,
+          paths: [EXIT_PATH(hooked)],
+          code: 'LOOP_UPGRADE_REQUIRED',
+        }),
+      }),
+    );
+    for (const table of ['webhook_receipts', 'runs'])
+      expect(
+        (await t.container.handle.client.execute(`SELECT count(*) AS n FROM ${table}`)).rows[0]?.[
+          'n'
+        ],
+      ).toBe(0);
+  });
 });

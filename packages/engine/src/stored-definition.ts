@@ -26,10 +26,11 @@ export function definitionUpgradeRequired(
     paths,
     `Loop ${version.loopId}: ${which} has an exit that publishes an Event at ${paths.join(', ')}. ` +
       'Event destinations were retired (ADR-0044) and this definition cannot be served or run. ' +
-      'Replace each such destination with a Subloop call to the receiving loop and publish a new version; ' +
-      'versions and draft-run snapshots that still hold one stay refused, so then delete the loop ' +
-      `(DELETE /loops/${version.loopId}) once its runs are terminal, remove the destination from the ` +
-      'stored definition by hand with GraphGoblin stopped, or reset the store.',
+      'Replace each such destination with a Subloop call to the receiving loop and publish a new version. ' +
+      'A published version or draft that still holds one can be repaired by removing the destination ' +
+      'from its stored JSON by hand with GraphGoblin stopped. A draft-run snapshot cannot be edited, ' +
+      `even then: delete the loop (DELETE /loops/${version.loopId}, once its runs are terminal, removes ` +
+      'its runs and snapshots) or reset the store.',
   );
 }
 

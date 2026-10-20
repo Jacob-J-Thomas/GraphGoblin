@@ -399,9 +399,13 @@ It is refused before it is served or run, never dropped silently: `GET /loops/{i
 to such a definition fails before its next node with `failure.code` `LOOP_UPGRADE_REQUIRED`
 (`resumable: false`, the same identity in `details`), and a parent whose subloop would start or
 awaits such a loop fails with it at its subloop node. Repair: replace the destination with a
-Subloop call and publish; versions and snapshots that still hold one stay refused, so delete the
-loop once its runs are terminal (`DELETE /loops/{id}` still works), remove the destination from
-the stored JSON by hand with GraphGoblin stopped, or reset the store.
+Subloop call and publish. A published version or draft that still holds one can be repaired by
+removing the destination from its stored JSON by hand with GraphGoblin stopped; a draft-run
+snapshot cannot be edited even then (migration 0014's immutability trigger), so delete the loop
+once its runs are terminal (`DELETE /loops/{id}` still works and removes its runs and snapshots)
+or reset the store. The store-level startup check does not refuse a definition whose only
+departure from the current contract is such a destination, so the API starts and the refusal
+stays per loop.
 
 Run-list items and `GET /runs/{id}` return the canonical `RunRecord`, without
 `templateSubject` or a template-store lookup. Regenerate strict clients for these

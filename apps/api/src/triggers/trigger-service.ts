@@ -15,6 +15,7 @@ import {
   type ValidationIssue,
 } from '@graphgoblin/domain';
 import type { ClockPort, IdPort, Logger, RunManager, SecretsPort } from '@graphgoblin/engine';
+import { LoopUpgradeRequiredError } from '@graphgoblin/engine';
 import {
   CronScheduler,
   type CronFire,
@@ -479,7 +480,27 @@ export class TriggerService {
         event: record,
         ...(outcome.receipt.intent ? { runId: outcome.receipt.intent.run.id } : {}),
       };
-    } catch {
+    } catch (error) {
+      if (error instanceof LoopUpgradeRequiredError) {
+        // Deterministic: retrying cannot help until the stored definition is repaired (ADR-0044).
+        // The sender learns only that; the owner's log carries the loop, version and paths.
+        this.deps.logger.error(
+          {
+            endpointId: endpoint.id,
+            loopId: error.loopId,
+            versionId: error.versionId,
+            paths: error.paths,
+            code: error.code,
+            error: error.message,
+          },
+          'webhook admission refused: the loop needs an upgrade',
+        );
+        return fail(
+          409,
+          'LOOP_UPGRADE_REQUIRED',
+          'the target loop must be repaired before it accepts deliveries',
+        );
+      }
       return fail(
         503,
         'WEBHOOK_ADMISSION_FAILED',
