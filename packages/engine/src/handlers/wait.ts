@@ -22,7 +22,7 @@ export const waitHandler: NodeHandler<'wait'> = {
     const now = Date.parse(ctx.services.now());
 
     if (!ctx.wake) {
-      let wait: WaitSpec;
+      let wait: Omit<WaitSpec, 'waitId' | 'startedSeq'>;
       switch (config.mode) {
         case 'input':
           wait = {
@@ -34,13 +34,11 @@ export const waitHandler: NodeHandler<'wait'> = {
           break;
         case 'duration': {
           const until = new Date(now + config.seconds * 1000).toISOString();
-          await ctx.ports.timers.schedule(ctx.run.id, 'timer', new Date(until));
           wait = { nodeId: ctx.node.id, kind: 'timer', until };
           break;
         }
         case 'until': {
           const until = isoFromTemplate(ctx, await ctx.services.render(config.timestamp));
-          await ctx.ports.timers.schedule(ctx.run.id, 'timer', new Date(until));
           wait = { nodeId: ctx.node.id, kind: 'timer', until };
           break;
         }
@@ -50,7 +48,6 @@ export const waitHandler: NodeHandler<'wait'> = {
       }
       if (config.timeoutSeconds !== undefined) {
         const deadline = new Date(now + config.timeoutSeconds * 1000);
-        await ctx.ports.timers.schedule(ctx.run.id, 'timeout', deadline);
         // Both deadlines are kept in the spec, so recovery can re-arm both (docs/05).
         wait = {
           ...wait,

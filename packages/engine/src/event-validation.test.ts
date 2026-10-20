@@ -44,7 +44,13 @@ describe('generated event validation', () => {
           : type === 'run.waiting'
             ? {
                 nodeId: 'work',
-                wait: { nodeId: 'work', kind: 'input', prompt: 'x'.repeat(length) },
+                wait: {
+                  waitId: 'validation:1',
+                  startedSeq: 1,
+                  nodeId: 'work',
+                  kind: 'input',
+                  prompt: 'x'.repeat(length),
+                },
               }
             : {
                 nodeId: 'work',

@@ -30,6 +30,12 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Recovery process acceptance
+        run: pnpm test:recovery-process
+
+      - name: Wait restart acceptance
+        run: pnpm test:wait-restart
+
       - name: Offline upgrade acceptance
         run: pnpm test:upgrade
 
