@@ -2,6 +2,15 @@ import { z } from 'zod';
 import { TimestampSchema } from './common.js';
 import { WebhookReturnChannelSchema } from './thread.js';
 
+/** Reviewed bounded policy (#246); migrations freeze the values at their creation. */
+export const WEBHOOK_DELIVERY_POLICY = {
+  maxAttempts: 5,
+  timeoutMs: 10_000,
+  retryDelaysMs: [0, 2_000, 5_000, 10_000, 20_000],
+  acknowledgementMaxBytes: 65_536,
+  identityHeader: 'idempotency-key',
+} as const;
+
 export const DeliveryErrorSchema = z.strictObject({
   code: z.enum([
     'invalid_destination',
@@ -24,8 +33,8 @@ export const WebhookDeliverySchema = z.strictObject({
   id: z.string().min(1).max(128),
   channel: WebhookReturnChannelSchema,
   status: z.enum(['pending', 'delivered', 'failed']),
-  attempts: z.number().int().min(0).max(5),
-  maxAttempts: z.number().int().min(1).max(5),
+  attempts: z.number().int().min(0).max(WEBHOOK_DELIVERY_POLICY.maxAttempts),
+  maxAttempts: z.number().int().min(1).max(WEBHOOK_DELIVERY_POLICY.maxAttempts),
   inFlight: z.boolean(),
   acknowledgement: z.enum(['accepted', 'unknown', 'not_sent', 'rejected']),
   /** Sticky: an uncertain earlier attempt remains uncertain after a later acknowledgement. */

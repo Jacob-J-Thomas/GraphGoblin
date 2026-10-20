@@ -306,6 +306,7 @@ export class RunManager {
   /** Arm timers and recover runs left active by a previous process. */
   async start(): Promise<void> {
     this.stopped = false;
+    this.returnDeliveries.resume();
     // Transient wake failures retain the row; unreadable history is diagnosed and acknowledged.
     this.unsubscribeTimers ??= this.ports.timers.onFire((runId, key) =>
       this.onTimer(runId, key).catch((error: unknown) => {
@@ -334,6 +335,7 @@ export class RunManager {
   /** Stop picking up new work. Active nodes finish; runs stay recoverable. */
   stop(): void {
     this.stopped = true;
+    this.returnDeliveries.stop();
     if (this.webhookSweep) clearInterval(this.webhookSweep);
     this.webhookSweep = undefined;
     this.unsubscribeTimers?.();

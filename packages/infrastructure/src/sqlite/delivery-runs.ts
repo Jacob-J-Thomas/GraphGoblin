@@ -1,7 +1,7 @@
 import type { RunRecord, RunStatus } from '@graphgoblin/contracts';
 import { RunEventSchema } from '@graphgoblin/contracts';
 import { UnreadableRunHistoryError } from '@graphgoblin/engine';
-import { asc, eq, like, and, sql } from 'drizzle-orm';
+import { asc, inArray, and, sql } from 'drizzle-orm';
 import type { Database } from './db.js';
 import { SqliteRunRepository, type RunListFilter, type RunPageFilter } from './runs.js';
 import { runEvents } from './schema.js';
@@ -12,18 +12,54 @@ export class SqliteDeliveryRunRepository extends SqliteRunRepository {
     super(deliveryDb);
   }
 
-  private async project(run: RunRecord): Promise<RunRecord> {
+  private async project(records: RunRecord[], skipUnreadable = false): Promise<RunRecord[]> {
+    if (!records.length) return [];
     const rows = await this.deliveryDb
       .select({
         payload: sql<string>`${runEvents.payload}`,
-        runId: runEvents.runId,
-        seq: runEvents.seq,
-        ts: runEvents.ts,
-        type: runEvents.type,
+        runId: sql<string>`${runEvents.runId}`,
+        seq: sql<number>`${runEvents.seq}`,
+        ts: sql<string>`${runEvents.ts}`,
+        type: sql<string>`${runEvents.type}`,
       })
-      .from(runEvents)
-      .where(and(eq(runEvents.runId, run.id), like(runEvents.type, 'delivery.%')))
+      // Otherwise ORDER BY seq can make SQLite prefer a scan of the run's primary key.
+      .from(sql`${runEvents} INDEXED BY run_events_delivery_idx`)
+      .where(
+        and(
+          inArray(
+            runEvents.runId,
+            records.map((run) => run.id),
+          ),
+          inArray(runEvents.type, [
+            'delivery.queued',
+            'delivery.attempted',
+            'delivery.attempt_finished',
+            'delivery.finished',
+          ]),
+        ),
+      )
       .orderBy(asc(runEvents.seq));
+    const grouped = new Map<string, typeof rows>();
+    for (const row of rows) {
+      const group = grouped.get(row.runId) ?? [];
+      group.push(row);
+      grouped.set(row.runId, group);
+    }
+    const projected: RunRecord[] = [];
+    for (const run of records) {
+      try {
+        projected.push(this.decode(run, grouped.get(run.id) ?? []));
+      } catch (error) {
+        if (!skipUnreadable || !(error instanceof UnreadableRunHistoryError)) throw error;
+      }
+    }
+    return projected;
+  }
+
+  private decode(
+    run: RunRecord,
+    rows: { payload: string; runId: string; seq: number; ts: string; type: string }[],
+  ): RunRecord {
     if (!rows.length) return run;
     const deliveries = new Map<string, NonNullable<RunRecord['deliveries']>[number]>();
     for (const row of rows) {
@@ -54,30 +90,19 @@ export class SqliteDeliveryRunRepository extends SqliteRunRepository {
   }
   override async get(id: string): Promise<RunRecord | undefined> {
     const run = await super.get(id);
-    return run ? this.project(run) : undefined;
+    return run ? (await this.project([run]))[0] : undefined;
   }
   override async list(filter: RunListFilter = {}): Promise<RunRecord[]> {
-    return this.projectReadable(await super.list(filter));
+    return this.project(await super.list(filter), true);
   }
   override async page(filter: RunPageFilter) {
     const page = await super.page(filter);
-    return { ...page, items: await this.projectReadable(page.items) };
-  }
-  private async projectReadable(records: RunRecord[]): Promise<RunRecord[]> {
-    const readable: RunRecord[] = [];
-    for (const run of records) {
-      try {
-        readable.push(await this.project(run));
-      } catch (error) {
-        if (!(error instanceof UnreadableRunHistoryError)) throw error;
-      }
-    }
-    return readable;
+    return { ...page, items: await this.project(page.items, true) };
   }
   override async listChildren(id: string): Promise<RunRecord[]> {
-    return Promise.all((await super.listChildren(id)).map((run) => this.project(run)));
+    return this.project(await super.listChildren(id));
   }
   override async listByStatus(statuses: readonly RunStatus[]): Promise<RunRecord[]> {
-    return Promise.all((await super.listByStatus(statuses)).map((run) => this.project(run)));
+    return this.project(await super.listByStatus(statuses));
   }
 }

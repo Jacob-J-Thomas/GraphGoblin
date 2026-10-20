@@ -15,10 +15,14 @@ UPDATE run_events SET
         'message', json_extract(payload, '$.error'), 'retryable', json('false'), 'acknowledgement', 'unknown')) END)),
   type = 'delivery.finished'
 WHERE type IN ('return.delivered', 'return.failed')
-  AND CASE WHEN json_valid(payload) THEN json_extract(payload, '$.channel.kind') = 'webhook' ELSE 0 END;
+  AND CASE WHEN json_valid(payload) THEN
+    json_extract(payload, '$.channel.kind') = 'webhook'
+    AND json_type(payload, '$.channel.url') = 'text'
+    AND (type = 'return.delivered' OR json_type(payload, '$.error') = 'text') ELSE 0 END;
 --> statement-breakpoint
 -- Allocate identities once for old unfinalized terminal runs that have not recorded a return.
 -- The old first attempt may have happened: conservatively consume it as unknown, never not_sent.
+-- Policy value generated from WEBHOOK_DELIVERY_POLICY by pnpm generate:webhook-policy.
 WITH finished AS (
   SELECT r.id, r.initial_thread, v.definition, COALESCE(r.finished_at, r.created_at) AS ts,
     (SELECT node_id FROM run_events WHERE run_id = r.id AND type = 'exit.evaluated' ORDER BY seq DESC LIMIT 1) AS exit_id
@@ -59,3 +63,5 @@ FROM pending;
 --> statement-breakpoint
 UPDATE runs SET last_event_seq = (SELECT MAX(seq) FROM run_events WHERE run_id = runs.id)
 WHERE id IN (SELECT run_id FROM run_events WHERE type LIKE 'delivery.%');
+--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `run_events_delivery_idx` ON `run_events` (`run_id`, `type`, `seq`);

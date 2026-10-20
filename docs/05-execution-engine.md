@@ -204,7 +204,14 @@ failed. Five attempts have 10-second deadlines and 2/5/10/20-second retry delays
 turns an in-flight attempt into unknown and preserves its identity, deadline and remaining
 budget, including a final failure if the interrupted attempt was the last. Recovery does not
 wait for the network before serving the API. Delivery work does not occupy execution slots;
-`waitForIdle` drains it. The run remains succeeded when its execution succeeded. Finalization
+`waitForIdle` drains it while running. After `stop()` (D-021), backoff waits wake immediately
+and no new request starts. In-flight requests finish or time out within their existing
+10-second deadline and journal their outcome; pending deliveries retain identity, attempts
+and retry deadline for recovery on the next start. Forced termination retains the same
+durable budget, with an unfinished acknowledgement recorded as unknown during recovery.
+Deleting a loop also stops its delivery workers: they re-read the run before each attempt
+and journal append; the append checks existence transactionally, preventing orphan events.
+The run remains succeeded when its execution succeeded. Finalization
 is marked only after every delivery finishes. See ADR-0043 for eligible failures and ambiguity.
 
 Recovery enumerates raw run identities and decodes each candidate separately. Candidates

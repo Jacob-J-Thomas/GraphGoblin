@@ -145,13 +145,17 @@ export class CapturingLogger implements Logger {
 export class InMemoryEventStore implements EventStorePort {
   private readonly logs = new Map<string, RunEvent[]>();
   private readonly listeners = new Map<string, Set<(event: RunEvent) => void>>();
-  constructor(private readonly clock: ClockPort) {}
+  constructor(
+    private readonly clock: ClockPort,
+    private readonly runRepository?: RunRepository,
+  ) {}
 
   async append(
     runId: string,
     drafts: readonly EventDraft[],
-    options: { expectedLastSeq?: number } = {},
+    options: { expectedLastSeq?: number; requireRun?: boolean } = {},
   ): Promise<RunEvent[]> {
+    if (options.requireRun && !(await this.runRepository?.get(runId))) return [];
     const log = this.logs.get(runId) ?? [];
     if (options.expectedLastSeq !== undefined && options.expectedLastSeq !== log.length) {
       return Promise.reject(new AppendConflictError(runId, options.expectedLastSeq, log.length));
@@ -1140,8 +1144,8 @@ export interface FakePorts extends EnginePorts {
 /** Build a complete set of fake ports wired together. */
 export function createFakePorts(options: { secrets?: Record<string, string> } = {}): FakePorts {
   const clock = new FakeClock();
-  const events = new InMemoryEventStore(clock);
   const runs = new InMemoryRunRepository();
+  const events = new InMemoryEventStore(clock, runs);
   const loops = new InMemoryLoopRepository();
   const admission = new InMemoryTriggerAdmission(runs, events, loops);
   const harness = new FakeHarness();

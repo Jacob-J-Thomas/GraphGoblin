@@ -1,10 +1,10 @@
 import type { ContextThread, JsonValue, RunEvent, WebhookDelivery } from '@graphgoblin/contracts';
+import { WEBHOOK_DELIVERY_POLICY } from '@graphgoblin/contracts';
 import type { EnginePorts, EventDraft, IdPort } from './ports.js';
 import type { NodeResult } from './handler.js';
 
-// Engineering proposal (#246): at most 5 x 10 s requests + 37 s of backoff.
-export const WEBHOOK_RETRY_DELAYS_MS = [0, 2_000, 5_000, 10_000, 20_000] as const;
-export const WEBHOOK_TIMEOUT_MS = 10_000;
+export const WEBHOOK_RETRY_DELAYS_MS = WEBHOOK_DELIVERY_POLICY.retryDelaysMs;
+export const WEBHOOK_TIMEOUT_MS = WEBHOOK_DELIVERY_POLICY.timeoutMs;
 
 /** Queue atomically with run.finished, so even the first terminal snapshot shows pending work. */
 export function queuedWebhooks(
@@ -25,7 +25,7 @@ export function queuedWebhooks(
       channel,
       status: 'pending',
       attempts: 0,
-      maxAttempts: 5,
+      maxAttempts: WEBHOOK_DELIVERY_POLICY.maxAttempts,
       inFlight: false,
       acknowledgement: 'not_sent',
       effectMayHaveHappened: false,
@@ -43,8 +43,32 @@ export function webhookStates(events: readonly RunEvent[]): WebhookDelivery[] {
 /** Runs independently of execution slots; only durable state authorizes a network attempt. */
 export class WebhookReturns {
   private readonly tasks = new Map<string, Promise<void>>();
+  private stopped = false;
+  private readonly wakeups = new Set<() => void>();
 
   constructor(private readonly ports: EnginePorts) {}
+
+  resume(): void {
+    this.stopped = false;
+  }
+
+  /** D-021: wake backoffs, but let an existing request record its bounded outcome. */
+  stop(): void {
+    this.stopped = true;
+    for (const wake of this.wakeups) wake();
+  }
+
+  private async pause(ms: number): Promise<void> {
+    await new Promise<void>((resolve) => {
+      const wake = () => {
+        clearTimeout(timer);
+        this.wakeups.delete(wake);
+        resolve();
+      };
+      const timer = setTimeout(wake, ms);
+      this.wakeups.add(wake);
+    });
+  }
 
   start(
     runId: string,
@@ -52,14 +76,14 @@ export class WebhookReturns {
     payload: JsonValue,
     finished: () => Promise<void>,
   ): void {
-    if (this.tasks.has(initial.id) || initial.status !== 'pending') return;
+    if (this.stopped || this.tasks.has(initial.id) || initial.status !== 'pending') return;
     const task = this.deliver(runId, initial, payload)
-      .then(finished)
+      .then((complete) => (complete ? finished() : undefined))
       .catch((error: unknown) => {
         // Persistence failures must leave the run unfinalized for recovery, never claim delivery.
         this.ports.logger.error(
           { runId, deliveryId: initial.id, error: String(error) },
-          'webhook delivery journal remains pending',
+          'webhook delivery journal persistence failed; recovery required',
         );
       })
       .finally(() => {
@@ -76,12 +100,25 @@ export class WebhookReturns {
     runId: string,
     initial: WebhookDelivery,
     payload: JsonValue,
-  ): Promise<void> {
+  ): Promise<boolean> {
     let state = initial;
+    const gone = () => {
+      this.ports.logger.info(
+        { runId, deliveryId: initial.id },
+        'webhook delivery stopped: run deleted',
+      );
+      return false;
+    };
+    const exists = async () => (await this.ports.runs.get(runId)) !== undefined;
     const record = async (
       type: 'delivery.attempted' | 'delivery.attempt_finished' | 'delivery.finished',
     ) => {
-      await this.ports.events.append(runId, [{ type, delivery: state }]);
+      if (!(await exists())) return gone();
+      // Close the read/delete/append race inside the journal's transaction too.
+      const appended = await this.ports.events.append(runId, [{ type, delivery: state }], {
+        requireRun: true,
+      });
+      return appended.length > 0 || gone();
     };
     if (state.inFlight) {
       // This attempt consumed its budget before the process died. Never resend attempt #1.
@@ -98,19 +135,21 @@ export class WebhookReturns {
           acknowledgement: 'unknown',
         },
       };
-      await record('delivery.attempt_finished');
+      if (!(await record('delivery.attempt_finished'))) return false;
     }
     while (state.status === 'pending') {
+      if (this.stopped) return false;
       if (state.attempts >= state.maxAttempts) {
         state = { ...state, status: 'failed', inFlight: false };
         delete state.nextAttemptAt;
-        await record('delivery.finished');
-        return;
+        return record('delivery.finished');
       }
       const delay = state.nextAttemptAt
         ? Math.max(0, Date.parse(state.nextAttemptAt) - this.ports.clock.now().getTime())
         : 0;
-      if (delay) await new Promise<void>((resolve) => setTimeout(resolve, delay));
+      if (delay) await this.pause(delay);
+      if (this.stopped) return false;
+      if (!(await exists())) return gone();
       const attempts = state.attempts + 1;
       const previousEffect = state.effectMayHaveHappened;
       state = {
@@ -126,11 +165,22 @@ export class WebhookReturns {
             (WEBHOOK_RETRY_DELAYS_MS[attempts] ?? 0),
         ).toISOString(),
       };
-      await record('delivery.attempted');
+      if (!(await record('delivery.attempted'))) return false;
+      if (this.stopped) return false;
+      let deleted = false;
+      let stoppedBeforeSend = false;
       const result = await (async () => {
         const secret = state.channel.secretRef
           ? await this.ports.secrets.resolve(state.channel.secretRef)
           : undefined;
+        if (!(await exists())) {
+          deleted = true;
+          return { ok: true as const };
+        }
+        if (this.stopped) {
+          stoppedBeforeSend = true;
+          return { ok: true as const };
+        }
         return this.ports.delivery.webhook(state.channel.url, payload, secret, state.id);
       })().catch(() => ({
         ok: false as const,
@@ -141,6 +191,8 @@ export class WebhookReturns {
           acknowledgement: 'unknown' as const,
         },
       }));
+      if (deleted) return gone();
+      if (stoppedBeforeSend) return false;
       state = {
         ...state,
         inFlight: false,
@@ -158,7 +210,13 @@ export class WebhookReturns {
           this.ports.clock.now().getTime() + (WEBHOOK_RETRY_DELAYS_MS[attempts] ?? 0),
         ).toISOString();
       else delete state.nextAttemptAt;
-      await record(state.status === 'pending' ? 'delivery.attempt_finished' : 'delivery.finished');
+      if (
+        !(await record(
+          state.status === 'pending' ? 'delivery.attempt_finished' : 'delivery.finished',
+        ))
+      )
+        return false;
     }
+    return true;
   }
 }

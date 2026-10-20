@@ -4,6 +4,7 @@ import { FakeClock } from '@graphgoblin/engine/testing';
 import { HttpWebhookDelivery } from './delivery.js';
 
 const calls: { path: string; id: string | undefined }[] = [];
+let url: string;
 const late = new Set<ReturnType<typeof setTimeout>>();
 const server = createServer((req, res) => {
   req.resume();
@@ -34,15 +35,17 @@ const server = createServer((req, res) => {
 beforeAll(async () => {
   await new Promise<void>((ok, no) => {
     server.once('error', no);
-    server.listen(5802, '127.0.0.1', ok);
+    server.listen(0, '127.0.0.1', ok);
   });
+  const address = server.address();
+  if (!address || typeof address === 'string') throw Error('Missing receiver address');
+  url = `http://127.0.0.1:${address.port}`;
 });
 afterAll(async () => {
   for (const timer of late) clearTimeout(timer);
   server.closeAllConnections();
   await new Promise<void>((ok) => server.close(() => ok()));
 });
-const url = 'http://127.0.0.1:5802';
 describe('webhook HTTP outcomes with a controlled receiver', () => {
   it.each([200, 204, 301, 400, 401, 408, 429, 500, 503])(
     'classifies HTTP %i without redirects',
@@ -103,9 +106,14 @@ describe('webhook HTTP outcomes with a controlled receiver', () => {
     },
   );
   it('identifies a positively refused connection as not sent', async () => {
+    const closed = createServer();
+    await new Promise<void>((ok) => closed.listen(0, '127.0.0.1', ok));
+    const address = closed.address();
+    if (!address || typeof address === 'string') throw Error('Missing closed address');
+    await new Promise<void>((ok) => closed.close(() => ok()));
     await expect(
       new HttpWebhookDelivery(new FakeClock()).webhook(
-        'http://127.0.0.1:5809',
+        `http://127.0.0.1:${address.port}`,
         {},
         undefined,
         'id',

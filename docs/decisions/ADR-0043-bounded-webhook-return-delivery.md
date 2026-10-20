@@ -1,6 +1,6 @@
 # ADR-0043 - Bounded durable webhook return delivery
 
-Date: 2026-10-20. Status: **Implemented proposal; independent review pending (#246)**.
+Date: 2026-10-20. Status: **Reviewed: approve with required fixes; round-two fixes implemented (#246)**.
 
 ## Decision
 
@@ -21,14 +21,24 @@ After the last interrupted attempt, write a failed final outcome without sending
 Final outcomes are never resent. Event persistence errors leave finalization pending for restart.
 
 Requests run outside execution slots. Parents may observe the child's execution outcome while
-its outbound delivery is pending. Finalization waits for every webhook outcome; orderly idle
-waiting drains delivery work too. Recovery starts pending delivery workers without delaying
+its outbound delivery is pending. Finalization waits for every webhook outcome. During normal
+operation idle waiting drains delivery work. D-021: `stop()` wakes backoff immediately and
+allows no new request; in-flight requests finish or time out within their existing 10-second
+deadline and persist their outcome. Pending deliveries retain identity, consumed attempts
+and retry deadlines for the next start. A forced stop leaves the same durable budget;
+unfinished acknowledgements become unknown on recovery. Recovery starts workers without delaying
 API startup for network acknowledgement or backoff.
 
-## Proposed engineering parameters
+Loop deletion removes the delivery's scope. Workers re-read the run before every attempt
+and journal append and stop with a clear informational log when it is gone. A transactional
+run-existence check also closes the read/delete/append race; no orphan journal rows are written.
 
-These numbers implement the owner-approved bounded-retry policy; they are not owner-approved
-parameters. Five attempts maximum, each with a 10-second request-and-acknowledgement deadline.
+## Reviewed engineering parameters
+
+These implementation parameters passed independent review. Five attempts maximum, each
+with a 10-second request-and-acknowledgement deadline. `WEBHOOK_DELIVERY_POLICY` is the named
+source for the contract, worker and HTTP adapter; `pnpm generate:webhook-policy` freezes its
+retry budget in migration 0015, checked by a migration conformance test.
 After failures 1-4, wait 2, 5, 10 and 20 seconds respectively. Nominal uninterrupted bound:
 87 seconds plus local scheduling/storage overhead. Fixed delays make the single-process local
 schedule reproducible; jitter is unnecessary at this scale. Downtime can extend elapsed time,
@@ -53,7 +63,11 @@ consume one unknown attempt, retaining four retries. Their pre-upgrade request h
 the new key cannot retroactively deduplicate it. The migration imports an unknown outcome,
 not fabricated attempt-start evidence. Conversion follows the last durable lifecycle event
 even if the row still says running; a completion superseded by resume/start is not rescheduled.
-No new columns or tables are required. Format remains 4.
+The `(run_id, type, seq)` index bounds journal projection to the four delivery event types;
+list/page/child/status reads project the whole result set in one query. No new columns or
+tables are required. Format remains 4. Back up the stopped store before upgrading: the
+previous build refuses a migrated store with `DATA_UPGRADE_REQUIRED`; restoring the backup
+restores the previous build's ability to boot.
 
 REST detail/list snapshots, generated api-client types, MCP `get_run` / `wait_for_run` and the
 inspector expose `deliveries`. `wait_for_run.finished` and SSE terminal closure still refer to

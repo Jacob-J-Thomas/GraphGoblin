@@ -225,7 +225,10 @@ mean the effect may have happened. `run.deliveries` and durable `delivery.*` eve
 pending, delivered or failed after N attempts and the last typed error, separately from
 execution. Restart retains identity and consumed attempts. See
 [ADR-0043](decisions/ADR-0043-bounded-webhook-return-delivery.md). These engineering values are
-proposals awaiting review. This outbound journal does not implement targeted Event intake.
+reviewed implementation parameters. On orderly stop, an in-flight request finishes within
+its existing 10-second deadline, no new attempt starts, and pending delivery resumes on the
+next start with the same budget. Loop deletion stops that loop's pending deliveries.
+This outbound journal does not implement targeted Event intake.
 
 ## Concurrency (Decided)
 

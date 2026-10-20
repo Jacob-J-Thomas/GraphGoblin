@@ -118,7 +118,10 @@ export const runEvents = sqliteTable(
     nodeId: text('node_id'),
     payload: text('payload', { mode: 'json' }).$type<Record<string, unknown>>().notNull(),
   },
-  (t) => [primaryKey({ columns: [t.runId, t.seq] })],
+  (t) => [
+    primaryKey({ columns: [t.runId, t.seq] }),
+    index('run_events_delivery_idx').on(t.runId, t.type, t.seq),
+  ],
 );
 
 export const harnessSessions = sqliteTable(

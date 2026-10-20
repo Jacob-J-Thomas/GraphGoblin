@@ -1,12 +1,12 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import type { JsonValue, WebhookAttemptResult } from '@graphgoblin/contracts';
-import { WEBHOOK_TIMEOUT_MS } from '@graphgoblin/engine';
+import { WEBHOOK_DELIVERY_POLICY } from '@graphgoblin/contracts';
 import type { ClockPort, Logger, ReturnDeliveryPort } from '@graphgoblin/engine';
 import type { FetchLike } from './probes.js';
 
 export const SIGNATURE_HEADER = 'x-graphgoblin-signature';
 export const TIMESTAMP_HEADER = 'x-graphgoblin-timestamp';
-export const DELIVERY_ID_HEADER = 'idempotency-key';
+export const DELIVERY_ID_HEADER = WEBHOOK_DELIVERY_POLICY.identityHeader;
 
 /** HMAC-SHA256 over `${timestamp}.${body}`, presented as `sha256=<hex>`. */
 export function signPayload(secret: string, timestamp: string, body: string | Uint8Array): string {
@@ -51,7 +51,7 @@ export interface WebhookDeliveryOptions {
   fetchImpl?: FetchLike;
 }
 
-/** POSTs JSON to a URL, signing it when a secret is supplied. Non-2xx responses throw. */
+/** POST signed JSON and return typed acknowledgement and HTTP failure outcomes. */
 export class HttpWebhookDelivery {
   private readonly fetchImpl: FetchLike;
   private readonly timeoutMs: number;
@@ -61,7 +61,7 @@ export class HttpWebhookDelivery {
     options: WebhookDeliveryOptions = {},
   ) {
     this.fetchImpl = options.fetchImpl ?? ((input, init) => fetch(input, init));
-    this.timeoutMs = options.timeoutMs ?? WEBHOOK_TIMEOUT_MS;
+    this.timeoutMs = options.timeoutMs ?? WEBHOOK_DELIVERY_POLICY.timeoutMs;
   }
 
   async webhook(
@@ -118,7 +118,7 @@ export class HttpWebhookDelivery {
               const value: unknown = chunk.value;
               if (!(value instanceof Uint8Array)) throw new Error('invalid acknowledgement bytes');
               bytes += value.byteLength;
-              if (bytes > 65_536) {
+              if (bytes > WEBHOOK_DELIVERY_POLICY.acknowledgementMaxBytes) {
                 await reader.cancel();
                 return {
                   ok: false,

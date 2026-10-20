@@ -1,9 +1,11 @@
 import { readFile } from 'node:fs/promises';
 import { afterEach, beforeEach, expect, it } from 'vitest';
 import type { RunRecord, WebhookDelivery } from '@graphgoblin/contracts';
-import { LoopDefinitionSchema } from '@graphgoblin/contracts';
+import { LoopDefinitionSchema, WEBHOOK_DELIVERY_POLICY } from '@graphgoblin/contracts';
 import { FIXTURE_TS, fakeUlid, samplePin, sampleThread } from '@graphgoblin/contracts/testing';
 import { FakeClock } from '@graphgoblin/engine/testing';
+import { drizzle } from 'drizzle-orm/libsql';
+import * as schema from './schema.js';
 import { openMemoryDatabase, type DatabaseHandle } from './db.js';
 import { SqliteDeliveryRunRepository } from './delivery-runs.js';
 import { SqliteEventStore } from './events.js';
@@ -41,6 +43,85 @@ beforeEach(async () => {
   await repo.create(run, sampleThread());
 });
 afterEach(() => handle.close());
+
+it('freezes the named retry budget in migration 0015', async () => {
+  const migration = await readFile(
+    new URL('../../drizzle/0015_webhook_delivery_journal.sql', import.meta.url),
+    'utf8',
+  );
+  expect(migration).toContain(
+    `'attempts', 1, 'maxAttempts', ${WEBHOOK_DELIVERY_POLICY.maxAttempts},`,
+  );
+});
+
+it.each([
+  ['return.delivered', '{"channel":{"kind":"webhook"}}'],
+  ['return.failed', '{"channel":{"kind":"webhook","url":"https://example.test"}}'],
+  ['return.failed', '{"channel":{"kind":"webhook","url":"https://example.test"},"error":42}'],
+])('migration preserves shape-damaged %s receipts byte for byte (%s)', async (type, payload) => {
+  await handle.client.execute({
+    sql: 'INSERT INTO run_events (run_id,seq,ts,type,payload) VALUES (?,?,?,?,?)',
+    args: [run.id, 1, FIXTURE_TS, type, payload],
+  });
+  const migration = await readFile(
+    new URL('../../drizzle/0015_webhook_delivery_journal.sql', import.meta.url),
+    'utf8',
+  );
+  for (const statement of migration.split('--> statement-breakpoint'))
+    await handle.client.execute(statement);
+  const result = await handle.client.execute({
+    sql: 'SELECT type,payload FROM run_events WHERE run_id=?',
+    args: [run.id],
+  });
+  expect(result.rows).toMatchObject([{ type, payload }]);
+  expect((await repo.get(run.id))?.deliveries).toBeUndefined();
+});
+
+it('does not append a delivery journal for an absent run', async () => {
+  const deletedId = fakeUlid('deleted run');
+  expect(
+    await events.append(deletedId, [{ type: 'delivery.attempted', delivery: state }], {
+      requireRun: true,
+    }),
+  ).toEqual([]);
+  expect(await events.read(deletedId)).toEqual([]);
+});
+
+it('projects a whole page in one indexed delivery query', async () => {
+  for (let i = 1; i < 20; i++)
+    await repo.create({ ...run, id: fakeUlid('page-' + i) }, sampleThread());
+  await events.append(run.id, [{ type: 'delivery.attempted', delivery: state }]);
+  const queries: string[] = [];
+  const measured = new SqliteDeliveryRunRepository(
+    drizzle(handle.client, {
+      schema,
+      logger: {
+        logQuery(query) {
+          queries.push(query);
+        },
+      },
+    }),
+  );
+  const page = await measured.page({ ownerId: 'local', limit: 20 });
+  expect(page.items).toHaveLength(20);
+  expect(page.items.find((item) => item.id === run.id)?.deliveries).toEqual([state]);
+  expect(page.items.filter((item) => item.deliveries === undefined)).toHaveLength(19);
+  const projections = queries.filter((query) => query.includes('from "run_events"'));
+  expect(projections).toHaveLength(1);
+  expect(projections[0]).toContain('INDEXED BY run_events_delivery_idx');
+  expect(projections[0]).toContain('"run_events"."type" in (?, ?, ?, ?)');
+  const plan = await handle.client.execute({
+    sql: "EXPLAIN QUERY PLAN SELECT seq FROM run_events INDEXED BY run_events_delivery_idx WHERE run_id=? AND type IN ('delivery.queued','delivery.attempted','delivery.attempt_finished','delivery.finished') ORDER BY seq",
+    args: [run.id],
+  });
+  expect(
+    plan.rows.some(
+      (row) =>
+        typeof row['detail'] === 'string' && row['detail'].includes('run_events_delivery_idx'),
+    ),
+  ).toBe(true);
+  expect(await measured.listByStatus([])).toEqual([]);
+});
 
 it('projects the same journal state through detail, lists, child reads and pages', async () => {
   expect(await repo.get('missing')).toBeUndefined();

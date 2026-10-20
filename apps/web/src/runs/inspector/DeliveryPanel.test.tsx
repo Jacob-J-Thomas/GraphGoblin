@@ -4,6 +4,7 @@ import type { WebhookDelivery } from '@graphgoblin/contracts';
 import { runRecord } from '../../__fixtures__/fake-api.js';
 import { renderWith } from '../../__fixtures__/render.js';
 import { DeliveryPanel } from './DeliveryPanel.js';
+import { formatDateTime } from '../../lib/utils.js';
 
 const delivery: WebhookDelivery = {
   id: 'stable-id',
@@ -21,6 +22,11 @@ describe('delivery in the run inspector', () => {
     expect(screen.getByText(/Execution: succeeded/)).toBeInTheDocument();
     expect(screen.getByText('Pending (1/5 attempts)')).toBeInTheDocument();
     expect(screen.getByText(/effect may have happened/)).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /if duplicate effects are unacceptable; GraphGoblin does not assume they do/,
+      ),
+    ).toBeInTheDocument();
     expect(screen.getByText(/stable-id/)).toBeInTheDocument();
     expect(screen.getByText('Awaiting acknowledgement.')).toBeInTheDocument();
   });
@@ -72,7 +78,9 @@ describe('delivery in the run inspector', () => {
         })}
       />,
     );
-    expect(screen.getByText(/Next attempt: 2026/)).toBeInTheDocument();
+    expect(
+      screen.getByText(`Next attempt: ${formatDateTime('2026-10-20T12:00:00.000Z')}`),
+    ).toBeInTheDocument();
   });
   it('omits the section when no webhook was queued', () => {
     renderWith(<DeliveryPanel run={runRecord()} />);

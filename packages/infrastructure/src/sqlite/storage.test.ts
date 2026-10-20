@@ -314,7 +314,7 @@ describe('SqliteRunRepository', () => {
     old.close();
     const current = openDatabase({ url });
     try {
-      // Fifteen shipped migrations minus this fixture's two historical ledger entries.
+      // Sixteen shipped migrations minus this fixture's two historical ledger entries.
       expect(await current.pendingMigrations()).toBe(14);
       await expect(current.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
       await applyShippedSqlToHistoricalTestFixture(current);

@@ -135,7 +135,7 @@ describe('signatures', () => {
 });
 
 describe('HttpWebhookDelivery', () => {
-  it('posts signed JSON and throws on non-2xx responses', async () => {
+  it('posts signed JSON and returns typed non-2xx outcomes', async () => {
     const clock = new FakeClock();
     const delivery = new HttpWebhookDelivery(clock, { timeoutMs: 20_000 });
     await expect(

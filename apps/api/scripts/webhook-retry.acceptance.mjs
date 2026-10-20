@@ -2,19 +2,18 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
-import { mkdtemp, writeFile } from 'node:fs/promises';
+import { mkdtemp, rm } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
-import { setTimeout } from 'node:timers';
+import { setTimeout, clearTimeout } from 'node:timers';
 import process from 'node:process';
 import console from 'node:console';
 import { Buffer } from 'node:buffer';
 const { fetch, AbortSignal } = globalThis;
-const baseline = process.argv.includes('--baseline');
 const dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-d2-'));
-const base = 'http://127.0.0.1:5800';
+let base;
 const received = [];
 let child;
 let output = '';
@@ -38,7 +37,7 @@ const receiver = createServer(async (req, res) => {
   }
   res
     .writeHead(
-      req.url === '/fail' || (req.url === '/retry' && count === 1)
+      req.url === '/fail' || (['/retry', '/drain-backoff'].includes(req.url) && count === 1)
         ? 503
         : req.url === '/permanent'
           ? 400
@@ -46,10 +45,7 @@ const receiver = createServer(async (req, res) => {
     )
     .end('ack');
 });
-await new Promise((ok, no) => {
-  receiver.once('error', no);
-  receiver.listen(5801, '127.0.0.1', ok);
-});
+let receiverUrl;
 async function until(check, timeout = 90_000) {
   const end = Date.now() + timeout;
   while (Date.now() < end) {
@@ -59,26 +55,36 @@ async function until(check, timeout = 90_000) {
   }
   throw Error('Acceptance timed out\n' + output);
 }
-async function boot() {
+async function boot(orderly = false) {
   const env = { ...process.env };
   for (const key of Object.keys(env)) if (key.startsWith('GG_')) delete env[key];
   output = '';
-  child = spawn(process.execPath, ['apps/api/dist/main.js'], {
-    windowsHide: true,
-    env: {
-      ...env,
-      GG_DATA_DIR: dataDir,
-      GG_HOST: '127.0.0.1',
-      GG_PORT: '5800',
-      GG_WEB_DIST: '',
-      GG_REQUIRE_API_KEY: 'false',
-      GG_SWAGGER_UI: 'false',
-      GG_MASTER_KEY: Buffer.alloc(32, 7).toString('base64'),
+  child = spawn(
+    process.execPath,
+    [
+      orderly && process.platform === 'win32'
+        ? 'apps/api/scripts/webhook-retry.process.mjs'
+        : 'apps/api/dist/main.js',
+    ],
+    {
+      windowsHide: true,
+      env: {
+        ...env,
+        GG_DATA_DIR: dataDir,
+        GG_HOST: '127.0.0.1',
+        GG_PORT: '0',
+        GG_WEB_DIST: '',
+        GG_REQUIRE_API_KEY: 'false',
+        GG_SWAGGER_UI: 'false',
+        GG_MASTER_KEY: Buffer.alloc(32, 7).toString('base64'),
+      },
+      stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
     },
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
+  );
   child.stdout.on('data', (b) => {
     output = (output + b).slice(-12000);
+    const listening = /Server listening at (http:\/\/127\.0\.0\.1:\d+)/.exec(output);
+    if (listening) base = listening[1];
   });
   child.stderr.on('data', (b) => {
     output = (output + b).slice(-12000);
@@ -86,8 +92,10 @@ async function boot() {
   child.on('error', (error) => {
     output += String(error);
   });
+  base = undefined;
   await until(async () => {
     assert.equal(child.exitCode, null, output);
+    if (!base) return false;
     return fetch(base + '/healthz', { signal: AbortSignal.timeout(2000) }).then(
       (r) => r.ok,
       () => false,
@@ -99,6 +107,23 @@ async function kill() {
   const exited = once(child, 'exit');
   child.kill('SIGKILL');
   await exited;
+}
+async function orderlyStop(path) {
+  const before = received.filter((r) => r.path === path).length;
+  const started = Date.now();
+  const exited = once(child, 'exit');
+  if (process.platform === 'win32') child.send('stop');
+  else child.kill('SIGTERM');
+  const timeout = setTimeout(() => child.kill('SIGKILL'), 12_000);
+  try {
+    const [code, signal] = await exited;
+    assert.equal(code, 0, output);
+    assert.equal(signal, null);
+    assert.equal(received.filter((r) => r.path === path).length, before);
+    return Date.now() - started;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 async function request(path, body) {
   const response = await fetch(
@@ -128,7 +153,7 @@ async function start(name, path) {
           label: 'Done',
           config: {
             returns: 'invocation.payload',
-            destinations: [{ kind: 'webhook', url: 'http://127.0.0.1:5801' + path }],
+            destinations: [{ kind: 'webhook', url: receiverUrl + path }],
           },
         },
       ],
@@ -138,13 +163,18 @@ async function start(name, path) {
   await request('/loops/' + loop.id + '/publish', {});
   return (await request('/loops/' + loop.id + '/runs', { input: { value: 42 } })).run.id;
 }
-const observations = { baseline, dataDir, receiverPort: 5801, apiPort: 5800 };
+const observations = {};
 try {
+  await new Promise((ok, no) => {
+    receiver.once('error', no);
+    receiver.listen(0, '127.0.0.1', ok);
+  });
+  receiverUrl = 'http://127.0.0.1:' + receiver.address().port;
   await boot();
   const failedId = await start('Delivery failure evidence', '/fail');
   await until(async () =>
     (await request('/runs/' + failedId + '/events')).items.some(
-      (e) => e.type === (baseline ? 'return.failed' : 'delivery.finished'),
+      (e) => e.type === 'delivery.finished',
     ),
   );
   await delay(1500);
@@ -165,7 +195,7 @@ try {
   await boot();
   await until(async () =>
     (await request('/runs/' + crashId + '/events')).items.some(
-      (e) => e.type === (baseline ? 'return.delivered' : 'delivery.finished'),
+      (e) => e.type === 'delivery.finished',
     ),
   );
   observations.afterRestart = {
@@ -175,7 +205,7 @@ try {
   };
   assert.equal(observations.failure.run.status, 'succeeded');
   assert.equal(observations.afterRestart.run.status, 'succeeded');
-  if (!baseline) {
+  {
     assert.equal(observations.failure.requests.length, 5);
     assert.equal(
       new Set(observations.failure.requests.map((r) => r.headers['idempotency-key'])).size,
@@ -223,17 +253,57 @@ try {
     assert.equal(received.length, requestCount);
     assert.equal((await request('/runs/' + failedId)).deliveries[0].status, 'failed');
   }
-  const file = join(dataDir, baseline ? 'before.json' : 'after.json');
-  await writeFile(file, JSON.stringify(observations, null, 2));
+  observations.drain = [];
+  for (const phase of ['backoff', 'attempt']) {
+    await kill();
+    await boot(true);
+    hold = phase === 'attempt';
+    const path = '/drain-' + phase;
+    const id = await start('Orderly stop ' + phase, path);
+    const pending = await until(async () => {
+      const run = await request('/runs/' + id);
+      return run.deliveries?.[0]?.attempts === 1 &&
+        run.deliveries[0].inFlight === hold &&
+        received.some((r) => r.path === path)
+        ? run
+        : false;
+    });
+    const elapsedMs = await orderlyStop(path);
+    assert.ok(elapsedMs < (phase === 'attempt' ? 11_000 : 2_000), `Drain took ${elapsedMs}ms`);
+    hold = false;
+    await boot();
+    const resumed = await until(async () => {
+      const run = await request('/runs/' + id);
+      return run.deliveries?.[0]?.status === 'delivered' ? run : false;
+    });
+    assert.equal(resumed.deliveries[0].id, pending.deliveries[0].id);
+    assert.equal(resumed.deliveries[0].attempts, 2);
+    assert.equal(received.filter((r) => r.path === path).length, 2);
+    if (phase === 'attempt') assert.equal(resumed.deliveries[0].lastError.code, 'timeout');
+    observations.drain.push({
+      phase,
+      elapsedMs,
+      requestsDuringDrain: 0,
+      resumed: resumed.deliveries[0],
+    });
+  }
   console.log(
     JSON.stringify({
-      evidence: file,
       failureRequests: observations.failure.requests.length,
       crashRequests: observations.afterRestart.requests.length,
+      matrix: observations.matrix.map(({ path, run, requests }) => ({
+        path,
+        attempts: requests.length,
+        delivery: run.deliveries[0],
+      })),
+      drain: observations.drain,
     }),
   );
 } finally {
   await kill();
   receiver.closeAllConnections();
   await new Promise((ok) => receiver.close(ok));
+  assert.equal(dirname(dataDir), resolve(tmpdir()));
+  assert.ok(basename(dataDir).startsWith('gg-wp-d2-'));
+  await rm(dataDir, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
 }

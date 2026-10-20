@@ -60,11 +60,12 @@ export interface EventStorePort {
    * that (0 for an empty log); otherwise nothing is written and `AppendConflictError` is thrown.
    * Implementations must validate every complete event against RunEventSchema before persisting
    * any part of the batch. Invalid generated records throw RunFailureError(EVENT_INVALID).
+   * `requireRun` checks run existence in the same transaction; a deleted run returns no events.
    */
   append(
     runId: string,
     drafts: readonly EventDraft[],
-    options?: { expectedLastSeq?: number },
+    options?: { expectedLastSeq?: number; requireRun?: boolean },
   ): Promise<RunEvent[]>;
   /** Events after `afterSeq` (default 0), oldest first, at most `limit` of them when given. */
   read(runId: string, afterSeq?: number, limit?: number): Promise<RunEvent[]>;

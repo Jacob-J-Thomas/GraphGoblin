@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { DeliveryError, WebhookDelivery } from '@graphgoblin/contracts';
 import { createTestEngine, singleNodeLoop } from './testing/scenario.js';
 import { WebhookReturns, webhookStates } from './webhook-returns.js';
+import { InMemoryEventStore } from './testing/fakes.js';
 
 const transient: DeliveryError = {
   code: 'http',
@@ -18,12 +19,23 @@ const work = {
 };
 afterEach(() => vi.useRealTimers());
 
+it('the standalone event fake also refuses a required missing run', async () => {
+  const engine = await createTestEngine();
+  engine.manager.stop();
+  const events = new InMemoryEventStore(engine.ports.clock);
+  const runId = engine.ports.ids.next();
+  expect(await events.append(runId, [{ type: 'run.cancelled' }], { requireRun: true })).toEqual([]);
+});
+
 describe('durable webhook returns through RunManager', () => {
   it.each([1, 2, 5])('delivers or exhausts with one identity (%i attempts)', async (required) => {
     vi.useFakeTimers();
     const engine = await createTestEngine();
-    engine.ports.delivery.responder = (_id, attempt) =>
-      required === 5 || attempt < required ? { ok: false, error: transient } : { ok: true };
+    const attemptTimes: number[] = [];
+    engine.ports.delivery.responder = (_id, attempt) => {
+      attemptTimes.push(Date.now());
+      return required === 5 || attempt < required ? { ok: false, error: transient } : { ok: true };
+    };
     const version = engine.publish(
       singleNodeLoop('retry', work, {
         returns: 'vars',
@@ -32,11 +44,20 @@ describe('durable webhook returns through RunManager', () => {
     );
     const run = await engine.start(version.loopId);
     await vi.waitFor(() => expect(engine.ports.delivery.webhooks).toHaveLength(1));
-    engine.manager.stop();
     // Delivery remains pending while execution has already succeeded.
     expect((await engine.ports.runs.get(run.id))?.status).toBe('succeeded');
-    await vi.advanceTimersByTimeAsync(37_000);
+    for (const delay of [2000, 5000, 10000, 20000].slice(0, required - 1)) {
+      const pending = webhookStates(engine.events(run.id))[0]!;
+      expect(pending.nextAttemptAt).toBe(
+        new Date(engine.ports.clock.now().getTime() + delay).toISOString(),
+      );
+      const count = engine.ports.delivery.webhooks.length;
+      await vi.advanceTimersByTimeAsync(delay);
+      expect(engine.ports.delivery.webhooks).toHaveLength(count + 1);
+      expect(attemptTimes.at(-1)! - attemptTimes.at(-2)!).toBe(delay);
+    }
     await engine.manager.waitForIdle();
+    engine.manager.stop();
     const calls = engine.ports.delivery.webhooks;
     expect(calls).toHaveLength(required);
     expect(new Set(calls.map((call) => call.deliveryId)).size).toBe(1);
@@ -148,9 +169,9 @@ describe('recovery of journalled attempts through the delivery component', () =>
     };
     const run = await engine.start(version.loopId);
     await vi.waitFor(() => expect(engine.ports.delivery.webhooks).toHaveLength(1));
-    engine.manager.stop();
     await vi.advanceTimersByTimeAsync(2000);
     await engine.manager.waitForIdle();
+    engine.manager.stop();
     expect(webhookStates(engine.events(run.id))).toMatchObject([
       {
         status: 'delivered',
@@ -160,4 +181,82 @@ describe('recovery of journalled attempts through the delivery component', () =>
       },
     ]);
   });
+});
+
+it('stops a backoff without spending another attempt and resumes the durable deadline', async () => {
+  vi.useFakeTimers();
+  const engine = await createTestEngine();
+  engine.ports.delivery.responder = (_id, n) =>
+    n === 1 ? { ok: false, error: transient } : { ok: true };
+  const version = engine.publish(
+    singleNodeLoop('orderly stop', work, {
+      returns: 'vars',
+      destinations: [{ kind: 'webhook', url: 'https://example.test' }],
+    }),
+  );
+  const run = await engine.start(version.loopId);
+  await vi.waitFor(() => expect(webhookStates(engine.events(run.id))[0]?.inFlight).toBe(false));
+  engine.manager.stop();
+  await vi.advanceTimersByTimeAsync(2000);
+  await engine.manager.waitForIdle();
+  expect(engine.ports.delivery.webhooks).toHaveLength(1);
+  expect(webhookStates(engine.events(run.id))).toMatchObject([{ status: 'pending', attempts: 1 }]);
+  await engine.manager.start();
+  await vi.advanceTimersByTimeAsync(2000);
+  await engine.manager.waitForIdle();
+  engine.manager.stop();
+  expect(engine.ports.delivery.webhooks).toHaveLength(2);
+  expect(webhookStates(engine.events(run.id))).toMatchObject([
+    { status: 'delivered', attempts: 2 },
+  ]);
+});
+
+it('reports persistence failure distinctly, sends nothing, and leaves recovery possible', async () => {
+  const engine = await createTestEngine();
+  const version = engine.publish(singleNodeLoop('journal failure', work));
+  const run = await engine.runToIdle(version.loopId);
+  engine.manager.stop();
+  const state: WebhookDelivery = {
+    id: 'durable-id',
+    channel: { kind: 'webhook', url: 'https://example.test' },
+    status: 'pending',
+    attempts: 0,
+    maxAttempts: 5,
+    inFlight: false,
+    acknowledgement: 'not_sent',
+    effectMayHaveHappened: false,
+  };
+  await engine.ports.events.append(run.id, [{ type: 'delivery.queued', delivery: state }]);
+  const failing = new WebhookReturns({
+    ...engine.ports,
+    events: {
+      append: () => Promise.reject(Error('disk full')),
+      read: (id, after, limit) => engine.ports.events.read(id, after, limit),
+      subscribe: (id, listener) => engine.ports.events.subscribe(id, listener),
+    },
+  });
+  let completions = 0;
+  const finished = () => {
+    completions++;
+    return Promise.resolve();
+  };
+  failing.start(run.id, state, {}, finished);
+  await failing.waitForIdle();
+  expect(completions).toBe(0);
+  expect(engine.ports.delivery.webhooks).toHaveLength(0);
+  expect(webhookStates(engine.events(run.id))).toEqual([state]);
+  expect(engine.ports.logger.lines).toContainEqual(
+    expect.objectContaining({
+      level: 'error',
+      msg: 'webhook delivery journal persistence failed; recovery required',
+    }),
+  );
+  expect(engine.ports.logger.lines.some((line) => line.msg.includes('run deleted'))).toBe(false);
+  const recovered = new WebhookReturns(engine.ports);
+  recovered.start(run.id, state, {}, finished);
+  await recovered.waitForIdle();
+  expect(completions).toBe(1);
+  expect(webhookStates(engine.events(run.id))).toMatchObject([
+    { status: 'delivered', attempts: 1 },
+  ]);
 });

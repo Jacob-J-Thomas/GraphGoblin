@@ -1,7 +1,7 @@
 import { createServer, type ServerResponse } from 'node:http';
-import { mkdtemp } from 'node:fs/promises';
+import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import { afterAll, beforeAll, expect, it, vi } from 'vitest';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
@@ -12,6 +12,7 @@ import { createMcpServer } from './server.js';
 
 let response: ServerResponse | undefined;
 let identity: string | undefined;
+let receiverUrl: string;
 const receiver = createServer((req, res) => {
   req.resume();
   req.on('end', () => {
@@ -28,8 +29,11 @@ function closePending() {
 beforeAll(async () => {
   await new Promise<void>((ok, no) => {
     receiver.once('error', no);
-    receiver.listen(5804, '127.0.0.1', ok);
+    receiver.listen(0, '127.0.0.1', ok);
   });
+  const address = receiver.address();
+  if (!address || typeof address === 'string') throw Error('Missing receiver address');
+  receiverUrl = `http://127.0.0.1:${address.port}`;
 });
 afterAll(async () => {
   receiver.closeAllConnections();
@@ -51,8 +55,8 @@ it.each([200, 400])(
     response = undefined;
     const dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-d2-interfaces-'));
     const api = await createTestApp({ env: { GG_DATA_DIR: dataDir } });
-    await api.app.listen({ host: '127.0.0.1', port: 5803 });
-    const client = createGraphGoblinClient({ baseUrl: 'http://127.0.0.1:5803' });
+    const baseUrl = await api.app.listen({ host: '127.0.0.1', port: 0 });
+    const client = createGraphGoblinClient({ baseUrl });
     const server = createMcpServer({ client });
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     await server.connect(serverTransport);
@@ -72,7 +76,7 @@ it.each([200, 400])(
             label: 'Done',
             config: {
               returns: 'trigger.payload',
-              destinations: [{ kind: 'webhook', url: 'http://127.0.0.1:5804/hook' }],
+              destinations: [{ kind: 'webhook', url: receiverUrl + '/hook' }],
             },
           },
         ],
@@ -117,6 +121,9 @@ it.each([200, 400])(
       await mcp.close();
       await server.close();
       await api.close();
+      expect(dirname(dataDir)).toBe(resolve(tmpdir()));
+      expect(basename(dataDir).startsWith('gg-wp-d2-interfaces-')).toBe(true);
+      await rm(dataDir, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
     }
   },
 );

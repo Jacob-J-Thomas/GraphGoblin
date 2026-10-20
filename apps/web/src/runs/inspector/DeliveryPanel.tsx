@@ -1,5 +1,6 @@
 import type { RunRecord } from '@graphgoblin/contracts';
 import { Card } from '../../components/ui/index.js';
+import { formatDateTime } from '../../lib/utils.js';
 
 export function DeliveryPanel({ run }: { run: RunRecord }) {
   if (!run.deliveries?.length) return null;
@@ -19,7 +20,7 @@ export function DeliveryPanel({ run }: { run: RunRecord }) {
           <p className="text-sm text-muted">Delivery identity: {delivery.id}</p>
           {delivery.inFlight ? <p>Awaiting acknowledgement.</p> : null}
           {delivery.nextAttemptAt && !delivery.inFlight ? (
-            <p>Next attempt: {delivery.nextAttemptAt}</p>
+            <p>Next attempt: {formatDateTime(delivery.nextAttemptAt)}</p>
           ) : null}
           {delivery.lastError ? (
             <p>
@@ -30,8 +31,9 @@ export function DeliveryPanel({ run }: { run: RunRecord }) {
           (delivery.acknowledgement !== 'accepted' ||
             delivery.lastError?.acknowledgement === 'unknown') ? (
             <p>
-              An acknowledgement was unknown; the effect may have happened. The receiver must
-              deduplicate the delivery identity.
+              An acknowledgement was unknown; the effect may have happened. Receivers must implement
+              their own deduplication if duplicate effects are unacceptable; GraphGoblin does not
+              assume they do.
             </p>
           ) : null}
         </div>

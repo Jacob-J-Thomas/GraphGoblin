@@ -1,14 +1,7 @@
-import { test, expect } from '@playwright/test';
-import { spawn, type ChildProcess } from 'node:child_process';
-import { once } from 'node:events';
-import { mkdtemp } from 'node:fs/promises';
+import { test, expect } from './fixtures.js';
 import { createServer, type ServerResponse } from 'node:http';
-import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
 
-const base = 'http://127.0.0.1:5806';
-let child: ChildProcess;
-let output = '';
+let receiverUrl: string;
 let acknowledge = false;
 const held = new Set<ServerResponse>();
 const receiver = createServer((req, res) => {
@@ -25,50 +18,13 @@ const receiver = createServer((req, res) => {
 test.beforeAll(async () => {
   await new Promise<void>((ok, no) => {
     receiver.once('error', no);
-    receiver.listen(5807, '127.0.0.1', ok);
+    receiver.listen(0, '127.0.0.1', ok);
   });
-  const dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-d2-browser-'));
-  const env = { ...process.env };
-  for (const key of Object.keys(env)) if (key.startsWith('GG_')) delete env[key];
-  child = spawn(process.execPath, [resolve('../api/dist/main.js')], {
-    windowsHide: true,
-    env: {
-      ...env,
-      GG_DATA_DIR: dataDir,
-      GG_HOST: '127.0.0.1',
-      GG_PORT: '5806',
-      GG_REQUIRE_API_KEY: 'false',
-      GG_SWAGGER_UI: 'false',
-      GG_MASTER_KEY: Buffer.alloc(32, 7).toString('base64'),
-      GG_WEB_DIST: resolve('dist'),
-    },
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
-  child.stdout?.on('data', (bytes) => {
-    output = (output + String(bytes)).slice(-10000);
-  });
-  child.stderr?.on('data', (bytes) => {
-    output = (output + String(bytes)).slice(-10000);
-  });
-  await expect
-    .poll(
-      async () => {
-        if (child.exitCode !== null) throw Error(output);
-        return fetch(base + '/healthz').then(
-          (response) => response.ok,
-          () => false,
-        );
-      },
-      { timeout: 90_000 },
-    )
-    .toBe(true);
+  const address = receiver.address();
+  if (!address || typeof address === 'string') throw Error('Missing receiver address');
+  receiverUrl = 'http://127.0.0.1:' + address.port;
 });
 test.afterAll(async () => {
-  if (child && child.exitCode === null && child.signalCode === null) {
-    const exited = once(child, 'exit');
-    child.kill('SIGKILL');
-    await exited;
-  }
   receiver.closeAllConnections();
   await new Promise<void>((ok) => receiver.close(() => ok()));
 });
@@ -77,7 +33,7 @@ test('inspector updates pending delivery to delivered without a reload while exe
   page,
   request,
 }, testInfo) => {
-  const made = await request.post(base + '/loops', {
+  const made = await request.post('/loops', {
     data: {
       definition: {
         schemaVersion: 4,
@@ -90,7 +46,7 @@ test('inspector updates pending delivery to delivered without a reload while exe
             label: 'Done',
             config: {
               returns: 'trigger.payload',
-              destinations: [{ kind: 'webhook', url: 'http://127.0.0.1:5807/hook' }],
+              destinations: [{ kind: 'webhook', url: receiverUrl + '/hook' }],
             },
           },
         ],
@@ -100,14 +56,12 @@ test('inspector updates pending delivery to delivered without a reload while exe
   });
   expect(made.status()).toBe(201);
   const { loop } = (await made.json()) as { loop: { id: string } };
-  expect((await request.post(base + '/loops/' + loop.id + '/publish', { data: {} })).ok()).toBe(
-    true,
-  );
-  const started = await request.post(base + '/loops/' + loop.id + '/runs', {
+  expect((await request.post('/loops/' + loop.id + '/publish', { data: {} })).ok()).toBe(true);
+  const started = await request.post('/loops/' + loop.id + '/runs', {
     data: { input: { answer: 42 } },
   });
   const { run } = (await started.json()) as { run: { id: string } };
-  await page.goto(base + '/app/runs/' + run.id);
+  await page.goto('/app/runs/' + run.id);
   await expect(
     page.getByText('Execution: succeeded. Delivery is tracked separately.'),
   ).toBeVisible();
