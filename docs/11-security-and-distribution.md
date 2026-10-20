@@ -38,6 +38,18 @@
 - Post-1.0 multi-tenant hosting requires per-run isolation, which is why the runner abstraction exists: a remote runner can be a container.
 - Expressions and templates run in-process. JSONata evaluation has a cooperative time and depth budget (05), and Liquid has no filesystem access. Neither can interrupt a native regular-expression match, so regexes are checked statically before they run: JSONata regex literals and the patterns of the `redact` and `replace` mutations are rejected when they contain a back-reference, a repeated group that contains another repetition, or a repeated group whose body can match the empty string or split the same text two ways, looking through nested groups (`packages/domain/src/regex-safety.ts`, ADV-007). JSONata cannot turn a string into a regex except through `$eval`, which compiles a string at run time; it is shadowed by a binding that checks the string the same way and then runs it through JSONata's own `$eval`, in the caller's environment and budget. The check is conservative and syntactic: it can reject a harmless pattern (rewrite it, for example without an optional part that overlaps what follows), and it is a heuristic, not a proof that every accepted pattern is linear. Residual risk: polynomial backtracking (several adjacent unbounded wildcards such as `.*.*.*x` against a very large string) and memory exhaustion are not bounded in-process, and Liquid has no CPU or output-size ceiling. For a single-user local tool the author of the expression is the owner; a hosted product needs evaluation in a worker or child process with an external deadline and bounded input and output, behind an evaluation port so the domain stays pure.
 
+## Probe resource bounds (#117)
+
+Outbound HTTP probes retain at most 65,536 decompressed body bytes before decoding
+or JSON parsing (`PROBE_MAX_BODY_BYTES` in `packages/engine/src/ports.ts`).
+Oversized identity-encoded declared lengths refuse before reading; encoded wire
+lengths are not compared with the decompressed cap. Streamed/no-length bodies stop
+on the first over-limit chunk. The reader is cancelled and its lock released on
+overflow, abort or timeout. Overflow is the safe typed `HTTP_PROBE_BODY_OVERFLOW`
+failure, never a successful truncated response. HEAD and body-less 204/304 metadata
+are exempt because there is no response body. This budget matches strict poll-script stdout and also
+applies to heartbeat and single-result HTTP probes (08).
+
 ## Retention (Decided)
 
 1.0 keeps all runs, events, and artifacts, matching the harness defaults, which keep sessions on disk indefinitely. Settings has no purge action. Retention policies, scheduled purges, and the manual run and loop purge controls are post-1.0 work (12, "Residual risks and post-1.0 backlog").

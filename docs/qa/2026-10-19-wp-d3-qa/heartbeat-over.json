@@ -1,0 +1,188 @@
+{
+  "run": {
+    "id": "01M5ANAH84FSS0BY8QM1DVGHYB",
+    "ownerId": "local",
+    "loopId": "01M5ANAH626T0MM6HHX5HDC0F6",
+    "versionId": "01M5ANAH621YKSQJF494K9SSV7",
+    "invocationId": "01M5ANAH84243KR3MWFKB27MER",
+    "status": "failed",
+    "currentNodeId": "work",
+    "iteration": 1,
+    "failure": {
+      "code": "HTTP_PROBE_BODY_OVERFLOW",
+      "message": "HTTP heartbeat probe body exceeds the 65536-byte limit; narrow the response or use a script probe",
+      "nodeId": "work",
+      "resumable": true
+    },
+    "createdAt": "2026-10-19T18:03:34.020Z",
+    "startedAt": "2026-10-19T18:03:34.035Z",
+    "finishedAt": "2026-10-19T18:03:34.112Z",
+    "lastEventSeq": 6
+  },
+  "events": {
+    "items": [
+      {
+        "runId": "01M5ANAH84FSS0BY8QM1DVGHYB",
+        "seq": 1,
+        "ts": "2026-10-19T18:03:34.020Z",
+        "type": "run.queued",
+        "initialThread": {
+          "schemaVersion": 1,
+          "run": {
+            "id": "01M5ANAH84FSS0BY8QM1DVGHYB",
+            "loopId": "01M5ANAH626T0MM6HHX5HDC0F6",
+            "versionId": "01M5ANAH621YKSQJF494K9SSV7",
+            "iteration": 1
+          },
+          "invocation": {
+            "id": "01M5ANAH84243KR3MWFKB27MER",
+            "source": "manual.api",
+            "caller": {
+              "kind": "api-key",
+              "id": "01M5AN9PH1GFBKZWJF3C0PYJA2"
+            },
+            "trigger": {
+              "nodeId": "start",
+              "kind": "manual",
+              "payload": null,
+              "receivedAt": "2026-10-19T18:03:34.020Z"
+            }
+          },
+          "messages": [],
+          "vars": {},
+          "artifacts": [],
+          "outputs": {},
+          "gates": {},
+          "counters": {
+            "nodeVisits": {},
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          }
+        }
+      },
+      {
+        "runId": "01M5ANAH84FSS0BY8QM1DVGHYB",
+        "seq": 2,
+        "ts": "2026-10-19T18:03:34.038Z",
+        "type": "run.started",
+        "attempt": 1
+      },
+      {
+        "runId": "01M5ANAH84FSS0BY8QM1DVGHYB",
+        "seq": 3,
+        "ts": "2026-10-19T18:03:34.057Z",
+        "type": "node.started",
+        "nodeId": "start",
+        "kind": "trigger",
+        "attempt": 1,
+        "configHash": "527dee9c4254fe4e"
+      },
+      {
+        "runId": "01M5ANAH84FSS0BY8QM1DVGHYB",
+        "seq": 4,
+        "ts": "2026-10-19T18:03:34.061Z",
+        "type": "node.finished",
+        "nodeId": "start",
+        "patch": [
+          {
+            "op": "add",
+            "path": "/outputs/start",
+            "value": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-19T18:03:34.061Z"
+            }
+          },
+          {
+            "op": "add",
+            "path": "/lastOutput",
+            "value": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-19T18:03:34.061Z"
+            }
+          }
+        ],
+        "route": "out",
+        "durationMs": 0
+      },
+      {
+        "runId": "01M5ANAH84FSS0BY8QM1DVGHYB",
+        "seq": 5,
+        "ts": "2026-10-19T18:03:34.088Z",
+        "type": "node.started",
+        "nodeId": "work",
+        "kind": "heartbeat",
+        "attempt": 1,
+        "configHash": "70b43ab038db517a"
+      },
+      {
+        "runId": "01M5ANAH84FSS0BY8QM1DVGHYB",
+        "seq": 6,
+        "ts": "2026-10-19T18:03:34.110Z",
+        "type": "run.failed",
+        "failure": {
+          "code": "HTTP_PROBE_BODY_OVERFLOW",
+          "message": "HTTP heartbeat probe body exceeds the 65536-byte limit; narrow the response or use a script probe",
+          "nodeId": "work",
+          "resumable": true
+        }
+      }
+    ],
+    "nextAfter": 6
+  },
+  "thread": {
+    "schemaVersion": 1,
+    "run": {
+      "id": "01M5ANAH84FSS0BY8QM1DVGHYB",
+      "loopId": "01M5ANAH626T0MM6HHX5HDC0F6",
+      "versionId": "01M5ANAH621YKSQJF494K9SSV7",
+      "iteration": 1
+    },
+    "invocation": {
+      "id": "01M5ANAH84243KR3MWFKB27MER",
+      "source": "manual.api",
+      "caller": {
+        "kind": "api-key",
+        "id": "01M5AN9PH1GFBKZWJF3C0PYJA2"
+      },
+      "trigger": {
+        "nodeId": "start",
+        "kind": "manual",
+        "payload": null,
+        "receivedAt": "2026-10-19T18:03:34.020Z"
+      }
+    },
+    "messages": [],
+    "vars": {},
+    "artifacts": [],
+    "outputs": {
+      "start": {
+        "nodeId": "start",
+        "value": null,
+        "at": "2026-10-19T18:03:34.061Z"
+      }
+    },
+    "lastOutput": {
+      "nodeId": "start",
+      "value": null,
+      "at": "2026-10-19T18:03:34.061Z"
+    },
+    "gates": {},
+    "counters": {
+      "nodeVisits": {
+        "start": 1
+      },
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedInputTokens": 0,
+        "reasoningOutputTokens": 0
+      }
+    }
+  }
+}

@@ -7,20 +7,30 @@ import { KindChip } from '../../editor/KindChip.js';
 import { JsonSchemaForm } from '../../forms/JsonSchemaForm.js';
 import { errorMessage, formatDateTime } from '../../lib/utils.js';
 
+type Answer = {
+  runId: string;
+  waitId: string;
+  value: unknown;
+  target: { kind: 'input' } | { kind: 'signal'; name: string };
+};
+
 /** The run waits on input or a signal: a form for it, generated from the wait node's schema. */
 export function WaitPanel({ run }: { run: RunSnapshot }) {
   const client = useApi();
   const queryClient = useQueryClient();
   const waiting = run.waiting;
   const respond = useMutation({
-    mutationFn: async (value: unknown) => {
-      if (waiting?.kind === 'signal') {
-        await runs.signal(client, run.id, waiting.signalName ?? '', value as never);
+    // A refetch may replace mutation callbacks while onMutate is pending. Keep the
+    // submitted snapshot in variables so answer A can never acquire wait B's identity.
+    mutationFn: async ({ runId, waitId, value, target }: Answer) => {
+      if (target.kind === 'signal') {
+        await runs.signal(client, runId, target.name, waitId, value as never);
       } else {
-        await runs.provideInput(client, run.id, (value ?? null) as never);
+        await runs.provideInput(client, runId, waitId, (value ?? null) as never);
       }
     },
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: keys.run(run.id) }),
+    onSuccess: (_result, { runId }) =>
+      void queryClient.invalidateQueries({ queryKey: keys.run(runId) }),
   });
   if (run.status !== 'waiting' || !waiting) return null;
   if (waiting.kind !== 'input' && waiting.kind !== 'signal') {
@@ -49,18 +59,28 @@ export function WaitPanel({ run }: { run: RunSnapshot }) {
         ) : null}
         <JsonSchemaForm
           // One form per wait: the next wait (even at the same node) starts empty, while a refetch
-          // of the same wait keeps what was typed. `startedSeq` is the wait's identity.
+          // of the same wait keeps what was typed. `waitId` is the observed park identity.
           key={JSON.stringify([
             waiting.nodeId,
             waiting.kind,
-            waiting.startedSeq ?? null,
+            waiting.waitId,
             waiting.signalName ?? null,
             waiting.inputSchema ?? null,
           ])}
           schema={waiting.kind === 'input' ? waiting.inputSchema : undefined}
           submitLabel={waiting.kind === 'input' ? 'Submit input' : 'Send signal'}
           busy={respond.isPending}
-          onSubmit={(value) => respond.mutate(value)}
+          onSubmit={(value) =>
+            respond.mutate({
+              runId: run.id,
+              waitId: waiting.waitId,
+              value,
+              target:
+                waiting.kind === 'signal'
+                  ? { kind: 'signal', name: waiting.signalName ?? '' }
+                  : { kind: 'input' },
+            })
+          }
         />
         {respond.isError ? <Alert>{errorMessage(respond.error)}</Alert> : null}
       </div>

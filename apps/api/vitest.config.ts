@@ -8,5 +8,11 @@ import { createVitestConfig } from '@graphgoblin/tooling/vitest';
 // File-backed SQLite tests collect closed native statements before removing their files on
 // Windows, matching infrastructure: expose gc at worker startup rather than changing V8 flags.
 export default createVitestConfig({
-  test: { pool: 'forks', execArgv: ['--expose-gc'], testTimeout: 20_000, hookTimeout: 20_000 },
+  test: {
+    pool: 'forks',
+    execArgv: ['--expose-gc'],
+    testTimeout: 20_000,
+    hookTimeout: 20_000,
+    globalSetup: ['./wait-storage.global-setup.ts'],
+  },
 });

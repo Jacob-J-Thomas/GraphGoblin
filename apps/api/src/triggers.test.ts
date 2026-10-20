@@ -17,14 +17,19 @@ import {
   FakeProbes,
   FakeScripts,
 } from '@graphgoblin/engine/testing';
-import { AdmissionConflictError, parseRunAdmission, RunManager } from '@graphgoblin/engine';
-import { SqliteSecrets } from '@graphgoblin/infrastructure/sqlite';
+import {
+  AdmissionConflictError,
+  parseRunAdmission,
+  PROBE_MAX_BODY_BYTES,
+  RunManager,
+} from '@graphgoblin/engine';
 import { signPayload, signRawBody } from '@graphgoblin/infrastructure/http';
 import { buildApp } from './app.js';
 import { loadConfig } from './config.js';
 import { createContainer, type Container } from './container.js';
 import { createTestApp, type TestApp } from './testing/test-app.js';
 import { FixedWindowRateLimiter } from './triggers/rate-limit.js';
+import { PollTriggers } from './triggers/poll.js';
 import { MAX_EVENT_CHAIN } from './triggers/trigger-service.js';
 
 let t: TestApp;
@@ -1022,7 +1027,16 @@ describe('poll triggers', () => {
         enabled: false,
       }),
     );
-    scripts.respondWith(() => ({ exitCode: 0, stdout: 'all good', stderr: '', timedOut: false }));
+    scripts.respondWith(() => ({
+      exitCode: 0,
+      stdout: 'all good',
+      stderr: '',
+      stdoutBytes: 8,
+      stdoutOverflow: false,
+      stderrBytes: 0,
+      stderrOverflow: false,
+      timedOut: false,
+    }));
     clock.advance(5_000);
     const first = await container.polls.poll();
     expect(first).toHaveLength(1);
@@ -1035,7 +1049,16 @@ describe('poll triggers', () => {
     expect(thread?.invocation.trigger.dedupeKey).toBeUndefined();
     expect(logger.lines.some((l) => l.msg === 'poll trigger failed')).toBe(true);
 
-    scripts.respondWith(() => ({ exitCode: 0, stdout: '', stderr: '', timedOut: false }));
+    scripts.respondWith(() => ({
+      exitCode: 0,
+      stdout: '',
+      stderr: '',
+      stdoutBytes: 0,
+      stdoutOverflow: false,
+      stderrBytes: 0,
+      stderrOverflow: false,
+      timedOut: false,
+    }));
     clock.advance(5_000);
     expect(await container.polls.poll()).toHaveLength(1);
     await container.stop();
@@ -1696,6 +1719,9 @@ describe('body signing and durable admission', () => {
         exitCode: 0,
         stdout: '[{"key":"same"},{"key":"next"}]',
         stderr: '',
+        stdoutBytes: 31,
+        stderrBytes: 0,
+        stderrOverflow: false,
         timedOut: false,
         stdoutOverflow: false,
       });
@@ -1733,11 +1759,30 @@ describe('body signing and durable admission', () => {
       gate = new Promise<void>((resolve) => {
         release = resolve;
       });
-    const receive = t.container.manager.receiveWebhook.bind(t.container.manager);
-    vi.spyOn(t.container.manager, 'receiveWebhook').mockImplementationOnce(async (...args) => {
+    // Controlled race at the exposed admission collaborator, after authentication.
+    let authenticatedClaimId = '';
+    const claim = t.container.ports.admission.claim.bind(t.container.ports.admission);
+    vi.spyOn(t.container.ports.admission, 'claim').mockImplementationOnce(async (...args) => {
+      authenticatedClaimId = args[0].id;
       entered();
       await gate;
-      return receive(...args);
+      return claim(...args);
+    });
+    // A second public engine/poll component shares the real admission port. One manager's
+    // pin mutex deliberately serializes poll admission behind a held claim; separate component
+    // callers let storage see this interleaving without patching the webhook execution chain.
+    const competingManager = new RunManager(t.container.ports, t.container.settings);
+    await competingManager.start();
+    const polls = new PollTriggers({
+      probes: t.container.ports.probes,
+      scripts: t.container.ports.scripts,
+      manager: competingManager,
+      clock: t.clock,
+      logger: t.logger,
+      scriptCwd: t.dataDir,
+      hasDedupe: (loop, node, key) => t.container.repos.runs.hasTriggerDedupe(loop, node, key),
+      findSeen: (loop, node, keys) =>
+        t.container.repos.runs.findTriggerDedupeKeys(loop, node, keys),
     });
     const delivery = bodyDelivery(path, '{"key":"same"}');
     try {
@@ -1761,21 +1806,36 @@ describe('body signing and durable admission', () => {
         exitCode: 0,
         stdout: '[{"key":"same"}]',
         stderr: '',
+        stdoutBytes: 16,
+        stderrBytes: 0,
+        stderrOverflow: false,
         timedOut: false,
         stdoutOverflow: false,
       });
+      const loop = await t.container.repos.loops.getLoop(id);
+      const version = await t.container.repos.loops.getLatestPublished(id);
+      if (!loop || !version) throw new Error('missing current poll fixture');
+      polls.arm(loop, version);
       t.clock.advance(5000);
-      expect(await t.container.polls.poll()).toHaveLength(1);
+      const polled = await polls.poll();
+      expect(polled).toHaveLength(1);
       release();
       const response = await delivery;
       expect(response.statusCode).toBe(202);
       expect(response.json()).toMatchObject({ accepted: true });
       await t.idle();
-      expect(await runsOf(id)).toHaveLength(1);
+      await competingManager.waitForIdle();
+      expect((await runsOf(id)).map((run) => run.id)).toEqual([polled[0]!.id]);
+      expect((await t.container.ports.admission.get(authenticatedClaimId))?.status).toBe(
+        'deduplicated',
+      );
       expect(await t.container.ports.admission.hasPendingPin(id)).toBe(false);
     } finally {
       release();
       await delivery;
+      await competingManager.waitForIdle();
+      competingManager.stop();
+      polls.stop();
     }
   });
   it('does not activate business dedupe for generated signature hints', async () => {
@@ -1850,6 +1910,9 @@ describe('bounded items-mode poll integration', () => {
     exitCode: 0,
     stdout,
     stderr: 'credential-marker',
+    stdoutBytes: new TextEncoder().encode(stdout).byteLength,
+    stderrBytes: 17,
+    stderrOverflow: false,
     timedOut: false,
     stdoutOverflow: false,
     ...extra,
@@ -1890,7 +1953,7 @@ describe('bounded items-mode poll integration', () => {
       }),
     );
   });
-  it('refuses failed/timeout/overflow/unbounded/invalid JSON probes only in new items mode', async () => {
+  it('refuses failed/timeout/overflow-flag/oversized-byte-count/invalid JSON probes only in new items mode', async () => {
     await t.publishLoop(triggerLoop('items-probe', config()));
     const script = vi.spyOn(t.container.ports.scripts, 'run');
     const lookup = vi.spyOn(t.container.repos.runs, 'findTriggerDedupeKeys');
@@ -1898,6 +1961,7 @@ describe('bounded items-mode poll integration', () => {
       result('[]', { exitCode: 1 }),
       result('[]', { timedOut: true }),
       result('[]', { stdoutOverflow: true }),
+      result('[]', { stdoutBytes: PROBE_MAX_BODY_BYTES + 1, stdoutOverflow: false }),
       result('broken'),
     ]) {
       script.mockResolvedValue(output);
@@ -1912,6 +1976,9 @@ describe('bounded items-mode poll integration', () => {
         'POLL_STDOUT_OVERFLOW',
         'POLL_JSON_INVALID',
       ]),
+    );
+    expect(t.logger.lines.filter((line) => line.obj.code === 'POLL_STDOUT_OVERFLOW')).toHaveLength(
+      2,
     );
   });
   it('skips overlapping sweeps even after republish, and admission failure leaves the unseen tail', async () => {
@@ -2150,14 +2217,14 @@ describe('general webhook configuration and unsigned intake', () => {
     'admits unsigned $body.type through saved intent, queued metadata and recovery',
     async (config) => {
       const { id, path } = await setup({ body: config.body, eventType: config.eventType });
-      const resolve = vi.spyOn(SqliteSecrets.prototype, 'resolve');
+      // All owner-scoped secret instances share this real storage boundary.
+      await t.container.handle.client.execute('DROP TABLE secrets');
       vi.spyOn(t.container.ports.admission, 'create').mockRejectedValueOnce(new Error('transient'));
       const bus = vi.spyOn(t.container.bus, 'publish');
       const response = await post(path, config.raw, { 'x-event': 'order.created' });
       expect(response.statusCode).toBe(202);
       expect(response.json()).toEqual({ accepted: true });
       await t.container.manager.waitForWebhookRecovery();
-      expect(resolve).not.toHaveBeenCalled();
       expect(bus).not.toHaveBeenCalled();
       expect(await runsOf(id)).toEqual([]);
       const rows = (await t.container.handle.client.execute('SELECT intent FROM webhook_receipts'))
@@ -2183,6 +2250,23 @@ describe('general webhook configuration and unsigned intake', () => {
       });
     },
   );
+  it('refuses signed intake when the real secret storage boundary is unavailable', async () => {
+    await setSecret();
+    const { id, path } = await setup({
+      authentication: { type: 'hmac-sha256', message: 'body', secretRef: 'hook-secret' },
+    });
+    await t.container.handle.client.execute('DROP TABLE secrets');
+    const raw = Buffer.from('{"id":1}');
+    const response = await post(path, raw, {
+      'x-hub-signature-256': signRawBody('shh', raw),
+    });
+    expect(response.statusCode).toBe(500);
+    expect(response.json()).toMatchObject({ code: 'INTERNAL_ERROR' });
+    expect(await runsOf(id)).toEqual([]);
+    expect(
+      (await t.container.handle.client.execute('SELECT intent FROM webhook_receipts')).rows,
+    ).toEqual([]);
+  });
   it('applies the limiter/bound/decoding to None without accepting an authenticated identity', async () => {
     const { path } = await setup();
     expect((await post(path, '')).json()).toMatchObject({ code: 'BODY_INVALID' });

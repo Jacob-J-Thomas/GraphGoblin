@@ -25,8 +25,8 @@ You drive the loop through the `graphgoblin` MCP tools. Never call the REST API 
 2. Call `wait_for_run` with the `runId` (default 60 s per call; pass `timeoutSeconds` up to 600 for long loops).
 3. Act on the result and repeat step 2 until `finished` is true:
    - `finished: true`: go to step 4.
-   - `status: "waiting"` with `waiting.kind: "input"`: the run is asking a question. Read `waiting.prompt` and `waiting.inputSchema`. If the answer is the user's to give, ask them; otherwise answer from context. Call `provide_input` with a value that matches `waiting.inputSchema`, then wait again.
-   - `status: "waiting"` with `waiting.kind: "signal"`: the run waits for `waiting.signalName`. Call `send_signal` only if the user asked you to; otherwise keep waiting or report that it is parked.
+   - `status: "waiting"` with `waiting.kind: "input"`: the run is asking a question. Read `waiting.prompt` and `waiting.inputSchema`. If the answer is the user's to give, ask them; otherwise answer from context. Call `provide_input` with the observed `waiting.waitId` as `waitId` and a value that matches `waiting.inputSchema`, then wait again.
+   - `status: "waiting"` with `waiting.kind: "signal"`: the run waits for `waiting.signalName`. Pass the observed `waiting.waitId` as `waitId` to `send_signal`. Call `send_signal` only if the user asked you to; otherwise keep waiting or report that it is parked.
    - `status: "paused"`: ask the user whether to `resume_run`.
    - Still `queued` or `running`: call `wait_for_run` again. After several calls, give the user a short progress note (use `read_run_events` with `after` set to the last `cursor` to see new steps).
 

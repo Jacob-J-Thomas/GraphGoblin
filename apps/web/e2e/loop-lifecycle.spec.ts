@@ -7,6 +7,7 @@ function handle(page: Page, nodeId: string, handleId: string) {
 
 test('draw a loop in the editor, publish it, run it, watch events, and provide input', async ({
   page,
+  request,
 }) => {
   await page.goto('/app/loops');
   await page.getByLabel('New loop name').fill('e2e approval');
@@ -46,11 +47,25 @@ test('draw a loop in the editor, publish it, run it, watch events, and provide i
   await expect(page.getByText('Input requested')).toBeVisible();
   await expect(page.getByText('Approve?')).toBeVisible();
 
+  const runId = new URL(page.url()).pathname.split('/').at(-1)!;
+  const observed = await (await request.get('/runs/' + runId)).json();
+  const posted = page.waitForRequest(
+    (req) => req.method() === 'POST' && req.url().endsWith('/runs/' + runId + '/input'),
+  );
   await page.getByLabel('Input (JSON)').fill('{"approved": true}');
   await page.getByRole('button', { name: 'Submit input' }).click();
+  expect((await posted).postDataJSON()).toEqual({
+    waitId: observed.waiting.waitId,
+    input: { approved: true },
+  });
   await expect(timeline.getByText('run.finished')).toBeVisible();
   await expect(page.locator('[data-status="succeeded"]')).toBeVisible();
   await expect(page.getByLabel('Messages')).toContainText('approved');
+  const duplicate = await request.post('/runs/' + runId + '/input', {
+    data: { waitId: observed.waiting.waitId, input: false },
+  });
+  expect(duplicate.status()).toBe(409);
+  expect(await duplicate.json()).toMatchObject({ code: 'WAIT_MISMATCH' });
 
   // The run shows on the runs list, linked from its loop's last-run status.
   await page.getByRole('link', { name: 'Loops' }).click();

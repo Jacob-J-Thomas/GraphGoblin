@@ -1,10 +1,13 @@
+import type { Client } from '@libsql/client';
+import type * as Libsql from '@libsql/client';
+import { rm } from 'node:fs/promises';
 import { SqliteTriggerAdmission } from './admission.js';
 import { applyShippedSqlToHistoricalTestFixture } from './testing/shipped-migrations.js';
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RunEvent, RunRecord } from '@graphgoblin/contracts';
 import { LoopDefinitionSchema } from '@graphgoblin/contracts';
 import {
@@ -34,6 +37,56 @@ import {
 import type { TimerStore } from '../scheduler/timer-store.js';
 import { SqliteTimerStore } from './timers.js';
 
+// Controlled external-client scheduling: execute the real SELECT, then hold its result.
+// The repository and its transaction implementation remain intact.
+let afterLoopSelect: (() => Promise<void>) | undefined;
+vi.mock('@libsql/client', async (importOriginal) => {
+  const actual = await importOriginal<typeof Libsql>();
+  return {
+    ...actual,
+    createClient: (options: Libsql.Config) => {
+      const client = actual.createClient(options);
+      const execute: Client['execute'] = async (
+        statement: Libsql.InStatement,
+        args?: Libsql.InArgs,
+      ) => {
+        const result =
+          typeof statement === 'string'
+            ? await client.execute(statement, args)
+            : await client.execute(statement);
+        const sql = typeof statement === 'string' ? statement : statement.sql;
+        if (/^select\b.*\bfrom "loops"/i.test(sql)) await afterLoopSelect?.();
+        return result;
+      };
+      return new Proxy(client, {
+        get(target, key) {
+          if (key === 'execute') return execute;
+          const value: unknown = Reflect.get(target, key, target);
+          const forwarded: unknown = typeof value === 'function' ? value.bind(target) : value;
+          return forwarded;
+        },
+      });
+    },
+  };
+});
+
+function holdNextLoopSelect() {
+  let release!: () => void;
+  let reached!: () => void;
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const selected = new Promise<void>((resolve) => {
+    reached = resolve;
+  });
+  afterLoopSelect = async () => {
+    afterLoopSelect = undefined;
+    reached();
+    await held;
+  };
+  return { selected, release };
+}
+
 let handle: DatabaseHandle;
 let clock: FakeClock;
 let ids: FakeIds;
@@ -45,6 +98,7 @@ beforeEach(async () => {
 });
 
 afterEach(() => {
+  afterLoopSelect = undefined;
   handle.close();
 });
 
@@ -93,7 +147,7 @@ describe('SqliteRunRepository', () => {
     const thread = sampleThread();
     const run = runRecord({
       parentRunId: fakeUlid('parent'),
-      waiting: { nodeId: 'w', kind: 'input' },
+      waiting: { waitId: 'fixture-wait', startedSeq: 1, nodeId: 'w', kind: 'input' },
     });
     await repo.create(run, thread);
     expect(await repo.get(run.id)).toEqual(run);
@@ -145,6 +199,32 @@ describe('SqliteRunRepository', () => {
     await expect(repo.transition('missing', ['queued'], { status: 'running' })).rejects.toThrow(
       /not found/,
     );
+  });
+
+  it('fences a delayed transition by the observed waiting identity', async () => {
+    const repo = new SqliteRunRepository(handle.db);
+    const run = runRecord({
+      status: 'waiting',
+      waiting: { waitId: 'A', startedSeq: 1, nodeId: 'w', kind: 'input' },
+    });
+    await repo.create(run, sampleThread());
+    expect(
+      await repo.transition(run.id, ['waiting'], { status: 'running' }, { waitId: 'unknown' }),
+    ).toBeUndefined();
+    expect(await repo.get(run.id)).toEqual(run);
+    await repo.update(run.id, {
+      waiting: { waitId: 'B', startedSeq: 2, nodeId: 'w', kind: 'input' },
+    });
+    expect(
+      await repo.transition(run.id, ['waiting'], { status: 'running' }, { waitId: 'A' }),
+    ).toBeUndefined();
+    expect((await repo.get(run.id))?.waiting?.waitId).toBe('B');
+    expect(
+      await repo.transition(run.id, ['waiting'], { status: 'running' }, { waitId: 'B' }),
+    ).toMatchObject({ status: 'running' });
+    expect(
+      await repo.transition(run.id, ['waiting'], { status: 'running' }, { waitId: 'B' }),
+    ).toBeUndefined();
   });
 
   it('rolls back a failed ordinary transition and allows only one concurrent resume', async () => {
@@ -375,28 +455,43 @@ describe('SqliteEventStore', () => {
 });
 
 describe('SqliteLoopRepository draft and publish interleaving', () => {
+  let competing: DatabaseHandle;
+  let databasePath: string;
+  let directory: string;
+  beforeEach(async () => {
+    // Separate connections let the publisher commit while the saver holds a SELECT result.
+    // A single serialized client would correctly block every competing call behind that read.
+    handle.close();
+    directory = mkdtempSync(join(tmpdir(), 'gg-publish-'));
+    databasePath = join(directory, 'store.db');
+    handle = openDatabase({ url: `file:${databasePath.replaceAll('\\', '/')}` });
+    await handle.migrate();
+    competing = openDatabase({ url: `file:${databasePath.replaceAll('\\', '/')}` });
+  });
+  afterEach(() => {
+    handle.close();
+    competing.close();
+    // libsql keeps files open after close on Windows: this pre-existing native leak cannot
+    // be cured here, so the directory may survive. Cleanup must never hold up the test.
+    void rm(directory, { recursive: true, force: true, maxRetries: 2, retryDelay: 10 }).catch(
+      () => undefined,
+    );
+  });
+
   it('never modifies a version that was published after a draft save read the loop', async () => {
     const repo = new SqliteLoopRepository(handle.db, clock, ids);
     const definition = LoopDefinitionSchema.parse(minimalLoop());
     const { loop, draft } = await repo.create('local', definition);
     // The save reads the loop (draft still current), pauses; a publish lands; the save resumes.
-    const getLoop = repo.getLoop.bind(repo);
-    let release!: () => void;
-    const paused = new Promise<void>((resolve) => (release = resolve));
-    let lookedUp!: () => void;
-    const lookupDone = new Promise<void>((resolve) => (lookedUp = resolve));
-    repo.getLoop = async (id) => {
-      const snapshot = await getLoop(id);
-      repo.getLoop = getLoop;
-      lookedUp();
-      await paused;
-      return snapshot;
-    };
+    const gate = holdNextLoopSelect();
     const saving = repo.saveDraft(loop.id, { ...definition, description: 'late edit' });
-    await lookupDone;
-    const published = await repo.publish(loop.id);
-    expect(published?.id).toBe(draft.id);
-    release();
+    await gate.selected;
+    try {
+      const published = await new SqliteLoopRepository(competing.db, clock, ids).publish(loop.id);
+      expect(published?.id).toBe(draft.id);
+    } finally {
+      gate.release();
+    }
     const saved = await saving;
 
     expect(saved.id).not.toBe(draft.id);
@@ -414,12 +509,20 @@ describe('SqliteLoopRepository draft and publish interleaving', () => {
   it('publishes a draft once even when two publishes read the same draft', async () => {
     const repo = new SqliteLoopRepository(handle.db, clock, ids);
     const { loop, draft } = await repo.create('local', LoopDefinitionSchema.parse(minimalLoop()));
-    const getLoop = repo.getLoop.bind(repo);
-    const stale = await getLoop(loop.id);
-    expect(await repo.publish(loop.id)).toMatchObject({ id: draft.id });
-    repo.getLoop = () => Promise.resolve(stale);
-    expect(await repo.publish(loop.id)).toBeUndefined();
-    repo.getLoop = getLoop;
+    const gate = holdNextLoopSelect();
+    const first = repo.publish(loop.id);
+    await gate.selected;
+    try {
+      expect(
+        await new SqliteLoopRepository(competing.db, clock, ids).publish(loop.id),
+      ).toMatchObject({ id: draft.id });
+    } finally {
+      gate.release();
+    }
+    expect(await first).toBeUndefined();
+    expect(await repo.listVersions(loop.id)).toEqual([
+      expect.objectContaining({ id: draft.id, status: 'published', version: 1 }),
+    ]);
     expect((await repo.getLoop(loop.id))?.currentVersionId).toBe(draft.id);
   });
 });
@@ -558,6 +661,20 @@ describe('SqliteTimerStore', () => {
     expect((await store.list(run)).map((t) => t.key)).toEqual(['timeout']);
     await store.remove(run);
     expect(await store.list(run)).toEqual([]);
+  });
+});
+
+describe('conditional timer deferral', () => {
+  it('requeues only the fired SQLite row and preserves a concurrent re-arm', async () => {
+    const store = new SqliteTimerStore(handle.db);
+    const at = new Date('2026-10-02T12:00:00.000Z');
+    const retryAt = new Date('2026-10-02T12:00:01.000Z');
+    await store.upsert('r', 'timer@wait', at);
+    await store.defer('r', 'timer@wait', at, retryAt);
+    expect(await store.listDue(at)).toEqual([]);
+    expect(await store.list('r')).toEqual([{ runId: 'r', key: 'timer@wait', at: retryAt }]);
+    await store.defer('r', 'timer@wait', at, new Date(0));
+    expect((await store.list('r'))[0]?.at).toEqual(retryAt);
   });
 });
 

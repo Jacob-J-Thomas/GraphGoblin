@@ -1,6 +1,5 @@
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { historyClock } from './history.js';
 import { canvasPortLabels, newLoopDefinition, validateDraft } from './model.js';
 import { useEditorStore } from './store.js';
 
@@ -264,7 +263,8 @@ describe('decision option edits in editor history', () => {
   });
 
   it('coalesces ID typing and edge rewrites into one undo step', () => {
-    const clock = vi.spyOn(historyClock, 'now').mockReturnValue(100);
+    vi.useFakeTimers({ toFake: ['performance'] });
+    vi.advanceTimersByTime(100);
     try {
       const before = store().definition!;
       const change = { path: 'routes.2.id', kind: 'typing' as const, id: 1 };
@@ -281,7 +281,7 @@ describe('decision option edits in editor history', () => {
       store().redo();
       expect(store().definition).toEqual(after);
     } finally {
-      clock.mockRestore();
+      vi.useRealTimers();
     }
   });
 

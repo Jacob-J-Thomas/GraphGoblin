@@ -1,3 +1,4 @@
+import { showWaitingWorker } from './pwa-helpers.js';
 import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 /**
  * Responsive review (#41): both stored themes, every page and transient state at four widths,
@@ -365,11 +366,13 @@ for (const theme of ['dark', 'light'] as const) {
 
         await page.goto('/app/loops');
         await expect(page.getByText('responsive sweep').first()).toBeVisible();
-        await expect.poll(() => page.evaluate(() => Boolean(window.graphgoblinPwa))).toBe(true);
-        await page.evaluate(() => window.graphgoblinPwa!.simulateUpdate());
-        const toast = page.getByRole('status').filter({ hasText: 'A new version is available' });
-        await expect(toast).toBeVisible();
-        await measure('Update toast', toast);
+        try {
+          const toast = await showWaitingWorker(page, request);
+          await measure('Update toast', toast);
+          await toast.getByRole('button', { name: 'Later' }).click();
+        } finally {
+          await control(request, '/worker/reset');
+        }
 
         // The same malformed Events test route used by screens.capture.ts exercises the real boundary.
         await page.route(

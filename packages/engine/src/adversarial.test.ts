@@ -41,7 +41,9 @@ describe('adversarial engine invariants', () => {
     expect((await e.settle(r.id)).status).toBe('waiting');
     await Promise.all([e.manager.cancel(r.id), e.manager.cancel(r.id)]);
     expect(e.eventTypes(r.id).filter((t) => t === 'run.cancelled')).toHaveLength(1);
-    await expect(e.manager.signal(r.id, 'late')).rejects.toMatchObject({ code: 'INVALID_STATE' });
+    await expect(
+      e.manager.signal(r.id, 'late', (await e.manager.getRun(r.id))?.waiting?.waitId ?? 'unknown'),
+    ).rejects.toMatchObject({ code: 'WAIT_MISMATCH' });
     await expect(e.manager.resume(r.id)).rejects.toMatchObject({ code: 'INVALID_STATE' });
   });
 
@@ -50,8 +52,16 @@ describe('adversarial engine invariants', () => {
     const v = e.publish(inputLoop());
     const r = await e.runToIdle(v.loopId);
     const results = await Promise.allSettled([
-      e.manager.provideInput(r.id, 'A'),
-      e.manager.provideInput(r.id, 'B'),
+      e.manager.provideInput(
+        r.id,
+        (await e.manager.getRun(r.id))?.waiting?.waitId ?? 'unknown',
+        'A',
+      ),
+      e.manager.provideInput(
+        r.id,
+        (await e.manager.getRun(r.id))?.waiting?.waitId ?? 'unknown',
+        'B',
+      ),
     ]);
     await e.settle(r.id);
     expect(results.filter((x) => x.status === 'fulfilled')).toHaveLength(1);
@@ -64,7 +74,11 @@ describe('adversarial engine invariants', () => {
     const v = e.publish(inputLoop());
     const r = await e.runToIdle(v.loopId);
     e.manager.stop();
-    await e.manager.provideInput(r.id, { answer: 42 });
+    await e.manager.provideInput(
+      r.id,
+      (await e.manager.getRun(r.id))?.waiting?.waitId ?? 'unknown',
+      { answer: 42 },
+    );
     const recovered = new RunManager(e.ports, e.settings);
     await recovered.start();
     await recovered.waitForIdle();
@@ -162,7 +176,11 @@ describe('adversarial engine invariants', () => {
       return transition(id, from, changes);
     });
     const r = await e.runToIdle(v.loopId);
-    await e.manager.provideInput(r.id, 'go');
+    await e.manager.provideInput(
+      r.id,
+      (await e.manager.getRun(r.id))?.waiting?.waitId ?? 'unknown',
+      'go',
+    );
     await vi.waitFor(() =>
       expect(e.events(r.id).some((x) => x.type === 'node.finished' && x.nodeId === 'done')).toBe(
         true,
@@ -298,12 +316,20 @@ describe('adversarial engine invariants', () => {
     const child = e.publish(minimalLoop());
     const r = await e.runToIdle(e.publish(waitThenChild('parent', child.loopId)).loopId);
     e.publish(minimalLoop(), { loopId: child.loopId, version: 2 });
-    await e.manager.provideInput(r.id, null);
+    await e.manager.provideInput(
+      r.id,
+      (await e.manager.getRun(r.id))?.waiting?.waitId ?? 'unknown',
+      null,
+    );
     expect((await e.settle(r.id)).status).toBe('succeeded');
     expect((await e.ports.runs.listChildren(r.id))[0]?.versionId).toBe(child.id);
     // A run created after the publish picks up the new version.
     const later = await e.runToIdle(e.loopId('parent'));
-    await e.manager.provideInput(later.id, null);
+    await e.manager.provideInput(
+      later.id,
+      (await e.manager.getRun(later.id))?.waiting?.waitId ?? 'unknown',
+      null,
+    );
     await e.settle(later.id);
     expect((await e.ports.runs.listChildren(later.id))[0]?.versionId).not.toBe(child.id);
   });
@@ -324,7 +350,11 @@ describe('adversarial engine invariants', () => {
     e.manager.stop();
     const recovered = new RunManager(e.ports, e.settings);
     await recovered.start();
-    await recovered.provideInput(root.id, null);
+    await recovered.provideInput(
+      root.id,
+      (await recovered.getRun(root.id))?.waiting?.waitId ?? 'unknown',
+      null,
+    );
     await recovered.waitForIdle();
     expect((await recovered.getRun(root.id))?.status).toBe('succeeded');
     const [mid] = await e.ports.runs.listChildren(root.id);

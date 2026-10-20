@@ -51,7 +51,25 @@ for (const source of [
   'mutate-error',
 ] as const) {
   it(`terminal append survives crash before status: ${source}`, async () => {
-    const e = await createTestEngine();
+    const e = await createTestEngine(
+      {},
+      source === 'invalid-patch'
+        ? {
+            handlers: {
+              ...defaultHandlers(),
+              trigger: {
+                kind: 'trigger',
+                execute: () =>
+                  Promise.resolve({
+                    kind: 'done',
+                    route: 'out',
+                    patch: [{ op: 'replace', path: '/schemaVersion', value: 999 }],
+                  }),
+              },
+            },
+          }
+        : {},
+    );
     let def: LoopDefinitionInput = minimalLoop();
     let code: string | undefined;
     if (source.startsWith('exit'))
@@ -164,11 +182,6 @@ for (const source of [
       code = source === 'harness-uninstalled' ? 'HARNESS_NOT_INSTALLED' : 'INFERENCE_TIMEOUT';
     }
     if (source === 'invalid-patch') {
-      vi.spyOn(defaultHandlers().trigger, 'execute').mockResolvedValue({
-        kind: 'done',
-        route: 'out',
-        patch: [{ op: 'replace', path: '/schemaVersion', value: 999 }],
-      });
       code = 'INTERNAL_ERROR';
     }
     if (source === 'executor-error') {
@@ -214,6 +227,10 @@ for (const source of [
         exitCode: source === 'script' ? 5 : 0,
         stdout: '',
         stderr: '',
+        stdoutBytes: 0,
+        stderrBytes: 0,
+        stdoutOverflow: false,
+        stderrOverflow: false,
         timedOut: source === 'script-timeout',
       });
       def = singleNodeLoop(source, {
@@ -289,6 +306,25 @@ for (const source of [
           : 'failed';
     expect(final.status).toBe(expected);
     if (code) expect(final.failure?.code).toBe(code);
+    if (source === 'invalid-patch') {
+      expect(e.events(r.id)).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ type: 'node.started', nodeId: 'start' }),
+          expect.objectContaining({
+            type: 'run.failed',
+            failure: expect.objectContaining({
+              code: 'INTERNAL_ERROR',
+              nodeId: 'start',
+              resumable: false,
+            }),
+          }),
+        ]),
+      );
+      expect(e.events(r.id).filter((event) => event.type === 'node.finished')).toHaveLength(0);
+      expect(
+        (await e.ports.runs.listRecoveryCandidates()).filter((c) => c.terminal).map((c) => c.id),
+      ).not.toContain(r.id);
+    }
     if (source.startsWith('exit')) expect(final.result).toBe(1);
     expect(e.events(r.id).filter(terminal)).toHaveLength(1);
   });

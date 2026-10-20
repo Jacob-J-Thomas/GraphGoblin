@@ -1,0 +1,91 @@
+{
+  "revision": "02ec16d6034e14cf7683b19619baa5c272be0591",
+  "dataDir": "%TEMP%/gg-c2-qa-upgrade-OnVLCv",
+  "port": 5700,
+  "results": [
+    {
+      "name": "true pre-identity event and snapshot store starts and isolates unreadable run",
+      "result": "pass",
+      "details": {
+        "oldRun": "01M5B7VTMVNTSJY5GMW7F9SVWS",
+        "healthyRun": "01M5B7VTS89H3S2RSCRD5AMM0M",
+        "sqlDamage": "Remove waitId and startedSeq from both run.waiting payload and runs.waiting snapshot while stopped; no conversion",
+        "diagnostics": {
+          "items": [
+            {
+              "runId": "01M5B7VTMVNTSJY5GMW7F9SVWS",
+              "code": "HISTORY_UNREADABLE",
+              "reason": "Stored run 01M5B7VTMVNTSJY5GMW7F9SVWS does not conform to the run record contract"
+            }
+          ],
+          "nextCursor": null
+        },
+        "inspected": {
+          "snapshot": {
+            "status": 500,
+            "json": {
+              "type": "https://graphgoblin.dev/problems/stored-run-invalid",
+              "title": "stored run invalid",
+              "status": 500,
+              "code": "STORED_RUN_INVALID",
+              "detail": "Stored run 01M5B7VTMVNTSJY5GMW7F9SVWS does not conform to the run record contract"
+            },
+            "text": "{\"type\":\"https://graphgoblin.dev/problems/stored-run-invalid\",\"title\":\"stored run invalid\",\"status\":500,\"code\":\"STORED_RUN_INVALID\",\"detail\":\"Stored run 01M5B7VTMVNTSJY5GMW7F9SVWS does not conform to the run record contract\"}"
+          },
+          "/events": {
+            "status": 500,
+            "json": {
+              "type": "https://graphgoblin.dev/problems/stored-run-invalid",
+              "title": "stored run invalid",
+              "status": 500,
+              "code": "STORED_RUN_INVALID",
+              "detail": "Stored run 01M5B7VTMVNTSJY5GMW7F9SVWS does not conform to the run record contract"
+            },
+            "text": "{\"type\":\"https://graphgoblin.dev/problems/stored-run-invalid\",\"title\":\"stored run invalid\",\"status\":500,\"code\":\"STORED_RUN_INVALID\",\"detail\":\"Stored run 01M5B7VTMVNTSJY5GMW7F9SVWS does not conform to the run record contract\"}"
+          },
+          "/thread": {
+            "status": 500,
+            "json": {
+              "type": "https://graphgoblin.dev/problems/stored-run-invalid",
+              "title": "stored run invalid",
+              "status": 500,
+              "code": "STORED_RUN_INVALID",
+              "detail": "Stored run 01M5B7VTMVNTSJY5GMW7F9SVWS does not conform to the run record contract"
+            },
+            "text": "{\"type\":\"https://graphgoblin.dev/problems/stored-run-invalid\",\"title\":\"stored run invalid\",\"status\":500,\"code\":\"STORED_RUN_INVALID\",\"detail\":\"Stored run 01M5B7VTMVNTSJY5GMW7F9SVWS does not conform to the run record contract\"}"
+          }
+        },
+        "answer": {
+          "status": 500,
+          "json": {
+            "type": "https://graphgoblin.dev/problems/stored-run-invalid",
+            "title": "stored run invalid",
+            "status": 500,
+            "code": "STORED_RUN_INVALID",
+            "detail": "Stored run 01M5B7VTMVNTSJY5GMW7F9SVWS does not conform to the run record contract"
+          },
+          "text": "{\"type\":\"https://graphgoblin.dev/problems/stored-run-invalid\",\"title\":\"stored run invalid\",\"status\":500,\"code\":\"STORED_RUN_INVALID\",\"detail\":\"Stored run 01M5B7VTMVNTSJY5GMW7F9SVWS does not conform to the run record contract\"}"
+        },
+        "healthyWaitId": "01M5B7VTS89H3S2RSCRD5AMM0M:5",
+        "healthyResult": "succeeded"
+      }
+    }
+  ],
+  "processes": [
+    {
+      "pid": 45080,
+      "role": "key CLI",
+      "stopped": true
+    },
+    {
+      "pid": 14528,
+      "role": "built API",
+      "stopped": true
+    },
+    {
+      "pid": 15132,
+      "role": "built API",
+      "stopped": true
+    }
+  ]
+}

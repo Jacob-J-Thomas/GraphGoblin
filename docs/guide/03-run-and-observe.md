@@ -101,7 +101,7 @@ Configure [MCP](05-mcp-and-codex-plugin.md), then call `list_loops`, `describe_l
 }
 ```
 
-Pass the returned `runId` to `wait_for_run`. Repeat until `finished` is true; handle input waits with `provide_input`. These starts record `manual.mcp`.
+Pass the returned `runId` to `wait_for_run`. Repeat until `finished` is true; handle input waits with `provide_input` using the observed `waiting.waitId` as `waitId`. These starts record `manual.mcp`.
 
 ## Read the lifecycle
 
@@ -285,6 +285,7 @@ Read `code`, `message`, `nodeId`, `resumable`, and any `details`. After fixing a
 | `EXPRESSION_ERROR`                                                  | Correct JSONata, its input assumptions, or the patch produced by a mapping.                                                                                                |
 | `WAIT_TIMEOUT`                                                      | Arrange the required input or signal sooner, or revise timeout behaviour in a new version.                                                                                 |
 | `HEARTBEAT_EXHAUSTED`                                               | Check the probe and condition; revise beat/deadline limits or exhaustion behaviour if needed.                                                                              |
+| `HTTP_PROBE_BODY_OVERFLOW`                                          | An HTTP heartbeat response exceeded 64 KiB. Narrow the response or use a script probe; no successful beat or partial JSON was recorded.                                    |
 | `MAX_NODE_VISITS`                                                   | A node exceeded the safety cap `maxNodeVisits`. Fix unintended cycles or configure enough visits for intentional gates.                                                    |
 | `RETURN_DELIVERY_FAILED`                                            | Check the destination and signing secret. Current delivery failures use `return.failed` events, rather than this reserved run-failure code; arrange redelivery explicitly. |
 | `EVENT_INVALID`                                                     | Generated event violates a contract bound. Read the failure, correct its source, then start or replay. Successful values are never trimmed.                                |

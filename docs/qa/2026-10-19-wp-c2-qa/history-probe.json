@@ -1,0 +1,262 @@
+{
+  "revision": "02ec16d6034e14cf7683b19619baa5c272be0591",
+  "dataDir": "%TEMP%/gg-c2-qa-native-XMLEf4",
+  "port": 5700,
+  "results": [
+    {
+      "name": "capture actual unreadable-history endpoints and confirm healthy isolation",
+      "result": "pass",
+      "details": {
+        "diagnostics": {
+          "items": [
+            {
+              "runId": "01M5B6K9EXQZMBHN5K0YAJB1RQ",
+              "code": "HISTORY_UNREADABLE",
+              "reason": "Stored run event does not conform: run 01M5B6K9EXQZMBHN5K0YAJB1RQ, seq 6, type run.waiting"
+            },
+            {
+              "runId": "01M5B6K9JF7QF7GASCAK34JY6K",
+              "code": "HISTORY_UNREADABLE",
+              "reason": "Stored run event does not conform: run 01M5B6K9JF7QF7GASCAK34JY6K, seq 6, type run.waiting"
+            }
+          ],
+          "nextCursor": "01M5B6KK7YJQAEJV56B3F1BNE7:0"
+        },
+        "damaged": [
+          {
+            "runId": "01M5B6K9EXQZMBHN5K0YAJB1RQ",
+            "snapshot": {
+              "status": 200,
+              "json": {
+                "id": "01M5B6K9EXQZMBHN5K0YAJB1RQ",
+                "ownerId": "local",
+                "loopId": "01M5B6K9DX3VGW2971B0H5M6Y5",
+                "versionId": "01M5B6K9DXKNPZ05BP6PSES393",
+                "invocationId": "01M5B6K9EX6YKPABCD2HT1NVWP",
+                "status": "waiting",
+                "currentNodeId": "work",
+                "iteration": 1,
+                "waiting": {
+                  "waitId": "01M5B6K9EXQZMBHN5K0YAJB1RQ:5",
+                  "nodeId": "work",
+                  "kind": "timer",
+                  "until": "2026-10-19T23:05:34.706Z",
+                  "startedSeq": 5
+                },
+                "createdAt": "2026-10-19T23:05:26.749Z",
+                "startedAt": "2026-10-19T23:05:26.760Z",
+                "lastEventSeq": 6
+              }
+            },
+            "history": {
+              "status": 500,
+              "json": {
+                "type": "https://graphgoblin.dev/problems/stored-event-invalid",
+                "title": "stored event invalid",
+                "status": 500,
+                "code": "STORED_EVENT_INVALID",
+                "detail": "Stored run event does not conform: run 01M5B6K9EXQZMBHN5K0YAJB1RQ, seq 6, type run.waiting"
+              },
+              "text": "{\"type\":\"https://graphgoblin.dev/problems/stored-event-invalid\",\"title\":\"stored event invalid\",\"status\":500,\"code\":\"STORED_EVENT_INVALID\",\"detail\":\"Stored run event does not conform: run 01M5B6K9EXQZMBHN5K0YAJB1RQ, seq 6, type run.waiting\"}"
+            },
+            "thread": {
+              "status": 200,
+              "json": {
+                "schemaVersion": 1,
+                "run": {
+                  "id": "01M5B6K9EXQZMBHN5K0YAJB1RQ",
+                  "loopId": "01M5B6K9DX3VGW2971B0H5M6Y5",
+                  "versionId": "01M5B6K9DXKNPZ05BP6PSES393",
+                  "iteration": 1
+                },
+                "invocation": {
+                  "id": "01M5B6K9EX6YKPABCD2HT1NVWP",
+                  "source": "manual.api",
+                  "caller": {
+                    "kind": "api-key",
+                    "id": "01M5B6HQNH88KKBTS787W5Q10V"
+                  },
+                  "trigger": {
+                    "nodeId": "start",
+                    "kind": "manual",
+                    "payload": null,
+                    "receivedAt": "2026-10-19T23:05:26.749Z"
+                  }
+                },
+                "messages": [],
+                "vars": {},
+                "artifacts": [],
+                "outputs": {
+                  "start": {
+                    "nodeId": "start",
+                    "value": null,
+                    "at": "2026-10-19T23:05:26.776Z"
+                  }
+                },
+                "lastOutput": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-19T23:05:26.776Z"
+                },
+                "gates": {},
+                "counters": {
+                  "nodeVisits": {
+                    "start": 1,
+                    "work": 1
+                  },
+                  "usage": {
+                    "inputTokens": 0,
+                    "outputTokens": 0,
+                    "cachedInputTokens": 0,
+                    "reasoningOutputTokens": 0
+                  }
+                }
+              },
+              "text": "{\"schemaVersion\":1,\"run\":{\"id\":\"01M5B6K9EXQZMBHN5K0YAJB1RQ\",\"loopId\":\"01M5B6K9DX3VGW2971B0H5M6Y5\",\"versionId\":\"01M5B6K9DXKNPZ05BP6PSES393\",\"iteration\":1},\"invocation\":{\"id\":\"01M5B6K9EX6YKPABCD2HT1NVWP\",\"source\":\"manual.api\",\"caller\":{\"kind\":\"api-key\",\"id\":\"01M5B6HQNH88KKBTS787W5Q10V\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"manual\",\"payload\":null,\"receivedAt\":\"2026-10-19T23:05:26.749Z\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{\"start\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-10-19T23:05:26.776Z\"}},\"lastOutput\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-10-19T23:05:26.776Z\"},\"gates\":{},\"counters\":{\"nodeVisits\":{\"start\":1,\"work\":1},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}"
+            },
+            "answer": {
+              "status": 409,
+              "json": {
+                "type": "https://graphgoblin.dev/problems/wait-mismatch",
+                "title": "wait mismatch",
+                "status": 409,
+                "code": "WAIT_MISMATCH",
+                "detail": "The observed input wait is no longer active"
+              },
+              "text": "{\"type\":\"https://graphgoblin.dev/problems/wait-mismatch\",\"title\":\"wait mismatch\",\"status\":409,\"code\":\"WAIT_MISMATCH\",\"detail\":\"The observed input wait is no longer active\"}"
+            }
+          },
+          {
+            "runId": "01M5B6K9JF7QF7GASCAK34JY6K",
+            "snapshot": {
+              "status": 200,
+              "json": {
+                "id": "01M5B6K9JF7QF7GASCAK34JY6K",
+                "ownerId": "local",
+                "loopId": "01M5B6K9HPZ8QXSZNF4SJX3VPZ",
+                "versionId": "01M5B6K9HPS8SF1E2Q3KZ1B3VY",
+                "invocationId": "01M5B6K9JFQ9M0QFZFKAMFH2SN",
+                "status": "waiting",
+                "currentNodeId": "work",
+                "iteration": 1,
+                "waiting": {
+                  "waitId": "01M5B6K9JF7QF7GASCAK34JY6K:5",
+                  "nodeId": "work",
+                  "kind": "input",
+                  "prompt": "Old history",
+                  "startedSeq": 5
+                },
+                "createdAt": "2026-10-19T23:05:26.863Z",
+                "startedAt": "2026-10-19T23:05:26.871Z",
+                "lastEventSeq": 6
+              }
+            },
+            "history": {
+              "status": 500,
+              "json": {
+                "type": "https://graphgoblin.dev/problems/stored-event-invalid",
+                "title": "stored event invalid",
+                "status": 500,
+                "code": "STORED_EVENT_INVALID",
+                "detail": "Stored run event does not conform: run 01M5B6K9JF7QF7GASCAK34JY6K, seq 6, type run.waiting"
+              },
+              "text": "{\"type\":\"https://graphgoblin.dev/problems/stored-event-invalid\",\"title\":\"stored event invalid\",\"status\":500,\"code\":\"STORED_EVENT_INVALID\",\"detail\":\"Stored run event does not conform: run 01M5B6K9JF7QF7GASCAK34JY6K, seq 6, type run.waiting\"}"
+            },
+            "thread": {
+              "status": 200,
+              "json": {
+                "schemaVersion": 1,
+                "run": {
+                  "id": "01M5B6K9JF7QF7GASCAK34JY6K",
+                  "loopId": "01M5B6K9HPZ8QXSZNF4SJX3VPZ",
+                  "versionId": "01M5B6K9HPS8SF1E2Q3KZ1B3VY",
+                  "iteration": 1
+                },
+                "invocation": {
+                  "id": "01M5B6K9JFQ9M0QFZFKAMFH2SN",
+                  "source": "manual.api",
+                  "caller": {
+                    "kind": "api-key",
+                    "id": "01M5B6HQNH88KKBTS787W5Q10V"
+                  },
+                  "trigger": {
+                    "nodeId": "start",
+                    "kind": "manual",
+                    "payload": null,
+                    "receivedAt": "2026-10-19T23:05:26.863Z"
+                  }
+                },
+                "messages": [],
+                "vars": {},
+                "artifacts": [],
+                "outputs": {
+                  "start": {
+                    "nodeId": "start",
+                    "value": null,
+                    "at": "2026-10-19T23:05:26.885Z"
+                  }
+                },
+                "lastOutput": {
+                  "nodeId": "start",
+                  "value": null,
+                  "at": "2026-10-19T23:05:26.885Z"
+                },
+                "gates": {},
+                "counters": {
+                  "nodeVisits": {
+                    "start": 1,
+                    "work": 1
+                  },
+                  "usage": {
+                    "inputTokens": 0,
+                    "outputTokens": 0,
+                    "cachedInputTokens": 0,
+                    "reasoningOutputTokens": 0
+                  }
+                }
+              },
+              "text": "{\"schemaVersion\":1,\"run\":{\"id\":\"01M5B6K9JF7QF7GASCAK34JY6K\",\"loopId\":\"01M5B6K9HPZ8QXSZNF4SJX3VPZ\",\"versionId\":\"01M5B6K9HPS8SF1E2Q3KZ1B3VY\",\"iteration\":1},\"invocation\":{\"id\":\"01M5B6K9JFQ9M0QFZFKAMFH2SN\",\"source\":\"manual.api\",\"caller\":{\"kind\":\"api-key\",\"id\":\"01M5B6HQNH88KKBTS787W5Q10V\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"manual\",\"payload\":null,\"receivedAt\":\"2026-10-19T23:05:26.863Z\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{\"start\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-10-19T23:05:26.885Z\"}},\"lastOutput\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-10-19T23:05:26.885Z\"},\"gates\":{},\"counters\":{\"nodeVisits\":{\"start\":1,\"work\":1},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}"
+            },
+            "answer": {
+              "status": 500,
+              "json": {
+                "type": "https://graphgoblin.dev/problems/stored-event-invalid",
+                "title": "stored event invalid",
+                "status": 500,
+                "code": "STORED_EVENT_INVALID",
+                "detail": "Stored run event does not conform: run 01M5B6K9JF7QF7GASCAK34JY6K, seq 6, type run.waiting"
+              },
+              "text": "{\"type\":\"https://graphgoblin.dev/problems/stored-event-invalid\",\"title\":\"stored event invalid\",\"status\":500,\"code\":\"STORED_EVENT_INVALID\",\"detail\":\"Stored run event does not conform: run 01M5B6K9JF7QF7GASCAK34JY6K, seq 6, type run.waiting\"}"
+            }
+          }
+        ],
+        "damagedTimerRows": 0,
+        "repeatedTimerLogIncrease": 0,
+        "healthyTimerRun": "01M5B6K9NWXK8MGGB0CJAEKVKE",
+        "healthyTimerWakes": 1,
+        "healthyTimerOriginalWait": {
+          "waitId": "01M5B6K9NWXK8MGGB0CJAEKVKE:5",
+          "nodeId": "work",
+          "kind": "timer",
+          "until": "2026-10-19T23:05:34.706Z",
+          "startedSeq": 5
+        },
+        "retainedInputRun": "01M5B6K9S7XT94NQW2Z3V6NF1R",
+        "retainedWaitId": "01M5B6K9S7XT94NQW2Z3V6NF1R:5",
+        "healthyAnswerStatus": 200
+      }
+    }
+  ],
+  "processes": [
+    {
+      "pid": 33340,
+      "role": "key CLI",
+      "stopped": true
+    },
+    {
+      "pid": 43880,
+      "role": "built API",
+      "stopped": true
+    }
+  ]
+}

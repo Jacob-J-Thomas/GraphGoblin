@@ -1,4 +1,5 @@
 import type { HttpProbePort, ProbeRequest, ProbeResponse } from '@graphgoblin/engine';
+import { PROBE_MAX_BODY_BYTES, ProbeBodyOverflowError } from '@graphgoblin/engine';
 
 export type FetchLike = (input: string, init: RequestInit) => Promise<Response>;
 
@@ -20,12 +21,60 @@ export class HttpProbeError extends Error {
   }
 }
 
+/** Platform fetch yields decompressed bytes. Bound them before allocating text or parsing JSON. */
+async function boundedBody(response: Response, signal: AbortSignal): Promise<string> {
+  const reader = response.body?.getReader();
+  const onAbort = (): void => {
+    void reader?.cancel().catch(() => undefined);
+  };
+  signal.addEventListener('abort', onAbort, { once: true });
+  try {
+    signal.throwIfAborted();
+    if (!reader) return '';
+    const length = response.headers.get('content-length');
+    const encoding = response.headers.get('content-encoding');
+    // Encoded Content-Length counts wire bytes; the stream budget counts decompressed bytes.
+    if (
+      (encoding === null || encoding.trim().toLowerCase() === 'identity') &&
+      length !== null &&
+      /^\d+$/.test(length) &&
+      Number(length) > PROBE_MAX_BODY_BYTES
+    )
+      throw new ProbeBodyOverflowError();
+    // One fixed buffer also bounds bookkeeping for streams of tiny chunks.
+    const bytes = new Uint8Array(PROBE_MAX_BODY_BYTES);
+    let size = 0;
+    while (true) {
+      const part = await reader.read();
+      signal.throwIfAborted();
+      if (part.done) break;
+      const value: unknown = part.value;
+      if (!(value instanceof Uint8Array)) throw new HttpProbeError();
+      if (value.byteLength > bytes.byteLength - size) throw new ProbeBodyOverflowError();
+      bytes.set(value, size);
+      size += value.byteLength;
+    }
+    return new TextDecoder().decode(bytes.subarray(0, size));
+  } finally {
+    signal.removeEventListener('abort', onAbort);
+    if (reader) {
+      try {
+        await reader.cancel();
+      } catch {
+        /* Preserve the safe primary failure. */
+      }
+      reader.releaseLock();
+    }
+  }
+}
+
 /** HTTP probe over platform fetch. Bodies remain text/JSON; credential response headers are omitted. */
 export class HttpProbes implements HttpProbePort {
   constructor(private readonly fetchImpl: FetchLike = (input, init) => fetch(input, init)) {}
 
   async fetch(request: ProbeRequest, signal: AbortSignal): Promise<ProbeResponse> {
     const timeout = AbortSignal.timeout(request.timeoutMs);
+    const combined = AbortSignal.any([signal, timeout]);
     try {
       const response = await this.fetchImpl(request.url, {
         method: request.method,
@@ -33,10 +82,13 @@ export class HttpProbes implements HttpProbePort {
         ...(request.body !== undefined && request.method !== 'GET' && request.method !== 'HEAD'
           ? { body: request.body }
           : {}),
-        signal: AbortSignal.any([signal, timeout]),
+        signal: combined,
         redirect: 'follow',
       });
-      const body = request.method === 'HEAD' ? '' : await response.text();
+      // HEAD's Content-Length describes the representation, not a response body.
+      let body = '';
+      if (request.method === 'HEAD') await response.body?.cancel();
+      else body = await boundedBody(response, combined);
       const headers: Record<string, string> = {};
       response.headers.forEach((value, key) => {
         const name = key.toLowerCase();
@@ -51,9 +103,10 @@ export class HttpProbes implements HttpProbePort {
         }
       }
       return { status: response.status, headers, body, ...(json !== undefined ? { json } : {}) };
-    } catch {
+    } catch (error) {
       if (signal.aborted) throw new DOMException('HTTP probe aborted', 'AbortError');
       if (timeout.aborted) throw new DOMException('HTTP probe timed out', 'TimeoutError');
+      if (error instanceof ProbeBodyOverflowError) throw error;
       throw new HttpProbeError();
     }
   }

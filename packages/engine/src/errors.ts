@@ -17,6 +17,15 @@ export class ArtifactStoreError extends Error {
   }
 }
 
+/** Safe, transport-independent failure: an HTTP probe body exceeded its byte budget. */
+export class ProbeBodyOverflowError extends Error {
+  readonly code = 'HTTP_PROBE_BODY_OVERFLOW';
+  constructor() {
+    super('HTTP probe body exceeds byte limit');
+    this.name = 'ProbeBodyOverflowError';
+  }
+}
+
 /**
  * Thrown by handlers and the executor for the "unavoidable" failure class in the resiliency
  * model (docs/05-execution-engine.md). Everything else that escapes a handler is a bug and is
