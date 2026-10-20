@@ -43,6 +43,7 @@ import {
 } from '@graphgoblin/domain';
 import {
   AppendConflictError,
+  ChildCancelledError,
   RunFailureError,
   UnreadableRunHistoryError,
   describeError,
@@ -63,6 +64,7 @@ import type { EngineSettings, EnginePorts, EventDraft, RunRecordChanges } from '
 import { createInitialThread, type InitialThreadInput } from './thread.js';
 import { bindClassifiers, freezeDraft, pinnedFields } from './definition-pin.js';
 import { boundedFailure } from './event-validation.js';
+import { assertCurrentDefinition, definitionUpgradeRequired } from './stored-definition.js';
 
 /** API-facing errors: bad requests against the run manager, never engine bugs. */
 export class EngineRequestError extends Error {
@@ -886,6 +888,7 @@ export class RunManager {
         `node ${input.nodeId} is not in loop version ${source.versionId}`,
       );
     }
+    assertCurrentDefinition(version);
     const initial = await this.ports.runs.getInitialThread(source.id);
     if (!initial) {
       throw new EngineRequestError('INVALID_STATE', `run ${source.id} has no initial thread`);
@@ -1236,13 +1239,15 @@ export class RunManager {
    * one (`waitId`, when given), and nothing woke it yet. That conditional append is the
    * compare-and-set: of concurrent wakes exactly one is recorded, payload and all. The status then
    * moves from waiting to running; if the process dies in between, recovery finds the durable wake
-   * and completes the move.
+   * and completes the move. A child wake (`childRunId`) is accepted only by a park of kind `child`
+   * on that same child run.
    */
   private async wake(
     runId: string,
     wake: WakeInfo,
     waitId?: string,
     preceding: EventDraft[] = [],
+    childRunId?: string,
   ): Promise<RunRecord> {
     const mismatch = () =>
       new EngineRequestError(
@@ -1282,7 +1287,9 @@ export class RunManager {
       if (
         !parked ||
         parked.wait.waitId !== run.waiting.waitId ||
-        (waitId !== undefined && parked.wait.waitId !== waitId)
+        (waitId !== undefined && parked.wait.waitId !== waitId) ||
+        (wake.reason === 'child' &&
+          (parked.wait.kind !== 'child' || parked.wait.childRunId !== childRunId))
       ) {
         throw mismatch();
       }
@@ -1347,6 +1354,13 @@ export class RunManager {
         message: `loop version ${run.versionId} not found`,
         resumable: false,
       });
+      return;
+    }
+    // A run admitted before ADR-0044 can be pinned to a definition whose exit publishes an Event:
+    // fail it explicitly before any node runs, instead of running to an exit it cannot deliver.
+    const refused = definitionUpgradeRequired(version);
+    if (refused) {
+      await this.failRun(runId, refused.toFailure());
       return;
     }
     const def = version.definition;
@@ -1454,6 +1468,7 @@ export class RunManager {
       },
       startChild: (request) => this.startChild(run, request, pinnedSubloops(events)),
       childOutcome: (childRunId) => this.childOutcome(childRunId),
+      resumeChild: (childRunId) => this.resumeChild(run, childRunId),
       events: () => Promise.resolve(events),
       depth: () => this.depthOf(run),
       workingDirectory: () => this.workingDirectory(run, def, thread),
@@ -1538,6 +1553,10 @@ export class RunManager {
         };
         result = await (handler as { execute(c: NodeContext): Promise<NodeResult> }).execute(ctx);
       } catch (error) {
+        if (error instanceof ChildCancelledError) {
+          await this.cancelForChild(runId, error.childRunId);
+          return;
+        }
         const terminationUnconfirmed =
           error instanceof RunFailureError && error.code === 'HARNESS_TERMINATION_UNCONFIRMED';
         if (!terminationUnconfirmed && (isAbortError(error) || controller.signal.aborted)) {
@@ -1848,15 +1867,6 @@ export class RunManager {
             target = channel.url;
             break;
           }
-          case 'event':
-            await this.ports.delivery.publishEvent(channel.eventType, {
-              runId: run.id,
-              loopId: run.loopId,
-              outcome: result.outcome,
-              result: payload,
-            });
-            target = channel.eventType;
-            break;
         }
         await append({ type: 'return.delivered', channel, ...(target ? { target } : {}) });
       } catch (error) {
@@ -1907,6 +1917,11 @@ export class RunManager {
     return updated;
   }
 
+  /**
+   * Wake the parent parked on this finished child. The wake is bound to the park this read
+   * observed (its `waitId` and child run), so a notification delayed past that park can never
+   * answer a later one: another wait, or the next visit of the same subloop node.
+   */
   private async notifyParent(
     run: RunRecord,
     status: RunStatus,
@@ -1914,22 +1929,28 @@ export class RunManager {
   ): Promise<void> {
     if (!run.parentRunId) return;
     const parent = await this.ports.runs.get(run.parentRunId);
+    const awaited = parent?.waiting;
     if (
       !parent ||
       parent.status !== 'waiting' ||
-      parent.waiting?.kind !== 'child' ||
-      parent.waiting.childRunId !== run.id
+      awaited?.kind !== 'child' ||
+      awaited.childRunId !== run.id
     )
       return;
     try {
-      await this.wake(parent.id, {
-        reason: 'child',
-        payload: { childRunId: run.id, status, outcome: outcome ?? null },
-      });
+      await this.wake(
+        parent.id,
+        { reason: 'child', payload: { childRunId: run.id, status, outcome: outcome ?? null } },
+        awaited.waitId,
+        [],
+        run.id,
+      );
     } catch (error) {
       // The child's own completion and the parent's post-park check can race. The wake is a
-      // compare-and-set, so the loser finds the parent already running and has nothing to do.
-      if (!(error instanceof EngineRequestError && error.code === 'INVALID_STATE')) throw error;
+      // compare-and-set on the observed park, so the loser (or a notification delayed past that
+      // park) finds it answered, gone or paused and has nothing to do: a paused parent is
+      // reconciled with its child when it resumes.
+      if (!(error instanceof EngineRequestError)) throw error;
     }
   }
 
@@ -2038,8 +2059,34 @@ export class RunManager {
       status: child.status,
       ...(child.outcome ? { outcome: child.outcome } : {}),
       ...(child.result !== undefined ? { result: child.result } : {}),
+      ...(child.failure ? { failure: child.failure } : {}),
       ...(thread ? { thread } : {}),
     };
+  }
+
+  /**
+   * An explicit resume of `parent` resumes its failed child in place (#251). A child that is no
+   * longer in a resumable failure (resumed or finished meanwhile) is left as it is.
+   */
+  private async resumeChild(parent: RunRecord, childRunId: string): Promise<ChildOutcome> {
+    try {
+      await this.resume(childRunId, { kind: 'run', id: parent.id });
+    } catch (error) {
+      if (!(error instanceof EngineRequestError)) throw error;
+    }
+    return this.childOutcome(childRunId);
+  }
+
+  /**
+   * The child this run awaited was cancelled: cancel this run too, as cancelling inline work
+   * cancels the run doing it (#251). The request is recorded as the child's.
+   */
+  private async cancelForChild(runId: string, childRunId: string): Promise<void> {
+    if (await this.ports.runs.claimCancel(runId, ACTIVE_STATUSES, this.now()))
+      await this.ports.events.append(runId, [
+        { type: 'run.cancel_requested', actor: { kind: 'run', id: childRunId } },
+      ]);
+    await this.finalizeCancel(runId);
   }
 
   private async depthOf(run: RunRecord): Promise<number> {
@@ -2114,6 +2161,8 @@ export class RunManager {
     if (version.status !== 'published' && !input.allowDraft) {
       throw new EngineRequestError('VERSION_NOT_PUBLISHED', `version ${version.id} is a draft`);
     }
+    // A definition stored before ADR-0044 can still publish an Event: refuse it at admission.
+    assertCurrentDefinition(version);
     return version;
   }
 

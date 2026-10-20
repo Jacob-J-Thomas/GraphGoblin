@@ -9,8 +9,10 @@ import {
   type LoopDefinition,
 } from '@graphgoblin/contracts';
 import {
+  retiredEventDestinations,
   stableStringify,
   upgradeLoopCurrent,
+  withoutRetiredEventDestinations,
   upgradeDefaultsV1,
   validateLoop,
   type CurrentUpgradeIssue,
@@ -168,13 +170,23 @@ export async function guardDatabaseUpgrade(
   if (!options.skipDefinitions)
     for await (const batch of tableBatches(client, 'loop_versions'))
       for (const row of batch) {
+        let definition: unknown;
         try {
-          LoopDefinitionSchema.parse(json(row.definition));
+          definition = json(row.definition);
         } catch {
+          definition = undefined;
+        }
+        // ADR-0044: an exit that still publishes an Event is a per-loop condition, refused with
+        // LOOP_UPGRADE_REQUIRED wherever that definition is served or run. It does not stop the
+        // store: a definition current apart from such destinations passes this check unchanged.
+        const current =
+          LoopDefinitionSchema.safeParse(definition).success ||
+          (retiredEventDestinations(definition).length > 0 &&
+            LoopDefinitionSchema.safeParse(withoutRetiredEventDestinations(definition)).success);
+        if (!current)
           throw new DatabaseUpgradeRequiredError(
             'A stored loop version is not strict current format',
           );
-        }
       }
   if (names.includes('settings')) {
     for (const row of await rows(client, 'SELECT key, value FROM settings')) {

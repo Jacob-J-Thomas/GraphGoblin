@@ -584,6 +584,31 @@ describe('RunInspectorPage', () => {
     );
     expect(await screen.findByText(/stream error/)).toBeInTheDocument();
     expect(screen.getByText('The thread is not available yet.')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'failed child run' })).toBeNull();
+  });
+
+  it('links a subloop failure to the child run that failed (#251)', async () => {
+    const api = new FakeApi();
+    const child = api.addRun({
+      status: 'failed',
+      failure: { code: 'SCRIPT_EXIT_CODE', message: 'exit 3', resumable: true, nodeId: 'work' },
+    });
+    const run = api.addRun({
+      status: 'failed',
+      failure: {
+        code: 'SCRIPT_EXIT_CODE',
+        message: `subloop child ${child.id} failed: exit 3`,
+        resumable: true,
+        nodeId: 'sub',
+        details: { childRunId: child.id, childNodeId: 'work' },
+      },
+    });
+    renderApp(`/runs/${run.id}`, api);
+    expect(await screen.findByText('Failed: SCRIPT_EXIT_CODE')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'failed child run' })).toHaveAttribute(
+      'href',
+      `/runs/${child.id}`,
+    );
   });
 
   it.each(['succeeded', 'exhausted'] as const)(

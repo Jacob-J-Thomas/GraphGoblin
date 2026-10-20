@@ -720,7 +720,7 @@ describe('handler edge cases', () => {
     expect((await engine.manager.getThread(rawRun.id))?.lastOutput?.value).toBe('not json');
   });
 
-  it('subloop: exclusions, fresh injections, default custom patches, and null results', async () => {
+  it('subloop: exclusions, fresh injections, default custom patches, and absent results', async () => {
     const engine = await createTestEngine();
     const child = engine.publish({
       schemaVersion: CURRENT_DEFINITION_FORMAT,
@@ -805,12 +805,13 @@ describe('handler edge cases', () => {
     expect(cdRun.status).toBe('succeeded');
     expect((cdRun.result as { last: unknown }).last).toBeNull();
 
+    // A child without output passes none: the result variable is absent, not null (#242).
     const silentChild = engine.publish(minimalLoop(), { loopId: engine.loopId('silent-child') });
-    const nullResult = engine.publish(
+    const absentResult = engine.publish(
       parent('nr', { loopRef: { loopId: silentChild.loopId }, output: { resultTo: { var: 'r' } } }),
     );
-    const nrRun = await engine.runToIdle(nullResult.loopId);
-    expect((nrRun.result as { vars: Record<string, unknown> }).vars['r']).toBeNull();
+    const nrRun = await engine.runToIdle(absentResult.loopId);
+    expect((nrRun.result as { vars: Record<string, unknown> }).vars).not.toHaveProperty('r');
   });
 });
 

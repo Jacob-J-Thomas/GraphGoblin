@@ -560,10 +560,18 @@ describe('subloop node', () => {
     selfLoop.name = 'self';
     engine.publish(selfLoop, { loopId: selfId });
     const deep = await engine.runToIdle(selfId);
-    expect(deep.status).toBe('succeeded'); // the innermost child failed with depth exceeded; parents see a failed child result
-    const all = [...engine.ports.runs.runs.values()];
-    const failedChild = all.find((r) => r.failure?.code === 'SUBLOOP_DEPTH_EXCEEDED');
-    expect(failedChild?.failure?.resumable).toBe(false);
+    // The innermost child failed with depth exceeded; as with an inline failure, every parent
+    // fails with it, non-resumably, rather than continuing on a failed child result (#251, G12).
+    expect(deep.status).toBe('failed');
+    expect(deep.failure).toMatchObject({
+      code: 'SUBLOOP_DEPTH_EXCEEDED',
+      resumable: false,
+      nodeId: 'sub',
+    });
+    const all = [...engine.ports.runs.runs.values()].filter((r) => r.loopId === selfId);
+    expect(all).toHaveLength(3);
+    for (const run of all)
+      expect(run.failure).toMatchObject({ code: 'SUBLOOP_DEPTH_EXCEEDED', resumable: false });
 
     const waitingChild = engine.publish(
       singleNodeLoop('wchild', {
@@ -587,7 +595,7 @@ describe('subloop node', () => {
     expect((await engine.ports.runs.get(run.id))?.status).toBe('cancelled');
   });
 
-  it('a cancelled or failed child wakes the parent with its status', async () => {
+  it('a cancelled child cancels the parent, and a failed child fails it (#251)', async () => {
     const engine = await createTestEngine();
     const waitingChild = engine.publish(
       singleNodeLoop('wc', {
@@ -601,8 +609,29 @@ describe('subloop node', () => {
     const run = await engine.runToIdle(parent.loopId);
     const child = (await engine.ports.runs.listChildren(run.id))[0]!;
     await engine.manager.cancel(child.id);
-    const done = await engine.settle(run.id);
-    expect(done.status).toBe('succeeded');
-    expect((done.result as { last: { status: string } }).last.status).toBe('cancelled');
+    const cancelled = await engine.settle(run.id);
+    expect(cancelled.status).toBe('cancelled');
+    expect(cancelled.result).toBeUndefined();
+
+    const failingChild = engine.publish(
+      singleNodeLoop('fc', {
+        id: 'w',
+        kind: 'wait',
+        label: 'W',
+        config: { mode: 'input', prompt: 'p', timeoutSeconds: 1, onTimeout: 'fail-run' },
+      }),
+      { loopId: engine.loopId('fc') },
+    );
+    const second = await engine.runToIdle(
+      engine.publish(parentLoop({}, failingChild.loopId), { loopId: engine.loopId('fp') }).loopId,
+    );
+    const timedOut = (await engine.ports.runs.listChildren(second.id))[0]!;
+    await engine.ports.timers.fire(timedOut.id, 'timeout');
+    const failed = await engine.settle(second.id);
+    expect((await engine.ports.runs.get(timedOut.id))?.failure?.code).toBe('WAIT_TIMEOUT');
+    expect(failed).toMatchObject({
+      status: 'failed',
+      failure: { code: 'WAIT_TIMEOUT', resumable: true, nodeId: 'sub' },
+    });
   });
 });

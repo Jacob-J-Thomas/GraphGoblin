@@ -134,7 +134,7 @@ describe('loop and run route branches', () => {
     });
   });
 
-  it('starts runs with every optional body field, signals without a payload, and delivers event return channels', async () => {
+  it('starts runs with every optional body field, signals without a payload, and delivers caller return defaults', async () => {
     const id = await t.publishLoop(returnLoop);
     const version = await t.container.repos.loops.getLatestPublished(id);
     const started = await t.app.inject({
@@ -143,7 +143,7 @@ describe('loop and run route branches', () => {
       payload: {
         triggerNodeId: 'start',
         versionId: version!.id,
-        return: [{ kind: 'event', eventType: 'loop-done' }],
+        return: [{ kind: 'log' }],
       },
     });
     expect(started.statusCode).toBe(202);
@@ -165,16 +165,14 @@ describe('loop and run route branches', () => {
     });
     await t.idle();
     expect((await t.app.inject(`/runs/${runId}`)).json<RunRecord>().status).toBe('succeeded');
-    const events = (await t.app.inject('/events')).json<{
-      items: { type: string; payload: unknown }[];
-    }>();
-    expect(events.items).toEqual([
-      expect.objectContaining({
-        type: 'loop-done',
-        ownerId: 'local',
-        payload: expect.objectContaining({ runId, outcome: 'success', result: { answer: 42 } }),
-      }),
-    ]);
+    const delivered = (await t.app.inject(`/runs/${runId}/events`)).json<{ items: RunEvent[] }>();
+    expect(
+      delivered.items.flatMap((event) =>
+        event.type === 'return.delivered' ? [event.channel.kind] : [],
+      ),
+    ).toEqual(['caller', 'log']);
+    // Returns never publish an Event (#242).
+    expect((await t.app.inject('/events')).json<{ items: unknown[] }>().items).toEqual([]);
 
     await t.app.inject({
       method: 'PUT',

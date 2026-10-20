@@ -15,9 +15,9 @@ AI engineers building repeatable agentic processes. Software-delivery loops such
 | Arguments             | The trigger envelope that starts a run                                     |
 | Local variables       | The context thread, owned by the run                                       |
 | Body                  | The graph of nodes between trigger and exit                                |
-| Nested call           | A subloop node, which executes a child run                                 |
+| Nested call           | A subloop node, which executes and awaits a child run                      |
 | Return value          | The exit node's return mapping                                             |
-| Where the return goes | Return channels: the caller, a webhook, a file, an internal event, the log |
+| Where the return goes | Return channels: the caller or awaiting parent, a webhook, a file, the log |
 | Side effects          | Changes a harness or script makes to a workspace                           |
 
 Loops must not rely only on side effects. A loop that produces something declares what it returns and where that goes, and the caller can read it.
