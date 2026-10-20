@@ -43,6 +43,23 @@ function ChildRunDetails({ runId }: { runId: string }) {
   );
 }
 
+/** A subloop failure is the failure of a child run (#251); its details name that run. */
+function FailedChildLink({ details }: { details: unknown }) {
+  const childRunId =
+    typeof details === 'object' && details !== null && 'childRunId' in details
+      ? details.childRunId
+      : undefined;
+  if (typeof childRunId !== 'string') return null;
+  return (
+    <>
+      {' '}
+      <Link to={`/runs/${childRunId}`} className={META_LINK}>
+        failed child run
+      </Link>
+    </>
+  );
+}
+
 /**
  * One run: its status and controls, failure or result, the waiting-for-input form, then the
  * timeline beside the thread at the chosen event (with that event's patch) and node progress.
@@ -113,6 +130,7 @@ export function RunInspectorPage() {
               <Alert title={`Failed: ${run.failure.code}`}>
                 {run.failure.message}
                 {run.failure.resumable ? ' (resumable)' : ''}
+                <FailedChildLink details={run.failure.details} />
               </Alert>
             ) : null}
             {latestExit ? (

@@ -158,19 +158,20 @@ describe('HttpWebhookDelivery', () => {
 
   it('composes the return-delivery port', async () => {
     const logger = new CapturingLogger();
-    const events: { eventType: string; payload: unknown }[] = [];
+    const webhooks: { url: string; payload: unknown }[] = [];
     const port = createReturnDelivery({
-      webhooks: { webhook: () => Promise.resolve() },
-      publishEvent: (eventType, payload) => {
-        events.push({ eventType, payload });
-        return Promise.resolve();
+      webhooks: {
+        webhook: (url, payload) => {
+          webhooks.push({ url, payload });
+          return Promise.resolve();
+        },
       },
       logger,
     });
-    await port.webhook('http://x', {}, undefined);
-    await port.publishEvent('done', { a: 1 });
+    await port.webhook('http://x', { a: 1 }, undefined);
     port.log('run-1', { b: 2 });
-    expect(events).toEqual([{ eventType: 'done', payload: { a: 1 } }]);
+    expect(webhooks).toEqual([{ url: 'http://x', payload: { a: 1 } }]);
+    expect(port).not.toHaveProperty('publishEvent');
     expect(logger.lines[0]).toMatchObject({
       level: 'info',
       msg: 'loop returned',

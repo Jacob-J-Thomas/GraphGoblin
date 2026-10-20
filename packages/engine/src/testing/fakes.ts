@@ -755,16 +755,11 @@ export class FakeProbes implements HttpProbePort {
 
 export class FakeDelivery implements ReturnDeliveryPort {
   readonly webhooks: { url: string; payload: JsonValue; secret?: string }[] = [];
-  readonly events: { eventType: string; payload: JsonValue }[] = [];
   readonly logged: { runId: string; payload: JsonValue }[] = [];
   failWebhooks = false;
   webhook(url: string, payload: JsonValue, secret?: string): Promise<void> {
     if (this.failWebhooks) return Promise.reject(new Error('webhook endpoint returned 503'));
     this.webhooks.push({ url, payload, ...(secret ? { secret } : {}) });
-    return Promise.resolve();
-  }
-  publishEvent(eventType: string, payload: JsonValue): Promise<void> {
-    this.events.push({ eventType, payload });
     return Promise.resolve();
   }
   log(runId: string, payload: JsonValue): void {

@@ -132,7 +132,7 @@ with a fallback. Pointers require JSON mode, allow the empty root pointer, RFC 6
 or nonscalar values use fallback. Ambiguous headers return 400 `EVENT_TYPE_AMBIGUOUS`;
 control/overlong scalar metadata returns 422 `EVENT_TYPE_INVALID`. Event names and fallbacks must
 be nonblank, control-free and at most 128 characters. This metadata is recorded on the invocation;
-it does not publish to the Event bus.
+it does not publish an Event.
 
 Authentication, body and extraction changes use the normal editor focus, validation and undo.
 JSON remains strict, nonempty UTF-8 JSON; literal `null` is valid. The flat signing fields are no
@@ -291,7 +291,7 @@ With these presets, a ping or unmatched payload starts a visible run that ends q
 
 Events shows delivery state and retry attempts. For either signing recipe, the 202 follows a saved claim without waiting for run creation. A transient admission failure retains one allocated run; the background sweep retries it without needing GitHub to redeliver. Pending admissions pin the loop and its referenced subloops. Permanent failures remain visible with a safe failure code. A repeated completed receipt returns 202 `{accepted:true}`. An unconfirmed save or unavailable signing secret returns 503.
 
-## Receive events and connect loops
+## Receive events
 
 Configure an event trigger to match a type and optionally deduplicate its payload; add a downstream decision for payload checks:
 
@@ -329,9 +329,7 @@ Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:4747/events' `
 
 Matching published triggers start runs. The response includes `runIds` and `duplicate`. A repeated event type plus request dedupe key returns the earlier event without starting more runs; this dedupe persists without a replay-window expiry. A node's own dedupe expression separately suppresses keys already used by that trigger.
 
-To emit from another loop, add an `event` return channel to its exit. Exit-generated payloads wrap the mapped value under `result`, alongside `runId`, `loopId`, and `outcome`; use those fields in the receiving trigger's dedupe expression and downstream decision checks.
-
-The self-trigger guard skips any loop already in the emitting run's chain, including parent subloops and earlier event callers. The chain stops at eight runs. The event remains recorded and skipped triggers produce warnings. An API-submitted event starts a fresh chain.
+Events come from outside GraphGoblin. Loops do not publish Events to one another: to run another loop and use its result, call it with a Subloop node. The parent waits for the child and receives its configured output (see [Run and observe](03-run-and-observe.md#read-returns-and-child-runs)).
 
 Open **Events** for each stored event's received time, type, source, dedupe key, payload, and **Started runs**, which links to every run the event started (or says none). The API listing returns the same `source` and `runIds`:
 
