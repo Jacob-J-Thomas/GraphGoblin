@@ -1,0 +1,21 @@
+import assert from 'node:assert/strict';
+import { readFile, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { openReadOnlyDatabaseClient } from '@graphgoblin/infrastructure/sqlite';
+
+const folder = 'docs/qa/2026-10-18-wp-c3-evidence/';
+const environment = JSON.parse(await readFile(folder + 'environment.json'));
+assert.ok(environment.stores.every(dir => !dir.includes('%TEMP%') && !dir.includes('<local>')),
+  'Redacted store paths: rerun both drivers and the admission audit first');
+let totalRuns = 0;
+for (const dir of environment.stores) {
+  const client = openReadOnlyDatabaseClient(join(dir, 'store.db'));
+  try {
+    const duplicate = await client.execute("SELECT run_id, json_extract(payload, '$.nodeId') AS node_id, count(*) AS n FROM run_events WHERE type = 'node.finished' GROUP BY run_id, node_id HAVING count(*) > 1");
+    assert.equal(duplicate.rows.length, 0, dir);
+    totalRuns += Number((await client.execute('SELECT count(*) AS n FROM runs')).rows[0].n);
+  } finally { client.close(); }
+}
+const result = { stores: environment.stores.length, totalRuns, duplicateNodeCompletions: 0 };
+await writeFile(folder + 'completion-audit.json', JSON.stringify(result, null, 2) + '\n');
+process.stdout.write(JSON.stringify(result) + '\n');

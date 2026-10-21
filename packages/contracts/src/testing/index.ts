@@ -483,7 +483,6 @@ export function everyFieldLoop(): LoopDefinitionInput {
             { kind: 'caller' },
             { kind: 'webhook', url: 'https://example.test/done', secretRef: 'hook-secret' },
             { kind: 'file', path: 'out/result.md', format: 'markdown' },
-            { kind: 'event', eventType: 'loop-done' },
             { kind: 'log' },
           ],
         },

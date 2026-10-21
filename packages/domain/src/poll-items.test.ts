@@ -1,11 +1,40 @@
 import { describe, expect, it } from 'vitest';
 import { type JsonValue, PollItemsSchema } from '@graphgoblin/contracts';
-import { preparePollItems } from './poll-items.js';
+import { POLL_ITEM_MAX_NESTING_DEPTH, preparePollItems } from './poll-items.js';
 const now = '2026-10-07T12:00:00.000Z';
 const config = (select = 'probe', dedupeKey = 'item.key') =>
   PollItemsSchema.parse({ select, dedupeKey });
 
 describe('complete poll-items preparation', () => {
+  it('classifies depth at the exact initial_thread SQLite boundary without dropping later items', async () => {
+    function nested(levels: number, key: string): JsonValue {
+      let v: JsonValue = null;
+      for (let i = 0; i < levels; i += 1) v = [v];
+      return { key, v };
+    }
+    expect(POLL_ITEM_MAX_NESTING_DEPTH).toBe(996);
+    const items = await preparePollItems(config(), {
+      now,
+      probe: [nested(996, 'last-storable'), nested(997, 'too-deep'), { key: 'later' }],
+    });
+    expect(items.map((item) => [item.dedupeKey, item.rejection])).toEqual([
+      ['last-storable', undefined],
+      ['too-deep', { code: 'POLL_ITEM_REJECTED', reason: 'NESTING_DEPTH_EXCEEDED', itemIndex: 1 }],
+      ['later', undefined],
+    ]);
+  });
+  it('keeps invalid or duplicate deep-item keys as whole-batch refusals', async () => {
+    let nested: JsonValue = {};
+    for (let i = 0; i < 5000; i += 1) nested = { child: nested };
+    await expect(
+      preparePollItems(config(), { now, probe: [{ key: '', nested }, { key: 'good' }] }),
+    ).rejects.toMatchObject({ reason: 'KEY_INVALID', itemIndex: 0 });
+    await expect(
+      preparePollItems(config(), { now, probe: [{ key: 'same', nested }, { key: 'same' }] }),
+    ).rejects.toMatchObject({ reason: 'KEY_DUPLICATE', itemIndex: 1 });
+    const items = await preparePollItems(config(), { now, probe: [{ key: 'deep', nested }] });
+    expect(items[0]?.rejection?.reason).toBe('NESTING_DEPTH_EXCEEDED');
+  });
   it('keeps every curated item and stable key in order without applying the dispatch cap early', async () => {
     const probe = Array.from({ length: 200 }, (_, index) => ({
       key: 'item-' + index,
