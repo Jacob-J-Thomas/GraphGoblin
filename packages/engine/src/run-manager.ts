@@ -13,7 +13,9 @@ import type {
   LoopVersionRecord,
   Node,
   Outcome,
+  PinnedDefaults,
   ReturnChannel,
+  RunPin,
   RunEvent,
   RunFailure,
   RunRecord,
@@ -41,6 +43,7 @@ import {
 } from '@graphgoblin/domain';
 import {
   AppendConflictError,
+  ChildCancelledError,
   RunFailureError,
   UnreadableRunHistoryError,
   describeError,
@@ -57,15 +60,11 @@ import type {
   WakeInfo,
 } from './handler.js';
 import { defaultHandlers } from './handlers/index.js';
-import type {
-  EngineSettings,
-  EnginePorts,
-  EventDraft,
-  RunRecordChanges,
-  TimerPort,
-} from './ports.js';
+import type { EngineSettings, EnginePorts, EventDraft, RunRecordChanges } from './ports.js';
 import { createInitialThread, type InitialThreadInput } from './thread.js';
+import { bindClassifiers, freezeDraft, pinnedFields } from './definition-pin.js';
 import { boundedFailure } from './event-validation.js';
+import { assertCurrentDefinition, definitionUpgradeRequired } from './stored-definition.js';
 
 /** API-facing errors: bad requests against the run manager, never engine bugs. */
 export class EngineRequestError extends Error {
@@ -77,6 +76,7 @@ export class EngineRequestError extends Error {
       | 'RUN_NOT_FOUND'
       | 'INVALID_STATE'
       | 'INVALID_INPUT'
+      | 'WAIT_MISMATCH'
       | 'REPLAY_NODE_NOT_REACHED',
     message: string,
     readonly details?: unknown,
@@ -102,10 +102,26 @@ export interface StartRunInput {
   returnDefaults?: ReturnChannel[];
   parentRunId?: string;
   seed?: InitialThreadInput['seed'];
-  /** Allow running a draft version (test runs). */
+  /** Allow running a draft version (test runs). The run pins a snapshot of it (ADR-0041). */
   allowDraft?: boolean;
   /** Subloop versions already pinned by the parent run; a child inherits them. */
   subloopVersions?: Record<string, string>;
+  /** Inherited model defaults already pinned by the parent run; a child inherits them. */
+  pinnedDefaults?: PinnedDefaults;
+  /** Classifier bindings already pinned by the parent run; a child keeps them for shared ids. */
+  pinnedClassifiers?: RunPin['classifiers'];
+}
+
+/** A run start prepared outside the pin lock, admitted inside it. */
+interface PreparedStart {
+  /** The immutable record the run executes: a published version or the draft snapshot. */
+  version: LoopVersionRecord;
+  /** The record the start read: the published version or the draft row, checked under the lock. */
+  sourceId: string;
+  run: RunRecord;
+  thread: ContextThread;
+  /** A draft start's frozen draft, committed with the run. */
+  snapshot?: LoopVersionRecord;
 }
 
 export interface ReplayRunInput {
@@ -170,21 +186,6 @@ export function parkedWait(events: readonly RunEvent[]): WaitingEvent | undefine
 }
 
 type TerminalEvent = Extract<RunEvent, { type: 'run.finished' | 'run.failed' | 'run.cancelled' }>;
-
-/** The run's terminal event, unless the run was resumed or restarted after it. */
-/**
- * A wait's identity: the seq of the `node.started` that parked. Waits recorded before identities
- * existed lack it on their spec; it is then derived from the log.
- */
-function waitIdentity(events: readonly RunEvent[], parked: WaitingEvent): number | undefined {
-  if (parked.wait.startedSeq !== undefined) return parked.wait.startedSeq;
-  for (let i = events.length - 1; i >= 0; i -= 1) {
-    const event = events[i] as RunEvent;
-    if (event.seq < parked.seq && event.type === 'node.started' && event.nodeId === parked.nodeId)
-      return event.seq;
-  }
-  return undefined;
-}
 
 /** The exit result a durable `run.finished` records, with the channels of the exit before it. */
 function exitResult(
@@ -276,20 +277,6 @@ function lastFinishedNode(
   return undefined;
 }
 
-/**
- * The timer port a node visit sees: its keys carry the visit's `node.started` seq (`timer@42`),
- * the identity its wait spec records, so a fire can be matched to the wait that armed it.
- * Cancelling without a key still drops every timer of the run.
- */
-function timersForVisit(timers: TimerPort, startedSeq: number): TimerPort {
-  return {
-    schedule: (runId, key, at) => timers.schedule(runId, `${key}@${startedSeq}`, at),
-    cancel: (runId, key) =>
-      timers.cancel(runId, key === undefined ? undefined : `${key}@${startedSeq}`),
-    onFire: (listener) => timers.onFire(listener),
-  };
-}
-
 export class RunManager {
   private readonly queue: string[] = [];
   private readonly active = new Map<string, AbortController>();
@@ -317,9 +304,16 @@ export class RunManager {
   /** Arm timers and recover runs left active by a previous process. */
   async start(): Promise<void> {
     this.stopped = false;
-    // A failed wake is rethrown so the timer port keeps the timer and delivers it again.
+    // Transient wake failures retain the row; unreadable history is diagnosed and acknowledged.
     this.unsubscribeTimers ??= this.ports.timers.onFire((runId, key) =>
       this.onTimer(runId, key).catch((error: unknown) => {
+        if (error instanceof UnreadableRunHistoryError) {
+          this.ports.logger.error(
+            { runId, key, code: error.code },
+            'timer acknowledged for unreadable history; inspect run diagnostics',
+          );
+          return true;
+        }
         this.ports.logger.error({ runId, key, error: describeError(error) }, 'timer wake failed');
         throw error;
       }),
@@ -355,11 +349,9 @@ export class RunManager {
   // Commands
   // ---------------------------------------------------------------------------
 
-  private async prepareStart(
-    input: StartRunInput,
-  ): Promise<{ version: LoopVersionRecord; run: RunRecord; thread: ContextThread }> {
-    const version = await this.resolveVersion(input);
-    const def = version.definition;
+  private async prepareStart(input: StartRunInput): Promise<PreparedStart> {
+    const source = await this.resolveVersion(input);
+    const def = source.definition;
     const trigger = this.resolveTrigger(def, input.triggerNodeId);
     const payload: JsonValue = input.payload ?? null;
     if (trigger.config.type === 'manual' && trigger.config.inputSchema) {
@@ -375,6 +367,20 @@ export class RunManager {
     const now = this.now();
     const runId = this.ports.ids.next();
     const invocationId = this.ports.ids.next();
+    // The run's definition is immutable for its whole life (ADR-0041): a draft start pins a frozen
+    // copy of exactly the draft read and validated above, committed with the run.
+    const snapshot =
+      source.status === 'draft' ? freezeDraft(source, this.ports.ids.next(), now) : undefined;
+    const version = snapshot ?? source;
+    const pinned = pinnedFields(version, {
+      defaults: input.pinnedDefaults ?? (await this.startDefaults(input)),
+      classifiers: await bindClassifiers(
+        def,
+        input.ownerId,
+        this.ports.classifiers,
+        input.pinnedClassifiers,
+      ),
+    });
     const thread = createInitialThread({
       runId,
       loopId: version.loopId,
@@ -405,7 +411,7 @@ export class RunManager {
       id: runId,
       ownerId: input.ownerId,
       loopId: version.loopId,
-      versionId: version.id,
+      ...pinned,
       ...(input.parentRunId ? { parentRunId: input.parentRunId } : {}),
       invocationId,
       status: 'queued',
@@ -413,19 +419,22 @@ export class RunManager {
       createdAt: now,
       lastEventSeq: 0,
     };
-    return { version, run, thread };
+    return { version, sourceId: source.id, run, thread, ...(snapshot ? { snapshot } : {}) };
+  }
+
+  /** The defaults a new top-level run inherits, read once at its start and pinned (ADR-0041). */
+  private async startDefaults(input: StartRunInput): Promise<PinnedDefaults> {
+    return {
+      owner: (await this.settings.ownerDefaults?.(input.ownerId)) ?? { byHarness: {} },
+      process: this.settings.defaults,
+    };
   }
 
   async startRun(input: StartRunInput): Promise<RunRecord> {
-    const { version, run, thread } = await this.prepareStart(input);
+    const prepared = await this.prepareStart(input);
     const admitted = await this.withPinLock(async () => {
-      await this.assertVersionPresent(version.id, input.loopId);
-      const intent = await this.prepareAdmission(
-        version.definition,
-        run,
-        thread,
-        input.subloopVersions ?? {},
-      );
+      await this.assertVersionPresent(prepared.sourceId, input.loopId);
+      const intent = await this.prepareAdmission(prepared, input.subloopVersions ?? {});
       return this.ports.admission.create(intent);
     });
     this.enqueue(admitted.id);
@@ -445,32 +454,31 @@ export class RunManager {
         'Atomic poll admission requires an items-mode trigger',
       );
     const run = await this.withPinLock(async () => {
-      await this.assertVersionPresent(prepared.version.id, input.loopId);
-      return this.ports.admission.createPollItem(
-        await this.prepareAdmission(prepared.version.definition, prepared.run, prepared.thread, {}),
-      );
+      await this.assertVersionPresent(prepared.sourceId, input.loopId);
+      return this.ports.admission.createPollItem(await this.prepareAdmission(prepared, {}));
     });
     if (run) this.enqueue(run.id);
     return run;
   }
 
   private async prepareAdmission(
-    def: LoopDefinition,
-    run: RunRecord,
-    initialThread: ContextThread,
+    { version, run, thread: initialThread, snapshot }: PreparedStart,
     inherited: Record<string, string>,
   ): Promise<RunAdmission> {
     const reached = new Set<string>([run.loopId]);
-    const subloopVersions = await this.pinSubloops(def, inherited, reached);
+    const subloopVersions = await this.pinSubloops(version.definition, inherited, reached);
     return {
       run,
       initialThread,
       pinnedLoopIds: [...reached],
       queued: {
         type: 'run.queued',
+        versionId: run.versionId,
+        pinned: run.pinned,
         initialThread,
         ...(Object.keys(subloopVersions).length ? { subloopVersions } : {}),
       },
+      ...(snapshot ? { snapshot } : {}),
     };
   }
 
@@ -490,13 +498,8 @@ export class RunManager {
       throw new AdmissionConflictError();
     const result = await this.withPinLock(async () => {
       const prepared = await this.prepareStart(input);
-      await this.assertVersionPresent(prepared.version.id, input.loopId);
-      const intent = await this.prepareAdmission(
-        prepared.version.definition,
-        prepared.run,
-        prepared.thread,
-        {},
-      );
+      await this.assertVersionPresent(prepared.sourceId, input.loopId);
+      const intent = await this.prepareAdmission(prepared, {});
       let claimed;
       try {
         claimed = await this.ports.admission.claim(claim, intent);
@@ -757,55 +760,106 @@ export class RunManager {
 
   async provideInput(
     runId: string,
+    waitId: string,
     payload: JsonValue,
     actor: Actor = SYSTEM_ACTOR,
   ): Promise<RunRecord> {
     const run = await this.mustGet(runId);
-    if (run.status !== 'waiting' || run.waiting?.kind !== 'input') {
-      throw new EngineRequestError('INVALID_STATE', `run ${runId} is not waiting for input`);
+    if (run.status === 'paused' && run.waiting?.waitId === waitId) {
+      throw new EngineRequestError(
+        'INVALID_STATE',
+        'The run is paused; resume it before providing input',
+      );
+    }
+    if (
+      run.status !== 'waiting' ||
+      run.waiting?.kind !== 'input' ||
+      run.waiting.waitId !== waitId
+    ) {
+      throw new EngineRequestError('WAIT_MISMATCH', 'The observed input wait is no longer active');
     }
     if (run.waiting.inputSchema) {
       const validation = validateJson(run.waiting.inputSchema, payload);
       if (!validation.ok) {
         throw new EngineRequestError(
           'INVALID_INPUT',
-          `input is invalid: ${validation.errors.join('; ')}`,
+          'input is invalid: ' + validation.errors.join('; '),
           { errors: validation.errors },
         );
       }
     }
     void actor;
-    return this.wake(runId, { reason: 'input', payload });
+    return this.wake(runId, { reason: 'input', payload }, waitId);
   }
 
-  /** Deliver a named signal. Always recorded; wakes the run only when it waits for that signal and the filter passes. */
+  /** Record a signal only against the park the sender observed. */
   async signal(
     runId: string,
     name: string,
+    waitId: string,
     payload: JsonValue = null,
   ): Promise<{ run: RunRecord; woke: boolean }> {
-    const run = await this.mustGet(runId);
-    if (isTerminal(run.status)) {
-      throw new EngineRequestError('INVALID_STATE', `run ${runId} is already ${run.status}`);
+    // Match wake's bounded ten conflict retries; a saturated caller must refresh its snapshot.
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      const run = await this.mustGet(runId);
+      if (run.status === 'paused' && run.waiting?.waitId === waitId) {
+        throw new EngineRequestError(
+          'INVALID_STATE',
+          'The run is paused; resume it before sending a signal',
+        );
+      }
+      if (
+        run.status !== 'waiting' ||
+        !run.waiting ||
+        run.waiting.waitId !== waitId ||
+        run.cancelRequestedAt
+      ) {
+        throw new EngineRequestError(
+          'WAIT_MISMATCH',
+          'The observed signal wait is no longer active',
+        );
+      }
+      const events = await this.ports.events.read(runId, run.waiting.startedSeq - 1);
+      if (parkedWait(events)?.wait.waitId !== waitId) {
+        // A retry must also complete an earlier durable signal answer's lost status write.
+        // wake repairs that acknowledgement, then rejects without appending this signal.
+        if (findPendingWake(events)) await this.wake(runId, { reason: 'signal', payload }, waitId);
+        throw new EngineRequestError(
+          'WAIT_MISMATCH',
+          'The observed signal wait is already answered',
+        );
+      }
+      let wakes = run.waiting.kind === 'signal' && run.waiting.signalName === name;
+      if (wakes) {
+        const version = await this.ports.loops.getVersion(run.versionId);
+        const node = version ? nodeById(version.definition, run.waiting.nodeId) : undefined;
+        if (node?.kind === 'wait' && node.config.mode === 'signal' && node.config.filter) {
+          const thread = await this.getThread(runId);
+          wakes = await evaluatePredicate(node.config.filter, payload, {
+            bindings: { thread: thread ? threadView(thread) : {} },
+          });
+        }
+      }
+      const received: EventDraft = { type: 'signal.received', name, payload };
+      if (wakes) {
+        return {
+          run: await this.wake(runId, { reason: 'signal', payload }, waitId, [received]),
+          woke: true,
+        };
+      }
+      try {
+        await this.ports.events.append(runId, [received], {
+          expectedLastSeq: events.at(-1)?.seq ?? 0,
+        });
+        return { run, woke: false };
+      } catch (error) {
+        if (!(error instanceof AppendConflictError)) throw error;
+      }
     }
-    await this.ports.events.append(runId, [{ type: 'signal.received', name, payload }]);
-    if (
-      run.status !== 'waiting' ||
-      run.waiting?.kind !== 'signal' ||
-      run.waiting.signalName !== name
-    ) {
-      return { run, woke: false };
-    }
-    const version = await this.ports.loops.getVersion(run.versionId);
-    const node = version ? nodeById(version.definition, run.waiting.nodeId) : undefined;
-    if (node?.kind === 'wait' && node.config.mode === 'signal' && node.config.filter) {
-      const thread = await this.getThread(runId);
-      const passes = await evaluatePredicate(node.config.filter, payload, {
-        bindings: { thread: thread ? threadView(thread) : {} },
-      });
-      if (!passes) return { run, woke: false };
-    }
-    return { run: await this.wake(runId, { reason: 'signal', payload }), woke: true };
+    throw new EngineRequestError(
+      'WAIT_MISMATCH',
+      'The observed signal wait kept changing; read it again',
+    );
   }
 
   /**
@@ -834,6 +888,7 @@ export class RunManager {
         `node ${input.nodeId} is not in loop version ${source.versionId}`,
       );
     }
+    assertCurrentDefinition(version);
     const initial = await this.ports.runs.getInitialThread(source.id);
     if (!initial) {
       throw new EngineRequestError('INVALID_STATE', `run ${source.id} has no initial thread`);
@@ -861,11 +916,13 @@ export class RunManager {
         replayOf,
       },
     };
+    // The fork executes the source's pinned definition with the source's inherited defaults.
     const run: RunRecord = {
       id: runId,
       ownerId: source.ownerId,
       loopId: source.loopId,
       versionId: source.versionId,
+      pinned: source.pinned,
       invocationId,
       status: 'queued',
       currentNodeId: input.nodeId,
@@ -886,6 +943,8 @@ export class RunManager {
         pinnedLoopIds: [...new Set([source.loopId, ...Object.keys(subloopVersions)])],
         queued: {
           type: 'run.queued',
+          versionId: run.versionId,
+          pinned: run.pinned,
           replayOf,
           ...(Object.keys(subloopVersions).length > 0 ? { subloopVersions } : {}),
         },
@@ -988,22 +1047,29 @@ export class RunManager {
             { runId, error: describeError(error) },
             'executor crashed outside node execution',
           );
-          return this.failRun(
-            runId,
-            error instanceof RunFailureError
-              ? error.toFailure((await this.ports.runs.get(runId))?.currentNodeId)
-              : {
-                  code: 'INTERNAL_ERROR',
-                  message: describeError(error),
-                  resumable: true,
-                },
-          ).catch(() => undefined);
+          try {
+            await this.failRun(
+              runId,
+              error instanceof RunFailureError
+                ? error.toFailure((await this.ports.runs.get(runId))?.currentNodeId)
+                : {
+                    code: 'INTERNAL_ERROR',
+                    message: describeError(error),
+                    resumable: true,
+                  },
+            );
+          } catch (recordError) {
+            this.ports.logger.error(
+              { runId, error: describeError(recordError) },
+              'executor crash could not be recorded',
+            );
+          }
         })
         .then(() => this.afterExecute(runId))
         .catch((error: unknown) => {
           this.ports.logger.error(
             { runId, error: describeError(error) },
-            'post-execution cancellation failed',
+            'post-execution bookkeeping failed',
           );
         })
         .finally(() => {
@@ -1038,6 +1104,7 @@ export class RunManager {
         await this.ports.runs.getThreadCheckpoint(run.id);
         const events = await this.ports.events.read(run.id);
         if (candidate.terminal) {
+          // A failed run whose `run.resumed` is durable but whose status write was lost: resume it.
           if (run.status === 'failed' && pendingResume(events)) {
             await this.completeResume(run.id);
             continue;
@@ -1061,35 +1128,35 @@ export class RunManager {
           await this.finalizeCancel(run.id);
           continue;
         }
+        // Complete an event-first park without executing its handler again. Its original
+        // wall-clock deadlines survive an interruption before snapshot/status/timer writes.
+        const parked = parkedWait(events);
+        if (parked) {
+          const paused = run.status === 'paused';
+          const restored = await this.ports.runs.update(run.id, {
+            ...(paused ? {} : { status: 'waiting' as const }),
+            currentNodeId: parked.wait.nodeId,
+            waiting: parked.wait,
+          });
+          await this.rearmTimers(run.id, parked.wait);
+          if (!paused) await this.reconcileChild(restored);
+          continue;
+        }
         if (run.status === 'queued' || run.status === 'running') {
           if (run.status === 'running') this.recovering.add(run.id);
           this.enqueue(run.id);
-        } else if (run.status === 'waiting' && run.waiting) {
-          if (findPendingWake(events)) {
-            // A wake is durable but the waiting-to-running write was lost: finish accepting it.
-            if (await this.ports.runs.transition(run.id, ['waiting'], { status: 'running' })) {
-              this.enqueue(run.id);
-            }
-            continue;
+        } else if (run.status === 'waiting' && run.waiting && findPendingWake(events)) {
+          // A wake is durable but the waiting-to-running write was lost: finish accepting it.
+          if (
+            await this.ports.runs.transition(
+              run.id,
+              ['waiting'],
+              { status: 'running' },
+              { waitId: run.waiting.waitId },
+            )
+          ) {
+            this.enqueue(run.id);
           }
-          // A wait recorded before waits had an identity: give it one (the seq of the node.started
-          // that parked, from the log) and replace its bare timer keys, so a stale bare timer can
-          // never wake a later wait.
-          let waiting = run.waiting;
-          if (waiting.startedSeq === undefined) {
-            const parked = parkedWait(events);
-            const startedSeq = parked ? waitIdentity(events, parked) : undefined;
-            if (startedSeq !== undefined) {
-              waiting = { ...waiting, startedSeq };
-              await this.ports.runs.update(run.id, { waiting });
-              await this.ports.timers.cancel(run.id);
-            }
-          }
-          // Waiting runs are woken by timers, inputs, signals, or finishing children. Re-arm the
-          // wait's timers from its spec in case a fire was lost (an upsert, so an armed timer stays
-          // as it is), and deliver a child outcome that finished while this process was down.
-          await this.rearmTimers(run.id, waiting);
-          await this.reconcileChild(run);
         }
       } catch (error) {
         // Only identified record decoding failures are run-local. Store/schema/I/O failures
@@ -1105,20 +1172,15 @@ export class RunManager {
     }
   }
 
-  /**
-   * Arm the timers a wait spec records: its own (`timer` or `heartbeat`, at `until`) and its
-   * timeout (`timeoutAt`; for a log written before that field, an input or signal wait's
-   * `until`). Keys carry the wait's identity when the spec has one.
-   */
+  /** Arm only a durable park; past deadlines are due on the very next scheduler poll. */
   private async rearmTimers(runId: string, wait: WaitSpec): Promise<void> {
-    const suffix = wait.startedSeq !== undefined ? `@${wait.startedSeq}` : '';
-    const own = wait.kind === 'timer' || wait.kind === 'heartbeat';
-    if (own && wait.until) {
-      await this.ports.timers.schedule(runId, `${wait.kind}${suffix}`, new Date(wait.until));
+    const suffix = '@' + wait.waitId;
+    if ((wait.kind === 'timer' || wait.kind === 'heartbeat') && wait.until) {
+      await this.ports.timers.schedule(runId, wait.kind + suffix, new Date(wait.until));
     }
-    const timeoutAt =
-      wait.timeoutAt ?? (wait.kind === 'input' || wait.kind === 'signal' ? wait.until : undefined);
-    if (timeoutAt) await this.ports.timers.schedule(runId, `timeout${suffix}`, new Date(timeoutAt));
+    if (wait.timeoutAt) {
+      await this.ports.timers.schedule(runId, 'timeout' + suffix, new Date(wait.timeoutAt));
+    }
   }
 
   /** Wake a parent parked on a child that is already terminal. Idempotent. */
@@ -1130,63 +1192,113 @@ export class RunManager {
       await this.notifyParent(child, child.status, child.outcome);
   }
 
-  /**
-   * A timer fired. Keys are `<name>@<startedSeq>`: the wait that armed it. Delivery is at least
-   * once and a fire can be stale (its wait already ended), so the wake is checked against the
-   * wait it was armed for, atomically (`wake`), and a stale fire does nothing. `timer` and
-   * `heartbeat` only wake a wait of that kind. A key without an identity (armed before identities
-   * existed) only wakes a wait that has none either; recovery gives such waits one and re-keys.
-   */
-  private async onTimer(runId: string, key: string): Promise<void> {
-    const [name = key, identity] = key.split('@');
-    const startedSeq = identity !== undefined ? Number(identity) : undefined;
+  /** False retains an early delivery. Paused runs re-arm their original deadline on resume. */
+  private async onTimer(runId: string, key: string): Promise<boolean> {
+    const [name, waitId] = key.split('@');
+    if (!waitId || (name !== 'timer' && name !== 'heartbeat' && name !== 'timeout')) return true;
     const run = await this.ports.runs.get(runId);
-    if (!run || run.status !== 'waiting' || !run.waiting) return;
-    if (startedSeq !== run.waiting.startedSeq) return;
-    if (name !== 'timeout' && name !== run.waiting.kind) return;
+    if (!run || isTerminal(run.status) || run.cancelRequestedAt) return true;
+    if (run.status === 'paused') return true;
+    if (run.waiting && run.waiting.waitId !== waitId) return true;
+    if (run.status !== 'waiting' || !run.waiting) {
+      // A row can already exist when a process is interrupted around parking. Never
+      // acknowledge a due row while its park has yet to become visible.
+      const events = await this.ports.events.read(runId);
+      const pending = findPendingWake(events) !== undefined;
+      // The status may have committed while its response (and therefore enqueue) was lost.
+      if (pending && run.status !== 'waiting') this.enqueue(runId);
+      return pending;
+    }
+    if (name !== 'timeout' && name !== run.waiting.kind) return true;
+    const events = await this.ports.events.read(runId, run.waiting.startedSeq - 1);
+    if (findPendingWake(events)) {
+      // A previous delivery committed the wake but lost the status acknowledgement.
+      if (await this.ports.runs.transition(runId, ['waiting'], { status: 'running' }, { waitId }))
+        this.enqueue(runId);
+      return true;
+    }
     try {
       await this.wake(
         runId,
         { reason: name === 'timeout' ? 'timeout' : 'timer', key: name },
-        startedSeq,
+        waitId,
       );
     } catch (error) {
-      // Lost a race to another wake or a pause: nothing left to deliver.
-      if (!(error instanceof EngineRequestError && error.code === 'INVALID_STATE')) throw error;
+      if (!(error instanceof EngineRequestError)) throw error;
+      // A pause can win after the read. Acknowledge its row; resume/recovery re-arm the deadline.
+      if (error.code === 'INVALID_STATE' && (await this.mustGet(runId)).status === 'paused')
+        return true;
+      if (error.code !== 'WAIT_MISMATCH') throw error;
     }
+    return true;
   }
 
   /**
    * Accept a wake. The log is written first: `run.woken` (with `input.received` for an input) is
    * appended only if the log is exactly as read, the run's current wait in the log is the expected
-   * one (`startedSeq`, when given), and nothing woke it yet. That conditional append is the
+   * one (`waitId`, when given), and nothing woke it yet. That conditional append is the
    * compare-and-set: of concurrent wakes exactly one is recorded, payload and all. The status then
    * moves from waiting to running; if the process dies in between, recovery finds the durable wake
-   * and completes the move.
+   * and completes the move. A child wake (`childRunId`) is accepted only by a park of kind `child`
+   * on that same child run.
    */
-  private async wake(runId: string, wake: WakeInfo, startedSeq?: number): Promise<RunRecord> {
+  private async wake(
+    runId: string,
+    wake: WakeInfo,
+    waitId?: string,
+    preceding: EventDraft[] = [],
+    childRunId?: string,
+  ): Promise<RunRecord> {
+    const mismatch = () =>
+      new EngineRequestError(
+        waitId ? 'WAIT_MISMATCH' : 'INVALID_STATE',
+        'The observed wait is no longer active',
+      );
     for (let attempt = 0; attempt < 10; attempt += 1) {
       const run = await this.mustGet(runId);
-      if (run.status !== 'waiting' || !run.waiting || run.cancelRequestedAt) {
-        throw new EngineRequestError('INVALID_STATE', `run ${runId} is not waiting`);
+      if (run.status === 'paused' && (waitId === undefined || run.waiting?.waitId === waitId)) {
+        throw new EngineRequestError(
+          'INVALID_STATE',
+          'The run is paused; resume it before answering',
+        );
       }
-      const after = run.waiting.startedSeq !== undefined ? run.waiting.startedSeq - 1 : 0;
+      if (
+        run.status !== 'waiting' ||
+        !run.waiting ||
+        run.cancelRequestedAt ||
+        (waitId !== undefined && run.waiting.waitId !== waitId)
+      ) {
+        throw mismatch();
+      }
+      const after = run.waiting.startedSeq - 1;
       const events = await this.ports.events.read(runId, after);
       const parked = parkedWait(events);
-      if (!parked || (startedSeq !== undefined && waitIdentity(events, parked) !== startedSeq)) {
-        // An earlier wake is durable but its status write failed: finish that one, not this.
-        if (findPendingWake(events)) {
-          if (await this.ports.runs.transition(runId, ['waiting'], { status: 'running' })) {
-            this.enqueue(runId);
-          }
-        }
-        throw new EngineRequestError('INVALID_STATE', `run ${runId} is not waiting for that`);
+      if (!parked && findPendingWake(events)) {
+        // Complete the accepted answer, never the retry payload. The identity guard prevents
+        // a delayed repair from changing a later park. The retry still rejects below.
+        const repaired = await this.ports.runs.transition(
+          runId,
+          ['waiting'],
+          { status: 'running' },
+          { waitId: run.waiting.waitId },
+        );
+        if (repaired) this.enqueue(runId);
+      }
+      if (
+        !parked ||
+        parked.wait.waitId !== run.waiting.waitId ||
+        (waitId !== undefined && parked.wait.waitId !== waitId) ||
+        (wake.reason === 'child' &&
+          (parked.wait.kind !== 'child' || parked.wait.childRunId !== childRunId))
+      ) {
+        throw mismatch();
       }
       const nodeId = parked.wait.nodeId;
       try {
         await this.ports.events.append(
           runId,
           [
+            ...preceding,
             ...(wake.reason === 'input'
               ? [{ type: 'input.received' as const, nodeId, payload: wake.payload ?? null }]
               : []),
@@ -1203,12 +1315,20 @@ export class RunManager {
         if (error instanceof AppendConflictError) continue;
         throw error;
       }
-      const updated = await this.ports.runs.transition(runId, ['waiting'], { status: 'running' });
+      const updated = await this.ports.runs.transition(
+        runId,
+        ['waiting'],
+        { status: 'running' },
+        { waitId: parked.wait.waitId },
+      );
       // Paused or cancelled in between: the wake stays in the log for resume to consume.
       if (updated) this.enqueue(runId);
       return updated ?? this.mustGet(runId);
     }
-    throw new EngineRequestError('INVALID_STATE', `run ${runId} kept changing; try again`);
+    throw new EngineRequestError(
+      waitId ? 'WAIT_MISMATCH' : 'INVALID_STATE',
+      'The wait kept changing; read it again',
+    );
   }
 
   /** After an executor pass: honour a cancel request that arrived while the run was parking or finishing. */
@@ -1236,9 +1356,18 @@ export class RunManager {
       });
       return;
     }
+    // A run admitted before ADR-0044 can be pinned to a definition whose exit publishes an Event:
+    // fail it explicitly before any node runs, instead of running to an exit it cannot deliver.
+    const refused = definitionUpgradeRequired(version);
+    if (refused) {
+      await this.failRun(runId, refused.toFailure());
+      return;
+    }
     const def = version.definition;
-    // Owner defaults are read at every (re)start, so a change in settings applies to the next run.
-    const ownerDefaults = (await this.settings.ownerDefaults?.(run.ownerId)) ?? { byHarness: {} };
+    // Inherited defaults (and classifier bindings, read by the decision handler) are the ones
+    // pinned when the run was created (ADR-0041): a Settings or process change reaches new runs
+    // only, never a run that waits, resumes or recovers.
+    const { owner: ownerDefaults, process: processDefaults } = run.pinned.defaults;
     // Read before any recovery marker is appended; a marker does not consume a wake either.
     const pendingWake = findPendingWake(events);
     let thread = await this.loadThread(run, events);
@@ -1304,7 +1433,7 @@ export class RunManager {
         const issues = validateHarnessDefaults({
           loopDefaults: def.settings.defaults,
           ownerDefaults,
-          processDefaults: this.settings.defaults,
+          processDefaults,
           catalog,
         });
         if (issues.length) {
@@ -1323,7 +1452,7 @@ export class RunManager {
           ...(effort !== undefined ? { effort } : {}),
           loopDefaults: def.settings.defaults,
           ownerDefaults,
-          processDefaults: this.settings.defaults,
+          processDefaults,
           catalog,
         });
         if (resolution.status !== 'ready') {
@@ -1339,6 +1468,7 @@ export class RunManager {
       },
       startChild: (request) => this.startChild(run, request, pinnedSubloops(events)),
       childOutcome: (childRunId) => this.childOutcome(childRunId),
+      resumeChild: (childRunId) => this.resumeChild(run, childRunId),
       events: () => Promise.resolve(events),
       depth: () => this.depthOf(run),
       workingDirectory: () => this.workingDirectory(run, def, thread),
@@ -1417,12 +1547,16 @@ export class RunManager {
           ...(wake ? { wake } : {}),
           ...(previousWait ? { previousWait } : {}),
           signal: controller.signal,
-          ports: { ...this.ports, timers: timersForVisit(this.ports.timers, startedSeq) },
+          ports: this.ports,
           settings: this.settings,
           services,
         };
         result = await (handler as { execute(c: NodeContext): Promise<NodeResult> }).execute(ctx);
       } catch (error) {
+        if (error instanceof ChildCancelledError) {
+          await this.cancelForChild(runId, error.childRunId);
+          return;
+        }
         const terminationUnconfirmed =
           error instanceof RunFailureError && error.code === 'HARNESS_TERMINATION_UNCONFIRMED';
         if (!terminationUnconfirmed && (isAbortError(error) || controller.signal.aborted)) {
@@ -1462,7 +1596,9 @@ export class RunManager {
       const durationMs = Date.now() - startedAt;
 
       if (result.kind === 'park') {
-        const wait: WaitSpec = { ...result.wait, startedSeq };
+        // The run and durable node.started sequence uniquely identify this park, without
+        // relying on in-memory allocation. Each heartbeat park gets a fresh token.
+        const wait: WaitSpec = { ...result.wait, startedSeq, waitId: runId + ':' + startedSeq };
         const seq = await appendAll([{ type: 'run.waiting', nodeId, wait }]);
         await this.ports.runs.saveThread(runId, thread, seq);
         const parked = await this.ports.runs.transition(runId, ['running'], {
@@ -1473,7 +1609,10 @@ export class RunManager {
         if (!parked) await this.ports.runs.update(runId, { waiting: wait });
         // A child that finished before this park found its parent still running and could not
         // wake it; now that the wait is recorded, deliver its outcome here.
-        else await this.reconcileChild(parked);
+        else {
+          await this.rearmTimers(runId, wait);
+          await this.reconcileChild(parked);
+        }
         return;
       }
 
@@ -1728,15 +1867,6 @@ export class RunManager {
             target = channel.url;
             break;
           }
-          case 'event':
-            await this.ports.delivery.publishEvent(channel.eventType, {
-              runId: run.id,
-              loopId: run.loopId,
-              outcome: result.outcome,
-              result: payload,
-            });
-            target = channel.eventType;
-            break;
         }
         await append({ type: 'return.delivered', channel, ...(target ? { target } : {}) });
       } catch (error) {
@@ -1787,6 +1917,11 @@ export class RunManager {
     return updated;
   }
 
+  /**
+   * Wake the parent parked on this finished child. The wake is bound to the park this read
+   * observed (its `waitId` and child run), so a notification delayed past that park can never
+   * answer a later one: another wait, or the next visit of the same subloop node.
+   */
   private async notifyParent(
     run: RunRecord,
     status: RunStatus,
@@ -1794,22 +1929,28 @@ export class RunManager {
   ): Promise<void> {
     if (!run.parentRunId) return;
     const parent = await this.ports.runs.get(run.parentRunId);
+    const awaited = parent?.waiting;
     if (
       !parent ||
       parent.status !== 'waiting' ||
-      parent.waiting?.kind !== 'child' ||
-      parent.waiting.childRunId !== run.id
+      awaited?.kind !== 'child' ||
+      awaited.childRunId !== run.id
     )
       return;
     try {
-      await this.wake(parent.id, {
-        reason: 'child',
-        payload: { childRunId: run.id, status, outcome: outcome ?? null },
-      });
+      await this.wake(
+        parent.id,
+        { reason: 'child', payload: { childRunId: run.id, status, outcome: outcome ?? null } },
+        awaited.waitId,
+        [],
+        run.id,
+      );
     } catch (error) {
       // The child's own completion and the parent's post-park check can race. The wake is a
-      // compare-and-set, so the loser finds the parent already running and has nothing to do.
-      if (!(error instanceof EngineRequestError && error.code === 'INVALID_STATE')) throw error;
+      // compare-and-set on the observed park, so the loser (or a notification delayed past that
+      // park) finds it answered, gone or paused and has nothing to do: a paused parent is
+      // reconciled with its child when it resumes.
+      if (!(error instanceof EngineRequestError)) throw error;
     }
   }
 
@@ -1844,6 +1985,8 @@ export class RunManager {
       parentRunId: parent.id,
       seed: request.seed,
       subloopVersions: pins,
+      pinnedDefaults: parent.pinned.defaults,
+      pinnedClassifiers: parent.pinned.classifiers,
     });
     return child.id;
   }
@@ -1916,8 +2059,34 @@ export class RunManager {
       status: child.status,
       ...(child.outcome ? { outcome: child.outcome } : {}),
       ...(child.result !== undefined ? { result: child.result } : {}),
+      ...(child.failure ? { failure: child.failure } : {}),
       ...(thread ? { thread } : {}),
     };
+  }
+
+  /**
+   * An explicit resume of `parent` resumes its failed child in place (#251). A child that is no
+   * longer in a resumable failure (resumed or finished meanwhile) is left as it is.
+   */
+  private async resumeChild(parent: RunRecord, childRunId: string): Promise<ChildOutcome> {
+    try {
+      await this.resume(childRunId, { kind: 'run', id: parent.id });
+    } catch (error) {
+      if (!(error instanceof EngineRequestError)) throw error;
+    }
+    return this.childOutcome(childRunId);
+  }
+
+  /**
+   * The child this run awaited was cancelled: cancel this run too, as cancelling inline work
+   * cancels the run doing it (#251). The request is recorded as the child's.
+   */
+  private async cancelForChild(runId: string, childRunId: string): Promise<void> {
+    if (await this.ports.runs.claimCancel(runId, ACTIVE_STATUSES, this.now()))
+      await this.ports.events.append(runId, [
+        { type: 'run.cancel_requested', actor: { kind: 'run', id: childRunId } },
+      ]);
+    await this.finalizeCancel(runId);
   }
 
   private async depthOf(run: RunRecord): Promise<number> {
@@ -1982,9 +2151,18 @@ export class RunManager {
         `loop ${input.loopId} has no ${input.versionId ? `version ${input.versionId}` : 'published version'}`,
       );
     }
+    if (version.status === 'snapshot') {
+      // A snapshot belongs to the draft runs that pinned it; it is never started again.
+      throw new EngineRequestError(
+        'VERSION_NOT_PUBLISHED',
+        `version ${version.id} is a draft run's snapshot; start the loop's draft or a published version`,
+      );
+    }
     if (version.status !== 'published' && !input.allowDraft) {
       throw new EngineRequestError('VERSION_NOT_PUBLISHED', `version ${version.id} is a draft`);
     }
+    // A definition stored before ADR-0044 can still publish an Event: refuse it at admission.
+    assertCurrentDefinition(version);
     return version;
   }
 

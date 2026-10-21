@@ -4,6 +4,7 @@
  */
 import type { ContextThread, Invocation } from '../thread.js';
 import type { RepairPolicyInput } from '../common.js';
+import type { RunPin } from '../run.js';
 import { CURRENT_DEFINITION_FORMAT, type LoopDefinitionInput } from '../loop.js';
 
 const ULID_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
@@ -55,6 +56,19 @@ export function sampleInvocation(overrides: Partial<Invocation> = {}): Invocatio
       payload: { topic: 'hello' },
       receivedAt: FIXTURE_TS,
     },
+    ...overrides,
+  };
+}
+
+/** A published-version pin with empty inherited defaults, for run records built by hand. */
+export function samplePin(overrides: Partial<RunPin> = {}): RunPin {
+  return {
+    source: 'published',
+    version: 1,
+    name: 'Minimal',
+    label: 'Minimal v1',
+    defaults: { owner: { byHarness: {} }, process: { byHarness: {} } },
+    classifiers: {},
     ...overrides,
   };
 }
@@ -469,7 +483,6 @@ export function everyFieldLoop(): LoopDefinitionInput {
             { kind: 'caller' },
             { kind: 'webhook', url: 'https://example.test/done', secretRef: 'hook-secret' },
             { kind: 'file', path: 'out/result.md', format: 'markdown' },
-            { kind: 'event', eventType: 'loop-done' },
             { kind: 'log' },
           ],
         },

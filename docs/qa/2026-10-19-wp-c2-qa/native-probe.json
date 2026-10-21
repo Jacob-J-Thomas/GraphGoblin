@@ -1,0 +1,353 @@
+{
+  "revision": "02ec16d6034e14cf7683b19619baa5c272be0591",
+  "dataDir": "%TEMP%/gg-c2-qa-native-XMLEf4",
+  "port": 5700,
+  "results": [
+    {
+      "name": "REST repeated input, schema, unknown, paused and stale identities",
+      "result": "pass",
+      "details": {
+        "runId": "01M5B6J1ZDAJK84SE5NPZ69GMM",
+        "a": "01M5B6J1ZDAJK84SE5NPZ69GMM:5",
+        "b": "01M5B6J1ZDAJK84SE5NPZ69GMM:16",
+        "rejected": [
+          {
+            "status": 400,
+            "code": "INVALID_INPUT",
+            "beforeSha256": "3ebaf7a7e14e9e770c2fe4e1bb6a369888b2b302d65efb5b30b58850b87e8b13",
+            "afterSha256": "3ebaf7a7e14e9e770c2fe4e1bb6a369888b2b302d65efb5b30b58850b87e8b13"
+          },
+          {
+            "status": 400,
+            "code": "VALIDATION_FAILED",
+            "beforeSha256": "3ebaf7a7e14e9e770c2fe4e1bb6a369888b2b302d65efb5b30b58850b87e8b13",
+            "afterSha256": "3ebaf7a7e14e9e770c2fe4e1bb6a369888b2b302d65efb5b30b58850b87e8b13"
+          },
+          {
+            "status": 409,
+            "code": "WAIT_MISMATCH",
+            "beforeSha256": "3ebaf7a7e14e9e770c2fe4e1bb6a369888b2b302d65efb5b30b58850b87e8b13",
+            "afterSha256": "3ebaf7a7e14e9e770c2fe4e1bb6a369888b2b302d65efb5b30b58850b87e8b13"
+          },
+          {
+            "status": 400,
+            "code": "VALIDATION_FAILED",
+            "beforeSha256": "3ebaf7a7e14e9e770c2fe4e1bb6a369888b2b302d65efb5b30b58850b87e8b13",
+            "afterSha256": "3ebaf7a7e14e9e770c2fe4e1bb6a369888b2b302d65efb5b30b58850b87e8b13"
+          }
+        ],
+        "paused": {
+          "type": "https://graphgoblin.dev/problems/invalid-state",
+          "title": "invalid state",
+          "status": 409,
+          "code": "INVALID_STATE",
+          "detail": "The run is paused; resume it before providing input"
+        },
+        "stale": {
+          "type": "https://graphgoblin.dev/problems/wait-mismatch",
+          "title": "wait mismatch",
+          "status": 409,
+          "code": "WAIT_MISMATCH",
+          "detail": "The observed input wait is no longer active"
+        },
+        "duplicate": {
+          "type": "https://graphgoblin.dev/problems/wait-mismatch",
+          "title": "wait mismatch",
+          "status": 409,
+          "code": "WAIT_MISMATCH",
+          "detail": "The observed input wait is no longer active"
+        },
+        "acceptedPerVisit": 1,
+        "inputEvents": 2,
+        "wakes": 2,
+        "staleLogSha256": "69525d1d19f37b89a4055759d803255a6a6bef1f8d8e859025aae65c293883f7",
+        "consumedLogSha256": "47aa134b49efaeebb725c0c13dbbb6f72e0c017b4fe08b97d83e919bf2d89747"
+      }
+    },
+    {
+      "name": "REST concurrent answers have one winner",
+      "result": "pass",
+      "details": {
+        "runId": "01M5B6J2HAM41FMW1WX4VYDHZK",
+        "statuses": [200, 409],
+        "inputEvents": 1,
+        "wakes": 1
+      }
+    },
+    {
+      "name": "REST signals positive, paused, between parks, malformed and unknown",
+      "result": "pass",
+      "details": {
+        "runId": "01M5B6J2QW5PJSQA4MQP284N7V",
+        "woke": true,
+        "malformed": 400,
+        "unknownRun": 404,
+        "paused": {
+          "type": "https://graphgoblin.dev/problems/invalid-state",
+          "title": "invalid state",
+          "status": 409,
+          "code": "INVALID_STATE",
+          "detail": "The run is paused; resume it before sending a signal"
+        },
+        "betweenParks": {
+          "type": "https://graphgoblin.dev/problems/wait-mismatch",
+          "title": "wait mismatch",
+          "status": 409,
+          "code": "WAIT_MISMATCH",
+          "detail": "The observed signal wait is no longer active"
+        }
+      }
+    },
+    {
+      "name": "api-client transports identity and typed conflicts",
+      "result": "pass",
+      "details": {
+        "inputRun": "01M5B6J3074TXYRH6TDSGH6Y5W",
+        "signalRun": "01M5B6J36MAGNKHK8PT51WBM3V",
+        "typedConflict": {
+          "status": 409,
+          "code": "WAIT_MISMATCH"
+        },
+        "signalWoke": true
+      }
+    },
+    {
+      "name": "MCP tools against built authenticated API",
+      "result": "pass",
+      "details": {
+        "inputRun": "01M5B6J3D9E2BHZ2TDYTBTD1AX",
+        "signalRun": "01M5B6J3K7H8N2R1PJSYKRTCK7",
+        "hint": {
+          "finished": false,
+          "status": "waiting",
+          "cursor": 6,
+          "currentNodeId": "work",
+          "waiting": {
+            "waitId": "01M5B6J3D9E2BHZ2TDYTBTD1AX:5",
+            "nodeId": "work",
+            "kind": "input",
+            "prompt": "MCP",
+            "startedSeq": 5
+          },
+          "next": "The run is waiting for input. Ask the user if needed, then call provide_input with waitId from the observed waiting.waitId and a value matching waiting.inputSchema, and call wait_for_run again."
+        },
+        "staleError": {
+          "content": [
+            {
+              "type": "text",
+              "text": "GraphGoblin API error WAIT_MISMATCH (HTTP 409): The observed input wait is no longer active"
+            }
+          ],
+          "isError": true
+        },
+        "requiredIdentity": true
+      }
+    },
+    {
+      "name": "heartbeat repeated visit resets beat and rejects previous park ID",
+      "result": "pass",
+      "details": {
+        "runId": "01M5B6J3S65FSNM8DGNP1CQW5P",
+        "beats": [
+          {
+            "runId": "01M5B6J3S65FSNM8DGNP1CQW5P",
+            "seq": 6,
+            "ts": "2026-10-19T23:04:48.209Z",
+            "type": "heartbeat.beat",
+            "nodeId": "work",
+            "beat": 1,
+            "result": {
+              "name": "tick",
+              "count": 0
+            }
+          },
+          {
+            "runId": "01M5B6J3S65FSNM8DGNP1CQW5P",
+            "seq": 11,
+            "ts": "2026-10-19T23:04:49.252Z",
+            "type": "heartbeat.beat",
+            "nodeId": "work",
+            "beat": 2,
+            "result": {
+              "name": "tick",
+              "count": 1
+            }
+          },
+          {
+            "runId": "01M5B6J3S65FSNM8DGNP1CQW5P",
+            "seq": 17,
+            "ts": "2026-10-19T23:04:49.280Z",
+            "type": "heartbeat.beat",
+            "nodeId": "work",
+            "beat": 1,
+            "result": {
+              "name": "tick",
+              "count": 0
+            }
+          },
+          {
+            "runId": "01M5B6J3S65FSNM8DGNP1CQW5P",
+            "seq": 22,
+            "ts": "2026-10-19T23:04:50.494Z",
+            "type": "heartbeat.beat",
+            "nodeId": "work",
+            "beat": 2,
+            "result": {
+              "name": "tick",
+              "count": 1
+            }
+          }
+        ],
+        "oldSignal": {
+          "type": "https://graphgoblin.dev/problems/wait-mismatch",
+          "title": "wait mismatch",
+          "status": 409,
+          "code": "WAIT_MISMATCH",
+          "detail": "The observed signal wait is no longer active"
+        }
+      }
+    },
+    {
+      "name": "parent child completion and stale parent wait ID rejection",
+      "result": "pass",
+      "details": {
+        "parent": "01M5B6J697YETB7PWJVMRWZQ4C",
+        "childA": "01M5B6J6AQB06KBH5SHFG2YWAP",
+        "childB": "01M5B6J6HHG6Q09SGD79MAAQX5",
+        "parentWaitIds": ["01M5B6J697YETB7PWJVMRWZQ4C:5", "01M5B6J697YETB7PWJVMRWZQ4C:15"],
+        "stale": {
+          "type": "https://graphgoblin.dev/problems/wait-mismatch",
+          "title": "wait mismatch",
+          "status": 409,
+          "code": "WAIT_MISMATCH",
+          "detail": "The observed input wait is no longer active"
+        },
+        "parentWakes": 2
+      }
+    },
+    {
+      "name": "paused timer acknowledged without repeated polling and resumes once",
+      "result": "pass",
+      "details": {
+        "runId": "01M5B6J6VS254T010GWHKQEVNA",
+        "originalDeadline": "2026-10-19T23:04:54.360Z",
+        "timerRowsWhilePaused": 0,
+        "repeatedLogIncrease": 0,
+        "wakes": 1
+      }
+    },
+    {
+      "name": "SIGKILL restart preserves input, heartbeat count and overdue timer deadline",
+      "result": "pass",
+      "details": {
+        "inputRun": "01M5B6JAWTXDY578VXENVKSYR8",
+        "retainedWaitId": "01M5B6JAWTXDY578VXENVKSYR8:5",
+        "timerRun": "01M5B6JD3CNDBKD9G1FFDEASQE",
+        "deadline": "2026-10-19T23:05:05.677Z",
+        "timerWakes": 1,
+        "heartbeatRun": "01M5B6JB0EJDYG03N1HSTJ3FFB",
+        "beatBeforeKill": 2,
+        "finalResult": {
+          "beat": 4,
+          "probe": {
+            "name": "tick",
+            "count": 2
+          },
+          "satisfied": true
+        },
+        "beatEvents": [
+          {
+            "runId": "01M5B6JB0EJDYG03N1HSTJ3FFB",
+            "seq": 6,
+            "ts": "2026-10-19T23:04:55.607Z",
+            "type": "heartbeat.beat",
+            "nodeId": "work",
+            "beat": 1,
+            "result": {
+              "name": "tick",
+              "count": 0
+            }
+          },
+          {
+            "runId": "01M5B6JB0EJDYG03N1HSTJ3FFB",
+            "seq": 11,
+            "ts": "2026-10-19T23:04:57.662Z",
+            "type": "heartbeat.beat",
+            "nodeId": "work",
+            "beat": 2,
+            "result": {
+              "name": "tick",
+              "count": 1
+            }
+          },
+          {
+            "runId": "01M5B6JB0EJDYG03N1HSTJ3FFB",
+            "seq": 15,
+            "ts": "2026-10-19T23:05:24.545Z",
+            "type": "heartbeat.beat",
+            "nodeId": "work",
+            "beat": 3,
+            "result": {
+              "name": "tick",
+              "count": 1
+            }
+          },
+          {
+            "runId": "01M5B6JB0EJDYG03N1HSTJ3FFB",
+            "seq": 20,
+            "ts": "2026-10-19T23:05:26.639Z",
+            "type": "heartbeat.beat",
+            "nodeId": "work",
+            "beat": 4,
+            "result": {
+              "name": "tick",
+              "count": 2
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "damaged and pre-identity histories isolate healthy park after native restart",
+      "result": "fail",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n200 !== 500\n\n    at file:///<worktree>/.tmp/c2-native-probe.mjs:92:1205\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async check (file:///<worktree>/.tmp/c2-native-probe.mjs:47:56)\n    at async file:///<worktree>/.tmp/c2-native-probe.mjs:92:3"
+    },
+    {
+      "name": "cancellation fences input and timer wakes",
+      "result": "pass",
+      "details": {
+        "inputRun": "01M5B6KK32MCQA8HYKERTEWH56",
+        "timerRun": "01M5B6KK7YJQAEJV56B3F1BNE7",
+        "statuses": ["cancelled", "cancelled"],
+        "timerWakes": 0
+      }
+    },
+    {
+      "name": "Edge current identity and controlled stale second tab",
+      "result": "fail",
+      "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByText(/WAIT_MISMATCH.*no longer active/) to be visible\u001b[22m\n\n    at <worktree>\\.tmp\\c2-native-probe.mjs:94:2121\n    at async check (<worktree>\\.tmp\\c2-native-probe.mjs:47:56)\n    at async file:///<worktree>/.tmp/c2-native-probe.mjs:94:3"
+    }
+  ],
+  "processes": [
+    {
+      "pid": 34580,
+      "role": "key CLI",
+      "stopped": true
+    },
+    {
+      "pid": 41108,
+      "role": "built API",
+      "stopped": true
+    },
+    {
+      "pid": 30348,
+      "role": "built API",
+      "stopped": true
+    },
+    {
+      "pid": 16816,
+      "role": "built API",
+      "stopped": true
+    }
+  ]
+}

@@ -81,7 +81,11 @@ describe('SSE event stream', () => {
         await t.app.inject({ method: 'POST', url: `/loops/${id}/runs`, payload: {} })
       ).json<{ run: RunRecord }>();
       await t.idle();
-      await t.container.manager.provideInput(run.id, true);
+      await t.container.manager.provideInput(
+        run.id,
+        (await t.container.manager.getRun(run.id))?.waiting?.waitId ?? 'unknown',
+        true,
+      );
       await t.idle();
       const good = await t.container.repos.events.read(run.id);
       const seq = good.at(-1)!.seq + 1;
@@ -169,7 +173,11 @@ describe('SSE event stream', () => {
     const response = await fetch(`${base}/runs/${run.id}/events`, {
       headers: { accept: 'text/event-stream' },
     });
-    await t.container.manager.provideInput(run.id, true);
+    await t.container.manager.provideInput(
+      run.id,
+      (await t.container.manager.getRun(run.id))?.waiting?.waitId ?? 'unknown',
+      true,
+    );
     await t.idle();
     const streamed = parseFrames(await readAll(response))
       .filter((frame) => frame.event)
@@ -203,7 +211,11 @@ describe('SSE event stream', () => {
 
     // Let the replay flush, then wake the run so the stream sees live events and the terminal event.
     await new Promise((r) => setTimeout(r, 50));
-    await t.container.manager.provideInput(run.id, { ok: true });
+    await t.container.manager.provideInput(
+      run.id,
+      (await t.container.manager.getRun(run.id))?.waiting?.waitId ?? 'unknown',
+      { ok: true },
+    );
     await t.idle();
     const text = await readAll(response);
     const frames = parseFrames(text);
@@ -225,7 +237,11 @@ describe('SSE event stream', () => {
       await t.app.inject({ method: 'POST', url: `/loops/${id}/runs`, payload: {} })
     ).json<{ run: RunRecord }>();
     await t.idle();
-    await t.container.manager.provideInput(run.id, 1);
+    await t.container.manager.provideInput(
+      run.id,
+      (await t.container.manager.getRun(run.id))?.waiting?.waitId ?? 'unknown',
+      1,
+    );
     await t.idle();
     const all = (await t.app.inject(`/runs/${run.id}/events`)).json<{
       items: { seq: number }[];
@@ -258,7 +274,11 @@ describe('SSE event stream', () => {
         await t.app.inject({ method: 'POST', url: `/loops/${id}/runs`, payload: {} })
       ).json<{ run: RunRecord }>();
       await t.idle();
-      await t.container.manager.provideInput(run.id, 1);
+      await t.container.manager.provideInput(
+        run.id,
+        (await t.container.manager.getRun(run.id))?.waiting?.waitId ?? 'unknown',
+        1,
+      );
       await t.idle();
       const all = (await t.app.inject(`/runs/${run.id}/events`)).json<{
         items: { seq: number; type: string }[];
@@ -314,7 +334,11 @@ describe('SSE event stream', () => {
         const { value } = await reader.read();
         text += decoder.decode(value, { stream: true });
       }
-      await t.container.manager.provideInput(run.id, 1);
+      await t.container.manager.provideInput(
+        run.id,
+        (await t.container.manager.getRun(run.id))?.waiting?.waitId ?? 'unknown',
+        1,
+      );
       const started = Date.now();
       for (;;) {
         const { value, done } = await reader.read();
@@ -342,7 +366,11 @@ describe('SSE event stream', () => {
     await reader.read();
     controller.abort();
     await new Promise((r) => setTimeout(r, 50));
-    await t.container.manager.provideInput(run.id, 1);
+    await t.container.manager.provideInput(
+      run.id,
+      (await t.container.manager.getRun(run.id))?.waiting?.waitId ?? 'unknown',
+      1,
+    );
     await t.idle();
     expect((await t.app.inject(`/runs/${run.id}`)).json<RunRecord>().status).toBe('succeeded');
   });

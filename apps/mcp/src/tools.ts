@@ -5,12 +5,12 @@
 import {
   GraphGoblinApiError,
   loops,
+  observeRun,
   runs,
   unwrap,
   type GraphGoblinClient,
 } from '@graphgoblin/api-client';
 import {
-  TERMINAL_RUN_STATUSES,
   UlidSchema,
   type LoopRecord,
   type LoopVersionRecord,
@@ -31,8 +31,6 @@ export interface ToolOptions {
 export const DEFAULT_WAIT_SECONDS = 60;
 export const MAX_WAIT_SECONDS = 600;
 
-const TERMINAL = new Set<string>(TERMINAL_RUN_STATUSES);
-
 const runId = z.string().min(1).describe('The run id (a ULID) returned by start_run or list_runs.');
 const loopRef = z
   .string()
@@ -41,25 +39,6 @@ const loopRef = z
 const json = z
   .unknown()
   .describe('Any JSON value. Match the inputSchema reported by describe_loop or the waiting spec.');
-
-/** Wait for `ms` or until `signal` aborts. */
-function sleep(ms: number, signal: AbortSignal): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (signal.aborted) {
-      reject(signal.reason as Error);
-      return;
-    }
-    const timer = setTimeout(() => {
-      signal.removeEventListener('abort', onAbort);
-      resolve();
-    }, ms);
-    const onAbort = (): void => {
-      clearTimeout(timer);
-      reject(signal.reason as Error);
-    };
-    signal.addEventListener('abort', onAbort, { once: true });
-  });
-}
 
 /** Find a loop by id, or by exact name when no loop has that id. */
 export async function resolveLoop(client: GraphGoblinClient, ref: string) {
@@ -93,10 +72,10 @@ type LoopDetail = { loop: LoopRecord; current?: LoopVersionRecord; draft?: LoopV
 /** What the agent should do next for a run that has not finished. */
 function nextStep(run: RunRecord): string {
   if (run.status === 'waiting' && run.waiting?.kind === 'input') {
-    return 'The run is waiting for input. Ask the user if needed, then call provide_input with a value matching waiting.inputSchema, and call wait_for_run again.';
+    return 'The run is waiting for input. Ask the user if needed, then call provide_input with waitId from the observed waiting.waitId and a value matching waiting.inputSchema, and call wait_for_run again.';
   }
   if (run.status === 'waiting' && run.waiting?.kind === 'signal') {
-    return `The run is waiting for the signal "${run.waiting.signalName ?? ''}". Call send_signal if you are the one expected to send it; otherwise call wait_for_run again.`;
+    return `The run is waiting for the signal "${run.waiting.signalName ?? ''}". Call send_signal with waitId from the observed waiting.waitId if you are the one expected to send it; otherwise call wait_for_run again.`;
   }
   if (run.status === 'paused') return 'The run is paused. Call resume_run to continue it.';
   return 'The run is still in progress. Call wait_for_run again with the same runId; use read_run_events with after=cursor to see what happened so far.';
@@ -157,7 +136,7 @@ export function registerTools(
     {
       title: 'Start a run',
       description:
-        'Start a run of a loop from a manual trigger. Returns immediately with the runId; the run executes in the background. Then call wait_for_run with that runId to get the result. Pass input matching the trigger inputSchema from describe_loop. triggerNodeId is only needed when the loop has more than one manual trigger.',
+        'Start a run of a loop from a manual trigger. Returns immediately with the runId; the run executes in the background. Then call wait_for_run with that runId to get the result. Pass input matching the trigger inputSchema from describe_loop. triggerNodeId is only needed when the loop has more than one manual trigger. The run keeps the definition it starts with (definition and pinned in the result) even if the loop is edited or published again while it runs.',
       inputSchema: {
         loopId: loopRef,
         input: json.optional(),
@@ -168,7 +147,9 @@ export function registerTools(
         allowDraft: z
           .boolean()
           .optional()
-          .describe('Run the draft version when the loop has no published version. Default false.'),
+          .describe(
+            'Run the draft version when the loop has no published version: the run pins a snapshot of the draft as it is now. Default false.',
+          ),
       },
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
     },
@@ -188,6 +169,8 @@ export function registerTools(
           runId: run.id,
           loopId: run.loopId,
           versionId: run.versionId,
+          definition: run.pinned.label,
+          pinned: run.pinned,
           status: run.status,
           next: 'Call wait_for_run with this runId to wait for the result.',
         };
@@ -198,48 +181,63 @@ export function registerTools(
     'wait_for_run',
     {
       title: 'Wait for a run',
-      description: `Wait for a run to finish, polling for up to timeoutSeconds (default ${DEFAULT_WAIT_SECONDS}, max ${MAX_WAIT_SECONDS}). If the run finished (succeeded, failed, cancelled, exhausted) it returns { finished: true, run } with run.result holding the loop's return value and run.failure explaining a failure. Otherwise it returns { finished: false, status, cursor, next }: follow "next". It returns early when the run needs you: waiting for input (call provide_input) or paused (call resume_run). For a long run, keep calling wait_for_run with the same runId. cursor is the last event sequence, usable as "after" in read_run_events.`,
+      description: `Wait for a run to finish, polling for up to timeoutSeconds (min 1, default ${DEFAULT_WAIT_SECONDS}, max ${MAX_WAIT_SECONDS} seconds). If the run finished (succeeded, failed, cancelled, exhausted) it returns { finished: true, run } with run.result holding the loop's return value and run.failure explaining a failure. Otherwise it returns { finished: false, status?, cursor?, next }: follow "next". It returns early when the run needs you: waiting for input (call provide_input) or paused (call resume_run). For a long run, keep calling wait_for_run with the same runId. cursor is the last event sequence, usable as "after" in read_run_events. If the deadline expires before any snapshot arrives, status, waiting and cursor are omitted. Deadlines and request cancellation stop observation only; they never cancel the run.`,
       inputSchema: {
         runId,
         timeoutSeconds: z
           .number()
           .int()
-          .min(0)
+          .min(1)
           .max(MAX_WAIT_SECONDS)
           .optional()
-          .describe(`How long to wait. Default ${DEFAULT_WAIT_SECONDS}, max ${MAX_WAIT_SECONDS}.`),
+          .describe(
+            `How long to wait, from 1 to 600 seconds. Default ${DEFAULT_WAIT_SECONDS}, max ${MAX_WAIT_SECONDS}.`,
+          ),
       },
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     ({ runId: id, timeoutSeconds }, extra) =>
       guard(async () => {
-        const deadline = now() + (timeoutSeconds ?? DEFAULT_WAIT_SECONDS) * 1000;
         const progressToken = extra._meta?.progressToken;
-        for (let polls = 1; ; polls += 1) {
-          const run = await runs.get(client, id);
-          if (TERMINAL.has(run.status)) return { finished: true, run };
-          const needsCaller =
-            run.status === 'paused' || (run.status === 'waiting' && run.waiting?.kind === 'input');
-          const remaining = deadline - now();
-          if (needsCaller || remaining <= 0) {
-            return {
-              finished: false,
-              status: run.status,
-              cursor: run.lastEventSeq,
-              ...(run.currentNodeId ? { currentNodeId: run.currentNodeId } : {}),
-              ...(run.waiting ? { waiting: run.waiting } : {}),
-              next: nextStep(run),
-            };
-          }
-          if (progressToken !== undefined) {
-            // Progress notifications let clients that support it extend their request timeout.
-            await extra.sendNotification({
-              method: 'notifications/progress',
-              params: { progressToken, progress: polls, message: `run is ${run.status}` },
-            });
-          }
-          await sleep(Math.min(pollMs, remaining), extra.signal);
+        const result = await observeRun(
+          client,
+          id,
+          {
+            timeoutMs: (timeoutSeconds ?? DEFAULT_WAIT_SECONDS) * 1000,
+            pollMs,
+            now,
+            signal: extra.signal,
+          },
+          {
+            stopWhen: (run) =>
+              run.status === 'paused' ||
+              (run.status === 'waiting' && run.waiting?.kind === 'input'),
+            onPoll: async (run, polls) => {
+              if (progressToken !== undefined) {
+                await extra.sendNotification({
+                  method: 'notifications/progress',
+                  params: { progressToken, progress: polls, message: `run is ${run.status}` },
+                });
+              }
+            },
+          },
+        );
+        if (result.finished) return result;
+        const { run } = result;
+        if (!run) {
+          return {
+            finished: false,
+            next: 'No run snapshot arrived before the observation deadline. Call wait_for_run again with the same runId, or get_run to check its status.',
+          };
         }
+        return {
+          finished: false,
+          status: run.status,
+          cursor: run.lastEventSeq,
+          ...(run.currentNodeId ? { currentNodeId: run.currentNodeId } : {}),
+          ...(run.waiting ? { waiting: run.waiting } : {}),
+          next: nextStep(run),
+        };
       }),
   );
 
@@ -414,13 +412,17 @@ export function registerTools(
     {
       title: 'Provide input to a waiting run',
       description:
-        'Answer a run that is waiting for input (wait_for_run or get_run shows status "waiting" with waiting.kind "input"). Pass a value matching waiting.inputSchema; read waiting.prompt to know what is being asked, and ask the user when the answer is theirs to give. Then call wait_for_run again.',
-      inputSchema: { runId, input: json },
+        'Answer a run that is waiting for input (wait_for_run or get_run shows status "waiting" with waiting.kind "input"). Pass waitId from waiting.waitId in that observed snapshot and a value matching waiting.inputSchema; read waiting.prompt to know what is being asked, and ask the user when the answer is theirs to give. Then call wait_for_run again.',
+      inputSchema: {
+        runId,
+        waitId: z.string().min(1).describe('The waiting.waitId shown by get_run or wait_for_run.'),
+        input: json,
+      },
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
     },
-    ({ runId: id, input }) =>
+    ({ runId: id, waitId, input }) =>
       guard(async () =>
-        summarizeRun(await runs.provideInput(client, id, (input ?? null) as never)),
+        summarizeRun(await runs.provideInput(client, id, waitId, (input ?? null) as never)),
       ),
   );
 
@@ -429,17 +431,18 @@ export function registerTools(
     {
       title: 'Send a signal to a run',
       description:
-        'Deliver a named signal to a run, for wait nodes in signal mode (waiting.kind "signal", waiting.signalName) and heartbeat probes that count signals. Returns woke: true when a waiting node consumed it. Then call wait_for_run to follow the run.',
+        'Deliver a named signal to a run, for wait nodes in signal mode (waiting.kind "signal", waiting.signalName) and heartbeat probes that count signals. Pass the waiting.waitId from get_run or wait_for_run as waitId. Returns woke: true when a waiting node consumed it. Then call wait_for_run to follow the run.',
       inputSchema: {
         runId,
         name: z.string().min(1).describe('The signal name, for example waiting.signalName.'),
+        waitId: z.string().min(1).describe('The waiting.waitId shown by get_run or wait_for_run.'),
         payload: json.optional(),
       },
       annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
     },
-    ({ runId: id, name, payload }) =>
+    ({ runId: id, name, waitId, payload }) =>
       guard(async () => {
-        const result = await runs.signal(client, id, name, payload as never);
+        const result = await runs.signal(client, id, name, waitId, payload as never);
         return { woke: result.woke, run: summarizeRun(result.run) };
       }),
   );

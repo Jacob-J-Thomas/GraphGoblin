@@ -76,6 +76,23 @@ export const ClassifierModelSummarySchema = ClassifierModelEntrySchema.safeExten
   configured: z.boolean(),
   configurationReason: z.string().optional(),
 });
+/**
+ * What a run calls for one classifier, pinned when the run is created (ADR-0041): later edits of
+ * the catalog entry reach new runs only. Existence, the enabled switch and the secret's value stay
+ * live, so a removed or disabled classifier fails the run explicitly and nothing is substituted.
+ */
+export const ClassifierBindingSchema = z
+  .strictObject({
+    provider: z.enum(['typesafe', 'http']),
+    providerModel: Metadata.providerModel,
+    primitives: ClassifierPrimitivesSchema,
+    endpoint: ClassifierEndpointSchema,
+    /** The secret's name; its value is read when the classifier is called. */
+    secretRef: ClassifierSecretRefSchema.optional(),
+  })
+  .refine(safeBearerEndpoint, bearerEndpointIssue);
+export type ClassifierBinding = z.infer<typeof ClassifierBindingSchema>;
+
 /** PUT replaces custom metadata; credentials, ownership, and enabled state are never input. */
 export const ClassifierModelPutSchema = z
   .strictObject({

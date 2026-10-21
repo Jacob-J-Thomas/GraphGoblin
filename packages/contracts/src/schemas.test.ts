@@ -12,6 +12,7 @@ import {
   JsonPointerSchema,
   LoopDefinitionSchema,
   LoopExportSchema,
+  LoopVersionRecordSchema,
   MutationOperationSchema,
   NodeConfigSchemas,
   NodeKindSchema,
@@ -31,6 +32,7 @@ import {
   fakeUlid,
   kitchenSinkLoop,
   minimalLoop,
+  samplePin,
   sampleThread,
 } from './testing/index.js';
 
@@ -382,30 +384,63 @@ describe('thread, run, and events', () => {
     expect(ContextThreadSchema.safeParse(thread).success).toBe(false);
   });
 
-  it('parses run records', () => {
-    const run = RunRecordSchema.parse({
+  it('parses run records with their definition pin', () => {
+    const record = {
       id: FIXTURE_IDS.run,
       ownerId: 'local',
       loopId: FIXTURE_IDS.loop,
       versionId: FIXTURE_IDS.version,
+      pinned: samplePin({ source: 'draft', label: 'Minimal draft v1' }),
       invocationId: FIXTURE_IDS.invocation,
       status: 'waiting',
       iteration: 1,
-      waiting: { nodeId: 'approve', kind: 'input', prompt: 'Approve?' },
+      waiting: {
+        waitId: 'fixture-wait',
+        startedSeq: 1,
+        nodeId: 'approve',
+        kind: 'input',
+        prompt: 'Approve?',
+      },
       createdAt: FIXTURE_TS,
       lastEventSeq: 4,
-    });
+    };
+    const run = RunRecordSchema.parse(record);
     expect(run.status).toBe('waiting');
+    expect(run.pinned.source).toBe('draft');
+    // Every run names what it pins; the pin is closed and its source is one of two kinds.
+    const { pinned: _pinned, ...unpinned } = record;
+    expect(RunRecordSchema.safeParse(unpinned).success).toBe(false);
+    for (const pinned of [
+      { ...record.pinned, source: 'snapshot' },
+      { ...record.pinned, extra: true },
+      { ...record.pinned, defaults: { owner: { byHarness: {} } } },
+    ])
+      expect(RunRecordSchema.safeParse({ ...record, pinned }).success).toBe(false);
+  });
+
+  it('separates draft snapshots from published versions and drafts', () => {
+    const version = {
+      id: FIXTURE_IDS.version,
+      loopId: FIXTURE_IDS.loop,
+      version: 2,
+      definition: minimalLoop(),
+      createdAt: FIXTURE_TS,
+    };
+    for (const status of ['draft', 'published', 'snapshot'])
+      expect(LoopVersionRecordSchema.safeParse({ ...version, status }).success).toBe(true);
+    expect(LoopVersionRecordSchema.safeParse({ ...version, status: 'frozen' }).success).toBe(false);
   });
 
   it('parses run events of several types', () => {
     const base = { runId: FIXTURE_IDS.run, seq: 1, ts: FIXTURE_TS };
+    const pin = { versionId: FIXTURE_IDS.version, pinned: samplePin() };
     const events = [
-      { ...base, type: 'run.queued' },
-      { ...base, type: 'run.queued', replayOf: { runId: FIXTURE_IDS.run, nodeId: 'n' } },
+      { ...base, type: 'run.queued', ...pin },
+      { ...base, type: 'run.queued', ...pin, replayOf: { runId: FIXTURE_IDS.run, nodeId: 'n' } },
       {
         ...base,
         type: 'run.queued',
+        ...pin,
         subloopVersions: { [FIXTURE_IDS.childLoop]: FIXTURE_IDS.version },
       },
       { ...base, type: 'run.started', attempt: 1 },
@@ -452,9 +487,12 @@ describe('thread, run, and events', () => {
       RunEventSchema.safeParse({
         ...base,
         type: 'run.queued',
+        ...pin,
         replayOf: { runId: 'x', nodeId: 'n' },
       }).success,
     ).toBe(false);
+    // The first event always says which definition the run pins.
+    expect(RunEventSchema.safeParse({ ...base, type: 'run.queued' }).success).toBe(false);
   });
 
   it('strictly validates the supported node progress variants and their bounds', () => {

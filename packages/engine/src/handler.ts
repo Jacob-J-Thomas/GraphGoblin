@@ -9,6 +9,7 @@ import type {
   NodeOfKind,
   Outcome,
   ReturnChannel,
+  RunFailure,
   RunRecord,
   WaitSpec,
   Effort,
@@ -38,6 +39,8 @@ export interface ChildOutcome {
   status: RunRecord['status'];
   outcome?: Outcome;
   result?: JsonValue;
+  /** The child's runtime failure; absent for an authored Failure exit, which is an outcome. */
+  failure?: RunFailure;
   thread?: ContextThread;
 }
 
@@ -57,6 +60,12 @@ export interface HandlerServices {
   startChild(request: ChildStartRequest): Promise<string>;
   /** Read a finished child's outcome and final thread. */
   childOutcome(childRunId: string): Promise<ChildOutcome>;
+  /**
+   * Resume a child whose runtime failure is resumable, on behalf of this run (an explicit resume
+   * of this run re-executes its subloop node, which resumes the child as an inline node would be
+   * re-executed), then read the child again.
+   */
+  resumeChild(childRunId: string): Promise<ChildOutcome>;
   /** Events of this run so far. */
   events(): Promise<readonly RunEvent[]>;
   /** Current depth of this run in the subloop tree (0 for a top-level run). */
@@ -88,7 +97,7 @@ export interface NodeContext<K extends NodeKind = NodeKind> {
 export type NodeResult =
   | { kind: 'done'; patch: JsonPatch; route: string }
   | { kind: 'decision'; patch: JsonPatch; route: string; evidence: DecisionEvidence }
-  | { kind: 'park'; patch: JsonPatch; wait: WaitSpec }
+  | { kind: 'park'; patch: JsonPatch; wait: Omit<WaitSpec, 'waitId' | 'startedSeq'> }
   | {
       kind: 'exit';
       patch: JsonPatch;

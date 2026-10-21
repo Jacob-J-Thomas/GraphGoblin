@@ -21,3 +21,5 @@ export * from './replay.js';
 export * from './regex-safety.js';
 export * from './model-resolution.js';
 export * from './poll-items.js';
+export * from './json-value.js';
+export * from './retired-destinations.js';

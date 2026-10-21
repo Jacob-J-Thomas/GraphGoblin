@@ -139,7 +139,12 @@ describe('decision node', () => {
     });
     expect(r.result).toBe('good');
     expect(e.ports.classifiers.requests).toEqual([
-      { ownerId: 'local', modelId: 'jev', primitive: 'choice' },
+      {
+        ownerId: 'local',
+        modelId: 'jev',
+        primitive: 'choice',
+        binding: expect.objectContaining({ provider: 'typesafe', providerModel: 'jev-latest' }),
+      },
     ]);
     expect(e.events(r.id).find((ev) => ev.type === 'decision.made')).toMatchObject({
       observation: { kind: 'classifier', answer: answer() },
@@ -816,7 +821,6 @@ describe('exit node and return channels', () => {
             { kind: 'file', path: '/abs/result.md', format: 'markdown' },
             { kind: 'file', path: 'plain.txt', format: 'text' },
             { kind: 'webhook', url: 'https://example.test/hook', secretRef: 'hook' },
-            { kind: 'event', eventType: 'answer-ready' },
           ],
         },
       ),
@@ -837,12 +841,8 @@ describe('exit node and return channels', () => {
       'https://example.test/default',
     ]);
     expect(engine.ports.delivery.webhooks[0]?.secret).toBe('hs');
-    expect(engine.ports.delivery.events[0]).toMatchObject({
-      eventType: 'answer-ready',
-      payload: { result: { answer: 42 }, outcome: 'success' },
-    });
     const delivered = engine.events(run.id).filter((e) => e.type === 'return.delivered');
-    expect(delivered).toHaveLength(8);
+    expect(delivered).toHaveLength(7);
   });
 
   it('records webhook failures and skips delivery when mapping is none', async () => {

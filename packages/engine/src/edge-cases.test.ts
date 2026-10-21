@@ -2,7 +2,13 @@ import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { describe, expect, it, vi } from 'vitest';
 import type { LoopDefinitionInput, Node, RunEvent } from '@graphgoblin/contracts';
 import { LoopDefinitionSchema } from '@graphgoblin/contracts';
-import { FIXTURE_IDS, FIXTURE_TS, minimalLoop, sampleThread } from '@graphgoblin/contracts/testing';
+import {
+  FIXTURE_IDS,
+  FIXTURE_TS,
+  minimalLoop,
+  samplePin,
+  sampleThread,
+} from '@graphgoblin/contracts/testing';
 import { RunCancelledError, RunFailureError, describeError, isAbortError } from './errors.js';
 import { nodeOfKind } from './handler.js';
 import {
@@ -216,7 +222,9 @@ describe('fakes', () => {
     const store = new InMemoryEventStore(clock);
     const seen: RunEvent[] = [];
     const unsubscribe = store.subscribe(FIXTURE_IDS.run, (e) => seen.push(e));
-    await store.append(FIXTURE_IDS.run, [{ type: 'run.queued' }]);
+    await store.append(FIXTURE_IDS.run, [
+      { type: 'run.queued', versionId: FIXTURE_IDS.version, pinned: samplePin() },
+    ]);
     unsubscribe();
     await store.append(FIXTURE_IDS.run, [{ type: 'run.started', attempt: 1 }]);
     expect(seen).toHaveLength(1);
@@ -328,7 +336,11 @@ describe('run manager edge cases', () => {
     );
     const run = await engine.runToIdle(version.loopId, null, { dedupeKey: 'dk-1' });
     expect((await engine.manager.getThread(run.id))?.invocation.trigger.dedupeKey).toBe('dk-1');
-    await engine.manager.provideInput(run.id, 'free text');
+    await engine.manager.provideInput(
+      run.id,
+      (await engine.manager.getRun(run.id))?.waiting?.waitId ?? 'unknown',
+      'free text',
+    );
     const done = await engine.settle(run.id);
     expect(done.status).toBe('succeeded');
     expect((await engine.manager.getThread(done.id))?.messages.at(-1)?.content).toBe('free text');
@@ -464,7 +476,9 @@ describe('run manager edge cases', () => {
     await second.waitForIdle();
     expect((await engine.ports.runs.get(run.id))?.status).toBe('waiting');
     engine.ports.runs.dropThreadSnapshot(run.id);
-    await second.provideInput(run.id, { ok: true });
+    await second.provideInput(run.id, (await second.getRun(run.id))?.waiting?.waitId ?? 'unknown', {
+      ok: true,
+    });
     await second.waitForIdle();
     const done = await engine.ports.runs.get(run.id);
     expect(done?.status).toBe('succeeded');
@@ -609,7 +623,7 @@ describe('handler edge cases', () => {
     const run = await engine.runToIdle(version.loopId);
     expect(run.waiting?.until).toBe('2026-10-02T12:00:05.000Z');
     expect(run.waiting?.timeoutAt).toBe('2026-10-02T12:01:00.000Z');
-    const seq = run.waiting?.startedSeq;
+    const seq = run.waiting?.waitId;
     expect(engine.ports.timers.scheduled.map((t) => t.key).sort()).toEqual([
       `timeout@${seq}`,
       `timer@${seq}`,
@@ -705,7 +719,7 @@ describe('handler edge cases', () => {
     expect((await engine.manager.getThread(rawRun.id))?.lastOutput?.value).toBe('not json');
   });
 
-  it('subloop: exclusions, fresh injections, default custom patches, and null results', async () => {
+  it('subloop: exclusions, fresh injections, default custom patches, and absent results', async () => {
     const engine = await createTestEngine();
     const child = engine.publish({
       schemaVersion: CURRENT_DEFINITION_FORMAT,
@@ -790,12 +804,13 @@ describe('handler edge cases', () => {
     expect(cdRun.status).toBe('succeeded');
     expect((cdRun.result as { last: unknown }).last).toBeNull();
 
+    // A child without output passes none: the result variable is absent, not null (#242).
     const silentChild = engine.publish(minimalLoop(), { loopId: engine.loopId('silent-child') });
-    const nullResult = engine.publish(
+    const absentResult = engine.publish(
       parent('nr', { loopRef: { loopId: silentChild.loopId }, output: { resultTo: { var: 'r' } } }),
     );
-    const nrRun = await engine.runToIdle(nullResult.loopId);
-    expect((nrRun.result as { vars: Record<string, unknown> }).vars['r']).toBeNull();
+    const nrRun = await engine.runToIdle(absentResult.loopId);
+    expect((nrRun.result as { vars: Record<string, unknown> }).vars).not.toHaveProperty('r');
   });
 });
 

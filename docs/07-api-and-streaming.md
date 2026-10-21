@@ -15,28 +15,29 @@ Loops
   GET    /loops/{id}                    loop with current published version and draft
   PUT    /loops/{id}/draft              save draft definition (validated, may be unpublishable; If-Match)
   POST   /loops/{id}/publish            validate and freeze draft as a new version
-  GET    /loops/{id}/versions           version history
+  GET    /loops/{id}/versions           version history: published versions and the draft (no draft snapshots)
+  GET    /loops/{id}/versions/{vid}     one version, draft or draft snapshot, with its definition (a run's versionId)
   GET    /loops/{id}/export             definition as JSON for committing to a repo
   POST   /loops/import                  create or update from exported JSON
   DELETE /loops/{id}                    delete loop, versions, drafts, triggers and all run history; 204, 404 or 409
 
 Runs
-  POST   /loops/{id}/runs               start a run from a manual trigger; body: { triggerNodeId, input?, return?: ReturnChannel[] }
+  POST   /loops/{id}/runs               start a run from a manual trigger; body: { triggerNodeId?, input?, return?: ReturnChannel[], versionId?, allowDraft? }; 202 { run } with its pin
   GET    /runs                          owner-scoped list with run/template filters and a stable nextCursor
-  GET    /runs/{id}                     snapshot: status, current node, iteration, waiting spec, result, failure
+  GET    /runs/{id}                     snapshot: pinned definition, status, current node, iteration, waiting spec, result, failure
   GET    /runs/{id}/thread              current context thread projection
   GET    /runs/{id}/events?after=N      page of events; with Accept: text/event-stream, a live tail
   POST   /runs/{id}/cancel | pause | resume
-  POST   /runs/{id}/input               for a wait node in input mode; validated against its inputSchema
-  POST   /runs/{id}/signals/{name}      deliver a named signal
+  POST   /runs/{id}/input               body: { waitId, input }; observed identity and inputSchema validated
+  POST   /runs/{id}/signals/{name}      body: { waitId, payload? }; deliver to the observed wait
   POST   /runs/{id}/replay              fork a new run at a node; body: { nodeId }; 202 { run }; 409 REPLAY_NODE_NOT_REACHED (see 05)
 
 Triggers and events
   POST   /triggers/cron/preview         next cron slots without saving or arming; loops:read
   POST   /hooks/{endpointToken}         webhook receiver (None or HMAC; JSON/text/bytes); 202 {accepted:true} after atomic receipt claim, asynchronous dispatch (1 MiB, rate limit; see 08)
   GET    /loops/{id}/triggers           schedules, webhook endpoints (path only, never the secret), armed poll triggers
-  POST   /events                        inbound event bus; body: { type, payload, dedupeKey? }; fires event triggers, returns runIds and duplicate
-  GET    /events?type=&before=&limit=   stored inbound events (API, exit channels, webhooks), newest first
+  POST   /events                        inbound Event intake; body: { type, payload, dedupeKey? }; fires event triggers, returns runIds and duplicate
+  GET    /events?type=&before=&limit=   stored inbound events (API, webhooks), newest first
 
 Settings and catalog
   CRUD   /secrets  /api-keys  /settings   (schedules follow publish; read them at /loops/{id}/triggers)
@@ -69,6 +70,10 @@ event metadata does not change `POST /events` or publish anything to the bus.
 The owner-scoped `GET /runs/diagnostics` endpoint (`runs:read`) identifies unreadable run rows or event history with `HISTORY_UNREADABLE`, a run ID, and a readable reason. It changes no persisted status or history; see the crash-recovery and troubleshooting procedures.
 
 Diagnostics are paged by `nextCursor`; pass it back as `?cursor=...` until null. Each request checks at most 20 runs, two threads per run and 100 events per run (at most 2,000 events total). A long event history resumes within the same run. Ordinary run lists skip unreadable rows while advancing their cursor; diagnostics identifies those rows. A direct unreadable snapshot returns `STORED_RUN_INVALID` with its run ID; unreadable event pages retain `STORED_EVENT_INVALID`. Unrelated loop deletion continues to work; active run references still protect their own and reachable loops.
+
+## Artifact downloads
+
+`GET /runs/{id}/artifacts/{artifactId}` returns the artifact's verified content, with SHA-256 checked before decoding. Missing artifact metadata or content returns `404 ARTIFACT_NOT_FOUND`; bytes that do not match the reference return `500 ARTIFACT_CORRUPT`, without serving partial or corrupt content. `ARTIFACT_CORRUPT` is an API problem code, not a run failure code. A publication failure during a run is the resumable run failure `ARTIFACT_WRITE_FAILED`, with the artifact `ref` in its details; resuming the run continues the recorded provider session (docs/05).
 
 ## Loop deletion
 
@@ -193,7 +198,7 @@ The `caller` return channel resolves at delivery time:
 | `manual.mcp`                                          | Also returned as the MCP tool result when the client waited; otherwise fetched with `get_run` |
 | `subloop`                                             | Handed to the parent run's subloop output mapping                                             |
 
-Other channels, webhook, file, event, and log, are delivered by the engine after the run finishes, with one `return.delivered` or `return.failed` event each.
+Other channels, webhook, file and log, are delivered by the engine after the run finishes, with one `return.delivered` or `return.failed` event each. There is no Event channel: a loop that needs another loop's result calls it as an awaited subloop (ADR-0044).
 
 ## MCP server (Decided)
 
@@ -204,22 +209,31 @@ Other channels, webhook, file, event, and log, are delivered by the engine after
 
 Tools (each with a Zod input schema; descriptions tell the agent when to call it and what to do next):
 
-| Tool                                    | Input                                                       | Behaviour                                                                                                                                                                                                   |
-| --------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `list_loops`                            | `query?`                                                    | Loops with `id`, `name`, `description`, `published`, `hasDraft`; `query` filters names and descriptions                                                                                                     |
-| `describe_loop`                         | `loopId` (id or exact name)                                 | The published version (or the draft, with a note): triggers with type, `inputSchema`, and `startableFromMcp`; input waits with prompt and schema; exits with `default`, `returnMapping`, channel kinds      |
-| `start_run`                             | `loopId`, `input?`, `triggerNodeId?`, `allowDraft?`         | Starts a manual trigger and returns `runId` immediately; `allowDraft` runs the draft of an unpublished loop                                                                                                 |
-| `wait_for_run`                          | `runId`, `timeoutSeconds?` (default 60, max 600)            | Returns `{ finished: true, run }` at a terminal status, or `{ finished: false, status, cursor, waiting?, next }`; returns early when the run waits for input or is paused; `cursor` is the last event `seq` |
-| `get_run`                               | `runId`                                                     | Run snapshot                                                                                                                                                                                                |
-| `get_run_thread`                        | `runId`                                                     | Context thread                                                                                                                                                                                              |
-| `list_runs`                             | `loopId?`, `status[]?`, `parentRunId?`, `cursor?`, `limit?` | `{ items, nextCursor }`: compact runs, newest first; pass the opaque `nextCursor` as `cursor` with the same filters, even when `items` is empty; null ends the listing                                      |
-| `read_run_events`                       | `runId`, `after?`, `limit?` (default 100)                   | `{ items, nextAfter, hasMore }`                                                                                                                                                                             |
-| `cancel_run`, `pause_run`, `resume_run` | `runId`                                                     | Control; return the compact run. A run paused while parked resumes to `waiting` on the same wait, otherwise to `running` (05)                                                                               |
-| `provide_input`                         | `runId`, `input`                                            | Answers a wait node in input mode                                                                                                                                                                           |
-| `send_signal`                           | `runId`, `name`, `payload?`                                 | `{ woke, run }`                                                                                                                                                                                             |
-| `replay_run`                            | `runId`, `nodeId`                                           | Forks a new run at `nodeId` with the thread from just before that node (`POST /runs/{id}/replay`); returns the compact fork with `replayOf` and a hint to call `wait_for_run`                               |
+| Tool                                    | Input                                                       | Behaviour                                                                                                                                                                                                     |
+| --------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `list_loops`                            | `query?`                                                    | Loops with `id`, `name`, `description`, `published`, `hasDraft`; `query` filters names and descriptions                                                                                                       |
+| `describe_loop`                         | `loopId` (id or exact name)                                 | The published version (or the draft, with a note): triggers with type, `inputSchema`, and `startableFromMcp`; input waits with prompt and schema; exits with `default`, `returnMapping`, channel kinds        |
+| `start_run`                             | `loopId`, `input?`, `triggerNodeId?`, `allowDraft?`         | Starts a manual trigger and returns `runId`, `versionId`, `definition` (the pin label) and `pinned` immediately; `allowDraft` runs a snapshot of the draft of an unpublished loop                             |
+| `wait_for_run`                          | `runId`, `timeoutSeconds?` (1 to 600, default 60)           | Returns `{ finished: true, run }` at a terminal status, or `{ finished: false, status?, cursor?, waiting?, next }`; returns early when the run waits for input or is paused; `cursor` is the last event `seq` |
+| `get_run`                               | `runId`                                                     | Run snapshot                                                                                                                                                                                                  |
+| `get_run_thread`                        | `runId`                                                     | Context thread                                                                                                                                                                                                |
+| `list_runs`                             | `loopId?`, `status[]?`, `parentRunId?`, `cursor?`, `limit?` | `{ items, nextCursor }`: compact runs, newest first; pass the opaque `nextCursor` as `cursor` with the same filters, even when `items` is empty; null ends the listing                                        |
+| `read_run_events`                       | `runId`, `after?`, `limit?` (default 100)                   | `{ items, nextAfter, hasMore }`                                                                                                                                                                               |
+| `cancel_run`, `pause_run`, `resume_run` | `runId`                                                     | Control; return the compact run. A run paused while parked resumes to `waiting` on the same wait, otherwise to `running` (05)                                                                                 |
+| `provide_input`                         | `runId`, `waitId`, `input`                                  | Answers the observed input wait                                                                                                                                                                               |
+| `send_signal`                           | `runId`, `name`, `waitId`, `payload?`                       | `{ woke, run }`                                                                                                                                                                                               |
+| `replay_run`                            | `runId`, `nodeId`                                           | Forks a new run at `nodeId` with the thread from just before that node (`POST /runs/{id}/replay`); returns the compact fork with `replayOf` and a hint to call `wait_for_run`                                 |
 
-`wait_for_run` polls `GET /runs/{id}` once a second rather than calling the client's `waitForRun`, so it can return early, and it sends MCP progress notifications between polls when the caller supplies a progress token. MCP clients have their own tool timeouts (the plugin sets Codex's `tool_timeout_sec` to 660); agents keep calling it until `finished` is true.
+`wait_for_run` uses the client's shared `observeRun` polling implementation, once a second,
+with early returns for input and paused runs and MCP progress notifications when the caller
+supplies a progress token. Its deadline covers pending HTTP requests, response bodies,
+progress notification delivery and sleeps. At the deadline it returns `finished: false`
+with the latest timely status and cursor. If no snapshot arrived, it omits status/waiting
+and cursor fields and asks the caller to check again. `timeoutSeconds` must be an
+integer from 1 to 600 (default 60). MCP request cancellation interrupts observation through the SDK's
+cancellation error; it never calls the run cancellation endpoint. MCP clients have their
+own tool timeouts (the plugin sets Codex's `tool_timeout_sec` to 660); agents keep calling
+until `finished` is true.
 
 Resources: the templates `graphgoblin://runs/{id}/events` (the whole log as JSON, up to 10,000 events, with `truncated` and `nextAfter`) and `graphgoblin://runs/{id}/thread`; listing them returns the 20 most recent runs.
 
@@ -260,7 +274,10 @@ Codex installs a plugin by copying it into `~/.codex/plugins/cache/<marketplace>
 - **Errors.** Non-2xx responses throw `GraphGoblinApiError` with the problem's `status`, `code`, `detail`, and `errors`; transport failures throw it with `status: 0` and `code: 'NETWORK_ERROR'`. `unwrap(result)` does the same for raw openapi-fetch calls.
 - **Resource wrappers.** `loops`, `runs`, `settings`, `secrets`, `apiKeys`, `modelCatalog`, `classifierModels`, `events`, and `system` take the client first and return the response body, for example `await runs.start(client, loopId, { input })` or `await runs.replay(client, runId, nodeId)`. Classifier helpers are `list(client)`, `upsert(client, id, metadata)`, `create(client, id, metadata)` (the same PUT with `If-None-Match: *`, refused with `CLASSIFIER_EXISTS` when the id exists), `setEnabled(client, id, enabled)`, and `remove(client, id)`; ids are encoded and API problems propagate unchanged.
 - **Live events.** `subscribeRunEvents({ client, runId, after?, onEvent, signal? })` reads `GET /runs/{id}/events` as SSE, validates each frame with `RunEventSchema`, and calls `onEvent` in `seq` order. It remembers the last delivered `seq`; if the connection drops before `run.finished`, `run.failed`, or `run.cancelled`, it reconnects with `after=<lastSeq>` after an exponential backoff (500 ms doubling, capped at 30 s, reset after a connection that makes progress) and discards replayed events it has already delivered. 408, 425, 429, 5xx, and network errors are retried; other statuses reject `done`. A frame that fails validation is reported through `onError` and skipped. It returns `{ close(), done, lastSeq }`.
-- **Waiting.** `waitForRun(client, runId, { timeoutMs, pollMs?, signal? })` polls `GET /runs/{id}` until a terminal status or the timeout and returns `{ run, finished }`; the MCP `wait_for_run` tool is built on it.
+- **Waiting.** `waitForRun(client, runId, { timeoutMs, pollMs?, signal? })` polls `GET /runs/{id}` until a terminal status or the deadline. Every GET and sleep receives a signal combining caller cancellation and the total observation budget. Caller abort rejects promptly with the signal's exact reason, including before the first request. The deadline resolves `{ finished: false, run? }` without waiting for an in-flight request or sleep, retaining only the last snapshot received before the deadline; when none arrived, `run` is omitted. The deadline result carries the last timely snapshot, which can be up to one poll interval old during normal polling (older if a request stalls). A zero budget makes no request. A timely terminal snapshot returns `{ finished: true, run }`. Late responses and rejections cannot change the settled result or trigger another poll. The first cancellation cause wins; a caller signal already aborted at entry wins over a zero deadline. Timers and caller listeners are removed on completion. `observeRun(client, runId, options, { stopWhen?, onPoll? })` shares these semantics while supporting MCP's early returns and progress reporting.
+- **Observation and run cancellation.** Aborting a client wait or MCP request, reaching its deadline, or closing/aborting an SSE subscription stops observation only. The run continues. Cancelling the run requires the explicit `POST /runs/{id}/cancel` endpoint (`runs.cancel` / MCP `cancel_run`). SSE already passes its subscription signal into the fetch and body reader, including reconnects; closing or aborting resolves its `done` promise.
+
+Both input and signal paths require the opaque `waitId` from `GET /runs/{id}` at `waiting.waitId`, or the `run.waiting` event at `wait.waitId`. The matching input or signal-mode answer is consumed once. Stale, unknown or already consumed identities return RFC 9457 409 `WAIT_MISMATCH` without appending another answer or replacing the accepted payload. A retry can finish the status acknowledgement and enqueue an earlier durable answer. A matching identity on a paused run returns 409 `INVALID_STATE` with a paused-run message; resume first, then answer the same observed wait. Missing identities are 400 validation errors. Input and signal acceptance retry at most ten conditional-append conflicts; a saturated caller receives `WAIT_MISMATCH` and must refresh its observed snapshot. Heartbeat signals are observations within the current logical visit; every accepted signal is counted once, and each new park has a new identity. The browser submits the identity associated with its displayed form. MCP callers obtain it from `get_run` or `wait_for_run`.
 
 ## Error responses (Decided)
 
@@ -349,6 +366,42 @@ out of subsequent pages. MCP `list_runs` uses this same server cursor and return
 Both the typed client's `GET('/runs')` and the generated OpenAPI contract expose
 the complete page; the convenience `runs.list` wrapper returns its items only.
 
+### Pinned definitions (ADR-0041)
+
+Every run, draft runs included, executes one immutable definition record for its whole life.
+`RunRecord.versionId` names it and `RunRecord.pinned` describes it:
+`{ source: 'published' | 'draft', version, name, label, defaults: { owner, process }, classifiers }`,
+where `classifiers` maps each classifier id the definition uses to the catalog binding it calls
+(`provider`, `providerModel`, `endpoint`, `primitives`, `secretRef?`; never the secret value).
+The start responses (`POST /loops/{id}/runs`, `POST /runs/{id}/replay`, MCP `start_run`) return it,
+and the first event of every run, `run.queued`, carries the same `versionId` and `pinned`, so the
+SSE stream identifies the definition before anything runs. A draft start
+(`{ versionId: <draft id>, allowDraft: true }`) answers with a new `versionId`: the draft snapshot
+taken at start, readable at `GET /loops/{id}/versions/{versionId}` (status `snapshot`) and never
+listed in the version history. Starting a snapshot directly answers 409 `VERSION_NOT_PUBLISHED`.
+`label` and `name` are those of the pinned definition, so renaming or editing the loop later does
+not change them. MCP compact runs (`list_runs`, control tools) include `definition`, the label.
+
+**Stored definitions that predate ADR-0044 (#242).** A version, draft or draft-run snapshot saved
+before exits stopped publishing Events can still hold an exit destination `{ kind: "event" }`.
+It is refused before it is served or run, never dropped silently: `GET /loops/{id}`,
+`GET /loops/{id}/versions`, `GET /loops/{id}/versions/{versionId}`, `GET /loops/{id}/export`,
+`POST /loops/{id}/publish`, `POST /loops/{id}/runs` and `POST /runs/{id}/replay` answer 409
+`LOOP_UPGRADE_REQUIRED` with the extension members `loopId`, `versionId`, `version` and `paths`
+(JSON Pointers to each such destination); the `detail` explains the repair. A run already pinned
+to such a definition fails before its next node with `failure.code` `LOOP_UPGRADE_REQUIRED`
+(`resumable: false`, the same identity in `details`), and a parent whose subloop would start or
+awaits such a loop fails with it at its subloop node. Repair: replace the destination with a
+Subloop call and publish. A published version or draft that still holds one can be repaired by
+removing the destination from its stored JSON by hand with GraphGoblin stopped; a draft-run
+snapshot cannot be edited even then (migration 0014's immutability trigger), so delete the loop
+once its runs are terminal (`DELETE /loops/{id}` still works and removes its runs and snapshots)
+or reset the store. The store-level startup check does not refuse a definition whose only
+departure from the current contract is such a destination (in the former channel's exact shape,
+`{ kind: "event", eventType: <slug> }`), so the API starts and the refusal stays per loop. The
+offline format cutover (`inspect`/`apply`) still converts every definition strictly: a store
+holding such a destination needs explicit repair, loop deletion or a reset before a cutover.
+
 Run-list items and `GET /runs/{id}` return the canonical `RunRecord`, without
 `templateSubject` or a template-store lookup. Regenerate strict clients for these
 response and query changes. Existing template runtime subjects remain internal
@@ -368,7 +421,7 @@ Ordinary copied drafts use the ordinary engine resume behavior. The API installs
 
 Create, import, draft save, validate and publish share the gate and terminal-exit schemas and graph checks. A missing `maxPasses` points at `nodes.<index>.config.maxPasses`; node-relative issues use `config.maxPasses`. Multiple repeat markers identify the extra `config.routes.<index>.repeat`, `config.answer.options.<index>.repeat`, Noul side or Score band path. A noncyclic repeat is `REPEAT_ROUTE_NOT_CYCLIC`; a missing Limit reached connection is `PORT_UNCONNECTED` at `config.maxPasses`. Reserve `limit-reached` in all authored route IDs.
 
-Exits are terminal: `{outcome, returns, destinations}`. `outcome` is `success` (default), `failure` or `exhausted`; `returns` is a JSONata expression or `none` (default); `destinations` defaults to `[{kind:"caller"}]` and supports caller, webhook, file, event and log. Exits have no criteria, predicate, default routing or loop-back, and no output ports.
+Exits are terminal: `{outcome, returns, destinations}`. `outcome` is `success` (default), `failure` or `exhausted`; `returns` is a JSONata expression or `none` (default); `destinations` defaults to `[{kind:"caller"}]` and supports caller, webhook, file and log (no Event channel; loops compose as awaited subloops, ADR-0044). Exits have no criteria, predicate, default routing or loop-back, and no output ports.
 
 Success finishes `succeeded`, Failure finishes `failed`, and Exhausted finishes the distinct terminal status `exhausted`. Exhausted means the authored graph gave up further repetition; normally a gate's Limit reached output leads here. It is an outcome, not a resumable node failure. Every outcome evaluates the same return expression and delivers its value unchanged; Exhausted adds no wrapper or implicit last output. Use `outputs.<workNodeId>.value` when returning work output, because the preceding gate replaces `lastOutput`.
 

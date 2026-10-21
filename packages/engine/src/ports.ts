@@ -2,6 +2,7 @@ import type { TriggerAdmissionPort } from './admission.js';
 import type {
   ChoiceAnswer,
   ChoiceOption,
+  ClassifierBinding,
   RouteDeclaration,
   ClassifierPrimitive,
   ScoreAnswer,
@@ -78,13 +79,15 @@ export interface RunRepository {
   update(runId: string, changes: RunRecordChanges): Promise<RunRecord>;
   /**
    * Compare-and-set: apply `changes` only if the run's status is one of `from`.
-   * Returns the updated record, or undefined when the status did not match. Lifecycle transitions
-   * go through this so concurrent commands cannot clobber each other.
+   * An optional wait guard also requires that exact recorded wait, atomically with the status.
+   * Returns the updated record, or undefined when either precondition did not match. Lifecycle
+   * transitions go through this so delayed acknowledgements cannot clobber a later wait.
    */
   transition(
     runId: string,
     from: readonly RunStatus[],
     changes: RunRecordChanges,
+    guard?: { waitId: string },
   ): Promise<RunRecord | undefined>;
   /**
    * Record a cancel request once: set `cancelRequestedAt` only when it is unset and the status is
@@ -98,7 +101,6 @@ export interface RunRepository {
   ): Promise<RunRecord | undefined>;
   /** Raw identities for per-run recovery; must not decode run JSON while enumerating. */
   listRecoveryCandidates(): Promise<{ id: string; terminal: boolean }[]>;
-  listByStatus(statuses: readonly RunStatus[]): Promise<RunRecord[]>;
   /** Active-use checks need only references; damaged run JSON must not block unrelated loops. */
   listRunReferences(
     statuses: readonly RunStatus[],
@@ -296,10 +298,21 @@ export type ClassifierResolution =
   | { status: 'unavailable'; reason: ClassifierUnavailableReason; message: string };
 
 export interface ClassifierRegistryPort {
+  /**
+   * The execution binding a new run pins for the catalog entry `modelId` (ADR-0041), or undefined
+   * when the owner has no such entry.
+   */
+  bind(ownerId: string, modelId: string): Promise<ClassifierBinding | undefined>;
+  /**
+   * A client for the binding a run pinned. Provider, model, endpoint, primitives and secret name
+   * come from the binding; the entry's existence, its enabled switch and the secret's value are
+   * checked now, so a removed or disabled classifier is unavailable and never substituted.
+   */
   resolve(
     ownerId: string,
     modelId: string,
     primitive: ClassifierPrimitive,
+    binding: ClassifierBinding,
   ): Promise<ClassifierResolution>;
 }
 
@@ -371,9 +384,12 @@ export interface TimerPort {
   /**
    * Listeners may return a promise. Implementations await it and remove the fired timer only
    * afterwards, so delivery is at-least-once: a fire interrupted by a crash fires again after a
-   * restart. Listeners must therefore be idempotent.
+   * restart. Returning false defers acknowledgement (for example, an early delivery).
+   * Listeners must therefore be idempotent.
    */
-  onFire(listener: (runId: string, key: string) => void | Promise<void>): () => void;
+  onFire(
+    listener: (runId: string, key: string) => void | boolean | Promise<void | boolean>,
+  ): () => void;
 }
 
 /** Shared byte bound for HTTP probe bodies and items-mode script stdout (64 KiB). */
@@ -405,12 +421,13 @@ export interface HttpProbePort {
 
 export interface ReturnDeliveryPort {
   webhook(url: string, payload: JsonValue, secret?: string): Promise<void>;
-  publishEvent(eventType: string, payload: JsonValue): Promise<void>;
   log(runId: string, payload: JsonValue): void;
 }
 
 export interface ArtifactStorePort {
+  /** Publish complete bytes, or throw ArtifactStoreError(ARTIFACT_WRITE_FAILED). */
   put(kind: string, content: string): Promise<{ ref: string; bytes: number }>;
+  /** Undefined means missing/invalid reference; corrupt bytes throw ArtifactStoreError(ARTIFACT_CORRUPT). */
   get(ref: string): Promise<string | undefined>;
 }
 

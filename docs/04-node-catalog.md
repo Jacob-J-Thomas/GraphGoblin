@@ -13,7 +13,7 @@ Starts a run. A loop may have several trigger nodes; each is an entry point that
 | `manual`  | `inputSchema?`, `exposeTo: ('ui' \| 'api' \| 'mcp')[]`                                                                         | Button in the UI, REST call, or MCP tool. Optional input validated against the schema.                                          |
 | `cron`    | `expression`, `timezone`, `missedFirePolicy: 'skip' \| 'run-once' \| 'run-each'`, `enabled`                                    | Persisted schedule, re-armed at boot. Missed-fire policy is a per-trigger setting.                                              |
 | `webhook` | `authentication`, `body`, `eventType`, `dedupeKey?: JSONata`                                                                   | General POST endpoint; None or either HMAC recipe. Payload checks run downstream.                                               |
-| `event`   | `eventType`, `dedupeKey?: JSONata`                                                                                             | Fires on the inbound-event bus; payload checks run downstream.                                                                  |
+| `event`   | `eventType`, `dedupeKey?: JSONata`                                                                                             | Fires on a matching inbound Event (`POST /events`); payload checks run downstream.                                              |
 | `poll`    | `intervalSeconds`, `probe: Probe`, `fireWhen: JSONata`, `dedupeKey?`, optional `items: { select, dedupeKey, maxRunsPerPoll? }` | Needs no inbound connectivity. Items mode validates a bounded candidate array and admits unseen items up to the configured cap. |
 
 Concurrency: every firing starts a new run, in parallel with any already running. A per-loop policy is post-1.0.
@@ -145,9 +145,16 @@ Ports: `out` plus any labels in `exitCodeRoutes`.
 
 Applies an ordered list of operations to the thread. No LLM calls in 1.0.
 
+Authored operations write only `/vars`, `/messages`, `/artifacts`, `/outputs` and
+`/lastOutput` and their descendants. Protected context remains readable. Script JSON
+Patch stdout obeys the same boundary: every mutating `path` is checked, and a `move`
+also checks `from`. A `copy` from protected context into a writable destination and a
+read-only `test` of protected context are permitted. A protected write or move source
+rejects the entire patch; earlier operations in that patch are not retained.
+
 | Operation              | Parameters                                                                                            | Effect                                                                         |
 | ---------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `set`                  | `path`, `value` (Liquid or JSONata)                                                                   | Set a var or any thread path                                                   |
+| `set`                  | `path`, `value` (Liquid or JSONata)                                                                   | Set a var or another writable thread path                                      |
 | `delete`               | `path`                                                                                                | Remove a var, message, or artifact                                             |
 | `append-message`       | `role`, `content` template, `tags`                                                                    | Inject additional context                                                      |
 | `inject`               | `position: 'start' \| 'end' \| index`, `messages[]`                                                   | Insert templated messages                                                      |
@@ -191,7 +198,7 @@ type SubloopConfig = {
 };
 ```
 
-Behaviour: the child run has its own id, event log, iteration counter, and version pin. The parent run enters `waiting` with kind `child` until the child finishes. Cancelling the parent cancels the child. The child's outcome does not fail the parent by itself; its return payload and outcome are available to the output mapping and to downstream decision nodes.
+Behaviour: the subloop is an awaited call ([ADR-0044](decisions/ADR-0044-awaited-subloops.md)). The child run has its own id, event log, iteration counter, and version pin. The parent run enters `waiting` with kind `child` and continues only after the child finishes; the wake is bound to that park, so it can never answer a later wait. The child's exit returns its configured output to the output mapping, or no output: with `returns: "none"` the summary has no `result` and `resultTo.var` is removed (after any variable merge, so a merged copy never restores it), while a returned JSON `null` arrives as `null`. A child exit never finishes the parent, which continues to its own exit. Cancelling the parent cancels the child. The child's authored outcome (Success, Failure or Exhausted exit) does not fail the parent; its return payload and outcome are available to the output mapping and to downstream decision nodes. A child's execution failure or cancellation is handled like the same failure inline (#251): the parent fails at this node with the child's code and resumability (`details.childRunId` names the child), or is cancelled with it. Resuming such a parent resumes the failed child in place.
 
 Ports: `out`.
 
@@ -204,11 +211,11 @@ Parks the run until something happens. In engine terms the run stops and is late
 | `input`    | `prompt` template, `inputSchema?`, `exposeTo: ('ui' \| 'api' \| 'mcp')[]` | A human or agent providing input through the UI, REST, or the MCP tool    |
 | `duration` | `seconds`                                                                 | A persisted timer                                                         |
 | `until`    | `timestamp`, a Liquid template rendering an ISO 8601 timestamp            | A persisted timer                                                         |
-| `signal`   | `name`, `filter?: JSONata`                                                | A named signal delivered through REST or MCP, or a matching inbound event |
+| `signal`   | `name`, `filter?: JSONata`                                                | A named signal delivered through REST or MCP, sent with the wait identity |
 
 Common fields: `timeoutSeconds?`, `onTimeout: 'continue' | 'fail-run'` (default `continue`, with `lastOutput = { timedOut: true }` so a decision node can branch).
 
-Behaviour: the node emits `run.waiting` and the run releases its worker. On wake, the received input or signal payload is appended as a message with role `user` or `note` and set as `lastOutput`.
+Behaviour: the node emits `run.waiting` with a required `wait.waitId`, also exposed as `waiting.waitId` in the run snapshot, and the run releases its worker. Input and signal callers must return that observed identity. Stale, unknown and already answered identities reject with 409 `WAIT_MISMATCH` without changing the run or log. On wake, the received input or signal payload is appended as a message with role `user` or `note` and set as `lastOutput`.
 
 Ports: `out`.
 
@@ -228,13 +235,15 @@ type HeartbeatConfig = {
 };
 ```
 
+A logical visit lasts until this node records `node.finished`. Signal observations and recorded beat numbers persist across beats, retries and restart within that visit; a gate returning to the completed node starts from zero observations and beat 1. Each park exposes a new `waiting.waitId`: send signals with the identity observed in that snapshot. Signals for earlier parks or visits reject with 409 `WAIT_MISMATCH` and cannot increase the count. Two separately accepted signals are two observations, even if their payloads match.
+
 Two readings of "heartbeat" fit this node. The first is "poll until a condition is true", such as waiting for an external job to finish. The second is "emit a periodic keep-alive to another system while the loop is paused", which is the same node with a `probe` that performs the ping and no `until`. If the owner meant something else, this section changes.
 
 Ports: `out`.
 
 ## Exit (Decided, #164 E1)
 
-Exits are terminal: `{outcome, returns, destinations}`. `outcome` is `success` (default), `failure` or `exhausted`; `returns` is a JSONata expression or `none` (default); `destinations` defaults to `[{kind:"caller"}]` and supports caller, webhook, file, event and log. Exits have no criteria, predicate, default routing or loop-back, and no output ports.
+Exits are terminal: `{outcome, returns, destinations}`. `outcome` is `success` (default), `failure` or `exhausted`; `returns` is a JSONata expression or `none` (default); `destinations` defaults to `[{kind:"caller"}]` and supports caller, webhook, file and log. Exits do not publish Events: a loop that needs another loop's result calls it as a subloop (ADR-0044). Exits have no criteria, predicate, default routing or loop-back, and no output ports.
 
 Success finishes `succeeded`, Failure finishes `failed`, and Exhausted finishes the distinct terminal status `exhausted`. Exhausted means the authored graph gave up further repetition; normally a gate's Limit reached output leads here. It is an outcome, not a resumable node failure. Every outcome evaluates the same return expression and delivers its value unchanged; Exhausted adds no wrapper or implicit last output. Use `outputs.<workNodeId>.value` when returning work output, because the preceding gate replaces `lastOutput`.
 

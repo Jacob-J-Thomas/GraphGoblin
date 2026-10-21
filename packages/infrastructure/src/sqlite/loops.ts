@@ -1,6 +1,6 @@
 import type { LoopDefinition, LoopRecord, LoopVersionRecord } from '@graphgoblin/contracts';
 import type { ClockPort, IdPort, LoopRepository } from '@graphgoblin/engine';
-import { and, asc, desc, eq, inArray, isNotNull } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, isNotNull, ne } from 'drizzle-orm';
 import type { Database } from './db.js';
 import { deleteRuns } from './delete-runs.js';
 import {
@@ -20,7 +20,7 @@ function toLoop(row: LoopRow): LoopRecord {
     id: row.id,
     ownerId: row.ownerId,
     name: row.name,
-    ...(row.description ? { description: row.description } : {}),
+    ...(row.description !== null ? { description: row.description } : {}),
     ...(row.currentVersionId ? { currentVersionId: row.currentVersionId } : {}),
     ...(row.draftVersionId ? { draftVersionId: row.draftVersionId } : {}),
     createdAt: row.createdAt,
@@ -28,7 +28,7 @@ function toLoop(row: LoopRow): LoopRecord {
   };
 }
 
-function toVersion(row: VersionRow): LoopVersionRecord {
+export function loopVersionFromRow(row: VersionRow): LoopVersionRecord {
   return {
     id: row.id,
     loopId: row.loopId,
@@ -69,7 +69,7 @@ export class SqliteLoopRepository implements LoopRepository {
     const row = await this.db.query.loopVersions.findFirst({
       where: eq(loopVersions.id, versionId),
     });
-    return row ? toVersion(row) : undefined;
+    return row ? loopVersionFromRow(row) : undefined;
   }
 
   async getLatestPublished(loopId: string): Promise<LoopVersionRecord | undefined> {
@@ -77,7 +77,7 @@ export class SqliteLoopRepository implements LoopRepository {
       where: and(eq(loopVersions.loopId, loopId), eq(loopVersions.status, 'published')),
       orderBy: desc(loopVersions.version),
     });
-    return row ? toVersion(row) : undefined;
+    return row ? loopVersionFromRow(row) : undefined;
   }
 
   async getPublished(loopId: string, version: number): Promise<LoopVersionRecord | undefined> {
@@ -88,7 +88,7 @@ export class SqliteLoopRepository implements LoopRepository {
         eq(loopVersions.status, 'published'),
       ),
     });
-    return row ? toVersion(row) : undefined;
+    return row ? loopVersionFromRow(row) : undefined;
   }
 
   // ---------------------------------------------------------------------------
@@ -147,13 +147,17 @@ export class SqliteLoopRepository implements LoopRepository {
     return rows.map(toLoop);
   }
 
+  /**
+   * The version history: published versions and the draft. Draft snapshots pinned by draft runs
+   * are run history, not versions (ADR-0041); `getVersion` still reads them by id.
+   */
   async listVersions(loopId: string): Promise<LoopVersionRecord[]> {
     const rows = await this.db
       .select()
       .from(loopVersions)
-      .where(eq(loopVersions.loopId, loopId))
+      .where(and(eq(loopVersions.loopId, loopId), ne(loopVersions.status, 'snapshot')))
       .orderBy(desc(loopVersions.version));
-    return rows.map(toVersion);
+    return rows.map(loopVersionFromRow);
   }
 
   /**

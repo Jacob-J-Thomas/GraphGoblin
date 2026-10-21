@@ -10,7 +10,13 @@ import {
   type Usage,
 } from '@graphgoblin/contracts';
 import { applyPatch, renderTemplate, threadView, validateJson } from '@graphgoblin/domain';
-import { RunCancelledError, RunFailureError, describeError, isAbortError } from '../errors.js';
+import {
+  ArtifactStoreError,
+  RunCancelledError,
+  RunFailureError,
+  describeError,
+  isAbortError,
+} from '../errors.js';
 import type { NodeContext, NodeHandler } from '../handler.js';
 import type {
   HarnessItem,
@@ -425,7 +431,15 @@ export const inferenceHandler: NodeHandler<'inference'> = {
       await ctx.ports.sessions.upsert({ ...row });
       return { kind: 'done', patch, route: 'out' };
     } catch (error) {
-      let failure = error;
+      // Storage faults remain operator-fixable. Explicit resume continues the recorded
+      // provider session with CONTINUATION_PROMPT rather than resending the authored prompt.
+      let failure: unknown =
+        error instanceof ArtifactStoreError && error.code === 'ARTIFACT_WRITE_FAILED'
+          ? new RunFailureError(error.code, error.message, {
+              nodeId: ctx.node.id,
+              details: { ref: error.ref },
+            })
+          : error;
       const unconfirmed = (value: unknown): boolean =>
         value instanceof RunFailureError && value.code === 'HARNESS_TERMINATION_UNCONFIRMED';
       if (session && !unconfirmed(failure)) {

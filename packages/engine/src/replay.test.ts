@@ -146,7 +146,11 @@ describe('replay-at-node', () => {
     expect(parked.status).toBe('waiting');
     expect(parked.waiting).toMatchObject({ nodeId: 'ask', kind: 'input' });
     // The source still waits on its own; answering the fork does not touch it.
-    await engine.manager.provideInput(fork.id, 'yes');
+    await engine.manager.provideInput(
+      fork.id,
+      (await engine.manager.getRun(fork.id))?.waiting?.waitId ?? 'unknown',
+      'yes',
+    );
     expect((await engine.settle(fork.id)).status).toBe('succeeded');
     expect((await engine.ports.runs.get(source.id))?.status).toBe('waiting');
   });

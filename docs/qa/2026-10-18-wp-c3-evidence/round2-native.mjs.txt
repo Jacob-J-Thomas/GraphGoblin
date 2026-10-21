@@ -1,0 +1,147 @@
+import assert from 'node:assert/strict';
+import { createServer } from 'node:http';
+import { mkdtemp, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+import { spawn } from 'node:child_process';
+
+// Inherit only OS launch paths. In particular, never seed a replay store with
+// the caller's JEV_* credentials or GG_* configuration under this dummy key.
+const launchEnvironment = Object.fromEntries(Object.entries(process.env).filter(([name]) =>
+  ['PATH', 'SYSTEMROOT', 'TEMP', 'TMP', 'USERPROFILE', 'APPDATA', 'LOCALAPPDATA'].includes(name.toUpperCase())));
+const evidence = 'docs/qa/2026-10-18-wp-c3-evidence/';
+const dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-c3-'));
+const base = 'http://127.0.0.1:5780';
+const counts = { '/first': 0, '/middle': 0 };
+let repaired = false;
+let child;
+let closed;
+let logs = '';
+const phases = [];
+const deep = '{"key":"deep","v":' + '['.repeat(1100) + '1' + ']'.repeat(1100) + '}';
+const bodies = {
+  '/first': '[' + deep + ',{"key":"s-a"},{"key":"s-b"}]',
+  '/middle': '[{"key":"mid-a"},' + deep + ',{"key":"mid-b"}]',
+};
+const source = createServer((req, res) => {
+  const path = req.url;
+  if (!(path in counts)) { res.writeHead(404); res.end(); return; }
+  counts[path] += 1;
+  res.writeHead(200, { 'content-type': 'application/json' });
+  res.end(repaired ? bodies[path].replace(deep, '{"key":"deep"}') : bodies[path]);
+});
+const pause = ms => new Promise(yes => setTimeout(yes, ms));
+async function until(test, label, timeout = 45000) {
+  const end = Date.now() + timeout;
+  while (Date.now() < end) {
+    if (await test()) return;
+    if (child && child.exitCode !== null) throw Error('API exited: ' + logs.slice(-2000));
+    await pause(150);
+  }
+  throw Error('Timeout: ' + label);
+}
+async function request(path, body) {
+  const res = await fetch(base + path, body === undefined ? {} : {
+    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body),
+  });
+  const value = await res.json();
+  assert.ok(res.ok, JSON.stringify(value));
+  return value;
+}
+async function boot() {
+  child = spawn(process.execPath, [resolve('apps/api/dist/main.js')], {
+    env: { ...launchEnvironment, GG_HOST: '127.0.0.1', GG_PORT: '5780', GG_DATA_DIR: dataDir,
+      GG_DB_URL: 'file:' + join(dataDir, 'store.db'), GG_TIMER_POLL_MS: '50',
+      GG_MASTER_KEY: Buffer.alloc(32, 29).toString('base64'), GG_REQUIRE_API_KEY: 'false',
+      GG_LOG_LEVEL: 'warn', GG_SWAGGER_UI: 'false', GG_WEB_DIST: '' },
+    stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true,
+  });
+  child.stdout.on('data', x => logs += x);
+  child.stderr.on('data', x => logs += x);
+  closed = new Promise(yes => child.once('close', (code, signal) => yes({ code, signal })));
+  await until(async () => {
+    try { return (await fetch(base + '/healthz', { signal: AbortSignal.timeout(500) })).ok; }
+    catch { return false; }
+  }, 'API startup');
+  return child.pid;
+}
+async function kill() {
+  assert.ok(child.kill('SIGKILL'), 'Could not hard-kill owned API child');
+  return closed;
+}
+function definition(path) {
+  return { schemaVersion: 4, name: 'Native depth ' + path, nodes: [
+    { id: 'poll', kind: 'trigger', label: 'Poll', config: { type: 'poll', intervalSeconds: 5,
+      probe: { kind: 'http', url: 'http://127.0.0.1:5781' + path }, fireWhen: 'true',
+      items: { select: 'probe.json', dedupeKey: 'item.key', maxRunsPerPoll: 5 } } },
+    { id: 'wait', kind: 'wait', label: 'Wait', config: { mode: 'input', prompt: 'Answer' } },
+    { id: 'done', kind: 'exit', label: 'Done', config: {} },
+  ], edges: [
+    { id: 'a', from: { node: 'poll', port: 'out' }, to: { node: 'wait' } },
+    { id: 'b', from: { node: 'wait', port: 'out' }, to: { node: 'done' } },
+  ] };
+}
+async function keys(loopId) {
+  const { items, nextCursor } = await request('/runs?loopId=' + loopId);
+  assert.equal(nextCursor, null);
+  const rows = [];
+  for (const r of items) {
+    const thread = await request('/runs/' + r.id + '/thread');
+    rows.push({ id: r.id, key: thread.invocation.trigger.dedupeKey, status: r.status });
+  }
+  return rows.sort((a,b) => a.key.localeCompare(b.key));
+}
+try {
+  // Refuse to attach to an unrelated listener on the allotted API port.
+  const reservation = createServer();
+  await new Promise((yes,no) => { reservation.once('error',no); reservation.listen(5780,'127.0.0.1',yes); });
+  await new Promise(yes => reservation.close(yes));
+  await new Promise((yes,no) => { source.once('error',no); source.listen(5781,'127.0.0.1',yes); });
+  const firstPid = await boot();
+  const loops = {};
+  for (const path of Object.keys(counts)) {
+    const created = await request('/loops', { definition: definition(path) });
+    loops[path] = created.loop.id;
+    await request('/loops/' + created.loop.id + '/publish', {});
+  }
+  await until(() => counts['/first'] >= 3 && counts['/middle'] >= 3, 'three polls');
+  const before = {};
+  for (const [path,id] of Object.entries(loops)) {
+    await until(async () => (await keys(id)).length === 2, 'two valid admissions');
+    before[path] = await keys(id);
+    assert.ok(before[path].every(r => r.key !== 'deep'));
+  }
+  phases.push({ phase: 'three-polls', pid: firstPid, counts: {...counts}, rows: before });
+  const killed = await kill();
+  const restartAt = {...counts};
+  const secondPid = await boot();
+  assert.notEqual(firstPid, secondPid);
+  await until(() => Object.keys(counts).every(p => counts[p] >= restartAt[p] + 2), 'two polls after hard restart');
+  const after = {};
+  for (const [path,id] of Object.entries(loops)) {
+    after[path] = await keys(id);
+    assert.deepEqual(after[path], before[path]);
+  }
+  phases.push({ phase: 'two-polls-after-hard-kill', pid: secondPid, killed, counts: {...counts}, rows: after });
+  repaired = true;
+  await until(async () => {
+    for (const id of Object.values(loops)) if ((await keys(id)).length !== 3) return false;
+    return true;
+  }, 'repaired keys admitted');
+  const repairedRows = {};
+  for (const [path,id] of Object.entries(loops)) {
+    repairedRows[path] = await keys(id);
+    assert.deepEqual(repairedRows[path].filter(r => r.key !== 'deep'), before[path]);
+  }
+  phases.push({ phase: 'repair-same-key', counts: {...counts}, rows: repairedRows });
+  const diagnostics = logs.split(/\r?\n/).flatMap(line => { try { return [JSON.parse(line)]; } catch { return []; } })
+    .filter(line => line.code?.startsWith('POLL_')).map(({code, itemIndex, reason}) => ({code,itemIndex,reason}));
+  assert.ok(diagnostics.length >= 10);
+  assert.ok(diagnostics.every(d => d.code === 'POLL_ITEM_REJECTED' && d.reason === 'NESTING_DEPTH_EXCEEDED'));
+  assert.ok(diagnostics.some(d => d.itemIndex === 0)); assert.ok(diagnostics.some(d => d.itemIndex === 1));
+  await writeFile(evidence + 'round2-native.json', JSON.stringify({ runtime: process.version, sourceBytes: Object.fromEntries(Object.entries(bodies).map(([k,v])=>[k,Buffer.byteLength(v)])), store: '%TEMP%/' + dataDir.split(/[\\/]/).at(-1), apiPort:5780, probePort:5781, phases, diagnostics }, null, 2) + '\n');
+  process.stdout.write(JSON.stringify({passed:true, hardRestarts:1, phases:phases.length, diagnostics:diagnostics.length}) + '\n');
+} finally {
+  if (child && child.exitCode === null && child.signalCode === null) await kill();
+  await new Promise(yes => { source.close(yes); source.closeAllConnections(); });
+}

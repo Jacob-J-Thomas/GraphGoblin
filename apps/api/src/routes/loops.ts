@@ -9,9 +9,10 @@ import {
   UlidSchema,
   type LoopDefinition,
   type LoopRecord,
+  type LoopVersionRecord,
 } from '@graphgoblin/contracts';
 import { exportLoop, importLoop, stableHash } from '@graphgoblin/domain';
-import { EngineRequestError } from '@graphgoblin/engine';
+import { EngineRequestError, assertCurrentDefinition } from '@graphgoblin/engine';
 import { LoopInUseError } from '@graphgoblin/infrastructure/sqlite';
 import type { FastifyRequest } from 'fastify';
 import { z } from 'zod';
@@ -21,6 +22,16 @@ import { problem } from '../plugins/errors.js';
 import type { ApiInstance } from '../types.js';
 
 export const IssueSchema = LoopIssueSchema;
+
+/**
+ * A stored definition leaves the server only when the current contract accepts it: one that
+ * predates ADR-0044 (an exit publishing an Event) is refused with 409 `LOOP_UPGRADE_REQUIRED`
+ * naming the loop, the version and the destination, rather than failing response validation.
+ */
+function served<T extends LoopVersionRecord | undefined>(version: T): T {
+  if (version) assertCurrentDefinition(version);
+  return version;
+}
 
 const DraftTokenSchema = z.string().meta({
   description:
@@ -194,10 +205,12 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
     },
     async (request, reply) => {
       const loop = await ownedLoop(request, request.params.id);
-      const current = loop.currentVersionId
-        ? await loops.getVersion(loop.currentVersionId)
-        : undefined;
-      const draft = loop.draftVersionId ? await loops.getVersion(loop.draftVersionId) : undefined;
+      const current = served(
+        loop.currentVersionId ? await loops.getVersion(loop.currentVersionId) : undefined,
+      );
+      const draft = served(
+        loop.draftVersionId ? await loops.getVersion(loop.draftVersionId) : undefined,
+      );
       const draftToken = draftTokenOf((draft ?? current)?.definition);
       if (draftToken) void reply.header('etag', `"${draftToken}"`);
       return {
@@ -318,7 +331,7 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       const outcome = await serializeDraftSave(request.params.id, async () => {
         const loop = await ownedLoop(request, request.params.id);
         if (!loop.draftVersionId) return { kind: 'no-draft' as const };
-        const draft = await loops.getVersion(loop.draftVersionId);
+        const draft = served(await loops.getVersion(loop.draftVersionId));
         const issues = draft
           ? await publishIssues(request.auth.ownerId, draft.definition, loop.id)
           : [];
@@ -357,7 +370,7 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
     },
     async (request) => {
       await ownedLoop(request, request.params.id);
-      return { items: await loops.listVersions(request.params.id) };
+      return { items: (await loops.listVersions(request.params.id)).map(served) };
     },
   );
 
@@ -381,7 +394,7 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
           'VERSION_NOT_FOUND',
           `version ${request.params.versionId} not found`,
         );
-      return version;
+      return served(version);
     },
   );
 
@@ -410,7 +423,7 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
             ? 'the loop has no draft'
             : 'the loop has no published version',
         );
-      return exportLoop(version.definition, container.ports.clock.now().toISOString());
+      return exportLoop(served(version).definition, container.ports.clock.now().toISOString());
     },
   );
 

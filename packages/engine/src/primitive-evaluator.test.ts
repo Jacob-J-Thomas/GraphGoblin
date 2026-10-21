@@ -30,6 +30,12 @@ function request(): ClassifierEvaluationRequest {
     signal: new AbortController().signal,
     ports: createFakePorts(),
     resolveModel: vi.fn(() => Promise.resolve({ model: 'gpt-6-luna', effort: 'low' as const })),
+    binding: {
+      provider: 'typesafe',
+      providerModel: 'jev-latest',
+      primitives: ['choice', 'noul', 'score'],
+      endpoint: 'https://classifier.test',
+    },
   };
 }
 const routes = [

@@ -1,0 +1,65 @@
+{
+  "api": "http://127.0.0.1:49427",
+  "control": "http://127.0.0.1:49428",
+  "pid": 18364,
+  "stopped": true,
+  "results": [
+    {
+      "name": "control timer polls around start; context bytes=0",
+      "result": "pass",
+      "details": {
+        "runId": "01M3Y7RKG0K6TDPGK0NTX4F64N",
+        "controlPolls": 26,
+        "contextBytes": 0,
+        "wakes": 1,
+        "originalDeadline": "2020-01-01T00:00:00.000Z",
+        "evidenceTier": "real in-process API/SQLite; fake clock; polls race start, no private hooks or forced pre-commit pause"
+      }
+    },
+    {
+      "name": "control timer polls around start; context bytes=262144",
+      "result": "pass",
+      "details": {
+        "runId": "01M3Y7RKG0TND6JN3BBTP7M5WA",
+        "controlPolls": 26,
+        "contextBytes": 262144,
+        "wakes": 1,
+        "originalDeadline": "2020-01-01T00:00:00.000Z",
+        "evidenceTier": "real in-process API/SQLite; fake clock; polls race start, no private hooks or forced pre-commit pause"
+      }
+    },
+    {
+      "name": "zero duration validation and past deadline support",
+      "result": "pass",
+      "details": {
+        "durationZeroStatus": 400,
+        "detail": {
+          "type": "https://graphgoblin.dev/problems/validation-failed",
+          "title": "validation failed",
+          "status": 400,
+          "code": "VALIDATION_FAILED",
+          "detail": "the request did not match the schema",
+          "errors": [
+            {
+              "path": "/definition/nodes/1/config/seconds",
+              "message": "Too small: expected number to be >0"
+            }
+          ]
+        },
+        "note": "Duration schema requires a positive integer; already-due wall-clock waits exercised above"
+      }
+    },
+    {
+      "name": "fake harness child wakes parent through control-scripted turn",
+      "result": "pass",
+      "details": {
+        "parentRun": "01M3Y7RKG04CAT37YG2K3JK0Y3",
+        "childRun": "01M3Y7RKG0BDANRQZAJ18JQ44X",
+        "waitId": "01M3Y7RKG04CAT37YG2K3JK0Y3:5",
+        "parentWakes": 1,
+        "harnessTurns": 1,
+        "evidenceTier": "fake harness only; no provider turn"
+      }
+    }
+  ]
+}

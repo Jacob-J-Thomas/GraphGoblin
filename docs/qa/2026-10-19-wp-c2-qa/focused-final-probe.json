@@ -1,0 +1,43 @@
+{
+  "revision": "02ec16d6034e14cf7683b19619baa5c272be0591",
+  "dataDir": "%TEMP%/gg-c2-qa-native-XMLEf4",
+  "port": 5700,
+  "results": [
+    {
+      "name": "damaged and legacy history diagnostics, guarded access and healthy isolation",
+      "result": "fail",
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n409 !== 500\n\n    at file:///<worktree>/.tmp/c2-focused-final-probe.mjs:91:50\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async check (file:///<worktree>/.tmp/c2-focused-final-probe.mjs:50:56)\n    at async file:///<worktree>/.tmp/c2-focused-final-probe.mjs:78:3"
+    },
+    {
+      "name": "Edge stale message, current identity, reload and keyboard at narrow viewport",
+      "result": "pass",
+      "details": {
+        "runId": "01M5B720BN31TEWC0DC8HKRYKN",
+        "firstWaitId": "01M5B720BN31TEWC0DC8HKRYKN:5",
+        "newWaitId": "01M5B720BN31TEWC0DC8HKRYKN:14",
+        "firstStatus": 200,
+        "staleStatus": 409,
+        "currentStatus": 200,
+        "renderedMessage": "The observed input wait is no longer active (WAIT_MISMATCH)",
+        "visibleText": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nRun\n01M5B720BN31TEWC0DC8HKRYKN\nwaiting\nat work\nloop\nchild runs\nPause\nCancel run\nInput requested\n\nQA browser input\n\nInput (JSON)\nSubmit input\nThe observed input wait is no longer active (WAIT_MISMATCH)\nTimeline (15 events, live)\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nstart (trigger) attempt 1\n#4\nnode.finished\nstart → out, 2 changes, 0 ms\n#5\nnode.started\nwork (wait) attempt 1\n#6\nrun.waiting\nwork waits for input\n#7\ninput.received\nwork\n#8\nrun.woken\nwork woken by input\n#9\nnode.started\nwork (wait) attempt 2\n#10\nnode.finished\nwork → out, 3 changes, 160 ms\n#11\nnode.started\ngate (decision) attempt 1\n#12\ndecision.made\nChose repeat with expression; passes 1 → 2 of 3\n#13\nnode.finished\ngate → repeat, 2 changes, 7 ms\n#14\nnode.started\nwork (wait) attempt 1\n#15\nrun.waiting\nwork waits for input\nThread at event 15\nMessages (1)\nuser\nwork\n\ntab A\n\nVariables\n{}\nFull thread JSON\nNode progress (1 nodes)",
+        "keyboardSubmit": true,
+        "viewport": "390x844",
+        "horizontalOverflow": false,
+        "browserVersion": "155.0.4283.62",
+        "staleClient": "Only second-tab GET snapshot fixed at A and stream disabled; all POSTs hit real built API"
+      }
+    }
+  ],
+  "processes": [
+    {
+      "pid": 16436,
+      "role": "key CLI",
+      "stopped": true
+    },
+    {
+      "pid": 46392,
+      "role": "built API",
+      "stopped": true
+    }
+  ]
+}

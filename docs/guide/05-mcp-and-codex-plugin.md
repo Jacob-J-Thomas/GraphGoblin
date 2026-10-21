@@ -47,27 +47,27 @@ HTTP accepts POST only and is stateless, with a fresh transport per request; GET
 
 ## Choose a tool
 
-| Tool              | Use it to                                                                                   |
-| ----------------- | ------------------------------------------------------------------------------------------- |
-| `list_loops`      | Find loops by optional name/description query and see their publish state.                  |
-| `describe_loop`   | Inspect triggers, input schemas, input waits, and exit mappings before a start.             |
-| `start_run`       | Start a manual trigger and return its run ID immediately.                                   |
-| `wait_for_run`    | Wait for completion, or return early for input or a pause.                                  |
-| `get_run`         | Read status, current node, waiting spec, result, and failure.                               |
-| `get_run_thread`  | Read current messages, variables, outputs, artifacts, and usage.                            |
-| `list_runs`       | Find recent runs by loop, status, or parent; page with `nextCursor`.                        |
-| `read_run_events` | Read an event page after a sequence cursor and continue with `nextAfter`.                   |
-| `cancel_run`      | Request cancellation and then check that the run stops.                                     |
-| `pause_run`       | Hold execution at a node boundary.                                                          |
-| `resume_run`      | Continue a paused run (back to `waiting` if it was paused in a wait) or retry a failed run. |
-| `provide_input`   | Supply schema-valid input to an input wait.                                                 |
-| `send_signal`     | Send a named signal with an optional payload; inspect `woke`.                               |
+| Tool              | Use it to                                                                                       |
+| ----------------- | ----------------------------------------------------------------------------------------------- |
+| `list_loops`      | Find loops by optional name/description query and see their publish state.                      |
+| `describe_loop`   | Inspect triggers, input schemas, input waits, and exit mappings before a start.                 |
+| `start_run`       | Start a manual trigger and return its run ID immediately.                                       |
+| `wait_for_run`    | Wait for completion, or return early for input or a pause.                                      |
+| `get_run`         | Read status, current node, waiting spec, result, and failure.                                   |
+| `get_run_thread`  | Read current messages, variables, outputs, artifacts, and usage.                                |
+| `list_runs`       | Find recent runs by loop, status, or parent; page with `nextCursor`.                            |
+| `read_run_events` | Read an event page after a sequence cursor and continue with `nextAfter`.                       |
+| `cancel_run`      | Request cancellation and then check that the run stops.                                         |
+| `pause_run`       | Hold execution at a node boundary.                                                              |
+| `resume_run`      | Continue a paused run (back to `waiting` if it was paused in a wait) or retry a failed run.     |
+| `provide_input`   | Supply the observed `waiting.waitId` and schema-valid input to an input wait.                   |
+| `send_signal`     | Send the observed `waiting.waitId` and a named signal with an optional payload; inspect `woke`. |
 
-`describe_loop` and `start_run` accept a loop ID or an exact, case-insensitive name. Use IDs when names are duplicated. `start_run` accepts `input`, optional `triggerNodeId`, and `allowDraft` for an unpublished loop.
+`describe_loop` and `start_run` accept a loop ID or an exact, case-insensitive name. Use IDs when names are duplicated. `start_run` accepts `input`, optional `triggerNodeId`, and `allowDraft` for an unpublished loop; a draft run keeps a snapshot of the draft as it was at start. Its result includes `definition`, the pinned label (for example `Review draft v2`), and the full `pinned` object.
 
 `list_runs` returns `{ items, nextCursor }`. Pass a non-null `nextCursor` as `cursor` with the same filters, even when `items` is empty; stop when `nextCursor` is null.
 
-`wait_for_run` defaults to 60 seconds and accepts up to 600. A timeout returns `finished` false, the status, a cursor, and a suggested next action; call it again with the same run ID. For an input wait, read the prompt and schema, call `provide_input`, then wait again. For a paused run, resume when authorised. A terminal result has `finished` true and the run snapshot.
+`wait_for_run` accepts an integer from 1 to 600 seconds and defaults to 60. A timeout returns `finished` false and a suggested next action; call it again with the same run ID. It includes the last observed status and cursor when a snapshot arrived; otherwise status, waiting details and cursor are omitted. For an input wait, read the prompt and schema, call `provide_input`, then wait again. For a paused run, resume when authorised. A terminal result has `finished` true and the run snapshot.
 
 Resources expose the log and thread through these templates:
 

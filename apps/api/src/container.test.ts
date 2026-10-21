@@ -1,5 +1,5 @@
 import { LoopDefinitionSchema, type RunRecord } from '@graphgoblin/contracts';
-import { minimalLoop, FIXTURE_IDS, FIXTURE_TS } from '@graphgoblin/contracts/testing';
+import { minimalLoop, samplePin, FIXTURE_IDS, FIXTURE_TS } from '@graphgoblin/contracts/testing';
 import { access, mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -83,11 +83,18 @@ async function queueRecoveryWork(container: Container) {
   );
   const version = await container.repos.loops.publish(loop.id);
   if (!version) throw new Error('expected published fixture');
+  // Pinned as a start would pin it (ADR-0041): the published version, no defaults or classifiers.
+  const pinned = samplePin({
+    version: version.version,
+    name: version.definition.name,
+    label: `${version.definition.name} v${version.version}`,
+  });
   const run: RunRecord = {
     id: FIXTURE_IDS.run,
     ownerId: LOCAL_OWNER,
     loopId: loop.id,
     versionId: version.id,
+    pinned,
     invocationId: FIXTURE_IDS.invocation,
     status: 'queued',
     iteration: 1,
@@ -114,7 +121,13 @@ async function queueRecoveryWork(container: Container) {
     run,
     initialThread,
     pinnedLoopIds: [loop.id],
-    queued: { type: 'run.queued', initialThread, subloopVersions: {} },
+    queued: {
+      type: 'run.queued',
+      versionId: version.id,
+      pinned,
+      initialThread,
+      subloopVersions: {},
+    },
   });
 }
 
@@ -139,10 +152,15 @@ function config(env: Record<string, string> = {}) {
   });
 }
 
+/** Resolve Jev as a run started now would: bind the current entry, then resolve that binding. */
+async function resolveJev(container: Container, primitive: 'choice' | 'noul') {
+  const binding = await container.classifierRegistry.bind(LOCAL_OWNER, 'jev');
+  if (!binding) throw new Error('the built-in classifier is always catalogued');
+  return container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', primitive, binding);
+}
+
 async function jevAvailable(container: Container): Promise<boolean> {
-  return (
-    (await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', 'noul')).status === 'ready'
-  );
+  return (await resolveJev(container, 'noul')).status === 'ready';
 }
 
 describe('default adapters', () => {
@@ -198,11 +216,11 @@ describe('default adapters', () => {
       url: `/secrets/${JEV_SECRET}`,
       payload: { value: 'configured-key' },
     });
-    const before = await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', 'noul');
+    const before = await resolveJev(container, 'noul');
     if (before.status !== 'ready') throw new Error('expected configured Jev');
     await app.inject({ method: 'PUT', url: '/secrets/other', payload: { value: 'x' } });
     await container.onSecretChanged('someone-else', JEV_SECRET);
-    const after = await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', 'noul');
+    const after = await resolveJev(container, 'noul');
     if (after.status !== 'ready') throw new Error('expected unchanged Jev availability');
     expect(after.classifier).toBe(before.classifier);
     expect(await jevAvailable(container)).toBe(true);
@@ -230,23 +248,21 @@ describe('default adapters', () => {
         url: `/secrets/${JEV_SECRET}`,
         payload: { value: 'first-key' },
       });
-      const first = await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', 'choice');
+      const first = await resolveJev(container, 'choice');
       expect(first.status).toBe('ready');
       if (first.status !== 'ready') throw new Error('expected configured Jev');
       expect(first.classifier).toBeInstanceOf(JevDecider);
-      expect(await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', 'choice')).toEqual(
-        first,
-      );
+      expect(await resolveJev(container, 'choice')).toEqual(first);
       await app.inject({
         method: 'PUT',
         url: `/secrets/${JEV_SECRET}`,
         payload: { value: 'second-key' },
       });
-      const next = await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', 'choice');
+      const next = await resolveJev(container, 'choice');
       expect(next.status).toBe('ready');
       if (next.status !== 'ready') throw new Error('expected configured Jev');
       expect(next.classifier).not.toBe(first.classifier);
-      const noul = await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', 'noul');
+      const noul = await resolveJev(container, 'noul');
       if (noul.status !== 'ready') throw new Error('expected configured Noul');
       expect(noul.classifier).toBe(next.classifier);
       expect(
@@ -317,9 +333,7 @@ describe('default adapters', () => {
         payload: { enabled: false },
       });
       expect(await jevAvailable(container)).toBe(false);
-      expect(
-        await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', 'choice'),
-      ).toMatchObject({
+      expect(await resolveJev(container, 'choice')).toMatchObject({
         reason: 'CLASSIFIER_MODEL_DISABLED',
       });
       await app.inject({
@@ -330,9 +344,7 @@ describe('default adapters', () => {
       expect(await jevAvailable(container)).toBe(true);
       await app.inject({ method: 'DELETE', url: `/secrets/${JEV_SECRET}` });
       expect(await jevAvailable(container)).toBe(false);
-      expect(
-        await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', 'choice'),
-      ).toMatchObject({
+      expect(await resolveJev(container, 'choice')).toMatchObject({
         reason: 'CLASSIFIER_SECRET_MISSING',
       });
     } finally {

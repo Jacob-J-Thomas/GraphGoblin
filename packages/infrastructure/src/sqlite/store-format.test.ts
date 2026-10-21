@@ -74,7 +74,7 @@ describe('current-format store guard', () => {
     [
       'DELETE FROM __drizzle_migrations WHERE created_at=(SELECT max(created_at) FROM __drizzle_migrations)',
       CURRENT_DEFINITION_FORMAT,
-      damaged('the migration ledger is incomplete or inconsistent'),
+      damaged('the migration ledger is behind the store structure'),
     ],
     [
       "INSERT INTO settings VALUES ('local','defaultModel','\"gpt-6-luna\"','2026-10-17T00:00:00.000Z')",

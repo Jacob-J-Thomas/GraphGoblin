@@ -4,14 +4,14 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { LoopDefinitionSchema } from '@graphgoblin/contracts';
 import { minimalLoop } from '@graphgoblin/contracts/testing';
-import { event, FakeApi } from '../__fixtures__/fake-api.js';
+import { event, FakeApi, queuedFields } from '../__fixtures__/fake-api.js';
 import { renderApp } from '../__fixtures__/render.js';
 import { useRunEventStore } from './event-store.js';
 
 function seedRun(api: FakeApi, overrides: Parameters<FakeApi['addRun']>[0] = {}) {
   const run = api.addRun(overrides);
   const r = run.id;
-  api.pushEvent(r, event(r, 1, 'run.queued', {}));
+  api.pushEvent(r, event(r, 1, 'run.queued', queuedFields()));
   api.pushEvent(r, event(r, 2, 'run.started', { attempt: 1 }));
   api.pushEvent(
     r,
@@ -89,7 +89,7 @@ describe('RunInspectorPage', () => {
     });
     const thread = api.threads.get(run.id)!;
     api.threads.set(run.id, { ...thread, gates: { gate: { passes: 3 } } });
-    api.pushEvent(run.id, event(run.id, 1, 'run.queued', {}));
+    api.pushEvent(run.id, event(run.id, 1, 'run.queued', queuedFields()));
     api.pushEvent(
       run.id,
       event(run.id, 2, 'node.started', {
@@ -336,7 +336,10 @@ describe('RunInspectorPage', () => {
     const api = new FakeApi();
     const seeded = api.addRun({ parentRunId: '01ARZ3NDEKTSV4RRFFQ69G5FAZ' });
     const seed = { ...api.threads.get(seeded.id)!, vars: { fromParent: 'yes' } };
-    api.pushEvent(seeded.id, event(seeded.id, 1, 'run.queued', { initialThread: seed }));
+    api.pushEvent(
+      seeded.id,
+      event(seeded.id, 1, 'run.queued', queuedFields({ initialThread: seed })),
+    );
     api.pushEvent(
       seeded.id,
       event(seeded.id, 2, 'node.finished', {
@@ -353,7 +356,7 @@ describe('RunInspectorPage', () => {
 
     // A log whose patch cannot apply to its start shows an explanation, not a blank page.
     const broken = api.addRun();
-    api.pushEvent(broken.id, event(broken.id, 1, 'run.queued', {}));
+    api.pushEvent(broken.id, event(broken.id, 1, 'run.queued', queuedFields()));
     api.pushEvent(
       broken.id,
       event(broken.id, 2, 'node.finished', {
@@ -399,6 +402,8 @@ describe('RunInspectorPage', () => {
     const run = seedRun(api, {
       status: 'waiting',
       waiting: {
+        waitId: 'fixture-wait',
+        startedSeq: 1,
         nodeId: 'approve',
         kind: 'input',
         prompt: 'Approve the plan?',
@@ -419,6 +424,7 @@ describe('RunInspectorPage', () => {
     await user.click(screen.getByRole('button', { name: 'Submit input' }));
     await waitFor(() => expect(api.callsTo('POST', `/runs/${run.id}/input`)).toHaveLength(1));
     expect(api.callsTo('POST', `/runs/${run.id}/input`)[0]!.body).toEqual({
+      waitId: run.waiting!.waitId,
       input: { approved: true, note: 'ship it' },
     });
     await waitFor(() => expect(screen.queryByText('Approve the plan?')).not.toBeInTheDocument());
@@ -429,17 +435,30 @@ describe('RunInspectorPage', () => {
     const api = new FakeApi();
     const run = seedRun(api, {
       status: 'waiting',
-      waiting: { nodeId: 'gate', kind: 'signal', signalName: 'go' },
+      waiting: {
+        waitId: 'fixture-wait',
+        startedSeq: 1,
+        nodeId: 'gate',
+        kind: 'signal',
+        signalName: 'go',
+      },
     });
     const timer = seedRun(api, {
       status: 'waiting',
-      waiting: { nodeId: 'nap', kind: 'timer', until: '2026-10-03T00:00:00.000Z' },
+      waiting: {
+        waitId: 'fixture-wait',
+        startedSeq: 1,
+        nodeId: 'nap',
+        kind: 'timer',
+        until: '2026-10-03T00:00:00.000Z',
+      },
     });
     const view = renderApp(`/runs/${run.id}`, api);
     await user.type(await screen.findByLabelText('Input (JSON)'), '{{"ok": true}');
     await user.click(screen.getByRole('button', { name: 'Send signal' }));
     await waitFor(() => expect(api.callsTo('POST', `/runs/${run.id}/signals/go`)).toHaveLength(1));
     expect(api.callsTo('POST', `/runs/${run.id}/signals/go`)[0]!.body).toEqual({
+      waitId: run.waiting!.waitId,
       payload: { ok: true },
     });
     view.unmount();
@@ -565,6 +584,31 @@ describe('RunInspectorPage', () => {
     );
     expect(await screen.findByText(/stream error/)).toBeInTheDocument();
     expect(screen.getByText('The thread is not available yet.')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'failed child run' })).toBeNull();
+  });
+
+  it('links a subloop failure to the child run that failed (#251)', async () => {
+    const api = new FakeApi();
+    const child = api.addRun({
+      status: 'failed',
+      failure: { code: 'SCRIPT_EXIT_CODE', message: 'exit 3', resumable: true, nodeId: 'work' },
+    });
+    const run = api.addRun({
+      status: 'failed',
+      failure: {
+        code: 'SCRIPT_EXIT_CODE',
+        message: `subloop child ${child.id} failed: exit 3`,
+        resumable: true,
+        nodeId: 'sub',
+        details: { childRunId: child.id, childNodeId: 'work' },
+      },
+    });
+    renderApp(`/runs/${run.id}`, api);
+    expect(await screen.findByText('Failed: SCRIPT_EXIT_CODE')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'failed child run' })).toHaveAttribute(
+      'href',
+      `/runs/${child.id}`,
+    );
   });
 
   it.each(['succeeded', 'exhausted'] as const)(

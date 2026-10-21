@@ -16,6 +16,7 @@ import {
   kitchenSinkLoop,
   minimalLoop,
   sampleInvocation,
+  samplePin,
   sampleThread,
 } from '@graphgoblin/contracts/testing';
 import { createInitialThread } from '@graphgoblin/engine';
@@ -108,6 +109,7 @@ function runRecord(overrides: Partial<RunRecord> = {}): RunRecord {
     ownerId: 'local',
     loopId: fakeUlid('loop:x'),
     versionId: fakeUlid('version:x'),
+    pinned: samplePin(),
     invocationId: fakeUlid('inv:x'),
     status: 'queued',
     iteration: 1,
@@ -147,7 +149,7 @@ describe('SqliteRunRepository', () => {
     const thread = sampleThread();
     const run = runRecord({
       parentRunId: fakeUlid('parent'),
-      waiting: { nodeId: 'w', kind: 'input' },
+      waiting: { waitId: 'fixture-wait', startedSeq: 1, nodeId: 'w', kind: 'input' },
     });
     await repo.create(run, thread);
     expect(await repo.get(run.id)).toEqual(run);
@@ -199,6 +201,32 @@ describe('SqliteRunRepository', () => {
     await expect(repo.transition('missing', ['queued'], { status: 'running' })).rejects.toThrow(
       /not found/,
     );
+  });
+
+  it('fences a delayed transition by the observed waiting identity', async () => {
+    const repo = new SqliteRunRepository(handle.db);
+    const run = runRecord({
+      status: 'waiting',
+      waiting: { waitId: 'A', startedSeq: 1, nodeId: 'w', kind: 'input' },
+    });
+    await repo.create(run, sampleThread());
+    expect(
+      await repo.transition(run.id, ['waiting'], { status: 'running' }, { waitId: 'unknown' }),
+    ).toBeUndefined();
+    expect(await repo.get(run.id)).toEqual(run);
+    await repo.update(run.id, {
+      waiting: { waitId: 'B', startedSeq: 2, nodeId: 'w', kind: 'input' },
+    });
+    expect(
+      await repo.transition(run.id, ['waiting'], { status: 'running' }, { waitId: 'A' }),
+    ).toBeUndefined();
+    expect((await repo.get(run.id))?.waiting?.waitId).toBe('B');
+    expect(
+      await repo.transition(run.id, ['waiting'], { status: 'running' }, { waitId: 'B' }),
+    ).toMatchObject({ status: 'running' });
+    expect(
+      await repo.transition(run.id, ['waiting'], { status: 'running' }, { waitId: 'B' }),
+    ).toBeUndefined();
   });
 
   it('rolls back a failed ordinary transition and allows only one concurrent resume', async () => {
@@ -254,6 +282,17 @@ describe('SqliteRunRepository', () => {
     const old = openDatabase({ url, migrationsFolder: migrations });
     await old.migrate();
     const thread = JSON.stringify(sampleThread());
+    // The runs' version exists, so migration 0014 can pin them.
+    await old.client.execute({
+      sql: "INSERT INTO loop_versions (id, loop_id, version, status, definition, created_at, published_at) VALUES (?, ?, 1, 'published', ?, ?, ?)",
+      args: [
+        fakeUlid('v'),
+        fakeUlid('loop'),
+        JSON.stringify(LoopDefinitionSchema.parse(minimalLoop())),
+        '2026-10-01T00:00:00.000Z',
+        '2026-10-01T00:00:00.000Z',
+      ],
+    });
     for (const [id, status] of [
       [fakeUlid('old-done'), 'succeeded'],
       [fakeUlid('old-wait'), 'waiting'],
@@ -275,8 +314,8 @@ describe('SqliteRunRepository', () => {
     old.close();
     const current = openDatabase({ url });
     try {
-      // Fourteen shipped migrations minus this fixture's two historical ledger entries.
-      expect(await current.pendingMigrations()).toBe(12);
+      // Fifteen shipped migrations minus this fixture's two historical ledger entries.
+      expect(await current.pendingMigrations()).toBe(13);
       await expect(current.migrate()).rejects.toMatchObject({ code: 'STORE_UNSUPPORTED' });
       await applyShippedSqlToHistoricalTestFixture(current);
       const repo = new SqliteRunRepository(current.db);
@@ -334,11 +373,11 @@ describe('SqliteRunRepository', () => {
     });
     for (const r of [parent, child, other]) await repo.create(r, sampleThread());
 
-    expect((await repo.listByStatus(['waiting', 'queued'])).map((r) => r.id)).toEqual([
+    expect((await repo.listRunReferences(['waiting', 'queued'])).map((r) => r.id)).toEqual([
       parent.id,
       other.id,
     ]);
-    expect(await repo.listByStatus([])).toEqual([]);
+    expect(await repo.listRunReferences([])).toEqual([]);
     expect((await repo.listChildren(parent.id)).map((r) => r.id)).toEqual([child.id]);
     expect((await repo.list()).map((r) => r.id)).toEqual([other.id, child.id, parent.id]);
     expect((await repo.list({ ownerId: 'local' })).map((r) => r.id)).toEqual([child.id, parent.id]);
@@ -368,7 +407,7 @@ describe('SqliteEventStore', () => {
 
     expect(await store.append(run.id, [])).toEqual([]);
     const first = await store.append(run.id, [
-      { type: 'run.queued' },
+      { type: 'run.queued', versionId: run.versionId, pinned: run.pinned },
       { type: 'run.started', attempt: 1 },
     ]);
     expect(first.map((e) => e.seq)).toEqual([1, 2]);
@@ -411,7 +450,13 @@ describe('SqliteEventStore', () => {
     const store = new SqliteEventStore(handle.db, clock);
     const run = runRecord();
     await runs.create(run, sampleThread());
-    await store.append(run.id, [{ type: 'run.queued' }], { expectedLastSeq: 0 });
+    await store.append(
+      run.id,
+      [{ type: 'run.queued', versionId: run.versionId, pinned: run.pinned }],
+      {
+        expectedLastSeq: 0,
+      },
+    );
     const results = await Promise.allSettled([
       store.append(run.id, [{ type: 'run.woken', nodeId: 'w', reason: 'input' }], {
         expectedLastSeq: 1,
@@ -502,6 +547,19 @@ describe('SqliteLoopRepository draft and publish interleaving', () => {
 });
 
 describe('SqliteLoopRepository', () => {
+  it('preserves an empty description distinctly from absence on create, list and draft save', async () => {
+    const repo = new SqliteLoopRepository(handle.db, clock, ids);
+    const definition = LoopDefinitionSchema.parse({ ...minimalLoop(), description: '' });
+    const { loop } = await repo.create('local', definition);
+    expect(loop.description).toBe('');
+    expect((await repo.getLoop(loop.id))?.description).toBe('');
+    expect((await repo.listLoops('local'))[0]?.description).toBe('');
+    await repo.saveDraft(loop.id, LoopDefinitionSchema.parse(minimalLoop()));
+    expect(Object.hasOwn((await repo.getLoop(loop.id))!, 'description')).toBe(false);
+    await repo.saveDraft(loop.id, definition);
+    expect((await repo.getLoop(loop.id))?.description).toBe('');
+  });
+
   it('creates loops with drafts, publishes, and resolves versions', async () => {
     const repo = new SqliteLoopRepository(handle.db, clock, ids);
     const definition = LoopDefinitionSchema.parse(minimalLoop());
@@ -622,6 +680,20 @@ describe('SqliteTimerStore', () => {
     expect((await store.list(run)).map((t) => t.key)).toEqual(['timeout']);
     await store.remove(run);
     expect(await store.list(run)).toEqual([]);
+  });
+});
+
+describe('conditional timer deferral', () => {
+  it('requeues only the fired SQLite row and preserves a concurrent re-arm', async () => {
+    const store = new SqliteTimerStore(handle.db);
+    const at = new Date('2026-10-02T12:00:00.000Z');
+    const retryAt = new Date('2026-10-02T12:00:01.000Z');
+    await store.upsert('r', 'timer@wait', at);
+    await store.defer('r', 'timer@wait', at, retryAt);
+    expect(await store.listDue(at)).toEqual([]);
+    expect(await store.list('r')).toEqual([{ runId: 'r', key: 'timer@wait', at: retryAt }]);
+    await store.defer('r', 'timer@wait', at, new Date(0));
+    expect((await store.list('r'))[0]?.at).toEqual(retryAt);
   });
 });
 
@@ -788,8 +860,9 @@ describe('migration 0003 model catalog max effort', () => {
     }
     const current = openDatabase({ url });
     try {
-      // Includes 0013_trigger_configuration after the three historical catalog migrations.
-      expect(await current.pendingMigrations()).toBe(11);
+      // Includes 0013_trigger_configuration and 0014_run_definition_pins after the three
+      // historical catalog migrations.
+      expect(await current.pendingMigrations()).toBe(12);
       await expect(current.migrate()).rejects.toMatchObject({ code: 'STORE_UNSUPPORTED' });
       await applyShippedSqlToHistoricalTestFixture(current);
       expect(await current.pendingMigrations()).toBe(0);

@@ -1,0 +1,232 @@
+import assert from 'node:assert/strict';
+import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { spawn } from 'node:child_process';
+import { createServer } from 'node:http';
+import { FakeClock, CapturingLogger, FakeHarness, FakeDecider, FakeStructured } from '@graphgoblin/engine/testing';
+import { createContainer } from '../dist/container.js';
+import { loadConfig } from '../dist/config.js';
+import { buildApp } from '../dist/app.js';
+
+// Restart children inherit only OS launch paths; setup() supplies its own GG_*.
+const launchEnvironment = Object.fromEntries(Object.entries(process.env).filter(([name]) =>
+  ['PATH', 'SYSTEMROOT', 'TEMP', 'TMP', 'USERPROFILE', 'APPDATA', 'LOCALAPPDATA'].includes(name.toUpperCase())));
+const output = resolve('docs/qa/2026-10-18-wp-c3-evidence/results.json');
+const script = fileURLToPath(import.meta.url);
+const records = [];
+const stores = [];
+async function setup(ms, dir, at) {
+  dir ??= await mkdtemp(join(tmpdir(), 'gg-wp-c3-'));
+  stores.push(dir);
+  const clock = new FakeClock(at);
+  const logger = new CapturingLogger();
+  const c = await createContainer(loadConfig({ GG_DATA_DIR: dir, GG_DB_URL: 'file:' + join(dir, 'store.db'), GG_TIMER_POLL_MS: String(ms), GG_MASTER_KEY: Buffer.alloc(32, 19).toString('base64'), GG_SWAGGER_UI: 'false' }), {
+    clock, logger, startTimers: false, harnesses: { codex: new FakeHarness() }, deciders: [new FakeDecider('codex')], structured: new FakeStructured(),
+  });
+  await c.start();
+  const app = await buildApp(c, { logger: false });
+  await app.ready();
+  return { c, app, dir, clock, logger, close: async () => { await app.close(); await c.stop(); } };
+}
+const node = (id, kind, config) => ({ id, kind, label: id, config });
+const edge = (from, to, port = 'out') => ({ id: from + '-' + port + '-' + to, from: { node: from, port }, to: { node: to } });
+function loop(config, name = 'wake') {
+  return { schemaVersion: 4, name, nodes: [node('start', 'trigger', { type: 'manual' }), node('work', 'wait', config), node('done', 'exit', { returns: 'outputs.work.value' })], edges: [edge('start', 'work'), edge('work', 'done')] };
+}
+async function publish(t, def) {
+  const created = await t.app.inject({ method: 'POST', url: '/loops', payload: { definition: def } });
+  assert.equal(created.statusCode, 201, created.body);
+  const id = created.json().loop.id;
+  const published = await t.app.inject({ method: 'POST', url: `/loops/${id}/publish` });
+  assert.equal(published.statusCode, 200, published.body);
+  return id;
+}
+async function start(t, def) {
+  const loopId = await publish(t, def);
+  const r = await t.c.manager.startRun({ ownerId: 'local', loopId, source: 'manual.api' });
+  await t.c.manager.waitForIdle();
+  return t.c.manager.getRun(r.id);
+}
+async function snapshot(t, id) {
+  await t.c.manager.waitForIdle();
+  const r = await t.c.manager.getRun(id);
+  const events = await t.c.ports.events.read(id);
+  return { id, status: r.status, result: r.result, failure: r.failure?.code, wait: r.waiting, wakes: events.filter(e => e.type === 'run.woken').map(e => ({ seq: e.seq, nodeId: e.nodeId, reason: e.reason, payload: e.payload })), inputs: events.filter(e => e.type === 'input.received').length, signals: events.filter(e => e.type === 'signal.received').length, finishedNodes: events.filter(e => e.type === 'node.finished').map(e => e.nodeId) };
+}
+const settled = values => values.map(x => x.status === 'fulfilled' ? { status: 'fulfilled' } : { status: 'rejected', code: x.reason.code ?? x.reason.message });
+async function restart(spec) {
+  return new Promise((yes, no) => {
+    const child = spawn(process.execPath, [script, '--restart', JSON.stringify(spec)], { env: launchEnvironment, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
+    let stdout = '', stderr = '';
+    child.stdout.on('data', x => stdout += x);
+    child.stderr.on('data', x => stderr += x);
+    child.on('error', no);
+    child.on('close', code => code === 0 ? yes(JSON.parse(stdout)) : no(new Error(`restart child ${code}: ${stderr}\n${stdout}`)));
+  });
+}
+async function resumed(spec) {
+  const t = await setup(spec.ms, spec.dir, spec.at);
+  try {
+    if (spec.kind === 'signal') {
+      const outcomes = settled(await Promise.allSettled([t.c.timers.poll(), t.c.manager.signal(spec.id, 'go', spec.waitId, 'pending-after-restart')]));
+      const state = await snapshot(t, spec.id);
+      assert.equal(state.wakes.length, 1);
+      return { pid: process.pid, outcomes, state };
+    }
+    if (spec.kind === 'heartbeat') {
+      await t.c.timers.poll();
+      const state = await snapshot(t, spec.id);
+      assert.equal(state.status, 'succeeded');
+      assert.equal(state.signals, 1);
+      assert.equal(state.wakes.length, 1);
+      return { pid: process.pid, state };
+    }
+    t.clock.advance(5000);
+    const runs = await t.c.polls.poll();
+    await t.c.manager.waitForIdle();
+    return { pid: process.pid, admitted: runs.map(r => r.id), stored: (await t.c.repos.runs.list({ loopId: spec.loopId })).map(r => ({ id: r.id, status: r.status })), diagnostics: t.logger.lines.filter(l => l.level === 'warn').map(l => l.obj) };
+  } finally { await t.close(); }
+}
+async function wakes(ms) {
+  const t = await setup(ms);
+  try {
+    // No timer callbacks or run-manager methods are captured or replaced.
+    for (const order of ['input-first', 'timer-first', 'parallel-input', 'parallel-timer']) {
+      const row = { test: 'timer-input', ms, order, attempts: [] };
+      for (let i = 0; i < 10; i++) {
+        const r = await start(t, loop({ mode: 'input', prompt: 'answer', timeoutSeconds: 1 }));
+        const input = () => t.c.manager.provideInput(r.id, r.waiting.waitId, `answer-${i}`);
+        let outcomes;
+        if (order === 'input-first') { await input(); t.clock.advance(1000); await t.c.timers.poll(); }
+        else if (order === 'timer-first') { t.clock.advance(1000); await t.c.timers.poll(); outcomes = settled(await Promise.allSettled([input()])); }
+        else { t.clock.advance(1000); outcomes = settled(await Promise.allSettled(order === 'parallel-input' ? [input(), t.c.timers.poll()] : [t.c.timers.poll(), input()])); }
+        const state = await snapshot(t, r.id);
+        assert.equal(state.status, 'succeeded'); assert.equal(state.wakes.length, 1);
+        assert.equal(state.inputs, state.wakes[0].reason === 'input' ? 1 : 0);
+        assert.equal(state.finishedNodes.filter(x => x === 'work').length, 1);
+        row.attempts.push({ outcomes, state });
+      }
+      records.push(row);
+    }
+    for (const order of ['one-two', 'two-one']) {
+      const row = { test: 'two-signals', ms, order, attempts: [] };
+      for (let i = 0; i < 10; i++) {
+        const r = await start(t, loop({ mode: 'signal', name: 'go' }));
+        const send = value => t.c.manager.signal(r.id, 'go', r.waiting.waitId, value);
+        const outcomes = settled(await Promise.allSettled(order === 'one-two' ? [send(1), send(2)] : [send(2), send(1)]));
+        const state = await snapshot(t, r.id);
+        assert.equal(outcomes.filter(x => x.status === 'fulfilled').length, 1);
+        assert.equal(state.signals, 1); assert.equal(state.wakes.length, 1); assert.equal(state.status, 'succeeded');
+        row.attempts.push({ outcomes, state });
+      }
+      records.push(row);
+    }
+    const d = loop({ mode: 'signal', name: 'go', filter: 'allow = true' });
+    const r = await start(t, d);
+    const a = r.waiting.waitId;
+    const wrongName = await t.c.manager.signal(r.id, 'other', a, { allow: true });
+    const wrongFilter = await t.c.manager.signal(r.id, 'go', a, { allow: false });
+    assert.equal(wrongName.woke, false); assert.equal(wrongFilter.woke, false);
+    assert.equal((await snapshot(t, r.id)).wakes.length, 0);
+    await t.c.manager.signal(r.id, 'go', a, { allow: true });
+    records.push({ test: 'unrelated-filtered-signals', ms, state: await snapshot(t, r.id) });
+
+    const repeated = loop({ mode: 'input', prompt: 'A or B', timeoutSeconds: 1 });
+    repeated.nodes.splice(2, 0, node('second', 'wait', { mode: 'input', prompt: 'B' }));
+    repeated.edges = [edge('start', 'work'), edge('work', 'second'), edge('second', 'done')];
+    const old = await start(t, repeated);
+    await t.c.manager.provideInput(old.id, old.waiting.waitId, 'A'); await t.c.manager.waitForIdle();
+    const current = await t.c.manager.getRun(old.id);
+    const before = await t.c.ports.events.read(old.id);
+    const outcomes = settled(await Promise.allSettled([t.c.manager.provideInput(old.id, old.waiting.waitId, 'late-A'), t.c.manager.signal(old.id, 'go', old.waiting.waitId)]));
+    t.clock.advance(1000); await t.c.timers.poll();
+    assert.deepEqual(await t.c.ports.events.read(old.id), before);
+    await t.c.manager.provideInput(old.id, current.waiting.waitId, 'B');
+    records.push({ test: 'stale-visit', ms, outcomes, state: await snapshot(t, old.id) });
+
+    const childId = await publish(t, loop({ mode: 'duration', seconds: 1 }, 'child'));
+    const parent = loop({ mode: 'input', prompt: 'start child', timeoutSeconds: 1 }, 'parent');
+    parent.nodes.splice(2, 0, node('sub', 'subloop', { loopRef: { loopId: childId } }));
+    parent.edges = [edge('start', 'work'), edge('work', 'sub'), edge('sub', 'done')];
+    const row = { test: 'input-timeout-to-child-timer', ms, attempts: [] };
+    for (let i = 0; i < 20; i++) {
+      const p = await start(t, parent); t.clock.advance(1000);
+      const outcomes = settled(await Promise.allSettled([t.c.manager.provideInput(p.id, p.waiting.waitId, 'go'), t.c.timers.poll()]));
+      await t.c.manager.waitForIdle();
+      const waiting = await t.c.manager.getRun(p.id);
+      assert.equal(waiting.waiting.kind, 'child');
+      // Signal is a public non-waking event on this child park; completion races its append.
+      t.clock.advance(1000);
+      await Promise.allSettled([t.c.timers.poll(), t.c.manager.signal(p.id, 'other', waiting.waiting.waitId)]);
+      const state = await snapshot(t, p.id);
+      assert.equal(state.status, 'succeeded'); assert.equal(state.wakes.length, 2);
+      assert.equal(state.wakes.filter(w => w.reason === 'child').length, 1);
+      assert.equal((await t.c.ports.runs.listChildren(p.id)).length, 1);
+      row.attempts.push({ outcomes, state });
+    }
+    records.push(row);
+  } finally { await t.close(); }
+  for (const kind of ['signal', 'heartbeat']) {
+    const prep = await setup(ms);
+    const def = loop({ mode: 'signal', name: 'go', timeoutSeconds: 1 });
+    if (kind === 'heartbeat') def.nodes[1] = node('work', 'heartbeat', { intervalSeconds: 1, probe: { kind: 'signal-count', name: 'go' }, until: 'probe.count >= 1' });
+    const r = await start(prep, def);
+    if (kind === 'heartbeat') await prep.c.manager.signal(r.id, 'go', r.waiting.waitId, 'durable');
+    const spec = { kind, ms, dir: prep.dir, at: prep.clock.now().getTime() + 2000, id: r.id, waitId: r.waiting.waitId };
+    await prep.close();
+    records.push({ test: 'native-restart-' + kind, ms, originalPid: process.pid, ...await restart(spec) });
+  }
+}
+
+async function polls() {
+  let response = { status: 200, body: [] };
+  const server = createServer((_req, res) => { res.writeHead(response.status, { 'content-type': 'application/json' }); res.end(typeof response.body === 'string' ? response.body : JSON.stringify(response.body)); });
+  await new Promise((yes, no) => { server.once('error', no); server.listen(5663, '127.0.0.1', yes); });
+  try {
+    for (const scenario of ['large-admitted', 'invalid-key', 'duplicate-key', 'overflow', 'malformed-json', 'network-503', 'storage-failure', 'cap-order']) {
+      const t = await setup(50);
+      const def = loop({ mode: 'input', prompt: '{{ trigger.payload.text }}' }, scenario);
+      def.nodes[0] = node('start', 'trigger', { type: 'poll', intervalSeconds: 5, probe: { kind: 'http', url: 'http://127.0.0.1:5663' }, fireWhen: 'true', items: { select: 'probe.json', dedupeKey: 'item.key', maxRunsPerPoll: scenario === 'cap-order' ? 2 : 5 } });
+      const loopId = await publish(t, def);
+      const good = [{ key: 'good-1', text: 'ok' }, { key: 'good-2', text: 'ok' }];
+      response = { status: scenario === 'network-503' ? 503 : 200, body: [{ key: 'first', text: scenario === 'large-admitted' ? 'x'.repeat(12000) : 'ok' }, ...good] };
+      if (scenario === 'invalid-key') response.body[0].key = 'k'.repeat(513);
+      if (scenario === 'duplicate-key') response.body[0].key = 'good-1';
+      if (scenario === 'overflow') response.body[0].text = 'x'.repeat(65536);
+      if (scenario === 'malformed-json') response.body = '[invalid JSON';
+      if (scenario === 'storage-failure') await t.c.handle.client.execute("CREATE TRIGGER c3_storage_fault BEFORE INSERT ON runs BEGIN SELECT RAISE(ABORT, 'c3 storage fault'); END");
+      const row = { test: 'poll-' + scenario, loopId, dir: t.dir, responseBytes: Buffer.byteLength(typeof response.body === 'string' ? response.body : JSON.stringify(response.body)), polls: [] };
+      for (let i = 0; i < 2; i++) {
+        t.clock.advance(5000); const admitted = await t.c.polls.poll(); await t.c.manager.waitForIdle();
+        row.polls.push({ admitted: admitted.map(r => r.id), stored: (await t.c.repos.runs.list({ loopId })).map(r => ({ id: r.id, status: r.status, failure: r.failure?.code })) });
+      }
+      row.diagnostics = t.logger.lines.filter(l => l.level === 'warn').map(l => l.obj);
+      const spec = { kind: 'poll', ms: 50, dir: t.dir, at: t.clock.now().getTime(), loopId };
+      await t.close(); row.restart = await restart(spec);
+      if (scenario === 'large-admitted' || scenario === 'cap-order') {
+        assert.equal(row.polls[1].stored.length, 3); assert.equal(row.restart.admitted.length, 0); assert.equal(row.restart.stored.length, 3);
+        if (scenario === 'large-admitted') { assert.equal(row.polls[0].admitted.length, 3); assert.equal(row.polls[0].stored.filter(r => r.failure === 'EVENT_INVALID').length, 1); }
+        else assert.deepEqual(row.polls.map(p => p.admitted.length), [2, 1]);
+      } else {
+        assert.equal(row.polls[1].stored.length, 0); assert.equal(row.restart.stored.length, 0);
+        response = { status: 200, body: [{ key: 'first', text: 'fixed' }, ...good] };
+        const recovered = await setup(50, spec.dir, spec.at);
+        if (scenario === 'storage-failure') await recovered.c.handle.client.execute('DROP TRIGGER c3_storage_fault');
+        recovered.clock.advance(5000); const admitted = await recovered.c.polls.poll();
+        assert.equal(admitted.length, 3); await recovered.c.manager.waitForIdle();
+        row.afterCorrection = admitted.map(r => r.id); await recovered.close();
+      }
+      records.push(row);
+    }
+  } finally { await new Promise(yes => server.close(yes)); }
+}
+if (process.argv[2] === '--restart') {
+  console.log(JSON.stringify(await resumed(JSON.parse(process.argv[3]))));
+} else if (resolve(process.argv[1]) === script) {
+  try { for (const ms of [50, 1000]) await wakes(ms); await polls(); }
+  finally { await writeFile(output, JSON.stringify({ baseline: '9070207ee11b86c31aee54a911ff3d16992fc67f', runtime: process.version, platform: process.platform, parentPid: process.pid, stores: [...new Set(stores)], records }, null, 2) + '\n'); }
+  console.log(JSON.stringify({ passed: records.length, output, stores: [...new Set(stores)].length }));
+}
+export { setup, loop, node, edge, publish, start, snapshot, stores };

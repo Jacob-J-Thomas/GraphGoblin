@@ -7,6 +7,7 @@ import {
   HeaderNameSchema,
   LoopDefinitionSchema,
 } from '@graphgoblin/contracts';
+import { retiredEventDestinations, withoutRetiredEventDestinations } from '@graphgoblin/domain';
 import {
   currentStoreReadiness,
   normalizeStoreSql,
@@ -112,6 +113,61 @@ async function requireCurrentMarker(client: StoreReader, names: string[]): Promi
     );
 }
 
+type StoreTables = Awaited<ReturnType<typeof storeStructure>>;
+
+/**
+ * What the stored structure lacks against `tables`, as the damage detail, or undefined when every
+ * table, column, constraint and index is present. With `exact`, the structure must also hold
+ * nothing beyond the tables described (the migration head).
+ */
+function structureGap(
+  structure: StoreTables,
+  tables: StoreTables,
+  exact: boolean,
+): string | undefined {
+  for (const table of tables) {
+    const actual = structure.find((stored) => stored.name === table.name);
+    if (!actual) return 'missing table ' + table.name;
+    if (
+      table.columns.some(
+        (column) =>
+          !actual.columns.some(
+            (stored) =>
+              stored.name === column.name &&
+              stored.notNull === column.notNull &&
+              stored.pk === column.pk,
+          ),
+      )
+    )
+      return 'incomplete columns in ' + table.name;
+    if (
+      table.checks.some((check) => !actual.checks.includes(check)) ||
+      table.constraints.some((constraint) => !actual.constraints.includes(constraint))
+    )
+      return 'incomplete constraints in ' + table.name;
+    if (
+      table.indexes.some(
+        (index) =>
+          !actual.indexes.some(
+            (stored) =>
+              stored.name === index.name &&
+              normalizeStoreSql(stored.sql) === normalizeStoreSql(index.sql),
+          ),
+      )
+    )
+      return 'incomplete indexes in ' + table.name;
+    if (
+      exact &&
+      (actual.columns.length !== table.columns.length ||
+        actual.checks.length !== table.checks.length ||
+        actual.constraints.length !== table.constraints.length ||
+        actual.indexes.length !== table.indexes.length)
+    )
+      return 'structure of ' + table.name + ' differs from the migration head';
+  }
+  return undefined;
+}
+
 /**
  * Must run before Drizzle migrations, run recovery, catalog seeding or trigger admission. Returns
  * `fresh` for an empty store and `current` for a complete current-format store; refuses anything
@@ -151,56 +207,28 @@ export async function guardCurrentStore(
         ?.columns.some((column) => column.name === 'template_subject'))
   )
     throw damaged('retired template storage is still present');
-  for (const table of readiness[options.phase ?? 'baseline']) {
-    const actual = structure.find((stored) => stored.name === table.name);
-    if (!actual) throw damaged('missing table ' + table.name);
-    if (
-      table.columns.some(
-        (column) =>
-          !actual.columns.some(
-            (stored) =>
-              stored.name === column.name &&
-              stored.notNull === column.notNull &&
-              stored.pk === column.pk,
-          ),
-      )
-    )
-      throw damaged('incomplete columns in ' + table.name);
-    if (
-      table.checks.some((check) => !actual.checks.includes(check)) ||
-      table.constraints.some((constraint) => !actual.constraints.includes(constraint))
-    )
-      throw damaged('incomplete constraints in ' + table.name);
-    if (
-      table.indexes.some(
-        (index) =>
-          !actual.indexes.some(
-            (stored) =>
-              stored.name === index.name &&
-              normalizeStoreSql(stored.sql) === normalizeStoreSql(index.sql),
-          ),
-      )
-    )
-      throw damaged('incomplete indexes in ' + table.name);
-    if (
-      options.phase === 'head' &&
-      (actual.columns.length !== table.columns.length ||
-        actual.checks.length !== table.checks.length ||
-        actual.constraints.length !== table.constraints.length ||
-        actual.indexes.length !== table.indexes.length)
-    )
-      throw damaged('structure of ' + table.name + ' differs from the migration head');
-  }
+  const phase = options.phase ?? 'baseline';
+  const gap = structureGap(structure, readiness[phase], phase === 'head');
+  if (gap) throw damaged(gap);
   const ledger = names.includes('__drizzle_migrations')
     ? await rows(client, 'SELECT created_at FROM __drizzle_migrations ORDER BY created_at')
     : [];
   if (
-    ledger.length <
-      (options.phase === 'head' ? readiness.ledger.length : readiness.requiredLedgerLength) ||
+    ledger.length < (phase === 'head' ? readiness.ledger.length : readiness.requiredLedgerLength) ||
     ledger.length > readiness.ledger.length ||
     ledger.some((entry, index) => Number(entry.created_at) !== readiness.ledger[index]?.created_at)
   )
     throw damaged('the migration ledger is incomplete or inconsistent');
+  // A ledger that stops before the shipped catalogue while the structure already holds every
+  // later migration's objects (a deleted ledger row, or a crash between a migration's statements
+  // and its row) would have startup run those migrations again into existing objects and fail
+  // inside the migrator. It is damage, refused here before any write.
+  if (
+    phase !== 'head' &&
+    ledger.length < readiness.ledger.length &&
+    structureGap(structure, readiness.head, false) === undefined
+  )
+    throw damaged('the migration ledger is behind the store structure');
   // A test-selected migration catalogue can stop before the authentication columns exist. The
   // shipped baseline always requires them before this data-level validation is reached.
   if (
@@ -223,11 +251,21 @@ export async function guardCurrentStore(
   if (!options.skipDefinitions)
     for await (const batch of tableBatches(client, 'loop_versions'))
       for (const row of batch) {
+        let definition: unknown;
         try {
-          LoopDefinitionSchema.parse(json(row.definition));
+          definition = json(row.definition);
         } catch {
-          throw damaged('stored loop version ' + String(row.id) + ' is not a valid definition');
+          definition = undefined;
         }
+        // ADR-0044: an exit that still publishes an Event is a per-loop condition, refused with
+        // LOOP_UPGRADE_REQUIRED wherever that definition is served or run. It does not make the
+        // store unsupported: a definition current apart from such destinations passes unchanged.
+        const current =
+          LoopDefinitionSchema.safeParse(definition).success ||
+          (retiredEventDestinations(definition).length > 0 &&
+            LoopDefinitionSchema.safeParse(withoutRetiredEventDestinations(definition)).success);
+        if (!current)
+          throw damaged('stored loop version ' + String(row.id) + ' is not a valid definition');
       }
   if (names.includes('settings')) {
     for (const row of await rows(client, 'SELECT key, value FROM settings')) {
