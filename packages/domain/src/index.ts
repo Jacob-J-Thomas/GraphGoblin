@@ -32,3 +32,4 @@ export * from './convert-v3-v4/index.js';
 
 export * from './poll-items.js';
 export * from './json-value.js';
+export * from './retired-destinations.js';

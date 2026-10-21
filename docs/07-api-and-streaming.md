@@ -36,8 +36,8 @@ Triggers and events
   POST   /triggers/cron/preview         next cron slots without saving or arming; loops:read
   POST   /hooks/{endpointToken}         webhook receiver (None or HMAC; JSON/text/bytes); 202 {accepted:true} after atomic receipt claim, asynchronous dispatch (1 MiB, rate limit; see 08)
   GET    /loops/{id}/triggers           schedules, webhook endpoints (path only, never the secret), armed poll triggers
-  POST   /events                        inbound event bus; body: { type, payload, dedupeKey? }; fires event triggers, returns runIds and duplicate
-  GET    /events?type=&before=&limit=   stored inbound events (API, exit channels, webhooks), newest first
+  POST   /events                        inbound Event intake; body: { type, payload, dedupeKey? }; fires event triggers, returns runIds and duplicate
+  GET    /events?type=&before=&limit=   stored inbound events (API, webhooks), newest first
 
 Settings and catalog
   CRUD   /secrets  /api-keys  /settings   (schedules follow publish; read them at /loops/{id}/triggers)
@@ -205,7 +205,7 @@ The `caller` return channel resolves at delivery time:
 | `manual.mcp`                                          | Also returned as the MCP tool result when the client waited; otherwise fetched with `get_run` |
 | `subloop`                                             | Handed to the parent run's subloop output mapping                                             |
 
-Other channels, webhook, file, event, and log, are delivered by the engine after the run finishes, with one `return.delivered` or `return.failed` event each.
+Other channels, webhook, file and log, are delivered by the engine after the run finishes, with one `return.delivered` or `return.failed` event each. There is no Event channel: a loop that needs another loop's result calls it as an awaited subloop (ADR-0044).
 
 ## MCP server (Decided)
 
@@ -416,6 +416,26 @@ listed in the version history. Starting a snapshot directly answers 409 `VERSION
 `label` and `name` are those of the pinned definition, so renaming or editing the loop later does
 not change them. MCP compact runs (`list_runs`, control tools) include `definition`, the label.
 
+**Stored definitions that predate ADR-0044 (#242).** A version, draft or draft-run snapshot saved
+before exits stopped publishing Events can still hold an exit destination `{ kind: "event" }`.
+It is refused before it is served or run, never dropped silently: `GET /loops/{id}`,
+`GET /loops/{id}/versions`, `GET /loops/{id}/versions/{versionId}`, `GET /loops/{id}/export`,
+`POST /loops/{id}/publish`, `POST /loops/{id}/runs` and `POST /runs/{id}/replay` answer 409
+`LOOP_UPGRADE_REQUIRED` with the extension members `loopId`, `versionId`, `version` and `paths`
+(JSON Pointers to each such destination); the `detail` explains the repair. A run already pinned
+to such a definition fails before its next node with `failure.code` `LOOP_UPGRADE_REQUIRED`
+(`resumable: false`, the same identity in `details`), and a parent whose subloop would start or
+awaits such a loop fails with it at its subloop node. Repair: replace the destination with a
+Subloop call and publish. A published version or draft that still holds one can be repaired by
+removing the destination from its stored JSON by hand with GraphGoblin stopped; a draft-run
+snapshot cannot be edited even then (migration 0014's immutability trigger), so delete the loop
+once its runs are terminal (`DELETE /loops/{id}` still works and removes its runs and snapshots)
+or reset the store. The store-level startup check does not refuse a definition whose only
+departure from the current contract is such a destination (in the former channel's exact shape,
+`{ kind: "event", eventType: <slug> }`), so the API starts and the refusal stays per loop. The
+offline format cutover (`inspect`/`apply`) still converts every definition strictly: a store
+holding such a destination needs explicit repair, loop deletion or a reset before a cutover.
+
 Run-list items and `GET /runs/{id}` return the canonical `RunRecord`, without
 `templateSubject` or a template-store lookup. Regenerate strict clients for these
 response and query changes. Existing template runtime subjects remain internal
@@ -449,7 +469,7 @@ the exact server count.
 
 Create, import, draft save, validate and publish share the gate and terminal-exit schemas and graph checks. A missing `maxPasses` points at `nodes.<index>.config.maxPasses`; node-relative issues use `config.maxPasses`. Multiple repeat markers identify the extra `config.routes.<index>.repeat`, `config.answer.options.<index>.repeat`, Noul side or Score band path. A noncyclic repeat is `REPEAT_ROUTE_NOT_CYCLIC`; a missing Limit reached connection is `PORT_UNCONNECTED` at `config.maxPasses`. Reserve `limit-reached` in all authored route IDs.
 
-Exits are terminal: `{outcome, returns, destinations}`. `outcome` is `success` (default), `failure` or `exhausted`; `returns` is a JSONata expression or `none` (default); `destinations` defaults to `[{kind:"caller"}]` and supports caller, webhook, file, event and log. Exits have no criteria, predicate, default routing or loop-back, and no output ports.
+Exits are terminal: `{outcome, returns, destinations}`. `outcome` is `success` (default), `failure` or `exhausted`; `returns` is a JSONata expression or `none` (default); `destinations` defaults to `[{kind:"caller"}]` and supports caller, webhook, file and log (no Event channel; loops compose as awaited subloops, ADR-0044). Exits have no criteria, predicate, default routing or loop-back, and no output ports.
 
 Success finishes `succeeded`, Failure finishes `failed`, and Exhausted finishes the distinct terminal status `exhausted`. Exhausted means the authored graph gave up further repetition; normally a gate's Limit reached output leads here. It is an outcome, not a resumable node failure. Every outcome evaluates the same return expression and delivers its value unchanged; Exhausted adds no wrapper or implicit last output. Use `outputs.<workNodeId>.value` when returning work output, because the preceding gate replaces `lastOutput`.
 

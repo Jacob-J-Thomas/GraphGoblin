@@ -371,7 +371,7 @@ describe('adversarial engine invariants', () => {
     expect((await e.ports.runs.listChildren(fork.id))[0]?.versionId).toBe(middle.id);
   });
 
-  it.each(['log', 'file', 'webhook', 'event'] as const)(
+  it.each(['log', 'file', 'webhook'] as const)(
     '5: failing %s delivery retains outcome and records failure',
     async (kind) => {
       const e = await createTestEngine();
@@ -381,15 +381,12 @@ describe('adversarial engine invariants', () => {
       if (kind === 'file') vi.spyOn(e.ports.workspace, 'writeFile').mockImplementation(fail);
       if (kind === 'log') vi.spyOn(e.ports.delivery, 'log').mockImplementation(fail);
       if (kind === 'webhook') vi.spyOn(e.ports.delivery, 'webhook').mockImplementation(fail);
-      if (kind === 'event') vi.spyOn(e.ports.delivery, 'publishEvent').mockImplementation(fail);
       const channel =
         kind === 'file'
           ? { kind, path: 'out.json' }
           : kind === 'webhook'
             ? { kind, url: 'https://example.invalid' }
-            : kind === 'event'
-              ? { kind, eventType: 'out' }
-              : { kind };
+            : { kind };
       const v = e.publish(
         singleNodeLoop(
           'return',
@@ -556,8 +553,18 @@ describe('adversarial engine invariants', () => {
         });
       const r = await e.runToIdle(parent.loopId);
       spy.mockRestore();
-      expect(r.status).toBe('succeeded');
-      expect((await e.manager.getThread(r.id))?.lastOutput?.value).toMatchObject({ status });
+      // The parent learns of the child exactly once, and then follows ordinary rules (#251): a
+      // finished child is data, a failed child fails the parent, a cancelled one cancels it.
+      expect(r.status).toBe(status);
+      expect(
+        e
+          .events(r.id)
+          .flatMap((event) => (event.type === 'child_run.finished' ? [event.status] : [])),
+      ).toEqual([status]);
+      if (status === 'succeeded')
+        expect((await e.manager.getThread(r.id))?.lastOutput?.value).toMatchObject({ status });
+      if (status === 'failed')
+        expect(r.failure).toMatchObject({ code: 'INTERNAL_ERROR', resumable: true });
       expect(e.eventTypes(r.id).filter((t) => t === 'run.woken')).toHaveLength(1);
     },
   );

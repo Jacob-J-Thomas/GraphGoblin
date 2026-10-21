@@ -30,7 +30,6 @@ import { createContainer, type Container } from './container.js';
 import { createTestApp, type TestApp } from './testing/test-app.js';
 import { FixedWindowRateLimiter } from './triggers/rate-limit.js';
 import { PollTriggers } from './triggers/poll.js';
-import { MAX_EVENT_CHAIN } from './triggers/trigger-service.js';
 
 let t: TestApp;
 
@@ -47,7 +46,7 @@ type TriggerConfig = Record<string, unknown> & { type: string };
 function triggerLoop(
   name: string,
   trigger: TriggerConfig,
-  options: { emit?: string; triggerId?: string; manual?: boolean } = {},
+  options: { triggerId?: string; manual?: boolean } = {},
 ): LoopDefinitionInput {
   const triggerId = options.triggerId ?? 'trig';
   return {
@@ -69,12 +68,7 @@ function triggerLoop(
         id: 'done',
         kind: 'exit',
         label: 'D',
-        config: {
-          returns: '"done"',
-          destinations: options.emit
-            ? [{ kind: 'event', eventType: options.emit }]
-            : [{ kind: 'log' }],
-        },
+        config: { returns: '"done"', destinations: [{ kind: 'log' }] },
       },
     ],
     edges: [
@@ -812,7 +806,7 @@ describe('event triggers', () => {
     expect(before.items).toEqual([]);
   });
 
-  it('logs trigger failures and bus events that cannot be stored', async () => {
+  it('logs event trigger failures', async () => {
     await t.publishLoop(
       triggerLoop('broken', { type: 'event', eventType: 'boom', dedupeKey: '$error("bad")' }),
     );
@@ -823,96 +817,40 @@ describe('event triggers', () => {
     });
     expect(result.json()).toMatchObject({ runIds: [] });
     expect(t.logger.lines.some((l) => l.msg === 'event trigger failed')).toBe(true);
-
-    const spy = vi
-      .spyOn(t.container.repos.inbound, 'insertUnlessDuplicate')
-      .mockRejectedValueOnce(new Error('db down'));
-    await t.container.bus.publish({
-      id: 'x',
-      ownerId: 'local',
-      type: 'boom',
-      payload: [1, 2],
-      receivedAt: t.clock.now().toISOString(),
-    });
-    expect(t.logger.lines.some((l) => l.msg === 'event ingest failed')).toBe(true);
-    spy.mockRestore();
-
-    await t.container.bus.publish({
-      id: 'y',
-      ownerId: 'local',
-      type: 'quiet',
-      payload: 'text',
-      dedupeKey: 'q',
-      receivedAt: t.clock.now().toISOString(),
-    });
-    const [event] = (await t.container.repos.inbound.page('local', { type: 'quiet' })).items ?? [];
-    expect(event).toMatchObject({ source: 'bus', dedupeKey: 'q' });
   });
 
-  it('chains loops through exit events and refuses to re-enter a loop in the chain', async () => {
+  it('starts event triggers from external Events only; finished runs publish none (#242)', async () => {
     const a = await t.publishLoop(
-      triggerLoop(
-        'loop-a',
-        { type: 'event', eventType: 'b-done' },
-        { emit: 'a-done', manual: true },
-      ),
+      triggerLoop('loop-a', { type: 'event', eventType: 'go' }, { manual: true }),
     );
-    const b = await t.publishLoop(
-      triggerLoop('loop-b', { type: 'event', eventType: 'a-done' }, { emit: 'b-done' }),
-    );
-    const self = await t.publishLoop(
-      triggerLoop('loop-self', { type: 'event', eventType: 'ping' }, { emit: 'ping' }),
-    );
-
-    const started = await t.app.inject({
+    const b = await t.publishLoop(triggerLoop('loop-b', { type: 'event', eventType: 'go' }));
+    const manual = await t.app.inject({
       method: 'POST',
       url: `/loops/${a}/runs`,
       payload: { triggerNodeId: 'manual' },
     });
-    expect(started.statusCode).toBe(202);
+    expect(manual.statusCode).toBe(202);
     await settle();
-    expect(await runsOf(a)).toHaveLength(1);
+    // A finished run starts nothing else and records no Event.
+    expect(await runsOf(b)).toEqual([]);
+    expect((await t.app.inject('/events')).json<{ items: unknown[] }>().items).toEqual([]);
+
+    const posted = await t.app.inject({ method: 'POST', url: '/events', payload: { type: 'go' } });
+    const eventId = posted.json<{ id: string }>().id;
+    await settle();
     const [bRun] = await runsOf(b);
     expect(bRun?.status).toBe('succeeded');
-    const bThread = await t.container.repos.runs.getInitialThread(bRun!.id);
-    expect(bThread?.invocation).toMatchObject({
+    expect(await runsOf(a)).toHaveLength(2);
+    expect((await t.container.repos.runs.getInitialThread(bRun!.id))?.invocation).toMatchObject({
       source: 'event',
-      caller: { kind: 'run', id: started.json<{ run: RunRecord }>().run.id },
-      trigger: { kind: 'event', payload: expect.objectContaining({ outcome: 'success' }) },
+      caller: { kind: 'system', id: `event:${eventId}` },
     });
     const events = (await t.app.inject('/events')).json<{
       items: { type: string; source: string; runIds: string[] }[];
     }>();
-    expect(events.items.map((e) => [e.type, e.runIds.length])).toEqual([
-      ['b-done', 0],
-      ['a-done', 1],
+    expect(events.items.map((e) => [e.type, e.source, e.runIds.length])).toEqual([
+      ['go', 'api', 2],
     ]);
-    expect(events.items[0]?.source).toBe(`run:${bRun!.id}`);
-
-    await t.app.inject({ method: 'POST', url: '/events', payload: { type: 'ping' } });
-    await settle();
-    expect(await runsOf(self)).toHaveLength(1);
-    expect(
-      t.logger.lines.filter((l) => l.msg === 'event trigger skipped: loop is already in the chain'),
-    ).toHaveLength(2);
-  });
-
-  it('stops a chain of distinct loops at the hop limit', async () => {
-    const ids: string[] = [];
-    for (let i = 0; i <= MAX_EVENT_CHAIN; i += 1) {
-      ids.push(
-        await t.publishLoop(
-          triggerLoop(`hop-${i}`, { type: 'event', eventType: `e${i}` }, { emit: `e${i + 1}` }),
-        ),
-      );
-    }
-    await t.app.inject({ method: 'POST', url: '/events', payload: { type: 'e0' } });
-    await settle();
-    const counts = await Promise.all(ids.map(async (id) => (await runsOf(id)).length));
-    expect(counts).toEqual([...Array(MAX_EVENT_CHAIN).fill(1), 0]);
-    expect(t.logger.lines.some((l) => l.msg === 'event trigger skipped: chain limit reached')).toBe(
-      true,
-    );
   });
 });
 
@@ -2226,12 +2164,10 @@ describe('general webhook configuration and unsigned intake', () => {
       // All owner-scoped secret instances share this real storage boundary.
       await t.container.handle.client.execute('DROP TABLE secrets');
       vi.spyOn(t.container.ports.admission, 'create').mockRejectedValueOnce(new Error('transient'));
-      const bus = vi.spyOn(t.container.bus, 'publish');
       const response = await post(path, config.raw, { 'x-event': 'order.created' });
       expect(response.statusCode).toBe(202);
       expect(response.json()).toEqual({ accepted: true });
       await t.container.manager.waitForWebhookRecovery();
-      expect(bus).not.toHaveBeenCalled();
       expect(await runsOf(id)).toEqual([]);
       const rows = (await t.container.handle.client.execute('SELECT intent FROM webhook_receipts'))
         .rows;
