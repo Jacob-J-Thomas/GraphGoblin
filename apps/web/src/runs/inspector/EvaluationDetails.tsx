@@ -262,7 +262,7 @@ export function EvaluationDetails({
   event: RunEvent | undefined;
   definition?: LoopDefinition | undefined;
   definitionLoading?: boolean;
-  /** Why the run returned nothing, when its exit's Returns is None (projections.ts). */
+  /** Why the run recorded no value, or why the history cannot show that (projections.ts). */
   exitReturns?: string | undefined;
 }) {
   if (!event || !['decision.made', 'exit.evaluated', 'run.failed'].includes(event.type))

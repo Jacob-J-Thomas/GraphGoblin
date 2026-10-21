@@ -724,6 +724,21 @@ describe('RunInspectorPage exit evidence', () => {
     expect(screen.queryByTestId('exit-returns')).toBeNull();
   });
 
+  it('does not claim a None configuration when an expression exit recorded no value', async () => {
+    // A format-4 run recorded by an older build omitted a null result (CHANGELOG); the pinned exit
+    // still has an expression, so the history cannot show a no-value configuration (#129 audit).
+    const api = new FakeApi();
+    const run = exitRun(api, { returns: 'null', destinations: [{ kind: 'caller' }] });
+    renderApp(`/runs/${run.id}`, api);
+    const ambiguous =
+      'No value was recorded for this run. The exit’s Returns is an expression, so the history alone does not show whether it returned nothing or a null that an older build did not record.';
+    await waitFor(() => expect(screen.getByTestId('exit-returns')).toHaveTextContent(ambiguous));
+    expect(screen.queryByTestId('run-result')).toBeNull();
+    expect(screen.queryByText(/Returns is None/)).toBeNull();
+    await userEvent.setup().click(screen.getByRole('button', { name: /exit\.evaluated/ }));
+    expect(screen.getByText(/Exit outcome:/)).toHaveTextContent(ambiguous);
+  });
+
   it('keeps the last gate pass and stopping limit beside the exit outcome', async () => {
     const api = new FakeApi();
     const run = exitRun(

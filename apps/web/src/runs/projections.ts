@@ -221,11 +221,14 @@ export function lastGateSummary(events: readonly RunEvent[]): string | undefined
 }
 
 /**
- * Why a finished run has no result, when its exit returned nothing on purpose: Returns is None,
- * so the engine delivers to no destination, the exit's own or the start request's (#129, #258).
- * Undefined while the run has not finished through an exit, or when the exit returned a value
- * (null included); Result shows that value. The pinned definition, when loaded, names the
- * destinations that received nothing, or identifies a quiet exit that has none.
+ * Why a finished run recorded no result. Undefined while the run has not finished through an
+ * exit, or when the exit returned a value (null included); Result shows that value. Only the
+ * pinned definition can establish that nothing was returned on purpose: an exit whose Returns is
+ * None delivers to no destination, the exit's own or the start request's (#129, #258), and the
+ * summary names the destinations that received nothing or identifies a quiet exit. An exit whose
+ * Returns is an expression, or a definition that is not available, establishes nothing: a run
+ * recorded by an older build omitted a null result, so the history alone does not show whether the
+ * exit returned nothing or null, and the summary says so rather than inventing a configuration.
  */
 export function exitReturnSummary(
   events: readonly RunEvent[],
@@ -240,9 +243,11 @@ export function exitReturnSummary(
   );
   if (!exit || !finished || finished.result !== undefined) return undefined;
   const node = definition?.nodes.find((n) => n.id === exit.nodeId);
-  const configuration = 'This is the exit’s configuration, not a failure.';
   if (node?.kind !== 'exit')
-    return `No value was returned: this exit’s Returns is None. ${configuration}`;
+    return `No value was recorded for this run. The pinned definition ${definition ? `has no exit node ${exit.nodeId}` : 'is not available'}, so whether the exit’s Returns is None cannot be shown.`;
+  if (node.config.returns !== 'none')
+    return 'No value was recorded for this run. The exit’s Returns is an expression, so the history alone does not show whether it returned nothing or a null that an older build did not record.';
+  const configuration = 'This is the exit’s configuration, not a failure.';
   const own = node.config.destinations;
   const key = (channel: ReturnChannel) => JSON.stringify(channel);
   const requested = startDestinations.filter((extra) => !own.some((c) => key(c) === key(extra)));

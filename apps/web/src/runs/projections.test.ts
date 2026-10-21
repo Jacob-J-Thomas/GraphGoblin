@@ -396,11 +396,11 @@ describe('exit evidence summaries', () => {
     );
   });
 
-  const exitDefinition = (destinations: ReturnChannel[]) =>
+  const exitDefinition = (destinations: ReturnChannel[], returns = 'none') =>
     LoopDefinitionSchema.parse({
       ...minimalLoop(),
       nodes: minimalLoop().nodes.map((node) =>
-        node.kind === 'exit' ? { ...node, config: { returns: 'none', destinations } } : node,
+        node.kind === 'exit' ? { ...node, config: { returns, destinations } } : node,
       ),
     });
   const finishedRun = (result?: JsonValue) => [
@@ -419,11 +419,34 @@ describe('exit evidence summaries', () => {
     expect(exitReturnSummary(finishedRun(null), exitDefinition([]))).toBeUndefined();
   });
 
+  it('asserts Returns None only when the pinned exit configuration establishes it (#129)', () => {
+    // A run recorded by an older build omitted a null result (CHANGELOG, format 4): with an
+    // expression exit, or without the definition, the history cannot show a no-value configuration.
+    expect(exitReturnSummary(finishedRun(), undefined)).toBe(
+      'No value was recorded for this run. The pinned definition is not available, so whether the exit’s Returns is None cannot be shown.',
+    );
+    expect(exitReturnSummary(finishedRun(), exitDefinition([{ kind: 'caller' }], 'null'))).toBe(
+      'No value was recorded for this run. The exit’s Returns is an expression, so the history alone does not show whether it returned nothing or a null that an older build did not record.',
+    );
+    expect(exitReturnSummary(finishedRun(), exitDefinition([], '$count(outputs)'))).toBe(
+      'No value was recorded for this run. The exit’s Returns is an expression, so the history alone does not show whether it returned nothing or a null that an older build did not record.',
+    );
+    const renamed = LoopDefinitionSchema.parse({
+      ...exitDefinition([]),
+      nodes: exitDefinition([]).nodes.map((node) =>
+        node.kind === 'exit' ? { ...node, id: 'finish' } : node,
+      ),
+      edges: exitDefinition([]).edges.map((edge) =>
+        edge.to.node === 'done' ? { ...edge, to: { ...edge.to, node: 'finish' } } : edge,
+      ),
+    });
+    expect(exitReturnSummary(finishedRun(), renamed)).toBe(
+      'No value was recorded for this run. The pinned definition has no exit node done, so whether the exit’s Returns is None cannot be shown.',
+    );
+  });
+
   it('explains a None return by configuration, naming the destinations that received nothing', () => {
     const configuration = 'This is the exit’s configuration, not a failure.';
-    expect(exitReturnSummary(finishedRun(), undefined)).toBe(
-      `No value was returned: this exit’s Returns is None. ${configuration}`,
-    );
     expect(exitReturnSummary(finishedRun(), exitDefinition([]))).toBe(
       `Quiet exit: Returns is None and there are no destinations, so nothing was returned or delivered. ${configuration}`,
     );
@@ -441,10 +464,8 @@ describe('exit evidence summaries', () => {
     ).toBe(
       `No value was returned: Returns is None, so no destination received anything (caller from the exit; webhook from the start request). ${configuration}`,
     );
-    expect(
-      exitReturnSummary(finishedRun(), exitDefinition([]), [{ kind: 'event', eventType: 'done' }]),
-    ).toBe(
-      `No value was returned: Returns is None, so no destination received anything (event from the start request). ${configuration}`,
+    expect(exitReturnSummary(finishedRun(), exitDefinition([]), [{ kind: 'log' }])).toBe(
+      `No value was returned: Returns is None, so no destination received anything (log from the start request). ${configuration}`,
     );
   });
 });

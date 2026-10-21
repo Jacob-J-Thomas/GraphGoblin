@@ -92,7 +92,25 @@ Run it:
 - The status is **succeeded** with no **Result** card.
 - **Exit evaluation** shows "Quiet exit: Returns is None and there are no destinations, so nothing was returned or delivered. This is the exit’s configuration, not a failure."
 
-## 6. Stop and clean up
+## 6. QA 129 history that omitted a null result
+
+A format-4 run recorded by an older build omitted a `null` result from `run.finished` (CHANGELOG). The inspector must not turn that gap into a Returns None explanation when the pinned exit has an expression (independent acceptance audit, 2026-10-21).
+
+Run the **QA 129 quiet exit** loop once more so that its **Kept** exit (Returns `"kept"`, a caller destination) finishes a run, note the run's ID, then stop the instance (Ctrl+C) and amend only that run in the disposable store:
+
+```powershell
+$run = "<run id>"
+node -e "const { createClient } = require('./packages/infrastructure/node_modules/@libsql/client'); const c = createClient({ url: 'file:' + process.argv[1].replace(/\\/g, '/') }); (async () => { await c.execute({ sql: \"UPDATE run_events SET payload = json_remove(payload, '$.result') WHERE run_id = ? AND type = 'run.finished'\", args: [process.argv[2]] }); await c.execute({ sql: 'UPDATE runs SET result = NULL WHERE id = ?', args: [process.argv[2]] }); console.log('amended', process.argv[2]); })();" "$env:GG_DATA_DIR\graphgoblin.db" $run
+```
+
+Start the instance again and open that run:
+
+- There is no **Result** card.
+- **Exit evaluation** shows "No value was recorded for this run. The exit’s Returns is an expression, so the history alone does not show whether it returned nothing or a null that an older build did not record." It does not say "Returns is None".
+- Select `exit.evaluated` in **Timeline**. Evaluation details give the same sentence after "Exit outcome: success. This exit is terminal."
+- The earlier runs of sections 4 and 5 still show their Returns None and quiet-exit explanations.
+
+## 7. Stop and clean up
 
 Stop the instance with Ctrl+C in its window, then delete the disposable data:
 
