@@ -6,6 +6,7 @@ import { join, relative } from 'node:path';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { acquireDataDirLock } from '../data-dir-lock.js';
 import {
+  assertDisjointManifest,
   executeReset,
   formatBytes,
   MANIFEST_LIST_LIMIT,
@@ -15,6 +16,7 @@ import {
   type ResetCliOptions,
 } from './reset.js';
 import { readStoreFacts, type StoreFacts } from './store-facts.js';
+import { kindOf } from './tree.js';
 import {
   copyStore,
   READER_ARGUMENTS,
@@ -479,6 +481,21 @@ describe('refused resets change nothing', () => {
       'is inside artifacts/, which a reset removes',
     ],
     [
+      'a database named artifacts',
+      { GG_DB_URL: '<artifacts>' },
+      'has the name of the artifacts directory, which a reset removes; rename it first',
+    ],
+    [
+      'a database named workspaces',
+      { GG_DB_URL: '<workspaces>' },
+      'has the name of the workspaces directory, which a reset removes; rename it first',
+    ],
+    [
+      'a database named like the lock file',
+      { GG_DB_URL: '<lock-db>' },
+      "has the name of the reset's lock file; rename it first",
+    ],
+    [
       'a database outside the data directory',
       { GG_DB_URL: '<outside-db>' },
       'is outside the data directory',
@@ -505,6 +522,9 @@ describe('refused resets change nothing', () => {
           '<other>': join(base, 'other'),
           '<outside-db>': `file:${join(base, 'elsewhere.db').replaceAll('\\', '/')}`,
           '<artifact-db>': `file:${join(dataDir, 'artifacts', 'store.db').replaceAll('\\', '/')}`,
+          '<artifacts>': `file:${join(dataDir, 'artifacts').replaceAll('\\', '/')}`,
+          '<workspaces>': `file:${join(dataDir, 'workspaces').replaceAll('\\', '/')}`,
+          '<lock-db>': `file:${join(dataDir, 'graphgoblin.lock.reclaim').replaceAll('\\', '/')}`,
           '<linked-db>': `file:${join(dataDir, 'linked-db', 'store.db').replaceAll('\\', '/')}`,
         })[value] ?? value;
       const env: Record<string, string> = { GG_DATA_DIR: dataDir };
@@ -519,6 +539,65 @@ describe('refused resets change nothing', () => {
       expect(result.out).toBe('');
       expect(result.err).toContain(error);
       expect(result.err).toMatch(/Nothing was changed\.\n$/);
+      expect(await snapshotTree(base)).toEqual(before);
+    },
+  );
+
+  // The independent acceptance audit (2026-10-21) found a regular database file named `artifacts`
+  // listed twice (once as the artifact target, once as the database), so a confirmed reset removed
+  // it and then stopped on the duplicate; one named `workspaces` was listed under both Removes and
+  // Keeps. Both configurations are refused before anything is listed or read.
+  it.each([
+    ['dry run', ['--reset']],
+    ['confirmed reset', ['--reset', '--yes', '--data-dir', '<data>']],
+  ])(
+    'refuses a %s whose database is a regular file named like a directory the reset owns, reading nothing',
+    async (_name, argv) => {
+      const base = await mkdtemp(join(tmpdir(), 'gg-reset-'));
+      bases.push(base);
+      const dataDir = join(base, 'data');
+      await mkdir(dataDir);
+      await writeFile(join(dataDir, 'artifacts'), 'a database with a reserved name');
+      await writeFile(join(dataDir, 'workspaces'), 'another one');
+      await writeFile(join(dataDir, 'unrelated.txt'), 'kept');
+      for (const name of ['artifacts', 'workspaces']) {
+        const before = await snapshotTree(base);
+        const result = await reset(
+          argv.map((arg) => (arg === '<data>' ? dataDir : arg)),
+          { GG_DATA_DIR: dataDir, GG_DB_URL: `file:${join(dataDir, name).replaceAll('\\', '/')}` },
+          { readStore: () => Promise.reject(new Error('the store must not be read')) },
+        );
+        expect(result.code).toBe(1);
+        expect(result.out).toBe('');
+        expect(result.err).toContain(
+          `the database ${name} has the name of the ${name} directory, which a reset removes; rename it first`,
+        );
+        expect(result.err).toMatch(/Nothing was changed\.\n$/);
+        expect(await snapshotTree(base)).toEqual(before);
+      }
+    },
+  );
+
+  // Node cannot create a FIFO itself; POSIX hosts (CI) use mkfifo, Windows has no FIFO files.
+  it.skipIf(process.platform === 'win32')(
+    'refuses a database that is a FIFO before reading it',
+    async () => {
+      const base = await mkdtemp(join(tmpdir(), 'gg-reset-'));
+      bases.push(base);
+      const dataDir = join(base, 'data');
+      await mkdir(dataDir);
+      const fifo = join(dataDir, 'graphgoblin.db');
+      expect(spawnSync('mkfifo', [fifo]).status).toBe(0);
+      const before = await snapshotTree(base);
+      const result = await reset(
+        ['--reset'],
+        { GG_DATA_DIR: dataDir, GG_DB_URL: `file:${fifo}` },
+        { readStore: () => Promise.reject(new Error('the store must not be read')) },
+      );
+      expect(result.code).toBe(1);
+      expect(result.err).toContain(
+        'graphgoblin.db is a special file, not a database file; a reset removes only regular database files',
+      );
       expect(await snapshotTree(base)).toEqual(before);
     },
   );
@@ -716,6 +795,44 @@ describe('data directory layouts', () => {
         () => undefined,
       ),
     ).rejects.toThrow('../outside-repo is not inside the data directory');
+  });
+});
+
+describe('entry kinds and manifest invariants', () => {
+  const stats = (flags: { link?: boolean; directory?: boolean; file?: boolean }) => ({
+    isSymbolicLink: () => flags.link ?? false,
+    isDirectory: () => flags.directory ?? false,
+    isFile: () => flags.file ?? false,
+  });
+
+  it('classifies anything that is neither a file, a directory nor a link as other', () => {
+    expect(kindOf(stats({ file: true }))).toBe('file');
+    expect(kindOf(stats({ directory: true }))).toBe('directory');
+    expect(kindOf(stats({ link: true, directory: true }))).toBe('link');
+    // A FIFO, socket or device: lstat reports none of the three.
+    expect(kindOf(stats({}))).toBe('other');
+  });
+
+  it('refuses a manifest that lists a path twice or both removes and keeps it', () => {
+    const entry = { path: 'artifacts', kind: 'file' as const, bytes: 1 };
+    expect(() =>
+      assertDisjointManifest(
+        [
+          { path: 'artifacts', what: 'artifacts', entries: [entry] },
+          { path: 'artifacts', what: 'database', entries: [entry] },
+        ],
+        [],
+      ),
+    ).toThrow('the manifest would list artifacts twice');
+    expect(() =>
+      assertDisjointManifest(
+        [{ path: 'workspaces', what: 'database', entries: [{ ...entry, path: 'workspaces' }] }],
+        [{ path: 'workspaces', why: 'a file, not a directory' }],
+      ),
+    ).toThrow('the manifest would both remove and keep workspaces');
+    expect(() =>
+      assertDisjointManifest([{ path: 'artifacts', what: 'artifacts', entries: [entry] }], []),
+    ).not.toThrow();
   });
 });
 

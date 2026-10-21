@@ -111,6 +111,8 @@ export class ResetIncompleteError extends Error {
 }
 
 const LOCK_FILES = new Set(['graphgoblin.lock', 'graphgoblin.lock.reclaim']);
+/** Directories a reset removes by name; a database may not be named like one or live inside one. */
+const RESERVED_ROOTS = new Set(['artifacts', 'workspaces']);
 const DATABASE_PARTS = [
   ['', 'database'],
   ['-wal', 'SQLite write-ahead log'],
@@ -144,17 +146,29 @@ export async function planReset({
         `the database path passes through ${ancestor.path}, which is not a physical directory; a reset never follows links`,
       );
   }
-  if (['artifacts', 'workspaces'].includes(segments[0] ?? '') && segments.length > 1)
+  // The reset owns artifacts/, workspaces/ and the lock files by name. A database named like one of
+  // them, or inside one of them, would be listed twice or under both Removes and Keeps, so the
+  // configuration is refused before anything is listed.
+  const root = segments[0] ?? '';
+  if (RESERVED_ROOTS.has(root))
     throw new ResetRefusedError(
-      `the database ${database} is inside ${segments[0]}/, which a reset removes; move it first`,
+      segments.length > 1
+        ? `the database ${database} is inside ${root}/, which a reset removes; move it first`
+        : `the database ${database} has the name of the ${root} directory, which a reset removes; rename it first`,
+    );
+  if (segments.length === 1 && LOCK_FILES.has(database))
+    throw new ResetRefusedError(
+      `the database ${database} has the name of the reset's lock file; rename it first`,
     );
   const databaseTargets: ResetTarget[] = [];
   for (const [suffix, what] of DATABASE_PARTS) {
     const entry = await statEntry(dataDir, database + suffix);
     if (!entry) continue;
+    // Only a regular file: a directory, a link, a FIFO, a socket or a device is never a database
+    // file, and reading the store from one could block or remove something that was never data.
     if (entry.kind !== 'file')
       throw new ResetRefusedError(
-        `${entry.path} is a ${entry.kind}, not a database file; a reset removes only regular database files`,
+        `${entry.path} is a ${NOUNS[entry.kind][0]}, not a database file; a reset removes only regular database files`,
       );
     databaseTargets.push({ path: entry.path, what, entries: [entry] });
   }
@@ -184,12 +198,18 @@ export async function planReset({
         });
     }
   } else if (workspaces)
-    kept.push({ path: 'workspaces', why: `a ${workspaces.kind}; a reset never follows links` });
+    kept.push({
+      path: 'workspaces',
+      why:
+        workspaces.kind === 'link'
+          ? 'a link; a reset never follows links'
+          : `a ${NOUNS[workspaces.kind][0]}, not a directory`,
+    });
   const artifacts = await listEntry(dataDir, 'artifacts');
   if (artifacts.length) targets.push({ path: 'artifacts', what: 'artifacts', entries: artifacts });
   targets.push(...databaseTargets);
-  const owned = new Set(['artifacts', 'workspaces', ...LOCK_FILES]);
-  if (segments.length > 1) owned.add(segments[0]!);
+  const owned = new Set([...RESERVED_ROOTS, ...LOCK_FILES]);
+  if (segments.length > 1) owned.add(root);
   else for (const [suffix] of DATABASE_PARTS) owned.add(database + suffix);
   for (const name of (await readdir(dataDir)).sort())
     if (!owned.has(name))
@@ -201,7 +221,29 @@ export async function planReset({
             : 'not part of the store',
       });
   kept.sort((a, b) => (a.path < b.path ? -1 : 1));
+  assertDisjointManifest(targets, kept);
   return { dataDir, database, store, targets, kept };
+}
+
+/**
+ * A manifest names every path once and never both removes and keeps one; a reset that could
+ * remove an entry twice would stop part of the way, and one that keeps what it removes would lie.
+ * The refusals above make this unreachable for any configuration; it stays as the final guard.
+ */
+export function assertDisjointManifest(
+  targets: readonly ResetTarget[],
+  kept: readonly KeptEntry[],
+): void {
+  const removed = new Set<string>();
+  for (const target of targets)
+    for (const entry of target.entries) {
+      if (removed.has(entry.path))
+        throw new ResetRefusedError(`the manifest would list ${entry.path} twice`);
+      removed.add(entry.path);
+    }
+  for (const entry of kept)
+    if (removed.has(entry.path))
+      throw new ResetRefusedError(`the manifest would both remove and keep ${entry.path}`);
 }
 
 export function formatBytes(bytes: number): string {
@@ -220,11 +262,12 @@ const NOUNS: Record<TreeEntry['kind'], [string, string]> = {
   file: ['file', 'files'],
   directory: ['directory', 'directories'],
   link: ['link', 'links'],
+  other: ['special file', 'special files'],
 };
 
 function counts(entries: readonly TreeEntry[]): string {
   const parts: string[] = [];
-  for (const kind of ['file', 'directory', 'link'] as const) {
+  for (const kind of ['file', 'directory', 'link', 'other'] as const) {
     const count = entries.filter((entry) => entry.kind === kind).length;
     if (count || kind === 'file')
       parts.push(`${String(count)} ${NOUNS[kind][count === 1 ? 0 : 1]}`);

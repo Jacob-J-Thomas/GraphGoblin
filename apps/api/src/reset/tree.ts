@@ -5,9 +5,11 @@ import { dirname, isAbsolute, join, relative, sep } from 'node:path';
 /**
  * Filesystem entries of a reset, read and removed without following links (ADR-0042). A symbolic
  * link or Windows junction is an entry of its own: listing never descends into it and removal
- * removes the link, never its target.
+ * removes the link, never its target. Anything that is neither a regular file, a directory nor a
+ * link (a FIFO, a socket, a device) is `other`: it is never accepted as a database file, and inside
+ * a removed directory it is unlinked like any other non-directory entry.
  */
-export type EntryKind = 'file' | 'directory' | 'link';
+export type EntryKind = 'file' | 'directory' | 'link' | 'other';
 
 export interface TreeEntry {
   /** Relative to the data directory, with `/` separators. */
@@ -27,9 +29,10 @@ export function isInside(root: string, path: string): boolean {
   return rel !== '' && rel !== '..' && !rel.startsWith('..' + sep) && !isAbsolute(rel);
 }
 
-export function kindOf(stats: Stats): EntryKind {
+export function kindOf(stats: Pick<Stats, 'isSymbolicLink' | 'isDirectory' | 'isFile'>): EntryKind {
   if (stats.isSymbolicLink()) return 'link';
-  return stats.isDirectory() ? 'directory' : 'file';
+  if (stats.isDirectory()) return 'directory';
+  return stats.isFile() ? 'file' : 'other';
 }
 
 const absolute = (root: string, path: string): string => join(root, ...path.split('/'));
