@@ -704,7 +704,9 @@ Failed lookups are reported immediately rather than retried by the action. A kno
 queued behind another loading check, and a retry after failure does not count as the first load. The field reads shared
 query state at action time and does not remount the form or refetch after a switch. Opening a
 trigger or exit dialog adds no harness lookups. Undo/Redo clears the switch notice; a pending
-switch is cancelled by dismissal, history changes or a concurrent field edit.
+switch is cancelled by dismissal, history changes or a concurrent field edit. When a concurrent
+edit cancels the current attempt, its waiting notice clears as the checks finish; an older attempt
+does not clear a newer attempt's notice.
 
 A failed/paused catalog or Settings lookup, unready/unknown harness, or unavailable compatible
 default retains explicit authored values and shows a warning under Harness, with an alert icon.

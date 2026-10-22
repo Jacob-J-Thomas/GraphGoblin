@@ -3,6 +3,7 @@ import { minimalLoop } from '@graphgoblin/contracts/testing';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { expect, it } from 'vitest';
 import { FakeApi, problem } from '../__fixtures__/fake-api.js';
+import { getCode, setCode } from '../__fixtures__/codemirror.js';
 import { useEditorStore } from './store.js';
 import { renderApp } from '../__fixtures__/render.js';
 
@@ -357,4 +358,59 @@ it('opening trigger and exit dialogs does not start additional harness lookups',
       ),
     ).toHaveLength(before);
   }
+});
+
+it('clears a cancelled switch notice after a concurrent prompt edit', async () => {
+  let release!: (response: Response) => void;
+  const { api, dialog, queryClient } = await setup('codex', 'absent', 'minimal', (api) => {
+    api.override('GET /settings', () => new Promise<Response>((resolve) => (release = resolve)));
+  });
+  fireEvent.click(within(dialog).getByRole('radio', { name: 'claude' }));
+  expect(within(dialog).getByText(/Waiting for the first/)).toBeVisible();
+  setCode('Template', 'Edited while the switch was pending');
+  act(() => release(Response.json(api.settingsValues)));
+  await waitFor(() => expect(queryClient.getQueryState(['settings'])?.status).toBe('success'));
+  expect(within(dialog).getByRole('radio', { name: 'codex' })).toBeChecked();
+  expect(within(dialog).getByLabelText('Model', { exact: true })).toHaveValue('gpt-6-astra');
+  expect(within(dialog).getByLabelText('Effort', { exact: true })).toHaveValue('minimal');
+  expect(getCode('Template')).toBe('Edited while the switch was pending');
+  expect(
+    useEditorStore.getState().definition?.nodes.find((node) => node.id === 'infer')?.config,
+  ).toMatchObject({
+    harness: 'codex',
+    model: 'gpt-6-astra',
+    effort: 'minimal',
+    prompt: { template: 'Edited while the switch was pending' },
+  });
+  await waitFor(() =>
+    expect(within(dialog).queryByText(/The harness change will apply/)).not.toBeInTheDocument(),
+  );
+});
+
+it('keeps a newer switch notice when an older pending attempt finishes', async () => {
+  let release!: (response: Response) => void;
+  const { api, dialog, queryClient } = await setup('codex', 'absent', 'minimal', (api) => {
+    api.override('GET /settings', () => new Promise<Response>((resolve) => (release = resolve)));
+  });
+  // Keep only Settings pending in the older action before failing the catalog separately.
+  await waitFor(() => expect(queryClient.getQueryState(['model-catalog'])?.status).toBe('success'));
+  await waitFor(() => expect(queryClient.getQueryState(['preflight'])?.status).toBe('success'));
+  fireEvent.click(within(dialog).getByRole('radio', { name: 'claude' }));
+  expect(within(dialog).getByText(/Waiting for the first/)).toBeVisible();
+  api.override('GET /model-catalog', () => problem(503, 'FAILED', 'catalog unavailable'));
+  await act(async () => {
+    await queryClient.refetchQueries({ queryKey: ['model-catalog'] });
+  });
+  expect(within(dialog).getByRole('radio', { name: 'codex' })).toBeChecked();
+  expect(within(dialog).getByText(/Waiting for the first/)).toBeVisible();
+  fireEvent.click(within(dialog).getByRole('radio', { name: 'claude' }));
+  const notice = await within(dialog).findByText(/Validation is unavailable while the catalog/);
+  const message = notice.textContent;
+  expect(within(dialog).getByRole('radio', { name: 'claude' })).toBeChecked();
+  act(() => release(Response.json(api.settingsValues)));
+  await waitFor(() => expect(queryClient.getQueryState(['settings'])?.status).toBe('success'));
+  expect(notice).toBeInTheDocument();
+  expect(notice).toHaveTextContent(message ?? '');
+  expect(within(dialog).getByLabelText('Model', { exact: true })).toHaveValue('gpt-6-astra');
+  expect(within(dialog).getByLabelText('Effort', { exact: true })).toHaveValue('minimal');
 });

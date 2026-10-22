@@ -69,7 +69,11 @@ function HarnessField({ schema, name, label }: FieldProps) {
           );
           void select.then((selection) => {
             // Undo, another switch, dismissal or a concurrent field edit cancels this action.
-            if (attempt !== requestRef.current || JSON.stringify(getValues()) !== snapshot) return;
+            if (attempt !== requestRef.current) return;
+            if (JSON.stringify(getValues()) !== snapshot) {
+              setNotice(undefined);
+              return;
+            }
             setNotice(
               selection.message ? { text: selection.message, values, loading: false } : undefined,
             );

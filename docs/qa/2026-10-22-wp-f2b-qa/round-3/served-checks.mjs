@@ -7,10 +7,16 @@ import { resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { openDatabase } from '../../../../packages/infrastructure/dist/sqlite/index.js';
 const root = fileURLToPath(new URL('../../../../', import.meta.url));
-const evidence = fileURLToPath(new URL('.', import.meta.url));
-const dir = await mkdtemp(join(tmpdir(), 'gg-qa-204-r3-served-'));
+const evidence = process.env.QA_OUTPUT_DIR
+  ? resolve(process.env.QA_OUTPUT_DIR)
+  : fileURLToPath(new URL('.', import.meta.url));
+const port = Number(process.env.QA_PORT ?? 5880);
+if (!Number.isInteger(port) || port < 1 || port > 65535) throw Error('Invalid QA_PORT');
+const prefix = process.env.QA_TEMP_PREFIX ?? 'gg-qa-204-r3-served-';
+if (!/^[a-zA-Z0-9_-]+$/.test(prefix)) throw Error('Invalid QA_TEMP_PREFIX');
+const dir = await mkdtemp(join(tmpdir(), prefix));
 const bin = join(dir, 'bin'),
-  base = 'http://127.0.0.1:5880',
+  base = `http://127.0.0.1:${port}`,
   results = [];
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const compile = spawn(
@@ -41,7 +47,7 @@ async function start() {
     env: {
       ...process.env,
       GG_HOST: '127.0.0.1',
-      GG_PORT: '5880',
+      GG_PORT: String(port),
       GG_DATA_DIR: join(dir, 'data'),
       GG_DEFAULTS: '{"byHarness":{"claude":{"model":"claude-opus-5-5","effort":"high"}}}',
       GG_DB_URL: 'file:' + join(dir, 'data', 'graphgoblin.db').replaceAll('\\', '/'),
@@ -292,7 +298,7 @@ try {
     actual: {
       node: process.version,
       edge: browser.version(),
-      port: 5880,
+      port,
       preflight: await api('/harness/preflight'),
     },
     verdict: 'PASS',
@@ -1107,11 +1113,25 @@ try {
     'Return failures for all shared lookups, then switch fully inheriting node both directions.',
     'No wait or extra request; no explicit fields appear despite failed checks.',
     async () => {
+      const finished = { catalog: 0, settings: 0, preflight: 0 };
       await open({ inherit: true, noEffort: true }, async (p) => {
+        p.on('requestfinished', (r) => {
+          if (r.method() !== 'GET') return;
+          const path = new URL(r.url()).pathname;
+          if (path === '/model-catalog') finished.catalog++;
+          if (path === '/settings') finished.settings++;
+          if (path === '/harness/preflight') finished.preflight++;
+        });
         for (const path of ['model-catalog', 'settings', 'harness/preflight'])
           await p.route('**/' + path, (r) => r.fulfill(failure));
       });
+      // Bootstrap retries each failed lookup once. Observe every response, not just the
+      // first Retry control, so unfinished initial requests cannot count as switch fetches.
+      await expect.poll(() => finished).toEqual({ catalog: 2, settings: 2, preflight: 2 });
+      await page.waitForLoadState('networkidle');
       await dialog().getByRole('button', { name: 'Retry model catalog', exact: true }).waitFor();
+      await dialog().getByRole('button', { name: 'Retry Codex preflight', exact: true }).waitFor();
+      const initiallySettled = { ...finished };
       const before = { ...counts };
       await sw('claude');
       await expect(dialog().getByRole('radio', { name: 'claude', exact: true })).toBeChecked();
@@ -1121,7 +1141,8 @@ try {
       await fields('', '');
       await expect(page.getByText(/Waiting for the first/)).toHaveCount(0);
       expect(counts).toEqual(before);
-      return { before, after: counts };
+      expect(finished).toEqual(initiallySettled);
+      return { initiallySettled, before, after: { ...counts } };
     },
   );
   await check(
@@ -1169,6 +1190,61 @@ try {
         await sw('claude');
         await fields('claude-opus-5-5', 'xhigh');
         return { cancelled: true, ...(await persist()) };
+      } finally {
+        release?.();
+        await page.unrouteAll({ behavior: 'wait' });
+      }
+    },
+  );
+
+  await check(
+    'pending-prompt-edit',
+    'Hold initial Settings, request Claude, edit the prompt, then release Settings.',
+    'Cancelled action clears its waiting notice; Codex/Astra/minimal and the edited prompt save and reopen.',
+    async () => {
+      let release;
+      const hold = new Promise((r) => (release = r));
+      const edited = 'Edited while the harness switch was pending';
+      try {
+        await open({}, (p) =>
+          p.route('**/settings', async (r) => {
+            await hold;
+            await r.continue();
+          }),
+        );
+        await sw('claude');
+        await expect(page.getByText(/Waiting for the first/)).toBeVisible();
+        const prompt = dialog().getByRole('textbox', { name: 'Template', exact: true });
+        await prompt.fill(edited);
+        await expect(prompt).toHaveText(edited);
+        const readConfig = async () =>
+          (await api('/loops/' + id)).draft.definition.nodes.find((n) => n.id === 'infer').config;
+        await expect.poll(async () => (await readConfig()).prompt.template).toBe(edited);
+        const settings = page.waitForResponse((r) => new URL(r.url()).pathname === '/settings');
+        release();
+        await (await settings).finished();
+        await expect(dialog().getByRole('radio', { name: 'codex', exact: true })).toBeChecked();
+        await fields('gpt-6-astra', 'minimal');
+        await expect(page.getByText(/The harness change will apply/)).toHaveCount(0);
+        const config = await readConfig();
+        expect(config).toMatchObject({
+          harness: 'codex',
+          model: 'gpt-6-astra',
+          effort: 'minimal',
+          prompt: { template: edited },
+        });
+        await done();
+        await page.reload();
+        await page.getByTestId('node-infer').click({ position: { x: 60, y: 12 } });
+        await dialog()
+          .getByRole('button', { name: /^Advanced/ })
+          .click();
+        await fields('gpt-6-astra', 'minimal');
+        await expect(dialog().getByRole('radio', { name: 'codex', exact: true })).toBeChecked();
+        await expect(dialog().getByRole('textbox', { name: 'Template', exact: true })).toHaveText(
+          edited,
+        );
+        return { cancelled: true, waitingNoticeCleared: true, config };
       } finally {
         release?.();
         await page.unrouteAll({ behavior: 'wait' });
