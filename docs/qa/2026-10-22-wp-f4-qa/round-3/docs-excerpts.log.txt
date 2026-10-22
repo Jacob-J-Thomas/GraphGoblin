@@ -1,0 +1,255 @@
+REVISION: b80c9fdfb001e020bdfc1b9c7c15e5f910d33766
+Exact complete source lines. Context included to preserve whole sentences.
+docs/05-execution-engine.md:254: ## Inference submission and recovery
+docs/05-execution-engine.md:255: 
+docs/05-execution-engine.md:256: One logical visit begins at the first `node.started` after that node last finished. Its identity
+docs/05-execution-engine.md:257: is `<runId>:<first-start-seq>`, retained across retries and restarts until `node.finished`.
+docs/05-execution-engine.md:258: Each initial, repair or continuation turn records `harness.turn` before adapter invocation,
+docs/05-execution-engine.md:259: including its exact rendered `prompt`, `promptKind`, `turnId`, harness and selected
+docs/05-execution-engine.md:260: `resumeSessionId`. Refused retries retain the saved prompt and policy selection, even if init
+docs/05-execution-engine.md:261: announced a different ID. They do not rerender against a changed thread. Repair refusals retain
+docs/05-execution-engine.md:262: the repair task, including a synchronous refusal before the repair invocation returns a session
+docs/05-execution-engine.md:263: handle. It uses the same typed failure mapping as the initial launch; pinned policy,
+docs/05-execution-engine.md:264: configuration and argument refusals remain non-resumable. These authored prompts are part of private run history, with the same access
+docs/05-execution-engine.md:265: and deletion boundary as its context thread. The entire prompt is stored inline with no schema
+docs/05-execution-engine.md:266: size limit or automatic artifact offloading; large prompts therefore enlarge the event log.
+docs/05-execution-engine.md:267: 
+docs/05-execution-engine.md:268: | Classification (`failure.inference.submission`) | Failure code                                                                                                                                               | Resume behavior                                                                                                                                                                                                                                            |
+docs/05-execution-engine.md:269: | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+docs/05-execution-engine.md:270: | `definitely-not-submitted`                      | Original cause, such as `HARNESS_NOT_INSTALLED`, `HARNESS_NOT_AUTHENTICATED`, `HARNESS_TURN_FAILED` or `INFERENCE_TIMEOUT`                                 | After fixing a resumable cause, submit the saved task with the original fresh/previous/named selection. Init alone cannot change that selection.                                                                                                           |
+docs/05-execution-engine.md:271: | `delivery-uncertain`                            | `HARNESS_DELIVERY_UNCERTAIN` for generic turn failures; specific causes such as `INFERENCE_TIMEOUT`, quota, artifact or termination failures remain intact | When eligible under the harness rule below, continue only a usable session with the continuation prompt. No usable session means `resumable: false`; use Replay from the node for a deliberate new attempt. Unconfirmed termination is also non-resumable. |
+docs/05-execution-engine.md:272: | `session-missing`                               | `HARNESS_SESSION_MISSING`                                                                                                                                  | Non-resumable. Do not silently start fresh or repeat the invalid session. Explicit fresh-session recovery is deferred to #265.                                                                                                                             |
+docs/05-execution-engine.md:273: 
+docs/05-execution-engine.md:274: `failure.inference` also contains `visitId`, `turnId`, `promptKind` and the session ID when
+docs/05-execution-engine.md:275: known. `harness.submission` records `submitted` on positive acceptance, with its marker, or
+docs/05-execution-engine.md:276: one of the three failure classifications when a turn fails. Acceptance does not prove that
+docs/05-execution-engine.md:277: the result was durably recorded; recovery of an accepted unfinished turn remains uncertain.
+docs/05-execution-engine.md:278: The crash window between durable intent and adapter invocation is conservatively uncertain:
+docs/05-execution-engine.md:279: absence of an acceptance marker, even init-only output, never proves non-submission. Adapters
+docs/05-execution-engine.md:280: may assert definite refusal only with positive pre-send/startup/refusal evidence. Once accepted,
+docs/05-execution-engine.md:281: a later authentication/refusal error cannot downgrade the turn to safe resubmission.
+docs/05-execution-engine.md:282: 
+docs/05-execution-engine.md:283: Under previous/named policy, an authored or retried authored turn with no durable acceptance
+docs/05-execution-engine.md:284: cannot use its inherited `resumeSessionId` alone for continuation (ADR-0045, D-022). It fails
+docs/05-execution-engine.md:285: non-resumably on explicit failure and at visit-start recovery. A different newly announced
+docs/05-execution-engine.md:286: session, an accepted turn, or a repair/continuation on the visit's own session can continue.
+docs/05-execution-engine.md:287: For non-pinned generic failures, Codex permits Resume even when its adapter reports
+docs/05-execution-engine.md:288: `retriable: false` for an exit or lost stream. Claude permits Resume only with the adapter's
+docs/05-execution-engine.md:289: `retriable` evidence. Unsupported policy, invalid configuration and rejected arguments remain
+docs/05-execution-engine.md:290: non-resumable for both harnesses because the definition is pinned. Continuation safety is
+docs/05-execution-engine.md:291: checked separately: uncertain delivery must still have a usable session under D-022.
+docs/05-execution-engine.md:292: Restorable login, installation and quota failures retain their specific eligibility. Resume
+docs/05-execution-engine.md:293: is still unavailable if delivery is uncertain and no usable session exists.
+docs/05-execution-engine.md:294: 
+docs/05-execution-engine.md:295: The continuation prompt is: "The previous turn was interrupted before GraphGoblin recorded its
+docs/05-execution-engine.md:296: result. Continue the task from where you left off and finish it." A new continuation has its own
+docs/05-execution-engine.md:297: turn ID within the same visit. Successful provider work followed by transcript storage failure
+docs/05-execution-engine.md:298: uses this same continuation path. Engine persistence faults preserve their original failure
+docs/05-execution-engine.md:299: cause; durable intent still governs subsequent recovery.
+docs/05-execution-engine.md:300: 
+docs/06-harness-integration.md:454: ### Submission markers and refusals (#244)
+docs/06-harness-integration.md:455: 
+docs/06-harness-integration.md:456: Initialization is session identity, not input acceptance. The engine persists exact pending
+docs/06-harness-integration.md:457: prompts and visit provenance before invoking either adapter; see [recovery](05-execution-engine.md#inference-submission-and-recovery).
+docs/06-harness-integration.md:458: The run event `harness.submission` says `submitted` with a marker on positive acceptance;
+docs/06-harness-integration.md:459: only failed or interrupted turns use the three failure classifications.
+docs/06-harness-integration.md:460: 
+docs/06-harness-integration.md:461: | Adapter            | Positive `submitted` marker                                                                                                                                                                                                  | What does not prove acceptance                                                                                     |
+docs/06-harness-integration.md:462: | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+docs/06-harness-integration.md:463: | Claude stream-json | First validated non-error `assistant` record producing text, thinking or a tool call (`claude.assistant`); a validated successful `result` record proves consumption when no assistant content was emitted (`claude.result`) | `system/init`, the policy transcript item, commands/UI metadata, status, partial-message and rate-limit records    |
+docs/06-harness-integration.md:464: | Codex SDK          | `turn.started` (`codex.turn.started`), the input-accepted turn boundary after thread initialization                                                                                                                          | `thread.started`, `resumeThread`, the adapter's early known-ID announcement, configuration/deprecation error items |
+docs/06-harness-integration.md:465: 
+docs/06-harness-integration.md:466: Markers emit once per adapter turn. Claude emits `claude.result` as soon as a successful
+docs/06-harness-integration.md:467: result record passes session, model, usage and result-text validation, before waiting for CLI exit.
+docs/06-harness-integration.md:468: The engine records that acceptance with the visit and turn IDs immediately. Usage totals,
+docs/06-harness-integration.md:469: turn completion and the final result still wait for a verified process outcome; a later
+docs/06-harness-integration.md:470: transport failure cannot retract the observed acceptance or publish the buffered result.
+docs/06-harness-integration.md:471: A lost stream after init or after a marker is uncertain;
+docs/06-harness-integration.md:472: markers never claim provider-side durability beyond the observed protocol boundary. A process
+docs/06-harness-integration.md:473: kill before the marker is durably recorded remains uncertain too.
+docs/06-harness-integration.md:474: 
+docs/06-harness-integration.md:475: Claude local policy/config/auth/readiness failures and confirmed spawn failures are definitely
+docs/06-harness-integration.md:476: unsubmitted. Turn stderr is bounded in memory and recognizes only fixed CLI refusal forms:
+docs/06-harness-integration.md:477: `error: unknown option` / `error: unexpected argument`, authentication-required diagnostics,
+docs/06-harness-integration.md:478: and `No conversation found with session ID:`. Raw diagnostics are discarded. Claude CLI
+docs/06-harness-integration.md:479: 2.1.304 can emit a pre-init `result` with `is_error: true` and `num_turns: 0` alongside the
+docs/06-harness-integration.md:480: missing-session stderr refusal. Before init/acceptance this native refusal result is deferred
+docs/06-harness-integration.md:481: until process outcome: the fixed stderr refusal yields `HARNESS_SESSION_MISSING`, ahead of
+docs/06-harness-integration.md:482: the otherwise missing-init protocol error. Termination-unconfirmed, abort, timeout and overflow
+docs/06-harness-integration.md:483: still take precedence. Without a recognized refusal, a nonzero exit is a generic uncertain
+docs/06-harness-integration.md:484: `HARNESS_TURN_FAILED`; an otherwise successful process with an incomplete stream remains a
+docs/06-harness-integration.md:485: protocol fault. An init/result mismatch also remains a protocol fault. Once assistant acceptance was
+docs/06-harness-integration.md:486: observed, later refusal text cannot make the turn definitely unsubmitted.
+docs/06-harness-integration.md:487: 
+docs/06-harness-integration.md:488: Codex reports startup/auth/argument refusals as definitely unsubmitted and positively identified
+docs/06-harness-integration.md:489: missing-rollout/thread/session refusals as session missing. Other stream/process failures are
+docs/06-harness-integration.md:490: uncertain. The engine prevents later refusal from downgrading already observed acceptance.
+docs/06-harness-integration.md:491: An authored/retried authored turn with only an inherited previous/named handle and no durable
+docs/06-harness-integration.md:492: acceptance is non-resumable when delivery is uncertain (ADR-0045). Accepted turns and
+docs/06-harness-integration.md:493: repair/continuation turns on the visit's own session retain continuation recovery. Unsupported
+docs/06-harness-integration.md:494: policy, invalid configuration and argument refusals remain non-resumable even if a generic
+docs/06-harness-integration.md:495: adapter error incorrectly advertises retryability. Non-pinned generic Codex failures permit
+docs/06-harness-integration.md:496: Resume even when the adapter reports `retriable: false` for a CLI exit or lost stream; generic
+docs/06-harness-integration.md:497: Claude failures require the adapter's `retriable` evidence. These eligibility rules do not
+docs/06-harness-integration.md:498: override D-022's usable-session requirement. Login, installation and quota retain their
+docs/06-harness-integration.md:499: restorable causes.
+docs/06-harness-integration.md:500: An abort during readiness probes is conservatively uncertain: the aborted/unknown probe
+docs/06-harness-integration.md:501: does not positively identify a pre-send refusal. It does not authorize a blind authored retry.
+docs/06-harness-integration.md:502: No readiness probes, probe directories, model selection or fallback policy changed.
+docs/09-frontend-and-pwa.md:82: - Thread viewer that reconstructs the thread at any event by replaying patches client-side using `domain`.
+docs/09-frontend-and-pwa.md:83: - Node progress drawer that shows harness items as they arrive.
+docs/09-frontend-and-pwa.md:84: - Wait handling: when the run is waiting on input, a form rendered from the wait node's `inputSchema` appears inline.
+docs/09-frontend-and-pwa.md:85: 
+docs/09-frontend-and-pwa.md:86: The timeline lists selectable `harness.turn` and `harness.submission` rows with the node ID.
+docs/09-frontend-and-pwa.md:87: Selection reconstructs the thread at that event. The authored prompt, visit ID, turn ID,
+docs/09-frontend-and-pwa.md:88: acceptance marker and submission classification are available through REST; the inspector
+docs/09-frontend-and-pwa.md:89: does not display them as event details today.
+docs/09-frontend-and-pwa.md:90: The provenance detail view is coordinated with #379.
+docs/09-frontend-and-pwa.md:91: 
+docs/09-frontend-and-pwa.md:92: ## PWA behaviour (Decided)
+docs/guide/03-run-and-observe.md:263: Read `code`, `message`, `nodeId`, `resumable`, any `details`, and `inference` submission provenance when present. After fixing an external cause, resume when the failure is marked resumable. Publish and start a new run when the correction changes the pinned definition. The contract lists every code below; some are reserved and current lower-level exceptions can appear as `INTERNAL_ERROR` instead.
+docs/guide/03-run-and-observe.md:264: 
+docs/guide/03-run-and-observe.md:265: Non-pinned generic Codex failures permit Resume even when the adapter reports `retriable: false`
+docs/guide/03-run-and-observe.md:266: for a lost stream or CLI exit. Generic Claude failures require the adapter's `retriable`
+docs/guide/03-run-and-observe.md:267: evidence. Unsupported policy, invalid configuration and rejected arguments remain
+docs/guide/03-run-and-observe.md:268: non-resumable for both. Uncertain delivery also requires a usable session: an accepted Codex
+docs/guide/03-run-and-observe.md:269: turn can continue its recorded conversation; an inherited ID without authored-task acceptance
+docs/guide/03-run-and-observe.md:270: cannot authorize continuation.
+docs/guide/03-run-and-observe.md:271: 
+docs/guide/03-run-and-observe.md:272: | `RunErrorCode`                                                      | Action                                                                                                                                                                                                                                              |
+docs/guide/03-run-and-observe.md:273: | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+docs/guide/03-run-and-observe.md:274: | `HARNESS_NOT_INSTALLED`                                             | Install Codex or correct the executable setting; check harness preflight. Missing executable errors during a turn can also appear as `HARNESS_TURN_FAILED`.                                                                                         |
+docs/guide/03-run-and-observe.md:275: | `HARNESS_NOT_AUTHENTICATED`                                         | Log into Codex as the API process user, then resume.                                                                                                                                                                                                |
+docs/guide/03-run-and-observe.md:276: | `HARNESS_QUOTA_EXHAUSTED`                                           | Wait for quota or rate-limit recovery, or resolve account access, then resume.                                                                                                                                                                      |
+docs/guide/03-run-and-observe.md:277: | `HARNESS_TURN_FAILED`                                               | Read the harness message and progress; check model availability, sandbox, CLI, and provider connectivity.                                                                                                                                           |
+docs/guide/03-run-and-observe.md:278: | `HARNESS_DELIVERY_UNCERTAIN`                                        | Inspect `failure.inference` and the visit's acceptance marker. When eligible, Resume continues only a usable session. An inherited previous/named ID without authored-task acceptance is insufficient; use Replay from the node when non-resumable. |
+docs/guide/03-run-and-observe.md:279: | `HARNESS_SESSION_MISSING`                                           | The provider refused the recorded conversation. Resume is unavailable. Inspect the failed run and use Replay from the node for a deliberate attempt; named-session lookup still applies.                                                            |
+docs/guide/03-run-and-observe.md:280: | `HARNESS_TERMINATION_UNCONFIRMED`                                   | Stop the remaining owned CLI process and inspect workspace effects before deliberately replaying or starting a new run. Resume is unavailable.                                                                                                      |
+docs/guide/07-troubleshooting.md:7: Inspect `failure.inference.submission` and the visit's `harness.turn` / `harness.submission`
+docs/guide/07-troubleshooting.md:8: events. A session ID or init announcement alone proves no prompt acceptance.
+docs/guide/07-troubleshooting.md:9: 
+docs/guide/07-troubleshooting.md:10: For non-pinned generic failures, Codex permits Resume even when the adapter reports
+docs/guide/07-troubleshooting.md:11: `retriable: false` for an exit or lost stream. Claude requires the adapter's `retriable`
+docs/guide/07-troubleshooting.md:12: evidence. Both still need a usable session for uncertain recovery; pinned unsupported-policy,
+docs/guide/07-troubleshooting.md:13: configuration and argument refusals remain non-resumable.
+docs/guide/07-troubleshooting.md:14: 
+docs/guide/07-troubleshooting.md:15: | Case                                                                                                                   | Action                                                                                                                                                                                                                                                                                                                |
+docs/guide/07-troubleshooting.md:16: | ---------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+docs/guide/07-troubleshooting.md:17: | Definitely not submitted (`definitely-not-submitted`)                                                                  | Fix the external cause and Resume when eligible: the exact saved authored/repair task uses its original session selection. Unsupported policy, invalid configuration and rejected arguments need a corrected definition and a new run; the failed run's definition is pinned.                                         |
+docs/guide/07-troubleshooting.md:18: | Delivery uncertain (`HARNESS_DELIVERY_UNCERTAIN`, or a specific timeout/quota/storage cause with `delivery-uncertain`) | When eligible, Resume continues a usable recorded session. An inherited previous/named ID without authored-task acceptance is insufficient. When non-resumable, inspect possible effects and use **Replay from the node** for a deliberate attempt. Stop an unconfirmed native process first.                         |
+docs/guide/07-troubleshooting.md:19: | Session missing (`HARNESS_SESSION_MISSING`)                                                                            | Preserve and inspect the failed run. Resume is refused. Use **Replay from the node** for a deliberate attempt; named-session lookup can still select the same missing conversation. To change that policy, correct the definition and start a new run. A dedicated fresh-session recovery action is deferred to #265. |
+docs/guide/07-troubleshooting.md:20: 
+CHANGELOG.md:7: - Preserve the exact authored or repair prompt after a proven pre-submission refusal. Record submission classification and acceptance markers per logical visit; uncertain work continues only a usable session, and missing sessions fail explicitly. An inherited previous/named session without acceptance of the authored task cannot authorize continuation (ADR-0045). Non-pinned generic Codex exits and lost streams retain Resume when session evidence permits it; generic Claude failures require adapter retryability evidence. Pinned policy, configuration and argument refusals remain non-resumable for both. Synchronous repair-start refusals retain the exact repair prompt and use the same typed failure and pinned-refusal rules as initial launch. The inspector lists selectable turn/submission rows with the node ID; provenance values remain REST-only, with the detail view coordinated with #379. Claude result-only acceptance is now recorded as soon as the successful record validates, before process exit; usage and completed results still wait for verified exit. **Upgrade:** on the old build, let every run inside an inference node finish or cancel it before upgrading: startup recovery automatically resumes `running` runs. After upgrading, never resume a failed run whose failure is on an inference node and whose log has no `harness.turn`; use Replay from the node, delete its loop, or reset the store. Ignoring this rule resends the authored prompt blindly: fresh policy starts a new conversation, while previous/named can repeat it in the inherited conversation. Regenerate API clients for `failure.inference`, `HARNESS_DELIVERY_UNCERTAIN`, `HARNESS_SESSION_MISSING`, `harness.turn` and `harness.submission` (now `submitted` for positive acceptance). No compatibility recovery or silent fresh-session fallback is provided. (#244)
+docs/decisions/ADR-0045-inference-inherited-session-recovery.md:1: # ADR-0045 - Inherited session IDs do not establish authored-task acceptance
+docs/decisions/ADR-0045-inference-inherited-session-recovery.md:2: 
+docs/decisions/ADR-0045-inference-inherited-session-recovery.md:3: Date: 2026-10-20. Status: Accepted. Records the orchestrator's D-022 decision in the #244 Round 2 brief.
+docs/decisions/ADR-0045-inference-inherited-session-recovery.md:4: 
+docs/decisions/ADR-0045-inference-inherited-session-recovery.md:5: ## Context
+docs/decisions/ADR-0045-inference-inherited-session-recovery.md:6: 
+docs/decisions/ADR-0045-inference-inherited-session-recovery.md:7: Node A can finish in a conversation that node B selects through previous or named policy.
+docs/decisions/ADR-0045-inference-inherited-session-recovery.md:8: If B's authored turn fails without acceptance evidence, or the process dies after its durable
+docs/decisions/ADR-0045-inference-inherited-session-recovery.md:9: intent but before any adapter event, that inherited ID still belongs to A's work. Continuing it
+docs/decisions/ADR-0045-inference-inherited-session-recovery.md:10: can complete A's task and incorrectly record that output as B's result. Initialization alone
+docs/decisions/ADR-0045-inference-inherited-session-recovery.md:11: does not prove that B's prompt was consumed. Absence of acceptance also cannot prove refusal.
+docs/decisions/ADR-0045-inference-inherited-session-recovery.md:12: 
+docs/decisions/ADR-0045-inference-inherited-session-recovery.md:13: ## Decision
+docs/decisions/ADR-0045-inference-inherited-session-recovery.md:14: 
+docs/decisions/ADR-0045-inference-inherited-session-recovery.md:15: An authored or retried authored turn whose only session evidence is its inherited
+docs/decisions/ADR-0045-inference-inherited-session-recovery.md:16: `resumeSessionId`, with no durable acceptance marker, has no usable session for uncertain
+docs/decisions/ADR-0045-inference-inherited-session-recovery.md:17: recovery. It fails non-resumably both on explicit failure and at visit-start recovery. It
+docs/decisions/ADR-0045-inference-inherited-session-recovery.md:18: never blindly resubmits B's prompt or continues A's work. Proven pre-send refusals can still
+docs/decisions/ADR-0045-inference-inherited-session-recovery.md:19: retry the saved authored task under the original policy when the cause is resumable.
+docs/decisions/ADR-0045-inference-inherited-session-recovery.md:20: 
+docs/decisions/ADR-0045-inference-inherited-session-recovery.md:21: Accepted turns, turns with a different newly established session, and repairs or continuations
+docs/decisions/ADR-0045-inference-inherited-session-recovery.md:22: on the visit's own session retain continuation recovery. This does not add a fresh-session
+docs/decisions/ADR-0045-inference-inherited-session-recovery.md:23: choice (#265) or an own-session policy (#33). Replay from the node is available as a deliberate
+docs/decisions/ADR-0045-inference-inherited-session-recovery.md:24: new attempt; named-session lookup remains in force, so changing that policy needs a corrected
+docs/decisions/ADR-0045-inference-inherited-session-recovery.md:25: definition and a new run.
+docs/decisions/ADR-0045-inference-inherited-session-recovery.md:26: 
+docs/decisions/ADR-0045-inference-inherited-session-recovery.md:27: ## Consequences
+docs/decisions/ADR-0045-inference-inherited-session-recovery.md:28: 
+docs/decisions/ADR-0045-inference-inherited-session-recovery.md:29: The failure retains the inherited ID as provenance, while eligibility uses the task's actual
+docs/decisions/ADR-0045-inference-inherited-session-recovery.md:30: session evidence. Startup and explicit Resume apply the same rule. A crash in the intent/send
+docs/decisions/ADR-0045-inference-inherited-session-recovery.md:31: window can require owner action even when nothing was actually sent; this conservative stop
+docs/decisions/ADR-0045-inference-inherited-session-recovery.md:32: prevents unrelated inherited work from being accepted as the new task's output.
+docs/03-domain-model.md:219: | `waiting?`                                             | `{ waitId: string, startedSeq: number, nodeId: string, kind: WaitKind, until?: string, timeoutAt?: string, prompt?: string, inputSchema?: JsonSchema, signalName?: string, childRunId?: string, beat?: number }` |
+docs/03-domain-model.md:220: | `cancelRequestedAt?`, `pausedAt?`                      | Persisted intent, honoured after restart                                                                                                                                                                         |
+docs/03-domain-model.md:221: | `failure?`                                             | `{ code: RunErrorCode; message: string; nodeId?: string; resumable: boolean; details?: unknown; inference?: PromptProvenance }`                                                                                  |
+docs/03-domain-model.md:222: | `result?`                                              | The exit node's return payload                                                                                                                                                                                   |
+docs/03-domain-model.md:223: | `outcome?`                                             | `success`, `failure`, `exhausted`                                                                                                                                                                                |
+docs/03-domain-model.md:224: | `startedAt`, `finishedAt?`, `lastEventSeq`             | Bookkeeping                                                                                                                                                                                                      |
+docs/03-domain-model.md:228: A child run's `waiting` parent is woken only through the park it observed: the wake carries the parent's `waiting.waitId` and is accepted only while that park, of kind `child` and on that `childRunId`, is current (05).
+docs/03-domain-model.md:229: 
+docs/03-domain-model.md:230: A `failure` carried up from a subloop child has the child's `code` and `resumable`, the parent's subloop node as `nodeId`, and `details: { childRunId, childNodeId?, childDetails? }` naming where it happened (#251, 05). A child that finished through a Failure exit has `outcome: failure` and no `failure`; its parent receives it as data.
+docs/03-domain-model.md:231: 
+docs/03-domain-model.md:232: `failure.inference` contains `visitId`, `turnId`, `promptKind` (`authored`, `repair`, or
+docs/03-domain-model.md:233: `continuation`), `submission` (`definitely-not-submitted`, `delivery-uncertain`, or
+docs/03-domain-model.md:234: `session-missing`), and optional `sessionId`. The ID may be an inherited previous/named
+docs/03-domain-model.md:235: conversation; it does not by itself establish acceptance of this visit's authored task.
+docs/03-domain-model.md:236: See [inference recovery](05-execution-engine.md#inference-submission-and-recovery).
+docs/03-domain-model.md:237: 
+docs/03-domain-model.md:238: ## Run events (Decided kinds, Draft payloads)
+docs/03-domain-model.md:239: 
+docs/03-domain-model.md:240: Each event has `runId`, `seq`, `ts`, `type`, optional `nodeId`, and typed fields. Transcripts and other output payloads use artifact references. `harness.turn.prompt` is an exception: the whole rendered prompt is stored inline, without a schema size limit or automatic artifact offloading. It can enlarge the event log; it shares the run's private access and deletion boundary. `run.queued.initialThread` is also inline (05).
+docs/03-domain-model.md:241: 
+docs/03-domain-model.md:242: | Type                                                                 | Payload                                                                                                                               |
+docs/03-domain-model.md:243: | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+docs/03-domain-model.md:251: | `node.progress`                                                      | small structured progress from long nodes; harness items are summarised here                                                          |
+docs/03-domain-model.md:252: | `harness.session`                                                    | harness, sessionId, mode (`fresh` or `resumed`), model, effort                                                                        |
+docs/03-domain-model.md:253: | `harness.turn`                                                       | nodeId, visitId, turnId, harness, promptKind, exact inline prompt, optional resumeSessionId; durable before invoking the adapter      |
+docs/03-domain-model.md:254: | `harness.submission`                                                 | nodeId, visitId, turnId, submission (`submitted` on acceptance, otherwise one of the three failure classes), optional positive marker |
+docs/03-domain-model.md:255: | `harness.usage`                                                      | tokens as reported by the harness, informational                                                                                      |
+docs/03-domain-model.md:256: | `decision.made`                                                      | portId, provenance, observation, optional gate pass/limit evidence, at most three factual diagnostics                                 |
+docs/03-domain-model.md:257: | `exit.evaluated`                                                     | nodeId, terminal outcome                                                                                                              |
+docs/03-domain-model.md:289: Exits are terminal: `{outcome, returns, destinations}`. `outcome` is `success` (default), `failure` or `exhausted`; `returns` is a JSONata expression or `none` (default); `destinations` defaults to `[{kind:"caller"}]` and supports caller, webhook, file and log (no Event channel; loops compose as awaited subloops, ADR-0044). Exits have no criteria, predicate, default routing or loop-back, and no output ports.
+docs/03-domain-model.md:290: 
+docs/03-domain-model.md:291: Success finishes `succeeded`, Failure finishes `failed`, and Exhausted finishes the distinct terminal status `exhausted`. Exhausted means the authored graph gave up further repetition; normally a gate's Limit reached output leads here. It is an outcome, not a resumable node failure. Every outcome evaluates the same return expression and delivers its value unchanged; Exhausted adds no wrapper or implicit last output. Use `outputs.<workNodeId>.value` when returning work output, because the preceding gate replaces `lastOutput`.
+docs/03-domain-model.md:292: 
+docs/03-domain-model.md:293: `/gates` is engine-owned; authored mutation patches cannot alter counts. Graph validation reports a noncyclic repeat at its precise `config.*.repeat` path (`REPEAT_ROUTE_NOT_CYCLIC`), and an unconnected Limit reached at `config.maxPasses` (`PORT_UNCONNECTED`). Schema validation identifies missing limits and extra repeat markers directly.
+docs/04-node-catalog.md:42: Classifier Choice retains options with IDs, labels and criteria. Noul retains authored true/false sides: probability at or above `truthThreshold` (default 0.5) selects true, with chosen-side confidence p or 1-p. Optional `minConfidence` rejects below the minimum; equality passes. Score retains ordered zero-based anchors and contiguous named bands; an interior boundary enters the next band and the final endpoint remains inclusive. Scores are never rounded. `recordAlternatives` and provider `context` are classifier fields; LLM also has provider `context`. Expressions have neither setting.
+docs/04-node-catalog.md:43: 
+docs/04-node-catalog.md:44: LLM responses require exactly `route`, `confidence` and `reasoning`, with no extra properties. The route must be declared, confidence finite in [0,1], and the stored reasoning excerpt at most 2,048 characters. Confidence is informational and has no acceptance threshold. There is no repair or evaluator fallback.
+docs/04-node-catalog.md:45: 
+docs/04-node-catalog.md:46: Source templates render against the full thread. Provider context selection separately prepares messages, variables and optional bare last output; it does not restrict Liquid exposure. Classifier requests, fractions and retry behaviour remain unchanged. Invalid explicit model/effort or classifier capabilities are admission errors; disabled/unconfigured selections remain visible in drafts and block publication.
+docs/04-node-catalog.md:47: 
+docs/04-node-catalog.md:87:     toMessages: 'final' | 'final-and-notes' | 'none';
+docs/04-node-catalog.md:88:     transforms: OutputTransform[]; // truncate, redact, replace, inject, drop
+docs/04-node-catalog.md:89:     schema?: { jsonSchema: JsonSchema; native: boolean; repair: RepairPolicy };
+docs/04-node-catalog.md:90:   };
+docs/04-node-catalog.md:91:   timeoutSeconds?: number; // optional watchdog, default none
+docs/04-node-catalog.md:92: };
+docs/04-node-catalog.md:100: ```
+docs/04-node-catalog.md:101: 
+docs/04-node-catalog.md:102: Behaviour: the engine renders the prompt and context files, persists the pending turn and harness session row, starts or resumes the session, streams events into `node.progress`, stores the transcript as an artifact, applies output transforms, validates against the schema if present, runs the configurable repair turns on the same session if validation fails, then patches `messages`, `lastOutput`, and `counters.usage`.
+docs/04-node-catalog.md:103: 
+docs/04-node-catalog.md:104: Before invoking the harness, the engine durably records `harness.turn`: the exact rendered
+docs/04-node-catalog.md:105: prompt, selected resume ID, prompt kind and logical visit/turn identities. `harness.submission`
+docs/04-node-catalog.md:106: records refusal, uncertainty, missing-session status and any positive acceptance marker.
+docs/04-node-catalog.md:107: A definitely-not-submitted turn retries that saved task with its original session-policy
+docs/04-node-catalog.md:108: selection when the cause is resumable. Uncertain authored work cannot continue a previous/named
+docs/04-node-catalog.md:109: conversation on its inherited ID alone: this visit needs durable acceptance or a newly
+docs/04-node-catalog.md:110: established session. Repairs and continuations can use the visit's own session. Without a
+docs/04-node-catalog.md:111: usable session, or with a missing session, the run fails non-resumably; Replay from the node
+docs/04-node-catalog.md:112: is the available deliberate new attempt. Named-session lookup still applies on replay.
+docs/04-node-catalog.md:113: See [submission recovery](05-execution-engine.md#inference-submission-and-recovery).
+docs/04-node-catalog.md:114: 
+docs/04-node-catalog.md:115: Claude Code accepts only the explicit `read-only`/`never` or `danger-full-access`/`never` policy
+docs/04-node-catalog.md:116: pairs. `workspace-write`, `on-request`, explicit `networkAccess: false`, `webSearch: true`,
+docs/04-node-catalog.md:138: ```
+docs/04-node-catalog.md:139: 
+docs/04-node-catalog.md:140: Behaviour: non-zero exit codes without a configured route fail the run with `SCRIPT_EXIT_CODE`, which is resumable after the script is fixed. Scripts should be idempotent because crash recovery may run them again (05).
+docs/04-node-catalog.md:141: 
+docs/04-node-catalog.md:142: Stdout and stderr use independent streaming UTF-8 decoders, so two-, three- and
+docs/04-node-catalog.md:143: four-byte characters survive arbitrary subprocess chunk boundaries. Capture is
+docs/04-node-catalog.md:174: | `replace`              | `where: JSONata`, `pattern`, `replacement`                                                            | Rewrite content                                                                |
+docs/04-node-catalog.md:175: | `redact`               | `where: JSONata`, `patterns[]`, `replacement`                                                         | Mask secrets or PII before content reaches a harness or a return channel       |
+docs/04-node-catalog.md:176: | `coerce`               | `source: path`, `jsonSchema`, `repair: RepairPolicy`, `target: path`                                  | Validate and reshape a value; repair uses a Codex structured turn when enabled |
+docs/04-node-catalog.md:177: | `summarise` (post-1.0) | `where`, `into`, `model`                                                                              | Reserved; requires an LLM provider                                             |
+docs/04-node-catalog.md:178: 
+docs/04-node-catalog.md:179: The same operations power `InputTransform` and `OutputTransform` on inferencing nodes, so "structural mutation or omission of input and output" is one vocabulary everywhere.
+docs/04-node-catalog.md:257: Exits are terminal: `{outcome, returns, destinations}`. `outcome` is `success` (default), `failure` or `exhausted`; `returns` is a JSONata expression or `none` (default); `destinations` defaults to `[{kind:"caller"}]` and supports caller, webhook, file and log. Exits do not publish Events: a loop that needs another loop's result calls it as a subloop (ADR-0044). Exits have no criteria, predicate, default routing or loop-back, and no output ports.
+docs/04-node-catalog.md:258: 
+docs/04-node-catalog.md:259: Success finishes `succeeded`, Failure finishes `failed`, and Exhausted finishes the distinct terminal status `exhausted`. Exhausted means the authored graph gave up further repetition; normally a gate's Limit reached output leads here. It is an outcome, not a resumable node failure. Every outcome evaluates the same return expression and delivers its value unchanged; Exhausted adds no wrapper or implicit last output. Use `outputs.<workNodeId>.value` when returning work output, because the preceding gate replaces `lastOutput`.
+docs/04-node-catalog.md:260: 
+docs/04-node-catalog.md:261: The caller destination resolves to the run result, the MCP caller or the parent subloop output mapping. Delivery records `return.delivered` or `return.failed` for each destination.
+docs/04-node-catalog.md:262: 

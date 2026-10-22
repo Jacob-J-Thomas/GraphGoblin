@@ -1,0 +1,94 @@
+REVISION: b80c9fdfb001e020bdfc1b9c7c15e5f910d33766
+packages/engine/src/handlers/inference.ts:187: /** An explicitly returned native candidate stays authoritative, including undefined or null. */
+packages/engine/src/handlers/inference.ts:188: function outputCandidate(result: HarnessResult): unknown {
+packages/engine/src/handlers/inference.ts:189:   return Object.hasOwn(result, 'structured') ? result.structured : jsonOrText(result.finalText);
+packages/engine/src/handlers/inference.ts:190: }
+packages/engine/src/handlers/inference.ts:191: 
+packages/engine/src/handlers/inference.ts:192: function mapHarnessFailure(
+packages/engine/src/handlers/inference.ts:193:   error: unknown,
+packages/engine/src/handlers/inference.ts:194:   lastError: { code: string; message: string; retriable: boolean } | undefined,
+packages/engine/src/handlers/inference.ts:195:   nodeId: string,
+packages/engine/src/handlers/inference.ts:196:   harness: HarnessId,
+packages/engine/src/handlers/inference.ts:197: ): RunFailureError {
+packages/engine/src/handlers/inference.ts:198:   const info = typeof error === 'object' && error !== null ? error : {};
+packages/engine/src/handlers/inference.ts:199:   const reportedCode =
+packages/engine/src/handlers/inference.ts:200:     lastError?.code ?? ('code' in info && typeof info.code === 'string' ? info.code : undefined);
+packages/engine/src/handlers/inference.ts:201:   const reportedRetriable =
+packages/engine/src/handlers/inference.ts:202:     lastError?.retriable ?? ('retriable' in info && info.retriable === true);
+packages/engine/src/handlers/inference.ts:203:   const code = (reportedCode ?? '').toLowerCase();
+packages/engine/src/handlers/inference.ts:204:   const message = lastError?.message ?? describeError(error);
+packages/engine/src/handlers/inference.ts:205:   if (code === 'harness_termination_unconfirmed')
+packages/engine/src/handlers/inference.ts:206:     return new RunFailureError('HARNESS_TERMINATION_UNCONFIRMED', message, {
+packages/engine/src/handlers/inference.ts:207:       nodeId,
+packages/engine/src/handlers/inference.ts:208:       resumable: false,
+packages/engine/src/handlers/inference.ts:209:       details: { adapterCode: reportedCode },
+packages/engine/src/handlers/inference.ts:210:     });
+packages/engine/src/handlers/inference.ts:211:   if (
+packages/engine/src/handlers/inference.ts:212:     [
+packages/engine/src/handlers/inference.ts:213:       'harness_quota_exhausted',
+packages/engine/src/handlers/inference.ts:214:       'usage_limit_reached',
+packages/engine/src/handlers/inference.ts:215:       'insufficient_quota',
+packages/engine/src/handlers/inference.ts:216:       'rate_limit_exceeded',
+packages/engine/src/handlers/inference.ts:420:             errors: validation.errors,
+packages/engine/src/handlers/inference.ts:421:             attempt: attempts,
+packages/engine/src/handlers/inference.ts:422:           });
+packages/engine/src/handlers/inference.ts:423:           pending = await beginTurn(repairPrompt, 'repair', sessionId);
+packages/engine/src/handlers/inference.ts:424:           // A synchronous refusal belongs to this invocation, not the completed turn.
+packages/engine/src/handlers/inference.ts:425:           session = undefined;
+packages/engine/src/handlers/inference.ts:426:           session = harness.resume(
+packages/engine/src/handlers/inference.ts:427:             sessionId,
+packages/engine/src/handlers/inference.ts:428:             sessionRequest({ prompt: repairPrompt, outputSchema: schema.jsonSchema }),
+packages/engine/src/handlers/inference.ts:429:             timeout.signal,
+packages/engine/src/handlers/inference.ts:430:           );
+packages/engine/src/handlers/inference.ts:431:           const repairResult = await consume(ctx, session, row, pending);
+packages/engine/src/handlers/inference.ts:432:           usage = addUsage(usage, repairResult.usage);
+packages/engine/src/handlers/inference.ts:433:           result = {
+packages/engine/src/handlers/inference.ts:434:             ...result,
+packages/engine/src/handlers/inference.ts:435:             items: [...result.items, ...repairResult.items],
+packages/engine/src/handlers/inference.ts:436:             finalText: repairResult.finalText,
+packages/engine/src/handlers/inference.ts:437:           };
+packages/engine/src/handlers/inference.ts:438:           candidate = outputCandidate(repairResult);
+packages/engine/src/handlers/inference.ts:439:           validation = validateJson(schema.jsonSchema, candidate);
+packages/engine/src/handlers/inference.ts:440:         }
+packages/engine/src/handlers/inference.ts:441:         if (validation.ok) {
+packages/engine/src/handlers/inference.ts:442:           output = toJson(candidate);
+packages/engine/src/handlers/inference.ts:443:         } else if (schema.repair.onFailure === 'continue-raw') {
+packages/engine/src/handlers/inference.ts:444:           output = toJson(candidate);
+packages/engine/src/handlers/inference.ts:445:         } else {
+packages/engine/src/handlers/inference.ts:446:           throw new RunFailureError(
+packages/engine/src/handlers/inference.ts:447:             'OUTPUT_SCHEMA_MISMATCH',
+packages/engine/src/handlers/inference.ts:448:             `harness output does not match the required schema: ${validation.errors.join('; ')}`,
+packages/engine/src/handlers/inference.ts:449:             {
+packages/engine/src/handlers/inference.ts:496:       row.updatedAt = ctx.services.now();
+packages/engine/src/handlers/inference.ts:497:       await ctx.ports.sessions.upsert({ ...row });
+packages/engine/src/handlers/inference.ts:498:       return { kind: 'done', patch, route: 'out' };
+packages/engine/src/handlers/inference.ts:499:     } catch (error) {
+packages/engine/src/handlers/inference.ts:500:       // Storage faults remain operator-fixable; turn provenance still controls recovery.
+packages/engine/src/handlers/inference.ts:501:       if (!session) await submission(ctx, pending, 'definitely-not-submitted');
+packages/engine/src/handlers/inference.ts:502:       let failure: unknown =
+packages/engine/src/handlers/inference.ts:503:         !session &&
+packages/engine/src/handlers/inference.ts:504:         invoking &&
+packages/engine/src/handlers/inference.ts:505:         !(error instanceof RunFailureError) &&
+packages/engine/src/handlers/inference.ts:506:         !(error instanceof RunCancelledError)
+packages/engine/src/handlers/inference.ts:507:           ? mapHarnessFailure(error, undefined, ctx.node.id, config.harness)
+packages/engine/src/handlers/inference.ts:508:           : error instanceof ArtifactStoreError && error.code === 'ARTIFACT_WRITE_FAILED'
+packages/engine/src/handlers/inference.ts:509:             ? new RunFailureError(error.code, error.message, {
+packages/engine/src/handlers/inference.ts:510:                 nodeId: ctx.node.id,
+packages/engine/src/handlers/inference.ts:511:                 details: { ref: error.ref },
+packages/engine/src/handlers/inference.ts:512:               })
+packages/engine/src/handlers/inference.ts:513:             : error;
+packages/engine/src/handlers/inference.ts:514:       const unconfirmed = (value: unknown): boolean =>
+packages/engine/src/handlers/inference.ts:515:         value instanceof RunFailureError && value.code === 'HARNESS_TERMINATION_UNCONFIRMED';
+packages/engine/src/handlers/inference.ts:516:       if (session && !unconfirmed(failure)) {
+packages/engine/src/handlers/inference.ts:517:         try {
+packages/engine/src/handlers/inference.ts:518:           await session.cancel();
+packages/engine/src/handlers/inference.ts:519:         } catch (cancelError) {
+packages/engine/src/handlers/inference.ts:520:           const cleanup = mapHarnessFailure(cancelError, undefined, ctx.node.id, config.harness);
+packages/engine/src/handlers/inference.ts:521:           if (unconfirmed(cleanup)) failure = cleanup;
+packages/engine/src/handlers/inference.ts:522:           else {
+packages/engine/src/handlers/inference.ts:523:             // Native Codex cancellation resolves; Claude rejects only for unconfirmed termination.
+packages/engine/src/handlers/inference.ts:524:             // An unrelated cleanup fault cannot replace the primary engine or provider cause.
+packages/engine/src/handlers/inference.ts:525:             ctx.ports.logger.warn(
+packages/engine/src/handlers/inference.ts:526:               { nodeId: ctx.node.id, code: cleanup.code },
+packages/engine/src/handlers/inference.ts:527:               'harness cleanup failed',
+packages/engine/src/handlers/inference.ts:528:             );
