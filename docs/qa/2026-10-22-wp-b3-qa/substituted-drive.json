@@ -1,0 +1,84 @@
+{
+  "drive": "R:",
+  "dry": {
+    "code": 1,
+    "stdout": "",
+    "stderr": "reset refused: the database R:\\data\\graphgoblin.db is outside the data directory %TEMP%\\gg-qa-266-r2-paths-CZ6WdG\\substituted-drive\\data; a reset removes only paths inside it, so remove that database yourself or point GG_DB_URL inside the data directory\nNothing was changed.\n",
+    "killed": false,
+    "durationMs": 2493
+  },
+  "confirmed": {
+    "code": 1,
+    "stdout": "",
+    "stderr": "reset refused: the database R:\\data\\graphgoblin.db is outside the data directory %TEMP%\\gg-qa-266-r2-paths-CZ6WdG\\substituted-drive\\data; a reset removes only paths inside it, so remove that database yourself or point GG_DB_URL inside the data directory\nNothing was changed.\n",
+    "killed": false,
+    "durationMs": 2175
+  },
+  "acceptedDry": {
+    "code": 0,
+    "stdout": "GraphGoblin reset (dry run: nothing is removed)\n\nData directory: R:\\data (physical path %TEMP%\\gg-qa-266-r2-paths-CZ6WdG\\substituted-drive\\data)\nDatabase:       R:\\data\\graphgoblin.db (format 4, the current format)\n\nRemoves:\n  graphgoblin.db                         database                 1 file, 256.0 KB\n  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 0 B\n  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB\n  graphgoblin.lock                       the reset's own lock     removed last, on release\n\nKeeps:\n  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable\n  unrelated.txt                          not part of the store\n  workspaces/my-notes                    not a stored run ID\n  Browser device drafts stay in each browser; discard them from the loop editor.\n\nTotal removed: 3 files, 288.0 KB in 3 items.\n\nNothing was removed. To reset, stop every GraphGoblin process using this data directory and run:\n  node apps/api/dist/main.js --reset --yes --data-dir \"R:\\data\"\n",
+    "stderr": "",
+    "durationMs": 3740
+  },
+  "acceptedConfirmed": {
+    "code": 0,
+    "stdout": "GraphGoblin reset\n\nData directory: R:\\data (physical path %TEMP%\\gg-qa-266-r2-paths-CZ6WdG\\substituted-drive\\data)\nDatabase:       R:\\data\\graphgoblin.db (format 4, the current format)\n\nRemoves:\n  graphgoblin.db                         database                 1 file, 256.0 KB\n  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 0 B\n  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB\n  graphgoblin.lock                       the reset's own lock     removed last, on release\n\nKeeps:\n  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable\n  unrelated.txt                          not part of the store\n  workspaces/my-notes                    not a stored run ID\n  Browser device drafts stay in each browser; discard them from the loop editor.\n\nTotal removed: 3 files, 288.0 KB in 3 items.\n\nRemoving:\n  removed graphgoblin.db (1 file, 256.0 KB)\n  removed graphgoblin.db-wal (1 file, 0 B)\n  removed graphgoblin.db-shm (1 file, 32.0 KB)\n  removed graphgoblin.lock\nReset complete. The next start creates a new, empty format-4 store in R:\\data.\n",
+    "stderr": "",
+    "durationMs": 4630
+  },
+  "before": [
+    ["data", "directory"],
+    [
+      "data/graphgoblin.db",
+      "sha256",
+      "1893672c2920e9494c49df84d1a5381bae04046aae6da8001c3381505da87780"
+    ],
+    [
+      "data/graphgoblin.db-shm",
+      "sha256",
+      "332980718cf14894e608097580b8ca37e603a0de2001542ec2cd93b5e2f59cc5"
+    ],
+    [
+      "data/graphgoblin.db-wal",
+      "sha256",
+      "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    ],
+    [
+      "data/master.key",
+      "sha256",
+      "aa2bf4a3e3732d8a5aa7067dad502608806fc7500680726029f2716a43c29997"
+    ],
+    [
+      "data/unrelated.txt",
+      "sha256",
+      "7cea0dc89e60b56e5ac5238d051b6e948ec74a86afc948d678dafefa590432e0"
+    ],
+    ["data/workspaces", "directory"],
+    ["data/workspaces/my-notes", "directory"],
+    [
+      "data/workspaces/my-notes/keep.txt",
+      "sha256",
+      "ab5aa97074c454a0632057e704220d9a6678fbf773a0a5806fc09b8173b07309"
+    ]
+  ],
+  "after": [
+    ["data", "directory"],
+    [
+      "data/master.key",
+      "sha256",
+      "aa2bf4a3e3732d8a5aa7067dad502608806fc7500680726029f2716a43c29997"
+    ],
+    [
+      "data/unrelated.txt",
+      "sha256",
+      "7cea0dc89e60b56e5ac5238d051b6e948ec74a86afc948d678dafefa590432e0"
+    ],
+    ["data/workspaces", "directory"],
+    ["data/workspaces/my-notes", "directory"],
+    [
+      "data/workspaces/my-notes/keep.txt",
+      "sha256",
+      "ab5aa97074c454a0632057e704220d9a6678fbf773a0a5806fc09b8173b07309"
+    ]
+  ]
+}

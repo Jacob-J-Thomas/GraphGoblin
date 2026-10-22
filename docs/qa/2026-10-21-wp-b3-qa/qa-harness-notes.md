@@ -1,0 +1,10 @@
+﻿# QA harness corrections and policy results
+
+These are QA tooling failures, not product findings. Original failure receipts were retained.
+
+- The first independent dry-run used a 60s execFile timeout. It was killed with code null and killed true. The product reader deadline is 120s. The single targeted rerun used 300s and passed with byte-identical before/after hashes (30.15s). No full acceptance or coverage suite was repeated.
+- The first Edge helper attempted to destructure chromium from a CommonJS dynamic-import namespace. It failed before browser launch. The helper selected the default export and the complete Edge run then passed 6/6. browser-harness-initial-failure.log retains the error.
+- The initial native helper interrupted before completing C6: Node warned Detected unsettled top-level await. A stopped process has signalCode populated while exitCode remains null; awaiting its exit event a second time never settles. The helper now checks both values. The continuation ran only C6 and current-store checks, not all prior tests. The original source is native-qa-initial.mjs.
+- The continuation's unpublished-loop export omitted ?draft=true. The API correctly returned 404 VERSION_NOT_FOUND, the loop has no published version. The corrected current-only run explicitly selected draft export and passed create/export/import/restart. Original continuation-checks.json retains that QA error.
+- Final shell deletion was rejected twice before execution by automatic approval review: first for guarded computed targets, then for the exact verified literal QA temporary roots. The only supplied reason was blocked by policy. No wrapper or alternate deletion method was used afterward. final-cleanup.json is an inventory, not a successful cleanup receipt.
+- Frozen installation was denied the global pnpm operation lock. A process-local LOCALAPPDATA diagnostic still used that same denied global path. Existing worktree dependencies were used; no dependency links, version change or machine runtime configuration was introduced.
