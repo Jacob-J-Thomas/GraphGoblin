@@ -1,10 +1,10 @@
-﻿# WP-F2b owner acceptance on a running isolated app (#204)
+﻿# WP-F2b QA recipe on a running isolated app (#204)
 
 This checks intentional inference-node harness changes, persistence, validation/publication and the
 actual CLI arguments. It does not accept WP-F1 or #205 for the owner. Model/effort are still under
 Advanced. Use this worktree, never ports 4747/4748 or the owner's store. All turns below use local
 synthetic executables; no subscription or API calls occur. Cross-provider reviewer real turns are
-separate evidence (D-005). This branch stacks on pending owner acceptance of WP-F1 (D-009).
+separate evidence (D-005). This branch stacks on WP-F1 (register D-009, D-024).
 
 ## Start the disposable app
 
@@ -209,8 +209,8 @@ for review. Directory removal is left to the owner after acceptance. No original
 
 ## Acceptance and implementation evidence
 
-Record each check above as pass/fail and keep the final model/effort request lines. Owner acceptance
-is still required before merge. [before.md](before.md) and [native-before.json](native-before.json)
+Record each check above as pass/fail and keep the final model/effort request lines. Independent QA records the
+result; there is no owner acceptance gate (register D-024). [before.md](before.md) and [native-before.json](native-before.json)
 record the reproduced baseline. The delivery report in [report.md](report.md) records gates,
 coverage, exact known #205 browser failures and remaining caveats.
 [round2-before.json](round2-before.json) and [round2-after.json](round2-after.json) record the

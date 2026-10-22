@@ -183,7 +183,7 @@ existing imports. All 9 Claude-harness and all 8 readiness cases pass, including
 loaded-incompatible cases and restored absent-property assertions. No browser failure is counted
 as a pass. Model and effort remain in Advanced for the separate #205 work.
 
-## 6. Docs, contracts and owner acceptance
+## 6. Docs, contracts and acceptance
 
 Docs 06/09, guide 06 and the CHANGELOG use **loop, Settings, ecosystem** for explicit-model
 switching (D-023), preserve unset inheritance and explain initial waiting/failure retention. A blocked
@@ -225,7 +225,7 @@ collector never overwrites tracked `native-after.json` or other repository evide
 
 ## 8. Caveats and open items
 
-- Owner running-product acceptance remains required before merge. The earlier Opus review and
+- Independent QA and the designated session's sign-off remain required before merge (register D-024); owner acceptance is not a gate. The earlier Opus review and
   bounded real provider turns (D-005) are prior evidence. This round used fake CLIs only, made no
   paid turns and did not touch the owner's app/store or ports 4747/4748.
 - N9 stays with the Defaults-asymmetry owner note: switching to Codex checks readiness while its
