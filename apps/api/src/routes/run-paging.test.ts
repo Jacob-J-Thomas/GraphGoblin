@@ -97,6 +97,25 @@ describe('ordinary run paging', () => {
     expect(await page('?limit=2')).toMatchObject({ items: [{}, {}], nextCursor: null });
   });
 
+  it('leaves damaged lookahead undecoded and continues past an empty unreadable page', async () => {
+    const records = [await seed(0), await seed(1), await seed(2)].sort((a, b) =>
+      b.id.localeCompare(a.id),
+    );
+    await t.container.handle.client.execute({
+      sql: 'UPDATE runs SET pinned = ? WHERE id = ?',
+      args: ['{invalid-json', records[1]!.id],
+    });
+    const first = await page('?limit=1');
+    expect(first.items.map((run) => run.id)).toEqual([records[0]!.id]);
+    expect(first.nextCursor).toBeTypeOf('string');
+    const unreadable = await page('?limit=1&cursor=' + first.nextCursor);
+    expect(unreadable.items).toEqual([]);
+    expect(unreadable.nextCursor).toBeTypeOf('string');
+    const last = await page('?limit=1&cursor=' + unreadable.nextCursor);
+    expect(last.items.map((run) => run.id)).toEqual([records[2]!.id]);
+    expect(last.nextCursor).toBeNull();
+  });
+
   it('applies each ordinary filter and their intersection', async () => {
     const parent = await seed(0, { createdAt: '2026-10-01T12:00:00.000Z' });
     const child = await seed(1, { status: 'failed', parentRunId: parent.id });

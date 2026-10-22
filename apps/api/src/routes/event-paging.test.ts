@@ -104,4 +104,25 @@ describe('inbound event paging over real SQLite', () => {
       expect(response.json()).toMatchObject({ code: 'VALIDATION_FAILED' });
     }
   });
+
+  it.each(['payload', 'run_ids'])(
+    'does not decode damaged %s outside the requested page',
+    async (column) => {
+      const records = [await seed(0), await seed(1), await seed(2)].sort((a, b) =>
+        b.id.localeCompare(a.id),
+      );
+      await t.container.handle.client.execute({
+        sql: `UPDATE inbound_events SET ${column} = ? WHERE id = ?`,
+        args: ['{invalid-json', records[1]!.id],
+      });
+      const first = await page('?limit=1');
+      expect(first.items.map((event) => event.id)).toEqual([records[0]!.id]);
+      expect(first.nextCursor).toBeTypeOf('string');
+      for (const query of ['?limit=1&cursor=' + first.nextCursor, '?limit=3']) {
+        const response = await t.app.inject({ url: '/events' + query, headers });
+        expect(response.statusCode).toBe(500);
+        expect(response.json()).toMatchObject({ code: 'INTERNAL_ERROR' });
+      }
+    },
+  );
 });

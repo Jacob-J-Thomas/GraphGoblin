@@ -128,4 +128,39 @@ describe('MCP history paging against real SQLite and API', () => {
       hasMore: false,
     });
   });
+
+  it('returns healthy event pages before damaged lookahead and reports the requested corruption', async () => {
+    const run = await seed(0);
+    await t.container.repos.events.append(run.id, [
+      { type: 'run.paused', actor: { kind: 'system', id: 'test' } },
+      { type: 'run.started', attempt: 1 },
+      { type: 'run.cancelled' },
+    ]);
+    await t.container.handle.client.execute({
+      sql: 'UPDATE run_events SET payload = ? WHERE run_id = ? AND seq = 2',
+      args: ['{}', run.id],
+    });
+    expect(await call('read_run_events', { runId: run.id, limit: 1 })).toMatchObject({
+      items: [{ seq: 1 }],
+      nextAfter: 1,
+      hasMore: true,
+    });
+    expect(await readAllEvents(api, run.id, 1, 1)).toMatchObject({
+      items: [{ seq: 1 }],
+      truncated: true,
+      nextAfter: 1,
+    });
+    for (const args of [
+      { after: 1, limit: 1 },
+      { after: 0, limit: 3 },
+    ]) {
+      const rejected = CallToolResultSchema.parse(
+        await client.callTool({ name: 'read_run_events', arguments: { runId: run.id, ...args } }),
+      );
+      expect(rejected.isError).toBe(true);
+      expect(rejected.content).toEqual([
+        { type: 'text', text: expect.stringContaining('STORED_EVENT_INVALID (HTTP 500)') },
+      ]);
+    }
+  });
 });

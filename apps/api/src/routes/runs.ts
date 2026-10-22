@@ -214,11 +214,8 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
         });
         return reply;
       }
-      // One lookahead event distinguishes an exactly full tail from a page with more history.
       const limit = request.query.limit ?? 500;
-      const rows = await repos.events.read(request.params.id, after, limit + 1);
-      const items = rows.slice(0, limit);
-      return { items, nextAfter: items.at(-1)?.seq ?? after, hasMore: rows.length > limit };
+      return repos.events.page(request.params.id, after, limit);
     },
   );
 

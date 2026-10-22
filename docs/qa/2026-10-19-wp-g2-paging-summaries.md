@@ -1,5 +1,9 @@
 # WP-G2 review fixes and owner QA (#231, #236)
 
+The [round-three page-isolation report](2026-10-21-wp-g2-lookahead.md) records the
+acceptance audit's lookahead defect and its current verification. The running-app
+recipe below remains the owner QA entry point.
+
 ## 1. Branch and worktree
 
 Branch: `codex-wp-g2-paging-summaries`; base: `7472895`.
@@ -114,7 +118,7 @@ finds damaged rows through `GET /runs/diagnostics`.
 - `apps/web/e2e/history.spec.ts`: Exercise keyboard paging focus and unfiltered Events in real Edge.
 - `apps/web/src/api/queries.ts`: Keep infinite-page metadata available to the shared history renderer.
 - `apps/web/src/components/HistoryState.tsx`: Continue empty cursor pages, avoid polling interference and focus exhaustion.
-- `apps/web/src/events/EventsPage.test.tsx`: Verify append/disclosure/focus and removal of hidden filters.
+- `apps/web/src/events/EventsPage.test.tsx`: Verify append/payload/focus and removal of hidden filters.
 - `apps/web/src/events/EventsPage.tsx`: Remove hidden type/before filters and read the paged event type.
 - `apps/web/src/loops/LoopsPage.test.tsx`: Verify unavailable/never-run states beside healthy summaries.
 - `apps/web/src/loops/LoopsPage.tsx`: Distinguish unavailable latest summaries from genuine no history.
@@ -308,15 +312,16 @@ and creates **105 inbound events**. It prints the loop IDs and the exact browser
    end-of-list message on the initial page. Change back to paging runs. Reload to
    begin at page one; Tab to **Load more** and press Enter. Focus lands on
    **All runs loaded.**, and the page does not jump back to the top.
-2. Open `http://127.0.0.1:5631/app/events`. Expand a payload near the end of the
-   first page. Load more appends five events, preserves that disclosure and reading
-   position, and shows **All events loaded.** Check keyboard activation as above.
+2. Open `http://127.0.0.1:5631/app/events`. Read a long preformatted payload near the
+   end of the first page (the seeded event with `index: 5`). Load more appends five
+   events, keeps the payload visible and the reading position, and shows
+   **All events loaded.** Check keyboard activation as above.
 3. Open `http://127.0.0.1:5631/app/loops`. **older history** links to its succeeded
    run even though 606 newer runs exist. Only **no history** says **never run**.
    Delete on **busy history** shows **all its runs (501)**; choose **Keep**.
 4. For failure/retry, reload Events and leave its first page displayed. Stop only
    this API using Ctrl+C in its terminal. Press **Load more**: loaded rows and the
-   expanded payload remain, and the page reports the failed request. Restart
+   visible payload remain, and the page reports the failed request. Restart
    `node apps/api/dist/main.js` in that same terminal with the same environment and
    `$qaData`; retry **Load more**. The final five events appear exactly once.
 5. Repeat the first two flows in the owner's preferred themes and phone width.

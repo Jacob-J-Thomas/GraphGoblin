@@ -4,7 +4,20 @@ import {
   type JsonValue,
 } from '@graphgoblin/contracts';
 import type { ClockPort, IdPort } from '@graphgoblin/engine';
-import { and, asc, desc, eq, gte, inArray, lt, lte, ne, sql, type SQL } from 'drizzle-orm';
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  getTableColumns,
+  gte,
+  inArray,
+  lt,
+  lte,
+  ne,
+  sql,
+  type SQL,
+} from 'drizzle-orm';
 import type {
   ScheduleAdvance,
   ScheduleRecord,
@@ -382,8 +395,13 @@ export class SqliteInboundEvents {
     next: Pick<InboundEventRecord, 'receivedAt' | 'id'> | null;
   }> {
     const limit = Math.max(1, Math.min(options.limit ?? 100, 500));
-    const rows = await this.listRows(ownerId, options, limit + 1, options.cursor);
-    const items = await this.withDelivery(rows.slice(0, limit));
+    const rows = await this.rawPageRows(ownerId, options, limit + 1, options.cursor);
+    // Both JSON columns stay raw until after trimming, including Drizzle's eager runIds decoder.
+    const items = await this.withDelivery(
+      rows
+        .slice(0, limit)
+        .map((row) => toInboundEvent({ ...row, runIds: JSON.parse(row.runIds) as string[] })),
+    );
     const last = items.at(-1)!;
     return {
       items,
@@ -391,12 +409,12 @@ export class SqliteInboundEvents {
     };
   }
 
-  private async listRows(
+  private async rawPageRows(
     ownerId: string,
     options: { type?: string; before?: string },
     limit: number,
     cursor?: Pick<InboundEventRecord, 'receivedAt' | 'id'>,
-  ): Promise<InboundEventRecord[]> {
+  ): Promise<(Omit<EventRow, 'runIds'> & { runIds: string })[]> {
     const filters: SQL[] = [eq(inboundEvents.ownerId, ownerId)];
     if (options.type) filters.push(eq(inboundEvents.type, options.type));
     if (options.before) filters.push(lt(inboundEvents.receivedAt, options.before));
@@ -404,13 +422,12 @@ export class SqliteInboundEvents {
       filters.push(
         sql`(${inboundEvents.receivedAt}, ${inboundEvents.id}) < (${cursor.receivedAt}, ${cursor.id})`,
       );
-    const rows = await this.db
-      .select()
+    return this.db
+      .select({ ...getTableColumns(inboundEvents), runIds: sql<string>`${inboundEvents.runIds}` })
       .from(inboundEvents)
       .where(and(...filters))
       .orderBy(desc(inboundEvents.receivedAt), desc(inboundEvents.id))
       .limit(limit);
-    return rows.map(toInboundEvent);
   }
 
   private async withDelivery(records: InboundEventRecord[]): Promise<InboundEventRecord[]> {

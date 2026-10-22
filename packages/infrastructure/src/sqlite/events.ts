@@ -109,6 +109,21 @@ export class SqliteEventStore implements EventStorePort {
   }
 
   async read(runId: string, afterSeq = 0, limit?: number): Promise<RunEvent[]> {
+    return (await this.readRows(runId, afterSeq, limit)).map(toEvent);
+  }
+
+  /** Decode only the requested page: corruption in lookahead must not hide healthy history. */
+  async page(
+    runId: string,
+    afterSeq: number,
+    limit: number,
+  ): Promise<{ items: RunEvent[]; nextAfter: number; hasMore: boolean }> {
+    const rows = await this.readRows(runId, afterSeq, limit + 1);
+    const items = rows.slice(0, limit).map(toEvent);
+    return { items, nextAfter: items.at(-1)?.seq ?? afterSeq, hasMore: rows.length > limit };
+  }
+
+  private async readRows(runId: string, afterSeq: number, limit?: number): Promise<Row[]> {
     const base = this.db
       .select({
         runId: runEvents.runId,
@@ -122,8 +137,7 @@ export class SqliteEventStore implements EventStorePort {
       .from(runEvents)
       .where(and(eq(runEvents.runId, runId), gt(runEvents.seq, afterSeq)))
       .orderBy(asc(runEvents.seq));
-    const rows = limit ? await base.limit(limit) : await base;
-    return rows.map(toEvent);
+    return limit ? base.limit(limit) : base;
   }
 
   subscribe(runId: string, listener: (event: RunEvent) => void): () => void {

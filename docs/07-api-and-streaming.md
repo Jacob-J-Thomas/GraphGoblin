@@ -387,8 +387,12 @@ creation order within one process. Unknown query parameters return 400, and `bef
 be a timestamp. The inbound cursor has the same 256-character bound as the run cursor.
 
 `GET /runs/{id}/events` retains its sequence-number continuation, returning
-`{items, nextAfter, hasMore}`. One lookahead event determines `hasMore`; an exactly full
-final page returns false. `read_run_events` forwards that authoritative API result.
+`{items, nextAfter, hasMore}`. One raw lookahead row determines `hasMore`; an exactly full
+final page returns false. Only requested rows are decoded and validated: malformed
+lookahead cannot fail a healthy page, but requesting that event still returns
+`STORED_EVENT_INVALID`, including when it is in the middle of a larger page. Inbound
+event and run lists likewise decode only their requested rows. `read_run_events`
+forwards that authoritative API result.
 This sequence cursor remains a number; it is not interchangeable with list cursors.
 
 Runs and Events append older rows through a new outline **Load more** button.

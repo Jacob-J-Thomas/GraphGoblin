@@ -4,6 +4,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- History readers decode only the requested page, so a malformed lookahead row no longer hides healthy run or inbound events. Requested malformed run events still return `STORED_EVENT_INVALID`. (#231)
+
 - Runs and Events append complete, filtered history through opaque cursors; MCP event pages use authoritative tail metadata, same-millisecond API IDs are monotonic, and valid run filters compose with cursors. **Upgrade:** `runs.list` and `events.list` now return `{ items, nextCursor }`; MCP `list_runs` replaces timestamp paging with `cursor`/`nextCursor` and loop/status/parent filters (no `before` parameter); REST `before` remains a timestamp filter. `/events` now rejects unknown query parameters with 400 and requires a timestamp for `before`. Cursors encode positions only: different filters continue from the same position. Regenerate clients for inbound-event cursors and run-event `hasMore`. (#231)
 - Loops show their true latest run and exact run count from an owner-scoped SQL summary, including beyond 500 unrelated runs and tied creation times. `GET /loops` items now include `latestRun` and `runCount`. Damaged latest summaries remain counted and display as unavailable; migration `0015_loop_owner_history` indexes owner-scoped lookups and counts. (#236)
 

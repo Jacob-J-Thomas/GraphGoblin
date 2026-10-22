@@ -44,7 +44,15 @@ for (let i = 0; i < 105; i++) await call('POST', `/loops/${paging}/runs`, {});
 const busy = await loop('busy history');
 for (let i = 0; i < 501; i++) await call('POST', `/loops/${busy}/runs`, {});
 for (let i = 0; i < 105; i++)
-  await call('POST', '/events', { type: 'paging-events', payload: { index: i } });
+  await call('POST', '/events', {
+    type: 'paging-events',
+    payload: {
+      index: i,
+      ...(i === 5
+        ? { text: 'Long payload remains visible while older events append.\n'.repeat(40) }
+        : {}),
+    },
+  });
 // Admission is asynchronous. Poll the public summary until the last simple exits have completed.
 for (let attempt = 0; ; attempt++) {
   const { items } = await call('GET', '/loops');
