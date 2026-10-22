@@ -1,0 +1,16 @@
+// Validate evidence links, path sanitization, final scenario coverage and raw download integrity.
+import {readFile,writeFile,readdir,stat} from 'node:fs/promises';import {resolve} from 'node:path';import {createHash} from 'node:crypto';
+import {createRequire} from 'node:module';
+const prettier=createRequire(resolve('package.json'))('prettier');
+const dir=resolve('docs/qa/2026-10-22-wp-e1-259-qa/round-3');
+const read=n=>readFile(resolve(dir,n),'utf8'),files=await readdir(dir);
+const report=await read('README.md');const targets=[...report.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)].map(m=>m[1]);
+const missing=[];for(const name of targets){if(/^(?:https?:|#)/.test(name))continue;try{await stat(resolve(dir,name.split('#')[0]));}catch{missing.push(name);}}
+const unlinked=files.filter(n=>n!=='README.md'&&!targets.includes(n));
+const localPaths=[];for(const name of files){if(name.endsWith('.png'))continue;const text=await read(name);if(/(?:[A-Z]:)?[\\/]+Users[\\/]+(?:98jak|[A-Za-z0-9._-]+)/i.test(text))localPaths.push(name);}
+const initial=JSON.parse(await read('browser-results.json')),follow=JSON.parse(await read('followup-results.json'));
+const final=new Map(initial.map(r=>[r.id,r]));follow.forEach(r=>final.set(r.id,r));
+const repro=JSON.parse(await read('focus-small-repro.json'));
+const downloads=[];for(const width of [1440,390]){const raw=await readFile(resolve(dir,'variables-download-'+width+'.json.txt')),api=await readFile(resolve(dir,'variables-api-'+width+'.json.txt'));downloads.push({width,bytes:raw.length,identical:raw.equals(api),sha256:createHash('sha256').update(raw).digest('hex')});}
+const result={files:files.length,missingLinks:missing,unlinkedFiles:unlinked,localUserPathFiles:localPaths,finalMatrixCases:final.size,failedMatrixCases:[...final.values()].filter(x=>!x.pass).map(x=>x.id),exactReproductions:repro.length,reproductionFailures:repro.filter(x=>!x.pass).length,downloads};
+await writeFile(resolve(dir,'validation.json'),await prettier.format(JSON.stringify(result),{parser:'json'}));console.log(JSON.stringify(result));process.exitCode=missing.length||unlinked.length||localPaths.length||result.failedMatrixCases.length||result.reproductionFailures?1:0;

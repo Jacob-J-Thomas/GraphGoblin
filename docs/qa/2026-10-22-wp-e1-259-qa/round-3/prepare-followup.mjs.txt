@@ -1,0 +1,14 @@
+// Correct two probe assumptions, preserving the entire initial run and script as evidence.
+import {readFile,writeFile} from 'node:fs/promises';import {resolve} from 'node:path';
+const dir=resolve('docs/qa/2026-10-22-wp-e1-259-qa/round-3');
+let s=await readFile(resolve(dir,'browser-matrix.mjs.txt'),'utf8');
+s=s.replace("last=es.items.at(-1).seq", "last=(es.items.find(e=>['run.finished','run.failed','run.cancelled'].includes(e.type))??es.items.at(-1)).seq");
+s=s.replace("async function record(id,expected,fn){", "async function record(id,expected,fn){if(!['rapid appends','Full thread JSON expanded','2322721-character'].some(x=>id.includes(x))&&id!=='1440: unchanged historical value stays expanded while appending')return;");
+s=s.replaceAll("'browser-results.json'","'followup-results.json'").replaceAll("'browser-runs.json'","'followup-runs.json'").replaceAll("'browser-errors.json'","'followup-errors.json'").replaceAll("'browser-environment.json'","'followup-environment.json'").replaceAll("'api-key-metadata.json'","'followup-key-metadata.json'");
+s=s.replace("change:'A'},replacement={...old,change:'B'}", "change:'A'.repeat(20000)},replacement={...old,change:'B'.repeat(20000)}");
+s=s.replace("async function expandFocus(label='Variables'){await page.getByRole('button',{name:'Show all of '+label,exact:true}).click();", "async function expandFocus(label='Variables'){await page.getByRole('button',{name:'Show all of '+label,exact:true}).focus();await page.keyboard.press('Enter');");
+s=s.replace("await select('seed');", "await select('seed');");
+s=s.replace("await button('seed').click();await expandFocus();", "await button('seed').focus();await page.keyboard.press('Enter');await frame();await expandFocus();");
+await writeFile(resolve(dir,'targeted-followup.mjs.txt'),s);
+await writeFile(resolve(dir,'probe-corrections.json'),JSON.stringify({corrections:[{initial:'Wait for the last REST event sequence even after terminal event',evidence:'timeline-diagnosis.json',actual:'REST appends return.delivered after run.finished; SSE closes at run.finished',change:'Synchronize at terminal event for completed runs'},{initial:'Replace vars.change with a single A/B character',actual:'Original fixture uses 20000 characters',change:'Restore 20000 A/B characters; expected 2322721 pretty JSON characters'},{initial:'One 1440 historical Show all click did not stabilize within 15 seconds',actual:'No component assertion was reached; initial failed result retained',change:'Use focus plus Enter for the historical keyboard probe; no force-click or retry setting'}],scope:'Only previously blocked checks run again, after these explicit probe changes; passed cases are not repeated'},null,2));
+console.log('Wrote corrected targeted follow-up; initial evidence preserved.');
