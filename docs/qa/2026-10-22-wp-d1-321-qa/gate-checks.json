@@ -1,0 +1,285 @@
+[
+  {
+    "name": "build",
+    "steps": "From worktree root with Node 22 first on PATH: pnpm.cmd build",
+    "expected": {
+      "exitCode": 0
+    },
+    "actual": {
+      "exitCode": 0,
+      "seconds": 39.293
+    },
+    "status": "PASS",
+    "evidence": "build.log"
+  },
+  {
+    "name": "contracts",
+    "steps": "From worktree root with Node 22 first on PATH: pnpm.cmd --filter @graphgoblin/contracts test:coverage --maxWorkers=2",
+    "expected": {
+      "exitCode": 0,
+      "minimumCoveragePercent": 90,
+      "thresholdsUnchanged": true
+    },
+    "actual": {
+      "exitCode": 0,
+      "seconds": 8.87
+    },
+    "status": "PASS",
+    "evidence": "contracts.log"
+  },
+  {
+    "name": "engine",
+    "steps": "From worktree root with Node 22 first on PATH: pnpm.cmd --filter @graphgoblin/engine test:coverage --maxWorkers=2",
+    "expected": {
+      "exitCode": 0,
+      "minimumCoveragePercent": 90,
+      "thresholdsUnchanged": true
+    },
+    "actual": {
+      "exitCode": 0,
+      "seconds": 40.44
+    },
+    "status": "PASS",
+    "evidence": "engine.log"
+  },
+  {
+    "name": "recovery-process",
+    "steps": "From worktree root with Node 22 first on PATH: pnpm.cmd exec node --test docs/qa/2026-10-22-wp-d1-321-qa/recovery-process.integration.mjs",
+    "expected": {
+      "exitCode": 0
+    },
+    "actual": {
+      "exitCode": 0,
+      "seconds": 25.83
+    },
+    "status": "PASS",
+    "evidence": "recovery-process.log"
+  },
+  {
+    "name": "restart",
+    "steps": "From worktree root with Node 22 first on PATH: pnpm.cmd --filter @graphgoblin/api exec vitest run src/script-restart.test.ts --config=../../docs/qa/2026-10-22-wp-d1-321-qa/api.config.mts --maxWorkers=1",
+    "expected": {
+      "exitCode": 0
+    },
+    "actual": {
+      "exitCode": 0,
+      "seconds": 33.73
+    },
+    "status": "PASS",
+    "evidence": "restart.log"
+  },
+  {
+    "name": "edge",
+    "steps": "From worktree root with Node 22 first on PATH: pnpm.cmd --filter @graphgoblin/web exec playwright test -c ../../docs/qa/2026-10-22-wp-d1-321-qa/playwright.script-recovery.config.ts",
+    "expected": {
+      "exitCode": 0
+    },
+    "actual": {
+      "exitCode": 0,
+      "seconds": 15.18
+    },
+    "status": "PASS",
+    "evidence": "edge.log"
+  },
+  {
+    "name": "mcp",
+    "steps": "From worktree root with Node 22 first on PATH: pnpm.cmd --filter @graphgoblin/mcp exec vitest run src/describe.test.ts src/tools.test.ts --maxWorkers=1",
+    "expected": {
+      "exitCode": 0
+    },
+    "actual": {
+      "exitCode": 0,
+      "seconds": 6.34
+    },
+    "status": "PASS",
+    "evidence": "mcp.log"
+  },
+  {
+    "name": "typecheck",
+    "steps": "From worktree root with Node 22 first on PATH: pnpm.cmd typecheck",
+    "expected": {
+      "exitCode": 0
+    },
+    "actual": {
+      "exitCode": 0,
+      "seconds": 54.07
+    },
+    "status": "PASS",
+    "evidence": "typecheck.log"
+  },
+  {
+    "name": "infrastructure",
+    "steps": "From worktree root with Node 22 first on PATH: pnpm.cmd --filter @graphgoblin/infrastructure test:coverage --config=../../docs/qa/2026-10-22-wp-d1-321-qa/infrastructure.config.mts --maxWorkers=1 --coverage.reportOnFailure",
+    "expected": {
+      "exitCode": 0,
+      "minimumCoveragePercent": 90,
+      "thresholdsUnchanged": true
+    },
+    "actual": {
+      "exitCode": 1,
+      "seconds": 340.04
+    },
+    "status": "FAIL",
+    "evidence": "infrastructure.log"
+  },
+  {
+    "name": "lint",
+    "steps": "From worktree root with Node 22 first on PATH: pnpm.cmd lint",
+    "expected": {
+      "exitCode": 0
+    },
+    "actual": {
+      "exitCode": 0,
+      "seconds": 94.8
+    },
+    "status": "PASS",
+    "evidence": "lint.log"
+  },
+  {
+    "name": "layers",
+    "steps": "From worktree root with Node 22 first on PATH: pnpm.cmd check:layers",
+    "expected": {
+      "exitCode": 0
+    },
+    "actual": {
+      "exitCode": 0,
+      "seconds": 0.28
+    },
+    "status": "PASS",
+    "evidence": "layers.log"
+  },
+  {
+    "name": "deps",
+    "steps": "From worktree root with Node 22 first on PATH: pnpm.cmd check:deps",
+    "expected": {
+      "exitCode": 0
+    },
+    "actual": {
+      "exitCode": 0,
+      "seconds": 6.52
+    },
+    "status": "PASS",
+    "evidence": "deps.log"
+  },
+  {
+    "name": "docs",
+    "steps": "From worktree root with Node 22 first on PATH: pnpm.cmd check:docs",
+    "expected": {
+      "exitCode": 0
+    },
+    "actual": {
+      "exitCode": 0,
+      "seconds": 1.19
+    },
+    "status": "PASS",
+    "evidence": "docs.log"
+  },
+  {
+    "name": "tokens",
+    "steps": "From worktree root with Node 22 first on PATH: pnpm.cmd check:tokens",
+    "expected": {
+      "exitCode": 0
+    },
+    "actual": {
+      "exitCode": 0,
+      "seconds": 0.99
+    },
+    "status": "PASS",
+    "evidence": "tokens.log"
+  },
+  {
+    "name": "native-isolated",
+    "steps": "From worktree root with Node 22 first on PATH: pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/process/scripts.test.ts --config=../../docs/qa/2026-10-22-wp-d1-321-qa/infrastructure.config.mts -t kills and closes a real process --maxWorkers=1",
+    "expected": {
+      "exitCode": 0
+    },
+    "actual": {
+      "exitCode": 1,
+      "seconds": 9.51
+    },
+    "status": "FAIL",
+    "evidence": "native-isolated.log"
+  },
+  {
+    "name": "client-types",
+    "steps": "From worktree root with Node 22 first on PATH: pnpm.cmd exec tsc -p docs/qa/2026-10-22-wp-d1-321-qa/client-config.json",
+    "expected": {
+      "exitCode": 0
+    },
+    "actual": {
+      "exitCode": 0,
+      "seconds": 1.46
+    },
+    "status": "PASS",
+    "evidence": "client-types.log"
+  },
+  {
+    "name": "native-other-isolated",
+    "steps": "From worktree root with Node 22 first on PATH: pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/process/scripts.test.ts src/claude/process.test.ts src/adversarial.test.ts --config=../../docs/qa/2026-10-22-wp-d1-321-qa/infrastructure.config.mts -t ProcessScripts abort kills|kills on deadline and output overflow|does not spawn for an already aborted|kills the descendant|kills the process tree on timeout|kills the process when the signal aborts --maxWorkers=1",
+    "expected": {
+      "exitCode": 0
+    },
+    "actual": {
+      "exitCode": 1,
+      "seconds": 98.62
+    },
+    "status": "FAIL",
+    "evidence": "native-other-isolated.log"
+  },
+  {
+    "name": "api",
+    "steps": "From worktree root with Node 22 first on PATH: pnpm.cmd --filter @graphgoblin/api test:coverage --config=../../docs/qa/2026-10-22-wp-d1-321-qa/api.config.mts --maxWorkers=1 --coverage.reportOnFailure",
+    "expected": {
+      "exitCode": 0,
+      "minimumCoveragePercent": 90,
+      "thresholdsUnchanged": true
+    },
+    "actual": {
+      "exitCode": 1,
+      "seconds": 587.71
+    },
+    "status": "FAIL",
+    "evidence": "api.log"
+  },
+  {
+    "name": "child-zero-isolated",
+    "steps": "From worktree root with Node 22 first on PATH: pnpm.cmd --filter @graphgoblin/api exec vitest run src/child-creation-restart.test.ts --config=../../docs/qa/2026-10-22-wp-d1-321-qa/api.config.mts -t kill 0ms --maxWorkers=1",
+    "expected": {
+      "exitCode": 0
+    },
+    "actual": {
+      "exitCode": 1,
+      "seconds": 91.01
+    },
+    "status": "FAIL",
+    "evidence": "child-zero-isolated.log"
+  },
+  {
+    "name": "web",
+    "steps": "From worktree root with Node 22 first on PATH: pnpm.cmd --filter @graphgoblin/web test:coverage --pool=threads --maxWorkers=1 --coverage.reportOnFailure",
+    "expected": {
+      "exitCode": 0,
+      "minimumCoveragePercent": 90,
+      "thresholdsUnchanged": true
+    },
+    "actual": {
+      "exitCode": 0,
+      "seconds": 1339.83
+    },
+    "status": "PASS",
+    "evidence": "web.log"
+  },
+  {
+    "name": "format",
+    "steps": "From worktree root with Node 22 first on PATH: pnpm.cmd format:check",
+    "expected": {
+      "exitCode": 0
+    },
+    "actual": {
+      "exitCode": 0,
+      "seconds": 44.92
+    },
+    "status": "PASS",
+    "evidence": "format.log"
+  }
+]

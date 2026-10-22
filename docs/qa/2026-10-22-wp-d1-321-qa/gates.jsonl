@@ -1,0 +1,20 @@
+{"name":"contracts","command":"pnpm.cmd --filter @graphgoblin/contracts test:coverage --maxWorkers=2","exitCode":0,"seconds":8.87}
+{"name":"engine","command":"pnpm.cmd --filter @graphgoblin/engine test:coverage --maxWorkers=2","exitCode":0,"seconds":40.44}
+{"name":"recovery-process","command":"pnpm.cmd exec node --test docs/qa/2026-10-22-wp-d1-321-qa/recovery-process.integration.mjs","exitCode":0,"seconds":25.83}
+{"name":"restart","command":"pnpm.cmd --filter @graphgoblin/api exec vitest run src/script-restart.test.ts --config=../../docs/qa/2026-10-22-wp-d1-321-qa/api.config.mts --maxWorkers=1","exitCode":0,"seconds":33.73}
+{"name":"edge","command":"pnpm.cmd --filter @graphgoblin/web exec playwright test -c ../../docs/qa/2026-10-22-wp-d1-321-qa/playwright.script-recovery.config.ts","exitCode":0,"seconds":15.18}
+{"name":"mcp","command":"pnpm.cmd --filter @graphgoblin/mcp exec vitest run src/describe.test.ts src/tools.test.ts --maxWorkers=1","exitCode":0,"seconds":6.34}
+{"name":"typecheck","command":"pnpm.cmd typecheck","exitCode":0,"seconds":54.07}
+{"name":"infrastructure","command":"pnpm.cmd --filter @graphgoblin/infrastructure test:coverage --config=../../docs/qa/2026-10-22-wp-d1-321-qa/infrastructure.config.mts --maxWorkers=1 --coverage.reportOnFailure","exitCode":1,"seconds":340.04}
+{"name":"lint","command":"pnpm.cmd lint","exitCode":0,"seconds":94.8}
+{"name":"layers","command":"pnpm.cmd check:layers","exitCode":0,"seconds":0.28}
+{"name":"deps","command":"pnpm.cmd check:deps","exitCode":0,"seconds":6.52}
+{"name":"docs","command":"pnpm.cmd check:docs","exitCode":0,"seconds":1.19}
+{"name":"tokens","command":"pnpm.cmd check:tokens","exitCode":0,"seconds":0.99}
+{"name":"native-isolated","command":"pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/process/scripts.test.ts --config=../../docs/qa/2026-10-22-wp-d1-321-qa/infrastructure.config.mts -t kills and closes a real process --maxWorkers=1","exitCode":1,"seconds":9.51}
+{"name":"client-types","command":"pnpm.cmd exec tsc -p docs/qa/2026-10-22-wp-d1-321-qa/client-config.json","exitCode":0,"seconds":1.46}
+{"name":"native-other-isolated","command":"pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/process/scripts.test.ts src/claude/process.test.ts src/adversarial.test.ts --config=../../docs/qa/2026-10-22-wp-d1-321-qa/infrastructure.config.mts -t ProcessScripts abort kills|kills on deadline and output overflow|does not spawn for an already aborted|kills the descendant|kills the process tree on timeout|kills the process when the signal aborts --maxWorkers=1","exitCode":1,"seconds":98.62}
+{"name":"api","command":"pnpm.cmd --filter @graphgoblin/api test:coverage --config=../../docs/qa/2026-10-22-wp-d1-321-qa/api.config.mts --maxWorkers=1 --coverage.reportOnFailure","exitCode":1,"seconds":587.71}
+{"name":"child-zero-isolated","command":"pnpm.cmd --filter @graphgoblin/api exec vitest run src/child-creation-restart.test.ts --config=../../docs/qa/2026-10-22-wp-d1-321-qa/api.config.mts -t kill 0ms --maxWorkers=1","exitCode":1,"seconds":91.01}
+{"name":"web","command":"pnpm.cmd --filter @graphgoblin/web test:coverage --pool=threads --maxWorkers=1 --coverage.reportOnFailure","exitCode":0,"seconds":1339.83}
+{"name":"format","command":"pnpm.cmd format:check","exitCode":0,"seconds":44.92}
