@@ -1,0 +1,36 @@
+import assert from 'node:assert/strict';import {spawn} from 'node:child_process';import {once} from 'node:events';
+import {mkdtemp,readdir,unlink,writeFile} from 'node:fs/promises';import {tmpdir} from 'node:os';import {join,basename,dirname,resolve} from 'node:path';import {pathToFileURL} from 'node:url';import {setTimeout as delay} from 'node:timers/promises';
+const root=process.cwd(),out=join(root,'docs/qa/2026-10-22-wp-f4-qa');
+const {singleNodeLoop}=await import(pathToFileURL(join(root,'packages/engine/dist/testing/index.js')).href);
+const continuation='The previous turn was interrupted before GraphGoblin recorded its result. Continue the task from where you left off and finish it.';
+const result={revision:'31f485e3060532f672ecdbb0e92fc2c743807fe0',provider:'existing real Node fake CLI; built API and SQLite',checks:[],cleanup:[]};
+const scrub=s=>s.replaceAll(root,'<worktree>').replaceAll(tmpdir(),'<temp>').replaceAll(process.env.USERPROFILE,'<user>');
+async function wait(fn){const until=Date.now()+60000;while(Date.now()<until){const x=await fn();if(x)return x;await delay(25);}throw new Error('Native observation deadline');}
+for(const [index,policy] of ['resume-previous','resume-named'].entries()){
+ const store=await mkdtemp(join(tmpdir(),'gg-qa-244-result-')),port=5852+index;const owned=new Map();let held=false;
+ const env=Object.fromEntries(Object.entries(process.env).filter(([k])=>!k.startsWith('GG_')&&!/^(OPENAI_API_KEY|ANTHROPIC_API_KEY|JEV_API_KEY|NODE_V8_COVERAGE)$/.test(k)));
+ Object.assign(env,{GG_DATA_DIR:store,GG_HOST:'127.0.0.1',GG_PORT:String(port),GG_REQUIRE_API_KEY:'false',GG_WEB_DIST:'',GG_LOG_LEVEL:'silent',GG_CODEX_BINARY:'gg-qa-244-missing.exe',GG_CLAUDE_BINARY:'gg-qa-244-missing.exe'});
+ const start=async mode=>{const p=spawn(process.execPath,['apps/api/scripts/prompt-restart.fixture.mjs'],{env:{...env,WP_F4_HOLD:mode},windowsHide:true,stdio:['ignore','pipe','pipe','ipc']});const closed=once(p,'close');closed.catch(()=>{});owned.set(p,closed);p.stdout.resume();let err='';p.stderr.on('data',b=>err+=b.toString());await new Promise((res,rej)=>{const t=setTimeout(()=>rej(new Error('Ready deadline '+scrub(err))),60000);p.on('message',m=>{if(m.type==='claude.result.hold')held=true;if(m.type==='ready'){clearTimeout(t);res();}});closed.then(()=>{clearTimeout(t);rej(new Error(scrub(err)));});});return p;};
+ const kill=async p=>{if(p.exitCode===null&&p.signalCode===null)p.kill('SIGKILL');await owned.get(p);};
+ const inspect=p=>new Promise((res,rej)=>{const t=setTimeout(()=>rej(new Error('Calls deadline')),60000);const receive=m=>{if(m.type==='calls'){clearTimeout(t);p.off('message',receive);res(m);}};p.on('message',receive);p.send({type:'inspect'});});
+ const api=async(path,body)=>{const response=await fetch(`http://127.0.0.1:${port}`+path,body===undefined?{}:{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});const value=await response.json();assert.ok(response.ok,JSON.stringify(value));return value;};
+ try{
+  let p=await start('claude-result');const cfg={harness:'claude',model:'claude-opus-5-5',effort:'low',harnessOptions:{sandbox:'read-only',approval:'never'}};
+  const definition=singleNodeLoop('Independent result '+policy,{id:'a',kind:'inference',label:'A',config:{...cfg,prompt:{template:'Task A'},session:{policy:'resume-named',key:'shared'}}});definition.nodes.splice(2,0,{id:'b',kind:'inference',label:'B',config:{...cfg,prompt:{template:'Task B'},session:policy==='resume-named'?{policy,key:'shared'}:{policy}}});definition.edges[1].to.node='b';definition.edges.push({id:'b-out',from:{node:'b',port:'out'},to:{node:'done'}});
+  const {loop}=await api('/loops',{definition});await api(`/loops/${loop.id}/publish`,{});const {run}=await api(`/loops/${loop.id}/runs`,{});let before;
+  await wait(async()=>{before=(await api(`/runs/${run.id}/events`)).items;return held&&before.some(e=>e.nodeId==='b'&&e.type==='harness.submission'&&e.marker==='claude.result');});
+  const b=before.filter(e=>e.nodeId==='b'),turn=b.find(e=>e.type==='harness.turn'),acceptance=b.find(e=>e.type==='harness.submission');
+  assert.equal(acceptance.submission,'submitted');assert.equal(acceptance.marker,'claude.result');assert.equal(acceptance.visitId,turn.visitId);assert.equal(acceptance.turnId,turn.turnId);assert.equal(turn.resumeSessionId,'11111111-1111-4111-8111-111111111111');
+  assert.equal(b.some(e=>['harness.usage','node.finished'].includes(e.type)),false);assert.equal((await api(`/runs/${run.id}/thread`)).outputs.b,undefined);const beforeRun=await api(`/runs/${run.id}`);assert.equal(beforeRun.status,'running');const beforeCalls=await inspect(p);
+  await kill(p);p=await start('claude-recovery');const afterRun=await wait(async()=>{const x=await api(`/runs/${run.id}`);return ['succeeded','failed'].includes(x.status)?x:false;});assert.equal(afterRun.status,'succeeded');assert.equal(afterRun.failure,undefined);
+  const after=(await api(`/runs/${run.id}/events`)).items;assert.equal(after.some(e=>e.type==='run.failed'),false);const calls=await inspect(p);assert.equal(calls.started.length,0);assert.equal(calls.resumed.length,1);assert.equal(calls.resumed[0].sessionId,turn.resumeSessionId);assert.equal(calls.resumed[0].request.turn.prompt,continuation);
+  const turns=after.filter(e=>e.type==='harness.turn'&&e.nodeId==='b');assert.equal(turns.length,2);assert.equal(turns[1].promptKind,'continuation');assert.equal(turns[1].visitId,turn.visitId);
+  result.checks.push({policy,port,store:basename(store),pass:true,runId:run.id,before:{status:beforeRun.status,turn,acceptance,usageOrFinish:false,bOutputPresent:false,calls:beforeCalls},after:{status:afterRun.status,runFailedEvents:0,turns,calls}});console.log('PASS independent result-before-exit '+policy);
+ }catch(e){result.checks.push({policy,pass:false,error:scrub(e.stack)});process.exitCode=1;console.log(scrub(e.message));}
+ finally{
+  for(const [p,closed]of owned){if(p.exitCode===null&&p.signalCode===null){p.send({type:'stop'});await Promise.race([closed,delay(10000)]);}await kill(p);}
+  async function clear(dir){for(const d of await readdir(dir,{withFileTypes:true})){const p=join(dir,d.name);if(d.isDirectory())await clear(p);else await unlink(p);}}
+  assert.equal(dirname(resolve(store)),resolve(tmpdir()));assert.ok(basename(store).startsWith('gg-qa-244-'));await clear(store);result.cleanup.push({store:basename(store),filesRemoved:true,processes:[...owned.keys()].map(p=>({pid:p.pid,exitCode:p.exitCode,signalCode:p.signalCode})),emptyDirectoryRetained:true});
+ }
+ await writeFile(join(out,'result-before-exit.txt'),scrub(JSON.stringify(result,null,2))+'\n');
+}
