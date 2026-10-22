@@ -1,0 +1,644 @@
+[
+  {
+    "id": "codex-configured",
+    "steps": "Create codex node; configure configured fixture; open Advanced; select claude. For successful checks save, publish, reload, reopen and execute.",
+    "expected": "Select compatible configured default; saved/reopened/request agree.",
+    "actual": {
+      "from": "codex",
+      "to": "claude",
+      "scenario": "configured",
+      "waitedForFirstCheck": true,
+      "model": "claude-fable-5-1",
+      "effort": "high",
+      "label": "Claude Fable 5.1 (claude-fable-5-1)",
+      "notices": ["", ""],
+      "authored": {
+        "harness": "claude",
+        "model": "claude-fable-5-1",
+        "effort": "high",
+        "session": {
+          "policy": "fresh"
+        },
+        "prompt": {
+          "template": "Synthetic switch QA"
+        },
+        "input": [],
+        "harnessOptions": {
+          "sandbox": "read-only",
+          "approval": "never"
+        },
+        "output": {
+          "captureTranscript": "artifact",
+          "toMessages": "final",
+          "transforms": []
+        }
+      },
+      "runStatus": "succeeded",
+      "request": {
+        "model": "claude-fable-5-1",
+        "effort": "high"
+      }
+    },
+    "verdict": "PASS",
+    "evidence": "collector-results.json#codex-configured"
+  },
+  {
+    "id": "codex-absent",
+    "steps": "Create codex node; configure absent fixture; open Advanced; select claude. For successful checks save, publish, reload, reopen and execute.",
+    "expected": "Select flagged ecosystem model and compatible effort; saved/reopened/request agree.",
+    "actual": {
+      "from": "codex",
+      "to": "claude",
+      "scenario": "absent",
+      "waitedForFirstCheck": true,
+      "model": "claude-opus-5-5",
+      "effort": "high",
+      "label": "Claude Opus 5.5 (claude-opus-5-5)",
+      "notices": ["", ""],
+      "authored": {
+        "harness": "claude",
+        "model": "claude-opus-5-5",
+        "effort": "high",
+        "session": {
+          "policy": "fresh"
+        },
+        "prompt": {
+          "template": "Synthetic switch QA"
+        },
+        "input": [],
+        "harnessOptions": {
+          "sandbox": "read-only",
+          "approval": "never"
+        },
+        "output": {
+          "captureTranscript": "artifact",
+          "toMessages": "final",
+          "transforms": []
+        }
+      },
+      "runStatus": "succeeded",
+      "request": {
+        "model": "claude-opus-5-5",
+        "effort": "high"
+      }
+    },
+    "verdict": "PASS",
+    "evidence": "collector-results.json#codex-absent"
+  },
+  {
+    "id": "codex-disabled",
+    "steps": "Create codex node; configure disabled fixture; open Advanced; select claude. For successful checks save, publish, reload, reopen and execute.",
+    "expected": "Use compatible ecosystem default without enabling disabled preference; saved/reopened/request agree.",
+    "actual": {
+      "from": "codex",
+      "to": "claude",
+      "scenario": "disabled",
+      "waitedForFirstCheck": true,
+      "model": "claude-opus-5-5",
+      "effort": "high",
+      "label": "Claude Opus 5.5 (claude-opus-5-5)",
+      "notices": ["", ""],
+      "authored": {
+        "harness": "claude",
+        "model": "claude-opus-5-5",
+        "effort": "high",
+        "session": {
+          "policy": "fresh"
+        },
+        "prompt": {
+          "template": "Synthetic switch QA"
+        },
+        "input": [],
+        "harnessOptions": {
+          "sandbox": "read-only",
+          "approval": "never"
+        },
+        "output": {
+          "captureTranscript": "artifact",
+          "toMessages": "final",
+          "transforms": []
+        }
+      },
+      "runStatus": "succeeded",
+      "request": {
+        "model": "claude-opus-5-5",
+        "effort": "high"
+      },
+      "disabledPreferencePreserved": true
+    },
+    "verdict": "PASS",
+    "evidence": "collector-results.json#codex-disabled"
+  },
+  {
+    "id": "codex-failed",
+    "steps": "Create codex node; configure failed fixture; open Advanced; select claude. For successful checks save, publish, reload, reopen and execute.",
+    "expected": "Retain authored model/effort with actionable failure notice; do not execute.",
+    "actual": {
+      "from": "codex",
+      "to": "claude",
+      "scenario": "failed",
+      "waitedForFirstCheck": false,
+      "model": "gpt-6-astra",
+      "effort": "minimal",
+      "label": "gpt-6-astra (saved)",
+      "notices": [
+        "The harness changed, but model and effort are unchanged. Retry model catalog, then choose a model or switch harness again. Validation is unavailable while the catalog cannot be loaded. An incompatible draft cannot be saved.",
+        "Cannot load the model catalog. The current values are read-only until it recovers.",
+        "",
+        ""
+      ]
+    },
+    "verdict": "PASS",
+    "evidence": "collector-results.json#codex-failed"
+  },
+  {
+    "id": "codex-inherited",
+    "steps": "Create codex node; configure inherited fixture; open Advanced; select claude. For successful checks save, publish, reload, reopen and execute.",
+    "expected": "Both overrides remain absent; persisted fields and resolved fake request agree.",
+    "actual": {
+      "from": "codex",
+      "to": "claude",
+      "scenario": "inherited",
+      "waitedForFirstCheck": false,
+      "model": "",
+      "effort": "",
+      "label": "(loop default)",
+      "notices": ["", ""],
+      "authored": {
+        "harness": "claude",
+        "session": {
+          "policy": "fresh"
+        },
+        "prompt": {
+          "template": "Synthetic switch QA"
+        },
+        "input": [],
+        "harnessOptions": {
+          "sandbox": "read-only",
+          "approval": "never"
+        },
+        "output": {
+          "captureTranscript": "artifact",
+          "toMessages": "final",
+          "transforms": []
+        }
+      },
+      "runStatus": "succeeded",
+      "request": {
+        "model": "claude-fable-5-1",
+        "effort": "high"
+      }
+    },
+    "verdict": "PASS",
+    "evidence": "collector-results.json#codex-inherited"
+  },
+  {
+    "id": "codex-effort-only",
+    "steps": "Create codex node; configure effort-only fixture; open Advanced; select claude. For successful checks save, publish, reload, reopen and execute.",
+    "expected": "Model stays inherited; effort is compatible; saved/reopened/request values agree.",
+    "actual": {
+      "from": "codex",
+      "to": "claude",
+      "scenario": "effort-only",
+      "waitedForFirstCheck": true,
+      "model": "",
+      "effort": "high",
+      "label": "(loop default)",
+      "notices": ["", ""],
+      "authored": {
+        "harness": "claude",
+        "effort": "high",
+        "session": {
+          "policy": "fresh"
+        },
+        "prompt": {
+          "template": "Synthetic switch QA"
+        },
+        "input": [],
+        "harnessOptions": {
+          "sandbox": "read-only",
+          "approval": "never"
+        },
+        "output": {
+          "captureTranscript": "artifact",
+          "toMessages": "final",
+          "transforms": []
+        }
+      },
+      "runStatus": "succeeded",
+      "request": {
+        "model": "claude-fable-5-1",
+        "effort": "high"
+      }
+    },
+    "verdict": "PASS",
+    "evidence": "collector-results.json#codex-effort-only"
+  },
+  {
+    "id": "codex-loop-over-owner",
+    "steps": "Create codex node; configure loop-over-owner fixture; open Advanced; select claude. For successful checks save, publish, reload, reopen and execute.",
+    "expected": "Loop model precedes Settings/ecosystem; supported old effort remains, otherwise loop effort.",
+    "actual": {
+      "from": "codex",
+      "to": "claude",
+      "scenario": "loop-over-owner",
+      "waitedForFirstCheck": false,
+      "model": "claude-fable-5-1",
+      "effort": "low",
+      "label": "Claude Fable 5.1 (claude-fable-5-1)",
+      "notices": ["", ""],
+      "authored": {
+        "harness": "claude",
+        "model": "claude-fable-5-1",
+        "effort": "low",
+        "session": {
+          "policy": "fresh"
+        },
+        "prompt": {
+          "template": "Synthetic switch QA"
+        },
+        "input": [],
+        "harnessOptions": {
+          "sandbox": "read-only",
+          "approval": "never"
+        },
+        "output": {
+          "captureTranscript": "artifact",
+          "toMessages": "final",
+          "transforms": []
+        }
+      },
+      "runStatus": "succeeded",
+      "request": {
+        "model": "claude-fable-5-1",
+        "effort": "low"
+      }
+    },
+    "verdict": "PASS",
+    "evidence": "collector-results.json#codex-loop-over-owner"
+  },
+  {
+    "id": "codex-early",
+    "steps": "Create codex node; configure early fixture; open Advanced; select claude. For successful checks save, publish, reload, reopen and execute.",
+    "expected": "Show first-load waiting; apply compatible fields automatically and persist/run.",
+    "actual": {
+      "from": "codex",
+      "to": "claude",
+      "scenario": "early",
+      "waitedForFirstCheck": true,
+      "model": "claude-fable-5-1",
+      "effort": "high",
+      "label": "Claude Fable 5.1 (claude-fable-5-1)",
+      "notices": ["", ""],
+      "authored": {
+        "harness": "claude",
+        "model": "claude-fable-5-1",
+        "effort": "high",
+        "session": {
+          "policy": "fresh"
+        },
+        "prompt": {
+          "template": "Synthetic switch QA"
+        },
+        "input": [],
+        "harnessOptions": {
+          "sandbox": "read-only",
+          "approval": "never"
+        },
+        "output": {
+          "captureTranscript": "artifact",
+          "toMessages": "final",
+          "transforms": []
+        }
+      },
+      "runStatus": "succeeded",
+      "request": {
+        "model": "claude-fable-5-1",
+        "effort": "high"
+      }
+    },
+    "verdict": "PASS",
+    "evidence": "collector-results.json#codex-early"
+  },
+  {
+    "id": "claude-configured",
+    "steps": "Create claude node; configure configured fixture; open Advanced; select codex. For successful checks save, publish, reload, reopen and execute.",
+    "expected": "Select compatible configured default; saved/reopened/request agree.",
+    "actual": {
+      "from": "claude",
+      "to": "codex",
+      "scenario": "configured",
+      "waitedForFirstCheck": true,
+      "model": "gpt-6-astra",
+      "effort": "high",
+      "label": "GPT-6 Astra (gpt-6-astra)",
+      "notices": ["", ""],
+      "authored": {
+        "harness": "codex",
+        "model": "gpt-6-astra",
+        "effort": "high",
+        "session": {
+          "policy": "fresh"
+        },
+        "prompt": {
+          "template": "Synthetic switch QA"
+        },
+        "input": [],
+        "harnessOptions": {
+          "sandbox": "read-only",
+          "approval": "never"
+        },
+        "output": {
+          "captureTranscript": "artifact",
+          "toMessages": "final",
+          "transforms": []
+        }
+      },
+      "runStatus": "succeeded",
+      "request": {
+        "model": "gpt-6-astra",
+        "effort": "high"
+      }
+    },
+    "verdict": "PASS",
+    "evidence": "collector-results.json#claude-configured"
+  },
+  {
+    "id": "claude-absent",
+    "steps": "Create claude node; configure absent fixture; open Advanced; select codex. For successful checks save, publish, reload, reopen and execute.",
+    "expected": "Select flagged ecosystem model and compatible effort; saved/reopened/request agree.",
+    "actual": {
+      "from": "claude",
+      "to": "codex",
+      "scenario": "absent",
+      "waitedForFirstCheck": true,
+      "model": "gpt-6-luna",
+      "effort": "high",
+      "label": "GPT-6 Luna (gpt-6-luna)",
+      "notices": ["", ""],
+      "authored": {
+        "harness": "codex",
+        "model": "gpt-6-luna",
+        "effort": "high",
+        "session": {
+          "policy": "fresh"
+        },
+        "prompt": {
+          "template": "Synthetic switch QA"
+        },
+        "input": [],
+        "harnessOptions": {
+          "sandbox": "read-only",
+          "approval": "never"
+        },
+        "output": {
+          "captureTranscript": "artifact",
+          "toMessages": "final",
+          "transforms": []
+        }
+      },
+      "runStatus": "succeeded",
+      "request": {
+        "model": "gpt-6-luna",
+        "effort": "high"
+      }
+    },
+    "verdict": "PASS",
+    "evidence": "collector-results.json#claude-absent"
+  },
+  {
+    "id": "claude-disabled",
+    "steps": "Create claude node; configure disabled fixture; open Advanced; select codex. For successful checks save, publish, reload, reopen and execute.",
+    "expected": "Use compatible ecosystem default without enabling disabled preference; saved/reopened/request agree.",
+    "actual": {
+      "from": "claude",
+      "to": "codex",
+      "scenario": "disabled",
+      "waitedForFirstCheck": true,
+      "model": "gpt-6-luna",
+      "effort": "high",
+      "label": "GPT-6 Luna (gpt-6-luna)",
+      "notices": ["", ""],
+      "authored": {
+        "harness": "codex",
+        "model": "gpt-6-luna",
+        "effort": "high",
+        "session": {
+          "policy": "fresh"
+        },
+        "prompt": {
+          "template": "Synthetic switch QA"
+        },
+        "input": [],
+        "harnessOptions": {
+          "sandbox": "read-only",
+          "approval": "never"
+        },
+        "output": {
+          "captureTranscript": "artifact",
+          "toMessages": "final",
+          "transforms": []
+        }
+      },
+      "runStatus": "succeeded",
+      "request": {
+        "model": "gpt-6-luna",
+        "effort": "high"
+      },
+      "disabledPreferencePreserved": true
+    },
+    "verdict": "PASS",
+    "evidence": "collector-results.json#claude-disabled"
+  },
+  {
+    "id": "claude-failed",
+    "steps": "Create claude node; configure failed fixture; open Advanced; select codex. For successful checks save, publish, reload, reopen and execute.",
+    "expected": "Retain authored model/effort with actionable failure notice; do not execute.",
+    "actual": {
+      "from": "claude",
+      "to": "codex",
+      "scenario": "failed",
+      "waitedForFirstCheck": false,
+      "model": "claude-fable-5-1",
+      "effort": "high",
+      "label": "claude-fable-5-1 (saved)",
+      "notices": [
+        "The harness changed, but model and effort are unchanged. Retry model catalog, then choose a model or switch harness again. Validation is unavailable while the catalog cannot be loaded. An incompatible draft cannot be saved.",
+        "Cannot load the model catalog. The current values are read-only until it recovers.",
+        "",
+        ""
+      ]
+    },
+    "verdict": "PASS",
+    "evidence": "collector-results.json#claude-failed"
+  },
+  {
+    "id": "claude-inherited",
+    "steps": "Create claude node; configure inherited fixture; open Advanced; select codex. For successful checks save, publish, reload, reopen and execute.",
+    "expected": "Both overrides remain absent; persisted fields and resolved fake request agree.",
+    "actual": {
+      "from": "claude",
+      "to": "codex",
+      "scenario": "inherited",
+      "waitedForFirstCheck": false,
+      "model": "",
+      "effort": "",
+      "label": "(loop default)",
+      "notices": ["", ""],
+      "authored": {
+        "harness": "codex",
+        "session": {
+          "policy": "fresh"
+        },
+        "prompt": {
+          "template": "Synthetic switch QA"
+        },
+        "input": [],
+        "harnessOptions": {
+          "sandbox": "read-only",
+          "approval": "never"
+        },
+        "output": {
+          "captureTranscript": "artifact",
+          "toMessages": "final",
+          "transforms": []
+        }
+      },
+      "runStatus": "succeeded",
+      "request": {
+        "model": "gpt-6-astra",
+        "effort": "high"
+      }
+    },
+    "verdict": "PASS",
+    "evidence": "collector-results.json#claude-inherited"
+  },
+  {
+    "id": "claude-effort-only",
+    "steps": "Create claude node; configure effort-only fixture; open Advanced; select codex. For successful checks save, publish, reload, reopen and execute.",
+    "expected": "Model stays inherited; effort is compatible; saved/reopened/request values agree.",
+    "actual": {
+      "from": "claude",
+      "to": "codex",
+      "scenario": "effort-only",
+      "waitedForFirstCheck": true,
+      "model": "",
+      "effort": "high",
+      "label": "(loop default)",
+      "notices": ["", ""],
+      "authored": {
+        "harness": "codex",
+        "effort": "high",
+        "session": {
+          "policy": "fresh"
+        },
+        "prompt": {
+          "template": "Synthetic switch QA"
+        },
+        "input": [],
+        "harnessOptions": {
+          "sandbox": "read-only",
+          "approval": "never"
+        },
+        "output": {
+          "captureTranscript": "artifact",
+          "toMessages": "final",
+          "transforms": []
+        }
+      },
+      "runStatus": "succeeded",
+      "request": {
+        "model": "gpt-6-astra",
+        "effort": "high"
+      }
+    },
+    "verdict": "PASS",
+    "evidence": "collector-results.json#claude-effort-only"
+  },
+  {
+    "id": "claude-loop-over-owner",
+    "steps": "Create claude node; configure loop-over-owner fixture; open Advanced; select codex. For successful checks save, publish, reload, reopen and execute.",
+    "expected": "Loop model precedes Settings/ecosystem; supported old effort remains, otherwise loop effort.",
+    "actual": {
+      "from": "claude",
+      "to": "codex",
+      "scenario": "loop-over-owner",
+      "waitedForFirstCheck": false,
+      "model": "gpt-6-astra",
+      "effort": "high",
+      "label": "GPT-6 Astra (gpt-6-astra)",
+      "notices": ["", ""],
+      "authored": {
+        "harness": "codex",
+        "model": "gpt-6-astra",
+        "effort": "high",
+        "session": {
+          "policy": "fresh"
+        },
+        "prompt": {
+          "template": "Synthetic switch QA"
+        },
+        "input": [],
+        "harnessOptions": {
+          "sandbox": "read-only",
+          "approval": "never"
+        },
+        "output": {
+          "captureTranscript": "artifact",
+          "toMessages": "final",
+          "transforms": []
+        }
+      },
+      "runStatus": "succeeded",
+      "request": {
+        "model": "gpt-6-astra",
+        "effort": "high"
+      }
+    },
+    "verdict": "PASS",
+    "evidence": "collector-results.json#claude-loop-over-owner"
+  },
+  {
+    "id": "claude-early",
+    "steps": "Create claude node; configure early fixture; open Advanced; select codex. For successful checks save, publish, reload, reopen and execute.",
+    "expected": "Show first-load waiting; apply compatible fields automatically and persist/run.",
+    "actual": {
+      "from": "claude",
+      "to": "codex",
+      "scenario": "early",
+      "waitedForFirstCheck": true,
+      "model": "gpt-6-astra",
+      "effort": "high",
+      "label": "GPT-6 Astra (gpt-6-astra)",
+      "notices": ["", ""],
+      "authored": {
+        "harness": "codex",
+        "model": "gpt-6-astra",
+        "effort": "high",
+        "session": {
+          "policy": "fresh"
+        },
+        "prompt": {
+          "template": "Synthetic switch QA"
+        },
+        "input": [],
+        "harnessOptions": {
+          "sandbox": "read-only",
+          "approval": "never"
+        },
+        "output": {
+          "captureTranscript": "artifact",
+          "toMessages": "final",
+          "transforms": []
+        }
+      },
+      "runStatus": "succeeded",
+      "request": {
+        "model": "gpt-6-astra",
+        "effort": "high"
+      }
+    },
+    "verdict": "PASS",
+    "evidence": "collector-results.json#claude-early"
+  }
+]

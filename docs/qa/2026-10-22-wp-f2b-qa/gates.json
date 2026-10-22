@@ -1,0 +1,32 @@
+[
+  {
+    "command": "pnpm.cmd typecheck --concurrency=1",
+    "exit": 0,
+    "tail": "@graphgoblin/web:typecheck: $ tsc -p tsconfig.json --noEmit\n@graphgoblin/plugin-codex:typecheck: cache hit, replaying logs 89ce5bea921c7cc1\n@graphgoblin/plugin-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json\n\n Tasks:    20 successful, 20 total\nCached:    20 cached, 20 total\n  Time:    11.328s >>> FULL TURBO\n"
+  },
+  {
+    "command": "pnpm.cmd lint --concurrency=1",
+    "exit": 0,
+    "tail": "@graphgoblin/mcp:lint: $ eslint .\n@graphgoblin/plugin-codex:lint: cache miss, executing 81828d8231a6e7e8\n@graphgoblin/plugin-codex:lint: $ eslint .\n\n Tasks:    11 successful, 11 total\nCached:    0 cached, 11 total\n  Time:    7m16.779s \n"
+  },
+  {
+    "command": "pnpm.cmd check:layers",
+    "exit": 0,
+    "tail": "pnpm.cmd : $ node tooling/scripts/check-layers.mjs\nAt line:2 char:527\n+ ... e+'.log'); $qaArgs=$qaGate.Args; & pnpm.cmd @qaArgs *> $qaLog; $qaRes ...\n+                                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n    + CategoryInfo          : NotSpecified: ($ node tooling/scripts/check-layers.mjs:String) [], RemoteException\n    + FullyQualifiedErrorId : NativeCommandError\n \nLayer rules: OK"
+  },
+  {
+    "command": "pnpm.cmd check:deps",
+    "exit": 0,
+    "tail": "    + CategoryInfo          : NotSpecified: ($ depcruise pac...ncy-cruiser.cjs:String) [], RemoteException\n    + FullyQualifiedErrorId : NativeCommandError\n \n\n  warn no-orphans: packages/infrastructure/drizzle.config.ts\n\nx 1 dependency violations (0 errors, 1 warnings). 823 modules, 3287 dependencies cruised.\n"
+  },
+  {
+    "command": "pnpm.cmd check:docs",
+    "exit": 0,
+    "tail": "At line:2 char:527\n+ ... e+'.log'); $qaArgs=$qaGate.Args; & pnpm.cmd @qaArgs *> $qaLog; $qaRes ...\n+                                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n    + CategoryInfo          : NotSpecified: ($ pnpm --filter...ocs.mjs --check:String) [], RemoteException\n    + FullyQualifiedErrorId : NativeCommandError\n \n$ tsc -b tsconfig.build.json\nGenerated docs are up to date."
+  },
+  {
+    "command": "pnpm.cmd check:tokens",
+    "exit": 0,
+    "tail": "pnpm.cmd : $ node tooling/scripts/check-design-tokens.mjs\nAt line:2 char:527\n+ ... e+'.log'); $qaArgs=$qaGate.Args; & pnpm.cmd @qaArgs *> $qaLog; $qaRes ...\n+                                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n    + CategoryInfo          : NotSpecified: ($ node tooling/...sign-tokens.mjs:String) [], RemoteException\n    + FullyQualifiedErrorId : NativeCommandError\n \nDesign tokens: OK (163 files checked)"
+  }
+]
