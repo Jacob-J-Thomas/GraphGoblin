@@ -1,0 +1,305 @@
+{
+  "loopId": "01M5J9F9M9P38CPADYM74BEWHW",
+  "runId": "01M5J9F9PS2Y8VWDE3T3RQSF7C",
+  "path": "/400",
+  "run": {
+    "id": "01M5J9F9PS2Y8VWDE3T3RQSF7C",
+    "ownerId": "local",
+    "loopId": "01M5J9F9M9P38CPADYM74BEWHW",
+    "versionId": "01M5J9F9M98JKJTZZT1NP076QA",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "Audit /400",
+      "label": "Audit /400 v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M5J9F9PSY2BVDX1BK0AYXX3P",
+    "status": "succeeded",
+    "iteration": 1,
+    "outcome": "success",
+    "result": null,
+    "deliveries": [
+      {
+        "id": "01M5J9F9SMVF7NGHBXA86TBXTD",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/400"
+        },
+        "status": "failed",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "rejected",
+        "effectMayHaveHappened": false,
+        "lastError": {
+          "code": "http",
+          "message": "Webhook returned HTTP 400.",
+          "retryable": false,
+          "acknowledgement": "rejected",
+          "httpStatus": 400
+        }
+      }
+    ],
+    "createdAt": "2026-10-22T17:10:22.681Z",
+    "startedAt": "2026-10-22T17:10:22.709Z",
+    "finishedAt": "2026-10-22T17:10:22.775Z",
+    "lastEventSeq": 11
+  },
+  "events": [
+    {
+      "runId": "01M5J9F9PS2Y8VWDE3T3RQSF7C",
+      "seq": 1,
+      "ts": "2026-10-22T17:10:22.681Z",
+      "type": "run.queued",
+      "versionId": "01M5J9F9M98JKJTZZT1NP076QA",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Audit /400",
+        "label": "Audit /400 v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5J9F9PS2Y8VWDE3T3RQSF7C",
+          "loopId": "01M5J9F9M9P38CPADYM74BEWHW",
+          "versionId": "01M5J9F9M98JKJTZZT1NP076QA",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5J9F9PSY2BVDX1BK0AYXX3P",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": {
+              "name": "Audit /400",
+              "value": 42
+            },
+            "receivedAt": "2026-10-22T17:10:22.681Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {},
+        "gates": {},
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    {
+      "runId": "01M5J9F9PS2Y8VWDE3T3RQSF7C",
+      "seq": 2,
+      "ts": "2026-10-22T17:10:22.718Z",
+      "type": "run.started",
+      "attempt": 1
+    },
+    {
+      "runId": "01M5J9F9PS2Y8VWDE3T3RQSF7C",
+      "seq": 3,
+      "ts": "2026-10-22T17:10:22.732Z",
+      "type": "node.started",
+      "nodeId": "start",
+      "kind": "trigger",
+      "attempt": 1,
+      "configHash": "527dee9c4254fe4e"
+    },
+    {
+      "runId": "01M5J9F9PS2Y8VWDE3T3RQSF7C",
+      "seq": 4,
+      "ts": "2026-10-22T17:10:22.738Z",
+      "type": "node.finished",
+      "nodeId": "start",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/outputs/start",
+          "value": {
+            "nodeId": "start",
+            "value": {
+              "name": "Audit /400",
+              "value": 42
+            },
+            "at": "2026-10-22T17:10:22.738Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "start",
+            "value": {
+              "name": "Audit /400",
+              "value": 42
+            },
+            "at": "2026-10-22T17:10:22.738Z"
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 0
+    },
+    {
+      "runId": "01M5J9F9PS2Y8VWDE3T3RQSF7C",
+      "seq": 5,
+      "ts": "2026-10-22T17:10:22.767Z",
+      "type": "node.started",
+      "nodeId": "done",
+      "kind": "exit",
+      "attempt": 1,
+      "configHash": "516897ce0e3ca56c"
+    },
+    {
+      "runId": "01M5J9F9PS2Y8VWDE3T3RQSF7C",
+      "seq": 6,
+      "ts": "2026-10-22T17:10:22.772Z",
+      "type": "exit.evaluated",
+      "nodeId": "done",
+      "outcome": "success"
+    },
+    {
+      "runId": "01M5J9F9PS2Y8VWDE3T3RQSF7C",
+      "seq": 7,
+      "ts": "2026-10-22T17:10:22.772Z",
+      "type": "node.finished",
+      "nodeId": "done",
+      "patch": [],
+      "durationMs": 1
+    },
+    {
+      "runId": "01M5J9F9PS2Y8VWDE3T3RQSF7C",
+      "seq": 8,
+      "ts": "2026-10-22T17:10:22.772Z",
+      "type": "run.finished",
+      "status": "succeeded",
+      "outcome": "success",
+      "result": null
+    },
+    {
+      "runId": "01M5J9F9PS2Y8VWDE3T3RQSF7C",
+      "seq": 9,
+      "ts": "2026-10-22T17:10:22.772Z",
+      "type": "delivery.queued",
+      "delivery": {
+        "id": "01M5J9F9SMVF7NGHBXA86TBXTD",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/400"
+        },
+        "status": "pending",
+        "attempts": 0,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "not_sent",
+        "effectMayHaveHappened": false
+      }
+    },
+    {
+      "runId": "01M5J9F9PS2Y8VWDE3T3RQSF7C",
+      "seq": 10,
+      "ts": "2026-10-22T17:10:22.799Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5J9F9SMVF7NGHBXA86TBXTD",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/400"
+        },
+        "status": "pending",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T17:10:34.796Z"
+      }
+    },
+    {
+      "runId": "01M5J9F9PS2Y8VWDE3T3RQSF7C",
+      "seq": 11,
+      "ts": "2026-10-22T17:10:22.824Z",
+      "type": "delivery.finished",
+      "delivery": {
+        "id": "01M5J9F9SMVF7NGHBXA86TBXTD",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/400"
+        },
+        "status": "failed",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "rejected",
+        "effectMayHaveHappened": false,
+        "lastError": {
+          "code": "http",
+          "message": "Webhook returned HTTP 400.",
+          "retryable": false,
+          "acknowledgement": "rejected",
+          "httpStatus": 400
+        }
+      }
+    }
+  ],
+  "rows": [
+    {
+      "finalized_at": "2026-10-22T17:10:22.845Z",
+      "last_event_seq": 11,
+      "status": "succeeded"
+    }
+  ],
+  "requests": [
+    {
+      "path": "/400",
+      "n": 1,
+      "ms": 1792689022813,
+      "key": "01M5J9F9SMVF7NGHBXA86TBXTD",
+      "body": {
+        "runId": "01M5J9F9PS2Y8VWDE3T3RQSF7C",
+        "loopId": "01M5J9F9M9P38CPADYM74BEWHW",
+        "outcome": "success",
+        "result": null
+      }
+    }
+  ]
+}

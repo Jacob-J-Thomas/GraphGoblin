@@ -204,7 +204,12 @@ REST run detail/list, the generated api-client, MCP `get_run` and `wait_for_run`
 `get_run` again to observe delivery. The inspector polls once per second while delivery is
 pending. SSE still closes on execution's terminal event; subsequent JSON event pages expose
 `delivery.queued`, `delivery.attempted`, `delivery.attempt_finished` and `delivery.finished`.
-Unknown acknowledgement is never represented as non-delivery. See ADR-0043.
+Unknown acknowledgement is never represented as non-delivery. The required
+`acknowledgementUncertain` flag in each delivery snapshot retains earlier uncertainty even
+when `lastError` is a later rejection and the final acknowledgement is accepted. The inspector
+keeps its possible-duplicate warning in that case; rejection-only retries do not set the flag.
+An invalid HTTP response status is a retryable `transport` error with unknown acknowledgement
+and no `httpStatus`. See ADR-0043.
 
 The `caller` return channel resolves at delivery time:
 

@@ -26,7 +26,7 @@ checkout changes, then use Windows' tar executable (Git's GNU tar treats a drive
 remote archive):
 
 ```powershell
-$env:PATH = "C:\Users\98jak\AppData\Roaming\nvm\v22.14.0;$env:PATH"
+$env:PATH = "$env:APPDATA\nvm\v22.14.0;$env:PATH"
 $baseExport = Join-Path $env:TEMP ('gg-wp-d2-base-' + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $baseExport | Out-Null
 git archive --format=tar --output="$baseExport/base.tar" 52360d9

@@ -129,7 +129,8 @@ the later format-4 cutover; the current offline upgrade is unchanged. See
 
 The run record's optional `deliveries` array tracks outbound webhooks independently of
 execution status. Each item carries `id`, webhook `channel`, `status` (pending/delivered/failed),
-`attempts`, `maxAttempts`, `inFlight`, `acknowledgement`, `effectMayHaveHappened`, optional
+`attempts`, `maxAttempts`, `inFlight`, `acknowledgement`, `effectMayHaveHappened`,
+`acknowledgementUncertain` (sticky across later rejections and success), optional
 `nextAttemptAt` and typed `lastError`. The journal's `delivery.queued`, `delivery.attempted`,
 `delivery.attempt_finished` and `delivery.finished` events each contain a complete snapshot.
 The API projects the latest snapshot per identity from these durable events, without a second

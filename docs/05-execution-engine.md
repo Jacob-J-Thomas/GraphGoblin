@@ -213,7 +213,10 @@ The offline server-store tool uses the same composition for each retained versio
 Webhook return delivery is independent of execution. `delivery.queued` is atomic with
 `run.finished`; `delivery.attempted` consumes an attempt before network I/O. A background
 worker records `delivery.attempt_finished` for a retry or `delivery.finished` for delivered /
-failed. Five attempts have 10-second deadlines and 2/5/10/20-second retry delays. Recovery
+failed. `acknowledgementUncertain` retains any earlier unknown attempt separately from the
+latest error and acknowledgement, including after eventual success. An invalid HTTP response
+status becomes retryable `transport` / unknown, without an invalid `httpStatus` in the journal.
+Five attempts have 10-second deadlines and 2/5/10/20-second retry delays. Recovery
 turns an in-flight attempt into unknown and preserves its identity, deadline and remaining
 budget, including a final failure if the interrupted attempt was the last. Recovery does not
 wait for the network before serving the API. Delivery work does not occupy execution slots;

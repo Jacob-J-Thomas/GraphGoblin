@@ -1,0 +1,67 @@
+
+ RUN  v5.0.3 %WORKTREE%/packages/infrastructure
+
+ ❯ src/sqlite/delivery-runs.test.ts (30 tests | 7 failed | 23 skipped) 780ms
+   × migration isolates a damaged pending returnDefaults ("corrupt") alongside a healthy run 255ms
+   × migration isolates a damaged pending returnDefaults ("corrupt") alongside a healthy run 126ms
+   × migration isolates a damaged pending returnDefaults (17) alongside a healthy run 76ms
+   × migration isolates a damaged pending returnDefaults (null) alongside a healthy run 83ms
+   × migration isolates a damaged pending returnDefaults (17) alongside a healthy run 92ms
+   × migration isolates a damaged pending returnDefaults (true) alongside a healthy run 78ms
+   × migration isolates a damaged pending returnDefaults ({"kind":"webhook"}) alongside a healthy run 67ms
+pnpm.cmd :
+At line:6 char:1
++ pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/sql ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/sqlite/delivery-runs.test.ts > migration isolates a damaged pending returnDefaults ("corrupt") alongside a
+healthy run
+ FAIL  src/sqlite/delivery-runs.test.ts > migration isolates a damaged pending returnDefaults ("corrupt") alongside a
+healthy run
+ FAIL  src/sqlite/delivery-runs.test.ts > migration isolates a damaged pending returnDefaults (17) alongside a healthy
+run
+ FAIL  src/sqlite/delivery-runs.test.ts > migration isolates a damaged pending returnDefaults (null) alongside a
+healthy run
+ FAIL  src/sqlite/delivery-runs.test.ts > migration isolates a damaged pending returnDefaults (17) alongside a healthy
+run
+ FAIL  src/sqlite/delivery-runs.test.ts > migration isolates a damaged pending returnDefaults (true) alongside a
+healthy run
+ FAIL  src/sqlite/delivery-runs.test.ts > migration isolates a damaged pending returnDefaults ({"kind":"webhook"})
+alongside a healthy run
+RunFailureError: Generated run event could not be recorded: outcome: Invalid option: expected one of
+"success"|"failure"|"exhausted"
+ ❯ validateGeneratedEvent ../engine/src/event-validation.ts:18:9
+     16|     .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
+     17|     .join('; ');
+     18|   throw new RunFailureError(
+       |         ^
+     19|     'EVENT_INVALID',
+     20|     `Generated run event could not be recorded: ${reason}`,
+ ❯ src/sqlite/events.ts:87:23
+ ❯ LibSQLSession.transaction
+../../node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/src/libsql/session.ts:122:19
+ ❯ SqliteEventStore.append src/sqlite/events.ts:70:20
+ ❯ src/sqlite/delivery-runs.test.ts:110:43
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 23 skipped (30)
+   Start at  12:17:36
+   Duration  20.44s (transform 71%, import 24%, tests 4%)
+
+  Transform  transforming modules took 13.10s · 71% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d2-
+  │ webhook-retry\packages\infrastructure
+

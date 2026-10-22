@@ -1,0 +1,692 @@
+[
+  {
+    "name": "/success",
+    "status": "succeeded",
+    "deliveries": [
+      {
+        "id": "01M5JAKW2VE43KAKTANK1GZ9Y5",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/success"
+        },
+        "status": "delivered",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "accepted",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": false
+      }
+    ],
+    "requestCount": 1,
+    "finalized": true
+  },
+  {
+    "name": "/retry",
+    "status": "succeeded",
+    "deliveries": [
+      {
+        "id": "01M5JAKWDWC9K44NQ655MHXQG1",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/retry"
+        },
+        "status": "delivered",
+        "attempts": 3,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "accepted",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "lastError": {
+          "code": "http",
+          "message": "Webhook returned HTTP 503.",
+          "retryable": true,
+          "acknowledgement": "unknown",
+          "httpStatus": 503
+        }
+      }
+    ],
+    "requestCount": 3,
+    "finalized": true
+  },
+  {
+    "name": "/429",
+    "status": "succeeded",
+    "deliveries": [
+      {
+        "id": "01M5JAKWHH7EDEVJCJHS7AWEQW",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/429"
+        },
+        "status": "failed",
+        "attempts": 5,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "rejected",
+        "effectMayHaveHappened": false,
+        "acknowledgementUncertain": false,
+        "lastError": {
+          "code": "http",
+          "message": "Webhook returned HTTP 429.",
+          "retryable": true,
+          "acknowledgement": "rejected",
+          "httpStatus": 429
+        }
+      }
+    ],
+    "requestCount": 5,
+    "finalized": true
+  },
+  {
+    "name": "/503",
+    "status": "succeeded",
+    "deliveries": [
+      {
+        "id": "01M5JAKWNVRQGB183V1QJRH9DM",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/503"
+        },
+        "status": "failed",
+        "attempts": 5,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "lastError": {
+          "code": "http",
+          "message": "Webhook returned HTTP 503.",
+          "retryable": true,
+          "acknowledgement": "unknown",
+          "httpStatus": 503
+        }
+      }
+    ],
+    "requestCount": 5,
+    "finalized": true
+  },
+  {
+    "name": "/400",
+    "status": "succeeded",
+    "deliveries": [
+      {
+        "id": "01M5JAKWVTX0R81K0YRKZM6VYZ",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/400"
+        },
+        "status": "failed",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "rejected",
+        "effectMayHaveHappened": false,
+        "acknowledgementUncertain": false,
+        "lastError": {
+          "code": "http",
+          "message": "Webhook returned HTTP 400.",
+          "retryable": false,
+          "acknowledgement": "rejected",
+          "httpStatus": 400
+        }
+      }
+    ],
+    "requestCount": 1,
+    "finalized": true
+  },
+  {
+    "name": "/redirect",
+    "status": "succeeded",
+    "deliveries": [
+      {
+        "id": "01M5JAKWZ2SN1QTG7MVECQQ8P2",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/redirect"
+        },
+        "status": "failed",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "rejected",
+        "effectMayHaveHappened": false,
+        "acknowledgementUncertain": false,
+        "lastError": {
+          "code": "http",
+          "message": "Webhook returned HTTP 302.",
+          "retryable": false,
+          "acknowledgement": "rejected",
+          "httpStatus": 302
+        }
+      }
+    ],
+    "requestCount": 1,
+    "finalized": true
+  },
+  {
+    "name": "/drop",
+    "status": "succeeded",
+    "deliveries": [
+      {
+        "id": "01M5JAKX3CANJ6G46VCEBE8BCY",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/drop"
+        },
+        "status": "delivered",
+        "attempts": 2,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "accepted",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "lastError": {
+          "code": "transport",
+          "message": "Webhook acknowledgement lost; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    ],
+    "requestCount": 2,
+    "finalized": true
+  },
+  {
+    "name": "/late",
+    "status": "succeeded",
+    "deliveries": [
+      {
+        "id": "01M5JAKX69MKJGRV0KNCMAN736",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/late"
+        },
+        "status": "delivered",
+        "attempts": 2,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "accepted",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "lastError": {
+          "code": "timeout",
+          "message": "Webhook acknowledgement timed out; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    ],
+    "requestCount": 2,
+    "finalized": true
+  },
+  {
+    "name": "/slow",
+    "status": "succeeded",
+    "deliveries": [
+      {
+        "id": "01M5JAKX8V3W62AVT4Q06QSK2H",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/slow"
+        },
+        "status": "delivered",
+        "attempts": 2,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "accepted",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "lastError": {
+          "code": "timeout",
+          "message": "Webhook acknowledgement timed out; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    ],
+    "requestCount": 2,
+    "finalized": true
+  },
+  {
+    "name": "/overflow",
+    "status": "succeeded",
+    "deliveries": [
+      {
+        "id": "01M5JAKXDP1MDZ1GQQ5M180GDM",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/overflow"
+        },
+        "status": "delivered",
+        "attempts": 2,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "accepted",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "lastError": {
+          "code": "transport",
+          "message": "Webhook acknowledgement exceeded 64 KiB; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    ],
+    "requestCount": 2,
+    "finalized": true
+  },
+  {
+    "name": "/boundary",
+    "status": "succeeded",
+    "deliveries": [
+      {
+        "id": "01M5JAKXH1S5JEH66HGQ8M64AB",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/boundary"
+        },
+        "status": "delivered",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "accepted",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": false
+      }
+    ],
+    "requestCount": 1,
+    "finalized": true
+  },
+  {
+    "name": "/uncertainty",
+    "status": "succeeded",
+    "deliveries": [
+      {
+        "id": "01M5JAKXNEEQSGRYXB5V2H8BHP",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/uncertainty"
+        },
+        "status": "delivered",
+        "attempts": 3,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "accepted",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "lastError": {
+          "code": "http",
+          "message": "Webhook returned HTTP 429.",
+          "retryable": true,
+          "acknowledgement": "rejected",
+          "httpStatus": 429
+        }
+      }
+    ],
+    "requestCount": 3,
+    "finalized": true
+  },
+  {
+    "name": "http://gg-audit-d2-nonexistent.invalid:5649/hook",
+    "status": "succeeded",
+    "deliveries": [
+      {
+        "id": "01M5JAKXRYTF1XCKVHC0GA8X3A",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://gg-audit-d2-nonexistent.invalid:5649/hook"
+        },
+        "status": "failed",
+        "attempts": 5,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "lastError": {
+          "code": "transport",
+          "message": "Webhook acknowledgement lost; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    ],
+    "requestCount": 0,
+    "finalized": true
+  },
+  {
+    "name": "http://127.0.0.1:5641/secret",
+    "status": "succeeded",
+    "deliveries": [
+      {
+        "id": "01M5JAKXYS6CVNNEPQJ18FATQZ",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/secret",
+          "secretRef": "broken"
+        },
+        "status": "failed",
+        "attempts": 5,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "lastError": {
+          "code": "transport",
+          "message": "No acknowledgement received; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    ],
+    "requestCount": 0,
+    "finalized": true
+  },
+  {
+    "name": "http://127.0.0.1:5649/refused",
+    "status": "succeeded",
+    "deliveries": [
+      {
+        "id": "01M5JAKY24YF0TY5J4B0PGWTV9",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5649/refused"
+        },
+        "status": "failed",
+        "attempts": 5,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "not_sent",
+        "effectMayHaveHappened": false,
+        "acknowledgementUncertain": false,
+        "lastError": {
+          "code": "connection_refused",
+          "message": "Webhook connection refused.",
+          "retryable": true,
+          "acknowledgement": "not_sent"
+        }
+      }
+    ],
+    "requestCount": 0,
+    "finalized": true
+  },
+  {
+    "name": "ftp://127.0.0.1/hook",
+    "status": "succeeded",
+    "deliveries": [
+      {
+        "id": "01M5JAKY59RWG3FF8XQFT7QXRP",
+        "channel": {
+          "kind": "webhook",
+          "url": "ftp://127.0.0.1/hook"
+        },
+        "status": "failed",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "not_sent",
+        "effectMayHaveHappened": false,
+        "acknowledgementUncertain": false,
+        "lastError": {
+          "code": "invalid_destination",
+          "message": "Webhook destination must be an HTTP(S) URL without credentials.",
+          "retryable": false,
+          "acknowledgement": "not_sent"
+        }
+      }
+    ],
+    "requestCount": 0,
+    "finalized": true
+  },
+  {
+    "name": "http://user:pass@127.0.0.1:5641/credential",
+    "status": "succeeded",
+    "deliveries": [
+      {
+        "id": "01M5JAKY87TE63K0R0PC2KH361",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://user:pass@127.0.0.1:5641/credential"
+        },
+        "status": "failed",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "not_sent",
+        "effectMayHaveHappened": false,
+        "acknowledgementUncertain": false,
+        "lastError": {
+          "code": "invalid_destination",
+          "message": "Webhook destination must be an HTTP(S) URL without credentials.",
+          "retryable": false,
+          "acknowledgement": "not_sent"
+        }
+      }
+    ],
+    "requestCount": 0,
+    "finalized": true
+  },
+  {
+    "name": "/two-a",
+    "status": "succeeded",
+    "deliveries": [
+      {
+        "id": "01M5JAKYAWK6H722ASC7TTB01T",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/two-a"
+        },
+        "status": "delivered",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "accepted",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": false
+      },
+      {
+        "id": "01M5JAKYAWQ228MXN6E727NYE0",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/two-b"
+        },
+        "status": "delivered",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "accepted",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": false
+      }
+    ],
+    "requestCount": 2,
+    "finalized": true
+  },
+  {
+    "name": "HTTP 600",
+    "runId": "01M5JAKYAXWRYQTHA2WMETBKE2",
+    "delivery": {
+      "id": "01M5JAKYDVDGB9QNWX4E8TM3RT",
+      "channel": {
+        "kind": "webhook",
+        "url": "http://127.0.0.1:5641/600"
+      },
+      "status": "pending",
+      "attempts": 4,
+      "maxAttempts": 5,
+      "inFlight": false,
+      "acknowledgement": "unknown",
+      "effectMayHaveHappened": true,
+      "acknowledgementUncertain": true,
+      "nextAttemptAt": "2026-10-22T17:31:00.628Z",
+      "lastError": {
+        "code": "transport",
+        "message": "Webhook returned an invalid HTTP status; the effect may have happened.",
+        "retryable": true,
+        "acknowledgement": "unknown"
+      }
+    },
+    "requests": 4,
+    "finalized": false,
+    "errors": []
+  },
+  {
+    "name": "uncertainty inspector",
+    "runId": "01M5JAKXHQ2DG2ABBB61Z7CSYJ",
+    "warningVisible": true,
+    "text": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nRun\n01M5JAKXHQ2DG2ABBB61Z7CSYJ\nsucceeded\nloop\nchild runs\nExit evaluation\n\nExited: success\n\nResult\nnull\nWebhook delivery\n\nExecution: succeeded. Delivery is tracked separately.\n\nhttp://127.0.0.1:5641/uncertainty\n\nDelivered after 3 attempts\n\nDelivery identity: 01M5JAKXNEEQSGRYXB5V2H8BHP\n\nhttp: Webhook returned HTTP 429.\n\nAn acknowledgement was unknown; the effect may have happened. Receivers must implement their own deduplication if duplicate effects are unacceptable; GraphGoblin does not assume they do.\n\nTimeline (8 events, complete)\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nstart (trigger) attempt 1\n#4\nnode.finished\nstart → out, 2 changes, 0 ms\n#5\nnode.started\ndone (exit) attempt 1\n#6\nexit.evaluated\nExited: success\n#7\nnode.finished\ndone, 0 changes, 0 ms\n#8\nrun.finished\nsucceeded (success)\nThread at event 8\nMessages (0)\nVariables\n{}\nFull thread JSON\nNode progress (1 nodes)"
+  },
+  {
+    "name": "pending to delivered UI",
+    "passed": true
+  },
+  {
+    "name": "crash in retry window",
+    "requests": 5,
+    "attempts": 5,
+    "sameIdentity": true,
+    "finishedEvents": 1
+  },
+  {
+    "name": "crash in flight",
+    "requests": 2,
+    "attempts": 2,
+    "sameIdentity": true
+  },
+  {
+    "name": "orderly backoff",
+    "elapsedMs": 88,
+    "newRequests": 0,
+    "afterStop": {
+      "delivery": {
+        "id": "01M5JASBKAJ1EBTP4T48YQ3FTK",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/drain-backoff"
+        },
+        "status": "pending",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "nextAttemptAt": "2026-10-22T17:33:22.900Z",
+        "lastError": {
+          "code": "http",
+          "message": "Webhook returned HTTP 503.",
+          "retryable": true,
+          "acknowledgement": "unknown",
+          "httpStatus": 503
+        }
+      }
+    },
+    "afterRestart": {
+      "id": "01M5JASBKAJ1EBTP4T48YQ3FTK",
+      "channel": {
+        "kind": "webhook",
+        "url": "http://127.0.0.1:5641/drain-backoff"
+      },
+      "status": "delivered",
+      "attempts": 2,
+      "maxAttempts": 5,
+      "inFlight": false,
+      "acknowledgement": "accepted",
+      "effectMayHaveHappened": true,
+      "acknowledgementUncertain": true,
+      "lastError": {
+        "code": "http",
+        "message": "Webhook returned HTTP 503.",
+        "retryable": true,
+        "acknowledgement": "unknown",
+        "httpStatus": 503
+      }
+    }
+  },
+  {
+    "name": "orderly attempt",
+    "elapsedMs": 10095,
+    "newRequests": 0,
+    "afterStop": {
+      "delivery": {
+        "id": "01M5JASS93X47TKSCSET1T3FYN",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/drain-attempt"
+        },
+        "status": "pending",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "nextAttemptAt": "2026-10-22T17:33:46.919Z",
+        "lastError": {
+          "code": "timeout",
+          "message": "Webhook acknowledgement timed out; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    },
+    "afterRestart": {
+      "id": "01M5JASS93X47TKSCSET1T3FYN",
+      "channel": {
+        "kind": "webhook",
+        "url": "http://127.0.0.1:5641/drain-attempt"
+      },
+      "status": "delivered",
+      "attempts": 2,
+      "maxAttempts": 5,
+      "inFlight": false,
+      "acknowledgement": "accepted",
+      "effectMayHaveHappened": true,
+      "acknowledgementUncertain": true,
+      "lastError": {
+        "code": "timeout",
+        "message": "Webhook acknowledgement timed out; the effect may have happened.",
+        "retryable": true,
+        "acknowledgement": "unknown"
+      }
+    }
+  },
+  {
+    "name": "fifth interrupted attempt",
+    "requests": 5,
+    "delivery": {
+      "id": "01M5JATDGPZNASFGDEAPQ7YQ5N",
+      "channel": {
+        "kind": "webhook",
+        "url": "http://127.0.0.1:5641/crash-five"
+      },
+      "status": "failed",
+      "attempts": 5,
+      "maxAttempts": 5,
+      "inFlight": false,
+      "acknowledgement": "unknown",
+      "effectMayHaveHappened": true,
+      "acknowledgementUncertain": true,
+      "lastError": {
+        "code": "interrupted",
+        "message": "Process stopped before acknowledgement was recorded; the effect may have happened.",
+        "retryable": true,
+        "acknowledgement": "unknown"
+      }
+    }
+  },
+  {
+    "name": "final outcomes on second startup",
+    "newRequests": 0,
+    "eventsUnchanged": true
+  },
+  {
+    "name": "loop deletion",
+    "newRequests": 0,
+    "orphanEvents": 0
+  }
+]

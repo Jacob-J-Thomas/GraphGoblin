@@ -1,6 +1,6 @@
 # ADR-0043 - Bounded durable webhook return delivery
 
-Date: 2026-10-20. Status: **Reviewed: approve with required fixes; round-two fixes implemented (#246)**.
+Date: 2026-10-20. Status: **Reviewed decision; final-audit fixes implemented, confirmation pending (#246)**.
 
 ## Decision
 
@@ -72,6 +72,27 @@ process interruption as proof of non-delivery. `effectMayHaveHappened` retains p
 even if a later attempt succeeds. No response bodies or transport exception text enter errors.
 
 ## Storage and clients
+
+### Amendment: damaged history and acknowledgement evidence (2026-10-22)
+
+Migration 0015 has not shipped. Its JSON traversal now establishes object and array types
+before nested extraction. A shape-damaged pending run is left for per-run
+`HISTORY_UNREADABLE` diagnostics; it cannot abort migration or prevent healthy runs and the
+API from starting. Historical receipt conversion checks required fields, optional-field
+types and bounds, strict keys and duplicate keys. Damaged receipts remain byte-identical
+for diagnostics and explicit repair; neither optional fields nor unexpected evidence are
+discarded to manufacture a valid outcome.
+
+Each delivery snapshot now requires `acknowledgementUncertain`, initialized false, set by an
+unknown completed or interrupted attempt, and never cleared by a later rejection or success.
+It is independent of `lastError` and the latest `acknowledgement`. Historical accepted receipts
+set it false; historical failures and interrupted pending returns set it true. The inspector
+preserves the possible-duplicate warning after eventual success without warning for purely
+rejected retries. Nonstandard/invalid HTTP response statuses use the existing retryable
+`transport` class and unknown acknowledgement, omitting `httpStatus`; untrusted statuses
+cannot violate the journal contract or strand an in-flight attempt. Policy values are unchanged.
+
+### One-off conversion
 
 Migration `0015_webhook_delivery_journal` rewrites completed historical webhook return events
 once into final journal snapshots, with one recorded attempt and no new retry budget. Old

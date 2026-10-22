@@ -29,6 +29,51 @@ it('the standalone event fake also refuses a required missing run', async () => 
 });
 
 describe('durable webhook returns through RunManager', () => {
+  it.each([true, false])(
+    'retains prior acknowledgement uncertainty separately from a later rejection (%s)',
+    async (unknown) => {
+      vi.useFakeTimers();
+      const engine = await createTestEngine();
+      engine.ports.delivery.responder = (_id, attempt) =>
+        attempt === 3
+          ? { ok: true }
+          : {
+              ok: false,
+              error:
+                attempt === 1 && unknown
+                  ? transient
+                  : {
+                      code: 'http',
+                      message: 'HTTP 429',
+                      httpStatus: 429,
+                      retryable: true,
+                      acknowledgement: 'rejected',
+                    },
+            };
+      const version = engine.publish(
+        singleNodeLoop('uncertainty then rejection', work, {
+          returns: 'vars',
+          destinations: [{ kind: 'webhook', url: 'https://example.test' }],
+        }),
+      );
+      const run = await engine.start(version.loopId);
+      await vi.waitFor(() => expect(engine.ports.delivery.webhooks).toHaveLength(1));
+      await vi.advanceTimersByTimeAsync(2000);
+      await vi.advanceTimersByTimeAsync(5000);
+      await engine.manager.waitForIdle();
+      engine.manager.stop();
+      expect(webhookStates(engine.events(run.id))).toMatchObject([
+        {
+          status: 'delivered',
+          attempts: 3,
+          acknowledgement: 'accepted',
+          acknowledgementUncertain: unknown,
+          lastError: { httpStatus: 429, acknowledgement: 'rejected' },
+        },
+      ]);
+      expect(new Set(engine.ports.delivery.webhooks.map((call) => call.deliveryId)).size).toBe(1);
+    },
+  );
   it.each([1, 2, 5])('delivers or exhausts with one identity (%i attempts)', async (required) => {
     vi.useFakeTimers();
     const engine = await createTestEngine();
@@ -127,6 +172,7 @@ describe('recovery of journalled attempts through the delivery component', () =>
         inFlight: true,
         acknowledgement: 'unknown',
         effectMayHaveHappened: true,
+        acknowledgementUncertain: false,
         nextAttemptAt: new Date(engine.ports.clock.now().getTime() + 100).toISOString(),
       };
       await engine.ports.events.append(run.id, [{ type: 'delivery.attempted', delivery: state }]);
@@ -148,6 +194,7 @@ describe('recovery of journalled attempts through the delivery component', () =>
         status: attempts === 5 ? 'failed' : 'delivered',
         lastError: { code: 'interrupted', acknowledgement: 'unknown' },
         effectMayHaveHappened: true,
+        acknowledgementUncertain: true,
       });
       component.start(run.id, final, {}, complete);
       await component.waitForIdle();
@@ -179,6 +226,7 @@ describe('recovery of journalled attempts through the delivery component', () =>
         attempts: 2,
         lastError: { code: 'transport', acknowledgement: 'unknown' },
         effectMayHaveHappened: true,
+        acknowledgementUncertain: true,
       },
     ]);
   });
@@ -226,6 +274,7 @@ it('reports persistence failure distinctly, sends nothing, and leaves recovery p
     inFlight: false,
     acknowledgement: 'not_sent',
     effectMayHaveHappened: false,
+    acknowledgementUncertain: false,
   };
   await engine.ports.events.append(run.id, [{ type: 'delivery.queued', delivery: state }]);
   const failing = new WebhookReturns({
@@ -276,6 +325,7 @@ async function boundaryFixture() {
     inFlight: false,
     acknowledgement: 'not_sent',
     effectMayHaveHappened: false,
+    acknowledgementUncertain: false,
   };
   return { engine, run, state };
 }
@@ -317,6 +367,7 @@ it.each(['after append', 'during secret resolution'])(
       inFlight: true,
       acknowledgement: 'unknown',
       effectMayHaveHappened: true,
+      acknowledgementUncertain: false,
     });
     expect(interrupted.nextAttemptAt).toBe(
       new Date(engine.ports.clock.now().getTime() + 12000).toISOString(),
@@ -343,6 +394,7 @@ it.each(['after append', 'during secret resolution'])(
         attempts: 2,
         inFlight: false,
         effectMayHaveHappened: true,
+        acknowledgementUncertain: true,
         lastError: { code: 'interrupted', acknowledgement: 'unknown' },
       },
     ]);

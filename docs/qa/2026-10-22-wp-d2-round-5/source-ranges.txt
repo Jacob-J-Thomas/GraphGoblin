@@ -1,0 +1,100 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+@@ -9 +9 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+diff --git a/apps/web/e2e/webhook-delivery.spec.ts b/apps/web/e2e/webhook-delivery.spec.ts
+@@ -5,0 +6 @@ let acknowledge = false;
+@@ -9,0 +11,9 @@ const receiver = createServer((req, res) => {
+@@ -17,0 +28,46 @@ const receiver = createServer((req, res) => {
+diff --git a/apps/web/src/runs/inspector/DeliveryPanel.test.tsx b/apps/web/src/runs/inspector/DeliveryPanel.test.tsx
+@@ -17,0 +18 @@ const delivery: WebhookDelivery = {
+@@ -19,0 +21,25 @@ describe('delivery in the run inspector', () => {
+@@ -75,0 +102 @@ describe('delivery in the run inspector', () => {
+diff --git a/apps/web/src/runs/inspector/DeliveryPanel.tsx b/apps/web/src/runs/inspector/DeliveryPanel.tsx
+@@ -30,3 +30,2 @@ export function DeliveryPanel({ run }: { run: RunRecord }) {
+diff --git a/docs/03-domain-model.md b/docs/03-domain-model.md
+@@ -132 +132,2 @@ execution status. Each item carries `id`, webhook `channel`, `status` (pending/d
+diff --git a/docs/05-execution-engine.md b/docs/05-execution-engine.md
+@@ -216 +216,4 @@ worker records `delivery.attempt_finished` for a retry or `delivery.finished` fo
+diff --git a/docs/07-api-and-streaming.md b/docs/07-api-and-streaming.md
+@@ -207 +207,6 @@ pending. SSE still closes on execution's terminal event; subsequent JSON event p
+diff --git a/docs/08-triggers-and-integrations.md b/docs/08-triggers-and-integrations.md
+@@ -215,0 +216,4 @@ other 4xx, redirects and invalid destinations stop once. Redirects are never fol
+diff --git a/docs/decisions/ADR-0043-bounded-webhook-return-delivery.md b/docs/decisions/ADR-0043-bounded-webhook-return-delivery.md
+@@ -3 +3 @@
+@@ -75,0 +76,21 @@ even if a later attempt succeeds. No response bodies or transport exception text
+diff --git a/docs/qa/2026-10-20-wp-d2-report/README.md b/docs/qa/2026-10-20-wp-d2-report/README.md
+@@ -7 +7 @@ run a temporary copy in that package's module scope from the repository root (No
+diff --git a/docs/qa/2026-10-20-wp-d2-round-2.md b/docs/qa/2026-10-20-wp-d2-round-2.md
+@@ -6 +6 @@
+diff --git a/docs/qa/2026-10-20-wp-d2-round-3.md b/docs/qa/2026-10-20-wp-d2-round-3.md
+@@ -6 +6 @@
+diff --git a/docs/qa/2026-10-21-wp-d2-qa/README.md b/docs/qa/2026-10-21-wp-d2-qa/README.md
+@@ -90 +90 @@ The original store was created by an archived `52360d99def690d3cff9f36cc81a76b48
+diff --git a/docs/qa/2026-10-21-wp-d2-report/README.md b/docs/qa/2026-10-21-wp-d2-report/README.md
+@@ -29 +29 @@ remote archive):
+diff --git a/docs/qa/2026-10-21-wp-d2-round-4.md b/docs/qa/2026-10-21-wp-d2-round-4.md
+@@ -6 +6 @@
+diff --git a/packages/api-client/openapi.json b/packages/api-client/openapi.json
+@@ -4729,0 +4730,3 @@
+@@ -4788 +4791,2 @@
+@@ -4913,0 +4918,3 @@
+@@ -4972 +4979,2 @@
+@@ -5069,0 +5078,3 @@
+@@ -5128 +5139,2 @@
+@@ -5225,0 +5238,3 @@
+@@ -5284 +5299,2 @@
+@@ -5381,0 +5398,3 @@
+@@ -5440 +5459,2 @@
+@@ -13221,0 +13242,3 @@
+@@ -13280 +13303,2 @@
+@@ -13405,0 +13430,3 @@
+@@ -13464 +13491,2 @@
+@@ -13561,0 +13590,3 @@
+@@ -13620 +13651,2 @@
+@@ -13717,0 +13750,3 @@
+@@ -13776 +13811,2 @@
+@@ -13873,0 +13910,3 @@
+@@ -13932 +13971,2 @@
+diff --git a/packages/api-client/src/generated/schema.ts b/packages/api-client/src/generated/schema.ts
+@@ -3706,0 +3707 @@ export interface components {
+@@ -3750,0 +3752 @@ export interface components {
+@@ -3786,0 +3789 @@ export interface components {
+@@ -3822,0 +3826 @@ export interface components {
+@@ -3858,0 +3863 @@ export interface components {
+@@ -5719,0 +5725 @@ export interface components {
+@@ -5763,0 +5770 @@ export interface components {
+@@ -5799,0 +5807 @@ export interface components {
+@@ -5835,0 +5844 @@ export interface components {
+@@ -5871,0 +5881 @@ export interface components {
+diff --git a/packages/contracts/src/delivery.ts b/packages/contracts/src/delivery.ts
+@@ -41,0 +42,2 @@ export const WebhookDeliverySchema = z.strictObject({
+diff --git a/packages/engine/src/webhook-returns.test.ts b/packages/engine/src/webhook-returns.test.ts
+@@ -31,0 +32,45 @@ describe('durable webhook returns through RunManager', () => {
+@@ -129,0 +175 @@ describe('recovery of journalled attempts through the delivery component', () =>
+@@ -150,0 +197 @@ describe('recovery of journalled attempts through the delivery component', () =>
+@@ -181,0 +229 @@ describe('recovery of journalled attempts through the delivery component', () =>
+@@ -228,0 +277 @@ it('reports persistence failure distinctly, sends nothing, and leaves recovery p
+@@ -278,0 +328 @@ async function boundaryFixture() {
+@@ -319,0 +370 @@ it.each(['after append', 'during secret resolution'])(
+@@ -345,0 +397 @@ it.each(['after append', 'during secret resolution'])(
+diff --git a/packages/engine/src/webhook-returns.ts b/packages/engine/src/webhook-returns.ts
+@@ -31,0 +32 @@ export function queuedWebhooks(
+@@ -129,0 +131 @@ export class WebhookReturns {
+@@ -201,0 +204,3 @@ export class WebhookReturns {
+diff --git a/packages/infrastructure/drizzle/0015_webhook_delivery_journal.sql b/packages/infrastructure/drizzle/0015_webhook_delivery_journal.sql
+@@ -9 +9,2 @@ UPDATE run_events SET
+@@ -13,0 +15 @@ UPDATE run_events SET
+@@ -19 +21,3 @@ WHERE type IN ('return.delivered', 'return.failed')
+@@ -21 +25,15 @@ WHERE type IN ('return.delivered', 'return.failed')
+@@ -30,0 +49,11 @@ WITH finished AS (
+@@ -39,2 +68,7 @@ WITH finished AS (
+@@ -43 +77,2 @@ WITH finished AS (
+@@ -57,0 +93 @@ SELECT id, last_seq + ordinal, ts, 'delivery.attempt_finished', NULL,
+diff --git a/packages/infrastructure/src/http/delivery-retry.test.ts b/packages/infrastructure/src/http/delivery-retry.test.ts
+@@ -3,0 +4 @@ import { FakeClock } from '@graphgoblin/engine/testing';
+@@ -49,0 +51,17 @@ describe('webhook HTTP outcomes with a controlled receiver', () => {
+diff --git a/packages/infrastructure/src/http/delivery.ts b/packages/infrastructure/src/http/delivery.ts
+@@ -107,0 +108,14 @@ export class HttpWebhookDelivery {
+diff --git a/packages/infrastructure/src/sqlite/delivery-runs.test.ts b/packages/infrastructure/src/sqlite/delivery-runs.test.ts
+@@ -37,0 +38 @@ const state: WebhookDelivery = {
+@@ -59,0 +61,24 @@ it.each([
+@@ -88,0 +114,62 @@ it('does not append a delivery journal for an absent run', async () => {

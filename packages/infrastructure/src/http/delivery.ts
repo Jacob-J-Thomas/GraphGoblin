@@ -105,6 +105,20 @@ export class HttpWebhookDelivery {
         signal: AbortSignal.timeout(this.timeoutMs),
         redirect: 'manual',
       });
+      // Status is receiver-controlled. Nonstandard responses cannot enter the typed journal
+      // as HTTP statuses; without a recognized acknowledgement their effect stays unknown.
+      if (!Number.isInteger(response.status) || response.status < 100 || response.status > 599) {
+        await response.body?.cancel().catch(() => undefined);
+        return {
+          ok: false,
+          error: {
+            code: 'transport',
+            message: 'Webhook returned an invalid HTTP status; the effect may have happened.',
+            retryable: true,
+            acknowledgement: 'unknown',
+          },
+        };
+      }
       if (response.ok) {
         // Require a complete acknowledgement, including EOF. Drain without retaining bytes,
         // bounded to 64 KiB and the same request deadline; a truncated 2xx is still uncertain.

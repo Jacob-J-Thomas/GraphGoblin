@@ -27,9 +27,8 @@ export function DeliveryPanel({ run }: { run: RunRecord }) {
               {delivery.lastError.code}: {delivery.lastError.message}
             </p>
           ) : null}
-          {delivery.effectMayHaveHappened &&
-          (delivery.acknowledgement !== 'accepted' ||
-            delivery.lastError?.acknowledgement === 'unknown') ? (
+          {delivery.acknowledgementUncertain ||
+          (delivery.inFlight && delivery.acknowledgement === 'unknown') ? (
             <p>
               An acknowledgement was unknown; the effect may have happened. Receivers must implement
               their own deduplication if duplicate effects are unacceptable; GraphGoblin does not

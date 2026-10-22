@@ -4,7 +4,7 @@ The archived benchmark uses the API package's public workspace dependencies. Aft
 run a temporary copy in that package's module scope from the repository root (Node 22):
 
 ```powershell
-$env:PATH = "C:\Users\98jak\AppData\Roaming\nvm\v22.14.0;$env:PATH"
+$env:PATH = "$env:APPDATA\nvm\v22.14.0;$env:PATH"
 $benchmarkCopy = Join-Path (Get-Location) ("apps/api/scripts/.projection-" + [guid]::NewGuid().ToString('N') + '.mjs')
 Copy-Item -LiteralPath 'docs/qa/2026-10-20-wp-d2-report/delivery-projection.measure.mjs' -Destination $benchmarkCopy
 try { node $benchmarkCopy } finally { Remove-Item -LiteralPath $benchmarkCopy -Force }

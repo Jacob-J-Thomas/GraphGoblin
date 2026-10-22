@@ -3704,6 +3704,7 @@ export interface components {
                 /** @enum {string} */
                 acknowledgement: "accepted" | "unknown" | "not_sent" | "rejected";
                 effectMayHaveHappened: boolean;
+                acknowledgementUncertain: boolean;
                 /** Format: date-time */
                 nextAttemptAt?: string | undefined;
                 lastError?: {
@@ -3748,6 +3749,7 @@ export interface components {
                 /** @enum {string} */
                 acknowledgement: "accepted" | "unknown" | "not_sent" | "rejected";
                 effectMayHaveHappened: boolean;
+                acknowledgementUncertain: boolean;
                 /** Format: date-time */
                 nextAttemptAt?: string | undefined;
                 lastError?: {
@@ -3784,6 +3786,7 @@ export interface components {
                 /** @enum {string} */
                 acknowledgement: "accepted" | "unknown" | "not_sent" | "rejected";
                 effectMayHaveHappened: boolean;
+                acknowledgementUncertain: boolean;
                 /** Format: date-time */
                 nextAttemptAt?: string | undefined;
                 lastError?: {
@@ -3820,6 +3823,7 @@ export interface components {
                 /** @enum {string} */
                 acknowledgement: "accepted" | "unknown" | "not_sent" | "rejected";
                 effectMayHaveHappened: boolean;
+                acknowledgementUncertain: boolean;
                 /** Format: date-time */
                 nextAttemptAt?: string | undefined;
                 lastError?: {
@@ -3856,6 +3860,7 @@ export interface components {
                 /** @enum {string} */
                 acknowledgement: "accepted" | "unknown" | "not_sent" | "rejected";
                 effectMayHaveHappened: boolean;
+                acknowledgementUncertain: boolean;
                 /** Format: date-time */
                 nextAttemptAt?: string | undefined;
                 lastError?: {
@@ -5717,6 +5722,7 @@ export interface components {
                 /** @enum {string} */
                 acknowledgement: "accepted" | "unknown" | "not_sent" | "rejected";
                 effectMayHaveHappened: boolean;
+                acknowledgementUncertain: boolean;
                 /** Format: date-time */
                 nextAttemptAt?: string | undefined;
                 lastError?: {
@@ -5761,6 +5767,7 @@ export interface components {
                 /** @enum {string} */
                 acknowledgement: "accepted" | "unknown" | "not_sent" | "rejected";
                 effectMayHaveHappened: boolean;
+                acknowledgementUncertain: boolean;
                 /** Format: date-time */
                 nextAttemptAt?: string | undefined;
                 lastError?: {
@@ -5797,6 +5804,7 @@ export interface components {
                 /** @enum {string} */
                 acknowledgement: "accepted" | "unknown" | "not_sent" | "rejected";
                 effectMayHaveHappened: boolean;
+                acknowledgementUncertain: boolean;
                 /** Format: date-time */
                 nextAttemptAt?: string | undefined;
                 lastError?: {
@@ -5833,6 +5841,7 @@ export interface components {
                 /** @enum {string} */
                 acknowledgement: "accepted" | "unknown" | "not_sent" | "rejected";
                 effectMayHaveHappened: boolean;
+                acknowledgementUncertain: boolean;
                 /** Format: date-time */
                 nextAttemptAt?: string | undefined;
                 lastError?: {
@@ -5869,6 +5878,7 @@ export interface components {
                 /** @enum {string} */
                 acknowledgement: "accepted" | "unknown" | "not_sent" | "rejected";
                 effectMayHaveHappened: boolean;
+                acknowledgementUncertain: boolean;
                 /** Format: date-time */
                 nextAttemptAt?: string | undefined;
                 lastError?: {

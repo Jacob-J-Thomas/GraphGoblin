@@ -1,6 +1,7 @@
 import { createServer, type ServerResponse } from 'node:http';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { FakeClock } from '@graphgoblin/engine/testing';
+import { DeliveryErrorSchema } from '@graphgoblin/contracts';
 import { HttpWebhookDelivery } from './delivery.js';
 
 const calls: { path: string; id: string | undefined }[] = [];
@@ -47,6 +48,23 @@ afterAll(async () => {
   await new Promise<void>((ok) => server.close(() => ok()));
 });
 describe('webhook HTTP outcomes with a controlled receiver', () => {
+  it('normalizes HTTP 600 to a journal-valid uncertain transport failure', async () => {
+    const result = await new HttpWebhookDelivery(new FakeClock()).webhook(
+      url + '/600',
+      {},
+      undefined,
+      'nonstandard-status',
+    );
+    expect(result.ok).toBe(false);
+    if (result.ok) throw Error('Expected a failed acknowledgement');
+    expect(DeliveryErrorSchema.safeParse(result.error).success).toBe(true);
+    expect(result.error).toMatchObject({
+      code: 'transport',
+      retryable: true,
+      acknowledgement: 'unknown',
+    });
+    expect(result.error.httpStatus).toBeUndefined();
+  });
   it.each([200, 204, 301, 400, 401, 408, 429, 500, 503])(
     'classifies HTTP %i without redirects',
     async (status) => {

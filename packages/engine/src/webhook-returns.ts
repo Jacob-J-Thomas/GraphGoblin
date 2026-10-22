@@ -29,6 +29,7 @@ export function queuedWebhooks(
       inFlight: false,
       acknowledgement: 'not_sent',
       effectMayHaveHappened: false,
+      acknowledgementUncertain: false,
     },
   }));
 }
@@ -127,6 +128,7 @@ export class WebhookReturns {
         inFlight: false,
         acknowledgement: 'unknown',
         effectMayHaveHappened: true,
+        acknowledgementUncertain: true,
         lastError: {
           code: 'interrupted',
           message:
@@ -199,6 +201,9 @@ export class WebhookReturns {
         acknowledgement: result.ok ? 'accepted' : result.error.acknowledgement,
         effectMayHaveHappened:
           previousEffect || result.ok || result.error.acknowledgement === 'unknown',
+        acknowledgementUncertain:
+          state.acknowledgementUncertain ||
+          (!result.ok && result.error.acknowledgement === 'unknown'),
       };
       if (result.ok) state.status = 'delivered';
       else {

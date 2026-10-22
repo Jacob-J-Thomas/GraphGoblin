@@ -1,0 +1,44 @@
+
+ RUN  v5.0.3 %WORKTREE%/apps/web
+
+ ❯ src/runs/inspector/DeliveryPanel.test.tsx (7 tests | 1 failed) 240ms
+   ❯ delivery in the run inspector (7)
+     × shows prior uncertainty after unknown, rejected and accepted attempts (true) 107ms
+pnpm.cmd :
+At line:5 char:1
++ pnpm.cmd --filter @graphgoblin/web exec vitest run src/runs/inspector ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/runs/inspector/DeliveryPanel.test.tsx > delivery in the run inspector > shows prior uncertainty after
+unknown, rejected and accepted attempts (true)
+AssertionError: expected null to be Anything // Object.is equality
+ ❯ src/runs/inspector/DeliveryPanel.test.tsx:33:66
+     31|     expect(screen.getByText('Delivered after 3 attempts')).toBeInTheDo…
+     32|     expect(screen.getByText(/HTTP 429/)).toBeInTheDocument();
+     33|     expect(screen.queryByText(/An acknowledgement was unknown/)).toBe(…
+       |                                                                  ^
+     34|   });
+     35|   it('shows pending acknowledgement independently of succeeded executi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  12:15:16
+   Duration  76.03s (transform 69%, environment 14%, import 12%, setup 5%)
+
+  Transform  transforming modules took 50.70s · 69% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d2-
+  │ webhook-retry\apps\web
+

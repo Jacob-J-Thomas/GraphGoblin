@@ -15,8 +15,34 @@ const delivery: WebhookDelivery = {
   inFlight: true,
   acknowledgement: 'unknown',
   effectMayHaveHappened: true,
+  acknowledgementUncertain: false,
 };
 describe('delivery in the run inspector', () => {
+  it.each([true, false])(
+    'shows prior uncertainty after unknown, rejected and accepted attempts (%s)',
+    (uncertain) => {
+      const final = {
+        ...delivery,
+        status: 'delivered' as const,
+        attempts: 3,
+        inFlight: false,
+        acknowledgement: 'accepted' as const,
+        acknowledgementUncertain: uncertain,
+        lastError: {
+          code: 'http' as const,
+          message: 'Webhook returned HTTP 429.',
+          retryable: true,
+          acknowledgement: 'rejected' as const,
+          httpStatus: 429,
+        },
+      };
+      renderWith(<DeliveryPanel run={runRecord({ status: 'succeeded', deliveries: [final] })} />);
+      expect(screen.getByText('Delivered after 3 attempts')).toBeInTheDocument();
+      expect(screen.getByText(/HTTP 429/)).toBeInTheDocument();
+      if (uncertain) expect(screen.getByText(/An acknowledgement was unknown/)).toBeInTheDocument();
+      else expect(screen.queryByText(/An acknowledgement was unknown/)).not.toBeInTheDocument();
+    },
+  );
   it('shows pending acknowledgement independently of succeeded execution', () => {
     renderWith(<DeliveryPanel run={runRecord({ status: 'succeeded', deliveries: [delivery] })} />);
     expect(screen.getByText(/Execution: succeeded/)).toBeInTheDocument();
@@ -73,6 +99,7 @@ describe('delivery in the run inspector', () => {
               inFlight: false,
               nextAttemptAt: '2026-10-20T12:00:00.000Z',
               effectMayHaveHappened: false,
+              acknowledgementUncertain: false,
             },
           ],
         })}

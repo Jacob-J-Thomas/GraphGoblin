@@ -213,6 +213,10 @@ does not assume they do. Signing still covers each attempt's timestamp and body.
 Five attempts have 10-second acknowledgement deadlines, separated by 2/5/10/20 seconds.
 Connection refusal, timeout, HTTP 408/429/5xx and unknown acknowledgement are eligible;
 other 4xx, redirects and invalid destinations stop once. Redirects are never followed.
+An out-of-range or invalid HTTP status is retryable `transport` / unknown, without a typed
+`httpStatus`. `acknowledgementUncertain` retains prior unknown attempts independently of the
+latest error and response. The inspector keeps its possible-duplicate warning after eventual
+success following an unknown acknowledgement; rejection-only retries do not produce it.
 The complete 2xx acknowledgement is bounded to 64 KiB. Timeouts and truncated/lost responses
 mean the effect may have happened. `run.deliveries` and durable `delivery.*` events expose
 pending, delivered or failed after N attempts and the last typed error, separately from

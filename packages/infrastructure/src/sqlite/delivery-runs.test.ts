@@ -35,6 +35,7 @@ const state: WebhookDelivery = {
   inFlight: true,
   acknowledgement: 'unknown',
   effectMayHaveHappened: true,
+  acknowledgementUncertain: false,
 };
 beforeEach(async () => {
   handle = await openMemoryDatabase();
@@ -57,6 +58,30 @@ it.each([
   ['return.delivered', '{"channel":{"kind":"webhook"}}'],
   ['return.failed', '{"channel":{"kind":"webhook","url":"https://example.test"}}'],
   ['return.failed', '{"channel":{"kind":"webhook","url":"https://example.test"},"error":42}'],
+  ['return.delivered', '{"channel":{"kind":"webhook","url":"https://example.test"},"target":17}'],
+  [
+    'return.delivered',
+    '{"channel":{"kind":"webhook","url":"https://example.test"},"unexpectedEvidence":"keep-this-damaged-record"}',
+  ],
+  ['return.delivered', '{"channel":{"kind":"webhook","url":"https://example.test"},"target":null}'],
+  [
+    'return.failed',
+    '{"channel":{"kind":"webhook","url":"https://example.test","secretRef":17},"error":"failed"}',
+  ],
+  [
+    'return.failed',
+    '{"channel":{"kind":"webhook","url":"https://example.test","extra":true},"error":"failed"}',
+  ],
+  [
+    'return.failed',
+    '{"channel":{"kind":"webhook","url":"https://example.test"},"error":"failed","target":"unexpected"}',
+  ],
+  ['return.delivered', JSON.stringify({ channel: state.channel, target: 'x'.repeat(4097) })],
+  ['return.failed', JSON.stringify({ channel: state.channel, error: 'x'.repeat(4001) })],
+  [
+    'return.delivered',
+    JSON.stringify({ channel: { ...state.channel, secretRef: 'x'.repeat(129) } }),
+  ],
 ])('migration preserves shape-damaged %s receipts byte for byte (%s)', async (type, payload) => {
   await handle.client.execute({
     sql: 'INSERT INTO run_events (run_id,seq,ts,type,payload) VALUES (?,?,?,?,?)',
@@ -85,6 +110,68 @@ it('does not append a delivery journal for an absent run', async () => {
   ).toEqual([]);
   expect(await events.read(deletedId)).toEqual([]);
 });
+
+it.each(
+  [['corrupt'], 'corrupt', 17, [null], [17], [true], [{ kind: 'webhook' }]].map((defaults) => ({
+    defaults,
+  })),
+)(
+  'migration isolates a damaged pending returnDefaults (%j) alongside a healthy run',
+  async ({ defaults }) => {
+    const definition = {
+      nodes: [{ id: 'done', config: { destinations: [state.channel] } }],
+    };
+    await handle.client.execute({
+      sql: 'INSERT INTO loop_versions (id,loop_id,version,status,definition,created_at) VALUES (?,?,1,?,?,?)',
+      args: [run.versionId, run.loopId, 'published', JSON.stringify(definition), FIXTURE_TS],
+    });
+    const healthyId = fakeUlid('healthy pending');
+    await repo.create({ ...run, id: healthyId }, sampleThread());
+    for (const id of [run.id, healthyId])
+      await events.append(id, [
+        { type: 'exit.evaluated', nodeId: 'done', outcome: 'success' },
+        { type: 'run.finished', status: 'succeeded', outcome: 'success', result: 42 },
+      ]);
+    const thread = sampleThread();
+    const damaged = JSON.stringify({
+      ...thread,
+      invocation: { ...thread.invocation, returnDefaults: defaults },
+    });
+    await handle.client.execute({
+      sql: 'UPDATE runs SET initial_thread=? WHERE id=?',
+      args: [damaged, run.id],
+    });
+    const before = await handle.client.execute({
+      sql: 'SELECT * FROM run_events WHERE run_id=?',
+      args: [run.id],
+    });
+    const migration = await readFile(
+      new URL('../../drizzle/0015_webhook_delivery_journal.sql', import.meta.url),
+      'utf8',
+    );
+    for (const statement of migration.split('--> statement-breakpoint'))
+      await handle.client.execute(statement);
+    expect(
+      (
+        await handle.client.execute({
+          sql: 'SELECT initial_thread FROM runs WHERE id=?',
+          args: [run.id],
+        })
+      ).rows[0]?.['initial_thread'],
+    ).toBe(damaged);
+    expect(
+      (
+        await handle.client.execute({
+          sql: 'SELECT * FROM run_events WHERE run_id=?',
+          args: [run.id],
+        })
+      ).rows,
+    ).toEqual(before.rows);
+    expect((await repo.get(healthyId))?.deliveries).toMatchObject([
+      { status: 'pending', attempts: 1 },
+    ]);
+  },
+);
 
 it('projects a whole page in one indexed delivery query', async () => {
   for (let i = 1; i < 20; i++)

@@ -39,6 +39,8 @@ export const WebhookDeliverySchema = z.strictObject({
   acknowledgement: z.enum(['accepted', 'unknown', 'not_sent', 'rejected']),
   /** Sticky: an uncertain earlier attempt remains uncertain after a later acknowledgement. */
   effectMayHaveHappened: z.boolean(),
+  /** Sticky independently of the latest response/error: any completed or interrupted unknown attempt. */
+  acknowledgementUncertain: z.boolean(),
   nextAttemptAt: TimestampSchema.optional(),
   lastError: DeliveryErrorSchema.optional(),
 });
