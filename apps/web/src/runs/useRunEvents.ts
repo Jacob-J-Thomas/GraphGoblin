@@ -25,6 +25,13 @@ export const EVENT_BATCH_MS = 100;
 // Matches the API's default SSE heartbeat interval (apps/api/src/sse.ts).
 const STREAM_HEARTBEAT_MS = 15_000;
 
+function historyEnded(events: readonly RunEvent[]): boolean {
+  const boundary = events.findLast(
+    (event) => TERMINAL_RUN_EVENT_TYPES.has(event.type) || event.type === 'run.resumed',
+  );
+  return boundary !== undefined && TERMINAL_RUN_EVENT_TYPES.has(boundary.type);
+}
+
 /**
  * Live tail of a run's events through the API client's SSE helper. Resumes after the stored cursor,
  * so a reload neither replays nor misses events; the helper itself reconnects on drops. `onEvents`
@@ -33,10 +40,18 @@ const STREAM_HEARTBEAT_MS = 15_000;
 export function useRunEvents(
   runId: string,
   onEvents?: () => void,
+  latestSeq?: number,
 ): RunEventLog & { status: StreamStatus; error?: string } {
   const client = useApi();
   const queryClient = useQueryClient();
   const log = useRunEventLog(runId);
+  // A failed outcome can be explicitly resumed. A newer run snapshot re-arms its closed
+  // tail from the saved cursor, including when the next outcome already finished. The cursor
+  // changes again for each historical terminal boundary; ordinary live updates do not reconnect.
+  const terminalCursorToRead =
+    historyEnded(log.events) && latestSeq !== undefined && latestSeq > log.lastSeq
+      ? log.lastSeq
+      : undefined;
   // A new or forgotten API key restarts the stream: one ended by a 401 recovers, and one opened
   // with a key that was just forgotten (here or in another tab) closes.
   const apiKey = useApiKeyStore((s) => s.key);
@@ -46,7 +61,11 @@ export function useRunEvents(
   useEffect(() => {
     const { runs, append } = useRunEventStore.getState();
     const known = runs[runId];
-    if (known?.events.some((e) => TERMINAL_RUN_EVENT_TYPES.has(e.type))) {
+    if (
+      known &&
+      historyEnded(known.events) &&
+      (latestSeq === undefined || known.lastSeq >= latestSeq)
+    ) {
       setStatus('finished');
       return;
     }
@@ -143,9 +162,10 @@ export function useRunEvents(
       flush();
       subscription?.close();
     };
-    // `onEvents` is a notification hook; re-subscribing when it changes identity would churn the stream.
+    // `onEvents` is a notification hook. Snapshot sequences re-arm only a closed terminal tail
+    // through terminalCursorToRead; live snapshot updates must not churn the stream.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [client, queryClient, runId, apiKey]);
+  }, [client, queryClient, runId, apiKey, terminalCursorToRead]);
 
   return { ...log, status, ...(error ? { error } : {}) };
 }

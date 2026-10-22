@@ -21,6 +21,7 @@ import type {
   RunEvent,
   RunRecord,
   RunStatus,
+  ScriptExecutionState,
   Usage,
   WorkingDirectorySpec,
 } from '@graphgoblin/contracts';
@@ -350,6 +351,8 @@ export interface ScriptRunRequest {
 }
 
 export interface ScriptRunResult {
+  /** Proven start refusal, unknown disposition, or observed process termination. */
+  state: ScriptExecutionState;
   exitCode: number | null;
   stdout: string;
   stderr: string;

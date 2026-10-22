@@ -231,6 +231,8 @@ A `failure` carried up from a subloop child has the child's `code` and `resumabl
 
 ## Run events (Decided kinds, Draft payloads)
 
+Script execution records `script.dispatched { nodeId, visitId, dispatchId }` before calling the process runner. A script failure's optional `script` provenance records `{ visitId, dispatchId?, state, exitCode? }`, where `state` is `definitely-not-started`, `outcome-uncertain`, or `completed`. `SCRIPT_START_FAILED` and `SCRIPT_OUTCOME_UNCERTAIN` are resumable failures; the latter requires an explicit retry choice because the previous attempt may already have produced its effect (05).
+
 Each event has `runId`, `seq`, `ts`, `type`, optional `nodeId`, and a typed `payload`. Large payloads are stored as artifacts and referenced.
 
 | Type                                                                 | Payload                                                                                               |

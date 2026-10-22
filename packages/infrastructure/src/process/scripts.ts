@@ -52,18 +52,45 @@ export class ProcessScripts implements ScriptPort {
   }
 
   run(request: ScriptRunRequest): Promise<ScriptRunResult> {
+    const notStarted: ScriptRunResult = {
+      state: 'definitely-not-started',
+      exitCode: null,
+      stdout: '',
+      stderr: '',
+      stdoutBytes: 0,
+      stderrBytes: 0,
+      timedOut: false,
+      stdoutOverflow: false,
+      stderrOverflow: false,
+    };
+    // Do not spawn and then kill a command whose cancellation is already known.
+    if (request.signal.aborted) return Promise.resolve(notStarted);
     const stdout = new BoundedOutputCapture(request.maxStdoutBytes ?? this.maxOutputBytes);
     const stderr = new BoundedOutputCapture(request.maxStderrBytes ?? this.maxOutputBytes);
     return new Promise((resolve) => {
-      const child = this.spawnImpl(request.command, request.args, {
-        cwd: request.cwd,
-        env: { ...(request.inheritEnv === false ? {} : this.baseEnv), ...request.env },
-        stdio: ['pipe', 'pipe', 'pipe'],
-        windowsHide: true,
-        detached: this.platform !== 'win32',
-        shell: false,
-      });
+      let child: ChildProcess;
+      try {
+        child = this.spawnImpl(request.command, request.args, {
+          cwd: request.cwd,
+          env: { ...(request.inheritEnv === false ? {} : this.baseEnv), ...request.env },
+          stdio: ['pipe', 'pipe', 'pipe'],
+          windowsHide: true,
+          detached: this.platform !== 'win32',
+          shell: false,
+        });
+      } catch {
+        // Node rejects some commands synchronously (notably .cmd/.bat with EINVAL).
+        resolve({
+          ...notStarted,
+          stderr: request.maxStderrBytes === undefined ? 'spawn failed: PROCESS_START_FAILED' : '',
+        });
+        return;
+      }
 
+      let spawned = false;
+      child.once('spawn', () => {
+        spawned = true;
+      });
       let timedOut = false;
       let settled = false;
       child.stdout?.on('data', (chunk: Buffer) => {
@@ -85,20 +112,24 @@ export class ProcessScripts implements ScriptPort {
       if (request.signal.aborted) onAbort();
       else request.signal.addEventListener('abort', onAbort, { once: true });
 
-      const finish = (exitCode: number | null, spawnFailed = false): void => {
+      const finish = (
+        exitCode: number | null,
+        state: ScriptRunResult['state'] = 'completed',
+      ): void => {
         if (settled) return;
         settled = true;
         if (timer) clearTimeout(timer);
         request.signal.removeEventListener('abort', onAbort);
         const errorText = stderr.text();
         resolve({
+          state,
           exitCode,
           timedOut,
           stdout: stdout.text(),
           stdoutBytes: stdout.byteLength,
           stderrBytes: stderr.byteLength,
           stderr:
-            spawnFailed && request.maxStderrBytes === undefined
+            state === 'definitely-not-started' && request.maxStderrBytes === undefined
               ? `${errorText}${errorText ? '\n' : ''}spawn failed: PROCESS_START_FAILED`
               : errorText,
           stderrOverflow: stderr.overflow,
@@ -107,7 +138,8 @@ export class ProcessScripts implements ScriptPort {
       };
 
       child.on('error', () => {
-        finish(null, true);
+        if (spawned) kill();
+        finish(null, spawned ? 'outcome-uncertain' : 'definitely-not-started');
       });
       child.on('close', (code) => {
         finish(code);

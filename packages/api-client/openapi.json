@@ -4294,6 +4294,8 @@
               "HARNESS_TERMINATION_UNCONFIRMED",
               "WORKING_DIRECTORY_MISSING",
               "SCRIPT_EXIT_CODE",
+              "SCRIPT_START_FAILED",
+              "SCRIPT_OUTCOME_UNCERTAIN",
               "SCRIPT_TIMEOUT",
               "INFERENCE_TIMEOUT",
               "OUTPUT_SCHEMA_MISMATCH",
@@ -4339,6 +4341,38 @@
           },
           "details": {
             "$ref": "#/components/schemas/JsonValueInput"
+          },
+          "script": {
+            "type": "object",
+            "properties": {
+              "visitId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "dispatchId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "state": {
+                "type": "string",
+                "enum": [
+                  "definitely-not-started",
+                  "outcome-uncertain",
+                  "completed"
+                ]
+              },
+              "exitCode": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "visitId",
+              "state"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -5972,6 +6006,52 @@
               "type",
               "nodeId",
               "progress"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "runId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "seq": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "ts": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "type": {
+                "type": "string",
+                "const": "script.dispatched"
+              },
+              "nodeId": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+              },
+              "visitId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "dispatchId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              }
+            },
+            "required": [
+              "runId",
+              "seq",
+              "ts",
+              "type",
+              "nodeId",
+              "visitId",
+              "dispatchId"
             ],
             "additionalProperties": false
           },
@@ -11918,6 +11998,8 @@
               "HARNESS_TERMINATION_UNCONFIRMED",
               "WORKING_DIRECTORY_MISSING",
               "SCRIPT_EXIT_CODE",
+              "SCRIPT_START_FAILED",
+              "SCRIPT_OUTCOME_UNCERTAIN",
               "SCRIPT_TIMEOUT",
               "INFERENCE_TIMEOUT",
               "OUTPUT_SCHEMA_MISMATCH",
@@ -11963,6 +12045,38 @@
           },
           "details": {
             "$ref": "#/components/schemas/JsonValue"
+          },
+          "script": {
+            "type": "object",
+            "properties": {
+              "visitId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "dispatchId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "state": {
+                "type": "string",
+                "enum": [
+                  "definitely-not-started",
+                  "outcome-uncertain",
+                  "completed"
+                ]
+              },
+              "exitCode": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "visitId",
+              "state"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -13608,6 +13722,52 @@
               "type",
               "nodeId",
               "progress"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "runId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "seq": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "ts": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "type": {
+                "type": "string",
+                "const": "script.dispatched"
+              },
+              "nodeId": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+              },
+              "visitId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "dispatchId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              }
+            },
+            "required": [
+              "runId",
+              "seq",
+              "ts",
+              "type",
+              "nodeId",
+              "visitId",
+              "dispatchId"
             ],
             "additionalProperties": false
           },

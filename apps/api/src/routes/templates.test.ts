@@ -212,6 +212,7 @@ describe('template API without runtime authority', () => {
           stdoutOverflow: false,
           stderrBytes: 0,
           stderrOverflow: false,
+          state: 'completed' as const,
           timedOut: false,
         });
       },
@@ -282,6 +283,7 @@ describe('template API without runtime authority', () => {
                   stdoutOverflow: false,
                   stderrBytes: 0,
                   stderrOverflow: false,
+                  state: 'completed' as const,
                   timedOut: false,
                 }),
               { once: true },

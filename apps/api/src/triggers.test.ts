@@ -973,6 +973,7 @@ describe('poll triggers', () => {
       stdoutOverflow: false,
       stderrBytes: 0,
       stderrOverflow: false,
+      state: 'completed' as const,
       timedOut: false,
     }));
     clock.advance(5_000);
@@ -995,6 +996,7 @@ describe('poll triggers', () => {
       stdoutOverflow: false,
       stderrBytes: 0,
       stderrOverflow: false,
+      state: 'completed' as const,
       timedOut: false,
     }));
     clock.advance(5_000);
@@ -1660,6 +1662,7 @@ describe('body signing and durable admission', () => {
         stdoutBytes: 31,
         stderrBytes: 0,
         stderrOverflow: false,
+        state: 'completed' as const,
         timedOut: false,
         stdoutOverflow: false,
       });
@@ -1747,6 +1750,7 @@ describe('body signing and durable admission', () => {
         stdoutBytes: 16,
         stderrBytes: 0,
         stderrOverflow: false,
+        state: 'completed' as const,
         timedOut: false,
         stdoutOverflow: false,
       });
@@ -1851,6 +1855,7 @@ describe('bounded items-mode poll integration', () => {
     stdoutBytes: new TextEncoder().encode(stdout).byteLength,
     stderrBytes: 17,
     stderrOverflow: false,
+    state: 'completed' as const,
     timedOut: false,
     stdoutOverflow: false,
     ...extra,

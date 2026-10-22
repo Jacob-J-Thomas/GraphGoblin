@@ -1,7 +1,33 @@
 import { describe, expect, it } from 'vitest';
 import { DecisionConfigSchema, LoopDefinitionSchema } from '@graphgoblin/contracts';
 import { minimalLoop } from '@graphgoblin/contracts/testing';
-import { describeDefinition } from './describe.js';
+import { describeDefinition, summarizeRun } from './describe.js';
+import { RunRecordSchema } from '@graphgoblin/contracts';
+import { fakeUlid, samplePin } from '@graphgoblin/contracts/testing';
+
+it('preserves script uncertainty and retry provenance in the MCP run summary (#321)', () => {
+  const failure = {
+    code: 'SCRIPT_OUTCOME_UNCERTAIN',
+    message:
+      'The previous script attempt may already have produced its effect. Resume runs it again.',
+    resumable: true,
+    script: { visitId: 'run:3', dispatchId: fakeUlid('dispatch'), state: 'outcome-uncertain' },
+  };
+  const run = RunRecordSchema.parse({
+    id: fakeUlid('run'),
+    ownerId: 'local',
+    loopId: fakeUlid('loop'),
+    versionId: fakeUlid('version'),
+    invocationId: fakeUlid('invocation'),
+    pinned: samplePin(),
+    status: 'failed',
+    iteration: 1,
+    createdAt: '2026-10-22T00:00:00.000Z',
+    lastEventSeq: 5,
+    failure,
+  });
+  expect(summarizeRun(run).failure).toEqual(failure);
+});
 
 describe('evaluator-specific decision descriptions', () => {
   it.each([undefined, 60])(

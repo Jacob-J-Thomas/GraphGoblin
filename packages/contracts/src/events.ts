@@ -162,6 +162,13 @@ export const RunEventSchema = z.discriminatedUnion('type', [
   }),
   z.strictObject({
     ...Base,
+    type: z.literal('script.dispatched'),
+    nodeId: SlugSchema,
+    visitId: z.string().min(1).max(128),
+    dispatchId: UlidSchema,
+  }),
+  z.strictObject({
+    ...Base,
     type: z.literal('harness.session'),
     nodeId: SlugSchema,
     harness: HarnessIdSchema,

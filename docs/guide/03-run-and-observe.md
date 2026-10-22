@@ -246,6 +246,8 @@ A subloop creates a separate child run with its own version, thread, and log. Th
 
 ## Act on failure reasons
 
+`SCRIPT_START_FAILED` means the runner proved the command did not start. Fix the start configuration, then Resume. `SCRIPT_OUTCOME_UNCERTAIN` means the previous attempt may already have produced its effect before its disposition was recorded. Recovery leaves it failed; **Recover script** opens an explicit choice: **Resume** runs it again in this run, **Replay** starts a new run from the failed node, **Cancel** leaves it failed. Both retry choices may repeat the effect. `failure.script` identifies the visit, dispatch, execution state and any known exit code. Completed nonzero exits still use `SCRIPT_EXIT_CODE`.
+
 A handler failure looks like this inside the run snapshot's `failure` field:
 
 <!-- guide-example: failure-shape -->
@@ -270,6 +272,8 @@ Read `code`, `message`, `nodeId`, `resumable`, and any `details`. After fixing a
 | `HARNESS_TURN_FAILED`                                               | Read the harness message and progress; check model availability, sandbox, CLI, and provider connectivity.                                                                  |
 | `WORKING_DIRECTORY_MISSING`                                         | Check the workspace path and permissions. The current filesystem adapter creates missing directories; filesystem failures can instead report `INTERNAL_ERROR`.             |
 | `SCRIPT_EXIT_CODE`                                                  | Fix the program or its patch output; add a route in a new version for an expected nonzero outcome.                                                                         |
+| `SCRIPT_START_FAILED`                                               | Install or repair the pinned command or its environment, then Resume. A node configuration change needs a new published version and a new run.                             |
+| `SCRIPT_OUTCOME_UNCERTAIN`                                          | Inspect the possible external effect; explicitly Resume or Replay only when you choose to run it again. Cancel leaves it failed.                                           |
 | `SCRIPT_TIMEOUT`                                                    | Resolve the slow program, or increase its timeout in a new version.                                                                                                        |
 | `INFERENCE_TIMEOUT`                                                 | Resolve slow harness work, or increase the node timeout in a new version.                                                                                                  |
 | `OUTPUT_SCHEMA_MISMATCH`                                            | Inspect raw output and repair attempts; correct the prompt, schema, or repair policy in a new version.                                                                     |

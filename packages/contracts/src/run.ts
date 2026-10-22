@@ -41,6 +41,8 @@ export const RunErrorCodeSchema = z.enum([
   'HARNESS_TERMINATION_UNCONFIRMED',
   'WORKING_DIRECTORY_MISSING',
   'SCRIPT_EXIT_CODE',
+  'SCRIPT_START_FAILED',
+  'SCRIPT_OUTCOME_UNCERTAIN',
   'SCRIPT_TIMEOUT',
   'INFERENCE_TIMEOUT',
   'OUTPUT_SCHEMA_MISMATCH',
@@ -76,12 +78,28 @@ export const RunErrorCodeSchema = z.enum([
 ]);
 export type RunErrorCode = z.infer<typeof RunErrorCodeSchema>;
 
+export const ScriptExecutionStateSchema = z.enum([
+  'definitely-not-started',
+  'outcome-uncertain',
+  'completed',
+]);
+export type ScriptExecutionState = z.infer<typeof ScriptExecutionStateSchema>;
+
+/** The logical visit survives retries; each dispatched process has a fresh dispatch identity. */
+export const ScriptFailureSchema = z.strictObject({
+  visitId: z.string().min(1).max(128),
+  dispatchId: UlidSchema.optional(),
+  state: ScriptExecutionStateSchema,
+  exitCode: z.number().int().optional(),
+});
+
 export const RunFailureSchema = z.strictObject({
   code: RunErrorCodeSchema,
   message: z.string().max(10_000),
   nodeId: SlugSchema.optional(),
   resumable: z.boolean(),
   details: JsonValueSchema.optional(),
+  script: ScriptFailureSchema.optional(),
 });
 export type RunFailure = z.infer<typeof RunFailureSchema>;
 
