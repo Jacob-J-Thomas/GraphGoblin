@@ -192,30 +192,27 @@ async function listedName(dir: string, name: string): Promise<string> {
 
 /**
  * The database path's segments below the data directory, found by walking its ancestors up to the
- * one that is the data directory by filesystem identity (the configured spelling or its physical
- * path), never by comparing path strings: a parent that keeps `Data` and `data` apart would
- * otherwise let one directory's database be planned against the other. Ancestors that do not exist
- * yet contribute their configured spelling. Undefined when no ancestor is the data directory.
+ * one whose physical directory is the data directory by filesystem identity, never by comparing
+ * path strings: a parent that keeps `Data` and `data` apart would otherwise let one directory's
+ * database be planned against the other. An ancestor is compared by its physical path, so an alias
+ * of the data directory itself (a junction or symbolic link to it, in either direction of the
+ * configuration) is the data directory; a link below it is left for the spelling resolution to
+ * refuse. Ancestors that do not exist yet contribute their configured spelling. Undefined when no
+ * ancestor is the data directory.
  */
 async function relativeToDataDir(
-  configured: string,
   dataDir: string,
   databaseFile: string,
 ): Promise<string[] | undefined> {
-  const targets = new Set(
-    [await identityOf(configured), await identityOf(dataDir)].filter(
-      (identity): identity is string => identity !== undefined,
-    ),
-  );
-  if (targets.size === 0) return undefined;
+  const target = await identityOf(dataDir);
+  if (target === undefined) return undefined;
   const tail: string[] = [];
   let current = resolve(databaseFile);
   for (;;) {
     const parent = dirname(current);
     if (parent === current) return undefined;
     tail.unshift(basename(current));
-    const identity = await identityOf(parent);
-    if (identity !== undefined && targets.has(identity)) return tail;
+    if ((await identityOf(await physicalPath(parent))) === target) return tail;
     current = parent;
   }
 }
@@ -590,7 +587,7 @@ export async function resetDataDirectory(
       'GG_DB_URL does not name a local database file; a reset removes only files inside the data directory',
     );
   const dataDir = await realpath(configured);
-  const segments = await relativeToDataDir(configured, dataDir, databaseFile);
+  const segments = await relativeToDataDir(dataDir, databaseFile);
   if (!segments)
     throw new ResetRefusedError(
       `the database ${databaseFile} is outside the data directory ${configured}; a reset removes only paths inside it, so remove that database yourself or point GG_DB_URL inside the data directory`,

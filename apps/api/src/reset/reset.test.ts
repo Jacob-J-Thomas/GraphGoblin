@@ -17,7 +17,7 @@ import {
   type ResetCliOptions,
 } from './reset.js';
 import { readStoreFacts, type StoreFacts } from './store-facts.js';
-import { kindOf } from './tree.js';
+import { identityOf, kindOf } from './tree.js';
 import {
   copyStore,
   READER_ARGUMENTS,
@@ -691,6 +691,28 @@ describe('refused resets change nothing', () => {
     },
   );
 
+  // An alias of the data directory itself is the data directory in both directions of the
+  // configuration (the Sol re-review's round-5 reproduction refused the database configured
+  // through a junction while the data directory was configured physically).
+  it('accepts the database configured through a link to the data directory and resets it', async () => {
+    const { base, dataDir } = await prepare('current');
+    const alias = join(base, 'alias');
+    await linkDirectory(dataDir, alias);
+    const url = `file:${join(alias, 'graphgoblin.db').replaceAll('\\', '/')}`;
+    const dry = await reset(['--reset'], { GG_DATA_DIR: dataDir, GG_DB_URL: url });
+    expect(dry.code).toBe(0);
+    expect(dry.out).toMatch(/\n {2}graphgoblin\.db +database +1 file/);
+    const confirmed = await reset(['--reset', '--yes', '--data-dir', dataDir], {
+      GG_DATA_DIR: dataDir,
+      GG_DB_URL: url,
+    });
+    expect(confirmed.code).toBe(0);
+    expect(confirmed.out).toContain('Reset complete');
+    expect((await readdir(dataDir)).sort()).not.toContain('graphgoblin.db');
+    // The alias itself was never removed or followed into another directory.
+    expect((await lstat(alias)).isSymbolicLink()).toBe(true);
+  });
+
   // A Windows alternate data stream shares its file's identity but is not the file (the Sol
   // re-review's round-4 reproduction removed the whole file when a stream was configured).
   it.runIf(process.platform === 'win32')(
@@ -1013,6 +1035,22 @@ describe('entry kinds and manifest invariants', () => {
     isDirectory: () => flags.directory ?? false,
     isFile: () => flags.file ?? false,
   });
+
+  // Windows reports device 0 for every volume, so the identity carries the volume root (the Sol
+  // re-review's round-5 observation: four volume roots shared one device and file index).
+  it.runIf(process.platform === 'win32')(
+    'tells the roots of two volumes apart',
+    async ({ skip }) => {
+      const roots: string[] = [];
+      for (const letter of 'CDEFGHIJKLMNOPQRSTUVWXYZ') {
+        const root = `${letter}:\\`;
+        if ((await identityOf(root)) !== undefined) roots.push(root);
+        if (roots.length === 2) break;
+      }
+      if (roots.length < 2) skip();
+      expect(await identityOf(roots[0]!)).not.toBe(await identityOf(roots[1]!));
+    },
+  );
 
   it('classifies anything that is neither a file, a directory nor a link as other', () => {
     expect(kindOf(stats({ file: true }))).toBe('file');

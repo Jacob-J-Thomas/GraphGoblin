@@ -1,5 +1,5 @@
 import { lstat, readdir, rmdir, unlink } from 'node:fs/promises';
-import { dirname, isAbsolute, join, relative, sep } from 'node:path';
+import { dirname, isAbsolute, join, parse, relative, resolve, sep } from 'node:path';
 
 /**
  * Filesystem entries of a reset, read and removed without following links (ADR-0042). A symbolic
@@ -25,15 +25,19 @@ export function hasCode(error: unknown, code: string): boolean {
 }
 
 /**
- * The identity of the entry at `path` without following links: the device and file index as
- * 64-bit values, which is how the filesystem itself tells one file from another. Two spellings of
- * one entry (letter case on a case-insensitive volume, a Windows short name) share it; two files
- * whose names merely fold alike never do. Undefined when nothing is there.
+ * The identity of the entry at `path` without following links: the volume root of the path, the
+ * device and the file index as 64-bit values, which is how the filesystem itself tells one file
+ * from another. Two spellings of one entry (letter case on a case-insensitive volume, a Windows
+ * short name) share it; two files whose names merely fold alike never do. The volume root is part
+ * of the key because Windows reports the same device number for every volume, so a file index alone
+ * can repeat across `C:\` and `D:\`; two drive letters for one volume therefore compare as
+ * different, which only ever refuses more. Undefined when nothing is there.
  */
 export async function identityOf(path: string): Promise<string | undefined> {
   try {
     const stats = await lstat(path, { bigint: true });
-    return `${String(stats.dev)}:${String(stats.ino)}`;
+    const root = parse(resolve(path)).root.toLowerCase();
+    return `${root}|${String(stats.dev)}:${String(stats.ino)}`;
   } catch (error) {
     if (hasCode(error, 'ENOENT') || hasCode(error, 'ENOTDIR')) return undefined;
     throw error;
