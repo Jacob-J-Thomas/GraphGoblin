@@ -7,6 +7,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { acquireDataDirLock } from '../data-dir-lock.js';
 import {
   assertDisjointManifest,
+  CASE_INSENSITIVE_NAMES,
   executeReset,
   formatBytes,
   MANIFEST_LIST_LIMIT,
@@ -578,6 +579,58 @@ describe('refused resets change nothing', () => {
     },
   );
 
+  // The Sol re-review (2026-10-21) found the reserved names and the manifest compared case-sensitive
+  // strings, so on a case-insensitive volume `ARTIFACTS` named the same file as `artifacts` and
+  // was listed twice, and `GRAPHGOBLIN.DB` was both removed and kept. Only a case-insensitive host
+  // can show this; on a case-sensitive volume those are different files and legitimate names.
+  it.runIf(CASE_INSENSITIVE_NAMES)(
+    'compares names the way a case-insensitive volume does: reserved names in any case are refused and the database is listed once',
+    async () => {
+      const base = await mkdtemp(join(tmpdir(), 'gg-reset-'));
+      bases.push(base);
+      const dataDir = join(base, 'data');
+      await mkdir(dataDir);
+      await writeFile(join(dataDir, 'artifacts'), 'a database with a reserved name');
+      await writeFile(join(dataDir, 'workspaces'), 'another one');
+      for (const [spelling, reserved] of [
+        ['ARTIFACTS', 'the artifacts directory'],
+        ['Workspaces', 'the workspaces directory'],
+        ['GraphGoblin.Lock', "the reset's lock file"],
+      ] as const) {
+        const before = await snapshotTree(base);
+        const result = await reset(
+          ['--reset', '--yes', '--data-dir', dataDir],
+          {
+            GG_DATA_DIR: dataDir,
+            GG_DB_URL: `file:${join(dataDir, spelling).replaceAll('\\', '/')}`,
+          },
+          { readStore: () => Promise.reject(new Error('the store must not be read')) },
+        );
+        expect(result.code).toBe(1);
+        expect(result.err).toContain(`the database ${spelling} has the name of ${reserved}`);
+        expect(await snapshotTree(base)).toEqual(before);
+      }
+      // A current store whose configured spelling differs from the stored file's: the manifest
+      // removes the database once and never also keeps it under its stored spelling.
+      const { base: storeBase, dataDir: storeDir } = await prepare('current');
+      const upper = `file:${join(storeDir, 'GRAPHGOBLIN.DB').replaceAll('\\', '/')}`;
+      const dry = await reset(['--reset'], { GG_DATA_DIR: storeDir, GG_DB_URL: upper });
+      expect(dry.code).toBe(0);
+      expect(dry.out).toMatch(/\n {2}GRAPHGOBLIN\.DB +database +1 file/);
+      expect(dry.out).not.toMatch(/graphgoblin\.db(-wal|-shm)? +not part of the store/);
+      const before = await snapshotTree(storeBase);
+      const confirmed = await reset(['--reset', '--yes', '--data-dir', storeDir], {
+        GG_DATA_DIR: storeDir,
+        GG_DB_URL: upper,
+      });
+      expect(confirmed.code).toBe(0);
+      expect(confirmed.out).toContain('Reset complete');
+      const after = await snapshotTree(storeBase);
+      expect(after.map((record) => record.path)).not.toContain('data/graphgoblin.db');
+      expect(after.length).toBeLessThan(before.length);
+    },
+  );
+
   // Node cannot create a FIFO itself; POSIX hosts (CI) use mkfifo, Windows has no FIFO files.
   it.skipIf(process.platform === 'win32')(
     'refuses a database that is a FIFO before reading it',
@@ -832,6 +885,16 @@ describe('entry kinds and manifest invariants', () => {
     ).toThrow('the manifest would both remove and keep workspaces');
     expect(() =>
       assertDisjointManifest([{ path: 'artifacts', what: 'artifacts', entries: [entry] }], []),
+    ).not.toThrow();
+    // Under a case-insensitive rule, `Artifacts` and `artifacts` are one entry.
+    const mixed = [
+      { path: 'Artifacts', what: 'database', entries: [{ ...entry, path: 'Artifacts' }] },
+    ];
+    expect(() =>
+      assertDisjointManifest(mixed, [{ path: 'artifacts', why: 'not part of the store' }], true),
+    ).toThrow('the manifest would both remove and keep artifacts');
+    expect(() =>
+      assertDisjointManifest(mixed, [{ path: 'artifacts', why: 'not part of the store' }], false),
     ).not.toThrow();
   });
 });

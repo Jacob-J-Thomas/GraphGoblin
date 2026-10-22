@@ -113,6 +113,19 @@ export class ResetIncompleteError extends Error {
 const LOCK_FILES = new Set(['graphgoblin.lock', 'graphgoblin.lock.reclaim']);
 /** Directories a reset removes by name; a database may not be named like one or live inside one. */
 const RESERVED_ROOTS = new Set(['artifacts', 'workspaces']);
+
+/**
+ * Names are compared the way the filesystem compares them. Windows and macOS volumes are
+ * case-insensitive by default, so `ARTIFACTS` and `artifacts` are one entry there and a database
+ * configured as `GRAPHGOBLIN.DB` is the stored `graphgoblin.db`. Over-refusing on a case-sensitive
+ * macOS volume costs a rename; under-refusing would list one entry twice or both remove and keep it.
+ */
+export const CASE_INSENSITIVE_NAMES = process.platform === 'win32' || process.platform === 'darwin';
+
+/** The comparison key of a path or name under the host's case rule. */
+export function nameKey(path: string, caseInsensitive = CASE_INSENSITIVE_NAMES): string {
+  return caseInsensitive ? path.toLowerCase() : path;
+}
 const DATABASE_PARTS = [
   ['', 'database'],
   ['-wal', 'SQLite write-ahead log'],
@@ -150,13 +163,13 @@ export async function planReset({
   // them, or inside one of them, would be listed twice or under both Removes and Keeps, so the
   // configuration is refused before anything is listed.
   const root = segments[0] ?? '';
-  if (RESERVED_ROOTS.has(root))
+  if (RESERVED_ROOTS.has(nameKey(root)))
     throw new ResetRefusedError(
       segments.length > 1
-        ? `the database ${database} is inside ${root}/, which a reset removes; move it first`
-        : `the database ${database} has the name of the ${root} directory, which a reset removes; rename it first`,
+        ? `the database ${database} is inside ${nameKey(root)}/, which a reset removes; move it first`
+        : `the database ${database} has the name of the ${nameKey(root)} directory, which a reset removes; rename it first`,
     );
-  if (segments.length === 1 && LOCK_FILES.has(database))
+  if (segments.length === 1 && LOCK_FILES.has(nameKey(database)))
     throw new ResetRefusedError(
       `the database ${database} has the name of the reset's lock file; rename it first`,
     );
@@ -208,15 +221,15 @@ export async function planReset({
   const artifacts = await listEntry(dataDir, 'artifacts');
   if (artifacts.length) targets.push({ path: 'artifacts', what: 'artifacts', entries: artifacts });
   targets.push(...databaseTargets);
-  const owned = new Set([...RESERVED_ROOTS, ...LOCK_FILES]);
-  if (segments.length > 1) owned.add(root);
-  else for (const [suffix] of DATABASE_PARTS) owned.add(database + suffix);
+  const owned = new Set([...RESERVED_ROOTS, ...LOCK_FILES].map((name) => nameKey(name)));
+  if (segments.length > 1) owned.add(nameKey(root));
+  else for (const [suffix] of DATABASE_PARTS) owned.add(nameKey(database + suffix));
   for (const name of (await readdir(dataDir)).sort())
-    if (!owned.has(name))
+    if (!owned.has(nameKey(name)))
       kept.push({
         path: name,
         why:
-          name === 'master.key'
+          nameKey(name) === 'master.key'
             ? 'secret-store key; kept so the secrets in a backup of this store stay readable'
             : 'not part of the store',
       });
@@ -228,21 +241,24 @@ export async function planReset({
 /**
  * A manifest names every path once and never both removes and keeps one; a reset that could
  * remove an entry twice would stop part of the way, and one that keeps what it removes would lie.
- * The refusals above make this unreachable for any configuration; it stays as the final guard.
+ * Paths are compared under the host's case rule. The refusals above make this unreachable for any
+ * configuration; it stays as the final guard.
  */
 export function assertDisjointManifest(
   targets: readonly ResetTarget[],
   kept: readonly KeptEntry[],
+  caseInsensitive = CASE_INSENSITIVE_NAMES,
 ): void {
   const removed = new Set<string>();
   for (const target of targets)
     for (const entry of target.entries) {
-      if (removed.has(entry.path))
+      const key = nameKey(entry.path, caseInsensitive);
+      if (removed.has(key))
         throw new ResetRefusedError(`the manifest would list ${entry.path} twice`);
-      removed.add(entry.path);
+      removed.add(key);
     }
   for (const entry of kept)
-    if (removed.has(entry.path))
+    if (removed.has(nameKey(entry.path, caseInsensitive)))
       throw new ResetRefusedError(`the manifest would both remove and keep ${entry.path}`);
 }
 
