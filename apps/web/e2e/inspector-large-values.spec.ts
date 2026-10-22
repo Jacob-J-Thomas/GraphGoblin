@@ -7,25 +7,37 @@ const LONG = 'v'.repeat(20_000);
 /** A wait prompt at most 10,000 characters long is what the run contract accepts. */
 const PROMPT = 'v'.repeat(9_000);
 
-function inferenceLoop(name: string) {
+function inferenceLoop(name: string, waitBeforeExit = false) {
   const source = minimalLoop();
+  const nodes = [
+    source.nodes[0]!,
+    {
+      id: 'work',
+      kind: 'inference',
+      label: 'Work',
+      config: { prompt: { template: 'Produce one long single-line value.' } },
+    },
+    ...(waitBeforeExit
+      ? [
+          {
+            id: 'approve',
+            kind: 'wait',
+            label: 'Approve',
+            config: { mode: 'input', prompt: 'Approve?' },
+          },
+        ]
+      : []),
+    { ...source.nodes[1]!, config: { returns: 'outputs.work.value' } },
+  ];
   return {
     ...source,
     name,
-    nodes: [
-      source.nodes[0]!,
-      {
-        id: 'work',
-        kind: 'inference',
-        label: 'Work',
-        config: { prompt: { template: 'Produce one long single-line value.' } },
-      },
-      { ...source.nodes[1]!, config: { returns: 'outputs.work.value' } },
-    ].map((node, index) => ({ ...node, ui: { x: index * 260, y: 80 } })),
-    edges: [
-      { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'work' } },
-      { id: 'e2', from: { node: 'work', port: 'out' }, to: { node: 'done' } },
-    ],
+    nodes: nodes.map((node, index) => ({ ...node, ui: { x: index * 260, y: 80 } })),
+    edges: nodes.slice(1).map((node, index) => ({
+      id: `e${index + 1}`,
+      from: { node: nodes[index]!.id, port: 'out' },
+      to: { node: node.id },
+    })),
   };
 }
 
@@ -147,3 +159,55 @@ for (const viewport of [
     expect(after.document).toBeLessThanOrEqual(after.window);
   });
 }
+
+test('the keyboard stays inside an expanded value that a live event replaces (#259)', async ({
+  page,
+  request,
+}) => {
+  const instance = await control(request, '/apps');
+  const url = String(instance['url']);
+  const instanceId = instance['instanceId'];
+  const created = await request.post(url + '/loops', {
+    data: { definition: inferenceLoop('Live replacement', true) },
+  });
+  expect(created.status(), await created.text()).toBe(201);
+  const { loop } = (await created.json()) as { loop: { id: string } };
+  expect((await request.post(url + '/loops/' + loop.id + '/publish')).status()).toBe(200);
+  await control(request, '/harness/script', { instanceId, turns: [{ finalText: LONG }] });
+  const started = await request.post(url + '/loops/' + loop.id + '/runs', { data: { input: {} } });
+  expect(started.status()).toBe(202);
+  const runId = RunRecordSchema.parse(((await started.json()) as { run: unknown }).run).id;
+  const run = async () =>
+    RunRecordSchema.parse(await (await request.get(url + '/runs/' + runId)).json());
+  await expect
+    .poll(async () => (await run()).status, { timeout: 30_000, intervals: [250, 500, 1000] })
+    .toBe('waiting');
+
+  await page.goto(url + '/app/runs/' + runId);
+  // The thread at the wait carries the long value; read it whole, with the keyboard on it.
+  await page.getByText('Full thread JSON', { exact: true }).click();
+  await page.getByRole('button', { name: 'Show all of Full thread JSON' }).click();
+  const region = page.getByRole('region', { name: 'Full thread JSON' });
+  await region.focus();
+  await expect(region).toBeFocused();
+
+  // Input arrives from elsewhere: the run finishes, the thread at the latest event is a new
+  // value, the region collapses, and the keyboard lands on its Show all, never on the body.
+  const waiting = (await run()).waiting;
+  expect(waiting).toBeDefined();
+  const answered = await request.post(url + '/runs/' + runId + '/input', {
+    data: { waitId: waiting!.waitId, input: { approved: true } },
+  });
+  expect(answered.status(), await answered.text()).toBe(200);
+  await expect(
+    page.getByRole('list', { name: 'Timeline' }).getByText('run.finished'),
+  ).toBeVisible();
+  const showAll = page.getByRole('button', { name: 'Show all of Full thread JSON' });
+  await expect(showAll).toBeVisible();
+  await expect(showAll).toBeFocused();
+  expect(await page.evaluate(() => document.activeElement?.tagName)).not.toBe('BODY');
+  // Tab moves on from the control; nothing is left focusable behind it.
+  await page.keyboard.press('Tab');
+  await expect(showAll).not.toBeFocused();
+  await expect(page.getByTestId('thread-json')).not.toHaveAttribute('tabindex', /.*/);
+});

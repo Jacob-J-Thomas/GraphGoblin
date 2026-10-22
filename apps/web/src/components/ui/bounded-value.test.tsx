@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { BoundedValue, CELL_PREVIEW_CHARS, VALUE_PREVIEW_CHARS } from './bounded-value.js';
@@ -153,14 +153,15 @@ describe('BoundedValue', () => {
     };
     const { rerender } = render(<BoundedValue value={big} label="Variables" testId="value" />);
     await user.click(screen.getByRole('button', { name: 'Show all of Variables' }));
-    screen.getByRole('region', { name: 'Variables' }).focus();
+    act(() => screen.getByRole('region', { name: 'Variables' }).focus());
     expect(screen.getByRole('region', { name: 'Variables' })).toHaveFocus();
     // Large to large: the new value's Show all takes the focus.
     rerender(<BoundedValue value={other} label="Variables" testId="value" />);
     expect(screen.getByRole('button', { name: 'Show all of Variables' })).toHaveFocus();
+    expect(screen.getByTestId('value')).not.toHaveAttribute('tabindex');
     // Large to small: the text itself keeps it, without becoming a tab stop, until it moves on.
     await user.click(screen.getByRole('button', { name: 'Show all of Variables' }));
-    screen.getByRole('region', { name: 'Variables' }).focus();
+    act(() => screen.getByRole('region', { name: 'Variables' }).focus());
     rerender(<BoundedValue value={{ topic: 'loops' }} label="Variables" testId="value" />);
     expect(screen.getByTestId('value')).toHaveFocus();
     expect(screen.getByTestId('value')).toHaveAttribute('tabindex', '-1');
@@ -170,8 +171,41 @@ describe('BoundedValue', () => {
     // A keyboard elsewhere is left alone.
     rerender(<BoundedValue value={big} label="Variables" testId="value" />);
     await user.click(screen.getByRole('button', { name: 'Show all of Variables' }));
-    (document.activeElement as HTMLElement).blur();
+    act(() => (document.activeElement as HTMLElement).blur());
     rerender(<BoundedValue value={other} label="Variables" testId="value" />);
     expect(document.activeElement).toBe(document.body);
+    expect(screen.getByTestId('value')).not.toHaveAttribute('tabindex');
+  });
+
+  it('hands the keyboard over when the control it was on disappears with the value', async () => {
+    const user = userEvent.setup();
+    const small = { topic: 'loops' };
+    const { rerender } = render(
+      <BoundedValue value={big} label="Variables" fileName="variables" testId="value" />,
+    );
+    // Collapsed, keyboard on Show all; the next value is small and has no controls.
+    act(() => screen.getByRole('button', { name: 'Show all of Variables' }).focus());
+    rerender(<BoundedValue value={small} label="Variables" fileName="variables" testId="value" />);
+    expect(screen.getByTestId('value')).toHaveFocus();
+    expect(screen.getByTestId('value')).toHaveAttribute('tabindex', '-1');
+    // Expanded, keyboard on Download; the controls go, the text takes the keyboard.
+    rerender(<BoundedValue value={big} label="Variables" fileName="variables" testId="value" />);
+    await user.click(screen.getByRole('button', { name: 'Show all of Variables' }));
+    act(() => screen.getByRole('button', { name: 'Download Variables as JSON' }).focus());
+    rerender(<BoundedValue value={small} label="Variables" fileName="variables" testId="value" />);
+    expect(screen.getByTestId('value')).toHaveFocus();
+    // Keyboard on a control that survives the change: it stays there.
+    rerender(<BoundedValue value={big} label="Variables" fileName="variables" testId="value" />);
+    act(() => screen.getByRole('button', { name: 'Download Variables as JSON' }).focus());
+    rerender(
+      <BoundedValue
+        value={{ items: Array.from({ length: 400 }, (_, i) => ({ id: i, note: 'z'.repeat(40) })) }}
+        label="Variables"
+        fileName="variables"
+        testId="value"
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Download Variables as JSON' })).toHaveFocus();
+    expect(screen.getByTestId('value')).not.toHaveAttribute('tabindex');
   });
 });

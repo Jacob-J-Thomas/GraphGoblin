@@ -71,34 +71,42 @@ export function BoundedValue({
   const showAllRef = useRef<HTMLButtonElement>(null);
   const [expandedState, setExpandedState] = useState(false);
   const [shownValue, setShownValue] = useState<unknown>(value);
-  // Counts the times a change of value collapsed an expanded region (the focus effect below).
-  const [collapses, setCollapses] = useState(0);
-  // The collapsed text keeps the keyboard focus it held while expanded, until the focus moves on.
+  // Whether the keyboard is inside this component, tracked by its focus events so that it is
+  // known in the render that sees a new value, before the DOM changes under the focused element.
+  const [ownsFocus, setOwnsFocus] = useState(false);
+  // The text carries the keyboard across a change of value (focusable, not a tab stop) until the
+  // keyboard moves on.
   const [holdsFocus, setHoldsFocus] = useState(false);
+  // Counts the changes of value that happened while the keyboard was inside (the effect below).
+  const [handoffs, setHandoffs] = useState(0);
   // Another value arrived (another event, a live reconstruction, or one shown expanded earlier):
   // it starts bounded. React re-renders at once with the adjusted state; `expanded` is false in
   // the discarded pass too, so the whole text is never formatted for a value that is not expanded.
   if (shownValue !== value) {
     setShownValue(value);
-    if (expandedState) {
-      setExpandedState(false);
-      setCollapses((n) => n + 1);
+    setExpandedState(false);
+    if (ownsFocus) {
+      // The text stays focusable in this same commit, so a focused region never loses its
+      // tabindex while it has the focus, and a removed control has somewhere to hand it to.
+      setHoldsFocus(true);
+      setHandoffs((n) => n + 1);
     }
   }
   const expanded = expandedState && shownValue === value;
-  // A collapse caused by a change of value, while the keyboard was inside this component, would
-  // drop the focus to the body once the region's tabindex is gone. Keep the keyboard here: on the
-  // new value's Show all when it has one, else on the text itself, focusable until it blurs.
+  // After the commit of a change of value made while the keyboard was inside: the browser may
+  // have dropped the focus to the body (a removed control, a region whose tabindex changed).
+  // Put the keyboard on the new value's Show all when it has one, else on the text itself, and
+  // keep the text focusable only while it is what holds the keyboard.
   useLayoutEffect(() => {
-    if (collapses === 0) return;
-    const active = document.activeElement;
-    if (!rootRef.current || !active || !rootRef.current.contains(active)) return;
-    if (showAllRef.current) showAllRef.current.focus();
-    else setHoldsFocus(true);
-  }, [collapses]);
-  useLayoutEffect(() => {
-    if (holdsFocus) preRef.current?.focus();
-  }, [holdsFocus]);
+    if (handoffs === 0) return;
+    const root = rootRef.current;
+    const pre = preRef.current;
+    const inside = root !== null && root.contains(document.activeElement);
+    if (showAllRef.current) {
+      if (!inside || document.activeElement === pre) showAllRef.current.focus();
+    } else if (!inside) pre?.focus();
+    setHoldsFocus(document.activeElement === pre);
+  }, [handoffs]);
   const isText = text && typeof value === 'string';
   // Collapsed: only the preview is produced (a string shows its own prefix; JSON stops at the
   // budget). Expanded: the whole text, once, for as long as this value stays expanded.
@@ -117,7 +125,14 @@ export function BoundedValue({
   const shown = expanded && full !== undefined ? full : preview.text;
   const total = isText ? value.length : full?.length;
   return (
-    <div ref={rootRef} className={cn('grid min-w-0 gap-1.5', className)}>
+    <div
+      ref={rootRef}
+      className={cn('grid min-w-0 gap-1.5', className)}
+      onFocus={() => setOwnsFocus(true)}
+      onBlur={(event) => {
+        if (!rootRef.current?.contains(event.relatedTarget)) setOwnsFocus(false);
+      }}
+    >
       <pre
         ref={preRef}
         // A region that scrolls must be named and reachable from the keyboard.
