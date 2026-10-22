@@ -1,0 +1,323 @@
+{
+  "name": "orderly-backoff",
+  "id": "01M5GHKQHYYB5EX26RN20E4C7P",
+  "expected": "No new attempt on stop; next boot uses attempt two",
+  "actual": [
+    {
+      "id": "01M5GHKQPEWMC7B32QBHWFZ2KK",
+      "channel": {
+        "kind": "webhook",
+        "url": "http://127.0.0.1:5811/stop-backoff"
+      },
+      "status": "delivered",
+      "attempts": 2,
+      "maxAttempts": 5,
+      "inFlight": false,
+      "acknowledgement": "accepted",
+      "effectMayHaveHappened": true,
+      "lastError": {
+        "code": "http",
+        "message": "Webhook returned HTTP 503.",
+        "retryable": true,
+        "acknowledgement": "unknown",
+        "httpStatus": 503
+      }
+    }
+  ],
+  "apiEvents": [
+    {
+      "runId": "01M5GHKQHYYB5EX26RN20E4C7P",
+      "seq": 9,
+      "ts": "2026-10-22T00:54:07.822Z",
+      "type": "delivery.queued",
+      "delivery": {
+        "id": "01M5GHKQPEWMC7B32QBHWFZ2KK",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5811/stop-backoff"
+        },
+        "status": "pending",
+        "attempts": 0,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "not_sent",
+        "effectMayHaveHappened": false
+      }
+    },
+    {
+      "runId": "01M5GHKQHYYB5EX26RN20E4C7P",
+      "seq": 10,
+      "ts": "2026-10-22T00:54:07.877Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5GHKQPEWMC7B32QBHWFZ2KK",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5811/stop-backoff"
+        },
+        "status": "pending",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T00:54:19.874Z"
+      }
+    },
+    {
+      "runId": "01M5GHKQHYYB5EX26RN20E4C7P",
+      "seq": 11,
+      "ts": "2026-10-22T00:54:08.067Z",
+      "type": "delivery.attempt_finished",
+      "delivery": {
+        "id": "01M5GHKQPEWMC7B32QBHWFZ2KK",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5811/stop-backoff"
+        },
+        "status": "pending",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T00:54:10.046Z",
+        "lastError": {
+          "code": "http",
+          "message": "Webhook returned HTTP 503.",
+          "retryable": true,
+          "acknowledgement": "unknown",
+          "httpStatus": 503
+        }
+      }
+    },
+    {
+      "runId": "01M5GHKQHYYB5EX26RN20E4C7P",
+      "seq": 12,
+      "ts": "2026-10-22T00:54:13.729Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5GHKQPEWMC7B32QBHWFZ2KK",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5811/stop-backoff"
+        },
+        "status": "pending",
+        "attempts": 2,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T00:54:28.713Z",
+        "lastError": {
+          "code": "http",
+          "message": "Webhook returned HTTP 503.",
+          "retryable": true,
+          "acknowledgement": "unknown",
+          "httpStatus": 503
+        }
+      }
+    },
+    {
+      "runId": "01M5GHKQHYYB5EX26RN20E4C7P",
+      "seq": 13,
+      "ts": "2026-10-22T00:54:13.853Z",
+      "type": "delivery.finished",
+      "delivery": {
+        "id": "01M5GHKQPEWMC7B32QBHWFZ2KK",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5811/stop-backoff"
+        },
+        "status": "delivered",
+        "attempts": 2,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "accepted",
+        "effectMayHaveHappened": true,
+        "lastError": {
+          "code": "http",
+          "message": "Webhook returned HTTP 503.",
+          "retryable": true,
+          "acknowledgement": "unknown",
+          "httpStatus": 503
+        }
+      }
+    }
+  ],
+  "sqlite": {
+    "run": {
+      "id": "01M5GHKQHYYB5EX26RN20E4C7P",
+      "status": "succeeded",
+      "finalized_at": "2026-10-22T00:54:13.886Z",
+      "last_event_seq": 13
+    },
+    "events": [
+      {
+        "run_id": "01M5GHKQHYYB5EX26RN20E4C7P",
+        "seq": 1,
+        "ts": "2026-10-22T00:54:07.678Z",
+        "type": "run.queued",
+        "node_id": null,
+        "payload": "{\"versionId\":\"01M5GHKQD0SYR1A71RE19SX4PD\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"QA stop backoff\",\"label\":\"QA stop backoff v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"classifiers\":{}},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M5GHKQHYYB5EX26RN20E4C7P\",\"loopId\":\"01M5GHKQD0SQ4WN1ERS2EHSBRF\",\"versionId\":\"01M5GHKQD0SYR1A71RE19SX4PD\",\"iteration\":1},\"invocation\":{\"id\":\"01M5GHKQHY9ZBQY5S0VGW9CSJD\",\"source\":\"manual.api\",\"caller\":{\"kind\":\"api-key\",\"id\":\"01M5GHDVJ7EHE58D5C73745QWV\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"manual\",\"payload\":{\"qa\":\"stop backoff\"},\"receivedAt\":\"2026-10-22T00:54:07.678Z\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}}"
+      },
+      {
+        "run_id": "01M5GHKQHYYB5EX26RN20E4C7P",
+        "seq": 2,
+        "ts": "2026-10-22T00:54:07.740Z",
+        "type": "run.started",
+        "node_id": null,
+        "payload": "{\"attempt\":1}"
+      },
+      {
+        "run_id": "01M5GHKQHYYB5EX26RN20E4C7P",
+        "seq": 3,
+        "ts": "2026-10-22T00:54:07.764Z",
+        "type": "node.started",
+        "node_id": "start",
+        "payload": "{\"kind\":\"trigger\",\"attempt\":1,\"configHash\":\"527dee9c4254fe4e\"}"
+      },
+      {
+        "run_id": "01M5GHKQHYYB5EX26RN20E4C7P",
+        "seq": 4,
+        "ts": "2026-10-22T00:54:07.781Z",
+        "type": "node.finished",
+        "node_id": "start",
+        "payload": "{\"patch\":[{\"op\":\"add\",\"path\":\"/outputs/start\",\"value\":{\"nodeId\":\"start\",\"value\":{\"qa\":\"stop backoff\"},\"at\":\"2026-10-22T00:54:07.779Z\"}},{\"op\":\"add\",\"path\":\"/lastOutput\",\"value\":{\"nodeId\":\"start\",\"value\":{\"qa\":\"stop backoff\"},\"at\":\"2026-10-22T00:54:07.779Z\"}}],\"route\":\"out\",\"durationMs\":0}"
+      },
+      {
+        "run_id": "01M5GHKQHYYB5EX26RN20E4C7P",
+        "seq": 5,
+        "ts": "2026-10-22T00:54:07.813Z",
+        "type": "node.started",
+        "node_id": "done",
+        "payload": "{\"kind\":\"exit\",\"attempt\":1,\"configHash\":\"5ff9ecddc96d99da\"}"
+      },
+      {
+        "run_id": "01M5GHKQHYYB5EX26RN20E4C7P",
+        "seq": 6,
+        "ts": "2026-10-22T00:54:07.822Z",
+        "type": "exit.evaluated",
+        "node_id": "done",
+        "payload": "{\"outcome\":\"success\"}"
+      },
+      {
+        "run_id": "01M5GHKQHYYB5EX26RN20E4C7P",
+        "seq": 7,
+        "ts": "2026-10-22T00:54:07.822Z",
+        "type": "node.finished",
+        "node_id": "done",
+        "payload": "{\"patch\":[],\"durationMs\":1}"
+      },
+      {
+        "run_id": "01M5GHKQHYYB5EX26RN20E4C7P",
+        "seq": 8,
+        "ts": "2026-10-22T00:54:07.822Z",
+        "type": "run.finished",
+        "node_id": null,
+        "payload": "{\"status\":\"succeeded\",\"outcome\":\"success\",\"result\":null}"
+      },
+      {
+        "run_id": "01M5GHKQHYYB5EX26RN20E4C7P",
+        "seq": 9,
+        "ts": "2026-10-22T00:54:07.822Z",
+        "type": "delivery.queued",
+        "node_id": null,
+        "payload": "{\"delivery\":{\"id\":\"01M5GHKQPEWMC7B32QBHWFZ2KK\",\"channel\":{\"kind\":\"webhook\",\"url\":\"http://127.0.0.1:5811/stop-backoff\"},\"status\":\"pending\",\"attempts\":0,\"maxAttempts\":5,\"inFlight\":false,\"acknowledgement\":\"not_sent\",\"effectMayHaveHappened\":false}}"
+      },
+      {
+        "run_id": "01M5GHKQHYYB5EX26RN20E4C7P",
+        "seq": 10,
+        "ts": "2026-10-22T00:54:07.877Z",
+        "type": "delivery.attempted",
+        "node_id": null,
+        "payload": "{\"delivery\":{\"id\":\"01M5GHKQPEWMC7B32QBHWFZ2KK\",\"channel\":{\"kind\":\"webhook\",\"url\":\"http://127.0.0.1:5811/stop-backoff\"},\"status\":\"pending\",\"attempts\":1,\"maxAttempts\":5,\"inFlight\":true,\"acknowledgement\":\"unknown\",\"effectMayHaveHappened\":true,\"nextAttemptAt\":\"2026-10-22T00:54:19.874Z\"}}"
+      },
+      {
+        "run_id": "01M5GHKQHYYB5EX26RN20E4C7P",
+        "seq": 11,
+        "ts": "2026-10-22T00:54:08.067Z",
+        "type": "delivery.attempt_finished",
+        "node_id": null,
+        "payload": "{\"delivery\":{\"id\":\"01M5GHKQPEWMC7B32QBHWFZ2KK\",\"channel\":{\"kind\":\"webhook\",\"url\":\"http://127.0.0.1:5811/stop-backoff\"},\"status\":\"pending\",\"attempts\":1,\"maxAttempts\":5,\"inFlight\":false,\"acknowledgement\":\"unknown\",\"effectMayHaveHappened\":true,\"nextAttemptAt\":\"2026-10-22T00:54:10.046Z\",\"lastError\":{\"code\":\"http\",\"message\":\"Webhook returned HTTP 503.\",\"retryable\":true,\"acknowledgement\":\"unknown\",\"httpStatus\":503}}}"
+      },
+      {
+        "run_id": "01M5GHKQHYYB5EX26RN20E4C7P",
+        "seq": 12,
+        "ts": "2026-10-22T00:54:13.729Z",
+        "type": "delivery.attempted",
+        "node_id": null,
+        "payload": "{\"delivery\":{\"id\":\"01M5GHKQPEWMC7B32QBHWFZ2KK\",\"channel\":{\"kind\":\"webhook\",\"url\":\"http://127.0.0.1:5811/stop-backoff\"},\"status\":\"pending\",\"attempts\":2,\"maxAttempts\":5,\"inFlight\":true,\"acknowledgement\":\"unknown\",\"effectMayHaveHappened\":true,\"nextAttemptAt\":\"2026-10-22T00:54:28.713Z\",\"lastError\":{\"code\":\"http\",\"message\":\"Webhook returned HTTP 503.\",\"retryable\":true,\"acknowledgement\":\"unknown\",\"httpStatus\":503}}}"
+      },
+      {
+        "run_id": "01M5GHKQHYYB5EX26RN20E4C7P",
+        "seq": 13,
+        "ts": "2026-10-22T00:54:13.853Z",
+        "type": "delivery.finished",
+        "node_id": null,
+        "payload": "{\"delivery\":{\"id\":\"01M5GHKQPEWMC7B32QBHWFZ2KK\",\"channel\":{\"kind\":\"webhook\",\"url\":\"http://127.0.0.1:5811/stop-backoff\"},\"status\":\"delivered\",\"attempts\":2,\"maxAttempts\":5,\"inFlight\":false,\"acknowledgement\":\"accepted\",\"effectMayHaveHappened\":true,\"lastError\":{\"code\":\"http\",\"message\":\"Webhook returned HTTP 503.\",\"retryable\":true,\"acknowledgement\":\"unknown\",\"httpStatus\":503}}}"
+      }
+    ]
+  },
+  "pass": true,
+  "pending": {
+    "id": "01M5GHKQHYYB5EX26RN20E4C7P",
+    "ownerId": "local",
+    "loopId": "01M5GHKQD0SQ4WN1ERS2EHSBRF",
+    "versionId": "01M5GHKQD0SYR1A71RE19SX4PD",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "QA stop backoff",
+      "label": "QA stop backoff v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M5GHKQHY9ZBQY5S0VGW9CSJD",
+    "status": "succeeded",
+    "iteration": 1,
+    "outcome": "success",
+    "result": null,
+    "deliveries": [
+      {
+        "id": "01M5GHKQPEWMC7B32QBHWFZ2KK",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5811/stop-backoff"
+        },
+        "status": "pending",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T00:54:10.046Z",
+        "lastError": {
+          "code": "http",
+          "message": "Webhook returned HTTP 503.",
+          "retryable": true,
+          "acknowledgement": "unknown",
+          "httpStatus": 503
+        }
+      }
+    ],
+    "createdAt": "2026-10-22T00:54:07.678Z",
+    "startedAt": "2026-10-22T00:54:07.725Z",
+    "finishedAt": "2026-10-22T00:54:07.833Z",
+    "lastEventSeq": 11
+  },
+  "elapsedMs": 192,
+  "requestsDuringStop": 0
+}

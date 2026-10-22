@@ -1,0 +1,510 @@
+{
+  "loopId": "01M5JAKXKYPZ7FRRBQ3RQ6DDRB",
+  "runId": "01M5JAKXPP3SVCNA76RJEBZRC1",
+  "path": "http://gg-audit-d2-nonexistent.invalid:5649/hook",
+  "run": {
+    "id": "01M5JAKXPP3SVCNA76RJEBZRC1",
+    "ownerId": "local",
+    "loopId": "01M5JAKXKYPZ7FRRBQ3RQ6DDRB",
+    "versionId": "01M5JAKXKYEM6KW5FDQJAWPQDR",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "Audit DNS",
+      "label": "Audit DNS v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M5JAKXPP6MD7GF0KHMHCBA3C",
+    "status": "succeeded",
+    "iteration": 1,
+    "outcome": "success",
+    "result": null,
+    "deliveries": [
+      {
+        "id": "01M5JAKXRYTF1XCKVHC0GA8X3A",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://gg-audit-d2-nonexistent.invalid:5649/hook"
+        },
+        "status": "failed",
+        "attempts": 5,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "lastError": {
+          "code": "transport",
+          "message": "Webhook acknowledgement lost; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    ],
+    "createdAt": "2026-10-22T17:30:22.806Z",
+    "startedAt": "2026-10-22T17:30:22.825Z",
+    "finishedAt": "2026-10-22T17:30:22.883Z",
+    "lastEventSeq": 19
+  },
+  "events": [
+    {
+      "runId": "01M5JAKXPP3SVCNA76RJEBZRC1",
+      "seq": 1,
+      "ts": "2026-10-22T17:30:22.806Z",
+      "type": "run.queued",
+      "versionId": "01M5JAKXKYEM6KW5FDQJAWPQDR",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Audit DNS",
+        "label": "Audit DNS v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5JAKXPP3SVCNA76RJEBZRC1",
+          "loopId": "01M5JAKXKYPZ7FRRBQ3RQ6DDRB",
+          "versionId": "01M5JAKXKYEM6KW5FDQJAWPQDR",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5JAKXPP6MD7GF0KHMHCBA3C",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": {
+              "name": "Audit DNS",
+              "value": 42
+            },
+            "receivedAt": "2026-10-22T17:30:22.806Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {},
+        "gates": {},
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    {
+      "runId": "01M5JAKXPP3SVCNA76RJEBZRC1",
+      "seq": 2,
+      "ts": "2026-10-22T17:30:22.829Z",
+      "type": "run.started",
+      "attempt": 1
+    },
+    {
+      "runId": "01M5JAKXPP3SVCNA76RJEBZRC1",
+      "seq": 3,
+      "ts": "2026-10-22T17:30:22.838Z",
+      "type": "node.started",
+      "nodeId": "start",
+      "kind": "trigger",
+      "attempt": 1,
+      "configHash": "527dee9c4254fe4e"
+    },
+    {
+      "runId": "01M5JAKXPP3SVCNA76RJEBZRC1",
+      "seq": 4,
+      "ts": "2026-10-22T17:30:22.845Z",
+      "type": "node.finished",
+      "nodeId": "start",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/outputs/start",
+          "value": {
+            "nodeId": "start",
+            "value": {
+              "name": "Audit DNS",
+              "value": 42
+            },
+            "at": "2026-10-22T17:30:22.844Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "start",
+            "value": {
+              "name": "Audit DNS",
+              "value": 42
+            },
+            "at": "2026-10-22T17:30:22.844Z"
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 1
+    },
+    {
+      "runId": "01M5JAKXPP3SVCNA76RJEBZRC1",
+      "seq": 5,
+      "ts": "2026-10-22T17:30:22.868Z",
+      "type": "node.started",
+      "nodeId": "done",
+      "kind": "exit",
+      "attempt": 1,
+      "configHash": "faa3c380f238602e"
+    },
+    {
+      "runId": "01M5JAKXPP3SVCNA76RJEBZRC1",
+      "seq": 6,
+      "ts": "2026-10-22T17:30:22.878Z",
+      "type": "exit.evaluated",
+      "nodeId": "done",
+      "outcome": "success"
+    },
+    {
+      "runId": "01M5JAKXPP3SVCNA76RJEBZRC1",
+      "seq": 7,
+      "ts": "2026-10-22T17:30:22.878Z",
+      "type": "node.finished",
+      "nodeId": "done",
+      "patch": [],
+      "durationMs": 0
+    },
+    {
+      "runId": "01M5JAKXPP3SVCNA76RJEBZRC1",
+      "seq": 8,
+      "ts": "2026-10-22T17:30:22.878Z",
+      "type": "run.finished",
+      "status": "succeeded",
+      "outcome": "success",
+      "result": null
+    },
+    {
+      "runId": "01M5JAKXPP3SVCNA76RJEBZRC1",
+      "seq": 9,
+      "ts": "2026-10-22T17:30:22.878Z",
+      "type": "delivery.queued",
+      "delivery": {
+        "id": "01M5JAKXRYTF1XCKVHC0GA8X3A",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://gg-audit-d2-nonexistent.invalid:5649/hook"
+        },
+        "status": "pending",
+        "attempts": 0,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "not_sent",
+        "effectMayHaveHappened": false,
+        "acknowledgementUncertain": false
+      }
+    },
+    {
+      "runId": "01M5JAKXPP3SVCNA76RJEBZRC1",
+      "seq": 10,
+      "ts": "2026-10-22T17:30:22.895Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5JAKXRYTF1XCKVHC0GA8X3A",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://gg-audit-d2-nonexistent.invalid:5649/hook"
+        },
+        "status": "pending",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": false,
+        "nextAttemptAt": "2026-10-22T17:30:34.894Z"
+      }
+    },
+    {
+      "runId": "01M5JAKXPP3SVCNA76RJEBZRC1",
+      "seq": 11,
+      "ts": "2026-10-22T17:30:22.960Z",
+      "type": "delivery.attempt_finished",
+      "delivery": {
+        "id": "01M5JAKXRYTF1XCKVHC0GA8X3A",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://gg-audit-d2-nonexistent.invalid:5649/hook"
+        },
+        "status": "pending",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "nextAttemptAt": "2026-10-22T17:30:24.940Z",
+        "lastError": {
+          "code": "transport",
+          "message": "Webhook acknowledgement lost; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    },
+    {
+      "runId": "01M5JAKXPP3SVCNA76RJEBZRC1",
+      "seq": 12,
+      "ts": "2026-10-22T17:30:24.957Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5JAKXRYTF1XCKVHC0GA8X3A",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://gg-audit-d2-nonexistent.invalid:5649/hook"
+        },
+        "status": "pending",
+        "attempts": 2,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "nextAttemptAt": "2026-10-22T17:30:39.955Z",
+        "lastError": {
+          "code": "transport",
+          "message": "Webhook acknowledgement lost; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    },
+    {
+      "runId": "01M5JAKXPP3SVCNA76RJEBZRC1",
+      "seq": 13,
+      "ts": "2026-10-22T17:30:24.968Z",
+      "type": "delivery.attempt_finished",
+      "delivery": {
+        "id": "01M5JAKXRYTF1XCKVHC0GA8X3A",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://gg-audit-d2-nonexistent.invalid:5649/hook"
+        },
+        "status": "pending",
+        "attempts": 2,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "nextAttemptAt": "2026-10-22T17:30:29.966Z",
+        "lastError": {
+          "code": "transport",
+          "message": "Webhook acknowledgement lost; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    },
+    {
+      "runId": "01M5JAKXPP3SVCNA76RJEBZRC1",
+      "seq": 14,
+      "ts": "2026-10-22T17:30:29.975Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5JAKXRYTF1XCKVHC0GA8X3A",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://gg-audit-d2-nonexistent.invalid:5649/hook"
+        },
+        "status": "pending",
+        "attempts": 3,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "nextAttemptAt": "2026-10-22T17:30:49.973Z",
+        "lastError": {
+          "code": "transport",
+          "message": "Webhook acknowledgement lost; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    },
+    {
+      "runId": "01M5JAKXPP3SVCNA76RJEBZRC1",
+      "seq": 15,
+      "ts": "2026-10-22T17:30:30.014Z",
+      "type": "delivery.attempt_finished",
+      "delivery": {
+        "id": "01M5JAKXRYTF1XCKVHC0GA8X3A",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://gg-audit-d2-nonexistent.invalid:5649/hook"
+        },
+        "status": "pending",
+        "attempts": 3,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "nextAttemptAt": "2026-10-22T17:30:40.012Z",
+        "lastError": {
+          "code": "transport",
+          "message": "Webhook acknowledgement lost; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    },
+    {
+      "runId": "01M5JAKXPP3SVCNA76RJEBZRC1",
+      "seq": 16,
+      "ts": "2026-10-22T17:30:40.019Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5JAKXRYTF1XCKVHC0GA8X3A",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://gg-audit-d2-nonexistent.invalid:5649/hook"
+        },
+        "status": "pending",
+        "attempts": 4,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "nextAttemptAt": "2026-10-22T17:31:10.017Z",
+        "lastError": {
+          "code": "transport",
+          "message": "Webhook acknowledgement lost; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    },
+    {
+      "runId": "01M5JAKXPP3SVCNA76RJEBZRC1",
+      "seq": 17,
+      "ts": "2026-10-22T17:30:40.051Z",
+      "type": "delivery.attempt_finished",
+      "delivery": {
+        "id": "01M5JAKXRYTF1XCKVHC0GA8X3A",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://gg-audit-d2-nonexistent.invalid:5649/hook"
+        },
+        "status": "pending",
+        "attempts": 4,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "nextAttemptAt": "2026-10-22T17:31:00.049Z",
+        "lastError": {
+          "code": "transport",
+          "message": "Webhook acknowledgement lost; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    },
+    {
+      "runId": "01M5JAKXPP3SVCNA76RJEBZRC1",
+      "seq": 18,
+      "ts": "2026-10-22T17:31:00.096Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5JAKXRYTF1XCKVHC0GA8X3A",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://gg-audit-d2-nonexistent.invalid:5649/hook"
+        },
+        "status": "pending",
+        "attempts": 5,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "nextAttemptAt": "2026-10-22T17:31:10.093Z",
+        "lastError": {
+          "code": "transport",
+          "message": "Webhook acknowledgement lost; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    },
+    {
+      "runId": "01M5JAKXPP3SVCNA76RJEBZRC1",
+      "seq": 19,
+      "ts": "2026-10-22T17:31:00.132Z",
+      "type": "delivery.finished",
+      "delivery": {
+        "id": "01M5JAKXRYTF1XCKVHC0GA8X3A",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://gg-audit-d2-nonexistent.invalid:5649/hook"
+        },
+        "status": "failed",
+        "attempts": 5,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "lastError": {
+          "code": "transport",
+          "message": "Webhook acknowledgement lost; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    }
+  ],
+  "rows": [
+    {
+      "finalized_at": "2026-10-22T17:31:00.140Z",
+      "last_event_seq": 19,
+      "status": "succeeded"
+    }
+  ],
+  "requests": []
+}

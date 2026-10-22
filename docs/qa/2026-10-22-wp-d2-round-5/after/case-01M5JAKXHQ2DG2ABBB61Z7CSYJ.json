@@ -1,0 +1,443 @@
+{
+  "loopId": "01M5JAKXFE0KJN4XKCM06T7B1A",
+  "runId": "01M5JAKXHQ2DG2ABBB61Z7CSYJ",
+  "path": "/uncertainty",
+  "run": {
+    "id": "01M5JAKXHQ2DG2ABBB61Z7CSYJ",
+    "ownerId": "local",
+    "loopId": "01M5JAKXFE0KJN4XKCM06T7B1A",
+    "versionId": "01M5JAKXFE40906X991Q287QK7",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "Audit /uncertainty",
+      "label": "Audit /uncertainty v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M5JAKXHQA4356P5NF49M83GN",
+    "status": "succeeded",
+    "iteration": 1,
+    "outcome": "success",
+    "result": null,
+    "deliveries": [
+      {
+        "id": "01M5JAKXNEEQSGRYXB5V2H8BHP",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/uncertainty"
+        },
+        "status": "delivered",
+        "attempts": 3,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "accepted",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "lastError": {
+          "code": "http",
+          "message": "Webhook returned HTTP 429.",
+          "retryable": true,
+          "acknowledgement": "rejected",
+          "httpStatus": 429
+        }
+      }
+    ],
+    "createdAt": "2026-10-22T17:30:22.647Z",
+    "startedAt": "2026-10-22T17:30:22.707Z",
+    "finishedAt": "2026-10-22T17:30:22.801Z",
+    "lastEventSeq": 15
+  },
+  "events": [
+    {
+      "runId": "01M5JAKXHQ2DG2ABBB61Z7CSYJ",
+      "seq": 1,
+      "ts": "2026-10-22T17:30:22.647Z",
+      "type": "run.queued",
+      "versionId": "01M5JAKXFE40906X991Q287QK7",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Audit /uncertainty",
+        "label": "Audit /uncertainty v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5JAKXHQ2DG2ABBB61Z7CSYJ",
+          "loopId": "01M5JAKXFE0KJN4XKCM06T7B1A",
+          "versionId": "01M5JAKXFE40906X991Q287QK7",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5JAKXHQA4356P5NF49M83GN",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": {
+              "name": "Audit /uncertainty",
+              "value": 42
+            },
+            "receivedAt": "2026-10-22T17:30:22.647Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {},
+        "gates": {},
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    {
+      "runId": "01M5JAKXHQ2DG2ABBB61Z7CSYJ",
+      "seq": 2,
+      "ts": "2026-10-22T17:30:22.710Z",
+      "type": "run.started",
+      "attempt": 1
+    },
+    {
+      "runId": "01M5JAKXHQ2DG2ABBB61Z7CSYJ",
+      "seq": 3,
+      "ts": "2026-10-22T17:30:22.728Z",
+      "type": "node.started",
+      "nodeId": "start",
+      "kind": "trigger",
+      "attempt": 1,
+      "configHash": "527dee9c4254fe4e"
+    },
+    {
+      "runId": "01M5JAKXHQ2DG2ABBB61Z7CSYJ",
+      "seq": 4,
+      "ts": "2026-10-22T17:30:22.737Z",
+      "type": "node.finished",
+      "nodeId": "start",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/outputs/start",
+          "value": {
+            "nodeId": "start",
+            "value": {
+              "name": "Audit /uncertainty",
+              "value": 42
+            },
+            "at": "2026-10-22T17:30:22.737Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "start",
+            "value": {
+              "name": "Audit /uncertainty",
+              "value": 42
+            },
+            "at": "2026-10-22T17:30:22.737Z"
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 0
+    },
+    {
+      "runId": "01M5JAKXHQ2DG2ABBB61Z7CSYJ",
+      "seq": 5,
+      "ts": "2026-10-22T17:30:22.760Z",
+      "type": "node.started",
+      "nodeId": "done",
+      "kind": "exit",
+      "attempt": 1,
+      "configHash": "808f1f6c015c393c"
+    },
+    {
+      "runId": "01M5JAKXHQ2DG2ABBB61Z7CSYJ",
+      "seq": 6,
+      "ts": "2026-10-22T17:30:22.766Z",
+      "type": "exit.evaluated",
+      "nodeId": "done",
+      "outcome": "success"
+    },
+    {
+      "runId": "01M5JAKXHQ2DG2ABBB61Z7CSYJ",
+      "seq": 7,
+      "ts": "2026-10-22T17:30:22.766Z",
+      "type": "node.finished",
+      "nodeId": "done",
+      "patch": [],
+      "durationMs": 0
+    },
+    {
+      "runId": "01M5JAKXHQ2DG2ABBB61Z7CSYJ",
+      "seq": 8,
+      "ts": "2026-10-22T17:30:22.766Z",
+      "type": "run.finished",
+      "status": "succeeded",
+      "outcome": "success",
+      "result": null
+    },
+    {
+      "runId": "01M5JAKXHQ2DG2ABBB61Z7CSYJ",
+      "seq": 9,
+      "ts": "2026-10-22T17:30:22.766Z",
+      "type": "delivery.queued",
+      "delivery": {
+        "id": "01M5JAKXNEEQSGRYXB5V2H8BHP",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/uncertainty"
+        },
+        "status": "pending",
+        "attempts": 0,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "not_sent",
+        "effectMayHaveHappened": false,
+        "acknowledgementUncertain": false
+      }
+    },
+    {
+      "runId": "01M5JAKXHQ2DG2ABBB61Z7CSYJ",
+      "seq": 10,
+      "ts": "2026-10-22T17:30:22.820Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5JAKXNEEQSGRYXB5V2H8BHP",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/uncertainty"
+        },
+        "status": "pending",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": false,
+        "nextAttemptAt": "2026-10-22T17:30:34.818Z"
+      }
+    },
+    {
+      "runId": "01M5JAKXHQ2DG2ABBB61Z7CSYJ",
+      "seq": 11,
+      "ts": "2026-10-22T17:30:22.867Z",
+      "type": "delivery.attempt_finished",
+      "delivery": {
+        "id": "01M5JAKXNEEQSGRYXB5V2H8BHP",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/uncertainty"
+        },
+        "status": "pending",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "nextAttemptAt": "2026-10-22T17:30:24.860Z",
+        "lastError": {
+          "code": "transport",
+          "message": "Webhook acknowledgement lost; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    },
+    {
+      "runId": "01M5JAKXHQ2DG2ABBB61Z7CSYJ",
+      "seq": 12,
+      "ts": "2026-10-22T17:30:24.879Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5JAKXNEEQSGRYXB5V2H8BHP",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/uncertainty"
+        },
+        "status": "pending",
+        "attempts": 2,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "nextAttemptAt": "2026-10-22T17:30:39.878Z",
+        "lastError": {
+          "code": "transport",
+          "message": "Webhook acknowledgement lost; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    },
+    {
+      "runId": "01M5JAKXHQ2DG2ABBB61Z7CSYJ",
+      "seq": 13,
+      "ts": "2026-10-22T17:30:24.888Z",
+      "type": "delivery.attempt_finished",
+      "delivery": {
+        "id": "01M5JAKXNEEQSGRYXB5V2H8BHP",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/uncertainty"
+        },
+        "status": "pending",
+        "attempts": 2,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "rejected",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "nextAttemptAt": "2026-10-22T17:30:29.886Z",
+        "lastError": {
+          "code": "http",
+          "message": "Webhook returned HTTP 429.",
+          "retryable": true,
+          "acknowledgement": "rejected",
+          "httpStatus": 429
+        }
+      }
+    },
+    {
+      "runId": "01M5JAKXHQ2DG2ABBB61Z7CSYJ",
+      "seq": 14,
+      "ts": "2026-10-22T17:30:29.896Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5JAKXNEEQSGRYXB5V2H8BHP",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/uncertainty"
+        },
+        "status": "pending",
+        "attempts": 3,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "nextAttemptAt": "2026-10-22T17:30:49.894Z",
+        "lastError": {
+          "code": "http",
+          "message": "Webhook returned HTTP 429.",
+          "retryable": true,
+          "acknowledgement": "rejected",
+          "httpStatus": 429
+        }
+      }
+    },
+    {
+      "runId": "01M5JAKXHQ2DG2ABBB61Z7CSYJ",
+      "seq": 15,
+      "ts": "2026-10-22T17:30:29.904Z",
+      "type": "delivery.finished",
+      "delivery": {
+        "id": "01M5JAKXNEEQSGRYXB5V2H8BHP",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/uncertainty"
+        },
+        "status": "delivered",
+        "attempts": 3,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "accepted",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "lastError": {
+          "code": "http",
+          "message": "Webhook returned HTTP 429.",
+          "retryable": true,
+          "acknowledgement": "rejected",
+          "httpStatus": 429
+        }
+      }
+    }
+  ],
+  "rows": [
+    {
+      "finalized_at": "2026-10-22T17:30:29.910Z",
+      "last_event_seq": 15,
+      "status": "succeeded"
+    }
+  ],
+  "requests": [
+    {
+      "path": "/uncertainty",
+      "n": 1,
+      "ms": 1792690222831,
+      "key": "01M5JAKXNEEQSGRYXB5V2H8BHP",
+      "body": {
+        "runId": "01M5JAKXHQ2DG2ABBB61Z7CSYJ",
+        "loopId": "01M5JAKXFE0KJN4XKCM06T7B1A",
+        "outcome": "success",
+        "result": null
+      }
+    },
+    {
+      "path": "/uncertainty",
+      "n": 2,
+      "ms": 1792690224885,
+      "key": "01M5JAKXNEEQSGRYXB5V2H8BHP",
+      "body": {
+        "runId": "01M5JAKXHQ2DG2ABBB61Z7CSYJ",
+        "loopId": "01M5JAKXFE0KJN4XKCM06T7B1A",
+        "outcome": "success",
+        "result": null
+      }
+    },
+    {
+      "path": "/uncertainty",
+      "n": 3,
+      "ms": 1792690229901,
+      "key": "01M5JAKXNEEQSGRYXB5V2H8BHP",
+      "body": {
+        "runId": "01M5JAKXHQ2DG2ABBB61Z7CSYJ",
+        "loopId": "01M5JAKXFE0KJN4XKCM06T7B1A",
+        "outcome": "success",
+        "result": null
+      }
+    }
+  ]
+}

@@ -197,6 +197,20 @@ following a timezone issue focuses the time zone control.
 
 ## Return delivery (Decided)
 
+Run snapshots include optional `deliveries` for outbound webhooks, with separate pending,
+delivered or failed state, stable identity, attempts/budget, next attempt and typed last error.
+REST run detail/list, the generated api-client, MCP `get_run` and `wait_for_run` preserve it.
+`wait_for_run.finished` means execution finished, even with pending or failed delivery; call
+`get_run` again to observe delivery. The inspector polls once per second while delivery is
+pending. SSE still closes on execution's terminal event; subsequent JSON event pages expose
+`delivery.queued`, `delivery.attempted`, `delivery.attempt_finished` and `delivery.finished`.
+Unknown acknowledgement is never represented as non-delivery. The required
+`acknowledgementUncertain` flag in each delivery snapshot retains earlier uncertainty even
+when `lastError` is a later rejection and the final acknowledgement is accepted. The inspector
+keeps its possible-duplicate warning in that case; rejection-only retries do not set the flag.
+An invalid HTTP response status is a retryable `transport` error with unknown acknowledgement
+and no `httpStatus`. See ADR-0043.
+
 The `caller` return channel resolves at delivery time:
 
 | Invocation source                                     | Delivery                                                                                      |
@@ -205,7 +219,7 @@ The `caller` return channel resolves at delivery time:
 | `manual.mcp`                                          | Also returned as the MCP tool result when the client waited; otherwise fetched with `get_run` |
 | `subloop`                                             | Handed to the parent run's subloop output mapping                                             |
 
-Other channels, webhook, file and log, are delivered by the engine after the run finishes, with one `return.delivered` or `return.failed` event each. There is no Event channel: a loop that needs another loop's result calls it as an awaited subloop (ADR-0044).
+The file and log channels are delivered by the engine after the run finishes, with one `return.delivered` or `return.failed` event each; webhooks use the delivery journal above. There is no Event channel: a loop that needs another loop's result calls it as an awaited subloop (ADR-0044).
 
 ## MCP server (Decided)
 
