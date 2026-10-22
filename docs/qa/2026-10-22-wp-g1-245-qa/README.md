@@ -37,7 +37,7 @@ Evidence: [browser-results.json](browser-results.json), [patch-display.json](pat
 
 Steps: with Node 22, run `pnpm.cmd --filter @graphgoblin/api test:coverage`. The existing test `src/subloop-restart.test.ts > awaited subloops across process death (#242) > a hard kill around child completion leaves every parent one continuation after restart` creates nested leaf/middle/top loops, supplies the leaf input, kills the native API at bounded delays and restarts the same store. Expected: one `child_run.finished` per parent. Actual: 2; assertion at `src/subloop-restart.test.ts:123`, invoked at line 179. 700 tests passed, 1 failed, 6 skipped. Coverage thresholds could not be certified because this run failed. No retry was performed.
 
-Evidence: [coverage-api.log](coverage-api.log). This is an observed gate failure outside the replay-seed delta, in the #242/#320 continuation/recovery area. Whether it predates the comparison base was not independently measured; no regression provenance or production correction is claimed.
+Evidence: [coverage-api.log.txt](coverage-api.log.txt). This is an observed gate failure outside the replay-seed delta, in the #242/#320 continuation/recovery area. Whether it predates the comparison base was not independently measured; no regression provenance or production correction is claimed.
 
 ### QA-245-03 — Minor: completed inspector omits the durable delivery tail
 
@@ -75,21 +75,21 @@ Node 22 was first on PATH for every command. Commands ran at the worktree root u
 
 | Command                                                                                         | Result                                                                                               | Evidence                                                                                       |
 | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| pnpm.cmd build                                                                                  | PASS, 11/11 tasks, 2 cached                                                                          | [build.log](build.log)                                                                         |
-| pnpm.cmd typecheck                                                                              | PASS, 20/20 tasks                                                                                    | [typecheck.log](typecheck.log)                                                                 |
-| pnpm.cmd lint                                                                                   | PASS, 11/11 tasks; nonfatal shared-cache access warnings                                             | [lint.log](lint.log)                                                                           |
-| pnpm.cmd --filter @graphgoblin/engine test:coverage                                             | PASS; 98.01% lines, 92.30% branches                                                                  | [coverage-engine.log](coverage-engine.log)                                                     |
-| pnpm.cmd --filter @graphgoblin/web test:coverage                                                | PASS; 98.94% lines, 94.85% branches                                                                  | [coverage-web.log](coverage-web.log)                                                           |
-| pnpm.cmd --filter @graphgoblin/api test:coverage                                                | FAIL; 700 passed, 1 failed, 6 skipped; QA-245-02                                                     | [coverage-api.log](coverage-api.log)                                                           |
-| pnpm.cmd check:layers                                                                           | PASS, exit 0                                                                                         | [layers.log](layers.log)                                                                       |
-| pnpm.cmd check:deps                                                                             | PASS, exit 0; existing no-orphans warning for infrastructure drizzle.config.ts                       | [deps.log](deps.log)                                                                           |
-| pnpm.cmd check:tokens                                                                           | PASS, 161 files, exit 0                                                                              | [tokens.log](tokens.log)                                                                       |
-| pnpm.cmd format:check                                                                           | Initial failures only in new QA artifacts; corrected with scoped prettier formatting; final run PASS | [format.log](format.log), [format-qa.log](format-qa.log), [format-final.log](format-final.log) |
+| pnpm.cmd build                                                                                  | PASS, 11/11 tasks, 2 cached                                                                          | [build.log.txt](build.log.txt)                                                                         |
+| pnpm.cmd typecheck                                                                              | PASS, 20/20 tasks                                                                                    | [typecheck.log.txt](typecheck.log.txt)                                                                 |
+| pnpm.cmd lint                                                                                   | PASS, 11/11 tasks; nonfatal shared-cache access warnings                                             | [lint.log.txt](lint.log.txt)                                                                           |
+| pnpm.cmd --filter @graphgoblin/engine test:coverage                                             | PASS; 98.01% lines, 92.30% branches                                                                  | [coverage-engine.log.txt](coverage-engine.log.txt)                                                     |
+| pnpm.cmd --filter @graphgoblin/web test:coverage                                                | PASS; 98.94% lines, 94.85% branches                                                                  | [coverage-web.log.txt](coverage-web.log.txt)                                                           |
+| pnpm.cmd --filter @graphgoblin/api test:coverage                                                | FAIL; 700 passed, 1 failed, 6 skipped; QA-245-02                                                     | [coverage-api.log.txt](coverage-api.log.txt)                                                           |
+| pnpm.cmd check:layers                                                                           | PASS, exit 0                                                                                         | [layers.log.txt](layers.log.txt)                                                                       |
+| pnpm.cmd check:deps                                                                             | PASS, exit 0; existing no-orphans warning for infrastructure drizzle.config.ts                       | [deps.log.txt](deps.log.txt)                                                                           |
+| pnpm.cmd check:tokens                                                                           | PASS, 161 files, exit 0                                                                              | [tokens.log.txt](tokens.log.txt)                                                                       |
+| pnpm.cmd format:check                                                                           | Initial failures only in new QA artifacts; corrected with scoped prettier formatting; final run PASS | [format.log.txt](format.log.txt), [format-qa.log.txt](format-qa.log.txt), [format-final.log.txt](format-final.log.txt) |
 | pnpm.cmd --filter @graphgoblin/web exec tsx ../../docs/qa/2026-10-22-wp-g1-245-qa/runner.mjs    | PASS, 209 checks; fake-only provider/native API                                                      | [runner.mjs](runner.mjs), [results.json](results.json)                                         |
 | node docs/qa/2026-10-22-wp-g1-245-qa/browser.mjs                                                | Completed; 96/96 selectable states PASS, 6 UI checks FAIL for two defect classes                     | [browser.mjs](browser.mjs), [browser-results.json](browser-results.json)                       |
 | pnpm.cmd --filter @graphgoblin/web exec tsx ../../docs/qa/2026-10-22-wp-g1-245-qa/component.mjs | PASS, 10/10                                                                                          | [component.mjs](component.mjs), [component-results.json](component-results.json)               |
 | node docs/qa/2026-10-22-wp-g1-245-qa/supplement.mjs                                             | PASS, 6/6                                                                                            | [supplement.mjs](supplement.mjs), [supplement-results.json](supplement-results.json)           |
-| git diff --check; git rev-parse HEAD; git status --short                                        | PASS; exact head retained; only this untracked QA folder                                             | [final-state.log](final-state.log)                                                             |
+| git diff --check; git rev-parse HEAD; git status --short                                        | PASS; exact head retained; only this untracked QA folder                                             | [final-state.log.txt](final-state.log.txt)                                                             |
 
 ## Driver corrections and evidence provenance
 
@@ -499,11 +499,11 @@ Every retained file in this evidence folder is linked here. SQL captures preserv
 - [active-restart.json](active-restart.json)
 - [array-mutator-source-bytes.json](array-mutator-source-bytes.json)
 - [array-mutator.json](array-mutator.json)
-- [audit.log](audit.log)
+- [audit.log.txt](audit.log.txt)
 - [audit.mjs](audit.mjs)
 - [browser-results.json](browser-results.json)
 - [browser.mjs](browser.mjs)
-- [build.log](build.log)
+- [build.log.txt](build.log.txt)
 - [cancelled-source-source-bytes.json](cancelled-source-source-bytes.json)
 - [cancelled-source.json](cancelled-source.json)
 - [component-results.json](component-results.json)
@@ -511,25 +511,25 @@ Every retained file in this evidence folder is linked here. SQL captures preserv
 - [concurrent-1.json](concurrent-1.json)
 - [concurrent-2.json](concurrent-2.json)
 - [concurrent-source-bytes.json](concurrent-source-bytes.json)
-- [coverage-api.log](coverage-api.log)
-- [coverage-engine.log](coverage-engine.log)
-- [coverage-web.log](coverage-web.log)
-- [deps.log](deps.log)
+- [coverage-api.log.txt](coverage-api.log.txt)
+- [coverage-engine.log.txt](coverage-engine.log.txt)
+- [coverage-web.log.txt](coverage-web.log.txt)
+- [deps.log.txt](deps.log.txt)
 - [exit-source-bytes.json](exit-source-bytes.json)
 - [exit.json](exit.json)
 - [failed-source-source-bytes.json](failed-source-source-bytes.json)
 - [failed-source.json](failed-source.json)
-- [final-state.log](final-state.log)
+- [final-state.log.txt](final-state.log.txt)
 - [first-after-trigger-source-bytes.json](first-after-trigger-source-bytes.json)
 - [first-after-trigger.json](first-after-trigger.json)
 - [fork-of-fork-pass-2-source-bytes.json](fork-of-fork-pass-2-source-bytes.json)
 - [fork-of-fork-pass-2.json](fork-of-fork-pass-2.json)
 - [fork-of-fork-pass-3-source-bytes.json](fork-of-fork-pass-3-source-bytes.json)
 - [fork-of-fork-pass-3.json](fork-of-fork-pass-3.json)
-- [format-final.log](format-final.log)
-- [format-qa.log](format-qa.log)
-- [format-sanitizer.log](format-sanitizer.log)
-- [format.log](format.log)
+- [format-final.log.txt](format-final.log.txt)
+- [format-qa.log.txt](format-qa.log.txt)
+- [format-sanitizer.log.txt](format-sanitizer.log.txt)
+- [format.log.txt](format.log.txt)
 - [gate-pass-1-source-bytes.json](gate-pass-1-source-bytes.json)
 - [gate-pass-1.json](gate-pass-1.json)
 - [gate-pass-2-source-bytes.json](gate-pass-2-source-bytes.json)
@@ -538,9 +538,9 @@ Every retained file in this evidence folder is linked here. SQL captures preserv
 - [gate-pass-3.json](gate-pass-3.json)
 - [guard-own-starts-source-bytes.json](guard-own-starts-source-bytes.json)
 - [guard-own-starts.json](guard-own-starts.json)
-- [key-cli.log](key-cli.log)
-- [layers.log](layers.log)
-- [lint.log](lint.log)
+- [key-cli.log.txt](key-cli.log.txt)
+- [layers.log.txt](layers.log.txt)
+- [lint.log.txt](lint.log.txt)
 - [negative-responses.json](negative-responses.json)
 - [oracle.mjs](oracle.mjs)
 - [patch-display.json](patch-display.json)
@@ -550,13 +550,13 @@ Every retained file in this evidence folder is linked here. SQL captures preserv
 - [running-source-source-bytes.json](running-source-source-bytes.json)
 - [running-source.json](running-source.json)
 - [sanitize.mjs](sanitize.mjs)
-- [server.log](server.log)
+- [server.log.txt](server.log.txt)
 - [server.mjs](server.mjs)
 - [source.json](source.json)
 - [supplement-results.json](supplement-results.json)
 - [supplement.mjs](supplement.mjs)
-- [tokens.log](tokens.log)
-- [typecheck.log](typecheck.log)
+- [tokens.log.txt](tokens.log.txt)
+- [typecheck.log.txt](typecheck.log.txt)
 - [waiting-fork-after-restart.json](waiting-fork-after-restart.json)
 - [waiting-restart.json](waiting-restart.json)
 - [waiting-source-source-bytes.json](waiting-source-source-bytes.json)
