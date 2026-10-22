@@ -1,35 +1,83 @@
-Round 4; HEAD 113953db00d0f82f8e5ee9c0371eb44f2198191e; Node v22.14.0
-Command: pnpm.cmd --filter @graphgoblin/api test:coverage --config '%TEMP%/gg-wp-d1-r4-ilRK7y\api.config.mjs' --maxWorkers=1 --coverage.reportOnFailure
-Started: 2026-10-22T20:40:38.680Z
+$ vitest run --coverage --maxWorkers=1 --coverage.reportOnFailure
 
-$ vitest run --coverage --config '<local>\AppData\Local\Temp\gg-wp-d1-r4-ilRK7y\api.config.mjs' --maxWorkers=1 --coverage.reportOnFailure
-failed to load config from <local>\AppData\Local\Temp\gg-wp-d1-r4-ilRK7y\api.config.mjs
+ RUN  v5.0.3 C:/Users/98jak/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d1-child-recovery/apps/api
+      Coverage enabled with v8
 
-⎯⎯⎯⎯⎯⎯⎯ Startup Error ⎯⎯⎯⎯⎯⎯⎯⎯
-Error: EPERM: operation not permitted, open '<local>\node_modules\.vite-temp\api.config.mjs.timestamp-1792701642783-549947550a9b9.mjs'
-    at async open (node:internal/fs/promises:638:25)
-    at async Object.writeFile (node:internal/fs/promises:1212:14)
-    at async loadConfigFromBundledFile (file:///<local>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d1-child-recovery/node_modules/.pnpm/vite@8.3.4_@types+node@22.2_79c918432028d6b7b81d88feec7f9ec5/node_modules/vite/dist/node/chunks/node.js:38130:3)
-    at async bundleAndLoadConfigFile (file:///<local>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d1-child-recovery/node_modules/.pnpm/vite@8.3.4_@types+node@22.2_79c918432028d6b7b81d88feec7f9ec5/node_modules/vite/dist/node/chunks/node.js:37978:21)
-    at async loadConfigFromFile (file:///<local>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d1-child-recovery/node_modules/.pnpm/vite@8.3.4_@types+node@22.2_79c918432028d6b7b81d88feec7f9ec5/node_modules/vite/dist/node/chunks/node.js:37938:42)
-    at async resolveConfig (file:///<local>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d1-child-recovery/node_modules/.pnpm/vite@8.3.4_@types+node@22.2_79c918432028d6b7b81d88feec7f9ec5/node_modules/vite/dist/node/chunks/node.js:37540:22)
-    at async resolveConfig$1 (file:///<local>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d1-child-recovery/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/index.DpLw24bj.js:14851:25)
-    at async createVitest (file:///<local>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d1-child-recovery/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/cli-api.C4x4GGip.js:26:17)
-    at async prepareVitest (file:///<local>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d1-child-recovery/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/cli-api.C4x4GGip.js:421:14)
-    at async startVitest (file:///<local>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d1-child-recovery/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/cli-api.C4x4GGip.js:340:14) {
-  errno: -4048,
-  code: 'EPERM',
-  syscall: 'open',
-  path: '<local>\\node_modules\\.vite-temp\\api.config.mjs.timestamp-1792701642783-549947550a9b9.mjs'
-}
+subloop kill landings:
+delay undefined: leaf waiting at restart; recovery restarts top 0, middle 0, leaf 0
+delay 0: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 10: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 30: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+delay 60: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 100: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 150: leaf succeeded at restart; recovery restarts top 1, middle 0, leaf 0
+delay 250: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+stderr | src/script-persistence-restart.test.ts > script outcomes survive storage failure and upgrade (#321) > node.finished refusal preserves uncertainty across a real restart and deliberate retry
+{"boundary":"node.finished","failure":"SCRIPT_OUTCOME_UNCERTAIN","script":{"visitId":"01M5JQGKXQK8D9P0W8BHVP2HBN:5","dispatchId":"01M5JQGM08C7JGAEPWM6G645T1","state":"outcome-uncertain"},"recovered":"SCRIPT_OUTCOME_UNCERTAIN","markerAfterResume":2,"store":"C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-wp-d1-outcome-b2kqJ8"}
+
+ ❯ src/script-persistence-restart.test.ts (3 tests | 1 failed) 152516ms
+   ❯ script outcomes survive storage failure and upgrade (#321) (3)
+     × node.finished refusal preserves uncertainty across a real restart and deliberate retry 85325ms
+{"level":30,"time":1792703896793,"pid":54768,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5658"}
+{"level":30,"time":1792703896794,"pid":54768,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5658,"dataDir":"C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-api-process-Lb4qVL","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792703896839,"pid":54768,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792703896845,"pid":54768,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":5.9637000000002445,"msg":"request completed"}
+child admission kill: delay=0ms snapshots=24379 children-at-kill=1 unlinked=none parents=24 child-counts=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+child admission kill: delay=5ms snapshots=32160 children-at-kill=1 unlinked=none parents=24 child-counts=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+child admission kill: delay=25ms snapshots=22387 children-at-kill=1 unlinked=none parents=24 child-counts=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+ ❯ src/child-creation-restart.test.ts (3 tests | 1 failed) 163977ms
+   ❯ child admission across a real API kill (#320) (3)
+     × kill 0ms after admission never exposes an unlinked child and recovers one child per nested parent visit 75780ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/child-creation-restart.test.ts > child admission across a real API kill (#320) > kill 0ms after admission never exposes an unlinked child and recovers one child per nested parent visit
+Error: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ src/child-creation-restart.test.ts:22:1
+     20|
+     21| const fixtures: Awaited<ReturnType<typeof createApiProcessFixture>>[] …
+     22| afterEach(async () => {
+       | ^
+     23|   for (const fixture of fixtures.splice(0)) {
+     24|     await fixture.dispose();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/script-persistence-restart.test.ts > script outcomes survive storage failure and upgrade (#321) > node.finished refusal preserves uncertainty across a real restart and deliberate retry
+Error: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ src/script-persistence-restart.test.ts:30:1
+     28|   });
+     29| }
+     30| afterEach(async () => {
+       | ^
+     31|   for (const { fixture, servers } of fixtures.splice(0)) {
+     32|     await writeFile(join(fixture.dataDir, 'release'), 'done');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
 
 
+ Test Files  2 failed | 51 passed | 2 skipped (55)
+      Tests  2 failed | 707 passed | 6 skipped (715)
+   Start at  16:12:40
+   Duration  1126.80s (tests 81%, import 18%, transform 1%)
 
+    Isolate  55 workers spawned · ~676ms startup each (spawn + environment, per file)
+             at least ~36.51s faster with isolate: false — reuses workers across files instead of one per file
+
+[34m % [39m[2mCoverage report from [22m[33mv8[39m
+
+=============================== Coverage summary ===============================
+Statements   : 96.46% ( 1939/2010 )
+Branches     : 92.9% ( 1258/1354 )
+Functions    : 94.3% ( 381/404 )
+Lines        : 97.83% ( 1762/1801 )
+================================================================================
 [ELIFECYCLE] Command failed with exit code 1.
 Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
 
-  × "pnpm recursive run" failed in <local>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d1-child-
+  × "pnpm recursive run" failed in C:
+  │ \Users\98jak\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d1-child-
   │ recovery\apps\api
 
-
-Finished: 2026-10-22T20:40:43.233Z; exitCode: 1
