@@ -1,0 +1,310 @@
+Built API ee0f4f40; Node 22.14.0; tooling/fixtures/readiness-cli.cs only.
+One probe means one --version invocation, including Claude safe-mode prefix.
+Counts at the 202 response are admission counts; final counts can include execution checks.
+202 alone is not a completion pass. Native success turns are refused by this fixture.
+
+{
+  "name": "depth-limit-two-probes-grandchild",
+  "pass": true,
+  "response": {
+    "status": 422,
+    "ms": 497,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/harness-not-ready",
+      "title": "harness not ready",
+      "status": 422,
+      "code": "HARNESS_NOT_READY",
+      "detail": "Harness readiness checks failed. Fix the listed problems, then start the run again.",
+      "errors": [
+        {
+          "code": "HARNESS_READINESS_AUTH",
+          "severity": "warning",
+          "loopId": "01M5GJ639Z98VHST78R9XYJPD3",
+          "versionId": "01M5GJ639Z5S7S8G08Z9B4SW2N",
+          "nodeId": "think",
+          "path": "config.harness",
+          "message": "Loop \"QA grandchild\" (01M5GJ639Z98VHST78R9XYJPD3), node \"think\": Claude is not signed in. Run claude auth login, then retry preflight."
+        }
+      ]
+    }
+  },
+  "before": {
+    "runs": 7,
+    "queued": 7,
+    "markerEvents": 4,
+    "snapshots": 0
+  },
+  "after": {
+    "runs": 7,
+    "queued": 7,
+    "markerEvents": 4,
+    "snapshots": 0
+  },
+  "probes": {
+    "claude": {
+      "probes": 1,
+      "commands": [
+        "--safe-mode --setting-sources  --strict-mcp-config --version",
+        "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+        "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+      ]
+    },
+    "codex": {
+      "probes": 0,
+      "commands": []
+    }
+  }
+}
+
+{
+  "name": "depth-one-root-and-child",
+  "pass": true,
+  "response": {
+    "status": 202,
+    "ms": 136
+  },
+  "admissionProbes": {
+    "claude": {
+      "probes": 0,
+      "commands": []
+    },
+    "codex": {
+      "probes": 0,
+      "commands": []
+    }
+  },
+  "run": {
+    "id": "01M5GJBG8ETECM25V9EWTYP9BZ",
+    "ownerId": "local",
+    "loopId": "01M5GJBG0BEQFM3NYVMFK8HB8B",
+    "versionId": "01M5GJBG0BRRRH8K8TBVFCDDF3",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "QA root depth1",
+      "label": "QA root depth1 v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M5GJBG8J6Q1DTDGDEWEQ6VGY",
+    "status": "failed",
+    "currentNodeId": "child",
+    "iteration": 1,
+    "waiting": {
+      "waitId": "01M5GJBG8ETECM25V9EWTYP9BZ:5",
+      "nodeId": "child",
+      "kind": "child",
+      "childRunId": "01M5GJBGMSBC0TNJ94G010W97M",
+      "startedSeq": 5
+    },
+    "failure": {
+      "code": "SUBLOOP_DEPTH_EXCEEDED",
+      "message": "subloop child 01M5GJBGMSBC0TNJ94G010W97M failed: subloop depth 2 exceeds the limit 1",
+      "nodeId": "child",
+      "resumable": false,
+      "details": {
+        "childRunId": "01M5GJBGMSBC0TNJ94G010W97M",
+        "childNodeId": "child"
+      }
+    },
+    "createdAt": "2026-10-22T01:07:06.638Z",
+    "startedAt": "2026-10-22T01:07:06.759Z",
+    "finishedAt": "2026-10-22T01:07:08.858Z",
+    "lastEventSeq": 11
+  },
+  "finalProbes": {
+    "claude": {
+      "probes": 0,
+      "commands": []
+    },
+    "codex": {
+      "probes": 0,
+      "commands": []
+    }
+  }
+}
+
+{
+  "name": "depth-two-root-and-child",
+  "pass": true,
+  "response": {
+    "status": 422,
+    "ms": 1722,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/harness-not-ready",
+      "title": "harness not ready",
+      "status": 422,
+      "code": "HARNESS_NOT_READY",
+      "detail": "Harness readiness checks failed. Fix the listed problems, then start the run again.",
+      "errors": [
+        {
+          "code": "HARNESS_READINESS_AUTH",
+          "severity": "warning",
+          "loopId": "01M5GJBEEQTK9PG7YYGN232WMK",
+          "versionId": "01M5GJBEEQA65Z66XKTPKJHCXG",
+          "nodeId": "think",
+          "path": "config.harness",
+          "message": "Loop \"QA grandchild\" (01M5GJBEEQTK9PG7YYGN232WMK), node \"think\": Claude is not signed in. Run claude auth login, then retry preflight."
+        }
+      ]
+    }
+  },
+  "before": {
+    "runs": 2,
+    "queued": 2,
+    "markerEvents": 0,
+    "snapshots": 0
+  },
+  "after": {
+    "runs": 2,
+    "queued": 2,
+    "markerEvents": 0,
+    "snapshots": 0
+  },
+  "probes": {
+    "claude": {
+      "probes": 1,
+      "commands": [
+        "--safe-mode --setting-sources  --strict-mcp-config --version",
+        "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+        "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+      ]
+    },
+    "codex": {
+      "probes": 0,
+      "commands": []
+    }
+  }
+}
+
+{
+  "name": "node-override-allows-grandchild",
+  "pass": true,
+  "response": {
+    "status": 422,
+    "ms": 1608,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/harness-not-ready",
+      "title": "harness not ready",
+      "status": 422,
+      "code": "HARNESS_NOT_READY",
+      "detail": "Harness readiness checks failed. Fix the listed problems, then start the run again.",
+      "errors": [
+        {
+          "code": "HARNESS_READINESS_AUTH",
+          "severity": "warning",
+          "loopId": "01M5GJBEEQTK9PG7YYGN232WMK",
+          "versionId": "01M5GJBEEQA65Z66XKTPKJHCXG",
+          "nodeId": "think",
+          "path": "config.harness",
+          "message": "Loop \"QA grandchild\" (01M5GJBEEQTK9PG7YYGN232WMK), node \"think\": Claude is not signed in. Run claude auth login, then retry preflight."
+        }
+      ]
+    }
+  },
+  "before": {
+    "runs": 2,
+    "queued": 2,
+    "markerEvents": 0,
+    "snapshots": 0
+  },
+  "after": {
+    "runs": 2,
+    "queued": 2,
+    "markerEvents": 0,
+    "snapshots": 0
+  },
+  "probes": {
+    "claude": {
+      "probes": 1,
+      "commands": [
+        "--safe-mode --setting-sources  --strict-mcp-config --version",
+        "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+        "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+      ]
+    },
+    "codex": {
+      "probes": 0,
+      "commands": []
+    }
+  }
+}
+
+{
+  "name": "cycle-both-harnesses-once",
+  "pass": true,
+  "response": {
+    "status": 422,
+    "ms": 2292,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/harness-not-ready",
+      "title": "harness not ready",
+      "status": 422,
+      "code": "HARNESS_NOT_READY",
+      "detail": "Harness readiness checks failed. Fix the listed problems, then start the run again.",
+      "errors": [
+        {
+          "code": "HARNESS_READINESS_AUTH",
+          "severity": "warning",
+          "loopId": "01M5GJBP7P69A23MQ7V6V51H49",
+          "versionId": "01M5GJBTMGH5FXJRADTK82AZF2",
+          "nodeId": "think",
+          "path": "config.harness",
+          "message": "Codex sign-in is missing or invalid. Run codex login, then retry preflight."
+        },
+        {
+          "code": "HARNESS_READINESS_AUTH",
+          "severity": "warning",
+          "loopId": "01M5GJBSFCFRVGC91GK4QFNE3F",
+          "versionId": "01M5GJBSFDZMBYKPVPKPP9JGV3",
+          "nodeId": "think",
+          "path": "config.harness",
+          "message": "Loop \"QA cycle B\" (01M5GJBSFCFRVGC91GK4QFNE3F), node \"think\": Claude is not signed in. Run claude auth login, then retry preflight."
+        }
+      ]
+    }
+  },
+  "before": {
+    "runs": 2,
+    "queued": 2,
+    "markerEvents": 0,
+    "snapshots": 0
+  },
+  "after": {
+    "runs": 2,
+    "queued": 2,
+    "markerEvents": 0,
+    "snapshots": 0
+  },
+  "probes": {
+    "claude": {
+      "probes": 1,
+      "commands": [
+        "--safe-mode --setting-sources  --strict-mcp-config --version",
+        "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+        "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+      ]
+    },
+    "codex": {
+      "probes": 1,
+      "commands": [
+        "--version",
+        "exec --help",
+        "exec resume --help",
+        "login status"
+      ]
+    }
+  }
+}

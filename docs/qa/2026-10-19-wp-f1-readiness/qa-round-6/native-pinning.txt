@@ -1,0 +1,312 @@
+Built API ee0f4f40; Node 22.14.0; tooling/fixtures/readiness-cli.cs only.
+One probe means one --version invocation, including Claude safe-mode prefix.
+Counts at the 202 response are admission counts; final counts can include execution checks.
+202 alone is not a completion pass. Native success turns are refused by this fixture.
+
+{
+  "name": "published-child-ignores-unready-draft",
+  "pass": true,
+  "response": {
+    "status": 202,
+    "ms": 1293
+  },
+  "admissionProbes": {
+    "claude": {
+      "probes": 1,
+      "commands": [
+        "--safe-mode --setting-sources  --strict-mcp-config --version",
+        "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+        "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+      ]
+    },
+    "codex": {
+      "probes": 0,
+      "commands": []
+    }
+  },
+  "run": {
+    "id": "01M5GJ5S68W0BMY8Y53XJAVEGD",
+    "ownerId": "local",
+    "loopId": "01M5GJ4CJZ997G6QTDEBYPFX24",
+    "versionId": "01M5GJ4CJZ9VXJ9WFHHCZHAQH8",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "QA audit parent",
+      "label": "QA audit parent v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M5GJ5S684WKWT7VR3DFEKX6S",
+    "status": "failed",
+    "currentNodeId": "child",
+    "iteration": 1,
+    "waiting": {
+      "waitId": "01M5GJ5S68W0BMY8Y53XJAVEGD:7",
+      "nodeId": "child",
+      "kind": "child",
+      "childRunId": "01M5GJ5TTN05GBZN4A2MFG91CK",
+      "startedSeq": 7
+    },
+    "failure": {
+      "code": "HARNESS_TURN_FAILED",
+      "message": "subloop child 01M5GJ5TTN05GBZN4A2MFG91CK failed: harness turn failed: Claude turn failed",
+      "nodeId": "child",
+      "resumable": false,
+      "details": {
+        "childRunId": "01M5GJ5TTN05GBZN4A2MFG91CK",
+        "childNodeId": "think",
+        "childDetails": {
+          "adapterCode": "HARNESS_TURN_FAILED"
+        }
+      }
+    },
+    "createdAt": "2026-10-22T01:03:59.176Z",
+    "startedAt": "2026-10-22T01:04:00.499Z",
+    "finishedAt": "2026-10-22T01:04:02.824Z",
+    "lastEventSeq": 13
+  },
+  "finalProbes": {
+    "claude": {
+      "probes": 2,
+      "commands": [
+        "--safe-mode --setting-sources  --strict-mcp-config --version",
+        "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+        "--safe-mode --setting-sources  --strict-mcp-config auth status --json",
+        "--safe-mode --setting-sources  --strict-mcp-config --version",
+        "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+        "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+      ]
+    },
+    "codex": {
+      "probes": 0,
+      "commands": []
+    }
+  }
+}
+
+{
+  "name": "numbered-child-v1-not-v2",
+  "pass": true,
+  "response": {
+    "status": 202,
+    "ms": 957
+  },
+  "admissionProbes": {
+    "claude": {
+      "probes": 1,
+      "commands": [
+        "--safe-mode --setting-sources  --strict-mcp-config --version",
+        "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+        "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+      ]
+    },
+    "codex": {
+      "probes": 0,
+      "commands": []
+    }
+  },
+  "run": {
+    "id": "01M5GJ604HE024PQ7B3SAKJQ6Q",
+    "ownerId": "local",
+    "loopId": "01M5GJ5XTVQ2A6934YWT9HHBM9",
+    "versionId": "01M5GJ5XTW0RDECYETX25XJTAW",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "QA explicit numbered parent",
+      "label": "QA explicit numbered parent v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M5GJ604JDVYNA5KTG5RNRR8T",
+    "status": "failed",
+    "currentNodeId": "child",
+    "iteration": 1,
+    "waiting": {
+      "waitId": "01M5GJ604HE024PQ7B3SAKJQ6Q:5",
+      "nodeId": "child",
+      "kind": "child",
+      "childRunId": "01M5GJ61EDY67JWRNHHE834SAP",
+      "startedSeq": 5
+    },
+    "failure": {
+      "code": "HARNESS_TURN_FAILED",
+      "message": "subloop child 01M5GJ61EDY67JWRNHHE834SAP failed: harness turn failed: Claude turn failed",
+      "nodeId": "child",
+      "resumable": false,
+      "details": {
+        "childRunId": "01M5GJ61EDY67JWRNHHE834SAP",
+        "childNodeId": "think",
+        "childDetails": {
+          "adapterCode": "HARNESS_TURN_FAILED"
+        }
+      }
+    },
+    "createdAt": "2026-10-22T01:04:06.289Z",
+    "startedAt": "2026-10-22T01:04:07.256Z",
+    "finishedAt": "2026-10-22T01:04:09.164Z",
+    "lastEventSeq": 11
+  },
+  "finalProbes": {
+    "claude": {
+      "probes": 2,
+      "commands": [
+        "--safe-mode --setting-sources  --strict-mcp-config --version",
+        "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+        "--safe-mode --setting-sources  --strict-mcp-config auth status --json",
+        "--safe-mode --setting-sources  --strict-mcp-config --version",
+        "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+        "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+      ]
+    },
+    "codex": {
+      "probes": 0,
+      "commands": []
+    }
+  }
+}
+
+{
+  "name": "draft-edited-during-native-hang",
+  "pass": true,
+  "editMs": 288,
+  "response": {
+    "status": 422,
+    "ms": 20514,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/harness-not-ready",
+      "title": "harness not ready",
+      "status": 422,
+      "code": "HARNESS_NOT_READY",
+      "detail": "Harness readiness checks failed. Fix the listed problems, then start the run again.",
+      "errors": [
+        {
+          "code": "HARNESS_READINESS_UNKNOWN",
+          "severity": "warning",
+          "loopId": "01M5GJGZG26A8F537HND43AV2C",
+          "versionId": "01M5GJH2XWKHJN51E785ECYBYX",
+          "nodeId": "think",
+          "path": "config.harness",
+          "message": "Claude CLI check process did not confirm that it stopped. Check that the Claude CLI starts and responds, then retry preflight."
+        }
+      ]
+    }
+  },
+  "before": {
+    "runs": 0,
+    "queued": 0,
+    "markerEvents": 0,
+    "snapshots": 0
+  },
+  "after": {
+    "runs": 0,
+    "queued": 0,
+    "markerEvents": 0,
+    "snapshots": 0
+  },
+  "probes": {
+    "claude": {
+      "probes": 1,
+      "commands": [
+        "--safe-mode --setting-sources  --strict-mcp-config --version",
+        "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+        "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+      ]
+    },
+    "codex": {
+      "probes": 0,
+      "commands": []
+    }
+  },
+  "limit": "Native rejection only; successful same-snapshot execution covered by API and engine test fixtures."
+}
+
+{
+  "name": "child-published-during-native-hang",
+  "pass": true,
+  "publish": {
+    "status": 200,
+    "ms": 1384,
+    "versionId": "01M5GJHTAMCSCPTHNR2KVDS613"
+  },
+  "originalVersion": "01M5GJHPZNE2MNAHBZCPM03ZZB",
+  "response": {
+    "status": 422,
+    "ms": 21737,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/harness-not-ready",
+      "title": "harness not ready",
+      "status": 422,
+      "code": "HARNESS_NOT_READY",
+      "detail": "Harness readiness checks failed. Fix the listed problems, then start the run again.",
+      "errors": [
+        {
+          "code": "HARNESS_READINESS_UNKNOWN",
+          "severity": "warning",
+          "loopId": "01M5GJHPZNQ0H8SMV7185HK2K3",
+          "versionId": "01M5GJHPZNE2MNAHBZCPM03ZZB",
+          "nodeId": "think",
+          "path": "config.harness",
+          "message": "Loop \"QA pinned old Claude\" (01M5GJHPZNQ0H8SMV7185HK2K3), node \"think\": Claude CLI check process did not confirm that it stopped. Check that the Claude CLI starts and responds, then retry preflight."
+        }
+      ]
+    }
+  },
+  "before": {
+    "runs": 0,
+    "queued": 0,
+    "markerEvents": 0,
+    "snapshots": 0
+  },
+  "after": {
+    "runs": 0,
+    "queued": 0,
+    "markerEvents": 0,
+    "snapshots": 0
+  },
+  "probes": {
+    "claude": {
+      "probes": 1,
+      "commands": [
+        "--safe-mode --setting-sources  --strict-mcp-config --version",
+        "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+        "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+      ]
+    },
+    "codex": {
+      "probes": 1,
+      "commands": [
+        "--version",
+        "exec --help",
+        "exec resume --help",
+        "login status"
+      ]
+    }
+  },
+  "limit": "Native rejection preserves old checked pin; successful execution pin race is a controlled API/engine test."
+}
