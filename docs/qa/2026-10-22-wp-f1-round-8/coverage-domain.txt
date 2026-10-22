@@ -1,0 +1,101 @@
+pnpm.cmd : $ vitest run --coverage --maxWorkers 1 --coverage.reportOnFailure --coverage.reporter=text
+--coverage.reporter=json-summary --coverage.reporter=json --reporter=default --reporter=json
+'--outputFile=<qa-root>\coverage-domain.json'
+At line:11 char:3
++   pnpm.cmd --filter "@graphgoblin/$package" test:coverage --maxWorker ...
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...ge-domain.json':String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+
+ RUN  v5.0.3 <worktree>/packages/domain
+      Coverage enabled with v8
+
+ ✓ src/adversarial.test.ts (41 tests) 8329ms
+   ✓ adversarial domain invariants (41)
+     ✓ ADV-007: JSONata native regex is bounded by its expression timeout 1294ms
+     ✓ ADV-007 review: 10 nested failing $evals stay small in a 128 MB process 1478ms
+     ✓ ADV-007 review: 20 nested failing $evals stay small in a 128 MB process 1518ms
+     ✓ ADV-007 review: 30 nested failing $evals stay small in a 128 MB process 1403ms
+     ✓ ADV-007 review: nested-alternative is rejected in an isolated process 1217ms
+     ✓ ADV-007 review: runtime-eval is rejected in an isolated process 1226ms
+ ✓ src/convert-v3-v4/conversion.test.ts (102 tests) 1097ms
+ ✓ src/convert-v3-v4/filters.test.ts (78 tests) 2701ms
+   ✓ predicate coercion parity (50)
+     ✓ quotes source exactly and retains guarded eval, regex/depth/deadline failures 2017ms
+ ✓ src/upgrade.test.ts (49 tests) 2672ms
+   ✓ offline v1 authoring conversion (14)
+     ✓ converts a singleton codex without changing edge ids/waypoints 707ms
+     ✓ uses real frozen AIDLC exports as refusal inputs, never selected-first fallbacks 705ms
+ ✓ src/upgrade-current.test.ts (22 tests) 800ms
+   ✓ one current offline definition cutover (22)
+     ✓ keeps format 1 decision conversion on frozen V3 contracts 609ms
+ ✓ src/upgrade-composed.test.ts (10 tests) 857ms
+   ✓ composed format-4 definition and export conversion (10)
+     ✓ matches the frozen stages and complete golden for v1 623ms
+ ✓ src/json-schema.test.ts (7 tests) 280ms
+ ✓ src/parse-identity.test.ts (3 tests) 164ms
+ ✓ src/expression.test.ts (10 tests) 304ms
+ ✓ src/syntax.test.ts (9 tests) 112ms
+ ✓ src/graph.test.ts (7 tests) 112ms
+ ✓ src/template-bundle.test.ts (4 tests) 46ms
+ ✓ src/mutations.test.ts (15 tests) 110ms
+ ✓ src/upgrade-v3.test.ts (29 tests) 113ms
+ ✓ src/gates.test.ts (15 tests) 68ms
+ ✓ src/loop-io.test.ts (13 tests) 75ms
+ ✓ src/poll-items.test.ts (8 tests) 67ms
+ ✓ src/template.test.ts (7 tests) 27ms
+ ✓ src/answers.test.ts (20 tests) 28ms
+ ✓ src/readiness.test.ts (22 tests) 20ms
+ ✓ src/patch.test.ts (24 tests) 40ms
+ ✓ src/regex-safety.test.ts (46 tests) 16ms
+ ✓ src/model-resolution.test.ts (15 tests) 16ms
+ ✓ src/pointer.test.ts (10 tests) 15ms
+ ✓ src/replay.test.ts (6 tests) 14ms
+ ✓ src/retired-destinations.test.ts (9 tests) 12ms
+ ✓ src/state-machine.test.ts (3 tests) 15ms
+ ✓ src/convert-v3-v4/retired-event-channel.test.ts (1 test) 148ms
+ ✓ src/thread-view.test.ts (3 tests) 8ms
+ ✓ src/json-value.test.ts (3 tests) 105ms
+
+ Test Files  30 passed (30)
+      Tests  591 passed (591)
+   Start at  13:07:39
+   Duration  60.40s (tests 44%, import 44%, transform 8%, worker 4%)
+
+     Import  111 modules were evaluated 212 times · 18.36s total, 44% of tracked time
+             ~8.75s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+JSON report written to <qa-root>/coverage-domain.json
+ % Coverage report from v8
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s
+-------------------|---------|----------|---------|---------|-------------------
+All files          |   97.32 |    95.78 |   97.11 |   98.47 |
+ src               |   97.73 |    95.73 |   96.36 |   98.56 |
+  answers.ts       |   98.36 |    97.33 |     100 |     100 | 41,71
+  expression.ts    |   98.85 |    95.38 |     100 |   98.66 | 25
+  graph.ts         |     100 |    98.85 |     100 |     100 | 256
+  json-schema.ts   |     100 |    82.35 |     100 |     100 | 43,55-67,72-73,91
+  mutations.ts     |   98.49 |    95.23 |      96 |     100 | 116,132,224,321
+  patch.ts         |   98.46 |    98.21 |     100 |     100 | 45
+  regex-safety.ts  |   99.41 |    99.24 |     100 |     100 | 169
+  syntax.ts        |     100 |       98 |     100 |     100 | 62
+  template.ts      |      70 |       50 |   44.44 |   73.68 | 10-15,18
+  ...de-current.ts |     100 |    94.73 |     100 |     100 | ...00,104,114-121
+  upgrade-v2-v3.ts |   93.91 |    94.54 |   88.88 |   94.94 | ...36-239,244-246
+  upgrade.ts       |    93.7 |     91.2 |   94.44 |   96.28 | ...07-610,619-621
+ src/convert-v3-v4 |   96.43 |    95.85 |   98.63 |   98.29 |
+  consumers.ts     |   96.29 |    96.46 |   92.85 |   99.35 | 42
+  filters.ts       |   97.19 |     96.7 |     100 |     100 | 63,107,125
+  index.ts         |   95.98 |    95.29 |     100 |   97.29 | ...-918,1007,1092
+  review.ts        |     100 |    95.83 |     100 |     100 | 33-38
+-------------------|---------|----------|---------|---------|-------------------
+
+=============================== Coverage summary ===============================
+Statements   : 97.32% ( 2328/2392 )
+Branches     : 95.78% ( 2270/2370 )
+Functions    : 97.11% ( 437/450 )
+Lines        : 98.47% ( 2007/2038 )
+================================================================================

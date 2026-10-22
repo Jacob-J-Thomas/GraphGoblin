@@ -117,16 +117,16 @@ with its next step. After fixing the cause, choose
 node editor). See [readiness lookup behavior](../09-frontend-and-pwa.md#claude-readiness-and-saved-selections)
 for first load, background rechecks, offline pauses, completed lookup failures and transport wording.
 
-| State              | Label             | What to do                                                                                     |
-| ------------------ | ----------------- | ---------------------------------------------------------------------------------------------- |
-| `checking`         | Checking…         | The first check has not answered yet. Wait for it.                                             |
-| `unknown`          | Unknown           | The check timed out or could not interpret its result. Check that the CLI starts, then retry.  |
-| `ready`            | Ready             | CLI version, required flags and local login passed. Account access to a model is not verified. |
-| `cli-missing`      | CLI not found     | Install the CLI or set `GG_CLAUDE_BINARY` / `GG_CODEX_BINARY`, then retry preflight.           |
-| `cli-incompatible` | CLI update needed | Update that CLI; the problem names the version or missing option. Then retry preflight.        |
-| `auth`             | Sign-in needed    | Run `claude auth login` / `codex login` for the API's Windows account, then retry preflight.   |
-| `quota`            | Usage limit       | Wait for the account allowance to reset, then retry preflight; keep the selected model.        |
-| `transport`        | Connection failed | Check the connection and provider service status, then retry preflight; keep the model.        |
+| State              | Label             | What to do                                                                                                                                                                                                       |
+| ------------------ | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `checking`         | Checking…         | The first check has not answered yet. Wait for it.                                                                                                                                                               |
+| `unknown`          | Unknown           | The check timed out or returned empty/unrecognised login output, even with exit 0. Sign-out is not established. Check that the CLI starts and responds, then retry preflight.                                    |
+| `ready`            | Ready             | CLI version, required flags and local login passed. Account access to a model is not verified.                                                                                                                   |
+| `cli-missing`      | CLI not found     | Install the CLI or set `GG_CLAUDE_BINARY` / `GG_CODEX_BINARY`, then retry preflight.                                                                                                                             |
+| `cli-incompatible` | CLI update needed | Update that CLI; the problem names the version or missing option. Then retry preflight.                                                                                                                          |
+| `auth`             | Sign-in needed    | The CLI reported sign-out, a wrong Claude account method or an authentication failure (including HTTP/API 401/403). Run `claude auth login` / `codex login` for the API's Windows account, then retry preflight. |
+| `quota`            | Usage limit       | The CLI reported HTTP/API 429 or an account allowance limit, even if it also mentions network settings. Wait for the allowance to reset, then retry preflight; keep the selected model.                          |
+| `transport`        | Connection failed | Check the connection and provider service status, then retry preflight; keep the model.                                                                                                                          |
 
 Model unavailable is reserved for a disabled model or an identity removed from GraphGoblin's
 supported catalog. Enable a deliberately disabled entry or choose a supported entry. A failed
@@ -138,6 +138,13 @@ with the specific readiness reason when prerequisites are not ready.
 
 `authenticated` omitted from a preflight response means login was not established, rather than
 signed out. A confirmed signed-out Claude status is `auth`, including JSON on stdout with exit 1.
+An empty response or `{}` on exit 0 instead shows "Unknown" with
+"Claude readiness could not be confirmed. Check that the Claude CLI starts and responds, then retry preflight."
+(or Codex).
+The unknown result omits `authenticated`; it does not ask you to log in based only on missing output.
+The [no-turn evidence precedence](../06-harness-integration.md#no-turn-readiness-179)
+keeps explicit status evidence ahead of incidental network wording and explains Claude's
+stderr/stdout conflict rule. No model turn is used to resolve an uncertain login.
 
 No readiness check starts a model turn. Native no-turn process evidence and disposable QA steps
 are recorded in the [WP-F1 report](../qa/2026-10-19-wp-f1-readiness/README.md).

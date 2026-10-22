@@ -1,0 +1,121 @@
+{"level":30,"time":1792694172036,"pid":29564,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5638"}
+{"level":30,"time":1792694172036,"pid":29564,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5638,"dataDir":"<local-path>","requireApiKey":false,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792694172203,"pid":29564,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/harness/preflight","host":"127.0.0.1:5638","remoteAddress":"127.0.0.1","remotePort":64011},"msg":"incoming request"}
+{"level":30,"time":1792694172583,"pid":29564,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":379.2817,"msg":"request completed"}
+{"level":30,"time":1792694172594,"pid":29564,"hostname":"DESKTOP-RQPA3QI","reqId":"req-2","req":{"method":"GET","url":"/harness/preflight","host":"127.0.0.1:5638","remoteAddress":"127.0.0.1","remotePort":64011},"msg":"incoming request"}
+{"level":30,"time":1792694172902,"pid":29564,"hostname":"DESKTOP-RQPA3QI","reqId":"req-2","res":{"statusCode":200},"responseTime":308.12069999999994,"msg":"request completed"}
+{"level":30,"time":1792694172906,"pid":29564,"hostname":"DESKTOP-RQPA3QI","reqId":"req-3","req":{"method":"GET","url":"/harness/preflight","host":"127.0.0.1:5638","remoteAddress":"127.0.0.1","remotePort":64011},"msg":"incoming request"}
+{"level":30,"time":1792694173220,"pid":29564,"hostname":"DESKTOP-RQPA3QI","reqId":"req-3","res":{"statusCode":200},"responseTime":313.1705000000002,"msg":"request completed"}
+{"level":30,"time":1792694173223,"pid":29564,"hostname":"DESKTOP-RQPA3QI","reqId":"req-4","req":{"method":"GET","url":"/harness/preflight","host":"127.0.0.1:5638","remoteAddress":"127.0.0.1","remotePort":64011},"msg":"incoming request"}
+{"level":30,"time":1792694173566,"pid":29564,"hostname":"DESKTOP-RQPA3QI","reqId":"req-4","res":{"statusCode":200},"responseTime":342.9921999999997,"msg":"request completed"}
+{"level":30,"time":1792694173570,"pid":29564,"hostname":"DESKTOP-RQPA3QI","reqId":"req-5","req":{"method":"GET","url":"/harness/preflight","host":"127.0.0.1:5638","remoteAddress":"127.0.0.1","remotePort":64011},"msg":"incoming request"}
+{"level":30,"time":1792694173890,"pid":29564,"hostname":"DESKTOP-RQPA3QI","reqId":"req-5","res":{"statusCode":200},"responseTime":319.5711000000001,"msg":"request completed"}
+[
+  {
+    "case": "explicit auth status with incidental network advice",
+    "expected": "auth",
+    "actual": [
+      {
+        "harness": "codex",
+        "state": "auth",
+        "authenticated": false,
+        "problems": [
+          "Codex sign-in is missing or invalid. Run codex login, then retry preflight."
+        ]
+      },
+      {
+        "harness": "claude",
+        "state": "auth",
+        "authenticated": false,
+        "problems": [
+          "Claude sign-in is missing or invalid. Run claude auth login, then retry preflight."
+        ]
+      }
+    ]
+  },
+  {
+    "case": "explicit quota status with incidental network text",
+    "expected": "quota",
+    "actual": [
+      {
+        "harness": "codex",
+        "state": "quota",
+        "problems": [
+          "Codex account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+        ]
+      },
+      {
+        "harness": "claude",
+        "state": "quota",
+        "problems": [
+          "Claude account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+        ]
+      }
+    ]
+  },
+  {
+    "case": "quota on stdout with unrelated stderr warning",
+    "expected": "quota",
+    "actual": [
+      {
+        "harness": "codex",
+        "state": "quota",
+        "problems": [
+          "Codex account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+        ]
+      },
+      {
+        "harness": "claude",
+        "state": "quota",
+        "problems": [
+          "Claude account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+        ]
+      }
+    ]
+  },
+  {
+    "case": "empty successful login status",
+    "expected": "unknown",
+    "actual": [
+      {
+        "harness": "codex",
+        "state": "unknown",
+        "problems": [
+          "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight."
+        ]
+      },
+      {
+        "harness": "claude",
+        "state": "unknown",
+        "problems": [
+          "Claude readiness could not be confirmed. Check that the Claude CLI starts and responds, then retry preflight."
+        ]
+      }
+    ]
+  },
+  {
+    "case": "unrecognized successful login status",
+    "expected": "unknown",
+    "actual": [
+      {
+        "harness": "codex",
+        "state": "unknown",
+        "problems": [
+          "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight."
+        ]
+      },
+      {
+        "harness": "claude",
+        "state": "unknown",
+        "problems": [
+          "Claude readiness could not be confirmed. Check that the Claude CLI starts and responds, then retry preflight."
+        ]
+      }
+    ]
+  }
+]
+{"level":30,"time":1792694174035,"pid":29564,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5638"}
+{"level":30,"time":1792694174035,"pid":29564,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5638,"dataDir":"<local-path>","requireApiKey":false,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792694174070,"pid":29564,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"DELETE","url":"/secrets/jev-api-key","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792694174073,"pid":29564,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":204},"responseTime":3.3859000000002197,"msg":"request completed"}
+Baseline disposable secret cleanup status 204
