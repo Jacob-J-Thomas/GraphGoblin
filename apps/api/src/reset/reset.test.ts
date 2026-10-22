@@ -1,6 +1,6 @@
 import { spawn, spawnSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
-import { mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises';
+import { lstat, mkdir, mkdtemp, readdir, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
@@ -686,18 +686,25 @@ describe('refused resets change nothing', () => {
       const dataDir = join(base, 'data');
       await mkdir(dataDir);
       const fifo = join(dataDir, 'graphgoblin.db');
+      await writeFile(join(dataDir, 'notes.txt'), 'kept');
       expect(spawnSync('mkfifo', [fifo]).status).toBe(0);
-      const before = await snapshotTree(base);
-      const result = await reset(
-        ['--reset'],
-        { GG_DATA_DIR: dataDir, GG_DB_URL: `file:${fifo}` },
-        { readStore: () => Promise.reject(new Error('the store must not be read')) },
-      );
-      expect(result.code).toBe(1);
-      expect(result.err).toContain(
-        'graphgoblin.db is a special file, not a database file; a reset removes only regular database files',
-      );
-      expect(await snapshotTree(base)).toEqual(before);
+      // Reading a FIFO with no writer blocks, so the tree is compared by listing, not by hashing
+      // (the hashing snapshot would hang exactly as a reader of the "database" would).
+      const before = (await readdir(dataDir)).sort();
+      for (const argv of [['--reset'], ['--reset', '--yes', '--data-dir', dataDir]]) {
+        const result = await reset(
+          argv,
+          { GG_DATA_DIR: dataDir, GG_DB_URL: `file:${fifo}` },
+          { readStore: () => Promise.reject(new Error('the store must not be read')) },
+        );
+        expect(result.code).toBe(1);
+        expect(result.err).toContain(
+          'graphgoblin.db is a special file, not a database file; a reset removes only regular database files',
+        );
+        expect(result.err).toMatch(/Nothing was changed\.\n$/);
+        expect((await readdir(dataDir)).sort()).toEqual(before);
+        expect((await lstat(fifo)).isFIFO()).toBe(true);
+      }
     },
   );
 
