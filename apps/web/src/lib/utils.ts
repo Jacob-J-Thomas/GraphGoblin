@@ -55,7 +55,7 @@ export function prettyJsonPrefix(
   // get; stops once the budget is spent.
   const quote = (text: string): void => {
     push('"');
-    for (let start = 0; start < text.length; ) {
+    for (let start = 0; start < text.length;) {
       let end = Math.min(start + QUOTE_CHUNK, text.length);
       if (
         end < text.length &&
