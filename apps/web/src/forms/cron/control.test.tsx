@@ -1,5 +1,5 @@
 import { NodeConfigSchemas } from '@graphgoblin/contracts';
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -372,19 +372,27 @@ describe('cron schedule control', () => {
     );
   });
   it('announces debounced values through one stable status, not raw typing', async () => {
-    const { user } = setup('0 9 * * *');
+    setup('0 9 * * *');
     const schedule = within(screen.getByRole('group', { name: 'Schedule' }));
     await waitFor(() =>
       expect(schedule.getByRole('status')).toHaveTextContent('Upcoming runs ready.'),
     );
     const status = schedule.getByRole('status');
     const before = status.textContent;
-    await user.selectOptions(screen.getByLabelText('Repeat'), 'custom');
-    fireEvent.change(raw(), { target: { value: 'b' } });
-    expect(schedule.getByRole('status')).toBe(status);
-    expect(status.textContent).toBe(before);
-    fireEvent.change(raw(), { target: { value: 'broken' } });
-    expect(status.textContent).toBe(before);
+    // These public input changes must stay inside the 350 ms announcement debounce, independent
+    // of wall-clock contention. Picker keyboard behavior is covered by the other control cases.
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    try {
+      fireEvent.change(screen.getByLabelText('Repeat'), { target: { value: 'custom' } });
+      fireEvent.change(raw(), { target: { value: 'b' } });
+      expect(schedule.getByRole('status')).toBe(status);
+      expect(status.textContent).toBe(before);
+      fireEvent.change(raw(), { target: { value: 'broken' } });
+      expect(status.textContent).toBe(before);
+      await act(() => vi.advanceTimersByTimeAsync(350));
+    } finally {
+      vi.useRealTimers();
+    }
     await waitFor(() => expect(status).toHaveTextContent('Custom expression: broken'));
     expect(schedule.getAllByRole('status')).toHaveLength(1);
   });

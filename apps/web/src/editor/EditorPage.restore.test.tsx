@@ -119,6 +119,10 @@ describe('restoring a set-aside copy', () => {
       synced: false,
     };
     await drafts.saveLocalDraft(original);
+    // This case tests conversion/archiving; loader failures have their own cases below.
+    // Resolve the UI's real lazy-import path before starting the mounted-state assertion
+    // window, even though the fixture also imports the converter directly.
+    await deviceUpgrader.loadDeviceUpgrader();
     renderApp(`/loops/${loop.id}/edit`, api);
     expect(await screen.findByRole('heading', { name: 'legacy device copy' })).toBeInTheDocument();
     await waitFor(async () => expect(await drafts.loadArchivedDrafts(loop.id)).toEqual([original]));
