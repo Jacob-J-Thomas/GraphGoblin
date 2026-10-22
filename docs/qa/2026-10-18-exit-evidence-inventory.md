@@ -12,7 +12,7 @@ Sources for "before": [ADR-0010](../decisions/ADR-0010-exit-return-channels.md),
 - the `exit.evaluated` event schema
 - the #129 comment of 2026-10-08 on the PR #126 exit-local Choice options array
 
-Sources for "after": current `main` (`f157fc1`), reproduced in the built product, then this branch. The owner review steps, with their three loops, are in [2026-10-19-wp-g4-exit-evidence](2026-10-19-wp-g4-exit-evidence/README.md).
+Sources for "after": current `main` (`f157fc1`), reproduced in the built product, then this branch. The owner review steps, with their four loops, are in [2026-10-19-wp-g4-exit-evidence](2026-10-19-wp-g4-exit-evidence/README.md).
 
 ## Inventory
 
@@ -82,6 +82,6 @@ Selecting `exit.evaluated` shows "Exit outcome: success. This exit is terminal. 
 - Exhausted gate: "Last gate decision: gate chose again on pass 3 of 3; maximum passes stopped the repeat, so it took Limit reached." Decision details add Label "Again" and Criterion "More work is needed".
 - The exit editor reads "No returned value. The run finishes without a result, and destinations receive nothing.". The Destinations help reads "Returns is None, so these 2 destinations receive nothing. Choose a JSONata expression to deliver a value, or remove destinations for a quiet exit." With no destinations it reads "Quiet exit: nothing is returned or delivered. The run still finishes with its outcome.".
 
-Engine behaviour, events and stored data are unchanged. The inspector derives the "returned nothing" line from the immutable run version and the absent `result` on `run.finished`. A return expression always produces a value, at least `null`, so an absent result means Returns was None.
+The inspector derives the "returned nothing" line from the immutable run version and the absent `result` on `run.finished`, only when the pinned exit's Returns is None. A recorded result, including `null`, appears in Result. When the result is absent but the pinned exit's Returns is an expression, the inspector says that the history alone cannot show whether nothing or an unrecorded null was returned: an older build omitted null results. When the pinned definition or exit is unavailable, it says that the Returns setting cannot be shown. Section 6 of the owner review recipe reproduces the omitted-null case.
 
-Not in this bolt: per-destination delivery status after the terminal event belongs to #185. The run snapshot drops a `null` result in storage. This change only displays it from the event log.
+Not in this bolt: per-destination delivery status after the terminal event belongs to #185. Current storage preserves `null` results. The inspector shows the run row's recorded result, falling back to `run.finished` when the row has none; if both omit the result, no Result card appears and the explanation follows the pinned configuration as described above.

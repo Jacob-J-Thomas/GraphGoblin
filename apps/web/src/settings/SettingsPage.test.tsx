@@ -58,10 +58,12 @@ describe('SettingsPage', () => {
     async (label, confirmation, heading) => {
       const api = seeded('litellm');
       const { queryClient } = renderApp('/settings', api);
-      const user = userEvent.setup();
       const trigger = await screen.findByRole('button', { name: label });
       await waitFor(() => expect(queryClient.isFetching()).toBe(0));
-      await user.click(trigger);
+      await userEvent.setup().click(trigger);
+      // The removal watch expires 500 ms after refresh settles. Hold its clock as well as
+      // rendering: real-time user-event/waitFor delays can otherwise expire it under load.
+      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
       const notifications: (() => void)[] = [];
       const frames: FrameRequestCallback[] = [];
       const frame = vi.spyOn(globalThis, 'requestAnimationFrame').mockImplementation((callback) => {
@@ -70,9 +72,14 @@ describe('SettingsPage', () => {
       });
       notifyManager.setScheduler((callback) => notifications.push(callback));
       try {
-        await user.click(screen.getByRole('button', { name: confirmation }));
-        await waitFor(() => expect(queryClient.isFetching()).toBe(0));
-        await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
+        // Drain promise continuations and zero-delay tasks (including dialog close) without
+        // advancing to the watch's expiry. act commits the close before notification release.
+        await act(async () => {
+          fireEvent.click(screen.getByRole('button', { name: confirmation }));
+          await vi.advanceTimersByTimeAsync(0);
+        });
+        expect(queryClient.isFetching()).toBe(0);
+        expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
         act(() => frames.splice(0).forEach((callback) => callback(0)));
         // The request settled and the old frame ran; the query's render notification is held.
         expect(trigger).toHaveFocus();
@@ -83,8 +90,14 @@ describe('SettingsPage', () => {
         expect(screen.getByRole('heading', { name: heading })).toHaveFocus();
       } finally {
         notifyManager.setScheduler(defaultScheduler);
-        frame.mockRestore();
-        await act(() => Promise.resolve(notifications.splice(0).forEach((callback) => callback())));
+        try {
+          await act(() =>
+            Promise.resolve(notifications.splice(0).forEach((callback) => callback())),
+          );
+        } finally {
+          frame.mockRestore();
+          vi.useRealTimers();
+        }
       }
     },
   );
