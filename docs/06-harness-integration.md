@@ -101,6 +101,24 @@ distinct harnesses are probed concurrently. Concurrent requests own separate mem
 retained on the container or module. Run admission pins the checked version and rejects failed
 prerequisites before starting a turn. Readiness issues use `HARNESS_READINESS_<STATE>` (hyphens
 become underscores); catalog/configuration issues retain their existing codes.
+
+Manual UI/API/MCP admission checks the engine's frozen root definition (published version or
+draft snapshot) and every executable pinned subloop definition, recursively. Both `latest` and
+numbered child references use the published records the engine prepared for this start, never a
+child's draft or a publication that arrives while a probe is pending. A breadth-first walk visits
+each version once at its shallowest depth, protects cycles and applies the execution handler's
+configured subloop depth limit (or that node's override, at most 64). Harnesses shared by parent
+and children share one probe; distinct harnesses are probed concurrently. An unready descendant
+returns 422 `HARNESS_NOT_READY`, with the child loop name, loop/version ids and node id in its
+issues, before any parent run, queued event, draft snapshot or mutation is committed.
+The engine commits the same checked intent after probing and revalidates that its versions still
+exist; slow probes do not hold the shared admission/deletion lock.
+
+Scheduled and webhook admissions, internally started subloops and resumes do not gain this
+manual preflight; their existing execution checks remain in place and can fail after earlier
+nodes have run. Unresolved child references retain their existing `SUBLOOP_NOT_FOUND` execution
+behavior. Readiness is an admission-time observation, not a guarantee of later account access.
+
 `/harness/preflight` exposes seven server states. `checking` is a web-only request state.
 `authenticated` is absent if login was not checked or could not be established; false requires
 positive signed-out evidence. Claude parses auth-status JSON even on exit 1 (`loggedIn:false`
