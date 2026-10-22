@@ -30,10 +30,13 @@ const QUOTE_CHUNK = 1_024;
  * without formatting the whole value: the walk stops as soon as the budget is spent, strings and
  * property names are quoted in chunks up to the remaining budget, and object properties are read
  * one at a time, so a multi-megabyte variable costs only its first lines of work and memory
- * (#259). The text is exactly `prettyJson(value).slice(0, limit)` for every value `JSON.stringify`
- * accepts: the same key order, escaping, indentation, array holes, boxed primitives, `toJSON`
- * (called with the property key) and omission of `undefined`, functions and symbols. A BigInt
- * throws the same `TypeError`.
+ * (#259). The text is exactly `prettyJson(value).slice(0, limit)` for JSON data (what the API
+ * returns: objects, arrays, strings, numbers, booleans, null) and the usual extras that reach it
+ * from JavaScript: the same key order, escaping, indentation, array holes, same-realm boxed
+ * primitives, `toJSON` (called with the property key, as on `Date`) and omission of `undefined`,
+ * functions and symbols; a BigInt throws the same `TypeError`. Exotic values (a function carrying
+ * `toJSON`, a boxed primitive from another realm or with an overridden `valueOf`, a getter that
+ * changes an array's length while it is read) are outside the guarantee.
  */
 export function prettyJsonPrefix(
   value: unknown,
@@ -46,13 +49,20 @@ export function prettyJsonPrefix(
     length += part.length;
     if (length > limit) throw STOP;
   };
-  // `JSON.stringify(text)` without quoting the whole text: chunks never split a surrogate pair,
-  // so the escapes are the ones the whole string would get; stops once the budget is spent.
+  // `JSON.stringify(text)` without quoting the whole text: a chunk boundary moves past a high
+  // surrogate only when the next character is its low half (a lone high surrogate stays where it
+  // is and escapes as `\ud800` either way), so the escapes are the ones the whole string would
+  // get; stops once the budget is spent.
   const quote = (text: string): void => {
     push('"');
     for (let start = 0; start < text.length; ) {
       let end = Math.min(start + QUOTE_CHUNK, text.length);
-      if (end < text.length && /[\ud800-\udbff]/.test(text[end - 1] ?? '')) end += 1;
+      if (
+        end < text.length &&
+        /[\ud800-\udbff]/.test(text[end - 1] ?? '') &&
+        /[\udc00-\udfff]/.test(text[end] ?? '')
+      )
+        end += 1;
       push(JSON.stringify(text.slice(start, end)).slice(1, -1));
       start = end;
     }

@@ -28,6 +28,11 @@ const fixtures: Record<string, unknown> = {
   inherited: Object.assign(Object.create({ fromPrototype: 1 }) as object, { own: 2 }),
   longKey: { ['k'.repeat(3_000)]: 'v', after: 1 },
   pairs: { text: `${'ab'.repeat(1_023)}😀${'c'.repeat(10)}` },
+  // A lone high surrogate right before a real pair at the chunk boundary, as a value and as a key.
+  loneThenPair: {
+    text: `${'a'.repeat(1_023)}\ud800😀${'z'.repeat(5_000)}`,
+    [`${'k'.repeat(1_023)}\ud800😀tail`]: 1,
+  },
 };
 
 describe('prettyJsonPrefix', () => {
@@ -70,10 +75,15 @@ describe('prettyJsonPrefix', () => {
         truncated: true,
       });
     }
-    // Chunk boundaries never split a surrogate pair, whatever the offset of the pair.
+    // Chunk boundaries never split a surrogate pair, whatever the offset of the pair, and a lone
+    // high surrogate beside the boundary does not drag a following pair's first half across it.
     for (const offset of [1_021, 1_022, 1_023, 1_024, 1_025]) {
-      const text = `${'a'.repeat(offset)}😀${'b'.repeat(5)}`;
-      expect(prettyJsonPrefix(text, Number.POSITIVE_INFINITY).text).toBe(JSON.stringify(text));
+      for (const lead of ['', '\ud800', '\udc00']) {
+        const text = `${'a'.repeat(offset)}${lead}😀${'b'.repeat(5)}`;
+        expect(prettyJsonPrefix(text, Number.POSITIVE_INFINITY).text).toBe(JSON.stringify(text));
+        for (const limit of [offset + 2, offset + 4, offset + 8])
+          expect(prettyJsonPrefix(text, limit).text).toBe(JSON.stringify(text).slice(0, limit));
+      }
     }
   });
 
