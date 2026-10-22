@@ -81,6 +81,8 @@ describe('LoopsPage', () => {
     renderApp('/loops', api);
     const damagedRow = (await screen.findByRole('link', { name: damaged.name })).closest('tr')!;
     expect(within(damagedRow).getByText('latest run unavailable')).toBeVisible();
+    expect(within(damagedRow).getByText('Check run history diagnostics.')).toBeVisible();
+    expect(within(damagedRow).queryByRole('link', { name: 'running' })).not.toBeInTheDocument();
     expect(within(damagedRow).queryByText('never run')).not.toBeInTheDocument();
     expect(
       within(screen.getByRole('link', { name: empty.name }).closest('tr')!).getByText('never run'),

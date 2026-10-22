@@ -16,40 +16,49 @@ describe('loop-specific run summaries over real SQLite', () => {
     t = await createTestApp();
   });
   afterEach(async () => t.close());
-  it('isolates damaged latest-run metadata, retains its count, and identifies it through diagnostics', async () => {
-    const damaged = await t.publishLoop({ ...minimalLoop(), name: 'damaged' });
-    const healthy = await t.publishLoop({ ...minimalLoop(), name: 'healthy' });
-    const badRun = await t.app.inject({
-      method: 'POST',
-      url: `/loops/${damaged}/runs`,
-      payload: {},
-    });
-    const goodRun = await t.app.inject({
-      method: 'POST',
-      url: `/loops/${healthy}/runs`,
-      payload: {},
-    });
-    const badId = badRun.json<{ run: RunRecord }>().run.id;
-    const goodId = goodRun.json<{ run: RunRecord }>().run.id;
-    await t.idle();
-    await t.container.handle.client.execute({
-      sql: 'UPDATE runs SET status = ? WHERE id = ?',
-      args: ['damaged-status', badId],
-    });
-    const response = await t.app.inject('/loops');
-    expect(response.statusCode, response.body).toBe(200);
-    const { items } = response.json<{
-      items: { id: string; latestRun: { id: string } | null; runCount: number }[];
-    }>();
-    expect(items.find((loop) => loop.id === damaged)).toMatchObject({
-      runCount: 1,
-      latestRun: null,
-    });
-    expect(items.find((loop) => loop.id === healthy)?.latestRun?.id).toBe(goodId);
-    expect((await t.app.inject('/runs/diagnostics')).json()).toMatchObject({
-      items: [{ runId: badId, code: 'HISTORY_UNREADABLE' }],
-    });
-  });
+  it.each([
+    ['status', 'damaged-status'],
+    ['pinned', '{broken'],
+    ['pinned', '{}'],
+    ['waiting', '{broken'],
+    ['result', '{broken'],
+  ])(
+    'isolates damaged latest-run %s and identifies it through diagnostics',
+    async (column, value) => {
+      const damaged = await t.publishLoop({ ...minimalLoop(), name: 'damaged' });
+      const healthy = await t.publishLoop({ ...minimalLoop(), name: 'healthy' });
+      const badRun = await t.app.inject({
+        method: 'POST',
+        url: `/loops/${damaged}/runs`,
+        payload: {},
+      });
+      const goodRun = await t.app.inject({
+        method: 'POST',
+        url: `/loops/${healthy}/runs`,
+        payload: {},
+      });
+      const badId = badRun.json<{ run: RunRecord }>().run.id;
+      const goodId = goodRun.json<{ run: RunRecord }>().run.id;
+      await t.idle();
+      await t.container.handle.client.execute({
+        sql: `UPDATE runs SET ${column} = ? WHERE id = ?`,
+        args: [value, badId],
+      });
+      const response = await t.app.inject('/loops');
+      expect(response.statusCode, response.body).toBe(200);
+      const { items } = response.json<{
+        items: { id: string; latestRun: { id: string } | null; runCount: number }[];
+      }>();
+      expect(items.find((loop) => loop.id === damaged)).toMatchObject({
+        runCount: 1,
+        latestRun: null,
+      });
+      expect(items.find((loop) => loop.id === healthy)?.latestRun?.id).toBe(goodId);
+      expect((await t.app.inject('/runs/diagnostics')).json()).toMatchObject({
+        items: [{ runId: badId, code: 'HISTORY_UNREADABLE' }],
+      });
+    },
+  );
 
   it('finds older history beyond 500 unrelated runs, orders ties, and distinguishes no history', async () => {
     const old = await t.container.repos.loops.create(

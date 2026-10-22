@@ -316,9 +316,12 @@ export function LoopsPage() {
                               <RunStatusBadge status={run.status} />
                             </Link>
                           ) : (
-                            <span className="text-sm text-muted">
-                              {loop.runCount === 0 ? 'never run' : 'latest run unavailable'}
-                            </span>
+                            <div className="text-sm text-muted">
+                              <span>
+                                {loop.runCount === 0 ? 'never run' : 'latest run unavailable'}
+                              </span>
+                              {loop.runCount > 0 ? <p>Check run history diagnostics.</p> : null}
+                            </div>
                           )}
                         </Td>
                         <Td>

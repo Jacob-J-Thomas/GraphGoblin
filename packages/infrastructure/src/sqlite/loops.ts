@@ -1,4 +1,3 @@
-import { RunRecordSchema } from '@graphgoblin/contracts';
 import type {
   LoopDefinition,
   LoopRecord,
@@ -6,9 +5,11 @@ import type {
   RunRecord,
 } from '@graphgoblin/contracts';
 import type { ClockPort, IdPort, LoopRepository } from '@graphgoblin/engine';
+import { UnreadableRunHistoryError } from '@graphgoblin/engine';
 import { and, asc, desc, eq, inArray, isNotNull, ne, sql, getTableColumns } from 'drizzle-orm';
 import type { Database } from './db.js';
 import { deleteRuns } from './delete-runs.js';
+import { decodeRunRecord, rawRunColumns } from './run-decoding.js';
 import {
   loopVersions,
   loops,
@@ -17,8 +18,6 @@ import {
   webhookEndpoints,
   webhookReceipts,
 } from './schema.js';
-
-const LatestRunSchema = RunRecordSchema.pick({ id: true, status: true, createdAt: true });
 
 type LoopRow = typeof loops.$inferSelect;
 type VersionRow = typeof loopVersions.$inferSelect;
@@ -155,7 +154,7 @@ export class SqliteLoopRepository implements LoopRepository {
     const rows = await this.db
       .select({
         ...getTableColumns(loops),
-        latestRun: { id: runs.id, status: runs.status, createdAt: runs.createdAt },
+        latestRun: rawRunColumns,
         runCount:
           sql<number>`(SELECT count(*) FROM runs r WHERE r.loop_id = ${loops.id} AND r.owner_id = ${loops.ownerId})`.mapWith(
             Number,
@@ -172,12 +171,22 @@ export class SqliteLoopRepository implements LoopRepository {
       .where(eq(loops.ownerId, ownerId))
       .orderBy(desc(loops.updatedAt));
     return rows.map((row) => {
-      const latest = LatestRunSchema.safeParse(row.latestRun);
+      let latestRun: Pick<RunRecord, 'id' | 'status' | 'createdAt'> | null = null;
+      if (row.latestRun) {
+        try {
+          // A valid status alone can be stale when a damaged snapshot could not be updated.
+          // Use the same strict decoder as every other run read before showing a badge.
+          const { id, status, createdAt } = decodeRunRecord(row.latestRun);
+          latestRun = { id, status, createdAt };
+        } catch (error) {
+          if (!(error instanceof UnreadableRunHistoryError)) throw error;
+        }
+      }
       return {
         ...toLoop(row),
         runCount: row.runCount,
         // A positive count with no readable latest summary means unavailable, not never run.
-        latestRun: latest.success ? latest.data : null,
+        latestRun,
       };
     });
   }

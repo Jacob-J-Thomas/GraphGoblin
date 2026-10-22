@@ -89,12 +89,21 @@ describe('SQLite history queries', () => {
         ?.status,
     ).toBe('failed');
   });
-  it('isolates a damaged latest status while counting its row and preserving healthy summaries', async () => {
+  it.each([
+    ['status', 'damaged-status'],
+    ['pinned', '{broken'],
+    ['pinned', '{}'],
+    ['pinned', null],
+    ['waiting', '{broken'],
+    ['failure', '{}'],
+    ['result', '{broken'],
+    ['iteration', -1],
+  ])('isolates damaged latest %s without substituting an older run', async (column, value) => {
     const loops = new SqliteLoopRepository(handle.db, new FakeClock(), new FakeIds());
     const damaged = await loops.create('local', LoopDefinitionSchema.parse(minimalLoop()));
     const healthy = await loops.create('local', LoopDefinitionSchema.parse(minimalLoop()));
     const runs = new SqliteRunRepository(handle.db);
-    const seed = async (tag: string, loopId: string) => {
+    const seed = async (tag: string, loopId: string, createdAt = FIXTURE_TS) => {
       const id = fakeUlid(tag);
       await runs.create(
         {
@@ -107,21 +116,23 @@ describe('SQLite history queries', () => {
           status: 'succeeded',
           iteration: 1,
           lastEventSeq: 0,
-          createdAt: FIXTURE_TS,
+          createdAt,
         },
         sampleThread(),
       );
       return id;
     };
+    await seed('older-summary', damaged.loop.id, '2026-09-01T00:00:00.000Z');
     const badId = await seed('bad-summary', damaged.loop.id);
     const goodId = await seed('good-summary', healthy.loop.id);
     await handle.client.execute({
-      sql: 'UPDATE runs SET status = ? WHERE id = ?',
-      args: ['damaged-status', badId],
+      // Column names come only from the fixed cases above; all values stay bound.
+      sql: `UPDATE runs SET ${column} = ? WHERE id = ?`,
+      args: [value, badId],
     });
     const summaries = await loops.listWithRunSummaries('local');
     expect(summaries.find((loop) => loop.id === damaged.loop.id)).toMatchObject({
-      runCount: 1,
+      runCount: 2,
       latestRun: null,
     });
     expect(summaries.find((loop) => loop.id === healthy.loop.id)).toMatchObject({
