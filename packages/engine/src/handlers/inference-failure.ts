@@ -4,6 +4,15 @@ import type { HarnessEvent } from '../ports.js';
 
 type ReportedFailure = Extract<HarnessEvent, { type: 'error' }>;
 
+function authority(code: unknown, state: unknown): number {
+  if (typeof code === 'string' && code.toLowerCase() === 'harness_termination_unconfirmed')
+    return 2;
+  return (typeof code === 'string' && code.toLowerCase() === 'harness_session_missing') ||
+    state === 'session-missing'
+    ? 1
+    : 0;
+}
+
 /** One mapping for launch exceptions, streamed errors and rejected results. */
 export function mapHarnessFailure(
   error: unknown,
@@ -11,14 +20,20 @@ export function mapHarnessFailure(
   nodeId: string,
   harness: HarnessId,
   fallback: PromptSubmission = 'delivery-uncertain',
-): { failure: RunFailureError; submission: PromptSubmission } {
+): { failure: RunFailureError; submission: PromptSubmission; evidence: ReportedFailure } {
   const info = typeof error === 'object' && error !== null ? error : {};
-  const reportedCode =
-    lastError?.code ?? ('code' in info && typeof info.code === 'string' ? info.code : undefined);
-  const reportedRetriable =
-    lastError?.retriable ?? ('retriable' in info && info.retriable === true);
+  const currentCode = 'code' in info && typeof info.code === 'string' ? info.code : undefined;
+  const currentSubmission = 'submission' in info ? info.submission : undefined;
+  // A generic final wrapper must not discard a useful streamed cause. Missing-session and
+  // termination evidence is authoritative: later evidence wins ties, and termination wins all.
+  const currentWins =
+    (('type' in info && info.type === 'error') || authority(currentCode, currentSubmission) > 0) &&
+    authority(currentCode, currentSubmission) >= authority(lastError?.code, lastError?.submission);
+  const previous = currentWins ? undefined : lastError;
+  const reportedCode = previous?.code ?? currentCode;
+  const reportedRetriable = previous?.retriable ?? ('retriable' in info && info.retriable === true);
   const code = (reportedCode ?? '').toLowerCase();
-  const message = lastError?.message ?? describeError(error);
+  const message = previous?.message ?? describeError(error);
   let failure: RunFailureError;
   if (code === 'harness_termination_unconfirmed' || code === 'harness_session_missing') {
     failure = new RunFailureError(
@@ -64,8 +79,7 @@ export function mapHarnessFailure(
       details: { adapterCode: reportedCode ?? null },
     });
   }
-  const reportedSubmission =
-    lastError?.submission ?? ('submission' in info ? info.submission : undefined);
+  const reportedSubmission = previous?.submission ?? currentSubmission;
   // A missing handle alone must not erase a missing conversation or uncertain transport.
   // Unconfirmed termination can never establish that nothing reached the provider.
   const submission =
@@ -78,5 +92,15 @@ export function mapHarnessFailure(
             reportedSubmission === 'session-missing'
           ? reportedSubmission
           : fallback;
-  return { failure, submission };
+  return {
+    failure,
+    submission,
+    evidence: {
+      type: 'error',
+      code: reportedCode ?? '',
+      message,
+      retriable: reportedRetriable,
+      submission,
+    },
+  };
 }

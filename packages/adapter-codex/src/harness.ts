@@ -1,7 +1,6 @@
 import { readinessFailure } from '@graphgoblin/domain';
 import type { Effort } from '@graphgoblin/contracts';
 import {
-  describeError,
   type HarnessEvent,
   type HarnessPort,
   type HarnessPreflight,
@@ -19,7 +18,7 @@ import {
   type TurnOptions,
 } from '@openai/codex-sdk';
 import { bundledCli, cliFor, preflightCli, runCli, type CliRunner } from './cli.js';
-import { TurnAccumulator } from './events.js';
+import { TurnAccumulator, classifyCodexError } from './events.js';
 import { clientOptions, threadOptions, type ResolvedSettings } from './options.js';
 import { EventQueue } from './queue.js';
 
@@ -183,18 +182,25 @@ export class CodexHarness implements HarnessPort {
           }
         }
       } catch (error) {
-        if (!controller.signal.aborted) accumulator.fail(describeError(error));
+        if (
+          !controller.signal.aborted ||
+          classifyCodexError(error).code === 'HARNESS_TERMINATION_UNCONFIRMED'
+        )
+          accumulator.fail(error);
       } finally {
         signal.removeEventListener('abort', onAbort);
       }
 
-      if (controller.signal.aborted) {
+      const outcome = accumulator.finish();
+      if (
+        controller.signal.aborted &&
+        outcome.failure?.code !== 'HARNESS_TERMINATION_UNCONFIRMED'
+      ) {
         queue.close();
         const error = abortError();
         rejectId(error);
         throw error;
       }
-      const outcome = accumulator.finish();
       if (outcome.failure) {
         const { code, message, retriable } = outcome.failure;
         logger?.warn({ code, retriable, sessionId: announced }, `codex turn failed: ${message}`);

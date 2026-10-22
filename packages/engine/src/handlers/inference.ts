@@ -121,7 +121,6 @@ async function consume(
 ): Promise<HarnessResult> {
   let lastError: Extract<HarnessEvent, { type: 'error' }> | undefined;
   const rethrow = async (error: unknown): Promise<never> => {
-    if (error instanceof RunFailureError || error instanceof RunCancelledError) throw error;
     const { failure, submission: state } = mapHarnessFailure(
       error,
       lastError,
@@ -130,11 +129,17 @@ async function consume(
       pending.submission,
     );
     if (
+      error instanceof RunFailureError &&
+      failure.code !== 'HARNESS_SESSION_MISSING' &&
+      failure.code !== 'HARNESS_TERMINATION_UNCONFIRMED'
+    )
+      throw error;
+    if (state !== pending.submission) await submission(ctx, pending, state);
+    if (
       failure.code !== 'HARNESS_TERMINATION_UNCONFIRMED' &&
-      (isAbortError(error) || ctx.signal.aborted)
+      (error instanceof RunCancelledError || isAbortError(error) || ctx.signal.aborted)
     )
       throw new RunCancelledError();
-    if (!lastError && state !== pending.submission) await submission(ctx, pending, state);
     throw failure;
   };
   // Only iterator-origin failures are provider failures. Persistence in the consumer stays outside.
@@ -180,14 +185,12 @@ async function consume(
           usage: event.usage,
         });
         break;
-      case 'error':
-        lastError = event;
-        await submission(
-          ctx,
-          pending,
-          mapHarnessFailure(event, undefined, ctx.node.id, ctx.config.harness).submission,
-        );
+      case 'error': {
+        const mapped = mapHarnessFailure(event, lastError, ctx.node.id, ctx.config.harness);
+        lastError = mapped.evidence;
+        await submission(ctx, pending, mapped.submission);
         break;
+      }
       case 'turn-complete':
         break;
     }
@@ -278,11 +281,11 @@ export const inferenceHandler: NodeHandler<'inference'> = {
         )?.sessionId;
       }
     }
-    const beginTurn = async (
+    const beginTurn = (
       text: string,
       kind: PendingTurn['turn']['promptKind'],
       id?: string,
-    ): Promise<PendingTurn> => {
+    ): PendingTurn => {
       const turn = {
         visitId: visit.visitId,
         turnId: ctx.services.newId(),
@@ -291,8 +294,6 @@ export const inferenceHandler: NodeHandler<'inference'> = {
         promptKind: kind,
         ...(id ? { resumeSessionId: id } : {}),
       };
-      // A crash after this append may occur on either side of adapter invocation: uncertain by default.
-      await ctx.services.record({ type: 'harness.turn', nodeId: ctx.node.id, ...turn });
       return {
         turn,
         submission: 'delivery-uncertain',
@@ -300,10 +301,14 @@ export const inferenceHandler: NodeHandler<'inference'> = {
         ...(id ? { sessionId: id } : {}),
       };
     };
+    const recordTurn = (task: PendingTurn) =>
+      ctx.services.record({ type: 'harness.turn', nodeId: ctx.node.id, ...task.turn });
     // A safe retry retains the original turn identity and exact rendered prompt.
-    if (!pending || pending.submission !== 'definitely-not-submitted')
-      pending = await beginTurn(prompt, promptKind, resumeId);
-    else {
+    if (!pending || pending.submission !== 'definitely-not-submitted') {
+      pending = beginTurn(prompt, promptKind, resumeId);
+      // A crash after this append may occur on either side of invocation: uncertain by default.
+      await recordTurn(pending);
+    } else {
       // Re-record the same task intent before another invocation. This resets any init-only ID
       // from the refused invocation, so a fresh retry cannot recover into that unused session.
       await ctx.services.record({ type: 'harness.turn', nodeId: ctx.node.id, ...pending.turn });
@@ -351,6 +356,7 @@ export const inferenceHandler: NodeHandler<'inference'> = {
     let result: HarnessResult;
     let session: HarnessSession | undefined;
     let invoking = false;
+    let repairIntentUnconfirmed = false;
     let usage: Usage = ZERO_USAGE;
     try {
       await ctx.ports.sessions.upsert({ ...row });
@@ -385,9 +391,15 @@ export const inferenceHandler: NodeHandler<'inference'> = {
             errors: validation.errors,
             attempt: attempts,
           });
-          pending = await beginTurn(repairPrompt, 'repair', sessionId);
-          // A synchronous refusal belongs to this invocation, not the completed turn.
+          // Establish the repair task and release the completed handle before persistence:
+          // an append can commit and then throw, without any repair invocation having started.
           session = undefined;
+          invoking = false;
+          pending = beginTurn(repairPrompt, 'repair', sessionId);
+          repairIntentUnconfirmed = true;
+          await recordTurn(pending);
+          repairIntentUnconfirmed = false;
+          invoking = true;
           session = harness.resume(
             sessionId,
             sessionRequest({ prompt: repairPrompt, outputSchema: schema.jsonSchema }),
@@ -465,6 +477,14 @@ export const inferenceHandler: NodeHandler<'inference'> = {
       // Storage faults remain operator-fixable; turn provenance still controls recovery.
       let failure: unknown = error;
       if (!session) {
+        if (repairIntentUnconfirmed) {
+          // Reconcile the real log, not the executor's cached history, after an ambiguous append.
+          // If storage is usable again, save an uncommitted intent before its refusal evidence.
+          const turnId = pending.turn.turnId;
+          const history = await ctx.ports.events.read(ctx.run.id);
+          if (!history.some((event) => event.type === 'harness.turn' && event.turnId === turnId))
+            await recordTurn(pending);
+        }
         const mapped =
           invoking && !(error instanceof RunFailureError) && !(error instanceof RunCancelledError)
             ? mapHarnessFailure(
@@ -496,14 +516,19 @@ export const inferenceHandler: NodeHandler<'inference'> = {
         try {
           await session.cancel();
         } catch (cancelError) {
-          const { failure: cleanup } = mapHarnessFailure(
+          const { failure: cleanup, submission: state } = mapHarnessFailure(
             cancelError,
             undefined,
             ctx.node.id,
             config.harness,
           );
-          if (unconfirmed(cleanup)) failure = cleanup;
-          else {
+          if (
+            unconfirmed(cleanup) ||
+            (cleanup.code === 'HARNESS_SESSION_MISSING' && !(failure instanceof RunCancelledError))
+          ) {
+            failure = cleanup;
+            if (state !== pending.submission) await submission(ctx, pending, state);
+          } else {
             // Native Codex cancellation resolves; Claude rejects only for unconfirmed termination.
             // An unrelated cleanup fault cannot replace the primary engine or provider cause.
             ctx.ports.logger.warn(
@@ -539,6 +564,9 @@ export const inferenceHandler: NodeHandler<'inference'> = {
             failure instanceof Error ? { name: failure.name, stack: failure.stack ?? null } : null,
         });
       if (failure instanceof RunFailureError) {
+        // Even a directly typed failure must retain termination's precedence over older state.
+        if (unconfirmed(failure) && pending.submission !== 'delivery-uncertain')
+          await submission(ctx, pending, 'delivery-uncertain');
         // Preserve actionable causes; uncertainty is typed separately from the adapter cause.
         const uncertain = pending.submission === 'delivery-uncertain';
         const missing = pending.submission === 'session-missing';

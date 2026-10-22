@@ -5,6 +5,7 @@ import {
   type Usage,
 } from '@graphgoblin/contracts';
 import type { HarnessEvent, HarnessItem, HarnessItemType } from '@graphgoblin/engine';
+import { describeError } from '@graphgoblin/engine';
 import type { ThreadEvent, ThreadItem } from '@openai/codex-sdk';
 
 /**
@@ -184,12 +185,38 @@ function unwrap(raw: string): { status?: number; type?: string; message: string 
   return { message: raw };
 }
 
-/**
- * Classify a Codex failure. Codes are chosen so the engine's `classifyHarnessError` maps them:
- * anything containing `quota` becomes `HARNESS_QUOTA_EXHAUSTED`, anything containing `auth`
- * becomes `HARNESS_NOT_AUTHENTICATED`; transport/service failures have a distinct code.
- */
-export function classifyCodexError(raw: string): ClassifiedError {
+const TYPED_FAILURES = new Set([
+  'HARNESS_SESSION_MISSING',
+  'HARNESS_TERMINATION_UNCONFIRMED',
+  'HARNESS_NOT_INSTALLED',
+  'HARNESS_NOT_AUTHENTICATED',
+  'HARNESS_ARGUMENTS_REJECTED',
+  'HARNESS_INVALID_CONFIGURATION',
+  'HARNESS_UNSUPPORTED_POLICY',
+  'HARNESS_QUOTA_EXHAUSTED',
+  'HARNESS_TIMEOUT',
+  'HARNESS_TRANSPORT_FAILED',
+  'HARNESS_TURN_FAILED',
+]);
+
+/** Preserve recognized typed SDK failures; classify untyped failures from native messages. */
+export function classifyCodexError(error: unknown): ClassifiedError {
+  // SDK factories can reject with typed metadata at either async boundary. Do not reduce
+  // that evidence to a message; unknown codes still use native-message classification.
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    typeof error.code === 'string' &&
+    TYPED_FAILURES.has(error.code)
+  ) {
+    return {
+      code: error.code,
+      message: describeError(error),
+      retriable: 'retriable' in error && error.retriable === true,
+    };
+  }
+  const raw = describeError(error);
   const { status, type, message } = unwrap(raw);
   const text = `${type ?? ''} ${message}`.toLowerCase();
   if (/error: (?:unexpected argument|unknown option|invalid value)/.test(text))
@@ -266,7 +293,7 @@ export class TurnAccumulator {
   private usage: Usage = ZERO_USAGE;
   private readonly items: HarnessItem[] = [];
   private failure: ClassifiedError | undefined;
-  private streamError: string | undefined;
+  private streamError: unknown;
   private completed = false;
   sessionId: string | undefined;
 
@@ -293,10 +320,10 @@ export class TurnAccumulator {
         this.usage = mapUsage(ev.usage);
         return [{ type: 'usage', usage: this.usage }, { type: 'turn-complete' }];
       case 'turn.failed':
-        this.failure = classifyCodexError(ev.error.message);
+        this.fail(ev.error);
         return [];
       case 'error':
-        this.streamError = ev.message;
+        this.streamError = ev;
         return [];
       default:
         return [];
@@ -304,8 +331,16 @@ export class TurnAccumulator {
   }
 
   /** Record a failure raised outside the event stream (a thrown SDK or process error). */
-  fail(message: string): void {
-    this.failure ??= classifyCodexError(message);
+  fail(error: unknown): void {
+    const failure = classifyCodexError(error);
+    // A later missing conversation or unconfirmed termination outranks an earlier turn error.
+    if (
+      !this.failure ||
+      failure.code === 'HARNESS_TERMINATION_UNCONFIRMED' ||
+      (failure.code === 'HARNESS_SESSION_MISSING' &&
+        this.failure.code !== 'HARNESS_TERMINATION_UNCONFIRMED')
+    )
+      this.failure = failure;
   }
 
   finish(): TurnOutcome {

@@ -265,7 +265,13 @@ submission mapping. A synchronous missing-session refusal is durably `session-mi
 `HARNESS_SESSION_MISSING`, regardless of retryability; Resume returns 409 without another
 harness call. An explicit delivery-uncertain transport failure or unconfirmed termination is
 never downgraded to safe non-submission because no handle was returned. Pinned policy,
-configuration and argument refusals remain non-resumable. These authored prompts are part of private run history, with the same access
+configuration and argument refusals remain non-resumable. Later missing-session evidence
+overrides an earlier streamed refusal; unconfirmed termination overrides both missing-session
+evidence and cancellation, including during cleanup. Every resulting classification change
+is recorded durably. Repair intent and its identity are established before its fallible append,
+so a commit-then-throw cannot restore the completed invocation; a recoverable storage fault
+retains the exact unsubmitted repair task. These authored prompts are part of private run
+history, with the same access
 and deletion boundary as its context thread. The entire prompt is stored inline with no schema
 size limit or automatic artifact offloading; large prompts therefore enlarge the event log.
 

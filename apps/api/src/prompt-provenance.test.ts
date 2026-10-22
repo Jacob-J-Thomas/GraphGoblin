@@ -8,11 +8,17 @@ import { createTestApp } from './testing/test-app.js';
 describe('inference recovery contract over the API', () => {
   it.each(
     (['codex', 'claude'] as const).flatMap((family) =>
-      [false, true].map((retriable) => ({ family, retriable })),
+      [false, true].flatMap((retriable) =>
+        (family === 'codex' ? ['sync', 'promise', 'iterator'] : ['sync']).map((boundary) => ({
+          family,
+          retriable,
+          boundary,
+        })),
+      ),
     ),
   )(
-    'blocks synchronous $family missing-session repair refusal with retriable=$retriable',
-    async ({ family, retriable }) => {
+    'blocks $boundary $family missing-session repair refusal with retriable=$retriable',
+    async ({ family, retriable, boundary }) => {
       let calls = 0;
       const fake = new FakeHarness([{ finalText: 'invalid' }], family);
       const refusal = () => {
@@ -41,7 +47,23 @@ describe('inference recovery contract over the API', () => {
               }),
           }),
           // Exercise the SDK boundary used by the auditor, before a session is returned.
-          resumeThread: refusal,
+          resumeThread: () => {
+            if (boundary === 'sync') return refusal();
+            const error = Object.assign(new Error('Recorded conversation no longer exists'), {
+              code: 'HARNESS_SESSION_MISSING',
+              retriable,
+            });
+            return {
+              runStreamed: () =>
+                boundary === 'promise'
+                  ? Promise.reject(error)
+                  : Promise.resolve({
+                      events: (async function* () {
+                        yield await Promise.reject(error);
+                      })(),
+                    }),
+            };
+          },
         }),
       });
       const harness: HarnessPort = {
