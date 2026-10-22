@@ -4,11 +4,21 @@ import {
   Alert,
   Badge,
   BoundedValue,
+  Button,
   Card,
   CELL_PREVIEW_CHARS,
   Disclosure,
 } from '../../components/ui/index.js';
+import { downloadJson } from '../../lib/utils.js';
 import { createThreadCache, initialThreadFrom, patchDiff, type PatchLine } from '../projections.js';
+
+/**
+ * Messages laid out at once: the latest ones, which is where a reader looks at an event; the
+ * rest, and an exact download of all of them, are one click away (#259). Fifty keeps a thread of
+ * thousands of short messages from mounting tens of thousands of elements on every selection.
+ */
+export const MESSAGE_PREVIEW_COUNT = 50;
+const count = (n: number) => n.toLocaleString('en-US');
 
 /** A finished node's patch: each operation with the value before and after it. */
 function PatchDiff({ nodeId, lines }: { nodeId: string; lines: PatchLine[] }) {
@@ -91,12 +101,26 @@ export function ThreadViewer({
     return before.ok ? patchDiff(before.thread, replayed.thread, selected.patch) : undefined;
   }, [selected, cache, initial, events, seq, replayed]);
   const [showJson, setShowJson] = useState(false);
-  if (!replayed.ok) {
+  const thread = replayed.ok ? replayed.thread : undefined;
+  // Whether every message is laid out. Like a value's expansion, it lasts while the same thread
+  // stays shown: another event's thread starts bounded again (adjusted in the render that sees it).
+  const [allMessagesState, setAllMessagesState] = useState(false);
+  const [shownThread, setShownThread] = useState<unknown>(thread);
+  if (shownThread !== thread) {
+    setShownThread(thread);
+    setAllMessagesState(false);
+  }
+  const allMessages = allMessagesState && shownThread === thread;
+  if (!replayed.ok || thread === undefined) {
     return (
-      <Alert title={`The thread cannot be reconstructed at event ${seq}`}>{replayed.error}</Alert>
+      <Alert title={`The thread cannot be reconstructed at event ${seq}`}>
+        {replayed.ok ? '' : replayed.error}
+      </Alert>
     );
   }
-  const thread = replayed.thread;
+  const messages = thread.messages;
+  const hidden = allMessages ? 0 : Math.max(0, messages.length - MESSAGE_PREVIEW_COUNT);
+  const shownMessages = hidden > 0 ? messages.slice(hidden) : messages;
   return (
     <div className="grid gap-section">
       {diff ? (
@@ -108,9 +132,34 @@ export function ThreadViewer({
       <Card title={`Thread at event ${seq}`}>
         <div className="grid gap-4">
           <div className="grid gap-2">
-            <h3 className="text-sm font-semibold">Messages ({thread.messages.length})</h3>
+            <h3 className="text-sm font-semibold">Messages ({count(messages.length)})</h3>
+            {messages.length > MESSAGE_PREVIEW_COUNT ? (
+              <p className="flex flex-wrap items-center gap-2 text-xs text-muted">
+                <span>
+                  {hidden > 0
+                    ? `Showing the last ${count(MESSAGE_PREVIEW_COUNT)} of ${count(messages.length)} messages.`
+                    : `Showing all ${count(messages.length)} messages.`}
+                </span>
+                <Button
+                  size="sm"
+                  aria-label={hidden > 0 ? 'Show all messages' : 'Show fewer messages'}
+                  onClick={() => setAllMessagesState(hidden > 0)}
+                >
+                  {hidden > 0 ? 'Show all' : 'Show fewer'}
+                </Button>
+                <Button
+                  size="sm"
+                  aria-label="Download messages as JSON"
+                  onClick={() =>
+                    downloadJson(`run-${thread.run.id}-messages-at-${seq}.json`, messages)
+                  }
+                >
+                  Download JSON
+                </Button>
+              </p>
+            ) : null}
             <ol className="grid gap-2 text-md" aria-label="Messages">
-              {thread.messages.map((m) => (
+              {shownMessages.map((m) => (
                 <li key={m.id} className="grid min-w-0 gap-1 rounded-md border border-default p-3">
                   <div className="flex items-center gap-2">
                     <Badge size="sm">{m.role}</Badge>{' '}

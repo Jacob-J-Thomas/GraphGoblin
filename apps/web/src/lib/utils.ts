@@ -75,7 +75,12 @@ export function prettyJsonPrefix(
       const method = (item as { toJSON?: unknown }).toJSON;
       if (typeof method === 'function') item = (method as (k: string) => unknown).call(item, key);
     }
-    if (item instanceof String || item instanceof Number || item instanceof Boolean)
+    if (
+      item instanceof String ||
+      item instanceof Number ||
+      item instanceof Boolean ||
+      item instanceof BigInt
+    )
       item = item.valueOf();
     if (typeof item === 'function' || typeof item === 'symbol') return undefined;
     return item;
@@ -139,6 +144,33 @@ export function prettyJsonPrefix(
     return { text: parts.join('').slice(0, limit), truncated: true };
   }
   return { text: parts.join(''), truncated: false };
+}
+
+const PREFIX_CACHE = new WeakMap<object, Map<number, { text: string; truncated: boolean }>>();
+
+/**
+ * `prettyJsonPrefix` remembered per object value and budget, for as long as the value is alive.
+ * The walk itself is bounded, with one exception JavaScript imposes: reading the first property of
+ * an object enumerates all of its keys (engines build the key list eagerly), so a single object
+ * with hundreds of thousands of properties costs that enumeration once. Caching by identity keeps
+ * the cost to the first time a value is shown; a return to it, or a re-render, costs a lookup.
+ */
+export function cachedJsonPrefix(
+  value: unknown,
+  limit: number,
+): { text: string; truncated: boolean } {
+  if (value === null || typeof value !== 'object') return prettyJsonPrefix(value, limit);
+  let byLimit = PREFIX_CACHE.get(value);
+  if (byLimit === undefined) {
+    byLimit = new Map();
+    PREFIX_CACHE.set(value, byLimit);
+  }
+  let result = byLimit.get(limit);
+  if (result === undefined) {
+    result = prettyJsonPrefix(value, limit);
+    byLimit.set(limit, result);
+  }
+  return result;
 }
 
 /** True when the error means the backend could not be reached. */

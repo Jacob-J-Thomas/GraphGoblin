@@ -7,7 +7,7 @@ const read=n=>readFile(resolve(dir,n),'utf8'),files=await readdir(dir);
 const report=await read('README.md');const targets=[...report.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)].map(m=>m[1]);
 const missing=[];for(const name of targets){if(/^(?:https?:|#)/.test(name))continue;try{await stat(resolve(dir,name.split('#')[0]));}catch{missing.push(name);}}
 const unlinked=files.filter(n=>n!=='README.md'&&!targets.includes(n));
-const localPaths=[];for(const name of files){if(name.endsWith('.png'))continue;const text=await read(name);if(/(?:[A-Z]:)?[\\/]+Users[\\/]+(?:98jak|[A-Za-z0-9._-]+)/i.test(text))localPaths.push(name);}
+const localPaths=[];for(const name of files){if(name.endsWith('.png'))continue;const text=await read(name);if(/(?:[A-Z]:)?[\\/]+Users[\\/]+[A-Za-z0-9._-]+/i.test(text))localPaths.push(name);}
 const initial=JSON.parse(await read('browser-results.json')),follow=JSON.parse(await read('followup-results.json'));
 const final=new Map(initial.map(r=>[r.id,r]));follow.forEach(r=>final.set(r.id,r));
 const repro=JSON.parse(await read('focus-small-repro.json'));

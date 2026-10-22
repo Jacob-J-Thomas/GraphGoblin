@@ -1,5 +1,5 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { cn, downloadJson, prettyJson, prettyJsonPrefix } from '../../lib/utils.js';
+import { cachedJsonPrefix, cn, downloadJson, prettyJson } from '../../lib/utils.js';
 import { Button } from './button.js';
 
 /**
@@ -109,12 +109,13 @@ export function BoundedValue({
   }, [handoffs]);
   const isText = text && typeof value === 'string';
   // Collapsed: only the preview is produced (a string shows its own prefix; JSON stops at the
-  // budget). Expanded: the whole text, once, for as long as this value stays expanded.
+  // budget, remembered per value so a return to it costs a lookup). Expanded: the whole text,
+  // once, for as long as this value stays expanded.
   const preview = useMemo(
     () =>
       isText
         ? { text: value.slice(0, previewChars), truncated: value.length > previewChars }
-        : prettyJsonPrefix(value, previewChars),
+        : cachedJsonPrefix(value, previewChars),
     [value, isText, previewChars],
   );
   const full = useMemo(

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { prettyJson, prettyJsonPrefix } from './utils.js';
+import { cachedJsonPrefix, prettyJson, prettyJsonPrefix } from './utils.js';
 
 const fixtures: Record<string, unknown> = {
   scalars: [0, -0, 1.5, -2, 1e21, NaN, Infinity, -Infinity, true, false, null, 'text'],
@@ -103,5 +103,32 @@ describe('prettyJsonPrefix', () => {
     expect(visited).toBe(0);
     prettyJsonPrefix(lazy, 10_000);
     expect(visited).toBe(1);
+  });
+
+  it('throws for a boxed BigInt as JSON.stringify does', () => {
+    expect(() => JSON.stringify(Object(1n))).toThrow(TypeError);
+    expect(() => prettyJsonPrefix(Object(1n), 100)).toThrow(TypeError);
+    expect(() => prettyJsonPrefix({ amount: Object(1n) }, 100)).toThrow(TypeError);
+  });
+
+  it('remembers a preview per object value and budget', () => {
+    let reads = 0;
+    const wide = Object.defineProperty({ b: 2 }, 'a', {
+      enumerable: true,
+      get() {
+        reads += 1;
+        return 1;
+      },
+    });
+    const first = cachedJsonPrefix(wide, 100);
+    expect(first).toEqual(prettyJsonPrefix(wide, 100));
+    expect(reads).toBe(2);
+    expect(cachedJsonPrefix(wide, 100)).toBe(first);
+    expect(reads).toBe(2);
+    cachedJsonPrefix(wide, 200);
+    expect(reads).toBe(3);
+    // Primitives are not cached (nothing to key on); the result is the same.
+    expect(cachedJsonPrefix('text', 3)).toEqual(prettyJsonPrefix('text', 3));
+    expect(cachedJsonPrefix(null, 10)).toEqual({ text: 'null', truncated: false });
   });
 });
