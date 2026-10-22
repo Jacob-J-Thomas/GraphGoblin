@@ -4,7 +4,7 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
-- Explicit inference harness changes preserve unset model/effort inheritance, choose compatible enabled loop, Settings, then ecosystem defaults for explicit models, and wait for initial checks without pinning or remounting. Failed lookups retain authored values; catalog failures prevent draft saving until resolved. Saved selections agree with adapter requests. Existing stored values need no migration. (#204)
+- Explicit inference harness changes preserve unset model/effort inheritance, choose compatible enabled loop, Settings, then ecosystem defaults for explicit models, and wait for initial checks without pinning or remounting. Failed lookups retain authored values; catalog failures hold publication even with cached choices. Blocked incompatible drafts must be corrected before saving. Saved selections agree with adapter requests. Existing stored values need no migration. (#204)
 
 - Check manual run readiness across the pinned parent and recursive subloop definitions before queuing the parent. Shared harnesses use one no-turn probe; distinct harnesses are checked concurrently. A nested readiness failure identifies the child loop and node and prevents preceding parent effects. Scheduled, webhook, child and resume starts keep their existing checks. (#179)
 

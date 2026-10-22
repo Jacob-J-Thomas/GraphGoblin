@@ -203,14 +203,28 @@ for (const scenario of [
   });
 }
 
-it('does not apply cached choices after a failed catalog refetch or rewrite on recovery', async () => {
+it('holds validation and publication after a failed cached catalog refresh until recovery', async () => {
   const { api, queryClient, dialog } = await setup('codex', 'absent');
+  await screen.findByText('Ready to publish');
+  const publish = screen.getByRole('button', { name: 'Publish' });
+  expect(publish).toBeEnabled();
+  const cached = queryClient.getQueryData(['model-catalog']);
+  expect(cached).toBeDefined();
   api.override('GET /model-catalog', () => problem(503, 'FAILED', 'catalog unavailable'));
   await act(async () => {
     await queryClient.refetchQueries({ queryKey: ['model-catalog'] });
   });
+  expect(queryClient.getQueryData(['model-catalog'])).toBe(cached);
+  const requests = api.calls.filter((call) => call.path === '/model-catalog').length;
   fireEvent.click(within(dialog).getByRole('radio', { name: 'claude' }));
+  const notice = await within(dialog).findByText(/Validation is unavailable while the catalog/);
+  const message = notice.textContent;
   expect(within(dialog).getByLabelText('Model', { exact: true })).toHaveValue('gpt-6-astra');
+  expect(within(dialog).getByLabelText('Effort', { exact: true })).toHaveValue('minimal');
+  await screen.findByText('Validation unavailable');
+  expect(screen.queryByText('Ready to publish')).not.toBeInTheDocument();
+  expect(publish).toBeDisabled();
+  expect(api.calls.filter((call) => call.path === '/model-catalog')).toHaveLength(requests);
   api.override(
     'GET /model-catalog',
     () =>
@@ -225,6 +239,11 @@ it('does not apply cached choices after a failed catalog refetch or rewrite on r
   expect(within(dialog).getByLabelText('Model', { exact: true })).toHaveAccessibleDescription(
     /Saved model belongs to Codex/,
   );
+  expect(notice).toBeInTheDocument();
+  expect(notice).toHaveTextContent(message ?? '');
+  // The unsaved form still retains its blocked choice; the saved Codex draft is valid again.
+  await screen.findByText('Ready to publish');
+  expect(publish).toBeEnabled();
 });
 
 for (const from of ['codex', 'claude'] as const) {

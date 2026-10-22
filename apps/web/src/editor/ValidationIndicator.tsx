@@ -42,11 +42,13 @@ export function ValidationIndicator({
   definition,
   check = 'done',
   readyLabel,
+  unavailableReason,
 }: {
   issues: readonly EditorIssue[];
   definition: LoopDefinitionInput;
   check?: ServerCheck;
   readyLabel?: string;
+  unavailableReason?: string | undefined;
 }) {
   const loopGroupId = useId();
   const nodeGroupId = useId();
@@ -60,7 +62,8 @@ export function ValidationIndicator({
         tabIndex={-1}
         title={
           check === 'error'
-            ? 'The server’s checks (cron expressions, subloops) could not run; Publish runs them again.'
+            ? (unavailableReason ??
+              'The server’s checks (cron expressions, subloops) could not run; Publish runs them again.')
             : undefined
         }
         className={cn(

@@ -247,3 +247,154 @@ collector never overwrites tracked `native-after.json` or other repository evide
 - Dependency cruising retains its existing `drizzle.config.ts` orphan warning, with zero errors.
   Turbo emits Windows cache access-denied warnings even on successful commands. These diagnostics
   are retained separately from product test results.
+
+## Round 3: QA-204-01 (cached catalog failure)
+
+### 1. Branch and worktree
+
+`codex-wp-f2b-harness-switch`, worktree
+`<local>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f2b-harness-switch`,
+base `013be37a` (including WP-F1 round 6). The worktree started clean. This round is uncommitted;
+ready for orchestrator commit after independent review/QA. D-024 applies: independent QA records
+the result; there is no owner acceptance gate.
+
+### 2. Per bolt: #204 / QA-204-01
+
+**Confirmed before the fix:** the new component regression loaded a successful model catalog and
+clean server validation, then failed its refetch with HTTP 503. The same catalog data remained
+cached. Switching Codex to Claude retained `gpt-6-astra` / `minimal` and showed the Harness warning,
+but `findByText('Validation unavailable')` failed: the toolbar still said **Ready to publish**.
+The new Edge case independently reproduced the same missing status against the built web app,
+real API and in-memory fake harnesses, using `gpt-6-luna` / `high`. Its first failed assertion was
+`getByText('Validation unavailable', { exact: true }).toBeVisible()` (10-second observation budget).
+No production source had changed for either reproduction.
+
+**After the fix:** a catalog query error holds publication independently of whether cached data
+exists. The cached picker remains usable; the explicit switch still retains its authored values
+and warning, and starts no extra catalog request. Recovery restores validation of the unchanged
+saved Codex draft and enables Publish, without changing the open form's incompatible values or
+clearing the switch warning. The focused component regression and related component suites pass
+(42 tests), and the served Edge regression passes both alone and in the required three-spec run.
+Full coverage results are recorded below.
+
+### 3. Files changed
+
+All line ranges below refer to this round's final worktree; every shared-file edit is listed.
+
+| File                                                 | Changed lines          | Purpose                                                                            |
+| ---------------------------------------------------- | ---------------------- | ---------------------------------------------------------------------------------- |
+| `apps/web/src/editor/EditorPage.tsx`                 | 130-134, 512, 518, 522 | Catalog error gates status and publication independently of cached data.           |
+| `apps/web/src/editor/EditorToolbar.tsx`              | 67, 86-87, 134-138     | Disable Publish with its catalog retry explanation.                                |
+| `apps/web/src/editor/ValidationIndicator.tsx`        | 45, 51, 65-66          | Use the catalog-specific unavailable tooltip.                                      |
+| `apps/web/src/editor/harness-switch.test.tsx`        | 206-247                | Cached-refresh failure, switch retention, no extra lookup and recovery regression. |
+| `apps/web/e2e/model-picker.spec.ts`                  | 417-477                | Served Edge regression through normal background refetch.                          |
+| `docs/09-frontend-and-pwa.md`                        | 553, 713-715           | Cached lookup errors hold Publish; recovery retains authored form values.          |
+| `docs/qa/2026-10-20-wp-f2b-harness-switch/README.md` | 156-165, 212-223       | Cached-refresh reproduction and checked disposable cleanup.                        |
+| `CHANGELOG.md`                                       | 7                      | Update the existing #204 bullet.                                                   |
+| `docs/qa/2026-10-20-wp-f2b-harness-switch/report.md` | 251 onward             | This round's evidence and gate record.                                             |
+
+No API, query/probe pattern, readiness vocabulary, switch selection, adapter/runtime path,
+catalog membership or effort changes.
+
+### 4. Tests
+
+The existing cached-refresh component case now verifies the initial ready state, retained cache,
+failed-refresh toolbar and disabled Publish, unchanged switch notice and authored model/effort,
+no switch refetch, and successful recovery. A new `model-picker.spec.ts` browser case drives the
+normal stale-query background refetch using a hidden-to-visible transition, then the same switch
+and explicit catalog retry. Both regressions demonstrably failed before production changes. After the full coverage run,
+the component case gained an explicit live-DOM assertion for the retained warning; that final
+focused case passes (1 passed, 27 filtered/skipped, 14.35 seconds). Production source is unchanged
+since the full coverage and Edge runs.
+
+The Edge run has **22 passed, 4 failed, 26 total** (4.2 minutes). All 9 Claude harness cases and
+9 readiness cases pass; the new cached-refresh case and the other three unaffected model-picker
+cases pass. Exactly these known #205 cases fail, with no retries:
+
+- `model-picker.spec.ts:36`: catalog model and effort publish and reach the harness (dark).
+- `model-picker.spec.ts:36`: catalog model and effort publish and reach the harness (light).
+- `model-picker.spec.ts:102`: a saved model removed from the catalog stays selected and explicit unknown import is rejected.
+- `model-picker.spec.ts:159`: catalog failure preserves the current values until retry and loop defaults share the picker.
+
+These are the original brief's `:28` twice, `:94` and `:151`, shifted by prior imports. The first two
+receive an empty model value instead of `picker-dark` / `picker-light`; the third cannot find
+the Model catalog in Settings link; the fourth times out looking for the retry button under
+collapsed Advanced. They remain outside #204. The new case also passes alone
+(1 passed), after failing before the fix; the full run confirms it alongside the neighboring specs.
+
+Web coverage passes **1542 tests / 120 files** in 716.58 seconds, with **98.95% lines
+(7088/7163), 95.01% branches (7280/7662)**; statements 98.04% (8132/8294), functions 98.55%
+(2190/2222). No web failures required triage. Both packages exceed 90% lines and branches.
+
+API coverage completes with **737 passed, 1 failed, 6 skipped / 744 tests**, across 55 files
+(52 passed, 1 failed, 2 skipped), in 523.39 seconds. Coverage exceeds the thresholds:
+**97.93% lines (1804/1842), 93.13% branches (1288/1383)**; statements 96.49% (1985/2057),
+functions 94.25% (394/418).
+
+The one failure is `src/main.test.ts:67`, **dispatches the API-key and preflight CLIs with their
+real exit codes**: `Test timed out in 60000ms` (reported duration 60350 ms). This test runs four
+local CLI processes, with an invalid preflight configuration to prevent provider probes. It
+passes alone with the same Node 22 / temporary root and unchanged test/fixture limits: **1 passed, 8 filtered/skipped**, 15.79 seconds
+for the isolated run. This is recorded as a load/environment-class failure under the brief's
+triage rule, not a clean full-suite gate or a production fix. API source is unchanged; the whole
+suite was not rerun to obtain a green result.
+
+### 5. Gates
+
+Node `v22.14.0`, `pnpm.cmd`, no threshold/timeout/exclusion changes:
+
+| Command                                                                                                                                                                  | Round 3 result                                                                                                    |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| `pnpm.cmd typecheck`                                                                                                                                                     | Pass; 20 tasks.                                                                                                   |
+| `pnpm.cmd lint`                                                                                                                                                          | Pass; 11 tasks.                                                                                                   |
+| `pnpm.cmd format:check`                                                                                                                                                  | Pass.                                                                                                             |
+| `pnpm.cmd check:docs`                                                                                                                                                    | Pass; generated docs are current.                                                                                 |
+| `pnpm.cmd check:tokens`                                                                                                                                                  | Pass; 163 files.                                                                                                  |
+| `pnpm.cmd check:layers`                                                                                                                                                  | Pass.                                                                                                             |
+| `pnpm.cmd check:deps`                                                                                                                                                    | Pass; existing `drizzle.config.ts` orphan warning, zero errors.                                                   |
+| `pnpm.cmd build`                                                                                                                                                         | Pass; 11 tasks.                                                                                                   |
+| `pnpm.cmd --filter @graphgoblin/web exec vitest run src/editor/harness-switch.test.tsx src/editor/EditorPage.freshness.test.tsx src/editor/ValidationIndicator.test.tsx` | Pass; 42 tests / 3 files.                                                                                         |
+| `pnpm.cmd --filter @graphgoblin/api test:coverage --maxWorkers=1 --coverage.reportOnFailure=true --coverage.reportsDirectory=<round3-temp>/api-coverage`                 | Coverage thresholds pass; 737 pass, 1 timeout, 6 skip. Command exits 1; isolated triage passes as recorded above. |
+| `pnpm.cmd --filter @graphgoblin/api exec vitest run src/main.test.ts -t dispatches --maxWorkers=1`                                                                       | Pass; 1 test, 8 filtered/skipped.                                                                                 |
+| `pnpm.cmd --filter @graphgoblin/web test:coverage --maxWorkers=2 --coverage.reportOnFailure=true --coverage.reportsDirectory=<round3-temp>/web-coverage`                 | Pass; 1542 tests / 120 files, coverage above both thresholds.                                                     |
+| From `apps/web`, `GG_E2E_BROWSER_CHANNEL=msedge`, `pnpm.cmd exec playwright test e2e/claude-harness.spec.ts e2e/model-picker.spec.ts e2e/readiness.spec.ts`              | 22 pass; exactly the 4 known #205 failures above; command exits 1.                                                |
+
+Turbo retains its Windows cache access-denied warnings despite successful tasks; PowerShell's
+redirected logs wrap native stderr with `NativeCommandError`. Gate results use the native pnpm
+exit code, not that log wrapper. Logs are in `%TEMP%/gg-wp-f2b-r3-*.log`.
+
+### 6. Docs
+
+Docs 09 describes publication being held even with cached catalog options; the status and Publish
+tooltips identify the catalog retry rather than telling the user to publish to retry it. The QA
+README adds the cached-background-refresh reproduction, retention/recovery expectations and
+checked cleanup of its own disposable directory. The #204 CHANGELOG bullet reflects publication
+being held. D-023 stays **loop default, then Settings default, then ecosystem default**; no stored
+value changes, migration, schema or generated-reference changes are needed.
+
+### 7. Decisions and parameters
+
+The existing cached catalog remains available to the picker; its error state independently gates
+validation and Publish. The same rule applies to the classifier model catalog. An ordinary failed
+server validation check retains its existing Publish-to-retry behavior. No lookup starts from this
+change. The browser uses the existing 2.1-second freshness wait, followed by an observed failed
+background refresh; no readiness or Settings wait was added to a switch.
+
+### 8. Caveats and open items
+
+This round uses component fakes and the built web app against the real API's test harness; it
+makes no live provider or paid turns. Standard API/browser tests keep their automatic isolated
+ports (including the API suite's existing 5600-5699 subprocess fixture range). The native CLI
+collector was not rerun this round; its prior 16-case evidence remains historical. The independent
+QA result and designated session sign-off remain separate from this implementation evidence.
+
+**Cleanup blocked by command policy:** all newly created temporary test stores are nested under
+`%TEMP%/gg-wp-f2b-round3-da544a70206c4a838471b9b789b54f94`. All test runners and their fixtures
+finished. A checked inventory found 704 files, 179 subdirectories, zero reparse points and zero
+`graphgoblin.lock` files. The exact resolved path was checked against the expected path and the
+system TEMP boundary before one `Remove-Item -LiteralPath ... -Recurse -Force` attempt. Automatic
+policy review rejected that command before execution with **"blocked by policy"**. The root is
+still present and needs removal by the orchestrator; no alternative deletion method was tried.
+This leaves the brief's temp-store removal requirement unresolved. No prior-round directory or
+owner app/store was touched. Flat coverage summaries were preserved separately as
+`%TEMP%/gg-wp-f2b-r3-{web,api}-coverage-summary.json`, with the gate logs alongside them.

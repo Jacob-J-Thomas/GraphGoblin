@@ -153,7 +153,16 @@ switch harness. The old model/effort must remain, with the catalog/readiness pro
 field and a warning directly under Harness. The editor shows **Validation unavailable** and the draft
 cannot be saved while the catalog is unavailable. Turn off blocking, click **Retry model catalog**:
 the authored values must still remain. Choose a model manually or switch away and back to author a replacement.
-A failed background refetch with cached data follows the same preservation rule.
+Also check a background failure with cached data: load a valid Codex node and wait for **Ready to
+publish**, then enable the same request block without reloading. After at least three seconds,
+switch to another Edge tab and back to let the normal stale-query refresh fail. The cached picker
+choices stay available. Switch to Claude: the authored Codex model/effort stay, the Harness warning
+stays visible, the toolbar shows **Validation unavailable**, and **Publish** is disabled. The switch
+must not start another catalog request or flicker to the initial loading state. Turn off blocking
+and click **Retry model catalog**. The toolbar can report readiness for the unchanged saved Codex
+draft again; the open form still shows its incompatible authored value and the same switch warning.
+Choose compatible values explicitly before clicking Done. A switch during the first checks still
+waits for them; a known failed refresh is reported immediately.
 
 Normal API writes reject explicit wrong-harness selections, so the separate loaded-incompatible
 case uses a controlled GET response in `claude-harness.spec.ts` (both ready and unready Claude).
@@ -200,12 +209,18 @@ if ($qaProcess -and -not $qaProcess.HasExited) {
 'GG_HOST','GG_PORT','GG_DATA_DIR','GG_DEFAULTS','GG_CODEX_BINARY','GG_CLAUDE_BINARY' | ForEach-Object {
   Remove-Item -LiteralPath "Env:$_" -ErrorAction SilentlyContinue
 }
-Get-ChildItem -LiteralPath $qaRoot
-$qaRoot
+# Copy any evidence you need to keep before removing this disposable app's directory.
+$qaTempPath = [IO.Path]::GetFullPath($env:TEMP).TrimEnd('\') + '\'
+$qaCleanupPath = (Resolve-Path -LiteralPath $qaRoot).Path
+if (-not $qaCleanupPath.StartsWith($qaTempPath, [StringComparison]::OrdinalIgnoreCase) -or
+    (Split-Path -Leaf $qaCleanupPath) -notlike 'gg-wp-f2b-owner-*') {
+  throw 'Refusing cleanup outside this recipe''s disposable directory.'
+}
+Remove-Item -LiteralPath $qaCleanupPath -Recurse -Force
 ```
 
-Data, binaries, request logs and startup logs are retained in that exact newly created directory
-for review. Directory removal is left to the owner after acceptance. No original store is changed.
+The cleanup removes only this recipe's newly created data, binaries and logs after the process has
+stopped. Keep the independent QA result separately; there is no owner acceptance gate (D-024).
 
 ## Acceptance and implementation evidence
 

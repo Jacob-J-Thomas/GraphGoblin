@@ -127,6 +127,11 @@ export function EditorPage() {
   useSettings();
   const classifiers = useClassifierModels();
   const catalogsResolved = models.data !== undefined && classifiers.data !== undefined;
+  // A failed refresh leaves cached choices available, but cannot certify publication readiness.
+  const catalogFailure = models.isError || classifiers.isError;
+  const catalogFailureReason = catalogFailure
+    ? 'A model catalog could not be loaded. Retry its lookup before publishing.'
+    : undefined;
   const catalogState = useMemo(
     () => catalogFingerprint(models.data, classifiers.data),
     [models.data, classifiers.data],
@@ -504,15 +509,17 @@ export function EditorPage() {
             issues={validation.issues}
             definition={def}
             check={
-              serverCheck.isError || (!catalogsResolved && (models.isError || classifiers.isError))
+              serverCheck.isError || catalogFailure
                 ? 'error'
                 : !catalogsResolved || serverCheck.isPending || serverCheck.isFetching
                   ? 'pending'
                   : 'done'
             }
+            unavailableReason={catalogFailureReason}
           />
         }
         publishing={publish.isPending}
+        publishBlockedReason={catalogFailureReason}
         onPublish={() => publish.mutate()}
         saveStatusRef={saveStatusRef}
       />
