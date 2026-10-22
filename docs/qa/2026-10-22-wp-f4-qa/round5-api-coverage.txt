@@ -1,0 +1,41 @@
+pnpm.cmd : $ vitest run --coverage --maxWorkers=2 --coverage.reportOnFailure
+At line:2 char:279
++ ... efore.json; pnpm.cmd --filter @graphgoblin/api test:coverage --maxWor ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...reportOnFailure:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 <worktree>/apps/api
+      Coverage enabled with v8
+
+{"level":30,"time":1792691126696,"pid":35192,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5628"}
+{"level":30,"time":1792691126697,"pid":35192,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5628,"dataDir":"<temp>\\gg-api-process-qKLBPs","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792691126745,"pid":35192,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792691126755,"pid":35192,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":8.310699999999997,"msg":"request completed"}
+subloop kill landings:
+delay undefined: leaf waiting at restart; recovery restarts top 0, middle 0, leaf 0
+delay 0: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 10: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 30: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 60: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 100: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 150: leaf succeeded at restart; recovery restarts top 1, middle 0, leaf 0
+delay 250: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+
+ Test Files  54 passed | 2 skipped (56)
+      Tests  742 passed | 6 skipped (748)
+   Start at  12:45:17
+   Duration  384.54s (tests 68%, import 30%, transform 1%, worker 1%)
+
+    Isolate  56 workers spawned · ~616ms startup each (spawn + environment, per file)
+             at least ~16.63s faster with isolate: false — reuses workers across files instead of one per file
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 96.49% ( 1984/2056 )
+Branches     : 93.11% ( 1284/1379 )
+Functions    : 94.24% ( 393/417 )
+Lines        : 97.93% ( 1803/1841 )
+================================================================================

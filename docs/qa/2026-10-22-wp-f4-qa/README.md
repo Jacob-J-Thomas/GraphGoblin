@@ -1,5 +1,10 @@
 # Independent QA round 2: WP-F4 / #244
 
+**Round 5 audit qualification:** the D-029 audit's initial matrix was **88 passed, one failed**
+before the intended Claude init boundary; its isolated pass does not make that a clean 89/89
+gate. The historical report below is retained. See the [qualification and corrected fixture](matrix-qualification.md)
+and [original failure evidence](matrix-initial-failure.json).
+
 ## Verdict and revision
 
 **Verdict: pass for the scoped #244 functional checks on `31f485e3060532f672ecdbb0e92fc2c743807fe0`; gates remain red with named exceptions.** All 89 repeated runtime checks, all five shipped native restart cases, and all three independent Edge provenance cases passed. Engine and API coverage passed. Infrastructure has eight D-015 native process-control failures, and the shipped Edge spec has the two expected #205 picker failures. No new #244 defect was reproduced. This is not clean-CI, merge or owner-acceptance sign-off.

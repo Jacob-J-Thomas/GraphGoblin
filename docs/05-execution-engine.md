@@ -259,7 +259,9 @@ Each initial, repair or continuation turn records `harness.turn` before adapter 
 including its exact rendered `prompt`, `promptKind`, `turnId`, harness and selected
 `resumeSessionId`. Refused retries retain the saved prompt and policy selection, even if init
 announced a different ID. They do not rerender against a changed thread. Repair refusals retain
-the repair task. These authored prompts are part of private run history, with the same access
+the repair task, including a synchronous refusal before the repair invocation returns a session
+handle. It uses the same typed failure mapping as the initial launch; pinned policy,
+configuration and argument refusals remain non-resumable. These authored prompts are part of private run history, with the same access
 and deletion boundary as its context thread. The entire prompt is stored inline with no schema
 size limit or automatic artifact offloading; large prompts therefore enlarge the event log.
 

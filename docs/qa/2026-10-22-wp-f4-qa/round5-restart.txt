@@ -1,0 +1,47 @@
+pnpm.cmd : $ node --test apps/api/scripts/prompt-restart.integration.mjs
+At line:2 char:69
++ ... +$env:PATH; pnpm.cmd test:prompt-restart *> (Join-Path $env:TEMP 'gg- ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ node --test a...integration.mjs:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+TAP version 13
+# {"dataDir":"C:\\\\Users\\\\98jak\\\\AppData\\\\Local\\\\Temp\\\\gg-wp-f4-restart-t96cRo","port":5660,"runId":"01M5JBPHSDK7FG6HTXYZE3RD06","visitId":"01M5JBPHSDK7FG6HTXYZE3RD06:5","recovered":"same session, continuation only"}
+# Subtest: a real kill of the built API continues accepted work from durable visit evidence
+ok 1 - a real kill of the built API continues accepted work from durable visit evidence
+  ---
+  duration_ms: 14017.985
+  ...
+# {"dataDir":"C:\\\\Users\\\\98jak\\\\AppData\\\\Local\\\\Temp\\\\gg-wp-f4-restart-uhQIb5","port":5660,"runId":"01M5JBPYHZHSVZ9XPWVNBGFXQM","policy":"resume-previous","recovered":"blocked inherited conversation; no provider call"}
+# Subtest: a real restart blocks unaccepted authored work with only an inherited resume-previous handle
+ok 2 - a real restart blocks unaccepted authored work with only an inherited resume-previous handle
+  ---
+  duration_ms: 12136.5225
+  ...
+# {"dataDir":"C:\\\\Users\\\\98jak\\\\AppData\\\\Local\\\\Temp\\\\gg-wp-f4-restart-iQ1BDY","port":5660,"runId":"01M5JBQ9RTHDJJ003TM16TPD7D","policy":"resume-named","recovered":"blocked inherited conversation; no provider call"}
+# Subtest: a real restart blocks unaccepted authored work with only an inherited resume-named handle
+ok 3 - a real restart blocks unaccepted authored work with only an inherited resume-named handle
+  ---
+  duration_ms: 11228.515
+  ...
+# {"dataDir":"C:\\\\Users\\\\98jak\\\\AppData\\\\Local\\\\Temp\\\\gg-wp-f4-restart-ReDWPR","port":5660,"runId":"01M5JBQNNKWN23SYSWXWQ6QNCQ","policy":"resume-previous","acceptanceBeforeKill":true,"recovered":"succeeded","calls":{"type":"calls","started":[],"resumed":[{"sessionId":"11111111-1111-4111-8111-111111111111","request":{"turn":{"prompt":"The previous turn was interrupted before GraphGoblin recorded its result. Continue the task from where you left off and finish it."}}}]}}
+# Subtest: a kill after Claude's result-only acceptance recovers resume-previous work
+ok 4 - a kill after Claude's result-only acceptance recovers resume-previous work
+  ---
+  duration_ms: 17535.5066
+  ...
+# {"dataDir":"C:\\\\Users\\\\98jak\\\\AppData\\\\Local\\\\Temp\\\\gg-wp-f4-restart-m1iHxp","port":5660,"runId":"01M5JBR94CM8Y82HX0GG489130","policy":"resume-named","acceptanceBeforeKill":true,"recovered":"succeeded","calls":{"type":"calls","started":[],"resumed":[{"sessionId":"11111111-1111-4111-8111-111111111111","request":{"turn":{"prompt":"The previous turn was interrupted before GraphGoblin recorded its result. Continue the task from where you left off and finish it."}}}]}}
+# Subtest: a kill after Claude's result-only acceptance recovers resume-named work
+ok 5 - a kill after Claude's result-only acceptance recovers resume-named work
+  ---
+  duration_ms: 21844.8489
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 79043.9303
