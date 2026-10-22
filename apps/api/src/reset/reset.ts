@@ -140,6 +140,12 @@ export async function storedSpelling(dataDir: string, database: string): Promise
   const stored: string[] = [];
   let parent = dataDir;
   for (const [index, segment] of configured.entries()) {
+    // Windows resolves a name with a trailing dot or space to the name without it, so such a
+    // spelling would name a listed entry under a form the listing never shows.
+    if (process.platform === 'win32' && /[. ]$/.test(segment))
+      throw new ResetRefusedError(
+        `the database path ${database} names ${segment} with a trailing dot or space, which Windows resolves to another name; configure GG_DB_URL with the name as the directory lists it`,
+      );
     let names: string[];
     try {
       names = await readdir(parent);

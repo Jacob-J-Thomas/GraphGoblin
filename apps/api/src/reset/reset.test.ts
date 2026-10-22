@@ -677,6 +677,31 @@ describe('refused resets change nothing', () => {
     },
   );
 
+  // Windows resolves `graphgoblin.db.` and `graphgoblin.db ` to `graphgoblin.db`, a spelling the
+  // listing never shows (the Sol re-review's round-3 probe).
+  it.runIf(process.platform === 'win32')(
+    'refuses a database name with a trailing dot or space, which Windows resolves to another name',
+    async () => {
+      const { base, dataDir } = await prepare('current');
+      for (const spelling of ['graphgoblin.db.', 'graphgoblin.db ']) {
+        const before = await snapshotTree(base);
+        const result = await reset(
+          ['--reset', '--yes', '--data-dir', dataDir],
+          {
+            GG_DATA_DIR: dataDir,
+            GG_DB_URL: `file:${join(dataDir, spelling).replaceAll('\\', '/')}`,
+          },
+          { readStore: () => Promise.reject(new Error('the store must not be read')) },
+        );
+        expect(result.code).toBe(1);
+        expect(result.err).toContain(
+          'with a trailing dot or space, which Windows resolves to another name',
+        );
+        expect(await snapshotTree(base)).toEqual(before);
+      }
+    },
+  );
+
   // Node cannot create a FIFO itself; POSIX hosts (CI) use mkfifo, Windows has no FIFO files.
   it.skipIf(process.platform === 'win32')(
     'refuses a database that is a FIFO before reading it',
