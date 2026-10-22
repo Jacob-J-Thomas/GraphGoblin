@@ -1,0 +1,98 @@
+{
+  "on": "113953db00d0f82f8e5ee9c0371eb44f2198191e",
+  "startedAt": "2026-10-22T20:35:41.121Z",
+  "node": "v22.14.0",
+  "temporaryRoot": "%TEMP%/gg-wp-d1-r4-ilRK7y",
+  "policy": "One execution per command; only resource prefixes/port ranges and worker limits differ. No threshold or exclusion changes.",
+  "runs": [
+    {
+      "name": "build",
+      "command": "pnpm.cmd build",
+      "log": "round4-build.log.txt",
+      "pid": 57528,
+      "startedAt": "2026-10-22T20:35:41.122Z",
+      "finishedAt": "2026-10-22T20:38:06.880Z",
+      "exitCode": 0
+    },
+    {
+      "name": "contracts",
+      "command": "pnpm.cmd --filter @graphgoblin/contracts test:coverage --maxWorkers=2",
+      "log": "contracts-coverage.log.txt",
+      "pid": 55840,
+      "startedAt": "2026-10-22T20:38:07.173Z",
+      "finishedAt": "2026-10-22T20:39:14.098Z",
+      "exitCode": 0,
+      "coverage": {
+        "lines": { "total": 377, "covered": 376, "skipped": 0, "pct": 99.73 },
+        "statements": { "total": 392, "covered": 390, "skipped": 0, "pct": 99.48 },
+        "functions": { "total": 58, "covered": 58, "skipped": 0, "pct": 100 },
+        "branches": { "total": 197, "covered": 187, "skipped": 0, "pct": 94.92 },
+        "branchesTrue": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
+      }
+    },
+    {
+      "name": "engine",
+      "command": "pnpm.cmd --filter @graphgoblin/engine test:coverage --maxWorkers=2",
+      "log": "engine-coverage-final.log.txt",
+      "pid": 39896,
+      "startedAt": "2026-10-22T20:39:14.321Z",
+      "finishedAt": "2026-10-22T20:40:33.829Z",
+      "exitCode": 0,
+      "coverage": {
+        "lines": { "total": 2362, "covered": 2317, "skipped": 0, "pct": 98.09 },
+        "statements": { "total": 2607, "covered": 2526, "skipped": 0, "pct": 96.89 },
+        "functions": { "total": 466, "covered": 460, "skipped": 0, "pct": 98.71 },
+        "branches": { "total": 2009, "covered": 1858, "skipped": 0, "pct": 92.48 },
+        "branchesTrue": { "total": 0, "covered": 0, "skipped": 0, "pct": 100 }
+      }
+    },
+    {
+      "name": "infrastructure",
+      "command": "pnpm.cmd --filter @graphgoblin/infrastructure test:coverage --config '%TEMP%/gg-wp-d1-r4-ilRK7y\\infrastructure.config.mjs' --maxWorkers=1 --coverage.reportOnFailure",
+      "log": "infrastructure-coverage-final.log.txt",
+      "pid": 636,
+      "startedAt": "2026-10-22T20:40:34.103Z",
+      "finishedAt": "2026-10-22T20:40:38.468Z",
+      "exitCode": 1
+    },
+    {
+      "name": "api",
+      "command": "pnpm.cmd --filter @graphgoblin/api test:coverage --config '%TEMP%/gg-wp-d1-r4-ilRK7y\\api.config.mjs' --maxWorkers=1 --coverage.reportOnFailure",
+      "log": "api-coverage-final.log.txt",
+      "pid": 38400,
+      "startedAt": "2026-10-22T20:40:38.680Z",
+      "finishedAt": "2026-10-22T20:40:43.254Z",
+      "exitCode": 1
+    },
+    {
+      "name": "docs",
+      "command": "pnpm.cmd docs:generate",
+      "log": "docs-generate.log.txt",
+      "pid": 57932,
+      "startedAt": "2026-10-22T20:40:43.510Z",
+      "finishedAt": "2026-10-22T20:40:48.548Z",
+      "exitCode": 0
+    },
+    {
+      "name": "client",
+      "command": "pnpm.cmd --filter @graphgoblin/api-client generate",
+      "log": "client-generate.log.txt",
+      "pid": 45208,
+      "startedAt": "2026-10-22T20:40:48.797Z",
+      "finishedAt": "2026-10-22T20:41:13.439Z",
+      "exitCode": 0
+    }
+  ],
+  "format": {
+    "command": "pnpm.cmd format --ignore-path .gg-wp-d1-round4.prettierignore --ignore-unknown",
+    "result": "passed; evidence files formatted",
+    "exitCode": 0,
+    "log": "round4-format.log.txt",
+    "firstInvocation": {
+      "command": "pnpm.cmd format --ignore-path %TEMP%/gg-wp-d1-r4-ilRK7y/round4.prettierignore --ignore-unknown",
+      "exitCode": 0,
+      "result": "selected zero files; scope location corrected before the second invocation"
+    },
+    "scope": "A temporary worktree-root copy of the retained .round4.prettierignore. Root temporary file removed after formatting; no directory deleted."
+  }
+}
