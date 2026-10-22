@@ -104,7 +104,14 @@ make this safe:
   its parent, and only then marks the run finalized (`RunRepository.markFinalized`, column
   `finalized_at`). Non-webhook returns skip channels whose `return.delivered` or `return.failed`
   is already in the log. Webhooks use their durable delivery journal and finite attempt budget
-  ([ADR-0043](decisions/ADR-0043-bounded-webhook-return-delivery.md)). At boot the run manager
+  ([ADR-0043](decisions/ADR-0043-bounded-webhook-return-delivery.md)). During recovery the finalizer
+  skips a retired Event return of an execution that already finished before upgrade, logging
+  `LOOP_UPGRADE_REQUIRED` with the run, loop and version identities. It neither publishes the
+  Event nor records a fictitious delivery receipt, and does not rewrite the historical outcome
+  or definition. Other returns finish normally, the parent receives the child's execution
+  outcome, and the run is finalized. This terminal bookkeeping exception does not admit or
+  execute a definition with a retired destination; those definitions still require repair.
+  At boot the run manager
   finalizes every terminal run not marked finalized (`listUnfinalized`), so a crash right after
   the status write loses no return and leaves no child running. A channel interrupted
   mid-delivery has an unknown acknowledgement; webhook recovery consumes that attempt and

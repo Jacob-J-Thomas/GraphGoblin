@@ -33,6 +33,24 @@ Loop deletion removes the delivery's scope. Workers re-read the run before every
 and journal append and stop with a clear informational log when it is gone. A transactional
 run-existence check also closes the read/delete/append race; no orphan journal rows are written.
 
+## Amendment: pre-upgrade terminal Event returns (2026-10-21)
+
+After integration with ADR-0044, an execution whose `run.finished` was already durable may
+still need finalization against its stored definition containing a retired Event destination.
+Finalization skips that destination and emits a structured warning with code
+`LOOP_UPGRADE_REQUIRED`, `runId`, `loopId`, `versionId` and `channelKind: event`. It does not
+publish the Event or fabricate `return.delivered` / `return.failed`, whose current schemas
+correctly exclude it. This diagnostic describes the skipped post-upgrade action; it makes no
+claim about any effect before the upgrade. Supported returns retain their normal handling,
+the parent receives the child's recorded execution outcome, and finalization completes once
+the other delivery outcomes exist. A later startup leaves finalized runs alone.
+
+This is terminal bookkeeping, not permission to execute the retired definition. Admission
+and active pinned runs retain WP-C6's `LOOP_UPGRADE_REQUIRED` refusal. Definitions, existing
+events and execution outcomes are not rewritten, consistent with D-020. The owner must still
+repair or delete the affected loop as described in ADR-0044 and the CHANGELOG. No migration,
+legacy channel schema, Event publication port or historical receipt conversion is added.
+
 ## Reviewed engineering parameters
 
 These implementation parameters passed independent review. Five attempts maximum, each

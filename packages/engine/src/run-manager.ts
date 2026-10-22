@@ -1851,6 +1851,21 @@ export class RunManager {
     };
     const deliveryStates = webhookStates(events);
     for (const channel of channels) {
+      // A pre-upgrade run may already have finished with this retired stored destination.
+      // Do not publish it or fabricate a receipt; execution and parent notification still stand.
+      if (String(channel.kind) === 'event') {
+        this.ports.logger.warn(
+          {
+            code: 'LOOP_UPGRADE_REQUIRED',
+            runId: run.id,
+            loopId: run.loopId,
+            versionId: run.versionId,
+            channelKind: 'event',
+          },
+          'retired Event return skipped; loop upgrade required',
+        );
+        continue;
+      }
       if (channel.kind === 'webhook') {
         const state = deliveryStates.find(
           (delivery) => JSON.stringify(delivery.channel) === JSON.stringify(channel),
