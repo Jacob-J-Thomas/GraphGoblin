@@ -45,6 +45,11 @@ beforeEach(async () => {
 });
 afterEach(() => handle.close());
 
+async function migrateHistoricalReturns() {
+  await handle.client.execute('DELETE FROM __drizzle_migrations WHERE created_at=1792454400000');
+  await handle.migrate();
+}
+
 it('freezes the historical import budget in migration 0015', async () => {
   const migration = await readFile(
     new URL('../../drizzle/0015_webhook_delivery_journal.sql', import.meta.url),
@@ -87,12 +92,8 @@ it.each([
     sql: 'INSERT INTO run_events (run_id,seq,ts,type,payload) VALUES (?,?,?,?,?)',
     args: [run.id, 1, FIXTURE_TS, type, payload],
   });
-  const migration = await readFile(
-    new URL('../../drizzle/0015_webhook_delivery_journal.sql', import.meta.url),
-    'utf8',
-  );
-  for (const statement of migration.split('--> statement-breakpoint'))
-    await handle.client.execute(statement);
+  await migrateHistoricalReturns();
+
   const result = await handle.client.execute({
     sql: 'SELECT type,payload FROM run_events WHERE run_id=?',
     args: [run.id],
@@ -118,9 +119,20 @@ it.each(
 )(
   'migration isolates a damaged pending returnDefaults (%j) alongside a healthy run',
   async ({ defaults }) => {
-    const definition = {
-      nodes: [{ id: 'done', config: { destinations: [state.channel] } }],
-    };
+    const definition = LoopDefinitionSchema.parse({
+      schemaVersion: 4,
+      name: 'Pending return fixture',
+      nodes: [
+        { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
+        {
+          id: 'done',
+          kind: 'exit',
+          label: 'Done',
+          config: { returns: '42', destinations: [state.channel] },
+        },
+      ],
+      edges: [{ id: 'a', from: { node: 'start', port: 'out' }, to: { node: 'done' } }],
+    });
     await handle.client.execute({
       sql: 'INSERT INTO loop_versions (id,loop_id,version,status,definition,created_at) VALUES (?,?,1,?,?,?)',
       args: [run.versionId, run.loopId, 'published', JSON.stringify(definition), FIXTURE_TS],
@@ -145,12 +157,7 @@ it.each(
       sql: 'SELECT * FROM run_events WHERE run_id=?',
       args: [run.id],
     });
-    const migration = await readFile(
-      new URL('../../drizzle/0015_webhook_delivery_journal.sql', import.meta.url),
-      'utf8',
-    );
-    for (const statement of migration.split('--> statement-breakpoint'))
-      await handle.client.execute(statement);
+    await migrateHistoricalReturns();
     expect(
       (
         await handle.client.execute({
@@ -258,12 +265,8 @@ it('one-off migration converts historical webhook outcomes without retrying or c
       sql: 'INSERT INTO run_events (run_id, seq, ts, type, payload) VALUES (?, ?, ?, ?, ?)',
       args: [run.id, index + 1, FIXTURE_TS, row.type, JSON.stringify(row.payload)],
     });
-  const migration = await readFile(
-    new URL('../../drizzle/0015_webhook_delivery_journal.sql', import.meta.url),
-    'utf8',
-  );
-  for (const statement of migration.split('--> statement-breakpoint'))
-    await handle.client.execute(statement);
+  await migrateHistoricalReturns();
+
   const migrated = await events.read(run.id);
   expect(migrated).toMatchObject([
     {
@@ -280,15 +283,16 @@ it('one-off migration converts historical webhook outcomes without retrying or c
     },
     { type: 'return.delivered', channel: { kind: 'caller' } },
   ]);
-  for (const statement of migration.split('--> statement-breakpoint'))
-    await handle.client.execute(statement);
+  await handle.migrate();
   expect(await events.read(run.id)).toEqual(migrated);
 });
 
-it.each(['succeeded', 'running', 'resumed'] as const)(
+it.each(['succeeded', 'running', 'resumed', 'receipted'] as const)(
   'one-off migration queues only the current unfinished return, including invocation defaults (%s)',
   async (status) => {
-    await repo.update(run.id, { status: status === 'resumed' ? 'running' : status });
+    await repo.update(run.id, {
+      status: status === 'resumed' ? 'running' : status === 'receipted' ? 'succeeded' : status,
+    });
     const definition = LoopDefinitionSchema.parse({
       schemaVersion: 4,
       name: 'Old pending return',
@@ -325,13 +329,24 @@ it.each(['succeeded', 'running', 'resumed'] as const)(
         { type: 'run.resumed', actor: { kind: 'system', id: 'fixture' } },
         { type: 'run.started', attempt: 2 },
       ]);
-    const migration = await readFile(
-      new URL('../../drizzle/0015_webhook_delivery_journal.sql', import.meta.url),
-      'utf8',
-    );
-    for (const statement of migration.split('--> statement-breakpoint'))
-      await handle.client.execute(statement);
+    if (status === 'receipted')
+      for (const [index, channel] of thread.invocation.returnDefaults.entries())
+        await handle.client.execute({
+          sql: 'INSERT INTO run_events (run_id,seq,ts,type,payload) VALUES (?,?,?,?,?)',
+          args: [run.id, 3 + index, FIXTURE_TS, 'return.delivered', JSON.stringify({ channel })],
+        });
+    await migrateHistoricalReturns();
     const migrated = await events.read(run.id);
+    if (status === 'receipted') {
+      expect(migrated.filter((event) => event.type === 'delivery.attempt_finished')).toEqual([]);
+      expect((await repo.get(run.id))?.deliveries).toMatchObject([
+        { status: 'delivered', attempts: 1, maxAttempts: 1 },
+        { status: 'delivered', attempts: 1, maxAttempts: 1 },
+      ]);
+      await handle.migrate();
+      expect(await events.read(run.id)).toEqual(migrated);
+      return;
+    }
     if (status === 'resumed') {
       expect(migrated).toHaveLength(4);
       expect((await repo.get(run.id))?.deliveries).toBeUndefined();
@@ -343,8 +358,7 @@ it.each(['succeeded', 'running', 'resumed'] as const)(
       { status: 'pending', attempts: 1, acknowledgement: 'unknown' },
     ]);
     expect((await repo.get(run.id))?.lastEventSeq).toBe(4);
-    for (const statement of migration.split('--> statement-breakpoint'))
-      await handle.client.execute(statement);
+    await handle.migrate();
     expect(await events.read(run.id)).toEqual(migrated);
   },
 );

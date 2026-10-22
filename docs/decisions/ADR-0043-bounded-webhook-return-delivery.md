@@ -78,8 +78,8 @@ even if a later attempt succeeds. No response bodies or transport exception text
 Migration 0015 has not shipped. Its JSON traversal now establishes object and array types
 before nested extraction. A shape-damaged pending run is left for per-run
 `HISTORY_UNREADABLE` diagnostics; it cannot abort migration or prevent healthy runs and the
-API from starting. Historical receipt conversion checks required fields, optional-field
-types and bounds, strict keys and duplicate keys. Damaged receipts remain byte-identical
+API from starting. Historical receipt conversion checks the frozen historical contract,
+including required fields, optional-field types and bounds, URL validity and strict keys. Damaged receipts remain byte-identical
 for diagnostics and explicit repair; neither optional fields nor unexpected evidence are
 discarded to manufacture a valid outcome.
 
@@ -94,7 +94,26 @@ cannot violate the journal contract or strand an in-flight attempt. Policy value
 
 ### One-off conversion
 
-Migration `0015_webhook_delivery_journal` rewrites completed historical webhook return events
+Amendment (2026-10-22, round 6): receipt eligibility is implemented in code using the archived
+format-3 receipt schemas, whose receipt/channel contract is unchanged in the pre-#246 build.
+It uses their exact `z.url()` and code-point string bounds, including characters after an
+embedded NUL; neither Unicode nor valid NUL-containing strings are refused. SQLite's string
+length and URL predicates cannot express this contract. Payloads and stored event envelopes
+are validated without stripping unknown evidence. Rows that fail remain byte-identical and
+surface as per-run unreadable history for explicit repair; healthy runs and startup continue.
+Validation does not replace the stored channel with a parser-normalized URL; valid channels
+retain their original values, including for the following pending-delivery lookup.
+There is no tolerant runtime reader or second receipt eligibility rule.
+
+The one-off code step runs before 0015's SQL allocates unfinished deliveries. Receipt rewrites,
+pending identities, index creation and the migration ledger commit in one write transaction,
+through the same runner for ordinary startup, fresh stores and offline upgrades. A failed or
+interrupted transaction rolls them all back; restart repeats the pending migration. A committed
+ledger skips the step, and already converted rows are not candidates. The SQL contains no
+receipt rewrite. The migration has not shipped; later policy changes must not edit its code
+or SQL.
+
+Migration `0015_webhook_delivery_journal` converts completed historical webhook return events
 once into final journal snapshots, with one recorded attempt and no new retry budget. Old
 failures have unknown acknowledgement; no missing attempt-start history is fabricated.
 Non-webhook events and damaged JSON remain unchanged. There are no runtime legacy readers.
