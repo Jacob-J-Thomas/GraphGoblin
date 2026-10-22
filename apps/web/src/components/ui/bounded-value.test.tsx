@@ -145,4 +145,33 @@ describe('BoundedValue', () => {
     rerender(<BoundedValue value={big} label="Variables" testId="value" className="mt-1" />);
     expect(screen.getByTestId('value').textContent).toBe(bigJson);
   });
+
+  it('keeps the keyboard inside the component when a change of value collapses the region', async () => {
+    const user = userEvent.setup();
+    const other = {
+      items: Array.from({ length: 400 }, (_, i) => ({ id: i, note: 'y'.repeat(40) })),
+    };
+    const { rerender } = render(<BoundedValue value={big} label="Variables" testId="value" />);
+    await user.click(screen.getByRole('button', { name: 'Show all of Variables' }));
+    screen.getByRole('region', { name: 'Variables' }).focus();
+    expect(screen.getByRole('region', { name: 'Variables' })).toHaveFocus();
+    // Large to large: the new value's Show all takes the focus.
+    rerender(<BoundedValue value={other} label="Variables" testId="value" />);
+    expect(screen.getByRole('button', { name: 'Show all of Variables' })).toHaveFocus();
+    // Large to small: the text itself keeps it, without becoming a tab stop, until it moves on.
+    await user.click(screen.getByRole('button', { name: 'Show all of Variables' }));
+    screen.getByRole('region', { name: 'Variables' }).focus();
+    rerender(<BoundedValue value={{ topic: 'loops' }} label="Variables" testId="value" />);
+    expect(screen.getByTestId('value')).toHaveFocus();
+    expect(screen.getByTestId('value')).toHaveAttribute('tabindex', '-1');
+    await user.tab();
+    expect(screen.getByTestId('value')).not.toHaveFocus();
+    expect(screen.getByTestId('value')).not.toHaveAttribute('tabindex');
+    // A keyboard elsewhere is left alone.
+    rerender(<BoundedValue value={big} label="Variables" testId="value" />);
+    await user.click(screen.getByRole('button', { name: 'Show all of Variables' }));
+    (document.activeElement as HTMLElement).blur();
+    rerender(<BoundedValue value={other} label="Variables" testId="value" />);
+    expect(document.activeElement).toBe(document.body);
+  });
 });
