@@ -1,0 +1,62 @@
+[
+  {
+    "name": "unparented control",
+    "pass": true
+  },
+  {
+    "name": "well-formed child",
+    "pass": true
+  },
+  {
+    "name": "identical admission acknowledgement lost",
+    "pass": true
+  },
+  {
+    "name": "missing-parent-with-node",
+    "pass": true,
+    "failure": {
+      "isAdmissionConflict": true,
+      "code": "WEBHOOK_INTENT_CONFLICT",
+      "name": "AdmissionConflictError"
+    }
+  },
+  {
+    "name": "missing-parent-without-node",
+    "pass": true,
+    "failure": {
+      "isAdmissionConflict": true,
+      "code": "WEBHOOK_INTENT_CONFLICT",
+      "name": "AdmissionConflictError"
+    }
+  },
+  {
+    "name": "existing-parent-without-node",
+    "pass": true,
+    "failure": {
+      "isAdmissionConflict": true,
+      "code": "WEBHOOK_INTENT_CONFLICT",
+      "name": "AdmissionConflictError"
+    }
+  },
+  {
+    "name": "node-without-parent",
+    "pass": true,
+    "failure": {
+      "isAdmissionConflict": true,
+      "code": "WEBHOOK_INTENT_CONFLICT",
+      "name": "AdmissionConflictError"
+    }
+  },
+  {
+    "name": "repeat child with different parent node",
+    "pass": true
+  },
+  {
+    "name": "final orphan query",
+    "pass": true
+  },
+  {
+    "cleanup": "gg-qa-320-r2-admission-Sk98dT",
+    "removed": true
+  }
+]

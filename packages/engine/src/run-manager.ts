@@ -101,6 +101,11 @@ export interface StartRunInput {
   dedupeKey?: string;
   returnDefaults?: ReturnChannel[];
   parentRunId?: string;
+  /**
+   * The parent's subloop node starting this child: the admission records the parent's
+   * `child_run.started` in the same transaction as the child (#320).
+   */
+  parentNodeId?: string;
   seed?: InitialThreadInput['seed'];
   /** Allow running a draft version (test runs). The run pins a snapshot of it (ADR-0041). */
   allowDraft?: boolean;
@@ -435,7 +440,9 @@ export class RunManager {
     const admitted = await this.withPinLock(async () => {
       await this.assertVersionPresent(prepared.sourceId, input.loopId);
       const intent = await this.prepareAdmission(prepared, input.subloopVersions ?? {});
-      return this.ports.admission.create(intent);
+      return this.ports.admission.create(
+        input.parentNodeId ? { ...intent, parentNodeId: input.parentNodeId } : intent,
+      );
     });
     this.enqueue(admitted.id);
     return admitted;
@@ -1466,7 +1473,15 @@ export class RunManager {
         }
         return { model: resolution.model, effort: resolution.effort };
       },
-      startChild: (request) => this.startChild(run, request, pinnedSubloops(events)),
+      startChild: async (request) => {
+        const childRunId = await this.startChild(run, request, pinnedSubloops(events));
+        // The child's admission committed this run's `child_run.started` with it (#320).
+        const linked = await this.ports.events.read(runId, (events.at(-1) as RunEvent).seq);
+        events.push(
+          ...linked.filter((e) => e.type === 'child_run.started' && e.childRunId === childRunId),
+        );
+        return childRunId;
+      },
       childOutcome: (childRunId) => this.childOutcome(childRunId),
       resumeChild: (childRunId) => this.resumeChild(run, childRunId),
       events: () => Promise.resolve(events),
@@ -1937,10 +1952,20 @@ export class RunManager {
       awaited.childRunId !== run.id
     )
       return;
+    const terminal = terminalEvent(await this.ports.events.read(run.id));
+    if (!terminal) return; // An independent resume made the old notification obsolete.
     try {
       await this.wake(
         parent.id,
-        { reason: 'child', payload: { childRunId: run.id, status, outcome: outcome ?? null } },
+        {
+          reason: 'child',
+          payload: {
+            childRunId: run.id,
+            childFinishedSeq: terminal.seq,
+            status,
+            outcome: outcome ?? null,
+          },
+        },
         awaited.waitId,
         [],
         run.id,
@@ -1983,6 +2008,7 @@ export class RunManager {
       caller: { kind: 'run', id: parent.id },
       payload: request.triggerPayload,
       parentRunId: parent.id,
+      parentNodeId: request.nodeId,
       seed: request.seed,
       subloopVersions: pins,
       pinnedDefaults: parent.pinned.defaults,
@@ -2053,14 +2079,33 @@ export class RunManager {
 
   private async childOutcome(childRunId: string): Promise<ChildOutcome> {
     const child = await this.mustGet(childRunId);
-    const thread = await this.getThread(childRunId);
+    const events = await this.ports.events.read(childRunId);
+    const terminal = terminalEvent(events);
+    const thread = await this.loadThread(child, events);
+    // Identity, outcome and thread come from one log snapshot. A resume can change the row while
+    // this is read; its previous terminal fields must never be paired with the new outcome seq.
+    const status =
+      terminal?.type === 'run.finished'
+        ? terminal.status
+        : terminal?.type === 'run.failed'
+          ? 'failed'
+          : terminal?.type === 'run.cancelled'
+            ? 'cancelled'
+            : isTerminal(child.status)
+              ? 'running'
+              : child.status;
     return {
       runId: childRunId,
-      status: child.status,
-      ...(child.outcome ? { outcome: child.outcome } : {}),
-      ...(child.result !== undefined ? { result: child.result } : {}),
-      ...(child.failure ? { failure: child.failure } : {}),
-      ...(thread ? { thread } : {}),
+      status,
+      ...(terminal ? { terminalSeq: terminal.seq } : {}),
+      ...(terminal?.type === 'run.finished'
+        ? {
+            outcome: terminal.outcome,
+            ...(terminal.result !== undefined ? { result: terminal.result } : {}),
+          }
+        : {}),
+      ...(terminal?.type === 'run.failed' ? { failure: terminal.failure } : {}),
+      thread,
     };
   }
 

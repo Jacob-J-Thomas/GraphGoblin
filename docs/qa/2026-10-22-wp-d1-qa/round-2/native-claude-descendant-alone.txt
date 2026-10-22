@@ -1,0 +1,45 @@
+START 2026-10-22T02:54:29.9041232Z
+node v22.14.0
+pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/claude/process.test.ts -t kills the descendant that a long-lived child started --config ../../docs/qa/2026-10-22-wp-d1-qa/round-2/infrastructure.config.mjs
+
+ RUN  v5.0.3 <worktree>/packages/infrastructure
+
+ G�� src/claude/process.test.ts (5 tests | 1 failed | 4 skipped) 6283ms
+   G�� owned native Claude process transport (5)
+     +� kills the descendant that a long-lived child started 6280ms
+System.Management.Automation.RemoteException
+GĻGĻGĻGĻGĻGĻGĻ Failed Tests 1 GĻGĻGĻGĻGĻGĻGĻ
+System.Management.Automation.RemoteException
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived child started
+AssertionError: expected 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxGǪ' to be 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxGǪ' // Object.is equality
+System.Management.Automation.RemoteException
+Expected: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+Received: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+System.Management.Automation.RemoteException
+ G�� src/claude/process.test.ts:146:46
+    144|       const stopped = await readFile(marker, 'utf8');
+    145|       await new Promise((resolve) => setTimeout(resolve, 100));
+    146|       expect(await readFile(marker, 'utf8')).toBe(stopped);
+       |                                              ^
+    147|     } finally {
+    148|       controller.abort();
+System.Management.Automation.RemoteException
+GĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻ[1/2]GĻ
+System.Management.Automation.RemoteException
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived child started
+Error: EBUSY: resource busy or locked, rmdir '<user>\AppData\Local\Temp\gg-qa-320-r2-native-claude-descendant-alone-2wUZk5\gg-qa-320-suite-claude-process-5JvTT7'
+GĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻ[2/2]GĻ
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 skipped (5)
+   Start at  21:54:31
+   Duration  7.15s (tests 95%, transform 3%, import 2%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+System.Management.Automation.RemoteException
+  +� "pnpm recursive exec" failed in C:
+[local path redacted]
+  G�� d1\packages\infrastructure
+System.Management.Automation.RemoteException
+END 2026-10-22T02:54:39.3804335Z EXIT 1

@@ -2,6 +2,7 @@ import {
   ContextThreadSchema,
   JsonValueSchema,
   LoopVersionRecordSchema,
+  SlugSchema,
   UlidSchema,
   RunRecordSchema,
   RunEventSchema,
@@ -24,6 +25,13 @@ export interface RunAdmission {
    * it with the run, so a run never references a snapshot that does not exist.
    */
   snapshot?: LoopVersionRecord;
+  /**
+   * A subloop child's link on its parent (#320): the parent's subloop node whose visit starts this
+   * child. Storage appends the parent's `child_run.started` for this node and child in the same
+   * transaction as the child, so a child never exists without its parent's record of it, and the
+   * record never names a child that does not exist. Requires `run.parentRunId`.
+   */
+  parentNodeId?: string;
 }
 export interface WebhookInbound {
   id: string;
@@ -106,6 +114,15 @@ export function assertAdmissionIdentity(
     throw new AdmissionConflictError();
 }
 
+/** The parent's `child_run.started` that a child admission commits with the child (#320). */
+export function childLinkEvent(
+  input: RunAdmission,
+): Omit<Extract<RunEvent, { type: 'child_run.started' }>, 'runId' | 'seq' | 'ts'> | undefined {
+  return input.parentNodeId === undefined
+    ? undefined
+    : { type: 'child_run.started', nodeId: input.parentNodeId, childRunId: input.run.id };
+}
+
 /** A corrupt saved intent is permanently refused, never interpreted as a new invocation. */
 export function parseRunAdmission(value: unknown): RunAdmission {
   if (value === null || typeof value !== 'object' || Array.isArray(value))
@@ -144,6 +161,14 @@ export function parseRunAdmission(value: unknown): RunAdmission {
   )
     throw new AdmissionConflictError();
   const snapshot = raw.snapshot === undefined ? undefined : parseSnapshot(raw.snapshot, run.data);
+  // A parent link belongs to a child, and every child carries one: the link is what keeps a child
+  // from existing without its parent's record of it (#320), so a run that names a parent without
+  // naming the parent's subloop node is refused, as is a node without a parent.
+  const parentNodeId =
+    raw.parentNodeId === undefined ? undefined : SlugSchema.safeParse(raw.parentNodeId);
+  const parented = run.data.parentRunId !== undefined && run.data.parentRunId !== null;
+  if (parentNodeId ? !parentNodeId.success || !parented : parented)
+    throw new AdmissionConflictError();
   const { runId: _id, seq: _seq, ts: _ts, ...queued } = event.data;
   return {
     run: run.data,
@@ -151,6 +176,7 @@ export function parseRunAdmission(value: unknown): RunAdmission {
     queued,
     pinnedLoopIds: [...(raw.pinnedLoopIds as string[])],
     ...(snapshot ? { snapshot } : {}),
+    ...(parentNodeId?.success ? { parentNodeId: parentNodeId.data } : {}),
   };
 }
 

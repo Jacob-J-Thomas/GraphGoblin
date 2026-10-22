@@ -1,0 +1,42 @@
+START 2026-10-22T02:43:40.4994655Z
+node v22.14.0
+pnpm.cmd --filter @graphgoblin/api test:coverage --config ../../docs/qa/2026-10-22-wp-d1-qa/round-2/api.config.mjs
+$ vitest run --coverage --config ../../docs/qa/2026-10-22-wp-d1-qa/round-2/api.config.mjs
+
+ RUN  v5.0.3 <worktree>/apps/api
+      Coverage enabled with v8
+
+child admission kill: delay=0ms snapshots=18828 children-at-kill=1 unlinked=none parents=24 child-counts=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+child admission kill: delay=5ms snapshots=19261 children-at-kill=1 unlinked=none parents=24 child-counts=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+subloop kill landings:
+delay undefined: leaf waiting at restart; recovery restarts top 0, middle 0, leaf 0
+delay 0: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 10: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 30: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 60: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+delay 100: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 150: leaf succeeded at restart; recovery restarts top 1, middle 0, leaf 0
+delay 250: leaf succeeded at restart; recovery restarts top 1, middle 0, leaf 0
+child admission kill: delay=25ms snapshots=21253 children-at-kill=1 unlinked=none parents=24 child-counts=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+{"level":30,"time":1792637259881,"pid":53136,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5925"}
+{"level":30,"time":1792637259883,"pid":53136,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5925,"dataDir":"<TEMP>\\gg-qa-320-r2-api-coverage-vPT5Vw\\gg-qa-320-suite-api-process-PPpr05","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792637259924,"pid":53136,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792637259932,"pid":53136,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":7.14469999999983,"msg":"request completed"}
+
+ Test Files  51 passed | 2 skipped (53)
+      Tests  703 passed | 6 skipped (709)
+   Start at  21:43:42
+   Duration  447.01s (tests 76%, import 22%, transform 2%)
+
+    Isolate  53 workers spawned -+ ~457ms startup each (spawn + environment, per file)
+             at least ~11.66s faster with isolate: false G�� reuses workers across files instead of one per file
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 96.41% ( 1938/2010 )
+Branches     : 92.88% ( 1254/1350 )
+Functions    : 94.05% ( 380/404 )
+Lines        : 97.83% ( 1762/1801 )
+================================================================================
+END 2026-10-22T02:51:10.1261259Z EXIT 0

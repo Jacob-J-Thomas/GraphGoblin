@@ -200,6 +200,8 @@ type SubloopConfig = {
 
 Behaviour: the subloop is an awaited call ([ADR-0044](decisions/ADR-0044-awaited-subloops.md)). The child run has its own id, event log, iteration counter, and version pin. The parent run enters `waiting` with kind `child` and continues only after the child finishes; the wake is bound to that park, so it can never answer a later wait. The child's exit returns its configured output to the output mapping, or no output: with `returns: "none"` the summary has no `result` and `resultTo.var` is removed (after any variable merge, so a merged copy never restores it), while a returned JSON `null` arrives as `null`. A child exit never finishes the parent, which continues to its own exit. Cancelling the parent cancels the child. The child's authored outcome (Success, Failure or Exhausted exit) does not fail the parent; its return payload and outcome are available to the output mapping and to downstream decision nodes. A child's execution failure or cancellation is handled like the same failure inline (#251): the parent fails at this node with the child's code and resumability (`details.childRunId` names the child), or is cancelled with it. Resuming such a parent resumes the failed child in place.
 
+The child's admission writes the parent's `child_run.started` link in the same SQLite transaction as the child, its thread and first event ([ADR-0046](decisions/ADR-0046-atomic-child-admission.md)). Recovery of an interrupted visit reuses that child even if the process died before the parent parked. A durable `child_run.finished` is reused when recovery repeats the interrupted completion handling.
+
 Ports: `out`.
 
 ## Wait (Decided purpose, Draft config)
