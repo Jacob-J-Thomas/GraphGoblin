@@ -32,7 +32,7 @@ The server-check-only case blocks only POST /validate: the default server-check 
 
 ## Served checks
 
-All 26 cases passed in one invocation. Every row is indexed by ID in [served-checks.json](served-checks.json), including complete actual response bodies and counts. [served.log](served.log) preserves the run output.
+All 26 cases passed in one invocation. Every row is indexed by ID in [served-checks.json](served-checks.json), including complete actual response bodies and counts. [served.log.txt](served.log.txt) preserves the run output.
 
 | Check                         | Steps                                                                                                                                                                                               | Expected                                                                                                                                                                            | Actual                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | Verdict |
 | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------- |
@@ -65,7 +65,7 @@ All 26 cases passed in one invocation. Every row is indexed by ID in [served-che
 
 ## Collector checks
 
-GG_SWITCH_PORT=5880 and GG_SWITCH_EXPECT_FIXED=1. All 16 scenarios pass; 14 nonfailure cases save, publish, reopen and execute with exact native fake-CLI request matches. Each row has complete per-case steps/expected/actual in [collector-checks.json](collector-checks.json); output is [collector.log](collector.log). No observation-only pass is represented as publication evidence.
+GG_SWITCH_PORT=5880 and GG_SWITCH_EXPECT_FIXED=1. All 16 scenarios pass; 14 nonfailure cases save, publish, reopen and execute with exact native fake-CLI request matches. Each row has complete per-case steps/expected/actual in [collector-checks.json](collector-checks.json); output is [collector.log.txt](collector.log.txt). No observation-only pass is represented as publication evidence.
 
 | Direction / scenario              | Steps                                                                                                      | Expected                                                                                | Actual                                                                                                                                                                                                                                                                                                                                    | Verdict |
 | --------------------------------- | ---------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
@@ -88,7 +88,7 @@ GG_SWITCH_PORT=5880 and GG_SWITCH_EXPECT_FIXED=1. All 16 scenarios pass; 14 nonf
 
 ## Edge model-picker
 
-Unchanged repository assertions; one worker, retries zero, msedge channel, served build. Expected exactly four known #205 failures. Actual 4 passes and 4 failures; baselineMatches=true. Full test errors, steps, expected, actual, durations and verdicts: [edge-results.json](edge-results.json). Full redacted JSON-reporter output: [edge.log](edge.log).
+Unchanged repository assertions; one worker, retries zero, msedge channel, served build. Expected exactly four known #205 failures. Actual 4 passes and 4 failures; baselineMatches=true. Full test errors, steps, expected, actual, durations and verdicts: [edge-results.json](edge-results.json). Full redacted JSON-reporter output: [edge.log.txt](edge.log.txt).
 
 | Line / case                                                                                         | Expected                                    | Actual                                                         | Verdict           |
 | --------------------------------------------------------------------------------------------------- | ------------------------------------------- | -------------------------------------------------------------- | ----------------- |
@@ -150,7 +150,7 @@ Every file to preserve has a Markdown link here. The manifest records hashes and
 - [README.md](README.md)
 - [artifact-manifest.json](artifact-manifest.json)
 - [build-command.json](build-command.json)
-- [build.log](build.log)
+- [build.log.txt](build.log.txt)
 - [cleanup-preflight.json](cleanup-preflight.json)
 - [cleanup.json](cleanup.json)
 - [cleanup.ps1](cleanup.ps1)
@@ -159,14 +159,14 @@ Every file to preserve has a Markdown link here. The manifest records hashes and
 - [collector-command.json](collector-command.json)
 - [collector-lifecycle.json](collector-lifecycle.json)
 - [collector-results.json](collector-results.json)
-- [collector.log](collector.log)
+- [collector.log.txt](collector.log.txt)
 - [collector.mjs](collector.mjs)
 - [components-command.json](components-command.json)
-- [components.log](components.log)
+- [components.log.txt](components.log.txt)
 - [coverage-command.json](coverage-command.json)
 - [coverage-location.json](coverage-location.json)
 - [coverage-results.json](coverage-results.json)
-- [coverage.log](coverage.log)
+- [coverage.log.txt](coverage.log.txt)
 - [coverage.txt](coverage.txt)
 - [edge-command.json](edge-command.json)
 - [edge-lifecycle.json](edge-lifecycle.json)
@@ -176,7 +176,7 @@ Every file to preserve has a Markdown link here. The manifest records hashes and
 - [edge-setup.ts](edge-setup.ts)
 - [edge-test-app.mjs](edge-test-app.mjs)
 - [edge.config.ts](edge.config.ts)
-- [edge.log](edge.log)
+- [edge.log.txt](edge.log.txt)
 - [final-audit.json](final-audit.json)
 - [gates.json](gates.json)
 - [gates.txt](gates.txt)
@@ -187,4 +187,4 @@ Every file to preserve has a Markdown link here. The manifest records hashes and
 - [served-command.json](served-command.json)
 - [served-lifecycle.json](served-lifecycle.json)
 - [served-results.json](served-results.json)
-- [served.log](served.log)
+- [served.log.txt](served.log.txt)
