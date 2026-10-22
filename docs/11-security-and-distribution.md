@@ -86,7 +86,7 @@ The lock lives on the data volume at `/data/graphgoblin.lock` and can survive an
 
 ## First-run preflight (Decided by implementation, 2026-10-03)
 
-`apps/api/src/preflight.ts` runs a fixed list of checks and reports each as `ok`, `warn` (works, but something is missing or is set up on first start), or `fail` (runs will not work until it is fixed). Nothing in it changes state or starts a harness session.
+`apps/api/src/preflight.ts` runs a fixed list of checks and reports each as `ok`, `warn` (works, but something is missing or is set up on first start), or `fail` (runs will not work until it is fixed). Nothing in it changes state or starts a harness session: an existing store is inspected through the same read-only connection as startup's guard, so a refused or healthy store keeps its database and write-ahead log bytes (the `-shm` index is shared memory any reader updates).
 
 | Check          | ok                                                                                                                                                            | warn                                                                                                                                                 | fail                                                                                    |
 | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |

@@ -192,6 +192,25 @@ export function databaseFilePath(
   return resolve(path);
 }
 
+/** Shipped migrations the store has not recorded yet. Reads the ledger only; works read-only. */
+export async function pendingMigrationCount(
+  client: Client,
+  migrationsFolder: string = DEFAULT_MIGRATIONS,
+): Promise<number> {
+  const shipped = readMigrationFiles({ migrationsFolder });
+  const table = await client.execute(
+    "SELECT name FROM sqlite_master WHERE type = 'table' AND name = '__drizzle_migrations'",
+  );
+  if (table.rows.length === 0) return shipped.length;
+  const last = await client.execute(
+    'SELECT created_at FROM __drizzle_migrations ORDER BY created_at DESC LIMIT 1',
+  );
+  const row = last.rows[0];
+  if (!row) return shipped.length;
+  const lastMillis = Number(row[0]);
+  return shipped.filter((m) => lastMillis < m.folderMillis).length;
+}
+
 export function openDatabase(options: DatabaseOptions): DatabaseHandle {
   const client = serializeClient(createClient({ url: options.url }));
   const db = drizzle(client, { schema });
@@ -211,19 +230,8 @@ export function openDatabase(options: DatabaseOptions): DatabaseHandle {
       if (state === 'current') await migrate(db, { migrationsFolder });
       await verifyStoreHead(client, migrationsFolder);
     },
-    async pendingMigrations() {
-      const shipped = readMigrationFiles({ migrationsFolder });
-      const table = await client.execute(
-        "SELECT name FROM sqlite_master WHERE type = 'table' AND name = '__drizzle_migrations'",
-      );
-      if (table.rows.length === 0) return shipped.length;
-      const last = await client.execute(
-        'SELECT created_at FROM __drizzle_migrations ORDER BY created_at DESC LIMIT 1',
-      );
-      const row = last.rows[0];
-      if (!row) return shipped.length;
-      const lastMillis = Number(row[0]);
-      return shipped.filter((m) => lastMillis < m.folderMillis).length;
+    pendingMigrations() {
+      return pendingMigrationCount(client, migrationsFolder);
     },
     close() {
       client.close();

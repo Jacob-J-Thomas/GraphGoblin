@@ -12,8 +12,12 @@ import {
   SqliteSecrets,
   UnsupportedStoreError,
   databaseFilePath,
+  databaseView,
   guardCurrentStore,
   openDatabase,
+  openReadOnlyDatabaseClient,
+  pendingMigrationCount,
+  type Database,
   type ModelCatalogEntry,
 } from '@graphgoblin/infrastructure/sqlite';
 import { z } from 'zod';
@@ -396,11 +400,19 @@ export async function assertCreatable(file: string, probeName?: ProbeName): Prom
   }
 }
 
+/** The connection preflight inspects a store through: read-only for a file on disk. */
+interface InspectedDatabase {
+  client: ReturnType<typeof openReadOnlyDatabaseClient>;
+  db: Database;
+  pendingMigrations(): Promise<number>;
+  close(): void;
+}
+
 /** What the CLI can learn about the database before the server has started. */
 type DatabaseState =
   | { kind: 'missing' }
   | { kind: 'broken'; error: unknown }
-  | { kind: 'open'; handle: ReturnType<typeof openDatabase> };
+  | { kind: 'open'; handle: InspectedDatabase };
 
 async function inspectDatabase(url: string): Promise<DatabaseState> {
   const file = databaseFilePath(url);
@@ -418,6 +430,20 @@ async function inspectDatabase(url: string): Promise<DatabaseState> {
     }
   }
   try {
+    if (file !== undefined) {
+      // The same read-only connection as startup's guard: a refused or healthy store keeps its
+      // database and write-ahead log bytes (a mutable connection checkpoints the log on close).
+      const client = openReadOnlyDatabaseClient(file);
+      return {
+        kind: 'open',
+        handle: {
+          client,
+          db: databaseView(client),
+          pendingMigrations: () => pendingMigrationCount(client),
+          close: () => client.close(),
+        },
+      };
+    }
     return { kind: 'open', handle: openDatabase({ url }) };
   } catch (error) {
     return { kind: 'broken', error };
