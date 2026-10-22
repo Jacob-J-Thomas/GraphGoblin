@@ -1,0 +1,373 @@
+{
+  "loopId": "01M5JAKX1QHRTMKYC2FQ2M2GD0",
+  "runId": "01M5JAKX3Y11XF1R7W03R8MFYC",
+  "path": "/late",
+  "run": {
+    "id": "01M5JAKX3Y11XF1R7W03R8MFYC",
+    "ownerId": "local",
+    "loopId": "01M5JAKX1QHRTMKYC2FQ2M2GD0",
+    "versionId": "01M5JAKX1Q30G4TK78N156AMJY",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "Audit /late",
+      "label": "Audit /late v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M5JAKX3Y3D60NZCM423XHJ5F",
+    "status": "succeeded",
+    "iteration": 1,
+    "outcome": "success",
+    "result": null,
+    "deliveries": [
+      {
+        "id": "01M5JAKX69MKJGRV0KNCMAN736",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/late"
+        },
+        "status": "delivered",
+        "attempts": 2,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "accepted",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "lastError": {
+          "code": "timeout",
+          "message": "Webhook acknowledgement timed out; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    ],
+    "createdAt": "2026-10-22T17:30:22.206Z",
+    "startedAt": "2026-10-22T17:30:22.223Z",
+    "finishedAt": "2026-10-22T17:30:22.289Z",
+    "lastEventSeq": 13
+  },
+  "events": [
+    {
+      "runId": "01M5JAKX3Y11XF1R7W03R8MFYC",
+      "seq": 1,
+      "ts": "2026-10-22T17:30:22.206Z",
+      "type": "run.queued",
+      "versionId": "01M5JAKX1Q30G4TK78N156AMJY",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Audit /late",
+        "label": "Audit /late v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5JAKX3Y11XF1R7W03R8MFYC",
+          "loopId": "01M5JAKX1QHRTMKYC2FQ2M2GD0",
+          "versionId": "01M5JAKX1Q30G4TK78N156AMJY",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5JAKX3Y3D60NZCM423XHJ5F",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": {
+              "name": "Audit /late",
+              "value": 42
+            },
+            "receivedAt": "2026-10-22T17:30:22.206Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {},
+        "gates": {},
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    {
+      "runId": "01M5JAKX3Y11XF1R7W03R8MFYC",
+      "seq": 2,
+      "ts": "2026-10-22T17:30:22.226Z",
+      "type": "run.started",
+      "attempt": 1
+    },
+    {
+      "runId": "01M5JAKX3Y11XF1R7W03R8MFYC",
+      "seq": 3,
+      "ts": "2026-10-22T17:30:22.243Z",
+      "type": "node.started",
+      "nodeId": "start",
+      "kind": "trigger",
+      "attempt": 1,
+      "configHash": "527dee9c4254fe4e"
+    },
+    {
+      "runId": "01M5JAKX3Y11XF1R7W03R8MFYC",
+      "seq": 4,
+      "ts": "2026-10-22T17:30:22.253Z",
+      "type": "node.finished",
+      "nodeId": "start",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/outputs/start",
+          "value": {
+            "nodeId": "start",
+            "value": {
+              "name": "Audit /late",
+              "value": 42
+            },
+            "at": "2026-10-22T17:30:22.252Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "start",
+            "value": {
+              "name": "Audit /late",
+              "value": 42
+            },
+            "at": "2026-10-22T17:30:22.252Z"
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 0
+    },
+    {
+      "runId": "01M5JAKX3Y11XF1R7W03R8MFYC",
+      "seq": 5,
+      "ts": "2026-10-22T17:30:22.276Z",
+      "type": "node.started",
+      "nodeId": "done",
+      "kind": "exit",
+      "attempt": 1,
+      "configHash": "380826a1fd881622"
+    },
+    {
+      "runId": "01M5JAKX3Y11XF1R7W03R8MFYC",
+      "seq": 6,
+      "ts": "2026-10-22T17:30:22.281Z",
+      "type": "exit.evaluated",
+      "nodeId": "done",
+      "outcome": "success"
+    },
+    {
+      "runId": "01M5JAKX3Y11XF1R7W03R8MFYC",
+      "seq": 7,
+      "ts": "2026-10-22T17:30:22.281Z",
+      "type": "node.finished",
+      "nodeId": "done",
+      "patch": [],
+      "durationMs": 1
+    },
+    {
+      "runId": "01M5JAKX3Y11XF1R7W03R8MFYC",
+      "seq": 8,
+      "ts": "2026-10-22T17:30:22.281Z",
+      "type": "run.finished",
+      "status": "succeeded",
+      "outcome": "success",
+      "result": null
+    },
+    {
+      "runId": "01M5JAKX3Y11XF1R7W03R8MFYC",
+      "seq": 9,
+      "ts": "2026-10-22T17:30:22.281Z",
+      "type": "delivery.queued",
+      "delivery": {
+        "id": "01M5JAKX69MKJGRV0KNCMAN736",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/late"
+        },
+        "status": "pending",
+        "attempts": 0,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "not_sent",
+        "effectMayHaveHappened": false,
+        "acknowledgementUncertain": false
+      }
+    },
+    {
+      "runId": "01M5JAKX3Y11XF1R7W03R8MFYC",
+      "seq": 10,
+      "ts": "2026-10-22T17:30:22.313Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5JAKX69MKJGRV0KNCMAN736",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/late"
+        },
+        "status": "pending",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": false,
+        "nextAttemptAt": "2026-10-22T17:30:34.309Z"
+      }
+    },
+    {
+      "runId": "01M5JAKX3Y11XF1R7W03R8MFYC",
+      "seq": 11,
+      "ts": "2026-10-22T17:30:32.331Z",
+      "type": "delivery.attempt_finished",
+      "delivery": {
+        "id": "01M5JAKX69MKJGRV0KNCMAN736",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/late"
+        },
+        "status": "pending",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "nextAttemptAt": "2026-10-22T17:30:34.330Z",
+        "lastError": {
+          "code": "timeout",
+          "message": "Webhook acknowledgement timed out; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    },
+    {
+      "runId": "01M5JAKX3Y11XF1R7W03R8MFYC",
+      "seq": 12,
+      "ts": "2026-10-22T17:30:34.339Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5JAKX69MKJGRV0KNCMAN736",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/late"
+        },
+        "status": "pending",
+        "attempts": 2,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "nextAttemptAt": "2026-10-22T17:30:49.337Z",
+        "lastError": {
+          "code": "timeout",
+          "message": "Webhook acknowledgement timed out; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    },
+    {
+      "runId": "01M5JAKX3Y11XF1R7W03R8MFYC",
+      "seq": 13,
+      "ts": "2026-10-22T17:30:34.346Z",
+      "type": "delivery.finished",
+      "delivery": {
+        "id": "01M5JAKX69MKJGRV0KNCMAN736",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/late"
+        },
+        "status": "delivered",
+        "attempts": 2,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "accepted",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "lastError": {
+          "code": "timeout",
+          "message": "Webhook acknowledgement timed out; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    }
+  ],
+  "rows": [
+    {
+      "finalized_at": "2026-10-22T17:30:34.352Z",
+      "last_event_seq": 13,
+      "status": "succeeded"
+    }
+  ],
+  "requests": [
+    {
+      "path": "/late",
+      "n": 1,
+      "ms": 1792690222333,
+      "key": "01M5JAKX69MKJGRV0KNCMAN736",
+      "body": {
+        "runId": "01M5JAKX3Y11XF1R7W03R8MFYC",
+        "loopId": "01M5JAKX1QHRTMKYC2FQ2M2GD0",
+        "outcome": "success",
+        "result": null
+      }
+    },
+    {
+      "path": "/late",
+      "n": 2,
+      "ms": 1792690234343,
+      "key": "01M5JAKX69MKJGRV0KNCMAN736",
+      "body": {
+        "runId": "01M5JAKX3Y11XF1R7W03R8MFYC",
+        "loopId": "01M5JAKX1QHRTMKYC2FQ2M2GD0",
+        "outcome": "success",
+        "result": null
+      }
+    }
+  ]
+}

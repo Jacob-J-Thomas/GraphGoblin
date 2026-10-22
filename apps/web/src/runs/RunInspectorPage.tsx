@@ -12,6 +12,7 @@ import { RunControls } from './inspector/RunControls.js';
 import { ThreadViewer } from './inspector/ThreadViewer.js';
 import { Timeline } from './inspector/Timeline.js';
 import { WaitPanel } from './inspector/WaitPanel.js';
+import { DeliveryPanel } from './inspector/DeliveryPanel.js';
 import { useRunEvents } from './useRunEvents.js';
 import { describeEvent } from './projections.js';
 
@@ -148,6 +149,7 @@ export function RunInspectorPage() {
               </Card>
             ) : null}
             <WaitPanel run={run} />
+            <DeliveryPanel run={run} />
           </>
         )}
       </QueryState>

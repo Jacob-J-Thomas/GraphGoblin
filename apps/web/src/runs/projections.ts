@@ -181,6 +181,11 @@ export function describeEvent(event: RunEvent): string {
       return describeExit(event);
     case 'signal.received':
       return event.name;
+    case 'delivery.queued':
+    case 'delivery.attempted':
+    case 'delivery.attempt_finished':
+    case 'delivery.finished':
+      return `Webhook ${event.delivery.status}, ${event.delivery.attempts}/${event.delivery.maxAttempts} attempts${event.delivery.lastError ? `: ${event.delivery.lastError.message}` : ''}`;
     case 'return.delivered':
     case 'return.failed':
       return event.channel.kind;

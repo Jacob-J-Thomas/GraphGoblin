@@ -1,0 +1,585 @@
+{
+  "loopId": "01M5J9PGYK2EFGQ54CJGSFRE90",
+  "runId": "01M5J9PHJFZCEX8Y50XP98S93C",
+  "path": "/crash-five",
+  "run": {
+    "id": "01M5J9PHJFZCEX8Y50XP98S93C",
+    "ownerId": "local",
+    "loopId": "01M5J9PGYK2EFGQ54CJGSFRE90",
+    "versionId": "01M5J9PGYKGA8X5A25W12F72A2",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "Audit repeated crash",
+      "label": "Audit repeated crash v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M5J9PHJFWP0PARCEZB4A5JDH",
+    "status": "succeeded",
+    "iteration": 1,
+    "outcome": "success",
+    "result": null,
+    "deliveries": [
+      {
+        "id": "01M5J9PJX0P4TBCYYG6KE7MRMD",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/crash-five"
+        },
+        "status": "failed",
+        "attempts": 5,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "lastError": {
+          "code": "interrupted",
+          "message": "Process stopped before acknowledgement was recorded; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    ],
+    "createdAt": "2026-10-22T17:14:20.111Z",
+    "startedAt": "2026-10-22T17:14:20.272Z",
+    "finishedAt": "2026-10-22T17:14:21.609Z",
+    "lastEventSeq": 20
+  },
+  "events": [
+    {
+      "runId": "01M5J9PHJFZCEX8Y50XP98S93C",
+      "seq": 1,
+      "ts": "2026-10-22T17:14:20.111Z",
+      "type": "run.queued",
+      "versionId": "01M5J9PGYKGA8X5A25W12F72A2",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Audit repeated crash",
+        "label": "Audit repeated crash v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5J9PHJFZCEX8Y50XP98S93C",
+          "loopId": "01M5J9PGYK2EFGQ54CJGSFRE90",
+          "versionId": "01M5J9PGYKGA8X5A25W12F72A2",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5J9PHJFWP0PARCEZB4A5JDH",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": {
+              "name": "Audit repeated crash",
+              "value": 42
+            },
+            "receivedAt": "2026-10-22T17:14:20.111Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {},
+        "gates": {},
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    {
+      "runId": "01M5J9PHJFZCEX8Y50XP98S93C",
+      "seq": 2,
+      "ts": "2026-10-22T17:14:20.414Z",
+      "type": "run.started",
+      "attempt": 1
+    },
+    {
+      "runId": "01M5J9PHJFZCEX8Y50XP98S93C",
+      "seq": 3,
+      "ts": "2026-10-22T17:14:20.567Z",
+      "type": "node.started",
+      "nodeId": "start",
+      "kind": "trigger",
+      "attempt": 1,
+      "configHash": "527dee9c4254fe4e"
+    },
+    {
+      "runId": "01M5J9PHJFZCEX8Y50XP98S93C",
+      "seq": 4,
+      "ts": "2026-10-22T17:14:20.740Z",
+      "type": "node.finished",
+      "nodeId": "start",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/outputs/start",
+          "value": {
+            "nodeId": "start",
+            "value": {
+              "name": "Audit repeated crash",
+              "value": 42
+            },
+            "at": "2026-10-22T17:14:20.739Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "start",
+            "value": {
+              "name": "Audit repeated crash",
+              "value": 42
+            },
+            "at": "2026-10-22T17:14:20.739Z"
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 0
+    },
+    {
+      "runId": "01M5J9PHJFZCEX8Y50XP98S93C",
+      "seq": 5,
+      "ts": "2026-10-22T17:14:21.256Z",
+      "type": "node.started",
+      "nodeId": "done",
+      "kind": "exit",
+      "attempt": 1,
+      "configHash": "a648fbbc2598c5c0"
+    },
+    {
+      "runId": "01M5J9PHJFZCEX8Y50XP98S93C",
+      "seq": 6,
+      "ts": "2026-10-22T17:14:21.472Z",
+      "type": "exit.evaluated",
+      "nodeId": "done",
+      "outcome": "success"
+    },
+    {
+      "runId": "01M5J9PHJFZCEX8Y50XP98S93C",
+      "seq": 7,
+      "ts": "2026-10-22T17:14:21.472Z",
+      "type": "node.finished",
+      "nodeId": "done",
+      "patch": [],
+      "durationMs": 2
+    },
+    {
+      "runId": "01M5J9PHJFZCEX8Y50XP98S93C",
+      "seq": 8,
+      "ts": "2026-10-22T17:14:21.472Z",
+      "type": "run.finished",
+      "status": "succeeded",
+      "outcome": "success",
+      "result": null
+    },
+    {
+      "runId": "01M5J9PHJFZCEX8Y50XP98S93C",
+      "seq": 9,
+      "ts": "2026-10-22T17:14:21.472Z",
+      "type": "delivery.queued",
+      "delivery": {
+        "id": "01M5J9PJX0P4TBCYYG6KE7MRMD",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/crash-five"
+        },
+        "status": "pending",
+        "attempts": 0,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "not_sent",
+        "effectMayHaveHappened": false
+      }
+    },
+    {
+      "runId": "01M5J9PHJFZCEX8Y50XP98S93C",
+      "seq": 10,
+      "ts": "2026-10-22T17:14:21.648Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5J9PJX0P4TBCYYG6KE7MRMD",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/crash-five"
+        },
+        "status": "pending",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T17:14:33.646Z"
+      }
+    },
+    {
+      "runId": "01M5J9PHJFZCEX8Y50XP98S93C",
+      "seq": 11,
+      "ts": "2026-10-22T17:14:36.156Z",
+      "type": "delivery.attempt_finished",
+      "delivery": {
+        "id": "01M5J9PJX0P4TBCYYG6KE7MRMD",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/crash-five"
+        },
+        "status": "pending",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T17:14:33.646Z",
+        "lastError": {
+          "code": "interrupted",
+          "message": "Process stopped before acknowledgement was recorded; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    },
+    {
+      "runId": "01M5J9PHJFZCEX8Y50XP98S93C",
+      "seq": 12,
+      "ts": "2026-10-22T17:14:36.325Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5J9PJX0P4TBCYYG6KE7MRMD",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/crash-five"
+        },
+        "status": "pending",
+        "attempts": 2,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T17:14:51.320Z",
+        "lastError": {
+          "code": "interrupted",
+          "message": "Process stopped before acknowledgement was recorded; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    },
+    {
+      "runId": "01M5J9PHJFZCEX8Y50XP98S93C",
+      "seq": 13,
+      "ts": "2026-10-22T17:14:58.584Z",
+      "type": "delivery.attempt_finished",
+      "delivery": {
+        "id": "01M5J9PJX0P4TBCYYG6KE7MRMD",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/crash-five"
+        },
+        "status": "pending",
+        "attempts": 2,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T17:14:51.320Z",
+        "lastError": {
+          "code": "interrupted",
+          "message": "Process stopped before acknowledgement was recorded; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    },
+    {
+      "runId": "01M5J9PHJFZCEX8Y50XP98S93C",
+      "seq": 14,
+      "ts": "2026-10-22T17:14:58.599Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5J9PJX0P4TBCYYG6KE7MRMD",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/crash-five"
+        },
+        "status": "pending",
+        "attempts": 3,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T17:15:18.594Z",
+        "lastError": {
+          "code": "interrupted",
+          "message": "Process stopped before acknowledgement was recorded; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    },
+    {
+      "runId": "01M5J9PHJFZCEX8Y50XP98S93C",
+      "seq": 15,
+      "ts": "2026-10-22T17:15:13.926Z",
+      "type": "delivery.attempt_finished",
+      "delivery": {
+        "id": "01M5J9PJX0P4TBCYYG6KE7MRMD",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/crash-five"
+        },
+        "status": "pending",
+        "attempts": 3,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T17:15:18.594Z",
+        "lastError": {
+          "code": "interrupted",
+          "message": "Process stopped before acknowledgement was recorded; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    },
+    {
+      "runId": "01M5J9PHJFZCEX8Y50XP98S93C",
+      "seq": 16,
+      "ts": "2026-10-22T17:15:18.613Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5J9PJX0P4TBCYYG6KE7MRMD",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/crash-five"
+        },
+        "status": "pending",
+        "attempts": 4,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T17:15:48.611Z",
+        "lastError": {
+          "code": "interrupted",
+          "message": "Process stopped before acknowledgement was recorded; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    },
+    {
+      "runId": "01M5J9PHJFZCEX8Y50XP98S93C",
+      "seq": 17,
+      "ts": "2026-10-22T17:15:29.011Z",
+      "type": "delivery.attempt_finished",
+      "delivery": {
+        "id": "01M5J9PJX0P4TBCYYG6KE7MRMD",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/crash-five"
+        },
+        "status": "pending",
+        "attempts": 4,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T17:15:48.611Z",
+        "lastError": {
+          "code": "interrupted",
+          "message": "Process stopped before acknowledgement was recorded; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    },
+    {
+      "runId": "01M5J9PHJFZCEX8Y50XP98S93C",
+      "seq": 18,
+      "ts": "2026-10-22T17:15:48.665Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5J9PJX0P4TBCYYG6KE7MRMD",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/crash-five"
+        },
+        "status": "pending",
+        "attempts": 5,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T17:15:58.662Z",
+        "lastError": {
+          "code": "interrupted",
+          "message": "Process stopped before acknowledgement was recorded; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    },
+    {
+      "runId": "01M5J9PHJFZCEX8Y50XP98S93C",
+      "seq": 19,
+      "ts": "2026-10-22T17:16:04.929Z",
+      "type": "delivery.attempt_finished",
+      "delivery": {
+        "id": "01M5J9PJX0P4TBCYYG6KE7MRMD",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/crash-five"
+        },
+        "status": "pending",
+        "attempts": 5,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T17:15:58.662Z",
+        "lastError": {
+          "code": "interrupted",
+          "message": "Process stopped before acknowledgement was recorded; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    },
+    {
+      "runId": "01M5J9PHJFZCEX8Y50XP98S93C",
+      "seq": 20,
+      "ts": "2026-10-22T17:16:04.944Z",
+      "type": "delivery.finished",
+      "delivery": {
+        "id": "01M5J9PJX0P4TBCYYG6KE7MRMD",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/crash-five"
+        },
+        "status": "failed",
+        "attempts": 5,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "lastError": {
+          "code": "interrupted",
+          "message": "Process stopped before acknowledgement was recorded; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    }
+  ],
+  "rows": [
+    {
+      "finalized_at": "2026-10-22T17:16:04.965Z",
+      "last_event_seq": 20,
+      "status": "succeeded"
+    }
+  ],
+  "requests": [
+    {
+      "path": "/crash-five",
+      "n": 1,
+      "ms": 1792689261686,
+      "key": "01M5J9PJX0P4TBCYYG6KE7MRMD",
+      "body": {
+        "runId": "01M5J9PHJFZCEX8Y50XP98S93C",
+        "loopId": "01M5J9PGYK2EFGQ54CJGSFRE90",
+        "outcome": "success",
+        "result": null
+      }
+    },
+    {
+      "path": "/crash-five",
+      "n": 2,
+      "ms": 1792689276501,
+      "key": "01M5J9PJX0P4TBCYYG6KE7MRMD",
+      "body": {
+        "runId": "01M5J9PHJFZCEX8Y50XP98S93C",
+        "loopId": "01M5J9PGYK2EFGQ54CJGSFRE90",
+        "outcome": "success",
+        "result": null
+      }
+    },
+    {
+      "path": "/crash-five",
+      "n": 3,
+      "ms": 1792689298702,
+      "key": "01M5J9PJX0P4TBCYYG6KE7MRMD",
+      "body": {
+        "runId": "01M5J9PHJFZCEX8Y50XP98S93C",
+        "loopId": "01M5J9PGYK2EFGQ54CJGSFRE90",
+        "outcome": "success",
+        "result": null
+      }
+    },
+    {
+      "path": "/crash-five",
+      "n": 4,
+      "ms": 1792689318734,
+      "key": "01M5J9PJX0P4TBCYYG6KE7MRMD",
+      "body": {
+        "runId": "01M5J9PHJFZCEX8Y50XP98S93C",
+        "loopId": "01M5J9PGYK2EFGQ54CJGSFRE90",
+        "outcome": "success",
+        "result": null
+      }
+    },
+    {
+      "path": "/crash-five",
+      "n": 5,
+      "ms": 1792689348782,
+      "key": "01M5J9PJX0P4TBCYYG6KE7MRMD",
+      "body": {
+        "runId": "01M5J9PHJFZCEX8Y50XP98S93C",
+        "loopId": "01M5J9PGYK2EFGQ54CJGSFRE90",
+        "outcome": "success",
+        "result": null
+      }
+    }
+  ]
+}

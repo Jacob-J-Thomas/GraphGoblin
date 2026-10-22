@@ -1,0 +1,90 @@
+
+ RUN  v5.0.3 %WORKTREE%/packages/engine
+
+ ❯ src/webhook-returns.test.ts (20 tests | 2 failed) 3655ms
+   ❯ durable webhook returns through RunManager (7)
+     × retains prior acknowledgement uncertainty separately from a later rejection (true) 504ms
+     × retains prior acknowledgement uncertainty separately from a later rejection (false) 389ms
+pnpm.cmd :
+At line:4 char:1
++ pnpm.cmd --filter @graphgoblin/engine exec vitest run src/webhook-ret ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/webhook-returns.test.ts > durable webhook returns through RunManager > retains prior acknowledgement
+uncertainty separately from a later rejection (true)
+AssertionError: expected [ { …(9) } ] to match object [ { status: 'delivered', …(4) } ]
+(7 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -1,9 +1,8 @@
+  [
+    {
+      "acknowledgement": "accepted",
+-     "acknowledgementUncertain": true,
+      "attempts": 3,
+      "lastError": {
+        "acknowledgement": "rejected",
+        "httpStatus": 429,
+      },
+
+ ❯ src/webhook-returns.test.ts:50:50
+     48|     await engine.manager.waitForIdle();
+     49|     engine.manager.stop();
+     50|     expect(webhookStates(engine.events(run.id))).toMatchObject([{
+       |                                                  ^
+     51|       status: 'delivered', attempts: 3, acknowledgement: 'accepted',
+     52|       acknowledgementUncertain: unknown,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/webhook-returns.test.ts > durable webhook returns through RunManager > retains prior acknowledgement
+uncertainty separately from a later rejection (false)
+AssertionError: expected [ { …(9) } ] to match object [ { status: 'delivered', …(4) } ]
+(7 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -1,9 +1,8 @@
+  [
+    {
+      "acknowledgement": "accepted",
+-     "acknowledgementUncertain": false,
+      "attempts": 3,
+      "lastError": {
+        "acknowledgement": "rejected",
+        "httpStatus": 429,
+      },
+
+ ❯ src/webhook-returns.test.ts:50:50
+     48|     await engine.manager.waitForIdle();
+     49|     engine.manager.stop();
+     50|     expect(webhookStates(engine.events(run.id))).toMatchObject([{
+       |                                                  ^
+     51|       status: 'delivered', attempts: 3, acknowledgement: 'accepted',
+     52|       acknowledgementUncertain: unknown,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 18 passed (20)
+   Start at  12:14:42
+   Duration  29.90s (transform 72%, import 15%, tests 14%)
+
+  Transform  transforming modules took 19.42s · 72% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d2-
+  │ webhook-retry\packages\engine
+
