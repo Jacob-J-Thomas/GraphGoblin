@@ -107,9 +107,10 @@ async function importExample(definition: unknown): Promise<string> {
     payload: JSON.stringify(definition),
   });
   expect(imported.statusCode, imported.body).toBe(201);
-  const { loop, notices } = imported.json<{ loop: LoopRecord; notices: unknown[] }>();
-  expect(notices).toEqual([]); // Current format only; no historical conversion.
-  return loop.id;
+  const body = imported.json<{ loop: LoopRecord }>();
+  // Current format only: the import response has no conversion notices (ADR-0042).
+  expect(Object.keys(body).sort()).toEqual(['draft', 'issues', 'loop']);
+  return body.loop.id;
 }
 async function publish(loopId: string): Promise<LoopVersionRecord> {
   const response = await t.app.inject({ method: 'POST', url: route('publish-request', loopId) });

@@ -1,0 +1,77 @@
+[
+  {
+    "id": "browser-old-import",
+    "steps": "In Edge, choose a format-3 JSON document in the import picker.",
+    "expected": "Visible unsupported-format alert; server list stays empty.",
+    "status": "PASS",
+    "actual": {
+      "visibleAlert": true,
+      "loops": 0
+    }
+  },
+  {
+    "id": "browser-create-loop",
+    "steps": "Type a loop name and submit Create in the app.",
+    "expected": "Editor opens on a new current server draft.",
+    "status": "PASS",
+    "actual": {
+      "loopId": "01M5H0WQ4VFT1WTJ3B8FA8WRT4",
+      "serverDraftName": "QA server draft"
+    }
+  },
+  {
+    "id": "browser-format-3",
+    "steps": "Plant raw IndexedDB record; open editor; reload; open second tab; export; explicitly discard.",
+    "expected": "Unsupported notice persists; exact stored/exported JSON; zero draft PUTs before discard; server draft opens after discard.",
+    "status": "PASS",
+    "actual": {
+      "reloadBlocked": true,
+      "secondTabBlocked": true,
+      "exportMatches": true,
+      "putsBeforeDiscard": 0,
+      "discardOpenedServer": true,
+      "keyboard": false,
+      "narrowViewport": false
+    }
+  },
+  {
+    "id": "browser-missing-definition",
+    "steps": "Plant raw IndexedDB record; open editor; reload; open second tab; export; explicitly discard.",
+    "expected": "Unsupported notice persists; exact stored/exported JSON; zero draft PUTs before discard; server draft opens after discard.",
+    "status": "PASS",
+    "actual": {
+      "reloadBlocked": true,
+      "secondTabBlocked": true,
+      "exportMatches": true,
+      "putsBeforeDiscard": 0,
+      "discardOpenedServer": true,
+      "keyboard": false,
+      "narrowViewport": false
+    }
+  },
+  {
+    "id": "browser-null-definition",
+    "steps": "Plant raw IndexedDB record; open editor; reload; open second tab; export; explicitly discard.",
+    "expected": "Unsupported notice persists; exact stored/exported JSON; zero draft PUTs before discard; server draft opens after discard.",
+    "status": "PASS",
+    "actual": {
+      "reloadBlocked": true,
+      "secondTabBlocked": true,
+      "exportMatches": true,
+      "putsBeforeDiscard": 0,
+      "discardOpenedServer": true,
+      "keyboard": true,
+      "narrowViewport": true
+    }
+  },
+  {
+    "id": "browser-current-draft-after-reload",
+    "steps": "Reload the editor after explicit discard.",
+    "expected": "Current server draft remains editable with no unsupported notice; no page render exceptions.",
+    "status": "PASS",
+    "actual": {
+      "pageErrors": [],
+      "serverEditorOpen": true
+    }
+  }
+]

@@ -12,3 +12,7 @@ Captured 2026-10-02 while stabilising the `apps/api` test suite. Versions: `@lib
 
 - An in-memory client has exactly one connection. A second `transaction()` or a plain `execute()` while a transaction is open throws `TRANSACTION_ACTIVE` rather than queueing. `serializeClient` in `packages/infrastructure/src/sqlite/db.ts` serialises all statements and transactions through a mutex for this reason.
 - `close()` is safe to call twice, rejects later calls with `CLIENT_CLOSED`, and closes any open transaction (`TRANSACTION_CLOSED`).
+
+## Closed files stay locked until collection (Windows)
+
+Measured 2026-10-18 for #266 (`@libsql/client` 0.18.0, `libsql` 0.5.29, Node 22.14, Windows 11). After `close()` on a plain client, a client with a committed transaction, a `serializeClient` handle and a `mode=ro` read-only client, `unlink` of the database, `-wal` and `-shm` failed with `EBUSY` in every case; after `global.gc()` the files could be removed. The native connection is released only when its prepared statements are garbage collected. Opening a WAL-mode database read-only (`mode=ro`) also created `-wal` and `-shm` beside a database that had none. A process that must remove a database it read (the `--reset` command) therefore reads a private copy in a child process, whose exit releases every handle, and never opens the original.

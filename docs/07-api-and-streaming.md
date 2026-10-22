@@ -93,25 +93,18 @@ node; omission defaults to Codex. Create, draft save, and validate request bodie
 canonical `LoopDefinitionSchema`. `settings.defaults.harness` is rejected as an unknown key,
 with its field path, regardless of its value.
 
-`POST /loops/import` explicitly converts old-format bare definitions and portable
-exports before current-schema admission. Its `201` response contains `loop`, `draft`,
-validation `issues` and automatic conversion `notices` (`code`, `path`, `message`).
-Current imports have an empty notices array. The web import result displays these
-changes alongside validation issues.
+`POST /loops/import` admits current-format bare definitions and portable exports. Its
+`201` response contains `loop`, `draft` and validation `issues`. A document that
+declares another format (an export's `formatVersion`, its loop's `schemaVersion`, or a
+bare definition's `schemaVersion`) is refused with `400 LOOP_FORMAT_UNSUPPORTED`,
+`errors: { foundFormat, requiredFormat }` and a detail saying it is not converted;
+nothing is saved ([ADR-0042](decisions/ADR-0042-explicit-resets-replace-conversion.md),
+[old exports](guide/08-offline-upgrade.md#old-exports)). Other envelope errors retain
+paths such as `loop.settings.defaults.harness`, `formatVersion` or `exportedAt` under
+`LOOP_IMPORT_ERROR`. Ordinary bodies use `VALIDATION_FAILED`.
 
-Pending conversion returns `400 LOOP_FORMAT_UPGRADE_REQUIRED` with `errors.issues`
-and hash-bound `errors.reviewItems`. The detail points to the [portable export
-workflow](guide/08-offline-upgrade.md#convert-a-portable-export) and the offline
-`--resolutions resolutions.json` file with its `v3` item map. Each conversion issue
-is classified as `kind: "pending"` or `kind: "invalid"`. Mixed refusals include both
-kinds and both correction and review instructions. Simply invalid old
-source/envelopes return `LOOP_IMPORT_SOURCE_INVALID`; current envelope errors retain
-paths such as `loop.settings.defaults.harness`, `formatVersion` or `exportedAt`
-under `LOOP_IMPORT_ERROR`. Ordinary bodies use `VALIDATION_FAILED`.
-
-Responses and exports use format 4. The server-store cutover remains separate:
-unconverted stores still stop before ordinary migrations or recovery. No tolerant
-runtime reader is added. See the CHANGELOG upgrade notes.
+Responses and exports use format 4. A store in another format stops startup before
+ordinary migrations or recovery; no tolerant runtime reader exists.
 
 ## SSE protocol (Decided)
 
@@ -138,7 +131,7 @@ Skip messages and failure diagnostics use fixed summaries and allowlisted codes;
 error bodies, credential values, and raw response payloads are excluded. Codex reasoning
 is its returned short justification, capped at 2,048 characters. Clients consuming the
 strict contract must upgrade with the server; migration `0007` supplies empty skip lists
-for historical decisions, whose missing evidence cannot be recovered. The offline converter also gives decisions recorded without skip evidence empty diagnostics, which means none were recorded.
+for historical decisions, whose missing evidence cannot be recovered.
 
 SQLite reads validate every stored row against `RunEventSchema`. A non-conforming row fails
 the entire requested page; it is neither repaired nor converted into a synthetic event.

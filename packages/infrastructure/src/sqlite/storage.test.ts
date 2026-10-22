@@ -316,7 +316,7 @@ describe('SqliteRunRepository', () => {
     try {
       // Fifteen shipped migrations minus this fixture's two historical ledger entries.
       expect(await current.pendingMigrations()).toBe(13);
-      await expect(current.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
+      await expect(current.migrate()).rejects.toMatchObject({ code: 'STORE_UNSUPPORTED' });
       await applyShippedSqlToHistoricalTestFixture(current);
       const repo = new SqliteRunRepository(current.db);
       expect((await repo.listRecoveryCandidates()).filter((r) => r.terminal)).toEqual([]);
@@ -863,7 +863,7 @@ describe('migration 0003 model catalog max effort', () => {
       // Includes 0013_trigger_configuration and 0014_run_definition_pins after the three
       // historical catalog migrations.
       expect(await current.pendingMigrations()).toBe(12);
-      await expect(current.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
+      await expect(current.migrate()).rejects.toMatchObject({ code: 'STORE_UNSUPPORTED' });
       await applyShippedSqlToHistoricalTestFixture(current);
       expect(await current.pendingMigrations()).toBe(0);
       await check(current);

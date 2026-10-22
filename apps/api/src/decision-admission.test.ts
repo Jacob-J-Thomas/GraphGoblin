@@ -148,7 +148,7 @@ describe('evaluator-specific decision admission', () => {
     },
   );
   it.each([1, 2, 3])(
-    'refuses malformed format-%s source independently of pending review',
+    'refuses format-%s source as unsupported without converting it',
     async (version) => {
       const t = await createTestApp();
       apps.push(t);
@@ -162,7 +162,7 @@ describe('evaluator-specific decision admission', () => {
         },
       });
       expect(response.statusCode).toBe(400);
-      expect(response.json().code).toBe('LOOP_IMPORT_SOURCE_INVALID');
+      expect(response.json().code).toBe('LOOP_FORMAT_UNSUPPORTED');
     },
   );
 });

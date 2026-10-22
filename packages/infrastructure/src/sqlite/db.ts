@@ -5,7 +5,7 @@ import { readMigrationFiles } from 'drizzle-orm/migrator';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { schema, type Schema } from './schema.js';
-import { guardDatabaseUpgrade, initializeFreshDatabase, verifyDatabaseHead } from './upgrade.js';
+import { guardCurrentStore, initializeFreshStore, verifyStoreHead } from './store-format.js';
 
 export type Database = LibSQLDatabase<Schema>;
 export type SqliteTransaction = Parameters<Parameters<Database['transaction']>[0]>[0];
@@ -192,6 +192,25 @@ export function databaseFilePath(
   return resolve(path);
 }
 
+/** Shipped migrations the store has not recorded yet. Reads the ledger only; works read-only. */
+export async function pendingMigrationCount(
+  client: Client,
+  migrationsFolder: string = DEFAULT_MIGRATIONS,
+): Promise<number> {
+  const shipped = readMigrationFiles({ migrationsFolder });
+  const table = await client.execute(
+    "SELECT name FROM sqlite_master WHERE type = 'table' AND name = '__drizzle_migrations'",
+  );
+  if (table.rows.length === 0) return shipped.length;
+  const last = await client.execute(
+    'SELECT created_at FROM __drizzle_migrations ORDER BY created_at DESC LIMIT 1',
+  );
+  const row = last.rows[0];
+  if (!row) return shipped.length;
+  const lastMillis = Number(row[0]);
+  return shipped.filter((m) => lastMillis < m.folderMillis).length;
+}
+
 export function openDatabase(options: DatabaseOptions): DatabaseHandle {
   const client = serializeClient(createClient({ url: options.url }));
   const db = drizzle(client, { schema });
@@ -202,29 +221,17 @@ export function openDatabase(options: DatabaseOptions): DatabaseHandle {
     async migrate(options = {}) {
       // Always repeat cheap checks before writes. Only a preflight protected by the database's
       // data-directory lock may save the strict definition parse.
-      let upgradeState = await guardDatabaseUpgrade(client, migrationsFolder, {
+      let state = await guardCurrentStore(client, migrationsFolder, {
         skipDefinitions: options.skipDefinitionValidation ?? false,
       });
       await client.execute('PRAGMA journal_mode = WAL').catch(() => undefined);
       await client.execute('PRAGMA busy_timeout = 5000').catch(() => undefined);
-      if (upgradeState === 'fresh')
-        upgradeState = await initializeFreshDatabase(client, migrationsFolder);
-      if (upgradeState === 'current') await migrate(db, { migrationsFolder });
-      await verifyDatabaseHead(client, migrationsFolder);
+      if (state === 'fresh') state = await initializeFreshStore(client, migrationsFolder);
+      if (state === 'current') await migrate(db, { migrationsFolder });
+      await verifyStoreHead(client, migrationsFolder);
     },
-    async pendingMigrations() {
-      const shipped = readMigrationFiles({ migrationsFolder });
-      const table = await client.execute(
-        "SELECT name FROM sqlite_master WHERE type = 'table' AND name = '__drizzle_migrations'",
-      );
-      if (table.rows.length === 0) return shipped.length;
-      const last = await client.execute(
-        'SELECT created_at FROM __drizzle_migrations ORDER BY created_at DESC LIMIT 1',
-      );
-      const row = last.rows[0];
-      if (!row) return shipped.length;
-      const lastMillis = Number(row[0]);
-      return shipped.filter((m) => lastMillis < m.folderMillis).length;
+    pendingMigrations() {
+      return pendingMigrationCount(client, migrationsFolder);
     },
     close() {
       client.close();

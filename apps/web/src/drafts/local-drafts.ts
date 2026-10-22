@@ -2,9 +2,6 @@ import { CURRENT_DEFINITION_FORMAT, type LoopDefinitionInput } from '@graphgobli
 import type { DecisionRoutes } from '../editor/decision-route-edges.js';
 import { del, get, update, promisifyRequest, type UseStore } from 'idb-keyval';
 
-/** Cannot match a server content hash; converted device edits need explicit reconciliation. */
-export const UNRECONCILED_DEVICE_TOKEN = 'unreconciled-device-format';
-
 /**
  * Unsaved editor drafts mirrored to IndexedDB, so a reload or an offline spell never loses work.
  * The server draft stays the source of truth once an autosave succeeds.
@@ -19,8 +16,31 @@ export interface LocalDraft {
   synced: boolean;
   /** The server draft token this copy is based on, sent as `If-Match` when it is saved. */
   baseToken?: string;
-  /** Present only when a legacy local copy was preserved because safe conversion was impossible. */
-  migrationIssues?: { code: string; path: string; message: string; id?: string; hash?: string }[];
+}
+
+/**
+ * Whether a stored device copy is in the current definition format. A copy written by an older
+ * build is unsupported: it is shown with an explicit discard and never converted (ADR-0042).
+ */
+export function isCurrentDeviceDraft(draft: LocalDraft): boolean {
+  // Stored records are external data: an older build's record may lack any definition at all.
+  const definition: unknown = draft.definition;
+  return (
+    typeof definition === 'object' &&
+    definition !== null &&
+    'schemaVersion' in definition &&
+    definition.schemaVersion === CURRENT_DEFINITION_FORMAT
+  );
+}
+
+/** A write would replace a device copy in another format, which only an explicit discard removes. */
+export class UnsupportedDeviceDraftError extends Error {
+  constructor() {
+    super(
+      'This device holds a draft of this loop in an unsupported format. Discard it in the editor before saving here.',
+    );
+    this.name = 'UnsupportedDeviceDraftError';
+  }
 }
 
 /** Latest work in this window. Presence in memory does not imply a durable write succeeded. */
@@ -39,7 +59,7 @@ export function rememberLocalDraft(draft: LocalDraft): CachedDraft {
 
 export function cachedLocalDraft(loopId: string): CachedDraft | undefined {
   const cached = latest.get(loopId);
-  return cached?.draft.definition.schemaVersion === CURRENT_DEFINITION_FORMAT ? cached : undefined;
+  return cached && isCurrentDeviceDraft(cached.draft) ? cached : undefined;
 }
 
 /**
@@ -98,7 +118,7 @@ function openDraftDatabase(): Promise<IDBDatabase> {
     };
     request.onupgradeneeded = () => {
       const db = request.result;
-      // Preserve every device copy; format conversion happens per draft, after archival.
+      // Preserve every device copy; one in another format is shown as unsupported, never converted.
       if (!db.objectStoreNames.contains('drafts')) db.createObjectStore('drafts');
     };
     request.onsuccess = () => {
@@ -185,45 +205,20 @@ export async function saveLocalDraft(draft: LocalDraft): Promise<void> {
   }
 }
 
-/** Also protects copies first discovered after a blocked database upgrade finishes. */
-async function preserveLegacyDraft(
-  key: string,
-  definition: LoopDefinitionInput,
-): Promise<LocalDraft | undefined> {
-  if (definition.schemaVersion !== CURRENT_DEFINITION_FORMAT) return;
-  return run(async (store) => {
-    const original = await get<LocalDraft>(key, store);
-    if (!original || original.definition.schemaVersion === CURRENT_DEFINITION_FORMAT) return;
-    await saveArchivedDraft(original);
-    const copies = await get<LocalDraft[]>(archiveKey(original.loopId), store);
-    if (!copies?.some((copy) => JSON.stringify(copy) === JSON.stringify(original)))
-      throw new Error('The original device copy could not be verified.');
-    return original;
-  });
-}
-
-/** The check and replacement run in one write transaction; a concurrent old edit must survive. */
-function requirePreserved(
-  local: LocalDraft | undefined,
-  original: LocalDraft | undefined,
-  definition: LoopDefinitionInput,
-): void {
-  if (
-    definition.schemaVersion === CURRENT_DEFINITION_FORMAT &&
-    local &&
-    local.definition.schemaVersion !== CURRENT_DEFINITION_FORMAT &&
-    JSON.stringify(local) !== JSON.stringify(original)
-  )
-    throw new Error('The device copy changed while being preserved. Reload before replacing it.');
+/**
+ * Checked inside the write transaction that would replace `local`, so a copy in another format
+ * (including one another window wrote meanwhile) is never overwritten: only a discard removes it.
+ */
+function refuseUnsupported(local: LocalDraft | undefined): void {
+  if (local && !isCurrentDeviceDraft(local)) throw new UnsupportedDeviceDraftError();
 }
 
 async function saveDraft(key: string, draft: LocalDraft): Promise<void> {
-  const original = await preserveLegacyDraft(key, draft.definition);
   await run((store) =>
     update<LocalDraft>(
       key,
       (local) => {
-        requirePreserved(local, original, draft.definition);
+        refuseUnsupported(local);
         return draft;
       },
       store,
@@ -234,11 +229,7 @@ async function saveDraft(key: string, draft: LocalDraft): Promise<void> {
 export async function loadLocalDraft(loopId: string): Promise<LocalDraft | undefined> {
   const before = latest.get(loopId);
   const draft = await loadDraft(loopId);
-  if (
-    !before &&
-    !latest.has(loopId) &&
-    draft?.definition?.schemaVersion === CURRENT_DEFINITION_FORMAT
-  )
+  if (!before && !latest.has(loopId) && draft && isCurrentDeviceDraft(draft))
     latest.set(loopId, { draft, durable: true });
   return draft;
 }
@@ -253,13 +244,9 @@ async function loadDraft(key: string): Promise<LocalDraft | undefined> {
   }
 }
 
-/** A missing or conversion-only token cannot establish descent from the accepted save. */
+/** A missing token cannot establish descent from the accepted save. */
 function sharesSaveBase(draft: LocalDraft, baseToken: string | undefined): boolean {
-  return (
-    baseToken !== undefined &&
-    baseToken !== UNRECONCILED_DEVICE_TOKEN &&
-    draft.baseToken === baseToken
-  );
+  return baseToken !== undefined && draft.baseToken === baseToken;
 }
 
 /**
@@ -267,7 +254,7 @@ function sharesSaveBase(draft: LocalDraft, baseToken: string | undefined): boole
  * concurrent mirror write is never lost. A device copy of that exact definition becomes synced. A
  * newer device copy advances only if its base matches this save's request base and its definition
  * and decision routes match this editor's latest mirror inside the transaction. Unread work keeps
- * its base even when it shares the request token; converted work keeps its mandatory overwrite token.
+ * its base even when it shares the request token.
  */
 export async function recordServerSave(
   loopId: string,
@@ -312,7 +299,6 @@ async function persistServerSave(
   token: string,
   baseToken: string | undefined,
 ): Promise<LocalDraft> {
-  const original = await preserveLegacyDraft(loopId, definition);
   const synced: LocalDraft = {
     loopId,
     definition,
@@ -325,7 +311,7 @@ async function persistServerSave(
     update<LocalDraft>(
       loopId,
       (local) => {
-        requirePreserved(local, original, definition);
+        refuseUnsupported(local);
         // A shared base alone cannot identify this editor's work. A queued mirror can also
         // supersede the copy seen when the save started, so inspect the latest cache here.
         const mirror = latest.get(loopId)?.draft;
@@ -356,7 +342,7 @@ export async function clearLocalDraft(loopId: string): Promise<void> {
   latest.delete(loopId);
 }
 
-/** Compare content and metadata, excluding the raw notice's generated migration issues. */
+/** Compare a stored copy's content and metadata. */
 function sameCopy(copy: LocalDraft, expected: LocalDraft): boolean {
   return (
     copy.loopId === expected.loopId &&
@@ -417,7 +403,7 @@ export async function clearSetAsideDraft(loopId: string, expected?: LocalDraft):
   await clearDraft(setAsideKey(loopId), expected);
 }
 
-/** Raw device copies that could not be converted safely, kept outside the live autosave key. */
+/** Earlier device copies archived before a newer copy replaced them, outside the live key. */
 function archiveKey(loopId: string): string {
   return `${loopId}:raw-archive`;
 }

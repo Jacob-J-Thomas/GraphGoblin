@@ -3,7 +3,6 @@
  * `If-Match` with the token the tab loaded; a stale one answers 409 `DRAFT_CONFLICT`, and the
  * editor asks before reloading or overwriting.
  */
-import { readFile } from 'node:fs/promises';
 import type { APIRequestContext, Page } from '@playwright/test';
 import { approvalLoop, expect, openDraftTab, showLoopPanel, test } from './fixtures.js';
 
@@ -207,99 +206,3 @@ test('an older version’s open connection blocks device drafts: the editor says
   await expect(page.getByText('Restored unsaved changes from this device.')).toBeVisible();
   await expect(page.locator('.react-flow__node[data-id="subloop"]')).toBeVisible();
 });
-
-for (const scenario of ['pending', 'synced', 'stale', 'unsynced'] as const) {
-  test(`a seeded format-3 device draft: ${scenario}`, async ({ page, request }) => {
-    const pending = scenario === 'pending';
-    const synced = scenario === 'synced';
-    const stale = scenario === 'stale';
-    const created = await request.post('/loops', {
-      data: { definition: approvalLoop('cutover server') },
-    });
-    expect(created.status()).toBe(201);
-    const { loop } = (await created.json()) as { loop: { id: string } };
-    const original = {
-      loopId: loop.id,
-      savedAt: scenario === 'unsynced' ? '2999-01-01T00:00:00.000Z' : '2000-01-01T00:00:00.000Z',
-      synced,
-      baseToken: 'old-server-token',
-      definition: {
-        schemaVersion: 3,
-        name: pending ? 'pending device' : 'automatic device',
-        nodes: [
-          { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
-          {
-            id: 'done',
-            kind: 'exit',
-            label: 'Done',
-            config: pending ? { criteria: [{ when: 'max-iterations', value: 3 }] } : {},
-          },
-        ],
-        edges: [{ id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'done' } }],
-      },
-    };
-    await page.goto('/app/loops');
-    await page.evaluate(async (draft) => {
-      const database = await new Promise<IDBDatabase>((resolve, reject) => {
-        const opening = indexedDB.open('graphgoblin', 2);
-        opening.onupgradeneeded = () => {
-          if (!opening.result.objectStoreNames.contains('drafts'))
-            opening.result.createObjectStore('drafts');
-        };
-        opening.onsuccess = () => resolve(opening.result);
-        opening.onerror = () => reject(opening.error ?? new Error('IndexedDB open failed'));
-      });
-      await new Promise<void>((resolve, reject) => {
-        const tx = database.transaction('drafts', 'readwrite');
-        tx.objectStore('drafts').put(draft, draft.loopId);
-        tx.oncomplete = () => resolve();
-        tx.onerror = () => reject(tx.error ?? new Error('IndexedDB transaction failed'));
-        tx.onabort = () => reject(tx.error ?? new Error('IndexedDB transaction failed'));
-      });
-      database.close();
-    }, original);
-    await page.goto(`/app/loops/${loop.id}/edit`);
-    if (pending) {
-      await expect(page.getByRole('heading', { name: 'cutover server' })).toBeVisible();
-      await expect(page.getByText('This device copy could not be migrated safely')).toBeVisible();
-      await expect(page.getByText('/nodes/1/config:exit-policy', { exact: true })).toBeVisible();
-      const downloadReady = page.waitForEvent('download');
-      await page.getByRole('button', { name: 'Export original device copy' }).click();
-      const download = await downloadReady;
-      const path = await download.path();
-      if (!path) throw new Error('Expected local download');
-      expect(JSON.parse(await readFile(path, 'utf8'))).toEqual(original);
-    } else if (synced || stale) {
-      await expect(page.getByRole('heading', { name: 'cutover server' })).toBeVisible();
-      await expect(page.getByText('This device draft was converted to format 4')).toBeHidden();
-      await expect(page.getByText('The draft changed on the server')).toBeHidden();
-      if (stale) {
-        await expect(page.getByText('The server has a newer draft')).toBeVisible();
-        await page.getByRole('button', { name: "Use this device's copy instead" }).click();
-        await expect(page.getByRole('heading', { name: 'automatic device' })).toBeVisible();
-        await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
-      } else {
-        await expect(
-          page.getByRole('button', { name: "Use this device's copy instead" }),
-        ).toBeHidden();
-        await page.reload();
-        await expect(page.getByRole('heading', { name: 'cutover server' })).toBeVisible();
-        await expect(page.getByText('Original device copy preserved')).toBeVisible();
-        await expect(page.getByText('This device draft was converted to format 4')).toBeHidden();
-      }
-    } else {
-      await expect(page.getByRole('heading', { name: 'automatic device' })).toBeVisible();
-      await expect(page.getByText('This device draft was converted to format 4')).toBeVisible();
-      await expect(page.getByText(/Another tab or device saved/)).toBeHidden();
-      const before = (await (await request.get(`/loops/${loop.id}`)).json()) as {
-        draft: { definition: { name: string } };
-      };
-      expect(before.draft.definition.name).toBe('cutover server');
-      await page.getByRole('button', { name: 'Overwrite with this copy' }).click();
-      await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
-      await page.reload();
-      await expect(page.getByRole('heading', { name: 'automatic device' })).toBeVisible();
-      await expect(page.getByText('Original device copy preserved')).toBeVisible();
-    }
-  });
-}

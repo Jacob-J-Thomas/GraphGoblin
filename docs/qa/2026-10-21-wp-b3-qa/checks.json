@@ -1,0 +1,257 @@
+[
+  {
+    "id": "recipe-04-start-refusal",
+    "steps": "Seed format 3 with owner QA seed; invoke built API.",
+    "expected": "Exit 1; format 3/4 and target/reset guidance; no stack trace; database/WAL unchanged.",
+    "status": "PASS",
+    "actual": {
+      "code": 1,
+      "stdout": "",
+      "stderr": "GraphGoblin did not start: this build cannot open the store in data directory %TEMP%\\gg-qa-266-20261021-rsQYAP\\recipe.\n  Database: %TEMP%\\gg-qa-266-20261021-rsQYAP\\recipe\\graphgoblin.db\n  Found:    format 3\n  Requires: format 4\n  Reason:   The store is format 3; this build reads only format 4\nNo stored data was changed. This build does not convert stores from other formats.\nTo keep that data, run the GraphGoblin build that wrote it. To start fresh, stop every GraphGoblin process using the data directory, then list what a reset would remove (this removes nothing):\n  node apps/api/dist/main.js --reset --data-dir \"%TEMP%\\gg-qa-266-20261021-rsQYAP\\recipe\"\n",
+      "killed": false
+    }
+  },
+  {
+    "id": "recipe-05-preflight",
+    "steps": "Invoke built API --preflight against format 3.",
+    "expected": "Exit 1, failed Database line, format reason and explicit reset command.",
+    "status": "PASS",
+    "actual": {
+      "code": 1,
+      "stdout": "GraphGoblin preflight\n\n  STATUS  CHECK           DETAIL\n  ok      Node.js         Node 22.14.0\n  ok      Data directory  %TEMP%\\gg-qa-266-20261021-rsQYAP\\recipe is writable\n  ok      Master key      read from %TEMP%\\gg-qa-266-20261021-rsQYAP\\recipe\\master.key\n  FAIL    Database        The store is format 3; this build reads only format 4. Start refuses this store and converts nothing; to start fresh, list what a reset removes with node apps/api/dist/main.js --reset --data-dir \"%TEMP%\\gg-qa-266-20261021-rsQYAP\\recipe\"\n  FAIL    Harness codex   Codex CLI is not logged in; run `codex login`\n  ok      Harness claude  claude 2.1.304 is installed and logged in\n  WARN    Jev             not checked until the database is migrated; Jev is optional\n  ok      Default model   gpt-6-luna (codex) is in the default catalog seeded on first start\n\n2 failed, 1 warning(s): fix the failed checks before starting\n",
+      "stderr": "",
+      "killed": false
+    }
+  },
+  {
+    "id": "recipe-06-dry-run",
+    "steps": "Snapshot every file (SHA-256), directory and junction; run --reset --data-dir; compare.",
+    "expected": "Exit 0; truthful manifest; byte-identical entire directory.",
+    "status": "FAIL",
+    "actual": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\nnull !== 0\n\n    at file:///<worktree>/docs/qa/2026-10-21-wp-b3-qa/native-qa.mjs:41:431\n    at async check (file:///<worktree>/docs/qa/2026-10-21-wp-b3-qa/native-qa.mjs:32:61)\n    at async file:///<worktree>/docs/qa/2026-10-21-wp-b3-qa/native-qa.mjs:41:2"
+  },
+  {
+    "id": "recipe-07-wrong-target",
+    "steps": "Run --reset --yes without target, then with a different disposable directory.",
+    "expected": "Exits 2 and 1; refusal changes no directory entry.",
+    "status": "PASS",
+    "actual": {
+      "missing": {
+        "code": 2,
+        "stdout": "",
+        "stderr": "--yes needs --data-dir <path> naming the data directory to reset\nusage: graphgoblin-api --reset [--yes --data-dir <path>]  (without --yes it only lists what a reset would remove)\n",
+        "killed": false
+      },
+      "wrong": {
+        "code": 1,
+        "stdout": "",
+        "stderr": "reset refused: --data-dir names %TEMP%\\gg-qa-266-20261021-rsQYAP\\recipe-outside, but this environment's data directory is %TEMP%\\gg-qa-266-20261021-rsQYAP\\recipe (GG_DATA_DIR, or ~/.graphgoblin when it is unset); run the reset with the environment that serves that directory\nNothing was changed.\n",
+        "killed": false
+      },
+      "identical": true
+    }
+  },
+  {
+    "id": "recipe-08-confirmed-reset",
+    "steps": "Confirm named target; compare surviving bytes including junction target.",
+    "expected": "Only manifest removed; master.key, user notes and linked target unchanged; lock removed.",
+    "status": "PASS",
+    "actual": {
+      "code": 0,
+      "survivors": [
+        "master.key",
+        "workspaces",
+        "workspaces/my-notes",
+        "workspaces/my-notes/keep.txt"
+      ],
+      "junctionTargetPreserved": true
+    }
+  },
+  {
+    "id": "recipe-09-fresh-start-lock",
+    "steps": "Start built API on reset store at 5651; list loops; attempt dry and confirmed reset while running.",
+    "expected": "Healthy empty format-4 store; both reset forms refuse held lock without changing DB/WAL.",
+    "status": "PASS",
+    "actual": {
+      "list": {
+        "status": 200,
+        "body": {
+          "items": []
+        }
+      },
+      "lockRefusals": [1, 1],
+      "identical": true
+    }
+  },
+  {
+    "id": "recipe-10-import-refusal",
+    "steps": "POST formatVersion 3 export to /loops/import; list loops.",
+    "expected": "400 LOOP_FORMAT_UNSUPPORTED with found=3 required=4; no loop added.",
+    "status": "PASS",
+    "actual": {
+      "status": 400,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/loop-format-unsupported",
+        "title": "loop format unsupported",
+        "status": 400,
+        "code": "LOOP_FORMAT_UNSUPPORTED",
+        "detail": "This loop export is format 3; this build reads only format 4 and does not convert other formats. Re-create the loop in this build, or export it again from a build that writes format 4.",
+        "errors": {
+          "foundFormat": 3,
+          "requiredFormat": 4
+        }
+      }
+    }
+  },
+  {
+    "id": "reserved-artifacts",
+    "steps": "Create regular reserved-name file and unrelated.txt (directory for graphgoblin.db); hash; run dry and confirmed built CLI.",
+    "expected": "Exit 1 before manifest; Nothing was changed; every hash identical.",
+    "status": "PASS",
+    "actual": {
+      "dry": {
+        "code": 1,
+        "stdout": "",
+        "stderr": "reset refused: the database artifacts has the name of the artifacts directory, which a reset removes; rename it first\nNothing was changed.\n",
+        "killed": false
+      },
+      "confirmed": {
+        "code": 1,
+        "stdout": "",
+        "stderr": "reset refused: the database artifacts has the name of the artifacts directory, which a reset removes; rename it first\nNothing was changed.\n",
+        "killed": false
+      },
+      "identical": true
+    }
+  },
+  {
+    "id": "reserved-workspaces",
+    "steps": "Create regular reserved-name file and unrelated.txt (directory for graphgoblin.db); hash; run dry and confirmed built CLI.",
+    "expected": "Exit 1 before manifest; Nothing was changed; every hash identical.",
+    "status": "PASS",
+    "actual": {
+      "dry": {
+        "code": 1,
+        "stdout": "",
+        "stderr": "reset refused: the database workspaces has the name of the workspaces directory, which a reset removes; rename it first\nNothing was changed.\n",
+        "killed": false
+      },
+      "confirmed": {
+        "code": 1,
+        "stdout": "",
+        "stderr": "reset refused: the database workspaces has the name of the workspaces directory, which a reset removes; rename it first\nNothing was changed.\n",
+        "killed": false
+      },
+      "identical": true
+    }
+  },
+  {
+    "id": "reserved-graphgoblin.lock.reclaim",
+    "steps": "Create regular reserved-name file and unrelated.txt (directory for graphgoblin.db); hash; run dry and confirmed built CLI.",
+    "expected": "Exit 1 before manifest; Nothing was changed; every hash identical.",
+    "status": "PASS",
+    "actual": {
+      "dry": {
+        "code": 1,
+        "stdout": "",
+        "stderr": "reset refused: another GraphGoblin process holds %TEMP%\\gg-qa-266-20261021-rsQYAP\\reserved-graphgoblin.lock.reclaim\\graphgoblin.lock.reclaim; stop it before resetting\nNothing was changed.\n",
+        "killed": false
+      },
+      "confirmed": {
+        "code": 1,
+        "stdout": "",
+        "stderr": "reset refused: another GraphGoblin process holds %TEMP%\\gg-qa-266-20261021-rsQYAP\\reserved-graphgoblin.lock.reclaim\\graphgoblin.lock.reclaim; stop it before resetting\nNothing was changed.\n",
+        "killed": false
+      },
+      "identical": true
+    }
+  },
+  {
+    "id": "reserved-graphgoblin.lock",
+    "steps": "Create regular reserved-name file and unrelated.txt (directory for graphgoblin.db); hash; run dry and confirmed built CLI.",
+    "expected": "Exit 1 before manifest; Nothing was changed; every hash identical.",
+    "status": "PASS",
+    "actual": {
+      "dry": {
+        "code": 1,
+        "stdout": "",
+        "stderr": "reset refused: another GraphGoblin process holds %TEMP%\\gg-qa-266-20261021-rsQYAP\\reserved-graphgoblin.lock\\graphgoblin.lock; stop it before resetting\nNothing was changed.\n",
+        "killed": false
+      },
+      "confirmed": {
+        "code": 1,
+        "stdout": "",
+        "stderr": "reset refused: another GraphGoblin process holds %TEMP%\\gg-qa-266-20261021-rsQYAP\\reserved-graphgoblin.lock\\graphgoblin.lock; stop it before resetting\nNothing was changed.\n",
+        "killed": false
+      },
+      "identical": true
+    }
+  },
+  {
+    "id": "reserved-graphgoblin.db-directory",
+    "steps": "Create regular reserved-name file and unrelated.txt (directory for graphgoblin.db); hash; run dry and confirmed built CLI.",
+    "expected": "Exit 1 before manifest; Nothing was changed; every hash identical.",
+    "status": "PASS",
+    "actual": {
+      "dry": {
+        "code": 1,
+        "stdout": "",
+        "stderr": "reset refused: graphgoblin.db is a directory, not a database file; a reset removes only regular database files\nNothing was changed.\n",
+        "killed": false
+      },
+      "confirmed": {
+        "code": 1,
+        "stdout": "",
+        "stderr": "reset refused: graphgoblin.db is a directory, not a database file; a reset removes only regular database files\nNothing was changed.\n",
+        "killed": false
+      },
+      "identical": true
+    }
+  },
+  {
+    "id": "database-junction-refusal",
+    "steps": "Place graphgoblin.db junction pointing to disposable sibling; hash both; confirm reset.",
+    "expected": "Refuse non-regular database link before removal; target unchanged.",
+    "status": "PASS",
+    "actual": {
+      "code": 1,
+      "stdout": "",
+      "stderr": "reset refused: graphgoblin.db is a link, not a database file; a reset removes only regular database files\nNothing was changed.\n",
+      "killed": false
+    }
+  },
+  {
+    "id": "partial-reset-rerun",
+    "steps": "Seed recipe; hold workspace output open with Windows FileShare.ReadWrite (no Delete); confirm reset; release; rerun.",
+    "expected": "Partial progress exactly reported, DB retained, lock released; rerun finishes and preserves linked target.",
+    "status": "PASS",
+    "actual": {
+      "partial": {
+        "code": 1,
+        "stdout": "GraphGoblin reset\n\nData directory: %TEMP%\\gg-qa-266-20261021-rsQYAP\\partial\nDatabase:       %TEMP%\\gg-qa-266-20261021-rsQYAP\\partial\\graphgoblin.db (format 3; this build requires format 4)\n\nRemoves:\n  workspaces/01JQA266RUNAAAAAAAAAAAAAAA  run workspace            1 file, 2 directories, 1 link, 10 B\n  artifacts                              artifacts                1 file, 2 directories, 13 B\n  graphgoblin.db                         database                 1 file, 4.0 KB\n  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 289.7 KB\n  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB\n  graphgoblin.lock                       the reset's own lock     removed last, on release\n\nKeeps:\n  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable\n  workspaces/my-notes                    not a stored run ID\n  Browser device drafts stay in each browser; discard them from the loop editor.\n\nTotal removed: 5 files, 4 directories, 1 link, 325.7 KB in 5 items.\n\nRemoving:\n",
+        "stderr": "Reset stopped: could not remove workspaces/01JQA266RUNAAAAAAAAAAAAAAA/src/out.txt: EBUSY: resource busy or locked, unlink '%TEMP%\\gg-qa-266-20261021-rsQYAP\\partial\\workspaces\\01JQA266RUNAAAAAAAAAAAAAAA\\src\\out.txt'\n  Removed:        nothing\n  Partly removed: workspaces/01JQA266RUNAAAAAAAAAAAAAAA (1 of 4 entries)\n  Not removed:    artifacts, graphgoblin.db, graphgoblin.db-wal, graphgoblin.db-shm\n  Released graphgoblin.lock.\nDo not start GraphGoblin on this data directory until the reset finishes: fix the cause and run the reset again; it lists and removes what is left.\n",
+        "killed": false
+      },
+      "rerun": {
+        "code": 0,
+        "stdout": "GraphGoblin reset\n\nData directory: %TEMP%\\gg-qa-266-20261021-rsQYAP\\partial\nDatabase:       %TEMP%\\gg-qa-266-20261021-rsQYAP\\partial\\graphgoblin.db (format 3; this build requires format 4)\n\nRemoves:\n  workspaces/01JQA266RUNAAAAAAAAAAAAAAA  run workspace            1 file, 2 directories, 10 B\n  artifacts                              artifacts                1 file, 2 directories, 13 B\n  graphgoblin.db                         database                 1 file, 4.0 KB\n  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 289.7 KB\n  graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB\n  graphgoblin.lock                       the reset's own lock     removed last, on release\n\nKeeps:\n  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable\n  workspaces/my-notes                    not a stored run ID\n  Browser device drafts stay in each browser; discard them from the loop editor.\n\nTotal removed: 5 files, 4 directories, 325.7 KB in 5 items.\n\nRemoving:\n  removed workspaces/01JQA266RUNAAAAAAAAAAAAAAA (1 file, 2 directories, 10 B)\n  removed artifacts (1 file, 2 directories, 13 B)\n  removed graphgoblin.db (1 file, 4.0 KB)\n  removed graphgoblin.db-wal (1 file, 289.7 KB)\n  removed graphgoblin.db-shm (1 file, 32.0 KB)\n  removed graphgoblin.lock\nReset complete. The next start creates a new, empty format-4 store in %TEMP%\\gg-qa-266-20261021-rsQYAP\\partial.\n",
+        "stderr": ""
+      },
+      "remaining": [
+        "artifacts",
+        "artifacts/text",
+        "artifacts/text/abc123",
+        "graphgoblin.db",
+        "graphgoblin.db-shm",
+        "graphgoblin.db-wal",
+        "master.key",
+        "workspaces",
+        "workspaces/01JQA266RUNAAAAAAAAAAAAAAA",
+        "workspaces/01JQA266RUNAAAAAAAAAAAAAAA/src",
+        "workspaces/01JQA266RUNAAAAAAAAAAAAAAA/src/out.txt",
+        "workspaces/my-notes",
+        "workspaces/my-notes/keep.txt"
+      ]
+    }
+  }
+]

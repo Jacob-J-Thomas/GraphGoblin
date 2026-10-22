@@ -4,7 +4,7 @@ import { NodeSchema } from './nodes.js';
 import { HarnessDefaultsSchema } from './evaluation.js';
 import { VariableDeclarationsSchema } from './thread.js';
 
-/** The one current definition/export/storage format; frozen conversion stages keep their literals. */
+/** The one current definition/export/storage format. Older formats are refused, never converted (ADR-0042). */
 export const CURRENT_DEFINITION_FORMAT = 4 as const;
 
 /** Where a run works. Fixed path, templated from the trigger, or a fresh temporary directory. */

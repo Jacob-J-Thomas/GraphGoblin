@@ -1,15 +1,15 @@
 /**
- * The startup guard and stored definitions that predate ADR-0044 (#242). An exit that still
- * publishes an Event is a per-loop condition (refused with LOOP_UPGRADE_REQUIRED where the
- * definition is served or run), not a store-format refusal; anything else outside the current
- * contract still stops startup. The guard never rewrites the stored row.
+ * The current-format store guard and stored definitions that predate ADR-0044 (#242). An exit that
+ * still publishes an Event is a per-loop condition (refused with LOOP_UPGRADE_REQUIRED where the
+ * definition is served or run), not a store refusal; anything else outside the current contract
+ * still refuses the store (ADR-0042). The guard never rewrites the stored row.
  */
 import { afterEach, describe, expect, it } from 'vitest';
 import { LoopDefinitionSchema } from '@graphgoblin/contracts';
 import { minimalLoop } from '@graphgoblin/contracts/testing';
 import { openMemoryDatabase, type DatabaseHandle } from './db.js';
 import { SqliteLoopRepository } from './loops.js';
-import { guardDatabaseUpgrade } from './upgrade.js';
+import { guardCurrentStore } from './store-format.js';
 
 const handles: DatabaseHandle[] = [];
 afterEach(() => {
@@ -52,12 +52,17 @@ const exitWith = (destinations: unknown[], extra: Record<string, unknown> = {}) 
   config: { outcome: 'success', returns: '1', destinations, ...extra },
 });
 
-describe('startup guard and retired Event destinations (#242)', () => {
+const unsupported = {
+  code: 'STORE_UNSUPPORTED',
+  message: expect.stringContaining('is not a valid definition'),
+};
+
+describe('store guard and retired Event destinations (#242, ADR-0042)', () => {
   it('lets a store start when a definition departs from the contract only by Event destinations', async () => {
     const { handle, stored, read } = await storeWithExit(
       exitWith([{ kind: 'caller' }, { kind: 'event', eventType: 'loop-done' }]),
     );
-    expect(await guardDatabaseUpgrade(handle.client)).toBe('current');
+    expect(await guardCurrentStore(handle.client)).toBe('current');
     // Nothing is stripped or rewritten.
     expect(await read()).toBe(stored);
   });
@@ -71,10 +76,7 @@ describe('startup guard and retired Event destinations (#242)', () => {
     ],
   ])('still refuses the store for %s', async (_name, exit) => {
     const { handle } = await storeWithExit(exit);
-    await expect(guardDatabaseUpgrade(handle.client)).rejects.toMatchObject({
-      code: 'DATA_UPGRADE_REQUIRED',
-      message: expect.stringContaining('not strict current format'),
-    });
+    await expect(guardCurrentStore(handle.client)).rejects.toMatchObject(unsupported);
   });
 
   // The former channel required a slug event type; anything else was never a valid destination.
@@ -88,10 +90,7 @@ describe('startup guard and retired Event destinations (#242)', () => {
     'still refuses the store for an Event destination with %s event type',
     async (_name, eventType) => {
       const { handle } = await storeWithExit(exitWith([{ kind: 'event', eventType }]));
-      await expect(guardDatabaseUpgrade(handle.client)).rejects.toMatchObject({
-        code: 'DATA_UPGRADE_REQUIRED',
-        message: expect.stringContaining('not strict current format'),
-      });
+      await expect(guardCurrentStore(handle.client)).rejects.toMatchObject(unsupported);
     },
   );
 
@@ -99,7 +98,7 @@ describe('startup guard and retired Event destinations (#242)', () => {
     const { handle } = await storeWithExit(
       exitWith([{ kind: 'event', eventType: 'd' + 'x'.repeat(63) }]),
     );
-    expect(await guardDatabaseUpgrade(handle.client)).toBe('current');
+    expect(await guardCurrentStore(handle.client)).toBe('current');
   });
 
   it('still refuses a stored definition that is not JSON', async () => {
@@ -111,8 +110,6 @@ describe('startup guard and retired Event destinations (#242)', () => {
       sql: 'UPDATE loop_versions SET definition = ? WHERE loop_id = ?',
       args: ['{broken', loop.id],
     });
-    await expect(guardDatabaseUpgrade(handle.client)).rejects.toMatchObject({
-      code: 'DATA_UPGRADE_REQUIRED',
-    });
+    await expect(guardCurrentStore(handle.client)).rejects.toMatchObject(unsupported);
   });
 });

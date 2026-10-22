@@ -25,5 +25,3 @@ export * from './events.js';
 
 export * from './trigger-integrations.js';
 export * from './template-manifest.js';
-export * from './upgrade-v2.js';
-export * from './upgrade-v3.js';

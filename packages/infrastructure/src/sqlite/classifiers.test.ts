@@ -150,7 +150,7 @@ describe('classifier repository', () => {
         await writeFile(join(dir, 'meta/_journal.json'), JSON.stringify(journal));
         // The current catalog ends with 0014_run_definition_pins, its fifteenth entry.
         expect(await handle.pendingMigrations()).toBe(15 - count);
-        await expect(handle.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
+        await expect(handle.migrate()).rejects.toMatchObject({ code: 'STORE_UNSUPPORTED' });
         await applyShippedSqlToHistoricalTestFixture(handle, dir);
         expect((await handle.client.execute('SELECT * FROM loop_versions')).rows).toEqual(versions);
         expect(

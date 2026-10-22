@@ -69,7 +69,7 @@ An edge's `ui.route` is canvas layout, like a node's `ui`: the positions of the 
 
 Trigger nodes store `config.type`: `manual`, `cron`, `webhook`, `event`, or `poll`.
 Both webhook signing variants use `type: 'webhook'`. Current configs and exports
-reject `subtype`; old exports are converted only by the format-4 offline upgrade.
+reject `subtype`; exports in an older format are refused, not converted (ADR-0042).
 
 Validation rules enforced by `domain` before a version can be published:
 
@@ -122,7 +122,7 @@ future attempt to execute it fails with `SUBLOOP_NOT_FOUND`.
 
 `SqliteRunRepository.deleteOrphans()` transactionally deletes runs whose version or loop no
 longer exists, using the same run-owned cleanup. It is an offline maintenance operation for
-the later format-4 cutover; the current offline upgrade is unchanged. See
+cleanup of damaged history; nothing runs it automatically. See
 [ADR-0033](decisions/ADR-0033-loop-deletion-removes-runs.md).
 
 ## Context thread (Draft - to be co-designed)
