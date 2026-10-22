@@ -38,18 +38,18 @@ Timeout and cancellation use finite five-second subprocesses: their final classi
 
 | Command group    | Actual exit | Seconds | Result | Log                                          |
 | ---------------- | ----------- | ------- | ------ | -------------------------------------------- |
-| build            | 0           | 2.71    | PASS   | [build.log](build.log)                       |
-| prepare          | 0           | 0.3     | PASS   | [prepare.log](prepare.log)                   |
-| independent      | 0           | 43.23   | PASS   | [independent.log](independent.log)           |
-| recovery-process | 0           | 17.05   | PASS   | [recovery-process.log](recovery-process.log) |
-| restart          | 0           | 25.43   | PASS   | [restart.log](restart.log)                   |
-| edge             | 0           | 12.1    | PASS   | [edge.log](edge.log)                         |
-| native-start     | 0           | 6.21    | PASS   | [native-start.log](native-start.log)         |
-| mcp              | 0           | 4.21    | PASS   | [mcp.log](mcp.log)                           |
-| client-types     | 0           | 1.34    | PASS   | [client-types.log](client-types.log)         |
-| typecheck        | 0           | 48.26   | PASS   | [typecheck.log](typecheck.log)               |
-| mcp-wire         | 0           | 3.57    | PASS   | [mcp-wire.log](mcp-wire.log)                 |
-| format           | 0           | 31.94   | PASS   | [format.log](format.log)                     |
+| build            | 0           | 2.71    | PASS   | [build.log.txt](build.log.txt)                       |
+| prepare          | 0           | 0.3     | PASS   | [prepare.log.txt](prepare.log.txt)                   |
+| independent      | 0           | 43.23   | PASS   | [independent.log.txt](independent.log.txt)           |
+| recovery-process | 0           | 17.05   | PASS   | [recovery-process.log.txt](recovery-process.log.txt) |
+| restart          | 0           | 25.43   | PASS   | [restart.log.txt](restart.log.txt)                   |
+| edge             | 0           | 12.1    | PASS   | [edge.log.txt](edge.log.txt)                         |
+| native-start     | 0           | 6.21    | PASS   | [native-start.log.txt](native-start.log.txt)         |
+| mcp              | 0           | 4.21    | PASS   | [mcp.log.txt](mcp.log.txt)                           |
+| client-types     | 0           | 1.34    | PASS   | [client-types.log.txt](client-types.log.txt)         |
+| typecheck        | 0           | 48.26   | PASS   | [typecheck.log.txt](typecheck.log.txt)               |
+| mcp-wire         | 0           | 3.57    | PASS   | [mcp-wire.log.txt](mcp-wire.log.txt)                 |
+| format           | 0           | 31.94   | PASS   | [format.log.txt](format.log.txt)                     |
 
 Built recovery-process acceptance: 1 passed; script restart test: 3 passed; standalone Edge: 1 passed; native start disposition: 2 passed; focused MCP description tests: 8 passed. The generated public client provenance probe compiles. Typecheck passed. Coverage thresholds and exclusions were untouched; full package coverage suites were not rerun in this evidence-only round.
 
@@ -80,34 +80,34 @@ The gate runner accepts `-Only` with comma-separated command groups. A full repl
 Every non-Markdown artifact in this folder is directly linked here so link-based curation keeps the replay bundle, including scripts, generated fixtures/configs, logs, results and metadata.
 
 - [api.config.mts](api.config.mts)
-- [build.log](build.log)
+- [build.log.txt](build.log.txt)
 - [bundle-validation.json](bundle-validation.json)
 - [cleanup.json](cleanup.json)
 - [cleanup.ps1](cleanup.ps1)
 - [client-config.json](client-config.json)
 - [client-contract.ts](client-contract.ts)
-- [client-types.log](client-types.log)
+- [client-types.log.txt](client-types.log.txt)
 - [corrected-edge-observations.json](corrected-edge-observations.json)
 - [corrected-results.json](corrected-results.json)
-- [edge.log](edge.log)
-- [format.log](format.log)
+- [edge.log.txt](edge.log.txt)
+- [format.log.txt](format.log.txt)
 - [gate-results.jsonl](gate-results.jsonl)
 - [independent-results.json](independent-results.json)
-- [independent.log](independent.log)
+- [independent.log.txt](independent.log.txt)
 - [independent.mjs](independent.mjs)
 - [infrastructure.config.mts](infrastructure.config.mts)
 - [mcp-provenance.json](mcp-provenance.json)
 - [mcp-provenance.mjs](mcp-provenance.mjs)
-- [mcp-wire.log](mcp-wire.log)
-- [mcp.log](mcp.log)
-- [native-start.log](native-start.log)
+- [mcp-wire.log.txt](mcp-wire.log.txt)
+- [mcp.log.txt](mcp.log.txt)
+- [native-start.log.txt](native-start.log.txt)
 - [playwright.script-recovery.config.ts](playwright.script-recovery.config.ts)
 - [prepare-fixtures.mjs](prepare-fixtures.mjs)
-- [prepare.log](prepare.log)
+- [prepare.log.txt](prepare.log.txt)
 - [process-exit.json](process-exit.json)
 - [recovery-process.integration.mjs](recovery-process.integration.mjs)
-- [recovery-process.log](recovery-process.log)
-- [restart.log](restart.log)
+- [recovery-process.log.txt](recovery-process.log.txt)
+- [restart.log.txt](restart.log.txt)
 - [retarget.mjs](retarget.mjs)
 - [run-gates.ps1](run-gates.ps1)
 - [runtime.json](runtime.json)
@@ -115,6 +115,6 @@ Every non-Markdown artifact in this folder is directly linked here so link-based
 - [script-recovery.browser.ts](script-recovery.browser.ts)
 - [standalone-edge-dialog.txt](standalone-edge-dialog.txt)
 - [standalone-edge-results/.last-run.json](standalone-edge-results/.last-run.json)
-- [typecheck.log](typecheck.log)
+- [typecheck.log.txt](typecheck.log.txt)
 - [verify-bundle.mjs](verify-bundle.mjs)
 - [write-report.mjs](write-report.mjs)

@@ -22,14 +22,14 @@ For each test invocation the expected result is all selected tests passing with 
 
 | Check / steps        | Passed | Failed | Skipped | Exit / result | EADDRINUSE mentions | Evidence                                             |
 | -------------------- | ------ | ------ | ------- | ------------- | ------------------- | ---------------------------------------------------- |
-| build                | n/a    | n/a    | n/a     | 0 / PASS      | 0                   | [build.log](build.log)                               |
-| pair-1               | 5      | 1      | 0       | 1 / FAIL      | 0                   | [pair-1.log](pair-1.log)                             |
-| pair-2               | 6      | 0      | 0       | 0 / PASS      | 0                   | [pair-2.log](pair-2.log)                             |
-| pair-3               | 6      | 0      | 0       | 0 / PASS      | 0                   | [pair-3.log](pair-3.log)                             |
-| with-subloop         | 8      | 1      | 0       | 1 / FAIL      | 0                   | [with-subloop.log](with-subloop.log)                 |
-| coverage-requested   | 705    | 1      | 6       | 1 / FAIL      | 0                   | [coverage-requested.log](coverage-requested.log)     |
-| triage-child-zero    | 0      | 1      | 2       | 1 / FAIL      | 0                   | [triage-child-zero.log](triage-child-zero.log)       |
-| coverage-two-workers | 706    | 0      | 6       | 0 / PASS      | 0                   | [coverage-two-workers.log](coverage-two-workers.log) |
+| build                | n/a    | n/a    | n/a     | 0 / PASS      | 0                   | [build.log.txt](build.log.txt)                               |
+| pair-1               | 5      | 1      | 0       | 1 / FAIL      | 0                   | [pair-1.log.txt](pair-1.log.txt)                             |
+| pair-2               | 6      | 0      | 0       | 0 / PASS      | 0                   | [pair-2.log.txt](pair-2.log.txt)                             |
+| pair-3               | 6      | 0      | 0       | 0 / PASS      | 0                   | [pair-3.log.txt](pair-3.log.txt)                             |
+| with-subloop         | 8      | 1      | 0       | 1 / FAIL      | 0                   | [with-subloop.log.txt](with-subloop.log.txt)                 |
+| coverage-requested   | 705    | 1      | 6       | 1 / FAIL      | 0                   | [coverage-requested.log.txt](coverage-requested.log.txt)     |
+| triage-child-zero    | 0      | 1      | 2       | 1 / FAIL      | 0                   | [triage-child-zero.log.txt](triage-child-zero.log.txt)       |
+| coverage-two-workers | 706    | 0      | 6       | 0 / PASS      | 0                   | [coverage-two-workers.log.txt](coverage-two-workers.log.txt) |
 
 The failed paired/combined/coverage cases name the same #320 zero-delay `afterEach` disposal timeout (60 seconds) seen in prior QA. The isolated check records its actual result separately. Child-cardinality diagnostics show one child for each of 24 parent visits before the cleanup hook fails. This is the previously dispositioned **D-015 native/sandbox cleanup class**, not an observed port-bind error. Prior outside-sandbox acceptance of QA-321-01 was supplied in round 2; no new outside-sandbox validation is claimed here.
 
@@ -67,23 +67,23 @@ Remaining owned stores: **0**. Other test stores were removed by their own fixtu
 
 ## Preservation manifest
 
-- [build.log](build.log)
+- [build.log.txt](build.log.txt)
 - [bundle-validation.json](bundle-validation.json)
 - [cleanup.json](cleanup.json)
 - [cleanup.ps1](cleanup.ps1)
 - [cli-parsing.json](cli-parsing.json)
 - [coverage-process-sample.json](coverage-process-sample.json)
-- [coverage-requested.log](coverage-requested.log)
+- [coverage-requested.log.txt](coverage-requested.log.txt)
 - [coverage-two-worker-process-sample.json](coverage-two-worker-process-sample.json)
-- [coverage-two-workers.log](coverage-two-workers.log)
+- [coverage-two-workers.log.txt](coverage-two-workers.log.txt)
 - [earlier-admission-change.diff](earlier-admission-change.diff)
 - [final-state.json](final-state.json)
 - [fixture-callers.txt](fixture-callers.txt)
-- [format.log](format.log)
+- [format.log.txt](format.log.txt)
 - [observe-ports.mjs](observe-ports.mjs)
-- [pair-1.log](pair-1.log)
-- [pair-2.log](pair-2.log)
-- [pair-3.log](pair-3.log)
+- [pair-1.log.txt](pair-1.log.txt)
+- [pair-2.log.txt](pair-2.log.txt)
+- [pair-3.log.txt](pair-3.log.txt)
 - [parallel-port-overlap.json](parallel-port-overlap.json)
 - [parse-cli.mjs](parse-cli.mjs)
 - [port-range.diff](port-range.diff)
@@ -98,7 +98,7 @@ Remaining owned stores: **0**. Other test stores were removed by their own fixtu
 - [static-results.json](static-results.json)
 - [summarize.mjs](summarize.mjs)
 - [summary.json](summary.json)
-- [triage-child-zero.log](triage-child-zero.log)
+- [triage-child-zero.log.txt](triage-child-zero.log.txt)
 - [verify-bundle.mjs](verify-bundle.mjs)
-- [with-subloop.log](with-subloop.log)
+- [with-subloop.log.txt](with-subloop.log.txt)
 - [write-report.mjs](write-report.mjs)

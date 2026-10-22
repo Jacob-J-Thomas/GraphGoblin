@@ -1,0 +1,73 @@
+pnpm.cmd : $ vitest run --coverage --config=../../docs/qa/2026-10-22-wp-d1-321-qa/api.config.mts --maxWorkers=1 
+--coverage.reportOnFailure
+At <worktree>\docs\qa\2026-10-22-wp-d1-321-qa\run-gat
+es.ps1:26 char:3
++   & pnpm.cmd @arguments *> $rawLog
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...reportOnFailure:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 <worktree>/apps/api
+      Coverage enabled with v8
+
+subloop kill landings:
+delay undefined: leaf waiting at restart; recovery restarts top 0, middle 0, leaf 0
+delay 0: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 10: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 30: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+delay 60: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 100: leaf succeeded at restart; recovery restarts top 1, middle 0, leaf 0
+delay 150: leaf succeeded at restart; recovery restarts top 1, middle 0, leaf 0
+delay 250: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+{"level":30,"time":1792645707537,"pid":41532,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5926"}
+{"level":30,"time":1792645707538,"pid":41532,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5926,"dataDir":"<user>\\AppData\\Local\\Temp\\gg-qa-321-api-process-pra7jv","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792645707580,"pid":41532,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792645707587,"pid":41532,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":6.669499999999971,"msg":"request completed"}
+child admission kill: delay=0ms snapshots=20497 children-at-kill=1 unlinked=none parents=24 child-counts=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+child admission kill: delay=5ms snapshots=23621 children-at-kill=1 unlinked=none parents=24 child-counts=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+child admission kill: delay=25ms snapshots=24503 children-at-kill=1 unlinked=none parents=24 child-counts=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+ ❯ src/child-creation-restart.test.ts (3 tests | 1 failed) 133345ms
+   ❯ child admission across a real API kill (#320) (3)
+     × kill 0ms after admission never exposes an unlinked child and recovers one child per nested parent visit 69535ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/child-creation-restart.test.ts > child admission across a real API kill (#320) > kill 0ms after admission 
+never exposes an unlinked child and recovers one child per nested parent visit
+Error: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ src/child-creation-restart.test.ts:22:1
+     20|
+     21| const fixtures: Awaited<ReturnType<typeof createApiProcessFixture>>[] …
+     22| afterEach(async () => {
+       | ^
+     23|   for (const fixture of fixtures.splice(0)) {
+     24|     await fixture.dispose();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 51 passed | 2 skipped (54)
+      Tests  1 failed | 705 passed | 6 skipped (712)
+   Start at  00:04:39
+   Duration  586.08s (tests 76%, import 22%, transform 1%)
+
+    Isolate  54 workers spawned · ~385ms startup each (spawn + environment, per file)
+             at least ~20.39s faster with isolate: false — reuses workers across files instead of one per file
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 96.41% ( 1938/2010 )
+Branches     : 92.9% ( 1258/1354 )
+Functions    : 94.05% ( 380/404 )
+Lines        : 97.83% ( 1762/1801 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ <user>\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-d1-
+  │ 321\apps\api
+
