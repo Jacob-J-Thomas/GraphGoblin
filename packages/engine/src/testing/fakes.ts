@@ -70,6 +70,7 @@ import {
   AdmissionConflictError,
   assertAdmissionIdentity,
   assertWebhookClaim,
+  childLinkEvent,
   parseRunAdmission,
   pollAdmissionIdentity,
   queuedEvent,
@@ -188,6 +189,21 @@ export class InMemoryEventStore implements EventStorePort {
   /** Admission installs the complete transaction before notifying subscribers. */
   commitQueued(event: RunEvent): void {
     this.logs.set(event.runId, [event]);
+  }
+  /** The next event of an existing log, validated but not yet installed (atomic admission). */
+  prepareNext(runId: string, draft: EventDraft, ts: string): RunEvent {
+    return validateGeneratedEvent({
+      ...draft,
+      runId,
+      seq: (this.logs.get(runId)?.length ?? 0) + 1,
+      ts,
+    });
+  }
+  /** Install a prepared event of an existing log, without notifying (atomic admission). */
+  commitNext(event: RunEvent): void {
+    const log = this.logs.get(event.runId) ?? [];
+    log.push(event);
+    this.logs.set(event.runId, log);
   }
   notifyCommitted(event: RunEvent): void {
     for (const listener of this.listeners.get(event.runId) ?? []) {
@@ -882,7 +898,9 @@ export type AdmissionWrite =
   | 'create.run'
   | 'create.event'
   | 'create.receipt'
-  | 'create.link';
+  | 'create.link'
+  /** A child's link on its parent's log (#320). */
+  | 'create.parent';
 
 export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
   readonly receipts = new Map<string, WebhookReceipt>();
@@ -920,6 +938,21 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
     }
     let run = this.runs.runs.get(input.run.id);
     const created = !run;
+    // A child commits with its parent's record of it (#320), or neither is installed.
+    const link = childLinkEvent(input);
+    const parentId = input.run.parentRunId;
+    if (link && (!parentId || !this.runs.runs.has(parentId))) throw new AdmissionConflictError();
+    if (link && !created) {
+      const recorded = this.events
+        .all(parentId!)
+        .some(
+          (event) =>
+            event.type === 'child_run.started' &&
+            event.nodeId === link.nodeId &&
+            event.childRunId === link.childRunId,
+        );
+      if (!recorded) throw new AdmissionConflictError();
+    }
     // A draft snapshot is immutable: the same id may only ever hold the same record.
     const existing = input.snapshot ? this.loops.versions.get(input.snapshot.id) : undefined;
     if (existing && stableStringify(existing) !== stableStringify(input.snapshot))
@@ -934,7 +967,10 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
       if (input.snapshot && !existing) this.beforeWrite('create.snapshot');
       this.beforeWrite('create.run');
       this.beforeWrite('create.event');
+      if (link) this.beforeWrite('create.parent');
     }
+    const parentLink =
+      link && created ? this.events.prepareNext(parentId!, link, input.run.createdAt) : undefined;
     // Prepare every write (including injected failures) before installing any state. No await
     // separates installation and publication, so listeners see the complete transaction.
     const admitted = receipt ? structuredClone(receipt) : undefined;
@@ -951,12 +987,20 @@ export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
       if (input.snapshot && !existing) this.loops.add(structuredClone(input.snapshot));
       this.runs.commitCreated(run, input.initialThread);
       this.events.commitQueued(queuedEvent(input));
+      if (parentLink) {
+        this.events.commitNext(parentLink);
+        this.runs.runs.set(parentId!, {
+          ...this.runs.runs.get(parentId!)!,
+          lastEventSeq: parentLink.seq,
+        });
+      }
     }
     if (admitted && linked) {
       this.receipts.set(admitted.id, admitted);
       this.inbound.set(linked.id, linked);
     }
     if (created) this.events.notifyCommitted(queuedEvent(input));
+    if (parentLink) this.events.notifyCommitted(parentLink);
     return run;
   }
   async createPollItem(authored: RunAdmission): Promise<RunRecord | undefined> {

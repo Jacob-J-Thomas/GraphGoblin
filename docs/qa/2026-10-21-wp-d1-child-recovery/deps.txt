@@ -1,0 +1,16 @@
+pnpm.cmd : $ depcruise packages apps --config .dependency-cruiser.cjs
+At line:8 char:3
++   & pnpm.cmd @gateArguments *> $logPath
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ depcruise pac...ncy-cruiser.cjs:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+  warn no-orphans: packages/infrastructure/drizzle.config.ts
+  error no-circular: packages/engine/src/admission.ts → 
+      packages/engine/src/ports.ts →
+      packages/engine/src/admission.ts
+
+x 2 dependency violations (1 errors, 1 warnings). 805 modules, 3187 dependencies cruised.
+
+[ELIFECYCLE] Command failed with exit code 1.

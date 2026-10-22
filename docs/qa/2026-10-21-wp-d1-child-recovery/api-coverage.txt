@@ -1,0 +1,91 @@
+pnpm.cmd : $ vitest run --coverage --maxWorkers=2 --coverage.reportOnFailure
+At line:4 char:1
++ pnpm.cmd --filter @graphgoblin/api test:coverage --maxWorkers=2 --cov ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...reportOnFailure:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 <local>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d1-child-recovery/apps/api
+      Coverage enabled with v8
+
+subloop kill landings:
+delay undefined: leaf waiting at restart; recovery restarts top 0, middle 0, leaf 0
+delay 0: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 10: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 30: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 60: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+delay 100: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+delay 150: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 250: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+{"level":30,"time":1792629244736,"pid":7688,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5629"}
+{"level":30,"time":1792629244737,"pid":7688,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5629,"dataDir":"%TEMP%\\gg-api-process-imT3Dc","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792629244845,"pid":7688,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792629244852,"pid":7688,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":6.096700000000055,"msg":"request completed"}
+ ❯ src/subloop-restart.test.ts (3 tests | 1 failed) 218297ms
+   ❯ awaited subloops across process death (#242) (3)
+     × the built API recovers a parent interrupted mid-wake with one continuation per parent 76001ms
+child admission kill: delay=0ms snapshots=36973 children-at-kill=1 unlinked=none parents=24 child-counts=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+child admission kill: delay=5ms snapshots=28030 children-at-kill=1 unlinked=none parents=24 child-counts=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+child admission kill: delay=25ms snapshots=16162 children-at-kill=1 unlinked=none parents=24 child-counts=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a parent 
+interrupted mid-wake with one continuation per parent
+AssertionError: expected undefined to be 'waiting' // Object.is equality
+
+- Expected:
+"waiting"
+
++ Received:
+undefined
+
+ ❯ src/subloop-restart.test.ts:220:32
+    218|         [mid] = await runs.listChildren(run.id);
+    219|         [bottom] = mid ? await runs.listChildren(mid.id) : [];
+    220|         expect(bottom?.status).toBe('waiting');
+       |                                ^
+    221|       });
+    222|       let stranded = false;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a parent 
+interrupted mid-wake with one continuation per parent
+Error: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ src/subloop-restart.test.ts:23:1
+     21|
+     22| const fixtures: Awaited<ReturnType<typeof createApiProcessFixture>>[] …
+     23| afterEach(async () => {
+       | ^
+     24|   for (const created of fixtures.splice(0)) await created.dispose();
+     25| }, 60_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 50 passed | 2 skipped (53)
+      Tests  1 failed | 702 passed | 6 skipped (709)
+   Start at  19:22:04
+   Duration  1146.48s (tests 69%, import 22%, transform 9%)
+
+    Isolate  53 workers spawned · ~926ms startup each (spawn + environment, per file)
+             at least ~23.62s faster with isolate: false — reuses workers across files instead of one per file
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 96.41% ( 1938/2010 )
+Branches     : 92.9% ( 1258/1354 )
+Functions    : 94.05% ( 380/404 )
+Lines        : 97.83% ( 1762/1801 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ \Users\<user>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d1-child-
+  │ recovery\apps\api
+

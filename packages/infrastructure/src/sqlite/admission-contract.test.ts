@@ -28,6 +28,7 @@ export async function createSqliteAdmissionFixture(): Promise<AdmissionContractF
     'create.event': 'BEFORE INSERT ON run_events',
     'create.receipt': 'BEFORE UPDATE ON webhook_receipts',
     'create.link': 'BEFORE UPDATE ON inbound_events',
+    'create.parent': "BEFORE INSERT ON run_events WHEN NEW.type = 'child_run.started'",
   };
   return {
     admission: new SqliteTriggerAdmission(handle.db, events),
