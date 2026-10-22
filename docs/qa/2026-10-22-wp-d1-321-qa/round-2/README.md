@@ -36,8 +36,8 @@ Timeout and cancellation use finite five-second subprocesses: their final classi
 
 [gate-results.jsonl](gate-results.jsonl) records exact commands, exit statuses and durations. Expected result for each command: exit zero. Logs are linked below.
 
-| Command group    | Actual exit | Seconds | Result | Log                                          |
-| ---------------- | ----------- | ------- | ------ | -------------------------------------------- |
+| Command group    | Actual exit | Seconds | Result | Log                                                  |
+| ---------------- | ----------- | ------- | ------ | ---------------------------------------------------- |
 | build            | 0           | 2.71    | PASS   | [build.log.txt](build.log.txt)                       |
 | prepare          | 0           | 0.3     | PASS   | [prepare.log.txt](prepare.log.txt)                   |
 | independent      | 0           | 43.23   | PASS   | [independent.log.txt](independent.log.txt)           |

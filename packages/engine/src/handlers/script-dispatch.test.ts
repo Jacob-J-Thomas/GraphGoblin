@@ -22,7 +22,13 @@ const dispatched: EventDraft = {
 };
 const failed: EventDraft = {
   type: 'run.failed',
-  failure: { code: 'SCRIPT_OUTCOME_UNCERTAIN', message: 'uncertain', resumable: true },
+  failure: {
+    code: 'SCRIPT_OUTCOME_UNCERTAIN',
+    message: 'uncertain',
+    resumable: true,
+    nodeId: 'script',
+    script: { visitId: `${runId}:1`, dispatchId, state: 'outcome-uncertain' },
+  },
 };
 const log = (...drafts: EventDraft[]) =>
   drafts.map((draft, index) =>
@@ -30,6 +36,36 @@ const log = (...drafts: EventDraft[]) =>
   );
 
 describe('script visit and attempt boundaries', () => {
+  it.each(['generic', 'different-visit', 'different-dispatch'] as const)(
+    '%s failure cannot dispose the current dispatch',
+    (kind) => {
+      const unrelated: EventDraft =
+        kind === 'generic'
+          ? {
+              type: 'run.failed',
+              failure: { code: 'INTERNAL_ERROR', message: 'bookkeeping failed', resumable: true },
+            }
+          : {
+              ...failed,
+              failure: {
+                ...failed.failure,
+                script: {
+                  visitId: kind === 'different-visit' ? `${runId}:99` : `${runId}:1`,
+                  dispatchId: kind === 'different-dispatch' ? fakeUlid('other') : dispatchId,
+                  state: 'completed',
+                },
+              },
+            };
+      expect(() =>
+        scriptVisit(log(started, dispatched, unrelated, started), runId, 'script'),
+      ).toThrow(/may already have produced its effect/);
+    },
+  );
+  it('refuses an unfinished pre-change visit without a dispatch marker', () => {
+    expect(() => scriptVisit(log(started, { ...started, attempt: 2 }), runId, 'script')).toThrow(
+      /may already have produced its effect/,
+    );
+  });
   it('retains the first start through attempts and failures, then starts a fresh visit after completion', () => {
     expect(scriptVisit(log(started, dispatched, failed, started), runId, 'script')).toBe(
       `${runId}:1`,

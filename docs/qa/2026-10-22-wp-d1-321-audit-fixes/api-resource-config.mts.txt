@@ -1,0 +1,16 @@
+import original from '<local>/apps/api/vitest.config.ts';
+export default {
+  ...original,
+  plugins: [...(original.plugins ?? []), {
+    name: 'wp-d1-owned-test-resources', enforce: 'pre' as const,
+    transform(code: string, id: string) {
+      if (!/\.test\.tsx?$|api-subprocess\.ts$|test-app\.ts$|global-setup\.ts$/.test(id.split('?')[0]!)) return;
+      return code.replaceAll("'gg-", "'gg-wp-d1-round3-")
+        .replaceAll('[5600, 5699]', '[5690, 5699]')
+        .replaceAll('[5910, 5919]', '[5690, 5694]')
+        .replaceAll('[5930, 5939]', '[5695, 5699]');
+    },
+  }],
+  test: { ...original.test, maxWorkers: 1, fileParallelism: false,
+    coverage: { ...original.test?.coverage, reportOnFailure: true } },
+};

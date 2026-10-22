@@ -20,8 +20,8 @@ The paired runs were executed three times consecutively, followed by the same pa
 
 For each test invocation the expected result is all selected tests passing with no EADDRINUSE. Build expects exit 0. [results.jsonl](results.jsonl) preserves exact commands and durations; [summary.json](summary.json) preserves counts and failure names.
 
-| Check / steps        | Passed | Failed | Skipped | Exit / result | EADDRINUSE mentions | Evidence                                             |
-| -------------------- | ------ | ------ | ------- | ------------- | ------------------- | ---------------------------------------------------- |
+| Check / steps        | Passed | Failed | Skipped | Exit / result | EADDRINUSE mentions | Evidence                                                     |
+| -------------------- | ------ | ------ | ------- | ------------- | ------------------- | ------------------------------------------------------------ |
 | build                | n/a    | n/a    | n/a     | 0 / PASS      | 0                   | [build.log.txt](build.log.txt)                               |
 | pair-1               | 5      | 1      | 0       | 1 / FAIL      | 0                   | [pair-1.log.txt](pair-1.log.txt)                             |
 | pair-2               | 6      | 0      | 0       | 0 / PASS      | 0                   | [pair-2.log.txt](pair-2.log.txt)                             |

@@ -120,7 +120,7 @@ describe('script dispatch recovery (#321)', () => {
         }
       }
       const recovered = (await e.ports.runs.get(run.id))!;
-      if (boundary === 'dispatch-ack') {
+      if (boundary === 'dispatch-ack' || boundary === 'before-dispatch') {
         expect(e.ports.scripts.calls).toHaveLength(0);
         expect(recovered.failure).toMatchObject({
           code: 'SCRIPT_OUTCOME_UNCERTAIN',
@@ -139,7 +139,11 @@ describe('script dispatch recovery (#321)', () => {
         expect(recovered.status).toBe('succeeded');
         expect(e.ports.scripts.calls).toHaveLength(1);
       }
-      if (boundary === 'dispatch-ack' || boundary === 'failure-ack') {
+      if (
+        boundary === 'dispatch-ack' ||
+        boundary === 'before-dispatch' ||
+        boundary === 'failure-ack'
+      ) {
         e.ports.scripts.respondWith(() => completed);
         const resumed = new RunManager(e.ports, e.settings);
         try {
@@ -149,9 +153,11 @@ describe('script dispatch recovery (#321)', () => {
           await resumed.waitForIdle();
           expect((await e.ports.runs.get(run.id))?.status).toBe('succeeded');
           const dispatches = e.events(run.id).filter((event) => event.type === 'script.dispatched');
-          expect(dispatches).toHaveLength(2);
-          expect(dispatches[1]!.visitId).toBe(dispatches[0]!.visitId);
-          expect(dispatches[1]!.dispatchId).not.toBe(dispatches[0]!.dispatchId);
+          expect(dispatches).toHaveLength(boundary === 'before-dispatch' ? 1 : 2);
+          if (boundary !== 'before-dispatch') {
+            expect(dispatches[1]!.visitId).toBe(dispatches[0]!.visitId);
+            expect(dispatches[1]!.dispatchId).not.toBe(dispatches[0]!.dispatchId);
+          }
         } finally {
           resumed.stop();
         }

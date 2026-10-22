@@ -1,0 +1,177 @@
+
+ RUN  v5.0.3 <local>/apps/api
+
+pnpm.cmd : stderr | src/script-persistence-restart.test.ts > script outcomes survive storage failure and upgrade 
+(#321) > node.progress refusal preserves uncertainty across a real restart and deliberate retry
+At line:2 char:85
++ ... ORES = '1'; pnpm.cmd --filter @graphgoblin/api exec vitest run src/sc ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (stderr | src/sc...eliberate retry:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+{"boundary":"node.progress","failure":{"code":"INTERNAL_ERROR","message":"Failed query: insert into \"run_events\" 
+(\"run_id\", \"seq\", \"ts\", \"type\", \"node_id\", \"payload\") values (?, ?, ?, ?, ?, ?)\nparams: 01M5JDDAAE9HESHGNX
+ZDY2V485,7,2026-10-22T18:19:13.823Z,node.progress,script,{\"progress\":{\"exitCode\":0,\"stderr\":\"\",\"stdoutBytes\":
+37}}","nodeId":"script","resumable":true,"details":{"name":"Error","stack":"Error: Failed query: insert into 
+\"run_events\" (\"run_id\", \"seq\", \"ts\", \"type\", \"node_id\", \"payload\") values (?, ?, ?, ?, ?, ?)\nparams: 01M
+5JDDAAE9HESHGNXZDY2V485,7,2026-10-22T18:19:13.823Z,node.progress,script,{\"progress\":{\"exitCode\":0,\"stderr\":\"\",\
+"stdoutBytes\":37}}\n    at LibSQLPreparedQuery.queryWithCache (file:///C:/Users/<user>/source/repos/GraphGoblin/.claude
+/worktrees/codex-wp-d1-child-recovery/node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/drizzle-
+orm/sqlite-core/session.js:43:15)\n    at async LibSQLPreparedQuery.run (file:///C:/Users/<user>/source/repos/GraphGobli
+n/.claude/worktrees/codex-wp-d1-child-recovery/node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules
+/drizzle-orm/libsql/session.js:121:12)\n    at async file:///C:/Users/<user>/source/repos/GraphGoblin/.claude/worktrees/
+codex-wp-d1-child-recovery/packages/infrastructure/dist/sqlite/events.js:77:13\n    at async LibSQLSession.transaction 
+(file:///<local>/node_modules/.pnpm/drizzl
+e-orm@0.45.3_@libsql+client@0.18.0/node_modules/drizzle-orm/libsql/session.js:71:22)\n    at async 
+SqliteEventStore.append (file:///<local>/p
+ackages/infrastructure/dist/sqlite/events.js:57:24)\n    at async appendAll (file:///C:/Users/<user>/source/repos/GraphG
+oblin/.claude/worktrees/codex-wp-d1-child-recovery/packages/engine/dist/run-manager.js:1107:28)\n    at async 
+Object.append [as record] (file:///<local>
+/packages/engine/dist/run-manager.js:1112:13)\n    at async Object.execute (file:///C:/Users/<user>/source/repos/GraphGo
+blin/.claude/worktrees/codex-wp-d1-child-recovery/packages/engine/dist/handlers/script.js:90:9)\n    at async 
+RunManager.execute (file:///<local>/packag
+es/engine/dist/run-manager.js:1271:26)"}},"recovered":{"code":"INTERNAL_ERROR","message":"Failed query: insert into 
+\"run_events\" (\"run_id\", \"seq\", \"ts\", \"type\", \"node_id\", \"payload\") values (?, ?, ?, ?, ?, ?)\nparams: 01M
+5JDDAAE9HESHGNXZDY2V485,7,2026-10-22T18:19:13.823Z,node.progress,script,{\"progress\":{\"exitCode\":0,\"stderr\":\"\",\
+"stdoutBytes\":37}}","nodeId":"script","resumable":true,"details":{"name":"Error","stack":"Error: Failed query: insert 
+into \"run_events\" (\"run_id\", \"seq\", \"ts\", \"type\", \"node_id\", \"payload\") values (?, ?, ?, ?, ?, 
+?)\nparams: 01M5JDDAAE9HESHGNXZDY2V485,7,2026-10-22T18:19:13.823Z,node.progress,script,{\"progress\":{\"exitCode\":0,\"
+stderr\":\"\",\"stdoutBytes\":37}}\n    at LibSQLPreparedQuery.queryWithCache (file:///C:/Users/<user>/source/repos/Grap
+hGoblin/.claude/worktrees/codex-wp-d1-child-recovery/node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_m
+odules/drizzle-orm/sqlite-core/session.js:43:15)\n    at async LibSQLPreparedQuery.run (file:///C:/Users/<user>/source/r
+epos/GraphGoblin/.claude/worktrees/codex-wp-d1-child-recovery/node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18
+.0/node_modules/drizzle-orm/libsql/session.js:121:12)\n    at async file:///C:/Users/<user>/source/repos/GraphGoblin/.cl
+aude/worktrees/codex-wp-d1-child-recovery/packages/infrastructure/dist/sqlite/events.js:77:13\n    at async 
+LibSQLSession.transaction (file:///<local>
+/node_modules/.pnpm/drizzle-orm@0.45.3_@libsql+client@0.18.0/node_modules/drizzle-orm/libsql/session.js:71:22)\n    at 
+async SqliteEventStore.append (file:///C:/Users/<user>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d1-child-reco
+very/packages/infrastructure/dist/sqlite/events.js:57:24)\n    at async appendAll (file:///C:/Users/<user>/source/repos/
+GraphGoblin/.claude/worktrees/codex-wp-d1-child-recovery/packages/engine/dist/run-manager.js:1107:28)\n    at async 
+Object.append [as record] (file:///<local>
+/packages/engine/dist/run-manager.js:1112:13)\n    at async Object.execute (file:///C:/Users/<user>/source/repos/GraphGo
+blin/.claude/worktrees/codex-wp-d1-child-recovery/packages/engine/dist/handlers/script.js:90:9)\n    at async 
+RunManager.execute (file:///<local>/packag
+es/engine/dist/run-manager.js:1271:26)"}},"markerAfterResume":2,"store":"%TEMP%\\gg-wp-
+d1-outcome-8fR8ES"}
+
+stderr | src/script-persistence-restart.test.ts > script outcomes survive storage failure and upgrade (#321) > 
+node.finished refusal preserves uncertainty across a real restart and deliberate retry
+{"boundary":"node.finished","failure":{"code":"INTERNAL_ERROR","message":"Failed query: insert into \"run_events\" 
+(\"run_id\", \"seq\", \"ts\", \"type\", \"node_id\", \"payload\") values (?, ?, ?, ?, ?, ?)\nparams: 01M5JDEBKKNASYTEY3
+6CAPJEPH,8,2026-10-22T18:19:47.033Z,node.finished,script,{\"patch\":[{\"op\":\"add\",\"path\":\"/outputs/script\",\"val
+ue\":{\"nodeId\":\"script\",\"value\":\"effect produced; waiting for release\\n\",\"at\":\"2026-10-22T18:19:47.032Z\"}}
+,{\"op\":\"replace\",\"path\":\"/lastOutput\",\"value\":{\"nodeId\":\"script\",\"value\":\"effect produced; waiting 
+for release\\n\",\"at\":\"2026-10-22T18:19:47.032Z\"}}],\"route\":\"out\",\"durationMs\":792}","resumable":true},"recov
+ered":{"code":"INTERNAL_ERROR","message":"Failed query: insert into \"run_events\" (\"run_id\", \"seq\", \"ts\", 
+\"type\", \"node_id\", \"payload\") values (?, ?, ?, ?, ?, ?)\nparams: 01M5JDEBKKNASYTEY36CAPJEPH,8,2026-10-22T18:19:47
+.033Z,node.finished,script,{\"patch\":[{\"op\":\"add\",\"path\":\"/outputs/script\",\"value\":{\"nodeId\":\"script\",\"
+value\":\"effect produced; waiting for release\\n\",\"at\":\"2026-10-22T18:19:47.032Z\"}},{\"op\":\"replace\",\"path\":
+\"/lastOutput\",\"value\":{\"nodeId\":\"script\",\"value\":\"effect produced; waiting for release\\n\",\"at\":\"2026-10
+-22T18:19:47.032Z\"}}],\"route\":\"out\",\"durationMs\":792}","resumable":true},"markerAfterResume":2,"store":"C:\\User
+s\\<user>\\AppData\\Local\\Temp\\gg-wp-d1-outcome-mVGJcl"}
+
+stderr | src/script-persistence-restart.test.ts > script outcomes survive storage failure and upgrade (#321) > a 
+constructed pre-change unfinished script history never automatically repeats its effect
+{"boundary":"pre-change-history","status":"succeeded","markerBeforeChoice":2,"store":"C:\\Users\\<user>\\AppData\\Local\
+\Temp\\gg-wp-d1-outcome-kNejG8"}
+
+ ❯ src/script-persistence-restart.test.ts (3 tests | 3 failed) 97985ms
+   ❯ script outcomes survive storage failure and upgrade (#321) (3)
+     × node.progress refusal preserves uncertainty across a real restart and deliberate retry 35618ms
+     × node.finished refusal preserves uncertainty across a real restart and deliberate retry 31085ms
+     × a constructed pre-change unfinished script history never automatically repeats its effect 31280ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/script-persistence-restart.test.ts > script outcomes survive storage failure and upgrade (#321) > 
+node.progress refusal preserves uncertainty across a real restart and deliberate retry
+AssertionError: expected { code: 'INTERNAL_ERROR', …(4) } to match object { …(4) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "SCRIPT_OUTCOME_UNCERTAIN",
++   "code": "INTERNAL_ERROR",
+    "nodeId": "script",
+    "resumable": true,
+-   "script": {
+-     "dispatchId": "01M5JDDAD1R79GZWZEB9KWXWB0",
+-     "state": "outcome-uncertain",
+-     "visitId": "01M5JDDAAE9HESHGNXZDY2V485:5",
+-   },
+  }
+
+ ❯ src/script-persistence-restart.test.ts:125:32
+    123|         await eventually(async () => (await f.get()).status === 'succe…
+    124|         console.warn(JSON.stringify({ boundary: type, failure: failed.…
+    125|         expect(failed.failure).toMatchObject({
+       |                                ^
+    126|           code: 'SCRIPT_OUTCOME_UNCERTAIN', nodeId: 'script', resumabl…
+    127|           script: { visitId: dispatch.visitId, dispatchId: dispatch.di…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/script-persistence-restart.test.ts > script outcomes survive storage failure and upgrade (#321) > 
+node.finished refusal preserves uncertainty across a real restart and deliberate retry
+AssertionError: expected { code: 'INTERNAL_ERROR', …(2) } to match object { …(4) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "SCRIPT_OUTCOME_UNCERTAIN",
+-   "nodeId": "script",
++   "code": "INTERNAL_ERROR",
+    "resumable": true,
+-   "script": {
+-     "dispatchId": "01M5JDEBP2345WF8TJ2QVR70XN",
+-     "state": "outcome-uncertain",
+-     "visitId": "01M5JDEBKKNASYTEY36CAPJEPH:5",
+-   },
+  }
+
+ ❯ src/script-persistence-restart.test.ts:125:32
+    123|         await eventually(async () => (await f.get()).status === 'succe…
+    124|         console.warn(JSON.stringify({ boundary: type, failure: failed.…
+    125|         expect(failed.failure).toMatchObject({
+       |                                ^
+    126|           code: 'SCRIPT_OUTCOME_UNCERTAIN', nodeId: 'script', resumabl…
+    127|           script: { visitId: dispatch.visitId, dispatchId: dispatch.di…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/script-persistence-restart.test.ts > script outcomes survive storage failure and upgrade (#321) > a 
+constructed pre-change unfinished script history never automatically repeats its effect
+AssertionError: expected 2 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ src/script-persistence-restart.test.ts:154:29
+    152|     const recovered = await f.get();
+    153|     console.warn(JSON.stringify({ boundary: 'pre-change-history', stat…
+    154|     expect(await f.count()).toBe(1);
+       |                             ^
+    155|     expect(recovered.failure).toMatchObject({
+    156|       code: 'SCRIPT_OUTCOME_UNCERTAIN', nodeId: 'script', resumable: t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  13:18:24
+   Duration  123.05s (tests 81%, transform 15%, import 4%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ \Users\<user>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d1-child-
+  │ recovery\apps\api
+

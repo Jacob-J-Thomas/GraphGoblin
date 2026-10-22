@@ -1,0 +1,72 @@
+pnpm.cmd : $ vitest run --coverage --config 
+'%TEMP%\gg-wp-d1-round3-config-475136566b2e40e5ab5dfe81134fbccd\api.config.mts'
+At line:2 char:485
++ ... STORES='1'; pnpm.cmd --filter @graphgoblin/api test:coverage --config ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...api.config.mts':String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 <local>/apps/api
+      Coverage enabled with v8
+
+child admission kill: delay=0ms snapshots=20283 children-at-kill=1 unlinked=none parents=24 child-counts=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+child admission kill: delay=5ms snapshots=20111 children-at-kill=1 unlinked=none parents=24 child-counts=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+child admission kill: delay=25ms snapshots=21465 children-at-kill=1 unlinked=none parents=24 child-counts=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+ ❯ src/child-creation-restart.test.ts (3 tests | 1 failed) 133165ms
+   ❯ child admission across a real API kill (#320) (3)
+     × kill 0ms after admission never exposes an unlinked child and recovers one child per nested parent visit 70644ms
+{"level":30,"time":1792694152140,"pid":48136,"hostname":"<host>","msg":"Server listening at http://127.0.0.1:5693"}
+{"level":30,"time":1792694152141,"pid":48136,"hostname":"<host>","host":"127.0.0.1","port":5693,"dataDir":"%TEMP%\\gg-wp-d1-round3-api-process-9E4dt0","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792694152169,"pid":48136,"hostname":"<host>","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792694152173,"pid":48136,"hostname":"<host>","reqId":"req-1","res":{"statusCode":200},"responseTime":4.17620000000079,"msg":"request completed"}
+subloop kill landings:
+delay undefined: leaf waiting at restart; recovery restarts top 0, middle 0, leaf 0
+delay 0: leaf running at restart; recovery restarts top 0, middle 0, leaf 1
+delay 10: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 30: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 60: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 100: leaf succeeded at restart; recovery restarts top 1, middle 0, leaf 0
+delay 150: leaf succeeded at restart; recovery restarts top 1, middle 0, leaf 0
+delay 250: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/child-creation-restart.test.ts > child admission across a real API kill (#320) > kill 0ms after admission 
+never exposes an unlinked child and recovers one child per nested parent visit
+Error: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ src/child-creation-restart.test.ts:22:1
+     20|
+     21| const fixtures: Awaited<ReturnType<typeof createApiProcessFixture>>[] …
+     22| afterEach(async () => {
+       | ^
+     23|   for (const fixture of fixtures.splice(0)) {
+     24|     await fixture.dispose();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 52 passed | 2 skipped (55)
+      Tests  1 failed | 708 passed | 6 skipped (715)
+   Start at  13:33:28
+   Duration  848.82s (tests 75%, import 24%, transform 1%, worker 1%)
+
+    Isolate  55 workers spawned · ~618ms startup each (spawn + environment, per file)
+             at least ~33.35s faster with isolate: false — reuses workers across files instead of one per file
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 96.41% ( 1938/2010 )
+Branches     : 92.9% ( 1258/1354 )
+Functions    : 94.05% ( 380/404 )
+Lines        : 97.83% ( 1762/1801 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ \Users\<user>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d1-child-
+  │ recovery\apps\api
+
