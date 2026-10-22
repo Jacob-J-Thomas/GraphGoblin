@@ -423,7 +423,7 @@ describe('exit evidence summaries', () => {
     // A run recorded by an older build omitted a null result (CHANGELOG, format 4): with an
     // expression exit, or without the definition, the history cannot show a no-value configuration.
     expect(exitReturnSummary(finishedRun(), undefined)).toBe(
-      'No value was recorded for this run. The pinned definition is not available, so whether the exit’s Returns is None cannot be shown.',
+      'No value was recorded for this run. The pinned definition is not available, so the exit’s Returns setting cannot be shown.',
     );
     expect(exitReturnSummary(finishedRun(), exitDefinition([{ kind: 'caller' }], 'null'))).toBe(
       'No value was recorded for this run. The exit’s Returns is an expression, so the history alone does not show whether it returned nothing or a null that an older build did not record.',
@@ -441,7 +441,7 @@ describe('exit evidence summaries', () => {
       ),
     });
     expect(exitReturnSummary(finishedRun(), renamed)).toBe(
-      'No value was recorded for this run. The pinned definition has no exit node done, so whether the exit’s Returns is None cannot be shown.',
+      'No value was recorded for this run. The pinned definition has no exit node done, so the exit’s Returns setting cannot be shown.',
     );
   });
 

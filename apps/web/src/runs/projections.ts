@@ -244,7 +244,7 @@ export function exitReturnSummary(
   if (!exit || !finished || finished.result !== undefined) return undefined;
   const node = definition?.nodes.find((n) => n.id === exit.nodeId);
   if (node?.kind !== 'exit')
-    return `No value was recorded for this run. The pinned definition ${definition ? `has no exit node ${exit.nodeId}` : 'is not available'}, so whether the exit’s Returns is None cannot be shown.`;
+    return `No value was recorded for this run. The pinned definition ${definition ? `has no exit node ${exit.nodeId}` : 'is not available'}, so the exit’s Returns setting cannot be shown.`;
   if (node.config.returns !== 'none')
     return 'No value was recorded for this run. The exit’s Returns is an expression, so the history alone does not show whether it returned nothing or a null that an older build did not record.';
   const configuration = 'This is the exit’s configuration, not a failure.';
