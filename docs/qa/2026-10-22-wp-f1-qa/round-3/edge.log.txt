@@ -1,0 +1,282 @@
+Command: pnpm.cmd --filter @graphgoblin/web test:e2e readiness claude-harness model-picker
+Node: v22.14.0
+Revision: c2a2b6632c0996383abe491268baf871aec448dd
+Exit: 1
+Elapsed ms: 400561
+
+$ playwright test readiness claude-harness model-picker
+
+Running 22 tests using 1 worker
+
+(node:46880) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:46880) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 [chromium] › e2e\claude-harness.spec.ts:77:1 › Claude inference selection stays family-specific through publish and run (5.6s)
+  ✘   2 [chromium] › e2e\claude-harness.spec.ts:159:3 › saved Codex model stays labelled on narrow Claude editor with readiness false (16.8s)
+(node:45496) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:45496) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘   3 [chromium] › e2e\claude-harness.spec.ts:159:3 › saved Codex model stays labelled on narrow Claude editor with readiness true (1.1m)
+(node:57224) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:57224) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   4 [chromium] › e2e\claude-harness.spec.ts:220:1 › a ready Claude model field stays editable while a focus refetch rechecks readiness (4.3s)
+  ✓   5 [chromium] › e2e\claude-harness.spec.ts:278:1 › Settings separates Claude adapter support from CLI readiness and supports Fable (1.2s)
+  ✓   6 [chromium] › e2e\claude-harness.spec.ts:343:1 › Claude settings stay pending through refresh and preserve the Codex defaults (1.3s)
+  ✓   7 [chromium] › e2e\claude-harness.spec.ts:410:1 › Claude inspector shows requested effort and policy artifact, and preserves unconfirmed termination failure (2.3s)
+  ✘   8 [chromium] › e2e\model-picker.spec.ts:28:3 › catalog model and effort publish and reach the harness (dark) (11.5s)
+(node:35740) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:35740) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘   9 [chromium] › e2e\model-picker.spec.ts:28:3 › catalog model and effort publish and reach the harness (light) (11.9s)
+(node:5840) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:5840) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  10 [chromium] › e2e\model-picker.spec.ts:94:1 › a saved model removed from the catalog stays selected and explicit unknown import is rejected (13.9s)
+(node:33516) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:33516) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  11 [chromium] › e2e\model-picker.spec.ts:151:1 › catalog failure preserves the current values until retry and loop defaults share the picker (1.0m)
+(node:44880) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:44880) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  12 [chromium] › e2e\model-picker.spec.ts:195:1 › the decision LLM uses an explicit harness model and rejects unsupported effort on admission (2.3s)
+  ✓  13 [chromium] › e2e\model-picker.spec.ts:276:1 › following a model issue keeps focus through a delayed catalog and a failed cached refresh (7.7s)
+  ✓  14 [chromium] › e2e\readiness.spec.ts:27:3 › Settings labels unknown separately from model support (995ms)
+  ✓  15 [chromium] › e2e\readiness.spec.ts:27:3 › Settings labels ready separately from model support (911ms)
+  ✓  16 [chromium] › e2e\readiness.spec.ts:27:3 › Settings labels cli-missing separately from model support (869ms)
+  ✓  17 [chromium] › e2e\readiness.spec.ts:27:3 › Settings labels cli-incompatible separately from model support (884ms)
+  ✓  18 [chromium] › e2e\readiness.spec.ts:27:3 › Settings labels auth separately from model support (913ms)
+  ✓  19 [chromium] › e2e\readiness.spec.ts:27:3 › Settings labels quota separately from model support (997ms)
+  ✓  20 [chromium] › e2e\readiness.spec.ts:27:3 › Settings labels transport separately from model support (985ms)
+  ✓  21 [chromium] › e2e\readiness.spec.ts:52:1 › Settings keeps the last result while rechecking, shows a failed lookup once and retries (2.6s)
+  ✓  22 [chromium] › e2e\readiness.spec.ts:98:1 › Settings shows the loading text during the first check (822ms)
+
+
+  1) [chromium] › e2e\claude-harness.spec.ts:159:3 › saved Codex model stays labelled on narrow Claude editor with readiness false 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('dialog').getByRole('status').filter({ hasText: 'Claude is not signed in. Run claude auth login, then retry preflight. Model choices are read-only until Claude is ready.' })
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('dialog').getByRole('status').filter({ hasText: 'Claude is not signed in. Run claude auth login, then retry preflight. Model choices are read-only until Claude is ready.' }) with timeout 10000ms
+      - waiting for getByRole('dialog').getByRole('status').filter({ hasText: 'Claude is not signed in. Run claude auth login, then retry preflight. Model choices are read-only until Claude is ready.' })
+
+
+      198 |             'Claude is not signed in. Run claude auth login, then retry preflight. Model choices are read-only until Claude is ready.',
+      199 |         }),
+    > 200 |       ).toBeVisible();
+          |         ^
+      201 |       await control(request, '/harness/preflight', {
+      202 |         instanceId: instance.id,
+      203 |         harness: 'claude',
+        at <worktree>\apps\web\e2e\claude-harness.spec.ts:200:9
+
+[Ephemeral Playwright attachment omitted; not retained.]
+
+[Ephemeral Playwright attachment omitted; not retained.]
+[Ephemeral Playwright attachment omitted; not retained.]
+    Usage:
+
+[Ephemeral Playwright attachment omitted; not retained.]
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium] › e2e\claude-harness.spec.ts:159:3 › saved Codex model stays labelled on narrow Claude editor with readiness true 
+
+    Test timeout of 60000ms exceeded.
+
+    Error: locator.selectOption: Test timeout of 60000ms exceeded.
+    Call log:
+      - waiting for getByRole('dialog').getByLabel('Model', { exact: true })
+        - locator resolved to <select id="_r_1u_" aria-describedby="_r_1u_-help _r_1i_-model-catalog" class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-su…>…</select>
+      - attempting select option action
+        2 × waiting for element to be visible and enabled
+          - element is not visible
+        - retrying select option action
+        - waiting 20ms
+        2 × waiting for element to be visible and enabled
+          - element is not visible
+        - retrying select option action
+          - waiting 100ms
+        120 × waiting for element to be visible and enabled
+            - element is not visible
+          - retrying select option action
+            - waiting 500ms
+
+
+      207 |     }
+      208 |     await expect(model).not.toHaveAttribute('aria-readonly', 'true');
+    > 209 |     await model.selectOption('claude-fable-5-1');
+          |                 ^
+      210 |     await expect(model).toHaveValue('claude-fable-5-1');
+      211 |     await expect(dialog.getByLabel('Sandbox and approval policy', { exact: true })).toHaveValue(
+      212 |       '0',
+        at <worktree>\apps\web\e2e\claude-harness.spec.ts:209:17
+
+[Ephemeral Playwright attachment omitted; not retained.]
+
+[Ephemeral Playwright attachment omitted; not retained.]
+[Ephemeral Playwright attachment omitted; not retained.]
+    Usage:
+
+[Ephemeral Playwright attachment omitted; not retained.]
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [chromium] › e2e\model-picker.spec.ts:28:3 › catalog model and effort publish and reach the harness (dark) 
+
+    Error: expect(locator).toHaveValue(expected) failed
+
+    Locator:  getByRole('dialog').getByLabel('Model', { exact: true })
+    Expected: "picker-dark"
+    Received: ""
+    Timeout:  10000ms
+
+    Call log:
+      - Expect "toHaveValue" getByRole('dialog').getByLabel('Model', { exact: true }) with timeout 10000ms
+      - waiting for getByRole('dialog').getByLabel('Model', { exact: true })
+        23 × locator resolved to <select id="_r_12_" aria-describedby="_r_12_-help" class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-point…>…</select>
+           - unexpected value ""
+
+
+      54 |     await page.keyboard.type(`Picker ${theme}`);
+      55 |     await page.keyboard.press('Enter');
+    > 56 |     await expect(model).toHaveValue(selected);
+         |                         ^
+      57 |     const effort = dialog.getByLabel('Effort', { exact: true });
+      58 |     await expect(effort.locator('option')).toHaveText([
+      59 |       '(inherited; the catalog suggests low)',
+        at <worktree>\apps\web\e2e\model-picker.spec.ts:56:25
+
+[Ephemeral Playwright attachment omitted; not retained.]
+
+[Ephemeral Playwright attachment omitted; not retained.]
+[Ephemeral Playwright attachment omitted; not retained.]
+    Usage:
+
+[Ephemeral Playwright attachment omitted; not retained.]
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) [chromium] › e2e\model-picker.spec.ts:28:3 › catalog model and effort publish and reach the harness (light) 
+
+    Error: expect(locator).toHaveValue(expected) failed
+
+    Locator:  getByRole('dialog').getByLabel('Model', { exact: true })
+    Expected: "picker-light"
+    Received: ""
+    Timeout:  10000ms
+
+    Call log:
+      - Expect "toHaveValue" getByRole('dialog').getByLabel('Model', { exact: true }) with timeout 10000ms
+      - waiting for getByRole('dialog').getByLabel('Model', { exact: true })
+        23 × locator resolved to <select id="_r_12_" aria-describedby="_r_12_-help" class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-point…>…</select>
+           - unexpected value ""
+
+
+      54 |     await page.keyboard.type(`Picker ${theme}`);
+      55 |     await page.keyboard.press('Enter');
+    > 56 |     await expect(model).toHaveValue(selected);
+         |                         ^
+      57 |     const effort = dialog.getByLabel('Effort', { exact: true });
+      58 |     await expect(effort.locator('option')).toHaveText([
+      59 |       '(inherited; the catalog suggests low)',
+        at <worktree>\apps\web\e2e\model-picker.spec.ts:56:25
+
+[Ephemeral Playwright attachment omitted; not retained.]
+
+[Ephemeral Playwright attachment omitted; not retained.]
+[Ephemeral Playwright attachment omitted; not retained.]
+    Usage:
+
+[Ephemeral Playwright attachment omitted; not retained.]
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5) [chromium] › e2e\model-picker.spec.ts:94:1 › a saved model removed from the catalog stays selected and explicit unknown import is rejected 
+
+    Error: expect(locator).toHaveAttribute(expected) failed
+
+    Locator: getByRole('dialog').getByRole('link', { name: 'Model catalog in Settings' })
+    Expected: "/app/settings"
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toHaveAttribute" getByRole('dialog').getByRole('link', { name: 'Model catalog in Settings' }) with timeout 10000ms
+      - waiting for getByRole('dialog').getByRole('link', { name: 'Model catalog in Settings' })
+
+
+      128 |     'alert',
+      129 |   );
+    > 130 |   await expect(dialog.getByRole('link', { name: 'Model catalog in Settings' })).toHaveAttribute(
+          |                                                                                 ^
+      131 |     'href',
+      132 |     '/app/settings',
+      133 |   );
+        at <worktree>\apps\web\e2e\model-picker.spec.ts:130:81
+
+[Ephemeral Playwright attachment omitted; not retained.]
+
+[Ephemeral Playwright attachment omitted; not retained.]
+[Ephemeral Playwright attachment omitted; not retained.]
+    Usage:
+
+[Ephemeral Playwright attachment omitted; not retained.]
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  6) [chromium] › e2e\model-picker.spec.ts:151:1 › catalog failure preserves the current values until retry and loop defaults share the picker 
+
+    Test timeout of 60000ms exceeded.
+
+    Error: locator.click: Test timeout of 60000ms exceeded.
+    Call log:
+      - waiting for getByRole('dialog').getByRole('button', { name: 'Retry model catalog' })
+
+
+      175 |   await expect(model).toHaveAccessibleDescription(/Cannot load the model catalog/);
+      176 |   await page.unroute('**/model-catalog');
+    > 177 |   await dialog.getByRole('button', { name: 'Retry model catalog' }).click();
+          |                                                                     ^
+      178 |   await expect(model).not.toHaveAttribute('aria-readonly');
+      179 |   await expect(model).toHaveValue(chosen.model);
+      180 |   await closeNode(page);
+        at <worktree>\apps\web\e2e\model-picker.spec.ts:177:69
+
+[Ephemeral Playwright attachment omitted; not retained.]
+
+[Ephemeral Playwright attachment omitted; not retained.]
+[Ephemeral Playwright attachment omitted; not retained.]
+    Usage:
+
+[Ephemeral Playwright attachment omitted; not retained.]
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  6 failed
+    [chromium] › e2e\claude-harness.spec.ts:159:3 › saved Codex model stays labelled on narrow Claude editor with readiness false 
+    [chromium] › e2e\claude-harness.spec.ts:159:3 › saved Codex model stays labelled on narrow Claude editor with readiness true 
+    [chromium] › e2e\model-picker.spec.ts:28:3 › catalog model and effort publish and reach the harness (dark) 
+    [chromium] › e2e\model-picker.spec.ts:28:3 › catalog model and effort publish and reach the harness (light) 
+    [chromium] › e2e\model-picker.spec.ts:94:1 › a saved model removed from the catalog stays selected and explicit unknown import is rejected 
+    [chromium] › e2e\model-picker.spec.ts:151:1 › catalog failure preserves the current values until retry and loop defaults share the picker 
+  16 passed (6.3m)
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in <user-path>
+  │ f1\apps\web
+

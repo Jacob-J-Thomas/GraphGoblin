@@ -1,0 +1,74 @@
+[
+  {
+    "system": "Edge",
+    "case": "Defaults initial catalog",
+    "steps": "Run the retained collector against the disposable built API.",
+    "expected": "Checking before first catalog response",
+    "actual": "Defaults\nCodex\nDefault model\n(server default)\ngpt-6-luna (saved)\nDefault effort\n(server default)\nminimal\nlow\nmedium\nhigh\nxhigh\nmax\n\nChecking…\n\nClaude\nDefault model (claude)\n(server default)\nclaude-opus-5-5 (saved)\nDefault effort (claude)\n(server default)\nhigh (unavailable)\n\nThis is the requested effort; Claude does not report the effective effort.\n\nChecking…",
+    "pass": true
+  },
+  {
+    "system": "Edge",
+    "case": "Defaults saved labels and catalog vocabulary",
+    "steps": "Run the retained collector against the disposable built API.",
+    "expected": "Claude saved label; Codex keeps catalog choices; one readiness help line per harness; matching catalog vocabulary",
+    "actual": {
+      "selected": ["GPT-6 Luna", "high", "Claude Opus 5.5 (saved)", "high"],
+      "text": "Defaults\nCodex\nDefault model\n(server default)\nGPT-5.5\nGPT-5.6 Luna\nGPT-5.6 Sol\nGPT-5.6 Terra\nGPT-6 Astra\nGPT-6 Luna\nGPT-6 Sol\nGPT-6.1 Sol\nDefault effort\n(server default)\nminimal\nlow\nmedium\nhigh\nxhigh\nmax\n\nCodex readiness: Sign-in needed. See Harness preflight below.\n\nClaude\nDefault model (claude)\n(server default)\nClaude Opus 5.5 (saved)\nDefault effort (claude)\n(server default)\nlow\nmedium\nhigh\nxhigh\nmax\n\nThis is the requested effort; Claude does not report the effective effort.\n\nClaude readiness: Sign-in needed. See Harness preflight below.",
+      "catalog": "Model catalog\n\nLocal models served through LiteLLM will appear here once the LiteLLM adapter is configured; see the Settings guide, Choose a model and effort.\n\nMODEL\tEFFORTS\tENABLED\nClaude Fable 5.1 claude/claude-fable-5-1\tlow, medium, high, xhigh, max (default high)\t\nClaude Fable 5.1:\nEnabled\n\nEnabled in catalog.\nClaude readiness: Sign-in needed.\n\n\nClaude Opus 5.5 claude/claude-opus-5-5\tlow, medium, high, xhigh, max (default high)\t\nClaude Opus 5.5:\nEnabled\n\nEnabled in catalog.\nClaude readiness: Sign-in needed.\n\n\nGPT-5.5 codex/gpt-5.5\tminimal, low, medium, high, xhigh, max (default medium)\t\nGPT-5.5:\nEnabled\n\nEnabled in catalog.\nCodex readiness: Sign-in needed.\n\n\nGPT-5.6 Luna codex/gpt-5.6-luna\tminimal, low, medium, high, xhigh, max (default low)\t\nGPT-5.6 Luna:\nEnabled\n\nEnabled in catalog.\nCodex readiness: Sign-in needed.\n\n\nGPT-5.6 Sol codex/gpt-5.6-sol\tminimal, low, medium, high, xhigh, max (default medium)\t\nGPT-5.6 Sol:\nEnabled\n\nEnabled in catalog.\nCodex readiness: Sign-in needed.\n\n\nGPT-5.6 Terra codex/gpt-5.6-terra\tminimal, low, medium, high, xhigh, max (default medium)\t\nGPT-5.6 Terra:\nEnabled\n\nEnabled in catalog.\nCodex readiness: Sign-in needed.\n\n\nGPT-6 Astra codex/gpt-6-astra\tminimal, low, medium, high, xhigh, max (default medium)\t\nGPT-6 Astra:\nEnabled\n\nEnabled in catalog.\nCodex readiness: Sign-in needed.\n\n\nGPT-6 Luna codex/gpt-6-luna\tminimal, low, medium, high, xhigh, max (default low)\t\nGPT-6 Luna:\nEnabled\n\nEnabled in catalog.\nCodex readiness: Sign-in needed.\n\n\nGPT-6 Sol codex/gpt-6-sol\tminimal, low, medium, high, xhigh, max (default medium)\t\nGPT-6 Sol:\nEnabled\n\nEnabled in catalog.\nCodex readiness: Sign-in needed.\n\n\nGPT-6.1 Sol codex/gpt-6.1-sol\tminimal, low, medium, high, xhigh, max (default medium)\t\nGPT-6.1 Sol:\nEnabled\n\nEnabled in catalog.\nCodex readiness: Sign-in needed.",
+      "imageDisposition": "The setup image was superseded; only the textual observation and counts from this attempt are retained. Final qualifying images have their own records."
+    },
+    "pass": true
+  },
+  {
+    "system": "Edge",
+    "case": "Retry while fetching",
+    "steps": "Run the retained collector against the disposable built API.",
+    "expected": "Disabled Retry, last auth badges, muted Rechecking live region",
+    "actual": {
+      "text": "Harness preflight\nRechecking…\nRetry preflight\nReady\ncodex\nv0.160.0-beta.1\nSign-in needed\nclaude\nv2.1.287\nClaude is not signed in. Run claude auth login, then retry preflight.\nclaude-opus-5-5\nlisted by adapter\nclaude-fable-5-1\nlisted by adapter\n\nAdapter model listings do not confirm account access. Preflight never starts a model turn.",
+      "imageDisposition": "The setup image was superseded; only the textual observation and counts from this attempt are retained. Final qualifying images have their own records."
+    },
+    "pass": false
+  },
+  {
+    "system": "Edge",
+    "case": "Offline previous result",
+    "steps": "Run the retained collector against the disposable built API.",
+    "expected": "Ready badges and offline live region",
+    "actual": {
+      "text": "Harness preflight\nOffline; showing the last check.\nRetry preflight\nReady\ncodex\nv0.160.0-beta.1\nReady\nclaude\nv2.1.287\n\nSigned in with Claude.ai.\n\nclaude-opus-5-5\nlisted by adapter\nclaude-fable-5-1\nlisted by adapter\n\nAdapter model listings do not confirm account access. Preflight never starts a model turn.",
+      "imageDisposition": "The setup image was superseded; only the textual observation and counts from this attempt are retained. Final qualifying images have their own records."
+    },
+    "pass": true
+  },
+  {
+    "system": "Edge",
+    "case": "Phone width",
+    "steps": "Run the retained collector against the disposable built API.",
+    "expected": "No horizontal document overflow",
+    "actual": {
+      "viewport": 390,
+      "scrollWidth": 390,
+      "imageDisposition": "The setup image was superseded; only the textual observation and counts from this attempt are retained. Final qualifying images have their own records."
+    },
+    "pass": true
+  },
+  {
+    "system": "Edge",
+    "case": "claude editor focus refetch",
+    "steps": "Run the retained collector against the disposable built API.",
+    "expected": "Previous ready model editable during pending check; public browser visibility event triggers native probes",
+    "actual": {
+      "value": "claude-opus-5-5",
+      "readonly": null,
+      "text": "Edit inference\ninfer0\n\nRequired fields are marked *\n\nNode id\n*\nLabel\n*\nSettings\nContext\nHarness\ncodex\nclaude\n\nHarness that runs the session.\n\nSession\nPolicy\nfresh\nresume-previous\nresume-named\n\nStart fresh, resume the previous session, or resume a named session.\n\nPrompt\n\nLiquid template rendered against the thread.\n\nTemplate\n*\nLiquid\n1\nNo paid turn; fixture refuses execution\nPreview (sample thread): No paid turn; fixture refuses execution\nEarlier node outputs (1)\nSandbox and approval policy\nRead-only — built-in tools only; no OS or read-path isolation\nDanger full access — command execution and network unconfined\n\nRead-only restricts built-in tools but provides no filesystem or OS confinement. Danger full access leaves command execution and network unconfined.\n\nAdvanced\n2 set\nMODEL\nModel\n(loop default)\nClaude Fable 5.1 (claude-fable-5-1)\nClaude Opus 5.5 (claude-opus-5-5)\n\nModel; inherits within this harness from loop, owner, then process defaults.\n\nModel catalog in Settings\nEffort\n(inherited; the catalog suggests high)\nlow\nmedium\nhigh\nxhigh\nmax\n\nReasoning effort; inherits within this harness like the model. Catalog effort is guidance only. For Claude, this is the requested effort; the CLI does not report the effective effort.\n\nHARNESS OPTIONS\nApproval\nnever\n\nClaude supports never approval only; choose a supported policy above to correct this value.\n\nNetwork access\nNot set\nYes\nNo\n\nLet commands in the sandbox reach the network.\n\nWeb search\nNot set\nYes\nNo\n\nLet the model search the web.\n\nEdit as JSON\nConfig overrides\n\nRaw harness configuration, passed through as is.\n\nAdd entry\nEdit as JSON\n\nNo resolved capability identifiers are available. Enter authored slugs.\n\nAdd capabilities\nOUTPUT\nCapture transcript\nartifact\nnone\n\nKeep the session transcript as an artifact, or not.\n\nTo messages\nfinal\nfinal-and-notes\nnone\n\nWhat the answer adds to the thread's messages.\n\nEdit as JSON\nTransforms\n\nMutations applied to the answer before it lands.\n\nAdd transforms\nAdd schema\nLIMITS\nTimeout seconds\n\nOptional watchdog; a timeout fails the run.\n\nConnections\nout → done\nDelete node\nDone",
+      "calls": {
+        "claude": [],
+        "codex": []
+      },
+      "imageDisposition": "The setup image was superseded; only the textual observation and counts from this attempt are retained. Final qualifying images have their own records."
+    },
+    "pass": false
+  }
+]

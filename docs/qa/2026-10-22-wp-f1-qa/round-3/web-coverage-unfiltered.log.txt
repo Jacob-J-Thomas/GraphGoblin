@@ -1,0 +1,1798 @@
+Command: pnpm.cmd --filter @graphgoblin/web test:coverage --maxWorkers 4 --coverage.reportOnFailure --coverage.reporter=text --coverage.reporter=json-summary --reporter=default --reporter=json --outputFile='<disposable-json-report>'
+Node: v22.14.0
+Revision: c2a2b6632c0996383abe491268baf871aec448dd
+Exit: 1
+Elapsed ms: 1010845
+
+$ vitest run --coverage --maxWorkers 4 --coverage.reportOnFailure --coverage.reporter=text --coverage.reporter=json-summary --reporter=default --reporter=json --outputFile=<disposable-json-report>
+
+ RUN  v5.0.3 <worktree>/apps/web
+      Coverage enabled with v8
+
+ ✓ src/forms/review.test.tsx (15 tests) 30300ms
+   ✓ saves required templates exactly as typed (""), without a Required message 3764ms
+   ✓ saves required templates exactly as typed (" "), without a Required message 1528ms
+   ✓ keeps typed expression whitespace in the view, omits optional blanks, and uses the schema error only 1568ms
+   ✓ focuses a newly added code editor after StrictMode recreates its view 2055ms
+   ✓ rechecks a refused key when its conflicting row is removed 2062ms
+   ✓ announces each collision transition once and includes the reason when reverting the key 2882ms
+   ✓ reverts a still-refused key on blur and announces it without duplicating the error announcement 2068ms
+   ✓ commits an available key draft on blur after its conflicting row disappears 1520ms
+   ✓ clears hidden parse errors when an optional union is unset 1276ms
+   ✓ retains identical unparsed text in a surviving nested array row after clearing and reusing its path 1816ms
+   ✓ clears hidden parse errors when a nested union switches variant, including switching back 2002ms
+   ✓ clears descendant parse errors when an optional object is removed 2075ms
+   ✓ clears all parse errors when the root variant changes 1900ms
+   ✓ resynchronizes row identities after an external reset grows and shrinks the array 3620ms
+ ✓ src/settings/SettingsPage.test.tsx (38 tests) 71796ms
+   ✓ SettingsPage (35)
+     ✓ recovers heading focus when Delete gpt-6-luna refreshes before React commits its row removal 4884ms
+     ✓ recovers heading focus when Delete secret jev-api-key refreshes before React commits its row removal 2480ms
+     ✓ recovers heading focus when Revoke mcp refreshes before React commits its row removal 4373ms
+     ✓ finishes revocation before a held list refresh, then restores focus after success 3424ms
+     ✓ finishes revocation before a held list refresh, then restores focus after 401 2699ms
+     ✓ review: refreshes the vanished Delete gpt-6-luna after a 404 is dismissed 3020ms
+     ✓ review: refreshes the vanished Delete secret jev-api-key after a 404 is dismissed 1496ms
+     ✓ review: refreshes the vanished Revoke mcp after a 404 is dismissed 3449ms
+     ✓ review: shows no browser-key warning when no key is stored 1869ms
+     ✓ review: describes startup re-seeding in the Jev deletion confirmation 1068ms
+     ✓ edits and deletes LiteLLM rows and toggles through PATCH 9729ms
+     ✓ explains catalog removal without promising harness models will return 1438ms
+     ✓ shows catalog save errors 2905ms
+     ✓ shows only enable switches for harness models and keeps Defaults in sync 1153ms
+     ✓ offers Add, Edit and Delete only for LiteLLM rows in a mixed catalog 3450ms
+     ✓ refreshes a vanished toggle and preserves focus on vanished switch 1005ms
+     ✓ refreshes a vanished toggle and preserves focus on another control 716ms
+     ✓ review: focuses the heading when a row vanishes while its toggle is pending, and clears the notice on the next toggle 810ms
+     ✓ keeps the local-model note hidden until the catalog is loaded 543ms
+     ✓ shows the saved disabled default truthfully until another model is chosen 908ms
+     ✓ shows the saved missing default truthfully until another model is chosen 663ms
+     ✓ saves default model and effort 1581ms
+     ✓ bounds inherited Claude default efforts without materializing a model, preserving saved undefined 560ms
+     ✓ bounds inherited Claude default efforts without materializing a model, preserving saved minimal 831ms
+     ✓ keeps Claude defaults per harness and enables Fable through the catalog 1872ms
+     ✓ keeps every harness default while a settings refresh is held between saves 1238ms
+     ✓ shows adapter support separately from a failed Claude CLI preflight 552ms
+     ✓ sets and deletes secrets without ever showing values 3513ms
+     ✓ creates an API key, shows the token once, and revokes keys 1137ms
+     ✓ shows harness preflight status and the install hint 415ms
+     ✓ confirms Delete gpt-6-luna, cancels without a request, and surfaces a second-delete error 1411ms
+     ✓ confirms Delete secret jev-api-key, cancels without a request, and surfaces a second-delete error 1444ms
+     ✓ confirms Revoke mcp, cancels without a request, and surfaces a second-delete error 1374ms
+     ✓ locks a secret deletion until the API finishes and returns focus to Secrets 1378ms
+     ✓ warns about browser access only when revoking the current key 900ms
+   ✓ Claude catalog enablement and readiness (2)
+     ✓ keeps owner enable switches usable with failed readiness and login true 398ms
+     ✓ keeps owner enable switches usable with failed readiness and login false 563ms
+   ✓ Codex catalog rows and readiness (1)
+     ✓ notes a known Codex failure on Codex rows as for Claude, but not during the first check 483ms
+stderr | src/forms/fields/model.test.tsx > readiness in the model picker > notes a known Codex failure with its own Retry button and keeps it while rechecking
+The current testing environment is not configured to support act(...)
+The current testing environment is not configured to support act(...)
+
+ ✓ src/forms/fields/model.test.tsx (37 tests) 194314ms
+   ✓ catalog field controls (28)
+     ✓ keeps a saved inherited Claude effort unverified and read-only while readiness is pending 9316ms
+     ✓ keeps a saved inherited Claude effort unverified and read-only while readiness is failed 4506ms
+     ✓ keeps a saved inherited Claude effort unverified and read-only while readiness is not-ready 4125ms
+     ✓ keeps a saved inherited Claude effort unverified and read-only while readiness is signed-out 4634ms
+     ✓ bounds inherited Claude effort choices and preserves the saved value undefined 5597ms
+     ✓ bounds inherited Claude effort choices and preserves the saved value minimal 5721ms
+     ✓ admits saved Fable and offers both supported Claude models 6474ms
+     ✓ changes Claude sandbox and approval only after an explicit supported policy selection 11212ms
+     ✓ retains the same focused select while a pending catalog loads without writing values 5117ms
+     ✓ derives an omitted harness from the sibling schema default 4135ms
+     ✓ shows one warning for a locally missing model instead of repeating the matching server warning 4535ms
+     ✓ shows one warning for a locally disabled model instead of repeating the matching server warning 4250ms
+     ✓ keeps server warnings when no catalog data is available 5570ms
+     ✓ uses Codex entries and sibling effort within the decision Codex group 3561ms
+     ✓ shows an empty catalog with only the inherited choice and a Settings link 5321ms
+     ✓ selects one entry by display name and id, restricts effort, and clears back to unset 8564ms
+     ✓ labels a retained model from Codex with Claude readiness true 8175ms
+     ✓ labels a retained model from Codex with Claude readiness false 7697ms
+     ✓ filters many entries by the sibling harness and enabled state, watching harness changes 5521ms
+     ✓ keeps a unknown model selected and warned without changing the form 4279ms
+     ✓ keeps a disabled model selected and warned without changing the form 3776ms
+     ✓ keeps an unsupported effort across model changes and updates after catalog refresh 6831ms
+     ✓ shows pending and failed fetches as read-only, then retries without changing saved values 6757ms
+     ✓ keeps cached choices editable and focused after a failed refresh, then recovers 5133ms
+     ✓ shows validation catalog warnings only at their exact field paths 4750ms
+     ✓ registers loop defaults with Codex choices and an owner-default unset value 3149ms
+     ✓ uses the validated byHarness record key for mixed loop default model and effort choices 1969ms
+     ✓ does not offer Claude model choices from static capabilities when CLI preflight is not ready 3510ms
+   ✓ keeps saved selection while cached lookup is pending or fails 4118ms
+   ✓ readiness in the model picker (8)
+     ✓ keeps a ready Claude field editable and labelled during a background recheck 6231ms
+     ✓ labels a saved Claude model "(saved)" when readiness is known but not ready 3605ms
+     ✓ names a Claude catalog entry the adapter does not list 3412ms
+     ✓ says when ready Claude offers no enabled listed model 4710ms
+     ✓ says when ready Claude preflight lists no models 3306ms
+     ✓ notes a known Codex failure with its own Retry button and keeps it while rechecking 5466ms
+     ✓ shows no Codex note during the first check 4179ms
+     ✓ says when Codex readiness could not be checked 5098ms
+stderr | src/editor/EditorPage.test.tsx > EditorPage > starts with the loop panel expanded on wide windows, and counts issues beside Publish
+Received NaN for the `cx` attribute. If this is expected, cast the value to a string.
+Received NaN for the `cy` attribute. If this is expected, cast the value to a string.
+Received NaN for the `r` attribute. If this is expected, cast the value to a string.
+Received NaN for the `x` attribute. If this is expected, cast the value to a string.
+Received NaN for the `y` attribute. If this is expected, cast the value to a string.
+
+ ❯ src/editor/DecisionAuthoring.test.tsx (23 tests | 3 failed) 295842ms
+   ✓ guides Expression to Classifier setup with field instructions and diagnostic details 15269ms
+   ✓ guides Noul to Score setup without raw bounds errors in the ordinary form 11704ms
+   ✓ decision gates (8)
+     ✓ surfaces a visit-cap warning and focuses Maximum passes without blocking publication 4941ms
+     ✓ previews removed gate limits for Routes JSON and applies cleanup with one undo 18961ms
+     ✓ marks only one repeat route and requires maximum passes with focused validation 10242ms
+     ✓ previews removing repeat settings and the Limit reached edge; cancel and undo preserve all 15328ms
+     ✓ marks classifier choice repeat routes and retains limits through kind changes 10861ms
+     ✓ marks classifier noul repeat routes and retains limits through kind changes 11837ms
+     ✓ marks classifier score repeat routes and retains limits through kind changes 10285ms
+     ✓ removing the repeat row previews limits and cleans the gate as one undo step 6860ms
+   ❯ decision authoring checkpoint (13)
+     ✓ keeps unfinished expression route fields through classifier conversion, cancel and undo 12659ms
+     ✓ keeps unfinished llm route fields through classifier conversion, cancel and undo 14378ms
+     ✓ names lost held route fields in the preview and moves compatible fields between classifier primitives 13002ms
+     ✓ restores active device ownership across reload with unfinished ID "" 16148ms
+     × restores active device ownership across reload with unfinished ID "review" 20219ms
+     ✓ restores set-aside device ownership across reload with unfinished ID "" 13217ms
+     × restores set-aside device ownership across reload with unfinished ID "review" 20266ms
+     ✓ invalidates a connection-removal review when connections change, and keeps compatible held context on kind change 17182ms
+     ✓ previews kind losses before writing; cancel preserves held text and confirm plus undo is atomic 11000ms
+     ✓ leaves new source unsaved, focuses its validation issue, then saves and reloads with edges 7802ms
+     × keeps row ownership through invalid ids, reorders and labels, and reviews removal before one undoable edit 20068ms
+     ✓ refuses a many-route Noul conversion, then preserves ids in an incomplete Score form 8817ms
+     ✓ moves held band input with its row and restores it with undo 4792ms
+ ❯ src/editor/NodeEditorDialog.test.tsx (30 tests | 9 failed) 363943ms
+   ❯ NodeEditorDialog evaluator-specific decisions (12)
+     ✓ authors terminal success exits with returns and destinations 13676ms
+     ✓ authors terminal failure exits with returns and destinations 8976ms
+     ✓ authors terminal exhausted exits with returns and destinations 10595ms
+     ✓ authors and saves a new expression decision from the default editor fields 5525ms
+     × authors and saves a new llm decision from the default editor fields 21038ms
+     × authors and saves a new classifier decision from the default editor fields 20291ms
+     ✓ edits and saves a valid expression decision 5294ms
+     ✓ edits and saves a valid llm decision 4886ms
+     × edits and saves a valid classifier decision 11043ms
+     × edits and saves a valid classifier decision 11058ms
+     ✓ edits and saves a valid classifier decision 6743ms
+     × selects each kind with only its applicable fields and keeps source issue focus 20353ms
+   ✓ NodeEditorDialog webhook receiver (2)
+     ✓ shows Receiver only while the trigger type is Webhook 10954ms
+     ✓ does not show Receiver for other node kinds 1639ms
+   ❯ NodeEditorDialog GitHub trigger presets (2)
+     × applies an editable body-signed fragment as one undoable graph change 20378ms
+     × shows bounded item controls for the GitHub poll preset 20065ms
+   ❯ NodeEditorDialog disclosures across undo and redo (11)
+     ✓ keeps incomplete Monday 07:30 across closing, reopening, undo and redo 19700ms
+     × keeps Advanced open through an undo and a redo of a basic picker, with focus restored 24061ms
+     × keeps opened and added list items open through an undo and a redo 21003ms
+     ✓ redoing a removal from the removed row keeps its neighbour collapsed 11008ms
+     ✓ undoing an add from its picker focuses a shown header without opening that row 10173ms
+     ✓ follows the same row when undo and redo move its header toggle 7337ms
+     ✓ follows the same row when undo and redo move its header remove 5838ms
+     ✓ undoing the only added row returns focus to the collection Add button 8044ms
+     ✓ redoing removal from an injected message focuses the surviving operation header (open: false) 15022ms
+     ✓ redoing removal from an injected message focuses the surviving operation header (open: true) 19398ms
+     ✓ undoing an injected message add returns to its surviving operation collection 8425ms
+   ✓ NodeEditorDialog inference harness changes (3)
+     ✓ preserves other authored harness options and reports unsupported Claude settings 4335ms
+     ✓ keeps the saved model and resets to a supported policy with readiness true 8991ms
+     ✓ keeps the saved model and resets to a supported policy with readiness false 8088ms
+ ✓ src/forms/json-sections.test.tsx (39 tests) 130577ms
+   ✓ section JSON mode (29)
+     ✓ returns confirmation cancellation to the JSON editor if parent validation disables Apply 3232ms
+     ✓ caches a held candidate across sibling held-input keystrokes and revalidates semantic changes and Apply 3873ms
+     ✓ keeps parent revalidation in the parent edit without adding undo steps or losing redo 16507ms
+     ✓ rechecks candidate validation at Apply even after the text was accepted 496ms
+     ✓ validates Config overrides against the complete inference config before writing 9322ms
+     ✓ validates Capabilities against the complete inference config before writing 8040ms
+     ✓ rechecks live sibling values at Apply and maps unrelated parent issues onto the section 2916ms
+     ✓ validates nested array replacements and root refinements without changing the live candidate 2991ms
+     ✓ keeps root union refinements when validating the selected variant section 989ms
+     ✓ returns to structured fields when history restores descendant held input 1435ms
+     ✓ does not hold whitespace/key-order-only edits, while array order remains significant 1955ms
+     ✓ requires a separate confirmation, rechecks changed consequences, and cancels review without applying 8717ms
+     ✓ refuses JSON mode while descendants hold input, names them, and focuses the first through disclosures 2047ms
+     ✓ round trips a cleared optional child without exposing the internal unset marker 2424ms
+     ✓ round trips declared routes without rewriting saved values and validates empty/absent input 5274ms
+     ✓ round trips input without rewriting saved values and validates empty/absent input 4744ms
+     ✓ round trips output.transforms without rewriting saved values and validates empty/absent input 3496ms
+     ✓ round trips contextFiles without rewriting saved values and validates empty/absent input 4933ms
+     ✓ round trips configOverrides without rewriting saved values and validates empty/absent input 3655ms
+     ✓ round trips capabilities without rewriting saved values and validates empty/absent input 4757ms
+     ✓ round trips choice routes without rewriting saved values and validates empty/absent input 3934ms
+     ✓ round trips noul routes without rewriting saved values and validates empty/absent input 3472ms
+     ✓ round trips score routes and rubric without rewriting saved values and validates empty/absent input 3997ms
+     ✓ round trips provider context without rewriting saved values and validates empty/absent input 3830ms
+     ✓ holds syntax/schema errors, blocks switching, cancels, and focuses nested issues in JSON 2432ms
+     ✓ rejects a different answer type and cross-row schema errors for choice 1813ms
+     ✓ rejects a different answer type and cross-row schema errors for noul 1943ms
+     ✓ rejects a different answer type and cross-row schema errors for score 2146ms
+     ✓ retains held text through Advanced, tabs, history and dialog-session remounts; Apply is one step 11429ms
+   ✓ typed inputs (10)
+     ✓ shows capability availability once per section and never renders empty capability datalists 727ms
+     ✓ keeps authored capability slugs editable and rejects malformed identifiers through the schema 527ms
+     ✓ keeps invalid numbers out of saved values 375ms
+     ✓ keeps criterion/rubric newlines and schema-typed booleans/enums 1452ms
+ ❯ src/editor/EditorPage.test.tsx (37 tests | 4 failed) 276557ms
+   ❯ EditorPage (37)
+     × describes valid pending JSON accurately and refuses Publish until applied or cancelled 6163ms
+     ✓ shows Harness in inference but not in the decision or loop settings 14723ms
+     ✓ collapses and expands the loop panel from its own controls and remembers it 9168ms
+     ✓ starts with the loop panel expanded on wide windows, and counts issues beside Publish 9261ms
+     × loads a draft, adds nodes from the palette, edits properties, and autosaves 20386ms
+     ✓ adds a node dropped from the palette and refuses bad connections 3214ms
+     ✓ opens the node editor’s Advanced group to focus an issue’s field inside it 17752ms
+     ✓ flags a collapsed Advanced group or operation holding an expression that does not compile 9536ms
+     ✓ keeps schema-invalid drafts on the device and explains why 6155ms
+     ✓ shows a dismissed save notice again after the draft returns to the same invalid state 8796ms
+     ✓ keeps a dismissed offline save notice hidden after an edit that remains offline 6078ms
+     ✓ keeps a newer server draft over an older unsynced local copy, and can switch 3892ms
+     ✓ restores an unsynced local draft and reports offline saves 2566ms
+     ✓ opens offline from the local draft, and shows offline or missing states without one 866ms
+     ✓ shows a missing loop as an error 274ms
+     ✓ publishes, surfaces 422 issues, and links to the New run flow once published 12747ms
+     ✓ says there is nothing to publish when the loop has no changes, and hides it after an edit 3079ms
+     ✓ waits for the server check before "Ready to publish", and says when it is unavailable 2193ms
+     ✓ shows the issues only the API finds on the node’s badge and in the counts 6894ms
+     ✓ blocks readiness and publish when Monday 07:30 has no day chosen 7804ms
+     ✓ blocks publishing on JSON that does not parse, and discards it from the badges 14767ms
+     ✓ opens a node at an issue’s field from its badge, by pointer or keyboard 8897ms
+     ✓ opens a node at an issue whose path holds a newline, a quote, or a backslash 4438ms
+     ✓ connects nodes from the keyboard and customizes a default list 9450ms
+     ✓ shows the right node when the open editor is switched to another node of the same kind 3337ms
+     ✓ keeps a node editor open under Strict Mode, as the dev server renders the app 2848ms
+     ✓ says in the dialog why a connection was refused 4458ms
+     ✓ never lets an older save land after a newer one 2471ms
+     ✓ keeps a set-aside device copy across edits and reloads until restored or discarded 5710ms
+     ✓ keeps a restored device copy when leaving while an earlier save is in flight 5450ms
+     ✓ loads the editor once an API key is entered after a 401 3527ms
+     ✓ keeps an edit made just before leaving the editor 454ms
+     ✓ refuses to publish a draft that cannot be saved 4113ms
+     × edits loop settings, variables, node ids, and edges 20746ms
+     × applies an id typed in the dialog when it closes, and stops once for an id that cannot apply 20925ms
+     ✓ picks a published subloop and shows its signature 9071ms
+     ✓ shows when the picked subloop has no published version 4333ms
+ ✓ src/forms/advanced.test.tsx (33 tests) 66675ms
+   ✓ basic fields first, advanced ones behind a disclosure (26)
+     ✓ trigger draws every field as before, in schema order, with no Advanced section 3198ms
+     ✓ wait draws every field as before, in schema order, with no Advanced section 1210ms
+     ✓ heartbeat draws every field as before, in schema order, with no Advanced section 857ms
+     ✓ inference shows its basic set, the rest under a collapsed Advanced 3664ms
+     ✓ script shows its basic set, the rest under a collapsed Advanced 594ms
+     ✓ subloop shows its basic set, the rest under a collapsed Advanced 1127ms
+     ✓ keeps mutate to its operations, with no Advanced section 2498ms
+     ✓ keeps every trigger field editable, down to nested leaves, once Advanced and items are open 2360ms
+     ✓ keeps every decision field editable, down to nested leaves, once Advanced and items are open 2380ms
+     ✓ keeps every inference field editable, down to nested leaves, once Advanced and items are open 3400ms
+     ✓ keeps every script field editable, down to nested leaves, once Advanced and items are open 612ms
+     ✓ keeps every mutate field editable, down to nested leaves, once Advanced and items are open 6034ms
+     ✓ keeps every subloop field editable, down to nested leaves, once Advanced and items are open 3125ms
+     ✓ keeps every wait field editable, down to nested leaves, once Advanced and items are open 1237ms
+     ✓ keeps every heartbeat field editable, down to nested leaves, once Advanced and items are open 611ms
+     ✓ keeps every exit field editable, down to nested leaves, once Advanced and items are open 540ms
+     ✓ expects the nested leaves and variant fields, and would notice one not drawn 1655ms
+     ✓ labels split fields by their title, and shows descriptions as help with code 1940ms
+     ✓ says how many advanced fields hold a value of their own, and follows edits 6782ms
+     ✓ flags problems inside a collapsed Advanced: issues and unparsed text 2003ms
+     ✓ flags a problem on an advanced decision field and shows it there 1266ms
+     ✓ counts errors found outside the form, such as an expression that does not compile 2801ms
+     ✓ counts an explicitly empty JSON Schema as set: it turns structured output on 2246ms
+     ✓ says "1 error" for one problem 807ms
+     ✓ opens Advanced when an issue is followed to a field inside it 2534ms
+   ✓ collapsible operations (3)
+     ✓ shows each operation collapsed to its kind and path, and opens it on request 4865ms
+     ✓ opens an added operation with focus on its first control, and flags problems when collapsed 3268ms
+     ✓ collapses the transforms of an inference node the same way 2000ms
+ ✓ src/editor/ClassifierField.test.tsx (7 tests) 21368ms
+   ✓ ClassifierField (7)
+     ✓ requires an explicit classifier and lists enabled Choice models by display name and ID 7215ms
+     ✓ keeps a current catalog choice and commits a new explicit selection 3626ms
+     ✓ preserves the saved but unavailable classifier off with a clear reason 1831ms
+     ✓ preserves the saved but unavailable classifier scorer with a clear reason 1157ms
+     ✓ preserves the saved but unavailable classifier gone with a clear reason 1626ms
+     ✓ explains when a selectable classifier still needs a secret 1968ms
+     ✓ filters enabled classifiers by Noul and Score while retaining the Choice filter 3942ms
+ ✓ src/editor/Canvas.test.tsx (30 tests) 6809ms
+   ✓ Canvas handlers (16)
+     ✓ closes the popovers on the canvas when it pans or zooms and when a node drag starts 660ms
+   ✓ manual edge routes (#44) (14)
+     ✓ nudges a loop-back lane by grid lines as one step, through cards when the author wants 449ms
+     ✓ refuses a drag that splits a 63-coordinate route, keeping the valid draft 445ms
+     ✓ refuses a nudge that splits a 63-coordinate route, keeping the valid draft 301ms
+     ✓ keeps the store valid through 32 alternating edits of the first stub from one coordinate 3414ms
+stderr | src/editor/EditorPage.undo.test.tsx > EditorPage undo and redo > undoes and redoes from the toolbar and the keyboard, not from inside text fields
+Received NaN for the `cx` attribute. If this is expected, cast the value to a string.
+Received NaN for the `cy` attribute. If this is expected, cast the value to a string.
+Received NaN for the `r` attribute. If this is expected, cast the value to a string.
+Received NaN for the `x` attribute. If this is expected, cast the value to a string.
+Received NaN for the `y` attribute. If this is expected, cast the value to a string.
+
+ ✓ src/editor/routing-review.test.ts (23 tests) 158677ms
+   ✓ routing review regressions (23)
+     ✓ finds at least the base router’s 586 routes in seeded 24-card grids with 16 px gaps 13520ms
+     ✓ finds at least the base router’s 587 routes in seeded 24-card grids with 24 px gaps 13183ms
+     ✓ finds at least the base router’s 587 routes in seeded 24-card grids with 32 px gaps 8176ms
+     ✓ keeps every corner round where it has room, and never curves into a card or handle 3143ms
+     ✓ keeps entry columns clear of a neighbour’s protruding out handle 584ms
+     ✓ routes at least forty of eighty crowded returns with distinct trunks and readable labels 517ms
+     ✓ separates shared-card vertical trunks in the dense graph and on two decision ports 1407ms
+     ✓ bounds local travel and computation for a 40-card column with 80 px gaps 4010ms
+     ✓ bounds local travel and computation for a 100-card column with 80 px gaps 9680ms
+     ✓ bounds local travel and computation for a 150-card column with 80 px gaps 12719ms
+     ✓ reroutes only affected spans, including old boxes, added obstacles and removed obstacles 12096ms
+     ✓ matches a fresh plan after moves, span-order changes, and returning to the original boxes 4262ms
+     ✓ matches fresh routing at every sampled drag step on 100 cards 9789ms
+     ✓ matches fresh routing at every sampled drag step on 300 cards 17146ms
+     ✓ seeded sparse graphs preserve geometry and keep detours below twelve bends 47982ms
+stderr | src/editor/TriggerEditor.test.tsx > trigger authoring > restores held input and selector focus through type undo, and focuses validation paths
+A component suspended inside an `act` scope, but the `act` call was not awaited. When testing React components that depend on asynchronous data, you must await the result:
+
+await act(() => ...)
+
+ ✓ src/settings/sections/ClassifierModelsSection.test.tsx (31 tests) 47251ms
+   ✓ ClassifierModelsSection (31)
+     ✓ sits directly below the LLM catalog and lists the built-in first 1455ms
+     ✓ shows the built-in alias and secret, only an enable switch, and what disabling stops 527ms
+     ✓ keeps configured and enabled independent, and links a missing key to Secrets 747ms
+     ✓ shows a configured status again once the secret is set, and needs a key after deletion 2013ms
+     ✓ adds a custom classifier that starts disabled, after the contract checks pass 8179ms
+     ✓ review: keeps Add unavailable until the list has loaded, then creates only 3901ms
+     ✓ review: says why a new entry waits when the list is being refetched with an error 909ms
+     ✓ review: an id added elsewhere is refused by the server, explained, and named by the refreshed check 3160ms
+     ✓ review: an old save finishing after Cancel does not close the form opened since 1706ms
+     ✓ review: an edit saves to the entry it was opened for, whatever the id field is set to 934ms
+     ✓ review: catalog and secret writes mark the editor’s checks of saved drafts stale 2728ms
+     ✓ opens only the Add form when a classifier has the id new 561ms
+     ✓ cancels Add back to its button 812ms
+     ✓ edits metadata with a fixed id, picks a secret from Secrets, and keeps enabled 3326ms
+     ✓ keeps the current secret when the secret names cannot be loaded, and says why 676ms
+     ✓ lists an unset referenced secret as not set 680ms
+     ✓ keeps the form and the server state when a save is refused (secrets:write) 1168ms
+     ✓ keeps the form and the server state when a save is refused (settings:write) 1467ms
+     ✓ keeps the form and the server state when a save is refused (validation) 1520ms
+     ✓ keeps the form and the server state when a save is refused (validation without details) 1205ms
+     ✓ keeps the form and the server state when a save is refused (built-in) 1123ms
+     ✓ ignores a second Save while the first is pending 1455ms
+     ✓ confirms deletion with its consequences; Keep changes nothing 1750ms
+     ✓ keeps a failed deletion open with its error, and refreshes a vanished row on dismissal 1546ms
+     ✓ enables and disables through PATCH and refreshes the summaries 643ms
+     ✓ restores a refused toggle and announces a plain sentence 370ms
+     ✓ restores a refused toggle and announces a plain sentence 544ms
+     ✓ restores a refused toggle and announces a plain sentence 434ms
+     ✓ refreshes a toggle refused with 404 and keeps focus sensible (vanished switch) 519ms
+     ✓ refreshes a toggle refused with 404 and keeps focus sensible (another control) 607ms
+     ✓ review: a row that vanishes while its toggle is pending still returns focus to the heading, and the next toggle clears the notice 585ms
+ ✓ src/editor/EditorPage.undo.test.tsx (8 tests) 41444ms
+   ✓ EditorPage undo and redo (8)
+     ✓ undoes and redoes from the toolbar and the keyboard, not from inside text fields 7157ms
+     ✓ undoes typing in a label in one step, from outside the field 6353ms
+     ✓ shows restored values in the node’s config form and the loop panel’s forms 7601ms
+     ✓ closes the node editor when an undo removes its node, and returns focus to the canvas 3522ms
+     ✓ undoes a rename: the id, its edges, and the open editor follow 5403ms
+     ✓ undoes a Discard the unparsed text made right after the typing, from the field or the badge 6646ms
+     ✓ leaves the keys to a code editor’s search panel, checkboxes and all 1489ms
+     ✓ takes unparsed text back and forth with the step that typed it 3270ms
+ ✓ src/editor/TriggerEditor.test.tsx (13 tests) 39802ms
+   ✓ keeps type through editor save, device draft, reopen and export: {"type":"manual","exposeTo":["ui","mcp"],"inputSchema":{"type":"object"}} 2613ms
+   ✓ keeps type through editor save, device draft, reopen and export: {"type":"cron","expression":"30 7 * * 1","timezone":"Europe/Paris"} 1757ms
+   ✓ keeps type through editor save, device draft, reopen and export: {"type":"event","eventType":"build-ready","dedupeKey":"id"} 1411ms
+   ✓ keeps type through editor save, device draft, reopen and export: {"type":"poll","intervalSeconds":30,"probe":{"kind":"none"},"fireWhen":"true"} 1624ms
+   ✓ keeps type through editor save, device draft, reopen and export: {"type":"webhook","authentication":{"type":"hmac-sha256","message":"timestamp-body","secretRef":"hook"}} 1448ms
+   ✓ keeps type through editor save, device draft, reopen and export: {"type":"webhook","authentication":{"type":"hmac-sha256","message":"body","secretRef":"github"},"dedupeKey":"id"} 1306ms
+   ✓ trigger authoring (4)
+     ✓ starts with five types, shows only their fields, and keeps signing under Webhook 3618ms
+     ✓ restores held input and selector focus through type undo, and focuses validation paths 2901ms
+     ✓ previews, cancels and applies issues-poll as one undo step including graph and held input 6580ms
+     ✓ previews, cancels and applies issues-labeled as one undo step including graph and held input 5550ms
+   ✓ edits authentication, body and extraction by keyboard with one-step undo and field validation 8569ms
+   ✓ authors the displayed UTC default on an untouched daily cron schedule 1469ms
+   ✓ gives an empty Event type a field instruction and retains the raw diagnostic 910ms
+ ✓ src/runs/RunInspectorPage.test.tsx (18 tests) 9140ms
+   ✓ RunInspectorPage (18)
+     ✓ loads the pinned definition for fallback gate counts before any decision event 1035ms
+     ✓ shows loading acceptance until the run’s pinned version resolves with its authored Noul threshold 498ms
+     ✓ shows Claude requested effort and states that effective effort is not reported 315ms
+     ✓ streams the timeline, replays the thread at any event, and shows the patch diff 1301ms
+     ✓ shows a failed tool call without its provider diagnostics 347ms
+     ✓ replays a child run from its seeded first event and reports logs that do not replay 625ms
+     ✓ resumes the stream after the stored cursor on reload 346ms
+     ✓ renders the input form from the wait node schema and submits input 1012ms
+     ✓ sends a signal to a run waiting for one, and describes timer waits 496ms
+     ✓ cancels, pauses, and resumes runs 1115ms
+     ✓ keeps the keyboard order: loop, parent run, child runs, then the run controls 461ms
+     ✓ explains a deleted child while preserving the parent inspector history 382ms
+     ✓ links an available child from a child-finished event 476ms
+ ✓ src/editor/EditorPage.conflict.test.tsx (12 tests) 22966ms
+   ✓ draft conflicts (If-Match) (9)
+     ✓ sends the loaded token, and the token from each save after it 2548ms
+     ✓ stops saving on a conflict and reloads the server draft on request 2931ms
+     ✓ overwrites the server draft with this copy on request 1374ms
+     ✓ asks the server for its token when the conflict did not carry one, and shows failures 1576ms
+     ✓ answers a conflict from inside an open node editor 4568ms
+     ✓ does not save over the server draft when leaving in conflict 1084ms
+     ✓ keeps a restored device copy's stale token and requires explicit reconciliation before any save 830ms
+     ✓ saves an undo or redo like any edit: If-Match, the device copy, and the conflict stop 4355ms
+   ✓ draft tokens across editors and saves (3)
+     ✓ does not load a delayed server draft for loop A into the editor of loop B 1714ms
+     ✓ bases the save sent on leaving on the save still in flight, so it does not conflict 924ms
+     ✓ moves a newer unsynced device copy onto the token of the save it follows 1057ms
+ ✓ src/forms/SchemaForm.test.tsx (33 tests) 34928ms
+   ✓ keeps errors without a field visible while diagnostic details are collapsed 434ms
+   ✓ SchemaForm (28)
+     ✓ does not trigger a second resolver pass for each keystroke while schema issues are unchanged 376ms
+     ✓ orders top-level fields without changing field paths or untouched values 1296ms
+     ✓ tabs through record key, Remove, then value in visual order 301ms
+     ✓ tabs through record key, Remove, then value in visual order 791ms
+     ✓ keeps edited script args when adding and removing without remounting 1866ms
+     ✓ keeps edited nested decision routes when adding and removing 3281ms
+     ✓ omits blank template previews unless a required template, and keeps malformed previews 404ms
+     ✓ omits blank expression previews unless a required template, and keeps malformed previews 447ms
+     ✓ keeps script env values through add, rename, and remove 2775ms
+     ✓ keeps the displayed variable schemas in sync when deleting an earlier row 773ms
+     ✓ keeps JSON values in array rows in sync after removal 640ms
+     ✓ treats blank optional node conditions as absent 406ms
+     ✓ treats blank optional node conditions as absent 303ms
+     ✓ treats blank optional node conditions as absent 347ms
+     ✓ keeps required mapping and decision expression errors 577ms
+     ✓ keeps required mapping and decision expression errors 1078ms
+     ✓ keeps required mapping and decision expression errors 495ms
+     ✓ renders strings, numbers, booleans, enums and reports changes 1580ms
+     ✓ edits arrays of strings and records 2430ms
+     ✓ switches a root discriminated union and shows literal and nested object fields 2360ms
+     ✓ retains the selected body-signature branch while its secret is incomplete 715ms
+     ✓ handles the decision evaluation union, context unions, option editing, and previews 2727ms
+     ✓ edits JSON fields, optional unions, and tri-state booleans 3567ms
+     ✓ renders the other node kinds and loop settings without crashing 797ms
+     ✓ disables adding past an array maximum and keeps non-object initial values 359ms
+   ✓ SchemaForm changes and undo steps (4)
+     ✓ makes three keystrokes one step, typing in another field another, and each toggle a step 624ms
+     ✓ makes the model and then the effort picker two steps 1476ms
+     ✓ makes a row removal one step with the unparsed text it moves, apart from the typing 762ms
+     ✓ reports typing in a record value at its path, a key rename by its row, and Add as a commit 440ms
+ ✓ src/editor/EditorPage.restore.test.tsx (20 tests) 16877ms
+   ✓ restoring a set-aside copy (20)
+     ✓ restores unfinished current JSONata into the editor instead of archiving it as an upgrade failure 734ms
+     ✓ converts a v1 draft, archives the exact original and requires explicit first-save overwrite 1754ms
+     ✓ leaves all device keys untouched after a chunk-load failure and converts on retry 631ms
+     ✓ leaves all device keys untouched after a chunk-load failure and converts on reopen 566ms
+     ✓ still preserves an inert exportable original when the loaded converter fails 363ms
+     ✓ keeps pending v3 review ids and hashes with an exportable inert original, including archives 408ms
+     ✓ blocks overwrite of an automatic conversion after archive write failure 861ms
+     ✓ blocks overwrite of an automatic conversion after archive readback failure 887ms
+     ✓ keeps a converted synced mirror as a clean cache, with offline=false 814ms
+     ✓ keeps a converted synced mirror as a clean cache, with offline=true 868ms
+     ✓ sets stale converted unsynced work aside and restores it only by explicit choice 1208ms
+     ✓ does not convert archives or current drafts, with current cache=false 308ms
+     ✓ does not convert archives or current drafts, with current cache=true 384ms
+     ✓ preserves and converts a set-aside copy and keeps its archived original inert on reopening 1692ms
+     ✓ keeps an ambiguous v1 device draft raw and prevents it from replacing the server copy 685ms
+     ✓ archives an ambiguous set-aside before a newer server copy moves a valid active draft there 587ms
+     ✓ fails closed without overwriting either raw source when archiving fails 818ms
+     ✓ keeps a dismissed restore notice hidden while the restored editor generation is edited 827ms
+     ✓ does not load into another loop opened while the restore was being persisted 2279ms
+ ✓ src/editor/EditorPage.freshness.test.tsx (8 tests) 10268ms
+   ✓ freshness of the API checks (phase review F3) (8)
+     ✓ checks a reloaded server draft instead of reusing the clean answer of the loaded one 3590ms
+     ✓ checks again when another tab disables the selected model, once per catalog change 592ms
+     ✓ drops a check whose answer arrives after the model catalog changed 614ms
+     ✓ never reuses a clean unknown-catalog answer as ready when reopened with a held retry 2201ms
+     ✓ checks a changed fingerprint once with a slow unchanged classifier catalog (held check: false) 757ms
+     ✓ checks a changed fingerprint once with a slow unchanged classifier catalog (held check: true) 626ms
+     ✓ waits for the check under the resolved catalog even after a clean early answer 675ms
+     ✓ names a draft without a server token by its content, and by the token once saved 1210ms
+ ✓ src/editor/TriggerPresets.test.tsx (15 tests) 16683ms
+   ✓ TriggerPresets (15)
+     ✓ previews poll removal or retained-check warning (shared: false) 2253ms
+     ✓ previews poll removal or retained-check warning (shared: true) 1438ms
+     ✓ invalidates a graph preview when definition changes 813ms
+     ✓ invalidates a graph preview when draftInputs changes 1035ms
+     ✓ invalidates a graph preview when generation changes 1242ms
+     ✓ explicitly reviews replacement of owner edits and held text, and surfaces an apply refusal 1695ms
+     ✓ shows editor captions and row numbers for held Poll fields 1167ms
+     ✓ invalidates a preview after the current config changes 1127ms
+     ✓ invalidates a preview after the current heldInputs changes 912ms
+     ✓ invalidates a preview after the current historyEpoch changes 926ms
+     ✓ keeps setup optional and requires explicit branch and signing values for a PR preset 1262ms
+     ✓ previews a signed issue-label graph without changing the trigger until apply 1596ms
+     ✓ creates a bounded GitHub issue poll and encodes the query label as one argument 1191ms
+ ✓ src/forms/cron/control.test.tsx (28 tests) 27465ms
+   ✓ cron schedule control (28)
+     ✓ safely restores the backing schedule when held state is malformed: { 540ms
+     ✓ safely restores the backing schedule when held state is malformed: {"kind":"weekly","time":"07:30","days":null} 315ms
+     ✓ loads a saved schedule unchanged and shows trigger and viewer times from the API 1083ms
+     ✓ builds every preset, edits numbers and times, and keeps the saved shape 2453ms
+     ✓ keeps custom source on load, switch to custom, and unrelated timezone edits; recognises raw presets 1660ms
+     ✓ uses UTC for a new trigger and offers the browser zone with a searchable datalist 416ms
+     ✓ debounces edits, suppresses invalid zones locally, and displays the server CRON_INVALID before save 3361ms
+     ✓ keeps current source and shows a clear unavailable preview when transport fails 709ms
+     ✓ does not show stale results from an earlier in-flight request 1168ms
+     ✓ flags incomplete number and time controls without requesting their preview 1107ms
+     ✓ accepts the valid zone Etc/UTC even outside the suggestion list 658ms
+     ✓ accepts the valid zone Asia/Kolkata even outside the suggestion list 712ms
+     ✓ opens with no schedule, makes no preview request, and adds no edit until a preset is chosen 1142ms
+     ✓ keeps the stored expression 0 9 * * * after clearing At time 1027ms
+     ✓ keeps the stored expression */5 * * * * after clearing Every (minutes) 1001ms
+     ✓ keeps the stored expression 0 9 12 * * after clearing Day of month 1021ms
+     ✓ keeps the stored weekly expression after clearing all days, then commits a complete choice 514ms
+     ✓ says what to choose and retains the last valid time after an incomplete edit (#41) 1067ms
+     ✓ retains the last valid weekly days and monthly day after clearing them 1281ms
+     ✓ retains time, days, and monthly day even through presets without those fields 806ms
+     ✓ reveals and focuses raw text on Custom selection and when following an expression issue 843ms
+     ✓ shows the expression problem count on Advanced 681ms
+     ✓ announces debounced values through one stable status, not raw typing 1172ms
+     ✓ shows the HTTP 403 detail without calling it a transport failure 679ms
+     ✓ shows the HTTP 503 detail without calling it a transport failure 664ms
+     ✓ omits the duplicate viewer time when the zones resolve identically 606ms
+     ✓ keeps help and schema error descriptions alongside a local zone error, with the button after them 543ms
+ ✓ src/forms/EarlierNodeOutputs.test.tsx (65 tests) 9803ms
+   ✓ field rendering and clipboard (39)
+     ✓ script args.0 (template) shows list: true 987ms
+     ✓ starts collapsed, supports keyboard expansion and copies exact template reference 665ms
+     ✓ starts collapsed, supports keyboard expansion and copies exact expression reference 667ms
+     ✓ announces clipboard failure and leaves the full reference selectable 515ms
+     ✓ uses the live store definition in the node dialog when edges and ids change 2984ms
+ ✓ src/forms/JsonSchemaForm.test.tsx (10 tests) 8057ms
+   ✓ JsonSchemaForm (9)
+     ✓ renders one field per property and validates before submitting 1973ms
+     ✓ sends an enum choice as the value it stands for, not its text 925ms
+     ✓ keeps an enum choice by value when the schema changes under a mounted form 672ms
+     ✓ says so when a segmented choice is no longer offered, and keeps the required ones marked 1126ms
+     ✓ gives each field its own ids, whatever its property is called 661ms
+     ✓ puts each problem beside its field: required boolean, text, enum, and the value as a whole 677ms
+     ✓ links the raw JSON editor to its problems, whether the text does not parse or does not fit 607ms
+     ✓ checks an empty input against the schema as the API will (as null) 629ms
+     ✓ falls back to a JSON editor for non-object schemas or none 766ms
+ ✓ src/loops/LoopsPage.test.tsx (16 tests) 8342ms
+   ✓ LoopsPage (16)
+     ✓ lists loops with publish state and last run status 1225ms
+     ✓ creates a loop and opens it in the editor 662ms
+     ✓ creates an editable template draft without setup, defaults, or readiness 349ms
+     ✓ keeps all gallery actions guarded while creating and opening a draft 694ms
+     ✓ omits setup readiness and setup-only queries while allowing a copy 348ms
+     ✓ reports a failed draft request and never retries it automatically 347ms
+     ✓ shows an empty gallery and still creates a template draft without typed settings defaults 642ms
+     ✓ imports an export file and reports bad files and server errors 630ms
+     ✓ exports the published version or the draft as a download 659ms
+     ✓ deletes a loop after confirmation and shows refusals 1472ms
+     ✓ shows export progress and ignores repeated clicks until the request finishes 324ms
+ ✓ src/runs/new/NewRunPage.test.tsx (8 tests) 3793ms
+   ✓ New run (8)
+     ✓ lists only published loops and keeps the choice in the address 1082ms
+     ✓ opens with the loop of a deep link chosen and starts a run of the current version 880ms
+     ✓ starts an older published version when chosen, and runs may overlap 507ms
+     ✓ starts from the manual trigger chosen, with that trigger’s input form 527ms
+     ✓ says when the chosen version has no manual trigger, and when versions fail to load 310ms
+ ✓ src/events/EventsPage.test.tsx (5 tests) 12167ms
+   ✓ EventsPage delivery dispositions (4)
+     ✓ shows the five receipt states, attempts, retry time, safe failure and admitted run link 1091ms
+     ✓ refreshes a pending receipt when it becomes admitted and stops polling 4361ms
+     ✓ refreshes a pending receipt when it becomes failed and stops polling 4323ms
+     ✓ stops pending refreshes when the Events page unmounts 2277ms
+ ✓ src/components/ui/choice-group.test.tsx (14 tests) 3694ms
+   ✓ ChoiceGroup (14)
+     ✓ opts into compact labels with persistent accessible descriptions and separate help buttons 605ms
+     ✓ shows help on hover, keeps it under the pointer and closes after leaving 686ms
+     ✓ has one Tab stop, showing radio focus help and closing on blur or Escape without moving focus 390ms
+     ✓ opens on touch tap without selecting the option and a second tap dismisses it 324ms
+     ✓ keeps native radio keyboard behaviour in the grid 316ms
+ ✓ src/editor/EditorPage.device.test.tsx (2 tests) 12542ms
+   ✓ device storage blocked by an older tab (2)
+     ✓ says a schema-invalid edit is in this window only, then saves it on the device once the old tab closes 7915ms
+     ✓ shows a valid edit saved to the server, with the device notice apart, until the old tab closes 4623ms
+ ✓ src/forms/saved-values.test.tsx (6 tests) 10431ms
+   ✓ the same edits save the same config (6)
+     ✓ inference: basic, split, and advanced fields 3118ms
+     ✓ script 1210ms
+     ✓ decision 1918ms
+     ✓ subloop: the split input and output mappings 1795ms
+     ✓ mutate: collapsible operations 1418ms
+     ✓ trigger, wait, heartbeat, and exit 968ms
+ ✓ src/settings/sections/ApiKeysSection.test.tsx (12 tests) 11080ms
+   ✓ current browser key in Settings (12)
+     ✓ marks A and revokes B without the browser warning or losing access 1814ms
+     ✓ warns on A, closes after DELETE, and focuses the key panel on the rejected refresh 927ms
+     ✓ shows the softer trusted-mode warning only when a key is stored, key=undefined 1266ms
+     ✓ shows the softer trusted-mode warning only when a key is stored, key=gg_stored 1312ms
+     ✓ recovers with Forget key after revoking the stored key in trusted mode 1031ms
+     ✓ refreshes the marker after save without a token in a query key 932ms
+     ✓ refreshes the marker after storage without a token in a query key 957ms
+     ✓ describes the current key on its Revoke button for keyboard and screen-reader users 501ms
+     ✓ closes an open Revoke dialog when another tab changes the key and the list reloads 794ms
+     ✓ ignores a late 401 from A after a storage event saves B, and aborts the old list query 683ms
+     ✓ discards an old in-flight list when the stored key changes during initial loading 577ms
+ ✓ src/forms/fields.test.tsx (9 tests) 5873ms
+   ✓ form controls in the schema-driven form (9)
+     ✓ marks required fields and links help and errors to their controls 808ms
+     ✓ draws booleans with a default as switches and optional ones as Not set / Yes / No 1712ms
+     ✓ draws small enums as segmented controls and larger ones as selects 853ms
+     ✓ gives code fields the input frame, a language tag, and linked state 470ms
+     ✓ draws record values as fields: marked, linked to their error, and announced 637ms
+     ✓ marks required collections at the group, and says how many they need 1201ms
+ ✓ src/editor/useLoadEditor.review.test.tsx (18 tests) 7100ms
+   ✓ F1: failed warm refetch keeps stale data in error state and reconciles only after later success 329ms
+   ✓ F4: permanently unavailable IndexedDB keeps its warning and Retry while server autosave works 1797ms
+   ✓ F4: a transient active-read failure keeps mirrors memory-only and preserves unread device work 360ms
+   ✓ F5: a current-format set-aside backup reopens with a backup label, not an unconverted-original label 951ms
+   ✓ F4: read failure stays visible after other storage succeeds, and retry preserves edits and held input 582ms
+   ✓ second review F1: failed-read autosave preserves unread work and requires a choice on reopening (same base=false) 313ms
+   ✓ second review F1: failed-read navigation preserves unread work and requires a choice on reopening (same base=false) 382ms
+   ✓ second review F1: failed-read autosave preserves unread work and requires a choice on reopening (same base=true) 367ms
+   ✓ second review F1: failed-read navigation preserves unread work and requires a choice on reopening (same base=true) 360ms
+ ✓ src/drafts/local-drafts.test.ts (27 tests) 6836ms
+   ✓ local drafts in IndexedDB (14)
+     ✓ silently skips blocked loads, rejects saves, says it is blocked, and recovers when the old tab closes 3137ms
+     ✓ preserves the version 1 store when opening version 2 338ms
+ ✓ src/components/ui/popover.test.tsx (29 tests) 4807ms
+   ✓ Popover (13)
+     ✓ opens on hover after a delay, stays while the pointer is over it, and closes after leaving both 478ms
+     ✓ opens on keyboard focus, lets Tab move through it, and closes when focus leaves both 765ms
+     ✓ moves between its controls with the arrow keys, Home, and End 458ms
+   ✓ Popover: what holds it open (#15 review) (8)
+     ✓ without the popover API, opens in document.body, out of transformed ancestors, keeping the keyboard order 348ms
+   ✓ Popover: re-check fixes (#15 review) (3)
+     ✓ without the popover API, Shift+Tab from the control after the trigger reaches the last row, as inline 765ms
+ ✓ src/components/ui/dialog.test.tsx (14 tests) 4291ms
+   ✓ Dialog (14)
+     ✓ opens as a named, described modal with focus on its heading, and returns focus on close 1089ms
+     ✓ keeps Tab and Shift+Tab inside the dialog, in visual order 821ms
+     ✓ returns focus where the owner says, and only to an element still on the page 368ms
+ ✓ src/editor/model-pickers.test.tsx (1 test) 4600ms
+   ✓ registers the node and loop pickers and forwards exact server validation warnings 4598ms
+ ✓ src/components/ui/confirm-action.test.tsx (18 tests) 4751ms
+   ✓ ConfirmAction (18)
+     ✓ starts no removal watch after plain Keep, even when unrelated content renders 588ms
+     ✓ consumes a queued programmatic close after reopening without swallowing the next native close 449ms
+     ✓ preserves an existing tabindex on the explicit fallback target 307ms
+     ✓ names the item, announces consequences, focuses Keep, and returns focus on cancellation 358ms
+     ✓ keeps errors announced until retried or dismissed, including a second failure 610ms
+ ✓ src/forms/structure.test.tsx (16 tests) 18268ms
+   ✓ removes unparsed array text without overwriting the next operation 4775ms
+   ✓ clears removed array errors and shifts surviving nested errors in the editor store 1341ms
+   ✓ renames an unparsed variable without losing its text or leaving the old issue 998ms
+   ✓ keeps errors under dotted record keys separate during removal and rename 1193ms
+   ✓ refuses a colliding record key while retaining the typed key and both values 919ms
+   ✓ focuses and announces an added array item 1610ms
+   ✓ removing array item 2 leaves focus safely on Add, including a second Enter 797ms
+   ✓ removing array item 3 leaves focus safely on Add, including a second Enter 949ms
+   ✓ focuses and announces added and removed record entries 525ms
+   ✓ uses the collection as a safe focus fallback when an invalid array still exceeds its maximum 445ms
+   ✓ S24: conflict reload replaces mounted Settings and Variables and later edits preserve the server values 3670ms
+ ✓ src/editor/ClassifierField.editor.test.tsx (6 tests) 8008ms
+   ✓ API checks held across a catalog change (#43 re-review) (3)
+     ✓ drops a check that was running when Settings changed the catalog, and clears after re-enabling 1548ms
+     ✓ drops a held check when another tab changes the catalog (a summaries refresh only) 490ms
+     ✓ drops a check whose answer arrives after the catalog changed, before the editor saw it 457ms
+   ✓ the classifier picker in the node editor (3)
+     ✓ requires an explicit classifier, changes the saved model, and keeps focus 2062ms
+     ✓ makes each pick an undo step of its own, however quick 2973ms
+     ✓ shows a classifier disabled elsewhere on the node badge without a draft edit 474ms
+ ✓ src/forms/context.test.tsx (5 tests) 7743ms
+   ✓ context placement (5)
+     ✓ counts customized context fields, ignores empty/default values, and updates its accessible name 3333ms
+     ✓ keeps classifier required inputs and answer routes on Settings 529ms
+     ✓ keeps llm required inputs and answer routes on Settings 462ms
+     ✓ counts problems per panel and reveals Context and its Advanced group for issue focus 734ms
+     ✓ keeps unparsed context text through tab switches and remounts without changing saved values 2681ms
+ ✓ src/settings/sections/AppearanceSection.test.tsx (11 tests) 5256ms
+   ✓ AppearanceSection (3)
+     ✓ offers Dark and Light as a labelled radio group, Dark chosen by default 1029ms
+     ✓ switches at once, persists, and follows the keyboard 1310ms
+   ✓ the Font control (8)
+     ✓ offers every face by name in a labelled radio group, Geist chosen by default 312ms
+     ✓ follows the keyboard: Tab reaches the chosen face, the arrow keys choose 981ms
+     ✓ shows the face the page already shows, and Geist for an unknown one 335ms
+     ✓ still switches when storage throws, without remembering the choice 392ms
+ ✓ src/api/queries.reconnect.test.tsx (31 tests) 4604ms
+   ✓ query reconnect (31)
+     ✓ recovers the cold offline Settings defaults query 315ms
+     ✓ caps retries if reconnect still cannot reach the API, then recovers on the next event 373ms
+     ✓ recovers after Query observes an offline-to-online transition 343ms
+     ✓ keeps a cached-data fetch in flight on reconnect without cancelling or starting another request 696ms
+ ✓ src/editor/Palette.test.tsx (3 tests) 865ms
+   ✓ Palette rail (3)
+     ✓ keeps all nine add buttons, names, tooltips, click and Enter actions while collapsed 755ms
+stderr | src/editor/useLoadEditor.test.tsx > times device rendering (warm=false) and distinguishes late set-aside restoration from an autosave 409 (#171)
+#171 ordering [{"event":"server request","ms":51},{"event":"memory cache miss","ms":53},{"event":"device read started","ms":53},{"event":"device read completed","ms":60},{"event":"memory cache miss","ms":61},{"event":"render device work","ms":65},{"event":"server response","ms":280},{"event":"server query cached","ms":286},{"event":"memory cache miss","ms":288},{"event":"render server copy","ms":289},{"event":"set-aside prompt (not 409)","ms":359}]
+
+stderr | src/editor/useLoadEditor.test.tsx > times device rendering (warm=true) and distinguishes late set-aside restoration from an autosave 409 (#171)
+#171 ordering [{"event":"server request","ms":3},{"event":"memory cache hit","ms":3},{"event":"device read started","ms":3},{"event":"render device work","ms":3},{"event":"device read completed","ms":8},{"event":"memory cache hit","ms":8},{"event":"server response","ms":162},{"event":"server query cached","ms":163},{"event":"memory cache hit","ms":178},{"event":"render server copy","ms":179},{"event":"set-aside prompt (not 409)","ms":266}]
+
+ ✓ src/editor/useLoadEditor.test.tsx (20 tests) 3877ms
+   ✓ times device rendering (warm=false) and distinguishes late set-aside restoration from an autosave 409 (#171) 395ms
+   ✓ gates saves, preserves edits and uses the loaded base token (synced=false) 320ms
+ ✓ src/editor/focus-field.cron.test.tsx (2 tests) 1009ms
+   ✓ cron issue paths in the node editor (2)
+     ✓ config.expression focuses its control and reveals the expression when needed 740ms
+ ✓ src/editor/useAutosave.test.tsx (11 tests) 3469ms
+   ✓ autosave on API recovery (7)
+     ✓ saves a pending offline draft with If-Match on the recovery notification 506ms
+     ✓ serializes repeated recovery notifications and the browser event into one save 314ms
+     ✓ does not land a recovered save in a later generation of the same editor 367ms
+   ✓ second review F1: flush keeps this editor's newer mirror safe (queued after response=false) 313ms
+   ✓ second review F1: browser reconnect keeps this editor's newer mirror safe (queued after response=false) 591ms
+   ✓ second review F1: API recovery keeps this editor's newer mirror safe (queued after response=false) 491ms
+ ✓ src/api/api-key.test.tsx (6 tests) 3152ms
+   ✓ API key entry (6)
+     ✓ review: focuses the key input when access is rejected without stealing it on later renders 574ms
+     ✓ waits for an open modal to release focus before focusing the rejected-key input 331ms
+     ✓ asks for a key on a 401, sends the stored key, and lets Settings forget it 1593ms
+     ✓ restarts a run inspector stream that a 401 ended once a key is entered 649ms
+ ✓ src/loops/TemplateGallery.test.tsx (10 tests) 5441ms
+   ✓ TemplateGallery (10)
+     ✓ offers one Use action for quick-start and opens the returned ordinary draft 1049ms
+     ✓ offers one Use action for implementation-workflow and opens the returned ordinary draft 780ms
+     ✓ offers one Use action for review and opens the returned ordinary draft 374ms
+     ✓ offers one Use action for qa and opens the returned ordinary draft 418ms
+     ✓ creates directly without settings or readiness and guards repeated cross-card activation 536ms
+     ✓ reports create failures without automatically retrying the mutation 409ms
+     ✓ retains the created id and retries editor opening without creating another draft 491ms
+     ✓ keeps keyboard focus after creation success 733ms
+     ✓ keeps keyboard focus after creation failure 415ms
+ ✓ src/components/icons/icons.test.tsx (6 tests) 413ms
+ ✓ src/editor/required-fields.test.tsx (1 test) 3966ms
+   ✓ links a refused loop name and node label to their messages, beside the fields 3962ms
+ ✓ src/app/App.test.tsx (5 tests) 2682ms
+   ✓ App shell (5)
+     ✓ redirects to loops and navigates between screens 1904ms
+ ✓ src/runs/inspector/EvaluationDetails.test.tsx (22 tests) 1819ms
+   ✓ EvaluationDetails (22)
+     ✓ shows recorded Choice evidence and factual confidence comparison 0 509ms
+ ✓ src/runs/inspector/WaitPanel.test.tsx (3 tests) 5062ms
+   ✓ WaitPanel (1)
+     ✓ keeps the form for the same wait, and starts a fresh one for the next wait 2775ms
+   ✓ submits the identity associated with the displayed input form 762ms
+   ✓ binds the displayed identity before an asynchronous mutation can see a newer wait 1518ms
+ ✓ src/settings/sections/PreflightSection.test.tsx (10 tests) 2273ms
+   ✓ readiness state display (10)
+     ✓ labels unknown on its badge without implying model access 546ms
+     ✓ keeps the last result while rechecking, then shows the error view and recovers on retry 658ms
+ ✓ src/editor/WebhookReceiver.test.tsx (11 tests) 2187ms
+   ✓ names the section and output, masks the token throughout the DOM, and explains the address 599ms
+ ✓ src/editor/focus-field.classifier.test.tsx (3 tests) 1888ms
+   ✓ classifier issue paths (3)
+     ✓ config.model focuses the classifier picker 1271ms
+     ✓ config.model with an empty catalog focuses the picker 427ms
+ ✓ src/forms/part-a-audit.test.tsx (7 tests) 2777ms
+   ✓ Part A audit (7)
+     ✓ drops held JSON when switching schemas at the same union path (nested: false) 1102ms
+     ✓ drops held JSON when switching schemas at the same union path (nested: true) 407ms
+     ✓ does not render unrelated inference fields per keystroke 560ms
+     ✓ does not render unrelated decision fields per keystroke 449ms
+ ✓ src/settings/shared.test.tsx (10 tests) 2267ms
+   ✓ MutationError (1)
+     ✓ uses caller messages, otherwise preserves the normal error display 380ms
+   ✓ EnableSwitch (6)
+     ✓ checks the generic MODEL_MANAGED_BY_HARNESS message mapping, pending state, rollback and retry 446ms
+ ✓ src/forms/JsonText.test.tsx (2 tests) 930ms
+   ✓ preserves unparsed text across value changes until discarded, then uses the latest value 835ms
+ ✓ src/editor/UndoRedo.test.tsx (3 tests) 806ms
+   ✓ UndoRedo (3)
+     ✓ names each button by the step it changes, and keeps it focusable when there is none 741ms
+ ✓ src/editor/useUndoShortcuts.test.tsx (13 tests) 1985ms
+   ✓ platform and keys (4)
+     ✓ leaves text editors to their own undo, and nothing else 602ms
+   ✓ useUndoShortcuts (9)
+     ✓ keeps focus in the field whose form remounted, else on the panel heading or the canvas 424ms
+ ✓ src/editor/TriggerTypePicker.test.tsx (1 test) 2565ms
+   ✓ TriggerTypePicker (1)
+     ✓ uses type and signing literals when every schema title is changed to the same text 2562ms
+ ✓ src/styles/code-theme.test.ts (4 tests) 780ms
+   ✓ code theme (4)
+     ✓ draws the search panel (Ctrl+F) and its matches with the tokens, not the base theme 460ms
+ ✓ src/runs/RunsPage.test.tsx (3 tests) 2320ms
+   ✓ RunsPage (3)
+     ✓ lists and filters exhausted runs with their status badge 895ms
+     ✓ lists runs with loop names, parents, and children links, and filters through the URL 1327ms
+ ✓ src/editor/routing-manual.test.ts (12 tests) 1946ms
+   ✓ manual routes in the router (#44) (12)
+     ✓ keeps the direction across route changes, and replans only routes a moved segment affects 1875ms
+ ✓ src/components/ui/controls.test.tsx (12 tests) 1838ms
+   ✓ Switch (4)
+     ✓ retains focus but ignores activation with aria-disabled=true 408ms
+   ✓ SegmentedControl (4)
+     ✓ is a named radio group whose arrow keys move the choice 320ms
+ ✓ src/editor/template-readiness.test.tsx (2 tests) 2152ms
+   ✓ opens a QA starting point without an instance lookup or configured-parent warning 1922ms
+ ✓ src/editor/ClaudePolicyField.test.tsx (7 tests) 1980ms
+   ✓ Claude saved policy readiness (7)
+     ✓ preserves the saved pair as unverified and read-only when readiness is pending 602ms
+ ✓ src/settings/sections/DefaultsSection.test.tsx (6 tests) 879ms
+   ✓ Defaults readiness lines (6)
+     ✓ treats Codex like Claude: one short line for a known failure, the full problem stays in preflight 414ms
+ ✓ src/editor/IssueBadge.test.tsx (7 tests) 1162ms
+   ✓ IssueBadge (5)
+     ✓ discards unparsed text from the popover, keeping focus in sight 432ms
+ ✓ src/components/ui/ui.test.tsx (19 tests) 1175ms
+   ✓ Button (4)
+     ✓ is a plain button by default with the primary look 458ms
+ ✓ src/editor/OrthogonalEdge.test.tsx (9 tests) 1036ms
+   ✓ OrthogonalEdge (9)
+     ✓ shows a handle per segment of a selected edge; arrows on the matching axis nudge it 410ms
+ ✓ src/components/ErrorBoundary.test.tsx (1 test) 389ms
+   ✓ ErrorBoundary (1)
+     ✓ shows the error in place of the screen and retries on request 386ms
+ ✓ src/editor/ValidationIndicator.test.tsx (6 tests) 1091ms
+   ✓ ValidationIndicator (6)
+     ✓ lists loop-level and edge issues in full, then one row per node that opens it 325ms
+ ✓ src/components/ui/disclosure.test.tsx (5 tests) 1065ms
+   ✓ Disclosure (4)
+     ✓ is a button that shows and hides its panel, named with its summary 510ms
+ ✓ src/components/ui/tabs.test.tsx (5 tests) 1210ms
+   ✓ Tabs (5)
+     ✓ keeps the main panel identity when a contextual evaluator gains or loses tabs 433ms
+     ✓ automatically activates arrows, wraps, and supports Home and End 324ms
+     ✓ keeps edited values and DOM identity through pointer switches 313ms
+ ✓ src/components/ui/side-panel.test.tsx (9 tests) 1242ms
+   ✓ SidePanel (7)
+     ✓ collapses to a rail with a Show button and its summary, and expands again 693ms
+ ✓ src/components/layout/layout.test.tsx (8 tests) 1091ms
+   ✓ MainNav (3)
+     ✓ marks the current page and keeps link names 337ms
+stderr | src/app/bootstrap.test.tsx > bootstrap > applies the stored theme if the boot script did not, and follows other tabs
+<Router basename="/app"> is not able to match the URL "/" because it does not start with the basename, so the <Router> won't render anything.
+<Router basename="/app"> is not able to match the URL "/" because it does not start with the basename, so the <Router> won't render anything.
+
+stderr | src/app/bootstrap.test.tsx > bootstrap > follows other tabs only while mounted: mounting again leaves exactly one listener
+<Router basename="/app"> is not able to match the URL "/" because it does not start with the basename, so the <Router> won't render anything.
+<Router basename="/app"> is not able to match the URL "/" because it does not start with the basename, so the <Router> won't render anything.
+<Router basename="/app"> is not able to match the URL "/" because it does not start with the basename, so the <Router> won't render anything.
+<Router basename="/app"> is not able to match the URL "/" because it does not start with the basename, so the <Router> won't render anything.
+
+stderr | src/app/bootstrap.test.tsx > bootstrap > applies the stored font if the boot script did not, leaves a shown one, and follows other tabs
+<Router basename="/app"> is not able to match the URL "/" because it does not start with the basename, so the <Router> won't render anything.
+<Router basename="/app"> is not able to match the URL "/" because it does not start with the basename, so the <Router> won't render anything.
+<Router basename="/app"> is not able to match the URL "/" because it does not start with the basename, so the <Router> won't render anything.
+<Router basename="/app"> is not able to match the URL "/" because it does not start with the basename, so the <Router> won't render anything.
+
+ ✓ src/app/bootstrap.test.tsx (6 tests) 484ms
+   ✓ bootstrap (6)
+     ✓ mounts the app and registers the service worker unless disabled 448ms
+ ✓ src/components/status.test.tsx (3 tests) 356ms
+ ✓ src/lib/focus.test.tsx (10 tests) 382ms
+ ✓ src/editor/github-fragment.test.ts (29 tests) 247ms
+ ✓ src/pwa/register.test.ts (21 tests) 241ms
+ ✓ src/editor/NodeCard.test.tsx (1 test) 428ms
+   ✓ refreshes committed handle ids and order once, including same-height changes, without refreshing unrelated data 426ms
+ ✓ scripts/github-fragment.test.ts (2 tests) 315ms
+ ✓ src/lib/online.test.tsx (5 tests) 296ms
+ ✓ src/editor/focus-field.test.ts (10 tests) 275ms
+ ✓ src/runs/useRunEvents.test.tsx (11 tests) 180ms
+ ✓ src/editor/store.decision-routes.test.ts (20 tests) 112ms
+ ✓ src/runs/projections.test.ts (15 tests) 192ms
+ ✓ src/api/templates.test.tsx (1 test) 143ms
+ ✓ src/editor/model.test.ts (11 tests) 147ms
+ ✓ src/lib/theme.test.ts (13 tests) 264ms
+ ✓ src/lib/font.test.ts (16 tests) 111ms
+ ✓ src/editor/store.test.ts (41 tests) 153ms
+ ✓ src/lib/reachability.test.ts (21 tests) 101ms
+ ✓ src/main.test.ts (1 test) 125ms
+ ✓ src/forms/cron/model.test.ts (44 tests) 78ms
+ ✓ src/editor/routing.test.ts (12 tests) 853ms
+   ✓ backward routing geometry (12)
+     ✓ function denseGraph(count = 100) {
+	const nodes = [node("start", "trigger", 0, 0)];
+	const edges = [edge("begin", "start", "n1")];
+	for (let i = 1; i < count - 1; i += 1) {
+		const labels = i < 3 ? [
+			"next",
+			"retry",
+			"self"
+		] : ["next", "retry"];
+		nodes.push({
+			...node(`n${i}`, "decision", i % 10 * 320, Math.floor(i / 10) * 270),
+			kind: "decision",
+			config: {
+				kind: "expression",
+				jsonata: "\"next\"",
+				routes: labels.map((id) => ({
+					id,
+					label: id
+				}))
+			}
+		});
+		edges.push(edge(`next-${i}`, `n${i}`, i === count - 2 ? "done" : `n${i + 1}`, "next"));
+		edges.push(edge(`retry-${i}`, `n${i}`, i === 1 ? "n1" : `n${i - 1}`, "retry"));
+		if (i < 3) edges.push(edge(`self-${i}`, `n${i}`, `n${i}`, "self"));
+	};
+	nodes.push(gate("done", 9 * 320, Math.floor((count - 1) / 10) * 270));
+	edges.push(edge("return", "done", "n1", "repeat"));
+	return {
+		schemaVersion: __vite_ssr_import_0__.CURRENT_DEFINITION_FORMAT,
+		name: `Dense graph: ${count} nodes, ${count * 2} edges`,
+		nodes,
+		edges
+	};
+}: orthogonal, padded, distinct lanes and straight labels 765ms
+ ✓ src/editor/useRouting.test.ts (5 tests) 69ms
+ ✓ src/editor/decision-authoring.test.ts (15 tests) 44ms
+ ✓ src/forms/layout.test.ts (15 tests) 43ms
+ ✓ src/lib/utils.test.ts (5 tests) 71ms
+ ✓ src/forms/introspect.test.ts (6 tests) 34ms
+ ✓ src/editor/route-channels.test.ts (1 test) 34ms
+ ✓ src/styles/palette.test.ts (3 tests) 22ms
+ ✓ src/settings/classifier-form.test.ts (23 tests) 29ms
+ ✓ src/editor/manual-route.test.ts (6 tests) 24ms
+ ✓ src/styles/fonts.test.ts (7 tests) 19ms
+ ✓ src/api/api-key-fetch.test.ts (11 tests) 16ms
+ ✓ src/editor/decision-gates.test.ts (2 tests) 23ms
+ ✓ src/forms/setup-instructions.test.ts (3 tests) 10ms
+ ✓ src/editor/port-targets.test.ts (5 tests) 11ms
+ ✓ src/editor/history.test.ts (6 tests) 15ms
+ ✓ src/lib/variants.test.ts (4 tests) 8ms
+ ✓ src/api/prefixes.test.ts (1 test) 9ms
+ ✓ src/e2e-support/worker.test.ts (1 test) 7ms
+ ✓ src/editor/save-status.test.ts (4 tests) 9ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 16 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/DecisionAuthoring.test.tsx > decision authoring checkpoint > restores active device ownership across reload with unfinished ID "review"
+ FAIL  src/editor/DecisionAuthoring.test.tsx > decision authoring checkpoint > restores set-aside device ownership across reload with unfinished ID "review"
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/DecisionAuthoring.test.tsx:370:5
+    368|     { copy: 'set-aside', unfinished: '' },
+    369|     { copy: 'set-aside', unfinished: 'review' },
+    370|   ])(
+       |     ^
+    371|     'restores $copy device ownership across reload with unfinished ID …
+    372|     async ({ copy, unfinished }) => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/16]⎯
+
+ FAIL  src/editor/DecisionAuthoring.test.tsx > decision authoring checkpoint > keeps row ownership through invalid ids, reorders and labels, and reviews removal before one undoable edit
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/DecisionAuthoring.test.tsx:532:3
+    530|   });
+    531|
+    532|   it('keeps row ownership through invalid ids, reorders and labels, an…
+       |   ^
+    533|     const user = userEvent.setup();
+    534|     const { dialog } = await setup();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/16]⎯
+
+ FAIL  src/editor/EditorPage.test.tsx > EditorPage > describes valid pending JSON accurately and refuses Publish until applied or cancelled
+TestingLibraryElementError: Unable to find an element with the text: Ready to publish. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="flex min-h-screen flex-col bg-surface-app text-default"
+    >
+      <header
+        class="hairline-accent relative z-20 flex h-14 shrink-0 items-center gap-8 bg-surface-inverse px-6 text-inverse max-sm:gap-2 max-sm:px-4"
+      >
+        <span
+          class="inline-flex items-center gap-2.5 font-display text-lg font-semibold tracking-[-0.015em] text-inverse"
+        >
+          <svg
+            aria-hidden="true"
+            class="size-[30px] shrink-0"
+            focusable="false"
+            viewBox="0 0 32 32"
+          >
+            <path
+              class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+              d="M10.4 11.1 .3 3 6 17.4Z"
+            />
+            <path
+              class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+              d="M21.6 11.1 31.7 3 26 17.4Z"
+            />
+            <path
+              class="fill-mascot-shade"
+              d="M8.7 11.9 2.6 6.2l3.5 9.2Z"
+            />
+            <path
+              class="fill-mascot-shade"
+              d="M23.3 11.9 29.4 6.2l-3.5 9.2Z"
+            />
+            <rect
+              class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+              height="17.4"
+              rx="6.2"
+              width="22"
+              x="5"
+              y="8.8"
+            />
+            <circle
+              class="fill-mascot-port stroke-mascot-ink stroke-[0.9]"
+              cx="5"
+              cy="20.2"
+              r="2.2"
+            />
+            <circle
+              class="fill-mascot-port stroke-mascot-ink stroke-[0.9]"
+              cx="27"
+              cy="20.2"
+              r="2.2"
+            />
+            <path
+              class="fill-none stroke-mascot-ink stroke-[2.1] [stroke-linecap:round] [stroke-linejoin:round]"
+              d="M9.1 12.3 14.5 15M22.9 12.3 17.5 15"
+            />
+            <path
+              class="fill-mascot-ink"
+              d="M9.8 17.4q2.5-1.9 5-.1-2.5 1.5-5 .1Z"
+            />
+            <path
+              class="fill-mascot-ink"
+              d="M22.2 17.4q-2.5-1.9-5-.1 2.5 1.5 5 .1Z"
+            />
+            <circle
+              class="fill-mascot-glint"
+              cx="13.3"
+              cy="17.2"
+              r=".7"
+            />
+            <circle
+              class="fill-mascot-glint"
+              cx="18.7"
+              cy="17.2"
+              r=".7"
+            />
+            <path
+              class="fill-none stroke-mascot-ink stroke-[1.5] [stroke-linecap:round] [stroke-linejoin:round]"
+              d="M11.4 21.1q3.8 1.7 7.3.5 1.6-.6 2.6-2.1"
+            />
+            <path
+              class="fill-mascot-tooth stroke-mascot-ink stroke-[0.45] [stroke-linejoin:round]"
+              d="M16.6 21.9l1.9-.5-.6 2.3Z"
+            />
+          </svg>
+          <span>
+            Graph
+            <span
+              class="text-accent"
+            >
+              Goblin
+            </span>
+          </span>
+        </span>
+        <button
+          aria-controls="_r_0_"
+          aria-expanded="false"
+          class="ml-auto inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border border-inverse px-3 pointer-coarse:h-11 font-medium text-inverse focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus sm:hidden"
+          type="button"
+        >
+          <svg
+            aria-hidden="true"
+            class="size-4 shrink-0"
+            data-icon="menu"
+            fill="none"
+            focusable="false"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M4 7h16M4 12h16M4 17h16"
+            />
+          </svg>
+          Menu
+        </button>
+        <nav
+          aria-label="Main"
+          class="flex gap-1 sm:static sm:flex sm:flex-row sm:items-stretch sm:self-stretch max-sm:absolute max-sm:inset-x-0 max-sm:top-14 max-sm:z-10 max-sm:flex-col max-sm:border-t max-sm:border-inverse max-sm:bg-surface-inverse max-sm:px-3 max-sm:pt-2 max-sm:pb-4 max-sm:shadow-3 max-sm:hidden"
+          id="_r_0_"
+        >
+          <a
+            aria-current="page"
+            class="group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised active"
+            data-discover="true"
+            href="/loops"
+          >
+            <span
+              class="relative after:absolute after:inset-x-0 after:-bottom-[5px] after:h-[3px] after:rounded-full after:transition-colors group-aria-[current=page]:after:bg-accent group...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="flex min-h-screen flex-col bg-surface-app text-default"
+    >
+      <header
+        class="hairline-accent relative z-20 flex h-14 shrink-0 items-center gap-8 bg-surface-inverse px-6 text-inverse max-sm:gap-2 max-sm:px-4"
+      >
+        <span
+          class="inline-flex items-center gap-2.5 font-display text-lg font-semibold tracking-[-0.015em] text-inverse"
+        >
+          <svg
+            aria-hidden="true"
+            class="size-[30px] shrink-0"
+            focusable="false"
+            viewBox="0 0 32 32"
+          >
+            <path
+              class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+              d="M10.4 11.1 .3 3 6 17.4Z"
+            />
+            <path
+              class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+              d="M21.6 11.1 31.7 3 26 17.4Z"
+            />
+            <path
+              class="fill-mascot-shade"
+              d="M8.7 11.9 2.6 6.2l3.5 9.2Z"
+            />
+            <path
+              class="fill-mascot-shade"
+              d="M23.3 11.9 29.4 6.2l-3.5 9.2Z"
+            />
+            <rect
+              class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+              height="17.4"
+              rx="6.2"
+              width="22"
+              x="5"
+              y="8.8"
+            />
+            <circle
+              class="fill-mascot-port stroke-mascot-ink stroke-[0.9]"
+              cx="5"
+              cy="20.2"
+              r="2.2"
+            />
+            <circle
+              class="fill-mascot-port stroke-mascot-ink stroke-[0.9]"
+              cx="27"
+              cy="20.2"
+              r="2.2"
+            />
+            <path
+              class="fill-none stroke-mascot-ink stroke-[2.1] [stroke-linecap:round] [stroke-linejoin:round]"
+              d="M9.1 12.3 14.5 15M22.9 12.3 17.5 15"
+            />
+            <path
+              class="fill-mascot-ink"
+              d="M9.8 17.4q2.5-1.9 5-.1-2.5 1.5-5 .1Z"
+            />
+            <path
+              class="fill-mascot-ink"
+              d="M22.2 17.4q-2.5-1.9-5-.1 2.5 1.5 5 .1Z"
+            />
+            <circle
+              class="fill-mascot-glint"
+              cx="13.3"
+              cy="17.2"
+              r=".7"
+            />
+            <circle
+              class="fill-mascot-glint"
+              cx="18.7"
+              cy="17.2"
+              r=".7"
+            />
+            <path
+              class="fill-none stroke-mascot-ink stroke-[1.5] [stroke-linecap:round] [stroke-linejoin:round]"
+              d="M11.4 21.1q3.8 1.7 7.3.5 1.6-.6 2.6-2.1"
+            />
+            <path
+              class="fill-mascot-tooth stroke-mascot-ink stroke-[0.45] [stroke-linejoin:round]"
+              d="M16.6 21.9l1.9-.5-.6 2.3Z"
+            />
+          </svg>
+          <span>
+            Graph
+            <span
+              class="text-accent"
+            >
+              Goblin
+            </span>
+          </span>
+        </span>
+        <button
+          aria-controls="_r_0_"
+          aria-expanded="false"
+          class="ml-auto inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border border-inverse px-3 pointer-coarse:h-11 font-medium text-inverse focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus sm:hidden"
+          type="button"
+        >
+          <svg
+            aria-hidden="true"
+            class="size-4 shrink-0"
+            data-icon="menu"
+            fill="none"
+            focusable="false"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M4 7h16M4 12h16M4 17h16"
+            />
+          </svg>
+          Menu
+        </button>
+        <nav
+          aria-label="Main"
+          class="flex gap-1 sm:static sm:flex sm:flex-row sm:items-stretch sm:self-stretch max-sm:absolute max-sm:inset-x-0 max-sm:top-14 max-sm:z-10 max-sm:flex-col max-sm:border-t max-sm:border-inverse max-sm:bg-surface-inverse max-sm:px-3 max-sm:pt-2 max-sm:pb-4 max-sm:shadow-3 max-sm:hidden"
+          id="_r_0_"
+        >
+          <a
+            aria-current="page"
+            class="group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised active"
+            data-discover="true"
+            href="/loops"
+          >
+            <span
+              class="relative after:absolute after:inset-x-0 after:-bottom-[5px] after:h-[3px] after:rounded-full after:transition-colors group-aria-[current=page]:after:bg-accent group...
+ ❯ waitForWrapper ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/editor/EditorPage.test.tsx:54:18
+     52|     const loop = api.addLoop(minimalLoop());
+     53|     renderApp(`/loops/${loop.id}/edit`, api);
+     54|     await screen.findByText('Ready to publish');
+       |                  ^
+     55|     act(() =>
+     56|       useEditorStore.getState().setFieldError('node:start', 'inputSche…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/16]⎯
+
+ FAIL  src/editor/EditorPage.test.tsx > EditorPage > loads a draft, adds nodes from the palette, edits properties, and autosaves
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/EditorPage.test.tsx:201:3
+    199|   });
+    200|
+    201|   it('loads a draft, adds nodes from the palette, edits properties, an…
+       |   ^
+    202|     const user = userEvent.setup();
+    203|     const api = new FakeApi();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/16]⎯
+
+ FAIL  src/editor/EditorPage.test.tsx > EditorPage > edits loop settings, variables, node ids, and edges
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/EditorPage.test.tsx:1151:3
+    1149|   });
+    1150|
+    1151|   it('edits loop settings, variables, node ids, and edges', async () =…
+       |   ^
+    1152|     const user = userEvent.setup();
+    1153|     const api = new FakeApi();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/16]⎯
+
+ FAIL  src/editor/EditorPage.test.tsx > EditorPage > applies an id typed in the dialog when it closes, and stops once for an id that cannot apply
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/EditorPage.test.tsx:1207:3
+    1205|   });
+    1206|
+    1207|   it('applies an id typed in the dialog when it closes, and stops once…
+       |   ^
+    1208|     const user = userEvent.setup();
+    1209|     const api = new FakeApi();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/16]⎯
+
+ FAIL  src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog evaluator-specific decisions > authors and saves a new llm decision from the default editor fields
+ FAIL  src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog evaluator-specific decisions > authors and saves a new classifier decision from the default editor fields
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/NodeEditorDialog.test.tsx:112:56
+    110|     },
+    111|   );
+    112|   it.each(['expression', 'llm', 'classifier'] as const)(
+       |                                                        ^
+    113|     'authors and saves a new %s decision from the default editor field…
+    114|     async (kind) => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/16]⎯
+
+ FAIL  src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog evaluator-specific decisions > edits and saves a valid classifier decision
+AssertionError: expected { kind: 'classifier', …(5) } to match object { …(2) }
+(8 matching properties omitted from actual)
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="flex min-h-screen flex-col bg-surface-app text-default"
+      >
+        <header
+          class="hairline-accent relative z-20 flex h-14 shrink-0 items-center gap-8 bg-surface-inverse px-6 text-inverse max-sm:gap-2 max-sm:px-4"
+        >
+          <span
+            class="inline-flex items-center gap-2.5 font-display text-lg font-semibold tracking-[-0.015em] text-inverse"
+          >
+            <svg
+              aria-hidden="true"
+              class="size-[30px] shrink-0"
+              focusable="false"
+              viewBox="0 0 32 32"
+            >
+              <path
+                class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+                d="M10.4 11.1 .3 3 6 17.4Z"
+              />
+              <path
+                class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+                d="M21.6 11.1 31.7 3 26 17.4Z"
+              />
+              <path
+                class="fill-mascot-shade"
+                d="M8.7 11.9 2.6 6.2l3.5 9.2Z"
+              />
+              <path
+                class="fill-mascot-shade"
+                d="M23.3 11.9 29.4 6.2l-3.5 9.2Z"
+              />
+              <rect
+                class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+                height="17.4"
+                rx="6.2"
+                width="22"
+                x="5"
+                y="8.8"
+              />
+              <circle
+                class="fill-mascot-port stroke-mascot-ink stroke-[0.9]"
+                cx="5"
+                cy="20.2"
+                r="2.2"
+              />
+              <circle
+                class="fill-mascot-port stroke-mascot-ink stroke-[0.9]"
+                cx="27"
+                cy="20.2"
+                r="2.2"
+              />
+              <path
+                class="fill-none stroke-mascot-ink stroke-[2.1] [stroke-linecap:round] [stroke-linejoin:round]"
+                d="M9.1 12.3 14.5 15M22.9 12.3 17.5 15"
+              />
+              <path
+                class="fill-mascot-ink"
+                d="M9.8 17.4q2.5-1.9 5-.1-2.5 1.5-5 .1Z"
+              />
+              <path
+                class="fill-mascot-ink"
+                d="M22.2 17.4q-2.5-1.9-5-.1 2.5 1.5 5 .1Z"
+              />
+              <circle
+                class="fill-mascot-glint"
+                cx="13.3"
+                cy="17.2"
+                r=".7"
+              />
+              <circle
+                class="fill-mascot-glint"
+                cx="18.7"
+                cy="17.2"
+                r=".7"
+              />
+              <path
+                class="fill-none stroke-mascot-ink stroke-[1.5] [stroke-linecap:round] [stroke-linejoin:round]"
+                d="M11.4 21.1q3.8 1.7 7.3.5 1.6-.6 2.6-2.1"
+              />
+              <path
+                class="fill-mascot-tooth stroke-mascot-ink stroke-[0.45] [stroke-linejoin:round]"
+                d="M16.6 21.9l1.9-.5-.6 2.3Z"
+              />
+            </svg>
+            <span>
+              Graph
+              <span
+                class="text-accent"
+              >
+                Goblin
+              </span>
+            </span>
+          </span>
+          <button
+            aria-controls="_r_9t_"
+            aria-expanded="false"
+            class="ml-auto inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border border-inverse px-3 pointer-coarse:h-11 font-medium text-inverse focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus sm:hidden"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="size-4 shrink-0"
+              data-icon="menu"
+              fill="none"
+              focusable="false"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M4 7h16M4 12h16M4 17h16"
+              />
+            </svg>
+            Menu
+          </button>
+          <nav
+            aria-label="Main"
+            class="flex gap-1 sm:static sm:flex sm:flex-row sm:items-stretch sm:self-stretch max-sm:absolute max-sm:inset-x-0 max-sm:top-14 max-sm:z-10 max-sm:flex-col max-sm:border-t max-sm:border-inverse max-sm:bg-surface-inverse max-sm:px-3 max-sm:pt-2 max-sm:pb-4 max-sm:shadow-3 max-sm:hidden"
+            id="_r_9t_"
+          >
+            <a
+              aria-current="page"
+              class="group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised active"
+              data-discover="true"
+...
+
+- Expected
++ Received
+
+  {
+    "kind": "classifier",
+-   "question": "Use the complete evidence.",
++   "question": "Classify {{ vars.topic }}.",
+  }
+
+ ❯ timeout src/editor/NodeEditorDialog.test.tsx:278:31
+    276|           saved?.kind === 'decision' && DecisionConfigSchema.safeParse…
+    277|         ).toBe(true);
+    278|         expect(saved?.config).toMatchObject({ [source]: text, kind: co…
+       |                               ^
+    279|       },
+    280|       { timeout: 4000 },
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ MutationObserver.checkRealTimersCallback ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+ ❯ MutationObserver.invokeTheCallbackFunction ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/generated/idl/MutationCallback.js:19:26
+ ❯ notifyMutationObservers ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/jsdom/living/helpers/mutation-observers.js:194:22
+ ❯ ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/jsdom/living/helpers/mutation-observers.js:165:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/16]⎯
+
+ FAIL  src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog evaluator-specific decisions > edits and saves a valid classifier decision
+AssertionError: expected { kind: 'classifier', …(5) } to match object { …(2) }
+(9 matching properties omitted from actual)
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="flex min-h-screen flex-col bg-surface-app text-default"
+      >
+        <header
+          class="hairline-accent relative z-20 flex h-14 shrink-0 items-center gap-8 bg-surface-inverse px-6 text-inverse max-sm:gap-2 max-sm:px-4"
+        >
+          <span
+            class="inline-flex items-center gap-2.5 font-display text-lg font-semibold tracking-[-0.015em] text-inverse"
+          >
+            <svg
+              aria-hidden="true"
+              class="size-[30px] shrink-0"
+              focusable="false"
+              viewBox="0 0 32 32"
+            >
+              <path
+                class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+                d="M10.4 11.1 .3 3 6 17.4Z"
+              />
+              <path
+                class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+                d="M21.6 11.1 31.7 3 26 17.4Z"
+              />
+              <path
+                class="fill-mascot-shade"
+                d="M8.7 11.9 2.6 6.2l3.5 9.2Z"
+              />
+              <path
+                class="fill-mascot-shade"
+                d="M23.3 11.9 29.4 6.2l-3.5 9.2Z"
+              />
+              <rect
+                class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+                height="17.4"
+                rx="6.2"
+                width="22"
+                x="5"
+                y="8.8"
+              />
+              <circle
+                class="fill-mascot-port stroke-mascot-ink stroke-[0.9]"
+                cx="5"
+                cy="20.2"
+                r="2.2"
+              />
+              <circle
+                class="fill-mascot-port stroke-mascot-ink stroke-[0.9]"
+                cx="27"
+                cy="20.2"
+                r="2.2"
+              />
+              <path
+                class="fill-none stroke-mascot-ink stroke-[2.1] [stroke-linecap:round] [stroke-linejoin:round]"
+                d="M9.1 12.3 14.5 15M22.9 12.3 17.5 15"
+              />
+              <path
+                class="fill-mascot-ink"
+                d="M9.8 17.4q2.5-1.9 5-.1-2.5 1.5-5 .1Z"
+              />
+              <path
+                class="fill-mascot-ink"
+                d="M22.2 17.4q-2.5-1.9-5-.1 2.5 1.5 5 .1Z"
+              />
+              <circle
+                class="fill-mascot-glint"
+                cx="13.3"
+                cy="17.2"
+                r=".7"
+              />
+              <circle
+                class="fill-mascot-glint"
+                cx="18.7"
+                cy="17.2"
+                r=".7"
+              />
+              <path
+                class="fill-none stroke-mascot-ink stroke-[1.5] [stroke-linecap:round] [stroke-linejoin:round]"
+                d="M11.4 21.1q3.8 1.7 7.3.5 1.6-.6 2.6-2.1"
+              />
+              <path
+                class="fill-mascot-tooth stroke-mascot-ink stroke-[0.45] [stroke-linejoin:round]"
+                d="M16.6 21.9l1.9-.5-.6 2.3Z"
+              />
+            </svg>
+            <span>
+              Graph
+              <span
+                class="text-accent"
+              >
+                Goblin
+              </span>
+            </span>
+          </span>
+          <button
+            aria-controls="_r_be_"
+            aria-expanded="false"
+            class="ml-auto inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border border-inverse px-3 pointer-coarse:h-11 font-medium text-inverse focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus sm:hidden"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="size-4 shrink-0"
+              data-icon="menu"
+              fill="none"
+              focusable="false"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M4 7h16M4 12h16M4 17h16"
+              />
+            </svg>
+            Menu
+          </button>
+          <nav
+            aria-label="Main"
+            class="flex gap-1 sm:static sm:flex sm:flex-row sm:items-stretch sm:self-stretch max-sm:absolute max-sm:inset-x-0 max-sm:top-14 max-sm:z-10 max-sm:flex-col max-sm:border-t max-sm:border-inverse max-sm:bg-surface-inverse max-sm:px-3 max-sm:pt-2 max-sm:pb-4 max-sm:shadow-3 max-sm:hidden"
+            id="_r_be_"
+          >
+            <a
+              aria-current="page"
+              class="group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised active"
+              data-discover="true"
+...
+
+- Expected
++ Received
+
+  {
+    "kind": "classifier",
+-   "question": "Use the complete evidence.",
++   "question": "Classify {{ vars.topic }}.",
+  }
+
+ ❯ timeout src/editor/NodeEditorDialog.test.tsx:278:31
+    276|           saved?.kind === 'decision' && DecisionConfigSchema.safeParse…
+    277|         ).toBe(true);
+    278|         expect(saved?.config).toMatchObject({ [source]: text, kind: co…
+       |                               ^
+    279|       },
+    280|       { timeout: 4000 },
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/16]⎯
+
+ FAIL  src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog evaluator-specific decisions > selects each kind with only its applicable fields and keeps source issue focus
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/NodeEditorDialog.test.tsx:283:3
+    281|     );
+    282|   });
+    283|   it('selects each kind with only its applicable fields and keeps sour…
+       |   ^
+    284|     const user = userEvent.setup();
+    285|     const dialog = await openDialog(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/16]⎯
+
+ FAIL  src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog GitHub trigger presets > applies an editable body-signed fragment as one undoable graph change
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/NodeEditorDialog.test.tsx:368:3
+    366|
+    367| describe('NodeEditorDialog GitHub trigger presets', () => {
+    368|   it('applies an editable body-signed fragment as one undoable graph c…
+       |   ^
+    369|     const user = userEvent.setup();
+    370|     const dialog = await openDialog(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/16]⎯
+
+ FAIL  src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog GitHub trigger presets > shows bounded item controls for the GitHub poll preset
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/NodeEditorDialog.test.tsx:430:3
+    428|   });
+    429|
+    430|   it('shows bounded item controls for the GitHub poll preset', async (…
+       |   ^
+    431|     const user = userEvent.setup();
+    432|     const dialog = await openDialog(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/16]⎯
+
+ FAIL  src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog disclosures across undo and redo > keeps Advanced open through an undo and a redo of a basic picker, with focus restored
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/NodeEditorDialog.test.tsx:521:3
+    519|   });
+    520|
+    521|   it('keeps Advanced open through an undo and a redo of a basic picker…
+       |   ^
+    522|     const user = userEvent.setup();
+    523|     const dialog = await openDialog(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/16]⎯
+
+ FAIL  src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog disclosures across undo and redo > keeps opened and added list items open through an undo and a redo
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/NodeEditorDialog.test.tsx:571:3
+    569|   });
+    570|
+    571|   it('keeps opened and added list items open through an undo and a red…
+       |   ^
+    572|     const user = userEvent.setup();
+    573|     const dialog = await openDialog(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/16]⎯
+
+
+ Test Files  3 failed | 115 passed (118)
+      Tests  16 failed | 1485 passed (1501)
+   Start at  15:12:17
+   Duration  980.73s (tests 57%, environment 22%, import 8%, setup 8%, transform 5%, worker 1%)
+
+    Isolate  118 workers spawned · ~8.15s startup each (spawn + environment, per file)
+             at least ~232.16s faster with isolate: false — reuses workers across files instead of one per file
+
+JSON report written to <disposable-json-report>
+ % Coverage report from v8
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-------------------|---------|----------|---------|---------|-------------------
+All files          |   98.05 |    95.01 |   98.54 |   98.96 |                   
+ src/api           |   98.37 |    95.94 |    98.8 |   99.35 |                   
+  ApiKeyPanel.tsx  |   97.91 |    92.85 |     100 |     100 | 69                
+  api-key.ts       |   96.55 |      100 |     100 |   96.15 | 10                
+  context.tsx      |   88.88 |       75 |      75 |     100 | 15                
+  queries.ts       |     100 |    95.83 |     100 |     100 | 72                
+ src/components/ui |   99.22 |    97.48 |   99.29 |   99.82 |                   
+  ...rm-action.tsx |   98.87 |    96.55 |   92.85 |     100 | 90,146            
+  dialog.tsx       |     100 |    97.05 |     100 |     100 | 134,162           
+  disclosure.tsx   |   97.05 |    95.45 |     100 |     100 | 71                
+  popover.tsx      |   98.85 |    95.62 |     100 |   99.54 | 453               
+ src/drafts        |   96.68 |    92.24 |   97.05 |   96.81 |                   
+  local-drafts.ts  |   96.68 |    92.24 |   97.05 |   96.81 | ...18,133,177,200 
+ src/editor        |   97.48 |    94.42 |   98.78 |   98.64 |                   
+  Canvas.tsx       |   97.63 |    92.27 |     100 |   98.25 | 128-135           
+  ...fierField.tsx |     100 |    92.85 |     100 |     100 | 30,39,62-65       
+  ...licyField.tsx |   97.43 |    95.45 |     100 |     100 | 19,74             
+  ...werPicker.tsx |     100 |       50 |     100 |     100 | 42                
+  EditorPage.tsx   |   97.38 |    93.33 |      96 |   97.72 | 280,451-452       
+  ...ingsPanel.tsx |    92.3 |    94.11 |   88.88 |   91.66 | 90                
+  ...nnections.tsx |   96.55 |      100 |   93.33 |   95.65 | 39                
+  ...torDialog.tsx |   96.44 |    90.83 |   97.14 |   98.75 | 335,438           
+  ...gonalEdge.tsx |     100 |       96 |     100 |     100 | 131-133,312       
+  Palette.tsx      |     100 |       90 |     100 |     100 | 74                
+  ...oopPicker.tsx |     100 |     90.9 |     100 |     100 | 27                
+  ...erPresets.tsx |     100 |    97.14 |     100 |     100 | 82,376            
+  ...ypePicker.tsx |     100 |    81.25 |     100 |     100 | 35,53,101         
+  ...Indicator.tsx |     100 |    93.33 |     100 |     100 | 72                
+  ...-authoring.ts |     100 |    99.21 |     100 |     100 | 131               
+  ...sion-gates.ts |     100 |    95.23 |     100 |     100 | 12                
+  ...oute-edges.ts |   97.43 |    91.42 |     100 |   98.97 | 88                
+  ...b-fragment.ts |   98.11 |    94.23 |     100 |     100 | 44-53,150         
+  manual-route.ts  |     100 |    98.21 |     100 |     100 | 114               
+  model.ts         |   99.25 |    96.71 |     100 |     100 | ...36,142,187,224 
+  ...g-geometry.ts |    99.4 |    99.13 |     100 |   99.26 | 185               
+  routing.ts       |   98.63 |    98.36 |     100 |   99.11 | 746-749           
+  store.ts         |     100 |    99.42 |     100 |     100 | 559               
+  ...eld-labels.ts |    87.5 |     87.5 |     100 |    87.5 | 35                
+  ...er-presets.ts |   97.61 |    94.82 |     100 |     100 | 45,126,134        
+  useAutosave.ts   |   97.48 |    94.82 |     100 |     100 | ...57,185,251,275 
+  useLoadEditor.ts |   85.66 |    82.93 |   85.18 |   91.46 | ...90-393,508-520 
+  ...veConflict.ts |   89.36 |       76 |   88.88 |   97.61 | 74                
+  useRouting.ts    |   95.45 |    90.16 |     100 |    98.3 | 84                
+  ...oShortcuts.ts |     100 |    92.04 |     100 |     100 | ...70,275-279,285 
+ src/forms         |   98.78 |    94.58 |   98.12 |    99.6 |                   
+  ...deOutputs.tsx |     100 |    98.61 |     100 |     100 | 34                
+  ...chemaForm.tsx |   99.34 |    94.76 |     100 |     100 | ...70,280,356,384 
+  SchemaForm.tsx   |   98.51 |    89.21 |   97.56 |   99.18 | 353               
+  disclosures.ts   |   98.52 |    83.33 |     100 |     100 | ...02,138-139,152 
+  introspect.ts    |   97.02 |    94.51 |   93.93 |   98.78 | 376,387           
+  layout.ts        |     100 |    96.94 |     100 |     100 | 174,185           
+  preview.ts       |     100 |    83.33 |     100 |     100 | 26                
+  sections.tsx     |   97.95 |    96.66 |   95.45 |     100 | 51                
+ src/forms/cron    |     100 |    97.67 |     100 |     100 |                   
+  control.tsx      |     100 |    95.04 |     100 |     100 | ...44,307,345,394 
+ src/forms/fields  |   97.93 |    96.05 |   97.36 |   98.44 |                   
+  choice.tsx       |     100 |    96.66 |     100 |     100 | 133               
+  collection.tsx   |     100 |    94.73 |     100 |     100 | 35                
+  json.tsx         |     100 |    96.95 |     100 |     100 | ...36,396,411,461 
+  model.tsx        |   97.39 |    96.01 |     100 |   97.16 | 70,73-74          
+  shared.tsx       |     100 |    97.95 |     100 |     100 | 112               
+  structure.tsx    |   96.95 |    94.95 |      94 |   98.12 | ...11,168,272,481 
+  suggestions.tsx  |   93.75 |       90 |     100 |     100 | 27                
+  text.tsx         |   95.08 |     97.4 |     100 |   94.82 | 172-174           
+ src/lib           |   98.82 |    98.36 |   97.84 |     100 |                   
+  focus.ts         |   96.49 |    94.28 |     100 |     100 | 3,54              
+  font.ts          |   97.72 |      100 |   94.73 |     100 |                   
+  theme.ts         |   97.72 |      100 |   94.11 |     100 |                   
+  utils.ts         |     100 |    97.91 |     100 |     100 | 95                
+ src/loops         |   97.12 |    97.02 |   97.82 |   99.18 |                   
+  LoopsPage.tsx    |     100 |     98.5 |     100 |     100 | 73                
+  ...teGallery.tsx |   92.85 |    94.11 |   93.33 |   97.77 | 36                
+ src/pwa           |   99.24 |    97.05 |   96.77 |     100 |                   
+  register.ts      |   99.13 |    96.96 |   95.45 |     100 | 26,87             
+ src/runs          |    97.3 |     92.5 |   96.72 |   98.29 |                   
+  ...ectorPage.tsx |   96.29 |    90.69 |     100 |   95.83 | 76                
+  projections.ts   |      95 |    88.99 |    87.5 |   96.05 | 205,217,248       
+  useRunEvents.ts  |    97.8 |    95.34 |     100 |     100 | 113,129           
+ ...runs/inspector |    92.5 |     87.8 |   97.56 |   96.15 |                   
+  ...onDetails.tsx |    92.1 |     94.3 |   93.33 |   93.93 | 36,317            
+  ...essDrawer.tsx |   81.81 |    71.42 |     100 |   92.85 | 35-36             
+  ThreadViewer.tsx |     100 |       80 |     100 |     100 | 13-19,62,74       
+  WaitPanel.tsx    |     100 |    88.23 |     100 |     100 | 29,40,52,80       
+ src/runs/new      |     100 |    95.45 |     100 |     100 |                   
+  RunLauncher.tsx  |     100 |       90 |     100 |     100 | 43,109            
+ src/settings      |      98 |    95.04 |     100 |   98.66 |                   
+  ...ifier-form.ts |   96.96 |    94.91 |     100 |   97.77 | 109               
+  shared.tsx       |     100 |    95.23 |     100 |     100 | 45,117            
+ ...tings/sections |     100 |    97.33 |     100 |     100 |                   
+  ...lsSection.tsx |     100 |    96.55 |     100 |     100 | 95,123            
+  ...tsSection.tsx |     100 |    94.28 |     100 |     100 | 92-96,123,131     
+  ...ogSection.tsx |     100 |    98.57 |     100 |     100 | 251               
+  ...htSection.tsx |     100 |    95.83 |     100 |     100 | 44                
+-------------------|---------|----------|---------|---------|-------------------
+
+=============================== Coverage summary ===============================
+Statements   : 98.05% ( 8049/8209 )
+Branches     : 95.01% ( 7187/7564 )
+Functions    : 98.54% ( 2168/2200 )
+Lines        : 98.96% ( 7010/7083 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in <user-path>
+  │ f1\apps\web
+

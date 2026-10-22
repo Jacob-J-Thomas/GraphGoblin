@@ -1,0 +1,42 @@
+// Independent round-3 fixture. Only version, help and login status are accepted.
+using System;
+using System.IO;
+using System.Text;
+using System.Threading;
+public static class IndependentReadinessFixture {
+  public static int Main(string[] args) {
+    string dir=AppDomain.CurrentDomain.BaseDirectory;
+    string harness=File.ReadAllText(Path.Combine(dir,"harness.txt")).Trim();
+    string scenario=File.ReadAllText(Path.Combine(dir,"scenario.txt")).Trim();
+    File.AppendAllText(Path.Combine(dir,"requests.txt"), DateTime.UtcNow.ToString("o")+"|"+String.Join(" ",args)+Environment.NewLine);
+    if(Array.IndexOf(args,"--version")>=0) {
+      Console.WriteLine(harness=="claude"?(scenario=="old"?"2.1.284":"2.1.287"):"codex-cli "+(scenario=="old"?"0.100.0":"0.160.0-beta.1")); return 0;
+    }
+    if(Array.IndexOf(args,"--help")>=0) {
+      string flags=harness=="claude"?"--safe-mode --restricted --setting-sources --strict-mcp-config --tools --allowedTools --permission-mode --permission-prompts --effort --json-schema --output-format --input-format --model --verbose --print --no-session-persistence --resume":"--json --model --sandbox --cd --skip-git-repo-check --output-schema --config";
+      if(scenario=="missing-model") flags=flags.Replace("--model","");
+      if(scenario=="missing-effort") flags=flags.Replace(harness=="claude"?"--effort":"--config","");
+      Console.WriteLine(flags); return 0;
+    }
+    if(Array.IndexOf(args,"status")>=0) {
+      if(scenario=="hang") Thread.Sleep(Timeout.Infinite);
+      if(scenario=="slow-ready") Thread.Sleep(2500);
+      if(File.Exists(Path.Combine(dir,"profile.txt")) && scenario=="profile") {
+        string[] profile=File.ReadAllLines(Path.Combine(dir,"profile.txt"));
+        Console.Out.Write(Encoding.UTF8.GetString(Convert.FromBase64String(profile[1])));
+        Console.Error.Write(Encoding.UTF8.GetString(Convert.FromBase64String(profile[2])));
+        return Int32.Parse(profile[0]);
+      }
+      if(scenario=="empty") return 0;
+      if(scenario=="object") {Console.WriteLine("{}");return 0;}
+      if(scenario=="auth") {
+        if(harness=="claude") Console.WriteLine("{\"loggedIn\":false,\"authMethod\":\"none\"}"); else Console.Error.WriteLine("Not logged in");
+        return 1;
+      }
+      string failure=scenario=="quota"?"Usage limit reached: quota exhausted":scenario=="transport"?"ECONNREFUSED authentication server":scenario=="unknown"?"Unknown login reply":null;
+      if(failure!=null) {Console.Error.WriteLine(failure);return 1;}
+      Console.WriteLine(harness=="claude"?"{\"loggedIn\":true,\"authMethod\":\"claude.ai\"}":"Logged in using ChatGPT");return 0;
+    }
+    Console.Error.WriteLine("Independent QA fixture refuses model turns");return 2;
+  }
+}
