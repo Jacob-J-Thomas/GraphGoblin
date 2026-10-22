@@ -1,6 +1,6 @@
 # Issue 98 core verification — 2026-10-07
 
-Verified in the managed child worktree `C:\Users\98jak\.codex\worktrees\decision-kinds-98\GraphGoblin`, branch `codex/decision-kinds-98`, based on main `2f98219`. This evidence covers the Choice contracts, domain model resolution/graph/export changes, engine, and Codex/Jev adapters. Repository gates, final migration verification, browser experience, and owner product acceptance remain separate gates. No local instance data was converted by these checks.
+Verified in the managed child worktree `<local>\.codex\worktrees\decision-kinds-98\GraphGoblin`, branch `codex/decision-kinds-98`, based on main `2f98219`. This evidence covers the Choice contracts, domain model resolution/graph/export changes, engine, and Codex/Jev adapters. Repository gates, final migration verification, browser experience, and owner product acceptance remain separate gates. No local instance data was converted by these checks.
 
 ## Package checks
 
