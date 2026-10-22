@@ -1,0 +1,367 @@
+{
+  "loopId": "01M5J9FA8MTR7VWAKMBEB2G8FG",
+  "runId": "01M5J9FABKX3EJE5FWTSMW5AMV",
+  "path": "/overflow",
+  "run": {
+    "id": "01M5J9FABKX3EJE5FWTSMW5AMV",
+    "ownerId": "local",
+    "loopId": "01M5J9FA8MTR7VWAKMBEB2G8FG",
+    "versionId": "01M5J9FA8MF9Z3PQZ9WS4QGXHB",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "Audit /overflow",
+      "label": "Audit /overflow v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M5J9FABKSVNMN547KPEW11PJ",
+    "status": "succeeded",
+    "iteration": 1,
+    "outcome": "success",
+    "result": null,
+    "deliveries": [
+      {
+        "id": "01M5J9FADTCA6RKWA053SZ7FRK",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/overflow"
+        },
+        "status": "delivered",
+        "attempts": 2,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "accepted",
+        "effectMayHaveHappened": true,
+        "lastError": {
+          "code": "transport",
+          "message": "Webhook acknowledgement exceeded 64 KiB; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    ],
+    "createdAt": "2026-10-22T17:10:23.347Z",
+    "startedAt": "2026-10-22T17:10:23.368Z",
+    "finishedAt": "2026-10-22T17:10:23.423Z",
+    "lastEventSeq": 13
+  },
+  "events": [
+    {
+      "runId": "01M5J9FABKX3EJE5FWTSMW5AMV",
+      "seq": 1,
+      "ts": "2026-10-22T17:10:23.347Z",
+      "type": "run.queued",
+      "versionId": "01M5J9FA8MF9Z3PQZ9WS4QGXHB",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Audit /overflow",
+        "label": "Audit /overflow v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5J9FABKX3EJE5FWTSMW5AMV",
+          "loopId": "01M5J9FA8MTR7VWAKMBEB2G8FG",
+          "versionId": "01M5J9FA8MF9Z3PQZ9WS4QGXHB",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5J9FABKSVNMN547KPEW11PJ",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": {
+              "name": "Audit /overflow",
+              "value": 42
+            },
+            "receivedAt": "2026-10-22T17:10:23.347Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {},
+        "gates": {},
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    {
+      "runId": "01M5J9FABKX3EJE5FWTSMW5AMV",
+      "seq": 2,
+      "ts": "2026-10-22T17:10:23.374Z",
+      "type": "run.started",
+      "attempt": 1
+    },
+    {
+      "runId": "01M5J9FABKX3EJE5FWTSMW5AMV",
+      "seq": 3,
+      "ts": "2026-10-22T17:10:23.384Z",
+      "type": "node.started",
+      "nodeId": "start",
+      "kind": "trigger",
+      "attempt": 1,
+      "configHash": "527dee9c4254fe4e"
+    },
+    {
+      "runId": "01M5J9FABKX3EJE5FWTSMW5AMV",
+      "seq": 4,
+      "ts": "2026-10-22T17:10:23.389Z",
+      "type": "node.finished",
+      "nodeId": "start",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/outputs/start",
+          "value": {
+            "nodeId": "start",
+            "value": {
+              "name": "Audit /overflow",
+              "value": 42
+            },
+            "at": "2026-10-22T17:10:23.389Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "start",
+            "value": {
+              "name": "Audit /overflow",
+              "value": 42
+            },
+            "at": "2026-10-22T17:10:23.389Z"
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 0
+    },
+    {
+      "runId": "01M5J9FABKX3EJE5FWTSMW5AMV",
+      "seq": 5,
+      "ts": "2026-10-22T17:10:23.412Z",
+      "type": "node.started",
+      "nodeId": "done",
+      "kind": "exit",
+      "attempt": 1,
+      "configHash": "fdd8d0f72ac4247c"
+    },
+    {
+      "runId": "01M5J9FABKX3EJE5FWTSMW5AMV",
+      "seq": 6,
+      "ts": "2026-10-22T17:10:23.418Z",
+      "type": "exit.evaluated",
+      "nodeId": "done",
+      "outcome": "success"
+    },
+    {
+      "runId": "01M5J9FABKX3EJE5FWTSMW5AMV",
+      "seq": 7,
+      "ts": "2026-10-22T17:10:23.418Z",
+      "type": "node.finished",
+      "nodeId": "done",
+      "patch": [],
+      "durationMs": 1
+    },
+    {
+      "runId": "01M5J9FABKX3EJE5FWTSMW5AMV",
+      "seq": 8,
+      "ts": "2026-10-22T17:10:23.418Z",
+      "type": "run.finished",
+      "status": "succeeded",
+      "outcome": "success",
+      "result": null
+    },
+    {
+      "runId": "01M5J9FABKX3EJE5FWTSMW5AMV",
+      "seq": 9,
+      "ts": "2026-10-22T17:10:23.418Z",
+      "type": "delivery.queued",
+      "delivery": {
+        "id": "01M5J9FADTCA6RKWA053SZ7FRK",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/overflow"
+        },
+        "status": "pending",
+        "attempts": 0,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "not_sent",
+        "effectMayHaveHappened": false
+      }
+    },
+    {
+      "runId": "01M5J9FABKX3EJE5FWTSMW5AMV",
+      "seq": 10,
+      "ts": "2026-10-22T17:10:23.463Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5J9FADTCA6RKWA053SZ7FRK",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/overflow"
+        },
+        "status": "pending",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T17:10:35.460Z"
+      }
+    },
+    {
+      "runId": "01M5J9FABKX3EJE5FWTSMW5AMV",
+      "seq": 11,
+      "ts": "2026-10-22T17:10:23.509Z",
+      "type": "delivery.attempt_finished",
+      "delivery": {
+        "id": "01M5J9FADTCA6RKWA053SZ7FRK",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/overflow"
+        },
+        "status": "pending",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T17:10:25.498Z",
+        "lastError": {
+          "code": "transport",
+          "message": "Webhook acknowledgement exceeded 64 KiB; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    },
+    {
+      "runId": "01M5J9FABKX3EJE5FWTSMW5AMV",
+      "seq": 12,
+      "ts": "2026-10-22T17:10:25.504Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5J9FADTCA6RKWA053SZ7FRK",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/overflow"
+        },
+        "status": "pending",
+        "attempts": 2,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T17:10:40.503Z",
+        "lastError": {
+          "code": "transport",
+          "message": "Webhook acknowledgement exceeded 64 KiB; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    },
+    {
+      "runId": "01M5J9FABKX3EJE5FWTSMW5AMV",
+      "seq": 13,
+      "ts": "2026-10-22T17:10:25.512Z",
+      "type": "delivery.finished",
+      "delivery": {
+        "id": "01M5J9FADTCA6RKWA053SZ7FRK",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/overflow"
+        },
+        "status": "delivered",
+        "attempts": 2,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "accepted",
+        "effectMayHaveHappened": true,
+        "lastError": {
+          "code": "transport",
+          "message": "Webhook acknowledgement exceeded 64 KiB; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    }
+  ],
+  "rows": [
+    {
+      "finalized_at": "2026-10-22T17:10:25.517Z",
+      "last_event_seq": 13,
+      "status": "succeeded"
+    }
+  ],
+  "requests": [
+    {
+      "path": "/overflow",
+      "n": 1,
+      "ms": 1792689023483,
+      "key": "01M5J9FADTCA6RKWA053SZ7FRK",
+      "body": {
+        "runId": "01M5J9FABKX3EJE5FWTSMW5AMV",
+        "loopId": "01M5J9FA8MTR7VWAKMBEB2G8FG",
+        "outcome": "success",
+        "result": null
+      }
+    },
+    {
+      "path": "/overflow",
+      "n": 2,
+      "ms": 1792689025509,
+      "key": "01M5J9FADTCA6RKWA053SZ7FRK",
+      "body": {
+        "runId": "01M5J9FABKX3EJE5FWTSMW5AMV",
+        "loopId": "01M5J9FA8MTR7VWAKMBEB2G8FG",
+        "outcome": "success",
+        "result": null
+      }
+    }
+  ]
+}

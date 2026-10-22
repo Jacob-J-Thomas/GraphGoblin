@@ -1,0 +1,220 @@
+node : (node:46940) ExperimentalWarning: `--experimental-loader` may be removed in the future; instead use
+`register()`:
+At line:2 char:356
++ ... bsoluteUri; node --experimental-loader $loader "$env:TEMP/gg-audit-d2 ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:46940) Ex...e `register()`::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+--import 'data:text/javascript,import { register } from "node:module"; import { pathToFileURL } from "node:url"; regist
+er("file%3A///C%3A%USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d2-webhook-retry/docs/qa/2026-10-21-
+wp-d2-report/base-loader.mjs", pathToFileURL("./"));'
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:46940) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+[
+  {
+    "name": "valid omitted optional fields",
+    "oldValid": true,
+    "converted": true,
+    "changed": true,
+    "newValid": true,
+    "httpStatus": 200
+  },
+  {
+    "name": "valid empty optional fields",
+    "oldValid": true,
+    "converted": true,
+    "changed": true,
+    "newValid": true,
+    "httpStatus": 200
+  },
+  {
+    "name": "valid ASCII maxima",
+    "oldValid": true,
+    "converted": true,
+    "changed": true,
+    "newValid": true,
+    "httpStatus": 200
+  },
+  {
+    "name": "valid astral maxima",
+    "oldValid": true,
+    "converted": true,
+    "changed": true,
+    "newValid": true,
+    "httpStatus": 200
+  },
+  {
+    "name": "valid embedded NUL below limits",
+    "oldValid": true,
+    "converted": true,
+    "changed": true,
+    "newValid": true,
+    "httpStatus": 200
+  },
+  {
+    "name": "valid ASCII failure maximum",
+    "oldValid": true,
+    "converted": true,
+    "changed": true,
+    "newValid": true,
+    "httpStatus": 200
+  },
+  {
+    "name": "valid astral failure maximum",
+    "oldValid": true,
+    "converted": true,
+    "changed": true,
+    "newValid": true,
+    "httpStatus": 200
+  },
+  {
+    "name": "valid empty failure",
+    "oldValid": true,
+    "converted": true,
+    "changed": true,
+    "newValid": true,
+    "httpStatus": 200
+  },
+  {
+    "name": "invalid ASCII target over bound",
+    "oldValid": false,
+    "converted": false,
+    "changed": false,
+    "newValid": false,
+    "httpStatus": 500
+  },
+  {
+    "name": "invalid ASCII secret over bound",
+    "oldValid": false,
+    "converted": false,
+    "changed": false,
+    "newValid": false,
+    "httpStatus": 500
+  },
+  {
+    "name": "invalid ASCII error over bound",
+    "oldValid": false,
+    "converted": false,
+    "changed": false,
+    "newValid": false,
+    "httpStatus": 500
+  },
+  {
+    "name": "invalid astral target over UTF16 bound",
+    "oldValid": true,
+    "converted": true,
+    "changed": true,
+    "newValid": true,
+    "httpStatus": 200
+  },
+  {
+    "name": "invalid astral secret over UTF16 bound",
+    "oldValid": true,
+    "converted": true,
+    "changed": true,
+    "newValid": true,
+    "httpStatus": 200
+  },
+  {
+    "name": "invalid astral error over UTF16 bound",
+    "oldValid": true,
+    "converted": true,
+    "changed": true,
+    "newValid": true,
+    "httpStatus": 200
+  },
+  {
+    "name": "invalid NUL target over bound",
+    "oldValid": false,
+    "converted": true,
+    "changed": true,
+    "newValid": true,
+    "httpStatus": 200
+  },
+  {
+    "name": "invalid NUL secret over bound",
+    "oldValid": false,
+    "converted": true,
+    "changed": true,
+    "newValid": false,
+    "httpStatus": 500
+  },
+  {
+    "name": "invalid NUL error over bound",
+    "oldValid": false,
+    "converted": true,
+    "changed": true,
+    "newValid": false,
+    "httpStatus": 500
+  },
+  {
+    "name": "invalid URL format",
+    "oldValid": false,
+    "converted": true,
+    "changed": true,
+    "newValid": false,
+    "httpStatus": 500
+  },
+  {
+    "name": "invalid target number",
+    "oldValid": false,
+    "converted": false,
+    "changed": false,
+    "newValid": false,
+    "httpStatus": 500
+  },
+  {
+    "name": "invalid extra evidence",
+    "oldValid": false,
+    "converted": false,
+    "changed": false,
+    "newValid": false,
+    "httpStatus": 500
+  }
+]
+{
+  "checked": 20,
+  "passed": 16,
+  "failures": [
+    {
+      "name": "invalid NUL target over bound",
+      "message": "An invalid historical receipt must remain byte-identical"
+    },
+    {
+      "name": "invalid NUL secret over bound",
+      "message": "An invalid historical receipt must remain byte-identical"
+    },
+    {
+      "name": "invalid NUL error over bound",
+      "message": "An invalid historical receipt must remain byte-identical"
+    },
+    {
+      "name": "invalid URL format",
+      "message": "An invalid historical receipt must remain byte-identical"
+    }
+  ]
+}
+node : node:internal/modules/run_main:122
+At line:2 char:484
++ ... before.log; node "$env:TEMP/gg-audit-d2-round2-20261022/migration-bou ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (node:internal/modules/run_main:122:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Historical receipt conversion must preserve every invalid row
+
+4 !== 0
+
+    at file:///%TEMP%/gg-audit-d2-round2-20261022/migration-boundaries-check.mjs:20:8 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 4,
+  expected: 0,
+  operator: 'strictEqual'
+}
+
+Node.js v22.14.0

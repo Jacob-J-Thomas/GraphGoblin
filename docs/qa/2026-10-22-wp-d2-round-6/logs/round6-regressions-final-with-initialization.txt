@@ -1,0 +1,58 @@
+
+ RUN  v5.0.3 %WORKTREE%/packages/infrastructure
+
+ ❯ src/sqlite/fresh-initialization.test.ts (14 tests | 1 failed) 9137ms
+   ❯ atomic fresh SQLite initialisation (14)
+     × applies pending ordinary migrations when another initialiser wins the write-lock race 1659ms
+pnpm.cmd :
+At line:2 char:243
++ ... STEXITCODE; pnpm.cmd --filter @graphgoblin/infrastructure exec vitest ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/sqlite/fresh-initialization.test.ts > atomic fresh SQLite initialisation > applies pending ordinary
+migrations when another initialiser wins the write-lock race
+AssertionError: promise rejected "DatabaseUpgradeRequiredError: The shipped… { code: '…' }" instead of resolving
+ ❯ Proxy.<anonymous> src/sqlite/fresh-initialization.test.ts:211:67
+    209|               races += 1;
+    210|               const winner = open(url);
+    211|               await expect(initializeFreshDatabase(winner.client)).res…
+       |                                                                   ^
+    212|               return target.transaction(mode);
+    213|             };
+ ❯ Proxy.transaction src/sqlite/db.ts:149:34
+ ❯ migrateCurrentDatabase src/sqlite/upgrade.ts:288:14
+ ❯ Object.migrate src/sqlite/db.ts:214:12
+ ❯ src/sqlite/fresh-initialization.test.ts:233:5
+
+Caused by: DatabaseUpgradeRequiredError: The shipped migration ledger is incomplete or inconsistent
+ ❯ guardDatabaseUpgrade src/sqlite/upgrade.ts:149:11
+ ❯ Module.initializeFreshDatabase src/sqlite/upgrade.ts:234:26
+ ❯ Proxy.<anonymous> src/sqlite/fresh-initialization.test.ts:211:15
+ ❯ Proxy.transaction src/sqlite/db.ts:149:21
+ ❯ migrateCurrentDatabase src/sqlite/upgrade.ts:288:14
+ ❯ Object.migrate src/sqlite/db.ts:214:12
+ ❯ src/sqlite/fresh-initialization.test.ts:233:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'DATA_UPGRADE_REQUIRED' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 82 passed (83)
+   Start at  15:00:53
+   Duration  70.19s (transform 45%, import 29%, tests 26%)
+
+  Transform  transforming modules took 28.81s · 45% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d2-
+  │ webhook-retry\packages\infrastructure

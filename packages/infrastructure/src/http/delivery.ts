@@ -1,10 +1,12 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import type { JsonValue } from '@graphgoblin/contracts';
+import type { JsonValue, WebhookAttemptResult } from '@graphgoblin/contracts';
+import { WEBHOOK_DELIVERY_POLICY } from '@graphgoblin/contracts';
 import type { ClockPort, Logger, ReturnDeliveryPort } from '@graphgoblin/engine';
 import type { FetchLike } from './probes.js';
 
 export const SIGNATURE_HEADER = 'x-graphgoblin-signature';
 export const TIMESTAMP_HEADER = 'x-graphgoblin-timestamp';
+export const DELIVERY_ID_HEADER = WEBHOOK_DELIVERY_POLICY.identityHeader;
 
 /** HMAC-SHA256 over `${timestamp}.${body}`, presented as `sha256=<hex>`. */
 export function signPayload(secret: string, timestamp: string, body: string | Uint8Array): string {
@@ -49,7 +51,7 @@ export interface WebhookDeliveryOptions {
   fetchImpl?: FetchLike;
 }
 
-/** POSTs JSON to a URL, signing it when a secret is supplied. Non-2xx responses throw. */
+/** POST signed JSON and return typed acknowledgement and HTTP failure outcomes. */
 export class HttpWebhookDelivery {
   private readonly fetchImpl: FetchLike;
   private readonly timeoutMs: number;
@@ -59,25 +61,131 @@ export class HttpWebhookDelivery {
     options: WebhookDeliveryOptions = {},
   ) {
     this.fetchImpl = options.fetchImpl ?? ((input, init) => fetch(input, init));
-    this.timeoutMs = options.timeoutMs ?? 30_000;
+    this.timeoutMs = options.timeoutMs ?? WEBHOOK_DELIVERY_POLICY.timeoutMs;
   }
 
-  async webhook(url: string, payload: JsonValue, secret?: string): Promise<void> {
+  async webhook(
+    url: string,
+    payload: JsonValue,
+    secret: string | undefined,
+    deliveryId: string,
+  ): Promise<WebhookAttemptResult> {
+    try {
+      const destination = new URL(url);
+      if (
+        !['http:', 'https:'].includes(destination.protocol) ||
+        destination.username ||
+        destination.password
+      )
+        throw new Error('invalid destination');
+    } catch {
+      return {
+        ok: false,
+        error: {
+          code: 'invalid_destination',
+          message: 'Webhook destination must be an HTTP(S) URL without credentials.',
+          retryable: false,
+          acknowledgement: 'not_sent',
+        },
+      };
+    }
     const body = JSON.stringify(payload);
     const timestamp = this.clock.now().toISOString();
     const headers: Record<string, string> = {
       'content-type': 'application/json',
       [TIMESTAMP_HEADER]: timestamp,
+      [DELIVERY_ID_HEADER]: deliveryId,
     };
     if (secret) headers[SIGNATURE_HEADER] = signPayload(secret, timestamp, body);
-    const response = await this.fetchImpl(url, {
-      method: 'POST',
-      headers,
-      body,
-      signal: AbortSignal.timeout(this.timeoutMs),
-    });
-    if (!response.ok) {
-      throw new Error(`webhook ${url} returned ${response.status}`);
+    try {
+      const response = await this.fetchImpl(url, {
+        method: 'POST',
+        headers,
+        body,
+        signal: AbortSignal.timeout(this.timeoutMs),
+        redirect: 'manual',
+      });
+      // Status is receiver-controlled. Nonstandard responses cannot enter the typed journal
+      // as HTTP statuses; without a recognized acknowledgement their effect stays unknown.
+      if (!Number.isInteger(response.status) || response.status < 100 || response.status > 599) {
+        await response.body?.cancel().catch(() => undefined);
+        return {
+          ok: false,
+          error: {
+            code: 'transport',
+            message: 'Webhook returned an invalid HTTP status; the effect may have happened.',
+            retryable: true,
+            acknowledgement: 'unknown',
+          },
+        };
+      }
+      if (response.ok) {
+        // Require a complete acknowledgement, including EOF. Drain without retaining bytes,
+        // bounded to 64 KiB and the same request deadline; a truncated 2xx is still uncertain.
+        const reader = response.body?.getReader();
+        if (reader) {
+          let bytes = 0;
+          try {
+            for (;;) {
+              const chunk = await reader.read();
+              if (chunk.done) break;
+              const value: unknown = chunk.value;
+              if (!(value instanceof Uint8Array)) throw new Error('invalid acknowledgement bytes');
+              bytes += value.byteLength;
+              if (bytes > WEBHOOK_DELIVERY_POLICY.acknowledgementMaxBytes) {
+                await reader.cancel();
+                return {
+                  ok: false,
+                  error: {
+                    code: 'transport',
+                    message:
+                      'Webhook acknowledgement exceeded 64 KiB; the effect may have happened.',
+                    retryable: true,
+                    acknowledgement: 'unknown',
+                  },
+                };
+              }
+            }
+          } finally {
+            reader.releaseLock();
+          }
+        }
+        return { ok: true };
+      }
+      await response.body?.cancel().catch(() => undefined);
+      return {
+        ok: false,
+        error: {
+          code: 'http',
+          message: `Webhook returned HTTP ${response.status}.`,
+          httpStatus: response.status,
+          retryable: response.status === 408 || response.status === 429 || response.status >= 500,
+          acknowledgement:
+            response.status >= 500 || response.status === 408 ? 'unknown' : 'rejected',
+        },
+      };
+    } catch (error) {
+      const cause = error instanceof Error ? error.cause : undefined;
+      const refused =
+        typeof cause === 'object' &&
+        cause !== null &&
+        'code' in cause &&
+        cause.code === 'ECONNREFUSED';
+      const timeout =
+        error instanceof Error && (error.name === 'TimeoutError' || error.name === 'AbortError');
+      return {
+        ok: false,
+        error: {
+          code: refused ? 'connection_refused' : timeout ? 'timeout' : 'transport',
+          message: refused
+            ? 'Webhook connection refused.'
+            : timeout
+              ? 'Webhook acknowledgement timed out; the effect may have happened.'
+              : 'Webhook acknowledgement lost; the effect may have happened.',
+          retryable: true,
+          acknowledgement: refused ? 'not_sent' : 'unknown',
+        },
+      };
     }
   }
 }
@@ -90,7 +198,8 @@ export interface ReturnDeliveryDeps {
 /** Compose the engine's return-delivery port from its two sinks. */
 export function createReturnDelivery(deps: ReturnDeliveryDeps): ReturnDeliveryPort {
   return {
-    webhook: (url, payload, secret) => deps.webhooks.webhook(url, payload, secret),
+    webhook: (url, payload, secret, deliveryId) =>
+      deps.webhooks.webhook(url, payload, secret, deliveryId),
     log: (runId, payload) => deps.logger.info({ runId, result: payload }, 'loop returned'),
   };
 }
