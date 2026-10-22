@@ -10,6 +10,7 @@ import {
 } from '@graphgoblin/contracts/testing';
 import { FakeClock, FakeIds } from '@graphgoblin/engine/testing';
 import { openMemoryDatabase, type DatabaseHandle } from './db.js';
+import { SqliteEventStore } from './events.js';
 import { SqliteLoopRepository } from './loops.js';
 import { SqliteRunRepository } from './runs.js';
 import { SqliteInboundEvents } from './triggers.js';
@@ -88,6 +89,16 @@ describe('SQLite history queries', () => {
       (await loops.listWithRunSummaries('local')).find((loop) => loop.id === old.loop.id)?.latestRun
         ?.status,
     ).toBe('failed');
+    // Only the selected latest row must be readable; an absent cached snapshot is valid.
+    const older = expected.id === a.id ? b : a;
+    await handle.client.execute({
+      sql: "UPDATE runs SET initial_thread = '{}', thread_snapshot = '{}' WHERE id = ?",
+      args: [older.id],
+    });
+    await runs.clearThreadSnapshot(expected.id);
+    expect(
+      (await loops.listWithRunSummaries('local')).find((loop) => loop.id === old.loop.id),
+    ).toMatchObject({ runCount: 2, latestRun: { id: expected.id, status: 'failed' } });
   });
   it.each([
     ['status', 'damaged-status'],
@@ -98,6 +109,9 @@ describe('SQLite history queries', () => {
     ['failure', '{}'],
     ['result', '{broken'],
     ['iteration', -1],
+    ['initial_thread', '{}'],
+    ['thread_snapshot', '{}'],
+    ['thread_snapshot', '{broken'],
   ])('isolates damaged latest %s without substituting an older run', async (column, value) => {
     const loops = new SqliteLoopRepository(handle.db, new FakeClock(), new FakeIds());
     const damaged = await loops.create('local', LoopDefinitionSchema.parse(minimalLoop()));
@@ -125,6 +139,17 @@ describe('SQLite history queries', () => {
     await seed('older-summary', damaged.loop.id, '2026-09-01T00:00:00.000Z');
     const badId = await seed('bad-summary', damaged.loop.id);
     const goodId = await seed('good-summary', healthy.loop.id);
+    if (column === 'initial_thread' || column === 'thread_snapshot') {
+      const events = new SqliteEventStore(handle.db, new FakeClock());
+      await events.append(badId, [
+        { type: 'run.finished', status: 'succeeded', outcome: 'success' },
+      ]);
+      await runs.update(badId, { status: 'running' });
+      expect((await events.read(badId)).at(-1)).toMatchObject({
+        type: 'run.finished',
+        status: 'succeeded',
+      });
+    }
     await handle.client.execute({
       // Column names come only from the fixed cases above; all values stay bound.
       sql: `UPDATE runs SET ${column} = ? WHERE id = ?`,

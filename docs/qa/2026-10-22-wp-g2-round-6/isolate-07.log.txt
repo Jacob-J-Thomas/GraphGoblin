@@ -1,0 +1,79 @@
+
+ RUN  v5.0.3 <worktree>/packages/infrastructure
+
+ ❯ src/process/scripts.test.ts (39 tests | 1 failed | 38 skipped) 15030ms
+   ❯ ProcessScripts (36)
+     ↓ returns raw captured byte counts and truncation for default capture, including incomplete EOF
+     ↓ preserves both UTF-8 streams split at byte offset 0 with default and explicit bounds
+     ↓ preserves both UTF-8 streams split at byte offset 1 with default and explicit bounds
+     ↓ preserves both UTF-8 streams split at byte offset 2 with default and explicit bounds
+     ↓ preserves both UTF-8 streams split at byte offset 3 with default and explicit bounds
+     ↓ preserves both UTF-8 streams split at byte offset 4 with default and explicit bounds
+     ↓ preserves both UTF-8 streams split at byte offset 5 with default and explicit bounds
+     ↓ preserves both UTF-8 streams split at byte offset 6 with default and explicit bounds
+     ↓ preserves both UTF-8 streams split at byte offset 7 with default and explicit bounds
+     ↓ preserves both UTF-8 streams split at byte offset 8 with default and explicit bounds
+     ↓ preserves both UTF-8 streams split at byte offset 9 with default and explicit bounds
+     ↓ preserves both UTF-8 streams split at byte offset 10 with default and explicit bounds
+     ↓ preserves both UTF-8 streams split at byte offset 11 with default and explicit bounds
+     ↓ counts raw bytes and drops only a cap-split suffix at cap 0 on both streams
+     ↓ counts raw bytes and drops only a cap-split suffix at cap 1 on both streams
+     ↓ counts raw bytes and drops only a cap-split suffix at cap 2 on both streams
+     ↓ counts raw bytes and drops only a cap-split suffix at cap 3 on both streams
+     ↓ counts raw bytes and drops only a cap-split suffix at cap 4 on both streams
+     ↓ counts raw bytes and drops only a cap-split suffix at cap 5 on both streams
+     ↓ counts raw bytes and drops only a cap-split suffix at cap 6 on both streams
+     ↓ counts raw bytes and drops only a cap-split suffix at cap 7 on both streams
+     ↓ counts raw bytes and drops only a cap-split suffix at cap 8 on both streams
+     ↓ counts raw bytes and drops only a cap-split suffix at cap 9 on both streams
+     ↓ counts raw bytes and drops only a cap-split suffix at cap 10 on both streams
+     ↓ counts raw bytes and drops only a cap-split suffix at cap 11 on both streams
+     ↓ replaces an incomplete trailing sequence at clean EOF on both streams
+     ↓ kills and closes a real process cancelled with incomplete UTF-8 pending on both streams
+     ↓ captures stdout, stderr, exit code, env, args, and stdin
+     ↓ closes stdin when none is provided
+     ↓ kills the process tree on timeout
+     × kills the process when the signal aborts, including when already aborted 15026ms
+     ↓ reports spawn failures as a null exit code with a message
+     ↓ caps captured output
+     ↓ bounds opted-in stdout by raw bytes and reports overflow without changing legacy capture
+     ↓ reports exact-cap output as complete and does not emit a cap-split UTF8 suffix
+     ↓ uses fixed spawn diagnostics without echoing a credential-bearing command
+   ↓ killTree (3)
+     ↓ does nothing without a pid
+     ↓ uses taskkill on Windows and falls back to kill when taskkill is missing
+     ↓ signals the process group on POSIX and falls back to kill on failure
+pnpm.cmd : 
+At line:25 char:3
++   & pnpm.cmd --filter $round6Case.package exec vitest run $round6Case ...
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/process/scripts.test.ts > ProcessScripts > kills the process when the signal aborts, including when already 
+aborted
+Error: Test timed out in 15000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/process/scripts.test.ts:248:3
+    246|   }, 15_000);
+    247|
+    248|   it('kills the process when the signal aborts, including when already…
+       |   ^
+    249|     const scripts = new ProcessScripts();
+    250|     const controller = new AbortController();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 38 skipped (39)
+   Start at  17:56:17
+   Duration  16.14s (tests 97%, transform 2%, import 1%)
+
+JSON report written to <worktree>/round6-isolate-07-results.log
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in <worktree>
+

@@ -22,6 +22,9 @@ describe('loop-specific run summaries over real SQLite', () => {
     ['pinned', '{}'],
     ['waiting', '{broken'],
     ['result', '{broken'],
+    ['initial_thread', '{}'],
+    ['thread_snapshot', '{}'],
+    ['thread_snapshot', '{broken'],
   ])(
     'isolates damaged latest-run %s and identifies it through diagnostics',
     async (column, value) => {
@@ -40,6 +43,15 @@ describe('loop-specific run summaries over real SQLite', () => {
       const badId = badRun.json<{ run: RunRecord }>().run.id;
       const goodId = goodRun.json<{ run: RunRecord }>().run.id;
       await t.idle();
+      if (column === 'initial_thread' || column === 'thread_snapshot') {
+        const events = await t.app.inject(`/runs/${badId}/events`);
+        expect(events.json<{ items: unknown[] }>().items).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ type: 'run.finished', status: 'succeeded' }),
+          ]),
+        );
+        await t.container.repos.runs.update(badId, { status: 'running' });
+      }
       await t.container.handle.client.execute({
         sql: `UPDATE runs SET ${column} = ? WHERE id = ?`,
         args: [value, badId],

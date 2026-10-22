@@ -464,12 +464,16 @@ subquery, and counts that loop's owner-scoped runs. The covering
 `runs_loop_owner_history_idx (loop_id, owner_id, created_at, id)` index supports both
 lookup and counting (migration `0015_loop_owner_history`). There is no global
 history-page limit or N+1 API fan-out. A null summary with `runCount: 0` means no history.
-The selected latest row passes through the same strict full-run decoder as other run
-reads before its summary is returned. If any run field is unreadable, `latestRun` is
-null while its row remains counted; an older run is never substituted. This prevents
-a valid but stale status column from becoming a badge after a damaged snapshot missed
-a terminal update, including after restart. The UI says "latest run unavailable"
-and directs the operator to run history diagnostics (`GET /runs/diagnostics`).
+The selected latest row's run record (including its pin), `initial_thread` and any
+present `thread_snapshot` pass through the shared strict decoders used by run and
+recovery readers before its summary is returned. An absent cached snapshot (SQL
+NULL) remains valid: readers rebuild from the initial thread and event log. Damage in any
+of those stored values makes `latestRun` null while its row remains counted; an
+older run is never substituted. Only the selected latest row is decoded, not every
+run in the loop. Recovery refuses damaged threads before repairing status; checking
+them here too prevents a valid but stale status column from becoming a badge after
+a damaged snapshot missed a terminal update, including after restart. The UI says
+"latest run unavailable" and directs the operator to run history diagnostics (`GET /runs/diagnostics`).
 Healthy loops remain available; database read failures remain errors. Loops refresh their summaries every five seconds; deletion confirmation uses
 the exact server count.
 

@@ -634,9 +634,11 @@ The Loops page reads each loop's `latestRun` and exact `runCount` from `GET /loo
 refreshed every five seconds. Last run links to the latest run by creation time, breaking
 ties by descending run ID, which follows creation order within one process. A zero
 count and null summary says "never run"; a positive count and null summary says
-"latest run unavailable" with "Check run history diagnostics." when any field of
-the selected latest run fails strict decoding. It shows neither a partial status badge
-nor an older run in its place. `GET /runs/diagnostics` identifies the damaged row,
-including after restart when its stored status is valid but stale. Unrelated loops
+"latest run unavailable" with "Check run history diagnostics." when the selected
+latest run's record (including its pin), initial thread or present cached thread
+snapshot fails strict decoding. An absent cached snapshot remains valid. It shows
+neither a partial status badge nor an older run in its place. `GET /runs/diagnostics`
+identifies the damaged row, including after restart when its stored status is valid
+but stale. Unrelated loops
 filling a global history page cannot hide older history. Deletion confirmation shows the exact
 server count, including above 500 runs. A failed listing shows its error.

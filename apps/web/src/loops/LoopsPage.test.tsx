@@ -61,33 +61,38 @@ describe('LoopsPage', () => {
     expect(api.callsTo('GET', '/runs')).toHaveLength(0);
   });
 
-  it('distinguishes an unavailable latest summary from a loop with no history', async () => {
-    const api = new FakeApi();
-    const damaged = api.addLoop({ ...minimalLoop(), name: 'damaged history' });
-    const empty = api.addLoop({ ...minimalLoop(), name: 'no history' });
-    api.override(
-      'GET /loops',
-      () =>
-        new Response(
-          JSON.stringify({
-            items: [
-              { ...damaged, runCount: 1, latestRun: null },
-              { ...empty, runCount: 0, latestRun: null },
-            ],
-          }),
-          { headers: { 'content-type': 'application/json' } },
+  it.each(['pinned', 'initial_thread', 'thread_snapshot'])(
+    'distinguishes unavailable %s history from a loop with no history',
+    async (column) => {
+      const api = new FakeApi();
+      const damaged = api.addLoop({ ...minimalLoop(), name: `damaged ${column} history` });
+      const empty = api.addLoop({ ...minimalLoop(), name: 'no history' });
+      api.override(
+        'GET /loops',
+        () =>
+          new Response(
+            JSON.stringify({
+              items: [
+                { ...damaged, runCount: 2, latestRun: null },
+                { ...empty, runCount: 0, latestRun: null },
+              ],
+            }),
+            { headers: { 'content-type': 'application/json' } },
+          ),
+      );
+      renderApp('/loops', api);
+      const damagedRow = (await screen.findByRole('link', { name: damaged.name })).closest('tr')!;
+      expect(within(damagedRow).getByText('latest run unavailable')).toBeVisible();
+      expect(within(damagedRow).getByText('Check run history diagnostics.')).toBeVisible();
+      expect(within(damagedRow).queryByRole('link', { name: 'running' })).not.toBeInTheDocument();
+      expect(within(damagedRow).queryByText('never run')).not.toBeInTheDocument();
+      expect(
+        within(screen.getByRole('link', { name: empty.name }).closest('tr')!).getByText(
+          'never run',
         ),
-    );
-    renderApp('/loops', api);
-    const damagedRow = (await screen.findByRole('link', { name: damaged.name })).closest('tr')!;
-    expect(within(damagedRow).getByText('latest run unavailable')).toBeVisible();
-    expect(within(damagedRow).getByText('Check run history diagnostics.')).toBeVisible();
-    expect(within(damagedRow).queryByRole('link', { name: 'running' })).not.toBeInTheDocument();
-    expect(within(damagedRow).queryByText('never run')).not.toBeInTheDocument();
-    expect(
-      within(screen.getByRole('link', { name: empty.name }).closest('tr')!).getByText('never run'),
-    ).toBeVisible();
-  });
+      ).toBeVisible();
+    },
+  );
 
   it('creates a loop and opens it in the editor', async () => {
     const user = userEvent.setup();

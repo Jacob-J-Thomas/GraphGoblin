@@ -9,7 +9,7 @@ import { UnreadableRunHistoryError } from '@graphgoblin/engine';
 import { and, asc, desc, eq, inArray, isNotNull, ne, sql, getTableColumns } from 'drizzle-orm';
 import type { Database } from './db.js';
 import { deleteRuns } from './delete-runs.js';
-import { decodeRunRecord, rawRunColumns } from './run-decoding.js';
+import { decodeRunRecord, decodeStoredThread, rawRunColumns } from './run-decoding.js';
 import {
   loopVersions,
   loops,
@@ -154,7 +154,11 @@ export class SqliteLoopRepository implements LoopRepository {
     const rows = await this.db
       .select({
         ...getTableColumns(loops),
-        latestRun: rawRunColumns,
+        latestRun: {
+          ...rawRunColumns,
+          initialThread: sql<string>`${runs.initialThread}`,
+          threadSnapshot: sql<string | null>`${runs.threadSnapshot}`,
+        },
         runCount:
           sql<number>`(SELECT count(*) FROM runs r WHERE r.loop_id = ${loops.id} AND r.owner_id = ${loops.ownerId})`.mapWith(
             Number,
@@ -177,6 +181,11 @@ export class SqliteLoopRepository implements LoopRepository {
           // A valid status alone can be stale when a damaged snapshot could not be updated.
           // Use the same strict decoder as every other run read before showing a badge.
           const { id, status, createdAt } = decodeRunRecord(row.latestRun);
+          // Recovery refuses damaged threads before repairing a stale status. A readable
+          // summary must validate both too; an absent cached snapshot is valid, not damage.
+          decodeStoredThread(id, 'initial_thread', row.latestRun.initialThread);
+          if (row.latestRun.threadSnapshot !== null)
+            decodeStoredThread(id, 'thread_snapshot', row.latestRun.threadSnapshot);
           latestRun = { id, status, createdAt };
         } catch (error) {
           if (!(error instanceof UnreadableRunHistoryError)) throw error;
