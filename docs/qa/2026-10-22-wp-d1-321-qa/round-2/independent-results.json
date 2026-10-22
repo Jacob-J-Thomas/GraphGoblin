@@ -1,0 +1,409 @@
+{
+  "head": "a5cd26c496e7ae59e13748e7c879d072064ace0f",
+  "checks": [
+    {
+      "id": "before-dispatch",
+      "steps": "Park before script, hard kill API, restart same store, submit observed waitId.",
+      "expected": "No dispatch before input; success with one effect.",
+      "status": "PASS",
+      "actual": {
+        "effects": 1,
+        "runId": "01M5H2ZQ47CKYDRX5WJP5WRZE3"
+      },
+      "seconds": 2.681
+    },
+    {
+      "id": "interrupted-dispatch-and-resumed-dispatch",
+      "steps": "Kill after live marker effect; restart twice without consent; Resume; kill second live dispatch; restart; deliberately Resume again.",
+      "expected": "Uncertainty preserves original IDs; no automatic repeat; same visit and fresh dispatch on each Resume; final success.",
+      "status": "PASS",
+      "actual": {
+        "firstFailure": {
+          "code": "SCRIPT_OUTCOME_UNCERTAIN",
+          "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+          "nodeId": "script",
+          "resumable": true,
+          "script": {
+            "visitId": "01M5H2ZSQD18G85Q923KGZHM69:5",
+            "dispatchId": "01M5H2ZSRH53CCRE2AWFVD83C9",
+            "state": "outcome-uncertain"
+          }
+        },
+        "secondFailure": {
+          "code": "SCRIPT_OUTCOME_UNCERTAIN",
+          "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+          "nodeId": "script",
+          "resumable": true,
+          "script": {
+            "visitId": "01M5H2ZSQD18G85Q923KGZHM69:5",
+            "dispatchId": "01M5H2ZZD8AT0TZX7KX1KVZAYQ",
+            "state": "outcome-uncertain"
+          }
+        },
+        "effectsBeforeConsent": 1,
+        "effectsAfterSecondKill": 2,
+        "finalEffects": 3,
+        "dispatches": [
+          {
+            "runId": "01M5H2ZSQD18G85Q923KGZHM69",
+            "seq": 6,
+            "ts": "2026-10-22T05:57:48.945Z",
+            "type": "script.dispatched",
+            "nodeId": "script",
+            "visitId": "01M5H2ZSQD18G85Q923KGZHM69:5",
+            "dispatchId": "01M5H2ZSRH53CCRE2AWFVD83C9"
+          },
+          {
+            "runId": "01M5H2ZSQD18G85Q923KGZHM69",
+            "seq": 12,
+            "ts": "2026-10-22T05:57:54.728Z",
+            "type": "script.dispatched",
+            "nodeId": "script",
+            "visitId": "01M5H2ZSQD18G85Q923KGZHM69:5",
+            "dispatchId": "01M5H2ZZD8AT0TZX7KX1KVZAYQ"
+          },
+          {
+            "runId": "01M5H2ZSQD18G85Q923KGZHM69",
+            "seq": 18,
+            "ts": "2026-10-22T05:57:57.208Z",
+            "type": "script.dispatched",
+            "nodeId": "script",
+            "visitId": "01M5H2ZSQD18G85Q923KGZHM69:5",
+            "dispatchId": "01M5H301TRQFVKDP7GZX37QZJ4"
+          }
+        ]
+      },
+      "seconds": 8.495
+    },
+    {
+      "id": "completed-before-cursor",
+      "steps": "Inject disposable SQLite cursor-write and error-disposition faults; finish marker; verify durable node.finished with old script cursor; hard kill; remove faults; restart.",
+      "expected": "Durable completion advances without another dispatch or effect.",
+      "status": "PASS",
+      "actual": {
+        "preKill": {
+          "current_node_id": "script",
+          "status": "running"
+        },
+        "killed": {
+          "code": null,
+          "signal": "SIGKILL"
+        },
+        "effects": 1,
+        "dispatches": 1,
+        "method": "controlled real SQLite storage fault followed by real API kill"
+      },
+      "seconds": 3.175
+    },
+    {
+      "id": "native-missing",
+      "steps": "Publish and run the real local command; inspect typed failure; repair missing executable in place and Resume.",
+      "expected": "Start refusal is resumable/definitely-not-started; exit 7 preserves completed provenance; timeout/cancel classification stays correct.",
+      "status": "PASS",
+      "actual": {
+        "id": "01M5H30548PER56S8W3FEZH16D",
+        "status": "failed",
+        "failure": {
+          "code": "SCRIPT_START_FAILED",
+          "message": "The script process could not start. Resume tries to start it again.",
+          "nodeId": "script",
+          "resumable": true,
+          "script": {
+            "visitId": "01M5H30548PER56S8W3FEZH16D:5",
+            "dispatchId": "01M5H30557MM6ZMWSEDPJMVYVH",
+            "state": "definitely-not-started"
+          }
+        },
+        "repairResumed": true
+      },
+      "seconds": 0.459
+    },
+    {
+      "id": "native-cmd",
+      "steps": "Publish and run the real local command; inspect typed failure; repair missing executable in place and Resume.",
+      "expected": "Start refusal is resumable/definitely-not-started; exit 7 preserves completed provenance; timeout/cancel classification stays correct.",
+      "status": "PASS",
+      "actual": {
+        "id": "01M5H305JA50YJZAQCMSNDV5FM",
+        "status": "failed",
+        "failure": {
+          "code": "SCRIPT_START_FAILED",
+          "message": "The script process could not start. Resume tries to start it again.",
+          "nodeId": "script",
+          "resumable": true,
+          "script": {
+            "visitId": "01M5H305JA50YJZAQCMSNDV5FM:5",
+            "dispatchId": "01M5H305JYGW4N6959QQ6NKWC7",
+            "state": "definitely-not-started"
+          }
+        },
+        "repairResumed": false
+      },
+      "seconds": 0.092
+    },
+    {
+      "id": "native-nonzero",
+      "steps": "Publish and run the real local command; inspect typed failure; repair missing executable in place and Resume.",
+      "expected": "Start refusal is resumable/definitely-not-started; exit 7 preserves completed provenance; timeout/cancel classification stays correct.",
+      "status": "PASS",
+      "actual": {
+        "id": "01M5H305N3RV766MZYF545F6J2",
+        "status": "failed",
+        "failure": {
+          "code": "SCRIPT_EXIT_CODE",
+          "message": "script exited with code 7",
+          "nodeId": "script",
+          "resumable": true,
+          "details": {
+            "exitCode": 7,
+            "stderr": "",
+            "stdout": ""
+          },
+          "script": {
+            "visitId": "01M5H305N3RV766MZYF545F6J2:5",
+            "dispatchId": "01M5H305NSW539WCBR66ETB58W",
+            "state": "completed",
+            "exitCode": 7
+          }
+        },
+        "repairResumed": false
+      },
+      "seconds": 0.141
+    },
+    {
+      "id": "native-timeout",
+      "steps": "Publish and run the real local command; inspect typed failure; repair missing executable in place and Resume.",
+      "expected": "Start refusal is resumable/definitely-not-started; exit 7 preserves completed provenance; timeout/cancel classification stays correct.",
+      "status": "PASS",
+      "actual": {
+        "id": "01M5H305SJE683SK0NZHXDEEBZ",
+        "status": "failed",
+        "failure": {
+          "code": "SCRIPT_TIMEOUT",
+          "message": "script exceeded 1s",
+          "nodeId": "script",
+          "resumable": true,
+          "script": {
+            "visitId": "01M5H305SJE683SK0NZHXDEEBZ:5",
+            "dispatchId": "01M5H305TFNHV0B9DK765JC3GE",
+            "state": "completed",
+            "exitCode": 0
+          }
+        },
+        "repairResumed": false,
+        "qualification": "Finite 5-second process: classification only; timely tree termination is D-015-limited."
+      },
+      "seconds": 5.142
+    },
+    {
+      "id": "native-cancel",
+      "steps": "Publish and run the real local command; inspect typed failure; repair missing executable in place and Resume.",
+      "expected": "Start refusal is resumable/definitely-not-started; exit 7 preserves completed provenance; timeout/cancel classification stays correct.",
+      "status": "PASS",
+      "actual": {
+        "id": "01M5H30AT8MCMDCANNEJVV8CFG",
+        "status": "cancelled",
+        "qualification": "Finite 5-second process: classification only; timely tree termination is D-015-limited."
+      },
+      "seconds": 5.149
+    },
+    {
+      "id": "edge-cancel-live-resume",
+      "steps": "Open uncertain inspector in Edge; Cancel recovery; Resume while marker held; release and observe final status.",
+      "expected": "Count remains 1 after Cancel; explicit Resume makes 2; success without document reload; earlier dispatch/failure retained.",
+      "status": "PASS",
+      "actual": {
+        "failure": {
+          "code": "SCRIPT_OUTCOME_UNCERTAIN",
+          "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+          "nodeId": "script",
+          "resumable": true,
+          "script": {
+            "visitId": "01M5H30GVF9FA0E8K4PR2S0EEJ:5",
+            "dispatchId": "01M5H30GWVJK4HKYPYSXR72BGK",
+            "state": "outcome-uncertain"
+          }
+        },
+        "effects": 2,
+        "documentReloads": 0,
+        "browser": "155.0.4283.62",
+        "dispatches": [
+          {
+            "runId": "01M5H30GVF9FA0E8K4PR2S0EEJ",
+            "seq": 6,
+            "ts": "2026-10-22T05:58:12.635Z",
+            "type": "script.dispatched",
+            "nodeId": "script",
+            "visitId": "01M5H30GVF9FA0E8K4PR2S0EEJ:5",
+            "dispatchId": "01M5H30GWVJK4HKYPYSXR72BGK"
+          },
+          {
+            "runId": "01M5H30GVF9FA0E8K4PR2S0EEJ",
+            "seq": 12,
+            "ts": "2026-10-22T05:58:15.857Z",
+            "type": "script.dispatched",
+            "nodeId": "script",
+            "visitId": "01M5H30GVF9FA0E8K4PR2S0EEJ:5",
+            "dispatchId": "01M5H30M1HG42Y2V09YDDK3DSP"
+          }
+        ]
+      },
+      "seconds": 3.508
+    },
+    {
+      "id": "edge-replay",
+      "steps": "Recover a second uncertain run with Replay.",
+      "expected": "Navigate to new successful fork; source stays failed; second effect.",
+      "status": "PASS",
+      "actual": {
+        "sourceId": "01M5H30M95QC05CCQ65VBN7M1R",
+        "forkId": "01M5H30PYA6DW8FGXRYFQNPRNZ",
+        "effects": 2
+      },
+      "seconds": 2.968
+    },
+    {
+      "id": "edge-non-script-failure",
+      "steps": "Fail a mutation expression and inspect its run.",
+      "expected": "No Recover script button and no failure.script.",
+      "status": "PASS",
+      "actual": {
+        "id": "01M5H30Q5YKDGCN06EERJTH44Q",
+        "status": "failed",
+        "failure": {
+          "code": "INTERNAL_ERROR",
+          "message": "expression failed: QA failure",
+          "nodeId": "mutation",
+          "resumable": true,
+          "details": {
+            "name": "ExpressionError",
+            "stack": "ExpressionError: expression failed: QA failure\n    at run (file:///<repo>/packages/domain/dist/expression.js:123:15)\n    at async resolveValue (file:///<repo>/packages/domain/dist/mutations.js:25:27)\n    at async planMutation (file:///<repo>/packages/domain/dist/mutations.js:85:27)\n    at async applyMutations (file:///<repo>/packages/domain/dist/mutations.js:221:22)\n    at async runMutations (file:///<repo>/packages/engine/dist/handlers/common.js:176:24)\n    at async Object.execute (file:///<repo>/packages/engine/dist/handlers/mutate.js:5:27)\n    at async RunManager.execute (file:///<repo>/packages/engine/dist/run-manager.js:1271:26)"
+          }
+        }
+      },
+      "seconds": 0.174
+    },
+    {
+      "id": "child-in-place",
+      "steps": "Kill API during child marker; inspect failed parent; Resume parent using Edge recovery dialog.",
+      "expected": "Parent inherits code/resumability; same child resumes; exactly one additional child effect.",
+      "status": "PASS",
+      "actual": {
+        "parentFailure": {
+          "code": "SCRIPT_OUTCOME_UNCERTAIN",
+          "message": "subloop child 01M5H30QCZ8MT051EN7A8MQ22B failed: The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+          "nodeId": "sub",
+          "resumable": true,
+          "details": {
+            "childRunId": "01M5H30QCZ8MT051EN7A8MQ22B",
+            "childNodeId": "script"
+          }
+        },
+        "childFailure": {
+          "code": "SCRIPT_OUTCOME_UNCERTAIN",
+          "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+          "nodeId": "script",
+          "resumable": true,
+          "script": {
+            "visitId": "01M5H30QCZ8MT051EN7A8MQ22B:5",
+            "dispatchId": "01M5H30QECJSFCW32CPJ67ANNQ",
+            "state": "outcome-uncertain"
+          }
+        },
+        "childId": "01M5H30QCZ8MT051EN7A8MQ22B",
+        "childStartCount": 1,
+        "effects": 2
+      },
+      "seconds": 3.065
+    },
+    {
+      "id": "edge-keyboard-narrow-concurrent-resume",
+      "steps": "Use 375px Edge, keyboard open/Escape, second tab, then concurrent explicit API Resume requests.",
+      "expected": "Dialog fits; opening/cancelling has no effect; one resumed dispatch; duplicate gets 409.",
+      "status": "PASS",
+      "actual": {
+        "dialogBox": {
+          "x": 0,
+          "y": 523,
+          "width": 375,
+          "height": 289
+        },
+        "effects": 2,
+        "requests": [
+          "accepted",
+          "POST /runs/01M5H30TBA0FN6GE1RF7N2D30Y/resume: 409 {\"type\":\"https://graphgoblin.dev/problems/invalid-state\",\"title\":\"invalid state\",\"status\":409,\"code\":\"INVALID_STATE\",\"detail\":\"cannot resume a run that is running\"}"
+        ]
+      },
+      "seconds": 3.302
+    },
+    {
+      "id": "api-client-mcp-provenance",
+      "steps": "Use built public client to GET real script failure; invoke MCP get_run/read_run_events/list_runs and list tools via in-memory transport.",
+      "expected": "Failure provenance round-trips; summaries include script/resumable for scripts only; Resume description requires explicit choice.",
+      "status": "PASS",
+      "actual": {
+        "publicClientFailure": {
+          "code": "SCRIPT_EXIT_CODE",
+          "message": "script exited with code 7",
+          "nodeId": "script",
+          "resumable": true,
+          "details": {
+            "exitCode": 7,
+            "stderr": "",
+            "stdout": ""
+          },
+          "script": {
+            "visitId": "01M5H305N3RV766MZYF545F6J2:5",
+            "dispatchId": "01M5H305NSW539WCBR66ETB58W",
+            "state": "completed",
+            "exitCode": 7
+          }
+        },
+        "scriptSummary": {
+          "code": "SCRIPT_EXIT_CODE",
+          "message": "script exited with code 7",
+          "script": {
+            "visitId": "01M5H305N3RV766MZYF545F6J2:5",
+            "dispatchId": "01M5H305NSW539WCBR66ETB58W",
+            "state": "completed",
+            "exitCode": 7
+          },
+          "resumable": true
+        },
+        "ordinarySummary": {
+          "code": "INTERNAL_ERROR",
+          "message": "expression failed: QA failure"
+        },
+        "resumeDescription": "Resume a paused run or a resumable failure. SCRIPT_START_FAILED means the script did not start; Resume tries again. SCRIPT_OUTCOME_UNCERTAIN means the previous script attempt may already have produced its effect; Resume runs it again and may repeat that effect. Resume uncertain scripts only when the user explicitly chooses to retry; offer replay_run or leave the failed run unchanged when they cancel recovery. A paused wait returns to waiting; other resumes continue running. Then call wait_for_run.",
+        "mcpGetFailure": {
+          "code": "SCRIPT_EXIT_CODE",
+          "message": "script exited with code 7",
+          "nodeId": "script",
+          "resumable": true,
+          "details": {
+            "exitCode": 7,
+            "stderr": "",
+            "stdout": ""
+          },
+          "script": {
+            "visitId": "01M5H305N3RV766MZYF545F6J2:5",
+            "dispatchId": "01M5H305NSW539WCBR66ETB58W",
+            "state": "completed",
+            "exitCode": 7
+          }
+        },
+        "eventTypes": [
+          "run.queued",
+          "run.started",
+          "node.started",
+          "node.finished",
+          "node.started",
+          "script.dispatched",
+          "node.progress",
+          "run.failed"
+        ]
+      },
+      "seconds": 0.944
+    }
+  ]
+}
