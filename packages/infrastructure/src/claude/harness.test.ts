@@ -674,7 +674,7 @@ describe('Claude preflight and transport failure matrix', () => {
             ? '2.1.287'
             : command.args.includes('--help')
               ? help.replace('--restricted', '')
-              : '{}',
+              : '{"loggedIn":false,"authMethod":"none"}',
         );
       },
     });

@@ -38,6 +38,8 @@ describe('Claude no-turn executable boundary', () => {
       });
       const result = await harness.preflight();
       expect(result).toMatchObject({ state, ok: state === 'ready' });
+      if (scenario === 'ready' || scenario === 'auth')
+        expect(result.authenticated).toBe(scenario === 'ready');
       expect(JSON.stringify(result)).not.toContain('PRIVATE_');
       // Each problem is one detail sentence and one action, with no repeated sentence.
       const update = ' Update the Claude CLI, then retry preflight.';
@@ -58,6 +60,43 @@ describe('Claude no-turn executable boundary', () => {
         hang: ['Claude CLI did not answer before the check deadline.' + check],
       };
       expect(result.problems).toEqual(problems[scenario]);
+    },
+    60000,
+  );
+});
+
+describe('audited Claude auth evidence', () => {
+  it.each([
+    ['auth-network', 'auth'],
+    ['quota-network', 'quota'],
+    ['stdout-quota-warning', 'quota'],
+    ['auth-empty', 'unknown'],
+    ['auth-unrecognised', 'unknown'],
+    ['conflict-auth-stderr', 'auth'],
+    ['conflict-quota-stderr', 'quota'],
+  ] as const)(
+    '%s preserves %s evidence through the executable boundary',
+    async (scenario, state) => {
+      const result = await new ClaudeHarness({
+        platform: 'win32',
+        runner: (request) =>
+          runClaudeProcess({
+            ...request,
+            binary: process.execPath,
+            args: [
+              fileURLToPath(new URL('./fixtures/readiness-cli.mjs', import.meta.url)),
+              scenario,
+              ...request.args,
+            ],
+          }),
+      }).preflight();
+      expect(result).toMatchObject({ state, ok: false });
+      if (state === 'unknown') {
+        expect(result).not.toHaveProperty('authenticated');
+        expect(result.problems).toEqual([
+          'Claude readiness could not be confirmed. Check that the Claude CLI starts and responds, then retry preflight.',
+        ]);
+      }
     },
     60000,
   );

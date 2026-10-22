@@ -208,11 +208,14 @@ async function inspectCli(
       ...(login.failure.state === 'auth' ? { authenticated: false } : {}),
       version,
     };
-  if (!/logged in/i.test(login.output) || /not logged in/i.test(login.output))
+  if (/not logged in/i.test(login.output))
     return {
       ...readinessFailure('codex', 'auth', 'Codex is not signed in.'),
       authenticated: false,
       version,
     };
+  // Successful exit alone cannot establish login; preserve the absence of that fact.
+  if (!/^\s*logged in\b/im.test(login.output))
+    return { ...readinessFailure('codex', 'unknown'), version };
   return { state: 'ready', ok: true, version, authenticated: true, problems: [] };
 }

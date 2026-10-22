@@ -88,6 +88,8 @@ describe('Codex no-turn executable boundaries', () => {
       };
       const result = await preflightCli(cli, runCli, scenario === 'hang' ? 1000 : 15000);
       expect(result).toMatchObject({ state, ok: state === 'ready' });
+      if (scenario === 'ready' || scenario === 'auth')
+        expect(result.authenticated).toBe(scenario === 'ready');
       expect(JSON.stringify(result)).not.toContain('PRIVATE_MARKER');
       const update = ' Update the Codex CLI, then retry preflight.';
       const expected: Record<string, string> = {
@@ -124,6 +126,39 @@ describe('Codex no-turn executable boundaries', () => {
     expect(result).toMatchObject({ state: 'ready', ok: true, authenticated: true });
     expect(result.version).toMatch(/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/);
   }, 60000);
+});
+
+describe('audited Codex auth evidence', () => {
+  it.each([
+    ['auth-network', 'auth'],
+    ['quota-network', 'quota'],
+    ['stdout-quota-warning', 'quota'],
+    ['auth-empty', 'unknown'],
+    ['auth-unrecognised', 'unknown'],
+  ] as const)(
+    '%s preserves %s evidence through the executable boundary',
+    async (scenario, state) => {
+      const result = await preflightCli(
+        {
+          command: process.execPath,
+          prefix: [
+            fileURLToPath(new URL('./fixtures/readiness-cli.mjs', import.meta.url)),
+            scenario,
+          ],
+        },
+        runCli,
+        15000,
+      );
+      expect(result).toMatchObject({ state, ok: false });
+      if (state === 'unknown') {
+        expect(result).not.toHaveProperty('authenticated');
+        expect(result.problems).toEqual([
+          'Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight.',
+        ]);
+      }
+    },
+    60000,
+  );
 });
 
 it('keeps a timed-out lookup unknown even when partial output mentions quota', async () => {

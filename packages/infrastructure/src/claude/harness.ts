@@ -236,7 +236,10 @@ export class ClaudeHarness implements HarnessPort {
         typeof auth === 'object' &&
         auth !== null &&
         (('loggedIn' in auth && auth.loggedIn === false) ||
-          ('authMethod' in auth && auth.authMethod !== 'claude.ai'))
+          ('authMethod' in auth &&
+            typeof auth.authMethod === 'string' &&
+            auth.authMethod !== '' &&
+            auth.authMethod !== 'claude.ai'))
       ) {
         checkOutcome({ ...result, exitCode: 0 }, signal, true);
         facts.authenticated = false;
@@ -248,8 +251,16 @@ export class ClaudeHarness implements HarnessPort {
         );
       }
       // This path runs version/help/auth only; stdout cannot be a model response.
+      // Recognised stderr is the CLI's primary error evidence, including conflicts with stdout.
+      // An unrelated warning must not hide a recognised stdout failure. Turn stdout is untouched.
       checkOutcome(
-        { ...result, failureState: result.failureState ?? cliFailureState(result.stdout) },
+        {
+          ...result,
+          failureState:
+            !result.failureState || result.failureState === 'unknown'
+              ? cliFailureState(result.stdout)
+              : result.failureState,
+        },
         signal,
         true,
       );
@@ -284,12 +295,9 @@ export class ClaudeHarness implements HarnessPort {
     try {
       const auth = await run([...SUPPRESSION_ARGS, 'auth', 'status', '--json'], true);
       facts.authMethod = authCategory(auth);
-      facts.authenticated = facts.authMethod === 'claude.ai';
-      if (!facts.authenticated)
-        throw new ClaudeHarnessError(
-          'HARNESS_NOT_AUTHENTICATED',
-          'Claude did not report a Claude.ai sign-in.',
-        );
+      if (facts.authMethod === null)
+        throw new ClaudeHarnessError('HARNESS_TURN_FAILED', readinessDetail('claude', 'unknown'));
+      facts.authenticated = true;
     } catch (error) {
       if (failureState(error) === 'auth') facts.authenticated = false;
       failures.push(error);
