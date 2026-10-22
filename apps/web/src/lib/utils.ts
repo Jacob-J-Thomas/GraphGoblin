@@ -22,19 +22,23 @@ export function prettyJson(value: unknown): string {
 
 /** Thrown inside `prettyJsonPrefix` to stop the walk once the budget is spent; never escapes. */
 const STOP = new Error('prettyJsonPrefix: budget spent');
+/** Characters of a string quoted at a time, so a huge string costs only its first chunks. */
+const QUOTE_CHUNK = 1_024;
 
 /**
  * The first `limit` characters of `prettyJson(value)` and whether more would follow, produced
- * without formatting the whole value: the walk stops as soon as the budget is spent, so a
- * multi-megabyte variable costs only its first lines of work and memory (#259). The text is
- * exactly `prettyJson(value).slice(0, limit)`: the same key order, escaping, indentation and
- * treatment of `undefined`, functions, symbols, non-finite numbers and `toJSON` as `JSON.stringify`.
+ * without formatting the whole value: the walk stops as soon as the budget is spent, strings and
+ * property names are quoted in chunks up to the remaining budget, and object properties are read
+ * one at a time, so a multi-megabyte variable costs only its first lines of work and memory
+ * (#259). The text is exactly `prettyJson(value).slice(0, limit)` for every value `JSON.stringify`
+ * accepts: the same key order, escaping, indentation, array holes, boxed primitives, `toJSON`
+ * (called with the property key) and omission of `undefined`, functions and symbols. A BigInt
+ * throws the same `TypeError`.
  */
 export function prettyJsonPrefix(
   value: unknown,
   limit: number,
 ): { text: string; truncated: boolean } {
-  if (value === undefined) return { text: '', truncated: false };
   const parts: string[] = [];
   let length = 0;
   const push = (part: string): void => {
@@ -42,49 +46,69 @@ export function prettyJsonPrefix(
     length += part.length;
     if (length > limit) throw STOP;
   };
-  const skipped = (item: unknown): boolean =>
-    item === undefined || typeof item === 'function' || typeof item === 'symbol';
-  const write = (item: unknown, indent: string): void => {
-    if (
-      item !== null &&
-      typeof item === 'object' &&
-      typeof (item as { toJSON?: unknown }).toJSON === 'function'
-    ) {
-      item = (item as { toJSON: () => unknown }).toJSON();
+  // `JSON.stringify(text)` without quoting the whole text: chunks never split a surrogate pair,
+  // so the escapes are the ones the whole string would get; stops once the budget is spent.
+  const quote = (text: string): void => {
+    push('"');
+    for (let start = 0; start < text.length; ) {
+      let end = Math.min(start + QUOTE_CHUNK, text.length);
+      if (end < text.length && /[\ud800-\udbff]/.test(text[end - 1] ?? '')) end += 1;
+      push(JSON.stringify(text.slice(start, end)).slice(1, -1));
+      start = end;
     }
-    if (item === null || skipped(item)) return push('null');
-    switch (typeof item) {
+    push('"');
+  };
+  // What `JSON.stringify` serialises for a value found under `key`: `toJSON` applied, boxed
+  // primitives unwrapped; `undefined` means the property is omitted (or `null` in an array).
+  const prepare = (item: unknown, key: string): unknown => {
+    if (item !== null && typeof item === 'object') {
+      const method = (item as { toJSON?: unknown }).toJSON;
+      if (typeof method === 'function') item = (method as (k: string) => unknown).call(item, key);
+    }
+    if (item instanceof String || item instanceof Number || item instanceof Boolean)
+      item = item.valueOf();
+    if (typeof item === 'function' || typeof item === 'symbol') return undefined;
+    return item;
+  };
+  const write = (prepared: unknown, indent: string): void => {
+    if (prepared === undefined || prepared === null) return push('null');
+    switch (typeof prepared) {
       case 'string':
-        return push(JSON.stringify(item));
+        return quote(prepared);
       case 'number':
-        return push(Number.isFinite(item) ? String(item) : 'null');
+        return push(Number.isFinite(prepared) ? String(prepared) : 'null');
       case 'boolean':
-        return push(item ? 'true' : 'false');
+        return push(prepared ? 'true' : 'false');
       case 'bigint':
         throw new TypeError('Do not know how to serialize a BigInt');
       default:
         break;
     }
     const inner = `${indent}  `;
-    if (Array.isArray(item)) {
-      if (item.length === 0) return push('[]');
+    if (Array.isArray(prepared)) {
+      if (prepared.length === 0) return push('[]');
       push('[');
-      item.forEach((element, index) => {
+      for (let index = 0; index < prepared.length; index += 1) {
         push(`${index === 0 ? '' : ','}\n${inner}`);
-        write(element, inner);
-      });
+        // A hole reads as `undefined`, which an array serialises as `null`.
+        write(prepare(prepared[index], String(index)), inner);
+      }
       return push(`\n${indent}]`);
     }
-    const record = item as Record<string, unknown>;
-    // Properties are read one at a time, so a budget spent on an early property never touches
-    // the later ones (a getter, a large value); the opening brace becomes `{}` if none is kept.
+    const record = prepared as Record<string, unknown>;
+    // Own enumerable string keys in `Object.keys` order, read one at a time: a budget spent on an
+    // early property never touches a later one; the opening brace becomes `{}` if none is kept.
     const open = parts.length;
     push('{');
     let first = true;
-    for (const key of Object.keys(record)) {
-      const property = record[key];
-      if (skipped(property)) continue;
-      push(`${first ? '' : ','}\n${inner}${JSON.stringify(key)}: `);
+    for (const key in record) {
+      if (!Object.prototype.hasOwnProperty.call(record, key)) continue;
+      const property = prepare(record[key], key);
+      if (property === undefined) continue;
+      push(first ? '\n' : ',\n');
+      push(inner);
+      quote(key);
+      push(': ');
       first = false;
       write(property, inner);
     }
@@ -97,7 +121,9 @@ export function prettyJsonPrefix(
     push(`\n${indent}}`);
   };
   try {
-    write(value, '');
+    const root = prepare(value, '');
+    if (root === undefined) return { text: '', truncated: false };
+    write(root, '');
   } catch (error) {
     if (error !== STOP) throw error;
     return { text: parts.join('').slice(0, limit), truncated: true };

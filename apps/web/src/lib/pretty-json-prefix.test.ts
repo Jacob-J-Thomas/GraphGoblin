@@ -16,6 +16,18 @@ const fixtures: Record<string, unknown> = {
   topNumber: 42,
   topNull: null,
   topArray: [1, [2, [3, [4]]]],
+  // Shapes JSON.stringify treats specially: holes, boxed primitives, toJSON that omits itself,
+  // toJSON reading its key, inherited enumerable properties (not own, so not serialised).
+  holes: Object.assign(new Array(6) as unknown[], { 0: 1, 2: 3, 4: () => 1, 5: Symbol('s') }),
+  boxed: { s: new String('boxed'), n: new Number(7), b: new Boolean(false) },
+  omitting: { a: { toJSON: () => undefined }, b: 1, c: [{ toJSON: () => undefined }] },
+  keyed: {
+    first: { toJSON: (key: string) => `seen ${key}` },
+    list: [{ toJSON: (key: string) => `index ${key}` }],
+  },
+  inherited: Object.assign(Object.create({ fromPrototype: 1 }) as object, { own: 2 }),
+  longKey: { ['k'.repeat(3_000)]: 'v', after: 1 },
+  pairs: { text: `${'ab'.repeat(1_023)}😀${'c'.repeat(10)}` },
 };
 
 describe('prettyJsonPrefix', () => {
@@ -47,6 +59,22 @@ describe('prettyJsonPrefix', () => {
     expect(prettyJsonPrefix(undefined, 10)).toEqual({ text: '', truncated: false });
     expect(() => prettyJsonPrefix({ n: 1n }, 10)).toThrow(TypeError);
     expect(() => prettyJson({ n: 1n })).toThrow(TypeError);
+  });
+
+  it('quotes a huge string only as far as the budget, with the exact escapes', () => {
+    const huge = `${'quote " and \\ and \n'.repeat(500)}${'x'.repeat(4_000_000)}😀end`;
+    const full = JSON.stringify({ text: huge }, null, 2);
+    for (const limit of [10, 100, 4_096, 20_000]) {
+      expect(prettyJsonPrefix({ text: huge }, limit)).toEqual({
+        text: full.slice(0, limit),
+        truncated: true,
+      });
+    }
+    // Chunk boundaries never split a surrogate pair, whatever the offset of the pair.
+    for (const offset of [1_021, 1_022, 1_023, 1_024, 1_025]) {
+      const text = `${'a'.repeat(offset)}😀${'b'.repeat(5)}`;
+      expect(prettyJsonPrefix(text, Number.POSITIVE_INFINITY).text).toBe(JSON.stringify(text));
+    }
   });
 
   it('stops walking once the budget is spent', () => {

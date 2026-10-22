@@ -93,7 +93,8 @@ export interface ThreadCache {
  * event seen before is still the same object at the same index (a cleared and refilled log keeps
  * its length and its tail but not its middle; comparing references is far cheaper than a replay);
  * a different initial thread or any other log empties the cache. At most `limit` results stay: a
- * viewer moves between a handful of events, and 32 threads is a few megabytes at most.
+ * viewer moves between a handful of selected events, so 32 covers a session's browsing; each
+ * result is one thread object, so the memory held scales with the run's thread, not with its log.
  */
 export function createThreadCache(limit = 32): ThreadCache {
   let initial: ContextThread | undefined;
