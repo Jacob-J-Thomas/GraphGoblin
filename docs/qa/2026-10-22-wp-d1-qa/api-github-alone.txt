@@ -1,0 +1,42 @@
+START 2026-10-22T02:00:29.0065489Z
+node v22.14.0
+pnpm.cmd --filter @graphgoblin/api exec vitest run src/triggers/github-recipe.test.ts -t curates all pages --config ../../docs/qa/2026-10-22-wp-d1-qa/api.config.mjs
+
+ RUN  v5.0.3 <worktree>/apps/api
+
+ ? src/triggers/github-recipe.test.ts (5 tests | 1 failed | 4 skipped) 28788ms
+   ? documented GitHub polling recipe with a controlled local CLI (5)
+     � curates all pages, drains five then the tail, and retains seen keys through a stopped restart 28742ms
+System.Management.Automation.RemoteException
+??????? Failed Tests 1 ???????
+System.Management.Automation.RemoteException
+ FAIL  src/triggers/github-recipe.test.ts > documented GitHub polling recipe with a controlled local CLI > curates all pages, drains five then the tail, and retains seen keys through a stopped restart
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ? src/triggers/github-recipe.test.ts:144:3
+    142| }
+    143| describe('documented GitHub polling recipe with a controlled local CLI�
+    144|   it('curates all pages, drains five then the tail, and retains seen k�
+       |   ^
+    145|     const fixtureData = await fixture();
+    146|     const { first, clock, id } = fixtureData;
+System.Management.Automation.RemoteException
+????????????????????????[1/1]?
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 skipped (5)
+   Start at  21:00:34
+   Duration  86.13s (tests 35%, transform 34%, import 31%)
+
+  Transform  transforming modules took 27.80s � 34% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+System.Management.Automation.RemoteException
+  � "pnpm recursive exec" failed in C:
+[local path redacted]
+  � d1\apps\api
+System.Management.Automation.RemoteException
+END 2026-10-22T02:02:04.8610742Z EXIT 1

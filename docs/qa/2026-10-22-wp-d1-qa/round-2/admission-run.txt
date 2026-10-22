@@ -1,0 +1,17 @@
+2026-10-22T02:34:07.663Z PASS historical inbound-only keys are permanent across versions and isolated by owner/loop/node
+2026-10-22T02:34:07.860Z PASS racing explicit keys have one pending intent and permanent failure does not reopen the key
+2026-10-22T02:34:08.093Z PASS ordinary create is atomic, canonical and idempotent; notification follows commit
+2026-10-22T02:34:08.386Z PASS claim rollback at claim.inbound leaves no inbound, receipt, pin or key
+2026-10-22T02:34:08.641Z PASS claim rollback at claim.receipt leaves no inbound, receipt, pin or key
+2026-10-22T02:34:09.855Z PASS create rollback at create.run preserves the complete pending intent and same-ID recovery
+2026-10-22T02:34:11.589Z PASS create rollback at create.event preserves the complete pending intent and same-ID recovery
+2026-10-22T02:34:11.795Z PASS create rollback at create.receipt preserves the complete pending intent and same-ID recovery
+2026-10-22T02:34:12.249Z PASS create rollback at create.link preserves the complete pending intent and same-ID recovery
+2026-10-22T02:34:12.520Z PASS claim validates owner, immutable intent, keys and pins before any writes
+2026-10-22T02:34:12.830Z PASS claim freezes caller objects and identical keyed content gets a distinct deduplicated receipt
+2026-10-22T02:34:13.144Z PASS pending keys reserve across webhook and poll, permanent failure releases poll pins
+2026-10-22T02:34:13.475Z PASS concurrent poll candidates consume one key and webhook sees the committed poll
+2026-10-22T02:34:14.984Z PASS Allow admits identical unkeyed raw bodies as distinct receipts and runs
+2026-10-22T02:34:15.590Z PASS a draft snapshot commits with its run or not at all, and is never replaced
+2026-10-22T02:34:15.968Z PASS a child commits with its parent's child_run.started or not at all (#320)
+2026-10-22T02:34:16.362Z PASS due selection is deterministic, nonnegative and bounded at five

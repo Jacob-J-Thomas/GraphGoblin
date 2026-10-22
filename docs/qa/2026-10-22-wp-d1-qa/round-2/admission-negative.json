@@ -1,0 +1,961 @@
+[
+  {
+    "ts": "2026-10-22T02:33:29.249Z",
+    "name": "unparented control",
+    "expected": "queued root admission succeeds with one queued event",
+    "actual": {
+      "run": {
+        "id": "00000000000000000000000005",
+        "ownerId": "local",
+        "loopId": "00000000000000000000000003",
+        "versionId": "00000000000000000000000004",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "R2 admission parent",
+          "label": "R2 admission parent v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {}
+        },
+        "invocationId": "00000000000000000000000006",
+        "status": "queued",
+        "iteration": 1,
+        "createdAt": "2026-10-02T12:00:00.000Z",
+        "lastEventSeq": 1
+      },
+      "events": [
+        {
+          "runId": "00000000000000000000000005",
+          "seq": 1,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "run.queued",
+          "versionId": "00000000000000000000000004",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "R2 admission parent",
+            "label": "R2 admission parent v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "classifiers": {}
+          },
+          "initialThread": {
+            "schemaVersion": 1,
+            "run": {
+              "id": "00000000000000000000000005",
+              "loopId": "00000000000000000000000003",
+              "versionId": "00000000000000000000000004",
+              "iteration": 1
+            },
+            "invocation": {
+              "id": "00000000000000000000000006",
+              "source": "manual.api",
+              "trigger": {
+                "nodeId": "start",
+                "kind": "manual",
+                "payload": null,
+                "receivedAt": "2026-10-02T12:00:00.000Z"
+              }
+            },
+            "messages": [],
+            "vars": {},
+            "artifacts": [],
+            "outputs": {},
+            "gates": {},
+            "counters": {
+              "nodeVisits": {},
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          },
+          "subloopVersions": {
+            "00000000000000000000000001": "00000000000000000000000002"
+          }
+        }
+      ]
+    },
+    "pass": true
+  },
+  {
+    "ts": "2026-10-22T02:33:29.274Z",
+    "name": "well-formed child",
+    "expected": "child and parent child_run.started committed together",
+    "actual": {
+      "child": {
+        "id": "00000000000000000000000007",
+        "ownerId": "local",
+        "loopId": "00000000000000000000000001",
+        "versionId": "00000000000000000000000002",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "R2 admission leaf",
+          "label": "R2 admission leaf v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {}
+        },
+        "parentRunId": "00000000000000000000000005",
+        "invocationId": "00000000000000000000000008",
+        "status": "queued",
+        "iteration": 1,
+        "createdAt": "2026-10-02T12:00:00.000Z",
+        "lastEventSeq": 1
+      },
+      "parentEvents": [
+        {
+          "runId": "00000000000000000000000005",
+          "seq": 1,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "run.queued",
+          "versionId": "00000000000000000000000004",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "R2 admission parent",
+            "label": "R2 admission parent v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "classifiers": {}
+          },
+          "initialThread": {
+            "schemaVersion": 1,
+            "run": {
+              "id": "00000000000000000000000005",
+              "loopId": "00000000000000000000000003",
+              "versionId": "00000000000000000000000004",
+              "iteration": 1
+            },
+            "invocation": {
+              "id": "00000000000000000000000006",
+              "source": "manual.api",
+              "trigger": {
+                "nodeId": "start",
+                "kind": "manual",
+                "payload": null,
+                "receivedAt": "2026-10-02T12:00:00.000Z"
+              }
+            },
+            "messages": [],
+            "vars": {},
+            "artifacts": [],
+            "outputs": {},
+            "gates": {},
+            "counters": {
+              "nodeVisits": {},
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          },
+          "subloopVersions": {
+            "00000000000000000000000001": "00000000000000000000000002"
+          }
+        },
+        {
+          "runId": "00000000000000000000000005",
+          "seq": 2,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "child_run.started",
+          "nodeId": "sub",
+          "childRunId": "00000000000000000000000007"
+        }
+      ],
+      "childEvents": [
+        {
+          "runId": "00000000000000000000000007",
+          "seq": 1,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "run.queued",
+          "versionId": "00000000000000000000000002",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "R2 admission leaf",
+            "label": "R2 admission leaf v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "classifiers": {}
+          },
+          "initialThread": {
+            "schemaVersion": 1,
+            "run": {
+              "id": "00000000000000000000000007",
+              "loopId": "00000000000000000000000001",
+              "versionId": "00000000000000000000000002",
+              "parentRunId": "00000000000000000000000005",
+              "iteration": 1
+            },
+            "invocation": {
+              "id": "00000000000000000000000008",
+              "source": "subloop",
+              "caller": {
+                "kind": "run",
+                "id": "00000000000000000000000005"
+              },
+              "trigger": {
+                "nodeId": "start",
+                "kind": "manual",
+                "payload": null,
+                "receivedAt": "2026-10-02T12:00:00.000Z"
+              }
+            },
+            "messages": [],
+            "vars": {},
+            "artifacts": [],
+            "outputs": {},
+            "gates": {},
+            "counters": {
+              "nodeVisits": {},
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "pass": true
+  },
+  {
+    "ts": "2026-10-22T02:33:29.292Z",
+    "name": "identical admission acknowledgement lost",
+    "expected": "same child, no extra events or parent link",
+    "actual": {
+      "parentEvents": [
+        {
+          "runId": "00000000000000000000000005",
+          "seq": 1,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "run.queued",
+          "versionId": "00000000000000000000000004",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "R2 admission parent",
+            "label": "R2 admission parent v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "classifiers": {}
+          },
+          "initialThread": {
+            "schemaVersion": 1,
+            "run": {
+              "id": "00000000000000000000000005",
+              "loopId": "00000000000000000000000003",
+              "versionId": "00000000000000000000000004",
+              "iteration": 1
+            },
+            "invocation": {
+              "id": "00000000000000000000000006",
+              "source": "manual.api",
+              "trigger": {
+                "nodeId": "start",
+                "kind": "manual",
+                "payload": null,
+                "receivedAt": "2026-10-02T12:00:00.000Z"
+              }
+            },
+            "messages": [],
+            "vars": {},
+            "artifacts": [],
+            "outputs": {},
+            "gates": {},
+            "counters": {
+              "nodeVisits": {},
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          },
+          "subloopVersions": {
+            "00000000000000000000000001": "00000000000000000000000002"
+          }
+        },
+        {
+          "runId": "00000000000000000000000005",
+          "seq": 2,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "child_run.started",
+          "nodeId": "sub",
+          "childRunId": "00000000000000000000000007"
+        }
+      ],
+      "childEvents": [
+        {
+          "runId": "00000000000000000000000007",
+          "seq": 1,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "run.queued",
+          "versionId": "00000000000000000000000002",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "R2 admission leaf",
+            "label": "R2 admission leaf v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "classifiers": {}
+          },
+          "initialThread": {
+            "schemaVersion": 1,
+            "run": {
+              "id": "00000000000000000000000007",
+              "loopId": "00000000000000000000000001",
+              "versionId": "00000000000000000000000002",
+              "parentRunId": "00000000000000000000000005",
+              "iteration": 1
+            },
+            "invocation": {
+              "id": "00000000000000000000000008",
+              "source": "subloop",
+              "caller": {
+                "kind": "run",
+                "id": "00000000000000000000000005"
+              },
+              "trigger": {
+                "nodeId": "start",
+                "kind": "manual",
+                "payload": null,
+                "receivedAt": "2026-10-02T12:00:00.000Z"
+              }
+            },
+            "messages": [],
+            "vars": {},
+            "artifacts": [],
+            "outputs": {},
+            "gates": {},
+            "counters": {
+              "nodeVisits": {},
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "pass": true
+  },
+  {
+    "ts": "2026-10-22T02:33:29.314Z",
+    "name": "missing-parent-with-node",
+    "expected": "AdmissionConflictError; no child row or events; parent log unchanged",
+    "actual": {
+      "failure": {
+        "isAdmissionConflict": true,
+        "code": "WEBHOOK_INTENT_CONFLICT",
+        "name": "AdmissionConflictError"
+      },
+      "childExists": false,
+      "childEvents": [],
+      "parentEvents": [
+        {
+          "runId": "00000000000000000000000005",
+          "seq": 1,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "run.queued",
+          "versionId": "00000000000000000000000004",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "R2 admission parent",
+            "label": "R2 admission parent v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "classifiers": {}
+          },
+          "initialThread": {
+            "schemaVersion": 1,
+            "run": {
+              "id": "00000000000000000000000005",
+              "loopId": "00000000000000000000000003",
+              "versionId": "00000000000000000000000004",
+              "iteration": 1
+            },
+            "invocation": {
+              "id": "00000000000000000000000006",
+              "source": "manual.api",
+              "trigger": {
+                "nodeId": "start",
+                "kind": "manual",
+                "payload": null,
+                "receivedAt": "2026-10-02T12:00:00.000Z"
+              }
+            },
+            "messages": [],
+            "vars": {},
+            "artifacts": [],
+            "outputs": {},
+            "gates": {},
+            "counters": {
+              "nodeVisits": {},
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          },
+          "subloopVersions": {
+            "00000000000000000000000001": "00000000000000000000000002"
+          }
+        },
+        {
+          "runId": "00000000000000000000000005",
+          "seq": 2,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "child_run.started",
+          "nodeId": "sub",
+          "childRunId": "00000000000000000000000007"
+        }
+      ]
+    },
+    "pass": true
+  },
+  {
+    "ts": "2026-10-22T02:33:29.324Z",
+    "name": "missing-parent-without-node",
+    "expected": "AdmissionConflictError; no child row or events; parent log unchanged",
+    "actual": {
+      "failure": {
+        "isAdmissionConflict": true,
+        "code": "WEBHOOK_INTENT_CONFLICT",
+        "name": "AdmissionConflictError"
+      },
+      "childExists": false,
+      "childEvents": [],
+      "parentEvents": [
+        {
+          "runId": "00000000000000000000000005",
+          "seq": 1,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "run.queued",
+          "versionId": "00000000000000000000000004",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "R2 admission parent",
+            "label": "R2 admission parent v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "classifiers": {}
+          },
+          "initialThread": {
+            "schemaVersion": 1,
+            "run": {
+              "id": "00000000000000000000000005",
+              "loopId": "00000000000000000000000003",
+              "versionId": "00000000000000000000000004",
+              "iteration": 1
+            },
+            "invocation": {
+              "id": "00000000000000000000000006",
+              "source": "manual.api",
+              "trigger": {
+                "nodeId": "start",
+                "kind": "manual",
+                "payload": null,
+                "receivedAt": "2026-10-02T12:00:00.000Z"
+              }
+            },
+            "messages": [],
+            "vars": {},
+            "artifacts": [],
+            "outputs": {},
+            "gates": {},
+            "counters": {
+              "nodeVisits": {},
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          },
+          "subloopVersions": {
+            "00000000000000000000000001": "00000000000000000000000002"
+          }
+        },
+        {
+          "runId": "00000000000000000000000005",
+          "seq": 2,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "child_run.started",
+          "nodeId": "sub",
+          "childRunId": "00000000000000000000000007"
+        }
+      ]
+    },
+    "pass": true
+  },
+  {
+    "ts": "2026-10-22T02:33:29.334Z",
+    "name": "existing-parent-without-node",
+    "expected": "AdmissionConflictError; no child row or events; parent log unchanged",
+    "actual": {
+      "failure": {
+        "isAdmissionConflict": true,
+        "code": "WEBHOOK_INTENT_CONFLICT",
+        "name": "AdmissionConflictError"
+      },
+      "childExists": false,
+      "childEvents": [],
+      "parentEvents": [
+        {
+          "runId": "00000000000000000000000005",
+          "seq": 1,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "run.queued",
+          "versionId": "00000000000000000000000004",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "R2 admission parent",
+            "label": "R2 admission parent v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "classifiers": {}
+          },
+          "initialThread": {
+            "schemaVersion": 1,
+            "run": {
+              "id": "00000000000000000000000005",
+              "loopId": "00000000000000000000000003",
+              "versionId": "00000000000000000000000004",
+              "iteration": 1
+            },
+            "invocation": {
+              "id": "00000000000000000000000006",
+              "source": "manual.api",
+              "trigger": {
+                "nodeId": "start",
+                "kind": "manual",
+                "payload": null,
+                "receivedAt": "2026-10-02T12:00:00.000Z"
+              }
+            },
+            "messages": [],
+            "vars": {},
+            "artifacts": [],
+            "outputs": {},
+            "gates": {},
+            "counters": {
+              "nodeVisits": {},
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          },
+          "subloopVersions": {
+            "00000000000000000000000001": "00000000000000000000000002"
+          }
+        },
+        {
+          "runId": "00000000000000000000000005",
+          "seq": 2,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "child_run.started",
+          "nodeId": "sub",
+          "childRunId": "00000000000000000000000007"
+        }
+      ]
+    },
+    "pass": true
+  },
+  {
+    "ts": "2026-10-22T02:33:29.350Z",
+    "name": "node-without-parent",
+    "expected": "AdmissionConflictError; no child row or events; parent log unchanged",
+    "actual": {
+      "failure": {
+        "isAdmissionConflict": true,
+        "code": "WEBHOOK_INTENT_CONFLICT",
+        "name": "AdmissionConflictError"
+      },
+      "childExists": false,
+      "childEvents": [],
+      "parentEvents": [
+        {
+          "runId": "00000000000000000000000005",
+          "seq": 1,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "run.queued",
+          "versionId": "00000000000000000000000004",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "R2 admission parent",
+            "label": "R2 admission parent v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "classifiers": {}
+          },
+          "initialThread": {
+            "schemaVersion": 1,
+            "run": {
+              "id": "00000000000000000000000005",
+              "loopId": "00000000000000000000000003",
+              "versionId": "00000000000000000000000004",
+              "iteration": 1
+            },
+            "invocation": {
+              "id": "00000000000000000000000006",
+              "source": "manual.api",
+              "trigger": {
+                "nodeId": "start",
+                "kind": "manual",
+                "payload": null,
+                "receivedAt": "2026-10-02T12:00:00.000Z"
+              }
+            },
+            "messages": [],
+            "vars": {},
+            "artifacts": [],
+            "outputs": {},
+            "gates": {},
+            "counters": {
+              "nodeVisits": {},
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          },
+          "subloopVersions": {
+            "00000000000000000000000001": "00000000000000000000000002"
+          }
+        },
+        {
+          "runId": "00000000000000000000000005",
+          "seq": 2,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "child_run.started",
+          "nodeId": "sub",
+          "childRunId": "00000000000000000000000007"
+        }
+      ]
+    },
+    "pass": true
+  },
+  {
+    "ts": "2026-10-22T02:33:29.377Z",
+    "name": "repeat child with different parent node",
+    "expected": "refused, existing child and link unchanged",
+    "actual": {
+      "refused": true,
+      "parentEvents": [
+        {
+          "runId": "00000000000000000000000005",
+          "seq": 1,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "run.queued",
+          "versionId": "00000000000000000000000004",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "R2 admission parent",
+            "label": "R2 admission parent v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "classifiers": {}
+          },
+          "initialThread": {
+            "schemaVersion": 1,
+            "run": {
+              "id": "00000000000000000000000005",
+              "loopId": "00000000000000000000000003",
+              "versionId": "00000000000000000000000004",
+              "iteration": 1
+            },
+            "invocation": {
+              "id": "00000000000000000000000006",
+              "source": "manual.api",
+              "trigger": {
+                "nodeId": "start",
+                "kind": "manual",
+                "payload": null,
+                "receivedAt": "2026-10-02T12:00:00.000Z"
+              }
+            },
+            "messages": [],
+            "vars": {},
+            "artifacts": [],
+            "outputs": {},
+            "gates": {},
+            "counters": {
+              "nodeVisits": {},
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          },
+          "subloopVersions": {
+            "00000000000000000000000001": "00000000000000000000000002"
+          }
+        },
+        {
+          "runId": "00000000000000000000000005",
+          "seq": 2,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "child_run.started",
+          "nodeId": "sub",
+          "childRunId": "00000000000000000000000007"
+        }
+      ],
+      "childEvents": [
+        {
+          "runId": "00000000000000000000000007",
+          "seq": 1,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "run.queued",
+          "versionId": "00000000000000000000000002",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "R2 admission leaf",
+            "label": "R2 admission leaf v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "classifiers": {}
+          },
+          "initialThread": {
+            "schemaVersion": 1,
+            "run": {
+              "id": "00000000000000000000000007",
+              "loopId": "00000000000000000000000001",
+              "versionId": "00000000000000000000000002",
+              "parentRunId": "00000000000000000000000005",
+              "iteration": 1
+            },
+            "invocation": {
+              "id": "00000000000000000000000008",
+              "source": "subloop",
+              "caller": {
+                "kind": "run",
+                "id": "00000000000000000000000005"
+              },
+              "trigger": {
+                "nodeId": "start",
+                "kind": "manual",
+                "payload": null,
+                "receivedAt": "2026-10-02T12:00:00.000Z"
+              }
+            },
+            "messages": [],
+            "vars": {},
+            "artifacts": [],
+            "outputs": {},
+            "gates": {},
+            "counters": {
+              "nodeVisits": {},
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "pass": true
+  },
+  {
+    "ts": "2026-10-22T02:33:29.382Z",
+    "name": "final orphan query",
+    "expected": "zero orphan children, only root and legitimate child",
+    "actual": {
+      "query": "SELECT c.id,c.parent_run_id FROM runs c WHERE c.parent_run_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM run_events e WHERE e.run_id=c.parent_run_id AND e.type='child_run.started' AND json_extract(e.payload,'$.childRunId')=c.id)",
+      "gaps": [],
+      "runs": [
+        {
+          "id": "00000000000000000000000005",
+          "parent_run_id": null,
+          "last_event_seq": 2
+        },
+        {
+          "id": "00000000000000000000000007",
+          "parent_run_id": "00000000000000000000000005",
+          "last_event_seq": 1
+        }
+      ]
+    },
+    "pass": true
+  },
+  {
+    "cleanup": "gg-qa-320-r2-admission-Sk98dT",
+    "removed": true
+  }
+]

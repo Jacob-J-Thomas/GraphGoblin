@@ -1,0 +1,100 @@
+[
+  {
+    "ts": "2026-10-22T01:45:39.718Z",
+    "withParentNodeId": true,
+    "expected": "refused, no child row or queued event",
+    "actual": "refused",
+    "code": "WEBHOOK_INTENT_CONFLICT",
+    "message": "The saved admission identity does not match the existing run",
+    "childExists": false,
+    "parentExists": false,
+    "childEvents": [],
+    "pass": true
+  },
+  {
+    "ts": "2026-10-22T01:45:39.730Z",
+    "withParentNodeId": false,
+    "expected": "refused, no child row or queued event",
+    "actual": "admitted",
+    "childExists": true,
+    "parentExists": false,
+    "childEvents": [
+      {
+        "runId": "00000000000000000000000008",
+        "seq": 1,
+        "ts": "2026-10-02T12:00:00.000Z",
+        "type": "run.queued",
+        "versionId": "00000000000000000000000002",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA orphan admission control",
+          "label": "QA orphan admission control v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {}
+        },
+        "initialThread": {
+          "schemaVersion": 1,
+          "run": {
+            "id": "00000000000000000000000008",
+            "loopId": "00000000000000000000000001",
+            "versionId": "00000000000000000000000002",
+            "parentRunId": "00000000000000000000000009",
+            "iteration": 1
+          },
+          "invocation": {
+            "id": "0000000000000000000000000A",
+            "source": "subloop",
+            "trigger": {
+              "nodeId": "start",
+              "kind": "manual",
+              "payload": null,
+              "receivedAt": "2026-10-02T12:00:00.000Z"
+            }
+          },
+          "messages": [],
+          "vars": {},
+          "artifacts": [],
+          "outputs": {},
+          "gates": {},
+          "counters": {
+            "nodeVisits": {},
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          }
+        }
+      }
+    ],
+    "pass": false
+  },
+  {
+    "ts": "2026-10-22T01:45:39.774Z",
+    "query": "child rows without a matching parent link",
+    "rows": [
+      {
+        "id": "00000000000000000000000008",
+        "parent_run_id": "00000000000000000000000009"
+      }
+    ]
+  },
+  {
+    "cleanup": "gg-qa-320-dICGfB",
+    "removed": true
+  }
+]

@@ -1,0 +1,84 @@
+START 2026-10-22T01:39:22.6210764Z
+node v22.14.0
+pnpm.cmd --filter @graphgoblin/api exec vitest run src/subloop-restart.test.ts --config ../../docs/qa/2026-10-22-wp-d1-qa/api.config.mjs
+
+ RUN  v5.0.3 <worktree>/apps/api
+
+subloop kill landings:
+delay undefined: leaf waiting at restart; recovery restarts top 0, middle 0, leaf 0
+delay 0: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 10: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 30: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 60: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+delay 100: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 150: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 250: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+ ? src/subloop-restart.test.ts (3 tests | 2 failed) 308547ms
+   ? awaited subloops across process death (#242) (3)
+     � the built API recovers a child finished while down with one continuation per parent 73304ms
+     � the built API recovers a parent interrupted mid-wake with one continuation per parent 119504ms
+System.Management.Automation.RemoteException
+??????? Failed Tests 2 ???????
+System.Management.Automation.RemoteException
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a child finished while down with one continuation per parent
+AssertionError: expected 'running' to be 'waiting' // Object.is equality
+System.Management.Automation.RemoteException
+Expected: "waiting"
+Received: "running"
+System.Management.Automation.RemoteException
+ ? src/subloop-restart.test.ts:220:32
+    218|         [mid] = await runs.listChildren(run.id);
+    219|         [bottom] = mid ? await runs.listChildren(mid.id) : [];
+    220|         expect(bottom?.status).toBe('waiting');
+       |                                ^
+    221|       });
+    222|       let stranded = false;
+System.Management.Automation.RemoteException
+????????????????????????[1/4]?
+System.Management.Automation.RemoteException
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a child finished while down with one continuation per parent
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a parent interrupted mid-wake with one continuation per parent
+Error: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ? src/subloop-restart.test.ts:23:1
+     21|
+     22| const fixtures: Awaited<ReturnType<typeof createApiProcessFixture>>[] �
+     23| afterEach(async () => {
+       | ^
+     24|   for (const created of fixtures.splice(0)) await created.dispose();
+     25| }, 60_000);
+System.Management.Automation.RemoteException
+????????????????????????[2/4]?
+System.Management.Automation.RemoteException
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a parent interrupted mid-wake with one continuation per parent
+AssertionError: expected undefined to be 'waiting' // Object.is equality
+System.Management.Automation.RemoteException
+- Expected:
+"waiting"
+System.Management.Automation.RemoteException
++ Received:
+undefined
+System.Management.Automation.RemoteException
+ ? src/subloop-restart.test.ts:220:32
+    218|         [mid] = await runs.listChildren(run.id);
+    219|         [bottom] = mid ? await runs.listChildren(mid.id) : [];
+    220|         expect(bottom?.status).toBe('waiting');
+       |                                ^
+    221|       });
+    222|       let stranded = false;
+System.Management.Automation.RemoteException
+????????????????????????[3/4]?
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  20:39:24
+   Duration  337.11s (tests 92%, transform 4%, import 4%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+System.Management.Automation.RemoteException
+  � "pnpm recursive exec" failed in C:
+[local path redacted]
+  � d1\apps\api
+System.Management.Automation.RemoteException
+END 2026-10-22T01:45:10.1378310Z EXIT 1

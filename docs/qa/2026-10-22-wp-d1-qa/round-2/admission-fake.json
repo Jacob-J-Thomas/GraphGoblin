@@ -1,0 +1,87 @@
+[
+  {
+    "ts": "2026-10-22T02:46:10.280Z",
+    "name": "historical inbound-only keys are permanent across versions and isolated by owner/loop/node",
+    "pass": true
+  },
+  {
+    "ts": "2026-10-22T02:46:10.306Z",
+    "name": "racing explicit keys have one pending intent and permanent failure does not reopen the key",
+    "pass": true
+  },
+  {
+    "ts": "2026-10-22T02:46:10.315Z",
+    "name": "ordinary create is atomic, canonical and idempotent; notification follows commit",
+    "pass": true
+  },
+  {
+    "ts": "2026-10-22T02:46:10.317Z",
+    "name": "claim rollback at claim.inbound leaves no inbound, receipt, pin or key",
+    "pass": true
+  },
+  {
+    "ts": "2026-10-22T02:46:10.318Z",
+    "name": "claim rollback at claim.receipt leaves no inbound, receipt, pin or key",
+    "pass": true
+  },
+  {
+    "ts": "2026-10-22T02:46:10.324Z",
+    "name": "create rollback at create.run preserves the complete pending intent and same-ID recovery",
+    "pass": true
+  },
+  {
+    "ts": "2026-10-22T02:46:10.330Z",
+    "name": "create rollback at create.event preserves the complete pending intent and same-ID recovery",
+    "pass": true
+  },
+  {
+    "ts": "2026-10-22T02:46:10.339Z",
+    "name": "create rollback at create.receipt preserves the complete pending intent and same-ID recovery",
+    "pass": true
+  },
+  {
+    "ts": "2026-10-22T02:46:10.345Z",
+    "name": "create rollback at create.link preserves the complete pending intent and same-ID recovery",
+    "pass": true
+  },
+  {
+    "ts": "2026-10-22T02:46:10.347Z",
+    "name": "claim validates owner, immutable intent, keys and pins before any writes",
+    "pass": true
+  },
+  {
+    "ts": "2026-10-22T02:46:10.350Z",
+    "name": "claim freezes caller objects and identical keyed content gets a distinct deduplicated receipt",
+    "pass": true
+  },
+  {
+    "ts": "2026-10-22T02:46:10.354Z",
+    "name": "pending keys reserve across webhook and poll, permanent failure releases poll pins",
+    "pass": true
+  },
+  {
+    "ts": "2026-10-22T02:46:10.356Z",
+    "name": "concurrent poll candidates consume one key and webhook sees the committed poll",
+    "pass": true
+  },
+  {
+    "ts": "2026-10-22T02:46:10.366Z",
+    "name": "Allow admits identical unkeyed raw bodies as distinct receipts and runs",
+    "pass": true
+  },
+  {
+    "ts": "2026-10-22T02:46:10.382Z",
+    "name": "a draft snapshot commits with its run or not at all, and is never replaced",
+    "pass": true
+  },
+  {
+    "ts": "2026-10-22T02:46:10.390Z",
+    "name": "a child commits with its parent's child_run.started or not at all (#320)",
+    "pass": true
+  },
+  {
+    "ts": "2026-10-22T02:46:10.395Z",
+    "name": "due selection is deterministic, nonnegative and bounded at five",
+    "pass": true
+  }
+]
