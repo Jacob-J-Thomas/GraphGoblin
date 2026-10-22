@@ -1,4 +1,3 @@
-import type { Stats } from 'node:fs';
 import { lstat, readdir, rmdir, unlink } from 'node:fs/promises';
 import { dirname, isAbsolute, join, relative, sep } from 'node:path';
 
@@ -17,10 +16,28 @@ export interface TreeEntry {
   kind: EntryKind;
   /** Size of a file; links and directories count 0. */
   bytes: number;
+  /** Filesystem identity (device and file index), so two spellings of one entry compare equal. */
+  identity: string;
 }
 
 export function hasCode(error: unknown, code: string): boolean {
   return error instanceof Error && 'code' in error && error.code === code;
+}
+
+/**
+ * The identity of the entry at `path` without following links: the device and file index as
+ * 64-bit values, which is how the filesystem itself tells one file from another. Two spellings of
+ * one entry (letter case on a case-insensitive volume, a Windows short name) share it; two files
+ * whose names merely fold alike never do. Undefined when nothing is there.
+ */
+export async function identityOf(path: string): Promise<string | undefined> {
+  try {
+    const stats = await lstat(path, { bigint: true });
+    return `${String(stats.dev)}:${String(stats.ino)}`;
+  } catch (error) {
+    if (hasCode(error, 'ENOENT') || hasCode(error, 'ENOTDIR')) return undefined;
+    throw error;
+  }
 }
 
 /** Whether `path` lies strictly inside `root` (both absolute and normalized). */
@@ -29,7 +46,11 @@ export function isInside(root: string, path: string): boolean {
   return rel !== '' && rel !== '..' && !rel.startsWith('..' + sep) && !isAbsolute(rel);
 }
 
-export function kindOf(stats: Pick<Stats, 'isSymbolicLink' | 'isDirectory' | 'isFile'>): EntryKind {
+export function kindOf(stats: {
+  isSymbolicLink(): boolean;
+  isDirectory(): boolean;
+  isFile(): boolean;
+}): EntryKind {
   if (stats.isSymbolicLink()) return 'link';
   if (stats.isDirectory()) return 'directory';
   return stats.isFile() ? 'file' : 'other';
@@ -40,11 +61,16 @@ const absolute = (root: string, path: string): string => join(root, ...path.spli
 /** The entry at `path` (relative to `root`), or undefined when nothing is there. */
 export async function statEntry(root: string, path: string): Promise<TreeEntry | undefined> {
   try {
-    const stats = await lstat(absolute(root, path));
+    const stats = await lstat(absolute(root, path), { bigint: true });
     const kind = kindOf(stats);
-    return { path, kind, bytes: kind === 'file' ? stats.size : 0 };
+    return {
+      path,
+      kind,
+      bytes: kind === 'file' ? Number(stats.size) : 0,
+      identity: `${String(stats.dev)}:${String(stats.ino)}`,
+    };
   } catch (error) {
-    if (hasCode(error, 'ENOENT')) return undefined;
+    if (hasCode(error, 'ENOENT') || hasCode(error, 'ENOTDIR')) return undefined;
     throw error;
   }
 }

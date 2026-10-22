@@ -1,4 +1,4 @@
-import { lstat, readdir, realpath, stat } from 'node:fs/promises';
+import { readdir, realpath, stat } from 'node:fs/promises';
 import { relative, resolve, sep } from 'node:path';
 import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { databaseFilePath } from '@graphgoblin/infrastructure/sqlite';
@@ -6,7 +6,7 @@ import { loadConfig, type ApiConfig } from '../config.js';
 import { acquireDataDirLock, dataDirLockState, type DataDirLock } from '../data-dir-lock.js';
 import { dataDirArgument, RESET_COMMAND } from '../store-refusal.js';
 import { readStoreFacts, type StoreFacts } from './store-facts.js';
-import { hasCode, isInside, listEntry, removeEntry, statEntry, type TreeEntry } from './tree.js';
+import { identityOf, isInside, listEntry, removeEntry, statEntry, type TreeEntry } from './tree.js';
 
 /**
  * `graphgoblin-api --reset` (ADR-0042): the explicit fresh start for a pre-1.0 store this build
@@ -82,6 +82,8 @@ export interface ResetTarget {
 export interface KeptEntry {
   path: string;
   why: string;
+  /** Filesystem identity when the entry exists; compared against the removed entries. */
+  identity?: string | undefined;
 }
 
 export interface ResetPlan {
@@ -115,25 +117,25 @@ const LOCK_FILES = new Set(['graphgoblin.lock', 'graphgoblin.lock.reclaim']);
 const RESERVED_ROOTS = new Set(['artifacts', 'workspaces']);
 
 /**
- * Names are compared the way the filesystem compares them. Windows and macOS volumes are
- * case-insensitive by default, so `ARTIFACTS` and `artifacts` are one entry there and a database
- * configured as `GRAPHGOBLIN.DB` is the stored `graphgoblin.db`. Over-refusing on a case-sensitive
- * macOS volume costs a rename; under-refusing would list one entry twice or both remove and keep it.
+ * Whether the host folds letter case in names by default (Windows and macOS volumes). Used only
+ * where nothing exists yet to compare by identity; everything that exists is compared by the
+ * filesystem's own identity, never by folding, because folding can equate two distinct files.
  */
 export const CASE_INSENSITIVE_NAMES = process.platform === 'win32' || process.platform === 'darwin';
 
-/** The comparison key of a path or name under the host's case rule. */
+/** The comparison key of a name under the host's default case rule, for entries that do not exist. */
 export function nameKey(path: string, caseInsensitive = CASE_INSENSITIVE_NAMES): string {
   return caseInsensitive ? path.toLowerCase() : path;
 }
 
 /**
- * The configured database path, segment by segment, as the data directory lists it. A segment that
- * matches a listed entry under the host's case rule takes that entry's spelling, so the manifest
- * names what the directory shows. A segment that names an existing entry under a spelling the
- * listing does not show (an NTFS short name such as `ARTIFA~1` or `GRAPHG~1.DB`) is refused:
- * every check here compares names, and an alias would slip past them. Segments below the deepest
- * existing entry are kept as configured; nothing exists there to alias.
+ * The configured database path, segment by segment, as the data directory lists it. Each existing
+ * segment is matched to the directory entry with the same filesystem identity, so a different
+ * letter case or a Windows short name resolves to the entry's own spelling while two distinct files
+ * whose names merely fold alike (`K.db` and the Kelvin-sign `K.db`, or two names in a case-sensitive
+ * directory) stay distinct; a spelling that identifies no listed entry, or more than one, is
+ * refused. Every ancestor is checked to be a physical directory before it is entered, so a link is
+ * never followed on the way. Segments below the deepest existing entry are kept as configured.
  */
 export async function storedSpelling(dataDir: string, database: string): Promise<string[]> {
   const configured = database.split('/');
@@ -146,30 +148,52 @@ export async function storedSpelling(dataDir: string, database: string): Promise
       throw new ResetRefusedError(
         `the database path ${database} names ${segment} with a trailing dot or space, which Windows resolves to another name; configure GG_DB_URL with the name as the directory lists it`,
       );
-    let names: string[];
-    try {
-      names = await readdir(parent);
-    } catch (error) {
-      if (hasCode(error, 'ENOENT') || hasCode(error, 'ENOTDIR'))
-        return [...stored, ...configured.slice(index)];
-      throw error;
-    }
-    const match = names.find((name) => nameKey(name) === nameKey(segment));
-    if (match === undefined) {
-      try {
-        await lstat(resolve(parent, segment));
-      } catch (error) {
-        if (hasCode(error, 'ENOENT')) return [...stored, ...configured.slice(index)];
-        throw error;
-      }
+    const identity = await identityOf(resolve(parent, segment));
+    if (identity === undefined) return [...stored, ...configured.slice(index)];
+    const matches: string[] = [];
+    for (const name of await readdir(parent))
+      if ((await identityOf(resolve(parent, name))) === identity) matches.push(name);
+    if (matches.length !== 1)
       throw new ResetRefusedError(
-        `the database path ${database} names ${segment} by a spelling the data directory does not list (a Windows short name, for example); configure GG_DB_URL with the name as the directory lists it`,
+        matches.length === 0
+          ? `the database path ${database} names ${segment} by a spelling the data directory does not list; configure GG_DB_URL with the name as the directory lists it`
+          : `the data directory lists ${segment} under more than one name (${matches.sort().join(', ')}); a reset cannot tell which one the configuration means`,
       );
+    const spelling = matches[0]!;
+    stored.push(spelling);
+    if (index < configured.length - 1) {
+      // Entered only when it is a physical directory: a link or a file on the way is refused here,
+      // before anything below it is listed.
+      const ancestor = await statEntry(dataDir, stored.join('/'));
+      if (ancestor?.kind !== 'directory')
+        throw new ResetRefusedError(
+          `the database path passes through ${stored.join('/')}, which is not a physical directory; a reset never follows links`,
+        );
     }
-    stored.push(match);
-    parent = resolve(parent, match);
+    parent = resolve(parent, spelling);
   }
   return stored;
+}
+
+/**
+ * The reserved name (one of `names`) that the configured first segment denotes: by filesystem
+ * identity when both exist, by exact spelling, or, when nothing exists yet to compare, by the
+ * host's default case rule (over-refusing an absent name costs a rename; under-refusing would list
+ * one entry twice once the file exists).
+ */
+async function reservedNameOf(
+  dataDir: string,
+  segment: string,
+  names: ReadonlySet<string>,
+): Promise<string | undefined> {
+  const identity = await identityOf(resolve(dataDir, segment));
+  for (const name of names) {
+    if (name === segment) return name;
+    if (identity !== undefined && identity === (await identityOf(resolve(dataDir, name))))
+      return name;
+    if (identity === undefined && nameKey(name) === nameKey(segment)) return name;
+  }
+  return undefined;
 }
 const DATABASE_PARTS = [
   ['', 'database'],
@@ -195,8 +219,9 @@ export async function planReset({
   database,
   readStore,
 }: PlanResetOptions): Promise<ResetPlan> {
-  // Every later check compares names, so the path is first spelled as the directory lists it (an
-  // alias the listing does not show is refused there).
+  // The path is first spelled as the directory lists it, by filesystem identity, with every
+  // ancestor checked to be a physical directory before it is entered; the later checks compare
+  // those spellings and identities.
   const segments = await storedSpelling(dataDir, database);
   const stored = segments.join('/');
   // The database must be reached without links, or its files could live outside the directory.
@@ -207,17 +232,18 @@ export async function planReset({
         `the database path passes through ${ancestor.path}, which is not a physical directory; a reset never follows links`,
       );
   }
-  // The reset owns artifacts/, workspaces/ and the lock files by name. A database named like one of
-  // them, or inside one of them, would be listed twice or under both Removes and Keeps, so the
-  // configuration is refused before anything is listed.
+  // The reset owns artifacts/, workspaces/ and the lock files. A database that is one of them, or
+  // inside one of them, would be listed twice or under both Removes and Keeps, so the configuration
+  // is refused before anything is listed.
   const root = segments[0] ?? '';
-  if (RESERVED_ROOTS.has(nameKey(root)))
+  const reservedRoot = await reservedNameOf(dataDir, root, RESERVED_ROOTS);
+  if (reservedRoot !== undefined)
     throw new ResetRefusedError(
       segments.length > 1
-        ? `the database ${database} is inside ${nameKey(root)}/, which a reset removes; move it first`
-        : `the database ${database} has the name of the ${nameKey(root)} directory, which a reset removes; rename it first`,
+        ? `the database ${database} is inside ${reservedRoot}/, which a reset removes; move it first`
+        : `the database ${database} has the name of the ${reservedRoot} directory, which a reset removes; rename it first`,
     );
-  if (segments.length === 1 && LOCK_FILES.has(nameKey(stored)))
+  if (segments.length === 1 && (await reservedNameOf(dataDir, stored, LOCK_FILES)) !== undefined)
     throw new ResetRefusedError(
       `the database ${database} has the name of the reset's lock file; rename it first`,
     );
@@ -256,6 +282,7 @@ export async function planReset({
             : 'absent' in store
               ? 'no database to match run IDs against'
               : 'the store could not be read to match run IDs',
+          identity: (await statEntry(dataDir, path))?.identity,
         });
     }
   } else if (workspaces)
@@ -265,48 +292,83 @@ export async function planReset({
         workspaces.kind === 'link'
           ? 'a link; a reset never follows links'
           : `a ${NOUNS[workspaces.kind][0]}, not a directory`,
+      identity: workspaces.identity,
     });
-  const artifacts = await listEntry(dataDir, 'artifacts');
-  if (artifacts.length) targets.push({ path: 'artifacts', what: 'artifacts', entries: artifacts });
+  // Only the artifact directory is the artifact store; a file or link of that name is kept.
+  const artifacts = await statEntry(dataDir, 'artifacts');
+  if (artifacts?.kind === 'directory')
+    targets.push({
+      path: 'artifacts',
+      what: 'artifacts',
+      entries: await listEntry(dataDir, 'artifacts'),
+    });
+  else if (artifacts)
+    kept.push({
+      path: 'artifacts',
+      why:
+        artifacts.kind === 'link'
+          ? 'a link; a reset never follows links'
+          : `a ${NOUNS[artifacts.kind][0]}, not a directory`,
+      identity: artifacts.identity,
+    });
   targets.push(...databaseTargets);
-  const owned = new Set([...RESERVED_ROOTS, ...LOCK_FILES].map((name) => nameKey(name)));
-  if (segments.length > 1) owned.add(nameKey(root));
-  else for (const [suffix] of DATABASE_PARTS) owned.add(nameKey(stored + suffix));
-  for (const name of (await readdir(dataDir)).sort())
-    if (!owned.has(nameKey(name)))
-      kept.push({
-        path: name,
-        why:
-          nameKey(name) === 'master.key'
-            ? 'secret-store key; kept so the secrets in a backup of this store stay readable'
-            : 'not part of the store',
-      });
+  // Everything else at the top level is kept. Ownership is decided by identity, so the database's
+  // stored spelling and its sidecars, or an `Artifacts` directory on a case-insensitive volume, are
+  // never listed under Keeps while their entries are removed.
+  const owned = new Set<string>();
+  for (const name of [...RESERVED_ROOTS, ...LOCK_FILES]) {
+    owned.add(name);
+    const identity = await identityOf(resolve(dataDir, name));
+    if (identity !== undefined) owned.add(identity);
+  }
+  if (segments.length > 1) {
+    owned.add(root);
+    const identity = await identityOf(resolve(dataDir, root));
+    if (identity !== undefined) owned.add(identity);
+  } else
+    for (const target of databaseTargets)
+      for (const entry of target.entries) owned.add(entry.path).add(entry.identity);
+  for (const name of (await readdir(dataDir)).sort()) {
+    const identity = await identityOf(resolve(dataDir, name));
+    if (owned.has(name) || (identity !== undefined && owned.has(identity))) continue;
+    kept.push({
+      path: name,
+      why:
+        name === 'master.key' || nameKey(name) === 'master.key'
+          ? 'secret-store key; kept so the secrets in a backup of this store stay readable'
+          : 'not part of the store',
+      identity,
+    });
+  }
   kept.sort((a, b) => (a.path < b.path ? -1 : 1));
   assertDisjointManifest(targets, kept);
   return { dataDir, database: stored, store, targets, kept };
 }
 
 /**
- * A manifest names every path once and never both removes and keeps one; a reset that could
+ * A manifest names every entry once and never both removes and keeps one; a reset that could
  * remove an entry twice would stop part of the way, and one that keeps what it removes would lie.
- * Paths are compared under the host's case rule. The refusals above make this unreachable for any
- * configuration; it stays as the final guard.
+ * Entries are compared by filesystem identity when both sides carry one, else by path. The
+ * refusals above make this unreachable for any configuration; it stays as the final guard.
  */
 export function assertDisjointManifest(
   targets: readonly ResetTarget[],
   kept: readonly KeptEntry[],
-  caseInsensitive = CASE_INSENSITIVE_NAMES,
 ): void {
-  const removed = new Set<string>();
+  const removedPaths = new Set<string>();
+  const removedIdentities = new Set<string>();
   for (const target of targets)
     for (const entry of target.entries) {
-      const key = nameKey(entry.path, caseInsensitive);
-      if (removed.has(key))
+      if (removedPaths.has(entry.path) || removedIdentities.has(entry.identity))
         throw new ResetRefusedError(`the manifest would list ${entry.path} twice`);
-      removed.add(key);
+      removedPaths.add(entry.path);
+      removedIdentities.add(entry.identity);
     }
   for (const entry of kept)
-    if (removed.has(nameKey(entry.path, caseInsensitive)))
+    if (
+      removedPaths.has(entry.path) ||
+      (entry.identity !== undefined && removedIdentities.has(entry.identity))
+    )
       throw new ResetRefusedError(`the manifest would both remove and keep ${entry.path}`);
 }
 

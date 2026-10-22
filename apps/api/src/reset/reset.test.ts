@@ -644,10 +644,11 @@ describe('refused resets change nothing', () => {
 
   // The Sol re-review (round 2) reproduced NTFS short names passing the name checks: `ARTIFA~1`
   // named the `artifacts` database and `GRAPHG~1.DB` the stored `graphgoblin.db`, so the manifest
-  // listed one file twice or kept what it removed. A spelling the directory listing does not show
-  // is refused before anything is listed or read.
+  // listed one file twice or kept what it removed. A short name now resolves, by filesystem
+  // identity, to the entry the directory lists, so the reserved-name refusal and the manifest see
+  // the real name.
   it.runIf(process.platform === 'win32')(
-    'refuses a database named by a Windows short-name alias of a listed entry, reading nothing',
+    'resolves a Windows short-name alias to the listed entry it identifies',
     async ({ skip }) => {
       const base = await mkdtemp(join(tmpdir(), 'gg-reset-'));
       bases.push(base);
@@ -657,25 +658,62 @@ describe('refused resets change nothing', () => {
       await writeFile(join(dataDir, 'graphgoblin-store.db'), 'a database with a long name');
       const reservedAlias = shortNameOf(dataDir, 'artifacts');
       const longAlias = shortNameOf(dataDir, 'graphgoblin-store.db');
-      // A volume with 8.3 name generation disabled has no aliases to refuse.
+      // A volume with 8.3 name generation disabled has no aliases to resolve.
       if (reservedAlias === undefined || longAlias === undefined) skip();
-      for (const alias of [reservedAlias!, longAlias!, `${reservedAlias!}/store.db`]) {
+      const url = (name: string) => `file:${join(dataDir, name).replaceAll('\\', '/')}`;
+      const unread = { readStore: () => Promise.reject(new Error('the store must not be read')) };
+      for (const [alias, refusal] of [
+        [reservedAlias!, 'has the name of the artifacts directory, which a reset removes'],
+        [
+          `${reservedAlias!}/store.db`,
+          'passes through artifacts, which is not a physical directory',
+        ],
+      ] as const) {
         const before = await snapshotTree(base);
         const result = await reset(
           ['--reset', '--yes', '--data-dir', dataDir],
-          {
-            GG_DATA_DIR: dataDir,
-            GG_DB_URL: `file:${join(dataDir, alias).replaceAll('\\', '/')}`,
-          },
-          { readStore: () => Promise.reject(new Error('the store must not be read')) },
+          { GG_DATA_DIR: dataDir, GG_DB_URL: url(alias) },
+          unread,
         );
         expect(result.code).toBe(1);
-        expect(result.err).toContain('by a spelling the data directory does not list');
+        expect(result.err).toContain(refusal);
         expect(result.err).toMatch(/Nothing was changed\.\n$/);
         expect(await snapshotTree(base)).toEqual(before);
       }
+      // The short name of an ordinary database resolves to its listed spelling: planned once, under
+      // that spelling, and never also kept.
+      const dry = await reset(['--reset'], { GG_DATA_DIR: dataDir, GG_DB_URL: url(longAlias!) });
+      expect(dry.code).toBe(0);
+      expect(dry.out).toMatch(/\n {2}graphgoblin-store\.db +database +1 file/);
+      expect(dry.out).not.toMatch(/graphgoblin-store\.db +not part of the store/);
+      // A regular file named `artifacts` is not the artifact store: kept, never removed.
+      expect(dry.out).toMatch(row('artifacts', 'a file, not a directory'));
     },
   );
+
+  // Two distinct files whose names fold alike (ASCII K and the Kelvin sign) must never be
+  // confused: identity, not case folding, decides which entry a spelling names (the Sol
+  // re-review's round-3 reproduction deleted the other file).
+  it('plans exactly the configured file when another entry has a look-alike name', async () => {
+    const base = await mkdtemp(join(tmpdir(), 'gg-reset-'));
+    bases.push(base);
+    const dataDir = join(base, 'data');
+    await mkdir(dataDir);
+    const kelvin = 'K.db';
+    await writeFile(join(dataDir, 'K.db'), 'the configured store');
+    await writeFile(join(dataDir, kelvin), 'another file entirely');
+    const url = `file:${join(dataDir, 'K.db').replaceAll('\\', '/')}`;
+    const dry = await reset(['--reset'], { GG_DATA_DIR: dataDir, GG_DB_URL: url });
+    expect(dry.code).toBe(0);
+    expect(dry.out).toMatch(/\n {2}K\.db +database +1 file/);
+    expect(dry.out).toMatch(row(kelvin, 'not part of the store'));
+    const confirmed = await reset(['--reset', '--yes', '--data-dir', dataDir], {
+      GG_DATA_DIR: dataDir,
+      GG_DB_URL: url,
+    });
+    expect(confirmed.code).toBe(0);
+    expect((await readdir(dataDir)).sort()).toEqual([kelvin]);
+  });
 
   // Windows resolves `graphgoblin.db.` and `graphgoblin.db ` to `graphgoblin.db`, a spelling the
   // listing never shows (the Sol re-review's round-3 probe).
@@ -918,7 +956,7 @@ describe('data directory layouts', () => {
             {
               path: '../outside-repo',
               what: 'artifacts',
-              entries: [{ path: '../outside-repo', kind: 'directory', bytes: 0 }],
+              entries: [{ path: '../outside-repo', kind: 'directory', bytes: 0, identity: '0:0' }],
             },
           ],
           kept: [],
@@ -944,8 +982,8 @@ describe('entry kinds and manifest invariants', () => {
     expect(kindOf(stats({}))).toBe('other');
   });
 
-  it('refuses a manifest that lists a path twice or both removes and keeps it', () => {
-    const entry = { path: 'artifacts', kind: 'file' as const, bytes: 1 };
+  it('refuses a manifest that lists an entry twice or both removes and keeps it', () => {
+    const entry = { path: 'artifacts', kind: 'file' as const, bytes: 1, identity: '1:7' };
     expect(() =>
       assertDisjointManifest(
         [
@@ -964,16 +1002,37 @@ describe('entry kinds and manifest invariants', () => {
     expect(() =>
       assertDisjointManifest([{ path: 'artifacts', what: 'artifacts', entries: [entry] }], []),
     ).not.toThrow();
-    // Under a case-insensitive rule, `Artifacts` and `artifacts` are one entry.
+    // Two spellings of one entry share an identity; two entries with look-alike names do not.
     const mixed = [
       { path: 'Artifacts', what: 'database', entries: [{ ...entry, path: 'Artifacts' }] },
     ];
     expect(() =>
-      assertDisjointManifest(mixed, [{ path: 'artifacts', why: 'not part of the store' }], true),
+      assertDisjointManifest(mixed, [
+        { path: 'artifacts', why: 'not part of the store', identity: '1:7' },
+      ]),
     ).toThrow('the manifest would both remove and keep artifacts');
     expect(() =>
-      assertDisjointManifest(mixed, [{ path: 'artifacts', why: 'not part of the store' }], false),
+      assertDisjointManifest(mixed, [
+        { path: 'artifacts', why: 'not part of the store', identity: '1:8' },
+      ]),
     ).not.toThrow();
+    expect(() =>
+      assertDisjointManifest(
+        [
+          {
+            path: 'a.db',
+            what: 'database',
+            entries: [{ ...entry, path: 'a.db', identity: '1:9' }],
+          },
+          {
+            path: 'A.db',
+            what: 'database',
+            entries: [{ ...entry, path: 'A.db', identity: '1:9' }],
+          },
+        ],
+        [],
+      ),
+    ).toThrow('the manifest would list A.db twice');
   });
 });
 
