@@ -34,6 +34,7 @@ describe('ordinary script resume', () => {
       stdoutOverflow: false,
       stderrBytes: 12,
       stderrOverflow: false,
+      state: 'completed' as const,
       timedOut: false,
     }));
     const pinned = engine.publish(scriptLoop());
@@ -52,6 +53,7 @@ describe('ordinary script resume', () => {
       stdoutOverflow: false,
       stderrBytes: 0,
       stderrOverflow: false,
+      state: 'completed' as const,
       timedOut: false,
     }));
 
@@ -110,6 +112,7 @@ describe('script patch boundaries', () => {
         exitCode: 0,
         stdout: JSON.stringify(patch),
         stderr: '',
+        state: 'completed' as const,
         timedOut: false,
         stdoutBytes: 0,
         stderrBytes: 0,
@@ -158,6 +161,7 @@ describe('authored handler mutations', () => {
           exitCode: 0,
           stdout: JSON.stringify([{ op: 'add', path: '/vars/marker', value: 1 }, operation]),
           stderr: '',
+          state: 'completed' as const,
           timedOut: false,
           stdoutBytes: 0,
           stderrBytes: 0,
@@ -192,6 +196,7 @@ describe('authored handler mutations', () => {
         { op: 'move', from: '/vars/copied', path: '/vars/moved' },
       ]),
       stderr: '',
+      state: 'completed' as const,
       timedOut: false,
       stdoutBytes: 0,
       stderrBytes: 0,

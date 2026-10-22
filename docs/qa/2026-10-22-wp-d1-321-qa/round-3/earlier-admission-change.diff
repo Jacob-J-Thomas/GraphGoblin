@@ -1,0 +1,44 @@
+diff --git a/packages/engine/src/admission.ts b/packages/engine/src/admission.ts
+index 600f883f..ccc0c3ad 100644
+--- a/packages/engine/src/admission.ts
++++ b/packages/engine/src/admission.ts
+@@ -161,10 +161,13 @@ export function parseRunAdmission(value: unknown): RunAdmission {
+   )
+     throw new AdmissionConflictError();
+   const snapshot = raw.snapshot === undefined ? undefined : parseSnapshot(raw.snapshot, run.data);
+-  // A parent link belongs to a child: it needs the parent run and a node id.
++  // A parent link belongs to a child, and every child carries one: the link is what keeps a child
++  // from existing without its parent's record of it (#320), so a run that names a parent without
++  // naming the parent's subloop node is refused, as is a node without a parent.
+   const parentNodeId =
+     raw.parentNodeId === undefined ? undefined : SlugSchema.safeParse(raw.parentNodeId);
+-  if (parentNodeId && (!parentNodeId.success || run.data.parentRunId === undefined))
++  const parented = run.data.parentRunId !== undefined && run.data.parentRunId !== null;
++  if (parentNodeId ? !parentNodeId.success || !parented : parented)
+     throw new AdmissionConflictError();
+   const { runId: _id, seq: _seq, ts: _ts, ...queued } = event.data;
+   return {
+diff --git a/packages/engine/src/testing/admission-contract.ts b/packages/engine/src/testing/admission-contract.ts
+index 62a3022d..fc05858c 100644
+--- a/packages/engine/src/testing/admission-contract.ts
++++ b/packages/engine/src/testing/admission-contract.ts
+@@ -537,13 +537,16 @@ const scenarios: Scenario[] = [
+       delete unparented.initialThread.run.parentRunId;
+       await rejects(() => f.admission.create(unparented));
+       equal(await f.run(orphan.run.id), undefined);
+-      // A child admitted without its link cannot later claim one it never committed.
++      // Every child names its parent's node: a parented admission without one is refused, so no
++      // child can exist without its parent's record of it (the independent QA's finding).
+       const unlinked = structuredClone(orphan);
+       unlinked.run.parentRunId = parent.run.id;
+       unlinked.initialThread.run.parentRunId = parent.run.id;
+       delete unlinked.parentNodeId;
+-      await f.admission.create(unlinked);
+-      await rejects(() => f.admission.create({ ...unlinked, parentNodeId: 'sub' }));
++      await rejects(() => f.admission.create(unlinked));
++      equal(await f.run(unlinked.run.id), undefined);
++      // The same child admitted again must name the node whose link it committed with.
++      await rejects(() => f.admission.create({ ...child, parentNodeId: 'other' }));
+       equal((await f.events(parent.run.id)).length, parentLog.length + 1);
+     },
+   },

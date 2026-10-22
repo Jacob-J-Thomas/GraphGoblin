@@ -1,0 +1,196 @@
+{
+  "head": "a44744f11d5c37000fe8354754fb3d8a82e3a4fa",
+  "commands": [
+    {
+      "name": "build",
+      "command": "pnpm.cmd build",
+      "exitCode": 0,
+      "seconds": 9.04,
+      "expected": "Exit 0; all selected cases pass; no EADDRINUSE.",
+      "tests": {
+        "passed": null,
+        "failed": null,
+        "skipped": null
+      },
+      "summary": null,
+      "eaddrinuseMentions": 0,
+      "failures": [],
+      "cleanupHookTimeout": false,
+      "evidence": "build.log.txt"
+    },
+    {
+      "name": "pair-1",
+      "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/script-restart.test.ts src/child-creation-restart.test.ts --config=../../docs/qa/2026-10-22-wp-d1-321-qa/round-3/qa.config.mts",
+      "exitCode": 1,
+      "seconds": 147.99,
+      "expected": "Exit 0; all selected cases pass; no EADDRINUSE.",
+      "tests": {
+        "passed": 5,
+        "failed": 1,
+        "skipped": 0
+      },
+      "summary": "Tests  1 failed | 5 passed (6)",
+      "eaddrinuseMentions": 0,
+      "failures": [
+        " FAIL  src/child-creation-restart.test.ts > child admission across a real API kill (#320) > kill 0ms after admission never exposes an unlinked child and recovers one child per nested parent visit",
+        "Error: Hook timed out in 60000ms.",
+        "Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL"
+      ],
+      "cleanupHookTimeout": true,
+      "evidence": "pair-1.log.txt"
+    },
+    {
+      "name": "pair-2",
+      "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/script-restart.test.ts src/child-creation-restart.test.ts --config=../../docs/qa/2026-10-22-wp-d1-321-qa/round-3/qa.config.mts",
+      "exitCode": 0,
+      "seconds": 150.47,
+      "expected": "Exit 0; all selected cases pass; no EADDRINUSE.",
+      "tests": {
+        "passed": 6,
+        "failed": 0,
+        "skipped": 0
+      },
+      "summary": "Tests  6 passed (6)",
+      "eaddrinuseMentions": 0,
+      "failures": [],
+      "cleanupHookTimeout": false,
+      "evidence": "pair-2.log.txt"
+    },
+    {
+      "name": "pair-3",
+      "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/script-restart.test.ts src/child-creation-restart.test.ts --config=../../docs/qa/2026-10-22-wp-d1-321-qa/round-3/qa.config.mts",
+      "exitCode": 0,
+      "seconds": 110.28,
+      "expected": "Exit 0; all selected cases pass; no EADDRINUSE.",
+      "tests": {
+        "passed": 6,
+        "failed": 0,
+        "skipped": 0
+      },
+      "summary": "Tests  6 passed (6)",
+      "eaddrinuseMentions": 0,
+      "failures": [],
+      "cleanupHookTimeout": false,
+      "evidence": "pair-3.log.txt"
+    },
+    {
+      "name": "with-subloop",
+      "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/script-restart.test.ts src/child-creation-restart.test.ts --config=../../docs/qa/2026-10-22-wp-d1-321-qa/round-3/qa.config.mts src/subloop-restart.test.ts",
+      "exitCode": 1,
+      "seconds": 123.02,
+      "expected": "Exit 0; all selected cases pass; no EADDRINUSE.",
+      "tests": {
+        "passed": 8,
+        "failed": 1,
+        "skipped": 0
+      },
+      "summary": "Tests  1 failed | 8 passed (9)",
+      "eaddrinuseMentions": 0,
+      "failures": [
+        " FAIL  src/child-creation-restart.test.ts > child admission across a real API kill (#320) > kill 0ms after admission never exposes an unlinked child and recovers one child per nested parent visit",
+        "Error: Hook timed out in 60000ms.",
+        "Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL"
+      ],
+      "cleanupHookTimeout": true,
+      "evidence": "with-subloop.log.txt"
+    },
+    {
+      "name": "coverage-requested",
+      "command": "pnpm.cmd --filter @graphgoblin/api test:coverage -- --maxWorkers=2 --config=../../docs/qa/2026-10-22-wp-d1-321-qa/round-3/qa.config.mts",
+      "exitCode": 1,
+      "seconds": 149.09,
+      "tempRoot": "gg-qa-321-r3-coverage-0117298b94f44b43bed856c014483031",
+      "expected": "Exit 0; all selected cases pass; no EADDRINUSE.",
+      "tests": {
+        "passed": 705,
+        "failed": 1,
+        "skipped": 6
+      },
+      "summary": "Tests  1 failed | 705 passed | 6 skipped (712)",
+      "eaddrinuseMentions": 0,
+      "failures": [
+        " FAIL  src/child-creation-restart.test.ts > child admission across a real API kill (#320) > kill 0ms after admission never exposes an unlinked child and recovers one child per nested parent visit",
+        "Error: Hook timed out in 60000ms.",
+        "Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL"
+      ],
+      "cleanupHookTimeout": true,
+      "evidence": "coverage-requested.log.txt"
+    },
+    {
+      "name": "triage-child-zero",
+      "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/child-creation-restart.test.ts -t 'kill 0ms' --config=../../docs/qa/2026-10-22-wp-d1-321-qa/round-3/qa.config.mts --maxWorkers=1",
+      "exitCode": 1,
+      "seconds": 73.39,
+      "tempRoot": null,
+      "expected": "Exit 0; all selected cases pass; no EADDRINUSE.",
+      "tests": {
+        "passed": 0,
+        "failed": 1,
+        "skipped": 2
+      },
+      "summary": "Tests  1 failed | 2 skipped (3)",
+      "eaddrinuseMentions": 0,
+      "failures": [
+        " FAIL  src/child-creation-restart.test.ts > child admission across a real API kill (#320) > kill 0ms after admission never exposes an unlinked child and recovers one child per nested parent visit",
+        "Error: Hook timed out in 60000ms.",
+        "Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL"
+      ],
+      "cleanupHookTimeout": true,
+      "evidence": "triage-child-zero.log.txt"
+    },
+    {
+      "name": "coverage-two-workers",
+      "command": "pnpm.cmd --filter @graphgoblin/api test:coverage --maxWorkers=2 --config=../../docs/qa/2026-10-22-wp-d1-321-qa/round-3/qa.config.mts --coverage.reportOnFailure",
+      "exitCode": 0,
+      "seconds": 230.65,
+      "tempRoot": "gg-qa-321-r3-coverage-fb8d0f921f2743168b9b0426842b5ae9",
+      "expected": "Exit 0; all selected cases pass; no EADDRINUSE.",
+      "tests": {
+        "passed": 706,
+        "failed": 0,
+        "skipped": 6
+      },
+      "summary": "Tests  706 passed | 6 skipped (712)",
+      "eaddrinuseMentions": 0,
+      "failures": [],
+      "cleanupHookTimeout": false,
+      "evidence": "coverage-two-workers.log.txt"
+    }
+  ],
+  "coverage": {
+    "fresh": true,
+    "command": "coverage-two-workers.log.txt",
+    "total": {
+      "lines": {
+        "total": 1801,
+        "covered": 1762,
+        "skipped": 0,
+        "pct": 97.83
+      },
+      "statements": {
+        "total": 2010,
+        "covered": 1938,
+        "skipped": 0,
+        "pct": 96.41
+      },
+      "functions": {
+        "total": 404,
+        "covered": 380,
+        "skipped": 0,
+        "pct": 94.05
+      },
+      "branches": {
+        "total": 1354,
+        "covered": 1258,
+        "skipped": 0,
+        "pct": 92.9
+      },
+      "branchesTrue": {
+        "total": 0,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 100
+      }
+    }
+  }
+}

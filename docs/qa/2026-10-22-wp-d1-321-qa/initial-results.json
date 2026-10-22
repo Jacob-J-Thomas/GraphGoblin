@@ -1,0 +1,241 @@
+[
+  {
+    "name": "before dispatch: real kill then ordinary recovery",
+    "steps": "Park at input before script; kill API; restart same store; submit observed waitId.",
+    "expected": "No dispatch before input; succeeds with exactly one marker effect.",
+    "status": "PASS",
+    "actual": {
+      "id": "01M5GZCARR3TY4N8JDDY12M04M",
+      "status": "succeeded",
+      "effects": 1
+    }
+  },
+  {
+    "name": "after effect and repeat kill during deliberate Resume",
+    "steps": "Observe marker while alive; hard kill; restart twice without consent; Resume; observe second marker; hard kill again; restart; explicitly Resume.",
+    "expected": "No automatic second effect; same visitId, fresh dispatchId per Resume; second interruption names second dispatch; final count 3.",
+    "status": "PASS",
+    "actual": {
+      "firstFailure": {
+        "code": "SCRIPT_OUTCOME_UNCERTAIN",
+        "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+        "nodeId": "script",
+        "resumable": true,
+        "script": {
+          "visitId": "01M5GZCFGW41AJQGSKA81QD188:5",
+          "dispatchId": "01M5GZCFK26EX9ZHQ91YCX02QY",
+          "state": "outcome-uncertain"
+        }
+      },
+      "secondFailure": {
+        "code": "SCRIPT_OUTCOME_UNCERTAIN",
+        "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+        "nodeId": "script",
+        "resumable": true,
+        "script": {
+          "visitId": "01M5GZCFGW41AJQGSKA81QD188:5",
+          "dispatchId": "01M5GZCTPP8MN333Q68XEEW60M",
+          "state": "outcome-uncertain"
+        }
+      },
+      "final": {
+        "id": "01M5GZCFGW41AJQGSKA81QD188",
+        "status": "succeeded"
+      },
+      "effects": 3,
+      "dispatches": [
+        {
+          "runId": "01M5GZCFGW41AJQGSKA81QD188",
+          "seq": 6,
+          "ts": "2026-10-22T04:54:50.211Z",
+          "type": "script.dispatched",
+          "nodeId": "script",
+          "visitId": "01M5GZCFGW41AJQGSKA81QD188:5",
+          "dispatchId": "01M5GZCFK26EX9ZHQ91YCX02QY"
+        },
+        {
+          "runId": "01M5GZCFGW41AJQGSKA81QD188",
+          "seq": 12,
+          "ts": "2026-10-22T04:55:01.591Z",
+          "type": "script.dispatched",
+          "nodeId": "script",
+          "visitId": "01M5GZCFGW41AJQGSKA81QD188:5",
+          "dispatchId": "01M5GZCTPP8MN333Q68XEEW60M"
+        },
+        {
+          "runId": "01M5GZCFGW41AJQGSKA81QD188",
+          "seq": 18,
+          "ts": "2026-10-22T04:55:07.936Z",
+          "type": "script.dispatched",
+          "nodeId": "script",
+          "visitId": "01M5GZCFGW41AJQGSKA81QD188:5",
+          "dispatchId": "01M5GZD0X0VKSDB8AFHZZ1EZC7"
+        }
+      ]
+    }
+  },
+  {
+    "name": "recorded completion survives real kill",
+    "steps": "Complete marker; park at subsequent input; hard kill and restart; submit input.",
+    "expected": "Recorded script completion is retained; exactly one effect and one dispatch.",
+    "status": "PASS",
+    "actual": {
+      "effects": 1,
+      "dispatches": 1,
+      "landing": "post-completion wait (cursor already advanced)"
+    }
+  },
+  {
+    "name": "native API script missing",
+    "steps": "Start real missing script through published loop; inspect run; repair external executable for missing command.",
+    "expected": "SCRIPT_START_FAILED definitely-not-started, resumable; repaired command succeeds",
+    "status": "PASS",
+    "actual": {
+      "id": "01M5GZD5KRYD9Z4178Z67RRWS4",
+      "status": "failed",
+      "failure": {
+        "code": "SCRIPT_START_FAILED",
+        "message": "The script process could not start. Resume tries to start it again.",
+        "nodeId": "script",
+        "resumable": true,
+        "script": {
+          "visitId": "01M5GZD5KRYD9Z4178Z67RRWS4:5",
+          "dispatchId": "01M5GZD5NGNZG7AT6ZZQ9X97K5",
+          "state": "definitely-not-started"
+        }
+      },
+      "repairResumed": true
+    }
+  },
+  {
+    "name": "native API script cmd",
+    "steps": "Start real cmd script through published loop; inspect run; repair external executable for missing command.",
+    "expected": "SCRIPT_START_FAILED definitely-not-started, resumable",
+    "status": "PASS",
+    "actual": {
+      "id": "01M5GZD65RBM73X1QZ7ASTJTVR",
+      "status": "failed",
+      "failure": {
+        "code": "SCRIPT_START_FAILED",
+        "message": "The script process could not start. Resume tries to start it again.",
+        "nodeId": "script",
+        "resumable": true,
+        "script": {
+          "visitId": "01M5GZD65RBM73X1QZ7ASTJTVR:5",
+          "dispatchId": "01M5GZD66Y8QXPX6JXAVHWXBZZ",
+          "state": "definitely-not-started"
+        }
+      },
+      "repairResumed": false
+    }
+  },
+  {
+    "name": "native API script nonzero",
+    "steps": "Start real nonzero script through published loop; inspect run; repair external executable for missing command.",
+    "expected": "SCRIPT_EXIT_CODE completed, exitCode 7",
+    "status": "PASS",
+    "actual": {
+      "id": "01M5GZD68J5RA8QS80EW8V02F8",
+      "status": "failed",
+      "failure": {
+        "code": "SCRIPT_EXIT_CODE",
+        "message": "script exited with code 7",
+        "nodeId": "script",
+        "resumable": true,
+        "details": {
+          "exitCode": 7,
+          "stderr": "",
+          "stdout": ""
+        },
+        "script": {
+          "visitId": "01M5GZD68J5RA8QS80EW8V02F8:5",
+          "dispatchId": "01M5GZD69XMHRFAMWM35XM2NYT",
+          "state": "completed",
+          "exitCode": 7
+        }
+      },
+      "repairResumed": false
+    }
+  },
+  {
+    "name": "native API script timeout",
+    "steps": "Start real timeout script through published loop; inspect run; repair external executable for missing command.",
+    "expected": "SCRIPT_TIMEOUT",
+    "status": "FAIL",
+    "actual": "Error: QA condition deadline exceeded\n    at until (file:///<worktree>/docs/qa/2026-10-22-wp-d1-321-qa/independent.mjs:30:9)\n    at async file:///<worktree>/docs/qa/2026-10-22-wp-d1-321-qa/independent.mjs:148:22\n    at async record (file:///<worktree>/docs/qa/2026-10-22-wp-d1-321-qa/independent.mjs:19:20)\n    at async file:///<worktree>/docs/qa/2026-10-22-wp-d1-321-qa/independent.mjs:140:5"
+  },
+  {
+    "name": "native API script cancel",
+    "steps": "Start real cancel script through published loop; inspect run; repair external executable for missing command.",
+    "expected": "cancelled without failure",
+    "status": "FAIL",
+    "actual": "Error: QA condition deadline exceeded\n    at until (file:///<worktree>/docs/qa/2026-10-22-wp-d1-321-qa/independent.mjs:30:9)\n    at async file:///<worktree>/docs/qa/2026-10-22-wp-d1-321-qa/independent.mjs:147:209\n    at async record (file:///<worktree>/docs/qa/2026-10-22-wp-d1-321-qa/independent.mjs:19:20)\n    at async file:///<worktree>/docs/qa/2026-10-22-wp-d1-321-qa/independent.mjs:140:5"
+  },
+  {
+    "name": "Edge consent, Cancel, live Resume, retained timeline",
+    "steps": "Hard kill marker; open failed inspector in Edge; Recover script then Cancel; reopen then Resume with effect held; release after visible running.",
+    "expected": "Cancel leaves failed/count 1; Resume reaches count 2 and successful inspector without reload; earlier dispatch and failure remain readable.",
+    "status": "FAIL",
+    "actual": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n1 !== 0\n\n    at file:///<worktree>/docs/qa/2026-10-22-wp-d1-321-qa/independent.mjs:187:12\n    at async record (file:///<worktree>/docs/qa/2026-10-22-wp-d1-321-qa/independent.mjs:19:20)\n    at async file:///<worktree>/docs/qa/2026-10-22-wp-d1-321-qa/independent.mjs:171:3"
+  },
+  {
+    "name": "Edge Replay forks and navigates",
+    "steps": "Create another uncertain run; Recover script then Replay.",
+    "expected": "New run ID; navigation to fork; source remains failed; second effect.",
+    "status": "PASS",
+    "actual": {
+      "sourceId": "01M5GZH15VEZCSW61JYNW6G30R",
+      "forkId": "01M5GZH568W4P9P1V63S8DRX6B",
+      "sourceStatus": "failed",
+      "forkStatus": "succeeded",
+      "effects": 2
+    }
+  },
+  {
+    "name": "Edge non-script failure hides recovery",
+    "steps": "Start mutate with invalid expression; open inspector.",
+    "expected": "Failed run has no Recover script button.",
+    "status": "FAIL",
+    "actual": "Error: POST /loops: 400 {\"type\":\"https://graphgoblin.dev/problems/validation-failed\",\"title\":\"validation failed\",\"status\":400,\"code\":\"VALIDATION_FAILED\",\"detail\":\"the request did not match the schema\",\"errors\":[{\"path\":\"/definition/nodes/1/config/operations/0/value/jsonata\",\"message\":\"Invalid input: expected string, received undefined\"},{\"path\":\"/definition/nodes/1/config/operations/0/value/expression\",\"message\":\"Unrecognized key \\\"expression\\\"\"}]}\n    at Object.call (file:///<worktree>/docs/qa/2026-10-22-wp-d1-321-qa/independent.mjs:55:26)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async Object.loop (file:///<worktree>/docs/qa/2026-10-22-wp-d1-321-qa/independent.mjs:64:24)\n    at async file:///<worktree>/docs/qa/2026-10-22-wp-d1-321-qa/independent.mjs:198:31\n    at async record (file:///<worktree>/docs/qa/2026-10-22-wp-d1-321-qa/independent.mjs:19:20)\n    at async file:///<worktree>/docs/qa/2026-10-22-wp-d1-321-qa/independent.mjs:197:3"
+  },
+  {
+    "name": "uncertain child propagates and parent inspector recovers same child",
+    "steps": "Hard kill API during child marker; restart; inspect parent; Recover script Resume parent.",
+    "expected": "Same child ID, child code and resumability; visible recovery; one knowingly repeated child effect.",
+    "status": "PASS",
+    "actual": {
+      "parentFailure": {
+        "code": "SCRIPT_OUTCOME_UNCERTAIN",
+        "message": "subloop child 01M5GZH5KPCNDBQDDQ3HV64XCV failed: The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+        "nodeId": "sub",
+        "resumable": true,
+        "details": {
+          "childRunId": "01M5GZH5KPCNDBQDDQ3HV64XCV",
+          "childNodeId": "script"
+        }
+      },
+      "childFailure": {
+        "code": "SCRIPT_OUTCOME_UNCERTAIN",
+        "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+        "nodeId": "script",
+        "resumable": true,
+        "script": {
+          "visitId": "01M5GZH5KPCNDBQDDQ3HV64XCV:5",
+          "dispatchId": "01M5GZH5N3BNGTN35RBWS9NZ9W",
+          "state": "outcome-uncertain"
+        }
+      },
+      "childId": "01M5GZH5KPCNDBQDDQ3HV64XCV",
+      "childStartCount": 1,
+      "status": "succeeded",
+      "effects": 2
+    }
+  },
+  {
+    "name": "MCP summary and explicit Resume tool contract",
+    "steps": "Call exported summary with actual API script failure and ordinary failure; list tools through in-memory MCP client/server.",
+    "expected": "Script summary carries script/resumable; ordinary summary omits them; resume_run describes explicit choice.",
+    "status": "FAIL",
+    "actual": "Error [ERR_PACKAGE_PATH_NOT_EXPORTED]: No \"exports\" main defined in <worktree>\\apps\\mcp\\package.json imported from <worktree>\\apps\\mcp\\package.json\n    at exportsNotFound (node:internal/modules/esm/resolve:314:10)\n    at packageExportsResolve (node:internal/modules/esm/resolve:604:13)\n    at trySelf (node:internal/modules/cjs/loader:606:34)\n    at Function._resolveFilename (node:internal/modules/cjs/loader:1202:24)\n    at Function._load (node:internal/modules/cjs/loader:1055:27)\n    at TracingChannel.traceSync (node:diagnostics_channel:322:14)\n    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)\n    at Module.require (node:internal/modules/cjs/loader:1311:12)\n    at require (node:internal/modules/helpers:136:16)\n    at file:///<worktree>/docs/qa/2026-10-22-wp-d1-321-qa/independent.mjs:211:47"
+  }
+]

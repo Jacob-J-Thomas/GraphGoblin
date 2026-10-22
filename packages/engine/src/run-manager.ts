@@ -60,6 +60,7 @@ import type {
   WakeInfo,
 } from './handler.js';
 import { defaultHandlers } from './handlers/index.js';
+import { classifyScriptFailure } from './handlers/script-dispatch.js';
 import type { EngineSettings, EnginePorts, EventDraft, RunRecordChanges } from './ports.js';
 import { createInitialThread, type InitialThreadInput } from './thread.js';
 import { bindClassifiers, freezeDraft, pinnedFields } from './definition-pin.js';
@@ -1895,7 +1896,6 @@ export class RunManager {
   }
 
   private async failRun(runId: string, authoredFailure: RunFailure): Promise<void> {
-    const failure = boundedFailure(authoredFailure);
     const run = await this.ports.runs.get(runId);
     if (!run || isTerminal(run.status)) return;
     // Event first, status second: a crash in between is completed from the log at recovery. A
@@ -1905,6 +1905,9 @@ export class RunManager {
       await this.completeFromLog(run, undefined, events);
       return;
     }
+    // A bookkeeping error is not a script outcome. Classify against durable evidence before
+    // recording either handler failures (progress writes) or outer failures (completion writes).
+    const failure = boundedFailure(classifyScriptFailure(events, runId, authoredFailure));
     await this.ports.events.append(runId, [{ type: 'run.failed', failure }]);
     const failed = await this.ports.runs.transition(runId, ACTIVE_STATUSES, {
       status: 'failed',

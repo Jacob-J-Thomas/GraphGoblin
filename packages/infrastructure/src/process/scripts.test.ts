@@ -1,5 +1,8 @@
 import { EventEmitter } from 'node:events';
 import { spawn, type ChildProcess } from 'node:child_process';
+import { access, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { ProcessScripts, killTree } from './scripts.js';
 
@@ -262,6 +265,7 @@ describe('ProcessScripts', () => {
       request({ args: ['-e', 'setTimeout(()=>{}, 20000)'], signal: aborted.signal }),
     );
     expect(immediate.exitCode === null || immediate.exitCode !== 0).toBe(true);
+    expect(immediate.state).toBe('definitely-not-started');
   }, 15_000);
 
   it('reports spawn failures as a null exit code with a message', async () => {
@@ -271,7 +275,44 @@ describe('ProcessScripts', () => {
     );
     expect(result.exitCode).toBeNull();
     expect(result.stderr).toMatch(/spawn failed/);
+    expect(result.state).toBe('definitely-not-started');
   });
+
+  it('classifies a synchronous EINVAL refusal without leaking its command', async () => {
+    const scripts = new ProcessScripts({
+      spawnImpl: new Proxy(spawn, {
+        apply() {
+          throw Object.assign(new Error('sensitive command'), { code: 'EINVAL' });
+        },
+      }),
+    });
+    const result = await scripts.run(request({ command: 'sensitive.cmd' }));
+    expect(result).toMatchObject({
+      state: 'definitely-not-started',
+      exitCode: null,
+      stderr: 'spawn failed: PROCESS_START_FAILED',
+    });
+    expect(result.stderr).not.toContain('sensitive');
+    expect((await scripts.run(request({ maxStderrBytes: 0 }))).stderr).toBe('');
+  });
+
+  it.skipIf(process.platform !== 'win32')(
+    'proves the native .cmd EINVAL refusal never executes its marker',
+    async () => {
+      const dir = await mkdtemp(join(tmpdir(), 'gg-wp-d1-spawn-'));
+      try {
+        const command = join(dir, 'refused.cmd');
+        const marker = join(dir, 'marker');
+        await writeFile(command, `@echo effect>"${marker}"\r\n`);
+        const result = await new ProcessScripts().run(request({ command, args: [], cwd: dir }));
+        expect(result).toMatchObject({ state: 'definitely-not-started', exitCode: null });
+        await expect(access(marker)).rejects.toMatchObject({ code: 'ENOENT' });
+      } finally {
+        await rm(dir, { recursive: true, force: true });
+      }
+      await expect(access(dir)).rejects.toMatchObject({ code: 'ENOENT' });
+    },
+  );
 
   it('caps captured output', async () => {
     const scripts = new ProcessScripts({ maxOutputBytes: 100 });

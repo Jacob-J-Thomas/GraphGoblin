@@ -363,7 +363,7 @@ export function registerTools(
     [
       'resume_run',
       'Resume a run',
-      'Resume a paused run from where it stopped: a run paused while waiting (for input, a signal, a timer, or a child run) goes back to waiting, anything else continues running. Then call wait_for_run to follow it.',
+      'Resume a paused run or a resumable failure. SCRIPT_START_FAILED means the script did not start; Resume tries again. SCRIPT_OUTCOME_UNCERTAIN means the previous script attempt may already have produced its effect; Resume runs it again and may repeat that effect. Resume uncertain scripts only when the user explicitly chooses to retry; offer replay_run or leave the failed run unchanged when they cancel recovery. A paused wait returns to waiting; other resumes continue running. Then call wait_for_run.',
       runs.resume,
       false,
     ],

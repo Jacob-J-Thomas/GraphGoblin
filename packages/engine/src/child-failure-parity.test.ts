@@ -19,6 +19,7 @@ const scriptResult = (exitCode: number, extra: Partial<ScriptRunResult> = {}): S
   stderrBytes: exitCode === 0 ? 0 : 4,
   stdoutOverflow: false,
   stderrOverflow: false,
+  state: 'completed' as const,
   timedOut: false,
   ...extra,
 });

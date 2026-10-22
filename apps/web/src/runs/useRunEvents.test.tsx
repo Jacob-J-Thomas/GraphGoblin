@@ -45,8 +45,9 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-function mountStream(client = createAppClient('http://graphgoblin.test')) {
-  return renderHook(() => useRunEvents(runId), {
+function mountStream(client = createAppClient('http://graphgoblin.test'), latestSeq?: number) {
+  return renderHook(({ seq }) => useRunEvents(runId, undefined, seq), {
+    initialProps: { seq: latestSeq },
     wrapper: ({ children }: { children: ReactNode }) => (
       <ApiProvider client={client}>
         <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
@@ -57,6 +58,96 @@ function mountStream(client = createAppClient('http://graphgoblin.test')) {
 function options(index = 0): SubscribeRunEventsOptions {
   return subscribe.mock.calls[index]![0];
 }
+
+describe('script recovery observation (#321)', () => {
+  const failed = event(runId, 1, 'run.failed', {
+    failure: { code: 'SCRIPT_OUTCOME_UNCERTAIN', message: 'uncertain', resumable: true },
+  });
+  const resumed = event(runId, 2, 'run.resumed', { actor: { kind: 'user', id: 'owner' } });
+  it.each([2, 3])(
+    'reads past a previous failure when the run snapshot advances to %i',
+    async (seq) => {
+      vi.useFakeTimers();
+      useRunEventStore.getState().append(runId, failed);
+      const view = mountStream(undefined, 1);
+      expect(view.result.current.status).toBe('finished');
+      expect(subscribe).not.toHaveBeenCalled();
+      view.rerender({ seq });
+      expect(subscribe).toHaveBeenCalledTimes(1);
+      expect(options().after).toBe(1);
+      await act(async () => {
+        await options().onEvent(resumed);
+        await options().onEvent(
+          event(runId, 3, 'run.finished', { status: 'succeeded', outcome: 'success' }),
+        );
+        await vi.advanceTimersByTimeAsync(EVENT_BATCH_MS);
+      });
+      expect(view.result.current.events.map((entry) => entry.seq)).toEqual([1, 2, 3]);
+      expect(view.result.current.status).toBe('finished');
+    },
+  );
+
+  it('observes a cached resumed run even though its history contains an earlier failure', () => {
+    useRunEventStore.getState().append(runId, failed, resumed);
+    mountStream(undefined, 2);
+    expect(subscribe).toHaveBeenCalledTimes(1);
+    expect(options().after).toBe(2);
+  });
+
+  it('does not reconnect a live subscription for ordinary snapshot sequence updates', () => {
+    const view = mountStream(undefined, 0);
+    view.rerender({ seq: 3 });
+    view.rerender({ seq: 8 });
+    expect(subscribe).toHaveBeenCalledTimes(1);
+  });
+
+  it('follows multiple recorded outcomes to the latest one while retaining their history', async () => {
+    vi.useFakeTimers();
+    useRunEventStore.getState().append(runId, failed);
+    const view = mountStream(undefined, 5);
+    expect(options().after).toBe(1);
+    await act(async () => {
+      await options().onEvent(resumed);
+      await options().onEvent(
+        event(runId, 3, 'run.failed', {
+          failure: {
+            code: 'SCRIPT_OUTCOME_UNCERTAIN',
+            message: 'uncertain again',
+            resumable: true,
+          },
+        }),
+      );
+      await vi.advanceTimersByTimeAsync(EVENT_BATCH_MS);
+    });
+    expect(subscribe).toHaveBeenCalledTimes(2);
+    expect(options(1).after).toBe(3);
+    await act(async () => {
+      await options(1).onEvent(
+        event(runId, 4, 'run.resumed', { actor: { kind: 'user', id: 'owner' } }),
+      );
+      await options(1).onEvent(
+        event(runId, 5, 'run.finished', { status: 'succeeded', outcome: 'success' }),
+      );
+      await vi.advanceTimersByTimeAsync(EVENT_BATCH_MS);
+    });
+    expect(view.result.current.events.map((entry) => entry.seq)).toEqual([1, 2, 3, 4, 5]);
+    expect(view.result.current.status).toBe('finished');
+  });
+
+  it('finishes after reading newer return bookkeeping for the same failed outcome', async () => {
+    vi.useFakeTimers();
+    useRunEventStore.getState().append(runId, failed);
+    const view = mountStream(undefined, 2);
+    expect(options().after).toBe(1);
+    await act(async () => {
+      await options().onEvent(event(runId, 2, 'return.delivered', { channel: { kind: 'log' } }));
+      await vi.advanceTimersByTimeAsync(EVENT_BATCH_MS);
+    });
+    expect(view.result.current.events.map((entry) => entry.seq)).toEqual([1, 2]);
+    expect(view.result.current.status).toBe('finished');
+    expect(subscribe).toHaveBeenCalledTimes(1);
+  });
+});
 
 describe('run stream reachability', () => {
   it('leaves an accepted clean close on the stream backoff without reporting an outage', () => {

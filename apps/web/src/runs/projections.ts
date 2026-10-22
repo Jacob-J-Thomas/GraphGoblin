@@ -127,6 +127,8 @@ export function describeEvent(event: RunEvent): string {
       return `iteration ${event.from} → ${event.to} at ${event.targetNodeId}`;
     case 'node.started':
       return `${event.nodeId} (${event.kind}) attempt ${event.attempt}`;
+    case 'script.dispatched':
+      return `${event.nodeId}: script dispatch ${event.dispatchId} (visit ${event.visitId})`;
     case 'node.finished':
       return `${event.nodeId}${event.route ? ` → ${event.route}` : ''}, ${event.patch.length} change${event.patch.length === 1 ? '' : 's'}, ${event.durationMs} ms`;
     case 'node.progress':

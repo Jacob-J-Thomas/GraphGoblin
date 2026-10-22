@@ -1,0 +1,77 @@
+
+ RUN  v5.0.3 <local>/packages/engine
+
+ ❯ src/script-recovery.test.ts (8 tests | 4 failed | 4 skipped) 262ms
+   ❯ script dispatch recovery (#321) (8)
+     × records definitely-not-started provenance and keeps completed nonzero exits distinct 130ms
+     × records outcome-uncertain provenance and keeps completed nonzero exits distinct 12ms
+     × records completed provenance and keeps completed nonzero exits distinct 37ms
+     × writes dispatch durably before entering the runner, and classifies an unproven rejection conservatively 79ms
+pnpm.cmd : 
+At line:2 char:459
++ ... ($false))}; pnpm.cmd --filter @graphgoblin/engine exec vitest run src ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/script-recovery.test.ts > script dispatch recovery (#321) > records definitely-not-started provenance and 
+keeps completed nonzero exits distinct
+ FAIL  src/script-recovery.test.ts > script dispatch recovery (#321) > records outcome-uncertain provenance and keeps 
+completed nonzero exits distinct
+ FAIL  src/script-recovery.test.ts > script dispatch recovery (#321) > records completed provenance and keeps 
+completed nonzero exits distinct
+AssertionError: expected undefined to be defined
+ ❯ src/script-recovery.test.ts:91:24
+     89|       const run = await e.runToIdle(v.loopId);
+     90|       const dispatch = e.events(run.id).find((event) => event.type ===…
+     91|       expect(dispatch).toBeDefined();
+       |                        ^
+     92|       expect(run.failure).toMatchObject({
+     93|         code: state === 'completed' ? 'SCRIPT_EXIT_CODE' : state === '…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/script-recovery.test.ts > script dispatch recovery (#321) > writes dispatch durably before entering the 
+runner, and classifies an unproven rejection conservatively
+AssertionError: expected { code: 'INTERNAL_ERROR', …(4) } to match object { …(2) }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "SCRIPT_OUTCOME_UNCERTAIN",
+-   "script": {
+-     "state": "outcome-uncertain",
+-   },
++   "code": "INTERNAL_ERROR",
+  }
+
+ ❯ src/script-recovery.test.ts:113:57
+    111|     try {
+    112|       await manager.start(); await manager.waitForIdle();
+    113|       expect((await e.ports.runs.get(run.id))?.failure).toMatchObject(…
+       |                                                         ^
+    114|     } finally { manager.stop(); }
+    115|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 4 skipped (8)
+   Start at  20:41:00
+   Duration  8.65s (transform 67%, import 30%, tests 3%)
+
+  Transform  transforming modules took 5.48s · 67% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ \Users\<user>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d1-child-
+  │ recovery\packages\engine
+

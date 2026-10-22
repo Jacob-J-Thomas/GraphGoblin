@@ -10,6 +10,7 @@ import { prettyJson } from '../lib/utils.js';
 import { ProgressDrawer } from './inspector/ProgressDrawer.js';
 import { EvaluationDetails } from './inspector/EvaluationDetails.js';
 import { RunControls } from './inspector/RunControls.js';
+import { ScriptRecovery } from './inspector/ScriptRecovery.js';
 import { ThreadViewer } from './inspector/ThreadViewer.js';
 import { Timeline } from './inspector/Timeline.js';
 import { WaitPanel } from './inspector/WaitPanel.js';
@@ -69,13 +70,17 @@ export function RunInspectorPage() {
   const queryClient = useQueryClient();
   const runQuery = useRun(runId);
   const threadQuery = useRunThread(runId);
-  const log = useRunEvents(runId, () => {
-    void queryClient.invalidateQueries({ queryKey: keys.run(runId) });
-    // The thread exists once the run has started; fetch it as soon as events show progress.
-    if (!queryClient.getQueryData(keys.thread(runId))) {
-      void queryClient.invalidateQueries({ queryKey: keys.thread(runId) });
-    }
-  });
+  const log = useRunEvents(
+    runId,
+    () => {
+      void queryClient.invalidateQueries({ queryKey: keys.run(runId) });
+      // The thread exists once the run has started; fetch it as soon as events show progress.
+      if (!queryClient.getQueryData(keys.thread(runId))) {
+        void queryClient.invalidateQueries({ queryKey: keys.thread(runId) });
+      }
+    },
+    runQuery.data?.lastEventSeq,
+  );
   const [selectedSeq, setSelectedSeq] = useState<number | undefined>();
   const seq = selectedSeq ?? log.lastSeq;
   const selectedEvent = log.events.find((event) => event.seq === seq);
@@ -124,11 +129,21 @@ export function RunInspectorPage() {
               </div>
               <div className="col-start-2 row-start-1 justify-self-end max-sm:col-start-1 max-sm:row-start-3 max-sm:justify-self-start">
                 <RunControls run={run} />
+                <ScriptRecovery run={run} />
               </div>
             </header>
             {run.failure ? (
               <Alert title={`Failed: ${run.failure.code}`}>
-                {run.failure.message}
+                {run.failure.code === 'SCRIPT_OUTCOME_UNCERTAIN' ? (
+                  <p>
+                    The previous script attempt may already have produced its effect. Resume runs
+                    the script again and may repeat that effect.
+                  </p>
+                ) : run.failure.code === 'SCRIPT_START_FAILED' ? (
+                  <p>The script process did not start. Resume tries to start it again.</p>
+                ) : (
+                  run.failure.message
+                )}
                 {run.failure.resumable ? ' (resumable)' : ''}
                 <FailedChildLink details={run.failure.details} />
               </Alert>

@@ -376,6 +376,7 @@ describe('Jev key at boot', () => {
             exitCode: 0,
             stdout: 'recovered',
             stderr: '',
+            state: 'completed' as const,
             timedOut: false,
             stdoutBytes: 9,
             stderrBytes: 0,

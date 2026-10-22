@@ -520,6 +520,7 @@ describe('awaiting a child across failures and restarts (#242)', () => {
       stderrBytes: 0,
       stdoutOverflow: false,
       stderrOverflow: false,
+      state: 'completed' as const,
       timedOut: false,
     });
     let calls = 0;

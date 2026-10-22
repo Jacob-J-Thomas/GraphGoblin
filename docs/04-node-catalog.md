@@ -126,7 +126,7 @@ type ScriptConfig = {
 };
 ```
 
-Behaviour: non-zero exit codes without a configured route fail the run with `SCRIPT_EXIT_CODE`, which is resumable after the script is fixed. Scripts should be idempotent because crash recovery may run them again (05).
+Behaviour: non-zero exit codes without a configured route fail the run with `SCRIPT_EXIT_CODE`, with `failure.script.state: completed` and the exit code. A proven process-start refusal fails with resumable `SCRIPT_START_FAILED` (`definitely-not-started`). Before calling the process runner the engine durably records `script.dispatched { nodeId, visitId, dispatchId }`. A dispatch without a matching recorded outcome fails with resumable `SCRIPT_OUTCOME_UNCERTAIN` (`outcome-uncertain`), including when writing progress or completion fails. A generic bookkeeping failure does not dispose the dispatch. Re-entering an unfinished script visit from an earlier build without a dispatch marker is also uncertain: missing provenance cannot prove the command never ran. Such visits never run automatically after upgrading. The previous attempt may already have produced its effect. In the inspector choose **Recover script**, then **Resume** to rerun knowingly, **Replay** to start a new run from that node, or **Cancel** to leave the run failed. Resume and Replay can repeat the effect; this is not an exactly-once guarantee (05).
 
 Stdout and stderr use independent streaming UTF-8 decoders, so two-, three- and
 four-byte characters survive arbitrary subprocess chunk boundaries. Capture is
