@@ -16,7 +16,7 @@ Finish reconciliation identifies an observed outcome by child id plus the child'
 
 ## Consequences and verification
 
-- The in-memory admission fake stages the same writes before publishing anything. A shared contract checks rollback, same-ID admission, the parent's event sequence and missing-parent refusal against both implementations.
+- The in-memory admission fake stages the same writes before publishing anything. A shared contract checks rollback, same-ID admission, the parent's event sequence, the missing-parent refusal and the refusal of a parented admission that names no parent node (every child carries its link) against both implementations.
 - A real SQLite admission wrapper interrupts before or after the public admission call. Closing and reopening the file proves recovery of the same child, including an unfinished input child. An SQLite trigger refusing the parent link proves that the child insertion rolls back with it.
 - A read-only observer queries child rows and parent links in one coherent statement while the built API executes nested queued runs. Real process kills at child creation are followed by restart and cardinality checks. Separate event-port interruptions exercise the finish-record boundary.
 - The event types and stored shapes are unchanged. No migration or owner reset is required. The guarantee applies to admissions made through this transaction; this change does not infer missing links for historical orphan children.
