@@ -223,7 +223,11 @@ engine-owned region. Usage roll-up remains an engine operation.
 | `outcome?`                                             | `success`, `failure`, `exhausted`                                                                                                                                                                                |
 | `startedAt`, `finishedAt?`, `lastEventSeq`             | Bookkeeping                                                                                                                                                                                                      |
 
-A missing run `result` means no payload was returned, whereas `result: null` is a present JSON value, preserved distinctly from `false`, `0`, `""`, `[]` and `{}` across storage and restart.
+A missing run `result` means no payload was returned, whereas `result: null` is a present JSON value, preserved distinctly from `false`, `0`, `""`, `[]` and `{}` across storage and restart. The distinction reaches a subloop parent too: a child without a result passes no `result` to the parent's mapping, and a child that returned `null` passes `null` (#242).
+
+A child run's `waiting` parent is woken only through the park it observed: the wake carries the parent's `waiting.waitId` and is accepted only while that park, of kind `child` and on that `childRunId`, is current (05).
+
+A `failure` carried up from a subloop child has the child's `code` and `resumable`, the parent's subloop node as `nodeId`, and `details: { childRunId, childNodeId?, childDetails? }` naming where it happened (#251, 05). A child that finished through a Failure exit has `outcome: failure` and no `failure`; its parent receives it as data.
 
 ## Run events (Decided kinds, Draft payloads)
 
@@ -274,7 +278,7 @@ Passes are one-based, available to JSONata as `gates.<nodeId>.passes` (quote an 
 
 Maximum run time is elapsed wall time from `run.startedAt` (falling back to `createdAt`), including waits, pauses and recovery downtime. It is checked after evaluation and only on a repeat choice; it does not interrupt running work or override a finishing choice. A replay fork keeps the checkpoint's passes and starts its own run clock.
 
-Exits are terminal: `{outcome, returns, destinations}`. `outcome` is `success` (default), `failure` or `exhausted`; `returns` is a JSONata expression or `none` (default); `destinations` defaults to `[{kind:"caller"}]` and supports caller, webhook, file, event and log. Exits have no criteria, predicate, default routing or loop-back, and no output ports.
+Exits are terminal: `{outcome, returns, destinations}`. `outcome` is `success` (default), `failure` or `exhausted`; `returns` is a JSONata expression or `none` (default); `destinations` defaults to `[{kind:"caller"}]` and supports caller, webhook, file and log (no Event channel; loops compose as awaited subloops, ADR-0044). Exits have no criteria, predicate, default routing or loop-back, and no output ports.
 
 Success finishes `succeeded`, Failure finishes `failed`, and Exhausted finishes the distinct terminal status `exhausted`. Exhausted means the authored graph gave up further repetition; normally a gate's Limit reached output leads here. It is an outcome, not a resumable node failure. Every outcome evaluates the same return expression and delivers its value unchanged; Exhausted adds no wrapper or implicit last output. Use `outputs.<workNodeId>.value` when returning work output, because the preceding gate replaces `lastOutput`.
 

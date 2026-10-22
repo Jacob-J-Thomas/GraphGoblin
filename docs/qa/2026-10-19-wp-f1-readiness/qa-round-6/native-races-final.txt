@@ -1,0 +1,197 @@
+Built API ee0f4f40, Node 22.14.0, native tooling/fixtures/readiness-cli.cs; port 5629, disposable store, binary-created key held only in memory.
+Native 202 means admission succeeded. The fixture deliberately refuses the later model turn; that runtime failure is preserved and is not a completion pass.
+
+{
+  "name": "native-ready-child-publication-race-attempt-1",
+  "pass": true,
+  "phaseBefore": {
+    "claude": {
+      "callsTotal": 1,
+      "turnCalls": 0,
+      "probes": 1,
+      "commands": [
+        "--safe-mode --setting-sources  --strict-mcp-config --version"
+      ]
+    },
+    "codex": {
+      "callsTotal": 0,
+      "turnCalls": 0,
+      "probes": 0,
+      "commands": []
+    }
+  },
+  "phaseAtAck": {
+    "claude": {
+      "callsTotal": 1,
+      "turnCalls": 0,
+      "probes": 1,
+      "commands": [
+        "--safe-mode --setting-sources  --strict-mcp-config --version"
+      ]
+    },
+    "codex": {
+      "callsTotal": 0,
+      "turnCalls": 0,
+      "probes": 0,
+      "commands": []
+    }
+  },
+  "pendingAtAck": true,
+  "committedBeforeAuth": true,
+  "publish": {
+    "status": 200,
+    "ms": 86,
+    "newVersion": "01M5GPPZP3ZSQKJ8ATN3RE2C3D"
+  },
+  "oldVersion": "01M5GPPX57CDM3WPJ4E3BBS9A3",
+  "response": {
+    "status": 202,
+    "ms": 1479
+  },
+  "children": [
+    {
+      "id": "01M5GPQ0Q8QKD61W87EX9X92Y6",
+      "version_id": "01M5GPPX57CDM3WPJ4E3BBS9A3",
+      "status": "failed"
+    }
+  ],
+  "queued": [
+    {
+      "subloopVersions": {
+        "01M5GPPX572CBKEE5J1PB52QT0": "01M5GPPX57CDM3WPJ4E3BBS9A3"
+      }
+    }
+  ],
+  "run": {
+    "id": "01M5GPPZ2TDSZSXTCASG3JSVGD",
+    "ownerId": "local",
+    "loopId": "01M5GPPZ04G5BNHXCR7FAGBZTN",
+    "versionId": "01M5GPPZ04WG9E87H89NNMTZ5B",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "QA native pin race 1",
+      "label": "QA native pin race 1 v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M5GPPZ2TCMDQTZMR7WKD0DKX",
+    "status": "failed",
+    "currentNodeId": "child",
+    "iteration": 1,
+    "waiting": {
+      "waitId": "01M5GPPZ2TDSZSXTCASG3JSVGD:5",
+      "nodeId": "child",
+      "kind": "child",
+      "childRunId": "01M5GPQ0Q8QKD61W87EX9X92Y6",
+      "startedSeq": 5
+    },
+    "failure": {
+      "code": "HARNESS_TURN_FAILED",
+      "message": "subloop child 01M5GPQ0Q8QKD61W87EX9X92Y6 failed: harness turn failed: Claude turn failed",
+      "nodeId": "child",
+      "resumable": false,
+      "details": {
+        "childRunId": "01M5GPQ0Q8QKD61W87EX9X92Y6",
+        "childNodeId": "think",
+        "childDetails": {
+          "adapterCode": "HARNESS_TURN_FAILED"
+        }
+      }
+    },
+    "createdAt": "2026-10-22T02:23:16.570Z",
+    "startedAt": "2026-10-22T02:23:18.042Z",
+    "finishedAt": "2026-10-22T02:23:21.190Z",
+    "lastEventSeq": 11
+  },
+  "limit": "Version execution is native; the fake refuses the actual model turn."
+}
+
+{
+  "name": "native-ready-draft-edit-race-attempt-1",
+  "pass": true,
+  "pendingAtAck": true,
+  "committedBeforeAuth": true,
+  "phaseAtAck": {
+    "claude": {
+      "callsTotal": 1,
+      "turnCalls": 0,
+      "probes": 1,
+      "commands": [
+        "--safe-mode --setting-sources  --strict-mcp-config --version"
+      ]
+    },
+    "codex": {
+      "callsTotal": 0,
+      "turnCalls": 0,
+      "probes": 0,
+      "commands": []
+    }
+  },
+  "response": {
+    "status": 202,
+    "ms": 831
+  },
+  "run": {
+    "id": "01M5GPQ3NXTHC2G2C4HWYW2SFX",
+    "ownerId": "local",
+    "loopId": "01M5GPQ3N4T5ARCQCT0D88GCVH",
+    "versionId": "01M5GPQ3NXSWM8YA9D2QDF8ZXR",
+    "pinned": {
+      "source": "draft",
+      "version": 1,
+      "name": "QA original snapshot 1",
+      "label": "QA original snapshot 1 draft v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M5GPQ3NXD0D4DSW36ACNSG40",
+    "status": "failed",
+    "currentNodeId": "think",
+    "iteration": 1,
+    "failure": {
+      "code": "HARNESS_TURN_FAILED",
+      "message": "harness turn failed: Claude turn failed",
+      "nodeId": "think",
+      "resumable": false,
+      "details": {
+        "adapterCode": "HARNESS_TURN_FAILED"
+      }
+    },
+    "createdAt": "2026-10-22T02:23:21.277Z",
+    "startedAt": "2026-10-22T02:23:22.109Z",
+    "finishedAt": "2026-10-22T02:23:23.429Z",
+    "lastEventSeq": 8
+  },
+  "executedSnapshot": {
+    "id": "01M5GPQ3NXSWM8YA9D2QDF8ZXR",
+    "status": "snapshot",
+    "name": "QA original snapshot 1",
+    "harness": "claude"
+  },
+  "limit": "The snapshot reaches its Claude node natively; the fake then refuses its model turn."
+}

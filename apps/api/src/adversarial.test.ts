@@ -19,17 +19,11 @@ async function app(options: Parameters<typeof createTestApp>[0] = {}) {
 afterEach(async () => {
   for (const t of opened.splice(0)) await t.close();
 });
-function triggerLoop(name: string, config: unknown, emit?: string): LoopDefinitionInput {
+function triggerLoop(name: string, config: unknown): LoopDefinitionInput {
   const def = minimalLoop();
   def.name = name;
   def.nodes[0] = { id: 'start', kind: 'trigger', label: 'Start', config: config as never };
-  if (emit)
-    def.nodes[1] = {
-      id: 'done',
-      kind: 'exit',
-      label: 'Done',
-      config: { returns: '42', destinations: [{ kind: 'event', eventType: emit }] },
-    };
+  def.nodes[1] = { id: 'done', kind: 'exit', label: 'Done', config: { returns: '42' } };
   return def;
 }
 async function hook(t: TestApp) {
@@ -389,31 +383,38 @@ describe('adversarial API invariants', () => {
     ).toBe(404);
   });
 
-  it.each([1, 2, 10])(
-    '14: event chain with %i loops terminates without repetition',
-    async (count) => {
-      const t = await app();
-      for (let i = 0; i < count; i++)
-        await t.publishLoop(
-          triggerLoop(
-            `event-${i}`,
-            { type: 'event', eventType: `event-${i}` },
-            `event-${(i + 1) % count}`,
-          ),
-        );
-      const response = await t.app.inject({
-        method: 'POST',
-        url: '/events',
-        payload: { type: 'event-0', payload: null },
-      });
-      expect(response.statusCode).toBe(202);
-      await t.idle();
-      const runs = await t.container.repos.runs.list({});
-      expect(runs).toHaveLength(Math.min(count, 8));
-      expect(new Set(runs.map((r) => r.loopId)).size).toBe(runs.length);
-      expect(runs.every((r) => r.status === 'succeeded')).toBe(true);
-    },
-  );
+  it('14: exits cannot chain loops through Events; external Event intake still starts runs', async () => {
+    const t = await app();
+    // A former exit-to-Event chain: the exit destination is no longer part of the contract.
+    const chained = triggerLoop('chained', { type: 'event', eventType: 'event-0' });
+    chained.nodes[1] = {
+      id: 'done',
+      kind: 'exit',
+      label: 'Done',
+      config: { returns: '42', destinations: [{ kind: 'event', eventType: 'event-0' }] as never },
+    };
+    const refused = await t.app.inject({
+      method: 'POST',
+      url: '/loops',
+      payload: { definition: chained },
+    });
+    expect(refused.statusCode).toBe(400);
+    for (let i = 0; i < 3; i++)
+      await t.publishLoop(triggerLoop(`event-${i}`, { type: 'event', eventType: 'event-0' }));
+    const response = await t.app.inject({
+      method: 'POST',
+      url: '/events',
+      payload: { type: 'event-0', payload: null },
+    });
+    expect(response.statusCode).toBe(202);
+    await t.idle();
+    const runs = await t.container.repos.runs.list({});
+    expect(runs).toHaveLength(3);
+    expect(runs.every((r) => r.status === 'succeeded')).toBe(true);
+    // Finished runs publish nothing: the only stored Event is the external one.
+    const events = (await t.app.inject('/events')).json<{ items: { source: string }[] }>();
+    expect(events.items).toEqual([expect.objectContaining({ source: 'api' })]);
+  });
 
   it('15: a draft cron is not armed', async () => {
     const t = await app();

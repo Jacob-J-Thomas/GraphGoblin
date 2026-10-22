@@ -220,8 +220,8 @@ Decides whether the loop is done, what it returns, where that goes, and whether 
 
 Ports: `loopBack`, only when configured.
 
-| Field          | Type                                                                                      | Required | Default               | Description                                                                                          |
-| -------------- | ----------------------------------------------------------------------------------------- | -------- | --------------------- | ---------------------------------------------------------------------------------------------------- |
-| `outcome`      | `"success"` \| `"failure"` \| `"exhausted"`                                               | no       | `"success"`           | Terminal outcome; Exhausted produces run status exhausted and preserves the return value.            |
-| `returns`      | `"none"` \| string                                                                        | no       | `"none"`              | JSONata return mapping, or none. Gate decisions replace lastOutput; prefer outputs.<workNode>.value. |
-| `destinations` | array of (one of `"caller"` \| `"webhook"` \| `"file"` \| `"event"` \| `"log"` by `kind`) | no       | `[{"kind":"caller"}]` | Return destinations; caller by default. No delivery when returns is none.                            |
+| Field          | Type                                                                         | Required | Default               | Description                                                                                          |
+| -------------- | ---------------------------------------------------------------------------- | -------- | --------------------- | ---------------------------------------------------------------------------------------------------- |
+| `outcome`      | `"success"` \| `"failure"` \| `"exhausted"`                                  | no       | `"success"`           | Terminal outcome; Exhausted produces run status exhausted and preserves the return value.            |
+| `returns`      | `"none"` \| string                                                           | no       | `"none"`              | JSONata return mapping, or none. Gate decisions replace lastOutput; prefer outputs.<workNode>.value. |
+| `destinations` | array of (one of `"caller"` \| `"webhook"` \| `"file"` \| `"log"` by `kind`) | no       | `[{"kind":"caller"}]` | Return destinations; caller by default. No delivery when returns is none.                            |

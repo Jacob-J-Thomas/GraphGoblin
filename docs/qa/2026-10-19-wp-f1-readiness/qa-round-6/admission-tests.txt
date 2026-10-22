@@ -1,0 +1,73 @@
+Node 22.14.0. Direct package test commands bypass Turbo coverage cache.
+pnpm.cmd --filter @graphgoblin/engine test:coverage --maxWorkers=2
+  31 passed (31)
+      Tests  540 passed (540)
+   Start at  19:56:38
+   Duration  192.51s (import 49%, tests 38%, transform 12%, worker 1%)
+
+    Isolate  31 workers spawned · ~1.29s startup each (spawn + environment, per file)
+             at least ~18.66s faster with isolate: false — reuses workers across files instead of one per file
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 96.82% ( 2377/2455 )
+Branches     : 92.33% ( 1735/1879 )
+Functions    : 98.65% ( 440/446 )
+Lines        : 98.02% ( 2184/2228 )
+================================================================================
+
+
+pnpm.cmd --filter @graphgoblin/api exec vitest run src/nested-readiness.test.ts --maxWorkers=1 --reporter=verbose
+
+ RUN  v5.0.3 <worktree>/apps/api
+
+ ✓ src/nested-readiness.test.ts > manual admission over pinned nested definitions > rejects a signed-out child before the parent mutation or any run is recorded 1571ms
+ ✓ src/nested-readiness.test.ts > manual admission over pinned nested definitions > checks both the unready parent and ready child in one admission 436ms
+ ✓ src/nested-readiness.test.ts > manual admission over pinned nested definitions > shares one probe between same-harness parent and child nodes 1227ms
+ ✓ src/nested-readiness.test.ts > manual admission over pinned nested definitions > starts probes for distinct parent/child harnesses concurrently 787ms
+ ✓ src/nested-readiness.test.ts > manual admission over pinned nested definitions > checks the published child, ignoring an unready-harness draft 1077ms
+ ✓ src/nested-readiness.test.ts > manual admission over pinned nested definitions > checks a numbered child version instead of its newer publication 585ms
+ ✓ src/nested-readiness.test.ts > manual admission over pinned nested definitions > honors the configured nesting limit 1 986ms
+ ✓ src/nested-readiness.test.ts > manual admission over pinned nested definitions > honors the configured nesting limit 2 322ms
+ ✓ src/nested-readiness.test.ts > manual admission over pinned nested definitions > checks a twice-referenced child once when ready 725ms
+ ✓ src/nested-readiness.test.ts > manual admission over pinned nested definitions > checks a twice-referenced child once when auth 244ms
+ ✓ src/nested-readiness.test.ts > manual admission over pinned nested definitions > keeps the child pin when a new version publishes while its probe is pending 576ms
+ ✓ src/nested-readiness.test.ts > manual admission over pinned nested definitions > freezes a draft root before probing and executes that same snapshot 455ms
+ ✓ src/nested-readiness.test.ts > manual admission over pinned nested definitions > does not hold the pin lock while probing; rechecks a deleted root 504ms
+ ✓ src/nested-readiness.test.ts > manual admission over pinned nested definitions > does not hold the pin lock while probing; rechecks a deleted child 1048ms
+ ✓ src/nested-readiness.test.ts > manual admission over pinned nested definitions > honors a node depth override when collecting executable descendants 551ms
+ ✓ src/nested-readiness.test.ts > manual admission over pinned nested definitions > protects cycles while checking a nested harness once 390ms
+ ✓ src/nested-readiness.test.ts > manual admission over pinned nested definitions > collects a nested LLM decision harness as well as inference nodes 373ms
+ ✓ src/nested-readiness.test.ts > manual admission over pinned nested definitions > uses the claude executable fixture through public nested admission 4151ms
+ ✓ src/nested-readiness.test.ts > manual admission over pinned nested definitions > uses the codex executable fixture through public nested admission 2962ms
+
+ Test Files  1 passed (1)
+      Tests  19 passed (19)
+   Start at  20:14:20
+   Duration  39.44s (tests 49%, transform 31%, import 19%)
+
+  Transform  transforming modules took 11.93s · 31% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+
+
+pnpm.cmd --filter @graphgoblin/engine exec vitest run src/start-admission.test.ts --maxWorkers=1 --reporter=verbose
+
+ RUN  v5.0.3 <worktree>/packages/engine
+
+ ✓ src/start-admission.test.ts > optional run-start admission policy > rejects before persisting a run, draft snapshot or effect 77ms
+ ✓ src/start-admission.test.ts > optional run-start admission policy > commits the checked pins without holding the pin lock during policy IO 519ms
+ ✓ src/start-admission.test.ts > optional run-start admission policy > revalidates a root deleted during policy IO 13ms
+ ✓ src/start-admission.test.ts > optional run-start admission policy > revalidates a child deleted during policy IO 4ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  20:15:03
+   Duration  19.11s (transform 76%, import 21%, tests 3%)
+
+  Transform  transforming modules took 13.49s · 76% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
