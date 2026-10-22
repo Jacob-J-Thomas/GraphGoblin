@@ -1,0 +1,135 @@
+START 2026-10-22T02:39:23.7578539Z
+node v22.14.0
+pnpm.cmd --filter @graphgoblin/infrastructure test:coverage --config ../../docs/qa/2026-10-22-wp-d1-qa/round-2/infrastructure.config.mjs
+$ vitest run --coverage --config ../../docs/qa/2026-10-22-wp-d1-qa/round-2/infrastructure.config.mjs
+
+ RUN  v5.0.3 <worktree>/packages/infrastructure
+      Coverage enabled with v8
+
+ G�� src/process/scripts.test.ts (39 tests | 3 failed) 90063ms
+   G�� ProcessScripts (36)
+     +� kills and closes a real process cancelled with incomplete UTF-8 pending on both streams 8158ms
+     +� kills the process tree on timeout 15015ms
+     +� kills the process when the signal aborts, including when already aborted 15023ms
+ G�� src/adversarial.test.ts (20 tests | 1 failed) 38386ms
+   G�� adversarial infrastructure invariants (forks pool) (11)
+     +� 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild 30257ms
+ G�� src/claude/process.test.ts (5 tests | 3 failed) 28719ms
+   G�� owned native Claude process transport (5)
+     +� kills on deadline and output overflow 16386ms
+     +� does not spawn for an already aborted signal and cancels a running process 5163ms
+     +� kills the descendant that a long-lived child started 6876ms
+System.Management.Automation.RemoteException
+GĻGĻGĻGĻGĻGĻGĻ Failed Tests 7 GĻGĻGĻGĻGĻGĻGĻ
+System.Management.Automation.RemoteException
+ FAIL  src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild
+Error: Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ G�� src/adversarial.test.ts:225:3
+    223|     expect(() => decryptSecret(Buffer.alloc(32, 5), ciphertext as striGǪ
+    224|   });
+    225|   it('6/QA-LIMIT-001: ProcessScripts abort kills a real child and its GǪ
+       |   ^
+    226|     const dir = await mkdtemp(join(tmpdir(), 'gg-process-tree-'));
+    227|     const pidFile = join(dir, 'grandchild.pid');
+System.Management.Automation.RemoteException
+GĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻ[1/8]GĻ
+System.Management.Automation.RemoteException
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills on deadline and output overflow
+Error: EBUSY: resource busy or locked, rmdir '<user>\AppData\Local\Temp\gg-qa-320-r2-infrastructure-coverage-CWVcoP\gg-qa-320-suite-claude-process-vwFdb7'
+GĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻ[2/8]GĻ
+System.Management.Automation.RemoteException
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > does not spawn for an already aborted signal and cancels a running process
+Error: EBUSY: resource busy or locked, rmdir '<user>\AppData\Local\Temp\gg-qa-320-r2-infrastructure-coverage-CWVcoP\gg-qa-320-suite-claude-process-QmaNmo'
+GĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻ[3/8]GĻ
+System.Management.Automation.RemoteException
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived child started
+AssertionError: expected 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxGǪ' to be 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxGǪ' // Object.is equality
+System.Management.Automation.RemoteException
+Expected: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+Received: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+System.Management.Automation.RemoteException
+ G�� src/claude/process.test.ts:146:46
+    144|       const stopped = await readFile(marker, 'utf8');
+    145|       await new Promise((resolve) => setTimeout(resolve, 100));
+    146|       expect(await readFile(marker, 'utf8')).toBe(stopped);
+       |                                              ^
+    147|     } finally {
+    148|       controller.abort();
+System.Management.Automation.RemoteException
+GĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻ[4/8]GĻ
+System.Management.Automation.RemoteException
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived child started
+Error: EBUSY: resource busy or locked, rmdir '<user>\AppData\Local\Temp\gg-qa-320-r2-infrastructure-coverage-CWVcoP\gg-qa-320-suite-claude-process-fJJUlO'
+GĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻ[5/8]GĻ
+System.Management.Automation.RemoteException
+ FAIL  src/process/scripts.test.ts > ProcessScripts > kills and closes a real process cancelled with incomplete UTF-8 pending on both streams
+AssertionError: native process-tree cancellation must finish before fixture cleanup: expected true to be false // Object.is equality
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+- false
++ true
+System.Management.Automation.RemoteException
+ G�� src/process/scripts.test.ts:194:7
+    192|       cleanupRequired,
+    193|       'native process-tree cancellation must finish before fixture cleGǪ
+    194|     ).toBe(false);
+       |       ^
+    195|     expect(streamsReady).toBe(2);
+    196|     expect(result).toMatchObject({ stdout: 'A\ufffd', stderr: 'B\ufffdGǪ
+System.Management.Automation.RemoteException
+GĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻ[6/8]GĻ
+System.Management.Automation.RemoteException
+ FAIL  src/process/scripts.test.ts > ProcessScripts > kills the process tree on timeout
+Error: Test timed out in 15000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ G�� src/process/scripts.test.ts:237:3
+    235|   });
+    236|
+    237|   it('kills the process tree on timeout', async () => {
+       |   ^
+    238|     const scripts = new ProcessScripts();
+    239|     const started = Date.now();
+System.Management.Automation.RemoteException
+GĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻ[7/8]GĻ
+System.Management.Automation.RemoteException
+ FAIL  src/process/scripts.test.ts > ProcessScripts > kills the process when the signal aborts, including when already aborted
+Error: Test timed out in 15000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ G�� src/process/scripts.test.ts:248:3
+    246|   }, 15_000);
+    247|
+    248|   it('kills the process when the signal aborts, including when alreadyGǪ
+       |   ^
+    249|     const scripts = new ProcessScripts();
+    250|     const controller = new AbortController();
+System.Management.Automation.RemoteException
+GĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻ[8/8]GĻ
+System.Management.Automation.RemoteException
+
+ Test Files  3 failed | 42 passed (45)
+      Tests  7 failed | 625 passed (632)
+   Start at  21:39:37
+   Duration  239.61s (tests 66%, import 22%, transform 11%, worker 1%)
+
+    Isolate  45 workers spawned -+ ~485ms startup each (spawn + environment, per file)
+             at least ~10.44s faster with isolate: false G�� reuses workers across files instead of one per file
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 97.82% ( 2251/2301 )
+Branches     : 94.66% ( 1560/1648 )
+Functions    : 98.23% ( 501/510 )
+Lines        : 98.61% ( 1999/2027 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+System.Management.Automation.RemoteException
+  +� "pnpm recursive run" failed in C:
+[local path redacted]
+  G�� d1\packages\infrastructure
+System.Management.Automation.RemoteException
+END 2026-10-22T02:43:39.7119995Z EXIT 1

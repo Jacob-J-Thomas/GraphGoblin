@@ -1,0 +1,29 @@
+START 2026-10-22T02:54:19.0491363Z
+node v22.14.0
+pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/claude/process.test.ts -t does not spawn for an already aborted signal --config ../../docs/qa/2026-10-22-wp-d1-qa/round-2/infrastructure.config.mjs
+
+ RUN  v5.0.3 <worktree>/packages/infrastructure
+
+ G�� src/claude/process.test.ts (5 tests | 1 failed | 4 skipped) 5178ms
+   G�� owned native Claude process transport (5)
+     +� does not spawn for an already aborted signal and cancels a running process 5162ms
+System.Management.Automation.RemoteException
+GĻGĻGĻGĻGĻGĻGĻ Failed Tests 1 GĻGĻGĻGĻGĻGĻGĻ
+System.Management.Automation.RemoteException
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > does not spawn for an already aborted signal and cancels a running process
+Error: EBUSY: resource busy or locked, rmdir '<user>\AppData\Local\Temp\gg-qa-320-r2-native-claude-abort-alone-mubGWF\gg-qa-320-suite-claude-process-Jda6D0'
+GĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻ[1/1]GĻ
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 skipped (5)
+   Start at  21:54:21
+   Duration  5.92s (tests 95%, transform 2%, import 2%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+System.Management.Automation.RemoteException
+  +� "pnpm recursive exec" failed in C:
+[local path redacted]
+  G�� d1\packages\infrastructure
+System.Management.Automation.RemoteException
+END 2026-10-22T02:54:28.1108862Z EXIT 1

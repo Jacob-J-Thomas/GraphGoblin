@@ -161,10 +161,13 @@ export function parseRunAdmission(value: unknown): RunAdmission {
   )
     throw new AdmissionConflictError();
   const snapshot = raw.snapshot === undefined ? undefined : parseSnapshot(raw.snapshot, run.data);
-  // A parent link belongs to a child: it needs the parent run and a node id.
+  // A parent link belongs to a child, and every child carries one: the link is what keeps a child
+  // from existing without its parent's record of it (#320), so a run that names a parent without
+  // naming the parent's subloop node is refused, as is a node without a parent.
   const parentNodeId =
     raw.parentNodeId === undefined ? undefined : SlugSchema.safeParse(raw.parentNodeId);
-  if (parentNodeId && (!parentNodeId.success || run.data.parentRunId === undefined))
+  const parented = run.data.parentRunId !== undefined && run.data.parentRunId !== null;
+  if (parentNodeId ? !parentNodeId.success || !parented : parented)
     throw new AdmissionConflictError();
   const { runId: _id, seq: _seq, ts: _ts, ...queued } = event.data;
   return {

@@ -537,13 +537,16 @@ const scenarios: Scenario[] = [
       delete unparented.initialThread.run.parentRunId;
       await rejects(() => f.admission.create(unparented));
       equal(await f.run(orphan.run.id), undefined);
-      // A child admitted without its link cannot later claim one it never committed.
+      // Every child names its parent's node: a parented admission without one is refused, so no
+      // child can exist without its parent's record of it (the independent QA's finding).
       const unlinked = structuredClone(orphan);
       unlinked.run.parentRunId = parent.run.id;
       unlinked.initialThread.run.parentRunId = parent.run.id;
       delete unlinked.parentNodeId;
-      await f.admission.create(unlinked);
-      await rejects(() => f.admission.create({ ...unlinked, parentNodeId: 'sub' }));
+      await rejects(() => f.admission.create(unlinked));
+      equal(await f.run(unlinked.run.id), undefined);
+      // The same child admitted again must name the node whose link it committed with.
+      await rejects(() => f.admission.create({ ...child, parentNodeId: 'other' }));
       equal((await f.events(parent.run.id)).length, parentLog.length + 1);
     },
   },

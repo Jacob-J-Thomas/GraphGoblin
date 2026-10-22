@@ -1,0 +1,44 @@
+START 2026-10-22T02:51:54.6459729Z
+node v22.14.0
+pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/process/scripts.test.ts -t kills and closes a real process cancelled with incomplete UTF-8 pending --config ../../docs/qa/2026-10-22-wp-d1-qa/round-2/infrastructure.config.mjs
+
+ RUN  v5.0.3 <worktree>/packages/infrastructure
+
+ G�� src/process/scripts.test.ts (39 tests | 1 failed | 38 skipped) 8046ms
+   G�� ProcessScripts (36)
+     +� kills and closes a real process cancelled with incomplete UTF-8 pending on both streams 8042ms
+System.Management.Automation.RemoteException
+GĻGĻGĻGĻGĻGĻGĻ Failed Tests 1 GĻGĻGĻGĻGĻGĻGĻ
+System.Management.Automation.RemoteException
+ FAIL  src/process/scripts.test.ts > ProcessScripts > kills and closes a real process cancelled with incomplete UTF-8 pending on both streams
+AssertionError: native process-tree cancellation must finish before fixture cleanup: expected true to be false // Object.is equality
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+- false
++ true
+System.Management.Automation.RemoteException
+ G�� src/process/scripts.test.ts:194:7
+    192|       cleanupRequired,
+    193|       'native process-tree cancellation must finish before fixture cleGǪ
+    194|     ).toBe(false);
+       |       ^
+    195|     expect(streamsReady).toBe(2);
+    196|     expect(result).toMatchObject({ stdout: 'A\ufffd', stderr: 'B\ufffdGǪ
+System.Management.Automation.RemoteException
+GĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻGĻ[1/1]GĻ
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 38 skipped (39)
+   Start at  21:51:56
+   Duration  9.88s (tests 94%, transform 4%, import 2%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+System.Management.Automation.RemoteException
+  +� "pnpm recursive exec" failed in C:
+[local path redacted]
+  G�� d1\packages\infrastructure
+System.Management.Automation.RemoteException
+END 2026-10-22T02:52:07.1549206Z EXIT 1
