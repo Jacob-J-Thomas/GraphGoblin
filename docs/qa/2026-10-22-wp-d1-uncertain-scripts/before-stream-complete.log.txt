@@ -1,0 +1,91 @@
+
+ RUN  v5.0.3 <local>/apps/web
+
+ ❯ src/runs/useRunEvents.test.tsx (17 tests | 5 failed | 11 skipped) 107ms
+   ❯ script recovery observation (#321) (6)
+     × reads past a previous failure when the run snapshot advances to 2 61ms
+     × reads past a previous failure when the run snapshot advances to 3 9ms
+     × observes a cached resumed run even though its history contains an earlier failure 8ms
+     × follows multiple recorded outcomes to the latest one while retaining their history 7ms
+     × finishes after reading newer return bookkeeping for the same failed outcome 5ms
+pnpm.cmd : 
+At line:2 char:362
++ ... w($false)); pnpm.cmd --filter @graphgoblin/web exec vitest run src/ru ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/runs/useRunEvents.test.tsx > script recovery observation (#321) > reads past a previous failure when the 
+run snapshot advances to 2
+ FAIL  src/runs/useRunEvents.test.tsx > script recovery observation (#321) > reads past a previous failure when the 
+run snapshot advances to 3
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ src/runs/useRunEvents.test.tsx:74:23
+     72|     expect(subscribe).not.toHaveBeenCalled();
+     73|     view.rerender({ seq });
+     74|     expect(subscribe).toHaveBeenCalledTimes(1);
+       |                       ^
+     75|     expect(options().after).toBe(1);
+     76|     act(() => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/runs/useRunEvents.test.tsx > script recovery observation (#321) > observes a cached resumed run even though 
+its history contains an earlier failure
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ src/runs/useRunEvents.test.tsx:88:23
+     86|     useRunEventStore.getState().append(runId, failed, resumed);
+     87|     mountStream(undefined, 2);
+     88|     expect(subscribe).toHaveBeenCalledTimes(1);
+       |                       ^
+     89|     expect(options().after).toBe(2);
+     90|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/runs/useRunEvents.test.tsx > script recovery observation (#321) > follows multiple recorded outcomes to the 
+latest one while retaining their history
+TypeError: Cannot read properties of undefined (reading '0')
+ ❯ options src/runs/useRunEvents.test.tsx:59:37
+     57| }
+     58| function options(index = 0): SubscribeRunEventsOptions {
+     59|   return subscribe.mock.calls[index]![0];
+       |                                     ^
+     60| }
+     61|
+ ❯ src/runs/useRunEvents.test.tsx:103:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/runs/useRunEvents.test.tsx > script recovery observation (#321) > finishes after reading newer return 
+bookkeeping for the same failed outcome
+TypeError: Cannot read properties of undefined (reading '0')
+ ❯ options src/runs/useRunEvents.test.tsx:59:37
+     57| }
+     58| function options(index = 0): SubscribeRunEventsOptions {
+     59|   return subscribe.mock.calls[index]![0];
+       |                                     ^
+     60| }
+     61|
+ ❯ src/runs/useRunEvents.test.tsx:124:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 1 passed | 11 skipped (17)
+   Start at  22:26:01
+   Duration  46.65s (environment 50%, transform 28%, setup 11%, import 10%)
+
+  Transform  transforming modules took 12.79s · 28% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ \Users\<user>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d1-child-
+  │ recovery\apps\web
+
