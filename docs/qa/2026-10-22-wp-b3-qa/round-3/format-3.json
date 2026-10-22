@@ -1,0 +1,258 @@
+{
+  "kind": "format-3",
+  "dataDirectory": "%TEMP%\\gg-qa-266-r3-wal-raUfpD\\format-3",
+  "sourceDirectory": "%TEMP%\\gg-qa-266-r3-wal-raUfpD\\format-3-source",
+  "metadata": {
+    "kind": "format-3",
+    "mutation": "UPDATE gg_upgrade_state SET format_version = 3",
+    "rowsAffected": 1,
+    "ledgerBefore": 15,
+    "ledgerAfter": 15,
+    "format": 3,
+    "pendingMigrations": 0,
+    "catalog": [
+      {
+        "harness": "claude",
+        "model": "claude-fable-5-1",
+        "displayName": "Claude Fable 5.1"
+      },
+      {
+        "harness": "claude",
+        "model": "claude-opus-5-5",
+        "displayName": "Claude Opus 5.5"
+      },
+      {
+        "harness": "codex",
+        "model": "gpt-5.5",
+        "displayName": "GPT-5.5"
+      },
+      {
+        "harness": "codex",
+        "model": "gpt-5.6-luna",
+        "displayName": "GPT-5.6 Luna"
+      },
+      {
+        "harness": "codex",
+        "model": "gpt-5.6-sol",
+        "displayName": "GPT-5.6 Sol"
+      },
+      {
+        "harness": "codex",
+        "model": "gpt-5.6-terra",
+        "displayName": "GPT-5.6 Terra"
+      },
+      {
+        "harness": "codex",
+        "model": "gpt-6-astra",
+        "displayName": "GPT-6 Astra"
+      },
+      {
+        "harness": "codex",
+        "model": "gpt-6-luna",
+        "displayName": "GPT-6 Luna"
+      },
+      {
+        "harness": "codex",
+        "model": "gpt-6-sol",
+        "displayName": "GPT-6 Sol"
+      },
+      {
+        "harness": "codex",
+        "model": "gpt-6.1-sol",
+        "displayName": "GPT-6.1 Sol"
+      }
+    ]
+  },
+  "initial": {
+    "graphgoblin.db": {
+      "present": true,
+      "bytes": 262144,
+      "sha256": "6863c286aac69430171b86807318f5c69db6ec78f9d802067371340e0abe8b1b"
+    },
+    "graphgoblin.db-wal": {
+      "present": true,
+      "bytes": 4152,
+      "sha256": "31924eb7a493d004660df5b342ad388847f0852632081d1569a93644f4debd31"
+    },
+    "graphgoblin.db-shm": {
+      "present": true,
+      "bytes": 32768,
+      "sha256": "d0dea8a01d8042064a32fc942bca360912822dbe085fdca75f33f1e48fda3034"
+    }
+  },
+  "preflight": {
+    "result": {
+      "code": 1,
+      "signal": null,
+      "killed": false,
+      "stdout": "GraphGoblin preflight\n\n  STATUS  CHECK           DETAIL\n  ok      Node.js         Node 22.14.0\n  ok      Data directory  %TEMP%\\gg-qa-266-r3-wal-raUfpD\\format-3 is writable\n  WARN    Master key      %TEMP%\\gg-qa-266-r3-wal-raUfpD\\format-3\\master.key does not exist yet; a key is generated on first start (back it up, or set GG_MASTER_KEY)\n  FAIL    Database        The store is format 3; this build reads only format 4. Start refuses this store and converts nothing; to start fresh, list what a reset removes with node apps/api/dist/main.js --reset --data-dir \"%TEMP%\\gg-qa-266-r3-wal-raUfpD\\format-3\"\n  FAIL    Harness codex   Codex CLI is not logged in; run `codex login`\n  ok      Harness claude  claude 2.1.304 is installed and logged in\n  WARN    Jev             not checked until the database is migrated; Jev is optional\n  ok      Default model   gpt-6-luna (codex) is in the default catalog seeded on first start\n\n2 failed, 2 warning(s): fix the failed checks before starting\n",
+      "stderr": "",
+      "elapsedMs": 2961
+    },
+    "before": {
+      "graphgoblin.db": {
+        "present": true,
+        "bytes": 262144,
+        "sha256": "6863c286aac69430171b86807318f5c69db6ec78f9d802067371340e0abe8b1b"
+      },
+      "graphgoblin.db-wal": {
+        "present": true,
+        "bytes": 4152,
+        "sha256": "31924eb7a493d004660df5b342ad388847f0852632081d1569a93644f4debd31"
+      },
+      "graphgoblin.db-shm": {
+        "present": true,
+        "bytes": 32768,
+        "sha256": "d0dea8a01d8042064a32fc942bca360912822dbe085fdca75f33f1e48fda3034"
+      }
+    },
+    "after": {
+      "graphgoblin.db": {
+        "present": true,
+        "bytes": 262144,
+        "sha256": "6863c286aac69430171b86807318f5c69db6ec78f9d802067371340e0abe8b1b"
+      },
+      "graphgoblin.db-wal": {
+        "present": true,
+        "bytes": 4152,
+        "sha256": "31924eb7a493d004660df5b342ad388847f0852632081d1569a93644f4debd31"
+      },
+      "graphgoblin.db-shm": {
+        "present": true,
+        "bytes": 32768,
+        "sha256": "bc81d6b5bccdf581c461acd03d3a54385c8bae46f3bb0c04c1dd80ffb2ac33c7"
+      }
+    },
+    "comparison": {
+      "allThreePresent": true,
+      "databaseUnchanged": true,
+      "walUnchanged": true,
+      "shmChanged": true
+    }
+  },
+  "guard": {
+    "result": {
+      "code": 0,
+      "signal": null,
+      "killed": false,
+      "stdout": "{\"accepted\":false,\"name\":\"UnsupportedStoreError\",\"reason\":\"The store is format 3; this build reads only format 4\",\"foundFormat\":3,\"requiredFormat\":4}",
+      "stderr": "",
+      "elapsedMs": 1486
+    },
+    "before": {
+      "graphgoblin.db": {
+        "present": true,
+        "bytes": 262144,
+        "sha256": "6863c286aac69430171b86807318f5c69db6ec78f9d802067371340e0abe8b1b"
+      },
+      "graphgoblin.db-wal": {
+        "present": true,
+        "bytes": 4152,
+        "sha256": "31924eb7a493d004660df5b342ad388847f0852632081d1569a93644f4debd31"
+      },
+      "graphgoblin.db-shm": {
+        "present": true,
+        "bytes": 32768,
+        "sha256": "bc81d6b5bccdf581c461acd03d3a54385c8bae46f3bb0c04c1dd80ffb2ac33c7"
+      }
+    },
+    "after": {
+      "graphgoblin.db": {
+        "present": true,
+        "bytes": 262144,
+        "sha256": "6863c286aac69430171b86807318f5c69db6ec78f9d802067371340e0abe8b1b"
+      },
+      "graphgoblin.db-wal": {
+        "present": true,
+        "bytes": 4152,
+        "sha256": "31924eb7a493d004660df5b342ad388847f0852632081d1569a93644f4debd31"
+      },
+      "graphgoblin.db-shm": {
+        "present": true,
+        "bytes": 32768,
+        "sha256": "bc81d6b5bccdf581c461acd03d3a54385c8bae46f3bb0c04c1dd80ffb2ac33c7"
+      }
+    },
+    "comparison": {
+      "allThreePresent": true,
+      "databaseUnchanged": true,
+      "walUnchanged": true,
+      "shmChanged": false
+    },
+    "value": {
+      "accepted": false,
+      "name": "UnsupportedStoreError",
+      "reason": "The store is format 3; this build reads only format 4",
+      "foundFormat": 3,
+      "requiredFormat": 4
+    }
+  },
+  "startup": {
+    "result": {
+      "code": 1,
+      "signal": null,
+      "killed": false,
+      "stdout": "",
+      "stderr": "GraphGoblin did not start: this build cannot open the store in data directory %TEMP%\\gg-qa-266-r3-wal-raUfpD\\format-3.\n  Database: %TEMP%\\gg-qa-266-r3-wal-raUfpD\\format-3\\graphgoblin.db\n  Found:    format 3\n  Requires: format 4\n  Reason:   The store is format 3; this build reads only format 4\nNo stored data was changed. This build does not convert stores from other formats.\nTo keep that data, run the GraphGoblin build that wrote it. To start fresh, stop every GraphGoblin process using the data directory, then list what a reset would remove (this removes nothing):\n  node apps/api/dist/main.js --reset --data-dir \"%TEMP%\\gg-qa-266-r3-wal-raUfpD\\format-3\"\n",
+      "elapsedMs": 2119
+    },
+    "before": {
+      "graphgoblin.db": {
+        "present": true,
+        "bytes": 262144,
+        "sha256": "6863c286aac69430171b86807318f5c69db6ec78f9d802067371340e0abe8b1b"
+      },
+      "graphgoblin.db-wal": {
+        "present": true,
+        "bytes": 4152,
+        "sha256": "31924eb7a493d004660df5b342ad388847f0852632081d1569a93644f4debd31"
+      },
+      "graphgoblin.db-shm": {
+        "present": true,
+        "bytes": 32768,
+        "sha256": "bc81d6b5bccdf581c461acd03d3a54385c8bae46f3bb0c04c1dd80ffb2ac33c7"
+      }
+    },
+    "after": {
+      "graphgoblin.db": {
+        "present": true,
+        "bytes": 262144,
+        "sha256": "6863c286aac69430171b86807318f5c69db6ec78f9d802067371340e0abe8b1b"
+      },
+      "graphgoblin.db-wal": {
+        "present": true,
+        "bytes": 4152,
+        "sha256": "31924eb7a493d004660df5b342ad388847f0852632081d1569a93644f4debd31"
+      },
+      "graphgoblin.db-shm": {
+        "present": true,
+        "bytes": 32768,
+        "sha256": "bc81d6b5bccdf581c461acd03d3a54385c8bae46f3bb0c04c1dd80ffb2ac33c7"
+      }
+    },
+    "comparison": {
+      "allThreePresent": true,
+      "databaseUnchanged": true,
+      "walUnchanged": true,
+      "shmChanged": false
+    }
+  },
+  "checks": [
+    {
+      "check": "preflight preserves DB/WAL and all three files",
+      "pass": true
+    },
+    {
+      "check": "CLI refuses expected reason and prints exact reset command for its configured directory",
+      "pass": true
+    },
+    {
+      "check": "startup guard refuses expected reason, preserving DB/WAL and all three files",
+      "pass": true
+    },
+    {
+      "check": "built startup exit 1, expected reason and reset instruction, preserving DB/WAL and all three files",
+      "pass": true
+    }
+  ]
+}
