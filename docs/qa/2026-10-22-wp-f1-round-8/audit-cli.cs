@@ -44,4 +44,3 @@ public static class ReadinessCli {
     return 2;
   }
 }
-
