@@ -1,14 +1,16 @@
-# Owner review: exit evidence after the decision-gate redesign (#129)
+# QA recipe: exit evidence after the decision-gate redesign (#129)
 
-These steps cover the human-in-the-loop review for #129, which absorbs report #258. They run on a separate, disposable instance. Do not use the instance on ports 4747/4748 or its store.
+These steps are the QA recipe for #129, which absorbs report #258; the independent QA agents and anyone else checking the running product follow them. They run on a separate, disposable instance. Do not use the instance on ports 4747/4748 or its store.
 
-The capability inventory and the before/after quotes are in [2026-10-18-exit-evidence-inventory.md](../2026-10-18-exit-evidence-inventory.md). This folder holds three loops that need no model turns:
+The capability inventory and the before/after quotes are in [2026-10-18-exit-evidence-inventory.md](../2026-10-18-exit-evidence-inventory.md). This folder holds four loops that need no model turns, and one helper script:
 
 | File                   | Loop                                  | What it exercises                                                                                                                                               |
 | ---------------------- | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `gate-loop.json`       | QA 129 gate repeat                    | An expression gate that always repeats, with maximum passes 3, Limit reached and an Exhausted exit                                                              |
 | `suppressed-loop.json` | QA 129 returns none with destinations | An exit with Returns None and two destinations (caller, log)                                                                                                    |
 | `quiet-loop.json`      | QA 129 quiet exit                     | An expression decision that always takes its Ignore route to a quiet exit (Returns None, no destinations); its Keep route leads to an exit that returns a value |
+| `history-loop.json`    | QA 129 omitted null                   | An exit with Returns `null` and a caller destination, whose finished run section 6 amends to look like an older build's history with the null result omitted    |
+| `omit-null-result.mjs` | (helper)                              | Removes `result` from one run's stored `run.finished` event and clears its run row's result, with the instance stopped (section 6)                              |
 
 ## 1. Build and start an isolated instance
 
