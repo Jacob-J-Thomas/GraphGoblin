@@ -946,6 +946,7 @@ export class RunManager {
           versionId: run.versionId,
           pinned: run.pinned,
           replayOf,
+          initialThread: thread,
           ...(Object.keys(subloopVersions).length > 0 ? { subloopVersions } : {}),
         },
       });
