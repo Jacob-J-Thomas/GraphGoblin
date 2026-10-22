@@ -23,9 +23,10 @@ describe('BoundedValue', () => {
     render(<BoundedValue value={big} label="Variables" testId="value" />);
     const shown = screen.getByTestId('value').textContent ?? '';
     expect(shown).toBe(`${bigJson.slice(0, VALUE_PREVIEW_CHARS)}…`);
+    // The total is unknown while collapsed: counting it would mean formatting the whole value.
     expect(
       screen.getByText(
-        `Showing the first ${VALUE_PREVIEW_CHARS.toLocaleString('en-US')} of ${bigJson.length.toLocaleString('en-US')} characters.`,
+        `Showing the first ${VALUE_PREVIEW_CHARS.toLocaleString('en-US')} characters of a larger value.`,
       ),
     ).toBeInTheDocument();
     // Nothing scrolls yet, so the preview is plain text: not a focusable region, and not named
@@ -92,12 +93,47 @@ describe('BoundedValue', () => {
     expect(screen.getByTestId('value').textContent).toBe('(absent)');
   });
 
-  it('bounds a long string shown as text', async () => {
+  it('bounds a long string shown as text and knows its total', async () => {
     const user = userEvent.setup();
     const long = 'word '.repeat(2_000);
     render(<BoundedValue value={long} text label="Message" testId="value" />);
     expect(screen.getByTestId('value').textContent).toBe(`${long.slice(0, VALUE_PREVIEW_CHARS)}…`);
+    expect(screen.getByText('Showing the first 4,096 of 10,000 characters.')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Show all of Message' }));
     expect(screen.getByTestId('value').textContent).toBe(long);
+  });
+
+  it('formats only the preview while collapsed and the whole value once expanded', async () => {
+    const user = userEvent.setup();
+    let visited = 0;
+    const lazy = {
+      head: 'h'.repeat(VALUE_PREVIEW_CHARS + 10),
+      get tail(): string {
+        visited += 1;
+        return 'tail';
+      },
+    };
+    render(<BoundedValue value={lazy} label="Variables" testId="value" />);
+    expect(screen.getByTestId('value').textContent?.length).toBe(VALUE_PREVIEW_CHARS + 1);
+    expect(visited).toBe(0);
+    await user.click(screen.getByRole('button', { name: 'Show all of Variables' }));
+    expect(screen.getByTestId('value').textContent).toBe(JSON.stringify(lazy, null, 2));
+    expect(visited).toBeGreaterThan(0);
+  });
+
+  it('starts bounded again when another value is shown', async () => {
+    const user = userEvent.setup();
+    const other = {
+      items: Array.from({ length: 400 }, (_, i) => ({ id: i, note: 'y'.repeat(40) })),
+    };
+    const { rerender } = render(<BoundedValue value={big} label="Variables" testId="value" />);
+    await user.click(screen.getByRole('button', { name: 'Show all of Variables' }));
+    expect(screen.getByTestId('value').textContent).toBe(bigJson);
+    rerender(<BoundedValue value={other} label="Variables" testId="value" />);
+    expect(screen.getByTestId('value').textContent?.length).toBe(VALUE_PREVIEW_CHARS + 1);
+    expect(screen.getByRole('button', { name: 'Show all of Variables' })).toBeInTheDocument();
+    // The same value again is still expanded.
+    rerender(<BoundedValue value={big} label="Variables" testId="value" />);
+    expect(screen.getByTestId('value').textContent).toBe(bigJson);
   });
 });

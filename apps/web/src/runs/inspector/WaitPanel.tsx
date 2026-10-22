@@ -2,7 +2,7 @@ import { runs, type RunSnapshot } from '@graphgoblin/api-client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useApi } from '../../api/context.js';
 import { keys } from '../../api/queries.js';
-import { Alert, Card } from '../../components/ui/index.js';
+import { Alert, BoundedValue, Card } from '../../components/ui/index.js';
 import { KindChip } from '../../editor/KindChip.js';
 import { JsonSchemaForm } from '../../forms/JsonSchemaForm.js';
 import { errorMessage, formatDateTime } from '../../lib/utils.js';
@@ -55,7 +55,14 @@ export function WaitPanel({ run }: { run: RunSnapshot }) {
     >
       <div className="grid gap-5">
         {waiting.prompt ? (
-          <p className="text-lg font-semibold whitespace-pre-wrap">{waiting.prompt}</p>
+          <BoundedValue
+            value={waiting.prompt}
+            text
+            tone="heading"
+            label="Prompt"
+            labelled
+            className="-mx-3"
+          />
         ) : null}
         <JsonSchemaForm
           // One form per wait: the next wait (even at the same node) starts empty, while a refetch

@@ -668,7 +668,9 @@ describe('RunInspectorPage', () => {
     expect(screen.getByRole('button', { name: 'Download Result as JSON' })).toBeInTheDocument();
     expect(screen.getByLabelText('Variables').textContent?.length).toBe(4_097);
     // Both the result and the variables carry the notice (each holds the 30,000-character value).
-    expect(screen.getAllByText(/Showing the first 4,096 of 30,0\d\d characters\./)).toHaveLength(2);
+    expect(
+      screen.getAllByText('Showing the first 4,096 characters of a larger value.'),
+    ).toHaveLength(2);
 
     // The patch diff bounds each side at the cell bound.
     const diff = screen.getByRole('list', { name: 'Patch diff' });

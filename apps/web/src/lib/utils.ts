@@ -20,6 +20,91 @@ export function prettyJson(value: unknown): string {
   return JSON.stringify(value, null, 2);
 }
 
+/** Thrown inside `prettyJsonPrefix` to stop the walk once the budget is spent; never escapes. */
+const STOP = new Error('prettyJsonPrefix: budget spent');
+
+/**
+ * The first `limit` characters of `prettyJson(value)` and whether more would follow, produced
+ * without formatting the whole value: the walk stops as soon as the budget is spent, so a
+ * multi-megabyte variable costs only its first lines of work and memory (#259). The text is
+ * exactly `prettyJson(value).slice(0, limit)`: the same key order, escaping, indentation and
+ * treatment of `undefined`, functions, symbols, non-finite numbers and `toJSON` as `JSON.stringify`.
+ */
+export function prettyJsonPrefix(
+  value: unknown,
+  limit: number,
+): { text: string; truncated: boolean } {
+  if (value === undefined) return { text: '', truncated: false };
+  const parts: string[] = [];
+  let length = 0;
+  const push = (part: string): void => {
+    parts.push(part);
+    length += part.length;
+    if (length > limit) throw STOP;
+  };
+  const skipped = (item: unknown): boolean =>
+    item === undefined || typeof item === 'function' || typeof item === 'symbol';
+  const write = (item: unknown, indent: string): void => {
+    if (
+      item !== null &&
+      typeof item === 'object' &&
+      typeof (item as { toJSON?: unknown }).toJSON === 'function'
+    ) {
+      item = (item as { toJSON: () => unknown }).toJSON();
+    }
+    if (item === null || skipped(item)) return push('null');
+    switch (typeof item) {
+      case 'string':
+        return push(JSON.stringify(item));
+      case 'number':
+        return push(Number.isFinite(item) ? String(item) : 'null');
+      case 'boolean':
+        return push(item ? 'true' : 'false');
+      case 'bigint':
+        throw new TypeError('Do not know how to serialize a BigInt');
+      default:
+        break;
+    }
+    const inner = `${indent}  `;
+    if (Array.isArray(item)) {
+      if (item.length === 0) return push('[]');
+      push('[');
+      item.forEach((element, index) => {
+        push(`${index === 0 ? '' : ','}\n${inner}`);
+        write(element, inner);
+      });
+      return push(`\n${indent}]`);
+    }
+    const record = item as Record<string, unknown>;
+    // Properties are read one at a time, so a budget spent on an early property never touches
+    // the later ones (a getter, a large value); the opening brace becomes `{}` if none is kept.
+    const open = parts.length;
+    push('{');
+    let first = true;
+    for (const key of Object.keys(record)) {
+      const property = record[key];
+      if (skipped(property)) continue;
+      push(`${first ? '' : ','}\n${inner}${JSON.stringify(key)}: `);
+      first = false;
+      write(property, inner);
+    }
+    if (first) {
+      parts[open] = '{}';
+      length += 1;
+      if (length > limit) throw STOP;
+      return;
+    }
+    push(`\n${indent}}`);
+  };
+  try {
+    write(value, '');
+  } catch (error) {
+    if (error !== STOP) throw error;
+    return { text: parts.join('').slice(0, limit), truncated: true };
+  }
+  return { text: parts.join(''), truncated: false };
+}
+
 /** True when the error means the backend could not be reached. */
 export function isOfflineError(error: unknown): boolean {
   return error instanceof GraphGoblinApiError && error.status === NETWORK_ERROR_STATUS;

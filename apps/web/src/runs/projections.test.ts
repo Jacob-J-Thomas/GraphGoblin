@@ -485,6 +485,27 @@ describe('initial thread and replay failures', () => {
       );
     });
 
+    it('does not serve a stale result for a log that was cleared and refilled', () => {
+      const cache = createThreadCache();
+      const original = ALL.slice(0, 12);
+      const at12 = cache.at(initial, original, 12);
+      // The store is cleared and refilled: same length, the same tail object, but event 10 now
+      // carries a different patch. Only the middle changed, so a tail-and-length check would miss it.
+      const refilled = original.map((e, index) =>
+        index === 9
+          ? event(R, 10, 'node.finished', {
+              nodeId: 'a',
+              patch: [{ op: 'add', path: '/vars/topic', value: 'changed' }],
+              durationMs: 3,
+            })
+          : e,
+      );
+      const after = cache.at(initial, refilled, 12);
+      expect(after).not.toBe(at12);
+      expect(after).toEqual(tryThreadAt(initial, refilled, 12));
+      expect(after.ok && after.thread.vars['topic']).toBe('changed');
+    });
+
     it('keeps at most the configured number of results', () => {
       const cache = createThreadCache(2);
       const at1 = cache.at(initial, ALL, 1);

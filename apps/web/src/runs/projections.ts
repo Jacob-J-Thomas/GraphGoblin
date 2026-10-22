@@ -89,8 +89,11 @@ export interface ThreadCache {
  * `tryThreadAt` with its results remembered per sequence while a run's log only grows (#259). A
  * live run appends an event every few hundred milliseconds, and without this every append replayed
  * the whole log again for the event the viewer had selected. A result is kept only once the log has
- * reached its sequence, since later events cannot change it; a different initial thread, or a log
- * that is not an extension of the last one seen, empties the cache. At most `limit` results stay.
+ * reached its sequence, since later events cannot change it. A log counts as grown only when every
+ * event seen before is still the same object at the same index (a cleared and refilled log keeps
+ * its length and its tail but not its middle; comparing references is far cheaper than a replay);
+ * a different initial thread or any other log empties the cache. At most `limit` results stay: a
+ * viewer moves between a handful of events, and 32 threads is a few megabytes at most.
  */
 export function createThreadCache(limit = 32): ThreadCache {
   let initial: ContextThread | undefined;
@@ -101,7 +104,7 @@ export function createThreadCache(limit = 32): ThreadCache {
       const extended =
         init === initial &&
         events.length >= known.length &&
-        (known.length === 0 || events[known.length - 1] === known[known.length - 1]);
+        known.every((event, index) => events[index] === event);
       if (!extended) {
         results.clear();
         initial = init;

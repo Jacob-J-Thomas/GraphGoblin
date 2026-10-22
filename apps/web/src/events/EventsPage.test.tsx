@@ -275,7 +275,9 @@ it('lays out a large payload within the cell bound and offers the exact value (#
   renderApp('/events', api);
   const cell = await screen.findByTestId('payload-big');
   expect(cell.textContent?.length).toBe(1_025);
-  expect(screen.getByText(/Showing the first 1,024 of [\d,]+ characters\./)).toBeInTheDocument();
+  expect(
+    screen.getByText('Showing the first 1,024 characters of a larger value.'),
+  ).toBeInTheDocument();
   expect(
     screen.getByRole('button', { name: 'Download Payload of event big as JSON' }),
   ).toBeInTheDocument();

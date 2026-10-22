@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { cn, downloadJson, prettyJson } from '../../lib/utils.js';
+import { cn, downloadJson, prettyJson, prettyJsonPrefix } from '../../lib/utils.js';
 import { Button } from './button.js';
 
 /**
@@ -16,6 +16,7 @@ const TONES = {
   removed: 'bg-status-bad-bg font-mono text-[12.5px] text-status-bad-fg',
   added: 'bg-status-good-bg font-mono text-[12.5px] text-status-good-fg',
   plain: 'text-md',
+  heading: 'text-lg font-semibold',
 } as const;
 
 export interface BoundedValueProps {
@@ -43,12 +44,16 @@ export interface BoundedValueProps {
 }
 
 const count = (n: number) => n.toLocaleString('en-US');
+/** Nothing is expanded. A symbol, so that no value can collide with it. */
+const NONE = Symbol('nothing expanded');
 
 /**
  * A value as text whose rendering is bounded: up to `previewChars` characters are laid out at
- * once; a larger value says how much of it is shown and offers the whole text in a scrolling
- * region, and the exact stored value as a download. Nothing about the value itself changes; the
- * bound is on what the page lays out, so a 2 MB variable cannot freeze the inspector's controls.
+ * once, and the preview is produced without formatting the whole value (`prettyJsonPrefix`); a
+ * larger value says so and offers the whole text in a scrolling region, formatted only then, and
+ * the exact stored value as a download. Nothing about the value itself changes; the bound is on
+ * what the page lays out and holds, so a 2 MB variable cannot freeze the inspector's controls.
+ * Expansion belongs to one value: selecting another value starts bounded again.
  */
 export function BoundedValue({
   value,
@@ -62,13 +67,25 @@ export function BoundedValue({
   className,
   testId,
 }: BoundedValueProps) {
-  const full = useMemo(
-    () => (text && typeof value === 'string' ? value : prettyJson(value)),
-    [value, text],
+  const [expandedFor, setExpandedFor] = useState<unknown>(NONE);
+  const expanded = expandedFor === value;
+  const isText = text && typeof value === 'string';
+  // Collapsed: only the preview is produced (a string shows its own prefix; JSON stops at the
+  // budget). Expanded: the whole text, once, for as long as this value stays expanded.
+  const preview = useMemo(
+    () =>
+      isText
+        ? { text: value.slice(0, previewChars), truncated: value.length > previewChars }
+        : prettyJsonPrefix(value, previewChars),
+    [value, isText, previewChars],
   );
-  const [expanded, setExpanded] = useState(false);
-  const large = full.length > previewChars;
-  const shown = large && !expanded ? full.slice(0, previewChars) : full;
+  const full = useMemo(
+    () => (expanded ? (isText ? value : prettyJson(value)) : undefined),
+    [expanded, value, isText],
+  );
+  const large = preview.truncated;
+  const shown = expanded && full !== undefined ? full : preview.text;
+  const total = isText ? value.length : full?.length;
   return (
     <div className={cn('grid min-w-0 gap-1.5', className)}>
       <pre
@@ -92,13 +109,15 @@ export function BoundedValue({
         <p className="flex flex-wrap items-center gap-2 text-xs text-muted">
           <span>
             {expanded
-              ? `Showing all ${count(full.length)} characters.`
-              : `Showing the first ${count(previewChars)} of ${count(full.length)} characters.`}
+              ? `Showing all ${count(total ?? shown.length)} characters.`
+              : total !== undefined
+                ? `Showing the first ${count(previewChars)} of ${count(total)} characters.`
+                : `Showing the first ${count(previewChars)} characters of a larger value.`}
           </span>
           <Button
             size="sm"
             aria-label={`${expanded ? 'Show less of' : 'Show all of'} ${label}`}
-            onClick={() => setExpanded(!expanded)}
+            onClick={() => setExpandedFor(expanded ? NONE : value)}
           >
             {expanded ? 'Show less' : 'Show all'}
           </Button>
