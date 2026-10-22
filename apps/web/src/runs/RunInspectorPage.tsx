@@ -153,7 +153,8 @@ export function RunInspectorPage() {
                 {returnSummary ? <p data-testid="exit-returns">{returnSummary}</p> : null}
               </Card>
             ) : null}
-            {/* A null return is a value: the snapshot drops it, so read it from the finish. */}
+            {/* A null return is a value: show the row's recorded result, or the finish event's
+                when the row has none. */}
             {run.result !== undefined || finished?.result !== undefined ? (
               <Card title="Result">
                 <pre
