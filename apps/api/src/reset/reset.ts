@@ -1,5 +1,5 @@
 import { readdir, realpath, stat } from 'node:fs/promises';
-import { basename, dirname, resolve } from 'node:path';
+import { resolve, sep } from 'node:path';
 import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { databaseFilePath } from '@graphgoblin/infrastructure/sqlite';
 import { loadConfig, type ApiConfig } from '../config.js';
@@ -191,30 +191,23 @@ async function listedName(dir: string, name: string): Promise<string> {
 }
 
 /**
- * The database path's segments below the data directory, found by walking its ancestors up to the
- * one whose physical directory is the data directory by filesystem identity, never by comparing
- * path strings: a parent that keeps `Data` and `data` apart would otherwise let one directory's
- * database be planned against the other. An ancestor is compared by its physical path, so an alias
- * of the data directory itself (a junction or symbolic link to it, in either direction of the
- * configuration) is the data directory; a link below it is left for the spelling resolution to
- * refuse. Ancestors that do not exist yet contribute their configured spelling. Undefined when no
- * ancestor is the data directory.
+ * The segments of `path` below `root` when `root` is an exact prefix of the resolved path (drive
+ * letter normalised, no case folding): a parent that keeps `Data` and `data` apart must never have
+ * one directory's database planned against the other, a stream of the directory (`data:review`) is
+ * not the directory, and a link to the data directory that appears only in the database path is
+ * not the data directory either (a reset never follows links). Undefined otherwise. The segments
+ * are then resolved by identity, ancestor by ancestor, by `storedSpelling`.
  */
-async function relativeToDataDir(
-  dataDir: string,
-  databaseFile: string,
-): Promise<string[] | undefined> {
-  const target = await identityOf(dataDir);
-  if (target === undefined) return undefined;
-  const tail: string[] = [];
-  let current = resolve(databaseFile);
-  for (;;) {
-    const parent = dirname(current);
-    if (parent === current) return undefined;
-    tail.unshift(basename(current));
-    if ((await identityOf(await physicalPath(parent))) === target) return tail;
-    current = parent;
-  }
+function segmentsBelow(root: string, path: string): string[] | undefined {
+  const normalise = (p: string) => (/^[a-z]:/i.test(p) ? p[0]!.toLowerCase() + p.slice(1) : p);
+  const base = normalise(resolve(root));
+  const target = normalise(resolve(path));
+  const prefix = base.endsWith(sep) ? base : base + sep;
+  if (!target.startsWith(prefix) || target.length === prefix.length) return undefined;
+  const rest = target.slice(prefix.length).split(sep);
+  return rest.some((segment) => segment === '' || segment === '.' || segment === '..')
+    ? undefined
+    : rest;
 }
 
 /**
@@ -541,14 +534,25 @@ async function physicalPath(path: string): Promise<string> {
 }
 
 /**
- * Two paths name one physical directory when their resolved identities agree, whatever the
- * spelling. When neither exists there is nothing a reset could remove, and the resolved spellings
- * decide only which message the caller sees.
+ * Two paths name one physical directory when both resolve to directories with one identity,
+ * whatever the spelling; a stream or file that shares a directory's identity is not that directory.
+ * When neither exists there is nothing a reset could remove, and the resolved spellings decide only
+ * which message the caller sees.
  */
 async function sameDirectory(a: string, b: string): Promise<boolean> {
   const [first, second] = [await physicalPath(a), await physicalPath(b)];
   const [firstId, secondId] = [await identityOf(first), await identityOf(second)];
-  if (firstId !== undefined || secondId !== undefined) return firstId === secondId;
+  if (firstId !== undefined || secondId !== undefined) {
+    if (firstId !== secondId) return false;
+    const isDirectory = async (path: string) => {
+      try {
+        return (await stat(path)).isDirectory();
+      } catch {
+        return false;
+      }
+    };
+    return (await isDirectory(first)) && (await isDirectory(second));
+  }
   return process.platform === 'win32'
     ? first.toLowerCase() === second.toLowerCase()
     : first === second;
@@ -587,7 +591,8 @@ export async function resetDataDirectory(
       'GG_DB_URL does not name a local database file; a reset removes only files inside the data directory',
     );
   const dataDir = await realpath(configured);
-  const segments = await relativeToDataDir(dataDir, databaseFile);
+  // Under the configured spelling or under the physical directory, compared exactly.
+  const segments = segmentsBelow(configured, databaseFile) ?? segmentsBelow(dataDir, databaseFile);
   if (!segments)
     throw new ResetRefusedError(
       `the database ${databaseFile} is outside the data directory ${configured}; a reset removes only paths inside it, so remove that database yourself or point GG_DB_URL inside the data directory`,

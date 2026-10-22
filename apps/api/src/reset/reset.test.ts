@@ -1,6 +1,16 @@
 import { spawn, spawnSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
-import { lstat, mkdir, mkdtemp, readdir, rename, rm, symlink, writeFile } from 'node:fs/promises';
+import {
+  link,
+  lstat,
+  mkdir,
+  mkdtemp,
+  readdir,
+  rename,
+  rm,
+  symlink,
+  writeFile,
+} from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
@@ -691,27 +701,93 @@ describe('refused resets change nothing', () => {
     },
   );
 
-  // An alias of the data directory itself is the data directory in both directions of the
-  // configuration (the Sol re-review's round-5 reproduction refused the database configured
-  // through a junction while the data directory was configured physically).
-  it('accepts the database configured through a link to the data directory and resets it', async () => {
+  // The database must lie under the configured data directory's own spelling or its physical
+  // path: a link to the data directory that appears only in the database path is a link, and a
+  // reset never follows links (the round-6 review withdrew the earlier acceptance of this case).
+  it('refuses a database configured through a link to the data directory, which is reached through a link', async () => {
     const { base, dataDir } = await prepare('current');
     const alias = join(base, 'alias');
     await linkDirectory(dataDir, alias);
     const url = `file:${join(alias, 'graphgoblin.db').replaceAll('\\', '/')}`;
-    const dry = await reset(['--reset'], { GG_DATA_DIR: dataDir, GG_DB_URL: url });
-    expect(dry.code).toBe(0);
-    expect(dry.out).toMatch(/\n {2}graphgoblin\.db +database +1 file/);
-    const confirmed = await reset(['--reset', '--yes', '--data-dir', dataDir], {
-      GG_DATA_DIR: dataDir,
-      GG_DB_URL: url,
-    });
-    expect(confirmed.code).toBe(0);
-    expect(confirmed.out).toContain('Reset complete');
-    expect((await readdir(dataDir)).sort()).not.toContain('graphgoblin.db');
-    // The alias itself was never removed or followed into another directory.
-    expect((await lstat(alias)).isSymbolicLink()).toBe(true);
+    const before = await snapshotTree(base);
+    for (const argv of [['--reset'], ['--reset', '--yes', '--data-dir', dataDir]]) {
+      const result = await reset(argv, { GG_DATA_DIR: dataDir, GG_DB_URL: url });
+      expect(result.code).toBe(1);
+      expect(result.err).toContain('is outside the data directory');
+      expect(await snapshotTree(base)).toEqual(before);
+    }
   });
+
+  // Links below the data directory are refused wherever they lead, even back to the data
+  // directory or to its parent (the round-6 review's reproductions).
+  it.each([
+    [
+      'the data directory itself',
+      'linked',
+      (dataDir: string, _base: string) => dataDir,
+      'linked/graphgoblin.db',
+    ],
+    [
+      'the parent of the data directory',
+      'up',
+      (_dataDir: string, base: string) => base,
+      'up/data/graphgoblin.db',
+    ],
+  ])(
+    'refuses a database path through a link below the data directory to %s',
+    async (_name, linkName, target, dbPath) => {
+      const { base, dataDir } = await prepare('current');
+      await linkDirectory(target(dataDir, base), join(dataDir, linkName));
+      const before = await snapshotTree(base);
+      const result = await reset(['--reset', '--yes', '--data-dir', dataDir], {
+        GG_DATA_DIR: dataDir,
+        GG_DB_URL: `file:${join(dataDir, ...dbPath.split('/')).replaceAll('\\', '/')}`,
+      });
+      expect(result.code).toBe(1);
+      expect(result.err).toContain(`passes through ${linkName}, which is not a physical directory`);
+      expect(await snapshotTree(base)).toEqual(before);
+    },
+  );
+
+  // A hard link leaves the database reachable under another name: the manifest would remove one
+  // name and keep the other, so the configuration is refused.
+  it('refuses a database that has a hard link under another name', async () => {
+    const { base, dataDir } = await prepare('current');
+    await link(join(dataDir, 'graphgoblin.db'), join(dataDir, 'backup.db'));
+    const before = await snapshotTree(base);
+    const result = await reset(['--reset', '--yes', '--data-dir', dataDir], {
+      GG_DATA_DIR: dataDir,
+    });
+    expect(result.code).toBe(1);
+    // The spelling resolution already sees two names for one file and refuses there.
+    expect(result.err).toContain(
+      'lists graphgoblin.db under more than one name (backup.db, graphgoblin.db)',
+    );
+    expect(await snapshotTree(base)).toEqual(before);
+  });
+
+  // A Windows stream of the data directory shares its identity but is a file, not the directory
+  // (the round-6 review's reproduction confirmed a reset through `data:review`).
+  it.runIf(process.platform === 'win32')(
+    'refuses a stream of the data directory as --data-dir and as a database ancestor',
+    async () => {
+      const { base, dataDir } = await prepare('current');
+      await writeFile(`${dataDir}:review`, 'a stream on the directory');
+      const before = await snapshotTree(base);
+      const confirmed = await reset(['--reset', '--yes', '--data-dir', `${dataDir}:review`], {
+        GG_DATA_DIR: dataDir,
+      });
+      expect(confirmed.code).toBe(1);
+      expect(confirmed.err).toContain('--data-dir names');
+      const ancestor = await reset(['--reset', '--yes', '--data-dir', dataDir], {
+        GG_DATA_DIR: dataDir,
+        GG_DB_URL: `file:${dataDir.replaceAll('\\', '/')}:review/graphgoblin.db`,
+      });
+      expect(ancestor.code).toBe(1);
+      expect(ancestor.err).toContain('is outside the data directory');
+      expect(await snapshotTree(base)).toEqual(before);
+    },
+  );
 
   // A Windows alternate data stream shares its file's identity but is not the file (the Sol
   // re-review's round-4 reproduction removed the whole file when a stream was configured).

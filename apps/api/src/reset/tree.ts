@@ -35,13 +35,17 @@ export function hasCode(error: unknown, code: string): boolean {
  */
 export async function identityOf(path: string): Promise<string | undefined> {
   try {
-    const stats = await lstat(path, { bigint: true });
-    const root = parse(resolve(path)).root.toLowerCase();
-    return `${root}|${String(stats.dev)}:${String(stats.ino)}`;
+    return identityFrom(path, await lstat(path, { bigint: true }));
   } catch (error) {
     if (hasCode(error, 'ENOENT') || hasCode(error, 'ENOTDIR')) return undefined;
     throw error;
   }
+}
+
+/** The one identity construction every entry uses, so identities from any source compare. */
+function identityFrom(path: string, stats: { dev: bigint; ino: bigint }): string {
+  const root = parse(resolve(path)).root.toLowerCase();
+  return `${root}|${String(stats.dev)}:${String(stats.ino)}`;
 }
 
 /** Whether `path` lies strictly inside `root` (both absolute and normalized). */
@@ -65,13 +69,14 @@ const absolute = (root: string, path: string): string => join(root, ...path.spli
 /** The entry at `path` (relative to `root`), or undefined when nothing is there. */
 export async function statEntry(root: string, path: string): Promise<TreeEntry | undefined> {
   try {
-    const stats = await lstat(absolute(root, path), { bigint: true });
+    const full = absolute(root, path);
+    const stats = await lstat(full, { bigint: true });
     const kind = kindOf(stats);
     return {
       path,
       kind,
       bytes: kind === 'file' ? Number(stats.size) : 0,
-      identity: `${String(stats.dev)}:${String(stats.ino)}`,
+      identity: identityFrom(full, stats),
     };
   } catch (error) {
     if (hasCode(error, 'ENOENT') || hasCode(error, 'ENOTDIR')) return undefined;
