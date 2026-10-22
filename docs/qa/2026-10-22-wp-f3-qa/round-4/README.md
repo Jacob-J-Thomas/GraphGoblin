@@ -13,10 +13,11 @@ state that their original raw evidence was lost. The fixed QA helper records act
 exit events/codes/signals and derives cleanup confirmation from those observations.
 The single fresh API replay passed **12/12** checks. Historical JSON was preserved.
 
-The parent report is unchanged, as instructed. The supplied checker still reports
-**10 missing names there**, itemized in section 5. No unresolved evidence target
-belongs to the repaired round-2/3/4 record, apart from that explicit outside-scope
-inventory. This is not a claim that the parent report has been repaired.
+At the round-4 closing boundary, the parent report was unchanged, as instructed,
+and the supplied checker reported **10 missing names there**. No unresolved evidence
+target belonged to the repaired round-2/3/4 record, apart from that explicit
+outside-scope inventory. Section 5 distinguishes that historical result from the
+later parent-report citation repair.
 
 Independent QA, same thread, alone; detached HEAD; uncommitted, ready for orchestrator
 review. Node **22.14.0** first on PATH, PowerShell, `pnpm.cmd`, built API, fake
@@ -137,32 +138,23 @@ Every round-4 artifact intended for preservation is directly linked here:
 
 ## 5. Observations outside scope and final checker disposition
 
-The eight names supplied in the dispatch belong to the implementer's record, as
-classified by that dispatch. They are not retained artifacts of this round:
+At the round-4 closing boundary, the eight names supplied in that dispatch and
+two original installation-log names remained unresolved in the parent report. The
+exact historical ten-name result remains in the [original checker output](references-final.log.txt)
+and [result record](references-results.json). This was a declared residual, not a
+zero-missing claim for the whole parent record. Actual relative Markdown targets in
+the repaired round-2/3/4 reports resolved at that boundary.
 
-- `claude-corrected-results.json`
-- `claude-native-first.json`
-- `coverage-engine.log`
-- `coverage-web.log`
-- `edge-extra-hydration-error.json`
-- `edge.log`
-- `final-checks.log`
-- `infrastructure-isolated.log`
-
-The checker also finds `base-install.log` and `base-install-2.log` in the
-[parent report](../report.md). Neither is in the committed tree or this worktree;
-no owned old TEMP directory remains. They are original round-1 installation logs,
-not the fresh successful F4 migration evidence. The instruction to leave that
-report alone prevents rewording those two links here. No replacement is invented
-and no ignored empty placeholder is supplied. All ten remain for its owner to
-disposition; the audit verifies the parent report's hash is unchanged.
-
-The supplied checker's remaining-name result is:
-
-> 10 missing: base-install-2.log (bare), base-install.log (bare), claude-corrected-results.json (bare), claude-native-first.json (bare), coverage-engine.log (bare), coverage-web.log (bare), edge-extra-hydration-error.json (bare), edge.log (bare), final-checks.log (bare), infrastructure-isolated.log (bare)
-
-This is a declared residual, not a zero-missing claim for the whole parent record.
-Actual relative Markdown targets in the repaired round-2/3/4 reports all resolve.
+A later citation repair on `e20355c1fd3aeb293e4a852c9a9483138a964293` reworded
+the [parent report](../report.md) to state that the eight original captures were
+not kept. It also recovered the two original installation transcripts from ignored
+files in the implementer's worktree and retained them as
+[first installation transcript](../base-install.log.txt) and
+[second installation transcript](../base-install-2.log.txt). The
+[disposition record](../citation-repair.json) preserves all original names. No
+replacement observation was invented or presented as the original. The earlier
+round-4 audit's unchanged-parent hash and remaining-name count describe that earlier
+boundary, before this later repair.
 
 The prior inspector gaps remain outside #243 per the delivery disposition
 (follow-ups #379/#380). Historical D-015 native descendant termination limitations
