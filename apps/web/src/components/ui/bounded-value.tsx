@@ -44,8 +44,6 @@ export interface BoundedValueProps {
 }
 
 const count = (n: number) => n.toLocaleString('en-US');
-/** Nothing is expanded. A symbol, so that no value can collide with it. */
-const NONE = Symbol('nothing expanded');
 
 /**
  * A value as text whose rendering is bounded: up to `previewChars` characters are laid out at
@@ -53,7 +51,8 @@ const NONE = Symbol('nothing expanded');
  * larger value says so and offers the whole text in a scrolling region, formatted only then, and
  * the exact stored value as a download. Nothing about the value itself changes; the bound is on
  * what the page lays out and holds, so a 2 MB variable cannot freeze the inspector's controls.
- * Expansion belongs to one value: selecting another value starts bounded again.
+ * Expansion lasts while the same value stays shown: any change of value starts bounded again,
+ * including a return to a value the reader expanded earlier.
  */
 export function BoundedValue({
   value,
@@ -67,8 +66,16 @@ export function BoundedValue({
   className,
   testId,
 }: BoundedValueProps) {
-  const [expandedFor, setExpandedFor] = useState<unknown>(NONE);
-  const expanded = expandedFor === value;
+  const [expandedState, setExpandedState] = useState(false);
+  const [shownValue, setShownValue] = useState<unknown>(value);
+  // Another value arrived (another event, a live reconstruction, or one shown expanded earlier):
+  // it starts bounded. React re-renders at once with the adjusted state; `expanded` is false in
+  // the discarded pass too, so the whole text is never formatted for a value that is not expanded.
+  if (shownValue !== value) {
+    setShownValue(value);
+    setExpandedState(false);
+  }
+  const expanded = expandedState && shownValue === value;
   const isText = text && typeof value === 'string';
   // Collapsed: only the preview is produced (a string shows its own prefix; JSON stops at the
   // budget). Expanded: the whole text, once, for as long as this value stays expanded.
@@ -117,7 +124,7 @@ export function BoundedValue({
           <Button
             size="sm"
             aria-label={`${expanded ? 'Show less of' : 'Show all of'} ${label}`}
-            onClick={() => setExpandedFor(expanded ? NONE : value)}
+            onClick={() => setExpandedState(!expanded)}
           >
             {expanded ? 'Show less' : 'Show all'}
           </Button>

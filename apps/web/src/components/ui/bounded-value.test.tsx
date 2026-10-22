@@ -121,7 +121,7 @@ describe('BoundedValue', () => {
     expect(visited).toBeGreaterThan(0);
   });
 
-  it('starts bounded again when another value is shown', async () => {
+  it('starts bounded again when another value is shown, and when the first one returns', async () => {
     const user = userEvent.setup();
     const other = {
       items: Array.from({ length: 400 }, (_, i) => ({ id: i, note: 'y'.repeat(40) })),
@@ -132,8 +132,17 @@ describe('BoundedValue', () => {
     rerender(<BoundedValue value={other} label="Variables" testId="value" />);
     expect(screen.getByTestId('value').textContent?.length).toBe(VALUE_PREVIEW_CHARS + 1);
     expect(screen.getByRole('button', { name: 'Show all of Variables' })).toBeInTheDocument();
-    // The same value again is still expanded.
+    // Returning to the expanded value (the same reference, from the thread cache) lays out the
+    // preview again: the bound is on what is shown now, not on what the reader once chose
+    // (QA-259-01, a 2.3 MB value rendered whole by ordinary timeline navigation).
     rerender(<BoundedValue value={big} label="Variables" testId="value" />);
+    expect(screen.getByTestId('value').textContent).toBe(
+      `${bigJson.slice(0, VALUE_PREVIEW_CHARS)}…`,
+    );
+    expect(screen.getByRole('button', { name: 'Show all of Variables' })).toBeInTheDocument();
+    // An unchanged value keeps its expansion across re-renders.
+    await user.click(screen.getByRole('button', { name: 'Show all of Variables' }));
+    rerender(<BoundedValue value={big} label="Variables" testId="value" className="mt-1" />);
     expect(screen.getByTestId('value').textContent).toBe(bigJson);
   });
 });
