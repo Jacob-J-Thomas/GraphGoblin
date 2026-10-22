@@ -83,6 +83,8 @@ The first selector attempt selected zero tests in37 collection-only commands; al
 | Five requested package test:coverage commands                       | Infrastructure/web FAIL; API/API-client/MCP PASS; all coverage thresholds pass; isolated triage complete: 30 pass/7 D-015 failures |
 | Edge history specs with GG_E2E_BROWSER_CHANNEL=msedge and retries 0 | PASS: 3/3                                                                                                                          |
 
+D-030 follow-up: the original gate-build.txt transcript was not retained; [the regenerated build transcript](round-2/gate-build.log.txt) records a successful pnpm.cmd build on a9df185eecdb192a79b90665ee682ee7916b2ac0 during round 2.
+
 Exact gate output is in the gate-*.txt files. No dependency or schema was changed by QA; licence/migration generation was not needed for QA edits.
 
 ## 6. Docs
