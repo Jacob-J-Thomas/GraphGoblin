@@ -1067,3 +1067,57 @@ describe('documented command-cache bootstrap without execution evidence', () => 
     expect(() => acc.push(result())).toThrow(/protocol/);
   });
 });
+
+describe('complete accepted transcripts (#243)', () => {
+  it('bounds stored item detail while retaining the complete final result', () => {
+    const acc = accumulator();
+    acc.push(init());
+    const text = 'x'.repeat(20000);
+    const events = acc.push({
+      type: 'assistant',
+      message: {
+        content: [
+          { type: 'text', text },
+          { type: 'thinking', thinking: text },
+          { type: 'tool_use', id: 'large-read', name: 'Read', input: { file_path: 'fixture.txt' } },
+        ],
+      },
+    });
+    expect(events.filter((event) => event.type === 'item').slice(0, 2)).toEqual([
+      expect.objectContaining({
+        item: expect.objectContaining({ detail: { text: text.slice(0, 16 * 1024) } }),
+      }),
+      expect.objectContaining({
+        item: expect.objectContaining({ detail: { text: text.slice(0, 16 * 1024) } }),
+      }),
+    ]);
+    const outputs = acc.push({
+      type: 'user',
+      message: {
+        content: [
+          { type: 'tool_result', tool_use_id: 'large-read', is_error: false, content: text },
+        ],
+      },
+    });
+    expect(outputs).toContainEqual(
+      expect.objectContaining({
+        item: expect.objectContaining({
+          detail: { tool: 'Read', output: text.slice(0, 16 * 1024) },
+        }),
+      }),
+    );
+    acc.push(result({ result: text }));
+    expect(acc.finish().finalText).toBe(text);
+    expect(
+      acc
+        .finish()
+        .items.filter(
+          (item) =>
+            item.detail &&
+            typeof item.detail === 'object' &&
+            !Array.isArray(item.detail) &&
+            'text' in item.detail,
+        ),
+    ).toHaveLength(2);
+  });
+});

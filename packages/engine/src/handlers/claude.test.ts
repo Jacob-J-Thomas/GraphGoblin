@@ -260,7 +260,7 @@ describe('unconfirmed native cancellation', () => {
     ['HARNESS_PROTOCOL_ERROR', 'HARNESS_DELIVERY_UNCERTAIN', false],
     ['HARNESS_OUTPUT_INVALID', 'HARNESS_DELIVERY_UNCERTAIN', false],
     ['HARNESS_UNSUPPORTED_POLICY', 'HARNESS_TURN_FAILED', false],
-    ['HARNESS_OUTPUT_LIMIT', 'HARNESS_DELIVERY_UNCERTAIN', false],
+    ['HARNESS_OUTPUT_LIMIT', 'HARNESS_OUTPUT_LIMIT', false],
     ['HARNESS_INVALID_CONFIGURATION', 'HARNESS_TURN_FAILED', false],
     ['HARNESS_TURN_FAILED', 'HARNESS_DELIVERY_UNCERTAIN', false],
   ])('maps fixed %s without substring inference', async (code, expected, resumable) => {

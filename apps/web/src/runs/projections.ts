@@ -196,7 +196,7 @@ function describeDecision(event: Extract<RunEvent, { type: 'decision.made' }>): 
         ? ` with ${confidenceLabel} not recorded`
         : '';
   const diagnostics = event.diagnostics.map((item) => `; ${item.code}: ${item.message}`).join('');
-  return `${description} with ${provenance.kind}${provider}${model}${confidenceText}${event.gate ? `; passes ${event.gate.previousPasses} → ${event.gate.passes} of ${event.gate.maxPasses}${event.gate.limit ? `; Limit reached (${event.gate.limit})` : ''}` : ''}${diagnostics}`;
+  return `${description} with ${provenance.kind}${provider}${model}${confidenceText}${event.gate ? `; passes ${event.gate.previousPasses} → ${event.gate.passes}${event.gate.maxPasses === null ? ' (unlimited)' : ` of ${event.gate.maxPasses}`}${event.gate.limit ? `; Limit reached (${event.gate.limit})` : ''}` : ''}${diagnostics}`;
 }
 
 function describeExit(event: Extract<RunEvent, { type: 'exit.evaluated' }>): string {

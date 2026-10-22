@@ -741,12 +741,7 @@ describe('Claude preflight and transport failure matrix', () => {
     });
   });
   it('validates positive process bounds', () => {
-    for (const options of [
-      { preflightTimeoutMs: 0 },
-      { turnTimeoutMs: -1 },
-      { maxOutputBytes: 0 },
-      { maxTurns: 1.5 },
-    ])
+    for (const options of [{ preflightTimeoutMs: 0 }, { maxOutputBytes: 0 }])
       expect(() => new ClaudeHarness(options)).toThrow();
     const { harness, calls } = fixture();
     expect(harness.id).toBe('claude');
@@ -775,17 +770,15 @@ describe('Claude preflight and transport failure matrix', () => {
       },
       platform: 'win32',
       preflightTimeoutMs: 1000,
-      turnTimeoutMs: 2000,
       maxOutputBytes: 1024,
-      maxTurns: 5,
     });
     expect(
       await configured.start({ ...request, effort: 'max' }, new AbortController().signal).result,
     ).toMatchObject({ finalText: 'finished' });
-    expect(configuredCalls.at(-1)).toMatchObject({ timeoutMs: 2000, maxOutputBytes: 1024 });
-    expect(configuredCalls.at(-1)?.args).toEqual(
-      expect.arrayContaining(['--effort', 'max', '--max-turns', '5']),
-    );
+    expect(configuredCalls.at(-1)).toMatchObject({ timeoutMs: null, maxOutputBytes: 1024 });
+    expect(configuredCalls.at(-1)?.args).toEqual(expect.arrayContaining(['--effort', 'max']));
+    expect(configuredCalls.at(-1)?.args).not.toContain('--max-turns');
+    expect(configuredCalls.at(-1)?.args).not.toContain('--max-budget-usd');
     const withoutSettings = {
       workingDirectory: request.workingDirectory,
       options: request.options,

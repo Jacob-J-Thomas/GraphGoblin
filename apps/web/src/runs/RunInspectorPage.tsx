@@ -1,3 +1,4 @@
+import { RunLimits } from './inspector/RunLimits.js';
 import { useQueryClient } from '@tanstack/react-query';
 import { GraphGoblinApiError } from '@graphgoblin/api-client';
 import { useState } from 'react';
@@ -148,6 +149,7 @@ export function RunInspectorPage() {
                 </pre>
               </Card>
             ) : null}
+            <RunLimits run={run} />
             <WaitPanel run={run} />
           </>
         )}

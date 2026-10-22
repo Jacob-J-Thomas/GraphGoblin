@@ -51,7 +51,7 @@ Current definitions/exports use format 4. Old exports and stores require the int
 
 ### Gates and repeat limits (#164 E1)
 
-A decision becomes a gate when exactly one route is marked `repeat: true`. This marker belongs on an expression/LLM route, Choice option, Noul side or Score band; it is never inferred from canvas direction. Require `maxPasses` (1–10,000); optionally set `maxRunTimeSeconds` (positive integer seconds, at most 31,536,000). Without a repeat marker neither limit is allowed. Reserve the port ID `limit-reached`: authors cannot use it as a route ID. The gate exposes **Limit reached** only while a repeat is marked, and that output must be connected. The repeat route must lead through a cycle back to the gate; exits are terminal and triggers cannot be repeat targets.
+A decision becomes a gate when exactly one route is marked `repeat: true`. This marker belongs on an expression/LLM route, Choice option, Noul side or Score band; it is never inferred from canvas direction. Require `maxPasses` (1 to 10,000 or null for Unlimited); optionally set `maxRunTimeSeconds` (positive integer seconds, at most 31,536,000). Without a repeat marker neither limit is allowed. Reserve the port ID `limit-reached`: authors cannot use it as a route ID. The gate exposes **Limit reached** only while a repeat is marked, and that output must be connected. The repeat route must lead through a cycle back to the gate; exits are terminal and triggers cannot be repeat targets.
 
 Passes are one-based, available to JSONata as `gates.<nodeId>.passes` (quote an ID with punctuation, for example `gates."my-gate".passes`). Every marked gate starts at 1. Evaluation happens first. An allowed repeat increments its count once; a non-repeat choice or a refused repeat leaves it unchanged. A non-repeat choice on the last allowed pass wins. If the decision chooses repeat at `maxPasses`, or after the optional run-time limit, it takes `limit-reached` instead. Both limits reached together are recorded as `max-passes`.
 
@@ -265,3 +265,27 @@ The caller destination resolves to the run result, the MCP caller or the parent 
 - Error or debug node: an explicit place to route to when run inspection is not enough for debugging.
 - Fan-out and fan-in nodes.
 - Summarise node once an LLM provider port exists.
+
+## Visible execution limits and unlimited mode (#243)
+
+The editor's Loop tab and Settings show the defaults before a run exists:
+`maxNodeVisits: 10` and no run deadline (`runDeadlineSeconds: null`). Omission means the
+contract default. For visits and repeat passes, `null` is an explicit Unlimited choice,
+with a warning. The deadline's neutral No run deadline choice is the default; choose
+Limited and enter seconds to add one. Each new run pins the effective
+values in `pinned.limits`; the run inspector shows those values and its absolute deadline.
+Definition changes and Settings edits cannot alter an existing run's pin.
+
+A run deadline starts on first execution, includes waits, pauses and restart downtime,
+and excludes queue time. A durable timer aborts active work or fails a parked run with
+`RUN_DEADLINE_EXCEEDED` (non-resumable). Late node results cannot overwrite this outcome;
+explicit Cancel remains `cancelled`. Null removes the run timer. Node `timeoutSeconds`
+and authored gate `maxRunTimeSeconds` remain independent explicit controls.
+
+Format 4 uses per-gate passes instead of shared iterations. Set `maxPasses: null` for
+unlimited marked repetition; evidence records null and passes continue increasing.
+The gate's authored non-repeat routes and explicit time check still apply. Disable both
+loop controls, pass limits and any authored watchdogs to permit intentionally indefinite
+execution, ending through authored exits, Cancel or an external/resource failure.
+GraphGoblin imposes no spending, token, subscription-usage or provider-turn budget.
+Authors may use script/decision nodes for their own usage-aware behavior.

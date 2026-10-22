@@ -221,6 +221,13 @@ function mapHarnessFailure(
     return new RunFailureError('HARNESS_NOT_AUTHENTICATED', message, { nodeId, resumable: true });
   if (code === 'harness_not_installed')
     return new RunFailureError('HARNESS_NOT_INSTALLED', message, { nodeId, resumable: true });
+  if (code === 'harness_transport_failed')
+    return new RunFailureError('HARNESS_TRANSPORT_FAILED', message, {
+      nodeId,
+      resumable: reportedRetriable,
+    });
+  if (code === 'harness_output_limit')
+    return new RunFailureError('HARNESS_OUTPUT_LIMIT', message, { nodeId, resumable: false });
   if (code === 'harness_timeout')
     return new RunFailureError('INFERENCE_TIMEOUT', message, { nodeId, resumable: true });
   return new RunFailureError('HARNESS_TURN_FAILED', 'harness turn failed: ' + message, {
@@ -397,10 +404,35 @@ export const inferenceHandler: NodeHandler<'inference'> = {
         );
       }
       invoking = true;
-      session = resumeId
-        ? harness.resume(resumeId, sessionRequest(turn), timeout.signal)
-        : harness.start(sessionRequest(turn), timeout.signal);
-      result = await consume(ctx, session, row, pending);
+      // One retry only for a positively unsubmitted transient transport failure. Submission
+      // evidence is F4's authority; accepted/uncertain work never enters this retry path.
+      for (let retry = 0; ; retry += 1) {
+        session = resumeId
+          ? harness.resume(resumeId, sessionRequest(turn), timeout.signal)
+          : harness.start(sessionRequest(turn), timeout.signal);
+        try {
+          result = await consume(ctx, session, row, pending);
+          break;
+        } catch (error) {
+          if (
+            !(error instanceof RunFailureError) ||
+            error.code !== 'HARNESS_TRANSPORT_FAILED' ||
+            !error.options.resumable ||
+            pending.submission !== 'definitely-not-submitted' ||
+            retry >= 1 ||
+            timeout.signal.aborted
+          )
+            throw error;
+          await session.cancel();
+          await ctx.services.record({ type: 'harness.turn', nodeId: ctx.node.id, ...pending.turn });
+          pending = {
+            turn: pending.turn,
+            submission: 'delivery-uncertain',
+            accepted: false,
+            ...(resumeId ? { sessionId: resumeId } : {}),
+          };
+        }
+      }
       usage = addUsage(usage, result.usage);
 
       // Structured output: validate, then repair on the same session as the policy allows.

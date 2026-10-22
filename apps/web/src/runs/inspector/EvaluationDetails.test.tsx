@@ -1,3 +1,4 @@
+import { describeEvent } from '../projections.js';
 import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
@@ -32,6 +33,33 @@ function noulDefinition(truthThreshold?: number) {
 }
 
 describe('EvaluationDetails', () => {
+  it('shows unlimited pass evidence explicitly in the inspector and timeline', () => {
+    const recorded = event('run', 1, 'decision.made', {
+      nodeId: 'check',
+      portId: 'again',
+      diagnostics: [],
+      observation: { kind: 'route', routeId: 'again', confidence: null, reasoning: null },
+      provenance: {
+        kind: 'expression',
+        provider: null,
+        classifierId: null,
+        model: null,
+        effort: null,
+      },
+      gate: {
+        previousPasses: 15,
+        passes: 16,
+        repeatRouteId: 'again',
+        maxPasses: null,
+        elapsedSeconds: 5,
+        limit: null,
+      },
+    });
+    render(<EvaluationDetails event={recorded} />);
+    expect(screen.getByText('Maximum passes').nextElementSibling).toHaveTextContent('Unlimited');
+    expect(describeEvent(recorded)).toContain('passes 15 \u2192 16 (unlimited)');
+  });
+
   it.each<{ type: string; observation: EvaluationObservation }>([
     {
       type: 'Noul',

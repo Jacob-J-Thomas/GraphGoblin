@@ -43,9 +43,7 @@ export interface ClaudeHarnessOptions {
   env?: NodeJS.ProcessEnv;
   platform?: NodeJS.Platform;
   preflightTimeoutMs?: number;
-  turnTimeoutMs?: number;
   maxOutputBytes?: number;
-  maxTurns?: number;
   /** Deterministic process transport injection; no provider call is needed for unit tests. */
   runner?: ClaudeCliRunner;
 }
@@ -177,12 +175,7 @@ export class ClaudeHarness implements HarnessPort {
     this.runner = options.runner ?? runClaudeProcess;
     this.platform = options.platform ?? process.platform;
     this.environment = subscriptionEnvironment(options.env ?? process.env);
-    for (const value of [
-      options.preflightTimeoutMs,
-      options.turnTimeoutMs,
-      options.maxOutputBytes,
-      options.maxTurns,
-    ])
+    for (const value of [options.preflightTimeoutMs, options.maxOutputBytes])
       if (value !== undefined && (!Number.isSafeInteger(value) || value <= 0))
         throw new ClaudeHarnessError(
           'HARNESS_INVALID_CONFIGURATION',
@@ -414,8 +407,6 @@ export class ClaudeHarness implements HarnessPort {
           settings.model,
           '--effort',
           settings.effort,
-          '--max-turns',
-          String(this.options.maxTurns ?? 100),
           '--output-format',
           'stream-json',
           '--verbose',
@@ -436,7 +427,7 @@ export class ClaudeHarness implements HarnessPort {
             env: this.environment,
             stdin: request.turn.prompt,
             signal: controller.signal,
-            timeoutMs: this.options.turnTimeoutMs ?? 600000,
+            timeoutMs: null,
             maxOutputBytes: this.options.maxOutputBytes ?? 4 * 1024 * 1024,
           },
           (chunk) => {

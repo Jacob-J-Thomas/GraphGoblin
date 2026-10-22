@@ -263,9 +263,10 @@ const ExpressionSourceSchema = z
         message: 'expression must contain source',
       });
   });
-type GateConfig = { maxPasses?: number | undefined; maxRunTimeSeconds?: number | undefined } & (
-  { routes: RouteDeclaration[] } | { answer: ClassifierAnswerConfig }
-);
+type GateConfig = {
+  maxPasses?: number | null | undefined;
+  maxRunTimeSeconds?: number | undefined;
+} & ({ routes: RouteDeclaration[] } | { answer: ClassifierAnswerConfig });
 function gateLimitsIssues(config: GateConfig, ctx: z.RefinementCtx): void {
   const routes =
     'routes' in config
@@ -313,11 +314,12 @@ const GateLimits = {
     .int()
     .positive()
     .max(10_000)
+    .nullable()
     .optional()
     .meta(
-      field(
-        'Required with a repeat route. One-based passes; a non-repeat choice wins on the last pass.',
-      ),
+      field('Required with a repeat route. Null means unlimited passes.', {
+        control: 'execution-limit',
+      }),
     ),
   maxRunTimeSeconds: z
     .number()
@@ -575,7 +577,7 @@ export const GateEvidenceSchema = z.strictObject({
   previousPasses: z.number().int().positive(),
   passes: z.number().int().positive(),
   repeatRouteId: RouteIdSchema,
-  maxPasses: z.number().int().positive().max(10_000),
+  maxPasses: z.number().int().positive().max(10_000).nullable(),
   maxRunTimeSeconds: z
     .number()
     .int()
@@ -600,15 +602,15 @@ export const DecisionPayloadSchema = EvaluationFactSchema.extend({
     const repeat = payload.portId === gate.repeatRouteId;
     const limit =
       repeat || payload.portId === LIMIT_REACHED_PORT_ID
-        ? gate.previousPasses >= gate.maxPasses
+        ? gate.maxPasses !== null && gate.previousPasses >= gate.maxPasses
           ? 'max-passes'
           : gate.maxRunTimeSeconds !== undefined && gate.elapsedSeconds >= gate.maxRunTimeSeconds
             ? 'max-run-time'
             : null
         : null;
     if (
-      gate.previousPasses > gate.maxPasses ||
-      gate.passes > gate.maxPasses ||
+      (gate.maxPasses !== null &&
+        (gate.previousPasses > gate.maxPasses || gate.passes > gate.maxPasses)) ||
       gate.limit !== limit ||
       (payload.portId === LIMIT_REACHED_PORT_ID) !== (limit !== null) ||
       gate.passes !== gate.previousPasses + (repeat && !limit ? 1 : 0)

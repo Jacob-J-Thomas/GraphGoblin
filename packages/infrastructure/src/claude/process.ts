@@ -10,7 +10,7 @@ export interface ClaudeProcessRequest {
   env: NodeJS.ProcessEnv;
   stdin?: string;
   signal: AbortSignal;
-  timeoutMs: number;
+  timeoutMs: number | null;
   maxOutputBytes: number;
   /** Ephemeral diagnostic inference is permitted only for no-turn prerequisite probes. */
   classifyDiagnostics?: true;
@@ -94,10 +94,13 @@ export const runClaudeProcess = (
       killTree(child);
       if (!killTimer) killTimer = setTimeout(() => finish(null, true), 5000);
     };
-    const timer = setTimeout(() => {
-      timedOut = true;
-      kill();
-    }, request.timeoutMs);
+    const timer =
+      request.timeoutMs === null
+        ? undefined
+        : setTimeout(() => {
+            timedOut = true;
+            kill();
+          }, request.timeoutMs);
     request.signal.addEventListener('abort', kill, { once: true });
     const collect = (chunk: Buffer, output: boolean): void => {
       if (settled || overflow || callbackError) return;

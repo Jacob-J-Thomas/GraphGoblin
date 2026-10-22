@@ -319,9 +319,29 @@
               },
               "maxNodeVisits": {
                 "default": 10,
-                "type": "integer",
-                "exclusiveMinimum": 0,
-                "maximum": 10000
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 10000
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "runDeadlineSeconds": {
+                "default": null,
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 31536000
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "subloopDepthLimit": {
                 "default": 8,
@@ -920,9 +940,16 @@
                               "maxLength": 100000
                             },
                             "maxPasses": {
-                              "type": "integer",
-                              "exclusiveMinimum": 0,
-                              "maximum": 10000
+                              "anyOf": [
+                                {
+                                  "type": "integer",
+                                  "exclusiveMinimum": 0,
+                                  "maximum": 10000
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
                             },
                             "maxRunTimeSeconds": {
                               "type": "integer",
@@ -1058,9 +1085,16 @@
                               ]
                             },
                             "maxPasses": {
-                              "type": "integer",
-                              "exclusiveMinimum": 0,
-                              "maximum": 10000
+                              "anyOf": [
+                                {
+                                  "type": "integer",
+                                  "exclusiveMinimum": 0,
+                                  "maximum": 10000
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
                             },
                             "maxRunTimeSeconds": {
                               "type": "integer",
@@ -1185,9 +1219,16 @@
                               "maximum": 1
                             },
                             "maxPasses": {
-                              "type": "integer",
-                              "exclusiveMinimum": 0,
-                              "maximum": 10000
+                              "anyOf": [
+                                {
+                                  "type": "integer",
+                                  "exclusiveMinimum": 0,
+                                  "maximum": 10000
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
                             },
                             "maxRunTimeSeconds": {
                               "type": "integer",
@@ -4291,6 +4332,9 @@
               "HARNESS_NOT_AUTHENTICATED",
               "HARNESS_QUOTA_EXHAUSTED",
               "HARNESS_TURN_FAILED",
+              "HARNESS_TRANSPORT_FAILED",
+              "HARNESS_OUTPUT_LIMIT",
+              "RUN_DEADLINE_EXCEEDED",
               "HARNESS_DELIVERY_UNCERTAIN",
               "HARNESS_SESSION_MISSING",
               "HARNESS_TERMINATION_UNCONFIRMED",
@@ -4595,6 +4639,38 @@
                 ],
                 "additionalProperties": false
               },
+              "limits": {
+                "type": "object",
+                "properties": {
+                  "maxNodeVisits": {
+                    "default": 10,
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 10000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "runDeadlineSeconds": {
+                    "default": null,
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 31536000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              },
               "classifiers": {
                 "type": "object",
                 "propertyNames": {
@@ -4655,6 +4731,7 @@
               "name",
               "label",
               "defaults",
+              "limits",
               "classifiers"
             ],
             "additionalProperties": false
@@ -4881,6 +4958,38 @@
                     ],
                     "additionalProperties": false
                   },
+                  "limits": {
+                    "type": "object",
+                    "properties": {
+                      "maxNodeVisits": {
+                        "default": 10,
+                        "anyOf": [
+                          {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 10000
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "runDeadlineSeconds": {
+                        "default": null,
+                        "anyOf": [
+                          {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 31536000
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false
+                  },
                   "classifiers": {
                     "type": "object",
                     "propertyNames": {
@@ -4941,6 +5050,7 @@
                   "name",
                   "label",
                   "defaults",
+                  "limits",
                   "classifiers"
                 ],
                 "additionalProperties": false
@@ -7144,9 +7254,16 @@
             "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
           },
           "maxPasses": {
-            "type": "integer",
-            "exclusiveMinimum": 0,
-            "maximum": 10000
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 10000
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "maxRunTimeSeconds": {
             "type": "integer",
@@ -7989,9 +8106,29 @@
               },
               "maxNodeVisits": {
                 "default": 10,
-                "type": "integer",
-                "exclusiveMinimum": 0,
-                "maximum": 10000
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 10000
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "runDeadlineSeconds": {
+                "default": null,
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 31536000
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "subloopDepthLimit": {
                 "default": 8,
@@ -8004,6 +8141,7 @@
               "workingDirectory",
               "defaults",
               "maxNodeVisits",
+              "runDeadlineSeconds",
               "subloopDepthLimit"
             ],
             "additionalProperties": false
@@ -8621,9 +8759,16 @@
                               "maxLength": 100000
                             },
                             "maxPasses": {
-                              "type": "integer",
-                              "exclusiveMinimum": 0,
-                              "maximum": 10000
+                              "anyOf": [
+                                {
+                                  "type": "integer",
+                                  "exclusiveMinimum": 0,
+                                  "maximum": 10000
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
                             },
                             "maxRunTimeSeconds": {
                               "type": "integer",
@@ -8759,9 +8904,16 @@
                               ]
                             },
                             "maxPasses": {
-                              "type": "integer",
-                              "exclusiveMinimum": 0,
-                              "maximum": 10000
+                              "anyOf": [
+                                {
+                                  "type": "integer",
+                                  "exclusiveMinimum": 0,
+                                  "maximum": 10000
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
                             },
                             "maxRunTimeSeconds": {
                               "type": "integer",
@@ -8890,9 +9042,16 @@
                               "maximum": 1
                             },
                             "maxPasses": {
-                              "type": "integer",
-                              "exclusiveMinimum": 0,
-                              "maximum": 10000
+                              "anyOf": [
+                                {
+                                  "type": "integer",
+                                  "exclusiveMinimum": 0,
+                                  "maximum": 10000
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
                             },
                             "maxRunTimeSeconds": {
                               "type": "integer",
@@ -12096,6 +12255,9 @@
               "HARNESS_NOT_AUTHENTICATED",
               "HARNESS_QUOTA_EXHAUSTED",
               "HARNESS_TURN_FAILED",
+              "HARNESS_TRANSPORT_FAILED",
+              "HARNESS_OUTPUT_LIMIT",
+              "RUN_DEADLINE_EXCEEDED",
               "HARNESS_DELIVERY_UNCERTAIN",
               "HARNESS_SESSION_MISSING",
               "HARNESS_TERMINATION_UNCONFIRMED",
@@ -12406,6 +12568,42 @@
                 ],
                 "additionalProperties": false
               },
+              "limits": {
+                "type": "object",
+                "properties": {
+                  "maxNodeVisits": {
+                    "default": 10,
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 10000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "runDeadlineSeconds": {
+                    "default": null,
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 31536000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "maxNodeVisits",
+                  "runDeadlineSeconds"
+                ],
+                "additionalProperties": false
+              },
               "classifiers": {
                 "type": "object",
                 "propertyNames": {
@@ -12466,6 +12664,7 @@
               "name",
               "label",
               "defaults",
+              "limits",
               "classifiers"
             ],
             "additionalProperties": false
@@ -12698,6 +12897,42 @@
                     ],
                     "additionalProperties": false
                   },
+                  "limits": {
+                    "type": "object",
+                    "properties": {
+                      "maxNodeVisits": {
+                        "default": 10,
+                        "anyOf": [
+                          {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 10000
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "runDeadlineSeconds": {
+                        "default": null,
+                        "anyOf": [
+                          {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 31536000
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "maxNodeVisits",
+                      "runDeadlineSeconds"
+                    ],
+                    "additionalProperties": false
+                  },
                   "classifiers": {
                     "type": "object",
                     "propertyNames": {
@@ -12758,6 +12993,7 @@
                   "name",
                   "label",
                   "defaults",
+                  "limits",
                   "classifiers"
                 ],
                 "additionalProperties": false
@@ -14967,9 +15203,16 @@
             "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
           },
           "maxPasses": {
-            "type": "integer",
-            "exclusiveMinimum": 0,
-            "maximum": 10000
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 10000
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "maxRunTimeSeconds": {
             "type": "integer",

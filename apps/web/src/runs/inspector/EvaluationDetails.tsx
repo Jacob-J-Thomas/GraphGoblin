@@ -277,7 +277,7 @@ export function EvaluationDetails({
                   <code>{event.gate.repeatRouteId}</code>
                 </dd>
                 <dt>Maximum passes</dt>
-                <dd>{event.gate.maxPasses}</dd>
+                <dd>{event.gate.maxPasses ?? 'Unlimited'}</dd>
                 <dt>Maximum run time</dt>
                 <dd>
                   {event.gate.maxRunTimeSeconds === undefined

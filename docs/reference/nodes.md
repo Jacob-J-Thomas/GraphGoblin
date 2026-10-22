@@ -63,12 +63,12 @@ Ports: Declared route ids for expression/LLM; classifier option, side or band id
 
 ### `kind: "expression"`
 
-| Field               | Type     | Required | Default | Description                                                                                                              |
-| ------------------- | -------- | -------- | ------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `jsonata`           | string   | yes      |         | JSONata source; return a declared route id for decisions.                                                                |
-| `maxPasses`         | integer  | no       |         | Required with a repeat route. One-based passes; a non-repeat choice wins on the last pass.                               |
-| `maxRunTimeSeconds` | integer  | no       |         | Optional maximum elapsed seconds from run start, including waits and pauses. Checked after evaluation, only on a repeat. |
-| `routes`            | object[] | yes      |         | Two to sixty-four stable readable routes.                                                                                |
+| Field               | Type            | Required | Default | Description                                                                                                              |
+| ------------------- | --------------- | -------- | ------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `jsonata`           | string          | yes      |         | JSONata source; return a declared route id for decisions.                                                                |
+| `maxPasses`         | integer \| null | no       |         | Required with a repeat route. Null means unlimited passes.                                                               |
+| `maxRunTimeSeconds` | integer         | no       |         | Optional maximum elapsed seconds from run start, including waits and pauses. Checked after evaluation, only on a repeat. |
+| `routes`            | object[]        | yes      |         | Two to sixty-four stable readable routes.                                                                                |
 
 ### `kind: "llm"`
 
@@ -78,7 +78,7 @@ Ports: Declared route ids for expression/LLM; classifier option, side or band id
 | `harness`           | `"codex"`                                    | yes      |         |                                         | Implemented structured evaluator harness.                                                                                |
 | `model`             | one of `"inherit"` \| `"explicit"` by `mode` | yes      |         |                                         | Inherit or explicitly select the model.                                                                                  |
 | `effort`            | one of `"inherit"` \| `"explicit"` by `mode` | yes      |         |                                         | Inherit or explicitly select reasoning effort.                                                                           |
-| `maxPasses`         | integer                                      | no       |         |                                         | Required with a repeat route. One-based passes; a non-repeat choice wins on the last pass.                               |
+| `maxPasses`         | integer \| null                              | no       |         |                                         | Required with a repeat route. Null means unlimited passes.                                                               |
 | `maxRunTimeSeconds` | integer                                      | no       |         |                                         | Optional maximum elapsed seconds from run start, including waits and pauses. Checked after evaluation, only on a repeat. |
 | `routes`            | object[]                                     | yes      |         |                                         | Declared stable route ids and readable labels.                                                                           |
 | `context`           | { messages?, vars?, includeLastOutput? }     | no       | `{}`    | all but `messages`, `includeLastOutput` | Selected provider context.                                                                                               |
@@ -91,7 +91,7 @@ Ports: Declared route ids for expression/LLM; classifier option, side or band id
 | `question`           | string                                               | yes      |         |                                         | Liquid classifier question.                                                                                              |
 | `minConfidence`      | number                                               | no       |         | yes                                     | Classifier confidence minimum.                                                                                           |
 | `truthThreshold`     | number                                               | no       |         | yes                                     | Noul true probability threshold; omission means 0.5.                                                                     |
-| `maxPasses`          | integer                                              | no       |         |                                         | Required with a repeat route. One-based passes; a non-repeat choice wins on the last pass.                               |
+| `maxPasses`          | integer \| null                                      | no       |         |                                         | Required with a repeat route. Null means unlimited passes.                                                               |
 | `maxRunTimeSeconds`  | integer                                              | no       |         |                                         | Optional maximum elapsed seconds from run start, including waits and pauses. Checked after evaluation, only on a repeat. |
 | `answer`             | one of `"choice"` \| `"noul"` \| `"score"` by `type` | yes      |         |                                         | Classifier answer and stable ports.                                                                                      |
 | `context`            | { messages?, vars?, includeLastOutput? }             | no       | `{}`    | all but `messages`, `includeLastOutput` | Selected provider context.                                                                                               |
