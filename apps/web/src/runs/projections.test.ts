@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { event, queuedFields } from '../__fixtures__/fake-api.js';
 import { quotaSafeSessionStorage, useRunEventStore } from './event-store.js';
 import {
+  createThreadCache,
   describeEvent,
   initialThreadFrom,
   nodeActivity,
@@ -440,5 +441,58 @@ describe('initial thread and replay failures', () => {
     expect(removeItem).toHaveBeenCalledWith('k');
     setItem.mockRestore();
     removeItem.mockRestore();
+  });
+
+  describe('createThreadCache (#259)', () => {
+    const initial = initialThreadFrom(sampleThread(), ALL);
+
+    it('returns the same result for a sequence while the log only grows', () => {
+      const cache = createThreadCache();
+      const firstTen = ALL.slice(0, 10);
+      const at10 = cache.at(initial, firstTen, 10);
+      expect(at10).toEqual(tryThreadAt(initial, firstTen, 10));
+      // Appending events keeps the earlier result (the same object), computed once.
+      expect(cache.at(initial, [...firstTen, ...ALL.slice(10, 14)], 10)).toBe(at10);
+      expect(cache.at(initial, ALL, 10)).toBe(at10);
+      // A later sequence is computed from the longer log.
+      expect(cache.at(initial, ALL, 14)).toEqual(tryThreadAt(initial, ALL, 14));
+    });
+
+    it('does not keep a result for a sequence the log has not reached yet', () => {
+      const cache = createThreadCache();
+      const early = cache.at(initial, ALL.slice(0, 5), 9);
+      expect(early).toEqual(tryThreadAt(initial, ALL.slice(0, 5), 9));
+      const later = cache.at(initial, ALL, 9);
+      expect(later).not.toBe(early);
+      expect(later).toEqual(tryThreadAt(initial, ALL, 9));
+    });
+
+    it('forgets everything when the initial thread or the log identity changes', () => {
+      const cache = createThreadCache();
+      const at10 = cache.at(initial, ALL, 10);
+      expect(cache.at(initial, ALL, 10)).toBe(at10);
+      // A different (rebuilt) log of the same length is not an extension.
+      const rebuilt = ALL.map((e) => ({ ...e }));
+      expect(cache.at(initial, rebuilt, 10)).not.toBe(at10);
+      // A different initial thread, too.
+      const other = { ...initial, vars: { ...initial.vars, seeded: true } };
+      const otherAt10 = cache.at(other, rebuilt, 10);
+      expect(otherAt10).not.toBe(at10);
+      expect(otherAt10).toEqual(tryThreadAt(other, rebuilt, 10));
+      // A shorter log (a cleared store) is not an extension either.
+      expect(cache.at(other, rebuilt.slice(0, 3), 2)).toEqual(
+        tryThreadAt(other, rebuilt.slice(0, 3), 2),
+      );
+    });
+
+    it('keeps at most the configured number of results', () => {
+      const cache = createThreadCache(2);
+      const at1 = cache.at(initial, ALL, 1);
+      cache.at(initial, ALL, 2);
+      cache.at(initial, ALL, 3);
+      // The oldest result was dropped and is computed again.
+      expect(cache.at(initial, ALL, 1)).not.toBe(at1);
+      expect(cache.at(initial, ALL, 1)).toEqual(at1);
+    });
   });
 });

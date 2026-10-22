@@ -1,10 +1,14 @@
 import type { ContextThread, LoopDefinition, RunEvent } from '@graphgoblin/contracts';
-import { useMemo } from 'react';
-import { Alert, Badge, Card, Disclosure } from '../../components/ui/index.js';
-import { prettyJson } from '../../lib/utils.js';
-import { initialThreadFrom, patchDiff, tryThreadAt, type PatchLine } from '../projections.js';
-
-const PRE = 'm-0 px-3 py-2 font-mono text-[12.5px] leading-normal whitespace-pre-wrap break-words';
+import { useMemo, useState } from 'react';
+import {
+  Alert,
+  Badge,
+  BoundedValue,
+  Card,
+  CELL_PREVIEW_CHARS,
+  Disclosure,
+} from '../../components/ui/index.js';
+import { createThreadCache, initialThreadFrom, patchDiff, type PatchLine } from '../projections.js';
 
 /** A finished node's patch: each operation with the value before and after it. */
 function PatchDiff({ nodeId, lines }: { nodeId: string; lines: PatchLine[] }) {
@@ -15,21 +19,37 @@ function PatchDiff({ nodeId, lines }: { nodeId: string; lines: PatchLine[] }) {
         {lines.map((line, i) => (
           <li key={i} className="overflow-hidden rounded-md border border-default">
             <div className="flex flex-wrap items-center gap-2 border-b border-default bg-surface-sunken px-3 py-2 text-sm">
-              <Badge size="sm">{line.op}</Badge> <code>{line.path}</code>
+              <Badge size="sm">{line.op}</Badge> <code className="wrap-anywhere">{line.path}</code>
               {line.from ? (
                 <>
                   {' '}
-                  from <code>{line.from}</code>
+                  from <code className="wrap-anywhere">{line.from}</code>
                 </>
               ) : null}
             </div>
             <div className="grid sm:grid-cols-2">
-              <pre className={`${PRE} bg-status-bad-bg text-status-bad-fg`}>
-                − {prettyJson(line.before) || '(absent)'}
-              </pre>
-              <pre className={`${PRE} bg-status-good-bg text-status-good-fg`}>
-                + {prettyJson(line.after) || '(absent)'}
-              </pre>
+              <div className="grid min-w-0 content-start bg-status-bad-bg">
+                <span className="px-3 pt-2 text-xs font-semibold text-status-bad-fg">Before</span>
+                <BoundedValue
+                  value={line.before}
+                  label={`Value before ${line.path}`}
+                  labelled
+                  tone="removed"
+                  emptyText="(absent)"
+                  previewChars={CELL_PREVIEW_CHARS}
+                />
+              </div>
+              <div className="grid min-w-0 content-start bg-status-good-bg">
+                <span className="px-3 pt-2 text-xs font-semibold text-status-good-fg">After</span>
+                <BoundedValue
+                  value={line.after}
+                  label={`Value after ${line.path}`}
+                  labelled
+                  tone="added"
+                  emptyText="(absent)"
+                  previewChars={CELL_PREVIEW_CHARS}
+                />
+              </div>
             </div>
           </li>
         ))}
@@ -38,7 +58,13 @@ function PatchDiff({ nodeId, lines }: { nodeId: string; lines: PatchLine[] }) {
   );
 }
 
-/** The thread as it stood after event `seq`, replayed client-side, and the patch that led there. */
+/**
+ * The thread as it stood after event `seq`, replayed client-side, and the patch that led there.
+ * Every value is laid out within a bound (`BoundedValue`): a large variable, message or patch value
+ * shows its first characters and offers the whole text and an exact download on request, so the
+ * inspector's controls stay responsive whatever the thread holds (#259). The full thread JSON is
+ * built only while its disclosure is open.
+ */
 export function ThreadViewer({
   current,
   events,
@@ -50,17 +76,21 @@ export function ThreadViewer({
   seq: number;
   definition?: LoopDefinition | undefined;
 }) {
+  // The initial thread depends on the first event only; a growing log must not rebuild it.
+  const first = events[0];
   const initial = useMemo(
-    () => initialThreadFrom(current, events, definition),
-    [current, events, definition],
+    () => initialThreadFrom(current, first ? [first] : [], definition),
+    [current, first, definition],
   );
-  const replayed = useMemo(() => tryThreadAt(initial, events, seq), [initial, events, seq]);
+  const [cache] = useState(createThreadCache);
+  const replayed = useMemo(() => cache.at(initial, events, seq), [cache, initial, events, seq]);
   const selected = events.find((e) => e.seq === seq);
   const diff = useMemo(() => {
     if (selected?.type !== 'node.finished' || !replayed.ok) return undefined;
-    const before = tryThreadAt(initial, events, seq - 1);
+    const before = cache.at(initial, events, seq - 1);
     return before.ok ? patchDiff(before.thread, replayed.thread, selected.patch) : undefined;
-  }, [selected, initial, events, seq, replayed]);
+  }, [selected, cache, initial, events, seq, replayed]);
+  const [showJson, setShowJson] = useState(false);
   if (!replayed.ok) {
     return (
       <Alert title={`The thread cannot be reconstructed at event ${seq}`}>{replayed.error}</Alert>
@@ -81,32 +111,45 @@ export function ThreadViewer({
             <h3 className="text-sm font-semibold">Messages ({thread.messages.length})</h3>
             <ol className="grid gap-2 text-md" aria-label="Messages">
               {thread.messages.map((m) => (
-                <li key={m.id} className="grid gap-1 rounded-md border border-default p-3">
+                <li key={m.id} className="grid min-w-0 gap-1 rounded-md border border-default p-3">
                   <div className="flex items-center gap-2">
                     <Badge size="sm">{m.role}</Badge>{' '}
                     <code className="text-xs text-muted">{m.nodeId}</code>
                   </div>
-                  <p className="whitespace-pre-wrap">{m.content}</p>
+                  <BoundedValue
+                    value={m.content}
+                    text
+                    tone="plain"
+                    label={`Message ${m.id} content`}
+                    className="-mx-3"
+                  />
                 </li>
               ))}
             </ol>
           </div>
           <div className="grid gap-2">
             <h3 className="text-sm font-semibold">Variables</h3>
-            <pre
-              className={`${PRE} overflow-auto rounded-md border border-default bg-code-bg text-code-fg`}
-              aria-label="Variables"
-            >
-              {prettyJson(thread.vars)}
-            </pre>
+            <BoundedValue
+              value={thread.vars}
+              label="Variables"
+              labelled
+              fileName={`run-${thread.run.id}-variables-at-${seq}`}
+            />
           </div>
-          <Disclosure label={<span className="font-semibold">Full thread JSON</span>} variant="row">
-            <pre
-              className={`${PRE} overflow-auto rounded-md border border-default bg-code-bg text-code-fg`}
-              data-testid="thread-json"
-            >
-              {prettyJson(thread)}
-            </pre>
+          <Disclosure
+            label={<span className="font-semibold">Full thread JSON</span>}
+            variant="row"
+            open={showJson}
+            onOpenChange={setShowJson}
+          >
+            {showJson ? (
+              <BoundedValue
+                value={thread}
+                label="Full thread JSON"
+                testId="thread-json"
+                fileName={`run-${thread.run.id}-thread-at-${seq}`}
+              />
+            ) : null}
           </Disclosure>
         </div>
       </Card>

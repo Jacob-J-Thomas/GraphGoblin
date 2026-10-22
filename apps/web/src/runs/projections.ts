@@ -79,6 +79,47 @@ export function tryThreadAt(
   }
 }
 
+export type ReplayResult = ReturnType<typeof tryThreadAt>;
+
+export interface ThreadCache {
+  at(initial: ContextThread, events: readonly RunEvent[], seq: number): ReplayResult;
+}
+
+/**
+ * `tryThreadAt` with its results remembered per sequence while a run's log only grows (#259). A
+ * live run appends an event every few hundred milliseconds, and without this every append replayed
+ * the whole log again for the event the viewer had selected. A result is kept only once the log has
+ * reached its sequence, since later events cannot change it; a different initial thread, or a log
+ * that is not an extension of the last one seen, empties the cache. At most `limit` results stay.
+ */
+export function createThreadCache(limit = 32): ThreadCache {
+  let initial: ContextThread | undefined;
+  let known: readonly RunEvent[] = [];
+  const results = new Map<number, ReplayResult>();
+  return {
+    at(init, events, seq) {
+      const extended =
+        init === initial &&
+        events.length >= known.length &&
+        (known.length === 0 || events[known.length - 1] === known[known.length - 1]);
+      if (!extended) {
+        results.clear();
+        initial = init;
+      }
+      known = events;
+      const hit = results.get(seq);
+      if (hit) return hit;
+      const result = tryThreadAt(init, events, seq);
+      const last = events[events.length - 1]?.seq ?? 0;
+      if (seq <= last) {
+        results.set(seq, result);
+        if (results.size > limit) results.delete(results.keys().next().value as number);
+      }
+      return result;
+    },
+  };
+}
+
 export interface PatchLine {
   op: string;
   path: string;

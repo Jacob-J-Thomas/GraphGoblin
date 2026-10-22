@@ -5,8 +5,7 @@ import { Link, useParams } from 'react-router';
 import { keys, useLoopVersion, useRun, useRunThread } from '../api/queries.js';
 import { Page } from '../components/layout/index.js';
 import { QueryState, RunStatusBadge } from '../components/status.js';
-import { Alert, Card } from '../components/ui/index.js';
-import { prettyJson } from '../lib/utils.js';
+import { Alert, BoundedValue, Card } from '../components/ui/index.js';
 import { ProgressDrawer } from './inspector/ProgressDrawer.js';
 import { EvaluationDetails } from './inspector/EvaluationDetails.js';
 import { RunControls } from './inspector/RunControls.js';
@@ -140,12 +139,12 @@ export function RunInspectorPage() {
             ) : null}
             {run.result !== undefined ? (
               <Card title="Result">
-                <pre
-                  className="overflow-auto rounded-md border border-default bg-code-bg px-3 py-2 text-[12.5px] text-code-fg"
-                  data-testid="run-result"
-                >
-                  {prettyJson(run.result)}
-                </pre>
+                <BoundedValue
+                  value={run.result}
+                  label="Result"
+                  testId="run-result"
+                  fileName={`run-${run.id}-result`}
+                />
               </Card>
             ) : null}
             <WaitPanel run={run} />

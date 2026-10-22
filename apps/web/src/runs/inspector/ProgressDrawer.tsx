@@ -1,5 +1,5 @@
 import { COMMAND_PREVIEW_MAX, type RunEvent } from '@graphgoblin/contracts';
-import { Disclosure } from '../../components/ui/index.js';
+import { BoundedValue, CELL_PREVIEW_CHARS, Disclosure } from '../../components/ui/index.js';
 import { prettyJson } from '../../lib/utils.js';
 import { describeEvent, nodeActivity } from '../projections.js';
 
@@ -59,7 +59,19 @@ function describeSession(event: Extract<RunEvent, { type: 'harness.session' }>):
   return `${event.harness} session ${event.mode}; model ${model}; ${effort}${effective}`;
 }
 
-/** Per node: harness progress, sessions, usage, decisions, and heartbeats as they arrive. */
+/** The one-line text of an activity event, or nothing when its value needs a bounded block. */
+function describeActivity(event: RunEvent): string | undefined {
+  if ('progress' in event) return describeStatusProgress(event.progress);
+  if ('usage' in event) return prettyJson(event.usage);
+  if (event.type === 'harness.session') return describeSession(event);
+  return describeEvent(event);
+}
+
+/**
+ * Per node: harness progress, sessions, usage, decisions, and heartbeats as they arrive. A progress
+ * value without a one-line description is laid out within a bound (`BoundedValue`), and every row
+ * wraps at any character, so a long single-line value never widens the page (#259, #380).
+ */
 export function ProgressDrawer({ events }: { events: RunEvent[] }) {
   const activity = nodeActivity(events);
   return (
@@ -69,21 +81,28 @@ export function ProgressDrawer({ events }: { events: RunEvent[] }) {
       className="rounded-lg border border-default bg-surface-raised px-5 py-4 shadow-1"
     >
       {[...activity.entries()].map(([nodeId, items]) => (
-        <div key={nodeId} className="grid gap-1">
-          <h3 className="font-mono text-xs font-semibold">{nodeId}</h3>
-          <ul className="grid gap-0.5 text-xs text-muted">
-            {items.map((e) => (
-              <li key={e.seq} className="break-words">
-                <code className="text-default">{e.type}</code>{' '}
-                {'progress' in e
-                  ? (describeStatusProgress(e.progress) ?? prettyJson(e.progress))
-                  : 'usage' in e
-                    ? prettyJson(e.usage)
-                    : e.type === 'harness.session'
-                      ? describeSession(e)
-                      : prettyJson(describeEvent(e))}
-              </li>
-            ))}
+        <div key={nodeId} className="grid min-w-0 gap-1">
+          <h3 className="font-mono text-xs font-semibold wrap-anywhere">{nodeId}</h3>
+          <ul className="grid min-w-0 gap-0.5 text-xs text-muted">
+            {items.map((e) => {
+              const text = describeActivity(e);
+              return (
+                <li key={e.seq} className="grid min-w-0 gap-1 wrap-anywhere">
+                  <span>
+                    <code className="text-default">{e.type}</code>
+                    {text !== undefined ? ` ${text}` : ''}
+                  </span>
+                  {text === undefined && 'progress' in e ? (
+                    <BoundedValue
+                      value={e.progress}
+                      label={`Progress of ${nodeId} at event ${e.seq}`}
+                      labelled
+                      previewChars={CELL_PREVIEW_CHARS}
+                    />
+                  ) : null}
+                </li>
+              );
+            })}
           </ul>
         </div>
       ))}
