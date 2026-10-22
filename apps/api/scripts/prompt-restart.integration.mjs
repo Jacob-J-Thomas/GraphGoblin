@@ -265,3 +265,106 @@ for (const policy of ['resume-previous', 'resume-named']) {
       }),
   );
 }
+
+for (const policy of ['resume-previous', 'resume-named']) {
+  test(
+    `a kill after Claude's result-only acceptance recovers ${policy} work`,
+    { timeout: 180000 },
+    () =>
+      withApiFixture(async ({ dataDir, port, start, kill, api, inspect }) => {
+        let child = start('claude-result');
+        await message(child, 'ready');
+        const config = {
+          harness: 'claude',
+          model: 'claude-opus-5-5',
+          effort: 'low',
+          harnessOptions: { sandbox: 'read-only', approval: 'never' },
+        };
+        const definition = singleNodeLoop('result-only restart-' + policy, {
+          id: 'a',
+          kind: 'inference',
+          label: 'A',
+          config: {
+            ...config,
+            prompt: { template: 'Task A' },
+            session: { policy: 'resume-named', key: 'shared' },
+          },
+        });
+        definition.nodes.splice(2, 0, {
+          id: 'b',
+          kind: 'inference',
+          label: 'B',
+          config: {
+            ...config,
+            prompt: { template: 'Task B' },
+            session: policy === 'resume-named' ? { policy, key: 'shared' } : { policy },
+          },
+        });
+        definition.edges[1].to.node = 'b';
+        definition.edges.push({
+          id: 'b-out',
+          from: { node: 'b', port: 'out' },
+          to: { node: 'done' },
+        });
+        const created = await api('/loops', { definition });
+        await api(`/loops/${created.loop.id}/publish`, {});
+        const held = message(child, 'claude.result.hold');
+        const { run } = await api(`/loops/${created.loop.id}/runs`, {});
+        await held;
+        // Retain before-fix crash evidence too: if the marker never arrives, still kill/restart
+        // and report D-022's resulting refusal before asserting this acceptance requirement.
+        const until = Date.now() + 10000;
+        let before, acceptance;
+        do {
+          before = (await api(`/runs/${run.id}/events`)).items;
+          acceptance = before.find(
+            (event) =>
+              event.type === 'harness.submission' &&
+              event.nodeId === 'b' &&
+              event.marker === 'claude.result',
+          );
+          if (!acceptance) await delay(25);
+        } while (!acceptance && Date.now() < until);
+        assert.equal(
+          before.some(
+            (event) =>
+              event.nodeId === 'b' && ['harness.usage', 'node.finished'].includes(event.type),
+          ),
+          false,
+        );
+        await kill(child);
+        child = start('claude-recovery');
+        await message(child, 'ready');
+        await eventually(async () =>
+          ['succeeded', 'failed'].includes((await api(`/runs/${run.id}`)).status),
+        );
+        const recovered = await api(`/runs/${run.id}`);
+        const calls = await inspect(child);
+        log(
+          JSON.stringify({
+            dataDir,
+            port,
+            runId: run.id,
+            policy,
+            acceptanceBeforeKill: !!acceptance,
+            recovered: recovered.status,
+            failure: recovered.failure,
+            calls,
+          }),
+        );
+        assert.equal(recovered.status, 'succeeded');
+        assert.ok(acceptance, 'result acceptance must be durable before the process exits');
+        assert.equal(acceptance.submission, 'submitted');
+        assert.equal(calls.started.length, 0);
+        assert.equal(calls.resumed.length, 1);
+        assert.equal(calls.resumed[0].sessionId, '11111111-1111-4111-8111-111111111111');
+        assert.match(calls.resumed[0].request.turn.prompt, /previous turn was interrupted/);
+        const turns = (await api(`/runs/${run.id}/events`)).items.filter(
+          (event) => event.type === 'harness.turn' && event.nodeId === 'b',
+        );
+        assert.equal(turns.length, 2);
+        assert.equal(turns[1].visitId, acceptance.visitId);
+        assert.equal(turns[1].promptKind, 'continuation');
+      }),
+  );
+}

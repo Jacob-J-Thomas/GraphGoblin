@@ -478,6 +478,27 @@ test('Claude inspector shows requested effort and policy artifact, and preserves
   ]);
 
   await page.goto(instance.url + '/app/runs/' + run.id);
+  const execution = (await (
+    await request.get(instance.url + '/runs/' + run.id + '/events')
+  ).json()) as {
+    items: { type: string; visitId?: string; turnId?: string; submission?: string }[];
+  };
+  const turn = execution.items.find((event) => event.type === 'harness.turn');
+  const acceptance = execution.items.find((event) => event.type === 'harness.submission');
+  expect(turn?.visitId).toBeTruthy();
+  expect(turn?.turnId).toBeTruthy();
+  expect(acceptance).toMatchObject({
+    visitId: turn!.visitId,
+    turnId: turn!.turnId,
+    submission: 'submitted',
+  });
+  const timeline = page.getByRole('list', { name: 'Timeline' });
+  const turnRow = timeline.getByRole('button', { name: /harness\.turn/ });
+  await turnRow.click();
+  await expect(turnRow).toHaveAttribute('aria-current', 'true');
+  const acceptanceRow = timeline.getByRole('button', { name: /harness\.submission/ });
+  await acceptanceRow.click();
+  await expect(acceptanceRow).toHaveAttribute('aria-current', 'true');
   const progress = page.getByRole('button', { name: /Node progress/ });
   await progress.click();
   await expect(

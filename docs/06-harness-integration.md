@@ -458,13 +458,17 @@ prompts and visit provenance before invoking either adapter; see [recovery](05-e
 The run event `harness.submission` says `submitted` with a marker on positive acceptance;
 only failed or interrupted turns use the three failure classifications.
 
-| Adapter            | Positive `submitted` marker                                                                                                                                                                                          | What does not prove acceptance                                                                                     |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| Claude stream-json | First validated non-error `assistant` record producing text, thinking or a tool call (`claude.assistant`); a verified successful `result` proves consumption when no assistant content was emitted (`claude.result`) | `system/init`, the policy transcript item, commands/UI metadata, status, partial-message and rate-limit records    |
-| Codex SDK          | `turn.started` (`codex.turn.started`), the input-accepted turn boundary after thread initialization                                                                                                                  | `thread.started`, `resumeThread`, the adapter's early known-ID announcement, configuration/deprecation error items |
+| Adapter            | Positive `submitted` marker                                                                                                                                                                                                  | What does not prove acceptance                                                                                     |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Claude stream-json | First validated non-error `assistant` record producing text, thinking or a tool call (`claude.assistant`); a validated successful `result` record proves consumption when no assistant content was emitted (`claude.result`) | `system/init`, the policy transcript item, commands/UI metadata, status, partial-message and rate-limit records    |
+| Codex SDK          | `turn.started` (`codex.turn.started`), the input-accepted turn boundary after thread initialization                                                                                                                          | `thread.started`, `resumeThread`, the adapter's early known-ID announcement, configuration/deprecation error items |
 
-Markers emit once per adapter turn. A result marker is not released until Claude's successful
-process/protocol outcome is verified. A lost stream after init or after a marker is uncertain;
+Markers emit once per adapter turn. Claude emits `claude.result` as soon as a successful
+result record passes session, model, usage and result-text validation, before waiting for CLI exit.
+The engine records that acceptance with the visit and turn IDs immediately. Usage totals,
+turn completion and the final result still wait for a verified process outcome; a later
+transport failure cannot retract the observed acceptance or publish the buffered result.
+A lost stream after init or after a marker is uncertain;
 markers never claim provider-side durability beyond the observed protocol boundary. A process
 kill before the marker is durably recorded remains uncertain too.
 
