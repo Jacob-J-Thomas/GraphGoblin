@@ -15,12 +15,38 @@ else if (args.includes('--help')) {
         : flags,
   );
 } else if (args.includes('auth')) {
+  const profiles = {
+    'auth-network': ['', 'API Error: 401 Authentication failed; check network settings.', 1],
+    'quota-network': ['', 'HTTP 429 Too Many Requests; network request failed.', 1],
+    'stdout-quota-warning': [
+      'API Error: 429 Too Many Requests',
+      'Warning: setting is deprecated',
+      1,
+    ],
+    'auth-empty': ['', '', 0],
+    'auth-unrecognised': ['{}', '', 0],
+    'conflict-auth-stderr': [
+      'API Error: 429 Too Many Requests',
+      'HTTP 401 Authentication failed',
+      1,
+    ],
+    'conflict-quota-stderr': [
+      'HTTP 401 Authentication failed',
+      'API Error: 429 Too Many Requests',
+      1,
+    ],
+  };
   const failures = {
     quota: 'Usage limit reached: quota exhausted PRIVATE_QUOTA_MARKER',
     transport: 'Network connection failed: ECONNRESET PRIVATE_TRANSPORT_MARKER',
     unknown: 'unrecognized diagnostic PRIVATE_UNKNOWN_MARKER',
   };
-  if (scenario === 'hang') setInterval(() => {}, 1000);
+  if (profiles[scenario]) {
+    const [stdout, stderr, code] = profiles[scenario];
+    process.stdout.write(String(stdout));
+    process.stderr.write(String(stderr));
+    process.exitCode = Number(code);
+  } else if (scenario === 'hang') setInterval(() => {}, 1000);
   else if (scenario === 'auth') {
     print('{"loggedIn":false,"authMethod":"none"}');
     process.exitCode = 1;

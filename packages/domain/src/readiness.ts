@@ -14,19 +14,19 @@ export function cliFailureState(text: string): HarnessReadinessState {
     )
   )
     return 'cli-incompatible';
+  // A returned HTTP/API status is stronger evidence than incidental diagnostic wording.
+  if (status === 401 || status === 403) return 'auth';
+  if (status === 429) return 'quota';
+  if (status >= 500 && status <= 599) return 'transport';
   // Connection evidence takes precedence over auth words in server/refresh diagnostics.
   if (
     /\beconn\w*\b|\benotfound\b|\betimedout\b|\beai_again\b|network|failed to connect|connection failed|stream disconnected|overloaded|temporarily unavailable/i.test(
       text,
-    ) ||
-    (status >= 500 && status <= 599)
+    )
   )
     return 'transport';
-  if (status === 429 || /quota|usage[_ ]limit|rate[_ ]limit|too many requests/i.test(text))
-    return 'quota';
+  if (/quota|usage[_ ]limit|rate[_ ]limit|too many requests/i.test(text)) return 'quota';
   if (
-    status === 401 ||
-    status === 403 ||
     /not logged in|unauthori[sz]ed|authentication|authenticat|login required|token (has )?expired|invalid api key|please run \/login/i.test(
       text,
     )

@@ -66,16 +66,16 @@ version, required CLI flags and local login only; it never promises account acce
 The `models` field lists adapter identities and efforts, even when the CLI is not ready.
 No probe sends a prompt, creates a session, or checks entitlement through inference.
 
-| State                 | Meaning and next action                                                                                                                   |
-| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `checking` (web only) | No result exists yet. A recheck keeps the last result instead; this is not a server readiness result.                                     |
-| `unknown`             | Timeout, cancellation, malformed/unrecognized output or an unexpected probe failure. Check the CLI and retry; model support is undecided. |
-| `ready`               | Required CLI capabilities and local authentication passed; account model access remains untested.                                         |
-| `cli-missing`         | Executable not found. Install it or correct the configured binary path, then retry.                                                       |
-| `cli-incompatible`    | Version or required CLI capability failed verification. Update the installed CLI and retry.                                               |
-| `auth`                | Authentication failed. Run `claude auth login` or `codex login`, then retry.                                                              |
-| `quota`               | Explicit allowance/rate-limit diagnostic. Check account allowance and retry when permitted; preserve the model.                           |
-| `transport`           | Explicit connection or temporary provider-service failure. Check connectivity/service status and retry; preserve the model.               |
+| State                 | Meaning and next action                                                                                                                                                                   |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `checking` (web only) | No result exists yet. A recheck keeps the last result instead; this is not a server readiness result.                                                                                     |
+| `unknown`             | Timeout, cancellation, empty/unrecognized login output (even after exit 0) or another inconclusive probe. Login stays unestablished. Check the CLI and retry; model support is undecided. |
+| `ready`               | Required CLI capabilities and local authentication passed; account model access remains untested.                                                                                         |
+| `cli-missing`         | Executable not found. Install it or correct the configured binary path, then retry.                                                                                                       |
+| `cli-incompatible`    | Version or required CLI capability failed verification. Update the installed CLI and retry.                                                                                               |
+| `auth`                | Positive sign-out, wrong Claude account method or authentication-error evidence, including explicit HTTP/API 401/403. Run `claude auth login` or `codex login`, then retry.               |
+| `quota`               | Explicit HTTP/API 429 or allowance/rate-limit diagnostic, even beside incidental network advice. Check account allowance and retry when permitted; preserve the model.                    |
+| `transport`           | Explicit connection or temporary provider-service failure. Check connectivity/service status and retry; preserve the model.                                                               |
 
 Only user-disabled models (`MODEL_DISABLED`) or identities absent from GraphGoblin support
 (`MODEL_NOT_IN_CATALOG`) mean model unavailable.
@@ -121,9 +121,22 @@ behavior. Readiness is an admission-time observation, not a guarantee of later a
 
 `/harness/preflight` exposes seven server states. `checking` is a web-only request state.
 `authenticated` is absent if login was not checked or could not be established; false requires
-positive signed-out evidence. Claude parses auth-status JSON even on exit 1 (`loggedIn:false`
-or a non-Claude.ai auth method). Connection diagnostics take precedence over incidental auth
-words during no-turn checks. Turn stderr never determines a cause or retry eligibility.
+positive signed-out evidence. Claude parses auth-status JSON even on
+exit 1 (`loggedIn:false` or an explicit nonempty non-Claude.ai account method). Empty output,
+`{}` or an unrecognised login response on exit 0 is `unknown`, with no `authenticated` field;
+a successful exit alone establishes no login fact. A recognised Claude.ai status or Codex
+"Logged in" status establishes true; an explicit signed-out status establishes false.
+
+No-turn diagnostic precedence is CLI-syntax errors first, explicit HTTP/API 401/403 (`auth`),
+429 (`quota`) or 5xx (`transport`) next, then connection errors/wording, then quota/auth keywords.
+Thus incidental "network" advice cannot override 401 or 429, while connection errors such as
+`ECONNREFUSED` still outrank incidental auth words in server/refresh diagnostics. Version numbers
+are not HTTP status evidence. For Claude's unstructured diagnostics, recognised stderr wins
+over conflicting stdout because stderr is the CLI's primary error channel; stdout is consulted
+when stderr is absent or classified `unknown`, so an unrelated warning cannot hide stdout quota.
+Structured Claude auth status is handled separately; process start, timeout, cancellation,
+overflow and unconfirmed termination remain authoritative. None of this inference applies to
+model-turn stdout or changes turn retry eligibility.
 Harness checks in `/system/preflight` carry state alongside the system's `ok`/`warn`/`fail`
 severity. Each problem is one detail sentence and one action ending "then retry preflight"
 (`readinessMessage` in the domain package); a specific detail, such as the CLI version below the
