@@ -616,7 +616,8 @@ describe('refused resets change nothing', () => {
       const upper = `file:${join(storeDir, 'GRAPHGOBLIN.DB').replaceAll('\\', '/')}`;
       const dry = await reset(['--reset'], { GG_DATA_DIR: storeDir, GG_DB_URL: upper });
       expect(dry.code).toBe(0);
-      expect(dry.out).toMatch(/\n {2}GRAPHGOBLIN\.DB +database +1 file/);
+      // The manifest names the database as the directory lists it, whatever the configured case.
+      expect(dry.out).toMatch(/\n {2}graphgoblin\.db +database +1 file/);
       expect(dry.out).not.toMatch(/graphgoblin\.db(-wal|-shm)? +not part of the store/);
       const before = await snapshotTree(storeBase);
       const confirmed = await reset(['--reset', '--yes', '--data-dir', storeDir], {
@@ -628,6 +629,51 @@ describe('refused resets change nothing', () => {
       const after = await snapshotTree(storeBase);
       expect(after.map((record) => record.path)).not.toContain('data/graphgoblin.db');
       expect(after.length).toBeLessThan(before.length);
+    },
+  );
+
+  /** The 8.3 short name NTFS generated for `name` in `dir`, when the volume keeps short names. */
+  function shortNameOf(dir: string, name: string): string | undefined {
+    const listing = spawnSync('cmd', ['/c', 'dir', '/x', '/a', dir], { encoding: 'utf8' });
+    for (const line of listing.stdout.split(/\r?\n/)) {
+      const match = /\s([^\s~]+~\d\S*)\s+(\S.*)$/.exec(line);
+      if (match && match[2]!.trim().toLowerCase() === name.toLowerCase()) return match[1];
+    }
+    return undefined;
+  }
+
+  // The Sol re-review (round 2) reproduced NTFS short names passing the name checks: `ARTIFA~1`
+  // named the `artifacts` database and `GRAPHG~1.DB` the stored `graphgoblin.db`, so the manifest
+  // listed one file twice or kept what it removed. A spelling the directory listing does not show
+  // is refused before anything is listed or read.
+  it.runIf(process.platform === 'win32')(
+    'refuses a database named by a Windows short-name alias of a listed entry, reading nothing',
+    async ({ skip }) => {
+      const base = await mkdtemp(join(tmpdir(), 'gg-reset-'));
+      bases.push(base);
+      const dataDir = join(base, 'data');
+      await mkdir(dataDir);
+      await writeFile(join(dataDir, 'artifacts'), 'a database with a reserved name');
+      await writeFile(join(dataDir, 'graphgoblin-store.db'), 'a database with a long name');
+      const reservedAlias = shortNameOf(dataDir, 'artifacts');
+      const longAlias = shortNameOf(dataDir, 'graphgoblin-store.db');
+      // A volume with 8.3 name generation disabled has no aliases to refuse.
+      if (reservedAlias === undefined || longAlias === undefined) skip();
+      for (const alias of [reservedAlias!, longAlias!, `${reservedAlias!}/store.db`]) {
+        const before = await snapshotTree(base);
+        const result = await reset(
+          ['--reset', '--yes', '--data-dir', dataDir],
+          {
+            GG_DATA_DIR: dataDir,
+            GG_DB_URL: `file:${join(dataDir, alias).replaceAll('\\', '/')}`,
+          },
+          { readStore: () => Promise.reject(new Error('the store must not be read')) },
+        );
+        expect(result.code).toBe(1);
+        expect(result.err).toContain('by a spelling the data directory does not list');
+        expect(result.err).toMatch(/Nothing was changed\.\n$/);
+        expect(await snapshotTree(base)).toEqual(before);
+      }
     },
   );
 

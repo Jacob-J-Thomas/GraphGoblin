@@ -1,4 +1,4 @@
-import { readdir, realpath, stat } from 'node:fs/promises';
+import { lstat, readdir, realpath, stat } from 'node:fs/promises';
 import { relative, resolve, sep } from 'node:path';
 import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { databaseFilePath } from '@graphgoblin/infrastructure/sqlite';
@@ -6,7 +6,7 @@ import { loadConfig, type ApiConfig } from '../config.js';
 import { acquireDataDirLock, dataDirLockState, type DataDirLock } from '../data-dir-lock.js';
 import { dataDirArgument, RESET_COMMAND } from '../store-refusal.js';
 import { readStoreFacts, type StoreFacts } from './store-facts.js';
-import { isInside, listEntry, removeEntry, statEntry, type TreeEntry } from './tree.js';
+import { hasCode, isInside, listEntry, removeEntry, statEntry, type TreeEntry } from './tree.js';
 
 /**
  * `graphgoblin-api --reset` (ADR-0042): the explicit fresh start for a pre-1.0 store this build
@@ -87,7 +87,7 @@ export interface KeptEntry {
 export interface ResetPlan {
   /** Physical path of the data directory; every target is inside it. */
   dataDir: string;
-  /** The configured database file, relative to the data directory. */
+  /** The configured database file, relative to the data directory, spelled as the directory lists it. */
   database: string;
   store: StoreFacts | { readable: false; reason: string; absent: true };
   targets: ResetTarget[];
@@ -126,6 +126,45 @@ export const CASE_INSENSITIVE_NAMES = process.platform === 'win32' || process.pl
 export function nameKey(path: string, caseInsensitive = CASE_INSENSITIVE_NAMES): string {
   return caseInsensitive ? path.toLowerCase() : path;
 }
+
+/**
+ * The configured database path, segment by segment, as the data directory lists it. A segment that
+ * matches a listed entry under the host's case rule takes that entry's spelling, so the manifest
+ * names what the directory shows. A segment that names an existing entry under a spelling the
+ * listing does not show (an NTFS short name such as `ARTIFA~1` or `GRAPHG~1.DB`) is refused:
+ * every check here compares names, and an alias would slip past them. Segments below the deepest
+ * existing entry are kept as configured; nothing exists there to alias.
+ */
+export async function storedSpelling(dataDir: string, database: string): Promise<string[]> {
+  const configured = database.split('/');
+  const stored: string[] = [];
+  let parent = dataDir;
+  for (const [index, segment] of configured.entries()) {
+    let names: string[];
+    try {
+      names = await readdir(parent);
+    } catch (error) {
+      if (hasCode(error, 'ENOENT') || hasCode(error, 'ENOTDIR'))
+        return [...stored, ...configured.slice(index)];
+      throw error;
+    }
+    const match = names.find((name) => nameKey(name) === nameKey(segment));
+    if (match === undefined) {
+      try {
+        await lstat(resolve(parent, segment));
+      } catch (error) {
+        if (hasCode(error, 'ENOENT')) return [...stored, ...configured.slice(index)];
+        throw error;
+      }
+      throw new ResetRefusedError(
+        `the database path ${database} names ${segment} by a spelling the data directory does not list (a Windows short name, for example); configure GG_DB_URL with the name as the directory lists it`,
+      );
+    }
+    stored.push(match);
+    parent = resolve(parent, match);
+  }
+  return stored;
+}
 const DATABASE_PARTS = [
   ['', 'database'],
   ['-wal', 'SQLite write-ahead log'],
@@ -150,7 +189,10 @@ export async function planReset({
   database,
   readStore,
 }: PlanResetOptions): Promise<ResetPlan> {
-  const segments = database.split('/');
+  // Every later check compares names, so the path is first spelled as the directory lists it (an
+  // alias the listing does not show is refused there).
+  const segments = await storedSpelling(dataDir, database);
+  const stored = segments.join('/');
   // The database must be reached without links, or its files could live outside the directory.
   for (let depth = 1; depth < segments.length; depth += 1) {
     const ancestor = await statEntry(dataDir, segments.slice(0, depth).join('/'));
@@ -169,13 +211,13 @@ export async function planReset({
         ? `the database ${database} is inside ${nameKey(root)}/, which a reset removes; move it first`
         : `the database ${database} has the name of the ${nameKey(root)} directory, which a reset removes; rename it first`,
     );
-  if (segments.length === 1 && LOCK_FILES.has(nameKey(database)))
+  if (segments.length === 1 && LOCK_FILES.has(nameKey(stored)))
     throw new ResetRefusedError(
       `the database ${database} has the name of the reset's lock file; rename it first`,
     );
   const databaseTargets: ResetTarget[] = [];
   for (const [suffix, what] of DATABASE_PARTS) {
-    const entry = await statEntry(dataDir, database + suffix);
+    const entry = await statEntry(dataDir, stored + suffix);
     if (!entry) continue;
     // Only a regular file: a directory, a link, a FIFO, a socket or a device is never a database
     // file, and reading the store from one could block or remove something that was never data.
@@ -186,7 +228,7 @@ export async function planReset({
     databaseTargets.push({ path: entry.path, what, entries: [entry] });
   }
   const store: ResetPlan['store'] =
-    databaseTargets[0]?.path === database
+    databaseTargets[0]?.path === stored
       ? await readStore(resolve(dataDir, ...segments))
       : { readable: false, reason: 'there is no database file', absent: true };
   // Removal order: the run workspaces and artifacts first and the database last, so a reset that
@@ -223,7 +265,7 @@ export async function planReset({
   targets.push(...databaseTargets);
   const owned = new Set([...RESERVED_ROOTS, ...LOCK_FILES].map((name) => nameKey(name)));
   if (segments.length > 1) owned.add(nameKey(root));
-  else for (const [suffix] of DATABASE_PARTS) owned.add(nameKey(database + suffix));
+  else for (const [suffix] of DATABASE_PARTS) owned.add(nameKey(stored + suffix));
   for (const name of (await readdir(dataDir)).sort())
     if (!owned.has(nameKey(name)))
       kept.push({
@@ -235,7 +277,7 @@ export async function planReset({
       });
   kept.sort((a, b) => (a.path < b.path ? -1 : 1));
   assertDisjointManifest(targets, kept);
-  return { dataDir, database, store, targets, kept };
+  return { dataDir, database: stored, store, targets, kept };
 }
 
 /**
