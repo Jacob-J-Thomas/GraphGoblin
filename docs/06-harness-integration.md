@@ -111,6 +111,24 @@ distinct harnesses are probed concurrently. Concurrent requests own separate mem
 retained on the container or module. Run admission pins the checked version and rejects failed
 prerequisites before starting a turn. Readiness issues use `HARNESS_READINESS_<STATE>` (hyphens
 become underscores); catalog/configuration issues retain their existing codes.
+
+Manual UI/API/MCP admission checks the engine's frozen root definition (published version or
+draft snapshot) and every executable pinned subloop definition, recursively. Both `latest` and
+numbered child references use the published records the engine prepared for this start, never a
+child's draft or a publication that arrives while a probe is pending. A breadth-first walk visits
+each version once at its shallowest depth, protects cycles and applies the execution handler's
+configured subloop depth limit (or that node's override, at most 64). Harnesses shared by parent
+and children share one probe; distinct harnesses are probed concurrently. An unready descendant
+returns 422 `HARNESS_NOT_READY`, with the child loop name, loop/version ids and node id in its
+issues, before any parent run, queued event, draft snapshot or mutation is committed.
+The engine commits the same checked intent after probing and revalidates that its versions still
+exist; slow probes do not hold the shared admission/deletion lock.
+
+Scheduled and webhook admissions, internally started subloops and resumes do not gain this
+manual preflight; their existing execution checks remain in place and can fail after earlier
+nodes have run. Unresolved child references retain their existing `SUBLOOP_NOT_FOUND` execution
+behavior. Readiness is an admission-time observation, not a guarantee of later account access.
+
 `/harness/preflight` exposes seven server states. `checking` is a web-only request state.
 `authenticated` is absent if login was not checked or could not be established; false requires
 positive signed-out evidence. Claude parses auth-status JSON even on exit 1 (`loggedIn:false`
@@ -440,13 +458,17 @@ prompts and visit provenance before invoking either adapter; see [recovery](05-e
 The run event `harness.submission` says `submitted` with a marker on positive acceptance;
 only failed or interrupted turns use the three failure classifications.
 
-| Adapter            | Positive `submitted` marker                                                                                                                                                                                          | What does not prove acceptance                                                                                     |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| Claude stream-json | First validated non-error `assistant` record producing text, thinking or a tool call (`claude.assistant`); a verified successful `result` proves consumption when no assistant content was emitted (`claude.result`) | `system/init`, the policy transcript item, commands/UI metadata, status, partial-message and rate-limit records    |
-| Codex SDK          | `turn.started` (`codex.turn.started`), the input-accepted turn boundary after thread initialization                                                                                                                  | `thread.started`, `resumeThread`, the adapter's early known-ID announcement, configuration/deprecation error items |
+| Adapter            | Positive `submitted` marker                                                                                                                                                                                                  | What does not prove acceptance                                                                                     |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Claude stream-json | First validated non-error `assistant` record producing text, thinking or a tool call (`claude.assistant`); a validated successful `result` record proves consumption when no assistant content was emitted (`claude.result`) | `system/init`, the policy transcript item, commands/UI metadata, status, partial-message and rate-limit records    |
+| Codex SDK          | `turn.started` (`codex.turn.started`), the input-accepted turn boundary after thread initialization                                                                                                                          | `thread.started`, `resumeThread`, the adapter's early known-ID announcement, configuration/deprecation error items |
 
-Markers emit once per adapter turn. A result marker is not released until Claude's successful
-process/protocol outcome is verified. A lost stream after init or after a marker is uncertain;
+Markers emit once per adapter turn. Claude emits `claude.result` as soon as a successful
+result record passes session, model, usage and result-text validation, before waiting for CLI exit.
+The engine records that acceptance with the visit and turn IDs immediately. Usage totals,
+turn completion and the final result still wait for a verified process outcome; a later
+transport failure cannot retract the observed acceptance or publish the buffered result.
+A lost stream after init or after a marker is uncertain;
 markers never claim provider-side durability beyond the observed protocol boundary. A process
 kill before the marker is durably recorded remains uncertain too.
 

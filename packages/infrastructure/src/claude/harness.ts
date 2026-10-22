@@ -393,7 +393,13 @@ export class ClaudeHarness implements HarnessPort {
           if (events.some((event) => event.type === 'session')) initialized = true;
           if (events.some((event) => event.type === 'submitted')) accepted = true;
           if (record.type === 'result') {
-            completionEvents = events;
+            // A validated result proves consumption even while the CLI is still alive.
+            // Persist that evidence now; usage/completion remain gated by process outcome.
+            completionEvents = [];
+            for (const event of events) {
+              if (event.type === 'submitted') queue.push(event);
+              else completionEvents.push(event);
+            }
             return;
           }
           for (const event of events) {

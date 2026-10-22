@@ -119,6 +119,13 @@ export interface StartRunInput {
   pinnedClassifiers?: RunPin['classifiers'];
 }
 
+/** The exact frozen root and published child records a start pinned, before any durable effect. */
+export interface RunStartPlan {
+  root: LoopVersionRecord;
+  versions: ReadonlyMap<string, LoopVersionRecord>;
+  subloopVersions: Readonly<Record<string, string>>;
+}
+
 /** A run start prepared outside the pin lock, admitted inside it. */
 interface PreparedStart {
   /** The immutable record the run executes: a published version or the draft snapshot. */
@@ -438,8 +445,34 @@ export class RunManager {
     };
   }
 
-  async startRun(input: StartRunInput): Promise<RunRecord> {
+  async startRun(
+    input: StartRunInput,
+    beforeAdmission?: (plan: RunStartPlan) => Promise<void>,
+  ): Promise<RunRecord> {
     const prepared = await this.prepareStart(input);
+    if (beforeAdmission) {
+      const versions = new Map([[prepared.version.id, prepared.version]]);
+      const intent = await this.withPinLock(async () => {
+        await this.assertVersionPresent(prepared.sourceId, input.loopId);
+        return this.prepareAdmission(prepared, input.subloopVersions ?? {}, versions);
+      });
+      // Slow admission policy (such as no-turn CLI probes) never holds the shared pin lock.
+      // Commit this same intent afterwards: a publish or draft edit cannot change what was checked.
+      await beforeAdmission({
+        root: prepared.version,
+        versions,
+        subloopVersions: intent.queued.subloopVersions ?? {},
+      });
+      const admitted = await this.withPinLock(async () => {
+        await this.assertVersionPresent(prepared.sourceId, input.loopId);
+        for (const version of versions.values())
+          if (version.id !== prepared.version.id)
+            await this.assertVersionPresent(version.id, version.loopId);
+        return this.ports.admission.create(intent);
+      });
+      this.enqueue(admitted.id);
+      return admitted;
+    }
     const admitted = await this.withPinLock(async () => {
       await this.assertVersionPresent(prepared.sourceId, input.loopId);
       const intent = await this.prepareAdmission(prepared, input.subloopVersions ?? {});
@@ -472,9 +505,15 @@ export class RunManager {
   private async prepareAdmission(
     { version, run, thread: initialThread, snapshot }: PreparedStart,
     inherited: Record<string, string>,
+    versions?: Map<string, LoopVersionRecord>,
   ): Promise<RunAdmission> {
     const reached = new Set<string>([run.loopId]);
-    const subloopVersions = await this.pinSubloops(version.definition, inherited, reached);
+    const subloopVersions = await this.pinSubloops(
+      version.definition,
+      inherited,
+      reached,
+      versions,
+    );
     return {
       run,
       initialThread,
@@ -2077,6 +2116,7 @@ export class RunManager {
     def: LoopDefinition,
     inherited: Record<string, string>,
     reached?: Set<string>,
+    versions?: Map<string, LoopVersionRecord>,
   ): Promise<Record<string, string>> {
     const pins: Record<string, string> = { ...inherited };
     const walked = new Set<string>();
@@ -2094,6 +2134,7 @@ export class RunManager {
           if (target) pins[loopId] = target.id;
         }
         if (target && !walked.has(target.id)) {
+          versions?.set(target.id, target);
           walked.add(target.id);
           pending.push(target.definition);
         }
