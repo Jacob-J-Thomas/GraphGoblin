@@ -2,7 +2,6 @@ import {
   COMMAND_PREVIEW_MAX,
   PROGRESS_SUMMARY_MAX,
   type ContextThread,
-  type HarnessId,
   type JsonValue,
   type NodeProgress,
   type PatchOperation,
@@ -20,6 +19,7 @@ import {
 import type { NodeContext, NodeHandler } from '../handler.js';
 import type {
   HarnessItem,
+  HarnessEvent,
   HarnessPort,
   HarnessResult,
   HarnessSession,
@@ -35,6 +35,7 @@ import {
   canContinueTurn,
   type PendingTurn,
 } from './inference-turn.js';
+import { mapHarnessFailure } from './inference-failure.js';
 import {
   DEFAULT_REPAIR_PROMPT,
   addUsage,
@@ -118,12 +119,22 @@ async function consume(
   row: HarnessSessionRecord,
   pending: PendingTurn,
 ): Promise<HarnessResult> {
-  let lastError: { code: string; message: string; retriable: boolean } | undefined;
-  const rethrow = (error: unknown): never => {
+  let lastError: Extract<HarnessEvent, { type: 'error' }> | undefined;
+  const rethrow = async (error: unknown): Promise<never> => {
     if (error instanceof RunFailureError || error instanceof RunCancelledError) throw error;
-    const failure = mapHarnessFailure(error, lastError, ctx.node.id, ctx.config.harness);
-    if (failure.code === 'HARNESS_TERMINATION_UNCONFIRMED') throw failure;
-    if (isAbortError(error) || ctx.signal.aborted) throw new RunCancelledError();
+    const { failure, submission: state } = mapHarnessFailure(
+      error,
+      lastError,
+      ctx.node.id,
+      ctx.config.harness,
+      pending.submission,
+    );
+    if (
+      failure.code !== 'HARNESS_TERMINATION_UNCONFIRMED' &&
+      (isAbortError(error) || ctx.signal.aborted)
+    )
+      throw new RunCancelledError();
+    if (!lastError && state !== pending.submission) await submission(ctx, pending, state);
     throw failure;
   };
   // Only iterator-origin failures are provider failures. Persistence in the consumer stays outside.
@@ -131,7 +142,7 @@ async function consume(
     try {
       yield* session.events;
     } catch (error) {
-      rethrow(error);
+      await rethrow(error);
     }
   }
   for await (const event of events()) {
@@ -170,8 +181,12 @@ async function consume(
         });
         break;
       case 'error':
-        lastError = { code: event.code, message: event.message, retriable: event.retriable };
-        await submission(ctx, pending, event.submission);
+        lastError = event;
+        await submission(
+          ctx,
+          pending,
+          mapHarnessFailure(event, undefined, ctx.node.id, ctx.config.harness).submission,
+        );
         break;
       case 'turn-complete':
         break;
@@ -187,56 +202,6 @@ async function consume(
 /** An explicitly returned native candidate stays authoritative, including undefined or null. */
 function outputCandidate(result: HarnessResult): unknown {
   return Object.hasOwn(result, 'structured') ? result.structured : jsonOrText(result.finalText);
-}
-
-function mapHarnessFailure(
-  error: unknown,
-  lastError: { code: string; message: string; retriable: boolean } | undefined,
-  nodeId: string,
-  harness: HarnessId,
-): RunFailureError {
-  const info = typeof error === 'object' && error !== null ? error : {};
-  const reportedCode =
-    lastError?.code ?? ('code' in info && typeof info.code === 'string' ? info.code : undefined);
-  const reportedRetriable =
-    lastError?.retriable ?? ('retriable' in info && info.retriable === true);
-  const code = (reportedCode ?? '').toLowerCase();
-  const message = lastError?.message ?? describeError(error);
-  if (code === 'harness_termination_unconfirmed')
-    return new RunFailureError('HARNESS_TERMINATION_UNCONFIRMED', message, {
-      nodeId,
-      resumable: false,
-      details: { adapterCode: reportedCode },
-    });
-  if (
-    [
-      'harness_quota_exhausted',
-      'usage_limit_reached',
-      'insufficient_quota',
-      'rate_limit_exceeded',
-    ].includes(code)
-  )
-    return new RunFailureError('HARNESS_QUOTA_EXHAUSTED', message, { nodeId, resumable: true });
-  if (['harness_not_authenticated', 'unauthorized', '401', 'not_authenticated'].includes(code))
-    return new RunFailureError('HARNESS_NOT_AUTHENTICATED', message, { nodeId, resumable: true });
-  if (code === 'harness_not_installed')
-    return new RunFailureError('HARNESS_NOT_INSTALLED', message, { nodeId, resumable: true });
-  if (code === 'harness_timeout')
-    return new RunFailureError('INFERENCE_TIMEOUT', message, { nodeId, resumable: true });
-  return new RunFailureError('HARNESS_TURN_FAILED', 'harness turn failed: ' + message, {
-    nodeId,
-    // Pinned refusals cannot be repaired within this run. Codex's generic exit/stream
-    // failures remain resumable even when its SDK says not retriable; Claude requires
-    // positive retry evidence. Submission/session safety is checked separately.
-    resumable:
-      ![
-        'harness_unsupported_policy',
-        'harness_invalid_configuration',
-        'harness_arguments_rejected',
-      ].includes(code) &&
-      (harness === 'codex' || reportedRetriable),
-    details: { adapterCode: reportedCode ?? null },
-  });
 }
 
 function noteFor(item: HarnessItem): string | undefined {
@@ -498,26 +463,45 @@ export const inferenceHandler: NodeHandler<'inference'> = {
       return { kind: 'done', patch, route: 'out' };
     } catch (error) {
       // Storage faults remain operator-fixable; turn provenance still controls recovery.
-      if (!session) await submission(ctx, pending, 'definitely-not-submitted');
-      let failure: unknown =
-        !session &&
-        invoking &&
-        !(error instanceof RunFailureError) &&
-        !(error instanceof RunCancelledError)
-          ? mapHarnessFailure(error, undefined, ctx.node.id, config.harness)
-          : error instanceof ArtifactStoreError && error.code === 'ARTIFACT_WRITE_FAILED'
-            ? new RunFailureError(error.code, error.message, {
-                nodeId: ctx.node.id,
-                details: { ref: error.ref },
-              })
-            : error;
+      let failure: unknown = error;
+      if (!session) {
+        const mapped =
+          invoking && !(error instanceof RunFailureError) && !(error instanceof RunCancelledError)
+            ? mapHarnessFailure(
+                error,
+                undefined,
+                ctx.node.id,
+                config.harness,
+                'definitely-not-submitted',
+              )
+            : undefined;
+        await submission(ctx, pending, mapped?.submission ?? 'definitely-not-submitted');
+        if (mapped)
+          failure =
+            mapped.failure.code !== 'HARNESS_TERMINATION_UNCONFIRMED' &&
+            (isAbortError(error) || ctx.signal.aborted)
+              ? new RunCancelledError()
+              : mapped.failure;
+      }
+      failure =
+        failure instanceof ArtifactStoreError && failure.code === 'ARTIFACT_WRITE_FAILED'
+          ? new RunFailureError(failure.code, failure.message, {
+              nodeId: ctx.node.id,
+              details: { ref: failure.ref },
+            })
+          : failure;
       const unconfirmed = (value: unknown): boolean =>
         value instanceof RunFailureError && value.code === 'HARNESS_TERMINATION_UNCONFIRMED';
       if (session && !unconfirmed(failure)) {
         try {
           await session.cancel();
         } catch (cancelError) {
-          const cleanup = mapHarnessFailure(cancelError, undefined, ctx.node.id, config.harness);
+          const { failure: cleanup } = mapHarnessFailure(
+            cancelError,
+            undefined,
+            ctx.node.id,
+            config.harness,
+          );
           if (unconfirmed(cleanup)) failure = cleanup;
           else {
             // Native Codex cancellation resolves; Claude rejects only for unconfirmed termination.

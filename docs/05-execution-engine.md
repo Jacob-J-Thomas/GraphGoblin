@@ -260,7 +260,11 @@ including its exact rendered `prompt`, `promptKind`, `turnId`, harness and selec
 `resumeSessionId`. Refused retries retain the saved prompt and policy selection, even if init
 announced a different ID. They do not rerender against a changed thread. Repair refusals retain
 the repair task, including a synchronous refusal before the repair invocation returns a session
-handle. It uses the same typed failure mapping as the initial launch; pinned policy,
+handle. Launch exceptions, streamed errors and rejected results share the same failure and
+submission mapping. A synchronous missing-session refusal is durably `session-missing` with
+`HARNESS_SESSION_MISSING`, regardless of retryability; Resume returns 409 without another
+harness call. An explicit delivery-uncertain transport failure or unconfirmed termination is
+never downgraded to safe non-submission because no handle was returned. Pinned policy,
 configuration and argument refusals remain non-resumable. These authored prompts are part of private run history, with the same access
 and deletion boundary as its context thread. The entire prompt is stored inline with no schema
 size limit or automatic artifact offloading; large prompts therefore enlarge the event log.
