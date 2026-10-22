@@ -766,6 +766,23 @@ describe('refused resets change nothing', () => {
     expect(await snapshotTree(base)).toEqual(before);
   });
 
+  // The other name may live elsewhere in the tree, where the spelling resolution of the database
+  // path never looks: the kept root file and the removed nested database are one file by identity.
+  it('refuses a nested database whose hard link lies at the root of the data directory', async () => {
+    const { base, dataDir } = await prepare('none');
+    await mkdir(join(dataDir, 'db'));
+    await writeFile(join(dataDir, 'db', 'store.db'), 'database bytes');
+    await link(join(dataDir, 'db', 'store.db'), join(dataDir, 'backup.db'));
+    const before = await snapshotTree(base);
+    const result = await reset(['--reset', '--yes', '--data-dir', dataDir], {
+      GG_DATA_DIR: dataDir,
+      GG_DB_URL: `file:${join(dataDir, 'db', 'store.db').replaceAll('\\', '/')}`,
+    });
+    expect(result.code).toBe(1);
+    expect(result.err).toContain('the manifest would both remove and keep backup.db');
+    expect(await snapshotTree(base)).toEqual(before);
+  });
+
   // A Windows stream of the data directory shares its identity but is a file, not the directory
   // (the round-6 review's reproduction confirmed a reset through `data:review`).
   it.runIf(process.platform === 'win32')(
