@@ -1,0 +1,42 @@
+[
+  {
+    "file": "adversarial",
+    "test": "adversarial infrastructure invariants (forks pool) 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild",
+    "error": "Error: Test timed out in 30000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".\n    at task (fil<local-path>\n    at Object.<anonymous> (fil<local-path>\n    at Object.<anonymous> (fil<local-path>\n    at chain (fil<local-path>\n    at <local-path>\n    at fil<local-path>\n    at runWithSuite (fil<local-path>\n    at Object.collect (fil<local-path>\n    at Object.collect (fil<local-path>\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)"
+  },
+  {
+    "file": "scripts",
+    "test": "ProcessScripts kills and closes a real process cancelled with incomplete UTF-8 pending on both streams",
+    "error": "AssertionError: native process-tree cancellation must finish before fixture cleanup: expected true to be false // Object.is equality\n    at <local-path>\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async fil<local-path>"
+  },
+  {
+    "file": "scripts",
+    "test": "ProcessScripts kills the process tree on timeout",
+    "error": "Error: Test timed out in 15000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".\n    at task (fil<local-path>\n    at Object.<anonymous> (fil<local-path>\n    at Object.<anonymous> (fil<local-path>\n    at chain (fil<local-path>\n    at <local-path>\n    at fil<local-path>\n    at runWithSuite (fil<local-path>\n    at Object.collect (fil<local-path>\n    at Object.collect (fil<local-path>\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)"
+  },
+  {
+    "file": "scripts",
+    "test": "ProcessScripts kills the process when the signal aborts, including when already aborted",
+    "error": "Error: Test timed out in 15000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".\n    at task (fil<local-path>\n    at Object.<anonymous> (fil<local-path>\n    at Object.<anonymous> (fil<local-path>\n    at chain (fil<local-path>\n    at <local-path>\n    at fil<local-path>\n    at runWithSuite (fil<local-path>\n    at Object.collect (fil<local-path>\n    at Object.collect (fil<local-path>\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)"
+  },
+  {
+    "file": "claude-process",
+    "test": "owned native Claude process transport kills on deadline and output overflow",
+    "error": "Error: EBUSY: resource busy or locked, rmdir '<local-path>'"
+  },
+  {
+    "file": "claude-process",
+    "test": "owned native Claude process transport does not spawn for an already aborted signal and cancels a running process",
+    "error": "Error: EBUSY: resource busy or locked, rmdir '<local-path>'"
+  },
+  {
+    "file": "claude-process",
+    "test": "owned native Claude process transport kills the descendant that a long-lived child started",
+    "error": "AssertionError: expected 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\u2026' to be 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\u2026' // Object.is equality\n    at <local-path>\n    at async fil<local-path>\nError: EBUSY: resource busy or locked, rmdir '<local-path>'"
+  },
+  {
+    "file": "claude-readiness",
+    "test": "Claude no-turn executable boundary hang reports unknown without exposing CLI bodies",
+    "error": "AssertionError: expected [ Array(1) ] to deeply equal [ Array(1) ]\n    at <local-path>\n    at async fil<local-path>"
+  }
+]

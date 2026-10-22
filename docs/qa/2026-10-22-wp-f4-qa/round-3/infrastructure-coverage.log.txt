@@ -1,0 +1,286 @@
+REVISION: b80c9fdfb001e020bdfc1b9c7c15e5f910d33766
+COMMAND: pnpm.cmd --filter @graphgoblin/infrastructure test:coverage --maxWorkers=1 --coverage.reportOnFailure
+pnpm.cmd : $ vitest run --coverage --maxWorkers=1 --coverage.reportOnFailure
+At line:10 char:3
++   & pnpm.cmd @GateArgs *> $raw
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...reportOnFailure:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 <worktree>/packages/infrastructure
+      Coverage enabled with v8
+
+ ❯ src/adversarial.test.ts (20 tests | 1 failed) 32762ms
+   ❯ adversarial infrastructure invariants (forks pool) (11)
+     × 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild 30061ms
+ ❯ src/process/scripts.test.ts (39 tests | 3 failed) 75711ms
+   ❯ ProcessScripts (36)
+     × kills and closes a real process cancelled with incomplete UTF-8 pending on both streams 8402ms
+     × kills the process tree on timeout 15057ms
+     × kills the process when the signal aborts, including when already aborted 15043ms
+ ❯ src/claude/process.test.ts (5 tests | 3 failed) 34479ms
+   ❯ owned native Claude process transport (5)
+     × kills on deadline and output overflow 16828ms
+     × does not spawn for an already aborted signal and cancels a running process 5345ms
+     × kills the descendant that a long-lived child started 10065ms
+ ❯ src/claude/readiness.test.ts (12 tests | 1 failed) 96798ms
+   ❯ Claude no-turn executable boundary (9)
+     × hang reports unknown without exposing CLI bodies 8600ms
+ ❯ src/sqlite/upgrade.test.ts (26 tests | 8 failed) 287468ms
+   ❯ definitions-only format-4 cutover (26)
+     × deletes all history and configured templates, converts definitions, retains signing identities/secrets/settings, and starts through ordinary migrations 20122ms
+     × blocks ordinary queued runs without cancelling them 20066ms
+     × blocks ordinary waiting runs without cancelling them 20175ms
+     × requires every hash-bound review, binds repeated nodes to their stored version, and rejects stale/unused resolutions 20519ms
+     × refuses changed source, damaged SQL/ledger, malformed template identities and invalid definitions 20000ms
+     × removes old database archives and converts legacy owner defaults without changing other settings 20107ms
+     × refuses invalid/conflicting owner defaults: INSERT INTO settings VALUES ('other','defaultEffort','"invalid"','2026-10-17T00:00:00.000Z') 20102ms
+     × treats a genuinely fresh format-4 store as a no-op 20064ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 16 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 6/QA-LIMIT-001: ProcessScripts 
+abort kills a real child and its grandchild
+Error: Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/adversarial.test.ts:225:3
+    223|     expect(() => decryptSecret(Buffer.alloc(32, 5), ciphertext as stri…
+    224|   });
+    225|   it('6/QA-LIMIT-001: ProcessScripts abort kills a real child and its …
+       |   ^
+    226|     const dir = await mkdtemp(join(tmpdir(), 'gg-process-tree-'));
+    227|     const pidFile = join(dir, 'grandchild.pid');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/17]⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills on deadline and output overflow
+Error: EBUSY: resource busy or locked, rmdir '<temp>\gg-claude-process-zRXmDX'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/17]⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > does not spawn for an already aborted 
+signal and cancels a running process
+Error: EBUSY: resource busy or locked, rmdir '<temp>\gg-claude-process-4pXfZK'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/17]⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived 
+child started
+AssertionError: expected 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…' to be 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…' // 
+Object.is equality
+
+Expected: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+Received: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+ ❯ src/claude/process.test.ts:146:46
+    144|       const stopped = await readFile(marker, 'utf8');
+    145|       await new Promise((resolve) => setTimeout(resolve, 100));
+    146|       expect(await readFile(marker, 'utf8')).toBe(stopped);
+       |                                              ^
+    147|     } finally {
+    148|       controller.abort();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/17]⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived 
+child started
+Error: EBUSY: resource busy or locked, rmdir '<temp>\gg-claude-process-lrTujv'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/17]⎯
+
+ FAIL  src/claude/readiness.test.ts > Claude no-turn executable boundary > hang reports unknown without exposing CLI 
+bodies
+AssertionError: expected [ …(2) ] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+  [
+    "Claude CLI did not answer before the check deadline. Check that the Claude CLI starts and responds, then retry 
+preflight.",
++   "Claude CLI check process did not confirm that it stopped. Check that the Claude CLI starts and responds, then 
+retry preflight.",
+  ]
+
+ ❯ src/claude/readiness.test.ts:60:31
+     58|         hang: ['Claude CLI did not answer before the check deadline.' …
+     59|       };
+     60|       expect(result.problems).toEqual(problems[scenario]);
+       |                               ^
+     61|     },
+     62|     60000,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/17]⎯
+
+ FAIL  src/process/scripts.test.ts > ProcessScripts > kills and closes a real process cancelled with incomplete UTF-8 
+pending on both streams
+AssertionError: native process-tree cancellation must finish before fixture cleanup: expected true to be false // 
+Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/process/scripts.test.ts:194:7
+    192|       cleanupRequired,
+    193|       'native process-tree cancellation must finish before fixture cle…
+    194|     ).toBe(false);
+       |       ^
+    195|     expect(streamsReady).toBe(2);
+    196|     expect(result).toMatchObject({ stdout: 'A\ufffd', stderr: 'B\ufffd…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/17]⎯
+
+ FAIL  src/process/scripts.test.ts > ProcessScripts > kills the process tree on timeout
+Error: Test timed out in 15000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/process/scripts.test.ts:237:3
+    235|   });
+    236|
+    237|   it('kills the process tree on timeout', async () => {
+       |   ^
+    238|     const scripts = new ProcessScripts();
+    239|     const started = Date.now();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/17]⎯
+
+ FAIL  src/process/scripts.test.ts > ProcessScripts > kills the process when the signal aborts, including when already 
+aborted
+Error: Test timed out in 15000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/process/scripts.test.ts:248:3
+    246|   }, 15_000);
+    247|
+    248|   it('kills the process when the signal aborts, including when already…
+       |   ^
+    249|     const scripts = new ProcessScripts();
+    250|     const controller = new AbortController();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/17]⎯
+
+ FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > deletes all history and configured templates, 
+converts definitions, retains signing identities/secrets/settings, and starts through ordinary migrations
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/sqlite/upgrade.test.ts:118:3
+    116|     await expect(handle.migrate()).rejects.toMatchObject({ code: 'DATA…
+    117|   });
+    118|   it('deletes all history and configured templates, converts definitio…
+       |   ^
+    119|     const handle = await fixture();
+    120|     const retained = await Promise.all(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/17]⎯
+
+ FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > blocks ordinary queued runs without cancelling 
+them
+ FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > blocks ordinary waiting runs without 
+cancelling them
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/sqlite/upgrade.test.ts:205:54
+    203|     expect(await snapshot(handle.client)).toEqual(before);
+    204|   });
+    205|   it.each(['queued', 'running', 'waiting', 'paused'])(
+       |                                                      ^
+    206|     'blocks ordinary %s runs without cancelling them',
+    207|     async (status) => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/17]⎯
+
+ FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > requires every hash-bound review, binds 
+repeated nodes to their stored version, and rejects stale/unused resolutions
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/sqlite/upgrade.test.ts:230:3
+    228|     await refuses(handle, await request(handle), /admission intents/);
+    229|   });
+    230|   it('requires every hash-bound review, binds repeated nodes to their …
+       |   ^
+    231|     const handle = await fixture();
+    232|     const definition = frozenDefinition('llm', {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/17]⎯
+
+ FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses changed source, damaged SQL/ledger, 
+malformed template identities and invalid definitions
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/sqlite/upgrade.test.ts:302:3
+    300|     expect(await guardDatabaseUpgrade(handle.client)).toBe('current');
+    301|   });
+    302|   it('refuses changed source, damaged SQL/ledger, malformed template i…
+       |   ^
+    303|     const handle = await fixture();
+    304|     const selected = await request(handle);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/17]⎯
+
+ FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > removes old database archives and converts 
+legacy owner defaults without changing other settings
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/sqlite/upgrade.test.ts:409:3
+    407|     expect(await snapshot(handle.client)).toEqual(before);
+    408|   });
+    409|   it('removes old database archives and converts legacy owner defaults…
+       |   ^
+    410|     const handle = await fixture();
+    411|     await handle.client.execute('CREATE TABLE gg_upgrade_archive (payl…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/17]⎯
+
+ FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses invalid/conflicting owner defaults: 
+INSERT INTO settings VALUES ('other','defaultEffort','"invalid"','2026-10-17T00:00:00.000Z')
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/sqlite/upgrade.test.ts:432:5
+    430|     "INSERT INTO settings VALUES ('local','defaultModel','\"unknown\"'…
+    431|     "INSERT INTO settings VALUES ('other','defaultEffort','\"invalid\"…
+    432|   ])('refuses invalid/conflicting owner defaults: %s', async (sql) => {
+       |     ^
+    433|     const handle = await fixture();
+    434|     await handle.client.execute(sql);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/17]⎯
+
+ FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > treats a genuinely fresh format-4 store as a 
+no-op
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/sqlite/upgrade.test.ts:467:3
+    465|     });
+    466|   });
+    467|   it('treats a genuinely fresh format-4 store as a no-op', async () =>…
+       |   ^
+    468|     const handle = await openMemoryDatabase();
+    469|     handles.push(handle);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/17]⎯
+
+
+ Test Files  5 failed | 42 passed (47)
+      Tests  16 failed | 641 passed (657)
+   Start at  13:50:15
+   Duration  885.77s (tests 82%, import 16%, transform 1%, worker 1%)
+
+    Isolate  47 workers spawned · ~977ms startup each (spawn + environment, per file)
+             at least ~44.96s faster with isolate: false — reuses workers across files instead of one per file
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 97.49% ( 2294/2353 )
+Branches     : 94.53% ( 1660/1756 )
+Functions    : 98.24% ( 505/514 )
+Lines        : 98.21% ( 2037/2074 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ <user-path>\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-
+  │ f4\packages\infrastructure
+
+
+EXIT=1 SECONDS=887.83

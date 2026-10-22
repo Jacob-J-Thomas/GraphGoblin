@@ -8,6 +8,8 @@ describe('no-turn readiness diagnostics', () => {
     ['stream disconnected before completion: authentication token refresh timed out', 'transport'],
     ['Invalid API key ? Please run /login', 'auth'],
     ['API Error: 500 Internal server error', 'transport'],
+    ['API Error: 401 Authentication failed; check network settings.', 'auth'],
+    ['HTTP 429 Too Many Requests; network request failed.', 'quota'],
     ['ETIMEDOUT', 'transport'],
     ['EAI_AGAIN', 'transport'],
     ['quota exhausted', 'quota'],

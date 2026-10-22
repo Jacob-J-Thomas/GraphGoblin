@@ -453,6 +453,8 @@ export const inferenceHandler: NodeHandler<'inference'> = {
             attempt: attempts,
           });
           pending = await beginTurn(repairPrompt, 'repair', sessionId);
+          // A synchronous refusal belongs to this invocation, not the completed turn.
+          session = undefined;
           session = harness.resume(
             sessionId,
             sessionRequest({ prompt: repairPrompt, outputSchema: schema.jsonSchema }),

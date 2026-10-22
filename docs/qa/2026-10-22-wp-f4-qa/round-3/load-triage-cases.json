@@ -1,0 +1,50 @@
+[
+  {
+    "name": "triage-sqlite-upgrade-01",
+    "file": "src/sqlite/upgrade.test.ts",
+    "case": "deletes all history and configured templates, converts definitions, retains signing identities/secrets/settings, and starts through ordinary migrations",
+    "pattern": "deletes\\ all\\ history\\ and\\ configured\\ templates,\\ converts\\ definitions,\\ retains\\ signing\\ identities/secrets/settings,\\ and\\ starts\\ through\\ ordinary\\ migrations$"
+  },
+  {
+    "name": "triage-sqlite-upgrade-02",
+    "file": "src/sqlite/upgrade.test.ts",
+    "case": "blocks ordinary queued runs without cancelling them",
+    "pattern": "blocks\\ ordinary\\ queued\\ runs\\ without\\ cancelling\\ them$"
+  },
+  {
+    "name": "triage-sqlite-upgrade-03",
+    "file": "src/sqlite/upgrade.test.ts",
+    "case": "blocks ordinary waiting runs without cancelling them",
+    "pattern": "blocks\\ ordinary\\ waiting\\ runs\\ without\\ cancelling\\ them$"
+  },
+  {
+    "name": "triage-sqlite-upgrade-04",
+    "file": "src/sqlite/upgrade.test.ts",
+    "case": "requires every hash-bound review, binds repeated nodes to their stored version, and rejects stale/unused resolutions",
+    "pattern": "requires\\ every\\ hash\\-bound\\ review,\\ binds\\ repeated\\ nodes\\ to\\ their\\ stored\\ version,\\ and\\ rejects\\ stale/unused\\ resolutions$"
+  },
+  {
+    "name": "triage-sqlite-upgrade-05",
+    "file": "src/sqlite/upgrade.test.ts",
+    "case": "refuses changed source, damaged SQL/ledger, malformed template identities and invalid definitions",
+    "pattern": "refuses\\ changed\\ source,\\ damaged\\ SQL/ledger,\\ malformed\\ template\\ identities\\ and\\ invalid\\ definitions$"
+  },
+  {
+    "name": "triage-sqlite-upgrade-06",
+    "file": "src/sqlite/upgrade.test.ts",
+    "case": "removes old database archives and converts legacy owner defaults without changing other settings",
+    "pattern": "removes\\ old\\ database\\ archives\\ and\\ converts\\ legacy\\ owner\\ defaults\\ without\\ changing\\ other\\ settings$"
+  },
+  {
+    "name": "triage-sqlite-upgrade-07",
+    "file": "src/sqlite/upgrade.test.ts",
+    "case": "refuses invalid/conflicting owner defaults: INSERT INTO settings VALUES ('other','defaultEffort','\"invalid\"','2026-10-17T00:00:00.000Z')",
+    "pattern": "refuses\\ invalid/conflicting\\ owner\\ defaults:\\ INSERT\\ INTO\\ settings\\ VALUES\\ \\('other','defaultEffort','\\x22invalid\\x22','2026\\-10\\-17T00:00:00\\.000Z'\\)$"
+  },
+  {
+    "name": "triage-sqlite-upgrade-08",
+    "file": "src/sqlite/upgrade.test.ts",
+    "case": "treats a genuinely fresh format-4 store as a no-op",
+    "pattern": "treats\\ a\\ genuinely\\ fresh\\ format\\-4\\ store\\ as\\ a\\ no\\-op$"
+  }
+]

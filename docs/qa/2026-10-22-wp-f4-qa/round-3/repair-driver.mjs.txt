@@ -1,0 +1,157 @@
+import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
+import { once } from 'node:events';
+import { createInterface } from 'node:readline';
+import { mkdtemp, readdir, unlink, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join, dirname, basename, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { createRequire } from 'node:module';
+import { setTimeout as delay } from 'node:timers/promises';
+
+const root = process.cwd();
+const imp = p => import(pathToFileURL(join(root, p)).href);
+const { createContainer } = await imp('apps/api/dist/container.js');
+const { buildApp } = await imp('apps/api/dist/app.js');
+const { loadConfig } = await imp('apps/api/dist/config.js');
+const { FakeHarness, singleNodeLoop } = await imp('packages/engine/dist/testing/index.js');
+const { CodexHarness } = await imp('packages/adapter-codex/dist/index.js');
+const { ClaudeHarness } = await imp('packages/infrastructure/dist/claude/index.js');
+const { runClaudeProcess } = await imp('packages/infrastructure/dist/claude/process.js');
+const { createGraphGoblinClient } = await imp('packages/api-client/dist/index.js');
+const { createMcpServer } = await imp('apps/mcp/dist/server.js');
+const req = createRequire(join(root, 'apps/mcp/package.json'));
+const { Client } = await import(pathToFileURL(req.resolve('@modelcontextprotocol/sdk/client/index.js')));
+const { InMemoryTransport } = await import(pathToFileURL(req.resolve('@modelcontextprotocol/sdk/inMemory.js')));
+const out = join(root, 'docs/qa/2026-10-22-wp-f4-qa/round-3');
+const store = await mkdtemp(join(tmpdir(), 'gg-qa-f4-repair-'));
+const ids = { codex: 'fixture-thread', claude: '11111111-1111-4111-8111-111111111111' };
+const continuation = 'The previous turn was interrupted before GraphGoblin recorded its result. Continue the task from where you left off and finish it.';
+const authored = 'Original task Ω\nKeep the authored task exact.';
+const invalid = 'invalid Ω\nline';
+const repairTemplate = 'Repair exactly №{{ attempt }}: {{ value }}\nPreserve Ω and "quotes".';
+const exactRepair = 'Repair exactly №1: ' + JSON.stringify(invalid, null, 2) + '\nPreserve Ω and "quotes".';
+const report = { revision: 'b80c9fdfb001e020bdfc1b9c7c15e5f910d33766', provider: 'FAKE ONLY', system: 'Built API, real HTTP/SQLite, public HarnessPort injection and real adapters over fake CLIs', port: 5894, store: basename(store), checks: [] };
+const env = Object.fromEntries(Object.entries(process.env).filter(([k]) => !k.startsWith('GG_') && !/^(OPENAI_API_KEY|ANTHROPIC_API_KEY|JEV_API_KEY|NODE_V8_COVERAGE)$/.test(k)));
+Object.assign(env, { GG_DATA_DIR: store, GG_HOST: '127.0.0.1', GG_PORT: '5894', GG_REQUIRE_API_KEY: 'true', GG_WEB_DIST: '', GG_LOG_LEVEL: 'silent', GG_CODEX_BINARY: 'gg-qa-f4-missing.exe', GG_CLAUDE_BINARY: 'gg-qa-f4-missing.exe' });
+const scrub = s => s.replaceAll(root, '<worktree>').replaceAll(tmpdir(), '<temp>').replaceAll(process.env.USERPROFILE, '<user>');
+const children = new Map();
+function child(cmd, args, options = {}) {
+  const p = spawn(cmd, args, { windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'], ...options });
+  const closed = once(p, 'close'); closed.catch(() => {}); children.set(p, closed); return p;
+}
+let control, calls = [], phase = 0;
+function fake(h, request, signal, id, script) {
+  const f = new FakeHarness([script], h);
+  const session = id ? f.resume(id, request, signal) : f.start(request, signal);
+  return { ...session, sessionId: Promise.resolve(id || ids[h]), events: (async function* () { for await (const e of session.events) yield e.type === 'session' ? { ...e, sessionId: id || ids[h] } : e; })() };
+}
+function cliAdapter(h, scenario) {
+  if (h === 'claude') return new ClaudeHarness({ platform: 'win32', preflightTimeoutMs: 60000, runner: (r, cb) => runClaudeProcess({ ...r, binary: process.execPath, args: [join(root, 'packages/infrastructure/src/claude/fixtures/turn-cli.mjs'), scenario, ...r.args] }, cb) });
+  return new CodexHarness({ clientFactory: () => {
+    const thread = () => ({ runStreamed: async prompt => ({ events: (async function* () {
+      const p = child(process.execPath, [join(root, 'packages/adapter-codex/src/fixtures/turn-cli.mjs'), scenario]);
+      let err = ''; p.stderr.on('data', b => err += b.toString()); p.stdin.on('error', () => {}); p.stdin.end(prompt);
+      for await (const line of createInterface({ input: p.stdout })) yield JSON.parse(line);
+      const [code] = await children.get(p); if (code !== 0) throw new Error(err || 'Controlled fake CLI exit ' + code);
+    })() }) });
+    return { startThread: thread, resumeThread: thread };
+  } });
+}
+function invoke(h, request, signal, sessionId) {
+  calls.push({ harness: h, sessionId, prompt: request.turn.prompt, outputSchema: request.turn.outputSchema });
+  if (request.turn.prompt === 'Seed A') return fake(h, request, signal, sessionId, { finalText: 'A complete' });
+  phase += 1;
+  if (phase === 1) return fake(h, request, signal, sessionId, { finalText: invalid });
+  if (phase > 2) return fake(h, request, signal, sessionId, { finalText: '42' });
+  if (control.mode === 'sync') {
+    const fail = () => { throw Object.assign(new Error('Controlled synchronous repair-start refusal'), { code: control.code, retriable: true }); };
+    // The real Codex clientFactory is a synchronous public adapter seam; Claude's fake
+    // HarnessPort tests the same engine boundary without changing either adapter.
+    if (h === 'codex') return new CodexHarness({ clientFactory: fail }).resume(sessionId, request, signal);
+    return fail();
+  }
+  if (control.mode === 'cli') {
+    const a = cliAdapter(h, control.scenario); return a.resume(sessionId, request, signal);
+  }
+  return fake(h, request, signal, sessionId, {
+    accepted: control.accepted, announceSession: control.accepted, items: [], submission: control.submission,
+    error: { code: control.code, message: 'Controlled asynchronous repair failure', retriable: control.retriable },
+  });
+}
+const ready = new FakeHarness();
+const harnesses = Object.fromEntries(['codex', 'claude'].map(h => [h, { id: h, preflight: () => ready.preflight(), start: (r, s) => invoke(h, r, s), resume: (id, r, s) => invoke(h, r, s, id) }]));
+let container, app, mcp, mcpClient, token, typed;
+const base = 'http://127.0.0.1:5894';
+async function api(path, body) {
+  const r = await fetch(base + path, { ...(body === undefined ? {} : { method: 'POST', body: JSON.stringify(body) }), headers: { authorization: 'Bearer ' + token, ...(body === undefined ? {} : { 'content-type': 'application/json' }) } });
+  return { status: r.status, value: await r.json() };
+}
+async function ok(path, body) { const r = await api(path, body); assert.ok(r.status < 300, JSON.stringify(r)); return r.value; }
+async function settle(id) { const until = Date.now() + 60000; while (Date.now() < until) { const r = await ok('/runs/' + id); if (['failed', 'succeeded'].includes(r.status)) return r; await delay(20); } throw new Error('Run observation deadline'); }
+async function inspect(id) {
+  const run = await ok('/runs/' + id);
+  assert.deepEqual((await typed.GET('/runs/{id}', { params: { path: { id } } })).data, run);
+  const result = await mcpClient.callTool({ name: 'get_run', arguments: { runId: id } }); assert.ok(!result.isError);
+  assert.deepEqual(JSON.parse(result.content.find(x => x.type === 'text').text), run);
+  return { run, events: (await ok('/runs/' + id + '/events')).items };
+}
+function definition(h, policy) {
+  const session = policy === 'resume-named' ? { policy, key: 'shared' } : { policy };
+  const config = { harness: h, prompt: { template: authored }, session, ...(h === 'claude' ? { model: 'claude-opus-5-5', effort: 'high', harnessOptions: { sandbox: 'read-only', approval: 'never' } } : {}), output: { schema: { jsonSchema: { type: 'number' }, repair: { enabled: true, maxAttempts: 1, prompt: repairTemplate } } } };
+  const d = singleNodeLoop('Repair-start QA ' + h + policy + control.name, { id: 'b', kind: 'inference', label: 'B', config });
+  if (policy !== 'fresh') { d.nodes.splice(1, 0, { id: 'a', kind: 'inference', label: 'A', config: { harness: h, prompt: { template: 'Seed A' }, session: policy === 'resume-named' ? session : { policy: 'fresh' }, ...(h === 'claude' ? { model: 'claude-opus-5-5', effort: 'high', harnessOptions: { sandbox: 'read-only', approval: 'never' } } : {}) } }); d.edges[0].to.node = 'a'; d.edges.push({ id: 'a-b', from: { node: 'a', port: 'out' }, to: { node: 'b' } }); }
+  return d;
+}
+const pinned = ['HARNESS_ARGUMENTS_REJECTED', 'HARNESS_INVALID_CONFIGURATION', 'HARNESS_UNSUPPORTED_POLICY'];
+const syncCodes = ['HARNESS_NOT_AUTHENTICATED', 'HARNESS_NOT_INSTALLED', 'HARNESS_QUOTA_EXHAUSTED', ...pinned];
+const variants = [
+  ...syncCodes.map(code => ({ name: 'sync ' + code, mode: 'sync', code, submission: 'definitely-not-submitted', canResume: !pinned.includes(code) })),
+  ...['HARNESS_NOT_AUTHENTICATED', ...pinned].map(code => ({ name: 'async refused ' + code, mode: 'fake', code, accepted: false, retriable: true, submission: 'definitely-not-submitted', canResume: !pinned.includes(code) })),
+  { name: 'async accepted generic no retry', mode: 'fake', code: 'HARNESS_TURN_FAILED', accepted: true, retriable: false, submission: 'delivery-uncertain', perHarness: true },
+  { name: 'async accepted generic retry', mode: 'fake', code: 'HARNESS_TURN_FAILED', accepted: true, retriable: true, submission: 'delivery-uncertain', canResume: true },
+  { name: 'async accepted pinned false-positive retry', mode: 'fake', code: 'HARNESS_ARGUMENTS_REJECTED', accepted: true, retriable: true, submission: 'delivery-uncertain', canResume: false },
+];
+try {
+  const key = child(process.execPath, ['apps/api/dist/main.js', '--create-api-key', 'WP-F4 round 3 QA'], { env }); let stdout = '', stderr = '';
+  key.stdout.on('data', b => stdout += b.toString()); key.stderr.on('data', b => stderr += b.toString());
+  assert.equal((await children.get(key))[0], 0, scrub(stderr)); token = stdout.split(/\r?\n/).find(x => /^  \S+$/.test(x))?.trim(); assert.ok(token); stdout = '';
+  container = await createContainer(loadConfig(env), { harnesses, startTimers: false }); await container.start(); app = await buildApp(container); await app.listen({ host: '127.0.0.1', port: 5894 });
+  typed = createGraphGoblinClient({ baseUrl: base, apiKey: token }); mcp = createMcpServer({ apiUrl: base, apiKey: token }); mcpClient = new Client({ name: 'independent-round3-qa', version: '1' }); const [ct, st] = InMemoryTransport.createLinkedPair(); await mcp.connect(st); await mcpClient.connect(ct);
+  for (const h of ['codex', 'claude']) for (const policy of ['fresh', 'resume-previous', 'resume-named']) {
+    const cases = [...variants, ...(h === 'claude' ? [{ name: 'CLI auth', mode: 'cli', scenario: 'auth', code: 'HARNESS_NOT_AUTHENTICATED', submission: 'definitely-not-submitted', canResume: true }, { name: 'CLI arguments', mode: 'cli', scenario: 'arguments', code: 'HARNESS_ARGUMENTS_REJECTED', adapterCode: h === 'claude' ? 'HARNESS_TURN_FAILED' : 'HARNESS_ARGUMENTS_REJECTED', submission: 'definitely-not-submitted', canResume: false }] : [{ name: 'CLI arguments', mode: 'cli', scenario: 'arguments', code: 'HARNESS_ARGUMENTS_REJECTED', adapterCode: h === 'claude' ? 'HARNESS_TURN_FAILED' : 'HARNESS_ARGUMENTS_REJECTED', submission: 'definitely-not-submitted', canResume: false }])];
+    for (control of cases) {
+      if (process.env.QA_REPAIR_AFFECTED && !(h === 'claude' && (policy !== 'fresh' || control.name === 'CLI arguments'))) continue;
+      calls = []; phase = 0; const item = { harness: h, policy, case: control.name, expected: { submission: control.submission, resumable: control.perHarness ? h === 'codex' : control.canResume } };
+      try {
+        const { loop } = await ok('/loops', { definition: definition(h, policy) }); await ok('/loops/' + loop.id + '/publish', {}); const { run } = await ok('/loops/' + loop.id + '/runs', {}); item.runId = run.id;
+        const failed = await settle(run.id); assert.equal(failed.status, 'failed'); const before = await inspect(run.id); item.failure = failed.failure;
+        const bTurns = before.events.filter(e => e.nodeId === 'b' && e.type === 'harness.turn'); assert.equal(bTurns.length, 2); const [original, repair] = bTurns;
+        assert.equal(original.prompt, authored); assert.equal(repair.prompt, exactRepair); assert.equal(repair.promptKind, 'repair'); assert.equal(repair.visitId, original.visitId); assert.notEqual(repair.turnId, original.turnId); assert.equal(repair.resumeSessionId, ids[h]);
+        const sub = before.events.filter(e => e.type === 'harness.submission' && e.turnId === repair.turnId); item.turns = bTurns; item.submissions = sub;
+        const f = failed.failure; assert.equal(f.inference.submission, control.submission); assert.equal(f.inference.promptKind, 'repair'); assert.equal(f.inference.turnId, repair.turnId); assert.equal(f.resumable, item.expected.resumable);
+        const expectedCode = control.submission === 'delivery-uncertain' ? 'HARNESS_DELIVERY_UNCERTAIN' : pinned.includes(control.code) ? 'HARNESS_TURN_FAILED' : control.code; assert.equal(f.code, expectedCode);
+        if (pinned.includes(control.code)) assert.equal(f.details.adapterCode, control.adapterCode ?? control.code);
+        if (control.submission === 'definitely-not-submitted') { assert.ok(sub.some(e => e.submission === 'definitely-not-submitted')); assert.ok(!sub.some(e => e.marker)); }
+        if (control.accepted) assert.ok(sub.some(e => e.marker === 'fake.accepted'));
+        const callsBefore = calls.length; const resumed = await api('/runs/' + run.id + '/resume', {}); item.resumeStatus = resumed.status;
+        assert.equal(resumed.status, item.expected.resumable ? 200 : 409);
+        if (item.expected.resumable) {
+          const completed = await settle(run.id); assert.equal(completed.status, 'succeeded'); const after = await inspect(run.id); const retried = calls.at(-1); const exact = control.submission === 'definitely-not-submitted'; assert.equal(retried.prompt, exact ? exactRepair : continuation); assert.equal(retried.sessionId, ids[h]); assert.equal(calls.length, callsBefore + 1);
+          const last = after.events.filter(e => e.type === 'harness.turn' && e.nodeId === 'b').at(-1); assert.equal(last.visitId, repair.visitId); assert.equal(last.turnId === repair.turnId, exact); assert.equal(last.promptKind, exact ? 'repair' : 'continuation'); item.finalStatus = completed.status; item.sameTurnIdentity = last.turnId === repair.turnId;
+        } else { await delay(50); assert.equal(calls.length, callsBefore); item.additionalCallsAfter409 = calls.length - callsBefore; }
+        item.calls = [...calls]; item.projections = 'REST = api-client = MCP get_run'; item.pass = true; console.log('PASS ' + h + ' ' + policy + ' ' + control.name);
+      } catch (e) { item.pass = false; item.error = scrub(e.stack); item.calls = [...calls]; console.log('FAIL ' + h + ' ' + policy + ' ' + control.name + ': ' + scrub(e.message)); }
+      report.checks.push(item); await writeFile(join(out, process.env.QA_REPAIR_EVIDENCE || 'repair-start.json'), scrub(JSON.stringify(report, null, 2)) + '\n');
+    }
+  }
+} catch (e) { report.fatal = scrub(e.stack); console.log(report.fatal); }
+finally {
+  await mcpClient?.close().catch(() => {}); await mcp?.close().catch(() => {}); await app?.close(); await container?.stop();
+  for (const [p, closed] of children) { if (p.exitCode === null && p.signalCode === null) p.kill('SIGKILL'); await closed.catch(() => {}); }
+  async function clear(dir) { for (const e of await readdir(dir, { withFileTypes: true })) { const p = join(dir, e.name); if (e.isDirectory()) await clear(p); else await unlink(p); } }
+  assert.equal(dirname(resolve(store)), resolve(tmpdir())); assert.ok(basename(store).startsWith('gg-qa-f4-')); try { await clear(store); } catch (e) { report.deferredCleanup = { code: e.code, action: 'Clear remaining files after this process exits' }; }
+  report.cleanup = { filesRemoved: !report.deferredCleanup, directory: 'retained empty; no directory deletion', childProcesses: [...children.keys()].map(p => ({ pid: p.pid, exitCode: p.exitCode, signalCode: p.signalCode })) };
+  await writeFile(join(out, process.env.QA_REPAIR_EVIDENCE || 'repair-start.json'), scrub(JSON.stringify(report, null, 2)) + '\n');
+}
+process.exitCode = report.fatal || report.checks.some(x => !x.pass) ? 1 : 0;

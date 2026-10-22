@@ -83,6 +83,12 @@ The owner's request: move the horizontal and vertical break points of a line to 
 - Node progress drawer that shows harness items as they arrive.
 - Wait handling: when the run is waiting on input, a form rendered from the wait node's `inputSchema` appears inline.
 
+The timeline lists selectable `harness.turn` and `harness.submission` rows with the node ID.
+Selection reconstructs the thread at that event. The authored prompt, visit ID, turn ID,
+acceptance marker and submission classification are available through REST; the inspector
+does not display them as event details today.
+The provenance detail view is coordinated with #379.
+
 ## PWA behaviour (Decided)
 
 - `vite-plugin-pwa` with Workbox, `registerType: 'prompt'`.

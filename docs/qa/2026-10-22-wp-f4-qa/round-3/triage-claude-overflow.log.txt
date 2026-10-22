@@ -1,0 +1,35 @@
+REVISION: b80c9fdfb001e020bdfc1b9c7c15e5f910d33766
+COMMAND: pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/claude/process.test.ts --maxWorkers=1 -t kills on deadline and output overflow
+
+ RUN  v5.0.3 <worktree>/packages/infrastructure
+
+ ❯ src/claude/process.test.ts (5 tests | 1 failed | 4 skipped) 15649ms
+   ❯ owned native Claude process transport (5)
+     × kills on deadline and output overflow 15647ms
+pnpm.cmd : 
+At line:10 char:3
++   & pnpm.cmd @GateArgs *> $raw
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills on deadline and output overflow
+Error: EBUSY: resource busy or locked, rmdir '<temp>\gg-claude-process-bAJhxj'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 skipped (5)
+   Start at  14:05:53
+   Duration  22.28s (tests 74%, transform 17%, import 9%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ <user-path>\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-
+  │ f4\packages\infrastructure
+
+
+EXIT=1 SECONDS=27.45

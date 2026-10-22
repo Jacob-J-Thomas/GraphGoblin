@@ -37,7 +37,7 @@ async function waitFor(fn, label = 'state') {
   while (Date.now()<until) { const x = await fn(); if(x) return x; await delay(30); }
   throw new Error('Deadline: '+label);
 }
-const report = { revision: '31f485e3060532f672ecdbb0e92fc2c743807fe0', provider: 'FAKE ONLY', checks: [], cleanup: [] };
+const report = { revision: process.env.QA_REVISION || 'not supplied (set QA_REVISION)', provider: 'FAKE ONLY', checks: [], cleanup: [] };
 const scrub = (s) => s.replaceAll(root, '<worktree>').replaceAll(root.replaceAll('\\','/'), '<worktree>').replaceAll(tmpdir(), '<temp>').replaceAll(process.env.USERPROFILE, '<user>').replaceAll(process.env.USERPROFILE.replaceAll('\\','/'), '<user>');
 const evidence = join(root, 'docs/qa/2026-10-22-wp-f4-qa');
 function compact(detail) {
@@ -49,7 +49,7 @@ async function record(name, fn) {
   if(process.env.QA_ONLY && !name.startsWith('built main') && !new RegExp(process.env.QA_ONLY).test(name)) return;
   try { const detail = await fn(); report.checks.push({name, pass:true,...compact(detail)}); console.log('PASS '+name); }
   catch(e) { report.checks.push({name, pass:false,error:scrub(e.stack).slice(0,3000)}); console.log('FAIL '+name+': '+scrub(e.message).slice(0,600)); }
-  await writeFile(join(evidence, process.env.QA_EVIDENCE || 'matrix.txt'), scrub(JSON.stringify(report,null,2))+'\n');
+  await writeFile(join(evidence, process.env.QA_EVIDENCE || 'matrix-qualified.txt'), scrub(JSON.stringify(report,null,2))+'\n');
 }
 
 if (process.argv.includes('--server')) {
@@ -69,7 +69,7 @@ if (process.argv.includes('--server')) {
     return { ...s, sessionId:Promise.resolve(id || ids[h]), result:s.result, events:(async function*(){ for await(const e of s.events) yield e.type==='session'?{...e,sessionId:id || ids[h]}:e; })() };
   }
   function adapter(h, scenario) {
-    if(h==='claude') return new ClaudeHarness({platform:'win32',runner:(req,onStdout)=>runClaudeProcess({...req,binary: scenario==='pre-start' && req.stdin!==undefined?'gg-qa-244-missing.exe':process.execPath,args:[join(root,'packages/infrastructure/src/claude/fixtures/turn-cli.mjs'),scenario,...req.args]},onStdout)});
+    if(h==='claude') return new ClaudeHarness({platform:'win32',preflightTimeoutMs:60000,runner:(req,onStdout)=>runClaudeProcess({...req,binary: scenario==='pre-start' && req.stdin!==undefined?'gg-qa-244-missing.exe':process.execPath,args:[join(root,'packages/infrastructure/src/claude/fixtures/turn-cli.mjs'),scenario,...req.args]},onStdout)});
     return new CodexHarness({clientFactory:()=>{
       const thread = id => ({runStreamed:async(prompt)=>({events:(async function*(){
         const p = child(scenario==='pre-start'?'gg-qa-244-missing.exe':process.execPath,[join(root,'packages/adapter-codex/src/fixtures/turn-cli.mjs'),scenario]);
@@ -121,9 +121,9 @@ if (process.argv.includes('--server')) {
 } else {
   const stores=[]; let apiChild; let mcpClient; let mcpServer; let token;
   const env = Object.fromEntries(Object.entries(process.env).filter(([k])=>!k.toUpperCase().startsWith('GG_')&&!/^(JEV_API_KEY|ANTHROPIC_API_KEY|OPENAI_API_KEY|NODE_V8_COVERAGE)$/.test(k)));
-  const dataDir=await mkdtemp(join(tmpdir(),'gg-qa-244-api-')); stores.push(dataDir);
-  Object.assign(env,{GG_DATA_DIR:dataDir,GG_HOST:'127.0.0.1',GG_PORT:'5850',GG_REQUIRE_API_KEY:'true',GG_SWAGGER_UI:'false',GG_WEB_DIST:'',GG_LOG_LEVEL:'silent',GG_CODEX_BINARY:'gg-qa-244-missing.exe',GG_CLAUDE_BINARY:'gg-qa-244-missing.exe'});
-  const base='http://127.0.0.1:5850';
+  const dataDir=await mkdtemp(join(tmpdir(),'gg-wp-f4-r5-api-')); stores.push(dataDir);
+  Object.assign(env,{GG_DATA_DIR:dataDir,GG_HOST:'127.0.0.1',GG_PORT:'5662',GG_REQUIRE_API_KEY:'true',GG_SWAGGER_UI:'false',GG_WEB_DIST:'',GG_LOG_LEVEL:'silent',GG_CODEX_BINARY:'gg-qa-244-missing.exe',GG_CLAUDE_BINARY:'gg-qa-244-missing.exe'});
+  const base='http://127.0.0.1:5662';
   const api=async(path,body,method=body===undefined?'GET':'POST')=>{
     const r=await fetch(base+path,{method,headers:{authorization:'Bearer '+token,...(body===undefined?{}:{'content-type':'application/json'})},...(body===undefined?{}:{body:JSON.stringify(body)})});
     const text=await r.text(); const value=text?JSON.parse(text):null; return {status:r.status,value};
@@ -158,7 +158,7 @@ if (process.argv.includes('--server')) {
     await record('built main creates API key and enforces authentication',async()=>{
       const cli=child(process.execPath,['apps/api/dist/main.js','--create-api-key','WP-F4 independent QA'],{env});let output='';let errors='';cli.stdout.on('data',b=>output+=b.toString());cli.stderr.on('data',b=>errors+=b.toString());const [code]=await owned.get(cli);assert.equal(code,0,scrub(errors));token=output.split(/\r?\n/).find(x=>/^  \S+$/.test(x))?.trim();assert.ok(token);output='';
       apiChild=child(process.execPath,['apps/api/dist/main.js'],{env});apiChild.stdout.resume();apiChild.stderr.resume();await waitFor(()=>fetch(base+'/healthz').then(r=>r.ok).catch(()=>false),'main listening');
-      const noKey=await fetch(base+'/loops');assert.equal(noKey.status,401);assert.equal((await api('/loops')).status,200);await kill(apiChild);apiChild=undefined;return {port:5850,store:basename(dataDir),withoutKey:401,withCreatedKey:200};
+      const noKey=await fetch(base+'/loops');assert.equal(noKey.status,401);assert.equal((await api('/loops')).status,200);await kill(apiChild);apiChild=undefined;return {port:5662,store:basename(dataDir),withoutKey:401,withCreatedKey:200};
     });
     assert.ok(token,'key creation required');await startServer();
     const {createGraphGoblinClient}=await imp('packages/api-client/dist/index.js');client=createGraphGoblinClient({baseUrl:base,apiKey:token});
@@ -174,11 +174,13 @@ if (process.argv.includes('--server')) {
         await send(apiChild,'configure',{control:controlledAuth?{mode:'fake',script:[...(policy==='fresh'?[]:[{finalText:'A completed'}]),{accepted:false,announceSession:false,items:[],submission:'definitely-not-submitted',error:{code:'HARNESS_NOT_AUTHENTICATED',message:'Synthetic authentication refusal',retriable:false}}]}:{mode:'cli',scenario}});
         const loopId=await publish(def(h,policy,'CLI '+(++serial)));const id=await startRun(loopId);const r=await settle(id);assert.equal(r.status,'failed');const before=await inspect(id);const f=r.failure;const bturn=before.events.filter(x=>x.nodeId==='b'&&x.type==='harness.turn');assert.equal(bturn.length,1);const submitted=before.events.filter(x=>x.nodeId==='b'&&x.type==='harness.submission'&&x.submission==='submitted');
         const accepted=['accepted','assistant'].includes(scenario);assert.equal(submitted.length,accepted?1:0);if(accepted)assert.equal(submitted[0].marker,h==='codex'?'codex.turn.started':'claude.assistant');
+        const claudeInitReached=h==='claude' && before.events.some(e=>e.nodeId==='b' && e.type==='harness.session' && e.harness==='claude' && e.sessionId===ids.claude);
+        if(h==='claude' && scenario==='init') assert.ok(claudeInitReached,'Fixture did not reach Claude init: '+JSON.stringify(f));
         const classification=['pre-start','arguments','auth'].includes(scenario)?'definitely-not-submitted':scenario==='missing'?'session-missing':'delivery-uncertain';assert.equal(f.inference.submission,classification);
         const canResume=['pre-start','auth'].includes(scenario)||(h==='codex'&&(accepted||policy==='fresh')&&scenario!=='missing'&&scenario!=='arguments');assert.equal(f.resumable,canResume,JSON.stringify(f));
         await send(apiChild,'recover');const response=await api('/runs/'+id+'/resume',{});assert.equal(response.status,canResume?200:409);
         let after;if(canResume){assert.equal((await settle(id)).status,'succeeded');after=await inspect(id);const last=after.calls.at(-1);assert.equal(last.prompt,classification==='definitely-not-submitted'?bturn[0].prompt:continuation);assert.equal(last.sessionId,classification==='definitely-not-submitted'?(policy==='fresh'?undefined:ids[h]):ids[h]);}
-        return {controlledAuth,loopId,id,before,resumeStatus:response.status,after};
+        return {controlledAuth,claudeInitReached,loopId,id,before,resumeStatus:response.status,after};
       });
     }
     for(const h of ['codex','claude'])for(const policy of policies)for(const kind of ['refused','uncertain-no-session','accepted','pinned'])await record(`fake ${h} ${policy} ${kind}`,async()=>{
@@ -237,8 +239,8 @@ if (process.argv.includes('--server')) {
     if(apiChild)await send(apiChild,'kill-cli').catch(()=>{});
     for(const p of owned.keys())await kill(p);
     async function clearFiles(dir){for(const entry of await readdir(dir,{withFileTypes:true})){const path=join(dir,entry.name);if(entry.isDirectory())await clearFiles(path);else await unlink(path);}}
-    for(const s of stores){assert.equal(dirname(resolve(s)),resolve(tmpdir()));assert.ok(basename(s).startsWith('gg-qa-244-'));try{await clearFiles(s);report.cleanup.push({store:basename(s),filesRemoved:true,directory:'retained empty; no directory deletion'});}catch(e){report.cleanup.push({store:basename(s),error:scrub(e.message).slice(0,600)});}}
-    report.processes=[...owned.keys()].map(p=>({pid:p.pid,exitCode:p.exitCode,signalCode:p.signalCode}));await writeFile(join(evidence,process.env.QA_EVIDENCE || 'matrix.txt'),scrub(JSON.stringify(report,null,2))+'\n');
+    for(const s of stores){assert.equal(dirname(resolve(s)),resolve(tmpdir()));assert.ok(basename(s).startsWith('gg-wp-f4-'));try{await clearFiles(s);report.cleanup.push({store:basename(s),filesRemoved:true,directory:'retained empty; no directory deletion'});}catch(e){report.cleanup.push({store:basename(s),error:scrub(e.message).slice(0,600)});}}
+    report.processes=[...owned.keys()].map(p=>({pid:p.pid,exitCode:p.exitCode,signalCode:p.signalCode}));await writeFile(join(evidence,process.env.QA_EVIDENCE || 'matrix-qualified.txt'),scrub(JSON.stringify(report,null,2))+'\n');
   }
   process.exitCode=report.fatal||report.checks.some(x=>!x.pass)?1:0;
 }
