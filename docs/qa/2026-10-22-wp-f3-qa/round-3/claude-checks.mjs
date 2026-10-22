@@ -98,6 +98,6 @@ try {
   r.data.nativeLog = await call('GET', '/qa/observations');
 } finally {
   if (server) r.data.lifecycle.push(await stop(server));
-  r.data.cleanup = await removeStore(data, true);
+  r.data.cleanup = await removeStore(data);
   await r.finish();
 }

@@ -1,5 +1,5 @@
 // Sanitize only this round and build a complete Markdown retention manifest.
-import { readdir, readFile, writeFile } from 'node:fs/promises';
+import { readdir, readFile, writeFile, access } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import { tmpdir } from 'node:os';
 import { execFileSync } from 'node:child_process';
@@ -11,6 +11,16 @@ async function visit(dir) {
     if (e.isDirectory()) {
       await visit(p);
       continue;
+    }
+    if (e.name.endsWith('.log')) {
+      if (
+        await access(p + '.txt').then(
+          () => true,
+          () => false,
+        )
+      )
+        continue;
+      throw Error('Rename replay logs with the retained .log.txt suffix before finalizing');
     }
     files.push(relative(evidence, p).replaceAll('\\', '/'));
     if (/\.(?:log|json|md|txt)$/.test(e.name)) {

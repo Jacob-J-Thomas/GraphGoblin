@@ -126,6 +126,13 @@ is followed by an observed process exit before its TEMP store is removed. The
 migration check independently copies the closed base store and removes both stores
 after candidate exits. JSON files record those process and cleanup outcomes.
 
+**Round-4 record correction:** the original API JSON records two signal exits as
+`confirmedExited:false`, while cleanup reports true through a literal argument.
+Those historical records remain unchanged. The helper now records the observed
+exit event and its exit/signal codes, and cleanup derives confirmation from every
+owned process associated with the store. The isolated fresh API replay and the
+original contradiction are documented in [round 4](../round-4/README.md).
+
 All stores created by this round were removed; final inventory is recorded in
 [final-boundary.json](final-boundary.json). No unknown process or previous-round
 fixture directory was touched. Listener/Git/privacy checks and retention verification
@@ -142,10 +149,16 @@ Every file intended for curation is linked **directly from this README**, includ
 scripts, JSON, text logs and nested Edge output. The same complete inventory is in
 [ARTIFACTS.md](ARTIFACTS.md). [finalize-evidence.mjs](finalize-evidence.mjs) regenerates
 both inventories and [retention-check-results.json](retention-check-results.json).
+The committed tree contains **45 artifacts in this directory**, including this
+README and the manifest. All **12 logs** are tracked with the .log.txt suffix; each resolves
+from the links below. This count excludes ignored old log duplicates on disk and
+the separate round-4 folder.
 The finalizer must run again if artifacts are added or renamed. JSON command results
 also retain sanitized stdout, so the meaningful observations are durable even when
 reading without the separate log files. Preserve explicitly linked files during
-curation, including any `.log` files ignored by normal Git discovery.
+curation. The replay wrapper writes the .log.txt suffix so the normal log ignore rule does
+not silently exclude its output. The finalizer skips old log duplicates when a
+retained text counterpart exists.
 
 ## 8. Files changed
 

@@ -164,6 +164,6 @@ try {
   );
 } finally {
   if (server) r.data.lifecycle.push(await stop(server));
-  r.data.cleanup = [await removeStore(data, true), await removeStore(copy, true)];
+  r.data.cleanup = [await removeStore(data), await removeStore(copy)];
   await r.finish();
 }

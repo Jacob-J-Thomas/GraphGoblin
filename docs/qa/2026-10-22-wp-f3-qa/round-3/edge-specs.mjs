@@ -19,6 +19,6 @@ try {
   assert.equal(result.exitCode, 0);
 } finally {
   if (server) result.lifecycle = await stop(server);
-  result.cleanup = await removeStore(data, true);
+  result.cleanup = await removeStore(data);
   await save('edge-specs-results.json', result);
 }

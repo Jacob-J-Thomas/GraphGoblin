@@ -110,6 +110,6 @@ try {
 } finally {
   if (browser) await browser.close();
   if (server) r.data.lifecycle.push(await stop(server));
-  r.data.cleanup = await removeStore(data, true);
+  r.data.cleanup = await removeStore(data);
   await r.finish();
 }

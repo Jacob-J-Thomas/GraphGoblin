@@ -4,12 +4,16 @@ import { spawn, execFileSync } from 'node:child_process';
 import { once } from 'node:events';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { basename, join, relative, isAbsolute } from 'node:path';
+import { basename, join, relative, isAbsolute, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
 export { assert, delay };
 export const repo = fileURLToPath(new URL('../../../../', import.meta.url));
 export const evidence = fileURLToPath(new URL('./', import.meta.url));
+// Keep fresh round-4 observations separate from the historical round-3 JSON.
+const round4 = process.env.GG_QA_ROUND === 'round-4';
+const outputEvidence = round4 ? fileURLToPath(new URL('../round-4/', import.meta.url)) : evidence;
+const storeProcesses = new Map();
 export const head = execFileSync('git', ['rev-parse', 'HEAD'], {
   cwd: repo,
   encoding: 'utf8',
@@ -31,7 +35,7 @@ export function sanitize(value) {
     .replace(/DESKTOP-[A-Z0-9]+/g, '<host>');
 }
 export async function save(name, value) {
-  await writeFile(join(evidence, name), sanitize(JSON.stringify(value, null, 2)) + '\n');
+  await writeFile(join(outputEvidence, name), sanitize(JSON.stringify(value, null, 2)) + '\n');
 }
 export function report(name) {
   const data = { head, results: [], lifecycle: [] };
@@ -178,16 +182,33 @@ export function cycleDefinition(settings = { maxNodeVisits: null }) {
     ],
   };
 }
-export const newStore = (label) => mkdtemp(join(tmpdir(), 'gg-qa-243-r3-' + label + '-'));
-export async function removeStore(dir, confirmedExited) {
-  assert(confirmedExited, 'Refuse cleanup before owned process exits');
+export const newStore = (label) =>
+  mkdtemp(join(tmpdir(), (round4 ? 'gg-qa-f3-r4-' : 'gg-qa-243-r3-') + label + '-'));
+export async function removeStore(dir) {
+  // Derive permission to remove from every owned child's observed exit event.
+  // Callers cannot replace process evidence with a literal boolean.
+  const processes = (storeProcesses.get(resolve(dir)) ?? []).map((server) => ({
+    pid: server.child.pid,
+    ...server.termination,
+    confirmedExited: server.termination.exitObserved,
+  }));
+  assert(
+    processes.every((p) => p.confirmedExited),
+    'Refuse cleanup before owned process exits',
+  );
   const r = relative(tmpdir(), dir);
-  assert(r.startsWith('gg-qa-243-') && !r.includes('..') && !isAbsolute(r));
+  assert(/^gg-qa-(?:243|f3)-[A-Za-z0-9-]+$/.test(r) && !isAbsolute(r));
   try {
     await rm(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 250 });
-    return { store: basename(dir), processConfirmedExited: true, removed: true };
+    return { store: basename(dir), processConfirmedExited: true, processes, removed: true };
   } catch (e) {
-    return { store: basename(dir), processConfirmedExited: true, removed: false, code: e.code };
+    return {
+      store: basename(dir),
+      processConfirmedExited: true,
+      processes,
+      removed: false,
+      code: e.code,
+    };
   }
 }
 export async function launch(dir, mode = 'candidate', port = 5905) {
@@ -197,40 +218,58 @@ export async function launch(dir, mode = 'candidate', port = 5905) {
     [join(evidence, 'server.mjs'), basename(dir), mode, String(port)],
     { cwd: repo, stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true },
   );
+  const server = {
+    child,
+    port,
+    termination: { exitObserved: false, exitCode: null, signalCode: null },
+  };
+  server.exited = new Promise((done) => {
+    child.once('exit', (exitCode, signalCode) => {
+      Object.assign(server.termination, { exitObserved: true, exitCode, signalCode });
+      done();
+    });
+  });
+  const key = resolve(dir);
+  storeProcesses.set(key, [...(storeProcesses.get(key) ?? []), server]);
   child.stdout.on('data', (x) => (output += x));
   child.stderr.on('data', (x) => (output += x));
   try {
     await until(() => {
-      if (child.exitCode !== null)
-        throw Error('QA server exited ' + child.exitCode + ' ' + sanitize(output));
+      if (server.termination.exitObserved)
+        throw Error(
+          'QA server exited ' + JSON.stringify(server.termination) + ' ' + sanitize(output),
+        );
       return output.includes('QA_READY');
     }, 30000);
   } catch (e) {
-    if (child.exitCode === null) {
-      const end = once(child, 'exit');
+    if (!server.termination.exitObserved) {
       child.kill();
-      await end;
+      await server.exited;
     }
     throw e;
   }
-  return { child, port };
+  return server;
 }
 export async function stop(server, kill = false) {
-  if (server.child.exitCode === null) {
-    const exited = once(server.child, 'exit');
+  if (!server.termination.exitObserved) {
     if (kill) server.child.kill();
     else await api('POST', '/qa/stop', {}, server.port);
-    await Promise.race([
-      exited,
-      delay(10000).then(() => {
-        throw Error('QA server exit not confirmed');
-      }),
-    ]);
+    let timer;
+    try {
+      await Promise.race([
+        server.exited,
+        new Promise((_, reject) => {
+          timer = setTimeout(() => reject(Error('QA server exit not confirmed')), 10000);
+        }),
+      ]);
+    } finally {
+      clearTimeout(timer);
+    }
   }
   return {
     pid: server.child.pid,
-    exitCode: server.child.exitCode,
-    confirmedExited: server.child.exitCode !== null,
+    ...server.termination,
+    confirmedExited: server.termination.exitObserved,
     forced: kill,
   };
 }

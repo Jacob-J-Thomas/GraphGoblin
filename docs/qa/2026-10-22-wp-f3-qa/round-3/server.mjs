@@ -6,7 +6,7 @@ import { readFile } from 'node:fs/promises';
 import { repo, evidence } from './qa-lib.mjs';
 const [name, mode = 'candidate', portText = '5905'] = process.argv.slice(2),
   port = Number(portText);
-if (!/^gg-qa-243-[A-Za-z0-9-]+$/.test(name ?? '') || port < 5900 || port > 5909)
+if (!/^gg-qa-(?:243|f3)-[A-Za-z0-9-]+$/.test(name ?? '') || port < 5900 || port > 5909)
   throw Error('Invalid QA store/port');
 const tree = mode === 'base' ? resolve(repo, '..', 'codex-qa-wp-f4') : repo;
 const imported = (path) => import(pathToFileURL(join(tree, path)).href);
