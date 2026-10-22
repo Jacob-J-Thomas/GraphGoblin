@@ -1,6 +1,6 @@
 import { spawn, spawnSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
-import { lstat, mkdir, mkdtemp, readdir, rm, symlink, writeFile } from 'node:fs/promises';
+import { lstat, mkdir, mkdtemp, readdir, rename, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
@@ -688,6 +688,46 @@ describe('refused resets change nothing', () => {
       expect(dry.out).not.toMatch(/graphgoblin-store\.db +not part of the store/);
       // A regular file named `artifacts` is not the artifact store: kept, never removed.
       expect(dry.out).toMatch(row('artifacts', 'a file, not a directory'));
+    },
+  );
+
+  // A Windows alternate data stream shares its file's identity but is not the file (the Sol
+  // re-review's round-4 reproduction removed the whole file when a stream was configured).
+  it.runIf(process.platform === 'win32')(
+    'refuses a database path that names a stream of a file',
+    async () => {
+      const { base, dataDir } = await prepare('current');
+      await writeFile(join(dataDir, 'graphgoblin.db:review'), 'another database in a stream');
+      const before = await snapshotTree(base);
+      const result = await reset(
+        ['--reset', '--yes', '--data-dir', dataDir],
+        {
+          GG_DATA_DIR: dataDir,
+          GG_DB_URL: `file:${join(dataDir, 'graphgoblin.db:review').replaceAll('\\', '/')}`,
+        },
+        { readStore: () => Promise.reject(new Error('the store must not be read')) },
+      );
+      expect(result.code).toBe(1);
+      expect(result.err).toContain(
+        'names a stream of a file (graphgoblin.db:review contains a colon)',
+      );
+      expect(await snapshotTree(base)).toEqual(before);
+    },
+  );
+
+  // The manifest shows the reserved directories and sidecars as the directory spells them.
+  it.runIf(CASE_INSENSITIVE_NAMES)(
+    'lists the artifact directory and the sidecars under their stored spelling',
+    async () => {
+      const { dataDir } = await prepare('current');
+      await rename(join(dataDir, 'artifacts'), join(dataDir, 'Artifacts'));
+      await writeFile(join(dataDir, 'GRAPHGOBLIN.DB-journal'), 'a sidecar spelled differently');
+      const dry = await reset(['--reset'], { GG_DATA_DIR: dataDir });
+      expect(dry.code).toBe(0);
+      expect(dry.out).toMatch(/\n {2}Artifacts +artifacts +/);
+      expect(dry.out).not.toMatch(/\n {2}artifacts +artifacts +/);
+      expect(dry.out).toMatch(/\n {2}GRAPHGOBLIN\.DB-journal +SQLite rollback journal/);
+      expect(dry.out).not.toMatch(/GRAPHGOBLIN\.DB-journal +not part of the store/);
     },
   );
 

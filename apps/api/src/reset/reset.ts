@@ -1,12 +1,12 @@
 import { readdir, realpath, stat } from 'node:fs/promises';
-import { relative, resolve, sep } from 'node:path';
+import { basename, dirname, resolve } from 'node:path';
 import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { databaseFilePath } from '@graphgoblin/infrastructure/sqlite';
 import { loadConfig, type ApiConfig } from '../config.js';
 import { acquireDataDirLock, dataDirLockState, type DataDirLock } from '../data-dir-lock.js';
 import { dataDirArgument, RESET_COMMAND } from '../store-refusal.js';
 import { readStoreFacts, type StoreFacts } from './store-facts.js';
-import { identityOf, isInside, listEntry, removeEntry, statEntry, type TreeEntry } from './tree.js';
+import { identityOf, listEntry, removeEntry, statEntry, type TreeEntry } from './tree.js';
 
 /**
  * `graphgoblin-api --reset` (ADR-0042): the explicit fresh start for a pre-1.0 store this build
@@ -148,6 +148,12 @@ export async function storedSpelling(dataDir: string, database: string): Promise
       throw new ResetRefusedError(
         `the database path ${database} names ${segment} with a trailing dot or space, which Windows resolves to another name; configure GG_DB_URL with the name as the directory lists it`,
       );
+    // A colon inside a Windows name denotes an alternate data stream: it shares the file's identity
+    // but is not the file, so it is refused rather than resolved to the file and removed with it.
+    if (process.platform === 'win32' && segment.includes(':'))
+      throw new ResetRefusedError(
+        `the database path ${database} names a stream of a file (${segment} contains a colon); configure GG_DB_URL with the file itself`,
+      );
     const identity = await identityOf(resolve(parent, segment));
     if (identity === undefined) return [...stored, ...configured.slice(index)];
     const matches: string[] = [];
@@ -173,6 +179,45 @@ export async function storedSpelling(dataDir: string, database: string): Promise
     parent = resolve(parent, spelling);
   }
   return stored;
+}
+
+/** The directory's own spelling of `name` (the entry with the same identity), or `name` when absent. */
+async function listedName(dir: string, name: string): Promise<string> {
+  const identity = await identityOf(resolve(dir, name));
+  if (identity === undefined) return name;
+  for (const entry of await readdir(dir))
+    if ((await identityOf(resolve(dir, entry))) === identity) return entry;
+  return name;
+}
+
+/**
+ * The database path's segments below the data directory, found by walking its ancestors up to the
+ * one that is the data directory by filesystem identity (the configured spelling or its physical
+ * path), never by comparing path strings: a parent that keeps `Data` and `data` apart would
+ * otherwise let one directory's database be planned against the other. Ancestors that do not exist
+ * yet contribute their configured spelling. Undefined when no ancestor is the data directory.
+ */
+async function relativeToDataDir(
+  configured: string,
+  dataDir: string,
+  databaseFile: string,
+): Promise<string[] | undefined> {
+  const targets = new Set(
+    [await identityOf(configured), await identityOf(dataDir)].filter(
+      (identity): identity is string => identity !== undefined,
+    ),
+  );
+  if (targets.size === 0) return undefined;
+  const tail: string[] = [];
+  let current = resolve(databaseFile);
+  for (;;) {
+    const parent = dirname(current);
+    if (parent === current) return undefined;
+    tail.unshift(basename(current));
+    const identity = await identityOf(parent);
+    if (identity !== undefined && targets.has(identity)) return tail;
+    current = parent;
+  }
 }
 
 /**
@@ -248,8 +293,11 @@ export async function planReset({
       `the database ${database} has the name of the reset's lock file; rename it first`,
     );
   const databaseTargets: ResetTarget[] = [];
+  const databaseDir = resolve(dataDir, ...segments.slice(0, -1));
   for (const [suffix, what] of DATABASE_PARTS) {
-    const entry = await statEntry(dataDir, stored + suffix);
+    // Sidecars are listed under the spelling the directory shows for them.
+    const leaf = await listedName(databaseDir, segments.at(-1)! + suffix);
+    const entry = await statEntry(dataDir, [...segments.slice(0, -1), leaf].join('/'));
     if (!entry) continue;
     // Only a regular file: a directory, a link, a FIFO, a socket or a device is never a database
     // file, and reading the store from one could block or remove something that was never data.
@@ -267,11 +315,15 @@ export async function planReset({
   // stops part of the way still has the run IDs it needs when it is run again.
   const targets: ResetTarget[] = [];
   const kept: KeptEntry[] = [];
-  const workspaces = await statEntry(dataDir, 'workspaces');
+  // The reserved directories are named as the directory lists them (`Artifacts` on a volume that
+  // folds case), so the manifest shows the stored spelling.
+  const workspacesName = await listedName(dataDir, 'workspaces');
+  const artifactsName = await listedName(dataDir, 'artifacts');
+  const workspaces = await statEntry(dataDir, workspacesName);
   if (workspaces?.kind === 'directory') {
     const runIds = new Set(store.readable ? store.runIds : []);
-    for (const name of (await readdir(resolve(dataDir, 'workspaces'))).sort()) {
-      const path = 'workspaces/' + name;
+    for (const name of (await readdir(resolve(dataDir, workspacesName))).sort()) {
+      const path = workspacesName + '/' + name;
       if (runIds.has(name))
         targets.push({ path, what: 'run workspace', entries: await listEntry(dataDir, path) });
       else
@@ -287,7 +339,7 @@ export async function planReset({
     }
   } else if (workspaces)
     kept.push({
-      path: 'workspaces',
+      path: workspacesName,
       why:
         workspaces.kind === 'link'
           ? 'a link; a reset never follows links'
@@ -295,16 +347,16 @@ export async function planReset({
       identity: workspaces.identity,
     });
   // Only the artifact directory is the artifact store; a file or link of that name is kept.
-  const artifacts = await statEntry(dataDir, 'artifacts');
+  const artifacts = await statEntry(dataDir, artifactsName);
   if (artifacts?.kind === 'directory')
     targets.push({
-      path: 'artifacts',
+      path: artifactsName,
       what: 'artifacts',
-      entries: await listEntry(dataDir, 'artifacts'),
+      entries: await listEntry(dataDir, artifactsName),
     });
   else if (artifacts)
     kept.push({
-      path: 'artifacts',
+      path: artifactsName,
       why:
         artifacts.kind === 'link'
           ? 'a link; a reset never follows links'
@@ -491,8 +543,15 @@ async function physicalPath(path: string): Promise<string> {
   }
 }
 
+/**
+ * Two paths name one physical directory when their resolved identities agree, whatever the
+ * spelling. When neither exists there is nothing a reset could remove, and the resolved spellings
+ * decide only which message the caller sees.
+ */
 async function sameDirectory(a: string, b: string): Promise<boolean> {
   const [first, second] = [await physicalPath(a), await physicalPath(b)];
+  const [firstId, secondId] = [await identityOf(first), await identityOf(second)];
+  if (firstId !== undefined || secondId !== undefined) return firstId === secondId;
   return process.platform === 'win32'
     ? first.toLowerCase() === second.toLowerCase()
     : first === second;
@@ -530,12 +589,13 @@ export async function resetDataDirectory(
     throw new ResetRefusedError(
       'GG_DB_URL does not name a local database file; a reset removes only files inside the data directory',
     );
-  if (!isInside(configured, databaseFile))
+  const dataDir = await realpath(configured);
+  const segments = await relativeToDataDir(configured, dataDir, databaseFile);
+  if (!segments)
     throw new ResetRefusedError(
       `the database ${databaseFile} is outside the data directory ${configured}; a reset removes only paths inside it, so remove that database yourself or point GG_DB_URL inside the data directory`,
     );
-  const dataDir = await realpath(configured);
-  const database = relative(configured, databaseFile).split(sep).join('/');
+  const database = segments.join('/');
   // Check the lock and plan the whole reset read-only first: every refusal happens here, before
   // the lock (or a stale lock file left by a dead process) is touched.
   const state = await dataDirLockState(dataDir);
