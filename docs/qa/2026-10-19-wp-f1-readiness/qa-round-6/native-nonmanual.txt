@@ -1,0 +1,151 @@
+Built API ee0f4f40; Node 22.14.0; tooling/fixtures/readiness-cli.cs only.
+One probe means one --version invocation, including Claude safe-mode prefix.
+Counts at the 202 response are admission counts; final counts can include execution checks.
+202 alone is not a completion pass. Native success turns are refused by this fixture.
+
+{
+  "name": "webhook-unchanged-unready",
+  "pass": true,
+  "http": 202,
+  "run": {
+    "id": "01M5GJC0CKSYJXD4NNZSBSB8P4",
+    "ownerId": "local",
+    "loopId": "01M5GJBZZS3QVZE8227WG40EDF",
+    "versionId": "01M5GJBZZSPZBGQ8E144F9WA8K",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "QA webhook parent",
+      "label": "QA webhook parent v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M5GJC0CK1D9BJPWF58GQ5KXZ",
+    "status": "failed",
+    "currentNodeId": "child",
+    "iteration": 1,
+    "waiting": {
+      "waitId": "01M5GJC0CKSYJXD4NNZSBSB8P4:7",
+      "nodeId": "child",
+      "kind": "child",
+      "childRunId": "01M5GJC0QY3P4WKRJ5ZCGSF31B",
+      "startedSeq": 7
+    },
+    "failure": {
+      "code": "HARNESS_NOT_AUTHENTICATED",
+      "message": "subloop child 01M5GJC0QY3P4WKRJ5ZCGSF31B failed: Claude is not signed in.",
+      "nodeId": "child",
+      "resumable": true,
+      "details": {
+        "childRunId": "01M5GJC0QY3P4WKRJ5ZCGSF31B",
+        "childNodeId": "think"
+      }
+    },
+    "createdAt": "2026-10-22T01:07:23.155Z",
+    "startedAt": "2026-10-22T01:07:23.215Z",
+    "finishedAt": "2026-10-22T01:07:25.203Z",
+    "lastEventSeq": 13
+  },
+  "marker": true,
+  "probes": {
+    "claude": {
+      "probes": 1,
+      "commands": [
+        "--safe-mode --setting-sources  --strict-mcp-config --version",
+        "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+        "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+      ]
+    },
+    "codex": {
+      "probes": 0,
+      "commands": []
+    }
+  }
+}
+
+{
+  "name": "scheduled-unchanged-unready",
+  "pass": true,
+  "waitMs": 7620,
+  "run": {
+    "id": "01M5GJC74MXH4HSQV5XYRTF2H8",
+    "ownerId": "local",
+    "loopId": "01M5GJC07N55VZ3T5DEB7Z1W5B",
+    "versionId": "01M5GJC07NCFXSWSGYSA5Z7N5M",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "QA scheduled parent",
+      "label": "QA scheduled parent v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M5GJC74M5PAD6H8RRS2JQE5B",
+    "status": "failed",
+    "currentNodeId": "child",
+    "iteration": 1,
+    "waiting": {
+      "waitId": "01M5GJC74MXH4HSQV5XYRTF2H8:7",
+      "nodeId": "child",
+      "kind": "child",
+      "childRunId": "01M5GJC7994035JVX3YYA63M2X",
+      "startedSeq": 7
+    },
+    "failure": {
+      "code": "HARNESS_NOT_AUTHENTICATED",
+      "message": "subloop child 01M5GJC7994035JVX3YYA63M2X failed: Claude is not signed in.",
+      "nodeId": "child",
+      "resumable": true,
+      "details": {
+        "childRunId": "01M5GJC7994035JVX3YYA63M2X",
+        "childNodeId": "think"
+      }
+    },
+    "createdAt": "2026-10-22T01:07:30.068Z",
+    "startedAt": "2026-10-22T01:07:30.106Z",
+    "finishedAt": "2026-10-22T01:07:32.796Z",
+    "lastEventSeq": 13
+  },
+  "marker": true,
+  "probes": {
+    "claude": {
+      "probes": 2,
+      "commands": [
+        "--safe-mode --setting-sources  --strict-mcp-config --version",
+        "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+        "--safe-mode --setting-sources  --strict-mcp-config auth status --json",
+        "--safe-mode --setting-sources  --strict-mcp-config --version",
+        "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+        "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+      ]
+    },
+    "codex": {
+      "probes": 0,
+      "commands": []
+    }
+  }
+}
