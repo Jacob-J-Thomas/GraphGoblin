@@ -1,0 +1,181 @@
+Command: pnpm.cmd --filter @graphgoblin/web test:e2e model-picker
+Node: v22.14.0
+Revision: c2a2b6632c0996383abe491268baf871aec448dd
+Exit: 1
+Elapsed ms: 366598
+
+$ playwright test model-picker
+
+Running 6 tests using 1 worker
+
+(node:16560) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:16560) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  1 [chromium] › e2e\model-picker.spec.ts:28:3 › catalog model and effort publish and reach the harness (dark) (18.2s)
+(node:53076) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:53076) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  2 [chromium] › e2e\model-picker.spec.ts:28:3 › catalog model and effort publish and reach the harness (light) (18.0s)
+(node:16140) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:16140) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  3 [chromium] › e2e\model-picker.spec.ts:94:1 › a saved model removed from the catalog stays selected and explicit unknown import is rejected (24.3s)
+(node:54560) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:54560) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  4 [chromium] › e2e\model-picker.spec.ts:151:1 › catalog failure preserves the current values until retry and loop defaults share the picker (1.0m)
+(node:39720) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:39720) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  5 [chromium] › e2e\model-picker.spec.ts:195:1 › the decision LLM uses an explicit harness model and rejects unsupported effort on admission (5.1s)
+  ✓  6 [chromium] › e2e\model-picker.spec.ts:276:1 › following a model issue keeps focus through a delayed catalog and a failed cached refresh (9.4s)
+
+
+  1) [chromium] › e2e\model-picker.spec.ts:28:3 › catalog model and effort publish and reach the harness (dark) 
+
+    Error: expect(locator).toHaveValue(expected) failed
+
+    Locator:  getByRole('dialog').getByLabel('Model', { exact: true })
+    Expected: "picker-dark"
+    Received: ""
+    Timeout:  10000ms
+
+    Call log:
+      - Expect "toHaveValue" getByRole('dialog').getByLabel('Model', { exact: true }) with timeout 10000ms
+      - waiting for getByRole('dialog').getByLabel('Model', { exact: true })
+        22 × locator resolved to <select id="_r_12_" aria-describedby="_r_12_-help" class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-point…>…</select>
+           - unexpected value ""
+
+
+      54 |     await page.keyboard.type(`Picker ${theme}`);
+      55 |     await page.keyboard.press('Enter');
+    > 56 |     await expect(model).toHaveValue(selected);
+         |                         ^
+      57 |     const effort = dialog.getByLabel('Effort', { exact: true });
+      58 |     await expect(effort.locator('option')).toHaveText([
+      59 |       '(inherited; the catalog suggests low)',
+        at <worktree>\apps\web\e2e\model-picker.spec.ts:56:25
+
+[Ephemeral Playwright attachment omitted; not retained.]
+
+[Ephemeral Playwright attachment omitted; not retained.]
+[Ephemeral Playwright attachment omitted; not retained.]
+    Usage:
+
+[Ephemeral Playwright attachment omitted; not retained.]
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium] › e2e\model-picker.spec.ts:28:3 › catalog model and effort publish and reach the harness (light) 
+
+    Error: expect(locator).toHaveValue(expected) failed
+
+    Locator:  getByRole('dialog').getByLabel('Model', { exact: true })
+    Expected: "picker-light"
+    Received: ""
+    Timeout:  10000ms
+
+    Call log:
+      - Expect "toHaveValue" getByRole('dialog').getByLabel('Model', { exact: true }) with timeout 10000ms
+      - waiting for getByRole('dialog').getByLabel('Model', { exact: true })
+        22 × locator resolved to <select id="_r_12_" aria-describedby="_r_12_-help" class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-point…>…</select>
+           - unexpected value ""
+
+
+      54 |     await page.keyboard.type(`Picker ${theme}`);
+      55 |     await page.keyboard.press('Enter');
+    > 56 |     await expect(model).toHaveValue(selected);
+         |                         ^
+      57 |     const effort = dialog.getByLabel('Effort', { exact: true });
+      58 |     await expect(effort.locator('option')).toHaveText([
+      59 |       '(inherited; the catalog suggests low)',
+        at <worktree>\apps\web\e2e\model-picker.spec.ts:56:25
+
+[Ephemeral Playwright attachment omitted; not retained.]
+
+[Ephemeral Playwright attachment omitted; not retained.]
+[Ephemeral Playwright attachment omitted; not retained.]
+    Usage:
+
+[Ephemeral Playwright attachment omitted; not retained.]
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [chromium] › e2e\model-picker.spec.ts:94:1 › a saved model removed from the catalog stays selected and explicit unknown import is rejected 
+
+    Error: expect(locator).toHaveAttribute(expected) failed
+
+    Locator: getByRole('dialog').getByRole('link', { name: 'Model catalog in Settings' })
+    Expected: "/app/settings"
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toHaveAttribute" getByRole('dialog').getByRole('link', { name: 'Model catalog in Settings' }) with timeout 10000ms
+      - waiting for getByRole('dialog').getByRole('link', { name: 'Model catalog in Settings' })
+
+
+      128 |     'alert',
+      129 |   );
+    > 130 |   await expect(dialog.getByRole('link', { name: 'Model catalog in Settings' })).toHaveAttribute(
+          |                                                                                 ^
+      131 |     'href',
+      132 |     '/app/settings',
+      133 |   );
+        at <worktree>\apps\web\e2e\model-picker.spec.ts:130:81
+
+[Ephemeral Playwright attachment omitted; not retained.]
+
+[Ephemeral Playwright attachment omitted; not retained.]
+[Ephemeral Playwright attachment omitted; not retained.]
+    Usage:
+
+[Ephemeral Playwright attachment omitted; not retained.]
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) [chromium] › e2e\model-picker.spec.ts:151:1 › catalog failure preserves the current values until retry and loop defaults share the picker 
+
+    Test timeout of 60000ms exceeded.
+
+    Error: locator.click: Test timeout of 60000ms exceeded.
+    Call log:
+      - waiting for getByRole('dialog').getByRole('button', { name: 'Retry model catalog' })
+
+
+      175 |   await expect(model).toHaveAccessibleDescription(/Cannot load the model catalog/);
+      176 |   await page.unroute('**/model-catalog');
+    > 177 |   await dialog.getByRole('button', { name: 'Retry model catalog' }).click();
+          |                                                                     ^
+      178 |   await expect(model).not.toHaveAttribute('aria-readonly');
+      179 |   await expect(model).toHaveValue(chosen.model);
+      180 |   await closeNode(page);
+        at <worktree>\apps\web\e2e\model-picker.spec.ts:177:69
+
+[Ephemeral Playwright attachment omitted; not retained.]
+
+[Ephemeral Playwright attachment omitted; not retained.]
+[Ephemeral Playwright attachment omitted; not retained.]
+    Usage:
+
+[Ephemeral Playwright attachment omitted; not retained.]
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4 failed
+    [chromium] › e2e\model-picker.spec.ts:28:3 › catalog model and effort publish and reach the harness (dark) 
+    [chromium] › e2e\model-picker.spec.ts:28:3 › catalog model and effort publish and reach the harness (light) 
+    [chromium] › e2e\model-picker.spec.ts:94:1 › a saved model removed from the catalog stays selected and explicit unknown import is rejected 
+    [chromium] › e2e\model-picker.spec.ts:151:1 › catalog failure preserves the current values until retry and loop defaults share the picker 
+  2 passed (5.9m)
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in <user-path>
+  │ f1\apps\web
+

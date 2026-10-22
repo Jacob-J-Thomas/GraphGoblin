@@ -1,0 +1,56 @@
+Command: pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/claude/process.test.ts --maxWorkers 1 -t '^(?!.*(?:probes the actual installed|classifies a real installed signed-out)).*$'
+Node: v22.14.0
+Revision: c2a2b6632c0996383abe491268baf871aec448dd
+Exit: 1
+Elapsed ms: 46910
+
+
+ RUN  v5.0.3 <worktree>/packages/infrastructure
+
+ ❯ src/claude/process.test.ts (5 tests | 3 failed) 33797ms
+   ❯ owned native Claude process transport (5)
+     × kills on deadline and output overflow 18107ms
+     × does not spawn for an already aborted signal and cancels a running process 5418ms
+     × kills the descendant that a long-lived child started 9854ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills on deadline and output overflow
+Error: EBUSY: resource busy or locked, rmdir '<temp>\tests\gg-claude-process-tOLHZE'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > does not spawn for an already aborted signal and cancels a running process
+Error: EBUSY: resource busy or locked, rmdir '<temp>\tests\gg-claude-process-BVKu7s'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived child started
+AssertionError: expected 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…' to be 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…' // Object.is equality
+
+Expected: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+Received: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+ ❯ src/claude/process.test.ts:146:46
+    144|       const stopped = await readFile(marker, 'utf8');
+    145|       await new Promise((resolve) => setTimeout(resolve, 100));
+    146|       expect(await readFile(marker, 'utf8')).toBe(stopped);
+       |                                              ^
+    147|     } finally {
+    148|       controller.abort();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived child started
+Error: EBUSY: resource busy or locked, rmdir '<temp>\tests\gg-claude-process-3IkT6v'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 2 passed (5)
+   Start at  14:40:36
+   Duration  43.79s (tests 80%, transform 15%, import 5%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in <user-path>
+  │ f1\packages\infrastructure
+

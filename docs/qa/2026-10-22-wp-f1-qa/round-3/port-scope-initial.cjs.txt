@@ -1,0 +1,40 @@
+// Verification environment only. Refuse listeners outside the assigned range.
+const net = require('node:net');
+const fs = require('node:fs');
+const listen = net.Server.prototype.listen;
+let cursor = (process.pid % 9) + 5811;
+net.Server.prototype.listen = function (...args) {
+  const first = args[0];
+  const object = first && typeof first === 'object';
+  const port = object ? first.port : typeof first === 'number' ? first : undefined;
+  if (port === undefined) return listen.apply(this, args);
+  if (port !== 0 && (port < 5810 || port > 5819)) {
+    process.nextTick(() => this.emit('error', Object.assign(new Error('QA port scope'), {code:'EADDRINUSE'})));
+    return this;
+  }
+  if (port !== 0) return listen.apply(this, args);
+  const server = this;
+  const emit = server.emit;
+  let attempts = 0;
+  const attempt = () => {
+    const candidate = cursor;
+    cursor = cursor === 5819 ? 5811 : cursor + 1;
+    const options = object ? {...first, port:candidate} : {port:candidate, host: typeof args[1] === 'string' ? args[1] : '127.0.0.1'};
+    const callback = args.find(x => typeof x === 'function');
+    listen.call(server, options, ...(callback ? [callback] : []));
+  };
+  server.emit = function (event, ...values) {
+    if (event === 'error' && values[0]?.code === 'EADDRINUSE' && ++attempts < 30) {
+      setImmediate(attempt);
+      return true;
+    }
+    if (event === 'listening' || event === 'error') {
+      server.emit = emit;
+      if (event === 'listening' && process.env.QA_PORT_LOG)
+        fs.appendFileSync(process.env.QA_PORT_LOG, JSON.stringify({pid:process.pid,port:server.address().port,at:new Date().toISOString()})+'\n');
+    }
+    return emit.call(this, event, ...values);
+  };
+  attempt();
+  return server;
+};

@@ -1,0 +1,28 @@
+// Derive concise evidence from retained responses; no product imports or internal mutation.
+import {readFileSync,writeFileSync,readdirSync} from 'node:fs';
+import {join,resolve} from 'node:path';
+const base=resolve('docs/qa/2026-10-22-wp-f1-qa/round-3');
+const read=n=>JSON.parse(readFileSync(join(base,n),'utf8'));
+const rows=read('runtime.json');
+const classification=rows.filter(r=>r.actual.hp).map(r=>{
+ const items=r.actual.hp.body.items;
+ const issues=r.actual.valid.body.issues.filter(i=>i.code.startsWith('HARNESS_READINESS_'));
+ const match=issues.every(i=>i.message===items.find(h=>h.harness===(i.nodeId==='infer1'?'codex':'claude')).problems[0]);
+ return {case:r.case,expected:r.expected.state,pass:r.pass&&match,validationProblemMatches:match,harnesses:items.map(i=>({harness:i.harness,state:i.state,authenticatedPresent:Object.hasOwn(i,'authenticated'),...(Object.hasOwn(i,'authenticated')?{authenticated:i.authenticated}:{}),problems:i.problems})),probes:Object.fromEntries(Object.entries(r.actual.hp.calls).map(([h,c])=>[h,c.filter(s=>s.includes('--version')).length])),status:{preflight:r.actual.hp.status,validate:r.actual.valid.status,publish:r.actual.pub.status,run:r.actual.run?.status},system:r.actual.system.body.checks.filter(i=>i.id.startsWith('harness.')).map(i=>({id:i.id,state:i.state,message:i.message}))};
+});
+writeFileSync(join(base,'classification-summary.json'),JSON.stringify(classification,null,2));
+const sources=['docs/06-harness-integration.md','docs/09-frontend-and-pwa.md','docs/guide/06-settings-and-secrets.md','docs/guide/07-troubleshooting.md','CHANGELOG.md'];
+const excerpts=sources.map(file=>({file,lines:readFileSync(file,'utf8').split(/\r?\n/).map((text,i)=>({line:i+1,text})).filter(x=>/401\/403|429|unrecogn|empty.*login|authenticated|HARNESS_UNAVAILABLE|HARNESS_NOT_READY|Rechecking|saved choice stays|draft.*probe|create.*import.*save/i.test(x.text))}));
+writeFileSync(join(base,'docs-comparison.json'),JSON.stringify({method:'Read these live sentences against the retained native and browser observations; source lines are current-head quotes.',excerpts},null,2));
+const control=read('prerelease-control.json');
+if(Array.isArray(control))writeFileSync(join(base,'prerelease-control.json'),JSON.stringify({disposition:'Invalid stable-ready setup for round-8 classification. Claude prerelease parser rejected 2.1.287-beta.1 before status classification. Fixed the independent fixture to print stable 2.1.287; Codex prerelease remains a passing control.',attemptedCases:control.map(r=>({case:r.case,pass:r.pass})),prerequisite:control[0]},null,2));
+// Scrub all new textual evidence again, including wrapped native pnpm diagnostics.
+for(const name of readdirSync(base)){
+ if(!/\.(txt|json|md)$/.test(name))continue;
+ const file=join(base,name);let text=readFileSync(file,'utf8');
+ text=text.replace(/\x1b\[[0-9;]*m/g,'').replace(/[A-Z]:\s*\r?\n[^\r\n]*[\\/]Users[\\/][^\r\n]*/g,'<user-path>').replace(/[A-Z]:[\\/]+Users[\\/]+[^\s"'<>]+/gi,'<user-path>');
+ if(process.env.USERNAME)text=text.split(process.env.USERNAME).join('<user>');
+ text=text.replace(/gg_[A-Za-z0-9_-]{25,}/g,'<redacted-key>');
+ writeFileSync(file,text);
+}
+console.log(JSON.stringify({classificationCases:classification.length,pass:classification.every(r=>r.pass)}));

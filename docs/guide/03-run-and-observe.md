@@ -180,7 +180,7 @@ Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:4747/runs/$runId/replay" `
   -ContentType 'application/json' -Body '{"nodeId":"summarise"}'
 ```
 
-The response is 202 with the new `run`; open it at `/app/runs/<new-run-id>`. Its invocation and first event record `replayOf` (source run and node). MCP callers use the `replay_run` tool with `runId` and `nodeId`, then `wait_for_run`. A node the source never reached answers 409 `REPLAY_NODE_NOT_REACHED`. The fork does not carry the source's Codex session or working directory, and a subloop node in the fork starts a new child run. See [Execution engine](../05-execution-engine.md#replay-and-debugging-decided-by-implementation-2026-10-03) for the exact rules.
+The response is 202 with the new `run`; open it at `/app/runs/<new-run-id>`. Its invocation and first event record `replayOf` (source run and node). The first event also records the actual `initialThread`: the inspector starts there, preserving inherited values, messages, visit counters and gate passes, then adds the fork's own execution. `GET /runs/{id}/thread` returns this seed while the fork is still queued. MCP callers use the `replay_run` tool with `runId` and `nodeId`, then `wait_for_run`. A node the source never reached answers 409 `REPLAY_NODE_NOT_REACHED`. The fork does not carry the source's Codex session or working directory, and a subloop node in the fork starts a new child run. See [Execution engine](../05-execution-engine.md#replay-and-debugging-decided-by-implementation-2026-10-03) for the exact rules.
 
 > After 1.0: A replay button in the run inspector. Use the API or MCP until then.
 

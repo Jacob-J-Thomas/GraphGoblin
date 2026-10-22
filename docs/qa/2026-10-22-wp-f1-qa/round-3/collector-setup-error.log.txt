@@ -1,0 +1,31 @@
+﻿Command: pnpm.cmd typecheck --concurrency=2
+Node: v22.14.0
+Revision: c2a2b6632c0996383abe491268baf871aec448dd
+Exit: 1
+Elapsed ms: 1720
+
+$ turbo run typecheck --concurrency=2
+node:internal/modules/cjs/loader:1228
+  throw err;
+  ^
+
+Error: Cannot find module '<invalid-preload-path>'
+Require stack:
+- internal/preload
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at node:internal/modules/cjs/loader:1856:12
+    at loadPreloadModules (node:internal/process/pre_execution:734:5)
+    at setupUserModules (node:internal/process/pre_execution:206:5)
+    at prepareExecution (node:internal/process/pre_execution:159:5)
+    at prepareMainThreadExecution (node:internal/process/pre_execution:54:10) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [ 'internal/preload' ]
+}
+
+Node.js v22.14.0
+[ELIFECYCLE] Command failed with exit code 1.
+
