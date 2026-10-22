@@ -26,13 +26,13 @@ node apps/api/dist/main.js
 
 Leave this window running.
 
-## 2. Import and publish the three loops
+## 2. Import and publish the four loops
 
 In a second PowerShell window at the repository root:
 
 ```powershell
 $qa = 'docs\qa\2026-10-19-wp-g4-exit-evidence'
-foreach ($file in 'gate-loop.json', 'suppressed-loop.json', 'quiet-loop.json') {
+foreach ($file in 'gate-loop.json', 'suppressed-loop.json', 'quiet-loop.json', 'history-loop.json') {
   $created = Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:5641/loops' `
     -ContentType 'application/json' -InFile (Join-Path $qa $file)
   # Windows PowerShell sends a form content type on a bodiless POST, which the API refuses (415).
@@ -96,14 +96,18 @@ Run it:
 
 A format-4 run recorded by an older build omitted a `null` result from `run.finished` (CHANGELOG). The inspector must not turn that gap into a Returns None explanation when the pinned exit has an expression (independent acceptance audit, 2026-10-21).
 
-Run the **QA 129 quiet exit** loop once more so that its **Kept** exit (Returns `"kept"`, a caller destination) finishes a run, note the run's ID, then stop the instance (Ctrl+C) and amend only that run in the disposable store:
+Start a run of the **QA 129 omitted null** loop (its **Done** exit has Returns `null` and a caller destination) and open it:
+
+- The status is **succeeded**; the **Result** card shows `null`; there is no exit-returns sentence.
+- Note the run's ID (the address bar, or the **Runs** list).
+
+Stop the instance (Ctrl+C in its window) and amend only that run in the disposable store with the script in this folder; it removes `result` from the stored `run.finished` event and clears the run row's result, as an older build's history looks:
 
 ```powershell
-$run = "<run id>"
-node -e "const { createClient } = require('./packages/infrastructure/node_modules/@libsql/client'); const c = createClient({ url: 'file:' + process.argv[1].replace(/\\/g, '/') }); (async () => { await c.execute({ sql: \"UPDATE run_events SET payload = json_remove(payload, '$.result') WHERE run_id = ? AND type = 'run.finished'\", args: [process.argv[2]] }); await c.execute({ sql: 'UPDATE runs SET result = NULL WHERE id = ?', args: [process.argv[2]] }); console.log('amended', process.argv[2]); })();" "$env:GG_DATA_DIR\graphgoblin.db" $run
+node docs/qa/2026-10-19-wp-g4-exit-evidence/omit-null-result.mjs "$env:GG_DATA_DIR\graphgoblin.db" "<run id>"
 ```
 
-Start the instance again and open that run:
+It prints `amended run <id>: 1 run.finished event(s), 1 run row(s)`. Start the instance again (section 1's last command) and open that run:
 
 - There is no **Result** card.
 - **Exit evaluation** shows "No value was recorded for this run. The exit’s Returns is an expression, so the history alone does not show whether it returned nothing or a null that an older build did not record." It does not say "Returns is None".
