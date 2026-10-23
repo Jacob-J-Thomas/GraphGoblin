@@ -16,6 +16,46 @@ describe('loop-specific run summaries over real SQLite', () => {
     t = await createTestApp();
   });
   afterEach(async () => t.close());
+  it('does not publish a stale running badge when the latest event log is unreadable', async () => {
+    const loopId = await t.publishLoop(minimalLoop());
+    const prior = (
+      await t.app.inject({ method: 'POST', url: `/loops/${loopId}/runs`, payload: {} })
+    ).json<{ run: RunRecord }>().run.id;
+    await t.idle();
+    t.clock.advance(1);
+    const id = (
+      await t.app.inject({ method: 'POST', url: `/loops/${loopId}/runs`, payload: {} })
+    ).json<{ run: RunRecord }>().run.id;
+    await t.idle();
+    const original = await t.app.inject(`/runs/${id}/events`);
+    expect(original.json<{ items: unknown[] }>().items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ type: 'run.finished', status: 'succeeded' }),
+      ]),
+    );
+    await t.container.repos.runs.update(id, { status: 'running' });
+    await t.container.handle.client.execute({
+      sql: "UPDATE run_events SET payload='{}' WHERE run_id=? AND seq=1",
+      args: [id],
+    });
+    expect((await t.app.inject(`/runs/${id}`)).statusCode).toBe(200);
+    expect((await t.app.inject(`/runs/${id}/thread`)).statusCode).toBe(200);
+    const response = await t.app.inject('/loops');
+    expect(response.statusCode).toBe(200);
+    expect(response.json<{ items: unknown[] }>().items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: loopId, latestRun: null, runCount: 2 }),
+      ]),
+    );
+    expect((await t.app.inject(`/runs/${id}/events`)).json()).toMatchObject({
+      status: 500,
+      code: 'STORED_EVENT_INVALID',
+    });
+    expect((await t.app.inject('/runs/diagnostics')).json()).toMatchObject({
+      items: [expect.objectContaining({ runId: id, code: 'HISTORY_UNREADABLE' })],
+    });
+    expect(prior).not.toBe(id);
+  });
   it.each([
     ['status', 'damaged-status'],
     ['pinned', '{broken'],

@@ -636,7 +636,9 @@ ties by descending run ID, which follows creation order within one process. A ze
 count and null summary says "never run"; a positive count and null summary says
 "latest run unavailable" with "Check run history diagnostics." when the selected
 latest run's record (including its pin), initial thread or present cached thread
-snapshot fails strict decoding. An absent cached snapshot remains valid. It shows
+snapshot, or an event in its history fails strict decoding. Event checks are cached
+by run identity and event count; manual database repairs require an API restart.
+An absent cached snapshot remains valid. It shows
 neither a partial status badge nor an older run in its place. `GET /runs/diagnostics`
 identifies the damaged row, including after restart when its stored status is valid
 but stale. Unrelated loops

@@ -40,10 +40,10 @@ Infrastructure:
 | File                                                                  | Merge resolution / change                                                                       |
 | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | `drizzle/0015_webhook_delivery_journal.sql`                           | Main's shipped SQL retained byte for byte, including its one-off rewrite.                       |
-| `drizzle/meta/0015_snapshot.json`                                     | Main's stage-3 snapshot retained byte for byte.                                                 |
+| packages/infrastructure/drizzle/meta/0015_snapshot.json               | Main's stage-3 snapshot retained byte for byte.                                                 |
 | `drizzle/0015_loop_owner_history.sql` → `0016_loop_owner_history.sql` | Same index statement; only the migration number changes.                                        |
-| `drizzle/meta/0016_snapshot.json`                                     | Regenerated from the merged schema; chains to main's 0015 and adds only the G2 index.           |
-| `drizzle/meta/_journal.json`                                          | All main entries retained; G2 appended at index 16 with its original timestamp.                 |
+| packages/infrastructure/drizzle/meta/0016_snapshot.json               | Regenerated from the merged schema; chains to main's 0015 and adds only the G2 index.           |
+| packages/infrastructure/drizzle/meta/_journal.json                    | All main entries retained; G2 appended at index 16 with its original timestamp.                 |
 | `src/sqlite/catalog.test.ts`                                          | All three G2 dynamic-count expectations retained; rollback comment now says 0016.               |
 | `src/sqlite/classifiers.test.ts`                                      | G2 `shippedSqlMigrationCount() - count` retained.                                               |
 | `src/sqlite/storage.test.ts`                                          | Both G2 dynamic-count expectations retained.                                                    |
@@ -160,7 +160,7 @@ is retained in [format-scope.log.txt](format-scope.log.txt).
 
 - `docs/07-api-and-streaming.md:479`: current migration reference becomes `0016_loop_owner_history`.
 - `CHANGELOG.md:14`: same reference update; both sides of the staged union remain present.
-- This folder: native upgrade replay, migration-chain proof, sanitized `.log.txt`
+- This folder: native upgrade replay, migration-chain proof, sanitized text
   logs, test/coverage summaries and restart/Edge evidence.
 - Numbered doc 09 and route schemas are unchanged; generated references remain current.
 - Historical QA and delivery-register references keep the migration names used by
@@ -213,3 +213,44 @@ unmerged index entries until the orchestrator stages them; the index was left
 untouched as instructed. The orchestrator also stages the SQL rename and new
 snapshot, commits the merge, obtains Fable review and resumes the independent audit.
 This report does not grant product acceptance or close either bolt.
+
+## Round-8 retention correction
+
+The original raw Vitest reporter objects cited by this round's logs were recovered from the retained working files. They are now stored beside the logs with `.txt` appended to their original output names; local path prefixes alone are normalized. The [filename and hash mapping](raw-reporter-preservation.json) identifies every original execution and its citing logs. These files retain `testResults` and `assertionResults`; the existing aggregate summaries are derived summaries, not those reporter objects. No rerun is presented as original-run evidence.
+
+The two invalid isolation attempts selected zero tests. Their original reporter objects are retained under the separate skipped-attempt names in the mapping; they are not replaced with the later executed-test results. The valid filter probe and final isolation outputs remain separate.
+
+- [round7-coverage-api-results.log.txt](round7-coverage-api-results.log.txt): 733 passed, 0 failed, 6 skipped.
+- [round7-coverage-infrastructure-after-fixture-fix-results.log.txt](round7-coverage-infrastructure-after-fixture-fix-results.log.txt): 709 passed, 7 failed, 0 skipped.
+- [round7-coverage-infrastructure-results.log.txt](round7-coverage-infrastructure-results.log.txt): 656 passed, 60 failed, 0 skipped.
+- [round7-coverage-mcp-results.log.txt](round7-coverage-mcp-results.log.txt): 49 passed, 0 failed, 0 skipped.
+- [round7-coverage-web-results.log.txt](round7-coverage-web-results.log.txt): 1496 passed, 0 failed, 0 skipped.
+- [round7-filter-probe-results.log.txt](round7-filter-probe-results.log.txt): 0 passed, 1 failed, 4 skipped.
+- [round7-fixtures-results.log.txt](round7-fixtures-results.log.txt): 58 passed, 0 failed, 0 skipped.
+- [round7-isolate-1-results.log.txt](round7-isolate-1-results.log.txt): 0 passed, 1 failed, 19 skipped.
+- [round7-isolation-fullname-skipped-1-results.log.txt](round7-isolation-fullname-skipped-1-results.log.txt): 0 passed, 0 failed, 20 skipped.
+- [round7-isolation-skipped-1-results.log.txt](round7-isolation-skipped-1-results.log.txt): 0 passed, 0 failed, 20 skipped.
+- [round7-isolate-3-results.log.txt](round7-isolate-3-results.log.txt): 0 passed, 1 failed, 4 skipped.
+- [round7-isolation-fullname-skipped-3-results.log.txt](round7-isolation-fullname-skipped-3-results.log.txt): 0 passed, 0 failed, 5 skipped.
+- [round7-isolation-skipped-3-results.log.txt](round7-isolation-skipped-3-results.log.txt): 0 passed, 0 failed, 5 skipped.
+- [round7-isolate-4-results.log.txt](round7-isolate-4-results.log.txt): 0 passed, 1 failed, 4 skipped.
+- [round7-isolation-fullname-skipped-4-results.log.txt](round7-isolation-fullname-skipped-4-results.log.txt): 0 passed, 0 failed, 5 skipped.
+- [round7-isolation-skipped-4-results.log.txt](round7-isolation-skipped-4-results.log.txt): 0 passed, 0 failed, 5 skipped.
+- [round7-isolate-5-results.log.txt](round7-isolate-5-results.log.txt): 0 passed, 1 failed, 38 skipped.
+- [round7-isolation-fullname-skipped-5-results.log.txt](round7-isolation-fullname-skipped-5-results.log.txt): 0 passed, 0 failed, 39 skipped.
+- [round7-isolation-skipped-5-results.log.txt](round7-isolation-skipped-5-results.log.txt): 0 passed, 0 failed, 39 skipped.
+- [round7-isolate-6-results.log.txt](round7-isolate-6-results.log.txt): 0 passed, 1 failed, 38 skipped.
+- [round7-isolation-fullname-skipped-6-results.log.txt](round7-isolation-fullname-skipped-6-results.log.txt): 0 passed, 0 failed, 39 skipped.
+- [round7-isolation-skipped-6-results.log.txt](round7-isolation-skipped-6-results.log.txt): 0 passed, 0 failed, 39 skipped.
+- [round7-isolate-7-results.log.txt](round7-isolate-7-results.log.txt): 0 passed, 1 failed, 38 skipped.
+- [round7-isolation-fullname-skipped-7-results.log.txt](round7-isolation-fullname-skipped-7-results.log.txt): 0 passed, 0 failed, 39 skipped.
+- [round7-isolation-skipped-7-results.log.txt](round7-isolation-skipped-7-results.log.txt): 0 passed, 0 failed, 39 skipped.
+- [round7-isolate-8-results.log.txt](round7-isolate-8-results.log.txt): 1 passed, 0 failed, 25 skipped.
+- [round7-isolation-fullname-skipped-8-results.log.txt](round7-isolation-fullname-skipped-8-results.log.txt): 0 passed, 0 failed, 26 skipped.
+- [round7-isolation-skipped-8-results.log.txt](round7-isolation-skipped-8-results.log.txt): 0 passed, 0 failed, 26 skipped.
+- [round7-isolate-9-results.log.txt](round7-isolate-9-results.log.txt): 1 passed, 0 failed, 25 skipped.
+- [round7-isolation-fullname-skipped-9-results.log.txt](round7-isolation-fullname-skipped-9-results.log.txt): 0 passed, 0 failed, 26 skipped.
+- [round7-isolation-skipped-9-results.log.txt](round7-isolation-skipped-9-results.log.txt): 0 passed, 0 failed, 26 skipped.
+- [round7-isolate-2-results.log.txt](round7-isolate-2-results.log.txt): 0 passed, 1 failed, 4 skipped.
+- [round7-isolation-fullname-skipped-2-results.log.txt](round7-isolation-fullname-skipped-2-results.log.txt): 0 passed, 0 failed, 5 skipped.
+- [round7-isolation-skipped-2-results.log.txt](round7-isolation-skipped-2-results.log.txt): 0 passed, 0 failed, 5 skipped.

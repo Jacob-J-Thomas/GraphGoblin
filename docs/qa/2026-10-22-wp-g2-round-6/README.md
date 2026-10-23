@@ -10,7 +10,7 @@ Runtime: Node `v22.14.0`, Windows PowerShell, `pnpm.cmd`.
 ## 2. Per bolt
 
 **#236 / D-029: reproduced on the base before the production change.** The original
-`thread-summary.mjs` audit was run against the built API, file-backed SQLite and Edge,
+[thread-summary.mjs](thread-summary.mjs) audit was run against the built API, file-backed SQLite and Edge,
 using a fresh disposable store. For each thread column the terminal event was
 `{"status":"succeeded","outcome":"success"}`, but the stored row remained
 `{"status":"running","bad":"{}","finalized_at":null}` after restart. `/loops`
@@ -66,7 +66,10 @@ This binds only `127.0.0.1:5620`, uses `$proofRoot/store` as `GG_DATA_DIR`, and 
 the built web app through `GG_WEB_DIST`. The script launches and closes its own API
 and headless installed Edge. `GG_MASTER_KEY` is not required: the disposable instance
 generates its own key. Trusted loopback mode is set only in the spawned process.
-`results.json`, `native-api.log.txt` and three PNGs remain under `$proofRoot`.
+The replay leaves its result JSON, API text log and three PNGs under `$proofRoot`.
+For the recorded final replay, those original outputs are retained here as
+[native-final.json](native-final.json), [native-final-api.log.txt](native-final-api.log.txt)
+and the three final captures (for example [cached thread](final-thread_snapshot.png)).
 Do not point the script at an existing owner store.
 
 ## 3. Files changed
@@ -80,10 +83,10 @@ latest-summary path and its tests/documentation.
 | Infrastructure: `src/sqlite/history-summaries.test.ts` | 13, 92–101, 112–114, 142–152 | Durable success beside stale status and damaged threads; malformed cached JSON; corrupt older-row and absent-cache controls.                                                                                                  |
 | API: `src/routes/loop-summaries.test.ts`               | 25–27, 46–54                 | Public-route assertions for both damaged threads and malformed cached JSON, with a durable terminal event and stale status.                                                                                                   |
 | Web: `src/loops/LoopsPage.test.tsx`                    | 64–96                        | Check unavailable versus never-run states for pin and both thread variants with count two.                                                                                                                                    |
-| Shared numbered docs: `docs/07-api-and-streaming.md`   | 467–476                      | Define readable latest rows, strict thread validation and valid SQL NULL cache absence.                                                                                                                                       |
-| Shared numbered docs: `docs/09-frontend-and-pwa.md`    | 637–642                      | Describe the corresponding unavailable state.                                                                                                                                                                                 |
-| Shared `CHANGELOG.md`                                  | 7–8                          | Add the thread-damage unavailable-state bullet ending in `(#236)`.                                                                                                                                                            |
-| This QA directory                                      | new                          | Executable restart/Edge replay, structured results, captures and sanitized `.log.txt` evidence.                                                                                                                               |
+| Shared numbered docs: docs/07-api-and-streaming.md     | 467–476                      | Define readable latest rows, strict thread validation and valid SQL NULL cache absence.                                                                                                                                       |
+| Shared numbered docs: docs/09-frontend-and-pwa.md      | 637–642                      | Describe the corresponding unavailable state.                                                                                                                                                                                 |
+| Shared CHANGELOG.md                                    | 7–8                          | Add the thread-damage unavailable-state bullet ending in `(#236)`.                                                                                                                                                            |
+| This QA directory                                      | new                          | Executable restart/Edge replay, structured results, captures and sanitized text-log evidence.                                                                                                                                 |
 
 `run-decoding.ts`, run readers, recovery, API schemas, generated clients, migrations,
 and the production Loops component are unchanged. The existing component already
@@ -192,7 +195,7 @@ Formatting uses a root-local ignore file limited to this patch, with an explicit
 exclusion for the orchestrator-owned QA folder. Its contents are recorded in
 [format-scope.log.txt](format-scope.log.txt). This is a scoped formatting result,
 not a claim that protected artifacts were rewritten or checked. Gate logs are
-retained here as `.log.txt` files; local user paths are redacted.
+retained here as UTF-8 text logs; local user paths are redacted.
 
 The auditor's script exits zero even when a recorded `pass` is false. Its results
 therefore need an explicit assertion check. An initial after-run checker failed
@@ -248,7 +251,11 @@ and recovery identify both thread faults; this change aligns the loop summary wi
 The final post-coverage invocation of the **original auditor script failed** with Windows
 access violation `0xC0000005` after emitting two passing functional records. Its API had
 stopped and port 5620 was released, but teardown did not reach the final `results.json`
-write. The follow-up file-based checker therefore failed with `ENOENT`. This is a separate,
+write. **Not kept: `results.json` for this failed invocation was never written.**
+The [loss register](NOT-KEPT.md) records this same absence for the reference checker.
+The surviving [auditor-final-records.json](auditor-final-records.json) preserves the
+two functional records derived from stdout; it is not that missing final output.
+The follow-up file-based checker therefore failed with `ENOENT`. This is a separate,
 **unresolved native crash, not D-015**; the responsible native component is not established.
 See [auditor-final-records.json](auditor-final-records.json), [audit-final.log.txt](audit-final.log.txt),
 [audit-final-check.log.txt](audit-final-check.log.txt) and [port/record check](audit-crash-record-check.log.txt).
@@ -269,3 +276,23 @@ Owner acceptance and issue closure are not granted by this worker report. Dispos
 stores, ignored coverage output and test-created fixtures are retained; no manual
 directory cleanup was performed. No owner app/store access, branch/index mutation, GitHub mutation,
 live provider turn or environment installation was part of this round.
+
+## Round-8 retention correction
+
+The original raw Vitest reporter objects cited by this round's logs were recovered from the retained working files. They are now stored beside the logs with `.txt` appended to their original output names; local path prefixes alone are normalized. The [filename and hash mapping](raw-reporter-preservation.json) identifies every original execution and its citing logs. These files retain `testResults` and `assertionResults`; the existing aggregate summaries are derived summaries, not those reporter objects. No rerun is presented as original-run evidence.
+
+- [round6-coverage-api-results.log.txt](round6-coverage-api-results.log.txt): 730 passed, 1 failed, 6 skipped.
+- [round6-coverage-infrastructure-results.log.txt](round6-coverage-infrastructure-results.log.txt): 630 passed, 9 failed, 0 skipped.
+- [round6-coverage-web-results.log.txt](round6-coverage-web-results.log.txt): 1488 passed, 0 failed, 0 skipped.
+- [round6-isolate-01-results.log.txt](round6-isolate-01-results.log.txt): 0 passed, 1 failed, 19 skipped.
+- [round6-isolate-02-results.log.txt](round6-isolate-02-results.log.txt): 0 passed, 1 failed, 4 skipped.
+- [round6-isolate-03-results.log.txt](round6-isolate-03-results.log.txt): 0 passed, 1 failed, 4 skipped.
+- [round6-isolate-04-results.log.txt](round6-isolate-04-results.log.txt): 0 passed, 1 failed, 4 skipped.
+- [round6-isolate-05-results.log.txt](round6-isolate-05-results.log.txt): 0 passed, 1 failed, 38 skipped.
+- [round6-isolate-06-results.log.txt](round6-isolate-06-results.log.txt): 0 passed, 1 failed, 38 skipped.
+- [round6-isolate-07-results.log.txt](round6-isolate-07-results.log.txt): 0 passed, 1 failed, 38 skipped.
+- [round6-isolate-08-results.log.txt](round6-isolate-08-results.log.txt): 0 passed, 1 failed, 25 skipped.
+- [round6-isolate-09-results.log.txt](round6-isolate-09-results.log.txt): 1 passed, 0 failed, 25 skipped.
+- [round6-isolate-10-results.log.txt](round6-isolate-10-results.log.txt): 1 passed, 0 failed, 33 skipped.
+
+The historical external auditor harness is now [retained](thread-summary.mjs), with [provenance and path normalization](auditor-harness-preservation.json). It is distinct from the independently authored, portable [thread-regression.mjs](thread-regression.mjs) replay; the latter was the only harness retained in this folder before this correction.

@@ -4,6 +4,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Mark a loop's latest run unavailable when its event history cannot be read, retaining the exact count and diagnostics guidance instead of a stale status badge. (#236)
+
 - Latest-run summaries also validate the selected run's initial thread and any cached thread snapshot. Damaged threads remain counted and show "latest run unavailable" instead of a stale status badge after restart; an absent cached snapshot remains valid. (#236)
 
 - Loops show "latest run unavailable" and direct operators to run history diagnostics when the selected latest run fails full-record decoding, including a valid but stale status beside damaged snapshot data after restart. Its exact count is retained; no older run or partial status badge is substituted. (#236)

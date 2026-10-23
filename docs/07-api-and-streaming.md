@@ -484,8 +484,20 @@ recovery readers before its summary is returned. An absent cached snapshot (SQL
 NULL) remains valid: readers rebuild from the initial thread and event log. Damage in any
 of those stored values makes `latestRun` null while its row remains counted; an
 older run is never substituted. Only the selected latest row is decoded, not every
-run in the loop. Recovery refuses damaged threads before repairing status; checking
-them here too prevents a valid but stale status column from becoming a badge after
+run in the loop. Its event log also passes the same strict decoder as recovery, in
+batches of at most 100 rows, stopping at the first unreadable event, which likewise
+makes `latestRun` null. Recovery logs
+failures without retaining a reusable set; diagnostics scans on demand. The repository
+therefore caches event readability by latest-run identity and event count (one entry
+per loop). Each listing counts events using the run-event index; unchanged histories
+need no event decoding or payload reads. Counting still walks that run's indexed
+entries. An append or a different latest run invalidates the cache.
+Cold validation is linear in the selected history up to its first bad event, with
+bounded batch memory; it never scans older runs. Out-of-band edits or repairs that
+leave the count unchanged require an API restart. Database failures remain errors,
+not cached unavailability. Recovery refuses damaged records, threads and events
+before repairing status; checking these boundaries here too prevents a valid but
+stale status column from becoming a badge after
 a damaged snapshot missed a terminal update, including after restart. The UI says
 "latest run unavailable" and directs the operator to run history diagnostics (`GET /runs/diagnostics`).
 Healthy loops remain available; database read failures remain errors. Loops refresh their summaries every five seconds; deletion confirmation uses

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LoopDefinitionSchema } from '@graphgoblin/contracts';
 import type { RunRecord } from '@graphgoblin/contracts';
 import {
@@ -197,5 +197,115 @@ describe('SQLite history queries', () => {
     expect(limitOne.next).not.toBeNull();
     expect((await repo.page('local', { before: FIXTURE_TS })).items).toEqual([]);
     expect(await repo.page('missing')).toEqual({ items: [], next: null });
+  });
+
+  it('refuses unreadable latest events despite a durable finish and a valid stale running record', async () => {
+    const clock = new FakeClock();
+    const loops = new SqliteLoopRepository(handle.db, clock, new FakeIds());
+    const runs = new SqliteRunRepository(handle.db);
+    const events = new SqliteEventStore(handle.db, clock);
+    const loop = await loops.create('local', LoopDefinitionSchema.parse(minimalLoop()));
+    for (const [tag, createdAt] of [
+      ['older', '2026-09-01T00:00:00.000Z'],
+      ['latest', FIXTURE_TS],
+    ] as const) {
+      await runs.create(
+        {
+          id: fakeUlid(tag),
+          ownerId: 'local',
+          loopId: loop.loop.id,
+          versionId: loop.draft.id,
+          invocationId: fakeUlid(`${tag}:inv`),
+          pinned: samplePin(),
+          status: 'running',
+          iteration: 1,
+          lastEventSeq: 0,
+          createdAt,
+        },
+        sampleThread(),
+      );
+    }
+    const id = fakeUlid('latest');
+    await events.append(id, [{ type: 'run.finished', status: 'succeeded', outcome: 'success' }]);
+    // More than one validation batch, with the damage in the middle of the second batch.
+    await events.append(
+      id,
+      Array.from({ length: 205 }, () => ({ type: 'run.started' as const, attempt: 1 })),
+    );
+    await handle.client.execute({
+      sql: "UPDATE run_events SET payload='{}', type='run.queued' WHERE run_id=? AND seq=103",
+      args: [id],
+    });
+    expect(await runs.get(id)).toMatchObject({ status: 'running' });
+    expect((await events.read(id, 0, 1))[0]).toMatchObject({ status: 'succeeded' });
+    const read = vi.spyOn(SqliteEventStore.prototype, 'read');
+    const reopened = new SqliteLoopRepository(handle.db, clock, new FakeIds());
+    expect((await reopened.listWithRunSummaries('local'))[0]).toMatchObject({
+      runCount: 2,
+      latestRun: null,
+    });
+    expect(read).toHaveBeenCalledTimes(2);
+    expect(read).toHaveBeenNthCalledWith(1, id, 0, 100);
+    expect(read).toHaveBeenNthCalledWith(2, id, 100, 100);
+    read.mockClear();
+    expect((await reopened.listWithRunSummaries('local'))[0]?.latestRun).toBeNull();
+    expect(read).not.toHaveBeenCalled();
+    // An append changes the count and invalidates the cached failure; repair alone requires restart.
+    await handle.client.execute({
+      sql: "UPDATE run_events SET payload=?, type='run.started' WHERE run_id=? AND seq=103",
+      args: [JSON.stringify({ attempt: 1 }), id],
+    });
+    await events.append(id, [{ type: 'run.started', attempt: 1 }]);
+    read.mockClear();
+    expect((await reopened.listWithRunSummaries('local'))[0]?.latestRun?.id).toBe(id);
+    expect(read).toHaveBeenCalledTimes(3);
+    read.mockClear();
+    await reopened.listWithRunSummaries('local');
+    expect(read).not.toHaveBeenCalled();
+    read.mockRestore();
+    // Damage on an older run cannot hide a healthy latest run.
+    await events.append(fakeUlid('older'), [{ type: 'run.started', attempt: 1 }]);
+    await handle.client.execute({
+      sql: "UPDATE run_events SET payload='{broken' WHERE run_id=?",
+      args: [fakeUlid('older')],
+    });
+    expect(
+      (
+        await new SqliteLoopRepository(handle.db, clock, new FakeIds()).listWithRunSummaries(
+          'local',
+        )
+      )[0]?.latestRun?.id,
+    ).toBe(id);
+  });
+
+  it('propagates event storage failures without caching them as unreadable history', async () => {
+    const clock = new FakeClock();
+    const loops = new SqliteLoopRepository(handle.db, clock, new FakeIds());
+    const runs = new SqliteRunRepository(handle.db);
+    const loop = await loops.create('local', LoopDefinitionSchema.parse(minimalLoop()));
+    const id = fakeUlid('storage-error');
+    await runs.create(
+      {
+        id,
+        ownerId: 'local',
+        loopId: loop.loop.id,
+        versionId: loop.draft.id,
+        invocationId: fakeUlid('storage-inv'),
+        pinned: samplePin(),
+        status: 'succeeded',
+        iteration: 1,
+        lastEventSeq: 0,
+        createdAt: FIXTURE_TS,
+      },
+      sampleThread(),
+    );
+    await new SqliteEventStore(handle.db, clock).append(id, [{ type: 'run.started', attempt: 1 }]);
+    const read = vi
+      .spyOn(SqliteEventStore.prototype, 'read')
+      .mockRejectedValueOnce(new Error('storage unavailable'));
+    await expect(loops.listWithRunSummaries('local')).rejects.toThrow('storage unavailable');
+    expect((await loops.listWithRunSummaries('local'))[0]?.latestRun?.id).toBe(id);
+    expect(read).toHaveBeenCalledTimes(2);
+    read.mockRestore();
   });
 });

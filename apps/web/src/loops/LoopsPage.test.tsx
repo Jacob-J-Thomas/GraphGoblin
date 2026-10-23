@@ -61,7 +61,7 @@ describe('LoopsPage', () => {
     expect(api.callsTo('GET', '/runs')).toHaveLength(0);
   });
 
-  it.each(['pinned', 'initial_thread', 'thread_snapshot'])(
+  it.each(['pinned', 'initial_thread', 'thread_snapshot', 'events'])(
     'distinguishes unavailable %s history from a loop with no history',
     async (column) => {
       const api = new FakeApi();
