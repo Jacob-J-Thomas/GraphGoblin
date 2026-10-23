@@ -1,0 +1,119 @@
+import {readFile,writeFile,readdir} from 'node:fs/promises';import {resolve} from 'node:path';import {createRequire} from 'node:module';
+const dir=resolve('docs/qa/2026-10-22-wp-e1-259-qa/round-10'),req=createRequire(resolve('package.json')),prettier=req('prettier'),load=async n=>JSON.parse(await readFile(resolve(dir,n),'utf8')),link=n=>`[${n}](${n})`,fmt=n=>Number(n).toFixed(1),tasks=v=>v?.longTasks?.map(t=>t.duration).join(', ')||'none';
+const prior=await load('prior-evidence-audit.json'),env=await load('browser-environment.json'),admission=await load('environment.json'),fixture=await load('fixture.json'),manifest=await load('not-kept.json'),cache=await load('cache-results.json'),focus=await load('focus-results.json'),continued=await load('result-continued-results.json'),large=await load('result-large-results.json'),initial=await load('result-results.json'),rows=[],timings=[],preparations=[];
+await writeFile(resolve(dir,'NOT-KEPT.md'),await prettier.format('# Captures not kept in the worktree\n\nThese captures exceed 1,000,000 bytes and remain only in disposable temporary storage. Exact names, sizes, SHA-256, comparison results and executable steps are retained. The controlled streams add the identified invalid patch only to the browser response. Nothing stored was changed by those responses. No directory or prior capture was deleted.\n\n| Name | Bytes | SHA-256 |\n| --- | ---: | --- |\n'+manifest.map(m=>`| ${m.name} | ${m.bytes} | ${m.sha256} |`).join('\n')+'\n',{parser:'markdown',printWidth:100}));
+function short(c){const a=c.actual;if(!a)return c.error;if(c.id.includes('paired'))return `One activation -> before {}, after ${a.afterChars} chars; return ${fmt(a.selected.wallMs)} ms; request ${fmt(a.requested.wallMs)} ms; width ${a.width}/${a.viewport}`;if(c.id.includes('35 recon'))return `35 explicit requests; return 7 card ${fmt(a.evicted.wallMs)} ms, no long task or sampled replay/serializer; recent 41 ${fmt(a.recent.wallMs)} ms`;if(c.id.includes('Variables download'))return `${a.exact.download.bytes} bytes exact; stored hashes unchanged`;if(c.id.includes('QA-259-R9'))return `Focused DIV tabindex -1 contains alert; Tab -> ${a.afterTab.text}; direct Shift+Tab -> ${a.directShiftTab.text}; cached failure leaves ${a.outsideAfter.text}; recovery passes`;if(a.exact)return `${a.fullChars} full chars / ${a.exact.download.bytes} exact bytes; preview ${a.collapsed.chars}; scrolling ${a.scrollAfter.height}/${a.scrollAfter.client}; keyboard names/order correct; timeline ${fmt(a.selection.wallMs)} ms; width ${a.width}/${a.viewport}`;if(a.kind==='absent')return `No Result card; ${a.exitSummary}`;return `Result text ${a.resultText}; row/event result presence ${a.rowHasResult}/${a.eventHasResult}; API hashes unchanged`;}
+function collect(v,path,file){if(!v||typeof v!=='object')return;if('wallMs'in v)timings.push(`| ${path} | ${fmt(v.wallMs)} | ${tasks(v)} | ${link(file)} |`);for(const[k,x]of Object.entries(v))if(!['tabPath','outsidePath'].includes(k))collect(x,path+' / '+k,file);}
+for(const[file,cases]of[['cache-results.json',cache],['focus-results.json',focus],['result-continued-results.json',continued.filter(c=>c.pass)],['result-large-results.json',large]])for(const c of cases){rows.push(`| ${c.id} | ${c.expected} | ${short(c).replaceAll('|','/').replaceAll('\n',' ')} | ${c.pass?'PASS':'FAIL'} | ${link(file)} |`);collect(c.actual,c.id,file);}
+for(const width of[1440,390])for(const[label,file]of[['35-event spot','explicit-events-'+width+'.json'],...['started-first','finished-first'].map(order=>[order,'pair-preparation-'+order+'-'+width+'.json'])])for(const e of await load(file))preparations.push(`| ${width} / ${label} / ${e.seq} | ${fmt(e.selection.wallMs)} | ${tasks(e.selection)} | ${e.activations} | ${e.requested?fmt(e.requested.wallMs):'already shown'} | ${e.requested?tasks(e.requested):'none'} | ${link(file)} |`);
+const invalid=[...initial.map(c=>`| ${c.id} | Initial readiness/fixture description | ${c.error.replaceAll('\n',' ').replaceAll('|','/')} | ${link('result-results.json')} |`),...continued.filter(c=>!c.pass).map(c=>`| ${c.id} | Intermediate broad region selector | ${c.error} | ${link('result-continued-results.json')} |`)];
+const gates=[];for(const n of['build.log.txt','web-units.log.txt','lint.log.txt','typecheck.log.txt','playwright.log.txt','layers.log.txt','deps.log.txt','tokens.log.txt','docs.log.txt','format.log.txt']){let raw;try{raw=await readFile(resolve(dir,n),'utf8');}catch{gates.push(`| repository formatting | pending | ${link(n)} |`);continue;}gates.push(`| ${raw.match(/^Command: (.*)/m)?.[1]} | ${/^Exit: 0$/m.test(raw)?'PASS':'FAIL'} | ${link(n)} |`);}
+const files=[...new Set([...(await readdir(dir)),'report.log.txt','validation.json','validation.log.txt','format.log.txt','format-qa.log.txt'])].filter(n=>n!=='README.md').sort();
+const text=`# Independent QA, round 10: #259 / PR #382
+
+## 1. Verdict
+
+**PASS** for the requested round-10 scope at **d4096962a46081b132dc6ec35ef114fd205ffc5b**, detached HEAD. **QA-259-R9-01 is fixed at both widths.** The merged Result card bounds the row result and the finish-event fallback, preserves exact downloads, and shows null as a value. The paired reconstruction and 35-event eviction spot checks remain correct. No new in-scope product defect was found.
+
+Main **50e59c686605d1d58d8e65db2b0236cb14b22648** is verified as an ancestor; parents **${admission.parents.join(' / ')}** and admission/final head are recorded in ${link('environment.json')}, ${link('final-state.json')}. Build, **103/103 affected unit tests in six files**, **11/11 maintained Edge tests**, lint/types/layers/deps/tokens and generated-doc checks pass; formatting is recorded below. Full coverage was explicitly waived. This is independent QA evidence for the named revision and bounded scope, not a merge/closure action.
+
+Worked alone, fake-only native execution through mutate nodes, input waits and the fake harness. No production or maintained-test edit, staging, commit, stash/branch operation, GitHub write or directory deletion. Only round-10 QA records were added. Built API/web ran on ports **5720/5721** in disposable store **${env.native.dataDir}**, Node **${env.node}**, installed Edge **${env.browser.version}**, headless, Windows **${env.os.release}**. The owned process is stopped and both ports are closed (${link('shutdown.json')}, ${link('finish.log.txt')}). No owner app/store or live provider was used.
+
+## 2. Defects
+
+No new in-scope product defect. **QA-259-R9-01: fixed**, using the original failure reproduction at **1440 × 900** and **390 × 844**:
+
+1. Admit the 350,000-property run (history above two million characters). In a separate Edge page, intercept only its event stream, preserve seed event 6's /vars patch and append remove /vars/absent-qa. This remains a contract-shaped event with a domain-invalid operation; API storage is unchanged.
+2. Select event 6, Tab to **Reconstruct the thread at event 6**, and press Enter once. The event-specific role=alert appears; document.activeElement is now the alert's **DIV container, tabindex -1**, not BODY. The container is verified by element identity and contains the actual alert.
+3. Tab reaches **Node progress (0 nodes)**. Shift+Tab from there skips the non-tab-stop alert and reaches timeline event **44 run.waiting ask**. Refocus the container and press Shift+Tab directly: it reaches the same timeline control. Tab forward again skips the container. The container remains tabindex -1; it never becomes a normal Tab stop.
+4. A valid event 1 reconstructs and puts focus on Messages. Move backward through the keyboard order to timeline event 6 and select its cached failure: focus remains on that timeline button. The failure hand-off does not steal a keyboard outside the viewer.
+
+Both fault pages record no page/console errors. API thread/events hashes are identical before and after. Evidence: ${link('focus-results.json')}, ${link('focus-1440.json')}, ${link('focus-390.json')}, ${link('focus.mjs.txt')}, ${link('focus.log.txt')}, ${link('failure-alert-1440.png')}, ${link('failure-alert-390.png')}. The screenshots show the alert; element identity/Tab destinations come from the JSON records. The oversized controlled responses are manifested in ${link('NOT-KEPT.md')}. Current-source corroboration is ${link('source-context.txt')}, ${link('source-context.json')}, alongside the exact source/test delta ${link('change.diff.txt')}.
+
+The requested-failure alert and both orders of one-activation paired reconstruction still pass. O9-01 is now **#385** and explicitly excluded from this PR/round; it was not re-tested or reclassified here. No product finding is inferred from the QA-helper mistakes documented below.
+
+## 3. Coverage of criteria
+
+Touched systems: ThreadViewer's error hand-off, normal/cached reconstruction readiness and bounded cache; RunInspectorPage's merged Result source selection; BoundedValue's preview/full/keyboard/download semantics; G4 exit evidence and null/absence distinction; API/SQLite fixture composition; affected units and maintained inspector/exit browser specs. Tests use public UI/API/component interfaces and the repository's public RunRepository.update for controlled stored-row fixtures. No private application store, component function or cache map was patched or inspected.
+
+The wide fixture has **${fixture.propertyCount.toLocaleString('en-US')} properties**, **${fixture.historyChars.toLocaleString('en-US')} initial history characters**, **${fixture.events.length} events**. Creation took **${fmt(fixture.creationWallMs)} ms** in the built native API; the run stays at its input wait throughout these spot checks. Each static cache case opens a fresh viewer. ${link('fixture.json')}, ${link('fixture.mjs.txt')}, ${link('fixture.log.txt')} retain admission, sequence/node/patch summaries and hashes. The fixture's later live waits are unused this round; no new live-append claim is made beyond the maintained spec.
+
+Result fixtures are native completed mutate/exit runs, with a 20,000-character single line plus escapes, a control character, Unicode, a surrogate pair, a lone surrogate, nulls and primitive values. A terminal row is altered **only during fixture preparation**, on this temporary instance, through **SqliteRunRepository.update**: clearing result creates the real stored fallback state; a separate row set to null over a large finish-event result checks null precedence. These are declared controlled storage fixtures, not engine-emitted contradictory results. The two normal/null/absent engine outcomes remain native. After preparation, viewing/downloading leaves each run, event list and thread hash unchanged. Exact API run/event bodies, property-presence flags, alterations and selected values: ${link('result-fixtures.json')}, ${link('result-fixtures.mjs.txt')}, ${link('result-fixtures.log.txt')}, ${link('server.mjs.txt')}.
+
+| Requested criterion / negative control | Expected | Actual / coverage | Evidence |
+| --- | --- | --- | --- |
+| Failed Reconstruct keyboard | Alert container takes focus; Tab and Shift+Tab preserve order | PASS twice: DIV tabindex -1, then Node progress / timeline 44; cached-failure selection leaves outside keyboard alone | ${link('focus-results.json')} |
+| Native large Result | Bounded preview/notice, exact full access, exact download | PASS twice: 4,096-character exact prefix plus ellipsis; Show all -> 20,155 chars, bounded named scrolling region; keyboard download 20,159 bytes equals GET run.result | ${link('result-large-results.json')} |
+| Row absent / finish-event fallback | Same bounds/full/download with row.result absent | PASS twice on a stored row genuinely lacking result: finish event 10 supplies the value; full 20,157 chars, exact download 20,161 bytes | ${link('result-large-results.json')}, ${link('result-fixtures.json')} |
+| Native returned null | Show literal null as a value | PASS twice: Result card with null, no large-value control, no no-return summary | ${link('result-continued-results.json')} |
+| Null row over non-null finish event | Null is present and wins; do not use a nullish fallback | PASS twice: Result is null despite large event result | ${link('result-continued-results.json')} |
+| Neither row nor finish result | No Result card; truthful configured no-return explanation | PASS twice: default caller destination receives nothing because Returns is None. This fixture is suppressed, not quiet. Maintained spec independently tests a genuinely quiet exit too | ${link('result-continued-results.json')}, ${link('playwright.log.txt')} |
+| Paired replay | Started/finished then 31 others; return asks; one activation restores /vars diff | PASS four cases: both orders at both widths. The already-prepared started half needs no additional request in reverse order | ${link('cache-results.json')} |
+| Eviction | 35 explicit reconstructions, return first asks without unrequested work | PASS twice: event 7 card remains after 250 ms; Variables absent; no observed long task or sampled replay/preview; recent 41 is immediate | ${link('cache-results.json')} |
+| One exact download / data preservation | Reconstructed Variables equals API vars; no stored changes | PASS twice: 7,827,782 bytes each, SHA-256 b8d4d3d575a5d82f611a4f4e41d60e4283155be4385d976b0b8bbbb3966c39d3 | ${link('cache-results.json')}, ${link('NOT-KEPT.md')} |
+
+Every completed independent product case:
+
+| System / case | Steps / expected | Actual | Result | Evidence |
+| --- | --- | --- | --- | --- |
+${rows.join('\n')}
+
+The merged Result source is verified against the API, not by hiding a field in a browser response. Both large sources provide the same accessible controls: Tab reaches Show all of Result; Enter expands; Shift+Tab enters the named Result pre; PageDown scrolls it; Tab reaches Show less then Download Result as JSON; Enter downloads the exact value. A native CDP click selects timeline event 1 while the Result remains expanded in the DOM; it stays the terminal Result. Returning focus to Show less and pressing Enter restores the exact preview. The collapsed pre has no region role or aria-label; the Result Card section remains a legitimate named region. Width is **1440/1440 or 390/390** in both expanded and collapsed records.
+
+Scroll height/client height is **2,379/538 px** desktop and **10,122/504 px** narrow. The narrow PageDown readings move to **438/440 px** for native/fallback. Full Result values include escaped/control/Unicode data, and their downloaded UTF-8 bytes are compared exactly with the API value under the same two-space JSON formatting. Raw bodies and capture SHA-256 are retained. Narrow screenshots ${link('result-final-native-expanded-390.png')}, ${link('result-final-fallback-expanded-390.png')} and ${link('failure-alert-390.png')} were visually inspected: long values and alert text wrap within the window.
+
+### QA-helper provenance and limitations
+
+The first Result probe reused a readiness helper that waits for run.lastEventSeq. Returned-value fixtures have **run.finished at 10, return.delivered at 11**; the inspector subscription completes at run.finished. Waiting for 11 prevented those Result assertions from running. Its optional no-result assertion also wrongly expected a quiet exit even though the schema's default destination is caller. The initial partial rows and interrupted exec log remain in ${link('result-results.json')}, ${link('results.mjs.txt')}, ${link('results.log.txt')}. A first inspection attempt hit the same readiness condition and failed before taking observations (${link('inspect-results.mjs.txt')}, ${link('inspect-results.log.txt')}). Raw-navigation diagnosis then recorded the correct DOM, event sequence and pinned configurations (${link('diagnose-page.mjs.txt')}, ${link('diagnose-page.log.txt')}, ${link('page-diagnosis.json')}); its reference-prefix field was for large values only, not a null/absence assertion.
+
+The continuation uses the terminal event as readiness and a fixture-correct Returns is None explanation (${link('prepare-continuation.mjs.txt')}, ${link('result-helper-correction.json')}, ${link('results-continued.mjs.txt')}, ${link('results-continued.log.txt')}). Six null/absent/precedence cases passed and were not repeated. The four large cases then completed their functional actions but stopped at an over-broad global region query: it matched the named Result Card, not just the collapsed pre. This is a QA selector error; source/DOM semantics are corroborated in ${link('source-context.txt')}. The failed rows remain, and their eight raw download/API bodies compare equal without being changed (${link('result-capture-verification.json')}).
+
+Only those four incomplete large-case records continued, with the assertion scoped to the pre; final captures have new filenames so prior captures are preserved. ${link('prepare-large-continuation.mjs.txt')}, ${link('result-role-correction.json')}, ${link('results-large.mjs.txt')}, ${link('results-large.log.txt')}, ${link('result-large-results.json')}. There was no production change or whole-suite retry. Original partial/invalid attempts are not claimed as passing product tests, and no unsaved timing from them is cited.
+
+| Initial/intermediate case | QA issue | Retained actual | Evidence |
+| --- | --- | --- | --- |
+${invalid.join('\n')}
+
+The initial unsuccessful Result-readiness process briefly overlapped the end of the focus process. **Focus request timings are contended observations**, not an isolated latency comparison; the functional focus destinations are still directly recorded. Cache/eviction measurements preceded that overlap. The final four large-Result measurements ran alone after all earlier probes/diagnostics ended. ${link('browser-environment.json')} records this qualification. All gates and fixture creation had finished before browser timings; unrelated host activity was uncontrolled.
+
+Timing method: standard **≥50 ms long tasks**, action to two animation frames after the expected public DOM; CDP input for cache selection and final timeline clicks, keyboard input for Result controls. Wall times include automation/scheduling/native/API work and are not INP or a hardware-independent SLA. Evicted selections also have 1 ms CPU sampling and retained Paint/state evidence; zero samples is reported as zero sampled work, not a mathematical proof about an offscreen frame. No below-fold card is claimed to be visible in that earlier paint. Initial page loading/fixture creation is outside selection windows.
+
+Evicted first returns: **32.2/35.4 ms** desktop/narrow, no long tasks and zero sampled replay/serializer work. Recent returns: **76.2/81.8 ms**, no long task. Final large-Result Show all: **23.6–49.7 ms**; timeline selection while expanded: **42.7–60.6 ms**; Show less: **18.3–27.8 ms**. Those Result control windows contain **no long tasks**. Explicit wide reconstruction/failure still pays the reported on-request work; focus request walls **558.5/565.1 ms**, tasks **523/539 ms**, have the contention qualification above.
+
+Every other recorded operation and every observed long task:
+
+| Operation | Wall ms | Every long task ms | Evidence |
+| --- | ---: | --- | --- |
+${timings.join('\n')}
+
+All cache preparations and 35-event spot measurements:
+
+| Width / fixture / event | Select wall ms | Every select long task ms | Requests | Request wall ms | Every request long task ms | Evidence |
+| --- | ---: | --- | ---: | ---: | --- | --- |
+${preparations.join('\n')}
+
+Six primary exact download comparisons pass: two Variables, four final Result. Four earlier Result body pairs are retained and separately verified as supplemental byte comparisons, not additional acceptance cases. All viewing-only snapshots preserve run/thread/events. The four oversized Variables bodies and two oversized controlled streams follow D-034 in ${link('NOT-KEPT.md')} / ${link('not-kept.json')}; all kept artifacts are under 1,000,000 bytes. Raw JSON and script bytes are preserved; only this round's Markdown is formatted, following the merged evidence rule.
+
+Gates, exact commands, Node 22:
+
+| Command | Result | Evidence |
+| --- | --- | --- |
+${gates.join('\n')}
+
+Affected units: **103/103**, ThreadViewer, projections, RunInspectorPage, EvaluationDetails, BoundedValue and deferred preview. The new failure-alert focus regression exists and passes; no old-head scratch regression execution was done in this round. Prior failing browser evidence is preserved, and current built-app reproduction establishes the fix. Maintained Edge: **11/11**, inspector-large-values.spec.ts and exit-primitives.spec.ts, one worker, retries **0**. The latter covers gate/exit Result evidence, suppressed/quiet None and a long route label after the merge. Generated-doc check was included because the merged contracts/API metadata changed. Dependency manifests did not change, so licence checking was not required/run. Full package coverage was explicitly waived; no percentage, changed threshold or exclusion is claimed.
+
+Not repeated in this bounded round: the full rounds 1–9 surface/adversarial matrix, #385, all Events pages, 6,000-message window/download, full-thread property order, actual screen-reader speech, native restart/session matrix, live providers, WP-F2b authoring beyond compilation/gates and these adjacent specs, or all-package coverage. All requested round-10 product criteria are tested and passed.
+
+## 4. Report path and evidence folder
+
+Report: docs/qa/2026-10-22-wp-e1-259-qa/round-10/README.md. All kept evidence is in this same folder, linked below. ${link('validation.json')} / ${link('validation.log.txt')} audit links, local paths, sizes, hashes, completed cases, invalid-helper classification and gate results.
+
+Prior evidence: **${prior.references} references**, **${prior.missingUnmanifested} unaccounted missing**, **${prior.manifestEntries} oversized manifest entries**; the 44 still-local round-4/5 raw bodies match their manifests, and 20 round-6/7/8/9 bodies are absent as manifested. No expected kept artifact is missing. Rounds 8 and 9 are now tracked, resolving the previous handoff discrepancy; referenced untracked prior artifacts: **${prior.untracked}**. No prior hash changed (${link('prior-evidence-audit.json')}, ${link('final-state.json')}). Existing oversized untracked bodies were left alone.
+
+${files.map(n=>'- '+link(n)).join('\n')}
+
+## 5. Observations outside scope
+
+No new outside-scope product defect was recorded. O9-01 is filed as **#385**, explicitly excluded and not re-opened. The completed-row fixture alterations and terminal-readiness/region-selector corrections are QA provenance, not product changes or hidden stored-data repair. The earlier tracking discrepancy is resolved on this head. Temporary stores, scripts/raw oversized captures and maintained-spec output remain for the orchestrator; no directory was deleted. Both owned ports are closed, tracked/staged diffs are empty, prior evidence is preserved, and no commit was made.
+`;
+await writeFile(resolve(dir,'README.md'),await prettier.format(text.replace(/\u001b\[[0-9;]*m/g,''),{parser:'markdown',printWidth:100}));console.log(JSON.stringify({verdict:'PASS',completedProductCases:rows.length,invalidHelperRows:invalid.length,cachePreparationMeasurements:preparations.length,artifacts:files.length}));
