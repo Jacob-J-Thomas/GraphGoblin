@@ -1,0 +1,9 @@
+import {createServer} from 'node:http';
+import {writeFileSync} from 'node:fs';
+const server=createServer((req,res)=>res.end('scope-smoke'));
+await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(5600,'127.0.0.1',resolve);});
+const actual=server.address().port,response=await fetch('http://127.0.0.1:5600');
+const body=await response.text();await new Promise(r=>server.close(r));
+const result={logicalPort:5600,actualPort:actual,body,pass:actual>=5810&&actual<=5819&&body==='scope-smoke'};
+writeFileSync('docs/qa/2026-10-22-wp-f1-qa/round-3/port-smoke.json',JSON.stringify(result,null,2));
+console.log(JSON.stringify(result));if(!result.pass)process.exitCode=1;

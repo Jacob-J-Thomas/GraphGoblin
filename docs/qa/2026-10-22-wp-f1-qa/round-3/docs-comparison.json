@@ -1,0 +1,178 @@
+{
+  "method": "Read these live sentences against the retained native and browser observations; source lines are current-head quotes.",
+  "excerpts": [
+    {
+      "file": "docs/06-harness-integration.md",
+      "lines": [
+        {
+          "line": 18,
+          "text": "    authenticated?: boolean;"
+        },
+        {
+          "line": 72,
+          "text": "| `unknown`             | Timeout, cancellation, empty/unrecognized login output (even after exit 0) or another inconclusive probe. Login stays unestablished. Check the CLI and retry; model support is undecided. |"
+        },
+        {
+          "line": 76,
+          "text": "| `auth`                | Positive sign-out, wrong Claude account method or authentication-error evidence, including explicit HTTP/API 401/403. Run `claude auth login` or `codex login`, then retry.               |"
+        },
+        {
+          "line": 77,
+          "text": "| `quota`               | Explicit HTTP/API 429 or allowance/rate-limit diagnostic, even beside incidental network advice. Check account allowance and retry when permitted; preserve the model.                    |"
+        },
+        {
+          "line": 95,
+          "text": "Draft create, template-draft create, import and save validate catalog/configuration only: they"
+        },
+        {
+          "line": 108,
+          "text": "child's draft or a publication that arrives while a probe is pending. A breadth-first walk visits"
+        },
+        {
+          "line": 112,
+          "text": "returns 422 `HARNESS_NOT_READY`, with the child loop name, loop/version ids and node id in its"
+        },
+        {
+          "line": 123,
+          "text": "`authenticated` is absent if login was not checked or could not be established; false requires"
+        },
+        {
+          "line": 126,
+          "text": "`{}` or an unrecognised login response on exit 0 is `unknown`, with no `authenticated` field;"
+        },
+        {
+          "line": 130,
+          "text": "No-turn diagnostic precedence is CLI-syntax errors first, explicit HTTP/API 401/403 (`auth`),"
+        },
+        {
+          "line": 131,
+          "text": "429 (`quota`) or 5xx (`transport`) next, then connection errors/wording, then quota/auth keywords."
+        },
+        {
+          "line": 132,
+          "text": "Thus incidental \"network\" advice cannot override 401 or 429, while connection errors such as"
+        },
+        {
+          "line": 172,
+          "text": "GraphGoblin uses the machine's existing Codex login, which may be a ChatGPT subscription. It never stores or proxies Codex credentials. The adapter's `preflight` runs the CLI to confirm it is installed and authenticated, and the settings page shows the result. If an API key is desired later, it is passed through `env`, never persisted by GraphGoblin."
+        },
+        {
+          "line": 210,
+          "text": "An `error` item, such as a configuration deprecation warning, is an ordinary item and never fails a turn. A top-level `error` event only counts if the turn then fails. Codes: `HARNESS_QUOTA_EXHAUSTED` (HTTP 429, usage limit, quota; retriable only for plain rate limits), `HARNESS_NOT_AUTHENTICATED` (401, 403, not logged in), `HARNESS_NOT_INSTALLED` (binary not found), `HARNESS_TRANSPORT_FAILED` (5xx and stream disconnects), and `HARNESS_TURN_FAILED` (other failures). The engine's `classifyHarnessError` maps the first two by substring."
+        },
+        {
+          "line": 298,
+          "text": "`available()` is synchronous: the decider resolves the key in the background at construction and caches a client; `init()` awaits that, and `refresh()` re-reads the secret. Without a key the chosen evaluator is unavailable and execution fails with restoration guidance. Failures carry codes: `DECIDER_UNAVAILABLE`, `DECIDER_NOT_AUTHENTICATED` (401, 403), `DECIDER_RATE_LIMITED` (429), `DECIDER_HTTP_ERROR`, `DECIDER_UNREACHABLE`, and `DECIDER_INVALID_RESPONSE` (the response is validated with Zod). Jev Choice probabilities must cover exactly the submitted stable option IDs; unknown choices are invalid responses. Jev errors use fixed messages with only numeric HTTP status, and SDK logs use fixed summaries without provider text or response headers. Decision and exit-predicate failures share the engine's safe summaries; snapshots, paged events, and streams never retain provider error bodies or stacks. Engine provider warnings carry only safe name, code, status, and strategy metadata. Existing Choice calls retain SDK retries (twice for 408, 429 and 5xx by default). New Noul/Score calls explicitly disable retries and check cancellation before dispatch. The per-attempt timeout is 10 seconds; aborts surface as `AbortError`. The base URL and model are explicit options (`baseUrl`, default `https://api.typesafe.ai`; `model`, default `jev-latest`), never read from `TYPESAFE_*` environment variables."
+        },
+        {
+          "line": 335,
+          "text": "Probabilities must cover exactly every submitted label, and all probability/confidence values must be finite and in `[0,1]`. The selected choice must be one of the submitted labels; an undeclared choice produces `DECIDER_INVALID_RESPONSE` with fixed text that does not include the value. Omitted confidence uses the selected probability. Provider model/usage and additional provider metadata may accompany the response. Requests have a 10-second deadline and respect executor cancellation. Redirects are not followed: a 3xx produces `DECIDER_REDIRECT` with \"Classifier redirects are not followed\". Malformed JSON or invalid answers produce `DECIDER_INVALID_RESPONSE`; 401/403 (`DECIDER_NOT_AUTHENTICATED`), 429 (`DECIDER_RATE_LIMITED`), other HTTP errors (`DECIDER_HTTP_ERROR`), connection failures (`DECIDER_UNREACHABLE`), and timeouts (`DECIDER_TIMEOUT`) have fixed diagnostics, with no credential or untrusted provider body in them. Decision provider failures use typed `EVALUATION_*` failures and retain only safe transport diagnostics; cancellation retains its existing behaviour. Unavailable configuration, rejected classifier confidence and unknown selections produce the explicit typed decision failures described in docs/05; they never invoke a different evaluator. Malformed provider answers and transport text are not retained. A valid answer rejected only by confidence retains its validated canonical primitive facts, evaluator provenance and acceptance gate in failure details; it emits no `decision.made` event and selects no route. The registry passes the engine logger to decision-time Jev SDK clients so SDK retries and errors retain fixed log summaries without raw provider text."
+        },
+        {
+          "line": 426,
+          "text": "unrecognised record types and system subtypes emit no events or stored evidence. The system"
+        },
+        {
+          "line": 434,
+          "text": "Protocol refusals keep `HARNESS_PROTOCOL_ERROR` and identify an unrecognised pre-init record's `type`"
+        }
+      ]
+    },
+    {
+      "file": "docs/09-frontend-and-pwa.md",
+      "lines": [
+        {
+          "line": 91,
+          "text": "- Offline: the shell opens and unsaved editor drafts persist in IndexedDB. Anything needing the backend shows a clear offline state. Active queries that failed because the API could not be reached retry on the browser's `online` event, including after an offline reload, without navigating. While an active query holds a connectivity error, a public `GET /healthz` probe through the API client's base URL retries after 2 seconds, doubling to a 30-second cap. A successful health response refetches only active connectivity-failed queries without cancelling their in-flight fetches. Recovery is confirmed once per outage only after those reads cease holding connectivity errors; a healthy `/healthz` with a stuck route keeps backing off and leaves the banner stable. There is at most one probe in flight, with a 5-second timeout; probes stop when no query needs recovery, the tab is hidden, or the browser is offline, and resume when visible and online. HTTP 4xx/5xx query errors never start probing. Each fetch keeps the one-retry limit; HTTP errors keep the existing query behaviour. The banner says \"You are offline\" for browser connectivity and \"Cannot reach the GraphGoblin API\" for an API outage while the browser is online; confirmed recovery clears API unreachability. Signal sources are active query transport failures, draft-save transport failures, and run-stream transport failures; accepted streams report reachability through the same transition functions. A failed draft save refreshes its active loop read once per revision, and a dropped run stream refreshes its active run read once per outage, so loaded screens also create probe demand. A stream whose last failure was a transport failure restarts at its committed cursor on recovery. Stream outages are reported once until an event advances the cursor or an accepted stream stays open for at least one 15-second heartbeat interval; acceptance alone and repeated short connections do not re-arm them. HTTP refusals, invalid stream frames, and a clean end-of-stream do not create connectivity failures; their retries keep the existing SSE backoff. When no active query needs recovery, the unreachable claim clears after one tick and a fresh check for active failures or reads, without a recovery notification; cached errors are remembered across inactivity and do not reopen an outage until a fresh failure arrives. There is no offline execution."
+        },
+        {
+          "line": 634,
+          "text": "on screen. The card announces \"Rechecking…\" in a muted live region; when its request is paused"
+        },
+        {
+          "line": 665,
+          "text": "auth, quota or transport failures. Omitted `authenticated` means login could not be established."
+        },
+        {
+          "line": 672,
+          "text": "Draft create, import, template draft and save (including 600 ms idle autosaves) never probe"
+        }
+      ]
+    },
+    {
+      "file": "docs/guide/06-settings-and-secrets.md",
+      "lines": [
+        {
+          "line": 51,
+          "text": "saved choice stays selected as \"<name> (saved)\" with the short help line \"Claude readiness:"
+        },
+        {
+          "line": 165,
+          "text": "When keys are required, **This browser** marks the key that authenticated the latest key-list request. The marker refreshes when you enter, forget, or change the stored key, including changes from another tab. The API returns a required `current` boolean on list items, without revealing tokens or hashes; key creation still returns only metadata and the one-time token. In trusted mode no row is marked, even if a valid key is stored. A stored key is still sent in trusted mode, revoking it shows the API key panel, and **Forget key** in Settings recovers access without it."
+        },
+        {
+          "line": 228,
+          "text": "| `loops:read`, `loops:write`       | Read and validate loops; create, import, save, publish, and delete them.                                                                                                                                |"
+        }
+      ]
+    },
+    {
+      "file": "docs/guide/07-troubleshooting.md",
+      "lines": [
+        {
+          "line": 9,
+          "text": "| Harness preflight says not authenticated; a run fails with `HARNESS_NOT_AUTHENTICATED` | The selected harness login is missing or expired for the API process user.                                                                                     | Run `codex login` or `claude auth login` as that user, check preflight again, and resume only a resumable failure.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |"
+        },
+        {
+          "line": 28,
+          "text": "| Webhook returns 429 `RATE_LIMITED`                                                     | Endpoint rate limit exceeded.                                                                                                                                  | Honour `retry-after` and reduce sender traffic.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |"
+        },
+        {
+          "line": 123,
+          "text": "| `unknown`          | Unknown           | The check timed out or returned empty/unrecognised login output, even with exit 0. Sign-out is not established. Check that the CLI starts and responds, then retry preflight.                                    |"
+        },
+        {
+          "line": 127,
+          "text": "| `auth`             | Sign-in needed    | The CLI reported sign-out, a wrong Claude account method or an authentication failure (including HTTP/API 401/403). Run `claude auth login` / `codex login` for the API's Windows account, then retry preflight. |"
+        },
+        {
+          "line": 128,
+          "text": "| `quota`            | Usage limit       | The CLI reported HTTP/API 429 or an account allowance limit, even if it also mentions network settings. Wait for the allowance to reset, then retry preflight; keep the selected model.                          |"
+        },
+        {
+          "line": 134,
+          "text": "choices do not establish provider entitlement. Draft create, import, template draft and save do"
+        },
+        {
+          "line": 139,
+          "text": "`authenticated` omitted from a preflight response means login was not established, rather than"
+        },
+        {
+          "line": 144,
+          "text": "The unknown result omits `authenticated`; it does not ask you to log in based only on missing output."
+        }
+      ]
+    },
+    {
+      "file": "CHANGELOG.md",
+      "lines": [
+        {
+          "line": 7,
+          "text": "- Preserve explicit authentication (HTTP/API 401/403) and quota (429) readiness when diagnostics also mention network settings. Claude no-turn probes consult recognised stdout failures when stderr is only an unrelated warning; recognised stderr remains primary on conflicting diagnostics. Empty or unrecognised successful login output is `unknown` without `authenticated`, rather than an invented sign-out. No model turn is used. (#179)"
+        },
+        {
+          "line": 11,
+          "text": "- Report precise no-turn CLI capability, authentication, quota and transport readiness; share concurrent probes within explicit validation, publication, preflight and manual run admission while draft writes make no probes and preserve model choices on failed lookups. Codex probes use exclusive `mkdir` directories with at most four fresh names, avoiding Windows' `fs.mkdtemp` failure from 248 characters; existing names are neither reused nor removed. Transport detail says \"Claude reported a connection or provider service error.\" (or Codex) without assuming a connectivity diagnosis, and CLI syntax errors take precedence over network words in option names. Each readiness problem is one detail sentence (naming the failed CLI version or option for Claude and Codex) and one action ending \"then retry preflight\". Settings, Harness preflight labels each badge (Ready, Unknown, CLI not found, CLI update needed, Sign-in needed, Usage limit, Connection failed), adds **Retry preflight**, keeps the last result with \"Rechecking…\" during a background refetch and gives \"listed by adapter\" a neutral tone. Defaults show one short readiness line for Codex and Claude alike and label an unoffered saved model \"(saved)\"; catalog rows of a not-ready Codex or Claude harness say so; the model picker keeps a ready Claude field editable during a focus refetch, offers **Retry Codex preflight** beside a known Codex failure, and no longer says \"model availability\". **Upgrade:** rebuild API and web together; preflight responses require a server `state` (`checking` is client-only), and `authenticated` is omitted when login is unknown. `HARNESS_UNAVAILABLE` is replaced by `HARNESS_READINESS_<STATE>` for API/MCP diagnostics. No store reset is needed. (#179)"
+        },
+        {
+          "line": 117,
+          "text": "- GitHub issue implementation template with configurable repository, labels, native gate and role selection. It polls eligible issues, reserves each attempt, runs fresh workers sequentially, verifies gates on an unchanged commit, and opens a closing PR without merging it. Attempt-aware deduplication permits only authenticated QA rework; relabeling does not reset consumed attempts. (#30)"
+        },
+        {
+          "line": 215,
+          "text": "- Validation that agrees across create, import, validate, draft save, and publish, including cron syntax and subloop references."
+        }
+      ]
+    }
+  ]
+}

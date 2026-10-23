@@ -75,6 +75,26 @@ const ALL: RunEvent[] = [
 ];
 
 describe('run projections', () => {
+  it("continues a replay seed's visits and historical iteration without changing the seed", () => {
+    const initial = sampleThread();
+    initial.run.iteration = 7;
+    initial.gates = { gate: { passes: 2 } };
+    initial.counters.nodeVisits = { start: 1, work: 2 };
+    const before = JSON.stringify(initial);
+    const events: RunEvent[] = [
+      event(R, 1, 'run.queued', { ...queuedFields(), initialThread: initial }),
+      event(R, 2, 'node.started', { nodeId: 'work', kind: 'mutate', attempt: 1, configHash: 'h' }),
+      event(R, 3, 'iteration.incremented', { from: 7, to: 8, targetNodeId: 'work' }),
+    ];
+    expect(threadAt(initial, events, 1)).toEqual(initial);
+    expect(threadAt(initial, events, 3)).toMatchObject({
+      run: { iteration: 8 },
+      gates: { gate: { passes: 2 } },
+      counters: { nodeVisits: { start: 1, work: 3 } },
+    });
+    expect(JSON.stringify(initial)).toBe(before);
+  });
+
   it.each(['success', 'failure', 'exhausted'] as const)(
     'describes a terminal %s exit',
     (outcome) => {

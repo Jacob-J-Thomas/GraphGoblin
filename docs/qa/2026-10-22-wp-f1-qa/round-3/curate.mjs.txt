@@ -1,0 +1,30 @@
+// Curation preserves assertions/results and removes private paths and unretained attachments.
+import {readFileSync,writeFileSync,readdirSync} from 'node:fs';
+import {resolve,join} from 'node:path';
+const base=resolve('docs/qa/2026-10-22-wp-f1-qa/round-3'),root=process.cwd(),temp=resolve(process.argv[2]);
+const write=(name,value)=>writeFileSync(join(base,name),JSON.stringify(value,null,2)+'\n');
+for(const name of ['browser-focus-setup.json','browser-followup.json','owner-replay-setup.json']){
+ const rows=JSON.parse(readFileSync(join(base,name),'utf8'));
+ for(const row of rows){
+  if(name.endsWith('-setup.json')||row.case==='Retry while fetching'){
+   if(row.actual?.screenshot){delete row.actual.screenshot;row.actual.imageDisposition='The setup image was superseded; only the textual observation and counts from this attempt are retained. Final qualifying images have their own records.';}
+  }
+ }
+ write(name,rows);
+}
+for(const name of readdirSync(base)){
+ if(!/\.(txt|json|md)$/.test(name))continue;
+ const file=join(base,name);let text=readFileSync(file,'utf8');
+ for(const [path,replacement] of [[root,'<worktree>'],[temp,'<temp>']]){
+  for(const variant of [path,path.replaceAll('\\','/'),path.replaceAll('\\','\\\\')])text=text.split(variant).join(replacement);
+ }
+ text=text.replace(/\x1b\[[0-9;]*m/g,'').replace(/\\u001b\[[0-9;]*m/g,'');
+ text=text.replace(/[A-Z]:\s*\r?\n[^\r\n]*[\\/]Users[\\/][^\r\n]*/g,'<user-path>').replace(/[A-Z]:[\\/]+Users[\\/]+[^\s"'<>]+/gi,'<user-path>');
+ if(process.env.USERNAME)text=text.split(process.env.USERNAME).join('<user>');
+ if(process.env.COMPUTERNAME)text=text.split(process.env.COMPUTERNAME).join('<host>');
+ text=text.replace(/gg_[A-Za-z0-9_-]{25,}/g,'<redacted-key>');
+ if(name.endsWith('.log.txt'))text=text.split(/\r?\n/).map(line=>/test-results[\\/]|attachment #\d+:|Error Context:/.test(line)?'[Ephemeral Playwright attachment omitted; not retained.]':line.replace(/<temp>[\\/]web-unfiltered\.json/g,'<disposable-json-report>')).join('\n');
+ writeFileSync(file,text);
+ if(name.endsWith('.json'))JSON.parse(text.replace(/^\uFEFF/,''));
+}
+console.log('Curation and JSON parse checks completed.');

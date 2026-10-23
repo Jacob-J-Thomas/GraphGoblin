@@ -1,0 +1,38 @@
+pnpm.cmd : $ vitest run --coverage
+At line:23 char:3
++   & pnpm.cmd @qaArgs *> (Join-Path $qaScratch ($qaGate.id + '.log.txt ...
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --coverage:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 <checkout>/apps/api
+      Coverage enabled with v8
+
+{"level":30,"time":1792720814507,"pid":2948,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5640"}
+{"level":30,"time":1792720814508,"pid":2948,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5640,"dataDir":"<round5-temp>\\gg-api-process-DHV59y","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792720814589,"pid":2948,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792720814602,"pid":2948,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":12.7520999999997,"msg":"request completed"}
+subloop kill landings:
+delay undefined: leaf waiting at restart; recovery restarts top 0, middle 0, leaf 0
+delay 0: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 10: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 30: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 60: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 100: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+delay 150: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 250: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+
+ Test Files  55 passed | 2 skipped (57)
+      Tests  750 passed | 6 skipped (756)
+   Start at  21:00:01
+   Duration  103.87s (tests 69%, import 26%, transform 5%)
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 96.49% ( 1985/2057 )
+Branches     : 93.13% ( 1288/1383 )
+Functions    : 94.25% ( 394/418 )
+Lines        : 97.93% ( 1804/1842 )
+================================================================================

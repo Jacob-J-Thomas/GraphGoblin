@@ -1,0 +1,992 @@
+{
+  "name": "parent-child",
+  "id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+  "expected": "Parent continues while delivery pending; child finalized after final failure",
+  "actual": [
+    {
+      "id": "01M5GHGSXGS2VJ14HRMRVBNGBM",
+      "channel": {
+        "kind": "webhook",
+        "url": "http://127.0.0.1:5811/parent-fail"
+      },
+      "status": "failed",
+      "attempts": 5,
+      "maxAttempts": 5,
+      "inFlight": false,
+      "acknowledgement": "unknown",
+      "effectMayHaveHappened": true,
+      "lastError": {
+        "code": "http",
+        "message": "Webhook returned HTTP 503.",
+        "retryable": true,
+        "acknowledgement": "unknown",
+        "httpStatus": 503
+      }
+    }
+  ],
+  "apiEvents": [
+    {
+      "runId": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+      "seq": 15,
+      "ts": "2026-10-22T00:52:31.792Z",
+      "type": "delivery.queued",
+      "delivery": {
+        "id": "01M5GHGSXGS2VJ14HRMRVBNGBM",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5811/parent-fail"
+        },
+        "status": "pending",
+        "attempts": 0,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "not_sent",
+        "effectMayHaveHappened": false
+      }
+    },
+    {
+      "runId": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+      "seq": 16,
+      "ts": "2026-10-22T00:52:31.842Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5GHGSXGS2VJ14HRMRVBNGBM",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5811/parent-fail"
+        },
+        "status": "pending",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T00:52:43.837Z"
+      }
+    },
+    {
+      "runId": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+      "seq": 17,
+      "ts": "2026-10-22T00:52:31.924Z",
+      "type": "delivery.attempt_finished",
+      "delivery": {
+        "id": "01M5GHGSXGS2VJ14HRMRVBNGBM",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5811/parent-fail"
+        },
+        "status": "pending",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T00:52:33.915Z",
+        "lastError": {
+          "code": "http",
+          "message": "Webhook returned HTTP 503.",
+          "retryable": true,
+          "acknowledgement": "unknown",
+          "httpStatus": 503
+        }
+      }
+    },
+    {
+      "runId": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+      "seq": 18,
+      "ts": "2026-10-22T00:52:33.963Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5GHGSXGS2VJ14HRMRVBNGBM",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5811/parent-fail"
+        },
+        "status": "pending",
+        "attempts": 2,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T00:52:48.942Z",
+        "lastError": {
+          "code": "http",
+          "message": "Webhook returned HTTP 503.",
+          "retryable": true,
+          "acknowledgement": "unknown",
+          "httpStatus": 503
+        }
+      }
+    },
+    {
+      "runId": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+      "seq": 19,
+      "ts": "2026-10-22T00:52:33.982Z",
+      "type": "delivery.attempt_finished",
+      "delivery": {
+        "id": "01M5GHGSXGS2VJ14HRMRVBNGBM",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5811/parent-fail"
+        },
+        "status": "pending",
+        "attempts": 2,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T00:52:38.981Z",
+        "lastError": {
+          "code": "http",
+          "message": "Webhook returned HTTP 503.",
+          "retryable": true,
+          "acknowledgement": "unknown",
+          "httpStatus": 503
+        }
+      }
+    },
+    {
+      "runId": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+      "seq": 20,
+      "ts": "2026-10-22T00:52:39.037Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5GHGSXGS2VJ14HRMRVBNGBM",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5811/parent-fail"
+        },
+        "status": "pending",
+        "attempts": 3,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T00:52:58.994Z",
+        "lastError": {
+          "code": "http",
+          "message": "Webhook returned HTTP 503.",
+          "retryable": true,
+          "acknowledgement": "unknown",
+          "httpStatus": 503
+        }
+      }
+    },
+    {
+      "runId": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+      "seq": 21,
+      "ts": "2026-10-22T00:52:39.067Z",
+      "type": "delivery.attempt_finished",
+      "delivery": {
+        "id": "01M5GHGSXGS2VJ14HRMRVBNGBM",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5811/parent-fail"
+        },
+        "status": "pending",
+        "attempts": 3,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T00:52:49.060Z",
+        "lastError": {
+          "code": "http",
+          "message": "Webhook returned HTTP 503.",
+          "retryable": true,
+          "acknowledgement": "unknown",
+          "httpStatus": 503
+        }
+      }
+    },
+    {
+      "runId": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+      "seq": 22,
+      "ts": "2026-10-22T00:52:49.166Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5GHGSXGS2VJ14HRMRVBNGBM",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5811/parent-fail"
+        },
+        "status": "pending",
+        "attempts": 4,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T00:53:19.154Z",
+        "lastError": {
+          "code": "http",
+          "message": "Webhook returned HTTP 503.",
+          "retryable": true,
+          "acknowledgement": "unknown",
+          "httpStatus": 503
+        }
+      }
+    },
+    {
+      "runId": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+      "seq": 23,
+      "ts": "2026-10-22T00:52:49.323Z",
+      "type": "delivery.attempt_finished",
+      "delivery": {
+        "id": "01M5GHGSXGS2VJ14HRMRVBNGBM",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5811/parent-fail"
+        },
+        "status": "pending",
+        "attempts": 4,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T00:53:09.291Z",
+        "lastError": {
+          "code": "http",
+          "message": "Webhook returned HTTP 503.",
+          "retryable": true,
+          "acknowledgement": "unknown",
+          "httpStatus": 503
+        }
+      }
+    },
+    {
+      "runId": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+      "seq": 24,
+      "ts": "2026-10-22T00:53:09.320Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5GHGSXGS2VJ14HRMRVBNGBM",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5811/parent-fail"
+        },
+        "status": "pending",
+        "attempts": 5,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T00:53:19.306Z",
+        "lastError": {
+          "code": "http",
+          "message": "Webhook returned HTTP 503.",
+          "retryable": true,
+          "acknowledgement": "unknown",
+          "httpStatus": 503
+        }
+      }
+    },
+    {
+      "runId": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+      "seq": 25,
+      "ts": "2026-10-22T00:53:09.375Z",
+      "type": "delivery.finished",
+      "delivery": {
+        "id": "01M5GHGSXGS2VJ14HRMRVBNGBM",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5811/parent-fail"
+        },
+        "status": "failed",
+        "attempts": 5,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "lastError": {
+          "code": "http",
+          "message": "Webhook returned HTTP 503.",
+          "retryable": true,
+          "acknowledgement": "unknown",
+          "httpStatus": 503
+        }
+      }
+    }
+  ],
+  "sqlite": {
+    "run": {
+      "id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+      "status": "succeeded",
+      "finalized_at": "2026-10-22T00:53:09.416Z",
+      "last_event_seq": 25
+    },
+    "events": [
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 1,
+        "ts": "2026-10-22T00:52:31.327Z",
+        "type": "run.queued",
+        "node_id": null,
+        "payload": "{\"versionId\":\"01M5GHGS54RNBSASM6PH02PZ23\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"QA awaited child\",\"label\":\"QA awaited child v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"classifiers\":{}},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M5GHGSEZ1MM0W4NGEZYRQG00\",\"loopId\":\"01M5GHGS5479D1EZ8G0W6182AG\",\"versionId\":\"01M5GHGS54RNBSASM6PH02PZ23\",\"parentRunId\":\"01M5GHGS9WZJBHVERHRCVX64BD\",\"iteration\":1},\"invocation\":{\"id\":\"01M5GHGSEZHDS9N89F3D73BVC6\",\"source\":\"subloop\",\"caller\":{\"kind\":\"run\",\"id\":\"01M5GHGS9WZJBHVERHRCVX64BD\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"manual\",\"payload\":null,\"receivedAt\":\"2026-10-22T00:52:31.327Z\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{\"start\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-10-22T00:52:31.266Z\"}},\"lastOutput\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-10-22T00:52:31.266Z\"},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}},\"subloopVersions\":{\"01M5GHGS5479D1EZ8G0W6182AG\":\"01M5GHGS54RNBSASM6PH02PZ23\"}}"
+      },
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 2,
+        "ts": "2026-10-22T00:52:31.398Z",
+        "type": "run.started",
+        "node_id": null,
+        "payload": "{\"attempt\":1}"
+      },
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 3,
+        "ts": "2026-10-22T00:52:31.413Z",
+        "type": "node.started",
+        "node_id": "start",
+        "payload": "{\"kind\":\"trigger\",\"attempt\":1,\"configHash\":\"527dee9c4254fe4e\"}"
+      },
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 4,
+        "ts": "2026-10-22T00:52:31.422Z",
+        "type": "node.finished",
+        "node_id": "start",
+        "payload": "{\"patch\":[{\"op\":\"replace\",\"path\":\"/outputs/start\",\"value\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-10-22T00:52:31.420Z\"}},{\"op\":\"replace\",\"path\":\"/lastOutput\",\"value\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-10-22T00:52:31.420Z\"}}],\"route\":\"out\",\"durationMs\":1}"
+      },
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 5,
+        "ts": "2026-10-22T00:52:31.459Z",
+        "type": "node.started",
+        "node_id": "ask",
+        "payload": "{\"kind\":\"wait\",\"attempt\":1,\"configHash\":\"8408ab9eb50c2a31\"}"
+      },
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 6,
+        "ts": "2026-10-22T00:52:31.480Z",
+        "type": "run.waiting",
+        "node_id": "ask",
+        "payload": "{\"wait\":{\"waitId\":\"01M5GHGSEZ1MM0W4NGEZYRQG00:5\",\"nodeId\":\"ask\",\"kind\":\"input\",\"prompt\":\"finish\",\"startedSeq\":5}}"
+      },
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 7,
+        "ts": "2026-10-22T00:52:31.557Z",
+        "type": "input.received",
+        "node_id": "ask",
+        "payload": "{\"payload\":\"finish\"}"
+      },
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 8,
+        "ts": "2026-10-22T00:52:31.557Z",
+        "type": "run.woken",
+        "node_id": "ask",
+        "payload": "{\"reason\":\"input\",\"payload\":\"finish\"}"
+      },
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 9,
+        "ts": "2026-10-22T00:52:31.630Z",
+        "type": "node.started",
+        "node_id": "ask",
+        "payload": "{\"kind\":\"wait\",\"attempt\":2,\"configHash\":\"8408ab9eb50c2a31\"}"
+      },
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 10,
+        "ts": "2026-10-22T00:52:31.673Z",
+        "type": "node.finished",
+        "node_id": "ask",
+        "payload": "{\"patch\":[{\"op\":\"add\",\"path\":\"/messages/-\",\"value\":{\"id\":\"01M5GHGSS8Y9C328VMY8RXCFDJ\",\"role\":\"user\",\"content\":\"finish\",\"nodeId\":\"ask\",\"ts\":\"2026-10-22T00:52:31.656Z\",\"tags\":[\"input\"]}},{\"op\":\"add\",\"path\":\"/outputs/ask\",\"value\":{\"nodeId\":\"ask\",\"value\":\"finish\",\"at\":\"2026-10-22T00:52:31.656Z\"}},{\"op\":\"replace\",\"path\":\"/lastOutput\",\"value\":{\"nodeId\":\"ask\",\"value\":\"finish\",\"at\":\"2026-10-22T00:52:31.656Z\"}}],\"route\":\"out\",\"durationMs\":1}"
+      },
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 11,
+        "ts": "2026-10-22T00:52:31.760Z",
+        "type": "node.started",
+        "node_id": "done",
+        "payload": "{\"kind\":\"exit\",\"attempt\":1,\"configHash\":\"2bed1c123943ff18\"}"
+      },
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 12,
+        "ts": "2026-10-22T00:52:31.792Z",
+        "type": "exit.evaluated",
+        "node_id": "done",
+        "payload": "{\"outcome\":\"success\"}"
+      },
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 13,
+        "ts": "2026-10-22T00:52:31.792Z",
+        "type": "node.finished",
+        "node_id": "done",
+        "payload": "{\"patch\":[],\"durationMs\":1}"
+      },
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 14,
+        "ts": "2026-10-22T00:52:31.792Z",
+        "type": "run.finished",
+        "node_id": null,
+        "payload": "{\"status\":\"succeeded\",\"outcome\":\"success\",\"result\":null}"
+      },
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 15,
+        "ts": "2026-10-22T00:52:31.792Z",
+        "type": "delivery.queued",
+        "node_id": null,
+        "payload": "{\"delivery\":{\"id\":\"01M5GHGSXGS2VJ14HRMRVBNGBM\",\"channel\":{\"kind\":\"webhook\",\"url\":\"http://127.0.0.1:5811/parent-fail\"},\"status\":\"pending\",\"attempts\":0,\"maxAttempts\":5,\"inFlight\":false,\"acknowledgement\":\"not_sent\",\"effectMayHaveHappened\":false}}"
+      },
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 16,
+        "ts": "2026-10-22T00:52:31.842Z",
+        "type": "delivery.attempted",
+        "node_id": null,
+        "payload": "{\"delivery\":{\"id\":\"01M5GHGSXGS2VJ14HRMRVBNGBM\",\"channel\":{\"kind\":\"webhook\",\"url\":\"http://127.0.0.1:5811/parent-fail\"},\"status\":\"pending\",\"attempts\":1,\"maxAttempts\":5,\"inFlight\":true,\"acknowledgement\":\"unknown\",\"effectMayHaveHappened\":true,\"nextAttemptAt\":\"2026-10-22T00:52:43.837Z\"}}"
+      },
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 17,
+        "ts": "2026-10-22T00:52:31.924Z",
+        "type": "delivery.attempt_finished",
+        "node_id": null,
+        "payload": "{\"delivery\":{\"id\":\"01M5GHGSXGS2VJ14HRMRVBNGBM\",\"channel\":{\"kind\":\"webhook\",\"url\":\"http://127.0.0.1:5811/parent-fail\"},\"status\":\"pending\",\"attempts\":1,\"maxAttempts\":5,\"inFlight\":false,\"acknowledgement\":\"unknown\",\"effectMayHaveHappened\":true,\"nextAttemptAt\":\"2026-10-22T00:52:33.915Z\",\"lastError\":{\"code\":\"http\",\"message\":\"Webhook returned HTTP 503.\",\"retryable\":true,\"acknowledgement\":\"unknown\",\"httpStatus\":503}}}"
+      },
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 18,
+        "ts": "2026-10-22T00:52:33.963Z",
+        "type": "delivery.attempted",
+        "node_id": null,
+        "payload": "{\"delivery\":{\"id\":\"01M5GHGSXGS2VJ14HRMRVBNGBM\",\"channel\":{\"kind\":\"webhook\",\"url\":\"http://127.0.0.1:5811/parent-fail\"},\"status\":\"pending\",\"attempts\":2,\"maxAttempts\":5,\"inFlight\":true,\"acknowledgement\":\"unknown\",\"effectMayHaveHappened\":true,\"nextAttemptAt\":\"2026-10-22T00:52:48.942Z\",\"lastError\":{\"code\":\"http\",\"message\":\"Webhook returned HTTP 503.\",\"retryable\":true,\"acknowledgement\":\"unknown\",\"httpStatus\":503}}}"
+      },
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 19,
+        "ts": "2026-10-22T00:52:33.982Z",
+        "type": "delivery.attempt_finished",
+        "node_id": null,
+        "payload": "{\"delivery\":{\"id\":\"01M5GHGSXGS2VJ14HRMRVBNGBM\",\"channel\":{\"kind\":\"webhook\",\"url\":\"http://127.0.0.1:5811/parent-fail\"},\"status\":\"pending\",\"attempts\":2,\"maxAttempts\":5,\"inFlight\":false,\"acknowledgement\":\"unknown\",\"effectMayHaveHappened\":true,\"nextAttemptAt\":\"2026-10-22T00:52:38.981Z\",\"lastError\":{\"code\":\"http\",\"message\":\"Webhook returned HTTP 503.\",\"retryable\":true,\"acknowledgement\":\"unknown\",\"httpStatus\":503}}}"
+      },
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 20,
+        "ts": "2026-10-22T00:52:39.037Z",
+        "type": "delivery.attempted",
+        "node_id": null,
+        "payload": "{\"delivery\":{\"id\":\"01M5GHGSXGS2VJ14HRMRVBNGBM\",\"channel\":{\"kind\":\"webhook\",\"url\":\"http://127.0.0.1:5811/parent-fail\"},\"status\":\"pending\",\"attempts\":3,\"maxAttempts\":5,\"inFlight\":true,\"acknowledgement\":\"unknown\",\"effectMayHaveHappened\":true,\"nextAttemptAt\":\"2026-10-22T00:52:58.994Z\",\"lastError\":{\"code\":\"http\",\"message\":\"Webhook returned HTTP 503.\",\"retryable\":true,\"acknowledgement\":\"unknown\",\"httpStatus\":503}}}"
+      },
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 21,
+        "ts": "2026-10-22T00:52:39.067Z",
+        "type": "delivery.attempt_finished",
+        "node_id": null,
+        "payload": "{\"delivery\":{\"id\":\"01M5GHGSXGS2VJ14HRMRVBNGBM\",\"channel\":{\"kind\":\"webhook\",\"url\":\"http://127.0.0.1:5811/parent-fail\"},\"status\":\"pending\",\"attempts\":3,\"maxAttempts\":5,\"inFlight\":false,\"acknowledgement\":\"unknown\",\"effectMayHaveHappened\":true,\"nextAttemptAt\":\"2026-10-22T00:52:49.060Z\",\"lastError\":{\"code\":\"http\",\"message\":\"Webhook returned HTTP 503.\",\"retryable\":true,\"acknowledgement\":\"unknown\",\"httpStatus\":503}}}"
+      },
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 22,
+        "ts": "2026-10-22T00:52:49.166Z",
+        "type": "delivery.attempted",
+        "node_id": null,
+        "payload": "{\"delivery\":{\"id\":\"01M5GHGSXGS2VJ14HRMRVBNGBM\",\"channel\":{\"kind\":\"webhook\",\"url\":\"http://127.0.0.1:5811/parent-fail\"},\"status\":\"pending\",\"attempts\":4,\"maxAttempts\":5,\"inFlight\":true,\"acknowledgement\":\"unknown\",\"effectMayHaveHappened\":true,\"nextAttemptAt\":\"2026-10-22T00:53:19.154Z\",\"lastError\":{\"code\":\"http\",\"message\":\"Webhook returned HTTP 503.\",\"retryable\":true,\"acknowledgement\":\"unknown\",\"httpStatus\":503}}}"
+      },
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 23,
+        "ts": "2026-10-22T00:52:49.323Z",
+        "type": "delivery.attempt_finished",
+        "node_id": null,
+        "payload": "{\"delivery\":{\"id\":\"01M5GHGSXGS2VJ14HRMRVBNGBM\",\"channel\":{\"kind\":\"webhook\",\"url\":\"http://127.0.0.1:5811/parent-fail\"},\"status\":\"pending\",\"attempts\":4,\"maxAttempts\":5,\"inFlight\":false,\"acknowledgement\":\"unknown\",\"effectMayHaveHappened\":true,\"nextAttemptAt\":\"2026-10-22T00:53:09.291Z\",\"lastError\":{\"code\":\"http\",\"message\":\"Webhook returned HTTP 503.\",\"retryable\":true,\"acknowledgement\":\"unknown\",\"httpStatus\":503}}}"
+      },
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 24,
+        "ts": "2026-10-22T00:53:09.320Z",
+        "type": "delivery.attempted",
+        "node_id": null,
+        "payload": "{\"delivery\":{\"id\":\"01M5GHGSXGS2VJ14HRMRVBNGBM\",\"channel\":{\"kind\":\"webhook\",\"url\":\"http://127.0.0.1:5811/parent-fail\"},\"status\":\"pending\",\"attempts\":5,\"maxAttempts\":5,\"inFlight\":true,\"acknowledgement\":\"unknown\",\"effectMayHaveHappened\":true,\"nextAttemptAt\":\"2026-10-22T00:53:19.306Z\",\"lastError\":{\"code\":\"http\",\"message\":\"Webhook returned HTTP 503.\",\"retryable\":true,\"acknowledgement\":\"unknown\",\"httpStatus\":503}}}"
+      },
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 25,
+        "ts": "2026-10-22T00:53:09.375Z",
+        "type": "delivery.finished",
+        "node_id": null,
+        "payload": "{\"delivery\":{\"id\":\"01M5GHGSXGS2VJ14HRMRVBNGBM\",\"channel\":{\"kind\":\"webhook\",\"url\":\"http://127.0.0.1:5811/parent-fail\"},\"status\":\"failed\",\"attempts\":5,\"maxAttempts\":5,\"inFlight\":false,\"acknowledgement\":\"unknown\",\"effectMayHaveHappened\":true,\"lastError\":{\"code\":\"http\",\"message\":\"Webhook returned HTTP 503.\",\"retryable\":true,\"acknowledgement\":\"unknown\",\"httpStatus\":503}}}"
+      }
+    ]
+  },
+  "pass": true,
+  "parentId": "01M5GHGS9WZJBHVERHRCVX64BD",
+  "parentEvents": [
+    {
+      "runId": "01M5GHGS9WZJBHVERHRCVX64BD",
+      "seq": 1,
+      "ts": "2026-10-22T00:52:31.164Z",
+      "type": "run.queued",
+      "versionId": "01M5GHGS8KEDDK8YQNEXEFMR2Q",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "QA parent",
+        "label": "QA parent v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5GHGS9WZJBHVERHRCVX64BD",
+          "loopId": "01M5GHGS8K3KB0Y3MYWWK994NS",
+          "versionId": "01M5GHGS8KEDDK8YQNEXEFMR2Q",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5GHGS9WMMH4K24V49V627DZ",
+          "source": "manual.api",
+          "caller": {
+            "kind": "api-key",
+            "id": "01M5GHDVJ7EHE58D5C73745QWV"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-22T00:52:31.164Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {},
+        "gates": {},
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      },
+      "subloopVersions": {
+        "01M5GHGS5479D1EZ8G0W6182AG": "01M5GHGS54RNBSASM6PH02PZ23"
+      }
+    },
+    {
+      "runId": "01M5GHGS9WZJBHVERHRCVX64BD",
+      "seq": 2,
+      "ts": "2026-10-22T00:52:31.241Z",
+      "type": "run.started",
+      "attempt": 1
+    },
+    {
+      "runId": "01M5GHGS9WZJBHVERHRCVX64BD",
+      "seq": 3,
+      "ts": "2026-10-22T00:52:31.246Z",
+      "type": "node.started",
+      "nodeId": "start",
+      "kind": "trigger",
+      "attempt": 1,
+      "configHash": "527dee9c4254fe4e"
+    },
+    {
+      "runId": "01M5GHGS9WZJBHVERHRCVX64BD",
+      "seq": 4,
+      "ts": "2026-10-22T00:52:31.267Z",
+      "type": "node.finished",
+      "nodeId": "start",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/outputs/start",
+          "value": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-22T00:52:31.266Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-22T00:52:31.266Z"
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 0
+    },
+    {
+      "runId": "01M5GHGS9WZJBHVERHRCVX64BD",
+      "seq": 5,
+      "ts": "2026-10-22T00:52:31.305Z",
+      "type": "node.started",
+      "nodeId": "sub",
+      "kind": "subloop",
+      "attempt": 1,
+      "configHash": "e84ce77689116973"
+    },
+    {
+      "runId": "01M5GHGS9WZJBHVERHRCVX64BD",
+      "seq": 6,
+      "ts": "2026-10-22T00:52:31.343Z",
+      "type": "child_run.started",
+      "nodeId": "sub",
+      "childRunId": "01M5GHGSEZ1MM0W4NGEZYRQG00"
+    },
+    {
+      "runId": "01M5GHGS9WZJBHVERHRCVX64BD",
+      "seq": 7,
+      "ts": "2026-10-22T00:52:31.357Z",
+      "type": "run.waiting",
+      "nodeId": "sub",
+      "wait": {
+        "waitId": "01M5GHGS9WZJBHVERHRCVX64BD:5",
+        "nodeId": "sub",
+        "kind": "child",
+        "childRunId": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "startedSeq": 5
+      }
+    },
+    {
+      "runId": "01M5GHGS9WZJBHVERHRCVX64BD",
+      "seq": 8,
+      "ts": "2026-10-22T00:52:31.845Z",
+      "type": "run.woken",
+      "nodeId": "sub",
+      "reason": "child",
+      "payload": {
+        "childRunId": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "status": "succeeded",
+        "outcome": "success"
+      }
+    },
+    {
+      "runId": "01M5GHGS9WZJBHVERHRCVX64BD",
+      "seq": 9,
+      "ts": "2026-10-22T00:52:31.941Z",
+      "type": "node.started",
+      "nodeId": "sub",
+      "kind": "subloop",
+      "attempt": 2,
+      "configHash": "e84ce77689116973"
+    },
+    {
+      "runId": "01M5GHGS9WZJBHVERHRCVX64BD",
+      "seq": 10,
+      "ts": "2026-10-22T00:52:31.987Z",
+      "type": "child_run.finished",
+      "nodeId": "sub",
+      "childRunId": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+      "outcome": "success",
+      "status": "succeeded"
+    },
+    {
+      "runId": "01M5GHGS9WZJBHVERHRCVX64BD",
+      "seq": 11,
+      "ts": "2026-10-22T00:52:31.992Z",
+      "type": "node.finished",
+      "nodeId": "sub",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/outputs/sub",
+          "value": {
+            "nodeId": "sub",
+            "value": {
+              "status": "succeeded",
+              "outcome": "success",
+              "result": null,
+              "childRunId": "01M5GHGSEZ1MM0W4NGEZYRQG00"
+            },
+            "at": "2026-10-22T00:52:31.991Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "sub",
+            "value": {
+              "status": "succeeded",
+              "outcome": "success",
+              "result": null,
+              "childRunId": "01M5GHGSEZ1MM0W4NGEZYRQG00"
+            },
+            "at": "2026-10-22T00:52:31.991Z"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/counters/usage",
+          "value": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 36
+    },
+    {
+      "runId": "01M5GHGS9WZJBHVERHRCVX64BD",
+      "seq": 12,
+      "ts": "2026-10-22T00:52:32.059Z",
+      "type": "node.started",
+      "nodeId": "done",
+      "kind": "exit",
+      "attempt": 1,
+      "configHash": "df8719842456c310"
+    },
+    {
+      "runId": "01M5GHGS9WZJBHVERHRCVX64BD",
+      "seq": 13,
+      "ts": "2026-10-22T00:52:32.087Z",
+      "type": "exit.evaluated",
+      "nodeId": "done",
+      "outcome": "success"
+    },
+    {
+      "runId": "01M5GHGS9WZJBHVERHRCVX64BD",
+      "seq": 14,
+      "ts": "2026-10-22T00:52:32.087Z",
+      "type": "node.finished",
+      "nodeId": "done",
+      "patch": [],
+      "durationMs": 0
+    },
+    {
+      "runId": "01M5GHGS9WZJBHVERHRCVX64BD",
+      "seq": 15,
+      "ts": "2026-10-22T00:52:32.087Z",
+      "type": "run.finished",
+      "status": "succeeded",
+      "outcome": "success",
+      "result": null
+    }
+  ],
+  "pendingChild": {
+    "id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+    "ownerId": "local",
+    "loopId": "01M5GHGS5479D1EZ8G0W6182AG",
+    "versionId": "01M5GHGS54RNBSASM6PH02PZ23",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "QA awaited child",
+      "label": "QA awaited child v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "classifiers": {}
+    },
+    "parentRunId": "01M5GHGS9WZJBHVERHRCVX64BD",
+    "invocationId": "01M5GHGSEZHDS9N89F3D73BVC6",
+    "status": "succeeded",
+    "iteration": 1,
+    "outcome": "success",
+    "result": null,
+    "deliveries": [
+      {
+        "id": "01M5GHGSXGS2VJ14HRMRVBNGBM",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5811/parent-fail"
+        },
+        "status": "pending",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T00:52:33.915Z",
+        "lastError": {
+          "code": "http",
+          "message": "Webhook returned HTTP 503.",
+          "retryable": true,
+          "acknowledgement": "unknown",
+          "httpStatus": 503
+        }
+      }
+    ],
+    "createdAt": "2026-10-22T00:52:31.327Z",
+    "startedAt": "2026-10-22T00:52:31.392Z",
+    "finishedAt": "2026-10-22T00:52:31.805Z",
+    "lastEventSeq": 17
+  },
+  "pendingRows": {
+    "run": {
+      "id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+      "status": "succeeded",
+      "finalized_at": null,
+      "last_event_seq": 17
+    },
+    "events": [
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 1,
+        "ts": "2026-10-22T00:52:31.327Z",
+        "type": "run.queued",
+        "node_id": null,
+        "payload": "{\"versionId\":\"01M5GHGS54RNBSASM6PH02PZ23\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"QA awaited child\",\"label\":\"QA awaited child v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"classifiers\":{}},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M5GHGSEZ1MM0W4NGEZYRQG00\",\"loopId\":\"01M5GHGS5479D1EZ8G0W6182AG\",\"versionId\":\"01M5GHGS54RNBSASM6PH02PZ23\",\"parentRunId\":\"01M5GHGS9WZJBHVERHRCVX64BD\",\"iteration\":1},\"invocation\":{\"id\":\"01M5GHGSEZHDS9N89F3D73BVC6\",\"source\":\"subloop\",\"caller\":{\"kind\":\"run\",\"id\":\"01M5GHGS9WZJBHVERHRCVX64BD\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"manual\",\"payload\":null,\"receivedAt\":\"2026-10-22T00:52:31.327Z\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{\"start\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-10-22T00:52:31.266Z\"}},\"lastOutput\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-10-22T00:52:31.266Z\"},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}},\"subloopVersions\":{\"01M5GHGS5479D1EZ8G0W6182AG\":\"01M5GHGS54RNBSASM6PH02PZ23\"}}"
+      },
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 2,
+        "ts": "2026-10-22T00:52:31.398Z",
+        "type": "run.started",
+        "node_id": null,
+        "payload": "{\"attempt\":1}"
+      },
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 3,
+        "ts": "2026-10-22T00:52:31.413Z",
+        "type": "node.started",
+        "node_id": "start",
+        "payload": "{\"kind\":\"trigger\",\"attempt\":1,\"configHash\":\"527dee9c4254fe4e\"}"
+      },
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 4,
+        "ts": "2026-10-22T00:52:31.422Z",
+        "type": "node.finished",
+        "node_id": "start",
+        "payload": "{\"patch\":[{\"op\":\"replace\",\"path\":\"/outputs/start\",\"value\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-10-22T00:52:31.420Z\"}},{\"op\":\"replace\",\"path\":\"/lastOutput\",\"value\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-10-22T00:52:31.420Z\"}}],\"route\":\"out\",\"durationMs\":1}"
+      },
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 5,
+        "ts": "2026-10-22T00:52:31.459Z",
+        "type": "node.started",
+        "node_id": "ask",
+        "payload": "{\"kind\":\"wait\",\"attempt\":1,\"configHash\":\"8408ab9eb50c2a31\"}"
+      },
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 6,
+        "ts": "2026-10-22T00:52:31.480Z",
+        "type": "run.waiting",
+        "node_id": "ask",
+        "payload": "{\"wait\":{\"waitId\":\"01M5GHGSEZ1MM0W4NGEZYRQG00:5\",\"nodeId\":\"ask\",\"kind\":\"input\",\"prompt\":\"finish\",\"startedSeq\":5}}"
+      },
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 7,
+        "ts": "2026-10-22T00:52:31.557Z",
+        "type": "input.received",
+        "node_id": "ask",
+        "payload": "{\"payload\":\"finish\"}"
+      },
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 8,
+        "ts": "2026-10-22T00:52:31.557Z",
+        "type": "run.woken",
+        "node_id": "ask",
+        "payload": "{\"reason\":\"input\",\"payload\":\"finish\"}"
+      },
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 9,
+        "ts": "2026-10-22T00:52:31.630Z",
+        "type": "node.started",
+        "node_id": "ask",
+        "payload": "{\"kind\":\"wait\",\"attempt\":2,\"configHash\":\"8408ab9eb50c2a31\"}"
+      },
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 10,
+        "ts": "2026-10-22T00:52:31.673Z",
+        "type": "node.finished",
+        "node_id": "ask",
+        "payload": "{\"patch\":[{\"op\":\"add\",\"path\":\"/messages/-\",\"value\":{\"id\":\"01M5GHGSS8Y9C328VMY8RXCFDJ\",\"role\":\"user\",\"content\":\"finish\",\"nodeId\":\"ask\",\"ts\":\"2026-10-22T00:52:31.656Z\",\"tags\":[\"input\"]}},{\"op\":\"add\",\"path\":\"/outputs/ask\",\"value\":{\"nodeId\":\"ask\",\"value\":\"finish\",\"at\":\"2026-10-22T00:52:31.656Z\"}},{\"op\":\"replace\",\"path\":\"/lastOutput\",\"value\":{\"nodeId\":\"ask\",\"value\":\"finish\",\"at\":\"2026-10-22T00:52:31.656Z\"}}],\"route\":\"out\",\"durationMs\":1}"
+      },
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 11,
+        "ts": "2026-10-22T00:52:31.760Z",
+        "type": "node.started",
+        "node_id": "done",
+        "payload": "{\"kind\":\"exit\",\"attempt\":1,\"configHash\":\"2bed1c123943ff18\"}"
+      },
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 12,
+        "ts": "2026-10-22T00:52:31.792Z",
+        "type": "exit.evaluated",
+        "node_id": "done",
+        "payload": "{\"outcome\":\"success\"}"
+      },
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 13,
+        "ts": "2026-10-22T00:52:31.792Z",
+        "type": "node.finished",
+        "node_id": "done",
+        "payload": "{\"patch\":[],\"durationMs\":1}"
+      },
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 14,
+        "ts": "2026-10-22T00:52:31.792Z",
+        "type": "run.finished",
+        "node_id": null,
+        "payload": "{\"status\":\"succeeded\",\"outcome\":\"success\",\"result\":null}"
+      },
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 15,
+        "ts": "2026-10-22T00:52:31.792Z",
+        "type": "delivery.queued",
+        "node_id": null,
+        "payload": "{\"delivery\":{\"id\":\"01M5GHGSXGS2VJ14HRMRVBNGBM\",\"channel\":{\"kind\":\"webhook\",\"url\":\"http://127.0.0.1:5811/parent-fail\"},\"status\":\"pending\",\"attempts\":0,\"maxAttempts\":5,\"inFlight\":false,\"acknowledgement\":\"not_sent\",\"effectMayHaveHappened\":false}}"
+      },
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 16,
+        "ts": "2026-10-22T00:52:31.842Z",
+        "type": "delivery.attempted",
+        "node_id": null,
+        "payload": "{\"delivery\":{\"id\":\"01M5GHGSXGS2VJ14HRMRVBNGBM\",\"channel\":{\"kind\":\"webhook\",\"url\":\"http://127.0.0.1:5811/parent-fail\"},\"status\":\"pending\",\"attempts\":1,\"maxAttempts\":5,\"inFlight\":true,\"acknowledgement\":\"unknown\",\"effectMayHaveHappened\":true,\"nextAttemptAt\":\"2026-10-22T00:52:43.837Z\"}}"
+      },
+      {
+        "run_id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+        "seq": 17,
+        "ts": "2026-10-22T00:52:31.924Z",
+        "type": "delivery.attempt_finished",
+        "node_id": null,
+        "payload": "{\"delivery\":{\"id\":\"01M5GHGSXGS2VJ14HRMRVBNGBM\",\"channel\":{\"kind\":\"webhook\",\"url\":\"http://127.0.0.1:5811/parent-fail\"},\"status\":\"pending\",\"attempts\":1,\"maxAttempts\":5,\"inFlight\":false,\"acknowledgement\":\"unknown\",\"effectMayHaveHappened\":true,\"nextAttemptAt\":\"2026-10-22T00:52:33.915Z\",\"lastError\":{\"code\":\"http\",\"message\":\"Webhook returned HTTP 503.\",\"retryable\":true,\"acknowledgement\":\"unknown\",\"httpStatus\":503}}}"
+      }
+    ]
+  }
+}

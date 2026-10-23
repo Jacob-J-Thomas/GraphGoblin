@@ -1,0 +1,344 @@
+{
+  "disposition": "Invalid stable-ready setup for round-8 classification. Claude prerelease parser rejected 2.1.287-beta.1 before status classification. Fixed the independent fixture to print stable 2.1.287; Codex prerelease remains a passing control.",
+  "attemptedCases": [
+    {
+      "case": "ready publication",
+      "pass": false
+    },
+    {
+      "case": "api401",
+      "pass": false
+    },
+    {
+      "case": "http429",
+      "pass": false
+    },
+    {
+      "case": "stdout429-warning",
+      "pass": false
+    },
+    {
+      "case": "empty",
+      "pass": false
+    },
+    {
+      "case": "empty-object",
+      "pass": false
+    },
+    {
+      "case": "ready",
+      "pass": false
+    },
+    {
+      "case": "signed-out",
+      "pass": false
+    },
+    {
+      "case": "errno-auth",
+      "pass": false
+    },
+    {
+      "case": "syntax-status-network",
+      "pass": false
+    },
+    {
+      "case": "http403",
+      "pass": false
+    },
+    {
+      "case": "http503",
+      "pass": false
+    },
+    {
+      "case": "unrecognized",
+      "pass": false
+    },
+    {
+      "case": "old",
+      "pass": false
+    },
+    {
+      "case": "missing-model",
+      "pass": false
+    },
+    {
+      "case": "missing-effort",
+      "pass": false
+    },
+    {
+      "case": "quota",
+      "pass": false
+    },
+    {
+      "case": "transport",
+      "pass": false
+    },
+    {
+      "case": "unknown",
+      "pass": false
+    },
+    {
+      "case": "hung Codex draft operations",
+      "pass": false
+    }
+  ],
+  "prerequisite": {
+    "system": "REST",
+    "case": "ready publication",
+    "steps": "Create mixed draft; publish",
+    "expected": "201 create;200 publish;one probe each",
+    "actual": {
+      "created": {
+        "status": 201,
+        "ms": 93,
+        "body": {
+          "loop": {
+            "id": "01M5JGK914VB57X97YNJ25X09H",
+            "ownerId": "local",
+            "name": "Round 3 claude 1792696493030",
+            "draftVersionId": "01M5JGK914KW3310XNAGK1XG77",
+            "createdAt": "2026-10-22T19:14:53.092Z",
+            "updatedAt": "2026-10-22T19:14:53.092Z"
+          },
+          "draft": {
+            "id": "01M5JGK914KW3310XNAGK1XG77",
+            "loopId": "01M5JGK914VB57X97YNJ25X09H",
+            "version": 1,
+            "status": "draft",
+            "definition": {
+              "schemaVersion": 4,
+              "name": "Round 3 claude 1792696493030",
+              "settings": {
+                "workingDirectory": {
+                  "kind": "temp"
+                },
+                "defaults": {
+                  "byHarness": {}
+                },
+                "maxNodeVisits": 10,
+                "subloopDepthLimit": 8
+              },
+              "variables": {},
+              "nodes": [
+                {
+                  "id": "start",
+                  "label": "Start",
+                  "ui": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "kind": "trigger",
+                  "config": {
+                    "type": "manual",
+                    "exposeTo": ["ui", "api", "mcp"]
+                  }
+                },
+                {
+                  "id": "infer0",
+                  "label": "Work 0",
+                  "ui": {
+                    "x": 260,
+                    "y": 80
+                  },
+                  "kind": "inference",
+                  "config": {
+                    "harness": "claude",
+                    "model": "claude-opus-5-5",
+                    "effort": "high",
+                    "session": {
+                      "policy": "fresh"
+                    },
+                    "prompt": {
+                      "template": "No paid turn; fixture refuses execution"
+                    },
+                    "input": [],
+                    "harnessOptions": {
+                      "sandbox": "read-only",
+                      "approval": "never"
+                    },
+                    "output": {
+                      "captureTranscript": "artifact",
+                      "toMessages": "final",
+                      "transforms": []
+                    }
+                  }
+                },
+                {
+                  "id": "infer1",
+                  "label": "Work 1",
+                  "ui": {
+                    "x": 520,
+                    "y": 80
+                  },
+                  "kind": "inference",
+                  "config": {
+                    "harness": "codex",
+                    "model": "gpt-6-luna",
+                    "effort": "high",
+                    "session": {
+                      "policy": "fresh"
+                    },
+                    "prompt": {
+                      "template": "No paid turn; fixture refuses execution"
+                    },
+                    "input": [],
+                    "harnessOptions": {
+                      "sandbox": "read-only",
+                      "approval": "never"
+                    },
+                    "output": {
+                      "captureTranscript": "artifact",
+                      "toMessages": "final",
+                      "transforms": []
+                    }
+                  }
+                },
+                {
+                  "id": "infer2",
+                  "label": "Work 2",
+                  "ui": {
+                    "x": 780,
+                    "y": 80
+                  },
+                  "kind": "inference",
+                  "config": {
+                    "harness": "claude",
+                    "model": "claude-opus-5-5",
+                    "effort": "high",
+                    "session": {
+                      "policy": "fresh"
+                    },
+                    "prompt": {
+                      "template": "No paid turn; fixture refuses execution"
+                    },
+                    "input": [],
+                    "harnessOptions": {
+                      "sandbox": "read-only",
+                      "approval": "never"
+                    },
+                    "output": {
+                      "captureTranscript": "artifact",
+                      "toMessages": "final",
+                      "transforms": []
+                    }
+                  }
+                },
+                {
+                  "id": "done",
+                  "label": "Done",
+                  "ui": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "kind": "exit",
+                  "config": {
+                    "outcome": "success",
+                    "returns": "none",
+                    "destinations": [
+                      {
+                        "kind": "caller"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "id": "e0",
+                  "from": {
+                    "node": "start",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "infer0",
+                    "port": "in"
+                  }
+                },
+                {
+                  "id": "e1",
+                  "from": {
+                    "node": "infer0",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "infer1",
+                    "port": "in"
+                  }
+                },
+                {
+                  "id": "e2",
+                  "from": {
+                    "node": "infer1",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "infer2",
+                    "port": "in"
+                  }
+                },
+                {
+                  "id": "e3",
+                  "from": {
+                    "node": "infer2",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "done",
+                    "port": "in"
+                  }
+                }
+              ]
+            },
+            "createdAt": "2026-10-22T19:14:53.092Z"
+          },
+          "issues": []
+        },
+        "calls": {
+          "claude": [],
+          "codex": []
+        }
+      },
+      "published": {
+        "status": 422,
+        "ms": 667,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/loop-invalid",
+          "title": "loop invalid",
+          "status": 422,
+          "code": "LOOP_INVALID",
+          "detail": "the draft has structural errors",
+          "errors": [
+            {
+              "code": "HARNESS_READINESS_CLI_INCOMPATIBLE",
+              "severity": "warning",
+              "nodeId": "infer0",
+              "path": "config.harness",
+              "message": "Claude CLI version could not be identified. Update the Claude CLI, then retry preflight."
+            },
+            {
+              "code": "HARNESS_READINESS_CLI_INCOMPATIBLE",
+              "severity": "warning",
+              "nodeId": "infer2",
+              "path": "config.harness",
+              "message": "Claude CLI version could not be identified. Update the Claude CLI, then retry preflight."
+            }
+          ]
+        },
+        "calls": {
+          "claude": [
+            "2026-10-22T19:14:53.2878452Z|--safe-mode --setting-sources  --strict-mcp-config --version",
+            "2026-10-22T19:14:53.4943038Z|--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+            "2026-10-22T19:14:53.6115840Z|--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+          ],
+          "codex": [
+            "2026-10-22T19:14:53.4853015Z|--version",
+            "2026-10-22T19:14:53.6075841Z|exec --help",
+            "2026-10-22T19:14:53.6951630Z|exec resume --help",
+            "2026-10-22T19:14:53.7757402Z|login status"
+          ]
+        }
+      }
+    },
+    "pass": false
+  }
+}

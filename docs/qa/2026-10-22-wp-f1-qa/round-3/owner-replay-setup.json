@@ -1,0 +1,117 @@
+[
+  {
+    "system": "Owner / Edge",
+    "case": "PATH and bare binary overrides",
+    "steps": "Prepend only the owned executable directories; configure the two bare fixture names; GET harness preflight",
+    "expected": "Both ready, all probes drive owned fakes",
+    "actual": {
+      "status": 200,
+      "body": {
+        "items": [
+          {
+            "state": "ready",
+            "ok": true,
+            "version": "0.160.0-beta.1",
+            "authenticated": true,
+            "problems": [],
+            "harness": "codex"
+          },
+          {
+            "state": "ready",
+            "ok": true,
+            "version": "2.1.287",
+            "authenticated": true,
+            "problems": [],
+            "authMethod": "claude.ai",
+            "supportedPolicies": [
+              {
+                "sandbox": "read-only",
+                "approval": "never",
+                "permissionMode": "dontAsk",
+                "tools": ["Read", "Glob", "Grep"],
+                "authMethod": "claude.ai",
+                "boundary": "builtin-tools",
+                "network": "unconfined"
+              },
+              {
+                "sandbox": "danger-full-access",
+                "approval": "never",
+                "permissionMode": "dontAsk",
+                "tools": ["Read", "Glob", "Grep", "Edit", "Write", "Bash"],
+                "authMethod": "claude.ai",
+                "boundary": "unconfined",
+                "network": "unconfined"
+              }
+            ],
+            "models": [
+              {
+                "model": "claude-opus-5-5",
+                "efforts": ["low", "medium", "high", "xhigh", "max"]
+              },
+              {
+                "model": "claude-fable-5-1",
+                "efforts": ["low", "medium", "high", "xhigh", "max"]
+              }
+            ],
+            "harness": "claude"
+          }
+        ]
+      }
+    },
+    "pass": true
+  },
+  {
+    "system": "Owner / Edge",
+    "case": "UI saved owner default",
+    "steps": "Choose Claude Opus in the Settings select; observe the public stored setting",
+    "expected": "Auto-save persists the exact model",
+    "actual": {
+      "settings": {
+        "defaults": {
+          "byHarness": {
+            "claude": {
+              "model": "claude-opus-5-5"
+            }
+          }
+        }
+      },
+      "imageDisposition": "The setup image was superseded; only the textual observation and counts from this attempt are retained. Final qualifying images have their own records."
+    },
+    "pass": true
+  },
+  {
+    "system": "Owner / Edge",
+    "case": "UI saved default through sign-out",
+    "steps": "After UI auto-save, sign the fake out and Retry",
+    "expected": "Saved label and one help line, exact value retained",
+    "actual": {
+      "label": "Claude Opus 5.5 (saved)",
+      "text": "Claude\nDefault model (claude)\n(server default)\nClaude Opus 5.5 (saved)\nDefault effort (claude)\n(server default)\nlow\nmedium\nhigh\nxhigh\nmax\n\nThis is the requested effort; Claude does not report the effective effort.\n\nClaude readiness: Sign-in needed. See Harness preflight below.",
+      "value": "claude-opus-5-5"
+    },
+    "pass": true
+  },
+  {
+    "system": "Owner / Edge",
+    "case": "Phone keyboard activation",
+    "steps": "At 390px, Shift-Tab then Tab to Retry and press Space; hold the real HTTP request",
+    "expected": "Keyboard focus returns to Retry; Space begins a disabled pending Retry; no horizontal overflow",
+    "actual": {
+      "width": 390,
+      "pendingText": "Harness preflight\nRechecking…\nRetry preflight\nReady\ncodex\nv0.160.0-beta.1\nReady\nclaude\nv2.1.287\n\nSigned in with Claude.ai.\n\nclaude-opus-5-5\nlisted by adapter\nclaude-fable-5-1\nlisted by adapter\n\nAdapter model listings do not confirm account access. Preflight never starts a model turn.",
+      "screenshotPhase": "Keyboard focus before Space",
+      "imageDisposition": "The setup image was superseded; only the textual observation and counts from this attempt are retained. Final qualifying images have their own records."
+    },
+    "pass": true
+  },
+  {
+    "system": "Owner / Edge",
+    "case": "Collector failure",
+    "steps": "Execute owner replay",
+    "expected": "All controls complete",
+    "actual": {
+      "message": "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for getByRole('dialog').getByRole('button', { name: 'Retry Codex preflight' })\n    - locator resolved to <button disabled type=\"button\" class=\"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-4…>…</button>\n  - attempting click action\n    2 × waiting for element to be visible, enabled and stable\n      - element is not enabled\n    - retrying click action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is not enabled\n    - retrying click action\n      - waiting 100ms\n    5 × waiting for element to be visible, enabled and stable\n      - element is not enabled\n    - retrying click action\n      - waiting 500ms\n    - waiting for element to be visible, enabled and stable\n  - element was detached from the DOM, retrying\n"
+    },
+    "pass": false
+  }
+]

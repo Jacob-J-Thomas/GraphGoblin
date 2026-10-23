@@ -1,0 +1,221 @@
+// Independent QA: built API, public REST/MCP and headless Edge. No model turn is accepted.
+// Copy beside fixture executables in a fresh gg-qa-f1-* temp root. Run from worktree root.
+import {spawn,execFileSync} from 'node:child_process';
+import {readFileSync,writeFileSync,existsSync,mkdirSync} from 'node:fs';
+import {resolve,join} from 'node:path';
+import {pathToFileURL} from 'node:url';
+import {createRequire} from 'node:module';
+const root=process.cwd(), temp=resolve(process.argv[2]);
+const evidence=resolve('docs/qa/2026-10-22-wp-f1-qa/round-3');
+const {minimalLoop}=await import(pathToFileURL(resolve('packages/contracts/dist/testing/index.js')));
+const {readinessMessage}=await import(pathToFileURL(resolve('packages/domain/dist/index.js')));
+const clean=x=>JSON.stringify(x,null,2).split(root).join('<worktree>').split(temp).join('<temp>').replace(/[A-Za-z]:[\\/]+Users[\\/]+[^\s"'<>]+/g,'<user-path>').replace(/gg_[A-Za-z0-9_-]{25,}/g,'<redacted-key>');
+const save=(name,x)=>writeFileSync(join(evidence,name),clean(x));
+const followup=process.argv[3]==='followup';
+const rows=followup?JSON.parse(readFileSync(join(evidence,'runtime.json'),'utf8')):[], browserRows=[];
+const record=(system,caseName,steps,expected,actual,pass)=>{rows.push({system,case:caseName,steps,expected,actual,pass:!!pass});save('runtime.json',rows);console.log((pass?'PASS ':'FAIL ')+caseName);};
+const browserRecord=(caseName,expected,actual,pass)=>{browserRows.push({system:'Edge',case:caseName,steps:'Run the retained collector against the disposable built API.',expected,actual,pass:!!pass});save(followup?'browser-followup.json':'browser.json',browserRows);console.log((pass?'PASS ':'FAIL ')+caseName);};
+const env=Object.fromEntries(Object.entries(process.env).filter(([k])=>!k.startsWith('GG_')&&!['JEV_API_KEY','NODE_OPTIONS'].includes(k)));
+mkdirSync(join(temp,'probes'),{recursive:true});Object.assign(env,{TEMP:join(temp,'probes'),TMP:join(temp,'probes'),TMPDIR:join(temp,'probes')});
+Object.assign(env,{GG_DATA_DIR:join(temp,'store-r3'),GG_HOST:'127.0.0.1',GG_PORT:'5810',GG_REQUIRE_API_KEY:'true',GG_WEB_DIST:resolve('apps/web/dist'),GG_LOG_LEVEL:'silent',GG_CLAUDE_BINARY:join(temp,'claude/claude-r3.exe'),GG_CODEX_BINARY:join(temp,'codex/codex-r3.exe'),GG_JEV_API_KEY:'',LIVE:'0'});
+mkdirSync(env.GG_DATA_DIR,{recursive:true});
+const base='http://127.0.0.1:5810';
+const delay=ms=>new Promise(r=>setTimeout(r,ms));
+const harnesses=['claude','codex'];
+function scenario(name){for(const h of harnesses) writeFileSync(join(temp,h,'scenario.txt'),name);}
+function profile(code,stdout='',stderr=''){for(const h of harnesses){writeFileSync(join(temp,h,'profile.txt'),[String(code),Buffer.from(stdout).toString('base64'),Buffer.from(stderr).toString('base64')].join('\n'));writeFileSync(join(temp,h,'scenario.txt'),'profile');}}
+const log=h=>existsSync(join(temp,h,'requests.txt'))?readFileSync(join(temp,h,'requests.txt'),'utf8').trim().split(/\r?\n/).filter(Boolean):[];
+const before=()=>Object.fromEntries(harnesses.map(h=>[h,log(h).length]));
+const delta=b=>Object.fromEntries(harnesses.map(h=>[h,log(h).slice(b[h])]));
+const count=calls=>harnesses.every(h=>calls[h].filter(s=>s.includes('--version')).length===1);
+const noTurns=calls=>Object.values(calls).flat().every(s=>/--version|--help|\bstatus\b/.test(s));
+let key,api,browser,serverLog='';
+async function request(path,method='GET',body){
+ const b=before(),t=Date.now();
+ const r=await fetch(base+path,{method,headers:{Authorization:'Bearer '+key,...(body===undefined?{}:{'Content-Type':'application/json'})},...(body===undefined?{}:{body:JSON.stringify(body)})});
+ const text=await r.text();let data;try{data=JSON.parse(text);}catch{data=text;}
+ return {status:r.status,ms:Date.now()-t,body:data,calls:delta(b)};
+}
+function definition(harness='claude',mixed=false){
+ const d=minimalLoop();d.name='Round 3 '+harness+' '+Date.now();
+ const hs=mixed?['claude','codex','claude']:[harness];
+ const nodes=hs.map((h,i)=>({id:'infer'+i,kind:'inference',label:'Work '+i,ui:{x:260*(i+1),y:80},config:{harness:h,model:h==='claude'?'claude-opus-5-5':'gpt-6-luna',effort:'high',harnessOptions:{sandbox:'read-only',approval:'never'},prompt:{template:'No paid turn; fixture refuses execution'}}}));
+ d.nodes=[d.nodes[0],...nodes,d.nodes[1]];
+ d.edges=d.nodes.slice(0,-1).map((n,i)=>({id:'e'+i,from:{node:n.id,port:'out'},to:{node:d.nodes[i+1].id}}));return d;
+}
+async function start(){
+ api=spawn(process.execPath,['apps/api/dist/main.js'],{cwd:root,env,windowsHide:true,stdio:['ignore','pipe','pipe']});
+ writeFileSync(join(temp,'api-pid.txt'),String(api.pid));
+ api.stdout.on('data',b=>serverLog+=b.toString());api.stderr.on('data',b=>serverLog+=b.toString());
+ for(let i=0;i<300;i++){try{if((await fetch(base+'/healthz')).ok)return;}catch{}if(api.exitCode!==null)throw Error('API exited');await delay(100);}throw Error('Startup deadline');
+}
+async function stop(){if(!api||api.exitCode!==null)return;const t=Date.now();api.kill();await Promise.race([new Promise(r=>api.once('exit',r)),delay(12000)]);return {ms:Date.now()-t,exit:api.exitCode,signal:api.signalCode,stopped:api.exitCode!==null||api.signalCode!==null};}
+const cases=[
+ ['api401','auth',()=>profile(1,'','API Error: 401 Authentication failed; check network settings.')],
+ ['http429','quota',()=>profile(1,'','HTTP 429 Too Many Requests; network request failed.')],
+ ['stdout429-warning','quota',()=>profile(1,'API Error: 429 Too Many Requests','Warning: setting is deprecated')],
+ ['empty','unknown',()=>scenario('empty')],['empty-object','unknown',()=>scenario('object')],
+ ['ready','ready',()=>scenario('ready')],['signed-out','auth',()=>scenario('auth')],
+ ['errno-auth','transport',()=>profile(1,'','ECONNREFUSED authentication server')],
+ ['syntax-status-network','cli-incompatible',()=>profile(1,'',"error: unknown option '--network-access'; HTTP 401 Authentication failed")],
+ ['http403','auth',()=>profile(1,'','HTTP/1.1 403 Forbidden; network request failed')],
+ ['http503','transport',()=>profile(1,'','API Error: 503 Authentication service unavailable')],
+ ['unrecognized','unknown',()=>profile(0,'not a login status')],
+ ['old','cli-incompatible',()=>scenario('old')],['missing-model','cli-incompatible',()=>scenario('missing-model')],['missing-effort','cli-incompatible',()=>scenario('missing-effort')],
+ ['quota','quota',()=>scenario('quota')],['transport','transport',()=>scenario('transport')],['unknown','unknown',()=>scenario('unknown')]
+];
+async function native(){
+ scenario('ready');const d=definition('claude',true);
+ const created=await request('/loops','POST',{definition:d}),id=created.body.loop.id;
+ const published=await request('/loops/'+id+'/publish','POST',{});
+ record('REST','ready publication','Create mixed draft; publish','201 create;200 publish;one probe each',{created,published},created.status===201&&published.status===200&&count(published.calls));
+ for(const [name,state,set] of followup?[]:cases){
+   set();
+   const hp=await request('/harness/preflight');
+   const valid=await request('/loops/'+id+'/validate','POST',{definition:d});
+   const system=await request('/system/preflight');
+   const dc=await request('/loops','POST',{definition:d});
+   const pub=await request('/loops/'+dc.body.loop.id+'/publish','POST',{});
+   const run=state==='ready'?undefined:await request('/loops/'+id+'/runs','POST',{});
+   const issues=valid.body.issues.filter(i=>i.code.startsWith('HARNESS_READINESS_'));
+   const expectedCode='HARNESS_READINESS_'+state.toUpperCase().replaceAll('-','_');
+   const items=hp.body.items;
+   const authOK=state!=='unknown'||items.every(i=>!Object.hasOwn(i,'authenticated'));
+   const controls=name==='ready'?items.every(i=>i.authenticated===true):name==='signed-out'?items.every(i=>i.authenticated===false):true;
+   const messages=items.every(i=>i.problems.length===(state==='ready'?0:1)&&i.problems.every(p=>p.startsWith(i.harness==='claude'?'Claude':'Codex')&&p.endsWith('retry preflight.')));
+   const pass=hp.status===200&&items.every(i=>i.state===state)&&count(hp.calls)&&authOK&&controls&&messages&&count(valid.calls)&&count(system.calls)&&system.body.checks.filter(i=>i.id.startsWith('harness.')).every(i=>i.state===state)&&(state==='ready'?issues.length===0&&pub.status===200:issues.length===3&&issues.every(i=>i.code===expectedCode)&&pub.status===422&&run.status===422&&run.body.code==='HARNESS_NOT_READY'&&count(run.calls)&&noTurns(run.calls))&&count(pub.calls);
+   record('Native CLI / REST',name,'Set independent diagnostic profile for both harnesses; GET harness/system preflight; validate mixed draft; publish fresh draft; reject manual start when unready',{state,unknownAuthenticated:'absent',probes:'one per harness per operation',problem:'one detail sentence plus one action',run:state==='ready'?'not started':'422 HARNESS_NOT_READY, no turn'},{hp,valid,system,pub,run},pass);
+ }
+ scenario('hang'); const draft=definition('codex');
+ const c=await request('/loops','POST',{definition:draft});
+ const saved=await request('/loops/'+c.body.loop.id+'/draft','PUT',{definition:draft});
+ const imported=await request('/loops/import','POST',{definition:draft});
+ const templates=await request('/templates');const templateResults=[];
+ for(const item of templates.body.items??[]){const tid=item.manifest?.id;if(tid)templateResults.push(await request('/templates/'+tid+'/draft','POST',{name:'Round 3 '+tid}));}
+ const authored=[c,saved,imported,...templateResults];
+ record('Draft authoring','hung Codex draft operations','Set both to hang; create/import/save/all template drafts','Success under 3s each; zero fixture invocations',authored,authored.every(r=>r.status<300&&r.ms<3000&&Object.values(r.calls).flat().length===0));
+ scenario('ready');writeFileSync(join(temp,'claude/scenario.txt'),'hang');
+ const b=before(),t=Date.now(),pending=request('/harness/preflight');await delay(1200);const midway=delta(b);const ended=await pending;
+ record('Native concurrency','hung Claude leaves Codex runnable','Begin preflight; inspect request timestamps before timeout','Codex login status before Claude deadline; Claude unknown after 15s plus bounded confirmation',{midway,elapsed:Date.now()-t,ended},midway.codex.some(s=>s.includes('login status'))&&ended.body.items.find(i=>i.harness==='claude').state==='unknown'&&ended.ms>=15000&&ended.ms<24000);
+ scenario('slow-ready');const slow=await request('/harness/preflight');
+ const times=harnesses.map(h=>Date.parse(slow.calls[h].find(s=>s.includes('status')).split('|')[0]));
+ record('Native concurrency','two ready probes overlap','Delay each auth command 2.5s; inspect timestamps','Auth start times <1s apart; total <5s',{slow,startDifference:Math.abs(times[0]-times[1])},slow.body.items.every(i=>i.state==='ready')&&Math.abs(times[0]-times[1])<1000&&slow.ms<5000);
+ scenario('ready');
+ // Exact owner step 10 rejection, including durable-state absence.
+ const childDef=definition('claude'),child=await request('/loops','POST',{definition:childDef});
+ await request('/loops/'+child.body.loop.id+'/publish','POST',{});
+ const parentDef=minimalLoop();parentDef.name='Round 3 nested parent';
+ parentDef.nodes=[parentDef.nodes[0],{id:'mutate',kind:'mutate',label:'Preceding effect',config:{operations:[{op:'append-message',content:'PARENT_EFFECT_MARKER'}]}},{id:'child',kind:'subloop',label:'Pinned child',config:{loopRef:{loopId:child.body.loop.id,version:'latest'}}},parentDef.nodes[1]];
+ parentDef.edges=parentDef.nodes.slice(0,-1).map((n,i)=>({id:'e'+i,from:{node:n.id,port:'out'},to:{node:parentDef.nodes[i+1].id}}));
+ const parent=await request('/loops','POST',{definition:parentDef});await request('/loops/'+parent.body.loop.id+'/publish','POST',{});
+ const runsBefore=await request('/runs');scenario('auth');
+ const direct=await request('/loops/'+child.body.loop.id+'/runs','POST',{}),nested=await request('/loops/'+parent.body.loop.id+'/runs','POST',{}),runsAfter=await request('/runs');
+ record('Nested admission','owner checklist step 10','Publish child and mutate/subloop parent ready; sign Claude out; direct and nested start','422 both, child loop/version/node issue, one Claude probe, no run or mutation',{direct,nested,runsBefore,runsAfter},direct.status===422&&nested.status===422&&nested.body.code==='HARNESS_NOT_READY'&&JSON.stringify(nested.body).includes(child.body.loop.id)&&JSON.stringify(nested.body).includes('infer0')&&nested.calls.claude.filter(s=>s.includes('--version')).length===1&&JSON.stringify(runsBefore.body)===JSON.stringify(runsAfter.body));
+ scenario('ready');
+ // MCP uses the same public start endpoint with a fake signed-out diagnostic.
+ const require=createRequire(resolve('apps/mcp/package.json'));
+ const {Client}=require('@modelcontextprotocol/sdk/client/index.js'),{StdioClientTransport}=require('@modelcontextprotocol/sdk/client/stdio.js');
+ const client=new Client({name:'round3-qa',version:'1'});
+ await client.connect(new StdioClientTransport({command:process.execPath,args:['apps/mcp/dist/main.js'],cwd:root,env:{...env,GG_API_URL:base,GG_API_KEY:key},stderr:'pipe'}));
+ try{scenario('auth');const b=before();const r=await client.callTool({name:'start_run',arguments:{loopId:id}});record('MCP','unready admission','Call start_run with signed-out fakes','HTTP 422 HARNESS_NOT_READY; one probe each; no turn',{result:r,calls:delta(b)},r.isError===true&&JSON.stringify(r).includes('HARNESS_NOT_READY')&&count(delta(b))&&noTurns(delta(b)));}finally{await client.close();}
+ scenario('ready');
+ return {id,definition:d};
+}
+async function browserChecks(){
+ const require=createRequire(resolve('apps/web/package.json'));
+ const {chromium,expect}=require('@playwright/test');
+ browser=await chromium.launch({channel:'msedge',headless:true});
+ const context=await browser.newContext({viewport:{width:1440,height:1000},serviceWorkers:'block'});
+ await context.addInitScript(k=>localStorage.setItem('graphgoblin-api-key',k),key);
+ const page=await context.newPage();
+ const labels={ready:'Ready',auth:'Sign-in needed',quota:'Usage limit',transport:'Connection failed',unknown:'Unknown','cli-incompatible':'CLI update needed','cli-missing':'CLI not found'};
+ for(const [name,state,set] of followup?[]:cases){
+   set(); const result=await request('/harness/preflight');
+   await page.goto(base+'/app/settings');
+   const region=page.getByRole('region',{name:'Harness preflight'});
+   await expect(region.locator('[data-state="'+state+'"]')).toHaveCount(2,{timeout:30000});
+   const badges=await region.locator('[data-state]').allTextContents(),text=await region.innerText();
+   const file='settings-'+name+'.png';await region.screenshot({path:join(evidence,file)});
+   browserRecord('Settings '+name,{state,label:labels[state],problem:result.body.items.map(i=>i.problems)}, {badges,text,screenshot:file},badges.every(b=>b.trim()===labels[state])&&result.body.items.every(i=>i.problems.every(p=>text.includes(p))));
+ }
+ // Saved defaults and a controlled delayed catalog exercise first-load help.
+ scenario('ready');await request('/settings','PUT',{defaults:{byHarness:{claude:{model:'claude-opus-5-5',effort:'high'},codex:{model:'gpt-6-luna',effort:'high'}}}});
+ let release;const hold=new Promise(r=>release=r);
+ await page.route('**/model-catalog',async route=>{await hold;await route.continue();});
+ await page.goto(base+'/app/settings');const defaults=page.getByRole('region',{name:'Defaults',exact:true});
+ await expect(defaults.getByText('Checking\u2026',{exact:true}).first()).toBeVisible();
+ browserRecord('Defaults initial catalog','Checking before first catalog response',await defaults.innerText(),true);const loaded=page.waitForResponse('**/model-catalog');release();await loaded;await page.unrouteAll({behavior:'wait'});
+ await expect(defaults.getByText('Checking\u2026',{exact:true})).toHaveCount(0);
+ scenario('auth');await page.getByRole('button',{name:'Retry preflight',exact:true}).click();
+ const region=page.getByRole('region',{name:'Harness preflight'});await expect(region.locator('[data-state="auth"]')).toHaveCount(2,{timeout:30000});
+ const defaultText=await defaults.innerText();const selected=await defaults.locator('select option:checked').allTextContents();
+ await defaults.screenshot({path:join(evidence,'defaults-auth.png')});
+ browserRecord('Defaults saved labels and catalog vocabulary','Claude saved label; Codex keeps catalog choices; one readiness help line per harness; matching catalog vocabulary',{selected,text:defaultText,catalog:await page.getByRole('region',{name:'Model catalog',exact:true}).innerText(),screenshot:'defaults-auth.png'},selected.some(s=>s.includes('Claude')&&s.includes('(saved)'))&&selected.some(s=>s.includes('GPT-6 Luna'))&&defaultText.includes('Claude readiness: Sign-in needed. See Harness preflight below.')&&defaultText.includes('Codex readiness: Sign-in needed. See Harness preflight below.'));
+ // Last results stay while a true slow no-turn probe is pending.
+ await page.waitForLoadState('networkidle');
+ const previousBadges=await region.locator('[data-state]').allTextContents();let releaseRetry;const retryHold=new Promise(r=>releaseRetry=r);
+ await page.route('**/harness/preflight',async route=>{await retryHold;await route.continue();});
+ scenario('slow-ready');await region.getByRole('button',{name:'Retry preflight'}).click();
+ await expect(region.getByRole('button',{name:'Retry preflight'})).toBeDisabled();
+ await expect(region.getByRole('status')).toHaveText('Rechecking\u2026');
+ const during=await region.innerText(),duringBadges=await region.locator('[data-state]').allTextContents();await region.screenshot({path:join(evidence,'settings-rechecking.png')});
+ browserRecord('Retry while fetching','Disabled Retry, unchanged previous badges, muted Rechecking live region',{text:during,previousBadges,duringBadges,screenshot:'settings-rechecking.png'},JSON.stringify(previousBadges)===JSON.stringify(duringBadges)&&await region.locator('[data-state="checking"]').count()===0);
+ const retryLoaded=page.waitForResponse('**/harness/preflight');releaseRetry();await retryLoaded;await page.unrouteAll({behavior:'wait'});
+ await expect(region.locator('[data-state="ready"]')).toHaveCount(2,{timeout:30000});
+ await context.setOffline(true);await region.getByRole('button',{name:'Retry preflight'}).click();
+ await expect(region.getByRole('status')).toHaveText('Offline; showing the last check.');
+ await region.screenshot({path:join(evidence,'settings-offline.png')});
+ browserRecord('Offline previous result','Ready badges and offline live region',{text:await region.innerText(),screenshot:'settings-offline.png'},await region.locator('[data-state="ready"]').count()===2);
+ await context.setOffline(false);await expect(region.getByRole('button',{name:'Retry preflight'})).toBeEnabled({timeout:30000});
+ await page.setViewportSize({width:390,height:844});await page.screenshot({path:join(evidence,'settings-phone.png'),fullPage:true});
+ browserRecord('Phone width','No horizontal document overflow',{viewport:390,scrollWidth:await page.evaluate(()=>document.documentElement.scrollWidth),screenshot:'settings-phone.png'},await page.evaluate(()=>document.documentElement.scrollWidth<=390));
+ await page.setViewportSize({width:1440,height:1000});
+ for(const h of harnesses){
+   scenario('ready');const d=definition(h);const c=await request('/loops','POST',{definition:d});
+   await page.goto(base+'/app/loops/'+c.body.loop.id+'/edit');
+   await page.getByTestId('node-infer0').click({position:{x:60,y:12}});
+   const dialog=page.getByRole('dialog');await expect(dialog).toBeVisible();
+   const advanced=dialog.getByRole('button',{name:/^Advanced/});if(await advanced.getAttribute('aria-expanded')!=='true')await advanced.click();
+   const model=dialog.getByLabel('Model',{exact:true});await expect(model).not.toHaveAttribute('aria-readonly','true',{timeout:30000});
+   const previous=await model.inputValue();scenario('slow-ready');const focusBefore=before();
+   const other=await context.newPage();await other.goto('about:blank');await delay(2200);await page.bringToFront();
+   // Visibility events model an OS focus transition in headless Edge; browser event is public.
+   await page.evaluate(()=>{window.dispatchEvent(new Event('visibilitychange'));window.dispatchEvent(new Event('focus'));});
+   await delay(500);const mid={value:await model.inputValue(),readonly:await model.getAttribute('aria-readonly'),text:await dialog.innerText(),calls:delta(focusBefore)};
+   await dialog.screenshot({path:join(evidence,h+'-editor-rechecking.png')});
+   browserRecord(h+' editor focus refetch','Previous ready model editable during pending check; public browser visibility event triggers native probes',{...mid,screenshot:h+'-editor-rechecking.png'},mid.value===previous&&mid.readonly!=='true'&&Object.values(mid.calls).flat().some(s=>s.includes('status')));
+   await other.close();await delay(3000);scenario('auth');
+   await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
+   // Force a new focus after stale interval if the previous check just completed.
+   await delay(2200);await page.evaluate(()=>{window.dispatchEvent(new Event('visibilitychange'));window.dispatchEvent(new Event('focus'));});
+   const retry=dialog.getByRole('button',{name:'Retry '+(h==='claude'?'Claude':'Codex')+' preflight'});
+   await expect(retry).toBeVisible({timeout:30000});
+   await dialog.screenshot({path:join(evidence,h+'-editor-auth-retry.png')});
+   browserRecord(h+' editor known failure','Saved choice preserved; sign-in problem and Retry; Claude read-only, Codex editable',{text:await dialog.innerText(),value:await model.inputValue(),readonly:await model.getAttribute('aria-readonly'),screenshot:h+'-editor-auth-retry.png'},await model.inputValue()===previous&&(h==='claude'?await model.getAttribute('aria-readonly')==='true':await model.getAttribute('aria-readonly')!=='true')&&(await dialog.innerText()).includes('retry preflight.'));
+ }
+ // Load a controlled stale, wrong-family saved value without switching a harness.
+ scenario('ready');const stale=definition('claude'),staleCreated=await request('/loops','POST',{definition:stale});
+ const staleId=staleCreated.body.loop.id;
+ await page.route('**/loops/'+staleId,async route=>{if(route.request().method()!=='GET')return route.continue();const response=await route.fetch();const body=await response.json();for(const version of [body.current,body.draft]){if(version?.definition){const node=version.definition.nodes.find(n=>n.id==='infer0');if(node)node.config.model='gpt-6-astra';}}await route.fulfill({response,json:body});});
+ await page.goto(base+'/app/loops/'+staleId+'/edit');await page.getByTestId('node-infer0').click({position:{x:60,y:12}});
+ const staleDialog=page.getByRole('dialog');const advanced=staleDialog.getByRole('button',{name:/^Advanced/});if(await advanced.getAttribute('aria-expanded')!=='true')await advanced.click();
+ const staleModel=staleDialog.getByLabel('Model',{exact:true});await expect(staleModel).toHaveValue('gpt-6-astra');
+ await staleDialog.screenshot({path:join(evidence,'editor-saved-incompatible.png')});
+ browserRecord('Saved incompatible value without switch','Saved Codex model remains on Claude with wrong-family explanation',{provenance:'controlled stale GET only; no switch or write',text:await staleDialog.innerText(),value:await staleModel.inputValue(),screenshot:'editor-saved-incompatible.png'},(await staleDialog.innerText()).includes('Saved model belongs to Codex'));
+ await context.close();
+}
+try{
+ scenario('ready');const out=execFileSync(process.execPath,['apps/api/dist/main.js','--create-api-key','round3-qa'],{cwd:root,env,encoding:'utf8',windowsHide:true});key=/\bgg_[A-Za-z0-9_-]+/.exec(out)?.[0];if(!key)throw Error('No key');
+ await start();
+ if(!followup)await native();
+ else{
+   scenario('hang');const d=definition('codex');const imported=await request('/loops/import','POST',d);record('Draft authoring','corrected hung import','Send the raw LoopDefinition body, not a create wrapper','201; zero probes; under 3s',imported,imported.status===201&&imported.ms<3000&&Object.values(imported.calls).flat().length===0);scenario('ready');
+ }
+ await browserChecks();
+ await stop();env.GG_CLAUDE_BINARY=join(temp,'absent-claude.exe');env.GG_CODEX_BINARY=join(temp,'absent-codex.exe');await start();
+ const missing=await request('/harness/preflight');
+ const req=createRequire(resolve('apps/web/package.json'));const missingBrowser=await req('@playwright/test').chromium.launch({channel:'msedge',headless:true});
+ try{const page=await missingBrowser.newPage();await page.addInitScript(k=>localStorage.setItem('graphgoblin-api-key',k),key);await page.goto(base+'/app/settings');await req('@playwright/test').expect(page.getByRole('region',{name:'Harness preflight'}).locator('[data-state="cli-missing"]')).toHaveCount(2);await page.getByRole('region',{name:'Harness preflight'}).screenshot({path:join(evidence,'settings-cli-missing.png')});record('REST / Edge','CLI missing','Restart API with nonexistent disposable executable paths','Two cli-missing results and CLI not found badges',{missing,screenshot:'settings-cli-missing.png'},missing.body.items.every(i=>i.state==='cli-missing'));}finally{await missingBrowser.close();}
+ const stopped=await stop();record('Process','API stop and restart','Stop owned built API; restart same disposable store','Bounded stop; health after restart',{stopped},stopped.stopped&&stopped.ms<12000);await start();const after=await request('/loops');record('Persistence','restart','List loops after built process restart','Created drafts and publications retained',{count:after.body.items?.length,status:after.status},after.status===200&&after.body.items.length>0);
+}catch(error){save('collector-error.json',{message:error.message,stack:error.stack});console.error(error.message);process.exitCode=1;}
+finally{if(browser)await browser.close();const stopped=await stop();save('collector-cleanup.json',{api:stopped,port:5810,noProviderTurns:true});save('api-server.json',{log:serverLog});save('fixture-requests.json',Object.fromEntries(harnesses.map(h=>[h,log(h)])));}
