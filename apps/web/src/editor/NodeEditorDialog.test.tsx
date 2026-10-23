@@ -9,7 +9,8 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { manualTriggerConfig } from '../__fixtures__/triggers.js';
 import { FakeApi } from '../__fixtures__/fake-api.js';
 import { getCode, setCode } from '../__fixtures__/codemirror.js';
-import { renderApp } from '../__fixtures__/render.js';
+import { renderNodeEditor } from '../__fixtures__/node-editor.js';
+import { pasteInto } from '../__fixtures__/user.js';
 import { LOOP_PANEL_STORAGE_KEY } from './LoopPanel.js';
 import { defaultConfig, newLoopDefinition, validateDraft } from './model.js';
 import { useEditorStore } from './store.js';
@@ -37,6 +38,7 @@ async function openDialog(
   extra: NodeInput,
   name: string,
   prepare?: (api: FakeApi, loopId: string) => void,
+  autosave = false,
 ) {
   const api = new FakeApi();
   api.catalog = [
@@ -50,11 +52,10 @@ async function openDialog(
       enabled: true,
     },
   ];
-  const loop = api.addLoop(loopWith(extra));
+  const definition = loopWith(extra);
+  const loop = api.addLoop(definition);
   prepare?.(api, loop.id);
-  renderApp(`/loops/${loop.id}/edit`, api);
-  await screen.findByRole('heading', { name: 'dialog' });
-  act(() => store().openNode(extra.id));
+  renderNodeEditor(loop.id, definition, extra.id, api, { autosave });
   const dialog = await screen.findByRole('dialog', { name });
   await within(dialog).findByRole('form', { name: `${extra.id} config` });
   return dialog;
@@ -109,6 +110,74 @@ describe('NodeEditorDialog evaluator-specific decisions', () => {
       );
     },
   );
+  it('says what destinations receive while Returns is None, and names a quiet exit (#129)', async () => {
+    const user = userEvent.setup();
+    const dialog = await openDialog(
+      {
+        id: 'finish',
+        kind: 'exit',
+        label: 'Finish',
+        config: { destinations: [{ kind: 'caller' }, { kind: 'log' }] },
+      },
+      'Edit exit finish',
+    );
+    expect(
+      within(dialog).getByText(
+        'No returned value. The run finishes without a result, and destinations receive nothing.',
+      ),
+    ).toBeInTheDocument();
+    const destinations = within(dialog).getByRole('group', { name: 'Destinations' });
+    expect(destinations).toHaveAccessibleDescription(
+      'Returns is None, so these 2 destinations receive nothing. Choose a JSONata expression to deliver a value, or remove destinations for a quiet exit.',
+    );
+    await user.click(within(destinations).getByRole('button', { name: 'Remove destinations 2' }));
+    await waitFor(() =>
+      expect(destinations).toHaveAccessibleDescription(
+        /^Returns is None, so this destination receives nothing\./,
+      ),
+    );
+    await user.click(within(destinations).getByRole('button', { name: 'Remove destinations 1' }));
+    await waitFor(() =>
+      expect(destinations).toHaveAccessibleDescription(
+        'Quiet exit: nothing is returned or delivered. The run still finishes with its outcome.',
+      ),
+    );
+    expect(store().definition!.nodes.find((n) => n.id === 'finish')!.config).toMatchObject({
+      destinations: [],
+    });
+    await user.click(within(dialog).getByRole('radio', { name: 'JSONata expression' }));
+    expect(destinations).toHaveAccessibleDescription(
+      'Return destinations; caller by default. No delivery when returns is none. With returns none and no destinations, the exit is quiet.',
+    );
+    expect(
+      within(dialog).getByText(/^Its value becomes the run result and goes to every destination\./),
+    ).toBeInTheDocument();
+  });
+
+  it('explains route IDs as output ports and labels as unique, beside the list rule (#129)', async () => {
+    const dialog = await openDialog(
+      {
+        id: 'pick',
+        kind: 'decision',
+        label: 'Pick',
+        config: DecisionConfigSchema.parse(defaultConfig('decision')),
+      },
+      'Edit decision pick',
+    );
+    const routes = within(dialog).getByRole('group', { name: 'Routes' });
+    expect(routes).toHaveAccessibleDescription(
+      'At least 2 items. Two to sixty-four routes with unique ids and unique labels; the expression returns one id.',
+    );
+    expect(within(routes).getAllByRole('textbox', { name: 'Id' })[0]).toHaveAccessibleDescription(
+      'Stable route id and output port; changing display order does not change the route.',
+    );
+    expect(
+      within(routes).getAllByRole('textbox', { name: 'Label' })[0],
+    ).toHaveAccessibleDescription(
+      'Unique readable route label, shown on the canvas and in Connections.',
+    );
+  });
+
   it.each(['expression', 'llm', 'classifier'] as const)(
     'authors and saves a new %s decision from the default editor fields',
     async (kind) => {
@@ -127,6 +196,7 @@ describe('NodeEditorDialog evaluator-specific decisions', () => {
           api = value;
           loopId = id;
         },
+        true,
       );
       if (kind !== 'expression') {
         await user.click(within(dialog).getByRole('radio', { name: kind }));
@@ -141,7 +211,7 @@ describe('NodeEditorDialog evaluator-specific decisions', () => {
           const field = dialog.querySelector<HTMLTextAreaElement>(
             `[data-field="answer.${side}.criteria"] textarea`,
           )!;
-          await user.type(field, `Evidence supports ${side}`);
+          await pasteInto(user, field, `Evidence supports ${side}`);
         }
       } else if (kind === 'llm') {
         setCode(
@@ -161,7 +231,7 @@ describe('NodeEditorDialog evaluator-specific decisions', () => {
             const input = dialog.querySelector<HTMLInputElement>(`[data-field="${path}"] input`)!;
             await waitFor(() => expect(input).toBeVisible());
             await user.clear(input);
-            await user.type(input, text);
+            await pasteInto(user, input, text);
           }
         }
       } else setCode('Jsonata', '"no"');
@@ -230,6 +300,7 @@ describe('NodeEditorDialog evaluator-specific decisions', () => {
         savedApi = api;
         loopId = id;
       },
+      true,
     );
     expect(within(dialog).getByRole('radiogroup', { name: 'Decision kind' })).toBeVisible();
     const source =
@@ -379,10 +450,10 @@ describe('NodeEditorDialog GitHub trigger presets', () => {
 
     await user.click(within(dialog).getByRole('button', { name: 'Start from a preset' }));
     await user.selectOptions(within(dialog).getByLabelText('Preset'), 'issues-labeled');
-    await user.type(within(dialog).getByLabelText('Repository owner'), 'octo-team');
-    await user.type(within(dialog).getByLabelText('Repository'), 'service');
-    await user.type(within(dialog).getByLabelText('Issue label'), 'ready');
-    await user.type(within(dialog).getByLabelText('Signing secret name'), 'issue-hook');
+    await pasteInto(user, within(dialog).getByLabelText('Repository owner'), 'octo-team');
+    await pasteInto(user, within(dialog).getByLabelText('Repository'), 'service');
+    await pasteInto(user, within(dialog).getByLabelText('Issue label'), 'ready');
+    await pasteInto(user, within(dialog).getByLabelText('Signing secret name'), 'issue-hook');
     await user.click(within(dialog).getByRole('button', { name: 'Preview GitHub preset' }));
     expect(within(dialog).getByRole('region', { name: 'Preset preview' })).toHaveFocus();
     await user.click(within(dialog).getByRole('button', { name: 'Apply GitHub preset' }));
@@ -414,8 +485,10 @@ describe('NodeEditorDialog GitHub trigger presets', () => {
     expect(getCode('Dedupe key')).toBe('$headers."x-github-delivery"');
     expect(within(dialog).queryByLabelText('Per-item dedupe key')).not.toBeInTheDocument();
 
-    await user.clear(within(dialog).getByLabelText('Secret name'));
-    await user.type(within(dialog).getByLabelText('Secret name'), 'renamed-hook');
+    await user.click(within(dialog).getByLabelText('Secret name'));
+    // One replacement input event is one history step, independent of the 1 s typing window.
+    await user.keyboard('{Control>}a{/Control}');
+    await user.paste('renamed-hook');
     expect(node()?.config).toMatchObject({ authentication: { secretRef: 'renamed-hook' } });
 
     act(() => store().undo());
@@ -440,9 +513,9 @@ describe('NodeEditorDialog GitHub trigger presets', () => {
     );
     await user.click(within(dialog).getByRole('button', { name: 'Start from a preset' }));
     await user.selectOptions(within(dialog).getByLabelText('Preset'), 'issues-poll');
-    await user.type(within(dialog).getByLabelText('Repository owner'), 'octo');
-    await user.type(within(dialog).getByLabelText('Repository'), 'service');
-    await user.type(within(dialog).getByLabelText('Issue label'), 'ready');
+    await pasteInto(user, within(dialog).getByLabelText('Repository owner'), 'octo');
+    await pasteInto(user, within(dialog).getByLabelText('Repository'), 'service');
+    await pasteInto(user, within(dialog).getByLabelText('Issue label'), 'ready');
     await user.click(within(dialog).getByRole('button', { name: 'Preview GitHub preset' }));
     expect(within(dialog).getByRole('region', { name: 'Preset preview' })).toHaveFocus();
     await user.click(within(dialog).getByRole('button', { name: 'Apply GitHub preset' }));
@@ -518,6 +591,10 @@ describe('NodeEditorDialog disclosures across undo and redo', () => {
     expect(monday()).not.toBeChecked();
   });
 
+  // This intentionally remounts the complete inference form repeatedly to check disclosure and
+  // focus across real shortcuts. Even without the app shell or autosave it exceeded 20 s under
+  // coverage plus three busy CPU threads. Use the API subprocess precedent's 60 s for this case
+  // only; its meaningful form remounts cannot be replaced by fixture writes or fixed waits.
   it('keeps Advanced open through an undo and a redo of a basic picker, with focus restored', async () => {
     const user = userEvent.setup();
     const dialog = await openDialog(
@@ -566,8 +643,10 @@ describe('NodeEditorDialog disclosures across undo and redo', () => {
     act(() => store().openNode('infer'));
     const reopened = await screen.findByRole('dialog', { name: 'Edit inference infer' });
     expect(advanced(reopened)).toHaveAttribute('aria-expanded', 'false');
-  });
+  }, 60_000);
 
+  // Like the Advanced case, this must remount and refocus real nested forms for each history
+  // step. The minimal dialog (without autosave) still exceeded 20 s under coverage/CPU load.
   it('keeps opened and added list items open through an undo and a redo', async () => {
     const user = userEvent.setup();
     const dialog = await openDialog(
@@ -618,7 +697,7 @@ describe('NodeEditorDialog disclosures across undo and redo', () => {
     await user.keyboard(UNDO);
     expect(item(1)).toHaveAttribute('aria-expanded', 'false');
     expect(item(2)).toHaveAttribute('aria-expanded', 'true');
-  });
+  }, 60_000);
 
   it('redoing a removal from the removed row keeps its neighbour collapsed', async () => {
     const user = userEvent.setup();

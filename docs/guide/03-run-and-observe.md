@@ -128,7 +128,9 @@ Select an event in **Timeline** to reconstruct the thread at that sequence. Sele
 
 Decision evaluation details show the selected stable port and evaluator-specific observation: a route ID for Expression/LLM, or Choice/Noul/Score evidence for a classifier. LLM confidence is informational. Classifier rejection retains its proposed evidence without claiming a selected route. The corresponding output paths are `portId`, `provenance` and `observation`.
 
-`exit.evaluated` records the terminal outcome: Success, Failure or Exhausted. Read **Result** for its returned value; Exhausted does not wrap or replace it. Gate **Evaluation details** show previous/current passes, maximum passes, optional run time in seconds, elapsed time from run start, and which limit stopped a repeat. The observed choice remains visible even when **Selected port** is `limit-reached`. Passes start at 1 and can be read by expressions at `gates.<nodeId>.passes`.
+`exit.evaluated` records the terminal outcome: Success, Failure or Exhausted. Read **Result** for its returned value, `null` included; Exhausted does not wrap or replace it. When the exit's Returns is None, **Exit evaluation** says that no value was returned by configuration, not by failure, and names the destinations that received nothing, from the exit and from the start request. An exit with no destinations is identified as a quiet exit. **Exit evaluation** also shows the last gate decision: which route it chose on which pass, and whether a limit stopped the repeat.
+
+Gate **Evaluation details** show previous/current passes, maximum passes, optional run time in seconds, elapsed time from run start, and which limit stopped a repeat. The observed choice remains visible even when **Selected port** is `limit-reached`. **Label** names the chosen route as the run's version authored it, and **Criterion** shows the criterion a classifier Choice option or Noul side gave the classifier. Passes start at 1 and can be read by expressions at `gates.<nodeId>.passes`.
 
 `decision.made` identifies the evaluator kind, selected option ID, confidence where applicable, and actual resolved provider/model/effort. The option ID is also its output port. LLM confidence is self-reported information, not a calibrated probability. Converted historical events preserve known skip diagnostics; unknown old values display as unknown rather than invented settings. New decisions never try another evaluator.
 
@@ -151,8 +153,11 @@ In PowerShell:
 
 ```powershell
 $runId = '<run-id>'
-Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:4747/runs/$runId/resume"
+Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:4747/runs/$runId/resume" `
+  -ContentType 'application/json' -Body '{}'
 ```
+
+Windows PowerShell gives a POST without a body a form content type, which the API refuses with 415 `UNSUPPORTED_MEDIA_TYPE`. The example therefore sends an empty JSON object.
 
 Pausing, resuming, or answering a run in the wrong status returns 409 `INVALID_STATE`.
 
@@ -220,7 +225,7 @@ The query's `after` overrides the header when both are supplied. Replay includes
 
 ## Read returns and child runs
 
-Set the exit's `returns` JSONata expression to produce a payload, and `destinations` to select channels. `returns` defaults to `none` (no result or deliveries); `destinations` defaults to `caller`. Choose these channels:
+Set the exit's `returns` JSONata expression to produce a payload, and `destinations` to select channels. `returns` defaults to `none`; `destinations` defaults to `caller`. With `none`, the run has no result and no destination receives anything, including channels added by the start request's `return`. Choose None with no destinations for a deliberate quiet exit. The exit editor shows which of these applies. Choose these channels:
 
 | Channel kind | Delivery                                                                                                                                  |
 | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |

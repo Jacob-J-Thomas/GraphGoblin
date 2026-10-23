@@ -5,6 +5,7 @@ import userEvent, { type UserEvent } from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, it } from 'vitest';
 import { SchemaForm } from './SchemaForm.js';
+import { pasteInto } from '../__fixtures__/user.js';
 
 /**
  * The same edits save the same config, wherever the form places a field. Each case makes edits
@@ -74,7 +75,7 @@ describe('the same edits save the same config', () => {
       'inference',
       { prompt: { template: 'Hi' } },
       async (user) => {
-        await user.type(within(fieldAt('model')).getByRole('textbox'), 'gpt-x');
+        await pasteInto(user, within(fieldAt('model')).getByRole('textbox'), 'gpt-x');
         await user.selectOptions(within(fieldAt('effort')).getByRole('combobox'), 'high');
         await user.click(radio('harnessOptions.sandbox', 'read-only'));
         await user.click(radio('harnessOptions.approval', 'on-request'));

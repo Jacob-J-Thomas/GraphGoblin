@@ -1,0 +1,10 @@
+  const [announced, setAnnounced] = useState(settled);
+  useEffect(() => {
+    const timer = setTimeout(() => setAnnounced({ expression, timezone, summary, valid: requestable }), 0);
+    return () => clearTimeout(timer);
+  }, [expression, timezone, summary, requestable]);
+  const announcement = !announced.valid
+    ? announced.expression.trim() === ''
+      ? 'Choose a schedule to see upcoming runs.'
+      : 'Complete the schedule to preview upcoming runs.'
+    : `${announced.summary}. ${query.isError ? previewErrorMessage(query.error) : query.isPending || query.isFetching ? 'Loading upcoming runs…' : query.data.next.length === 0 ? 'No upcoming runs for this expression.' : 'Upcoming runs ready.'}`;
