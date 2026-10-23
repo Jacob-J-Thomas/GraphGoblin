@@ -8,7 +8,7 @@ Worktree codex-qa-wp-f2b, detached HEAD; evidence changes only, uncommitted. No 
 
 ### QA-F2B-R4-01 — major verification blocker: required served replay fails
 
-Steps: build this head, invoke the committed round-3 served-checks.mjs.txt once with QA_PORT=5860, QA_OUTPUT_DIR=<round-4> and QA_TEMP_PREFIX=gg-qa-f2b-r4-served-, without QA_ONLY. Expected: the entire replay passes on the integrated F1/F2b head. Actual: 15 failures remain as failures. Cases timed out waiting for selected model/effort, a completed harness action, publication readiness or their existing lookup assertions. Some snapshots still show the first-load waiting notice or Checking.
+Steps: build this head, invoke the committed round-3 served-checks.mjs once with QA_PORT=5860, QA_OUTPUT_DIR=<round-4> and QA_TEMP_PREFIX=gg-qa-f2b-r4-served-, without QA_ONLY. Expected: the entire replay passes on the integrated F1/F2b head. Actual: 15 failures remain as failures. Cases timed out waiting for selected model/effort, a completed harness action, publication readiness or their existing lookup assertions. Some snapshots still show the first-load waiting notice or Checking.
 
 Captured API timing shows GET /harness/preflight reaching 9003 ms (10 responses over 5000 ms), POST /validate reaching 7891 ms (4 over 5000 ms), and POST /publish reaching 6350 ms (1 over 5000 ms). The component run took 199.42 seconds, including 83.60 seconds transforming modules. Components overlapped the first part of the served run. These are host/load-class timing observations; product attribution remains unresolved. They do not waive or convert a failed assertion. No retry, timeout change or test repair was made. D-015 is not used as a waiver.
 
