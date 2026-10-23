@@ -1,0 +1,8 @@
+Head: 5d2783359dbcb95aa719146416f02dc303cbd1ed
+Minor documentation mismatch: introductory count/table omit fourth loop; executable sections 2/6 include it.
+docs/qa/2026-10-19-wp-g4-exit-evidence/README.md:5: The capability inventory and the before/after quotes are in [2026-10-18-exit-evidence-inventory.md](../2026-10-18-exit-evidence-inventory.md). This folder holds three loops that need no model turns:
+docs/qa/2026-10-19-wp-g4-exit-evidence/README.md:9: | `gate-loop.json`       | QA 129 gate repeat                    | An expression gate that always repeats, with maximum passes 3, Limit reached and an Exhausted exit                                                              |
+docs/qa/2026-10-19-wp-g4-exit-evidence/README.md:10: | `suppressed-loop.json` | QA 129 returns none with destinations | An exit with Returns None and two destinations (caller, log)                                                                                                    |
+docs/qa/2026-10-19-wp-g4-exit-evidence/README.md:11: | `quiet-loop.json`      | QA 129 quiet exit                     | An expression decision that always takes its Ignore route to a quiet exit (Returns None, no destinations); its Keep route leads to an exit that returns a value |
+docs/qa/2026-10-19-wp-g4-exit-evidence/README.md:29: ## 2. Import and publish the four loops
+docs/qa/2026-10-19-wp-g4-exit-evidence/README.md:35: foreach ($file in 'gate-loop.json', 'suppressed-loop.json', 'quiet-loop.json', 'history-loop.json') {

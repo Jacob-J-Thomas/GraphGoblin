@@ -1,0 +1,23 @@
+{
+  "definition": {
+    "schemaVersion": 4,
+    "name": "QA 129 omitted null",
+    "nodes": [
+      {
+        "id": "start",
+        "kind": "trigger",
+        "label": "Start",
+        "config": { "type": "manual" },
+        "ui": { "x": 0, "y": 80 }
+      },
+      {
+        "id": "done",
+        "kind": "exit",
+        "label": "Done",
+        "config": { "returns": "null", "destinations": [{ "kind": "caller" }] },
+        "ui": { "x": 260, "y": 80 }
+      }
+    ],
+    "edges": [{ "id": "e1", "from": { "node": "start", "port": "out" }, "to": { "node": "done" } }]
+  }
+}

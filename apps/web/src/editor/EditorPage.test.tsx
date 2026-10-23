@@ -946,6 +946,10 @@ describe('EditorPage', () => {
     await user.click(screen.getByRole('button', { name: 'Add Exit node' }));
     act(() => useEditorStore.getState().openNode('exit'));
     expect(await screen.findByText('[{"kind":"caller"}]')).toBeInTheDocument();
+    // Its help says that default receives nothing while Returns is None (#129).
+    expect(screen.getByRole('group', { name: 'Destinations' })).toHaveAccessibleDescription(
+      /^Returns is None, so this destination receives nothing\./,
+    );
     await user.click(screen.getByRole('button', { name: 'Customize destinations' }));
     await waitFor(() =>
       expect(

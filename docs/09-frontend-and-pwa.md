@@ -82,6 +82,7 @@ The owner's request: move the horizontal and vertical break points of a line to 
 - Thread viewer that reconstructs the thread at any event by replaying patches client-side using `domain`.
 - Node progress drawer that shows harness items as they arrive.
 - Wait handling: when the run is waiting on input, a form rendered from the wait node's `inputSchema` appears inline.
+- Completion evidence: **Exit evaluation** shows the exit outcome, the last gate decision, and why a run whose exit returns None has no result (see "Gate and terminal exit authoring" below).
 
 ## PWA behaviour (Decided)
 
@@ -612,7 +613,9 @@ Unmarking opens D2's loss preview before writing: it lists the configured limits
 
 Exit shows **Outcome** (Success, Failure, Exhausted), **Returns** (JSONata or `none`) and **Destinations**. It has no criteria or loop-back controls. Loop settings show **Maximum node visits**, with copy identifying the safety cap against unintended cycles.
 
-The inspector displays recorded previous/current passes, repeat route, maximum passes, optional maximum run time, elapsed seconds from run start and which limit stopped repetition. Raw evaluation choice and actual selected port remain separate. Terminal exit details show outcome; Result shows the returned value. Exhausted is available in run filters and badges and stops SSE/MCP waiting.
+Returns None says the run finishes without a result. While Returns is None, the Destinations help counts the destinations that will receive nothing and suggests either an expression or removing them. With no destinations it identifies a quiet exit. The help is part of the group's description, including on a destination list still showing its default. The return expression's help says its value becomes the run result and recommends `outputs.<workNode>.value` after a gate. Route lists, Choice options, Noul sides and Score bands state their count and uniqueness rules, and each ID is described as an output port (#129).
+
+The inspector displays recorded previous/current passes, repeat route, maximum passes, optional maximum run time, elapsed seconds from run start and which limit stopped repetition. Raw evaluation choice and actual selected port remain separate. Decision details add the chosen route's authored **Label** and, for a classifier Choice option or Noul side, its **Criterion**, from the immutable run version. Terminal exit details show outcome; Result shows the returned value, including `null`. **Exit evaluation** at the top keeps the last gate decision (route, pass, stopping limit) beside the exit outcome. When Returns was None it states that nothing was returned by configuration, naming the exit and start-request destinations that received nothing, or identifies a quiet exit. It derives this from the run's version and the absent result, not from delivery events, and only a pinned exit whose Returns is None supports the statement: when the pinned exit's Returns is an expression, or the pinned definition is unavailable, the inspector says that the history alone cannot show whether nothing or an unrecorded null was returned (a format-4 run recorded by an older build omitted a null result). Exhausted is available in run filters and badges and stops SSE/MCP waiting.
 
 When a log lacks a recorded initial thread, the inspector fetches the immutable run definition and seeds each gate at `passes: 1`, including when inspecting an event before the first decision. A recorded initial thread always takes precedence, preserving replay-fork seeds.
 
