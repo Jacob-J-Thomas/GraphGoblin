@@ -1,0 +1,552 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index d51b4c1a..5924d701 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -6,6 +6,25 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+ 
+ - The run inspector and the Events page lay out large values within a bound: up to 4,096 characters of a result, variable, message, wait prompt, patch value or thread JSON at once (1,024 in diff columns, progress rows and table cells), produced without formatting the whole value, with **Show all** for the whole text in a scrolling region and **Download JSON** for the exact stored value; nothing stored or executed is truncated. The full thread JSON is built only while open, thread reconstruction is remembered per selected event while a live log grows, Node progress rows and the evaluation reasoning excerpt wrap at any character instead of widening the page, which fixes #380, and the thread's messages are laid out fifty at a time with the rest one click away. A run whose recorded events exceed 2,000,000 characters has its thread reconstructed on request (**Reconstruct the thread at event N**) rather than on every selection, and the browser's stored event logs restart from the first event once because they now carry that size (#259).
+ 
++- Mark a loop's latest run unavailable when its event history cannot be read, retaining the exact count and diagnostics guidance instead of a stale status badge. (#236)
++
++- Latest-run summaries also validate the selected run's initial thread and any cached thread snapshot. Damaged threads remain counted and show "latest run unavailable" instead of a stale status badge after restart; an absent cached snapshot remains valid. (#236)
++
++- Loops show "latest run unavailable" and direct operators to run history diagnostics when the selected latest run fails full-record decoding, including a valid but stale status beside damaged snapshot data after restart. Its exact count is retained; no older run or partial status badge is substituted. (#236)
++
++- History readers decode only the requested page, so a malformed lookahead row no longer hides healthy run or inbound events. Requested malformed run events still return `STORED_EVENT_INVALID`. (#231)
++
++- Runs and Events append complete, filtered history through opaque cursors; MCP event pages use authoritative tail metadata, same-millisecond API IDs are monotonic, and valid run filters compose with cursors. **Upgrade:** `runs.list` and `events.list` now return `{ items, nextCursor }`; MCP `list_runs` replaces timestamp paging with `cursor`/`nextCursor` and loop/status/parent filters (no `before` parameter); REST `before` remains a timestamp filter. `/events` now rejects unknown query parameters with 400 and requires a timestamp for `before`. Cursors encode positions only: different filters continue from the same position. Regenerate clients for inbound-event cursors and run-event `hasMore`. (#231)
++- Loops show their true latest run and exact run count from an owner-scoped SQL summary, including beyond 500 unrelated runs and tied creation times. `GET /loops` items now include `latestRun` and `runCount`. Damaged latest summaries remain counted and display as unavailable; migration `0016_loop_owner_history` indexes owner-scoped lookups and counts. (#236)
++
++- Recognise explicit Claude auth-status sign-out text on stdout or bounded stderr even after a successful CLI exit; empty or unrecognised status remains unknown, and process failures keep precedence. (#179)
++
++- Preserve explicit authentication (HTTP/API 401/403) and quota (429) readiness when diagnostics also mention network settings. Claude no-turn probes consult recognised stdout failures when stderr is only an unrelated warning; recognised stderr remains primary on conflicting diagnostics. Empty or unrecognised successful login output is `unknown` without `authenticated`, rather than an invented sign-out. No model turn is used. (#179)
++
++- Check manual run readiness across the pinned parent and recursive subloop definitions before queuing the parent. Shared harnesses use one no-turn probe; distinct harnesses are checked concurrently. A nested readiness failure identifies the child loop and node and prevents preceding parent effects. Scheduled, webhook, child and resume starts keep their existing checks. (#179)
++
++- Report precise no-turn CLI capability, authentication, quota and transport readiness; share concurrent probes within explicit validation, publication, preflight and manual run admission while draft writes make no probes and preserve model choices on failed lookups. Codex probes use exclusive `mkdir` directories with at most four fresh names, avoiding Windows' `fs.mkdtemp` failure from 248 characters; existing names are neither reused nor removed. Transport detail says "Claude reported a connection or provider service error." (or Codex) without assuming a connectivity diagnosis, and CLI syntax errors take precedence over network words in option names. Each readiness problem is one detail sentence (naming the failed CLI version or option for Claude and Codex) and one action ending "then retry preflight". Settings, Harness preflight labels each badge (Ready, Unknown, CLI not found, CLI update needed, Sign-in needed, Usage limit, Connection failed), adds **Retry preflight**, keeps the last result with "Rechecking…" during a background refetch and gives "listed by adapter" a neutral tone. Defaults show one short readiness line for Codex and Claude alike and label an unoffered saved model "(saved)"; catalog rows of a not-ready Codex or Claude harness say so; the model picker keeps a ready Claude field editable during a focus refetch, offers **Retry Codex preflight** beside a known Codex failure, and no longer says "model availability". **Upgrade:** rebuild API and web together; preflight responses require a server `state` (`checking` is client-only), and `authenticated` is omitted when login is unknown. `HARNESS_UNAVAILABLE` is replaced by `HARNESS_READINESS_<STATE>` for API/MCP diagnostics. No store reset is needed. (#179)
++
+ - Complete finalization of executions that finished before the upgrade with a retired Event return: skip that return with a structured `LOOP_UPGRADE_REQUIRED` warning naming the run, loop and version, finish the other returns, and notify the parent of the recorded execution outcome. **Upgrade:** this does not publish an Event or rewrite history, and does not claim whether an old effect happened. Repair or delete the affected loop before running it again; admission and unfinished pinned executions still refuse the retired definition. No additional migration is needed. (#246)
+ 
+ - Webhook returns now use a stable `Idempotency-Key`, five attempts with a 10-second timeout and 2, 5, 10 and 20 second delays, and durable typed delivery outcomes exposed separately from execution in REST, api-client, MCP and the inspector. Orderly stop starts no new attempt: in-flight attempts finish within their existing deadline and pending deliveries resume on restart (D-021). Loop deletion stops pending delivery without orphan events; indexed delivery projections batch each page. Receivers must implement their own deduplication if duplicate effects are unacceptable; GraphGoblin does not assume they do. **Upgrade:** back up the stopped store before upgrading. Migration 0015 converts historical webhook returns once in an atomic code-and-SQL transaction, using the frozen receipt contract (including URL validity and full code-point lengths past embedded NULs); damaged pending threads and receipts that fail that contract stay byte-identical and appear in per-run `HISTORY_UNREADABLE` diagnostics for explicit repair or deletion, while the API and healthy runs start normally; old failures stay final, while unfinished old returns consume one unknown attempt with four retries and a newly allocated identity that cannot deduplicate a pre-upgrade request. The previous build refuses a migrated store with `DATA_UPGRADE_REQUIRED`; a restored backup boots. Regenerate clients for `deliveries`, its required sticky `acknowledgementUncertain` flag and `delivery.*` events. Earlier unknown acknowledgements remain visible after later rejection and success; invalid HTTP statuses retry as `transport` / unknown within the same budget. (#246)
+@@ -40,7 +59,7 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+ 
+ - Add repeatable sustained-run measurement tooling for cyclic execution, growing context, replay, artifacts, readiness, populated stores, and Edge, with JSON summaries and CPU profiles (#190).
+ 
+-- Recover healthy current-format runs beside damaged history; log HISTORY_UNREADABLE and expose owner-scoped diagnostics for explicit manual repair or deletion without changing damaged data. MCP `list_runs` preserves the server cursor even on pages with no readable runs. **Upgrade:** Check `GET /runs/diagnostics` after upgrading and explicitly repair or delete damaged history. MCP callers must pass `cursor` and read `nextCursor` instead of `before` and `nextBefore`. (#318)
++- Recover healthy current-format runs beside damaged history; log HISTORY_UNREADABLE and expose owner-scoped diagnostics for explicit manual repair or deletion without changing damaged data. MCP `list_runs` preserves the server cursor even on pages with no readable runs. **Upgrade:** Check `GET /runs/diagnostics` after upgrading and explicitly repair or delete damaged history. MCP callers must pass `cursor` and read `nextCursor` instead of timestamp continuation. (#318)
+ - Validate generated durable events before persistence, bound terminal failure diagnostics visibly, and fail rejected success events with nonresumable EVENT_INVALID so restart does not repeat uncertain work. **Upgrade:** Check `GET /runs/diagnostics` after upgrading; invalid events written before this fix now surface as `HISTORY_UNREADABLE`. (#223)
+ 
+ - Aligned installation, gates, CI, container, installers and API preflight on Node 22 LTS (22.x), with root `devEngines.runtime` enforcing the project runtime without enforcing every dependency engine range. **Upgrade:** every pnpm command (install, build, start) refuses Node 23; restart the running instance from a Node 22 shell. Settings → Preflight shows Node as failed under any other major. API consumers use `SUPPORTED_NODE_MAJOR` in place of `MIN_NODE_MAJOR`. (#263)
+diff --git a/apps/web/src/components/HistoryState.tsx b/apps/web/src/components/HistoryState.tsx
+new file mode 100644
+index 00000000..33085716
+--- /dev/null
++++ b/apps/web/src/components/HistoryState.tsx
+@@ -0,0 +1,70 @@
++import type { InfiniteData, UseInfiniteQueryResult } from '@tanstack/react-query';
++import { useEffect, useRef, type ReactNode } from 'react';
++import { ErrorState, QueryState } from './status.js';
++import { Button } from './ui/index.js';
++
++type HistoryPage<T> = { items: T[] };
++
++/** Append failures retain loaded rows; exhausted user-initiated paging keeps keyboard focus. */
++export function HistoryState<T>({
++  query,
++  what,
++  children,
++}: {
++  query: UseInfiniteQueryResult<InfiniteData<HistoryPage<T>>>;
++  what: string;
++  children: (items: T[]) => ReactNode;
++}) {
++  const endRef = useRef<HTMLParagraphElement>(null);
++  const userAppendRef = useRef(false);
++  const { hasNextPage, isFetchingNextPage } = query;
++  const hasAppended = (query.data?.pages.length ?? 0) > 1;
++  useEffect(() => {
++    if (!isFetchingNextPage && userAppendRef.current) {
++      userAppendRef.current = false;
++      if (!hasNextPage && hasAppended) endRef.current?.focus({ preventScroll: true });
++    }
++  }, [isFetchingNextPage, hasNextPage, hasAppended, query.dataUpdatedAt, query.errorUpdatedAt]);
++  return (
++    <>
++      <QueryState query={query} what={what} keepDataOnError={query.isFetchNextPageError}>
++        {(data) => {
++          const items = data.pages.flatMap((page) => page.items);
++          if (!items.length && (hasNextPage || hasAppended))
++            return (
++              <p className="text-sm text-muted">
++                {hasNextPage
++                  ? 'Load more to continue through history.'
++                  : `No readable ${what.toLowerCase()} found.`}
++              </p>
++            );
++          return children(items);
++        }}
++      </QueryState>
++      {query.isFetchNextPageError ? <ErrorState error={query.error} what={what} /> : null}
++      {query.data ? (
++        // Retain footer height at exhaustion so the reading position cannot be clamped.
++        <div className="min-h-9 pointer-coarse:min-h-11">
++          {hasNextPage ? (
++            <Button
++              variant="outline"
++              aria-disabled={isFetchingNextPage}
++              aria-busy={isFetchingNextPage}
++              onClick={() => {
++                if (isFetchingNextPage) return;
++                userAppendRef.current = true;
++                void query.fetchNextPage();
++              }}
++            >
++              {isFetchingNextPage ? 'Loading more\u2026' : 'Load more'}
++            </Button>
++          ) : hasAppended ? (
++            <p ref={endRef} role="status" tabIndex={-1} className="text-sm text-muted">
++              All {what.toLowerCase()} loaded.
++            </p>
++          ) : null}
++        </div>
++      ) : null}
++    </>
++  );
++}
+diff --git a/apps/web/src/events/EventsPage.test.tsx b/apps/web/src/events/EventsPage.test.tsx
+index c94c414b..8b3ecb6f 100644
+--- a/apps/web/src/events/EventsPage.test.tsx
++++ b/apps/web/src/events/EventsPage.test.tsx
+@@ -1,10 +1,52 @@
+-import { screen, within } from '@testing-library/react';
+ import userEvent from '@testing-library/user-event';
++import { screen, waitFor, within } from '@testing-library/react';
+ import { describe, expect, it } from 'vitest';
+ import { FakeApi, TS } from '../__fixtures__/fake-api.js';
+ import { renderApp } from '../__fixtures__/render.js';
+ 
+ describe('EventsPage delivery dispositions', () => {
++  it('appends an exactly full final event page and preserves expanded content and keyboard focus', async () => {
++    const api = new FakeApi();
++    const user = userEvent.setup();
++    api.inbound = Array.from({ length: 200 }, (_, i) => ({
++      id: `event-${i}`,
++      ownerId: 'local',
++      type: 'chosen',
++      payload: { index: i },
++      receivedAt: TS,
++      source: 'api',
++      runIds: [],
++    }));
++    api.inbound = api.inbound.map((event, i) => ({
++      ...event,
++      ...(i === 0
++        ? {
++            webhook: {
++              configurationAvailable: false,
++            },
++          }
++        : {}),
++    }));
++    renderApp('/events?type=ignored&before=invalid', api);
++    const disclosure = await screen.findByText('Webhook configuration');
++    await user.click(disclosure);
++    const expanded = disclosure.closest('details')!;
++    expect(expanded).toHaveAttribute('open');
++    const more = await screen.findByRole('button', { name: 'Load more' });
++    more.focus();
++    await user.keyboard('{Enter}');
++    await waitFor(() => expect(screen.getAllByRole('row')).toHaveLength(201));
++    await waitFor(() => expect(screen.getByText('All events loaded.')).toHaveFocus());
++    expect(screen.queryByRole('button', { name: 'Load more' })).not.toBeInTheDocument();
++    const call = api.callsTo('GET', '/events').at(-1)!;
++    expect(call.search.has('type')).toBe(false);
++    expect(call.search.has('before')).toBe(false);
++    expect(call.search.get('cursor')).toBe('event-99');
++    expect(expanded).toBeInTheDocument();
++    expect(expanded).toHaveAttribute('open');
++    expect(screen.queryByText('other', { exact: true })).not.toBeInTheDocument();
++  });
++
+   it('shows the five receipt states, attempts, retry time, safe failure and admitted run link', async () => {
+     const api = new FakeApi();
+     api.inbound = [
+diff --git a/apps/web/src/events/EventsPage.tsx b/apps/web/src/events/EventsPage.tsx
+index c9f36c62..61cd40a4 100644
+--- a/apps/web/src/events/EventsPage.tsx
++++ b/apps/web/src/events/EventsPage.tsx
+@@ -1,7 +1,7 @@
++import { HistoryState } from '../components/HistoryState.js';
+ import { Link } from 'react-router';
+ import { useInboundEvents } from '../api/queries.js';
+ import { Page, PageHeader } from '../components/layout/index.js';
+-import { QueryState } from '../components/status.js';
+ import {
+   Badge,
+   BoundedValue,
+@@ -15,7 +15,9 @@ import {
+ import { formatDateTime, prettyJson } from '../lib/utils.js';
+ 
+ const LINK = 'touch-target text-link underline-offset-[3px] hover:underline';
+-type InboundEvent = NonNullable<Awaited<ReturnType<typeof useInboundEvents>>['data']>[number];
++type InboundEvent = NonNullable<
++  ReturnType<typeof useInboundEvents>['data']
++>['pages'][number]['items'][number];
+ type EventDelivery = NonNullable<InboundEvent['delivery']>;
+ 
+ const DELIVERY: Record<EventDelivery['state'], { label: string; tone: Tone; explanation: string }> =
+@@ -115,7 +117,7 @@ export function EventsPage() {
+   return (
+     <Page>
+       <PageHeader title="Events" />
+-      <QueryState query={query} what="Events">
++      <HistoryState query={query} what="Events">
+         {(items) =>
+           items.length === 0 ? (
+             <p className="text-sm text-muted">No inbound events yet.</p>
+@@ -184,7 +186,7 @@ export function EventsPage() {
+             </Card>
+           )
+         }
+-      </QueryState>
++      </HistoryState>
+     </Page>
+   );
+ }
+diff --git a/apps/web/src/loops/LoopsPage.tsx b/apps/web/src/loops/LoopsPage.tsx
+index e3dd4881..b64d6165 100644
+--- a/apps/web/src/loops/LoopsPage.tsx
++++ b/apps/web/src/loops/LoopsPage.tsx
+@@ -1,10 +1,10 @@
+ import { loops } from '@graphgoblin/api-client';
+-import type { LoopRecord, RunRecord } from '@graphgoblin/contracts';
++import type { LoopRecord } from '@graphgoblin/contracts';
+ import { useMutation, useQueryClient } from '@tanstack/react-query';
+ import { useRef, useState, type ChangeEvent, type FormEvent } from 'react';
+ import { Link, useNavigate } from 'react-router';
+ import { useApi } from '../api/context.js';
+-import { keys, useCreateTemplateDraft, useLoops, useRuns, useTemplates } from '../api/queries.js';
++import { keys, useCreateTemplateDraft, useLoops, useTemplates } from '../api/queries.js';
+ import { Icon } from '../components/icons/index.js';
+ import { Page, PageHeader } from '../components/layout/index.js';
+ import { QueryState, RunStatusBadge } from '../components/status.js';
+@@ -46,16 +46,6 @@ function PublishState({ loop }: { loop: LoopRecord }) {
+   return <Badge tone="good">published</Badge>;
+ }
+ 
+-/** The most recent run per loop, from one runs listing. */
+-function latestRuns(runs: RunRecord[]): Map<string, RunRecord> {
+-  const latest = new Map<string, RunRecord>();
+-  for (const run of runs) {
+-    const seen = latest.get(run.loopId);
+-    if (!seen || run.createdAt > seen.createdAt) latest.set(run.loopId, run);
+-  }
+-  return latest;
+-}
+-
+ function CreateLoop() {
+   const client = useApi();
+   const navigate = useNavigate();
+@@ -177,7 +167,7 @@ function ImportLoop() {
+   );
+ }
+ 
+-function LoopActions({ loop, runCount }: { loop: LoopRecord; runCount: number | undefined }) {
++function LoopActions({ loop, runCount }: { loop: LoopRecord; runCount: number }) {
+   const client = useApi();
+   const queryClient = useQueryClient();
+   const exportingRef = useRef(false);
+@@ -223,9 +213,9 @@ function LoopActions({ loop, runCount }: { loop: LoopRecord; runCount: number |
+           consequences={
+             <p>
+               The loop, all its versions, its triggers and all its runs
+-              {runCount === undefined ? '' : ` (${runCount})`} will be deleted, including run
+-              history and artifact references. Loops using it as a subloop will no longer be able to
+-              start it. Cancel active runs first.
++              {` (${runCount})`} will be deleted, including run history and artifact references.
++              Loops using it as a subloop will no longer be able to start it. Cancel active runs
++              first.
+             </p>
+           }
+           onConfirm={async () => {
+@@ -244,13 +234,11 @@ function LoopActions({ loop, runCount }: { loop: LoopRecord; runCount: number |
+ }
+ 
+ export function LoopsPage() {
+-  const loopsQuery = useLoops();
+-  const runsQuery = useRuns({ limit: 500 }, 5000);
++  const loopsQuery = useLoops(5000);
+   const templatesQuery = useTemplates();
+   const createTemplateDraft = useCreateTemplateDraft();
+   const queryClient = useQueryClient();
+   const navigate = useNavigate();
+-  const latest = latestRuns(runsQuery.data ?? []);
+   return (
+     <Page>
+       <PageHeader title="Loops" titleId="loops-heading" />
+@@ -301,7 +289,7 @@ export function LoopsPage() {
+                 </thead>
+                 <tbody>
+                   {items.map((loop) => {
+-                    const run = latest.get(loop.id);
++                    const run = loop.latestRun;
+                     return (
+                       <tr key={loop.id}>
+                         <Td className="min-w-56 wrap-anywhere">
+@@ -328,18 +316,16 @@ export function LoopsPage() {
+                               <RunStatusBadge status={run.status} />
+                             </Link>
+                           ) : (
+-                            <span className="text-sm text-muted">never run</span>
++                            <div className="text-sm text-muted">
++                              <span>
++                                {loop.runCount === 0 ? 'never run' : 'latest run unavailable'}
++                              </span>
++                              {loop.runCount > 0 ? <p>Check run history diagnostics.</p> : null}
++                            </div>
+                           )}
+                         </Td>
+                         <Td>
+-                          <LoopActions
+-                            loop={loop}
+-                            runCount={
+-                              runsQuery.data && runsQuery.data.length < 500
+-                                ? runsQuery.data.filter((run) => run.loopId === loop.id).length
+-                                : undefined
+-                            }
+-                          />
++                          <LoopActions loop={loop} runCount={loop.runCount} />
+                         </Td>
+                       </tr>
+                     );
+diff --git a/apps/web/src/runs/inspector/ThreadViewer.test.tsx b/apps/web/src/runs/inspector/ThreadViewer.test.tsx
+index f3388d9b..749a15d2 100644
+--- a/apps/web/src/runs/inspector/ThreadViewer.test.tsx
++++ b/apps/web/src/runs/inspector/ThreadViewer.test.tsx
+@@ -134,6 +134,34 @@ describe('ThreadViewer with a large history', () => {
+     expect(screen.queryByRole('list', { name: 'Messages' })).not.toBeInTheDocument();
+   });
+ 
++  it('keeps the keyboard in the viewer across the card and the thread', async () => {
++    const user = userEvent.setup();
++    const { thread, events } = threadOf(60, 'a');
++    const all = [...events, started(thread.run.id, 2)];
++    const view = (seq: number) => (
++      <>
++        <ThreadViewer current={thread} events={all} seq={seq} historyBytes={3_500_000} />
++        <button type="button">Elsewhere</button>
++      </>
++    );
++    const { rerender } = render(view(1));
++    // Activating Reconstruct from the keyboard hands the keyboard to the thread's controls.
++    await user.tab();
++    expect(screen.getByRole('button', { name: 'Reconstruct the thread at event 1' })).toHaveFocus();
++    await user.keyboard('{Enter}');
++    expect(screen.getByRole('button', { name: 'Show all messages' })).toHaveFocus();
++    // A live event that becomes the selection replaces the thread with its card: the keyboard
++    // lands on the card's button, never on the body.
++    rerender(view(2));
++    expect(screen.getByRole('button', { name: 'Reconstruct the thread at event 2' })).toHaveFocus();
++    // A keyboard elsewhere is left alone, both ways.
++    act(() => screen.getByRole('button', { name: 'Elsewhere' }).focus());
++    rerender(view(1));
++    expect(screen.getByRole('button', { name: 'Elsewhere' })).toHaveFocus();
++    rerender(view(2));
++    expect(screen.getByRole('button', { name: 'Elsewhere' })).toHaveFocus();
++  });
++
+   it('reconstructs automatically at and below the threshold', () => {
+     const { thread, events } = threadOf(3, 'a');
+     render(
+diff --git a/apps/web/src/runs/inspector/ThreadViewer.tsx b/apps/web/src/runs/inspector/ThreadViewer.tsx
+index 1b603009..65f4ddd6 100644
+--- a/apps/web/src/runs/inspector/ThreadViewer.tsx
++++ b/apps/web/src/runs/inspector/ThreadViewer.tsx
+@@ -137,6 +137,18 @@ export function ThreadViewer({
+   const [ownsFocus, setOwnsFocus] = useState(false);
+   const [holdsFocus, setHoldsFocus] = useState(false);
+   const [handoffs, setHandoffs] = useState(0);
++  // In large-history mode the card and the thread replace each other: when a live event's card
++  // replaces a thread the keyboard was in, the keyboard goes to the card's button; when the reader
++  // activates that button, the keyboard goes to the thread's controls (the hand-off below).
++  // Ownership of the whole viewer is tracked by its focus events for the same reason as above.
++  const rootRef = useRef<HTMLDivElement>(null);
++  const reconstructRef = useRef<HTMLButtonElement>(null);
++  const [viewerOwnsFocus, setViewerOwnsFocus] = useState(false);
++  // The card unmounts the messages section without a blur event: its ownership ends here.
++  if (!ready && ownsFocus) {
++    setOwnsFocus(false);
++    setHoldsFocus(false);
++  }
+   if (shownThread !== thread) {
+     setShownThread(thread);
+     setAllMessagesState(false);
+@@ -154,34 +166,56 @@ export function ThreadViewer({
+     if (!inside) (showAllRef.current ?? list)?.focus();
+     setHoldsFocus(document.activeElement === list);
+   }, [handoffs]);
++  useLayoutEffect(() => {
++    if (ready || !viewerOwnsFocus) return;
++    const root = rootRef.current;
++    if (root !== null && !root.contains(document.activeElement)) reconstructRef.current?.focus();
++  }, [ready, shownSeq, viewerOwnsFocus]);
++  const viewerFocus = {
++    ref: rootRef,
++    onFocus: () => setViewerOwnsFocus(true),
++    onBlur: (event: React.FocusEvent<HTMLDivElement>) => {
++      if (!rootRef.current?.contains(event.relatedTarget)) setViewerOwnsFocus(false);
++    },
++  };
+   if (!ready) {
+     return (
+-      <Card title={`Thread at event ${shownSeq}`}>
+-        <p className="text-sm text-muted">
+-          This run's history holds {megabytes(historyBytes)} of recorded events. Replaying them to
+-          rebuild the thread at an event can take a while, so it happens on request.
+-        </p>
+-        <p>
+-          <Button
+-            size="sm"
+-            onClick={() => setPrepared((set) => new Set(set).add(shownSeq))}
+-          >{`Reconstruct the thread at event ${shownSeq}`}</Button>
+-        </p>
+-      </Card>
++      <div {...viewerFocus}>
++        <Card title={`Thread at event ${shownSeq}`}>
++          <p className="text-sm text-muted">
++            This run's history holds {megabytes(historyBytes)} of recorded events. Replaying them to
++            rebuild the thread at an event can take a while, so it happens on request.
++          </p>
++          <p>
++            <Button
++              ref={reconstructRef}
++              size="sm"
++              onClick={() => {
++                setPrepared((set) => new Set(set).add(shownSeq));
++                // The button goes away with the card: the thread's controls take the keyboard.
++                setHoldsFocus(true);
++                setHandoffs((n) => n + 1);
++              }}
++            >{`Reconstruct the thread at event ${shownSeq}`}</Button>
++          </p>
++        </Card>
++      </div>
+     );
+   }
+   if (replayed === undefined || !replayed.ok || thread === undefined) {
+     return (
+-      <Alert title={`The thread cannot be reconstructed at event ${shownSeq}`}>
+-        {replayed === undefined || replayed.ok ? '' : replayed.error}
+-      </Alert>
++      <div {...viewerFocus}>
++        <Alert title={`The thread cannot be reconstructed at event ${shownSeq}`}>
++          {replayed === undefined || replayed.ok ? '' : replayed.error}
++        </Alert>
++      </div>
+     );
+   }
+   const messages = thread.messages;
+   const hidden = allMessages ? 0 : Math.max(0, messages.length - MESSAGE_PREVIEW_COUNT);
+   const shownMessages = hidden > 0 ? messages.slice(hidden) : messages;
+   return (
+-    <div className="grid gap-section">
++    <div className="grid gap-section" {...viewerFocus}>
+       {diff ? (
+         <PatchDiff
+           nodeId={selected?.type === 'node.finished' ? selected.nodeId : ''}
+diff --git a/docs/09-frontend-and-pwa.md b/docs/09-frontend-and-pwa.md
+index 97db69ad..74088b54 100644
+--- a/docs/09-frontend-and-pwa.md
++++ b/docs/09-frontend-and-pwa.md
+@@ -81,7 +81,7 @@ The owner's request: move the horizontal and vertical break points of a line to
+ - Timeline from the SSE stream with the cursor stored so reload resumes without gaps.
+ - Thread viewer that reconstructs the thread at any event by replaying patches client-side using `domain`. The Full thread JSON shown and downloaded at an event is that reconstruction, so its property order follows the replay rather than the API's serialisation of the live thread; the values are the same.
+ - Node progress drawer that shows harness items as they arrive.
+-- Bounded rendering of large values (#259). Every value the inspector shows as text (the result, variables, messages, the two sides of a patch diff, progress values without a one-line description, the full thread JSON) is laid out through `BoundedValue`: up to 4,096 characters at once (1,024 in a diff column or a progress row, and in the Events table's payload cell), then "Showing the first 4,096 characters of a larger value" (a string says its total) with **Show all**, which puts the whole text in a named scrolling region, and **Download JSON**, which saves the exact stored value. The preview is produced by `prettyJsonPrefix`, which walks the value only until the budget is spent, so the page's layout and the text it holds do not grow with the value until the viewer asks for the whole text. One cost JavaScript imposes remains proportional to a value: reading the first property of an object enumerates all of its keys, so a single object with hundreds of thousands of properties costs that enumeration the first time it is previewed; the preview is remembered per value (`cachedJsonPrefix`), so a return to it or a re-render costs a lookup; a changed value is previewed, and a newly selected event's thread reconstructed, in the deferred render after the urgent one (React's `useDeferredValue`; "Preparing the preview…" replaces the text in between, and the previous thread stays mounted under a "Reconstructing the thread at event N…" note so open disclosures and the keyboard keep their place, and keeps its own event's number in its title and download names until the selected one is shown, so nothing is labelled with an event it does not show), so selecting an event paints before that work runs; a pending hand-off of the keyboard is dropped when the reader leaves during the wait; and a live append replays only the new events from the remembered thread, so the parts of the thread the events did not touch keep their identity and their remembered previews. What remains proportional to a pathological value is one reconstruction and one key enumeration per value, on the main thread, so above 2,000,000 characters of recorded events (`RunEventLog.bytes`, summed as the events arrive; ordinary runs record kilobytes to a few hundred kilobytes) the run's history counts as large and the inspector reconstructs the thread at an event only when the reader asks: a card names the history's size and offers "Reconstruct the thread at event N", an event once reconstructed stays so while the inspector is open, and a newly arrived event that becomes the selection asks again, so nothing a selection or a live update does by itself costs more than a constant. Messages are laid out fifty at a time, the latest first in reading order, with "Show all" and an exact download of all of them one click away, so a thread of thousands of messages does not mount thousands of elements on every selection. Expansion lasts while the same value stays shown, and any change of value starts bounded again, including a return to an event whose value the viewer expanded earlier (the whole text is never formatted for a value that is not expanded now). The bound is on what the page lays out and holds, never on what is stored or on the execution context: the engine's thread, events and results are untouched. The wait prompt is bounded the same way and the evaluation reasoning excerpt wraps at any character. The full thread JSON is built only while its disclosure is open, and thread reconstruction per selected event is remembered while the log grows (`createThreadCache`: a log counts as grown only when every earlier event is the same object at the same index; at most 32 results, enough for a session's browsing between selected events, each one thread object whose size follows the run's thread), so a live run's appends do not replay the log again for the event on screen. Every progress row wraps at any character, so a long single-line value never widens the page (#380).
++- Bounded rendering of large values (#259). Every value the inspector shows as text (the result, variables, messages, the two sides of a patch diff, progress values without a one-line description, the full thread JSON) is laid out through `BoundedValue`: up to 4,096 characters at once (1,024 in a diff column or a progress row, and in the Events table's payload cell), then "Showing the first 4,096 characters of a larger value" (a string says its total) with **Show all**, which puts the whole text in a named scrolling region, and **Download JSON**, which saves the exact stored value. The preview is produced by `prettyJsonPrefix`, which walks the value only until the budget is spent, so the page's layout and the text it holds do not grow with the value until the viewer asks for the whole text. One cost JavaScript imposes remains proportional to a value: reading the first property of an object enumerates all of its keys, so a single object with hundreds of thousands of properties costs that enumeration the first time it is previewed; the preview is remembered per value (`cachedJsonPrefix`), so a return to it or a re-render costs a lookup; a changed value is previewed, and a newly selected event's thread reconstructed, in the deferred render after the urgent one (React's `useDeferredValue`; "Preparing the preview…" replaces the text in between, and the previous thread stays mounted under a "Reconstructing the thread at event N…" note so open disclosures and the keyboard keep their place, and keeps its own event's number in its title and download names until the selected one is shown, so nothing is labelled with an event it does not show), so selecting an event paints before that work runs; a pending hand-off of the keyboard is dropped when the reader leaves during the wait; and a live append replays only the new events from the remembered thread, so the parts of the thread the events did not touch keep their identity and their remembered previews. What remains proportional to a pathological value is one reconstruction and one key enumeration per value, on the main thread, so above 2,000,000 characters of recorded events (`RunEventLog.bytes`, summed as the events arrive; ordinary runs record kilobytes to a few hundred kilobytes) the run's history counts as large and the inspector reconstructs the thread at an event only when the reader asks: a card names the history's size and offers "Reconstruct the thread at event N", an event once reconstructed stays so while the inspector is open, and a newly arrived event that becomes the selection asks again, so nothing a selection or a live update does by itself costs more than a constant; the keyboard follows the replacement both ways (a card that replaces a thread the keyboard was in takes it on its button; the thread's message controls take it after Reconstruct). Messages are laid out fifty at a time, the latest first in reading order, with "Show all" and an exact download of all of them one click away, so a thread of thousands of messages does not mount thousands of elements on every selection. Expansion lasts while the same value stays shown, and any change of value starts bounded again, including a return to an event whose value the viewer expanded earlier (the whole text is never formatted for a value that is not expanded now). The bound is on what the page lays out and holds, never on what is stored or on the execution context: the engine's thread, events and results are untouched. The wait prompt is bounded the same way and the evaluation reasoning excerpt wraps at any character. The full thread JSON is built only while its disclosure is open, and thread reconstruction per selected event is remembered while the log grows (`createThreadCache`: a log counts as grown only when every earlier event is the same object at the same index; at most 32 results, enough for a session's browsing between selected events, each one thread object whose size follows the run's thread), so a live run's appends do not replay the log again for the event on screen. Every progress row wraps at any character, so a long single-line value never widens the page (#380).
+ - Wait handling: when the run is waiting on input, a form rendered from the wait node's `inputSchema` appears inline.
+ 
+ ## PWA behaviour (Decided)
+@@ -246,6 +246,7 @@ The adversarial QA report is `docs/qa/2026-10-03-wp-d2.md`. Behaviour that chang
+ - **Editor.** Palette additions pan into view. List fields with a default show the default and a Customize button instead of item fields bound to nothing. Settings' "(server default)" deletes the setting.
+ - **Run inspector.** Replay starts from `run.queued`'s `initialThread`, including a subloop child's or replay fork's inherited messages, variables, outputs, counters, gate passes and iteration. A recorded seed takes precedence over the empty fallback. Domain `replayThread` adds every `node.started` to the seed's visits, projects absolute decision gate passes and historical iteration increments, and applies node patches; the inspector does not recount visits from zero. Thus event 1 shows the actual admitted seed and replace diffs use the same inherited values as execution; an array-append row (a `/-` pointer) still shows both sides as absent because `patchDiff` reads the literal pointer, which #255 addresses. A log that does not replay shows an explanation; an error boundary per screen keeps the shell alive. Events are appended, rendered, and reported in 100 ms batches and session storage never throws on quota: a 1,211-event run opens in about 0.5 s with a handful of run fetches (it took 7 s and one fetch per event before).
+ - **Events screen** shows each event's source (API, webhook delivery, or the run whose exit emitted it) and links to the runs it started. Webhook receipts distinguish historical filtered rows and current deduplicated, pending, admitted and failed delivery states, with retry attempts and safe failure codes. While the mounted page contains pending receipts, it refreshes every two seconds so recovery results and new run links appear automatically; interval refresh stops after all displayed receipts are terminal or the page unmounts. Normal focus and reconnect refresh remain enabled. Each delivery can disclose its pinned safe webhook configuration; complete endpoint history remains available through `GET /loops/{id}/triggers`.
++  The Events page appends older events with **Load more**, keeps long preformatted payloads visible and the reading position on append or retry, and focuses the end-of-list message after the final user load. Its URL has no hidden type or time filters; those filters remain available through the API and client. The control is busy only while fetching its next page.
+ - **Settings** check the secret name rule before sending, and validation messages name the first failing field.
+ 
+ ## Draft conflicts (Decided, WP-F2)
+@@ -626,4 +627,73 @@ Every use creates an owner-scoped ordinary loop with an independent definition.
+ 
+ ### Claude readiness and saved selections
+ 
+-Settings separates owner catalog enablement from installed-harness readiness. Opus 5.5 and Fable 5.1 have ordinary enable switches; an enabled row with failed preflight says "Enabled in catalog; Claude harness not ready". Preflight shows login independently of CLI version/capability failures. The inference picker keeps a saved model from another harness as a disabled, labelled option, including while preflight fails, and directs the user to a valid model or inherited default. Switching an inference node to Claude resets its policy to `read-only`/`never`, avoiding Codex's unsupported `workspace-write` default; full access remains an explicit choice. Other authored harness options are preserved, with unsupported Claude settings reported for correction. Models retain exact identity and effort checks (ADR-0029).
++Settings separates owner catalog enablement from prerequisite health. The seven server states are
++`unknown`, `ready`, `cli-missing`, `cli-incompatible`, `auth`, `quota` and `transport`; `checking`
++is client-only while no result exists yet.
++
++On first load, readiness is `checking` until a result arrives; the Settings preflight card shows
++"Loading preflight…". A background recheck (window focus or Retry preflight) keeps the last result
++on screen. The card announces "Rechecking…" in a muted live region; when its request is paused
++offline, it keeps the last result and announces "Offline; showing the last check." A completed
++lookup failure or timeout replaces the card's badge list with "Could not load preflight", with no
++state badge; the model picker and policy field show `unknown` instead of cached success.
++
++After a successful lookup, **Harness preflight** shows one badge per harness with a label, never
++the enum, which stays in `data-state`: Ready, Unknown, CLI not found, CLI update needed, Sign-in needed, Usage
++limit, Connection failed. Missing, outdated and signed-out CLIs use the failure tone; unknown,
++usage limit and connection failures the warning tone. Under it are the server's problems, each one
++detail sentence and one action (for example "Claude is not signed in. Run claude auth login, then
++retry preflight."). Claude rows add the adapter's model listing ("listed by adapter", neutral tone)
++and state that listings do not confirm account access. **Retry preflight** in the card head
++refetches and is disabled while a check runs.
++
++**Defaults** gives each harness, Codex and Claude alike, at most one short line under its fields:
++"Checking…" while the catalog first loads, the saved model's catalog problem (not in the catalog,
++disabled), or "<Harness> readiness: <label>. See Harness preflight below." for a harness that is
++not ready. A saved model the list does not offer stays selected as "<name> (saved)", "(disabled)"
++or "(not in catalog)"; the full problem stays in Harness preflight. Catalog rows of a harness that
++is not ready say "Enabled in catalog. <Harness> readiness: <label>." for Claude and Codex rows
++alike; nothing is shown during the first check.
++
++The **model picker** keeps a ready Claude field editable, with its label, through a background
++recheck. While Claude is not ready its choices are read-only; the note is the server's first
++problem followed by "Model choices are read-only until Claude is ready.", a saved model reads
++"<id> (saved)", and **Retry Claude preflight** refetches. A known Codex failure adds the server's
++problem as a warning and **Retry Codex preflight**; Codex choices stay editable, and neither the
++first check nor a previously ready recheck adds a new failure note; an existing Codex failure
++note stays visible while Retry rechecks it. The Claude policy field uses the same "Claude readiness:
++<label>." line. Adapter model listings do not establish account access, and failed catalog fetches
++do not prove removal. `MODEL_DISABLED` and `MODEL_NOT_IN_CATALOG` are catalog facts independent of
++auth, quota or transport failures. Omitted `authenticated` means login could not be established.
++
++Transport detail says "Claude reported a connection or provider service error." (or Codex),
++followed by "Check the network connection and the provider's service status, then retry preflight."
++It covers provider HTTP 500 responses as well as connection failures; it does not establish a
++connectivity diagnosis.
++
++Draft create, import, template draft and save (including 600 ms idle autosaves) never probe
++readiness (D-017). The editor fetches readiness independently from `/harness/preflight`. Validate,
++publish, preflight and run start probe once per referenced harness at request admission, sharing
++the result within that operation and probing distinct harnesses concurrently. Each new operation
++probes afresh; a later Claude turn-launch inspection is a separate check. These failures preserve
++authored model/effort values.
++Switching an inference node to Claude resets its policy to `read-only`/`never`; full access remains
++explicit. Other authored harness options remain, with unsupported settings reported for correction.
++Models retain exact identity and effort checks (ADR-0029).
++
++### Loop history summaries
++
++The Loops page reads each loop's `latestRun` and exact `runCount` from `GET /loops`,
++refreshed every five seconds. Last run links to the latest run by creation time, breaking
++ties by descending run ID, which follows creation order within one process. A zero
++count and null summary says "never run"; a positive count and null summary says
++"latest run unavailable" with "Check run history diagnostics." when the selected
++latest run's record (including its pin), initial thread or present cached thread
++snapshot, or an event in its history fails strict decoding. Event checks are cached
++by run identity and event count; manual database repairs require an API restart.
++An absent cached snapshot remains valid. It shows
++neither a partial status badge nor an older run in its place. `GET /runs/diagnostics`
++identifies the damaged row, including after restart when its stored status is valid
++but stale. Unrelated loops
++filling a global history page cannot hide older history. Deletion confirmation shows the exact
++server count, including above 500 runs. A failed listing shows its error.

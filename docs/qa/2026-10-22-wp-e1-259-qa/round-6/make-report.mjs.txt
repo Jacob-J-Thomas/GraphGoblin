@@ -1,0 +1,118 @@
+import {readFile,writeFile,readdir} from 'node:fs/promises';import {resolve} from 'node:path';import {createRequire} from 'node:module';
+const dir=resolve('docs/qa/2026-10-22-wp-e1-259-qa/round-6'),req=createRequire(resolve('package.json')),prettier=req('prettier');
+const load=async n=>JSON.parse(await readFile(resolve(dir,n),'utf8')),fmt=n=>Number(n).toFixed(1),tasks=t=>t?.longTasks?.map(t=>String(t.duration)).join(', ')||'none',link=n=>`[${n}](${n})`;
+const suites=[['focus-results.json',await load('focus-results.json')],['performance-results.json',await load('performance-results.json')],['identifier-results.json',await load('identifier-results.json')],['followup-results.json',await load('followup-results.json')]],visible=await load('visible-paint-results.json'),admission=await load('fixtures.json'),prior=await load('prior-evidence-audit.json'),state=await load('final-state.json');
+let notKept=[];try{notKept=await load('not-kept.json');}catch{}
+await writeFile(resolve(dir,'NOT-KEPT.md'),await prettier.format('# Captures not kept in the worktree\n\nCaptures above 1,000,000 bytes stay in disposable temporary storage. These entries record the exact bytes compared during this run. The scripts and comparison results are retained; the large captured bodies are not represented as committed evidence. No directory or previous artifact was deleted.\n\n| Name | Bytes | SHA-256 |\n| --- | ---: | --- |\n'+notKept.map(x=>`| ${x.name} | ${x.bytes} | ${x.sha256} |`).join('\n')+'\n',{parser:'markdown'}));
+const rows=[],timings=[];for(const [file,checks] of suites)for(const c of checks){let actual=c.error??'';const a=c.actual;if(a){if(c.id.includes('stale hand-off'))actual=`A: ${a.onA.text}; B: ${a.onB.text}; other region retained; preview ${a.aChars} chars`;
+else if(c.id.includes('large-to-small'))actual=`${a.held.tag} ${a.held.tabindex}; Tab -> ${a.afterTab.text}; tabindex ${a.tabindex}`;
+else if(c.id.includes('large cold'))actual=`${fmt(a.timing.wallMs)} ms; tasks ${tasks(a.timing)}; card event 6; no Variables DOM`;
+else if(c.id.includes('requested reconstruction'))actual=`${fmt(a.timing.wallMs)} ms; tasks ${tasks(a.timing)}; exact 4,096-character prefix plus ellipsis; ${a.download.download.bytes} download bytes match`;
+else if(c.id.includes('prepared return'))actual=`${fmt(a.timing.wallMs)} ms; tasks ${tasks(a.timing)}; no request card`;
+else if(c.id.includes('live selection'))actual=`New request card; focus ${a.after.tag}; tasks ${tasks(a.timing)} (focus recorded as QA-259-R6-01)`;
+else if(c.id.includes('reload and other'))actual=`Large after=0; ordinary after=${a.smallSeq}; large absent from stored logs; ordinary retained`;
+else if(c.id.includes('below threshold'))actual=`${a.history.historyChars} history characters; ${fmt(a.timing.wallMs)} ms; tasks ${tasks(a.timing)}; exact bounded prefix`;
+else if(c.id.includes('messages window'))actual=`50 -> 6,000 -> 50; ${a.download.download.bytes} bytes match; ${a.before.label} -> ${a.after.label}; Tab -> ${a.afterTab.label}`;
+else if(c.id.includes('pending download'))actual=`Title ${a.moment.title}; note ${a.moment.note}; both names at-${a.oldSeq}; Variables bytes equal; thread values equal`;
+else if(c.id.includes('failed replay'))actual=`${a.text}; valid A recovered; API hashes unchanged`;
+else if(c.id.includes('large-history controls'))actual=`Typing ${fmt(a.typing.wallMs)} ms, Pause ${fmt(a.pause.wallMs)} ms, Resume ${fmt(a.resume.wallMs)} ms; no long tasks`;
+else if(c.id.includes('new-origin'))actual=`${fmt(a.timing.wallMs)} ms; tasks ${tasks(a.timing)}; after=0; usable ${a.usable}`;
+else if(c.id.includes('storage version'))actual=`v0 after=0; v1 after=${a.seq}; clear after=0; version ${a.storedVersion}; ${a.historyChars} counted chars`;
+else if(c.id.includes('original nested'))actual=`${a.expandedChars} -> ${a.returnedChars} chars on return; ${fmt(a.timing.wallMs)} ms; no long task`;
+for(const [key,t] of Object.entries(a)){if(t&&typeof t==='object'&&'wallMs' in t){const invalid=c.id.includes('reload and other-run');timings.push(`| ${c.id}: ${key} | ${fmt(t.wallMs)} | ${invalid?'not valid across navigation; see corrected reload below':tasks(t)} | ${link(file)} |`);}}
+}rows.push(`| ${c.id} | ${c.expected} | ${actual.replaceAll('|','/').replaceAll('\n',' ')} | ${c.pass?'PASS':'FAIL'} | ${link(file)} |`);}
+const paintRows=[];for(const name of ['large-cold-card-1440','large-cold-card-390','large-request-1440','large-request-390','below-medium-1440','below-medium-390','below-string-1440','below-string-390','visible-medium-390','visible-wide-390']){const t=await load(name+'.json'),pending=t.states.find(s=>s.note||s.card),paint=t.paints.find(p=>pending&&p.at>=pending.at);paintRows.push(`| ${name} | ${pending?fmt(pending.at):'n/a'} | ${paint?fmt(paint.at):'n/a'} | ${t.replay.firstAt?fmt(t.replay.firstAt):'none sampled'} | ${t.serializer.firstAt?fmt(t.serializer.firstAt):'none sampled'} | ${fmt(t.replay.sampledMs)} / ${fmt(t.serializer.sampledMs)} | ${link(name+'.json')} |`);}
+const gateNames=['build.log.txt','focused-tests.log.txt','lint.log.txt','typecheck.log.txt','playwright.log.txt','layers.log.txt','deps.log.txt','tokens.log.txt','format.log.txt'];const gates=[];for(const file of gateNames){try{const raw=await readFile(resolve(dir,file),'utf8');gates.push(`| ${raw.match(/^Command: (.*)/m)?.[1]} | ${raw.match(/^Exit: (\d+)/m)?.[1]==='0'?'PASS':'FAIL'} | ${link(file)} |`);}catch{gates.push(`| pending format check | PENDING | ${link(file)} |`);}}
+const files=[...new Set([...(await readdir(dir)), 'validation.json','validation.log.txt','format.log.txt','format-qa.log.txt'])].filter(n=>n!=='README.md').sort();
+const report=`# Independent QA, round 6: #259 / PR #382
+
+## 1. Verdict
+
+**FAIL** at **689b885a3cdb30a5fbb9bea6b6fa694f053b0646**, detached HEAD. QA-259-R5-01 is fixed in the reproduced keyboard and other-value cases. The large-history request mode removes automatic replay/preview work from cold selection; below the threshold the selection note painted before the sampled replay and preview work, so QA-259-R5-02 is addressed for the measured cases. One new minor focus defect remains in the large-history request transition.
+
+Independent QA only, run alone. No production or maintained-test changes, staging, commits, branch operations or GitHub writes. Only this round's QA records were added. ${link('environment.json')} and ${link('final-state.json')} pin admission and final state. The built native API used ports 5720/5721 and disposable store gg-qa-e1-b5r3Tf; it has been stopped and both ports are closed (${link('shutdown.json')}). No owner instance/store was accessed. All run turns used the fake harness or mutate nodes; no live-provider claim is made.
+
+## 2. Defects
+
+**QA-259-R6-01 — minor — a large-history request transition drops keyboard focus to the body.** Reproduced at 1440 × 900 and 390 × 844, with both an expanded region and a collapsed value control.
+
+1. Create the admitted 350,000-property Variables run (history about 6.43 million JSON characters), let it wait at ask, and open its inspector at the latest event.
+2. Activate Reconstruct. Expand Variables and Shift+Tab into its named region, or focus Show all of Variables without expanding.
+3. Deliver input from the public API so a live event becomes the selection. The thread view is replaced by the new event's request card.
+4. Read document.activeElement: **BODY** at both widths. In the independent control reproduction, the transition was to Reconstruct the thread at event 24. Focus that button and press Enter: after the requested thread appears, focus is again **BODY**.
+
+Expected: a disappearing focused thread/control hands the keyboard to a meaningful surviving target, such as the new request control; activating that request similarly leaves focus in the resulting view. Actual: the focused subtree/control is removed and no replacement takes focus. The page remains operable, but a keyboard reader loses their position. Source location: ThreadViewer.tsx lines 157–171 return a different card without a hand-off for either direction; the value-level hand-off cannot survive the component's removal. This is a new container transition, while the previously reported value-level hand-off is fixed.
+
+Evidence: ${link('large-live-focus-1440.json')}, ${link('large-live-focus-390.json')} (expanded region), ${link('large-focus-independent-1440.json')}, ${link('large-focus-independent-390.json')} (control and keyboard request), ${link('followup-results.json')}, ${link('followup.log.txt')}; exact public-interface reproductions in ${link('performance.mjs.txt')} and ${link('followup.mjs.txt')}. The two failing follow-up rows are this single defect. Ordinary intentional Tab traversal through the end of the document also records BODY in the focus trace; those entries are distinct from the unprompted replacement failure above.
+
+QA-259-01 remains fixed: the original 2,322,721-character value returns at 4,097 displayed characters including the ellipsis. QA-259-R4-01 remains fixed for the under-threshold messages run. QA-259-02 remains disposed: reconstructed full-thread downloads preserve values but may order properties differently from the live API. No value difference was found.
+
+## 3. Coverage of criteria
+
+Environment: Node v22.14.0 first on PATH; installed Edge 155.0.4283.62, headless; built app at 1440 × 900 and 390 × 844. Two supplementary 390 × 3000 captures expose the stacked inspector and timeline together. ${link('browser-environment.json')}, ${link('source-map-provenance.json')}, ${link('change.diff.txt')}.
+
+Touched systems and positive/negative coverage:
+
+| System | Steps and expected behavior | Actual / coverage |
+| --- | --- | --- |
+| BoundedValue focus, preview and expansion | Expand A; Shift+Tab in; live B hands off; Tab through the page to timeline A and B and select with Enter. Repeat with focus in another value; replace by small data and Tab on. | PASS at both widths; focus remains at the intended timeline/message target; held text has tabindex -1 only until Tab. Original nested A/B/A also PASS. |
+| ThreadViewer large-history mode, cache and diff | Select queued then unseen seed; expect request card, no thread DOM/work. Request it, return through queued to seed, then append while following the latest. | PASS for request gating, exact preview, prepared return, and fresh live card. FAIL for keyboard position at card transitions (QA-259-R6-01). Replay/preview cost is incurred on request. |
+| Deferred reconstruction and identifiers | Under-threshold 90,000-property and million-character-string runs: select queued then uncached node.finished. During pending render trigger the visible Variables and Full thread JSON downloads; inject a replay-invalid external patch. | PASS: note/selection paint before measured work; shown title/names/content identify event 8 while note identifies selected 14; failed-replay alert identifies 14, and valid earlier selection recovers. |
+| Event store size, persistence and hydration | Compare summed JSON event lengths; large log omitted, ordinary log retained. Reload both; inject an older version-0 stored ordinary log, then clear storage. | PASS: large after=0, ordinary after=8; version-0/clear after=0, hydrated version 1 counts exact event characters; reconstructed values remain correct. Exact threshold and duplicate-count cases also covered by maintained tests. |
+| Messages window and focus | Valid 6,000-message API fixture; show latest 50, Show all, download, focus/expand old m0, append externally, then Tab. | PASS: 50 → 6,000 → 50; exact message bytes, focus to Show all messages, Tab to Download messages, no list tabindex left. |
+| Controls, stored data and adjacent inspector surfaces | Type in input with reconstructed wide Variables shown; Pause/Resume; navigate timeline; exact downloads; compare stored API thread/events before/after the controlled failure view. Run adjacent result/progress/wait/Events unit files and maintained Edge spec. | PASS functionality and stored hash comparisons; measured costs below. Full JSON formatting occurs when explicitly opened. No engine context/value truncation observed. |
+| Docs and operator behavior | Read changed docs/09, CHANGELOG and implementation diff against behavior. | Request threshold, large-log reload semantics and reconstruction/property-order distinction match the exercised behavior. No schema/route/dependency change in this delta. |
+
+Each case below was executed once after fixture/configuration admission; errors from setup are disclosed separately. Scripts contain the exact API operations and DOM/keyboard steps. The expected column states the assertion scope: the main live-card rows pass gating while their recorded focus failure is independently failed below.
+
+| System / case | Steps / expected | Actual | Result | Evidence |
+| --- | --- | --- | --- | --- |
+${rows.join('\n')}
+| Supplementary visible 390-px card | Cold queued → seed at height 3000; request card visible with no replay/preview | ${fmt(visible[0].timing.wallMs)} ms; no long task; inspected compositor frame shows selected event 6 and request card | PASS | ${link('visible-paint-results.json')} |
+| Supplementary visible 390-px deferred view | Cold queued → seed at height 3000; show previous event and pending note before preview | ${fmt(visible[1].timing.wallMs)} ms; task ${tasks(visible[1].timing)}; inspected frame shows selection 6, shown event 1 and note before first serializer sample | PASS | ${link('visible-medium-390-frame-22.png')} |
+
+Measurement method and limits: read-only PerformanceObserver records standard ≥50 ms long tasks; durations below are milliseconds, action-to-two-animation-frames after the expected state. Cold denotes an unseen selected sequence after its log has loaded; initial history transfer/validation is measured separately by the reload follow-up. Wall times include Playwright/CDP scheduling and, for live/API controls, server/network work; they are not INP. CPU sampling interval is 1 ms, mapped through the built sourcemap; a first sample is an observed bound, not exact function-entry time. Profiles identify serializer work in utils.ts lines 41–147 and domain replay/patch frames. Paint events are distinct from DOM commits and delivered compositor frames; the retained frames were inspected. No app function/store was patched. Gates and fixture creation had finished before the main timings; unrelated host activity is uncontrolled, and no cross-round speedup ratio is claimed.
+
+The ordinary below-threshold object has **1,510,208 / 1,510,206** history characters; the string run has **1,002,437 / 1,002,435**. The wide run has **6,430,205 / 6,430,203**. Thus both paths are exercised through admitted API values rather than an invented size flag. ${link('fixtures.json')}.
+
+| Operation / width | Wall ms | Every observed long task (ms) | Evidence |
+| --- | ---: | --- | --- |
+${timings.join('\n')}
+
+The first pair of reload rows in the main script used performance.now from two different document origins: their wall times and cursor/storage assertions are valid, but their empty long-task lists are **not evidence of task-free reloads**. The explicit new-origin follow-up replaces those task readings: desktop 155, 546, 157 ms; narrow 185, 559, 160 ms. Both reloads remain usable. This measurement correction is retained rather than silently replacing the original capture. Full-thread JSON opening (101 / 96 ms) and showing all 6,000 messages (1,325 / 1,207 ms maximum task) are explicit requested work; collapsing thousands of mounted messages on live replacement also has the recorded costs. No promise of a frame-time bound for these requested/expanded states is inferred.
+
+| Trace / case | Pending/card DOM at | First Paint after it | First sampled replay | First sampled serializer | Sampled replay / serializer ms | Evidence |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+${paintRows.join('\n')}
+
+At normal desktop size the below-threshold note is visible in ${link('below-medium-1440-frame-24.png')}; at narrow size the supplementary ${link('visible-medium-390-frame-22.png')} shows the stacked note before the first sampled preview enumeration. In the ordinary 390 × 844 viewport the note is below the fold; its DOM/paint evidence is retained, and ${link('below-medium-390-frame-46.png')} shows the updated timeline before the first serializer sample. A Paint event occurred between the note commit and first sampled replay work in each measured object case; the compositor frame interval does not locate the exact start of replay. The large-history card's cold selections have **zero sampled replay/serializer frames and no long task**; requested reconstruction has **820 / 822 ms** tasks, including roughly **529.9 / 506.0 ms** sampled replay work and **250.9 / 225.8 ms** sampled serializer work.
+
+Downloads: both wide Variables files were compared byte for byte with API vars using identical two-space JSON formatting: **7,827,782 bytes**, SHA-256 **b8d4d3d575a5d82f611a4f4e41d60e4283155be4385d976b0b8bbbb3966c39d3**. Both 6,000-message downloads were compared byte for byte with the API messages array; their byte counts/hashes and retained bodies are in ${link('performance-results.json')}. The pending event-8 Variables downloads also match API bytes; full-thread downloads match API values with the known property-order difference (${link('identifier-results.json')}). No stored-value difference was found. The four >1,000,000-byte wide bodies are recorded in ${link('NOT-KEPT.md')} / ${link('not-kept.json')}; every retained capture is below the requested size limit.
+
+Gates (Node 22; exact commands are also in each log):
+
+| Command | Result | Evidence |
+| --- | --- | --- |
+${gates.join('\n')}
+
+Affected unit tests: **97/97 in 11 files** pass, including the new deferred focus and identifier tests, large-history component tests, projection/cache/store-size/migration cases and adjacent inspector/Events tests. The command includes an event-store.test.ts filter that matches no file; the event-store tests live in projections.test.ts and ran there. Maintained Edge spec: **6/6**, workers 1, retries 0. Build emitted a nonfatal Turbo cache-write permission warning; compilation succeeded. Full web/package coverage was explicitly waived for this round and was not run; no coverage percentage is claimed. check:docs and check:licenses were not run because this delta changes neither a schema/route nor dependencies. Regression failure on an older head was not executed this round; prior negative evidence and the current diff establish the old-hand-off path, and the independently reproduced new defect has no production change here.
+
+Setup corrections, preserved: the first message fixture used createdAt instead of the contract's ts (${link('fixtures-initial.mjs.txt')}, ${link('fixtures-initial.log.txt')}); after correction the event-page helper was corrected from events to the documented items envelope (${link('fixtures-envelope.log.txt')}, ${link('support.mjs.txt')}). The initial Edge invocation found no tests because its config resolved the filtered package's working directory; setting QA_WORKTREE_ROOT plus the two disposable endpoint variables corrected the configuration (${link('playwright-config-initial.log.txt')}, ${link('playwright.config.mjs.txt')}). These runs executed no failing product assertion. Their errors were not dropped or relabelled as passing tests. The final functional fixture/admission log is ${link('fixtures.log.txt')}.
+
+The initial integrity check found its own pending validation.json output missing after a PowerShell quoting error in the placeholder command. That check's JSON and log are retained as validation-initial.json.txt and validation-initial.log.txt. The final integrity run checks the complete output set; no product assertion was rerun for this correction.
+
+Not tested in this bounded round: full package coverage, the full rounds 1–5 surface/adversarial matrix, native restart on the same store, real screen-reader speech, live providers, extremely long histories by event count, cache eviction after more than 32 requested events, simultaneous multi-tab updates, and hardware-independent latency guarantees. Keyboard DOM semantics were exercised; no speech-output claim is made. API bad-patch replay testing uses an explicitly intercepted external SSE response and proves the built UI failure path, not a claim that the current engine emitted bad data.
+
+## 4. Report path and evidence folder
+
+This README is at docs/qa/2026-10-22-wp-e1-259-qa/round-6/README.md. The evidence folder is this same round-6 directory. All kept artifacts are linked below; scripts end in .mjs.txt and logs in .log.txt. Large-body comparisons retain their sizes/hashes in NOT-KEPT.md. The integrity result is ${link('validation.json')} / ${link('validation.log.txt')}.
+
+The prior evidence audit found **${prior.references} references**, **${prior.missingUnmanifested} unaccounted missing references**, and **${prior.manifestEntries} NOT-KEPT entries** whose still-local bytes all match their recorded size and SHA-256. The ${prior.untracked} large previous captures are present locally as untracked files, consistently listed in those manifests; the committed reports and kept evidence are present. No previous evidence hash changed (${link('prior-evidence-audit.json')}, ${link('final-state.json')}).
+
+${files.map(n=>'- '+link(n)).join('\n')}
+
+## 5. Observations outside scope
+
+No additional product finding outside this round's touched systems was recorded. Reload still transfers/validates the complete large history and has the measured main-thread tasks; on-request reconstruction and all-message/full-JSON expansion have the explicit costs above. These are measured limits, not stored-data truncation or a new engine/provider finding. Disposable stores, temporary scripts/raw captures and temporary Playwright output were left for the orchestrator; no directory was deleted. Only the native instance owned by this round was stopped. Tracked and staged diffs remain empty; prior evidence is unchanged. No commit was made.
+`;
+await writeFile(resolve(dir,'README.md'),await prettier.format(report,{parser:'markdown',printWidth:100}));console.log(JSON.stringify({rows:rows.length+2,retainedIndex:files.length,priorReferences:prior.references,verdict:'FAIL',defects:['QA-259-R6-01']}));

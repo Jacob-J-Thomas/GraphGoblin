@@ -1,0 +1,14 @@
+// Read-only diagnosis of the independent probe's completed-run synchronization timeouts.
+import {createRequire} from 'node:module';import {resolve} from 'node:path';import {writeFile} from 'node:fs/promises';
+const dir=resolve('docs/qa/2026-10-22-wp-e1-259-qa/round-3'),api='http://127.0.0.1:5720';
+const {chromium}=createRequire(resolve('apps/web/package.json'))('@playwright/test');
+const browser=await chromium.launch({channel:'msedge',headless:true}),page=await browser.newPage();
+const runs=(await (await fetch(api+'/runs?limit=100')).json()).items.filter(r=>r.pinned.name.includes('rapid')||r.pinned.name.includes('full thread finish'));
+const out=[];
+for(const run of runs.slice(0,4)){
+ const es=await (await fetch(api+'/runs/'+run.id+'/events')).json();
+ await page.goto(api+'/app/runs/'+run.id);await page.getByRole('list',{name:'Timeline',exact:true}).waitFor();await page.waitForTimeout(800);
+ const dom=await page.evaluate(()=>({buttons:[...document.querySelectorAll('[aria-label="Timeline"] button')].map(e=>({first:e.firstElementChild?.textContent,text:e.textContent})),headings:[...document.querySelectorAll('h2')].map(e=>e.textContent),text:document.body.innerText.slice(-3000)}));
+ out.push({id:run.id,name:run.pinned.name,apiLast:es.items.at(-1),count:es.items.length,nextAfter:es.nextAfter,dom});
+}
+await writeFile(resolve(dir,'timeline-diagnosis.json'),JSON.stringify(out,null,2));console.log(JSON.stringify(out.map(r=>({id:r.id,count:r.count,nextAfter:r.nextAfter,apiLast:r.apiLast.seq,domLast:r.dom.buttons.at(-1)}))));await browser.close();

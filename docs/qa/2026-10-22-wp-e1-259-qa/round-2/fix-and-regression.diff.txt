@@ -1,0 +1,229 @@
+﻿diff --git a/apps/web/src/components/ui/bounded-value.test.tsx b/apps/web/src/components/ui/bounded-value.test.tsx
+index acaff164..392bbb70 100644
+--- a/apps/web/src/components/ui/bounded-value.test.tsx
++++ b/apps/web/src/components/ui/bounded-value.test.tsx
+@@ -121,7 +121,7 @@ describe('BoundedValue', () => {
+     expect(visited).toBeGreaterThan(0);
+   });
+ 
+-  it('starts bounded again when another value is shown', async () => {
++  it('starts bounded again when another value is shown, and when the first one returns', async () => {
+     const user = userEvent.setup();
+     const other = {
+       items: Array.from({ length: 400 }, (_, i) => ({ id: i, note: 'y'.repeat(40) })),
+@@ -132,8 +132,46 @@ describe('BoundedValue', () => {
+     rerender(<BoundedValue value={other} label="Variables" testId="value" />);
+     expect(screen.getByTestId('value').textContent?.length).toBe(VALUE_PREVIEW_CHARS + 1);
+     expect(screen.getByRole('button', { name: 'Show all of Variables' })).toBeInTheDocument();
+-    // The same value again is still expanded.
++    // Returning to the expanded value (the same reference, from the thread cache) lays out the
++    // preview again: the bound is on what is shown now, not on what the reader once chose
++    // (QA-259-01, a 2.3 MB value rendered whole by ordinary timeline navigation).
+     rerender(<BoundedValue value={big} label="Variables" testId="value" />);
++    expect(screen.getByTestId('value').textContent).toBe(
++      `${bigJson.slice(0, VALUE_PREVIEW_CHARS)}…`,
++    );
++    expect(screen.getByRole('button', { name: 'Show all of Variables' })).toBeInTheDocument();
++    // An unchanged value keeps its expansion across re-renders.
++    await user.click(screen.getByRole('button', { name: 'Show all of Variables' }));
++    rerender(<BoundedValue value={big} label="Variables" testId="value" className="mt-1" />);
+     expect(screen.getByTestId('value').textContent).toBe(bigJson);
+   });
++
++  it('keeps the keyboard inside the component when a change of value collapses the region', async () => {
++    const user = userEvent.setup();
++    const other = {
++      items: Array.from({ length: 400 }, (_, i) => ({ id: i, note: 'y'.repeat(40) })),
++    };
++    const { rerender } = render(<BoundedValue value={big} label="Variables" testId="value" />);
++    await user.click(screen.getByRole('button', { name: 'Show all of Variables' }));
++    screen.getByRole('region', { name: 'Variables' }).focus();
++    expect(screen.getByRole('region', { name: 'Variables' })).toHaveFocus();
++    // Large to large: the new value's Show all takes the focus.
++    rerender(<BoundedValue value={other} label="Variables" testId="value" />);
++    expect(screen.getByRole('button', { name: 'Show all of Variables' })).toHaveFocus();
++    // Large to small: the text itself keeps it, without becoming a tab stop, until it moves on.
++    await user.click(screen.getByRole('button', { name: 'Show all of Variables' }));
++    screen.getByRole('region', { name: 'Variables' }).focus();
++    rerender(<BoundedValue value={{ topic: 'loops' }} label="Variables" testId="value" />);
++    expect(screen.getByTestId('value')).toHaveFocus();
++    expect(screen.getByTestId('value')).toHaveAttribute('tabindex', '-1');
++    await user.tab();
++    expect(screen.getByTestId('value')).not.toHaveFocus();
++    expect(screen.getByTestId('value')).not.toHaveAttribute('tabindex');
++    // A keyboard elsewhere is left alone.
++    rerender(<BoundedValue value={big} label="Variables" testId="value" />);
++    await user.click(screen.getByRole('button', { name: 'Show all of Variables' }));
++    (document.activeElement as HTMLElement).blur();
++    rerender(<BoundedValue value={other} label="Variables" testId="value" />);
++    expect(document.activeElement).toBe(document.body);
++  });
+ });
+diff --git a/apps/web/src/components/ui/bounded-value.tsx b/apps/web/src/components/ui/bounded-value.tsx
+index 21d3e748..0f9adbcc 100644
+--- a/apps/web/src/components/ui/bounded-value.tsx
++++ b/apps/web/src/components/ui/bounded-value.tsx
+@@ -1,4 +1,4 @@
+-import { useMemo, useState } from 'react';
++import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+ import { cn, downloadJson, prettyJson, prettyJsonPrefix } from '../../lib/utils.js';
+ import { Button } from './button.js';
+ 
+@@ -44,8 +44,6 @@ export interface BoundedValueProps {
+ }
+ 
+ const count = (n: number) => n.toLocaleString('en-US');
+-/** Nothing is expanded. A symbol, so that no value can collide with it. */
+-const NONE = Symbol('nothing expanded');
+ 
+ /**
+  * A value as text whose rendering is bounded: up to `previewChars` characters are laid out at
+@@ -53,7 +51,8 @@ const NONE = Symbol('nothing expanded');
+  * larger value says so and offers the whole text in a scrolling region, formatted only then, and
+  * the exact stored value as a download. Nothing about the value itself changes; the bound is on
+  * what the page lays out and holds, so a 2 MB variable cannot freeze the inspector's controls.
+- * Expansion belongs to one value: selecting another value starts bounded again.
++ * Expansion lasts while the same value stays shown: any change of value starts bounded again,
++ * including a return to a value the reader expanded earlier.
+  */
+ export function BoundedValue({
+   value,
+@@ -67,8 +66,39 @@ export function BoundedValue({
+   className,
+   testId,
+ }: BoundedValueProps) {
+-  const [expandedFor, setExpandedFor] = useState<unknown>(NONE);
+-  const expanded = expandedFor === value;
++  const rootRef = useRef<HTMLDivElement>(null);
++  const preRef = useRef<HTMLPreElement>(null);
++  const showAllRef = useRef<HTMLButtonElement>(null);
++  const [expandedState, setExpandedState] = useState(false);
++  const [shownValue, setShownValue] = useState<unknown>(value);
++  // Counts the times a change of value collapsed an expanded region (the focus effect below).
++  const [collapses, setCollapses] = useState(0);
++  // The collapsed text keeps the keyboard focus it held while expanded, until the focus moves on.
++  const [holdsFocus, setHoldsFocus] = useState(false);
++  // Another value arrived (another event, a live reconstruction, or one shown expanded earlier):
++  // it starts bounded. React re-renders at once with the adjusted state; `expanded` is false in
++  // the discarded pass too, so the whole text is never formatted for a value that is not expanded.
++  if (shownValue !== value) {
++    setShownValue(value);
++    if (expandedState) {
++      setExpandedState(false);
++      setCollapses((n) => n + 1);
++    }
++  }
++  const expanded = expandedState && shownValue === value;
++  // A collapse caused by a change of value, while the keyboard was inside this component, would
++  // drop the focus to the body once the region's tabindex is gone. Keep the keyboard here: on the
++  // new value's Show all when it has one, else on the text itself, focusable until it blurs.
++  useLayoutEffect(() => {
++    if (collapses === 0) return;
++    const active = document.activeElement;
++    if (!rootRef.current || !active || !rootRef.current.contains(active)) return;
++    if (showAllRef.current) showAllRef.current.focus();
++    else setHoldsFocus(true);
++  }, [collapses]);
++  useLayoutEffect(() => {
++    if (holdsFocus) preRef.current?.focus();
++  }, [holdsFocus]);
+   const isText = text && typeof value === 'string';
+   // Collapsed: only the preview is produced (a string shows its own prefix; JSON stops at the
+   // budget). Expanded: the whole text, once, for as long as this value stays expanded.
+@@ -87,14 +117,16 @@ export function BoundedValue({
+   const shown = expanded && full !== undefined ? full : preview.text;
+   const total = isText ? value.length : full?.length;
+   return (
+-    <div className={cn('grid min-w-0 gap-1.5', className)}>
++    <div ref={rootRef} className={cn('grid min-w-0 gap-1.5', className)}>
+       <pre
++        ref={preRef}
+         // A region that scrolls must be named and reachable from the keyboard.
+         {...(expanded
+           ? { role: 'region', tabIndex: 0, 'aria-label': label }
+-          : labelled
+-            ? { 'aria-label': label }
+-            : {})}
++          : {
++              ...(labelled ? { 'aria-label': label } : {}),
++              ...(holdsFocus ? { tabIndex: -1, onBlur: () => setHoldsFocus(false) } : {}),
++            })}
+         data-testid={testId}
+         className={cn(
+           'm-0 min-w-0 px-3 py-2 leading-normal whitespace-pre-wrap wrap-anywhere',
+@@ -115,9 +147,10 @@ export function BoundedValue({
+                 : `Showing the first ${count(previewChars)} characters of a larger value.`}
+           </span>
+           <Button
++            ref={showAllRef}
+             size="sm"
+             aria-label={`${expanded ? 'Show less of' : 'Show all of'} ${label}`}
+-            onClick={() => setExpandedFor(expanded ? NONE : value)}
++            onClick={() => setExpandedState(!expanded)}
+           >
+             {expanded ? 'Show less' : 'Show all'}
+           </Button>
+diff --git a/apps/web/src/runs/projections.ts b/apps/web/src/runs/projections.ts
+index 518d0763..c3a579a5 100644
+--- a/apps/web/src/runs/projections.ts
++++ b/apps/web/src/runs/projections.ts
+@@ -14,7 +14,7 @@ import { getAtPointer, replayThread } from '@graphgoblin/domain';
+ 
+ /**
+  * The thread as the run started. The engine records it on the first event (`run.queued`),
+- * including a subloop child's seed; logs written before that field existed fall back to the
++ * including a subloop child's or replay fork's seed; logs without that field fall back to the
+  * immutable `run` and `invocation` from the current thread and one-based gates from the definition.
+  */
+ export function initialThreadFrom(
+@@ -45,22 +45,15 @@ export function initialThreadFrom(
+ }
+ 
+ /**
+- * The thread after the event with sequence `seq`: node patches replayed by `domain`, plus the
+- * node-visit counter the engine keeps outside patches (it counts `node.started`).
++ * The thread after event `seq`, including the seed's counters, gates and iteration. Domain replay
++ * increments visits for each `node.started`, just as the executor does, without resetting the seed.
+  */
+ export function threadAt(
+   initial: ContextThread,
+   events: readonly RunEvent[],
+   seq: number,
+ ): ContextThread {
+-  const thread = replayThread(initial, events, seq);
+-  const nodeVisits: Record<string, number> = {};
+-  for (const event of events) {
+-    if (event.seq > seq) break;
+-    if (event.type === 'node.started')
+-      nodeVisits[event.nodeId] = (nodeVisits[event.nodeId] ?? 0) + 1;
+-  }
+-  return { ...thread, counters: { ...thread.counters, nodeVisits } };
++  return replayThread(initial, events, seq);
+ }
+ 
+ /**
+diff --git a/docs/09-frontend-and-pwa.md b/docs/09-frontend-and-pwa.md
+index e3694ce6..684f2a1a 100644
+--- a/docs/09-frontend-and-pwa.md
++++ b/docs/09-frontend-and-pwa.md
+@@ -79,9 +79,9 @@ The owner's request: move the horizontal and vertical break points of a line to
+ ## Run inspector (Draft)
+ 
+ - Timeline from the SSE stream with the cursor stored so reload resumes without gaps.
+-- Thread viewer that reconstructs the thread at any event by replaying patches client-side using `domain`.
++- Thread viewer that reconstructs the thread at any event by replaying patches client-side using `domain`. The Full thread JSON shown and downloaded at an event is that reconstruction, so its property order follows the replay rather than the API's serialisation of the live thread; the values are the same.
+ - Node progress drawer that shows harness items as they arrive.
+-- Bounded rendering of large values (#259). Every value the inspector shows as text (the result, variables, messages, the two sides of a patch diff, progress values without a one-line description, the full thread JSON) is laid out through `BoundedValue`: up to 4,096 characters at once (1,024 in a diff column or a progress row, and in the Events table's payload cell), then "Showing the first 4,096 characters of a larger value" (a string says its total) with **Show all**, which puts the whole text in a named scrolling region, and **Download JSON**, which saves the exact stored value. The preview is produced by `prettyJsonPrefix`, which walks the value only until the budget is spent, so neither the page's layout nor the browser's memory grows with the value until the viewer asks for the whole text; expansion belongs to one value, and selecting another value starts bounded again. The bound is on what the page lays out and holds, never on what is stored or on the execution context: the engine's thread, events and results are untouched. The wait prompt is bounded the same way and the evaluation reasoning excerpt wraps at any character. The full thread JSON is built only while its disclosure is open, and thread reconstruction per selected event is remembered while the log grows (`createThreadCache`: a log counts as grown only when every earlier event is the same object at the same index; at most 32 results, enough for a session's browsing between selected events, each one thread object whose size follows the run's thread), so a live run's appends do not replay the log again for the event on screen. Every progress row wraps at any character, so a long single-line value never widens the page (#380).
++- Bounded rendering of large values (#259). Every value the inspector shows as text (the result, variables, messages, the two sides of a patch diff, progress values without a one-line description, the full thread JSON) is laid out through `BoundedValue`: up to 4,096 characters at once (1,024 in a diff column or a progress row, and in the Events table's payload cell), then "Showing the first 4,096 characters of a larger value" (a string says its total) with **Show all**, which puts the whole text in a named scrolling region, and **Download JSON**, which saves the exact stored value. The preview is produced by `prettyJsonPrefix`, which walks the value only until the budget is spent, so neither the page's layout nor the browser's memory grows with the value until the viewer asks for the whole text; expansion lasts while the same value stays shown, and any change of value starts bounded again, including a return to an event whose value the viewer expanded earlier (the whole text is never formatted for a value that is not expanded now). The bound is on what the page lays out and holds, never on what is stored or on the execution context: the engine's thread, events and results are untouched. The wait prompt is bounded the same way and the evaluation reasoning excerpt wraps at any character. The full thread JSON is built only while its disclosure is open, and thread reconstruction per selected event is remembered while the log grows (`createThreadCache`: a log counts as grown only when every earlier event is the same object at the same index; at most 32 results, enough for a session's browsing between selected events, each one thread object whose size follows the run's thread), so a live run's appends do not replay the log again for the event on screen. Every progress row wraps at any character, so a long single-line value never widens the page (#380).
+ - Wait handling: when the run is waiting on input, a form rendered from the wait node's `inputSchema` appears inline.
+ 
+ ## PWA behaviour (Decided)
+@@ -244,7 +244,7 @@ The adversarial QA report is `docs/qa/2026-10-03-wp-d2.md`. Behaviour that chang
+ - **Validation agrees with the API.** The editor lists the local `domain` issues (now including Liquid and JSONata syntax), the issues only the API can find (cron syntax, subloop references) from `POST /loops/{id}/validate` after each save, and `FIELD_INPUT_INVALID` for held input: unparsed JSON, an incomplete schedule, or valid section JSON awaiting Apply. Invalid input keeps its existing message; valid pending JSON says it is JSON not applied yet. Publish asks the user to complete/discard invalid input or apply/cancel pending JSON first. The held text and its issue stay in the editor state when the field is left (coming back shows the text again) until the text parses (and section JSON is applied), the user discards it (in the field or from its issue's row: since #15 in the node's badge popover, or beside Publish for loop settings and variables), its row is removed, or an undo takes back the typing that produced it (redo brings it back; see "Undo and redo"). Renames and removals update these stored paths through the form's parse-error channel. Removing an optional object or switching a union variant also clears errors for the fields it removes. Shared domain validation rejects supplied blank JSONata expressions, including whitespace-only input from imports or API clients; the form omits optional blank expressions instead. Empty and whitespace-only Liquid templates remain valid. Contracts parsing is unchanged. Publishing an unchanged loop says there is nothing to publish; the outcome message clears on the next edit.
+ - **Drafts.** IndexedDB store upgrades preserve live, set-aside and archived copies; they never delete the drafts store. New in-progress drafts remain on the device across reloads even with schema errors. If an older tab or PWA window blocks the store upgrade, the server copy can open while the three-second storage grace runs, and device storage reports itself blocked (see "Device storage and the save states" below). After device inspection, every edit is mirrored to IndexedDB at once and, after safe reconciliation, flushed to the server when the editor unmounts, so leaving inside the debounce window loses nothing. An unsynced local draft older than the server's last save is set aside, under its own IndexedDB key that later edits do not touch, and offered (use or discard) on every load until the user chooses. Draft saves for a loop are serialized, including the one sent when leaving the editor, and a save updates the editor only while the same loop and editor generation are loaded, so an older save never lands after a newer one. Two tabs no longer overwrite each other: see "Draft conflicts" below.
+ - **Editor.** Palette additions pan into view. List fields with a default show the default and a Customize button instead of item fields bound to nothing. Settings' "(server default)" deletes the setting.
+-- **Run inspector.** Replay starts from `run.queued`'s `initialThread`, so subloop child runs reconstruct correctly; a log that does not replay shows an explanation; an error boundary per screen keeps the shell alive. Events are appended, rendered, and reported in 100 ms batches and session storage never throws on quota: a 1,211-event run opens in about 0.5 s with a handful of run fetches (it took 7 s and one fetch per event before).
++- **Run inspector.** Replay starts from `run.queued`'s `initialThread`, including a subloop child's or replay fork's inherited messages, variables, outputs, counters, gate passes and iteration. A recorded seed takes precedence over the empty fallback. Domain `replayThread` adds every `node.started` to the seed's visits, projects absolute decision gate passes and historical iteration increments, and applies node patches; the inspector does not recount visits from zero. Thus event 1 shows the actual admitted seed and replace diffs use the same inherited values as execution; an array-append row (a `/-` pointer) still shows both sides as absent because `patchDiff` reads the literal pointer, which #255 addresses. A log that does not replay shows an explanation; an error boundary per screen keeps the shell alive. Events are appended, rendered, and reported in 100 ms batches and session storage never throws on quota: a 1,211-event run opens in about 0.5 s with a handful of run fetches (it took 7 s and one fetch per event before).
+ - **Events screen** shows each event's source (API, webhook delivery, or the run whose exit emitted it) and links to the runs it started. Webhook receipts distinguish historical filtered rows and current deduplicated, pending, admitted and failed delivery states, with retry attempts and safe failure codes. While the mounted page contains pending receipts, it refreshes every two seconds so recovery results and new run links appear automatically; interval refresh stops after all displayed receipts are terminal or the page unmounts. Normal focus and reconnect refresh remain enabled. Each delivery can disclose its pinned safe webhook configuration; complete endpoint history remains available through `GET /loops/{id}/triggers`.
+ - **Settings** check the secret name rule before sending, and validation messages name the first failing field.
+ 

@@ -245,15 +245,19 @@ describe('RunInspectorPage', () => {
     ).toBeInTheDocument();
 
     // Before the node finished the thread is the initial one.
+    // The thread at a newly selected event is reconstructed in the deferred render (#259).
     await user.click(within(timeline).getByText(/#3/));
-    expect(screen.getByLabelText('Variables')).toHaveTextContent('{}');
+    expect(await screen.findByLabelText('Variables')).toHaveTextContent('{}');
     expect(screen.getByText('Thread at event 3')).toBeInTheDocument();
 
     await user.click(within(timeline).getByText(/#4/));
-    const diff = screen.getByRole('list', { name: 'Patch diff' });
+    const diff = await screen.findByRole('list', { name: 'Patch diff' });
     expect(within(diff).getByText('/vars/topic')).toBeInTheDocument();
     expect(within(diff).getAllByText(/\(absent\)/).length).toBeGreaterThan(0);
-    expect(screen.getByTestId('thread-json')).toHaveTextContent('"prep": 1');
+    // The full thread JSON is built only once its disclosure opens (#259).
+    expect(screen.queryByTestId('thread-json')).not.toBeInTheDocument();
+    await user.click(screen.getByText('Full thread JSON'));
+    expect(await screen.findByTestId('thread-json')).toHaveTextContent('"prep": 1');
 
     // A live event arrives.
     act(() =>
@@ -639,6 +643,54 @@ describe('RunInspectorPage', () => {
       expect(api.callsTo('GET', `/runs/${run.id}/events`)).toHaveLength(0);
     },
   );
+
+  it('bounds large values, builds the full thread JSON only when opened, and keeps exact access (#259)', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const long = 'z'.repeat(30_000);
+    const run = seedRun(api, { result: { text: long } });
+    api.pushEvent(
+      run.id,
+      event(run.id, 7, 'node.started', {
+        nodeId: 'grow',
+        kind: 'mutate',
+        attempt: 1,
+        configHash: 'h',
+      }),
+    );
+    api.pushEvent(
+      run.id,
+      event(run.id, 8, 'node.finished', {
+        nodeId: 'grow',
+        durationMs: 2,
+        patch: [{ op: 'add', path: '/vars/blob', value: long }],
+      }),
+    );
+    renderApp(`/runs/${run.id}`, api);
+    await screen.findByText(/Timeline \(8 events, live\)/);
+
+    // The result and the variables show their first characters; the whole text is one click away.
+    await waitFor(() => expect(screen.getByTestId('run-result').textContent?.length).toBe(4_097));
+    expect(screen.getByRole('button', { name: 'Show all of Result' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Download Result as JSON' })).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByLabelText('Variables').textContent?.length).toBe(4_097));
+    // Both the result and the variables carry the notice (each holds the 30,000-character value).
+    expect(
+      screen.getAllByText('Showing the first 4,096 characters of a larger value.'),
+    ).toHaveLength(2);
+
+    // The patch diff bounds each side at the cell bound.
+    const diff = screen.getByRole('list', { name: 'Patch diff' });
+    expect(within(diff).getByLabelText('Value before /vars/blob')).toHaveTextContent('(absent)');
+    expect(within(diff).getByLabelText('Value after /vars/blob').textContent?.length).toBe(1_025);
+
+    // The full thread JSON is not laid out until its disclosure opens.
+    expect(screen.queryByTestId('thread-json')).not.toBeInTheDocument();
+    await user.click(screen.getByText('Full thread JSON'));
+    await waitFor(() => expect(screen.getByTestId('thread-json').textContent?.length).toBe(4_097));
+    await user.click(screen.getByRole('button', { name: 'Show all of Full thread JSON' }));
+    expect(JSON.parse(screen.getByTestId('thread-json').textContent).vars.blob).toBe(long);
+  });
 });
 
 /** What a finished exit returned, and the last gate's passes, at the top of the run (#129). */

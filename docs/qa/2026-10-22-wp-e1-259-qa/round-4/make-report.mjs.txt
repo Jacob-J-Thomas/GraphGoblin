@@ -1,0 +1,126 @@
+import {readFile,writeFile,readdir} from 'node:fs/promises';import {resolve} from 'node:path';import {createRequire} from 'node:module';
+const dir=resolve('docs/qa/2026-10-22-wp-e1-259-qa/round-4'),prettier=createRequire(resolve('package.json'))('prettier'),read=n=>readFile(resolve(dir,n),'utf8'),json=async n=>JSON.parse(await read(n));
+const main=await json('browser-results.json'),focus=await json('message-focus-results.json'),old=await json('focus-small-repro.json'),prior=await json('prior-evidence-audit.json'),env=await json('browser-environment.json');
+const clean=s=>String(s??'').replaceAll('|',' / ').replaceAll('\n',' '),ms=n=>n.toFixed(1),tasks=p=>p.longTasks.length?p.longTasks.map(x=>x.duration+' ms').join(', '):'none';
+function actual(row){const a=row.actual;if(!a)return row.error;if(a.fullChars)return `${a.fullChars} characters; bounded A/B/A; ${a.bytes} download bytes, equal API SHA-256`;if(row.id.includes('wide'))return `${a.keys} keys; all prefixes exact and at most 4097 characters; all selections width <= viewport`;if(a.initial)return `${a.initial.messages} mounted, ${a.initial.domElements} elements, m5950 to m5999; six timed moves`;if(a.expand)return `${a.expand.messages} on request; ${a.shrink.messages} after Show fewer; focus retained; ${a.bytes} download bytes, exact API; stored thread/events/run unchanged`;if(a.append)return `${a.append.messages} current; ${a.historyCount} historical; ${a.storedMessageCount} stored; current focus ${a.focusAfterAppend.label}`;return `${a.messages} visible; ${a.showAllControls} Show all controls; width ${a.width}/${a.viewport}`;}
+const rows=main.map(r=>`| ${r.system} | ${clean(r.id)} | ${clean(r.expected)} | ${clean(actual(r))} | **${r.pass?'PASS':'FAIL'}** | [Case](browser-results.json) |`).join('\n');
+const measureRows=[];for(const r of main){const a=r.actual;if(!a)continue;const probes=a.probes??[a.expand,a.typing,a.runControlFocus,a.shrink,a.append,a.b,a.a].filter(Boolean);for(const p of probes)measureRows.push(`| ${r.id.split(':')[0]} px | ${r.id.includes('wide')?'wide object':r.id.includes('A/B/A')?'A/B/A':'messages'} | ${p.name} | ${ms(p.wallMs)} | ${tasks(p)} | ${p.domElements} | ${p.messages} |`);if(a.probes&&a.append)measureRows.push(`| ${r.id.split(':')[0]} px | wide object | ${a.append.name} (API-to-browser, includes backend) | ${ms(a.append.wallMs)} | ${tasks(a.append)} | ${a.append.domElements} | ${a.append.messages} |`);}
+const taskRows=[];for(const name of (await readdir(dir)).filter(n=>/-tasks-\d+\.json$|-all-tasks-\d+\.json$/.test(n)).sort()){const ts=await json(name);if(!ts.length)taskRows.push(`| [${name}](${name}) | none | none |`);else for(const t of ts)taskRows.push(`| [${name}](${name}) | ${t.start.toFixed(1)} | ${t.duration} |`);}
+const gateRows=[];for(const name of ['build','focused-tests','lint','typecheck','playwright','source-format','layers','deps','tokens','format']){let log='';try{log=await read(name+'.log.txt');}catch{}const command=log.match(/^Command: (.+)/m)?.[1]??'pending',code=log.match(/^Exit: (.+)/m)?.[1]??'pending';gateRows.push(`| ${clean(command)} | ${code==='0'?'PASS':code==='pending'?'PENDING':'FAIL; see exact warning paths in log'} | [Log](${name}.log.txt) |`);}
+const planned=['format.log.txt','format-qa.log.txt','validation.json','validation.log.txt'];const files=[...new Set([...(await readdir(dir)).filter(n=>n!=='README.md'),...planned])].sort();
+let report=`# 1. Verdict
+
+**FAIL** at **8984d7f44b1e3f88e9f7ada8388da2f616bad6f2** because the new message window can remove a focused older message and leave the keyboard on BODY (**QA-259-R4-01, minor**). The message-count bound and wide-object preview cache pass their core checks. This report distinguishes that functional success from the remaining cold-render costs and the focus failure.
+
+Worktree **codex-qa-wp-e1-259**, detached at the exact assigned HEAD; round-3 comparison head **011a01296a00bf1b5427bb9a397c3c5bc2fbdaf6**. No production code, maintained tests, index, branches or previous QA artifacts were changed; no commits, stashes, sub-agents, GitHub writes or live provider turns. This round's evidence is **uncommitted; ready for orchestrator commit**. [Final state](final-state.json), [targeted UI diff](targeted-change.diff.txt).
+
+# 2. Defects
+
+## QA-259-R4-01 — minor — live message-window reset removes the focused region and leaves focus on BODY
+
+Reproduced once at each width, **1440 x 900** and **390 x 844**, through a fresh public-API mutate/wait run:
+
+1. Seed 6,000 messages, using the same message schema as the main workload. For this additional regression case, message m0 has a 20,000-character content string; the other messages remain short.
+2. At the current wait, activate **Show all messages**. Activate **Show all of Message m0 content**, then Shift+Tab into its named region.
+3. Submit the observed wait ID through HTTP from elsewhere, appending the input message and a mutate-node message; the thread now contains 6,002 messages.
+4. The inspector follows the latest event and correctly resets to its last 50 messages. Message m0, which held the keyboard, is removed from the DOM.
+
+Expected: retain a meaningful keyboard location by handing focus to a surviving message-window control (or an equivalent explicit fallback), following the focus-preservation behavior accepted in rounds 2/3. Actual at **both widths**: **document.activeElement is BODY**, the old named region is absent, and no focus-in event names a replacement. The next Tab reaches Full thread JSON; Show all messages and Download messages are skipped from that prior position. All **6,002** messages and m0's **20,000** characters remain stored, so this is a keyboard-position defect, not data loss.
+
+Evidence: [two complete reproductions](message-focus-results.json), [public-interface reproduction script](message-focus.mjs.txt), [execution log](message-focus.log.txt), [desktop screenshot after the following Tab](message-focus-after-tab-1440.png), [narrow screenshot after the following Tab](message-focus-after-tab-390.png). The screenshots are supplemental; the JSON captures BODY before Tab. No retry-to-green was used.
+
+The relevant removal is the render-time reset and slicing/mapping in apps/web/src/runs/inspector/ThreadViewer.tsx:105, :122 and :162. The existing BoundedValue hand-off cannot run after that entire older message component unmounts. This is a new interaction with the message window; **QA-259-R2-01 remains fixed** for a value changing inside its surviving component.
+
+# 3. Coverage of criteria
+
+## Environment and evidence provenance
+
+- Node **${env.node}** first on PATH; pnpm build completed successfully before the built app was served. Dependencies were already installed.
+- Installed Microsoft Edge **${env.browser}**, headless Playwright, **1440 x 900** and **390 x 844**. [Environment](browser-environment.json).
+- Disposable API **127.0.0.1:5720**; fake-only control server **127.0.0.1:5721**; system-temp store **${env.server.dataDir}**. [Server](server.mjs.txt), [server log](server.log.txt), [API-created key metadata](api-key-metadata.json). No token is retained; owner ports/store were not accessed.
+- Real HTTP, SQLite, engine, mutate and wait execution. **Fake-only provider evidence** for the inference cases: FakeHarness/FakeStructured through supported injection. No real provider/CLI turn. [Fixture admission](fixtures.json), [fixture generator](fixtures.mjs.txt), [fixture log](fixtures.log.txt).
+- All **${prior.references}** references in rounds 1–3 exist and are tracked at this HEAD, including the round-2 evidence that was previously untracked. [Retention audit with hashes](prior-evidence-audit.json). Every referenced file remained unchanged during this run, per [final verification](final-state.json).
+- The native disposable process was stopped; its exec session exited with code 0 and both ports became unreachable. [Shutdown](shutdown.json), [shutdown log](shutdown.log.txt). Temp data/output directories are left for the orchestrator; no directory was deleted.
+
+Touched systems: ThreadViewer message-count expansion/reset and historical selection; keyboard navigation and removal of focused child regions; BoundedValue preview/cache and existing focus hand-off; prettyJsonPrefix boxed BigInt behavior; exact downloads and stored context preservation; run-event reconstruction/live appends; narrow document layout; relevant Result/progress/wait regressions. The main merge's delivery/replay additions are not separately accepted by this bounded QA round.
+
+## Requirement disposition
+
+| Requested criterion | Disposition | Evidence |
+| --- | --- | --- |
+| 1: 6,000 short API-admitted messages, latest 50 and notice | PASS at both widths | [14-case matrix](browser-results.json), [admission](fixtures.json) |
+| 1: Show all, scroll, Show fewer, exact full-array download | PASS at both widths | Matrix, raw message downloads, keyboard transitions and timings below |
+| 1: queued -> waiting re-selection measurements | MEASURED; bounded, zero long tasks in all six return selections | All measured moves below; full task logs |
+| 1: live append while Show all is on resets to last 50 | PASS at both widths | 6,002 stored, 50 current, 6,000 on a separately selected historical thread |
+| 2: 350,000 API-admitted properties, first/cached/new-thread selections | PASS for exactness and cache behavior; cold costs remain MEASURED | Wide-object timing rows, prefixes compared with retained API JSON |
+| 2: every observed long task retained | DONE for measured pages/windows | Per-page task snapshots and complete listing below |
+| 3: keyboard names, Show fewer removal, Tab order, narrow width | PASS for ordinary window controls; FAIL when a live reset removes a focused older message | Matrix and QA-259-R4-01 |
+| 4: original QA-259-01 A/B/A | PASS at both widths | Original 2,322,721-character fixture; preview returns to 4,097 characters |
+| 4: prior small-value focus hand-off | PASS in all four direct/500 ms cases | [Exact prior reproduction](focus-small-repro.json), [log](focus-small.log.txt) |
+| 4: one exactness download | PASS at both widths | Nested Variables strict API-byte comparisons, including original adversarial values |
+
+The 14 core independent cases pass, the four exact prior focus reproductions pass, and the two additional message-window/focus regression cases fail. No browser console/page errors were recorded. The only new defect is QA-259-R4-01. No thresholds or retry settings were relaxed.
+
+## Every core check
+
+The [script](browser.mjs.txt) contains the exact public-API, DOM and keyboard steps. Common selection steps: load and synchronize the run, scroll a target timeline event into view, dispatch CDP mouse press/release, then let two animation frames complete. The message-control case uses the keyboard from the latest timeline event: Tab -> Show all; Enter -> Show fewer; Tab -> Download; Shift+Tab -> Show fewer; Enter -> Show all after shrinking; Tab -> Download; Enter downloads; Tab -> Full thread JSON. Focus stays on the surviving renamed toggle when Show fewer removes 5,950 items.
+
+| System | Case / steps | Expected | Actual | Result | Evidence |
+| --- | --- | --- | --- | --- | --- |
+${rows}
+
+The short-message window mounts **525 document elements** instead of all 6,000 messages. Explicit Show all mounts **42,175 elements**, with all 6,000 messages in API order and a page scroll height of **948,891 px** at desktop and **1,327,306 px** at narrow width. Page scrolling was observed. Document scroll width equals the window in the captured main cases. Show all persists across opening/closing Full thread JSON on the same thread, while another event or current-thread append starts bounded again. A separately selected earlier thread keeps its 6,000-message expansion during the append.
+
+Fresh full-message downloads are **1,989,782 UTF-8 bytes**, SHA-256 **aac60dc3440df7074966ddd4e7352460d2238fb4d883e8a72cf35d43fcc70778**, identical at both widths and byte-for-byte equal to the API messages array under two-space JSON formatting. Nested Variables downloads are **2,322,734 UTF-8 bytes**, SHA-256 **7f2577a2a104addc52573d9df76bdcc880ca0db6e5ae294dd7cba67ad935941f**, also equal at both widths and to API bytes. Raw JSON evidence uses .json.txt so formatting cannot alter it. Thread, events and complete run records remain unchanged by viewing, expansion, download and collapse before the intentional append.
+
+The wide fixture has **350,000** named properties. After a live append, two mutate operations change key0 (including a surrogate pair and NUL) and key349999. The first 4,096 characters plus ellipsis exactly match the retained API JSON both before and after that change; the historical seed still shows its old exact prefix. At node.finished seed, both the 1,024-character diff preview and 4,096-character Variables preview are exercised. A new value/budget can still pay enumeration once; cached repetitions show zero long tasks in these probes.
+
+## Measurements: all actions and selections
+
+The browser's Long Tasks API uses its **50 ms** threshold. Wall time is operator-process elapsed time from the dispatched action to two completed animation frames; it includes automation/scheduling overhead and is **not INP**. The observer is allowed 70 ms to deliver entries after that measured end. Scrolling the timeline target into view occurs before selection timing. API-to-browser append measurements include backend execution and waiting for the next wait; they are not a continuous browser-block duration. Unit/gate/fixture jobs had finished before these main timings. These are observations, not owner-approved performance limits or a controlled before/after benchmark against the Astra audit.
+
+| Width | Workload | Action | Wall ms | Long-task durations | DOM elements | Mounted messages |
+| --- | --- | --- | --- | --- | --- | --- |
+${measureRows.join('\n')}
+
+Message-return re-selections are **74.6–127.6 ms** with zero long tasks. Cold wide seed selections are **710.8/716.0 ms** with **659/698 ms** long tasks. Cached seed returns are **24.1–129.7 ms**, zero long tasks. The first selection of the new thread after append is **1,683.3/1,568.7 ms** with **1,559/1,465 ms** long tasks; later returns to it have zero long tasks. That new-thread probe intentionally leaves run.queued selected during the append, so the new value has not already been previewed before selection. First selection includes replay/reconstruction work; this does not isolate enumeration CPU time alone.
+
+Explicitly asking for all messages costs **1,624.9/1,752.4 ms** wall time, with **423/376 ms** long tasks. Shrinking costs **157.4/227.1 ms**, with **100/96 ms** long tasks. With all messages mounted, the tested input-fill action takes **202.7/502.1 ms** and Pause-control focus takes **175.1/286.2 ms**, both with zero long tasks in those windows. Pause was focused, not activated; actual pause/resume execution is not newly claimed. The full counts/values, focus positions and task durations remain in the JSON rather than being reduced to a subjective responsiveness claim.
+
+## Every observed long-task entry in the measured page snapshots
+
+Start times below are browser performance.now milliseconds relative to that document navigation. Snapshots can include entries before the action windows, including initial parsing/reconstruction, explicit expansion and live event processing. A snapshot is a page timeline, not a distinct-event count across all files; snapshots of the same page can overlap. The historical helper tab was a state/focus check, not a separate performance profile.
+
+| Page snapshot | Task start ms | Duration ms |
+| --- | --- | --- |
+${taskRows.join('\n')}
+
+## Tests and gates
+
+**77/77 tests in nine affected files pass**: bounded-value, pretty-json-prefix, utils, ThreadViewer, RunInspectorPage, ProgressDrawer, WaitPanel, projections and EventsPage. The new ThreadViewer tests cover the last-50 range, Show all/fewer, exact endpoint text, re-bounding on another thread and the 50-message boundary. Prefix tests cover boxed BigInt TypeError and one cached result per object identity/budget, including an observable public getter and primitive fallbacks. The maintained Edge spec passes **5/5**, including the prior live focus regression, both widths for Result/progress/page width and long wait prompts. Retries are disabled.
+
+The new unit tests and [diff](targeted-change.diff.txt) were read; the old implementation was not re-executed or swapped into production. Their before-fix failure is source reasoning, not a new baseline execution. The current independent failing focus script supplies fresh negative regression evidence for the additional case the maintained tests do not cover. No test-only production hooks or cache monkey-patches were used.
+
+| Exact command | Result | Evidence |
+| --- | --- | --- |
+${gateRows.join('\n')}
+| pnpm --filter @graphgoblin/web test:coverage | NOT RUN — full coverage explicitly waived for this round | User's round-4 scope |
+| pnpm check:docs | NOT RUN — no node schema/route changed by the tested UI fixes | [Targeted diff](targeted-change.diff.txt) |
+| pnpm check:licenses | NOT RUN — no dependency change by the tested fixes | Targeted UI-only scope |
+
+No numbered docs, ADRs, CHANGELOG or generated references were edited by QA. Docs 09's once-per-value cold enumeration caveat and the window behavior were read as the intended current behavior. This round makes no main-merge delivery-system acceptance claim. No production thresholds, dependencies or engineering parameters were changed.
+
+# 4. Report path and evidence folder
+
+Report: **docs/qa/2026-10-22-wp-e1-259-qa/round-4/README.md**. Evidence: **docs/qa/2026-10-22-wp-e1-259-qa/round-4/**. Only this directory was added. [Link/path/raw-download validation](validation.json), [validation log](validation.log.txt). Validation checks retention of the two known failures; a successful integrity check does not change the FAIL product verdict.
+
+${files.map(n=>`- [${n}](${n})`).join('\n')}
+
+# 5. Observations outside scope
+
+- While the empty run.queued event remains selected, the wide-object append takes **19,729.2/16,640.9 ms** end-to-end and produces seven browser long tasks per width (**196–216 ms** desktop; **233–271 ms** narrow). The empty selected Variables preview remains two characters, so these measurements must not be described as cached-prefix selection work or as a continuously blocked 20-second browser. Live event ingestion/persistence and backend execution were not CPU-profiled here; the existing persistence path is apps/web/src/runs/event-store.ts:73. No causal attribution or out-of-scope fix is claimed.
+- Cold/new-thread selection and explicit all-message rendering remain expensive, as recorded above. The tested cache reduces repeated preview work; it does not establish that every first display is free of a long task.
+- Broader rounds 1–3 criteria (full adversarial surface matrix, native restart/session-reset campaign, actual screen-reader software and live providers) were not all rerun under this narrowed brief. The current spot-checks and retained historical evidence are distinguished explicitly.
+`;
+await writeFile(resolve(dir,'README.md'),await prettier.format(report,{parser:'markdown'}));
+console.log(JSON.stringify({verdict:'FAIL',defect:'QA-259-R4-01 minor',coreCases:main.length,priorFocusCases:old.length,newFocusFailures:focus.results.filter(x=>!x.pass).length}));

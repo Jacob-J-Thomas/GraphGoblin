@@ -1,0 +1,134 @@
+diff --git a/apps/web/src/runs/inspector/ThreadViewer.test.tsx b/apps/web/src/runs/inspector/ThreadViewer.test.tsx
+index 4f9925f1..49d6b08d 100644
+--- a/apps/web/src/runs/inspector/ThreadViewer.test.tsx
++++ b/apps/web/src/runs/inspector/ThreadViewer.test.tsx
+@@ -188,6 +188,65 @@ describe('ThreadViewer with a large history', () => {
+     expect(screen.getByRole('list', { name: 'Messages' })).toBeInTheDocument();
+   });
+ 
++  it('reconstructs a patch diff whose other half was let go in one activation', async () => {
++    const user = userEvent.setup();
++    const { thread, events } = threadOf(3, 'a');
++    const id = thread.run.id;
++    // Event 2 starts node a, event 3 finishes it with a patch; then 33 more started events.
++    const finished = event(id, 3, 'node.finished', {
++      nodeId: 'a',
++      patch: [{ op: 'add', path: '/vars/count', value: 1 }],
++      durationMs: 1,
++    });
++    const all = [
++      ...events,
++      started(id, 2),
++      finished,
++      ...Array.from({ length: 33 }, (_, i) => started(id, i + 4)),
++    ];
++    const view = (seq: number) => (
++      <ThreadViewer current={thread} events={all} seq={seq} historyBytes={3_500_000} />
++    );
++    const { rerender } = render(view(2));
++    await user.click(screen.getByRole('button', { name: 'Reconstruct the thread at event 2' }));
++    rerender(view(3));
++    await user.click(screen.getByRole('button', { name: 'Reconstruct the thread at event 3' }));
++    expect(screen.getByText('Patch from a')).toBeInTheDocument();
++    // Thirty-one more reconstructions let event 2 go while event 3 is the oldest kept.
++    for (let seq = 4; seq <= 34; seq += 1) {
++      rerender(view(seq));
++      await user.click(
++        screen.getByRole('button', { name: `Reconstruct the thread at event ${seq}` }),
++      );
++    }
++    rerender(view(3));
++    expect(
++      screen.getByRole('button', { name: 'Reconstruct the thread at event 3' }),
++    ).toBeInTheDocument();
++    // One activation brings both halves back together.
++    await user.click(screen.getByRole('button', { name: 'Reconstruct the thread at event 3' }));
++    expect(screen.getByText('Patch from a')).toBeInTheDocument();
++    expect(screen.queryByRole('button', { name: /Reconstruct/ })).not.toBeInTheDocument();
++  });
++
++  it('shows the failure of a reconstruction the reader asked for', async () => {
++    const user = userEvent.setup();
++    const { thread, events } = threadOf(3, 'a');
++    const all = [
++      ...events,
++      started(thread.run.id, 2),
++      event(thread.run.id, 3, 'node.finished', {
++        nodeId: 'a',
++        patch: [{ op: 'remove', path: '/vars/missing' }],
++        durationMs: 1,
++      }),
++    ];
++    render(<ThreadViewer current={thread} events={all} seq={3} historyBytes={3_500_000} />);
++    await user.click(screen.getByRole('button', { name: 'Reconstruct the thread at event 3' }));
++    expect(screen.getByText('The thread cannot be reconstructed at event 3')).toBeInTheDocument();
++    expect(screen.queryByRole('button', { name: /Reconstruct/ })).not.toBeInTheDocument();
++  });
++
+   it('reconstructs automatically at and below the threshold', () => {
+     const { thread, events } = threadOf(3, 'a');
+     render(
+diff --git a/apps/web/src/runs/projections.test.ts b/apps/web/src/runs/projections.test.ts
+index f2bd8a9e..9d689ae8 100644
+--- a/apps/web/src/runs/projections.test.ts
++++ b/apps/web/src/runs/projections.test.ts
+@@ -510,11 +510,28 @@ describe('initial thread and replay failures', () => {
+       expect(cache.has(initial, [...ALL], 3)).toBe(true);
+       expect(cache.has(initialThreadFrom(sampleThread(), ALL), ALL, 3)).toBe(false);
+       expect(cache.has(initial, ALL.slice(1), 3)).toBe(false);
+-      // Beyond the limit, the oldest reconstruction is let go.
++      // Beyond the limit, the reconstruction used least recently is let go: a hit is used.
+       cache.at(initial, ALL, 4);
++      cache.at(initial, ALL, 3);
+       cache.at(initial, ALL, 5);
+-      expect(cache.has(initial, ALL, 3)).toBe(false);
++      expect(cache.has(initial, ALL, 4)).toBe(false);
++      expect(cache.has(initial, ALL, 3)).toBe(true);
+       expect(cache.has(initial, ALL, 5)).toBe(true);
++      // A remembered failure is remembered too: asking again shows it rather than rebuilding.
++      const broken = [
++        ALL[0]!,
++        event(ALL[0]!.runId, 2, 'node.finished', {
++          nodeId: 'a',
++          patch: [{ op: 'remove', path: '/vars/missing' }],
++          durationMs: 1,
++        }),
++      ];
++      const failing = createThreadCache(2);
++      expect(failing.at(initialThreadFrom(sampleThread(), broken), broken, 2).ok).toBe(false);
++      expect(failing.has(initialThreadFrom(sampleThread(), broken), broken, 2)).toBe(false);
++      const seed = initialThreadFrom(sampleThread(), broken);
++      expect(failing.at(seed, broken, 2).ok).toBe(false);
++      expect(failing.has(seed, broken, 2)).toBe(true);
+     });
+ 
+     it('returns the same result for a sequence while the log only grows', () => {
+diff --git a/apps/web/src/runs/projections.ts b/apps/web/src/runs/projections.ts
+index b8aa3eff..a9047024 100644
+--- a/apps/web/src/runs/projections.ts
++++ b/apps/web/src/runs/projections.ts
+@@ -101,7 +101,8 @@ export function createThreadCache(limit = 32): ThreadCache {
+     known.every((event, index) => events[index] === event);
+   return {
+     has(init, events, seq) {
+-      return grown(init, events) && results.get(seq)?.ok === true;
++      // A remembered failure counts: asking again would show the same error, not rebuild.
++      return grown(init, events) && results.has(seq);
+     },
+     at(init, events, seq) {
+       const extended = grown(init, events);
+@@ -111,7 +112,13 @@ export function createThreadCache(limit = 32): ThreadCache {
+       }
+       known = events;
+       const hit = results.get(seq);
+-      if (hit) return hit;
++      if (hit) {
++        // A hit becomes the newest entry, so the results a reader asks for together (a patch
++        // diff needs an event and the one before it) are not parted by the next eviction.
++        results.delete(seq);
++        results.set(seq, hit);
++        return hit;
++      }
+       // Replay from the nearest earlier remembered thread rather than from the seed: a live append
+       // then costs the new events only, and the parts of the thread those events do not touch keep
+       // their identity (patches copy only along their path), so their remembered previews stay.

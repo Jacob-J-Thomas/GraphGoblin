@@ -1,0 +1,15 @@
+import {readFile,writeFile} from 'node:fs/promises';import {resolve} from 'node:path';import {dir,call,createRun,op,mut,waitNode,messages,save,sha} from './gg-qa-e1-r5-support.mjs';
+const msgs=await messages(),wide={};for(let i=0;i<350000;i++)wide['key'+i]=i;
+const fixtures={runs:{},admission:[]},append=id=>mut(id,[{op:'append-message',role:'note',content:'message '+id}]);
+const key=await call('/api-keys',{label:'Independent QA #259 round 5',scopes:['*']});await save('api-key-metadata.json',{created:Boolean(key.token),id:key.key.id,label:key.key.label});
+for(const width of [1440,390]){
+ const many=await createRun('6000 messages '+width,[mut('seed',[op('/messages',msgs)]),waitNode('ask'),append('append1'),waitNode('notouch'),append('append2'),waitNode('touched')]);
+ const wideId=await createRun('350000 properties '+width,[mut('seed',[op('/vars',wide)]),waitNode('ask'),append('append'),waitNode('notouch'),mut('change',[op('/vars/key0','CHANGED 🚀\u0000')]),waitNode('touched')]);
+ fixtures.runs[width]={many,wide:wideId};const a=await call('/runs/'+many+'/thread'),b=await call('/runs/'+wideId+'/thread');if(a.messages.length!==6000||Object.keys(b.vars).length!==350000)throw Error('admission mismatch');
+ fixtures.admission.push({width,messages:a.messages.length,properties:Object.keys(b.vars).length,messagesSha256:sha(JSON.stringify(a.messages,null,2)),variablesSha256:sha(JSON.stringify(b.vars,null,2))});
+ if(width===1440){await writeFile(resolve(dir,'messages-api.json.txt'),JSON.stringify(a.messages,null,2));await writeFile(resolve(dir,'wide-api-before.json.txt'),JSON.stringify(b.vars,null,2));}
+ await save('fixtures.json',fixtures);console.log(JSON.stringify({width,many,wide:wideId}));
+}
+const previous=JSON.parse(await readFile(resolve(dir,'../round-2/mutate-thread-before.json'),'utf8')).vars;
+fixtures.runs.nested=await createRun('original A B A',[mut('seed',[op('/vars',{...previous,change:'A'.repeat(20000)})]),mut('replace',[op('/vars/change','B'.repeat(20000))]),waitNode('ask')]);
+await save('fixtures.json',fixtures);console.log('Fixtures ready.');

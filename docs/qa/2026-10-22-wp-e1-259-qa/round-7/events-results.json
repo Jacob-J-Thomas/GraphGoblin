@@ -1,0 +1,102 @@
+[
+  {
+    "id": "1440: payload bounds across three cursor pages",
+    "expected": "100 -> 200 -> 205 stable rows; exact payload previews/expansion/download on each page; keyboard Load more and exhaustion focus",
+    "pass": false,
+    "error": "row accessible name lacks payload marker",
+    "focus": {
+      "tag": "BODY",
+      "label": null,
+      "role": null,
+      "tabindex": null
+    }
+  },
+  {
+    "id": "1440: failed append preserves bounded and expanded payloads",
+    "expected": "Controlled 503 append failure retains 100 rows and expansion; Load more can recover by explicit keyboard action",
+    "actual": {
+      "injectedAttempts": 2,
+      "afterError": {
+        "tag": "BUTTON",
+        "label": null,
+        "role": null,
+        "tabindex": null,
+        "text": "Load more"
+      },
+      "afterRecovery": {
+        "tag": "BUTTON",
+        "label": null,
+        "role": null,
+        "tabindex": null,
+        "text": "Load more"
+      },
+      "rows": 200,
+      "fullChars": 20969,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+        "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+      ],
+      "pageErrors": [],
+      "controlledResponseOnly": true
+    },
+    "pass": true
+  },
+  {
+    "id": "390: payload bounds across three cursor pages",
+    "expected": "100 -> 200 -> 205 stable rows; exact payload previews/expansion/download on each page; keyboard Load more and exhaustion focus",
+    "pass": false,
+    "error": "row accessible name lacks payload marker",
+    "focus": {
+      "tag": "BODY",
+      "label": null,
+      "role": null,
+      "tabindex": null
+    }
+  },
+  {
+    "id": "390: failed append preserves bounded and expanded payloads",
+    "expected": "Controlled 503 append failure retains 100 rows and expansion; Load more can recover by explicit keyboard action",
+    "actual": {
+      "injectedAttempts": 2,
+      "afterError": {
+        "tag": "BUTTON",
+        "label": null,
+        "role": null,
+        "tabindex": null,
+        "text": "Load more"
+      },
+      "afterRecovery": {
+        "tag": "BUTTON",
+        "label": null,
+        "role": null,
+        "tabindex": null,
+        "text": "Load more"
+      },
+      "rows": 200,
+      "fullChars": 20969,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+        "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+      ],
+      "pageErrors": [],
+      "controlledResponseOnly": true
+    },
+    "pass": true
+  },
+  {
+    "id": "API invalid opaque cursor",
+    "expected": "Malformed cursor is rejected with readable typed 400 without modifying history",
+    "actual": {
+      "status": 400,
+      "contentType": "application/problem+json; charset=utf-8",
+      "body": {
+        "type": "https://graphgoblin.dev/problems/invalid-cursor",
+        "title": "invalid cursor",
+        "status": 400,
+        "code": "INVALID_CURSOR",
+        "detail": "Choose a cursor returned by the inbound event listing."
+      }
+    },
+    "pass": true
+  }
+]

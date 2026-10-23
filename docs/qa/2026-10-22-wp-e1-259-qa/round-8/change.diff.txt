@@ -1,0 +1,161 @@
+diff --git a/apps/web/src/runs/inspector/ThreadViewer.test.tsx b/apps/web/src/runs/inspector/ThreadViewer.test.tsx
+index 749a15d2..4f9925f1 100644
+--- a/apps/web/src/runs/inspector/ThreadViewer.test.tsx
++++ b/apps/web/src/runs/inspector/ThreadViewer.test.tsx
+@@ -162,6 +162,32 @@ describe('ThreadViewer with a large history', () => {
+     expect(screen.getByRole('button', { name: 'Elsewhere' })).toHaveFocus();
+   });
+ 
++  it('asks again for an event whose reconstruction the viewer no longer remembers', async () => {
++    const user = userEvent.setup();
++    const { thread, events } = threadOf(3, 'a');
++    const id = thread.run.id;
++    const all = [...events, ...Array.from({ length: 34 }, (_, i) => started(id, i + 2))];
++    const view = (seq: number) => (
++      <ThreadViewer current={thread} events={all} seq={seq} historyBytes={3_500_000} />
++    );
++    const { rerender } = render(view(1));
++    // Thirty-four explicit reconstructions: the viewer remembers the last thirty-two.
++    for (let seq = 1; seq <= 34; seq += 1) {
++      rerender(view(seq));
++      await user.click(
++        screen.getByRole('button', { name: `Reconstruct the thread at event ${seq}` }),
++      );
++      expect(screen.getByRole('list', { name: 'Messages' })).toBeInTheDocument();
++    }
++    rerender(view(1));
++    expect(
++      screen.getByRole('button', { name: 'Reconstruct the thread at event 1' }),
++    ).toBeInTheDocument();
++    expect(screen.queryByRole('list', { name: 'Messages' })).not.toBeInTheDocument();
++    rerender(view(34));
++    expect(screen.getByRole('list', { name: 'Messages' })).toBeInTheDocument();
++  });
++
+   it('reconstructs automatically at and below the threshold', () => {
+     const { thread, events } = threadOf(3, 'a');
+     render(
+diff --git a/apps/web/src/runs/inspector/ThreadViewer.tsx b/apps/web/src/runs/inspector/ThreadViewer.tsx
+index 65f4ddd6..0f67e7de 100644
+--- a/apps/web/src/runs/inspector/ThreadViewer.tsx
++++ b/apps/web/src/runs/inspector/ThreadViewer.tsx
+@@ -99,22 +99,27 @@ export function ThreadViewer({
+   );
+   const [cache] = useState(createThreadCache);
+   // A large history (`LARGE_HISTORY_BYTES`) is reconstructed on request only, so a selection or a
+-  // live event costs a constant until the reader asks; the sequences asked for stay prepared while
+-  // this viewer lives.
++  // live event costs a constant until the reader asks. An event is ready while the cache still
++  // holds its reconstruction (and the one before it, for a patch diff): the cache keeps the last
++  // 32, so an event asked for long ago asks again rather than being rebuilt unasked.
+   const large = historyBytes > LARGE_HISTORY_BYTES;
+-  const [prepared, setPrepared] = useState<ReadonlySet<number>>(() => new Set());
++  const [, setPrepared] = useState(0);
+   // A newly selected event is otherwise reconstructed in the deferred render after the urgent one,
+   // so the selection paints (the title and a note) before a thread is rebuilt; the remembered
+   // threads make most selections immediate anyway.
+   const deferredSeq = useDeferredValue(seq);
+   const shownSeq = large ? seq : deferredSeq;
+   const reconstructing = shownSeq !== seq;
+-  const ready = !large || prepared.has(shownSeq);
++  const selected = events.find((e) => e.seq === shownSeq);
++  const withDiff = selected?.type === 'node.finished';
++  const ready =
++    !large ||
++    (cache.has(initial, events, shownSeq) &&
++      (!withDiff || cache.has(initial, events, shownSeq - 1)));
+   const replayed = useMemo(
+     () => (ready ? cache.at(initial, events, shownSeq) : undefined),
+     [ready, cache, initial, events, shownSeq],
+   );
+-  const selected = events.find((e) => e.seq === shownSeq);
+   const diff = useMemo(() => {
+     if (selected?.type !== 'node.finished' || !replayed?.ok) return undefined;
+     const before = cache.at(initial, events, shownSeq - 1);
+@@ -191,7 +196,10 @@ export function ThreadViewer({
+               ref={reconstructRef}
+               size="sm"
+               onClick={() => {
+-                setPrepared((set) => new Set(set).add(shownSeq));
++                // The replay happens here, on request; the render that follows finds it cached.
++                cache.at(initial, events, shownSeq);
++                if (withDiff) cache.at(initial, events, shownSeq - 1);
++                setPrepared((n) => n + 1);
+                 // The button goes away with the card: the thread's controls take the keyboard.
+                 setHoldsFocus(true);
+                 setHandoffs((n) => n + 1);
+diff --git a/apps/web/src/runs/projections.test.ts b/apps/web/src/runs/projections.test.ts
+index d2db9c91..f2bd8a9e 100644
+--- a/apps/web/src/runs/projections.test.ts
++++ b/apps/web/src/runs/projections.test.ts
+@@ -500,6 +500,23 @@ describe('initial thread and replay failures', () => {
+   describe('createThreadCache (#259)', () => {
+     const initial = initialThreadFrom(sampleThread(), ALL);
+ 
++    it('reports what it remembers: nothing before a replay, nothing for another log, nothing let go', () => {
++      const cache = createThreadCache(2);
++      expect(cache.has(initial, ALL, 3)).toBe(false);
++      cache.at(initial, ALL, 3);
++      expect(cache.has(initial, ALL, 3)).toBe(true);
++      expect(cache.has(initial, ALL, 2)).toBe(false);
++      // A grown log keeps the memory; a different seed or a rewritten log does not.
++      expect(cache.has(initial, [...ALL], 3)).toBe(true);
++      expect(cache.has(initialThreadFrom(sampleThread(), ALL), ALL, 3)).toBe(false);
++      expect(cache.has(initial, ALL.slice(1), 3)).toBe(false);
++      // Beyond the limit, the oldest reconstruction is let go.
++      cache.at(initial, ALL, 4);
++      cache.at(initial, ALL, 5);
++      expect(cache.has(initial, ALL, 3)).toBe(false);
++      expect(cache.has(initial, ALL, 5)).toBe(true);
++    });
++
+     it('returns the same result for a sequence while the log only grows', () => {
+       const cache = createThreadCache();
+       const firstTen = ALL.slice(0, 10);
+diff --git a/apps/web/src/runs/projections.ts b/apps/web/src/runs/projections.ts
+index 6337e384..b8aa3eff 100644
+--- a/apps/web/src/runs/projections.ts
++++ b/apps/web/src/runs/projections.ts
+@@ -76,6 +76,8 @@ export type ReplayResult = ReturnType<typeof tryThreadAt>;
+ 
+ export interface ThreadCache {
+   at(initial: ContextThread, events: readonly RunEvent[], seq: number): ReplayResult;
++  /** Whether `at` would answer from memory for this seed and log: a remembered, replayable thread. */
++  has(initial: ContextThread, events: readonly RunEvent[], seq: number): boolean;
+ }
+ 
+ /**
+@@ -93,12 +95,16 @@ export function createThreadCache(limit = 32): ThreadCache {
+   let initial: ContextThread | undefined;
+   let known: readonly RunEvent[] = [];
+   const results = new Map<number, ReplayResult>();
++  const grown = (init: ContextThread, events: readonly RunEvent[]) =>
++    init === initial &&
++    events.length >= known.length &&
++    known.every((event, index) => events[index] === event);
+   return {
++    has(init, events, seq) {
++      return grown(init, events) && results.get(seq)?.ok === true;
++    },
+     at(init, events, seq) {
+-      const extended =
+-        init === initial &&
+-        events.length >= known.length &&
+-        known.every((event, index) => events[index] === event);
++      const extended = grown(init, events);
+       if (!extended) {
+         results.clear();
+         initial = init;
+diff --git a/docs/09-frontend-and-pwa.md b/docs/09-frontend-and-pwa.md
+index 74088b54..1723d33b 100644
+--- a/docs/09-frontend-and-pwa.md
++++ b/docs/09-frontend-and-pwa.md
+@@ -81,7 +81,7 @@ The owner's request: move the horizontal and vertical break points of a line to
+ - Timeline from the SSE stream with the cursor stored so reload resumes without gaps.
+ - Thread viewer that reconstructs the thread at any event by replaying patches client-side using `domain`. The Full thread JSON shown and downloaded at an event is that reconstruction, so its property order follows the replay rather than the API's serialisation of the live thread; the values are the same.
+ - Node progress drawer that shows harness items as they arrive.
+-- Bounded rendering of large values (#259). Every value the inspector shows as text (the result, variables, messages, the two sides of a patch diff, progress values without a one-line description, the full thread JSON) is laid out through `BoundedValue`: up to 4,096 characters at once (1,024 in a diff column or a progress row, and in the Events table's payload cell), then "Showing the first 4,096 characters of a larger value" (a string says its total) with **Show all**, which puts the whole text in a named scrolling region, and **Download JSON**, which saves the exact stored value. The preview is produced by `prettyJsonPrefix`, which walks the value only until the budget is spent, so the page's layout and the text it holds do not grow with the value until the viewer asks for the whole text. One cost JavaScript imposes remains proportional to a value: reading the first property of an object enumerates all of its keys, so a single object with hundreds of thousands of properties costs that enumeration the first time it is previewed; the preview is remembered per value (`cachedJsonPrefix`), so a return to it or a re-render costs a lookup; a changed value is previewed, and a newly selected event's thread reconstructed, in the deferred render after the urgent one (React's `useDeferredValue`; "Preparing the preview…" replaces the text in between, and the previous thread stays mounted under a "Reconstructing the thread at event N…" note so open disclosures and the keyboard keep their place, and keeps its own event's number in its title and download names until the selected one is shown, so nothing is labelled with an event it does not show), so selecting an event paints before that work runs; a pending hand-off of the keyboard is dropped when the reader leaves during the wait; and a live append replays only the new events from the remembered thread, so the parts of the thread the events did not touch keep their identity and their remembered previews. What remains proportional to a pathological value is one reconstruction and one key enumeration per value, on the main thread, so above 2,000,000 characters of recorded events (`RunEventLog.bytes`, summed as the events arrive; ordinary runs record kilobytes to a few hundred kilobytes) the run's history counts as large and the inspector reconstructs the thread at an event only when the reader asks: a card names the history's size and offers "Reconstruct the thread at event N", an event once reconstructed stays so while the inspector is open, and a newly arrived event that becomes the selection asks again, so nothing a selection or a live update does by itself costs more than a constant; the keyboard follows the replacement both ways (a card that replaces a thread the keyboard was in takes it on its button; the thread's message controls take it after Reconstruct). Messages are laid out fifty at a time, the latest first in reading order, with "Show all" and an exact download of all of them one click away, so a thread of thousands of messages does not mount thousands of elements on every selection. Expansion lasts while the same value stays shown, and any change of value starts bounded again, including a return to an event whose value the viewer expanded earlier (the whole text is never formatted for a value that is not expanded now). The bound is on what the page lays out and holds, never on what is stored or on the execution context: the engine's thread, events and results are untouched. The wait prompt is bounded the same way and the evaluation reasoning excerpt wraps at any character. The full thread JSON is built only while its disclosure is open, and thread reconstruction per selected event is remembered while the log grows (`createThreadCache`: a log counts as grown only when every earlier event is the same object at the same index; at most 32 results, enough for a session's browsing between selected events, each one thread object whose size follows the run's thread), so a live run's appends do not replay the log again for the event on screen. Every progress row wraps at any character, so a long single-line value never widens the page (#380).
++- Bounded rendering of large values (#259). Every value the inspector shows as text (the result, variables, messages, the two sides of a patch diff, progress values without a one-line description, the full thread JSON) is laid out through `BoundedValue`: up to 4,096 characters at once (1,024 in a diff column or a progress row, and in the Events table's payload cell), then "Showing the first 4,096 characters of a larger value" (a string says its total) with **Show all**, which puts the whole text in a named scrolling region, and **Download JSON**, which saves the exact stored value. The preview is produced by `prettyJsonPrefix`, which walks the value only until the budget is spent, so the page's layout and the text it holds do not grow with the value until the viewer asks for the whole text. One cost JavaScript imposes remains proportional to a value: reading the first property of an object enumerates all of its keys, so a single object with hundreds of thousands of properties costs that enumeration the first time it is previewed; the preview is remembered per value (`cachedJsonPrefix`), so a return to it or a re-render costs a lookup; a changed value is previewed, and a newly selected event's thread reconstructed, in the deferred render after the urgent one (React's `useDeferredValue`; "Preparing the preview…" replaces the text in between, and the previous thread stays mounted under a "Reconstructing the thread at event N…" note so open disclosures and the keyboard keep their place, and keeps its own event's number in its title and download names until the selected one is shown, so nothing is labelled with an event it does not show), so selecting an event paints before that work runs; a pending hand-off of the keyboard is dropped when the reader leaves during the wait; and a live append replays only the new events from the remembered thread, so the parts of the thread the events did not touch keep their identity and their remembered previews. What remains proportional to a pathological value is one reconstruction and one key enumeration per value, on the main thread, so above 2,000,000 characters of recorded events (`RunEventLog.bytes`, summed as the events arrive; ordinary runs record kilobytes to a few hundred kilobytes) the run's history counts as large and the inspector reconstructs the thread at an event only when the reader asks: a card names the history's size and offers "Reconstruct the thread at event N", an event once reconstructed stays so while the viewer still remembers it (the last 32 reconstructions; one it has let go asks again), and a newly arrived event that becomes the selection asks again, so nothing a selection or a live update does by itself costs more than a constant; the keyboard follows the replacement both ways (a card that replaces a thread the keyboard was in takes it on its button; the thread's message controls take it after Reconstruct). Messages are laid out fifty at a time, the latest first in reading order, with "Show all" and an exact download of all of them one click away, so a thread of thousands of messages does not mount thousands of elements on every selection. Expansion lasts while the same value stays shown, and any change of value starts bounded again, including a return to an event whose value the viewer expanded earlier (the whole text is never formatted for a value that is not expanded now). The bound is on what the page lays out and holds, never on what is stored or on the execution context: the engine's thread, events and results are untouched. The wait prompt is bounded the same way and the evaluation reasoning excerpt wraps at any character. The full thread JSON is built only while its disclosure is open, and thread reconstruction per selected event is remembered while the log grows (`createThreadCache`: a log counts as grown only when every earlier event is the same object at the same index; at most 32 results, enough for a session's browsing between selected events, each one thread object whose size follows the run's thread), so a live run's appends do not replay the log again for the event on screen. Every progress row wraps at any character, so a long single-line value never widens the page (#380).
+ - Wait handling: when the run is waiting on input, a form rendered from the wait node's `inputSchema` appears inline.
+ 
+ ## PWA behaviour (Decided)

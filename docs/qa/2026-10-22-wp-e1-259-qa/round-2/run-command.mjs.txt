@@ -1,0 +1,6 @@
+// node temp-copy.mjs <artifact-log-basename> <command>; commands are fixed by the QA operator.
+import {spawn} from 'node:child_process';import {writeFile} from 'node:fs/promises';import {resolve} from 'node:path';
+const [name,command]=process.argv.slice(2),dir=resolve('docs/qa/2026-10-22-wp-e1-259-qa/round-2');let data='';const started=Date.now();
+const child=spawn('cmd.exe',['/d','/s','/c',command],{cwd:process.cwd(),env:process.env,windowsHide:true,stdio:['ignore','pipe','pipe']});child.stdout.on('data',c=>data+=c);child.stderr.on('data',c=>data+=c);
+const code=await new Promise((ok,fail)=>{child.once('error',fail);child.once('exit',ok)});
+data=data.replace(/(?:[A-Z]:)?[\\/]+Users[\\/]+[A-Za-z0-9._-]+/gi,'<USER>');await writeFile(resolve(dir,name),`Command: ${command}\nExit: ${code}\nElapsed ms: ${Date.now()-started}\n\n${data}`);console.log(JSON.stringify({command,code,elapsedMs:Date.now()-started,log:name}));process.exitCode=code;
