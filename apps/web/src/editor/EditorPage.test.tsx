@@ -1,5 +1,12 @@
 import { kitchenSinkLoop, minimalLoop } from '@graphgoblin/contracts/testing';
-import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  screen,
+  waitFor,
+  waitForElementToBeRemoved,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { StrictMode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -53,6 +60,9 @@ describe('EditorPage', () => {
     const api = new FakeApi();
     const loop = api.addLoop(minimalLoop());
     renderApp(`/loops/${loop.id}/edit`, api);
+    // Loop/device loading precedes validation. Give that public phase its own observation
+    // window, within the unchanged 20 s test budget, before observing the server's checks.
+    await waitForElementToBeRemoved(screen.getByText('Loading loop…'), { timeout: 10_000 });
     await screen.findByText('Ready to publish');
     act(() =>
       useEditorStore.getState().setFieldError('node:start', 'inputSchema', {

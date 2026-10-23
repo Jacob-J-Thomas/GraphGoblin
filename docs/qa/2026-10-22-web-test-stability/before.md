@@ -1,5 +1,8 @@
 # Web editor test stability: baseline
 
+This is the original round 1 baseline. See [round2.md](round2.md) for the audit
+reproductions on `67c84088` and the follow-up measurements.
+
 Measured on 2026-10-22 in `codex-chore-web-test-stability`, clean baseline
 `39705dd7e961cf64e48cf7c66275774ec2b5e958`, Windows, Node **v22.14.0**,
 12 available logical processors. No retries were enabled.
@@ -16,7 +19,7 @@ for (;;) {
 }
 ```
 
-The complete load script (`%TEMP%\gg-chore-web-load.cjs`) is:
+The complete load script ([gg-chore-web-load.cjs](gg-chore-web-load.cjs)) is:
 
 ```js
 const { Worker } = require('node:worker_threads');
@@ -46,7 +49,7 @@ own three-thread load process; the script's 30-minute bound is only recovery for
 an abandoned runner, not a test timeout. Completed load PIDs were checked and
 were no longer running.
 
-Raw local log: `%TEMP%\gg-chore-web-before.log` (the initial logger mixed text
+Retained log: [gg-chore-web-before.log.txt](gg-chore-web-before.log.txt) (the initial logger mixed text
 encodings; its Vitest output is UTF-16LE). Later logs use UTF-8 consistently.
 
 ## Result: reproduced
@@ -100,7 +103,7 @@ took **589 + 953 + 250 = 1792 ms**. Selects, body radios and undo/redo took the
 remaining event time; mounting, queries and assertions occupied the rest.
 This diagnostic ran alongside the initial component investigation, so its timing
 is attribution evidence, not a matched coverage comparison. Raw diagnostic log:
-`%TEMP%\gg-chore-web-event-profile.log`. The diagnostic test copy was removed.
+[gg-chore-web-event-profile.log.txt](gg-chore-web-event-profile.log.txt). The diagnostic test copy was removed.
 
 An earlier attempted V8 CPU-profile invocation emitted no profile artifact; its
 single unchanged case passed in 15446 ms while the baseline suite was still

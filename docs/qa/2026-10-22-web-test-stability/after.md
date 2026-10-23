@@ -1,9 +1,12 @@
 # Web editor test stability: verification
 
+This is the historical round 1 record. The audit found remaining failures;
+[round2.md](round2.md) records the follow-up and supersedes its stability conclusion.
+
 Baseline and load definition: [before.md](before.md). The final Vitest matrix
 uses Node 22.14.0 and three continuously busy Node worker threads per invocation.
 Static gates and browser checks are recorded separately below as other evidence.
-The load generator and runner logs use the prefix `gg-chore-web-` in system temp.
+The retained load generator and transcripts are beside this document; local user-directory prefixes are redacted.
 Vitest retries remain zero. No existing assertion, test, threshold, exclusion or
 global timeout was removed, skipped or increased. Four inherently heavy cases have
 documented per-test 60 s budgets, described below.
@@ -18,8 +21,8 @@ documented per-test 60 s budgets, described below.
 | `--maxWorkers=1` | 116 files / 1474 tests passed, exit 0 |       1513.13 s |        1517.823 s | 98.93% |   94.84% |     98.02% |    98.49% |
 
 Each completed full run emitted its coverage summary without a retry. Raw logs
-are `%TEMP%\gg-chore-web-run-{1,2,3}.log` and
-`%TEMP%\gg-chore-web-serial.log`. PowerShell renders pnpm's script-header stderr
+are [gg-chore-web-run-1.log.txt](gg-chore-web-run-1.log.txt), [gg-chore-web-run-2.log.txt](gg-chore-web-run-2.log.txt), [gg-chore-web-run-3.log.txt](gg-chore-web-run-3.log.txt) and
+[gg-chore-web-serial.log.txt](gg-chore-web-serial.log.txt). PowerShell renders pnpm's script-header stderr
 as native-error records in redirected logs; the reported outcome uses the
 actual pnpm exit code and Vitest's final test/coverage summaries.
 
@@ -58,7 +61,7 @@ All six isolated groups passed **130/130 executions**, with no retries:
 | Kinds              |                   1 |         10 |         40.99 s |          42.727 s | Pass, exit 0 |
 | Advanced           |                   1 |         10 |         63.34 s |          66.548 s | Pass, exit 0 |
 
-Raw logs: `%TEMP%\gg-chore-web-repeat-{preset,keyboard,default,existing,kinds,advanced}.log`.
+Raw logs: [gg-chore-web-repeat-preset.log.txt](gg-chore-web-repeat-preset.log.txt), [gg-chore-web-repeat-keyboard.log.txt](gg-chore-web-repeat-keyboard.log.txt), [gg-chore-web-repeat-default.log.txt](gg-chore-web-repeat-default.log.txt), [gg-chore-web-repeat-existing.log.txt](gg-chore-web-repeat-existing.log.txt), [gg-chore-web-repeat-kinds.log.txt](gg-chore-web-repeat-kinds.log.txt), [gg-chore-web-repeat-advanced.log.txt](gg-chore-web-repeat-advanced.log.txt).
 Each selected case reports `repeat x9`; Vitest's repeat runner preserves a failed
 iteration as a failure, even if later iterations pass. Focused CLI filtering
 accounts for the other cases shown as unselected/skipped in these isolated runs;
@@ -119,8 +122,8 @@ secret uses select-all plus one paste, so its one-step undo does not depend on
 remain. Autosave's real 600 ms debounce remains exercised; no interval or expiry
 was found to control the originally reproduced timeout, so clocks were not globally faked.
 
-The first full verification of the intermediate fixture still failed (local log
-`%TEMP%\gg-chore-web-after-1.log`, exit 1, 547.88 s, 1469 passed / 5 failed):
+The first full verification of the intermediate fixture still failed (retained log
+[gg-chore-web-after-1.log.txt](gg-chore-web-after-1.log.txt), exit 1, 547.88 s, 1469 passed / 5 failed):
 the labeled preset and keyboard tests timed out at 20147/20682 ms. That evidence
 led to removing autosave from non-persistence component cases. Three additional
 failures were also addressed through their existing public interfaces:
@@ -143,7 +146,7 @@ labeled preset 2032 ms and keyboard editing 3593 ms. These focused checks are
 diagnostic verification; the final full-suite series below starts with this
 refined revision. No failed run is counted as a passing gate.
 
-That revision's first full run (`%TEMP%\gg-chore-web-final-1.log`) passed 1473
+That revision's first full run ([gg-chore-web-final-1.log.txt](gg-chore-web-final-1.log.txt)) passed 1473
 tests and failed only Advanced at **20126 ms**, despite removing unrelated
 rendering and autosave. Vitest duration was 340.98 s. Typecheck/lint started only
 after that failure was already recorded; this run is not part of the final clean
@@ -154,7 +157,7 @@ its real form remounts and focus assertions are the behavior under test.
 Keyboard editing also took 18841 ms, so its two ordinary fixture strings now use
 single paste edits while its JSON-pointer typing and keyboard history checks stay.
 
-The next full admission run (`%TEMP%\gg-chore-web-verified-1.log`) exposed further
+The next full admission run ([gg-chore-web-verified-1.log.txt](gg-chore-web-verified-1.log.txt)) exposed further
 test-only scheduling/workload assumptions: **1467 passed / 7 failed**, 629.58 s
 Vitest duration (638.791 s command wall time), with no coverage summary. Advanced
 completed in **30563 ms** under its scoped budget. New failures and corrections:
@@ -178,7 +181,7 @@ The extended focused check passed the seven non-cron cases (2412 to 10216 ms).
 Its first fake-clock cron implementation deadlocked on user-event's outer task
 wrapper. The final clock phase uses supported `fireEvent.change` input events;
 picker keyboard behavior is tested elsewhere. The corrected cron case passed
-**10/10 loaded executions**, zero retries (`%TEMP%\gg-chore-web-cron-clock.log`).
+**10/10 loaded executions**, zero retries ([gg-chore-web-cron-clock.log.txt](gg-chore-web-cron-clock.log.txt)).
 No failed admission or diagnostic invocation is included in the final passing
 matrix below.
 
@@ -199,12 +202,12 @@ generator was stopped during the later Settings diagnostic work; this failed
 attempt is explicitly excluded from matched full-suite measurements.
 
 The port passed all **30 focused executions** (three parameters, ten executions
-each, no retries); log `%TEMP%\gg-chore-web-settings-clock.log`. A TypeScript AST
+each, no retries); log [gg-chore-web-settings-clock.log.txt](gg-chore-web-settings-clock.log.txt). A TypeScript AST
 comparison against the worktree's original HEAD found **all 1070 original
 explicit assertion calls retained** across the nine modified test files, with
 one additional cached-draft readiness precondition in S24. No test declaration
 or parameter was removed. Assertion-audit log:
-`%TEMP%\gg-chore-web-assertions.log`.
+[gg-chore-web-assertions.log.txt](gg-chore-web-assertions.log.txt).
 
 CPU contention can still extend elapsed time; no finite test deadline can
 guarantee success under unlimited starvation. The verification below measures
@@ -252,15 +255,18 @@ All commands use Node 22 first on PATH, from the worktree root.
 Browser verification used disposable copies of the existing Playwright config,
 global setup and server, with only the main/control listeners bound to **5770 /
 5771**, retries forced to zero and results under
-`%TEMP%\gg-chore-web-browser-results`. Those three temporary files were removed;
+`%TEMP%\gg-chore-web-browser-results`. The disposable config is reconstructed from
+[gg-chore-web-browser.cjs](gg-chore-web-browser.cjs) as
+[gg-chore-web-playwright.config.ts](gg-chore-web-playwright.config.ts).
+Those three temporary files were removed;
 no persistent e2e or Vitest configuration changed. Browser log:
-`%TEMP%\gg-chore-web-browser.log`.
+[gg-chore-web-browser.log.txt](gg-chore-web-browser.log.txt).
 
 One concurrent lint invocation rejected that temporary config because it was
 outside the TypeScript project service's allowed config names. This validation
 ordering mistake was corrected by removing the temporary browser files and
 running lint again before starting the final loaded series. That failed
-invocation is retained in `%TEMP%\gg-chore-web-lint-final.log`; it is not counted
+invocation is retained in [gg-chore-web-lint-final.log.txt](gg-chore-web-lint-final.log.txt); it is not counted
 as a passing gate. Turbo also emitted nonfatal cache I/O access-denied warnings
 on successful typecheck/lint/build runs; the changed web task ran freshly.
 

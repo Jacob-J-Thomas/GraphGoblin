@@ -379,17 +379,26 @@ describe('cron schedule control', () => {
     );
     const status = schedule.getByRole('status');
     const before = status.textContent;
-    // These public input changes must stay inside the 350 ms announcement debounce, independent
-    // of wall-clock contention. Picker keyboard behavior is covered by the other control cases.
+    // Advance between public edits to check each debounce window and its cancellation,
+    // independent of wall-clock contention. Picker keyboard behavior is covered elsewhere.
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     try {
       fireEvent.change(screen.getByLabelText('Repeat'), { target: { value: 'custom' } });
+      await act(() => vi.advanceTimersByTimeAsync(100));
       fireEvent.change(raw(), { target: { value: 'b' } });
       expect(schedule.getByRole('status')).toBe(status);
       expect(status.textContent).toBe(before);
+      await act(() => vi.advanceTimersByTimeAsync(349));
+      expect(status.textContent).toBe(before);
       fireEvent.change(raw(), { target: { value: 'broken' } });
       expect(status.textContent).toBe(before);
-      await act(() => vi.advanceTimersByTimeAsync(350));
+      // The first edit's deadline passes, but the second edit restarted the debounce.
+      await act(() => vi.advanceTimersByTimeAsync(1));
+      expect(status.textContent).toBe(before);
+      await act(() => vi.advanceTimersByTimeAsync(348));
+      expect(status.textContent).toBe(before);
+      await act(() => vi.advanceTimersByTimeAsync(1));
+      expect(status).toHaveTextContent('Custom expression: broken');
     } finally {
       vi.useRealTimers();
     }
