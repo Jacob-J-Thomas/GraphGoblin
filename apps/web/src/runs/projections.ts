@@ -11,7 +11,7 @@ import type {
   LoopDefinition,
   ReturnChannel,
 } from '@graphgoblin/contracts';
-import { getAtPointer, replayThread } from '@graphgoblin/domain';
+import { getAtPointer, replayStateAt, replayThread } from '@graphgoblin/domain';
 
 /**
  * The thread as the run started. The engine records it on the first event (`run.queued`),
@@ -71,6 +71,90 @@ export function tryThreadAt(
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : String(error) };
   }
+}
+
+export type ReplayResult = ReturnType<typeof tryThreadAt>;
+
+export interface ThreadCache {
+  at(initial: ContextThread, events: readonly RunEvent[], seq: number): ReplayResult;
+  /** Whether `at` would answer from memory for this seed and log: a remembered, replayable thread. */
+  has(initial: ContextThread, events: readonly RunEvent[], seq: number): boolean;
+}
+
+/**
+ * `tryThreadAt` with its results remembered per sequence while a run's log only grows (#259). A
+ * live run appends an event every few hundred milliseconds, and without this every append replayed
+ * the whole log again for the event the viewer had selected. A result is kept only once the log has
+ * reached its sequence, since later events cannot change it. A log counts as grown only when every
+ * event seen before is still the same object at the same index (a cleared and refilled log keeps
+ * its length and its tail but not its middle; comparing references is far cheaper than a replay);
+ * a different initial thread or any other log empties the cache. At most `limit` results stay: a
+ * viewer moves between a handful of selected events, so 32 covers a session's browsing; each
+ * result is one thread object, so the memory held scales with the run's thread, not with its log.
+ */
+export function createThreadCache(limit = 32): ThreadCache {
+  let initial: ContextThread | undefined;
+  let known: readonly RunEvent[] = [];
+  const results = new Map<number, ReplayResult>();
+  const grown = (init: ContextThread, events: readonly RunEvent[]) =>
+    init === initial &&
+    events.length >= known.length &&
+    known.every((event, index) => events[index] === event);
+  return {
+    has(init, events, seq) {
+      // A remembered failure counts: asking again would show the same error, not rebuild.
+      return grown(init, events) && results.has(seq);
+    },
+    at(init, events, seq) {
+      const extended = grown(init, events);
+      if (!extended) {
+        results.clear();
+        initial = init;
+      }
+      known = events;
+      const hit = results.get(seq);
+      if (hit) {
+        // A hit becomes the newest entry, so the results a reader asks for together (a patch
+        // diff needs an event and the one before it) are not parted by the next eviction.
+        results.delete(seq);
+        results.set(seq, hit);
+        return hit;
+      }
+      // Replay from the nearest earlier remembered thread rather than from the seed: a live append
+      // then costs the new events only, and the parts of the thread those events do not touch keep
+      // their identity (patches copy only along their path), so their remembered previews stay.
+      let base: { seq: number; thread: ContextThread } | undefined;
+      for (const [cachedSeq, cached] of results) {
+        if (cached.ok && cachedSeq < seq && (base === undefined || cachedSeq > base.seq))
+          base = { seq: cachedSeq, thread: cached.thread };
+      }
+      let result: ReplayResult;
+      if (base === undefined) result = tryThreadAt(init, events, seq);
+      else {
+        const baseSeq = base.seq;
+        const from = events.findIndex((e) => e.seq > baseSeq);
+        try {
+          result = {
+            ok: true,
+            thread: replayThread(
+              base.thread,
+              from === -1 ? [] : events.slice(from),
+              seq,
+              replayStateAt(events, base.seq),
+            ),
+          };
+        } catch (error) {
+          result = { ok: false, error: error instanceof Error ? error.message : String(error) };
+        }
+      }
+      const last = events[events.length - 1]?.seq ?? 0;
+      if (seq <= last) {
+        results.set(seq, result);
+        if (results.size > limit) results.delete(results.keys().next().value as number);
+      }
+      return result;
+    },
+  };
 }
 
 export interface PatchLine {

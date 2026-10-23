@@ -6,8 +6,7 @@ import { Link, useParams } from 'react-router';
 import { keys, useLoopVersion, useRun, useRunThread } from '../api/queries.js';
 import { Page } from '../components/layout/index.js';
 import { QueryState, RunStatusBadge } from '../components/status.js';
-import { Alert, Card } from '../components/ui/index.js';
-import { prettyJson } from '../lib/utils.js';
+import { Alert, BoundedValue, Card } from '../components/ui/index.js';
 import { ProgressDrawer } from './inspector/ProgressDrawer.js';
 import { EvaluationDetails } from './inspector/EvaluationDetails.js';
 import { RunControls } from './inspector/RunControls.js';
@@ -158,12 +157,12 @@ export function RunInspectorPage() {
                 when the row has none. */}
             {run.result !== undefined || finished?.result !== undefined ? (
               <Card title="Result">
-                <pre
-                  className="overflow-auto rounded-md border border-default bg-code-bg px-3 py-2 text-[12.5px] text-code-fg"
-                  data-testid="run-result"
-                >
-                  {prettyJson(run.result !== undefined ? run.result : finished?.result)}
-                </pre>
+                <BoundedValue
+                  value={run.result !== undefined ? run.result : finished?.result}
+                  label="Result"
+                  testId="run-result"
+                  fileName={`run-${run.id}-result`}
+                />
               </Card>
             ) : null}
             <WaitPanel run={run} />
@@ -196,6 +195,7 @@ export function RunInspectorPage() {
               events={log.events}
               seq={seq}
               definition={definition}
+              historyBytes={log.bytes}
             />
           ) : (
             <p className="text-sm text-muted">The thread is not available yet.</p>

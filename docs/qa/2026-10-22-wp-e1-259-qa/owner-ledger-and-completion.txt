@@ -1,0 +1,133 @@
+## Owner decision ledger
+
+### Authority and vocabulary
+
+The owner approved the final plan and its priority order in this conversation, then explicitly authorized GitHub publication only. Latest explicit human input supersedes older model proposals, historical issue text and old compatibility assumptions. The hierarchy is intents → UoWs → bolts; campaigns/phases are not additional delivery layers.
+
+### Dispatch hold
+
+Do not start implementation. Every runnable bolt remains parked with no aidlc-ready, human-in-the-loop or approval gate labels. Plan approval is recorded in the body; a later explicit dispatch decision releases the hold. Deferred work stays parked and is not made implementation-ready by this publication.
+
+### Protected work
+
+Leave #38, #97, #98, #118, #152, #164, #165, #166, #168, #169, #171, #173 and newly observed related #341, and PRs #275/#277/#340 unchanged, including closed records. Preserve their native/inverse parent, sub-issue, dependency and duplicate relationships. #280/#281 reference external acceptance without adding inverse links. Do not redirect or message Claude.
+
+### Owner environment
+
+Never restart, reconfigure, write to or start runs on the owner app at ports 4747/4748, its store or checkout. Eventual verification uses a separate instance, alternate port and disposable data. No implementation, reset, provider call or installer execution is part of this publication.
+
+### Accepted delivery
+
+Retain completed #9, #11, #21, #26, #28–31, #99, #158–161 and #170. #9 is completed, not not-planned. Prior evidence and owner acceptance remain distinct; this update does not claim new live smoke tests. #32 is accepted as sufficient at its delivered scope; repository-specific QA loops are owner-led usage/testing with no new product follow-up.
+
+### Current UI
+
+The owner is happy with the current UI. Keep cards minimal. Optional toasts/skeletons are #210; light-mode repair is #211, System theme selection is #172, and mascot work is #10. Broad JSON-editing/Advanced refinements wait for concrete needs; direct model/effort visibility is the explicit exception in #205.
+
+### Decision configuration
+
+Evaluation method is primary at the top of decision configuration and controls field visibility. Classifiers alone expose Choice/Noul/Score answer types; LLM decisions use freeform instructions and structured result validation; expressions use snippets with only relevant options. This is captured outside protected #97/#98/#164, not imposed by editing their active scope.
+
+### Authoring follow-ups
+
+Use one visible effort dropdown and keep model/effort out of Advanced. Connections belong on the canvas for all node kinds after conformance is verified. Undo/Redo stay at fixed positions. Prevent equivalent duplicate loop names including import/copy. Preserve saved geometry; readable default spacing follows more serious bugs.
+
+### Human defect reports
+
+An AI model must reproduce human-reported defects before a corrective implementation; explicitly flag inability to reproduce. Missing reproduction is not disproof. Owner product review is required, especially #125/#221. The decision-output screenshot was captured after reload, when attempted connections appeared.
+
+### Pre-1.0 data
+
+Prefer clean current-format code and explicit operator resets over historical conversions. Preserve current-format durability. Old stores/imports/device drafts refuse clearly; startup never silently wipes data. Existing damaged history may be deleted explicitly or manually repaired; automatic historical preservation/repair is not required. Apply future cleanup after the currently protected cutover/editor boundary.
+
+### Definition lifetime
+
+All executions, including draft runs, retain the original immutable definition through their entire lifetime, waits, resume and restart. Only new executions use subsequent edits. This is settled, not a fresh product question.
+
+### Child composition
+
+Always await child/subloop completion and pass its configured exit output back to the parent, or no output if none is configured. A child exit is not a parent exit. Child failures follow ordinary parent-node failure rules. Future parallel branches must also join/wait, but branching/merging is deferred.
+
+### Shutdown
+
+Stop new independent admission while active parent/child work can finish and queued work stays recoverable. After a configurable several-minute interactive grace, explain active work and offer keep waiting or force. Waiting has no hidden kill timer. Without UI, normal stop waits indefinitely if necessary; explicit force interrupts. Browser tab closure is not shutdown.
+
+### Waits and heartbeats
+
+Durable timers and observed-wait identities prevent lost/cross-visit wakes. Past wall-clock waits become eligible after restart; paused runs stay paused. Heartbeat counts reset on a genuine visit and persist across its beats/retries/restart. The natural competing-wake race remains an investigation, not a proven defect.
+
+### External effects
+
+Use stable child/delivery identities. Do not blindly repeat uncertain non-idempotent scripts; require explicit retry. Eligible outbound-webhook retries are bounded and preserve identity; recipient deduplication is not assumed.
+
+#343 adds durable POC Event intake: require one stable loop ID and unambiguous entry; retain webhook URL targeting; durably save accepted admission and recover it without duplicate runs. Independent targeted requests may execute concurrently within configured capacity. This admission guarantee is not universal exactly-once external effects.
+
+#345 is parked pre-1.0: a configured-but-missing outbound signing secret prevents the request and produces a safe visible delivery failure. Deliberately unsigned delivery remains supported. No repeated attempt while that required configuration remains missing.
+
+### Sessions and limits
+
+- Context modes are fresh/isolated with authored task and selected inputs; current main-loop context supplied deliberately; or an independent conversation owned by this node within this execution. A fresh provider session can still receive selected loop context.
+- Persistent memory means previous visits during one execution, not separate executions. Isolate node/run/harness identities, replay forks and children. Outputs enter the main thread only through the normal configured output behavior.
+- An explicitly chosen reset-after-N-visits policy is valid. It must be visible and optional, never an imposed hidden ten-visit reset, and must not erase the main-loop context.
+- Preserve prompt-delivery provenance: definitely unsubmitted work retains its authored prompt; uncertain accepted work is not blindly resent; a missing provider conversation requires an explicit fresh-session recovery choice.
+
+Loop guardrails are visible, disableable controls for loop execution (iterations/node visits and optional elapsed deadlines). Do not impose cost/token/subscription budgets or substitute provider-turn ceilings. Users may author their own usage-aware script/decision nodes. Quota exhaustion currently fails explicitly; only positively identified transient failures safe to repeat receive bounded retries. Future same-model allowance waiting/resumption is #335.
+
+### Model selections
+
+Explicit provider switches choose a valid configured compatible default or supported ecosystem default when none exists (#204). Model and reasoning effort remain directly visible with one effort control (#205). #206 is the separate high-priority pre-1.0 Sonnet/Haiku bolt, verified against installed capability and actual isolated turns.
+
+#262 is parked post-1.0, including its authoring-validation test changes. Unavailable means user-disabled or removed from GraphGoblin support, not quota/authentication/transient failure. Warn before disabling a referenced model, identify affected loops, and unpublish affected published loops if confirmed. GraphGoblin retirement requires an explicit tested compatible successor and clean upgrade of definitions/settings for new executions. Running definitions/models and historical evidence remain unchanged. Runtime failures never silently substitute a model.
+
+#335 is post-1.0 same-model usage-exhaustion recovery; it replaces the fallback-model candidate. No model-substitution capability is scheduled.
+
+### Sustained execution
+
+Sustained loops are central to the POC. Start #190/#268 measurements early alongside gate reliability; prioritize bounded streaming #186. Measure before targeted optimization; no general RunManager rewrite or invented latency SLA. Critical state/finalization fixes accompany runtime changes rather than waiting behind UI polish.
+
+### History deletion
+
+Only specifically user-confirmed delete-ready history is eligible for automatic cleanup. Age/terminal status is not consent; failed runs need no special rule. Protect active/required retained data. Cleanup is pressure-driven and off by default with ample storage, with a subtle visible warning. Explicit loop deletion must clearly cover any associated history it removes.
+
+### Test quality
+
+Review maintained unit, integration, regression, browser and restart/concurrency evidence through supported component/public methods. Private-method access, reflection, invasive casts and monkey-patching the tested component are errors. Legitimate public dependency injection, fake clocks, malformed external inputs and real storage faults remain valid. Keep coverage protections and truthful denominators; no fake-only claim of native integration success.
+
+### Paid validation
+
+Existing subscriptions may be used for bounded real Codex/Claude validation through installed logins. Jev uses its existing API path. An API key may be discussed only if actually required; do not add direct API adapters solely for tests, export credentials, schedule recurring paid jobs or infer unbounded quota approval.
+
+### Recovery/evidence UI
+
+Resume/Replay eligibility must be truthful. Preserve useful loopback-node capabilities/evidence when decisions replace them (#129); nothing is dropped without an equivalent. Pinned execution metadata, complete paging, raw values and explicit finalization must agree across API/MCP/browser.
+
+### Later priorities
+
+MacOS follows most POC development but precedes final distribution preparation. Installer/setup #34–36/#39 are final pre-1.0 checks. #100 is a high-priority post-1.0 deferral just ahead of #25. Mobile is separately parked. Accessibility follows adoption after 1.0. Light mode is low pre-1.0 priority; mascot follows pressing work; guidance/navigation is mostly near 1.0.
+
+### Installation
+
+Detect existing harnesses and offer normal externally usable installations when missing. The lightweight Windows launcher is early usable product work; a full installer is separate. HTTP MCP is started only when applicable, and stdio remains client-owned.
+
+### Historic proposals
+
+Historical comments remain attributable history, not a second operative specification. The current approved body and this ledger supersede contradictory old caps, silent session fallbacks, compatibility requirements, scheduling and approval statements. Do not edit or erase human comments. Protected active issues remain unchanged and are reconciled only at the explicit external acceptance gate.
+
+## Shared completion standard
+
+- Exercise supported public/component interfaces; do not access private state, use reflection to bypass encapsulation, monkey-patch the component under test or add test-only production exports.
+- Use appropriate unit, real storage/process/API integration and browser evidence. Regression tests must demonstrate faulty behavior on the applicable baseline and corrected behavior after the change.
+- Human reports require reproduction before a corrective implementation; if unreproduced, preserve the report and evidence and request owner disposition rather than guessing a fix.
+- Test relevant positive, negative, cancellation, concurrency and restart cases; a fake or controlled failure fixture is identified as such.
+- Keep strict coverage and quality protections; no lowering thresholds, arbitrary exclusions, suppressed assertions, retry-to-green or repeated broad suites without cause.
+- Update changed contracts, generated references, relevant behavior docs and ADRs within the bolt. Residual documentation polish can remain later.
+- Default proposed delivery routing is GPT-6.1 Sol xhigh implementation, opposite-vendor Claude review and independent QA per repository workflow. No agent is launched by this plan.
+- UI bolts require owner product acceptance. Architecture/cutover plans require owner approval. All these gates are proposed metadata, never self-applied plan-approved labels.
+- Only isolated workspaces, alternate ports and disposable data may be used. Never operate on owner port 4747 or its store.
+- Research/diagnostic bolts can end with an evidence-backed no-change result; conditional corrective bolts require the reproduction or measurement they depend on.
+
+## Engineering parameters
+
+Existing accepted configuration is retained when applicable. Unsettled numeric grace periods, execution defaults, retry/backoff values, storage-pressure thresholds and performance budgets are engineering parameters to document and justify in their owning bolt; no invented number is represented as owner-approved.
+
+## Integrated acceptance

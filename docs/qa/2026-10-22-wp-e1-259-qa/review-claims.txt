@@ -1,0 +1,5 @@
+Read-only GitHub connector snapshot, 2026-10-22. The worktree register predates these review rounds. Claims are not QA evidence.
+
+### WP-E1 (#259) — Sol review round 4 of `a52299c6`: confirmed (2026-10-22, D-026)
+
+All earlier findings closed; no new finding. The reviewer ran 4,248 independent prefix checks across 270 value and key cases (the surrogate case that failed round 3 now matches, including through the built frontend), measured a 20 MiB flat string previewed at 4,096 characters with about 120 KiB of additional heap, confirmed exact full-value access and downloads with special characters, the wait prompt and reasoning excerpt at 1440 and 390 px, the expansion reset, and the narrowed serialiser contract; gates: typecheck, lint, format, tokens, layers, deps, web coverage 119 files and 1,498 tests (98.03 statements, 94.88 branches, 98.5 functions, 98.95 lines), build, Edge 4/4; the earlier editor timeouts did not recur. Residual risks named by the reviewer: controlled workloads rather than a sustained-load benchmark, no full screen-reader audit, exotic JavaScript values outside the guarantee. Next: independent Sol QA, then the Astra audit.

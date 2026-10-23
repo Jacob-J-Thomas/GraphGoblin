@@ -1,0 +1,181 @@
+--- apps/web/src/components/ui/card.tsx:1 ---
+import { useId, type ReactNode } from 'react';
+import { cn } from '../../lib/utils.js';
+
+/**
+ * A raised panel: an optional head (title and actions on a band over a hairline) and a padded body.
+ * The head's band (`--surface-head`) and title colour (`--text-heading`) are the light theme's
+ * tinted surfaces and dark-brown accents (#11); in dark they match the card. `flush` drops the body
+ * padding for content that brings its own, such as a table, and lets that content scroll sideways
+ * when it is wider than the card (narrow windows, 200% zoom), with a shadow on the edge that has
+ * more (`scroll-shadow-x`).
+ */
+export function Card({
+  id,
+  title,
+  titleLevel = 2,
+  actions,
+  flush = false,
+  className,
+  bodyClassName,
+  children,
+}: {
+  /** The section's id, for a link to it (Settings → Secrets, say). */
+  id?: string;
+  title?: ReactNode;
+  titleLevel?: 2 | 3;
+  actions?: ReactNode;
+  flush?: boolean;
+  className?: string;
+  bodyClassName?: string;
+  children: ReactNode;
+}) {
+  const titleId = useId();
+  return (
+    <section
+      id={id}
+      aria-labelledby={title ? titleId : undefined}
+      className={cn(
+        'min-w-0 rounded-lg border border-default bg-surface-raised shadow-1',
+        flush && 'overflow-hidden',
+        className,
+      )}
+    >
+      {title || actions ? (
+        <header className="flex min-h-13 flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-t-[inherit] border-b border-default bg-surface-head px-5 py-3">
+          {title ? (
+            titleLevel === 3 ? (
+              <h3
+                id={titleId}
+                className="flex items-center gap-2 text-md font-semibold text-heading"
+              >
+                {title}
+              </h3>
+            ) : (
+              <h2
+                id={titleId}
+                className="flex items-center gap-2 text-md font-semibold text-heading"
+              >
+                {title}
+              </h2>
+            )
+          ) : (
+            <span />
+          )}
+          {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
+        </header>
+      ) : null}
+      <div className={cn(flush ? 'scroll-shadow-x overflow-x-auto' : 'p-5', bodyClassName)}>
+        {children}
+      </div>
+    </section>
+  );
+}
+
+--- apps/web/src/runs/inspector/ThreadViewer.tsx:149 ---
+  const rootRef = useRef<HTMLDivElement>(null);
+  const reconstructRef = useRef<HTMLButtonElement>(null);
+  const alertRef = useRef<HTMLDivElement>(null);
+  const [viewerOwnsFocus, setViewerOwnsFocus] = useState(false);
+  // The card unmounts the messages section without a blur event: its ownership ends here.
+  if (!ready && ownsFocus) {
+    setOwnsFocus(false);
+    setHoldsFocus(false);
+  }
+  if (shownThread !== thread) {
+    setShownThread(thread);
+    setAllMessagesState(false);
+    if (ownsFocus) {
+      setHoldsFocus(true);
+      setHandoffs((n) => n + 1);
+    }
+  }
+  const allMessages = allMessagesState && shownThread === thread;
+  useLayoutEffect(() => {
+    if (handoffs === 0) return;
+    const section = messagesRef.current;
+    const list = listRef.current;
+    const inside = section !== null && section.contains(document.activeElement);
+    // Without a messages section (a reconstruction that failed), the alert itself takes the
+    // keyboard, so an activated control never leaves it on the body.
+    if (!inside) (showAllRef.current ?? list ?? alertRef.current)?.focus();
+    setHoldsFocus(document.activeElement === list);
+  }, [handoffs]);
+  useLayoutEffect(() => {
+    if (ready || !viewerOwnsFocus) return;
+    const root = rootRef.current;
+    if (root !== null && !root.contains(document.activeElement)) reconstructRef.current?.focus();
+  }, [ready, shownSeq, viewerOwnsFocus]);
+  const viewerFocus = {
+    ref: rootRef,
+    onFocus: () => setViewerOwnsFocus(true),
+    onBlur: (event: React.FocusEvent<HTMLDivElement>) => {
+      if (!rootRef.current?.contains(event.relatedTarget)) setViewerOwnsFocus(false);
+    },
+  };
+  if (!ready) {
+    return (
+      <div {...viewerFocus}>
+        <Card title={`Thread at event ${shownSeq}`}>
+          <p className="text-sm text-muted">
+            This run's history holds {megabytes(historyBytes)} of recorded events. Replaying them to
+            rebuild the thread at an event can take a while, so it happens on request.
+          </p>
+          <p>
+            <Button
+              ref={reconstructRef}
+              size="sm"
+              onClick={() => {
+                // The replay happens here, on request; the render that follows finds it cached.
+                cache.at(initial, events, shownSeq);
+                if (withDiff) cache.at(initial, events, shownSeq - 1);
+                setPrepared((n) => n + 1);
+                // The button goes away with the card: the thread's controls take the keyboard.
+                setHoldsFocus(true);
+                setHandoffs((n) => n + 1);
+              }}
+            >{`Reconstruct the thread at event ${shownSeq}`}</Button>
+          </p>
+        </Card>
+      </div>
+    );
+  }
+  if (replayed === undefined || !replayed.ok || thread === undefined) {
+    return (
+      <div {...viewerFocus}>
+        <div ref={alertRef} tabIndex={-1} className="outline-none">
+          <Alert title={`The thread cannot be reconstructed at event ${shownSeq}`}>
+            {replayed === undefined || replayed.ok ? '' : replayed.error}
+          </Alert>
+        </div>
+      </div>
+    );
+  }
+
+--- apps/web/src/runs/RunInspectorPage.tsx:156 ---
+            {/* A null return is a value: show the row's recorded result, or the finish event's
+                when the row has none. */}
+            {run.result !== undefined || finished?.result !== undefined ? (
+              <Card title="Result">
+                <BoundedValue
+                  value={run.result !== undefined ? run.result : finished?.result}
+                  label="Result"
+                  testId="run-result"
+                  fileName={`run-${run.id}-result`}
+                />
+              </Card>
+            ) : null}
+
+--- packages/api-client/src/sse.ts:1 ---
+import { RunEventSchema, type RunEvent } from '@graphgoblin/contracts';
+import type { GraphGoblinClient } from './client.js';
+import { GraphGoblinApiError } from './errors.js';
+
+/** Event types after which the API closes the stream and no further events can arrive. */
+export const TERMINAL_RUN_EVENT_TYPES: ReadonlySet<RunEvent['type']> = new Set([
+  'run.finished',
+  'run.failed',
+  'run.cancelled',
+]);
+
+

@@ -1,0 +1,107 @@
+import {readFile,writeFile,readdir} from 'node:fs/promises';import {resolve} from 'node:path';import {createRequire} from 'node:module';
+const dir=resolve('docs/qa/2026-10-22-wp-e1-259-qa/round-8'),req=createRequire(resolve('package.json')),prettier=req('prettier'),load=async n=>JSON.parse(await readFile(resolve(dir,n),'utf8')),link=n=>`[${n}](${n})`,fmt=n=>Number(n).toFixed(1),tasks=t=>t?.longTasks?.map(t=>t.duration).join(', ')||'none';
+const prior=await load('prior-evidence-audit.json'),env=await load('browser-environment.json'),state=await load('final-state.json'),manifest=await load('not-kept.json'),suites=[];for(const file of ['eviction-results.json','continuation-results.json','outside-control-results.json','focus-results.json'])suites.push([file,await load(file)]);
+await writeFile(resolve(dir,'NOT-KEPT.md'),await prettier.format('# Captures not kept in the worktree\n\nThese captures exceed 1,000,000 bytes. They remain only in disposable temporary storage. The comparison results, exact sizes, SHA-256 and reproducible scripts are retained. The two SSE captures reproduce the original failed response byte for byte; their hashes agree with the failure records. No directory or old capture was deleted.\n\n| Name | Bytes | SHA-256 |\n| --- | ---: | --- |\n'+manifest.map(x=>`| ${x.name} | ${x.bytes} | ${x.sha256} |`).join('\n')+'\n',{parser:'markdown',printWidth:100}));
+const rows=[],timings=[];
+function short(c){const a=c.actual;if(!a)return c.error;if(c.id.includes('API wide fixture'))return `${a.historyChars} history chars; ${a.events.length} events; 350000 variables properties`;if(c.id.includes('35 explicit'))return `35 explicit events 7–41; predecessor of event 8 evicted after request 39 -> card; first 7 -> card, ${fmt(a.evicted.wallMs)} ms, no long tasks or replay/serializer samples; recent 41 -> ${fmt(a.recent.wallMs)} ms, no long task`;if(c.id.includes('patch diff'))return `Diff after ${a.diffAfterChars} chars; exact ${a.exact.download.bytes}-byte download; width ${a.width}/${a.viewport}`;if(c.id.includes('earlier prepared'))return `Event 41 unchanged/expanded; ${a.before.tag} ${a.before.label} -> ${a.after.tag} ${a.after.label}; width ${a.width}/${a.viewport}`;if(c.id.includes('QA-259-R6'))return `Request -> ${a.requestedFocus.tag} ${a.requestedFocus.label}, tabindex ${a.requestedFocus.tabindex}; Tab -> ${a.afterTab.label}; live -> ${a.onCard.text}; Enter -> ${a.afterRequest.tag} ${a.afterRequest.label}; list tabindex removed`;if(c.id.includes('retain controlled'))return `Below-threshold ${a.historyChars} chars -> ${a.text}; API thread/events hashes unchanged; large fault capture matches original hash`;if(c.id.includes('outside ownership'))return `Timeline A/B and Pause retained; live card -> ${a.onCard.text}; prepared return -> ${a.onReturn.text}; width ${a.width}/${a.viewport}`;if(c.id.includes('stale hand-off'))return `Live B -> ${a.handed.label}; timeline A ${a.onA.text}, B ${a.onB.text} retained; other message region retained; distinct A returns ${a.aChars} chars`;if(c.id.includes('large-to-small'))return `${a.held.tag} ${a.held.label} tabindex ${a.held.tabindex}; Tab -> ${a.afterTab.text}; remaining tabindex ${a.tabindex}`;return JSON.stringify(a).slice(0,200);}
+function collect(v,path,file){if(!v||typeof v!=='object')return;if('wallMs'in v)timings.push(`| ${path} | ${fmt(v.wallMs)} | ${tasks(v)} | ${link(file)} |`);for(const[k,x]of Object.entries(v))if(!k.startsWith('tabs')&&k!=='tabPath'&&k!=='events')collect(x,path+' / '+k,file);}
+for(const[file,cases]of suites)for(const c of cases){const invalid=!c.pass&&(c.error==='request stole outside timeline focus'||c.error==='A return expanded');rows.push(`| ${c.id} | ${c.expected} | ${short(c).replaceAll('|','/').replaceAll('\n',' ')} | ${invalid?'INVALID HELPER; continued separately':c.pass?'PASS':'FAIL: QA-259-R8-01'} | ${link(file)} |`);collect(c.actual,c.id,file);}
+const explicit=[];for(const width of [1440,390])for(const e of await load('explicit-events-'+width+'.json'))explicit.push(`| ${width} / ${e.seq} ${e.type} | ${fmt(e.selection.wallMs)} | ${tasks(e.selection)} | ${fmt(e.reconstruction.wallMs)} | ${tasks(e.reconstruction)} | ${e.diff?'yes':'no'} | ${link('explicit-events-'+width+'.json')} |`);
+for(const width of[1440,390]){const bad=await load('invalid-replay-'+width+'.json');collect(bad.actual.attempt,width+': controlled failed request','invalid-replay-'+width+'.json');}
+const gateNames=['api-lookahead-alone.log.txt','build.log.txt','web-units.log.txt','lint.log.txt','typecheck.log.txt','playwright.log.txt','layers.log.txt','deps.log.txt','tokens.log.txt','format.log.txt'],gates=[];for(const n of gateNames){let raw;try{raw=await readFile(resolve(dir,n),'utf8');}catch{gates.push(`| repository formatting | pending | ${link(n)} |`);continue;}gates.push(`| ${raw.match(/^Command: (.*)/m)?.[1]} | ${/^Exit: 0$/m.test(raw)?'PASS':'FAIL'} | ${link(n)} |`);}
+const files=[...new Set([...(await readdir(dir)),'validation.json','validation.log.txt','format.log.txt','format-qa.log.txt'])].filter(n=>n!=='README.md').sort();
+const text=`# Independent QA, round 8: #259 / PR #382
+
+## 1. Verdict
+
+**FAIL**, at **4ef4093e053a1ad7f2063b1cd8ccba5f0937a11c**, detached HEAD. **The audit's eviction reproduction passes at both widths, QA-259-R6-01 remains fixed, and the round-7 API validation gate is resolved.** One new minor defect remains: a failed explicit reconstruction in large-history mode leaves the request card visible without its failure alert (**QA-259-R8-01**).
+
+Independent QA, alone, fake-only execution through mutate nodes and the fake harness. No production or maintained-test edits, staging, commits, stash, branch operations or GitHub writes. Only round-8 QA evidence was added. The revision was checked before work and again at shutdown (${link('environment.json')}, ${link('final-state.json')}). Built API/web used ports **5720/5721**, disposable store **${env.native.dataDir}**, Node **${env.node}**, installed Edge **${env.browser.version}**, headless, Windows **${env.os.release}**. Both owned ports were closed after testing (${link('shutdown.json')}). No owner app/store or live provider was used.
+
+The exact API file that timed out in round 7 was run **alone, before the app, build or any other QA job**: all **5/5 passed**, first attempt, Vitest duration **7.52 s**, command elapsed **8,365 ms**. This follows the user's explicit round-8 instruction; no second attempt, threshold change or test edit was needed. No host-state diagnosis is inferred from the pass, and the historical failed log is unchanged. Evidence: ${link('api-lookahead-alone.log.txt')}.
+
+## 2. Defects
+
+**QA-259-R8-01 — minor — large-history explicit replay failures never display the failure alert.** Reproduced at 1440 × 900 and 390 × 844. This is controlled malformed external-input evidence, not a claim that the fake engine naturally emits an invalid patch.
+
+1. Through the API, publish and start the 350,000-property Variables fixture; its initial history is about 6.4 million JSON characters. The fixture is a normal mutate run, waiting for input.
+2. In a separate Edge page, intercept only that run's browser event-stream response. Preserve the original events and append one contract-shaped invalid domain patch operation to seed's node.finished event 6: remove /vars/absent-qa. Keep the large set-/vars operation, so the history remains above the threshold. Stored API events/thread are not modified.
+3. Select event 6. Activate **Reconstruct the thread at event 6** and wait for the attempt to finish.
+4. Actual at both widths: **one request card, zero alerts, zero Variables previews**. Focus remains on the request button. The user receives no reason that reconstruction failed. Selecting event 1 and requesting it still works, so the page is recoverable.
+
+Expected: an explicit failed request shows the existing event-specific failure alert and reason. Below the threshold, the same invalid remove operation correctly produces **The thread cannot be reconstructed at event 6 — operation 0 (remove /vars/absent-qa): path does not exist**. This control confirms a real replay failure rather than a missing stream or invalid fixture setup.
+
+Source corroboration: projections.ts ThreadCache.has returns true only for an ok result; ThreadViewer.tsx uses it to decide ready, returns the request card when false, and reaches the failure alert only after that early return. A failed cache.at result therefore cannot reach the alert in large-history mode. The source delta is ${link('change.diff.txt')}; source reasoning is not an old-head execution claim. No fix was made.
+
+Evidence: ${link('invalid-replay-1440.json')}, ${link('invalid-replay-390.json')}, ${link('invalid-replay-1440.png')}, ${link('invalid-replay-390.png')}, ${link('eviction.mjs.txt')}, ${link('eviction.log.txt')}; below-threshold controls and before/after API hashes in ${link('continuation-results.json')}, ${link('continuation.mjs.txt')}, ${link('continuation.log.txt')}. The original large response bytes were reproduced exactly and are manifested in ${link('NOT-KEPT.md')}; retained small response bodies are indexed below. Both fault pages have zero page errors and API thread/events hashes are identical before and after viewing.
+
+The previous eviction finding is fixed for the measured successful replays. The requested keyboard regression is also fixed: live replacement sends owned focus to the new Reconstruct button; Tab then Enter on that button sends focus to the Messages list (tabindex -1), and Tab reaches Show all of Variables and removes the list tabindex. A keyboard on a timeline control or Pause is left there on the tested live card/prepared-return transitions. QA-259-01's distinct-value A/B/A and QA-259-R5-01's stale hand-off spot checks pass. QA-259-02 remains disposed; no new full-thread property-order claim is made.
+
+## 3. Coverage of criteria
+
+Touched systems: ThreadViewer's large-history readiness, requested replay and patch diff; the bounded ThreadCache and grown-log retention; viewer/value focus ownership; Variables preview/download; API paging validation; compiled composition and docs. Positive cases and the malformed replay negative are tested through public API/UI/component interfaces. No private application store, component function or cache map was patched or inspected. Read-only DOM/PerformanceObserver/CDP profiling is identified below. ${link('browser-environment.json')} and ${link('change.diff.txt')} record environment and the exact scoped delta.
+
+| Requested criterion | Coverage |
+| --- | --- |
+| Round-7 API setup timeout | PASS: isolated run-event-paging.test.ts, five assertions, first attempt. No conditional second attempt required. |
+| Reconstruct 35 distinct wide-value events, return first | PASS at both widths: explicitly request consecutive events 7–41, all holding the admitted 350,000-property value. Every uncached selection asks. Return 7 shows the card; Variables is absent and the card remains after 250 ms. No observed long task and zero sampled replay/serializer work. |
+| Patch predecessor retention | PASS: after requesting 7–39, event 8's own result is still within the FIFO window but its predecessor 7 has fallen out; selecting 8 asks again. No hidden predecessor replay. This follows the public sequence and component behavior, corroborated by the public cache unit tests. |
+| Recent reconstruction | PASS: event 41 shows immediately without a card, desktop/narrow 107.4/89.7 ms, no observed long task. |
+| Requested node.finished diff | PASS: request seed event 6; its /vars after column is the exact first 1,024 pretty-JSON characters plus ellipsis; diff is shown. Variables is 4,096 plus ellipsis. |
+| Live append with prepared earlier event | PASS: event 41 stays shown and expanded while events grow, Variables region keeps focus. |
+| Live following selection / keyboard | PASS at both widths: fresh page follows latest; live card takes owned focus; request -> Messages list; Tab cleanup; separate outside timeline/Pause cases stay outside. |
+| Negative replay | FAIL: QA-259-R8-01; below-threshold failure control and storage integrity PASS. |
+| Exactness download | PASS: both Variables downloads equal API vars byte for byte under two-space JSON formatting; 7,827,782 bytes each; SHA-256 b8d4d3d575a5d82f611a4f4e41d60e4283155be4385d976b0b8bbbb3966c39d3. |
+| Earlier regressions | PASS: original distinct 20,000/21,000-character A/B values, cached return, another value's focus, and large-to-small held text then Tab. All normal recorded document widths equal 1440/1440 or 390/390. |
+| Gates and maintained browser tests | Build, affected units, lint/types/layers/deps/tokens, formatting and maintained Edge spec: results below. Full coverage explicitly waived. |
+
+Every independent case, including invalid helpers retained for provenance:
+
+| System / case | Steps / expected | Actual | Result | Evidence |
+| --- | --- | --- | --- | --- |
+${rows.join('\n')}
+| Outside helper interruption | Wait for the final run, then check outside focus | Helper polled nonexistent completed instead of documented succeeded; interrupted its own exec session. No assertion result claimed. Continued on a fresh large-history control with a next input wait. | INVALID HELPER | ${link('outside-interruption.json')}, ${link('outside.mjs.txt')}, ${link('outside.log.txt')} |
+
+QA-helper corrections: first, native DOM activation of Reconstruct deliberately requests a focus hand-off, so it was not a valid outside-focus prepared-return check (${link('focus-helper-correction.json')}). Second, the wide fixture deliberately preserves the same vars value; unchanged expansion should remain, so it was invalid for the distinct-value A/B/A assertion (${link('same-value-helper-correction.json')}). Finally, the extra terminal poll used the wrong contract status and was interrupted as above. All original scripts/logs and invalid rows are retained. Only interrupted assertions continued in ${link('outside-control.mjs.txt')}, ${link('outside-control-results.json')}, ${link('outside-control.log.txt')}; the actual distinct-value fixture is ${link('focus.mjs.txt')}, ${link('focus-results.json')}, ${link('focus.log.txt')}. These are QA corrections, not product fixes or whole-suite retries to mask a product failure. The confirmed negative failure remains failed at both widths.
+
+Measurements use standard **≥50 ms long tasks**, action to two animation frames after the expected state, installed headless Edge. Every observed task is retained. CDP mouse input avoids Playwright actionability waiting for the selection samples; other wall times include automation, scheduling and native/API work. They are not INP or a universal performance SLA. Validation jobs finished before independent browser timings. No unrelated host activity was controlled. DOM probes observe public output only; profiling does not invoke or replace application functions.
+
+Evicted selection: **61.6 / 109.8 ms** desktop/narrow, **no long tasks, zero replay/serializer CPU samples**; selected event and card committed, followed by a browser Paint. The trace's card may be below the fold during selection; the dedicated screenshots show it after scrolling. This distinguishes a committed request state from an unrequested replay, without claiming a below-fold card was visible in that earlier paint. Profiles, trace evidence, state records and selected frames are linked below. Cold explicit request 7 still incurs **549 / 510 ms** tasks; requested seed diff incurs **592 / 620 ms** tasks. Those costs happen on request. Initial page loading and original fixture construction are not included in the selection measurements.
+
+All 70 requested event selections and reconstructions (each selection showed a request card; each successful preview matched its exact prefix):
+
+| Width / event | Select wall ms | Every select long task ms | Request wall ms | Every request long task ms | Patch diff | Evidence |
+| --- | ---: | --- | ---: | --- | --- | --- |
+${explicit.join('\n')}
+
+Other timed operations, including the explicit failing requests:
+
+| Operation / width | Wall ms | Every long task ms | Evidence |
+| --- | ---: | --- | --- |
+${timings.join('\n')}
+
+The wide fixture's nodes append short messages without changing vars; native fixture creation is real engine/store work and was allowed to reach its input wait before measurement. Fixture IDs, event/node sequence, patch summaries, history lengths and original API hashes are ${link('fixtures.json')}. Full expanded Variables is exercised only on demand. Exact comparisons retain size/hash/results; the four oversized download/API bodies and two oversized controlled response bodies follow D-034 in ${link('NOT-KEPT.md')}, ${link('not-kept.json')}. No capture above 1,000,000 bytes is kept this round. Narrow screenshots ${link('evicted-card-390.png')} and ${link('invalid-replay-390.png')} were visually inspected: card content wraps within the window.
+
+Gates, exact commands and results (Node 22 first):
+
+| Command | Result | Evidence |
+| --- | --- | --- |
+${gates.join('\n')}
+
+Affected units: **65/65 in five files**, including ThreadViewer's eviction/request/focus cases, projections cache retention, inspector page, BoundedValue identity and deferred preview. The previous-head regression tests were not executed in a scratch copy this round; existence/current success and the source diff are verified, and the independently reproduced eviction behavior is the product evidence. Maintained Edge: **6/6**, one worker, **retries 0**. Full package coverage was explicitly waived; no percentage or threshold/exclusion change is claimed. No node schema, route or dependency changed in the round-8 delta, so generated-doc and licence gates were not required/run. The prior round's broader paging/main validation was not repeated beyond the explicitly requested API file and scoped gates.
+
+Not re-tested in this bounded round: the full rounds 1–7 adversarial/surface matrix, all Events pages, 6,000-message window/download, full-thread download property order, actual screen-reader speech, native restart/reload/session resume, live providers, concurrent readers beyond the isolated fault page, and all-package coverage. Earlier evidence was audited rather than claimed as new browser observations. No requested round-8 product case is left untested; the malformed large-history replay case is tested and failed.
+
+## 4. Report path and evidence folder
+
+Report: docs/qa/2026-10-22-wp-e1-259-qa/round-8/README.md. Evidence is in this same round-8 folder; every kept artifact is linked below. ${link('validation.json')} / ${link('validation.log.txt')} audit links, paths, sizes, comparisons, expected failed rows and gate results. An integrity pass does not turn QA-259-R8-01 into a product pass.
+
+Prior evidence audit: **${prior.references} references**, **${prior.missingUnmanifested} unaccounted missing**, **${prior.manifestEntries} manifest entries**. The 44 still-local round-4/5 oversized bodies match their manifests; eight round-6/7 bodies are absent as explicitly manifested. Nothing cited and expected to be retained is missing. Existing large untracked captures were left alone. No prior evidence hash changed (${link('prior-evidence-audit.json')}, ${link('final-state.json')}). Only round-8 evidence is new; production and staged diffs are empty.
+
+${files.map(n=>'- '+link(n)).join('\n')}
+
+## 5. Observations outside scope
+
+No additional out-of-scope product defect was recorded. The round-7 API setup gate is now resolved on this exact head by the requested isolated first-attempt pass. Requested replay, initial page loading and native construction retain their recorded large-data costs; the eviction fix specifically removes unrequested reconstruction on return. Disposable stores, temporary scripts/raw oversized captures and maintained-spec output remain for the orchestrator. No directory was deleted, both owned ports are closed, and no commit was made.
+`;
+await writeFile(resolve(dir,'README.md'),await prettier.format(text,{parser:'markdown',printWidth:100}));console.log(JSON.stringify({verdict:'FAIL',defect:'QA-259-R8-01 minor',requestedEviction:'PASS',previousApiGate:'PASS',cases:rows.length,artifacts:files.length}));

@@ -1,0 +1,265 @@
+diff --git a/apps/web/e2e/inspector-large-values.spec.ts b/apps/web/e2e/inspector-large-values.spec.ts
+index 3f8322d9..b11ba690 100644
+--- a/apps/web/e2e/inspector-large-values.spec.ts
++++ b/apps/web/e2e/inspector-large-values.spec.ts
+@@ -7,25 +7,37 @@ const LONG = 'v'.repeat(20_000);
+ /** A wait prompt at most 10,000 characters long is what the run contract accepts. */
+ const PROMPT = 'v'.repeat(9_000);
+ 
+-function inferenceLoop(name: string) {
++function inferenceLoop(name: string, waitBeforeExit = false) {
+   const source = minimalLoop();
++  const nodes = [
++    source.nodes[0]!,
++    {
++      id: 'work',
++      kind: 'inference',
++      label: 'Work',
++      config: { prompt: { template: 'Produce one long single-line value.' } },
++    },
++    ...(waitBeforeExit
++      ? [
++          {
++            id: 'approve',
++            kind: 'wait',
++            label: 'Approve',
++            config: { mode: 'input', prompt: 'Approve?' },
++          },
++        ]
++      : []),
++    { ...source.nodes[1]!, config: { returns: 'outputs.work.value' } },
++  ];
+   return {
+     ...source,
+     name,
+-    nodes: [
+-      source.nodes[0]!,
+-      {
+-        id: 'work',
+-        kind: 'inference',
+-        label: 'Work',
+-        config: { prompt: { template: 'Produce one long single-line value.' } },
+-      },
+-      { ...source.nodes[1]!, config: { returns: 'outputs.work.value' } },
+-    ].map((node, index) => ({ ...node, ui: { x: index * 260, y: 80 } })),
+-    edges: [
+-      { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'work' } },
+-      { id: 'e2', from: { node: 'work', port: 'out' }, to: { node: 'done' } },
+-    ],
++    nodes: nodes.map((node, index) => ({ ...node, ui: { x: index * 260, y: 80 } })),
++    edges: nodes.slice(1).map((node, index) => ({
++      id: `e${index + 1}`,
++      from: { node: nodes[index]!.id, port: 'out' },
++      to: { node: node.id },
++    })),
+   };
+ }
+ 
+@@ -147,3 +159,55 @@ for (const viewport of [
+     expect(after.document).toBeLessThanOrEqual(after.window);
+   });
+ }
++
++test('the keyboard stays inside an expanded value that a live event replaces (#259)', async ({
++  page,
++  request,
++}) => {
++  const instance = await control(request, '/apps');
++  const url = String(instance['url']);
++  const instanceId = instance['instanceId'];
++  const created = await request.post(url + '/loops', {
++    data: { definition: inferenceLoop('Live replacement', true) },
++  });
++  expect(created.status(), await created.text()).toBe(201);
++  const { loop } = (await created.json()) as { loop: { id: string } };
++  expect((await request.post(url + '/loops/' + loop.id + '/publish')).status()).toBe(200);
++  await control(request, '/harness/script', { instanceId, turns: [{ finalText: LONG }] });
++  const started = await request.post(url + '/loops/' + loop.id + '/runs', { data: { input: {} } });
++  expect(started.status()).toBe(202);
++  const runId = RunRecordSchema.parse(((await started.json()) as { run: unknown }).run).id;
++  const run = async () =>
++    RunRecordSchema.parse(await (await request.get(url + '/runs/' + runId)).json());
++  await expect
++    .poll(async () => (await run()).status, { timeout: 30_000, intervals: [250, 500, 1000] })
++    .toBe('waiting');
++
++  await page.goto(url + '/app/runs/' + runId);
++  // The thread at the wait carries the long value; read it whole, with the keyboard on it.
++  await page.getByText('Full thread JSON', { exact: true }).click();
++  await page.getByRole('button', { name: 'Show all of Full thread JSON' }).click();
++  const region = page.getByRole('region', { name: 'Full thread JSON' });
++  await region.focus();
++  await expect(region).toBeFocused();
++
++  // Input arrives from elsewhere: the run finishes, the thread at the latest event is a new
++  // value, the region collapses, and the keyboard lands on its Show all, never on the body.
++  const waiting = (await run()).waiting;
++  expect(waiting).toBeDefined();
++  const answered = await request.post(url + '/runs/' + runId + '/input', {
++    data: { waitId: waiting!.waitId, input: { approved: true } },
++  });
++  expect(answered.status(), await answered.text()).toBe(200);
++  await expect(
++    page.getByRole('list', { name: 'Timeline' }).getByText('run.finished'),
++  ).toBeVisible();
++  const showAll = page.getByRole('button', { name: 'Show all of Full thread JSON' });
++  await expect(showAll).toBeVisible();
++  await expect(showAll).toBeFocused();
++  expect(await page.evaluate(() => document.activeElement?.tagName)).not.toBe('BODY');
++  // Tab moves on from the control; nothing is left focusable behind it.
++  await page.keyboard.press('Tab');
++  await expect(showAll).not.toBeFocused();
++  await expect(page.getByTestId('thread-json')).not.toHaveAttribute('tabindex', /.*/);
++});
+diff --git a/apps/web/src/components/ui/bounded-value.test.tsx b/apps/web/src/components/ui/bounded-value.test.tsx
+index 392bbb70..8c42d072 100644
+--- a/apps/web/src/components/ui/bounded-value.test.tsx
++++ b/apps/web/src/components/ui/bounded-value.test.tsx
+@@ -1,4 +1,4 @@
+-import { render, screen } from '@testing-library/react';
++import { act, render, screen } from '@testing-library/react';
+ import userEvent from '@testing-library/user-event';
+ import { afterEach, describe, expect, it, vi } from 'vitest';
+ import { BoundedValue, CELL_PREVIEW_CHARS, VALUE_PREVIEW_CHARS } from './bounded-value.js';
+@@ -153,14 +153,15 @@ describe('BoundedValue', () => {
+     };
+     const { rerender } = render(<BoundedValue value={big} label="Variables" testId="value" />);
+     await user.click(screen.getByRole('button', { name: 'Show all of Variables' }));
+-    screen.getByRole('region', { name: 'Variables' }).focus();
++    act(() => screen.getByRole('region', { name: 'Variables' }).focus());
+     expect(screen.getByRole('region', { name: 'Variables' })).toHaveFocus();
+     // Large to large: the new value's Show all takes the focus.
+     rerender(<BoundedValue value={other} label="Variables" testId="value" />);
+     expect(screen.getByRole('button', { name: 'Show all of Variables' })).toHaveFocus();
++    expect(screen.getByTestId('value')).not.toHaveAttribute('tabindex');
+     // Large to small: the text itself keeps it, without becoming a tab stop, until it moves on.
+     await user.click(screen.getByRole('button', { name: 'Show all of Variables' }));
+-    screen.getByRole('region', { name: 'Variables' }).focus();
++    act(() => screen.getByRole('region', { name: 'Variables' }).focus());
+     rerender(<BoundedValue value={{ topic: 'loops' }} label="Variables" testId="value" />);
+     expect(screen.getByTestId('value')).toHaveFocus();
+     expect(screen.getByTestId('value')).toHaveAttribute('tabindex', '-1');
+@@ -170,8 +171,41 @@ describe('BoundedValue', () => {
+     // A keyboard elsewhere is left alone.
+     rerender(<BoundedValue value={big} label="Variables" testId="value" />);
+     await user.click(screen.getByRole('button', { name: 'Show all of Variables' }));
+-    (document.activeElement as HTMLElement).blur();
++    act(() => (document.activeElement as HTMLElement).blur());
+     rerender(<BoundedValue value={other} label="Variables" testId="value" />);
+     expect(document.activeElement).toBe(document.body);
++    expect(screen.getByTestId('value')).not.toHaveAttribute('tabindex');
++  });
++
++  it('hands the keyboard over when the control it was on disappears with the value', async () => {
++    const user = userEvent.setup();
++    const small = { topic: 'loops' };
++    const { rerender } = render(
++      <BoundedValue value={big} label="Variables" fileName="variables" testId="value" />,
++    );
++    // Collapsed, keyboard on Show all; the next value is small and has no controls.
++    act(() => screen.getByRole('button', { name: 'Show all of Variables' }).focus());
++    rerender(<BoundedValue value={small} label="Variables" fileName="variables" testId="value" />);
++    expect(screen.getByTestId('value')).toHaveFocus();
++    expect(screen.getByTestId('value')).toHaveAttribute('tabindex', '-1');
++    // Expanded, keyboard on Download; the controls go, the text takes the keyboard.
++    rerender(<BoundedValue value={big} label="Variables" fileName="variables" testId="value" />);
++    await user.click(screen.getByRole('button', { name: 'Show all of Variables' }));
++    act(() => screen.getByRole('button', { name: 'Download Variables as JSON' }).focus());
++    rerender(<BoundedValue value={small} label="Variables" fileName="variables" testId="value" />);
++    expect(screen.getByTestId('value')).toHaveFocus();
++    // Keyboard on a control that survives the change: it stays there.
++    rerender(<BoundedValue value={big} label="Variables" fileName="variables" testId="value" />);
++    act(() => screen.getByRole('button', { name: 'Download Variables as JSON' }).focus());
++    rerender(
++      <BoundedValue
++        value={{ items: Array.from({ length: 400 }, (_, i) => ({ id: i, note: 'z'.repeat(40) })) }}
++        label="Variables"
++        fileName="variables"
++        testId="value"
++      />,
++    );
++    expect(screen.getByRole('button', { name: 'Download Variables as JSON' })).toHaveFocus();
++    expect(screen.getByTestId('value')).not.toHaveAttribute('tabindex');
+   });
+ });
+diff --git a/apps/web/src/components/ui/bounded-value.tsx b/apps/web/src/components/ui/bounded-value.tsx
+index 0f9adbcc..d2a183f6 100644
+--- a/apps/web/src/components/ui/bounded-value.tsx
++++ b/apps/web/src/components/ui/bounded-value.tsx
+@@ -71,34 +71,42 @@ export function BoundedValue({
+   const showAllRef = useRef<HTMLButtonElement>(null);
+   const [expandedState, setExpandedState] = useState(false);
+   const [shownValue, setShownValue] = useState<unknown>(value);
+-  // Counts the times a change of value collapsed an expanded region (the focus effect below).
+-  const [collapses, setCollapses] = useState(0);
+-  // The collapsed text keeps the keyboard focus it held while expanded, until the focus moves on.
++  // Whether the keyboard is inside this component, tracked by its focus events so that it is
++  // known in the render that sees a new value, before the DOM changes under the focused element.
++  const [ownsFocus, setOwnsFocus] = useState(false);
++  // The text carries the keyboard across a change of value (focusable, not a tab stop) until the
++  // keyboard moves on.
+   const [holdsFocus, setHoldsFocus] = useState(false);
++  // Counts the changes of value that happened while the keyboard was inside (the effect below).
++  const [handoffs, setHandoffs] = useState(0);
+   // Another value arrived (another event, a live reconstruction, or one shown expanded earlier):
+   // it starts bounded. React re-renders at once with the adjusted state; `expanded` is false in
+   // the discarded pass too, so the whole text is never formatted for a value that is not expanded.
+   if (shownValue !== value) {
+     setShownValue(value);
+-    if (expandedState) {
+-      setExpandedState(false);
+-      setCollapses((n) => n + 1);
++    setExpandedState(false);
++    if (ownsFocus) {
++      // The text stays focusable in this same commit, so a focused region never loses its
++      // tabindex while it has the focus, and a removed control has somewhere to hand it to.
++      setHoldsFocus(true);
++      setHandoffs((n) => n + 1);
+     }
+   }
+   const expanded = expandedState && shownValue === value;
+-  // A collapse caused by a change of value, while the keyboard was inside this component, would
+-  // drop the focus to the body once the region's tabindex is gone. Keep the keyboard here: on the
+-  // new value's Show all when it has one, else on the text itself, focusable until it blurs.
++  // After the commit of a change of value made while the keyboard was inside: the browser may
++  // have dropped the focus to the body (a removed control, a region whose tabindex changed).
++  // Put the keyboard on the new value's Show all when it has one, else on the text itself, and
++  // keep the text focusable only while it is what holds the keyboard.
+   useLayoutEffect(() => {
+-    if (collapses === 0) return;
+-    const active = document.activeElement;
+-    if (!rootRef.current || !active || !rootRef.current.contains(active)) return;
+-    if (showAllRef.current) showAllRef.current.focus();
+-    else setHoldsFocus(true);
+-  }, [collapses]);
+-  useLayoutEffect(() => {
+-    if (holdsFocus) preRef.current?.focus();
+-  }, [holdsFocus]);
++    if (handoffs === 0) return;
++    const root = rootRef.current;
++    const pre = preRef.current;
++    const inside = root !== null && root.contains(document.activeElement);
++    if (showAllRef.current) {
++      if (!inside || document.activeElement === pre) showAllRef.current.focus();
++    } else if (!inside) pre?.focus();
++    setHoldsFocus(document.activeElement === pre);
++  }, [handoffs]);
+   const isText = text && typeof value === 'string';
+   // Collapsed: only the preview is produced (a string shows its own prefix; JSON stops at the
+   // budget). Expanded: the whole text, once, for as long as this value stays expanded.
+@@ -117,7 +125,14 @@ export function BoundedValue({
+   const shown = expanded && full !== undefined ? full : preview.text;
+   const total = isText ? value.length : full?.length;
+   return (
+-    <div ref={rootRef} className={cn('grid min-w-0 gap-1.5', className)}>
++    <div
++      ref={rootRef}
++      className={cn('grid min-w-0 gap-1.5', className)}
++      onFocus={() => setOwnsFocus(true)}
++      onBlur={(event) => {
++        if (!rootRef.current?.contains(event.relatedTarget)) setOwnsFocus(false);
++      }}
++    >
+       <pre
+         ref={preRef}
+         // A region that scrolls must be named and reachable from the keyboard.

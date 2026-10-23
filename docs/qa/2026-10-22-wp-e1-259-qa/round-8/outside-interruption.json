@@ -1,0 +1,6 @@
+{
+  "script": "outside.mjs.txt",
+  "reason": "QA helper polled the nonexistent completed status instead of the documented succeeded status. It was interrupted through its own exec session before claiming an outside-focus assertion result. The owned run had succeeded at sequence 76.",
+  "interruption": "Ctrl-C to QA exec session 72249; shell returned exit 1. Native app remains running. A process inventory attempt was denied and changed nothing.",
+  "correction": "Use a fresh 2.1M-string large-history control with an explicit next input wait; no terminal status polling. Preserve previous helper and partial evidence."
+}

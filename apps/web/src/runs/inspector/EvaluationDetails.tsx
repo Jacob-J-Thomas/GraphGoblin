@@ -246,7 +246,11 @@ function ObservationDetails({
       (provenance.kind === 'llm' || observation.reasoning !== null) ? (
         <>
           <dt>Reasoning excerpt</dt>
-          <dd className="whitespace-pre-wrap">{observation.reasoning ?? 'Not recorded'}</dd>
+          {/* The excerpt is bounded by the contract; it still wraps at any character so one long
+              token never widens the page (#259). */}
+          <dd className="min-w-0 whitespace-pre-wrap wrap-anywhere">
+            {observation.reasoning ?? 'Not recorded'}
+          </dd>
         </>
       ) : null}
     </>

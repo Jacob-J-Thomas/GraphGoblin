@@ -1,0 +1,281 @@
+diff --git a/apps/web/src/components/ui/bounded-value.tsx b/apps/web/src/components/ui/bounded-value.tsx
+index d2a183f6..dc064cec 100644
+--- a/apps/web/src/components/ui/bounded-value.tsx
++++ b/apps/web/src/components/ui/bounded-value.tsx
+@@ -1,5 +1,5 @@
+ import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+-import { cn, downloadJson, prettyJson, prettyJsonPrefix } from '../../lib/utils.js';
++import { cachedJsonPrefix, cn, downloadJson, prettyJson } from '../../lib/utils.js';
+ import { Button } from './button.js';
+ 
+ /**
+@@ -109,12 +109,13 @@ export function BoundedValue({
+   }, [handoffs]);
+   const isText = text && typeof value === 'string';
+   // Collapsed: only the preview is produced (a string shows its own prefix; JSON stops at the
+-  // budget). Expanded: the whole text, once, for as long as this value stays expanded.
++  // budget, remembered per value so a return to it costs a lookup). Expanded: the whole text,
++  // once, for as long as this value stays expanded.
+   const preview = useMemo(
+     () =>
+       isText
+         ? { text: value.slice(0, previewChars), truncated: value.length > previewChars }
+-        : prettyJsonPrefix(value, previewChars),
++        : cachedJsonPrefix(value, previewChars),
+     [value, isText, previewChars],
+   );
+   const full = useMemo(
+diff --git a/apps/web/src/lib/pretty-json-prefix.test.ts b/apps/web/src/lib/pretty-json-prefix.test.ts
+index c8ef291b..38594b7c 100644
+--- a/apps/web/src/lib/pretty-json-prefix.test.ts
++++ b/apps/web/src/lib/pretty-json-prefix.test.ts
+@@ -1,5 +1,5 @@
+ import { describe, expect, it } from 'vitest';
+-import { prettyJson, prettyJsonPrefix } from './utils.js';
++import { cachedJsonPrefix, prettyJson, prettyJsonPrefix } from './utils.js';
+ 
+ const fixtures: Record<string, unknown> = {
+   scalars: [0, -0, 1.5, -2, 1e21, NaN, Infinity, -Infinity, true, false, null, 'text'],
+@@ -104,4 +104,31 @@ describe('prettyJsonPrefix', () => {
+     prettyJsonPrefix(lazy, 10_000);
+     expect(visited).toBe(1);
+   });
++
++  it('throws for a boxed BigInt as JSON.stringify does', () => {
++    expect(() => JSON.stringify(Object(1n))).toThrow(TypeError);
++    expect(() => prettyJsonPrefix(Object(1n), 100)).toThrow(TypeError);
++    expect(() => prettyJsonPrefix({ amount: Object(1n) }, 100)).toThrow(TypeError);
++  });
++
++  it('remembers a preview per object value and budget', () => {
++    let reads = 0;
++    const wide = Object.defineProperty({ b: 2 }, 'a', {
++      enumerable: true,
++      get() {
++        reads += 1;
++        return 1;
++      },
++    });
++    const first = cachedJsonPrefix(wide, 100);
++    expect(first).toEqual(prettyJsonPrefix(wide, 100));
++    expect(reads).toBe(2);
++    expect(cachedJsonPrefix(wide, 100)).toBe(first);
++    expect(reads).toBe(2);
++    cachedJsonPrefix(wide, 200);
++    expect(reads).toBe(3);
++    // Primitives are not cached (nothing to key on); the result is the same.
++    expect(cachedJsonPrefix('text', 3)).toEqual(prettyJsonPrefix('text', 3));
++    expect(cachedJsonPrefix(null, 10)).toEqual({ text: 'null', truncated: false });
++  });
+ });
+diff --git a/apps/web/src/lib/utils.ts b/apps/web/src/lib/utils.ts
+index fe69c778..0a4bf1e1 100644
+--- a/apps/web/src/lib/utils.ts
++++ b/apps/web/src/lib/utils.ts
+@@ -75,7 +75,12 @@ export function prettyJsonPrefix(
+       const method = (item as { toJSON?: unknown }).toJSON;
+       if (typeof method === 'function') item = (method as (k: string) => unknown).call(item, key);
+     }
+-    if (item instanceof String || item instanceof Number || item instanceof Boolean)
++    if (
++      item instanceof String ||
++      item instanceof Number ||
++      item instanceof Boolean ||
++      item instanceof BigInt
++    )
+       item = item.valueOf();
+     if (typeof item === 'function' || typeof item === 'symbol') return undefined;
+     return item;
+@@ -141,6 +146,33 @@ export function prettyJsonPrefix(
+   return { text: parts.join(''), truncated: false };
+ }
+ 
++const PREFIX_CACHE = new WeakMap<object, Map<number, { text: string; truncated: boolean }>>();
++
++/**
++ * `prettyJsonPrefix` remembered per object value and budget, for as long as the value is alive.
++ * The walk itself is bounded, with one exception JavaScript imposes: reading the first property of
++ * an object enumerates all of its keys (engines build the key list eagerly), so a single object
++ * with hundreds of thousands of properties costs that enumeration once. Caching by identity keeps
++ * the cost to the first time a value is shown; a return to it, or a re-render, costs a lookup.
++ */
++export function cachedJsonPrefix(
++  value: unknown,
++  limit: number,
++): { text: string; truncated: boolean } {
++  if (value === null || typeof value !== 'object') return prettyJsonPrefix(value, limit);
++  let byLimit = PREFIX_CACHE.get(value);
++  if (byLimit === undefined) {
++    byLimit = new Map();
++    PREFIX_CACHE.set(value, byLimit);
++  }
++  let result = byLimit.get(limit);
++  if (result === undefined) {
++    result = prettyJsonPrefix(value, limit);
++    byLimit.set(limit, result);
++  }
++  return result;
++}
++
+ /** True when the error means the backend could not be reached. */
+ export function isOfflineError(error: unknown): boolean {
+   return error instanceof GraphGoblinApiError && error.status === NETWORK_ERROR_STATUS;
+diff --git a/apps/web/src/runs/inspector/ThreadViewer.test.tsx b/apps/web/src/runs/inspector/ThreadViewer.test.tsx
+new file mode 100644
+index 00000000..45767df8
+--- /dev/null
++++ b/apps/web/src/runs/inspector/ThreadViewer.test.tsx
+@@ -0,0 +1,59 @@
++import { render, screen, within } from '@testing-library/react';
++import userEvent from '@testing-library/user-event';
++import { describe, expect, it } from 'vitest';
++import { sampleThread } from '@graphgoblin/contracts/testing';
++import { event, queuedFields } from '../../__fixtures__/fake-api.js';
++import { MESSAGE_PREVIEW_COUNT, ThreadViewer } from './ThreadViewer.js';
++
++/** A thread of `n` short messages, each naming its position, seeded as the run's first event. */
++function threadOf(n: number, prefix: string) {
++  const base = sampleThread();
++  const thread = sampleThread({
++    messages: Array.from({ length: n }, (_, i) => ({
++      ...base.messages[0]!,
++      id: `${prefix}${i}`,
++      content: `${prefix} message ${i}`,
++    })),
++  });
++  const events = [event(thread.run.id, 1, 'run.queued', queuedFields({ initialThread: thread }))];
++  return { thread, events };
++}
++
++describe('ThreadViewer messages', () => {
++  it('lays out the latest fifty messages, the rest on request, and starts bounded for another thread', async () => {
++    const user = userEvent.setup();
++    const { thread, events } = threadOf(60, 'a');
++    const { rerender } = render(<ThreadViewer current={thread} events={events} seq={1} />);
++    const list = () => screen.getByRole('list', { name: 'Messages' });
++    expect(within(list()).getAllByRole('listitem')).toHaveLength(MESSAGE_PREVIEW_COUNT);
++    expect(within(list()).queryByText('a message 9')).not.toBeInTheDocument();
++    expect(within(list()).getByText('a message 10')).toBeInTheDocument();
++    expect(within(list()).getByText('a message 59')).toBeInTheDocument();
++    expect(screen.getByText('Showing the last 50 of 60 messages.')).toBeInTheDocument();
++    expect(screen.getByRole('button', { name: 'Download messages as JSON' })).toBeInTheDocument();
++
++    await user.click(screen.getByRole('button', { name: 'Show all messages' }));
++    expect(within(list()).getAllByRole('listitem')).toHaveLength(60);
++    expect(within(list()).getByText('a message 0')).toBeInTheDocument();
++    expect(screen.getByText('Showing all 60 messages.')).toBeInTheDocument();
++    await user.click(screen.getByRole('button', { name: 'Show fewer messages' }));
++    expect(within(list()).getAllByRole('listitem')).toHaveLength(MESSAGE_PREVIEW_COUNT);
++
++    // Another thread (another event) starts bounded again, even after Show all here.
++    await user.click(screen.getByRole('button', { name: 'Show all messages' }));
++    const other = threadOf(70, 'b');
++    rerender(<ThreadViewer current={other.thread} events={other.events} seq={1} />);
++    expect(within(list()).getAllByRole('listitem')).toHaveLength(MESSAGE_PREVIEW_COUNT);
++    expect(screen.getByText('Showing the last 50 of 70 messages.')).toBeInTheDocument();
++    expect(screen.getByRole('button', { name: 'Show all messages' })).toBeInTheDocument();
++  });
++
++  it('shows every message of a short thread without controls', () => {
++    const { thread, events } = threadOf(MESSAGE_PREVIEW_COUNT, 'c');
++    render(<ThreadViewer current={thread} events={events} seq={1} />);
++    const list = screen.getByRole('list', { name: 'Messages' });
++    expect(within(list).getAllByRole('listitem')).toHaveLength(MESSAGE_PREVIEW_COUNT);
++    expect(screen.queryByText(/Showing/)).not.toBeInTheDocument();
++    expect(screen.queryByRole('button', { name: /messages/ })).not.toBeInTheDocument();
++  });
++});
+diff --git a/apps/web/src/runs/inspector/ThreadViewer.tsx b/apps/web/src/runs/inspector/ThreadViewer.tsx
+index 9e3e0ed9..9e367806 100644
+--- a/apps/web/src/runs/inspector/ThreadViewer.tsx
++++ b/apps/web/src/runs/inspector/ThreadViewer.tsx
+@@ -4,12 +4,22 @@ import {
+   Alert,
+   Badge,
+   BoundedValue,
++  Button,
+   Card,
+   CELL_PREVIEW_CHARS,
+   Disclosure,
+ } from '../../components/ui/index.js';
++import { downloadJson } from '../../lib/utils.js';
+ import { createThreadCache, initialThreadFrom, patchDiff, type PatchLine } from '../projections.js';
+ 
++/**
++ * Messages laid out at once: the latest ones, which is where a reader looks at an event; the
++ * rest, and an exact download of all of them, are one click away (#259). Fifty keeps a thread of
++ * thousands of short messages from mounting tens of thousands of elements on every selection.
++ */
++export const MESSAGE_PREVIEW_COUNT = 50;
++const count = (n: number) => n.toLocaleString('en-US');
++
+ /** A finished node's patch: each operation with the value before and after it. */
+ function PatchDiff({ nodeId, lines }: { nodeId: string; lines: PatchLine[] }) {
+   return (
+@@ -91,12 +101,26 @@ export function ThreadViewer({
+     return before.ok ? patchDiff(before.thread, replayed.thread, selected.patch) : undefined;
+   }, [selected, cache, initial, events, seq, replayed]);
+   const [showJson, setShowJson] = useState(false);
+-  if (!replayed.ok) {
++  const thread = replayed.ok ? replayed.thread : undefined;
++  // Whether every message is laid out. Like a value's expansion, it lasts while the same thread
++  // stays shown: another event's thread starts bounded again (adjusted in the render that sees it).
++  const [allMessagesState, setAllMessagesState] = useState(false);
++  const [shownThread, setShownThread] = useState<unknown>(thread);
++  if (shownThread !== thread) {
++    setShownThread(thread);
++    setAllMessagesState(false);
++  }
++  const allMessages = allMessagesState && shownThread === thread;
++  if (!replayed.ok || thread === undefined) {
+     return (
+-      <Alert title={`The thread cannot be reconstructed at event ${seq}`}>{replayed.error}</Alert>
++      <Alert title={`The thread cannot be reconstructed at event ${seq}`}>
++        {replayed.ok ? '' : replayed.error}
++      </Alert>
+     );
+   }
+-  const thread = replayed.thread;
++  const messages = thread.messages;
++  const hidden = allMessages ? 0 : Math.max(0, messages.length - MESSAGE_PREVIEW_COUNT);
++  const shownMessages = hidden > 0 ? messages.slice(hidden) : messages;
+   return (
+     <div className="grid gap-section">
+       {diff ? (
+@@ -108,9 +132,34 @@ export function ThreadViewer({
+       <Card title={`Thread at event ${seq}`}>
+         <div className="grid gap-4">
+           <div className="grid gap-2">
+-            <h3 className="text-sm font-semibold">Messages ({thread.messages.length})</h3>
++            <h3 className="text-sm font-semibold">Messages ({count(messages.length)})</h3>
++            {messages.length > MESSAGE_PREVIEW_COUNT ? (
++              <p className="flex flex-wrap items-center gap-2 text-xs text-muted">
++                <span>
++                  {hidden > 0
++                    ? `Showing the last ${count(MESSAGE_PREVIEW_COUNT)} of ${count(messages.length)} messages.`
++                    : `Showing all ${count(messages.length)} messages.`}
++                </span>
++                <Button
++                  size="sm"
++                  aria-label={hidden > 0 ? 'Show all messages' : 'Show fewer messages'}
++                  onClick={() => setAllMessagesState(hidden > 0)}
++                >
++                  {hidden > 0 ? 'Show all' : 'Show fewer'}
++                </Button>
++                <Button
++                  size="sm"
++                  aria-label="Download messages as JSON"
++                  onClick={() =>
++                    downloadJson(`run-${thread.run.id}-messages-at-${seq}.json`, messages)
++                  }
++                >
++                  Download JSON
++                </Button>
++              </p>
++            ) : null}
+             <ol className="grid gap-2 text-md" aria-label="Messages">
+-              {thread.messages.map((m) => (
++              {shownMessages.map((m) => (
+                 <li key={m.id} className="grid min-w-0 gap-1 rounded-md border border-default p-3">
+                   <div className="flex items-center gap-2">
+                     <Badge size="sm">{m.role}</Badge>{' '}
