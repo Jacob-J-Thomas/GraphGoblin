@@ -25,6 +25,8 @@ else if (args.includes('--help')) {
     ],
     'auth-empty': ['', '', 0],
     'auth-unrecognised': ['{}', '', 0],
+    'auth-zero-stdout': ['Not logged in', '', 0],
+    'auth-zero-stderr': ['', 'Not logged in', 0],
     'conflict-auth-stderr': [
       'API Error: 429 Too Many Requests',
       'HTTP 401 Authentication failed',

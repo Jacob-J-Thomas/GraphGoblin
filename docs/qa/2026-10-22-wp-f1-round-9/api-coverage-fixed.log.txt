@@ -1,0 +1,73 @@
+pnpm.cmd : $ vitest run --coverage --maxWorkers=1 --coverage.reportOnFailure
+At line:2 char:290
++ ... ers.jsonl"; pnpm.cmd --filter @graphgoblin/api test:coverage --maxWor ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...reportOnFailure:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+
+ RUN  v5.0.3 [local-path]
+      Coverage enabled with v8
+
+subloop kill landings:
+delay undefined: leaf waiting at restart; recovery restarts top 0, middle 0, leaf 0
+delay 0: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 10: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 30: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 60: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 100: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 150: leaf succeeded at restart; recovery restarts top 1, middle 0, leaf 0
+delay 250: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+{"level":30,"time":1792711992520,"pid":52856,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5631"}
+{"level":30,"time":1792711992520,"pid":52856,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5631,"dataDir":"[local-path]","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792711992560,"pid":52856,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792711992567,"pid":52856,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":6.931299999999737,"msg":"request completed"}
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-pool]: Worker forks emitted error.
+ ❯ EventEmitter.onTaskError ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_
+modules/vitest/dist/chunks/index.DpLw24bj.js:11532:21
+ ❯ EventEmitter.emit node:events:518:28
+ ❯ ChildProcess.emitUnexpectedExit ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed5
+3/node_modules/vitest/dist/chunks/index.DpLw24bj.js:11007:22
+ ❯ ChildProcess.emit node:events:518:28
+ ❯ ChildProcess._handle.onexit node:internal/child_process:293:12
+
+Caused by: Error: Worker exited unexpectedly with exit code 3221225477 during started state while running test file [local-path]
+[local-path]
+ ❯ ChildProcess.emitUnexpectedExit ../../node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed5
+3/node_modules/vitest/dist/chunks/index.DpLw24bj.js:11005:33
+ ❯ ChildProcess.emit node:events:518:28
+ ❯ ChildProcess._handle.onexit node:internal/child_process:293:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  53 passed | 2 skipped (56)
+      Tests  711 passed | 6 skipped (753)
+     Errors  1 error
+   Start at  18:29:10
+   Duration  765.53s (tests 72%, import 25%, transform 2%, worker 1%)
+
+     Import  281 modules were evaluated 475 times · 181.47s total, 25% of tracked time
+             ~74.12s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 95.86% ( 1971/2056 )
+Branches     : 92.09% ( 1270/1379 )
+Functions    : 94% ( 392/417 )
+Lines        : 97.28% ( 1791/1841 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ [local-path]
+  │ readiness-precision\apps\api

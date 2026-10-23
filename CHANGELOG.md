@@ -4,6 +4,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Recognise explicit Claude auth-status sign-out text on stdout or bounded stderr even after a successful CLI exit; empty or unrecognised status remains unknown, and process failures keep precedence. (#179)
+
 - Preserve explicit authentication (HTTP/API 401/403) and quota (429) readiness when diagnostics also mention network settings. Claude no-turn probes consult recognised stdout failures when stderr is only an unrelated warning; recognised stderr remains primary on conflicting diagnostics. Empty or unrecognised successful login output is `unknown` without `authenticated`, rather than an invented sign-out. No model turn is used. (#179)
 
 - Check manual run readiness across the pinned parent and recursive subloop definitions before queuing the parent. Shared harnesses use one no-turn probe; distinct harnesses are checked concurrently. A nested readiness failure identifies the child loop and node and prevents preceding parent effects. Scheduled, webhook, child and resume starts keep their existing checks. (#179)

@@ -28,6 +28,8 @@ export interface ClaudeProcessResult {
   callbackError?: ClaudeHarnessError;
   /** Fixed classification only; stdout/stderr diagnostic bodies are never retained here. */
   failureState?: HarnessReadinessState;
+  /** Positive sign-out text in bounded no-turn stderr; never a retained diagnostic body. */
+  notLoggedIn?: true;
 }
 export type ClaudeCliRunner = (
   request: ClaudeProcessRequest,
@@ -81,6 +83,9 @@ export const runClaudeProcess = (
         ...(callbackError ? { callbackError } : {}),
         ...(request.classifyDiagnostics && exitCode !== 0 && diagnostic
           ? { failureState: cliFailureState(diagnostic) }
+          : {}),
+        ...(request.classifyDiagnostics && /\bnot logged in\b/i.test(diagnostic)
+          ? { notLoggedIn: true }
           : {}),
       });
     };
