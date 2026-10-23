@@ -188,6 +188,65 @@ describe('ThreadViewer with a large history', () => {
     expect(screen.getByRole('list', { name: 'Messages' })).toBeInTheDocument();
   });
 
+  it('reconstructs a patch diff whose other half was let go in one activation', async () => {
+    const user = userEvent.setup();
+    const { thread, events } = threadOf(3, 'a');
+    const id = thread.run.id;
+    // Event 2 starts node a, event 3 finishes it with a patch; then 33 more started events.
+    const finished = event(id, 3, 'node.finished', {
+      nodeId: 'a',
+      patch: [{ op: 'add', path: '/vars/count', value: 1 }],
+      durationMs: 1,
+    });
+    const all = [
+      ...events,
+      started(id, 2),
+      finished,
+      ...Array.from({ length: 33 }, (_, i) => started(id, i + 4)),
+    ];
+    const view = (seq: number) => (
+      <ThreadViewer current={thread} events={all} seq={seq} historyBytes={3_500_000} />
+    );
+    const { rerender } = render(view(2));
+    await user.click(screen.getByRole('button', { name: 'Reconstruct the thread at event 2' }));
+    rerender(view(3));
+    await user.click(screen.getByRole('button', { name: 'Reconstruct the thread at event 3' }));
+    expect(screen.getByText('Patch from a')).toBeInTheDocument();
+    // Thirty-one more reconstructions let event 2 go while event 3 is the oldest kept.
+    for (let seq = 4; seq <= 34; seq += 1) {
+      rerender(view(seq));
+      await user.click(
+        screen.getByRole('button', { name: `Reconstruct the thread at event ${seq}` }),
+      );
+    }
+    rerender(view(3));
+    expect(
+      screen.getByRole('button', { name: 'Reconstruct the thread at event 3' }),
+    ).toBeInTheDocument();
+    // One activation brings both halves back together.
+    await user.click(screen.getByRole('button', { name: 'Reconstruct the thread at event 3' }));
+    expect(screen.getByText('Patch from a')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Reconstruct/ })).not.toBeInTheDocument();
+  });
+
+  it('shows the failure of a reconstruction the reader asked for', async () => {
+    const user = userEvent.setup();
+    const { thread, events } = threadOf(3, 'a');
+    const all = [
+      ...events,
+      started(thread.run.id, 2),
+      event(thread.run.id, 3, 'node.finished', {
+        nodeId: 'a',
+        patch: [{ op: 'remove', path: '/vars/missing' }],
+        durationMs: 1,
+      }),
+    ];
+    render(<ThreadViewer current={thread} events={all} seq={3} historyBytes={3_500_000} />);
+    await user.click(screen.getByRole('button', { name: 'Reconstruct the thread at event 3' }));
+    expect(screen.getByText('The thread cannot be reconstructed at event 3')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Reconstruct/ })).not.toBeInTheDocument();
+  });
+
   it('reconstructs automatically at and below the threshold', () => {
     const { thread, events } = threadOf(3, 'a');
     render(

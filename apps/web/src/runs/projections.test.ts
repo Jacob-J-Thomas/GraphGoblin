@@ -510,11 +510,28 @@ describe('initial thread and replay failures', () => {
       expect(cache.has(initial, [...ALL], 3)).toBe(true);
       expect(cache.has(initialThreadFrom(sampleThread(), ALL), ALL, 3)).toBe(false);
       expect(cache.has(initial, ALL.slice(1), 3)).toBe(false);
-      // Beyond the limit, the oldest reconstruction is let go.
+      // Beyond the limit, the reconstruction used least recently is let go: a hit is used.
       cache.at(initial, ALL, 4);
+      cache.at(initial, ALL, 3);
       cache.at(initial, ALL, 5);
-      expect(cache.has(initial, ALL, 3)).toBe(false);
+      expect(cache.has(initial, ALL, 4)).toBe(false);
+      expect(cache.has(initial, ALL, 3)).toBe(true);
       expect(cache.has(initial, ALL, 5)).toBe(true);
+      // A remembered failure is remembered too: asking again shows it rather than rebuilding.
+      const broken = [
+        ALL[0]!,
+        event(ALL[0]!.runId, 2, 'node.finished', {
+          nodeId: 'a',
+          patch: [{ op: 'remove', path: '/vars/missing' }],
+          durationMs: 1,
+        }),
+      ];
+      const failing = createThreadCache(2);
+      expect(failing.at(initialThreadFrom(sampleThread(), broken), broken, 2).ok).toBe(false);
+      expect(failing.has(initialThreadFrom(sampleThread(), broken), broken, 2)).toBe(false);
+      const seed = initialThreadFrom(sampleThread(), broken);
+      expect(failing.at(seed, broken, 2).ok).toBe(false);
+      expect(failing.has(seed, broken, 2)).toBe(true);
     });
 
     it('returns the same result for a sequence while the log only grows', () => {

@@ -101,7 +101,8 @@ export function createThreadCache(limit = 32): ThreadCache {
     known.every((event, index) => events[index] === event);
   return {
     has(init, events, seq) {
-      return grown(init, events) && results.get(seq)?.ok === true;
+      // A remembered failure counts: asking again would show the same error, not rebuild.
+      return grown(init, events) && results.has(seq);
     },
     at(init, events, seq) {
       const extended = grown(init, events);
@@ -111,7 +112,13 @@ export function createThreadCache(limit = 32): ThreadCache {
       }
       known = events;
       const hit = results.get(seq);
-      if (hit) return hit;
+      if (hit) {
+        // A hit becomes the newest entry, so the results a reader asks for together (a patch
+        // diff needs an event and the one before it) are not parted by the next eviction.
+        results.delete(seq);
+        results.set(seq, hit);
+        return hit;
+      }
       // Replay from the nearest earlier remembered thread rather than from the seed: a live append
       // then costs the new events only, and the parts of the thread those events do not touch keep
       // their identity (patches copy only along their path), so their remembered previews stay.
