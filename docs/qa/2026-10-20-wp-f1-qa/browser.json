@@ -1,0 +1,175 @@
+[
+  {
+    "name": "Edge: initial Defaults catalog",
+    "expected": "Checking… during first catalog request",
+    "actual": "Checking… visible",
+    "pass": true
+  },
+  {
+    "name": "Edge: badges old",
+    "expected": "two CLI update needed badges with data-state=cli-incompatible",
+    "actual": {
+      "screenshot": "settings-old.png",
+      "text": "Harness preflight\nRetry preflight\nCLI update needed\ncodex\nv0.100.0\nCodex CLI 0.100.0 is older than the minimum version 0.160.0. Update the Codex CLI, then retry preflight.\nCLI update needed\nclaude\nv2.1.284\nClaude CLI 2.1.284 is older than the minimum version 2.1.285. Update the Claude CLI, then retry preflight.\n\nSigned in with Claude.ai.\n\nclaude-opus-5-5\nlisted by adapter\nclaude-fable-5-1\nlisted by adapter\n\nAdapter model listings do not confirm account access. Preflight never starts a model turn."
+    },
+    "pass": true
+  },
+  {
+    "name": "Edge: badges missing-model",
+    "expected": "two CLI update needed badges with data-state=cli-incompatible",
+    "actual": {
+      "screenshot": "settings-missing-model.png",
+      "text": "Harness preflight\nRetry preflight\nCLI update needed\ncodex\nv0.160.0\nCodex CLI 0.160.0 does not list required exec options: --model. Update the Codex CLI, then retry preflight.\nCLI update needed\nclaude\nv2.1.287\nClaude CLI 2.1.287 does not list required options: --model. Update the Claude CLI, then retry preflight.\n\nSigned in with Claude.ai.\n\nclaude-opus-5-5\nlisted by adapter\nclaude-fable-5-1\nlisted by adapter\n\nAdapter model listings do not confirm account access. Preflight never starts a model turn."
+    },
+    "pass": true
+  },
+  {
+    "name": "Edge: badges missing-effort",
+    "expected": "two CLI update needed badges with data-state=cli-incompatible",
+    "actual": {
+      "screenshot": "settings-missing-effort.png",
+      "text": "Harness preflight\nRetry preflight\nCLI update needed\ncodex\nv0.160.0\nCodex CLI 0.160.0 does not list required exec options: --config. Update the Codex CLI, then retry preflight.\nCLI update needed\nclaude\nv2.1.287\nClaude CLI 2.1.287 does not list required options: --effort. Update the Claude CLI, then retry preflight.\n\nSigned in with Claude.ai.\n\nclaude-opus-5-5\nlisted by adapter\nclaude-fable-5-1\nlisted by adapter\n\nAdapter model listings do not confirm account access. Preflight never starts a model turn."
+    },
+    "pass": true
+  },
+  {
+    "name": "Edge: badges auth",
+    "expected": "two Sign-in needed badges with data-state=auth",
+    "actual": {
+      "screenshot": "settings-auth.png",
+      "text": "Harness preflight\nRetry preflight\nSign-in needed\ncodex\nv0.160.0\nCodex sign-in is missing or invalid. Run codex login, then retry preflight.\nSign-in needed\nclaude\nv2.1.287\nClaude is not signed in. Run claude auth login, then retry preflight.\nclaude-opus-5-5\nlisted by adapter\nclaude-fable-5-1\nlisted by adapter\n\nAdapter model listings do not confirm account access. Preflight never starts a model turn."
+    },
+    "pass": true
+  },
+  {
+    "name": "Edge: badges quota",
+    "expected": "two Usage limit badges with data-state=quota",
+    "actual": {
+      "screenshot": "settings-quota.png",
+      "text": "Harness preflight\nRetry preflight\nUsage limit\ncodex\nv0.160.0\nCodex account usage limit reached. Wait for the usage limit to reset, then retry preflight.\nUsage limit\nclaude\nv2.1.287\nClaude account usage limit reached. Wait for the usage limit to reset, then retry preflight.\nclaude-opus-5-5\nlisted by adapter\nclaude-fable-5-1\nlisted by adapter\n\nAdapter model listings do not confirm account access. Preflight never starts a model turn."
+    },
+    "pass": true
+  },
+  {
+    "name": "Edge: badges transport",
+    "expected": "two Connection failed badges with data-state=transport",
+    "actual": {
+      "screenshot": "settings-transport.png",
+      "text": "Harness preflight\nRetry preflight\nConnection failed\ncodex\nv0.160.0\nCodex reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight.\nConnection failed\nclaude\nv2.1.287\nClaude reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight.\nclaude-opus-5-5\nlisted by adapter\nclaude-fable-5-1\nlisted by adapter\n\nAdapter model listings do not confirm account access. Preflight never starts a model turn."
+    },
+    "pass": true
+  },
+  {
+    "name": "Edge: badges unknown",
+    "expected": "two Unknown badges with data-state=unknown",
+    "actual": {
+      "screenshot": "settings-unknown.png",
+      "text": "Harness preflight\nRetry preflight\nUnknown\ncodex\nv0.160.0\nCodex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight.\nUnknown\nclaude\nv2.1.287\nClaude CLI check exited with code 1. Check that the Claude CLI starts and responds, then retry preflight.\nclaude-opus-5-5\nlisted by adapter\nclaude-fable-5-1\nlisted by adapter\n\nAdapter model listings do not confirm account access. Preflight never starts a model turn."
+    },
+    "pass": true
+  },
+  {
+    "name": "Edge: badges ready",
+    "expected": "two Ready badges with data-state=ready",
+    "actual": {
+      "screenshot": "settings-ready.png",
+      "text": "Harness preflight\nRetry preflight\nReady\ncodex\nv0.160.0\nReady\nclaude\nv2.1.287\n\nSigned in with Claude.ai.\n\nclaude-opus-5-5\nlisted by adapter\nclaude-fable-5-1\nlisted by adapter\n\nAdapter model listings do not confirm account access. Preflight never starts a model turn."
+    },
+    "pass": true
+  },
+  {
+    "name": "Edge: Defaults and catalog failure vocabulary",
+    "expected": "Claude saved option; short Claude and Codex help; matching catalog rows",
+    "actual": {
+      "claudeLabel": "Claude Opus 5.5 (saved)",
+      "codexLabel": "GPT-6 Luna",
+      "screenshot": "defaults-auth.png"
+    },
+    "pass": true
+  },
+  {
+    "name": "Edge: background hang retains badges and retry disabled",
+    "expected": "Rechecking… live region; auth badges stay; no checking badge",
+    "actual": "settings-rechecking.png",
+    "pass": true
+  },
+  {
+    "name": "Edge: offline retained last result",
+    "expected": "Offline; showing the last check.",
+    "actual": "settings-offline.png",
+    "pass": true
+  },
+  {
+    "name": "Edge: phone Settings and keyboard",
+    "expected": "390px; no document overflow; Retry operable with keyboard",
+    "actual": {
+      "sizes": {
+        "width": 390,
+        "scroll": 390
+      },
+      "screenshot": "settings-phone.png"
+    },
+    "pass": true
+  },
+  {
+    "name": "Edge: claude focus refetch",
+    "expected": "same editable model/label; no new failure note during refetch",
+    "actual": {
+      "value": "claude-opus-5-5",
+      "label": "Claude Opus 5.5 (claude-opus-5-5)",
+      "screenshot": "claude-editor-rechecking.png"
+    },
+    "pass": true
+  },
+  {
+    "name": "Edge: claude known failure retry",
+    "expected": "failure note retained during Retry; saved value retained",
+    "actual": {
+      "screenshot": "claude-editor-auth-retry.png",
+      "savedValue": "claude-opus-5-5"
+    },
+    "pass": true
+  },
+  {
+    "name": "Edge: codex focus refetch",
+    "expected": "same editable model/label; no new failure note during refetch",
+    "actual": "TimeoutError: page.waitForRequest: Timeout 30000ms exceeded while waiting for event \"request\"",
+    "pass": false
+  },
+  {
+    "name": "Edge: codex known failure retry",
+    "expected": "failure note retained during Retry; saved value retained",
+    "actual": {
+      "screenshot": "codex-editor-auth-retry.png",
+      "savedValue": "gpt-6-luna"
+    },
+    "pass": true
+  },
+  {
+    "name": "Edge: saved incompatible value loaded without switch",
+    "expected": "saved Codex model preserved in Claude node, with wrong-family reason",
+    "actual": {
+      "provenance": "controlled stale GET response; no switch, no write",
+      "screenshot": "editor-saved-incompatible.png",
+      "label": "gpt-6-astra (Saved model belongs to Codex)"
+    },
+    "pass": true
+  },
+  {
+    "name": "Edge: console errors",
+    "expected": "none",
+    "actual": [],
+    "pass": true
+  },
+  {
+    "name": "final API shutdown",
+    "expected": "stopped",
+    "actual": {
+      "ms": 18,
+      "exit": null,
+      "signal": "SIGTERM",
+      "stopped": true
+    },
+    "pass": true
+  }
+]

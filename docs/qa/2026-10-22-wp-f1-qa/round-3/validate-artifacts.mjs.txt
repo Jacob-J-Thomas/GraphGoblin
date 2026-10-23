@@ -1,0 +1,49 @@
+import {readFileSync,writeFileSync,readdirSync,existsSync} from 'node:fs';
+import {resolve,dirname,join} from 'node:path';
+import {execFileSync,spawnSync} from 'node:child_process';
+const base=resolve('docs/qa/2026-10-22-wp-f1-qa/round-3');
+if(!existsSync(join(base,'artifact-validation.json')))writeFileSync(join(base,'artifact-validation.json'),'{}\n');
+const files=readdirSync(base),errors=[],syntax=[],readme=readFileSync(join(base,'README.md'),'utf8');let links=0;
+for(const name of files){
+ const file=join(base,name);
+ if(!readme.includes(']('+name+')'))errors.push('Unindexed artifact: '+name);
+ if(!/\.(txt|json|md)$/.test(name))continue;
+ const text=readFileSync(file,'utf8');
+ if(/[A-Z]:[\\/]+Users[\\/]/i.test(text)||(process.env.USERNAME&&text.includes(process.env.USERNAME)))errors.push('Local profile path: '+name);
+ if(/gg_[A-Za-z0-9_-]{25,}/.test(text))errors.push('Key-shaped token: '+name);
+ if(/[\x00-\x08\x0b\x0c\x0e-\x1f]/.test(text))errors.push('Control character: '+name);
+ if(name.endsWith('.md'))for(const match of text.matchAll(/\]\(([^)]+)\)/g)){
+  const target=match[1];if(/^(?:https?:|#)/.test(target))continue;links++;
+  if(!existsSync(resolve(dirname(file),target.split('#')[0])))errors.push('Missing link from '+name+': '+target);
+ }
+ if(name.endsWith('.json'))try{JSON.parse(text.replace(/^\uFEFF/,''));}catch{errors.push('Invalid JSON: '+name);}
+ if(/\.(mjs|cjs)\.txt$/.test(name)){
+  const checked=spawnSync(process.execPath,['--check','--input-type='+ (name.endsWith('.cjs.txt')?'commonjs':'module')],{input:text,encoding:'utf8',windowsHide:true});
+  syntax.push({file:name,exit:checked.status});if(checked.status!==0)errors.push('Invalid replay source: '+name);
+ }
+}
+for(const file of ['docs/qa/2026-10-20-wp-f1-qa/index.md','docs/qa/2026-10-20-wp-f1-qa/checks.md','docs/qa/2026-10-20-wp-f1-qa.md']){
+ const text=readFileSync(file,'utf8');if(!text.includes('## Evidence restored'))errors.push('Missing historical provenance section: '+file);
+ if(/[A-Z]:[\\/]+Users[\\/]/i.test(text)||(process.env.USERNAME&&text.includes(process.env.USERNAME)))errors.push('Historical record contains local profile path: '+file);
+ for(const match of text.matchAll(/\]\(([^)]+)\)/g)){const target=match[1];if(/^(?:https?:|#)/.test(target))continue;links++;if(!existsSync(resolve(dirname(file),target.split('#')[0])))errors.push('Missing historical link: '+target);}
+}
+const head=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
+if(head!=='c2a2b6632c0996383abe491268baf871aec448dd')errors.push('HEAD changed');
+const changed=execFileSync('git',['diff','--name-only'],{encoding:'utf8'}).trim().split(/\r?\n/).filter(Boolean);
+if(changed.some(f=>!f.startsWith('docs/qa/')))errors.push('Non-QA tracked change');
+const untracked=execFileSync('git',['ls-files','--others','--exclude-standard'],{encoding:'utf8'}).trim().split(/\r?\n/).filter(Boolean);
+if(untracked.some(f=>!f.startsWith('docs/qa/2026-10-22-wp-f1-qa/round-3/')))errors.push('Unexpected untracked file outside QA evidence');
+if(execFileSync('git',['diff','--cached','--name-only'],{encoding:'utf8'}).trim())errors.push('Index changed');
+const mapping=JSON.parse(readFileSync(join(base,'restoration-map.json'),'utf8'));if(mapping.mapping.length!==61)errors.push('Restoration count is not 61');
+for(const item of mapping.mapping)if(!existsSync(join(base,item.regenerated)))errors.push('Missing restoration target '+item.regenerated);
+for(const file of ['docs/qa/2026-10-20-wp-f1-qa/index.md','docs/qa/2026-10-20-wp-f1-qa/checks.md','docs/qa/2026-10-20-wp-f1-qa.md']){
+ const text=readFileSync(file,'utf8').replace(/\[[^\]]*\]\([^)]+\)/g,'');
+ for(const item of mapping.mapping){
+  const escaped=item.historical.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  const pattern=new RegExp('(?<![A-Za-z0-9_/.-])'+escaped+'(?![A-Za-z0-9_.-])','g');
+  if(pattern.test(text))errors.push('Unresolved bare/backtick historical artifact in '+file+': '+item.historical);
+ }
+}
+const ignored=spawnSync('git',['check-ignore',...files.map(f=>'docs/qa/2026-10-22-wp-f1-qa/round-3/'+f)],{encoding:'utf8'});if(ignored.stdout.trim())errors.push('An evidence file is gitignored');
+const result={head,files:files.length,links,restored:mapping.mapping.length,changedTracked:changed,untrackedEvidenceFiles:untracked.length,syntax,errors};
+writeFileSync(join(base,'artifact-validation.json'),JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify(result));if(errors.length)process.exitCode=1;

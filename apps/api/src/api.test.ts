@@ -68,13 +68,23 @@ describe('system routes', () => {
       items: { harness: string; ok: boolean }[];
     }>();
     expect(preflight.items).toEqual([
-      { harness: 'codex', ok: true, version: 'fake', authenticated: true, problems: [] },
+      {
+        harness: 'codex',
+        state: 'ready',
+        ok: true,
+        version: 'fake',
+        authenticated: true,
+        problems: [],
+      },
     ]);
     t.harness.preflight = () => Promise.reject(new Error('codex missing'));
     const broken = (await t.app.inject('/harness/preflight')).json<{
       items: { ok: boolean; problems: string[] }[];
     }>();
-    expect(broken.items[0]).toMatchObject({ ok: false, problems: ['codex missing'] });
+    expect(broken.items[0]).toMatchObject({
+      ok: false,
+      problems: [expect.stringMatching(/readiness could not be confirmed/)],
+    });
     delete t.container.ports.harnesses.codex;
     const none = (await t.app.inject('/harness/preflight')).json<{
       items: { problems: string[] }[];

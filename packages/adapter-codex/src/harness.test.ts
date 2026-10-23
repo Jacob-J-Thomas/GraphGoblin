@@ -388,7 +388,16 @@ describe('preflight', () => {
   const runner =
     (responses: Record<string, Awaited<ReturnType<CliRunner>>>): CliRunner =>
     (_cli, args) =>
-      Promise.resolve(responses[args.join(' ')] ?? { code: 1, output: '' });
+      Promise.resolve(
+        responses[args.join(' ')] ??
+          (args.includes('--help')
+            ? {
+                code: 0,
+                output:
+                  '--json --model --sandbox --cd --skip-git-repo-check --output-schema --config',
+              }
+            : { code: 1, output: '' }),
+      );
 
   it('reports version and login for a healthy install', async () => {
     const harness = new CodexHarness({
@@ -399,6 +408,7 @@ describe('preflight', () => {
       }),
     });
     expect(await harness.preflight()).toEqual({
+      state: 'ready',
       ok: true,
       version: '0.160.0',
       authenticated: true,
@@ -409,13 +419,18 @@ describe('preflight', () => {
   it('reports a logged-out CLI as a problem', async () => {
     const harness = new CodexHarness({
       cliRunner: runner({
-        '--version': { code: 0, output: 'codex dev' },
+        '--version': { code: 0, output: 'codex-cli 0.160.0' },
         'login status': { code: 1, output: 'Not logged in' },
       }),
     });
     const result = await harness.preflight();
-    expect(result).toMatchObject({ ok: false, version: 'codex dev', authenticated: false });
-    expect(result.problems[0]).toMatch(/not logged in/);
+    expect(result).toMatchObject({
+      state: 'auth',
+      ok: false,
+      version: '0.160.0',
+      authenticated: false,
+    });
+    expect(result.problems[0]).toMatch(/codex login/);
   });
 
   it('reports a login status call that could not run', async () => {
@@ -425,9 +440,13 @@ describe('preflight', () => {
         'login status': { code: null, output: '', spawnError: 'timed out after 10 ms' },
       }),
     });
-    expect((await harness.preflight()).problems).toEqual([
-      'codex login status failed: timed out after 10 ms',
-    ]);
+    expect(await harness.preflight()).toMatchObject({
+      state: 'unknown',
+      ok: false,
+      problems: [
+        'Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight.',
+      ],
+    });
   });
 
   it('reports a missing binary without throwing', async () => {
@@ -436,28 +455,25 @@ describe('preflight', () => {
       cliRunner: runner({ '--version': { code: null, output: '', spawnError: 'spawn ENOENT' } }),
     });
     const result = await harness.preflight();
-    expect(result).toEqual({
-      ok: false,
-      authenticated: false,
-      problems: ['Codex CLI could not be run (C:/missing/codex.exe): spawn ENOENT'],
-    });
+    expect(result).toMatchObject({ state: 'cli-missing', ok: false });
+    expect(result).not.toHaveProperty('authenticated');
     const failing = new CodexHarness({
       codexBinary: 'codex.mjs',
       cliRunner: runner({ '--version': { code: 2, output: '' } }),
     });
-    expect((await failing.preflight()).problems[0]).toMatch(/exit 2$/);
+    expect((await failing.preflight()).problems[0]).toMatch(/could not be confirmed/);
     const noisy = new CodexHarness({
       cliRunner: runner({ '--version': { code: 2, output: 'bad flag' } }),
     });
-    expect((await noisy.preflight()).problems[0]).toMatch(/bad flag$/);
+    expect((await noisy.preflight()).problems[0]).toMatch(/could not be confirmed/);
   });
 
   it('turns an unexpected runner failure into a problem', async () => {
     const harness = new CodexHarness({ cliRunner: () => Promise.reject(new Error('boom')) });
     expect(await harness.preflight()).toEqual({
+      state: 'unknown',
       ok: false,
-      authenticated: false,
-      problems: ['preflight failed: boom'],
+      problems: [expect.stringMatching(/could not be confirmed/)],
     });
   });
 });

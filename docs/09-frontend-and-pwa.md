@@ -626,7 +626,59 @@ Every use creates an owner-scoped ordinary loop with an independent definition. 
 
 ### Claude readiness and saved selections
 
-Settings separates owner catalog enablement from installed-harness readiness. Opus 5.5 and Fable 5.1 have ordinary enable switches; an enabled row with failed preflight says "Enabled in catalog; Claude harness not ready". Preflight shows login independently of CLI version/capability failures. The inference picker keeps a saved model from another harness as a disabled, labelled option, including while preflight fails, and directs the user to a valid model or inherited default. Switching an inference node to Claude resets its policy to `read-only`/`never`, avoiding Codex's unsupported `workspace-write` default; full access remains an explicit choice. Other authored harness options are preserved, with unsupported Claude settings reported for correction. Models retain exact identity and effort checks (ADR-0029).
+Settings separates owner catalog enablement from prerequisite health. The seven server states are
+`unknown`, `ready`, `cli-missing`, `cli-incompatible`, `auth`, `quota` and `transport`; `checking`
+is client-only while no result exists yet.
+
+On first load, readiness is `checking` until a result arrives; the Settings preflight card shows
+"Loading preflight…". A background recheck (window focus or Retry preflight) keeps the last result
+on screen. The card announces "Rechecking…" in a muted live region; when its request is paused
+offline, it keeps the last result and announces "Offline; showing the last check." A completed
+lookup failure or timeout replaces the card's badge list with "Could not load preflight", with no
+state badge; the model picker and policy field show `unknown` instead of cached success.
+
+After a successful lookup, **Harness preflight** shows one badge per harness with a label, never
+the enum, which stays in `data-state`: Ready, Unknown, CLI not found, CLI update needed, Sign-in needed, Usage
+limit, Connection failed. Missing, outdated and signed-out CLIs use the failure tone; unknown,
+usage limit and connection failures the warning tone. Under it are the server's problems, each one
+detail sentence and one action (for example "Claude is not signed in. Run claude auth login, then
+retry preflight."). Claude rows add the adapter's model listing ("listed by adapter", neutral tone)
+and state that listings do not confirm account access. **Retry preflight** in the card head
+refetches and is disabled while a check runs.
+
+**Defaults** gives each harness, Codex and Claude alike, at most one short line under its fields:
+"Checking…" while the catalog first loads, the saved model's catalog problem (not in the catalog,
+disabled), or "<Harness> readiness: <label>. See Harness preflight below." for a harness that is
+not ready. A saved model the list does not offer stays selected as "<name> (saved)", "(disabled)"
+or "(not in catalog)"; the full problem stays in Harness preflight. Catalog rows of a harness that
+is not ready say "Enabled in catalog. <Harness> readiness: <label>." for Claude and Codex rows
+alike; nothing is shown during the first check.
+
+The **model picker** keeps a ready Claude field editable, with its label, through a background
+recheck. While Claude is not ready its choices are read-only; the note is the server's first
+problem followed by "Model choices are read-only until Claude is ready.", a saved model reads
+"<id> (saved)", and **Retry Claude preflight** refetches. A known Codex failure adds the server's
+problem as a warning and **Retry Codex preflight**; Codex choices stay editable, and neither the
+first check nor a previously ready recheck adds a new failure note; an existing Codex failure
+note stays visible while Retry rechecks it. The Claude policy field uses the same "Claude readiness:
+<label>." line. Adapter model listings do not establish account access, and failed catalog fetches
+do not prove removal. `MODEL_DISABLED` and `MODEL_NOT_IN_CATALOG` are catalog facts independent of
+auth, quota or transport failures. Omitted `authenticated` means login could not be established.
+
+Transport detail says "Claude reported a connection or provider service error." (or Codex),
+followed by "Check the network connection and the provider's service status, then retry preflight."
+It covers provider HTTP 500 responses as well as connection failures; it does not establish a
+connectivity diagnosis.
+
+Draft create, import, template draft and save (including 600 ms idle autosaves) never probe
+readiness (D-017). The editor fetches readiness independently from `/harness/preflight`. Validate,
+publish, preflight and run start probe once per referenced harness at request admission, sharing
+the result within that operation and probing distinct harnesses concurrently. Each new operation
+probes afresh; a later Claude turn-launch inspection is a separate check. These failures preserve
+authored model/effort values.
+Switching an inference node to Claude resets its policy to `read-only`/`never`; full access remains
+explicit. Other authored harness options remain, with unsupported settings reported for correction.
+Models retain exact identity and effort checks (ADR-0029).
 
 ### Loop history summaries
 

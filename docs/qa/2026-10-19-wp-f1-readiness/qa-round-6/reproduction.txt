@@ -1,0 +1,66 @@
+Native reproduction protocol (fake-only)
+
+Revision: ee0f4f4077c2a4076381c51a42a313a5811e2195, detached.
+Node 22.14.0, Windows PowerShell, pnpm.cmd build.
+Compile tooling/fixtures/readiness-cli.cs with the existing builder:
+  powershell.exe -NoProfile -ExecutionPolicy Bypass -File tooling/scripts/readiness-fake-cli.ps1 -Directory <new-temp>/claude -Harness claude
+  powershell.exe -NoProfile -ExecutionPolicy Bypass -File tooling/scripts/readiness-fake-cli.ps1 -Directory <new-temp>/codex -Harness codex
+Every <new-temp> is beneath %TEMP% and has prefix gg-qa-179-.
+
+Run node apps/api/dist/main.js with a new GG_DATA_DIR, explicit GG_CODEX_BINARY
+and GG_CLAUDE_BINARY pointing at those executables, GG_HOST=127.0.0.1,
+GG_PORT=5624 (later keyed instances: 5629), GG_LOG_LEVEL=silent and the built
+apps/web/dist as GG_WEB_DIST. Remove inherited GG_* and JEV_API_KEY settings.
+README step 10 uses GG_REQUIRE_API_KEY=false as written. The separate keyed
+checks create a key using the built binary's --create-api-key command, retain
+the token only in memory, and set GG_REQUIRE_API_KEY=true. No token is evidence.
+
+Canonical sequential graph:
+  schemaVersion: 4
+  name: the descriptive case name recorded in the evidence
+  settings: {subloopDepthLimit: 8}, except the stated depth cases
+  nodes: start (manual trigger), the case's steps, done (exit, config:{})
+  edges: successive nodes, each from port out to the next node
+
+Claude inference step:
+  {id:'think',kind:'inference',label:'Think',config:{
+    harness:'claude',model:'claude-opus-5-5',effort:'high',
+    harnessOptions:{sandbox:'read-only',approval:'never'},
+    prompt:{template:'Fake turn only'}}}
+Codex inference substitutes harness:'codex', model:'gpt-6-luna'.
+Parent inference nodes use id:'parentThink'.
+
+Mutation step:
+  {id:'mutate',kind:'mutate',label:'Preceding effect',config:{operations:[
+    {op:'append-message',content:'PARENT_EFFECT_MARKER'}]}}
+Subloop step:
+  {id:'child',kind:'subloop',label:'Child',config:{loopRef:{
+    loopId:<created-child-id>,version:'latest'}}}
+The numbered-version case substitutes version:1; repeated references use
+different node IDs. All graphs pass LoopDefinitionSchema before submission.
+
+Create: POST /loops {definition:<graph>} -> 201, retain loop.id and draft.id.
+Save: PUT /loops/:id/draft {definition:<graph>} -> 200.
+Publish with ready fakes: POST /loops/:id/publish {} -> 200, retain version.id.
+Start: POST /loops/:id/runs {}.
+Draft start: POST /loops/:id/runs {allowDraft:true,versionId:<draft.id>}.
+GET /runs/:id returns the run directly; GET /runs returns {items,...}.
+
+For each admission count, close QA GraphGoblin pages, clear both probes.log
+files, set each scenario.txt, record durable counts, POST once, then read logs
+and durable counts again. One probe is one whitespace-delimited --version
+argument; Claude prefixes it with safe-mode arguments. Codex also invokes
+exec --help, exec resume --help and login status. Claude invokes help and
+auth status --json. Count model-turn calls separately from these commands.
+
+Read-only SQL evidence counts runs, run.queued events, events whose payload
+contains PARENT_EFFECT_MARKER, and loop_versions with status='snapshot'.
+The final native checks also count every run_events row. No SQL writes are used.
+Compare before/after each rejected start, including child runs in global counts.
+For accepted starts, read child run.version_id and the root run.queued payload's
+subloopVersions; do not infer a child pin merely from the root's version ID.
+
+Each fake refuses every model turn with exit 2. Consequently a native 202
+followed by HARNESS_TURN_FAILED demonstrates admission and selected-version
+execution, not successful provider completion. Successful synthetic execution
+and releasable barriers are separately labelled API/engine test evidence.

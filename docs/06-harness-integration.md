@@ -12,9 +12,10 @@ Decision routes and temporary boolean predicates use the Codex decider; structur
 interface HarnessPort {
   id: 'codex' | 'claude'; // LiteLLM is a recorded later adapter idea
   preflight(): Promise<{
+    state: HarnessReadinessState;
     ok: boolean;
     version?: string;
-    authenticated: boolean;
+    authenticated?: boolean;
     problems: string[];
     authMethod?: 'claude.ai' | null;
     supportedPolicies?: ClaudePolicy[];
@@ -57,6 +58,102 @@ type HarnessResult = {
 ```
 
 Adapters translate native events into this model. The engine never sees SDK types.
+
+## No-turn readiness (#179)
+
+Readiness describes CLI prerequisites, independently of catalog enablement. `ready` confirms
+version, required CLI flags and local login only; it never promises account access to a model.
+The `models` field lists adapter identities and efforts, even when the CLI is not ready.
+No probe sends a prompt, creates a session, or checks entitlement through inference.
+
+| State                 | Meaning and next action                                                                                                                                                                   |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `checking` (web only) | No result exists yet. A recheck keeps the last result instead; this is not a server readiness result.                                                                                     |
+| `unknown`             | Timeout, cancellation, empty/unrecognized login output (even after exit 0) or another inconclusive probe. Login stays unestablished. Check the CLI and retry; model support is undecided. |
+| `ready`               | Required CLI capabilities and local authentication passed; account model access remains untested.                                                                                         |
+| `cli-missing`         | Executable not found. Install it or correct the configured binary path, then retry.                                                                                                       |
+| `cli-incompatible`    | Version or required CLI capability failed verification. Update the installed CLI and retry.                                                                                               |
+| `auth`                | Positive sign-out, wrong Claude account method or authentication-error evidence, including explicit HTTP/API 401/403. Run `claude auth login` or `codex login`, then retry.               |
+| `quota`               | Explicit HTTP/API 429 or allowance/rate-limit diagnostic, even beside incidental network advice. Check account allowance and retry when permitted; preserve the model.                    |
+| `transport`           | Explicit connection or temporary provider-service failure. Check connectivity/service status and retry; preserve the model.                                                               |
+
+Only user-disabled models (`MODEL_DISABLED`) or identities absent from GraphGoblin support
+(`MODEL_NOT_IN_CATALOG`) mean model unavailable.
+A failed catalog fetch is unknown, not removal. An effort or wrong-harness configuration error
+is reported separately. This change adds no retirement, substitution or usage-recovery behavior.
+
+Claude probes its configured executable (default `%USERPROFILE%\.local\bin\claude.exe`) in a
+fresh empty directory: version (minimum 2.1.285), help with the hidden `--max-turns` parser check,
+and local auth status. Help must advertise every launch flag, including `--model` and `--effort`.
+Codex probes the SDK-bundled CLI or `GG_CODEX_BINARY`: version (minimum SDK baseline 0.160.0),
+`exec --help`, `exec resume --help`, then `login status`, also in a fresh empty directory.
+The exec help must advertise `--json`, `--model`, `--sandbox`, `--cd`, `--skip-git-repo-check`,
+`--output-schema`, and `--config` (the SDK uses the latter for reasoning effort and policy).
+Each command has a 15-second deadline; neither command includes a prompt. Advertised flags
+establish syntax only; runtime verification still owns model/effort execution truth.
+
+Draft create, template-draft create, import and save validate catalog/configuration only: they
+never probe CLI readiness or wait for a provider prerequisite. Readiness cannot reject a draft.
+The editor obtains readiness separately from `/harness/preflight`.
+Explicit validate, publish, preflight and manual API/MCP trigger start use an operation-owned memo.
+Each referenced harness is probed once per operation, including failures and multiple nodes;
+distinct harnesses are probed concurrently. Concurrent requests own separate memos; nothing is
+retained on the container or module. Run admission pins the checked version and rejects failed
+prerequisites before starting a turn. Readiness issues use `HARNESS_READINESS_<STATE>` (hyphens
+become underscores); catalog/configuration issues retain their existing codes.
+
+Manual UI/API/MCP trigger start checks the engine's frozen root definition (published version or
+draft snapshot) and every executable pinned subloop definition, recursively. Both `latest` and
+numbered child references use the published records the engine prepared for this start, never a
+child's draft or a publication that arrives while a probe is pending. A breadth-first walk visits
+each version once at its shallowest depth, protects cycles and applies the execution handler's
+configured subloop depth limit (or that node's override, at most 64). Harnesses shared by parent
+and children share one probe; distinct harnesses are probed concurrently. An unready descendant
+returns 422 `HARNESS_NOT_READY`, with the child loop name, loop/version ids and node id in its
+issues, before any parent run, queued event, draft snapshot or mutation is committed.
+The engine commits the same checked intent after probing and revalidates that its versions still
+exist; slow probes do not hold the shared admission/deletion lock.
+
+Replay, scheduled and webhook admissions, internally started subloops and resumes do not gain
+this manual trigger-start preflight; their existing execution checks remain in place and can
+fail after earlier nodes have run. In particular, replay can return 202 with an unready harness,
+execute preceding mutations, then fail when it reaches that harness. Unresolved child references
+retain their existing `SUBLOOP_NOT_FOUND` execution behavior. Readiness is an admission-time
+observation, not a guarantee of later account access.
+
+`/harness/preflight` exposes seven server states. `checking` is a web-only request state.
+`authenticated` is absent if login was not checked or could not be established; false requires
+positive signed-out evidence. Claude parses auth-status JSON even on
+exit 1 (`loggedIn:false` or an explicit nonempty non-Claude.ai account method). During auth status,
+explicit `Not logged in` text on stdout or bounded stderr confirms sign-out even on exit 0.
+Empty output, `{}` or an unrecognised login response on exit 0 is `unknown`, with no `authenticated` field;
+a successful exit alone establishes no login fact. A recognised Claude.ai status or Codex
+"Logged in" status establishes true; an explicit signed-out status establishes false.
+
+No-turn diagnostic precedence is CLI-syntax errors first, explicit HTTP/API 401/403 (`auth`),
+429 (`quota`) or 5xx (`transport`) next, then connection errors/wording, then quota/auth keywords.
+Thus incidental "network" advice cannot override 401 or 429, while connection errors such as
+`ECONNREFUSED` still outrank incidental auth words in server/refresh diagnostics. Version numbers
+are not HTTP status evidence. For Claude's unstructured diagnostics, recognised stderr wins
+over conflicting stdout because stderr is the CLI's primary error channel; stdout is consulted
+when stderr is absent or classified `unknown`, so an unrelated warning cannot hide stdout quota.
+Positive Claude auth-status sign-out evidence (structured or explicit text) is handled separately;
+process start, timeout, cancellation, overflow and unconfirmed termination remain authoritative.
+None of this inference applies to
+model-turn stdout or changes turn retry eligibility.
+Harness checks in `/system/preflight` carry state alongside the system's `ok`/`warn`/`fail`
+severity. Each problem is one detail sentence and one action ending "then retry preflight"
+(`readinessMessage` in the domain package); a specific detail, such as the CLI version below the
+minimum or the missing option, replaces the generic one rather than being followed by it.
+Web queries retain their existing two-second stale interval and focus refresh.
+[Frontend readiness behavior](09-frontend-and-pwa.md#claude-readiness-and-saved-selections)
+describes first load, background rechecks, offline pauses, completed lookup failures, Retry
+controls and transport wording, including the distinction between the Settings card and fields.
+
+Process lifetime was measured with installed no-turn commands under the product runners on
+native Windows. No surviving new native process was observed in the recorded before/after
+listings; no orphan-process fix is prescribed. This bounded observation does not prove general
+turn or descendant lifetime. See the [WP-F1 evidence](qa/2026-10-19-wp-f1-readiness/README.md).
 
 ## Codex adapter for 1.0 (Decided)
 
@@ -114,7 +211,7 @@ Composition: `apps/api` builds the Codex adapters from the Codex entry of the ha
 | `turn.completed`                                                  | `usage` (`input_tokens`, `cached_input_tokens`, `output_tokens`, `reasoning_output_tokens`), then `turn-complete`                                                                                                                                                                                       |
 | `turn.failed`, thrown SDK error, stream ending without completion | `error { code, message, retriable }`, and `result` rejects with the same `code`                                                                                                                                                                                                                         |
 
-An `error` item, such as a configuration deprecation warning, is an ordinary item and never fails a turn. A top-level `error` event only counts if the turn then fails. Codes: `HARNESS_QUOTA_EXHAUSTED` (HTTP 429, usage limit, quota; retriable only for plain rate limits), `HARNESS_NOT_AUTHENTICATED` (401, 403, not logged in), `HARNESS_NOT_INSTALLED` (binary not found), and `HARNESS_TURN_FAILED` (everything else; retriable for 5xx and stream disconnects). The engine's `classifyHarnessError` maps the first two by substring.
+An `error` item, such as a configuration deprecation warning, is an ordinary item and never fails a turn. A top-level `error` event only counts if the turn then fails. Codes: `HARNESS_QUOTA_EXHAUSTED` (HTTP 429, usage limit, quota; retriable only for plain rate limits), `HARNESS_NOT_AUTHENTICATED` (401, 403, not logged in), `HARNESS_NOT_INSTALLED` (binary not found), `HARNESS_TRANSPORT_FAILED` (5xx and stream disconnects), and `HARNESS_TURN_FAILED` (other failures). The engine's `classifyHarnessError` maps the first two by substring.
 
 Inference `node.progress` uses a strict item variant for each normalized type (`message`, `reasoning`, `command`, `file-change`, `tool-call`, `search`, `error`, and `other`): each has an id, summary (max 2,000 chars), and only allowlisted fields. Commands include a required `status` (`ok`, `failed`, or `running`), optional bounded `commandPreview` (max `COMMAND_PREVIEW_MAX`, currently 160 chars), and optional integer `exitCode`. Other item types may include the normalized status when the SDK supplies one. Error summaries are replaced with a fixed label, tool-call diagnostics are omitted, and progress never includes `detail` or command output. Script progress is a separate strict shape: integer `exitCode`, `stderr` capped at 2,000 chars, and nonnegative integer `stdoutBytes`. Command items recorded before the strict progress contract, which have no status, appear after the offline upgrade as `other` items with their original id and summary, and the original event is kept in the upgrade audit.
 
@@ -180,7 +277,7 @@ The model catalog is authoritative for selected and effective models. Shared adm
 
 The product owner develops on Windows 11. Codex's native Windows sandbox applies. POSIX signals are not available, so process trees are killed with `taskkill /T /F` where GraphGoblin owns the process (scripts); for Codex sessions the CLI's own job object ends the tree on abort (see "Cancellation"). `preflight` spawns with `windowsHide: true`; the SDK spawns sessions without it, which only matters if the gateway runs without a console. Paths are normalised with `node:path` and never built by string concatenation.
 
-Windows starts no process whose working directory is missing or longer than 258 characters (error 267). Codex 0.160.0 reports that for a worker command as `CreateProcessWithLogonW failed: 267` (elevated sandbox) or `CreateProcessAsUserW failed: 267` (unelevated). The #102 occurrences came from per-command directories the worker model mistyped, not from GraphGoblin's `--cd`. The Claude adapter creates its check directory with `mkdir`, because Windows `fs.mkdtemp` fails from 248 characters (247 still works); a name that already exists is never reused or removed, and up to four fresh names are tried. Evidence and the launch comparison matrix: [WP-F5 launch diagnosis](qa/2026-10-19-wp-f5-launch-diagnosis.md).
+Windows starts no process whose working directory is missing or longer than 258 characters (error 267). Codex 0.160.0 reports that for a worker command as `CreateProcessWithLogonW failed: 267` (elevated sandbox) or `CreateProcessAsUserW failed: 267` (unelevated). The #102 occurrences came from per-command directories the worker model mistyped, not from GraphGoblin's `--cd`. The Claude and Codex adapters create their `gg-claude-probe-*` and `gg-codex-probe-*` check directories with `mkdir`, because Windows `fs.mkdtemp` fails from 248 characters (247 still works); a name that already exists is never reused or removed, and up to four fresh names are tried. Evidence and the launch comparison matrix: [WP-F5 launch diagnosis](qa/2026-10-19-wp-f5-launch-diagnosis.md).
 
 ### Fixtures (Decided)
 

@@ -1,0 +1,386 @@
+Built API ee0f4f40, Node 22.14.0, native tooling/fixtures/readiness-cli.cs; port 5629, disposable store, binary-created key held only in memory.
+Native 202 means admission succeeded. The fixture deliberately refuses the later model turn; that runtime failure is preserved and is not a completion pass.
+
+{
+  "name": "final-native-start",
+  "pass": true,
+  "pid": 57716,
+  "port": 5629,
+  "node": "v22.14.0",
+  "keyCreatedByBinary": true
+}
+
+{
+  "name": "final-audit-child-no-turn",
+  "pass": true,
+  "response": {
+    "status": 422,
+    "ms": 839,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/harness-not-ready",
+      "title": "harness not ready",
+      "status": 422,
+      "code": "HARNESS_NOT_READY",
+      "detail": "Harness readiness checks failed. Fix the listed problems, then start the run again.",
+      "errors": [
+        {
+          "code": "HARNESS_READINESS_AUTH",
+          "severity": "warning",
+          "loopId": "01M5GPP4198MQ5KJ211K4T4W94",
+          "versionId": "01M5GPP41ARCVA3D7AAMVNFNHN",
+          "nodeId": "think",
+          "path": "config.harness",
+          "message": "Claude is not signed in. Run claude auth login, then retry preflight."
+        }
+      ]
+    }
+  },
+  "before": {
+    "runs": 0,
+    "events": 0,
+    "queued": 0,
+    "markerEvents": 0,
+    "snapshots": 0
+  },
+  "after": {
+    "runs": 0,
+    "events": 0,
+    "queued": 0,
+    "markerEvents": 0,
+    "snapshots": 0
+  },
+  "probes": {
+    "claude": {
+      "callsTotal": 3,
+      "turnCalls": 0,
+      "probes": 1,
+      "commands": [
+        "--safe-mode --setting-sources  --strict-mcp-config --version",
+        "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+        "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+      ]
+    },
+    "codex": {
+      "callsTotal": 0,
+      "turnCalls": 0,
+      "probes": 0,
+      "commands": []
+    }
+  }
+}
+
+{
+  "name": "final-audit-parent-no-turn",
+  "pass": true,
+  "response": {
+    "status": 422,
+    "ms": 606,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/harness-not-ready",
+      "title": "harness not ready",
+      "status": 422,
+      "code": "HARNESS_NOT_READY",
+      "detail": "Harness readiness checks failed. Fix the listed problems, then start the run again.",
+      "errors": [
+        {
+          "code": "HARNESS_READINESS_AUTH",
+          "severity": "warning",
+          "loopId": "01M5GPP4198MQ5KJ211K4T4W94",
+          "versionId": "01M5GPP41ARCVA3D7AAMVNFNHN",
+          "nodeId": "think",
+          "path": "config.harness",
+          "message": "Loop \"QA final Claude child\" (01M5GPP4198MQ5KJ211K4T4W94), node \"think\": Claude is not signed in. Run claude auth login, then retry preflight."
+        }
+      ]
+    }
+  },
+  "before": {
+    "runs": 0,
+    "events": 0,
+    "queued": 0,
+    "markerEvents": 0,
+    "snapshots": 0
+  },
+  "after": {
+    "runs": 0,
+    "events": 0,
+    "queued": 0,
+    "markerEvents": 0,
+    "snapshots": 0
+  },
+  "probes": {
+    "claude": {
+      "callsTotal": 3,
+      "turnCalls": 0,
+      "probes": 1,
+      "commands": [
+        "--safe-mode --setting-sources  --strict-mcp-config --version",
+        "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+        "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+      ]
+    },
+    "codex": {
+      "callsTotal": 0,
+      "turnCalls": 0,
+      "probes": 0,
+      "commands": []
+    }
+  }
+}
+
+{
+  "name": "ready-probes-native-overlap",
+  "pass": true,
+  "response": {
+    "status": 202,
+    "ms": 1167
+  },
+  "observations": {
+    "codex:--version": 131,
+    "claude:--safe-mode --setting-sources  --strict-mcp-config --version": 188,
+    "claude:--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help": 539,
+    "codex:exec --help": 539,
+    "codex:exec resume --help": 740,
+    "claude:--safe-mode --setting-sources  --strict-mcp-config auth status --json": 792,
+    "codex:login status": 955
+  },
+  "overlap": true,
+  "probes": {
+    "claude": {
+      "callsTotal": 3,
+      "turnCalls": 0,
+      "probes": 1,
+      "commands": [
+        "--safe-mode --setting-sources  --strict-mcp-config --version",
+        "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+        "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+      ]
+    },
+    "codex": {
+      "callsTotal": 4,
+      "turnCalls": 0,
+      "probes": 1,
+      "commands": [
+        "--version",
+        "exec --help",
+        "exec resume --help",
+        "login status"
+      ]
+    }
+  },
+  "run": {
+    "id": "01M5GPPKMX5ZZRZCC1DAE99NTC",
+    "ownerId": "local",
+    "loopId": "01M5GPPJKGV6NN5P93PXFXP3A3",
+    "versionId": "01M5GPPJKGJQNHMQ6VW95TR96B",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "QA ready concurrent probes",
+      "label": "QA ready concurrent probes v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M5GPPKMXW0WZ698AZFQHWJ32",
+    "status": "failed",
+    "currentNodeId": "parentThink",
+    "iteration": 1,
+    "failure": {
+      "code": "HARNESS_TURN_FAILED",
+      "message": "harness turn failed: Codex Exec exited with code 2: Readiness fixture refuses model turns\r\n",
+      "nodeId": "parentThink",
+      "resumable": true,
+      "details": {
+        "adapterCode": "HARNESS_TURN_FAILED"
+      }
+    },
+    "createdAt": "2026-10-22T02:23:04.861Z",
+    "startedAt": "2026-10-22T02:23:06.120Z",
+    "finishedAt": "2026-10-22T02:23:07.151Z",
+    "lastEventSeq": 6
+  }
+}
+
+{
+  "name": "readme-10-ready-Codex-auth-Claude-concurrent",
+  "pass": true,
+  "observations": {
+    "claude:--safe-mode --setting-sources  --strict-mcp-config --version": 845,
+    "codex:--version": 845,
+    "codex:exec --help": 1324,
+    "claude:--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help": 1359,
+    "codex:exec resume --help": 1688,
+    "claude:--safe-mode --setting-sources  --strict-mcp-config auth status --json": 1786,
+    "codex:login status": 2035
+  },
+  "overlap": true,
+  "response": {
+    "status": 422,
+    "ms": 2141,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/harness-not-ready",
+      "title": "harness not ready",
+      "status": 422,
+      "code": "HARNESS_NOT_READY",
+      "detail": "Harness readiness checks failed. Fix the listed problems, then start the run again.",
+      "errors": [
+        {
+          "code": "HARNESS_READINESS_AUTH",
+          "severity": "warning",
+          "loopId": "01M5GPP4198MQ5KJ211K4T4W94",
+          "versionId": "01M5GPP41ARCVA3D7AAMVNFNHN",
+          "nodeId": "think",
+          "path": "config.harness",
+          "message": "Loop \"QA final Claude child\" (01M5GPP4198MQ5KJ211K4T4W94), node \"think\": Claude is not signed in. Run claude auth login, then retry preflight."
+        }
+      ]
+    }
+  },
+  "before": {
+    "runs": 1,
+    "events": 6,
+    "queued": 1,
+    "markerEvents": 0,
+    "snapshots": 0
+  },
+  "after": {
+    "runs": 1,
+    "events": 6,
+    "queued": 1,
+    "markerEvents": 0,
+    "snapshots": 0
+  },
+  "probes": {
+    "claude": {
+      "callsTotal": 3,
+      "turnCalls": 0,
+      "probes": 1,
+      "commands": [
+        "--safe-mode --setting-sources  --strict-mcp-config --version",
+        "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+        "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+      ]
+    },
+    "codex": {
+      "callsTotal": 4,
+      "turnCalls": 0,
+      "probes": 1,
+      "commands": [
+        "--version",
+        "exec --help",
+        "exec resume --help",
+        "login status"
+      ]
+    }
+  }
+}
+
+{
+  "name": "ready-same-Claude-one-admission-probe",
+  "pass": true,
+  "response": {
+    "status": 202,
+    "ms": 1366
+  },
+  "admissionProbes": {
+    "claude": {
+      "callsTotal": 3,
+      "turnCalls": 0,
+      "probes": 1,
+      "commands": [
+        "--safe-mode --setting-sources  --strict-mcp-config --version",
+        "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+        "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+      ]
+    },
+    "codex": {
+      "callsTotal": 0,
+      "turnCalls": 0,
+      "probes": 0,
+      "commands": []
+    }
+  },
+  "run": {
+    "id": "01M5GPPSE59TNJ2RGQHZG3KNS3",
+    "ownerId": "local",
+    "loopId": "01M5GPPR30WV0KKKBJ7GTJXEK3",
+    "versionId": "01M5GPPR37TPF9J0XV4PTE9X9F",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "QA ready same Claude",
+      "label": "QA ready same Claude v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M5GPPSE503WQD19Y56HBSYMC",
+    "status": "failed",
+    "currentNodeId": "parentThink",
+    "iteration": 1,
+    "failure": {
+      "code": "HARNESS_TURN_FAILED",
+      "message": "harness turn failed: Claude turn failed",
+      "nodeId": "parentThink",
+      "resumable": false,
+      "details": {
+        "adapterCode": "HARNESS_TURN_FAILED"
+      }
+    },
+    "createdAt": "2026-10-22T02:23:10.789Z",
+    "startedAt": "2026-10-22T02:23:12.158Z",
+    "finishedAt": "2026-10-22T02:23:14.471Z",
+    "lastEventSeq": 6
+  },
+  "finalProbes": {
+    "claude": {
+      "callsTotal": 7,
+      "turnCalls": 1,
+      "probes": 2,
+      "commands": [
+        "--safe-mode --setting-sources  --strict-mcp-config --version",
+        "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+        "--safe-mode --setting-sources  --strict-mcp-config auth status --json",
+        "--safe-mode --setting-sources  --strict-mcp-config --version",
+        "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+        "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+      ]
+    },
+    "codex": {
+      "callsTotal": 0,
+      "turnCalls": 0,
+      "probes": 0,
+      "commands": []
+    }
+  }
+}
+
+{
+  "name": "final-api-stop",
+  "pass": true,
+  "exitCode": null,
+  "signalCode": "SIGTERM"
+}

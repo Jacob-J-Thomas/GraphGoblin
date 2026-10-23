@@ -1,0 +1,150 @@
+
+ RUN  v5.0.3 <worktree>/packages/infrastructure
+
+ ↓ src/claude/readiness.test.ts > Claude no-turn executable boundary > ready reports ready without exposing CLI bodies
+ ↓ src/claude/readiness.test.ts > Claude no-turn executable boundary > old reports cli-incompatible without exposing CLI bodies
+ ↓ src/claude/readiness.test.ts > Claude no-turn executable boundary > missing-model reports cli-incompatible without exposing CLI bodies
+ ↓ src/claude/readiness.test.ts > Claude no-turn executable boundary > missing-effort reports cli-incompatible without exposing CLI bodies
+ ↓ src/claude/readiness.test.ts > Claude no-turn executable boundary > auth reports auth without exposing CLI bodies
+ ↓ src/claude/readiness.test.ts > Claude no-turn executable boundary > quota reports quota without exposing CLI bodies
+ ↓ src/claude/readiness.test.ts > Claude no-turn executable boundary > transport reports transport without exposing CLI bodies
+ ↓ src/claude/readiness.test.ts > Claude no-turn executable boundary > unknown reports unknown without exposing CLI bodies
+ ↓ src/claude/readiness.test.ts > Claude no-turn executable boundary > hang reports unknown without exposing CLI bodies
+ × src/claude/readiness.test.ts > audited Claude auth evidence > auth-network preserves auth evidence through the executable boundary 2476ms
+   → expected { state: 'transport', ok: false, …(5) } to match object { state: 'auth', ok: false }
+(5 matching properties omitted from actual)
+ × src/claude/readiness.test.ts > audited Claude auth evidence > quota-network preserves quota evidence through the executable boundary 2364ms
+   → expected { state: 'transport', ok: false, …(5) } to match object { state: 'quota', ok: false }
+(5 matching properties omitted from actual)
+ × src/claude/readiness.test.ts > audited Claude auth evidence > stdout-quota-warning preserves quota evidence through the executable boundary 2207ms
+   → expected { state: 'unknown', ok: false, …(5) } to match object { state: 'quota', ok: false }
+(5 matching properties omitted from actual)
+ × src/claude/readiness.test.ts > audited Claude auth evidence > auth-empty preserves unknown evidence through the executable boundary 2404ms
+   → expected { state: 'auth', ok: false, …(6) } to match object { state: 'unknown', ok: false }
+(6 matching properties omitted from actual)
+ × src/claude/readiness.test.ts > audited Claude auth evidence > auth-unrecognised preserves unknown evidence through the executable boundary 3103ms
+   → expected { state: 'auth', ok: false, …(6) } to match object { state: 'unknown', ok: false }
+(6 matching properties omitted from actual)
+ ✓ src/claude/readiness.test.ts > audited Claude auth evidence > conflict-auth-stderr preserves auth evidence through the executable boundary 2539ms
+ ✓ src/claude/readiness.test.ts > audited Claude auth evidence > conflict-quota-stderr preserves quota evidence through the executable boundary 1718ms
+ ↓ src/claude/readiness.test.ts > probes the actual installed native Claude without a model turn
+ ↓ src/claude/readiness.test.ts > reports a missing Claude executable as cli-missing
+ ↓ src/claude/readiness.test.ts > classifies a real installed signed-out Claude in a disposable home as auth
+pnpm.cmd :
+At line:6 char:1
++ pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/cla ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/claude/readiness.test.ts > audited Claude auth evidence > auth-network preserves auth evidence through the
+executable boundary
+AssertionError: expected { state: 'transport', ok: false, …(5) } to match object { state: 'auth', ok: false }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "ok": false,
+-   "state": "auth",
++   "state": "transport",
+  }
+
+ ❯ src/claude/readiness.test.ts:91:20
+     89|         }),
+     90|     }).preflight();
+     91|     expect(result).toMatchObject({ state, ok: false });
+       |                    ^
+     92|     if (state === 'unknown') {
+     93|       expect(result).not.toHaveProperty('authenticated');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/claude/readiness.test.ts > audited Claude auth evidence > quota-network preserves quota evidence through
+the executable boundary
+AssertionError: expected { state: 'transport', ok: false, …(5) } to match object { state: 'quota', ok: false }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "ok": false,
+-   "state": "quota",
++   "state": "transport",
+  }
+
+ ❯ src/claude/readiness.test.ts:91:20
+     89|         }),
+     90|     }).preflight();
+     91|     expect(result).toMatchObject({ state, ok: false });
+       |                    ^
+     92|     if (state === 'unknown') {
+     93|       expect(result).not.toHaveProperty('authenticated');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/claude/readiness.test.ts > audited Claude auth evidence > stdout-quota-warning preserves quota evidence
+through the executable boundary
+AssertionError: expected { state: 'unknown', ok: false, …(5) } to match object { state: 'quota', ok: false }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "ok": false,
+-   "state": "quota",
++   "state": "unknown",
+  }
+
+ ❯ src/claude/readiness.test.ts:91:20
+     89|         }),
+     90|     }).preflight();
+     91|     expect(result).toMatchObject({ state, ok: false });
+       |                    ^
+     92|     if (state === 'unknown') {
+     93|       expect(result).not.toHaveProperty('authenticated');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/claude/readiness.test.ts > audited Claude auth evidence > auth-empty preserves unknown evidence through the
+executable boundary
+ FAIL  src/claude/readiness.test.ts > audited Claude auth evidence > auth-unrecognised preserves unknown evidence
+through the executable boundary
+AssertionError: expected { state: 'auth', ok: false, …(6) } to match object { state: 'unknown', ok: false }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "ok": false,
+-   "state": "unknown",
++   "state": "auth",
+  }
+
+ ❯ src/claude/readiness.test.ts:91:20
+     89|         }),
+     90|     }).preflight();
+     91|     expect(result).toMatchObject({ state, ok: false });
+       |                    ^
+     92|     if (state === 'unknown') {
+     93|       expect(result).not.toHaveProperty('authenticated');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 2 passed | 12 skipped (19)
+   Start at  12:58:31
+   Duration  26.90s (tests 65%, transform 24%, import 11%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ \Users\<user>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f1-
+  │ readiness-precision\packages\infrastructure

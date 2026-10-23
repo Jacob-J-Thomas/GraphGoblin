@@ -1,0 +1,25 @@
+{
+  "reason": "The initial installed-CLI exclusion regex unintentionally filtered multiline web test names. Web needs no such exclusion.",
+  "filteredCases": [
+    {
+      "file": "<worktree>/apps/web/src/editor/routing.test.ts",
+      "name": "backward routing geometry function simpleLoop() {\n\treturn {\n\t\tschemaVersion: __vite_ssr_import_0__.CURRENT_DEFINITION_FORMAT,\n\t\tname: \"Simple loop\",\n\t\tnodes: [\n\t\t\tnode(\"start\", \"trigger\", 0),\n\t\t\tnode(\"work\", \"mutate\", 300),\n\t\t\tnode(\"check\", \"script\", 600),\n\t\t\tgate(\"done\", 900)\n\t\t],\n\t\tedges: [\n\t\t\tedge(\"start-work\", \"start\", \"work\"),\n\t\t\tedge(\"work-check\", \"work\", \"check\"),\n\t\t\tedge(\"check-done\", \"check\", \"done\"),\n\t\t\tedge(\"return\", \"done\", \"work\", \"repeat\")\n\t\t]\n\t};\n}: orthogonal, padded, distinct lanes and straight labels",
+      "status": "passed"
+    },
+    {
+      "file": "<worktree>/apps/web/src/editor/routing.test.ts",
+      "name": "backward routing geometry function nestedLoops() {\n\treturn {\n\t\tschemaVersion: __vite_ssr_import_0__.CURRENT_DEFINITION_FORMAT,\n\t\tname: \"Nested loops\",\n\t\tnodes: [\n\t\t\tnode(\"start\", \"trigger\", 0),\n\t\t\tnode(\"outer-work\", \"mutate\", 300),\n\t\t\tnode(\"inner-work\", \"mutate\", 600),\n\t\t\tgate(\"inner-done\", 900),\n\t\t\tgate(\"outer-done\", 1200),\n\t\t\t{\n\t\t\t\t...node(\"choose\", \"decision\", 600, -160),\n\t\t\t\tkind: \"decision\",\n\t\t\t\tconfig: {\n\t\t\t\t\tkind: \"expression\",\n\t\t\t\t\tjsonata: \"\\\"finish\\\"\",\n\t\t\t\t\troutes: [{\n\t\t\t\t\t\tid: \"repeat\",\n\t\t\t\t\t\tlabel: \"Repeat\"\n\t\t\t\t\t}, {\n\t\t\t\t\t\tid: \"finish\",\n\t\t\t\t\t\tlabel: \"Finish\"\n\t\t\t\t\t}]\n\t\t\t\t}\n\t\t\t}\n\t\t],\n\t\tedges: [\n\t\t\tedge(\"start-outer\", \"start\", \"outer-work\"),\n\t\t\tedge(\"outer-inner\", \"outer-work\", \"inner-work\"),\n\t\t\tedge(\"inner-check\", \"inner-work\", \"choose\"),\n\t\t\tedge(\"choose-repeat\", \"choose\", \"inner-done\", \"repeat\"),\n\t\t\tedge(\"choose-finish\", \"choose\", \"outer-done\", \"finish\"),\n\t\t\tedge(\"inner-return\", \"inner-done\", \"inner-work\", \"repeat\"),\n\t\t\tedge(\"outer-return\", \"outer-done\", \"outer-work\", \"repeat\")\n\t\t]\n\t};\n}: orthogonal, padded, distinct lanes and straight labels",
+      "status": "passed"
+    },
+    {
+      "file": "<worktree>/apps/web/src/editor/routing.test.ts",
+      "name": "backward routing geometry function decisionBackRoute() {\n\treturn {\n\t\tschemaVersion: __vite_ssr_import_0__.CURRENT_DEFINITION_FORMAT,\n\t\tname: \"Decision back-route\",\n\t\tnodes: [\n\t\t\tnode(\"start\", \"trigger\", 0),\n\t\t\tnode(\"work\", \"mutate\", 300),\n\t\t\t{\n\t\t\t\t...node(\"decide\", \"decision\", 600),\n\t\t\t\tkind: \"decision\",\n\t\t\t\tconfig: {\n\t\t\t\t\tkind: \"expression\",\n\t\t\t\t\tjsonata: \"\\\"done\\\"\",\n\t\t\t\t\troutes: [\n\t\t\t\t\t\t{\n\t\t\t\t\t\t\tid: \"retry\",\n\t\t\t\t\t\t\tlabel: \"Retry\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t{\n\t\t\t\t\t\t\tid: \"again\",\n\t\t\t\t\t\t\tlabel: \"Again\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t{\n\t\t\t\t\t\t\tid: \"done\",\n\t\t\t\t\t\t\tlabel: \"Done\"\n\t\t\t\t\t\t}\n\t\t\t\t\t]\n\t\t\t\t}\n\t\t\t},\n\t\t\tnode(\"done\", \"exit\", 900)\n\t\t],\n\t\tedges: [\n\t\t\tedge(\"start-work\", \"start\", \"work\"),\n\t\t\tedge(\"work-decide\", \"work\", \"decide\"),\n\t\t\tedge(\"retry\", \"decide\", \"work\", \"retry\"),\n\t\t\tedge(\"self\", \"decide\", \"decide\", \"again\"),\n\t\t\tedge(\"finish\", \"decide\", \"done\", \"done\")\n\t\t]\n\t};\n}: orthogonal, padded, distinct lanes and straight labels",
+      "status": "passed"
+    },
+    {
+      "file": "<worktree>/apps/web/src/editor/routing.test.ts",
+      "name": "backward routing geometry function denseGraph(count = 100) {\n\tconst nodes = [node(\"start\", \"trigger\", 0, 0)];\n\tconst edges = [edge(\"begin\", \"start\", \"n1\")];\n\tfor (let i = 1; i < count - 1; i += 1) {\n\t\tconst labels = i < 3 ? [\n\t\t\t\"next\",\n\t\t\t\"retry\",\n\t\t\t\"self\"\n\t\t] : [\"next\", \"retry\"];\n\t\tnodes.push({\n\t\t\t...node(`n${i}`, \"decision\", i % 10 * 320, Math.floor(i / 10) * 270),\n\t\t\tkind: \"decision\",\n\t\t\tconfig: {\n\t\t\t\tkind: \"expression\",\n\t\t\t\tjsonata: \"\\\"next\\\"\",\n\t\t\t\troutes: labels.map((id) => ({\n\t\t\t\t\tid,\n\t\t\t\t\tlabel: id\n\t\t\t\t}))\n\t\t\t}\n\t\t});\n\t\tedges.push(edge(`next-${i}`, `n${i}`, i === count - 2 ? \"done\" : `n${i + 1}`, \"next\"));\n\t\tedges.push(edge(`retry-${i}`, `n${i}`, i === 1 ? \"n1\" : `n${i - 1}`, \"retry\"));\n\t\tif (i < 3) edges.push(edge(`self-${i}`, `n${i}`, `n${i}`, \"self\"));\n\t};\n\tnodes.push(gate(\"done\", 9 * 320, Math.floor((count - 1) / 10) * 270));\n\tedges.push(edge(\"return\", \"done\", \"n1\", \"repeat\"));\n\treturn {\n\t\tschemaVersion: __vite_ssr_import_0__.CURRENT_DEFINITION_FORMAT,\n\t\tname: `Dense graph: ${count} nodes, ${count * 2} edges`,\n\t\tnodes,\n\t\tedges\n\t};\n}: orthogonal, padded, distinct lanes and straight labels",
+      "status": "passed"
+    }
+  ]
+}

@@ -1,3 +1,4 @@
+import { type ReadinessOperation } from '../readiness-operation.js';
 import { blocksPublication, rejectsDraftAdmission } from '../model-issues.js';
 import {
   LoopDefinitionSchema,
@@ -106,8 +107,9 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
     ownerId: string,
     def: LoopDefinition,
     selfId?: string,
+    readiness?: ReadinessOperation | false,
   ): Promise<LoopIssue[]> {
-    return loopPublicationIssues(container, ownerId, def, selfId);
+    return loopPublicationIssues(container, ownerId, def, selfId, readiness);
   }
 
   app.get(
@@ -154,7 +156,12 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       },
     },
     async (request, reply) => {
-      const admission = await publishIssues(request.auth.ownerId, request.body.definition);
+      const admission = await publishIssues(
+        request.auth.ownerId,
+        request.body.definition,
+        undefined,
+        false,
+      );
       if (admission.some((issue) => rejectsDraftAdmission(request.body.definition, issue)))
         return problem(
           reply,
@@ -167,7 +174,12 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       reply.status(201);
       return {
         ...created,
-        issues: await publishIssues(request.auth.ownerId, request.body.definition, created.loop.id),
+        issues: await publishIssues(
+          request.auth.ownerId,
+          request.body.definition,
+          created.loop.id,
+          false,
+        ),
       };
     },
   );
@@ -229,7 +241,12 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
         notices = result.notices;
       }
       const imported = importLoop(input);
-      const admission = await publishIssues(request.auth.ownerId, imported.definition);
+      const admission = await publishIssues(
+        request.auth.ownerId,
+        imported.definition,
+        undefined,
+        false,
+      );
       if (admission.some((issue) => rejectsDraftAdmission(imported.definition, issue)))
         return problem(
           reply,
@@ -240,12 +257,12 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
         );
       const created = await loops.create(request.auth.ownerId, imported.definition);
       reply.status(201);
-      // The same list as create, validate, draft saves, and publish (importLoop's own issues are
-      // the validateLoop part of it).
+      // Draft writes validate configuration without CLI probes; explicit validation/publish adds readiness.
       const issues = await publishIssues(
         request.auth.ownerId,
         imported.definition,
         created.loop.id,
+        false,
       );
       return { ...created, issues, notices };
     },
@@ -302,7 +319,12 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
     },
     async (request, reply) => {
       const loopId = request.params.id;
-      const admission = await publishIssues(request.auth.ownerId, request.body.definition, loopId);
+      const admission = await publishIssues(
+        request.auth.ownerId,
+        request.body.definition,
+        loopId,
+        false,
+      );
       if (admission.some((issue) => rejectsDraftAdmission(request.body.definition, issue)))
         return problem(
           reply,
@@ -344,7 +366,7 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       return {
         draft: saved.draft,
         draftToken,
-        issues: await publishIssues(request.auth.ownerId, request.body.definition, loopId),
+        issues: await publishIssues(request.auth.ownerId, request.body.definition, loopId, false),
       };
     },
   );
