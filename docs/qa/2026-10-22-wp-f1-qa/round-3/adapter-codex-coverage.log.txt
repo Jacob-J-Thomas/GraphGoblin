@@ -1,0 +1,39 @@
+Command: pnpm.cmd --filter @graphgoblin/adapter-codex test:coverage --maxWorkers 1 --coverage.reportOnFailure --coverage.reporter=text --coverage.reporter=json-summary -t '^(?!.*(?:probes the actual installed|classifies a real installed signed-out)).*$'
+Node: v22.14.0
+Revision: c2a2b6632c0996383abe491268baf871aec448dd
+Exit: 0
+Elapsed ms: 16944
+
+$ vitest run --coverage --maxWorkers 1 --coverage.reportOnFailure --coverage.reporter=text --coverage.reporter=json-summary -t '^(?!.*(?:probes the actual installed|classifies a real installed signed-out)).*$'
+
+ RUN  v5.0.3 <worktree>/packages/adapter-codex
+      Coverage enabled with v8
+
+
+ Test Files  6 passed | 1 skipped (7)
+      Tests  95 passed | 5 skipped (100)
+   Start at  14:18:45
+   Duration  15.63s (tests 53%, import 34%, transform 11%, worker 1%)
+
+     Import  126 modules were evaluated 232 times · 4.73s total, 34% of tracked time
+             ~2.16s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+ % Coverage report from v8
+---------------|---------|----------|---------|---------|-------------------
+File           | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s
+---------------|---------|----------|---------|---------|-------------------
+All files      |   97.77 |    94.78 |   97.64 |   98.76 |
+ cli.ts        |   95.55 |    83.05 |     100 |   96.29 | 178,199,212
+ events.ts     |     100 |    98.29 |     100 |     100 | 98,112
+ harness.ts    |    97.7 |    96.15 |   90.47 |    98.7 | 227
+ options.ts    |     100 |    97.05 |     100 |     100 | 46
+ queue.ts      |   91.66 |    83.33 |     100 |     100 | 11,22
+---------------|---------|----------|---------|---------|-------------------
+
+=============================== Coverage summary ===============================
+Statements   : 97.77% ( 351/359 )
+Branches     : 94.78% ( 309/326 )
+Functions    : 97.64% ( 83/85 )
+Lines        : 98.76% ( 319/323 )
+================================================================================

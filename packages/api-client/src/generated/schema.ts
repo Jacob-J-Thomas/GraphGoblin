@@ -114,6 +114,8 @@ export interface paths {
                         "application/json": {
                             ok: boolean;
                             checks: {
+                                /** @enum {string} */
+                                state?: ("unknown" | "ready" | "cli-missing" | "cli-incompatible" | "auth" | "quota" | "transport") | undefined;
                                 id: string;
                                 label: string;
                                 /** @enum {string} */
@@ -158,9 +160,11 @@ export interface paths {
                     content: {
                         "application/json": {
                             items: {
+                                /** @enum {string} */
+                                state: "unknown" | "ready" | "cli-missing" | "cli-incompatible" | "auth" | "quota" | "transport";
                                 ok: boolean;
                                 version?: string | undefined;
-                                authenticated: boolean;
+                                authenticated?: boolean | undefined;
                                 problems: string[];
                                 authMethod?: ("claude.ai" | null) | undefined;
                                 supportedPolicies?: {

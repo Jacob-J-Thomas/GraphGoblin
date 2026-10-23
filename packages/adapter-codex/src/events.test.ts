@@ -186,7 +186,7 @@ describe('classifyCodexError', () => {
       code: 'HARNESS_NOT_INSTALLED',
     });
     expect(classifyCodexError(JSON.stringify({ status: 503 }))).toMatchObject({
-      code: 'HARNESS_TURN_FAILED',
+      code: 'HARNESS_TRANSPORT_FAILED',
       retriable: true,
     });
     expect(classifyCodexError('stream disconnected before completion')).toMatchObject({

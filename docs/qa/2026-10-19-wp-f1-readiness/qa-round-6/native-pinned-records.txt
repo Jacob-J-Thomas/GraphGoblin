@@ -1,0 +1,549 @@
+{
+  "runs": [
+    {
+      "id": "01M5GJ4E9XZPEG1YJNDN7JD786",
+      "parent_run_id": null,
+      "version_id": "01M5GJ4CJZ9VXJ9WFHHCZHAQH8",
+      "status": "failed",
+      "definition_name": "QA audit parent"
+    },
+    {
+      "id": "01M5GJ4GP62NRR6ZT5JZ5G14X9",
+      "parent_run_id": "01M5GJ4E9XZPEG1YJNDN7JD786",
+      "version_id": "01M5GJ4AZQ0TX5CTN46VC95PKE",
+      "status": "failed",
+      "definition_name": "QA Claude child"
+    },
+    {
+      "id": "01M5GJ4YYJ0DD2SYB1DEWVTRM0",
+      "parent_run_id": null,
+      "version_id": "01M5GJ4MM7DVV8AQZ0V1JPYGC1",
+      "status": "failed",
+      "definition_name": "QA Codex parent Claude child"
+    },
+    {
+      "id": "01M5GJ5S68W0BMY8Y53XJAVEGD",
+      "parent_run_id": null,
+      "version_id": "01M5GJ4CJZ9VXJ9WFHHCZHAQH8",
+      "status": "failed",
+      "definition_name": "QA audit parent"
+    },
+    {
+      "id": "01M5GJ5TTN05GBZN4A2MFG91CK",
+      "parent_run_id": "01M5GJ5S68W0BMY8Y53XJAVEGD",
+      "version_id": "01M5GJ4AZQ0TX5CTN46VC95PKE",
+      "status": "failed",
+      "definition_name": "QA Claude child"
+    },
+    {
+      "id": "01M5GJ604HE024PQ7B3SAKJQ6Q",
+      "parent_run_id": null,
+      "version_id": "01M5GJ5XTW0RDECYETX25XJTAW",
+      "status": "failed",
+      "definition_name": "QA explicit numbered parent"
+    },
+    {
+      "id": "01M5GJ61EDY67JWRNHHE834SAP",
+      "parent_run_id": "01M5GJ604HE024PQ7B3SAKJQ6Q",
+      "version_id": "01M5GJ5X1W7C4PG1JRAS95877C",
+      "status": "failed",
+      "definition_name": "QA numbered child v1"
+    }
+  ],
+  "queued": [
+    {
+      "run_id": "01M5GJ4E9XZPEG1YJNDN7JD786",
+      "versionId": "01M5GJ4CJZ9VXJ9WFHHCZHAQH8",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "QA audit parent",
+        "label": "QA audit parent v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5GJ4E9XZPEG1YJNDN7JD786",
+          "loopId": "01M5GJ4CJZ997G6QTDEBYPFX24",
+          "versionId": "01M5GJ4CJZ9VXJ9WFHHCZHAQH8",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5GJ4E9XRZ6NA8RGP27XNN80",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-22T01:03:15.261Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {},
+        "gates": {},
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      },
+      "subloopVersions": {
+        "01M5GJ4AZQMNCE2E6VKNRT2ADZ": "01M5GJ4AZQ0TX5CTN46VC95PKE"
+      }
+    },
+    {
+      "run_id": "01M5GJ4GP62NRR6ZT5JZ5G14X9",
+      "versionId": "01M5GJ4AZQ0TX5CTN46VC95PKE",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "QA Claude child",
+        "label": "QA Claude child v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5GJ4GP62NRR6ZT5JZ5G14X9",
+          "loopId": "01M5GJ4AZQMNCE2E6VKNRT2ADZ",
+          "versionId": "01M5GJ4AZQ0TX5CTN46VC95PKE",
+          "parentRunId": "01M5GJ4E9XZPEG1YJNDN7JD786",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5GJ4GP623C8Y2ZZ25NG3B4C",
+          "source": "subloop",
+          "caller": {
+            "kind": "run",
+            "id": "01M5GJ4E9XZPEG1YJNDN7JD786"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-22T01:03:17.702Z"
+          }
+        },
+        "messages": [
+          {
+            "id": "01M5GJ4GFDT5CB8TGHK8NMF5WV",
+            "role": "note",
+            "content": "PARENT_EFFECT_MARKER",
+            "nodeId": "mutate",
+            "ts": "2026-10-22T01:03:17.485Z"
+          }
+        ],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {
+          "start": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-22T01:03:17.337Z"
+          }
+        },
+        "lastOutput": {
+          "nodeId": "start",
+          "value": null,
+          "at": "2026-10-22T01:03:17.337Z"
+        },
+        "gates": {},
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      },
+      "subloopVersions": {
+        "01M5GJ4AZQMNCE2E6VKNRT2ADZ": "01M5GJ4AZQ0TX5CTN46VC95PKE"
+      }
+    },
+    {
+      "run_id": "01M5GJ4YYJ0DD2SYB1DEWVTRM0",
+      "versionId": "01M5GJ4MM7DVV8AQZ0V1JPYGC1",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "QA Codex parent Claude child",
+        "label": "QA Codex parent Claude child v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5GJ4YYJ0DD2SYB1DEWVTRM0",
+          "loopId": "01M5GJ4MM7J23KMZGZ51M87NYS",
+          "versionId": "01M5GJ4MM7DVV8AQZ0V1JPYGC1",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5GJ4YYJPXVVV8KTF0TZ7Y2N",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-22T01:03:32.306Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {},
+        "gates": {},
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      },
+      "subloopVersions": {
+        "01M5GJ4AZQMNCE2E6VKNRT2ADZ": "01M5GJ4AZQ0TX5CTN46VC95PKE"
+      }
+    },
+    {
+      "run_id": "01M5GJ5S68W0BMY8Y53XJAVEGD",
+      "versionId": "01M5GJ4CJZ9VXJ9WFHHCZHAQH8",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "QA audit parent",
+        "label": "QA audit parent v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5GJ5S68W0BMY8Y53XJAVEGD",
+          "loopId": "01M5GJ4CJZ997G6QTDEBYPFX24",
+          "versionId": "01M5GJ4CJZ9VXJ9WFHHCZHAQH8",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5GJ5S684WKWT7VR3DFEKX6S",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-22T01:03:59.176Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {},
+        "gates": {},
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      },
+      "subloopVersions": {
+        "01M5GJ4AZQMNCE2E6VKNRT2ADZ": "01M5GJ4AZQ0TX5CTN46VC95PKE"
+      }
+    },
+    {
+      "run_id": "01M5GJ5TTN05GBZN4A2MFG91CK",
+      "versionId": "01M5GJ4AZQ0TX5CTN46VC95PKE",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "QA Claude child",
+        "label": "QA Claude child v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5GJ5TTN05GBZN4A2MFG91CK",
+          "loopId": "01M5GJ4AZQMNCE2E6VKNRT2ADZ",
+          "versionId": "01M5GJ4AZQ0TX5CTN46VC95PKE",
+          "parentRunId": "01M5GJ5S68W0BMY8Y53XJAVEGD",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5GJ5TTPXGG1JGAE47EB4FA9",
+          "source": "subloop",
+          "caller": {
+            "kind": "run",
+            "id": "01M5GJ5S68W0BMY8Y53XJAVEGD"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-22T01:04:00.853Z"
+          }
+        },
+        "messages": [
+          {
+            "id": "01M5GJ5TQWXDAE4WBS62W02VJ4",
+            "role": "note",
+            "content": "PARENT_EFFECT_MARKER",
+            "nodeId": "mutate",
+            "ts": "2026-10-22T01:04:00.764Z"
+          }
+        ],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {
+          "start": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-22T01:04:00.666Z"
+          }
+        },
+        "lastOutput": {
+          "nodeId": "start",
+          "value": null,
+          "at": "2026-10-22T01:04:00.666Z"
+        },
+        "gates": {},
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      },
+      "subloopVersions": {
+        "01M5GJ4AZQMNCE2E6VKNRT2ADZ": "01M5GJ4AZQ0TX5CTN46VC95PKE"
+      }
+    },
+    {
+      "run_id": "01M5GJ604HE024PQ7B3SAKJQ6Q",
+      "versionId": "01M5GJ5XTW0RDECYETX25XJTAW",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "QA explicit numbered parent",
+        "label": "QA explicit numbered parent v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5GJ604HE024PQ7B3SAKJQ6Q",
+          "loopId": "01M5GJ5XTVQ2A6934YWT9HHBM9",
+          "versionId": "01M5GJ5XTW0RDECYETX25XJTAW",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5GJ604JDVYNA5KTG5RNRR8T",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-22T01:04:06.289Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {},
+        "gates": {},
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    {
+      "run_id": "01M5GJ61EDY67JWRNHHE834SAP",
+      "versionId": "01M5GJ5X1W7C4PG1JRAS95877C",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "QA numbered child v1",
+        "label": "QA numbered child v1 v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5GJ61EDY67JWRNHHE834SAP",
+          "loopId": "01M5GJ5X1WCBHAKEY8XEEG2TSA",
+          "versionId": "01M5GJ5X1W7C4PG1JRAS95877C",
+          "parentRunId": "01M5GJ604HE024PQ7B3SAKJQ6Q",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5GJ61EDTKZYGW3JX2HGG1G5",
+          "source": "subloop",
+          "caller": {
+            "kind": "run",
+            "id": "01M5GJ604HE024PQ7B3SAKJQ6Q"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": null,
+            "receivedAt": "2026-10-22T01:04:07.629Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {
+          "start": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-22T01:04:07.435Z"
+          }
+        },
+        "lastOutput": {
+          "nodeId": "start",
+          "value": null,
+          "at": "2026-10-22T01:04:07.435Z"
+        },
+        "gates": {},
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    }
+  ]
+}

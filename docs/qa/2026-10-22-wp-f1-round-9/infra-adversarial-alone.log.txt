@@ -1,0 +1,59 @@
+
+ RUN  v5.0.3 [local-path]
+
+ ✓ src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 3: concurrent SQLite batches have no sequence gaps 226ms
+ ✓ src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 15: skip catches missed daily slots across spring DST 49ms
+ ✓ src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 15: run-once catches missed daily slots across spring DST 44ms
+ ✓ src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 15: run-each catches missed daily slots across spring DST 63ms
+ ✓ src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > ADV-010: run-once chooses the latest missed slot even beyond the run-each cap 111ms
+ ✓ src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 15: two scheduler instances have no shared lease (documented single-process limit) 89ms
+ ✓ src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > ADV-011: a duration timer lost before a crash is re-armed from the waiting run 178ms
+ ✓ src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > ADV-011: a input timeout timer lost before a crash is re-armed from the waiting run 91ms
+ ✓ src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > ADV-011: a fire interrupted mid-delivery is delivered again after a restart 134ms
+ ✓ src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 18: concurrent set of one secret preserves one authenticated ciphertext 63ms
+ × src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild 30061ms
+   → Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ✓ src/adversarial.test.ts > timer delivery (review of WP-G) > a throwing timer listener leaves the timer for another delivery 43ms
+ ✓ src/adversarial.test.ts > timer delivery (review of WP-G) > a failed manager wake does not consume the timer 73ms
+ ✓ src/adversarial.test.ts > timer delivery (review of WP-G) > a duration with a timeout re-arms both lost deadlines (SQLite) 52ms
+ ✓ src/adversarial.test.ts > timer delivery (review of WP-G) > an obsolete timeout in the same poll batch does not wake a later input wait 88ms
+ ✓ src/adversarial.test.ts > finalization on SQLite (review of WP-G, fourth round) > a resumed failed run is finalized again after a crash on its next terminal status 181ms
+ ✓ src/adversarial.test.ts > finalization on SQLite (review of WP-G, fourth round) > an older finalizer in flight cannot hide the next success 137ms
+ ✓ src/adversarial.test.ts > finalization on SQLite (review of WP-G, fourth round) > an older finalizer in flight cannot hide the durable resume 185ms
+ ✓ src/adversarial.test.ts > finalization on SQLite (review of WP-G, fourth round) > of two concurrent resumes of one failure, only one acts (same failure) 147ms
+ ✓ src/adversarial.test.ts > finalization on SQLite (review of WP-G, fourth round) > of two concurrent resumes of one failure, only one acts (newer non-resumable failure) 141ms
+pnpm.cmd :
+At line:2 char:559
++ ... e=$case[1]; pnpm.cmd --filter @graphgoblin/infrastructure exec vitest ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 6/QA-LIMIT-001: ProcessScripts
+abort kills a real child and its grandchild
+Error: Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/adversarial.test.ts:225:3
+    223|     expect(() => decryptSecret(Buffer.alloc(32, 5), ciphertext as stri…
+    224|   });
+    225|   it('6/QA-LIMIT-001: ProcessScripts abort kills a real child and its …
+       |   ^
+    226|     const dir = await mkdtemp(join(tmpdir(), 'gg-process-tree-'));
+    227|     const pidFile = join(dir, 'grandchild.pid');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 19 passed (20)
+   Start at  18:20:33
+   Duration  38.25s (tests 85%, import 10%, transform 6%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ [local-path]
+  │ readiness-precision\packages\infrastructure

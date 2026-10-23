@@ -1,0 +1,133 @@
+
+ RUN  v5.0.3 <worktree>/packages/adapter-codex
+
+ ↓ src/cli.test.ts > bundledCli > resolves the launcher of the CLI the SDK depends on
+ ↓ src/cli.test.ts > bundledCli > returns undefined when the SDK cannot be resolved
+ ↓ src/cli.test.ts > cliFor > runs JavaScript launchers through Node and executables directly
+ ↓ src/cli.test.ts > runCli > captures stdout and stderr together with the exit code
+ ↓ src/cli.test.ts > runCli > reports a missing binary as a spawn error
+ ↓ src/cli.test.ts > runCli > kills a process that exceeds the timeout
+ ↓ src/cli.test.ts > preflightCli > reports a missing bundled CLI
+ ↓ src/cli.test.ts > Codex no-turn executable boundaries > ready reports ready
+ ↓ src/cli.test.ts > Codex no-turn executable boundaries > old reports cli-incompatible
+ ↓ src/cli.test.ts > Codex no-turn executable boundaries > missing-model reports cli-incompatible
+ ↓ src/cli.test.ts > Codex no-turn executable boundaries > missing-effort reports cli-incompatible
+ ↓ src/cli.test.ts > Codex no-turn executable boundaries > missing-resume-json reports cli-incompatible
+ ↓ src/cli.test.ts > Codex no-turn executable boundaries > prerelease reports ready
+ ↓ src/cli.test.ts > Codex no-turn executable boundaries > auth reports auth
+ ↓ src/cli.test.ts > Codex no-turn executable boundaries > quota reports quota
+ ↓ src/cli.test.ts > Codex no-turn executable boundaries > transport reports transport
+ ↓ src/cli.test.ts > Codex no-turn executable boundaries > unknown reports unknown
+ ↓ src/cli.test.ts > Codex no-turn executable boundaries > hang reports unknown
+ ↓ src/cli.test.ts > Codex no-turn executable boundaries > probes the actual installed SDK CLI without a model turn
+ × src/cli.test.ts > audited Codex auth evidence > auth-network preserves auth evidence through the executable boundary 2582ms
+   → expected { state: 'transport', ok: false, …(2) } to match object { state: 'auth', ok: false }
+(2 matching properties omitted from actual)
+ × src/cli.test.ts > audited Codex auth evidence > quota-network preserves quota evidence through the executable boundary 2581ms
+   → expected { state: 'transport', ok: false, …(2) } to match object { state: 'quota', ok: false }
+(2 matching properties omitted from actual)
+ ✓ src/cli.test.ts > audited Codex auth evidence > stdout-quota-warning preserves quota evidence through the executable boundary 3339ms
+ × src/cli.test.ts > audited Codex auth evidence > auth-empty preserves unknown evidence through the executable boundary 4133ms
+   → expected { state: 'auth', ok: false, …(3) } to match object { state: 'unknown', ok: false }
+(3 matching properties omitted from actual)
+ × src/cli.test.ts > audited Codex auth evidence > auth-unrecognised preserves unknown evidence through the executable boundary 3462ms
+   → expected { state: 'auth', ok: false, …(3) } to match object { state: 'unknown', ok: false }
+(3 matching properties omitted from actual)
+ ↓ src/cli.test.ts > keeps a timed-out lookup unknown even when partial output mentions quota
+ ↓ src/cli.test.ts > leaves login unknown if a pre-login command reports an auth diagnostic
+ ↓ src/cli.test.ts > names the version probe when version syntax cannot be established: {"code":1,"output":"unknown option --version"}
+ ↓ src/cli.test.ts > names the version probe when version syntax cannot be established: {"code":0,"output":"unparseable version"}
+pnpm.cmd :
+At line:6 char:1
++ pnpm.cmd --filter @graphgoblin/adapter-codex exec vitest run src/cli. ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/cli.test.ts > audited Codex auth evidence > auth-network preserves auth evidence through the executable
+boundary
+AssertionError: expected { state: 'transport', ok: false, …(2) } to match object { state: 'auth', ok: false }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "ok": false,
+-   "state": "auth",
++   "state": "transport",
+  }
+
+ ❯ src/cli.test.ts:143:20
+    141|       prefix: [fileURLToPath(new URL('./fixtures/readiness-cli.mjs', i…
+    142|     }, runCli, 15000);
+    143|     expect(result).toMatchObject({ state, ok: false });
+       |                    ^
+    144|     if (state === 'unknown') {
+    145|       expect(result).not.toHaveProperty('authenticated');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/cli.test.ts > audited Codex auth evidence > quota-network preserves quota evidence through the executable
+boundary
+AssertionError: expected { state: 'transport', ok: false, …(2) } to match object { state: 'quota', ok: false }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "ok": false,
+-   "state": "quota",
++   "state": "transport",
+  }
+
+ ❯ src/cli.test.ts:143:20
+    141|       prefix: [fileURLToPath(new URL('./fixtures/readiness-cli.mjs', i…
+    142|     }, runCli, 15000);
+    143|     expect(result).toMatchObject({ state, ok: false });
+       |                    ^
+    144|     if (state === 'unknown') {
+    145|       expect(result).not.toHaveProperty('authenticated');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/cli.test.ts > audited Codex auth evidence > auth-empty preserves unknown evidence through the executable
+boundary
+ FAIL  src/cli.test.ts > audited Codex auth evidence > auth-unrecognised preserves unknown evidence through the
+executable boundary
+AssertionError: expected { state: 'auth', ok: false, …(3) } to match object { state: 'unknown', ok: false }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "ok": false,
+-   "state": "unknown",
++   "state": "auth",
+  }
+
+ ❯ src/cli.test.ts:143:20
+    141|       prefix: [fileURLToPath(new URL('./fixtures/readiness-cli.mjs', i…
+    142|     }, runCli, 15000);
+    143|     expect(result).toMatchObject({ state, ok: false });
+       |                    ^
+    144|     if (state === 'unknown') {
+    145|       expect(result).not.toHaveProperty('authenticated');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed | 23 skipped (28)
+   Start at  12:58:32
+   Duration  25.69s (tests 67%, transform 22%, import 10%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ \Users\<user>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f1-
+  │ readiness-precision\packages\adapter-codex

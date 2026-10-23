@@ -17,6 +17,8 @@ import type { FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import type { Container } from '../container.js';
 import { problem } from '../plugins/errors.js';
+import { readinessOperation } from '../readiness-operation.js';
+import { assertRunReadiness, RunReadinessError } from '../run-readiness.js';
 import { streamRunEvents } from '../sse.js';
 import type { ApiInstance } from '../types.js';
 import { decodeRunCursor, encodeRunCursor } from '../run-cursor.js';
@@ -78,19 +80,30 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
       if (!loop || loop.ownerId !== request.auth.ownerId)
         throw new EngineRequestError('LOOP_NOT_FOUND', `loop ${request.params.id} not found`);
       const body = request.body;
-      const run = await manager.startRun({
-        ownerId: request.auth.ownerId,
-        loopId: loop.id,
-        source: sourceFor(request),
-        caller: { kind: request.auth.actor.kind, id: request.auth.actor.id },
-        ...(body.triggerNodeId ? { triggerNodeId: body.triggerNodeId } : {}),
-        ...(body.input !== undefined ? { payload: body.input } : {}),
-        ...(body.return ? { returnDefaults: body.return } : {}),
-        ...(body.versionId ? { versionId: body.versionId } : {}),
-        ...(body.allowDraft ? { allowDraft: true } : {}),
-      });
-      reply.status(202);
-      return { run };
+      const versionId = body.versionId || loop.currentVersionId;
+      const readiness = readinessOperation(ports.harnesses);
+      try {
+        const run = await manager.startRun(
+          {
+            ownerId: request.auth.ownerId,
+            loopId: loop.id,
+            source: sourceFor(request),
+            caller: { kind: request.auth.actor.kind, id: request.auth.actor.id },
+            ...(body.triggerNodeId ? { triggerNodeId: body.triggerNodeId } : {}),
+            ...(body.input !== undefined ? { payload: body.input } : {}),
+            ...(body.return ? { returnDefaults: body.return } : {}),
+            ...(versionId ? { versionId } : {}),
+            ...(body.allowDraft ? { allowDraft: true } : {}),
+          },
+          (plan) => assertRunReadiness(plan, readiness),
+        );
+        reply.status(202);
+        return { run };
+      } catch (error) {
+        if (error instanceof RunReadinessError)
+          return problem(reply, 422, 'HARNESS_NOT_READY', error.message, error.issues);
+        throw error;
+      }
     },
   );
 

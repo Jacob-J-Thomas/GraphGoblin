@@ -203,6 +203,7 @@ describe('runPreflight', () => {
   it('fails when a harness is not ready or none is configured', async () => {
     const harness = new FakeHarness();
     harness.preflightResult = {
+      state: 'unknown',
       ok: false,
       authenticated: false,
       problems: ['Codex CLI is not logged in; run `codex login`'],
@@ -210,18 +211,21 @@ describe('runPreflight', () => {
     const notReady = await runPreflight(sources({ harnesses: { codex: harness } }));
     expect(notReady.ok).toBe(false);
     expect(byId(notReady, 'harness.codex')?.message).toMatch(/codex login/);
-    harness.preflightResult = { ok: false, authenticated: false, problems: [] };
+    harness.preflightResult = { state: 'unknown', ok: false, authenticated: false, problems: [] };
     expect(
       byId(await runPreflight(sources({ harnesses: { codex: harness } })), 'harness.codex')
         ?.message,
-    ).toBe('codex is not ready');
+    ).toMatch(/readiness could not be confirmed/);
     const throwing = new FakeHarness();
     throwing.preflight = () => Promise.reject(new Error('spawn ENOENT'));
     expect(
       byId(await runPreflight(sources({ harnesses: { codex: throwing } })), 'harness.codex'),
-    ).toMatchObject({ status: 'fail', message: 'spawn ENOENT' });
+    ).toMatchObject({
+      status: 'fail',
+      message: expect.stringMatching(/readiness could not be confirmed/),
+    });
     const unversioned = new FakeHarness();
-    unversioned.preflightResult = { ok: true, authenticated: true, problems: [] };
+    unversioned.preflightResult = { state: 'ready', ok: true, authenticated: true, problems: [] };
     expect(
       byId(await runPreflight(sources({ harnesses: { codex: unversioned } })), 'harness.codex')
         ?.message,
@@ -322,7 +326,12 @@ describe('graphgoblin-api --preflight', () => {
     expect(ready.out).toContain('API key set (secret "jev-api-key") (disabled in Settings)');
 
     const harness = new FakeHarness();
-    harness.preflightResult = { ok: false, authenticated: false, problems: ['not logged in'] };
+    harness.preflightResult = {
+      state: 'unknown',
+      ok: false,
+      authenticated: false,
+      problems: ['not logged in'],
+    };
     const notLoggedIn = await cli(env, harness);
     expect(notLoggedIn.code).toBe(1);
     expect(notLoggedIn.out).toMatch(/FAIL\s+Harness codex\s+not logged in/);

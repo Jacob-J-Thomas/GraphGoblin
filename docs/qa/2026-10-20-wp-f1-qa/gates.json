@@ -1,0 +1,62 @@
+[
+  {
+    "command": "pnpm.cmd typecheck --concurrency=2",
+    "name": "typecheck",
+    "elapsedMs": 3312,
+    "exit": 0
+  },
+  {
+    "command": "pnpm.cmd lint --concurrency=2",
+    "name": "lint",
+    "elapsedMs": 194594,
+    "exit": 0
+  },
+  {
+    "command": "pnpm.cmd format:check",
+    "name": "format",
+    "elapsedMs": 66143,
+    "exit": 1
+  },
+  {
+    "command": "pnpm.cmd check:docs",
+    "name": "docs",
+    "elapsedMs": 3653,
+    "exit": 0
+  },
+  {
+    "command": "pnpm.cmd check:tokens",
+    "name": "tokens",
+    "elapsedMs": 1705,
+    "exit": 0
+  },
+  {
+    "command": "pnpm.cmd --filter @graphgoblin/domain test:coverage --maxWorkers 1 --coverage.reportOnFailure",
+    "name": "domain",
+    "elapsedMs": 41724,
+    "exit": 0
+  },
+  {
+    "command": "pnpm.cmd --filter @graphgoblin/infrastructure test:coverage --maxWorkers 1 --coverage.reportOnFailure --testNamePattern ^(?!.*(?:actual installed|real installed)).*$",
+    "name": "infrastructure",
+    "elapsedMs": 425691,
+    "exit": 1
+  },
+  {
+    "command": "pnpm.cmd --filter @graphgoblin/adapter-codex test:coverage --maxWorkers 1 --coverage.reportOnFailure --testNamePattern ^(?!.*(?:actual installed|real installed)).*$",
+    "name": "adapter-codex",
+    "elapsedMs": 32827,
+    "exit": 0
+  },
+  {
+    "command": "pnpm.cmd --filter @graphgoblin/api test:coverage --maxWorkers 1 --coverage.reportOnFailure",
+    "name": "api",
+    "elapsedMs": 528347,
+    "exit": 0
+  },
+  {
+    "command": "pnpm.cmd --filter @graphgoblin/web test:coverage --maxWorkers 1 --coverage.reportOnFailure",
+    "name": "web",
+    "elapsedMs": 1544038,
+    "exit": 1
+  }
+]

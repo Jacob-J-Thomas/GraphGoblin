@@ -1,0 +1,114 @@
+Command: pnpm.cmd --filter @graphgoblin/api test:coverage --maxWorkers 1 --coverage.reportOnFailure --coverage.reporter=text --coverage.reporter=json-summary
+Node: v22.14.0
+Revision: c2a2b6632c0996383abe491268baf871aec448dd
+Exit: 1
+Elapsed ms: 1600108
+
+$ vitest run --coverage --maxWorkers 1 --coverage.reportOnFailure --coverage.reporter=text --coverage.reporter=json-summary
+
+ RUN  v5.0.3 <worktree>/apps/api
+      Coverage enabled with v8
+
+subloop kill landings:
+delay undefined: leaf waiting at restart; recovery restarts top 0, middle 0, leaf 0
+delay 0: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 10: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 30: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+delay 60: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 100: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 150: leaf succeeded at restart; recovery restarts top 1, middle 0, leaf 0
+delay 250: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+{"level":30,"time":1792700143819,"pid":3244,"hostname":"<host>","msg":"Server listening at http://127.0.0.1:5814"}
+{"level":30,"time":1792700143821,"pid":3244,"hostname":"<host>","host":"127.0.0.1","port":5639,"dataDir":"<user-path>","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792700144394,"pid":3244,"hostname":"<host>","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792700144402,"pid":3244,"hostname":"<host>","reqId":"req-1","res":{"statusCode":200},"responseTime":6.995899999998073,"msg":"request completed"}
+ ❯ src/main.test.ts (9 tests | 2 failed | 4 skipped) 202714ms
+   ❯ built API entry and startup failures (6)
+     × serves authenticated requests using a binary-created key and refuses a competing process 60860ms
+     × dispatches the API-key and preflight CLIs with their real exit codes 60440ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/main.test.ts > built API entry and startup failures > serves authenticated requests using a binary-created key and refuses a competing process
+Error: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/main.test.ts:49:3
+     47|   }, 60_000);
+     48|
+     49|   it('serves authenticated requests using a binary-created key and ref…
+       |   ^
+     50|     const f = await fixture();
+     51|     const token = await f.createKey();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/main.test.ts > built API entry and startup failures > dispatches the API-key and preflight CLIs with their real exit codes
+Error: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/main.test.ts:67:3
+     65|   }, 60_000);
+     66|
+     67|   it('dispatches the API-key and preflight CLIs with their real exit c…
+       |   ^
+     68|     const f = await fixture();
+     69|     const token = await f.createKey();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 52 passed | 2 skipped (55)
+      Tests  2 failed | 740 passed | 6 skipped (748)
+   Start at  15:09:35
+   Duration  1591.84s (tests 77%, import 21%, transform 1%)
+
+    Isolate  55 workers spawned · ~1.21s startup each (spawn + environment, per file)
+             at least ~65.41s faster with isolate: false — reuses workers across files instead of one per file
+
+ % Coverage report from v8
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s
+-------------------|---------|----------|---------|---------|-------------------
+All files          |   96.49 |    93.11 |   94.24 |   97.93 |
+ src               |   94.99 |    91.08 |   90.74 |   96.32 |
+  ...r-registry.ts |   97.91 |     92.5 |     100 |   97.77 | 149
+  container.ts     |     100 |    95.77 |     100 |     100 | 169,275,297
+  ...te-api-key.ts |     100 |    96.36 |     100 |     100 | 118-137
+  data-dir-lock.ts |   82.45 |    82.14 |      90 |      88 | 60-61,68-71
+  emit-openapi.ts  |   73.68 |     62.5 |   33.33 |   76.47 | 31-37
+  loop-issues.ts   |     100 |    90.47 |     100 |     100 | 23,45
+  main.ts          |   67.92 |    53.33 |   41.66 |   73.46 | 31-38,86-93
+  preflight.ts     |   96.23 |    84.12 |   89.13 |    97.6 | 462-464,474
+  sse.ts           |   95.58 |    85.36 |     100 |     100 | 56,62-68,86,112
+ src/plugins       |   99.09 |       94 |     100 |     100 |
+  auth.ts          |    97.5 |    92.85 |     100 |     100 | 28,65,68
+  errors.ts        |     100 |    97.72 |     100 |     100 | 74
+  static.ts        |     100 |    85.71 |     100 |     100 | 52-53
+ src/routes        |   99.13 |    96.01 |   99.01 |   99.76 |
+  classifiers.ts   |   97.67 |      100 |      90 |     100 |
+  loops.ts         |   99.31 |    93.87 |     100 |     100 | ...27,347,401,406
+  runs.ts          |   98.83 |    95.34 |     100 |     100 | 95,198,233,372
+  templates.ts     |   93.75 |       75 |     100 |   92.85 | 39
+  triggers.ts      |     100 |    95.83 |     100 |     100 | 134
+ src/templates     |   95.45 |      100 |     100 |   95.16 |
+  copy-catalog.ts  |       0 |      100 |     100 |       0 | 3-5
+ src/testing       |   89.93 |    81.03 |   85.18 |   96.26 |
+  ...subprocess.ts |   86.86 |    67.85 |   83.33 |    93.9 | 43,49,85,125,184
+  ...classifier.ts |   94.11 |     87.5 |    92.3 |     100 | 78-85
+  test-app.ts      |   96.15 |      100 |      80 |     100 |
+ src/triggers      |   98.75 |    95.31 |     100 |   99.71 |
+  poll.ts          |     100 |    96.72 |     100 |     100 | 115,181
+  ...er-service.ts |   97.87 |    92.85 |     100 |     100 | ...13,579-581,617
+  webhook-body.ts  |   98.48 |    96.34 |     100 |    98.3 | 170
+-------------------|---------|----------|---------|---------|-------------------
+
+=============================== Coverage summary ===============================
+Statements   : 96.49% ( 1984/2056 )
+Branches     : 93.11% ( 1284/1379 )
+Functions    : 94.24% ( 393/417 )
+Lines        : 97.93% ( 1803/1841 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in <user-path>
+  │ f1\apps\api
