@@ -35,7 +35,8 @@ const ignore = new Set([
   'playwright.config.ts',
 ]);
 // Longest alternatives first: `x.log.txt` must match whole, not as `x.log` followed by `.txt`.
-const EXT = 'aria\\.txt|log\\.txt|mjs\\.txt|ps1\\.txt|jsonl|json|log|mjs|cjs|js|txt|ps1|sh|png|csv|html|md';
+const EXT =
+  'aria\\.txt|log\\.txt|mjs\\.txt|ps1\\.txt|jsonl|json|log|mjs|cjs|js|txt|ps1|sh|png|csv|html|md';
 const missing = new Map(); // name -> how it was cited
 let cited = 0;
 const note = (name, how) => {
@@ -53,7 +54,9 @@ for (const file of files) {
   for (const match of text.matchAll(new RegExp(`\`([A-Za-z0-9_./\\\\-]+\\.(?:${EXT}))\``, 'g'))) {
     note(basename(match[1].replace(/\\/g, '/')), 'quoted');
   }
-  for (const match of text.matchAll(new RegExp(`(?<![\\w./\\\\-])([A-Za-z0-9_][A-Za-z0-9_-]*\\.(?:${EXT}))(?![\\w-])`, 'g'))) {
+  for (const match of text.matchAll(
+    new RegExp(`(?<![\\w./\\\\-])([A-Za-z0-9_][A-Za-z0-9_-]*\\.(?:${EXT}))(?![\\w-])`, 'g'),
+  )) {
     const name = match[1];
     if (ignore.has(name) || name.includes('*') || name === basename(file)) continue;
     // Source files mentioned with their folder are repository paths, not evidence.
