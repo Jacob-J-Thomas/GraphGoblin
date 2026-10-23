@@ -4,7 +4,19 @@ import {
   type ProgressItemStatus,
   type Usage,
 } from '@graphgoblin/contracts';
-import type { HarnessEvent, HarnessItem, HarnessItemType } from '@graphgoblin/engine';
+import type {
+  HarnessFailureEvidence,
+  HarnessEvent,
+  HarnessItem,
+  HarnessItemType,
+} from '@graphgoblin/engine';
+import {
+  describeError,
+  isHarnessFailureCode,
+  harnessFailureEvidence,
+  harnessFailureRank,
+  mergeHarnessFailure,
+} from '@graphgoblin/engine';
 import type { ThreadEvent, ThreadItem } from '@openai/codex-sdk';
 
 /**
@@ -141,7 +153,7 @@ export function mapUsage(usage: Partial<Record<string, unknown>> | null | undefi
   };
 }
 
-export interface ClassifiedError {
+export interface ClassifiedError extends HarnessFailureEvidence {
   /** One of the `HARNESS_*` codes below; the engine's `classifyHarnessError` keys off them. */
   code: string;
   message: string;
@@ -184,14 +196,50 @@ function unwrap(raw: string): { status?: number; type?: string; message: string 
   return { message: raw };
 }
 
-/**
- * Classify a Codex failure. Codes are chosen so the engine's `classifyHarnessError` maps them:
- * anything containing `quota` becomes `HARNESS_QUOTA_EXHAUSTED`, anything containing `auth`
- * becomes `HARNESS_NOT_AUTHENTICATED`; transport/service failures have a distinct code.
- */
-export function classifyCodexError(raw: string): ClassifiedError {
+/** Preserve recognized typed SDK failures; classify untyped failures from native messages. */
+export function classifyCodexError(error: unknown): ClassifiedError {
+  const metadata = harnessFailureEvidence(error);
+  return {
+    ...classifyNativeError(error),
+    ...(metadata.submission ? { submission: metadata.submission } : {}),
+  };
+}
+
+function classifyNativeError(error: unknown): ClassifiedError {
+  // SDK factories can reject with typed metadata at either async boundary. Do not reduce
+  // that evidence to a message; unknown codes still use native-message classification.
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    typeof error.code === 'string' &&
+    isHarnessFailureCode(error.code)
+  ) {
+    return {
+      code: error.code,
+      message: describeError(error),
+      retriable: 'retriable' in error && error.retriable === true,
+    };
+  }
+  const raw = describeError(error);
   const { status, type, message } = unwrap(raw);
   const text = `${type ?? ''} ${message}`.toLowerCase();
+  if (/error: (?:unexpected argument|unknown option|invalid value)/.test(text))
+    return {
+      code: 'HARNESS_ARGUMENTS_REJECTED',
+      message: 'Codex rejected the turn arguments',
+      retriable: false,
+    };
+  if (
+    /(?:no rollout found|session (?:not found|does not exist)|thread (?:not found|does not exist)|failed to (?:load|find) (?:session|rollout))/.test(
+      text,
+    )
+  )
+    return {
+      code: 'HARNESS_SESSION_MISSING',
+      message: 'The recorded Codex conversation was not found',
+      retriable: false,
+    };
   if (
     status === 429 ||
     /usage[_ ]limit|quota|rate[_ ]limit|too many requests|insufficient_quota/.test(text)
@@ -241,15 +289,16 @@ export interface TurnOutcome {
  * - Items are emitted on `item.completed` only; `item.started` and `item.updated` are progress
  *   noise for a node-level view and would duplicate entries.
  * - An `error` item (for example a configuration deprecation warning) is a normal item, not a
- *   failure. `turn.failed` is the failure signal. A top-level `error` event is remembered and only
- *   counts as the failure if the turn never completes (Codex also emits it before `turn.failed`).
+ *   failure. `turn.failed` is the failure signal. Top-level errors, `turn.failed` and thrown failures share the evidence precedence;
+ *   successful turns tolerate nonfatal top-level diagnostics.
  */
 export class TurnAccumulator {
+  private submitted = false;
   private finalText = '';
   private usage: Usage = ZERO_USAGE;
   private readonly items: HarnessItem[] = [];
   private failure: ClassifiedError | undefined;
-  private streamError: string | undefined;
+  private fatal = false;
   private completed = false;
   sessionId: string | undefined;
 
@@ -261,6 +310,10 @@ export class TurnAccumulator {
       case 'thread.started':
         this.sessionId = ev.thread_id;
         return [{ type: 'session', sessionId: ev.thread_id, mode: this.mode }];
+      case 'turn.started':
+        if (this.submitted) return [];
+        this.submitted = true;
+        return [{ type: 'submitted', marker: 'codex.turn.started' }];
       case 'item.completed': {
         const item = normalizeItem(ev.item);
         this.items.push(item);
@@ -272,10 +325,12 @@ export class TurnAccumulator {
         this.usage = mapUsage(ev.usage);
         return [{ type: 'usage', usage: this.usage }, { type: 'turn-complete' }];
       case 'turn.failed':
-        this.failure = classifyCodexError(ev.error.message);
+        this.fail(ev.error);
         return [];
       case 'error':
-        this.streamError = ev.message;
+        // Native top-level errors and turn.failed use the same evidence fold. A completed
+        // turn may tolerate diagnostics, but terminal/pinned refusals are not diagnostics.
+        this.add(classifyCodexError(ev), true);
         return [];
       default:
         return [];
@@ -283,17 +338,23 @@ export class TurnAccumulator {
   }
 
   /** Record a failure raised outside the event stream (a thrown SDK or process error). */
-  fail(message: string): void {
-    this.failure ??= classifyCodexError(message);
+  fail(error: unknown): void {
+    this.add(classifyCodexError(error), false);
+  }
+
+  private add(next: ClassifiedError, diagnostic: boolean): void {
+    this.failure = mergeHarnessFailure(this.failure, next);
+    this.fatal ||= !diagnostic || harnessFailureRank(next) >= 4;
   }
 
   finish(): TurnOutcome {
-    let failure = this.failure;
-    if (!failure && !this.completed) {
-      failure = classifyCodexError(
-        this.streamError ?? 'the Codex event stream ended before the turn completed',
-      );
-    }
+    const failure =
+      this.completed && !this.fatal
+        ? undefined
+        : (this.failure ??
+          (!this.completed
+            ? classifyCodexError('the Codex event stream ended before the turn completed')
+            : undefined));
     return {
       finalText: this.finalText,
       usage: this.usage,

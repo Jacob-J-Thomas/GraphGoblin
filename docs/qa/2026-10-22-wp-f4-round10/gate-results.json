@@ -1,0 +1,147 @@
+[
+  {
+    "command": "pnpm.cmd install --frozen-lockfile --prefer-offline",
+    "exit": 1,
+    "log": "install.log.txt",
+    "note": "Global pnpm operation lock denied before install."
+  },
+  {
+    "command": "pnpm.cmd install --frozen-lockfile --prefer-offline --store-dir <existing store> (LOCALAPPDATA scoped)",
+    "exit": 1,
+    "log": "install-scoped.log.txt",
+    "note": "Same global lock; no directory deletion or linking attempted."
+  },
+  {
+    "command": "pnpm.cmd install --frozen-lockfile --prefer-offline --store-dir <existing store> (XDG state/data scoped)",
+    "exit": 1,
+    "log": "install-xdg.log.txt",
+    "note": "Same global lock; cannot complete inside current sandbox."
+  },
+  {
+    "command": "pnpm.cmd typecheck",
+    "exit": 0,
+    "log": "typecheck.log.txt",
+    "tasks": 20
+  },
+  {
+    "command": "pnpm.cmd lint",
+    "exit": 0,
+    "log": "lint.log.txt",
+    "tasks": 11
+  },
+  {
+    "command": "pnpm.cmd exec prettier --list-different . --ignore-path .prettierignore --ignore-path <initial task scope>",
+    "exit": 1,
+    "log": "format-scope-check.log.txt",
+    "note": "Read-only setup preflight found pre-existing .tmp fixtures. Excluded that unowned directory before authorized write-format; no fixture was edited."
+  },
+  {
+    "command": "pnpm.cmd format --ignore-path .prettierignore --ignore-path <task format scope>",
+    "exit": 0,
+    "log": "format.log.txt",
+    "note": "Only two authorized source files selected, both unchanged; staged files protected."
+  },
+  {
+    "command": "pnpm.cmd check:docs",
+    "exit": 0,
+    "log": "check-docs.log.txt"
+  },
+  {
+    "command": "pnpm.cmd build",
+    "exit": 0,
+    "log": "build.log.txt",
+    "tasks": 11
+  },
+  {
+    "command": "pnpm.cmd check:layers",
+    "exit": 0,
+    "log": "check-layers.log.txt"
+  },
+  {
+    "command": "pnpm.cmd check:deps",
+    "exit": 0,
+    "log": "check-deps.log.txt",
+    "note": "One existing no-orphans warning; zero errors."
+  },
+  {
+    "command": "pnpm.cmd --filter @graphgoblin/infrastructure test:coverage --maxWorkers=1 (initial preload quoting)",
+    "exit": 1,
+    "log": "infrastructure-preload-failure.log.txt",
+    "note": "Verification setup failed before collection; corrected by forward-slash NODE_OPTIONS path."
+  },
+  {
+    "command": "pnpm.cmd --filter @graphgoblin/infrastructure test:coverage --maxWorkers=1",
+    "exit": 1,
+    "log": "infrastructure-coverage.log.txt",
+    "passed": 740,
+    "failed": 8,
+    "note": "D-015 native termination failures; coverage not emitted on failure."
+  },
+  {
+    "command": "Eight infrastructure failing tests, each alone: pnpm.cmd --filter @graphgoblin/infrastructure test --maxWorkers=1 <file> -t <test name>",
+    "exit": 1,
+    "results": "infra-triage-results.json",
+    "note": "All eight reproduce independently; individual triage logs retain assertions."
+  },
+  {
+    "command": "pnpm.cmd --filter @graphgoblin/infrastructure test:coverage --maxWorkers=1 --coverage.reportOnFailure",
+    "exit": 1,
+    "log": "infrastructure-coverage-diagnostic.log.txt",
+    "passed": 740,
+    "failed": 8,
+    "note": "Diagnostic rerun solely to collect fresh coverage; same failures, no exclusions or threshold change."
+  },
+  {
+    "command": "pnpm.cmd --filter @graphgoblin/engine test:coverage --maxWorkers=2",
+    "exit": 0,
+    "log": "engine-coverage.log.txt",
+    "passed": 1560,
+    "failed": 0,
+    "lines": 98.15,
+    "branches": 92.95
+  },
+  {
+    "command": "pnpm.cmd --filter @graphgoblin/adapter-codex test:coverage --maxWorkers=1",
+    "exit": 0,
+    "log": "adapter-codex-coverage.log.txt",
+    "passed": 495,
+    "failed": 0,
+    "skipped": 5,
+    "lines": 98.82,
+    "branches": 94.63
+  },
+  {
+    "command": "pnpm.cmd --filter @graphgoblin/api test:coverage --maxWorkers=1 (after build)",
+    "exit": 0,
+    "log": "api-coverage.log.txt",
+    "passed": 1280,
+    "failed": 0,
+    "skipped": 6,
+    "lines": 98.04,
+    "branches": 93.25,
+    "durationSeconds": 965.13
+  },
+  {
+    "command": "node docs/qa/2026-10-22-wp-f4-round10/replay-5650.mjs",
+    "exit": 0,
+    "log": "replay.log.txt",
+    "passed": 326,
+    "failed": 0,
+    "note": "Maintained six-driver suite; port allocation copy only. Eight sustained read-outage recovery cases remain qualified controls."
+  },
+  {
+    "command": "node --experimental-import-meta-resolve --test docs/qa/2026-10-22-wp-f4-round10/restart-5650.mjs",
+    "exit": 0,
+    "log": "restart.log.txt",
+    "passed": 5,
+    "failed": 0,
+    "runs": 1,
+    "note": "Original test bodies/assertions; port and package/fixture-context qualification only."
+  },
+  {
+    "command": "pnpm.cmd format:check --ignore-path .prettierignore --ignore-path <task format scope>",
+    "exit": 0,
+    "log": "format-check.log.txt",
+    "note": "Authorized source files only; all other staged files protected."
+  }
+]

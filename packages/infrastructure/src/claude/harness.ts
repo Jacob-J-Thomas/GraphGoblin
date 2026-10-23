@@ -8,7 +8,7 @@ import {
   readinessFailure,
   readinessMessage,
 } from '@graphgoblin/domain';
-import type { HarnessReadinessState } from '@graphgoblin/contracts';
+import type { HarnessReadinessState, PromptSubmission } from '@graphgoblin/contracts';
 import type {
   HarnessEvent,
   HarnessPreflight,
@@ -376,6 +376,9 @@ export class ClaudeHarness implements HarnessPort {
     sessionId.catch(() => undefined);
     const pump = async (): Promise<HarnessResult> => {
       let detectedVersion: string | undefined;
+      let delivery: PromptSubmission = 'definitely-not-submitted';
+      let accepted = false;
+      let initialized = false;
       try {
         if (controller.signal.aborted) throw abortError();
         if (resumeId !== undefined && !validClaudeSessionId(resumeId))
@@ -399,9 +402,27 @@ export class ClaudeHarness implements HarnessPort {
         const parser = new JsonLines();
         let completionEvents: HarnessEvent[] = [];
         const accept = (record: Record<string, unknown>): void => {
+          // Native missing-session refusals can precede init (CLI 2.1.304). They are not
+          // turn output. Await the fixed stderr refusal; never retain the provider error body.
+          if (
+            !initialized &&
+            !accepted &&
+            record.type === 'result' &&
+            record.is_error === true &&
+            record.num_turns === 0
+          )
+            return;
           const events = accumulator.push(record);
+          if (events.some((event) => event.type === 'session')) initialized = true;
+          if (events.some((event) => event.type === 'submitted')) accepted = true;
           if (record.type === 'result') {
-            completionEvents = events;
+            // A validated result proves consumption even while the CLI is still alive.
+            // Persist that evidence now; usage/completion remain gated by process outcome.
+            completionEvents = [];
+            for (const event of events) {
+              if (event.type === 'submitted') queue.push(event);
+              else completionEvents.push(event);
+            }
             return;
           }
           for (const event of events) {
@@ -428,6 +449,7 @@ export class ClaudeHarness implements HarnessPort {
           'text',
           '--print',
         ];
+        delivery = 'delivery-uncertain';
         const result = await this.runner(
           {
             binary: this.binary,
@@ -443,6 +465,32 @@ export class ClaudeHarness implements HarnessPort {
             for (const record of parser.push(chunk)) accept(record);
           },
         );
+        if (result.spawnCode) delivery = 'definitely-not-submitted';
+        // Refusal diagnostics must never conceal an unconfirmed process or a transport cutoff.
+        if (
+          result.terminationUnconfirmed ||
+          result.aborted ||
+          result.timedOut ||
+          result.overflow ||
+          result.callbackError
+        )
+          checkOutcome(result, controller.signal);
+        if (!accepted && result.turnRejection) {
+          delivery =
+            result.turnRejection === 'session-missing'
+              ? 'session-missing'
+              : 'definitely-not-submitted';
+          if (result.turnRejection === 'session-missing')
+            throw new ClaudeHarnessError(
+              'HARNESS_SESSION_MISSING',
+              'The recorded Claude conversation was not found',
+            );
+          if (result.turnRejection === 'auth')
+            throw new ClaudeHarnessError(
+              'HARNESS_NOT_AUTHENTICATED',
+              'Claude requires authentication before submitting this turn',
+            );
+        }
         checkOutcome(result, controller.signal);
         for (const record of parser.finish()) accept(record);
         const completed = accumulator.finish();
@@ -476,6 +524,7 @@ export class ClaudeHarness implements HarnessPort {
             code: failure.code,
             message: failure.message,
             retriable: failure.retriable,
+            submission: delivery,
           });
         throw failure;
       } finally {

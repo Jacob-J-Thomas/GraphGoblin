@@ -1,0 +1,216 @@
+pnpm.cmd : $ vitest run --coverage --maxWorkers=2 --coverage.reportOnFailure
+
+
+At line:9 char:1
+
+
++ pnpm.cmd --filter @graphgoblin/api test:coverage --maxWorkers=2 --cov ...
+
+
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+    + CategoryInfo          : NotSpecified: ($ vitest run --...reportOnFailure:String) [], RemoteException
+
+
+    + FullyQualifiedErrorId : NativeCommandError
+
+
+ 
+
+
+
+
+
+ RUN  v5.0.3 <USERPROFILE>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f4-prompt-provenance/apps/api
+
+
+      Coverage enabled with v8
+
+
+
+
+
+{"level":30,"time":1792704665170,"pid":32988,"hostname":"<HOST>","msg":"Server listening at http://127.0.0.1:5660"}
+
+
+{"level":30,"time":1792704665171,"pid":32988,"hostname":"<HOST>","host":"127.0.0.1","port":5660,"dataDir":"<USERPROFILE>\\AppData\\Local\\Temp\\gg-wp-f4-round7-unit\\gg-api-process-PlHciy","requireApiKey":true,"msg":"GraphGoblin API listening"}
+
+
+{"level":30,"time":1792704665233,"pid":32988,"hostname":"<HOST>","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+
+
+{"level":30,"time":1792704665240,"pid":32988,"hostname":"<HOST>","reqId":"req-1","res":{"statusCode":200},"responseTime":6.524699999999939,"msg":"request completed"}
+
+
+ ❯ src/subloop-restart.test.ts (3 tests | 1 failed) 37357ms
+
+
+   ❯ awaited subloops across process death (#242) (3)
+
+
+     × a hard kill around child completion leaves every parent one continuation after restart 12441ms
+
+
+
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+
+
+
+
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > a hard kill around child 
+
+
+completion leaves every parent one continuation after restart
+
+
+Error: API child exited before GraphGoblin API listening: Error: listen EADDRINUSE: address already in use 
+
+
+127.0.0.1:5660
+
+
+    at Server.setupListenHandle [as _listen2] (node:net:1937:16)
+
+
+    at listenInCluster (node:net:1994:12)
+
+
+    at node:net:2203:7
+
+
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+
+
+  code: 'EADDRINUSE',
+
+
+  errno: -4091,
+
+
+  syscall: 'listen',
+
+
+  address: '127.0.0.1',
+
+
+  port: 5660
+
+
+}
+
+
+
+
+
+ ❯ src/testing/api-subprocess.ts:109:27
+
+
+    107|       await eventually(() => {
+
+
+    108|         if (stdout.includes(message)) return true;
+
+
+    109|         if (exited) throw new Error(`API child exited before ${message…
+
+
+       |                           ^
+
+
+    110|         return false;
+
+
+    111|       }, timeoutMs);
+
+
+ ❯ eventually src/testing/api-subprocess.ts:18:18
+
+
+ ❯ Object.waitForLog src/testing/api-subprocess.ts:107:7
+
+
+ ❯ Object.ready src/testing/api-subprocess.ts:179:7
+
+
+ ❯ Object.start src/subloop-restart.test.ts:100:7
+
+
+ ❯ src/subloop-restart.test.ts:166:16
+
+
+
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+
+
+
+
+
+
+ Test Files  1 failed | 54 passed | 2 skipped (57)
+
+
+      Tests  1 failed | 752 passed | 6 skipped (759)
+
+
+   Start at  16:30:55
+
+
+   Duration  238.01s (tests 71%, import 27%, transform 2%, worker 1%)
+
+
+
+
+
+ % Coverage report from v8
+
+
+
+
+
+=============================== Coverage summary ===============================
+
+
+Statements   : 96.69% ( 1988/2056 )
+
+
+Branches     : 93.32% ( 1287/1379 )
+
+
+Functions    : 94.72% ( 395/417 )
+
+
+Lines        : 98.04% ( 1805/1841 )
+
+
+================================================================================
+
+
+[ELIFECYCLE] Command failed with exit code 1.
+
+
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+
+
+
+
+  × "pnpm recursive run" failed in C:
+
+
+  │ \Users\<user>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f4-
+
+
+  │ prompt-provenance\apps\api
+
+
+
+
+

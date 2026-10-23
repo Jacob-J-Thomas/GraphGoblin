@@ -231,7 +231,7 @@ engine-owned region. Usage roll-up remains an engine operation.
 | `currentNodeId?`, `iteration`                          | Where the token is                                                                                                                                                                                               |
 | `waiting?`                                             | `{ waitId: string, startedSeq: number, nodeId: string, kind: WaitKind, until?: string, timeoutAt?: string, prompt?: string, inputSchema?: JsonSchema, signalName?: string, childRunId?: string, beat?: number }` |
 | `cancelRequestedAt?`, `pausedAt?`                      | Persisted intent, honoured after restart                                                                                                                                                                         |
-| `failure?`                                             | `{ code: RunErrorCode; message: string; nodeId?: string; resumable: boolean }`                                                                                                                                   |
+| `failure?`                                             | `{ code: RunErrorCode; message: string; nodeId?: string; resumable: boolean; details?: unknown; inference?: PromptProvenance }`                                                                                  |
 | `result?`                                              | The exit node's return payload                                                                                                                                                                                   |
 | `outcome?`                                             | `success`, `failure`, `exhausted`                                                                                                                                                                                |
 | `startedAt`, `finishedAt?`, `lastEventSeq`             | Bookkeeping                                                                                                                                                                                                      |
@@ -242,28 +242,36 @@ A child run's `waiting` parent is woken only through the park it observed: the w
 
 A `failure` carried up from a subloop child has the child's `code` and `resumable`, the parent's subloop node as `nodeId`, and `details: { childRunId, childNodeId?, childDetails? }` naming where it happened (#251, 05). A child that finished through a Failure exit has `outcome: failure` and no `failure`; its parent receives it as data.
 
+`failure.inference` contains `visitId`, `turnId`, `promptKind` (`authored`, `repair`, or
+`continuation`), `submission` (`definitely-not-submitted`, `delivery-uncertain`, or
+`session-missing`), and optional `sessionId`. The ID may be an inherited previous/named
+conversation; it does not by itself establish acceptance of this visit's authored task.
+See [inference recovery](05-execution-engine.md#inference-submission-and-recovery).
+
 ## Run events (Decided kinds, Draft payloads)
 
-Each event has `runId`, `seq`, `ts`, `type`, optional `nodeId`, and a typed `payload`. Large payloads are stored as artifacts and referenced.
+Each event has `runId`, `seq`, `ts`, `type`, optional `nodeId`, and typed fields. Transcripts and other output payloads use artifact references. `harness.turn.prompt` is an exception: the whole rendered prompt is stored inline, without a schema size limit or automatic artifact offloading. It can enlarge the event log; it shares the run's private access and deletion boundary. `run.queued.initialThread` is also inline (05).
 
-| Type                                                                 | Payload                                                                                               |
-| -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `run.queued`                                                         | `versionId` and `pinned` as on the run, initial thread, subloop pins, replay origin                   |
-| `run.started`, `run.finished`                                        | status, outcome, result reference                                                                     |
-| `run.paused`, `run.resumed`, `run.cancel_requested`, `run.cancelled` | actor                                                                                                 |
-| `run.waiting`, `run.woken`                                           | wait spec, wake reason                                                                                |
-| `run.failed`                                                         | failure object                                                                                        |
-| `iteration.incremented`                                              | historical from, to, target; not emitted by new gates                                                 |
-| `node.started`, `node.finished`                                      | config hash; patch, route, duration                                                                   |
-| `node.progress`                                                      | small structured progress from long nodes; harness items are summarised here                          |
-| `harness.session`                                                    | harness, sessionId, mode (`fresh` or `resumed`), model, effort                                        |
-| `harness.usage`                                                      | tokens as reported by the harness, informational                                                      |
-| `decision.made`                                                      | portId, provenance, observation, optional gate pass/limit evidence, at most three factual diagnostics |
-| `exit.evaluated`                                                     | nodeId, terminal outcome                                                                              |
-| `signal.received`, `input.received`                                  | name, payload reference                                                                               |
-| `heartbeat.beat`                                                     | beat number, probe result summary                                                                     |
-| `child_run.started`, `child_run.finished`                            | child run id, outcome                                                                                 |
-| `return.delivered`, `return.failed`                                  | channel, target, status                                                                               |
+| Type                                                                 | Payload                                                                                                                               |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `run.queued`                                                         | `versionId` and `pinned` as on the run, initial thread, subloop pins, replay origin                                                   |
+| `run.started`, `run.finished`                                        | status, outcome, result reference                                                                                                     |
+| `run.paused`, `run.resumed`, `run.cancel_requested`, `run.cancelled` | actor                                                                                                                                 |
+| `run.waiting`, `run.woken`                                           | wait spec, wake reason                                                                                                                |
+| `run.failed`                                                         | failure object                                                                                                                        |
+| `iteration.incremented`                                              | historical from, to, target; not emitted by new gates                                                                                 |
+| `node.started`, `node.finished`                                      | config hash; patch, route, duration                                                                                                   |
+| `node.progress`                                                      | small structured progress from long nodes; harness items are summarised here                                                          |
+| `harness.session`                                                    | harness, sessionId, mode (`fresh` or `resumed`), model, effort                                                                        |
+| `harness.turn`                                                       | nodeId, visitId, turnId, harness, promptKind, exact inline prompt, optional resumeSessionId; durable before invoking the adapter      |
+| `harness.submission`                                                 | nodeId, visitId, turnId, submission (`submitted` on acceptance, otherwise one of the three failure classes), optional positive marker |
+| `harness.usage`                                                      | tokens as reported by the harness, informational                                                                                      |
+| `decision.made`                                                      | portId, provenance, observation, optional gate pass/limit evidence, at most three factual diagnostics                                 |
+| `exit.evaluated`                                                     | nodeId, terminal outcome                                                                                                              |
+| `signal.received`, `input.received`                                  | name, payload reference                                                                                                               |
+| `heartbeat.beat`                                                     | beat number, probe result summary                                                                                                     |
+| `child_run.started`, `child_run.finished`                            | child run id, outcome                                                                                                                 |
+| `return.delivered`, `return.failed`                                  | channel, target, status                                                                                                               |
 
 ## Other entities (Decided)
 

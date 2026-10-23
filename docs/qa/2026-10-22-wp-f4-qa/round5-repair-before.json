@@ -1,0 +1,112 @@
+{
+  "head": "112d6207e7f59c707e2f06e29f71551fa08551aa",
+  "store": "<temp>\\gg-audit-f4-repair-repro-JlUu5L",
+  "results": [
+    {
+      "code": "HARNESS_NOT_AUTHENTICATED",
+      "runId": "01M5JAQRJQ89EDGE1TKFNB4DF9",
+      "failure": {
+        "code": "INTERNAL_ERROR",
+        "message": "Controlled pre-launch refusal",
+        "nodeId": "infer",
+        "resumable": true,
+        "details": {
+          "name": "Error",
+          "stack": "Error: Controlled pre-launch refusal\n    at CodexHarness.clientFactory (file:///<temp>/gg-audit-f4-20261022/repair-regression.mjs:18:38)\n    at CodexHarness.run (file:///<worktree>/packages/adapter-codex/dist/harness.js:64:29)\n    at CodexHarness.resume (file:///<worktree>/packages/adapter-codex/dist/harness.js:46:21)\n    at Object.resume (file:///<temp>/gg-audit-f4-20261022/repair-regression.mjs:30:61)\n    at Object.execute (file:///<worktree>/packages/engine/dist/handlers/inference.js:328:39)\n    at runNextTicks (node:internal/process/task_queues:65:5)\n    at process.processImmediate (node:internal/timers:459:9)\n    at async RunManager.execute (file:///<worktree>/packages/engine/dist/run-manager.js:1288:26)"
+        },
+        "inference": {
+          "visitId": "01M5JAQRJQ89EDGE1TKFNB4DF9:5",
+          "turnId": "01M5JAQRS7GCEMDEQM0S6F0M4Z",
+          "submission": "delivery-uncertain",
+          "promptKind": "repair",
+          "sessionId": "controlled-thread"
+        }
+      },
+      "expectedRetry": "Repair exactly: \"invalid\"",
+      "resumeStatus": 200,
+      "resumedRunStatus": "succeeded",
+      "calls": [
+        "Original task",
+        "Repair exactly: \"invalid\"",
+        "The previous turn was interrupted before GraphGoblin recorded its result. Continue the task from where you left off and finish it."
+      ],
+      "mismatches": [
+        {
+          "label": "submission",
+          "actual": "delivery-uncertain",
+          "expected": "definitely-not-submitted"
+        },
+        {
+          "label": "typed failure",
+          "actual": "INTERNAL_ERROR",
+          "expected": "HARNESS_NOT_AUTHENTICATED"
+        },
+        {
+          "label": "exact repair retry",
+          "actual": "The previous turn was interrupted before GraphGoblin recorded its result. Continue the task from where you left off and finish it.",
+          "expected": "Repair exactly: \"invalid\""
+        }
+      ],
+      "pass": false,
+      "error": "[{\"label\":\"submission\",\"actual\":\"delivery-uncertain\",\"expected\":\"definitely-not-submitted\"},{\"label\":\"typed failure\",\"actual\":\"INTERNAL_ERROR\",\"expected\":\"HARNESS_NOT_AUTHENTICATED\"},{\"label\":\"exact repair retry\",\"actual\":\"The previous turn was interrupted before GraphGoblin recorded its result. Continue the task from where you left off and finish it.\",\"expected\":\"Repair exactly: \\\"invalid\\\"\"}]\n\n3 !== 0\n"
+    },
+    {
+      "code": "HARNESS_ARGUMENTS_REJECTED",
+      "runId": "01M5JAQRZES024GK5Y5SQSWXF6",
+      "failure": {
+        "code": "INTERNAL_ERROR",
+        "message": "Controlled pre-launch refusal",
+        "nodeId": "infer",
+        "resumable": true,
+        "details": {
+          "name": "Error",
+          "stack": "Error: Controlled pre-launch refusal\n    at CodexHarness.clientFactory (file:///<temp>/gg-audit-f4-20261022/repair-regression.mjs:18:38)\n    at CodexHarness.run (file:///<worktree>/packages/adapter-codex/dist/harness.js:64:29)\n    at CodexHarness.resume (file:///<worktree>/packages/adapter-codex/dist/harness.js:46:21)\n    at Object.resume (file:///<temp>/gg-audit-f4-20261022/repair-regression.mjs:30:61)\n    at Object.execute (file:///<worktree>/packages/engine/dist/handlers/inference.js:328:39)\n    at async RunManager.execute (file:///<worktree>/packages/engine/dist/run-manager.js:1288:26)"
+        },
+        "inference": {
+          "visitId": "01M5JAQRZES024GK5Y5SQSWXF6:5",
+          "turnId": "01M5JAQS27W40EYZVRQFYSTE5P",
+          "submission": "delivery-uncertain",
+          "promptKind": "repair",
+          "sessionId": "controlled-thread"
+        }
+      },
+      "expectedRetry": "Repair exactly: \"invalid\"",
+      "resumeStatus": 200,
+      "resumedRunStatus": "succeeded",
+      "calls": [
+        "Original task",
+        "Repair exactly: \"invalid\"",
+        "The previous turn was interrupted before GraphGoblin recorded its result. Continue the task from where you left off and finish it."
+      ],
+      "mismatches": [
+        {
+          "label": "submission",
+          "actual": "delivery-uncertain",
+          "expected": "definitely-not-submitted"
+        },
+        {
+          "label": "typed failure",
+          "actual": "INTERNAL_ERROR",
+          "expected": "HARNESS_TURN_FAILED"
+        },
+        {
+          "label": "pinned refusal",
+          "actual": true,
+          "expected": false
+        },
+        {
+          "label": "Resume status",
+          "actual": 200,
+          "expected": 409
+        },
+        {
+          "label": "no recovery call",
+          "actual": 3,
+          "expected": 2
+        }
+      ],
+      "pass": false,
+      "error": "[{\"label\":\"submission\",\"actual\":\"delivery-uncertain\",\"expected\":\"definitely-not-submitted\"},{\"label\":\"typed failure\",\"actual\":\"INTERNAL_ERROR\",\"expected\":\"HARNESS_TURN_FAILED\"},{\"label\":\"pinned refusal\",\"actual\":true,\"expected\":false},{\"label\":\"Resume status\",\"actual\":200,\"expected\":409},{\"label\":\"no recovery call\",\"actual\":3,\"expected\":2}]\n\n5 !== 0\n"
+    }
+  ]
+}

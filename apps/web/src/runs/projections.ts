@@ -213,6 +213,8 @@ export function describeEvent(event: RunEvent): string {
     case 'input.received':
     case 'child_run.started':
     case 'child_run.finished':
+    case 'harness.turn':
+    case 'harness.submission':
     case 'harness.session':
       return 'nodeId' in event ? event.nodeId : '';
     case 'decision.made':

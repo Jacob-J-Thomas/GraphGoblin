@@ -2,6 +2,22 @@
 
 Read the run's failure banner and event log first. Record the run ID, failing node, code, and message before changing anything. Use the [failure-code reference](03-run-and-observe.md#act-on-failure-reasons) for every contract code.
 
+## Inference prompt delivery
+
+Inspect `failure.inference.submission` and the visit's `harness.turn` / `harness.submission`
+events. A session ID or init announcement alone proves no prompt acceptance.
+
+For non-pinned generic failures, Codex permits Resume even when the adapter reports
+`retriable: false` for an exit or lost stream. Claude requires the adapter's `retriable`
+evidence. Both still need a usable session for uncertain recovery; pinned unsupported-policy,
+configuration and argument refusals remain non-resumable.
+
+| Case                                                                                                                   | Action                                                                                                                                                                                                                                                                                                                |
+| ---------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Definitely not submitted (`definitely-not-submitted`)                                                                  | Fix the external cause and Resume when eligible: the exact saved authored/repair task uses its original session selection. Unsupported policy, invalid configuration and rejected arguments need a corrected definition and a new run; the failed run's definition is pinned.                                         |
+| Delivery uncertain (`HARNESS_DELIVERY_UNCERTAIN`, or a specific timeout/quota/storage cause with `delivery-uncertain`) | When eligible, Resume continues a usable recorded session. An inherited previous/named ID without authored-task acceptance is insufficient. When non-resumable, inspect possible effects and use **Replay from the node** for a deliberate attempt. Stop an unconfirmed native process first.                         |
+| Session missing (`HARNESS_SESSION_MISSING`)                                                                            | Preserve and inspect the failed run. Resume is refused. Use **Replay from the node** for a deliberate attempt; named-session lookup can still select the same missing conversation. To change that policy, correct the definition and start a new run. A dedicated fresh-session recovery action is deferred to #265. |
+
 ## Find the symptom
 
 | Symptom                                                                                | Likely cause                                                                                                                                                   | Fix                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |

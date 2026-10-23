@@ -1,0 +1,59 @@
+{
+  "revision": "624aaa9cd4699b20f8330a0cee0b4a7d736c88db",
+  "provider": "FAKE ONLY",
+  "checks": [
+    {
+      "name": "built main creates API key and enforces authentication",
+      "pass": true,
+      "port": 5890,
+      "store": "gg-wp-f4-qa-api-LcN28i",
+      "withoutKey": 401,
+      "withCreatedKey": 200
+    },
+    {
+      "name": "extra boundary template limit and 256 KiB rendered prompt retention",
+      "pass": true,
+      "overLimitTemplateStatus": 400,
+      "captures": [
+        {
+          "id": "01M5D98Y2R39117NYEWGFHDQYB",
+          "characters": 100000,
+          "sha256": "271b759ad2d0b87a7b94fa88a9cfe40680f58917ead49f7145efa12975a80fd2",
+          "savedExact": true,
+          "retriedExact": true
+        },
+        {
+          "id": "01M5D98YE9TTKWYAJP0KW5MN3E",
+          "characters": 262165,
+          "sha256": "0936240e4fd97c5da77174ae5f1efadaf8e18dd711677e78cf89315f5d768720",
+          "savedExact": true,
+          "retriedExact": true
+        }
+      ]
+    }
+  ],
+  "cleanup": [
+    {
+      "store": "gg-wp-f4-qa-api-LcN28i",
+      "filesRemoved": true,
+      "directory": "retained empty; no directory deletion"
+    }
+  ],
+  "processes": [
+    {
+      "pid": 16320,
+      "exitCode": 0,
+      "signalCode": null
+    },
+    {
+      "pid": 44104,
+      "exitCode": null,
+      "signalCode": "SIGKILL"
+    },
+    {
+      "pid": 14924,
+      "exitCode": null,
+      "signalCode": "SIGKILL"
+    }
+  ]
+}

@@ -1,5 +1,6 @@
 import type { TriggerAdmissionPort } from './admission.js';
 import type {
+  PromptSubmission,
   ChoiceAnswer,
   ChoiceOption,
   ClassifierBinding,
@@ -180,7 +181,17 @@ export type HarnessEvent =
   | { type: 'item'; item: HarnessItem }
   | { type: 'usage'; usage: Usage }
   | { type: 'turn-complete' }
-  | { type: 'error'; code: string; message: string; retriable: boolean };
+  | {
+      type: 'submitted';
+      marker: 'claude.assistant' | 'claude.result' | 'codex.turn.started' | 'fake.accepted';
+    }
+  | {
+      type: 'error';
+      code: string;
+      message: string;
+      retriable: boolean;
+      submission: PromptSubmission;
+    };
 
 export interface HarnessTurnRequest {
   prompt: string;

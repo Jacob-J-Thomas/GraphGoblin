@@ -1,0 +1,45 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/api test:coverage --maxWorkers=1 --coverage.reportOnFailure
+pnpm.cmd : $ vitest run --coverage --maxWorkers=1 --coverage.reportOnFailure
+At line:10 char:3
++   & pnpm.cmd @GateArgs *> $raw
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...reportOnFailure:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 <worktree>/apps/api
+      Coverage enabled with v8
+
+subloop kill landings:
+delay undefined: leaf waiting at restart; recovery restarts top 0, middle 0, leaf 0
+delay 0: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 10: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 30: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 60: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 100: leaf succeeded at restart; recovery restarts top 1, middle 0, leaf 0
+delay 150: leaf succeeded at restart; recovery restarts top 1, middle 0, leaf 0
+delay 250: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+{"level":30,"time":1792642695357,"pid":55940,"hostname":"<host>","msg":"Server listening at http://127.0.0.1:5637"}
+{"level":30,"time":1792642695358,"pid":55940,"hostname":"<host>","host":"127.0.0.1","port":5637,"dataDir":"<disposable-store>","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792642695399,"pid":55940,"hostname":"<host>","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792642695406,"pid":55940,"hostname":"<host>","reqId":"req-1","res":{"statusCode":200},"responseTime":6.623800000000301,"msg":"request completed"}
+
+ Test Files  53 passed | 2 skipped (55)
+      Tests  738 passed | 6 skipped (744)
+   Start at  23:17:04
+   Duration  445.78s (tests 72%, import 26%, transform 1%, worker 1%)
+
+     Import  278 modules were evaluated 397 times � 109.69s total, 26% of tracked time
+             ~32.88s faster with isolate: false � shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 96.49% ( 1984/2056 )
+Branches     : 93.11% ( 1284/1379 )
+Functions    : 94.24% ( 393/417 )
+Lines        : 97.93% ( 1803/1841 )
+================================================================================
+
+EXIT=0 SECONDS=447.42

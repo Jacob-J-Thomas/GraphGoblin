@@ -35,6 +35,58 @@ function codexUsage(inputTokens: number) {
 }
 
 describe('CodexHarness.start', () => {
+  it.each(
+    [false, true].flatMap((retriable) =>
+      (['sync', 'promise', 'iterator'] as const).map((boundary) => ({ retriable, boundary })),
+    ),
+  )(
+    'preserves typed missing-session metadata at $boundary with retriable=$retriable',
+    async ({ retriable, boundary }) => {
+      const error = Object.assign(new Error('Recorded conversation no longer exists'), {
+        code: 'HARNESS_SESSION_MISSING',
+        retriable,
+      });
+      const harness = new CodexHarness({
+        clientFactory: () => ({
+          startThread: () => {
+            throw new Error('Expected resume');
+          },
+          resumeThread: () => {
+            if (boundary === 'sync') throw error;
+            return {
+              runStreamed: () =>
+                boundary === 'promise'
+                  ? Promise.reject(error)
+                  : Promise.resolve({
+                      events: (async function* () {
+                        yield await Promise.reject(error);
+                      })(),
+                    }),
+            };
+          },
+        }),
+      });
+      if (boundary === 'sync') {
+        expect(() => harness.resume('missing-id', request(), new AbortController().signal)).toThrow(
+          error,
+        );
+        return;
+      }
+      const session = harness.resume('missing-id', request(), new AbortController().signal);
+      const events = await drain(session);
+      expect(events.at(-1)).toMatchObject({
+        type: 'error',
+        code: 'HARNESS_SESSION_MISSING',
+        submission: 'session-missing',
+        retriable,
+      });
+      await expect(session.result).rejects.toMatchObject({
+        code: 'HARNESS_SESSION_MISSING',
+        retriable,
+      });
+    },
+  );
+
   it('replays a message turn: session first, items, usage, turn-complete, result', async () => {
     const codex = ReplayCodex.fromFixtures('message');
     const harness = createCodexHarness({ clientFactory: codex.factory });
@@ -45,6 +97,7 @@ describe('CodexHarness.start', () => {
     expect(events.map((e) => e.type)).toEqual([
       'session',
       'item',
+      'submitted',
       'item',
       'usage',
       'turn-complete',
@@ -136,6 +189,7 @@ describe('CodexHarness.start', () => {
     expect(types).toEqual([
       'session',
       'error',
+      'submitted',
       'command',
       'file-change',
       'message',
@@ -171,7 +225,7 @@ describe('CodexHarness.start', () => {
     const harness = new CodexHarness({ clientFactory: codex.factory, logger: log });
     const session = harness.start(request(), new AbortController().signal);
     const events = await drain(session);
-    expect(events.map((e) => e.type)).toEqual(['session', 'item', 'item', 'error']);
+    expect(events.map((e) => e.type)).toEqual(['session', 'item', 'item', 'submitted', 'error']);
     expect(events.at(-1)).toMatchObject({
       type: 'error',
       code: 'HARNESS_TURN_FAILED',
@@ -312,6 +366,33 @@ describe('CodexHarness.resume', () => {
 });
 
 describe('cancellation', () => {
+  it('preserves typed unconfirmed termination when cancellation is in flight', async () => {
+    const controller = new AbortController();
+    const harness = new CodexHarness({
+      clientFactory: () => ({
+        startThread: () => ({
+          runStreamed: () => {
+            controller.abort();
+            return Promise.reject(
+              Object.assign(new Error('Process still alive'), {
+                code: 'HARNESS_TERMINATION_UNCONFIRMED',
+                retriable: false,
+              }),
+            );
+          },
+        }),
+        resumeThread: () => {
+          throw new Error('Expected start');
+        },
+      }),
+    });
+    const session = harness.start(request(), controller.signal);
+    expect((await drain(session)).at(-1)).toMatchObject({
+      code: 'HARNESS_TERMINATION_UNCONFIRMED',
+      submission: 'delivery-uncertain',
+    });
+    await expect(session.result).rejects.toMatchObject({ code: 'HARNESS_TERMINATION_UNCONFIRMED' });
+  });
   it('aborts the SDK call when the caller signal fires and rejects with an AbortError', async () => {
     const codex = new ReplayCodex({
       events: loadFixture('command-and-file-change').events,

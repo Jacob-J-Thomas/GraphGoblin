@@ -1,0 +1,54 @@
+pnpm.cmd : $ vitest run --maxWorkers=1 src/claude/readiness.test.ts -t 'hang reports unknown without exposing CLI 
+bodies'
+At line:21 char:2
++  pnpm.cmd --filter @graphgoblin/infrastructure test --maxWorkers=1 $c ...
++  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...ing CLI bodies':String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 <USERPROFILE>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f4-prompt-provenance/packages/infrastructure
+
+ ❯ src/claude/readiness.test.ts (21 tests | 1 failed | 20 skipped) 6277ms
+   ❯ Claude no-turn executable boundary (9)
+     × hang reports unknown without exposing CLI bodies 6275ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/claude/readiness.test.ts > Claude no-turn executable boundary > hang reports unknown without exposing CLI 
+bodies
+AssertionError: expected [ Array(1) ] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+  [
+-   "Claude CLI did not answer before the check deadline. Check that the Claude CLI starts and responds, then retry 
+preflight.",
++   "Claude CLI check process did not confirm that it stopped. Check that the Claude CLI starts and responds, then 
+retry preflight.",
+  ]
+
+ ❯ src/claude/readiness.test.ts:62:31
+     60|         hang: ['Claude CLI did not answer before the check deadline.' …
+     61|       };
+     62|       expect(result.problems).toEqual(problems[scenario]);
+       |                               ^
+     63|     },
+     64|     60000,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 20 skipped (21)
+   Start at  21:44:41
+   Duration  9.72s (tests 67%, import 18%, transform 16%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ \Users\<user>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f4-
+  │ prompt-provenance\packages\infrastructure
+

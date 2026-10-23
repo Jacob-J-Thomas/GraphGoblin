@@ -1,0 +1,48 @@
+import assert from 'node:assert/strict';
+import {spawn} from 'node:child_process';
+import {once} from 'node:events';
+import {mkdtemp,writeFile,readdir,unlink} from 'node:fs/promises';
+import {join,basename,resolve,dirname} from 'node:path';
+import {tmpdir} from 'node:os';
+import {pathToFileURL} from 'node:url';
+import {createRequire} from 'node:module';
+import {setTimeout as delay} from 'node:timers/promises';
+const root=process.cwd(),out=join(root,'docs/qa/2026-10-22-wp-f4-qa');
+const req=createRequire(join(root,'apps/web/package.json'));
+const pRequire=createRequire(req.resolve('@playwright/test'));
+const {chromium}=pRequire('playwright');
+const {singleNodeLoop}=await import(pathToFileURL(join(root,'packages/engine/dist/testing/index.js')).href);
+const store=await mkdtemp(join(tmpdir(),'gg-qa-244-browser-'));
+const env=Object.fromEntries(Object.entries(process.env).filter(([k])=>!k.startsWith('GG_')&&!/^(OPENAI_API_KEY|ANTHROPIC_API_KEY|JEV_API_KEY)$/.test(k)));
+Object.assign(env,{GG_DATA_DIR:store,GG_HOST:'127.0.0.1',GG_PORT:'5851',GG_REQUIRE_API_KEY:'false',GG_WEB_DIST:join(root,'apps/web/dist'),GG_LOG_LEVEL:'silent',GG_CODEX_BINARY:'gg-qa-244-missing.exe',GG_CLAUDE_BINARY:'gg-qa-244-missing.exe'});
+const child=spawn(process.execPath,[join(tmpdir(),'gg-qa-244-matrix.mjs'),'--server'],{env,windowsHide:true,stdio:['ignore','pipe','pipe','ipc']});
+const closed=once(child,'close');closed.catch(()=>{});child.stdout.resume();let stderr='';child.stderr.on('data',b=>stderr+=b.toString());
+const scrub=s=>s.replaceAll(root,'<worktree>').replaceAll(tmpdir(),'<temp>').replaceAll(process.env.USERPROFILE,'<user>');
+const result={revision:'31f485e3060532f672ecdbb0e92fc2c743807fe0',evidence:'real headless Edge; built UI/API; fake provider',port:5851,store:basename(store),checks:[]};
+const rpc=(type,extra={})=>new Promise((res,rej)=>{const timer=setTimeout(()=>rej(new Error('IPC deadline '+type)),60000);const receive=m=>{if(m.type===type){clearTimeout(timer);child.off('message',receive);res(m);}};child.on('message',receive);child.send({type,...extra});});
+async function api(path,body){const r=await fetch('http://127.0.0.1:5851'+path,body===undefined?{}:{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});const value=await r.json();assert.ok(r.ok,JSON.stringify(value));return value;}
+let browser;let context;
+try{
+ await new Promise((res,rej)=>{const timer=setTimeout(()=>rej(new Error('Ready deadline '+scrub(stderr))),60000);child.on('message',m=>{if(m.type==='ready'){clearTimeout(timer);res();}});closed.then(()=>rej(new Error(scrub(stderr))));});
+ browser=await chromium.launch({channel:'msedge',headless:true});result.browserVersion=browser.version();context=await browser.newContext({viewport:{width:1440,height:900}});const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ for(const kind of ['accepted','uncertain','not-submitted']){
+  const scripted=kind==='accepted'?{finalText:'Completed synthetic accepted task.'}:kind==='uncertain'?{accepted:false,announceSession:true,items:[],submission:'delivery-uncertain',error:{code:'HARNESS_TURN_FAILED',message:'Synthetic init-only stream loss',retriable:false}}:{accepted:false,announceSession:false,items:[],submission:'definitely-not-submitted',error:{code:'HARNESS_NOT_AUTHENTICATED',message:'Synthetic pre-send auth refusal',retriable:false}};
+  await rpc('configure',{control:{mode:'fake',script:[scripted]}});
+  const definition=singleNodeLoop('Inspector '+kind,{id:'infer',kind:'inference',label:'Infer',config:{session:{policy:'fresh'},prompt:{template:'Complete synthetic '+kind+' QA task.'}}});
+  const {loop}=await api('/loops',{definition});await api(`/loops/${loop.id}/publish`,{});const {run}=await api(`/loops/${loop.id}/runs`,{});
+  let settled;for(let i=0;i<1200;i++){settled=await api('/runs/'+run.id);if(['succeeded','failed'].includes(settled.status))break;await delay(50);}assert.equal(settled.status,kind==='accepted'?'succeeded':'failed');
+  const {items}=await api(`/runs/${run.id}/events`);const turn=items.find(e=>e.type==='harness.turn');const submission=items.find(e=>e.type==='harness.submission');assert.equal(submission.submission,kind==='accepted'?'submitted':kind==='uncertain'?'delivery-uncertain':'definitely-not-submitted');assert.equal(submission.visitId,turn.visitId);assert.equal(submission.turnId,turn.turnId);
+  await page.goto('http://127.0.0.1:5851/app/runs/'+run.id);await page.getByRole('heading',{name:/Run /}).waitFor();const timeline=page.getByRole('list',{name:'Timeline'});const turnRow=timeline.getByRole('button',{name:/harness\.turn/});const subRow=timeline.getByRole('button',{name:/harness\.submission/});await turnRow.click();assert.equal(await turnRow.getAttribute('aria-current'),'true');await subRow.click();assert.equal(await subRow.getAttribute('aria-current'),'true');
+  await turnRow.focus();await page.keyboard.press('Enter');assert.equal(await turnRow.getAttribute('aria-current'),'true');
+  if(kind!=='accepted')await page.getByText('Failed: '+settled.failure.code,{exact:true}).waitFor();await page.reload();await timeline.getByRole('button',{name:/harness\.submission/}).waitFor();await page.setViewportSize({width:390,height:844});await subRow.click();assert.equal(await subRow.getAttribute('aria-current'),'true');
+  const dom=await page.locator('body').innerText();const imagePath=join(tmpdir(),'gg-qa-244-'+kind+'.png');await page.screenshot({path:imagePath,fullPage:true});
+  result.checks.push({name:kind,pass:true,runId:run.id,status:settled.status,failure:settled.failure,turn:{visitId:turn.visitId,turnId:turn.turnId,promptKind:turn.promptKind},submission:{visitId:submission.visitId,turnId:submission.turnId,submission:submission.submission,marker:submission.marker},steps:['open built inspector','select harness.turn','select harness.submission','keyboard Enter selection','reload','390px viewport selection'],turnText:await turnRow.innerText(),submissionText:await subRow.innerText(),visiblePageText:dom.slice(0,7000),screenshot:basename(imagePath)});
+  await page.setViewportSize({width:1440,height:900});console.log('PASS Edge inspector '+kind);
+ }
+ assert.deepEqual(errors,[]);result.pageErrors=errors;
+}catch(e){result.error=scrub(e.stack);console.log(scrub(e.stack));process.exitCode=1;}
+finally{
+ await context?.close().catch(()=>{});await browser?.close().catch(()=>{});if(child.exitCode===null&&child.signalCode===null){rpc('stop').catch(()=>{});await Promise.race([closed,delay(10000)]);if(child.exitCode===null&&child.signalCode===null)child.kill('SIGKILL');}await closed.catch(()=>{});
+ async function clear(dir){for(const e of await readdir(dir,{withFileTypes:true})){const p=join(dir,e.name);if(e.isDirectory())await clear(p);else await unlink(p);}}
+ assert.equal(dirname(resolve(store)),resolve(tmpdir()));assert.ok(basename(store).startsWith('gg-qa-244-'));await clear(store);result.cleanup={apiPid:child.pid,exitCode:child.exitCode,signalCode:child.signalCode,browserClosed:true,storeFilesRemoved:true,emptyDirectoryRetained:true};await writeFile(join(out,'edge-provenance.txt'),scrub(JSON.stringify(result,null,2))+'\n');
+}

@@ -1,0 +1,67 @@
+REVISION: b80c9fdfb001e020bdfc1b9c7c15e5f910d33766
+COMMAND: pnpm.cmd typecheck --concurrency=2
+pnpm.cmd : $ turbo run typecheck --concurrency=2
+At line:10 char:3
++   & pnpm.cmd @GateArgs *> $raw
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ turbo run typecheck --concurrency=2:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running typecheck in 12 packages
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/contracts:build: cache miss, executing 03923bb428cab1fb
+@graphgoblin/contracts:typecheck: cache miss, executing 0db02fb9695be507
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+@graphgoblin/contracts:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/domain:build: cache miss, executing 9ac534a9a99e0a83
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/domain:typecheck: cache miss, executing efc961d87b905717
+@graphgoblin/domain:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/engine:build: cache miss, executing 07eb06e27b4a7fbe
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/engine:typecheck: cache miss, executing 4ba9c576e26ab0c0
+@graphgoblin/engine:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/adapter-jev:typecheck: cache miss, executing 5e43dbf935df9173
+@graphgoblin/adapter-jev:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-codex:build: cache miss, executing 7283c0f0de543744
+@graphgoblin/adapter-codex:typecheck: cache miss, executing 2155bb83b10b6b81
+@graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/infrastructure:typecheck: cache miss, executing b2ead3c5006269cf
+@graphgoblin/infrastructure:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-jev:build: cache miss, executing db9402145fe27feb
+@graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:build: cache miss, executing e868b7019abe3376
+@graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+@graphgoblin/api:typecheck: cache miss, executing 907a5473d950e320
+@graphgoblin/api:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/api:build: cache miss, executing f27eee0c01a3fb4d
+@graphgoblin/api:build: $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+@graphgoblin/api-client:typecheck: cache miss, executing 122ea3c34acb688b
+@graphgoblin/api-client:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/api-client:build: cache miss, executing 0188608e5b3e9153
+@graphgoblin/api-client:build: $ tsc -b tsconfig.build.json
+@graphgoblin/mcp:build: cache miss, executing 70790cd2dc0dc25c
+@graphgoblin/mcp:build: $ tsc -b tsconfig.build.json
+@graphgoblin/mcp:typecheck: cache miss, executing 4ed59d7af0845ae4
+@graphgoblin/mcp:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/web:typecheck: cache miss, executing 2ce564fabfbead36
+@graphgoblin/web:typecheck: $ tsc -p tsconfig.json --noEmit
+@graphgoblin/plugin-codex:typecheck: cache miss, executing f1f27032e27b1e49
+@graphgoblin/plugin-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+
+ Tasks:    20 successful, 20 total
+Cached:    0 cached, 20 total
+  Time:    1m39.214s 
+
+
+EXIT=0 SECONDS=99.77
