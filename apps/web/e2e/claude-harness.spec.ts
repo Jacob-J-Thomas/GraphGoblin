@@ -162,6 +162,105 @@ test('Claude inference selection stays family-specific through publish and run',
   await expect(page.locator('[data-status="succeeded"]').first()).toBeVisible();
 });
 
+for (const [model, displayName, effort] of [
+  ['claude-sonnet-5-5', 'Claude Sonnet 5.5', 'max'],
+  ['claude-haiku-5-5', 'Claude Haiku 5.5', 'low'],
+] as const) {
+  test(`${displayName} selection and effort survive save and reopen and reach the adapter request`, async ({
+    page,
+    request,
+  }) => {
+    const instance = await claudeInstance(request);
+    const created = await request.post(instance.url + '/loops', {
+      data: { definition: inferenceLoop(displayName + ' picker', 'claude') },
+    });
+    expect(created.status(), await created.text()).toBe(201);
+    const { loop } = (await created.json()) as { loop: { id: string } };
+
+    await page.goto(instance.url + '/app/loops/' + loop.id + '/edit');
+    const dialog = await openNode(page, 'infer');
+    // Model and effort currently sit under Advanced; #205 owns their placement.
+    await openAdvanced(dialog);
+    const modelField = dialog.getByLabel('Model', { exact: true });
+    await expect(modelField).not.toHaveAttribute('aria-readonly', 'true');
+    await expect(
+      modelField.getByRole('option', { name: `${displayName} (${model})` }),
+    ).toBeEnabled();
+    await modelField.selectOption(model);
+    await expect(modelField).toHaveValue(model);
+    const effortField = dialog.getByLabel('Effort', { exact: true });
+    // Exactly the catalog's supported efforts for this model; minimal is never offered for Claude.
+    await expect(effortField.locator('option')).toHaveText([
+      '(inherited; the catalog suggests high)',
+      'low',
+      'medium',
+      'high',
+      'xhigh',
+      'max',
+    ]);
+    await effortField.selectOption(effort);
+    await expect(effortField).toHaveValue(effort);
+    await dialog.getByRole('button', { name: 'Done' }).click();
+    await page.getByRole('button', { name: 'Publish', exact: true }).click();
+    await expect(page.getByText('Published version 1.')).toBeVisible();
+
+    const saved = await request.get(instance.url + '/loops/' + loop.id);
+    const current = (await saved.json()) as { current: { definition: unknown } };
+    const authored = LoopDefinitionSchema.parse(current.current.definition).nodes.find(
+      (node) => node.id === 'infer',
+    );
+    expect(authored?.config).toMatchObject({ harness: 'claude', model, effort });
+
+    await page.reload();
+    const reopened = await openNode(page, 'infer');
+    await openAdvanced(reopened);
+    await expect(reopened.getByLabel('Model', { exact: true })).toHaveValue(model);
+    await expect(reopened.getByLabel('Effort', { exact: true })).toHaveValue(effort);
+    await reopened.getByRole('button', { name: 'Done' }).click();
+
+    await control(request, '/harness/script', {
+      instanceId: instance.id,
+      harness: 'claude',
+      turns: [{ finalText: 'Synthetic Claude result.' }],
+    });
+    const started = await request.post(instance.url + '/loops/' + loop.id + '/runs', {
+      data: { input: null },
+    });
+    expect(started.status()).toBe(202);
+    const { run } = (await started.json()) as { run: { id: string } };
+    await waitForTerminal(request, instance.url, run.id, 'succeeded');
+    expect(
+      await control(request, '/harness/requests', { instanceId: instance.id, harness: 'claude' }),
+    ).toMatchObject({
+      started: [
+        {
+          harness: 'claude',
+          model,
+          effort,
+          options: { sandbox: 'read-only', approval: 'never' },
+        },
+      ],
+    });
+
+    // An unsupported effort for this model is refused at authoring and never reaches the adapter.
+    const unsupported = inferenceLoop(displayName + ' unsupported', 'claude');
+    const node = unsupported.nodes.find((item) => item.id === 'infer');
+    if (!node || !('config' in node)) throw new Error('missing inference node');
+    Object.assign(node.config, { model, effort: 'minimal' });
+    for (const [method, url] of [
+      ['post', instance.url + '/loops'],
+      ['put', instance.url + '/loops/' + loop.id + '/draft'],
+    ] as const) {
+      const refused = await request[method](url, { data: { definition: unsupported } });
+      expect(refused.status()).toBe(400);
+      expect(await refused.text()).toContain('EFFORT_UNSUPPORTED');
+    }
+    expect(
+      await control(request, '/harness/requests', { instanceId: instance.id, harness: 'claude' }),
+    ).toMatchObject({ started: [{ model, effort }] });
+  });
+}
+
 for (const ready of [false, true]) {
   test(`explicit harness switch on narrow editor with readiness ${ready}`, async ({
     page,
@@ -339,15 +438,20 @@ test('Settings separates Claude adapter support from CLI readiness and supports 
   ).toBeVisible();
 
   const support = claudeStatus.getByRole('list', { name: 'Claude model support' });
-  const opus = support.getByRole('listitem').filter({ hasText: 'claude-opus-5-5' });
-  const fable = support.getByRole('listitem').filter({ hasText: 'claude-fable-5-1' });
-  await expect(opus.getByText('listed by adapter', { exact: true })).toBeVisible();
-  await expect(fable.getByText('listed by adapter', { exact: true })).toBeVisible();
   const catalog = page.getByRole('region', { name: 'Model catalog' });
-  await expect(catalog.getByRole('switch', { name: 'Enable Claude Fable 5.1' })).toBeChecked();
+  for (const [model, displayName] of [
+    ['claude-opus-5-5', 'Claude Opus 5.5'],
+    ['claude-fable-5-1', 'Claude Fable 5.1'],
+    ['claude-sonnet-5-5', 'Claude Sonnet 5.5'],
+    ['claude-haiku-5-5', 'Claude Haiku 5.5'],
+  ] as const) {
+    const row = support.getByRole('listitem').filter({ hasText: model });
+    await expect(row.getByText('listed by adapter', { exact: true })).toBeVisible();
+    await expect(catalog.getByRole('switch', { name: 'Enable ' + displayName })).toBeChecked();
+  }
   await expect(
     catalog.getByText('Enabled in catalog. Claude readiness: Sign-in needed.', { exact: true }),
-  ).toHaveCount(2);
+  ).toHaveCount(4);
 
   const model = page.getByLabel('Default model (claude)', { exact: true });
   await expect(model).toBeVisible();

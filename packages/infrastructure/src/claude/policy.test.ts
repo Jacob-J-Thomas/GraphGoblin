@@ -85,7 +85,15 @@ describe('approved native Windows Claude policy', () => {
     expect(() => resolvedClaudeSettings({ model: 'claude-opus-5-5' })).toThrow(/effort/);
     for (const effort of ['low', 'medium', 'high', 'xhigh', 'max'] as const)
       expect(resolvedClaudeSettings({ model: 'claude-opus-5-5', effort }).effort).toBe(effort);
-    for (const model of ['gpt-6-luna', 'opus', 'claude-sonnet-5', ''])
+    for (const model of [
+      'gpt-6-luna',
+      'opus',
+      'sonnet',
+      'haiku',
+      'claude-sonnet-5',
+      'claude-haiku-4-5-20251001',
+      '',
+    ])
       expect(() => resolvedClaudeSettings({ model, effort: 'xhigh' })).toThrow(/model/);
     expect(() => resolvedClaudeSettings({ model: 'claude-opus-5-5', effort: 'minimal' })).toThrow(
       /effort/,

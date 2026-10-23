@@ -102,6 +102,14 @@ const readyClaudePreflight = HarnessPreflightSchema.parse({
       model: 'claude-fable-5-1',
       efforts: claudeEfforts,
     },
+    {
+      model: 'claude-sonnet-5-5',
+      efforts: claudeEfforts,
+    },
+    {
+      model: 'claude-haiku-5-5',
+      efforts: claudeEfforts,
+    },
   ],
 });
 const notReadyClaudePreflight: HarnessPreflight = {
