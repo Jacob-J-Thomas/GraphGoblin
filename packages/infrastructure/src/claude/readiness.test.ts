@@ -72,6 +72,8 @@ describe('audited Claude auth evidence', () => {
     ['stdout-quota-warning', 'quota'],
     ['auth-empty', 'unknown'],
     ['auth-unrecognised', 'unknown'],
+    ['auth-zero-stdout', 'auth'],
+    ['auth-zero-stderr', 'auth'],
     ['conflict-auth-stderr', 'auth'],
     ['conflict-quota-stderr', 'quota'],
   ] as const)(
@@ -91,6 +93,7 @@ describe('audited Claude auth evidence', () => {
           }),
       }).preflight();
       expect(result).toMatchObject({ state, ok: false });
+      if (state === 'auth') expect(result.authenticated).toBe(false);
       if (state === 'unknown') {
         expect(result).not.toHaveProperty('authenticated');
         expect(result.problems).toEqual([
@@ -113,7 +116,12 @@ it('probes the actual installed native Claude without a model turn', async (cont
     context.skip('Installed Claude has no accessible login');
     return;
   }
-  expect(result).toMatchObject({ state: 'ready', ok: true, authenticated: true });
+  expect(result, JSON.stringify({ problems: result.problems })).toMatchObject({
+    state: 'ready',
+    ok: true,
+    authenticated: true,
+    problems: [],
+  });
   expect(result.version).toMatch(/^\d+\.\d+\.\d+$/);
 }, 60000);
 

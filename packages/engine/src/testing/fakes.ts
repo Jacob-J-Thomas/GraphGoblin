@@ -17,6 +17,7 @@ import type {
   RunStatus,
   Usage,
   WorkingDirectorySpec,
+  WebhookAttemptResult,
 } from '@graphgoblin/contracts';
 import { isTerminal, stableStringify } from '@graphgoblin/domain';
 import type {
@@ -145,13 +146,17 @@ export class CapturingLogger implements Logger {
 export class InMemoryEventStore implements EventStorePort {
   private readonly logs = new Map<string, RunEvent[]>();
   private readonly listeners = new Map<string, Set<(event: RunEvent) => void>>();
-  constructor(private readonly clock: ClockPort) {}
+  constructor(
+    private readonly clock: ClockPort,
+    private readonly runRepository?: RunRepository,
+  ) {}
 
   async append(
     runId: string,
     drafts: readonly EventDraft[],
-    options: { expectedLastSeq?: number } = {},
+    options: { expectedLastSeq?: number; requireRun?: boolean } = {},
   ): Promise<RunEvent[]> {
+    if (options.requireRun && !(await this.runRepository?.get(runId))) return [];
     const log = this.logs.get(runId) ?? [];
     if (options.expectedLastSeq !== undefined && options.expectedLastSeq !== log.length) {
       return Promise.reject(new AppendConflictError(runId, options.expectedLastSeq, log.length));
@@ -770,13 +775,40 @@ export class FakeProbes implements HttpProbePort {
 }
 
 export class FakeDelivery implements ReturnDeliveryPort {
-  readonly webhooks: { url: string; payload: JsonValue; secret?: string }[] = [];
+  readonly webhooks: { url: string; payload: JsonValue; secret?: string; deliveryId: string }[] =
+    [];
   readonly logged: { runId: string; payload: JsonValue }[] = [];
   failWebhooks = false;
-  webhook(url: string, payload: JsonValue, secret?: string): Promise<void> {
-    if (this.failWebhooks) return Promise.reject(new Error('webhook endpoint returned 503'));
-    this.webhooks.push({ url, payload, ...(secret ? { secret } : {}) });
-    return Promise.resolve();
+  responder?: (
+    deliveryId: string,
+    attempt: number,
+  ) => WebhookAttemptResult | Promise<WebhookAttemptResult>;
+  webhook(
+    url: string,
+    payload: JsonValue,
+    secret: string | undefined,
+    deliveryId: string,
+  ): Promise<WebhookAttemptResult> {
+    this.webhooks.push({ url, payload, ...(secret ? { secret } : {}), deliveryId });
+    if (this.responder)
+      return Promise.resolve(
+        this.responder(
+          deliveryId,
+          this.webhooks.filter((call) => call.deliveryId === deliveryId).length,
+        ),
+      );
+    if (this.failWebhooks)
+      return Promise.resolve({
+        ok: false,
+        error: {
+          code: 'http',
+          message: 'Webhook returned HTTP 400.',
+          httpStatus: 400,
+          retryable: false,
+          acknowledgement: 'rejected',
+        },
+      });
+    return Promise.resolve({ ok: true });
   }
   log(runId: string, payload: JsonValue): void {
     this.logged.push({ runId, payload });
@@ -1124,8 +1156,8 @@ export interface FakePorts extends EnginePorts {
 /** Build a complete set of fake ports wired together. */
 export function createFakePorts(options: { secrets?: Record<string, string> } = {}): FakePorts {
   const clock = new FakeClock();
-  const events = new InMemoryEventStore(clock);
   const runs = new InMemoryRunRepository();
+  const events = new InMemoryEventStore(clock, runs);
   const loops = new InMemoryLoopRepository();
   const admission = new InMemoryTriggerAdmission(runs, events, loops);
   const harness = new FakeHarness();

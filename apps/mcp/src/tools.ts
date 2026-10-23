@@ -7,7 +7,6 @@ import {
   loops,
   observeRun,
   runs,
-  unwrap,
   type GraphGoblinClient,
 } from '@graphgoblin/api-client';
 import {
@@ -181,7 +180,7 @@ export function registerTools(
     'wait_for_run',
     {
       title: 'Wait for a run',
-      description: `Wait for a run to finish, polling for up to timeoutSeconds (min 1, default ${DEFAULT_WAIT_SECONDS}, max ${MAX_WAIT_SECONDS} seconds). If the run finished (succeeded, failed, cancelled, exhausted) it returns { finished: true, run } with run.result holding the loop's return value and run.failure explaining a failure. Otherwise it returns { finished: false, status?, cursor?, next }: follow "next". It returns early when the run needs you: waiting for input (call provide_input) or paused (call resume_run). For a long run, keep calling wait_for_run with the same runId. cursor is the last event sequence, usable as "after" in read_run_events. If the deadline expires before any snapshot arrives, status, waiting and cursor are omitted. Deadlines and request cancellation stop observation only; they never cancel the run.`,
+      description: `Wait for a run to finish, polling for up to timeoutSeconds (min 1, default ${DEFAULT_WAIT_SECONDS}, max ${MAX_WAIT_SECONDS} seconds). The finished flag refers to execution only; inspect run.deliveries separately for pending or failed webhook returns. If execution finished (succeeded, failed, cancelled, exhausted) it returns { finished: true, run } with run.result holding the loop's return value and run.failure explaining a failure. Otherwise it returns { finished: false, status?, cursor?, next }: follow "next". It returns early when the run needs you: waiting for input (call provide_input) or paused (call resume_run). For a long run, keep calling wait_for_run with the same runId. cursor is the last event sequence, usable as "after" in read_run_events. If the deadline expires before any snapshot arrives, status, waiting and cursor are omitted. Deadlines and request cancellation stop observation only; they never cancel the run.`,
       inputSchema: {
         runId,
         timeoutSeconds: z
@@ -302,19 +301,14 @@ export function registerTools(
     },
     ({ loopId, status, parentRunId, cursor, limit }) =>
       guard(async () => {
-        const page = unwrap(
-          await client.GET('/runs', {
-            params: {
-              query: {
-                ...(loopId ? { loopId } : {}),
-                ...(status?.length ? { status: status.join(',') } : {}),
-                ...(parentRunId ? { parent: parentRunId } : {}),
-                ...(cursor !== undefined ? { cursor } : {}),
-                limit: limit ?? 20,
-              },
-            },
-          }),
-        );
+        const size = limit ?? 20;
+        const page = await runs.list(client, {
+          ...(loopId ? { loopId } : {}),
+          ...(status?.length ? { status: status.join(',') } : {}),
+          ...(parentRunId ? { parent: parentRunId } : {}),
+          ...(cursor !== undefined ? { cursor } : {}),
+          limit: size,
+        });
         return { items: page.items.map((r) => summarizeRun(r)), nextCursor: page.nextCursor };
       }),
   );
@@ -341,7 +335,7 @@ export function registerTools(
       guard(async () => {
         const size = limit ?? 100;
         const page = await runs.events(client, id, { after: after ?? 0, limit: size });
-        return { ...page, hasMore: page.items.length === size };
+        return page;
       }),
   );
 

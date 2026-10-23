@@ -1,0 +1,651 @@
+{
+  "before": {
+    "loopId": "01M5JART27VKX3RJA33RYANWVG",
+    "runId": "01M5JART342VRSS5V91QAVE5N8",
+    "path": "/crash-flight",
+    "run": {
+      "id": "01M5JART342VRSS5V91QAVE5N8",
+      "ownerId": "local",
+      "loopId": "01M5JART27VKX3RJA33RYANWVG",
+      "versionId": "01M5JART27QPVM432TKXHGZMMY",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Audit crash flight",
+        "label": "Audit crash flight v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5JART35YGPX3MTYQTA46XQQ",
+      "status": "succeeded",
+      "iteration": 1,
+      "outcome": "success",
+      "result": null,
+      "deliveries": [
+        {
+          "id": "01M5JART4ZTECJ2FCWAW4VSHSP",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5641/crash-flight"
+          },
+          "status": "pending",
+          "attempts": 1,
+          "maxAttempts": 5,
+          "inFlight": true,
+          "acknowledgement": "unknown",
+          "effectMayHaveHappened": true,
+          "acknowledgementUncertain": false,
+          "nextAttemptAt": "2026-10-22T17:33:15.024Z"
+        }
+      ],
+      "createdAt": "2026-10-22T17:33:02.948Z",
+      "startedAt": "2026-10-22T17:33:02.965Z",
+      "finishedAt": "2026-10-22T17:33:03.011Z",
+      "lastEventSeq": 10
+    },
+    "events": [
+      {
+        "runId": "01M5JART342VRSS5V91QAVE5N8",
+        "seq": 1,
+        "ts": "2026-10-22T17:33:02.948Z",
+        "type": "run.queued",
+        "versionId": "01M5JART27QPVM432TKXHGZMMY",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Audit crash flight",
+          "label": "Audit crash flight v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {}
+        },
+        "initialThread": {
+          "schemaVersion": 1,
+          "run": {
+            "id": "01M5JART342VRSS5V91QAVE5N8",
+            "loopId": "01M5JART27VKX3RJA33RYANWVG",
+            "versionId": "01M5JART27QPVM432TKXHGZMMY",
+            "iteration": 1
+          },
+          "invocation": {
+            "id": "01M5JART35YGPX3MTYQTA46XQQ",
+            "source": "manual.api",
+            "caller": {
+              "kind": "user",
+              "id": "local"
+            },
+            "trigger": {
+              "nodeId": "start",
+              "kind": "manual",
+              "payload": {
+                "name": "Audit crash flight",
+                "value": 42
+              },
+              "receivedAt": "2026-10-22T17:33:02.948Z"
+            }
+          },
+          "messages": [],
+          "vars": {},
+          "artifacts": [],
+          "outputs": {},
+          "gates": {},
+          "counters": {
+            "nodeVisits": {},
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          }
+        }
+      },
+      {
+        "runId": "01M5JART342VRSS5V91QAVE5N8",
+        "seq": 2,
+        "ts": "2026-10-22T17:33:02.969Z",
+        "type": "run.started",
+        "attempt": 1
+      },
+      {
+        "runId": "01M5JART342VRSS5V91QAVE5N8",
+        "seq": 3,
+        "ts": "2026-10-22T17:33:02.983Z",
+        "type": "node.started",
+        "nodeId": "start",
+        "kind": "trigger",
+        "attempt": 1,
+        "configHash": "527dee9c4254fe4e"
+      },
+      {
+        "runId": "01M5JART342VRSS5V91QAVE5N8",
+        "seq": 4,
+        "ts": "2026-10-22T17:33:02.990Z",
+        "type": "node.finished",
+        "nodeId": "start",
+        "patch": [
+          {
+            "op": "add",
+            "path": "/outputs/start",
+            "value": {
+              "nodeId": "start",
+              "value": {
+                "name": "Audit crash flight",
+                "value": 42
+              },
+              "at": "2026-10-22T17:33:02.989Z"
+            }
+          },
+          {
+            "op": "add",
+            "path": "/lastOutput",
+            "value": {
+              "nodeId": "start",
+              "value": {
+                "name": "Audit crash flight",
+                "value": 42
+              },
+              "at": "2026-10-22T17:33:02.989Z"
+            }
+          }
+        ],
+        "route": "out",
+        "durationMs": 0
+      },
+      {
+        "runId": "01M5JART342VRSS5V91QAVE5N8",
+        "seq": 5,
+        "ts": "2026-10-22T17:33:03.001Z",
+        "type": "node.started",
+        "nodeId": "done",
+        "kind": "exit",
+        "attempt": 1,
+        "configHash": "df91af1644a5d6e6"
+      },
+      {
+        "runId": "01M5JART342VRSS5V91QAVE5N8",
+        "seq": 6,
+        "ts": "2026-10-22T17:33:03.007Z",
+        "type": "exit.evaluated",
+        "nodeId": "done",
+        "outcome": "success"
+      },
+      {
+        "runId": "01M5JART342VRSS5V91QAVE5N8",
+        "seq": 7,
+        "ts": "2026-10-22T17:33:03.007Z",
+        "type": "node.finished",
+        "nodeId": "done",
+        "patch": [],
+        "durationMs": 1
+      },
+      {
+        "runId": "01M5JART342VRSS5V91QAVE5N8",
+        "seq": 8,
+        "ts": "2026-10-22T17:33:03.007Z",
+        "type": "run.finished",
+        "status": "succeeded",
+        "outcome": "success",
+        "result": null
+      },
+      {
+        "runId": "01M5JART342VRSS5V91QAVE5N8",
+        "seq": 9,
+        "ts": "2026-10-22T17:33:03.007Z",
+        "type": "delivery.queued",
+        "delivery": {
+          "id": "01M5JART4ZTECJ2FCWAW4VSHSP",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5641/crash-flight"
+          },
+          "status": "pending",
+          "attempts": 0,
+          "maxAttempts": 5,
+          "inFlight": false,
+          "acknowledgement": "not_sent",
+          "effectMayHaveHappened": false,
+          "acknowledgementUncertain": false
+        }
+      },
+      {
+        "runId": "01M5JART342VRSS5V91QAVE5N8",
+        "seq": 10,
+        "ts": "2026-10-22T17:33:03.026Z",
+        "type": "delivery.attempted",
+        "delivery": {
+          "id": "01M5JART4ZTECJ2FCWAW4VSHSP",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5641/crash-flight"
+          },
+          "status": "pending",
+          "attempts": 1,
+          "maxAttempts": 5,
+          "inFlight": true,
+          "acknowledgement": "unknown",
+          "effectMayHaveHappened": true,
+          "acknowledgementUncertain": false,
+          "nextAttemptAt": "2026-10-22T17:33:15.024Z"
+        }
+      }
+    ],
+    "rows": [
+      {
+        "finalized_at": null,
+        "last_event_seq": 10,
+        "status": "succeeded"
+      }
+    ],
+    "requests": [
+      {
+        "path": "/crash-flight",
+        "n": 1,
+        "ms": 1792690383032,
+        "key": "01M5JART4ZTECJ2FCWAW4VSHSP",
+        "body": {
+          "runId": "01M5JART342VRSS5V91QAVE5N8",
+          "loopId": "01M5JART27VKX3RJA33RYANWVG",
+          "outcome": "success",
+          "result": null
+        }
+      }
+    ]
+  },
+  "after": {
+    "loopId": "01M5JART27VKX3RJA33RYANWVG",
+    "runId": "01M5JART342VRSS5V91QAVE5N8",
+    "path": "/crash-flight",
+    "run": {
+      "id": "01M5JART342VRSS5V91QAVE5N8",
+      "ownerId": "local",
+      "loopId": "01M5JART27VKX3RJA33RYANWVG",
+      "versionId": "01M5JART27QPVM432TKXHGZMMY",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Audit crash flight",
+        "label": "Audit crash flight v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5JART35YGPX3MTYQTA46XQQ",
+      "status": "succeeded",
+      "iteration": 1,
+      "outcome": "success",
+      "result": null,
+      "deliveries": [
+        {
+          "id": "01M5JART4ZTECJ2FCWAW4VSHSP",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5641/crash-flight"
+          },
+          "status": "delivered",
+          "attempts": 2,
+          "maxAttempts": 5,
+          "inFlight": false,
+          "acknowledgement": "accepted",
+          "effectMayHaveHappened": true,
+          "acknowledgementUncertain": true,
+          "lastError": {
+            "code": "interrupted",
+            "message": "Process stopped before acknowledgement was recorded; the effect may have happened.",
+            "retryable": true,
+            "acknowledgement": "unknown"
+          }
+        }
+      ],
+      "createdAt": "2026-10-22T17:33:02.948Z",
+      "startedAt": "2026-10-22T17:33:02.965Z",
+      "finishedAt": "2026-10-22T17:33:03.011Z",
+      "lastEventSeq": 13
+    },
+    "events": [
+      {
+        "runId": "01M5JART342VRSS5V91QAVE5N8",
+        "seq": 1,
+        "ts": "2026-10-22T17:33:02.948Z",
+        "type": "run.queued",
+        "versionId": "01M5JART27QPVM432TKXHGZMMY",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Audit crash flight",
+          "label": "Audit crash flight v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {}
+        },
+        "initialThread": {
+          "schemaVersion": 1,
+          "run": {
+            "id": "01M5JART342VRSS5V91QAVE5N8",
+            "loopId": "01M5JART27VKX3RJA33RYANWVG",
+            "versionId": "01M5JART27QPVM432TKXHGZMMY",
+            "iteration": 1
+          },
+          "invocation": {
+            "id": "01M5JART35YGPX3MTYQTA46XQQ",
+            "source": "manual.api",
+            "caller": {
+              "kind": "user",
+              "id": "local"
+            },
+            "trigger": {
+              "nodeId": "start",
+              "kind": "manual",
+              "payload": {
+                "name": "Audit crash flight",
+                "value": 42
+              },
+              "receivedAt": "2026-10-22T17:33:02.948Z"
+            }
+          },
+          "messages": [],
+          "vars": {},
+          "artifacts": [],
+          "outputs": {},
+          "gates": {},
+          "counters": {
+            "nodeVisits": {},
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          }
+        }
+      },
+      {
+        "runId": "01M5JART342VRSS5V91QAVE5N8",
+        "seq": 2,
+        "ts": "2026-10-22T17:33:02.969Z",
+        "type": "run.started",
+        "attempt": 1
+      },
+      {
+        "runId": "01M5JART342VRSS5V91QAVE5N8",
+        "seq": 3,
+        "ts": "2026-10-22T17:33:02.983Z",
+        "type": "node.started",
+        "nodeId": "start",
+        "kind": "trigger",
+        "attempt": 1,
+        "configHash": "527dee9c4254fe4e"
+      },
+      {
+        "runId": "01M5JART342VRSS5V91QAVE5N8",
+        "seq": 4,
+        "ts": "2026-10-22T17:33:02.990Z",
+        "type": "node.finished",
+        "nodeId": "start",
+        "patch": [
+          {
+            "op": "add",
+            "path": "/outputs/start",
+            "value": {
+              "nodeId": "start",
+              "value": {
+                "name": "Audit crash flight",
+                "value": 42
+              },
+              "at": "2026-10-22T17:33:02.989Z"
+            }
+          },
+          {
+            "op": "add",
+            "path": "/lastOutput",
+            "value": {
+              "nodeId": "start",
+              "value": {
+                "name": "Audit crash flight",
+                "value": 42
+              },
+              "at": "2026-10-22T17:33:02.989Z"
+            }
+          }
+        ],
+        "route": "out",
+        "durationMs": 0
+      },
+      {
+        "runId": "01M5JART342VRSS5V91QAVE5N8",
+        "seq": 5,
+        "ts": "2026-10-22T17:33:03.001Z",
+        "type": "node.started",
+        "nodeId": "done",
+        "kind": "exit",
+        "attempt": 1,
+        "configHash": "df91af1644a5d6e6"
+      },
+      {
+        "runId": "01M5JART342VRSS5V91QAVE5N8",
+        "seq": 6,
+        "ts": "2026-10-22T17:33:03.007Z",
+        "type": "exit.evaluated",
+        "nodeId": "done",
+        "outcome": "success"
+      },
+      {
+        "runId": "01M5JART342VRSS5V91QAVE5N8",
+        "seq": 7,
+        "ts": "2026-10-22T17:33:03.007Z",
+        "type": "node.finished",
+        "nodeId": "done",
+        "patch": [],
+        "durationMs": 1
+      },
+      {
+        "runId": "01M5JART342VRSS5V91QAVE5N8",
+        "seq": 8,
+        "ts": "2026-10-22T17:33:03.007Z",
+        "type": "run.finished",
+        "status": "succeeded",
+        "outcome": "success",
+        "result": null
+      },
+      {
+        "runId": "01M5JART342VRSS5V91QAVE5N8",
+        "seq": 9,
+        "ts": "2026-10-22T17:33:03.007Z",
+        "type": "delivery.queued",
+        "delivery": {
+          "id": "01M5JART4ZTECJ2FCWAW4VSHSP",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5641/crash-flight"
+          },
+          "status": "pending",
+          "attempts": 0,
+          "maxAttempts": 5,
+          "inFlight": false,
+          "acknowledgement": "not_sent",
+          "effectMayHaveHappened": false,
+          "acknowledgementUncertain": false
+        }
+      },
+      {
+        "runId": "01M5JART342VRSS5V91QAVE5N8",
+        "seq": 10,
+        "ts": "2026-10-22T17:33:03.026Z",
+        "type": "delivery.attempted",
+        "delivery": {
+          "id": "01M5JART4ZTECJ2FCWAW4VSHSP",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5641/crash-flight"
+          },
+          "status": "pending",
+          "attempts": 1,
+          "maxAttempts": 5,
+          "inFlight": true,
+          "acknowledgement": "unknown",
+          "effectMayHaveHappened": true,
+          "acknowledgementUncertain": false,
+          "nextAttemptAt": "2026-10-22T17:33:15.024Z"
+        }
+      },
+      {
+        "runId": "01M5JART342VRSS5V91QAVE5N8",
+        "seq": 11,
+        "ts": "2026-10-22T17:33:17.864Z",
+        "type": "delivery.attempt_finished",
+        "delivery": {
+          "id": "01M5JART4ZTECJ2FCWAW4VSHSP",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5641/crash-flight"
+          },
+          "status": "pending",
+          "attempts": 1,
+          "maxAttempts": 5,
+          "inFlight": false,
+          "acknowledgement": "unknown",
+          "effectMayHaveHappened": true,
+          "acknowledgementUncertain": true,
+          "nextAttemptAt": "2026-10-22T17:33:15.024Z",
+          "lastError": {
+            "code": "interrupted",
+            "message": "Process stopped before acknowledgement was recorded; the effect may have happened.",
+            "retryable": true,
+            "acknowledgement": "unknown"
+          }
+        }
+      },
+      {
+        "runId": "01M5JART342VRSS5V91QAVE5N8",
+        "seq": 12,
+        "ts": "2026-10-22T17:33:17.886Z",
+        "type": "delivery.attempted",
+        "delivery": {
+          "id": "01M5JART4ZTECJ2FCWAW4VSHSP",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5641/crash-flight"
+          },
+          "status": "pending",
+          "attempts": 2,
+          "maxAttempts": 5,
+          "inFlight": true,
+          "acknowledgement": "unknown",
+          "effectMayHaveHappened": true,
+          "acknowledgementUncertain": true,
+          "nextAttemptAt": "2026-10-22T17:33:32.881Z",
+          "lastError": {
+            "code": "interrupted",
+            "message": "Process stopped before acknowledgement was recorded; the effect may have happened.",
+            "retryable": true,
+            "acknowledgement": "unknown"
+          }
+        }
+      },
+      {
+        "runId": "01M5JART342VRSS5V91QAVE5N8",
+        "seq": 13,
+        "ts": "2026-10-22T17:33:18.068Z",
+        "type": "delivery.finished",
+        "delivery": {
+          "id": "01M5JART4ZTECJ2FCWAW4VSHSP",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5641/crash-flight"
+          },
+          "status": "delivered",
+          "attempts": 2,
+          "maxAttempts": 5,
+          "inFlight": false,
+          "acknowledgement": "accepted",
+          "effectMayHaveHappened": true,
+          "acknowledgementUncertain": true,
+          "lastError": {
+            "code": "interrupted",
+            "message": "Process stopped before acknowledgement was recorded; the effect may have happened.",
+            "retryable": true,
+            "acknowledgement": "unknown"
+          }
+        }
+      }
+    ],
+    "rows": [
+      {
+        "finalized_at": "2026-10-22T17:33:18.082Z",
+        "last_event_seq": 13,
+        "status": "succeeded"
+      }
+    ],
+    "requests": [
+      {
+        "path": "/crash-flight",
+        "n": 1,
+        "ms": 1792690383032,
+        "key": "01M5JART4ZTECJ2FCWAW4VSHSP",
+        "body": {
+          "runId": "01M5JART342VRSS5V91QAVE5N8",
+          "loopId": "01M5JART27VKX3RJA33RYANWVG",
+          "outcome": "success",
+          "result": null
+        }
+      },
+      {
+        "path": "/crash-flight",
+        "n": 2,
+        "ms": 1792690398039,
+        "key": "01M5JART4ZTECJ2FCWAW4VSHSP",
+        "body": {
+          "runId": "01M5JART342VRSS5V91QAVE5N8",
+          "loopId": "01M5JART27VKX3RJA33RYANWVG",
+          "outcome": "success",
+          "result": null
+        }
+      }
+    ]
+  }
+}

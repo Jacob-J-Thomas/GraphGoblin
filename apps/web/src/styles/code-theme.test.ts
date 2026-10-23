@@ -5,6 +5,7 @@ import { jinja2 } from '@codemirror/legacy-modes/mode/jinja2';
 import { EditorState, type Extension } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { basicSetup } from 'codemirror';
+import { waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { codeTheme, roleOf, tokenHighlighter } from './code-theme.js';
 
@@ -51,12 +52,17 @@ describe('code theme', () => {
     expect(tokenHighlighter.style([tag('keyword')])).toBe('gg-tok-keyword');
   });
 
-  it('colours JSON keys, strings, numbers, and literals', () => {
-    const classes = classesOf(render('{"name": "loop", "count": 2, "on": true}', json()));
-    expect(classes).toContainEqual(['gg-tok-property', '"name"']);
-    expect(classes).toContainEqual(['gg-tok-string', '"loop"']);
-    expect(classes).toContainEqual(['gg-tok-number', '2']);
-    expect(classes).toContainEqual(['gg-tok-number', 'true']);
+  it('colours JSON keys, strings, numbers, and literals', async () => {
+    const content = render('{"name": "loop", "count": 2, "on": true}', json());
+    // CodeMirror can exhaust its initial parse budget and finish highlighting on a later task.
+    // Read a fresh DOM snapshot until all four token assertions pass together.
+    await waitFor(() => {
+      const classes = classesOf(content);
+      expect(classes).toContainEqual(['gg-tok-property', '"name"']);
+      expect(classes).toContainEqual(['gg-tok-string', '"loop"']);
+      expect(classes).toContainEqual(['gg-tok-number', '2']);
+      expect(classes).toContainEqual(['gg-tok-number', 'true']);
+    });
   });
 
   it('draws the search panel (Ctrl+F) and its matches with the tokens, not the base theme', () => {

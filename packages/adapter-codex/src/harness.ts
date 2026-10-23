@@ -1,7 +1,7 @@
 import { readinessFailure } from '@graphgoblin/domain';
 import type { Effort } from '@graphgoblin/contracts';
 import {
-  describeError,
+  harnessFailureSubmission,
   type HarnessEvent,
   type HarnessPort,
   type HarnessPreflight,
@@ -59,7 +59,7 @@ export interface CodexHarnessOptions {
   cliRunner?: CliRunner;
 }
 
-const DEFAULT_MODEL = 'gpt-6-luna';
+export const DEFAULT_MODEL = 'gpt-6-luna';
 const DEFAULT_EFFORT: Effort = 'low';
 
 function abortError(): Error {
@@ -183,35 +183,38 @@ export class CodexHarness implements HarnessPort {
           }
         }
       } catch (error) {
-        if (!controller.signal.aborted) accumulator.fail(describeError(error));
+        // Even cancellation cannot discard higher-ranked terminal evidence from this boundary.
+        accumulator.fail(error);
       } finally {
         signal.removeEventListener('abort', onAbort);
       }
 
-      if (controller.signal.aborted) {
+      const outcome = accumulator.finish();
+      if (
+        controller.signal.aborted &&
+        outcome.failure?.code.toUpperCase() !== 'HARNESS_TERMINATION_UNCONFIRMED'
+      ) {
         queue.close();
         const error = abortError();
         rejectId(error);
         throw error;
       }
-      const outcome = accumulator.finish();
       if (outcome.failure) {
         const { code, message, retriable } = outcome.failure;
         logger?.warn({ code, retriable, sessionId: announced }, `codex turn failed: ${message}`);
-        const submission =
-          code === 'HARNESS_SESSION_MISSING'
-            ? 'session-missing'
-            : !accepted &&
-                [
-                  'HARNESS_NOT_INSTALLED',
-                  'HARNESS_NOT_AUTHENTICATED',
-                  'HARNESS_ARGUMENTS_REJECTED',
-                ].includes(code)
-              ? 'definitely-not-submitted'
-              : 'delivery-uncertain';
+        const fallback =
+          !accepted &&
+          [
+            'HARNESS_NOT_INSTALLED',
+            'HARNESS_NOT_AUTHENTICATED',
+            'HARNESS_ARGUMENTS_REJECTED',
+          ].includes(code)
+            ? 'definitely-not-submitted'
+            : 'delivery-uncertain';
+        const submission = harnessFailureSubmission(outcome.failure, fallback, accepted);
         queue.push({ type: 'error', code, message, retriable, submission });
         queue.close();
-        const error = Object.assign(new Error(message), { code, retriable });
+        const error = Object.assign(new Error(message), { code, retriable, submission });
         rejectId(error);
         throw error;
       }

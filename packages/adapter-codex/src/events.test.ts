@@ -154,6 +154,25 @@ describe('mapUsage', () => {
 });
 
 describe('classifyCodexError', () => {
+  it('uses native-message fallback for unknown metadata and defaults a missing retry hint to false', () => {
+    expect(
+      classifyCodexError({
+        code: 'UNKNOWN',
+        message: 'No rollout found with id abc',
+        retriable: true,
+      }),
+    ).toMatchObject({ code: 'HARNESS_SESSION_MISSING', retriable: false });
+    expect(
+      classifyCodexError({
+        code: 'HARNESS_SESSION_MISSING',
+        message: 'Recorded conversation refused',
+      }),
+    ).toEqual({
+      code: 'HARNESS_SESSION_MISSING',
+      message: 'Recorded conversation refused',
+      retriable: false,
+    });
+  });
   it('unwraps the JSON API error Codex reports', () => {
     const raw = loadFixture('failed-invalid-model').events.find((e) => e.type === 'turn.failed');
     const message = (raw as { error: { message: string } }).error.message;
@@ -202,6 +221,20 @@ describe('classifyCodexError', () => {
 });
 
 describe('TurnAccumulator', () => {
+  it('retains authoritative typed evidence over later generic and missing-session wrappers', () => {
+    const acc = new TurnAccumulator('resumed');
+    acc.push({ type: 'turn.failed', error: { message: 'Not logged in' } });
+    acc.fail({
+      code: 'HARNESS_SESSION_MISSING',
+      message: 'Recorded conversation refused',
+      retriable: true,
+    });
+    expect(acc.finish().failure?.code).toBe('HARNESS_SESSION_MISSING');
+    acc.fail({ code: 'HARNESS_TERMINATION_UNCONFIRMED', message: 'Process still alive' });
+    acc.fail({ code: 'HARNESS_SESSION_MISSING', message: 'Recorded conversation refused' });
+    acc.fail('Generic wrapper');
+    expect(acc.finish().failure?.code).toBe('HARNESS_TERMINATION_UNCONFIRMED');
+  });
   it('replays the plain message fixture', () => {
     const acc = new TurnAccumulator('fresh');
     const out = loadFixture('message').events.flatMap((e) => acc.push(e));

@@ -1,0 +1,202 @@
+
+
+ RUN  v5.0.3 <USERPROFILE>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f4-prompt-provenance/packages/engine
+
+
+
+ ❯ src/handlers/inference-refusal.test.ts (8 tests | 4 failed) 315ms
+
+   × preserves sync codex missing-session repair refusal with retriable=false 140ms
+
+   × preserves sync codex missing-session repair refusal with retriable=true 10ms
+
+   × preserves sync claude missing-session repair refusal with retriable=false 33ms
+
+   × preserves sync claude missing-session repair refusal with retriable=true 22ms
+
+pnpm.cmd : 
+
+At line:3 char:1
+
++ pnpm.cmd --filter @graphgoblin/engine exec vitest run src/handlers/in ...
+
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+
+    + FullyQualifiedErrorId : NativeCommandError
+
+ 
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+
+
+ FAIL  src/handlers/inference-refusal.test.ts > preserves sync codex missing-session repair refusal with 
+
+retriable=false
+
+ FAIL  src/handlers/inference-refusal.test.ts > preserves sync codex missing-session repair refusal with retriable=true
+
+ FAIL  src/handlers/inference-refusal.test.ts > preserves sync claude missing-session repair refusal with 
+
+retriable=true
+
+AssertionError: expected { code: 'HARNESS_TURN_FAILED', …(5) } to match object { …(4) }
+
+(5 matching properties omitted from actual)
+
+
+
+- Expected
+
++ Received
+
+
+
+  {
+
+-   "code": "HARNESS_SESSION_MISSING",
+
++   "code": "HARNESS_TURN_FAILED",
+
+    "details": {
+
+      "adapterCode": "HARNESS_SESSION_MISSING",
+
+    },
+
+    "inference": {
+
+      "promptKind": "repair",
+
+-     "submission": "session-missing",
+
++     "submission": "definitely-not-submitted",
+
+    },
+
+-   "resumable": false,
+
++   "resumable": true,
+
+  }
+
+
+
+ ❯ src/handlers/inference-refusal.test.ts:65:27
+
+     63|       const run = await e.runToIdle(version.loopId);
+
+     64|       expect(run.status).toBe('failed');
+
+     65|       expect(run.failure).toMatchObject({
+
+       |                           ^
+
+     66|         code: 'HARNESS_SESSION_MISSING',
+
+     67|         resumable: false,
+
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+
+
+ FAIL  src/handlers/inference-refusal.test.ts > preserves sync claude missing-session repair refusal with 
+
+retriable=false
+
+AssertionError: expected { code: 'HARNESS_TURN_FAILED', …(5) } to match object { …(4) }
+
+(5 matching properties omitted from actual)
+
+
+
+- Expected
+
++ Received
+
+
+
+  {
+
+-   "code": "HARNESS_SESSION_MISSING",
+
++   "code": "HARNESS_TURN_FAILED",
+
+    "details": {
+
+      "adapterCode": "HARNESS_SESSION_MISSING",
+
+    },
+
+    "inference": {
+
+      "promptKind": "repair",
+
+-     "submission": "session-missing",
+
++     "submission": "definitely-not-submitted",
+
+    },
+
+    "resumable": false,
+
+  }
+
+
+
+ ❯ src/handlers/inference-refusal.test.ts:65:27
+
+     63|       const run = await e.runToIdle(version.loopId);
+
+     64|       expect(run.status).toBe('failed');
+
+     65|       expect(run.failure).toMatchObject({
+
+       |                           ^
+
+     66|         code: 'HARNESS_SESSION_MISSING',
+
+     67|         resumable: false,
+
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+
+
+
+
+ Test Files  1 failed (1)
+
+      Tests  4 failed | 4 passed (8)
+
+   Start at  16:18:18
+
+   Duration  5.70s (import 48%, transform 46%, tests 6%)
+
+
+
+  Transform  transforming modules took 2.38s · 46% of tracked time, re-done on every run
+
+             persist transforms across runs with fsModuleCache: true
+
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+
+
+  × "pnpm recursive exec" failed in C:
+
+  │ \Users\<user>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f4-
+
+  │ prompt-provenance\packages\engine
+
+
+

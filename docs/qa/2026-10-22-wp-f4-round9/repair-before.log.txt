@@ -1,0 +1,68 @@
+
+ RUN  v5.0.3 <USERPROFILE>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f4-prompt-provenance/packages/engine
+
+ ❯ src/handlers/inference-evidence-matrix.test.ts (868 tests | 4 failed | 864 skipped) 170ms
+   × reconciles codex repair afterCommit=false with a failed read 84ms
+   × reconciles codex repair afterCommit=true with a failed read 19ms
+   × reconciles claude repair afterCommit=false with a failed read 30ms
+   × reconciles claude repair afterCommit=true with a failed read 31ms
+pnpm.cmd : 
+At line:2 char:50
++ ... $env:PATH"; pnpm.cmd --filter @graphgoblin/engine exec vitest run src ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/handlers/inference-evidence-matrix.test.ts > reconciles codex repair afterCommit=false with a failed read
+ FAIL  src/handlers/inference-evidence-matrix.test.ts > reconciles codex repair afterCommit=true with a failed read
+ FAIL  src/handlers/inference-evidence-matrix.test.ts > reconciles claude repair afterCommit=false with a failed read
+ FAIL  src/handlers/inference-evidence-matrix.test.ts > reconciles claude repair afterCommit=true with a failed read
+AssertionError: expected { code: 'INTERNAL_ERROR', …(4) } to match object { code: 'INTERNAL_ERROR', …(2) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "code": "INTERNAL_ERROR",
+    "details": {
+-     "recording": Any<Array>,
+-   },
+-   "inference": {
+-     "promptKind": "repair",
+-     "submission": "definitely-not-submitted",
++     "name": "Error",
++     "stack": "Error: Reconciliation read failed
++     at Object.read (<USERPROFILE>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f4-prompt-provenance/packages/
+engine/src/handlers/inference-evidence-matrix.test.ts:65:74)
++     at Object.execute (<USERPROFILE>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f4-prompt-provenance/packag
+es/engine/src/handlers/inference.ts:484:50)
++     at RunManager.execute (<USERPROFILE>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f4-prompt-provenance/pa
+ckages/engine/src/run-manager.ts:1594:18)",
+    },
+  }
+
+ ❯ src/handlers/inference-evidence-matrix.test.ts:74:25
+     72|     await manager.waitForIdle();
+     73|     const run = (await e.ports.runs.get(started.id))!;
+     74|     expect(run.failure).toMatchObject({code: 'INTERNAL_ERROR', inferen…
+       |                         ^
+     75|     expect(readFailed).toBe(true); expect(fake.cancelled).toHaveLength…
+     76|     await manager.resume(run.id); await manager.waitForIdle();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 864 skipped (868)
+   Start at  19:50:07
+   Duration  2.93s (import 51%, transform 42%, tests 6%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ \Users\<user>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f4-
+  │ prompt-provenance\packages\engine
+

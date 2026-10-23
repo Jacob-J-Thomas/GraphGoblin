@@ -1,0 +1,828 @@
+[
+  {
+    "case": "api401",
+    "expected": "auth",
+    "pass": true,
+    "validationProblemMatches": true,
+    "harnesses": [
+      {
+        "harness": "codex",
+        "state": "auth",
+        "authenticatedPresent": true,
+        "authenticated": false,
+        "problems": ["Codex sign-in is missing or invalid. Run codex login, then retry preflight."]
+      },
+      {
+        "harness": "claude",
+        "state": "auth",
+        "authenticatedPresent": true,
+        "authenticated": false,
+        "problems": [
+          "Claude sign-in is missing or invalid. Run claude auth login, then retry preflight."
+        ]
+      }
+    ],
+    "probes": {
+      "claude": 1,
+      "codex": 1
+    },
+    "status": {
+      "preflight": 200,
+      "validate": 200,
+      "publish": 422,
+      "run": 422
+    },
+    "system": [
+      {
+        "id": "harness.claude",
+        "state": "auth",
+        "message": "Claude sign-in is missing or invalid. Run claude auth login, then retry preflight."
+      },
+      {
+        "id": "harness.codex",
+        "state": "auth",
+        "message": "Codex sign-in is missing or invalid. Run codex login, then retry preflight."
+      }
+    ]
+  },
+  {
+    "case": "http429",
+    "expected": "quota",
+    "pass": true,
+    "validationProblemMatches": true,
+    "harnesses": [
+      {
+        "harness": "codex",
+        "state": "quota",
+        "authenticatedPresent": false,
+        "problems": [
+          "Codex account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+        ]
+      },
+      {
+        "harness": "claude",
+        "state": "quota",
+        "authenticatedPresent": false,
+        "problems": [
+          "Claude account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+        ]
+      }
+    ],
+    "probes": {
+      "claude": 1,
+      "codex": 1
+    },
+    "status": {
+      "preflight": 200,
+      "validate": 200,
+      "publish": 422,
+      "run": 422
+    },
+    "system": [
+      {
+        "id": "harness.claude",
+        "state": "quota",
+        "message": "Claude account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+      },
+      {
+        "id": "harness.codex",
+        "state": "quota",
+        "message": "Codex account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+      }
+    ]
+  },
+  {
+    "case": "stdout429-warning",
+    "expected": "quota",
+    "pass": true,
+    "validationProblemMatches": true,
+    "harnesses": [
+      {
+        "harness": "codex",
+        "state": "quota",
+        "authenticatedPresent": false,
+        "problems": [
+          "Codex account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+        ]
+      },
+      {
+        "harness": "claude",
+        "state": "quota",
+        "authenticatedPresent": false,
+        "problems": [
+          "Claude account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+        ]
+      }
+    ],
+    "probes": {
+      "claude": 1,
+      "codex": 1
+    },
+    "status": {
+      "preflight": 200,
+      "validate": 200,
+      "publish": 422,
+      "run": 422
+    },
+    "system": [
+      {
+        "id": "harness.claude",
+        "state": "quota",
+        "message": "Claude account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+      },
+      {
+        "id": "harness.codex",
+        "state": "quota",
+        "message": "Codex account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+      }
+    ]
+  },
+  {
+    "case": "empty",
+    "expected": "unknown",
+    "pass": true,
+    "validationProblemMatches": true,
+    "harnesses": [
+      {
+        "harness": "codex",
+        "state": "unknown",
+        "authenticatedPresent": false,
+        "problems": [
+          "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight."
+        ]
+      },
+      {
+        "harness": "claude",
+        "state": "unknown",
+        "authenticatedPresent": false,
+        "problems": [
+          "Claude readiness could not be confirmed. Check that the Claude CLI starts and responds, then retry preflight."
+        ]
+      }
+    ],
+    "probes": {
+      "claude": 1,
+      "codex": 1
+    },
+    "status": {
+      "preflight": 200,
+      "validate": 200,
+      "publish": 422,
+      "run": 422
+    },
+    "system": [
+      {
+        "id": "harness.claude",
+        "state": "unknown",
+        "message": "Claude readiness could not be confirmed. Check that the Claude CLI starts and responds, then retry preflight."
+      },
+      {
+        "id": "harness.codex",
+        "state": "unknown",
+        "message": "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight."
+      }
+    ]
+  },
+  {
+    "case": "empty-object",
+    "expected": "unknown",
+    "pass": true,
+    "validationProblemMatches": true,
+    "harnesses": [
+      {
+        "harness": "codex",
+        "state": "unknown",
+        "authenticatedPresent": false,
+        "problems": [
+          "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight."
+        ]
+      },
+      {
+        "harness": "claude",
+        "state": "unknown",
+        "authenticatedPresent": false,
+        "problems": [
+          "Claude readiness could not be confirmed. Check that the Claude CLI starts and responds, then retry preflight."
+        ]
+      }
+    ],
+    "probes": {
+      "claude": 1,
+      "codex": 1
+    },
+    "status": {
+      "preflight": 200,
+      "validate": 200,
+      "publish": 422,
+      "run": 422
+    },
+    "system": [
+      {
+        "id": "harness.claude",
+        "state": "unknown",
+        "message": "Claude readiness could not be confirmed. Check that the Claude CLI starts and responds, then retry preflight."
+      },
+      {
+        "id": "harness.codex",
+        "state": "unknown",
+        "message": "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight."
+      }
+    ]
+  },
+  {
+    "case": "ready",
+    "expected": "ready",
+    "pass": true,
+    "validationProblemMatches": true,
+    "harnesses": [
+      {
+        "harness": "codex",
+        "state": "ready",
+        "authenticatedPresent": true,
+        "authenticated": true,
+        "problems": []
+      },
+      {
+        "harness": "claude",
+        "state": "ready",
+        "authenticatedPresent": true,
+        "authenticated": true,
+        "problems": []
+      }
+    ],
+    "probes": {
+      "claude": 1,
+      "codex": 1
+    },
+    "status": {
+      "preflight": 200,
+      "validate": 200,
+      "publish": 200
+    },
+    "system": [
+      {
+        "id": "harness.claude",
+        "state": "ready",
+        "message": "claude 2.1.287 is installed and logged in"
+      },
+      {
+        "id": "harness.codex",
+        "state": "ready",
+        "message": "codex 0.160.0-beta.1 is installed and logged in"
+      }
+    ]
+  },
+  {
+    "case": "signed-out",
+    "expected": "auth",
+    "pass": true,
+    "validationProblemMatches": true,
+    "harnesses": [
+      {
+        "harness": "codex",
+        "state": "auth",
+        "authenticatedPresent": true,
+        "authenticated": false,
+        "problems": ["Codex sign-in is missing or invalid. Run codex login, then retry preflight."]
+      },
+      {
+        "harness": "claude",
+        "state": "auth",
+        "authenticatedPresent": true,
+        "authenticated": false,
+        "problems": ["Claude is not signed in. Run claude auth login, then retry preflight."]
+      }
+    ],
+    "probes": {
+      "claude": 1,
+      "codex": 1
+    },
+    "status": {
+      "preflight": 200,
+      "validate": 200,
+      "publish": 422,
+      "run": 422
+    },
+    "system": [
+      {
+        "id": "harness.claude",
+        "state": "auth",
+        "message": "Claude is not signed in. Run claude auth login, then retry preflight."
+      },
+      {
+        "id": "harness.codex",
+        "state": "auth",
+        "message": "Codex sign-in is missing or invalid. Run codex login, then retry preflight."
+      }
+    ]
+  },
+  {
+    "case": "errno-auth",
+    "expected": "transport",
+    "pass": true,
+    "validationProblemMatches": true,
+    "harnesses": [
+      {
+        "harness": "codex",
+        "state": "transport",
+        "authenticatedPresent": false,
+        "problems": [
+          "Codex reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight."
+        ]
+      },
+      {
+        "harness": "claude",
+        "state": "transport",
+        "authenticatedPresent": false,
+        "problems": [
+          "Claude reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight."
+        ]
+      }
+    ],
+    "probes": {
+      "claude": 1,
+      "codex": 1
+    },
+    "status": {
+      "preflight": 200,
+      "validate": 200,
+      "publish": 422,
+      "run": 422
+    },
+    "system": [
+      {
+        "id": "harness.claude",
+        "state": "transport",
+        "message": "Claude reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight."
+      },
+      {
+        "id": "harness.codex",
+        "state": "transport",
+        "message": "Codex reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight."
+      }
+    ]
+  },
+  {
+    "case": "syntax-status-network",
+    "expected": "cli-incompatible",
+    "pass": true,
+    "validationProblemMatches": true,
+    "harnesses": [
+      {
+        "harness": "codex",
+        "state": "cli-incompatible",
+        "authenticatedPresent": false,
+        "problems": [
+          "Codex CLI lacks a required capability. Update the Codex CLI, then retry preflight."
+        ]
+      },
+      {
+        "harness": "claude",
+        "state": "cli-incompatible",
+        "authenticatedPresent": false,
+        "problems": [
+          "Claude CLI lacks a required capability. Update the Claude CLI, then retry preflight."
+        ]
+      }
+    ],
+    "probes": {
+      "claude": 1,
+      "codex": 1
+    },
+    "status": {
+      "preflight": 200,
+      "validate": 200,
+      "publish": 422,
+      "run": 422
+    },
+    "system": [
+      {
+        "id": "harness.claude",
+        "state": "cli-incompatible",
+        "message": "Claude CLI lacks a required capability. Update the Claude CLI, then retry preflight."
+      },
+      {
+        "id": "harness.codex",
+        "state": "cli-incompatible",
+        "message": "Codex CLI lacks a required capability. Update the Codex CLI, then retry preflight."
+      }
+    ]
+  },
+  {
+    "case": "http403",
+    "expected": "auth",
+    "pass": true,
+    "validationProblemMatches": true,
+    "harnesses": [
+      {
+        "harness": "codex",
+        "state": "auth",
+        "authenticatedPresent": true,
+        "authenticated": false,
+        "problems": ["Codex sign-in is missing or invalid. Run codex login, then retry preflight."]
+      },
+      {
+        "harness": "claude",
+        "state": "auth",
+        "authenticatedPresent": true,
+        "authenticated": false,
+        "problems": [
+          "Claude sign-in is missing or invalid. Run claude auth login, then retry preflight."
+        ]
+      }
+    ],
+    "probes": {
+      "claude": 1,
+      "codex": 1
+    },
+    "status": {
+      "preflight": 200,
+      "validate": 200,
+      "publish": 422,
+      "run": 422
+    },
+    "system": [
+      {
+        "id": "harness.claude",
+        "state": "auth",
+        "message": "Claude sign-in is missing or invalid. Run claude auth login, then retry preflight."
+      },
+      {
+        "id": "harness.codex",
+        "state": "auth",
+        "message": "Codex sign-in is missing or invalid. Run codex login, then retry preflight."
+      }
+    ]
+  },
+  {
+    "case": "http503",
+    "expected": "transport",
+    "pass": true,
+    "validationProblemMatches": true,
+    "harnesses": [
+      {
+        "harness": "codex",
+        "state": "transport",
+        "authenticatedPresent": false,
+        "problems": [
+          "Codex reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight."
+        ]
+      },
+      {
+        "harness": "claude",
+        "state": "transport",
+        "authenticatedPresent": false,
+        "problems": [
+          "Claude reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight."
+        ]
+      }
+    ],
+    "probes": {
+      "claude": 1,
+      "codex": 1
+    },
+    "status": {
+      "preflight": 200,
+      "validate": 200,
+      "publish": 422,
+      "run": 422
+    },
+    "system": [
+      {
+        "id": "harness.claude",
+        "state": "transport",
+        "message": "Claude reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight."
+      },
+      {
+        "id": "harness.codex",
+        "state": "transport",
+        "message": "Codex reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight."
+      }
+    ]
+  },
+  {
+    "case": "unrecognized",
+    "expected": "unknown",
+    "pass": true,
+    "validationProblemMatches": true,
+    "harnesses": [
+      {
+        "harness": "codex",
+        "state": "unknown",
+        "authenticatedPresent": false,
+        "problems": [
+          "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight."
+        ]
+      },
+      {
+        "harness": "claude",
+        "state": "unknown",
+        "authenticatedPresent": false,
+        "problems": [
+          "Claude CLI check exited with code 3762504530. Check that the Claude CLI starts and responds, then retry preflight."
+        ]
+      }
+    ],
+    "probes": {
+      "claude": 1,
+      "codex": 1
+    },
+    "status": {
+      "preflight": 200,
+      "validate": 200,
+      "publish": 422,
+      "run": 422
+    },
+    "system": [
+      {
+        "id": "harness.claude",
+        "state": "unknown",
+        "message": "Claude CLI check exited with code 3762504530. Check that the Claude CLI starts and responds, then retry preflight."
+      },
+      {
+        "id": "harness.codex",
+        "state": "unknown",
+        "message": "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight."
+      }
+    ]
+  },
+  {
+    "case": "old",
+    "expected": "cli-incompatible",
+    "pass": true,
+    "validationProblemMatches": true,
+    "harnesses": [
+      {
+        "harness": "codex",
+        "state": "cli-incompatible",
+        "authenticatedPresent": false,
+        "problems": [
+          "Codex CLI 0.100.0 is older than the minimum version 0.160.0. Update the Codex CLI, then retry preflight."
+        ]
+      },
+      {
+        "harness": "claude",
+        "state": "cli-incompatible",
+        "authenticatedPresent": true,
+        "authenticated": true,
+        "problems": [
+          "Claude CLI 2.1.284 is older than the minimum version 2.1.285. Update the Claude CLI, then retry preflight."
+        ]
+      }
+    ],
+    "probes": {
+      "claude": 1,
+      "codex": 1
+    },
+    "status": {
+      "preflight": 200,
+      "validate": 200,
+      "publish": 422,
+      "run": 422
+    },
+    "system": [
+      {
+        "id": "harness.codex",
+        "state": "cli-incompatible",
+        "message": "Codex CLI 0.100.0 is older than the minimum version 0.160.0. Update the Codex CLI, then retry preflight."
+      },
+      {
+        "id": "harness.claude",
+        "state": "cli-incompatible",
+        "message": "Claude CLI 2.1.284 is older than the minimum version 2.1.285. Update the Claude CLI, then retry preflight."
+      }
+    ]
+  },
+  {
+    "case": "missing-model",
+    "expected": "cli-incompatible",
+    "pass": true,
+    "validationProblemMatches": true,
+    "harnesses": [
+      {
+        "harness": "codex",
+        "state": "cli-incompatible",
+        "authenticatedPresent": false,
+        "problems": [
+          "Codex CLI 0.160.0-beta.1 does not list required exec options: --model. Update the Codex CLI, then retry preflight."
+        ]
+      },
+      {
+        "harness": "claude",
+        "state": "cli-incompatible",
+        "authenticatedPresent": true,
+        "authenticated": true,
+        "problems": [
+          "Claude CLI 2.1.287 does not list required options: --model. Update the Claude CLI, then retry preflight."
+        ]
+      }
+    ],
+    "probes": {
+      "claude": 1,
+      "codex": 1
+    },
+    "status": {
+      "preflight": 200,
+      "validate": 200,
+      "publish": 422,
+      "run": 422
+    },
+    "system": [
+      {
+        "id": "harness.codex",
+        "state": "cli-incompatible",
+        "message": "Codex CLI 0.160.0-beta.1 does not list required exec options: --model. Update the Codex CLI, then retry preflight."
+      },
+      {
+        "id": "harness.claude",
+        "state": "cli-incompatible",
+        "message": "Claude CLI 2.1.287 does not list required options: --model. Update the Claude CLI, then retry preflight."
+      }
+    ]
+  },
+  {
+    "case": "missing-effort",
+    "expected": "cli-incompatible",
+    "pass": true,
+    "validationProblemMatches": true,
+    "harnesses": [
+      {
+        "harness": "codex",
+        "state": "cli-incompatible",
+        "authenticatedPresent": false,
+        "problems": [
+          "Codex CLI 0.160.0-beta.1 does not list required exec options: --config. Update the Codex CLI, then retry preflight."
+        ]
+      },
+      {
+        "harness": "claude",
+        "state": "cli-incompatible",
+        "authenticatedPresent": true,
+        "authenticated": true,
+        "problems": [
+          "Claude CLI 2.1.287 does not list required options: --effort. Update the Claude CLI, then retry preflight."
+        ]
+      }
+    ],
+    "probes": {
+      "claude": 1,
+      "codex": 1
+    },
+    "status": {
+      "preflight": 200,
+      "validate": 200,
+      "publish": 422,
+      "run": 422
+    },
+    "system": [
+      {
+        "id": "harness.codex",
+        "state": "cli-incompatible",
+        "message": "Codex CLI 0.160.0-beta.1 does not list required exec options: --config. Update the Codex CLI, then retry preflight."
+      },
+      {
+        "id": "harness.claude",
+        "state": "cli-incompatible",
+        "message": "Claude CLI 2.1.287 does not list required options: --effort. Update the Claude CLI, then retry preflight."
+      }
+    ]
+  },
+  {
+    "case": "quota",
+    "expected": "quota",
+    "pass": true,
+    "validationProblemMatches": true,
+    "harnesses": [
+      {
+        "harness": "codex",
+        "state": "quota",
+        "authenticatedPresent": false,
+        "problems": [
+          "Codex account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+        ]
+      },
+      {
+        "harness": "claude",
+        "state": "quota",
+        "authenticatedPresent": false,
+        "problems": [
+          "Claude account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+        ]
+      }
+    ],
+    "probes": {
+      "claude": 1,
+      "codex": 1
+    },
+    "status": {
+      "preflight": 200,
+      "validate": 200,
+      "publish": 422,
+      "run": 422
+    },
+    "system": [
+      {
+        "id": "harness.claude",
+        "state": "quota",
+        "message": "Claude account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+      },
+      {
+        "id": "harness.codex",
+        "state": "quota",
+        "message": "Codex account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+      }
+    ]
+  },
+  {
+    "case": "transport",
+    "expected": "transport",
+    "pass": true,
+    "validationProblemMatches": true,
+    "harnesses": [
+      {
+        "harness": "codex",
+        "state": "transport",
+        "authenticatedPresent": false,
+        "problems": [
+          "Codex reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight."
+        ]
+      },
+      {
+        "harness": "claude",
+        "state": "transport",
+        "authenticatedPresent": false,
+        "problems": [
+          "Claude reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight."
+        ]
+      }
+    ],
+    "probes": {
+      "claude": 1,
+      "codex": 1
+    },
+    "status": {
+      "preflight": 200,
+      "validate": 200,
+      "publish": 422,
+      "run": 422
+    },
+    "system": [
+      {
+        "id": "harness.claude",
+        "state": "transport",
+        "message": "Claude reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight."
+      },
+      {
+        "id": "harness.codex",
+        "state": "transport",
+        "message": "Codex reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight."
+      }
+    ]
+  },
+  {
+    "case": "unknown",
+    "expected": "unknown",
+    "pass": true,
+    "validationProblemMatches": true,
+    "harnesses": [
+      {
+        "harness": "codex",
+        "state": "unknown",
+        "authenticatedPresent": false,
+        "problems": [
+          "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight."
+        ]
+      },
+      {
+        "harness": "claude",
+        "state": "unknown",
+        "authenticatedPresent": false,
+        "problems": [
+          "Claude CLI check exited with code 1. Check that the Claude CLI starts and responds, then retry preflight."
+        ]
+      }
+    ],
+    "probes": {
+      "claude": 1,
+      "codex": 1
+    },
+    "status": {
+      "preflight": 200,
+      "validate": 200,
+      "publish": 422,
+      "run": 422
+    },
+    "system": [
+      {
+        "id": "harness.claude",
+        "state": "unknown",
+        "message": "Claude CLI check exited with code 1. Check that the Claude CLI starts and responds, then retry preflight."
+      },
+      {
+        "id": "harness.codex",
+        "state": "unknown",
+        "message": "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight."
+      }
+    ]
+  }
+]

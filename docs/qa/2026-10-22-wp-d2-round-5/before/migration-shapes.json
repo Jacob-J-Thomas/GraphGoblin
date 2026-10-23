@@ -1,0 +1,321 @@
+{
+  "before": {
+    "run_id": "01M5J6BJS4S6E8ASS6KYDKV25N",
+    "seq": 15,
+    "ts": "2026-10-22T17:10:05.382Z",
+    "type": "return.delivered",
+    "node_id": null,
+    "payload": "{\"channel\":{\"kind\":\"webhook\",\"url\":\"http://127.0.0.1:5642/hold-finalisation\"},\"target\":17,\"unexpectedEvidence\":\"keep-this-damaged-record\"}"
+  },
+  "after": {
+    "run_id": "01M5J6BJS4S6E8ASS6KYDKV25N",
+    "seq": 15,
+    "ts": "2026-10-22T17:10:05.382Z",
+    "type": "delivery.finished",
+    "node_id": null,
+    "payload": "{\"delivery\":{\"id\":\"01M5J6BJS4S6E8ASS6KYDKV25N:return:15\",\"channel\":{\"kind\":\"webhook\",\"url\":\"http://127.0.0.1:5642/hold-finalisation\"},\"status\":\"delivered\",\"attempts\":1,\"maxAttempts\":1,\"inFlight\":false,\"acknowledgement\":\"accepted\",\"effectMayHaveHappened\":true}}"
+  },
+  "eventHttpStatus": 200,
+  "run": {
+    "status": "succeeded",
+    "finalized_at": "2026-10-22T17:10:11.758Z"
+  },
+  "events": {
+    "items": [
+      {
+        "runId": "01M5J6BJS4S6E8ASS6KYDKV25N",
+        "seq": 1,
+        "ts": "2026-10-22T16:15:55.172Z",
+        "type": "run.queued",
+        "versionId": "01M5J6BJM36TAS81TSA96Q6706",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Pre-upgrade Event-return child",
+          "label": "Pre-upgrade Event-return child v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {}
+        },
+        "initialThread": {
+          "schemaVersion": 1,
+          "run": {
+            "id": "01M5J6BJS4S6E8ASS6KYDKV25N",
+            "loopId": "01M5J6BJM2YY7QAQ4MTGK0G5J1",
+            "versionId": "01M5J6BJM36TAS81TSA96Q6706",
+            "parentRunId": "01M5J6BJPSE9JWWXJ5ZQSJG8RH",
+            "iteration": 1
+          },
+          "invocation": {
+            "id": "01M5J6BJS4BP1CYN91DNFFPM07",
+            "source": "subloop",
+            "caller": {
+              "kind": "run",
+              "id": "01M5J6BJPSE9JWWXJ5ZQSJG8RH"
+            },
+            "trigger": {
+              "nodeId": "start",
+              "kind": "manual",
+              "payload": null,
+              "receivedAt": "2026-10-22T16:15:55.172Z"
+            }
+          },
+          "messages": [],
+          "vars": {},
+          "artifacts": [],
+          "outputs": {
+            "start": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-22T16:15:55.150Z"
+            }
+          },
+          "lastOutput": {
+            "nodeId": "start",
+            "value": null,
+            "at": "2026-10-22T16:15:55.150Z"
+          },
+          "gates": {},
+          "counters": {
+            "nodeVisits": {},
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          }
+        },
+        "subloopVersions": {
+          "01M5J6BJM2YY7QAQ4MTGK0G5J1": "01M5J6BJM36TAS81TSA96Q6706"
+        }
+      },
+      {
+        "runId": "01M5J6BJS4S6E8ASS6KYDKV25N",
+        "seq": 2,
+        "ts": "2026-10-22T16:15:55.200Z",
+        "type": "run.started",
+        "attempt": 1
+      },
+      {
+        "runId": "01M5J6BJS4S6E8ASS6KYDKV25N",
+        "seq": 3,
+        "ts": "2026-10-22T16:15:55.209Z",
+        "type": "node.started",
+        "nodeId": "start",
+        "kind": "trigger",
+        "attempt": 1,
+        "configHash": "527dee9c4254fe4e"
+      },
+      {
+        "runId": "01M5J6BJS4S6E8ASS6KYDKV25N",
+        "seq": 4,
+        "ts": "2026-10-22T16:15:55.213Z",
+        "type": "node.finished",
+        "nodeId": "start",
+        "patch": [
+          {
+            "op": "replace",
+            "path": "/outputs/start",
+            "value": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-22T16:15:55.213Z"
+            }
+          },
+          {
+            "op": "replace",
+            "path": "/lastOutput",
+            "value": {
+              "nodeId": "start",
+              "value": null,
+              "at": "2026-10-22T16:15:55.213Z"
+            }
+          }
+        ],
+        "route": "out",
+        "durationMs": 0
+      },
+      {
+        "runId": "01M5J6BJS4S6E8ASS6KYDKV25N",
+        "seq": 5,
+        "ts": "2026-10-22T16:15:55.225Z",
+        "type": "node.started",
+        "nodeId": "ask",
+        "kind": "wait",
+        "attempt": 1,
+        "configHash": "a227eb494fef1329"
+      },
+      {
+        "runId": "01M5J6BJS4S6E8ASS6KYDKV25N",
+        "seq": 6,
+        "ts": "2026-10-22T16:15:55.229Z",
+        "type": "run.waiting",
+        "nodeId": "ask",
+        "wait": {
+          "waitId": "01M5J6BJS4S6E8ASS6KYDKV25N:5",
+          "nodeId": "ask",
+          "kind": "input",
+          "prompt": "?",
+          "startedSeq": 5
+        }
+      },
+      {
+        "runId": "01M5J6BJS4S6E8ASS6KYDKV25N",
+        "seq": 7,
+        "ts": "2026-10-22T16:15:55.267Z",
+        "type": "input.received",
+        "nodeId": "ask",
+        "payload": "finish before upgrade"
+      },
+      {
+        "runId": "01M5J6BJS4S6E8ASS6KYDKV25N",
+        "seq": 8,
+        "ts": "2026-10-22T16:15:55.267Z",
+        "type": "run.woken",
+        "nodeId": "ask",
+        "reason": "input",
+        "payload": "finish before upgrade"
+      },
+      {
+        "runId": "01M5J6BJS4S6E8ASS6KYDKV25N",
+        "seq": 9,
+        "ts": "2026-10-22T16:15:55.286Z",
+        "type": "node.started",
+        "nodeId": "ask",
+        "kind": "wait",
+        "attempt": 2,
+        "configHash": "a227eb494fef1329"
+      },
+      {
+        "runId": "01M5J6BJS4S6E8ASS6KYDKV25N",
+        "seq": 10,
+        "ts": "2026-10-22T16:15:55.292Z",
+        "type": "node.finished",
+        "nodeId": "ask",
+        "patch": [
+          {
+            "op": "add",
+            "path": "/messages/-",
+            "value": {
+              "id": "01M5J6BJWT6B30HMXTYRPN4WAT",
+              "role": "user",
+              "content": "finish before upgrade",
+              "nodeId": "ask",
+              "ts": "2026-10-22T16:15:55.290Z",
+              "tags": ["input"]
+            }
+          },
+          {
+            "op": "add",
+            "path": "/outputs/ask",
+            "value": {
+              "nodeId": "ask",
+              "value": "finish before upgrade",
+              "at": "2026-10-22T16:15:55.290Z"
+            }
+          },
+          {
+            "op": "replace",
+            "path": "/lastOutput",
+            "value": {
+              "nodeId": "ask",
+              "value": "finish before upgrade",
+              "at": "2026-10-22T16:15:55.290Z"
+            }
+          }
+        ],
+        "route": "out",
+        "durationMs": 1
+      },
+      {
+        "runId": "01M5J6BJS4S6E8ASS6KYDKV25N",
+        "seq": 11,
+        "ts": "2026-10-22T16:15:55.302Z",
+        "type": "node.started",
+        "nodeId": "done",
+        "kind": "exit",
+        "attempt": 1,
+        "configHash": "375e67edd1452658"
+      },
+      {
+        "runId": "01M5J6BJS4S6E8ASS6KYDKV25N",
+        "seq": 12,
+        "ts": "2026-10-22T16:15:55.307Z",
+        "type": "exit.evaluated",
+        "nodeId": "done",
+        "outcome": "success"
+      },
+      {
+        "runId": "01M5J6BJS4S6E8ASS6KYDKV25N",
+        "seq": 13,
+        "ts": "2026-10-22T16:15:55.307Z",
+        "type": "node.finished",
+        "nodeId": "done",
+        "patch": [],
+        "durationMs": 1
+      },
+      {
+        "runId": "01M5J6BJS4S6E8ASS6KYDKV25N",
+        "seq": 14,
+        "ts": "2026-10-22T16:15:55.307Z",
+        "type": "run.finished",
+        "status": "succeeded",
+        "outcome": "success",
+        "result": "old-child-result"
+      },
+      {
+        "runId": "01M5J6BJS4S6E8ASS6KYDKV25N",
+        "seq": 15,
+        "ts": "2026-10-22T17:10:05.382Z",
+        "type": "delivery.finished",
+        "delivery": {
+          "id": "01M5J6BJS4S6E8ASS6KYDKV25N:return:15",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5642/hold-finalisation"
+          },
+          "status": "delivered",
+          "attempts": 1,
+          "maxAttempts": 1,
+          "inFlight": false,
+          "acknowledgement": "accepted",
+          "effectMayHaveHappened": true
+        }
+      },
+      {
+        "runId": "01M5J6BJS4S6E8ASS6KYDKV25N",
+        "seq": 16,
+        "ts": "2026-10-22T17:10:11.733Z",
+        "type": "return.delivered",
+        "channel": {
+          "kind": "caller"
+        },
+        "target": "run.result"
+      },
+      {
+        "runId": "01M5J6BJS4S6E8ASS6KYDKV25N",
+        "seq": 17,
+        "ts": "2026-10-22T17:10:11.741Z",
+        "type": "return.delivered",
+        "channel": {
+          "kind": "log"
+        }
+      }
+    ],
+    "nextAfter": 17
+  },
+  "changed": true,
+  "log": "{\"level\":40,\"time\":1792689011732,\"pid\":56444,\"hostname\":\"DESKTOP-RQPA3QI\",\"code\":\"LOOP_UPGRADE_REQUIRED\",\"runId\":\"01M5J6BJS4S6E8ASS6KYDKV25N\",\"loopId\":\"01M5J6BJM2YY7QAQ4MTGK0G5J1\",\"versionId\":\"01M5J6BJM36TAS81TSA96Q6706\",\"channelKind\":\"event\",\"msg\":\"retired Event return skipped; loop upgrade required\"}\n{\"level\":30,\"time\":1792689011740,\"pid\":56444,\"hostname\":\"DESKTOP-RQPA3QI\",\"runId\":\"01M5J6BJS4S6E8ASS6KYDKV25N\",\"result\":\"old-child-result\",\"msg\":\"loop returned\"}\n{\"level\":30,\"time\":1792689012614,\"pid\":56444,\"hostname\":\"DESKTOP-RQPA3QI\",\"msg\":\"Server listening at http://127.0.0.1:5644\"}\n{\"level\":30,\"time\":1792689012614,\"pid\":56444,\"hostname\":\"DESKTOP-RQPA3QI\",\"host\":\"127.0.0.1\",\"port\":5644,\"dataDir\":\"%TEMP%\\\\gg-wp-d2-round5-migration-shapes-1792689005304\",\"requireApiKey\":false,\"msg\":\"GraphGoblin API listening\"}\n{\"level\":30,\"time\":1792689012644,\"pid\":56444,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-1\",\"req\":{\"method\":\"GET\",\"url\":\"/healthz\",\"host\":\"127.0.0.1:5644\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":58231},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1792689012650,\"pid\":56444,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-1\",\"res\":{\"statusCode\":200},\"responseTime\":6.347399999999652,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1792689012665,\"pid\":56444,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-2\",\"req\":{\"method\":\"GET\",\"url\":\"/runs/01M5J6BJS4S6E8ASS6KYDKV25N/events\",\"host\":\"127.0.0.1:5644\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":58232},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1792689012687,\"pid\":56444,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-2\",\"res\":{\"statusCode\":200},\"responseTime\":22.511900000000423,\"msg\":\"request completed\"}\n"
+}

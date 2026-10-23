@@ -13,3 +13,4 @@ export * from './run-manager.js';
 export * from './admission.js';
 export * from './stored-definition.js';
 export { validateGeneratedEvent } from './event-validation.js';
+export * from './handlers/inference-failure.js';

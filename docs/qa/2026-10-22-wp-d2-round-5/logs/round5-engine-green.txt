@@ -1,0 +1,145 @@
+
+ RUN  v5.0.3 %WORKTREE%/packages/engine
+
+ ❯ src/webhook-returns.test.ts (20 tests | 5 failed) 2158ms
+   ❯ recovery of journalled attempts through the delivery component (3)
+     × records an interrupted attempt as unknown and retains budget (1) 33ms
+     × records an interrupted attempt as unknown and retains budget (5) 31ms
+     × preserves a lost acknowledgement from a thrown transport error 248ms
+   × retains an unsent durable attempt conservatively when stop lands after append 48ms
+   × retains an unsent durable attempt conservatively when stop lands during secret resolution 30ms
+pnpm.cmd :
+At line:4 char:1
++ pnpm.cmd --filter @graphgoblin/engine exec vitest run src/webhook-ret ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/webhook-returns.test.ts > recovery of journalled attempts through the delivery component > records an
+interrupted attempt as unknown and retains budget (1)
+AssertionError: expected { id: 'stable-recovered-id', …(9) } to match object { attempts: 2, …(4) }
+(7 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -1,7 +1,7 @@
+  {
+-   "acknowledgementUncertain": false,
++   "acknowledgementUncertain": true,
+    "attempts": 2,
+    "effectMayHaveHappened": true,
+    "lastError": {
+      "acknowledgement": "unknown",
+      "code": "interrupted",
+
+ ❯ src/webhook-returns.test.ts:172:21
+    170|       expect(engine.ports.delivery.webhooks).toHaveLength(attempts ===…
+    171|       const final = webhookStates(engine.events(run.id))[0]!;
+    172|       expect(final).toMatchObject({
+       |                     ^
+    173|         attempts: attempts === 5 ? 5 : 2,
+    174|         status: attempts === 5 ? 'failed' : 'delivered',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/webhook-returns.test.ts > recovery of journalled attempts through the delivery component > records an
+interrupted attempt as unknown and retains budget (5)
+AssertionError: expected { id: 'stable-recovered-id', …(9) } to match object { attempts: 5, status: 'failed', …(3) }
+(7 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -1,7 +1,7 @@
+  {
+-   "acknowledgementUncertain": false,
++   "acknowledgementUncertain": true,
+    "attempts": 5,
+    "effectMayHaveHappened": true,
+    "lastError": {
+      "acknowledgement": "unknown",
+      "code": "interrupted",
+
+ ❯ src/webhook-returns.test.ts:172:21
+    170|       expect(engine.ports.delivery.webhooks).toHaveLength(attempts ===…
+    171|       const final = webhookStates(engine.events(run.id))[0]!;
+    172|       expect(final).toMatchObject({
+       |                     ^
+    173|         attempts: attempts === 5 ? 5 : 2,
+    174|         status: attempts === 5 ? 'failed' : 'delivered',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/webhook-returns.test.ts > recovery of journalled attempts through the delivery component > preserves a lost
+acknowledgement from a thrown transport error
+AssertionError: expected [ { …(10) } ] to match object [ { status: 'delivered', …(4) } ]
+(7 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -1,8 +1,8 @@
+  [
+    {
+-     "acknowledgementUncertain": false,
++     "acknowledgementUncertain": true,
+      "attempts": 2,
+      "effectMayHaveHappened": true,
+      "lastError": {
+        "acknowledgement": "unknown",
+        "code": "transport",
+
+ ❯ src/webhook-returns.test.ts:203:50
+    201|     await engine.manager.waitForIdle();
+    202|     engine.manager.stop();
+    203|     expect(webhookStates(engine.events(run.id))).toMatchObject([
+       |                                                  ^
+    204|       {
+    205|         status: 'delivered',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/webhook-returns.test.ts > retains an unsent durable attempt conservatively when stop lands after append
+ FAIL  src/webhook-returns.test.ts > retains an unsent durable attempt conservatively when stop lands during secret
+resolution
+AssertionError: expected [ { id: 'boundary-delivery', …(9) } ] to match object [ { id: 'boundary-delivery', …(6) } ]
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -1,8 +1,8 @@
+  [
+    {
+-     "acknowledgementUncertain": false,
++     "acknowledgementUncertain": true,
+      "attempts": 2,
+      "effectMayHaveHappened": true,
+      "id": "boundary-delivery",
+      "inFlight": false,
+      "lastError": {
+
+ ❯ src/webhook-returns.test.ts:370:50
+    368|     expect(completions).toBe(1);
+    369|     expect(engine.ports.delivery.webhooks).toMatchObject([{ deliveryId…
+    370|     expect(webhookStates(engine.events(run.id))).toMatchObject([
+       |                                                  ^
+    371|       {
+    372|         id: state.id,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 15 passed (20)
+   Start at  12:22:07
+   Duration  5.67s (tests 40%, import 32%, transform 28%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d2-
+  │ webhook-retry\packages\engine

@@ -3,6 +3,7 @@ import { ExecutionLimitsSchema } from './loop.js';
 import {
   JsonSchemaSchema,
   JsonValueSchema,
+  HarnessIdSchema,
   SlugSchema,
   TimestampSchema,
   UlidSchema,
@@ -10,6 +11,7 @@ import {
 import { ClassifierBindingSchema, ClassifierModelIdSchema } from './classifiers.js';
 import { HarnessDefaultsSchema } from './evaluation.js';
 import { OutcomeSchema, WaitKindSchema } from './nodes.js';
+import { WebhookDeliverySchema } from './delivery.js';
 
 export const RunStatusSchema = z.enum([
   'queued',
@@ -97,6 +99,14 @@ export const PromptProvenanceSchema = z.strictObject({
   submission: PromptSubmissionSchema,
   promptKind: z.enum(['authored', 'repair', 'continuation']),
   sessionId: z.string().min(1).max(256).optional(),
+  /** Exact uninvoked intent when its separate log append could not be reconciled. */
+  retry: z
+    .strictObject({
+      harness: HarnessIdSchema,
+      prompt: z.string(),
+      resumeSessionId: z.string().min(1).max(256).optional(),
+    })
+    .optional(),
 });
 export type PromptProvenance = z.infer<typeof PromptProvenanceSchema>;
 
@@ -191,6 +201,8 @@ export const RunRecordSchema = z.strictObject({
   failure: RunFailureSchema.optional(),
   outcome: OutcomeSchema.optional(),
   result: JsonValueSchema.optional(),
+  /** Webhook delivery is independent of execution status; absent when no webhook is queued. */
+  deliveries: z.array(WebhookDeliverySchema).optional(),
   createdAt: TimestampSchema,
   startedAt: TimestampSchema.optional(),
   finishedAt: TimestampSchema.optional(),

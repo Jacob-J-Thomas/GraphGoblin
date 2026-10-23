@@ -160,6 +160,53 @@ function DecisionAcceptance({
     </>
   );
 }
+/**
+ * The chosen route as authored in the immutable run version: its readable label and, for a
+ * classifier Choice option or Noul side, the criterion the classifier was given. A refused repeat
+ * keeps its observed route here while Selected port says Limit reached (#129).
+ */
+function ChosenRoute({
+  event,
+  definition,
+  definitionLoading,
+}: {
+  event: Extract<RunEvent, { type: 'decision.made' }>;
+  definition: LoopDefinition | undefined;
+  definitionLoading: boolean;
+}) {
+  const node = definition?.nodes.find((n) => n.id === event.nodeId);
+  const config = node?.kind === 'decision' ? node.config : undefined;
+  const chosen = event.gate?.limit ? event.gate.repeatRouteId : event.portId;
+  const rows: { id: string; label: string; criteria?: string }[] = !config
+    ? []
+    : config.kind !== 'classifier'
+      ? config.routes
+      : config.answer.type === 'choice'
+        ? config.answer.options
+        : config.answer.type === 'noul'
+          ? [config.answer.true, config.answer.false]
+          : config.answer.bands;
+  const row = rows.find((candidate) => candidate.id === chosen);
+  return (
+    <>
+      <dt>Label</dt>
+      {/* Labels may be 120 characters without a break opportunity: wrap them, never widen. */}
+      <dd className="min-w-0 wrap-anywhere">
+        {!definition && definitionLoading
+          ? 'Loading run-version configuration…'
+          : !config
+            ? 'Not recorded (decision configuration unavailable)'
+            : (row?.label ?? 'Not in the run-version configuration')}
+      </dd>
+      {row?.criteria !== undefined ? (
+        <>
+          <dt>Criterion</dt>
+          <dd className="min-w-0 whitespace-pre-wrap wrap-anywhere">{row.criteria}</dd>
+        </>
+      ) : null}
+    </>
+  );
+}
 function ObservationDetails({
   observation,
   provenance,
@@ -210,10 +257,13 @@ export function EvaluationDetails({
   event,
   definition,
   definitionLoading = false,
+  exitReturns,
 }: {
   event: RunEvent | undefined;
   definition?: LoopDefinition | undefined;
   definitionLoading?: boolean;
+  /** Why the run recorded no value, or why the history cannot show that (projections.ts). */
+  exitReturns?: string | undefined;
 }) {
   if (!event || !['decision.made', 'exit.evaluated', 'run.failed'].includes(event.type))
     return null;
@@ -224,12 +274,12 @@ export function EvaluationDetails({
       <p>{describeEvent(event)}</p>
       {event.type === 'exit.evaluated' ? (
         <p>
-          Exit outcome: {event.outcome}. This exit is terminal. See the run result for the returned
-          value.
+          Exit outcome: {event.outcome}. This exit is terminal.{' '}
+          {exitReturns ?? 'See the run result for the returned value.'}
         </p>
       ) : event.type === 'decision.made' ? (
         <>
-          <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
+          <dl className="mt-2 grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 text-sm">
             <dt>
               {event.observation.kind === 'route'
                 ? 'Route ID'
@@ -266,6 +316,11 @@ export function EvaluationDetails({
             <dd>
               <code>{event.portId}</code>
             </dd>
+            <ChosenRoute
+              event={event}
+              definition={definition}
+              definitionLoading={definitionLoading}
+            />
             {event.gate ? (
               <>
                 <dt>Previous passes</dt>
@@ -329,7 +384,7 @@ export function EvaluationDetails({
               Classifier result rejected by the confidence gate. No decision was accepted and no
               route was selected.
             </p>
-            <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+            <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1">
               <dt>Proposed answer</dt>
               <dd>{answerDescription(rejection.answer)}</dd>
               <ObservationDetails

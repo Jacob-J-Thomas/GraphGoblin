@@ -1,0 +1,76 @@
+
+ RUN  v5.0.3 <worktree>/apps/api
+
+ ❯ src/routes/loop-summaries.test.ts (10 tests | 1 failed | 9 skipped) 1211ms
+   ❯ loop-specific run summaries over real SQLite (10)
+     × does not publish a stale running badge when the latest event log is unreadable 1208ms
+     ↓ isolates damaged latest-run status and identifies it through diagnostics
+     ↓ isolates damaged latest-run pinned and identifies it through diagnostics
+     ↓ isolates damaged latest-run pinned and identifies it through diagnostics
+     ↓ isolates damaged latest-run waiting and identifies it through diagnostics
+     ↓ isolates damaged latest-run result and identifies it through diagnostics
+     ↓ isolates damaged latest-run initial_thread and identifies it through diagnostics
+     ↓ isolates damaged latest-run thread_snapshot and identifies it through diagnostics
+     ↓ isolates damaged latest-run thread_snapshot and identifies it through diagnostics
+     ↓ finds older history beyond 500 unrelated runs, orders ties, and distinguishes no history
+pnpm.cmd : 
+At line:2 char:358
++ ... TEXITCODE"; pnpm.cmd --filter @graphgoblin/api exec vitest run src/ro ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/routes/loop-summaries.test.ts > loop-specific run summaries over real SQLite > does not publish a stale 
+running badge when the latest event log is unreadable
+AssertionError: expected [ { …(8) } ] to deeply equal ArrayContaining{…}
+
+- Expected
++ Received
+
+- ArrayContaining [
+-   ObjectContaining {
++ [
++   {
++     "createdAt": "2026-10-02T12:00:00.000Z",
++     "currentVersionId": "01M3Y7RKG0B2WVC3NNKBWCTARR",
+      "id": "01M3Y7RKG0B2WVC3NNKBWCTARQ",
+-     "latestRun": null,
++     "latestRun": {
++       "createdAt": "2026-10-02T12:00:00.001Z",
++       "id": "01M3Y7RKG1RZ6CPESWFNMVXN74",
++       "status": "running",
++     },
++     "name": "minimal",
++     "ownerId": "local",
+      "runCount": 2,
++     "updatedAt": "2026-10-02T12:00:00.000Z",
+    },
+  ]
+
+ ❯ src/routes/loop-summaries.test.ts:34:55
+     32|     const response = await t.app.inject('/loops');
+     33|     expect(response.statusCode).toBe(200);
+     34|     expect(response.json<{items: unknown[]}>().items).toEqual(expect.a…
+       |                                                       ^
+     35|     expect((await t.app.inject(`/runs/${id}/events`)).json()).toMatchO…
+     36|     expect((await t.app.inject('/runs/diagnostics')).json()).toMatchOb…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 skipped (10)
+   Start at  20:34:04
+   Duration  11.03s (import 48%, transform 40%, tests 11%)
+
+  Transform  transforming modules took 4.28s · 40% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+JSON report written to <worktree>/round8-api-before-results.log
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in <worktree>
+

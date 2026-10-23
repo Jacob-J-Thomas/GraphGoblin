@@ -1,0 +1,52 @@
+
+ RUN  v5.0.3 [local-path]
+
+ ✓ src/classifiers.test.ts > classifier catalog HTTP API > requires secrets:write to attach a secret and permits settings-only edits that clear it 1734ms
+ ✓ src/classifiers.test.ts > classifier catalog HTTP API > returns a configured/enabled distinction and protects builtin metadata 160ms
+ ✓ src/classifiers.test.ts > classifier catalog HTTP API > creates disabled, replaces metadata preserving enabled, clears auth and retains secrets on delete 128ms
+ ✓ src/classifiers.test.ts > classifier catalog HTTP API > rejects invalid metadata with field paths {"enabled":true} 207ms
+ ✓ src/classifiers.test.ts > classifier catalog HTTP API > rejects invalid metadata with field paths {"source":"custom"} 125ms
+ ✓ src/classifiers.test.ts > classifier catalog HTTP API > rejects invalid metadata with field paths {"configured":true} 147ms
+ ✓ src/classifiers.test.ts > classifier catalog HTTP API > rejects invalid metadata with field paths {"apiKey":"key"} 246ms
+ ✓ src/classifiers.test.ts > classifier catalog HTTP API > rejects invalid metadata with field paths {"endpoint":"https://user:key@host"} 308ms
+ ✓ src/classifiers.test.ts > classifier catalog HTTP API > rejects invalid metadata with field paths {"endpoint":"http://classifier.example","secretRef":"required-key"} 242ms
+ ✓ src/classifiers.test.ts > classifier catalog HTTP API > rejects invalid metadata with field paths {"primitives":["choice","choice"]} 648ms
+ ✓ src/classifiers.test.ts > classifier catalog HTTP API > creates only with If-None-Match: *, refusing an existing id with CLASSIFIER_EXISTS 459ms
+ ✓ src/classifiers.test.ts > classifier catalog HTTP API > lets exactly one of two concurrent create-only requests for an id succeed 587ms
+ ✓ src/classifiers.test.ts > classifier catalog HTTP API > rejects invalid ids and enabled bodies 308ms
+ ✓ src/classifiers.test.ts > classifier catalog HTTP API > checks settings scopes before parsing bodies and isolates owners and their secret state 405ms
+ ✓ src/classifiers.test.ts > classifier catalog HTTP API > derives status without provider calls through missing, blank, created, rotated, unreadable and deleted secrets 491ms
+ ✓ src/classifiers.test.ts > classifier publish validation agreement > reports built-in Jev decision warnings on all five endpoints (disabled) 422ms
+ ✓ src/classifiers.test.ts > classifier publish validation agreement > reports built-in Jev decision warnings on all five endpoints (missing) 679ms
+ ✓ src/classifiers.test.ts > classifier publish validation agreement > reports built-in Jev decision warnings on all five endpoints (blank) 446ms
+ ✓ src/classifiers.test.ts > classifier publish validation agreement > reports built-in Jev decision warnings on all five endpoints (unreadable) 307ms
+ ✓ src/classifiers.test.ts > classifier publish validation agreement > reports built-in Jev decision warnings on all five endpoints (configured) 245ms
+ ✓ src/classifiers.test.ts > classifier publish validation agreement > reports the same diagnostics on every endpoint (missing) 248ms
+ ✓ src/classifiers.test.ts > classifier publish validation agreement > reports the same diagnostics on every endpoint (no-choice) 228ms
+ ✓ src/classifiers.test.ts > classifier publish validation agreement > reports the same diagnostics on every endpoint (disabled) 507ms
+ ✓ src/classifiers.test.ts > classifier publish validation agreement > reports the same diagnostics on every endpoint (secret-missing) 260ms
+ ✓ src/classifiers.test.ts > classifier publish validation agreement > reports the same diagnostics on every endpoint (secret-blank) 299ms
+ ✓ src/classifiers.test.ts > classifier publish validation agreement > reports the same diagnostics on every endpoint (secret-unreadable) 251ms
+ ✓ src/classifiers.test.ts > classifier publish validation agreement > reports the same diagnostics on every endpoint (implicit) 355ms
+ ✓ src/classifiers.test.ts > classifier publish validation agreement > reports the same diagnostics on every endpoint (implicit-only) 248ms
+ ✓ src/classifiers.test.ts > classifier publish validation agreement > reports the same diagnostics on every endpoint (configured) 253ms
+ ✓ src/classifiers.test.ts > classifier publish validation agreement > exports and imports a clean expression evaluator without unused classifier metadata 257ms
+ ✓ src/classifiers.test.ts > classifier runtime hot reload > rejects Jev probabilities with an undeclared secret key before any run read 730ms
+ ✓ src/classifiers.test.ts > classifier runtime hot reload > keeps real Jev decision HTTP error bodies out of snapshots, events, streams and logs 305ms
+ ✓ src/classifiers.test.ts > classifier runtime hot reload > sanitizes real built-in Jev validation paths and error bodies (HTTP 200) 311ms
+ ✓ src/classifiers.test.ts > classifier runtime hot reload > sanitizes real built-in Jev validation paths and error bodies (HTTP 400) 313ms
+ ✓ src/classifiers.test.ts > classifier runtime hot reload > sanitizes a real Codex turn failure before persisting it for run readers 339ms
+ ✓ src/classifiers.test.ts > classifier runtime hot reload > never exposes an echoed classifier bearer to runs:read (recordAlternatives true) 372ms
+ ✓ src/classifiers.test.ts > classifier runtime hot reload > never exposes an echoed classifier bearer to runs:read (recordAlternatives false) 203ms
+ ✓ src/classifiers.test.ts > classifier runtime hot reload > passes the engine logger to the decision-time Jev SDK client 115ms
+ ✓ src/classifiers.test.ts > classifier runtime hot reload > uses catalog/provider ids, updates secrets and metadata, preserves in-flight snapshots and fails unavailable deleted/disabled published references 586ms
+ ✓ src/classifiers.test.ts > classifier runtime hot reload > reports an unreachable endpoint as a provider failure, without silently falling through 210ms
+
+ Test Files  1 passed (1)
+      Tests  40 passed (40)
+   Start at  18:43:13
+   Duration  63.07s (transform 57%, tests 24%, import 19%)
+
+  Transform  transforming modules took 35.39s · 57% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns

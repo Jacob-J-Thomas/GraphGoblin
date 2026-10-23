@@ -226,7 +226,25 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            items: components["schemas"]["LoopRecord"][];
+                            items: {
+                                id: string;
+                                ownerId: string;
+                                name: string;
+                                description?: string | undefined;
+                                currentVersionId?: string | undefined;
+                                draftVersionId?: string | undefined;
+                                /** Format: date-time */
+                                createdAt: string;
+                                /** Format: date-time */
+                                updatedAt: string;
+                                latestRun: {
+                                    id: string;
+                                    status: components["schemas"]["RunStatus"];
+                                    /** Format: date-time */
+                                    createdAt: string;
+                                } | null;
+                                runCount: number;
+                            }[];
                         };
                     };
                 };
@@ -891,6 +909,7 @@ export interface paths {
                         "application/json": {
                             items: components["schemas"]["RunEvent"][];
                             nextAfter: number;
+                            hasMore: boolean;
                         };
                     };
                 };
@@ -1734,6 +1753,7 @@ export interface paths {
                                 /** @enum {string} */
                                 defaultEffort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
                                 enabled: boolean;
+                                ecosystemDefault: boolean;
                             }[];
                         };
                     };
@@ -2067,12 +2087,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Stored inbound events, newest first */
+        /** Stored inbound events, newest first with stable paging */
         get: {
             parameters: {
                 query?: {
                     type?: string;
                     before?: string;
+                    /** @description Opaque inbound-event cursor, at most 256 base64url characters. */
+                    cursor?: string;
                     limit?: number;
                 };
                 header?: never;
@@ -2170,6 +2192,7 @@ export interface paths {
                                     failureCode?: string | undefined;
                                 } | undefined;
                             }[];
+                            nextCursor: string | null;
                         };
                     };
                 };
@@ -3623,6 +3646,12 @@ export interface components {
                 /** @enum {string} */
                 promptKind: "authored" | "repair" | "continuation";
                 sessionId?: string | undefined;
+                retry?: {
+                    /** @enum {string} */
+                    harness: "codex" | "claude";
+                    prompt: string;
+                    resumeSessionId?: string | undefined;
+                } | undefined;
             } | undefined;
         };
         WaitSpecInput: {
@@ -3708,6 +3737,36 @@ export interface components {
             /** @enum {string} */
             outcome?: ("success" | "failure" | "exhausted") | undefined;
             result?: components["schemas"]["JsonValueInput"] | undefined;
+            deliveries?: {
+                id: string;
+                channel: {
+                    /** @constant */
+                    kind: "webhook";
+                    /** Format: uri */
+                    url: string;
+                    secretRef?: string | undefined;
+                };
+                /** @enum {string} */
+                status: "pending" | "delivered" | "failed";
+                attempts: number;
+                maxAttempts: number;
+                inFlight: boolean;
+                /** @enum {string} */
+                acknowledgement: "accepted" | "unknown" | "not_sent" | "rejected";
+                effectMayHaveHappened: boolean;
+                acknowledgementUncertain: boolean;
+                /** Format: date-time */
+                nextAttemptAt?: string | undefined;
+                lastError?: {
+                    /** @enum {string} */
+                    code: "invalid_destination" | "http" | "connection_refused" | "timeout" | "transport" | "interrupted" | "historical_failure";
+                    message: string;
+                    retryable: boolean;
+                    /** @enum {string} */
+                    acknowledgement: "unknown" | "not_sent" | "rejected";
+                    httpStatus?: number | undefined;
+                } | undefined;
+            }[] | undefined;
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -3717,6 +3776,154 @@ export interface components {
             lastEventSeq: number;
         };
         RunEventInput: {
+            runId: string;
+            seq: number;
+            /** Format: date-time */
+            ts: string;
+            /** @constant */
+            type: "delivery.queued";
+            delivery: {
+                id: string;
+                channel: {
+                    /** @constant */
+                    kind: "webhook";
+                    /** Format: uri */
+                    url: string;
+                    secretRef?: string | undefined;
+                };
+                /** @enum {string} */
+                status: "pending" | "delivered" | "failed";
+                attempts: number;
+                maxAttempts: number;
+                inFlight: boolean;
+                /** @enum {string} */
+                acknowledgement: "accepted" | "unknown" | "not_sent" | "rejected";
+                effectMayHaveHappened: boolean;
+                acknowledgementUncertain: boolean;
+                /** Format: date-time */
+                nextAttemptAt?: string | undefined;
+                lastError?: {
+                    /** @enum {string} */
+                    code: "invalid_destination" | "http" | "connection_refused" | "timeout" | "transport" | "interrupted" | "historical_failure";
+                    message: string;
+                    retryable: boolean;
+                    /** @enum {string} */
+                    acknowledgement: "unknown" | "not_sent" | "rejected";
+                    httpStatus?: number | undefined;
+                } | undefined;
+            };
+        } | {
+            runId: string;
+            seq: number;
+            /** Format: date-time */
+            ts: string;
+            /** @constant */
+            type: "delivery.attempted";
+            delivery: {
+                id: string;
+                channel: {
+                    /** @constant */
+                    kind: "webhook";
+                    /** Format: uri */
+                    url: string;
+                    secretRef?: string | undefined;
+                };
+                /** @enum {string} */
+                status: "pending" | "delivered" | "failed";
+                attempts: number;
+                maxAttempts: number;
+                inFlight: boolean;
+                /** @enum {string} */
+                acknowledgement: "accepted" | "unknown" | "not_sent" | "rejected";
+                effectMayHaveHappened: boolean;
+                acknowledgementUncertain: boolean;
+                /** Format: date-time */
+                nextAttemptAt?: string | undefined;
+                lastError?: {
+                    /** @enum {string} */
+                    code: "invalid_destination" | "http" | "connection_refused" | "timeout" | "transport" | "interrupted" | "historical_failure";
+                    message: string;
+                    retryable: boolean;
+                    /** @enum {string} */
+                    acknowledgement: "unknown" | "not_sent" | "rejected";
+                    httpStatus?: number | undefined;
+                } | undefined;
+            };
+        } | {
+            runId: string;
+            seq: number;
+            /** Format: date-time */
+            ts: string;
+            /** @constant */
+            type: "delivery.attempt_finished";
+            delivery: {
+                id: string;
+                channel: {
+                    /** @constant */
+                    kind: "webhook";
+                    /** Format: uri */
+                    url: string;
+                    secretRef?: string | undefined;
+                };
+                /** @enum {string} */
+                status: "pending" | "delivered" | "failed";
+                attempts: number;
+                maxAttempts: number;
+                inFlight: boolean;
+                /** @enum {string} */
+                acknowledgement: "accepted" | "unknown" | "not_sent" | "rejected";
+                effectMayHaveHappened: boolean;
+                acknowledgementUncertain: boolean;
+                /** Format: date-time */
+                nextAttemptAt?: string | undefined;
+                lastError?: {
+                    /** @enum {string} */
+                    code: "invalid_destination" | "http" | "connection_refused" | "timeout" | "transport" | "interrupted" | "historical_failure";
+                    message: string;
+                    retryable: boolean;
+                    /** @enum {string} */
+                    acknowledgement: "unknown" | "not_sent" | "rejected";
+                    httpStatus?: number | undefined;
+                } | undefined;
+            };
+        } | {
+            runId: string;
+            seq: number;
+            /** Format: date-time */
+            ts: string;
+            /** @constant */
+            type: "delivery.finished";
+            delivery: {
+                id: string;
+                channel: {
+                    /** @constant */
+                    kind: "webhook";
+                    /** Format: uri */
+                    url: string;
+                    secretRef?: string | undefined;
+                };
+                /** @enum {string} */
+                status: "pending" | "delivered" | "failed";
+                attempts: number;
+                maxAttempts: number;
+                inFlight: boolean;
+                /** @enum {string} */
+                acknowledgement: "accepted" | "unknown" | "not_sent" | "rejected";
+                effectMayHaveHappened: boolean;
+                acknowledgementUncertain: boolean;
+                /** Format: date-time */
+                nextAttemptAt?: string | undefined;
+                lastError?: {
+                    /** @enum {string} */
+                    code: "invalid_destination" | "http" | "connection_refused" | "timeout" | "transport" | "interrupted" | "historical_failure";
+                    message: string;
+                    retryable: boolean;
+                    /** @enum {string} */
+                    acknowledgement: "unknown" | "not_sent" | "rejected";
+                    httpStatus?: number | undefined;
+                } | undefined;
+            };
+        } | {
             runId: string;
             seq: number;
             /** Format: date-time */
@@ -4194,7 +4401,22 @@ export interface components {
             ts: string;
             /** @constant */
             type: "return.delivered";
-            channel: components["schemas"]["ReturnChannelInput"];
+            channel: {
+                /** @constant */
+                kind: "caller";
+            } | {
+                /** @constant */
+                kind: "file";
+                path: string;
+                /**
+                 * @default json
+                 * @enum {string}
+                 */
+                format?: ("json" | "markdown" | "text") | undefined;
+            } | {
+                /** @constant */
+                kind: "log";
+            };
             target?: string | undefined;
         } | {
             runId: string;
@@ -4203,7 +4425,22 @@ export interface components {
             ts: string;
             /** @constant */
             type: "return.failed";
-            channel: components["schemas"]["ReturnChannelInput"];
+            channel: {
+                /** @constant */
+                kind: "caller";
+            } | {
+                /** @constant */
+                kind: "file";
+                path: string;
+                /**
+                 * @default json
+                 * @enum {string}
+                 */
+                format?: ("json" | "markdown" | "text") | undefined;
+            } | {
+                /** @constant */
+                kind: "log";
+            };
             error: string;
         };
         EvaluationDiagnosticInput: {
@@ -5486,6 +5723,12 @@ export interface components {
                 /** @enum {string} */
                 promptKind: "authored" | "repair" | "continuation";
                 sessionId?: string | undefined;
+                retry?: {
+                    /** @enum {string} */
+                    harness: "codex" | "claude";
+                    prompt: string;
+                    resumeSessionId?: string | undefined;
+                } | undefined;
             } | undefined;
         };
         WaitSpec: {
@@ -5571,6 +5814,36 @@ export interface components {
             /** @enum {string} */
             outcome?: ("success" | "failure" | "exhausted") | undefined;
             result?: components["schemas"]["JsonValue"] | undefined;
+            deliveries?: {
+                id: string;
+                channel: {
+                    /** @constant */
+                    kind: "webhook";
+                    /** Format: uri */
+                    url: string;
+                    secretRef?: string | undefined;
+                };
+                /** @enum {string} */
+                status: "pending" | "delivered" | "failed";
+                attempts: number;
+                maxAttempts: number;
+                inFlight: boolean;
+                /** @enum {string} */
+                acknowledgement: "accepted" | "unknown" | "not_sent" | "rejected";
+                effectMayHaveHappened: boolean;
+                acknowledgementUncertain: boolean;
+                /** Format: date-time */
+                nextAttemptAt?: string | undefined;
+                lastError?: {
+                    /** @enum {string} */
+                    code: "invalid_destination" | "http" | "connection_refused" | "timeout" | "transport" | "interrupted" | "historical_failure";
+                    message: string;
+                    retryable: boolean;
+                    /** @enum {string} */
+                    acknowledgement: "unknown" | "not_sent" | "rejected";
+                    httpStatus?: number | undefined;
+                } | undefined;
+            }[] | undefined;
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -5580,6 +5853,154 @@ export interface components {
             lastEventSeq: number;
         };
         RunEvent: {
+            runId: string;
+            seq: number;
+            /** Format: date-time */
+            ts: string;
+            /** @constant */
+            type: "delivery.queued";
+            delivery: {
+                id: string;
+                channel: {
+                    /** @constant */
+                    kind: "webhook";
+                    /** Format: uri */
+                    url: string;
+                    secretRef?: string | undefined;
+                };
+                /** @enum {string} */
+                status: "pending" | "delivered" | "failed";
+                attempts: number;
+                maxAttempts: number;
+                inFlight: boolean;
+                /** @enum {string} */
+                acknowledgement: "accepted" | "unknown" | "not_sent" | "rejected";
+                effectMayHaveHappened: boolean;
+                acknowledgementUncertain: boolean;
+                /** Format: date-time */
+                nextAttemptAt?: string | undefined;
+                lastError?: {
+                    /** @enum {string} */
+                    code: "invalid_destination" | "http" | "connection_refused" | "timeout" | "transport" | "interrupted" | "historical_failure";
+                    message: string;
+                    retryable: boolean;
+                    /** @enum {string} */
+                    acknowledgement: "unknown" | "not_sent" | "rejected";
+                    httpStatus?: number | undefined;
+                } | undefined;
+            };
+        } | {
+            runId: string;
+            seq: number;
+            /** Format: date-time */
+            ts: string;
+            /** @constant */
+            type: "delivery.attempted";
+            delivery: {
+                id: string;
+                channel: {
+                    /** @constant */
+                    kind: "webhook";
+                    /** Format: uri */
+                    url: string;
+                    secretRef?: string | undefined;
+                };
+                /** @enum {string} */
+                status: "pending" | "delivered" | "failed";
+                attempts: number;
+                maxAttempts: number;
+                inFlight: boolean;
+                /** @enum {string} */
+                acknowledgement: "accepted" | "unknown" | "not_sent" | "rejected";
+                effectMayHaveHappened: boolean;
+                acknowledgementUncertain: boolean;
+                /** Format: date-time */
+                nextAttemptAt?: string | undefined;
+                lastError?: {
+                    /** @enum {string} */
+                    code: "invalid_destination" | "http" | "connection_refused" | "timeout" | "transport" | "interrupted" | "historical_failure";
+                    message: string;
+                    retryable: boolean;
+                    /** @enum {string} */
+                    acknowledgement: "unknown" | "not_sent" | "rejected";
+                    httpStatus?: number | undefined;
+                } | undefined;
+            };
+        } | {
+            runId: string;
+            seq: number;
+            /** Format: date-time */
+            ts: string;
+            /** @constant */
+            type: "delivery.attempt_finished";
+            delivery: {
+                id: string;
+                channel: {
+                    /** @constant */
+                    kind: "webhook";
+                    /** Format: uri */
+                    url: string;
+                    secretRef?: string | undefined;
+                };
+                /** @enum {string} */
+                status: "pending" | "delivered" | "failed";
+                attempts: number;
+                maxAttempts: number;
+                inFlight: boolean;
+                /** @enum {string} */
+                acknowledgement: "accepted" | "unknown" | "not_sent" | "rejected";
+                effectMayHaveHappened: boolean;
+                acknowledgementUncertain: boolean;
+                /** Format: date-time */
+                nextAttemptAt?: string | undefined;
+                lastError?: {
+                    /** @enum {string} */
+                    code: "invalid_destination" | "http" | "connection_refused" | "timeout" | "transport" | "interrupted" | "historical_failure";
+                    message: string;
+                    retryable: boolean;
+                    /** @enum {string} */
+                    acknowledgement: "unknown" | "not_sent" | "rejected";
+                    httpStatus?: number | undefined;
+                } | undefined;
+            };
+        } | {
+            runId: string;
+            seq: number;
+            /** Format: date-time */
+            ts: string;
+            /** @constant */
+            type: "delivery.finished";
+            delivery: {
+                id: string;
+                channel: {
+                    /** @constant */
+                    kind: "webhook";
+                    /** Format: uri */
+                    url: string;
+                    secretRef?: string | undefined;
+                };
+                /** @enum {string} */
+                status: "pending" | "delivered" | "failed";
+                attempts: number;
+                maxAttempts: number;
+                inFlight: boolean;
+                /** @enum {string} */
+                acknowledgement: "accepted" | "unknown" | "not_sent" | "rejected";
+                effectMayHaveHappened: boolean;
+                acknowledgementUncertain: boolean;
+                /** Format: date-time */
+                nextAttemptAt?: string | undefined;
+                lastError?: {
+                    /** @enum {string} */
+                    code: "invalid_destination" | "http" | "connection_refused" | "timeout" | "transport" | "interrupted" | "historical_failure";
+                    message: string;
+                    retryable: boolean;
+                    /** @enum {string} */
+                    acknowledgement: "unknown" | "not_sent" | "rejected";
+                    httpStatus?: number | undefined;
+                } | undefined;
+            };
+        } | {
             runId: string;
             seq: number;
             /** Format: date-time */
@@ -6057,7 +6478,22 @@ export interface components {
             ts: string;
             /** @constant */
             type: "return.delivered";
-            channel: components["schemas"]["ReturnChannel"];
+            channel: {
+                /** @constant */
+                kind: "caller";
+            } | {
+                /** @constant */
+                kind: "file";
+                path: string;
+                /**
+                 * @default json
+                 * @enum {string}
+                 */
+                format: "json" | "markdown" | "text";
+            } | {
+                /** @constant */
+                kind: "log";
+            };
             target?: string | undefined;
         } | {
             runId: string;
@@ -6066,7 +6502,22 @@ export interface components {
             ts: string;
             /** @constant */
             type: "return.failed";
-            channel: components["schemas"]["ReturnChannel"];
+            channel: {
+                /** @constant */
+                kind: "caller";
+            } | {
+                /** @constant */
+                kind: "file";
+                path: string;
+                /**
+                 * @default json
+                 * @enum {string}
+                 */
+                format: "json" | "markdown" | "text";
+            } | {
+                /** @constant */
+                kind: "log";
+            };
             error: string;
         };
         EvaluationDiagnostic: {

@@ -139,7 +139,7 @@ describe('draft snapshots', () => {
         ],
       });
       const migration = await readFile(
-        new URL('../../drizzle/0015_run_execution_limits.sql', import.meta.url),
+        new URL('../../drizzle/0017_run_execution_limits.sql', import.meta.url),
         'utf8',
       );
       const apply = async () => {

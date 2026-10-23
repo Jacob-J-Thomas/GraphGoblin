@@ -57,9 +57,9 @@ Ports: `out`.
 
 ## Decision (`decision`)
 
-Chooses a route using an expression, LLM instructions, or a classifier primitive.
+Chooses a route using an expression, LLM instructions, or a classifier primitive. Marking one route as repeat makes it a gate with pass limits.
 
-Ports: Declared route ids for expression/LLM; classifier option, side or band ids.
+Ports: Declared route ids for expression/LLM; classifier option, side or band ids. A gate adds `limit-reached`.
 
 ### `kind: "expression"`
 
@@ -68,7 +68,7 @@ Ports: Declared route ids for expression/LLM; classifier option, side or band id
 | `jsonata`           | string          | yes      |         | JSONata source; return a declared route id for decisions.                                                                |
 | `maxPasses`         | integer \| null | no       |         | Required with a repeat route. Null means unlimited passes.                                                               |
 | `maxRunTimeSeconds` | integer         | no       |         | Optional maximum elapsed seconds from run start, including waits and pauses. Checked after evaluation, only on a repeat. |
-| `routes`            | object[]        | yes      |         | Two to sixty-four stable readable routes.                                                                                |
+| `routes`            | object[]        | yes      |         | Two to sixty-four routes with unique ids and unique labels; the expression returns one id.                               |
 
 ### `kind: "llm"`
 
@@ -80,7 +80,7 @@ Ports: Declared route ids for expression/LLM; classifier option, side or band id
 | `effort`            | one of `"inherit"` \| `"explicit"` by `mode` | yes      |         |                                         | Inherit or explicitly select reasoning effort.                                                                           |
 | `maxPasses`         | integer \| null                              | no       |         |                                         | Required with a repeat route. Null means unlimited passes.                                                               |
 | `maxRunTimeSeconds` | integer                                      | no       |         |                                         | Optional maximum elapsed seconds from run start, including waits and pauses. Checked after evaluation, only on a repeat. |
-| `routes`            | object[]                                     | yes      |         |                                         | Declared stable route ids and readable labels.                                                                           |
+| `routes`            | object[]                                     | yes      |         |                                         | Two to sixty-four routes with unique ids and unique labels; Codex chooses one id.                                        |
 | `context`           | { messages?, vars?, includeLastOutput? }     | no       | `{}`    | all but `messages`, `includeLastOutput` | Selected provider context.                                                                                               |
 
 ### `kind: "classifier"`
@@ -216,12 +216,12 @@ Ports: `out`.
 
 ## Exit (`exit`)
 
-Decides whether the loop is done, what it returns, where that goes, and whether to go around again.
+Finishes the run with an outcome, evaluates what it returns, and delivers that value to its destinations. With returns none the run has no result and no destination receives anything; with no destinations as well, the exit is quiet. Exits never loop back: repetition belongs to decision gates.
 
-Ports: `loopBack`, only when configured.
+Ports: None; exits are terminal.
 
-| Field          | Type                                                                         | Required | Default               | Description                                                                                          |
-| -------------- | ---------------------------------------------------------------------------- | -------- | --------------------- | ---------------------------------------------------------------------------------------------------- |
-| `outcome`      | `"success"` \| `"failure"` \| `"exhausted"`                                  | no       | `"success"`           | Terminal outcome; Exhausted produces run status exhausted and preserves the return value.            |
-| `returns`      | `"none"` \| string                                                           | no       | `"none"`              | JSONata return mapping, or none. Gate decisions replace lastOutput; prefer outputs.<workNode>.value. |
-| `destinations` | array of (one of `"caller"` \| `"webhook"` \| `"file"` \| `"log"` by `kind`) | no       | `[{"kind":"caller"}]` | Return destinations; caller by default. No delivery when returns is none.                            |
+| Field          | Type                                                                         | Required | Default               | Description                                                                                                                                                                            |
+| -------------- | ---------------------------------------------------------------------------- | -------- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `outcome`      | `"success"` \| `"failure"` \| `"exhausted"`                                  | no       | `"success"`           | Terminal outcome; Exhausted produces run status exhausted and preserves the return value.                                                                                              |
+| `returns`      | `"none"` \| string                                                           | no       | `"none"`              | JSONata return mapping, or none. None returns nothing: the run has no result and no destination receives anything. Gate decisions replace lastOutput; prefer outputs.<workNode>.value. |
+| `destinations` | array of (one of `"caller"` \| `"webhook"` \| `"file"` \| `"log"` by `kind`) | no       | `[{"kind":"caller"}]` | Return destinations; caller by default. No delivery when returns is none. With returns none and no destinations, the exit is quiet.                                                    |

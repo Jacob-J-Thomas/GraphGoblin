@@ -22,11 +22,22 @@ describe('CLI evidence through Settings preflight and draft validation', () => {
     ['stdout-quota-warning', 'quota'],
     ['auth-empty', 'unknown'],
     ['auth-unrecognised', 'unknown'],
+    ['auth-zero-stdout', 'auth'],
+    ['auth-zero-stderr', 'auth'],
     ['ready', 'ready'],
     ['auth', 'auth'],
   ] as const)(
     '%s preserves %s for both harnesses',
     async (scenario, state) => {
+      const problem = (id: HarnessId) =>
+        readinessMessage(
+          id,
+          state,
+          state === 'auth' &&
+            (scenario.startsWith('auth-zero') || (scenario === 'auth' && id === 'claude'))
+            ? `${id === 'claude' ? 'Claude' : 'Codex'} is not signed in.`
+            : undefined,
+        );
       const commands: { harness: HarnessId; args: readonly string[] }[] = [];
       async function executable(harness: HarnessId, args: readonly string[], cwd: string) {
         commands.push({ harness, args });
@@ -68,6 +79,9 @@ describe('CLI evidence through Settings preflight and draft validation', () => {
             ...(result.code !== 0 && result.stderr
               ? { failureState: cliFailureState(result.stderr) }
               : {}),
+            ...(request.classifyDiagnostics && /\bnot logged in\b/i.test(result.stderr.slice(-8192))
+              ? { notLoggedIn: true as const }
+              : {}),
           };
         },
       });
@@ -90,8 +104,10 @@ describe('CLI evidence through Settings preflight and draft validation', () => {
           expect(item).not.toHaveProperty('authenticated');
           expect(item.problems).toEqual([readinessMessage(item.harness, 'unknown')]);
         }
+        if (state === 'auth') expect(item.problems).toEqual([problem(item.harness)]);
         if (scenario === 'ready' || scenario === 'auth')
           expect(item.authenticated).toBe(scenario === 'ready');
+        if (scenario.startsWith('auth-zero')) expect(item.authenticated).toBe(false);
       }
       const preflight = await app.app.inject('/system/preflight');
       expect(preflight.statusCode).toBe(200);
@@ -135,7 +151,7 @@ describe('CLI evidence through Settings preflight and draft validation', () => {
             expect.objectContaining({
               code: 'HARNESS_READINESS_' + state.toUpperCase(),
               nodeId: 'work',
-              ...(state === 'unknown' ? { message: readinessMessage(id, 'unknown') } : {}),
+              ...(['unknown', 'auth'].includes(state) ? { message: problem(id) } : {}),
             }),
           ]);
       }

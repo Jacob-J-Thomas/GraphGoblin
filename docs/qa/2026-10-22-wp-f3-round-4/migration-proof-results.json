@@ -1,0 +1,63 @@
+{
+  "main": "a78e12a3713bc73cf440de7ea2058b4324709e76",
+  "evidence": "Real disk SQLite using public components and main SQL; not a main app build.",
+  "checks": [
+    {
+      "name": "omitted run, queued event and both saved pins",
+      "limits": {
+        "maxNodeVisits": 10,
+        "runDeadlineSeconds": null
+      },
+      "pass": true
+    },
+    {
+      "name": "finite run, queued event and both saved pins",
+      "limits": {
+        "maxNodeVisits": 4,
+        "runDeadlineSeconds": 5
+      },
+      "pass": true
+    },
+    {
+      "name": "unlimited run, queued event and both saved pins",
+      "limits": {
+        "maxNodeVisits": null,
+        "runDeadlineSeconds": null
+      },
+      "pass": true
+    },
+    {
+      "name": "main 0016 to candidate 0017 across disk close/reopen, then idempotent reopen",
+      "before": 17,
+      "after": 18,
+      "pass": true
+    },
+    {
+      "name": "fresh database migrates from zero through all 18 migrations",
+      "pass": true
+    }
+  ],
+  "cleanup": {
+    "databaseFile": "gg-wp-f3-round4-171b7115-9137-4882-b058-e35bf7f96c0f.db",
+    "databaseFilesRemoved": false,
+    "cleanupDeferredUntilProcessExit": true,
+    "fixtureFilesRemoved": true,
+    "cleanupFailures": [
+      {
+        "file": "gg-wp-f3-round4-171b7115-9137-4882-b058-e35bf7f96c0f.db",
+        "code": "EBUSY"
+      },
+      {
+        "file": "gg-wp-f3-round4-171b7115-9137-4882-b058-e35bf7f96c0f.db-wal",
+        "code": "EBUSY"
+      },
+      {
+        "file": "gg-wp-f3-round4-171b7115-9137-4882-b058-e35bf7f96c0f.db-shm",
+        "code": "EBUSY"
+      }
+    ],
+    "emptyFixtureDirectory": "gg-wp-f3-round4-sql-egeidN",
+    "emptyMetaDirectory": "gg-wp-f3-round4-sql-egeidN/meta",
+    "directoriesNotDeleted": true
+  }
+}

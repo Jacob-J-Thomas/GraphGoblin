@@ -6,7 +6,9 @@ Runs start from the **Runs** screen. Click **New run** and choose a published lo
 
 In the editor, **Open in Runs** (in the toolbar, and in the notice after a publish) opens New run with that loop already chosen. Until the loop has a published version it is disabled and says why. The editor itself starts no runs.
 
-The Runs screen lists runs across loops and filters by loop, status, and parent; with a loop filter set, **New run** starts with that loop chosen. The chosen loop is part of the address, so a link or a reload keeps it. Its browser routes are:
+The Runs screen lists runs across loops and filters by loop, status, and parent; with a loop filter set, **New run** starts with that loop chosen. The chosen loop is part of the address, so a link or a reload keeps it. Use **Load more** on Runs or Events to append older history. Runs keeps the selected loop, status and parent filters; changing a filter starts that history. Loaded rows remain visible if a later page fails, and the same button retries it.
+
+Its browser routes are:
 
 <!-- guide-example: run-urls -->
 
@@ -126,7 +128,9 @@ Select an event in **Timeline** to reconstruct the thread at that sequence. Sele
 
 Decision evaluation details show the selected stable port and evaluator-specific observation: a route ID for Expression/LLM, or Choice/Noul/Score evidence for a classifier. LLM confidence is informational. Classifier rejection retains its proposed evidence without claiming a selected route. The corresponding output paths are `portId`, `provenance` and `observation`.
 
-`exit.evaluated` records the terminal outcome: Success, Failure or Exhausted. Read **Result** for its returned value; Exhausted does not wrap or replace it. Gate **Evaluation details** show previous/current passes, maximum passes, optional run time in seconds, elapsed time from run start, and which limit stopped a repeat. The observed choice remains visible even when **Selected port** is `limit-reached`. Passes start at 1 and can be read by expressions at `gates.<nodeId>.passes`.
+`exit.evaluated` records the terminal outcome: Success, Failure or Exhausted. Read **Result** for its returned value, `null` included; Exhausted does not wrap or replace it. When the exit's Returns is None, **Exit evaluation** says that no value was returned by configuration, not by failure, and names the destinations that received nothing, from the exit and from the start request. An exit with no destinations is identified as a quiet exit. **Exit evaluation** also shows the last gate decision: which route it chose on which pass, and whether a limit stopped the repeat.
+
+Gate **Evaluation details** show previous/current passes, maximum passes, optional run time in seconds, elapsed time from run start, and which limit stopped a repeat. The observed choice remains visible even when **Selected port** is `limit-reached`. **Label** names the chosen route as the run's version authored it, and **Criterion** shows the criterion a classifier Choice option or Noul side gave the classifier. Passes start at 1 and can be read by expressions at `gates.<nodeId>.passes`.
 
 `decision.made` identifies the evaluator kind, selected option ID, confidence where applicable, and actual resolved provider/model/effort. The option ID is also its output port. LLM confidence is self-reported information, not a calibrated probability. Converted historical events preserve known skip diagnostics; unknown old values display as unknown rather than invented settings. New decisions never try another evaluator.
 
@@ -149,8 +153,11 @@ In PowerShell:
 
 ```powershell
 $runId = '<run-id>'
-Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:4747/runs/$runId/resume" -ContentType 'application/json' -Body '{}'
+Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:4747/runs/$runId/resume" `
+  -ContentType 'application/json' -Body '{}'
 ```
+
+Windows PowerShell gives a POST without a body a form content type, which the API refuses with 415 `UNSUPPORTED_MEDIA_TYPE`. The example therefore sends an empty JSON object.
 
 Pausing, resuming, or answering a run in the wrong status returns 409 `INVALID_STATE`.
 
@@ -180,7 +187,7 @@ Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:4747/runs/$runId/replay" `
   -ContentType 'application/json' -Body '{"nodeId":"summarise"}'
 ```
 
-The response is 202 with the new `run`; open it at `/app/runs/<new-run-id>`. Its invocation and first event record `replayOf` (source run and node). MCP callers use the `replay_run` tool with `runId` and `nodeId`, then `wait_for_run`. A node the source never reached answers 409 `REPLAY_NODE_NOT_REACHED`. The fork does not carry the source's Codex session or working directory, and a subloop node in the fork starts a new child run. See [Execution engine](../05-execution-engine.md#replay-and-debugging-decided-by-implementation-2026-10-03) for the exact rules.
+The response is 202 with the new `run`; open it at `/app/runs/<new-run-id>`. Its invocation and first event record `replayOf` (source run and node). The first event also records the actual `initialThread`: the inspector starts there, preserving inherited values, messages, visit counters and gate passes, then adds the fork's own execution. `GET /runs/{id}/thread` returns this seed while the fork is still queued. MCP callers use the `replay_run` tool with `runId` and `nodeId`, then `wait_for_run`. A node the source never reached answers 409 `REPLAY_NODE_NOT_REACHED`. The fork does not carry the source's Codex session or working directory, and a subloop node in the fork starts a new child run. See [Execution engine](../05-execution-engine.md#replay-and-debugging-decided-by-implementation-2026-10-03) for the exact rules.
 
 > After 1.0: A replay button in the run inspector. Use the API or MCP until then.
 
@@ -218,7 +225,7 @@ The query's `after` overrides the header when both are supplied. Replay includes
 
 ## Read returns and child runs
 
-Set the exit's `returns` JSONata expression to produce a payload, and `destinations` to select channels. `returns` defaults to `none` (no result or deliveries); `destinations` defaults to `caller`. Choose these channels:
+Set the exit's `returns` JSONata expression to produce a payload, and `destinations` to select channels. `returns` defaults to `none`; `destinations` defaults to `caller`. With `none`, the run has no result and no destination receives anything, including channels added by the start request's `return`. Choose None with no destinations for a deliberate quiet exit. The exit editor shows which of these applies. Choose these channels:
 
 | Channel kind | Delivery                                                                                                                                  |
 | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
@@ -227,7 +234,7 @@ Set the exit's `returns` JSONata expression to produce a payload, and `destinati
 | `file`       | Write `path` in `json`, `markdown`, or `text` format. Relative paths resolve against the run workspace; absolute paths are used as given. |
 | `log`        | Write the result to the API's logger.                                                                                                     |
 
-Exits do not publish Events; to use one loop's result in another, call it with a Subloop node. Webhook channels wrap the mapped result with `runId`, `loopId`, and `outcome`. Delivery happens after `run.finished`; a delivery failure records `return.failed` and does not change the finished status. SSE closes at the terminal event, so read a subsequent JSON event page to check delivery events:
+Exits do not publish Events; to use one loop's result in another, call it with a Subloop node. Webhook channels wrap the mapped result with `runId`, `loopId`, and `outcome`. Delivery happens after `run.finished` and does not change execution status. The inspector's Webhook delivery section and `run.deliveries` show pending, delivered or failed after N attempts, the identity and the last typed error. Webhooks retry eligible failures up to five times, with 10-second deadlines and 2/5/10/20-second delays. Every attempt sends the same `Idempotency-Key`. Receivers must implement their own deduplication if duplicate effects are unacceptable; GraphGoblin does not assume they do. Orderly stop lets an in-flight request finish within its existing deadline and starts no new attempt; pending delivery resumes on the next start with the same identity and budget. Deleting a loop stops its pending deliveries. A timeout, truncated acknowledgement or interrupted process means the effect may have happened. Other return sinks still record `return.failed`. SSE closes at the terminal execution event, so fetch the run again or read a subsequent JSON event page to check durable `delivery.*` events:
 
 <!-- guide-example: returns-bash -->
 
@@ -302,7 +309,7 @@ cannot authorize continuation.
 | `HEARTBEAT_EXHAUSTED`                                               | Check the probe and condition; revise beat/deadline limits or exhaustion behaviour if needed.                                                                                                                                                       |
 | `HTTP_PROBE_BODY_OVERFLOW`                                          | An HTTP heartbeat response exceeded 64 KiB. Narrow the response or use a script probe; no successful beat or partial JSON was recorded.                                                                                                             |
 | `MAX_NODE_VISITS`                                                   | Fix unintended cycles, raise maximum visits, or explicitly choose Unlimited for intentional execution.                                                                                                                                              |
-| `RETURN_DELIVERY_FAILED`                                            | Check the destination and signing secret. Current delivery failures use `return.failed` events, rather than this reserved run-failure code; arrange redelivery explicitly.                                                                          |
+| `RETURN_DELIVERY_FAILED`                                            | Reserved run-failure code. Check `run.deliveries` and `delivery.finished` for webhook outcomes; other sinks use `return.failed`. Delivery never changes execution status.                                                                           |
 | `EVENT_INVALID`                                                     | Generated event violates a contract bound. Read the failure, correct its source, then start or replay. Successful values are never trimmed.                                                                                                         |
 | `INTERNAL_ERROR`                                                    | Preserve the run ID, log, and failure details; investigate or report the defect before retrying side effects.                                                                                                                                       |
 

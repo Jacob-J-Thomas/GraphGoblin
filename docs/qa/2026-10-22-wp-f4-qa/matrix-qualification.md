@@ -14,8 +14,16 @@ does not qualify that first audit execution.
 
 [matrix-initial-failure.json](matrix-initial-failure.json) retains the auditor's stored failure
 and B events, copied without changing their values from
-`%TEMP%/gg-audit-f4-20261022/matrix-failure-inspection.json`. The original initial run and its
-isolated replay remain in the audit directory as `matrix.txt` and `matrix-isolated.txt`.
+`%TEMP%/gg-audit-f4-20261022/matrix-failure-inspection.json`. The auditor's original initial run
+and its isolated replay, observations of `112d6207` and not of this head, are committed as
+[audit-matrix-initial-112d6207.txt](audit-matrix-initial-112d6207.txt) and
+[audit-matrix-isolated-112d6207.txt](audit-matrix-isolated-112d6207.txt), copied from the audit
+directory's `matrix.txt` and `matrix-isolated.txt` in the second audit round. The auditor's
+originals use CRLF line endings and hash to SHA-256
+`8c95b0119914da0075dc8fcece16a09db21cdad8c3dc20528a43c2c01c928a51` and
+`d0f87010e7dd56ee41f2ab1b7fecc8968e778f3751b86bd7fa841212c91840e1`; git stores text with LF
+line endings, so the committed blobs hash differently, and the contents are identical after
+newline normalisation (every line equal).
 The existing QA `matrix.txt`, `matrix-checks.md` and earlier gate logs are unchanged.
 
 The qualified [driver](api-driver.txt) makes three changes relevant to reproducing this case:

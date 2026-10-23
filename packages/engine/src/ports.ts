@@ -24,6 +24,7 @@ import type {
   RunStatus,
   Usage,
   WorkingDirectorySpec,
+  WebhookAttemptResult,
 } from '@graphgoblin/contracts';
 
 /**
@@ -60,11 +61,12 @@ export interface EventStorePort {
    * that (0 for an empty log); otherwise nothing is written and `AppendConflictError` is thrown.
    * Implementations must validate every complete event against RunEventSchema before persisting
    * any part of the batch. Invalid generated records throw RunFailureError(EVENT_INVALID).
+   * `requireRun` checks run existence in the same transaction; a deleted run returns no events.
    */
   append(
     runId: string,
     drafts: readonly EventDraft[],
-    options?: { expectedLastSeq?: number },
+    options?: { expectedLastSeq?: number; requireRun?: boolean },
   ): Promise<RunEvent[]>;
   /** Events after `afterSeq` (default 0), oldest first, at most `limit` of them when given. */
   read(runId: string, afterSeq?: number, limit?: number): Promise<RunEvent[]>;
@@ -72,7 +74,9 @@ export interface EventStorePort {
 }
 
 /** Field-level changes to a run record; `undefined` clears a field. */
-export type RunRecordChanges = { [K in keyof RunRecord]?: RunRecord[K] | undefined };
+export type RunRecordChanges = {
+  [K in Exclude<keyof RunRecord, 'deliveries'>]?: RunRecord[K] | undefined;
+};
 
 export interface RunRepository {
   create(run: RunRecord, initialThread: ContextThread): Promise<void>;
@@ -431,7 +435,12 @@ export interface HttpProbePort {
 }
 
 export interface ReturnDeliveryPort {
-  webhook(url: string, payload: JsonValue, secret?: string): Promise<void>;
+  webhook(
+    url: string,
+    payload: JsonValue,
+    secret: string | undefined,
+    deliveryId: string,
+  ): Promise<WebhookAttemptResult>;
   log(runId: string, payload: JsonValue): void;
 }
 

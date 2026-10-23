@@ -143,6 +143,51 @@ describe('execution guardrails (#243)', () => {
       ).size,
     ).toBe(1);
   });
+  it('never retries accepted transport work despite later non-submission metadata', async () => {
+    const e = await engine();
+    e.ports.harness.script([
+      {
+        accepted: true,
+        submission: 'definitely-not-submitted',
+        error: { code: 'HARNESS_TRANSPORT_FAILED', message: 'After acceptance', retriable: true },
+      },
+    ]);
+    const run = await e.runToIdle(e.publish(cycle()).loopId);
+    expect(run.failure?.code).toBe('HARNESS_TRANSPORT_FAILED');
+    expect(run.failure?.inference?.submission).toBe('delivery-uncertain');
+    expect(e.ports.harness.started).toHaveLength(1);
+  });
+  it('folds unconfirmed cleanup before allowing a transport retry', async () => {
+    const e = await engine();
+    const fake = e.ports.harness;
+    fake.script([
+      {
+        submission: 'definitely-not-submitted',
+        error: { code: 'HARNESS_TRANSPORT_FAILED', message: 'Before acceptance', retriable: true },
+      },
+    ]);
+    e.ports.harnesses.codex = {
+      id: 'codex',
+      preflight: () => fake.preflight(),
+      resume: (id, request, signal) => fake.resume(id, request, signal),
+      start(request, signal) {
+        return {
+          ...fake.start(request, signal),
+          cancel: () =>
+            Promise.reject(
+              Object.assign(new Error('Controlled unconfirmed cleanup'), {
+                code: 'HARNESS_TERMINATION_UNCONFIRMED',
+                retriable: false,
+              }),
+            ),
+        };
+      },
+    };
+    const run = await e.runToIdle(e.publish(cycle()).loopId);
+    expect(run.failure?.code).toBe('HARNESS_TERMINATION_UNCONFIRMED');
+    expect(run.failure?.resumable).toBe(false);
+    expect(fake.started).toHaveLength(1);
+  });
   it.each(['HARNESS_QUOTA_EXHAUSTED', 'HARNESS_NOT_AUTHENTICATED', 'HARNESS_OUTPUT_LIMIT'])(
     'does not retry %s',
     async (code) => {

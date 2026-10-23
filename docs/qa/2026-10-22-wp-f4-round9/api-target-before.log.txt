@@ -1,0 +1,125 @@
+
+ RUN  v5.0.3 <USERPROFILE>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f4-prompt-provenance/apps/api
+
+ ❯ src/prompt-evidence-matrix.test.ts (144 tests | 1 failed | 143 skipped) 883ms
+   × keeps HTTP codex HARNESS_TERMINATION_UNCONFIRMED retry=false storage=before 880ms
+pnpm.cmd : 
+At line:2 char:50
++ ... $env:PATH"; pnpm.cmd --filter @graphgoblin/api exec vitest run src/pr ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_TERMINATION_UNCONFIRMED retry=false storage=before
+AssertionError: expected { code: 'INTERNAL_ERROR', …(5) } to match object { …(3) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "HARNESS_TERMINATION_UNCONFIRMED",
++   "code": "INTERNAL_ERROR",
+    "inference": {
+      "promptKind": "repair",
+      "submission": "delivery-uncertain",
+    },
+-   "resumable": false,
++   "resumable": true,
+  }
+
+ ❯ src/prompt-evidence-matrix.test.ts:33:30
+     31|     const run = (await test.app.inject({ method: 'GET', url: `/runs/${…
+     32|     const expected = expectedFailure(spec, 'result', family, retriable…
+     33|     expect.soft(run.failure).toMatchObject({ code: expected.code, resu…
+       |                              ^
+     34|     if (fired) expect.soft(run.failure?.details).toMatchObject({ recor…
+     35|     const resumed = await test.app.inject({ method: 'POST', url: `/run…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_TERMINATION_UNCONFIRMED retry=false storage=before
+AssertionError: expected { name: 'Error', …(1) } to match object { recording: Any<Array> }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "recording": Any<Array>,
++   "name": "Error",
++   "stack": "Error: HTTP classification recording fault before
++     at Object.append (<USERPROFILE>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f4-prompt-provenance/apps/ap
+i/src/prompt-evidence-matrix.test.ts:20:15)
++     at appendAll (<USERPROFILE>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f4-prompt-provenance/packages/en
+gine/src/run-manager.ts:1421:46)
++     at Object.append (<USERPROFILE>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f4-prompt-provenance/package
+s/engine/src/run-manager.ts:1426:13)
++     at submission (<USERPROFILE>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f4-prompt-provenance/packages/e
+ngine/src/handlers/inference-turn.ts:74:22)
++     at rethrow (<USERPROFILE>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f4-prompt-provenance/packages/engi
+ne/src/handlers/inference.ts:137:45)
++     at consume (<USERPROFILE>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f4-prompt-provenance/packages/engi
+ne/src/handlers/inference.ts:201:12)
++     at Object.execute (<USERPROFILE>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f4-prompt-provenance/packag
+es/engine/src/handlers/inference.ts:408:32)
++     at RunManager.execute (<USERPROFILE>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f4-prompt-provenance/pa
+ckages/engine/src/run-manager.ts:1594:18)",
+  }
+
+ ❯ src/prompt-evidence-matrix.test.ts:34:50
+     32|     const expected = expectedFailure(spec, 'result', family, retriable…
+     33|     expect.soft(run.failure).toMatchObject({ code: expected.code, resu…
+     34|     if (fired) expect.soft(run.failure?.details).toMatchObject({ recor…
+       |                                                  ^
+     35|     const resumed = await test.app.inject({ method: 'POST', url: `/run…
+     36|     await test.idle();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_TERMINATION_UNCONFIRMED retry=false storage=before
+AssertionError: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ src/prompt-evidence-matrix.test.ts:37:37
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/prompt-evidence-matrix.test.ts > keeps HTTP codex HARNESS_TERMINATION_UNCONFIRMED retry=false storage=before
+AssertionError: expected 3 to be 2 // Object.is equality
+
+- Expected
++ Received
+
+- 2
++ 3
+
+ ❯ src/prompt-evidence-matrix.test.ts:38:33
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 143 skipped (144)
+   Start at  19:48:59
+   Duration  10.39s (import 49%, transform 42%, tests 9%)
+
+  Transform  transforming modules took 4.15s · 42% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ \Users\<user>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f4-
+  │ prompt-provenance\apps\api
+

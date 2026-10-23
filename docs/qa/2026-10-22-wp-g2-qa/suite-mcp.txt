@@ -1,0 +1,71 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/mcp test:coverage --maxWorkers=1 --coverage.reportOnFailure --reporter=verbose
+$ vitest run --coverage --maxWorkers=1 --coverage.reportOnFailure --reporter=verbose
+
+ RUN  v5.0.3 <worktree>/apps/mcp
+      Coverage enabled with v8
+
+ ? src/mcp.test.ts > MCP server against the in-process API > advertises every tool with an agent-facing description and an input schema 64ms
+ ? src/mcp.test.ts > MCP server against the in-process API > lists and describes loops by id and by name 415ms
+ ? src/mcp.test.ts > MCP server against the in-process API > describes a draft-only loop and maps lookup failures to coded tool errors 393ms
+ ? src/mcp.test.ts > MCP server against the in-process API > starts a run, waits for it, and records the manual.mcp source 261ms
+ ? src/mcp.test.ts > MCP server against the in-process API > starts the start-mcp guide example through start_run with the exact loop name 299ms
+ ? src/mcp.test.ts > MCP server against the in-process API > stops waiting on exhausted, preserving the return value and recorded gate evidence 171ms
+ ? src/mcp.test.ts > MCP server against the in-process API > reports progress while a run is busy, then succeeds 585ms
+ ? src/mcp.test.ts > MCP server against the in-process API > returns early for input, and drives input, signals, pause, resume, and cancel 1640ms
+ ? src/mcp.test.ts > MCP server against the in-process API > maps API problem details onto tool errors with the code preserved 47ms
+ ? src/mcp.test.ts > MCP server against the in-process API > serves run events and threads as resources 226ms
+ ? src/mcp.test.ts > MCP server with API keys > sends the configured key and reports UNAUTHORIZED without it 143ms
+ ? src/units.test.ts > loadConfig > uses defaults 5ms
+ ? src/units.test.ts > loadConfig > reads the environment 3ms
+ ? src/units.test.ts > loadConfig > lets flags override the environment 1ms
+ ? src/units.test.ts > loadConfig > rejects bad flags, ports, and URLs 3ms
+ ? src/units.test.ts > tool results > returns JSON text and structured content for objects only 1ms
+ ? src/units.test.ts > tool results > describes every kind of failure with a code first 2ms
+ ? src/units.test.ts > tool results > reports an unreachable gateway as NETWORK_ERROR 0ms
+ ? src/units.test.ts > gateway client > identifies itself as the MCP client and sends the key 12ms
+ ? src/units.test.ts > isEntryPoint > compares real paths 4ms
+ ? src/units.test.ts > describe helpers > describes every trigger type, waits, and exits of the kitchen-sink loop 40ms
+ ? src/units.test.ts > describe helpers > reports wait nodes without an input schema and loops without versions 3ms
+ ? src/units.test.ts > describe helpers > summarises failed child runs 1ms
+ ? src/units.test.ts > gateway failures > surfaces an unreachable gateway as a NETWORK_ERROR tool error 45ms
+ ? src/transports.test.ts > transports > serves Streamable HTTP from main --http on an ephemeral port 1542ms
+ ? src/transports.test.ts > transports > answers 500 when building the server fails and allows any Host off loopback 11ms
+ ? src/transports.test.ts > transports > binds IPv6 loopback and rejects a port that is in use 5ms
+ ? src/transports.test.ts > transports > serves stdio from main by default 17ms
+ ? src/transports.test.ts > transports > prints usage for --help and exits 2 on bad flags 1ms
+ ? src/paging.test.ts > MCP history paging against real SQLite and API > carries opaque cursors and all filters across limit-one timestamp ties to exhaustion 1385ms
+ ? src/paging.test.ts > MCP history paging against real SQLite and API > keeps before on REST only and reports invalid MCP cursors 272ms
+ ? src/paging.test.ts > MCP history paging against real SQLite and API > reports no more events when the final page exactly equals its limit 285ms
+ ? src/paging.test.ts > MCP history paging against real SQLite and API > returns healthy event pages before damaged lookahead and reports the requested corruption 204ms
+ ? src/classifiers.test.ts > MCP classifier consumer regression > runs and inspects explicit expression and classifier kinds without adding tools 577ms
+ ? src/classifiers.test.ts > MCP classifier consumer regression > preserves classifier validation messages through API-client and MCP errors 8ms
+ ? src/wait.test.ts > MCP observation deadlines > advertises a minimum one-second budget and refuses zero without a GET 89ms
+ ? src/wait.test.ts > MCP observation deadlines > ends a stalled GET at the deadline, ignores its late success, and never cancels the run 34ms
+ ? src/wait.test.ts > MCP observation deadlines > returns the last observed status when a later request stalls 38ms
+ ? src/wait.test.ts > MCP observation deadlines > propagates MCP request cancellation into a stalled GET without a cancel endpoint 11ms
+ ? src/describe.test.ts > evaluator-specific decision descriptions > describes gate limits, repeat routes and terminal exits (seconds: undefined) 22ms
+ ? src/describe.test.ts > evaluator-specific decision descriptions > describes gate limits, repeat routes and terminal exits (seconds: 60) 1ms
+ ? src/describe.test.ts > evaluator-specific decision descriptions > describes expression with readable stable routes and applicable selection 2ms
+ ? src/describe.test.ts > evaluator-specific decision descriptions > describes llm with readable stable routes and applicable selection 4ms
+ ? src/describe.test.ts > evaluator-specific decision descriptions > describes classifier with readable stable routes and applicable selection 4ms
+ ? src/describe.test.ts > evaluator-specific decision descriptions > describes classifier with readable stable routes and applicable selection 1ms
+ ? src/describe.test.ts > evaluator-specific decision descriptions > describes classifier with readable stable routes and applicable selection 2ms
+ ? src/run-pagination.test.ts > list_runs follows the server cursor past an empty damaged-row page to a readable run 53ms
+
+ Test Files  8 passed (8)
+      Tests  47 passed (47)
+   Start at  21:48:54
+   Duration  46.63s (import 51%, tests 28%, transform 19%, worker 1%)
+
+    Isolate  8 workers spawned · ~354ms startup each (spawn + environment, per file)
+             at least ~2.48s faster with isolate: false  reuses workers across files instead of one per file
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 95.09% ( 252/265 )
+Branches     : 95.81% ( 206/215 )
+Functions    : 93.97% ( 78/83 )
+Lines        : 96.66% ( 232/240 )
+================================================================================
+EXIT: 0; ELAPSED_SECONDS: 48.9

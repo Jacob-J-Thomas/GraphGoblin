@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { DecisionEvidenceSchema } from './evaluation.js';
+import { WebhookDeliverySchema } from './delivery.js';
 import {
   EffortSchema,
   HarnessIdSchema,
@@ -20,7 +21,7 @@ import {
 import {
   ContextThreadSchema,
   ReplayOriginSchema,
-  ReturnChannelSchema,
+  NonWebhookReturnChannelSchema,
   UsageSchema,
 } from './thread.js';
 
@@ -92,6 +93,22 @@ export type NodeProgress = z.infer<typeof NodeProgressSchema>;
  * Large payloads live in artifacts and are referenced here.
  */
 export const RunEventSchema = z.discriminatedUnion('type', [
+  z.strictObject({ ...Base, type: z.literal('delivery.queued'), delivery: WebhookDeliverySchema }),
+  z.strictObject({
+    ...Base,
+    type: z.literal('delivery.attempted'),
+    delivery: WebhookDeliverySchema,
+  }),
+  z.strictObject({
+    ...Base,
+    type: z.literal('delivery.attempt_finished'),
+    delivery: WebhookDeliverySchema,
+  }),
+  z.strictObject({
+    ...Base,
+    type: z.literal('delivery.finished'),
+    delivery: WebhookDeliverySchema,
+  }),
   z.strictObject({
     ...Base,
     type: z.literal('run.queued'),
@@ -253,13 +270,13 @@ export const RunEventSchema = z.discriminatedUnion('type', [
   z.strictObject({
     ...Base,
     type: z.literal('return.delivered'),
-    channel: ReturnChannelSchema,
+    channel: NonWebhookReturnChannelSchema,
     target: z.string().max(4096).optional(),
   }),
   z.strictObject({
     ...Base,
     type: z.literal('return.failed'),
-    channel: ReturnChannelSchema,
+    channel: NonWebhookReturnChannelSchema,
     error: z.string().max(4000),
   }),
 ]);

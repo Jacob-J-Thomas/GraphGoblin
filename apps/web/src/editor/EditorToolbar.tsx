@@ -64,6 +64,7 @@ export function EditorToolbar({
   errors,
   validation,
   publishing,
+  publishBlockedReason,
   onPublish,
   saveStatusRef,
 }: {
@@ -82,6 +83,8 @@ export function EditorToolbar({
   /** The validation indicator, shown left of Publish. */
   validation?: ReactNode;
   publishing: boolean;
+  /** A failed catalog lookup holds publication, even when cached choices remain. */
+  publishBlockedReason?: string | undefined;
   onPublish: () => void;
   saveStatusRef?: Ref<HTMLSpanElement>;
 }) {
@@ -128,8 +131,11 @@ export function EditorToolbar({
         {validation}
         <Button
           onClick={onPublish}
-          disabled={publishing}
-          title={errors > 0 ? `${errors} validation error(s) will block publishing` : undefined}
+          disabled={publishing || publishBlockedReason !== undefined}
+          title={
+            publishBlockedReason ??
+            (errors > 0 ? `${errors} validation error(s) will block publishing` : undefined)
+          }
         >
           <Icon name="send" />
           {publishing ? 'Publishing…' : 'Publish'}

@@ -18,7 +18,7 @@ const { fetch } = globalThis;
 
 const fixture = fileURLToPath(new URL('./prompt-restart.fixture.mjs', import.meta.url));
 async function freePort() {
-  for (let port = 5840; port <= 5849; port++) {
+  for (let port = 5660; port <= 5669; port++) {
     const probe = createServer();
     try {
       await new Promise((resolve, reject) => {
@@ -31,7 +31,7 @@ async function freePort() {
       if (error.code !== 'EADDRINUSE') throw error;
     }
   }
-  throw new Error('No disposable port in 5840-5849');
+  throw new Error('No disposable port in 5660-5669');
 }
 async function eventually(check) {
   const until = Date.now() + 60000;

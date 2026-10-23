@@ -105,14 +105,14 @@ establish syntax only; runtime verification still owns model/effort execution tr
 Draft create, template-draft create, import and save validate catalog/configuration only: they
 never probe CLI readiness or wait for a provider prerequisite. Readiness cannot reject a draft.
 The editor obtains readiness separately from `/harness/preflight`.
-Explicit validate, publish, preflight and manual API/MCP run admission use an operation-owned memo.
+Explicit validate, publish, preflight and manual API/MCP trigger start use an operation-owned memo.
 Each referenced harness is probed once per operation, including failures and multiple nodes;
 distinct harnesses are probed concurrently. Concurrent requests own separate memos; nothing is
 retained on the container or module. Run admission pins the checked version and rejects failed
 prerequisites before starting a turn. Readiness issues use `HARNESS_READINESS_<STATE>` (hyphens
 become underscores); catalog/configuration issues retain their existing codes.
 
-Manual UI/API/MCP admission checks the engine's frozen root definition (published version or
+Manual UI/API/MCP trigger start checks the engine's frozen root definition (published version or
 draft snapshot) and every executable pinned subloop definition, recursively. Both `latest` and
 numbered child references use the published records the engine prepared for this start, never a
 child's draft or a publication that arrives while a probe is pending. A breadth-first walk visits
@@ -124,16 +124,19 @@ issues, before any parent run, queued event, draft snapshot or mutation is commi
 The engine commits the same checked intent after probing and revalidates that its versions still
 exist; slow probes do not hold the shared admission/deletion lock.
 
-Scheduled and webhook admissions, internally started subloops and resumes do not gain this
-manual preflight; their existing execution checks remain in place and can fail after earlier
-nodes have run. Unresolved child references retain their existing `SUBLOOP_NOT_FOUND` execution
-behavior. Readiness is an admission-time observation, not a guarantee of later account access.
+Replay, scheduled and webhook admissions, internally started subloops and resumes do not gain
+this manual trigger-start preflight; their existing execution checks remain in place and can
+fail after earlier nodes have run. In particular, replay can return 202 with an unready harness,
+execute preceding mutations, then fail when it reaches that harness. Unresolved child references
+retain their existing `SUBLOOP_NOT_FOUND` execution behavior. Readiness is an admission-time
+observation, not a guarantee of later account access.
 
 `/harness/preflight` exposes seven server states. `checking` is a web-only request state.
 `authenticated` is absent if login was not checked or could not be established; false requires
 positive signed-out evidence. Claude parses auth-status JSON even on
-exit 1 (`loggedIn:false` or an explicit nonempty non-Claude.ai account method). Empty output,
-`{}` or an unrecognised login response on exit 0 is `unknown`, with no `authenticated` field;
+exit 1 (`loggedIn:false` or an explicit nonempty non-Claude.ai account method). During auth status,
+explicit `Not logged in` text on stdout or bounded stderr confirms sign-out even on exit 0.
+Empty output, `{}` or an unrecognised login response on exit 0 is `unknown`, with no `authenticated` field;
 a successful exit alone establishes no login fact. A recognised Claude.ai status or Codex
 "Logged in" status establishes true; an explicit signed-out status establishes false.
 
@@ -144,8 +147,9 @@ Thus incidental "network" advice cannot override 401 or 429, while connection er
 are not HTTP status evidence. For Claude's unstructured diagnostics, recognised stderr wins
 over conflicting stdout because stderr is the CLI's primary error channel; stdout is consulted
 when stderr is absent or classified `unknown`, so an unrelated warning cannot hide stdout quota.
-Structured Claude auth status is handled separately; process start, timeout, cancellation,
-overflow and unconfirmed termination remain authoritative. None of this inference applies to
+Positive Claude auth-status sign-out evidence (structured or explicit text) is handled separately;
+process start, timeout, cancellation, overflow and unconfirmed termination remain authoritative.
+None of this inference applies to
 model-turn stdout or changes turn retry eligibility.
 Harness checks in `/system/preflight` carry state alongside the system's `ok`/`warn`/`fail`
 severity. Each problem is one detail sentence and one action ending "then retry preflight"
@@ -564,3 +568,13 @@ or uncertain work is never blindly resubmitted. The same exact prompt/turn ident
 retained for a positively safe retry. Other failures fail normally; explicit recovery
 remains governed by provenance and resumability. Users may author script/decision nodes
 for usage-aware behavior; built-in limits are execution controls only.
+
+## Explicit node harness changes (#204)
+
+An explicit Harness change preserves unset node model/effort inheritance. For an explicit model,
+the editor chooses an enabled compatible loop default, then Settings default, then the adapter's
+ecosystem default (D-023). It waits for first-time checks already in flight; failed checks preserve
+authored selections. A failed catalog lookup shows **Validation unavailable**; a blocked switch
+leaves an incompatible draft that cannot be saved until corrected. See [the editor's harness-change rule](09-frontend-and-pwa.md#explicit-node-harness-changes-204)
+for compatibility, effort, notices and persistence. Runtime resolution is unchanged; stored values
+need no migration.

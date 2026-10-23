@@ -1,4 +1,6 @@
 import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
+import { CODEX_DEFAULT_MODEL } from '@graphgoblin/adapter-codex';
+import { CLAUDE_MODEL } from '@graphgoblin/infrastructure/claude';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { LoopDefinitionInput, LoopIssue, ModelCatalogEntry } from '@graphgoblin/contracts';
 import { fakeUlid, minimalLoop } from '@graphgoblin/contracts/testing';
@@ -15,6 +17,19 @@ const body = { displayName: 'Changed', efforts: ['low'], defaultEffort: 'low' };
 const url = '/model-catalog/codex/gpt-6-luna';
 
 describe('catalog ownership and toggle routes', () => {
+  it('identifies the adapters ecosystem defaults without changing catalog enablement', async () => {
+    await t.app.inject({ method: 'PATCH', url, payload: { enabled: false } });
+    const { items } = (await t.app.inject('/model-catalog')).json<{
+      items: (ModelCatalogEntry & { ecosystemDefault: boolean })[];
+    }>();
+    expect(
+      items.filter((entry) => entry.ecosystemDefault).map(({ harness, model }) => [harness, model]),
+    ).toEqual([
+      ['claude', CLAUDE_MODEL],
+      ['codex', CODEX_DEFAULT_MODEL],
+    ]);
+    expect(items.find((entry) => entry.model === CODEX_DEFAULT_MODEL)?.enabled).toBe(false);
+  });
   it('returns source and enabled, refuses harness edit/delete/create and source spoofing', async () => {
     const before = (await t.app.inject('/model-catalog')).json<{ items: ModelCatalogEntry[] }>()
       .items;
