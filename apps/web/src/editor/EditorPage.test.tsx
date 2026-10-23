@@ -1092,7 +1092,8 @@ describe('EditorPage', () => {
     renderApp(`/loops/${loop.id}/edit`, api);
     expect(await screen.findByText('The server has a newer draft')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Discard it' }));
-    expect(screen.queryByText('The server has a newer draft')).toBeNull();
+    // The click dispatch completes before the asynchronous device deletion necessarily does.
+    await waitFor(() => expect(screen.queryByText('The server has a newer draft')).toBeNull());
     await waitFor(async () => expect(await loadSetAsideDraft(loop.id)).toBeUndefined());
   });
 
