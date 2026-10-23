@@ -1,0 +1,255 @@
+{
+  "base": "851524d37dca3bb3968edb9e09ee6f6df275bfe4",
+  "node": "v22.14.0",
+  "packages": [
+    {
+      "package": "infrastructure",
+      "total": 636,
+      "passed": 629,
+      "failed": 7,
+      "skipped": 0,
+      "coverage": {
+        "lines": {
+          "total": 2035,
+          "covered": 2007,
+          "skipped": 0,
+          "pct": 98.62
+        },
+        "statements": {
+          "total": 2307,
+          "covered": 2257,
+          "skipped": 0,
+          "pct": 97.83
+        },
+        "functions": {
+          "total": 517,
+          "covered": 508,
+          "skipped": 0,
+          "pct": 98.25
+        },
+        "branches": {
+          "total": 1646,
+          "covered": 1559,
+          "skipped": 0,
+          "pct": 94.71
+        },
+        "branchesTrue": {
+          "total": 0,
+          "covered": 0,
+          "skipped": 0,
+          "pct": 100
+        }
+      },
+      "failures": [
+        {
+          "file": "packages/infrastructure/src/adversarial.test.ts",
+          "title": "6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild",
+          "error": "Error: Test timed out in 30000ms."
+        },
+        {
+          "file": "packages/infrastructure/src/claude/process.test.ts",
+          "title": "kills on deadline and output overflow",
+          "error": "Error: EBUSY: resource busy or locked, rmdir '<temp>\\gg-claude-process-WeL07F'"
+        },
+        {
+          "file": "packages/infrastructure/src/claude/process.test.ts",
+          "title": "does not spawn for an already aborted signal and cancels a running process",
+          "error": "Error: EBUSY: resource busy or locked, rmdir '<temp>\\gg-claude-process-3BCkxg'"
+        },
+        {
+          "file": "packages/infrastructure/src/claude/process.test.ts",
+          "title": "kills the descendant that a long-lived child started",
+          "error": "AssertionError: expected 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…' to be 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…' // Object.is equality"
+        },
+        {
+          "file": "packages/infrastructure/src/process/scripts.test.ts",
+          "title": "kills and closes a real process cancelled with incomplete UTF-8 pending on both streams",
+          "error": "AssertionError: native process-tree cancellation must finish before fixture cleanup: expected true to be false // Object.is equality"
+        },
+        {
+          "file": "packages/infrastructure/src/process/scripts.test.ts",
+          "title": "kills the process tree on timeout",
+          "error": "Error: Test timed out in 15000ms."
+        },
+        {
+          "file": "packages/infrastructure/src/process/scripts.test.ts",
+          "title": "kills the process when the signal aborts, including when already aborted",
+          "error": "Error: Test timed out in 15000ms."
+        }
+      ]
+    },
+    {
+      "package": "api",
+      "total": 733,
+      "passed": 726,
+      "failed": 1,
+      "skipped": 6,
+      "coverage": {
+        "lines": {
+          "total": 1810,
+          "covered": 1771,
+          "skipped": 0,
+          "pct": 97.84
+        },
+        "statements": {
+          "total": 2023,
+          "covered": 1950,
+          "skipped": 0,
+          "pct": 96.39
+        },
+        "functions": {
+          "total": 405,
+          "covered": 381,
+          "skipped": 0,
+          "pct": 94.07
+        },
+        "branches": {
+          "total": 1355,
+          "covered": 1259,
+          "skipped": 0,
+          "pct": 92.91
+        },
+        "branchesTrue": {
+          "total": 0,
+          "covered": 0,
+          "skipped": 0,
+          "pct": 100
+        }
+      },
+      "failures": [
+        {
+          "file": "apps/api/src/templates/catalog-package.test.ts",
+          "title": "ships only declared starting-point assets and removes stale files on rebuild",
+          "error": "Error: Test timed out in 20000ms."
+        }
+      ]
+    },
+    {
+      "package": "web",
+      "total": 1483,
+      "passed": 1483,
+      "failed": 0,
+      "skipped": 0,
+      "coverage": {
+        "lines": {
+          "total": 7064,
+          "covered": 6989,
+          "skipped": 0,
+          "pct": 98.93
+        },
+        "statements": {
+          "total": 8195,
+          "covered": 8034,
+          "skipped": 0,
+          "pct": 98.03
+        },
+        "functions": {
+          "total": 2204,
+          "covered": 2171,
+          "skipped": 0,
+          "pct": 98.5
+        },
+        "branches": {
+          "total": 7550,
+          "covered": 7163,
+          "skipped": 0,
+          "pct": 94.87
+        },
+        "branchesTrue": {
+          "total": 0,
+          "covered": 0,
+          "skipped": 0,
+          "pct": 100
+        }
+      },
+      "failures": []
+    }
+  ],
+  "isolated": [
+    {
+      "package": "infrastructure",
+      "file": "src/adversarial.test.ts",
+      "title": "6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild",
+      "exit": 1,
+      "selected": 1,
+      "passed": 0,
+      "failed": 1
+    },
+    {
+      "package": "infrastructure",
+      "file": "src/claude/process.test.ts",
+      "title": "kills on deadline and output overflow",
+      "exit": 1,
+      "selected": 1,
+      "passed": 0,
+      "failed": 1
+    },
+    {
+      "package": "infrastructure",
+      "file": "src/claude/process.test.ts",
+      "title": "does not spawn for an already aborted signal and cancels a running process",
+      "exit": 1,
+      "selected": 1,
+      "passed": 0,
+      "failed": 1
+    },
+    {
+      "package": "infrastructure",
+      "file": "src/claude/process.test.ts",
+      "title": "kills the descendant that a long-lived child started",
+      "exit": 1,
+      "selected": 1,
+      "passed": 0,
+      "failed": 1
+    },
+    {
+      "package": "infrastructure",
+      "file": "src/process/scripts.test.ts",
+      "title": "kills and closes a real process cancelled with incomplete UTF-8 pending on both streams",
+      "exit": 1,
+      "selected": 1,
+      "passed": 0,
+      "failed": 1
+    },
+    {
+      "package": "infrastructure",
+      "file": "src/process/scripts.test.ts",
+      "title": "kills the process tree on timeout",
+      "exit": 1,
+      "selected": 1,
+      "passed": 0,
+      "failed": 1
+    },
+    {
+      "package": "infrastructure",
+      "file": "src/process/scripts.test.ts",
+      "title": "kills the process when the signal aborts, including when already aborted",
+      "exit": 1,
+      "selected": 1,
+      "passed": 0,
+      "failed": 1
+    },
+    {
+      "package": "api",
+      "file": "src/templates/catalog-package.test.ts",
+      "title": "ships only declared starting-point assets and removes stale files on rebuild",
+      "exit": 0,
+      "selected": 1,
+      "passed": 1,
+      "failed": 0
+    }
+  ],
+  "gates": [
+    "typecheck=0",
+    "lint=0",
+    "format-check=1",
+    "layers=0",
+    "deps=0",
+    "migrations=0",
+    "tokens=0",
+    "docs=0",
+    "build-after=0",
+    "format-check-final=0"
+  ],
+  "followup": ["isolations finished", "history-edge=0"]
+}

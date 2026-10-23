@@ -195,7 +195,7 @@ describe('against the in-process API (local trusted mode)', () => {
     if (!finished) throw new Error('the run did not finish within the observation budget');
     expect(run.status).toBe('succeeded');
 
-    expect((await runs.list(client, { loopId: loop.id })).map((r) => r.id)).toEqual([run.id]);
+    expect((await runs.list(client, { loopId: loop.id })).items.map((r) => r.id)).toEqual([run.id]);
     expect((await runs.thread(client, run.id)).invocation.source).toBe('manual.api');
     const page = await runs.events(client, run.id, { after: 0, limit: 2 });
     expect(page.items).toHaveLength(2);
@@ -203,7 +203,7 @@ describe('against the in-process API (local trusted mode)', () => {
     expect(await runs.sessions(client, run.id)).toEqual([]);
   });
 
-  it('preserves typed run pages and the items-only wrapper', async () => {
+  it('preserves typed run pages including opaque cursors', async () => {
     const { loop } = await loops.create(client, minimalLoop());
     await loops.publish(client, loop.id);
     await runs.start(client, loop.id);
@@ -214,7 +214,7 @@ describe('against the in-process API (local trusted mode)', () => {
     if (!first.data?.nextCursor) throw new Error('expected a next page');
     expect(first.data.items).toHaveLength(1);
     expect(first.data.items[0]).not.toHaveProperty('templateSubject');
-    expect(await runs.list(client, query)).toEqual(first.data.items);
+    expect(await runs.list(client, query)).toEqual(first.data);
     const last = await client.GET('/runs', {
       params: { query: { ...query, cursor: first.data.nextCursor } },
     });
@@ -450,7 +450,7 @@ describe('against the in-process API (local trusted mode)', () => {
     await modelCatalog.remove(client, 'codex', 'test-model');
 
     const published = await events.publish(client, { type: 'demo', payload: { a: 1 } });
-    expect((await events.list(client)).map((e) => e.id)).toContain(published.id);
+    expect((await events.list(client)).items.map((e) => e.id)).toContain(published.id);
   });
 });
 

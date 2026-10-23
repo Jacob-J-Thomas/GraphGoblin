@@ -1,0 +1,42 @@
+Independent QA evidence for PR #367
+Head: 9896cf769fb46fd9a474c7de2a20078971eda9a2
+Branch: codex-qa-wp-g2
+Baseline: clean tracked files and empty index; no commits or Git mutations.
+Runtime: Node v22.14.0 selected first on PATH for all pnpm commands.
+Browser: Microsoft Edge155.0.4283.62, headless Playwright; no mouse or visible browser takeover.
+Main native API: loopback5633, file-backed SQLite; disposable store below %TEMP%/gg-qa-231-9896cf-independent/store.
+MCP: built native stdio process explicitly pointed at loopback5633.
+Edge spec harness: built public packages; API5634, extra Events API5635, control5639.
+Repository coverage suites use their own ephemeral loopback listeners; their temporary files are contained under the QA root/tests.
+No owner app/store requests; no paid provider turns; no GitHub mutations.
+Prior independent audit read live:
+https://github.com/Jacob-J-Thomas/GraphGoblin/pull/367#issuecomment-6327114818
+Prior head0536cdff3227295530d5599a99b0071b1517b82f; changes required for lookahead validation.
+Current evidence does not infer CI, integration conflict resolution, designated final review sign-off or merge authority.
+
+pnpm.cmd install --frozen-lockfile:
+FAIL before install: ERR_PNPM_STORE_DIR_OPEN_OPERATION_LOCK, access denied to global all-stores.lock.
+Dependencies were already provisioned. No links to another checkout were created.
+pnpm.cmd build:
+PASS11/11 tasks,5 cached,3m50.956s. Nonfatal Turbo cache access-denied warnings.
+Built API/MCP and web assets used for custom functional QA.
+
+Initial run-event custom checks passed REST assertions but the QA parser attempted JSON.parse on MCP's normal readable error text.
+Those entries remain marked FAIL in functional.jsonl; targeted lookahead-retest.jsonl corrects only the QA parser and reruns those cases.
+No product fix, timeout increase, coverage exclusion or retry-to-green was used.
+Edge harness preparation initially had an import-only package resolution error and a config cwd error before test collection; corrected only QA support files.
+The completed Edge run has3/3 tests passed with zero retries.
+One infrastructure live-log append collided with a simultaneous read of that text file. Its final Vitest summary, coverage summary and all22 unique failure identities are present. Future progress reads used shared native file reads; no broad suite was rerun for this logging issue.
+Supplemental boundary checks:
+- Damaged run row101: the first100 rows stayed available; append produced104 healthy rows; the real inspector alert visibly named STORED_RUN_INVALID and the damaged identity.
+- Initial inspector locator wrongly required the code as an exact standalone text node. A targeted follow-up matched the code within the full explanatory message; that assertion and the snapshot succeeded. Its final optional log capture then timed out looking for a main element (the page has none). The saved damaged-run-inspector.txt and inspected temporary screenshot establish the actual UI result. The failed harness records remain intact; no broad suite was rerun to hide them.
+- Inbound run_ids row101: first100 retained, next-page error explicit, repair and retry105.
+Workspace provenance check:
+- root node_modules is a directory, not a link to another checkout.
+- apps/api -> infrastructure, apps/web -> api, and infrastructure -> engine workspace junctions resolve within <worktree>.
+- No workspace links were created or changed by QA.
+Installed lockfile comparison:
+- committed pnpm-lock.yaml and node_modules/.pnpm/lock.yaml are not byte-identical.
+- Diff contains the pnpm12.8.1 package-manager document and only get-tsconfig4.14.3 / resolve-pkg-maps1.0.0 package/snapshot entries; no importer-version change.
+- get-tsconfig appears only as a package/snapshot definition; resolve-pkg-maps is referenced only by that snapshot. They are not reachable from the application importers in this lock.
+- This supplements, but does not replace, the failed frozen-install gate. No dependency or lock file was changed.

@@ -245,6 +245,7 @@ The adversarial QA report is `docs/qa/2026-10-03-wp-d2.md`. Behaviour that chang
 - **Editor.** Palette additions pan into view. List fields with a default show the default and a Customize button instead of item fields bound to nothing. Settings' "(server default)" deletes the setting.
 - **Run inspector.** Replay starts from `run.queued`'s `initialThread`, including a subloop child's or replay fork's inherited messages, variables, outputs, counters, gate passes and iteration. A recorded seed takes precedence over the empty fallback. Domain `replayThread` adds every `node.started` to the seed's visits, projects absolute decision gate passes and historical iteration increments, and applies node patches; the inspector does not recount visits from zero. Thus event 1 shows the actual admitted seed and replace diffs use the same inherited values as execution; an array-append row (a `/-` pointer) still shows both sides as absent because `patchDiff` reads the literal pointer, which #255 addresses. A log that does not replay shows an explanation; an error boundary per screen keeps the shell alive. Events are appended, rendered, and reported in 100 ms batches and session storage never throws on quota: a 1,211-event run opens in about 0.5 s with a handful of run fetches (it took 7 s and one fetch per event before).
 - **Events screen** shows each event's source (API, webhook delivery, or the run whose exit emitted it) and links to the runs it started. Webhook receipts distinguish historical filtered rows and current deduplicated, pending, admitted and failed delivery states, with retry attempts and safe failure codes. While the mounted page contains pending receipts, it refreshes every two seconds so recovery results and new run links appear automatically; interval refresh stops after all displayed receipts are terminal or the page unmounts. Normal focus and reconnect refresh remain enabled. Each delivery can disclose its pinned safe webhook configuration; complete endpoint history remains available through `GET /loops/{id}/triggers`.
+  The Events page appends older events with **Load more**, keeps long preformatted payloads visible and the reading position on append or retry, and focuses the end-of-list message after the final user load. Its URL has no hidden type or time filters; those filters remain available through the API and client. The control is busy only while fetching its next page.
 - **Settings** check the secret name rule before sending, and validation messages name the first failing field.
 
 ## Draft conflicts (Decided, WP-F2)
@@ -678,6 +679,23 @@ authored model/effort values.
 Switching an inference node to Claude resets its policy to `read-only`/`never`; full access remains
 explicit. Other authored harness options remain, with unsupported settings reported for correction.
 Models retain exact identity and effort checks (ADR-0029).
+
+### Loop history summaries
+
+The Loops page reads each loop's `latestRun` and exact `runCount` from `GET /loops`,
+refreshed every five seconds. Last run links to the latest run by creation time, breaking
+ties by descending run ID, which follows creation order within one process. A zero
+count and null summary says "never run"; a positive count and null summary says
+"latest run unavailable" with "Check run history diagnostics." when the selected
+latest run's record (including its pin), initial thread or present cached thread
+snapshot, or an event in its history fails strict decoding. Event checks are cached
+by run identity and event count; manual database repairs require an API restart.
+An absent cached snapshot remains valid. It shows
+neither a partial status badge nor an older run in its place. `GET /runs/diagnostics`
+identifies the damaged row, including after restart when its stored status is valid
+but stale. Unrelated loops
+filling a global history page cannot hide older history. Deletion confirmation shows the exact
+server count, including above 500 runs. A failed listing shows its error.
 
 ## Explicit node harness changes (#204)
 

@@ -7,7 +7,6 @@ import {
   loops,
   observeRun,
   runs,
-  unwrap,
   type GraphGoblinClient,
 } from '@graphgoblin/api-client';
 import {
@@ -302,19 +301,14 @@ export function registerTools(
     },
     ({ loopId, status, parentRunId, cursor, limit }) =>
       guard(async () => {
-        const page = unwrap(
-          await client.GET('/runs', {
-            params: {
-              query: {
-                ...(loopId ? { loopId } : {}),
-                ...(status?.length ? { status: status.join(',') } : {}),
-                ...(parentRunId ? { parent: parentRunId } : {}),
-                ...(cursor !== undefined ? { cursor } : {}),
-                limit: limit ?? 20,
-              },
-            },
-          }),
-        );
+        const size = limit ?? 20;
+        const page = await runs.list(client, {
+          ...(loopId ? { loopId } : {}),
+          ...(status?.length ? { status: status.join(',') } : {}),
+          ...(parentRunId ? { parent: parentRunId } : {}),
+          ...(cursor !== undefined ? { cursor } : {}),
+          limit: size,
+        });
         return { items: page.items.map((r) => summarizeRun(r)), nextCursor: page.nextCursor };
       }),
   );
@@ -341,7 +335,7 @@ export function registerTools(
       guard(async () => {
         const size = limit ?? 100;
         const page = await runs.events(client, id, { after: after ?? 0, limit: size });
-        return { ...page, hasMore: page.items.length === size };
+        return page;
       }),
   );
 

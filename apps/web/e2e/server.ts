@@ -268,6 +268,11 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
   const body = await readJson(request);
   const target = main.app;
   switch (request.url) {
+    case '/clock/advance':
+      selectedInstance(body).app.clock.advance(
+        z.number().int().positive().parse(body['milliseconds']),
+      );
+      return { ok: true };
     case '/api/listener':
       await setApiListening(body['listening'] !== false);
       return { ok: true };

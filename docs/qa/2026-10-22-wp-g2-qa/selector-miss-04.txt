@@ -1,0 +1,19 @@
+PACKAGE: infrastructure
+FILE: src/claude/process.test.ts
+TEST: owned native Claude process transport > kills the descendant that a long-lived child started
+COMMAND: pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/claude/process.test.ts --maxWorkers=1 --reporter=verbose -t <escaped exact full name>
+
+ RUN  v5.0.3 <worktree>/packages/infrastructure
+
+ ? src/claude/process.test.ts > owned native Claude process transport > streams stdout, sends stdin and never retains stderr content
+ ? src/claude/process.test.ts > owned native Claude process transport > reports missing executable without exposing raw native errors
+ ? src/claude/process.test.ts > owned native Claude process transport > kills on deadline and output overflow
+ ? src/claude/process.test.ts > owned native Claude process transport > does not spawn for an already aborted signal and cancels a running process
+ ? src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived child started
+
+ Test Files  1 skipped (1)
+      Tests  5 skipped (5)
+   Start at  22:54:18
+   Duration  528ms (transform 52%, import 42%, worker 5%)
+
+EXIT: 0
