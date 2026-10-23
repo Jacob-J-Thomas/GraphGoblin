@@ -3621,6 +3621,12 @@ export interface components {
                 /** @enum {string} */
                 promptKind: "authored" | "repair" | "continuation";
                 sessionId?: string | undefined;
+                retry?: {
+                    /** @enum {string} */
+                    harness: "codex" | "claude";
+                    prompt: string;
+                    resumeSessionId?: string | undefined;
+                } | undefined;
             } | undefined;
         };
         WaitSpecInput: {
@@ -5678,6 +5684,12 @@ export interface components {
                 /** @enum {string} */
                 promptKind: "authored" | "repair" | "continuation";
                 sessionId?: string | undefined;
+                retry?: {
+                    /** @enum {string} */
+                    harness: "codex" | "claude";
+                    prompt: string;
+                    resumeSessionId?: string | undefined;
+                } | undefined;
             } | undefined;
         };
         WaitSpec: {

@@ -4374,6 +4374,31 @@
                 "type": "string",
                 "minLength": 1,
                 "maxLength": 256
+              },
+              "retry": {
+                "type": "object",
+                "properties": {
+                  "harness": {
+                    "type": "string",
+                    "enum": [
+                      "codex",
+                      "claude"
+                    ]
+                  },
+                  "prompt": {
+                    "type": "string"
+                  },
+                  "resumeSessionId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  }
+                },
+                "required": [
+                  "harness",
+                  "prompt"
+                ],
+                "additionalProperties": false
               }
             },
             "required": [
@@ -13061,6 +13086,31 @@
                 "type": "string",
                 "minLength": 1,
                 "maxLength": 256
+              },
+              "retry": {
+                "type": "object",
+                "properties": {
+                  "harness": {
+                    "type": "string",
+                    "enum": [
+                      "codex",
+                      "claude"
+                    ]
+                  },
+                  "prompt": {
+                    "type": "string"
+                  },
+                  "resumeSessionId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  }
+                },
+                "required": [
+                  "harness",
+                  "prompt"
+                ],
+                "additionalProperties": false
               }
             },
             "required": [
