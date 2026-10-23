@@ -3,6 +3,7 @@
  * tests and by API and E2E tests through `@graphgoblin/engine/testing`.
  */
 import type {
+  PromptSubmission,
   ContextThread,
   ClassifierBinding,
   ClassifierPrimitive,
@@ -422,6 +423,12 @@ export interface ScriptedTurn {
   usage?: Partial<Usage>;
   /** Simulate a harness-level failure. */
   error?: { code: string; message: string; retriable?: boolean };
+  /** Explicit transport evidence. Default failed scripts are uncertain. */
+  submission?: PromptSubmission;
+  /** Omit even initialization/session evidence. */
+  announceSession?: boolean;
+  /** Positive acceptance marker, independent of initialization. */
+  accepted?: boolean;
   /** Delay before completing, in fake-clock-independent real milliseconds; lets tests cancel mid-turn. */
   delayMs?: number;
 }
@@ -492,7 +499,10 @@ export class FakeHarness implements HarnessPort {
     const usage: Usage = { ...ZERO_USAGE, ...turn.usage };
     const items = turn.items ?? [{ id: 'i1', type: 'message', summary: turn.finalText ?? 'OK' }];
     const events: HarnessEvent[] = [
-      { type: 'session', sessionId, mode },
+      ...(turn.announceSession === false ? [] : [{ type: 'session' as const, sessionId, mode }]),
+      ...((turn.accepted ?? !turn.error)
+        ? [{ type: 'submitted' as const, marker: 'fake.accepted' as const }]
+        : []),
       ...items.map((item) => ({ type: 'item', item }) as const),
     ];
     if (turn.error) {
@@ -501,6 +511,11 @@ export class FakeHarness implements HarnessPort {
         code: turn.error.code,
         message: turn.error.message,
         retriable: turn.error.retriable ?? false,
+        submission:
+          turn.submission ??
+          (turn.error.code === 'HARNESS_SESSION_MISSING'
+            ? 'session-missing'
+            : 'delivery-uncertain'),
       });
     } else {
       events.push({ type: 'usage', usage }, { type: 'turn-complete' });

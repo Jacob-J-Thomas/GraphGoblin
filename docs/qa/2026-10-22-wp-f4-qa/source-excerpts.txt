@@ -1,0 +1,186 @@
+apps/api/scripts/prompt-restart.integration.mjs
+268: 
+269: for (const policy of ['resume-previous', 'resume-named']) {
+270:   test(
+271:     `a kill after Claude's result-only acceptance recovers ${policy} work`,
+272:     { timeout: 180000 },
+273:     () =>
+274:       withApiFixture(async ({ dataDir, port, start, kill, api, inspect }) => {
+275:         let child = start('claude-result');
+276:         await message(child, 'ready');
+277:         const config = {
+278:           harness: 'claude',
+279:           model: 'claude-opus-5-5',
+280:           effort: 'low',
+281:           harnessOptions: { sandbox: 'read-only', approval: 'never' },
+282:         };
+283:         const definition = singleNodeLoop('result-only restart-' + policy, {
+284:           id: 'a',
+285:           kind: 'inference',
+286:           label: 'A',
+287:           config: {
+288:             ...config,
+289:             prompt: { template: 'Task A' },
+290:             session: { policy: 'resume-named', key: 'shared' },
+291:           },
+292:         });
+293:         definition.nodes.splice(2, 0, {
+294:           id: 'b',
+295:           kind: 'inference',
+296:           label: 'B',
+297:           config: {
+298:             ...config,
+299:             prompt: { template: 'Task B' },
+300:             session: policy === 'resume-named' ? { policy, key: 'shared' } : { policy },
+301:           },
+302:         });
+303:         definition.edges[1].to.node = 'b';
+304:         definition.edges.push({
+305:           id: 'b-out',
+306:           from: { node: 'b', port: 'out' },
+307:           to: { node: 'done' },
+308:         });
+309:         const created = await api('/loops', { definition });
+310:         await api(`/loops/${created.loop.id}/publish`, {});
+311:         const held = message(child, 'claude.result.hold');
+312:         const { run } = await api(`/loops/${created.loop.id}/runs`, {});
+313:         await held;
+314:         // Retain before-fix crash evidence too: if the marker never arrives, still kill/restart
+315:         // and report D-022's resulting refusal before asserting this acceptance requirement.
+316:         const until = Date.now() + 10000;
+317:         let before, acceptance;
+318:         do {
+319:           before = (await api(`/runs/${run.id}/events`)).items;
+320:           acceptance = before.find(
+321:             (event) =>
+322:               event.type === 'harness.submission' &&
+323:               event.nodeId === 'b' &&
+324:               event.marker === 'claude.result',
+325:           );
+326:           if (!acceptance) await delay(25);
+327:         } while (!acceptance && Date.now() < until);
+328:         assert.equal(
+329:           before.some(
+330:             (event) =>
+331:               event.nodeId === 'b' && ['harness.usage', 'node.finished'].includes(event.type),
+332:           ),
+333:           false,
+334:         );
+335:         await kill(child);
+336:         child = start('claude-recovery');
+337:         await message(child, 'ready');
+338:         await eventually(async () =>
+339:           ['succeeded', 'failed'].includes((await api(`/runs/${run.id}`)).status),
+340:         );
+341:         const recovered = await api(`/runs/${run.id}`);
+342:         const calls = await inspect(child);
+343:         log(
+344:           JSON.stringify({
+345:             dataDir,
+346:             port,
+347:             runId: run.id,
+348:             policy,
+349:             acceptanceBeforeKill: !!acceptance,
+350:             recovered: recovered.status,
+351:             failure: recovered.failure,
+352:             calls,
+353:           }),
+354:         );
+355:         assert.equal(recovered.status, 'succeeded');
+356:         assert.ok(acceptance, 'result acceptance must be durable before the process exits');
+357:         assert.equal(acceptance.submission, 'submitted');
+358:         assert.equal(calls.started.length, 0);
+359:         assert.equal(calls.resumed.length, 1);
+360:         assert.equal(calls.resumed[0].sessionId, '11111111-1111-4111-8111-111111111111');
+361:         assert.match(calls.resumed[0].request.turn.prompt, /previous turn was interrupted/);
+362:         const turns = (await api(`/runs/${run.id}/events`)).items.filter(
+363:           (event) => event.type === 'harness.turn' && event.nodeId === 'b',
+364:         );
+365:         assert.equal(turns.length, 2);
+366:         assert.equal(turns[1].visitId, acceptance.visitId);
+367:         assert.equal(turns[1].promptKind, 'continuation');
+368:       }),
+369:   );
+370: }
+
+packages/infrastructure/src/claude/harness.ts
+390:           // turn output. Await the fixed stderr refusal; never retain the provider error body.
+391:           if (
+392:             !initialized &&
+393:             !accepted &&
+394:             record.type === 'result' &&
+395:             record.is_error === true &&
+396:             record.num_turns === 0
+397:           )
+398:             return;
+399:           const events = accumulator.push(record);
+400:           if (events.some((event) => event.type === 'session')) initialized = true;
+401:           if (events.some((event) => event.type === 'submitted')) accepted = true;
+402:           if (record.type === 'result') {
+403:             // A validated result proves consumption even while the CLI is still alive.
+404:             // Persist that evidence now; usage/completion remain gated by process outcome.
+405:             completionEvents = [];
+406:             for (const event of events) {
+407:               if (event.type === 'submitted') queue.push(event);
+408:               else completionEvents.push(event);
+409:             }
+410:             return;
+411:           }
+412:           for (const event of events) {
+413:             if (event.type === 'session') resolveId(event.sessionId);
+414:             queue.push(event);
+415:           }
+416:         };
+417:         const args = [
+418:           ...policyArgs(policy),
+419:           '--model',
+420:           settings.model,
+
+docs/06-harness-integration.md
+453: 
+454: ### Submission markers and refusals (#244)
+455: 
+456: Initialization is session identity, not input acceptance. The engine persists exact pending
+457: prompts and visit provenance before invoking either adapter; see [recovery](05-execution-engine.md#inference-submission-and-recovery).
+458: The run event `harness.submission` says `submitted` with a marker on positive acceptance;
+459: only failed or interrupted turns use the three failure classifications.
+460: 
+461: | Adapter            | Positive `submitted` marker                                                                                                                                                                                                  | What does not prove acceptance                                                                                     |
+462: | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+463: | Claude stream-json | First validated non-error `assistant` record producing text, thinking or a tool call (`claude.assistant`); a validated successful `result` record proves consumption when no assistant content was emitted (`claude.result`) | `system/init`, the policy transcript item, commands/UI metadata, status, partial-message and rate-limit records    |
+464: | Codex SDK          | `turn.started` (`codex.turn.started`), the input-accepted turn boundary after thread initialization                                                                                                                          | `thread.started`, `resumeThread`, the adapter's early known-ID announcement, configuration/deprecation error items |
+465: 
+466: Markers emit once per adapter turn. Claude emits `claude.result` as soon as a successful
+467: result record passes session, model, usage and result-text validation, before waiting for CLI exit.
+468: The engine records that acceptance with the visit and turn IDs immediately. Usage totals,
+469: turn completion and the final result still wait for a verified process outcome; a later
+470: transport failure cannot retract the observed acceptance or publish the buffered result.
+471: A lost stream after init or after a marker is uncertain;
+472: markers never claim provider-side durability beyond the observed protocol boundary. A process
+473: kill before the marker is durably recorded remains uncertain too.
+
+apps/web/e2e/claude-harness.spec.ts
+480:   await page.goto(instance.url + '/app/runs/' + run.id);
+481:   const execution = (await (
+482:     await request.get(instance.url + '/runs/' + run.id + '/events')
+483:   ).json()) as {
+484:     items: { type: string; visitId?: string; turnId?: string; submission?: string }[];
+485:   };
+486:   const turn = execution.items.find((event) => event.type === 'harness.turn');
+487:   const acceptance = execution.items.find((event) => event.type === 'harness.submission');
+488:   expect(turn?.visitId).toBeTruthy();
+489:   expect(turn?.turnId).toBeTruthy();
+490:   expect(acceptance).toMatchObject({
+491:     visitId: turn!.visitId,
+492:     turnId: turn!.turnId,
+493:     submission: 'submitted',
+494:   });
+495:   const timeline = page.getByRole('list', { name: 'Timeline' });
+496:   const turnRow = timeline.getByRole('button', { name: /harness\.turn/ });
+497:   await turnRow.click();
+498:   await expect(turnRow).toHaveAttribute('aria-current', 'true');
+499:   const acceptanceRow = timeline.getByRole('button', { name: /harness\.submission/ });
+500:   await acceptanceRow.click();
+501:   await expect(acceptanceRow).toHaveAttribute('aria-current', 'true');
+502:   const progress = page.getByRole('button', { name: /Node progress/ });
+

@@ -46,8 +46,18 @@ type HarnessEvent =
   | { type: 'session'; sessionId: string; mode: 'fresh' | 'resumed' }
   | { type: 'item'; item: HarnessItem } // message, reasoning summary, command, file change, tool call, search
   | { type: 'usage'; inputTokens: number; outputTokens: number; cached?: number }
+  | {
+      type: 'submitted';
+      marker: 'claude.assistant' | 'claude.result' | 'codex.turn.started' | 'fake.accepted';
+    }
   | { type: 'turn-complete' }
-  | { type: 'error'; code: string; message: string; retriable: boolean };
+  | {
+      type: 'error';
+      code: string;
+      message: string;
+      retriable: boolean;
+      submission: PromptSubmission;
+    };
 
 type HarnessResult = {
   finalText: string;
@@ -247,7 +257,7 @@ A harness cannot accept conversation history as messages. The thread reaches Cod
 
 1. **Prompt template.** The default template renders the trigger summary, selected variables, the last N messages, and `lastOutput`. Input transforms shape the view the template sees.
 2. **Context files.** Optional files written under the working directory before the session starts, from templates. The default location is `.graphgoblin/context/<nodeId>.md` and the default prompt mentions it. GraphGoblin never edits the user's own `AGENTS.md`.
-3. **Session resume.** The harness keeps its own history. Resuming continues it without re-sending anything.
+3. **Session resume.** The harness keeps its own history. A resumed turn receives an explicit prompt: a new authored task under its configured policy, a retained definitely-unsubmitted task, or the continuation prompt for uncertain work. See submission markers and recovery below.
 
 ### Structured output and repair (Decided)
 
@@ -444,7 +454,10 @@ included. Only bounded name-shaped metadata is included, never prompt, response,
 rate-limit bodies. A green preflight verifies prerequisites; it does not run a model turn or
 guarantee that a future CLI stream will pass runtime verification.
 
-Prompt delivery proof is unsupported for the current text-input transport. Session init and stdin delivery do not acknowledge a particular prompt; no proof event is emitted. The context and recovery decisions remain with #38/#33.
+The text-input transport supplies no acknowledgement tied to the exact prompt bytes. Session
+init and writing stdin are not proof. The adapter does emit `submitted` on validated evidence
+that a turn was consumed (below); it does not claim an exact-byte receipt. Context-delivery
+proof and own-session continuity remain with #38/#33.
 
 The earlier [Claude Agent SDK research](research/claude-code-agent-sdk.md) records an alternative
 that this adapter does not use.
@@ -454,6 +467,56 @@ that this adapter does not use.
 ### LiteLLM
 
 A `LiteLLMPort` would provide plain completion calls for decision, coerce, and summarise operations against local or alternative models. It is not a harness: it has no tools or workspace. It would plug in as a `DeciderPort` and as the provider for the post-1.0 `summarise` operation.
+
+### Submission markers and refusals (#244)
+
+Initialization is session identity, not input acceptance. The engine persists exact pending
+prompts and visit provenance before invoking either adapter; see [recovery](05-execution-engine.md#inference-submission-and-recovery).
+The run event `harness.submission` says `submitted` with a marker on positive acceptance;
+only failed or interrupted turns use the three failure classifications.
+
+| Adapter            | Positive `submitted` marker                                                                                                                                                                                                  | What does not prove acceptance                                                                                     |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Claude stream-json | First validated non-error `assistant` record producing text, thinking or a tool call (`claude.assistant`); a validated successful `result` record proves consumption when no assistant content was emitted (`claude.result`) | `system/init`, the policy transcript item, commands/UI metadata, status, partial-message and rate-limit records    |
+| Codex SDK          | `turn.started` (`codex.turn.started`), the input-accepted turn boundary after thread initialization                                                                                                                          | `thread.started`, `resumeThread`, the adapter's early known-ID announcement, configuration/deprecation error items |
+
+Markers emit once per adapter turn. Claude emits `claude.result` as soon as a successful
+result record passes session, model, usage and result-text validation, before waiting for CLI exit.
+The engine records that acceptance with the visit and turn IDs immediately. Usage totals,
+turn completion and the final result still wait for a verified process outcome; a later
+transport failure cannot retract the observed acceptance or publish the buffered result.
+A lost stream after init or after a marker is uncertain;
+markers never claim provider-side durability beyond the observed protocol boundary. A process
+kill before the marker is durably recorded remains uncertain too.
+
+Claude local policy/config/auth/readiness failures and confirmed spawn failures are definitely
+unsubmitted. Turn stderr is bounded in memory and recognizes only fixed CLI refusal forms:
+`error: unknown option` / `error: unexpected argument`, authentication-required diagnostics,
+and `No conversation found with session ID:`. Raw diagnostics are discarded. Claude CLI
+2.1.304 can emit a pre-init `result` with `is_error: true` and `num_turns: 0` alongside the
+missing-session stderr refusal. Before init/acceptance this native refusal result is deferred
+until process outcome: the fixed stderr refusal yields `HARNESS_SESSION_MISSING`, ahead of
+the otherwise missing-init protocol error. Termination-unconfirmed, abort, timeout and overflow
+still take precedence. Without a recognized refusal, a nonzero exit is a generic uncertain
+`HARNESS_TURN_FAILED`; an otherwise successful process with an incomplete stream remains a
+protocol fault. An init/result mismatch also remains a protocol fault. Once assistant acceptance was
+observed, later refusal text cannot make the turn definitely unsubmitted.
+
+Codex reports startup/auth/argument refusals as definitely unsubmitted and positively identified
+missing-rollout/thread/session refusals as session missing. Other stream/process failures are
+uncertain. The engine prevents later refusal from downgrading already observed acceptance.
+An authored/retried authored turn with only an inherited previous/named handle and no durable
+acceptance is non-resumable when delivery is uncertain (ADR-0045). Accepted turns and
+repair/continuation turns on the visit's own session retain continuation recovery. Unsupported
+policy, invalid configuration and argument refusals remain non-resumable even if a generic
+adapter error incorrectly advertises retryability. Non-pinned generic Codex failures permit
+Resume even when the adapter reports `retriable: false` for a CLI exit or lost stream; generic
+Claude failures require the adapter's `retriable` evidence. These eligibility rules do not
+override D-022's usable-session requirement. Login, installation and quota retain their
+restorable causes.
+An abort during readiness probes is conservatively uncertain: the aborted/unknown probe
+does not positively identify a pre-send refusal. It does not authorize a blind authored retry.
+No readiness probes, probe directories, model selection or fallback policy changed.
 
 ## Explicit node harness changes (#204)
 

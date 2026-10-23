@@ -1,0 +1,146 @@
+{
+  "revision": "b80c9fdfb001e020bdfc1b9c7c15e5f910d33766",
+  "evidence": "real headless Edge; built UI/API; fake provider",
+  "port": 5891,
+  "store": "gg-qa-f4-browser-KAKpBZ",
+  "checks": [
+    {
+      "name": "accepted",
+      "pass": true,
+      "runId": "01M5JEBHANAC4AH8Z8XEBJX7J8",
+      "status": "succeeded",
+      "turn": {
+        "visitId": "01M5JEBHANAC4AH8Z8XEBJX7J8:5",
+        "turnId": "01M5JEBHDAVY5G8S21RKTJAGBF",
+        "promptKind": "authored"
+      },
+      "submission": {
+        "visitId": "01M5JEBHANAC4AH8Z8XEBJX7J8:5",
+        "turnId": "01M5JEBHDAVY5G8S21RKTJAGBF",
+        "submission": "submitted",
+        "marker": "fake.accepted"
+      },
+      "steps": [
+        "open built inspector",
+        "select harness.turn",
+        "select harness.submission",
+        "keyboard Enter selection",
+        "reload",
+        "390px viewport selection"
+      ],
+      "turnText": "#6\nharness.turn\ninfer",
+      "submissionText": "#8\nharness.submission\ninfer",
+      "visiblePageText": "GraphGoblin\nMenu\nRun\n01M5JEBHANAC4AH8Z8XEBJX7J8\nsucceeded\nloop\nchild runs\nExit evaluation\n\nExited: success\n\nTimeline (15 events, complete)\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nstart (trigger) attempt 1\n#4\nnode.finished\nstart → out, 2 changes, 1 ms\n#5\nnode.started\ninfer (inference) attempt 1\n#6\nharness.turn\ninfer\n#7\nharness.session\ninfer\n#8\nharness.submission\ninfer\n#9\nnode.progress\ninfer\n#10\nharness.usage\ninfer\n#11\nnode.finished\ninfer → out, 5 changes, 41 ms\n#12\nnode.started\ndone (exit) attempt 1\n#13\nexit.evaluated\nExited: success\n#14\nnode.finished\ndone, 0 changes, 0 ms\n#15\nrun.finished\nsucceeded (success)\nThread at event 8\nMessages (0)\nVariables\n{}\nFull thread JSON\nNode progress (2 nodes)",
+      "visualReview": {
+        "viewed": true,
+        "sha256": "8f4c77ef4922c730f6cab7288c6c81809a95dc83273c6ecf12a95158fd308a4c",
+        "imageRetained": false,
+        "retention": "Text-only evidence; no binary artifact cited"
+      }
+    },
+    {
+      "name": "uncertain",
+      "pass": true,
+      "runId": "01M5JEBJEQMXK268XYFHZTRAJ4",
+      "status": "failed",
+      "failure": {
+        "code": "HARNESS_DELIVERY_UNCERTAIN",
+        "message": "harness turn failed: Synthetic init-only stream loss",
+        "nodeId": "infer",
+        "resumable": true,
+        "details": {
+          "adapterCode": "HARNESS_TURN_FAILED"
+        },
+        "inference": {
+          "visitId": "01M5JEBJEQMXK268XYFHZTRAJ4:5",
+          "turnId": "01M5JEBJG6JM7KC278VS4MN00R",
+          "submission": "delivery-uncertain",
+          "promptKind": "authored",
+          "sessionId": "fixture-thread"
+        }
+      },
+      "turn": {
+        "visitId": "01M5JEBJEQMXK268XYFHZTRAJ4:5",
+        "turnId": "01M5JEBJG6JM7KC278VS4MN00R",
+        "promptKind": "authored"
+      },
+      "submission": {
+        "visitId": "01M5JEBJEQMXK268XYFHZTRAJ4:5",
+        "turnId": "01M5JEBJG6JM7KC278VS4MN00R",
+        "submission": "delivery-uncertain"
+      },
+      "steps": [
+        "open built inspector",
+        "select harness.turn",
+        "select harness.submission",
+        "keyboard Enter selection",
+        "reload",
+        "390px viewport selection"
+      ],
+      "turnText": "#6\nharness.turn\ninfer",
+      "submissionText": "#8\nharness.submission\ninfer",
+      "visiblePageText": "GraphGoblin\nMenu\nRun\n01M5JEBJEQMXK268XYFHZTRAJ4\nfailed\nat infer\nloop\nchild runs\n\nFailed: HARNESS_DELIVERY_UNCERTAIN\n\nharness turn failed: Synthetic init-only stream loss (resumable)\nTimeline (9 events, complete)\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nstart (trigger) attempt 1\n#4\nnode.finished\nstart → out, 2 changes, 0 ms\n#5\nnode.started\ninfer (inference) attempt 1\n#6\nharness.turn\ninfer\n#7\nharness.session\ninfer\n#8\nharness.submission\ninfer\n#9\nrun.failed\nHARNESS_DELIVERY_UNCERTAIN: harness turn failed: Synthetic init-only stream loss\nThread at event 8\nMessages (0)\nVariables\n{}\nFull thread JSON\nNode progress (1 nodes)",
+      "visualReview": {
+        "viewed": true,
+        "sha256": "35382723f08495dc4910294252e6b997fd494f17710b4935a42c90dcc57e5999",
+        "imageRetained": false,
+        "retention": "Text-only evidence; no binary artifact cited"
+      }
+    },
+    {
+      "name": "not-submitted",
+      "pass": true,
+      "runId": "01M5JEBK0STKZVXZH1WBMEJBWS",
+      "status": "failed",
+      "failure": {
+        "code": "HARNESS_NOT_AUTHENTICATED",
+        "message": "Synthetic pre-send auth refusal",
+        "nodeId": "infer",
+        "resumable": true,
+        "inference": {
+          "visitId": "01M5JEBK0STKZVXZH1WBMEJBWS:5",
+          "turnId": "01M5JEBK25BPZC83JN8JX6VZ4P",
+          "submission": "definitely-not-submitted",
+          "promptKind": "authored"
+        }
+      },
+      "turn": {
+        "visitId": "01M5JEBK0STKZVXZH1WBMEJBWS:5",
+        "turnId": "01M5JEBK25BPZC83JN8JX6VZ4P",
+        "promptKind": "authored"
+      },
+      "submission": {
+        "visitId": "01M5JEBK0STKZVXZH1WBMEJBWS:5",
+        "turnId": "01M5JEBK25BPZC83JN8JX6VZ4P",
+        "submission": "definitely-not-submitted"
+      },
+      "steps": [
+        "open built inspector",
+        "select harness.turn",
+        "select harness.submission",
+        "keyboard Enter selection",
+        "reload",
+        "390px viewport selection"
+      ],
+      "turnText": "#6\nharness.turn\ninfer",
+      "submissionText": "#7\nharness.submission\ninfer",
+      "visiblePageText": "GraphGoblin\nMenu\nRun\n01M5JEBK0STKZVXZH1WBMEJBWS\nfailed\nat infer\nloop\nchild runs\n\nFailed: HARNESS_NOT_AUTHENTICATED\n\nSynthetic pre-send auth refusal (resumable)\nTimeline (8 events, complete)\n#1\nrun.queued\n#2\nrun.started\nattempt 1\n#3\nnode.started\nstart (trigger) attempt 1\n#4\nnode.finished\nstart → out, 2 changes, 1 ms\n#5\nnode.started\ninfer (inference) attempt 1\n#6\nharness.turn\ninfer\n#7\nharness.submission\ninfer\n#8\nrun.failed\nHARNESS_NOT_AUTHENTICATED: Synthetic pre-send auth refusal\nThread at event 7\nMessages (0)\nVariables\n{}\nFull thread JSON\nNode progress (0 nodes)",
+      "visualReview": {
+        "viewed": true,
+        "sha256": "225d1b0ad87598d9a91859b95049fbe2be9f76007672005e37153e0985b5ebc0",
+        "imageRetained": false,
+        "retention": "Text-only evidence; no binary artifact cited"
+      }
+    }
+  ],
+  "browserVersion": "155.0.4283.62",
+  "pageErrors": [],
+  "cleanup": {
+    "apiPid": 22436,
+    "exitCode": 0,
+    "signalCode": null,
+    "browserClosed": true,
+    "storeFilesRemoved": true,
+    "emptyDirectoryRetained": true
+  }
+}

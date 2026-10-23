@@ -12,7 +12,7 @@ export interface ClaudeProcessRequest {
   signal: AbortSignal;
   timeoutMs: number;
   maxOutputBytes: number;
-  /** Ephemeral diagnostic inference is permitted only for no-turn prerequisite probes. */
+  /** Readiness diagnostic inference is permitted only for no-turn prerequisite probes. */
   classifyDiagnostics?: true;
 }
 export interface ClaudeProcessResult {
@@ -28,6 +28,8 @@ export interface ClaudeProcessResult {
   callbackError?: ClaudeHarnessError;
   /** Fixed classification only; stdout/stderr diagnostic bodies are never retained here. */
   failureState?: HarnessReadinessState;
+  /** Fixed pre-turn refusal inferred only from bounded CLI stderr, never model stdout. */
+  turnRejection?: 'arguments' | 'auth' | 'session-missing';
   /** Positive sign-out text in bounded no-turn stderr; never a retained diagnostic body. */
   notLoggedIn?: true;
 }
@@ -65,6 +67,7 @@ export const runClaudeProcess = (
     let callbackError: ClaudeHarnessError | undefined, spawnCode: ClaudeProcessResult['spawnCode'];
     let killTimer: ReturnType<typeof setTimeout> | undefined;
     let diagnostic = '';
+    let rejection: ClaudeProcessResult['turnRejection'];
     const finish = (exitCode: number | null, terminationUnconfirmed = false): void => {
       if (settled) return;
       settled = true;
@@ -79,6 +82,7 @@ export const runClaudeProcess = (
         overflow,
         ...(terminationUnconfirmed ? { terminationUnconfirmed: true } : {}),
         ...(spawnCode ? { spawnCode } : {}),
+        ...(exitCode !== 0 && rejection ? { turnRejection: rejection } : {}),
         ...(stdinFailed ? { stdinFailed } : {}),
         ...(callbackError ? { callbackError } : {}),
         ...(request.classifyDiagnostics && exitCode !== 0 && diagnostic
@@ -110,9 +114,21 @@ export const runClaudeProcess = (
       }
       try {
         // Keep only stderr in this ephemeral window. Turn stdout can contain authored/model text.
-        // No-turn probe stdout is classified separately by the harness inspection path.
-        if (!output && request.classifyDiagnostics)
+        // The same bounded buffer supports turn refusals and probe-only sign-out inference;
+        // only fixed classifications leave it. Probe stdout is inspected separately by the harness.
+        if (!output) {
           diagnostic = (diagnostic + chunk.toString('utf8')).slice(-8192);
+          if (/^(?:Error: )?No conversation found with session ID:/im.test(diagnostic))
+            rejection = 'session-missing';
+          else if (/^error: (?:unknown option|unexpected argument)/im.test(diagnostic))
+            rejection = 'arguments';
+          else if (
+            /^(?:Error: )?(?:Not logged in|Invalid API key|Authentication required)\b/im.test(
+              diagnostic,
+            )
+          )
+            rejection = 'auth';
+        }
         if (output) {
           stdout += chunk.toString('utf8');
           onStdout?.(chunk);

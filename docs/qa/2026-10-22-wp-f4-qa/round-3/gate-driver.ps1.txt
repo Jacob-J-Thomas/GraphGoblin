@@ -1,0 +1,60 @@
+param([string]$Phase = 'build')
+$env:PATH = "$env:APPDATA\nvm\v22.14.0;$env:PATH"
+$env:GG_E2E_BROWSER_CHANNEL = 'msedge'
+$ErrorActionPreference = 'Continue'
+$root = (Get-Location).Path
+$out = Join-Path $root 'docs/qa/2026-10-22-wp-f4-qa/round-3'
+function Run-Gate([string]$Name, [string[]]$GateArgs) {
+  $raw = Join-Path $env:TEMP ('gg-qa-f4-' + $Name + '.log')
+  $start = Get-Date
+  & pnpm.cmd @GateArgs *> $raw
+  $result = $LASTEXITCODE
+  $s = Get-Content -Raw -LiteralPath $raw
+  foreach ($entry in @(@($root,'<worktree>'),@($env:TEMP,'<temp>'),@($env:USERPROFILE,'<user>'))) {
+    foreach ($form in @($entry[0],$entry[0].Replace('\','/'),$entry[0].Replace('\','\\'))) { $s=$s.Replace($form,$entry[1]) }
+  }
+  $s = $s -replace '\x1b\[[0-9;]*m', ''
+  $duration = [math]::Round(((Get-Date)-$start).TotalSeconds,2)
+  Set-Content -LiteralPath (Join-Path $out ($Name + '.log.txt')) -Encoding UTF8 -Value (('REVISION: b80c9fdfb001e020bdfc1b9c7c15e5f910d33766' + "`nCOMMAND: pnpm.cmd " + ($GateArgs -join ' ')) + "`n" + $s + "`nEXIT=$result SECONDS=$duration")
+  Write-Output ($Name + ': exit=' + $result + ' seconds=' + $duration)
+  Write-Output (($s -split "`n" | Select-Object -Last 5) -join "`n")
+}
+switch ($Phase) {
+  'build' { Run-Gate 'build' @('build') }
+  'static' {
+    Run-Gate 'typecheck' @('typecheck','--concurrency=2')
+    Run-Gate 'lint' @('lint','--concurrency=2')
+    Run-Gate 'format' @('format:check')
+    Run-Gate 'docs' @('check:docs')
+    Run-Gate 'layers' @('check:layers')
+    Run-Gate 'deps' @('check:deps')
+    Run-Gate 'tokens' @('check:tokens')
+    Run-Gate 'licenses' @('check:licenses')
+  }
+  'coverage' {
+    Run-Gate 'engine-coverage' @('--filter','@graphgoblin/engine','test:coverage','--maxWorkers=1','--coverage.reportOnFailure')
+    Run-Gate 'codex-coverage' @('--filter','@graphgoblin/adapter-codex','test:coverage','--maxWorkers=1','--coverage.reportOnFailure')
+    Run-Gate 'api-coverage' @('--filter','@graphgoblin/api','test:coverage','--maxWorkers=1','--coverage.reportOnFailure')
+    Run-Gate 'infrastructure-coverage' @('--filter','@graphgoblin/infrastructure','test:coverage','--maxWorkers=1','--coverage.reportOnFailure')
+  }
+  'edge' {
+    Run-Gate 'web-inspector' @('--filter','@graphgoblin/web','exec','playwright','test','e2e/claude-harness.spec.ts','--retries=0','--output',(Join-Path $env:TEMP 'gg-qa-f4-edge-artifacts'))
+  }
+  'triage' {
+    Run-Gate 'triage-tree-abort' @('--filter','@graphgoblin/infrastructure','exec','vitest','run','src/adversarial.test.ts','--maxWorkers=1','-t','6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild')
+    Run-Gate 'triage-claude-overflow' @('--filter','@graphgoblin/infrastructure','exec','vitest','run','src/claude/process.test.ts','--maxWorkers=1','-t','kills on deadline and output overflow')
+    Run-Gate 'triage-claude-cancel' @('--filter','@graphgoblin/infrastructure','exec','vitest','run','src/claude/process.test.ts','--maxWorkers=1','-t','does not spawn for an already aborted signal and cancels a running process')
+    Run-Gate 'triage-claude-descendant' @('--filter','@graphgoblin/infrastructure','exec','vitest','run','src/claude/process.test.ts','--maxWorkers=1','-t','kills the descendant that a long-lived child started')
+    Run-Gate 'triage-readiness-hang' @('--filter','@graphgoblin/infrastructure','exec','vitest','run','src/claude/readiness.test.ts','--maxWorkers=1','-t','hang reports unknown without exposing CLI bodies')
+    Run-Gate 'triage-utf8-cancel' @('--filter','@graphgoblin/infrastructure','exec','vitest','run','src/process/scripts.test.ts','--maxWorkers=1','-t','kills and closes a real process cancelled with incomplete UTF-8 pending on both streams')
+    Run-Gate 'triage-script-timeout' @('--filter','@graphgoblin/infrastructure','exec','vitest','run','src/process/scripts.test.ts','--maxWorkers=1','-t','kills the process tree on timeout')
+    Run-Gate 'triage-script-abort' @('--filter','@graphgoblin/infrastructure','exec','vitest','run','src/process/scripts.test.ts','--maxWorkers=1','-t','kills the process when the signal aborts, including when already aborted')
+  }
+  'triage-load' {
+    $cases = Get-Content -Raw (Join-Path $out 'load-triage-cases.json') | ConvertFrom-Json
+    foreach ($case in $cases) {
+      Run-Gate $case.name @('--filter','@graphgoblin/infrastructure','exec','vitest','run',$case.file,'--maxWorkers=1','-t',$case.pattern)
+    }
+  }
+  'format-final' { Run-Gate 'format' @('format:check') }
+}

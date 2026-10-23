@@ -100,7 +100,10 @@ describe('generated durable event boundaries with SQLite', () => {
     const run = await t.start(await t.publish('inference', { prompt: { template: 'hello' } }));
     await t.manager.waitForIdle();
     const record = await t.runs.get(run.id);
-    expect(record).toMatchObject({ status: 'failed', failure: { code: 'HARNESS_TURN_FAILED' } });
+    expect(record).toMatchObject({
+      status: 'failed',
+      failure: { code: 'HARNESS_DELIVERY_UNCERTAIN' },
+    });
     expect(record?.failure?.message.length).toBe(failureBound);
     expect(record?.failure?.message).toContain('[truncated; original ');
     await expect(t.events.read(run.id)).resolves.toBeDefined();

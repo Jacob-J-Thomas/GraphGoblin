@@ -1,0 +1,51 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/process/scripts.test.ts --maxWorkers=1 -t kills and closes a real process cancelled with incomplete UTF-8 pending on both streams
+
+ RUN  v5.0.3 <worktree>/packages/infrastructure
+
+ ? src/process/scripts.test.ts (39 tests | 1 failed | 38 skipped) 8027ms
+   ? ProcessScripts (36)
+     � kills and closes a real process cancelled with incomplete UTF-8 pending on both streams 8024ms
+pnpm.cmd : 
+At line:10 char:3
++   & pnpm.cmd @GateArgs *> $raw
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+??????? Failed Tests 1 ???????
+
+ FAIL  src/process/scripts.test.ts > ProcessScripts > kills and closes a real process cancelled with incomplete UTF-8 
+pending on both streams
+AssertionError: native process-tree cancellation must finish before fixture cleanup: expected true to be false // 
+Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ? src/process/scripts.test.ts:194:7
+    192|       cleanupRequired,
+    193|       'native process-tree cancellation must finish before fixture cle�
+    194|     ).toBe(false);
+       |       ^
+    195|     expect(streamsReady).toBe(2);
+    196|     expect(result).toMatchObject({ stdout: 'A\ufffd', stderr: 'B\ufffd�
+
+????????????????????????[1/1]?
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 38 skipped (39)
+   Start at  23:33:52
+   Duration  8.50s (tests 98%, transform 1%, import 1%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  � "pnpm recursive exec" failed in C:
+  � <user path>\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-
+  � f4\packages\infrastructure
+
+
+EXIT=1 SECONDS=9.48

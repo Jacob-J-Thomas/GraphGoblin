@@ -1,0 +1,54 @@
+{
+  "head": "112d6207e7f59c707e2f06e29f71551fa08551aa",
+  "store": "<temp>\\gg-audit-f4-repair-repro-YnESX8",
+  "results": [
+    {
+      "code": "HARNESS_NOT_AUTHENTICATED",
+      "runId": "01M5JBYQ2ZFXF4G1WMNZ0ZG5WN",
+      "failure": {
+        "code": "HARNESS_NOT_AUTHENTICATED",
+        "message": "Controlled pre-launch refusal",
+        "nodeId": "infer",
+        "resumable": true,
+        "inference": {
+          "visitId": "01M5JBYQ2ZFXF4G1WMNZ0ZG5WN:5",
+          "turnId": "01M5JBYQA5DK3RR818Y41H6DAF",
+          "submission": "definitely-not-submitted",
+          "promptKind": "repair",
+          "sessionId": "controlled-thread"
+        }
+      },
+      "expectedRetry": "Repair exactly: \"invalid\"",
+      "resumeStatus": 200,
+      "resumedRunStatus": "succeeded",
+      "calls": ["Original task", "Repair exactly: \"invalid\"", "Repair exactly: \"invalid\""],
+      "mismatches": [],
+      "pass": true
+    },
+    {
+      "code": "HARNESS_ARGUMENTS_REJECTED",
+      "runId": "01M5JBYQM23TEKBH4K3NPCD66W",
+      "failure": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: Controlled pre-launch refusal",
+        "nodeId": "infer",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M5JBYQM23TEKBH4K3NPCD66W:5",
+          "turnId": "01M5JBYQPDC76ARGGXG1P3S7MK",
+          "submission": "definitely-not-submitted",
+          "promptKind": "repair",
+          "sessionId": "controlled-thread"
+        }
+      },
+      "expectedRetry": "Repair exactly: \"invalid\"",
+      "resumeStatus": 409,
+      "calls": ["Original task", "Repair exactly: \"invalid\""],
+      "mismatches": [],
+      "pass": true
+    }
+  ]
+}

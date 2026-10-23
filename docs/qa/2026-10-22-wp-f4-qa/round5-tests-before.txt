@@ -1,0 +1,75 @@
+
+ RUN  v5.0.3 <worktree>/apps/api
+
+ ❯ src/repair-start.test.ts (4 tests | 4 failed) 5856ms
+   × resubmits the exact saved repair after a synchronous restorable refusal 2975ms
+   × refuses Resume without another call after synchronous repair HARNESS_ARGUMENTS_REJECTED 1112ms
+   × refuses Resume without another call after synchronous repair HARNESS_UNSUPPORTED_POLICY 640ms
+   × refuses Resume without another call after synchronous repair HARNESS_INVALID_CONFIGURATION 1127ms
+pnpm.cmd : 
+At line:2 char:69
++ ... +$env:PATH; pnpm.cmd --filter @graphgoblin/api exec vitest run src/re ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/repair-start.test.ts > resubmits the exact saved repair after a synchronous restorable refusal
+AssertionError: expected 'The previous turn was interrupted bef…' to be 'Repair exactly: "invalid"' // Object.is 
+equality
+
+Expected: "Repair exactly: "invalid""
+Received: "The previous turn was interrupted before GraphGoblin recorded its result. Continue the task from where you 
+left off and finish it."
+
+ ❯ src/repair-start.test.ts:93:43
+     91|     await test.idle();
+     92|     expect(resumed.statusCode).toBe(200);
+     93|     expect(calls[2]?.request.turn.prompt).toBe('Repair exactly: "inval…
+       |                                           ^
+     94|     expect(calls[2]?.request.turn.prompt).toBe(calls[1]?.request.turn.…
+     95|     expect(calls[2]?.sessionId).toBe('repair-thread');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/repair-start.test.ts > refuses Resume without another call after synchronous repair 
+HARNESS_ARGUMENTS_REJECTED
+ FAIL  src/repair-start.test.ts > refuses Resume without another call after synchronous repair 
+HARNESS_UNSUPPORTED_POLICY
+ FAIL  src/repair-start.test.ts > refuses Resume without another call after synchronous repair 
+HARNESS_INVALID_CONFIGURATION
+AssertionError: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ src/repair-start.test.ts:127:32
+    125|     });
+    126|     await test.idle();
+    127|     expect(resumed.statusCode).toBe(409);
+       |                                ^
+    128|     expect(calls).toHaveLength(2);
+    129|     expect(failed.failure).toMatchObject({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  12:36:35
+   Duration  42.65s (transform 62%, import 23%, tests 15%)
+
+  Transform  transforming modules took 25.09s · 62% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ \Users\<user>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f4-
+  │ prompt-provenance\apps\api
+
