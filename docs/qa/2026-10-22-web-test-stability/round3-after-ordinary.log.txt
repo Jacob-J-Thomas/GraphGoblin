@@ -1,0 +1,49 @@
+{"command":"pnpm.cmd --filter @graphgoblin/web test:coverage","node":"v22.14.0","start":"2026-10-23T02:45:24.523Z"}
+$ vitest run --coverage
+
+ RUN  v5.0.3 <USERPROFILE>/source/repos/GraphGoblin/.claude/worktrees/codex-chore-web-test-stability/apps/web
+      Coverage enabled with v8
+
+ ❯ src/editor/useLoadEditor.test.tsx (20 tests | 1 failed) 2877ms
+   × gates saves, preserves edits and uses the loaded base token (synced=true) 102ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/useLoadEditor.test.tsx > gates saves, preserves edits and uses the loaded base token (synced=true)
+AssertionError: expected undefined to be 'edited during read' // Object.is equality
+
+- Expected:
+"edited during read"
+
++ Received:
+undefined
+
+ ❯ src/editor/useLoadEditor.test.tsx:170:76
+    168|     expect(await view.result.current.flush()).toBe(false);
+    169|     expect(api.callsTo('PUT', `/loops/${loop.id}/draft`)).toHaveLength…
+    170|     expect((await drafts.loadLocalDraft(loop.id))?.definition.descript…
+       |                                                                            ^
+    171|       'edited during read',
+    172|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 115 passed (116)
+      Tests  1 failed | 1473 passed (1474)
+   Start at  21:45:25
+   Duration  201.35s (tests 43%, environment 32%, import 11%, setup 11%, transform 2%, worker 1%)
+
+Environment  jsdom was created 116 times · 662.23s total, 32% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ \Users\<USERPROFILE>\source\repos\GraphGoblin\.claude\worktrees\codex-chore-web-
+  │ test-stability\apps\web
+
+
+RESULT {"name":"ordinary","command":"pnpm.cmd --filter @graphgoblin/web test:coverage","code":1,"wallSeconds":202.534}

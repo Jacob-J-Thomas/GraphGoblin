@@ -539,11 +539,13 @@ describe('webhooks', () => {
     });
     expect(response.statusCode).toBe(202);
     expect(response.json()).toEqual({ accepted: true });
-    expect((await t.container.repos.inbound.list('local'))[0]).toMatchObject({
+    expect((await t.container.repos.inbound.page('local')).items[0]).toMatchObject({
       payload: { title: 'Ã©', action: 'opened' },
     });
     expect(response.body).not.toContain(signature);
-    expect(JSON.stringify(await t.container.repos.inbound.list('local'))).not.toContain(signature);
+    expect(JSON.stringify((await t.container.repos.inbound.page('local')).items)).not.toContain(
+      signature,
+    );
     expect(
       (
         await t.app.inject({
@@ -601,7 +603,7 @@ describe('webhooks', () => {
     });
     expect(response.statusCode).toBe(202);
     expect(response.json()).toEqual({ accepted: true });
-    expect((await t.container.repos.inbound.list('local'))[0]?.payload).toBeNull();
+    expect((await t.container.repos.inbound.page('local')).items[0]?.payload).toBeNull();
   });
 
   it('acknowledges formerly ignored payloads and quietly exits inside the admitted run', async () => {
@@ -619,8 +621,10 @@ describe('webhooks', () => {
       events.filter((event) => event.type === 'node.started').map((event) => event.nodeId),
     ).toEqual(['trig', 'check', 'quiet']);
     expect(events.some((event) => event.type === 'return.delivered')).toBe(false);
-    expect((await t.container.repos.inbound.list('local'))[0]?.runIds).toEqual([run!.id]);
-    expect((await t.container.repos.inbound.list('local'))[0]?.delivery?.state).toBe('admitted');
+    expect((await t.container.repos.inbound.page('local')).items[0]?.runIds).toEqual([run!.id]);
+    expect((await t.container.repos.inbound.page('local')).items[0]?.delivery?.state).toBe(
+      'admitted',
+    );
     expect((await deliver(path, '{"action":"opened"}')).statusCode).toBe(202);
     await settle();
     expect(await runsOf(id)).toHaveLength(2);
@@ -642,7 +646,7 @@ describe('webhooks', () => {
     expect((await deliver(path, '{"different":true}')).statusCode).toBe(202);
     await settle();
     expect(await runsOf(id)).toHaveLength(1);
-    expect((await t.container.repos.inbound.list('local'))[0]?.delivery?.state).toBe(
+    expect((await t.container.repos.inbound.page('local')).items[0]?.delivery?.state).toBe(
       'deduplicated',
     );
   });
@@ -660,7 +664,7 @@ describe('webhooks', () => {
     });
     const first = await deliver(path, '{"id":1}', { headers: { 'x-delivery': 'd' } });
     expect(first.json()).toEqual({ accepted: true });
-    expect((await t.container.repos.inbound.list('local'))[0]?.dedupeKey).toBe('d:1');
+    expect((await t.container.repos.inbound.page('local')).items[0]?.dedupeKey).toBe('d:1');
     t.clock.advance(5_000);
     expect((await deliver(path, '{"id":1}', { headers: { 'x-delivery': 'd' } })).statusCode).toBe(
       202,
@@ -1058,7 +1062,7 @@ describe('body signing and durable admission', () => {
     });
     expect(response.statusCode).toBe(413);
     expect(intake).not.toHaveBeenCalled();
-    expect(await t.container.repos.inbound.list('local')).toEqual([]);
+    expect((await t.container.repos.inbound.page('local')).items).toEqual([]);
     expect(await runsOf(id)).toEqual([]);
     expect(
       await t.container.triggers.handleWebhook(path.slice('/hooks/'.length), body, {}),
@@ -1226,7 +1230,7 @@ describe('body signing and durable admission', () => {
       expect(initialThread?.invocation.trigger.payload).toEqual(JSON.parse(body));
       const persisted = JSON.stringify({
         receipts: (await t.container.handle.client.execute('SELECT * FROM webhook_receipts')).rows,
-        inbound: await t.container.repos.inbound.list('local'),
+        inbound: (await t.container.repos.inbound.page('local')).items,
         initialThread,
         snapshot: await t.container.repos.runs.getThread(result.runId),
         events: await t.container.repos.events.read(result.runId),
@@ -2015,7 +2019,7 @@ describe('unified signed webhook admission and Allow', () => {
         await t.container.handle.client.execute('SELECT id,intent FROM webhook_receipts')
       ).rows;
       expect(receipts).toHaveLength(write.startsWith('claim.') ? 0 : 1);
-      const inbound = await t.container.repos.inbound.list('local');
+      const inbound = (await t.container.repos.inbound.page('local')).items;
       expect(inbound).toHaveLength(receipts.length);
       expect(await t.container.ports.admission.hasPendingPin(id)).toBe(receipts.length > 0);
       await t.container.handle.client.execute('DROP TRIGGER injected_failure');
@@ -2040,7 +2044,9 @@ describe('unified signed webhook admission and Allow', () => {
             initialThread: intent.initialThread,
           }),
         ]);
-        expect((await t.container.repos.inbound.list('local'))[0]?.runIds).toEqual([intent.run.id]);
+        expect((await t.container.repos.inbound.page('local')).items[0]?.runIds).toEqual([
+          intent.run.id,
+        ]);
         expect(await t.container.ports.admission.hasPendingPin(id)).toBe(false);
       } else {
         expect((await send('{"id":1}')).statusCode).toBe(202);
@@ -2075,7 +2081,7 @@ describe('unified signed webhook admission and Allow', () => {
       await t.idle();
       expect(await runsOf(keyed.id)).toHaveLength(1);
       expect(
-        (await t.container.repos.inbound.list('local')).filter(
+        (await t.container.repos.inbound.page('local')).items.filter(
           (event) => event.delivery?.state === 'deduplicated',
         ),
       ).toHaveLength(1);
@@ -2124,7 +2130,7 @@ describe('general webhook configuration and unsigned intake', () => {
     await t.idle();
     expect(await runsOf(keyed.id)).toHaveLength(1);
     expect(
-      (await t.container.repos.inbound.list('local')).filter(
+      (await t.container.repos.inbound.page('local')).items.filter(
         (event) => event.delivery?.state === 'deduplicated',
       ),
     ).toHaveLength(1);
@@ -2321,7 +2327,7 @@ describe('general webhook configuration and unsigned intake', () => {
     expect((await t.app.inject(`/loops/${id}/triggers`)).json()).toMatchObject({
       webhooks: [{ configurationAvailable: false, authentication: { type: 'none' } }],
     });
-    const event = (await t.container.repos.inbound.list('local'))[0]!;
+    const event = (await t.container.repos.inbound.page('local')).items[0]!;
     expect(
       (await t.container.triggers.describeInbound([{ ...event, ownerId: 'other' }]))[0],
     ).not.toHaveProperty('webhook');

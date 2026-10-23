@@ -629,7 +629,7 @@ describe('settings, secrets, api keys, catalog, events', () => {
     ).toBe(404);
   });
 
-  it('publishes and lists inbound events', async () => {
+  it('publishes and lists same-millisecond inbound events in reverse creation order', async () => {
     const published = await t.app.inject({
       method: 'POST',
       url: '/events',
@@ -642,7 +642,14 @@ describe('settings, secrets, api keys, catalog, events', () => {
       dedupeKey: 'k',
       ownerId: 'local',
     });
-    await t.app.inject({ method: 'POST', url: '/events', payload: { type: 'second' } });
+    const second = await t.app.inject({
+      method: 'POST',
+      url: '/events',
+      payload: { type: 'second' },
+    });
+    expect(second.json<{ receivedAt: string }>().receivedAt).toBe(
+      published.json<{ receivedAt: string }>().receivedAt,
+    );
     const list = (await t.app.inject('/events')).json<{ items: { type: string }[] }>();
     expect(list.items.map((e) => e.type)).toEqual(['second', 'issue-ready']);
   });

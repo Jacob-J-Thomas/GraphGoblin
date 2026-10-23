@@ -1,0 +1,49 @@
+[
+  {
+    "name": "durable success with unreadable earlier event after restart",
+    "pass": false,
+    "details": {
+      "loop": "01M5K67H80NS9PVAA68A9WF7Y8",
+      "id": "01M5K67HG1HE88WGD5565JZN4T",
+      "prior": "01M5K67HA25KXZDBMTJYRYFP8P",
+      "terminal": {
+        "status": "succeeded",
+        "outcome": "success"
+      },
+      "after": {
+        "status": "running",
+        "finalized_at": null
+      },
+      "summary": {
+        "latestRun": {
+          "id": "01M5K67HG1HE88WGD5565JZN4T",
+          "status": "running",
+          "createdAt": "2026-10-23T01:32:57.217Z"
+        },
+        "count": 2
+      },
+      "snapshot": {
+        "status": 200,
+        "runStatus": "running"
+      },
+      "eventPage": {
+        "status": 500,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/stored-event-invalid",
+          "title": "stored event invalid",
+          "status": 500,
+          "code": "STORED_EVENT_INVALID",
+          "detail": "Stored run event does not conform: run 01M5K67HG1HE88WGD5565JZN4T, seq 1, type run.queued"
+        }
+      },
+      "diagnostics": [
+        {
+          "runId": "01M5K67HG1HE88WGD5565JZN4T",
+          "code": "HISTORY_UNREADABLE",
+          "reason": "Stored run event does not conform: run 01M5K67HG1HE88WGD5565JZN4T, seq 1, type run.queued"
+        }
+      ],
+      "ui": "audit durable success unreadable event\n\nUpdated 10/22/2026, 8:32:56 PM\n\n\t\npublished\n\t\nrunning\n\t\nEdit\nExport\nDelete"
+    }
+  }
+]

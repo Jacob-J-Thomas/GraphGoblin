@@ -1,0 +1,30 @@
+Error: QA fixture exited 1: node:internal/modules/esm/load:209
+    throw new ERR_UNSUPPORTED_ESM_URL_SCHEME(parsed, schemes);
+          ^
+
+Error [ERR_UNSUPPORTED_ESM_URL_SCHEME]: Only URLs with a scheme in: file, data, and node are supported by the default ESM loader. On Windows, absolute paths must be valid file:// URLs. Received protocol 'c:'
+
+   at ..\..\..\docs\qa\2026-10-21-wp-g4-qa\regression-setup.cjs:12
+
+  10 | const serverPath=path.join(web,'e2e/server.ts');let server=remap(fs.readFileSync(serverPath,'utf8'),serverPath);server=server.replace("const dist = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'dist');",'let qaNextPort = 5642;\nconst dist = '+JSON.stringify(path.join(web,'dist'))+';');server=server.replace("port: 0 });","port: qaNextPort++ });").replace("controlServer.listen(0, '127.0.0.1', done)","controlServer.listen(5640, '127.0.0.1', done)").replace("'gg-e2e-live-'","'gg-qa-129-e2e-live-'");fs.writeFileSync(path.join(tmp,'server.ts'),server);
+  11 | const child=spawn(process.execPath,['--import',req.resolve('tsx'),path.join(tmp,'server.ts')],{cwd:web,windowsHide:true,stdio:['pipe','pipe','pipe'],env:{...process.env,JEV_API_KEY:'',GG_JEV_API_KEY:''}});let buffer='';let errors='';child.stderr.on('data',x=>errors+=x);let timer;
+> 12 | try{await new Promise((resolve,reject)=>{timer=setTimeout(()=>reject(Error('QA regression fixture startup timeout: '+errors)),60000);child.stdout.on('data',x=>{buffer+=x;const base=/GG_E2E_READY (\S+)/.exec(buffer);const control=/GG_E2E_CONTROL (\S+)/.exec(buffer);if(base&&control){process.env.GG_E2E_BASE_URL=base[1];process.env.GG_E2E_CONTROL_URL=control[1];resolve();}});child.once('exit',code=>reject(Error('QA fixture exited '+code+': '+errors)));});}finally{clearTimeout(timer);}
+     |                                                                                                                                                                                                                                                                                                                                                                                                                       ^
+  13 | fs.writeFileSync(path.join(__dirname,'regression-environment.json'),JSON.stringify({base:process.env.GG_E2E_BASE_URL,control:process.env.GG_E2E_CONTROL_URL,apiPorts:'5642 through 5648',classifierPort:5649,temp:'%TEMP%/'+path.basename(tmp),testBodies:'Unmodified repository specs',fixtureChanges:'Only bind ports, temp prefix and import locations; built API and built web.'},null,2));
+  14 | return async()=>{const done=once(child,'exit');child.stdin.end('stop\n');await Promise.race([done,new Promise(r=>setTimeout(r,10000))]);if(child.exitCode===null)child.kill();const absolute=path.resolve(tmp);if(path.dirname(absolute)!==path.resolve(os.tmpdir())||!path.basename(absolute).startsWith('gg-qa-129-'))throw Error('Unsafe cleanup target');fs.rmSync(absolute,{recursive:true,force:true});};
+  15 | };
+    at throwIfUnsupportedURLScheme (node:internal/modules/esm/load:209:11)
+    at defaultLoad (node:internal/modules/esm/load:107:3)
+    at ModuleLoader.load (node:internal/modules/esm/loader:701:12)
+    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:514:43)
+    at #createModuleJob (node:internal/modules/esm/loader:538:36)
+    at #getJobFromResolveResult (node:internal/modules/esm/loader:306:34)
+    at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:274:41)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:577:25) {
+  code: 'ERR_UNSUPPORTED_ESM_URL_SCHEME'
+}
+
+Node.js v22.14.0
+
+    at ChildProcess.<anonymous> (%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-g4\docs\qa\2026-10-21-wp-g4-qa\regression-setup.cjs:12:407)
+

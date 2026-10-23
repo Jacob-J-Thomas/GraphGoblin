@@ -1,5 +1,5 @@
 import { LoopDefinitionSchema, type LoopDefinitionInput } from '@graphgoblin/contracts';
-import { act, screen, waitFor, within } from '@testing-library/react';
+import { act, screen, waitFor, waitForElementToBeRemoved, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { FakeApi } from '../__fixtures__/fake-api.js';
@@ -119,7 +119,13 @@ describe('restoring a set-aside copy', () => {
       synced: false,
     };
     await drafts.saveLocalDraft(original);
+    // This case tests conversion/archiving; loader failures have their own cases below.
+    // Resolve the UI's real lazy-import path before starting the mounted-state assertion
+    // window, even though the fixture also imports the converter directly.
+    await deviceUpgrader.loadDeviceUpgrader();
     renderApp(`/loops/${loop.id}/edit`, api);
+    // Observe device/server loading before querying the restored editor's accessible tree.
+    await waitForElementToBeRemoved(screen.getByText('Loading loop…'));
     expect(await screen.findByRole('heading', { name: 'legacy device copy' })).toBeInTheDocument();
     await waitFor(async () => expect(await drafts.loadArchivedDrafts(loop.id)).toEqual([original]));
     expect(await drafts.loadLocalDraft(loop.id)).toMatchObject({

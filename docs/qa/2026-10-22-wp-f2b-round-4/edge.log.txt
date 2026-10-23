@@ -1,0 +1,185 @@
+
+Running 17 tests using 1 worker
+
+pnpm.cmd : (node:49636) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+At line:2 char:244
++ ... nv:CI = ''; pnpm.cmd exec playwright test e2e/claude-harness.spec.ts  ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:49636) Wa... env being set.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:49636) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 [chromium] › e2e\claude-harness.spec.ts:77:1 › Claude inference selection stays family-specific through publish and run (3.5s)
+  ✓   2 [chromium] › e2e\claude-harness.spec.ts:166:3 › explicit harness switch on narrow editor with readiness false (1.9s)
+  ✓   3 [chromium] › e2e\claude-harness.spec.ts:166:3 › explicit harness switch on narrow editor with readiness true (1.3s)
+  ✓   4 [chromium] › e2e\claude-harness.spec.ts:238:1 › a ready Claude model field stays editable while a focus refetch rechecks readiness (3.4s)
+  ✓   5 [chromium] › e2e\claude-harness.spec.ts:296:1 › Settings separates Claude adapter support from CLI readiness and supports Fable (1.0s)
+  ✓   6 [chromium] › e2e\claude-harness.spec.ts:361:1 › Claude settings stay pending through refresh and preserve the Codex defaults (896ms)
+  ✓   7 [chromium] › e2e\claude-harness.spec.ts:428:1 › Claude inspector shows requested effort and policy artifact, and preserves unconfirmed termination failure (2.1s)
+  ✓   8 [chromium] › e2e\claude-harness.spec.ts:580:3 › loaded saved incompatible model is retained without a switch, readiness false (1.0s)
+  ✓   9 [chromium] › e2e\claude-harness.spec.ts:580:3 › loaded saved incompatible model is retained without a switch, readiness true (1.0s)
+  ✘  10 [chromium] › e2e\model-picker.spec.ts:36:3 › catalog model and effort publish and reach the harness (dark) (11.1s)
+(node:45772) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:45772) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  11 [chromium] › e2e\model-picker.spec.ts:36:3 › catalog model and effort publish and reach the harness (light) (11.6s)
+(node:22344) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:22344) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  12 [chromium] › e2e\model-picker.spec.ts:102:1 › a saved model removed from the catalog stays selected and explicit unknown import is rejected (11.5s)
+(node:48952) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:48952) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  13 [chromium] › e2e\model-picker.spec.ts:159:1 › catalog failure preserves the current values until retry and loop defaults share the picker (1.0m)
+(node:34820) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:34820) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  14 [chromium] › e2e\model-picker.spec.ts:203:1 › the decision LLM uses an explicit harness model and rejects unsupported effort on admission (1.5s)
+  ✓  15 [chromium] › e2e\model-picker.spec.ts:284:1 › following a model issue keeps focus through a delayed catalog and a failed cached refresh (7.1s)
+  ✓  16 [chromium] › e2e\model-picker.spec.ts:366:1 › explicit Claude to Codex switch persists the owner default and sends the exact request (1.8s)
+  ✓  17 [chromium] › e2e\model-picker.spec.ts:418:1 › cached catalog failure holds publication across a harness switch and recovers (4.7s)
+
+
+  1) [chromium] › e2e\model-picker.spec.ts:36:3 › catalog model and effort publish and reach the harness (dark) 
+
+    Error: expect(locator).toHaveValue(expected) failed
+
+    Locator:  getByRole('dialog').getByLabel('Model', { exact: true })
+    Expected: "picker-dark"
+    Received: ""
+    Timeout:  10000ms
+
+    Call log:
+      - Expect "toHaveValue" getByRole('dialog').getByLabel('Model', { exact: true }) with timeout 10000ms
+      - waiting for getByRole('dialog').getByLabel('Model', { exact: true })
+        23 × locator resolved to <select id="_r_11_" aria-describedby="_r_11_-help" class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-point…>…</select>
+           - unexpected value ""
+
+
+      62 |     await page.keyboard.type(`Picker ${theme}`);
+      63 |     await page.keyboard.press('Enter');
+    > 64 |     await expect(model).toHaveValue(selected);
+         |                         ^
+      65 |     const effort = dialog.getByLabel('Effort', { exact: true });
+      66 |     await expect(effort.locator('option')).toHaveText([
+      67 |       '(inherited; the catalog suggests low)',
+        at <checkout>\apps\web\e2e\model-picker.spec.ts:64:25
+
+    Error Context: test-results\model-picker-catalog-model-e2e89-and-reach-the-harness-dark--chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\model-picker-catalog-model-e2e89-and-reach-the-harness-dark--chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\model-picker-catalog-model-e2e89-and-reach-the-harness-dark--chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium] › e2e\model-picker.spec.ts:36:3 › catalog model and effort publish and reach the harness (light) 
+
+    Error: expect(locator).toHaveValue(expected) failed
+
+    Locator:  getByRole('dialog').getByLabel('Model', { exact: true })
+    Expected: "picker-light"
+    Received: ""
+    Timeout:  10000ms
+
+    Call log:
+      - Expect "toHaveValue" getByRole('dialog').getByLabel('Model', { exact: true }) with timeout 10000ms
+      - waiting for getByRole('dialog').getByLabel('Model', { exact: true })
+        23 × locator resolved to <select id="_r_11_" aria-describedby="_r_11_-help" class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-point…>…</select>
+           - unexpected value ""
+
+
+      62 |     await page.keyboard.type(`Picker ${theme}`);
+      63 |     await page.keyboard.press('Enter');
+    > 64 |     await expect(model).toHaveValue(selected);
+         |                         ^
+      65 |     const effort = dialog.getByLabel('Effort', { exact: true });
+      66 |     await expect(effort.locator('option')).toHaveText([
+      67 |       '(inherited; the catalog suggests low)',
+        at <checkout>\apps\web\e2e\model-picker.spec.ts:64:25
+
+    Error Context: test-results\model-picker-catalog-model-e1fa8-nd-reach-the-harness-light--chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\model-picker-catalog-model-e1fa8-nd-reach-the-harness-light--chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\model-picker-catalog-model-e1fa8-nd-reach-the-harness-light--chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [chromium] › e2e\model-picker.spec.ts:102:1 › a saved model removed from the catalog stays selected and explicit unknown import is rejected 
+
+    Error: expect(locator).toHaveAttribute(expected) failed
+
+    Locator: getByRole('dialog').getByRole('link', { name: 'Model catalog in Settings' })
+    Expected: "/app/settings"
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toHaveAttribute" getByRole('dialog').getByRole('link', { name: 'Model catalog in Settings' }) with timeout 10000ms
+      - waiting for getByRole('dialog').getByRole('link', { name: 'Model catalog in Settings' })
+
+
+      136 |     'alert',
+      137 |   );
+    > 138 |   await expect(dialog.getByRole('link', { name: 'Model catalog in Settings' })).toHaveAttribute(
+          |                                                                                 ^
+      139 |     'href',
+      140 |     '/app/settings',
+      141 |   );
+        at <checkout>\apps\web\e2e\model-picker.spec.ts:138:81
+
+    Error Context: test-results\model-picker-a-saved-model-8583b--unknown-import-is-rejected-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\model-picker-a-saved-model-8583b--unknown-import-is-rejected-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\model-picker-a-saved-model-8583b--unknown-import-is-rejected-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) [chromium] › e2e\model-picker.spec.ts:159:1 › catalog failure preserves the current values until retry and loop defaults share the picker 
+
+    Test timeout of 60000ms exceeded.
+
+    Error: locator.click: Test timeout of 60000ms exceeded.
+    Call log:
+      - waiting for getByRole('dialog').getByRole('button', { name: 'Retry model catalog' })
+
+
+      183 |   await expect(model).toHaveAccessibleDescription(/Cannot load the model catalog/);
+      184 |   await page.unroute('**/model-catalog');
+    > 185 |   await dialog.getByRole('button', { name: 'Retry model catalog' }).click();
+          |                                                                     ^
+      186 |   await expect(model).not.toHaveAttribute('aria-readonly');
+      187 |   await expect(model).toHaveValue(chosen.model);
+      188 |   await closeNode(page);
+        at <checkout>\apps\web\e2e\model-picker.spec.ts:185:69
+
+    Error Context: test-results\model-picker-catalog-failu-3fc6e-p-defaults-share-the-picker-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\model-picker-catalog-failu-3fc6e-p-defaults-share-the-picker-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\model-picker-catalog-failu-3fc6e-p-defaults-share-the-picker-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4 failed
+    [chromium] › e2e\model-picker.spec.ts:36:3 › catalog model and effort publish and reach the harness (dark) 
+    [chromium] › e2e\model-picker.spec.ts:36:3 › catalog model and effort publish and reach the harness (light) 
+    [chromium] › e2e\model-picker.spec.ts:102:1 › a saved model removed from the catalog stays selected and explicit unknown import is rejected 
+    [chromium] › e2e\model-picker.spec.ts:159:1 › catalog failure preserves the current values until retry and loop defaults share the picker 
+  13 passed (2.4m)

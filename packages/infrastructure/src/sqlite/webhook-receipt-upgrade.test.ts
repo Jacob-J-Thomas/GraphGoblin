@@ -46,8 +46,9 @@ const cases = [
 
 beforeEach(async () => {
   handle = await openMemoryDatabase();
-  // Recreate the real pre-0015 ledger boundary; the public migration entry point does the work.
-  await handle.client.execute('DELETE FROM __drizzle_migrations WHERE created_at=1792454400000');
+  // Restore a pre-0015 ledger prefix; remove the later index before both migrations replay.
+  await handle.client.execute('DROP INDEX runs_loop_owner_history_idx');
+  await handle.client.execute('DELETE FROM __drizzle_migrations WHERE created_at>=1792454400000');
 });
 afterEach(() => handle.close());
 

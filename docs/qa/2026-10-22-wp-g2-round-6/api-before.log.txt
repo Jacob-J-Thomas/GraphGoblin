@@ -1,0 +1,115 @@
+
+ RUN  v5.0.3 <worktree>/apps/api
+
+ ❯ src/routes/loop-summaries.test.ts (9 tests | 3 failed) 2170ms
+   ❯ loop-specific run summaries over real SQLite (9)
+     × isolates damaged latest-run initial_thread and identifies it through diagnostics 153ms
+     × isolates damaged latest-run thread_snapshot and identifies it through diagnostics 137ms
+     × isolates damaged latest-run thread_snapshot and identifies it through diagnostics 129ms
+pnpm.cmd : 
+At line:73 char:1
++ pnpm.cmd --filter @graphgoblin/api exec vitest run src/routes/loop-su ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/routes/loop-summaries.test.ts > loop-specific run summaries over real SQLite > isolates damaged latest-run 
+initial_thread and identifies it through diagnostics
+AssertionError: expected { …(8) } to match object { runCount: 1, latestRun: null }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "latestRun": null,
++   "latestRun": {
++     "createdAt": "2026-10-02T12:00:00.000Z",
++     "id": "01M3Y7RKG02BM1MDJKSAHZFYB5",
++     "status": "running",
++   },
+    "runCount": 1,
+  }
+
+ ❯ src/routes/loop-summaries.test.ts:64:57
+     62|         items: { id: string; latestRun: { id: string } | null; runCoun…
+     63|       }>();
+     64|       expect(items.find((loop) => loop.id === damaged)).toMatchObject({
+       |                                                         ^
+     65|         runCount: 1,
+     66|         latestRun: null,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/routes/loop-summaries.test.ts > loop-specific run summaries over real SQLite > isolates damaged latest-run 
+thread_snapshot and identifies it through diagnostics
+AssertionError: expected { …(8) } to match object { runCount: 1, latestRun: null }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "latestRun": null,
++   "latestRun": {
++     "createdAt": "2026-10-02T12:00:00.000Z",
++     "id": "01M3Y7RKG0ECRSAYYT942EFHJV",
++     "status": "running",
++   },
+    "runCount": 1,
+  }
+
+ ❯ src/routes/loop-summaries.test.ts:64:57
+     62|         items: { id: string; latestRun: { id: string } | null; runCoun…
+     63|       }>();
+     64|       expect(items.find((loop) => loop.id === damaged)).toMatchObject({
+       |                                                         ^
+     65|         runCount: 1,
+     66|         latestRun: null,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/routes/loop-summaries.test.ts > loop-specific run summaries over real SQLite > isolates damaged latest-run 
+thread_snapshot and identifies it through diagnostics
+AssertionError: expected { …(8) } to match object { runCount: 1, latestRun: null }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "latestRun": null,
++   "latestRun": {
++     "createdAt": "2026-10-02T12:00:00.000Z",
++     "id": "01M3Y7RKG0NA2023JJZH89SQ7H",
++     "status": "running",
++   },
+    "runCount": 1,
+  }
+
+ ❯ src/routes/loop-summaries.test.ts:64:57
+     62|         items: { id: string; latestRun: { id: string } | null; runCoun…
+     63|       }>();
+     64|       expect(items.find((loop) => loop.id === damaged)).toMatchObject({
+       |                                                         ^
+     65|         runCount: 1,
+     66|         latestRun: null,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 6 passed (9)
+   Start at  16:47:40
+   Duration  9.35s (import 47%, transform 28%, tests 24%)
+
+  Transform  transforming modules took 2.57s · 28% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in <worktree>
+

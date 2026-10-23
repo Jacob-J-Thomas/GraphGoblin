@@ -1,0 +1,59 @@
+{
+  "total": 716,
+  "passed": 709,
+  "failed": 7,
+  "skipped": 0,
+  "files": 48,
+  "failures": [
+    {
+      "file": "packages/infrastructure/src/adversarial.test.ts",
+      "title": "adversarial infrastructure invariants (forks pool) 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild",
+      "failures": [
+        "Error: Test timed out in 30000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".\n    at task (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2681:43)\n    at Object.<anonymous> (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2698:16)\n    at Object.<anonymous> (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2471:28)\n    at chain (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:1859:14)\n    at <worktree>/packages/infrastructure/src/adversarial.test.ts:225:3\n    at file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2763:52\n    at runWithSuite (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:3250:8)\n    at Object.collect (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2763:22)\n    at Object.collect (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2768:51)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/claude/process.test.ts",
+      "title": "owned native Claude process transport kills on deadline and output overflow",
+      "failures": [
+        "Error: EBUSY: resource busy or locked, rmdir '<temp>\\gg-claude-process-7WVfEn'"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/claude/process.test.ts",
+      "title": "owned native Claude process transport does not spawn for an already aborted signal and cancels a running process",
+      "failures": [
+        "Error: EBUSY: resource busy or locked, rmdir '<temp>\\gg-claude-process-fXFoGH'"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/claude/process.test.ts",
+      "title": "owned native Claude process transport kills the descendant that a long-lived child started",
+      "failures": [
+        "AssertionError: expected 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…' to be 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…' // Object.is equality\n    at <worktree>/packages/infrastructure/src/claude/process.test.ts:146:46\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20",
+        "Error: EBUSY: resource busy or locked, rmdir '<temp>\\gg-claude-process-9Tt2QQ'"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/process/scripts.test.ts",
+      "title": "ProcessScripts kills and closes a real process cancelled with incomplete UTF-8 pending on both streams",
+      "failures": [
+        "AssertionError: native process-tree cancellation must finish before fixture cleanup: expected true to be false // Object.is equality\n    at <worktree>/packages/infrastructure/src/process/scripts.test.ts:194:7\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/process/scripts.test.ts",
+      "title": "ProcessScripts kills the process tree on timeout",
+      "failures": [
+        "Error: Test timed out in 15000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".\n    at task (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2681:43)\n    at Object.<anonymous> (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2698:16)\n    at Object.<anonymous> (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2471:28)\n    at chain (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:1859:14)\n    at <worktree>/packages/infrastructure/src/process/scripts.test.ts:237:3\n    at file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2763:52\n    at runWithSuite (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:3250:8)\n    at Object.collect (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2763:22)\n    at Object.collect (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2768:51)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)"
+      ]
+    },
+    {
+      "file": "packages/infrastructure/src/process/scripts.test.ts",
+      "title": "ProcessScripts kills the process when the signal aborts, including when already aborted",
+      "failures": [
+        "Error: Test timed out in 15000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".\n    at task (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2681:43)\n    at Object.<anonymous> (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2698:16)\n    at Object.<anonymous> (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2471:28)\n    at chain (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:1859:14)\n    at <worktree>/packages/infrastructure/src/process/scripts.test.ts:248:3\n    at file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2763:52\n    at runWithSuite (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:3250:8)\n    at Object.collect (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2763:22)\n    at Object.collect (file:///<worktree>/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2768:51)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)"
+      ]
+    }
+  ]
+}

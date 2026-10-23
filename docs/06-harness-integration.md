@@ -517,3 +517,12 @@ restorable causes.
 An abort during readiness probes is conservatively uncertain: the aborted/unknown probe
 does not positively identify a pre-send refusal. It does not authorize a blind authored retry.
 No readiness probes, probe directories, model selection or fallback policy changed.
+## Explicit node harness changes (#204)
+
+An explicit Harness change preserves unset node model/effort inheritance. For an explicit model,
+the editor chooses an enabled compatible loop default, then Settings default, then the adapter's
+ecosystem default (D-023). It waits for first-time checks already in flight; failed checks preserve
+authored selections. A failed catalog lookup shows **Validation unavailable**; a blocked switch
+leaves an incompatible draft that cannot be saved until corrected. See [the editor's harness-change rule](09-frontend-and-pwa.md#explicit-node-harness-changes-204)
+for compatibility, effort, notices and persistence. Runtime resolution is unchanged; stored values
+need no migration.

@@ -85,7 +85,7 @@ export const ChoiceConfigSchema = z
       .max(64)
       .meta(
         field(
-          'Two to sixty-four uniquely labelled options, each with a stable id and a nonblank criterion.',
+          'Two to sixty-four uniquely labelled options, each with a unique stable id (its output port) and a nonblank criterion.',
         ),
       ),
   })
@@ -115,7 +115,15 @@ const NoulFields = {
 export const NoulSpecSchema = z.strictObject(NoulFields);
 export type NoulSpec = z.infer<typeof NoulSpecSchema>;
 export const NoulConfigSchema = z
-  .strictObject({ ...NoulFields, true: ChoiceOptionSchema, false: ChoiceOptionSchema })
+  .strictObject({
+    ...NoulFields,
+    true: ChoiceOptionSchema.meta(
+      field('True side: its id is an output port; the two sides need different ids and labels.'),
+    ),
+    false: ChoiceOptionSchema.meta(
+      field('False side: its id is an output port; the two sides need different ids and labels.'),
+    ),
+  })
   .superRefine((answer, ctx) => {
     for (const key of ['id', 'label'] as const) {
       if (answer.true[key] === answer.false[key])
@@ -152,7 +160,11 @@ export const ScoreConfigSchema = z
       .array(ScoreBandSchema)
       .min(1)
       .max(64)
-      .meta(field('Stable bands covering the entire rubric.')),
+      .meta(
+        field(
+          'One to sixty-four bands with unique ids (output ports) and unique labels, covering the entire rubric without gaps or overlap.',
+        ),
+      ),
   })
   .superRefine((answer, ctx) => {
     for (const key of ['id', 'label'] as const) {
@@ -225,8 +237,15 @@ export type DecisionContext = z.infer<typeof DecisionContextSchema>;
 export const RouteIdSchema = ChoiceOptionIdSchema;
 export type RouteId = z.infer<typeof RouteIdSchema>;
 export const RouteDeclarationSchema = z.strictObject({
-  id: RouteIdSchema,
-  label: z.string().trim().min(1).max(120),
+  id: RouteIdSchema.meta(
+    field('Stable route id and output port; changing display order does not change the route.'),
+  ),
+  label: z
+    .string()
+    .trim()
+    .min(1)
+    .max(120)
+    .meta(field('Unique readable route label, shown on the canvas and in Connections.')),
   repeat: z.boolean().optional().meta(field('Mark the one route that repeats through this gate.')),
 });
 export type RouteDeclaration = z.infer<typeof RouteDeclarationSchema>;
@@ -334,7 +353,10 @@ const GateLimits = {
 export const ExpressionDecisionConfigSchema = ExpressionSourceSchema.safeExtend({
   ...GateLimits,
   routes: RouteDeclarationsSchema.meta(
-    field('Two to sixty-four stable readable routes.', { jsonEditor: true }),
+    field(
+      'Two to sixty-four routes with unique ids and unique labels; the expression returns one id.',
+      { jsonEditor: true },
+    ),
   ),
 }).superRefine(gateLimitsIssues);
 const LlmSourceSchema = z.strictObject({
@@ -347,7 +369,9 @@ const LlmSourceSchema = z.strictObject({
 export const LlmDecisionConfigSchema = LlmSourceSchema.extend({
   ...GateLimits,
   routes: RouteDeclarationsSchema.meta(
-    field('Declared stable route ids and readable labels.', { jsonEditor: true }),
+    field('Two to sixty-four routes with unique ids and unique labels; Codex chooses one id.', {
+      jsonEditor: true,
+    }),
   ),
   context: DecisionContextSchema.prefault({}).meta(
     field('Selected provider context.', { context: true, jsonEditor: true }),

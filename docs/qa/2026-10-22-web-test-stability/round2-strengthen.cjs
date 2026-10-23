@@ -1,0 +1,7 @@
+const fs = require('node:fs'), path = require('node:path');
+let test = fs.readFileSync('apps/web/src/forms/cron/control.test.tsx','utf8');
+test = test.replace("      fireEvent.change(screen.getByLabelText('Repeat'), { target: { value: 'custom' } });\n      fireEvent.change(raw(), { target: { value: 'b' } });", "      fireEvent.change(screen.getByLabelText('Repeat'), { target: { value: 'custom' } });\n      await act(() => vi.advanceTimersByTimeAsync(100));\n      fireEvent.change(raw(), { target: { value: 'b' } });");
+test = test.replace("      fireEvent.change(raw(), { target: { value: 'broken' } });", "      await act(() => vi.advanceTimersByTimeAsync(349));\n      expect(status.textContent).toBe(before);\n      fireEvent.change(raw(), { target: { value: 'broken' } });");
+test = test.replace("      await act(() => vi.advanceTimersByTimeAsync(350));\n    } finally", "      // The first edit's deadline passes, but the second edit restarted the debounce.\n      await act(() => vi.advanceTimersByTimeAsync(1));\n      expect(status.textContent).toBe(before);\n      await act(() => vi.advanceTimersByTimeAsync(348));\n      expect(status.textContent).toBe(before);\n      await act(() => vi.advanceTimersByTimeAsync(1));\n      expect(status).toHaveTextContent('Custom expression: broken');\n    } finally");
+if (!test.includes('advanceTimersByTimeAsync(348)')) throw new Error('Strengthening failed');
+fs.writeFileSync(path.join(process.env.TEMP,'gg-chore-web-stronger-cron.txt'),test);

@@ -1,0 +1,39 @@
+PACKAGE: web
+FILE: src/editor/EditorPage.restore.test.tsx
+TEST: restoring a set-aside copy > converts a v1 draft, archives the exact original and requires explicit first-save overwrite
+COMMAND: pnpm.cmd --filter @graphgoblin/web exec vitest run src/editor/EditorPage.restore.test.tsx --maxWorkers=1 --reporter=verbose -t <escaped exact full name>
+FILTER_REGEX: converts.*a.*v1.*draft.*archives.*the.*exact.*original.*and.*requires.*explicit.*first.*save.*overwrite
+
+ RUN  v5.0.3 <worktree>/apps/web
+
+ ? src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > restores unfinished current JSONata into the editor instead of archiving it as an upgrade failure
+ ? src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > converts a v1 draft, archives the exact original and requires explicit first-save overwrite 1658ms
+ ? src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > leaves all device keys untouched after a chunk-load failure and converts on retry
+ ? src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > leaves all device keys untouched after a chunk-load failure and converts on reopen
+ ? src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > still preserves an inert exportable original when the loaded converter fails
+ ? src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > keeps pending v3 review ids and hashes with an exportable inert original, including archives
+ ? src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > blocks overwrite of an automatic conversion after archive write failure
+ ? src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > blocks overwrite of an automatic conversion after archive readback failure
+ ? src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > keeps a converted synced mirror as a clean cache, with offline=false
+ ? src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > keeps a converted synced mirror as a clean cache, with offline=true
+ ? src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > sets stale converted unsynced work aside and restores it only by explicit choice
+ ? src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > does not convert archives or current drafts, with current cache=false
+ ? src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > does not convert archives or current drafts, with current cache=true
+ ? src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > preserves and converts a set-aside copy and keeps its archived original inert on reopening
+ ? src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > keeps an ambiguous v1 device draft raw and prevents it from replacing the server copy
+ ? src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > archives an ambiguous set-aside before a newer server copy moves a valid active draft there
+ ? src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > offers the original device-copy export when no server definition is available
+ ? src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > fails closed without overwriting either raw source when archiving fails
+ ? src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > keeps a dismissed restore notice hidden while the restored editor generation is edited
+ ? src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > does not load into another loop opened while the restore was being persisted
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 19 skipped (20)
+   Start at  23:05:31
+   Duration  15.20s (import 31%, transform 30%, environment 21%, tests 11%, setup 7%)
+
+  Transform  transforming modules took 4.44s · 30% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+EXIT: 0

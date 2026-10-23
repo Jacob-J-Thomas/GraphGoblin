@@ -113,30 +113,24 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
       schema: {
         tags: ['runs'],
         summary: 'List runs with filters and stable newest-first paging',
-        querystring: z
-          .strictObject({
-            loopId: UlidSchema.optional(),
-            status: z
-              .string()
-              .refine(
-                (value) =>
-                  value.split(',').every((s) => RunStatusSchema.safeParse(s.trim()).success),
-                'Use comma-separated run statuses.',
-              )
-              .optional(),
-            parent: z.union([UlidSchema, z.literal('none')]).optional(),
-            before: TimestampSchema.optional(),
-            cursor: z.string().optional().register(openApiRegistry, {
-              description: 'Opaque run cursor, at most 256 base64url characters.',
-              // The decoder enforces this bound so invalid cursors keep INVALID_CURSOR.
-              maxLength: 256,
-            }),
-            limit: z.coerce.number().int().min(1).max(500).optional(),
-          })
-          .superRefine((query, ctx) => {
-            if (query.cursor !== undefined && query.before !== undefined)
-              ctx.addIssue({ code: 'custom', message: 'Use either cursor or before.' });
+        querystring: z.strictObject({
+          loopId: UlidSchema.optional(),
+          status: z
+            .string()
+            .refine(
+              (value) => value.split(',').every((s) => RunStatusSchema.safeParse(s.trim()).success),
+              'Use comma-separated run statuses.',
+            )
+            .optional(),
+          parent: z.union([UlidSchema, z.literal('none')]).optional(),
+          before: TimestampSchema.optional(),
+          cursor: z.string().optional().register(openApiRegistry, {
+            description: 'Opaque run cursor, at most 256 base64url characters.',
+            // The decoder enforces this bound so invalid cursors keep INVALID_CURSOR.
+            maxLength: 256,
           }),
+          limit: z.coerce.number().int().min(1).max(500).optional(),
+        }),
         response: {
           200: z.object({ items: z.array(RunRecordSchema), nextCursor: z.string().nullable() }),
         },
@@ -212,7 +206,11 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
           limit: z.coerce.number().int().min(1).max(1000).optional(),
         }),
         response: {
-          200: z.object({ items: z.array(RunEventSchema), nextAfter: z.number().int() }),
+          200: z.object({
+            items: z.array(RunEventSchema),
+            nextAfter: z.number().int(),
+            hasMore: z.boolean(),
+          }),
         },
       },
     },
@@ -229,8 +227,8 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
         });
         return reply;
       }
-      const items = await repos.events.read(request.params.id, after, request.query.limit ?? 500);
-      return { items, nextAfter: items.length ? (items[items.length - 1]?.seq ?? after) : after };
+      const limit = request.query.limit ?? 500;
+      return repos.events.page(request.params.id, after, limit);
     },
   );
 
