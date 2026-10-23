@@ -1,5 +1,5 @@
 import type { ContextThread, LoopDefinition, RunEvent } from '@graphgoblin/contracts';
-import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useDeferredValue, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Badge,
@@ -93,13 +93,21 @@ export function ThreadViewer({
     [current, first, definition],
   );
   const [cache] = useState(createThreadCache);
-  const replayed = useMemo(() => cache.at(initial, events, seq), [cache, initial, events, seq]);
-  const selected = events.find((e) => e.seq === seq);
+  // A newly selected event is reconstructed in the deferred render after the urgent one, so the
+  // selection paints (the title and a note) before a thread with a wide value is rebuilt; the
+  // remembered threads make most selections immediate anyway.
+  const shownSeq = useDeferredValue(seq);
+  const reconstructing = shownSeq !== seq;
+  const replayed = useMemo(
+    () => cache.at(initial, events, shownSeq),
+    [cache, initial, events, shownSeq],
+  );
+  const selected = events.find((e) => e.seq === shownSeq);
   const diff = useMemo(() => {
     if (selected?.type !== 'node.finished' || !replayed.ok) return undefined;
-    const before = cache.at(initial, events, seq - 1);
+    const before = cache.at(initial, events, shownSeq - 1);
     return before.ok ? patchDiff(before.thread, replayed.thread, selected.patch) : undefined;
-  }, [selected, cache, initial, events, seq, replayed]);
+  }, [selected, cache, initial, events, shownSeq, replayed]);
   const [showJson, setShowJson] = useState(false);
   const thread = replayed.ok ? replayed.thread : undefined;
   // Whether every message is laid out. Like a value's expansion, it lasts while the same thread
@@ -153,7 +161,14 @@ export function ThreadViewer({
         />
       ) : null}
       <Card title={`Thread at event ${seq}`}>
-        <div className="grid gap-4">
+        {/* While the newly selected event's thread is rebuilt, the previous one stays mounted (so
+            nothing loses the keyboard or its open state) and says so. */}
+        {reconstructing ? (
+          <p className="text-sm text-muted" aria-live="polite">
+            Reconstructing the thread at event {seq}…
+          </p>
+        ) : null}
+        <div className="grid gap-4" data-reconstructing={reconstructing ? 'true' : undefined}>
           <div
             ref={messagesRef}
             className="grid gap-2"

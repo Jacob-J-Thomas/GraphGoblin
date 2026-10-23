@@ -144,7 +144,11 @@ export function BoundedValue({
       className={cn('grid min-w-0 gap-1.5', className)}
       onFocus={() => setOwnsFocus(true)}
       onBlur={(event) => {
-        if (!rootRef.current?.contains(event.relatedTarget)) setOwnsFocus(false);
+        if (rootRef.current?.contains(event.relatedTarget)) return;
+        // The reader left (a blur event means the keyboard moved by itself: a control the update
+        // removed fires none). Nothing is owed any more, including a hand-off still pending.
+        setOwnsFocus(false);
+        setHandoffFor(undefined);
       }}
     >
       <pre

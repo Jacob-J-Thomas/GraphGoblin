@@ -239,18 +239,19 @@ describe('RunInspectorPage', () => {
     ).toBeInTheDocument();
 
     // Before the node finished the thread is the initial one.
+    // The thread at a newly selected event is reconstructed in the deferred render (#259).
     await user.click(within(timeline).getByText(/#3/));
-    expect(screen.getByLabelText('Variables')).toHaveTextContent('{}');
+    expect(await screen.findByLabelText('Variables')).toHaveTextContent('{}');
     expect(screen.getByText('Thread at event 3')).toBeInTheDocument();
 
     await user.click(within(timeline).getByText(/#4/));
-    const diff = screen.getByRole('list', { name: 'Patch diff' });
+    const diff = await screen.findByRole('list', { name: 'Patch diff' });
     expect(within(diff).getByText('/vars/topic')).toBeInTheDocument();
     expect(within(diff).getAllByText(/\(absent\)/).length).toBeGreaterThan(0);
     // The full thread JSON is built only once its disclosure opens (#259).
     expect(screen.queryByTestId('thread-json')).not.toBeInTheDocument();
     await user.click(screen.getByText('Full thread JSON'));
-    expect(screen.getByTestId('thread-json')).toHaveTextContent('"prep": 1');
+    expect(await screen.findByTestId('thread-json')).toHaveTextContent('"prep": 1');
 
     // A live event arrives.
     act(() =>
@@ -666,7 +667,7 @@ describe('RunInspectorPage', () => {
     await waitFor(() => expect(screen.getByTestId('run-result').textContent?.length).toBe(4_097));
     expect(screen.getByRole('button', { name: 'Show all of Result' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Download Result as JSON' })).toBeInTheDocument();
-    expect(screen.getByLabelText('Variables').textContent?.length).toBe(4_097);
+    await waitFor(() => expect(screen.getByLabelText('Variables').textContent?.length).toBe(4_097));
     // Both the result and the variables carry the notice (each holds the 30,000-character value).
     expect(
       screen.getAllByText('Showing the first 4,096 characters of a larger value.'),
@@ -680,7 +681,7 @@ describe('RunInspectorPage', () => {
     // The full thread JSON is not laid out until its disclosure opens.
     expect(screen.queryByTestId('thread-json')).not.toBeInTheDocument();
     await user.click(screen.getByText('Full thread JSON'));
-    expect(screen.getByTestId('thread-json').textContent?.length).toBe(4_097);
+    await waitFor(() => expect(screen.getByTestId('thread-json').textContent?.length).toBe(4_097));
     await user.click(screen.getByRole('button', { name: 'Show all of Full thread JSON' }));
     expect(JSON.parse(screen.getByTestId('thread-json').textContent).vars.blob).toBe(long);
   });
