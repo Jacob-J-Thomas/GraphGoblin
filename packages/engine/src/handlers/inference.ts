@@ -407,12 +407,63 @@ export const inferenceHandler: NodeHandler<'inference'> = {
         );
       }
       invoking = true;
-      session = resumeId
-        ? harness.resume(resumeId, sessionRequest(turn), timeout.signal)
-        : harness.start(sessionRequest(turn), timeout.signal);
-      result = await consume(ctx, session, row, pending, failures);
-      requireAcceptanceRecording(failures);
-      failures.evidence = undefined;
+      // F3's one retry uses F4's selected evidence, including acceptance and recording faults.
+      for (let retry = 0; ; retry += 1) {
+        session = resumeId
+          ? harness.resume(resumeId, sessionRequest(turn), timeout.signal)
+          : harness.start(sessionRequest(turn), timeout.signal);
+        try {
+          result = await consume(ctx, session, row, pending, failures);
+          requireAcceptanceRecording(failures);
+          failures.evidence = undefined;
+          break;
+        } catch (error) {
+          const selected = mapHarnessFailure(error, failures.evidence, ctx.node.id, config.harness);
+          const state = harnessFailureSubmission(
+            selected.evidence,
+            pending.submission,
+            pending.accepted || pending.acceptanceObserved,
+          );
+          if (
+            retry >= 1 ||
+            selected.failure.code !== 'HARNESS_TRANSPORT_FAILED' ||
+            !selected.evidence.retriable ||
+            state !== 'definitely-not-submitted' ||
+            failures.acceptanceFailure ||
+            failures.recording.length ||
+            timeout.signal.aborted
+          )
+            throw error;
+          failures.evidence = selected.evidence;
+          try {
+            await session.cancel();
+          } catch (cleanupError) {
+            observe(failures, cleanupError);
+            failures.rejected = true;
+            throw error;
+          }
+          await recordSubmission(ctx, pending, failures, state);
+          if (failures.recording.length) throw error;
+          // Establish the exact retry intent before its fallible append. Recovery must not
+          // confuse the retired handle with a new invocation that has not happened yet.
+          session = undefined;
+          invoking = false;
+          pending = {
+            turn: pending.turn,
+            submission: 'delivery-uncertain',
+            accepted: false,
+            ...(resumeId ? { sessionId: resumeId } : {}),
+            intentUnconfirmed: true,
+          };
+          intentUnconfirmed = true;
+          failures.evidence = undefined;
+          failures.rejected = false;
+          await recordTurn(pending);
+          intentUnconfirmed = false;
+          pending.intentUnconfirmed = false;
+          invoking = true;
+        }
+      }
       usage = addUsage(usage, result.usage);
 
       // Structured output: validate, then repair on the same session as the policy allows.

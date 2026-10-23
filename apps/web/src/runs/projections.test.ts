@@ -381,6 +381,7 @@ describe('exit evidence summaries', () => {
     portId: string,
     previousPasses: number,
     limit: 'max-passes' | 'max-run-time' | null,
+    maxPasses: number | null = 3,
   ) =>
     event(R, previousPasses, 'decision.made', {
       ...expressionEvidence(limit ? 'again' : portId),
@@ -390,7 +391,7 @@ describe('exit evidence summaries', () => {
         previousPasses,
         passes: previousPasses + (portId === 'again' && !limit ? 1 : 0),
         repeatRouteId: 'again',
-        maxPasses: 3,
+        maxPasses,
         maxRunTimeSeconds: 60,
         elapsedSeconds: limit === 'max-run-time' ? 61 : 1,
         limit,
@@ -414,6 +415,13 @@ describe('exit evidence summaries', () => {
     );
     expect(lastGateSummary([gate('again', 2, 'max-run-time')])).toBe(
       'Last gate decision: gate chose again on pass 2 of 3; maximum run time stopped the repeat, so it took Limit reached.',
+    );
+    // An Unlimited gate records no pass bound (#243).
+    expect(lastGateSummary([gate('done', 12, null, null)])).toBe(
+      'Last gate decision: gate chose done on pass 12 (unlimited passes).',
+    );
+    expect(lastGateSummary([gate('again', 4, 'max-run-time', null)])).toBe(
+      'Last gate decision: gate chose again on pass 4 (unlimited passes); maximum run time stopped the repeat, so it took Limit reached.',
     );
   });
 

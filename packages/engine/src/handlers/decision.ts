@@ -112,7 +112,7 @@ export const decisionHandler: NodeHandler<'decision'> = {
       const limit =
         payload.portId !== repeat.id
           ? null
-          : previousPasses >= maxPasses
+          : maxPasses !== null && previousPasses >= maxPasses
             ? 'max-passes'
             : config.maxRunTimeSeconds !== undefined && elapsedSeconds >= config.maxRunTimeSeconds
               ? 'max-run-time'

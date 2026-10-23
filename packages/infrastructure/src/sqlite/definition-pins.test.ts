@@ -42,6 +42,7 @@ function admissionFor(record: LoopVersionRecord, seed: string): RunAdmission {
     label: `${record.definition.name} ${source === 'draft' ? 'draft ' : ''}v${record.version}`,
     defaults: NO_DEFAULTS,
     classifiers: {},
+    limits: { maxNodeVisits: 10, runDeadlineSeconds: null },
   };
   const run: RunRecord = {
     id: fakeUlid(`run:${seed}`),
@@ -100,6 +101,83 @@ describe('draft snapshots', () => {
     const run = await admission.create(admissionFor(snapshot, seed));
     return { loop, draft, snapshot, run };
   }
+
+  it.each([null, 5])(
+    'migrates authored deadline %s once and preserves damaged JSON',
+    async (deadline) => {
+      const definition = named('Custom limits');
+      definition.settings.maxNodeVisits = 4;
+      definition.settings.runDeadlineSeconds = deadline;
+      const { draft } = await loops.create('local', definition);
+      const snapshot: LoopVersionRecord = {
+        ...draft,
+        id: fakeUlid('limits-snapshot'),
+        status: 'snapshot',
+      };
+      const intent = admissionFor(snapshot, 'limits');
+      const created = await admission.create(intent);
+      await handle.client.execute({
+        sql: "UPDATE runs SET pinned = json_remove(pinned, '$.limits') WHERE id = ?",
+        args: [created.id],
+      });
+      await handle.client.execute({
+        sql: "UPDATE run_events SET payload = json_remove(payload, '$.pinned.limits') WHERE run_id = ?",
+        args: [created.id],
+      });
+      await handle.client.execute({
+        sql: "INSERT INTO webhook_receipts (id, owner_id, loop_id, trigger_node_id, content_hash, inbound_id, status, intent, attempts) VALUES (?, 'local', ?, 'start', ?, ?, 'pending', ?, 0)",
+        args: [
+          fakeUlid('limits-receipt'),
+          draft.loopId,
+          'a'.repeat(64),
+          fakeUlid('limits-inbound'),
+          JSON.stringify({
+            ...intent,
+            run: { ...intent.run, pinned: { ...intent.run.pinned, limits: undefined } },
+            queued: { ...intent.queued, pinned: { ...intent.run.pinned, limits: undefined } },
+          }),
+        ],
+      });
+      const migration = await readFile(
+        new URL('../../drizzle/0017_run_execution_limits.sql', import.meta.url),
+        'utf8',
+      );
+      const apply = async () => {
+        for (const statement of migration.split('--> statement-breakpoint'))
+          await handle.client.execute(statement);
+      };
+      await apply();
+      await apply();
+      expect((await runs.get(created.id))?.pinned.limits).toEqual({
+        maxNodeVisits: 4,
+        runDeadlineSeconds: deadline,
+      });
+      expect(
+        (await new SqliteEventStore(handle.db, new FakeClock()).read(created.id))[0],
+      ).toMatchObject({ pinned: { limits: { maxNodeVisits: 4, runDeadlineSeconds: deadline } } });
+      const saved = (await handle.client.execute('SELECT intent FROM webhook_receipts')).rows[0]?.[
+        'intent'
+      ];
+      if (typeof saved !== 'string') throw new Error('Expected saved admission JSON');
+      expect(parseRunAdmission(JSON.parse(saved)).run.pinned.limits).toEqual({
+        maxNodeVisits: 4,
+        runDeadlineSeconds: deadline,
+      });
+      await handle.client.execute({
+        sql: 'UPDATE runs SET pinned = ? WHERE id = ?',
+        args: ['{broken', created.id],
+      });
+      await apply();
+      expect(
+        (
+          await handle.client.execute({
+            sql: 'SELECT pinned FROM runs WHERE id = ?',
+            args: [created.id],
+          })
+        ).rows[0]?.['pinned'],
+      ).toBe('{broken');
+    },
+  );
 
   it('are stored with their run, read by id, and kept out of the version history', async () => {
     const { loop, draft, snapshot, run } = await draftRun('history');
@@ -192,7 +270,7 @@ describe('migration 0014 pins existing runs', () => {
 
   /** A store migrated through 0013, the last migration before definition pins. */
   async function storeBeforePins(): Promise<DatabaseHandle> {
-    const dir = await mkdtemp(join(tmpdir(), 'gg-pin-migration-'));
+    const dir = await mkdtemp(join(tmpdir(), 'gg-wp-f3-pin-migration-'));
     dirs.push(dir);
     const source = fileURLToPath(new URL('../../drizzle/', import.meta.url));
     const journal = JSON.parse(await readFile(join(source, 'meta/_journal.json'), 'utf8')) as {
@@ -238,7 +316,7 @@ describe('migration 0014 pins existing runs', () => {
             loopId,
             version,
             status,
-            JSON.stringify(named(name)),
+            JSON.stringify({ ...named(name), settings: { maxNodeVisits: 10 } }),
             FIXTURE_TS,
             status === 'published' ? FIXTURE_TS : null,
           ],
@@ -335,6 +413,7 @@ describe('migration 0014 pins existing runs', () => {
           label: 'Release v1',
           defaults: { owner, process: { byHarness: {} } },
           classifiers: {},
+          limits: { maxNodeVisits: 10, runDeadlineSeconds: null },
         },
       });
       // The draft run now pins a frozen copy named by its own id, everywhere it is recorded.
@@ -348,9 +427,13 @@ describe('migration 0014 pins existing runs', () => {
         loopId,
         version: 2,
         status: 'snapshot',
-        definition: named('Draft name'),
+        definition: { ...named('Draft name'), settings: { maxNodeVisits: 10 } },
         createdAt: FIXTURE_TS,
       });
+      expect(
+        LoopDefinitionSchema.parse((await loops.getVersion(runIds.draft))?.definition).settings
+          .runDeadlineSeconds,
+      ).toBeNull();
       expect((await loops.listVersions(loopId)).map((version) => version.id).sort()).toEqual(
         [published, draft].sort(),
       );

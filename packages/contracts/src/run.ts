@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ExecutionLimitsSchema } from './loop.js';
 import {
   JsonSchemaSchema,
   JsonValueSchema,
@@ -40,6 +41,9 @@ export const RunErrorCodeSchema = z.enum([
   'HARNESS_NOT_AUTHENTICATED',
   'HARNESS_QUOTA_EXHAUSTED',
   'HARNESS_TURN_FAILED',
+  'HARNESS_TRANSPORT_FAILED',
+  'HARNESS_OUTPUT_LIMIT',
+  'RUN_DEADLINE_EXCEEDED',
   'HARNESS_DELIVERY_UNCERTAIN',
   'HARNESS_SESSION_MISSING',
   'HARNESS_TERMINATION_UNCONFIRMED',
@@ -166,6 +170,7 @@ export const RunPinSchema = z.strictObject({
   /** Readable label: `<name> v<version>`, or `<name> draft v<version>` for a draft snapshot. */
   label: z.string().min(1).max(160),
   defaults: PinnedDefaultsSchema,
+  limits: ExecutionLimitsSchema,
   /**
    * The execution binding of every classifier the pinned definition references, by catalog id,
    * taken at start (a child inherits its parent's for the ids they share). A classifier missing at

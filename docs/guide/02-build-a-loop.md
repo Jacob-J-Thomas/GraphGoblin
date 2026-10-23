@@ -370,3 +370,21 @@ Changing a node ID updates its connections. Update authored references such as `
 To find a reference, expand **Earlier node outputs (N)** under a template or expression field in the node dialog. It lists the nodes that can run before this one, nearest first, each with its reference in that field's syntax, a **Copy** button and a note on what it outputs. For example, a script's default output is its stdout itself, parsed as JSON when possible: `42`, not `{stdout: 42}`. IDs with a hyphen are quoted for you: `{{ outputs["old-id"].value }}` in Liquid and `outputs."old-id".value` in JSONata.
 
 The list is help, not validation. A branch may not run, and a node marked **previous visit** has no value the first time through. Nodes that write no output, such as Mutate and Exit, are left out. Fields evaluated against something other than the run thread show no list; these include trigger fields, a wait's signal filter, a heartbeat's stop condition, subloop output mappings, and the `where` predicates of message and artifact selectors and mutations, which see one item at a time.
+
+### Visible execution limits
+
+In the editor's Loop tab, Maximum node visits defaults to 10 and No run deadline is
+selected by default. Settings also lists these defaults. To add a deadline, choose
+Limited and enter seconds (the suggested value is 3600). With no deadline, long waits,
+heartbeats and polling runs continue until an authored exit, Cancel or another explicit
+limit/failure. Choose Unlimited visits explicitly to remove the visit cutoff; its warning
+explains that authored exits and Cancel remain available.
+Marked repeat decisions use Maximum passes; choose Unlimited there for indefinite passes.
+Existing authored gate time checks and node timeouts still apply. The run inspector's
+Execution limits card shows the pinned values and absolute deadline, even after edits.
+An authored deadline includes waits, pauses and downtime; expiry fails RUN_DEADLINE_EXCEEDED.
+
+Provider/service limits can still fail a run. Quota exhaustion fails explicitly; GraphGoblin
+has no cost, token, subscription or provider-turn budget. Authors can implement usage-aware
+script/decision nodes. Only a positively unsubmitted transient transport failure retries
+once; uncertain accepted work is never blindly resent.

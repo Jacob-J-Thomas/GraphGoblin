@@ -18,6 +18,7 @@ const ORDINARY = new Set([
   'HARNESS_NOT_AUTHENTICATED',
   'HARNESS_QUOTA_EXHAUSTED',
   'HARNESS_TRANSPORT_FAILED',
+  'HARNESS_OUTPUT_LIMIT',
   'HARNESS_TIMEOUT',
   'HARNESS_NOT_INSTALLED',
   'INFERENCE_TIMEOUT',
@@ -133,6 +134,11 @@ export function mapHarnessFailure(
     failure = new RunFailureError(code, message, { nodeId, resumable: true });
   } else if (code === 'HARNESS_TIMEOUT' || code === 'INFERENCE_TIMEOUT') {
     failure = new RunFailureError('INFERENCE_TIMEOUT', message, { nodeId, resumable: true });
+  } else if (code === 'HARNESS_TRANSPORT_FAILED' || code === 'HARNESS_OUTPUT_LIMIT') {
+    failure = new RunFailureError(code, message, {
+      nodeId,
+      resumable: code === 'HARNESS_TRANSPORT_FAILED' && evidence.retriable,
+    });
   } else {
     failure = new RunFailureError('HARNESS_TURN_FAILED', 'harness turn failed: ' + message, {
       nodeId,

@@ -1,4 +1,5 @@
 import type { RunEvent } from '@graphgoblin/contracts';
+import { RunLimits } from './inspector/RunLimits.js';
 import { useQueryClient } from '@tanstack/react-query';
 import { GraphGoblinApiError } from '@graphgoblin/api-client';
 import { useState } from 'react';
@@ -165,6 +166,7 @@ export function RunInspectorPage() {
                 />
               </Card>
             ) : null}
+            <RunLimits run={run} />
             <WaitPanel run={run} />
             <DeliveryPanel run={run} />
           </>

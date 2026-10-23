@@ -310,3 +310,21 @@ the draft cannot be saved until you correct it after the catalog recovers. Saved
 See [the editor description](../09-frontend-and-pwa.md#explicit-node-harness-changes-204) for details.
 
 Read [Security and distribution](../11-security-and-distribution.md) for design context. Continue with [Troubleshooting](07-troubleshooting.md).
+
+### Visible execution limits
+
+In the editor's Loop tab, Maximum node visits defaults to 10 and No run deadline is
+selected by default. Settings also lists these defaults. To add a deadline, choose
+Limited and enter seconds (the suggested value is 3600). With no deadline, long waits,
+heartbeats and polling runs continue until an authored exit, Cancel or another explicit
+limit/failure. Choose Unlimited visits explicitly to remove the visit cutoff; its warning
+explains that authored exits and Cancel remain available.
+Marked repeat decisions use Maximum passes; choose Unlimited there for indefinite passes.
+Existing authored gate time checks and node timeouts still apply. The run inspector's
+Execution limits card shows the pinned values and absolute deadline, even after edits.
+An authored deadline includes waits, pauses and downtime; expiry fails RUN_DEADLINE_EXCEEDED.
+
+Provider/service limits can still fail a run. Quota exhaustion fails explicitly; GraphGoblin
+has no cost, token, subscription or provider-turn budget. Authors can implement usage-aware
+script/decision nodes. Only a positively unsubmitted transient transport failure retries
+once; uncertain accepted work is never blindly resent.

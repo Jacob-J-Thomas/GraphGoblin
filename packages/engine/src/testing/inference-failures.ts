@@ -137,8 +137,7 @@ export function expectedFailure(
   const code =
     spec.code === 'HARNESS_TIMEOUT'
       ? 'INFERENCE_TIMEOUT'
-      : spec.code === 'HARNESS_TRANSPORT_FAILED' ||
-          spec.code === 'HARNESS_TURN_FAILED' ||
+      : spec.code === 'HARNESS_TURN_FAILED' ||
           (!spec.eligible && spec.state === 'definitely-not-submitted')
         ? state === 'delivery-uncertain'
           ? 'HARNESS_DELIVERY_UNCERTAIN'
@@ -148,7 +147,11 @@ export function expectedFailure(
   return {
     cancelled,
     code,
-    resumable: spec.eligible && (!generic || family === 'codex' || retriable),
+    resumable:
+      spec.eligible &&
+      (spec.code === 'HARNESS_TRANSPORT_FAILED'
+        ? retriable
+        : !generic || family === 'codex' || retriable),
     state,
   };
 }

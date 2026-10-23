@@ -71,14 +71,21 @@ export function LoopSettingsPanel({
       <h3 className="mt-2 text-xs font-semibold tracking-wide text-muted uppercase">Settings</h3>
       <HelpText>
         Maximum node visits is a safety cap against unintended cycles. Use a decision gate's maximum
-        passes for an intentional repeat.
+        passes for an intentional repeat. The elapsed execution deadline includes waits and pauses.
+        There is no run deadline unless you set one. Visits and passes can be explicitly set to
+        Unlimited; cancellation remains available.
       </HelpText>
       <CatalogWarningsContext
         value={issues
           .filter((issue) => !issue.nodeId && issue.path?.startsWith('settings.'))
           .map((issue) => ({ ...issue, path: issue.path?.slice('settings.'.length) }))}
       >
-        <FieldLabelsContext value={{ maxNodeVisits: 'Maximum node visits' }}>
+        <FieldLabelsContext
+          value={{
+            maxNodeVisits: 'Maximum node visits',
+            runDeadlineSeconds: 'Run deadline seconds',
+          }}
+        >
           <SchemaForm
             schema={LoopSettingsSchema}
             controls={LOOP_FIELD_CONTROLS}

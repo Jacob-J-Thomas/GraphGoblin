@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { readMigrationFiles } from 'drizzle-orm/migrator';
+import { fileURLToPath } from 'node:url';
 import { LoopDefinitionSchema } from '@graphgoblin/contracts';
 import type { RunRecord } from '@graphgoblin/contracts';
 import {
@@ -23,10 +25,17 @@ describe('SQLite history queries', () => {
   afterEach(() => handle.close());
   it('applies the history index to an existing current-format store and reruns idempotently', async () => {
     await handle.client.execute('DROP INDEX runs_loop_owner_history_idx');
-    await handle.client.execute(
-      'DELETE FROM __drizzle_migrations WHERE created_at=(SELECT max(created_at) FROM __drizzle_migrations)',
+    const historyMigration = readMigrationFiles({
+      migrationsFolder: fileURLToPath(new URL('../../drizzle', import.meta.url)),
+    }).find((migration) =>
+      migration.sql.some((sql) => sql.includes('runs_loop_owner_history_idx')),
     );
-    expect(await handle.pendingMigrations()).toBe(1);
+    if (!historyMigration) throw new Error('Missing shipped history-index migration');
+    const removed = await handle.client.execute({
+      sql: 'DELETE FROM __drizzle_migrations WHERE created_at >= ?',
+      args: [historyMigration.folderMillis],
+    });
+    expect(await handle.pendingMigrations()).toBe(removed.rowsAffected);
     await handle.migrate();
     expect(await handle.pendingMigrations()).toBe(0);
     await handle.migrate();

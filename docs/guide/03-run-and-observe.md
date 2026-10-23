@@ -282,6 +282,9 @@ cannot authorize continuation.
 | `HARNESS_NOT_AUTHENTICATED`                                         | Log into Codex as the API process user, then resume.                                                                                                                                                                                                |
 | `HARNESS_QUOTA_EXHAUSTED`                                           | Wait for quota or rate-limit recovery, or resolve account access, then resume.                                                                                                                                                                      |
 | `HARNESS_TURN_FAILED`                                               | Read the harness message and progress; check model availability, sandbox, CLI, and provider connectivity.                                                                                                                                           |
+| `HARNESS_TRANSPORT_FAILED`                                          | Inspect transport/service connectivity and submission provenance. Only positively unsubmitted transient work retries once automatically.                                                                                                            |
+| `HARNESS_OUTPUT_LIMIT`                                              | A transport/protocol resource bound was exceeded. Inspect output size; GraphGoblin did not accept a silently truncated result.                                                                                                                      |
+| `RUN_DEADLINE_EXCEEDED`                                             | This run reached its pinned elapsed deadline. Start a new run with a longer deadline or No run deadline; the expired run is not resumable.                                                                                                          |
 | `HARNESS_DELIVERY_UNCERTAIN`                                        | Inspect `failure.inference` and the visit's acceptance marker. When eligible, Resume continues only a usable session. An inherited previous/named ID without authored-task acceptance is insufficient; use Replay from the node when non-resumable. |
 | `HARNESS_SESSION_MISSING`                                           | The provider refused the recorded conversation. Resume is unavailable. Inspect the failed run and use Replay from the node for a deliberate attempt; named-session lookup still applies.                                                            |
 | `HARNESS_TERMINATION_UNCONFIRMED`                                   | Stop the remaining owned CLI process and inspect workspace effects before deliberately replaying or starting a new run. Resume is unavailable.                                                                                                      |
@@ -305,9 +308,27 @@ cannot authorize continuation.
 | `WAIT_TIMEOUT`                                                      | Arrange the required input or signal sooner, or revise timeout behaviour in a new version.                                                                                                                                                          |
 | `HEARTBEAT_EXHAUSTED`                                               | Check the probe and condition; revise beat/deadline limits or exhaustion behaviour if needed.                                                                                                                                                       |
 | `HTTP_PROBE_BODY_OVERFLOW`                                          | An HTTP heartbeat response exceeded 64 KiB. Narrow the response or use a script probe; no successful beat or partial JSON was recorded.                                                                                                             |
-| `MAX_NODE_VISITS`                                                   | A node exceeded the safety cap `maxNodeVisits`. Fix unintended cycles or configure enough visits for intentional gates.                                                                                                                             |
+| `MAX_NODE_VISITS`                                                   | Fix unintended cycles, raise maximum visits, or explicitly choose Unlimited for intentional execution.                                                                                                                                              |
 | `RETURN_DELIVERY_FAILED`                                            | Reserved run-failure code. Check `run.deliveries` and `delivery.finished` for webhook outcomes; other sinks use `return.failed`. Delivery never changes execution status.                                                                           |
 | `EVENT_INVALID`                                                     | Generated event violates a contract bound. Read the failure, correct its source, then start or replay. Successful values are never trimmed.                                                                                                         |
 | `INTERNAL_ERROR`                                                    | Preserve the run ID, log, and failure details; investigate or report the defect before retrying side effects.                                                                                                                                       |
 
 Use [Troubleshooting](07-troubleshooting.md) for concrete checks. See [Execution engine](../05-execution-engine.md) and [API, streaming, and MCP](../07-api-and-streaming.md) for design context.
+
+### Visible execution limits
+
+In the editor's Loop tab, Maximum node visits defaults to 10 and No run deadline is
+selected by default. Settings also lists these defaults. To add a deadline, choose
+Limited and enter seconds (the suggested value is 3600). With no deadline, long waits,
+heartbeats and polling runs continue until an authored exit, Cancel or another explicit
+limit/failure. Choose Unlimited visits explicitly to remove the visit cutoff; its warning
+explains that authored exits and Cancel remain available.
+Marked repeat decisions use Maximum passes; choose Unlimited there for indefinite passes.
+Existing authored gate time checks and node timeouts still apply. The run inspector's
+Execution limits card shows the pinned values and absolute deadline, even after edits.
+An authored deadline includes waits, pauses and downtime; expiry fails RUN_DEADLINE_EXCEEDED.
+
+Provider/service limits can still fail a run. Quota exhaustion fails explicitly; GraphGoblin
+has no cost, token, subscription or provider-turn budget. Authors can implement usage-aware
+script/decision nodes. Only a positively unsubmitted transient transport failure retries
+once; uncertain accepted work is never blindly resent.

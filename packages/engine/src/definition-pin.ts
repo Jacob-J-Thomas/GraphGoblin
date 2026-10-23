@@ -34,6 +34,10 @@ export function pinOf(record: LoopVersionRecord, selections: PinnedSelections): 
     name,
     label: pinLabel(source, name, record.version),
     defaults: selections.defaults,
+    limits: {
+      maxNodeVisits: record.definition.settings.maxNodeVisits,
+      runDeadlineSeconds: record.definition.settings.runDeadlineSeconds,
+    },
     classifiers: selections.classifiers,
   };
 }

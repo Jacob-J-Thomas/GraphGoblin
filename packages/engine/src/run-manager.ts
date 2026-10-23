@@ -1,4 +1,11 @@
 import {
+  RUN_DEADLINE_TIMER,
+  runDeadline,
+  deadlineFailure,
+  isDeadlineAbort,
+  watchRunDeadline,
+} from './run-deadline.js';
+import {
   AdmissionConflictError,
   type RunAdmission,
   type WebhookClaim,
@@ -289,6 +296,7 @@ export class RunManager {
   private readonly returnDeliveries: WebhookReturns;
   private readonly queue: string[] = [];
   private readonly active = new Map<string, AbortController>();
+  private readonly deadlineStops = new Map<string, () => void>();
   private readonly recovering = new Set<string>();
   /** Runs enqueued while their executor was still active: queued again once it returns. */
   private readonly requeue = new Set<string>();
@@ -1176,6 +1184,8 @@ export class RunManager {
           await this.finalizeCancel(run.id);
           continue;
         }
+        await this.armRunDeadline(run);
+        if (await this.expireRunDeadline(run.id)) continue;
         // Complete an event-first park without executing its handler again. Its original
         // wall-clock deadlines survive an interruption before snapshot/status/timer writes.
         const parked = parkedWait(events);
@@ -1220,6 +1230,34 @@ export class RunManager {
     }
   }
 
+  /** Schedule the absolute deadline from the immutable run definition, never a fresh duration. */
+  private async armRunDeadline(run: RunRecord): Promise<void> {
+    const at = runDeadline(run);
+    if (at) await this.ports.timers.schedule(run.id, RUN_DEADLINE_TIMER, at);
+    const controller = this.active.get(run.id);
+    if (controller) {
+      this.deadlineStops.get(run.id)?.();
+      const stop = watchRunDeadline(run, controller, () => this.ports.clock.now());
+      if (stop) this.deadlineStops.set(run.id, stop);
+    }
+  }
+
+  /** Active work must settle after abort before capacity is released. Parked work can fail now. */
+  private async expireRunDeadline(runId: string): Promise<boolean> {
+    const run = await this.ports.runs.get(runId);
+    if (!run || isTerminal(run.status) || run.cancelRequestedAt) return true;
+    const at = runDeadline(run);
+    if (!at) return false;
+    if (at.getTime() > this.ports.clock.now().getTime()) return false;
+    const controller = this.active.get(runId);
+    if (controller) {
+      controller.abort(deadlineFailure());
+      return false;
+    }
+    await this.failRun(runId, deadlineFailure().toFailure());
+    return true;
+  }
+
   /** Arm only a durable park; past deadlines are due on the very next scheduler poll. */
   private async rearmTimers(runId: string, wait: WaitSpec): Promise<void> {
     const suffix = '@' + wait.waitId;
@@ -1242,6 +1280,7 @@ export class RunManager {
 
   /** False retains an early delivery. Paused runs re-arm their original deadline on resume. */
   private async onTimer(runId: string, key: string): Promise<boolean> {
+    if (key === RUN_DEADLINE_TIMER) return this.expireRunDeadline(runId);
     const [name, waitId] = key.split('@');
     if (!waitId || (name !== 'timer' && name !== 'heartbeat' && name !== 'timeout')) return true;
     const run = await this.ports.runs.get(runId);
@@ -1381,6 +1420,8 @@ export class RunManager {
 
   /** After an executor pass: honour a cancel request that arrived while the run was parking or finishing. */
   private async afterExecute(runId: string): Promise<void> {
+    this.deadlineStops.get(runId)?.();
+    this.deadlineStops.delete(runId);
     const run = await this.ports.runs.get(runId);
     if (run && !isTerminal(run.status) && run.cancelRequestedAt) await this.finalizeCancel(runId);
   }
@@ -1457,6 +1498,8 @@ export class RunManager {
       }
     }
 
+    await this.armRunDeadline(run);
+
     // The log is the source of truth for the cursor: a crash between a durable `node.finished` and
     // the cursor write must not run the finished node again.
     const caughtUp = await this.catchUpCursor(run, def, events);
@@ -1531,6 +1574,14 @@ export class RunManager {
       await new Promise<void>((resolve) => setTimeout(resolve, 0));
       // Re-read after the yield: a pause or cancel may have landed while this run was parked.
       const current = await this.mustGet(runId);
+      if (
+        !current.cancelRequestedAt &&
+        (isDeadlineAbort(controller.signal) ||
+          (runDeadline(run)?.getTime() ?? Infinity) <= this.ports.clock.now().getTime())
+      ) {
+        await this.failRun(runId, deadlineFailure().toFailure());
+        return;
+      }
       if (controller.signal.aborted || current.cancelRequestedAt) {
         await this.finalizeCancel(runId);
         return;
@@ -1549,13 +1600,17 @@ export class RunManager {
       // Visit cap (docs/05): a fresh entry (attempt 1; wakes, retries, and resumes re-enter with a
       // higher attempt) beyond `maxNodeVisits` fails the run, which bounds graph cycles that never
       // pass through a marked repeat gate.
-      if (attempt === 1 && countEntries(events, nodeId) >= def.settings.maxNodeVisits) {
+      if (
+        run.pinned.limits.maxNodeVisits !== null &&
+        attempt === 1 &&
+        countEntries(events, nodeId) >= run.pinned.limits.maxNodeVisits
+      ) {
         await this.failRun(runId, {
           code: 'MAX_NODE_VISITS',
-          message: `node "${nodeId}" would start for visit ${def.settings.maxNodeVisits + 1}, above the loop's maxNodeVisits of ${def.settings.maxNodeVisits}`,
+          message: `node "${nodeId}" would start for visit ${run.pinned.limits.maxNodeVisits + 1}, above the loop's maxNodeVisits of ${run.pinned.limits.maxNodeVisits}`,
           nodeId,
           resumable: false,
-          details: { maxNodeVisits: def.settings.maxNodeVisits },
+          details: { maxNodeVisits: run.pinned.limits.maxNodeVisits },
         });
         return;
       }
@@ -1607,6 +1662,14 @@ export class RunManager {
         }
         const terminationUnconfirmed =
           error instanceof RunFailureError && error.code === 'HARNESS_TERMINATION_UNCONFIRMED';
+        if (
+          !terminationUnconfirmed &&
+          isDeadlineAbort(controller.signal) &&
+          !(await this.mustGet(runId)).cancelRequestedAt
+        ) {
+          await this.failRun(runId, deadlineFailure().toFailure(nodeId));
+          return;
+        }
         if (!terminationUnconfirmed && (isAbortError(error) || controller.signal.aborted)) {
           await this.finalizeCancel(runId);
           return;
@@ -1639,6 +1702,19 @@ export class RunManager {
           );
         else this.ports.logger.error({ runId, nodeId, failure }, 'node failed');
         await this.failRun(runId, failure);
+        return;
+      }
+      // A late result cannot replace a deadline/cancel outcome, even if a port ignored abort.
+      const afterNode = await this.mustGet(runId);
+      if (afterNode.cancelRequestedAt) {
+        await this.finalizeCancel(runId);
+        return;
+      }
+      if (
+        isDeadlineAbort(controller.signal) ||
+        (runDeadline(run)?.getTime() ?? Infinity) <= this.ports.clock.now().getTime()
+      ) {
+        await this.failRun(runId, deadlineFailure().toFailure(nodeId));
         return;
       }
       const durationMs = Date.now() - startedAt;
@@ -1828,7 +1904,7 @@ export class RunManager {
     if (!isTerminal(run.status)) return;
     await this.ports.timers.cancel(runId);
     let complete = true;
-    if (run.status === 'cancelled') {
+    if (run.status === 'cancelled' || run.failure?.code === 'RUN_DEADLINE_EXCEEDED') {
       // Children are cancelled after the parent is terminal, so their completion does not wake it.
       // A child that could not be cancelled (and is not terminal by now) keeps the parent's
       // finalization pending, so the next recovery tries again.
