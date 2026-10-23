@@ -87,12 +87,12 @@ describe('query reconnect', () => {
     name: string;
     useRead: (loopId: string, runId: string) => UseQueryResult<unknown>;
   }[] = [
-    { name: 'Loops', useRead: useLoops },
+    { name: 'Loops', useRead: () => useLoops() },
     { name: 'loop details', useRead: (loopId) => useLoop(loopId) },
     { name: 'Runs', useRead: () => useRuns() },
     { name: 'run inspector', useRead: (_loopId, runId) => useRun(runId) },
     { name: 'run thread', useRead: (_loopId, runId) => useRunThread(runId) },
-    { name: 'Events', useRead: useInboundEvents },
+    { name: 'Events', useRead: () => useInboundEvents() },
     { name: 'Settings defaults', useRead: useSettings },
     { name: 'Settings models', useRead: useModelCatalog },
     { name: 'Settings secrets', useRead: useSecrets },

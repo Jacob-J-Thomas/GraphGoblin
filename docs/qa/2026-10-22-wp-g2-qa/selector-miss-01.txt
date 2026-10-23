@@ -1,0 +1,34 @@
+PACKAGE: infrastructure
+FILE: src/adversarial.test.ts
+TEST: adversarial infrastructure invariants (forks pool) > 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild
+COMMAND: pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/adversarial.test.ts --maxWorkers=1 --reporter=verbose -t <escaped exact full name>
+
+ RUN  v5.0.3 <worktree>/packages/infrastructure
+
+ ? src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 3: concurrent SQLite batches have no sequence gaps
+ ? src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 15: skip catches missed daily slots across spring DST
+ ? src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 15: run-once catches missed daily slots across spring DST
+ ? src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 15: run-each catches missed daily slots across spring DST
+ ? src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > ADV-010: run-once chooses the latest missed slot even beyond the run-each cap
+ ? src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 15: two scheduler instances have no shared lease (documented single-process limit)
+ ? src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > ADV-011: a duration timer lost before a crash is re-armed from the waiting run
+ ? src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > ADV-011: a input timeout timer lost before a crash is re-armed from the waiting run
+ ? src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > ADV-011: a fire interrupted mid-delivery is delivered again after a restart
+ ? src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 18: concurrent set of one secret preserves one authenticated ciphertext
+ ? src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild
+ ? src/adversarial.test.ts > timer delivery (review of WP-G) > a throwing timer listener leaves the timer for another delivery
+ ? src/adversarial.test.ts > timer delivery (review of WP-G) > a failed manager wake does not consume the timer
+ ? src/adversarial.test.ts > timer delivery (review of WP-G) > a duration with a timeout re-arms both lost deadlines (SQLite)
+ ? src/adversarial.test.ts > timer delivery (review of WP-G) > an obsolete timeout in the same poll batch does not wake a later input wait
+ ? src/adversarial.test.ts > finalization on SQLite (review of WP-G, fourth round) > a resumed failed run is finalized again after a crash on its next terminal status
+ ? src/adversarial.test.ts > finalization on SQLite (review of WP-G, fourth round) > an older finalizer in flight cannot hide the next success
+ ? src/adversarial.test.ts > finalization on SQLite (review of WP-G, fourth round) > an older finalizer in flight cannot hide the durable resume
+ ? src/adversarial.test.ts > finalization on SQLite (review of WP-G, fourth round) > of two concurrent resumes of one failure, only one acts (same failure)
+ ? src/adversarial.test.ts > finalization on SQLite (review of WP-G, fourth round) > of two concurrent resumes of one failure, only one acts (newer non-resumable failure)
+
+ Test Files  1 skipped (1)
+      Tests  20 skipped (20)
+   Start at  22:54:08
+   Duration  5.06s (import 62%, transform 37%)
+
+EXIT: 0

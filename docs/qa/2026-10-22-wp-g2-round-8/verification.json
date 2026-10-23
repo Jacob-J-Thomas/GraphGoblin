@@ -1,0 +1,368 @@
+{
+  "kind": "Derived verification summary, not a raw Vitest reporter object",
+  "head": "f0569e7b386ab2e7beb11dccc343255e4f4a08be",
+  "branch": "codex-wp-g2-paging-summaries",
+  "node": "v22.14.0",
+  "packages": [
+    {
+      "package": "infrastructure",
+      "total": 718,
+      "assertionStatuses": {
+        "passed": 710,
+        "failed": 7,
+        "pending": 1
+      },
+      "reporterTopLevelPending": 0,
+      "coverage": {
+        "lines": {
+          "total": 2157,
+          "covered": 2096,
+          "skipped": 0,
+          "pct": 97.17
+        },
+        "statements": {
+          "total": 2445,
+          "covered": 2344,
+          "skipped": 0,
+          "pct": 95.86
+        },
+        "functions": {
+          "total": 532,
+          "covered": 507,
+          "skipped": 0,
+          "pct": 95.3
+        },
+        "branches": {
+          "total": 1744,
+          "covered": 1615,
+          "skipped": 0,
+          "pct": 92.6
+        },
+        "branchesTrue": {
+          "total": 0,
+          "covered": 0,
+          "skipped": 0,
+          "pct": 100
+        }
+      },
+      "result": "FAIL",
+      "qualification": "Worker crash left one assertion pending; coverage collection is incomplete. Seven D-015 assertions also failed.",
+      "rawReporter": "round8-coverage-infrastructure-results.log.txt"
+    },
+    {
+      "package": "api",
+      "total": 740,
+      "assertionStatuses": {
+        "passed": 734,
+        "skipped": 6
+      },
+      "reporterTopLevelPending": 6,
+      "coverage": {
+        "lines": {
+          "total": 1810,
+          "covered": 1771,
+          "skipped": 0,
+          "pct": 97.84
+        },
+        "statements": {
+          "total": 2023,
+          "covered": 1950,
+          "skipped": 0,
+          "pct": 96.39
+        },
+        "functions": {
+          "total": 405,
+          "covered": 381,
+          "skipped": 0,
+          "pct": 94.07
+        },
+        "branches": {
+          "total": 1355,
+          "covered": 1259,
+          "skipped": 0,
+          "pct": 92.91
+        },
+        "branchesTrue": {
+          "total": 0,
+          "covered": 0,
+          "skipped": 0,
+          "pct": 100
+        }
+      },
+      "result": "PASS",
+      "qualification": "Complete full run.",
+      "rawReporter": "round8-coverage-api-results.log.txt"
+    },
+    {
+      "package": "web",
+      "total": 1497,
+      "assertionStatuses": {
+        "passed": 1497
+      },
+      "reporterTopLevelPending": 0,
+      "coverage": {
+        "lines": {
+          "total": 7064,
+          "covered": 6988,
+          "skipped": 0,
+          "pct": 98.92
+        },
+        "statements": {
+          "total": 8195,
+          "covered": 8032,
+          "skipped": 0,
+          "pct": 98.01
+        },
+        "functions": {
+          "total": 2208,
+          "covered": 2174,
+          "skipped": 0,
+          "pct": 98.46
+        },
+        "branches": {
+          "total": 7575,
+          "covered": 7180,
+          "skipped": 0,
+          "pct": 94.78
+        },
+        "branchesTrue": {
+          "total": 0,
+          "covered": 0,
+          "skipped": 0,
+          "pct": 100
+        }
+      },
+      "result": "PASS",
+      "qualification": "Complete full run.",
+      "rawReporter": "round8-coverage-web-results.log.txt"
+    }
+  ],
+  "gates": [
+    {
+      "name": "typecheck",
+      "command": "pnpm.cmd typecheck",
+      "exit": 0,
+      "tasks": "20/20"
+    },
+    {
+      "name": "lint",
+      "command": "pnpm.cmd lint",
+      "exit": 0,
+      "tasks": "11/11"
+    },
+    {
+      "name": "format",
+      "command": "pnpm.cmd format --ignore-path .round8-format.ignore.log",
+      "exit": 0,
+      "elapsedSeconds": 3.0063804
+    },
+    {
+      "name": "format-check",
+      "command": "pnpm.cmd format:check --ignore-path .round8-format.ignore.log",
+      "exit": 0,
+      "elapsedSeconds": 3.0636978
+    },
+    {
+      "name": "check-docs",
+      "command": "pnpm.cmd check:docs",
+      "exit": 0,
+      "elapsedSeconds": 1.6461245999999998
+    },
+    {
+      "name": "check-layers",
+      "command": "pnpm.cmd check:layers",
+      "exit": 0,
+      "elapsedSeconds": 0.35514049999999997
+    },
+    {
+      "name": "check-deps",
+      "command": "pnpm.cmd check:deps",
+      "exit": 0,
+      "elapsedSeconds": 11.7112492
+    },
+    {
+      "name": "check-tokens",
+      "command": "pnpm.cmd check:tokens",
+      "exit": 0,
+      "elapsedSeconds": 1.5330096
+    },
+    {
+      "name": "check-migrations",
+      "command": "pnpm.cmd check:migrations",
+      "exit": 0,
+      "elapsedSeconds": 2.9449943
+    },
+    {
+      "name": "build",
+      "command": "pnpm.cmd build",
+      "exit": 0,
+      "elapsedSeconds": 15.3795574
+    },
+    {
+      "name": "coverage-infrastructure",
+      "command": "pnpm.cmd --filter @graphgoblin/infrastructure test:coverage --maxWorkers=1 --coverage.reportOnFailure --reporter=default --reporter=json --outputFile.json=<worktree>/round8-coverage-infrastructure-results.log",
+      "exit": 1,
+      "elapsedSeconds": 264.0127468
+    },
+    {
+      "name": "coverage-api",
+      "command": "pnpm.cmd --filter @graphgoblin/api test:coverage (reporters as recorded)",
+      "exit": 0
+    },
+    {
+      "name": "coverage-web",
+      "command": "pnpm.cmd --filter @graphgoblin/web test:coverage --maxWorkers=1 (reporters as recorded)",
+      "exit": 0
+    },
+    {
+      "name": "auditor-event-restart",
+      "command": "node <audit round 3>/event-summary.mjs <fresh gg-wp-g2 store>",
+      "exit": 0,
+      "cases": 1
+    },
+    {
+      "name": "combined-restart",
+      "command": "node docs/qa/2026-10-22-wp-g2-round-8/restart-regression.mjs <fresh gg-wp-g2 store>",
+      "exit": 0,
+      "cases": 4
+    },
+    {
+      "name": "edge-history",
+      "command": "pnpm.cmd --filter @graphgoblin/web exec playwright test --config <fresh gg-wp-g2 fixture>/playwright.config.ts --retries=0; msedge",
+      "exit": 0,
+      "cases": 3
+    },
+    {
+      "name": "final-format-check",
+      "command": "pnpm.cmd format:check --ignore-path .round8-format.ignore.log",
+      "exit": 0
+    },
+    {
+      "name": "final-check-docs",
+      "command": "pnpm.cmd check:docs",
+      "exit": 0
+    }
+  ],
+  "reproduction": {
+    "before": {
+      "pass": false,
+      "summary": {
+        "latestRun": {
+          "id": "01M5K67HG1HE88WGD5565JZN4T",
+          "status": "running",
+          "createdAt": "2026-10-23T01:32:57.217Z"
+        },
+        "count": 2
+      },
+      "terminal": {
+        "status": "succeeded",
+        "outcome": "success"
+      }
+    },
+    "after": {
+      "pass": true,
+      "summary": {
+        "latestRun": null,
+        "count": 2
+      },
+      "terminal": {
+        "status": "succeeded",
+        "outcome": "success"
+      }
+    },
+    "combined": [
+      {
+        "column": "pinned",
+        "pass": true,
+        "count": 2,
+        "latestRun": null
+      },
+      {
+        "column": "initial_thread",
+        "pass": true,
+        "count": 2,
+        "latestRun": null
+      },
+      {
+        "column": "thread_snapshot",
+        "pass": true,
+        "count": 2,
+        "latestRun": null
+      },
+      {
+        "column": "events",
+        "pass": true,
+        "count": 2,
+        "latestRun": null
+      }
+    ]
+  },
+  "historicalRawRetention": {
+    "names": 29,
+    "objects": 47,
+    "citations": 47,
+    "lossesInThatSet": 0,
+    "externalThreadHarnessRetained": true,
+    "otherKnownLoss": "Round-6 auditor crashed before writing results.json; explicit not-kept disclosure and stdout-derived records at the citation."
+  },
+  "failedPreparations": [
+    {
+      "case": "repository fixture",
+      "error": "run.started.attempt omitted; corrected before valid pre-fix regression"
+    },
+    {
+      "case": "repository fixture SQL",
+      "error": "Incorrectly quoted JSON string; corrected before valid pre-fix regression"
+    },
+    {
+      "case": "Edge config",
+      "exit": 1,
+      "error": "CJS entry lacked named ESM defineConfig export; no tests ran"
+    },
+    {
+      "case": "Edge server",
+      "exit": 1,
+      "passed": 2,
+      "failed": 1,
+      "error": "Control response 500 EADDRINUSE 5622; isolated once with same error, then fixed port allocation"
+    },
+    {
+      "case": "reference-checker preflight",
+      "round6Missing": 6,
+      "round7Missing": 4,
+      "qualification": "Source/extension citations clarified, successful native outputs mapped; known unwritten round-6 final JSON explicitly disclosed."
+    },
+    {
+      "case": "First final reference-output assertion",
+      "error": "Original checker changed during the session, adding a recorded-as-not-kept count. Both outputs and both checker versions retained; loss now registered in NOT-KEPT.md."
+    }
+  ],
+  "referenceChecks": [
+    {
+      "round": 6,
+      "exit": 0,
+      "files": 98,
+      "citations": 181,
+      "recordedAsNotKept": 1,
+      "notKept": ["results.json"],
+      "missing": [],
+      "disposition": "Never written by the crashed historical auditor invocation; disclosed at citation and in NOT-KEPT.md."
+    },
+    {
+      "round": 7,
+      "exit": 0,
+      "files": 142,
+      "citations": 141,
+      "recordedAsNotKept": 0,
+      "missing": []
+    }
+  ],
+  "finalChecks": {
+    "format": 0,
+    "formatCheck": 0,
+    "checkDocs": 0,
+    "gitDiffCheck": 0,
+    "expectedHead": "f0569e7b386ab2e7beb11dccc343255e4f4a08be",
+    "evidenceNormalization": "UTF-8 and repository LF; source and retained hashes distinguish originals and normalized files."
+  }
+}

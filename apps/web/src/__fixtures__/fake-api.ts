@@ -45,6 +45,7 @@ export interface RecordedCall {
   search: URLSearchParams;
   body: unknown;
   headers: Headers;
+  signal?: AbortSignal;
 }
 
 type Handler = (call: RecordedCall, params: string[]) => Response | Promise<Response>;
@@ -406,6 +407,7 @@ export class FakeApi {
       search: url.searchParams,
       body: text ? (JSON.parse(text) as unknown) : undefined,
       headers: request.headers,
+      signal: request.signal,
     };
     this.calls.push(call);
     if (this.requiredKey && request.headers.get('authorization') !== `Bearer ${this.requiredKey}`)
@@ -476,7 +478,29 @@ export class FakeApi {
       },
     ],
     ['GET /loops/:id/triggers', () => json({ schedules: [], webhooks: [], polls: [] })],
-    ['GET /loops', () => json({ items: [...this.loops.values()].map((l) => l.loop) })],
+    [
+      'GET /loops',
+      () =>
+        json({
+          items: [...this.loops.values()].map(({ loop }) => {
+            const history = [...this.runs.values()]
+              .filter((r) => r.loopId === loop.id)
+              .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id));
+            const latest = history[0];
+            return {
+              ...loop,
+              runCount: history.length,
+              latestRun: latest
+                ? {
+                    id: latest.id,
+                    status: latest.status,
+                    createdAt: latest.createdAt,
+                  }
+                : null,
+            };
+          }),
+        }),
+    ],
     [
       'POST /loops',
       (call) => {
@@ -692,7 +716,16 @@ export class FakeApi {
         if (status) items = items.filter((r) => status.split(',').includes(r.status));
         if (parent === 'none') items = items.filter((r) => !r.parentRunId);
         else if (parent) items = items.filter((r) => r.parentRunId === parent);
-        return json({ items });
+        const before = call.search.get('before');
+        if (before) items = items.filter((r) => r.createdAt < before);
+        items.sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id));
+        const cursor = call.search.get('cursor');
+        if (cursor) items = items.slice(items.findIndex((item) => item.id === cursor) + 1);
+        const limit = Number(call.search.get('limit') ?? 100);
+        return json({
+          items: items.slice(0, limit),
+          nextCursor: items.length > limit ? items[limit - 1]!.id : null,
+        });
       },
     ],
     [
@@ -936,7 +969,23 @@ export class FakeApi {
       },
     ],
     ['GET /harness/preflight', () => json({ items: this.preflight })],
-    ['GET /events', () => json({ items: this.inbound })],
+    [
+      'GET /events',
+      (call) => {
+        let items = [...this.inbound];
+        const type = call.search.get('type');
+        if (type) items = items.filter((event) => event.type === type);
+        const before = call.search.get('before');
+        if (before) items = items.filter((event) => event.receivedAt < before);
+        const cursor = call.search.get('cursor');
+        if (cursor) items = items.slice(items.findIndex((item) => item.id === cursor) + 1);
+        const limit = Number(call.search.get('limit') ?? 100);
+        return json({
+          items: items.slice(0, limit),
+          nextCursor: items.length > limit ? items[limit - 1]!.id : null,
+        });
+      },
+    ],
   ];
 }
 

@@ -113,7 +113,7 @@ it.each([200, 400])(
       expect(rest.json()).toEqual(final);
       expect(await call('get_run', started.id)).toEqual(final);
       expect(await call('wait_for_run', started.id)).toMatchObject({ finished: true, run: final });
-      expect((await runs.list(client))[0]?.deliveries).toEqual(final.deliveries);
+      expect((await runs.list(client)).items[0]?.deliveries).toEqual(final.deliveries);
       const events = await runs.events(client, started.id);
       expect(events.items.filter((event) => event.type === 'delivery.finished')).toHaveLength(1);
     } finally {

@@ -1,0 +1,17 @@
+try {
+ await start();const seed=JSON.parse(await readFile(join(out,'seed.json'),'utf8'));
+ sql=createClient({url:'file:'+join(data,'graphgoblin.db').replaceAll('\\','/')});
+ browser=await chromium.launch({channel:'msedge',headless:true});const context=await browser.newContext({serviceWorkers:'block',viewport:{width:1440,height:900}}),page=await context.newPage();
+ await check('browser-run-damaged-lookahead-inspector','Damage pinned JSON in row101 of105 paging runs; open Runs first100, append, visit damaged run inspector; restore','First100 retained and next4 healthy runs appended; inspector visibly reports STORED_RUN_INVALID for damaged identity',async()=>{
+  const row=(await sql.execute({sql:'SELECT id,pinned FROM runs WHERE loop_id=? ORDER BY created_at DESC,id DESC LIMIT 1 OFFSET 100',args:[seed.paging]})).rows[0];
+  await sql.execute({sql:'UPDATE runs SET pinned=? WHERE id=?',args:['{invalid',row.id]});
+  try{await page.goto(base+'/app/runs?loop='+seed.paging);await count(page,100);const first=await page.locator('tbody tr').first().innerText();await page.getByRole('button',{name:'Load more',exact:true}).click();await count(page,104);assert.equal(await page.locator('tbody tr').first().innerText(),first);await page.goto(base+'/app/runs/'+row.id);await expect(page.getByText(/STORED_RUN_INVALID/)).toBeVisible();await snap(page,'damaged-run-inspector');return{firstRows:100,appendedTotal:104,damagedId:row.id,inspectorText:await page.locator('body').innerText()}}finally{await sql.execute({sql:'UPDATE runs SET pinned=? WHERE id=?',args:[row.pinned,row.id]})}
+ });
+ await check('browser-inbound-runids-boundary','Damage run_ids JSON of inbound row101; Events first100; Load more failure; repair and retry','First100 stay readable; own requested corrupt page fails; after repair105 rows',async()=>{
+  const row=(await sql.execute('SELECT id,run_ids FROM inbound_events ORDER BY received_at DESC,id DESC LIMIT 1 OFFSET 100')).rows[0];await sql.execute({sql:'UPDATE inbound_events SET run_ids=? WHERE id=?',args:['{invalid',row.id]});
+  try{await page.goto(base+'/app/events');await count(page,100);await page.getByRole('button',{name:'Load more',exact:true}).click();await expect(page.getByText(/something went wrong/i).first()).toBeVisible();await count(page,100)}finally{await sql.execute({sql:'UPDATE inbound_events SET run_ids=? WHERE id=?',args:[row.run_ids,row.id]})}
+  await page.getByRole('button',{name:'Load more',exact:true}).click();await count(page,105);return{firstRows:100,retainedAfterFailure:100,afterRepair:105}
+ });
+}catch(e){await rec({id:'boundary-harness',result:'FAIL',actual:clean(e.stack)});process.exitCode=1}
+finally{await browser?.close().catch(()=>{});sql?.close();await stop();console.log('BOUNDARY_DONE')}
+
