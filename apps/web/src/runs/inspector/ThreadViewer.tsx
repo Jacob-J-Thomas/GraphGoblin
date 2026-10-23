@@ -148,6 +148,7 @@ export function ThreadViewer({
   // Ownership of the whole viewer is tracked by its focus events for the same reason as above.
   const rootRef = useRef<HTMLDivElement>(null);
   const reconstructRef = useRef<HTMLButtonElement>(null);
+  const alertRef = useRef<HTMLDivElement>(null);
   const [viewerOwnsFocus, setViewerOwnsFocus] = useState(false);
   // The card unmounts the messages section without a blur event: its ownership ends here.
   if (!ready && ownsFocus) {
@@ -168,7 +169,9 @@ export function ThreadViewer({
     const section = messagesRef.current;
     const list = listRef.current;
     const inside = section !== null && section.contains(document.activeElement);
-    if (!inside) (showAllRef.current ?? list)?.focus();
+    // Without a messages section (a reconstruction that failed), the alert itself takes the
+    // keyboard, so an activated control never leaves it on the body.
+    if (!inside) (showAllRef.current ?? list ?? alertRef.current)?.focus();
     setHoldsFocus(document.activeElement === list);
   }, [handoffs]);
   useLayoutEffect(() => {
@@ -213,9 +216,11 @@ export function ThreadViewer({
   if (replayed === undefined || !replayed.ok || thread === undefined) {
     return (
       <div {...viewerFocus}>
-        <Alert title={`The thread cannot be reconstructed at event ${shownSeq}`}>
-          {replayed === undefined || replayed.ok ? '' : replayed.error}
-        </Alert>
+        <div ref={alertRef} tabIndex={-1} className="outline-none">
+          <Alert title={`The thread cannot be reconstructed at event ${shownSeq}`}>
+            {replayed === undefined || replayed.ok ? '' : replayed.error}
+          </Alert>
+        </div>
       </div>
     );
   }

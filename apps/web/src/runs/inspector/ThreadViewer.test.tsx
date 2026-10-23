@@ -242,9 +242,15 @@ describe('ThreadViewer with a large history', () => {
       }),
     ];
     render(<ThreadViewer current={thread} events={all} seq={3} historyBytes={3_500_000} />);
-    await user.click(screen.getByRole('button', { name: 'Reconstruct the thread at event 3' }));
-    expect(screen.getByText('The thread cannot be reconstructed at event 3')).toBeInTheDocument();
+    // Activated from the keyboard: the alert takes the keyboard the button had.
+    await user.tab();
+    expect(screen.getByRole('button', { name: 'Reconstruct the thread at event 3' })).toHaveFocus();
+    await user.keyboard('{Enter}');
+    const alert = screen.getByText('The thread cannot be reconstructed at event 3');
+    expect(alert).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Reconstruct/ })).not.toBeInTheDocument();
+    expect(document.activeElement).not.toBe(document.body);
+    expect(document.activeElement?.contains(alert)).toBe(true);
   });
 
   it('reconstructs automatically at and below the threshold', () => {
