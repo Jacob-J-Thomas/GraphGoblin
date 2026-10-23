@@ -134,6 +134,34 @@ describe('ThreadViewer with a large history', () => {
     expect(screen.queryByRole('list', { name: 'Messages' })).not.toBeInTheDocument();
   });
 
+  it('keeps the keyboard in the viewer across the card and the thread', async () => {
+    const user = userEvent.setup();
+    const { thread, events } = threadOf(60, 'a');
+    const all = [...events, started(thread.run.id, 2)];
+    const view = (seq: number) => (
+      <>
+        <ThreadViewer current={thread} events={all} seq={seq} historyBytes={3_500_000} />
+        <button type="button">Elsewhere</button>
+      </>
+    );
+    const { rerender } = render(view(1));
+    // Activating Reconstruct from the keyboard hands the keyboard to the thread's controls.
+    await user.tab();
+    expect(screen.getByRole('button', { name: 'Reconstruct the thread at event 1' })).toHaveFocus();
+    await user.keyboard('{Enter}');
+    expect(screen.getByRole('button', { name: 'Show all messages' })).toHaveFocus();
+    // A live event that becomes the selection replaces the thread with its card: the keyboard
+    // lands on the card's button, never on the body.
+    rerender(view(2));
+    expect(screen.getByRole('button', { name: 'Reconstruct the thread at event 2' })).toHaveFocus();
+    // A keyboard elsewhere is left alone, both ways.
+    act(() => screen.getByRole('button', { name: 'Elsewhere' }).focus());
+    rerender(view(1));
+    expect(screen.getByRole('button', { name: 'Elsewhere' })).toHaveFocus();
+    rerender(view(2));
+    expect(screen.getByRole('button', { name: 'Elsewhere' })).toHaveFocus();
+  });
+
   it('reconstructs automatically at and below the threshold', () => {
     const { thread, events } = threadOf(3, 'a');
     render(

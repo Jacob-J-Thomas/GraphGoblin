@@ -137,6 +137,18 @@ export function ThreadViewer({
   const [ownsFocus, setOwnsFocus] = useState(false);
   const [holdsFocus, setHoldsFocus] = useState(false);
   const [handoffs, setHandoffs] = useState(0);
+  // In large-history mode the card and the thread replace each other: when a live event's card
+  // replaces a thread the keyboard was in, the keyboard goes to the card's button; when the reader
+  // activates that button, the keyboard goes to the thread's controls (the hand-off below).
+  // Ownership of the whole viewer is tracked by its focus events for the same reason as above.
+  const rootRef = useRef<HTMLDivElement>(null);
+  const reconstructRef = useRef<HTMLButtonElement>(null);
+  const [viewerOwnsFocus, setViewerOwnsFocus] = useState(false);
+  // The card unmounts the messages section without a blur event: its ownership ends here.
+  if (!ready && ownsFocus) {
+    setOwnsFocus(false);
+    setHoldsFocus(false);
+  }
   if (shownThread !== thread) {
     setShownThread(thread);
     setAllMessagesState(false);
@@ -154,34 +166,56 @@ export function ThreadViewer({
     if (!inside) (showAllRef.current ?? list)?.focus();
     setHoldsFocus(document.activeElement === list);
   }, [handoffs]);
+  useLayoutEffect(() => {
+    if (ready || !viewerOwnsFocus) return;
+    const root = rootRef.current;
+    if (root !== null && !root.contains(document.activeElement)) reconstructRef.current?.focus();
+  }, [ready, shownSeq, viewerOwnsFocus]);
+  const viewerFocus = {
+    ref: rootRef,
+    onFocus: () => setViewerOwnsFocus(true),
+    onBlur: (event: React.FocusEvent<HTMLDivElement>) => {
+      if (!rootRef.current?.contains(event.relatedTarget)) setViewerOwnsFocus(false);
+    },
+  };
   if (!ready) {
     return (
-      <Card title={`Thread at event ${shownSeq}`}>
-        <p className="text-sm text-muted">
-          This run's history holds {megabytes(historyBytes)} of recorded events. Replaying them to
-          rebuild the thread at an event can take a while, so it happens on request.
-        </p>
-        <p>
-          <Button
-            size="sm"
-            onClick={() => setPrepared((set) => new Set(set).add(shownSeq))}
-          >{`Reconstruct the thread at event ${shownSeq}`}</Button>
-        </p>
-      </Card>
+      <div {...viewerFocus}>
+        <Card title={`Thread at event ${shownSeq}`}>
+          <p className="text-sm text-muted">
+            This run's history holds {megabytes(historyBytes)} of recorded events. Replaying them to
+            rebuild the thread at an event can take a while, so it happens on request.
+          </p>
+          <p>
+            <Button
+              ref={reconstructRef}
+              size="sm"
+              onClick={() => {
+                setPrepared((set) => new Set(set).add(shownSeq));
+                // The button goes away with the card: the thread's controls take the keyboard.
+                setHoldsFocus(true);
+                setHandoffs((n) => n + 1);
+              }}
+            >{`Reconstruct the thread at event ${shownSeq}`}</Button>
+          </p>
+        </Card>
+      </div>
     );
   }
   if (replayed === undefined || !replayed.ok || thread === undefined) {
     return (
-      <Alert title={`The thread cannot be reconstructed at event ${shownSeq}`}>
-        {replayed === undefined || replayed.ok ? '' : replayed.error}
-      </Alert>
+      <div {...viewerFocus}>
+        <Alert title={`The thread cannot be reconstructed at event ${shownSeq}`}>
+          {replayed === undefined || replayed.ok ? '' : replayed.error}
+        </Alert>
+      </div>
     );
   }
   const messages = thread.messages;
   const hidden = allMessages ? 0 : Math.max(0, messages.length - MESSAGE_PREVIEW_COUNT);
   const shownMessages = hidden > 0 ? messages.slice(hidden) : messages;
   return (
-    <div className="grid gap-section">
+    <div className="grid gap-section" {...viewerFocus}>
       {diff ? (
         <PatchDiff
           nodeId={selected?.type === 'node.finished' ? selected.nodeId : ''}
