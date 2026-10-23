@@ -10,6 +10,7 @@ import { manualTriggerConfig } from '../__fixtures__/triggers.js';
 import { FakeApi } from '../__fixtures__/fake-api.js';
 import { getCode, setCode } from '../__fixtures__/codemirror.js';
 import { renderNodeEditor } from '../__fixtures__/node-editor.js';
+import { renderApp } from '../__fixtures__/render.js';
 import { pasteInto } from '../__fixtures__/user.js';
 import { LOOP_PANEL_STORAGE_KEY } from './LoopPanel.js';
 import { defaultConfig, newLoopDefinition, validateDraft } from './model.js';
@@ -39,6 +40,7 @@ async function openDialog(
   name: string,
   prepare?: (api: FakeApi, loopId: string) => void,
   autosave = false,
+  editor = false,
 ) {
   const api = new FakeApi();
   api.catalog = [
@@ -55,7 +57,13 @@ async function openDialog(
   const definition = loopWith(extra);
   const loop = api.addLoop(definition);
   prepare?.(api, loop.id);
-  renderNodeEditor(loop.id, definition, extra.id, api, { autosave });
+  if (editor) {
+    // The harness-change tests exercise the editor page's mount-time catalog, Settings and
+    // readiness lookups (#204), so they mount the whole editor rather than the dialog alone.
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'dialog' });
+    act(() => store().openNode(extra.id));
+  } else renderNodeEditor(loop.id, definition, extra.id, api, { autosave });
   const dialog = await screen.findByRole('dialog', { name });
   await within(dialog).findByRole('form', { name: `${extra.id} config` });
   return dialog;
@@ -889,13 +897,18 @@ describe('NodeEditorDialog disclosures across undo and redo', () => {
 });
 
 describe('NodeEditorDialog inference harness changes', () => {
+  const openEditorDialog = (
+    extra: NodeInput,
+    name: string,
+    prepare?: (api: FakeApi, loopId: string) => void,
+  ) => openDialog(extra, name, prepare, false, true);
   it('preserves other authored harness options and reports unsupported Claude settings', async () => {
     const otherOptions = {
       networkAccess: false,
       webSearch: true,
       configOverrides: { custom: 'authored' },
     };
-    const dialog = await openDialog(
+    const dialog = await openEditorDialog(
       {
         id: 'infer',
         kind: 'inference',
@@ -928,7 +941,7 @@ describe('NodeEditorDialog inference harness changes', () => {
     'selects a compatible model only when ready and resets the policy (ready: %s)',
     async (ready) => {
       const user = userEvent.setup();
-      const dialog = await openDialog(
+      const dialog = await openEditorDialog(
         {
           id: 'infer',
           kind: 'inference',
