@@ -1,0 +1,8 @@
+import { readFile, writeFile } from 'node:fs/promises';
+const p='docs/qa/2026-10-22-wp-e1-259-qa/';
+const a=await readFile(p+'mismatch-Full-thread-JSON-1440.json','utf8'),b=await readFile(p+'mutate-thread-before.json','utf8');
+let n=0;while(a[n]===b[n]&&n<a.length)n++;
+const sort=x=>x&&typeof x==='object'?Array.isArray(x)?x.map(sort):Object.fromEntries(Object.keys(x).sort().map(k=>[k,sort(x[k])])):x;
+const aa=JSON.parse(a),bb=JSON.parse(b);
+const result={firstMismatch:n,actual:a.slice(n-60,n+120),api:b.slice(n-60,n+120),sameValue:JSON.stringify(sort(aa))===JSON.stringify(sort(bb)),actualKeys:Object.keys(aa),apiKeys:Object.keys(bb)};
+await writeFile(p+'thread-comparison.json',JSON.stringify(result,null,2));console.log(JSON.stringify(result));

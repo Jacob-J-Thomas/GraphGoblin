@@ -1,0 +1,334 @@
+[
+  {
+    "id": "1440: exact round-1 A/B/A and B/A/B regression",
+    "expected": "Each change has 4096-character preview, Show all and no whole-value layout",
+    "pass": true,
+    "actual": {
+      "fullChars": 2322721,
+      "movements": [
+        {
+          "selected": "seed",
+          "wallMs": 38.56050000000005,
+          "preChars": 4097,
+          "maxPreChars": 4097,
+          "longTasks": [],
+          "width": {
+            "window": 1440,
+            "document": 1440
+          },
+          "metrics": {
+            "ScriptDuration": 3.717999999999999,
+            "LayoutDuration": 2.8039999999999177,
+            "TaskDuration": 13.249999999999984
+          }
+        },
+        {
+          "selected": "replace",
+          "wallMs": 30.220299999999952,
+          "preChars": 4097,
+          "maxPreChars": 4097,
+          "longTasks": [],
+          "width": {
+            "window": 1440,
+            "document": 1440
+          },
+          "metrics": {
+            "ScriptDuration": 2.5479999999999947,
+            "LayoutDuration": 1.234999999999986,
+            "TaskDuration": 9.950999999999821
+          }
+        },
+        {
+          "selected": "replace",
+          "wallMs": 29.233099999999922,
+          "preChars": 4097,
+          "maxPreChars": 4097,
+          "longTasks": [],
+          "width": {
+            "window": 1440,
+            "document": 1440
+          },
+          "metrics": {
+            "ScriptDuration": 2.4339999999999917,
+            "LayoutDuration": 1.8819999999999393,
+            "TaskDuration": 11.328999999999922
+          }
+        },
+        {
+          "selected": "seed",
+          "wallMs": 29.376999999999953,
+          "preChars": 4097,
+          "maxPreChars": 4097,
+          "longTasks": [],
+          "width": {
+            "window": 1440,
+            "document": 1440
+          },
+          "metrics": {
+            "ScriptDuration": 2.077000000000051,
+            "LayoutDuration": 1.5279999999999738,
+            "TaskDuration": 10.164000000000062
+          }
+        }
+      ],
+      "screenshot": "bounded-return-1440.png"
+    }
+  },
+  {
+    "id": "1440: keyboard event change, large-to-large and large-to-small",
+    "expected": "Keyboard selection keeps focus on the selected timeline button; values collapse",
+    "pass": true,
+    "actual": {
+      "runId": "01M5JS020TV3K198PW0JP2A086",
+      "large": {
+        "shiftTabs": 12,
+        "focus": {
+          "tag": "BUTTON",
+          "label": null,
+          "role": null,
+          "tabindex": null,
+          "text": "#14node.finishedchange-large → out, 1 change, 0 ms"
+        },
+        "targetFocused": true
+      },
+      "small": {
+        "shiftTabs": 5,
+        "focus": {
+          "tag": "BUTTON",
+          "label": null,
+          "role": null,
+          "tabindex": null,
+          "text": "#22node.finishedchange-small → out, 1 change, 0 ms"
+        },
+        "targetFocused": true
+      },
+      "smallText": "{\n  \"small\": true\n}"
+    }
+  },
+  {
+    "id": "1440: live replacement focus inside expanded component",
+    "expected": "Large-to-large focuses new Show all; large-to-small holds pre at -1; Tab leaves no tabindex",
+    "pass": false,
+    "error": "large-to-small focus lost: {\"tag\":\"BODY\",\"label\":null,\"role\":null,\"tabindex\":null}"
+  },
+  {
+    "id": "1440: live replacement leaves outside keyboard alone",
+    "expected": "Outside Full thread JSON toggle retains focus for large/large and large/small updates",
+    "pass": true,
+    "actual": {
+      "runId": "01M5JS03ZJ0ZRNQ3PQTA63ZK9N",
+      "large": {
+        "tag": "BUTTON",
+        "label": null,
+        "role": null,
+        "tabindex": null,
+        "text": "Full thread JSON"
+      },
+      "small": {
+        "tag": "BUTTON",
+        "label": null,
+        "role": null,
+        "tabindex": null,
+        "text": "Full thread JSON"
+      },
+      "tabindex": null
+    }
+  },
+  {
+    "id": "1440: unchanged earlier expanded value survives live re-render",
+    "expected": "Selected seed, full text and region focus remain unchanged while events append",
+    "pass": true,
+    "actual": {
+      "runId": "01M5JS04T7FH0K3SN59JPYCZ0J",
+      "selected": "#6\nnode.finished\nseed → out, 1 change, 0 ms",
+      "chars": 20018,
+      "focus": {
+        "tag": "PRE",
+        "label": "Variables",
+        "role": "region",
+        "tabindex": "0"
+      },
+      "newLastSeq": 16
+    }
+  },
+  {
+    "id": "1440: reload/session reset starts bounded",
+    "expected": "A fresh component starts collapsed and reconstructs the same stored Variables",
+    "pass": true,
+    "actual": {
+      "chars": 4097,
+      "focus": {
+        "tag": "BODY",
+        "label": null,
+        "role": null,
+        "tabindex": null
+      }
+    }
+  },
+  {
+    "id": "390: exact round-1 A/B/A and B/A/B regression",
+    "expected": "Each change has 4096-character preview, Show all and no whole-value layout",
+    "pass": true,
+    "actual": {
+      "fullChars": 2322721,
+      "movements": [
+        {
+          "selected": "seed",
+          "wallMs": 40.121900000000096,
+          "preChars": 4097,
+          "maxPreChars": 4097,
+          "longTasks": [],
+          "width": {
+            "window": 390,
+            "document": 390
+          },
+          "metrics": {
+            "ScriptDuration": 3.895999999999997,
+            "LayoutDuration": 2.838000000000007,
+            "TaskDuration": 20.519999999999982
+          }
+        },
+        {
+          "selected": "replace",
+          "wallMs": 28.836200000001554,
+          "preChars": 4097,
+          "maxPreChars": 4097,
+          "longTasks": [],
+          "width": {
+            "window": 390,
+            "document": 390
+          },
+          "metrics": {
+            "ScriptDuration": 2.495000000000004,
+            "LayoutDuration": 0.8989999999999831,
+            "TaskDuration": 10.06600000000002
+          }
+        },
+        {
+          "selected": "replace",
+          "wallMs": 35.82810000000063,
+          "preChars": 4097,
+          "maxPreChars": 4097,
+          "longTasks": [],
+          "width": {
+            "window": 390,
+            "document": 390
+          },
+          "metrics": {
+            "ScriptDuration": 2.6940000000000017,
+            "LayoutDuration": 1.9700000000000273,
+            "TaskDuration": 11.163000000000034
+          }
+        },
+        {
+          "selected": "seed",
+          "wallMs": 36.005300000000716,
+          "preChars": 4097,
+          "maxPreChars": 4097,
+          "longTasks": [],
+          "width": {
+            "window": 390,
+            "document": 390
+          },
+          "metrics": {
+            "ScriptDuration": 2.625000000000002,
+            "LayoutDuration": 2.2119999999998807,
+            "TaskDuration": 11.568000000000023
+          }
+        }
+      ],
+      "screenshot": "bounded-return-390.png"
+    }
+  },
+  {
+    "id": "390: keyboard event change, large-to-large and large-to-small",
+    "expected": "Keyboard selection keeps focus on the selected timeline button; values collapse",
+    "pass": true,
+    "actual": {
+      "runId": "01M5JS08WVWS3Z64H52P1CP1HN",
+      "large": {
+        "shiftTabs": 12,
+        "focus": {
+          "tag": "BUTTON",
+          "label": null,
+          "role": null,
+          "tabindex": null,
+          "text": "#14node.finishedchange-large → out, 1 change, 0 ms"
+        },
+        "targetFocused": true
+      },
+      "small": {
+        "shiftTabs": 5,
+        "focus": {
+          "tag": "BUTTON",
+          "label": null,
+          "role": null,
+          "tabindex": null,
+          "text": "#22node.finishedchange-small → out, 1 change, 0 ms"
+        },
+        "targetFocused": true
+      },
+      "smallText": "{\n  \"small\": true\n}"
+    }
+  },
+  {
+    "id": "390: live replacement focus inside expanded component",
+    "expected": "Large-to-large focuses new Show all; large-to-small holds pre at -1; Tab leaves no tabindex",
+    "pass": false,
+    "error": "large-to-small focus lost: {\"tag\":\"BODY\",\"label\":null,\"role\":null,\"tabindex\":null}"
+  },
+  {
+    "id": "390: live replacement leaves outside keyboard alone",
+    "expected": "Outside Full thread JSON toggle retains focus for large/large and large/small updates",
+    "pass": true,
+    "actual": {
+      "runId": "01M5JS0ANQ421C9ZEF1PYNK2ED",
+      "large": {
+        "tag": "BUTTON",
+        "label": null,
+        "role": null,
+        "tabindex": null,
+        "text": "Full thread JSON"
+      },
+      "small": {
+        "tag": "BUTTON",
+        "label": null,
+        "role": null,
+        "tabindex": null,
+        "text": "Full thread JSON"
+      },
+      "tabindex": null
+    }
+  },
+  {
+    "id": "390: unchanged earlier expanded value survives live re-render",
+    "expected": "Selected seed, full text and region focus remain unchanged while events append",
+    "pass": true,
+    "actual": {
+      "runId": "01M5JS0BE05W2E6EDFZ2E43HR5",
+      "selected": "#6\nnode.finished\nseed → out, 1 change, 0 ms",
+      "chars": 20018,
+      "focus": {
+        "tag": "PRE",
+        "label": "Variables",
+        "role": "region",
+        "tabindex": "0"
+      },
+      "newLastSeq": 16
+    }
+  },
+  {
+    "id": "390: reload/session reset starts bounded",
+    "expected": "A fresh component starts collapsed and reconstructs the same stored Variables",
+    "pass": true,
+    "actual": {
+      "chars": 4097,
+      "focus": {
+        "tag": "BODY",
+        "label": null,
+        "role": null,
+        "tabindex": null
+      }
+    }
+  }
+]

@@ -1,0 +1,509 @@
+$ vitest run --coverage
+
+ RUN  v5.0.3 <USER>/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-259/apps/web
+      Coverage enabled with v8
+
+ ? src/editor/NodeEditorDialog.test.tsx (30 tests | 2 failed) 177178ms
+   ? NodeEditorDialog evaluator-specific decisions (12)
+     � authors and saves a new classifier decision from the default editor fields 20106ms
+   ? NodeEditorDialog disclosures across undo and redo (11)
+     � keeps Advanced open through an undo and a redo of a basic picker, with focus restored 21069ms
+ ? src/settings/sections/ClassifierModelsSection.test.tsx (31 tests | 1 failed) 191898ms
+   ? ClassifierModelsSection (31)
+     � adds a custom classifier that starts disabled, after the contract checks pass 20359ms
+ ? src/editor/routing-review.test.ts (23 tests | 1 failed) 239937ms
+   ? routing review regressions (23)
+     � seeded sparse graphs preserve geometry and keep detours below twelve bends 94935ms
+ ? src/editor/DecisionAuthoring.test.tsx (23 tests | 3 failed) 304251ms
+   ? decision authoring checkpoint (13)
+     � restores set-aside device ownership across reload with unfinished ID "review" 20116ms
+     � invalidates a connection-removal review when connections change, and keeps compatible held context on kind change 21482ms
+     � keeps row ownership through invalid ids, reorders and labels, and reviews removal before one undoable edit 20419ms
+ ? src/editor/EditorPage.test.tsx (37 tests | 5 failed) 338251ms
+   ? EditorPage (37)
+     � describes valid pending JSON accurately and refuses Publish until applied or cancelled 6625ms
+     � blocks publishing on JSON that does not parse, and discards it from the badges 20217ms
+     � opens a node at an issue�s field from its badge, by pointer or keyboard 21577ms
+     � edits loop settings, variables, node ids, and edges 20518ms
+     � applies an id typed in the dialog when it closes, and stops once for an id that cannot apply 10997ms
+ ? src/editor/TriggerEditor.test.tsx (13 tests | 2 failed) 136137ms
+   ? trigger authoring (4)
+     � previews, cancels and applies issues-poll as one undo step including graph and held input 21474ms
+   � edits authentication, body and extraction by keyboard with one-step undo and field validation 20075ms
+System.Management.Automation.RemoteException
+?????? Failed Tests 14 ???????
+System.Management.Automation.RemoteException
+ FAIL  src/editor/DecisionAuthoring.test.tsx > decision authoring checkpoint > restores set-aside device ownership across reload with unfinished ID "review"
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ? src/editor/DecisionAuthoring.test.tsx:370:5
+    368|     { copy: 'set-aside', unfinished: '' },
+    369|     { copy: 'set-aside', unfinished: 'review' },
+    370|   ])(
+       |     ^
+    371|     'restores $copy device ownership across reload with unfinished ID �
+    372|     async ({ copy, unfinished }) => {
+System.Management.Automation.RemoteException
+???????????????????????[1/14]?
+System.Management.Automation.RemoteException
+ FAIL  src/editor/DecisionAuthoring.test.tsx > decision authoring checkpoint > invalidates a connection-removal review when connections change, and keeps compatible held context on kind change
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ? src/editor/DecisionAuthoring.test.tsx:426:3
+    424|   );
+    425|
+    426|   it('invalidates a connection-removal review when connections change,�
+       |   ^
+    427|     const user = userEvent.setup();
+    428|     const context = { messages: 'all', includeLastOutput: false };
+System.Management.Automation.RemoteException
+???????????????????????[2/14]?
+System.Management.Automation.RemoteException
+ FAIL  src/editor/DecisionAuthoring.test.tsx > decision authoring checkpoint > keeps row ownership through invalid ids, reorders and labels, and reviews removal before one undoable edit
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ? src/editor/DecisionAuthoring.test.tsx:532:3
+    530|   });
+    531|
+    532|   it('keeps row ownership through invalid ids, reorders and labels, an�
+       |   ^
+    533|     const user = userEvent.setup();
+    534|     const { dialog } = await setup();
+System.Management.Automation.RemoteException
+???????????????????????[3/14]?
+System.Management.Automation.RemoteException
+ FAIL  src/editor/EditorPage.test.tsx > EditorPage > describes valid pending JSON accurately and refuses Publish until applied or cancelled
+TestingLibraryElementError: Unable to find an element with the text: Ready to publish. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+System.Management.Automation.RemoteException
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex min-h-screen flex-col bg-surface-app text-default"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"hairline-accent relative z-20 flex h-14 shrink-0 items-center gap-8 bg-surface-inverse px-6 text-inverse max-sm:gap-2 max-sm:px-4"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"inline-flex items-center gap-2.5 font-display text-lg font-semibold tracking-[-0.015em] text-inverse"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"size-[30px] shrink-0"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mviewBox[39m=[32m"0 0 32 32"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M10.4 11.1 .3 3 6 17.4Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M21.6 11.1 31.7 3 26 17.4Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-shade"[39m
+              [33md[39m=[32m"M8.7 11.9 2.6 6.2l3.5 9.2Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-shade"[39m
+              [33md[39m=[32m"M23.3 11.9 29.4 6.2l-3.5 9.2Z"[39m
+            [36m/>[39m
+            [36m<rect[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33mheight[39m=[32m"17.4"[39m
+              [33mrx[39m=[32m"6.2"[39m
+              [33mwidth[39m=[32m"22"[39m
+              [33mx[39m=[32m"5"[39m
+              [33my[39m=[32m"8.8"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-port stroke-mascot-ink stroke-[0.9]"[39m
+              [33mcx[39m=[32m"5"[39m
+              [33mcy[39m=[32m"20.2"[39m
+              [33mr[39m=[32m"2.2"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-port stroke-mascot-ink stroke-[0.9]"[39m
+              [33mcx[39m=[32m"27"[39m
+              [33mcy[39m=[32m"20.2"[39m
+              [33mr[39m=[32m"2.2"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-none stroke-mascot-ink stroke-[2.1] [stroke-linecap:round] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M9.1 12.3 14.5 15M22.9 12.3 17.5 15"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-ink"[39m
+              [33md[39m=[32m"M9.8 17.4q2.5-1.9 5-.1-2.5 1.5-5 .1Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-ink"[39m
+              [33md[39m=[32m"M22.2 17.4q-2.5-1.9-5-.1 2.5 1.5 5 .1Z"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-glint"[39m
+              [33mcx[39m=[32m"13.3"[39m
+              [33mcy[39m=[32m"17.2"[39m
+              [33mr[39m=[32m".7"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-glint"[39m
+              [33mcx[39m=[32m"18.7"[39m
+              [33mcy[39m=[32m"17.2"[39m
+              [33mr[39m=[32m".7"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-none stroke-mascot-ink stroke-[1.5] [stroke-linecap:round] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M11.4 21.1q3.8 1.7 7.3.5 1.6-.6 2.6-2.1"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-tooth stroke-mascot-ink stroke-[0.45] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M16.6 21.9l1.9-.5-.6 2.3Z"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<span>[39m
+            [0mGraph[0m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-accent"[39m
+            [36m>[39m
+              [0mGoblin[0m
+            [36m</span>[39m
+          [36m</span>[39m
+        [36m</span>[39m
+        [36m<button[39m
+          [33maria-controls[39m=[32m"_r_0_"[39m
+          [33maria-expanded[39m=[32m"false"[39m
+          [33mclass[39m=[32m"ml-auto inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border border-inverse px-3 pointer-coarse:h-11 font-medium text-inverse focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus sm:hidden"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"size-4 shrink-0"[39m
+            [33mdata-icon[39m=[32m"menu"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M4 7h16M4 12h16M4 17h16"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0mMenu[0m
+        [36m</button>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"Main"[39m
+          [33mclass[39m=[32m"flex gap-1 sm:static sm:flex sm:flex-row sm:items-stretch sm:self-stretch max-sm:absolute max-sm:inset-x-0 max-sm:top-14 max-sm:z-10 max-sm:flex-col max-sm:border-t max-sm:border-inverse max-sm:bg-surface-inverse max-sm:px-3 max-sm:pt-2 max-sm:pb-4 max-sm:shadow-3 max-sm:hidden"[39m
+          [33mid[39m=[32m"_r_0_"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33maria-current[39m=[32m"page"[39m
+            [33mclass[39m=[32m"group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised active"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/loops"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"relative after:absolute after:inset-x-0 after:-bottom-[5px] after:h-[3px] after:rounded-full after:transition-colors group-aria-[current=page]:after:bg-accent group...
+System.Management.Automation.RemoteException
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex min-h-screen flex-col bg-surface-app text-default"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"hairline-accent relative z-20 flex h-14 shrink-0 items-center gap-8 bg-surface-inverse px-6 text-inverse max-sm:gap-2 max-sm:px-4"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"inline-flex items-center gap-2.5 font-display text-lg font-semibold tracking-[-0.015em] text-inverse"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"size-[30px] shrink-0"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mviewBox[39m=[32m"0 0 32 32"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M10.4 11.1 .3 3 6 17.4Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M21.6 11.1 31.7 3 26 17.4Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-shade"[39m
+              [33md[39m=[32m"M8.7 11.9 2.6 6.2l3.5 9.2Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-shade"[39m
+              [33md[39m=[32m"M23.3 11.9 29.4 6.2l-3.5 9.2Z"[39m
+            [36m/>[39m
+            [36m<rect[39m
+              [33mclass[39m=[32m"fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"[39m
+              [33mheight[39m=[32m"17.4"[39m
+              [33mrx[39m=[32m"6.2"[39m
+              [33mwidth[39m=[32m"22"[39m
+              [33mx[39m=[32m"5"[39m
+              [33my[39m=[32m"8.8"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-port stroke-mascot-ink stroke-[0.9]"[39m
+              [33mcx[39m=[32m"5"[39m
+              [33mcy[39m=[32m"20.2"[39m
+              [33mr[39m=[32m"2.2"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-port stroke-mascot-ink stroke-[0.9]"[39m
+              [33mcx[39m=[32m"27"[39m
+              [33mcy[39m=[32m"20.2"[39m
+              [33mr[39m=[32m"2.2"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-none stroke-mascot-ink stroke-[2.1] [stroke-linecap:round] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M9.1 12.3 14.5 15M22.9 12.3 17.5 15"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-ink"[39m
+              [33md[39m=[32m"M9.8 17.4q2.5-1.9 5-.1-2.5 1.5-5 .1Z"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-ink"[39m
+              [33md[39m=[32m"M22.2 17.4q-2.5-1.9-5-.1 2.5 1.5 5 .1Z"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-glint"[39m
+              [33mcx[39m=[32m"13.3"[39m
+              [33mcy[39m=[32m"17.2"[39m
+              [33mr[39m=[32m".7"[39m
+            [36m/>[39m
+            [36m<circle[39m
+              [33mclass[39m=[32m"fill-mascot-glint"[39m
+              [33mcx[39m=[32m"18.7"[39m
+              [33mcy[39m=[32m"17.2"[39m
+              [33mr[39m=[32m".7"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-none stroke-mascot-ink stroke-[1.5] [stroke-linecap:round] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M11.4 21.1q3.8 1.7 7.3.5 1.6-.6 2.6-2.1"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33mclass[39m=[32m"fill-mascot-tooth stroke-mascot-ink stroke-[0.45] [stroke-linejoin:round]"[39m
+              [33md[39m=[32m"M16.6 21.9l1.9-.5-.6 2.3Z"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [36m<span>[39m
+            [0mGraph[0m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-accent"[39m
+            [36m>[39m
+              [0mGoblin[0m
+            [36m</span>[39m
+          [36m</span>[39m
+        [36m</span>[39m
+        [36m<button[39m
+          [33maria-controls[39m=[32m"_r_0_"[39m
+          [33maria-expanded[39m=[32m"false"[39m
+          [33mclass[39m=[32m"ml-auto inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border border-inverse px-3 pointer-coarse:h-11 font-medium text-inverse focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus sm:hidden"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"size-4 shrink-0"[39m
+            [33mdata-icon[39m=[32m"menu"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"2"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M4 7h16M4 12h16M4 17h16"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+          [0mMenu[0m
+        [36m</button>[39m
+        [36m<nav[39m
+          [33maria-label[39m=[32m"Main"[39m
+          [33mclass[39m=[32m"flex gap-1 sm:static sm:flex sm:flex-row sm:items-stretch sm:self-stretch max-sm:absolute max-sm:inset-x-0 max-sm:top-14 max-sm:z-10 max-sm:flex-col max-sm:border-t max-sm:border-inverse max-sm:bg-surface-inverse max-sm:px-3 max-sm:pt-2 max-sm:pb-4 max-sm:shadow-3 max-sm:hidden"[39m
+          [33mid[39m=[32m"_r_0_"[39m
+        [36m>[39m
+          [36m<a[39m
+            [33maria-current[39m=[32m"page"[39m
+            [33mclass[39m=[32m"group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised active"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mhref[39m=[32m"/loops"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"relative after:absolute after:inset-x-0 after:-bottom-[5px] after:h-[3px] after:rounded-full after:transition-colors group-aria-[current=page]:after:bg-accent group...
+ ? waitForWrapper ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ? ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ? src/editor/EditorPage.test.tsx:54:18
+     52|     const loop = api.addLoop(minimalLoop());
+     53|     renderApp(`/loops/${loop.id}/edit`, api);
+     54|     await screen.findByText('Ready to publish');
+       |                  ^
+     55|     act(() =>
+     56|       useEditorStore.getState().setFieldError('node:start', 'inputSche�
+System.Management.Automation.RemoteException
+???????????????????????[4/14]?
+System.Management.Automation.RemoteException
+ FAIL  src/editor/EditorPage.test.tsx > EditorPage > blocks publishing on JSON that does not parse, and discards it from the badges
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ? src/editor/EditorPage.test.tsx:686:3
+    684|   });
+    685|
+    686|   it('blocks publishing on JSON that does not parse, and discards it f�
+       |   ^
+    687|     const user = userEvent.setup();
+    688|     const api = new FakeApi();
+System.Management.Automation.RemoteException
+???????????????????????[5/14]?
+System.Management.Automation.RemoteException
+ FAIL  src/editor/EditorPage.test.tsx > EditorPage > opens a node at an issue�s field from its badge, by pointer or keyboard
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ? src/editor/EditorPage.test.tsx:768:3
+    766|   });
+    767|
+    768|   it('opens a node at an issue�s field from its badge, by pointer or k�
+       |   ^
+    769|     const user = userEvent.setup();
+    770|     const api = new FakeApi();
+System.Management.Automation.RemoteException
+???????????????????????[6/14]?
+System.Management.Automation.RemoteException
+ FAIL  src/editor/EditorPage.test.tsx > EditorPage > edits loop settings, variables, node ids, and edges
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ? src/editor/EditorPage.test.tsx:1151:3
+    1149|   });
+    1150|
+    1151|   it('edits loop settings, variables, node ids, and edges', async () =�
+       |   ^
+    1152|     const user = userEvent.setup();
+    1153|     const api = new FakeApi();
+System.Management.Automation.RemoteException
+???????????????????????[7/14]?
+System.Management.Automation.RemoteException
+ FAIL  src/editor/EditorPage.test.tsx > EditorPage > applies an id typed in the dialog when it closes, and stops once for an id that cannot apply
+AssertionError: expected false to be true // Object.is equality
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+- true
++ false
+System.Management.Automation.RemoteException
+ ? src/editor/EditorPage.test.tsx:1222:88
+    1220|     await user.keyboard('{Escape}');
+    1221|     expect(screen.queryByRole('dialog')).toBeNull();
+    1222|     expect(useEditorStore.getState().definition!.nodes.some((n) => n.i�
+       |                                                                                        ^
+    1223|     expect(useEditorStore.getState().selectedNodeId).toBe('verify');
+    1224|
+System.Management.Automation.RemoteException
+???????????????????????[8/14]?
+System.Management.Automation.RemoteException
+ FAIL  src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog evaluator-specific decisions > authors and saves a new classifier decision from the default editor fields
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ? src/editor/NodeEditorDialog.test.tsx:112:56
+    110|     },
+    111|   );
+    112|   it.each(['expression', 'llm', 'classifier'] as const)(
+       |                                                        ^
+    113|     'authors and saves a new %s decision from the default editor field�
+    114|     async (kind) => {
+System.Management.Automation.RemoteException
+???????????????????????[9/14]?
+System.Management.Automation.RemoteException
+ FAIL  src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog disclosures across undo and redo > keeps Advanced open through an undo and a redo of a basic picker, with focus restored
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ? src/editor/NodeEditorDialog.test.tsx:521:3
+    519|   });
+    520|
+    521|   it('keeps Advanced open through an undo and a redo of a basic picker�
+       |   ^
+    522|     const user = userEvent.setup();
+    523|     const dialog = await openDialog(
+System.Management.Automation.RemoteException
+??????????????????????[10/14]?
+System.Management.Automation.RemoteException
+ FAIL  src/editor/routing-review.test.ts > routing review regressions > seeded sparse graphs preserve geometry and keep detours below twelve bends
+Error: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ? src/editor/routing-review.test.ts:662:3
+    660|   });
+    661|
+    662|   it('seeded sparse graphs preserve geometry and keep detours below tw�
+       |   ^
+    663|     let seed = 0x182026;
+    664|     const random = () => (seed = (Math.imul(seed, 1664525) + 101390422�
+System.Management.Automation.RemoteException
+??????????????????????[11/14]?
+System.Management.Automation.RemoteException
+ FAIL  src/editor/TriggerEditor.test.tsx > trigger authoring > previews, cancels and applies issues-poll as one undo step including graph and held input
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ? src/editor/TriggerEditor.test.tsx:174:54
+    172|   });
+    173|
+    174|   it.each(['issues-poll', 'issues-labeled'] as const)(
+       |                                                      ^
+    175|     'previews, cancels and applies %s as one undo step including graph�
+    176|     async (preset) => {
+System.Management.Automation.RemoteException
+??????????????????????[12/14]?
+System.Management.Automation.RemoteException
+ FAIL  src/editor/TriggerEditor.test.tsx > edits authentication, body and extraction by keyboard with one-step undo and field validation
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ? src/editor/TriggerEditor.test.tsx:241:1
+    239| });
+    240|
+    241| it('edits authentication, body and extraction by keyboard with one-ste�
+       | ^
+    242|   const user = userEvent.setup();
+    243|   const dialog = await openTrigger();
+System.Management.Automation.RemoteException
+??????????????????????[13/14]?
+System.Management.Automation.RemoteException
+ FAIL  src/settings/sections/ClassifierModelsSection.test.tsx > ClassifierModelsSection > adds a custom classifier that starts disabled, after the contract checks pass
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ? src/settings/sections/ClassifierModelsSection.test.tsx:142:3
+    140|   });
+    141|
+    142|   it('adds a custom classifier that starts disabled, after the contrac�
+       |   ^
+    143|     const api = seeded();
+    144|     renderApp('/settings', api);
+System.Management.Automation.RemoteException
+??????????????????????[14/14]?
+System.Management.Automation.RemoteException
+
+ Test Files  6 failed | 113 passed (119)
+      Tests  14 failed | 1484 passed (1498)
+   Start at  14:42:22
+   Duration  566.28s (tests 49%, environment 27%, setup 10%, import 9%, transform 5%, worker 1%)
+
+Environment  jsdom was created 119 times � 1572.72s total, 27% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+System.Management.Automation.RemoteException
+  � "pnpm recursive run" failed in C:
+  � <USER>\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-e1-
+  � 259\apps\web
+System.Management.Automation.RemoteException

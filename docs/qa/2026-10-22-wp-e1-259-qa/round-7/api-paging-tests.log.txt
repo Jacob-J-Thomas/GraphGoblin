@@ -1,0 +1,42 @@
+Command: pnpm.cmd --filter @graphgoblin/api exec vitest run src/routes/event-paging.test.ts src/routes/run-paging.test.ts src/routes/run-event-paging.test.ts
+Exit: 1
+Elapsed ms: 57072
+
+
+ RUN  v5.0.3 <USER>/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-259/apps/api
+
+ ❯ src/routes/run-event-paging.test.ts (5 tests | 1 failed) 32530ms
+   ❯ run-event page boundaries over file-backed SQLite (5)
+     × returns the unchanged requested page when only its lookahead payload is {} 21265ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/routes/run-event-paging.test.ts > run-event page boundaries over file-backed SQLite > returns the unchanged requested page when only its lookahead payload is {}
+Error: Hook timed out in 20000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ src/routes/run-event-paging.test.ts:16:3
+     14|   let headers: Record<string, string>;
+     15|
+     16|   beforeEach(async () => {
+       |   ^
+     17|     dataDir = await mkdtemp(join(tmpdir(), 'gg-wp-g2-lookahead-'));
+     18|     t = await createTestApp({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 37 passed (38)
+   Start at  22:41:40
+   Duration  55.92s (tests 40%, transform 35%, import 25%)
+
+  Transform  transforming modules took 40.50s · 35% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ <USER>\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-e1-
+  │ 259\apps\api
+

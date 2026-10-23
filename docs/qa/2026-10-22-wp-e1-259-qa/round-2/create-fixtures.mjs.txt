@@ -1,0 +1,32 @@
+// Public API fixtures only. Requires the disposable server from server.mjs.txt.
+import { writeFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+const dir=resolve('docs/qa/2026-10-22-wp-e1-259-qa/round-2');
+const api='http://127.0.0.1:5720', ctrl='http://127.0.0.1:5721';
+async function request(path,body,base=api) {const r=await fetch(base+path,{method:body===undefined?'GET':'POST',headers:{'content-type':'application/json'},body:body===undefined?undefined:JSON.stringify(body)});const v=await r.json();if(!r.ok)throw new Error(`${r.status} ${path} ${JSON.stringify(v).slice(0,800)}`);return v;}
+function loop(name,nodes,returns) {
+ const all=[{id:'start',kind:'trigger',label:'Start',config:{type:'manual'}},...nodes,{id:'done',kind:'exit',label:'Done',config:returns?{returns}:{}}].map((n,i)=>({...n,ui:{x:i*260,y:80}}));
+ return {schemaVersion:4,name:name+' '+Date.now(),nodes:all,edges:all.slice(0,-1).flatMap((n,i)=>n.kind==='decision'?[{id:`e${i}`,from:{node:n.id,port:'go'},to:{node:all[i+1].id}},{id:`e${i}b`,from:{node:n.id,port:'stop'},to:{node:all[i+1].id}}]:[{id:`e${i}`,from:{node:n.id,port:'out'},to:{node:all[i+1].id}}])};
+}
+const set=(path,value)=>({op:'set',path,value:{kind:'literal',value}});
+async function start(def,input={}) {const {loop}=await request('/loops',{definition:def});await request(`/loops/${loop.id}/publish`,{});const {run}=await request(`/loops/${loop.id}/runs`,{input});return run.id;}
+async function wait(id,status) {for(let i=0;i<200;i++){const v=await request('/runs/'+id);if(v.status===status)return v;if(v.status==='failed')throw new Error('run failed '+JSON.stringify(v.failure));await new Promise(r=>setTimeout(r,100));}throw new Error('wait '+id);}
+const meta={node:process.version,environment:await request('/info',{},ctrl),runs:{}};
+// Deliberately include JSON controls, escaping, and lone/pair surrogates at 1023/1024.
+const tricky={escapes:'quote" backslash\\ newline\n tab\t nul\u0000 cr\r end',pair:'a'.repeat(1023)+'\ud83d\ude80'+'b'.repeat(9000),loneHigh:'a'.repeat(1023)+'\ud800x'+'c'.repeat(9000),loneLow:'a'.repeat(1023)+'\udc00'+'d'.repeat(9000),holes:[,null,,0],['K'.repeat(12000)+'\ud800']:null,unicode:'中文 é 🚀 \u2028\u2029'};
+// 2 MiB nested arrays of objects, depth 12, 512 leaf records (slightly over 2 MiB serialized).
+let nested=Array.from({length:512},(_,i)=>({index:i,data:'N'.repeat(4096),nullValue:null}));for(let i=0;i<12;i++)nested=[{level:i,children:nested}];
+await request('/script',{turns:[{finalText:'V'.repeat(20000),items:[{id:'summary',type:'message',summary:'P'.repeat(16384)},{id:'raw',type:'message',summary:'V'.repeat(20000)}]}]},ctrl);
+meta.runs.inference=await start(loop('QA inference long result',[{id:'work',kind:'inference',label:'Work',config:{prompt:{template:'Return a long line.'}}}],'outputs.work.value'));
+await wait(meta.runs.inference,'succeeded');
+const nodes=[{id:'seed',kind:'mutate',label:'Seed',config:{operations:[set('/vars/large',nested),set('/vars/tricky',tricky),set('/vars/change','A'.repeat(20000)),{op:'append-message',role:'note',content:'M'.repeat(50000)}]}},{id:'replace',kind:'mutate',label:'Replace',config:{operations:[set('/vars/change','B'.repeat(20000))]}},{id:'ask',kind:'wait',label:'Ask',config:{mode:'input',prompt:'W'.repeat(10000),inputSchema:{type:'object',properties:{answer:{type:'string'}},required:['answer']}}}];
+meta.runs.mutate=await start(loop('QA nested and message',nodes,'vars.change'));await wait(meta.runs.mutate,'waiting');
+meta.runs.decision=await start(loop('QA long reasoning',[{id:'choose',kind:'decision',label:'Choose',config:{kind:'llm',harness:'codex',model:{mode:'inherit'},effort:{mode:'inherit'},instructions:'Choose go.',routes:[{id:'go',label:'Go'},{id:'stop',label:'Stop'}]}}]));await wait(meta.runs.decision,'succeeded');
+meta.runs.similarA=await start(loop('QA similar A',[{id:'seed',kind:'mutate',label:'Seed',config:{operations:[set('/vars/marker','RUN_A_'+'A'.repeat(8000))]}}]));await wait(meta.runs.similarA,'succeeded');
+meta.runs.similarB=await start(loop('QA similar B',[{id:'seed',kind:'mutate',label:'Seed',config:{operations:[set('/vars/marker','RUN_B_'+'B'.repeat(8000))]}}]));await wait(meta.runs.similarB,'succeeded');
+const event=await request('/events',{type:'qa.large',payload:{marker:'EVENT_PAYLOAD_QA',nested:[{data:'E'.repeat(1024*1024)}]}});meta.event=event;
+meta.nestedBytes=Buffer.byteLength(JSON.stringify(nested));meta.trickyBytes=Buffer.byteLength(JSON.stringify(tricky));
+await writeFile(resolve(dir,'fixtures.json'),JSON.stringify(meta,null,2));
+for(const [name,id] of Object.entries(meta.runs)) {for(const suffix of ['','/thread','/events']) {const v=await request('/runs/'+id+suffix);await writeFile(resolve(dir,`${name}${suffix.replaceAll('/','-')||'-run'}-before.json`),JSON.stringify(v,null,2));}}
+await writeFile(resolve(dir,'events-before.json'),JSON.stringify(await request('/events'),null,2));
+console.log(JSON.stringify({runs:meta.runs,nestedBytes:meta.nestedBytes,trickyBytes:meta.trickyBytes}));

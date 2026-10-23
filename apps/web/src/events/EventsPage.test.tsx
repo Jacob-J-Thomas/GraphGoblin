@@ -298,3 +298,32 @@ it('shows safe pinned webhook configuration and explains unavailable history', a
     within(unavailable).getByText('Configuration unavailable for this delivery.'),
   ).toBeVisible();
 });
+
+it('lays out a large payload within the cell bound and offers the exact value (#259)', async () => {
+  const user = userEvent.setup();
+  const api = new FakeApi();
+  const payload = { items: Array.from({ length: 300 }, (_, i) => ({ i, text: 'p'.repeat(64) })) };
+  api.inbound = [
+    {
+      id: 'big',
+      ownerId: 'local',
+      type: 'issues',
+      payload,
+      receivedAt: TS,
+      source: 'api',
+      runIds: [],
+    },
+  ];
+  renderApp('/events', api);
+  const cell = await screen.findByTestId('payload-big');
+  expect(cell.textContent?.length).toBe(1_025);
+  expect(
+    screen.getByText('Showing the first 1,024 characters of a larger value.'),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole('button', { name: 'Download Payload of event big as JSON' }),
+  ).toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Show all of Payload of event big' }));
+  const region = screen.getByRole('region', { name: 'Payload of event big' });
+  expect(JSON.parse(region.textContent ?? '')).toEqual(payload);
+});

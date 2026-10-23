@@ -1,0 +1,22 @@
+// Public exported utility, imported through tsx. No monkey-patching or private state access.
+import { pathToFileURL } from 'node:url';
+import { resolve } from 'node:path';
+import { writeFile, readFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
+const parent=pathToFileURL(resolve('apps/web/package.json')).href;
+const req=createRequire(parent),ts=req('typescript');
+const source=await readFile(resolve('apps/web/src/lib/utils.ts'),'utf8');
+const emitted=ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText;
+const js=emitted.replace(/from (['"])(.*?)\1/g,(_,q,n)=>'from '+JSON.stringify(import.meta.resolve(n,parent)));
+const {prettyJsonPrefix}=await import('data:text/javascript;base64,'+Buffer.from(js).toString('base64'));
+const cases=[];
+const add=(name,v)=>cases.push({name,v});
+add('null',null);add('holes',[,null,,0]);add('controls','\u0000\u0001\b\t\n\f\r"\\'.repeat(800));add('Unicode','中文 é 🚀\u2028\u2029'.repeat(800));
+for(const pos of [1021,1022,1023,1024,1025,2047,4095])for(const ch of ['\ud800','\udc00','\ud83d\ude80','\ud800x\udc00']){
+ const s='a'.repeat(pos)+ch+'b'.repeat(6000);
+ add('string '+pos+' '+JSON.stringify(ch),s);add('key '+pos+' '+JSON.stringify(ch),{[s]:[null,'tail']});add('nested '+pos+' '+JSON.stringify(ch),{a:[{b:s}]});
+}
+add('long key',{['K'.repeat(50000)]:null});
+const limits=[0,1,2,3,5,12,1023,1024,1025,2048,4095,4096,4097,8192,100000];
+const out=[];for(const {name,v}of cases){const full=JSON.stringify(v,null,2);for(const limit of limits){const t=performance.now();const got=prettyJsonPrefix(v,limit);out.push({name,limit,pass:got.text===full.slice(0,limit)&&got.truncated===(full.length>limit),ms:performance.now()-t,expectedLength:Math.min(limit,full.length),actualLength:got.text.length});}}
+await writeFile('docs/qa/2026-10-22-wp-e1-259-qa/round-2/prefix-results.json',JSON.stringify({cases:cases.length,checks:out.length,failed:out.filter(x=>!x.pass).length,results:out},null,2));console.log(JSON.stringify({cases:cases.length,checks:out.length,failed:out.filter(x=>!x.pass).length}));
