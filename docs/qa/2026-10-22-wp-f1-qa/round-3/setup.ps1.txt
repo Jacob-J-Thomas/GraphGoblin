@@ -1,0 +1,17 @@
+param([Parameter(Mandatory=$true)][string]$QaRoot)
+$ErrorActionPreference='Stop'
+$env:PATH="$env:APPDATA\nvm\v22.14.0;$env:PATH"
+if ((node --version) -notmatch '^v22\.') { throw 'Node 22 required' }
+$resolved=[IO.Path]::GetFullPath($QaRoot)
+if ((Split-Path $resolved -Parent) -ne [IO.Path]::GetFullPath($env:TEMP).TrimEnd('\') -or (Split-Path $resolved -Leaf) -notlike 'gg-qa-f1-*') {throw 'Unexpected root'}
+$source=Get-Content docs/qa/2026-10-22-wp-f1-qa/round-3/fixture.cs.txt -Raw
+foreach ($harness in @('claude','codex')) {
+  $dir=Join-Path $resolved $harness
+  New-Item -ItemType Directory -Path $dir -Force | Out-Null
+  Set-Content -Path (Join-Path $dir 'harness.txt') -Value $harness -Encoding Ascii
+  Set-Content -Path (Join-Path $dir 'scenario.txt') -Value 'ready' -Encoding Ascii
+  $exe=Join-Path $dir ($harness+'-r3.exe')
+  if ($harness -eq 'claude') {Add-Type -TypeDefinition $source -OutputAssembly $exe -OutputType ConsoleApplication}
+  else {Copy-Item -LiteralPath (Join-Path (Join-Path $resolved 'claude') 'claude-r3.exe') -Destination $exe}
+}
+'Independent no-turn fixtures compiled.'

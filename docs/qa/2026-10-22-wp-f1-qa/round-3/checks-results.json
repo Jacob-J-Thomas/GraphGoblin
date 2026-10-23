@@ -1,0 +1,200 @@
+[
+  {
+    "name": "adapter-codex-coverage",
+    "command": "pnpm.cmd --filter @graphgoblin/adapter-codex test:coverage --maxWorkers 1 --coverage.reportOnFailure --coverage.reporter=text --coverage.reporter=json-summary -t '^(?!.*(?:probes the actual installed|classifies a real installed signed-out)).*$'",
+    "code": 0,
+    "evidence": "adapter-codex-coverage.log.txt"
+  },
+  {
+    "name": "api-coverage-corrected",
+    "command": "pnpm.cmd --filter @graphgoblin/api test:coverage --maxWorkers 1 --coverage.reportOnFailure --coverage.reporter=text --coverage.reporter=json-summary",
+    "code": 1,
+    "evidence": "api-coverage-corrected.log.txt"
+  },
+  {
+    "name": "api-coverage",
+    "command": "pnpm.cmd --filter @graphgoblin/api test:coverage --maxWorkers 1 --coverage.reportOnFailure --coverage.reporter=text --coverage.reporter=json-summary",
+    "code": 1,
+    "evidence": "api-coverage.log.txt"
+  },
+  {
+    "name": "api-main-alone",
+    "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/main.test.ts --maxWorkers 1",
+    "code": 0,
+    "evidence": "api-main-alone.log.txt"
+  },
+  {
+    "name": "api-main-timeout-alone",
+    "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/main.test.ts --maxWorkers 1",
+    "code": 0,
+    "evidence": "api-main-timeout-alone.log.txt"
+  },
+  {
+    "name": "api-readiness-alone",
+    "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/model-readiness.test.ts src/readiness-evidence.test.ts src/nested-readiness.test.ts --maxWorkers 1",
+    "code": 0,
+    "evidence": "api-readiness-alone.log.txt"
+  },
+  {
+    "name": "api-retired-event-startup-alone",
+    "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/retired-event-startup.test.ts --maxWorkers 1",
+    "code": 0,
+    "evidence": "api-retired-event-startup-alone.log.txt"
+  },
+  {
+    "name": "api-subloop-restart-alone",
+    "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/subloop-restart.test.ts --maxWorkers 1",
+    "code": 0,
+    "evidence": "api-subloop-restart-alone.log.txt"
+  },
+  {
+    "name": "build",
+    "command": "pnpm.cmd build",
+    "code": 0,
+    "evidence": "build.log.txt"
+  },
+  {
+    "name": "deps",
+    "command": "pnpm.cmd check:deps",
+    "code": 0,
+    "evidence": "deps.log.txt"
+  },
+  {
+    "name": "docs",
+    "command": "pnpm.cmd check:docs",
+    "code": 0,
+    "evidence": "docs.log.txt"
+  },
+  {
+    "name": "domain-coverage",
+    "command": "pnpm.cmd --filter @graphgoblin/domain test:coverage --maxWorkers 1 --coverage.reportOnFailure --coverage.reporter=text --coverage.reporter=json-summary -t '^(?!.*(?:probes the actual installed|classifies a real installed signed-out)).*$'",
+    "code": 0,
+    "evidence": "domain-coverage.log.txt"
+  },
+  {
+    "name": "edge-claude-alone",
+    "command": "pnpm.cmd --filter @graphgoblin/web test:e2e claude-harness",
+    "code": 1,
+    "evidence": "edge-claude-alone.log.txt"
+  },
+  {
+    "name": "edge-picker-alone",
+    "command": "pnpm.cmd --filter @graphgoblin/web test:e2e model-picker",
+    "code": 1,
+    "evidence": "edge-picker-alone.log.txt"
+  },
+  {
+    "name": "edge",
+    "command": "pnpm.cmd --filter @graphgoblin/web test:e2e readiness claude-harness model-picker",
+    "code": 1,
+    "evidence": "edge.log.txt"
+  },
+  {
+    "name": "format-final",
+    "command": "pnpm.cmd format:check",
+    "code": 0,
+    "evidence": "format-final.log.txt"
+  },
+  {
+    "name": "format",
+    "command": "pnpm.cmd format:check",
+    "code": 2,
+    "evidence": "format.log.txt"
+  },
+  {
+    "name": "infra-adversarial-alone",
+    "command": "pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/adversarial.test.ts --maxWorkers 1 -t '^(?!.*(?:probes the actual installed|classifies a real installed signed-out)).*$'",
+    "code": 1,
+    "evidence": "infra-adversarial-alone.log.txt"
+  },
+  {
+    "name": "infra-claude-process-alone",
+    "command": "pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/claude/process.test.ts --maxWorkers 1 -t '^(?!.*(?:probes the actual installed|classifies a real installed signed-out)).*$'",
+    "code": 1,
+    "evidence": "infra-claude-process-alone.log.txt"
+  },
+  {
+    "name": "infra-claude-readiness-alone",
+    "command": "pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/claude/readiness.test.ts --maxWorkers 1 -t '^(?!.*(?:probes the actual installed|classifies a real installed signed-out)).*$'",
+    "code": 1,
+    "evidence": "infra-claude-readiness-alone.log.txt"
+  },
+  {
+    "name": "infra-fs-alone",
+    "command": "pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/fs/fs.test.ts --maxWorkers 1 -t '^(?!.*(?:probes the actual installed|classifies a real installed signed-out)).*$'",
+    "code": 0,
+    "evidence": "infra-fs-alone.log.txt"
+  },
+  {
+    "name": "infra-scripts-alone",
+    "command": "pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/process/scripts.test.ts --maxWorkers 1 -t '^(?!.*(?:probes the actual installed|classifies a real installed signed-out)).*$'",
+    "code": 1,
+    "evidence": "infra-scripts-alone.log.txt"
+  },
+  {
+    "name": "infrastructure-coverage",
+    "command": "pnpm.cmd --filter @graphgoblin/infrastructure test:coverage --maxWorkers 1 --coverage.reportOnFailure --coverage.reporter=text --coverage.reporter=json-summary -t '^(?!.*(?:probes the actual installed|classifies a real installed signed-out)).*$'",
+    "code": 1,
+    "evidence": "infrastructure-coverage.log.txt"
+  },
+  {
+    "name": "layers",
+    "command": "pnpm.cmd check:layers",
+    "code": 0,
+    "evidence": "layers.log.txt"
+  },
+  {
+    "name": "licenses",
+    "command": "pnpm.cmd check:licenses",
+    "code": 0,
+    "evidence": "licenses.log.txt"
+  },
+  {
+    "name": "lint",
+    "command": "pnpm.cmd lint --concurrency=2",
+    "code": 0,
+    "evidence": "lint.log.txt"
+  },
+  {
+    "name": "tokens",
+    "command": "pnpm.cmd check:tokens",
+    "code": 0,
+    "evidence": "tokens.log.txt"
+  },
+  {
+    "name": "typecheck",
+    "command": "pnpm.cmd typecheck --concurrency=2",
+    "code": 0,
+    "evidence": "typecheck.log.txt"
+  },
+  {
+    "name": "web-coverage-unfiltered",
+    "command": "pnpm.cmd --filter @graphgoblin/web test:coverage --maxWorkers 4 --coverage.reportOnFailure --coverage.reporter=text --coverage.reporter=json-summary --reporter=default --reporter=json --outputFile='<disposable-json-report>'",
+    "code": 1,
+    "evidence": "web-coverage-unfiltered.log.txt"
+  },
+  {
+    "name": "web-coverage",
+    "command": "pnpm.cmd --filter @graphgoblin/web test:coverage --maxWorkers 1 --coverage.reportOnFailure --coverage.reporter=text --coverage.reporter=json-summary -t '^(?!.*(?:probes the actual installed|classifies a real installed signed-out)).*$'",
+    "code": 0,
+    "evidence": "web-coverage.log.txt"
+  },
+  {
+    "name": "web-DecisionAuthoring-alone",
+    "command": "pnpm.cmd --filter @graphgoblin/web exec vitest run src/editor/DecisionAuthoring.test.tsx --maxWorkers 1",
+    "code": 0,
+    "evidence": "web-DecisionAuthoring-alone.log.txt"
+  },
+  {
+    "name": "web-EditorPage-alone",
+    "command": "pnpm.cmd --filter @graphgoblin/web exec vitest run src/editor/EditorPage.test.tsx --maxWorkers 1",
+    "code": 0,
+    "evidence": "web-EditorPage-alone.log.txt"
+  },
+  {
+    "name": "web-NodeEditorDialog-alone",
+    "command": "pnpm.cmd --filter @graphgoblin/web exec vitest run src/editor/NodeEditorDialog.test.tsx --maxWorkers 1",
+    "code": 0,
+    "evidence": "web-NodeEditorDialog-alone.log.txt"
+  }
+]

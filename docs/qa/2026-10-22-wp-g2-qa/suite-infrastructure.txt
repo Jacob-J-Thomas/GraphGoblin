@@ -1,0 +1,937 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/infrastructure test:coverage --maxWorkers=1 --coverage.reportOnFailure --reporter=verbose
+$ vitest run --coverage --maxWorkers=1 --coverage.reportOnFailure --reporter=verbose
+
+ RUN  v5.0.3 <worktree>/packages/infrastructure
+      Coverage enabled with v8
+
+ ? src/sqlite/storage.test.ts > database > migrates idempotently 1165ms
+ ? src/sqlite/storage.test.ts > SqliteRunRepository > creates, reads, updates, and clears fields 1004ms
+ ? src/sqlite/storage.test.ts > SqliteRunRepository > transitions only from expected statuses 301ms
+ ? src/sqlite/storage.test.ts > SqliteRunRepository > fences a delayed transition by the observed waiting identity 821ms
+ ? src/sqlite/storage.test.ts > SqliteRunRepository > rolls back a failed ordinary transition and allows only one concurrent resume 330ms
+ ? src/sqlite/storage.test.ts > SqliteRunRepository > lists terminal runs until their finalization is recorded 99ms
+ ? src/sqlite/storage.test.ts > SqliteRunRepository > migration 0002 marks runs that were already terminal as finalized 1240ms
+ ? src/sqlite/storage.test.ts > SqliteRunRepository > claims a cancel request once, and only on an expected status 125ms
+ ? src/sqlite/storage.test.ts > SqliteRunRepository > lists by status, children, and filters 75ms
+ ? src/sqlite/storage.test.ts > SqliteEventStore > assigns increasing sequence numbers, updates the run, and notifies subscribers 886ms
+ ? src/sqlite/storage.test.ts > SqliteEventStore > appends conditionally on the last seq, atomically 73ms
+ ? src/sqlite/storage.test.ts > SqliteLoopRepository draft and publish interleaving > never modifies a version that was published after a draft save read the loop 610ms
+ ? src/sqlite/storage.test.ts > SqliteLoopRepository draft and publish interleaving > publishes a draft once even when two publishes read the same draft 1265ms
+ ? src/sqlite/storage.test.ts > SqliteLoopRepository > preserves an empty description distinctly from absence on create, list and draft save 777ms
+ ? src/sqlite/storage.test.ts > SqliteLoopRepository > creates loops with drafts, publishes, and resolves versions 858ms
+ ? src/sqlite/storage.test.ts > SqliteSessionRepository > upserts and queries sessions 85ms
+ ? src/sqlite/storage.test.ts > SqliteTimerStore > stores, lists, and removes timers 260ms
+ ? src/sqlite/storage.test.ts > conditional timer deferral > requeues only the fired SQLite row and preserves a concurrent re-arm 103ms
+ ? src/sqlite/storage.test.ts > secrets > encrypts and decrypts, detecting tampering and bad keys 275ms
+ ? src/sqlite/storage.test.ts > secrets > stores per owner and never returns plaintext in listings 380ms
+ ? src/sqlite/storage.test.ts > settings, api keys, model catalog > settings round-trip per owner 398ms
+ ? src/sqlite/storage.test.ts > settings, api keys, model catalog > api keys authenticate until revoked 71ms
+ ? src/sqlite/storage.test.ts > settings, api keys, model catalog > seeds the model catalog once and answers allow-list questions 89ms
+ ? src/sqlite/storage.test.ts > migration 0003 model catalog max effort > appends max to an unedited seeded row without changing its other columns 1198ms
+ ? src/sqlite/storage.test.ts > migration 0003 model catalog max effort > upgrades every model id seeded in 1.0.0 822ms
+ ? src/sqlite/storage.test.ts > migration 0003 model catalog max effort > preserves an edited display name while adding max 1566ms
+ ? src/sqlite/storage.test.ts > migration 0003 model catalog max effort > preserves an edited default effort while adding max 1129ms
+ ? src/sqlite/storage.test.ts > migration 0003 model catalog max effort > preserves a disabled row while adding max 671ms
+ ? src/sqlite/storage.test.ts > migration 0003 model catalog max effort > compares efforts as a set and preserves their stored order 2132ms
+ ? src/sqlite/storage.test.ts > migration 0003 model catalog max effort > ignores duplicate old values when comparing efforts as a set 1606ms
+ ? src/sqlite/storage.test.ts > migration 0003 model catalog max effort > leaves a strict subset unchanged byte for byte 734ms
+ ? src/sqlite/storage.test.ts > migration 0003 model catalog max effort > leaves a strict superset with another extra value unchanged byte for byte 2443ms
+ ? src/sqlite/storage.test.ts > migration 0003 model catalog max effort > leaves a strict superset already containing max unchanged byte for byte 626ms
+ ? src/sqlite/storage.test.ts > migration 0003 model catalog max effort > leaves a shorter list already containing max unchanged byte for byte 554ms
+ ? src/sqlite/storage.test.ts > migration 0003 model catalog max effort > leaves a user-added model with the old efforts unchanged 1497ms
+ ? src/sqlite/storage.test.ts > migration 0003 model catalog max effort > leaves a non-Codex harness with the old efforts unchanged 851ms
+ ? src/sqlite/storage.test.ts > migration 0003 model catalog max effort > leaves an array with an extra null unchanged 925ms
+ ? src/sqlite/storage.test.ts > migration 0003 model catalog max effort > leaves a JSON object with the old values unchanged 762ms
+ ? src/sqlite/storage.test.ts > migration 0003 model catalog max effort > leaves malformed JSON unchanged without aborting the upgrade 728ms
+ ? src/sqlite/storage.test.ts > migration 0003 model catalog max effort > is idempotent when the shipped SQL statement is executed again 1528ms
+ ? src/sqlite/storage.test.ts > migration 0003 model catalog max effort > does not reapply the migration but seeding restores current harness efforts 1153ms
+ ? src/sqlite/storage.test.ts > with the engine > runs a loop end to end on SQLite 660ms
+ ? src/claude/protocol.test.ts > strict Claude auth/capability parsing > retains only the accepted auth category 24ms
+ ? src/claude/protocol.test.ts > strict Claude auth/capability parsing > requires the minimum installed version and every policy flag 70ms
+ ? src/claude/protocol.test.ts > bounded JSONL parser > handles byte-split UTF8, CRLF, empty lines and a valid trailing partial line 3ms
+ ? src/claude/protocol.test.ts > bounded JSONL parser > rejects malformed JSON, nonobjects, excess line bytes, and bad final partial data safely 1ms
+ ? src/claude/protocol.test.ts > Claude stream contract and honest execution evidence > accepts verified init before session evidence and maps only safe content/usage fields 8ms
+ ? src/claude/protocol.test.ts > Claude stream contract and honest execution evidence > checks exact model, tool set, dontAsk, auth source and MCP before announcing a session 1ms
+ ? src/claude/protocol.test.ts > Claude stream contract and honest execution evidence > rejects out-of-order, duplicate init/result, unexpected tools and mismatched sessions 4ms
+ ? src/claude/protocol.test.ts > Claude stream contract and honest execution evidence > requires a successful final result and exact actual model usage; unknown failures contain no raw body 1ms
+ ? src/claude/protocol.test.ts > Claude stream contract and honest execution evidence > returns native structured candidates for engine validation and never substitutes fallback final text 2ms
+ ? src/claude/protocol.test.ts > Claude stream contract and honest execution evidence > retains benign metadata advertising verified built-ins, never claims all built-ins removed 1ms
+ ? src/claude/protocol.test.ts > conditional native structured-output carrier > records the requested schema carrier separately with ok settlement 1ms
+ ? src/claude/protocol.test.ts > conditional native structured-output carrier > records the requested schema carrier separately with ok settlement 1ms
+ ? src/claude/protocol.test.ts > conditional native structured-output carrier > records the requested schema carrier separately with failed settlement 1ms
+ ? src/claude/protocol.test.ts > conditional native structured-output carrier > rejects missing, duplicate, and extra init tools before announcing a schema session 2ms
+ ? src/claude/protocol.test.ts > conditional native structured-output carrier > rejects carrier advertisement/use without a requested schema and preserves ordinary execution tools 1ms
+ ? src/claude/protocol.test.ts > conditional native structured-output carrier > requires well-formed carrier IDs, object inputs, and matching result correlation 2ms
+ ? src/claude/protocol.test.ts > conditional native structured-output carrier > leaves final native candidate {"ok":"wrong"} to engine validation without carrier fallback 0ms
+ ? src/claude/protocol.test.ts > conditional native structured-output carrier > leaves final native candidate null to engine validation without carrier fallback 0ms
+ ? src/claude/protocol.test.ts > conditional native structured-output carrier > leaves final native candidate undefined to engine validation without carrier fallback 0ms
+ ? src/claude/protocol.test.ts > Claude transcript and error evidence limits > maps the valid tool-result marker {} to ok evidence 1ms
+ ? src/claude/protocol.test.ts > Claude transcript and error evidence limits > maps the valid tool-result marker { is_error: false } to ok evidence 0ms
+ ? src/claude/protocol.test.ts > Claude transcript and error evidence limits > maps the valid tool-result marker { is_error: true } to failed evidence 1ms
+ ? src/claude/protocol.test.ts > Claude transcript and error evidence limits > refuses non-boolean tool-result is_error true without success evidence or private diagnostics 42ms
+ ? src/claude/protocol.test.ts > Claude transcript and error evidence limits > refuses non-boolean tool-result is_error false without success evidence or private diagnostics 1ms
+ ? src/claude/protocol.test.ts > Claude transcript and error evidence limits > refuses non-boolean tool-result is_error null without success evidence or private diagnostics 0ms
+ ? src/claude/protocol.test.ts > Claude transcript and error evidence limits > refuses non-boolean tool-result is_error 0 without success evidence or private diagnostics 0ms
+ ? src/claude/protocol.test.ts > Claude transcript and error evidence limits > refuses non-boolean tool-result is_error 1 without success evidence or private diagnostics 8ms
+ ? src/claude/protocol.test.ts > Claude transcript and error evidence limits > refuses non-boolean tool-result is_error { marker: 'PRIVATE_MARKER' } without success evidence or private diagnostics 1ms
+ ? src/claude/protocol.test.ts > Claude transcript and error evidence limits > refuses non-boolean tool-result is_error [ 'PRIVATE_MARKER' ] without success evidence or private diagnostics 0ms
+ ? src/claude/protocol.test.ts > Claude transcript and error evidence limits > allows non-execution status metadata after init and safely ignores unknown content block kinds 3ms
+ ? src/claude/protocol.test.ts > Claude transcript and error evidence limits > rejects malformed content and tool correlations before accepting evidence 1ms
+ ? src/claude/protocol.test.ts > Claude transcript and error evidence limits > maps actual full-access command/file events with bounded detail and no invented exit code 3ms
+ ? src/claude/protocol.test.ts > Claude transcript and error evidence limits > classifies known structured status 401 without provider text 0ms
+ ? src/claude/protocol.test.ts > Claude transcript and error evidence limits > classifies known structured status 403 without provider text 0ms
+ ? src/claude/protocol.test.ts > Claude transcript and error evidence limits > classifies known structured status 429 without provider text 0ms
+ ? src/claude/protocol.test.ts > Claude transcript and error evidence limits > classifies known structured status 503 without provider text 0ms
+ ? src/claude/protocol.test.ts > Claude transcript and error evidence limits > classifies known structured status 400 without provider text 0ms
+ ? src/claude/protocol.test.ts > Claude transcript and error evidence limits > rejects overlong lines, final text and transcript count without truncating final output silently 87ms
+ ? src/claude/protocol.test.ts > Claude CLI 2.1.287 captured stream > replays every captured record with exact result, model and aggregate usage 51ms
+ ? src/claude/protocol.test.ts > Claude CLI 2.1.287 captured stream > accepts bounded UI metadata before and after init without execution evidence 1ms
+ ? src/claude/protocol.test.ts > Claude CLI 2.1.287 captured stream > refuses malformed UI metadata {} with safe record diagnostics 1ms
+ ? src/claude/protocol.test.ts > Claude CLI 2.1.287 captured stream > refuses malformed UI metadata {"event":null} with safe record diagnostics 1ms
+ ? src/claude/protocol.test.ts > Claude CLI 2.1.287 captured stream > refuses malformed UI metadata {"event":1} with safe record diagnostics 0ms
+ ? src/claude/protocol.test.ts > Claude CLI 2.1.287 captured stream > refuses malformed UI metadata {"event":""} with safe record diagnostics 2ms
+ ? src/claude/protocol.test.ts > Claude CLI 2.1.287 captured stream > refuses malformed UI metadata {"event":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"} with safe record diagnostics 0ms
+ ? src/claude/protocol.test.ts > Claude CLI 2.1.287 captured stream > refuses malformed UI metadata {"uuid":"bad"} with safe record diagnostics 0ms
+ ? src/claude/protocol.test.ts > Claude CLI 2.1.287 captured stream > refuses malformed UI metadata {} with safe record diagnostics 0ms
+ ? src/claude/protocol.test.ts > Claude CLI 2.1.287 captured stream > refuses malformed UI metadata {"session_id":"bad"} with safe record diagnostics 1ms
+ ? src/claude/protocol.test.ts > Claude CLI 2.1.287 captured stream > refuses malformed UI metadata {} with safe record diagnostics 1ms
+ ? src/claude/protocol.test.ts > Claude CLI 2.1.287 captured stream > binds UI, command-cache and init metadata to the same session before and after init 1ms
+ ? src/claude/protocol.test.ts > Claude CLI 2.1.287 captured stream > names the unexpected plugin without exposing record bodies 1ms
+ ? src/claude/protocol.test.ts > Claude CLI 2.1.287 captured stream > names the unexpected skill without exposing record bodies 0ms
+ ? src/claude/protocol.test.ts > Claude CLI 2.1.287 captured stream > names the unexpected tool without exposing record bodies 0ms
+ ? src/claude/protocol.test.ts > Claude CLI 2.1.287 captured stream > refuses malformed policy metadata {"tools":null} without serializing it 0ms
+ ? src/claude/protocol.test.ts > Claude CLI 2.1.287 captured stream > refuses malformed policy metadata {"tools":[null]} without serializing it 0ms
+ ? src/claude/protocol.test.ts > Claude CLI 2.1.287 captured stream > refuses malformed policy metadata {"plugins":null} without serializing it 0ms
+ ? src/claude/protocol.test.ts > Claude CLI 2.1.287 captured stream > refuses malformed policy metadata {"plugins":[null]} without serializing it 0ms
+ ? src/claude/protocol.test.ts > Claude CLI 2.1.287 captured stream > refuses malformed policy metadata {"plugins":[{"name":null}]} without serializing it 0ms
+ ? src/claude/protocol.test.ts > Claude CLI 2.1.287 captured stream > refuses malformed policy metadata {"skills":null} without serializing it 0ms
+ ? src/claude/protocol.test.ts > Claude CLI 2.1.287 captured stream > refuses malformed policy metadata {"skills":[null]} without serializing it 0ms
+ ? src/claude/protocol.test.ts > Claude CLI 2.1.287 captured stream > refuses malformed policy metadata {"plugins":[{"name":"unsafe\nPRIVATE_BODY"}]} without serializing it 0ms
+ ? src/claude/protocol.test.ts > Claude CLI 2.1.287 captured stream > refuses an allowlisted plugin with unverified provenance {"path":"C:/Users/alice/private-plugin","source":"cc-plugin-agents-md@builtin"} 1ms
+ ? src/claude/protocol.test.ts > Claude CLI 2.1.287 captured stream > refuses an allowlisted plugin with unverified provenance {"path":"builtin","source":"alice@example.com"} 0ms
+ ? src/claude/protocol.test.ts > Claude CLI 2.1.287 captured stream > refuses an allowlisted plugin with unverified provenance {"path":"builtin","source":"cc-plugin-plugin-authoring@builtin"} 0ms
+ ? src/claude/protocol.test.ts > Claude CLI 2.1.287 captured stream > refuses an allowlisted plugin with unverified provenance {"source":"cc-plugin-agents-md@builtin"} 0ms
+ ? src/claude/protocol.test.ts > Claude CLI 2.1.287 captured stream > refuses an allowlisted plugin with unverified provenance {"path":"builtin"} 0ms
+ ? src/claude/protocol.test.ts > Claude CLI 2.1.287 captured stream > names unknown pre-init records and redacts invalid record names 1ms
+ ? src/claude/protocol.test.ts > Claude CLI 2.1.287 captured stream > ignores unknown post-init records without evidence, but refuses every record after result 1ms
+ ? src/claude/protocol.test.ts > Claude CLI 2.1.287 captured stream > keeps model, usage, native structured candidate and error checks despite new fields 11ms
+ ? src/claude/protocol.test.ts > documented native assistant failure categories > maps authentication_failed before storing private error content 0ms
+ ? src/claude/protocol.test.ts > documented native assistant failure categories > maps rate_limit before storing private error content 0ms
+ ? src/claude/protocol.test.ts > documented native assistant failure categories > maps server_error before storing private error content 0ms
+ ? src/claude/protocol.test.ts > documented native assistant failure categories > maps billing_error before storing private error content 0ms
+ ? src/claude/protocol.test.ts > documented native assistant failure categories > maps invalid_request before storing private error content 0ms
+ ? src/claude/protocol.test.ts > documented native assistant failure categories > maps unknown before storing private error content 0ms
+ ? src/claude/protocol.test.ts > documented native assistant failure categories > maps FUTURE_CATEGORY before storing private error content 0ms
+ ? src/claude/protocol.test.ts > documented command-cache bootstrap without execution evidence > accepts explicitly built-in command metadata before/after init while withholding session/policy/result evidence 1ms
+ ? src/claude/protocol.test.ts > documented command-cache bootstrap without execution evidence > refuses custom, missing-builtin and replaced command rows rather than trusting command names 1ms
+ ? src/claude/protocol.test.ts > documented command-cache bootstrap without execution evidence > requires bounded valid metadata and matching stream identity 1ms
+ ? src/claude/protocol.test.ts > documented command-cache bootstrap without execution evidence > refuses hook/install execution before and after init, and keeps unknown bootstrap messages closed 1ms
+ ? src/claude/protocol.test.ts > documented command-cache bootstrap without execution evidence > requires every observed tool call to settle before accepting final success 0ms
+ ? src/claude/harness.test.ts > Claude existing harness contract > uses a fresh empty prerequisite directory and removes it after inspection 62ms
+ ? src/claude/harness.test.ts > Claude existing harness contract > handles prerequisite cleanup failure without concealing success disposition 73ms
+ ? src/claude/harness.test.ts > Claude existing harness contract > handles prerequisite cleanup failure without concealing unconfirmed disposition 73ms
+ ? src/claude/harness.test.ts > Claude existing harness contract > creates the prerequisite directory under a system temporary directory of 226 characters (#102) 218ms
+ ? src/claude/harness.test.ts > Claude existing harness contract > tries a fresh prerequisite directory name after a name collision and never removes the existing one 43ms
+ ? src/claude/harness.test.ts > Claude existing harness contract > fails the check without starting the CLI or removing anything after four name collisions 12ms
+ ? src/claude/harness.test.ts > Claude existing harness contract > fails the check without starting the CLI or removing anything after a creation fault 9ms
+ ? src/claude/harness.test.ts > Claude existing harness contract > checks the installed capability/auth prerequisites and exposes explicit model support and policies 12ms
+ ? src/claude/harness.test.ts > Claude existing harness contract > executes Fable through strict native model verification with its requested effort 18ms
+ ? src/claude/harness.test.ts > Claude existing harness contract > checks auth before every start and resume, uses the same env, and maps current port events/result 62ms
+ ? src/claude/harness.test.ts > Claude existing harness contract > refuses api_key before a model starts and hides raw status 16ms
+ ? src/claude/harness.test.ts > Claude existing harness contract > refuses api_key_helper before a model starts and hides raw status 51ms
+ ? src/claude/harness.test.ts > Claude existing harness contract > refuses oauth_token before a model starts and hides raw status 2ms
+ ? src/claude/harness.test.ts > Claude existing harness contract > refuses third_party before a model starts and hides raw status 45ms
+ ? src/claude/harness.test.ts > Claude existing harness contract > refuses none before a model starts and hides raw status 57ms
+ ? src/claude/harness.test.ts > Claude existing harness contract > refuses unknown before a model starts and hides raw status 90ms
+ ? src/claude/harness.test.ts > Claude existing harness contract > fails unsupported request/capabilities/session IDs before any CLI launch 5ms
+ ? src/claude/harness.test.ts > Claude existing harness contract > validates structured results through the existing schema contract 5ms
+ ? src/claude/harness.test.ts > Claude existing harness contract > handles the native schema carrier without extending CLI execution tools or promoting carrier content 46ms
+ ? src/claude/harness.test.ts > Claude existing harness contract > rejects malformed/incomplete/out-of-order streams and abnormal exit without final success evidence 258ms
+ ? src/claude/harness.test.ts > Claude existing harness contract > converts private transport failures to typed fixed diagnostics 64ms
+ ? src/claude/harness.test.ts > Claude existing harness contract > preserves the CLI version, safe refusal name and recovery hint in result and error events 304ms
+ ? src/claude/harness.test.ts > Claude existing harness contract > aborts during auth without starting a model and makes cancel idempotent 162ms
+ ? src/claude/harness.test.ts > Claude existing harness contract > cancels an in-flight turn, reacts to the caller signal and never starts already aborted requests 132ms
+ ? src/claude/harness.test.ts > Claude preflight and transport failure matrix > reports detected version 2.1.284 independently of account login 154ms
+ ? src/claude/harness.test.ts > Claude preflight and transport failure matrix > reports detected version 2.1.285 independently of account login 45ms
+ ? src/claude/harness.test.ts > Claude preflight and transport failure matrix > reports detected version 2.1.287 independently of account login 19ms
+ ? src/claude/harness.test.ts > Claude preflight and transport failure matrix > reports a missing capability and failed login together without starting a turn 21ms
+ ? src/claude/harness.test.ts > Claude preflight and transport failure matrix > reports the detected version when the hidden max-turns capability probe fails and still checks login 82ms
+ ? src/claude/harness.test.ts > Claude preflight and transport failure matrix > returns fixed preflight problems for missing binary, unsupported platform/version/flags and bad auth 171ms
+ ? src/claude/harness.test.ts > Claude preflight and transport failure matrix > validates positive process bounds 29ms
+ ? src/claude/harness.test.ts > Claude preflight and transport failure matrix > requires resolved settings and preserves explicit effort and process bounds 60ms
+ ? src/claude/harness.test.ts > Claude preflight and transport failure matrix > maps transport disposition HARNESS_TIMEOUT safely 48ms
+ ? src/claude/harness.test.ts > Claude preflight and transport failure matrix > maps transport disposition HARNESS_OUTPUT_LIMIT safely 54ms
+ ? src/claude/harness.test.ts > Claude preflight and transport failure matrix > maps transport disposition HARNESS_NOT_INSTALLED safely 48ms
+ ? src/claude/harness.test.ts > Claude preflight and transport failure matrix > maps transport disposition HARNESS_TURN_FAILED safely 91ms
+ ? src/claude/harness.test.ts > Claude preflight and transport failure matrix > does not cancel a completed session or generate a replacement session on resume mismatch 41ms
+ ? src/claude/harness.test.ts > unconfirmed native termination > preserves actionable typed failure for cancel and after completion 60ms
+ ? src/claude/harness.test.ts > unconfirmed native termination > preserves actionable typed failure for signal and after completion 17ms
+ ? src/claude/harness.test.ts > unconfirmed native termination > reports unconfirmed timeout termination before ordinary timeout handling 12ms
+ ? src/claude/harness.test.ts > Claude native structured repair through the engine > repairs the exact native candidate undefined instead of final-text fallback 212ms
+ ? src/claude/harness.test.ts > Claude native structured repair through the engine > repairs the exact native candidate null instead of final-text fallback 66ms
+ ? src/claude/harness.test.ts > Claude native structured repair through the engine > repairs the exact native candidate { ok: 'wrong' } instead of final-text fallback 69ms
+ ? src/sqlite/definition-pins.test.ts > draft snapshots > are stored with their run, read by id, and kept out of the version history 540ms
+ ? src/sqlite/definition-pins.test.ts > draft snapshots > refuse any change, and deletion while a run pins them 94ms
+ ? src/sqlite/definition-pins.test.ts > draft snapshots > go with the last run that pins them 172ms
+ ? src/sqlite/definition-pins.test.ts > draft snapshots > reports a missing pin as unreadable history for that run only 210ms
+ ? src/sqlite/definition-pins.test.ts > draft snapshots > reports a malformed pin as unreadable history for that run only 83ms
+ ? src/sqlite/definition-pins.test.ts > draft snapshots > reports a schema-invalid pin as unreadable history for that run only 114ms
+ ? src/sqlite/definition-pins.test.ts > migration 0014 pins existing runs > freezes draft-run definitions, pins every run, event and saved intent 1514ms
+ ? src/sqlite/definition-pins.test.ts > migration 0014 pins existing runs > pins healthy history and leaves damaged JSON untouched for unreadable-history reports 1750ms
+ ? src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 3: concurrent SQLite batches have no sequence gaps 1546ms
+ ? src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 15: skip catches missed daily slots across spring DST 136ms
+ ? src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 15: run-once catches missed daily slots across spring DST 104ms
+ ? src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 15: run-each catches missed daily slots across spring DST 82ms
+ ? src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > ADV-010: run-once chooses the latest missed slot even beyond the run-each cap 781ms
+ ? src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 15: two scheduler instances have no shared lease (documented single-process limit) 92ms
+ ? src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > ADV-011: a duration timer lost before a crash is re-armed from the waiting run 436ms
+ ? src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > ADV-011: a input timeout timer lost before a crash is re-armed from the waiting run 453ms
+ ? src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > ADV-011: a fire interrupted mid-delivery is delivered again after a restart 188ms
+ ? src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 18: concurrent set of one secret preserves one authenticated ciphertext 123ms
+ × src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild 30138ms
+   ? Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ? src/adversarial.test.ts > timer delivery (review of WP-G) > a throwing timer listener leaves the timer for another delivery 337ms
+ ? src/adversarial.test.ts > timer delivery (review of WP-G) > a failed manager wake does not consume the timer 197ms
+ ? src/adversarial.test.ts > timer delivery (review of WP-G) > a duration with a timeout re-arms both lost deadlines (SQLite) 372ms
+ ? src/adversarial.test.ts > timer delivery (review of WP-G) > an obsolete timeout in the same poll batch does not wake a later input wait 358ms
+ ? src/adversarial.test.ts > finalization on SQLite (review of WP-G, fourth round) > a resumed failed run is finalized again after a crash on its next terminal status 659ms
+ ? src/adversarial.test.ts > finalization on SQLite (review of WP-G, fourth round) > an older finalizer in flight cannot hide the next success 1932ms
+ ? src/adversarial.test.ts > finalization on SQLite (review of WP-G, fourth round) > an older finalizer in flight cannot hide the durable resume 1321ms
+ ? src/adversarial.test.ts > finalization on SQLite (review of WP-G, fourth round) > of two concurrent resumes of one failure, only one acts (same failure) 1083ms
+ ? src/adversarial.test.ts > finalization on SQLite (review of WP-G, fourth round) > of two concurrent resumes of one failure, only one acts (newer non-resumable failure) 1884ms
+ ? src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > inspects every published version and draft without writes, excludes active template work, and reports disarms/counts 15248ms
+ × src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > deletes all history and configured templates, converts definitions, retains signing identities/secrets/settings, and starts through ordinary migrations 20195ms
+   ? Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ × src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > blocks ordinary queued runs without cancelling them 20001ms
+   ? Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ × src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > blocks ordinary running runs without cancelling them 20113ms
+   ? Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ × src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > blocks ordinary waiting runs without cancelling them 20030ms
+   ? Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ × src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > blocks ordinary paused runs without cancelling them 20016ms
+   ? Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ × src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > blocks a pending ordinary receipt and its frozen admission intent 20042ms
+   ? Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ × src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > requires every hash-bound review, binds repeated nodes to their stored version, and rejects stale/unused resolutions 20075ms
+   ? Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ × src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses changed source, damaged SQL/ledger, malformed template identities and invalid definitions 20015ms
+   ? Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ × src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > rolls back deletions, DDL, ledger, rewrites and marker on a failure after structural SQL 20184ms
+   ? Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ × src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > rechecks safety at commit and rolls back if the lock or backup is lost 20001ms
+   ? Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ × src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses an ordinary definition that would invoke a retired template loop 20090ms
+   ? Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ? src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > requires the stopped lock/backup capability and propagates failed safety verification before transaction 14309ms
+ × src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > removes old database archives and converts legacy owner defaults without changing other settings 20091ms
+   ? Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ × src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses invalid/conflicting owner defaults: UPDATE settings SET value='not JSON' 20022ms
+   ? Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ × src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses invalid/conflicting owner defaults: INSERT INTO settings VALUES ('local','defaultModel','"unknown"','2026-10-17T00:00:00.000Z') 20106ms
+   ? Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ × src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses invalid/conflicting owner defaults: INSERT INTO settings VALUES ('other','defaultEffort','"invalid"','2026-10-17T00:00:00.000Z') 20023ms
+   ? Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ? src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses damaged or old completion state before ordinary startup writes: UPDATE gg_upgrade_state SET status='pending' 143ms
+ ? src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses damaged or old completion state before ordinary startup writes: DELETE FROM gg_upgrade_state 106ms
+ ? src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses damaged or old completion state before ordinary startup writes: DROP INDEX runs_parent_idx 116ms
+ ? src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses damaged or old completion state before ordinary startup writes: CREATE TABLE template_instances (id TEXT) 398ms
+ ? src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses damaged or old completion state before ordinary startup writes: ALTER TABLE runs ADD COLUMN template_subject TEXT 533ms
+ ? src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses damaged or old completion state before ordinary startup writes: DELETE FROM __drizzle_migrations WHERE created_at=(SELECT min(created_at) FROM __drizzle_migrations) 73ms
+ ? src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses damaged or old completion state before ordinary startup writes: UPDATE gg_upgrade_state SET format_version=3 107ms
+ ? src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses a recorded ledger without application tables and permits a truly empty ledger 6ms
+ ? src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > treats a genuinely fresh format-4 store as a no-op 17448ms
+ ? src/sqlite/admission.test.ts > SQLite atomic admission > recovers the frozen run ID after closing the database immediately after claim 3216ms
+ ? src/sqlite/admission.test.ts > SQLite atomic admission > refuses re-admission without a receipt when the stored first event is malformed 142ms
+ ? src/sqlite/admission.test.ts > SQLite atomic admission > refuses re-admission without a receipt when the invocation changes 111ms
+ ? src/sqlite/admission.test.ts > SQLite atomic admission > rolls back run and queued event together, keeps pending pins, then commits and notifies once 141ms
+ ? src/sqlite/admission.test.ts > SQLite atomic admission > allows identical unkeyed content across version and inbound identities 114ms
+ ? src/sqlite/admission.test.ts > SQLite atomic admission > refuses changed immutable identity and malformed/missing receipt links without writing a run 189ms
+ ? src/sqlite/admission.test.ts > SQLite atomic admission > consumes authored keys from prior filtered receipts without retaining a new intent 57ms
+ ? src/sqlite/admission.test.ts > SQLite atomic admission > consumes authored keys from prior pending receipts without retaining a new intent 316ms
+ ? src/sqlite/admission.test.ts > SQLite atomic admission > consumes authored keys from prior failed receipts without retaining a new intent 174ms
+ ? src/sqlite/admission.test.ts > SQLite atomic admission > consumes authored keys from prior admitted receipts without retaining a new intent 99ms
+ ? src/sqlite/admission.test.ts > SQLite atomic admission > consumes authored keys from prior deduplicated receipts without retaining a new intent 394ms
+ ? src/sqlite/admission.test.ts > SQLite atomic admission > uses every authored key and isolates owner/loop/node 430ms
+ ? src/sqlite/admission.test.ts > SQLite atomic admission > keeps pending intent keys consumed when the inbound link is unavailable 568ms
+ ? src/sqlite/admission.test.ts > SQLite atomic admission > keeps failed intent keys consumed when the inbound link is unavailable 667ms
+ ? src/sqlite/admission.test.ts > SQLite atomic admission > reserves pending webhook keys against atomic poll admission and releases only after permanent failure 260ms
+ ? src/sqlite/admission.test.ts > SQLite atomic admission > refuses non-poll and missing-key intents at the items-only admission boundary 176ms
+ ? src/sqlite/admission.test.ts > SQLite atomic admission > bounds due recovery and retains safe permanent failure metadata while releasing pins 123ms
+ ? src/sqlite/triggers.test.ts > SqliteScheduleStore > replaces a loop version, keeping existing rows of the same version 1358ms
+ ? src/sqlite/triggers.test.ts > SqliteWebhookEndpoints > keeps a trigger node token across versions and prefers the enabled row 102ms
+ ? src/sqlite/triggers.test.ts > SqliteInboundEvents > inserts, lists newest first, pages, and records started runs 114ms
+ ? src/sqlite/triggers.test.ts > SqliteInboundEvents > finds duplicates by type, source, and window, and inserts atomically 197ms
+ ? src/sqlite/triggers.test.ts > trigger lookups on runs and loops > finds runs by trigger dedupe key and lists published loops across owners 265ms
+ ? src/sqlite/triggers.test.ts > 0013 trigger configuration > accepts exactly the none recipe fields (null, null, null, null) 274ms
+ ? src/sqlite/triggers.test.ts > 0013 trigger configuration > accepts exactly the hmac-sha256 recipe fields (body, x-signature, key, null) 165ms
+ ? src/sqlite/triggers.test.ts > 0013 trigger configuration > accepts exactly the hmac-sha256 recipe fields (timestamp-body, x-signature, key, 1) 600ms
+ ? src/sqlite/triggers.test.ts > 0013 trigger configuration > accepts exactly the hmac-sha256 recipe fields (timestamp-body, x-signature, key, 86400) 64ms
+ ? src/sqlite/triggers.test.ts > 0013 trigger configuration > rejects inconsistent recipe "none" / "body" / null / null / null 81ms
+ ? src/sqlite/triggers.test.ts > 0013 trigger configuration > rejects inconsistent recipe "none" / null / "x-signature" / null / null 100ms
+ ? src/sqlite/triggers.test.ts > 0013 trigger configuration > rejects inconsistent recipe "none" / null / null / "key" / null 319ms
+ ? src/sqlite/triggers.test.ts > 0013 trigger configuration > rejects inconsistent recipe "none" / null / null / null / 300 158ms
+ ? src/sqlite/triggers.test.ts > 0013 trigger configuration > rejects inconsistent recipe "hmac-sha256" / null / "x-signature" / "key" / null 165ms
+ ? src/sqlite/triggers.test.ts > 0013 trigger configuration > rejects inconsistent recipe "hmac-sha256" / "body" / null / "key" / null 266ms
+ ? src/sqlite/triggers.test.ts > 0013 trigger configuration > rejects inconsistent recipe "hmac-sha256" / "body" / "x-signature" / null / null 251ms
+ ? src/sqlite/triggers.test.ts > 0013 trigger configuration > rejects inconsistent recipe "hmac-sha256" / "body" / "x-signature" / "key" / 300 137ms
+ ? src/sqlite/triggers.test.ts > 0013 trigger configuration > rejects inconsistent recipe "hmac-sha256" / "timestamp-body" / null / "key" / 300 66ms
+ ? src/sqlite/triggers.test.ts > 0013 trigger configuration > rejects inconsistent recipe "hmac-sha256" / "timestamp-body" / "x-signature" / null / 300 264ms
+ ? src/sqlite/triggers.test.ts > 0013 trigger configuration > rejects inconsistent recipe "hmac-sha256" / "timestamp-body" / "x-signature" / "key" / null 273ms
+ ? src/sqlite/triggers.test.ts > 0013 trigger configuration > rejects inconsistent recipe "hmac-sha256" / "timestamp-body" / "x-signature" / "key" / 0 278ms
+ ? src/sqlite/triggers.test.ts > 0013 trigger configuration > rejects inconsistent recipe "hmac-sha256" / "timestamp-body" / "x-signature" / "key" / 86401 309ms
+ ? src/sqlite/triggers.test.ts > 0013 trigger configuration > rejects inconsistent recipe "hmac-sha256" / "timestamp-body" / "x-signature" / "key" / 1.5 61ms
+ ? src/sqlite/triggers.test.ts > 0013 trigger configuration > rejects inconsistent recipe "custom" / "body" / "x-signature" / "key" / null 126ms
+ ? src/sqlite/triggers.test.ts > 0013 trigger configuration > rejects inconsistent recipe "hmac-sha256" / "custom" / "x-signature" / "key" / null 322ms
+ ? src/sqlite/triggers.test.ts > 0013 trigger configuration > maps both old signing rows without changing identities, tokens or timestamps and removes content uniqueness 262ms
+ ? src/sqlite/triggers.test.ts > refuses inconsistent authentication rows instead of filling or discarding stored signing fields 275ms
+ ? src/sqlite/triggers.test.ts > arms all authentication recipes using exact SQL fields and stable endpoint tokens across versions 183ms
+ ? src/sqlite/fresh-initialization.test.ts > atomic fresh SQLite initialisation > rolls back an interruption after schema persistence and recovers on restart 1538ms
+ ? src/sqlite/fresh-initialization.test.ts > atomic fresh SQLite initialisation > rolls back an interruption before marker creation and recovers on restart 976ms
+ ? src/sqlite/fresh-initialization.test.ts > atomic fresh SQLite initialisation > rolls back an interruption before marker-row persistence and recovers on restart 1259ms
+ ? src/sqlite/fresh-initialization.test.ts > atomic fresh SQLite initialisation > applies pending ordinary migrations when another initialiser wins the write-lock race 1256ms
+ ? src/sqlite/fresh-initialization.test.ts > atomic fresh SQLite initialisation > preserves the original initialisation error when rollback also fails 1267ms
+ ? src/sqlite/fresh-initialization.test.ts > atomic fresh SQLite initialisation > initialises once and preserves schema, ledger, marker and data across repeated starts 1256ms
+ ? src/sqlite/fresh-initialization.test.ts > atomic fresh SQLite initialisation > accepts an empty migration ledger without treating recorded history as fresh 316ms
+ ? src/sqlite/fresh-initialization.test.ts > atomic fresh SQLite initialisation > refuses a unmarked schema with empty application tables without changing it on either start 286ms
+ ? src/sqlite/fresh-initialization.test.ts > atomic fresh SQLite initialisation > refuses a populated unmarked store without changing it on either start 355ms
+ ? src/sqlite/fresh-initialization.test.ts > atomic fresh SQLite initialisation > refuses a marker table without its row without changing it on either start 1531ms
+ ? src/sqlite/fresh-initialization.test.ts > atomic fresh SQLite initialisation > refuses a incomplete upgrade state without changing it on either start 1077ms
+ ? src/sqlite/fresh-initialization.test.ts > atomic fresh SQLite initialisation > refuses a old complete format marker without changing it on either start 575ms
+ ? src/sqlite/fresh-initialization.test.ts > atomic fresh SQLite initialisation > refuses a recorded migration-only damaged store without changing it on either start 179ms
+ ? src/sqlite/fresh-initialization.test.ts > atomic fresh SQLite initialisation > rechecks freshness under the write lock and refuses an unmarked schema 150ms
+ ? src/http/classifier.test.ts > HTTP Choice classifier > sends the exact protocol, provider id, state, and optional bearer (undefined) 385ms
+ ? src/http/classifier.test.ts > HTTP Choice classifier > sends the exact protocol, provider id, state, and optional bearer (private-test-key) 24ms
+ ? src/http/classifier.test.ts > HTTP Choice classifier > preserves explicit confidence and sorts alternatives 6ms
+ ? src/http/classifier.test.ts > HTTP Choice classifier > rejects malformed Choice response "{broken" 32ms
+ ? src/http/classifier.test.ts > HTTP Choice classifier > rejects malformed Choice response {} 19ms
+ ? src/http/classifier.test.ts > HTTP Choice classifier > rejects malformed Choice response {"answers":{"answer":{"type":"noul"}}} 32ms
+ ? src/http/classifier.test.ts > HTTP Choice classifier > rejects malformed Choice response {"answers":{"answer":{"type":"choice","choice":"yes","probabilities":{"yes":0.8}}}} 32ms
+ ? src/http/classifier.test.ts > HTTP Choice classifier > rejects malformed Choice response {"answers":{"answer":{"type":"choice","choice":"yes","probabilities":{"yes":0.8,"extra":0.2}}}} 6ms
+ ? src/http/classifier.test.ts > HTTP Choice classifier > rejects malformed Choice response {"answers":{"answer":{"type":"choice","choice":"yes","probabilities":{"yes":0.8,"no":0.1,"extra":0.1}}}} 9ms
+ ? src/http/classifier.test.ts > HTTP Choice classifier > rejects malformed Choice response {"answers":{"answer":{"type":"choice","choice":"yes","probabilities":{"yes":-0.1,"no":1.1}}}} 22ms
+ ? src/http/classifier.test.ts > HTTP Choice classifier > rejects malformed Choice response {"answers":{"answer":{"type":"choice","choice":"yes","probabilities":{"yes":null,"no":0}}}} 25ms
+ ? src/http/classifier.test.ts > HTTP Choice classifier > rejects malformed Choice response {"answers":{"answer":{"type":"choice","choice":"yes","probabilities":{"yes":0.8,"no":0.2},"confidence":1.1}}} 10ms
+ ? src/http/classifier.test.ts > HTTP Choice classifier > rejects a bearer echoed as the choice without retaining it (confidence undefined) 46ms
+ ? src/http/classifier.test.ts > HTTP Choice classifier > rejects a bearer echoed as the choice without retaining it (confidence 0.7) 8ms
+ ? src/http/classifier.test.ts > HTTP Choice classifier > requires exact label membership for choice "" 10ms
+ ? src/http/classifier.test.ts > HTTP Choice classifier > requires exact label membership for choice " yes" 8ms
+ ? src/http/classifier.test.ts > HTTP Choice classifier > requires exact label membership for choice "YES" 9ms
+ ? src/http/classifier.test.ts > HTTP Choice classifier > requires exact label membership for choice "y?s" 8ms
+ ? src/http/classifier.test.ts > HTTP Choice classifier > requires exact label membership for choice "__proto__" 14ms
+ ? src/http/classifier.test.ts > HTTP Choice classifier > requires exact label membership for choice "constructor" 122ms
+ ? src/http/classifier.test.ts > HTTP Choice classifier > reports HTTP 301 redirects without following or echoing the bearer 80ms
+ ? src/http/classifier.test.ts > HTTP Choice classifier > reports HTTP 302 redirects without following or echoing the bearer 62ms
+ ? src/http/classifier.test.ts > HTTP Choice classifier > reports HTTP 307 redirects without following or echoing the bearer 50ms
+ ? src/http/classifier.test.ts > HTTP Choice classifier > reports HTTP 308 redirects without following or echoing the bearer 11ms
+ ? src/http/classifier.test.ts > HTTP Choice classifier > maps HTTP 401 without echoing credentials 10ms
+ ? src/http/classifier.test.ts > HTTP Choice classifier > maps HTTP 403 without echoing credentials 10ms
+ ? src/http/classifier.test.ts > HTTP Choice classifier > maps HTTP 429 without echoing credentials 7ms
+ ? src/http/classifier.test.ts > HTTP Choice classifier > maps HTTP 400 without echoing credentials 18ms
+ ? src/http/classifier.test.ts > HTTP Choice classifier > maps HTTP 503 without echoing credentials 8ms
+ ? src/http/classifier.test.ts > HTTP Choice classifier > times out and preserves caller cancellation 62ms
+ ? src/http/classifier.test.ts > HTTP Choice classifier > maps connection failures and ignores transport diagnostics that echo credentials 8ms
+ ? src/http/classifier.test.ts > HTTP Choice classifier > maps an abort during body consumption to timeout or caller cancellation 35ms
+ ? src/http/classifier.test.ts > HTTP Noul and Score classifier > sends both authored Noul criteria and returns its raw true probability 8ms
+ ? src/http/classifier.test.ts > HTTP Noul and Score classifier > sends the ordered rubric and retains fractional Score evidence 41ms
+ ? src/http/classifier.test.ts > HTTP Noul and Score classifier > retains honest absent Score confidence/probabilities 12ms
+ ? src/http/classifier.test.ts > HTTP Noul and Score classifier > rejects invalid Score once {"type":"score","score":3.1,"confidence":0.75,"legend":{"0":"Low","1":"Medium","2":"High","3":"Critical"},"probabilities":{"0":0,"1":0.75,"2":0.25,"3":0}} 11ms
+ ? src/http/classifier.test.ts > HTTP Noul and Score classifier > rejects invalid Score once {"type":"score","score":1.25,"confidence":-0.1,"legend":{"0":"Low","1":"Medium","2":"High","3":"Critical"},"probabilities":{"0":0,"1":0.75,"2":0.25,"3":0}} 29ms
+ ? src/http/classifier.test.ts > HTTP Noul and Score classifier > rejects invalid Score once {"type":"score","score":1.25,"confidence":0.75,"legend":{"0":"Low"},"probabilities":{"0":0,"1":0.75,"2":0.25,"3":0}} 12ms
+ ? src/http/classifier.test.ts > HTTP Noul and Score classifier > rejects invalid Score once {"type":"score","score":1.25,"confidence":0.75,"legend":{"0":"Low","1":"Medium","2":"High","3":"Critical"},"probabilities":{"0":1}} 15ms
+ ? src/http/classifier.test.ts > HTTP Noul and Score classifier > rejects invalid Score once {"type":"noul","noul":0.5} 8ms
+ ? src/http/classifier.test.ts > HTTP Noul and Score classifier > rejects invalid Noul and insufficient rubrics before a Score call 11ms
+ ? src/http/classifier.test.ts > HTTP Noul and Score classifier > preserves sanitized errors and cancellation for classifyNoul 13ms
+ ? src/http/classifier.test.ts > HTTP Noul and Score classifier > preserves sanitized errors and cancellation for score 19ms
+ ? src/sqlite/catalog.test.ts > model catalog source migration and repository > enables previously blocked Fable once, then preserves owner switches and every other row 11129ms
+ ? src/sqlite/catalog.test.ts > model catalog source migration and repository > adds source on a fresh database and defaults direct legacy inserts to harness 243ms
+ ? src/sqlite/catalog.test.ts > model catalog source migration and repository > preserves seeded, edited, and hand-added 1.0.0 rows, then refreshes only seed metadata 10213ms
+ ? src/sqlite/catalog.test.ts > model catalog source migration and repository > runs the previous release without SQL rollback and retains provenance on re-upgrade 8284ms
+ ? src/sqlite/catalog.test.ts > model catalog source migration and repository > never refreshes a LiteLLM row that shares a seed key and toggles either source 190ms
+ ? src/sqlite/catalog.test.ts > model catalog source migration and repository > can roll back the column and migration record without losing model data 409ms
+ ? src/scheduler/cron-scheduler.test.ts > CronScheduler.nextFire > computes slots in the schedule timezone, across daylight saving time 446ms
+ ? src/scheduler/cron-scheduler.test.ts > CronScheduler.nextFire > returns undefined when there is no future slot and validates input 104ms
+ ? src/scheduler/cron-scheduler.test.ts > CronScheduler.poll > fires due schedules once, advances them, and ignores disabled ones 85ms
+ ? src/scheduler/cron-scheduler.test.ts > CronScheduler.poll > keeps going when a listener throws and logs store failures 109ms
+ ? src/scheduler/cron-scheduler.test.ts > CronScheduler.poll > disarms a schedule whose expression no longer parses 65ms
+ ? src/scheduler/cron-scheduler.test.ts > CronScheduler.poll > skips overlapping polls 265ms
+ ? src/scheduler/cron-scheduler.test.ts > CronScheduler.poll > polls on an interval between start and stop 253ms
+ ? src/scheduler/cron-scheduler.test.ts > CronScheduler.recover (missed-fire policies) > skip moves to the next future slot without firing (cap undefined) 198ms
+ ? src/scheduler/cron-scheduler.test.ts > CronScheduler.recover (missed-fire policies) > skip moves to the next future slot without firing (cap 2) 111ms
+ ? src/scheduler/cron-scheduler.test.ts > CronScheduler.recover (missed-fire policies) > run-once fires the latest missed slot (cap undefined) 124ms
+ ? src/scheduler/cron-scheduler.test.ts > CronScheduler.recover (missed-fire policies) > run-once fires the latest missed slot (cap 2) 216ms
+ ? src/scheduler/cron-scheduler.test.ts > CronScheduler.recover (missed-fire policies) > run-each fires every slot up to the cap without a warning (cap undefined) 249ms
+ ? src/scheduler/cron-scheduler.test.ts > CronScheduler.recover (missed-fire policies) > run-each fires every slot up to the cap without a warning (cap 4) 497ms
+ ? src/scheduler/cron-scheduler.test.ts > CronScheduler.recover (missed-fire policies) > run-each with a zero cap drops all missed slots without firing 183ms
+ ? src/scheduler/cron-scheduler.test.ts > CronScheduler.recover (missed-fire policies) > run-each retains the latest slots at the cap and warns 197ms
+ ? src/scheduler/cron-scheduler.test.ts > CronScheduler.recover (missed-fire policies) > run-each drops the 50 oldest of 150 missed slots and fires the latest 100 oldest first 712ms
+ ? src/scheduler/cron-scheduler.test.ts > CronScheduler.recover (missed-fire policies) > arms schedules without a next slot and leaves future ones alone 339ms
+ ? src/scheduler/cron-scheduler.test.ts > CronScheduler.recover (missed-fire policies) > start applies the policy before polling 243ms
+ ? src/process/scripts.test.ts > ProcessScripts > returns raw captured byte counts and truncation for default capture, including incomplete EOF 528ms
+ ? src/process/scripts.test.ts > ProcessScripts > preserves both UTF-8 streams split at byte offset 1 with default and explicit bounds 1759ms
+ ? src/process/scripts.test.ts > ProcessScripts > preserves both UTF-8 streams split at byte offset 2 with default and explicit bounds 902ms
+ ? src/process/scripts.test.ts > ProcessScripts > preserves both UTF-8 streams split at byte offset 3 with default and explicit bounds 715ms
+ ? src/process/scripts.test.ts > ProcessScripts > preserves both UTF-8 streams split at byte offset 4 with default and explicit bounds 1182ms
+ ? src/process/scripts.test.ts > ProcessScripts > preserves both UTF-8 streams split at byte offset 5 with default and explicit bounds 900ms
+ ? src/process/scripts.test.ts > ProcessScripts > preserves both UTF-8 streams split at byte offset 6 with default and explicit bounds 602ms
+ ? src/process/scripts.test.ts > ProcessScripts > preserves both UTF-8 streams split at byte offset 7 with default and explicit bounds 1308ms
+ ? src/process/scripts.test.ts > ProcessScripts > preserves both UTF-8 streams split at byte offset 8 with default and explicit bounds 1904ms
+ ? src/process/scripts.test.ts > ProcessScripts > preserves both UTF-8 streams split at byte offset 9 with default and explicit bounds 617ms
+ ? src/process/scripts.test.ts > ProcessScripts > preserves both UTF-8 streams split at byte offset 10 with default and explicit bounds 779ms
+ ? src/process/scripts.test.ts > ProcessScripts > preserves both UTF-8 streams split at byte offset 11 with default and explicit bounds 1204ms
+ ? src/process/scripts.test.ts > ProcessScripts > counts raw bytes and drops only a cap-split suffix at cap 0 on both streams 1623ms
+ ? src/process/scripts.test.ts > ProcessScripts > counts raw bytes and drops only a cap-split suffix at cap 1 on both streams 1635ms
+ ? src/process/scripts.test.ts > ProcessScripts > counts raw bytes and drops only a cap-split suffix at cap 2 on both streams 2772ms
+ ? src/process/scripts.test.ts > ProcessScripts > counts raw bytes and drops only a cap-split suffix at cap 3 on both streams 2575ms
+ ? src/process/scripts.test.ts > ProcessScripts > counts raw bytes and drops only a cap-split suffix at cap 4 on both streams 1763ms
+ ? src/process/scripts.test.ts > ProcessScripts > counts raw bytes and drops only a cap-split suffix at cap 5 on both streams 2370ms
+ ? src/process/scripts.test.ts > ProcessScripts > counts raw bytes and drops only a cap-split suffix at cap 6 on both streams 1939ms
+ ? src/process/scripts.test.ts > ProcessScripts > counts raw bytes and drops only a cap-split suffix at cap 7 on both streams 3231ms
+ ? src/process/scripts.test.ts > ProcessScripts > counts raw bytes and drops only a cap-split suffix at cap 8 on both streams 2682ms
+ ? src/process/scripts.test.ts > ProcessScripts > counts raw bytes and drops only a cap-split suffix at cap 9 on both streams 1555ms
+ ? src/process/scripts.test.ts > ProcessScripts > counts raw bytes and drops only a cap-split suffix at cap 10 on both streams 2885ms
+ ? src/process/scripts.test.ts > ProcessScripts > counts raw bytes and drops only a cap-split suffix at cap 11 on both streams 4434ms
+ ? src/process/scripts.test.ts > ProcessScripts > replaces an incomplete trailing sequence at clean EOF on both streams 4470ms
+ × src/process/scripts.test.ts > ProcessScripts > kills and closes a real process cancelled with incomplete UTF-8 pending on both streams 8226ms
+   ? native process-tree cancellation must finish before fixture cleanup: expected true to be false // Object.is equality
+ ? src/process/scripts.test.ts > ProcessScripts > captures stdout, stderr, exit code, env, args, and stdin 1449ms
+ ? src/process/scripts.test.ts > ProcessScripts > closes stdin when none is provided 2513ms
+ × src/process/scripts.test.ts > ProcessScripts > kills the process tree on timeout 15033ms
+   ? Test timed out in 15000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ × src/process/scripts.test.ts > ProcessScripts > kills the process when the signal aborts, including when already aborted 15043ms
+   ? Test timed out in 15000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ? src/process/scripts.test.ts > ProcessScripts > reports spawn failures as a null exit code with a message 480ms
+ ? src/process/scripts.test.ts > ProcessScripts > caps captured output 759ms
+ ? src/process/scripts.test.ts > ProcessScripts > bounds opted-in stdout by raw bytes and reports overflow without changing legacy capture 1329ms
+ ? src/process/scripts.test.ts > ProcessScripts > reports exact-cap output as complete and does not emit a cap-split UTF8 suffix 2770ms
+ ? src/process/scripts.test.ts > ProcessScripts > uses fixed spawn diagnostics without echoing a credential-bearing command 62ms
+ ? src/process/scripts.test.ts > killTree > does nothing without a pid 0ms
+ ? src/process/scripts.test.ts > killTree > uses taskkill on Windows and falls back to kill when taskkill is missing 0ms
+ ? src/process/scripts.test.ts > killTree > signals the process group on POSIX and falls back to kill on failure 0ms
+ ? src/sqlite/template-retirement.test.ts > applies 0012 during atomic fresh initialization 979ms
+ ? src/sqlite/template-retirement.test.ts > drops a populated inline-CHECK column on deployed libsql, preserving ordinary rows and structure 623ms
+ ? src/sqlite/template-retirement.test.ts > rolls back all eight DDL statements and populated template evidence on transaction failure 238ms
+ ? src/sqlite/loop-deletion.test.ts > loop deletion > deletes terminal runs and every dependent table, with no upgrade orphan (D5) 2251ms
+ ? src/sqlite/loop-deletion.test.ts > loop deletion > prunes only the deleted loop run from a shared inbound event 272ms
+ ? src/sqlite/loop-deletion.test.ts > loop deletion > deletes a loop without runs and returns false for a missing loop 228ms
+ ? src/sqlite/loop-deletion.test.ts > loop deletion > refuses a queued run without changing any table 509ms
+ ? src/sqlite/loop-deletion.test.ts > loop deletion > refuses a running run without changing any table 186ms
+ ? src/sqlite/loop-deletion.test.ts > loop deletion > refuses a waiting run without changing any table 170ms
+ ? src/sqlite/loop-deletion.test.ts > loop deletion > refuses a paused run without changing any table 568ms
+ ? src/sqlite/loop-deletion.test.ts > loop deletion > rolls back every deletion and link update when deleting the loop row fails 203ms
+ ? src/sqlite/loop-deletion.test.ts > loop deletion > preserves another loop and its parent/child history, detaching surviving children only 153ms
+ ? src/sqlite/loop-deletion.test.ts > loop deletion > deletes only orphan runs and their dependents, including active historical orphans 550ms
+ ? src/sqlite/loop-deletion.test.ts > loop deletion > rolls back orphan cleanup when a dependent delete fails 92ms
+ ? src/sqlite/durable-events.test.ts > generated durable event boundaries with SQLite > records the exact prompt bound and fails one over (template=false) 2586ms
+ ? src/sqlite/durable-events.test.ts > generated durable event boundaries with SQLite > records the exact prompt bound and fails one over (template=true) 1187ms
+ ? src/sqlite/durable-events.test.ts > generated durable event boundaries with SQLite > bounds a generated harness failure without stranding a running run 806ms
+ ? src/sqlite/durable-events.test.ts > generated durable event boundaries with SQLite > reopens an oversized-event failure without executing the node again 2284ms
+ ? src/sqlite/durable-events.test.ts > generated durable event boundaries with SQLite > recovers healthy queued work beside unreadable json history 319ms
+ ? src/sqlite/durable-events.test.ts > generated durable event boundaries with SQLite > recovers healthy queued work beside unreadable schema history 962ms
+ ? src/sqlite/durable-events.test.ts > generated durable event boundaries with SQLite > recovers healthy queued work beside unreadable row history 849ms
+ ? src/sqlite/durable-events.test.ts > generated durable event boundaries with SQLite > recovers healthy queued work beside unreadable row-schema history 811ms
+ ? src/sqlite/durable-events.test.ts > generated durable event boundaries with SQLite > recovers healthy queued work beside unreadable snapshot history 480ms
+ ? src/sqlite/durable-events.test.ts > generated durable event boundaries with SQLite > recovers healthy queued work beside unreadable snapshot-schema history 423ms
+ ? src/sqlite/durable-events.test.ts > generated durable event boundaries with SQLite > recovers healthy queued work beside unreadable initial-schema history 708ms
+ ? src/sqlite/durable-events.test.ts > generated durable event boundaries with SQLite > recovers healthy queued work beside unreadable terminal history 930ms
+ ? src/sqlite/durable-events.test.ts > generated durable event boundaries with SQLite > attributes damaged JSON to its run through get 826ms
+ ? src/sqlite/durable-events.test.ts > generated durable event boundaries with SQLite > attributes damaged JSON to its run through listChildren 348ms
+ ? src/sqlite/durable-events.test.ts > generated durable event boundaries with SQLite > attributes damaged JSON to its run through transition 267ms
+ ? src/sqlite/durable-events.test.ts > generated durable event boundaries with SQLite > attributes damaged JSON to its run through update 600ms
+ ? src/sqlite/durable-events.test.ts > generated durable event boundaries with SQLite > attributes damaged JSON to its run through claimCancel 261ms
+ ? src/sqlite/durable-events.test.ts > generated durable event boundaries with SQLite > recovers healthy work beside a cancel-requested parent with a damaged child row 663ms
+ ? src/sqlite/durable-events.test.ts > generated durable event boundaries with SQLite > reads metadata without touching damaged thread snapshots, but isolates them at recovery 245ms
+ ? src/sqlite/durable-events.test.ts > generated durable event boundaries with SQLite > maps only named run fields when storage adds an internal column 451ms
+ ? src/sqlite/readiness.test.ts > refuses a stored noncanonical header "X Sig" before startup writes 2204ms
+ ? src/sqlite/readiness.test.ts > refuses a stored noncanonical header "X-Sig" before startup writes 168ms
+ ? src/sqlite/readiness.test.ts > refuses a stored noncanonical header "" before startup writes 322ms
+ ? src/sqlite/readiness.test.ts > refuses a stored noncanonical header "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" before startup writes 258ms
+ ? src/sqlite/readiness.test.ts > refuses a stored noncanonical header "x\nbad" before startup writes 494ms
+ ? src/sqlite/readiness.test.ts > refuses missing table before any startup write 135ms
+ ? src/sqlite/readiness.test.ts > refuses missing column before any startup write 128ms
+ ? src/sqlite/readiness.test.ts > refuses ledger timestamp mismatch before any startup write 360ms
+ ? src/sqlite/readiness.test.ts > refuses missing ledger entry before any startup write 804ms
+ ? src/sqlite/readiness.test.ts > refuses wrong marker before any startup write 631ms
+ ? src/sqlite/readiness.test.ts > refuses malformed stored definitions before any startup write 366ms
+ ? src/sqlite/readiness.test.ts > derives current readiness and the fresh marker from the format constant and shipped ledger 346ms
+ ? src/sqlite/readiness.test.ts > accepts historical applied hashes because Drizzle identifies migrations by timestamp 940ms
+ ? src/sqlite/readiness.test.ts > refuses a format-4 marker whose ledger stops before the baseline at migration 8 589ms
+ ? src/sqlite/readiness.test.ts > refuses a format-4 marker whose ledger stops before the baseline at migration 9 264ms
+ ? src/sqlite/readiness.test.ts > refuses a format-4 marker whose ledger stops before the baseline at migration 10 435ms
+ ? src/sqlite/readiness.test.ts > refuses a format-4 marker whose ledger stops before the baseline at migration 11 356ms
+ ? src/sqlite/readiness.test.ts > refuses a format-4 marker whose ledger stops before the baseline at migration 12 387ms
+ ? src/sqlite/readiness.test.ts > refuses a head ledger with missing additive structure after a no-op migration 108ms
+ ? src/sqlite/readiness.test.ts > requires the shipped baseline constraint names as well as their expressions 36ms
+ ? src/sqlite/readiness.test.ts > derives dropped and IF NOT EXISTS indexes from the executed migration catalogue 5204ms
+ ? src/sqlite/readiness.test.ts > refuses a complete format-3 marker at 0011 without applying cutover SQL 177ms
+ ? src/sqlite/db.test.ts > Mutex > runs tasks one at a time in order and tolerates double release 141ms
+ ? src/sqlite/db.test.ts > Mutex > releases the lock when the task throws 12ms
+ ? src/sqlite/db.test.ts > serialised client > lets a transaction and other statements interleave safely on a file database 1527ms
+ ? src/sqlite/db.test.ts > serialised client > releases the lock when a transaction rolls back or fails to open 304ms
+ ? src/sqlite/db.test.ts > event loop fairness > yields to the event loop before a statement once the interval has passed 24ms
+ ? src/sqlite/db.test.ts > serialised client ordering with yields > never lets a statement submitted after a yield overtake one already queued 8ms
+ ? src/sqlite/db.test.ts > serialised client ordering with yields > keeps submission order when every statement yields 10ms
+ ? src/sqlite/db.test.ts > serialised client ordering with yields > keeps a transaction in its queue position when it yields 1ms
+ ? src/sqlite/db.test.ts > databaseFilePath > resolves the file a libsql URL opens, like libsql does 2ms
+ ? src/sqlite/db.test.ts > databaseFilePath > names the file libsql actually creates for an encoded URL 419ms
+ ? src/sqlite/db.test.ts > pendingMigrations > counts shipped migrations until they are applied, by the last recorded one 222ms
+ ? src/scheduler/timer-service.test.ts > MemoryTimerStore > upserts, lists due timers in order, and removes by key or run 7ms
+ ? src/scheduler/timer-service.test.ts > TimerService > keeps a timer whose listener failed and delivers it again on the next poll 2ms
+ ? src/scheduler/timer-service.test.ts > TimerService > skips overlapping polls and logs store failures 1ms
+ ? src/scheduler/timer-service.test.ts > TimerService > delivers at least once: a timer stays until its listeners return, and a re-arm survives 69ms
+ ? src/scheduler/timer-service.test.ts > TimerService > polls on an interval between start and stop 62ms
+ ? src/scheduler/timer-service.test.ts > deferred timer delivery > retains an early delivery until a listener accepts it (50 ms) 1ms
+ ? src/scheduler/timer-service.test.ts > deferred timer delivery > retains an early delivery until a listener accepts it (1000 ms) 0ms
+ ? src/scheduler/timer-service.test.ts > moves deferred rows out of a full batch without replacing a listener re-arm 1ms
+ ? src/scheduler/timer-service.test.ts > keeps an identical-deadline re-arm requested by a delivery listener 1ms
+ ? src/scheduler/timer-service.test.ts > preserves mutation order and recovers the queue after a failed schedule 3ms
+ ? src/fs/fs.test.ts > FsWorkspace > resolves fixed, templated, and temporary directories and creates them 222ms
+ ? src/fs/fs.test.ts > FsWorkspace > writes relative and absolute files, creating parent directories 225ms
+ ? src/fs/fs.test.ts > FsArtifactStore > accepts verified bytes published by another writer while a read handle blocks replacement 3723ms
+ ? src/fs/fs.test.ts > FsArtifactStore > rejects corrupted final bytes and atomically repairs a pre-existing partial file 398ms
+ ? src/fs/fs.test.ts > FsArtifactStore > does not accept truncated bytes on a repeated put 1102ms
+ ? src/fs/fs.test.ts > FsArtifactStore > ignores interrupted temporary writes and converges under identical and different concurrent puts 1489ms
+ ? src/fs/fs.test.ts > FsArtifactStore > stores content once by hash and reads it back by reference 443ms
+ ? src/fs/fs.test.ts > FsArtifactStore > verifies raw bytes before UTF-8 decoding 85ms
+ ? src/fs/fs.test.ts > FsArtifactStore > reports a typed publication failure without a final artifact when storage is unavailable 18ms
+ ? src/fs/fs.test.ts > FsArtifactStore > returns undefined for malformed or missing references 7ms
+ ? src/fs/fs.test.ts > FsArtifactStore > rethrows unexpected filesystem errors 151ms
+ ? src/sqlite/classifiers.test.ts > classifier repository > scopes rows by owner, preserves enabled on edits/seeds, clears optional auth, protects the built-in 358ms
+ ? src/sqlite/classifiers.test.ts > classifier repository > upgrades a database at 3 migrations without rewriting existing data and reruns idempotently 1498ms
+ ? src/sqlite/classifiers.test.ts > classifier repository > upgrades a database at 6 migrations without rewriting existing data and reruns idempotently 975ms
+ ? src/http/probes-security.test.ts > probe credential boundaries > refuses malformed external stream chunks with safe diagnostics 134ms
+ ? src/http/probes-security.test.ts > probe credential boundaries > keeps the typed overflow safe when transport cancellation itself fails 1ms
+ ? src/http/probes-security.test.ts > probe credential boundaries > rejects an oversized advertised body before reading, cancels it, and releases the lock 9ms
+ ? src/http/probes-security.test.ts > probe credential boundaries > handles an absent body and cancels a supplied HEAD body without interpreting its length 4ms
+ ? src/http/probes-security.test.ts > probe credential boundaries > cancels a pending injected body read on abort and discards the supplied private reason 1ms
+ ? src/http/probes-security.test.ts > probe credential boundaries > omits credential response headers case-insensitively while preserving ordinary response data 2ms
+ ? src/http/probes-security.test.ts > probe credential boundaries > replaces raw transport and body-reader diagnostics with a safe typed code 6ms
+ ? src/http/probes-security.test.ts > probe credential boundaries > preserves caller-abort control semantics without exposing its supplied reason 0ms
+ ? src/http/probes-security.test.ts > probe credential boundaries > rejects CRLF header injection through the platform header normalizer with safe diagnostics 1ms
+ ? src/http/probes-bounds.test.ts > HTTP probe body bounds over real sockets > accepts body-less 304 metadata with a large declared representation length 198ms
+ ? src/http/probes-bounds.test.ts > HTTP probe body bounds over real sockets > accepts body-less 204 metadata with a large declared representation length 15ms
+ ? src/http/probes-bounds.test.ts > HTTP probe body bounds over real sockets > accepts gzip at the decompressed cap when its wire length exceeds the cap 29ms
+ ? src/http/probes-bounds.test.ts > HTTP probe body bounds over real sockets > bounds decompressed bytes even when the compressed Content-Length fits 24ms
+ ? src/http/probes-bounds.test.ts > HTTP probe body bounds over real sockets > accepts exactly the byte cap (chunked: false) 46ms
+ ? src/http/probes-bounds.test.ts > HTTP probe body bounds over real sockets > accepts exactly the byte cap (chunked: true) 63ms
+ ? src/http/probes-bounds.test.ts > HTTP probe body bounds over real sockets > refuses cap plus one before parsing (chunked: false) 48ms
+ ? src/http/probes-bounds.test.ts > HTTP probe body bounds over real sockets > refuses cap plus one before parsing (chunked: true) 26ms
+ ? src/http/probes-bounds.test.ts > HTTP probe body bounds over real sockets > refuses an oversized Content-Length without waiting for any body bytes 12ms
+ ? src/http/probes-bounds.test.ts > HTTP probe body bounds over real sockets > cancels a no-length stream on overflow without waiting for EOF 310ms
+ ? src/http/probes-bounds.test.ts > HTTP probe body bounds over real sockets > preserves split UTF-8 JSON at byte offset 1, including at the cap 1003ms
+ ? src/http/probes-bounds.test.ts > HTTP probe body bounds over real sockets > preserves split UTF-8 JSON at byte offset 2, including at the cap 968ms
+ ? src/http/probes-bounds.test.ts > HTTP probe body bounds over real sockets > preserves split UTF-8 JSON at byte offset 3, including at the cap 978ms
+ ? src/http/probes-bounds.test.ts > HTTP probe body bounds over real sockets > preserves split UTF-8 JSON at byte offset 4, including at the cap 1072ms
+ ? src/http/probes-bounds.test.ts > HTTP probe body bounds over real sockets > preserves split UTF-8 JSON at byte offset 5, including at the cap 1191ms
+ ? src/http/probes-bounds.test.ts > HTTP probe body bounds over real sockets > preserves split UTF-8 JSON at byte offset 6, including at the cap 1670ms
+ ? src/http/probes-bounds.test.ts > HTTP probe body bounds over real sockets > preserves split UTF-8 JSON at byte offset 7, including at the cap 1932ms
+ ? src/http/probes-bounds.test.ts > HTTP probe body bounds over real sockets > preserves split UTF-8 JSON at byte offset 8, including at the cap 2000ms
+ ? src/http/probes-bounds.test.ts > HTTP probe body bounds over real sockets > preserves split UTF-8 JSON at byte offset 9, including at the cap 1294ms
+ ? src/http/probes-bounds.test.ts > HTTP probe body bounds over real sockets > preserves split UTF-8 JSON at byte offset 10, including at the cap 1111ms
+ ? src/http/probes-bounds.test.ts > HTTP probe body bounds over real sockets > releases the socket on abort mid-read 107ms
+ ? src/http/probes-bounds.test.ts > HTTP probe body bounds over real sockets > releases the socket on timeout mid-read 215ms
+ ? src/http/probes-bounds.test.ts > HTTP probe body bounds over real sockets > accepts HEAD metadata for a large representation without reading its body 14ms
+ ? src/sqlite/json-values.test.ts > JSON values in real SQLite > preserves absent on create, update, transition and reopen 679ms
+ ? src/sqlite/json-values.test.ts > JSON values in real SQLite > preserves null on create, update, transition and reopen 462ms
+ ? src/sqlite/json-values.test.ts > JSON values in real SQLite > preserves false on create, update, transition and reopen 453ms
+ ? src/sqlite/json-values.test.ts > JSON values in real SQLite > preserves zero on create, update, transition and reopen 384ms
+ ? src/sqlite/json-values.test.ts > JSON values in real SQLite > preserves empty string on create, update, transition and reopen 8706ms
+ ? src/sqlite/json-values.test.ts > JSON values in real SQLite > preserves array on create, update, transition and reopen 766ms
+ ? src/sqlite/json-values.test.ts > JSON values in real SQLite > preserves object on create, update, transition and reopen 478ms
+ ? src/sqlite/json-values.test.ts > JSON values in real SQLite > preserves nested null on create, update, transition and reopen 485ms
+ ? src/sqlite/json-values.test.ts > JSON values in real SQLite > rejects an invalid update without changing prior values 468ms
+ ? src/sqlite/json-values.test.ts > JSON values in real SQLite > rejects an invalid transition without changing prior values 410ms
+ ? src/sqlite/json-values.test.ts > JSON values in real SQLite > preserves nested null and falsy values in optional object columns and thread snapshots 498ms
+ ? src/sqlite/json-values.test.ts > JSON values in real SQLite > preserves all accepted settings and inbound payload values across reopen 656ms
+ ? src/sqlite/history-summaries.test.ts > SQLite history queries > applies the history index to an existing current-format store and reruns idempotently 352ms
+ ? src/sqlite/history-summaries.test.ts > SQLite history queries > summarizes each owner loop beyond 500 unrelated runs, with ties and no-history controls 808ms
+ ? src/sqlite/history-summaries.test.ts > SQLite history queries > isolates a damaged latest status while counting its row and preserving healthy summaries 115ms
+ ? src/sqlite/history-summaries.test.ts > SQLite history queries > pages inbound timestamp ties, applies every filter before the boundary, and detects exhaustion 445ms
+ ? src/http/http.test.ts > HttpProbes > performs GET, HEAD, and POST probes and parses JSON bodies 141ms
+ ? src/http/http.test.ts > HttpProbes > times out and honours the caller signal 122ms
+ ? src/http/http.test.ts > signatures > signs and verifies in constant time 3ms
+ ? src/http/http.test.ts > HttpWebhookDelivery > posts signed JSON and throws on non-2xx responses 19ms
+ ? src/http/http.test.ts > HttpWebhookDelivery > composes the return-delivery port 3ms
+ ? src/claude/process.test.ts > owned native Claude process transport > streams stdout, sends stdin and never retains stderr content 306ms
+ ? src/claude/process.test.ts > owned native Claude process transport > reports missing executable without exposing raw native errors 21ms
+ × src/claude/process.test.ts > owned native Claude process transport > kills on deadline and output overflow 15762ms
+   ? EBUSY: resource busy or locked, rmdir '<user>\AppData\Local\Temp\gg-qa-231-9896cf-independent\tests\gg-claude-process-OahR6b'
+ × src/claude/process.test.ts > owned native Claude process transport > does not spawn for an already aborted signal and cancels a running process 5134ms
+   ? EBUSY: resource busy or locked, rmdir '<user>\AppData\Local\Temp\gg-qa-231-9896cf-independent\tests\gg-claude-process-9NH2gR'
+ × src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived child started 6671ms
+   ? expected 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' to be 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' // Object.is equality
+   ? EBUSY: resource busy or locked, rmdir '<user>\AppData\Local\Temp\gg-qa-231-9896cf-independent\tests\gg-claude-process-g0VLfG'
+ ? src/sqlite/upgrade-scan.test.ts > matches the old hash across batches, duplicate rows and UTF-16/control-character ordering 240ms
+ ? src/sqlite/upgrade-scan.test.ts > propagates a failed inventory read while cleaning up its temporary sort 4ms
+ ? src/sqlite/upgrade-scan.test.ts > merges multiple bounded fan-in passes with hash parity and removes all spill files 2012ms
+ ? src/sqlite/upgrade-scan.test.ts > closes merge readers and cleans intermediate output when a merge read fails 82ms
+ ? src/sqlite/upgrade-scan.test.ts > rejects invalid sort bounds {"chunkSize":0} 1ms
+ ? src/sqlite/upgrade-scan.test.ts > rejects invalid sort bounds {"chunkSize":1.5} 0ms
+ ? src/sqlite/upgrade-scan.test.ts > rejects invalid sort bounds {"fanIn":1} 0ms
+ ? src/sqlite/upgrade-scan.test.ts > rejects invalid sort bounds {"fanIn":64} 0ms
+ ? src/sqlite/upgrade-scan.test.ts > rejects invalid sort bounds {"fanIn":65} 0ms
+ ? src/sqlite/upgrade-scan.test.ts > rejects invalid sort bounds {"fanIn":2.5} 0ms
+ ? src/sqlite/retired-destinations-guard.test.ts > startup guard and retired Event destinations (#242) > lets a store start when a definition departs from the contract only by Event destinations 315ms
+ ? src/sqlite/retired-destinations-guard.test.ts > startup guard and retired Event destinations (#242) > still refuses the store for another invalid field beside it 81ms
+ ? src/sqlite/retired-destinations-guard.test.ts > startup guard and retired Event destinations (#242) > still refuses the store for an invalid destination of another kind 78ms
+ ? src/sqlite/retired-destinations-guard.test.ts > startup guard and retired Event destinations (#242) > still refuses the store for an Event destination with an unknown field 105ms
+ ? src/sqlite/retired-destinations-guard.test.ts > startup guard and retired Event destinations (#242) > still refuses the store for an Event destination with an empty event type 174ms
+ ? src/sqlite/retired-destinations-guard.test.ts > startup guard and retired Event destinations (#242) > still refuses the store for an Event destination with a space-containing event type 134ms
+ ? src/sqlite/retired-destinations-guard.test.ts > startup guard and retired Event destinations (#242) > still refuses the store for an Event destination with a digit-leading event type 118ms
+ ? src/sqlite/retired-destinations-guard.test.ts > startup guard and retired Event destinations (#242) > still refuses the store for an Event destination with an overlong event type 142ms
+ ? src/sqlite/retired-destinations-guard.test.ts > startup guard and retired Event destinations (#242) > still refuses the store for an Event destination with a newline-containing event type 105ms
+ ? src/sqlite/retired-destinations-guard.test.ts > startup guard and retired Event destinations (#242) > accepts the longest slug event type the former channel allowed 87ms
+ ? src/sqlite/retired-destinations-guard.test.ts > startup guard and retired Event destinations (#242) > still refuses a stored definition that is not JSON 102ms
+ ? src/sqlite/run-paging.test.ts > SqliteRunRepository ordinary paging > matches an unpaged SQL query across tuple pages with timestamp ties and a concurrent insertion 448ms
+ ? src/sqlite/run-paging.test.ts > SqliteRunRepository ordinary paging > applies owner, loop, statuses, parent and timestamp filters before the cursor boundary 130ms
+ ? src/sqlite/run-paging.test.ts > SqliteRunRepository ordinary paging > clamps an internal page limit of 0 to one item 133ms
+ ? src/sqlite/run-paging.test.ts > SqliteRunRepository ordinary paging > clamps an internal page limit of -1 to one item 77ms
+ ? src/sqlite/run-paging.test.ts > SqliteRunRepository ordinary paging > clamps an internal page limit of -100 to one item 107ms
+ ? src/sqlite/run-paging.test.ts > SqliteRunRepository ordinary paging > permits a 501-row lookahead while list remains capped at 500 1101ms
+ ? src/claude/policy.test.ts > approved native Windows Claude policy > exposes exactly the verified read-only tools without an OS confinement claim 10ms
+ ? src/claude/policy.test.ts > approved native Windows Claude policy > uses dontAsk plus explicit allowed full-access tools, never bypass or restricted 3ms
+ ? src/claude/policy.test.ts > approved native Windows Claude policy > rejects on-request read-only 2ms
+ ? src/claude/policy.test.ts > approved native Windows Claude policy > rejects on-request workspace-write 0ms
+ ? src/claude/policy.test.ts > approved native Windows Claude policy > rejects on-request danger-full-access 0ms
+ ? src/claude/policy.test.ts > approved native Windows Claude policy > rejects workspace-write, non-Windows assumptions, explicit network isolation and web search 2ms
+ ? src/claude/policy.test.ts > approved native Windows Claude policy > fails closed on customizations rather than ignoring them 2ms
+ ? src/claude/policy.test.ts > approved native Windows Claude policy > binds the exact initial model and supported effort without a competing inheritance resolver 1ms
+ ? src/claude/policy.test.ts > refuses invalid runtime option shapes before selecting a policy 1ms
+ ? src/claude/process-failure.test.ts > bounded native transport failure outcomes > reports unconfirmed termination after abort instead of successful cancellation 17ms
+ ? src/claude/process-failure.test.ts > bounded native transport failure outcomes > reports unconfirmed termination after timeout instead of successful cancellation 7ms
+ ? src/claude/process-failure.test.ts > bounded native transport failure outcomes > confirmed close clears the kill deadline and distinguishes normal cancellation 3ms
+ ? src/claude/process-failure.test.ts > bounded native transport failure outcomes > retains only fixed typed parser diagnostics and kills the owned process 1ms
+ ? src/claude/process-failure.test.ts > bounded native transport failure outcomes > retains only fixed unknown parser diagnostics and kills the owned process 1ms
+ ? src/claude/process-failure.test.ts > bounded native transport failure outcomes > reports stdin delivery failure without claiming a successful turn 1ms
+ ? src/claude/process-failure.test.ts > bounded native transport failure outcomes > maps native spawn error EACCES without retaining its body 1ms
+ ? src/claude/process-failure.test.ts > bounded native transport failure outcomes > maps native spawn error EPERM without retaining its body 1ms
+ ? src/http/body-signature.test.ts > body-only webhook HMAC > matches an independent timestamp/raw-byte vector, including bytes that UTF-8 cannot decode 4ms
+ ? src/http/body-signature.test.ts > body-only webhook HMAC > matches the published GitHub SHA256 vector without a timestamp 1ms
+ ? src/http/body-signature.test.ts > body-only webhook HMAC > authenticates exact bytes before any decoding, parsing or normalization 1ms
+ ? src/http/body-signature.test.ts > body-only webhook HMAC > refuses incorrect secrets and malformed algorithm/digest headers without throwing 1ms
+ ? src/http/body-signature.test.ts > body-only webhook HMAC > keeps timestamp signing independent with its exact existing verification behavior 2ms
+stderr | src/sqlite/event-read-benchmark.test.ts > round-trips large mixed evaluation pages and measures read validation overhead
+{"eventReadBenchmark":{"rows":1000,"samples":10,"baselineMedianMs":42.42829999999958,"validatedMedianMs":79.09640000000036,"addedMedianMs":36.66810000000078}}
+System.Management.Automation.RemoteException
+stderr | src/sqlite/event-read-benchmark.test.ts > round-trips large mixed evaluation pages and measures read validation overhead
+{"eventReadBenchmark":{"rows":10000,"samples":10,"baselineMedianMs":435.1386000000002,"validatedMedianMs":735.7312000000002,"addedMedianMs":300.59259999999995}}
+System.Management.Automation.RemoteException
+ ? src/sqlite/event-read-benchmark.test.ts > round-trips large mixed evaluation pages and measures read validation overhead 22414ms
+ ? src/process/output-capture.test.ts > items-mode byte capture > preserves pending UTF-8 bytes when an offset input view is reused after append 4ms
+ ? src/process/output-capture.test.ts > items-mode byte capture > admits exactly the cap, detects the first extra byte and retains only the bounded prefix 1ms
+ ? src/process/output-capture.test.ts > items-mode byte capture > counts UTF-8 bytes across chunk boundaries and omits a cap-split final character 1ms
+ ? src/process/output-capture.test.ts > items-mode byte capture > keeps decoded output stable when input chunks are reused 1ms
+ ? src/process/output-capture.test.ts > items-mode byte capture > handles empty output and a zero cap while refusing invalid limits 1ms
+ ? src/process/output-capture.test.ts > items-mode byte capture > replaces incomplete clean-EOF sequences and returns a stable final read 1ms
+ ? src/sqlite/event-validation.test.ts > strict stored event reads > rejects a whole page for invalid decision.made / {"strategy":"expression","route":"yes"} without revealing data 346ms
+ ? src/sqlite/event-validation.test.ts > strict stored event reads > rejects a whole page for invalid decision.made / {"strategy":"expression","route":"yes", without revealing data 64ms
+ ? src/sqlite/event-validation.test.ts > strict stored event reads > rejects a whole page for invalid unknown.event / {} without revealing data 357ms
+ ? src/sqlite/event-validation.test.ts > strict stored event reads > rejects a whole page for invalid run.queued / {secret-marker without revealing data 285ms
+ ? src/sqlite/event-validation.test.ts > strict stored event reads > rejects a whole page for invalid run.queued / null without revealing data 280ms
+ ? src/sqlite/event-validation.test.ts > strict stored event reads > rejects a whole page for invalid run.queued / [] without revealing data 104ms
+ ? src/sqlite/event-validation.test.ts > strict stored event reads > rejects a whole page for invalid run.queued / 7 without revealing data 117ms
+ ? src/sqlite/event-validation.test.ts > strict stored event reads > rejects a whole page for invalid run.queued / {} without revealing data 126ms
+ ? src/sqlite/admission-contract.test.ts > SQLite admission contract > historical inbound-only keys are perman 607ms
+ ? src/sqlite/admission-contract.test.ts > SQLite admission contract > racing explicit keys have one pending i 250ms
+ ? src/sqlite/admission-contract.test.ts > SQLite admission contract > ordinary create is atomic, canonical an 893ms
+ ? src/sqlite/admission-contract.test.ts > SQLite admission contract > claim rollback at claim.inbound leaves  527ms
+ ? src/sqlite/admission-contract.test.ts > SQLite admission contract > claim rollback at claim.receipt leaves  225ms
+ ? src/sqlite/admission-contract.test.ts > SQLite admission contract > create rollback at create.run preserves 437ms
+ ? src/sqlite/admission-contract.test.ts > SQLite admission contract > create rollback at create.event preserv 257ms
+ ? src/sqlite/admission-contract.test.ts > SQLite admission contract > create rollback at create.receipt prese 197ms
+ ? src/sqlite/admission-contract.test.ts > SQLite admission contract > create rollback at create.link preserve 587ms
+ ? src/sqlite/admission-contract.test.ts > SQLite admission contract > claim validates owner, immutable intent 70ms
+ ? src/sqlite/admission-contract.test.ts > SQLite admission contract > claim freezes caller objects and identi 469ms
+ ? src/sqlite/admission-contract.test.ts > SQLite admission contract > pending keys reserve across webhook and 510ms
+ ? src/sqlite/admission-contract.test.ts > SQLite admission contract > concurrent poll candidates consume one  215ms
+ ? src/sqlite/admission-contract.test.ts > SQLite admission contract > Allow admits identical unkeyed raw bodi 241ms
+ ? src/sqlite/admission-contract.test.ts > SQLite admission contract > a draft snapshot commits with its run o 618ms
+ ? src/sqlite/admission-contract.test.ts > SQLite admission contract > due selection is deterministic, nonnega 946ms
+ ? src/sqlite/decision-migration.test.ts > decision skipped evidence migration > rewrites historical decisions once and preserves existing evidence and other events 1390ms
+ ? src/sqlite/session-family.test.ts > sqlite session family selection > filters before sorting, preserving older same-family rows and existing keys 595ms
+ ? src/sqlite/session-family.test.ts > memory session family selection > filters before sorting, preserving older same-family rows and existing keys 4ms
+ ? src/claude/environment.test.ts > Claude subscription child environment > copies only explicitly allowlisted Windows runtime/auth-location variables case insensitively 5ms
+ ? src/claude/environment.test.ts > Claude subscription child environment > never propagates API keys, tokens, providers, alternate credential/settings locations or arbitrary values 1ms
+ ? src/process/template-support.test.ts > private helper capture > assembles split chunks before returning independently bounded stdout/stderr and excludes inherited credentials 57ms
+ ? src/sqlite/append-validation.test.ts > rejects the entire generated append before insert, sequence changes or publication 1513ms
+ ? src/claude/models.test.ts > exact Claude model capabilities > admits both exact identities through the same model and effort checks 20ms
+ ? src/claude/errors.test.ts > safe Claude diagnostic names > retains real record, plugin, skill and tool names 3ms
+ ? src/claude/errors.test.ts > safe Claude diagnostic names > redacts path/account-like metadata C:/Users/alice/secret.txt from diagnostics 2ms
+ ? src/claude/errors.test.ts > safe Claude diagnostic names > redacts path/account-like metadata home/alice/notes.md from diagnostics 0ms
+ ? src/claude/errors.test.ts > safe Claude diagnostic names > redacts path/account-like metadata alice@example.com from diagnostics 0ms
+ ? src/claude/errors.test.ts > safe Claude diagnostic names > redacts path/account-like metadata C:\Users\alice\secret.txt from diagnostics 0ms
+ ? src/claude/errors.test.ts > safe Claude diagnostic names > redacts path/account-like metadata account:alice from diagnostics 0ms
+ ? src/claude/queue.test.ts > buffers values, wakes a pending consumer and closes idempotently 5ms
+System.Management.Automation.RemoteException
+?????? Failed Tests 22 ???????
+System.Management.Automation.RemoteException
+ FAIL  src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild
+Error: Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ? src/adversarial.test.ts:225:3
+    223|     expect(() => decryptSecret(Buffer.alloc(32, 5), ciphertext as stri
+    224|   });
+    225|   it('6/QA-LIMIT-001: ProcessScripts abort kills a real child and its 
+       |   ^
+    226|     const dir = await mkdtemp(join(tmpdir(), 'gg-process-tree-'));
+    227|     const pidFile = join(dir, 'grandchild.pid');
+System.Management.Automation.RemoteException
+???????????????????????[1/23]?
+System.Management.Automation.RemoteException
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills on deadline and output overflow
+Error: EBUSY: resource busy or locked, rmdir '<user>\AppData\Local\Temp\gg-qa-231-9896cf-independent\tests\gg-claude-process-OahR6b'
+??????????????????????????????
+Serialized Error: { errno: -4082, code: 'EBUSY', syscall: 'rmdir', path: '<user>\AppData\Local\Temp\gg-qa-231-9896cf-independent\tests\gg-claude-process-OahR6b' }
+???????????????????????[2/23]?
+System.Management.Automation.RemoteException
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > does not spawn for an already aborted signal and cancels a running process
+Error: EBUSY: resource busy or locked, rmdir '<user>\AppData\Local\Temp\gg-qa-231-9896cf-independent\tests\gg-claude-process-9NH2gR'
+??????????????????????????????
+Serialized Error: { errno: -4082, code: 'EBUSY', syscall: 'rmdir', path: '<user>\AppData\Local\Temp\gg-qa-231-9896cf-independent\tests\gg-claude-process-9NH2gR' }
+???????????????????????[3/23]?
+System.Management.Automation.RemoteException
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived child started
+AssertionError: expected 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' to be 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' // Object.is equality
+System.Management.Automation.RemoteException
+Expected: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+Received: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+System.Management.Automation.RemoteException
+ ? src/claude/process.test.ts:146:46
+    144|       const stopped = await readFile(marker, 'utf8');
+    145|       await new Promise((resolve) => setTimeout(resolve, 100));
+    146|       expect(await readFile(marker, 'utf8')).toBe(stopped);
+       |                                              ^
+    147|     } finally {
+    148|       controller.abort();
+System.Management.Automation.RemoteException
+???????????????????????[4/23]?
+System.Management.Automation.RemoteException
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived child started
+Error: EBUSY: resource busy or locked, rmdir '<user>\AppData\Local\Temp\gg-qa-231-9896cf-independent\tests\gg-claude-process-g0VLfG'
+??????????????????????????????
+Serialized Error: { errno: -4082, code: 'EBUSY', syscall: 'rmdir', path: '<user>\AppData\Local\Temp\gg-qa-231-9896cf-independent\tests\gg-claude-process-g0VLfG' }
+???????????????????????[5/23]?
+System.Management.Automation.RemoteException
+ FAIL  src/process/scripts.test.ts > ProcessScripts > kills and closes a real process cancelled with incomplete UTF-8 pending on both streams
+AssertionError: native process-tree cancellation must finish before fixture cleanup: expected true to be false // Object.is equality
+System.Management.Automation.RemoteException
+- Expected
++ Received
+System.Management.Automation.RemoteException
+- false
++ true
+System.Management.Automation.RemoteException
+ ? src/process/scripts.test.ts:194:7
+    192|       cleanupRequired,
+    193|       'native process-tree cancellation must finish before fixture cle
+    194|     ).toBe(false);
+       |       ^
+    195|     expect(streamsReady).toBe(2);
+    196|     expect(result).toMatchObject({ stdout: 'A\ufffd', stderr: 'B\ufffd
+System.Management.Automation.RemoteException
+???????????????????????[6/23]?
+System.Management.Automation.RemoteException
+ FAIL  src/process/scripts.test.ts > ProcessScripts > kills the process tree on timeout
+Error: Test timed out in 15000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ? src/process/scripts.test.ts:237:3
+    235|   });
+    236|
+    237|   it('kills the process tree on timeout', async () => {
+       |   ^
+    238|     const scripts = new ProcessScripts();
+    239|     const started = Date.now();
+System.Management.Automation.RemoteException
+???????????????????????[7/23]?
+System.Management.Automation.RemoteException
+ FAIL  src/process/scripts.test.ts > ProcessScripts > kills the process when the signal aborts, including when already aborted
+Error: Test timed out in 15000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ? src/process/scripts.test.ts:248:3
+    246|   }, 15_000);
+    247|
+    248|   it('kills the process when the signal aborts, including when already
+       |   ^
+    249|     const scripts = new ProcessScripts();
+    250|     const controller = new AbortController();
+System.Management.Automation.RemoteException
+???????????????????????[8/23]?
+System.Management.Automation.RemoteException
+ FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > deletes all history and configured templates, converts definitions, retains signing identities/secrets/settings, and starts through ordinary migrations
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ? src/sqlite/upgrade.test.ts:118:3
+    116|     await expect(handle.migrate()).rejects.toMatchObject({ code: 'DATA
+    117|   });
+    118|   it('deletes all history and configured templates, converts definitio
+       |   ^
+    119|     const handle = await fixture();
+    120|     const retained = await Promise.all(
+System.Management.Automation.RemoteException
+???????????????????????[9/23]?
+System.Management.Automation.RemoteException
+ FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > blocks ordinary queued runs without cancelling them
+ FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > blocks ordinary running runs without cancelling them
+ FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > blocks ordinary waiting runs without cancelling them
+ FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > blocks ordinary paused runs without cancelling them
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ? src/sqlite/upgrade.test.ts:205:54
+    203|     expect(await snapshot(handle.client)).toEqual(before);
+    204|   });
+    205|   it.each(['queued', 'running', 'waiting', 'paused'])(
+       |                                                      ^
+    206|     'blocks ordinary %s runs without cancelling them',
+    207|     async (status) => {
+System.Management.Automation.RemoteException
+??????????????????????[10/23]?
+System.Management.Automation.RemoteException
+ FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > blocks a pending ordinary receipt and its frozen admission intent
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ? src/sqlite/upgrade.test.ts:220:3
+    218|     },
+    219|   );
+    220|   it('blocks a pending ordinary receipt and its frozen admission inten
+       |   ^
+    221|     const handle = await fixture();
+    222|     await handle.client.execute(
+System.Management.Automation.RemoteException
+
+ Test Files  4 failed | 41 passed (45)
+??????????????????????[11/23]?
+      Tests  22 failed | 607 passed (629)
+System.Management.Automation.RemoteException
+   Start at  21:07:00
+ FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > requires every hash-bound review, binds repeated nodes to their stored version, and rejects stale/unused resolutions
+   Duration  1286.06s (tests 62%, import 32%, transform 6%, worker 1%)
+Error: Test timed out in 20000ms.
+
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+     Import  198 modules were evaluated 374 times · 384.13s total, 32% of tracked time
+ ? src/sqlite/upgrade.test.ts:230:3
+             ~180.77s faster with isolate: false  shared modules are evaluated once per worker instead of once per file
+    228|     await refuses(handle, await request(handle), /admission intents/);
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+    229|   });
+ % Coverage report from v8
+
+    230|   it('requires every hash-bound review, binds repeated nodes to their 
+=============================== Coverage summary ===============================
+       |   ^
+Statements   : 96.09% ( 2212/2302 )
+    231|     const handle = await fixture();
+Branches     : 93.49% ( 1537/1644 )
+    232|     const definition = frozenDefinition('llm', {
+System.Management.Automation.RemoteException
+Functions    : 98.06% ( 507/517 )
+??????????????????????[12/23]?
+Lines        : 96.79% ( 1966/2031 )
+System.Management.Automation.RemoteException
+================================================================================
+ FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses changed source, damaged SQL/ledger, malformed template identities and invalid definitions
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ? src/sqlite/upgrade.test.ts:302:3
+    300|     expect(await guardDatabaseUpgrade(handle.client)).toBe('current');
+    301|   });
+    302|   it('refuses changed source, damaged SQL/ledger, malformed template i
+       |   ^
+    303|     const handle = await fixture();
+    304|     const selected = await request(handle);
+System.Management.Automation.RemoteException
+??????????????????????[13/23]?
+System.Management.Automation.RemoteException
+ FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > rolls back deletions, DDL, ledger, rewrites and marker on a failure after structural SQL
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ? src/sqlite/upgrade.test.ts:323:3
+    321|     }
+    322|   });
+    323|   it('rolls back deletions, DDL, ledger, rewrites and marker on a fail
+       |   ^
+    324|     const handle = await fixture(),
+    325|       before = await snapshot(handle.client),
+System.Management.Automation.RemoteException
+??????????????????????[14/23]?
+System.Management.Automation.RemoteException
+ FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > rechecks safety at commit and rolls back if the lock or backup is lost
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ? src/sqlite/upgrade.test.ts:349:3
+    347|     await applyDatabaseUpgrade(handle.client, selected, safety);
+    348|   });
+    349|   it('rechecks safety at commit and rolls back if the lock or backup i
+       |   ^
+    350|     const handle = await fixture(),
+    351|       selected = await request(handle),
+System.Management.Automation.RemoteException
+??????????????????????[15/23]?
+System.Management.Automation.RemoteException
+ FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses an ordinary definition that would invoke a retired template loop
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ? src/sqlite/upgrade.test.ts:367:3
+    365|     expect(await snapshot(handle.client)).toEqual(before);
+    366|   });
+    367|   it('refuses an ordinary definition that would invoke a retired templ
+       |   ^
+    368|     const handle = await fixture();
+    369|     const original = frozenDefinition();
+System.Management.Automation.RemoteException
+??????????????????????[16/23]?
+System.Management.Automation.RemoteException
+ FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > removes old database archives and converts legacy owner defaults without changing other settings
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ? src/sqlite/upgrade.test.ts:409:3
+    407|     expect(await snapshot(handle.client)).toEqual(before);
+    408|   });
+    409|   it('removes old database archives and converts legacy owner defaults
+       |   ^
+    410|     const handle = await fixture();
+    411|     await handle.client.execute('CREATE TABLE gg_upgrade_archive (payl
+System.Management.Automation.RemoteException
+??????????????????????[17/23]?
+System.Management.Automation.RemoteException
+ FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses invalid/conflicting owner defaults: UPDATE settings SET value='not JSON'
+ FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses invalid/conflicting owner defaults: INSERT INTO settings VALUES ('local','defaultModel','"unknown"','2026-10-17T00:00:00.000Z')
+ FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses invalid/conflicting owner defaults: INSERT INTO settings VALUES ('other','defaultEffort','"invalid"','2026-10-17T00:00:00.000Z')
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ? src/sqlite/upgrade.test.ts:432:5
+    430|     "INSERT INTO settings VALUES ('local','defaultModel','\"unknown\"'
+    431|     "INSERT INTO settings VALUES ('other','defaultEffort','\"invalid\"
+    432|   ])('refuses invalid/conflicting owner defaults: %s', async (sql) => {
+       |     ^
+    433|     const handle = await fixture();
+    434|     await handle.client.execute(sql);
+System.Management.Automation.RemoteException
+??????????????????????[18/23]?
+System.Management.Automation.RemoteException
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive run" failed in C:
+  ¦ <user>\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-
+  ¦ g2\packages\infrastructure
+System.Management.Automation.RemoteException
+EXIT: 1; ELAPSED_SECONDS: 1330.3

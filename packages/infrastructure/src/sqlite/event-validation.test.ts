@@ -60,6 +60,19 @@ describe('strict stored event reads', () => {
       await expect(store.read(runId, 0, 2)).rejects.toThrow(`seq 2, type ${type}`);
       expect(await store.read(runId, 0, 1)).toMatchObject([{ type: 'run.queued', seq: 1 }]);
       expect(await store.read(runId, 2)).toMatchObject([{ type: 'run.cancelled', seq: 3 }]);
+      expect(await store.page(runId, 0, 1)).toMatchObject({
+        items: [{ type: 'run.queued', seq: 1 }],
+        nextAfter: 1,
+        hasMore: true,
+      });
+      await expect(store.page(runId, 1, 1)).rejects.toThrow(`seq 2, type ${type}`);
+      await expect(store.page(runId, 0, 3)).rejects.toThrow(`seq 2, type ${type}`);
+      expect(await store.page(runId, 2, 1)).toMatchObject({
+        items: [{ type: 'run.cancelled', seq: 3 }],
+        nextAfter: 3,
+        hasMore: false,
+      });
+      expect(await store.page(runId, 3, 1)).toEqual({ items: [], nextAfter: 3, hasMore: false });
     },
   );
 });

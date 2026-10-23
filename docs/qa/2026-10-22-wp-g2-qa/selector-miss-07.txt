@@ -1,0 +1,53 @@
+PACKAGE: infrastructure
+FILE: src/process/scripts.test.ts
+TEST: ProcessScripts > kills the process when the signal aborts, including when already aborted
+COMMAND: pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/process/scripts.test.ts --maxWorkers=1 --reporter=verbose -t <escaped exact full name>
+
+ RUN  v5.0.3 <worktree>/packages/infrastructure
+
+ ? src/process/scripts.test.ts > ProcessScripts > returns raw captured byte counts and truncation for default capture, including incomplete EOF
+ ? src/process/scripts.test.ts > ProcessScripts > preserves both UTF-8 streams split at byte offset 0 with default and explicit bounds
+ ? src/process/scripts.test.ts > ProcessScripts > preserves both UTF-8 streams split at byte offset 1 with default and explicit bounds
+ ? src/process/scripts.test.ts > ProcessScripts > preserves both UTF-8 streams split at byte offset 2 with default and explicit bounds
+ ? src/process/scripts.test.ts > ProcessScripts > preserves both UTF-8 streams split at byte offset 3 with default and explicit bounds
+ ? src/process/scripts.test.ts > ProcessScripts > preserves both UTF-8 streams split at byte offset 4 with default and explicit bounds
+ ? src/process/scripts.test.ts > ProcessScripts > preserves both UTF-8 streams split at byte offset 5 with default and explicit bounds
+ ? src/process/scripts.test.ts > ProcessScripts > preserves both UTF-8 streams split at byte offset 6 with default and explicit bounds
+ ? src/process/scripts.test.ts > ProcessScripts > preserves both UTF-8 streams split at byte offset 7 with default and explicit bounds
+ ? src/process/scripts.test.ts > ProcessScripts > preserves both UTF-8 streams split at byte offset 8 with default and explicit bounds
+ ? src/process/scripts.test.ts > ProcessScripts > preserves both UTF-8 streams split at byte offset 9 with default and explicit bounds
+ ? src/process/scripts.test.ts > ProcessScripts > preserves both UTF-8 streams split at byte offset 10 with default and explicit bounds
+ ? src/process/scripts.test.ts > ProcessScripts > preserves both UTF-8 streams split at byte offset 11 with default and explicit bounds
+ ? src/process/scripts.test.ts > ProcessScripts > counts raw bytes and drops only a cap-split suffix at cap 0 on both streams
+ ? src/process/scripts.test.ts > ProcessScripts > counts raw bytes and drops only a cap-split suffix at cap 1 on both streams
+ ? src/process/scripts.test.ts > ProcessScripts > counts raw bytes and drops only a cap-split suffix at cap 2 on both streams
+ ? src/process/scripts.test.ts > ProcessScripts > counts raw bytes and drops only a cap-split suffix at cap 3 on both streams
+ ? src/process/scripts.test.ts > ProcessScripts > counts raw bytes and drops only a cap-split suffix at cap 4 on both streams
+ ? src/process/scripts.test.ts > ProcessScripts > counts raw bytes and drops only a cap-split suffix at cap 5 on both streams
+ ? src/process/scripts.test.ts > ProcessScripts > counts raw bytes and drops only a cap-split suffix at cap 6 on both streams
+ ? src/process/scripts.test.ts > ProcessScripts > counts raw bytes and drops only a cap-split suffix at cap 7 on both streams
+ ? src/process/scripts.test.ts > ProcessScripts > counts raw bytes and drops only a cap-split suffix at cap 8 on both streams
+ ? src/process/scripts.test.ts > ProcessScripts > counts raw bytes and drops only a cap-split suffix at cap 9 on both streams
+ ? src/process/scripts.test.ts > ProcessScripts > counts raw bytes and drops only a cap-split suffix at cap 10 on both streams
+ ? src/process/scripts.test.ts > ProcessScripts > counts raw bytes and drops only a cap-split suffix at cap 11 on both streams
+ ? src/process/scripts.test.ts > ProcessScripts > replaces an incomplete trailing sequence at clean EOF on both streams
+ ? src/process/scripts.test.ts > ProcessScripts > kills and closes a real process cancelled with incomplete UTF-8 pending on both streams
+ ? src/process/scripts.test.ts > ProcessScripts > captures stdout, stderr, exit code, env, args, and stdin
+ ? src/process/scripts.test.ts > ProcessScripts > closes stdin when none is provided
+ ? src/process/scripts.test.ts > ProcessScripts > kills the process tree on timeout
+ ? src/process/scripts.test.ts > ProcessScripts > kills the process when the signal aborts, including when already aborted
+ ? src/process/scripts.test.ts > ProcessScripts > reports spawn failures as a null exit code with a message
+ ? src/process/scripts.test.ts > ProcessScripts > caps captured output
+ ? src/process/scripts.test.ts > ProcessScripts > bounds opted-in stdout by raw bytes and reports overflow without changing legacy capture
+ ? src/process/scripts.test.ts > ProcessScripts > reports exact-cap output as complete and does not emit a cap-split UTF8 suffix
+ ? src/process/scripts.test.ts > ProcessScripts > uses fixed spawn diagnostics without echoing a credential-bearing command
+ ? src/process/scripts.test.ts > killTree > does nothing without a pid
+ ? src/process/scripts.test.ts > killTree > uses taskkill on Windows and falls back to kill when taskkill is missing
+ ? src/process/scripts.test.ts > killTree > signals the process group on POSIX and falls back to kill on failure
+
+ Test Files  1 skipped (1)
+      Tests  39 skipped (39)
+   Start at  22:54:22
+   Duration  418ms (transform 49%, import 44%, worker 8%)
+
+EXIT: 0

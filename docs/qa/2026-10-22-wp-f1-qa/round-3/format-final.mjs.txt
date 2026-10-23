@@ -1,0 +1,13 @@
+// Read this source through node --input-type=module; no disposable files are created.
+import {spawn,execFileSync} from 'node:child_process';
+import {writeFileSync} from 'node:fs';
+import {resolve} from 'node:path';
+const start=Date.now(),root=process.cwd();let output='';
+const child=spawn('powershell.exe',['-NoProfile','-Command','& pnpm.cmd format:check; exit $LASTEXITCODE'],{cwd:root,env:process.env,windowsHide:true,stdio:['ignore','pipe','pipe']});
+for(const stream of [child.stdout,child.stderr])stream.on('data',b=>output+=b.toString());
+const code=await new Promise(r=>child.on('exit',r));
+output=output.split(root).join('<worktree>').split(root.replaceAll('\\','/')).join('<worktree>').replace(/[A-Z]:[\\/]+Users[\\/]+[^\s"'<>]+/gi,'<user-path>');
+if(process.env.USERNAME)output=output.split(process.env.USERNAME).join('<user>');
+const header=`Command: pnpm.cmd format:check\nNode: ${process.version}\nRevision: ${execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim()}\nExit: ${code}\nElapsed ms: ${Date.now()-start}\n\n`;
+writeFileSync(resolve('docs/qa/2026-10-22-wp-f1-qa/round-3/format-final.log.txt'),header+output);
+console.log('format:check exit '+code);process.exitCode=code;

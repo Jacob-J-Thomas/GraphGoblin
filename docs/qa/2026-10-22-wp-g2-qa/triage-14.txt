@@ -1,0 +1,45 @@
+PACKAGE: infrastructure
+FILE: src/sqlite/upgrade.test.ts
+TEST: definitions-only format-4 cutover > requires every hash-bound review, binds repeated nodes to their stored version, and rejects stale/unused resolutions
+COMMAND: pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/sqlite/upgrade.test.ts --maxWorkers=1 --reporter=verbose -t <escaped exact full name>
+FILTER_REGEX: requires.*every.*hash.*bound.*review.*binds.*repeated.*nodes.*to.*their.*stored.*version.*and.*rejects.*stale.*unused.*resolutions
+
+ RUN  v5.0.3 <worktree>/packages/infrastructure
+
+ ? src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > inspects every published version and draft without writes, excludes active template work, and reports disarms/counts
+ ? src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > deletes all history and configured templates, converts definitions, retains signing identities/secrets/settings, and starts through ordinary migrations
+ ? src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > blocks ordinary queued runs without cancelling them
+ ? src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > blocks ordinary running runs without cancelling them
+ ? src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > blocks ordinary waiting runs without cancelling them
+ ? src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > blocks ordinary paused runs without cancelling them
+ ? src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > blocks a pending ordinary receipt and its frozen admission intent
+ ? src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > requires every hash-bound review, binds repeated nodes to their stored version, and rejects stale/unused resolutions 3372ms
+ ? src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses changed source, damaged SQL/ledger, malformed template identities and invalid definitions
+ ? src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > rolls back deletions, DDL, ledger, rewrites and marker on a failure after structural SQL
+ ? src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > rechecks safety at commit and rolls back if the lock or backup is lost
+ ? src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses an ordinary definition that would invoke a retired template loop
+ ? src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > requires the stopped lock/backup capability and propagates failed safety verification before transaction
+ ? src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > removes old database archives and converts legacy owner defaults without changing other settings
+ ? src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses invalid/conflicting owner defaults: UPDATE settings SET value='not JSON'
+ ? src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses invalid/conflicting owner defaults: INSERT INTO settings VALUES ('local','defaultModel','"unknown"','2026-10-17T00:00:00.000Z')
+ ? src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses invalid/conflicting owner defaults: INSERT INTO settings VALUES ('other','defaultEffort','"invalid"','2026-10-17T00:00:00.000Z')
+ ? src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses damaged or old completion state before ordinary startup writes: UPDATE gg_upgrade_state SET status='pending'
+ ? src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses damaged or old completion state before ordinary startup writes: DELETE FROM gg_upgrade_state
+ ? src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses damaged or old completion state before ordinary startup writes: DROP INDEX runs_parent_idx
+ ? src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses damaged or old completion state before ordinary startup writes: CREATE TABLE template_instances (id TEXT)
+ ? src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses damaged or old completion state before ordinary startup writes: ALTER TABLE runs ADD COLUMN template_subject TEXT
+ ? src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses damaged or old completion state before ordinary startup writes: DELETE FROM __drizzle_migrations WHERE created_at=(SELECT min(created_at) FROM __drizzle_migrations)
+ ? src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses damaged or old completion state before ordinary startup writes: UPDATE gg_upgrade_state SET format_version=3
+ ? src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses a recorded ledger without application tables and permits a truly empty ledger
+ ? src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > treats a genuinely fresh format-4 store as a no-op
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 25 skipped (26)
+   Start at  23:03:06
+   Duration  9.46s (tests 38%, import 34%, transform 28%)
+
+  Transform  transforming modules took 2.48s · 28% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+EXIT: 0

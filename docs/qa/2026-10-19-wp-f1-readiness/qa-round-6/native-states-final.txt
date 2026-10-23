@@ -1,0 +1,475 @@
+Built API ee0f4f40, Node 22.14.0, native tooling/fixtures/readiness-cli.cs; port 5629, disposable store, binary-created key held only in memory.
+Native 202 means admission succeeded. The fixture deliberately refuses the later model turn; that runtime failure is preserved and is not a completion pass.
+
+{
+  "name": "nested-Claude-quota",
+  "pass": true,
+  "response": {
+    "status": 422,
+    "ms": 855,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/harness-not-ready",
+      "title": "harness not ready",
+      "status": 422,
+      "code": "HARNESS_NOT_READY",
+      "detail": "Harness readiness checks failed. Fix the listed problems, then start the run again.",
+      "errors": [
+        {
+          "code": "HARNESS_READINESS_QUOTA",
+          "severity": "warning",
+          "loopId": "01M5GPP4198MQ5KJ211K4T4W94",
+          "versionId": "01M5GPP41ARCVA3D7AAMVNFNHN",
+          "nodeId": "think",
+          "path": "config.harness",
+          "message": "Loop \"QA final Claude child\" (01M5GPP4198MQ5KJ211K4T4W94), node \"think\": Claude account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+        }
+      ]
+    }
+  },
+  "before": {
+    "runs": 0,
+    "events": 0,
+    "queued": 0,
+    "markerEvents": 0,
+    "snapshots": 0
+  },
+  "after": {
+    "runs": 0,
+    "events": 0,
+    "queued": 0,
+    "markerEvents": 0,
+    "snapshots": 0
+  },
+  "probes": {
+    "claude": {
+      "callsTotal": 3,
+      "turnCalls": 0,
+      "probes": 1,
+      "commands": [
+        "--safe-mode --setting-sources  --strict-mcp-config --version",
+        "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+        "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+      ]
+    },
+    "codex": {
+      "callsTotal": 0,
+      "turnCalls": 0,
+      "probes": 0,
+      "commands": []
+    }
+  }
+}
+
+{
+  "name": "nested-Claude-transport",
+  "pass": true,
+  "response": {
+    "status": 422,
+    "ms": 816,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/harness-not-ready",
+      "title": "harness not ready",
+      "status": 422,
+      "code": "HARNESS_NOT_READY",
+      "detail": "Harness readiness checks failed. Fix the listed problems, then start the run again.",
+      "errors": [
+        {
+          "code": "HARNESS_READINESS_TRANSPORT",
+          "severity": "warning",
+          "loopId": "01M5GPP4198MQ5KJ211K4T4W94",
+          "versionId": "01M5GPP41ARCVA3D7AAMVNFNHN",
+          "nodeId": "think",
+          "path": "config.harness",
+          "message": "Loop \"QA final Claude child\" (01M5GPP4198MQ5KJ211K4T4W94), node \"think\": Claude reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight."
+        }
+      ]
+    }
+  },
+  "before": {
+    "runs": 0,
+    "events": 0,
+    "queued": 0,
+    "markerEvents": 0,
+    "snapshots": 0
+  },
+  "after": {
+    "runs": 0,
+    "events": 0,
+    "queued": 0,
+    "markerEvents": 0,
+    "snapshots": 0
+  },
+  "probes": {
+    "claude": {
+      "callsTotal": 3,
+      "turnCalls": 0,
+      "probes": 1,
+      "commands": [
+        "--safe-mode --setting-sources  --strict-mcp-config --version",
+        "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+        "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+      ]
+    },
+    "codex": {
+      "callsTotal": 0,
+      "turnCalls": 0,
+      "probes": 0,
+      "commands": []
+    }
+  }
+}
+
+{
+  "name": "nested-Claude-old",
+  "pass": true,
+  "response": {
+    "status": 422,
+    "ms": 730,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/harness-not-ready",
+      "title": "harness not ready",
+      "status": 422,
+      "code": "HARNESS_NOT_READY",
+      "detail": "Harness readiness checks failed. Fix the listed problems, then start the run again.",
+      "errors": [
+        {
+          "code": "HARNESS_READINESS_CLI_INCOMPATIBLE",
+          "severity": "warning",
+          "loopId": "01M5GPP4198MQ5KJ211K4T4W94",
+          "versionId": "01M5GPP41ARCVA3D7AAMVNFNHN",
+          "nodeId": "think",
+          "path": "config.harness",
+          "message": "Loop \"QA final Claude child\" (01M5GPP4198MQ5KJ211K4T4W94), node \"think\": Claude CLI 2.1.284 is older than the minimum version 2.1.285. Update the Claude CLI, then retry preflight."
+        }
+      ]
+    }
+  },
+  "before": {
+    "runs": 0,
+    "events": 0,
+    "queued": 0,
+    "markerEvents": 0,
+    "snapshots": 0
+  },
+  "after": {
+    "runs": 0,
+    "events": 0,
+    "queued": 0,
+    "markerEvents": 0,
+    "snapshots": 0
+  },
+  "probes": {
+    "claude": {
+      "callsTotal": 3,
+      "turnCalls": 0,
+      "probes": 1,
+      "commands": [
+        "--safe-mode --setting-sources  --strict-mcp-config --version",
+        "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+        "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+      ]
+    },
+    "codex": {
+      "callsTotal": 0,
+      "turnCalls": 0,
+      "probes": 0,
+      "commands": []
+    }
+  }
+}
+
+{
+  "name": "nested-Claude-missing-model",
+  "pass": true,
+  "response": {
+    "status": 422,
+    "ms": 989,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/harness-not-ready",
+      "title": "harness not ready",
+      "status": 422,
+      "code": "HARNESS_NOT_READY",
+      "detail": "Harness readiness checks failed. Fix the listed problems, then start the run again.",
+      "errors": [
+        {
+          "code": "HARNESS_READINESS_CLI_INCOMPATIBLE",
+          "severity": "warning",
+          "loopId": "01M5GPP4198MQ5KJ211K4T4W94",
+          "versionId": "01M5GPP41ARCVA3D7AAMVNFNHN",
+          "nodeId": "think",
+          "path": "config.harness",
+          "message": "Loop \"QA final Claude child\" (01M5GPP4198MQ5KJ211K4T4W94), node \"think\": Claude CLI 2.1.287 does not list required options: --model. Update the Claude CLI, then retry preflight."
+        }
+      ]
+    }
+  },
+  "before": {
+    "runs": 0,
+    "events": 0,
+    "queued": 0,
+    "markerEvents": 0,
+    "snapshots": 0
+  },
+  "after": {
+    "runs": 0,
+    "events": 0,
+    "queued": 0,
+    "markerEvents": 0,
+    "snapshots": 0
+  },
+  "probes": {
+    "claude": {
+      "callsTotal": 3,
+      "turnCalls": 0,
+      "probes": 1,
+      "commands": [
+        "--safe-mode --setting-sources  --strict-mcp-config --version",
+        "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+        "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+      ]
+    },
+    "codex": {
+      "callsTotal": 0,
+      "turnCalls": 0,
+      "probes": 0,
+      "commands": []
+    }
+  }
+}
+
+{
+  "name": "nested-Claude-missing-effort",
+  "pass": true,
+  "response": {
+    "status": 422,
+    "ms": 1145,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/harness-not-ready",
+      "title": "harness not ready",
+      "status": 422,
+      "code": "HARNESS_NOT_READY",
+      "detail": "Harness readiness checks failed. Fix the listed problems, then start the run again.",
+      "errors": [
+        {
+          "code": "HARNESS_READINESS_CLI_INCOMPATIBLE",
+          "severity": "warning",
+          "loopId": "01M5GPP4198MQ5KJ211K4T4W94",
+          "versionId": "01M5GPP41ARCVA3D7AAMVNFNHN",
+          "nodeId": "think",
+          "path": "config.harness",
+          "message": "Loop \"QA final Claude child\" (01M5GPP4198MQ5KJ211K4T4W94), node \"think\": Claude CLI 2.1.287 does not list required options: --effort. Update the Claude CLI, then retry preflight."
+        }
+      ]
+    }
+  },
+  "before": {
+    "runs": 0,
+    "events": 0,
+    "queued": 0,
+    "markerEvents": 0,
+    "snapshots": 0
+  },
+  "after": {
+    "runs": 0,
+    "events": 0,
+    "queued": 0,
+    "markerEvents": 0,
+    "snapshots": 0
+  },
+  "probes": {
+    "claude": {
+      "callsTotal": 3,
+      "turnCalls": 0,
+      "probes": 1,
+      "commands": [
+        "--safe-mode --setting-sources  --strict-mcp-config --version",
+        "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+        "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+      ]
+    },
+    "codex": {
+      "callsTotal": 0,
+      "turnCalls": 0,
+      "probes": 0,
+      "commands": []
+    }
+  }
+}
+
+{
+  "name": "nested-Claude-unknown",
+  "pass": true,
+  "response": {
+    "status": 422,
+    "ms": 2989,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/harness-not-ready",
+      "title": "harness not ready",
+      "status": 422,
+      "code": "HARNESS_NOT_READY",
+      "detail": "Harness readiness checks failed. Fix the listed problems, then start the run again.",
+      "errors": [
+        {
+          "code": "HARNESS_READINESS_UNKNOWN",
+          "severity": "warning",
+          "loopId": "01M5GPP4198MQ5KJ211K4T4W94",
+          "versionId": "01M5GPP41ARCVA3D7AAMVNFNHN",
+          "nodeId": "think",
+          "path": "config.harness",
+          "message": "Loop \"QA final Claude child\" (01M5GPP4198MQ5KJ211K4T4W94), node \"think\": Claude CLI check exited with code 1. Check that the Claude CLI starts and responds, then retry preflight."
+        }
+      ]
+    }
+  },
+  "before": {
+    "runs": 0,
+    "events": 0,
+    "queued": 0,
+    "markerEvents": 0,
+    "snapshots": 0
+  },
+  "after": {
+    "runs": 0,
+    "events": 0,
+    "queued": 0,
+    "markerEvents": 0,
+    "snapshots": 0
+  },
+  "probes": {
+    "claude": {
+      "callsTotal": 3,
+      "turnCalls": 0,
+      "probes": 1,
+      "commands": [
+        "--safe-mode --setting-sources  --strict-mcp-config --version",
+        "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+        "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+      ]
+    },
+    "codex": {
+      "callsTotal": 0,
+      "turnCalls": 0,
+      "probes": 0,
+      "commands": []
+    }
+  }
+}
+
+{
+  "name": "shallower-reference-retains-grandchild-harness",
+  "pass": true,
+  "response": {
+    "status": 422,
+    "ms": 557,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/harness-not-ready",
+      "title": "harness not ready",
+      "status": 422,
+      "code": "HARNESS_NOT_READY",
+      "detail": "Harness readiness checks failed. Fix the listed problems, then start the run again.",
+      "errors": [
+        {
+          "code": "HARNESS_READINESS_AUTH",
+          "severity": "warning",
+          "loopId": "01M5GPP4198MQ5KJ211K4T4W94",
+          "versionId": "01M5GPP41ARCVA3D7AAMVNFNHN",
+          "nodeId": "think",
+          "path": "config.harness",
+          "message": "Loop \"QA final Claude child\" (01M5GPP4198MQ5KJ211K4T4W94), node \"think\": Claude is not signed in. Run claude auth login, then retry preflight."
+        }
+      ]
+    }
+  },
+  "before": {
+    "runs": 0,
+    "events": 0,
+    "queued": 0,
+    "markerEvents": 0,
+    "snapshots": 0
+  },
+  "after": {
+    "runs": 0,
+    "events": 0,
+    "queued": 0,
+    "markerEvents": 0,
+    "snapshots": 0
+  },
+  "probes": {
+    "claude": {
+      "callsTotal": 3,
+      "turnCalls": 0,
+      "probes": 1,
+      "commands": [
+        "--safe-mode --setting-sources  --strict-mcp-config --version",
+        "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+        "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+      ]
+    },
+    "codex": {
+      "callsTotal": 0,
+      "turnCalls": 0,
+      "probes": 0,
+      "commands": []
+    }
+  }
+}
+
+{
+  "name": "nested-LLM-decision-transport",
+  "pass": true,
+  "response": {
+    "status": 422,
+    "ms": 1165,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/harness-not-ready",
+      "title": "harness not ready",
+      "status": 422,
+      "code": "HARNESS_NOT_READY",
+      "detail": "Harness readiness checks failed. Fix the listed problems, then start the run again.",
+      "errors": [
+        {
+          "code": "HARNESS_READINESS_TRANSPORT",
+          "severity": "warning",
+          "loopId": "01M5GPPG1W72A2T4K2YF8VQAER",
+          "versionId": "01M5GPPG1WKPPRF3JV1926X9KP",
+          "nodeId": "choose",
+          "path": "config.harness",
+          "message": "Loop \"QA native LLM decision\" (01M5GPPG1W72A2T4K2YF8VQAER), node \"choose\": Codex reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight."
+        }
+      ]
+    }
+  },
+  "before": {
+    "runs": 0,
+    "events": 0,
+    "queued": 0,
+    "markerEvents": 0,
+    "snapshots": 0
+  },
+  "after": {
+    "runs": 0,
+    "events": 0,
+    "queued": 0,
+    "markerEvents": 0,
+    "snapshots": 0
+  },
+  "probes": {
+    "claude": {
+      "callsTotal": 0,
+      "turnCalls": 0,
+      "probes": 0,
+      "commands": []
+    },
+    "codex": {
+      "callsTotal": 4,
+      "turnCalls": 0,
+      "probes": 1,
+      "commands": [
+        "--version",
+        "exec --help",
+        "exec resume --help",
+        "login status"
+      ]
+    }
+  }
+}

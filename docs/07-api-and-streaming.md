@@ -50,12 +50,12 @@ Settings and catalog
   PUT    /classifier-models/{id}        create/replace custom HTTP metadata, 200 summary (settings:write; also secrets:write with secretRef); If-None-Match: * creates only
   PATCH  /classifier-models/{id}        exactly { enabled: boolean }, 200 summary (settings:write)
   DELETE /classifier-models/{id}        remove custom metadata, 204; preserve secrets/references (settings:write)
-  GET    /harness/preflight             Codex installed and authenticated?
+  GET    /harness/preflight             Configured harness capabilities and local login?
   GET    /system/preflight              first-run checks: Node, data dir, master key, database, harnesses, Jev, default model (11)
   GET    /openapi.json   GET /healthz   GET /version   (all public; Swagger UI at /docs when enabled)
 ```
 
-Run and loop lists are paginated with cursors. Loop/run ids are ULIDs; classifier ids are bounded URL-safe names, with `jev` reserved for the built-in.
+Run and inbound-event lists are paginated with opaque cursors. Loop listings return every owner loop with its latest-run summary and exact run count. Loop/run ids are ULIDs; classifier ids are bounded URL-safe names, with `jev` reserved for the built-in.
 
 Webhook endpoint summaries expose nested safe `authentication`, pinned `body`, `eventType`,
 optional `dedupeKey`, and `configurationAvailable`. Secret references are names only. Webhook and Event configs reject `filter`; payload checks belong in downstream decisions. Historical `filtered` receipt states remain readable.
@@ -339,9 +339,9 @@ Decision evaluation failures never retain provider raw answers, messages, stacks
 
 Classifier validation joins the same issue collection for create, import, draft save, validate and publish. It applies to `config.kind: classifier` at `config.model`, requiring the declared Choice, Noul or Score capability, without an exit predicate path. Expression source issues identify `config.jsonata`; LLM issues identify `config.instructions`, `config.model.value` or `config.effort.value`. Unknown models and unsupported capability are admission errors. Disabled, missing/blank-secret and unreadable-secret selections remain visible as diagnostics and block publication. Runtime rechecks the chosen entry and fails without fallback if it is unavailable.
 
-`POST /loops`, `POST /loops/import`, `PUT /loops/{id}/draft`, `POST /loops/{id}/validate`, and `POST /loops/{id}/publish` report the same issue list: the `domain` rules (`validateLoop`, which includes Liquid and JSONata syntax checks), trigger checks such as cron syntax, and subloop references, which must name a loop of the same owner with a published version (`SUBLOOP_NOT_FOUND`, `SUBLOOP_NOT_PUBLISHED`; a loop may reference itself). `publishable` from validate is true exactly when publish would accept the draft. The editor runs the `domain` rules locally and adds the API-only issues from validate.
+`POST /loops`, `POST /loops/import` and `PUT /loops/{id}/draft` report catalog/configuration issues without CLI probes. `POST /loops/{id}/validate` and `POST /loops/{id}/publish` add fresh readiness issues. All share the same base checks: the `domain` rules (`validateLoop`, which includes Liquid and JSONata syntax checks), trigger checks such as cron syntax, and subloop references, which must name a loop of the same owner with a published version (`SUBLOOP_NOT_FOUND`, `SUBLOOP_NOT_PUBLISHED`; a loop may reference itself). `publishable` from validate is true exactly when publish would accept the draft. The editor runs the `domain` rules locally and adds the API-only issues from validate.
 
-The API validates explicit and inherited model/effort selections within the selected harness. Unknown or wrong-harness models and unsupported effective effort are errors. Disabled or unconfigured models block publication. Loop and owner defaults use `defaults.byHarness`; process defaults use the same shape through `GG_DEFAULTS`. Precise node-relative paths identify decision `evaluation` selections and inference fields; loop diagnostics identify the selected harness entry. Draft creation and saving allow unresolved inherited model or effort defaults, returning the readiness issues for later repair. Explicit invalid node or loop selections still fail admission. Publication and runtime keep enforcing the full resolution policy.
+The API validates explicit and inherited model/effort selections within the selected harness. Unknown or wrong-harness models and unsupported effective effort are errors. Disabled or unconfigured models block publication. Loop and owner defaults use `defaults.byHarness`; process defaults use the same shape through `GG_DEFAULTS`. Precise node-relative paths identify decision `evaluation` selections and inference fields; loop diagnostics identify the selected harness entry. Draft creation, import and saving allow unresolved inherited model or effort defaults, returning catalog/configuration issues for later repair. They never probe harness readiness. Explicit validate, publish and manual API/MCP trigger start probe once per referenced harness per request, concurrently across harnesses; `/harness/preflight` supplies editor readiness separately. Manual trigger start returns 422 `HARNESS_NOT_READY` with typed readiness issues before a turn starts when prerequisites fail. Replay (`POST /runs/{id}/replay`) has a separate admission policy and does not perform this preflight: it can return 202, execute preceding mutations and then fail at an unready harness. Scheduled/webhook starts, internal subloops and resumes also retain their existing execution checks; see [no-turn readiness](06-harness-integration.md#no-turn-readiness-179). Explicit invalid node or loop selections still fail admission. Publication and runtime keep enforcing the full resolution policy.
 
 Known limitation: loop-default model warnings always check the Codex catalog, the only supported
 inference harness. Revisit this check when a second harness exists so a model inherited by nodes
@@ -366,13 +366,13 @@ The loader and dormant configured contracts/services are removed in the next bou
 ### Ordinary run listing and pagination
 
 `GET /runs` returns `{items, nextCursor}` in descending creation-time and run-ID order.
-Reuse the returned opaque `cursor` with the same filters; `nextCursor: null` ends the
-listing. Equal creation timestamps do not skip runs. The default page size is 100,
+Reuse the returned opaque `nextCursor` as `cursor` with the same filters; `nextCursor: null` ends the
+listing. Equal timestamps are ordered by ID; IDs follow creation order within one process through a monotonic ULID generator, so ties do not skip runs. The default page size is 100,
 with `limit` from 1 to 500. The run repository fetches one extra row (at most 501)
 to determine whether another page exists. Cursors are bounded to 256 characters,
 canonical base64url encodings of strict `{createdAt: Timestamp, id: ULID}` JSON.
 A malformed, oversized or noncanonical cursor receives `400 INVALID_CURSOR`.
-The timestamp-only `before` filter is still available, but cannot accompany `cursor`.
+The timestamp-only `before` filter is an exclusive time bound, not a paging cursor; it composes with `cursor` and stays unchanged on every page.
 Accepted `before` timestamps are normalized to UTC with milliseconds before comparison,
 so offsets and omitted milliseconds select the same page as the canonical timestamp.
 
@@ -381,11 +381,42 @@ Filters are `loopId`, comma-separated `status`, `parent` (a run ID or `none`),
 including the removed `repository`, `issue`, `pullRequest`, `head`, `mergeSha`
 and `templateInstanceId`. Reads always remain scoped to the authenticated owner.
 The exclusive `(created_at, id)` boundary keeps newer insertions between requests
-out of subsequent pages. MCP `list_runs` uses this same server cursor and returns
-`{ items, nextCursor }`; pass `nextCursor` as `cursor` with the same filters, even when
-`items` is empty because damaged rows were skipped. Stop when `nextCursor` is null.
-Both the typed client's `GET('/runs')` and the generated OpenAPI contract expose
-the complete page; the convenience `runs.list` wrapper returns its items only.
+out of subsequent pages. Both `runs.list(client, query)` and MCP `list_runs` expose
+`{items, nextCursor}`. Consumers never decode or reconstruct a cursor; repeat the active
+filters and copy `nextCursor` unchanged into `cursor`. Pass it even when `items` is empty
+because damaged rows were skipped; stop when `nextCursor` is null. Invalid statuses
+(including empty or partly invalid comma-separated lists) receive `400 VALIDATION_FAILED`,
+with a `/status` error explaining: "Use comma-separated run statuses."
+MCP `list_runs` accepts `cursor` and its loop/status/parent filters; its parameters do not include `before`.
+
+`GET /events` and `events.list(client, query)` return `{items, nextCursor}`, ordered by
+`receivedAt DESC, id DESC`, using one lookahead row and the same 100 default / 500 maximum.
+The opaque inbound cursor is distinct from a run-list cursor; malformed, oversized and
+noncanonical values receive `400 INVALID_CURSOR`. The `type` and exclusive `before`
+filters compose with `cursor`; keep them unchanged on subsequent pages. A cursor is a
+position, not a snapshot: concurrent insertions ahead of it do not appear in older pages.
+It encodes only a position; reusing it with different filters continues from that position
+under the new filters. Inbound rows sharing a timestamp are ordered by ID, which follows
+creation order within one process. Unknown query parameters return 400, and `before` must
+be a timestamp. The inbound cursor has the same 256-character bound as the run cursor.
+
+`GET /runs/{id}/events` retains its sequence-number continuation, returning
+`{items, nextAfter, hasMore}`. One raw lookahead row determines `hasMore`; an exactly full
+final page returns false. Only requested rows are decoded and validated: malformed
+lookahead cannot fail a healthy page, but requesting that event still returns
+`STORED_EVENT_INVALID`, including when it is in the middle of a larger page. Inbound
+event and run lists likewise decode only their requested rows. `read_run_events`
+forwards that authoritative API result.
+This sequence cursor remains a number; it is not interchangeable with list cursors.
+
+Runs and Events append older rows through a new outline **Load more** button.
+Filters remain part of the query key and every page request; changing a filter selects
+its own history. Runs expose loop/status/parent selects; Events has no hidden URL-only
+filters. The control is busy only during a next-page fetch, so background polling does
+not block it. End-of-list text appears after an append and receives keyboard focus
+when that user-initiated load exhausts the list. Next-page failures retain the loaded rows and expanded details and
+show an error with a retry through the same button. Runs retain their five-second polling;
+Events retain pending-delivery polling. No manual Events refresh is added here.
 
 ### Pinned definitions (ADR-0041)
 
@@ -437,6 +468,40 @@ these identities during admission; authored run input cannot assert them.
 Repository recipes remain unregistered in this foundation release.
 
 Ordinary copied drafts use the ordinary engine resume behavior. The API installs no template admission, execution, resume or reporting policy. Dormant configured runtime modules await deletion in the next #165 split.
+
+### Loop listing summaries
+
+`GET /loops` returns `{items}` with `latestRun: {id, status, createdAt} | null` and an
+exact `runCount` on each loop. One SQL statement selects each authenticated owner's
+loops, joins its latest run through a correlated `ORDER BY created_at DESC, id DESC LIMIT 1`
+subquery, and counts that loop's owner-scoped runs. The covering
+`runs_loop_owner_history_idx (loop_id, owner_id, created_at, id)` index supports both
+lookup and counting (migration `0016_loop_owner_history`). There is no global
+history-page limit or N+1 API fan-out. A null summary with `runCount: 0` means no history.
+The selected latest row's run record (including its pin), `initial_thread` and any
+present `thread_snapshot` pass through the shared strict decoders used by run and
+recovery readers before its summary is returned. An absent cached snapshot (SQL
+NULL) remains valid: readers rebuild from the initial thread and event log. Damage in any
+of those stored values makes `latestRun` null while its row remains counted; an
+older run is never substituted. Only the selected latest row is decoded, not every
+run in the loop. Its event log also passes the same strict decoder as recovery, in
+batches of at most 100 rows, stopping at the first unreadable event, which likewise
+makes `latestRun` null. Recovery logs
+failures without retaining a reusable set; diagnostics scans on demand. The repository
+therefore caches event readability by latest-run identity and event count (one entry
+per loop). Each listing counts events using the run-event index; unchanged histories
+need no event decoding or payload reads. Counting still walks that run's indexed
+entries. An append or a different latest run invalidates the cache.
+Cold validation is linear in the selected history up to its first bad event, with
+bounded batch memory; it never scans older runs. Out-of-band edits or repairs that
+leave the count unchanged require an API restart. Database failures remain errors,
+not cached unavailability. Recovery refuses damaged records, threads and events
+before repairing status; checking these boundaries here too prevents a valid but
+stale status column from becoming a badge after
+a damaged snapshot missed a terminal update, including after restart. The UI says
+"latest run unavailable" and directs the operator to run history diagnostics (`GET /runs/diagnostics`).
+Healthy loops remain available; database read failures remain errors. Loops refresh their summaries every five seconds; deletion confirmation uses
+the exact server count.
 
 ## Gate admission and terminal outcomes (#164 E1)
 

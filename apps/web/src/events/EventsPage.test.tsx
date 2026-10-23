@@ -1,10 +1,52 @@
-import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { FakeApi, TS } from '../__fixtures__/fake-api.js';
 import { renderApp } from '../__fixtures__/render.js';
 
 describe('EventsPage delivery dispositions', () => {
+  it('appends an exactly full final event page and preserves expanded content and keyboard focus', async () => {
+    const api = new FakeApi();
+    const user = userEvent.setup();
+    api.inbound = Array.from({ length: 200 }, (_, i) => ({
+      id: `event-${i}`,
+      ownerId: 'local',
+      type: 'chosen',
+      payload: { index: i },
+      receivedAt: TS,
+      source: 'api',
+      runIds: [],
+    }));
+    api.inbound = api.inbound.map((event, i) => ({
+      ...event,
+      ...(i === 0
+        ? {
+            webhook: {
+              configurationAvailable: false,
+            },
+          }
+        : {}),
+    }));
+    renderApp('/events?type=ignored&before=invalid', api);
+    const disclosure = await screen.findByText('Webhook configuration');
+    await user.click(disclosure);
+    const expanded = disclosure.closest('details')!;
+    expect(expanded).toHaveAttribute('open');
+    const more = await screen.findByRole('button', { name: 'Load more' });
+    more.focus();
+    await user.keyboard('{Enter}');
+    await waitFor(() => expect(screen.getAllByRole('row')).toHaveLength(201));
+    await waitFor(() => expect(screen.getByText('All events loaded.')).toHaveFocus());
+    expect(screen.queryByRole('button', { name: 'Load more' })).not.toBeInTheDocument();
+    const call = api.callsTo('GET', '/events').at(-1)!;
+    expect(call.search.has('type')).toBe(false);
+    expect(call.search.has('before')).toBe(false);
+    expect(call.search.get('cursor')).toBe('event-99');
+    expect(expanded).toBeInTheDocument();
+    expect(expanded).toHaveAttribute('open');
+    expect(screen.queryByText('other', { exact: true })).not.toBeInTheDocument();
+  });
+
   it('shows the five receipt states, attempts, retry time, safe failure and admitted run link', async () => {
     const api = new FakeApi();
     api.inbound = [

@@ -1,6 +1,6 @@
 import { LoopDefinitionSchema } from '@graphgoblin/contracts';
 import { minimalLoop } from '@graphgoblin/contracts/testing';
-import { control, expect, openNode, test } from './fixtures.js';
+import { control, expect, openAdvanced, openNode, test } from './fixtures.js';
 
 const baseClaudeConfig = {
   harness: 'claude',
@@ -193,9 +193,10 @@ for (const ready of [false, true]) {
     if (!ready) {
       await expect(model).toHaveAttribute('aria-readonly', 'true');
       await expect(
-        dialog
-          .getByRole('status')
-          .filter({ hasText: 'Claude CLI preflight is not ready; model choices' }),
+        dialog.getByRole('status').filter({
+          hasText:
+            'Claude is not signed in. Run claude auth login, then retry preflight. Model choices are read-only until Claude is ready.',
+        }),
       ).toBeVisible();
       await control(request, '/harness/preflight', {
         instanceId: instance.id,
@@ -215,6 +216,64 @@ for (const ready of [false, true]) {
     ).toBe(true);
   });
 }
+
+test('a ready Claude model field stays editable while a focus refetch rechecks readiness', async ({
+  page,
+  request,
+}) => {
+  const instance = await claudeInstance(request);
+  const definition = inferenceLoop('Focus recheck', 'claude');
+  const node = definition.nodes.find((item) => item.id === 'infer');
+  if (!node || !('config' in node)) throw new Error('missing inference node');
+  Object.assign(node.config, { model: 'claude-opus-5-5' });
+  const created = await request.post(instance.url + '/loops', { data: { definition } });
+  expect(created.status(), await created.text()).toBe(201);
+  const { loop } = (await created.json()) as { loop: { id: string } };
+  let held = false;
+  let release!: () => void;
+  const pending = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let arrived!: () => void;
+  const heldRequest = new Promise<void>((resolve) => {
+    arrived = resolve;
+  });
+  await page.route(instance.url + '/harness/preflight', async (route) => {
+    if (held) {
+      arrived();
+      await pending;
+    }
+    await route.continue();
+  });
+  await page.goto(instance.url + '/app/loops/' + loop.id + '/edit');
+  const dialog = await openNode(page, 'infer');
+  await openAdvanced(dialog);
+  const model = dialog.getByLabel('Model', { exact: true });
+  await expect(model).toBeVisible();
+  await expect(model).toHaveValue('claude-opus-5-5');
+  await expect(model).not.toHaveAttribute('aria-readonly');
+  const label = await model.locator('option:checked').textContent();
+  expect(label).toMatch(/claude-opus-5-5/);
+
+  held = true;
+  // Window focus refetches stale queries (two-second stale time) on a hidden-to-visible change.
+  await page.waitForTimeout(2100);
+  await page.evaluate(() => {
+    Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'hidden' });
+    document.dispatchEvent(new Event('visibilitychange', { bubbles: true }));
+    Reflect.deleteProperty(document, 'visibilityState');
+    document.dispatchEvent(new Event('visibilitychange', { bubbles: true }));
+  });
+  await heldRequest;
+  await expect(model).not.toHaveAttribute('aria-readonly');
+  await expect(model.locator('option:checked')).toHaveText(label ?? '');
+  await expect(dialog.getByText(/Checking Claude readiness|readiness unknown/)).toHaveCount(0);
+  await expect(dialog.getByRole('button', { name: 'Retry Claude preflight' })).toHaveCount(0);
+  release();
+  held = false;
+  await expect(model).not.toHaveAttribute('aria-readonly');
+  await expect(model).toHaveValue('claude-opus-5-5');
+});
 
 test('Settings separates Claude adapter support from CLI readiness and supports Fable', async ({
   page,
@@ -247,21 +306,36 @@ test('Settings separates Claude adapter support from CLI readiness and supports 
 
   await page.goto(instance.url + '/app/settings');
   const preflight = page.getByRole('region', { name: 'Harness preflight' });
-  const claudeStatus = preflight.getByRole('listitem').filter({ hasText: 'claude' });
-  await expect(claudeStatus.getByText('not ready', { exact: true })).toBeVisible();
-  await expect(claudeStatus.getByText('Claude CLI is not signed in.')).toBeVisible();
+  const claudeStatus = preflight
+    .getByRole('listitem')
+    .filter({ has: page.locator('code').getByText('claude', { exact: true }) });
+  await expect(claudeStatus.locator('[data-state]')).toHaveAttribute('data-state', 'auth');
+  await expect(claudeStatus.locator('[data-state]')).toHaveText('Sign-in needed');
+  await expect(
+    claudeStatus.getByText(
+      'Claude is not signed in. Run claude auth login, then retry preflight.',
+      {
+        exact: true,
+      },
+    ),
+  ).toBeVisible();
 
   const support = claudeStatus.getByRole('list', { name: 'Claude model support' });
   const opus = support.getByRole('listitem').filter({ hasText: 'claude-opus-5-5' });
   const fable = support.getByRole('listitem').filter({ hasText: 'claude-fable-5-1' });
-  await expect(opus.getByText('supported by adapter')).toBeVisible();
-  await expect(fable.getByText('supported by adapter')).toBeVisible();
+  await expect(opus.getByText('listed by adapter', { exact: true })).toBeVisible();
+  await expect(fable.getByText('listed by adapter', { exact: true })).toBeVisible();
   const catalog = page.getByRole('region', { name: 'Model catalog' });
   await expect(catalog.getByRole('switch', { name: 'Enable Claude Fable 5.1' })).toBeChecked();
-  await expect(catalog.getByText(/Enabled in catalog; Claude harness not ready/)).toHaveCount(2);
+  await expect(
+    catalog.getByText('Enabled in catalog. Claude readiness: Sign-in needed.', { exact: true }),
+  ).toHaveCount(2);
 
   const model = page.getByLabel('Default model (claude)', { exact: true });
   await expect(model).toBeVisible();
+  await expect(model).toHaveAccessibleDescription(
+    'Claude readiness: Sign-in needed. See Harness preflight below.',
+  );
   await expect(model.getByRole('option', { name: /Claude Opus 5\.5/ })).toHaveCount(0);
   await expect(model.getByRole('option', { name: /Fable/ })).toHaveCount(0);
 });

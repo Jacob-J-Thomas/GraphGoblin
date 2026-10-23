@@ -1,0 +1,72 @@
+
+ RUN  v5.0.3 <worktree>/packages/infrastructure
+
+ ❯ src/sqlite/history-summaries.test.ts (15 tests | 1 failed | 14 skipped) 269ms
+   ❯ SQLite history queries (15)
+     ↓ applies the history index to an existing current-format store and reruns idempotently
+     ↓ summarizes each owner loop beyond 500 unrelated runs, with ties and no-history controls
+     ↓ isolates damaged latest status without substituting an older run
+     ↓ isolates damaged latest pinned without substituting an older run
+     ↓ isolates damaged latest pinned without substituting an older run
+     ↓ isolates damaged latest pinned without substituting an older run
+     ↓ isolates damaged latest waiting without substituting an older run
+     ↓ isolates damaged latest failure without substituting an older run
+     ↓ isolates damaged latest result without substituting an older run
+     ↓ isolates damaged latest iteration without substituting an older run
+     ↓ isolates damaged latest initial_thread without substituting an older run
+     ↓ isolates damaged latest thread_snapshot without substituting an older run
+     ↓ isolates damaged latest thread_snapshot without substituting an older run
+     ↓ pages inbound timestamp ties, applies every filter before the boundary, and detects exhaustion
+     × refuses unreadable latest events despite a durable finish and a valid stale running record 266ms
+pnpm.cmd : 
+At line:5 char:7
++ try { pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run s ...
++       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/sqlite/history-summaries.test.ts > SQLite history queries > refuses unreadable latest events despite a 
+durable finish and a valid stale running record
+AssertionError: expected { …(8) } to match object { runCount: 2, latestRun: null }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "latestRun": null,
++   "latestRun": {
++     "createdAt": "2026-10-02T12:00:00.000Z",
++     "id": "N48WXDF6C7P34TVZ3RMGEVKZ4M",
++     "status": "running",
++   },
+    "runCount": 2,
+  }
+
+ ❯ src/sqlite/history-summaries.test.ts:224:63
+    222|     const read = vi.spyOn(SqliteEventStore.prototype, 'read');
+    223|     const reopened = new SqliteLoopRepository(handle.db, clock, new Fa…
+    224|     expect((await reopened.listWithRunSummaries('local'))[0]).toMatchO…
+       |                                                               ^
+    225|     expect(read).toHaveBeenCalledTimes(2);
+    226|     expect(read).toHaveBeenNthCalledWith(1, id, 0, 100);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 14 skipped (15)
+   Start at  20:35:14
+   Duration  6.55s (import 53%, transform 42%, tests 4%)
+
+  Transform  transforming modules took 2.63s · 42% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+JSON report written to <worktree>/round8-repository-before-results.log
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in <worktree>
+

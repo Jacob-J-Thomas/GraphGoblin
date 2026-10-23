@@ -1,0 +1,65 @@
+[
+  {
+    "system": "Edge",
+    "case": "Stable pending Retry",
+    "steps": "Wait for native ready response and network idle; hold next HTTP request; Retry",
+    "expected": "Two unchanged Ready badges; Retry disabled; Rechecking live region",
+    "actual": {
+      "previous": ["Ready", "Ready"],
+      "current": ["Ready", "Ready"],
+      "text": "Harness preflight\nRechecking…\nRetry preflight\nReady\ncodex\nv0.160.0-beta.1\nReady\nclaude\nv2.1.287\n\nSigned in with Claude.ai.\n\nclaude-opus-5-5\nlisted by adapter\nclaude-fable-5-1\nlisted by adapter\n\nAdapter model listings do not confirm account access. Preflight never starts a model turn.",
+      "screenshot": "settings-rechecking.png"
+    },
+    "pass": true
+  },
+  {
+    "system": "Edge",
+    "case": "Saved-choice sentence",
+    "steps": "Load a stale Codex saved model absent from catalog; no provider switch",
+    "expected": "Saved value stays selected with exact replacement sentence",
+    "actual": {
+      "text": "Edit inference\ninfer\n\nRequired fields are marked *\n\nNode id\n*\nLabel\n*\nSettings\n1 error\nContext\nHarness\ncodex\nclaude\n\nHarness that runs the session.\n\nSession\nPolicy\nfresh\nresume-previous\nresume-named\n\nStart fresh, resume the previous session, or resume a named session.\n\nPrompt\n\nLiquid template rendered against the thread.\n\nTemplate\n*\nLiquid\n1\nNo turn\nPreview (sample thread): No turn\nEarlier node outputs (1)\nSandbox\nread-only\nworkspace-write\ndanger-full-access\n\nSandbox or tool policy. Claude requires an explicit supported policy and provides no OS/read-path confinement.\n\nAdvanced\n2 set\n1 error\nMODEL\nModel\n(loop default)\nqa-removed-model (not in catalog)\nGPT-5.5 (gpt-5.5)\nGPT-5.6 Luna (gpt-5.6-luna)\nGPT-5.6 Sol (gpt-5.6-sol)\nGPT-5.6 Terra (gpt-5.6-terra)\nGPT-6 Astra (gpt-6-astra)\nGPT-6 Luna (gpt-6-luna)\nGPT-6 Sol (gpt-6-sol)\nGPT-6.1 Sol (gpt-6.1-sol)\n\nThis model is not in the catalog. The saved choice stays until you change it.\n\nModel; inherits within this harness from loop, owner, then process defaults.\n\nModel catalog in Settings\nEffort\n(inherited effort)\nminimal\nlow\nmedium\nhigh\nxhigh\nmax\n\nReasoning effort; inherits within this harness like the model. Catalog effort is guidance only.\n\nHARNESS OPTIONS\nApproval\nnever\non-request\n\nWhether the harness may stop to ask before acting.\n\nNetwork access\nNot set\nYes\nNo\n\nLet commands in the sandbox reach the network.\n\nWeb search\nNot set\nYes\nNo\n\nLet the model search the web.\n\nEdit as JSON\nConfig overrides\n\nRaw harness configuration, passed through as is.\n\nAdd entry\nEdit as JSON\n\nNo resolved capability identifiers are available. Enter authored slugs.\n\nAdd capabilities\nOUTPUT\nCapture transcript\nartifact\nnone\n\nKeep the session transcript as an artifact, or not.\n\nTo messages\nfinal\nfinal-and-notes\nnone\n\nWhat the answer adds to the thread's messages.\n\nEdit as JSON\nTransforms\n\nMutations applied to the answer before it lands.\n\nAdd transforms\nAdd schema\nLIMITS\nTimeout seconds\n\nOptional watchdog; a timeout fails the run.\n\nConnections\nout → done\nDelete node\nDone",
+      "value": "qa-removed-model",
+      "screenshot": "editor-saved-not-in-catalog.png"
+    },
+    "pass": true
+  },
+  {
+    "system": "Edge",
+    "case": "claude known failure adjudication",
+    "steps": "Read the retained live editor snapshot against harness-specific edit rules",
+    "expected": "Claude read-only, Codex editable; retained value; named Retry and capitalised problem",
+    "actual": {
+      "source": "browser-followup.json",
+      "readonly": "true",
+      "text": "Edit inference\ninfer0\n\nRequired fields are marked *\n\nNode id\n*\nLabel\n*\nSettings\nContext\nHarness\ncodex\nclaude\n\nHarness that runs the session.\n\nSession\nPolicy\nfresh\nresume-previous\nresume-named\n\nStart fresh, resume the previous session, or resume a named session.\n\nPrompt\n\nLiquid template rendered against the thread.\n\nTemplate\n*\nLiquid\n1\nNo paid turn; fixture refuses execution\nPreview (sample thread): No paid turn; fixture refuses execution\nEarlier node outputs (1)\nSandbox and approval policy\nCurrent policy: read-only / never (saved; not verified)\n\nRead-only restricts built-in tools but provides no filesystem or OS confinement. Danger full access leaves command execution and network unconfined.\n\nClaude readiness: Sign-in needed. The saved policy is unchanged.\n\nAdvanced\n2 set\nMODEL\nModel\n(loop default)\nclaude-opus-5-5 (saved)\n\nClaude is not signed in. Run claude auth login, then retry preflight. Model choices are read-only until Claude is ready.\n\nRetry Claude preflight\n\nModel; inherits within this harness from loop, owner, then process defaults.\n\nModel catalog in Settings\nEffort\n(inherited; the catalog suggests high)\nlow\nmedium\nhigh\nxhigh\nmax\n\nReasoning effort; inherits within this harness like the model. Catalog effort is guidance only. For Claude, this is the requested effort; the CLI does not report the effective effort.\n\nHARNESS OPTIONS\nApproval\nnever\n\nClaude supports never approval only; choose a supported policy above to correct this value.\n\nNetwork access\nNot set\nYes\nNo\n\nLet commands in the sandbox reach the network.\n\nWeb search\nNot set\nYes\nNo\n\nLet the model search the web.\n\nEdit as JSON\nConfig overrides\n\nRaw harness configuration, passed through as is.\n\nAdd entry\nEdit as JSON\n\nNo resolved capability identifiers are available. Enter authored slugs.\n\nAdd capabilities\nOUTPUT\nCapture transcript\nartifact\nnone\n\nKeep the session transcript as an artifact, or not.\n\nTo messages\nfinal\nfinal-and-notes\nnone\n\nWhat the answer adds to the thread's messages.\n\nEdit as JSON\nTransforms\n\nMutations applied to the answer before it lands.\n\nAdd transforms\nAdd schema\nLIMITS\nTimeout seconds\n\nOptional watchdog; a timeout fails the run.\n\nConnections\nout → done\nDelete node\nDone"
+    },
+    "pass": true
+  },
+  {
+    "system": "Edge",
+    "case": "codex known failure adjudication",
+    "steps": "Read the retained live editor snapshot against harness-specific edit rules",
+    "expected": "Claude read-only, Codex editable; retained value; named Retry and capitalised problem",
+    "actual": {
+      "source": "browser-followup.json",
+      "readonly": null,
+      "text": "Edit inference\ninfer0\n\nRequired fields are marked *\n\nNode id\n*\nLabel\n*\nSettings\nContext\nHarness\ncodex\nclaude\n\nHarness that runs the session.\n\nSession\nPolicy\nfresh\nresume-previous\nresume-named\n\nStart fresh, resume the previous session, or resume a named session.\n\nPrompt\n\nLiquid template rendered against the thread.\n\nTemplate\n*\nLiquid\n1\nNo paid turn; fixture refuses execution\nPreview (sample thread): No paid turn; fixture refuses execution\nEarlier node outputs (1)\nSandbox\nread-only\nworkspace-write\ndanger-full-access\n\nSandbox or tool policy. Claude requires an explicit supported policy and provides no OS/read-path confinement.\n\nAdvanced\n2 set\nMODEL\nModel\n(loop default)\nGPT-5.5 (gpt-5.5)\nGPT-5.6 Luna (gpt-5.6-luna)\nGPT-5.6 Sol (gpt-5.6-sol)\nGPT-5.6 Terra (gpt-5.6-terra)\nGPT-6 Astra (gpt-6-astra)\nGPT-6 Luna (gpt-6-luna)\nGPT-6 Sol (gpt-6-sol)\nGPT-6.1 Sol (gpt-6.1-sol)\n\nCodex sign-in is missing or invalid. Run codex login, then retry preflight.\n\nRetry Codex preflight\n\nModel; inherits within this harness from loop, owner, then process defaults.\n\nModel catalog in Settings\nEffort\n(inherited; the catalog suggests low)\nminimal\nlow\nmedium\nhigh\nxhigh\nmax\n\nReasoning effort; inherits within this harness like the model. Catalog effort is guidance only.\n\nHARNESS OPTIONS\nApproval\nnever\non-request\n\nWhether the harness may stop to ask before acting.\n\nNetwork access\nNot set\nYes\nNo\n\nLet commands in the sandbox reach the network.\n\nWeb search\nNot set\nYes\nNo\n\nLet the model search the web.\n\nEdit as JSON\nConfig overrides\n\nRaw harness configuration, passed through as is.\n\nAdd entry\nEdit as JSON\n\nNo resolved capability identifiers are available. Enter authored slugs.\n\nAdd capabilities\nOUTPUT\nCapture transcript\nartifact\nnone\n\nKeep the session transcript as an artifact, or not.\n\nTo messages\nfinal\nfinal-and-notes\nnone\n\nWhat the answer adds to the thread's messages.\n\nEdit as JSON\nTransforms\n\nMutations applied to the answer before it lands.\n\nAdd transforms\nAdd schema\nLIMITS\nTimeout seconds\n\nOptional watchdog; a timeout fails the run.\n\nConnections\nout → done\nDelete node\nDone"
+    },
+    "pass": true
+  },
+  {
+    "system": "Edge",
+    "case": "Browser environment",
+    "steps": "Launch installed msedge in headless mode",
+    "expected": "Edge with desktop and retained 390px phone evidence",
+    "actual": {
+      "version": "155.0.4283.62",
+      "desktop": {
+        "width": 1440,
+        "height": 1000
+      }
+    },
+    "pass": true
+  }
+]

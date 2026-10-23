@@ -6,7 +6,9 @@ Runs start from the **Runs** screen. Click **New run** and choose a published lo
 
 In the editor, **Open in Runs** (in the toolbar, and in the notice after a publish) opens New run with that loop already chosen. Until the loop has a published version it is disabled and says why. The editor itself starts no runs.
 
-The Runs screen lists runs across loops and filters by loop, status, and parent; with a loop filter set, **New run** starts with that loop chosen. The chosen loop is part of the address, so a link or a reload keeps it. Its browser routes are:
+The Runs screen lists runs across loops and filters by loop, status, and parent; with a loop filter set, **New run** starts with that loop chosen. The chosen loop is part of the address, so a link or a reload keeps it. Use **Load more** on Runs or Events to append older history. Runs keeps the selected loop, status and parent filters; changing a filter starts that history. Loaded rows remain visible if a later page fails, and the same button retries it.
+
+Its browser routes are:
 
 <!-- guide-example: run-urls -->
 

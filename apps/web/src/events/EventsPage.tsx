@@ -1,7 +1,7 @@
+import { HistoryState } from '../components/HistoryState.js';
 import { Link } from 'react-router';
 import { useInboundEvents } from '../api/queries.js';
 import { Page, PageHeader } from '../components/layout/index.js';
-import { QueryState } from '../components/status.js';
 import {
   Badge,
   BoundedValue,
@@ -15,7 +15,9 @@ import {
 import { formatDateTime, prettyJson } from '../lib/utils.js';
 
 const LINK = 'touch-target text-link underline-offset-[3px] hover:underline';
-type InboundEvent = NonNullable<Awaited<ReturnType<typeof useInboundEvents>>['data']>[number];
+type InboundEvent = NonNullable<
+  ReturnType<typeof useInboundEvents>['data']
+>['pages'][number]['items'][number];
 type EventDelivery = NonNullable<InboundEvent['delivery']>;
 
 const DELIVERY: Record<EventDelivery['state'], { label: string; tone: Tone; explanation: string }> =
@@ -115,7 +117,7 @@ export function EventsPage() {
   return (
     <Page>
       <PageHeader title="Events" />
-      <QueryState query={query} what="Events">
+      <HistoryState query={query} what="Events">
         {(items) =>
           items.length === 0 ? (
             <p className="text-sm text-muted">No inbound events yet.</p>
@@ -184,7 +186,7 @@ export function EventsPage() {
             </Card>
           )
         }
-      </QueryState>
+      </HistoryState>
     </Page>
   );
 }

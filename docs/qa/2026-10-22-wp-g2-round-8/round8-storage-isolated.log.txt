@@ -1,0 +1,39 @@
+
+ RUN  v5.0.3 <worktree>/packages/infrastructure
+
+ ✓ src/sqlite/storage.test.ts (42 tests) 11020ms
+   ✓ database (1)
+     ✓ migrates idempotently 375ms
+   ✓ SqliteRunRepository (8)
+     ✓ migration 0002 marks runs that were already terminal as finalized 501ms
+   ✓ SqliteLoopRepository draft and publish interleaving (2)
+     ✓ never modifies a version that was published after a draft save read the loop 304ms
+     ✓ publishes a draft once even when two publishes read the same draft 524ms
+   ✓ migration 0003 model catalog max effort (18)
+     ✓ appends max to an unedited seeded row without changing its other columns 409ms
+     ✓ upgrades every model id seeded in 1.0.0 524ms
+     ✓ preserves an edited display name while adding max 464ms
+     ✓ preserves an edited default effort while adding max 569ms
+     ✓ preserves a disabled row while adding max 448ms
+     ✓ compares efforts as a set and preserves their stored order 486ms
+     ✓ ignores duplicate old values when comparing efforts as a set 697ms
+     ✓ leaves a strict superset already containing max unchanged byte for byte 358ms
+     ✓ leaves a shorter list already containing max unchanged byte for byte 350ms
+     ✓ leaves a user-added model with the old efforts unchanged 308ms
+     ✓ leaves a non-Codex harness with the old efforts unchanged 339ms
+     ✓ leaves an array with an extra null unchanged 337ms
+     ✓ leaves a JSON object with the old values unchanged 346ms
+     ✓ leaves malformed JSON unchanged without aborting the upgrade 413ms
+     ✓ is idempotent when the shipped SQL statement is executed again 330ms
+     ✓ does not reapply the migration but seeding restores current harness efforts 522ms
+
+ Test Files  1 passed (1)
+      Tests  42 passed (42)
+   Start at  20:48:49
+   Duration  46.14s (transform 62%, tests 24%, import 14%)
+
+  Transform  transforming modules took 27.95s · 62% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+JSON report written to <worktree>/round8-storage-isolated-results.log

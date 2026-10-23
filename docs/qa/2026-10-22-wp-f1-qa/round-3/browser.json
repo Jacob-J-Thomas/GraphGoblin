@@ -1,0 +1,393 @@
+[
+  {
+    "system": "Edge",
+    "case": "Settings api401",
+    "steps": "Run the retained collector against the disposable built API.",
+    "expected": {
+      "state": "auth",
+      "label": "Sign-in needed",
+      "problem": [
+        ["Codex sign-in is missing or invalid. Run codex login, then retry preflight."],
+        ["Claude sign-in is missing or invalid. Run claude auth login, then retry preflight."]
+      ]
+    },
+    "actual": {
+      "badges": ["Sign-in needed", "Sign-in needed"],
+      "text": "Harness preflight\nRetry preflight\nSign-in needed\ncodex\nv0.160.0-beta.1\nCodex sign-in is missing or invalid. Run codex login, then retry preflight.\nSign-in needed\nclaude\nv2.1.287\nClaude sign-in is missing or invalid. Run claude auth login, then retry preflight.\nclaude-opus-5-5\nlisted by adapter\nclaude-fable-5-1\nlisted by adapter\n\nAdapter model listings do not confirm account access. Preflight never starts a model turn.",
+      "screenshot": "settings-api401.png"
+    },
+    "pass": true
+  },
+  {
+    "system": "Edge",
+    "case": "Settings http429",
+    "steps": "Run the retained collector against the disposable built API.",
+    "expected": {
+      "state": "quota",
+      "label": "Usage limit",
+      "problem": [
+        [
+          "Codex account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+        ],
+        [
+          "Claude account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+        ]
+      ]
+    },
+    "actual": {
+      "badges": ["Usage limit", "Usage limit"],
+      "text": "Harness preflight\nRetry preflight\nUsage limit\ncodex\nv0.160.0-beta.1\nCodex account usage limit reached. Wait for the usage limit to reset, then retry preflight.\nUsage limit\nclaude\nv2.1.287\nClaude account usage limit reached. Wait for the usage limit to reset, then retry preflight.\nclaude-opus-5-5\nlisted by adapter\nclaude-fable-5-1\nlisted by adapter\n\nAdapter model listings do not confirm account access. Preflight never starts a model turn.",
+      "screenshot": "settings-http429.png"
+    },
+    "pass": true
+  },
+  {
+    "system": "Edge",
+    "case": "Settings stdout429-warning",
+    "steps": "Run the retained collector against the disposable built API.",
+    "expected": {
+      "state": "quota",
+      "label": "Usage limit",
+      "problem": [
+        [
+          "Codex account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+        ],
+        [
+          "Claude account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+        ]
+      ]
+    },
+    "actual": {
+      "badges": ["Usage limit", "Usage limit"],
+      "text": "Harness preflight\nRetry preflight\nUsage limit\ncodex\nv0.160.0-beta.1\nCodex account usage limit reached. Wait for the usage limit to reset, then retry preflight.\nUsage limit\nclaude\nv2.1.287\nClaude account usage limit reached. Wait for the usage limit to reset, then retry preflight.\nclaude-opus-5-5\nlisted by adapter\nclaude-fable-5-1\nlisted by adapter\n\nAdapter model listings do not confirm account access. Preflight never starts a model turn.",
+      "screenshot": "settings-stdout429-warning.png"
+    },
+    "pass": true
+  },
+  {
+    "system": "Edge",
+    "case": "Settings empty",
+    "steps": "Run the retained collector against the disposable built API.",
+    "expected": {
+      "state": "unknown",
+      "label": "Unknown",
+      "problem": [
+        [
+          "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight."
+        ],
+        [
+          "Claude readiness could not be confirmed. Check that the Claude CLI starts and responds, then retry preflight."
+        ]
+      ]
+    },
+    "actual": {
+      "badges": ["Unknown", "Unknown"],
+      "text": "Harness preflight\nRetry preflight\nUnknown\ncodex\nv0.160.0-beta.1\nCodex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight.\nUnknown\nclaude\nv2.1.287\nClaude readiness could not be confirmed. Check that the Claude CLI starts and responds, then retry preflight.\nclaude-opus-5-5\nlisted by adapter\nclaude-fable-5-1\nlisted by adapter\n\nAdapter model listings do not confirm account access. Preflight never starts a model turn.",
+      "screenshot": "settings-empty.png"
+    },
+    "pass": true
+  },
+  {
+    "system": "Edge",
+    "case": "Settings empty-object",
+    "steps": "Run the retained collector against the disposable built API.",
+    "expected": {
+      "state": "unknown",
+      "label": "Unknown",
+      "problem": [
+        [
+          "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight."
+        ],
+        [
+          "Claude readiness could not be confirmed. Check that the Claude CLI starts and responds, then retry preflight."
+        ]
+      ]
+    },
+    "actual": {
+      "badges": ["Unknown", "Unknown"],
+      "text": "Harness preflight\nRetry preflight\nUnknown\ncodex\nv0.160.0-beta.1\nCodex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight.\nUnknown\nclaude\nv2.1.287\nClaude readiness could not be confirmed. Check that the Claude CLI starts and responds, then retry preflight.\nclaude-opus-5-5\nlisted by adapter\nclaude-fable-5-1\nlisted by adapter\n\nAdapter model listings do not confirm account access. Preflight never starts a model turn.",
+      "screenshot": "settings-empty-object.png"
+    },
+    "pass": true
+  },
+  {
+    "system": "Edge",
+    "case": "Settings ready",
+    "steps": "Run the retained collector against the disposable built API.",
+    "expected": {
+      "state": "ready",
+      "label": "Ready",
+      "problem": [[], []]
+    },
+    "actual": {
+      "badges": ["Ready", "Ready"],
+      "text": "Harness preflight\nRetry preflight\nReady\ncodex\nv0.160.0-beta.1\nReady\nclaude\nv2.1.287\n\nSigned in with Claude.ai.\n\nclaude-opus-5-5\nlisted by adapter\nclaude-fable-5-1\nlisted by adapter\n\nAdapter model listings do not confirm account access. Preflight never starts a model turn.",
+      "screenshot": "settings-ready.png"
+    },
+    "pass": true
+  },
+  {
+    "system": "Edge",
+    "case": "Settings signed-out",
+    "steps": "Run the retained collector against the disposable built API.",
+    "expected": {
+      "state": "auth",
+      "label": "Sign-in needed",
+      "problem": [
+        ["Codex sign-in is missing or invalid. Run codex login, then retry preflight."],
+        ["Claude is not signed in. Run claude auth login, then retry preflight."]
+      ]
+    },
+    "actual": {
+      "badges": ["Sign-in needed", "Sign-in needed"],
+      "text": "Harness preflight\nRetry preflight\nSign-in needed\ncodex\nv0.160.0-beta.1\nCodex sign-in is missing or invalid. Run codex login, then retry preflight.\nSign-in needed\nclaude\nv2.1.287\nClaude is not signed in. Run claude auth login, then retry preflight.\nclaude-opus-5-5\nlisted by adapter\nclaude-fable-5-1\nlisted by adapter\n\nAdapter model listings do not confirm account access. Preflight never starts a model turn.",
+      "screenshot": "settings-signed-out.png"
+    },
+    "pass": true
+  },
+  {
+    "system": "Edge",
+    "case": "Settings errno-auth",
+    "steps": "Run the retained collector against the disposable built API.",
+    "expected": {
+      "state": "transport",
+      "label": "Connection failed",
+      "problem": [
+        [
+          "Codex reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight."
+        ],
+        [
+          "Claude reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight."
+        ]
+      ]
+    },
+    "actual": {
+      "badges": ["Connection failed", "Connection failed"],
+      "text": "Harness preflight\nRetry preflight\nConnection failed\ncodex\nv0.160.0-beta.1\nCodex reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight.\nConnection failed\nclaude\nv2.1.287\nClaude reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight.\nclaude-opus-5-5\nlisted by adapter\nclaude-fable-5-1\nlisted by adapter\n\nAdapter model listings do not confirm account access. Preflight never starts a model turn.",
+      "screenshot": "settings-errno-auth.png"
+    },
+    "pass": true
+  },
+  {
+    "system": "Edge",
+    "case": "Settings syntax-status-network",
+    "steps": "Run the retained collector against the disposable built API.",
+    "expected": {
+      "state": "cli-incompatible",
+      "label": "CLI update needed",
+      "problem": [
+        ["Codex CLI lacks a required capability. Update the Codex CLI, then retry preflight."],
+        ["Claude CLI lacks a required capability. Update the Claude CLI, then retry preflight."]
+      ]
+    },
+    "actual": {
+      "badges": ["CLI update needed", "CLI update needed"],
+      "text": "Harness preflight\nRetry preflight\nCLI update needed\ncodex\nv0.160.0-beta.1\nCodex CLI lacks a required capability. Update the Codex CLI, then retry preflight.\nCLI update needed\nclaude\nv2.1.287\nClaude CLI lacks a required capability. Update the Claude CLI, then retry preflight.\nclaude-opus-5-5\nlisted by adapter\nclaude-fable-5-1\nlisted by adapter\n\nAdapter model listings do not confirm account access. Preflight never starts a model turn.",
+      "screenshot": "settings-syntax-status-network.png"
+    },
+    "pass": true
+  },
+  {
+    "system": "Edge",
+    "case": "Settings http403",
+    "steps": "Run the retained collector against the disposable built API.",
+    "expected": {
+      "state": "auth",
+      "label": "Sign-in needed",
+      "problem": [
+        ["Codex sign-in is missing or invalid. Run codex login, then retry preflight."],
+        ["Claude sign-in is missing or invalid. Run claude auth login, then retry preflight."]
+      ]
+    },
+    "actual": {
+      "badges": ["Sign-in needed", "Sign-in needed"],
+      "text": "Harness preflight\nRetry preflight\nSign-in needed\ncodex\nv0.160.0-beta.1\nCodex sign-in is missing or invalid. Run codex login, then retry preflight.\nSign-in needed\nclaude\nv2.1.287\nClaude sign-in is missing or invalid. Run claude auth login, then retry preflight.\nclaude-opus-5-5\nlisted by adapter\nclaude-fable-5-1\nlisted by adapter\n\nAdapter model listings do not confirm account access. Preflight never starts a model turn.",
+      "screenshot": "settings-http403.png"
+    },
+    "pass": true
+  },
+  {
+    "system": "Edge",
+    "case": "Settings http503",
+    "steps": "Run the retained collector against the disposable built API.",
+    "expected": {
+      "state": "transport",
+      "label": "Connection failed",
+      "problem": [
+        [
+          "Codex reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight."
+        ],
+        [
+          "Claude reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight."
+        ]
+      ]
+    },
+    "actual": {
+      "badges": ["Connection failed", "Connection failed"],
+      "text": "Harness preflight\nRetry preflight\nConnection failed\ncodex\nv0.160.0-beta.1\nCodex reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight.\nConnection failed\nclaude\nv2.1.287\nClaude reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight.\nclaude-opus-5-5\nlisted by adapter\nclaude-fable-5-1\nlisted by adapter\n\nAdapter model listings do not confirm account access. Preflight never starts a model turn.",
+      "screenshot": "settings-http503.png"
+    },
+    "pass": true
+  },
+  {
+    "system": "Edge",
+    "case": "Settings unrecognized",
+    "steps": "Run the retained collector against the disposable built API.",
+    "expected": {
+      "state": "unknown",
+      "label": "Unknown",
+      "problem": [
+        [
+          "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight."
+        ],
+        [
+          "Claude CLI check exited with code 3762504530. Check that the Claude CLI starts and responds, then retry preflight."
+        ]
+      ]
+    },
+    "actual": {
+      "badges": ["Unknown", "Unknown"],
+      "text": "Harness preflight\nRetry preflight\nUnknown\ncodex\nv0.160.0-beta.1\nCodex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight.\nUnknown\nclaude\nv2.1.287\nClaude CLI check exited with code 3762504530. Check that the Claude CLI starts and responds, then retry preflight.\nclaude-opus-5-5\nlisted by adapter\nclaude-fable-5-1\nlisted by adapter\n\nAdapter model listings do not confirm account access. Preflight never starts a model turn.",
+      "screenshot": "settings-unrecognized.png"
+    },
+    "pass": true
+  },
+  {
+    "system": "Edge",
+    "case": "Settings old",
+    "steps": "Run the retained collector against the disposable built API.",
+    "expected": {
+      "state": "cli-incompatible",
+      "label": "CLI update needed",
+      "problem": [
+        [
+          "Codex CLI 0.100.0 is older than the minimum version 0.160.0. Update the Codex CLI, then retry preflight."
+        ],
+        [
+          "Claude CLI 2.1.284 is older than the minimum version 2.1.285. Update the Claude CLI, then retry preflight."
+        ]
+      ]
+    },
+    "actual": {
+      "badges": ["CLI update needed", "CLI update needed"],
+      "text": "Harness preflight\nRetry preflight\nCLI update needed\ncodex\nv0.100.0\nCodex CLI 0.100.0 is older than the minimum version 0.160.0. Update the Codex CLI, then retry preflight.\nCLI update needed\nclaude\nv2.1.284\nClaude CLI 2.1.284 is older than the minimum version 2.1.285. Update the Claude CLI, then retry preflight.\n\nSigned in with Claude.ai.\n\nclaude-opus-5-5\nlisted by adapter\nclaude-fable-5-1\nlisted by adapter\n\nAdapter model listings do not confirm account access. Preflight never starts a model turn.",
+      "screenshot": "settings-old.png"
+    },
+    "pass": true
+  },
+  {
+    "system": "Edge",
+    "case": "Settings missing-model",
+    "steps": "Run the retained collector against the disposable built API.",
+    "expected": {
+      "state": "cli-incompatible",
+      "label": "CLI update needed",
+      "problem": [
+        [
+          "Codex CLI 0.160.0-beta.1 does not list required exec options: --model. Update the Codex CLI, then retry preflight."
+        ],
+        [
+          "Claude CLI 2.1.287 does not list required options: --model. Update the Claude CLI, then retry preflight."
+        ]
+      ]
+    },
+    "actual": {
+      "badges": ["CLI update needed", "CLI update needed"],
+      "text": "Harness preflight\nRetry preflight\nCLI update needed\ncodex\nv0.160.0-beta.1\nCodex CLI 0.160.0-beta.1 does not list required exec options: --model. Update the Codex CLI, then retry preflight.\nCLI update needed\nclaude\nv2.1.287\nClaude CLI 2.1.287 does not list required options: --model. Update the Claude CLI, then retry preflight.\n\nSigned in with Claude.ai.\n\nclaude-opus-5-5\nlisted by adapter\nclaude-fable-5-1\nlisted by adapter\n\nAdapter model listings do not confirm account access. Preflight never starts a model turn.",
+      "screenshot": "settings-missing-model.png"
+    },
+    "pass": true
+  },
+  {
+    "system": "Edge",
+    "case": "Settings missing-effort",
+    "steps": "Run the retained collector against the disposable built API.",
+    "expected": {
+      "state": "cli-incompatible",
+      "label": "CLI update needed",
+      "problem": [
+        [
+          "Codex CLI 0.160.0-beta.1 does not list required exec options: --config. Update the Codex CLI, then retry preflight."
+        ],
+        [
+          "Claude CLI 2.1.287 does not list required options: --effort. Update the Claude CLI, then retry preflight."
+        ]
+      ]
+    },
+    "actual": {
+      "badges": ["CLI update needed", "CLI update needed"],
+      "text": "Harness preflight\nRetry preflight\nCLI update needed\ncodex\nv0.160.0-beta.1\nCodex CLI 0.160.0-beta.1 does not list required exec options: --config. Update the Codex CLI, then retry preflight.\nCLI update needed\nclaude\nv2.1.287\nClaude CLI 2.1.287 does not list required options: --effort. Update the Claude CLI, then retry preflight.\n\nSigned in with Claude.ai.\n\nclaude-opus-5-5\nlisted by adapter\nclaude-fable-5-1\nlisted by adapter\n\nAdapter model listings do not confirm account access. Preflight never starts a model turn.",
+      "screenshot": "settings-missing-effort.png"
+    },
+    "pass": true
+  },
+  {
+    "system": "Edge",
+    "case": "Settings quota",
+    "steps": "Run the retained collector against the disposable built API.",
+    "expected": {
+      "state": "quota",
+      "label": "Usage limit",
+      "problem": [
+        [
+          "Codex account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+        ],
+        [
+          "Claude account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+        ]
+      ]
+    },
+    "actual": {
+      "badges": ["Usage limit", "Usage limit"],
+      "text": "Harness preflight\nRetry preflight\nUsage limit\ncodex\nv0.160.0-beta.1\nCodex account usage limit reached. Wait for the usage limit to reset, then retry preflight.\nUsage limit\nclaude\nv2.1.287\nClaude account usage limit reached. Wait for the usage limit to reset, then retry preflight.\nclaude-opus-5-5\nlisted by adapter\nclaude-fable-5-1\nlisted by adapter\n\nAdapter model listings do not confirm account access. Preflight never starts a model turn.",
+      "screenshot": "settings-quota.png"
+    },
+    "pass": true
+  },
+  {
+    "system": "Edge",
+    "case": "Settings transport",
+    "steps": "Run the retained collector against the disposable built API.",
+    "expected": {
+      "state": "transport",
+      "label": "Connection failed",
+      "problem": [
+        [
+          "Codex reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight."
+        ],
+        [
+          "Claude reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight."
+        ]
+      ]
+    },
+    "actual": {
+      "badges": ["Connection failed", "Connection failed"],
+      "text": "Harness preflight\nRetry preflight\nConnection failed\ncodex\nv0.160.0-beta.1\nCodex reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight.\nConnection failed\nclaude\nv2.1.287\nClaude reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight.\nclaude-opus-5-5\nlisted by adapter\nclaude-fable-5-1\nlisted by adapter\n\nAdapter model listings do not confirm account access. Preflight never starts a model turn.",
+      "screenshot": "settings-transport.png"
+    },
+    "pass": true
+  },
+  {
+    "system": "Edge",
+    "case": "Settings unknown",
+    "steps": "Run the retained collector against the disposable built API.",
+    "expected": {
+      "state": "unknown",
+      "label": "Unknown",
+      "problem": [
+        [
+          "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight."
+        ],
+        [
+          "Claude CLI check exited with code 1. Check that the Claude CLI starts and responds, then retry preflight."
+        ]
+      ]
+    },
+    "actual": {
+      "badges": ["Unknown", "Unknown"],
+      "text": "Harness preflight\nRetry preflight\nUnknown\ncodex\nv0.160.0-beta.1\nCodex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight.\nUnknown\nclaude\nv2.1.287\nClaude CLI check exited with code 1. Check that the Claude CLI starts and responds, then retry preflight.\nclaude-opus-5-5\nlisted by adapter\nclaude-fable-5-1\nlisted by adapter\n\nAdapter model listings do not confirm account access. Preflight never starts a model turn.",
+      "screenshot": "settings-unknown.png"
+    },
+    "pass": true
+  }
+]

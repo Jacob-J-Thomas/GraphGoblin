@@ -16,6 +16,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildApp, createContainer, loadConfig } from '@graphgoblin/api';
+import { readinessMessage } from '@graphgoblin/domain';
 import { createTestApp, startFakeClassifierEndpoint, type TestApp } from '@graphgoblin/api/testing';
 import type { HarnessEvent, HarnessStartRequest, HarnessSession } from '@graphgoblin/engine';
 import { FakeHarness, type ScriptedTurn } from '@graphgoblin/engine/testing';
@@ -66,6 +67,7 @@ const ClassifierReplySchema = z.discriminatedUnion('type', [
 const classifierReplies = new Map<string, z.infer<typeof ClassifierReplySchema>[]>();
 const claudeEfforts = ['low', 'medium', 'high', 'xhigh', 'max'] as const;
 const readyClaudePreflight = HarnessPreflightSchema.parse({
+  state: 'ready',
   ok: true,
   version: '2.1.285 (E2E fake)',
   authenticated: true,
@@ -104,9 +106,10 @@ const readyClaudePreflight = HarnessPreflightSchema.parse({
 });
 const notReadyClaudePreflight: HarnessPreflight = {
   ...readyClaudePreflight,
+  state: 'auth',
   ok: false,
   authenticated: false,
-  problems: ['Claude CLI is not signed in.'],
+  problems: [readinessMessage('claude', 'auth', 'Claude is not signed in.')],
   supportedPolicies: [],
 };
 
@@ -265,6 +268,11 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
   const body = await readJson(request);
   const target = main.app;
   switch (request.url) {
+    case '/clock/advance':
+      selectedInstance(body).app.clock.advance(
+        z.number().int().positive().parse(body['milliseconds']),
+      );
+      return { ok: true };
     case '/api/listener':
       await setApiListening(body['listening'] !== false);
       return { ok: true };
