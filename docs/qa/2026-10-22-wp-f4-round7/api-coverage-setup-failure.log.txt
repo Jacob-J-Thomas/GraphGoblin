@@ -1,0 +1,72 @@
+pnpm.cmd : $ vitest run --coverage --maxWorkers=2 --coverage.reportOnFailure
+
+At line:9 char:1
+
++ pnpm.cmd --filter @graphgoblin/api test:coverage --maxWorkers=2 --cov ...
+
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    + CategoryInfo          : NotSpecified: ($ vitest run --...reportOnFailure:String) [], RemoteException
+
+    + FullyQualifiedErrorId : NativeCommandError
+
+ 
+
+node:internal/modules/cjs/loader:1228
+
+  throw err;
+
+  ^
+
+
+
+Error: Cannot find module 'C:Users<user>AppDataLocalTempgg-audit-f4-r2-20261022port-scope.cjs'
+
+Require stack:
+
+- internal/preload
+
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+
+    at node:internal/modules/cjs/loader:1856:12
+
+    at loadPreloadModules (node:internal/process/pre_execution:734:5)
+
+    at setupUserModules (node:internal/process/pre_execution:206:5)
+
+    at prepareExecution (node:internal/process/pre_execution:159:5)
+
+    at prepareMainThreadExecution (node:internal/process/pre_execution:54:10) {
+
+  code: 'MODULE_NOT_FOUND',
+
+  requireStack: [ 'internal/preload' ]
+
+}
+
+
+
+Node.js v22.14.0
+
+[ELIFECYCLE] Command failed with exit code 1.
+
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+
+
+  × "pnpm recursive run" failed in C:
+
+  │ \Users\<user>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f4-
+
+  │ prompt-provenance\apps\api
+
+
+

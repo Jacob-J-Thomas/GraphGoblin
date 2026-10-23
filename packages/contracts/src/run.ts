@@ -2,6 +2,7 @@ import { z } from 'zod';
 import {
   JsonSchemaSchema,
   JsonValueSchema,
+  HarnessIdSchema,
   SlugSchema,
   TimestampSchema,
   UlidSchema,
@@ -39,6 +40,8 @@ export const RunErrorCodeSchema = z.enum([
   'HARNESS_NOT_AUTHENTICATED',
   'HARNESS_QUOTA_EXHAUSTED',
   'HARNESS_TURN_FAILED',
+  'HARNESS_DELIVERY_UNCERTAIN',
+  'HARNESS_SESSION_MISSING',
   'HARNESS_TERMINATION_UNCONFIRMED',
   'WORKING_DIRECTORY_MISSING',
   'SCRIPT_EXIT_CODE',
@@ -77,12 +80,39 @@ export const RunErrorCodeSchema = z.enum([
 ]);
 export type RunErrorCode = z.infer<typeof RunErrorCodeSchema>;
 
+export const PromptSubmissionSchema = z.enum([
+  'definitely-not-submitted',
+  'delivery-uncertain',
+  'session-missing',
+]);
+export type PromptSubmission = z.infer<typeof PromptSubmissionSchema>;
+/** Current turn evidence, including positively observed submission before an outcome is known. */
+export const TurnSubmissionSchema = z.enum([...PromptSubmissionSchema.options, 'submitted']);
+export type TurnSubmission = z.infer<typeof TurnSubmissionSchema>;
+export const PromptProvenanceSchema = z.strictObject({
+  visitId: z.string().min(1).max(64),
+  turnId: UlidSchema,
+  submission: PromptSubmissionSchema,
+  promptKind: z.enum(['authored', 'repair', 'continuation']),
+  sessionId: z.string().min(1).max(256).optional(),
+  /** Exact uninvoked intent when its separate log append could not be reconciled. */
+  retry: z
+    .strictObject({
+      harness: HarnessIdSchema,
+      prompt: z.string(),
+      resumeSessionId: z.string().min(1).max(256).optional(),
+    })
+    .optional(),
+});
+export type PromptProvenance = z.infer<typeof PromptProvenanceSchema>;
+
 export const RunFailureSchema = z.strictObject({
   code: RunErrorCodeSchema,
   message: z.string().max(10_000),
   nodeId: SlugSchema.optional(),
   resumable: z.boolean(),
   details: JsonValueSchema.optional(),
+  inference: PromptProvenanceSchema.optional(),
 });
 export type RunFailure = z.infer<typeof RunFailureSchema>;
 

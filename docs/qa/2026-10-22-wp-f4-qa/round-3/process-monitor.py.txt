@@ -1,0 +1,40 @@
+import json, os, time
+from pathlib import Path
+import psutil
+
+root = str(Path.cwd()).lower()
+temp = Path(os.environ['TEMP'])
+stop = temp / 'gg-qa-f4-monitor.stop'
+out = Path('docs/qa/2026-10-22-wp-f4-qa/round-3/process-inventory.json')
+seen = {}
+denials = 0
+started = time.time()
+while not stop.exists():
+    current = {}
+    for p in psutil.process_iter(['pid','ppid','name','create_time','cmdline','cwd']):
+        try:
+            d = p.info
+            cmd = ' '.join(d['cmdline'] or []).lower()
+            cwd = (d['cwd'] or '').lower()
+            name = (d['name'] or '').lower()
+            own = root in cmd or cwd.startswith(root)
+            relevant = any(x in cmd for x in ['gg-qa-f4-', 'vitest', 'playwright', 'pnpm', 'turbo', 'tsc', 'eslint', 'prettier', 'test:coverage'])
+            if (own and relevant and p.pid != os.getpid()) or any(v['pid']==d['ppid'] for v in seen.values()):
+                key = str(d['pid']) + ':' + str(d['create_time'])
+                if key not in seen:
+                    seen[key] = {k:d[k] for k in ['pid','ppid','name','create_time']}
+                current[key] = True
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            pass
+    time.sleep(.4)
+survivors = []
+for identity in seen.values():
+    try:
+        p = psutil.Process(identity['pid'])
+        if p.create_time() == identity['create_time'] and p.is_running():
+            survivors.append(identity)
+    except psutil.NoSuchProcess:
+        pass
+    except psutil.AccessDenied:
+        denials += 1
+out.write_text(json.dumps({'revision':'b80c9fdfb001e020bdfc1b9c7c15e5f910d33766','method':'Observed task commands in the exclusive QA worktree and their descendants; PID plus creation time prevents PID-reuse mistakes','seconds':round(time.time()-started,2),'recorded':list(seen.values()),'survivors':survivors,'identityCheckDenials':denials},indent=2)+'\n',encoding='utf-8')

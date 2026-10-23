@@ -1,0 +1,3014 @@
+{
+  "revision": "b80c9fdfb001e020bdfc1b9c7c15e5f910d33766",
+  "provider": "FAKE ONLY",
+  "system": "Built API, real HTTP/SQLite, public HarnessPort injection and real adapters over fake CLIs",
+  "port": 5894,
+  "store": "gg-qa-f4-repair-AncglL",
+  "checks": [
+    {
+      "harness": "claude",
+      "policy": "fresh",
+      "case": "CLI arguments",
+      "expected": {
+        "submission": "definitely-not-submitted",
+        "resumable": false
+      },
+      "runId": "01M5JECMGY8M6B3Q3SV0Y442PS",
+      "failure": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: Claude turn failed",
+        "nodeId": "b",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_TURN_FAILED"
+        },
+        "inference": {
+          "visitId": "01M5JECMGY8M6B3Q3SV0Y442PS:5",
+          "turnId": "01M5JECMME8FGDDP9XMV72NMY4",
+          "submission": "definitely-not-submitted",
+          "promptKind": "repair",
+          "sessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      },
+      "turns": [
+        {
+          "runId": "01M5JECMGY8M6B3Q3SV0Y442PS",
+          "seq": 6,
+          "ts": "2026-10-22T18:36:18.404Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECMGY8M6B3Q3SV0Y442PS:5",
+          "turnId": "01M5JECMK4AA05RM0GVQ8C21GS",
+          "harness": "claude",
+          "promptKind": "authored",
+          "prompt": "Original task Ω\nKeep the authored task exact."
+        },
+        {
+          "runId": "01M5JECMGY8M6B3Q3SV0Y442PS",
+          "seq": 11,
+          "ts": "2026-10-22T18:36:18.446Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECMGY8M6B3Q3SV0Y442PS:5",
+          "turnId": "01M5JECMME8FGDDP9XMV72NMY4",
+          "harness": "claude",
+          "promptKind": "repair",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      ],
+      "submissions": [
+        {
+          "runId": "01M5JECMGY8M6B3Q3SV0Y442PS",
+          "seq": 12,
+          "ts": "2026-10-22T18:36:18.828Z",
+          "type": "harness.submission",
+          "nodeId": "b",
+          "visitId": "01M5JECMGY8M6B3Q3SV0Y442PS:5",
+          "turnId": "01M5JECMME8FGDDP9XMV72NMY4",
+          "submission": "definitely-not-submitted"
+        }
+      ],
+      "resumeStatus": 409,
+      "additionalCallsAfter409": 0,
+      "calls": [
+        {
+          "harness": "claude",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        }
+      ],
+      "projections": "REST = api-client = MCP get_run",
+      "pass": true
+    },
+    {
+      "harness": "claude",
+      "policy": "resume-previous",
+      "case": "sync HARNESS_NOT_AUTHENTICATED",
+      "expected": {
+        "submission": "definitely-not-submitted",
+        "resumable": true
+      },
+      "runId": "01M5JECN4MZ4P7VG3A1WF6CTER",
+      "failure": {
+        "code": "HARNESS_NOT_AUTHENTICATED",
+        "message": "Controlled synchronous repair-start refusal",
+        "nodeId": "b",
+        "resumable": true,
+        "inference": {
+          "visitId": "01M5JECN4MZ4P7VG3A1WF6CTER:12",
+          "turnId": "01M5JECN72H3DR6ARHFA8GM0KN",
+          "submission": "definitely-not-submitted",
+          "promptKind": "repair",
+          "sessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      },
+      "turns": [
+        {
+          "runId": "01M5JECN4MZ4P7VG3A1WF6CTER",
+          "seq": 13,
+          "ts": "2026-10-22T18:36:19.034Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECN4MZ4P7VG3A1WF6CTER:12",
+          "turnId": "01M5JECN6TPC897R0V9BT6D8E8",
+          "harness": "claude",
+          "promptKind": "authored",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        },
+        {
+          "runId": "01M5JECN4MZ4P7VG3A1WF6CTER",
+          "seq": 18,
+          "ts": "2026-10-22T18:36:19.042Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECN4MZ4P7VG3A1WF6CTER:12",
+          "turnId": "01M5JECN72H3DR6ARHFA8GM0KN",
+          "harness": "claude",
+          "promptKind": "repair",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      ],
+      "submissions": [
+        {
+          "runId": "01M5JECN4MZ4P7VG3A1WF6CTER",
+          "seq": 19,
+          "ts": "2026-10-22T18:36:19.045Z",
+          "type": "harness.submission",
+          "nodeId": "b",
+          "visitId": "01M5JECN4MZ4P7VG3A1WF6CTER:12",
+          "turnId": "01M5JECN72H3DR6ARHFA8GM0KN",
+          "submission": "definitely-not-submitted"
+        }
+      ],
+      "resumeStatus": 200,
+      "finalStatus": "succeeded",
+      "sameTurnIdentity": true,
+      "calls": [
+        {
+          "harness": "claude",
+          "prompt": "Seed A"
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        }
+      ],
+      "projections": "REST = api-client = MCP get_run",
+      "pass": true
+    },
+    {
+      "harness": "claude",
+      "policy": "resume-previous",
+      "case": "sync HARNESS_NOT_INSTALLED",
+      "expected": {
+        "submission": "definitely-not-submitted",
+        "resumable": true
+      },
+      "runId": "01M5JECNCVX7CTG2AGH6GX7R0X",
+      "failure": {
+        "code": "HARNESS_NOT_INSTALLED",
+        "message": "Controlled synchronous repair-start refusal",
+        "nodeId": "b",
+        "resumable": true,
+        "inference": {
+          "visitId": "01M5JECNCVX7CTG2AGH6GX7R0X:12",
+          "turnId": "01M5JECNFJP7RMXF8GNMYB4QVF",
+          "submission": "definitely-not-submitted",
+          "promptKind": "repair",
+          "sessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      },
+      "turns": [
+        {
+          "runId": "01M5JECNCVX7CTG2AGH6GX7R0X",
+          "seq": 13,
+          "ts": "2026-10-22T18:36:19.299Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECNCVX7CTG2AGH6GX7R0X:12",
+          "turnId": "01M5JECNF3BSKEGF2KWC5PRP59",
+          "harness": "claude",
+          "promptKind": "authored",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        },
+        {
+          "runId": "01M5JECNCVX7CTG2AGH6GX7R0X",
+          "seq": 18,
+          "ts": "2026-10-22T18:36:19.314Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECNCVX7CTG2AGH6GX7R0X:12",
+          "turnId": "01M5JECNFJP7RMXF8GNMYB4QVF",
+          "harness": "claude",
+          "promptKind": "repair",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      ],
+      "submissions": [
+        {
+          "runId": "01M5JECNCVX7CTG2AGH6GX7R0X",
+          "seq": 19,
+          "ts": "2026-10-22T18:36:19.315Z",
+          "type": "harness.submission",
+          "nodeId": "b",
+          "visitId": "01M5JECNCVX7CTG2AGH6GX7R0X:12",
+          "turnId": "01M5JECNFJP7RMXF8GNMYB4QVF",
+          "submission": "definitely-not-submitted"
+        }
+      ],
+      "resumeStatus": 200,
+      "finalStatus": "succeeded",
+      "sameTurnIdentity": true,
+      "calls": [
+        {
+          "harness": "claude",
+          "prompt": "Seed A"
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        }
+      ],
+      "projections": "REST = api-client = MCP get_run",
+      "pass": true
+    },
+    {
+      "harness": "claude",
+      "policy": "resume-previous",
+      "case": "sync HARNESS_QUOTA_EXHAUSTED",
+      "expected": {
+        "submission": "definitely-not-submitted",
+        "resumable": true
+      },
+      "runId": "01M5JECNMDFSYFRVHF0B71KQ71",
+      "failure": {
+        "code": "HARNESS_QUOTA_EXHAUSTED",
+        "message": "Controlled synchronous repair-start refusal",
+        "nodeId": "b",
+        "resumable": true,
+        "inference": {
+          "visitId": "01M5JECNMDFSYFRVHF0B71KQ71:12",
+          "turnId": "01M5JECNQHQJD4KM3C5A6H4NR3",
+          "submission": "definitely-not-submitted",
+          "promptKind": "repair",
+          "sessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      },
+      "turns": [
+        {
+          "runId": "01M5JECNMDFSYFRVHF0B71KQ71",
+          "seq": 13,
+          "ts": "2026-10-22T18:36:19.554Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECNMDFSYFRVHF0B71KQ71:12",
+          "turnId": "01M5JECNQ2PDFYSW5A6TCM03DS",
+          "harness": "claude",
+          "promptKind": "authored",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        },
+        {
+          "runId": "01M5JECNMDFSYFRVHF0B71KQ71",
+          "seq": 18,
+          "ts": "2026-10-22T18:36:19.569Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECNMDFSYFRVHF0B71KQ71:12",
+          "turnId": "01M5JECNQHQJD4KM3C5A6H4NR3",
+          "harness": "claude",
+          "promptKind": "repair",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      ],
+      "submissions": [
+        {
+          "runId": "01M5JECNMDFSYFRVHF0B71KQ71",
+          "seq": 19,
+          "ts": "2026-10-22T18:36:19.571Z",
+          "type": "harness.submission",
+          "nodeId": "b",
+          "visitId": "01M5JECNMDFSYFRVHF0B71KQ71:12",
+          "turnId": "01M5JECNQHQJD4KM3C5A6H4NR3",
+          "submission": "definitely-not-submitted"
+        }
+      ],
+      "resumeStatus": 200,
+      "finalStatus": "succeeded",
+      "sameTurnIdentity": true,
+      "calls": [
+        {
+          "harness": "claude",
+          "prompt": "Seed A"
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        }
+      ],
+      "projections": "REST = api-client = MCP get_run",
+      "pass": true
+    },
+    {
+      "harness": "claude",
+      "policy": "resume-previous",
+      "case": "sync HARNESS_ARGUMENTS_REJECTED",
+      "expected": {
+        "submission": "definitely-not-submitted",
+        "resumable": false
+      },
+      "runId": "01M5JECNXCBQ49PBY5CAMGKMRF",
+      "failure": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: Controlled synchronous repair-start refusal",
+        "nodeId": "b",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M5JECNXCBQ49PBY5CAMGKMRF:12",
+          "turnId": "01M5JECNZX3RGQF5C0F3EFFKRF",
+          "submission": "definitely-not-submitted",
+          "promptKind": "repair",
+          "sessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      },
+      "turns": [
+        {
+          "runId": "01M5JECNXCBQ49PBY5CAMGKMRF",
+          "seq": 13,
+          "ts": "2026-10-22T18:36:19.827Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECNXCBQ49PBY5CAMGKMRF:12",
+          "turnId": "01M5JECNZKXNWFP2YWX27CEFG4",
+          "harness": "claude",
+          "promptKind": "authored",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        },
+        {
+          "runId": "01M5JECNXCBQ49PBY5CAMGKMRF",
+          "seq": 18,
+          "ts": "2026-10-22T18:36:19.837Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECNXCBQ49PBY5CAMGKMRF:12",
+          "turnId": "01M5JECNZX3RGQF5C0F3EFFKRF",
+          "harness": "claude",
+          "promptKind": "repair",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      ],
+      "submissions": [
+        {
+          "runId": "01M5JECNXCBQ49PBY5CAMGKMRF",
+          "seq": 19,
+          "ts": "2026-10-22T18:36:19.839Z",
+          "type": "harness.submission",
+          "nodeId": "b",
+          "visitId": "01M5JECNXCBQ49PBY5CAMGKMRF:12",
+          "turnId": "01M5JECNZX3RGQF5C0F3EFFKRF",
+          "submission": "definitely-not-submitted"
+        }
+      ],
+      "resumeStatus": 409,
+      "additionalCallsAfter409": 0,
+      "calls": [
+        {
+          "harness": "claude",
+          "prompt": "Seed A"
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        }
+      ],
+      "projections": "REST = api-client = MCP get_run",
+      "pass": true
+    },
+    {
+      "harness": "claude",
+      "policy": "resume-previous",
+      "case": "sync HARNESS_INVALID_CONFIGURATION",
+      "expected": {
+        "submission": "definitely-not-submitted",
+        "resumable": false
+      },
+      "runId": "01M5JECP434F4CPSC8SB5W6Y22",
+      "failure": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: Controlled synchronous repair-start refusal",
+        "nodeId": "b",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_INVALID_CONFIGURATION"
+        },
+        "inference": {
+          "visitId": "01M5JECP434F4CPSC8SB5W6Y22:12",
+          "turnId": "01M5JECP6CNN17X5QDRP60JE8C",
+          "submission": "definitely-not-submitted",
+          "promptKind": "repair",
+          "sessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      },
+      "turns": [
+        {
+          "runId": "01M5JECP434F4CPSC8SB5W6Y22",
+          "seq": 13,
+          "ts": "2026-10-22T18:36:20.034Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECP434F4CPSC8SB5W6Y22:12",
+          "turnId": "01M5JECP62H53VTB82PM4PSEVR",
+          "harness": "claude",
+          "promptKind": "authored",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        },
+        {
+          "runId": "01M5JECP434F4CPSC8SB5W6Y22",
+          "seq": 18,
+          "ts": "2026-10-22T18:36:20.044Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECP434F4CPSC8SB5W6Y22:12",
+          "turnId": "01M5JECP6CNN17X5QDRP60JE8C",
+          "harness": "claude",
+          "promptKind": "repair",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      ],
+      "submissions": [
+        {
+          "runId": "01M5JECP434F4CPSC8SB5W6Y22",
+          "seq": 19,
+          "ts": "2026-10-22T18:36:20.045Z",
+          "type": "harness.submission",
+          "nodeId": "b",
+          "visitId": "01M5JECP434F4CPSC8SB5W6Y22:12",
+          "turnId": "01M5JECP6CNN17X5QDRP60JE8C",
+          "submission": "definitely-not-submitted"
+        }
+      ],
+      "resumeStatus": 409,
+      "additionalCallsAfter409": 0,
+      "calls": [
+        {
+          "harness": "claude",
+          "prompt": "Seed A"
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        }
+      ],
+      "projections": "REST = api-client = MCP get_run",
+      "pass": true
+    },
+    {
+      "harness": "claude",
+      "policy": "resume-previous",
+      "case": "sync HARNESS_UNSUPPORTED_POLICY",
+      "expected": {
+        "submission": "definitely-not-submitted",
+        "resumable": false
+      },
+      "runId": "01M5JECP9VM7W3BZK7ABV3BK10",
+      "failure": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: Controlled synchronous repair-start refusal",
+        "nodeId": "b",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_UNSUPPORTED_POLICY"
+        },
+        "inference": {
+          "visitId": "01M5JECP9VM7W3BZK7ABV3BK10:12",
+          "turnId": "01M5JECPCM4HFQY4FYPG3N8TMY",
+          "submission": "definitely-not-submitted",
+          "promptKind": "repair",
+          "sessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      },
+      "turns": [
+        {
+          "runId": "01M5JECP9VM7W3BZK7ABV3BK10",
+          "seq": 13,
+          "ts": "2026-10-22T18:36:20.235Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECP9VM7W3BZK7ABV3BK10:12",
+          "turnId": "01M5JECPCA1FMF0E8ENJ9490YY",
+          "harness": "claude",
+          "promptKind": "authored",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        },
+        {
+          "runId": "01M5JECP9VM7W3BZK7ABV3BK10",
+          "seq": 18,
+          "ts": "2026-10-22T18:36:20.244Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECP9VM7W3BZK7ABV3BK10:12",
+          "turnId": "01M5JECPCM4HFQY4FYPG3N8TMY",
+          "harness": "claude",
+          "promptKind": "repair",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      ],
+      "submissions": [
+        {
+          "runId": "01M5JECP9VM7W3BZK7ABV3BK10",
+          "seq": 19,
+          "ts": "2026-10-22T18:36:20.245Z",
+          "type": "harness.submission",
+          "nodeId": "b",
+          "visitId": "01M5JECP9VM7W3BZK7ABV3BK10:12",
+          "turnId": "01M5JECPCM4HFQY4FYPG3N8TMY",
+          "submission": "definitely-not-submitted"
+        }
+      ],
+      "resumeStatus": 409,
+      "additionalCallsAfter409": 0,
+      "calls": [
+        {
+          "harness": "claude",
+          "prompt": "Seed A"
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        }
+      ],
+      "projections": "REST = api-client = MCP get_run",
+      "pass": true
+    },
+    {
+      "harness": "claude",
+      "policy": "resume-previous",
+      "case": "async refused HARNESS_NOT_AUTHENTICATED",
+      "expected": {
+        "submission": "definitely-not-submitted",
+        "resumable": true
+      },
+      "runId": "01M5JECPH8XWTMNDZN1KRRT44V",
+      "failure": {
+        "code": "HARNESS_NOT_AUTHENTICATED",
+        "message": "Controlled asynchronous repair failure",
+        "nodeId": "b",
+        "resumable": true,
+        "inference": {
+          "visitId": "01M5JECPH8XWTMNDZN1KRRT44V:12",
+          "turnId": "01M5JECPM1SW1GJ0DGWCN04DE8",
+          "submission": "definitely-not-submitted",
+          "promptKind": "repair",
+          "sessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      },
+      "turns": [
+        {
+          "runId": "01M5JECPH8XWTMNDZN1KRRT44V",
+          "seq": 13,
+          "ts": "2026-10-22T18:36:20.470Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECPH8XWTMNDZN1KRRT44V:12",
+          "turnId": "01M5JECPKP1DJ2JA7QGK6A1FKM",
+          "harness": "claude",
+          "promptKind": "authored",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        },
+        {
+          "runId": "01M5JECPH8XWTMNDZN1KRRT44V",
+          "seq": 18,
+          "ts": "2026-10-22T18:36:20.481Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECPH8XWTMNDZN1KRRT44V:12",
+          "turnId": "01M5JECPM1SW1GJ0DGWCN04DE8",
+          "harness": "claude",
+          "promptKind": "repair",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      ],
+      "submissions": [
+        {
+          "runId": "01M5JECPH8XWTMNDZN1KRRT44V",
+          "seq": 19,
+          "ts": "2026-10-22T18:36:20.482Z",
+          "type": "harness.submission",
+          "nodeId": "b",
+          "visitId": "01M5JECPH8XWTMNDZN1KRRT44V:12",
+          "turnId": "01M5JECPM1SW1GJ0DGWCN04DE8",
+          "submission": "definitely-not-submitted"
+        }
+      ],
+      "resumeStatus": 200,
+      "finalStatus": "succeeded",
+      "sameTurnIdentity": true,
+      "calls": [
+        {
+          "harness": "claude",
+          "prompt": "Seed A"
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        }
+      ],
+      "projections": "REST = api-client = MCP get_run",
+      "pass": true
+    },
+    {
+      "harness": "claude",
+      "policy": "resume-previous",
+      "case": "async refused HARNESS_ARGUMENTS_REJECTED",
+      "expected": {
+        "submission": "definitely-not-submitted",
+        "resumable": false
+      },
+      "runId": "01M5JECPT98F88TPNZ6KNAJNZW",
+      "failure": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: Controlled asynchronous repair failure",
+        "nodeId": "b",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M5JECPT98F88TPNZ6KNAJNZW:12",
+          "turnId": "01M5JECPX5D5NT0J9M24RXQC5H",
+          "submission": "definitely-not-submitted",
+          "promptKind": "repair",
+          "sessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      },
+      "turns": [
+        {
+          "runId": "01M5JECPT98F88TPNZ6KNAJNZW",
+          "seq": 13,
+          "ts": "2026-10-22T18:36:20.763Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECPT98F88TPNZ6KNAJNZW:12",
+          "turnId": "01M5JECPWVK79KT0ZRXZPGBTAZ",
+          "harness": "claude",
+          "promptKind": "authored",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        },
+        {
+          "runId": "01M5JECPT98F88TPNZ6KNAJNZW",
+          "seq": 18,
+          "ts": "2026-10-22T18:36:20.773Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECPT98F88TPNZ6KNAJNZW:12",
+          "turnId": "01M5JECPX5D5NT0J9M24RXQC5H",
+          "harness": "claude",
+          "promptKind": "repair",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      ],
+      "submissions": [
+        {
+          "runId": "01M5JECPT98F88TPNZ6KNAJNZW",
+          "seq": 19,
+          "ts": "2026-10-22T18:36:20.775Z",
+          "type": "harness.submission",
+          "nodeId": "b",
+          "visitId": "01M5JECPT98F88TPNZ6KNAJNZW:12",
+          "turnId": "01M5JECPX5D5NT0J9M24RXQC5H",
+          "submission": "definitely-not-submitted"
+        }
+      ],
+      "resumeStatus": 409,
+      "additionalCallsAfter409": 0,
+      "calls": [
+        {
+          "harness": "claude",
+          "prompt": "Seed A"
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        }
+      ],
+      "projections": "REST = api-client = MCP get_run",
+      "pass": true
+    },
+    {
+      "harness": "claude",
+      "policy": "resume-previous",
+      "case": "async refused HARNESS_INVALID_CONFIGURATION",
+      "expected": {
+        "submission": "definitely-not-submitted",
+        "resumable": false
+      },
+      "runId": "01M5JECQ0WTX5HK1B2JQH9PGM5",
+      "failure": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: Controlled asynchronous repair failure",
+        "nodeId": "b",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_INVALID_CONFIGURATION"
+        },
+        "inference": {
+          "visitId": "01M5JECQ0WTX5HK1B2JQH9PGM5:12",
+          "turnId": "01M5JECQ3PAA3GVY8DXZY7C5JS",
+          "submission": "definitely-not-submitted",
+          "promptKind": "repair",
+          "sessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      },
+      "turns": [
+        {
+          "runId": "01M5JECQ0WTX5HK1B2JQH9PGM5",
+          "seq": 13,
+          "ts": "2026-10-22T18:36:20.971Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECQ0WTX5HK1B2JQH9PGM5:12",
+          "turnId": "01M5JECQ3BV8VYEG38JCYBMY2P",
+          "harness": "claude",
+          "promptKind": "authored",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        },
+        {
+          "runId": "01M5JECQ0WTX5HK1B2JQH9PGM5",
+          "seq": 18,
+          "ts": "2026-10-22T18:36:20.982Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECQ0WTX5HK1B2JQH9PGM5:12",
+          "turnId": "01M5JECQ3PAA3GVY8DXZY7C5JS",
+          "harness": "claude",
+          "promptKind": "repair",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      ],
+      "submissions": [
+        {
+          "runId": "01M5JECQ0WTX5HK1B2JQH9PGM5",
+          "seq": 19,
+          "ts": "2026-10-22T18:36:20.984Z",
+          "type": "harness.submission",
+          "nodeId": "b",
+          "visitId": "01M5JECQ0WTX5HK1B2JQH9PGM5:12",
+          "turnId": "01M5JECQ3PAA3GVY8DXZY7C5JS",
+          "submission": "definitely-not-submitted"
+        }
+      ],
+      "resumeStatus": 409,
+      "additionalCallsAfter409": 0,
+      "calls": [
+        {
+          "harness": "claude",
+          "prompt": "Seed A"
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        }
+      ],
+      "projections": "REST = api-client = MCP get_run",
+      "pass": true
+    },
+    {
+      "harness": "claude",
+      "policy": "resume-previous",
+      "case": "async refused HARNESS_UNSUPPORTED_POLICY",
+      "expected": {
+        "submission": "definitely-not-submitted",
+        "resumable": false
+      },
+      "runId": "01M5JECQ7TYWBY7MG201NMXT71",
+      "failure": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: Controlled asynchronous repair failure",
+        "nodeId": "b",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_UNSUPPORTED_POLICY"
+        },
+        "inference": {
+          "visitId": "01M5JECQ7TYWBY7MG201NMXT71:12",
+          "turnId": "01M5JECQB25MS5PT7ZJ9QH3K9S",
+          "submission": "definitely-not-submitted",
+          "promptKind": "repair",
+          "sessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      },
+      "turns": [
+        {
+          "runId": "01M5JECQ7TYWBY7MG201NMXT71",
+          "seq": 13,
+          "ts": "2026-10-22T18:36:21.206Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECQ7TYWBY7MG201NMXT71:12",
+          "turnId": "01M5JECQAPTGSHJDRPFDS5F3N6",
+          "harness": "claude",
+          "promptKind": "authored",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        },
+        {
+          "runId": "01M5JECQ7TYWBY7MG201NMXT71",
+          "seq": 18,
+          "ts": "2026-10-22T18:36:21.218Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECQ7TYWBY7MG201NMXT71:12",
+          "turnId": "01M5JECQB25MS5PT7ZJ9QH3K9S",
+          "harness": "claude",
+          "promptKind": "repair",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      ],
+      "submissions": [
+        {
+          "runId": "01M5JECQ7TYWBY7MG201NMXT71",
+          "seq": 19,
+          "ts": "2026-10-22T18:36:21.219Z",
+          "type": "harness.submission",
+          "nodeId": "b",
+          "visitId": "01M5JECQ7TYWBY7MG201NMXT71:12",
+          "turnId": "01M5JECQB25MS5PT7ZJ9QH3K9S",
+          "submission": "definitely-not-submitted"
+        }
+      ],
+      "resumeStatus": 409,
+      "additionalCallsAfter409": 0,
+      "calls": [
+        {
+          "harness": "claude",
+          "prompt": "Seed A"
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        }
+      ],
+      "projections": "REST = api-client = MCP get_run",
+      "pass": true
+    },
+    {
+      "harness": "claude",
+      "policy": "resume-previous",
+      "case": "async accepted generic no retry",
+      "expected": {
+        "submission": "delivery-uncertain",
+        "resumable": false
+      },
+      "runId": "01M5JECQF1KWWWE9843Y5D69B6",
+      "failure": {
+        "code": "HARNESS_DELIVERY_UNCERTAIN",
+        "message": "harness turn failed: Controlled asynchronous repair failure",
+        "nodeId": "b",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_TURN_FAILED"
+        },
+        "inference": {
+          "visitId": "01M5JECQF1KWWWE9843Y5D69B6:12",
+          "turnId": "01M5JECQHSF2YS40V4CZ1798A1",
+          "submission": "delivery-uncertain",
+          "promptKind": "repair",
+          "sessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      },
+      "turns": [
+        {
+          "runId": "01M5JECQF1KWWWE9843Y5D69B6",
+          "seq": 13,
+          "ts": "2026-10-22T18:36:21.419Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECQF1KWWWE9843Y5D69B6:12",
+          "turnId": "01M5JECQHBS6Z8SDVFQ4FV1GJD",
+          "harness": "claude",
+          "promptKind": "authored",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        },
+        {
+          "runId": "01M5JECQF1KWWWE9843Y5D69B6",
+          "seq": 18,
+          "ts": "2026-10-22T18:36:21.433Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECQF1KWWWE9843Y5D69B6:12",
+          "turnId": "01M5JECQHSF2YS40V4CZ1798A1",
+          "harness": "claude",
+          "promptKind": "repair",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      ],
+      "submissions": [
+        {
+          "runId": "01M5JECQF1KWWWE9843Y5D69B6",
+          "seq": 20,
+          "ts": "2026-10-22T18:36:21.437Z",
+          "type": "harness.submission",
+          "nodeId": "b",
+          "visitId": "01M5JECQF1KWWWE9843Y5D69B6:12",
+          "turnId": "01M5JECQHSF2YS40V4CZ1798A1",
+          "submission": "submitted",
+          "marker": "fake.accepted"
+        },
+        {
+          "runId": "01M5JECQF1KWWWE9843Y5D69B6",
+          "seq": 21,
+          "ts": "2026-10-22T18:36:21.438Z",
+          "type": "harness.submission",
+          "nodeId": "b",
+          "visitId": "01M5JECQF1KWWWE9843Y5D69B6:12",
+          "turnId": "01M5JECQHSF2YS40V4CZ1798A1",
+          "submission": "delivery-uncertain"
+        }
+      ],
+      "resumeStatus": 409,
+      "additionalCallsAfter409": 0,
+      "calls": [
+        {
+          "harness": "claude",
+          "prompt": "Seed A"
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        }
+      ],
+      "projections": "REST = api-client = MCP get_run",
+      "pass": true
+    },
+    {
+      "harness": "claude",
+      "policy": "resume-previous",
+      "case": "async accepted generic retry",
+      "expected": {
+        "submission": "delivery-uncertain",
+        "resumable": true
+      },
+      "runId": "01M5JECQNSFVSPXWFWD0WGHXVG",
+      "failure": {
+        "code": "HARNESS_DELIVERY_UNCERTAIN",
+        "message": "harness turn failed: Controlled asynchronous repair failure",
+        "nodeId": "b",
+        "resumable": true,
+        "details": {
+          "adapterCode": "HARNESS_TURN_FAILED"
+        },
+        "inference": {
+          "visitId": "01M5JECQNSFVSPXWFWD0WGHXVG:12",
+          "turnId": "01M5JECQRMA1TCSK1823RZXPR0",
+          "submission": "delivery-uncertain",
+          "promptKind": "repair",
+          "sessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      },
+      "turns": [
+        {
+          "runId": "01M5JECQNSFVSPXWFWD0WGHXVG",
+          "seq": 13,
+          "ts": "2026-10-22T18:36:21.637Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECQNSFVSPXWFWD0WGHXVG:12",
+          "turnId": "01M5JECQR53SEFHP4MS3QNKT3Y",
+          "harness": "claude",
+          "promptKind": "authored",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        },
+        {
+          "runId": "01M5JECQNSFVSPXWFWD0WGHXVG",
+          "seq": 18,
+          "ts": "2026-10-22T18:36:21.652Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECQNSFVSPXWFWD0WGHXVG:12",
+          "turnId": "01M5JECQRMA1TCSK1823RZXPR0",
+          "harness": "claude",
+          "promptKind": "repair",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      ],
+      "submissions": [
+        {
+          "runId": "01M5JECQNSFVSPXWFWD0WGHXVG",
+          "seq": 20,
+          "ts": "2026-10-22T18:36:21.655Z",
+          "type": "harness.submission",
+          "nodeId": "b",
+          "visitId": "01M5JECQNSFVSPXWFWD0WGHXVG:12",
+          "turnId": "01M5JECQRMA1TCSK1823RZXPR0",
+          "submission": "submitted",
+          "marker": "fake.accepted"
+        },
+        {
+          "runId": "01M5JECQNSFVSPXWFWD0WGHXVG",
+          "seq": 21,
+          "ts": "2026-10-22T18:36:21.657Z",
+          "type": "harness.submission",
+          "nodeId": "b",
+          "visitId": "01M5JECQNSFVSPXWFWD0WGHXVG:12",
+          "turnId": "01M5JECQRMA1TCSK1823RZXPR0",
+          "submission": "delivery-uncertain"
+        }
+      ],
+      "resumeStatus": 200,
+      "finalStatus": "succeeded",
+      "sameTurnIdentity": false,
+      "calls": [
+        {
+          "harness": "claude",
+          "prompt": "Seed A"
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "The previous turn was interrupted before GraphGoblin recorded its result. Continue the task from where you left off and finish it.",
+          "outputSchema": {
+            "type": "number"
+          }
+        }
+      ],
+      "projections": "REST = api-client = MCP get_run",
+      "pass": true
+    },
+    {
+      "harness": "claude",
+      "policy": "resume-previous",
+      "case": "async accepted pinned false-positive retry",
+      "expected": {
+        "submission": "delivery-uncertain",
+        "resumable": false
+      },
+      "runId": "01M5JECQYD000HNQHRAY9J3GJ8",
+      "failure": {
+        "code": "HARNESS_DELIVERY_UNCERTAIN",
+        "message": "harness turn failed: Controlled asynchronous repair failure",
+        "nodeId": "b",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M5JECQYD000HNQHRAY9J3GJ8:12",
+          "turnId": "01M5JECR0NETTNVPKSP40KW5CY",
+          "submission": "delivery-uncertain",
+          "promptKind": "repair",
+          "sessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      },
+      "turns": [
+        {
+          "runId": "01M5JECQYD000HNQHRAY9J3GJ8",
+          "seq": 13,
+          "ts": "2026-10-22T18:36:21.902Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECQYD000HNQHRAY9J3GJ8:12",
+          "turnId": "01M5JECR0ET55NRZ52MFVE64MK",
+          "harness": "claude",
+          "promptKind": "authored",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        },
+        {
+          "runId": "01M5JECQYD000HNQHRAY9J3GJ8",
+          "seq": 18,
+          "ts": "2026-10-22T18:36:21.909Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECQYD000HNQHRAY9J3GJ8:12",
+          "turnId": "01M5JECR0NETTNVPKSP40KW5CY",
+          "harness": "claude",
+          "promptKind": "repair",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      ],
+      "submissions": [
+        {
+          "runId": "01M5JECQYD000HNQHRAY9J3GJ8",
+          "seq": 20,
+          "ts": "2026-10-22T18:36:21.915Z",
+          "type": "harness.submission",
+          "nodeId": "b",
+          "visitId": "01M5JECQYD000HNQHRAY9J3GJ8:12",
+          "turnId": "01M5JECR0NETTNVPKSP40KW5CY",
+          "submission": "submitted",
+          "marker": "fake.accepted"
+        },
+        {
+          "runId": "01M5JECQYD000HNQHRAY9J3GJ8",
+          "seq": 21,
+          "ts": "2026-10-22T18:36:21.917Z",
+          "type": "harness.submission",
+          "nodeId": "b",
+          "visitId": "01M5JECQYD000HNQHRAY9J3GJ8:12",
+          "turnId": "01M5JECR0NETTNVPKSP40KW5CY",
+          "submission": "delivery-uncertain"
+        }
+      ],
+      "resumeStatus": 409,
+      "additionalCallsAfter409": 0,
+      "calls": [
+        {
+          "harness": "claude",
+          "prompt": "Seed A"
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        }
+      ],
+      "projections": "REST = api-client = MCP get_run",
+      "pass": true
+    },
+    {
+      "harness": "claude",
+      "policy": "resume-previous",
+      "case": "CLI auth",
+      "expected": {
+        "submission": "definitely-not-submitted",
+        "resumable": true
+      },
+      "runId": "01M5JECR4S457WZSZCCNXV46EY",
+      "failure": {
+        "code": "HARNESS_NOT_AUTHENTICATED",
+        "message": "Claude requires authentication before submitting this turn",
+        "nodeId": "b",
+        "resumable": true,
+        "inference": {
+          "visitId": "01M5JECR4S457WZSZCCNXV46EY:12",
+          "turnId": "01M5JECR6QS28A1FQVA5VJKXSH",
+          "submission": "definitely-not-submitted",
+          "promptKind": "repair",
+          "sessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      },
+      "turns": [
+        {
+          "runId": "01M5JECR4S457WZSZCCNXV46EY",
+          "seq": 13,
+          "ts": "2026-10-22T18:36:22.093Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECR4S457WZSZCCNXV46EY:12",
+          "turnId": "01M5JECR6D4DQW7DEWKQD38WY3",
+          "harness": "claude",
+          "promptKind": "authored",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        },
+        {
+          "runId": "01M5JECR4S457WZSZCCNXV46EY",
+          "seq": 18,
+          "ts": "2026-10-22T18:36:22.103Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECR4S457WZSZCCNXV46EY:12",
+          "turnId": "01M5JECR6QS28A1FQVA5VJKXSH",
+          "harness": "claude",
+          "promptKind": "repair",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      ],
+      "submissions": [
+        {
+          "runId": "01M5JECR4S457WZSZCCNXV46EY",
+          "seq": 19,
+          "ts": "2026-10-22T18:36:22.463Z",
+          "type": "harness.submission",
+          "nodeId": "b",
+          "visitId": "01M5JECR4S457WZSZCCNXV46EY:12",
+          "turnId": "01M5JECR6QS28A1FQVA5VJKXSH",
+          "submission": "definitely-not-submitted"
+        }
+      ],
+      "resumeStatus": 200,
+      "finalStatus": "succeeded",
+      "sameTurnIdentity": true,
+      "calls": [
+        {
+          "harness": "claude",
+          "prompt": "Seed A"
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        }
+      ],
+      "projections": "REST = api-client = MCP get_run",
+      "pass": true
+    },
+    {
+      "harness": "claude",
+      "policy": "resume-previous",
+      "case": "CLI arguments",
+      "expected": {
+        "submission": "definitely-not-submitted",
+        "resumable": false
+      },
+      "runId": "01M5JECRP0GK9H215GTB7Y601D",
+      "failure": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: Claude turn failed",
+        "nodeId": "b",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_TURN_FAILED"
+        },
+        "inference": {
+          "visitId": "01M5JECRP0GK9H215GTB7Y601D:12",
+          "turnId": "01M5JECRRQ54YFMSD2PT9NA3PM",
+          "submission": "definitely-not-submitted",
+          "promptKind": "repair",
+          "sessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      },
+      "turns": [
+        {
+          "runId": "01M5JECRP0GK9H215GTB7Y601D",
+          "seq": 13,
+          "ts": "2026-10-22T18:36:22.664Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECRP0GK9H215GTB7Y601D:12",
+          "turnId": "01M5JECRR7Y2QHW9KRB8XH674A",
+          "harness": "claude",
+          "promptKind": "authored",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        },
+        {
+          "runId": "01M5JECRP0GK9H215GTB7Y601D",
+          "seq": 18,
+          "ts": "2026-10-22T18:36:22.679Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECRP0GK9H215GTB7Y601D:12",
+          "turnId": "01M5JECRRQ54YFMSD2PT9NA3PM",
+          "harness": "claude",
+          "promptKind": "repair",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      ],
+      "submissions": [
+        {
+          "runId": "01M5JECRP0GK9H215GTB7Y601D",
+          "seq": 19,
+          "ts": "2026-10-22T18:36:23.096Z",
+          "type": "harness.submission",
+          "nodeId": "b",
+          "visitId": "01M5JECRP0GK9H215GTB7Y601D:12",
+          "turnId": "01M5JECRRQ54YFMSD2PT9NA3PM",
+          "submission": "definitely-not-submitted"
+        }
+      ],
+      "resumeStatus": 409,
+      "additionalCallsAfter409": 0,
+      "calls": [
+        {
+          "harness": "claude",
+          "prompt": "Seed A"
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        }
+      ],
+      "projections": "REST = api-client = MCP get_run",
+      "pass": true
+    },
+    {
+      "harness": "claude",
+      "policy": "resume-named",
+      "case": "sync HARNESS_NOT_AUTHENTICATED",
+      "expected": {
+        "submission": "definitely-not-submitted",
+        "resumable": true
+      },
+      "runId": "01M5JECS982PCC0V9933HNZZ09",
+      "failure": {
+        "code": "HARNESS_NOT_AUTHENTICATED",
+        "message": "Controlled synchronous repair-start refusal",
+        "nodeId": "b",
+        "resumable": true,
+        "inference": {
+          "visitId": "01M5JECS982PCC0V9933HNZZ09:12",
+          "turnId": "01M5JECSBDWQ9JNZHASDZAS64R",
+          "submission": "definitely-not-submitted",
+          "promptKind": "repair",
+          "sessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      },
+      "turns": [
+        {
+          "runId": "01M5JECS982PCC0V9933HNZZ09",
+          "seq": 13,
+          "ts": "2026-10-22T18:36:23.266Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECS982PCC0V9933HNZZ09:12",
+          "turnId": "01M5JECSB2VDHG9ZFQNA896F1W",
+          "harness": "claude",
+          "promptKind": "authored",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        },
+        {
+          "runId": "01M5JECS982PCC0V9933HNZZ09",
+          "seq": 18,
+          "ts": "2026-10-22T18:36:23.277Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECS982PCC0V9933HNZZ09:12",
+          "turnId": "01M5JECSBDWQ9JNZHASDZAS64R",
+          "harness": "claude",
+          "promptKind": "repair",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      ],
+      "submissions": [
+        {
+          "runId": "01M5JECS982PCC0V9933HNZZ09",
+          "seq": 19,
+          "ts": "2026-10-22T18:36:23.278Z",
+          "type": "harness.submission",
+          "nodeId": "b",
+          "visitId": "01M5JECS982PCC0V9933HNZZ09:12",
+          "turnId": "01M5JECSBDWQ9JNZHASDZAS64R",
+          "submission": "definitely-not-submitted"
+        }
+      ],
+      "resumeStatus": 200,
+      "finalStatus": "succeeded",
+      "sameTurnIdentity": true,
+      "calls": [
+        {
+          "harness": "claude",
+          "prompt": "Seed A"
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        }
+      ],
+      "projections": "REST = api-client = MCP get_run",
+      "pass": true
+    },
+    {
+      "harness": "claude",
+      "policy": "resume-named",
+      "case": "sync HARNESS_NOT_INSTALLED",
+      "expected": {
+        "submission": "definitely-not-submitted",
+        "resumable": true
+      },
+      "runId": "01M5JECSF5FMBCPHTE7C8T4WFD",
+      "failure": {
+        "code": "HARNESS_NOT_INSTALLED",
+        "message": "Controlled synchronous repair-start refusal",
+        "nodeId": "b",
+        "resumable": true,
+        "inference": {
+          "visitId": "01M5JECSF5FMBCPHTE7C8T4WFD:12",
+          "turnId": "01M5JECSGYS995BX7KBE0SWQHG",
+          "submission": "definitely-not-submitted",
+          "promptKind": "repair",
+          "sessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      },
+      "turns": [
+        {
+          "runId": "01M5JECSF5FMBCPHTE7C8T4WFD",
+          "seq": 13,
+          "ts": "2026-10-22T18:36:23.445Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECSF5FMBCPHTE7C8T4WFD:12",
+          "turnId": "01M5JECSGNRDGDXPX3YVXYDBSY",
+          "harness": "claude",
+          "promptKind": "authored",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        },
+        {
+          "runId": "01M5JECSF5FMBCPHTE7C8T4WFD",
+          "seq": 18,
+          "ts": "2026-10-22T18:36:23.454Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECSF5FMBCPHTE7C8T4WFD:12",
+          "turnId": "01M5JECSGYS995BX7KBE0SWQHG",
+          "harness": "claude",
+          "promptKind": "repair",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      ],
+      "submissions": [
+        {
+          "runId": "01M5JECSF5FMBCPHTE7C8T4WFD",
+          "seq": 19,
+          "ts": "2026-10-22T18:36:23.455Z",
+          "type": "harness.submission",
+          "nodeId": "b",
+          "visitId": "01M5JECSF5FMBCPHTE7C8T4WFD:12",
+          "turnId": "01M5JECSGYS995BX7KBE0SWQHG",
+          "submission": "definitely-not-submitted"
+        }
+      ],
+      "resumeStatus": 200,
+      "finalStatus": "succeeded",
+      "sameTurnIdentity": true,
+      "calls": [
+        {
+          "harness": "claude",
+          "prompt": "Seed A"
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        }
+      ],
+      "projections": "REST = api-client = MCP get_run",
+      "pass": true
+    },
+    {
+      "harness": "claude",
+      "policy": "resume-named",
+      "case": "sync HARNESS_QUOTA_EXHAUSTED",
+      "expected": {
+        "submission": "definitely-not-submitted",
+        "resumable": true
+      },
+      "runId": "01M5JECSPEBH9S9P7YBVPPHKZV",
+      "failure": {
+        "code": "HARNESS_QUOTA_EXHAUSTED",
+        "message": "Controlled synchronous repair-start refusal",
+        "nodeId": "b",
+        "resumable": true,
+        "inference": {
+          "visitId": "01M5JECSPEBH9S9P7YBVPPHKZV:12",
+          "turnId": "01M5JECSRK6QVXMRS6ABQD1RGP",
+          "submission": "definitely-not-submitted",
+          "promptKind": "repair",
+          "sessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      },
+      "turns": [
+        {
+          "runId": "01M5JECSPEBH9S9P7YBVPPHKZV",
+          "seq": 13,
+          "ts": "2026-10-22T18:36:23.690Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECSPEBH9S9P7YBVPPHKZV:12",
+          "turnId": "01M5JECSRA0RXJVHBKXTJATK9Q",
+          "harness": "claude",
+          "promptKind": "authored",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        },
+        {
+          "runId": "01M5JECSPEBH9S9P7YBVPPHKZV",
+          "seq": 18,
+          "ts": "2026-10-22T18:36:23.699Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECSPEBH9S9P7YBVPPHKZV:12",
+          "turnId": "01M5JECSRK6QVXMRS6ABQD1RGP",
+          "harness": "claude",
+          "promptKind": "repair",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      ],
+      "submissions": [
+        {
+          "runId": "01M5JECSPEBH9S9P7YBVPPHKZV",
+          "seq": 19,
+          "ts": "2026-10-22T18:36:23.701Z",
+          "type": "harness.submission",
+          "nodeId": "b",
+          "visitId": "01M5JECSPEBH9S9P7YBVPPHKZV:12",
+          "turnId": "01M5JECSRK6QVXMRS6ABQD1RGP",
+          "submission": "definitely-not-submitted"
+        }
+      ],
+      "resumeStatus": 200,
+      "finalStatus": "succeeded",
+      "sameTurnIdentity": true,
+      "calls": [
+        {
+          "harness": "claude",
+          "prompt": "Seed A"
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        }
+      ],
+      "projections": "REST = api-client = MCP get_run",
+      "pass": true
+    },
+    {
+      "harness": "claude",
+      "policy": "resume-named",
+      "case": "sync HARNESS_ARGUMENTS_REJECTED",
+      "expected": {
+        "submission": "definitely-not-submitted",
+        "resumable": false
+      },
+      "runId": "01M5JECSX8E1KYE3MQ9CH1S4PZ",
+      "failure": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: Controlled synchronous repair-start refusal",
+        "nodeId": "b",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M5JECSX8E1KYE3MQ9CH1S4PZ:12",
+          "turnId": "01M5JECT01DEJ3QKK9N3G0C9J6",
+          "submission": "definitely-not-submitted",
+          "promptKind": "repair",
+          "sessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      },
+      "turns": [
+        {
+          "runId": "01M5JECSX8E1KYE3MQ9CH1S4PZ",
+          "seq": 13,
+          "ts": "2026-10-22T18:36:23.928Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECSX8E1KYE3MQ9CH1S4PZ:12",
+          "turnId": "01M5JECSZRN24ZQ0VKZETC0PKP",
+          "harness": "claude",
+          "promptKind": "authored",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        },
+        {
+          "runId": "01M5JECSX8E1KYE3MQ9CH1S4PZ",
+          "seq": 18,
+          "ts": "2026-10-22T18:36:23.937Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECSX8E1KYE3MQ9CH1S4PZ:12",
+          "turnId": "01M5JECT01DEJ3QKK9N3G0C9J6",
+          "harness": "claude",
+          "promptKind": "repair",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      ],
+      "submissions": [
+        {
+          "runId": "01M5JECSX8E1KYE3MQ9CH1S4PZ",
+          "seq": 19,
+          "ts": "2026-10-22T18:36:23.939Z",
+          "type": "harness.submission",
+          "nodeId": "b",
+          "visitId": "01M5JECSX8E1KYE3MQ9CH1S4PZ:12",
+          "turnId": "01M5JECT01DEJ3QKK9N3G0C9J6",
+          "submission": "definitely-not-submitted"
+        }
+      ],
+      "resumeStatus": 409,
+      "additionalCallsAfter409": 0,
+      "calls": [
+        {
+          "harness": "claude",
+          "prompt": "Seed A"
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        }
+      ],
+      "projections": "REST = api-client = MCP get_run",
+      "pass": true
+    },
+    {
+      "harness": "claude",
+      "policy": "resume-named",
+      "case": "sync HARNESS_INVALID_CONFIGURATION",
+      "expected": {
+        "submission": "definitely-not-submitted",
+        "resumable": false
+      },
+      "runId": "01M5JECT432T05G01YS7YWE7SS",
+      "failure": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: Controlled synchronous repair-start refusal",
+        "nodeId": "b",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_INVALID_CONFIGURATION"
+        },
+        "inference": {
+          "visitId": "01M5JECT432T05G01YS7YWE7SS:12",
+          "turnId": "01M5JECT6VGMF7PCY9T6AFGWFR",
+          "submission": "definitely-not-submitted",
+          "promptKind": "repair",
+          "sessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      },
+      "turns": [
+        {
+          "runId": "01M5JECT432T05G01YS7YWE7SS",
+          "seq": 13,
+          "ts": "2026-10-22T18:36:24.146Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECT432T05G01YS7YWE7SS:12",
+          "turnId": "01M5JECT6JSZWNER2H8C3WHR2C",
+          "harness": "claude",
+          "promptKind": "authored",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        },
+        {
+          "runId": "01M5JECT432T05G01YS7YWE7SS",
+          "seq": 18,
+          "ts": "2026-10-22T18:36:24.155Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECT432T05G01YS7YWE7SS:12",
+          "turnId": "01M5JECT6VGMF7PCY9T6AFGWFR",
+          "harness": "claude",
+          "promptKind": "repair",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      ],
+      "submissions": [
+        {
+          "runId": "01M5JECT432T05G01YS7YWE7SS",
+          "seq": 19,
+          "ts": "2026-10-22T18:36:24.156Z",
+          "type": "harness.submission",
+          "nodeId": "b",
+          "visitId": "01M5JECT432T05G01YS7YWE7SS:12",
+          "turnId": "01M5JECT6VGMF7PCY9T6AFGWFR",
+          "submission": "definitely-not-submitted"
+        }
+      ],
+      "resumeStatus": 409,
+      "additionalCallsAfter409": 0,
+      "calls": [
+        {
+          "harness": "claude",
+          "prompt": "Seed A"
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        }
+      ],
+      "projections": "REST = api-client = MCP get_run",
+      "pass": true
+    },
+    {
+      "harness": "claude",
+      "policy": "resume-named",
+      "case": "sync HARNESS_UNSUPPORTED_POLICY",
+      "expected": {
+        "submission": "definitely-not-submitted",
+        "resumable": false
+      },
+      "runId": "01M5JECTAXPTD5PQJGJNMCRVVV",
+      "failure": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: Controlled synchronous repair-start refusal",
+        "nodeId": "b",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_UNSUPPORTED_POLICY"
+        },
+        "inference": {
+          "visitId": "01M5JECTAXPTD5PQJGJNMCRVVV:12",
+          "turnId": "01M5JECTDPSXDP20DXJBVN6JPG",
+          "submission": "definitely-not-submitted",
+          "promptKind": "repair",
+          "sessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      },
+      "turns": [
+        {
+          "runId": "01M5JECTAXPTD5PQJGJNMCRVVV",
+          "seq": 13,
+          "ts": "2026-10-22T18:36:24.363Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECTAXPTD5PQJGJNMCRVVV:12",
+          "turnId": "01M5JECTDBEY1THF1BHJ4FR9RE",
+          "harness": "claude",
+          "promptKind": "authored",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        },
+        {
+          "runId": "01M5JECTAXPTD5PQJGJNMCRVVV",
+          "seq": 18,
+          "ts": "2026-10-22T18:36:24.374Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECTAXPTD5PQJGJNMCRVVV:12",
+          "turnId": "01M5JECTDPSXDP20DXJBVN6JPG",
+          "harness": "claude",
+          "promptKind": "repair",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      ],
+      "submissions": [
+        {
+          "runId": "01M5JECTAXPTD5PQJGJNMCRVVV",
+          "seq": 19,
+          "ts": "2026-10-22T18:36:24.376Z",
+          "type": "harness.submission",
+          "nodeId": "b",
+          "visitId": "01M5JECTAXPTD5PQJGJNMCRVVV:12",
+          "turnId": "01M5JECTDPSXDP20DXJBVN6JPG",
+          "submission": "definitely-not-submitted"
+        }
+      ],
+      "resumeStatus": 409,
+      "additionalCallsAfter409": 0,
+      "calls": [
+        {
+          "harness": "claude",
+          "prompt": "Seed A"
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        }
+      ],
+      "projections": "REST = api-client = MCP get_run",
+      "pass": true
+    },
+    {
+      "harness": "claude",
+      "policy": "resume-named",
+      "case": "async refused HARNESS_NOT_AUTHENTICATED",
+      "expected": {
+        "submission": "definitely-not-submitted",
+        "resumable": true
+      },
+      "runId": "01M5JECTHVNS8FC2EVFD6M953F",
+      "failure": {
+        "code": "HARNESS_NOT_AUTHENTICATED",
+        "message": "Controlled asynchronous repair failure",
+        "nodeId": "b",
+        "resumable": true,
+        "inference": {
+          "visitId": "01M5JECTHVNS8FC2EVFD6M953F:12",
+          "turnId": "01M5JECTMJJ3EKRBXHSP4FVMP2",
+          "submission": "definitely-not-submitted",
+          "promptKind": "repair",
+          "sessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      },
+      "turns": [
+        {
+          "runId": "01M5JECTHVNS8FC2EVFD6M953F",
+          "seq": 13,
+          "ts": "2026-10-22T18:36:24.582Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECTHVNS8FC2EVFD6M953F:12",
+          "turnId": "01M5JECTM6WDQ4Y86CGN7PR2XH",
+          "harness": "claude",
+          "promptKind": "authored",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        },
+        {
+          "runId": "01M5JECTHVNS8FC2EVFD6M953F",
+          "seq": 18,
+          "ts": "2026-10-22T18:36:24.594Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECTHVNS8FC2EVFD6M953F:12",
+          "turnId": "01M5JECTMJJ3EKRBXHSP4FVMP2",
+          "harness": "claude",
+          "promptKind": "repair",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      ],
+      "submissions": [
+        {
+          "runId": "01M5JECTHVNS8FC2EVFD6M953F",
+          "seq": 19,
+          "ts": "2026-10-22T18:36:24.596Z",
+          "type": "harness.submission",
+          "nodeId": "b",
+          "visitId": "01M5JECTHVNS8FC2EVFD6M953F:12",
+          "turnId": "01M5JECTMJJ3EKRBXHSP4FVMP2",
+          "submission": "definitely-not-submitted"
+        }
+      ],
+      "resumeStatus": 200,
+      "finalStatus": "succeeded",
+      "sameTurnIdentity": true,
+      "calls": [
+        {
+          "harness": "claude",
+          "prompt": "Seed A"
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        }
+      ],
+      "projections": "REST = api-client = MCP get_run",
+      "pass": true
+    },
+    {
+      "harness": "claude",
+      "policy": "resume-named",
+      "case": "async refused HARNESS_ARGUMENTS_REJECTED",
+      "expected": {
+        "submission": "definitely-not-submitted",
+        "resumable": false
+      },
+      "runId": "01M5JECTSP0C0SDHWDPSMW4G74",
+      "failure": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: Controlled asynchronous repair failure",
+        "nodeId": "b",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M5JECTSP0C0SDHWDPSMW4G74:12",
+          "turnId": "01M5JECTWHMXC11N125TMA733W",
+          "submission": "definitely-not-submitted",
+          "promptKind": "repair",
+          "sessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      },
+      "turns": [
+        {
+          "runId": "01M5JECTSP0C0SDHWDPSMW4G74",
+          "seq": 13,
+          "ts": "2026-10-22T18:36:24.838Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECTSP0C0SDHWDPSMW4G74:12",
+          "turnId": "01M5JECTW6CRHHJZVR46ES2MRX",
+          "harness": "claude",
+          "promptKind": "authored",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        },
+        {
+          "runId": "01M5JECTSP0C0SDHWDPSMW4G74",
+          "seq": 18,
+          "ts": "2026-10-22T18:36:24.849Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECTSP0C0SDHWDPSMW4G74:12",
+          "turnId": "01M5JECTWHMXC11N125TMA733W",
+          "harness": "claude",
+          "promptKind": "repair",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      ],
+      "submissions": [
+        {
+          "runId": "01M5JECTSP0C0SDHWDPSMW4G74",
+          "seq": 19,
+          "ts": "2026-10-22T18:36:24.850Z",
+          "type": "harness.submission",
+          "nodeId": "b",
+          "visitId": "01M5JECTSP0C0SDHWDPSMW4G74:12",
+          "turnId": "01M5JECTWHMXC11N125TMA733W",
+          "submission": "definitely-not-submitted"
+        }
+      ],
+      "resumeStatus": 409,
+      "additionalCallsAfter409": 0,
+      "calls": [
+        {
+          "harness": "claude",
+          "prompt": "Seed A"
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        }
+      ],
+      "projections": "REST = api-client = MCP get_run",
+      "pass": true
+    },
+    {
+      "harness": "claude",
+      "policy": "resume-named",
+      "case": "async refused HARNESS_INVALID_CONFIGURATION",
+      "expected": {
+        "submission": "definitely-not-submitted",
+        "resumable": false
+      },
+      "runId": "01M5JECV0DVZ78T7XMMCMMJTH3",
+      "failure": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: Controlled asynchronous repair failure",
+        "nodeId": "b",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_INVALID_CONFIGURATION"
+        },
+        "inference": {
+          "visitId": "01M5JECV0DVZ78T7XMMCMMJTH3:12",
+          "turnId": "01M5JECV2FA8EPBT3H4SY1JPKJ",
+          "submission": "definitely-not-submitted",
+          "promptKind": "repair",
+          "sessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      },
+      "turns": [
+        {
+          "runId": "01M5JECV0DVZ78T7XMMCMMJTH3",
+          "seq": 13,
+          "ts": "2026-10-22T18:36:25.028Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECV0DVZ78T7XMMCMMJTH3:12",
+          "turnId": "01M5JECV24ETZWMDBYP6JHF3BY",
+          "harness": "claude",
+          "promptKind": "authored",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        },
+        {
+          "runId": "01M5JECV0DVZ78T7XMMCMMJTH3",
+          "seq": 18,
+          "ts": "2026-10-22T18:36:25.039Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECV0DVZ78T7XMMCMMJTH3:12",
+          "turnId": "01M5JECV2FA8EPBT3H4SY1JPKJ",
+          "harness": "claude",
+          "promptKind": "repair",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      ],
+      "submissions": [
+        {
+          "runId": "01M5JECV0DVZ78T7XMMCMMJTH3",
+          "seq": 19,
+          "ts": "2026-10-22T18:36:25.040Z",
+          "type": "harness.submission",
+          "nodeId": "b",
+          "visitId": "01M5JECV0DVZ78T7XMMCMMJTH3:12",
+          "turnId": "01M5JECV2FA8EPBT3H4SY1JPKJ",
+          "submission": "definitely-not-submitted"
+        }
+      ],
+      "resumeStatus": 409,
+      "additionalCallsAfter409": 0,
+      "calls": [
+        {
+          "harness": "claude",
+          "prompt": "Seed A"
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        }
+      ],
+      "projections": "REST = api-client = MCP get_run",
+      "pass": true
+    },
+    {
+      "harness": "claude",
+      "policy": "resume-named",
+      "case": "async refused HARNESS_UNSUPPORTED_POLICY",
+      "expected": {
+        "submission": "definitely-not-submitted",
+        "resumable": false
+      },
+      "runId": "01M5JECV6CX62X615W1X6Z01QK",
+      "failure": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: Controlled asynchronous repair failure",
+        "nodeId": "b",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_UNSUPPORTED_POLICY"
+        },
+        "inference": {
+          "visitId": "01M5JECV6CX62X615W1X6Z01QK:12",
+          "turnId": "01M5JECV913X9RKRAS2TQN0KFX",
+          "submission": "definitely-not-submitted",
+          "promptKind": "repair",
+          "sessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      },
+      "turns": [
+        {
+          "runId": "01M5JECV6CX62X615W1X6Z01QK",
+          "seq": 13,
+          "ts": "2026-10-22T18:36:25.237Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECV6CX62X615W1X6Z01QK:12",
+          "turnId": "01M5JECV8NBJ8SV7VA21CJA797",
+          "harness": "claude",
+          "promptKind": "authored",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        },
+        {
+          "runId": "01M5JECV6CX62X615W1X6Z01QK",
+          "seq": 18,
+          "ts": "2026-10-22T18:36:25.249Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECV6CX62X615W1X6Z01QK:12",
+          "turnId": "01M5JECV913X9RKRAS2TQN0KFX",
+          "harness": "claude",
+          "promptKind": "repair",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      ],
+      "submissions": [
+        {
+          "runId": "01M5JECV6CX62X615W1X6Z01QK",
+          "seq": 19,
+          "ts": "2026-10-22T18:36:25.251Z",
+          "type": "harness.submission",
+          "nodeId": "b",
+          "visitId": "01M5JECV6CX62X615W1X6Z01QK:12",
+          "turnId": "01M5JECV913X9RKRAS2TQN0KFX",
+          "submission": "definitely-not-submitted"
+        }
+      ],
+      "resumeStatus": 409,
+      "additionalCallsAfter409": 0,
+      "calls": [
+        {
+          "harness": "claude",
+          "prompt": "Seed A"
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        }
+      ],
+      "projections": "REST = api-client = MCP get_run",
+      "pass": true
+    },
+    {
+      "harness": "claude",
+      "policy": "resume-named",
+      "case": "async accepted generic no retry",
+      "expected": {
+        "submission": "delivery-uncertain",
+        "resumable": false
+      },
+      "runId": "01M5JECVD01CGYS82749RDTVTH",
+      "failure": {
+        "code": "HARNESS_DELIVERY_UNCERTAIN",
+        "message": "harness turn failed: Controlled asynchronous repair failure",
+        "nodeId": "b",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_TURN_FAILED"
+        },
+        "inference": {
+          "visitId": "01M5JECVD01CGYS82749RDTVTH:12",
+          "turnId": "01M5JECVFCG543SNG6PG8MNACT",
+          "submission": "delivery-uncertain",
+          "promptKind": "repair",
+          "sessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      },
+      "turns": [
+        {
+          "runId": "01M5JECVD01CGYS82749RDTVTH",
+          "seq": 13,
+          "ts": "2026-10-22T18:36:25.434Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECVD01CGYS82749RDTVTH:12",
+          "turnId": "01M5JECVETD1MZDVVMDZB7K2HF",
+          "harness": "claude",
+          "promptKind": "authored",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        },
+        {
+          "runId": "01M5JECVD01CGYS82749RDTVTH",
+          "seq": 18,
+          "ts": "2026-10-22T18:36:25.452Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECVD01CGYS82749RDTVTH:12",
+          "turnId": "01M5JECVFCG543SNG6PG8MNACT",
+          "harness": "claude",
+          "promptKind": "repair",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      ],
+      "submissions": [
+        {
+          "runId": "01M5JECVD01CGYS82749RDTVTH",
+          "seq": 20,
+          "ts": "2026-10-22T18:36:25.456Z",
+          "type": "harness.submission",
+          "nodeId": "b",
+          "visitId": "01M5JECVD01CGYS82749RDTVTH:12",
+          "turnId": "01M5JECVFCG543SNG6PG8MNACT",
+          "submission": "submitted",
+          "marker": "fake.accepted"
+        },
+        {
+          "runId": "01M5JECVD01CGYS82749RDTVTH",
+          "seq": 21,
+          "ts": "2026-10-22T18:36:25.457Z",
+          "type": "harness.submission",
+          "nodeId": "b",
+          "visitId": "01M5JECVD01CGYS82749RDTVTH:12",
+          "turnId": "01M5JECVFCG543SNG6PG8MNACT",
+          "submission": "delivery-uncertain"
+        }
+      ],
+      "resumeStatus": 409,
+      "additionalCallsAfter409": 0,
+      "calls": [
+        {
+          "harness": "claude",
+          "prompt": "Seed A"
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        }
+      ],
+      "projections": "REST = api-client = MCP get_run",
+      "pass": true
+    },
+    {
+      "harness": "claude",
+      "policy": "resume-named",
+      "case": "async accepted generic retry",
+      "expected": {
+        "submission": "delivery-uncertain",
+        "resumable": true
+      },
+      "runId": "01M5JECVME87ZQ0ZPB19H48WV6",
+      "failure": {
+        "code": "HARNESS_DELIVERY_UNCERTAIN",
+        "message": "harness turn failed: Controlled asynchronous repair failure",
+        "nodeId": "b",
+        "resumable": true,
+        "details": {
+          "adapterCode": "HARNESS_TURN_FAILED"
+        },
+        "inference": {
+          "visitId": "01M5JECVME87ZQ0ZPB19H48WV6:12",
+          "turnId": "01M5JECVPEJHZMMEQSWP6DR9Y3",
+          "submission": "delivery-uncertain",
+          "promptKind": "repair",
+          "sessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      },
+      "turns": [
+        {
+          "runId": "01M5JECVME87ZQ0ZPB19H48WV6",
+          "seq": 13,
+          "ts": "2026-10-22T18:36:25.668Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECVME87ZQ0ZPB19H48WV6:12",
+          "turnId": "01M5JECVP4KEH4NZ07KQ20HM66",
+          "harness": "claude",
+          "promptKind": "authored",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        },
+        {
+          "runId": "01M5JECVME87ZQ0ZPB19H48WV6",
+          "seq": 18,
+          "ts": "2026-10-22T18:36:25.678Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECVME87ZQ0ZPB19H48WV6:12",
+          "turnId": "01M5JECVPEJHZMMEQSWP6DR9Y3",
+          "harness": "claude",
+          "promptKind": "repair",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      ],
+      "submissions": [
+        {
+          "runId": "01M5JECVME87ZQ0ZPB19H48WV6",
+          "seq": 20,
+          "ts": "2026-10-22T18:36:25.683Z",
+          "type": "harness.submission",
+          "nodeId": "b",
+          "visitId": "01M5JECVME87ZQ0ZPB19H48WV6:12",
+          "turnId": "01M5JECVPEJHZMMEQSWP6DR9Y3",
+          "submission": "submitted",
+          "marker": "fake.accepted"
+        },
+        {
+          "runId": "01M5JECVME87ZQ0ZPB19H48WV6",
+          "seq": 21,
+          "ts": "2026-10-22T18:36:25.684Z",
+          "type": "harness.submission",
+          "nodeId": "b",
+          "visitId": "01M5JECVME87ZQ0ZPB19H48WV6:12",
+          "turnId": "01M5JECVPEJHZMMEQSWP6DR9Y3",
+          "submission": "delivery-uncertain"
+        }
+      ],
+      "resumeStatus": 200,
+      "finalStatus": "succeeded",
+      "sameTurnIdentity": false,
+      "calls": [
+        {
+          "harness": "claude",
+          "prompt": "Seed A"
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "The previous turn was interrupted before GraphGoblin recorded its result. Continue the task from where you left off and finish it.",
+          "outputSchema": {
+            "type": "number"
+          }
+        }
+      ],
+      "projections": "REST = api-client = MCP get_run",
+      "pass": true
+    },
+    {
+      "harness": "claude",
+      "policy": "resume-named",
+      "case": "async accepted pinned false-positive retry",
+      "expected": {
+        "submission": "delivery-uncertain",
+        "resumable": false
+      },
+      "runId": "01M5JECVW6YZ4GEDN9JGKQV2F1",
+      "failure": {
+        "code": "HARNESS_DELIVERY_UNCERTAIN",
+        "message": "harness turn failed: Controlled asynchronous repair failure",
+        "nodeId": "b",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_ARGUMENTS_REJECTED"
+        },
+        "inference": {
+          "visitId": "01M5JECVW6YZ4GEDN9JGKQV2F1:12",
+          "turnId": "01M5JECVYC4EW5Q9VTFE4Z3T19",
+          "submission": "delivery-uncertain",
+          "promptKind": "repair",
+          "sessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      },
+      "turns": [
+        {
+          "runId": "01M5JECVW6YZ4GEDN9JGKQV2F1",
+          "seq": 13,
+          "ts": "2026-10-22T18:36:25.922Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECVW6YZ4GEDN9JGKQV2F1:12",
+          "turnId": "01M5JECVY2BYSDNB0GQN4K0RQD",
+          "harness": "claude",
+          "promptKind": "authored",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        },
+        {
+          "runId": "01M5JECVW6YZ4GEDN9JGKQV2F1",
+          "seq": 18,
+          "ts": "2026-10-22T18:36:25.932Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECVW6YZ4GEDN9JGKQV2F1:12",
+          "turnId": "01M5JECVYC4EW5Q9VTFE4Z3T19",
+          "harness": "claude",
+          "promptKind": "repair",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      ],
+      "submissions": [
+        {
+          "runId": "01M5JECVW6YZ4GEDN9JGKQV2F1",
+          "seq": 20,
+          "ts": "2026-10-22T18:36:25.936Z",
+          "type": "harness.submission",
+          "nodeId": "b",
+          "visitId": "01M5JECVW6YZ4GEDN9JGKQV2F1:12",
+          "turnId": "01M5JECVYC4EW5Q9VTFE4Z3T19",
+          "submission": "submitted",
+          "marker": "fake.accepted"
+        },
+        {
+          "runId": "01M5JECVW6YZ4GEDN9JGKQV2F1",
+          "seq": 21,
+          "ts": "2026-10-22T18:36:25.938Z",
+          "type": "harness.submission",
+          "nodeId": "b",
+          "visitId": "01M5JECVW6YZ4GEDN9JGKQV2F1:12",
+          "turnId": "01M5JECVYC4EW5Q9VTFE4Z3T19",
+          "submission": "delivery-uncertain"
+        }
+      ],
+      "resumeStatus": 409,
+      "additionalCallsAfter409": 0,
+      "calls": [
+        {
+          "harness": "claude",
+          "prompt": "Seed A"
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        }
+      ],
+      "projections": "REST = api-client = MCP get_run",
+      "pass": true
+    },
+    {
+      "harness": "claude",
+      "policy": "resume-named",
+      "case": "CLI auth",
+      "expected": {
+        "submission": "definitely-not-submitted",
+        "resumable": true
+      },
+      "runId": "01M5JECW3BY625N3AN5Y0EJR8H",
+      "failure": {
+        "code": "HARNESS_NOT_AUTHENTICATED",
+        "message": "Claude requires authentication before submitting this turn",
+        "nodeId": "b",
+        "resumable": true,
+        "inference": {
+          "visitId": "01M5JECW3BY625N3AN5Y0EJR8H:12",
+          "turnId": "01M5JECW88YHX5RQSRA41FFPNC",
+          "submission": "definitely-not-submitted",
+          "promptKind": "repair",
+          "sessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      },
+      "turns": [
+        {
+          "runId": "01M5JECW3BY625N3AN5Y0EJR8H",
+          "seq": 13,
+          "ts": "2026-10-22T18:36:26.208Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECW3BY625N3AN5Y0EJR8H:12",
+          "turnId": "01M5JECW70QVQD2W8DXT8RW1CH",
+          "harness": "claude",
+          "promptKind": "authored",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        },
+        {
+          "runId": "01M5JECW3BY625N3AN5Y0EJR8H",
+          "seq": 18,
+          "ts": "2026-10-22T18:36:26.248Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECW3BY625N3AN5Y0EJR8H:12",
+          "turnId": "01M5JECW88YHX5RQSRA41FFPNC",
+          "harness": "claude",
+          "promptKind": "repair",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      ],
+      "submissions": [
+        {
+          "runId": "01M5JECW3BY625N3AN5Y0EJR8H",
+          "seq": 19,
+          "ts": "2026-10-22T18:36:26.604Z",
+          "type": "harness.submission",
+          "nodeId": "b",
+          "visitId": "01M5JECW3BY625N3AN5Y0EJR8H:12",
+          "turnId": "01M5JECW88YHX5RQSRA41FFPNC",
+          "submission": "definitely-not-submitted"
+        }
+      ],
+      "resumeStatus": 200,
+      "finalStatus": "succeeded",
+      "sameTurnIdentity": true,
+      "calls": [
+        {
+          "harness": "claude",
+          "prompt": "Seed A"
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        }
+      ],
+      "projections": "REST = api-client = MCP get_run",
+      "pass": true
+    },
+    {
+      "harness": "claude",
+      "policy": "resume-named",
+      "case": "CLI arguments",
+      "expected": {
+        "submission": "definitely-not-submitted",
+        "resumable": false
+      },
+      "runId": "01M5JECWWEFJP8F9Y40WZJV8NJ",
+      "failure": {
+        "code": "HARNESS_TURN_FAILED",
+        "message": "harness turn failed: Claude turn failed",
+        "nodeId": "b",
+        "resumable": false,
+        "details": {
+          "adapterCode": "HARNESS_TURN_FAILED"
+        },
+        "inference": {
+          "visitId": "01M5JECWWEFJP8F9Y40WZJV8NJ:12",
+          "turnId": "01M5JECX4FM4N7ZSX534670P8R",
+          "submission": "definitely-not-submitted",
+          "promptKind": "repair",
+          "sessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      },
+      "turns": [
+        {
+          "runId": "01M5JECWWEFJP8F9Y40WZJV8NJ",
+          "seq": 13,
+          "ts": "2026-10-22T18:36:27.109Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECWWEFJP8F9Y40WZJV8NJ:12",
+          "turnId": "01M5JECX35CANFN9HD25BVMT4D",
+          "harness": "claude",
+          "promptKind": "authored",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        },
+        {
+          "runId": "01M5JECWWEFJP8F9Y40WZJV8NJ",
+          "seq": 18,
+          "ts": "2026-10-22T18:36:27.151Z",
+          "type": "harness.turn",
+          "nodeId": "b",
+          "visitId": "01M5JECWWEFJP8F9Y40WZJV8NJ:12",
+          "turnId": "01M5JECX4FM4N7ZSX534670P8R",
+          "harness": "claude",
+          "promptKind": "repair",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "resumeSessionId": "11111111-1111-4111-8111-111111111111"
+        }
+      ],
+      "submissions": [
+        {
+          "runId": "01M5JECWWEFJP8F9Y40WZJV8NJ",
+          "seq": 19,
+          "ts": "2026-10-22T18:36:27.464Z",
+          "type": "harness.submission",
+          "nodeId": "b",
+          "visitId": "01M5JECWWEFJP8F9Y40WZJV8NJ:12",
+          "turnId": "01M5JECX4FM4N7ZSX534670P8R",
+          "submission": "definitely-not-submitted"
+        }
+      ],
+      "resumeStatus": 409,
+      "additionalCallsAfter409": 0,
+      "calls": [
+        {
+          "harness": "claude",
+          "prompt": "Seed A"
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Original task Ω\nKeep the authored task exact.",
+          "outputSchema": {
+            "type": "number"
+          }
+        },
+        {
+          "harness": "claude",
+          "sessionId": "11111111-1111-4111-8111-111111111111",
+          "prompt": "Repair exactly №1: \"invalid Ω\\nline\"\nPreserve Ω and \"quotes\".",
+          "outputSchema": {
+            "type": "number"
+          }
+        }
+      ],
+      "projections": "REST = api-client = MCP get_run",
+      "pass": true
+    }
+  ],
+  "deferredCleanup": {
+    "code": "EBUSY",
+    "action": "Clear remaining files after this process exits"
+  },
+  "cleanup": {
+    "filesRemoved": false,
+    "directory": "retained empty; no directory deletion",
+    "childProcesses": [
+      {
+        "pid": 27344,
+        "exitCode": 0,
+        "signalCode": null
+      }
+    ]
+  }
+}

@@ -272,7 +272,7 @@ At boot the run manager loads every run in `queued`, `running`, `waiting`, or `p
 - `waiting` with a durable wake in the log: moved to running, so the woken node runs.
 - Any active run with a durable `run.waiting` and no later wake or node execution: complete the park from that event, including an interrupted snapshot/status write. Keep its original `waitId` and deadlines. Paused runs retain their pause. Re-arm both `until` (timer or heartbeat) and `timeoutAt` with keys containing the recorded `waitId`, then reconcile a completed child for runs that are waiting.
 - `running`: the executor starts from the log. The thread is the last verified checkpoint plus the events after it (see "Event log and projections"), and the cursor is checked against the log: when the log's last node event is the `node.finished` of the node the run record still points at, that node completed and only the cursor write was lost, so the cursor advances along the route it recorded (a gate follows its recorded actual port, with passes in the same append) without running the node again. Otherwise the last `node.started` without a matching `node.finished` identifies the interrupted node. Recovery depends on its kind.
-  - Inferencing: the `harness_sessions` row was written before the subprocess started, so the handler resumes that session and asks it to continue. If the session was never started, it starts fresh.
+  - Inferencing: reconstruct the open logical visit and its pending turn from the event log. A proven refusal resends the exact saved task with its original policy selection; uncertain work continues a usable session, or stops non-resumably. An inherited previous/named ID alone is unusable for unaccepted authored work. A missing session also stops. See below.
   - Script: re-executed. Scripts are documented as at-least-once.
   - Decision, mutation, exit: re-executed. They are deterministic given the thread, except Jev and Codex-backed decisions, which are simply asked again. (An exit whose `run.finished` is durable is completed from the log instead.)
   - Subloop: if the visit already recorded `child_run.started`, the handler re-parks on that child, or handles its outcome if it has finished (maps it, or fails or cancels the parent with the child's runtime failure or cancellation); otherwise it creates the child. A crash between creating the child and recording `child_run.started` can still leave an orphan child and start a second one; closing that needs the child id allocated before the child is created.
@@ -280,16 +280,104 @@ At boot the run manager loads every run in `queued`, `running`, `waiting`, or `p
 
 Recovery is automatic and silent apart from a `node.started` event with `attempt` incremented.
 
+## Inference submission and recovery
+
+One logical visit begins at the first `node.started` after that node last finished. Its identity
+is `<runId>:<first-start-seq>`, retained across retries and restarts until `node.finished`.
+Each initial, repair or continuation turn records `harness.turn` before adapter invocation,
+including its exact rendered `prompt`, `promptKind`, `turnId`, harness and selected
+`resumeSessionId`. Refused retries retain the saved prompt and policy selection, even if init
+announced a different ID. They do not rerender against a changed thread. Repair refusals retain
+the repair task, including a synchronous refusal before the repair invocation returns a session
+handle. Launch exceptions, streamed errors and rejected results share the same failure and
+submission mapping. A synchronous missing-session refusal is durably `session-missing` with
+`HARNESS_SESSION_MISSING`, regardless of retryability; Resume returns 409 without another
+harness call. An explicit delivery-uncertain transport failure or unconfirmed termination is
+never downgraded to safe non-submission because no handle was returned. Pinned policy,
+configuration and argument refusals remain non-resumable. Every provider boundary uses one pure evidence fold, shared by the engine and Codex adapter:
+
+| Rank (highest first) | Evidence                                                                         |
+| -------------------- | -------------------------------------------------------------------------------- |
+| 1                    | Unconfirmed termination                                                          |
+| 2                    | Missing session (typed cause or explicit session-missing metadata)               |
+| 3                    | Pinned argument, configuration or policy refusal                                 |
+| 4                    | Valid explicit submission metadata                                               |
+| 5                    | Ordinary typed authentication, quota, transport, timeout or installation failure |
+| 6                    | Generic final wrappers                                                           |
+
+Higher-ranked evidence wins; within a rank the later observation wins. This applies to
+launch exceptions, streamed errors, rejected promises/results, iterator throws, Codex top-level
+errors and `turn.failed`, cleanup and cancellation. Unconfirmed termination overrides
+cancellation. A successful Codex turn can still tolerate nonfatal top-level diagnostics.
+Acceptance cannot be downgraded to safe non-submission by later metadata.
+
+Classification is decided independently of persistence. A failed classification/status write
+adds `failure.details.recording` diagnostics without replacing the primary cause, submission,
+provenance or Resume eligibility. The terminal failure also records the selected submission,
+so recovery uses it if an earlier classification append was lost. Turn intents (initial tasks, exact retries and repairs) and their identities
+are established before their fallible appends. Reconciliation reads are guarded: if an ambiguous
+append cannot be reconciled, `failure.inference.retry` carries the exact uninvoked prompt,
+harness and selected resume ID. Recovery reconciles that same turn identity when storage is
+available, rather than sending a generic continuation or cancelling the completed invocation.
+This requires storage to recover sufficiently to record the terminal failure; a sustained outage
+that also prevents terminal persistence cannot establish a durable outcome.
+
+These authored prompts are part of private run
+history, with the same access
+and deletion boundary as its context thread. The entire prompt is stored inline with no schema
+size limit or automatic artifact offloading; large prompts therefore enlarge the event log.
+
+| Classification (`failure.inference.submission`) | Failure code                                                                                                                                               | Resume behavior                                                                                                                                                                                                                                            |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `definitely-not-submitted`                      | Original cause, such as `HARNESS_NOT_INSTALLED`, `HARNESS_NOT_AUTHENTICATED`, `HARNESS_TURN_FAILED` or `INFERENCE_TIMEOUT`                                 | After fixing a resumable cause, submit the saved task with the original fresh/previous/named selection. Init alone cannot change that selection.                                                                                                           |
+| `delivery-uncertain`                            | `HARNESS_DELIVERY_UNCERTAIN` for generic turn failures; specific causes such as `INFERENCE_TIMEOUT`, quota, artifact or termination failures remain intact | When eligible under the harness rule below, continue only a usable session with the continuation prompt. No usable session means `resumable: false`; use Replay from the node for a deliberate new attempt. Unconfirmed termination is also non-resumable. |
+| `session-missing`                               | `HARNESS_SESSION_MISSING`                                                                                                                                  | Non-resumable. Do not silently start fresh or repeat the invalid session. Explicit fresh-session recovery is deferred to #265.                                                                                                                             |
+
+`failure.inference` also contains `visitId`, `turnId`, `promptKind` and the session ID when
+known. `harness.submission` records `submitted` on positive acceptance, with its marker, or
+one of the three failure classifications when a turn fails. Acceptance does not prove that
+the result was durably recorded; recovery of an accepted unfinished turn remains uncertain.
+The crash window between durable intent and adapter invocation is conservatively uncertain:
+absence of an acceptance marker, even init-only output, never proves non-submission. Adapters
+may assert definite refusal only with positive pre-send/startup/refusal evidence. Once accepted,
+a later authentication/refusal error cannot downgrade the turn to safe resubmission.
+
+Under previous/named policy, an authored or retried authored turn with no durable acceptance
+cannot use its inherited `resumeSessionId` alone for continuation (ADR-0045, D-022). It fails
+non-resumably on explicit failure and at visit-start recovery. A different newly announced
+session, an accepted turn, or a repair/continuation on the visit's own session can continue.
+For non-pinned generic failures, Codex permits Resume even when its adapter reports
+`retriable: false` for an exit or lost stream. Claude permits Resume only with the adapter's
+`retriable` evidence. Unsupported policy, invalid configuration and rejected arguments remain
+non-resumable for both harnesses because the definition is pinned. Continuation safety is
+checked separately: uncertain delivery must still have a usable session under D-022.
+Restorable login, installation and quota failures retain their specific eligibility. Resume
+is still unavailable if delivery is uncertain and no usable session exists.
+
+The continuation prompt is: "The previous turn was interrupted before GraphGoblin recorded its
+result. Continue the task from where you left off and finish it." A new continuation has its own
+turn ID within the same visit. Successful provider work followed by transcript storage failure
+uses this same continuation path. Engine persistence faults preserve their original failure
+cause; durable intent still governs subsequent recovery.
+
+Each repeated visit starts new provenance. Replay forks and child runs have their own logs and
+inherit no pending turn or submission state; an explicitly authored named-session policy keeps
+its existing lookup semantics. This bolt adds no own-session policy (#33) or fresh-session
+recovery action (#265). A normal turn failure stops the run; there is no in-process retry
+loop. Explicit Resume and automatic startup recovery apply the saved provenance: resend
+proven refused tasks, continue accepted/otherwise usable unfinished sessions, and fail
+uncertain work without a usable session. Recovery can therefore invoke the provider again.
+
 ## Resiliency model (Decided)
 
 Resiliency is built into the engine. Users do not model it. Failures fall into four classes.
 
-| Class                    | Examples                                                                                                                                                                | Engine behaviour                                                                                                                                                                                    |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Transient infrastructure | SQLite busy, Jev network blip, outbound webhook 503                                                                                                                     | Internal retry with backoff, bounded, logged. Invisible to the loop.                                                                                                                                |
-| Harness-internal         | Model errors, tool failures inside a Codex turn                                                                                                                         | Delegated entirely to Codex. GraphGoblin does not retry turns.                                                                                                                                      |
-| Unavoidable              | Subscription exhausted, login expired, harness not installed, working directory missing, script exits non-zero without a route, schema repair exhausted with `fail-run` | Run moves to `failed` with a typed, human-readable reason and `resumable: true`. The operator fixes the cause and resumes from the failed node.                                                     |
-| Bug                      | A handler throws anything else                                                                                                                                          | Run moves to `failed` with `resumable: true`, full diagnostics in the event, and the error is surfaced prominently. This is a defect to fix in GraphGoblin, never a case for users to route around. |
+| Class                    | Examples                                                                                                                                                                | Engine behaviour                                                                                                                                                                         |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Transient infrastructure | SQLite busy, Jev network blip, outbound webhook 503                                                                                                                     | Internal retry with backoff, bounded, logged. Invisible to the loop.                                                                                                                     |
+| Harness-internal         | Model errors, tool failures inside a Codex turn                                                                                                                         | Handled inside the harness turn. GraphGoblin stops on a reported failure; explicit resume and startup recovery follow submission provenance above.                                       |
+| Unavoidable              | Subscription exhausted, login expired, harness not installed, working directory missing, script exits non-zero without a route, schema repair exhausted with `fail-run` | Run moves to `failed` with a typed, human-readable reason. Resume eligibility follows the cause and, for inference, the submission evidence above.                                       |
+| Bug                      | A handler throws anything else                                                                                                                                          | Run moves to `failed` with full diagnostics. Resume is available when recovery is safe; inference without a usable session stops non-resumably. The defect must be fixed in GraphGoblin. |
 
 Provider exceptions from decision evaluation use a shared fixed summary instead of raw diagnostics. The catch-all also sanitizes errors carrying `DECIDER_*`: it stores a recognized code and the selected strategy when available, without provider messages or stacks. Engine provider warnings contain only safe name, code, numeric HTTP status, and run/node/strategy identifiers. Ordinary internal defects retain their full diagnostics.
 
@@ -312,7 +400,7 @@ Optional `timeoutSeconds` exists on inferencing and script nodes and on wait and
 - The thread projection replays `node.finished` patches (a `node.finished` is applied only when it completes the open visit, the node most recently started and not yet finished; a second record of the same completion, immediate or delayed, is applied once), `decision.made` absolute gate counts, historical `iteration.incremented`, and `node.started` visit counts. **Verified checkpoints:** the executor saves the thread snapshot together with the `seq` of the event it reflects, always after that event is durable (`RunRepository.saveThread(runId, thread, seq)`, column `thread_snapshot_seq`). At every executor start it loads the checkpoint and, when its `seq` is in the log, replays only the events after it, carrying over the visit open at the checkpoint so a duplicate completion straddling it is still applied once; a snapshot without a `seq`, or one the log does not reach, is ignored and the thread is replayed from the initial thread. A run resumed after 10,000 completions replays only what follows its last checkpoint.
 - Replay also counts `node.started` events, including resumed attempts, in `counters.nodeVisits`. Recovery reconstructs a pending wake before appending its new `run.started`, so an accepted input is still available to the resumed node.
 - The SSE stream (07) is a tail of the same log, which is why reconnecting clients can resume from a sequence number without loss.
-- Large payloads such as transcripts, full probe responses, and return payloads above a size threshold are stored as artifacts on disk, keyed by content hash, and referenced from events.
+- Large output payloads such as transcripts, full probe responses, and return payloads above a size threshold are stored as artifacts on disk, keyed by content hash, and referenced from events. Pending `harness.turn.prompt` and `run.queued.initialThread` remain inline without a separate schema size limit; they are not automatically offloaded.
 - The filesystem artifact store publishes flushed temporary files by atomic same-directory rename and verifies content hashes on reads (11). Failed publication raises the resumable node failure `ARTIFACT_WRITE_FAILED`, carrying its reference and publishing no transcript/output patch. After repairing storage, explicitly resume: inference continues the recorded provider session with the continuation prompt instead of resending the authored prompt. Corrupt downloads return the API problem `ARTIFACT_CORRUPT` (07); it is not a run failure code.
 
 ### Durable event validation
@@ -376,7 +464,7 @@ Because every node input is reconstructible, the API offers "re-run this node wi
 - **Subloop results land in `lastOutput` as `{ status, outcome, result, childRunId }`**, so a following decision node can branch on the child's outcome, not only its payload. `resultTo.var` stores the bare result. A child without output leaves `result` out and removes `resultTo.var` (#242).
 - **Wait inputs become `user` messages tagged `input`; signals become `note` messages tagged `signal`.** Timeouts that continue set `lastOutput` to `{ timedOut: true }`.
 - **Heartbeat outputs** are `{ beat, probe, satisfied: true }` when the condition holds and `{ beat, probe, exhausted: true }` when it runs out and is configured to continue.
-- **Inference recovery resumes the recorded session** with a continuation prompt when a node is re-executed with `attempt > 1` and a session id is on file.
+- **Inference recovery follows visit submission provenance**, rather than attempt numbers or a session row alone. Proven refusal retains the authored task; uncertainty never blindly resends it.
 - **Return channels merge** the exit node's list with any `returnDefaults` the caller supplied on the invocation, de-duplicated.
 
 ## Implementation notes from WP-D2 (Decided by implementation, 2026-10-03)

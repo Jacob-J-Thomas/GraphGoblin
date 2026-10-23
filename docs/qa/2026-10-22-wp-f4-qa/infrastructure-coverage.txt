@@ -1,0 +1,177 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/infrastructure test:coverage --maxWorkers=1 --coverage.reportOnFailure
+pnpm.cmd : $ vitest run --coverage --maxWorkers=1 --coverage.reportOnFailure
+At line:10 char:3
++   & pnpm.cmd @GateArgs *> $raw
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...reportOnFailure:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 <worktree>/packages/infrastructure
+      Coverage enabled with v8
+
+ ? src/process/scripts.test.ts (39 tests | 3 failed) 42976ms
+   ? ProcessScripts (36)
+     � kills and closes a real process cancelled with incomplete UTF-8 pending on both streams 8021ms
+     � kills the process tree on timeout 15008ms
+     � kills the process when the signal aborts, including when already aborted 15005ms
+ ? src/adversarial.test.ts (20 tests | 1 failed) 32003ms
+   ? adversarial infrastructure invariants (forks pool) (11)
+     � 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild 30053ms
+ ? src/claude/process.test.ts (5 tests | 3 failed) 26189ms
+   ? owned native Claude process transport (5)
+     � kills on deadline and output overflow 15259ms
+     � does not spawn for an already aborted signal and cancels a running process 5087ms
+     � kills the descendant that a long-lived child started 5753ms
+ ? src/claude/readiness.test.ts (12 tests | 1 failed) 10121ms
+   ? Claude no-turn executable boundary (9)
+     � hang reports unknown without exposing CLI bodies 6229ms
+
+??????? Failed Tests 8 ???????
+
+ FAIL  src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 6/QA-LIMIT-001: ProcessScripts 
+abort kills a real child and its grandchild
+Error: Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ? src/adversarial.test.ts:225:3
+    223|     expect(() => decryptSecret(Buffer.alloc(32, 5), ciphertext as stri�
+    224|   });
+    225|   it('6/QA-LIMIT-001: ProcessScripts abort kills a real child and its �
+       |   ^
+    226|     const dir = await mkdtemp(join(tmpdir(), 'gg-process-tree-'));
+    227|     const pidFile = join(dir, 'grandchild.pid');
+
+????????????????????????[1/9]?
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills on deadline and output overflow
+Error: EBUSY: resource busy or locked, rmdir '<temp>\gg-claude-process-BhyzWK'
+????????????????????????[2/9]?
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > does not spawn for an already aborted 
+signal and cancels a running process
+Error: EBUSY: resource busy or locked, rmdir '<temp>\gg-claude-process-cZYMMR'
+????????????????????????[3/9]?
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived 
+child started
+AssertionError: expected 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx�' to be 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx�' // 
+Object.is equality
+
+Expected: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+Received: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+ ? src/claude/process.test.ts:146:46
+    144|       const stopped = await readFile(marker, 'utf8');
+    145|       await new Promise((resolve) => setTimeout(resolve, 100));
+    146|       expect(await readFile(marker, 'utf8')).toBe(stopped);
+       |                                              ^
+    147|     } finally {
+    148|       controller.abort();
+
+????????????????????????[4/9]?
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived 
+child started
+Error: EBUSY: resource busy or locked, rmdir '<temp>\gg-claude-process-WfuhqQ'
+????????????????????????[5/9]?
+
+ FAIL  src/claude/readiness.test.ts > Claude no-turn executable boundary > hang reports unknown without exposing CLI 
+bodies
+AssertionError: expected [ Array(1) ] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+  [
+-   "Claude CLI did not answer before the check deadline. Check that the Claude CLI starts and responds, then retry 
+preflight.",
++   "Claude CLI check process did not confirm that it stopped. Check that the Claude CLI starts and responds, then 
+retry preflight.",
+  ]
+
+ ? src/claude/readiness.test.ts:60:31
+     58|         hang: ['Claude CLI did not answer before the check deadline.' �
+     59|       };
+     60|       expect(result.problems).toEqual(problems[scenario]);
+       |                               ^
+     61|     },
+     62|     60000,
+
+????????????????????????[6/9]?
+
+ FAIL  src/process/scripts.test.ts > ProcessScripts > kills and closes a real process cancelled with incomplete UTF-8 
+pending on both streams
+AssertionError: native process-tree cancellation must finish before fixture cleanup: expected true to be false // 
+Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ? src/process/scripts.test.ts:194:7
+    192|       cleanupRequired,
+    193|       'native process-tree cancellation must finish before fixture cle�
+    194|     ).toBe(false);
+       |       ^
+    195|     expect(streamsReady).toBe(2);
+    196|     expect(result).toMatchObject({ stdout: 'A\ufffd', stderr: 'B\ufffd�
+
+????????????????????????[7/9]?
+
+ FAIL  src/process/scripts.test.ts > ProcessScripts > kills the process tree on timeout
+Error: Test timed out in 15000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ? src/process/scripts.test.ts:237:3
+
+    235|   });
+    236|
+    237|   it('kills the process tree on timeout', async () => {
+       |   ^
+    238|     const scripts = new ProcessScripts();
+    239|     const started = Date.now();
+
+????????????????????????[8/9]?
+
+ FAIL  src/process/scripts.test.ts > ProcessScripts > kills the process when the signal aborts, including when already 
+aborted
+Error: Test timed out in 15000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ? src/process/scripts.test.ts:248:3
+    246|   }, 15_000);
+    247|
+    248|   it('kills the process when the signal aborts, including when already�
+       |   ^
+    249|     const scripts = new ProcessScripts();
+    250|     const controller = new AbortController();
+
+????????????????????????[9/9]?
+
+ Test Files  4 failed | 43 passed (47)
+      Tests  8 failed | 649 passed (657)
+   Start at  23:24:31
+   Duration  237.69s (tests 78%, import 19%, transform 1%, worker 1%)
+
+    Isolate  47 workers spawned � ~229ms startup each (spawn + environment, per file)
+             at least ~10.51s faster with isolate: false � reuses workers across files instead of one per file
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 97.87% ( 2303/2353 )
+Branches     : 94.7% ( 1663/1756 )
+Functions    : 98.24% ( 505/514 )
+Lines        : 98.64% ( 2046/2074 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  � "pnpm recursive run" failed in C:
+  � <user path>\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-
+  � f4\packages\infrastructure
+
+
+EXIT=1 SECONDS=239.16

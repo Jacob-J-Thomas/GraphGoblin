@@ -1,0 +1,113 @@
+{
+  "revision": "112d6207e7f59c707e2f06e29f71551fa08551aa",
+  "provider": "FAKE ONLY",
+  "checks": [
+    {
+      "name": "built main creates API key and enforces authentication",
+      "pass": true,
+      "port": 5662,
+      "store": "gg-wp-f4-r5-api-ZoVHr6",
+      "withoutKey": 401,
+      "withCreatedKey": 200
+    },
+    {
+      "name": "CLI claude resume-named init",
+      "pass": true,
+      "controlledAuth": false,
+      "claudeInitReached": true,
+      "loopId": "01M5JBHEBTKZPK8CBXN6ZTMBY7",
+      "id": "01M5JBHEDMPEFKXJACNK5R0A6K",
+      "before": {
+        "runId": "01M5JBHEDMPEFKXJACNK5R0A6K",
+        "status": "failed",
+        "failure": {
+          "code": "HARNESS_DELIVERY_UNCERTAIN",
+          "message": "harness turn failed: Claude turn failed. Prompt delivery is uncertain and no usable session was established for this task. An inherited conversation without durable acceptance cannot be continued. Use Replay from the node for a deliberate new attempt.",
+          "nodeId": "b",
+          "resumable": false,
+          "details": {
+            "adapterCode": "HARNESS_TURN_FAILED"
+          },
+          "inference": {
+            "visitId": "01M5JBHEDMPEFKXJACNK5R0A6K:12",
+            "turnId": "01M5JBHEJGWV61421A1MXTNW5T",
+            "submission": "delivery-uncertain",
+            "promptKind": "authored",
+            "sessionId": "11111111-1111-4111-8111-111111111111"
+          }
+        },
+        "projections": "REST = api-client = MCP get_run",
+        "turns": [
+          {
+            "nodeId": "a",
+            "visitId": "01M5JBHEDMPEFKXJACNK5R0A6K:5",
+            "turnId": "01M5JBHEGHQ4D09S1JFPC3PZZT",
+            "promptKind": "authored",
+            "promptLength": 6
+          },
+          {
+            "nodeId": "b",
+            "visitId": "01M5JBHEDMPEFKXJACNK5R0A6K:12",
+            "turnId": "01M5JBHEJGWV61421A1MXTNW5T",
+            "promptKind": "authored",
+            "resumeSessionId": "11111111-1111-4111-8111-111111111111",
+            "promptLength": 42
+          }
+        ],
+        "submissions": [
+          {
+            "nodeId": "a",
+            "visitId": "01M5JBHEDMPEFKXJACNK5R0A6K:5",
+            "turnId": "01M5JBHEGHQ4D09S1JFPC3PZZT",
+            "submission": "submitted",
+            "marker": "fake.accepted"
+          },
+          {
+            "nodeId": "b",
+            "visitId": "01M5JBHEDMPEFKXJACNK5R0A6K:12",
+            "turnId": "01M5JBHEJGWV61421A1MXTNW5T",
+            "submission": "delivery-uncertain"
+          }
+        ],
+        "calls": [
+          {
+            "harness": "claude",
+            "promptKind": "authored",
+            "promptLength": 6
+          },
+          {
+            "harness": "claude",
+            "sessionId": "11111111-1111-4111-8111-111111111111",
+            "promptKind": "authored",
+            "promptLength": 42
+          }
+        ]
+      },
+      "resumeStatus": 409
+    }
+  ],
+  "cleanup": [
+    {
+      "store": "gg-wp-f4-r5-api-ZoVHr6",
+      "filesRemoved": true,
+      "directory": "retained empty; no directory deletion"
+    }
+  ],
+  "processes": [
+    {
+      "pid": 56208,
+      "exitCode": 0,
+      "signalCode": null
+    },
+    {
+      "pid": 47128,
+      "exitCode": null,
+      "signalCode": "SIGKILL"
+    },
+    {
+      "pid": 50988,
+      "exitCode": null,
+      "signalCode": "SIGKILL"
+    }
+  ]
+}

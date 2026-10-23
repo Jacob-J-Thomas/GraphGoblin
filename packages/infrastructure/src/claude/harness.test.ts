@@ -111,6 +111,41 @@ async function drain(events: AsyncIterable<HarnessEvent>) {
   return values;
 }
 describe('Claude existing harness contract', () => {
+  it.each([
+    { terminationUnconfirmed: true as const, code: 'HARNESS_TERMINATION_UNCONFIRMED' },
+    { timedOut: true, code: 'HARNESS_TIMEOUT' },
+    { overflow: true, code: 'HARNESS_OUTPUT_LIMIT' },
+  ])('preserves $code over a native zero-turn refusal envelope', async ({ code, ...transport }) => {
+    const { harness } = fixture({
+      records: [
+        {
+          type: 'result',
+          subtype: 'error_during_execution',
+          is_error: true,
+          num_turns: 0,
+          session_id: id,
+        },
+      ],
+      exit: { exitCode: 1, turnRejection: 'session-missing', ...transport },
+    });
+    await expect(
+      harness.resume(id, request, new AbortController().signal).result,
+    ).rejects.toMatchObject({ code });
+  });
+  it('does not let a refusal diagnostic conceal unconfirmed native termination', async () => {
+    const { harness } = fixture({
+      records: [init],
+      exit: { exitCode: null, terminationUnconfirmed: true, turnRejection: 'session-missing' },
+    });
+    const session = harness.resume(id, request, new AbortController().signal);
+    await expect(session.result).rejects.toMatchObject({ code: 'HARNESS_TERMINATION_UNCONFIRMED' });
+    expect((await drain(session.events)).at(-1)).toMatchObject({
+      type: 'error',
+      code: 'HARNESS_TERMINATION_UNCONFIRMED',
+      submission: 'delivery-uncertain',
+    });
+  });
+
   it('uses a fresh empty prerequisite directory and removes it after inspection', async () => {
     const directories = new Set<string>();
     const runner: ClaudeCliRunner = async (command) => {
@@ -330,6 +365,7 @@ describe('Claude existing harness contract', () => {
     expect((await drain(first.events)).map((event) => event.type)).toEqual([
       'session',
       'item',
+      'submitted',
       'usage',
       'turn-complete',
     ]);
@@ -461,6 +497,7 @@ describe('Claude existing harness contract', () => {
     expect(events.map((event) => event.type)).toEqual([
       'session',
       'item',
+      'submitted',
       'item',
       'item',
       'usage',

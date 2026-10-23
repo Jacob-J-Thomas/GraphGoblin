@@ -678,8 +678,8 @@ describe('handler edge cases', () => {
     engine.ports.harnesses.codex = silent;
     const failed = await engine.runToIdle(version.loopId);
     expect(failed.failure).toMatchObject({
-      code: 'HARNESS_TURN_FAILED',
-      message: 'harness turn failed: socket closed',
+      code: 'HARNESS_DELIVERY_UNCERTAIN',
+      message: expect.stringContaining('harness turn failed: socket closed'),
     });
 
     // A harness that never reports a session id cannot repair; the policy falls through to continue-raw.

@@ -152,6 +152,7 @@ class E2eClaudeHarness extends FakeHarness {
         code: error.code,
         message: error.message,
         retriable: false,
+        submission: 'delivery-uncertain',
       };
     };
     return {

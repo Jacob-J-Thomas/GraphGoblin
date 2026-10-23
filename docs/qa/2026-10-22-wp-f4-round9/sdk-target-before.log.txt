@@ -1,0 +1,79 @@
+
+ RUN  v5.0.3 <USERPROFILE>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f4-prompt-provenance/packages/adapter-codex
+
+ ❯ src/failure-evidence.test.ts (192 tests | 2 failed | 190 skipped) 23ms
+   × preserves HARNESS_TRANSPORT_FAILED at promise retry=false accepted=false 17ms
+   × preserves HARNESS_TRANSPORT_FAILED at promise retry=false accepted=false 4ms
+pnpm.cmd : 
+At line:2 char:50
++ ... $env:PATH"; pnpm.cmd --filter @graphgoblin/adapter-codex exec vitest  ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/failure-evidence.test.ts > preserves HARNESS_TRANSPORT_FAILED at promise retry=false accepted=false
+AssertionError: expected { type: 'error', …(4) } to match object { type: 'error', …(4) }
+
+- Expected
++ Received
+
+  {
+    "code": "HARNESS_TRANSPORT_FAILED",
+    "message": "Later selected cause",
+    "retriable": false,
+-   "submission": "definitely-not-submitted",
++   "submission": "delivery-uncertain",
+    "type": "error",
+  }
+
+ ❯ src/failure-evidence.test.ts:36:25
+     34|   for await (const event of session.events) events.push(event);
+     35|   const submission = accepted && spec.state === 'definitely-not-submit…
+     36|   expect(events.at(-1)).toMatchObject({ type: 'error', ...failure, sub…
+       |                         ^
+     37|   await expect(session.result).rejects.toMatchObject({ code: spec.code…
+     38| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/failure-evidence.test.ts > preserves HARNESS_TRANSPORT_FAILED at promise retry=false accepted=false
+AssertionError: expected Error: Later selected cause { …(2) } to match object { …(3) }
+
+- Expected
++ Received
+
+- {
++ Error {
+    "code": "HARNESS_TRANSPORT_FAILED",
+    "retriable": false,
+-   "submission": "delivery-uncertain",
+  }
+
+ ❯ src/failure-evidence.test.ts:37:31
+     35|   const submission = accepted && spec.state === 'definitely-not-submit…
+     36|   expect(events.at(-1)).toMatchObject({ type: 'error', ...failure, sub…
+     37|   await expect(session.result).rejects.toMatchObject({ code: spec.code…
+       |                               ^
+     38| });
+     39|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 190 skipped (192)
+   Start at  19:48:58
+   Duration  5.97s (transform 62%, import 38%)
+
+  Transform  transforming modules took 3.49s · 62% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ \Users\<user>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f4-
+  │ prompt-provenance\packages\adapter-codex
+

@@ -11,7 +11,8 @@ export type ClaudeErrorCode =
   | 'HARNESS_TIMEOUT'
   | 'HARNESS_TERMINATION_UNCONFIRMED'
   | 'HARNESS_QUOTA_EXHAUSTED'
-  | 'HARNESS_TURN_FAILED';
+  | 'HARNESS_TURN_FAILED'
+  | 'HARNESS_SESSION_MISSING';
 /** Diagnostics contain only fixed text and bounded protocol names, never provider/auth bodies. */
 export class ClaudeHarnessError extends Error {
   constructor(
