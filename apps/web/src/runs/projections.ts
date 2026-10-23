@@ -298,7 +298,9 @@ export function lastGateSummary(events: readonly RunEvent[]): string | undefined
   );
   const gate = event?.gate;
   if (!event || !gate) return undefined;
-  const chose = `Last gate decision: ${event.nodeId} chose ${gate.limit ? gate.repeatRouteId : event.portId} on pass ${gate.previousPasses} of ${gate.maxPasses}`;
+  // An Unlimited gate records `maxPasses: null` (#243): name the pass without a bound.
+  const of = gate.maxPasses === null ? ' (unlimited passes)' : ` of ${gate.maxPasses}`;
+  const chose = `Last gate decision: ${event.nodeId} chose ${gate.limit ? gate.repeatRouteId : event.portId} on pass ${gate.previousPasses}${of}`;
   if (!gate.limit) return `${chose}.`;
   const limit = gate.limit === 'max-passes' ? 'maximum passes' : 'maximum run time';
   return `${chose}; ${limit} stopped the repeat, so it took Limit reached.`;
