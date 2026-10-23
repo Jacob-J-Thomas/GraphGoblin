@@ -500,6 +500,23 @@ describe('initial thread and replay failures', () => {
   describe('createThreadCache (#259)', () => {
     const initial = initialThreadFrom(sampleThread(), ALL);
 
+    it('reports what it remembers: nothing before a replay, nothing for another log, nothing let go', () => {
+      const cache = createThreadCache(2);
+      expect(cache.has(initial, ALL, 3)).toBe(false);
+      cache.at(initial, ALL, 3);
+      expect(cache.has(initial, ALL, 3)).toBe(true);
+      expect(cache.has(initial, ALL, 2)).toBe(false);
+      // A grown log keeps the memory; a different seed or a rewritten log does not.
+      expect(cache.has(initial, [...ALL], 3)).toBe(true);
+      expect(cache.has(initialThreadFrom(sampleThread(), ALL), ALL, 3)).toBe(false);
+      expect(cache.has(initial, ALL.slice(1), 3)).toBe(false);
+      // Beyond the limit, the oldest reconstruction is let go.
+      cache.at(initial, ALL, 4);
+      cache.at(initial, ALL, 5);
+      expect(cache.has(initial, ALL, 3)).toBe(false);
+      expect(cache.has(initial, ALL, 5)).toBe(true);
+    });
+
     it('returns the same result for a sequence while the log only grows', () => {
       const cache = createThreadCache();
       const firstTen = ALL.slice(0, 10);

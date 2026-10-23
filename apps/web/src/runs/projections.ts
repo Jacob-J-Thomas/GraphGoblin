@@ -76,6 +76,8 @@ export type ReplayResult = ReturnType<typeof tryThreadAt>;
 
 export interface ThreadCache {
   at(initial: ContextThread, events: readonly RunEvent[], seq: number): ReplayResult;
+  /** Whether `at` would answer from memory for this seed and log: a remembered, replayable thread. */
+  has(initial: ContextThread, events: readonly RunEvent[], seq: number): boolean;
 }
 
 /**
@@ -93,12 +95,16 @@ export function createThreadCache(limit = 32): ThreadCache {
   let initial: ContextThread | undefined;
   let known: readonly RunEvent[] = [];
   const results = new Map<number, ReplayResult>();
+  const grown = (init: ContextThread, events: readonly RunEvent[]) =>
+    init === initial &&
+    events.length >= known.length &&
+    known.every((event, index) => events[index] === event);
   return {
+    has(init, events, seq) {
+      return grown(init, events) && results.get(seq)?.ok === true;
+    },
     at(init, events, seq) {
-      const extended =
-        init === initial &&
-        events.length >= known.length &&
-        known.every((event, index) => events[index] === event);
+      const extended = grown(init, events);
       if (!extended) {
         results.clear();
         initial = init;

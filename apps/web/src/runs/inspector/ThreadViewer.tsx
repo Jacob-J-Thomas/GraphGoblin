@@ -99,22 +99,27 @@ export function ThreadViewer({
   );
   const [cache] = useState(createThreadCache);
   // A large history (`LARGE_HISTORY_BYTES`) is reconstructed on request only, so a selection or a
-  // live event costs a constant until the reader asks; the sequences asked for stay prepared while
-  // this viewer lives.
+  // live event costs a constant until the reader asks. An event is ready while the cache still
+  // holds its reconstruction (and the one before it, for a patch diff): the cache keeps the last
+  // 32, so an event asked for long ago asks again rather than being rebuilt unasked.
   const large = historyBytes > LARGE_HISTORY_BYTES;
-  const [prepared, setPrepared] = useState<ReadonlySet<number>>(() => new Set());
+  const [, setPrepared] = useState(0);
   // A newly selected event is otherwise reconstructed in the deferred render after the urgent one,
   // so the selection paints (the title and a note) before a thread is rebuilt; the remembered
   // threads make most selections immediate anyway.
   const deferredSeq = useDeferredValue(seq);
   const shownSeq = large ? seq : deferredSeq;
   const reconstructing = shownSeq !== seq;
-  const ready = !large || prepared.has(shownSeq);
+  const selected = events.find((e) => e.seq === shownSeq);
+  const withDiff = selected?.type === 'node.finished';
+  const ready =
+    !large ||
+    (cache.has(initial, events, shownSeq) &&
+      (!withDiff || cache.has(initial, events, shownSeq - 1)));
   const replayed = useMemo(
     () => (ready ? cache.at(initial, events, shownSeq) : undefined),
     [ready, cache, initial, events, shownSeq],
   );
-  const selected = events.find((e) => e.seq === shownSeq);
   const diff = useMemo(() => {
     if (selected?.type !== 'node.finished' || !replayed?.ok) return undefined;
     const before = cache.at(initial, events, shownSeq - 1);
@@ -191,7 +196,10 @@ export function ThreadViewer({
               ref={reconstructRef}
               size="sm"
               onClick={() => {
-                setPrepared((set) => new Set(set).add(shownSeq));
+                // The replay happens here, on request; the render that follows finds it cached.
+                cache.at(initial, events, shownSeq);
+                if (withDiff) cache.at(initial, events, shownSeq - 1);
+                setPrepared((n) => n + 1);
                 // The button goes away with the card: the thread's controls take the keyboard.
                 setHoldsFocus(true);
                 setHandoffs((n) => n + 1);

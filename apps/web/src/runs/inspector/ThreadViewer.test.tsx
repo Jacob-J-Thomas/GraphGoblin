@@ -162,6 +162,32 @@ describe('ThreadViewer with a large history', () => {
     expect(screen.getByRole('button', { name: 'Elsewhere' })).toHaveFocus();
   });
 
+  it('asks again for an event whose reconstruction the viewer no longer remembers', async () => {
+    const user = userEvent.setup();
+    const { thread, events } = threadOf(3, 'a');
+    const id = thread.run.id;
+    const all = [...events, ...Array.from({ length: 34 }, (_, i) => started(id, i + 2))];
+    const view = (seq: number) => (
+      <ThreadViewer current={thread} events={all} seq={seq} historyBytes={3_500_000} />
+    );
+    const { rerender } = render(view(1));
+    // Thirty-four explicit reconstructions: the viewer remembers the last thirty-two.
+    for (let seq = 1; seq <= 34; seq += 1) {
+      rerender(view(seq));
+      await user.click(
+        screen.getByRole('button', { name: `Reconstruct the thread at event ${seq}` }),
+      );
+      expect(screen.getByRole('list', { name: 'Messages' })).toBeInTheDocument();
+    }
+    rerender(view(1));
+    expect(
+      screen.getByRole('button', { name: 'Reconstruct the thread at event 1' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: 'Messages' })).not.toBeInTheDocument();
+    rerender(view(34));
+    expect(screen.getByRole('list', { name: 'Messages' })).toBeInTheDocument();
+  });
+
   it('reconstructs automatically at and below the threshold', () => {
     const { thread, events } = threadOf(3, 'a');
     render(
