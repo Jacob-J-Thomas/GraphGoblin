@@ -177,6 +177,34 @@ describe('BoundedValue', () => {
     expect(screen.getByTestId('value')).not.toHaveAttribute('tabindex');
   });
 
+  it('does not replay a finished hand-off when its value returns while the keyboard is elsewhere', async () => {
+    const user = userEvent.setup();
+    const other = {
+      items: Array.from({ length: 400 }, (_, i) => ({ id: i, note: 'y'.repeat(40) })),
+    };
+    const page = (value: unknown) => (
+      <>
+        <BoundedValue value={value} label="Variables" testId="value" />
+        <button type="button">Timeline</button>
+      </>
+    );
+    const { rerender } = render(page(big));
+    // The first value is expanded with the keyboard inside; the second one's arrival hands the
+    // keyboard to its Show all.
+    await user.click(screen.getByRole('button', { name: 'Show all of Variables' }));
+    act(() => screen.getByRole('region', { name: 'Variables' }).focus());
+    rerender(page(other));
+    expect(screen.getByRole('button', { name: 'Show all of Variables' })).toHaveFocus();
+    // The reader moves to the timeline and selects the first value, then the second one again:
+    // the keyboard stays on the timeline both times.
+    act(() => screen.getByRole('button', { name: 'Timeline' }).focus());
+    rerender(page(big));
+    expect(screen.getByRole('button', { name: 'Timeline' })).toHaveFocus();
+    rerender(page(other));
+    expect(screen.getByRole('button', { name: 'Timeline' })).toHaveFocus();
+    expect(screen.getByTestId('value')).not.toHaveAttribute('tabindex');
+  });
+
   it('hands the keyboard over when the control it was on disappears with the value', async () => {
     const user = userEvent.setup();
     const small = { topic: 'loops' };

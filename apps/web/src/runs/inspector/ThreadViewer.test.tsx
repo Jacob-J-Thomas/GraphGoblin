@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { sampleThread } from '@graphgoblin/contracts/testing';
 import { event, queuedFields } from '../../__fixtures__/fake-api.js';
+import { LARGE_HISTORY_BYTES } from '../event-store.js';
 import { MESSAGE_PREVIEW_COUNT, ThreadViewer } from './ThreadViewer.js';
 
 /** A thread of `n` short messages, each naming its position, seeded as the run's first event. */
@@ -88,5 +89,57 @@ describe('ThreadViewer messages', () => {
     expect(within(list).getAllByRole('listitem')).toHaveLength(MESSAGE_PREVIEW_COUNT);
     expect(screen.queryByText(/Showing/)).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /messages/ })).not.toBeInTheDocument();
+  });
+});
+
+describe('ThreadViewer with a large history', () => {
+  const started = (runId: string, seq: number) =>
+    event(runId, seq, 'node.started', { nodeId: 'a', kind: 'mutate', attempt: 1, configHash: 'h' });
+
+  it('reconstructs the thread at an event on request only, and remembers the events asked for', async () => {
+    const user = userEvent.setup();
+    const { thread, events } = threadOf(3, 'a');
+    const id = thread.run.id;
+    const all = [...events, started(id, 2), started(id, 3)];
+    const view = (seq: number, history = all) => (
+      <ThreadViewer current={thread} events={history} seq={seq} historyBytes={3_500_000} />
+    );
+    const { rerender } = render(view(1));
+    // Nothing is replayed until asked: the card names the size and the event.
+    expect(screen.getByText('Thread at event 1')).toBeInTheDocument();
+    expect(screen.getByText(/history holds 3\.5 MB of recorded events/)).toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: 'Messages' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Reconstruct the thread at event 1' }));
+    expect(screen.getByRole('list', { name: 'Messages' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Reconstruct/ })).not.toBeInTheDocument();
+
+    // Another event asks again, at once (no deferred reconstruction, so no "Reconstructing" note).
+    rerender(view(3));
+    expect(screen.getByText('Thread at event 3')).toBeInTheDocument();
+    expect(screen.queryByText(/Reconstructing the thread/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: 'Messages' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Reconstruct the thread at event 3' }));
+    expect(screen.getByRole('list', { name: 'Messages' })).toBeInTheDocument();
+
+    // A return to an event already asked for shows it without asking.
+    rerender(view(1));
+    expect(screen.getByRole('list', { name: 'Messages' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Reconstruct/ })).not.toBeInTheDocument();
+
+    // A newly arrived event that becomes the selection asks too: live updates are explicit.
+    rerender(view(4, [...all, started(id, 4)]));
+    expect(
+      screen.getByRole('button', { name: 'Reconstruct the thread at event 4' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: 'Messages' })).not.toBeInTheDocument();
+  });
+
+  it('reconstructs automatically at and below the threshold', () => {
+    const { thread, events } = threadOf(3, 'a');
+    render(
+      <ThreadViewer current={thread} events={events} seq={1} historyBytes={LARGE_HISTORY_BYTES} />,
+    );
+    expect(screen.getByRole('list', { name: 'Messages' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Reconstruct/ })).not.toBeInTheDocument();
   });
 });

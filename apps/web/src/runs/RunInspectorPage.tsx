@@ -177,6 +177,7 @@ export function RunInspectorPage() {
               events={log.events}
               seq={seq}
               definition={versionQuery.data?.definition}
+              historyBytes={log.bytes}
             />
           ) : (
             <p className="text-sm text-muted">The thread is not available yet.</p>

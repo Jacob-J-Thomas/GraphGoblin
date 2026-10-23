@@ -2,7 +2,7 @@ import { LoopDefinitionSchema, type RunEvent } from '@graphgoblin/contracts';
 import { FIXTURE_TS, minimalLoop, sampleThread } from '@graphgoblin/contracts/testing';
 import { describe, expect, it, vi } from 'vitest';
 import { event, queuedFields } from '../__fixtures__/fake-api.js';
-import { quotaSafeSessionStorage, useRunEventStore } from './event-store.js';
+import { LARGE_HISTORY_BYTES, quotaSafeSessionStorage, useRunEventStore } from './event-store.js';
 import {
   createThreadCache,
   describeEvent,
@@ -446,12 +446,46 @@ describe('initial thread and replay failures', () => {
     expect(tryThreadAt(initialThreadFrom(current, bad), bad, 1).ok).toBe(true);
   });
 
+  it('drops a stored log of the earlier version, which carries no recorded size (#259)', async () => {
+    useRunEventStore.setState({ runs: {} });
+    useRunEventStore.persist.clearStorage();
+    const sized = event(R, 1, 'decision.made', { nodeId: 'd', ...expressionEvidence('good') });
+    sessionStorage.setItem(
+      'graphgoblin-run-events-v4',
+      JSON.stringify({ state: { runs: { [R]: { events: [sized], lastSeq: 1 } } }, version: 0 }),
+    );
+    vi.resetModules();
+    const { useRunEventStore: freshStore } = await import('./event-store.js');
+    await freshStore.persist.rehydrate();
+    expect(freshStore.getState().runs[R]).toBeUndefined();
+    freshStore.getState().append(R, sized);
+    expect(freshStore.getState().runs[R]?.bytes).toBe(JSON.stringify(sized).length);
+    expect(sessionStorage.getItem('graphgoblin-run-events-v4')).toContain('"version":1');
+  });
+
   it('appends batches in order and drops a full session storage copy instead of throwing', () => {
     const { append } = useRunEventStore.getState();
     append('batch', ALL[0]!, ALL[1]!, ALL[1]!, ALL[2]!);
     expect(useRunEventStore.getState().runs['batch']?.events.map((e) => e.seq)).toEqual([1, 2, 3]);
     append('batch', ALL[0]!);
     expect(useRunEventStore.getState().runs['batch']?.lastSeq).toBe(3);
+    // The recorded size counts each kept event once, as its JSON (#259).
+    expect(useRunEventStore.getState().runs['batch']?.bytes).toBe(
+      ALL.slice(0, 3).reduce((sum, e) => sum + JSON.stringify(e).length, 0),
+    );
+    // A large history is kept in memory but left out of the stored copy, which other runs keep.
+    const wide = event('wide', 1, 'node.finished', {
+      nodeId: 'a',
+      patch: [{ op: 'add', path: '/vars/wide', value: 'w'.repeat(LARGE_HISTORY_BYTES) }],
+      durationMs: 1,
+    });
+    append('wide', wide);
+    expect(useRunEventStore.getState().runs['wide']?.bytes).toBeGreaterThan(LARGE_HISTORY_BYTES);
+    const stored = JSON.parse(sessionStorage.getItem('graphgoblin-run-events-v4') ?? '{}') as {
+      state: { runs: Record<string, unknown> };
+    };
+    expect(Object.keys(stored.state.runs)).toContain('batch');
+    expect(Object.keys(stored.state.runs)).not.toContain('wide');
 
     const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new DOMException('full', 'QuotaExceededError');

@@ -6,6 +6,8 @@ import { approvalLoop, control, expect, test } from './fixtures.js';
 const LONG = 'v'.repeat(20_000);
 /** A wait prompt at most 10,000 characters long is what the run contract accepts. */
 const PROMPT = 'v'.repeat(9_000);
+/** A value that alone puts the run's recorded history above the large-history threshold. */
+const HUGE = 'v'.repeat(2_100_000);
 
 function inferenceLoop(name: string, waitBeforeExit = false) {
   const source = minimalLoop();
@@ -210,4 +212,81 @@ test('the keyboard stays inside an expanded value that a live event replaces (#2
   await page.keyboard.press('Tab');
   await expect(showAll).not.toBeFocused();
   await expect(page.getByTestId('thread-json')).not.toHaveAttribute('tabindex', /.*/);
+});
+
+test('a run with a large history reconstructs the thread at an event on request (#259)', async ({
+  page,
+  request,
+}) => {
+  const instance = await control(request, '/apps');
+  const url = String(instance['url']);
+  const instanceId = instance['instanceId'];
+  const created = await request.post(url + '/loops', {
+    data: { definition: inferenceLoop('Large history', true) },
+  });
+  expect(created.status(), await created.text()).toBe(201);
+  const { loop } = (await created.json()) as { loop: { id: string } };
+  expect((await request.post(url + '/loops/' + loop.id + '/publish')).status()).toBe(200);
+  await control(request, '/harness/script', { instanceId, turns: [{ finalText: HUGE }] });
+  const started = await request.post(url + '/loops/' + loop.id + '/runs', { data: { input: {} } });
+  expect(started.status()).toBe(202);
+  const runId = RunRecordSchema.parse(((await started.json()) as { run: unknown }).run).id;
+  const run = async () =>
+    RunRecordSchema.parse(await (await request.get(url + '/runs/' + runId)).json());
+  await expect
+    .poll(async () => (await run()).status, { timeout: 30_000, intervals: [250, 500, 1000] })
+    .toBe('waiting');
+
+  await page.goto(url + '/app/runs/' + runId);
+  const timeline = page.getByRole('list', { name: 'Timeline' });
+  await expect(timeline.getByText('run.waiting')).toBeVisible();
+  // The history is above the threshold: the latest event asks before anything is replayed.
+  const reconstruct = page.getByRole('button', { name: /^Reconstruct the thread at event \d+$/ });
+  await expect(page.getByText(/history holds \d+\.\d MB of recorded events/)).toBeVisible();
+  await expect(reconstruct).toBeVisible();
+  await expect(page.getByText('Full thread JSON', { exact: true })).toHaveCount(0);
+  const waitSeq = (await reconstruct.textContent())?.match(/\d+$/)?.[0];
+  expect(waitSeq).toBeDefined();
+  await reconstruct.click();
+  await expect(page.getByText('Full thread JSON', { exact: true })).toBeVisible();
+  await expect(reconstruct).toHaveCount(0);
+
+  // A live event that becomes the selection (the inspector follows the latest event until one is
+  // selected by hand) asks again.
+  const waiting = (await run()).waiting;
+  expect(waiting).toBeDefined();
+  const answered = await request.post(url + '/runs/' + runId + '/input', {
+    data: { waitId: waiting!.waitId, input: { approved: true } },
+  });
+  expect(answered.status(), await answered.text()).toBe(200);
+  await expect(timeline.getByText('run.finished')).toBeVisible();
+  await expect(reconstruct).toBeVisible();
+  const finishedSeq = (await reconstruct.textContent())?.match(/\d+$/)?.[0];
+  expect(finishedSeq).toBeDefined();
+  expect(finishedSeq).not.toBe(waitSeq);
+
+  // The first event asks too; the events reconstructed earlier stay shown on return.
+  await timeline.getByRole('button').first().click();
+  await expect(page.getByRole('heading', { name: 'Thread at event 1', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Reconstruct the thread at event 1' }).click();
+  await expect(page.getByText('Full thread JSON', { exact: true })).toBeVisible();
+  await timeline.getByRole('button').filter({ hasText: 'run.waiting' }).click();
+  await expect(
+    page.getByRole('heading', { name: `Thread at event ${waitSeq}`, exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText('Full thread JSON', { exact: true })).toBeVisible();
+  await expect(reconstruct).toHaveCount(0);
+  await timeline.getByRole('button').last().click();
+  await expect(
+    page.getByRole('button', { name: `Reconstruct the thread at event ${finishedSeq}` }),
+  ).toBeVisible();
+
+  // The log of such a run is not stored: a reload replays it from the first event and asks again.
+  await page.reload();
+  await expect(page.getByRole('list', { name: 'Timeline' }).getByText('run.finished')).toBeVisible({
+    timeout: 20_000,
+  });
+  await expect(
+    page.getByRole('button', { name: /^Reconstruct the thread at event \d+$/ }),
+  ).toBeVisible();
 });

@@ -10,6 +10,7 @@ import {
   Disclosure,
 } from '../../components/ui/index.js';
 import { downloadJson } from '../../lib/utils.js';
+import { LARGE_HISTORY_BYTES } from '../event-store.js';
 import { createThreadCache, initialThreadFrom, patchDiff, type PatchLine } from '../projections.js';
 
 /**
@@ -19,6 +20,7 @@ import { createThreadCache, initialThreadFrom, patchDiff, type PatchLine } from 
  */
 export const MESSAGE_PREVIEW_COUNT = 50;
 const count = (n: number) => n.toLocaleString('en-US');
+const megabytes = (n: number) => `${(n / 1_000_000).toFixed(1)} MB`;
 
 /** A finished node's patch: each operation with the value before and after it. */
 function PatchDiff({ nodeId, lines }: { nodeId: string; lines: PatchLine[] }) {
@@ -80,11 +82,14 @@ export function ThreadViewer({
   events,
   seq,
   definition,
+  historyBytes = 0,
 }: {
   current: ContextThread;
   events: RunEvent[];
   seq: number;
   definition?: LoopDefinition | undefined;
+  /** Recorded size of the run's events (`RunEventLog.bytes`); decides the large-history mode. */
+  historyBytes?: number;
 }) {
   // The initial thread depends on the first event only; a growing log must not rebuild it.
   const first = events[0];
@@ -93,23 +98,30 @@ export function ThreadViewer({
     [current, first, definition],
   );
   const [cache] = useState(createThreadCache);
-  // A newly selected event is reconstructed in the deferred render after the urgent one, so the
-  // selection paints (the title and a note) before a thread with a wide value is rebuilt; the
-  // remembered threads make most selections immediate anyway.
-  const shownSeq = useDeferredValue(seq);
+  // A large history (`LARGE_HISTORY_BYTES`) is reconstructed on request only, so a selection or a
+  // live event costs a constant until the reader asks; the sequences asked for stay prepared while
+  // this viewer lives.
+  const large = historyBytes > LARGE_HISTORY_BYTES;
+  const [prepared, setPrepared] = useState<ReadonlySet<number>>(() => new Set());
+  // A newly selected event is otherwise reconstructed in the deferred render after the urgent one,
+  // so the selection paints (the title and a note) before a thread is rebuilt; the remembered
+  // threads make most selections immediate anyway.
+  const deferredSeq = useDeferredValue(seq);
+  const shownSeq = large ? seq : deferredSeq;
   const reconstructing = shownSeq !== seq;
+  const ready = !large || prepared.has(shownSeq);
   const replayed = useMemo(
-    () => cache.at(initial, events, shownSeq),
-    [cache, initial, events, shownSeq],
+    () => (ready ? cache.at(initial, events, shownSeq) : undefined),
+    [ready, cache, initial, events, shownSeq],
   );
   const selected = events.find((e) => e.seq === shownSeq);
   const diff = useMemo(() => {
-    if (selected?.type !== 'node.finished' || !replayed.ok) return undefined;
+    if (selected?.type !== 'node.finished' || !replayed?.ok) return undefined;
     const before = cache.at(initial, events, shownSeq - 1);
     return before.ok ? patchDiff(before.thread, replayed.thread, selected.patch) : undefined;
   }, [selected, cache, initial, events, shownSeq, replayed]);
   const [showJson, setShowJson] = useState(false);
-  const thread = replayed.ok ? replayed.thread : undefined;
+  const thread = replayed?.ok ? replayed.thread : undefined;
   // Whether every message is laid out. Like a value's expansion, it lasts while the same thread
   // stays shown: another event's thread starts bounded again (adjusted in the render that sees it).
   const [allMessagesState, setAllMessagesState] = useState(false);
@@ -142,10 +154,26 @@ export function ThreadViewer({
     if (!inside) (showAllRef.current ?? list)?.focus();
     setHoldsFocus(document.activeElement === list);
   }, [handoffs]);
-  if (!replayed.ok || thread === undefined) {
+  if (!ready) {
     return (
-      <Alert title={`The thread cannot be reconstructed at event ${seq}`}>
-        {replayed.ok ? '' : replayed.error}
+      <Card title={`Thread at event ${shownSeq}`}>
+        <p className="text-sm text-muted">
+          This run's history holds {megabytes(historyBytes)} of recorded events. Replaying them to
+          rebuild the thread at an event can take a while, so it happens on request.
+        </p>
+        <p>
+          <Button
+            size="sm"
+            onClick={() => setPrepared((set) => new Set(set).add(shownSeq))}
+          >{`Reconstruct the thread at event ${shownSeq}`}</Button>
+        </p>
+      </Card>
+    );
+  }
+  if (replayed === undefined || !replayed.ok || thread === undefined) {
+    return (
+      <Alert title={`The thread cannot be reconstructed at event ${shownSeq}`}>
+        {replayed === undefined || replayed.ok ? '' : replayed.error}
       </Alert>
     );
   }
@@ -160,9 +188,10 @@ export function ThreadViewer({
           lines={diff}
         />
       ) : null}
-      <Card title={`Thread at event ${seq}`}>
+      <Card title={`Thread at event ${shownSeq}`}>
         {/* While the newly selected event's thread is rebuilt, the previous one stays mounted (so
-            nothing loses the keyboard or its open state) and says so. */}
+            nothing loses the keyboard or its open state), keeps its own event's identifiers in its
+            title and downloads, and says what is coming. */}
         {reconstructing ? (
           <p className="text-sm text-muted" aria-live="polite">
             Reconstructing the thread at event {seq}…
@@ -174,7 +203,10 @@ export function ThreadViewer({
             className="grid gap-2"
             onFocus={() => setOwnsFocus(true)}
             onBlur={(event) => {
-              if (!messagesRef.current?.contains(event.relatedTarget)) setOwnsFocus(false);
+              if (messagesRef.current?.contains(event.relatedTarget)) return;
+              // The reader left the section: nothing is owed, and the list stops being focusable.
+              setOwnsFocus(false);
+              setHoldsFocus(false);
             }}
           >
             <h3 className="text-sm font-semibold">Messages ({count(messages.length)})</h3>
@@ -197,7 +229,7 @@ export function ThreadViewer({
                   size="sm"
                   aria-label="Download messages as JSON"
                   onClick={() =>
-                    downloadJson(`run-${thread.run.id}-messages-at-${seq}.json`, messages)
+                    downloadJson(`run-${thread.run.id}-messages-at-${shownSeq}.json`, messages)
                   }
                 >
                   Download JSON
@@ -233,7 +265,7 @@ export function ThreadViewer({
               value={thread.vars}
               label="Variables"
               labelled
-              fileName={`run-${thread.run.id}-variables-at-${seq}`}
+              fileName={`run-${thread.run.id}-variables-at-${shownSeq}`}
             />
           </div>
           <Disclosure
@@ -247,7 +279,7 @@ export function ThreadViewer({
                 value={thread}
                 label="Full thread JSON"
                 testId="thread-json"
-                fileName={`run-${thread.run.id}-thread-at-${seq}`}
+                fileName={`run-${thread.run.id}-thread-at-${shownSeq}`}
               />
             ) : null}
           </Disclosure>

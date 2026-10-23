@@ -79,9 +79,12 @@ export function BoundedValue({
   // The text carries the keyboard across a change of value (focusable, not a tab stop) until the
   // keyboard moves on.
   const [holdsFocus, setHoldsFocus] = useState(false);
-  // The value whose arrival found the keyboard inside: its hand-off is in flight until its
-  // preview has settled (the effect below).
-  const [handoffFor, setHandoffFor] = useState<unknown>(undefined);
+  // The value whose arrival found the keyboard inside, boxed so that `undefined` as a value is
+  // distinct from no hand-off: its hand-off is in flight until its preview has settled. A box is
+  // completed once (`completedRef`): a return to the same value later, with the keyboard
+  // elsewhere, must not replay a hand-off that already happened.
+  const [handoff, setHandoff] = useState<{ for: unknown } | undefined>(undefined);
+  const completedRef = useRef<{ for: unknown } | undefined>(undefined);
   // Another value arrived (another event, a live reconstruction, or one shown expanded earlier):
   // it starts bounded. React re-renders at once with the adjusted state; `expanded` is false in
   // the discarded pass too, so the whole text is never formatted for a value that is not expanded.
@@ -92,7 +95,7 @@ export function BoundedValue({
       // The text stays focusable in this same commit, so a focused region never loses its
       // tabindex while it has the focus, and a removed control has somewhere to hand it to.
       setHoldsFocus(true);
-      setHandoffFor(value);
+      setHandoff({ for: value });
     }
   }
   const expanded = expandedState && shownValue === value;
@@ -126,10 +129,12 @@ export function BoundedValue({
   // tabindex changed). Put the keyboard on the new value's Show all when it has one, else on the
   // text itself, and keep the text focusable only while it is what holds the keyboard. Until then
   // the text stays focusable and the previous controls stay mounted, so nothing is lost in the
-  // urgent commit. A later value that arrives with the keyboard elsewhere leaves `handoffFor`
-  // behind, so the effect does nothing for it.
+  // urgent commit. A later value that arrives with the keyboard elsewhere leaves `handoff` boxing
+  // the earlier value, so the effect does nothing for it.
   useLayoutEffect(() => {
-    if (handoffFor !== value || pending) return;
+    if (handoff === undefined || handoff === completedRef.current) return;
+    if (handoff.for !== value || pending) return;
+    completedRef.current = handoff;
     const root = rootRef.current;
     const pre = preRef.current;
     const inside = root !== null && root.contains(document.activeElement);
@@ -137,7 +142,7 @@ export function BoundedValue({
       if (!inside || document.activeElement === pre) showAllRef.current.focus();
     } else if (!inside) pre?.focus();
     setHoldsFocus(document.activeElement === pre);
-  }, [handoffFor, value, pending, large]);
+  }, [handoff, value, pending, large]);
   return (
     <div
       ref={rootRef}
@@ -146,9 +151,10 @@ export function BoundedValue({
       onBlur={(event) => {
         if (rootRef.current?.contains(event.relatedTarget)) return;
         // The reader left (a blur event means the keyboard moved by itself: a control the update
-        // removed fires none). Nothing is owed any more, including a hand-off still pending.
+        // removed fires none). Nothing is owed any more: no pending hand-off, no held text.
         setOwnsFocus(false);
-        setHandoffFor(undefined);
+        setHandoff(undefined);
+        setHoldsFocus(false);
       }}
     >
       <pre
