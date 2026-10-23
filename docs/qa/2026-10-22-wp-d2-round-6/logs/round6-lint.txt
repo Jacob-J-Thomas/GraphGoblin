@@ -1,0 +1,58 @@
+pnpm.cmd : $ turbo run lint
+At line:2 char:303
++ ... nd6-'+$gate.Replace(':','-')+'.log'; & pnpm.cmd $gate *> $log; $code= ...
++                                          ~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ turbo run lint:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running lint in 12 packages
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/contracts:lint: cache miss, executing cbfa203a47b86eee
+@graphgoblin/domain:lint: cache miss, executing a4a24604a1eeb368
+@graphgoblin/engine:lint: cache miss, executing 0fa719e8297dec1e
+@graphgoblin/adapter-codex:lint: cache miss, executing 5c5824f827e06554
+@graphgoblin/adapter-jev:lint: cache miss, executing a621e4c7c265bfc4
+@graphgoblin/api:lint: cache miss, executing 8aa952d6c6aa0a7b
+@graphgoblin/api-client:lint: cache miss, executing 80093d2444853bed
+@graphgoblin/mcp:lint: cache miss, executing a1454e911c494eb7
+@graphgoblin/web:lint: cache miss, executing c74a66b9b26f7181
+@graphgoblin/infrastructure:lint: cache miss, executing 907baa16eb73c33f
+@graphgoblin/contracts:lint: $ eslint .
+@graphgoblin/api-client:lint: $ eslint .
+@graphgoblin/adapter-jev:lint: $ eslint .
+@graphgoblin/adapter-codex:lint: $ eslint .
+@graphgoblin/infrastructure:lint: $ eslint .
+@graphgoblin/api:lint: $ eslint .
+@graphgoblin/domain:lint: $ eslint .
+@graphgoblin/engine:lint: $ eslint .
+@graphgoblin/web:lint: $ eslint .
+@graphgoblin/mcp:lint: $ eslint .
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/plugin-codex:lint: cache miss, executing 3c89fe98976babf6
+@graphgoblin/plugin-codex:lint: $ eslint .
+ WARNING  IO error: Access is denied. (os error 5)
+ WARNING  IO error: Access is denied. (os error 5)
+ WARNING  IO error: Access is denied. (os error 5)
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/infrastructure:lint:
+@graphgoblin/infrastructure:lint: %WORKTREE%\packages\infrastructure\src\sqlite\webhook-receipt-upgrade.test.ts
+@graphgoblin/infrastructure:lint:   74:30  error  'after[0]?.['payload']' may use Object's default stringification format ('[object Object]') when stringified  @typescript-eslint/no-base-to-string
+@graphgoblin/infrastructure:lint:
+@graphgoblin/infrastructure:lint: ✖ 1 problem (1 error, 0 warnings)
+@graphgoblin/infrastructure:lint:
+@graphgoblin/infrastructure:lint: [ELIFECYCLE] Command failed with exit code 1.
+@graphgoblin/infrastructure#lint:  ERROR  command
+(%WORKTREE%\packages\infrastructure)
+C:\nvm4w\nodejs\pnpm.cmd run lint exited (1)
+
+ Tasks:    9 successful, 11 total
+Cached:    0 cached, 11 total
+  Time:    2m58.18s
+Failed:    @graphgoblin/infrastructure#lint
+
+ ERROR  run failed: command  exited (1)
+[ELIFECYCLE] Command failed with exit code 1.

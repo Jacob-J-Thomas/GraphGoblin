@@ -30,6 +30,7 @@ const definition = (model = 'claude-opus-5-5', extra: Record<string, unknown> = 
 beforeEach(async () => {
   claude = new FakeHarness([], 'claude');
   claude.preflightResult = {
+    state: 'ready',
     ok: true,
     version: '2.1.285',
     authenticated: true,
@@ -69,7 +70,7 @@ describe('Claude public integration', () => {
         expect.objectContaining({
           harness: 'claude',
           ok: false,
-          problems: ['Claude preflight failed'],
+          problems: [expect.stringMatching(/readiness could not be confirmed/)],
         }),
       ]),
     });
@@ -121,6 +122,7 @@ describe('Claude public integration', () => {
   });
   it('blocks unavailable Claude publication without substituting Codex', async () => {
     claude.preflightResult = {
+      state: 'unknown',
       ok: false,
       authenticated: false,
       problems: ['Claude account login required'],
@@ -139,7 +141,9 @@ describe('Claude public integration', () => {
     });
     expect(validated.json()).toMatchObject({
       publishable: false,
-      issues: expect.arrayContaining([expect.objectContaining({ code: 'HARNESS_UNAVAILABLE' })]),
+      issues: expect.arrayContaining([
+        expect.objectContaining({ code: 'HARNESS_READINESS_UNKNOWN' }),
+      ]),
     });
     expect(
       (await t.app.inject({ method: 'POST', url: '/loops/' + id + '/publish' })).statusCode,
@@ -198,6 +202,7 @@ describe('Claude public integration', () => {
   });
   it('keeps missing optional Claude a warning, but fails configured Claude readiness', async () => {
     claude.preflightResult = {
+      state: 'unknown',
       ok: false,
       authenticated: false,
       problems: ['Claude is not installed'],

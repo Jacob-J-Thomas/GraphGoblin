@@ -2,6 +2,7 @@ import { HarnessOptionsSchema, type ClaudePolicy } from '@graphgoblin/contracts'
 import { useId } from 'react';
 import { useWatch } from 'react-hook-form';
 import { usePreflight } from '../api/queries.js';
+import { harnessReadiness, readinessLine } from '../api/readiness.js';
 import { FieldGroup, HelpText, Label, Select } from '../components/ui/index.js';
 import { useFormChange } from '../forms/changes.js';
 import { DefaultField } from '../forms/fields.js';
@@ -43,10 +44,9 @@ function ClaudePolicySelect({ name, label }: FieldProps) {
     typeof approvalValue === 'string'
       ? approvalValue
       : HarnessOptionsSchema.shape.approval.parse(undefined);
-  const preflight = usePreflight();
-  const policyItem = preflight.data?.find((item) => item.harness === 'claude');
-  const policies =
-    policyItem?.ok === true && policyItem.authenticated ? (policyItem.supportedPolicies ?? []) : [];
+  // Same rule as the model picker: a background recheck keeps the last result.
+  const readiness = harnessReadiness(usePreflight(), 'claude');
+  const policies = readiness.state === 'ready' ? (readiness.item?.supportedPolicies ?? []) : [];
   const currentIndex = policies.findIndex(
     (policy) => policy.sandbox === sandbox && policy.approval === approval,
   );
@@ -104,13 +104,10 @@ function ClaudePolicySelect({ name, label }: FieldProps) {
       </HelpText>
       {unavailable ? (
         <HelpText role="status" tone="warn">
-          {preflight.isError
-            ? 'Claude policy options could not be verified. The saved policy is unchanged.'
-            : preflight.data === undefined
-              ? 'Loading Claude policy options. The saved policy is unchanged.'
-              : !policyItem?.ok || !policyItem.authenticated
-                ? 'Claude CLI preflight is not ready. The saved policy is unchanged.'
-                : 'No supported Claude policy is available on this platform. The saved policy is unchanged.'}
+          {readiness.state === 'ready'
+            ? 'No supported Claude policy is available on this platform.'
+            : readinessLine('claude', readiness)}{' '}
+          The saved policy is unchanged.
         </HelpText>
       ) : null}
       <FieldError name={name} id={errorId} />

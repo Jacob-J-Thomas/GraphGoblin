@@ -15,7 +15,7 @@ import { getAtPointer, replayThread } from '@graphgoblin/domain';
 
 /**
  * The thread as the run started. The engine records it on the first event (`run.queued`),
- * including a subloop child's seed; logs written before that field existed fall back to the
+ * including a subloop child's or replay fork's seed; logs without that field fall back to the
  * immutable `run` and `invocation` from the current thread and one-based gates from the definition.
  */
 export function initialThreadFrom(
@@ -46,22 +46,15 @@ export function initialThreadFrom(
 }
 
 /**
- * The thread after the event with sequence `seq`: node patches replayed by `domain`, plus the
- * node-visit counter the engine keeps outside patches (it counts `node.started`).
+ * The thread after event `seq`, including the seed's counters, gates and iteration. Domain replay
+ * increments visits for each `node.started`, just as the executor does, without resetting the seed.
  */
 export function threadAt(
   initial: ContextThread,
   events: readonly RunEvent[],
   seq: number,
 ): ContextThread {
-  const thread = replayThread(initial, events, seq);
-  const nodeVisits: Record<string, number> = {};
-  for (const event of events) {
-    if (event.seq > seq) break;
-    if (event.type === 'node.started')
-      nodeVisits[event.nodeId] = (nodeVisits[event.nodeId] ?? 0) + 1;
-  }
-  return { ...thread, counters: { ...thread.counters, nodeVisits } };
+  return replayThread(initial, events, seq);
 }
 
 /**
@@ -144,6 +137,11 @@ export function describeEvent(event: RunEvent): string {
       return describeExit(event);
     case 'signal.received':
       return event.name;
+    case 'delivery.queued':
+    case 'delivery.attempted':
+    case 'delivery.attempt_finished':
+    case 'delivery.finished':
+      return `Webhook ${event.delivery.status}, ${event.delivery.attempts}/${event.delivery.maxAttempts} attempts${event.delivery.lastError ? `: ${event.delivery.lastError.message}` : ''}`;
     case 'return.delivered':
     case 'return.failed':
       return event.channel.kind;

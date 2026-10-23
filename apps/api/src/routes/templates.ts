@@ -28,7 +28,13 @@ export function registerTemplateRoutes(app: ApiInstance, container: Container): 
     async (request, reply) => {
       const definition = await container.templates.catalog.draft(request.params.id);
       if (request.body.name !== undefined) definition.name = request.body.name.trim();
-      const admission = await loopPublicationIssues(container, request.auth.ownerId, definition);
+      const admission = await loopPublicationIssues(
+        container,
+        request.auth.ownerId,
+        definition,
+        undefined,
+        false,
+      );
       if (admission.some((issue) => rejectsDraftAdmission(definition, issue)))
         return problem(
           reply,

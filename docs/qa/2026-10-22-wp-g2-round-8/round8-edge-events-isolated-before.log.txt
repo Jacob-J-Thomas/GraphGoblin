@@ -1,0 +1,44 @@
+
+Running 1 test using 1 worker
+
+pnpm.cmd : (node:40872) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+At line:5 char:143
++ ... L='msedge'; pnpm.cmd --filter @graphgoblin/web exec playwright test - ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:40872) Wa... env being set.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:40872) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+CONTROL_REFUSAL 500 {"error":"Error: listen EADDRINUSE: address already in use 127.0.0.1:5622"}
+  ✘  1 [edge] › ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-wp-g2-round8-edge-UMrs7Q\history.spec.ts:50:1 › Events appends beyond the first page with reading position and keyboard focus intact (501ms)
+
+
+  1) [edge] › ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-wp-g2-round8-edge-UMrs7Q\history.spec.ts:50:1 › Events appends beyond the first page with reading position and keyboard focus intact 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+       at fixtures.ts:78
+
+      76 |   const res = await request.post(`${base}${path}`, { data: body });
+      77 |   if (!res.ok()) console.error('CONTROL_REFUSAL', res.status(), await res.text());
+    > 78 |   expect(res.ok()).toBe(true);
+         |                    ^
+      79 |   return (await res.json()) as Record<string, unknown>;
+      80 | }
+      81 |
+        at control (<temp>\gg-wp-g2-round8-edge-UMrs7Q\fixtures.ts:78:20)
+        at <temp>\gg-wp-g2-round8-edge-UMrs7Q\history.spec.ts:54:20
+
+    Error Context: ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-wp-g2-round8-edge-UMrs7Q\output\history-Events-appends-bey-888e5-n-and-keyboard-focus-intact-edge\error-context.md
+
+  1 failed
+    [edge] › ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-wp-g2-round8-edge-UMrs7Q\history.spec.ts:50:1 › Events appends beyond the first page with reading position and keyboard focus intact 
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in <worktree>
+

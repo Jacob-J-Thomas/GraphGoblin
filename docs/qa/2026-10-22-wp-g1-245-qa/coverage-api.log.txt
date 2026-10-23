@@ -1,0 +1,55 @@
+pnpm.cmd : $ vitest run --coverage
+At line:2 char:52
++ ... $env:PATH"; pnpm.cmd --filter @graphgoblin/api test:coverage *> docs/ ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --coverage:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 <worktree>/apps/api
+      Coverage enabled with v8
+
+{"level":30,"time":1792689285310,"pid":23564,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5692"}
+{"level":30,"time":1792689285311,"pid":23564,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5692,"dataDir":"<local>\\AppData\\Local\\Temp\\gg-api-process-d41ccP","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792689285455,"pid":23564,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792689285633,"pid":23564,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":177.68669999999838,"msg":"request completed"}
+ o' src/subloop-restart.test.ts (3 tests | 1 failed) 207913ms
+   o' awaited subloops across process death (#242) (3)
+     � a hard kill around child completion leaves every parent one continuation after restart 123698ms
+
+�#�#�#�#�#�#�# Failed Tests 1 �#�#�#�#�#�#�#
+
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > a hard kill around child 
+completion leaves every parent one continuation after restart
+AssertionError: expected 2 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ o' expectOneContinuation src/subloop-restart.test.ts:123:65
+    121|   expect(count((event) => event.type === 'child_run.started')).toBe(1);
+    122|   expect(count((event) => event.type === 'run.woken')).toBe(1);
+    123|   expect(count((event) => event.type === 'child_run.finished')).toBe(1& 
+       |                                                                 ^
+    124|   expect(count((event) => event.type === 'node.finished' && event.node& 
+    125|   expect(count((event) => event.type === 'run.finished')).toBe(1);
+ o' src/subloop-restart.test.ts:179:25
+
+�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#[1/1]�#
+
+
+ Test Files  1 failed | 49 passed | 2 skipped (52)
+      Tests  1 failed | 700 passed | 6 skipped (707)
+   Start at  12:12:22
+   Duration  328.34s (tests 69%, import 23%, transform 8%)
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  � "pnpm recursive run" failed in C:
+  % <local>\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-g1-
+  % 245\apps\api
+

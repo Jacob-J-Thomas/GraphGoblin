@@ -1,0 +1,66 @@
+
+ RUN  v5.0.3 [local-path]
+
+ ↓ src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > auth-network preserves auth for both harnesses
+ ↓ src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > quota-network preserves quota for both harnesses
+ ↓ src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > stdout-quota-warning preserves quota for both harnesses
+ ↓ src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > auth-empty preserves unknown for both harnesses
+ ↓ src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > auth-unrecognised preserves unknown for both harnesses
+ × src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > auth-zero-stdout preserves auth for both harnesses 834ms
+   → expected { state: 'unknown', ok: false, …(6) } to match object { state: 'auth', ok: false }
+(6 matching properties omitted from actual)
+ × src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > auth-zero-stderr preserves auth for both harnesses 417ms
+   → expected { state: 'unknown', ok: false, …(6) } to match object { state: 'auth', ok: false }
+(6 matching properties omitted from actual)
+ ↓ src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > ready preserves ready for both harnesses
+ ↓ src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > auth preserves auth for both harnesses
+pnpm.cmd :
+At line:2 char:70
++ ... $env:PATH"; pnpm.cmd --filter @graphgoblin/api exec vitest run src/re ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation >
+auth-zero-stdout preserves auth for both harnesses
+ FAIL  src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation >
+auth-zero-stderr preserves auth for both harnesses
+AssertionError: expected { state: 'unknown', ok: false, …(6) } to match object { state: 'auth', ok: false }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "ok": false,
+-   "state": "auth",
++   "state": "unknown",
+  }
+
+ ❯ src/readiness-evidence.test.ts:90:22
+     88|       expect(items).toHaveLength(2);
+     89|       for (const item of items) {
+     90|         expect(item).toMatchObject({ state, ok: state === 'ready' });
+       |                      ^
+     91|         if (state === 'unknown') {
+     92|           expect(item).not.toHaveProperty('authenticated');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 7 skipped (9)
+   Start at  18:01:02
+   Duration  7.48s (import 52%, transform 31%, tests 17%)
+
+  Transform  transforming modules took 2.22s · 31% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ [local-path]
+  │ readiness-precision\apps\api

@@ -119,7 +119,7 @@ describe('strict Claude auth/capability parsing', () => {
       );
     for (const text of ['PRIVATE', '2.1', '2.1.287-beta', '9999999.1.1'])
       expect(() => verifyInstalledCapabilities(text, flags.join(' '))).toThrow(
-        /version unknown.*version identification/,
+        /^Claude CLI version could not be identified\.$/,
       );
     for (const removed of flags)
       expect(() =>
@@ -127,7 +127,7 @@ describe('strict Claude auth/capability parsing', () => {
           '2.1.285 (Claude Code)',
           flags.filter((flag) => flag !== removed).join(' '),
         ),
-      ).toThrow(new RegExp(`2\\.1\\.285.*capabilities unavailable: ${removed}`));
+      ).toThrow(`Claude CLI 2.1.285 does not list required options: ${removed}.`);
   });
 });
 describe('bounded JSONL parser', () => {
@@ -685,7 +685,7 @@ describe('Claude transcript and error evidence limits', () => {
     { status: 401, code: 'HARNESS_NOT_AUTHENTICATED', retriable: false },
     { status: 403, code: 'HARNESS_NOT_AUTHENTICATED', retriable: false },
     { status: 429, code: 'HARNESS_QUOTA_EXHAUSTED', retriable: true },
-    { status: 503, code: 'HARNESS_TURN_FAILED', retriable: true },
+    { status: 503, code: 'HARNESS_TRANSPORT_FAILED', retriable: true },
     { status: 400, code: 'HARNESS_TURN_FAILED', retriable: false },
   ])(
     'classifies known structured status $status without provider text',
@@ -969,7 +969,9 @@ describe('documented native assistant failure categories', () => {
   it.each([
     { category: 'authentication_failed', code: 'HARNESS_NOT_AUTHENTICATED', retriable: false },
     { category: 'rate_limit', code: 'HARNESS_QUOTA_EXHAUSTED', retriable: true },
-    { category: 'server_error', code: 'HARNESS_TURN_FAILED', retriable: true },
+    { category: 'quota_exceeded', code: 'HARNESS_QUOTA_EXHAUSTED', retriable: false },
+    { category: 'usage_limit', code: 'HARNESS_QUOTA_EXHAUSTED', retriable: false },
+    { category: 'server_error', code: 'HARNESS_TRANSPORT_FAILED', retriable: true },
     { category: 'billing_error', code: 'HARNESS_TURN_FAILED', retriable: false },
     { category: 'invalid_request', code: 'HARNESS_TURN_FAILED', retriable: false },
     { category: 'unknown', code: 'HARNESS_TURN_FAILED', retriable: false },

@@ -1,0 +1,28 @@
+// Run from worktree root, after every gate/collector has exited. No directory deletion.
+import {spawnSync,execFileSync} from 'node:child_process';
+import {readFileSync,writeFileSync,readdirSync,existsSync,statSync,unlinkSync} from 'node:fs';
+import {resolve,join,relative,dirname} from 'node:path';
+import {tmpdir} from 'node:os';
+const root=process.cwd(),temp=resolve(process.argv[2]),base=resolve('docs/qa/2026-10-22-wp-f1-qa/round-3');
+const prefix=process.argv[3]??'';
+if(!/^[a-z-]*$/.test(prefix))throw Error('Unexpected evidence prefix');
+if(dirname(temp).toLowerCase()!==resolve(tmpdir()).toLowerCase()||!/^gg-qa-f1-/.test(relative(dirname(temp),temp)))throw Error('Unexpected disposable root');
+const born=statSync(temp).birthtimeMs;
+const probeCandidates=readdirSync(dirname(temp),{withFileTypes:true}).filter(e=>e.isDirectory()&&/^gg-(?:claude|codex)-probe-/.test(e.name)).flatMap(e=>{const path=join(dirname(temp),e.name),s=statSync(path);return s.birthtimeMs>=born?[{name:e.name,created:s.birthtime.toISOString(),ownership:'unattributed; not removed'}]:[];});
+const clean=text=>text.split(root).join('<worktree>').split(temp).join('<temp>').replace(/[A-Z]:[\\/]+Users[\\/]+[^\s"'<>]+/gi,'<user-path>').replace(/gg_[A-Za-z0-9_-]{25,}/g,'<redacted-key>');
+const portFile=join(temp,'ports.jsonl');const bindings=existsSync(portFile)?readFileSync(portFile,'utf8').trim().split(/\r?\n/).filter(Boolean).map(s=>JSON.parse(s)):[];
+if(bindings.some(b=>b.port<5810||b.port>5819))throw Error('Excluded physical binding recorded');
+writeFileSync(join(base,prefix+'listener-audit.json'),JSON.stringify({physicalRange:[5810,5819],bindings},null,2)+'\n');
+writeFileSync(join(base,prefix+'fixture-requests.json'),JSON.stringify({scope:'Cumulative final native request log; execution commands were refused by the fixture.',requests:Object.fromEntries(['claude','codex'].map(h=>[h,readFileSync(join(temp,h,'requests.txt'),'utf8').trim().split(/\r?\n/)]))},null,2)+'\n');
+const script=join(temp,'cleanup.ps1');writeFileSync(script,readFileSync(join(base,'cleanup.ps1.txt')));
+const child=spawnSync('powershell.exe',['-NoProfile','-ExecutionPolicy','Bypass','-File',script,'-QaRoot',temp],{encoding:'utf8',windowsHide:true,maxBuffer:20_000_000});
+let cleanup;try{cleanup=JSON.parse(child.stdout.trim().replace(/^\uFEFF/,''));}catch{cleanup={exit:child.status,stdout:clean(child.stdout),stderr:clean(child.stderr)};}
+const generated={removed:[],preservedOlder:0,errors:[]};
+for(const suffix of ['apps/api/coverage','apps/web/coverage','packages/domain/coverage','packages/infrastructure/coverage','packages/adapter-codex/coverage','apps/web/test-results']){
+ const folder=resolve(suffix);if(!folder.startsWith(root+'\\'))throw Error('Output scope escaped');if(!existsSync(folder))continue;
+ const visit=directory=>{for(const entry of readdirSync(directory,{withFileTypes:true})){const path=join(directory,entry.name);if(entry.isSymbolicLink())throw Error('Unexpected output link');if(entry.isDirectory())visit(path);else if(statSync(path).mtimeMs>=born){try{unlinkSync(path);generated.removed.push(relative(root,path).replaceAll('\\','/'));}catch(error){generated.errors.push({file:relative(root,path),message:clean(error.message)});}}else generated.preservedOlder++;}};visit(folder);
+}
+const remaining=[];const visit=directory=>{for(const entry of readdirSync(directory,{withFileTypes:true})){const path=join(directory,entry.name);if(entry.isSymbolicLink())throw Error('Unexpected link after cleanup');if(entry.isDirectory())visit(path);else remaining.push(relative(temp,path).replaceAll('\\','/'));}};visit(temp);
+const evidence={revision:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),node:process.version,disposableRoot:'%TEMP%/'+relative(dirname(temp),temp),manualPort:5810,physicalRange:[5810,5819],recordedBindings:bindings.length,excludedBindings:0,cleanupExit:child.status,cleanup,generatedOutputs:generated,remainingDisposableFiles:remaining,globalProbeDirectoryCandidates:probeCandidates,probeDirectoryLimit:'Manual apps originally inherited the default OS temp root for transient CLI probe directories. Candidates created during the QA window cannot be uniquely attributed; names only are inventoried and directories are not deleted. Replay sources now put probe temp directories below the disposable root.',noDirectoryDeletion:true,noProviderTurns:true,ownerAppOrStoreUsed:false};
+writeFileSync(join(base,prefix+'environment.json'),clean(JSON.stringify(evidence,null,2))+'\n');console.log(JSON.stringify({cleanupExit:child.status,remainingFiles:remaining.length,cleanupErrors:cleanup.errors?.length,generatedErrors:generated.errors.length}));
+if(child.status!==0||remaining.length||cleanup.errors?.length||generated.errors.length)process.exitCode=1;

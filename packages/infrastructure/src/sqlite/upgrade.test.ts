@@ -441,8 +441,8 @@ describe('definitions-only format-4 cutover', () => {
     'DROP INDEX runs_parent_idx',
     'CREATE TABLE template_instances (id TEXT)',
     'ALTER TABLE runs ADD COLUMN template_subject TEXT',
-    // The format-4 baseline (0013_trigger_configuration); later migrations are ordinary pending ones.
-    'DELETE FROM __drizzle_migrations WHERE created_at=1791828000000',
+    // The required format baseline must remain present even when optional SQL follows it.
+    'DELETE FROM __drizzle_migrations WHERE created_at=(SELECT min(created_at) FROM __drizzle_migrations)',
     'UPDATE gg_upgrade_state SET format_version=3',
   ])('refuses damaged or old completion state before ordinary startup writes: %s', async (sql) => {
     const handle = await openMemoryDatabase();

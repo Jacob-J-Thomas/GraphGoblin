@@ -102,11 +102,20 @@ make this safe:
 - **Finalization is recorded.** After a terminal status the engine drops the run's timers,
   cancels its children (when it was cancelled), delivers its returns (when it finished), wakes
   its parent, and only then marks the run finalized (`RunRepository.markFinalized`, column
-  `finalized_at`). Each step is idempotent: returns are delivered per channel, skipping channels
-  whose `return.delivered` or `return.failed` is already in the log. At boot the run manager
+  `finalized_at`). Non-webhook returns skip channels whose `return.delivered` or `return.failed`
+  is already in the log. Webhooks use their durable delivery journal and finite attempt budget
+  ([ADR-0043](decisions/ADR-0043-bounded-webhook-return-delivery.md)). During recovery the finalizer
+  skips a retired Event return of an execution that already finished before upgrade, logging
+  `LOOP_UPGRADE_REQUIRED` with the run, loop and version identities. It neither publishes the
+  Event nor records a fictitious delivery receipt, and does not rewrite the historical outcome
+  or definition. Other returns finish normally, the parent receives the child's execution
+  outcome, and the run is finalized. This terminal bookkeeping exception does not admit or
+  execute a definition with a retired destination; those definitions still require repair.
+  At boot the run manager
   finalizes every terminal run not marked finalized (`listUnfinalized`), so a crash right after
   the status write loses no return and leaves no child running. A channel interrupted
-  mid-delivery is delivered again: returns are at least once. Migration `0002` marks runs that
+  mid-delivery has an unknown acknowledgement; webhook recovery consumes that attempt and
+  retries with the same identity and remaining budget. Migration `0002` marks runs that
   were already terminal as finalized. Finalization belongs to one terminal outcome: resuming a
   failed run clears the marker, so its next terminal outcome is finalized again; the resume waits
   for any finalizer of the failure still in flight (they share a per-run lock), so that finalizer
@@ -200,6 +209,26 @@ and need offline review. See the [offline guide](guide/08-offline-upgrade.md).
 The offline server-store tool uses the same composition for each retained version and draft. Portable export and device conversion do not authorize or perform a server cutover.
 
 ## Crash recovery (Decided)
+
+Webhook return delivery is independent of execution. `delivery.queued` is atomic with
+`run.finished`; `delivery.attempted` consumes an attempt before network I/O. A background
+worker records `delivery.attempt_finished` for a retry or `delivery.finished` for delivered /
+failed. `acknowledgementUncertain` retains any earlier unknown attempt separately from the
+latest error and acknowledgement, including after eventual success. An invalid HTTP response
+status becomes retryable `transport` / unknown, without an invalid `httpStatus` in the journal.
+Five attempts have 10-second deadlines and 2/5/10/20-second retry delays. Recovery
+turns an in-flight attempt into unknown and preserves its identity, deadline and remaining
+budget, including a final failure if the interrupted attempt was the last. Recovery does not
+wait for the network before serving the API. Delivery work does not occupy execution slots;
+`waitForIdle` drains it while running. After `stop()` (D-021), backoff waits wake immediately
+and no new request starts. In-flight requests finish or time out within their existing
+10-second deadline and journal their outcome; pending deliveries retain identity, attempts
+and retry deadline for recovery on the next start. Forced termination retains the same
+durable budget, with an unfinished acknowledgement recorded as unknown during recovery.
+Deleting a loop also stops its delivery workers: they re-read the run before each attempt
+and journal append; the append checks existence transactionally, preventing orphan events.
+The run remains succeeded when its execution succeeded. Finalization
+is marked only after every delivery finishes. See ADR-0043 for eligible failures and ambiguity.
 
 Recovery enumerates raw run identities and decodes each candidate separately. Candidates
 are active runs and terminal runs awaiting finalization; startup checks and logs damaged
@@ -333,7 +362,8 @@ Because every node input is reconstructible, the API offers "re-run this node wi
 - **The source may be in any status**, including running or waiting; it is never modified. It must have a `node.started` event for `nodeId`, otherwise the request fails with `REPLAY_NODE_NOT_REACHED` (409). The node must exist in the source's pinned definition, otherwise `INVALID_STATE`; pins never change, so a node the source started is always there.
 - **The fork's thread** is the source's initial thread replayed (`replayThread`) up to the event just before the node's _first_ `node.started`: every earlier `node.finished` patch, gate count and historical `iteration.incremented`, with `counters.nodeVisits` counted from the earlier `node.started` events. `run.id` is the fork's id; `run.parentRunId` is dropped, so forking a child run gives a top-level run that never wakes the original parent.
 - **The invocation** keeps the trigger envelope (node, kind, payload, `receivedAt`, dedupe key) and gets a fresh id and `replayOf: { runId, nodeId }`. Source and caller are those of whoever asked for the replay (the API passes them; the engine keeps the source's when none are given). The source's `returnDefaults` are dropped: they belong to the source's caller. Return channels declared on exit nodes still deliver.
-- **The fork** is a new run on the source's pinned definition record (a draft run's snapshot included) with the source's `pinned`, its own id and event log, created `queued` with `currentNodeId` set to the node and `iteration` from the thread, so the executor starts there. Its first event is `run.queued` with `replayOf`. Nothing before the node is re-executed, and the source's child runs are not copied: a subloop node in the fork starts a new child.
+- **The fork** is a new run on the source's pinned definition record (a draft run's snapshot included) with the source's `pinned`, its own id and event log, created `queued` with `currentNodeId` set to the node and `iteration` from the thread, so the executor starts there. Its first event is `run.queued` with `replayOf` and `initialThread`, exactly the seed admitted to storage and used by the executor. `GET /runs/{id}/thread` returns that seed even before the fork starts. Nothing before the node is re-executed, and the source's child runs are not copied: a subloop node in the fork starts a new child.
+- **Reconstruction continues from the seed**, including inherited messages, variables, outputs, counters, gate passes and iteration. Each fork `node.started` adds one visit to the inherited counter; decision events set absolute gate passes, and historical `iteration.incremented` events set iteration. The fresh-entry guardrail (`maxNodeVisits`) counts only this fork's own attempt-1 starts, independently of its inherited display counters. The inspector uses the same `replayThread` rule and never resets the recorded seed's counters.
 - **Harness sessions are not carried over.** A node that resumes "the previous session" of its run finds none in the fork and starts fresh; named sessions (`resume-named`) are looked up by scope key and still resume. Files the source wrote into a per-run working directory are not copied.
 
 ## Implementation notes from M2 (Decided by implementation, 2026-10-02)

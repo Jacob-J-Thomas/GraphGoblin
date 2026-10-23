@@ -187,7 +187,7 @@ function unwrap(raw: string): { status?: number; type?: string; message: string 
 /**
  * Classify a Codex failure. Codes are chosen so the engine's `classifyHarnessError` maps them:
  * anything containing `quota` becomes `HARNESS_QUOTA_EXHAUSTED`, anything containing `auth`
- * becomes `HARNESS_NOT_AUTHENTICATED`, everything else `HARNESS_TURN_FAILED`.
+ * becomes `HARNESS_NOT_AUTHENTICATED`; transport/service failures have a distinct code.
  */
 export function classifyCodexError(raw: string): ClassifiedError {
   const { status, type, message } = unwrap(raw);
@@ -217,7 +217,11 @@ export function classifyCodexError(raw: string): ClassifiedError {
     /stream disconnected|timed? ?out|econnreset|network|overloaded|temporarily unavailable/.test(
       text,
     );
-  return { code: 'HARNESS_TURN_FAILED', message, retriable: transient };
+  return {
+    code: transient ? 'HARNESS_TRANSPORT_FAILED' : 'HARNESS_TURN_FAILED',
+    message,
+    retriable: transient,
+  };
 }
 
 export interface TurnOutcome {

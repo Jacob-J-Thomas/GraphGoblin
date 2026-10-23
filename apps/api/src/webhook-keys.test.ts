@@ -75,7 +75,7 @@ describe.each(recipes)('uniform webhook keys: $type $message', (auth) => {
         code: 'KEY_INVALID',
       });
     expect(claim).not.toHaveBeenCalled();
-    expect((await t.app.inject('/events')).json()).toEqual({ items: [] });
+    expect((await t.app.inject('/events')).json()).toEqual({ items: [], nextCursor: null });
     for (const key of ['k'.repeat(512), ' ', '  ', false, 0, { id: 1 }, ['a']]) {
       expect((await send(JSON.stringify({ key }))).statusCode).toBe(202);
       await t.idle();
@@ -152,7 +152,7 @@ describe.each(recipes)('uniform webhook keys: $type $message', (auth) => {
     await t.idle();
     expect(await t.container.repos.runs.list({ loopId: id })).toHaveLength(1);
     expect(
-      (await t.container.repos.inbound.list('local')).filter(
+      (await t.container.repos.inbound.page('local')).items.filter(
         (event) => event.delivery?.state === 'deduplicated',
       ),
     ).toHaveLength(2);

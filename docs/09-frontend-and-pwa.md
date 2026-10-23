@@ -244,8 +244,9 @@ The adversarial QA report is `docs/qa/2026-10-03-wp-d2.md`. Behaviour that chang
 - **Validation agrees with the API.** The editor lists the local `domain` issues (now including Liquid and JSONata syntax), the issues only the API can find (cron syntax, subloop references) from `POST /loops/{id}/validate` after each save, and `FIELD_INPUT_INVALID` for held input: unparsed JSON, an incomplete schedule, or valid section JSON awaiting Apply. Invalid input keeps its existing message; valid pending JSON says it is JSON not applied yet. Publish asks the user to complete/discard invalid input or apply/cancel pending JSON first. The held text and its issue stay in the editor state when the field is left (coming back shows the text again) until the text parses (and section JSON is applied), the user discards it (in the field or from its issue's row: since #15 in the node's badge popover, or beside Publish for loop settings and variables), its row is removed, or an undo takes back the typing that produced it (redo brings it back; see "Undo and redo"). Renames and removals update these stored paths through the form's parse-error channel. Removing an optional object or switching a union variant also clears errors for the fields it removes. Shared domain validation rejects supplied blank JSONata expressions, including whitespace-only input from imports or API clients; the form omits optional blank expressions instead. Empty and whitespace-only Liquid templates remain valid. Contracts parsing is unchanged. Publishing an unchanged loop says there is nothing to publish; the outcome message clears on the next edit.
 - **Drafts.** IndexedDB store upgrades preserve live, set-aside and archived copies; they never delete the drafts store. New in-progress drafts remain on the device across reloads even with schema errors. If an older tab or PWA window blocks the store upgrade, the server copy can open while the three-second storage grace runs, and device storage reports itself blocked (see "Device storage and the save states" below). After device inspection, every edit is mirrored to IndexedDB at once and, after safe reconciliation, flushed to the server when the editor unmounts, so leaving inside the debounce window loses nothing. An unsynced local draft older than the server's last save is set aside, under its own IndexedDB key that later edits do not touch, and offered (use or discard) on every load until the user chooses. Draft saves for a loop are serialized, including the one sent when leaving the editor, and a save updates the editor only while the same loop and editor generation are loaded, so an older save never lands after a newer one. Two tabs no longer overwrite each other: see "Draft conflicts" below.
 - **Editor.** Palette additions pan into view. List fields with a default show the default and a Customize button instead of item fields bound to nothing. Settings' "(server default)" deletes the setting.
-- **Run inspector.** Replay starts from `run.queued`'s `initialThread`, so subloop child runs reconstruct correctly; a log that does not replay shows an explanation; an error boundary per screen keeps the shell alive. Events are appended, rendered, and reported in 100 ms batches and session storage never throws on quota: a 1,211-event run opens in about 0.5 s with a handful of run fetches (it took 7 s and one fetch per event before).
+- **Run inspector.** Replay starts from `run.queued`'s `initialThread`, including a subloop child's or replay fork's inherited messages, variables, outputs, counters, gate passes and iteration. A recorded seed takes precedence over the empty fallback. Domain `replayThread` adds every `node.started` to the seed's visits, projects absolute decision gate passes and historical iteration increments, and applies node patches; the inspector does not recount visits from zero. Thus event 1 shows the actual admitted seed and replace diffs use the same inherited values as execution; an array-append row (a `/-` pointer) still shows both sides as absent because `patchDiff` reads the literal pointer, which #255 addresses. A log that does not replay shows an explanation; an error boundary per screen keeps the shell alive. Events are appended, rendered, and reported in 100 ms batches and session storage never throws on quota: a 1,211-event run opens in about 0.5 s with a handful of run fetches (it took 7 s and one fetch per event before).
 - **Events screen** shows each event's source (API, webhook delivery, or the run whose exit emitted it) and links to the runs it started. Webhook receipts distinguish historical filtered rows and current deduplicated, pending, admitted and failed delivery states, with retry attempts and safe failure codes. While the mounted page contains pending receipts, it refreshes every two seconds so recovery results and new run links appear automatically; interval refresh stops after all displayed receipts are terminal or the page unmounts. Normal focus and reconnect refresh remain enabled. Each delivery can disclose its pinned safe webhook configuration; complete endpoint history remains available through `GET /loops/{id}/triggers`.
+  The Events page appends older events with **Load more**, keeps long preformatted payloads visible and the reading position on append or retry, and focuses the end-of-list message after the final user load. Its URL has no hidden type or time filters; those filters remain available through the API and client. The control is busy only while fetching its next page.
 - **Settings** check the secret name rule before sending, and validation messages name the first failing field.
 
 ## Draft conflicts (Decided, WP-F2)
@@ -628,4 +629,73 @@ Every use creates an owner-scoped ordinary loop with an independent definition. 
 
 ### Claude readiness and saved selections
 
-Settings separates owner catalog enablement from installed-harness readiness. Opus 5.5 and Fable 5.1 have ordinary enable switches; an enabled row with failed preflight says "Enabled in catalog; Claude harness not ready". Preflight shows login independently of CLI version/capability failures. The inference picker keeps a saved model from another harness as a disabled, labelled option, including while preflight fails, and directs the user to a valid model or inherited default. Switching an inference node to Claude resets its policy to `read-only`/`never`, avoiding Codex's unsupported `workspace-write` default; full access remains an explicit choice. Other authored harness options are preserved, with unsupported Claude settings reported for correction. Models retain exact identity and effort checks (ADR-0029).
+Settings separates owner catalog enablement from prerequisite health. The seven server states are
+`unknown`, `ready`, `cli-missing`, `cli-incompatible`, `auth`, `quota` and `transport`; `checking`
+is client-only while no result exists yet.
+
+On first load, readiness is `checking` until a result arrives; the Settings preflight card shows
+"Loading preflight…". A background recheck (window focus or Retry preflight) keeps the last result
+on screen. The card announces "Rechecking…" in a muted live region; when its request is paused
+offline, it keeps the last result and announces "Offline; showing the last check." A completed
+lookup failure or timeout replaces the card's badge list with "Could not load preflight", with no
+state badge; the model picker and policy field show `unknown` instead of cached success.
+
+After a successful lookup, **Harness preflight** shows one badge per harness with a label, never
+the enum, which stays in `data-state`: Ready, Unknown, CLI not found, CLI update needed, Sign-in needed, Usage
+limit, Connection failed. Missing, outdated and signed-out CLIs use the failure tone; unknown,
+usage limit and connection failures the warning tone. Under it are the server's problems, each one
+detail sentence and one action (for example "Claude is not signed in. Run claude auth login, then
+retry preflight."). Claude rows add the adapter's model listing ("listed by adapter", neutral tone)
+and state that listings do not confirm account access. **Retry preflight** in the card head
+refetches and is disabled while a check runs.
+
+**Defaults** gives each harness, Codex and Claude alike, at most one short line under its fields:
+"Checking…" while the catalog first loads, the saved model's catalog problem (not in the catalog,
+disabled), or "<Harness> readiness: <label>. See Harness preflight below." for a harness that is
+not ready. A saved model the list does not offer stays selected as "<name> (saved)", "(disabled)"
+or "(not in catalog)"; the full problem stays in Harness preflight. Catalog rows of a harness that
+is not ready say "Enabled in catalog. <Harness> readiness: <label>." for Claude and Codex rows
+alike; nothing is shown during the first check.
+
+The **model picker** keeps a ready Claude field editable, with its label, through a background
+recheck. While Claude is not ready its choices are read-only; the note is the server's first
+problem followed by "Model choices are read-only until Claude is ready.", a saved model reads
+"<id> (saved)", and **Retry Claude preflight** refetches. A known Codex failure adds the server's
+problem as a warning and **Retry Codex preflight**; Codex choices stay editable, and neither the
+first check nor a previously ready recheck adds a new failure note; an existing Codex failure
+note stays visible while Retry rechecks it. The Claude policy field uses the same "Claude readiness:
+<label>." line. Adapter model listings do not establish account access, and failed catalog fetches
+do not prove removal. `MODEL_DISABLED` and `MODEL_NOT_IN_CATALOG` are catalog facts independent of
+auth, quota or transport failures. Omitted `authenticated` means login could not be established.
+
+Transport detail says "Claude reported a connection or provider service error." (or Codex),
+followed by "Check the network connection and the provider's service status, then retry preflight."
+It covers provider HTTP 500 responses as well as connection failures; it does not establish a
+connectivity diagnosis.
+
+Draft create, import, template draft and save (including 600 ms idle autosaves) never probe
+readiness (D-017). The editor fetches readiness independently from `/harness/preflight`. Validate,
+publish, preflight and run start probe once per referenced harness at request admission, sharing
+the result within that operation and probing distinct harnesses concurrently. Each new operation
+probes afresh; a later Claude turn-launch inspection is a separate check. These failures preserve
+authored model/effort values.
+Switching an inference node to Claude resets its policy to `read-only`/`never`; full access remains
+explicit. Other authored harness options remain, with unsupported settings reported for correction.
+Models retain exact identity and effort checks (ADR-0029).
+
+### Loop history summaries
+
+The Loops page reads each loop's `latestRun` and exact `runCount` from `GET /loops`,
+refreshed every five seconds. Last run links to the latest run by creation time, breaking
+ties by descending run ID, which follows creation order within one process. A zero
+count and null summary says "never run"; a positive count and null summary says
+"latest run unavailable" with "Check run history diagnostics." when the selected
+latest run's record (including its pin), initial thread or present cached thread
+snapshot, or an event in its history fails strict decoding. Event checks are cached
+by run identity and event count; manual database repairs require an API restart.
+An absent cached snapshot remains valid. It shows
+neither a partial status badge nor an older run in its place. `GET /runs/diagnostics`
+identifies the damaged row, including after restart when its stored status is valid
+but stale. Unrelated loops
+filling a global history page cannot hide older history. Deletion confirmation shows the exact
+server count, including above 500 runs. A failed listing shows its error.

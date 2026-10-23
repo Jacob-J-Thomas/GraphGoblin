@@ -18,7 +18,12 @@ async function setup(): Promise<GraphGoblinClient> {
 
 it('creates an ordinary editable draft with the generated client without automation setup', async () => {
   const client = await setup();
-  app!.harness.preflightResult = { ok: false, authenticated: false, problems: ['not configured'] };
+  app!.harness.preflightResult = {
+    state: 'unknown',
+    ok: false,
+    authenticated: false,
+    problems: ['not configured'],
+  };
   const first = await templates.createDraft(client, 'review');
   const second = await templates.createDraft(client, 'review', { name: 'My editable review' });
   expect(first.loop.id).not.toBe(second.loop.id);

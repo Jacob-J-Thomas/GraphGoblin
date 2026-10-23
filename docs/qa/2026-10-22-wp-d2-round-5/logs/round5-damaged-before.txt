@@ -1,0 +1,9 @@
+node : (node:47976) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+At line:17 char:1
++ node (Join-Path $qa 'migration-damaged-thread.mjs') *> round5-damaged ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:47976) Ex...nge at any time:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+(Use `node --trace-warnings ...` to show where the warning was created)
+{"exitCode":1,"signal":null,"timedOut":false,"served":false,"beforeMigrations":15,"afterMigrations":15,"injectedReturnDefaults":["corrupt"],"log":"LibsqlBatchError: SQLITE_ERROR: SQLITE_ERROR: malformed JSON\n    at Sqlite3Client.migrate (file:///%WORKTREE%/node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:307:31) {\n  code: 'SQLITE_ERROR',\n  extendedCode: 'SQLITE_ERROR',\n  rawCode: 1,\n  statementIndex: 1,\n  [cause]: SqliteError: malformed JSON\n      at convertError (%WORKTREE%\\node_modules\\.pnpm\\libsql@0.5.29\\node_modules\\libsql\\index.js:59:12)\n      at Statement.run (%WORKTREE%\\node_modules\\.pnpm\\libsql@0.5.29\\node_modules\\libsql\\index.js:335:13)\n      at executeStmt (file:///%WORKTREE%/node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:549:34)\n      at Sqlite3Client.migrate (file:///%WORKTREE%/node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:300:37) {\n    code: 'SQLITE_ERROR',\n    rawCode: 1\n  }\n}\n"}

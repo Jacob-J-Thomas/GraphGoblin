@@ -23,7 +23,12 @@ describe('editable template starting points', () => {
     'creates exactly one ordinary %s draft without credentials, readiness or repository settings',
     async (kind) => {
       app = await createTestApp({ env: { GG_DEFAULTS: '{"byHarness":{}}' } });
-      app.harness.preflightResult = { ok: false, authenticated: false, problems: ['unavailable'] };
+      app.harness.preflightResult = {
+        state: 'unknown',
+        ok: false,
+        authenticated: false,
+        problems: ['unavailable'],
+      };
       const preflight = vi.spyOn(app.harness, 'preflight');
       const created = await createDraft(kind);
       expect(
@@ -111,16 +116,13 @@ describe('editable template starting points', () => {
       if (state === 'disabled')
         await app.container.repos.catalog.setEnabled('codex', 'gpt-6-luna', false);
       const created = await createDraft('starter');
-      expect(created.issues).toContainEqual(
-        expect.objectContaining({
-          code:
-            state === 'missing'
-              ? 'MODEL_NOT_IN_CATALOG'
-              : state === 'disabled'
-                ? 'MODEL_DISABLED'
-                : 'HARNESS_UNAVAILABLE',
-        }),
-      );
+      if (state === 'no-harness') expect(created.issues).toEqual([]);
+      else
+        expect(created.issues).toContainEqual(
+          expect.objectContaining({
+            code: state === 'missing' ? 'MODEL_NOT_IN_CATALOG' : 'MODEL_DISABLED',
+          }),
+        );
       expect(
         (await app.app.inject({ method: 'POST', url: '/loops/' + created.loop.id + '/publish' }))
           .statusCode,

@@ -1,0 +1,122 @@
+[
+  {
+    "name": "explicit auth status with incidental network advice",
+    "stdout": "",
+    "stderr": "API Error: 401 Authentication failed; check network settings.",
+    "exit": 1,
+    "expected": "auth",
+    "http": 200,
+    "actual": [
+      {
+        "harness": "codex",
+        "state": "auth",
+        "authenticated": false,
+        "problems": ["Codex sign-in is missing or invalid. Run codex login, then retry preflight."]
+      },
+      {
+        "harness": "claude",
+        "state": "auth",
+        "authenticated": false,
+        "problems": [
+          "Claude sign-in is missing or invalid. Run claude auth login, then retry preflight."
+        ]
+      }
+    ]
+  },
+  {
+    "name": "explicit quota status with incidental network text",
+    "stdout": "",
+    "stderr": "HTTP 429 Too Many Requests; network request failed.",
+    "exit": 1,
+    "expected": "quota",
+    "http": 200,
+    "actual": [
+      {
+        "harness": "codex",
+        "state": "quota",
+        "problems": [
+          "Codex account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+        ]
+      },
+      {
+        "harness": "claude",
+        "state": "quota",
+        "problems": [
+          "Claude account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+        ]
+      }
+    ]
+  },
+  {
+    "name": "quota on stdout with unrelated stderr warning",
+    "stdout": "API Error: 429 Too Many Requests",
+    "stderr": "Warning: setting is deprecated",
+    "exit": 1,
+    "expected": "quota",
+    "http": 200,
+    "actual": [
+      {
+        "harness": "codex",
+        "state": "quota",
+        "problems": [
+          "Codex account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+        ]
+      },
+      {
+        "harness": "claude",
+        "state": "quota",
+        "problems": [
+          "Claude account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+        ]
+      }
+    ]
+  },
+  {
+    "name": "empty successful login status",
+    "stdout": "",
+    "stderr": "",
+    "exit": 0,
+    "expected": "unknown",
+    "http": 200,
+    "actual": [
+      {
+        "harness": "codex",
+        "state": "unknown",
+        "problems": [
+          "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight."
+        ]
+      },
+      {
+        "harness": "claude",
+        "state": "unknown",
+        "problems": [
+          "Claude readiness could not be confirmed. Check that the Claude CLI starts and responds, then retry preflight."
+        ]
+      }
+    ]
+  },
+  {
+    "name": "unrecognized successful login status",
+    "stdout": "{}",
+    "stderr": "",
+    "exit": 0,
+    "expected": "unknown",
+    "http": 200,
+    "actual": [
+      {
+        "harness": "codex",
+        "state": "unknown",
+        "problems": [
+          "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight."
+        ]
+      },
+      {
+        "harness": "claude",
+        "state": "unknown",
+        "problems": [
+          "Claude readiness could not be confirmed. Check that the Claude CLI starts and responds, then retry preflight."
+        ]
+      }
+    ]
+  }
+]
