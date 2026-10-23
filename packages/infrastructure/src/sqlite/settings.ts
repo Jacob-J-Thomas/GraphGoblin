@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from 'node:crypto';
-import { claudeModelCapabilities, CLAUDE_MODEL } from '../claude/models.js';
+import { claudeCatalogModels } from '../claude/models.js';
 import { JsonValueSchema } from '@graphgoblin/contracts';
 import type { Effort, JsonValue, ModelCatalogEntry } from '@graphgoblin/contracts';
 import type { ClockPort, IdPort } from '@graphgoblin/engine';
@@ -229,11 +229,11 @@ export const DEFAULT_MODEL_CATALOG: ModelCatalogEntry[] = [
     defaultEffort: 'medium',
     enabled: true,
   },
-  ...claudeModelCapabilities().map((entry) => ({
+  ...claudeCatalogModels().map((entry) => ({
     harness: 'claude',
     source: 'harness' as const,
     model: entry.model,
-    displayName: entry.model === CLAUDE_MODEL ? 'Claude Opus 5.5' : 'Claude Fable 5.1',
+    displayName: entry.displayName,
     efforts: entry.efforts,
     defaultEffort: 'high' as const,
     enabled: true,
