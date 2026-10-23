@@ -9,6 +9,8 @@ export interface PendingTurn {
   submission: PromptProvenance['submission'];
   sessionId?: string;
   accepted: boolean;
+  acceptanceObserved?: boolean;
+  intentUnconfirmed?: boolean;
 }
 
 /** The first start since this node last finished identifies one visit across retries/restarts. */
@@ -19,6 +21,29 @@ export function visitTurn(
   let visitId = '';
   let pending: PendingTurn | undefined;
   for (const event of events) {
+    if (event.type === 'run.failed' && event.failure.nodeId === nodeId) {
+      const evidence = event.failure.inference;
+      if (evidence?.visitId === visitId) {
+        // Terminal provenance survives a failed classification append. An uninvoked task
+        // also carries its exact intent if a read could not resolve an ambiguous append.
+        if (evidence.retry && evidence.submission === 'definitely-not-submitted')
+          pending = {
+            turn: {
+              visitId,
+              turnId: evidence.turnId,
+              promptKind: evidence.promptKind,
+              ...evidence.retry,
+            },
+            submission: evidence.submission,
+            accepted: false,
+            ...(evidence.sessionId ? { sessionId: evidence.sessionId } : {}),
+          };
+        else if (pending?.turn.turnId === evidence.turnId) {
+          pending.submission = evidence.submission;
+          if (evidence.sessionId) pending.sessionId = evidence.sessionId;
+        }
+      }
+    }
     if (!('nodeId' in event) || event.nodeId !== nodeId) continue;
     if (event.type === 'node.finished') {
       visitId = '';
@@ -57,6 +82,17 @@ export function provenance(pending: PendingTurn): PromptProvenance {
     promptKind: pending.turn.promptKind,
     submission: pending.submission,
     ...(pending.sessionId ? { sessionId: pending.sessionId } : {}),
+    ...(pending.intentUnconfirmed
+      ? {
+          retry: {
+            harness: pending.turn.harness,
+            prompt: pending.turn.prompt,
+            ...(pending.turn.resumeSessionId
+              ? { resumeSessionId: pending.turn.resumeSessionId }
+              : {}),
+          },
+        }
+      : {}),
   };
 }
 
@@ -66,9 +102,13 @@ export async function submission(
   state: TurnSubmission,
   marker?: Extract<HarnessEvent, { type: 'submitted' }>['marker'],
 ): Promise<void> {
+  // Observed acceptance prevents a safe resend even if its append fails. Only durable
+  // acceptance (accepted) authorizes continuing an inherited authored conversation.
+  pending.acceptanceObserved ||= marker !== undefined;
   // Once accepted, a later refusal cannot make resending this turn safe.
   pending.submission =
-    state === 'submitted' || (pending.accepted && state === 'definitely-not-submitted')
+    state === 'submitted' ||
+    ((pending.accepted || pending.acceptanceObserved) && state === 'definitely-not-submitted')
       ? 'delivery-uncertain'
       : state;
   await ctx.services.record({

@@ -1,0 +1,130 @@
+
+ RUN  v5.0.3 <USERPROFILE>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f4-prompt-provenance/packages/engine
+
+ ❯ src/finalization.test.ts (44 tests | 1 failed | 43 skipped) 1156ms
+   × terminal append survives crash before status: inference-timeout 1154ms
+ ❯ src/handlers/claude.test.ts (38 tests | 2 failed | 36 skipped) 95ms
+   ❯ inference consumption keeps engine failures and cleans up both harness families (16)
+     × preserves typed codex completion failures when secondary cleanup fails 68ms
+     × preserves typed claude completion failures when secondary cleanup fails 25ms
+ ❯ src/handlers/inference.test.ts (12 tests | 1 failed | 11 skipped) 1086ms
+   ❯ inference node (12)
+     × times out a slow session with INFERENCE_TIMEOUT 1084ms
+pnpm.cmd : 
+At line:2 char:50
++ ... $env:PATH"; pnpm.cmd --filter @graphgoblin/engine exec vitest run src ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/finalization.test.ts > terminal append survives crash before status: inference-timeout
+AssertionError: expected 'cancelled' to be 'failed' // Object.is equality
+
+Expected: "failed"
+Received: "cancelled"
+
+ ❯ src/finalization.test.ts:307:26
+    305|           ? 'exhausted'
+    306|           : 'failed';
+    307|     expect(final.status).toBe(expected);
+       |                          ^
+    308|     if (code) expect(final.failure?.code).toBe(code);
+    309|     if (source === 'invalid-patch') {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/handlers/claude.test.ts > inference consumption keeps engine failures and cleans up both harness families > 
+preserves typed codex completion failures when secondary cleanup fails
+AssertionError: expected { …(6) } to match object { code: 'SECRET_MISSING', …(3) }
+(8 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "SECRET_MISSING",
++   "code": "HARNESS_DELIVERY_UNCERTAIN",
+    "details": {
+-     "source": "fixture",
++     "adapterCode": "HARNESS_TURN_FAILED",
+    },
+-   "message": "Synthetic typed completion failure",
+-   "resumable": false,
++   "message": "harness turn failed: PRIVATE_CLEANUP_BODY",
++   "resumable": true,
+  }
+
+ ❯ src/handlers/claude.test.ts:361:58
+    359|         singleNodeLoop('secondary-cleanup-' + family, infer('a', famil…
+    360|       );
+    361|       expect((await engine.runToIdle(v.loopId)).failure).toMatchObject…
+       |                                                          ^
+    362|         code: 'SECRET_MISSING',
+    363|         message: 'Synthetic typed completion failure',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/handlers/claude.test.ts > inference consumption keeps engine failures and cleans up both harness families > 
+preserves typed claude completion failures when secondary cleanup fails
+AssertionError: expected { …(6) } to match object { code: 'SECRET_MISSING', …(3) }
+(8 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "SECRET_MISSING",
++   "code": "HARNESS_DELIVERY_UNCERTAIN",
+    "details": {
+-     "source": "fixture",
++     "adapterCode": "HARNESS_TURN_FAILED",
+    },
+-   "message": "Synthetic typed completion failure",
++   "message": "harness turn failed: PRIVATE_CLEANUP_BODY",
+    "resumable": false,
+  }
+
+ ❯ src/handlers/claude.test.ts:361:58
+    359|         singleNodeLoop('secondary-cleanup-' + family, infer('a', famil…
+    360|       );
+    361|       expect((await engine.runToIdle(v.loopId)).failure).toMatchObject…
+       |                                                          ^
+    362|         code: 'SECRET_MISSING',
+    363|         message: 'Synthetic typed completion failure',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/handlers/inference.test.ts > inference node > times out a slow session with INFERENCE_TIMEOUT
+AssertionError: expected 'cancelled' to be 'failed' // Object.is equality
+
+Expected: "failed"
+Received: "cancelled"
+
+ ❯ src/handlers/inference.test.ts:363:24
+    361|     const started = Date.now();
+    362|     const run = await engine.runToIdle(version.loopId);
+    363|     expect(run.status).toBe('failed');
+       |                        ^
+    364|     expect(run.failure?.code).toBe('INFERENCE_TIMEOUT');
+    365|     expect(Date.now() - started).toBeLessThan(1900);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  4 failed | 90 skipped (94)
+   Start at  20:00:04
+   Duration  8.23s (import 40%, tests 31%, transform 28%)
+
+  Transform  transforming modules took 2.10s · 28% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ \Users\<user>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f4-
+  │ prompt-provenance\packages\engine
+

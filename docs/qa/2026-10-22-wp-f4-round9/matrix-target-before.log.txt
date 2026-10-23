@@ -1,0 +1,55 @@
+
+ RUN  v5.0.3 <USERPROFILE>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f4-prompt-provenance/packages/engine
+
+ ❯ src/handlers/inference-evidence-matrix.test.ts (864 tests | 1 failed | 863 skipped) 122ms
+   × folds codex HARNESS_TERMINATION_UNCONFIRMED at launch retry=false storage=before 117ms
+pnpm.cmd : 
+At line:2 char:50
++ ... $env:PATH"; pnpm.cmd --filter @graphgoblin/engine exec vitest run src ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/handlers/inference-evidence-matrix.test.ts > folds codex HARNESS_TERMINATION_UNCONFIRMED at launch 
+retry=false storage=before
+AssertionError: expected { code: 'INTERNAL_ERROR', …(4) } to match object { …(3) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "HARNESS_TERMINATION_UNCONFIRMED",
+-   "inference": {
+-     "promptKind": "repair",
+-     "submission": "delivery-uncertain",
+-   },
+-   "resumable": false,
++   "code": "INTERNAL_ERROR",
++   "resumable": true,
+  }
+
+ ❯ src/handlers/inference-evidence-matrix.test.ts:38:27
+     36|     expect(run.status).toBe(expected.cancelled ? 'cancelled' : 'failed…
+     37|     if (!expected.cancelled) {
+     38|       expect(run.failure).toMatchObject({ code: expected.code, resumab…
+       |                           ^
+     39|       if (fired) expect(run.failure?.details).toMatchObject({ recordin…
+     40|       if (expected.resumable) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 863 skipped (864)
+   Start at  19:47:42
+   Duration  3.73s (import 52%, transform 44%, tests 4%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ \Users\<user>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f4-
+  │ prompt-provenance\packages\engine
+

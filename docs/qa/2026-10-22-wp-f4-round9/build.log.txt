@@ -1,0 +1,34 @@
+pnpm.cmd : $ turbo run build
+At line:8 char:524
++ ... " -Tail 10; pnpm.cmd build *> "$env:TEMP/gg-wp-f4-round9-build.log.tx ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ turbo run build:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running build in 12 packages
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/contracts:build: cache miss, executing ed32c9ca5eee9de2
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/domain:build: cache miss, executing da09b85524d781f6
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/engine:build: cache miss, executing 5e726228e13f0b31
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:build: src/handlers/inference.ts(447,76): error TS2339: Property 'error' does not exist on type 'never'.
+@graphgoblin/engine:build: [ELIFECYCLE] Command failed with exit code 1.
+@graphgoblin/engine#build:  ERROR  command 
+(<USERPROFILE>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f4-prompt-provenance\packages\engine) 
+C:\nvm4w\nodejs\pnpm.cmd run build exited (1)
+
+ Tasks:    2 successful, 3 total
+Cached:    0 cached, 3 total
+  Time:    3.085s 
+Failed:    @graphgoblin/engine#build
+
+ ERROR  run failed: command  exited (1)
+[ELIFECYCLE] Command failed with exit code 1.

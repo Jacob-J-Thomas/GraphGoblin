@@ -1,0 +1,128 @@
+[
+  {
+    "command": "pnpm.cmd typecheck",
+    "result": "PASS",
+    "log": "typecheck-all-tests.log.txt",
+    "count": "20/20 tasks"
+  },
+  {
+    "command": "pnpm.cmd lint",
+    "result": "PASS",
+    "log": "lint-all-tests.log.txt",
+    "count": "11/11 tasks, all final test files included"
+  },
+  {
+    "command": "pnpm.cmd format --ignore-path .prettierignore --ignore-path <TEMP>/gg-wp-f4-round9-format.ignore",
+    "result": "PASS",
+    "log": "format-complete.log.txt",
+    "qualification": "Protected historical QA is excluded; only round-9 evidence is formatted separately."
+  },
+  {
+    "command": "pnpm.cmd check:docs",
+    "result": "PASS",
+    "log": "check-docs-complete.log.txt"
+  },
+  {
+    "command": "pnpm.cmd check:layers",
+    "result": "PASS",
+    "log": "check-layers-complete.log.txt"
+  },
+  {
+    "command": "pnpm.cmd check:deps",
+    "result": "PASS",
+    "log": "check-deps-complete.log.txt",
+    "qualification": "One pre-existing drizzle.config.ts no-orphans warning, zero errors."
+  },
+  {
+    "command": "pnpm.cmd --filter @graphgoblin/engine test:coverage --maxWorkers=2",
+    "result": "PASS",
+    "log": "engine-coverage-complete.log.txt",
+    "passed": 1539,
+    "lines": 98.11,
+    "branches": 92.81
+  },
+  {
+    "command": "pnpm.cmd --filter @graphgoblin/adapter-codex test:coverage --maxWorkers=1",
+    "result": "PASS",
+    "log": "codex-coverage-complete.log.txt",
+    "passed": 495,
+    "skipped": 5,
+    "lines": 98.53,
+    "branches": 94.35
+  },
+  {
+    "command": "pnpm.cmd --filter @graphgoblin/contracts test:coverage --maxWorkers=1",
+    "result": "PASS",
+    "log": "contracts-coverage.log.txt",
+    "passed": 258,
+    "lines": 99.73,
+    "branches": 94.92
+  },
+  {
+    "command": "pnpm.cmd --filter @graphgoblin/api test:coverage --maxWorkers=1",
+    "result": "PASS",
+    "log": "api-coverage-complete.log.txt",
+    "passed": 1276,
+    "skipped": 6,
+    "lines": 98.04,
+    "branches": 93.25,
+    "durationSeconds": 639.49
+  },
+  {
+    "command": "pnpm.cmd build",
+    "result": "PASS",
+    "log": "build-complete.log.txt",
+    "count": "11/11 tasks"
+  },
+  {
+    "command": "pnpm.cmd test:prompt-evidence",
+    "result": "PASS",
+    "log": "drivers-complete.log.txt",
+    "passed": 326,
+    "qualification": "Six maintained audit derivatives; eight sustained-read outages are restore/recovery controls, explicitly qualified."
+  },
+  {
+    "command": "pnpm.cmd test:prompt-restart",
+    "result": "PASS",
+    "log": "native-restart.log.txt",
+    "passed": 5,
+    "durationSeconds": 86.4405576,
+    "qualification": "Exactly one execution, built native API kill/restart, fake providers."
+  },
+  {
+    "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/prompt-evidence-matrix.test.ts src/prompt-sdk-storage-matrix.test.ts --maxWorkers=1",
+    "result": "PASS",
+    "passed": 508,
+    "log": "api-supplemental.log.txt"
+  },
+  {
+    "command": "pnpm.cmd --filter @graphgoblin/engine exec vitest run src/handlers/inference-evidence-matrix.test.ts --maxWorkers=1",
+    "result": "PASS",
+    "passed": 872,
+    "log": "handler-fault-reached.log.txt"
+  },
+  {
+    "command": "pnpm.cmd exec prettier --write docs/qa/2026-10-22-wp-f4-round9",
+    "result": "PASS",
+    "log": "final-evidence-format.log.txt"
+  },
+  {
+    "command": "pnpm.cmd format:check",
+    "result": "PASS",
+    "log": "format-check-final.log.txt"
+  },
+  {
+    "command": "git diff --check",
+    "result": "PASS"
+  },
+  {
+    "command": "allocated-port probe (5660-5669 only)",
+    "result": "PASS",
+    "log": "ports.json"
+  },
+  {
+    "command": "pnpm.cmd exec prettier --check docs/qa/2026-10-22-wp-f4-round9",
+    "result": "PASS",
+    "log": "evidence-check.log.txt"
+  }
+]

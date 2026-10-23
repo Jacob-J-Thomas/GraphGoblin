@@ -265,12 +265,35 @@ submission mapping. A synchronous missing-session refusal is durably `session-mi
 `HARNESS_SESSION_MISSING`, regardless of retryability; Resume returns 409 without another
 harness call. An explicit delivery-uncertain transport failure or unconfirmed termination is
 never downgraded to safe non-submission because no handle was returned. Pinned policy,
-configuration and argument refusals remain non-resumable. Later missing-session evidence
-overrides an earlier streamed refusal; unconfirmed termination overrides both missing-session
-evidence and cancellation, including during cleanup. Every resulting classification change
-is recorded durably. Repair intent and its identity are established before its fallible append,
-so a commit-then-throw cannot restore the completed invocation; a recoverable storage fault
-retains the exact unsubmitted repair task. These authored prompts are part of private run
+configuration and argument refusals remain non-resumable. Every provider boundary uses one pure evidence fold, shared by the engine and Codex adapter:
+
+| Rank (highest first) | Evidence                                                                         |
+| -------------------- | -------------------------------------------------------------------------------- |
+| 1                    | Unconfirmed termination                                                          |
+| 2                    | Missing session (typed cause or explicit session-missing metadata)               |
+| 3                    | Pinned argument, configuration or policy refusal                                 |
+| 4                    | Valid explicit submission metadata                                               |
+| 5                    | Ordinary typed authentication, quota, transport, timeout or installation failure |
+| 6                    | Generic final wrappers                                                           |
+
+Higher-ranked evidence wins; within a rank the later observation wins. This applies to
+launch exceptions, streamed errors, rejected promises/results, iterator throws, Codex top-level
+errors and `turn.failed`, cleanup and cancellation. Unconfirmed termination overrides
+cancellation. A successful Codex turn can still tolerate nonfatal top-level diagnostics.
+Acceptance cannot be downgraded to safe non-submission by later metadata.
+
+Classification is decided independently of persistence. A failed classification/status write
+adds `failure.details.recording` diagnostics without replacing the primary cause, submission,
+provenance or Resume eligibility. The terminal failure also records the selected submission,
+so recovery uses it if an earlier classification append was lost. Turn intents (initial tasks, exact retries and repairs) and their identities
+are established before their fallible appends. Reconciliation reads are guarded: if an ambiguous
+append cannot be reconciled, `failure.inference.retry` carries the exact uninvoked prompt,
+harness and selected resume ID. Recovery reconciles that same turn identity when storage is
+available, rather than sending a generic continuation or cancelling the completed invocation.
+This requires storage to recover sufficiently to record the terminal failure; a sustained outage
+that also prevents terminal persistence cannot establish a durable outcome.
+
+These authored prompts are part of private run
 history, with the same access
 and deletion boundary as its context thread. The entire prompt is stored inline with no schema
 size limit or automatic artifact offloading; large prompts therefore enlarge the event log.

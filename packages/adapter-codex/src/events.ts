@@ -4,8 +4,19 @@ import {
   type ProgressItemStatus,
   type Usage,
 } from '@graphgoblin/contracts';
-import type { HarnessEvent, HarnessItem, HarnessItemType } from '@graphgoblin/engine';
-import { describeError } from '@graphgoblin/engine';
+import type {
+  HarnessFailureEvidence,
+  HarnessEvent,
+  HarnessItem,
+  HarnessItemType,
+} from '@graphgoblin/engine';
+import {
+  describeError,
+  isHarnessFailureCode,
+  harnessFailureEvidence,
+  harnessFailureRank,
+  mergeHarnessFailure,
+} from '@graphgoblin/engine';
 import type { ThreadEvent, ThreadItem } from '@openai/codex-sdk';
 
 /**
@@ -142,7 +153,7 @@ export function mapUsage(usage: Partial<Record<string, unknown>> | null | undefi
   };
 }
 
-export interface ClassifiedError {
+export interface ClassifiedError extends HarnessFailureEvidence {
   /** One of the `HARNESS_*` codes below; the engine's `classifyHarnessError` keys off them. */
   code: string;
   message: string;
@@ -185,22 +196,16 @@ function unwrap(raw: string): { status?: number; type?: string; message: string 
   return { message: raw };
 }
 
-const TYPED_FAILURES = new Set([
-  'HARNESS_SESSION_MISSING',
-  'HARNESS_TERMINATION_UNCONFIRMED',
-  'HARNESS_NOT_INSTALLED',
-  'HARNESS_NOT_AUTHENTICATED',
-  'HARNESS_ARGUMENTS_REJECTED',
-  'HARNESS_INVALID_CONFIGURATION',
-  'HARNESS_UNSUPPORTED_POLICY',
-  'HARNESS_QUOTA_EXHAUSTED',
-  'HARNESS_TIMEOUT',
-  'HARNESS_TRANSPORT_FAILED',
-  'HARNESS_TURN_FAILED',
-]);
-
 /** Preserve recognized typed SDK failures; classify untyped failures from native messages. */
 export function classifyCodexError(error: unknown): ClassifiedError {
+  const metadata = harnessFailureEvidence(error);
+  return {
+    ...classifyNativeError(error),
+    ...(metadata.submission ? { submission: metadata.submission } : {}),
+  };
+}
+
+function classifyNativeError(error: unknown): ClassifiedError {
   // SDK factories can reject with typed metadata at either async boundary. Do not reduce
   // that evidence to a message; unknown codes still use native-message classification.
   if (
@@ -208,7 +213,7 @@ export function classifyCodexError(error: unknown): ClassifiedError {
     error !== null &&
     'code' in error &&
     typeof error.code === 'string' &&
-    TYPED_FAILURES.has(error.code)
+    isHarnessFailureCode(error.code)
   ) {
     return {
       code: error.code,
@@ -284,8 +289,8 @@ export interface TurnOutcome {
  * - Items are emitted on `item.completed` only; `item.started` and `item.updated` are progress
  *   noise for a node-level view and would duplicate entries.
  * - An `error` item (for example a configuration deprecation warning) is a normal item, not a
- *   failure. `turn.failed` is the failure signal. A top-level `error` event is remembered and only
- *   counts as the failure if the turn never completes (Codex also emits it before `turn.failed`).
+ *   failure. `turn.failed` is the failure signal. Top-level errors, `turn.failed` and thrown failures share the evidence precedence;
+ *   successful turns tolerate nonfatal top-level diagnostics.
  */
 export class TurnAccumulator {
   private submitted = false;
@@ -293,7 +298,7 @@ export class TurnAccumulator {
   private usage: Usage = ZERO_USAGE;
   private readonly items: HarnessItem[] = [];
   private failure: ClassifiedError | undefined;
-  private streamError: unknown;
+  private fatal = false;
   private completed = false;
   sessionId: string | undefined;
 
@@ -323,7 +328,9 @@ export class TurnAccumulator {
         this.fail(ev.error);
         return [];
       case 'error':
-        this.streamError = ev;
+        // Native top-level errors and turn.failed use the same evidence fold. A completed
+        // turn may tolerate diagnostics, but terminal/pinned refusals are not diagnostics.
+        this.add(classifyCodexError(ev), true);
         return [];
       default:
         return [];
@@ -332,24 +339,22 @@ export class TurnAccumulator {
 
   /** Record a failure raised outside the event stream (a thrown SDK or process error). */
   fail(error: unknown): void {
-    const failure = classifyCodexError(error);
-    // A later missing conversation or unconfirmed termination outranks an earlier turn error.
-    if (
-      !this.failure ||
-      failure.code === 'HARNESS_TERMINATION_UNCONFIRMED' ||
-      (failure.code === 'HARNESS_SESSION_MISSING' &&
-        this.failure.code !== 'HARNESS_TERMINATION_UNCONFIRMED')
-    )
-      this.failure = failure;
+    this.add(classifyCodexError(error), false);
+  }
+
+  private add(next: ClassifiedError, diagnostic: boolean): void {
+    this.failure = mergeHarnessFailure(this.failure, next);
+    this.fatal ||= !diagnostic || harnessFailureRank(next) >= 4;
   }
 
   finish(): TurnOutcome {
-    let failure = this.failure;
-    if (!failure && !this.completed) {
-      failure = classifyCodexError(
-        this.streamError ?? 'the Codex event stream ended before the turn completed',
-      );
-    }
+    const failure =
+      this.completed && !this.fatal
+        ? undefined
+        : (this.failure ??
+          (!this.completed
+            ? classifyCodexError('the Codex event stream ended before the turn completed')
+            : undefined));
     return {
       finalText: this.finalText,
       usage: this.usage,

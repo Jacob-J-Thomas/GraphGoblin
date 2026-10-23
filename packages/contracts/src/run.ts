@@ -2,6 +2,7 @@ import { z } from 'zod';
 import {
   JsonSchemaSchema,
   JsonValueSchema,
+  HarnessIdSchema,
   SlugSchema,
   TimestampSchema,
   UlidSchema,
@@ -93,6 +94,14 @@ export const PromptProvenanceSchema = z.strictObject({
   submission: PromptSubmissionSchema,
   promptKind: z.enum(['authored', 'repair', 'continuation']),
   sessionId: z.string().min(1).max(256).optional(),
+  /** Exact uninvoked intent when its separate log append could not be reconciled. */
+  retry: z
+    .strictObject({
+      harness: HarnessIdSchema,
+      prompt: z.string(),
+      resumeSessionId: z.string().min(1).max(256).optional(),
+    })
+    .optional(),
 });
 export type PromptProvenance = z.infer<typeof PromptProvenanceSchema>;
 

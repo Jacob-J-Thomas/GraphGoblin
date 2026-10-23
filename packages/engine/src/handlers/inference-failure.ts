@@ -1,106 +1,144 @@
 import type { HarnessId, PromptSubmission } from '@graphgoblin/contracts';
 import { describeError, RunFailureError } from '../errors.js';
-import type { HarnessEvent } from '../ports.js';
 
-type ReportedFailure = Extract<HarnessEvent, { type: 'error' }>;
-
-function authority(code: unknown, state: unknown): number {
-  if (typeof code === 'string' && code.toLowerCase() === 'harness_termination_unconfirmed')
-    return 2;
-  return (typeof code === 'string' && code.toLowerCase() === 'harness_session_missing') ||
-    state === 'session-missing'
-    ? 1
-    : 0;
+/** Raw evidence: defaults used to classify a turn must never masquerade as explicit metadata. */
+export interface HarnessFailureEvidence {
+  code: string;
+  message: string;
+  retriable: boolean;
+  submission?: PromptSubmission;
 }
 
-/** One mapping for launch exceptions, streamed errors and rejected results. */
+const PINNED = new Set([
+  'HARNESS_ARGUMENTS_REJECTED',
+  'HARNESS_INVALID_CONFIGURATION',
+  'HARNESS_UNSUPPORTED_POLICY',
+]);
+const ORDINARY = new Set([
+  'HARNESS_NOT_AUTHENTICATED',
+  'HARNESS_QUOTA_EXHAUSTED',
+  'HARNESS_TRANSPORT_FAILED',
+  'HARNESS_TIMEOUT',
+  'HARNESS_NOT_INSTALLED',
+  'INFERENCE_TIMEOUT',
+  'UNAUTHORIZED',
+  '401',
+  'NOT_AUTHENTICATED',
+  'USAGE_LIMIT_REACHED',
+  'INSUFFICIENT_QUOTA',
+  'RATE_LIMIT_EXCEEDED',
+]);
+
+/** Recognized adapter metadata is preserved before message-based classification. */
+export function isHarnessFailureCode(code: string): boolean {
+  const value = code.toUpperCase();
+  return (
+    PINNED.has(value) ||
+    ORDINARY.has(value) ||
+    ['HARNESS_SESSION_MISSING', 'HARNESS_TERMINATION_UNCONFIRMED', 'HARNESS_TURN_FAILED'].includes(
+      value,
+    )
+  );
+}
+
+/** Single precedence table for engine and adapter evidence, independent of arrival boundary. */
+export function harnessFailureRank(evidence: HarnessFailureEvidence): number {
+  const code = evidence.code.toUpperCase();
+  if (code === 'HARNESS_TERMINATION_UNCONFIRMED') return 6;
+  if (code === 'HARNESS_SESSION_MISSING' || evidence.submission === 'session-missing') return 5;
+  if (PINNED.has(code)) return 4;
+  if (evidence.submission !== undefined) return 3;
+  return ORDINARY.has(code) ? 2 : 1;
+}
+
+export function harnessFailureEvidence(error: unknown): HarnessFailureEvidence {
+  const info = typeof error === 'object' && error !== null ? error : {};
+  const state = 'submission' in info ? info.submission : undefined;
+  return {
+    code: 'code' in info && typeof info.code === 'string' ? info.code : 'HARNESS_TURN_FAILED',
+    message: describeError(error),
+    retriable: 'retriable' in info && info.retriable === true,
+    ...(state === 'definitely-not-submitted' ||
+    state === 'delivery-uncertain' ||
+    state === 'session-missing'
+      ? { submission: state }
+      : {}),
+  };
+}
+
+/** Higher evidence wins; within a class the later observation wins. No I/O or derived defaults. */
+export function mergeHarnessFailure(
+  previous: HarnessFailureEvidence | undefined,
+  next: HarnessFailureEvidence,
+): HarnessFailureEvidence {
+  // Missing conversations and unconfirmed termination are safety evidence, not generic wrappers.
+  // An earlier ordinary error must never hide these or a later pinned-definition refusal.
+  return !previous || harnessFailureRank(next) >= harnessFailureRank(previous) ? next : previous;
+}
+
+export function harnessFailureSubmission(
+  evidence: HarnessFailureEvidence,
+  fallback: PromptSubmission,
+  accepted = false,
+): PromptSubmission {
+  const code = evidence.code.toUpperCase();
+  const state =
+    code === 'HARNESS_TERMINATION_UNCONFIRMED'
+      ? 'delivery-uncertain'
+      : code === 'HARNESS_SESSION_MISSING'
+        ? 'session-missing'
+        : (evidence.submission ?? fallback);
+  return accepted && state === 'definitely-not-submitted' ? 'delivery-uncertain' : state;
+}
+
+/** Derive the engine outcome only after all evidence, including cleanup, has been folded. */
 export function mapHarnessFailure(
   error: unknown,
-  lastError: ReportedFailure | undefined,
+  previous: HarnessFailureEvidence | undefined,
   nodeId: string,
   harness: HarnessId,
   fallback: PromptSubmission = 'delivery-uncertain',
-): { failure: RunFailureError; submission: PromptSubmission; evidence: ReportedFailure } {
-  const info = typeof error === 'object' && error !== null ? error : {};
-  const currentCode = 'code' in info && typeof info.code === 'string' ? info.code : undefined;
-  const currentSubmission = 'submission' in info ? info.submission : undefined;
-  // A generic final wrapper must not discard a useful streamed cause. Missing-session and
-  // termination evidence is authoritative: later evidence wins ties, and termination wins all.
-  const currentWins =
-    (('type' in info && info.type === 'error') || authority(currentCode, currentSubmission) > 0) &&
-    authority(currentCode, currentSubmission) >= authority(lastError?.code, lastError?.submission);
-  const previous = currentWins ? undefined : lastError;
-  const reportedCode = previous?.code ?? currentCode;
-  const reportedRetriable = previous?.retriable ?? ('retriable' in info && info.retriable === true);
-  const code = (reportedCode ?? '').toLowerCase();
-  const message = previous?.message ?? describeError(error);
+) {
+  const evidence = mergeHarnessFailure(previous, harnessFailureEvidence(error));
+  const code = evidence.code.toUpperCase();
+  const message = evidence.message;
   let failure: RunFailureError;
-  if (code === 'harness_termination_unconfirmed' || code === 'harness_session_missing') {
+  if (
+    code === 'HARNESS_TERMINATION_UNCONFIRMED' ||
+    code === 'HARNESS_SESSION_MISSING' ||
+    evidence.submission === 'session-missing'
+  ) {
     failure = new RunFailureError(
-      code === 'harness_session_missing'
-        ? 'HARNESS_SESSION_MISSING'
-        : 'HARNESS_TERMINATION_UNCONFIRMED',
+      code === 'HARNESS_TERMINATION_UNCONFIRMED' ? code : 'HARNESS_SESSION_MISSING',
       message,
-      { nodeId, resumable: false, details: { adapterCode: reportedCode } },
+      { nodeId, resumable: false, details: { adapterCode: evidence.code } },
     );
   } else if (
     [
-      'harness_quota_exhausted',
-      'usage_limit_reached',
-      'insufficient_quota',
-      'rate_limit_exceeded',
+      'HARNESS_QUOTA_EXHAUSTED',
+      'USAGE_LIMIT_REACHED',
+      'INSUFFICIENT_QUOTA',
+      'RATE_LIMIT_EXCEEDED',
     ].includes(code)
   ) {
     failure = new RunFailureError('HARNESS_QUOTA_EXHAUSTED', message, { nodeId, resumable: true });
   } else if (
-    ['harness_not_authenticated', 'unauthorized', '401', 'not_authenticated'].includes(code)
+    ['HARNESS_NOT_AUTHENTICATED', 'UNAUTHORIZED', '401', 'NOT_AUTHENTICATED'].includes(code)
   ) {
     failure = new RunFailureError('HARNESS_NOT_AUTHENTICATED', message, {
       nodeId,
       resumable: true,
     });
-  } else if (code === 'harness_not_installed') {
-    failure = new RunFailureError('HARNESS_NOT_INSTALLED', message, { nodeId, resumable: true });
-  } else if (code === 'harness_timeout') {
+  } else if (code === 'HARNESS_NOT_INSTALLED') {
+    failure = new RunFailureError(code, message, { nodeId, resumable: true });
+  } else if (code === 'HARNESS_TIMEOUT' || code === 'INFERENCE_TIMEOUT') {
     failure = new RunFailureError('INFERENCE_TIMEOUT', message, { nodeId, resumable: true });
   } else {
     failure = new RunFailureError('HARNESS_TURN_FAILED', 'harness turn failed: ' + message, {
       nodeId,
-      // Pinned refusals cannot be repaired within this run. Codex's generic exit/stream
-      // failures remain resumable even when its SDK says not retriable; Claude requires
-      // positive retry evidence. Submission/session safety is checked separately.
-      resumable:
-        ![
-          'harness_unsupported_policy',
-          'harness_invalid_configuration',
-          'harness_arguments_rejected',
-        ].includes(code) &&
-        (harness === 'codex' || reportedRetriable),
-      details: { adapterCode: reportedCode ?? null },
+      resumable: !PINNED.has(code) && (harness === 'codex' || evidence.retriable),
+      details: { adapterCode: evidence.code },
     });
   }
-  const reportedSubmission = previous?.submission ?? currentSubmission;
-  // A missing handle alone must not erase a missing conversation or uncertain transport.
-  // Unconfirmed termination can never establish that nothing reached the provider.
-  const submission =
-    failure.code === 'HARNESS_SESSION_MISSING'
-      ? 'session-missing'
-      : failure.code === 'HARNESS_TERMINATION_UNCONFIRMED'
-        ? 'delivery-uncertain'
-        : reportedSubmission === 'definitely-not-submitted' ||
-            reportedSubmission === 'delivery-uncertain' ||
-            reportedSubmission === 'session-missing'
-          ? reportedSubmission
-          : fallback;
-  return {
-    failure,
-    submission,
-    evidence: {
-      type: 'error',
-      code: reportedCode ?? '',
-      message,
-      retriable: reportedRetriable,
-      submission,
-    },
-  };
+  return { failure, evidence, submission: harnessFailureSubmission(evidence, fallback) };
 }
