@@ -1,5 +1,7 @@
 # WP-G2 round 8: unreadable latest event history and evidence retention (#236)
 
+> Files above 1,000,000 bytes (1 in this round) are not kept in the repository; [NOT-KEPT.md](NOT-KEPT.md) records each with its size and SHA-256. Mentions of those names below, and in the JSON result files, refer to that record.
+
 ## 1. Branch and worktree
 
 Branch `codex-wp-g2-paging-summaries`, worktree `.claude/worktrees/codex-wp-g2-paging-summaries`.
@@ -167,7 +169,7 @@ summary file passed 10/10. The focused Loops component file passed 21/21.
 
 The [infrastructure raw reporter](round8-coverage-infrastructure-results.log.txt),
 [API raw reporter](round8-coverage-api-results.log.txt),
-[web raw reporter](round8-coverage-web-results.log.txt) and
+web raw reporter (`round8-coverage-web-results.log.txt`, not kept; see [NOT-KEPT.md](NOT-KEPT.md)) and
 [isolation summary](round8-infrastructure-triage-summary.log.txt) retain those
 distinctions. Their console logs and each isolated run's raw reporter are alongside
 them, mapped by [retention-manifest.json](retention-manifest.json).
