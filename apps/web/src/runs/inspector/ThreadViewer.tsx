@@ -1,5 +1,5 @@
 import type { ContextThread, LoopDefinition, RunEvent } from '@graphgoblin/contracts';
-import { useMemo, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Badge,
@@ -106,11 +106,34 @@ export function ThreadViewer({
   // stays shown: another event's thread starts bounded again (adjusted in the render that sees it).
   const [allMessagesState, setAllMessagesState] = useState(false);
   const [shownThread, setShownThread] = useState<unknown>(thread);
+  // The keyboard may be inside the message list when a live event replaces the thread and the
+  // window slides past the message that held it. Ownership is tracked by the section's focus
+  // events so the render that sees the new thread knows it before the DOM changes; the list stays
+  // focusable through that commit and the hand-off below puts the keyboard on the controls or the
+  // list itself, as `BoundedValue` does for a value.
+  const messagesRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLOListElement>(null);
+  const showAllRef = useRef<HTMLButtonElement>(null);
+  const [ownsFocus, setOwnsFocus] = useState(false);
+  const [holdsFocus, setHoldsFocus] = useState(false);
+  const [handoffs, setHandoffs] = useState(0);
   if (shownThread !== thread) {
     setShownThread(thread);
     setAllMessagesState(false);
+    if (ownsFocus) {
+      setHoldsFocus(true);
+      setHandoffs((n) => n + 1);
+    }
   }
   const allMessages = allMessagesState && shownThread === thread;
+  useLayoutEffect(() => {
+    if (handoffs === 0) return;
+    const section = messagesRef.current;
+    const list = listRef.current;
+    const inside = section !== null && section.contains(document.activeElement);
+    if (!inside) (showAllRef.current ?? list)?.focus();
+    setHoldsFocus(document.activeElement === list);
+  }, [handoffs]);
   if (!replayed.ok || thread === undefined) {
     return (
       <Alert title={`The thread cannot be reconstructed at event ${seq}`}>
@@ -131,7 +154,14 @@ export function ThreadViewer({
       ) : null}
       <Card title={`Thread at event ${seq}`}>
         <div className="grid gap-4">
-          <div className="grid gap-2">
+          <div
+            ref={messagesRef}
+            className="grid gap-2"
+            onFocus={() => setOwnsFocus(true)}
+            onBlur={(event) => {
+              if (!messagesRef.current?.contains(event.relatedTarget)) setOwnsFocus(false);
+            }}
+          >
             <h3 className="text-sm font-semibold">Messages ({count(messages.length)})</h3>
             {messages.length > MESSAGE_PREVIEW_COUNT ? (
               <p className="flex flex-wrap items-center gap-2 text-xs text-muted">
@@ -141,6 +171,7 @@ export function ThreadViewer({
                     : `Showing all ${count(messages.length)} messages.`}
                 </span>
                 <Button
+                  ref={showAllRef}
                   size="sm"
                   aria-label={hidden > 0 ? 'Show all messages' : 'Show fewer messages'}
                   onClick={() => setAllMessagesState(hidden > 0)}
@@ -158,7 +189,12 @@ export function ThreadViewer({
                 </Button>
               </p>
             ) : null}
-            <ol className="grid gap-2 text-md" aria-label="Messages">
+            <ol
+              ref={listRef}
+              className="grid gap-2 text-md"
+              aria-label="Messages"
+              {...(holdsFocus ? { tabIndex: -1, onBlur: () => setHoldsFocus(false) } : {})}
+            >
               {shownMessages.map((m) => (
                 <li key={m.id} className="grid min-w-0 gap-1 rounded-md border border-default p-3">
                   <div className="flex items-center gap-2">

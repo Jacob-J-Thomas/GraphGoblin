@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { sampleThread } from '@graphgoblin/contracts/testing';
@@ -46,6 +46,39 @@ describe('ThreadViewer messages', () => {
     expect(within(list()).getAllByRole('listitem')).toHaveLength(MESSAGE_PREVIEW_COUNT);
     expect(screen.getByText('Showing the last 50 of 70 messages.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Show all messages' })).toBeInTheDocument();
+  });
+
+  it('keeps the keyboard in the section when a live append slides a focused message out', async () => {
+    const user = userEvent.setup();
+    const long = 'x'.repeat(5_000);
+    // Message 10 is the oldest shown of 60; its long content gives it a Show all control.
+    const build = (n: number) => {
+      const made = threadOf(n, 'a');
+      made.thread.messages[10]!.content = long;
+      return made;
+    };
+    const first = build(60);
+    const { rerender } = render(
+      <ThreadViewer current={first.thread} events={first.events} seq={1} />,
+    );
+    const control = screen.getByRole('button', { name: 'Show all of Message a10 content' });
+    act(() => control.focus());
+    expect(control).toHaveFocus();
+    // One more message arrives: a10 leaves the window, the keyboard lands on the list's control.
+    const second = build(61);
+    rerender(<ThreadViewer current={second.thread} events={second.events} seq={1} />);
+    expect(
+      screen.queryByRole('button', { name: 'Show all of Message a10 content' }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Show all messages' })).toHaveFocus();
+    expect(screen.getByRole('list', { name: 'Messages' })).not.toHaveAttribute('tabindex');
+    // A keyboard elsewhere is left alone.
+    act(() => (document.activeElement as HTMLElement).blur());
+    const third = build(62);
+    rerender(<ThreadViewer current={third.thread} events={third.events} seq={1} />);
+    expect(document.activeElement).toBe(document.body);
+    await user.tab();
+    expect(document.activeElement).not.toBe(document.body);
   });
 
   it('shows every message of a short thread without controls', () => {

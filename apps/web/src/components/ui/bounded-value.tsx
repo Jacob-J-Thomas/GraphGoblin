@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useDeferredValue, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { cachedJsonPrefix, cn, downloadJson, prettyJson } from '../../lib/utils.js';
 import { Button } from './button.js';
 
@@ -44,6 +44,8 @@ export interface BoundedValueProps {
 }
 
 const count = (n: number) => n.toLocaleString('en-US');
+/** Shown in the render that first sees a changed value, before its preview exists. */
+const PREPARING = 'Preparing the preview…';
 
 /**
  * A value as text whose rendering is bounded: up to `previewChars` characters are laid out at
@@ -77,8 +79,9 @@ export function BoundedValue({
   // The text carries the keyboard across a change of value (focusable, not a tab stop) until the
   // keyboard moves on.
   const [holdsFocus, setHoldsFocus] = useState(false);
-  // Counts the changes of value that happened while the keyboard was inside (the effect below).
-  const [handoffs, setHandoffs] = useState(0);
+  // The value whose arrival found the keyboard inside: its hand-off is in flight until its
+  // preview has settled (the effect below).
+  const [handoffFor, setHandoffFor] = useState<unknown>(undefined);
   // Another value arrived (another event, a live reconstruction, or one shown expanded earlier):
   // it starts bounded. React re-renders at once with the adjusted state; `expanded` is false in
   // the discarded pass too, so the whole text is never formatted for a value that is not expanded.
@@ -89,25 +92,16 @@ export function BoundedValue({
       // The text stays focusable in this same commit, so a focused region never loses its
       // tabindex while it has the focus, and a removed control has somewhere to hand it to.
       setHoldsFocus(true);
-      setHandoffs((n) => n + 1);
+      setHandoffFor(value);
     }
   }
   const expanded = expandedState && shownValue === value;
-  // After the commit of a change of value made while the keyboard was inside: the browser may
-  // have dropped the focus to the body (a removed control, a region whose tabindex changed).
-  // Put the keyboard on the new value's Show all when it has one, else on the text itself, and
-  // keep the text focusable only while it is what holds the keyboard.
-  useLayoutEffect(() => {
-    if (handoffs === 0) return;
-    const root = rootRef.current;
-    const pre = preRef.current;
-    const inside = root !== null && root.contains(document.activeElement);
-    if (showAllRef.current) {
-      if (!inside || document.activeElement === pre) showAllRef.current.focus();
-    } else if (!inside) pre?.focus();
-    setHoldsFocus(document.activeElement === pre);
-  }, [handoffs]);
   const isText = text && typeof value === 'string';
+  // A changed value is previewed in the deferred render that follows the urgent one, so selecting
+  // an event paints before a wide object's keys are enumerated; a mounted component's first value
+  // is previewed at once, and a string's prefix is cheap enough to take straight away.
+  const settledValue = useDeferredValue(value);
+  const pending = !isText && settledValue !== value;
   // Collapsed: only the preview is produced (a string shows its own prefix; JSON stops at the
   // budget, remembered per value so a return to it costs a lookup). Expanded: the whole text,
   // once, for as long as this value stays expanded.
@@ -115,16 +109,35 @@ export function BoundedValue({
     () =>
       isText
         ? { text: value.slice(0, previewChars), truncated: value.length > previewChars }
-        : cachedJsonPrefix(value, previewChars),
-    [value, isText, previewChars],
+        : cachedJsonPrefix(settledValue, previewChars),
+    [settledValue, value, isText, previewChars],
   );
   const full = useMemo(
     () => (expanded ? (isText ? value : prettyJson(value)) : undefined),
     [expanded, value, isText],
   );
+  // While the preview is pending, the controls follow the settled (previous) preview, so a control
+  // that holds the keyboard is not unmounted for one frame only to come back.
   const large = preview.truncated;
-  const shown = expanded && full !== undefined ? full : preview.text;
+  const shown = pending ? PREPARING : expanded && full !== undefined ? full : preview.text;
   const total = isText ? value.length : full?.length;
+  // After the commit that settles a changed value's preview, when its arrival found the keyboard
+  // inside: the browser may have dropped the focus to the body (a removed control, a region whose
+  // tabindex changed). Put the keyboard on the new value's Show all when it has one, else on the
+  // text itself, and keep the text focusable only while it is what holds the keyboard. Until then
+  // the text stays focusable and the previous controls stay mounted, so nothing is lost in the
+  // urgent commit. A later value that arrives with the keyboard elsewhere leaves `handoffFor`
+  // behind, so the effect does nothing for it.
+  useLayoutEffect(() => {
+    if (handoffFor !== value || pending) return;
+    const root = rootRef.current;
+    const pre = preRef.current;
+    const inside = root !== null && root.contains(document.activeElement);
+    if (showAllRef.current) {
+      if (!inside || document.activeElement === pre) showAllRef.current.focus();
+    } else if (!inside) pre?.focus();
+    setHoldsFocus(document.activeElement === pre);
+  }, [handoffFor, value, pending, large]);
   return (
     <div
       ref={rootRef}

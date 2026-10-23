@@ -1,5 +1,5 @@
 import { LoopDefinitionSchema, type RunEvent } from '@graphgoblin/contracts';
-import { minimalLoop, sampleThread } from '@graphgoblin/contracts/testing';
+import { FIXTURE_TS, minimalLoop, sampleThread } from '@graphgoblin/contracts/testing';
 import { describe, expect, it, vi } from 'vitest';
 import { event, queuedFields } from '../__fixtures__/fake-api.js';
 import { quotaSafeSessionStorage, useRunEventStore } from './event-store.js';
@@ -524,6 +524,67 @@ describe('initial thread and replay failures', () => {
       expect(after).not.toBe(at12);
       expect(after).toEqual(tryThreadAt(initial, refilled, 12));
       expect(after.ok && after.thread.vars['topic']).toBe('changed');
+    });
+
+    it('replays a live append from the remembered thread, keeping untouched identities', () => {
+      const queued = event(R, 1, 'run.queued', queuedFields());
+      const log = [
+        queued,
+        event(R, 2, 'node.started', { nodeId: 'a', kind: 'mutate', attempt: 1, configHash: 'h' }),
+        event(R, 3, 'node.finished', {
+          nodeId: 'a',
+          durationMs: 1,
+          patch: [{ op: 'add', path: '/vars/topic', value: 'loops' }],
+        }),
+        event(R, 4, 'node.started', { nodeId: 'b', kind: 'mutate', attempt: 1, configHash: 'h' }),
+        event(R, 5, 'harness.usage', {
+          nodeId: 'b',
+          usage: {
+            inputTokens: 1,
+            outputTokens: 1,
+            cachedInputTokens: 0,
+            reasoningOutputTokens: 0,
+          },
+        }),
+        event(R, 6, 'node.finished', {
+          nodeId: 'b',
+          durationMs: 1,
+          patch: [
+            {
+              op: 'add',
+              path: '/messages/-',
+              value: { id: 'n1', role: 'note', content: 'done', nodeId: 'b', ts: FIXTURE_TS },
+            },
+          ],
+        }),
+      ];
+      const seed = initialThreadFrom(sampleThread(), [queued]);
+      const cache = createThreadCache();
+      const at3 = cache.at(seed, log.slice(0, 3), 3);
+      expect(at3).toEqual(tryThreadAt(seed, log.slice(0, 3), 3));
+      // Two events arrive that touch neither variables nor messages: both keep their identity.
+      const at5 = cache.at(seed, log.slice(0, 5), 5);
+      expect(at5).toEqual(tryThreadAt(seed, log.slice(0, 5), 5));
+      expect(at5.ok && at3.ok && at5.thread.vars).toBe(at3.ok && at3.thread.vars);
+      expect(at5.ok && at3.ok && at5.thread.messages).toBe(at3.ok && at3.thread.messages);
+      // A patch to the messages changes them and leaves the variables' identity alone.
+      const at6 = cache.at(seed, log, 6);
+      expect(at6).toEqual(tryThreadAt(seed, log, 6));
+      expect(at6.ok && at3.ok && at6.thread.vars).toBe(at3.ok && at3.thread.vars);
+      expect(at6.ok && at5.ok && at6.thread.messages).not.toBe(at5.ok && at5.thread.messages);
+      // A replay that fails from the remembered thread reports the failure like a full one.
+      const broken = [
+        ...log,
+        event(R, 7, 'node.started', { nodeId: 'c', kind: 'mutate', attempt: 1, configHash: 'h' }),
+        event(R, 8, 'node.finished', {
+          nodeId: 'c',
+          durationMs: 1,
+          patch: [{ op: 'test', path: '/vars/topic', value: 'something else' }],
+        }),
+      ];
+      const at8 = cache.at(seed, broken, 8);
+      expect(at8.ok).toBe(false);
+      expect(at8).toEqual(tryThreadAt(seed, broken, 8));
     });
 
     it('keeps at most the configured number of results', () => {
