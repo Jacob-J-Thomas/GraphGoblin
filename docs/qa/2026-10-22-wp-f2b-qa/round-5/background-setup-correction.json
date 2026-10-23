@@ -1,0 +1,10 @@
+{
+  "originalResults": "merge-results.json",
+  "failedCases": ["background-recheck-1440", "background-recheck-390"],
+  "originalWaitMs": 5000,
+  "observed": "One initial readiness request; no second request or response, so background behavior was never entered.",
+  "cause": "Synthetic document visibilitychange events did not bubble to the window listener.",
+  "before": "document.dispatchEvent(new Event('visibilitychange'));Object.defineProperty(document,'visibilityState',{configurable:true,value:'visible'});document.dispatchEvent(new Event('visibilitychange'));",
+  "after": "document.dispatchEvent(new Event('visibilitychange',{bubbles:true}));Reflect.deleteProperty(document,'visibilityState');document.dispatchEvent(new Event('visibilitychange',{bubbles:true}));",
+  "scope": "Two focused checks with corrected external-event setup; original failed observations retained. Not a served replay rerun; no timeout or product edit."
+}

@@ -1,0 +1,2520 @@
+[
+  {
+    "id": "environment",
+    "actual": {
+      "node": "v22.14.0",
+      "edge": "155.0.4283.62",
+      "port": 5860,
+      "preflight": {
+        "items": [
+          {
+            "state": "ready",
+            "ok": true,
+            "version": "0.160.0",
+            "authenticated": true,
+            "problems": [],
+            "harness": "codex"
+          },
+          {
+            "state": "ready",
+            "ok": true,
+            "version": "2.1.287",
+            "authenticated": true,
+            "problems": [],
+            "authMethod": "claude.ai",
+            "supportedPolicies": [
+              {
+                "sandbox": "read-only",
+                "approval": "never",
+                "permissionMode": "dontAsk",
+                "tools": ["Read", "Glob", "Grep"],
+                "authMethod": "claude.ai",
+                "boundary": "builtin-tools",
+                "network": "unconfined"
+              },
+              {
+                "sandbox": "danger-full-access",
+                "approval": "never",
+                "permissionMode": "dontAsk",
+                "tools": ["Read", "Glob", "Grep", "Edit", "Write", "Bash"],
+                "authMethod": "claude.ai",
+                "boundary": "unconfined",
+                "network": "unconfined"
+              }
+            ],
+            "models": [
+              {
+                "model": "claude-opus-5-5",
+                "efforts": ["low", "medium", "high", "xhigh", "max"]
+              },
+              {
+                "model": "claude-fable-5-1",
+                "efforts": ["low", "medium", "high", "xhigh", "max"]
+              }
+            ],
+            "harness": "claude"
+          }
+        ]
+      }
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "B2-loop-sibling",
+    "steps": "Settings Opus/xhigh, loop Fable/low, switch Astra/minimal; publish/reopen/run with inherited sibling.",
+    "expected": "Both requests Fable/low; read-only/never; same saved/reopened values.",
+    "actual": {
+      "error": "Error: expect(locator).toHaveValue(expected) failed\n\nLocator:  getByRole('dialog').getByLabel('Model', { exact: true })\nExpected: \"claude-fable-5-1\"\nReceived: \"gpt-6-astra\"\nTimeout:  5000ms\n\nCall log:\n  - Expect \"toHaveValue\" getByRole('dialog').getByLabel('Model', { exact: true }) with timeout 5000ms\n  - waiting for getByRole('dialog').getByLabel('Model', { exact: true })\n    14 × locator resolved to <select id=\"_r_17_\" aria-describedby=\"_r_17_-help\" class=\"rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-point…>…</select>\n       - unexpected value \"gpt-6-astra\"\n\n    at captureRawStack (<checkout>/node_modules\\.pnpm\\playwright-core@1.63.0\\node_modules\\playwright-core\\lib\\coreBundle.js:8588:17)\n    at callMatcherAsStep (<checkout>/node_modules\\.pnpm\\playwright@1.63.0\\node_modules\\playwright\\lib\\matchers\\expect.js:13310:57)\n    at Object.toHaveValue (<checkout>/node_modules\\.pnpm\\playwright@1.63.0\\node_modules\\playwright\\lib\\matchers\\expect.js:13302:23)\n    at fields (<checkout>/docs\\qa\\2026-10-22-wp-f2b-qa\\round-3\\served-checks.mjs:165:25)\n    at <checkout>/docs\\qa\\2026-10-22-wp-f2b-qa\\round-3\\served-checks.mjs:325:13\n    at async check (<checkout>/docs\\qa\\2026-10-22-wp-f2b-qa\\round-3\\served-checks.mjs:257:20)\n    at async file:///<checkout>/docs/qa/2026-10-22-wp-f2b-qa/round-3/served-checks.mjs:306:3",
+      "pageText": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nLoops\n/\nIndependent switch QA\ndraft only\nAll changes saved\nUndo\nRedo\nOpen in Runs\nPublish the loop first: runs start from a published version.\nChecking…\nPublish\nPalette\nTrigger\nStarts a run\nDecision\nChooses a route and can limit repeats\nInference\nHands work to a harness\nScript\nRuns a program\nMutate\nChanges the context thread\nSubloop\nRuns another loop\nWait\nParks until input, time, or a signal\nHeartbeat\nPolls on an interval\nExit\nFinishes with an outcome and return value\nTRIGGER\nStart\nstart\nout\nINFERENCE\nInfer\ninfer\nout\nINFERENCE\nSibling\nsibling\nout\nEXIT\nDone\ndone\nReact Flow\nLoop settings\n\nRequired fields are marked *\n\nName\n*\nDescription\nSETTINGS\n\nMaximum node visits is a safety cap against unintended cycles. Use a decision gate's maximum passes for an intentional repeat.\n\nWorking directory\nKind\nfixed\ntemplate\ntemp\nDefaults\nBy harness\n\nDefaults keyed by their harness; omitted fields inherit only within that harness.\n\nKey\nBy harness value 1\nModel\n(owner default)\nclaude-fable-5-1 (saved)\n\nChecking Claude readiness. Model choices are read-only until the check finishes.\n\nRetry Claude preflight\n\nDefault harness model.\n\nModel catalog in Settings\nEffort\n(inherited; the catalog suggests high)\nlow\nmedium\nhigh\nxhigh\nmax\n\nDefault reasoning effort. For Claude, this is the requested effort; the CLI does not report the effective effort.\n\nAdd entry\nMaximum node visits\nSubloop depth limit\nVARIABLES\n\nEach variable maps a name to a JSON Schema.\n\nVariables *\nAdd entry\nEdit inference\ninfer\n\nRequired fields are marked *\n\nNode id\n*\nLabel\n*\nSettings\nContext\nHarness\ncodex\nclaude\n\nWaiting for the first model catalog, Settings and readiness checks to finish... The harness change will apply when they finish.\n\nHarness that runs the session.\n\nSession\nPolicy\nfresh\nresume-previous\nresume-named\n\nStart fresh, resume the previous session, or resume a named session.\n\nPrompt\n\nLiquid template rendered against the thread.\n\nTemplate\n*\nLiquid\n1\nSynthetic QA only\nPreview (sample thread): Synthetic QA only\nEarlier node outputs (1)\nSandbox\nread-only\nworkspace-write\ndanger-full-access\n\nSandbox or tool policy. Claude requires an explicit supported policy and provides no OS/read-path confinement.\n\nAdvanced\n2 set\nMODEL\nModel\n(loop default)\nGPT-5.5 (gpt-5.5)\nGPT-5.6 Luna (gpt-5.6-luna)\nGPT-5.6 Sol (gpt-5.6-sol)\nGPT-5.6 Terra (gpt-5.6-terra)\nGPT-6 Astra (gpt-6-astra)\nGPT-6 Luna (gpt-6-luna)\nGPT-6 Sol (gpt-6-sol)\nGPT-6.1 Sol (gpt-6.1-sol)\n\nModel; inherits within this harness from loop, owner, then process defaults.\n\nModel catalog in Settings\nEffort\n(inherited; the catalog suggests medium)\nminimal\nlow\nmedium\nhigh\nxhigh\nmax\n\nReasoning effort; inherits within this harness like the model. Catalog effort is guidance only.\n\nHARNESS OPTIONS\nApproval\nnever\non-request\n\nWhether the harness may stop to ask before acting.\n\nNetwork access\nNot set\nYes\nNo\n\nLet commands in the sandbox reach the network.\n\nWeb search\nNot set\nYes\nNo\n\nLet the model search the web.\n\nEdit as JSON\nConfig overrides\n\nRaw harness configuration, passed through as is.\n\nAdd entry\nEdit as JSON\n\nNo resolved capability identifiers are available. Enter authored slugs.\n\nAdd capabilities\nOUTPUT\nCapture transcript\nartifact\nnone\n\nKeep the session transcript as an artifact, or not.\n\nTo messages\nfinal\nfinal-and-notes\nnone\n\nWhat the answer adds to the thread's messages.\n\nEdit as JSON\nTransforms\n\nMutations applied to the answer before it lands.\n\nAdd transforms\nAdd schema\nLIMITS\nTimeout seconds\n\nOptional watchdog; a timeout fails the run.\n\nConnections\nout → sibling\nDelete node\nDone",
+      "loop": {
+        "loop": {
+          "id": "01M5JM0RJFD1CPV5S7387G3AXY",
+          "ownerId": "local",
+          "name": "Independent switch QA",
+          "draftVersionId": "01M5JM0RJFNH2WW5QD6Z3CTTV4",
+          "createdAt": "2026-10-22T20:14:40.719Z",
+          "updatedAt": "2026-10-22T20:14:40.719Z"
+        },
+        "draft": {
+          "id": "01M5JM0RJFNH2WW5QD6Z3CTTV4",
+          "loopId": "01M5JM0RJFD1CPV5S7387G3AXY",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Independent switch QA",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {
+                  "claude": {
+                    "model": "claude-fable-5-1",
+                    "effort": "low"
+                  }
+                }
+              },
+              "maxNodeVisits": 10,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": ["ui", "api", "mcp"]
+                }
+              },
+              {
+                "id": "infer",
+                "label": "Infer",
+                "ui": {
+                  "x": 260,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "codex",
+                  "model": "gpt-6-astra",
+                  "effort": "minimal",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "Synthetic QA only"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "workspace-write",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "sibling",
+                "label": "Sibling",
+                "ui": {
+                  "x": 520,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "claude",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "Synthetic QA sibling"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "read-only",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 780,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "a",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "b",
+                "from": {
+                  "node": "infer",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "sibling",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "c",
+                "from": {
+                  "node": "sibling",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-22T20:14:40.719Z"
+        },
+        "draftToken": "ad1cfc9d838b28ad"
+      }
+    },
+    "verdict": "FAIL"
+  },
+  {
+    "id": "B1-no-wait",
+    "steps": "Hold all three first responses; fully inheriting node switches both directions; release and publish/reopen/run.",
+    "expected": "No wait or extra lookup; absent overrides persisted; Settings resolved at execution.",
+    "actual": {
+      "before": {
+        "catalog": 1,
+        "settings": 1,
+        "preflight": 1
+      },
+      "config": {
+        "harness": "claude",
+        "session": {
+          "policy": "fresh"
+        },
+        "prompt": {
+          "template": "Synthetic QA only"
+        },
+        "input": [],
+        "harnessOptions": {
+          "sandbox": "read-only",
+          "approval": "never"
+        },
+        "output": {
+          "captureTranscript": "artifact",
+          "toMessages": "final",
+          "transforms": []
+        }
+      },
+      "reopened": {
+        "model": "",
+        "effort": ""
+      },
+      "requests": [
+        {
+          "model": "claude-opus-5-5",
+          "effort": "xhigh"
+        }
+      ]
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "effort-only-high",
+    "steps": "Switch effort-only Codex high to Claude; persist/reopen/run.",
+    "expected": "Model stays inherited; effort high",
+    "actual": {
+      "error": "Error: expect(locator).toBeChecked() failed\n\nLocator:  getByRole('dialog').getByRole('radio', { name: 'claude', exact: true })\nExpected: checked\nReceived: unchecked\nTimeout:  5000ms\n\nCall log:\n  - Expect \"toBeChecked\" getByRole('dialog').getByRole('radio', { name: 'claude', exact: true }) with timeout 5000ms\n  - waiting for getByRole('dialog').getByRole('radio', { name: 'claude', exact: true })\n    13 × locator resolved to <input type=\"radio\" name=\"_r_n_\" value=\"claude\" class=\"peer sr-only\"/>\n       - unexpected value \"unchecked\"\n\n    at captureRawStack (<checkout>/node_modules\\.pnpm\\playwright-core@1.63.0\\node_modules\\playwright-core\\lib\\coreBundle.js:8588:17)\n    at callMatcherAsStep (<checkout>/node_modules\\.pnpm\\playwright@1.63.0\\node_modules\\playwright\\lib\\matchers\\expect.js:13310:57)\n    at Object.toBeChecked (<checkout>/node_modules\\.pnpm\\playwright@1.63.0\\node_modules\\playwright\\lib\\matchers\\expect.js:13302:23)\n    at <checkout>/docs\\qa\\2026-10-22-wp-f2b-qa\\round-3\\served-checks.mjs:386:84\n    at async check (<checkout>/docs\\qa\\2026-10-22-wp-f2b-qa\\round-3\\served-checks.mjs:257:20)\n    at async file:///<checkout>/docs/qa/2026-10-22-wp-f2b-qa/round-3/served-checks.mjs:378:5",
+      "pageText": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nLoops\n/\nIndependent switch QA\ndraft only\nAll changes saved\nUndo\nRedo\nOpen in Runs\nPublish the loop first: runs start from a published version.\nChecking…\nPublish\nPalette\nTrigger\nStarts a run\nDecision\nChooses a route and can limit repeats\nInference\nHands work to a harness\nScript\nRuns a program\nMutate\nChanges the context thread\nSubloop\nRuns another loop\nWait\nParks until input, time, or a signal\nHeartbeat\nPolls on an interval\nExit\nFinishes with an outcome and return value\nTRIGGER\nStart\nstart\nout\nINFERENCE\nInfer\ninfer\nout\nEXIT\nDone\ndone\nReact Flow\nLoop settings\n\nRequired fields are marked *\n\nName\n*\nDescription\nSETTINGS\n\nMaximum node visits is a safety cap against unintended cycles. Use a decision gate's maximum passes for an intentional repeat.\n\nWorking directory\nKind\nfixed\ntemplate\ntemp\nDefaults\nBy harness\n\nDefaults keyed by their harness; omitted fields inherit only within that harness.\n\nAdd entry\nMaximum node visits\nSubloop depth limit\nVARIABLES\n\nEach variable maps a name to a JSON Schema.\n\nVariables *\nAdd entry\nEdit inference\ninfer\n\nRequired fields are marked *\n\nNode id\n*\nLabel\n*\nSettings\nContext\nHarness\ncodex\nclaude\n\nWaiting for the first model catalog, Settings and readiness checks to finish... The harness change will apply when they finish.\n\nHarness that runs the session.\n\nSession\nPolicy\nfresh\nresume-previous\nresume-named\n\nStart fresh, resume the previous session, or resume a named session.\n\nPrompt\n\nLiquid template rendered against the thread.\n\nTemplate\n*\nLiquid\n1\nSynthetic QA only\nPreview (sample thread): Synthetic QA only\nEarlier node outputs (1)\nSandbox\nread-only\nworkspace-write\ndanger-full-access\n\nSandbox or tool policy. Claude requires an explicit supported policy and provides no OS/read-path confinement.\n\nAdvanced\n1 set\nMODEL\nModel\n(loop default)\nGPT-5.5 (gpt-5.5)\nGPT-5.6 Luna (gpt-5.6-luna)\nGPT-5.6 Sol (gpt-5.6-sol)\nGPT-5.6 Terra (gpt-5.6-terra)\nGPT-6 Astra (gpt-6-astra)\nGPT-6 Luna (gpt-6-luna)\nGPT-6 Sol (gpt-6-sol)\nGPT-6.1 Sol (gpt-6.1-sol)\n\nModel; inherits within this harness from loop, owner, then process defaults.\n\nModel catalog in Settings\nEffort\n(inherited effort)\nminimal\nlow\nmedium\nhigh\nxhigh\nmax\n\nReasoning effort; inherits within this harness like the model. Catalog effort is guidance only.\n\nHARNESS OPTIONS\nApproval\nnever\non-request\n\nWhether the harness may stop to ask before acting.\n\nNetwork access\nNot set\nYes\nNo\n\nLet commands in the sandbox reach the network.\n\nWeb search\nNot set\nYes\nNo\n\nLet the model search the web.\n\nEdit as JSON\nConfig overrides\n\nRaw harness configuration, passed through as is.\n\nAdd entry\nEdit as JSON\n\nNo resolved capability identifiers are available. Enter authored slugs.\n\nAdd capabilities\nOUTPUT\nCapture transcript\nartifact\nnone\n\nKeep the session transcript as an artifact, or not.\n\nTo messages\nfinal\nfinal-and-notes\nnone\n\nWhat the answer adds to the thread's messages.\n\nEdit as JSON\nTransforms\n\nMutations applied to the answer before it lands.\n\nAdd transforms\nAdd schema\nLIMITS\nTimeout seconds\n\nOptional watchdog; a timeout fails the run.\n\nConnections\nout → done\nDelete node\nDone",
+      "loop": {
+        "loop": {
+          "id": "01M5JM1GPB7Q84S94WYKCD9FXZ",
+          "ownerId": "local",
+          "name": "Independent switch QA",
+          "draftVersionId": "01M5JM1GPB243Y2PT2J5FWB0Q1",
+          "createdAt": "2026-10-22T20:15:05.419Z",
+          "updatedAt": "2026-10-22T20:15:05.419Z"
+        },
+        "draft": {
+          "id": "01M5JM1GPB243Y2PT2J5FWB0Q1",
+          "loopId": "01M5JM1GPB7Q84S94WYKCD9FXZ",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Independent switch QA",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": ["ui", "api", "mcp"]
+                }
+              },
+              {
+                "id": "infer",
+                "label": "Infer",
+                "ui": {
+                  "x": 260,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "codex",
+                  "effort": "high",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "Synthetic QA only"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "workspace-write",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 520,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "a",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "b",
+                "from": {
+                  "node": "infer",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-22T20:15:05.419Z"
+        },
+        "draftToken": "b33c5e18dd1cf4ec"
+      }
+    },
+    "verdict": "FAIL"
+  },
+  {
+    "id": "effort-only-minimal",
+    "steps": "Switch effort-only Codex minimal to Claude; persist/reopen/run.",
+    "expected": "Model stays inherited; effort xhigh",
+    "actual": {
+      "error": "Error: expect(locator).toBeChecked() failed\n\nLocator:  getByRole('dialog').getByRole('radio', { name: 'claude', exact: true })\nExpected: checked\nReceived: unchecked\nTimeout:  5000ms\n\nCall log:\n  - Expect \"toBeChecked\" getByRole('dialog').getByRole('radio', { name: 'claude', exact: true }) with timeout 5000ms\n  - waiting for getByRole('dialog').getByRole('radio', { name: 'claude', exact: true })\n    14 × locator resolved to <input type=\"radio\" name=\"_r_n_\" value=\"claude\" class=\"peer sr-only\"/>\n       - unexpected value \"unchecked\"\n\n    at captureRawStack (<checkout>/node_modules\\.pnpm\\playwright-core@1.63.0\\node_modules\\playwright-core\\lib\\coreBundle.js:8588:17)\n    at callMatcherAsStep (<checkout>/node_modules\\.pnpm\\playwright@1.63.0\\node_modules\\playwright\\lib\\matchers\\expect.js:13310:57)\n    at Object.toBeChecked (<checkout>/node_modules\\.pnpm\\playwright@1.63.0\\node_modules\\playwright\\lib\\matchers\\expect.js:13302:23)\n    at <checkout>/docs\\qa\\2026-10-22-wp-f2b-qa\\round-3\\served-checks.mjs:386:84\n    at async check (<checkout>/docs\\qa\\2026-10-22-wp-f2b-qa\\round-3\\served-checks.mjs:257:20)\n    at async file:///<checkout>/docs/qa/2026-10-22-wp-f2b-qa/round-3/served-checks.mjs:378:5",
+      "pageText": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nLoops\n/\nIndependent switch QA\ndraft only\nUnsaved changes\nUndo edit config of infer\nRedo\nOpen in Runs\nPublish the loop first: runs start from a published version.\nReady to publish\nPublish\nPalette\nTrigger\nStarts a run\nDecision\nChooses a route and can limit repeats\nInference\nHands work to a harness\nScript\nRuns a program\nMutate\nChanges the context thread\nSubloop\nRuns another loop\nWait\nParks until input, time, or a signal\nHeartbeat\nPolls on an interval\nExit\nFinishes with an outcome and return value\nTRIGGER\nStart\nstart\nout\nINFERENCE\nInfer\ninfer\nout\nEXIT\nDone\ndone\nReact Flow\nLoop settings\n\nRequired fields are marked *\n\nName\n*\nDescription\nSETTINGS\n\nMaximum node visits is a safety cap against unintended cycles. Use a decision gate's maximum passes for an intentional repeat.\n\nWorking directory\nKind\nfixed\ntemplate\ntemp\nDefaults\nBy harness\n\nDefaults keyed by their harness; omitted fields inherit only within that harness.\n\nAdd entry\nMaximum node visits\nSubloop depth limit\nVARIABLES\n\nEach variable maps a name to a JSON Schema.\n\nVariables *\nAdd entry\nEdit inference\ninfer\n\nRequired fields are marked *\n\nNode id\n*\nLabel\n*\nSettings\nContext\nHarness\ncodex\nclaude\n\nHarness that runs the session.\n\nSession\nPolicy\nfresh\nresume-previous\nresume-named\n\nStart fresh, resume the previous session, or resume a named session.\n\nPrompt\n\nLiquid template rendered against the thread.\n\nTemplate\n*\nLiquid\n1\nSynthetic QA only\nPreview (sample thread): Synthetic QA only\nEarlier node outputs (1)\nSandbox and approval policy\nRead-only — built-in tools only; no OS or read-path isolation\nDanger full access — command execution and network unconfined\n\nRead-only restricts built-in tools but provides no filesystem or OS confinement. Danger full access leaves command execution and network unconfined.\n\nAdvanced\n1 set\nMODEL\nModel\n(loop default)\nClaude Fable 5.1 (claude-fable-5-1)\nClaude Opus 5.5 (claude-opus-5-5)\n\nModel; inherits within this harness from loop, owner, then process defaults.\n\nModel catalog in Settings\nEffort\n(inherited effort)\nlow\nmedium\nhigh\nxhigh\nmax\n\nReasoning effort; inherits within this harness like the model. Catalog effort is guidance only. For Claude, this is the requested effort; the CLI does not report the effective effort.\n\nHARNESS OPTIONS\nApproval\nnever\n\nClaude supports never approval only; choose a supported policy above to correct this value.\n\nNetwork access\nNot set\nYes\nNo\n\nLet commands in the sandbox reach the network.\n\nWeb search\nNot set\nYes\nNo\n\nLet the model search the web.\n\nEdit as JSON\nConfig overrides\n\nRaw harness configuration, passed through as is.\n\nAdd entry\nEdit as JSON\n\nNo resolved capability identifiers are available. Enter authored slugs.\n\nAdd capabilities\nOUTPUT\nCapture transcript\nartifact\nnone\n\nKeep the session transcript as an artifact, or not.\n\nTo messages\nfinal\nfinal-and-notes\nnone\n\nWhat the answer adds to the thread's messages.\n\nEdit as JSON\nTransforms\n\nMutations applied to the answer before it lands.\n\nAdd transforms\nAdd schema\nLIMITS\nTimeout seconds\n\nOptional watchdog; a timeout fails the run.\n\nConnections\nout → done\nDelete node\nDone",
+      "loop": {
+        "loop": {
+          "id": "01M5JM1R6Q8T10CV54TGY23CDG",
+          "ownerId": "local",
+          "name": "Independent switch QA",
+          "draftVersionId": "01M5JM1R6QT0ZG7C3JCB8JDSHH",
+          "createdAt": "2026-10-22T20:15:13.111Z",
+          "updatedAt": "2026-10-22T20:15:13.111Z"
+        },
+        "draft": {
+          "id": "01M5JM1R6QT0ZG7C3JCB8JDSHH",
+          "loopId": "01M5JM1R6Q8T10CV54TGY23CDG",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Independent switch QA",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": ["ui", "api", "mcp"]
+                }
+              },
+              {
+                "id": "infer",
+                "label": "Infer",
+                "ui": {
+                  "x": 260,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "codex",
+                  "effort": "minimal",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "Synthetic QA only"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "workspace-write",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 520,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "a",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "b",
+                "from": {
+                  "node": "infer",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-22T20:15:13.111Z"
+        },
+        "draftToken": "7da3eff7e80e0369"
+      }
+    },
+    "verdict": "FAIL"
+  },
+  {
+    "id": "B3-first-load",
+    "steps": "Hold all initial queries; request switch during mount; release and save.",
+    "expected": "Waiting then automatic Fable/low, one load each, draft saves.",
+    "actual": {
+      "error": "Error: expect(locator).toHaveValue(expected) failed\n\nLocator:  getByRole('dialog').getByLabel('Model', { exact: true })\nExpected: \"claude-fable-5-1\"\nReceived: \"gpt-6-astra\"\nTimeout:  5000ms\n\nCall log:\n  - Expect \"toHaveValue\" getByRole('dialog').getByLabel('Model', { exact: true }) with timeout 5000ms\n  - waiting for getByRole('dialog').getByLabel('Model', { exact: true })\n    - locator resolved to <select id=\"_r_17_\" aria-readonly=\"true\" aria-describedby=\"_r_17_-help _r_q_-model-catalog\" class=\"rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sun…>…</select>\n    12 × unexpected value \"gpt-6-astra\"\n       - locator resolved to <select id=\"_r_17_\" aria-describedby=\"_r_17_-help\" class=\"rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-point…>…</select>\n    - unexpected value \"gpt-6-astra\"\n\n    at captureRawStack (<checkout>/node_modules\\.pnpm\\playwright-core@1.63.0\\node_modules\\playwright-core\\lib\\coreBundle.js:8588:17)\n    at callMatcherAsStep (<checkout>/node_modules\\.pnpm\\playwright@1.63.0\\node_modules\\playwright\\lib\\matchers\\expect.js:13310:57)\n    at Object.toHaveValue (<checkout>/node_modules\\.pnpm\\playwright@1.63.0\\node_modules\\playwright\\lib\\matchers\\expect.js:13302:23)\n    at fields (<checkout>/docs\\qa\\2026-10-22-wp-f2b-qa\\round-3\\served-checks.mjs:165:25)\n    at <checkout>/docs\\qa\\2026-10-22-wp-f2b-qa\\round-3\\served-checks.mjs:424:15\n    at async check (<checkout>/docs\\qa\\2026-10-22-wp-f2b-qa\\round-3\\served-checks.mjs:257:20)\n    at async file:///<checkout>/docs/qa/2026-10-22-wp-f2b-qa/round-3/served-checks.mjs:395:3",
+      "pageText": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nLoops\n/\nIndependent switch QA\ndraft only\nUnsaved changes\nUndo edit config of infer\nRedo\nOpen in Runs\nPublish the loop first: runs start from a published version.\nChecking…\nPublish\nPalette\nTrigger\nStarts a run\nDecision\nChooses a route and can limit repeats\nInference\nHands work to a harness\nScript\nRuns a program\nMutate\nChanges the context thread\nSubloop\nRuns another loop\nWait\nParks until input, time, or a signal\nHeartbeat\nPolls on an interval\nExit\nFinishes with an outcome and return value\nTRIGGER\nStart\nstart\nout\nINFERENCE\nInfer\ninfer\nout\nEXIT\nDone\ndone\nReact Flow\nLoop settings\n\nRequired fields are marked *\n\nName\n*\nDescription\nSETTINGS\n\nMaximum node visits is a safety cap against unintended cycles. Use a decision gate's maximum passes for an intentional repeat.\n\nWorking directory\nKind\nfixed\ntemplate\ntemp\nDefaults\nBy harness\n\nDefaults keyed by their harness; omitted fields inherit only within that harness.\n\nKey\nBy harness value 1\nModel\n(owner default)\nClaude Fable 5.1 (claude-fable-5-1)\nClaude Opus 5.5 (claude-opus-5-5)\n\nDefault harness model.\n\nModel catalog in Settings\nEffort\n(inherited; the catalog suggests high)\nlow\nmedium\nhigh\nxhigh\nmax\n\nDefault reasoning effort. For Claude, this is the requested effort; the CLI does not report the effective effort.\n\nAdd entry\nMaximum node visits\nSubloop depth limit\nVARIABLES\n\nEach variable maps a name to a JSON Schema.\n\nVariables *\nAdd entry\nEdit inference\ninfer\n\nRequired fields are marked *\n\nNode id\n*\nLabel\n*\nSettings\nContext\nHarness\ncodex\nclaude\n\nHarness that runs the session.\n\nSession\nPolicy\nfresh\nresume-previous\nresume-named\n\nStart fresh, resume the previous session, or resume a named session.\n\nPrompt\n\nLiquid template rendered against the thread.\n\nTemplate\n*\nLiquid\n1\nSynthetic QA only\nPreview (sample thread): Synthetic QA only\nEarlier node outputs (1)\nSandbox and approval policy\nRead-only — built-in tools only; no OS or read-path isolation\nDanger full access — command execution and network unconfined\n\nRead-only restricts built-in tools but provides no filesystem or OS confinement. Danger full access leaves command execution and network unconfined.\n\nAdvanced\n2 set\nMODEL\nModel\n(loop default)\nClaude Fable 5.1 (claude-fable-5-1)\nClaude Opus 5.5 (claude-opus-5-5)\n\nModel; inherits within this harness from loop, owner, then process defaults.\n\nModel catalog in Settings\nEffort\n(inherited; the catalog suggests high)\nlow\nmedium\nhigh\nxhigh\nmax\n\nReasoning effort; inherits within this harness like the model. Catalog effort is guidance only. For Claude, this is the requested effort; the CLI does not report the effective effort.\n\nHARNESS OPTIONS\nApproval\nnever\n\nClaude supports never approval only; choose a supported policy above to correct this value.\n\nNetwork access\nNot set\nYes\nNo\n\nLet commands in the sandbox reach the network.\n\nWeb search\nNot set\nYes\nNo\n\nLet the model search the web.\n\nEdit as JSON\nConfig overrides\n\nRaw harness configuration, passed through as is.\n\nAdd entry\nEdit as JSON\n\nNo resolved capability identifiers are available. Enter authored slugs.\n\nAdd capabilities\nOUTPUT\nCapture transcript\nartifact\nnone\n\nKeep the session transcript as an artifact, or not.\n\nTo messages\nfinal\nfinal-and-notes\nnone\n\nWhat the answer adds to the thread's messages.\n\nEdit as JSON\nTransforms\n\nMutations applied to the answer before it lands.\n\nAdd transforms\nAdd schema\nLIMITS\nTimeout seconds\n\nOptional watchdog; a timeout fails the run.\n\nConnections\nout → done\nDelete node\nDone",
+      "loop": {
+        "loop": {
+          "id": "01M5JM1ZP4XYMTVDJ5PJGTT7FZ",
+          "ownerId": "local",
+          "name": "Independent switch QA",
+          "draftVersionId": "01M5JM1ZP46X2D2QVQVZ0VNQWD",
+          "createdAt": "2026-10-22T20:15:20.772Z",
+          "updatedAt": "2026-10-22T20:15:20.772Z"
+        },
+        "draft": {
+          "id": "01M5JM1ZP46X2D2QVQVZ0VNQWD",
+          "loopId": "01M5JM1ZP4XYMTVDJ5PJGTT7FZ",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Independent switch QA",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {
+                  "claude": {
+                    "model": "claude-fable-5-1",
+                    "effort": "low"
+                  }
+                }
+              },
+              "maxNodeVisits": 10,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": ["ui", "api", "mcp"]
+                }
+              },
+              {
+                "id": "infer",
+                "label": "Infer",
+                "ui": {
+                  "x": 260,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "codex",
+                  "model": "gpt-6-astra",
+                  "effort": "minimal",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "Synthetic QA only"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "workspace-write",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 520,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "a",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "b",
+                "from": {
+                  "node": "infer",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-22T20:15:20.772Z"
+        },
+        "draftToken": "62bbd1c4020f27fe"
+      }
+    },
+    "verdict": "FAIL"
+  },
+  {
+    "id": "failure-catalog",
+    "steps": "Inject catalog failure; switch; inspect retry notice, validation and API draft rejection; recover.",
+    "expected": "Authored values retained; named action under Harness; unavailable validation on catalog failure; incompatible write rejected.",
+    "actual": {
+      "notices": [
+        "The harness changed, but model and effort are unchanged. Retry model catalog, then choose a model or switch harness again. Validation is unavailable while the catalog cannot be loaded. An incompatible draft cannot be saved.",
+        "Claude readiness: Checking… The saved policy is unchanged.",
+        "Cannot load the model catalog. The current values are read-only until it recovers.",
+        "",
+        ""
+      ],
+      "buttons": [
+        "",
+        "Earlier node outputs (1)",
+        "Advanced 2 set ",
+        "Retry model catalog",
+        "Retry Claude preflight",
+        "Edit as JSON",
+        "Add entry",
+        "Edit as JSON",
+        "Add capabilities",
+        "Edit as JSON",
+        "Add transforms",
+        "Add schema",
+        "",
+        "Delete node",
+        "Done"
+      ],
+      "validationUnavailable": true,
+      "apiSave": {
+        "status": 400,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/evaluation-invalid-configuration",
+          "title": "evaluation invalid configuration",
+          "status": 400,
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "detail": "invalid evaluator or model configuration",
+          "errors": [
+            {
+              "code": "MODEL_HARNESS_MISMATCH",
+              "severity": "error",
+              "nodeId": "infer",
+              "path": "config.model",
+              "message": "The selected model belongs to another harness"
+            }
+          ]
+        }
+      }
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "failure-settings",
+    "steps": "Inject settings failure; switch; inspect retry notice, validation and API draft rejection; recover.",
+    "expected": "Authored values retained; named action under Harness; unavailable validation on catalog failure; incompatible write rejected.",
+    "actual": {
+      "notices": [
+        "The harness changed, but model and effort are unchanged until Settings defaults can be checked. Reload the editor, then choose a model or switch harness again.",
+        "Claude readiness: Checking… The saved policy is unchanged.",
+        "Checking Claude readiness. Model choices are read-only until the check finishes. Saved model belongs to Codex. Choose a Claude model or an inherited default from this picker when the harness is ready.",
+        "",
+        ""
+      ],
+      "buttons": [
+        "",
+        "Earlier node outputs (1)",
+        "Advanced 2 set ",
+        "Retry Claude preflight",
+        "Edit as JSON",
+        "Add entry",
+        "Edit as JSON",
+        "Add capabilities",
+        "Edit as JSON",
+        "Add transforms",
+        "Add schema",
+        "",
+        "Delete node",
+        "Done"
+      ],
+      "validationUnavailable": false,
+      "apiSave": {
+        "status": 400,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/evaluation-invalid-configuration",
+          "title": "evaluation invalid configuration",
+          "status": 400,
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "detail": "invalid evaluator or model configuration",
+          "errors": [
+            {
+              "code": "MODEL_HARNESS_MISMATCH",
+              "severity": "error",
+              "nodeId": "infer",
+              "path": "config.model",
+              "message": "The selected model belongs to another harness"
+            }
+          ]
+        }
+      }
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "failure-readiness",
+    "steps": "Inject readiness failure; switch; inspect retry notice, validation and API draft rejection; recover.",
+    "expected": "Authored values retained; named action under Harness; unavailable validation on catalog failure; incompatible write rejected.",
+    "actual": {
+      "notices": [
+        "Claude readiness: Sign-in needed. Model and effort are unchanged. Retry Claude preflight, then choose a model or switch harness again.",
+        "Claude readiness: Sign-in needed. The saved policy is unchanged.",
+        "QA Claude sign-in needed Model choices are read-only until Claude is ready. Saved model belongs to Codex. Choose a Claude model or an inherited default from this picker when the harness is ready.",
+        "",
+        ""
+      ],
+      "buttons": [
+        "",
+        "Earlier node outputs (1)",
+        "Advanced 2 set ",
+        "Retry Claude preflight",
+        "Edit as JSON",
+        "Add entry",
+        "Edit as JSON",
+        "Add capabilities",
+        "Edit as JSON",
+        "Add transforms",
+        "Add schema",
+        "",
+        "Delete node",
+        "Done"
+      ],
+      "validationUnavailable": false,
+      "apiSave": {
+        "status": 400,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/evaluation-invalid-configuration",
+          "title": "evaluation invalid configuration",
+          "status": 400,
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "detail": "invalid evaluator or model configuration",
+          "errors": [
+            {
+              "code": "MODEL_HARNESS_MISMATCH",
+              "severity": "error",
+              "nodeId": "infer",
+              "path": "config.model",
+              "message": "The selected model belongs to another harness"
+            }
+          ]
+        }
+      }
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "B3-known-failure",
+    "steps": "Fail catalog while first Settings is held, switch, release.",
+    "expected": "Immediate harness switch and retained authored fields; no wait or later rewrite.",
+    "actual": {
+      "counts": {
+        "catalog": 2,
+        "settings": 1,
+        "preflight": 1
+      },
+      "notices": [
+        "The harness changed, but model and effort are unchanged. Retry model catalog, then choose a model or switch harness again. Validation is unavailable while the catalog cannot be loaded. An incompatible draft cannot be saved.",
+        "Claude readiness: Checking… The saved policy is unchanged.",
+        "Cannot load the model catalog. The current values are read-only until it recovers.",
+        "",
+        ""
+      ]
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "B3-retry-not-first",
+    "steps": "Fail catalog; hold explicit retry; switch; release and explicitly correct/save.",
+    "expected": "No first-load queue or later rewrite; corrected draft saves.",
+    "actual": {
+      "error": "Error: expect(locator).toBeChecked() failed\n\nLocator:  getByRole('dialog').getByRole('radio', { name: 'claude', exact: true })\nExpected: checked\nReceived: unchecked\nTimeout:  5000ms\n\nCall log:\n  - Expect \"toBeChecked\" getByRole('dialog').getByRole('radio', { name: 'claude', exact: true }) with timeout 5000ms\n  - waiting for getByRole('dialog').getByRole('radio', { name: 'claude', exact: true })\n    14 × locator resolved to <input type=\"radio\" name=\"_r_n_\" value=\"claude\" class=\"peer sr-only\"/>\n       - unexpected value \"unchecked\"\n\n    at captureRawStack (<checkout>/node_modules\\.pnpm\\playwright-core@1.63.0\\node_modules\\playwright-core\\lib\\coreBundle.js:8588:17)\n    at callMatcherAsStep (<checkout>/node_modules\\.pnpm\\playwright@1.63.0\\node_modules\\playwright\\lib\\matchers\\expect.js:13310:57)\n    at Object.toBeChecked (<checkout>/node_modules\\.pnpm\\playwright@1.63.0\\node_modules\\playwright\\lib\\matchers\\expect.js:13302:23)\n    at <checkout>/docs\\qa\\2026-10-22-wp-f2b-qa\\round-3\\served-checks.mjs:565:84\n    at async check (<checkout>/docs\\qa\\2026-10-22-wp-f2b-qa\\round-3\\served-checks.mjs:257:20)\n    at async file:///<checkout>/docs/qa/2026-10-22-wp-f2b-qa/round-3/served-checks.mjs:538:3",
+      "pageText": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nLoops\n/\nIndependent switch QA\ndraft only\nAll changes saved\nUndo\nRedo\nOpen in Runs\nPublish the loop first: runs start from a published version.\nChecking…\nPublish\nPalette\nTrigger\nStarts a run\nDecision\nChooses a route and can limit repeats\nInference\nHands work to a harness\nScript\nRuns a program\nMutate\nChanges the context thread\nSubloop\nRuns another loop\nWait\nParks until input, time, or a signal\nHeartbeat\nPolls on an interval\nExit\nFinishes with an outcome and return value\nTRIGGER\nStart\nstart\nout\nINFERENCE\nInfer\ninfer\nout\nEXIT\nDone\ndone\nReact Flow\nLoop settings\n\nRequired fields are marked *\n\nName\n*\nDescription\nSETTINGS\n\nMaximum node visits is a safety cap against unintended cycles. Use a decision gate's maximum passes for an intentional repeat.\n\nWorking directory\nKind\nfixed\ntemplate\ntemp\nDefaults\nBy harness\n\nDefaults keyed by their harness; omitted fields inherit only within that harness.\n\nAdd entry\nMaximum node visits\nSubloop depth limit\nVARIABLES\n\nEach variable maps a name to a JSON Schema.\n\nVariables *\nAdd entry\nEdit inference\ninfer\n\nRequired fields are marked *\n\nNode id\n*\nLabel\n*\nSettings\nContext\nHarness\ncodex\nclaude\n\nWaiting for the first model catalog, Settings and readiness checks to finish... The harness change will apply when they finish.\n\nHarness that runs the session.\n\nSession\nPolicy\nfresh\nresume-previous\nresume-named\n\nStart fresh, resume the previous session, or resume a named session.\n\nPrompt\n\nLiquid template rendered against the thread.\n\nTemplate\n*\nLiquid\n1\nSynthetic QA only\nPreview (sample thread): Synthetic QA only\nEarlier node outputs (1)\nSandbox\nread-only\nworkspace-write\ndanger-full-access\n\nSandbox or tool policy. Claude requires an explicit supported policy and provides no OS/read-path confinement.\n\nAdvanced\n2 set\nMODEL\nModel\n(loop default)\ngpt-6-astra (saved)\n\nLoading the model catalog. The current values are read-only.\n\nRetry model catalog\n\nModel; inherits within this harness from loop, owner, then process defaults.\n\nModel catalog in Settings\nEffort\n(inherited effort)\nminimal (saved)\n\nReasoning effort; inherits within this harness like the model. Catalog effort is guidance only.\n\nHARNESS OPTIONS\nApproval\nnever\non-request\n\nWhether the harness may stop to ask before acting.\n\nNetwork access\nNot set\nYes\nNo\n\nLet commands in the sandbox reach the network.\n\nWeb search\nNot set\nYes\nNo\n\nLet the model search the web.\n\nEdit as JSON\nConfig overrides\n\nRaw harness configuration, passed through as is.\n\nAdd entry\nEdit as JSON\n\nNo resolved capability identifiers are available. Enter authored slugs.\n\nAdd capabilities\nOUTPUT\nCapture transcript\nartifact\nnone\n\nKeep the session transcript as an artifact, or not.\n\nTo messages\nfinal\nfinal-and-notes\nnone\n\nWhat the answer adds to the thread's messages.\n\nEdit as JSON\nTransforms\n\nMutations applied to the answer before it lands.\n\nAdd transforms\nAdd schema\nLIMITS\nTimeout seconds\n\nOptional watchdog; a timeout fails the run.\n\nConnections\nout → done\nDelete node\nDone",
+      "loop": {
+        "loop": {
+          "id": "01M5JM2RXQ70R70CGVN5DGBDFM",
+          "ownerId": "local",
+          "name": "Independent switch QA",
+          "draftVersionId": "01M5JM2RXQJMZ52K9CT3HVAFN1",
+          "createdAt": "2026-10-22T20:15:46.614Z",
+          "updatedAt": "2026-10-22T20:15:46.614Z"
+        },
+        "draft": {
+          "id": "01M5JM2RXQJMZ52K9CT3HVAFN1",
+          "loopId": "01M5JM2RXQ70R70CGVN5DGBDFM",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Independent switch QA",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": ["ui", "api", "mcp"]
+                }
+              },
+              {
+                "id": "infer",
+                "label": "Infer",
+                "ui": {
+                  "x": 260,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "codex",
+                  "model": "gpt-6-astra",
+                  "effort": "minimal",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "Synthetic QA only"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "workspace-write",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 520,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "a",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "b",
+                "from": {
+                  "node": "infer",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-22T20:15:46.614Z"
+        },
+        "draftToken": "a5f6c60c33b8bc52"
+      }
+    },
+    "verdict": "FAIL"
+  },
+  {
+    "id": "no-extra-lookups",
+    "steps": "After shared loads, open Start and Done, then Infer and switch.",
+    "expected": "Request counts remain exactly one each.",
+    "actual": {
+      "error": "Error: expect(locator).toHaveValue(expected) failed\n\nLocator:  getByRole('dialog').getByLabel('Model', { exact: true })\nExpected: \"claude-opus-5-5\"\nReceived: \"gpt-6-astra\"\nTimeout:  5000ms\n\nCall log:\n  - Expect \"toHaveValue\" getByRole('dialog').getByLabel('Model', { exact: true }) with timeout 5000ms\n  - waiting for getByRole('dialog').getByLabel('Model', { exact: true })\n    13 × locator resolved to <select id=\"_r_30_\" aria-describedby=\"_r_30_-help\" class=\"rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-point…>…</select>\n       - unexpected value \"gpt-6-astra\"\n\n    at captureRawStack (<checkout>/node_modules\\.pnpm\\playwright-core@1.63.0\\node_modules\\playwright-core\\lib\\coreBundle.js:8588:17)\n    at callMatcherAsStep (<checkout>/node_modules\\.pnpm\\playwright@1.63.0\\node_modules\\playwright\\lib\\matchers\\expect.js:13310:57)\n    at Object.toHaveValue (<checkout>/node_modules\\.pnpm\\playwright@1.63.0\\node_modules\\playwright\\lib\\matchers\\expect.js:13302:23)\n    at fields (<checkout>/docs\\qa\\2026-10-22-wp-f2b-qa\\round-3\\served-checks.mjs:165:25)\n    at <checkout>/docs\\qa\\2026-10-22-wp-f2b-qa\\round-3\\served-checks.mjs:598:17\n    at async check (<checkout>/docs\\qa\\2026-10-22-wp-f2b-qa\\round-3\\served-checks.mjs:257:20)\n    at async file:///<checkout>/docs/qa/2026-10-22-wp-f2b-qa/round-3/served-checks.mjs:581:3",
+      "pageText": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nLoops\n/\nIndependent switch QA\ndraft only\nAll changes saved\nUndo\nRedo\nOpen in Runs\nPublish the loop first: runs start from a published version.\nChecking…\nPublish\nPalette\nTrigger\nStarts a run\nDecision\nChooses a route and can limit repeats\nInference\nHands work to a harness\nScript\nRuns a program\nMutate\nChanges the context thread\nSubloop\nRuns another loop\nWait\nParks until input, time, or a signal\nHeartbeat\nPolls on an interval\nExit\nFinishes with an outcome and return value\nTRIGGER\nStart\nstart\nout\nINFERENCE\nInfer\ninfer\nout\nEXIT\nDone\ndone\nReact Flow\nLoop settings\n\nRequired fields are marked *\n\nName\n*\nDescription\nSETTINGS\n\nMaximum node visits is a safety cap against unintended cycles. Use a decision gate's maximum passes for an intentional repeat.\n\nWorking directory\nKind\nfixed\ntemplate\ntemp\nDefaults\nBy harness\n\nDefaults keyed by their harness; omitted fields inherit only within that harness.\n\nAdd entry\nMaximum node visits\nSubloop depth limit\nVARIABLES\n\nEach variable maps a name to a JSON Schema.\n\nVariables *\nAdd entry\nEdit inference\ninfer\n\nRequired fields are marked *\n\nNode id\n*\nLabel\n*\nSettings\nContext\nHarness\ncodex\nclaude\n\nWaiting for the first model catalog, Settings and readiness checks to finish... The harness change will apply when they finish.\n\nHarness that runs the session.\n\nSession\nPolicy\nfresh\nresume-previous\nresume-named\n\nStart fresh, resume the previous session, or resume a named session.\n\nPrompt\n\nLiquid template rendered against the thread.\n\nTemplate\n*\nLiquid\n1\nSynthetic QA only\nPreview (sample thread): Synthetic QA only\nEarlier node outputs (1)\nSandbox\nread-only\nworkspace-write\ndanger-full-access\n\nSandbox or tool policy. Claude requires an explicit supported policy and provides no OS/read-path confinement.\n\nAdvanced\n2 set\nMODEL\nModel\n(loop default)\nGPT-5.5 (gpt-5.5)\nGPT-5.6 Luna (gpt-5.6-luna)\nGPT-5.6 Sol (gpt-5.6-sol)\nGPT-5.6 Terra (gpt-5.6-terra)\nGPT-6 Astra (gpt-6-astra)\nGPT-6 Luna (gpt-6-luna)\nGPT-6 Sol (gpt-6-sol)\nGPT-6.1 Sol (gpt-6.1-sol)\n\nModel; inherits within this harness from loop, owner, then process defaults.\n\nModel catalog in Settings\nEffort\n(inherited; the catalog suggests medium)\nminimal\nlow\nmedium\nhigh\nxhigh\nmax\n\nReasoning effort; inherits within this harness like the model. Catalog effort is guidance only.\n\nHARNESS OPTIONS\nApproval\nnever\non-request\n\nWhether the harness may stop to ask before acting.\n\nNetwork access\nNot set\nYes\nNo\n\nLet commands in the sandbox reach the network.\n\nWeb search\nNot set\nYes\nNo\n\nLet the model search the web.\n\nEdit as JSON\nConfig overrides\n\nRaw harness configuration, passed through as is.\n\nAdd entry\nEdit as JSON\n\nNo resolved capability identifiers are available. Enter authored slugs.\n\nAdd capabilities\nOUTPUT\nCapture transcript\nartifact\nnone\n\nKeep the session transcript as an artifact, or not.\n\nTo messages\nfinal\nfinal-and-notes\nnone\n\nWhat the answer adds to the thread's messages.\n\nEdit as JSON\nTransforms\n\nMutations applied to the answer before it lands.\n\nAdd transforms\nAdd schema\nLIMITS\nTimeout seconds\n\nOptional watchdog; a timeout fails the run.\n\nConnections\nout → done\nDelete node\nDone",
+      "loop": {
+        "loop": {
+          "id": "01M5JM31WM5P5H1GNXPCP1Z699",
+          "ownerId": "local",
+          "name": "Independent switch QA",
+          "draftVersionId": "01M5JM31WMG20C8B0PXRK21KPS",
+          "createdAt": "2026-10-22T20:15:55.796Z",
+          "updatedAt": "2026-10-22T20:15:55.796Z"
+        },
+        "draft": {
+          "id": "01M5JM31WMG20C8B0PXRK21KPS",
+          "loopId": "01M5JM31WM5P5H1GNXPCP1Z699",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Independent switch QA",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": ["ui", "api", "mcp"]
+                }
+              },
+              {
+                "id": "infer",
+                "label": "Infer",
+                "ui": {
+                  "x": 260,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "codex",
+                  "model": "gpt-6-astra",
+                  "effort": "minimal",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "Synthetic QA only"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "workspace-write",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 520,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "a",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "b",
+                "from": {
+                  "node": "infer",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-22T20:15:55.796Z"
+        },
+        "draftToken": "a5f6c60c33b8bc52"
+      }
+    },
+    "verdict": "FAIL"
+  },
+  {
+    "id": "undo-switch",
+    "steps": "Switch to Claude then one Undo/Redo. Disable both Claude entries, switch and Undo warning.",
+    "expected": "Harness/model/effort/policy are one history step, Undo clears notice and disabled flags stay off.",
+    "actual": {
+      "error": "Error: expect(locator).toHaveValue(expected) failed\n\nLocator:  getByRole('dialog').getByLabel('Model', { exact: true })\nExpected: \"claude-opus-5-5\"\nReceived: \"gpt-6-astra\"\nTimeout:  5000ms\n\nCall log:\n  - Expect \"toHaveValue\" getByRole('dialog').getByLabel('Model', { exact: true }) with timeout 5000ms\n  - waiting for getByRole('dialog').getByLabel('Model', { exact: true })\n    13 × locator resolved to <select id=\"_r_11_\" aria-describedby=\"_r_11_-help\" class=\"rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-point…>…</select>\n       - unexpected value \"gpt-6-astra\"\n\n    at captureRawStack (<checkout>/node_modules\\.pnpm\\playwright-core@1.63.0\\node_modules\\playwright-core\\lib\\coreBundle.js:8588:17)\n    at callMatcherAsStep (<checkout>/node_modules\\.pnpm\\playwright@1.63.0\\node_modules\\playwright\\lib\\matchers\\expect.js:13310:57)\n    at Object.toHaveValue (<checkout>/node_modules\\.pnpm\\playwright@1.63.0\\node_modules\\playwright\\lib\\matchers\\expect.js:13302:23)\n    at fields (<checkout>/docs\\qa\\2026-10-22-wp-f2b-qa\\round-3\\served-checks.mjs:165:25)\n    at <checkout>/docs\\qa\\2026-10-22-wp-f2b-qa\\round-3\\served-checks.mjs:613:13\n    at async check (<checkout>/docs\\qa\\2026-10-22-wp-f2b-qa\\round-3\\served-checks.mjs:257:20)\n    at async file:///<checkout>/docs/qa/2026-10-22-wp-f2b-qa/round-3/served-checks.mjs:605:3",
+      "pageText": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nLoops\n/\nIndependent switch QA\ndraft only\nAll changes saved\nUndo\nRedo\nOpen in Runs\nPublish the loop first: runs start from a published version.\nChecking…\nPublish\nPalette\nTrigger\nStarts a run\nDecision\nChooses a route and can limit repeats\nInference\nHands work to a harness\nScript\nRuns a program\nMutate\nChanges the context thread\nSubloop\nRuns another loop\nWait\nParks until input, time, or a signal\nHeartbeat\nPolls on an interval\nExit\nFinishes with an outcome and return value\nTRIGGER\nStart\nstart\nout\nINFERENCE\nInfer\ninfer\nout\nEXIT\nDone\ndone\nReact Flow\nLoop settings\n\nRequired fields are marked *\n\nName\n*\nDescription\nSETTINGS\n\nMaximum node visits is a safety cap against unintended cycles. Use a decision gate's maximum passes for an intentional repeat.\n\nWorking directory\nKind\nfixed\ntemplate\ntemp\nDefaults\nBy harness\n\nDefaults keyed by their harness; omitted fields inherit only within that harness.\n\nAdd entry\nMaximum node visits\nSubloop depth limit\nVARIABLES\n\nEach variable maps a name to a JSON Schema.\n\nVariables *\nAdd entry\nEdit inference\ninfer\n\nRequired fields are marked *\n\nNode id\n*\nLabel\n*\nSettings\nContext\nHarness\ncodex\nclaude\n\nWaiting for the first model catalog, Settings and readiness checks to finish... The harness change will apply when they finish.\n\nHarness that runs the session.\n\nSession\nPolicy\nfresh\nresume-previous\nresume-named\n\nStart fresh, resume the previous session, or resume a named session.\n\nPrompt\n\nLiquid template rendered against the thread.\n\nTemplate\n*\nLiquid\n1\nSynthetic QA only\nPreview (sample thread): Synthetic QA only\nEarlier node outputs (1)\nSandbox\nread-only\nworkspace-write\ndanger-full-access\n\nSandbox or tool policy. Claude requires an explicit supported policy and provides no OS/read-path confinement.\n\nAdvanced\n2 set\nMODEL\nModel\n(loop default)\nGPT-5.5 (gpt-5.5)\nGPT-5.6 Luna (gpt-5.6-luna)\nGPT-5.6 Sol (gpt-5.6-sol)\nGPT-5.6 Terra (gpt-5.6-terra)\nGPT-6 Astra (gpt-6-astra)\nGPT-6 Luna (gpt-6-luna)\nGPT-6 Sol (gpt-6-sol)\nGPT-6.1 Sol (gpt-6.1-sol)\n\nModel; inherits within this harness from loop, owner, then process defaults.\n\nModel catalog in Settings\nEffort\n(inherited; the catalog suggests medium)\nminimal\nlow\nmedium\nhigh\nxhigh\nmax\n\nReasoning effort; inherits within this harness like the model. Catalog effort is guidance only.\n\nHARNESS OPTIONS\nApproval\nnever\non-request\n\nWhether the harness may stop to ask before acting.\n\nNetwork access\nNot set\nYes\nNo\n\nLet commands in the sandbox reach the network.\n\nWeb search\nNot set\nYes\nNo\n\nLet the model search the web.\n\nEdit as JSON\nConfig overrides\n\nRaw harness configuration, passed through as is.\n\nAdd entry\nEdit as JSON\n\nNo resolved capability identifiers are available. Enter authored slugs.\n\nAdd capabilities\nOUTPUT\nCapture transcript\nartifact\nnone\n\nKeep the session transcript as an artifact, or not.\n\nTo messages\nfinal\nfinal-and-notes\nnone\n\nWhat the answer adds to the thread's messages.\n\nEdit as JSON\nTransforms\n\nMutations applied to the answer before it lands.\n\nAdd transforms\nAdd schema\nLIMITS\nTimeout seconds\n\nOptional watchdog; a timeout fails the run.\n\nConnections\nout → done\nDelete node\nDone",
+      "loop": {
+        "loop": {
+          "id": "01M5JM38TT7QK0T4PEZJQMHJY8",
+          "ownerId": "local",
+          "name": "Independent switch QA",
+          "draftVersionId": "01M5JM38TTKB8P665SVCJEPGNA",
+          "createdAt": "2026-10-22T20:16:02.906Z",
+          "updatedAt": "2026-10-22T20:16:02.906Z"
+        },
+        "draft": {
+          "id": "01M5JM38TTKB8P665SVCJEPGNA",
+          "loopId": "01M5JM38TT7QK0T4PEZJQMHJY8",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Independent switch QA",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": ["ui", "api", "mcp"]
+                }
+              },
+              {
+                "id": "infer",
+                "label": "Infer",
+                "ui": {
+                  "x": 260,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "codex",
+                  "model": "gpt-6-astra",
+                  "effort": "minimal",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "Synthetic QA only"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "workspace-write",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 520,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "a",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "b",
+                "from": {
+                  "node": "infer",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-22T20:16:02.906Z"
+        },
+        "draftToken": "a5f6c60c33b8bc52"
+      }
+    },
+    "verdict": "FAIL"
+  },
+  {
+    "id": "restart",
+    "steps": "Save/publish Fable/low; stop owned API and start new process on same disposable store; reopen/run.",
+    "expected": "Values survive real process restart and request remains Fable/low.",
+    "actual": {
+      "error": "Error: expect(locator).toHaveValue(expected) failed\n\nLocator:  getByRole('dialog').getByLabel('Model', { exact: true })\nExpected: \"claude-fable-5-1\"\nReceived: \"gpt-6-astra\"\nTimeout:  5000ms\n\nCall log:\n  - Expect \"toHaveValue\" getByRole('dialog').getByLabel('Model', { exact: true }) with timeout 5000ms\n  - waiting for getByRole('dialog').getByLabel('Model', { exact: true })\n    14 × locator resolved to <select id=\"_r_17_\" aria-describedby=\"_r_17_-help\" class=\"rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-point…>…</select>\n       - unexpected value \"gpt-6-astra\"\n\n    at captureRawStack (<checkout>/node_modules\\.pnpm\\playwright-core@1.63.0\\node_modules\\playwright-core\\lib\\coreBundle.js:8588:17)\n    at callMatcherAsStep (<checkout>/node_modules\\.pnpm\\playwright@1.63.0\\node_modules\\playwright\\lib\\matchers\\expect.js:13310:57)\n    at Object.toHaveValue (<checkout>/node_modules\\.pnpm\\playwright@1.63.0\\node_modules\\playwright\\lib\\matchers\\expect.js:13302:23)\n    at fields (<checkout>/docs\\qa\\2026-10-22-wp-f2b-qa\\round-3\\served-checks.mjs:165:25)\n    at <checkout>/docs\\qa\\2026-10-22-wp-f2b-qa\\round-3\\served-checks.mjs:657:13\n    at async check (<checkout>/docs\\qa\\2026-10-22-wp-f2b-qa\\round-3\\served-checks.mjs:257:20)\n    at async file:///<checkout>/docs/qa/2026-10-22-wp-f2b-qa/round-3/served-checks.mjs:649:3",
+      "pageText": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nLoops\n/\nIndependent switch QA\ndraft only\nAll changes saved\nUndo\nRedo\nOpen in Runs\nPublish the loop first: runs start from a published version.\nChecking…\nPublish\nPalette\nTrigger\nStarts a run\nDecision\nChooses a route and can limit repeats\nInference\nHands work to a harness\nScript\nRuns a program\nMutate\nChanges the context thread\nSubloop\nRuns another loop\nWait\nParks until input, time, or a signal\nHeartbeat\nPolls on an interval\nExit\nFinishes with an outcome and return value\nTRIGGER\nStart\nstart\nout\nINFERENCE\nInfer\ninfer\nout\nEXIT\nDone\ndone\nReact Flow\nLoop settings\n\nRequired fields are marked *\n\nName\n*\nDescription\nSETTINGS\n\nMaximum node visits is a safety cap against unintended cycles. Use a decision gate's maximum passes for an intentional repeat.\n\nWorking directory\nKind\nfixed\ntemplate\ntemp\nDefaults\nBy harness\n\nDefaults keyed by their harness; omitted fields inherit only within that harness.\n\nKey\nBy harness value 1\nModel\n(owner default)\nclaude-fable-5-1 (saved)\n\nChecking Claude readiness. Model choices are read-only until the check finishes.\n\nRetry Claude preflight\n\nDefault harness model.\n\nModel catalog in Settings\nEffort\n(inherited; the catalog suggests high)\nlow\nmedium\nhigh\nxhigh\nmax\n\nDefault reasoning effort. For Claude, this is the requested effort; the CLI does not report the effective effort.\n\nAdd entry\nMaximum node visits\nSubloop depth limit\nVARIABLES\n\nEach variable maps a name to a JSON Schema.\n\nVariables *\nAdd entry\nEdit inference\ninfer\n\nRequired fields are marked *\n\nNode id\n*\nLabel\n*\nSettings\nContext\nHarness\ncodex\nclaude\n\nWaiting for the first model catalog, Settings and readiness checks to finish... The harness change will apply when they finish.\n\nHarness that runs the session.\n\nSession\nPolicy\nfresh\nresume-previous\nresume-named\n\nStart fresh, resume the previous session, or resume a named session.\n\nPrompt\n\nLiquid template rendered against the thread.\n\nTemplate\n*\nLiquid\n1\nSynthetic QA only\nPreview (sample thread): Synthetic QA only\nEarlier node outputs (1)\nSandbox\nread-only\nworkspace-write\ndanger-full-access\n\nSandbox or tool policy. Claude requires an explicit supported policy and provides no OS/read-path confinement.\n\nAdvanced\n2 set\nMODEL\nModel\n(loop default)\nGPT-5.5 (gpt-5.5)\nGPT-5.6 Luna (gpt-5.6-luna)\nGPT-5.6 Sol (gpt-5.6-sol)\nGPT-5.6 Terra (gpt-5.6-terra)\nGPT-6 Astra (gpt-6-astra)\nGPT-6 Luna (gpt-6-luna)\nGPT-6 Sol (gpt-6-sol)\nGPT-6.1 Sol (gpt-6.1-sol)\n\nModel; inherits within this harness from loop, owner, then process defaults.\n\nModel catalog in Settings\nEffort\n(inherited; the catalog suggests medium)\nminimal\nlow\nmedium\nhigh\nxhigh\nmax\n\nReasoning effort; inherits within this harness like the model. Catalog effort is guidance only.\n\nHARNESS OPTIONS\nApproval\nnever\non-request\n\nWhether the harness may stop to ask before acting.\n\nNetwork access\nNot set\nYes\nNo\n\nLet commands in the sandbox reach the network.\n\nWeb search\nNot set\nYes\nNo\n\nLet the model search the web.\n\nEdit as JSON\nConfig overrides\n\nRaw harness configuration, passed through as is.\n\nAdd entry\nEdit as JSON\n\nNo resolved capability identifiers are available. Enter authored slugs.\n\nAdd capabilities\nOUTPUT\nCapture transcript\nartifact\nnone\n\nKeep the session transcript as an artifact, or not.\n\nTo messages\nfinal\nfinal-and-notes\nnone\n\nWhat the answer adds to the thread's messages.\n\nEdit as JSON\nTransforms\n\nMutations applied to the answer before it lands.\n\nAdd transforms\nAdd schema\nLIMITS\nTimeout seconds\n\nOptional watchdog; a timeout fails the run.\n\nConnections\nout → done\nDelete node\nDone",
+      "loop": {
+        "loop": {
+          "id": "01M5JM3GXCARYK0DD2VCTDXA81",
+          "ownerId": "local",
+          "name": "Independent switch QA",
+          "draftVersionId": "01M5JM3GXCXVV50JRQR3TFPT4D",
+          "createdAt": "2026-10-22T20:16:11.180Z",
+          "updatedAt": "2026-10-22T20:16:11.180Z"
+        },
+        "draft": {
+          "id": "01M5JM3GXCXVV50JRQR3TFPT4D",
+          "loopId": "01M5JM3GXCARYK0DD2VCTDXA81",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Independent switch QA",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {
+                  "claude": {
+                    "model": "claude-fable-5-1",
+                    "effort": "low"
+                  }
+                }
+              },
+              "maxNodeVisits": 10,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": ["ui", "api", "mcp"]
+                }
+              },
+              {
+                "id": "infer",
+                "label": "Infer",
+                "ui": {
+                  "x": 260,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "codex",
+                  "model": "gpt-6-astra",
+                  "effort": "minimal",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "Synthetic QA only"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "workspace-write",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 520,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "a",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "b",
+                "from": {
+                  "node": "infer",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-22T20:16:11.180Z"
+        },
+        "draftToken": "62bbd1c4020f27fe"
+      }
+    },
+    "verdict": "FAIL"
+  },
+  {
+    "id": "recipe-ui",
+    "steps": "Follow configured-default recipe in Settings, both editor switch directions, save/reopen/reload, publish, Open in Runs and Start run.",
+    "expected": "Settings Sol/high and Opus/xhigh; loop Astra/low and Fable/low override them; actual CLI requests agree.",
+    "actual": {
+      "error": "Error: expect(locator).toHaveValue(expected) failed\n\nLocator:  getByRole('dialog').getByLabel('Model', { exact: true })\nExpected: \"gpt-6-astra\"\nReceived: \"claude-opus-5-5\"\nTimeout:  5000ms\n\nCall log:\n  - Expect \"toHaveValue\" getByRole('dialog').getByLabel('Model', { exact: true }) with timeout 5000ms\n  - waiting for getByRole('dialog').getByLabel('Model', { exact: true })\n    14 × locator resolved to <select id=\"_r_1b_\" aria-readonly=\"true\" aria-describedby=\"_r_1b_-help _r_10_-model-catalog\" class=\"rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-su…>…</select>\n       - unexpected value \"claude-opus-5-5\"\n\n    at captureRawStack (<checkout>/node_modules\\.pnpm\\playwright-core@1.63.0\\node_modules\\playwright-core\\lib\\coreBundle.js:8588:17)\n    at callMatcherAsStep (<checkout>/node_modules\\.pnpm\\playwright@1.63.0\\node_modules\\playwright\\lib\\matchers\\expect.js:13310:57)\n    at Object.toHaveValue (<checkout>/node_modules\\.pnpm\\playwright@1.63.0\\node_modules\\playwright\\lib\\matchers\\expect.js:13302:23)\n    at fields (<checkout>/docs\\qa\\2026-10-22-wp-f2b-qa\\round-3\\served-checks.mjs:165:25)\n    at <checkout>/docs\\qa\\2026-10-22-wp-f2b-qa\\round-3\\served-checks.mjs:710:13\n    at async check (<checkout>/docs\\qa\\2026-10-22-wp-f2b-qa\\round-3\\served-checks.mjs:257:20)\n    at async file:///<checkout>/docs/qa/2026-10-22-wp-f2b-qa/round-3/served-checks.mjs:674:3",
+      "pageText": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nLoops\n/\nIndependent switch QA\ndraft only\nAll changes saved\nUndo\nRedo\nOpen in Runs\nPublish the loop first: runs start from a published version.\nReady to publish\nPublish\nPalette\nTrigger\nStarts a run\nDecision\nChooses a route and can limit repeats\nInference\nHands work to a harness\nScript\nRuns a program\nMutate\nChanges the context thread\nSubloop\nRuns another loop\nWait\nParks until input, time, or a signal\nHeartbeat\nPolls on an interval\nExit\nFinishes with an outcome and return value\nTRIGGER\nStart\nstart\nout\nINFERENCE\nInfer\ninfer\nout\nEXIT\nDone\ndone\nReact Flow\nLoop settings\n\nRequired fields are marked *\n\nName\n*\nDescription\nSETTINGS\n\nMaximum node visits is a safety cap against unintended cycles. Use a decision gate's maximum passes for an intentional repeat.\n\nWorking directory\nKind\nfixed\ntemplate\ntemp\nDefaults\nBy harness\n\nDefaults keyed by their harness; omitted fields inherit only within that harness.\n\nKey\nBy harness value 1\nModel\n(owner default)\nGPT-5.5 (gpt-5.5)\nGPT-5.6 Luna (gpt-5.6-luna)\nGPT-5.6 Sol (gpt-5.6-sol)\nGPT-5.6 Terra (gpt-5.6-terra)\nGPT-6 Astra (gpt-6-astra)\nGPT-6 Luna (gpt-6-luna)\nGPT-6 Sol (gpt-6-sol)\nGPT-6.1 Sol (gpt-6.1-sol)\n\nDefault harness model.\n\nModel catalog in Settings\nEffort\n(inherited; the catalog suggests medium)\nminimal\nlow\nmedium\nhigh\nxhigh\nmax\n\nDefault reasoning effort.\n\nKey\nBy harness value 2\nModel\n(owner default)\nclaude-fable-5-1 (saved)\n\nChecking Claude readiness. Model choices are read-only until the check finishes.\n\nRetry Claude preflight\n\nDefault harness model.\n\nModel catalog in Settings\nEffort\n(inherited; the catalog suggests high)\nlow\nmedium\nhigh\nxhigh\nmax\n\nDefault reasoning effort. For Claude, this is the requested effort; the CLI does not report the effective effort.\n\nAdd entry\nMaximum node visits\nSubloop depth limit\nVARIABLES\n\nEach variable maps a name to a JSON Schema.\n\nVariables *\nAdd entry\nEdit inference\ninfer\n\nRequired fields are marked *\n\nNode id\n*\nLabel\n*\nSettings\nContext\nHarness\ncodex\nclaude\n\nWaiting for the first model catalog, Settings and readiness checks to finish... The harness change will apply when they finish.\n\nHarness that runs the session.\n\nSession\nPolicy\nfresh\nresume-previous\nresume-named\n\nStart fresh, resume the previous session, or resume a named session.\n\nPrompt\n\nLiquid template rendered against the thread.\n\nTemplate\n*\nLiquid\n1\nSynthetic QA only\nPreview (sample thread): Synthetic QA only\nEarlier node outputs (1)\nSandbox and approval policy\nCurrent policy: read-only / never (saved; not verified)\n\nRead-only restricts built-in tools but provides no filesystem or OS confinement. Danger full access leaves command execution and network unconfined.\n\nClaude readiness: Checking… The saved policy is unchanged.\n\nAdvanced\n2 set\nMODEL\nModel\n(loop default)\nclaude-opus-5-5 (saved)\n\nChecking Claude readiness. Model choices are read-only until the check finishes.\n\nRetry Claude preflight\n\nModel; inherits within this harness from loop, owner, then process defaults.\n\nModel catalog in Settings\nEffort\n(inherited; the catalog suggests high)\nlow\nmedium\nhigh\nxhigh\nmax\n\nReasoning effort; inherits within this harness like the model. Catalog effort is guidance only. For Claude, this is the requested effort; the CLI does not report the effective effort.\n\nHARNESS OPTIONS\nApproval\nnever\n\nClaude supports never approval only; choose a supported policy above to correct this value.\n\nNetwork access\nNot set\nYes\nNo\n\nLet commands in the sandbox reach the network.\n\nWeb search\nNot set\nYes\nNo\n\nLet the model search the web.\n\nEdit as JSON\nConfig overrides\n\nRaw harness configuration, passed through as is.\n\nAdd entry\nEdit as JSON\n\nNo resolved capability identifiers are available. Enter authored slugs.\n\nAdd capabilities\nOUTPUT\nCapture transcript\nartifact\nnone\n\nKeep the session transcript as an artifact, or not.\n\nTo messages\nfinal\nfinal-and-notes\nnone\n\nWhat the answer adds to the thread's messages.\n\nEdit as JSON\nTransforms\n\nMutations applied to the answer before it lands.\n\nAdd transforms\nAdd schema\nLIMITS\nTimeout seconds\n\nOptional watchdog; a timeout fails the run.\n\nConnections\nout → done\nDelete node\nDone",
+      "loop": {
+        "loop": {
+          "id": "01M5JM41TJX5Q00WE73305QX7G",
+          "ownerId": "local",
+          "name": "Independent switch QA",
+          "draftVersionId": "01M5JM41TJ4RP2YESXMG8QY2R5",
+          "createdAt": "2026-10-22T20:16:28.498Z",
+          "updatedAt": "2026-10-22T20:16:28.498Z"
+        },
+        "draft": {
+          "id": "01M5JM41TJ4RP2YESXMG8QY2R5",
+          "loopId": "01M5JM41TJX5Q00WE73305QX7G",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Independent switch QA",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-astra",
+                    "effort": "low"
+                  },
+                  "claude": {
+                    "model": "claude-fable-5-1",
+                    "effort": "low"
+                  }
+                }
+              },
+              "maxNodeVisits": 10,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": ["ui", "api", "mcp"]
+                }
+              },
+              {
+                "id": "infer",
+                "label": "Infer",
+                "ui": {
+                  "x": 260,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "claude",
+                  "model": "claude-opus-5-5",
+                  "effort": "high",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "Synthetic QA only"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "read-only",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 520,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "a",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "b",
+                "from": {
+                  "node": "infer",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-22T20:16:28.498Z"
+        },
+        "draftToken": "abe73800874897fc"
+      }
+    },
+    "verdict": "FAIL"
+  },
+  {
+    "id": "recipe-absent-disabled",
+    "steps": "Clear Settings efforts then models in UI; verify ecosystem choices; configure Fable/xhigh, disable it in Settings catalog, switch; disable Opus and inspect blocked state; restore without rewrite.",
+    "expected": "Opus/high and Luna/high with absent defaults; disabled defaults not re-enabled; no enabled default retains authored values.",
+    "actual": {
+      "error": "Error: expect(locator).toHaveValue(expected) failed\n\nLocator:  getByRole('dialog').getByLabel('Model', { exact: true })\nExpected: \"claude-opus-5-5\"\nReceived: \"gpt-6-astra\"\nTimeout:  5000ms\n\nCall log:\n  - Expect \"toHaveValue\" getByRole('dialog').getByLabel('Model', { exact: true }) with timeout 5000ms\n  - waiting for getByRole('dialog').getByLabel('Model', { exact: true })\n    13 × locator resolved to <select id=\"_r_11_\" aria-describedby=\"_r_11_-help\" class=\"rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-point…>…</select>\n       - unexpected value \"gpt-6-astra\"\n\n    at captureRawStack (<checkout>/node_modules\\.pnpm\\playwright-core@1.63.0\\node_modules\\playwright-core\\lib\\coreBundle.js:8588:17)\n    at callMatcherAsStep (<checkout>/node_modules\\.pnpm\\playwright@1.63.0\\node_modules\\playwright\\lib\\matchers\\expect.js:13310:57)\n    at Object.toHaveValue (<checkout>/node_modules\\.pnpm\\playwright@1.63.0\\node_modules\\playwright\\lib\\matchers\\expect.js:13302:23)\n    at fields (<checkout>/docs\\qa\\2026-10-22-wp-f2b-qa\\round-3\\served-checks.mjs:165:25)\n    at <checkout>/docs\\qa\\2026-10-22-wp-f2b-qa\\round-3\\served-checks.mjs:774:13\n    at async check (<checkout>/docs\\qa\\2026-10-22-wp-f2b-qa\\round-3\\served-checks.mjs:257:20)\n    at async file:///<checkout>/docs/qa/2026-10-22-wp-f2b-qa/round-3/served-checks.mjs:747:3",
+      "pageText": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nLoops\n/\nIndependent switch QA\ndraft only\nAll changes saved\nUndo\nRedo\nOpen in Runs\nPublish the loop first: runs start from a published version.\nChecking…\nPublish\nPalette\nTrigger\nStarts a run\nDecision\nChooses a route and can limit repeats\nInference\nHands work to a harness\nScript\nRuns a program\nMutate\nChanges the context thread\nSubloop\nRuns another loop\nWait\nParks until input, time, or a signal\nHeartbeat\nPolls on an interval\nExit\nFinishes with an outcome and return value\nTRIGGER\nStart\nstart\nout\nINFERENCE\nInfer\ninfer\nout\nEXIT\nDone\ndone\nReact Flow\nLoop settings\n\nRequired fields are marked *\n\nName\n*\nDescription\nSETTINGS\n\nMaximum node visits is a safety cap against unintended cycles. Use a decision gate's maximum passes for an intentional repeat.\n\nWorking directory\nKind\nfixed\ntemplate\ntemp\nDefaults\nBy harness\n\nDefaults keyed by their harness; omitted fields inherit only within that harness.\n\nAdd entry\nMaximum node visits\nSubloop depth limit\nVARIABLES\n\nEach variable maps a name to a JSON Schema.\n\nVariables *\nAdd entry\nEdit inference\ninfer\n\nRequired fields are marked *\n\nNode id\n*\nLabel\n*\nSettings\nContext\nHarness\ncodex\nclaude\n\nWaiting for the first model catalog, Settings and readiness checks to finish... The harness change will apply when they finish.\n\nHarness that runs the session.\n\nSession\nPolicy\nfresh\nresume-previous\nresume-named\n\nStart fresh, resume the previous session, or resume a named session.\n\nPrompt\n\nLiquid template rendered against the thread.\n\nTemplate\n*\nLiquid\n1\nSynthetic QA only\nPreview (sample thread): Synthetic QA only\nEarlier node outputs (1)\nSandbox\nread-only\nworkspace-write\ndanger-full-access\n\nSandbox or tool policy. Claude requires an explicit supported policy and provides no OS/read-path confinement.\n\nAdvanced\n2 set\nMODEL\nModel\n(loop default)\nGPT-5.5 (gpt-5.5)\nGPT-5.6 Luna (gpt-5.6-luna)\nGPT-5.6 Sol (gpt-5.6-sol)\nGPT-5.6 Terra (gpt-5.6-terra)\nGPT-6 Astra (gpt-6-astra)\nGPT-6 Luna (gpt-6-luna)\nGPT-6 Sol (gpt-6-sol)\nGPT-6.1 Sol (gpt-6.1-sol)\n\nModel; inherits within this harness from loop, owner, then process defaults.\n\nModel catalog in Settings\nEffort\n(inherited; the catalog suggests medium)\nminimal\nlow\nmedium\nhigh\nxhigh\nmax\n\nReasoning effort; inherits within this harness like the model. Catalog effort is guidance only.\n\nHARNESS OPTIONS\nApproval\nnever\non-request\n\nWhether the harness may stop to ask before acting.\n\nNetwork access\nNot set\nYes\nNo\n\nLet commands in the sandbox reach the network.\n\nWeb search\nNot set\nYes\nNo\n\nLet the model search the web.\n\nEdit as JSON\nConfig overrides\n\nRaw harness configuration, passed through as is.\n\nAdd entry\nEdit as JSON\n\nNo resolved capability identifiers are available. Enter authored slugs.\n\nAdd capabilities\nOUTPUT\nCapture transcript\nartifact\nnone\n\nKeep the session transcript as an artifact, or not.\n\nTo messages\nfinal\nfinal-and-notes\nnone\n\nWhat the answer adds to the thread's messages.\n\nEdit as JSON\nTransforms\n\nMutations applied to the answer before it lands.\n\nAdd transforms\nAdd schema\nLIMITS\nTimeout seconds\n\nOptional watchdog; a timeout fails the run.\n\nConnections\nout → done\nDelete node\nDone",
+      "loop": {
+        "loop": {
+          "id": "01M5JM4BNP7814PZMNM78GJMV6",
+          "ownerId": "local",
+          "name": "Independent switch QA",
+          "draftVersionId": "01M5JM4BNP5RHDSYS9SAWF8RR8",
+          "createdAt": "2026-10-22T20:16:38.582Z",
+          "updatedAt": "2026-10-22T20:16:38.582Z"
+        },
+        "draft": {
+          "id": "01M5JM4BNP5RHDSYS9SAWF8RR8",
+          "loopId": "01M5JM4BNP7814PZMNM78GJMV6",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Independent switch QA",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": ["ui", "api", "mcp"]
+                }
+              },
+              {
+                "id": "infer",
+                "label": "Infer",
+                "ui": {
+                  "x": 260,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "codex",
+                  "model": "gpt-6-astra",
+                  "effort": "minimal",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "Synthetic QA only"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "workspace-write",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 520,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "a",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "b",
+                "from": {
+                  "node": "infer",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-22T20:16:38.582Z"
+        },
+        "draftToken": "a5f6c60c33b8bc52"
+      }
+    },
+    "verdict": "FAIL"
+  },
+  {
+    "id": "effort-only-cleared",
+    "steps": "No configured effort; controlled catalog suggests unsupported minimal for Claude; switch effort-only Codex minimal.",
+    "expected": "Model remains absent and effort clears to inheritance; saved/reopened config has neither property; effort inherits high from the process configuration.",
+    "actual": {
+      "error": "Error: expect(locator).toBeChecked() failed\n\nLocator:  getByRole('dialog').getByRole('radio', { name: 'claude', exact: true })\nExpected: checked\nReceived: unchecked\nTimeout:  5000ms\n\nCall log:\n  - Expect \"toBeChecked\" getByRole('dialog').getByRole('radio', { name: 'claude', exact: true }) with timeout 5000ms\n  - waiting for getByRole('dialog').getByRole('radio', { name: 'claude', exact: true })\n    14 × locator resolved to <input type=\"radio\" name=\"_r_t_\" value=\"claude\" class=\"peer sr-only\"/>\n       - unexpected value \"unchecked\"\n\n    at captureRawStack (<checkout>/node_modules\\.pnpm\\playwright-core@1.63.0\\node_modules\\playwright-core\\lib\\coreBundle.js:8588:17)\n    at callMatcherAsStep (<checkout>/node_modules\\.pnpm\\playwright@1.63.0\\node_modules\\playwright\\lib\\matchers\\expect.js:13310:57)\n    at Object.toBeChecked (<checkout>/node_modules\\.pnpm\\playwright@1.63.0\\node_modules\\playwright\\lib\\matchers\\expect.js:13302:23)\n    at <checkout>/docs\\qa\\2026-10-22-wp-f2b-qa\\round-3\\served-checks.mjs:847:82\n    at async check (<checkout>/docs\\qa\\2026-10-22-wp-f2b-qa\\round-3\\served-checks.mjs:257:20)\n    at async file:///<checkout>/docs/qa/2026-10-22-wp-f2b-qa/round-3/served-checks.mjs:827:3",
+      "pageText": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nLoops\n/\nIndependent switch QA\ndraft only\nAll changes saved\nUndo\nRedo\nOpen in Runs\nPublish the loop first: runs start from a published version.\n1 error\nPublish\nPalette\nTrigger\nStarts a run\nDecision\nChooses a route and can limit repeats\nInference\nHands work to a harness\nScript\nRuns a program\nMutate\nChanges the context thread\nSubloop\nRuns another loop\nWait\nParks until input, time, or a signal\nHeartbeat\nPolls on an interval\nExit\nFinishes with an outcome and return value\nTRIGGER\nStart\nstart\nout\nINFERENCE\nInfer\ninfer\nout\nEXIT\nDone\ndone\nReact Flow\nLoop settings\n\nRequired fields are marked *\n\nName\n*\nDescription\nSETTINGS\n\nMaximum node visits is a safety cap against unintended cycles. Use a decision gate's maximum passes for an intentional repeat.\n\nWorking directory\nKind\nfixed\ntemplate\ntemp\nDefaults\nBy harness\n\nDefaults keyed by their harness; omitted fields inherit only within that harness.\n\nKey\nBy harness value 1\nModel\n(owner default)\nclaude-opus-5-5 (saved)\n\nChecking Claude readiness. Model choices are read-only until the check finishes.\n\nRetry Claude preflight\n\nDefault harness model.\n\nModel catalog in Settings\nEffort\n(inherited; the catalog suggests minimal)\nlow\nmedium\nhigh\nxhigh\nmax\n\nDefault reasoning effort. For Claude, this is the requested effort; the CLI does not report the effective effort.\n\nAdd entry\nMaximum node visits\nSubloop depth limit\nVARIABLES\n\nEach variable maps a name to a JSON Schema.\n\nVariables *\nAdd entry\nEdit inference\ninfer\n\nRequired fields are marked *\n\nNode id\n*\nLabel\n*\nSettings\n1 error\nContext\nHarness\ncodex\nclaude\n\nWaiting for the first model catalog, Settings and readiness checks to finish... The harness change will apply when they finish.\n\nHarness that runs the session.\n\nSession\nPolicy\nfresh\nresume-previous\nresume-named\n\nStart fresh, resume the previous session, or resume a named session.\n\nPrompt\n\nLiquid template rendered against the thread.\n\nTemplate\n*\nLiquid\n1\nSynthetic QA only\nPreview (sample thread): Synthetic QA only\nEarlier node outputs (1)\nSandbox\nread-only\nworkspace-write\ndanger-full-access\n\nSandbox or tool policy. Claude requires an explicit supported policy and provides no OS/read-path confinement.\n\nAdvanced\n1 set\n1 error\nMODEL\nModel\n(loop default)\nGPT-5.5 (gpt-5.5)\nGPT-5.6 Luna (gpt-5.6-luna)\nGPT-5.6 Sol (gpt-5.6-sol)\nGPT-5.6 Terra (gpt-5.6-terra)\nGPT-6 Astra (gpt-6-astra)\nGPT-6 Luna (gpt-6-luna)\nGPT-6 Sol (gpt-6-sol)\nGPT-6.1 Sol (gpt-6.1-sol)\n\nModel; inherits within this harness from loop, owner, then process defaults.\n\nModel catalog in Settings\nEffort\n(inherited effort)\nminimal\nlow\nmedium\nhigh\nxhigh\nmax\n\nReasoning effort; inherits within this harness like the model. Catalog effort is guidance only.\n\nHARNESS OPTIONS\nApproval\nnever\non-request\n\nWhether the harness may stop to ask before acting.\n\nNetwork access\nNot set\nYes\nNo\n\nLet commands in the sandbox reach the network.\n\nWeb search\nNot set\nYes\nNo\n\nLet the model search the web.\n\nEdit as JSON\nConfig overrides\n\nRaw harness configuration, passed through as is.\n\nAdd entry\nEdit as JSON\n\nNo resolved capability identifiers are available. Enter authored slugs.\n\nAdd capabilities\nOUTPUT\nCapture transcript\nartifact\nnone\n\nKeep the session transcript as an artifact, or not.\n\nTo messages\nfinal\nfinal-and-notes\nnone\n\nWhat the answer adds to the thread's messages.\n\nEdit as JSON\nTransforms\n\nMutations applied to the answer before it lands.\n\nAdd transforms\nAdd schema\nLIMITS\nTimeout seconds\n\nOptional watchdog; a timeout fails the run.\n\nConnections\nout → done\nDelete node\nDone",
+      "loop": {
+        "loop": {
+          "id": "01M5JM4HV9EW5WY111385V87AR",
+          "ownerId": "local",
+          "name": "Independent switch QA",
+          "draftVersionId": "01M5JM4HV90KZ7NCYXHJE4QKCG",
+          "createdAt": "2026-10-22T20:16:44.905Z",
+          "updatedAt": "2026-10-22T20:16:44.905Z"
+        },
+        "draft": {
+          "id": "01M5JM4HV90KZ7NCYXHJE4QKCG",
+          "loopId": "01M5JM4HV9EW5WY111385V87AR",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Independent switch QA",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {
+                  "claude": {
+                    "model": "claude-opus-5-5"
+                  }
+                }
+              },
+              "maxNodeVisits": 10,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": ["ui", "api", "mcp"]
+                }
+              },
+              {
+                "id": "infer",
+                "label": "Infer",
+                "ui": {
+                  "x": 260,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "codex",
+                  "effort": "minimal",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "Synthetic QA only"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "workspace-write",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 520,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "a",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "b",
+                "from": {
+                  "node": "infer",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-22T20:16:44.905Z"
+        },
+        "draftToken": "0c48161cca906404"
+      }
+    },
+    "verdict": "FAIL"
+  },
+  {
+    "id": "ecosystem-flag",
+    "steps": "Controlled successful catalog swaps Claude ecosystemDefault flags and Settings has an incompatible model.",
+    "expected": "Explicit switch uses the flagged supported Fable, proving no hard-coded web default.",
+    "actual": {
+      "controlledResponses": true,
+      "model": "claude-fable-5-1",
+      "effort": "high"
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "cached-catalog-failure",
+    "steps": "Cache Codex Astra/minimal, wait 2.1s, fail visibility-triggered catalog refetch, switch Claude, retry catalog.",
+    "expected": "Unavailable status and disabled Publish have catalog tooltip; values/notice retained; switch adds no lookup; retry restores saved-draft readiness; API refuses incompatible values.",
+    "actual": {
+      "error": "Error: expect(locator).toBeVisible() failed\n\nLocator: getByText('Ready to publish', { exact: true })\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n  - Expect \"toBeVisible\" getByText('Ready to publish', { exact: true }) with timeout 5000ms\n  - waiting for getByText('Ready to publish', { exact: true })\n\n    at captureRawStack (<checkout>/node_modules\\.pnpm\\playwright-core@1.63.0\\node_modules\\playwright-core\\lib\\coreBundle.js:8588:17)\n    at callMatcherAsStep (<checkout>/node_modules\\.pnpm\\playwright@1.63.0\\node_modules\\playwright\\lib\\matchers\\expect.js:13310:57)\n    at Object.toBeVisible (<checkout>/node_modules\\.pnpm\\playwright@1.63.0\\node_modules\\playwright\\lib\\matchers\\expect.js:13302:23)\n    at <checkout>/docs\\qa\\2026-10-22-wp-f2b-qa\\round-3\\served-checks.mjs:906:73\n    at async check (<checkout>/docs\\qa\\2026-10-22-wp-f2b-qa\\round-3\\served-checks.mjs:257:20)\n    at async file:///<checkout>/docs/qa/2026-10-22-wp-f2b-qa/round-3/served-checks.mjs:896:3",
+      "pageText": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nLoops\n/\nIndependent switch QA\ndraft only\nAll changes saved\nUndo\nRedo\nOpen in Runs\nPublish the loop first: runs start from a published version.\nChecking…\nPublish\nPalette\nTrigger\nStarts a run\nDecision\nChooses a route and can limit repeats\nInference\nHands work to a harness\nScript\nRuns a program\nMutate\nChanges the context thread\nSubloop\nRuns another loop\nWait\nParks until input, time, or a signal\nHeartbeat\nPolls on an interval\nExit\nFinishes with an outcome and return value\nTRIGGER\nStart\nstart\nout\nINFERENCE\nInfer\ninfer\nout\nEXIT\nDone\ndone\nReact Flow\nLoop settings\n\nRequired fields are marked *\n\nName\n*\nDescription\nSETTINGS\n\nMaximum node visits is a safety cap against unintended cycles. Use a decision gate's maximum passes for an intentional repeat.\n\nWorking directory\nKind\nfixed\ntemplate\ntemp\nDefaults\nBy harness\n\nDefaults keyed by their harness; omitted fields inherit only within that harness.\n\nAdd entry\nMaximum node visits\nSubloop depth limit\nVARIABLES\n\nEach variable maps a name to a JSON Schema.\n\nVariables *\nAdd entry\nEdit inference\ninfer\n\nRequired fields are marked *\n\nNode id\n*\nLabel\n*\nSettings\nContext\nHarness\ncodex\nclaude\n\nHarness that runs the session.\n\nSession\nPolicy\nfresh\nresume-previous\nresume-named\n\nStart fresh, resume the previous session, or resume a named session.\n\nPrompt\n\nLiquid template rendered against the thread.\n\nTemplate\n*\nLiquid\n1\nSynthetic QA only\nPreview (sample thread): Synthetic QA only\nEarlier node outputs (1)\nSandbox\nread-only\nworkspace-write\ndanger-full-access\n\nSandbox or tool policy. Claude requires an explicit supported policy and provides no OS/read-path confinement.\n\nAdvanced\n2 set\nMODEL\nModel\n(loop default)\nGPT-5.5 (gpt-5.5)\nGPT-5.6 Luna (gpt-5.6-luna)\nGPT-5.6 Sol (gpt-5.6-sol)\nGPT-5.6 Terra (gpt-5.6-terra)\nGPT-6 Astra (gpt-6-astra)\nGPT-6 Luna (gpt-6-luna)\nGPT-6 Sol (gpt-6-sol)\nGPT-6.1 Sol (gpt-6.1-sol)\n\nModel; inherits within this harness from loop, owner, then process defaults.\n\nModel catalog in Settings\nEffort\n(inherited; the catalog suggests medium)\nminimal\nlow\nmedium\nhigh\nxhigh\nmax\n\nReasoning effort; inherits within this harness like the model. Catalog effort is guidance only.\n\nHARNESS OPTIONS\nApproval\nnever\non-request\n\nWhether the harness may stop to ask before acting.\n\nNetwork access\nNot set\nYes\nNo\n\nLet commands in the sandbox reach the network.\n\nWeb search\nNot set\nYes\nNo\n\nLet the model search the web.\n\nEdit as JSON\nConfig overrides\n\nRaw harness configuration, passed through as is.\n\nAdd entry\nEdit as JSON\n\nNo resolved capability identifiers are available. Enter authored slugs.\n\nAdd capabilities\nOUTPUT\nCapture transcript\nartifact\nnone\n\nKeep the session transcript as an artifact, or not.\n\nTo messages\nfinal\nfinal-and-notes\nnone\n\nWhat the answer adds to the thread's messages.\n\nEdit as JSON\nTransforms\n\nMutations applied to the answer before it lands.\n\nAdd transforms\nAdd schema\nLIMITS\nTimeout seconds\n\nOptional watchdog; a timeout fails the run.\n\nConnections\nout → done\nDelete node\nDone",
+      "loop": {
+        "loop": {
+          "id": "01M5JM4Z8S57EHZM619V031HZ1",
+          "ownerId": "local",
+          "name": "Independent switch QA",
+          "draftVersionId": "01M5JM4Z8SBHKXD7GGY9TC14CS",
+          "createdAt": "2026-10-22T20:16:58.649Z",
+          "updatedAt": "2026-10-22T20:16:58.649Z"
+        },
+        "draft": {
+          "id": "01M5JM4Z8SBHKXD7GGY9TC14CS",
+          "loopId": "01M5JM4Z8S57EHZM619V031HZ1",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Independent switch QA",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": ["ui", "api", "mcp"]
+                }
+              },
+              {
+                "id": "infer",
+                "label": "Infer",
+                "ui": {
+                  "x": 260,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "codex",
+                  "model": "gpt-6-astra",
+                  "effort": "minimal",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "Synthetic QA only"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "workspace-write",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 520,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "a",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "b",
+                "from": {
+                  "node": "infer",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-22T20:16:58.649Z"
+        },
+        "draftToken": "a5f6c60c33b8bc52"
+      }
+    },
+    "verdict": "FAIL"
+  },
+  {
+    "id": "server-check-only-failure",
+    "steps": "Block only POST /validate on valid saved draft; inspect tooltips; close unchanged dialog and publish.",
+    "expected": "Default unavailable tooltip; Publish enabled; POST /publish retries real server validation and succeeds.",
+    "actual": {
+      "error": "Error: expect(locator).toBeVisible() failed\n\nLocator: getByText('Published version 1.')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n  - Expect \"toBeVisible\" getByText('Published version 1.') with timeout 5000ms\n  - waiting for getByText('Published version 1.')\n\n    at captureRawStack (<checkout>/node_modules\\.pnpm\\playwright-core@1.63.0\\node_modules\\playwright-core\\lib\\coreBundle.js:8588:17)\n    at callMatcherAsStep (<checkout>/node_modules\\.pnpm\\playwright@1.63.0\\node_modules\\playwright\\lib\\matchers\\expect.js:13310:57)\n    at Object.toBeVisible (<checkout>/node_modules\\.pnpm\\playwright@1.63.0\\node_modules\\playwright\\lib\\matchers\\expect.js:13302:23)\n    at <checkout>/docs\\qa\\2026-10-22-wp-f2b-qa\\round-3\\served-checks.mjs:1009:60\n    at async check (<checkout>/docs\\qa\\2026-10-22-wp-f2b-qa\\round-3\\served-checks.mjs:257:20)\n    at async file:///<checkout>/docs/qa/2026-10-22-wp-f2b-qa/round-3/served-checks.mjs:980:3",
+      "pageText": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nLoops\n/\nIndependent switch QA\ndraft only\nAll changes saved\nUndo\nRedo\nOpen in Runs\nPublish the loop first: runs start from a published version.\nValidation unavailable\nPublishing…\nPalette\nTrigger\nStarts a run\nDecision\nChooses a route and can limit repeats\nInference\nHands work to a harness\nScript\nRuns a program\nMutate\nChanges the context thread\nSubloop\nRuns another loop\nWait\nParks until input, time, or a signal\nHeartbeat\nPolls on an interval\nExit\nFinishes with an outcome and return value\nTRIGGER\nStart\nstart\nout\nINFERENCE\nInfer\ninfer\nout\nEXIT\nDone\ndone\nReact Flow\nLoop settings\n\nRequired fields are marked *\n\nName\n*\nDescription\nSETTINGS\n\nMaximum node visits is a safety cap against unintended cycles. Use a decision gate's maximum passes for an intentional repeat.\n\nWorking directory\nKind\nfixed\ntemplate\ntemp\nDefaults\nBy harness\n\nDefaults keyed by their harness; omitted fields inherit only within that harness.\n\nAdd entry\nMaximum node visits\nSubloop depth limit\nVARIABLES\n\nEach variable maps a name to a JSON Schema.\n\nVariables *\nAdd entry",
+      "loop": {
+        "loop": {
+          "id": "01M5JM566WQ5M6FPK7A1697355",
+          "ownerId": "local",
+          "name": "Independent switch QA",
+          "draftVersionId": "01M5JM566WB2C540E1RDZV4CAZ",
+          "createdAt": "2026-10-22T20:17:05.756Z",
+          "updatedAt": "2026-10-22T20:17:05.756Z"
+        },
+        "draft": {
+          "id": "01M5JM566WB2C540E1RDZV4CAZ",
+          "loopId": "01M5JM566WQ5M6FPK7A1697355",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Independent switch QA",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": ["ui", "api", "mcp"]
+                }
+              },
+              {
+                "id": "infer",
+                "label": "Infer",
+                "ui": {
+                  "x": 260,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "codex",
+                  "model": "gpt-6-astra",
+                  "effort": "minimal",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "Synthetic QA only"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "workspace-write",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 520,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "a",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "b",
+                "from": {
+                  "node": "infer",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-22T20:17:05.756Z"
+        },
+        "draftToken": "a5f6c60c33b8bc52"
+      }
+    },
+    "verdict": "FAIL"
+  },
+  {
+    "id": "classifier-catalog-failure",
+    "steps": "Cache classifier catalog, fail only its stale visibility refetch; unblock and reload.",
+    "expected": "Cached classifier error uses catalog tooltip and disables Publish; recovery restores readiness.",
+    "actual": {
+      "error": "Error: expect(locator).toBeVisible() failed\n\nLocator: getByText('Ready to publish', { exact: true })\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n  - Expect \"toBeVisible\" getByText('Ready to publish', { exact: true }) with timeout 5000ms\n  - waiting for getByText('Ready to publish', { exact: true })\n\n    at captureRawStack (<checkout>/node_modules\\.pnpm\\playwright-core@1.63.0\\node_modules\\playwright-core\\lib\\coreBundle.js:8588:17)\n    at callMatcherAsStep (<checkout>/node_modules\\.pnpm\\playwright@1.63.0\\node_modules\\playwright\\lib\\matchers\\expect.js:13310:57)\n    at Object.toBeVisible (<checkout>/node_modules\\.pnpm\\playwright@1.63.0\\node_modules\\playwright\\lib\\matchers\\expect.js:13302:23)\n    at <checkout>/docs\\qa\\2026-10-22-wp-f2b-qa\\round-3\\served-checks.mjs:1032:73\n    at async check (<checkout>/docs\\qa\\2026-10-22-wp-f2b-qa\\round-3\\served-checks.mjs:257:20)\n    at async file:///<checkout>/docs/qa/2026-10-22-wp-f2b-qa/round-3/served-checks.mjs:1022:3",
+      "pageText": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nLoops\n/\nIndependent switch QA\ndraft only\nAll changes saved\nUndo\nRedo\nOpen in Runs\nPublish the loop first: runs start from a published version.\nChecking…\nPublish\nPalette\nTrigger\nStarts a run\nDecision\nChooses a route and can limit repeats\nInference\nHands work to a harness\nScript\nRuns a program\nMutate\nChanges the context thread\nSubloop\nRuns another loop\nWait\nParks until input, time, or a signal\nHeartbeat\nPolls on an interval\nExit\nFinishes with an outcome and return value\nTRIGGER\nStart\nstart\nout\nINFERENCE\nInfer\ninfer\nout\nEXIT\nDone\ndone\nReact Flow\nLoop settings\n\nRequired fields are marked *\n\nName\n*\nDescription\nSETTINGS\n\nMaximum node visits is a safety cap against unintended cycles. Use a decision gate's maximum passes for an intentional repeat.\n\nWorking directory\nKind\nfixed\ntemplate\ntemp\nDefaults\nBy harness\n\nDefaults keyed by their harness; omitted fields inherit only within that harness.\n\nAdd entry\nMaximum node visits\nSubloop depth limit\nVARIABLES\n\nEach variable maps a name to a JSON Schema.\n\nVariables *\nAdd entry\nEdit inference\ninfer\n\nRequired fields are marked *\n\nNode id\n*\nLabel\n*\nSettings\nContext\nHarness\ncodex\nclaude\n\nHarness that runs the session.\n\nSession\nPolicy\nfresh\nresume-previous\nresume-named\n\nStart fresh, resume the previous session, or resume a named session.\n\nPrompt\n\nLiquid template rendered against the thread.\n\nTemplate\n*\nLiquid\n1\nSynthetic QA only\nPreview (sample thread): Synthetic QA only\nEarlier node outputs (1)\nSandbox\nread-only\nworkspace-write\ndanger-full-access\n\nSandbox or tool policy. Claude requires an explicit supported policy and provides no OS/read-path confinement.\n\nAdvanced\n2 set\nMODEL\nModel\n(loop default)\nGPT-5.5 (gpt-5.5)\nGPT-5.6 Luna (gpt-5.6-luna)\nGPT-5.6 Sol (gpt-5.6-sol)\nGPT-5.6 Terra (gpt-5.6-terra)\nGPT-6 Astra (gpt-6-astra)\nGPT-6 Luna (gpt-6-luna)\nGPT-6 Sol (gpt-6-sol)\nGPT-6.1 Sol (gpt-6.1-sol)\n\nModel; inherits within this harness from loop, owner, then process defaults.\n\nModel catalog in Settings\nEffort\n(inherited; the catalog suggests medium)\nminimal\nlow\nmedium\nhigh\nxhigh\nmax\n\nReasoning effort; inherits within this harness like the model. Catalog effort is guidance only.\n\nHARNESS OPTIONS\nApproval\nnever\non-request\n\nWhether the harness may stop to ask before acting.\n\nNetwork access\nNot set\nYes\nNo\n\nLet commands in the sandbox reach the network.\n\nWeb search\nNot set\nYes\nNo\n\nLet the model search the web.\n\nEdit as JSON\nConfig overrides\n\nRaw harness configuration, passed through as is.\n\nAdd entry\nEdit as JSON\n\nNo resolved capability identifiers are available. Enter authored slugs.\n\nAdd capabilities\nOUTPUT\nCapture transcript\nartifact\nnone\n\nKeep the session transcript as an artifact, or not.\n\nTo messages\nfinal\nfinal-and-notes\nnone\n\nWhat the answer adds to the thread's messages.\n\nEdit as JSON\nTransforms\n\nMutations applied to the answer before it lands.\n\nAdd transforms\nAdd schema\nLIMITS\nTimeout seconds\n\nOptional watchdog; a timeout fails the run.\n\nConnections\nout → done\nDelete node\nDone",
+      "loop": {
+        "loop": {
+          "id": "01M5JM5D44B73F34P2FV3MSX9F",
+          "ownerId": "local",
+          "name": "Independent switch QA",
+          "draftVersionId": "01M5JM5D44MCJF3HJRDN6B40J7",
+          "createdAt": "2026-10-22T20:17:12.836Z",
+          "updatedAt": "2026-10-22T20:17:12.836Z"
+        },
+        "draft": {
+          "id": "01M5JM5D44MCJF3HJRDN6B40J7",
+          "loopId": "01M5JM5D44B73F34P2FV3MSX9F",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Independent switch QA",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": ["ui", "api", "mcp"]
+                }
+              },
+              {
+                "id": "infer",
+                "label": "Infer",
+                "ui": {
+                  "x": 260,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "codex",
+                  "model": "gpt-6-astra",
+                  "effort": "minimal",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "Synthetic QA only"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "workspace-write",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 520,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "a",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "b",
+                "from": {
+                  "node": "infer",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-22T20:17:12.836Z"
+        },
+        "draftToken": "a5f6c60c33b8bc52"
+      }
+    },
+    "verdict": "FAIL"
+  },
+  {
+    "id": "api-publication-defense",
+    "steps": "Validate/save invalid Claude/Astra/minimal; seed exact normalized rejected definition only into owned disposable draft; POST /publish; restore.",
+    "expected": "Validate false; save 400; final publication 422 MODEL_HARNESS_MISMATCH with no published version.",
+    "actual": {
+      "fixture": "API rejects admission; direct normalized row seed only in owned disposable store.",
+      "validation": {
+        "status": 200,
+        "body": {
+          "issues": [
+            {
+              "code": "MODEL_HARNESS_MISMATCH",
+              "severity": "error",
+              "message": "The selected model belongs to another harness",
+              "nodeId": "infer",
+              "path": "config.model"
+            }
+          ],
+          "publishable": false
+        }
+      },
+      "save": {
+        "status": 400,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/evaluation-invalid-configuration",
+          "title": "evaluation invalid configuration",
+          "status": 400,
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "detail": "invalid evaluator or model configuration",
+          "errors": [
+            {
+              "code": "MODEL_HARNESS_MISMATCH",
+              "severity": "error",
+              "nodeId": "infer",
+              "path": "config.model",
+              "message": "The selected model belongs to another harness"
+            }
+          ]
+        }
+      },
+      "publish": {
+        "status": 422,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/loop-invalid",
+          "title": "loop invalid",
+          "status": 422,
+          "code": "LOOP_INVALID",
+          "detail": "the draft has structural errors",
+          "errors": [
+            {
+              "code": "MODEL_HARNESS_MISMATCH",
+              "severity": "error",
+              "nodeId": "infer",
+              "path": "config.model",
+              "message": "The selected model belongs to another harness"
+            }
+          ]
+        }
+      },
+      "publishedVersionCreated": false
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "B1-all-failed",
+    "steps": "Return failures for all shared lookups, then switch fully inheriting node both directions.",
+    "expected": "No wait or extra request; no explicit fields appear despite failed checks.",
+    "actual": {
+      "initiallySettled": {
+        "catalog": 2,
+        "settings": 2,
+        "preflight": 2
+      },
+      "before": {
+        "catalog": 2,
+        "settings": 2,
+        "preflight": 2
+      },
+      "after": {
+        "catalog": 2,
+        "settings": 2,
+        "preflight": 2
+      }
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "effort-only-failed",
+    "steps": "Fail catalog and switch effort-only Codex minimal to Claude.",
+    "expected": "Inherited model stays absent and authored minimal effort stays; API rejects incompatible draft.",
+    "actual": {
+      "model": "",
+      "effort": "minimal",
+      "rejected": {
+        "status": 400,
+        "body": {
+          "type": "https://graphgoblin.dev/problems/evaluation-invalid-configuration",
+          "title": "evaluation invalid configuration",
+          "status": 400,
+          "code": "EVALUATION_INVALID_CONFIGURATION",
+          "detail": "invalid evaluator or model configuration",
+          "errors": [
+            {
+              "code": "EFFORT_UNSUPPORTED",
+              "severity": "error",
+              "nodeId": "infer",
+              "path": "config.effort",
+              "message": "The selected reasoning effort is not supported by this model"
+            }
+          ]
+        }
+      }
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "pending-dismiss",
+    "steps": "Hold first Settings, request explicit switch, dismiss dialog, release response and reopen.",
+    "expected": "Pending action cancels; original harness/model/effort remain; later explicit switch succeeds.",
+    "actual": {
+      "cancelled": true,
+      "config": {
+        "harness": "claude",
+        "model": "claude-opus-5-5",
+        "effort": "xhigh",
+        "session": {
+          "policy": "fresh"
+        },
+        "prompt": {
+          "template": "Synthetic QA only"
+        },
+        "input": [],
+        "harnessOptions": {
+          "sandbox": "read-only",
+          "approval": "never"
+        },
+        "output": {
+          "captureTranscript": "artifact",
+          "toMessages": "final",
+          "transforms": []
+        }
+      },
+      "reopened": {
+        "model": "claude-opus-5-5",
+        "effort": "xhigh"
+      },
+      "requests": [
+        {
+          "model": "claude-opus-5-5",
+          "effort": "xhigh"
+        }
+      ]
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "pending-prompt-edit",
+    "steps": "Hold initial Settings, request Claude, edit the prompt, then release Settings.",
+    "expected": "Cancelled action clears its waiting notice; Codex/Astra/minimal and the edited prompt save and reopen.",
+    "actual": {
+      "cancelled": true,
+      "waitingNoticeCleared": true,
+      "config": {
+        "harness": "codex",
+        "model": "gpt-6-astra",
+        "effort": "minimal",
+        "session": {
+          "policy": "fresh"
+        },
+        "prompt": {
+          "template": "Edited while the harness switch was pending"
+        },
+        "input": [],
+        "harnessOptions": {
+          "sandbox": "workspace-write",
+          "approval": "never"
+        },
+        "output": {
+          "captureTranscript": "artifact",
+          "toMessages": "final",
+          "transforms": []
+        }
+      }
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "undo-persistence",
+    "steps": "Switch to Claude, save; one Undo and save; one Redo and save. Read public draft after each.",
+    "expected": "Harness, model, effort and sandbox/approval policy restore together in one history step.",
+    "actual": {
+      "undone": {
+        "harness": "codex",
+        "model": "gpt-6-astra",
+        "effort": "minimal",
+        "harnessOptions": {
+          "sandbox": "workspace-write",
+          "approval": "never"
+        }
+      },
+      "redone": {
+        "harness": "claude",
+        "model": "claude-opus-5-5",
+        "effort": "xhigh",
+        "harnessOptions": {
+          "sandbox": "read-only",
+          "approval": "never"
+        }
+      }
+    },
+    "verdict": "PASS"
+  },
+  {
+    "id": "B2-disabled-loop-and-settings",
+    "steps": "Start with loop Fable/low and Settings Fable/xhigh, disable Fable after loop creation, reload catalog, then switch an explicit Codex node.",
+    "expected": "Neither disabled configured model is chosen; flagged Opus is chosen; supported loop low effort wins; disabled preference stays off.",
+    "actual": {
+      "error": "Error: expect(locator).toHaveValue(expected) failed\n\nLocator:  getByRole('dialog').getByLabel('Model', { exact: true })\nExpected: \"claude-opus-5-5\"\nReceived: \"gpt-6-astra\"\nTimeout:  5000ms\n\nCall log:\n  - Expect \"toHaveValue\" getByRole('dialog').getByLabel('Model', { exact: true }) with timeout 5000ms\n  - waiting for getByRole('dialog').getByLabel('Model', { exact: true })\n    10 × locator resolved to <select id=\"_r_17_\" aria-describedby=\"_r_17_-help\" class=\"rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-point…>…</select>\n       - unexpected value \"gpt-6-astra\"\n\n    at captureRawStack (<checkout>/node_modules\\.pnpm\\playwright-core@1.63.0\\node_modules\\playwright-core\\lib\\coreBundle.js:8588:17)\n    at callMatcherAsStep (<checkout>/node_modules\\.pnpm\\playwright@1.63.0\\node_modules\\playwright\\lib\\matchers\\expect.js:13310:57)\n    at Object.toHaveValue (<checkout>/node_modules\\.pnpm\\playwright@1.63.0\\node_modules\\playwright\\lib\\matchers\\expect.js:13302:23)\n    at fields (<checkout>/docs\\qa\\2026-10-22-wp-f2b-qa\\round-3\\served-checks.mjs:165:25)\n    at <checkout>/docs\\qa\\2026-10-22-wp-f2b-qa\\round-3\\served-checks.mjs:1336:15\n    at async check (<checkout>/docs\\qa\\2026-10-22-wp-f2b-qa\\round-3\\served-checks.mjs:257:20)\n    at async file:///<checkout>/docs/qa/2026-10-22-wp-f2b-qa/round-3/served-checks.mjs:1315:3",
+      "pageText": "GraphGoblin\nLoops\nRuns\nEvents\nSettings\nLoops\n/\nIndependent switch QA\ndraft only\nAll changes saved\nUndo\nRedo\nOpen in Runs\nPublish the loop first: runs start from a published version.\nReady to publish\nPublish\nPalette\nTrigger\nStarts a run\nDecision\nChooses a route and can limit repeats\nInference\nHands work to a harness\nScript\nRuns a program\nMutate\nChanges the context thread\nSubloop\nRuns another loop\nWait\nParks until input, time, or a signal\nHeartbeat\nPolls on an interval\nExit\nFinishes with an outcome and return value\nTRIGGER\nStart\nstart\nout\nINFERENCE\nInfer\ninfer\nout\nEXIT\nDone\ndone\nReact Flow\nLoop settings\n\nRequired fields are marked *\n\nName\n*\nDescription\nSETTINGS\n\nMaximum node visits is a safety cap against unintended cycles. Use a decision gate's maximum passes for an intentional repeat.\n\nWorking directory\nKind\nfixed\ntemplate\ntemp\nDefaults\nBy harness\n\nDefaults keyed by their harness; omitted fields inherit only within that harness.\n\nKey\nBy harness value 1\nModel\n(owner default)\nclaude-fable-5-1 (disabled in the catalog)\n\nChecking Claude readiness. Model choices are read-only until the check finishes.\n\nRetry Claude preflight\n\nDefault harness model.\n\nModel catalog in Settings\nEffort\n(inherited; the catalog suggests high)\nlow\nmedium\nhigh\nxhigh\nmax\n\nDefault reasoning effort. For Claude, this is the requested effort; the CLI does not report the effective effort.\n\nAdd entry\nMaximum node visits\nSubloop depth limit\nVARIABLES\n\nEach variable maps a name to a JSON Schema.\n\nVariables *\nAdd entry\nEdit inference\ninfer\n\nRequired fields are marked *\n\nNode id\n*\nLabel\n*\nSettings\nContext\nHarness\ncodex\nclaude\n\nWaiting for the first model catalog, Settings and readiness checks to finish... The harness change will apply when they finish.\n\nHarness that runs the session.\n\nSession\nPolicy\nfresh\nresume-previous\nresume-named\n\nStart fresh, resume the previous session, or resume a named session.\n\nPrompt\n\nLiquid template rendered against the thread.\n\nTemplate\n*\nLiquid\n1\nSynthetic QA only\nPreview (sample thread): Synthetic QA only\nEarlier node outputs (1)\nSandbox\nread-only\nworkspace-write\ndanger-full-access\n\nSandbox or tool policy. Claude requires an explicit supported policy and provides no OS/read-path confinement.\n\nAdvanced\n2 set\nMODEL\nModel\n(loop default)\nGPT-5.5 (gpt-5.5)\nGPT-5.6 Luna (gpt-5.6-luna)\nGPT-5.6 Sol (gpt-5.6-sol)\nGPT-5.6 Terra (gpt-5.6-terra)\nGPT-6 Astra (gpt-6-astra)\nGPT-6 Luna (gpt-6-luna)\nGPT-6 Sol (gpt-6-sol)\nGPT-6.1 Sol (gpt-6.1-sol)\n\nModel; inherits within this harness from loop, owner, then process defaults.\n\nModel catalog in Settings\nEffort\n(inherited; the catalog suggests medium)\nminimal\nlow\nmedium\nhigh\nxhigh\nmax\n\nReasoning effort; inherits within this harness like the model. Catalog effort is guidance only.\n\nHARNESS OPTIONS\nApproval\nnever\non-request\n\nWhether the harness may stop to ask before acting.\n\nNetwork access\nNot set\nYes\nNo\n\nLet commands in the sandbox reach the network.\n\nWeb search\nNot set\nYes\nNo\n\nLet the model search the web.\n\nEdit as JSON\nConfig overrides\n\nRaw harness configuration, passed through as is.\n\nAdd entry\nEdit as JSON\n\nNo resolved capability identifiers are available. Enter authored slugs.\n\nAdd capabilities\nOUTPUT\nCapture transcript\nartifact\nnone\n\nKeep the session transcript as an artifact, or not.\n\nTo messages\nfinal\nfinal-and-notes\nnone\n\nWhat the answer adds to the thread's messages.\n\nEdit as JSON\nTransforms\n\nMutations applied to the answer before it lands.\n\nAdd transforms\nAdd schema\nLIMITS\nTimeout seconds\n\nOptional watchdog; a timeout fails the run.\n\nConnections\nout → done\nDelete node\nDone",
+      "loop": {
+        "loop": {
+          "id": "01M5JM71QVQWMHYZQ6EWAZJ0Q8",
+          "ownerId": "local",
+          "name": "Independent switch QA",
+          "draftVersionId": "01M5JM71QVY72FMXG7ETR0KHE4",
+          "createdAt": "2026-10-22T20:18:06.715Z",
+          "updatedAt": "2026-10-22T20:18:06.715Z"
+        },
+        "draft": {
+          "id": "01M5JM71QVY72FMXG7ETR0KHE4",
+          "loopId": "01M5JM71QVQWMHYZQ6EWAZJ0Q8",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Independent switch QA",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {
+                  "claude": {
+                    "model": "claude-fable-5-1",
+                    "effort": "low"
+                  }
+                }
+              },
+              "maxNodeVisits": 10,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": ["ui", "api", "mcp"]
+                }
+              },
+              {
+                "id": "infer",
+                "label": "Infer",
+                "ui": {
+                  "x": 260,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "codex",
+                  "model": "gpt-6-astra",
+                  "effort": "minimal",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "Synthetic QA only"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "workspace-write",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 520,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "a",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "infer",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "b",
+                "from": {
+                  "node": "infer",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-22T20:18:06.715Z"
+        },
+        "draftToken": "62bbd1c4020f27fe"
+      }
+    },
+    "verdict": "FAIL"
+  }
+]

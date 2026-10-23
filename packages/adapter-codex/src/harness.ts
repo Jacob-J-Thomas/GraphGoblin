@@ -59,7 +59,7 @@ export interface CodexHarnessOptions {
   cliRunner?: CliRunner;
 }
 
-const DEFAULT_MODEL = 'gpt-6-luna';
+export const DEFAULT_MODEL = 'gpt-6-luna';
 const DEFAULT_EFFORT: Effort = 'low';
 
 function abortError(): Error {
