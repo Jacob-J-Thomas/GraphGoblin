@@ -1,0 +1,10 @@
+import {readFile,writeFile,readdir} from 'node:fs/promises';import {resolve} from 'node:path';import {execFileSync} from 'node:child_process';import {createHash} from 'node:crypto';
+const base=resolve('docs/qa/2026-10-22-wp-e1-259-qa'),dir=resolve(base,'round-4');
+const stopped=await (await fetch('http://127.0.0.1:5721/stop',{method:'POST'})).json();await new Promise(ok=>setTimeout(ok,1000));const ports=[];
+for(const port of [5720,5721]){let reachable;try{await fetch('http://127.0.0.1:'+port+'/info',{signal:AbortSignal.timeout(2000)});reachable=true;}catch{reachable=false;}ports.push({port,reachable});}
+await writeFile(resolve(dir,'shutdown.json'),JSON.stringify({stopped,ports,dataDirectoryLeftForOrchestrator:'gg-qa-e1-08LYeI'},null,2));
+for(const name of (await readdir(dir)).filter(n=>n.endsWith('.log.txt'))){const raw=await readFile(resolve(dir,name));let text=raw[0]===255&&raw[1]===254?raw.subarray(2).toString('utf16le'):raw.toString('utf8');text=text.replace(/(?:[A-Z]:)?[\\/]+Users[\\/]+[A-Za-z0-9._-]+/gi,'<USER>');await writeFile(resolve(dir,name),text);}
+const prior=JSON.parse(await readFile(resolve(dir,'prior-evidence-audit.json'),'utf8')),retained=[];
+for(const row of prior.records){const folder=row.round==='round-1'?base:resolve(base,row.round);const raw=await readFile(resolve(folder,row.ref));retained.push({round:row.round,ref:row.ref,unchanged:createHash('sha256').update(raw).digest('hex')===row.sha256});}
+const final={head:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),status:execFileSync('git',['status','--short'],{encoding:'utf8'}).trim(),trackedDiff:execFileSync('git',['diff','--stat'],{encoding:'utf8'}).trim(),indexDiff:execFileSync('git',['diff','--cached','--stat'],{encoding:'utf8'}).trim(),priorReferences:retained.length,allPriorReferencesUnchanged:retained.every(x=>x.unchanged),retained};
+await writeFile(resolve(dir,'final-state.json'),JSON.stringify(final,null,2));console.log(JSON.stringify({stopped,ports,head:final.head,priorReferencesUnchanged:final.allPriorReferencesUnchanged,trackedDiff:final.trackedDiff,indexDiff:final.indexDiff}));
