@@ -1,0 +1,125 @@
+
+ RUN  v5.0.3 [local-path]
+
+ ↓ src/claude/readiness.test.ts > Claude no-turn executable boundary > ready reports ready without exposing CLI bodies
+ ↓ src/claude/readiness.test.ts > Claude no-turn executable boundary > old reports cli-incompatible without exposing CLI bodies
+ ↓ src/claude/readiness.test.ts > Claude no-turn executable boundary > missing-model reports cli-incompatible without exposing CLI bodies
+ ↓ src/claude/readiness.test.ts > Claude no-turn executable boundary > missing-effort reports cli-incompatible without exposing CLI bodies
+ ↓ src/claude/readiness.test.ts > Claude no-turn executable boundary > auth reports auth without exposing CLI bodies
+ ↓ src/claude/readiness.test.ts > Claude no-turn executable boundary > quota reports quota without exposing CLI bodies
+ ↓ src/claude/readiness.test.ts > Claude no-turn executable boundary > transport reports transport without exposing CLI bodies
+ ↓ src/claude/readiness.test.ts > Claude no-turn executable boundary > unknown reports unknown without exposing CLI bodies
+ ↓ src/claude/readiness.test.ts > Claude no-turn executable boundary > hang reports unknown without exposing CLI bodies
+ ↓ src/claude/readiness.test.ts > audited Claude auth evidence > auth-network preserves auth evidence through the executable boundary
+ ↓ src/claude/readiness.test.ts > audited Claude auth evidence > quota-network preserves quota evidence through the executable boundary
+ ↓ src/claude/readiness.test.ts > audited Claude auth evidence > stdout-quota-warning preserves quota evidence through the executable boundary
+ ↓ src/claude/readiness.test.ts > audited Claude auth evidence > auth-empty preserves unknown evidence through the executable boundary
+ ↓ src/claude/readiness.test.ts > audited Claude auth evidence > auth-unrecognised preserves unknown evidence through the executable boundary
+ ✓ src/claude/readiness.test.ts > audited Claude auth evidence > auth-zero-stdout preserves auth evidence through the executable boundary 2529ms
+ ✓ src/claude/readiness.test.ts > audited Claude auth evidence > auth-zero-stderr preserves auth evidence through the executable boundary 2073ms
+ ↓ src/claude/readiness.test.ts > audited Claude auth evidence > conflict-auth-stderr preserves auth evidence through the executable boundary
+ ↓ src/claude/readiness.test.ts > audited Claude auth evidence > conflict-quota-stderr preserves quota evidence through the executable boundary
+ ↓ src/claude/readiness.test.ts > probes the actual installed native Claude without a model turn
+ ↓ src/claude/readiness.test.ts > reports a missing Claude executable as cli-missing
+ ↓ src/claude/readiness.test.ts > classifies a real installed signed-out Claude in a disposable home as auth
+ ↓ src/claude/harness.test.ts > Claude existing harness contract > uses a fresh empty prerequisite directory and removes it after inspection
+ ↓ src/claude/harness.test.ts > Claude existing harness contract > handles prerequisite cleanup failure without concealing success disposition
+ ↓ src/claude/harness.test.ts > Claude existing harness contract > handles prerequisite cleanup failure without concealing unconfirmed disposition
+ ↓ src/claude/harness.test.ts > Claude existing harness contract > creates the prerequisite directory under a system temporary directory of 226 characters (#102)
+ ↓ src/claude/harness.test.ts > Claude existing harness contract > tries a fresh prerequisite directory name after a name collision and never removes the existing one
+ ↓ src/claude/harness.test.ts > Claude existing harness contract > fails the check without starting the CLI or removing anything after four name collisions
+ ↓ src/claude/harness.test.ts > Claude existing harness contract > fails the check without starting the CLI or removing anything after a creation fault
+ ↓ src/claude/harness.test.ts > Claude existing harness contract > checks the installed capability/auth prerequisites and exposes explicit model support and policies
+ ↓ src/claude/harness.test.ts > Claude existing harness contract > executes Fable through strict native model verification with its requested effort
+ ↓ src/claude/harness.test.ts > Claude existing harness contract > checks auth before every start and resume, uses the same env, and maps current port events/result
+ ↓ src/claude/harness.test.ts > Claude existing harness contract > refuses api_key before a model starts and hides raw status
+ ↓ src/claude/harness.test.ts > Claude existing harness contract > refuses api_key_helper before a model starts and hides raw status
+ ↓ src/claude/harness.test.ts > Claude existing harness contract > refuses oauth_token before a model starts and hides raw status
+ ↓ src/claude/harness.test.ts > Claude existing harness contract > refuses third_party before a model starts and hides raw status
+ ↓ src/claude/harness.test.ts > Claude existing harness contract > refuses none before a model starts and hides raw status
+ ↓ src/claude/harness.test.ts > Claude existing harness contract > refuses unknown before a model starts and hides raw status
+ ↓ src/claude/harness.test.ts > Claude existing harness contract > fails unsupported request/capabilities/session IDs before any CLI launch
+ ↓ src/claude/harness.test.ts > Claude existing harness contract > validates structured results through the existing schema contract
+ ↓ src/claude/harness.test.ts > Claude existing harness contract > handles the native schema carrier without extending CLI execution tools or promoting carrier content
+ ↓ src/claude/harness.test.ts > Claude existing harness contract > rejects malformed/incomplete/out-of-order streams and abnormal exit without final success evidence
+ ↓ src/claude/harness.test.ts > Claude existing harness contract > converts private transport failures to typed fixed diagnostics
+ ↓ src/claude/harness.test.ts > Claude existing harness contract > preserves the CLI version, safe refusal name and recovery hint in result and error events
+ ↓ src/claude/harness.test.ts > Claude existing harness contract > aborts during auth without starting a model and makes cancel idempotent
+ ↓ src/claude/harness.test.ts > Claude existing harness contract > cancels an in-flight turn, reacts to the caller signal and never starts already aborted requests
+ ↓ src/claude/harness.test.ts > Claude preflight and transport failure matrix > reports detected version 2.1.284 independently of account login
+ ↓ src/claude/harness.test.ts > Claude preflight and transport failure matrix > reports detected version 2.1.285 independently of account login
+ ↓ src/claude/harness.test.ts > Claude preflight and transport failure matrix > reports detected version 2.1.287 independently of account login
+ ↓ src/claude/harness.test.ts > Claude preflight and transport failure matrix > reports a missing capability and failed login together without starting a turn
+ ↓ src/claude/harness.test.ts > Claude preflight and transport failure matrix > reports the detected version when the hidden max-turns capability probe fails and still checks login
+ ↓ src/claude/harness.test.ts > Claude preflight and transport failure matrix > returns fixed preflight problems for missing binary, unsupported platform/version/flags and bad auth
+ ↓ src/claude/harness.test.ts > Claude preflight and transport failure matrix > validates positive process bounds
+ ↓ src/claude/harness.test.ts > Claude preflight and transport failure matrix > requires resolved settings and preserves explicit effort and process bounds
+ ↓ src/claude/harness.test.ts > Claude preflight and transport failure matrix > maps transport disposition HARNESS_TIMEOUT safely
+ ↓ src/claude/harness.test.ts > Claude preflight and transport failure matrix > maps transport disposition HARNESS_OUTPUT_LIMIT safely
+ ↓ src/claude/harness.test.ts > Claude preflight and transport failure matrix > maps transport disposition HARNESS_TURN_FAILED safely
+ ↓ src/claude/harness.test.ts > Claude preflight and transport failure matrix > maps transport disposition HARNESS_TURN_FAILED safely
+ ↓ src/claude/harness.test.ts > Claude preflight and transport failure matrix > does not cancel a completed session or generate a replacement session on resume mismatch
+ ✓ src/claude/harness.test.ts > unconfirmed native termination > keeps timeout authoritative over positive auth-status text 19ms
+ ✓ src/claude/harness.test.ts > unconfirmed native termination > keeps missing executable authoritative over positive auth-status text 81ms
+ ✓ src/claude/harness.test.ts > unconfirmed native termination > keeps unconfirmed termination authoritative over positive auth-status text 19ms
+ × src/claude/harness.test.ts > unconfirmed native termination > keeps aborted process authoritative over positive auth-status text 101ms
+   → expected ClaudeHarnessError: Claude turn failed { …(2) } to match object { code: 'ABORTED' }
+(2 matching properties omitted from actual)
+ ✓ src/claude/harness.test.ts > unconfirmed native termination > keeps output overflow authoritative over positive auth-status text 110ms
+ ↓ src/claude/harness.test.ts > unconfirmed native termination > preserves actionable typed failure for cancel and after completion
+ ↓ src/claude/harness.test.ts > unconfirmed native termination > preserves actionable typed failure for signal and after completion
+ ↓ src/claude/harness.test.ts > unconfirmed native termination > reports unconfirmed timeout termination before ordinary timeout handling
+ ↓ src/claude/harness.test.ts > Claude native structured repair through the engine > repairs the exact native candidate undefined instead of final-text fallback
+ ↓ src/claude/harness.test.ts > Claude native structured repair through the engine > repairs the exact native candidate null instead of final-text fallback
+ ↓ src/claude/harness.test.ts > Claude native structured repair through the engine > repairs the exact native candidate { ok: 'wrong' } instead of final-text fallback
+ ✓ src/claude/harness.test.ts > does not infer a real turn failure from auth stderr classification 44ms
+ ✓ src/claude/harness.test.ts > does not infer a real turn failure from quota stderr classification 41ms
+ ✓ src/claude/harness.test.ts > does not infer a real turn failure from transport stderr classification 13ms
+pnpm.cmd :
+At line:2 char:70
++ ... $env:PATH"; pnpm.cmd --filter @graphgoblin/infrastructure exec vitest ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/claude/harness.test.ts > unconfirmed native termination > keeps aborted process authoritative over positive
+auth-status text
+AssertionError: expected ClaudeHarnessError: Claude turn failed { …(2) } to match object { code: 'ABORTED' }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "code": "ABORTED",
++ ClaudeHarnessError {
++   "code": "HARNESS_TURN_FAILED",
+  }
+
+ ❯ src/claude/harness.test.ts:816:78
+    814|     expect(result).toMatchObject({ state, ok: false });
+    815|     expect(result).not.toHaveProperty('authenticated');
+    816|     await expect(harness.start(request, new AbortController().signal).…
+       |                                                                              ^
+    817|   });
+    818|   it.each(['cancel', 'signal'] as const)(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 9 passed | 62 skipped (72)
+   Start at  18:03:05
+   Duration  17.09s (transform 42%, tests 32%, import 26%)
+
+  Transform  transforming modules took 6.52s · 42% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ [local-path]
+  │ readiness-precision\packages\infrastructure

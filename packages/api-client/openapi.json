@@ -4662,6 +4662,138 @@
           "result": {
             "$ref": "#/components/schemas/JsonValueInput"
           },
+          "deliveries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128
+                },
+                "channel": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "webhook"
+                    },
+                    "url": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "secretRef": {
+                      "type": "string",
+                      "maxLength": 128
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "url"
+                  ],
+                  "additionalProperties": false
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "pending",
+                    "delivered",
+                    "failed"
+                  ]
+                },
+                "attempts": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 5
+                },
+                "maxAttempts": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 5
+                },
+                "inFlight": {
+                  "type": "boolean"
+                },
+                "acknowledgement": {
+                  "type": "string",
+                  "enum": [
+                    "accepted",
+                    "unknown",
+                    "not_sent",
+                    "rejected"
+                  ]
+                },
+                "effectMayHaveHappened": {
+                  "type": "boolean"
+                },
+                "acknowledgementUncertain": {
+                  "type": "boolean"
+                },
+                "nextAttemptAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                },
+                "lastError": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "invalid_destination",
+                        "http",
+                        "connection_refused",
+                        "timeout",
+                        "transport",
+                        "interrupted",
+                        "historical_failure"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 4000
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    },
+                    "acknowledgement": {
+                      "type": "string",
+                      "enum": [
+                        "unknown",
+                        "not_sent",
+                        "rejected"
+                      ]
+                    },
+                    "httpStatus": {
+                      "type": "integer",
+                      "minimum": 100,
+                      "maximum": 599
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message",
+                    "retryable",
+                    "acknowledgement"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "id",
+                "channel",
+                "status",
+                "attempts",
+                "maxAttempts",
+                "inFlight",
+                "acknowledgement",
+                "effectMayHaveHappened",
+                "acknowledgementUncertain"
+              ],
+              "additionalProperties": false
+            }
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -4699,6 +4831,646 @@
       },
       "RunEventInput": {
         "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "runId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "seq": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "ts": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "type": {
+                "type": "string",
+                "const": "delivery.queued"
+              },
+              "delivery": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  },
+                  "channel": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "webhook"
+                      },
+                      "url": {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      "secretRef": {
+                        "type": "string",
+                        "maxLength": 128
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "url"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "pending",
+                      "delivered",
+                      "failed"
+                    ]
+                  },
+                  "attempts": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 5
+                  },
+                  "maxAttempts": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5
+                  },
+                  "inFlight": {
+                    "type": "boolean"
+                  },
+                  "acknowledgement": {
+                    "type": "string",
+                    "enum": [
+                      "accepted",
+                      "unknown",
+                      "not_sent",
+                      "rejected"
+                    ]
+                  },
+                  "effectMayHaveHappened": {
+                    "type": "boolean"
+                  },
+                  "acknowledgementUncertain": {
+                    "type": "boolean"
+                  },
+                  "nextAttemptAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "lastError": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "string",
+                        "enum": [
+                          "invalid_destination",
+                          "http",
+                          "connection_refused",
+                          "timeout",
+                          "transport",
+                          "interrupted",
+                          "historical_failure"
+                        ]
+                      },
+                      "message": {
+                        "type": "string",
+                        "maxLength": 4000
+                      },
+                      "retryable": {
+                        "type": "boolean"
+                      },
+                      "acknowledgement": {
+                        "type": "string",
+                        "enum": [
+                          "unknown",
+                          "not_sent",
+                          "rejected"
+                        ]
+                      },
+                      "httpStatus": {
+                        "type": "integer",
+                        "minimum": 100,
+                        "maximum": 599
+                      }
+                    },
+                    "required": [
+                      "code",
+                      "message",
+                      "retryable",
+                      "acknowledgement"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "id",
+                  "channel",
+                  "status",
+                  "attempts",
+                  "maxAttempts",
+                  "inFlight",
+                  "acknowledgement",
+                  "effectMayHaveHappened",
+                  "acknowledgementUncertain"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "runId",
+              "seq",
+              "ts",
+              "type",
+              "delivery"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "runId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "seq": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "ts": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "type": {
+                "type": "string",
+                "const": "delivery.attempted"
+              },
+              "delivery": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  },
+                  "channel": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "webhook"
+                      },
+                      "url": {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      "secretRef": {
+                        "type": "string",
+                        "maxLength": 128
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "url"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "pending",
+                      "delivered",
+                      "failed"
+                    ]
+                  },
+                  "attempts": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 5
+                  },
+                  "maxAttempts": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5
+                  },
+                  "inFlight": {
+                    "type": "boolean"
+                  },
+                  "acknowledgement": {
+                    "type": "string",
+                    "enum": [
+                      "accepted",
+                      "unknown",
+                      "not_sent",
+                      "rejected"
+                    ]
+                  },
+                  "effectMayHaveHappened": {
+                    "type": "boolean"
+                  },
+                  "acknowledgementUncertain": {
+                    "type": "boolean"
+                  },
+                  "nextAttemptAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "lastError": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "string",
+                        "enum": [
+                          "invalid_destination",
+                          "http",
+                          "connection_refused",
+                          "timeout",
+                          "transport",
+                          "interrupted",
+                          "historical_failure"
+                        ]
+                      },
+                      "message": {
+                        "type": "string",
+                        "maxLength": 4000
+                      },
+                      "retryable": {
+                        "type": "boolean"
+                      },
+                      "acknowledgement": {
+                        "type": "string",
+                        "enum": [
+                          "unknown",
+                          "not_sent",
+                          "rejected"
+                        ]
+                      },
+                      "httpStatus": {
+                        "type": "integer",
+                        "minimum": 100,
+                        "maximum": 599
+                      }
+                    },
+                    "required": [
+                      "code",
+                      "message",
+                      "retryable",
+                      "acknowledgement"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "id",
+                  "channel",
+                  "status",
+                  "attempts",
+                  "maxAttempts",
+                  "inFlight",
+                  "acknowledgement",
+                  "effectMayHaveHappened",
+                  "acknowledgementUncertain"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "runId",
+              "seq",
+              "ts",
+              "type",
+              "delivery"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "runId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "seq": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "ts": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "type": {
+                "type": "string",
+                "const": "delivery.attempt_finished"
+              },
+              "delivery": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  },
+                  "channel": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "webhook"
+                      },
+                      "url": {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      "secretRef": {
+                        "type": "string",
+                        "maxLength": 128
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "url"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "pending",
+                      "delivered",
+                      "failed"
+                    ]
+                  },
+                  "attempts": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 5
+                  },
+                  "maxAttempts": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5
+                  },
+                  "inFlight": {
+                    "type": "boolean"
+                  },
+                  "acknowledgement": {
+                    "type": "string",
+                    "enum": [
+                      "accepted",
+                      "unknown",
+                      "not_sent",
+                      "rejected"
+                    ]
+                  },
+                  "effectMayHaveHappened": {
+                    "type": "boolean"
+                  },
+                  "acknowledgementUncertain": {
+                    "type": "boolean"
+                  },
+                  "nextAttemptAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "lastError": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "string",
+                        "enum": [
+                          "invalid_destination",
+                          "http",
+                          "connection_refused",
+                          "timeout",
+                          "transport",
+                          "interrupted",
+                          "historical_failure"
+                        ]
+                      },
+                      "message": {
+                        "type": "string",
+                        "maxLength": 4000
+                      },
+                      "retryable": {
+                        "type": "boolean"
+                      },
+                      "acknowledgement": {
+                        "type": "string",
+                        "enum": [
+                          "unknown",
+                          "not_sent",
+                          "rejected"
+                        ]
+                      },
+                      "httpStatus": {
+                        "type": "integer",
+                        "minimum": 100,
+                        "maximum": 599
+                      }
+                    },
+                    "required": [
+                      "code",
+                      "message",
+                      "retryable",
+                      "acknowledgement"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "id",
+                  "channel",
+                  "status",
+                  "attempts",
+                  "maxAttempts",
+                  "inFlight",
+                  "acknowledgement",
+                  "effectMayHaveHappened",
+                  "acknowledgementUncertain"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "runId",
+              "seq",
+              "ts",
+              "type",
+              "delivery"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "runId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "seq": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "ts": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "type": {
+                "type": "string",
+                "const": "delivery.finished"
+              },
+              "delivery": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  },
+                  "channel": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "webhook"
+                      },
+                      "url": {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      "secretRef": {
+                        "type": "string",
+                        "maxLength": 128
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "url"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "pending",
+                      "delivered",
+                      "failed"
+                    ]
+                  },
+                  "attempts": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 5
+                  },
+                  "maxAttempts": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5
+                  },
+                  "inFlight": {
+                    "type": "boolean"
+                  },
+                  "acknowledgement": {
+                    "type": "string",
+                    "enum": [
+                      "accepted",
+                      "unknown",
+                      "not_sent",
+                      "rejected"
+                    ]
+                  },
+                  "effectMayHaveHappened": {
+                    "type": "boolean"
+                  },
+                  "acknowledgementUncertain": {
+                    "type": "boolean"
+                  },
+                  "nextAttemptAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "lastError": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "string",
+                        "enum": [
+                          "invalid_destination",
+                          "http",
+                          "connection_refused",
+                          "timeout",
+                          "transport",
+                          "interrupted",
+                          "historical_failure"
+                        ]
+                      },
+                      "message": {
+                        "type": "string",
+                        "maxLength": 4000
+                      },
+                      "retryable": {
+                        "type": "boolean"
+                      },
+                      "acknowledgement": {
+                        "type": "string",
+                        "enum": [
+                          "unknown",
+                          "not_sent",
+                          "rejected"
+                        ]
+                      },
+                      "httpStatus": {
+                        "type": "integer",
+                        "minimum": 100,
+                        "maximum": 599
+                      }
+                    },
+                    "required": [
+                      "code",
+                      "message",
+                      "retryable",
+                      "acknowledgement"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "id",
+                  "channel",
+                  "status",
+                  "attempts",
+                  "maxAttempts",
+                  "inFlight",
+                  "acknowledgement",
+                  "effectMayHaveHappened",
+                  "acknowledgementUncertain"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "runId",
+              "seq",
+              "ts",
+              "type",
+              "delivery"
+            ],
+            "additionalProperties": false
+          },
           {
             "type": "object",
             "properties": {
@@ -6793,7 +7565,62 @@
                 "const": "return.delivered"
               },
               "channel": {
-                "$ref": "#/components/schemas/ReturnChannelInput"
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "caller"
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "file"
+                      },
+                      "path": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 4096
+                      },
+                      "format": {
+                        "default": "json",
+                        "type": "string",
+                        "enum": [
+                          "json",
+                          "markdown",
+                          "text"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "path"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "log"
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
               },
               "target": {
                 "type": "string",
@@ -6831,7 +7658,62 @@
                 "const": "return.failed"
               },
               "channel": {
-                "$ref": "#/components/schemas/ReturnChannelInput"
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "caller"
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "file"
+                      },
+                      "path": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 4096
+                      },
+                      "format": {
+                        "default": "json",
+                        "type": "string",
+                        "enum": [
+                          "json",
+                          "markdown",
+                          "text"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "path"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "log"
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
               },
               "error": {
                 "type": "string",
@@ -12292,6 +13174,138 @@
           "result": {
             "$ref": "#/components/schemas/JsonValue"
           },
+          "deliveries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128
+                },
+                "channel": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "webhook"
+                    },
+                    "url": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "secretRef": {
+                      "type": "string",
+                      "maxLength": 128
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "url"
+                  ],
+                  "additionalProperties": false
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "pending",
+                    "delivered",
+                    "failed"
+                  ]
+                },
+                "attempts": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 5
+                },
+                "maxAttempts": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 5
+                },
+                "inFlight": {
+                  "type": "boolean"
+                },
+                "acknowledgement": {
+                  "type": "string",
+                  "enum": [
+                    "accepted",
+                    "unknown",
+                    "not_sent",
+                    "rejected"
+                  ]
+                },
+                "effectMayHaveHappened": {
+                  "type": "boolean"
+                },
+                "acknowledgementUncertain": {
+                  "type": "boolean"
+                },
+                "nextAttemptAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                },
+                "lastError": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "invalid_destination",
+                        "http",
+                        "connection_refused",
+                        "timeout",
+                        "transport",
+                        "interrupted",
+                        "historical_failure"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 4000
+                    },
+                    "retryable": {
+                      "type": "boolean"
+                    },
+                    "acknowledgement": {
+                      "type": "string",
+                      "enum": [
+                        "unknown",
+                        "not_sent",
+                        "rejected"
+                      ]
+                    },
+                    "httpStatus": {
+                      "type": "integer",
+                      "minimum": 100,
+                      "maximum": 599
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message",
+                    "retryable",
+                    "acknowledgement"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "id",
+                "channel",
+                "status",
+                "attempts",
+                "maxAttempts",
+                "inFlight",
+                "acknowledgement",
+                "effectMayHaveHappened",
+                "acknowledgementUncertain"
+              ],
+              "additionalProperties": false
+            }
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -12329,6 +13343,646 @@
       },
       "RunEvent": {
         "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "runId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "seq": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "ts": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "type": {
+                "type": "string",
+                "const": "delivery.queued"
+              },
+              "delivery": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  },
+                  "channel": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "webhook"
+                      },
+                      "url": {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      "secretRef": {
+                        "type": "string",
+                        "maxLength": 128
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "url"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "pending",
+                      "delivered",
+                      "failed"
+                    ]
+                  },
+                  "attempts": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 5
+                  },
+                  "maxAttempts": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5
+                  },
+                  "inFlight": {
+                    "type": "boolean"
+                  },
+                  "acknowledgement": {
+                    "type": "string",
+                    "enum": [
+                      "accepted",
+                      "unknown",
+                      "not_sent",
+                      "rejected"
+                    ]
+                  },
+                  "effectMayHaveHappened": {
+                    "type": "boolean"
+                  },
+                  "acknowledgementUncertain": {
+                    "type": "boolean"
+                  },
+                  "nextAttemptAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "lastError": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "string",
+                        "enum": [
+                          "invalid_destination",
+                          "http",
+                          "connection_refused",
+                          "timeout",
+                          "transport",
+                          "interrupted",
+                          "historical_failure"
+                        ]
+                      },
+                      "message": {
+                        "type": "string",
+                        "maxLength": 4000
+                      },
+                      "retryable": {
+                        "type": "boolean"
+                      },
+                      "acknowledgement": {
+                        "type": "string",
+                        "enum": [
+                          "unknown",
+                          "not_sent",
+                          "rejected"
+                        ]
+                      },
+                      "httpStatus": {
+                        "type": "integer",
+                        "minimum": 100,
+                        "maximum": 599
+                      }
+                    },
+                    "required": [
+                      "code",
+                      "message",
+                      "retryable",
+                      "acknowledgement"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "id",
+                  "channel",
+                  "status",
+                  "attempts",
+                  "maxAttempts",
+                  "inFlight",
+                  "acknowledgement",
+                  "effectMayHaveHappened",
+                  "acknowledgementUncertain"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "runId",
+              "seq",
+              "ts",
+              "type",
+              "delivery"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "runId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "seq": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "ts": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "type": {
+                "type": "string",
+                "const": "delivery.attempted"
+              },
+              "delivery": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  },
+                  "channel": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "webhook"
+                      },
+                      "url": {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      "secretRef": {
+                        "type": "string",
+                        "maxLength": 128
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "url"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "pending",
+                      "delivered",
+                      "failed"
+                    ]
+                  },
+                  "attempts": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 5
+                  },
+                  "maxAttempts": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5
+                  },
+                  "inFlight": {
+                    "type": "boolean"
+                  },
+                  "acknowledgement": {
+                    "type": "string",
+                    "enum": [
+                      "accepted",
+                      "unknown",
+                      "not_sent",
+                      "rejected"
+                    ]
+                  },
+                  "effectMayHaveHappened": {
+                    "type": "boolean"
+                  },
+                  "acknowledgementUncertain": {
+                    "type": "boolean"
+                  },
+                  "nextAttemptAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "lastError": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "string",
+                        "enum": [
+                          "invalid_destination",
+                          "http",
+                          "connection_refused",
+                          "timeout",
+                          "transport",
+                          "interrupted",
+                          "historical_failure"
+                        ]
+                      },
+                      "message": {
+                        "type": "string",
+                        "maxLength": 4000
+                      },
+                      "retryable": {
+                        "type": "boolean"
+                      },
+                      "acknowledgement": {
+                        "type": "string",
+                        "enum": [
+                          "unknown",
+                          "not_sent",
+                          "rejected"
+                        ]
+                      },
+                      "httpStatus": {
+                        "type": "integer",
+                        "minimum": 100,
+                        "maximum": 599
+                      }
+                    },
+                    "required": [
+                      "code",
+                      "message",
+                      "retryable",
+                      "acknowledgement"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "id",
+                  "channel",
+                  "status",
+                  "attempts",
+                  "maxAttempts",
+                  "inFlight",
+                  "acknowledgement",
+                  "effectMayHaveHappened",
+                  "acknowledgementUncertain"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "runId",
+              "seq",
+              "ts",
+              "type",
+              "delivery"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "runId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "seq": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "ts": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "type": {
+                "type": "string",
+                "const": "delivery.attempt_finished"
+              },
+              "delivery": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  },
+                  "channel": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "webhook"
+                      },
+                      "url": {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      "secretRef": {
+                        "type": "string",
+                        "maxLength": 128
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "url"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "pending",
+                      "delivered",
+                      "failed"
+                    ]
+                  },
+                  "attempts": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 5
+                  },
+                  "maxAttempts": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5
+                  },
+                  "inFlight": {
+                    "type": "boolean"
+                  },
+                  "acknowledgement": {
+                    "type": "string",
+                    "enum": [
+                      "accepted",
+                      "unknown",
+                      "not_sent",
+                      "rejected"
+                    ]
+                  },
+                  "effectMayHaveHappened": {
+                    "type": "boolean"
+                  },
+                  "acknowledgementUncertain": {
+                    "type": "boolean"
+                  },
+                  "nextAttemptAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "lastError": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "string",
+                        "enum": [
+                          "invalid_destination",
+                          "http",
+                          "connection_refused",
+                          "timeout",
+                          "transport",
+                          "interrupted",
+                          "historical_failure"
+                        ]
+                      },
+                      "message": {
+                        "type": "string",
+                        "maxLength": 4000
+                      },
+                      "retryable": {
+                        "type": "boolean"
+                      },
+                      "acknowledgement": {
+                        "type": "string",
+                        "enum": [
+                          "unknown",
+                          "not_sent",
+                          "rejected"
+                        ]
+                      },
+                      "httpStatus": {
+                        "type": "integer",
+                        "minimum": 100,
+                        "maximum": 599
+                      }
+                    },
+                    "required": [
+                      "code",
+                      "message",
+                      "retryable",
+                      "acknowledgement"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "id",
+                  "channel",
+                  "status",
+                  "attempts",
+                  "maxAttempts",
+                  "inFlight",
+                  "acknowledgement",
+                  "effectMayHaveHappened",
+                  "acknowledgementUncertain"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "runId",
+              "seq",
+              "ts",
+              "type",
+              "delivery"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "runId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "seq": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "ts": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "type": {
+                "type": "string",
+                "const": "delivery.finished"
+              },
+              "delivery": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  },
+                  "channel": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "webhook"
+                      },
+                      "url": {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      "secretRef": {
+                        "type": "string",
+                        "maxLength": 128
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "url"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "pending",
+                      "delivered",
+                      "failed"
+                    ]
+                  },
+                  "attempts": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 5
+                  },
+                  "maxAttempts": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5
+                  },
+                  "inFlight": {
+                    "type": "boolean"
+                  },
+                  "acknowledgement": {
+                    "type": "string",
+                    "enum": [
+                      "accepted",
+                      "unknown",
+                      "not_sent",
+                      "rejected"
+                    ]
+                  },
+                  "effectMayHaveHappened": {
+                    "type": "boolean"
+                  },
+                  "acknowledgementUncertain": {
+                    "type": "boolean"
+                  },
+                  "nextAttemptAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "lastError": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "string",
+                        "enum": [
+                          "invalid_destination",
+                          "http",
+                          "connection_refused",
+                          "timeout",
+                          "transport",
+                          "interrupted",
+                          "historical_failure"
+                        ]
+                      },
+                      "message": {
+                        "type": "string",
+                        "maxLength": 4000
+                      },
+                      "retryable": {
+                        "type": "boolean"
+                      },
+                      "acknowledgement": {
+                        "type": "string",
+                        "enum": [
+                          "unknown",
+                          "not_sent",
+                          "rejected"
+                        ]
+                      },
+                      "httpStatus": {
+                        "type": "integer",
+                        "minimum": 100,
+                        "maximum": 599
+                      }
+                    },
+                    "required": [
+                      "code",
+                      "message",
+                      "retryable",
+                      "acknowledgement"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "id",
+                  "channel",
+                  "status",
+                  "attempts",
+                  "maxAttempts",
+                  "inFlight",
+                  "acknowledgement",
+                  "effectMayHaveHappened",
+                  "acknowledgementUncertain"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "runId",
+              "seq",
+              "ts",
+              "type",
+              "delivery"
+            ],
+            "additionalProperties": false
+          },
           {
             "type": "object",
             "properties": {
@@ -14435,7 +16089,63 @@
                 "const": "return.delivered"
               },
               "channel": {
-                "$ref": "#/components/schemas/ReturnChannel"
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "caller"
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "file"
+                      },
+                      "path": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 4096
+                      },
+                      "format": {
+                        "default": "json",
+                        "type": "string",
+                        "enum": [
+                          "json",
+                          "markdown",
+                          "text"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "path",
+                      "format"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "log"
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
               },
               "target": {
                 "type": "string",
@@ -14473,7 +16183,63 @@
                 "const": "return.failed"
               },
               "channel": {
-                "$ref": "#/components/schemas/ReturnChannel"
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "caller"
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "file"
+                      },
+                      "path": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 4096
+                      },
+                      "format": {
+                        "default": "json",
+                        "type": "string",
+                        "enum": [
+                          "json",
+                          "markdown",
+                          "text"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "path",
+                      "format"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "log"
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
               },
               "error": {
                 "type": "string",
@@ -15240,6 +17006,18 @@
                       "items": {
                         "type": "object",
                         "properties": {
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "unknown",
+                              "ready",
+                              "cli-missing",
+                              "cli-incompatible",
+                              "auth",
+                              "quota",
+                              "transport"
+                            ]
+                          },
                           "id": {
                             "type": "string"
                           },
@@ -15299,6 +17077,18 @@
                       "items": {
                         "type": "object",
                         "properties": {
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "unknown",
+                              "ready",
+                              "cli-missing",
+                              "cli-incompatible",
+                              "auth",
+                              "quota",
+                              "transport"
+                            ]
+                          },
                           "ok": {
                             "type": "boolean"
                           },
@@ -15436,8 +17226,8 @@
                           }
                         },
                         "required": [
+                          "state",
                           "ok",
-                          "authenticated",
                           "problems",
                           "harness"
                         ],
@@ -15473,7 +17263,90 @@
                     "items": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/LoopRecord"
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                          },
+                          "ownerId": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 128
+                          },
+                          "name": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 120
+                          },
+                          "description": {
+                            "type": "string",
+                            "maxLength": 4000
+                          },
+                          "currentVersionId": {
+                            "type": "string",
+                            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                          },
+                          "draftVersionId": {
+                            "type": "string",
+                            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          },
+                          "updatedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          },
+                          "latestRun": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                                  },
+                                  "status": {
+                                    "$ref": "#/components/schemas/RunStatus"
+                                  },
+                                  "createdAt": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "status",
+                                  "createdAt"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "runCount": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "ownerId",
+                          "name",
+                          "createdAt",
+                          "updatedAt",
+                          "latestRun",
+                          "runCount"
+                        ],
+                        "additionalProperties": false
                       }
                     }
                   },
@@ -16455,11 +18328,15 @@
                       "type": "integer",
                       "minimum": -9007199254740991,
                       "maximum": 9007199254740991
+                    },
+                    "hasMore": {
+                      "type": "boolean"
                     }
                   },
                   "required": [
                     "items",
-                    "nextAfter"
+                    "nextAfter",
+                    "hasMore"
                   ],
                   "additionalProperties": false
                 }
@@ -18638,7 +20515,7 @@
         }
       },
       "get": {
-        "summary": "Stored inbound events, newest first",
+        "summary": "Stored inbound events, newest first with stable paging",
         "tags": [
           "events"
         ],
@@ -18654,11 +20531,23 @@
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
             },
             "in": "query",
             "name": "before",
             "required": false
+          },
+          {
+            "schema": {
+              "maxLength": 256,
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "description": "Opaque inbound-event cursor, at most 256 base64url characters."
           },
           {
             "schema": {
@@ -19006,10 +20895,17 @@
                         ],
                         "additionalProperties": false
                       }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     }
                   },
                   "required": [
-                    "items"
+                    "items",
+                    "nextCursor"
                   ],
                   "additionalProperties": false
                 }

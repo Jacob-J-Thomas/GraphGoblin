@@ -96,6 +96,7 @@ export const runs = sqliteTable(
   (t) => [
     index('runs_owner_status_idx').on(t.ownerId, t.status),
     index('runs_loop_idx').on(t.loopId, t.createdAt),
+    index('runs_loop_owner_history_idx').on(t.loopId, t.ownerId, t.createdAt, t.id),
     // Drizzle Kit 0.31 renders SQLite expression indexes incorrectly; 0008 supplies exact SQL.
     index('runs_trigger_dedupe_idx').on(
       t.loopId,
@@ -118,7 +119,10 @@ export const runEvents = sqliteTable(
     nodeId: text('node_id'),
     payload: text('payload', { mode: 'json' }).$type<Record<string, unknown>>().notNull(),
   },
-  (t) => [primaryKey({ columns: [t.runId, t.seq] })],
+  (t) => [
+    primaryKey({ columns: [t.runId, t.seq] }),
+    index('run_events_delivery_idx').on(t.runId, t.type, t.seq),
+  ],
 );
 
 export const harnessSessions = sqliteTable(

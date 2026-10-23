@@ -1,0 +1,581 @@
+{
+  "loopId": "01M5JAKWFHZYW0PMKJMWCZJZHR",
+  "runId": "01M5JAKWJ0RAF0T5AAJRBX3M25",
+  "path": "/503",
+  "run": {
+    "id": "01M5JAKWJ0RAF0T5AAJRBX3M25",
+    "ownerId": "local",
+    "loopId": "01M5JAKWFHZYW0PMKJMWCZJZHR",
+    "versionId": "01M5JAKWFH3EC3JHAK63PV8DW6",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "Audit /503",
+      "label": "Audit /503 v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M5JAKWJ007ZVD3BC6NW6JXAF",
+    "status": "succeeded",
+    "iteration": 1,
+    "outcome": "success",
+    "result": null,
+    "deliveries": [
+      {
+        "id": "01M5JAKWNVRQGB183V1QJRH9DM",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/503"
+        },
+        "status": "failed",
+        "attempts": 5,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "lastError": {
+          "code": "http",
+          "message": "Webhook returned HTTP 503.",
+          "retryable": true,
+          "acknowledgement": "unknown",
+          "httpStatus": 503
+        }
+      }
+    ],
+    "createdAt": "2026-10-22T17:30:21.632Z",
+    "startedAt": "2026-10-22T17:30:21.687Z",
+    "finishedAt": "2026-10-22T17:30:21.844Z",
+    "lastEventSeq": 19
+  },
+  "events": [
+    {
+      "runId": "01M5JAKWJ0RAF0T5AAJRBX3M25",
+      "seq": 1,
+      "ts": "2026-10-22T17:30:21.632Z",
+      "type": "run.queued",
+      "versionId": "01M5JAKWFH3EC3JHAK63PV8DW6",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Audit /503",
+        "label": "Audit /503 v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5JAKWJ0RAF0T5AAJRBX3M25",
+          "loopId": "01M5JAKWFHZYW0PMKJMWCZJZHR",
+          "versionId": "01M5JAKWFH3EC3JHAK63PV8DW6",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5JAKWJ007ZVD3BC6NW6JXAF",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": {
+              "name": "Audit /503",
+              "value": 42
+            },
+            "receivedAt": "2026-10-22T17:30:21.632Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {},
+        "gates": {},
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    {
+      "runId": "01M5JAKWJ0RAF0T5AAJRBX3M25",
+      "seq": 2,
+      "ts": "2026-10-22T17:30:21.690Z",
+      "type": "run.started",
+      "attempt": 1
+    },
+    {
+      "runId": "01M5JAKWJ0RAF0T5AAJRBX3M25",
+      "seq": 3,
+      "ts": "2026-10-22T17:30:21.704Z",
+      "type": "node.started",
+      "nodeId": "start",
+      "kind": "trigger",
+      "attempt": 1,
+      "configHash": "527dee9c4254fe4e"
+    },
+    {
+      "runId": "01M5JAKWJ0RAF0T5AAJRBX3M25",
+      "seq": 4,
+      "ts": "2026-10-22T17:30:21.712Z",
+      "type": "node.finished",
+      "nodeId": "start",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/outputs/start",
+          "value": {
+            "nodeId": "start",
+            "value": {
+              "name": "Audit /503",
+              "value": 42
+            },
+            "at": "2026-10-22T17:30:21.712Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "start",
+            "value": {
+              "name": "Audit /503",
+              "value": 42
+            },
+            "at": "2026-10-22T17:30:21.712Z"
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 0
+    },
+    {
+      "runId": "01M5JAKWJ0RAF0T5AAJRBX3M25",
+      "seq": 5,
+      "ts": "2026-10-22T17:30:21.738Z",
+      "type": "node.started",
+      "nodeId": "done",
+      "kind": "exit",
+      "attempt": 1,
+      "configHash": "a9b01f2480e0180a"
+    },
+    {
+      "runId": "01M5JAKWJ0RAF0T5AAJRBX3M25",
+      "seq": 6,
+      "ts": "2026-10-22T17:30:21.755Z",
+      "type": "exit.evaluated",
+      "nodeId": "done",
+      "outcome": "success"
+    },
+    {
+      "runId": "01M5JAKWJ0RAF0T5AAJRBX3M25",
+      "seq": 7,
+      "ts": "2026-10-22T17:30:21.755Z",
+      "type": "node.finished",
+      "nodeId": "done",
+      "patch": [],
+      "durationMs": 1
+    },
+    {
+      "runId": "01M5JAKWJ0RAF0T5AAJRBX3M25",
+      "seq": 8,
+      "ts": "2026-10-22T17:30:21.755Z",
+      "type": "run.finished",
+      "status": "succeeded",
+      "outcome": "success",
+      "result": null
+    },
+    {
+      "runId": "01M5JAKWJ0RAF0T5AAJRBX3M25",
+      "seq": 9,
+      "ts": "2026-10-22T17:30:21.755Z",
+      "type": "delivery.queued",
+      "delivery": {
+        "id": "01M5JAKWNVRQGB183V1QJRH9DM",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/503"
+        },
+        "status": "pending",
+        "attempts": 0,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "not_sent",
+        "effectMayHaveHappened": false,
+        "acknowledgementUncertain": false
+      }
+    },
+    {
+      "runId": "01M5JAKWJ0RAF0T5AAJRBX3M25",
+      "seq": 10,
+      "ts": "2026-10-22T17:30:21.884Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5JAKWNVRQGB183V1QJRH9DM",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/503"
+        },
+        "status": "pending",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": false,
+        "nextAttemptAt": "2026-10-22T17:30:33.881Z"
+      }
+    },
+    {
+      "runId": "01M5JAKWJ0RAF0T5AAJRBX3M25",
+      "seq": 11,
+      "ts": "2026-10-22T17:30:21.906Z",
+      "type": "delivery.attempt_finished",
+      "delivery": {
+        "id": "01M5JAKWNVRQGB183V1QJRH9DM",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/503"
+        },
+        "status": "pending",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "nextAttemptAt": "2026-10-22T17:30:23.903Z",
+        "lastError": {
+          "code": "http",
+          "message": "Webhook returned HTTP 503.",
+          "retryable": true,
+          "acknowledgement": "unknown",
+          "httpStatus": 503
+        }
+      }
+    },
+    {
+      "runId": "01M5JAKWJ0RAF0T5AAJRBX3M25",
+      "seq": 12,
+      "ts": "2026-10-22T17:30:23.914Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5JAKWNVRQGB183V1QJRH9DM",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/503"
+        },
+        "status": "pending",
+        "attempts": 2,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "nextAttemptAt": "2026-10-22T17:30:38.912Z",
+        "lastError": {
+          "code": "http",
+          "message": "Webhook returned HTTP 503.",
+          "retryable": true,
+          "acknowledgement": "unknown",
+          "httpStatus": 503
+        }
+      }
+    },
+    {
+      "runId": "01M5JAKWJ0RAF0T5AAJRBX3M25",
+      "seq": 13,
+      "ts": "2026-10-22T17:30:23.922Z",
+      "type": "delivery.attempt_finished",
+      "delivery": {
+        "id": "01M5JAKWNVRQGB183V1QJRH9DM",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/503"
+        },
+        "status": "pending",
+        "attempts": 2,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "nextAttemptAt": "2026-10-22T17:30:28.920Z",
+        "lastError": {
+          "code": "http",
+          "message": "Webhook returned HTTP 503.",
+          "retryable": true,
+          "acknowledgement": "unknown",
+          "httpStatus": 503
+        }
+      }
+    },
+    {
+      "runId": "01M5JAKWJ0RAF0T5AAJRBX3M25",
+      "seq": 14,
+      "ts": "2026-10-22T17:30:28.940Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5JAKWNVRQGB183V1QJRH9DM",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/503"
+        },
+        "status": "pending",
+        "attempts": 3,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "nextAttemptAt": "2026-10-22T17:30:48.938Z",
+        "lastError": {
+          "code": "http",
+          "message": "Webhook returned HTTP 503.",
+          "retryable": true,
+          "acknowledgement": "unknown",
+          "httpStatus": 503
+        }
+      }
+    },
+    {
+      "runId": "01M5JAKWJ0RAF0T5AAJRBX3M25",
+      "seq": 15,
+      "ts": "2026-10-22T17:30:28.946Z",
+      "type": "delivery.attempt_finished",
+      "delivery": {
+        "id": "01M5JAKWNVRQGB183V1QJRH9DM",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/503"
+        },
+        "status": "pending",
+        "attempts": 3,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "nextAttemptAt": "2026-10-22T17:30:38.945Z",
+        "lastError": {
+          "code": "http",
+          "message": "Webhook returned HTTP 503.",
+          "retryable": true,
+          "acknowledgement": "unknown",
+          "httpStatus": 503
+        }
+      }
+    },
+    {
+      "runId": "01M5JAKWJ0RAF0T5AAJRBX3M25",
+      "seq": 16,
+      "ts": "2026-10-22T17:30:38.949Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5JAKWNVRQGB183V1QJRH9DM",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/503"
+        },
+        "status": "pending",
+        "attempts": 4,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "nextAttemptAt": "2026-10-22T17:31:08.947Z",
+        "lastError": {
+          "code": "http",
+          "message": "Webhook returned HTTP 503.",
+          "retryable": true,
+          "acknowledgement": "unknown",
+          "httpStatus": 503
+        }
+      }
+    },
+    {
+      "runId": "01M5JAKWJ0RAF0T5AAJRBX3M25",
+      "seq": 17,
+      "ts": "2026-10-22T17:30:38.955Z",
+      "type": "delivery.attempt_finished",
+      "delivery": {
+        "id": "01M5JAKWNVRQGB183V1QJRH9DM",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/503"
+        },
+        "status": "pending",
+        "attempts": 4,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "nextAttemptAt": "2026-10-22T17:30:58.954Z",
+        "lastError": {
+          "code": "http",
+          "message": "Webhook returned HTTP 503.",
+          "retryable": true,
+          "acknowledgement": "unknown",
+          "httpStatus": 503
+        }
+      }
+    },
+    {
+      "runId": "01M5JAKWJ0RAF0T5AAJRBX3M25",
+      "seq": 18,
+      "ts": "2026-10-22T17:30:58.962Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5JAKWNVRQGB183V1QJRH9DM",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/503"
+        },
+        "status": "pending",
+        "attempts": 5,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "nextAttemptAt": "2026-10-22T17:31:08.961Z",
+        "lastError": {
+          "code": "http",
+          "message": "Webhook returned HTTP 503.",
+          "retryable": true,
+          "acknowledgement": "unknown",
+          "httpStatus": 503
+        }
+      }
+    },
+    {
+      "runId": "01M5JAKWJ0RAF0T5AAJRBX3M25",
+      "seq": 19,
+      "ts": "2026-10-22T17:30:58.970Z",
+      "type": "delivery.finished",
+      "delivery": {
+        "id": "01M5JAKWNVRQGB183V1QJRH9DM",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/503"
+        },
+        "status": "failed",
+        "attempts": 5,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": true,
+        "lastError": {
+          "code": "http",
+          "message": "Webhook returned HTTP 503.",
+          "retryable": true,
+          "acknowledgement": "unknown",
+          "httpStatus": 503
+        }
+      }
+    }
+  ],
+  "rows": [
+    {
+      "finalized_at": "2026-10-22T17:30:58.977Z",
+      "last_event_seq": 19,
+      "status": "succeeded"
+    }
+  ],
+  "requests": [
+    {
+      "path": "/503",
+      "n": 1,
+      "ms": 1792690221891,
+      "key": "01M5JAKWNVRQGB183V1QJRH9DM",
+      "body": {
+        "runId": "01M5JAKWJ0RAF0T5AAJRBX3M25",
+        "loopId": "01M5JAKWFHZYW0PMKJMWCZJZHR",
+        "outcome": "success",
+        "result": null
+      }
+    },
+    {
+      "path": "/503",
+      "n": 2,
+      "ms": 1792690223920,
+      "key": "01M5JAKWNVRQGB183V1QJRH9DM",
+      "body": {
+        "runId": "01M5JAKWJ0RAF0T5AAJRBX3M25",
+        "loopId": "01M5JAKWFHZYW0PMKJMWCZJZHR",
+        "outcome": "success",
+        "result": null
+      }
+    },
+    {
+      "path": "/503",
+      "n": 3,
+      "ms": 1792690228944,
+      "key": "01M5JAKWNVRQGB183V1QJRH9DM",
+      "body": {
+        "runId": "01M5JAKWJ0RAF0T5AAJRBX3M25",
+        "loopId": "01M5JAKWFHZYW0PMKJMWCZJZHR",
+        "outcome": "success",
+        "result": null
+      }
+    },
+    {
+      "path": "/503",
+      "n": 4,
+      "ms": 1792690238953,
+      "key": "01M5JAKWNVRQGB183V1QJRH9DM",
+      "body": {
+        "runId": "01M5JAKWJ0RAF0T5AAJRBX3M25",
+        "loopId": "01M5JAKWFHZYW0PMKJMWCZJZHR",
+        "outcome": "success",
+        "result": null
+      }
+    },
+    {
+      "path": "/503",
+      "n": 5,
+      "ms": 1792690258967,
+      "key": "01M5JAKWNVRQGB183V1QJRH9DM",
+      "body": {
+        "runId": "01M5JAKWJ0RAF0T5AAJRBX3M25",
+        "loopId": "01M5JAKWFHZYW0PMKJMWCZJZHR",
+        "outcome": "success",
+        "result": null
+      }
+    }
+  ]
+}

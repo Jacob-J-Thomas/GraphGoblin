@@ -6,6 +6,7 @@
 import { describe, expect, it } from 'vitest';
 import type { LoopDefinition, LoopVersionRecord } from '@graphgoblin/contracts';
 import { LoopUpgradeRequiredError } from './errors.js';
+import { RunManager } from './run-manager.js';
 import { assertCurrentDefinition, definitionUpgradeRequired } from './stored-definition.js';
 import { createTestEngine, singleNodeLoop, type TestEngine } from './testing/scenario.js';
 
@@ -30,6 +31,59 @@ const waitLoop = singleNodeLoop('emitting wait', {
 });
 
 describe('stored definitions with an Event destination (#242)', () => {
+  it('finalizes an already completed old Event return without rewriting history or repeating it', async () => {
+    const e = await createTestEngine();
+    const version = e.publish(
+      singleNodeLoop(
+        'completed before upgrade',
+        {
+          id: 'work',
+          kind: 'mutate',
+          label: 'Work',
+          config: { operations: [{ op: 'delete', path: '/vars/x' }] },
+        },
+        { returns: 'vars' },
+      ),
+    );
+    const run = await e.runToIdle(version.loopId);
+    e.manager.stop();
+    // Public storage ports model the crash boundary and the old stored definition.
+    await e.ports.runs.clearFinalized(run.id);
+    const old = stored(e, version);
+    const history = structuredClone(e.events(run.id));
+    const recovered = new RunManager(e.ports, e.settings);
+    await recovered.start();
+    await recovered.waitForIdle();
+    recovered.stop();
+    expect(await recovered.getRun(run.id)).toMatchObject({ status: 'succeeded', result: {} });
+    expect(await e.ports.runs.listRecoveryCandidates()).not.toContainEqual({
+      id: run.id,
+      terminal: true,
+    });
+    expect(e.events(run.id)).toEqual(history);
+    expect(await e.ports.loops.getVersion(old.id)).toEqual(old);
+    expect(e.ports.logger.lines).toContainEqual(
+      expect.objectContaining({
+        level: 'warn',
+        msg: 'retired Event return skipped; loop upgrade required',
+        obj: expect.objectContaining({
+          code: 'LOOP_UPGRADE_REQUIRED',
+          runId: run.id,
+          loopId: run.loopId,
+          versionId: run.versionId,
+        }),
+      }),
+    );
+    expect(e.ports.logger.lines.some((line) => line.msg === 'finalize failed')).toBe(false);
+    const logs = structuredClone(e.ports.logger.lines);
+    const again = new RunManager(e.ports, e.settings);
+    await again.start();
+    await again.waitForIdle();
+    again.stop();
+    expect(e.events(run.id)).toEqual(history);
+    expect(e.ports.logger.lines).toEqual(logs);
+  });
+
   it('names the loop, the version and every destination, and says how to repair', async () => {
     const e = await createTestEngine();
     const version = stored(e, e.publish(waitLoop));

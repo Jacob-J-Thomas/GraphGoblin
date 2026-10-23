@@ -1,0 +1,69 @@
+pnpm.cmd : $ turbo run build
+At line:17 char:1
++ pnpm.cmd build *> round6-build-after.log
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ turbo run build:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running build in 12 packages
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/contracts:build: cache hit, replaying logs 882264bc6b1530b5
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+@graphgoblin/domain:build: cache hit, replaying logs 676116f07a3050d1
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:build: cache miss, executing 232bd7a09471cef5
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-jev:build: cache miss, executing 017cbff3269fab5d
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/adapter-codex:build: cache miss, executing 76810084647521c7
+@graphgoblin/infrastructure:build: cache miss, executing 1ea2229e2d503bfd
+@graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+ WARNING  IO error: Access is denied. (os error 5)
+ WARNING  IO error: Access is denied. (os error 5)
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/api:build: cache miss, executing 7e0d03d5706e3e78
+@graphgoblin/api:build: $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/api-client:build: cache miss, executing aa4ff166a0a6cdcd
+@graphgoblin/api-client:build: $ tsc -b tsconfig.build.json
+@graphgoblin/mcp:build: cache miss, executing 48e1a2c7a1d7b10c
+@graphgoblin/web:build: cache miss, executing 112e111cc510e4d1
+@graphgoblin/mcp:build: $ tsc -b tsconfig.build.json
+@graphgoblin/web:build: $ vite build
+@graphgoblin/plugin-codex:build: cache miss, executing 9a4a8f114119eff2
+@graphgoblin/plugin-codex:build: $ tsc -b tsconfig.build.json && node dist/cli.js
+@graphgoblin/plugin-codex:build: Assembled graphgoblin@graphgoblin-local with skills design-loop, inspect-run, run-loop.
+@graphgoblin/plugin-codex:build: Install: codex plugin marketplace add "<worktree>\apps\plugin-codex\dist\marketplace"
+@graphgoblin/plugin-codex:build:          codex plugin add graphgoblin@graphgoblin-local
+@graphgoblin/web:build: vite v8.3.4 building client environment for production...
+@graphgoblin/web:build: transforming...
+@graphgoblin/web:build: ✓ 727 modules transformed.
+@graphgoblin/web:build: rendering chunks...
+@graphgoblin/web:build: computing gzip size...
+@graphgoblin/web:build: dist/manifest.webmanifest                    0.47 kB
+@graphgoblin/web:build: dist/index.html                              2.40 kB │ gzip:   1.09 kB
+@graphgoblin/web:build: dist/assets/index-BPwmNi8Y.css              88.17 kB │ gzip:  16.78 kB
+@graphgoblin/web:build: dist/assets/upgrade-current-Bq--qKFS.js    187.87 kB │ gzip:  35.93 kB │ map:   704.30 kB
+@graphgoblin/web:build: dist/assets/index-CUiUEewv.js            1,812.74 kB │ gzip: 567.54 kB │ map: 8,303.13 kB
+@graphgoblin/web:build: 
+@graphgoblin/web:build: ✓ built in 1.96s
+@graphgoblin/web:build: 
+@graphgoblin/web:build: PWA v1.3.0
+@graphgoblin/web:build: mode      generateSW
+@graphgoblin/web:build: precache  21 entries (2510.06 KiB)
+@graphgoblin/web:build: files generated
+@graphgoblin/web:build:   dist/sw.js.map
+@graphgoblin/web:build:   dist/sw.js
+@graphgoblin/web:build:   dist/workbox-2fbc6a65.js.map
+@graphgoblin/web:build:   dist/workbox-2fbc6a65.js
+
+ Tasks:    11 successful, 11 total
+Cached:    2 cached, 11 total
+  Time:    12.512s 
+

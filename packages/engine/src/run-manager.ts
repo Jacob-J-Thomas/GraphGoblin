@@ -4,6 +4,7 @@ import {
   type WebhookClaim,
   type WebhookReceipt,
 } from './admission.js';
+import { WebhookReturns, webhookStates, queuedWebhooks } from './webhook-returns.js';
 import type {
   Caller,
   ContextThread,
@@ -110,6 +111,13 @@ export interface StartRunInput {
   pinnedDefaults?: PinnedDefaults;
   /** Classifier bindings already pinned by the parent run; a child keeps them for shared ids. */
   pinnedClassifiers?: RunPin['classifiers'];
+}
+
+/** The exact frozen root and published child records a start pinned, before any durable effect. */
+export interface RunStartPlan {
+  root: LoopVersionRecord;
+  versions: ReadonlyMap<string, LoopVersionRecord>;
+  subloopVersions: Readonly<Record<string, string>>;
 }
 
 /** A run start prepared outside the pin lock, admitted inside it. */
@@ -278,6 +286,7 @@ function lastFinishedNode(
 }
 
 export class RunManager {
+  private readonly returnDeliveries: WebhookReturns;
   private readonly queue: string[] = [];
   private readonly active = new Map<string, AbortController>();
   private readonly recovering = new Set<string>();
@@ -299,11 +308,14 @@ export class RunManager {
     private readonly ports: EnginePorts,
     private readonly settings: EngineSettings,
     private readonly handlers: HandlerRegistry = defaultHandlers(),
-  ) {}
+  ) {
+    this.returnDeliveries = new WebhookReturns(ports);
+  }
 
   /** Arm timers and recover runs left active by a previous process. */
   async start(): Promise<void> {
     this.stopped = false;
+    this.returnDeliveries.resume();
     // Transient wake failures retain the row; unreadable history is diagnosed and acknowledged.
     this.unsubscribeTimers ??= this.ports.timers.onFire((runId, key) =>
       this.onTimer(runId, key).catch((error: unknown) => {
@@ -332,6 +344,7 @@ export class RunManager {
   /** Stop picking up new work. Active nodes finish; runs stay recoverable. */
   stop(): void {
     this.stopped = true;
+    this.returnDeliveries.stop();
     if (this.webhookSweep) clearInterval(this.webhookSweep);
     this.webhookSweep = undefined;
     this.unsubscribeTimers?.();
@@ -341,8 +354,10 @@ export class RunManager {
   /** Resolves when nothing is queued or executing. */
   async waitForIdle(): Promise<void> {
     await this.waitForWebhookRecovery();
-    if (this.queue.length === 0 && this.active.size === 0) return Promise.resolve();
-    return new Promise((resolve) => this.idleWaiters.push(resolve));
+    if (this.queue.length !== 0 || this.active.size !== 0) {
+      await new Promise<void>((resolve) => this.idleWaiters.push(resolve));
+    }
+    await this.returnDeliveries.waitForIdle();
   }
 
   // ---------------------------------------------------------------------------
@@ -430,8 +445,34 @@ export class RunManager {
     };
   }
 
-  async startRun(input: StartRunInput): Promise<RunRecord> {
+  async startRun(
+    input: StartRunInput,
+    beforeAdmission?: (plan: RunStartPlan) => Promise<void>,
+  ): Promise<RunRecord> {
     const prepared = await this.prepareStart(input);
+    if (beforeAdmission) {
+      const versions = new Map([[prepared.version.id, prepared.version]]);
+      const intent = await this.withPinLock(async () => {
+        await this.assertVersionPresent(prepared.sourceId, input.loopId);
+        return this.prepareAdmission(prepared, input.subloopVersions ?? {}, versions);
+      });
+      // Slow admission policy (such as no-turn CLI probes) never holds the shared pin lock.
+      // Commit this same intent afterwards: a publish or draft edit cannot change what was checked.
+      await beforeAdmission({
+        root: prepared.version,
+        versions,
+        subloopVersions: intent.queued.subloopVersions ?? {},
+      });
+      const admitted = await this.withPinLock(async () => {
+        await this.assertVersionPresent(prepared.sourceId, input.loopId);
+        for (const version of versions.values())
+          if (version.id !== prepared.version.id)
+            await this.assertVersionPresent(version.id, version.loopId);
+        return this.ports.admission.create(intent);
+      });
+      this.enqueue(admitted.id);
+      return admitted;
+    }
     const admitted = await this.withPinLock(async () => {
       await this.assertVersionPresent(prepared.sourceId, input.loopId);
       const intent = await this.prepareAdmission(prepared, input.subloopVersions ?? {});
@@ -464,9 +505,15 @@ export class RunManager {
   private async prepareAdmission(
     { version, run, thread: initialThread, snapshot }: PreparedStart,
     inherited: Record<string, string>,
+    versions?: Map<string, LoopVersionRecord>,
   ): Promise<RunAdmission> {
     const reached = new Set<string>([run.loopId]);
-    const subloopVersions = await this.pinSubloops(version.definition, inherited, reached);
+    const subloopVersions = await this.pinSubloops(
+      version.definition,
+      inherited,
+      reached,
+      versions,
+    );
     return {
       run,
       initialThread,
@@ -946,6 +993,7 @@ export class RunManager {
           versionId: run.versionId,
           pinned: run.pinned,
           replayOf,
+          initialThread: thread,
           ...(Object.keys(subloopVersions).length > 0 ? { subloopVersions } : {}),
         },
       });
@@ -1652,6 +1700,7 @@ export class RunManager {
             outcome: result.outcome,
             ...(result.returnPayload !== undefined ? { result: result.returnPayload } : {}),
           },
+          ...queuedWebhooks(result, thread, this.ports.ids),
         ]);
         await this.ports.runs.saveThread(runId, thread, seq);
         await this.finish(run, def, thread, result);
@@ -1759,7 +1808,8 @@ export class RunManager {
    * record it as finalized. Every step is idempotent, and a run that is terminal but not
    * finalized is finalized again at recovery, so a crash right after the status write loses
    * nothing. Returns are delivered per channel, skipping channels whose delivery is already
-   * recorded; a channel interrupted mid-delivery is delivered again (at least once).
+   * recorded. Webhooks journal each attempt and recover uncertainty with the same identity
+   * and remaining finite budget; other interrupted sinks retain at-least-once semantics.
    */
   private finalizeTerminal(
     runId: string,
@@ -1803,7 +1853,14 @@ export class RunManager {
       const def = knownDef ?? (await this.ports.loops.getVersion(run.versionId))?.definition;
       if (def) {
         const thread = knownThread ?? (await this.loadThread(run, events));
-        await this.deliverReturns(run, def, thread, exitResult(def, events, terminal), events);
+        complete =
+          (await this.deliverReturns(
+            run,
+            def,
+            thread,
+            exitResult(def, events, terminal),
+            events,
+          )) && complete;
       }
     }
     await this.notifyParent(run, run.status, run.outcome);
@@ -1816,8 +1873,9 @@ export class RunManager {
     thread: ContextThread,
     result: Extract<NodeResult, { kind: 'exit' }>,
     events: readonly RunEvent[],
-  ): Promise<void> {
-    if (result.returnPayload === undefined) return;
+  ): Promise<boolean> {
+    if (result.returnPayload === undefined) return true;
+    let complete = true;
     const payload = result.returnPayload;
     const channels: ReturnChannel[] = [...result.channels];
     for (const extra of thread.invocation.returnDefaults ?? []) {
@@ -1831,7 +1889,41 @@ export class RunManager {
     const append = async (draft: EventDraft): Promise<void> => {
       await this.ports.events.append(run.id, [draft]);
     };
+    const deliveryStates = webhookStates(events);
     for (const channel of channels) {
+      // A pre-upgrade run may already have finished with this retired stored destination.
+      // Do not publish it or fabricate a receipt; execution and parent notification still stand.
+      if (String(channel.kind) === 'event') {
+        this.ports.logger.warn(
+          {
+            code: 'LOOP_UPGRADE_REQUIRED',
+            runId: run.id,
+            loopId: run.loopId,
+            versionId: run.versionId,
+            channelKind: 'event',
+          },
+          'retired Event return skipped; loop upgrade required',
+        );
+        continue;
+      }
+      if (channel.kind === 'webhook') {
+        const state = deliveryStates.find(
+          (delivery) => JSON.stringify(delivery.channel) === JSON.stringify(channel),
+        );
+        if (!state) {
+          throw new Error(`Missing durable webhook delivery intent for run ${run.id}`);
+        }
+        if (state.status === 'pending') {
+          complete = false;
+          this.returnDeliveries.start(
+            run.id,
+            state,
+            { runId: run.id, loopId: run.loopId, outcome: result.outcome, result: payload },
+            () => this.finalizeTerminal(run.id),
+          );
+        }
+        continue;
+      }
       if (recorded.has(JSON.stringify(channel))) continue;
       try {
         let target: string | undefined;
@@ -1855,18 +1947,6 @@ export class RunManager {
             target = await this.ports.workspace.writeFile(dir, channel.path, content);
             break;
           }
-          case 'webhook': {
-            const secret = channel.secretRef
-              ? await this.ports.secrets.resolve(channel.secretRef)
-              : undefined;
-            await this.ports.delivery.webhook(
-              channel.url,
-              { runId: run.id, loopId: run.loopId, outcome: result.outcome, result: payload },
-              secret,
-            );
-            target = channel.url;
-            break;
-          }
         }
         await append({ type: 'return.delivered', channel, ...(target ? { target } : {}) });
       } catch (error) {
@@ -1877,6 +1957,7 @@ export class RunManager {
         });
       }
     }
+    return complete;
   }
 
   private async failRun(runId: string, authoredFailure: RunFailure): Promise<void> {
@@ -2001,6 +2082,7 @@ export class RunManager {
     def: LoopDefinition,
     inherited: Record<string, string>,
     reached?: Set<string>,
+    versions?: Map<string, LoopVersionRecord>,
   ): Promise<Record<string, string>> {
     const pins: Record<string, string> = { ...inherited };
     const walked = new Set<string>();
@@ -2018,6 +2100,7 @@ export class RunManager {
           if (target) pins[loopId] = target.id;
         }
         if (target && !walked.has(target.id)) {
+          versions?.set(target.id, target);
           walked.add(target.id);
           pending.push(target.definition);
         }

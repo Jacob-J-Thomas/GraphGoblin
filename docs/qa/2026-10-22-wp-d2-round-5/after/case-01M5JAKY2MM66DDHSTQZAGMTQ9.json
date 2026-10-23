@@ -1,0 +1,294 @@
+{
+  "loopId": "01M5JAKY0SB53S2XSB1TQSZS7E",
+  "runId": "01M5JAKY2MM66DDHSTQZAGMTQ9",
+  "path": "ftp://127.0.0.1/hook",
+  "run": {
+    "id": "01M5JAKY2MM66DDHSTQZAGMTQ9",
+    "ownerId": "local",
+    "loopId": "01M5JAKY0SB53S2XSB1TQSZS7E",
+    "versionId": "01M5JAKY0SMTSZYRQAYS4JX935",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "Audit invalid",
+      "label": "Audit invalid v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M5JAKY2M6YGYANV58RQNJ1KS",
+    "status": "succeeded",
+    "iteration": 1,
+    "outcome": "success",
+    "result": null,
+    "deliveries": [
+      {
+        "id": "01M5JAKY59RWG3FF8XQFT7QXRP",
+        "channel": {
+          "kind": "webhook",
+          "url": "ftp://127.0.0.1/hook"
+        },
+        "status": "failed",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "not_sent",
+        "effectMayHaveHappened": false,
+        "acknowledgementUncertain": false,
+        "lastError": {
+          "code": "invalid_destination",
+          "message": "Webhook destination must be an HTTP(S) URL without credentials.",
+          "retryable": false,
+          "acknowledgement": "not_sent"
+        }
+      }
+    ],
+    "createdAt": "2026-10-22T17:30:23.188Z",
+    "startedAt": "2026-10-22T17:30:23.210Z",
+    "finishedAt": "2026-10-22T17:30:23.278Z",
+    "lastEventSeq": 11
+  },
+  "events": [
+    {
+      "runId": "01M5JAKY2MM66DDHSTQZAGMTQ9",
+      "seq": 1,
+      "ts": "2026-10-22T17:30:23.188Z",
+      "type": "run.queued",
+      "versionId": "01M5JAKY0SMTSZYRQAYS4JX935",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Audit invalid",
+        "label": "Audit invalid v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5JAKY2MM66DDHSTQZAGMTQ9",
+          "loopId": "01M5JAKY0SB53S2XSB1TQSZS7E",
+          "versionId": "01M5JAKY0SMTSZYRQAYS4JX935",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5JAKY2M6YGYANV58RQNJ1KS",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": {
+              "name": "Audit invalid",
+              "value": 42
+            },
+            "receivedAt": "2026-10-22T17:30:23.188Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {},
+        "gates": {},
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    {
+      "runId": "01M5JAKY2MM66DDHSTQZAGMTQ9",
+      "seq": 2,
+      "ts": "2026-10-22T17:30:23.215Z",
+      "type": "run.started",
+      "attempt": 1
+    },
+    {
+      "runId": "01M5JAKY2MM66DDHSTQZAGMTQ9",
+      "seq": 3,
+      "ts": "2026-10-22T17:30:23.232Z",
+      "type": "node.started",
+      "nodeId": "start",
+      "kind": "trigger",
+      "attempt": 1,
+      "configHash": "527dee9c4254fe4e"
+    },
+    {
+      "runId": "01M5JAKY2MM66DDHSTQZAGMTQ9",
+      "seq": 4,
+      "ts": "2026-10-22T17:30:23.242Z",
+      "type": "node.finished",
+      "nodeId": "start",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/outputs/start",
+          "value": {
+            "nodeId": "start",
+            "value": {
+              "name": "Audit invalid",
+              "value": 42
+            },
+            "at": "2026-10-22T17:30:23.242Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "start",
+            "value": {
+              "name": "Audit invalid",
+              "value": 42
+            },
+            "at": "2026-10-22T17:30:23.242Z"
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 0
+    },
+    {
+      "runId": "01M5JAKY2MM66DDHSTQZAGMTQ9",
+      "seq": 5,
+      "ts": "2026-10-22T17:30:23.268Z",
+      "type": "node.started",
+      "nodeId": "done",
+      "kind": "exit",
+      "attempt": 1,
+      "configHash": "ecafc75c6cb23745"
+    },
+    {
+      "runId": "01M5JAKY2MM66DDHSTQZAGMTQ9",
+      "seq": 6,
+      "ts": "2026-10-22T17:30:23.273Z",
+      "type": "exit.evaluated",
+      "nodeId": "done",
+      "outcome": "success"
+    },
+    {
+      "runId": "01M5JAKY2MM66DDHSTQZAGMTQ9",
+      "seq": 7,
+      "ts": "2026-10-22T17:30:23.273Z",
+      "type": "node.finished",
+      "nodeId": "done",
+      "patch": [],
+      "durationMs": 0
+    },
+    {
+      "runId": "01M5JAKY2MM66DDHSTQZAGMTQ9",
+      "seq": 8,
+      "ts": "2026-10-22T17:30:23.273Z",
+      "type": "run.finished",
+      "status": "succeeded",
+      "outcome": "success",
+      "result": null
+    },
+    {
+      "runId": "01M5JAKY2MM66DDHSTQZAGMTQ9",
+      "seq": 9,
+      "ts": "2026-10-22T17:30:23.273Z",
+      "type": "delivery.queued",
+      "delivery": {
+        "id": "01M5JAKY59RWG3FF8XQFT7QXRP",
+        "channel": {
+          "kind": "webhook",
+          "url": "ftp://127.0.0.1/hook"
+        },
+        "status": "pending",
+        "attempts": 0,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "not_sent",
+        "effectMayHaveHappened": false,
+        "acknowledgementUncertain": false
+      }
+    },
+    {
+      "runId": "01M5JAKY2MM66DDHSTQZAGMTQ9",
+      "seq": 10,
+      "ts": "2026-10-22T17:30:23.302Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5JAKY59RWG3FF8XQFT7QXRP",
+        "channel": {
+          "kind": "webhook",
+          "url": "ftp://127.0.0.1/hook"
+        },
+        "status": "pending",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": false,
+        "nextAttemptAt": "2026-10-22T17:30:35.299Z"
+      }
+    },
+    {
+      "runId": "01M5JAKY2MM66DDHSTQZAGMTQ9",
+      "seq": 11,
+      "ts": "2026-10-22T17:30:23.327Z",
+      "type": "delivery.finished",
+      "delivery": {
+        "id": "01M5JAKY59RWG3FF8XQFT7QXRP",
+        "channel": {
+          "kind": "webhook",
+          "url": "ftp://127.0.0.1/hook"
+        },
+        "status": "failed",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "not_sent",
+        "effectMayHaveHappened": false,
+        "acknowledgementUncertain": false,
+        "lastError": {
+          "code": "invalid_destination",
+          "message": "Webhook destination must be an HTTP(S) URL without credentials.",
+          "retryable": false,
+          "acknowledgement": "not_sent"
+        }
+      }
+    }
+  ],
+  "rows": [
+    {
+      "finalized_at": "2026-10-22T17:30:23.347Z",
+      "last_event_seq": 11,
+      "status": "succeeded"
+    }
+  ],
+  "requests": []
+}

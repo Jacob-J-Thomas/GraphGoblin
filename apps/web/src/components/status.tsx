@@ -51,13 +51,20 @@ export function QueryState<T>({
   query,
   what,
   children,
+  keepDataOnError = false,
 }: {
   query: UseQueryResult<T>;
   what: string;
   children: (data: T) => ReactNode;
+  keepDataOnError?: boolean;
 }) {
   if (query.isPending && query.fetchStatus === 'paused') return <OfflineState what={what} />;
   if (query.isPending) return <p className="text-sm text-muted">Loading {what.toLowerCase()}…</p>;
-  if (query.isError) return <ErrorState error={query.error} what={what} />;
+  if (query.isError)
+    return keepDataOnError && query.data !== undefined ? (
+      <>{children(query.data)}</>
+    ) : (
+      <ErrorState error={query.error} what={what} />
+    );
   return <>{children(query.data)}</>;
 }

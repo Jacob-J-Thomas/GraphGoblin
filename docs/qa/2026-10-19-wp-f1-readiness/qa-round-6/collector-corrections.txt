@@ -1,0 +1,34 @@
+Collector setup corrections, not product defects
+
+The first collector compared each log line with exactly "--version". Claude adds
+safe-mode arguments before that flag. Its observed 422 responses and zero durable
+effects were valid; the zero-probe assertion was wrong. The corrected collector
+counts --version as a whitespace-delimited argument.
+
+The first collector expected GET /runs/:id to return {run:...}. That endpoint
+returns the run directly. The collector timed out waiting for an already failed
+fixture turn. The corrected collector reads the documented response shape.
+
+The first cycle setup referenced an unpublished child. Publish correctly returned
+422 SUBLOOP_NOT_PUBLISHED. The corrected setup publishes A v1, publishes B pointing
+to A, then publishes A v2 pointing to B.
+
+The first depth-one setup left the middle loop's limit at 8. It correctly probed
+the grandchild: each subloop node uses its containing definition's limit. The
+corrected depth-one and depth-two chains set both root and middle limits.
+
+The first draft request omitted versionId. allowDraft alone does not select an
+unpublished draft; the endpoint correctly returned 404 LOOP_NOT_FOUND, with zero
+probes or effects. The corrected request supplies the created draft ID together
+with allowDraft:true and receives the expected readiness rejection.
+
+These invalid collector assertions remain disclosed here. They are not counted
+as product failures, and the corrected measurements are identified separately.
+
+The first native deletion control sent Content-Type: application/json with no
+body. Fastify returned 400 before the delete handler; the unrelated ready start
+correctly returned 202. The following restart control then compared counts while
+that run was still queued. Recovery correctly added its execution events and
+child run. Those two collector expectations were invalid. The corrected control
+sends DELETE with {}, checks the 404 admission rejection after deletion, and
+restarts from a store with no admitted run in flight.

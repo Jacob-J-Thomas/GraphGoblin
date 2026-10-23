@@ -1,8 +1,16 @@
-import type { LoopDefinition, LoopRecord, LoopVersionRecord } from '@graphgoblin/contracts';
+import type {
+  LoopDefinition,
+  LoopRecord,
+  LoopVersionRecord,
+  RunRecord,
+} from '@graphgoblin/contracts';
 import type { ClockPort, IdPort, LoopRepository } from '@graphgoblin/engine';
-import { and, asc, desc, eq, inArray, isNotNull, ne } from 'drizzle-orm';
+import { UnreadableRunHistoryError } from '@graphgoblin/engine';
+import { and, asc, desc, eq, inArray, isNotNull, ne, sql, getTableColumns } from 'drizzle-orm';
 import type { Database } from './db.js';
 import { deleteRuns } from './delete-runs.js';
+import { SqliteEventStore } from './events.js';
+import { decodeRunRecord, decodeStoredThread, rawRunColumns } from './run-decoding.js';
 import {
   loopVersions,
   loops,
@@ -55,11 +63,19 @@ export class LoopInUseError extends Error {
 }
 
 export class SqliteLoopRepository implements LoopRepository {
+  private readonly events: SqliteEventStore;
+  private readonly eventReadability = new Map<
+    string,
+    { runId: string; count: number; readable: boolean }
+  >();
+
   constructor(
     private readonly db: Database,
     private readonly clock: ClockPort,
     private readonly ids: IdPort,
-  ) {}
+  ) {
+    this.events = new SqliteEventStore(db, clock);
+  }
 
   // ---------------------------------------------------------------------------
   // Engine port
@@ -135,6 +151,95 @@ export class SqliteLoopRepository implements LoopRepository {
       .where(eq(loops.ownerId, ownerId))
       .orderBy(desc(loops.updatedAt));
     return rows.map(toLoop);
+  }
+
+  /** One statement selects each owner loop's exact count and deterministic latest run. */
+  async listWithRunSummaries(ownerId: string): Promise<
+    (LoopRecord & {
+      latestRun: Pick<RunRecord, 'id' | 'status' | 'createdAt'> | null;
+      runCount: number;
+    })[]
+  > {
+    const rows = await this.db
+      .select({
+        ...getTableColumns(loops),
+        latestRun: {
+          ...rawRunColumns,
+          initialThread: sql<string>`${runs.initialThread}`,
+          threadSnapshot: sql<string | null>`${runs.threadSnapshot}`,
+          eventCount:
+            sql<number>`(SELECT count(*) FROM run_events e WHERE e.run_id = ${runs.id})`.mapWith(
+              Number,
+            ),
+        },
+        runCount:
+          sql<number>`(SELECT count(*) FROM runs r WHERE r.loop_id = ${loops.id} AND r.owner_id = ${loops.ownerId})`.mapWith(
+            Number,
+          ),
+      })
+      .from(loops)
+      .leftJoin(
+        runs,
+        sql`${runs.id} = (
+      SELECT r.id FROM runs r WHERE r.loop_id = ${loops.id} AND r.owner_id = ${loops.ownerId}
+      ORDER BY r.created_at DESC, r.id DESC LIMIT 1
+    )`,
+      )
+      .where(eq(loops.ownerId, ownerId))
+      .orderBy(desc(loops.updatedAt));
+    const summaries = [];
+    for (const row of rows) {
+      let latestRun: Pick<RunRecord, 'id' | 'status' | 'createdAt'> | null = null;
+      if (row.latestRun) {
+        try {
+          // A valid status alone can be stale when a damaged snapshot could not be updated.
+          // Use the same strict decoder as every other run read before showing a badge.
+          const { id, status, createdAt } = decodeRunRecord(row.latestRun);
+          // Recovery refuses damaged threads before repairing a stale status. A readable
+          // summary must validate both too; an absent cached snapshot is valid, not damage.
+          decodeStoredThread(id, 'initial_thread', row.latestRun.initialThread);
+          if (row.latestRun.threadSnapshot !== null)
+            decodeStoredThread(id, 'thread_snapshot', row.latestRun.threadSnapshot);
+          if (await this.hasReadableEvents(row.id, id, row.latestRun.eventCount))
+            latestRun = { id, status, createdAt };
+        } catch (error) {
+          if (!(error instanceof UnreadableRunHistoryError)) throw error;
+        }
+      }
+      summaries.push({
+        ...toLoop(row),
+        runCount: row.runCount,
+        // A positive count with no readable latest summary means unavailable, not never run.
+        latestRun,
+      });
+    }
+    return summaries;
+  }
+
+  private async hasReadableEvents(loopId: string, runId: string, count: number): Promise<boolean> {
+    // Recovery also refuses unreadable events before repairing status. It only logs failures;
+    // diagnostics scans on demand, so neither supplies a shared set. Check the same strict
+    // event decoder in batches, stopping at the first bad row. Cache one identity/count per
+    // loop: polling unchanged histories does no JSON decoding, even for long finished runs.
+    // Count bounds a scan of an active run; appends invalidate the result on the next read.
+    // Out-of-band repairs/edits with unchanged count require restarting this cache's process.
+    const cached = this.eventReadability.get(loopId);
+    if (cached?.runId === runId && cached.count === count) return cached.readable;
+    let readable = true;
+    try {
+      let after = 0;
+      for (let remaining = count; remaining > 0;) {
+        const events = await this.events.read(runId, after, Math.min(100, remaining));
+        if (events.length === 0) break;
+        after = events.at(-1)!.seq;
+        remaining -= events.length;
+      }
+    } catch (error) {
+      if (!(error instanceof UnreadableRunHistoryError)) throw error;
+      readable = false;
+    }
+    this.eventReadability.set(loopId, { runId, count, readable });
+    return readable;
   }
 
   /** Every loop with a published version, across owners; used to re-arm triggers at boot. */

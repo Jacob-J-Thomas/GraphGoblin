@@ -1,0 +1,137 @@
+[
+  {
+    "system": "Owner / Edge",
+    "case": "PATH and bare binary overrides",
+    "steps": "Prepend only the owned executable directories; configure the two bare fixture names; GET harness preflight",
+    "expected": "Both ready, all probes drive owned fakes",
+    "actual": {
+      "status": 200,
+      "body": {
+        "items": [
+          {
+            "state": "ready",
+            "ok": true,
+            "version": "0.160.0-beta.1",
+            "authenticated": true,
+            "problems": [],
+            "harness": "codex"
+          },
+          {
+            "state": "ready",
+            "ok": true,
+            "version": "2.1.287",
+            "authenticated": true,
+            "problems": [],
+            "authMethod": "claude.ai",
+            "supportedPolicies": [
+              {
+                "sandbox": "read-only",
+                "approval": "never",
+                "permissionMode": "dontAsk",
+                "tools": ["Read", "Glob", "Grep"],
+                "authMethod": "claude.ai",
+                "boundary": "builtin-tools",
+                "network": "unconfined"
+              },
+              {
+                "sandbox": "danger-full-access",
+                "approval": "never",
+                "permissionMode": "dontAsk",
+                "tools": ["Read", "Glob", "Grep", "Edit", "Write", "Bash"],
+                "authMethod": "claude.ai",
+                "boundary": "unconfined",
+                "network": "unconfined"
+              }
+            ],
+            "models": [
+              {
+                "model": "claude-opus-5-5",
+                "efforts": ["low", "medium", "high", "xhigh", "max"]
+              },
+              {
+                "model": "claude-fable-5-1",
+                "efforts": ["low", "medium", "high", "xhigh", "max"]
+              }
+            ],
+            "harness": "claude"
+          }
+        ]
+      }
+    },
+    "pass": true
+  },
+  {
+    "system": "Owner / Edge",
+    "case": "UI saved owner default",
+    "steps": "Choose Claude Opus in the Settings select; observe the public stored setting",
+    "expected": "Auto-save persists the exact model",
+    "actual": {
+      "settings": {
+        "defaults": {
+          "byHarness": {
+            "claude": {
+              "model": "claude-opus-5-5"
+            }
+          }
+        }
+      },
+      "screenshot": "owner-defaults-saved.png"
+    },
+    "pass": true
+  },
+  {
+    "system": "Owner / Edge",
+    "case": "UI saved default through sign-out",
+    "steps": "After UI auto-save, sign the fake out and Retry",
+    "expected": "Saved label and one help line, exact value retained",
+    "actual": {
+      "label": "Claude Opus 5.5 (saved)",
+      "text": "Claude\nDefault model (claude)\n(server default)\nClaude Opus 5.5 (saved)\nDefault effort (claude)\n(server default)\nlow\nmedium\nhigh\nxhigh\nmax\n\nThis is the requested effort; Claude does not report the effective effort.\n\nClaude readiness: Sign-in needed. See Harness preflight below.",
+      "value": "claude-opus-5-5"
+    },
+    "pass": true
+  },
+  {
+    "system": "Owner / Edge",
+    "case": "Phone keyboard activation",
+    "steps": "At 390px, Shift-Tab then Tab to Retry and press Space; hold the real HTTP request",
+    "expected": "Keyboard focus returns to Retry; Space begins a disabled pending Retry; no horizontal overflow",
+    "actual": {
+      "width": 390,
+      "pendingText": "Harness preflight\nRechecking…\nRetry preflight\nReady\ncodex\nv0.160.0-beta.1\nReady\nclaude\nv2.1.287\n\nSigned in with Claude.ai.\n\nclaude-opus-5-5\nlisted by adapter\nclaude-fable-5-1\nlisted by adapter\n\nAdapter model listings do not confirm account access. Preflight never starts a model turn.",
+      "screenshot": "owner-phone-keyboard.png",
+      "screenshotPhase": "Keyboard focus before Space"
+    },
+    "pass": true
+  },
+  {
+    "system": "Owner / Edge",
+    "case": "Codex known auth note during native retry",
+    "steps": "Retry a known auth failure; native slow-ready probe finishes while its HTTP result is held",
+    "expected": "Old auth note and disabled Retry stay; model remains editable with the saved value; real native status command observed",
+    "actual": {
+      "note": "Codex sign-in is missing or invalid. Run codex login, then retry preflight.",
+      "readonly": null,
+      "value": "gpt-6-luna",
+      "calls": [
+        "2026-10-22T21:09:41.9898914Z|--version",
+        "2026-10-22T21:09:42.0777566Z|exec --help",
+        "2026-10-22T21:09:42.1506402Z|exec resume --help",
+        "2026-10-22T21:09:42.2113221Z|login status"
+      ],
+      "nativeState": "ready",
+      "screenshot": "codex-known-auth-native-retry.png"
+    },
+    "pass": true
+  },
+  {
+    "system": "Owner / Edge",
+    "case": "Browser console",
+    "steps": "Collect pageerror and console.error across the owner replay",
+    "expected": "No unexpected browser error",
+    "actual": {
+      "errors": []
+    },
+    "pass": true
+  }
+]

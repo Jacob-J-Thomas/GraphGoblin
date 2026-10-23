@@ -4,9 +4,16 @@
 import { fileURLToPath } from 'node:url';
 import { readMigrationFiles } from 'drizzle-orm/migrator';
 import type { DatabaseHandle } from '../db.js';
+const SHIPPED_SQL = fileURLToPath(new URL('../../../drizzle', import.meta.url));
+
+/** Counts entries rather than assuming migration numbers are contiguous. */
+export function shippedSqlMigrationCount(): number {
+  return readMigrationFiles({ migrationsFolder: SHIPPED_SQL }).length;
+}
+
 export async function applyShippedSqlToHistoricalTestFixture(
   handle: DatabaseHandle,
-  folder = fileURLToPath(new URL('../../../drizzle', import.meta.url)),
+  folder = SHIPPED_SQL,
 ): Promise<void> {
   const tx = await handle.client.transaction('write');
   try {

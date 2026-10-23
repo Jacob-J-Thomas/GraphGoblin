@@ -1,0 +1,53 @@
+PACKAGE: infrastructure
+FILE: src/claude/process.test.ts
+TEST: owned native Claude process transport > kills the descendant that a long-lived child started
+COMMAND: pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/claude/process.test.ts --maxWorkers=1 --reporter=verbose -t <escaped exact full name>
+FILTER_REGEX: kills.*the.*descendant.*that.*a.*long.*lived.*child.*started
+
+ RUN  v5.0.3 <worktree>/packages/infrastructure
+
+ ? src/claude/process.test.ts > owned native Claude process transport > streams stdout, sends stdin and never retains stderr content
+ ? src/claude/process.test.ts > owned native Claude process transport > reports missing executable without exposing raw native errors
+ ? src/claude/process.test.ts > owned native Claude process transport > kills on deadline and output overflow
+ ? src/claude/process.test.ts > owned native Claude process transport > does not spawn for an already aborted signal and cancels a running process
+ × src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived child started 7019ms
+   ? expected 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' to be 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' // Object.is equality
+   ? EBUSY: resource busy or locked, rmdir '<user>\AppData\Local\Temp\gg-qa-231-9896cf-independent\tests\gg-claude-process-BNd29Q'
+System.Management.Automation.RemoteException
+??????? Failed Tests 1 ???????
+System.Management.Automation.RemoteException
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived child started
+AssertionError: expected 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' to be 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' // Object.is equality
+System.Management.Automation.RemoteException
+Expected: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+Received: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+System.Management.Automation.RemoteException
+ ? src/claude/process.test.ts:146:46
+    144|       const stopped = await readFile(marker, 'utf8');
+    145|       await new Promise((resolve) => setTimeout(resolve, 100));
+    146|       expect(await readFile(marker, 'utf8')).toBe(stopped);
+       |                                              ^
+    147|     } finally {
+    148|       controller.abort();
+System.Management.Automation.RemoteException
+????????????????????????[1/2]?
+System.Management.Automation.RemoteException
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived child started
+Error: EBUSY: resource busy or locked, rmdir '<user>\AppData\Local\Temp\gg-qa-231-9896cf-independent\tests\gg-claude-process-BNd29Q'
+??????????????????????????????
+Serialized Error: { errno: -4082, code: 'EBUSY', syscall: 'rmdir', path: '<user>\AppData\Local\Temp\gg-qa-231-9896cf-independent\tests\gg-claude-process-BNd29Q' }
+????????????????????????[2/2]?
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 skipped (5)
+   Start at  23:01:12
+   Duration  7.71s (tests 96%, transform 2%, import 2%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+System.Management.Automation.RemoteException
+  × "pnpm recursive exec" failed in C:
+  ¦ <user>\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-
+  ¦ g2\packages\infrastructure
+System.Management.Automation.RemoteException
+EXIT: 1

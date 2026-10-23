@@ -1,3 +1,4 @@
+import { readinessFailure } from '@graphgoblin/domain';
 import type { Effort } from '@graphgoblin/contracts';
 import {
   describeError,
@@ -91,13 +92,11 @@ export class CodexHarness implements HarnessPort {
 
   preflight(): Promise<HarnessPreflight> {
     const cli = this.options.codexBinary ? cliFor(this.options.codexBinary) : bundledCli();
-    return preflightCli(cli, this.cliRunner, this.options.preflightTimeoutMs ?? 15_000).catch(
-      (error: unknown) => ({
-        ok: false,
-        authenticated: false,
-        problems: [`preflight failed: ${describeError(error)}`],
-      }),
-    );
+    return preflightCli(
+      cli && this.options.env ? { ...cli, env: this.options.env } : cli,
+      this.cliRunner,
+      this.options.preflightTimeoutMs ?? 15_000,
+    ).catch(() => readinessFailure('codex', 'unknown'));
   }
 
   start(request: HarnessStartRequest, signal: AbortSignal): HarnessSession {

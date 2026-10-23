@@ -1,0 +1,46 @@
+Command: pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/claude/readiness.test.ts --maxWorkers 1 -t '^(?!.*(?:probes the actual installed|classifies a real installed signed-out)).*$'
+Node: v22.14.0
+Revision: c2a2b6632c0996383abe491268baf871aec448dd
+Exit: 1
+Elapsed ms: 160329
+
+
+ RUN  v5.0.3 <worktree>/packages/infrastructure
+
+ ❯ src/claude/readiness.test.ts (19 tests | 1 failed | 2 skipped) 128116ms
+   ❯ Claude no-turn executable boundary (9)
+     × hang reports unknown without exposing CLI bodies 8793ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/claude/readiness.test.ts > Claude no-turn executable boundary > hang reports unknown without exposing CLI bodies
+AssertionError: expected [ …(2) ] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+  [
+    "Claude CLI did not answer before the check deadline. Check that the Claude CLI starts and responds, then retry preflight.",
++   "Claude CLI check process did not confirm that it stopped. Check that the Claude CLI starts and responds, then retry preflight.",
+  ]
+
+ ❯ src/claude/readiness.test.ts:62:31
+     60|         hang: ['Claude CLI did not answer before the check deadline.' …
+     61|       };
+     62|       expect(result.problems).toEqual(problems[scenario]);
+       |                               ^
+     63|     },
+     64|     60000,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 16 passed | 2 skipped (19)
+   Start at  14:41:37
+   Duration  138.84s (tests 93%, transform 5%, import 2%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in <user-path>
+  │ f1\packages\infrastructure

@@ -1,0 +1,10 @@
+Initial evidence-verifier ordering failure (quoted from the tool output):
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
++ [ 'format-check.log.txt' ]
+- []
+
+The link audit ran before format-check.log.txt was created. The subsequent single-file
+format command also reported that hygiene.json did not exist (format-hygiene.log.txt).
+These are evidence-tool setup failures, not product test failures. Verification is repeated
+after the gate log exists, retaining this result and the original formatting error.

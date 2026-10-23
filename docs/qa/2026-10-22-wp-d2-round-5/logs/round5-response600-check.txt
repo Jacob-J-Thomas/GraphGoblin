@@ -1,0 +1,24 @@
+node : node:internal/fs/promises:638
+At line:6 char:1
++ node docs/qa/2026-10-22-wp-d2-round-5/response-outcomes.check.mjs $en ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (node:internal/fs/promises:638:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+  return new FileHandle(await PromisePrototypeThen(
+                        ^
+
+Error: ENOENT: no such file or directory, open '%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d2-w
+ebhook-retry\docs\qa\2026-10-22-wp-d2-round-5\after\native-results.json'
+    at async open (node:internal/fs/promises:638:25)
+    at async readFile (node:internal/fs/promises:1242:14)
+    at async file:///%WORKTREE%/docs/qa/2026-1
+0-22-wp-d2-round-5/response-outcomes.check.mjs:6:28 {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '%WORKTREE%\\docs\\qa\\2026-10
+-22-wp-d2-round-5\\after\\native-results.json'
+}
+
+Node.js v22.14.0
