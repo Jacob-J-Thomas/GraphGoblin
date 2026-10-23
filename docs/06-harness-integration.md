@@ -407,8 +407,10 @@ lists `low`, `medium`, `high`, `xhigh` and `max` for both Sonnet 5.5 and Haiku 5
 describes the fallback rule quoted above.
 
 CLI 2.1.292 does not yet list `claude-haiku-5-5` in its model registry. It prints an
-`unrecognized_model` notice on stderr, which the adapter does not read, and treats the model as a
-first-party model with every effort level. The
+`unrecognized_model` notice on stderr, which the adapter does not treat as a refusal (bounded turn
+stderr is matched only against the fixed refusal forms below), and treats the model as a
+first-party model with every effort level. On 2026-10-23 one real Sonnet 5.5 turn and one real
+Haiku 5.5 turn passed again through the built API on Claude Code 2.1.308, which lists both. The
 [model configuration page](https://code.claude.com/docs/en/model-config), checked on 2026-10-18,
 names Claude Code 2.1.293 as the minimum for Haiku 5.5; the turns above passed on 2.1.292, and GraphGoblin keeps its single CLI
 minimum (2.1.285) rather than a per-model one. Not admitted: `claude-haiku-4-5-20251001`, whose
