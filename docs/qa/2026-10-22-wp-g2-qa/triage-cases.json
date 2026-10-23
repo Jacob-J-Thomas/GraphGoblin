@@ -1,0 +1,187 @@
+[
+  {
+    "package": "infrastructure",
+    "file": "src/adversarial.test.ts",
+    "name": "adversarial infrastructure invariants (forks pool) > 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild"
+  },
+  {
+    "package": "infrastructure",
+    "file": "src/claude/process.test.ts",
+    "name": "owned native Claude process transport > kills on deadline and output overflow"
+  },
+  {
+    "package": "infrastructure",
+    "file": "src/claude/process.test.ts",
+    "name": "owned native Claude process transport > does not spawn for an already aborted signal and cancels a running process"
+  },
+  {
+    "package": "infrastructure",
+    "file": "src/claude/process.test.ts",
+    "name": "owned native Claude process transport > kills the descendant that a long-lived child started"
+  },
+  {
+    "package": "infrastructure",
+    "file": "src/process/scripts.test.ts",
+    "name": "ProcessScripts > kills and closes a real process cancelled with incomplete UTF-8 pending on both streams"
+  },
+  {
+    "package": "infrastructure",
+    "file": "src/process/scripts.test.ts",
+    "name": "ProcessScripts > kills the process tree on timeout"
+  },
+  {
+    "package": "infrastructure",
+    "file": "src/process/scripts.test.ts",
+    "name": "ProcessScripts > kills the process when the signal aborts, including when already aborted"
+  },
+  {
+    "package": "infrastructure",
+    "file": "src/sqlite/upgrade.test.ts",
+    "name": "definitions-only format-4 cutover > deletes all history and configured templates, converts definitions, retains signing identities/secrets/settings, and starts through ordinary migrations"
+  },
+  {
+    "package": "infrastructure",
+    "file": "src/sqlite/upgrade.test.ts",
+    "name": "definitions-only format-4 cutover > blocks ordinary queued runs without cancelling them"
+  },
+  {
+    "package": "infrastructure",
+    "file": "src/sqlite/upgrade.test.ts",
+    "name": "definitions-only format-4 cutover > blocks ordinary running runs without cancelling them"
+  },
+  {
+    "package": "infrastructure",
+    "file": "src/sqlite/upgrade.test.ts",
+    "name": "definitions-only format-4 cutover > blocks ordinary waiting runs without cancelling them"
+  },
+  {
+    "package": "infrastructure",
+    "file": "src/sqlite/upgrade.test.ts",
+    "name": "definitions-only format-4 cutover > blocks ordinary paused runs without cancelling them"
+  },
+  {
+    "package": "infrastructure",
+    "file": "src/sqlite/upgrade.test.ts",
+    "name": "definitions-only format-4 cutover > blocks a pending ordinary receipt and its frozen admission intent"
+  },
+  {
+    "package": "infrastructure",
+    "file": "src/sqlite/upgrade.test.ts",
+    "name": "definitions-only format-4 cutover > requires every hash-bound review, binds repeated nodes to their stored version, and rejects stale/unused resolutions"
+  },
+  {
+    "package": "infrastructure",
+    "file": "src/sqlite/upgrade.test.ts",
+    "name": "definitions-only format-4 cutover > refuses changed source, damaged SQL/ledger, malformed template identities and invalid definitions"
+  },
+  {
+    "package": "infrastructure",
+    "file": "src/sqlite/upgrade.test.ts",
+    "name": "definitions-only format-4 cutover > rolls back deletions, DDL, ledger, rewrites and marker on a failure after structural SQL"
+  },
+  {
+    "package": "infrastructure",
+    "file": "src/sqlite/upgrade.test.ts",
+    "name": "definitions-only format-4 cutover > rechecks safety at commit and rolls back if the lock or backup is lost"
+  },
+  {
+    "package": "infrastructure",
+    "file": "src/sqlite/upgrade.test.ts",
+    "name": "definitions-only format-4 cutover > refuses an ordinary definition that would invoke a retired template loop"
+  },
+  {
+    "package": "infrastructure",
+    "file": "src/sqlite/upgrade.test.ts",
+    "name": "definitions-only format-4 cutover > removes old database archives and converts legacy owner defaults without changing other settings"
+  },
+  {
+    "package": "infrastructure",
+    "file": "src/sqlite/upgrade.test.ts",
+    "name": "definitions-only format-4 cutover > refuses invalid/conflicting owner defaults: UPDATE settings SET value='not JSON'"
+  },
+  {
+    "package": "infrastructure",
+    "file": "src/sqlite/upgrade.test.ts",
+    "name": "definitions-only format-4 cutover > refuses invalid/conflicting owner defaults: INSERT INTO settings VALUES ('local','defaultModel','\"unknown\"','2026-10-17T00:00:00.000Z')"
+  },
+  {
+    "package": "infrastructure",
+    "file": "src/sqlite/upgrade.test.ts",
+    "name": "definitions-only format-4 cutover > refuses invalid/conflicting owner defaults: INSERT INTO settings VALUES ('other','defaultEffort','\"invalid\"','2026-10-17T00:00:00.000Z')"
+  },
+  {
+    "package": "web",
+    "file": "src/editor/DecisionAuthoring.test.tsx",
+    "name": "decision authoring checkpoint > restores set-aside device ownership across reload with unfinished ID \"review\""
+  },
+  {
+    "package": "web",
+    "file": "src/editor/DecisionAuthoring.test.tsx",
+    "name": "decision authoring checkpoint > invalidates a connection-removal review when connections change, and keeps compatible held context on kind change"
+  },
+  {
+    "package": "web",
+    "file": "src/editor/DecisionAuthoring.test.tsx",
+    "name": "decision authoring checkpoint > keeps row ownership through invalid ids, reorders and labels, and reviews removal before one undoable edit"
+  },
+  {
+    "package": "web",
+    "file": "src/editor/EditorPage.restore.test.tsx",
+    "name": "restoring a set-aside copy > converts a v1 draft, archives the exact original and requires explicit first-save overwrite"
+  },
+  {
+    "package": "web",
+    "file": "src/editor/EditorPage.restore.test.tsx",
+    "name": "restoring a set-aside copy > leaves all device keys untouched after a chunk-load failure and converts on retry"
+  },
+  {
+    "package": "web",
+    "file": "src/editor/EditorPage.restore.test.tsx",
+    "name": "restoring a set-aside copy > leaves all device keys untouched after a chunk-load failure and converts on reopen"
+  },
+  {
+    "package": "web",
+    "file": "src/editor/EditorPage.restore.test.tsx",
+    "name": "restoring a set-aside copy > still preserves an inert exportable original when the loaded converter fails"
+  },
+  {
+    "package": "web",
+    "file": "src/editor/EditorPage.restore.test.tsx",
+    "name": "restoring a set-aside copy > keeps pending v3 review ids and hashes with an exportable inert original, including archives"
+  },
+  {
+    "package": "web",
+    "file": "src/editor/EditorPage.restore.test.tsx",
+    "name": "restoring a set-aside copy > blocks overwrite of an automatic conversion after archive readback failure"
+  },
+  {
+    "package": "web",
+    "file": "src/editor/EditorPage.restore.test.tsx",
+    "name": "restoring a set-aside copy > sets stale converted unsynced work aside and restores it only by explicit choice"
+  },
+  {
+    "package": "web",
+    "file": "src/editor/EditorPage.restore.test.tsx",
+    "name": "restoring a set-aside copy > preserves and converts a set-aside copy and keeps its archived original inert on reopening"
+  },
+  {
+    "package": "web",
+    "file": "src/editor/EditorPage.restore.test.tsx",
+    "name": "restoring a set-aside copy > keeps an ambiguous v1 device draft raw and prevents it from replacing the server copy"
+  },
+  {
+    "package": "web",
+    "file": "src/editor/EditorPage.restore.test.tsx",
+    "name": "restoring a set-aside copy > archives an ambiguous set-aside before a newer server copy moves a valid active draft there"
+  },
+  {
+    "package": "web",
+    "file": "src/editor/EditorPage.restore.test.tsx",
+    "name": "restoring a set-aside copy > does not load into another loop opened while the restore was being persisted"
+  },
+  {
+    "package": "web",
+    "file": "src/forms/advanced.test.tsx",
+    "name": "basic fields first, advanced ones behind a disclosure > keeps every mutate field editable, down to nested leaves, once Advanced and items are open"
+  }
+]

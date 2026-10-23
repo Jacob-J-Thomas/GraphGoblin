@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { RunEvent } from '@graphgoblin/contracts';
-import { FIXTURE_IDS, FIXTURE_TS, sampleThread } from '@graphgoblin/contracts/testing';
+import { FIXTURE_IDS, FIXTURE_TS, samplePin, sampleThread } from '@graphgoblin/contracts/testing';
 import { replayStateAt, replayThread, summarizeRun } from './replay.js';
 
 function ev<T extends RunEvent['type']>(
@@ -12,7 +12,7 @@ function ev<T extends RunEvent['type']>(
 }
 
 const events: RunEvent[] = [
-  ev(1, 'run.queued', {}),
+  ev(1, 'run.queued', { versionId: FIXTURE_IDS.version, pinned: samplePin() }),
   ev(2, 'run.started', { attempt: 1 }),
   ev(3, 'node.started', { nodeId: 'prep', kind: 'mutate', attempt: 1, configHash: 'h' }),
   ev(4, 'node.finished', {
@@ -22,7 +22,10 @@ const events: RunEvent[] = [
     durationMs: 1,
   }),
   ev(5, 'node.started', { nodeId: 'approve', kind: 'wait', attempt: 1, configHash: 'h' }),
-  ev(6, 'run.waiting', { nodeId: 'approve', wait: { nodeId: 'approve', kind: 'input' } }),
+  ev(6, 'run.waiting', {
+    nodeId: 'approve',
+    wait: { waitId: 'fixture-wait', startedSeq: 1, nodeId: 'approve', kind: 'input' },
+  }),
   ev(7, 'run.woken', { nodeId: 'approve', reason: 'input' }),
   ev(8, 'node.finished', {
     nodeId: 'approve',

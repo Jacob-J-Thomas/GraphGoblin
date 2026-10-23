@@ -1,0 +1,479 @@
+[
+  {
+    "name": "API authentication",
+    "pass": true
+  },
+  {
+    "name": "script/add",
+    "pass": true,
+    "byteIdentical": false,
+    "status": "waiting"
+  },
+  {
+    "name": "script/replace",
+    "pass": true,
+    "byteIdentical": false,
+    "status": "waiting"
+  },
+  {
+    "name": "script/remove",
+    "pass": true,
+    "byteIdentical": false,
+    "status": "waiting"
+  },
+  {
+    "name": "script/writable-move",
+    "pass": true,
+    "byteIdentical": false,
+    "status": "waiting"
+  },
+  {
+    "name": "script/protected-remove",
+    "pass": true,
+    "failure": {
+      "code": "SCRIPT_EXIT_CODE",
+      "message": "script patch is outside the mutable regions: path \"/run/id\" is not in a mutable region (/vars, /messages, /artifacts, /outputs, /lastOutput)",
+      "nodeId": "target",
+      "resumable": true
+    },
+    "byteIdentical": true,
+    "status": "failed"
+  },
+  {
+    "name": "script/protected-move-source",
+    "pass": true,
+    "failure": {
+      "code": "SCRIPT_EXIT_CODE",
+      "message": "script patch is outside the mutable regions: from \"/run/id\" is not in a mutable region (/vars, /messages, /artifacts, /outputs, /lastOutput)",
+      "nodeId": "target",
+      "resumable": true
+    },
+    "byteIdentical": true,
+    "status": "failed"
+  },
+  {
+    "name": "script/protected-move-target",
+    "pass": true,
+    "failure": {
+      "code": "SCRIPT_EXIT_CODE",
+      "message": "script patch is outside the mutable regions: path \"/run/id\" is not in a mutable region (/vars, /messages, /artifacts, /outputs, /lastOutput)",
+      "nodeId": "target",
+      "resumable": true
+    },
+    "byteIdentical": true,
+    "status": "failed"
+  },
+  {
+    "name": "script/protected-copy",
+    "pass": true,
+    "byteIdentical": false,
+    "status": "waiting"
+  },
+  {
+    "name": "script/missing-path",
+    "pass": true,
+    "failure": {
+      "code": "INTERNAL_ERROR",
+      "message": "node target produced an invalid patch: operation 0 (replace /vars/missing): path \"/vars/missing\" does not exist",
+      "nodeId": "target",
+      "resumable": false
+    },
+    "byteIdentical": true,
+    "status": "failed"
+  },
+  {
+    "name": "script/third-protected",
+    "pass": true,
+    "failure": {
+      "code": "SCRIPT_EXIT_CODE",
+      "message": "script patch is outside the mutable regions: path \"/invocation/id\" is not in a mutable region (/vars, /messages, /artifacts, /outputs, /lastOutput)",
+      "nodeId": "target",
+      "resumable": true
+    },
+    "byteIdentical": true,
+    "status": "failed"
+  },
+  {
+    "name": "script/third-missing",
+    "pass": true,
+    "failure": {
+      "code": "INTERNAL_ERROR",
+      "message": "node target produced an invalid patch: operation 2 (remove /vars/missing): path \"/vars/missing\" does not exist",
+      "nodeId": "target",
+      "resumable": false
+    },
+    "byteIdentical": true,
+    "status": "failed"
+  },
+  {
+    "name": "script/protected-test",
+    "pass": true,
+    "byteIdentical": false,
+    "status": "waiting"
+  },
+  {
+    "name": "subloop/add",
+    "pass": true,
+    "byteIdentical": false,
+    "status": "waiting"
+  },
+  {
+    "name": "subloop/replace",
+    "pass": true,
+    "byteIdentical": false,
+    "status": "waiting"
+  },
+  {
+    "name": "subloop/remove",
+    "pass": true,
+    "byteIdentical": false,
+    "status": "waiting"
+  },
+  {
+    "name": "subloop/writable-move",
+    "pass": true,
+    "byteIdentical": false,
+    "status": "waiting"
+  },
+  {
+    "name": "subloop/protected-remove",
+    "pass": true,
+    "failure": {
+      "code": "EXPRESSION_ERROR",
+      "message": "custom output mapping is outside the mutable regions: path \"/run/id\" is not in a mutable region (/vars, /messages, /artifacts, /outputs, /lastOutput)",
+      "nodeId": "target",
+      "resumable": true
+    },
+    "byteIdentical": true,
+    "status": "failed"
+  },
+  {
+    "name": "subloop/protected-move-source",
+    "pass": true,
+    "failure": {
+      "code": "EXPRESSION_ERROR",
+      "message": "custom output mapping is outside the mutable regions: from \"/run/id\" is not in a mutable region (/vars, /messages, /artifacts, /outputs, /lastOutput)",
+      "nodeId": "target",
+      "resumable": true
+    },
+    "byteIdentical": true,
+    "status": "failed"
+  },
+  {
+    "name": "subloop/protected-move-target",
+    "pass": true,
+    "failure": {
+      "code": "EXPRESSION_ERROR",
+      "message": "custom output mapping is outside the mutable regions: path \"/run/id\" is not in a mutable region (/vars, /messages, /artifacts, /outputs, /lastOutput)",
+      "nodeId": "target",
+      "resumable": true
+    },
+    "byteIdentical": true,
+    "status": "failed"
+  },
+  {
+    "name": "subloop/protected-copy",
+    "pass": true,
+    "byteIdentical": false,
+    "status": "waiting"
+  },
+  {
+    "name": "subloop/missing-path",
+    "pass": true,
+    "failure": {
+      "code": "INTERNAL_ERROR",
+      "message": "node target produced an invalid patch: operation 0 (replace /vars/missing): path \"/vars/missing\" does not exist",
+      "nodeId": "target",
+      "resumable": false
+    },
+    "byteIdentical": true,
+    "status": "failed"
+  },
+  {
+    "name": "subloop/third-protected",
+    "pass": true,
+    "failure": {
+      "code": "EXPRESSION_ERROR",
+      "message": "custom output mapping is outside the mutable regions: path \"/invocation/id\" is not in a mutable region (/vars, /messages, /artifacts, /outputs, /lastOutput)",
+      "nodeId": "target",
+      "resumable": true
+    },
+    "byteIdentical": true,
+    "status": "failed"
+  },
+  {
+    "name": "subloop/third-missing",
+    "pass": true,
+    "failure": {
+      "code": "INTERNAL_ERROR",
+      "message": "node target produced an invalid patch: operation 2 (remove /vars/missing): path \"/vars/missing\" does not exist",
+      "nodeId": "target",
+      "resumable": false
+    },
+    "byteIdentical": true,
+    "status": "failed"
+  },
+  {
+    "name": "subloop/protected-test",
+    "pass": true,
+    "byteIdentical": false,
+    "status": "waiting"
+  },
+  {
+    "name": "client zero and preabort",
+    "pass": true,
+    "count": 0,
+    "zero": {
+      "finished": false
+    },
+    "exact": true
+  },
+  {
+    "name": "client sleep deadline concurrency",
+    "pass": true,
+    "cancelled": {
+      "exact": true,
+      "ms": 101
+    },
+    "short": {
+      "finished": false,
+      "run": {
+        "id": "01M5BRAQ3JBAW8YG32M675GZQW",
+        "ownerId": "local",
+        "loopId": "01M5BRAQ2YZ9WM2JEQ8QTPKKRD",
+        "versionId": "01M5BRAQ2ZVHTZZ8HD6VRKFYVB",
+        "invocationId": "01M5BRAQ3JJ2P752CNCWE22Y2P",
+        "status": "running",
+        "currentNodeId": "work",
+        "iteration": 1,
+        "createdAt": "2026-10-20T04:15:20.178Z",
+        "startedAt": "2026-10-20T04:15:20.185Z",
+        "lastEventSeq": 5
+      }
+    },
+    "still": "running",
+    "finals": [
+      {
+        "finished": true,
+        "status": "succeeded"
+      },
+      {
+        "finished": true,
+        "status": "succeeded"
+      },
+      {
+        "finished": true,
+        "status": "succeeded"
+      }
+    ]
+  },
+  {
+    "name": "client pending abort deadline late",
+    "pass": true,
+    "exact": true,
+    "abortMs": 59,
+    "deadlineMs": 147,
+    "deadline": {
+      "finished": false
+    },
+    "late": {
+      "finished": false
+    },
+    "count": 1,
+    "requests": [
+      {
+        "method": "GET",
+        "url": "/runs/01ARZ3NDEKTSV4RRFFQ69G5FAV",
+        "closedEarly": true
+      },
+      {
+        "method": "GET",
+        "url": "/runs/01ARZ3NDEKTSV4RRFFQ69G5FAV",
+        "closedEarly": true
+      },
+      {
+        "method": "GET",
+        "url": "/runs/01ARZ3NDEKTSV4RRFFQ69G5FAV",
+        "closedEarly": false
+      },
+      {
+        "method": "GET",
+        "url": "/runs/01ARZ3NDEKTSV4RRFFQ69G5FAV",
+        "closedEarly": true
+      },
+      {
+        "method": "GET",
+        "url": "/runs/01ARZ3NDEKTSV4RRFFQ69G5FAV",
+        "closedEarly": true
+      }
+    ]
+  },
+  {
+    "name": "MCP boundaries",
+    "pass": true,
+    "invalid": [
+      {
+        "value": 0,
+        "result": {
+          "isError": true,
+          "content": [
+            {
+              "type": "text",
+              "text": "MCP error -32602: Input validation error: Invalid arguments for tool wait_for_run: Too small: expected number to be >=1 at timeoutSeconds"
+            }
+          ]
+        }
+      },
+      {
+        "value": -1,
+        "result": {
+          "isError": true,
+          "content": [
+            {
+              "type": "text",
+              "text": "MCP error -32602: Input validation error: Invalid arguments for tool wait_for_run: Too small: expected number to be >=1 at timeoutSeconds"
+            }
+          ]
+        }
+      },
+      {
+        "value": 1.5,
+        "result": {
+          "isError": true,
+          "content": [
+            {
+              "type": "text",
+              "text": "MCP error -32602: Input validation error: Invalid arguments for tool wait_for_run: Invalid input: expected int, received number at timeoutSeconds"
+            }
+          ]
+        }
+      },
+      {
+        "value": 601,
+        "result": {
+          "isError": true,
+          "content": [
+            {
+              "type": "text",
+              "text": "MCP error -32602: Input validation error: Invalid arguments for tool wait_for_run: Too big: expected number to be <=600 at timeoutSeconds"
+            }
+          ]
+        }
+      },
+      {
+        "value": "1",
+        "result": {
+          "isError": true,
+          "content": [
+            {
+              "type": "text",
+              "text": "MCP error -32602: Input validation error: Invalid arguments for tool wait_for_run: Invalid input: expected number, received string at timeoutSeconds"
+            }
+          ]
+        }
+      }
+    ],
+    "accepted600": {
+      "run": {
+        "id": "01M5BRAVWQ3BQAS6JWYZC6V5DC",
+        "ownerId": "local",
+        "loopId": "01M5BRAVW377D2YS0V4BBPM6G4",
+        "versionId": "01M5BRAVW3PWXFDQ773HET8WFN",
+        "invocationId": "01M5BRAVWQVSNVCFT07Z0CMTHT",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-20T04:15:25.079Z",
+        "startedAt": "2026-10-20T04:15:25.086Z",
+        "finishedAt": "2026-10-20T04:15:27.744Z",
+        "lastEventSeq": 11
+      },
+      "finished": true
+    }
+  },
+  {
+    "name": "MCP busy deadline and input",
+    "pass": true,
+    "answer": {
+      "finished": false,
+      "status": "running",
+      "cursor": 5,
+      "currentNodeId": "work",
+      "next": "The run is still in progress. Call wait_for_run again with the same runId; use read_run_events with after=cursor to see what happened so far."
+    },
+    "ms": 1008,
+    "input": {
+      "finished": false,
+      "status": "waiting",
+      "cursor": 6,
+      "currentNodeId": "input",
+      "waiting": {
+        "waitId": "01M5BRB1MKPGXWXJPMWV3RYCGP:5",
+        "nodeId": "input",
+        "kind": "input",
+        "prompt": "QA answer",
+        "startedSeq": 5
+      },
+      "next": "The run is waiting for input. Ask the user if needed, then call provide_input with waitId from the observed waiting.waitId and a value matching waiting.inputSchema, and call wait_for_run again."
+    },
+    "final": "succeeded"
+  },
+  {
+    "name": "MCP no snapshot",
+    "pass": true,
+    "ms": 1017,
+    "result": {
+      "finished": false,
+      "next": "No run snapshot arrived before the observation deadline. Call wait_for_run again with the same runId, or get_run to check its status."
+    }
+  },
+  {
+    "name": "MCP default60",
+    "pass": true,
+    "ms": 60058,
+    "result": {
+      "finished": false,
+      "next": "No run snapshot arrived before the observation deadline. Call wait_for_run again with the same runId, or get_run to check its status."
+    }
+  },
+  {
+    "name": "MCP request cancel run survives",
+    "pass": true,
+    "cancelled": {
+      "error": "McpError: MCP error -32001: Error: QA MCP cancellation"
+    },
+    "ms": 100,
+    "still": "running",
+    "final": "succeeded"
+  },
+  {
+    "name": "client restart",
+    "pass": false,
+    "answer": {
+      "finished": false,
+      "run": {
+        "id": "01M5BRD0YGJPAXFK5YPDJHPG0S",
+        "ownerId": "local",
+        "loopId": "01M5BRD0X9NR3NQVWWC61TBVNA",
+        "versionId": "01M5BRD0X9V9JJ7E1F47KKC6CF",
+        "invocationId": "01M5BRD0YGZ3HQB02WD3M1B2F1",
+        "status": "running",
+        "currentNodeId": "input",
+        "iteration": 1,
+        "waiting": {
+          "waitId": "01M5BRD0YGJPAXFK5YPDJHPG0S:5",
+          "nodeId": "input",
+          "kind": "input",
+          "prompt": "Continue",
+          "startedSeq": 5
+        },
+        "createdAt": "2026-10-20T04:16:35.792Z",
+        "startedAt": "2026-10-20T04:16:35.800Z",
+        "lastEventSeq": 10
+      }
+    },
+    "settlements": 1,
+    "term": 1,
+    "waitIdentityPreserved": true
+  }
+]

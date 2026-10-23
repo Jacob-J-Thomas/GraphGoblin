@@ -21,6 +21,7 @@ import { registerClassifierRoutes } from './routes/classifiers.js';
 import { registerSystemRoutes } from './routes/system.js';
 import { registerTriggerRoutes } from './routes/triggers.js';
 import { API_VERSION, type ApiInstance } from './types.js';
+import { registerRunDiagnosticRoutes } from './routes/run-diagnostics.js';
 
 export interface BuildAppOptions {
   /** Fastify logger option; a pino instance for production, `false` in tests. */
@@ -63,7 +64,7 @@ export async function buildApp(
         { name: 'settings', description: 'Owner settings and the model catalog' },
         { name: 'secrets', description: 'Named secrets (values are never returned)' },
         { name: 'api-keys', description: 'Keys for other applications and the MCP server' },
-        { name: 'events', description: 'The inbound event bus' },
+        { name: 'events', description: 'Inbound Events and the event triggers they start' },
         {
           name: 'triggers',
           description: 'Schedules, webhook endpoints, and the public /hooks receiver',
@@ -84,6 +85,7 @@ export async function buildApp(
   registerSystemRoutes(app, container);
   registerLoopRoutes(app, container);
   registerRunRoutes(app, container);
+  registerRunDiagnosticRoutes(app, container);
   registerTemplateRoutes(app, container);
   registerSettingsRoutes(app, container);
   registerClassifierRoutes(app, container);

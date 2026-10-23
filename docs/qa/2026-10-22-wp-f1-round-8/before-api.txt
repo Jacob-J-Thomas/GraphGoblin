@@ -1,0 +1,142 @@
+
+ RUN  v5.0.3 <worktree>/apps/api
+
+ × src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > auth-network preserves auth for both harnesses 3485ms
+   → expected { state: 'transport', ok: false, …(6) } to match object { state: 'auth', ok: false }
+(6 matching properties omitted from actual)
+ × src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > quota-network preserves quota for both harnesses 2768ms
+   → expected { state: 'transport', ok: false, …(6) } to match object { state: 'quota', ok: false }
+(6 matching properties omitted from actual)
+ × src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > stdout-quota-warning preserves quota for both harnesses 2190ms
+   → expected { state: 'unknown', ok: false, …(6) } to match object { state: 'quota', ok: false }
+(6 matching properties omitted from actual)
+ × src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > auth-empty preserves unknown for both harnesses 2190ms
+   → expected { state: 'auth', ok: false, …(7) } to match object { state: 'unknown', ok: false }
+(7 matching properties omitted from actual)
+ × src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > auth-unrecognised preserves unknown for both harnesses 2781ms
+   → expected { state: 'auth', ok: false, …(7) } to match object { state: 'unknown', ok: false }
+(7 matching properties omitted from actual)
+ ✓ src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > ready preserves ready for both harnesses 7153ms
+ ✓ src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > auth preserves auth for both harnesses 9803ms
+pnpm.cmd :
+At line:6 char:1
++ pnpm.cmd --filter @graphgoblin/api exec vitest run src/readiness-evid ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > auth-network
+preserves auth for both harnesses
+AssertionError: expected { state: 'transport', ok: false, …(6) } to match object { state: 'auth', ok: false }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "ok": false,
+-   "state": "auth",
++   "state": "transport",
+  }
+
+ ❯ src/readiness-evidence.test.ts:72:20
+     70|     expect(items).toHaveLength(2);
+     71|     for (const item of items) {
+     72|       expect(item).toMatchObject({ state, ok: state === 'ready' });
+       |                    ^
+     73|       if (state === 'unknown') {
+     74|         expect(item).not.toHaveProperty('authenticated');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > quota-network
+preserves quota for both harnesses
+AssertionError: expected { state: 'transport', ok: false, …(6) } to match object { state: 'quota', ok: false }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "ok": false,
+-   "state": "quota",
++   "state": "transport",
+  }
+
+ ❯ src/readiness-evidence.test.ts:72:20
+     70|     expect(items).toHaveLength(2);
+     71|     for (const item of items) {
+     72|       expect(item).toMatchObject({ state, ok: state === 'ready' });
+       |                    ^
+     73|       if (state === 'unknown') {
+     74|         expect(item).not.toHaveProperty('authenticated');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation >
+stdout-quota-warning preserves quota for both harnesses
+AssertionError: expected { state: 'unknown', ok: false, …(6) } to match object { state: 'quota', ok: false }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "ok": false,
+-   "state": "quota",
++   "state": "unknown",
+  }
+
+ ❯ src/readiness-evidence.test.ts:72:20
+     70|     expect(items).toHaveLength(2);
+     71|     for (const item of items) {
+     72|       expect(item).toMatchObject({ state, ok: state === 'ready' });
+       |                    ^
+     73|       if (state === 'unknown') {
+     74|         expect(item).not.toHaveProperty('authenticated');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > auth-empty
+preserves unknown for both harnesses
+ FAIL  src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation >
+auth-unrecognised preserves unknown for both harnesses
+AssertionError: expected { state: 'auth', ok: false, …(7) } to match object { state: 'unknown', ok: false }
+(7 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "ok": false,
+-   "state": "unknown",
++   "state": "auth",
+  }
+
+ ❯ src/readiness-evidence.test.ts:72:20
+     70|     expect(items).toHaveLength(2);
+     71|     for (const item of items) {
+     72|       expect(item).toMatchObject({ state, ok: state === 'ready' });
+       |                    ^
+     73|       if (state === 'unknown') {
+     74|         expect(item).not.toHaveProperty('authenticated');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 2 passed (7)
+   Start at  12:58:33
+   Duration  53.55s (tests 58%, transform 26%, import 16%)
+
+  Transform  transforming modules took 13.81s · 26% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ \Users\<user>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f1-
+  │ readiness-precision\apps\api

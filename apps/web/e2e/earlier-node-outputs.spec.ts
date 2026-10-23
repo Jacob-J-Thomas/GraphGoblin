@@ -93,7 +93,9 @@ for (const viewport of [
     await argument
       .getByRole('button', { name: 'Copy reference for Produce 42 (producer-id)' })
       .click();
-    await expect(argument.getByRole('status')).toHaveText('Copied');
+    await expect(argument.getByRole('status')).toHaveText(
+      'Copied {{ outputs["producer-id"].value }}',
+    );
     await dialog.getByLabel('Args 3', { exact: true }).click();
     await page.keyboard.press('ControlOrMeta+V');
     await expect(dialog.getByLabel('Args 3', { exact: true })).toHaveText(

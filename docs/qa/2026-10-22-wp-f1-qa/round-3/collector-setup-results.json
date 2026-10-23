@@ -1,0 +1,74 @@
+[
+  {
+    "name": "typecheck",
+    "command": "typecheck --concurrency=2",
+    "code": 1,
+    "ms": 1721
+  },
+  {
+    "name": "lint",
+    "command": "lint --concurrency=2",
+    "code": 1,
+    "ms": 1811
+  },
+  {
+    "name": "format",
+    "command": "format:check",
+    "code": 1,
+    "ms": 1447
+  },
+  {
+    "name": "docs",
+    "command": "check:docs",
+    "code": 1,
+    "ms": 2353
+  },
+  {
+    "name": "tokens",
+    "command": "check:tokens",
+    "code": 1,
+    "ms": 1596
+  },
+  {
+    "name": "layers",
+    "command": "check:layers",
+    "code": 1,
+    "ms": 1708
+  },
+  {
+    "name": "deps",
+    "command": "check:deps",
+    "code": 1,
+    "ms": 1490
+  },
+  {
+    "name": "licenses",
+    "command": "check:licenses",
+    "code": 1,
+    "ms": 2456
+  },
+  {
+    "name": "domain-coverage",
+    "command": "--filter @graphgoblin/domain test:coverage --maxWorkers 1 --coverage.reportOnFailure --coverage.reporter=text --coverage.reporter=json-summary -t '^(?!.*(?:probes the actual installed|classifies a real installed signed-out)).*$'",
+    "code": 1,
+    "ms": 2123
+  },
+  {
+    "name": "adapter-codex-coverage",
+    "command": "--filter @graphgoblin/adapter-codex test:coverage --maxWorkers 1 --coverage.reportOnFailure --coverage.reporter=text --coverage.reporter=json-summary -t '^(?!.*(?:probes the actual installed|classifies a real installed signed-out)).*$'",
+    "code": 1,
+    "ms": 1239
+  },
+  {
+    "name": "infrastructure-coverage",
+    "command": "--filter @graphgoblin/infrastructure test:coverage --maxWorkers 1 --coverage.reportOnFailure --coverage.reporter=text --coverage.reporter=json-summary -t '^(?!.*(?:probes the actual installed|classifies a real installed signed-out)).*$'",
+    "code": 1,
+    "ms": 1373
+  },
+  {
+    "name": "web-coverage",
+    "command": "--filter @graphgoblin/web test:coverage --maxWorkers 1 --coverage.reportOnFailure --coverage.reporter=text --coverage.reporter=json-summary -t '^(?!.*(?:probes the actual installed|classifies a real installed signed-out)).*$'",
+    "code": 1,
+    "ms": 1045
+  }
+]

@@ -1,0 +1,744 @@
+{
+  "store": "%TEMP%\\gg-qa-246-native-IQkL50",
+  "node": "v22.14.0",
+  "ports": [5810, 5811, 5819],
+  "cases": [
+    {
+      "name": "five-success",
+      "id": "01M5GHDYVYWYAGZEXSY7FG7ZEV",
+      "expected": "5 attempts; delivered",
+      "pass": true,
+      "actual": [
+        {
+          "id": "01M5GHDZ0GVBQ5MYTSRTXVVQN3",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5811/five-success"
+          },
+          "status": "delivered",
+          "attempts": 5,
+          "maxAttempts": 5,
+          "inFlight": false,
+          "acknowledgement": "accepted",
+          "effectMayHaveHappened": true,
+          "lastError": {
+            "code": "http",
+            "message": "Webhook returned HTTP 503.",
+            "retryable": true,
+            "acknowledgement": "unknown",
+            "httpStatus": 503
+          }
+        }
+      ],
+      "gapsMs": [2036, 5024, 10023, 20058],
+      "evidence": "native-five-success.json"
+    },
+    {
+      "name": "always",
+      "id": "01M5GHDZ1EDS97PY7M8SX7T06M",
+      "expected": "5 attempts; failed",
+      "pass": true,
+      "actual": [
+        {
+          "id": "01M5GHDZ52FYFD8100W1FMQ65R",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5811/always"
+          },
+          "status": "failed",
+          "attempts": 5,
+          "maxAttempts": 5,
+          "inFlight": false,
+          "acknowledgement": "unknown",
+          "effectMayHaveHappened": true,
+          "lastError": {
+            "code": "http",
+            "message": "Webhook returned HTTP 503.",
+            "retryable": true,
+            "acknowledgement": "unknown",
+            "httpStatus": 503
+          }
+        }
+      ],
+      "gapsMs": [2009, 5027, 10014, 20140],
+      "evidence": "native-always.json"
+    },
+    {
+      "name": "http-408",
+      "id": "01M5GHDZ64BWX171RST0FC3W7K",
+      "expected": "5 attempts; failed",
+      "pass": true,
+      "actual": [
+        {
+          "id": "01M5GHDZ85PJAA8W0QSQ3JD1PZ",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5811/status-408"
+          },
+          "status": "failed",
+          "attempts": 5,
+          "maxAttempts": 5,
+          "inFlight": false,
+          "acknowledgement": "unknown",
+          "effectMayHaveHappened": true,
+          "lastError": {
+            "code": "http",
+            "message": "Webhook returned HTTP 408.",
+            "retryable": true,
+            "acknowledgement": "unknown",
+            "httpStatus": 408
+          }
+        }
+      ],
+      "gapsMs": [2013, 5027, 10025, 20137],
+      "evidence": "native-http-408.json"
+    },
+    {
+      "name": "http-429",
+      "id": "01M5GHDZ9Q6AZZXBJWXJ2JQZ2R",
+      "expected": "5 attempts; failed",
+      "pass": true,
+      "actual": [
+        {
+          "id": "01M5GHDZBQP61WSTN162WVPXJE",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5811/status-429"
+          },
+          "status": "failed",
+          "attempts": 5,
+          "maxAttempts": 5,
+          "inFlight": false,
+          "acknowledgement": "rejected",
+          "effectMayHaveHappened": false,
+          "lastError": {
+            "code": "http",
+            "message": "Webhook returned HTTP 429.",
+            "retryable": true,
+            "acknowledgement": "rejected",
+            "httpStatus": 429
+          }
+        }
+      ],
+      "gapsMs": [2025, 5029, 10016, 20256],
+      "evidence": "native-http-429.json"
+    },
+    {
+      "name": "http-500",
+      "id": "01M5GHDZCKKYMXXX58Y3AXGCM1",
+      "expected": "5 attempts; failed",
+      "pass": true,
+      "actual": [
+        {
+          "id": "01M5GHDZE754SMRSY68VWQAVA1",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5811/status-500"
+          },
+          "status": "failed",
+          "attempts": 5,
+          "maxAttempts": 5,
+          "inFlight": false,
+          "acknowledgement": "unknown",
+          "effectMayHaveHappened": true,
+          "lastError": {
+            "code": "http",
+            "message": "Webhook returned HTTP 500.",
+            "retryable": true,
+            "acknowledgement": "unknown",
+            "httpStatus": 500
+          }
+        }
+      ],
+      "gapsMs": [2015, 5022, 10024, 20190],
+      "evidence": "native-http-500.json"
+    },
+    {
+      "name": "http-400",
+      "id": "01M5GHDZEY2DBXDQ29FXFGMQ3P",
+      "expected": "1 attempts; failed",
+      "pass": true,
+      "actual": [
+        {
+          "id": "01M5GHDZGNJBH24BXBHP2XDXFV",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5811/status-400"
+          },
+          "status": "failed",
+          "attempts": 1,
+          "maxAttempts": 5,
+          "inFlight": false,
+          "acknowledgement": "rejected",
+          "effectMayHaveHappened": false,
+          "lastError": {
+            "code": "http",
+            "message": "Webhook returned HTTP 400.",
+            "retryable": false,
+            "acknowledgement": "rejected",
+            "httpStatus": 400
+          }
+        }
+      ],
+      "gapsMs": [],
+      "evidence": "native-http-400.json"
+    },
+    {
+      "name": "http-401",
+      "id": "01M5GHDZGZYS2WBXA0EVVKNF10",
+      "expected": "1 attempts; failed",
+      "pass": true,
+      "actual": [
+        {
+          "id": "01M5GHDZK9430GZRF15ANQ257R",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5811/status-401"
+          },
+          "status": "failed",
+          "attempts": 1,
+          "maxAttempts": 5,
+          "inFlight": false,
+          "acknowledgement": "rejected",
+          "effectMayHaveHappened": false,
+          "lastError": {
+            "code": "http",
+            "message": "Webhook returned HTTP 401.",
+            "retryable": false,
+            "acknowledgement": "rejected",
+            "httpStatus": 401
+          }
+        }
+      ],
+      "gapsMs": [],
+      "evidence": "native-http-401.json"
+    },
+    {
+      "name": "http-404",
+      "id": "01M5GHDZM03G6V693X0WZRM7E0",
+      "expected": "1 attempts; failed",
+      "pass": true,
+      "actual": [
+        {
+          "id": "01M5GHDZPJR30FCMYGG0KCAJRK",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5811/status-404"
+          },
+          "status": "failed",
+          "attempts": 1,
+          "maxAttempts": 5,
+          "inFlight": false,
+          "acknowledgement": "rejected",
+          "effectMayHaveHappened": false,
+          "lastError": {
+            "code": "http",
+            "message": "Webhook returned HTTP 404.",
+            "retryable": false,
+            "acknowledgement": "rejected",
+            "httpStatus": 404
+          }
+        }
+      ],
+      "gapsMs": [],
+      "evidence": "native-http-404.json"
+    },
+    {
+      "name": "redirect",
+      "id": "01M5GHDZPZMNEY15K70ZW5S1WG",
+      "expected": "1 attempts; failed",
+      "pass": true,
+      "actual": [
+        {
+          "id": "01M5GHDZRV009S0QY714CDM88H",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5811/redirect"
+          },
+          "status": "failed",
+          "attempts": 1,
+          "maxAttempts": 5,
+          "inFlight": false,
+          "acknowledgement": "rejected",
+          "effectMayHaveHappened": false,
+          "lastError": {
+            "code": "http",
+            "message": "Webhook returned HTTP 302.",
+            "retryable": false,
+            "acknowledgement": "rejected",
+            "httpStatus": 302
+          }
+        }
+      ],
+      "gapsMs": [],
+      "evidence": "native-redirect.json"
+    },
+    {
+      "name": "never",
+      "id": "01M5GHDZT3F1E3HVXRP6DAJQ39",
+      "expected": "5 attempts; failed",
+      "pass": true,
+      "actual": [
+        {
+          "id": "01M5GHDZVNQ03VPVQWPHE3FSVT",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5811/never"
+          },
+          "status": "failed",
+          "attempts": 5,
+          "maxAttempts": 5,
+          "inFlight": false,
+          "acknowledgement": "unknown",
+          "effectMayHaveHappened": true,
+          "lastError": {
+            "code": "timeout",
+            "message": "Webhook acknowledgement timed out; the effect may have happened.",
+            "retryable": true,
+            "acknowledgement": "unknown"
+          }
+        }
+      ],
+      "gapsMs": [12049, 15033, 20034, 30202],
+      "deadlineDurationsMs": [10023, 10059, 10020, 10009, 10030],
+      "evidence": "native-never.json"
+    },
+    {
+      "name": "slow-body",
+      "id": "01M5GHDZW9AQT4B2NRQA0R86HM",
+      "expected": "5 attempts; failed",
+      "pass": true,
+      "actual": [
+        {
+          "id": "01M5GHDZXJR8SM0YE31ZR49DBK",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5811/slow-body"
+          },
+          "status": "failed",
+          "attempts": 5,
+          "maxAttempts": 5,
+          "inFlight": false,
+          "acknowledgement": "unknown",
+          "effectMayHaveHappened": true,
+          "lastError": {
+            "code": "timeout",
+            "message": "Webhook acknowledgement timed out; the effect may have happened.",
+            "retryable": true,
+            "acknowledgement": "unknown"
+          }
+        }
+      ],
+      "gapsMs": [12037, 15042, 20039, 30132],
+      "deadlineDurationsMs": [10029, 10042, 10009, 10036, 10031],
+      "evidence": "native-slow-body.json"
+    },
+    {
+      "name": "overflow",
+      "id": "01M5GHDZYMRWWKN89CCSXGB88Q",
+      "expected": "5 attempts; failed",
+      "pass": true,
+      "actual": [
+        {
+          "id": "01M5GHE001DBQW527EB3MEYF0V",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5811/overflow"
+          },
+          "status": "failed",
+          "attempts": 5,
+          "maxAttempts": 5,
+          "inFlight": false,
+          "acknowledgement": "unknown",
+          "effectMayHaveHappened": true,
+          "lastError": {
+            "code": "transport",
+            "message": "Webhook acknowledgement exceeded 64 KiB; the effect may have happened.",
+            "retryable": true,
+            "acknowledgement": "unknown"
+          }
+        }
+      ],
+      "gapsMs": [2039, 5013, 10015, 20192],
+      "evidence": "native-overflow.json"
+    },
+    {
+      "name": "small-body",
+      "id": "01M5GHE00Q05BR261PFAWCASQC",
+      "expected": "1 attempts; delivered",
+      "pass": true,
+      "actual": [
+        {
+          "id": "01M5GHE029W8W8DBT2FRBS46ND",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5811/small"
+          },
+          "status": "delivered",
+          "attempts": 1,
+          "maxAttempts": 5,
+          "inFlight": false,
+          "acknowledgement": "accepted",
+          "effectMayHaveHappened": true
+        }
+      ],
+      "gapsMs": [],
+      "evidence": "native-small-body.json"
+    },
+    {
+      "name": "exact-boundary",
+      "id": "01M5GHE02XGFB7DWKJ9V3ETJ8V",
+      "expected": "1 attempts; delivered",
+      "pass": true,
+      "actual": [
+        {
+          "id": "01M5GHE04D22575SWWBB8HYNHA",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5811/boundary"
+          },
+          "status": "delivered",
+          "attempts": 1,
+          "maxAttempts": 5,
+          "inFlight": false,
+          "acknowledgement": "accepted",
+          "effectMayHaveHappened": true
+        }
+      ],
+      "gapsMs": [],
+      "evidence": "native-exact-boundary.json"
+    },
+    {
+      "name": "late",
+      "id": "01M5GHE05PGFR3J3RHHCFN96GG",
+      "expected": "2 attempts; delivered",
+      "pass": true,
+      "actual": [
+        {
+          "id": "01M5GHE07BD8FAGPKJADHGNGQ9",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5811/late"
+          },
+          "status": "delivered",
+          "attempts": 2,
+          "maxAttempts": 5,
+          "inFlight": false,
+          "acknowledgement": "accepted",
+          "effectMayHaveHappened": true,
+          "lastError": {
+            "code": "timeout",
+            "message": "Webhook acknowledgement timed out; the effect may have happened.",
+            "retryable": true,
+            "acknowledgement": "unknown"
+          }
+        }
+      ],
+      "gapsMs": [12097],
+      "evidence": "native-late.json"
+    },
+    {
+      "name": "drop",
+      "id": "01M5GHE07KYCZSZE7310HZMXZZ",
+      "expected": "2 attempts; delivered",
+      "pass": true,
+      "actual": [
+        {
+          "id": "01M5GHE09DNKZSZKDHPCWYMV32",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5811/drop"
+          },
+          "status": "delivered",
+          "attempts": 2,
+          "maxAttempts": 5,
+          "inFlight": false,
+          "acknowledgement": "accepted",
+          "effectMayHaveHappened": true,
+          "lastError": {
+            "code": "transport",
+            "message": "Webhook acknowledgement lost; the effect may have happened.",
+            "retryable": true,
+            "acknowledgement": "unknown"
+          }
+        }
+      ],
+      "gapsMs": [2033],
+      "evidence": "native-drop.json"
+    },
+    {
+      "name": "refused",
+      "id": "01M5GHE09PYQEGYSZ4N5ZVD053",
+      "expected": "5 attempts; failed",
+      "pass": true,
+      "actual": [
+        {
+          "id": "01M5GHE0BRY533W41BGPZZGDEM",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5819/closed"
+          },
+          "status": "failed",
+          "attempts": 5,
+          "maxAttempts": 5,
+          "inFlight": false,
+          "acknowledgement": "not_sent",
+          "effectMayHaveHappened": false,
+          "lastError": {
+            "code": "connection_refused",
+            "message": "Webhook connection refused.",
+            "retryable": true,
+            "acknowledgement": "not_sent"
+          }
+        }
+      ],
+      "gapsMs": [],
+      "evidence": "native-refused.json"
+    },
+    {
+      "name": "credentials",
+      "id": "01M5GHE0CDD8C9Z6YCP6WM6NF3",
+      "expected": "1 attempts; failed",
+      "pass": true,
+      "actual": [
+        {
+          "id": "01M5GHE0DX7ZB3ZGN8KN93FSBE",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://user:pass@127.0.0.1:5811/credentials"
+          },
+          "status": "failed",
+          "attempts": 1,
+          "maxAttempts": 5,
+          "inFlight": false,
+          "acknowledgement": "not_sent",
+          "effectMayHaveHappened": false,
+          "lastError": {
+            "code": "invalid_destination",
+            "message": "Webhook destination must be an HTTP(S) URL without credentials.",
+            "retryable": false,
+            "acknowledgement": "not_sent"
+          }
+        }
+      ],
+      "gapsMs": [],
+      "evidence": "native-credentials.json"
+    },
+    {
+      "name": "scheme",
+      "id": "01M5GHE0E9B2VCG9BA1X823W9Z",
+      "expected": "1 attempts; failed",
+      "pass": true,
+      "actual": [
+        {
+          "id": "01M5GHE0G370TPKP7RZ0BFX0VW",
+          "channel": {
+            "kind": "webhook",
+            "url": "ftp://127.0.0.1:5811/unsupported"
+          },
+          "status": "failed",
+          "attempts": 1,
+          "maxAttempts": 5,
+          "inFlight": false,
+          "acknowledgement": "not_sent",
+          "effectMayHaveHappened": false,
+          "lastError": {
+            "code": "invalid_destination",
+            "message": "Webhook destination must be an HTTP(S) URL without credentials.",
+            "retryable": false,
+            "acknowledgement": "not_sent"
+          }
+        }
+      ],
+      "gapsMs": [],
+      "evidence": "native-scheme.json"
+    },
+    {
+      "name": "two-channels",
+      "id": "01M5GHE0GQVG8CEJ6KQ0PX731H",
+      "expected": "Distinct ULIDs",
+      "pass": true,
+      "actual": [
+        {
+          "id": "01M5GHE0J69GS046YBYMFKC5MQ",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5811/channel-a"
+          },
+          "status": "delivered",
+          "attempts": 1,
+          "maxAttempts": 5,
+          "inFlight": false,
+          "acknowledgement": "accepted",
+          "effectMayHaveHappened": true
+        },
+        {
+          "id": "01M5GHE0J6Y8VKE4KRT3CF45Q1",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5811/channel-b"
+          },
+          "status": "delivered",
+          "attempts": 1,
+          "maxAttempts": 5,
+          "inFlight": false,
+          "acknowledgement": "accepted",
+          "effectMayHaveHappened": true
+        }
+      ],
+      "evidence": "native-two-channels.json"
+    },
+    {
+      "name": "parent-child",
+      "id": "01M5GHGSEZ1MM0W4NGEZYRQG00",
+      "expected": "Parent continues while delivery pending; child finalized after final failure",
+      "pass": true,
+      "actual": [
+        {
+          "id": "01M5GHGSXGS2VJ14HRMRVBNGBM",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5811/parent-fail"
+          },
+          "status": "failed",
+          "attempts": 5,
+          "maxAttempts": 5,
+          "inFlight": false,
+          "acknowledgement": "unknown",
+          "effectMayHaveHappened": true,
+          "lastError": {
+            "code": "http",
+            "message": "Webhook returned HTTP 503.",
+            "retryable": true,
+            "acknowledgement": "unknown",
+            "httpStatus": 503
+          }
+        }
+      ],
+      "evidence": "native-parent-child.json"
+    },
+    {
+      "name": "crash-between-two-three",
+      "id": "01M5GHHZCWTMZGDNN69RR31K00",
+      "expected": "Exactly five total attempts across restart",
+      "pass": true,
+      "actual": [
+        {
+          "id": "01M5GHHZMAN1PKWRV1AKCPF713",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5811/restart"
+          },
+          "status": "failed",
+          "attempts": 5,
+          "maxAttempts": 5,
+          "inFlight": false,
+          "acknowledgement": "unknown",
+          "effectMayHaveHappened": true,
+          "lastError": {
+            "code": "http",
+            "message": "Webhook returned HTTP 503.",
+            "retryable": true,
+            "acknowledgement": "unknown",
+            "httpStatus": 503
+          }
+        }
+      ],
+      "evidence": "native-crash-between-two-three.json"
+    },
+    {
+      "name": "delivered-not-resent",
+      "id": "01M5GHE0GQVG8CEJ6KQ0PX731H",
+      "expected": "No resend or event changes after hard kill/restart",
+      "pass": true,
+      "actual": [
+        {
+          "id": "01M5GHE0J69GS046YBYMFKC5MQ",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5811/channel-a"
+          },
+          "status": "delivered",
+          "attempts": 1,
+          "maxAttempts": 5,
+          "inFlight": false,
+          "acknowledgement": "accepted",
+          "effectMayHaveHappened": true
+        },
+        {
+          "id": "01M5GHE0J6Y8VKE4KRT3CF45Q1",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5811/channel-b"
+          },
+          "status": "delivered",
+          "attempts": 1,
+          "maxAttempts": 5,
+          "inFlight": false,
+          "acknowledgement": "accepted",
+          "effectMayHaveHappened": true
+        }
+      ],
+      "evidence": "native-delivered-not-resent.json"
+    },
+    {
+      "name": "orderly-backoff",
+      "id": "01M5GHKQHYYB5EX26RN20E4C7P",
+      "expected": "No new attempt on stop; next boot uses attempt two",
+      "pass": true,
+      "actual": [
+        {
+          "id": "01M5GHKQPEWMC7B32QBHWFZ2KK",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5811/stop-backoff"
+          },
+          "status": "delivered",
+          "attempts": 2,
+          "maxAttempts": 5,
+          "inFlight": false,
+          "acknowledgement": "accepted",
+          "effectMayHaveHappened": true,
+          "lastError": {
+            "code": "http",
+            "message": "Webhook returned HTTP 503.",
+            "retryable": true,
+            "acknowledgement": "unknown",
+            "httpStatus": 503
+          }
+        }
+      ],
+      "elapsedMs": 192,
+      "evidence": "native-orderly-backoff.json"
+    },
+    {
+      "name": "orderly-attempt",
+      "id": "01M5GHMEGW53T2TD6YYXMHTAKV",
+      "expected": "No new attempt on stop; next boot uses attempt two",
+      "pass": true,
+      "actual": [
+        {
+          "id": "01M5GHMEWMMWVXZPEX91TYFVSB",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5811/stop-attempt"
+          },
+          "status": "delivered",
+          "attempts": 2,
+          "maxAttempts": 5,
+          "inFlight": false,
+          "acknowledgement": "accepted",
+          "effectMayHaveHappened": true,
+          "lastError": {
+            "code": "timeout",
+            "message": "Webhook acknowledgement timed out; the effect may have happened.",
+            "retryable": true,
+            "acknowledgement": "unknown"
+          }
+        }
+      ],
+      "elapsedMs": 9842,
+      "evidence": "native-orderly-attempt.json"
+    }
+  ]
+}

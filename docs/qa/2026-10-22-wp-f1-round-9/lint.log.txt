@@ -1,0 +1,57 @@
+pnpm.cmd : $ turbo run lint
+At line:2 char:292
++ ... ers.jsonl"; pnpm.cmd lint *> docs/qa/2026-10-22-wp-f1-round-9/lint.lo ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ turbo run lint:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running lint in 12 packages
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/contracts:lint: cache miss, executing 833d75839075ec71
+@graphgoblin/domain:lint: cache miss, executing 66dc2e294ba22a71
+@graphgoblin/engine:lint: cache miss, executing fa7ca463c390c078
+@graphgoblin/adapter-jev:lint: cache miss, executing a54abf1065fa3281
+@graphgoblin/adapter-codex:lint: cache miss, executing 52957e4870994fb8
+@graphgoblin/infrastructure:lint: cache miss, executing 7a57d52724426c9c
+@graphgoblin/api:lint: cache miss, executing 4f6770329f5fb5b9
+@graphgoblin/api-client:lint: cache miss, executing 4b36b696beb1e45a
+@graphgoblin/mcp:lint: cache miss, executing 2ed5cbc49ff36765
+@graphgoblin/web:lint: cache miss, executing 2f2024d1dbc078f6
+@graphgoblin/contracts:lint: $ eslint .
+@graphgoblin/domain:lint: $ eslint .
+@graphgoblin/engine:lint: $ eslint .
+@graphgoblin/adapter-jev:lint: $ eslint .
+@graphgoblin/adapter-codex:lint: $ eslint .
+@graphgoblin/api:lint: $ eslint .
+@graphgoblin/infrastructure:lint: $ eslint .
+@graphgoblin/mcp:lint: $ eslint .
+@graphgoblin/api-client:lint: $ eslint .
+@graphgoblin/web:lint: $ eslint .
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/plugin-codex:lint: cache miss, executing f5b4027177a947db
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/plugin-codex:lint: $ eslint .
+ WARNING  IO error: Access is denied. (os error 5)
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/infrastructure:lint:
+@graphgoblin/infrastructure:lint: [local-path]
+@graphgoblin/infrastructure:lint:   807:53  error  Async arrow function 'runner' has no 'await' expression  @typescript-eslint/require-await
+@graphgoblin/infrastructure:lint:
+@graphgoblin/infrastructure:lint: ✖ 1 problem (1 error, 0 warnings)
+@graphgoblin/infrastructure:lint:
+@graphgoblin/infrastructure:lint: [ELIFECYCLE] Command failed with exit code 1.
+@graphgoblin/infrastructure#lint:  ERROR  command
+([local-path])
+[local-path] run lint exited (1)
+
+ Tasks:    4 successful, 11 total
+Cached:    0 cached, 11 total
+  Time:    1m40.012s
+Failed:    @graphgoblin/infrastructure#lint
+
+ ERROR  run failed: command  exited (1)
+[ELIFECYCLE] Command failed with exit code 1.

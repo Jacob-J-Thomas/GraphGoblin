@@ -1,0 +1,59 @@
+
+ RUN  v5.0.3 <worktree>/packages/infrastructure
+
+ ❯ src/sqlite/history-summaries.test.ts (14 tests | 3 failed) 994ms
+   ❯ SQLite history queries (14)
+     × isolates damaged latest initial_thread without substituting an older run 53ms
+     × isolates damaged latest thread_snapshot without substituting an older run 40ms
+     × isolates damaged latest thread_snapshot without substituting an older run 36ms
+pnpm.cmd : 
+At line:71 char:1
++ pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/sql ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/sqlite/history-summaries.test.ts > SQLite history queries > isolates damaged latest initial_thread without 
+substituting an older run
+ FAIL  src/sqlite/history-summaries.test.ts > SQLite history queries > isolates damaged latest thread_snapshot without 
+substituting an older run
+ FAIL  src/sqlite/history-summaries.test.ts > SQLite history queries > isolates damaged latest thread_snapshot without 
+substituting an older run
+AssertionError: expected { …(8) } to match object { runCount: 2, latestRun: null }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "latestRun": null,
++   "latestRun": {
++     "createdAt": "2026-10-02T12:00:00.000Z",
++     "id": "8N7RTNK3108F6R0YWVC9X2EJZT",
++     "status": "running",
++   },
+    "runCount": 2,
+  }
+
+ ❯ src/sqlite/history-summaries.test.ts:160:67
+    158|     });
+    159|     const summaries = await loops.listWithRunSummaries('local');
+    160|     expect(summaries.find((loop) => loop.id === damaged.loop.id)).toMa…
+       |                                                                   ^
+    161|       runCount: 2,
+    162|       latestRun: null,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 11 passed (14)
+   Start at  16:47:34
+   Duration  5.33s (import 51%, transform 29%, tests 20%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in <worktree>
+

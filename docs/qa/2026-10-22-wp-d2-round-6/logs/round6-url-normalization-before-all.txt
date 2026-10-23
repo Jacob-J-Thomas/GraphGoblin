@@ -1,0 +1,52 @@
+
+ RUN  v5.0.3 %WORKTREE%/packages/infrastructure
+
+ ❯ src/sqlite/webhook-receipt-upgrade.test.ts (27 tests | 1 failed) 3170ms
+   × frozen receipt contract: URL normalization preserves stored chan… 160ms
+pnpm.cmd :
+At line:2 char:211
++ ... un='false'; pnpm.cmd --filter @graphgoblin/infrastructure exec vitest ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/sqlite/webhook-receipt-upgrade.test.ts > frozen receipt contract: URL normalization preserves stored chan…
+AssertionError: expected { delivery: { …(9) } } to match object { delivery: { channel: { …(2) } } }
+(8 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "delivery": {
+      "channel": {
+        "kind": "webhook",
+-       "url": " https://example.test/hook ",
++       "url": "https://example.test/hook",
+      },
+    },
+  }
+
+ ❯ src/sqlite/webhook-receipt-upgrade.test.ts:71:39
+     69|     const storedPayload = after[0]?.['payload'];
+     70|     if (typeof storedPayload !== 'string') throw new Error('Expected s…
+     71|     expect(JSON.parse(storedPayload)).toMatchObject({ delivery: { chan…
+       |                                       ^
+     72|     expect(
+     73|       RunEventSchema.safeParse({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 26 passed (27)
+   Start at  14:55:11
+   Duration  7.84s (tests 42%, import 38%, transform 20%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d2-
+  │ webhook-retry\packages\infrastructure

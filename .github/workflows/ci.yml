@@ -21,7 +21,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: pnpm
 
       - name: Install (frozen lockfile)
@@ -29,6 +29,15 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+      - name: Recovery process acceptance
+        run: pnpm test:recovery-process
+
+      - name: Wait restart acceptance
+        run: pnpm test:wait-restart
+
+      - name: Webhook retry acceptance
+        run: pnpm test:webhook-retry
 
       - name: Offline upgrade acceptance
         run: pnpm test:upgrade

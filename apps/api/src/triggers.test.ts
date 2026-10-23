@@ -17,15 +17,19 @@ import {
   FakeProbes,
   FakeScripts,
 } from '@graphgoblin/engine/testing';
-import { AdmissionConflictError, parseRunAdmission, RunManager } from '@graphgoblin/engine';
-import { SqliteSecrets } from '@graphgoblin/infrastructure/sqlite';
+import {
+  AdmissionConflictError,
+  parseRunAdmission,
+  PROBE_MAX_BODY_BYTES,
+  RunManager,
+} from '@graphgoblin/engine';
 import { signPayload, signRawBody } from '@graphgoblin/infrastructure/http';
 import { buildApp } from './app.js';
 import { loadConfig } from './config.js';
 import { createContainer, type Container } from './container.js';
 import { createTestApp, type TestApp } from './testing/test-app.js';
 import { FixedWindowRateLimiter } from './triggers/rate-limit.js';
-import { MAX_EVENT_CHAIN } from './triggers/trigger-service.js';
+import { PollTriggers } from './triggers/poll.js';
 
 let t: TestApp;
 
@@ -42,7 +46,7 @@ type TriggerConfig = Record<string, unknown> & { type: string };
 function triggerLoop(
   name: string,
   trigger: TriggerConfig,
-  options: { emit?: string; triggerId?: string; manual?: boolean } = {},
+  options: { triggerId?: string; manual?: boolean } = {},
 ): LoopDefinitionInput {
   const triggerId = options.triggerId ?? 'trig';
   return {
@@ -64,12 +68,7 @@ function triggerLoop(
         id: 'done',
         kind: 'exit',
         label: 'D',
-        config: {
-          returns: '"done"',
-          destinations: options.emit
-            ? [{ kind: 'event', eventType: options.emit }]
-            : [{ kind: 'log' }],
-        },
+        config: { returns: '"done"', destinations: [{ kind: 'log' }] },
       },
     ],
     edges: [
@@ -540,11 +539,13 @@ describe('webhooks', () => {
     });
     expect(response.statusCode).toBe(202);
     expect(response.json()).toEqual({ accepted: true });
-    expect((await t.container.repos.inbound.list('local'))[0]).toMatchObject({
+    expect((await t.container.repos.inbound.page('local')).items[0]).toMatchObject({
       payload: { title: 'Ã©', action: 'opened' },
     });
     expect(response.body).not.toContain(signature);
-    expect(JSON.stringify(await t.container.repos.inbound.list('local'))).not.toContain(signature);
+    expect(JSON.stringify((await t.container.repos.inbound.page('local')).items)).not.toContain(
+      signature,
+    );
     expect(
       (
         await t.app.inject({
@@ -602,7 +603,7 @@ describe('webhooks', () => {
     });
     expect(response.statusCode).toBe(202);
     expect(response.json()).toEqual({ accepted: true });
-    expect((await t.container.repos.inbound.list('local'))[0]?.payload).toBeNull();
+    expect((await t.container.repos.inbound.page('local')).items[0]?.payload).toBeNull();
   });
 
   it('acknowledges formerly ignored payloads and quietly exits inside the admitted run', async () => {
@@ -620,8 +621,10 @@ describe('webhooks', () => {
       events.filter((event) => event.type === 'node.started').map((event) => event.nodeId),
     ).toEqual(['trig', 'check', 'quiet']);
     expect(events.some((event) => event.type === 'return.delivered')).toBe(false);
-    expect((await t.container.repos.inbound.list('local'))[0]?.runIds).toEqual([run!.id]);
-    expect((await t.container.repos.inbound.list('local'))[0]?.delivery?.state).toBe('admitted');
+    expect((await t.container.repos.inbound.page('local')).items[0]?.runIds).toEqual([run!.id]);
+    expect((await t.container.repos.inbound.page('local')).items[0]?.delivery?.state).toBe(
+      'admitted',
+    );
     expect((await deliver(path, '{"action":"opened"}')).statusCode).toBe(202);
     await settle();
     expect(await runsOf(id)).toHaveLength(2);
@@ -643,7 +646,7 @@ describe('webhooks', () => {
     expect((await deliver(path, '{"different":true}')).statusCode).toBe(202);
     await settle();
     expect(await runsOf(id)).toHaveLength(1);
-    expect((await t.container.repos.inbound.list('local'))[0]?.delivery?.state).toBe(
+    expect((await t.container.repos.inbound.page('local')).items[0]?.delivery?.state).toBe(
       'deduplicated',
     );
   });
@@ -661,7 +664,7 @@ describe('webhooks', () => {
     });
     const first = await deliver(path, '{"id":1}', { headers: { 'x-delivery': 'd' } });
     expect(first.json()).toEqual({ accepted: true });
-    expect((await t.container.repos.inbound.list('local'))[0]?.dedupeKey).toBe('d:1');
+    expect((await t.container.repos.inbound.page('local')).items[0]?.dedupeKey).toBe('d:1');
     t.clock.advance(5_000);
     expect((await deliver(path, '{"id":1}', { headers: { 'x-delivery': 'd' } })).statusCode).toBe(
       202,
@@ -803,7 +806,7 @@ describe('event triggers', () => {
     expect(before.items).toEqual([]);
   });
 
-  it('logs trigger failures and bus events that cannot be stored', async () => {
+  it('logs event trigger failures', async () => {
     await t.publishLoop(
       triggerLoop('broken', { type: 'event', eventType: 'boom', dedupeKey: '$error("bad")' }),
     );
@@ -814,96 +817,40 @@ describe('event triggers', () => {
     });
     expect(result.json()).toMatchObject({ runIds: [] });
     expect(t.logger.lines.some((l) => l.msg === 'event trigger failed')).toBe(true);
-
-    const spy = vi
-      .spyOn(t.container.repos.inbound, 'insertUnlessDuplicate')
-      .mockRejectedValueOnce(new Error('db down'));
-    await t.container.bus.publish({
-      id: 'x',
-      ownerId: 'local',
-      type: 'boom',
-      payload: [1, 2],
-      receivedAt: t.clock.now().toISOString(),
-    });
-    expect(t.logger.lines.some((l) => l.msg === 'event ingest failed')).toBe(true);
-    spy.mockRestore();
-
-    await t.container.bus.publish({
-      id: 'y',
-      ownerId: 'local',
-      type: 'quiet',
-      payload: 'text',
-      dedupeKey: 'q',
-      receivedAt: t.clock.now().toISOString(),
-    });
-    const [event] = (await t.container.repos.inbound.list('local', { type: 'quiet' })) ?? [];
-    expect(event).toMatchObject({ source: 'bus', dedupeKey: 'q' });
   });
 
-  it('chains loops through exit events and refuses to re-enter a loop in the chain', async () => {
+  it('starts event triggers from external Events only; finished runs publish none (#242)', async () => {
     const a = await t.publishLoop(
-      triggerLoop(
-        'loop-a',
-        { type: 'event', eventType: 'b-done' },
-        { emit: 'a-done', manual: true },
-      ),
+      triggerLoop('loop-a', { type: 'event', eventType: 'go' }, { manual: true }),
     );
-    const b = await t.publishLoop(
-      triggerLoop('loop-b', { type: 'event', eventType: 'a-done' }, { emit: 'b-done' }),
-    );
-    const self = await t.publishLoop(
-      triggerLoop('loop-self', { type: 'event', eventType: 'ping' }, { emit: 'ping' }),
-    );
-
-    const started = await t.app.inject({
+    const b = await t.publishLoop(triggerLoop('loop-b', { type: 'event', eventType: 'go' }));
+    const manual = await t.app.inject({
       method: 'POST',
       url: `/loops/${a}/runs`,
       payload: { triggerNodeId: 'manual' },
     });
-    expect(started.statusCode).toBe(202);
+    expect(manual.statusCode).toBe(202);
     await settle();
-    expect(await runsOf(a)).toHaveLength(1);
+    // A finished run starts nothing else and records no Event.
+    expect(await runsOf(b)).toEqual([]);
+    expect((await t.app.inject('/events')).json<{ items: unknown[] }>().items).toEqual([]);
+
+    const posted = await t.app.inject({ method: 'POST', url: '/events', payload: { type: 'go' } });
+    const eventId = posted.json<{ id: string }>().id;
+    await settle();
     const [bRun] = await runsOf(b);
     expect(bRun?.status).toBe('succeeded');
-    const bThread = await t.container.repos.runs.getInitialThread(bRun!.id);
-    expect(bThread?.invocation).toMatchObject({
+    expect(await runsOf(a)).toHaveLength(2);
+    expect((await t.container.repos.runs.getInitialThread(bRun!.id))?.invocation).toMatchObject({
       source: 'event',
-      caller: { kind: 'run', id: started.json<{ run: RunRecord }>().run.id },
-      trigger: { kind: 'event', payload: expect.objectContaining({ outcome: 'success' }) },
+      caller: { kind: 'system', id: `event:${eventId}` },
     });
     const events = (await t.app.inject('/events')).json<{
       items: { type: string; source: string; runIds: string[] }[];
     }>();
-    expect(events.items.map((e) => [e.type, e.runIds.length])).toEqual([
-      ['b-done', 0],
-      ['a-done', 1],
+    expect(events.items.map((e) => [e.type, e.source, e.runIds.length])).toEqual([
+      ['go', 'api', 2],
     ]);
-    expect(events.items[0]?.source).toBe(`run:${bRun!.id}`);
-
-    await t.app.inject({ method: 'POST', url: '/events', payload: { type: 'ping' } });
-    await settle();
-    expect(await runsOf(self)).toHaveLength(1);
-    expect(
-      t.logger.lines.filter((l) => l.msg === 'event trigger skipped: loop is already in the chain'),
-    ).toHaveLength(2);
-  });
-
-  it('stops a chain of distinct loops at the hop limit', async () => {
-    const ids: string[] = [];
-    for (let i = 0; i <= MAX_EVENT_CHAIN; i += 1) {
-      ids.push(
-        await t.publishLoop(
-          triggerLoop(`hop-${i}`, { type: 'event', eventType: `e${i}` }, { emit: `e${i + 1}` }),
-        ),
-      );
-    }
-    await t.app.inject({ method: 'POST', url: '/events', payload: { type: 'e0' } });
-    await settle();
-    const counts = await Promise.all(ids.map(async (id) => (await runsOf(id)).length));
-    expect(counts).toEqual([...Array(MAX_EVENT_CHAIN).fill(1), 0]);
-    expect(t.logger.lines.some((l) => l.msg === 'event trigger skipped: chain limit reached')).toBe(
-      true,
-    );
   });
 });
 
@@ -1022,7 +969,16 @@ describe('poll triggers', () => {
         enabled: false,
       }),
     );
-    scripts.respondWith(() => ({ exitCode: 0, stdout: 'all good', stderr: '', timedOut: false }));
+    scripts.respondWith(() => ({
+      exitCode: 0,
+      stdout: 'all good',
+      stderr: '',
+      stdoutBytes: 8,
+      stdoutOverflow: false,
+      stderrBytes: 0,
+      stderrOverflow: false,
+      timedOut: false,
+    }));
     clock.advance(5_000);
     const first = await container.polls.poll();
     expect(first).toHaveLength(1);
@@ -1035,7 +991,16 @@ describe('poll triggers', () => {
     expect(thread?.invocation.trigger.dedupeKey).toBeUndefined();
     expect(logger.lines.some((l) => l.msg === 'poll trigger failed')).toBe(true);
 
-    scripts.respondWith(() => ({ exitCode: 0, stdout: '', stderr: '', timedOut: false }));
+    scripts.respondWith(() => ({
+      exitCode: 0,
+      stdout: '',
+      stderr: '',
+      stdoutBytes: 0,
+      stdoutOverflow: false,
+      stderrBytes: 0,
+      stderrOverflow: false,
+      timedOut: false,
+    }));
     clock.advance(5_000);
     expect(await container.polls.poll()).toHaveLength(1);
     await container.stop();
@@ -1097,7 +1062,7 @@ describe('body signing and durable admission', () => {
     });
     expect(response.statusCode).toBe(413);
     expect(intake).not.toHaveBeenCalled();
-    expect(await t.container.repos.inbound.list('local')).toEqual([]);
+    expect((await t.container.repos.inbound.page('local')).items).toEqual([]);
     expect(await runsOf(id)).toEqual([]);
     expect(
       await t.container.triggers.handleWebhook(path.slice('/hooks/'.length), body, {}),
@@ -1265,7 +1230,7 @@ describe('body signing and durable admission', () => {
       expect(initialThread?.invocation.trigger.payload).toEqual(JSON.parse(body));
       const persisted = JSON.stringify({
         receipts: (await t.container.handle.client.execute('SELECT * FROM webhook_receipts')).rows,
-        inbound: await t.container.repos.inbound.list('local'),
+        inbound: (await t.container.repos.inbound.page('local')).items,
         initialThread,
         snapshot: await t.container.repos.runs.getThread(result.runId),
         events: await t.container.repos.events.read(result.runId),
@@ -1696,6 +1661,9 @@ describe('body signing and durable admission', () => {
         exitCode: 0,
         stdout: '[{"key":"same"},{"key":"next"}]',
         stderr: '',
+        stdoutBytes: 31,
+        stderrBytes: 0,
+        stderrOverflow: false,
         timedOut: false,
         stdoutOverflow: false,
       });
@@ -1733,11 +1701,30 @@ describe('body signing and durable admission', () => {
       gate = new Promise<void>((resolve) => {
         release = resolve;
       });
-    const receive = t.container.manager.receiveWebhook.bind(t.container.manager);
-    vi.spyOn(t.container.manager, 'receiveWebhook').mockImplementationOnce(async (...args) => {
+    // Controlled race at the exposed admission collaborator, after authentication.
+    let authenticatedClaimId = '';
+    const claim = t.container.ports.admission.claim.bind(t.container.ports.admission);
+    vi.spyOn(t.container.ports.admission, 'claim').mockImplementationOnce(async (...args) => {
+      authenticatedClaimId = args[0].id;
       entered();
       await gate;
-      return receive(...args);
+      return claim(...args);
+    });
+    // A second public engine/poll component shares the real admission port. One manager's
+    // pin mutex deliberately serializes poll admission behind a held claim; separate component
+    // callers let storage see this interleaving without patching the webhook execution chain.
+    const competingManager = new RunManager(t.container.ports, t.container.settings);
+    await competingManager.start();
+    const polls = new PollTriggers({
+      probes: t.container.ports.probes,
+      scripts: t.container.ports.scripts,
+      manager: competingManager,
+      clock: t.clock,
+      logger: t.logger,
+      scriptCwd: t.dataDir,
+      hasDedupe: (loop, node, key) => t.container.repos.runs.hasTriggerDedupe(loop, node, key),
+      findSeen: (loop, node, keys) =>
+        t.container.repos.runs.findTriggerDedupeKeys(loop, node, keys),
     });
     const delivery = bodyDelivery(path, '{"key":"same"}');
     try {
@@ -1761,21 +1748,36 @@ describe('body signing and durable admission', () => {
         exitCode: 0,
         stdout: '[{"key":"same"}]',
         stderr: '',
+        stdoutBytes: 16,
+        stderrBytes: 0,
+        stderrOverflow: false,
         timedOut: false,
         stdoutOverflow: false,
       });
+      const loop = await t.container.repos.loops.getLoop(id);
+      const version = await t.container.repos.loops.getLatestPublished(id);
+      if (!loop || !version) throw new Error('missing current poll fixture');
+      polls.arm(loop, version);
       t.clock.advance(5000);
-      expect(await t.container.polls.poll()).toHaveLength(1);
+      const polled = await polls.poll();
+      expect(polled).toHaveLength(1);
       release();
       const response = await delivery;
       expect(response.statusCode).toBe(202);
       expect(response.json()).toMatchObject({ accepted: true });
       await t.idle();
-      expect(await runsOf(id)).toHaveLength(1);
+      await competingManager.waitForIdle();
+      expect((await runsOf(id)).map((run) => run.id)).toEqual([polled[0]!.id]);
+      expect((await t.container.ports.admission.get(authenticatedClaimId))?.status).toBe(
+        'deduplicated',
+      );
       expect(await t.container.ports.admission.hasPendingPin(id)).toBe(false);
     } finally {
       release();
       await delivery;
+      await competingManager.waitForIdle();
+      competingManager.stop();
+      polls.stop();
     }
   });
   it('does not activate business dedupe for generated signature hints', async () => {
@@ -1850,6 +1852,9 @@ describe('bounded items-mode poll integration', () => {
     exitCode: 0,
     stdout,
     stderr: 'credential-marker',
+    stdoutBytes: new TextEncoder().encode(stdout).byteLength,
+    stderrBytes: 17,
+    stderrOverflow: false,
     timedOut: false,
     stdoutOverflow: false,
     ...extra,
@@ -1890,7 +1895,7 @@ describe('bounded items-mode poll integration', () => {
       }),
     );
   });
-  it('refuses failed/timeout/overflow/unbounded/invalid JSON probes only in new items mode', async () => {
+  it('refuses failed/timeout/overflow-flag/oversized-byte-count/invalid JSON probes only in new items mode', async () => {
     await t.publishLoop(triggerLoop('items-probe', config()));
     const script = vi.spyOn(t.container.ports.scripts, 'run');
     const lookup = vi.spyOn(t.container.repos.runs, 'findTriggerDedupeKeys');
@@ -1898,6 +1903,7 @@ describe('bounded items-mode poll integration', () => {
       result('[]', { exitCode: 1 }),
       result('[]', { timedOut: true }),
       result('[]', { stdoutOverflow: true }),
+      result('[]', { stdoutBytes: PROBE_MAX_BODY_BYTES + 1, stdoutOverflow: false }),
       result('broken'),
     ]) {
       script.mockResolvedValue(output);
@@ -1912,6 +1918,9 @@ describe('bounded items-mode poll integration', () => {
         'POLL_STDOUT_OVERFLOW',
         'POLL_JSON_INVALID',
       ]),
+    );
+    expect(t.logger.lines.filter((line) => line.obj.code === 'POLL_STDOUT_OVERFLOW')).toHaveLength(
+      2,
     );
   });
   it('skips overlapping sweeps even after republish, and admission failure leaves the unseen tail', async () => {
@@ -2010,7 +2019,7 @@ describe('unified signed webhook admission and Allow', () => {
         await t.container.handle.client.execute('SELECT id,intent FROM webhook_receipts')
       ).rows;
       expect(receipts).toHaveLength(write.startsWith('claim.') ? 0 : 1);
-      const inbound = await t.container.repos.inbound.list('local');
+      const inbound = (await t.container.repos.inbound.page('local')).items;
       expect(inbound).toHaveLength(receipts.length);
       expect(await t.container.ports.admission.hasPendingPin(id)).toBe(receipts.length > 0);
       await t.container.handle.client.execute('DROP TRIGGER injected_failure');
@@ -2035,7 +2044,9 @@ describe('unified signed webhook admission and Allow', () => {
             initialThread: intent.initialThread,
           }),
         ]);
-        expect((await t.container.repos.inbound.list('local'))[0]?.runIds).toEqual([intent.run.id]);
+        expect((await t.container.repos.inbound.page('local')).items[0]?.runIds).toEqual([
+          intent.run.id,
+        ]);
         expect(await t.container.ports.admission.hasPendingPin(id)).toBe(false);
       } else {
         expect((await send('{"id":1}')).statusCode).toBe(202);
@@ -2070,7 +2081,7 @@ describe('unified signed webhook admission and Allow', () => {
       await t.idle();
       expect(await runsOf(keyed.id)).toHaveLength(1);
       expect(
-        (await t.container.repos.inbound.list('local')).filter(
+        (await t.container.repos.inbound.page('local')).items.filter(
           (event) => event.delivery?.state === 'deduplicated',
         ),
       ).toHaveLength(1);
@@ -2119,7 +2130,7 @@ describe('general webhook configuration and unsigned intake', () => {
     await t.idle();
     expect(await runsOf(keyed.id)).toHaveLength(1);
     expect(
-      (await t.container.repos.inbound.list('local')).filter(
+      (await t.container.repos.inbound.page('local')).items.filter(
         (event) => event.delivery?.state === 'deduplicated',
       ),
     ).toHaveLength(1);
@@ -2150,15 +2161,13 @@ describe('general webhook configuration and unsigned intake', () => {
     'admits unsigned $body.type through saved intent, queued metadata and recovery',
     async (config) => {
       const { id, path } = await setup({ body: config.body, eventType: config.eventType });
-      const resolve = vi.spyOn(SqliteSecrets.prototype, 'resolve');
+      // All owner-scoped secret instances share this real storage boundary.
+      await t.container.handle.client.execute('DROP TABLE secrets');
       vi.spyOn(t.container.ports.admission, 'create').mockRejectedValueOnce(new Error('transient'));
-      const bus = vi.spyOn(t.container.bus, 'publish');
       const response = await post(path, config.raw, { 'x-event': 'order.created' });
       expect(response.statusCode).toBe(202);
       expect(response.json()).toEqual({ accepted: true });
       await t.container.manager.waitForWebhookRecovery();
-      expect(resolve).not.toHaveBeenCalled();
-      expect(bus).not.toHaveBeenCalled();
       expect(await runsOf(id)).toEqual([]);
       const rows = (await t.container.handle.client.execute('SELECT intent FROM webhook_receipts'))
         .rows;
@@ -2183,6 +2192,23 @@ describe('general webhook configuration and unsigned intake', () => {
       });
     },
   );
+  it('refuses signed intake when the real secret storage boundary is unavailable', async () => {
+    await setSecret();
+    const { id, path } = await setup({
+      authentication: { type: 'hmac-sha256', message: 'body', secretRef: 'hook-secret' },
+    });
+    await t.container.handle.client.execute('DROP TABLE secrets');
+    const raw = Buffer.from('{"id":1}');
+    const response = await post(path, raw, {
+      'x-hub-signature-256': signRawBody('shh', raw),
+    });
+    expect(response.statusCode).toBe(500);
+    expect(response.json()).toMatchObject({ code: 'INTERNAL_ERROR' });
+    expect(await runsOf(id)).toEqual([]);
+    expect(
+      (await t.container.handle.client.execute('SELECT intent FROM webhook_receipts')).rows,
+    ).toEqual([]);
+  });
   it('applies the limiter/bound/decoding to None without accepting an authenticated identity', async () => {
     const { path } = await setup();
     expect((await post(path, '')).json()).toMatchObject({ code: 'BODY_INVALID' });
@@ -2301,7 +2327,7 @@ describe('general webhook configuration and unsigned intake', () => {
     expect((await t.app.inject(`/loops/${id}/triggers`)).json()).toMatchObject({
       webhooks: [{ configurationAvailable: false, authentication: { type: 'none' } }],
     });
-    const event = (await t.container.repos.inbound.list('local'))[0]!;
+    const event = (await t.container.repos.inbound.page('local')).items[0]!;
     expect(
       (await t.container.triggers.describeInbound([{ ...event, ownerId: 'other' }]))[0],
     ).not.toHaveProperty('webhook');

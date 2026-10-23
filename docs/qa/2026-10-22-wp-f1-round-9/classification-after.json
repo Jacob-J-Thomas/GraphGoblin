@@ -1,0 +1,896 @@
+[
+  {
+    "name": "R1 explicit auth + network",
+    "out": "",
+    "err": "API Error: 401 Authentication failed; check network settings.",
+    "exit": 1,
+    "expected": "auth",
+    "fact": false,
+    "http": 200,
+    "ms": 573,
+    "actual": [
+      {
+        "harness": "codex",
+        "state": "auth",
+        "authenticated": false,
+        "authenticatedPresent": true,
+        "problems": ["Codex sign-in is missing or invalid. Run codex login, then retry preflight."],
+        "expected": "auth",
+        "expectedAuthenticated": false,
+        "pass": true
+      },
+      {
+        "harness": "claude",
+        "state": "auth",
+        "authenticated": false,
+        "authenticatedPresent": true,
+        "problems": [
+          "Claude sign-in is missing or invalid. Run claude auth login, then retry preflight."
+        ],
+        "expected": "auth",
+        "expectedAuthenticated": false,
+        "pass": true
+      }
+    ],
+    "sentinelExposed": false
+  },
+  {
+    "name": "R1 explicit quota + network",
+    "out": "",
+    "err": "HTTP 429 Too Many Requests; network request failed.",
+    "exit": 1,
+    "expected": "quota",
+    "http": 200,
+    "ms": 409,
+    "actual": [
+      {
+        "harness": "codex",
+        "state": "quota",
+        "authenticatedPresent": false,
+        "problems": [
+          "Codex account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+        ],
+        "expected": "quota",
+        "pass": true
+      },
+      {
+        "harness": "claude",
+        "state": "quota",
+        "authenticatedPresent": false,
+        "problems": [
+          "Claude account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+        ],
+        "expected": "quota",
+        "pass": true
+      }
+    ],
+    "sentinelExposed": false
+  },
+  {
+    "name": "R1 stdout quota + unrelated stderr",
+    "out": "API Error: 429 Too Many Requests",
+    "err": "Warning: setting is deprecated",
+    "exit": 1,
+    "expected": "quota",
+    "http": 200,
+    "ms": 321,
+    "actual": [
+      {
+        "harness": "codex",
+        "state": "quota",
+        "authenticatedPresent": false,
+        "problems": [
+          "Codex account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+        ],
+        "expected": "quota",
+        "pass": true
+      },
+      {
+        "harness": "claude",
+        "state": "quota",
+        "authenticatedPresent": false,
+        "problems": [
+          "Claude account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+        ],
+        "expected": "quota",
+        "pass": true
+      }
+    ],
+    "sentinelExposed": false
+  },
+  {
+    "name": "R1 empty success",
+    "out": "",
+    "err": "",
+    "exit": 0,
+    "expected": "unknown",
+    "http": 200,
+    "ms": 346,
+    "actual": [
+      {
+        "harness": "codex",
+        "state": "unknown",
+        "authenticatedPresent": false,
+        "problems": [
+          "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight."
+        ],
+        "expected": "unknown",
+        "pass": true
+      },
+      {
+        "harness": "claude",
+        "state": "unknown",
+        "authenticatedPresent": false,
+        "problems": [
+          "Claude readiness could not be confirmed. Check that the Claude CLI starts and responds, then retry preflight."
+        ],
+        "expected": "unknown",
+        "pass": true
+      }
+    ],
+    "sentinelExposed": false
+  },
+  {
+    "name": "R1 empty object success",
+    "out": "{}",
+    "err": "",
+    "exit": 0,
+    "expected": "unknown",
+    "http": 200,
+    "ms": 330,
+    "actual": [
+      {
+        "harness": "codex",
+        "state": "unknown",
+        "authenticatedPresent": false,
+        "problems": [
+          "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight."
+        ],
+        "expected": "unknown",
+        "pass": true
+      },
+      {
+        "harness": "claude",
+        "state": "unknown",
+        "authenticatedPresent": false,
+        "problems": [
+          "Claude readiness could not be confirmed. Check that the Claude CLI starts and responds, then retry preflight."
+        ],
+        "expected": "unknown",
+        "pass": true
+      }
+    ],
+    "sentinelExposed": false
+  },
+  {
+    "name": "status inside longer sentence",
+    "out": "",
+    "err": "Refresh attempt finished: HTTP/2 401 — Anmeldung erforderlich; check network settings before retry.",
+    "exit": 1,
+    "expected": "auth",
+    "fact": false,
+    "http": 200,
+    "ms": 364,
+    "actual": [
+      {
+        "harness": "codex",
+        "state": "auth",
+        "authenticated": false,
+        "authenticatedPresent": true,
+        "problems": ["Codex sign-in is missing or invalid. Run codex login, then retry preflight."],
+        "expected": "auth",
+        "expectedAuthenticated": false,
+        "pass": true
+      },
+      {
+        "harness": "claude",
+        "state": "auth",
+        "authenticated": false,
+        "authenticatedPresent": true,
+        "problems": [
+          "Claude sign-in is missing or invalid. Run claude auth login, then retry preflight."
+        ],
+        "expected": "auth",
+        "expectedAuthenticated": false,
+        "pass": true
+      }
+    ],
+    "sentinelExposed": false
+  },
+  {
+    "name": "localized HTTP 403",
+    "out": "",
+    "err": "Le serveur répond HTTP 403 : accès refusé; réseau disponible.",
+    "exit": 1,
+    "expected": "auth",
+    "fact": false,
+    "http": 200,
+    "ms": 357,
+    "actual": [
+      {
+        "harness": "codex",
+        "state": "auth",
+        "authenticated": false,
+        "authenticatedPresent": true,
+        "problems": ["Codex sign-in is missing or invalid. Run codex login, then retry preflight."],
+        "expected": "auth",
+        "expectedAuthenticated": false,
+        "pass": true
+      },
+      {
+        "harness": "claude",
+        "state": "auth",
+        "authenticated": false,
+        "authenticatedPresent": true,
+        "problems": [
+          "Claude sign-in is missing or invalid. Run claude auth login, then retry preflight."
+        ],
+        "expected": "auth",
+        "expectedAuthenticated": false,
+        "pass": true
+      }
+    ],
+    "sentinelExposed": false
+  },
+  {
+    "name": "localized status_code quota",
+    "out": "",
+    "err": "{\"error\":{\"status_code\":429,\"message\":\"ネットワーク要求の上限\"}}",
+    "exit": 1,
+    "expected": "quota",
+    "http": 200,
+    "ms": 290,
+    "actual": [
+      {
+        "harness": "codex",
+        "state": "quota",
+        "authenticatedPresent": false,
+        "problems": [
+          "Codex account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+        ],
+        "expected": "quota",
+        "pass": true
+      },
+      {
+        "harness": "claude",
+        "state": "quota",
+        "authenticatedPresent": false,
+        "problems": [
+          "Claude account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+        ],
+        "expected": "quota",
+        "pass": true
+      }
+    ],
+    "sentinelExposed": false
+  },
+  {
+    "name": "API 503 with auth words",
+    "out": "",
+    "err": "Authentication refresh returned API Error: 503 Service Unavailable",
+    "exit": 1,
+    "expected": "transport",
+    "http": 200,
+    "ms": 358,
+    "actual": [
+      {
+        "harness": "codex",
+        "state": "transport",
+        "authenticatedPresent": false,
+        "problems": [
+          "Codex reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight."
+        ],
+        "expected": "transport",
+        "pass": true
+      },
+      {
+        "harness": "claude",
+        "state": "transport",
+        "authenticatedPresent": false,
+        "problems": [
+          "Claude reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight."
+        ],
+        "expected": "transport",
+        "pass": true
+      }
+    ],
+    "sentinelExposed": false
+  },
+  {
+    "name": "actual connection + auth words",
+    "out": "",
+    "err": "Failed to connect to authentication server: ECONNREFUSED",
+    "exit": 1,
+    "expected": "transport",
+    "http": 200,
+    "ms": 315,
+    "actual": [
+      {
+        "harness": "codex",
+        "state": "transport",
+        "authenticatedPresent": false,
+        "problems": [
+          "Codex reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight."
+        ],
+        "expected": "transport",
+        "pass": true
+      },
+      {
+        "harness": "claude",
+        "state": "transport",
+        "authenticatedPresent": false,
+        "problems": [
+          "Claude reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight."
+        ],
+        "expected": "transport",
+        "pass": true
+      }
+    ],
+    "sentinelExposed": false
+  },
+  {
+    "name": "syntax + network + auth status",
+    "out": "",
+    "err": "error: unknown option '--network-access'; HTTP 401",
+    "exit": 1,
+    "expected": "cli-incompatible",
+    "http": 200,
+    "ms": 345,
+    "actual": [
+      {
+        "harness": "codex",
+        "state": "cli-incompatible",
+        "authenticatedPresent": false,
+        "problems": [
+          "Codex CLI lacks a required capability. Update the Codex CLI, then retry preflight."
+        ],
+        "expected": "cli-incompatible",
+        "pass": true
+      },
+      {
+        "harness": "claude",
+        "state": "cli-incompatible",
+        "authenticatedPresent": false,
+        "problems": [
+          "Claude CLI lacks a required capability. Update the Claude CLI, then retry preflight."
+        ],
+        "expected": "cli-incompatible",
+        "pass": true
+      }
+    ],
+    "sentinelExposed": false
+  },
+  {
+    "name": "stdout quota, stderr auth conflict",
+    "out": "HTTP 429 Too Many Requests",
+    "err": "HTTP 401 Unauthorized",
+    "exit": 1,
+    "expectedByHarness": {
+      "claude": "auth"
+    },
+    "factByHarness": {
+      "claude": false
+    },
+    "http": 200,
+    "ms": 431,
+    "actual": [
+      {
+        "harness": "codex",
+        "state": "quota",
+        "authenticatedPresent": false,
+        "problems": [
+          "Codex account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+        ],
+        "pass": null
+      },
+      {
+        "harness": "claude",
+        "state": "auth",
+        "authenticated": false,
+        "authenticatedPresent": true,
+        "problems": [
+          "Claude sign-in is missing or invalid. Run claude auth login, then retry preflight."
+        ],
+        "expected": "auth",
+        "expectedAuthenticated": false,
+        "pass": true
+      }
+    ],
+    "sentinelExposed": false
+  },
+  {
+    "name": "stdout auth, stderr quota conflict",
+    "out": "HTTP 401 Unauthorized",
+    "err": "HTTP 429 Too Many Requests",
+    "exit": 1,
+    "expectedByHarness": {
+      "claude": "quota"
+    },
+    "http": 200,
+    "ms": 558,
+    "actual": [
+      {
+        "harness": "codex",
+        "state": "auth",
+        "authenticated": false,
+        "authenticatedPresent": true,
+        "problems": ["Codex sign-in is missing or invalid. Run codex login, then retry preflight."],
+        "pass": null
+      },
+      {
+        "harness": "claude",
+        "state": "quota",
+        "authenticatedPresent": false,
+        "problems": [
+          "Claude account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+        ],
+        "expected": "quota",
+        "pass": true
+      }
+    ],
+    "sentinelExposed": false
+  },
+  {
+    "name": "stdout transport, stderr quota conflict",
+    "out": "HTTP 503 Service Unavailable",
+    "err": "HTTP 429 Too Many Requests",
+    "exit": 1,
+    "expectedByHarness": {
+      "claude": "quota"
+    },
+    "http": 200,
+    "ms": 1890,
+    "actual": [
+      {
+        "harness": "codex",
+        "state": "transport",
+        "authenticatedPresent": false,
+        "problems": [
+          "Codex reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight."
+        ],
+        "pass": null
+      },
+      {
+        "harness": "claude",
+        "state": "quota",
+        "authenticatedPresent": false,
+        "problems": [
+          "Claude account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+        ],
+        "expected": "quota",
+        "pass": true
+      }
+    ],
+    "sentinelExposed": false
+  },
+  {
+    "name": "structured sign-out with conflicting stderr",
+    "out": "{\"loggedIn\":false,\"authMethod\":\"none\"}",
+    "err": "HTTP 429 Too Many Requests",
+    "exit": 1,
+    "expectedByHarness": {
+      "claude": "auth"
+    },
+    "factByHarness": {
+      "claude": false
+    },
+    "http": 200,
+    "ms": 2376,
+    "actual": [
+      {
+        "harness": "codex",
+        "state": "quota",
+        "authenticatedPresent": false,
+        "problems": [
+          "Codex account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+        ],
+        "pass": null
+      },
+      {
+        "harness": "claude",
+        "state": "auth",
+        "authenticated": false,
+        "authenticatedPresent": true,
+        "problems": ["Claude is not signed in. Run claude auth login, then retry preflight."],
+        "expected": "auth",
+        "expectedAuthenticated": false,
+        "pass": true
+      }
+    ],
+    "sentinelExposed": false
+  },
+  {
+    "name": "malformed JSON success",
+    "out": "{\"loggedIn\":",
+    "err": "",
+    "exit": 0,
+    "expected": "unknown",
+    "http": 200,
+    "ms": 2077,
+    "actual": [
+      {
+        "harness": "codex",
+        "state": "unknown",
+        "authenticatedPresent": false,
+        "problems": [
+          "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight."
+        ],
+        "expected": "unknown",
+        "pass": true
+      },
+      {
+        "harness": "claude",
+        "state": "unknown",
+        "authenticatedPresent": false,
+        "problems": [
+          "Claude readiness could not be confirmed. Check that the Claude CLI starts and responds, then retry preflight."
+        ],
+        "expected": "unknown",
+        "pass": true
+      }
+    ],
+    "sentinelExposed": false
+  },
+  {
+    "name": "JSON null success",
+    "out": "null",
+    "err": "",
+    "exit": 0,
+    "expected": "unknown",
+    "http": 200,
+    "ms": 2144,
+    "actual": [
+      {
+        "harness": "codex",
+        "state": "unknown",
+        "authenticatedPresent": false,
+        "problems": [
+          "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight."
+        ],
+        "expected": "unknown",
+        "pass": true
+      },
+      {
+        "harness": "claude",
+        "state": "unknown",
+        "authenticatedPresent": false,
+        "problems": [
+          "Claude readiness could not be confirmed. Check that the Claude CLI starts and responds, then retry preflight."
+        ],
+        "expected": "unknown",
+        "pass": true
+      }
+    ],
+    "sentinelExposed": false
+  },
+  {
+    "name": "JSON array success",
+    "out": "[]",
+    "err": "",
+    "exit": 0,
+    "expected": "unknown",
+    "http": 200,
+    "ms": 1488,
+    "actual": [
+      {
+        "harness": "codex",
+        "state": "unknown",
+        "authenticatedPresent": false,
+        "problems": [
+          "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight."
+        ],
+        "expected": "unknown",
+        "pass": true
+      },
+      {
+        "harness": "claude",
+        "state": "unknown",
+        "authenticatedPresent": false,
+        "problems": [
+          "Claude readiness could not be confirmed. Check that the Claude CLI starts and responds, then retry preflight."
+        ],
+        "expected": "unknown",
+        "pass": true
+      }
+    ],
+    "sentinelExposed": false
+  },
+  {
+    "name": "unrecognized success",
+    "out": "auth status result unavailable",
+    "err": "",
+    "exit": 0,
+    "expected": "unknown",
+    "http": 200,
+    "ms": 1530,
+    "actual": [
+      {
+        "harness": "codex",
+        "state": "unknown",
+        "authenticatedPresent": false,
+        "problems": [
+          "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight."
+        ],
+        "expected": "unknown",
+        "pass": true
+      },
+      {
+        "harness": "claude",
+        "state": "unknown",
+        "authenticatedPresent": false,
+        "problems": [
+          "Claude readiness could not be confirmed. Check that the Claude CLI starts and responds, then retry preflight."
+        ],
+        "expected": "unknown",
+        "pass": true
+      }
+    ],
+    "sentinelExposed": false
+  },
+  {
+    "name": "recognized plaintext sign-out stdout success",
+    "out": "Not logged in",
+    "err": "",
+    "exit": 0,
+    "expected": "auth",
+    "fact": false,
+    "http": 200,
+    "ms": 1733,
+    "actual": [
+      {
+        "harness": "codex",
+        "state": "auth",
+        "authenticated": false,
+        "authenticatedPresent": true,
+        "problems": ["Codex is not signed in. Run codex login, then retry preflight."],
+        "expected": "auth",
+        "expectedAuthenticated": false,
+        "pass": true
+      },
+      {
+        "harness": "claude",
+        "state": "auth",
+        "authenticated": false,
+        "authenticatedPresent": true,
+        "problems": ["Claude is not signed in. Run claude auth login, then retry preflight."],
+        "expected": "auth",
+        "expectedAuthenticated": false,
+        "pass": true
+      }
+    ],
+    "sentinelExposed": false
+  },
+  {
+    "name": "recognized plaintext sign-out stderr success",
+    "out": "",
+    "err": "Not logged in",
+    "exit": 0,
+    "expected": "auth",
+    "fact": false,
+    "http": 200,
+    "ms": 1501,
+    "actual": [
+      {
+        "harness": "codex",
+        "state": "auth",
+        "authenticated": false,
+        "authenticatedPresent": true,
+        "problems": ["Codex is not signed in. Run codex login, then retry preflight."],
+        "expected": "auth",
+        "expectedAuthenticated": false,
+        "pass": true
+      },
+      {
+        "harness": "claude",
+        "state": "auth",
+        "authenticated": false,
+        "authenticatedPresent": true,
+        "problems": ["Claude is not signed in. Run claude auth login, then retry preflight."],
+        "expected": "auth",
+        "expectedAuthenticated": false,
+        "pass": true
+      }
+    ],
+    "sentinelExposed": false
+  },
+  {
+    "name": "native-format sign-out success",
+    "outByHarness": {
+      "claude": "{\"loggedIn\":false,\"authMethod\":\"none\"}",
+      "codex": "Not logged in"
+    },
+    "err": "",
+    "exit": 0,
+    "expected": "auth",
+    "fact": false,
+    "http": 200,
+    "ms": 1523,
+    "actual": [
+      {
+        "harness": "codex",
+        "state": "auth",
+        "authenticated": false,
+        "authenticatedPresent": true,
+        "problems": ["Codex is not signed in. Run codex login, then retry preflight."],
+        "expected": "auth",
+        "expectedAuthenticated": false,
+        "pass": true
+      },
+      {
+        "harness": "claude",
+        "state": "auth",
+        "authenticated": false,
+        "authenticatedPresent": true,
+        "problems": ["Claude is not signed in. Run claude auth login, then retry preflight."],
+        "expected": "auth",
+        "expectedAuthenticated": false,
+        "pass": true
+      }
+    ],
+    "sentinelExposed": false
+  },
+  {
+    "name": "native-format sign-in success",
+    "outByHarness": {
+      "claude": "{\"loggedIn\":true,\"authMethod\":\"claude.ai\"}",
+      "codex": "Logged in using ChatGPT"
+    },
+    "err": "",
+    "exit": 0,
+    "expected": "ready",
+    "fact": true,
+    "http": 200,
+    "ms": 1578,
+    "actual": [
+      {
+        "harness": "codex",
+        "state": "ready",
+        "authenticated": true,
+        "authenticatedPresent": true,
+        "problems": [],
+        "expected": "ready",
+        "expectedAuthenticated": true,
+        "pass": true
+      },
+      {
+        "harness": "claude",
+        "state": "ready",
+        "authenticated": true,
+        "authenticatedPresent": true,
+        "problems": [],
+        "expected": "ready",
+        "expectedAuthenticated": true,
+        "pass": true
+      }
+    ],
+    "sentinelExposed": false
+  },
+  {
+    "name": "partial auth output failed",
+    "out": "Unauth",
+    "err": "",
+    "exit": 1,
+    "expected": "unknown",
+    "http": 200,
+    "ms": 2427,
+    "actual": [
+      {
+        "harness": "codex",
+        "state": "unknown",
+        "authenticatedPresent": false,
+        "problems": [
+          "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight."
+        ],
+        "expected": "unknown",
+        "pass": true
+      },
+      {
+        "harness": "claude",
+        "state": "unknown",
+        "authenticatedPresent": false,
+        "problems": [
+          "Claude CLI check exited with code 1. Check that the Claude CLI starts and responds, then retry preflight."
+        ],
+        "expected": "unknown",
+        "pass": true
+      }
+    ],
+    "sentinelExposed": false
+  },
+  {
+    "name": "empty failed exit",
+    "out": "",
+    "err": "",
+    "exit": 1,
+    "expected": "unknown",
+    "http": 200,
+    "ms": 2537,
+    "actual": [
+      {
+        "harness": "codex",
+        "state": "unknown",
+        "authenticatedPresent": false,
+        "problems": [
+          "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight."
+        ],
+        "expected": "unknown",
+        "pass": true
+      },
+      {
+        "harness": "claude",
+        "state": "unknown",
+        "authenticatedPresent": false,
+        "problems": [
+          "Claude CLI check exited with code 1. Check that the Claude CLI starts and responds, then retry preflight."
+        ],
+        "expected": "unknown",
+        "pass": true
+      }
+    ],
+    "sentinelExposed": false
+  },
+  {
+    "name": "localized unknown failed",
+    "out": "",
+    "err": "要求を処理できませんでした",
+    "exit": 1,
+    "expected": "unknown",
+    "http": 200,
+    "ms": 2390,
+    "actual": [
+      {
+        "harness": "codex",
+        "state": "unknown",
+        "authenticatedPresent": false,
+        "problems": [
+          "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight."
+        ],
+        "expected": "unknown",
+        "pass": true
+      },
+      {
+        "harness": "claude",
+        "state": "unknown",
+        "authenticatedPresent": false,
+        "problems": [
+          "Claude CLI check exited with code 1. Check that the Claude CLI starts and responds, then retry preflight."
+        ],
+        "expected": "unknown",
+        "pass": true
+      }
+    ],
+    "sentinelExposed": false
+  },
+  {
+    "name": "diagnostic sentinel",
+    "out": "",
+    "err": "HTTP 429 Too Many Requests PRIVATE_AUDIT_SENTINEL",
+    "exit": 1,
+    "expected": "quota",
+    "http": 200,
+    "ms": 2405,
+    "actual": [
+      {
+        "harness": "codex",
+        "state": "quota",
+        "authenticatedPresent": false,
+        "problems": [
+          "Codex account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+        ],
+        "expected": "quota",
+        "pass": true
+      },
+      {
+        "harness": "claude",
+        "state": "quota",
+        "authenticatedPresent": false,
+        "problems": [
+          "Claude account usage limit reached. Wait for the usage limit to reset, then retry preflight."
+        ],
+        "expected": "quota",
+        "pass": true
+      }
+    ],
+    "sentinelExposed": false
+  }
+]

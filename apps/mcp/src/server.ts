@@ -8,7 +8,7 @@ export const SERVER_VERSION = '0.1.0';
 
 const INSTRUCTIONS = `GraphGoblin runs agent loops: graphs of trigger, decision, inference, script, mutate, subloop, wait, heartbeat, and exit nodes.
 To run a loop: list_loops, describe_loop (read the trigger inputSchema), start_run, then wait_for_run until finished is true.
-If wait_for_run reports a run waiting for input, call provide_input and wait again. Use read_run_events and get_run_thread to explain what a run did.`;
+If wait_for_run reports a run waiting for input, call provide_input with the observed waiting.waitId as waitId and wait again. For send_signal, also pass the waiting.waitId observed in get_run or wait_for_run. Use read_run_events and get_run_thread to explain what a run did.`;
 
 /** Connection to the gateway: an existing client, or the settings to build one. */
 export type GatewayOptions =

@@ -1,5 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { fakeUlid, FIXTURE_TS, minimalLoop, sampleThread } from '@graphgoblin/contracts/testing';
+import {
+  fakeUlid,
+  FIXTURE_TS,
+  minimalLoop,
+  samplePin,
+  sampleThread,
+} from '@graphgoblin/contracts/testing';
 import type { RunRecord } from '@graphgoblin/contracts';
 import { createTestApp, type TestApp } from './testing/test-app.js';
 
@@ -137,6 +143,7 @@ describe('DELETE /loops/:id', () => {
           ownerId: 'local',
           loopId,
           versionId: loop.currentVersionId!,
+          pinned: samplePin(),
           invocationId: fakeUlid('inv'),
           status,
           iteration: 1,
@@ -169,6 +176,7 @@ describe('DELETE /loops/:id', () => {
           ownerId: 'local',
           loopId,
           versionId: loop.currentVersionId!,
+          pinned: samplePin(),
           invocationId: fakeUlid('inv'),
           status: 'queued',
           iteration: 1,

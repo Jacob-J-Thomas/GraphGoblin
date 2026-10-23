@@ -9,12 +9,13 @@ import type {
   EvaluationObservation,
   RunEvent,
   LoopDefinition,
+  ReturnChannel,
 } from '@graphgoblin/contracts';
 import { getAtPointer, replayThread } from '@graphgoblin/domain';
 
 /**
  * The thread as the run started. The engine records it on the first event (`run.queued`),
- * including a subloop child's seed; logs written before that field existed fall back to the
+ * including a subloop child's or replay fork's seed; logs without that field fall back to the
  * immutable `run` and `invocation` from the current thread and one-based gates from the definition.
  */
 export function initialThreadFrom(
@@ -45,22 +46,15 @@ export function initialThreadFrom(
 }
 
 /**
- * The thread after the event with sequence `seq`: node patches replayed by `domain`, plus the
- * node-visit counter the engine keeps outside patches (it counts `node.started`).
+ * The thread after event `seq`, including the seed's counters, gates and iteration. Domain replay
+ * increments visits for each `node.started`, just as the executor does, without resetting the seed.
  */
 export function threadAt(
   initial: ContextThread,
   events: readonly RunEvent[],
   seq: number,
 ): ContextThread {
-  const thread = replayThread(initial, events, seq);
-  const nodeVisits: Record<string, number> = {};
-  for (const event of events) {
-    if (event.seq > seq) break;
-    if (event.type === 'node.started')
-      nodeVisits[event.nodeId] = (nodeVisits[event.nodeId] ?? 0) + 1;
-  }
-  return { ...thread, counters: { ...thread.counters, nodeVisits } };
+  return replayThread(initial, events, seq);
 }
 
 /**
@@ -143,6 +137,11 @@ export function describeEvent(event: RunEvent): string {
       return describeExit(event);
     case 'signal.received':
       return event.name;
+    case 'delivery.queued':
+    case 'delivery.attempted':
+    case 'delivery.attempt_finished':
+    case 'delivery.finished':
+      return `Webhook ${event.delivery.status}, ${event.delivery.attempts}/${event.delivery.maxAttempts} attempts${event.delivery.lastError ? `: ${event.delivery.lastError.message}` : ''}`;
     case 'return.delivered':
     case 'return.failed':
       return event.channel.kind;
@@ -199,6 +198,65 @@ function describeDecision(event: Extract<RunEvent, { type: 'decision.made' }>): 
 
 function describeExit(event: Extract<RunEvent, { type: 'exit.evaluated' }>): string {
   return `Exited: ${event.outcome}`;
+}
+
+/**
+ * The latest gate decision's pass and limit evidence, in one line for the top of the run: where
+ * a loop-back exit used to say "iteration 2 of 5", a gate says which pass chose what and whether a
+ * limit stopped the repeat (#129). Undefined when no gate decided.
+ */
+export function lastGateSummary(events: readonly RunEvent[]): string | undefined {
+  const event = events.findLast(
+    (e): e is Extract<RunEvent, { type: 'decision.made' }> =>
+      e.type === 'decision.made' && e.gate !== undefined,
+  );
+  const gate = event?.gate;
+  if (!event || !gate) return undefined;
+  const chose = `Last gate decision: ${event.nodeId} chose ${gate.limit ? gate.repeatRouteId : event.portId} on pass ${gate.previousPasses} of ${gate.maxPasses}`;
+  if (!gate.limit) return `${chose}.`;
+  const limit = gate.limit === 'max-passes' ? 'maximum passes' : 'maximum run time';
+  return `${chose}; ${limit} stopped the repeat, so it took Limit reached.`;
+}
+
+/**
+ * Why a finished run recorded no result. Undefined while the run has not finished through an
+ * exit, or when the exit returned a value (null included); Result shows that value. Only the
+ * pinned definition can establish that nothing was returned on purpose: an exit whose Returns is
+ * None delivers to no destination, the exit's own or the start request's (#129, #258), and the
+ * summary names the destinations that received nothing or identifies a quiet exit. An exit whose
+ * Returns is an expression, or a definition that is not available, establishes nothing: a run
+ * recorded by an older build omitted a null result, so the history alone does not show whether the
+ * exit returned nothing or null, and the summary says so rather than inventing a configuration.
+ */
+export function exitReturnSummary(
+  events: readonly RunEvent[],
+  definition: LoopDefinition | undefined,
+  startDestinations: readonly ReturnChannel[] = [],
+): string | undefined {
+  const exit = events.findLast(
+    (e): e is Extract<RunEvent, { type: 'exit.evaluated' }> => e.type === 'exit.evaluated',
+  );
+  const finished = events.findLast(
+    (e): e is Extract<RunEvent, { type: 'run.finished' }> => e.type === 'run.finished',
+  );
+  if (!exit || !finished || finished.result !== undefined) return undefined;
+  const node = definition?.nodes.find((n) => n.id === exit.nodeId);
+  if (node?.kind !== 'exit')
+    return `No value was recorded for this run. The pinned definition ${definition ? `has no exit node ${exit.nodeId}` : 'is not available'}, so the exit’s Returns setting cannot be shown.`;
+  if (node.config.returns !== 'none')
+    return 'No value was recorded for this run. The exit’s Returns is an expression, so the history alone does not show whether it returned nothing or a null that an older build did not record.';
+  const configuration = 'This is the exit’s configuration, not a failure.';
+  const own = node.config.destinations;
+  const key = (channel: ReturnChannel) => JSON.stringify(channel);
+  const requested = startDestinations.filter((extra) => !own.some((c) => key(c) === key(extra)));
+  if (own.length === 0 && requested.length === 0)
+    return `Quiet exit: Returns is None and there are no destinations, so nothing was returned or delivered. ${configuration}`;
+  const kinds = (channels: readonly ReturnChannel[]) => channels.map((c) => c.kind).join(', ');
+  const named = [
+    ...(own.length ? [`${kinds(own)} from the exit`] : []),
+    ...(requested.length ? [`${kinds(requested)} from the start request`] : []),
+  ].join('; ');
+  return `No value was returned: Returns is None, so no destination received anything (${named}). ${configuration}`;
 }
 
 export function strategyName(strategy: string): string {

@@ -1,0 +1,133 @@
+{
+  "initialGates": [
+    {
+      "name": "format",
+      "command": "pnpm.cmd format --ignore-path .round7-format.ignore.log",
+      "exit": 0,
+      "seconds": 2.2
+    },
+    {
+      "name": "typecheck",
+      "command": "pnpm.cmd typecheck",
+      "exit": 2,
+      "seconds": 95.01
+    },
+    {
+      "name": "lint",
+      "command": "pnpm.cmd lint",
+      "exit": 0,
+      "seconds": 89.5
+    },
+    {
+      "name": "migrations",
+      "command": "pnpm.cmd check:migrations",
+      "exit": 0,
+      "seconds": 2.8
+    },
+    {
+      "name": "docs",
+      "command": "pnpm.cmd check:docs",
+      "exit": 0,
+      "seconds": 2.74
+    },
+    {
+      "name": "layers",
+      "command": "pnpm.cmd check:layers",
+      "exit": 0,
+      "seconds": 1.1
+    },
+    {
+      "name": "deps",
+      "command": "pnpm.cmd check:deps",
+      "exit": 0,
+      "seconds": 12.73
+    },
+    {
+      "name": "build",
+      "command": "pnpm.cmd build",
+      "exit": 0,
+      "seconds": 55.95
+    }
+  ],
+  "finalGates": [
+    {
+      "name": "format-final",
+      "command": "pnpm.cmd format --ignore-path .round7-format.ignore.log",
+      "exit": 0,
+      "seconds": 3.09
+    },
+    {
+      "name": "typecheck-final",
+      "command": "pnpm.cmd typecheck",
+      "exit": 0,
+      "seconds": 71.05
+    },
+    {
+      "name": "lint-final",
+      "command": "pnpm.cmd lint",
+      "exit": 0,
+      "seconds": 91.76
+    },
+    {
+      "name": "format-check",
+      "command": "pnpm.cmd format:check --ignore-path .round7-format.ignore.log",
+      "exit": 0,
+      "seconds": 2.94
+    },
+    {
+      "name": "migrations-final",
+      "command": "pnpm.cmd check:migrations",
+      "exit": 0,
+      "seconds": 2.26
+    },
+    {
+      "name": "docs-final",
+      "command": "pnpm.cmd check:docs",
+      "exit": 0,
+      "seconds": 1.65
+    },
+    {
+      "name": "tokens",
+      "command": "pnpm.cmd check:tokens",
+      "exit": 0,
+      "seconds": 1.36
+    },
+    {
+      "name": "build-final",
+      "command": "pnpm.cmd build",
+      "exit": 0,
+      "seconds": 15.13
+    }
+  ],
+  "coverageGates": [
+    {
+      "name": "infrastructure",
+      "command": "pnpm.cmd --filter @graphgoblin/infrastructure test:coverage --maxWorkers=1 --coverage.reportOnFailure --reporter=default --reporter=json --outputFile.json=<worktree>\\round7-coverage-infrastructure-results.log",
+      "exit": 1,
+      "seconds": 430.69
+    },
+    {
+      "name": "api",
+      "command": "pnpm.cmd --filter @graphgoblin/api test:coverage --coverage.reportOnFailure --reporter=default --reporter=json --outputFile.json=<worktree>\\round7-coverage-api-results.log",
+      "exit": 0,
+      "seconds": 162.85
+    },
+    {
+      "name": "web",
+      "command": "pnpm.cmd --filter @graphgoblin/web test:coverage --maxWorkers=1 --coverage.reportOnFailure --reporter=default --reporter=json --outputFile.json=<worktree>\\round7-coverage-web-results.log",
+      "exit": 0,
+      "seconds": 2054.12
+    },
+    {
+      "name": "mcp",
+      "command": "pnpm.cmd --filter @graphgoblin/mcp test:coverage --coverage.reportOnFailure --reporter=default --reporter=json --outputFile.json=<worktree>\\round7-coverage-mcp-results.log",
+      "exit": 0,
+      "seconds": 16.94
+    }
+  ],
+  "infraGate": {
+    "name": "infrastructure-after-fixture-fix",
+    "exit": 1,
+    "seconds": 366.63
+  }
+}

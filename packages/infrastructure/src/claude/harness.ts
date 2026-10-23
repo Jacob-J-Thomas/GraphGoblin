@@ -1,6 +1,14 @@
-import { mkdtemp, rm } from 'node:fs/promises';
+import { randomBytes } from 'node:crypto';
+import { mkdir, rm } from 'node:fs/promises';
 import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
+import {
+  cliFailureState,
+  readinessDetail,
+  readinessFailure,
+  readinessMessage,
+} from '@graphgoblin/domain';
+import type { HarnessReadinessState } from '@graphgoblin/contracts';
 import type {
   HarnessEvent,
   HarnessPreflight,
@@ -45,26 +53,108 @@ export interface ClaudeHarnessPreflight extends HarnessPreflight {
   authMethod: 'claude.ai' | null;
   supportedPolicies: ClaudePolicy[];
 }
-function checkOutcome(result: ClaudeProcessResult, signal: AbortSignal): void {
+function failureState(error: unknown): Exclude<HarnessReadinessState, 'ready'> {
+  const failure = error;
+  if (!(failure instanceof ClaudeHarnessError)) return 'unknown';
+  switch (failure.code) {
+    case 'HARNESS_NOT_INSTALLED':
+      return 'cli-missing';
+    case 'HARNESS_CLI_INCOMPATIBLE':
+    case 'HARNESS_UNSUPPORTED_POLICY':
+      return 'cli-incompatible';
+    case 'HARNESS_NOT_AUTHENTICATED':
+      return 'auth';
+    case 'HARNESS_QUOTA_EXHAUSTED':
+      return 'quota';
+    case 'HARNESS_TRANSPORT_FAILED':
+      return 'transport';
+    default:
+      return 'unknown';
+  }
+}
+/** Fresh names tried before a run of name collisions fails the check. */
+const PROBE_DIRECTORY_ATTEMPTS = 4;
+/**
+ * A fresh, exclusively created, empty directory for the version, help and auth checks. Not
+ * `fs.mkdtemp`: on Windows it hands its prefix to the OS without the long-path namespace and fails
+ * with ENAMETOOLONG from 248 characters (247 still works), while `mkdir` and starting the CLI there
+ * still work up to the 258-character working-directory limit (#102,
+ * docs/qa/2026-10-19-wp-f5-launch-diagnosis.md). A name that already exists is never reused or
+ * removed; a few fresh names are tried instead.
+ */
+async function probeDirectory(): Promise<string> {
+  for (let attempt = 1; ; attempt += 1) {
+    const directory = join(tmpdir(), `gg-claude-probe-${randomBytes(4).toString('hex')}`);
+    try {
+      await mkdir(directory, { mode: 0o700 });
+      return directory;
+    } catch (error) {
+      if (
+        (error as NodeJS.ErrnoException).code !== 'EEXIST' ||
+        attempt === PROBE_DIRECTORY_ATTEMPTS
+      )
+        throw error;
+    }
+  }
+}
+/**
+ * Turns and no-turn probes share the failure order. A probe's messages are single detail
+ * sentences about the check (preflight adds the one next step); turn messages are unchanged.
+ */
+function checkOutcome(result: ClaudeProcessResult, signal: AbortSignal, probe = false): void {
   if (result.terminationUnconfirmed)
     throw new ClaudeHarnessError(
       'HARNESS_TERMINATION_UNCONFIRMED',
-      'Claude process termination was not confirmed; stop the installed CLI before retrying',
+      probe
+        ? 'Claude CLI check process did not confirm that it stopped.'
+        : 'Claude process termination was not confirmed; stop the installed CLI before retrying',
     );
   if (signal.aborted || result.aborted) throw abortError();
   if (result.spawnCode)
     throw new ClaudeHarnessError(
-      'HARNESS_NOT_INSTALLED',
-      'The installed Claude executable could not be started',
+      result.spawnCode === 'ENOENT' ? 'HARNESS_NOT_INSTALLED' : 'HARNESS_TURN_FAILED',
+      !probe
+        ? 'The installed Claude executable could not be started; check its path and permissions'
+        : result.spawnCode === 'ENOENT'
+          ? 'Claude CLI was not found at the configured path.'
+          : `Claude CLI could not be started (${result.spawnCode}).`,
     );
   if (result.timedOut)
-    throw new ClaudeHarnessError('HARNESS_TIMEOUT', 'Claude process timed out', true);
+    throw new ClaudeHarnessError(
+      'HARNESS_TIMEOUT',
+      probe ? 'Claude CLI did not answer before the check deadline.' : 'Claude process timed out',
+      true,
+    );
   if (result.overflow)
     throw new ClaudeHarnessError(
       'HARNESS_OUTPUT_LIMIT',
-      'Claude process output exceeded the configured limit',
+      probe
+        ? 'Claude CLI printed more output than the check accepts.'
+        : 'Claude process output exceeded the configured limit',
     );
   if (result.callbackError) throw result.callbackError;
+  if (probe && result.exitCode !== 0 && result.failureState && result.failureState !== 'unknown') {
+    const codes: Partial<
+      Record<HarnessReadinessState, ConstructorParameters<typeof ClaudeHarnessError>[0]>
+    > = {
+      auth: 'HARNESS_NOT_AUTHENTICATED',
+      quota: 'HARNESS_QUOTA_EXHAUSTED',
+      transport: 'HARNESS_TRANSPORT_FAILED',
+      'cli-incompatible': 'HARNESS_CLI_INCOMPATIBLE',
+    };
+    throw new ClaudeHarnessError(
+      codes[result.failureState] ?? 'HARNESS_TURN_FAILED',
+      readinessDetail('claude', result.failureState),
+      result.failureState === 'transport',
+    );
+  }
+  if (probe && (result.stdinFailed || result.exitCode !== 0))
+    throw new ClaudeHarnessError(
+      'HARNESS_TURN_FAILED',
+      result.exitCode === null
+        ? 'Claude CLI check stopped without an exit code.'
+        : `Claude CLI check exited with code ${result.exitCode}.`,
+    );
   if (result.stdinFailed || result.exitCode !== 0)
     throw new ClaudeHarnessError('HARNESS_TURN_FAILED', 'Claude turn failed');
 }
@@ -109,8 +199,8 @@ export class ClaudeHarness implements HarnessPort {
     failures: unknown[];
   }> {
     const facts: ClaudeHarnessPreflight = {
+      state: 'unknown',
       ok: false,
-      authenticated: false,
       problems: [],
       authMethod: null,
       models: claudeModelCapabilities(),
@@ -119,8 +209,8 @@ export class ClaudeHarness implements HarnessPort {
     const failures: unknown[] = [];
     // Unsupported platforms cannot execute this native Windows adapter.
     facts.supportedPolicies = this.supportedPolicies();
-    const cwd = await mkdtemp(join(tmpdir(), 'gg-claude-probe-'));
-    const run = async (args: string[]): Promise<string> => {
+    const cwd = await probeDirectory();
+    const run = async (args: string[], authStatus = false): Promise<string> => {
       if (signal.aborted) throw abortError();
       const result = await this.runner({
         binary: this.binary,
@@ -130,8 +220,58 @@ export class ClaudeHarness implements HarnessPort {
         signal,
         timeoutMs: this.options.preflightTimeoutMs ?? 15000,
         maxOutputBytes: 128 * 1024,
+        classifyDiagnostics: true,
       });
-      checkOutcome(result, signal);
+      // Auth status can confirm sign-out in JSON or text, even on exit 0. Interpret it only here;
+      // timeout/start/termination failures remain authoritative and turn output is never inferred.
+      let auth: unknown;
+      if (authStatus) {
+        try {
+          auth = JSON.parse(result.stdout);
+        } catch {
+          /* No structured status. */
+        }
+      }
+      let signOutDetail: string | undefined;
+      if (
+        typeof auth === 'object' &&
+        auth !== null &&
+        (('loggedIn' in auth && auth.loggedIn === false) ||
+          ('authMethod' in auth &&
+            typeof auth.authMethod === 'string' &&
+            auth.authMethod !== '' &&
+            auth.authMethod !== 'claude.ai'))
+      ) {
+        signOutDetail =
+          'loggedIn' in auth && auth.loggedIn === false
+            ? 'Claude is not signed in.'
+            : 'Claude is not signed in with a Claude.ai account.';
+      }
+      if (
+        authStatus &&
+        (signOutDetail || /\bnot logged in\b/i.test(result.stdout) || result.notLoggedIn)
+      ) {
+        checkOutcome({ ...result, exitCode: 0 }, signal, true);
+        facts.authenticated = false;
+        throw new ClaudeHarnessError(
+          'HARNESS_NOT_AUTHENTICATED',
+          signOutDetail ?? 'Claude is not signed in.',
+        );
+      }
+      // This path runs version/help/auth only; stdout cannot be a model response.
+      // Recognised stderr is the CLI's primary error evidence, including conflicts with stdout.
+      // An unrelated warning must not hide a recognised stdout failure. Turn stdout is untouched.
+      checkOutcome(
+        {
+          ...result,
+          failureState:
+            !result.failureState || result.failureState === 'unknown'
+              ? cliFailureState(result.stdout)
+              : result.failureState,
+        },
+        signal,
+        true,
+      );
       return result.stdout;
     };
     try {
@@ -143,10 +283,14 @@ export class ClaudeHarness implements HarnessPort {
       try {
         help = await run([...SUPPRESSION_ARGS, '--max-turns', '1', '--help']);
       } catch (error) {
-        if (error instanceof ClaudeHarnessError)
+        // A rejected or failing option check names the version; timeouts and causes keep their detail.
+        if (
+          error instanceof ClaudeHarnessError &&
+          (error.code === 'HARNESS_CLI_INCOMPATIBLE' || error.code === 'HARNESS_TURN_FAILED')
+        )
           throw new ClaudeHarnessError(
             error.code,
-            `Claude CLI ${version ?? 'unknown'}: required capability --max-turns/--help probe failed: ${error.message}`,
+            `Claude CLI ${version ?? '(unknown version)'} failed the --max-turns/--help check.`,
             error.retriable,
           );
         throw error;
@@ -157,15 +301,13 @@ export class ClaudeHarness implements HarnessPort {
     }
     // Login is a separate fact, even when the CLI version or policy flags are unsupported.
     try {
-      const auth = await run([...SUPPRESSION_ARGS, 'auth', 'status', '--json']);
+      const auth = await run([...SUPPRESSION_ARGS, 'auth', 'status', '--json'], true);
       facts.authMethod = authCategory(auth);
-      facts.authenticated = facts.authMethod === 'claude.ai';
-      if (!facts.authenticated)
-        throw new ClaudeHarnessError(
-          'HARNESS_NOT_AUTHENTICATED',
-          'Claude account login is required; run claude auth login',
-        );
+      if (facts.authMethod === null)
+        throw new ClaudeHarnessError('HARNESS_TURN_FAILED', readinessDetail('claude', 'unknown'));
+      facts.authenticated = true;
     } catch (error) {
+      if (failureState(error) === 'auth') facts.authenticated = false;
       failures.push(error);
     }
     try {
@@ -176,15 +318,22 @@ export class ClaudeHarness implements HarnessPort {
         failures.push(
           new ClaudeHarnessError(
             'HARNESS_TURN_FAILED',
-            'Claude prerequisite workspace cleanup failed',
+            'Claude readiness check could not remove its temporary folder.',
           ),
         );
     }
     facts.ok = failures.length === 0;
+    facts.state = facts.ok ? 'ready' : failureState(failures[0]);
+    // One problem per failure: its own detail sentence and the action for its state.
+    // Anything other than a typed harness error keeps the generic detail, never its message.
     facts.problems = [
       ...new Set(
         failures.map((error) =>
-          error instanceof ClaudeHarnessError ? error.message : 'Claude preflight failed',
+          readinessMessage(
+            'claude',
+            failureState(error),
+            error instanceof ClaudeHarnessError ? error.message : undefined,
+          ),
         ),
       ),
     ];
@@ -195,9 +344,7 @@ export class ClaudeHarness implements HarnessPort {
       return (await this.inspect(new AbortController().signal)).facts;
     } catch (error) {
       return {
-        ok: false,
-        authenticated: false,
-        problems: [error instanceof ClaudeHarnessError ? error.message : 'Claude preflight failed'],
+        ...readinessFailure('claude', failureState(error)),
         authMethod: null,
         models: claudeModelCapabilities(),
         supportedPolicies: this.platform === 'win32' ? this.supportedPolicies() : [],

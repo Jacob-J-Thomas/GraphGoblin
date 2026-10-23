@@ -121,8 +121,6 @@ const GLYPHS = {
 
 export type IconName = keyof typeof GLYPHS;
 
-export const ICON_NAMES = Object.keys(GLYPHS) as IconName[];
-
 export type IconProps = Omit<SVGProps<SVGSVGElement>, 'children'> & { name: IconName };
 
 /** One stroke icon, 16 px by default; size and colour come from the classes passed in. */

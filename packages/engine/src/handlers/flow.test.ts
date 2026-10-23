@@ -139,7 +139,12 @@ describe('decision node', () => {
     });
     expect(r.result).toBe('good');
     expect(e.ports.classifiers.requests).toEqual([
-      { ownerId: 'local', modelId: 'jev', primitive: 'choice' },
+      {
+        ownerId: 'local',
+        modelId: 'jev',
+        primitive: 'choice',
+        binding: expect.objectContaining({ provider: 'typesafe', providerModel: 'jev-latest' }),
+      },
     ]);
     expect(e.events(r.id).find((ev) => ev.type === 'decision.made')).toMatchObject({
       observation: { kind: 'classifier', answer: answer() },
@@ -588,6 +593,16 @@ describe('script node', () => {
         hasStdin: typeof req.stdin === 'string',
       }),
       stderr: '',
+      stdoutBytes: new TextEncoder().encode(
+        JSON.stringify({
+          got: req.args,
+          env: req.env['TOKEN'],
+          hasStdin: typeof req.stdin === 'string',
+        }),
+      ).byteLength,
+      stdoutOverflow: false,
+      stderrBytes: 0,
+      stderrOverflow: false,
       timedOut: false,
     }));
     const version = engine.publish(
@@ -624,6 +639,12 @@ describe('script node', () => {
       exitCode: 0,
       stdout: JSON.stringify([{ op: 'add', path: '/vars/fromScript', value: 1 }]),
       stderr: '',
+      stdoutBytes: new TextEncoder().encode(
+        JSON.stringify([{ op: 'add', path: '/vars/fromScript', value: 1 }]),
+      ).byteLength,
+      stdoutOverflow: false,
+      stderrBytes: 0,
+      stderrOverflow: false,
       timedOut: false,
     }));
     const version = engine.publish(
@@ -642,6 +663,12 @@ describe('script node', () => {
       exitCode: 0,
       stdout: JSON.stringify([{ op: 'add', path: '/run/id', value: 1 }]),
       stderr: '',
+      stdoutBytes: new TextEncoder().encode(
+        JSON.stringify([{ op: 'add', path: '/run/id', value: 1 }]),
+      ).byteLength,
+      stdoutOverflow: false,
+      stderrBytes: 0,
+      stderrOverflow: false,
       timedOut: false,
     }));
     expect((await engine.runToIdle(version.loopId)).failure?.message).toMatch(
@@ -651,6 +678,10 @@ describe('script node', () => {
       exitCode: 0,
       stdout: 'not json',
       stderr: '',
+      stdoutBytes: 8,
+      stdoutOverflow: false,
+      stderrBytes: 0,
+      stderrOverflow: false,
       timedOut: false,
     }));
     expect((await engine.runToIdle(version.loopId)).failure?.message).toMatch(/not a JSON patch/);
@@ -658,6 +689,10 @@ describe('script node', () => {
       exitCode: 0,
       stdout: JSON.stringify([{ op: 'explode' }]),
       stderr: '',
+      stdoutBytes: new TextEncoder().encode(JSON.stringify([{ op: 'explode' }])).byteLength,
+      stdoutOverflow: false,
+      stderrBytes: 0,
+      stderrOverflow: false,
       timedOut: false,
     }));
     expect((await engine.runToIdle(version.loopId)).failure?.message).toMatch(
@@ -713,6 +748,10 @@ describe('script node', () => {
       exitCode: 3,
       stdout: '',
       stderr: '',
+      stdoutBytes: 0,
+      stdoutOverflow: false,
+      stderrBytes: 0,
+      stderrOverflow: false,
       timedOut: false,
     }));
     expect((await withSecret.runToIdle(v2.loopId)).result).toEqual({ retried: true });
@@ -720,6 +759,10 @@ describe('script node', () => {
       exitCode: 0,
       stdout: 'ignored',
       stderr: '',
+      stdoutBytes: 7,
+      stdoutOverflow: false,
+      stderrBytes: 0,
+      stderrOverflow: false,
       timedOut: false,
     }));
     const plain = await withSecret.runToIdle(v2.loopId);
@@ -728,6 +771,10 @@ describe('script node', () => {
       exitCode: 7,
       stdout: '',
       stderr: 'bad',
+      stdoutBytes: 0,
+      stdoutOverflow: false,
+      stderrBytes: 3,
+      stderrOverflow: false,
       timedOut: false,
     }));
     expect((await withSecret.runToIdle(v2.loopId)).failure).toMatchObject({
@@ -738,6 +785,10 @@ describe('script node', () => {
       exitCode: null,
       stdout: '',
       stderr: '',
+      stdoutBytes: 0,
+      stdoutOverflow: false,
+      stderrBytes: 0,
+      stderrOverflow: false,
       timedOut: true,
     }));
     expect((await withSecret.runToIdle(v2.loopId)).failure?.code).toBe('SCRIPT_TIMEOUT');
@@ -770,7 +821,6 @@ describe('exit node and return channels', () => {
             { kind: 'file', path: '/abs/result.md', format: 'markdown' },
             { kind: 'file', path: 'plain.txt', format: 'text' },
             { kind: 'webhook', url: 'https://example.test/hook', secretRef: 'hook' },
-            { kind: 'event', eventType: 'answer-ready' },
           ],
         },
       ),
@@ -786,17 +836,18 @@ describe('exit node and return channels', () => {
     ).toBe(true);
     expect(engine.ports.workspace.files.get('/abs/result.md')).toMatch(/Outcome: success/);
     expect([...engine.ports.workspace.files.values()]).toContain('{"answer":42}');
-    expect(engine.ports.delivery.webhooks.map((w) => w.url)).toEqual([
-      'https://example.test/hook',
+    // Webhook deliveries run concurrently in the background, so their order is not part of the
+    // contract: the signed one resolves its secret first.
+    expect(engine.ports.delivery.webhooks.map((w) => w.url).sort()).toEqual([
       'https://example.test/default',
+      'https://example.test/hook',
     ]);
-    expect(engine.ports.delivery.webhooks[0]?.secret).toBe('hs');
-    expect(engine.ports.delivery.events[0]).toMatchObject({
-      eventType: 'answer-ready',
-      payload: { result: { answer: 42 }, outcome: 'success' },
-    });
+    expect(
+      engine.ports.delivery.webhooks.find((w) => w.url === 'https://example.test/hook')?.secret,
+    ).toBe('hs');
     const delivered = engine.events(run.id).filter((e) => e.type === 'return.delivered');
-    expect(delivered).toHaveLength(8);
+    expect(delivered).toHaveLength(5);
+    expect(engine.events(run.id).filter((e) => e.type === 'delivery.finished')).toHaveLength(2);
   });
 
   it('records webhook failures and skips delivery when mapping is none', async () => {
@@ -819,8 +870,10 @@ describe('exit node and return channels', () => {
     );
     const run = await engine.runToIdle(failing.loopId);
     expect(run.status).toBe('succeeded');
-    const failed = engine.events(run.id).find((e) => e.type === 'return.failed');
-    expect(failed).toMatchObject({ error: 'webhook endpoint returned 503' });
+    const failed = engine.events(run.id).find((e) => e.type === 'delivery.finished');
+    expect(failed).toMatchObject({
+      delivery: { status: 'failed', attempts: 1, lastError: { httpStatus: 400 } },
+    });
 
     const silent = engine.publish(
       singleNodeLoop('silent', {

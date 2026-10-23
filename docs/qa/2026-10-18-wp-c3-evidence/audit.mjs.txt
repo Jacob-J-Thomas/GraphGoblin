@@ -1,0 +1,25 @@
+﻿import assert from 'node:assert/strict';
+import { readFile, writeFile, copyFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { createHash } from 'node:crypto';
+import { openReadOnlyDatabaseClient } from '@graphgoblin/infrastructure/sqlite';
+const folder='docs/qa/2026-10-18-wp-c3-evidence/';
+const d=JSON.parse(await readFile(folder+'results.json'));
+const f=JSON.parse(await readFile(folder+'fast-child.json'));
+const audit=[];
+for(const row of d.records.filter(r=>r.test.startsWith('poll-'))){
+ const client=openReadOnlyDatabaseClient(join(row.dir,'store.db'));
+ try {
+  const rows=(await client.execute({sql:"SELECT id, status, json_extract(initial_thread, '$.invocation.trigger.dedupeKey') AS dedupe_key, length(json_extract(initial_thread, '$.invocation.trigger.payload.text')) AS text_length FROM runs WHERE loop_id = ?",args:[row.loopId]})).rows;
+  const byId=new Map(rows.map(r=>[r.id,r]));
+  const order=row.polls.map(p=>p.admitted.map(id=>byId.get(id).dedupe_key));
+  assert.deepEqual(order,row.test==='poll-large-admitted'?[['first','good-1','good-2'],[]]:row.test==='poll-cap-order'?[['first','good-1'],['good-2']]:[[],[]]);
+  audit.push({test:row.test,admissionOrder:order,rows});
+ } finally {client.close();}
+}
+await writeFile(folder+'storage-audit.json',JSON.stringify(audit,null,2)+'\n');
+for(const [source,target] of [['apps/api/.tmp/wp-c3-investigate.mjs','driver.mjs.txt'],['apps/api/.tmp/wp-c3-fast-child.mjs','fast-child.mjs.txt']])await copyFile(source,folder+target);
+const manifest={baseline:d.baseline,branch:'codex-wp-c3-wake-poll-research',runtime:d.runtime,platform:d.platform,executionDate:'2026-10-19',method:'Built API composition root; public manager and scheduler; fake clock; real SQLite and loopback HTTP; fresh processes for orderly restart',probePort:5663,stores:[...new Set([...d.stores,...f.stores])],cleanup:'All owned containers and controlled HTTP server closed; no directories deleted. Stores retained for orchestrator cleanup.',apiTeardownFailure:'%TEMP%\\gg-wp-c2-tests-VtxUQP\\gg-wp-c2-DlXOcN\\store.db',scratchDrivers:['apps/api/.tmp/wp-c3-investigate.mjs','apps/api/.tmp/wp-c3-fast-child.mjs'],sourceHashes:{}};
+for(const name of ['driver.mjs.txt','fast-child.mjs.txt'])manifest.sourceHashes[name]=createHash('sha256').update(await readFile(folder+name)).digest('hex');
+await writeFile(folder+'environment.json',JSON.stringify(manifest,null,2)+'\n');
+console.log(JSON.stringify({orderAudit:'passed',closedStores:manifest.stores.length,pollFamilies:audit.length}));

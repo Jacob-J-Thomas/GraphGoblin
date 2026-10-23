@@ -1,0 +1,82 @@
+{
+  "phase": "after",
+  "node": "v22.14.0",
+  "port": 5624,
+  "cli": "native C# no-turn fixtures; real provider binaries never invoked",
+  "direct": {
+    "status": 422,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/harness-not-ready",
+      "title": "harness not ready",
+      "status": 422,
+      "code": "HARNESS_NOT_READY",
+      "detail": "Harness readiness checks failed. Fix the listed problems, then start the run again.",
+      "errors": [
+        {
+          "code": "HARNESS_READINESS_AUTH",
+          "severity": "warning",
+          "loopId": "01M5GABC89KY82NGW7NAQ0JWAN",
+          "versionId": "01M5GABC89B07Z7XEHN7BE9GB9",
+          "nodeId": "think",
+          "path": "config.harness",
+          "message": "Claude is not signed in. Run claude auth login, then retry preflight."
+        }
+      ]
+    },
+    "probes": {
+      "claude": {
+        "versionCommands": 1,
+        "commands": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ]
+      },
+      "codex": {
+        "versionCommands": 0,
+        "commands": []
+      }
+    }
+  },
+  "parent": {
+    "status": 422,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/harness-not-ready",
+      "title": "harness not ready",
+      "status": 422,
+      "code": "HARNESS_NOT_READY",
+      "detail": "Harness readiness checks failed. Fix the listed problems, then start the run again.",
+      "errors": [
+        {
+          "code": "HARNESS_READINESS_AUTH",
+          "severity": "warning",
+          "loopId": "01M5GABC89KY82NGW7NAQ0JWAN",
+          "versionId": "01M5GABC89B07Z7XEHN7BE9GB9",
+          "nodeId": "think",
+          "path": "config.harness",
+          "message": "Loop \"QA inference child\" (01M5GABC89KY82NGW7NAQ0JWAN), node \"think\": Claude is not signed in. Run claude auth login, then retry preflight."
+        }
+      ]
+    },
+    "elapsedMs": 934,
+    "admissionProbes": {
+      "claude": {
+        "versionCommands": 1,
+        "commands": [
+          "--safe-mode --setting-sources  --strict-mcp-config --version",
+          "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+          "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+        ]
+      },
+      "codex": {
+        "versionCommands": 0,
+        "commands": []
+      }
+    },
+    "history": [],
+    "childRuns": []
+  },
+  "runs": [],
+  "parentEffect": false,
+  "turnCommands": []
+}

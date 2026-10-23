@@ -1,0 +1,50 @@
+
+Running 3 tests using 1 worker
+
+pnpm.cmd : (node:44880) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+At line:2 char:580
++ ... L='msedge'; pnpm.cmd --filter @graphgoblin/web exec playwright test - ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:44880) Wa... env being set.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:44880) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 [edge] › ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-wp-g2-round8-edge-UMrs7Q\history.spec.ts:4:1 › Runs appends a second page and preserves loop, status and parent filters (10.3s)
+  ✘  2 [edge] › ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-wp-g2-round8-edge-UMrs7Q\history.spec.ts:50:1 › Events appends beyond the first page with reading position and keyboard focus intact (526ms)
+(node:46968) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:46968) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  3 [edge] › ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-wp-g2-round8-edge-UMrs7Q\history.spec.ts:84:1 › Loops shows older history beyond 500 unrelated runs and a genuine never-run control (24.5s)
+
+
+  1) [edge] › ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-wp-g2-round8-edge-UMrs7Q\history.spec.ts:50:1 › Events appends beyond the first page with reading position and keyboard focus intact 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+       at fixtures.ts:77
+
+      75 |   if (!base) throw new Error('GG_E2E_CONTROL_URL is not set; the global setup did not run');
+      76 |   const res = await request.post(`${base}${path}`, { data: body });
+    > 77 |   expect(res.ok()).toBe(true);
+         |                    ^
+      78 |   return (await res.json()) as Record<string, unknown>;
+      79 | }
+      80 |
+        at control (<temp>\gg-wp-g2-round8-edge-UMrs7Q\fixtures.ts:77:20)
+        at <temp>\gg-wp-g2-round8-edge-UMrs7Q\history.spec.ts:54:20
+
+    Error Context: ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-wp-g2-round8-edge-UMrs7Q\output\history-Events-appends-bey-888e5-n-and-keyboard-focus-intact-edge\error-context.md
+
+  1 failed
+    [edge] › ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-wp-g2-round8-edge-UMrs7Q\history.spec.ts:50:1 › Events appends beyond the first page with reading position and keyboard focus intact 
+  2 passed (1.6m)
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in <worktree>
+

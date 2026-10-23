@@ -7,13 +7,13 @@ import type {
 } from '@graphgoblin/contracts';
 import { JsonPatchSchema } from '@graphgoblin/contracts';
 import {
-  MUTABLE_REGIONS,
+  assertMutablePatch,
   evaluateExpression,
   isTerminal,
-  pointerStartsWith,
   threadView,
+  type MutationError,
 } from '@graphgoblin/domain';
-import { RunFailureError } from '../errors.js';
+import { ChildCancelledError, RunFailureError } from '../errors.js';
 import type { ChildOutcome, NodeContext, NodeHandler, NodeResult } from '../handler.js';
 import {
   addUsage,
@@ -78,10 +78,12 @@ async function outputMapping(
   const childView = child.thread
     ? (threadView(child.thread) as unknown as Record<string, unknown>)
     : undefined;
+  // A child that returned no output passes none: `result` stays absent, never `null` (docs/03).
+  const result = child.result !== undefined ? { result: child.result } : {};
   const summary = toJson({
     status: child.status,
     outcome: child.outcome ?? null,
-    result: child.result ?? null,
+    ...result,
     childRunId: child.runId,
   });
   const patch: PatchOperation[] = [];
@@ -90,7 +92,7 @@ async function outputMapping(
     const value = await evaluateExpression(output.custom?.patch ?? '[]', {
       parent: parentView,
       child: childView ?? null,
-      result: child.result ?? null,
+      ...result,
       outcome: child.outcome ?? null,
       status: child.status,
     });
@@ -102,17 +104,14 @@ async function outputMapping(
         { nodeId: ctx.node.id },
       );
     }
-    for (const op of checked.data) {
-      if (
-        !MUTABLE_REGIONS.some((r) => pointerStartsWith(op.path, r)) ||
-        (op.op === 'move' && !MUTABLE_REGIONS.some((r) => pointerStartsWith(op.from, r)))
-      ) {
-        throw new RunFailureError(
-          'EXPRESSION_ERROR',
-          `custom output mapping touches "${op.path}", outside the mutable regions`,
-          { nodeId: ctx.node.id },
-        );
-      }
+    try {
+      assertMutablePatch(checked.data);
+    } catch (error) {
+      throw new RunFailureError(
+        'EXPRESSION_ERROR',
+        `custom output mapping is outside the mutable regions: ${(error as MutationError).message}`,
+        { nodeId: ctx.node.id },
+      );
     }
     patch.push(...checked.data);
     return patch;
@@ -121,13 +120,9 @@ async function outputMapping(
   if (output.resultTo.lastOutput)
     patch.push(...outputPatch(parent, ctx.node.id, summary, ctx.services.now()));
 
-  // Variables are merged into one replacement so the result variable and the merge strategy compose.
+  // Variables are merged into one replacement so the merge strategy and the result variable compose.
   let vars: Record<string, JsonValue> = { ...parent.vars };
   let varsChanged = false;
-  if (output.resultTo.var) {
-    vars[output.resultTo.var] = child.result ?? null;
-    varsChanged = true;
-  }
 
   if (output.mode === 'merge' && child.thread) {
     const childThread = child.thread;
@@ -157,6 +152,17 @@ async function outputMapping(
     for (const artifact of artifacts)
       patch.push({ op: 'add', path: '/artifacts/-', value: toJson(artifact) });
   }
+  // The result variable is applied after any merge, so it holds exactly what the child returned:
+  // a merged variable of the same name (the child's inherited copy, say) never overrides it.
+  const resultVar = output.resultTo.var;
+  if (resultVar && child.result !== undefined) {
+    vars[resultVar] = child.result;
+    varsChanged = true;
+  } else if (resultVar && Object.hasOwn(vars, resultVar)) {
+    // No output: the variable no longer holds a result (an earlier visit's, or a merged copy).
+    vars = Object.fromEntries(Object.entries(vars).filter(([name]) => name !== resultVar));
+    varsChanged = true;
+  }
   if (varsChanged) patch.push({ op: 'replace', path: '/vars', value: toJson(vars) });
 
   if (output.usage === 'roll-up' && child.thread) {
@@ -173,54 +179,50 @@ export const subloopHandler: NodeHandler<'subloop'> = {
   kind: 'subloop',
   async execute(ctx) {
     const { config } = ctx;
-    // A visit that already started its child (the process died before the park was recorded, or
-    // the node runs again without a wake) re-parks on that child, or maps its outcome if it has
-    // finished, instead of starting a second one (docs/05, crash recovery).
-    const existing = ctx.wake ? undefined : await childOfThisVisit(ctx);
-    if (existing) {
-      const child = await ctx.services.childOutcome(existing);
+    // The child this visit awaits: the child of its recorded park (woken or not), or one this
+    // visit already started before the park was recorded (the process died in between), so a
+    // second one is never started (docs/05, crash recovery).
+    const awaited = ctx.previousWait?.childRunId ?? (await childOfThisVisit(ctx));
+    if (awaited) {
+      let child = await ctx.services.childOutcome(awaited);
+      // This run failed with its child's resumable failure and was explicitly resumed: resume the
+      // child in place, as resuming an inline failure re-executes the failed node (#251).
+      if (child.failure?.resumable && failedSinceAwaiting(await ctx.services.events(), ctx.node.id))
+        child = await ctx.services.resumeChild(awaited);
+      // The parent continues only after its child has finished: an unfinished child (one resumed
+      // after it notified, say) is awaited again rather than mapped.
       if (!isTerminal(child.status)) {
         return {
           kind: 'park',
           patch: [],
-          wait: { nodeId: ctx.node.id, kind: 'child', childRunId: existing },
+          wait: { nodeId: ctx.node.id, kind: 'child', childRunId: awaited },
         };
       }
       return finishWithChild(ctx, child);
     }
-    if (!ctx.wake) {
-      const depth = await ctx.services.depth();
-      const limit = config.depthLimitOverride ?? ctx.definition.settings.subloopDepthLimit;
-      if (depth + 1 > limit) {
-        throw new RunFailureError(
-          'SUBLOOP_DEPTH_EXCEEDED',
-          `subloop depth ${depth + 1} exceeds the limit ${limit}`,
-          { nodeId: ctx.node.id, resumable: false },
-        );
-      }
-      const seed = await buildSeed(ctx);
-      const view = threadView(ctx.thread) as unknown as Record<string, unknown>;
-      const triggerPayload = config.input.trigger
-        ? toJson(await evaluateExpression(config.input.trigger.payload, view))
-        : ctx.thread.invocation.trigger.payload;
-      const childRunId = await ctx.services.startChild({
-        loopId: config.loopRef.loopId,
-        version: config.loopRef.version,
-        seed,
-        triggerPayload,
-        depthLimit: limit,
-      });
-      await ctx.services.record({ type: 'child_run.started', nodeId: ctx.node.id, childRunId });
-      return { kind: 'park', patch: [], wait: { nodeId: ctx.node.id, kind: 'child', childRunId } };
+    const depth = await ctx.services.depth();
+    const limit = config.depthLimitOverride ?? ctx.definition.settings.subloopDepthLimit;
+    if (depth + 1 > limit) {
+      throw new RunFailureError(
+        'SUBLOOP_DEPTH_EXCEEDED',
+        `subloop depth ${depth + 1} exceeds the limit ${limit}`,
+        { nodeId: ctx.node.id, resumable: false },
+      );
     }
-
-    const childRunId = ctx.previousWait?.childRunId;
-    if (!childRunId) {
-      throw new RunFailureError('INTERNAL_ERROR', 'subloop woke without a child run id', {
-        nodeId: ctx.node.id,
-      });
-    }
-    return finishWithChild(ctx, await ctx.services.childOutcome(childRunId));
+    const seed = await buildSeed(ctx);
+    const view = threadView(ctx.thread) as unknown as Record<string, unknown>;
+    const triggerPayload = config.input.trigger
+      ? toJson(await evaluateExpression(config.input.trigger.payload, view))
+      : ctx.thread.invocation.trigger.payload;
+    const childRunId = await ctx.services.startChild({
+      loopId: config.loopRef.loopId,
+      version: config.loopRef.version,
+      seed,
+      triggerPayload,
+      depthLimit: limit,
+    });
+    await ctx.services.record({ type: 'child_run.started', nodeId: ctx.node.id, childRunId });
+    return { kind: 'park', patch: [], wait: { nodeId: ctx.node.id, kind: 'child', childRunId } };
   },
 };
 
@@ -235,8 +237,41 @@ async function finishWithChild(
     status: child.status,
     ...(child.outcome ? { outcome: child.outcome } : {}),
   });
+  // Ordinary failure rules (#251): the child's execution error or cancellation is the parent's,
+  // exactly as if the failing work had run inline. An authored outcome (Success, Failure or
+  // Exhausted exit) is data for the output mapping.
+  if (child.status === 'cancelled') throw new ChildCancelledError(child.runId);
+  if (child.failure) {
+    const { code, message, resumable, nodeId, details } = child.failure;
+    throw new RunFailureError(code, `subloop child ${child.runId} failed: ${message}`, {
+      nodeId: ctx.node.id,
+      resumable,
+      details: {
+        childRunId: child.runId,
+        ...(nodeId ? { childNodeId: nodeId } : {}),
+        ...(details !== undefined ? { childDetails: details } : {}),
+      },
+    });
+  }
   const patch = await outputMapping(ctx, child);
   return { kind: 'done', patch, route: 'out' };
+}
+
+/**
+ * Whether this run failed after it parked on (or started) this node's child: it is executing
+ * again, so it was explicitly resumed from that failure.
+ */
+function failedSinceAwaiting(events: readonly RunEvent[], nodeId: string): boolean {
+  for (let i = events.length - 1; i >= 0; i -= 1) {
+    const event = events[i] as RunEvent;
+    if (event.type === 'run.failed') return true;
+    if (
+      (event.type === 'run.waiting' || event.type === 'child_run.started') &&
+      event.nodeId === nodeId
+    )
+      return false;
+  }
+  return false;
 }
 
 /** The child this node started during its current, unfinished visit, from the run's log. */

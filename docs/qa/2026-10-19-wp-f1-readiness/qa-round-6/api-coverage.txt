@@ -1,0 +1,220 @@
+Initial full API coverage: exit 1; 2 failed / 733 passed / 6 skipped; no coverage summary emitted on this failed attempt.
+Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/retired-event-startup.test.ts > cold start over a stored retired Event destination (#242) > starts with a
+published version holding one, refuses that loop per loop and serves the rest
+Error: API child exited before GraphGoblin API listening: Error: listen EADDRINUSE: address already in use
+127.0.0.1:5624
+    at Server.setupListenHandle [as _listen2] (node:net:1937:16)
+    at listenInCluster (node:net:1994:12)
+    at node:net:2203:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '127.0.0.1',
+  port: 5624
+}
+
+ ❯ src/testing/api-subprocess.ts:109:27
+    107|       await eventually(() => {
+    108|         if (stdout.includes(message)) return true;
+    109|         if (exited) throw new Error(`API child exited before ${message…
+       |                           ^
+    110|         return false;
+    111|       }, timeoutMs);
+ ❯ eventually src/testing/api-subprocess.ts:18:18
+ ❯ Object.waitForLog src/testing/api-subprocess.ts:107:7
+ ❯ Object.ready src/testing/api-subprocess.ts:179:7
+ ❯ src/retired-event-startup.test.ts:135:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a child
+finished while down with one continuation per parent
+Error: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ src/subloop-restart.test.ts:23:1
+     21|
+     22| const fixtures: Awaited<ReturnType<typeof createApiProcessFixture>>[] …
+     23| afterEach(async () => {
+       | ^
+     24|   for (const created of fixtures.splice(0)) await created.dispose();
+     25| }, 60_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed | 50 passed | 2 skipped (54)
+      Tests  2 failed | 733 passed | 6 skipped (741)
+   Start at  20:03:43
+   Duration  855.41s (tests 70%, import 26%, transform 3%)
+
+    Isolate  54 workers spawned · ~808ms startup each (spawn + environment, per file)
+             at least ~21.00s faster with isolate: false — reuses workers across files instead of one per file
+
+[ELIFECYCLE] Command failed with exit code 1.
+
+
+File-alone retired-event-startup: exit 0; 2 passed.
+ RUN  v5.0.3 <worktree>/apps/api
+
+ ✓ src/retired-event-startup.test.ts > cold start over a stored retired Event destination (#242) > starts with a published version holding one, refuses that loop per loop and serves the rest 47389ms
+ ✓ src/retired-event-startup.test.ts > cold start over a stored retired Event destination (#242) > starts with a draft snapshot only holding one, refuses that loop per loop and serves the rest 47932ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  20:32:26
+   Duration  157.81s (tests 61%, transform 32%, import 7%)
+
+  Transform  transforming modules took 49.89s · 32% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+
+
+File-alone subloop-restart: exit 1; 2 failed / 1 passed.
+ × src/subloop-restart.test.ts > awaited subloops across process death (#242) > a hard kill around child completion leaves every parent one continuation after restart 180156ms
+   → Test timed out in 180000ms.
+ × src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a child finished while down with one continuation per parent 105661ms
+   → Hook timed out in 60000ms.
+ ✓ src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a parent interrupted mid-wake with one continuation per parent 27914ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > a hard kill around child
+Error: Test timed out in 180000ms.
+ ❯ src/subloop-restart.test.ts:133:3
+    133|   it('a hard kill around child completion leaves every parent one cont…
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a child
+Error: Hook timed out in 60000ms.
+ ❯ src/subloop-restart.test.ts:23:1
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  20:35:12
+   Duration  357.99s (tests 88%, transform 9%, import 4%)
+Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > a hard kill around child
+completion leaves every parent one continuation after restart
+Error: Test timed out in 180000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/subloop-restart.test.ts:133:3
+    131|
+    132| describe('awaited subloops across process death (#242)', () => {
+    133|   it('a hard kill around child completion leaves every parent one cont…
+       |   ^
+    134|     const api = await boot();
+    135|     let server = await api.start();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a child
+finished while down with one continuation per parent
+Error: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ src/subloop-restart.test.ts:23:1
+     21|
+     22| const fixtures: Awaited<ReturnType<typeof createApiProcessFixture>>[] …
+     23| afterEach(async () => {
+       | ^
+     24|   for (const created of fixtures.splice(0)) await created.dispose();
+     25| }, 60_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  20:35:12
+   Duration  357.99s (tests 88%, transform 9%, import 4%)
+
+
+
+Isolated serialized coverage repeat, coverage.reportOnFailure enabled. Exit 1
+Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > a hard kill around child
+completion leaves every parent one continuation after restart
+Error: Timed out waiting for disposable API state
+ ❯ eventually src/testing/api-subprocess.ts:19:39
+     17|   const deadline = Date.now() + timeoutMs;
+     18|   while (!(await check())) {
+     19|     if (Date.now() >= deadline) throw new Error('Timed out waiting for…
+       |                                       ^
+     20|     await new Promise<void>((resolve) => setTimeout(resolve, 25));
+     21|   }
+ ❯ Object.waitForLog src/testing/api-subprocess.ts:107:7
+ ❯ Object.ready src/testing/api-subprocess.ts:179:7
+ ❯ Object.start src/subloop-restart.test.ts:100:7
+ ❯ src/subloop-restart.test.ts:166:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a child
+finished while down with one continuation per parent
+AssertionError: expected 'queued' to be 'waiting' // Object.is equality
+
+Expected: "waiting"
+Received: "queued"
+
+ ❯ src/subloop-restart.test.ts:220:32
+    218|         [mid] = await runs.listChildren(run.id);
+    219|         [bottom] = mid ? await runs.listChildren(mid.id) : [];
+    220|         expect(bottom?.status).toBe('waiting');
+       |                                ^
+    221|       });
+    222|       let stranded = false;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a child
+finished while down with one continuation per parent
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a parent
+interrupted mid-wake with one continuation per parent
+Error: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ src/subloop-restart.test.ts:23:1
+     21|
+     22| const fixtures: Awaited<ReturnType<typeof createApiProcessFixture>>[] …
+     23| afterEach(async () => {
+       | ^
+     24|   for (const created of fixtures.splice(0)) await created.dispose();
+     25| }, 60_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a parent
+interrupted mid-wake with one continuation per parent
+AssertionError: expected 'running' to be 'waiting' // Object.is equality
+
+Expected: "waiting"
+Received: "running"
+
+ ❯ src/subloop-restart.test.ts:220:32
+    218|         [mid] = await runs.listChildren(run.id);
+    219|         [bottom] = mid ? await runs.listChildren(mid.id) : [];
+    220|         expect(bottom?.status).toBe('waiting');
+       |                                ^
+    221|       });
+    222|       let stranded = false;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+
+ Test Files  1 failed | 51 passed | 2 skipped (54)
+      Tests  3 failed | 732 passed | 6 skipped (741)
+   Start at  20:41:13
+   Duration  2448.74s (tests 64%, import 33%, transform 2%)
+
+     Import  276 modules were evaluated 394 times · 783.69s total, 33% of tracked time
+             ~234.71s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 96.69% ( 1988/2056 )
+Branches     : 93.32% ( 1287/1379 )
+Functions    : 94.72% ( 395/417 )
+Lines        : 98.04% ( 1805/1841 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.

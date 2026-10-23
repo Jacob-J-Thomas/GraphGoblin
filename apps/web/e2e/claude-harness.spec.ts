@@ -99,6 +99,7 @@ test('Claude inference selection stays family-specific through publish and run',
 
   await page.goto(instance.url + '/app/loops/' + loop.id + '/edit');
   const dialog = await openNode(page, 'infer');
+  await openAdvanced(dialog);
   const claude = dialog.getByRole('radio', { name: 'claude', exact: true });
   await claude.focus();
   await page.keyboard.press('Space');
@@ -117,9 +118,15 @@ test('Claude inference selection stays family-specific through publish and run',
   );
   expect(authored?.kind).toBe('inference');
   if (authored?.kind !== 'inference') throw new Error('expected an inference node');
-  expect(authored.config).toMatchObject({ harness: 'claude' });
+  expect(authored.config.harness).toBe('claude');
   expect(authored.config).not.toHaveProperty('model');
   expect(authored.config).not.toHaveProperty('effort');
+  await page.reload();
+  const reopened = await openNode(page, 'infer');
+  await openAdvanced(reopened);
+  await expect(reopened.getByLabel('Model', { exact: true })).toHaveValue('');
+  await expect(reopened.getByLabel('Effort', { exact: true })).toHaveValue('');
+  await reopened.getByRole('button', { name: 'Done', exact: true }).click();
 
   await control(request, '/harness/script', {
     instanceId: instance.id,
@@ -255,7 +262,7 @@ for (const [model, displayName, effort] of [
 }
 
 for (const ready of [false, true]) {
-  test(`saved Codex model stays labelled on narrow Claude editor with readiness ${ready}`, async ({
+  test(`explicit harness switch on narrow editor with readiness ${ready}`, async ({
     page,
     request,
   }) => {
@@ -280,21 +287,23 @@ for (const ready of [false, true]) {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(instance.url + '/app/loops/' + loop.id + '/edit');
     const dialog = await openNode(page, 'infer');
+    await openAdvanced(dialog);
     const harness = dialog.getByRole('radio', { name: 'claude', exact: true });
     await harness.focus();
     await page.keyboard.press('Space');
     await expect(harness).toBeChecked();
     await expect(harness).toBeFocused();
     const model = dialog.getByLabel('Model', { exact: true });
-    await expect(model).toHaveValue('gpt-6-astra');
-    await expect(model.locator('option:checked')).toHaveText(/Saved model belongs to Codex/);
-    await expect(model.locator('option:checked')).toBeDisabled();
     if (!ready) {
+      await expect(model).toHaveValue('gpt-6-astra');
+      await expect(model.locator('option:checked')).toHaveText(/Saved model belongs to Codex/);
+      await expect(model.locator('option:checked')).toBeDisabled();
       await expect(model).toHaveAttribute('aria-readonly', 'true');
       await expect(
-        dialog
-          .getByRole('status')
-          .filter({ hasText: 'Claude CLI preflight is not ready; model choices' }),
+        dialog.getByRole('status').filter({
+          hasText:
+            'Claude is not signed in. Run claude auth login, then retry preflight. Model choices are read-only until Claude is ready.',
+        }),
       ).toBeVisible();
       await control(request, '/harness/preflight', {
         instanceId: instance.id,
@@ -304,6 +313,16 @@ for (const ready of [false, true]) {
       await dialog.getByRole('button', { name: 'Retry Claude preflight' }).click();
     }
     await expect(model).not.toHaveAttribute('aria-readonly', 'true');
+    if (!ready) {
+      // Query recovery does not perform an authoring action. Switch explicitly again.
+      await expect(model).toHaveValue('gpt-6-astra');
+      await dialog.getByRole('radio', { name: 'codex', exact: true }).focus();
+      await page.keyboard.press('Space');
+      await harness.focus();
+      await page.keyboard.press('Space');
+    }
+    await expect(model).toHaveValue('claude-opus-5-5');
+    await expect(dialog.getByLabel('Effort', { exact: true })).toHaveValue('high');
     await model.selectOption('claude-fable-5-1');
     await expect(model).toHaveValue('claude-fable-5-1');
     await expect(dialog.getByLabel('Sandbox and approval policy', { exact: true })).toHaveValue(
@@ -314,6 +333,64 @@ for (const ready of [false, true]) {
     ).toBe(true);
   });
 }
+
+test('a ready Claude model field stays editable while a focus refetch rechecks readiness', async ({
+  page,
+  request,
+}) => {
+  const instance = await claudeInstance(request);
+  const definition = inferenceLoop('Focus recheck', 'claude');
+  const node = definition.nodes.find((item) => item.id === 'infer');
+  if (!node || !('config' in node)) throw new Error('missing inference node');
+  Object.assign(node.config, { model: 'claude-opus-5-5' });
+  const created = await request.post(instance.url + '/loops', { data: { definition } });
+  expect(created.status(), await created.text()).toBe(201);
+  const { loop } = (await created.json()) as { loop: { id: string } };
+  let held = false;
+  let release!: () => void;
+  const pending = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let arrived!: () => void;
+  const heldRequest = new Promise<void>((resolve) => {
+    arrived = resolve;
+  });
+  await page.route(instance.url + '/harness/preflight', async (route) => {
+    if (held) {
+      arrived();
+      await pending;
+    }
+    await route.continue();
+  });
+  await page.goto(instance.url + '/app/loops/' + loop.id + '/edit');
+  const dialog = await openNode(page, 'infer');
+  await openAdvanced(dialog);
+  const model = dialog.getByLabel('Model', { exact: true });
+  await expect(model).toBeVisible();
+  await expect(model).toHaveValue('claude-opus-5-5');
+  await expect(model).not.toHaveAttribute('aria-readonly');
+  const label = await model.locator('option:checked').textContent();
+  expect(label).toMatch(/claude-opus-5-5/);
+
+  held = true;
+  // Window focus refetches stale queries (two-second stale time) on a hidden-to-visible change.
+  await page.waitForTimeout(2100);
+  await page.evaluate(() => {
+    Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'hidden' });
+    document.dispatchEvent(new Event('visibilitychange', { bubbles: true }));
+    Reflect.deleteProperty(document, 'visibilityState');
+    document.dispatchEvent(new Event('visibilitychange', { bubbles: true }));
+  });
+  await heldRequest;
+  await expect(model).not.toHaveAttribute('aria-readonly');
+  await expect(model.locator('option:checked')).toHaveText(label ?? '');
+  await expect(dialog.getByText(/Checking Claude readiness|readiness unknown/)).toHaveCount(0);
+  await expect(dialog.getByRole('button', { name: 'Retry Claude preflight' })).toHaveCount(0);
+  release();
+  held = false;
+  await expect(model).not.toHaveAttribute('aria-readonly');
+  await expect(model).toHaveValue('claude-opus-5-5');
+});
 
 test('Settings separates Claude adapter support from CLI readiness and supports Fable', async ({
   page,
@@ -346,9 +423,19 @@ test('Settings separates Claude adapter support from CLI readiness and supports 
 
   await page.goto(instance.url + '/app/settings');
   const preflight = page.getByRole('region', { name: 'Harness preflight' });
-  const claudeStatus = preflight.getByRole('listitem').filter({ hasText: 'claude' });
-  await expect(claudeStatus.getByText('not ready', { exact: true })).toBeVisible();
-  await expect(claudeStatus.getByText('Claude CLI is not signed in.')).toBeVisible();
+  const claudeStatus = preflight
+    .getByRole('listitem')
+    .filter({ has: page.locator('code').getByText('claude', { exact: true }) });
+  await expect(claudeStatus.locator('[data-state]')).toHaveAttribute('data-state', 'auth');
+  await expect(claudeStatus.locator('[data-state]')).toHaveText('Sign-in needed');
+  await expect(
+    claudeStatus.getByText(
+      'Claude is not signed in. Run claude auth login, then retry preflight.',
+      {
+        exact: true,
+      },
+    ),
+  ).toBeVisible();
 
   const support = claudeStatus.getByRole('list', { name: 'Claude model support' });
   const catalog = page.getByRole('region', { name: 'Model catalog' });
@@ -359,13 +446,18 @@ test('Settings separates Claude adapter support from CLI readiness and supports 
     ['claude-haiku-5-5', 'Claude Haiku 5.5'],
   ] as const) {
     const row = support.getByRole('listitem').filter({ hasText: model });
-    await expect(row.getByText('supported by adapter')).toBeVisible();
+    await expect(row.getByText('listed by adapter', { exact: true })).toBeVisible();
     await expect(catalog.getByRole('switch', { name: 'Enable ' + displayName })).toBeChecked();
   }
-  await expect(catalog.getByText(/Enabled in catalog; Claude harness not ready/)).toHaveCount(4);
+  await expect(
+    catalog.getByText('Enabled in catalog. Claude readiness: Sign-in needed.', { exact: true }),
+  ).toHaveCount(4);
 
   const model = page.getByLabel('Default model (claude)', { exact: true });
   await expect(model).toBeVisible();
+  await expect(model).toHaveAccessibleDescription(
+    'Claude readiness: Sign-in needed. See Harness preflight below.',
+  );
   await expect(model.getByRole('option', { name: /Claude Opus 5\.5/ })).toHaveCount(0);
   await expect(model.getByRole('option', { name: /Fable/ })).toHaveCount(0);
 });
@@ -587,3 +679,46 @@ test('Claude inspector shows requested effort and policy artifact, and preserves
   await waitForTerminal(request, instance.url, cancelRun.id, 'cancelled');
   await expect(page.locator('[data-status="cancelled"]').first()).toBeVisible();
 });
+
+for (const ready of [false, true]) {
+  test(`loaded saved incompatible model is retained without a switch, readiness ${ready}`, async ({
+    page,
+    request,
+  }) => {
+    const instance = await claudeInstance(request);
+    if (!ready)
+      await control(request, '/harness/preflight', {
+        instanceId: instance.id,
+        harness: 'claude',
+        state: 'not-ready',
+      });
+    const definition = inferenceLoop('Loaded incompatible');
+    const inference = definition.nodes.find((node) => node.id === 'infer')!;
+    Object.assign(inference.config, { model: 'gpt-6-astra', effort: 'high' });
+    const created = await request.post(instance.url + '/loops', { data: { definition } });
+    expect(created.status()).toBe(201);
+    const { loop } = (await created.json()) as { loop: { id: string } };
+    await page.route(`**/loops/${loop.id}`, async (route) => {
+      const response = await route.fetch();
+      const body = (await response.json()) as {
+        draft?: { definition: unknown };
+        current?: { definition: unknown };
+      };
+      const version = body.draft ?? body.current;
+      if (!version) throw new Error('Missing loaded version fixture');
+      const definition = LoopDefinitionSchema.parse(version.definition);
+      const loaded = definition.nodes.find((node) => node.id === 'infer');
+      if (loaded?.kind !== 'inference') throw new Error('Missing loaded inference fixture');
+      loaded.config.harness = 'claude';
+      version.definition = definition;
+      await route.fulfill({ response, json: body });
+    });
+    await page.goto(instance.url + '/app/loops/' + loop.id + '/edit');
+    const dialog = await openNode(page, 'infer');
+    await openAdvanced(dialog);
+    const model = dialog.getByLabel('Model', { exact: true });
+    await expect(model).toHaveValue('gpt-6-astra');
+    await expect(model.locator('option:checked')).toHaveText(/Saved model belongs to Codex/);
+    await expect(model.locator('option:checked')).toBeDisabled();
+  });
+}

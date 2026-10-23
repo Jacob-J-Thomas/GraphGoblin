@@ -1,9 +1,4 @@
-import {
-  ContextThreadSchema,
-  JsonValueSchema,
-  RunEventSchema,
-  RunRecordSchema,
-} from '@graphgoblin/contracts';
+import { JsonValueSchema, RunEventSchema } from '@graphgoblin/contracts';
 import { stableStringify } from '@graphgoblin/domain';
 import {
   AdmissionConflictError,
@@ -12,6 +7,7 @@ import {
   parseRunAdmission,
   pollAdmissionIdentity,
   queuedEvent,
+  validateGeneratedEvent,
   type RunAdmission,
   type TriggerAdmissionPort,
   type WebhookClaim,
@@ -20,8 +16,17 @@ import {
 } from '@graphgoblin/engine';
 import { and, asc, eq, getTableColumns, lte, or, sql } from 'drizzle-orm';
 import type { Database } from './db.js';
-import { inboundEvents, runEvents, runs, webhookEndpoints, webhookReceipts } from './schema.js';
-import { runInsert, runRecordFromRow } from './runs.js';
+import {
+  inboundEvents,
+  loopVersions,
+  runEvents,
+  runs,
+  webhookEndpoints,
+  webhookReceipts,
+} from './schema.js';
+import { runInsert } from './runs.js';
+import { loopVersionFromRow } from './loops.js';
+import { rawRunColumns, decodeRunRecord, decodeStoredThread } from './run-decoding.js';
 import type { SqliteEventStore } from './events.js';
 
 function runKeyScope(ownerId: string, loopId: string, nodeId: string, key: string) {
@@ -132,7 +137,19 @@ export class SqliteTriggerAdmission implements TriggerAdmissionPort {
           input,
         );
       }
-      const [prior] = await tx.select().from(runs).where(eq(runs.id, input.run.id));
+      // A draft snapshot is immutable: its id may only ever hold the same record (ADR-0041).
+      const [existing] = input.snapshot
+        ? await tx.select().from(loopVersions).where(eq(loopVersions.id, input.snapshot.id))
+        : [];
+      if (
+        existing &&
+        stableStringify(loopVersionFromRow(existing)) !== stableStringify(input.snapshot)
+      )
+        throw new AdmissionConflictError();
+      const [prior] = await tx
+        .select({ ...rawRunColumns, initialThread: sql<string>`${runs.initialThread}` })
+        .from(runs)
+        .where(eq(runs.id, input.run.id));
       const [first] = await tx
         .select()
         .from(runEvents)
@@ -152,16 +169,16 @@ export class SqliteTriggerAdmission implements TriggerAdmissionPort {
               ...(first.nodeId ? { nodeId: first.nodeId } : {}),
             })
           : undefined;
-        const record = RunRecordSchema.safeParse(runRecordFromRow(prior));
-        const thread = ContextThreadSchema.safeParse(prior.initialThread);
-        if (!stored?.success || !record.success || !thread.success)
-          throw new AdmissionConflictError();
-        run = record.data;
-        assertAdmissionIdentity(input, run, thread.data, stored.data);
+        const record = decodeRunRecord(prior);
+        const thread = decodeStoredThread(prior.id, 'initial_thread', prior.initialThread);
+        if (!stored?.success || (input.snapshot && !existing)) throw new AdmissionConflictError();
+        run = record;
+        assertAdmissionIdentity(input, run, thread, stored.data);
       } else {
         if (first) throw new AdmissionConflictError();
         run = { ...input.run, lastEventSeq: 1 };
-        event = queuedEvent(input);
+        event = validateGeneratedEvent(queuedEvent(input));
+        if (input.snapshot && !existing) await tx.insert(loopVersions).values(input.snapshot);
         await tx.insert(runs).values(runInsert(run, input.initialThread));
         const { runId, seq, ts, type, ...payload } = event;
         await tx.insert(runEvents).values({ runId, seq, ts, type, payload });

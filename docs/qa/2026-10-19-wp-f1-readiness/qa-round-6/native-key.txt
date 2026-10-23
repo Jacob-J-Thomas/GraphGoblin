@@ -1,0 +1,77 @@
+Built API ee0f4f40; Node 22.14.0; tooling/fixtures/readiness-cli.cs only.
+One probe means one --version invocation, including Claude safe-mode prefix.
+Counts at the 202 response are admission counts; final counts can include execution checks.
+202 alone is not a completion pass. Native success turns are refused by this fixture.
+
+{
+  "name": "binary-created-key",
+  "pass": true,
+  "keyPrinted": false,
+  "port": 5629,
+  "pid": 58012
+}
+
+{
+  "name": "draft-explicit-version-auth-no-snapshot",
+  "pass": true,
+  "response": {
+    "status": 422,
+    "ms": 3410,
+    "body": {
+      "type": "https://graphgoblin.dev/problems/harness-not-ready",
+      "title": "harness not ready",
+      "status": 422,
+      "code": "HARNESS_NOT_READY",
+      "detail": "Harness readiness checks failed. Fix the listed problems, then start the run again.",
+      "errors": [
+        {
+          "code": "HARNESS_READINESS_AUTH",
+          "severity": "warning",
+          "loopId": "01M5GJGZG26A8F537HND43AV2C",
+          "versionId": "01M5GJGZMWNA8FBDWXDZJTE5NG",
+          "nodeId": "think",
+          "path": "config.harness",
+          "message": "Claude is not signed in. Run claude auth login, then retry preflight."
+        }
+      ]
+    }
+  },
+  "before": {
+    "runs": 0,
+    "queued": 0,
+    "markerEvents": 0,
+    "snapshots": 0
+  },
+  "after": {
+    "runs": 0,
+    "queued": 0,
+    "markerEvents": 0,
+    "snapshots": 0
+  },
+  "probes": {
+    "claude": {
+      "probes": 1,
+      "commands": [
+        "--safe-mode --setting-sources  --strict-mcp-config --version",
+        "--safe-mode --setting-sources  --strict-mcp-config --max-turns 1 --help",
+        "--safe-mode --setting-sources  --strict-mcp-config auth status --json"
+      ]
+    },
+    "codex": {
+      "probes": 0,
+      "commands": []
+    }
+  }
+}
+
+{
+  "name": "key-native-finished",
+  "pass": true
+}
+
+{
+  "name": "key-api-stop",
+  "pass": true,
+  "exitCode": null,
+  "signalCode": "SIGTERM"
+}

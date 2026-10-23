@@ -1,0 +1,151 @@
+
+Running 8 tests using 1 worker
+
+pnpm.cmd : (node:45928) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+At <repo>\docs\qa\2026-10-22-wp-f2b-qa\round-5\run-s
+tep.ps1:29 char:1
++ & $exe @a *> $logFile
++ ~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:45928) Wa... env being set.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:45928) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  1 e2e\model-picker.spec.ts:36:3 › catalog model and effort publish and reach the harness (dark) (11.5s)
+(node:10108) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:10108) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  2 e2e\model-picker.spec.ts:36:3 › catalog model and effort publish and reach the harness (light) (11.3s)
+(node:54280) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:54280) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  3 e2e\model-picker.spec.ts:102:1 › a saved model removed from the catalog stays selected and explicit unknown import is rejected (11.4s)
+(node:30176) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:30176) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  4 e2e\model-picker.spec.ts:159:1 › catalog failure preserves the current values until retry and loop defaults share the picker (1.0m)
+(node:36948) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:36948) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  5 e2e\model-picker.spec.ts:203:1 › the decision LLM uses an explicit harness model and rejects unsupported effort on admission (1.7s)
+  ✓  6 e2e\model-picker.spec.ts:284:1 › following a model issue keeps focus through a delayed catalog and a failed cached refresh (7.2s)
+  ✓  7 e2e\model-picker.spec.ts:366:1 › explicit Claude to Codex switch persists the owner default and sends the exact request (2.0s)
+  ✓  8 e2e\model-picker.spec.ts:418:1 › cached catalog failure holds publication across a harness switch and recovers (4.8s)
+
+
+  1) e2e\model-picker.spec.ts:36:3 › catalog model and effort publish and reach the harness (dark) ─
+
+    Error: expect(locator).toHaveValue(expected) failed
+
+    Locator:  getByRole('dialog').getByLabel('Model', { exact: true })
+    Expected: "picker-dark"
+    Received: ""
+    Timeout:  10000ms
+
+    Call log:
+      - Expect "toHaveValue" getByRole('dialog').getByLabel('Model', { exact: true }) with timeout 10000ms
+      - waiting for getByRole('dialog').getByLabel('Model', { exact: true })
+        23 × locator resolved to <select id="_r_11_" aria-describedby="_r_11_-help" class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-point…>…</select>
+           - unexpected value ""
+
+
+      62 |     await page.keyboard.type(`Picker ${theme}`);
+      63 |     await page.keyboard.press('Enter');
+    > 64 |     await expect(model).toHaveValue(selected);
+         |                         ^
+      65 |     const effort = dialog.getByLabel('Effort', { exact: true });
+      66 |     await expect(effort.locator('option')).toHaveText([
+      67 |       '(inherited; the catalog suggests low)',
+        at <repo>\apps\web\e2e\model-picker.spec.ts:64:25
+
+    Error Context: ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-qa-f2b-r5-edge-results\model-picker-catalog-model-e2e89-and-reach-the-harness-dark-\error-context.md
+
+  2) e2e\model-picker.spec.ts:36:3 › catalog model and effort publish and reach the harness (light) 
+
+    Error: expect(locator).toHaveValue(expected) failed
+
+    Locator:  getByRole('dialog').getByLabel('Model', { exact: true })
+    Expected: "picker-light"
+    Received: ""
+    Timeout:  10000ms
+
+    Call log:
+      - Expect "toHaveValue" getByRole('dialog').getByLabel('Model', { exact: true }) with timeout 10000ms
+      - waiting for getByRole('dialog').getByLabel('Model', { exact: true })
+        23 × locator resolved to <select id="_r_11_" aria-describedby="_r_11_-help" class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-point…>…</select>
+           - unexpected value ""
+
+
+      62 |     await page.keyboard.type(`Picker ${theme}`);
+      63 |     await page.keyboard.press('Enter');
+    > 64 |     await expect(model).toHaveValue(selected);
+         |                         ^
+      65 |     const effort = dialog.getByLabel('Effort', { exact: true });
+      66 |     await expect(effort.locator('option')).toHaveText([
+      67 |       '(inherited; the catalog suggests low)',
+        at <repo>\apps\web\e2e\model-picker.spec.ts:64:25
+
+    Error Context: ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-qa-f2b-r5-edge-results\model-picker-catalog-model-e1fa8-nd-reach-the-harness-light-\error-context.md
+
+  3) e2e\model-picker.spec.ts:102:1 › a saved model removed from the catalog stays selected and explicit unknown import is rejected 
+
+    Error: expect(locator).toHaveAttribute(expected) failed
+
+    Locator: getByRole('dialog').getByRole('link', { name: 'Model catalog in Settings' })
+    Expected: "/app/settings"
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toHaveAttribute" getByRole('dialog').getByRole('link', { name: 'Model catalog in Settings' }) with timeout 10000ms
+      - waiting for getByRole('dialog').getByRole('link', { name: 'Model catalog in Settings' })
+
+
+      136 |     'alert',
+      137 |   );
+    > 138 |   await expect(dialog.getByRole('link', { name: 'Model catalog in Settings' })).toHaveAttribute(
+          |                                                                                 ^
+      139 |     'href',
+      140 |     '/app/settings',
+      141 |   );
+        at <repo>\apps\web\e2e\model-picker.spec.ts:138:81
+
+    Error Context: ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-qa-f2b-r5-edge-results\model-picker-a-saved-model-8583b--unknown-import-is-rejected\error-context.md
+
+  4) e2e\model-picker.spec.ts:159:1 › catalog failure preserves the current values until retry and loop defaults share the picker 
+
+    Test timeout of 60000ms exceeded.
+
+    Error: locator.click: Test timeout of 60000ms exceeded.
+    Call log:
+      - waiting for getByRole('dialog').getByRole('button', { name: 'Retry model catalog' })
+
+
+      183 |   await expect(model).toHaveAccessibleDescription(/Cannot load the model catalog/);
+      184 |   await page.unroute('**/model-catalog');
+    > 185 |   await dialog.getByRole('button', { name: 'Retry model catalog' }).click();
+          |                                                                     ^
+      186 |   await expect(model).not.toHaveAttribute('aria-readonly');
+      187 |   await expect(model).toHaveValue(chosen.model);
+      188 |   await closeNode(page);
+        at <repo>\apps\web\e2e\model-picker.spec.ts:185:69
+
+    Error Context: ..\..\..\..\..\..\..\..\AppData\Local\Temp\gg-qa-f2b-r5-edge-results\model-picker-catalog-failu-3fc6e-p-defaults-share-the-picker\error-context.md
+
+  4 failed
+    e2e\model-picker.spec.ts:36:3 › catalog model and effort publish and reach the harness (dark) ──
+    e2e\model-picker.spec.ts:36:3 › catalog model and effort publish and reach the harness (light) ─
+    e2e\model-picker.spec.ts:102:1 › a saved model removed from the catalog stays selected and explicit unknown import is rejected 
+    e2e\model-picker.spec.ts:159:1 › catalog failure preserves the current values until retry and loop defaults share the picker 
+  4 passed (2.1m)
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ <user>\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-
+  │ f2b\apps\web
+

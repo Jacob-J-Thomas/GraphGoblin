@@ -1,14 +1,17 @@
+import { type ReadinessOperation } from '../readiness-operation.js';
 import { blocksPublication, rejectsDraftAdmission } from '../model-issues.js';
 import {
   LoopDefinitionSchema,
   LoopExportSchema,
   LoopRecordSchema,
+  RunRecordSchema,
   LoopVersionRecordSchema,
   LoopIssueSchema,
   type LoopIssue,
   UlidSchema,
   type LoopDefinition,
   type LoopRecord,
+  type LoopVersionRecord,
 } from '@graphgoblin/contracts';
 import {
   exportLoop,
@@ -18,7 +21,7 @@ import {
   upgradeLoopCurrent,
   type UpgradeIssue,
 } from '@graphgoblin/domain';
-import { EngineRequestError } from '@graphgoblin/engine';
+import { EngineRequestError, assertCurrentDefinition } from '@graphgoblin/engine';
 import { LoopInUseError } from '@graphgoblin/infrastructure/sqlite';
 import type { FastifyRequest } from 'fastify';
 import { z } from 'zod';
@@ -28,6 +31,16 @@ import { problem } from '../plugins/errors.js';
 import type { ApiInstance } from '../types.js';
 
 export const IssueSchema = LoopIssueSchema;
+
+/**
+ * A stored definition leaves the server only when the current contract accepts it: one that
+ * predates ADR-0044 (an exit publishing an Event) is refused with 409 `LOOP_UPGRADE_REQUIRED`
+ * naming the loop, the version and the destination, rather than failing response validation.
+ */
+function served<T extends LoopVersionRecord | undefined>(version: T): T {
+  if (version) assertCurrentDefinition(version);
+  return version;
+}
 
 const DraftTokenSchema = z.string().meta({
   description:
@@ -94,8 +107,9 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
     ownerId: string,
     def: LoopDefinition,
     selfId?: string,
+    readiness?: ReadinessOperation | false,
   ): Promise<LoopIssue[]> {
-    return loopPublicationIssues(container, ownerId, def, selfId);
+    return loopPublicationIssues(container, ownerId, def, selfId, readiness);
   }
 
   app.get(
@@ -104,11 +118,24 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       schema: {
         tags: ['loops'],
         summary: 'List loops',
-        response: { 200: z.object({ items: z.array(LoopRecordSchema) }) },
+        response: {
+          200: z.object({
+            items: z.array(
+              LoopRecordSchema.extend({
+                latestRun: RunRecordSchema.pick({
+                  id: true,
+                  status: true,
+                  createdAt: true,
+                }).nullable(),
+                runCount: z.number().int().nonnegative(),
+              }),
+            ),
+          }),
+        },
       },
     },
     async (request) => ({
-      items: await loops.listLoops(request.auth.ownerId),
+      items: await loops.listWithRunSummaries(request.auth.ownerId),
     }),
   );
 
@@ -129,7 +156,12 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       },
     },
     async (request, reply) => {
-      const admission = await publishIssues(request.auth.ownerId, request.body.definition);
+      const admission = await publishIssues(
+        request.auth.ownerId,
+        request.body.definition,
+        undefined,
+        false,
+      );
       if (admission.some((issue) => rejectsDraftAdmission(request.body.definition, issue)))
         return problem(
           reply,
@@ -142,7 +174,12 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       reply.status(201);
       return {
         ...created,
-        issues: await publishIssues(request.auth.ownerId, request.body.definition, created.loop.id),
+        issues: await publishIssues(
+          request.auth.ownerId,
+          request.body.definition,
+          created.loop.id,
+          false,
+        ),
       };
     },
   );
@@ -204,7 +241,12 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
         notices = result.notices;
       }
       const imported = importLoop(input);
-      const admission = await publishIssues(request.auth.ownerId, imported.definition);
+      const admission = await publishIssues(
+        request.auth.ownerId,
+        imported.definition,
+        undefined,
+        false,
+      );
       if (admission.some((issue) => rejectsDraftAdmission(imported.definition, issue)))
         return problem(
           reply,
@@ -215,12 +257,12 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
         );
       const created = await loops.create(request.auth.ownerId, imported.definition);
       reply.status(201);
-      // The same list as create, validate, draft saves, and publish (importLoop's own issues are
-      // the validateLoop part of it).
+      // Draft writes validate configuration without CLI probes; explicit validation/publish adds readiness.
       const issues = await publishIssues(
         request.auth.ownerId,
         imported.definition,
         created.loop.id,
+        false,
       );
       return { ...created, issues, notices };
     },
@@ -238,10 +280,12 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
     },
     async (request, reply) => {
       const loop = await ownedLoop(request, request.params.id);
-      const current = loop.currentVersionId
-        ? await loops.getVersion(loop.currentVersionId)
-        : undefined;
-      const draft = loop.draftVersionId ? await loops.getVersion(loop.draftVersionId) : undefined;
+      const current = served(
+        loop.currentVersionId ? await loops.getVersion(loop.currentVersionId) : undefined,
+      );
+      const draft = served(
+        loop.draftVersionId ? await loops.getVersion(loop.draftVersionId) : undefined,
+      );
       const draftToken = draftTokenOf((draft ?? current)?.definition);
       if (draftToken) void reply.header('etag', `"${draftToken}"`);
       return {
@@ -275,7 +319,12 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
     },
     async (request, reply) => {
       const loopId = request.params.id;
-      const admission = await publishIssues(request.auth.ownerId, request.body.definition, loopId);
+      const admission = await publishIssues(
+        request.auth.ownerId,
+        request.body.definition,
+        loopId,
+        false,
+      );
       if (admission.some((issue) => rejectsDraftAdmission(request.body.definition, issue)))
         return problem(
           reply,
@@ -317,7 +366,7 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       return {
         draft: saved.draft,
         draftToken,
-        issues: await publishIssues(request.auth.ownerId, request.body.definition, loopId),
+        issues: await publishIssues(request.auth.ownerId, request.body.definition, loopId, false),
       };
     },
   );
@@ -362,7 +411,7 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       const outcome = await serializeDraftSave(request.params.id, async () => {
         const loop = await ownedLoop(request, request.params.id);
         if (!loop.draftVersionId) return { kind: 'no-draft' as const };
-        const draft = await loops.getVersion(loop.draftVersionId);
+        const draft = served(await loops.getVersion(loop.draftVersionId));
         const issues = draft
           ? await publishIssues(request.auth.ownerId, draft.definition, loop.id)
           : [];
@@ -401,7 +450,7 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
     },
     async (request) => {
       await ownedLoop(request, request.params.id);
-      return { items: await loops.listVersions(request.params.id) };
+      return { items: (await loops.listVersions(request.params.id)).map(served) };
     },
   );
 
@@ -425,7 +474,7 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
           'VERSION_NOT_FOUND',
           `version ${request.params.versionId} not found`,
         );
-      return version;
+      return served(version);
     },
   );
 
@@ -454,7 +503,7 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
             ? 'the loop has no draft'
             : 'the loop has no published version',
         );
-      return exportLoop(version.definition, container.ports.clock.now().toISOString());
+      return exportLoop(served(version).definition, container.ports.clock.now().toISOString());
     },
   );
 

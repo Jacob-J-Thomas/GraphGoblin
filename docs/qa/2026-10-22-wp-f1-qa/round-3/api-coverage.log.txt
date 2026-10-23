@@ -1,0 +1,211 @@
+Command: pnpm.cmd --filter @graphgoblin/api test:coverage --maxWorkers 1 --coverage.reportOnFailure --coverage.reporter=text --coverage.reporter=json-summary
+Node: v22.14.0
+Revision: c2a2b6632c0996383abe491268baf871aec448dd
+Exit: 1
+Elapsed ms: 712568
+
+$ vitest run --coverage --maxWorkers 1 --coverage.reportOnFailure --coverage.reporter=text --coverage.reporter=json-summary
+
+ RUN  v5.0.3 <worktree>/apps/api
+      Coverage enabled with v8
+
+ ❯ src/subloop-restart.test.ts (3 tests | 3 failed) 27ms
+   ❯ awaited subloops across process death (#242) (3)
+     × a hard kill around child completion leaves every parent one continuation after restart 17ms
+     × the built API recovers a child finished while down with one continuation per parent 4ms
+     × the built API recovers a parent interrupted mid-wake with one continuation per parent 3ms
+ ❯ src/main.test.ts (9 tests | 5 failed | 4 skipped) 31ms
+   ❯ built API entry and startup failures (6)
+     × holds ownership while listening and releases it on supported HTTP close 15ms
+     × serves authenticated requests using a binary-created key and refuses a competing process 4ms
+     × dispatches the API-key and preflight CLIs with their real exit codes 3ms
+     × releases ownership on a real corrupt-database startup fault before HTTP setup 3ms
+     × releases ownership after a real occupied-port listen failure 3ms
+ ❯ src/retired-event-startup.test.ts (2 tests | 2 failed) 23ms
+   ❯ cold start over a stored retired Event destination (#242) (2)
+     × starts with a published version holding one, refuses that loop per loop and serves the rest 16ms
+     × starts with a draft snapshot only holding one, refuses that loop per loop and serves the rest 3ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/main.test.ts > built API entry and startup failures > holds ownership while listening and releases it on supported HTTP close
+Error: No disposable API port is free in 5600-5699
+ ❯ freePort src/testing/api-subprocess.ts:49:9
+     47|     if (available) return port;
+     48|   }
+     49|   throw new Error('No disposable API port is free in 5600-5699');
+       |         ^
+     50| }
+     51|
+ ❯ createApiProcessFixture src/testing/api-subprocess.ts:132:16
+ ❯ fixture src/main.test.ts:12:19
+ ❯ src/main.test.ts:27:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  src/main.test.ts > built API entry and startup failures > serves authenticated requests using a binary-created key and refuses a competing process
+Error: No disposable API port is free in 5600-5699
+ ❯ freePort src/testing/api-subprocess.ts:49:9
+     47|     if (available) return port;
+     48|   }
+     49|   throw new Error('No disposable API port is free in 5600-5699');
+       |         ^
+     50| }
+     51|
+ ❯ createApiProcessFixture src/testing/api-subprocess.ts:132:16
+ ❯ fixture src/main.test.ts:12:19
+ ❯ src/main.test.ts:50:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  src/main.test.ts > built API entry and startup failures > dispatches the API-key and preflight CLIs with their real exit codes
+Error: No disposable API port is free in 5600-5699
+ ❯ freePort src/testing/api-subprocess.ts:49:9
+     47|     if (available) return port;
+     48|   }
+     49|   throw new Error('No disposable API port is free in 5600-5699');
+       |         ^
+     50| }
+     51|
+ ❯ createApiProcessFixture src/testing/api-subprocess.ts:132:16
+ ❯ fixture src/main.test.ts:12:19
+ ❯ src/main.test.ts:68:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  src/main.test.ts > built API entry and startup failures > releases ownership on a real corrupt-database startup fault before HTTP setup
+Error: No disposable API port is free in 5600-5699
+ ❯ freePort src/testing/api-subprocess.ts:49:9
+     47|     if (available) return port;
+     48|   }
+     49|   throw new Error('No disposable API port is free in 5600-5699');
+       |         ^
+     50| }
+     51|
+ ❯ createApiProcessFixture src/testing/api-subprocess.ts:132:16
+ ❯ fixture src/main.test.ts:12:19
+ ❯ src/main.test.ts:88:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  src/main.test.ts > built API entry and startup failures > releases ownership after a real occupied-port listen failure
+Error: No disposable API port is free in 5600-5699
+ ❯ freePort src/testing/api-subprocess.ts:49:9
+     47|     if (available) return port;
+     48|   }
+     49|   throw new Error('No disposable API port is free in 5600-5699');
+       |         ^
+     50| }
+     51|
+ ❯ createApiProcessFixture src/testing/api-subprocess.ts:132:16
+ ❯ fixture src/main.test.ts:12:19
+ ❯ src/main.test.ts:102:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  src/retired-event-startup.test.ts > cold start over a stored retired Event destination (#242) > starts with a published version holding one, refuses that loop per loop and serves the rest
+ FAIL  src/retired-event-startup.test.ts > cold start over a stored retired Event destination (#242) > starts with a draft snapshot only holding one, refuses that loop per loop and serves the rest
+Error: No disposable API port is free in 5600-5699
+ ❯ freePort src/testing/api-subprocess.ts:49:9
+     47|     if (available) return port;
+     48|   }
+     49|   throw new Error('No disposable API port is free in 5600-5699');
+       |         ^
+     50| }
+     51|
+ ❯ createApiProcessFixture src/testing/api-subprocess.ts:132:16
+ ❯ prepare src/retired-event-startup.test.ts:57:13
+ ❯ src/retired-event-startup.test.ts:133:79
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > a hard kill around child completion leaves every parent one continuation after restart
+Error: No disposable API port is free in 5600-5699
+ ❯ freePort src/testing/api-subprocess.ts:49:9
+     47|     if (available) return port;
+     48|   }
+     49|   throw new Error('No disposable API port is free in 5600-5699');
+       |         ^
+     50| }
+     51|
+ ❯ createApiProcessFixture src/testing/api-subprocess.ts:132:16
+ ❯ boot src/subloop-restart.test.ts:75:13
+ ❯ src/subloop-restart.test.ts:134:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a child finished while down with one continuation per parent
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a parent interrupted mid-wake with one continuation per parent
+Error: No disposable API port is free in 5600-5699
+ ❯ freePort src/testing/api-subprocess.ts:49:9
+     47|     if (available) return port;
+     48|   }
+     49|   throw new Error('No disposable API port is free in 5600-5699');
+       |         ^
+     50| }
+     51|
+ ❯ createApiProcessFixture src/testing/api-subprocess.ts:132:16
+ ❯ boot src/subloop-restart.test.ts:75:13
+ ❯ src/subloop-restart.test.ts:193:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+
+ Test Files  3 failed | 50 passed | 2 skipped (55)
+      Tests  10 failed | 732 passed | 6 skipped (748)
+   Start at  14:27:24
+   Duration  700.90s (tests 68%, import 28%, transform 4%, worker 1%)
+
+     Import  277 modules were evaluated 395 times · 184.80s total, 28% of tracked time
+             ~55.21s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+ % Coverage report from v8
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s
+-------------------|---------|----------|---------|---------|-------------------
+All files          |   93.14 |     91.8 |   87.76 |   94.62 |
+ src               |   94.29 |     90.9 |   90.12 |   95.53 |
+  ...r-registry.ts |   97.91 |     92.5 |     100 |   97.77 | 149
+  container.ts     |     100 |    95.77 |     100 |     100 | 169,275,297
+  ...te-api-key.ts |     100 |    96.36 |     100 |     100 | 118-137
+  data-dir-lock.ts |   82.45 |    82.14 |      90 |      88 | 60-61,68-71
+  emit-openapi.ts  |   73.68 |     62.5 |   33.33 |   76.47 | 31-37
+  loop-issues.ts   |     100 |    90.47 |     100 |     100 | 23,45
+  main.ts          |    56.6 |    46.66 |   33.33 |   61.22 | ...38,76-78,86-93
+  preflight.ts     |   96.23 |    84.12 |   89.13 |    97.6 | 462-464,474
+  sse.ts           |   95.58 |    85.36 |     100 |     100 | 56,62-68,86,112
+ src/plugins       |   99.09 |       94 |     100 |     100 |
+  auth.ts          |    97.5 |    92.85 |     100 |     100 | 28,65,68
+  errors.ts        |     100 |    97.72 |     100 |     100 | 74
+  static.ts        |     100 |    85.71 |     100 |     100 | 52-53
+ src/routes        |   99.13 |    96.01 |   99.01 |   99.76 |
+  classifiers.ts   |   97.67 |      100 |      90 |     100 |
+  loops.ts         |   99.31 |    93.87 |     100 |     100 | ...27,347,401,406
+  runs.ts          |   98.83 |    95.34 |     100 |     100 | 95,198,233,372
+  templates.ts     |   93.75 |       75 |     100 |   92.85 | 39
+  triggers.ts      |     100 |    95.83 |     100 |     100 | 134
+ src/templates     |   95.45 |      100 |     100 |   95.16 |
+  copy-catalog.ts  |       0 |      100 |     100 |       0 | 3-5
+ src/testing       |   50.31 |    51.72 |   37.03 |   55.22 |
+  ...subprocess.ts |   23.23 |     7.14 |   11.11 |   26.82 | ...59-161,171-191
+  ...classifier.ts |   94.11 |     87.5 |    92.3 |     100 | 78-85
+  test-app.ts      |   96.15 |      100 |      80 |     100 |
+ src/triggers      |   98.75 |    95.31 |     100 |   99.71 |
+  poll.ts          |     100 |    96.72 |     100 |     100 | 115,181
+  ...er-service.ts |   97.87 |    92.85 |     100 |     100 | ...13,579-581,617
+  webhook-body.ts  |   98.48 |    96.34 |     100 |    98.3 | 170
+-------------------|---------|----------|---------|---------|-------------------
+
+=============================== Coverage summary ===============================
+Statements   : 93.14% ( 1915/2056 )
+Branches     : 91.8% ( 1266/1379 )
+Functions    : 87.76% ( 366/417 )
+Lines        : 94.62% ( 1742/1841 )
+================================================================================
+ERROR: Coverage for functions (87.76%) does not meet global threshold (90%)
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in <user-path>
+  │ f1\apps\api

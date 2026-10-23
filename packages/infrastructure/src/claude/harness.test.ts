@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import * as probeFs from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { HarnessOptionsSchema } from '@graphgoblin/contracts';
 import { createTestEngine, singleNodeLoop } from '@graphgoblin/engine/testing';
 import type { HarnessEvent, HarnessStartRequest } from '@graphgoblin/engine';
@@ -157,9 +159,95 @@ describe('Claude existing harness contract', () => {
       }
     },
   );
+  it('creates the prerequisite directory under a system temporary directory of 226 characters (#102)', async () => {
+    // Windows `fs.mkdtemp` refused the 249-character probe path here (ENAMETOOLONG), although the
+    // directory can be created and the CLI started in it; see docs/qa/2026-10-19-wp-f5-launch-diagnosis.md.
+    const root = await probeFs.mkdtemp(join(tmpdir(), 'gg-long-temp-'));
+    let longTemp = root;
+    while (longTemp.length < 226 - 21) longTemp = join(longTemp, 'segment-abcdefghij');
+    longTemp = join(longTemp, 'x'.repeat(226 - longTemp.length - 1));
+    expect(longTemp).toHaveLength(226);
+    await probeFs.mkdir(longTemp, { recursive: true });
+    const directories: string[] = [];
+    const runner: ClaudeCliRunner = async (command) => {
+      directories.push(command.cwd);
+      expect(await probeFs.readdir(command.cwd)).toEqual([]);
+      if (command.args.includes('--version')) return outcome('2.1.285');
+      if (command.args.includes('--help')) return outcome(help);
+      return outcome('{"authMethod":"claude.ai"}');
+    };
+    for (const name of ['TEMP', 'TMP', 'TMPDIR']) vi.stubEnv(name, longTemp);
+    try {
+      const harness = new ClaudeHarness({ runner, platform: 'win32' });
+      expect(await harness.preflight()).toMatchObject({ ok: true, problems: [] });
+      expect(directories).toHaveLength(3);
+      expect(new Set(directories).size).toBe(1);
+      expect(directories[0]?.startsWith(longTemp)).toBe(true);
+      expect(directories[0]?.length).toBeGreaterThan(248);
+      await expect(probeFs.access(directories[0] ?? '')).rejects.toMatchObject({ code: 'ENOENT' });
+    } finally {
+      vi.unstubAllEnvs();
+      await probeFs.rm(root, { recursive: true, force: true });
+    }
+  });
+  it('tries a fresh prerequisite directory name after a name collision and never removes the existing one', async () => {
+    const collision = Object.assign(new Error('Synthetic name collision'), { code: 'EEXIST' });
+    const create = vi.spyOn(probeFs, 'mkdir').mockRejectedValueOnce(collision);
+    const remove = vi.spyOn(probeFs, 'rm');
+    const directories = new Set<string>();
+    const runner: ClaudeCliRunner = (command) => {
+      directories.add(command.cwd);
+      if (command.args.includes('--version')) return Promise.resolve(outcome('2.1.285'));
+      if (command.args.includes('--help')) return Promise.resolve(outcome(help));
+      return Promise.resolve(outcome('{"authMethod":"claude.ai"}'));
+    };
+    try {
+      const harness = new ClaudeHarness({ runner, platform: 'win32' });
+      expect(await harness.preflight()).toMatchObject({ ok: true, problems: [] });
+      const attempted = create.mock.calls.map(([path]) => String(path));
+      expect(attempted).toHaveLength(2);
+      expect(attempted[0]).not.toBe(attempted[1]);
+      expect([...directories]).toEqual([attempted[1]]);
+      expect(remove.mock.calls.map(([path]) => String(path))).toEqual([attempted[1]]);
+    } finally {
+      create.mockRestore();
+      remove.mockRestore();
+    }
+  });
+  it.each([
+    ['four name collisions', 'EEXIST', 4],
+    ['a creation fault', 'EACCES', 1],
+  ])(
+    'fails the check without starting the CLI or removing anything after %s',
+    async (_case, code, attempts) => {
+      const fault = Object.assign(new Error('Synthetic creation fault'), { code });
+      const create = vi.spyOn(probeFs, 'mkdir').mockRejectedValue(fault);
+      const remove = vi.spyOn(probeFs, 'rm');
+      const runner = vi.fn<ClaudeCliRunner>();
+      try {
+        const harness = new ClaudeHarness({ runner, platform: 'win32' });
+        expect(await harness.preflight()).toMatchObject({
+          ok: false,
+          state: 'unknown',
+          problems: [
+            'Claude readiness could not be confirmed. Check that the Claude CLI starts and responds, then retry preflight.',
+          ],
+        });
+        const attempted = create.mock.calls.map(([path]) => String(path));
+        expect(attempted).toHaveLength(attempts);
+        expect(new Set(attempted).size).toBe(attempts);
+        expect(runner).not.toHaveBeenCalled();
+        expect(remove).not.toHaveBeenCalled();
+      } finally {
+        create.mockRestore();
+        remove.mockRestore();
+      }
+    },
+  );
   it('checks the installed capability/auth prerequisites and exposes explicit model support and policies', async () => {
     const { harness, calls } = fixture();
     expect(await harness.preflight()).toMatchObject({
+      state: 'ready',
       ok: true,
       authenticated: true,
       version: '2.1.285',
@@ -577,7 +665,7 @@ describe('Claude preflight and transport failure matrix', () => {
             ? '2.1.287'
             : command.args.includes('--help')
               ? help.replace('--restricted', '')
-              : '{}',
+              : '{"loggedIn":false,"authMethod":"none"}',
         );
       },
     });
@@ -708,7 +796,7 @@ describe('Claude preflight and transport failure matrix', () => {
   it.each([
     { timedOut: true, code: 'HARNESS_TIMEOUT' },
     { overflow: true, code: 'HARNESS_OUTPUT_LIMIT' },
-    { spawnCode: 'EACCES' as const, code: 'HARNESS_NOT_INSTALLED' },
+    { spawnCode: 'EACCES' as const, code: 'HARNESS_TURN_FAILED' },
     { stdinFailed: true, code: 'HARNESS_TURN_FAILED' },
   ])('maps transport disposition $code safely', async ({ code, ...exit }) => {
     const { harness } = fixture({ exit });
@@ -737,6 +825,34 @@ describe('Claude preflight and transport failure matrix', () => {
 });
 
 describe('unconfirmed native termination', () => {
+  it.each([
+    ['timeout', { timedOut: true }, 'unknown', 'HARNESS_TIMEOUT'],
+    ['missing executable', { spawnCode: 'ENOENT' }, 'cli-missing', 'HARNESS_NOT_INSTALLED'],
+    [
+      'unconfirmed termination',
+      { terminationUnconfirmed: true },
+      'unknown',
+      'HARNESS_TERMINATION_UNCONFIRMED',
+    ],
+    ['aborted process', { aborted: true }, 'unknown', 'HARNESS_TURN_FAILED'],
+    ['output overflow', { overflow: true }, 'unknown', 'HARNESS_OUTPUT_LIMIT'],
+  ] as const)(
+    'keeps %s authoritative over positive auth-status text',
+    async (_name, fault, state, code) => {
+      const runner: ClaudeCliRunner = (command) => {
+        if (command.args.includes('--version')) return Promise.resolve(outcome('2.1.285'));
+        if (command.args.includes('--help')) return Promise.resolve(outcome(help));
+        return Promise.resolve(outcome('Not logged in', { notLoggedIn: true, ...fault }));
+      };
+      const harness = new ClaudeHarness({ platform: 'win32', runner });
+      const result = await harness.preflight();
+      expect(result).toMatchObject({ state, ok: false });
+      expect(result).not.toHaveProperty('authenticated');
+      await expect(
+        harness.start(request, new AbortController().signal).result,
+      ).rejects.toMatchObject({ code });
+    },
+  );
   it.each(['cancel', 'signal'] as const)(
     'preserves actionable typed failure for %s and after completion',
     async (mode) => {
@@ -853,3 +969,17 @@ describe('Claude native structured repair through the engine', () => {
     },
   );
 });
+
+it.each(['auth', 'quota', 'transport'] as const)(
+  'does not infer a real turn failure from %s stderr classification',
+  async (failureState) => {
+    const { harness } = fixture({ exit: { exitCode: 1, failureState, notLoggedIn: true } });
+    const session = harness.start(request, new AbortController().signal);
+    const events = drain(session.events);
+    await expect(session.result).rejects.toMatchObject({
+      code: 'HARNESS_TURN_FAILED',
+      retriable: false,
+    });
+    await events;
+  },
+);

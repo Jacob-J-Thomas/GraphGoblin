@@ -1,0 +1,121 @@
+{
+  "head": "541fddd4e7d0ff87408b0427b86721345f604f4d",
+  "exitCode": 1,
+  "browser": "Microsoft Edge (msedge channel)",
+  "retries": 0,
+  "stats": {
+    "startTime": "2026-10-22T06:00:33.317Z",
+    "duration": 120406.895,
+    "expected": 4,
+    "skipped": 0,
+    "unexpected": 4,
+    "flaky": 0
+  },
+  "checks": [
+    {
+      "file": "model-picker.spec.ts",
+      "line": 36,
+      "name": "catalog model and effort publish and reach the harness (dark)",
+      "steps": "Unchanged repository model-picker spec in served Microsoft Edge, with built API and existing controlled fakes.",
+      "expected": "Pass except exactly the four known #205 cases at :36 (dark/light), :102 and :159.",
+      "actual": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveValue\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator:  getByRole('dialog').getByLabel('Model', { exact: true })\nExpected: \u001b[32m\"picker-dark\"\u001b[39m\nReceived: \u001b[31m\"\"\u001b[39m\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveValue\" getByRole('dialog').getByLabel('Model', { exact: true }) with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('dialog').getByLabel('Model', { exact: true })\u001b[22m\n\u001b[2m    23 × locator resolved to <select id=\"_r_11_\" aria-describedby=\"_r_11_-help\" class=\"rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-point…>…</select>\u001b[22m\n\u001b[2m       - unexpected value \"\"\u001b[22m\n\n\n  62 |     await page.keyboard.type(`Picker ${theme}`);\n  63 |     await page.keyboard.press('Enter');\n> 64 |     await expect(model).toHaveValue(selected);\n     |                         ^\n  65 |     const effort = dialog.getByLabel('Effort', { exact: true });\n  66 |     await expect(effort.locator('option')).toHaveText([\n  67 |       '(inherited; the catalog suggests low)',\n    at <profile>\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-f2b\\apps\\web\\e2e\\model-picker.spec.ts:64:25",
+      "verdict": "FAIL",
+      "known205": true,
+      "status": "failed",
+      "retry": 0,
+      "durationMs": 11327
+    },
+    {
+      "file": "model-picker.spec.ts",
+      "line": 36,
+      "name": "catalog model and effort publish and reach the harness (light)",
+      "steps": "Unchanged repository model-picker spec in served Microsoft Edge, with built API and existing controlled fakes.",
+      "expected": "Pass except exactly the four known #205 cases at :36 (dark/light), :102 and :159.",
+      "actual": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveValue\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator:  getByRole('dialog').getByLabel('Model', { exact: true })\nExpected: \u001b[32m\"picker-light\"\u001b[39m\nReceived: \u001b[31m\"\"\u001b[39m\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveValue\" getByRole('dialog').getByLabel('Model', { exact: true }) with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('dialog').getByLabel('Model', { exact: true })\u001b[22m\n\u001b[2m    23 × locator resolved to <select id=\"_r_11_\" aria-describedby=\"_r_11_-help\" class=\"rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 cursor-point…>…</select>\u001b[22m\n\u001b[2m       - unexpected value \"\"\u001b[22m\n\n\n  62 |     await page.keyboard.type(`Picker ${theme}`);\n  63 |     await page.keyboard.press('Enter');\n> 64 |     await expect(model).toHaveValue(selected);\n     |                         ^\n  65 |     const effort = dialog.getByLabel('Effort', { exact: true });\n  66 |     await expect(effort.locator('option')).toHaveText([\n  67 |       '(inherited; the catalog suggests low)',\n    at <profile>\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-f2b\\apps\\web\\e2e\\model-picker.spec.ts:64:25",
+      "verdict": "FAIL",
+      "known205": true,
+      "status": "failed",
+      "retry": 0,
+      "durationMs": 11017
+    },
+    {
+      "file": "model-picker.spec.ts",
+      "line": 102,
+      "name": "a saved model removed from the catalog stays selected and explicit unknown import is rejected",
+      "steps": "Unchanged repository model-picker spec in served Microsoft Edge, with built API and existing controlled fakes.",
+      "expected": "Pass except exactly the four known #205 cases at :36 (dark/light), :102 and :159.",
+      "actual": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveAttribute\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('dialog').getByRole('link', { name: 'Model catalog in Settings' })\nExpected: \u001b[32m\"/app/settings\"\u001b[39m\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toHaveAttribute\" getByRole('dialog').getByRole('link', { name: 'Model catalog in Settings' }) with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('dialog').getByRole('link', { name: 'Model catalog in Settings' })\u001b[22m\n\n\n  136 |     'alert',\n  137 |   );\n> 138 |   await expect(dialog.getByRole('link', { name: 'Model catalog in Settings' })).toHaveAttribute(\n      |                                                                                 ^\n  139 |     'href',\n  140 |     '/app/settings',\n  141 |   );\n    at <profile>\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-f2b\\apps\\web\\e2e\\model-picker.spec.ts:138:81",
+      "verdict": "FAIL",
+      "known205": true,
+      "status": "failed",
+      "retry": 0,
+      "durationMs": 11085
+    },
+    {
+      "file": "model-picker.spec.ts",
+      "line": 159,
+      "name": "catalog failure preserves the current values until retry and loop defaults share the picker",
+      "steps": "Unchanged repository model-picker spec in served Microsoft Edge, with built API and existing controlled fakes.",
+      "expected": "Pass except exactly the four known #205 cases at :36 (dark/light), :102 and :159.",
+      "actual": "\u001b[31mTest timeout of 60000ms exceeded.\u001b[39m\nError: locator.click: Test timeout of 60000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('dialog').getByRole('button', { name: 'Retry model catalog' })\u001b[22m\n\n\n  183 |   await expect(model).toHaveAccessibleDescription(/Cannot load the model catalog/);\n  184 |   await page.unroute('**/model-catalog');\n> 185 |   await dialog.getByRole('button', { name: 'Retry model catalog' }).click();\n      |                                                                     ^\n  186 |   await expect(model).not.toHaveAttribute('aria-readonly');\n  187 |   await expect(model).toHaveValue(chosen.model);\n  188 |   await closeNode(page);\n    at <profile>\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-qa-wp-f2b\\apps\\web\\e2e\\model-picker.spec.ts:185:69",
+      "verdict": "FAIL",
+      "known205": true,
+      "status": "timedOut",
+      "retry": 0,
+      "durationMs": 60059
+    },
+    {
+      "file": "model-picker.spec.ts",
+      "line": 203,
+      "name": "the decision LLM uses an explicit harness model and rejects unsupported effort on admission",
+      "steps": "Unchanged repository model-picker spec in served Microsoft Edge, with built API and existing controlled fakes.",
+      "expected": "Pass except exactly the four known #205 cases at :36 (dark/light), :102 and :159.",
+      "actual": "All assertions passed.",
+      "verdict": "PASS",
+      "known205": false,
+      "status": "passed",
+      "retry": 0,
+      "durationMs": 1434
+    },
+    {
+      "file": "model-picker.spec.ts",
+      "line": 284,
+      "name": "following a model issue keeps focus through a delayed catalog and a failed cached refresh",
+      "steps": "Unchanged repository model-picker spec in served Microsoft Edge, with built API and existing controlled fakes.",
+      "expected": "Pass except exactly the four known #205 cases at :36 (dark/light), :102 and :159.",
+      "actual": "All assertions passed.",
+      "verdict": "PASS",
+      "known205": false,
+      "status": "passed",
+      "retry": 0,
+      "durationMs": 6922
+    },
+    {
+      "file": "model-picker.spec.ts",
+      "line": 366,
+      "name": "explicit Claude to Codex switch persists the owner default and sends the exact request",
+      "steps": "Unchanged repository model-picker spec in served Microsoft Edge, with built API and existing controlled fakes.",
+      "expected": "Pass except exactly the four known #205 cases at :36 (dark/light), :102 and :159.",
+      "actual": "All assertions passed.",
+      "verdict": "PASS",
+      "known205": false,
+      "status": "passed",
+      "retry": 0,
+      "durationMs": 1415
+    },
+    {
+      "file": "model-picker.spec.ts",
+      "line": 418,
+      "name": "cached catalog failure holds publication across a harness switch and recovers",
+      "steps": "Unchanged repository model-picker spec in served Microsoft Edge, with built API and existing controlled fakes.",
+      "expected": "Pass except exactly the four known #205 cases at :36 (dark/light), :102 and :159.",
+      "actual": "All assertions passed.",
+      "verdict": "PASS",
+      "known205": false,
+      "status": "passed",
+      "retry": 0,
+      "durationMs": 4259
+    }
+  ],
+  "baselineMatches": true
+}

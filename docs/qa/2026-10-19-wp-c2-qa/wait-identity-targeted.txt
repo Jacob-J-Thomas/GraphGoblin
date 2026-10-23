@@ -1,0 +1,43 @@
+
+ RUN  v5.0.3 <worktree>/apps/api
+
+ ✓ src/wait-identity.test.ts > observed wait identities over real SQLite and API > rejects visit A answers at visit B without mutation, and accepts B once 6720ms
+ ✓ src/wait-identity.test.ts > observed wait identities over real SQLite and API > resets signal observations on a genuine heartbeat revisit 2484ms
+ ✓ src/wait-identity.test.ts > observed wait identities over real SQLite and API > cannot lose a timer delivered synchronously by the injected timer port around parking 2628ms
+ ✓ src/wait-identity.test.ts > durable wait boundaries > accepts only one racing API answer and rejects retry without changing the log 1494ms
+ ✓ src/wait-identity.test.ts > durable wait boundaries > keeps the observed identity when SQLite is closed and reopened 4296ms
+ ✓ src/wait-identity.test.ts > durable wait boundaries > recovers an event-first park and its passed deadline at 50 ms polling 691ms
+ ✓ src/wait-identity.test.ts > durable wait boundaries > recovers an event-first park and its passed deadline at 1000 ms polling 1498ms
+ ✓ src/wait-identity.test.ts > durable wait boundaries > acknowledges a due timer while paused and re-arms its original deadline after reopen and resume 914ms
+ ✓ src/wait-identity.test.ts > durable wait boundaries > handles deadline -1000, context 8, polling 50 2839ms
+ ✓ src/wait-identity.test.ts > durable wait boundaries > handles deadline -1000, context 256000, polling 50 2440ms
+ ✓ src/wait-identity.test.ts > durable wait boundaries > handles deadline 0, context 8, polling 50 3699ms
+ ✓ src/wait-identity.test.ts > durable wait boundaries > handles deadline 0, context 256000, polling 50 3411ms
+ ✓ src/wait-identity.test.ts > durable wait boundaries > handles deadline 1000, context 8, polling 50 4186ms
+ ✓ src/wait-identity.test.ts > durable wait boundaries > handles deadline 1000, context 256000, polling 50 2159ms
+ ✓ src/wait-identity.test.ts > durable wait boundaries > handles deadline -1000, context 8, polling 1000 1138ms
+ ✓ src/wait-identity.test.ts > durable wait boundaries > handles deadline -1000, context 256000, polling 1000 2406ms
+ ✓ src/wait-identity.test.ts > durable wait boundaries > handles deadline 0, context 8, polling 1000 2330ms
+ ✓ src/wait-identity.test.ts > durable wait boundaries > handles deadline 0, context 256000, polling 1000 3617ms
+ ✓ src/wait-identity.test.ts > durable wait boundaries > handles deadline 1000, context 8, polling 1000 2250ms
+ ✓ src/wait-identity.test.ts > durable wait boundaries > handles deadline 1000, context 256000, polling 1000 2997ms
+ ✓ src/wait-identity.test.ts > durable wait boundaries > retains heartbeat observations through beats and real SQLite reopen, then rejects old signals 1045ms
+ ✓ src/wait-identity.test.ts > wait rejection and acknowledgement boundaries > requires an observed token and rejects unknown tokens without mutation 1844ms
+ ✓ src/wait-identity.test.ts > wait rejection and acknowledgement boundaries > records one signal answer atomically when two API requests race 1875ms
+ ✓ src/wait-identity.test.ts > wait rejection and acknowledgement boundaries > recovers a paused event-first park before its snapshot/status commit without advancing it 377ms
+ ✓ src/wait-identity.test.ts > wait rejection and acknowledgement boundaries > closes and reopens SQLite after the wake but before timer acknowledgement 681ms
+ ✓ src/wait-identity.test.ts > a delayed wake acknowledgement cannot replace the next observed wait 2847ms
+ ✓ src/wait-identity.test.ts > redelivery queues a durable wake after its committed status response was lost 3164ms
+ ✓ src/wait-identity.test.ts > retry repairs a durable input answer after its status transition failed 3947ms
+ ✓ src/wait-identity.test.ts > retry repairs a durable signal answer after its status transition failed 1401ms
+ ✓ src/wait-identity.test.ts > acknowledges timers for unreadable event history and keeps healthy work available 1988ms
+ ✓ src/wait-identity.test.ts > acknowledges timers for unreadable row history and keeps healthy work available 2274ms
+ ✓ src/wait-identity.test.ts > reports a paused input wait as INVALID_STATE without consuming its identity 1808ms
+ ✓ src/wait-identity.test.ts > reports a paused signal wait as INVALID_STATE without consuming its identity 1400ms
+ ✓ src/wait-identity.test.ts > a paused timer acknowledgement cannot delete a resume re-arm at the same deadline 1347ms
+
+ Test Files  1 passed (1)
+      Tests  34 passed (34)
+   Start at  18:24:56
+   Duration  116.19s (tests 72%, transform 18%, import 11%)
+

@@ -4,7 +4,7 @@ import {
   type LoopDefinitionInput,
   type NodeInput,
 } from '@graphgoblin/contracts';
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Icon } from '../components/icons/index.js';
 import {
   Button,
@@ -44,6 +44,7 @@ import {
 } from './TriggerTypePicker.js';
 import { POLL_FIELD_LABELS, WEBHOOK_FIELD_LABELS } from './trigger-field-labels.js';
 import { CatalogWarningsContext } from '../forms/fields/model.js';
+import { INFERENCE_FIELD_OVERRIDES } from './HarnessField.js';
 import { GateLimitIssuesContext } from './DecisionGateFields.js';
 import { canvasFocusTarget } from './canvas-focus.js';
 import { DECISION_FIELD_OVERRIDES, NODE_FIELD_CONTROLS } from './field-controls.js';
@@ -164,7 +165,6 @@ export function NodeEditorDialog({
   const historyEpoch = useEditorStore((s) => s.historyEpoch);
   const generation = useEditorStore((s) => s.generation);
   const bodyRef = useRef<HTMLElement>(null);
-  const pendingHarnessFocusRef = useRef(false);
   const [epoch, setEpoch] = useState(0);
   const [review, setReview] = useState<{
     title: string;
@@ -287,14 +287,6 @@ export function NodeEditorDialog({
     return () => clearTimeout(timer);
   }, [nodeFocus, node.id]);
 
-  useLayoutEffect(() => {
-    if (!pendingHarnessFocusRef.current) return;
-    pendingHarnessFocusRef.current = false;
-    bodyRef.current
-      ?.querySelector<HTMLInputElement>('input[type="radio"][value="claude"]')
-      ?.focus();
-  }, [epoch]);
-
   const commitId = () => {
     const error = idProblem(id.value, node.id, definition);
     setIdState({ ...id, error });
@@ -306,26 +298,6 @@ export function NodeEditorDialog({
       config = cleanGateLimits(config);
       for (const path of ['maxPasses', 'maxRunTimeSeconds'])
         setFieldError(`node:${node.id}`, path, undefined, undefined, change);
-      setEpoch((current) => current + 1);
-    }
-    if (
-      node.kind === 'inference' &&
-      change?.path === 'harness' &&
-      record(config)['harness'] === 'claude' &&
-      node.config.harness !== 'claude'
-    ) {
-      // Switching harness is explicit; start with Claude's least-privileged supported policy.
-      pendingHarnessFocusRef.current =
-        document.activeElement instanceof HTMLInputElement &&
-        document.activeElement.type === 'radio';
-      config = {
-        ...record(config),
-        harnessOptions: {
-          ...record(record(config)['harnessOptions']),
-          sandbox: 'read-only',
-          approval: 'never',
-        },
-      };
       setEpoch((current) => current + 1);
     }
     if (node.kind === 'decision' && change?.path === 'answer') {
@@ -683,11 +655,13 @@ export function NodeEditorDialog({
                                       : undefined
                                 }
                                 fieldOverrides={
-                                  node.kind === 'decision'
-                                    ? DECISION_FIELD_OVERRIDES
-                                    : node.kind === 'exit'
-                                      ? EXIT_FIELD_OVERRIDES
-                                      : undefined
+                                  node.kind === 'inference'
+                                    ? INFERENCE_FIELD_OVERRIDES
+                                    : node.kind === 'decision'
+                                      ? DECISION_FIELD_OVERRIDES
+                                      : node.kind === 'exit'
+                                        ? EXIT_FIELD_OVERRIDES
+                                        : undefined
                                 }
                                 problems={configProblems}
                                 disclosures={disclosures}

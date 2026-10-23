@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { fileURLToPath } from 'node:url';
 import { GraphGoblinApiError } from '@graphgoblin/api-client';
 import { LoopDefinitionSchema } from '@graphgoblin/contracts';
-import { kitchenSinkLoop } from '@graphgoblin/contracts/testing';
+import { kitchenSinkLoop, samplePin } from '@graphgoblin/contracts/testing';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import {
@@ -205,6 +205,7 @@ describe('describe helpers', () => {
       ownerId: 'local',
       loopId: '01J00000000000000000000000',
       versionId: '01J00000000000000000000002',
+      pinned: samplePin({ label: 'Child v1' }),
       parentRunId: '01J00000000000000000000003',
       invocationId: '01J00000000000000000000004',
       status: 'failed',
@@ -216,6 +217,7 @@ describe('describe helpers', () => {
     expect(summarizeRun(run)).toEqual({
       id: run.id,
       loopId: run.loopId,
+      definition: 'Child v1',
       status: 'failed',
       iteration: 1,
       failure: { code: 'INTERNAL_ERROR', message: 'x' },

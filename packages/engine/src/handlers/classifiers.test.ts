@@ -72,9 +72,20 @@ describe('classifier selection through the executor', () => {
         ],
       });
     }
+    // Each run calls the binding it pinned at start for its classifier.
     expect(e.ports.classifiers.requests).toEqual([
-      { ownerId: 'local', modelId: 'a', primitive: 'choice' },
-      { ownerId: 'local', modelId: 'b', primitive: 'choice' },
+      {
+        ownerId: 'local',
+        modelId: 'a',
+        primitive: 'choice',
+        binding: expect.objectContaining({ providerModel: 'a' }),
+      },
+      {
+        ownerId: 'local',
+        modelId: 'b',
+        primitive: 'choice',
+        binding: expect.objectContaining({ providerModel: 'b' }),
+      },
     ]);
   });
   it.each([
@@ -106,9 +117,16 @@ describe('classifier selection through the executor', () => {
     },
   );
   it('covers unknown fake registrations and unconfigured providers', async () => {
-    expect(await new FakeClassifierRegistry().resolve('local', 'missing', 'choice')).toMatchObject({
-      reason: 'CLASSIFIER_MODEL_NOT_FOUND',
-    });
+    const registry = new FakeClassifierRegistry();
+    expect(await registry.bind('local', 'missing')).toBeUndefined();
+    expect(
+      await registry.resolve('local', 'missing', 'choice', {
+        provider: 'http',
+        providerModel: 'missing',
+        primitives: ['choice'],
+        endpoint: 'https://classifier.test',
+      }),
+    ).toMatchObject({ reason: 'CLASSIFIER_MODEL_NOT_FOUND' });
     const e = await createTestEngine();
     e.ports.jev.isAvailable = false;
     const r = await e.runToIdle(e.publish(loop()).loopId);

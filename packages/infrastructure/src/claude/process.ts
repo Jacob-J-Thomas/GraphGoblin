@@ -1,6 +1,8 @@
 import { spawn } from 'node:child_process';
 import { killTree } from '../process/index.js';
 import { ClaudeHarnessError } from './errors.js';
+import { cliFailureState } from '@graphgoblin/domain';
+import type { HarnessReadinessState } from '@graphgoblin/contracts';
 export interface ClaudeProcessRequest {
   binary: string;
   args: readonly string[];
@@ -10,6 +12,8 @@ export interface ClaudeProcessRequest {
   signal: AbortSignal;
   timeoutMs: number;
   maxOutputBytes: number;
+  /** Ephemeral diagnostic inference is permitted only for no-turn prerequisite probes. */
+  classifyDiagnostics?: true;
 }
 export interface ClaudeProcessResult {
   exitCode: number | null;
@@ -22,6 +26,10 @@ export interface ClaudeProcessResult {
   terminationUnconfirmed?: true;
   stdinFailed?: boolean;
   callbackError?: ClaudeHarnessError;
+  /** Fixed classification only; stdout/stderr diagnostic bodies are never retained here. */
+  failureState?: HarnessReadinessState;
+  /** Positive sign-out text in bounded no-turn stderr; never a retained diagnostic body. */
+  notLoggedIn?: true;
 }
 export type ClaudeCliRunner = (
   request: ClaudeProcessRequest,
@@ -56,6 +64,7 @@ export const runClaudeProcess = (
       stdinFailed = false;
     let callbackError: ClaudeHarnessError | undefined, spawnCode: ClaudeProcessResult['spawnCode'];
     let killTimer: ReturnType<typeof setTimeout> | undefined;
+    let diagnostic = '';
     const finish = (exitCode: number | null, terminationUnconfirmed = false): void => {
       if (settled) return;
       settled = true;
@@ -72,6 +81,12 @@ export const runClaudeProcess = (
         ...(spawnCode ? { spawnCode } : {}),
         ...(stdinFailed ? { stdinFailed } : {}),
         ...(callbackError ? { callbackError } : {}),
+        ...(request.classifyDiagnostics && exitCode !== 0 && diagnostic
+          ? { failureState: cliFailureState(diagnostic) }
+          : {}),
+        ...(request.classifyDiagnostics && /\bnot logged in\b/i.test(diagnostic)
+          ? { notLoggedIn: true }
+          : {}),
       });
     };
     const kill = (): void => {
@@ -94,6 +109,10 @@ export const runClaudeProcess = (
         return;
       }
       try {
+        // Keep only stderr in this ephemeral window. Turn stdout can contain authored/model text.
+        // No-turn probe stdout is classified separately by the harness inspection path.
+        if (!output && request.classifyDiagnostics)
+          diagnostic = (diagnostic + chunk.toString('utf8')).slice(-8192);
         if (output) {
           stdout += chunk.toString('utf8');
           onStdout?.(chunk);

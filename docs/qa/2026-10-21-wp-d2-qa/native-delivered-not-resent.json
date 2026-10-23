@@ -1,0 +1,274 @@
+{
+  "name": "delivered-not-resent",
+  "id": "01M5GHE0GQVG8CEJ6KQ0PX731H",
+  "expected": "No resend or event changes after hard kill/restart",
+  "actual": [
+    {
+      "id": "01M5GHE0J69GS046YBYMFKC5MQ",
+      "channel": {
+        "kind": "webhook",
+        "url": "http://127.0.0.1:5811/channel-a"
+      },
+      "status": "delivered",
+      "attempts": 1,
+      "maxAttempts": 5,
+      "inFlight": false,
+      "acknowledgement": "accepted",
+      "effectMayHaveHappened": true
+    },
+    {
+      "id": "01M5GHE0J6Y8VKE4KRT3CF45Q1",
+      "channel": {
+        "kind": "webhook",
+        "url": "http://127.0.0.1:5811/channel-b"
+      },
+      "status": "delivered",
+      "attempts": 1,
+      "maxAttempts": 5,
+      "inFlight": false,
+      "acknowledgement": "accepted",
+      "effectMayHaveHappened": true
+    }
+  ],
+  "apiEvents": [
+    {
+      "runId": "01M5GHE0GQVG8CEJ6KQ0PX731H",
+      "seq": 9,
+      "ts": "2026-10-22T00:51:00.294Z",
+      "type": "delivery.queued",
+      "delivery": {
+        "id": "01M5GHE0J69GS046YBYMFKC5MQ",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5811/channel-a"
+        },
+        "status": "pending",
+        "attempts": 0,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "not_sent",
+        "effectMayHaveHappened": false
+      }
+    },
+    {
+      "runId": "01M5GHE0GQVG8CEJ6KQ0PX731H",
+      "seq": 10,
+      "ts": "2026-10-22T00:51:00.294Z",
+      "type": "delivery.queued",
+      "delivery": {
+        "id": "01M5GHE0J6Y8VKE4KRT3CF45Q1",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5811/channel-b"
+        },
+        "status": "pending",
+        "attempts": 0,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "not_sent",
+        "effectMayHaveHappened": false
+      }
+    },
+    {
+      "runId": "01M5GHE0GQVG8CEJ6KQ0PX731H",
+      "seq": 11,
+      "ts": "2026-10-22T00:51:00.308Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5GHE0J69GS046YBYMFKC5MQ",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5811/channel-a"
+        },
+        "status": "pending",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T00:51:12.305Z"
+      }
+    },
+    {
+      "runId": "01M5GHE0GQVG8CEJ6KQ0PX731H",
+      "seq": 12,
+      "ts": "2026-10-22T00:51:00.308Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5GHE0J6Y8VKE4KRT3CF45Q1",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5811/channel-b"
+        },
+        "status": "pending",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T00:51:12.306Z"
+      }
+    },
+    {
+      "runId": "01M5GHE0GQVG8CEJ6KQ0PX731H",
+      "seq": 13,
+      "ts": "2026-10-22T00:51:00.323Z",
+      "type": "delivery.finished",
+      "delivery": {
+        "id": "01M5GHE0J69GS046YBYMFKC5MQ",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5811/channel-a"
+        },
+        "status": "delivered",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "accepted",
+        "effectMayHaveHappened": true
+      }
+    },
+    {
+      "runId": "01M5GHE0GQVG8CEJ6KQ0PX731H",
+      "seq": 14,
+      "ts": "2026-10-22T00:51:00.331Z",
+      "type": "delivery.finished",
+      "delivery": {
+        "id": "01M5GHE0J6Y8VKE4KRT3CF45Q1",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5811/channel-b"
+        },
+        "status": "delivered",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "accepted",
+        "effectMayHaveHappened": true
+      }
+    }
+  ],
+  "sqlite": {
+    "run": {
+      "id": "01M5GHE0GQVG8CEJ6KQ0PX731H",
+      "status": "succeeded",
+      "finalized_at": "2026-10-22T00:51:00.339Z",
+      "last_event_seq": 14
+    },
+    "events": [
+      {
+        "run_id": "01M5GHE0GQVG8CEJ6KQ0PX731H",
+        "seq": 1,
+        "ts": "2026-10-22T00:51:00.247Z",
+        "type": "run.queued",
+        "node_id": null,
+        "payload": "{\"versionId\":\"01M5GHE0F4YGYFX891XJAGMBVN\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"QA two channels\",\"label\":\"QA two channels v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"classifiers\":{}},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M5GHE0GQVG8CEJ6KQ0PX731H\",\"loopId\":\"01M5GHE0F4C9G98RTCCS4KHGVD\",\"versionId\":\"01M5GHE0F4YGYFX891XJAGMBVN\",\"iteration\":1},\"invocation\":{\"id\":\"01M5GHE0GQBBPVYJ2YRZ9N6Y3Z\",\"source\":\"manual.api\",\"caller\":{\"kind\":\"api-key\",\"id\":\"01M5GHDVJ7EHE58D5C73745QWV\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"manual\",\"payload\":{\"qa\":\"two channels\"},\"receivedAt\":\"2026-10-22T00:51:00.247Z\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}}"
+      },
+      {
+        "run_id": "01M5GHE0GQVG8CEJ6KQ0PX731H",
+        "seq": 2,
+        "ts": "2026-10-22T00:51:00.268Z",
+        "type": "run.started",
+        "node_id": null,
+        "payload": "{\"attempt\":1}"
+      },
+      {
+        "run_id": "01M5GHE0GQVG8CEJ6KQ0PX731H",
+        "seq": 3,
+        "ts": "2026-10-22T00:51:00.275Z",
+        "type": "node.started",
+        "node_id": "start",
+        "payload": "{\"kind\":\"trigger\",\"attempt\":1,\"configHash\":\"527dee9c4254fe4e\"}"
+      },
+      {
+        "run_id": "01M5GHE0GQVG8CEJ6KQ0PX731H",
+        "seq": 4,
+        "ts": "2026-10-22T00:51:00.279Z",
+        "type": "node.finished",
+        "node_id": "start",
+        "payload": "{\"patch\":[{\"op\":\"add\",\"path\":\"/outputs/start\",\"value\":{\"nodeId\":\"start\",\"value\":{\"qa\":\"two channels\"},\"at\":\"2026-10-22T00:51:00.279Z\"}},{\"op\":\"add\",\"path\":\"/lastOutput\",\"value\":{\"nodeId\":\"start\",\"value\":{\"qa\":\"two channels\"},\"at\":\"2026-10-22T00:51:00.279Z\"}}],\"route\":\"out\",\"durationMs\":0}"
+      },
+      {
+        "run_id": "01M5GHE0GQVG8CEJ6KQ0PX731H",
+        "seq": 5,
+        "ts": "2026-10-22T00:51:00.290Z",
+        "type": "node.started",
+        "node_id": "done",
+        "payload": "{\"kind\":\"exit\",\"attempt\":1,\"configHash\":\"791b7ae54ba4d403\"}"
+      },
+      {
+        "run_id": "01M5GHE0GQVG8CEJ6KQ0PX731H",
+        "seq": 6,
+        "ts": "2026-10-22T00:51:00.294Z",
+        "type": "exit.evaluated",
+        "node_id": "done",
+        "payload": "{\"outcome\":\"success\"}"
+      },
+      {
+        "run_id": "01M5GHE0GQVG8CEJ6KQ0PX731H",
+        "seq": 7,
+        "ts": "2026-10-22T00:51:00.294Z",
+        "type": "node.finished",
+        "node_id": "done",
+        "payload": "{\"patch\":[],\"durationMs\":0}"
+      },
+      {
+        "run_id": "01M5GHE0GQVG8CEJ6KQ0PX731H",
+        "seq": 8,
+        "ts": "2026-10-22T00:51:00.294Z",
+        "type": "run.finished",
+        "node_id": null,
+        "payload": "{\"status\":\"succeeded\",\"outcome\":\"success\",\"result\":null}"
+      },
+      {
+        "run_id": "01M5GHE0GQVG8CEJ6KQ0PX731H",
+        "seq": 9,
+        "ts": "2026-10-22T00:51:00.294Z",
+        "type": "delivery.queued",
+        "node_id": null,
+        "payload": "{\"delivery\":{\"id\":\"01M5GHE0J69GS046YBYMFKC5MQ\",\"channel\":{\"kind\":\"webhook\",\"url\":\"http://127.0.0.1:5811/channel-a\"},\"status\":\"pending\",\"attempts\":0,\"maxAttempts\":5,\"inFlight\":false,\"acknowledgement\":\"not_sent\",\"effectMayHaveHappened\":false}}"
+      },
+      {
+        "run_id": "01M5GHE0GQVG8CEJ6KQ0PX731H",
+        "seq": 10,
+        "ts": "2026-10-22T00:51:00.294Z",
+        "type": "delivery.queued",
+        "node_id": null,
+        "payload": "{\"delivery\":{\"id\":\"01M5GHE0J6Y8VKE4KRT3CF45Q1\",\"channel\":{\"kind\":\"webhook\",\"url\":\"http://127.0.0.1:5811/channel-b\"},\"status\":\"pending\",\"attempts\":0,\"maxAttempts\":5,\"inFlight\":false,\"acknowledgement\":\"not_sent\",\"effectMayHaveHappened\":false}}"
+      },
+      {
+        "run_id": "01M5GHE0GQVG8CEJ6KQ0PX731H",
+        "seq": 11,
+        "ts": "2026-10-22T00:51:00.308Z",
+        "type": "delivery.attempted",
+        "node_id": null,
+        "payload": "{\"delivery\":{\"id\":\"01M5GHE0J69GS046YBYMFKC5MQ\",\"channel\":{\"kind\":\"webhook\",\"url\":\"http://127.0.0.1:5811/channel-a\"},\"status\":\"pending\",\"attempts\":1,\"maxAttempts\":5,\"inFlight\":true,\"acknowledgement\":\"unknown\",\"effectMayHaveHappened\":true,\"nextAttemptAt\":\"2026-10-22T00:51:12.305Z\"}}"
+      },
+      {
+        "run_id": "01M5GHE0GQVG8CEJ6KQ0PX731H",
+        "seq": 12,
+        "ts": "2026-10-22T00:51:00.308Z",
+        "type": "delivery.attempted",
+        "node_id": null,
+        "payload": "{\"delivery\":{\"id\":\"01M5GHE0J6Y8VKE4KRT3CF45Q1\",\"channel\":{\"kind\":\"webhook\",\"url\":\"http://127.0.0.1:5811/channel-b\"},\"status\":\"pending\",\"attempts\":1,\"maxAttempts\":5,\"inFlight\":true,\"acknowledgement\":\"unknown\",\"effectMayHaveHappened\":true,\"nextAttemptAt\":\"2026-10-22T00:51:12.306Z\"}}"
+      },
+      {
+        "run_id": "01M5GHE0GQVG8CEJ6KQ0PX731H",
+        "seq": 13,
+        "ts": "2026-10-22T00:51:00.323Z",
+        "type": "delivery.finished",
+        "node_id": null,
+        "payload": "{\"delivery\":{\"id\":\"01M5GHE0J69GS046YBYMFKC5MQ\",\"channel\":{\"kind\":\"webhook\",\"url\":\"http://127.0.0.1:5811/channel-a\"},\"status\":\"delivered\",\"attempts\":1,\"maxAttempts\":5,\"inFlight\":false,\"acknowledgement\":\"accepted\",\"effectMayHaveHappened\":true}}"
+      },
+      {
+        "run_id": "01M5GHE0GQVG8CEJ6KQ0PX731H",
+        "seq": 14,
+        "ts": "2026-10-22T00:51:00.331Z",
+        "type": "delivery.finished",
+        "node_id": null,
+        "payload": "{\"delivery\":{\"id\":\"01M5GHE0J6Y8VKE4KRT3CF45Q1\",\"channel\":{\"kind\":\"webhook\",\"url\":\"http://127.0.0.1:5811/channel-b\"},\"status\":\"delivered\",\"attempts\":1,\"maxAttempts\":5,\"inFlight\":false,\"acknowledgement\":\"accepted\",\"effectMayHaveHappened\":true}}"
+      }
+    ]
+  },
+  "pass": true
+}

@@ -1,0 +1,605 @@
+[
+  {
+    "id": "poll-over",
+    "pass": true,
+    "milliseconds": 5647,
+    "detail": {
+      "loop": "01M5AN9XWCPQ45W5FXT0CGH11E",
+      "admitted": 0,
+      "warning": "HTTP_PROBE_BODY_OVERFLOW"
+    }
+  },
+  {
+    "id": "poll-exact",
+    "pass": true,
+    "milliseconds": 5800,
+    "detail": {
+      "loop": "01M5AN9XVST5RSXKBDM4XM6TG6",
+      "run": "01M5ANA3472ST9QTWBKR087X80",
+      "exactBodyAndJson": true,
+      "bodyBytes": 65536
+    }
+  },
+  {
+    "id": "poll-chunk-over",
+    "pass": true,
+    "milliseconds": 6142,
+    "detail": {
+      "loop": "01M5AN9XWCNCX1B149DKQQT6RR",
+      "admitted": 0,
+      "warning": "HTTP_PROBE_BODY_OVERFLOW"
+    }
+  },
+  {
+    "id": "poll-gzip-over",
+    "pass": true,
+    "milliseconds": 6245,
+    "detail": {
+      "loop": "01M5AN9XWDKKMQ82MCDJECY85S",
+      "admitted": 0,
+      "warning": "HTTP_PROBE_BODY_OVERFLOW"
+    }
+  },
+  {
+    "id": "poll-gzip-wide",
+    "pass": true,
+    "milliseconds": 6353,
+    "detail": {
+      "loop": "01M5AN9XWDXW0XSW1TEGYK38XS",
+      "run": "01M5ANA3RBTGC5H6R29H370TX9",
+      "exactBodyAndJson": true,
+      "bodyBytes": 20
+    }
+  },
+  {
+    "id": "poll-head",
+    "pass": true,
+    "milliseconds": 6389,
+    "detail": {
+      "loop": "01M5AN9XX54N6VTVRKVMYAN2PA",
+      "run": "01M5ANA3VQ3CT30Z36EAWT4Q02",
+      "exactBodyAndJson": true,
+      "bodyBytes": 0
+    }
+  },
+  {
+    "id": "poll-204",
+    "pass": true,
+    "milliseconds": 6391,
+    "detail": {
+      "loop": "01M5AN9XX4NAV2GW1GDFVZXNAN",
+      "run": "01M5ANA3SMTG0S8X025BJNQC43",
+      "exactBodyAndJson": true,
+      "bodyBytes": 0
+    }
+  },
+  {
+    "id": "poll-304",
+    "pass": true,
+    "milliseconds": 6394,
+    "detail": {
+      "loop": "01M5AN9XX5ZX74K5QJRNZVMGJZ",
+      "run": "01M5ANA3TAK3KPSDEVS8NPC984",
+      "exactBodyAndJson": true,
+      "bodyBytes": 0
+    }
+  },
+  {
+    "id": "poll-unicode",
+    "pass": true,
+    "milliseconds": 6634,
+    "detail": {
+      "loop": "01M5AN9XX5R8N491GRGZ1W3BXS",
+      "run": "01M5ANA424AQGP1JFYH8R2VMBM",
+      "exactBodyAndJson": true,
+      "bodyBytes": 65536
+    }
+  },
+  {
+    "id": "poll-next-after-overflow",
+    "pass": true,
+    "milliseconds": 3815,
+    "detail": {
+      "loop": "01M5AN9XWCPQ45W5FXT0CGH11E",
+      "run": "01M5ANA7XY9HPFP3K01MKSXAGE",
+      "nextPollExact": true
+    }
+  },
+  {
+    "id": "chunk-socket-closed-early",
+    "pass": true,
+    "milliseconds": 0,
+    "detail": {
+      "route": "chunk-over",
+      "mode": "chunk-over",
+      "method": "GET",
+      "sent": 67584,
+      "total": 1048576,
+      "ended": false,
+      "closed": true,
+      "started": 1792432999631,
+      "elapsed": 561
+    }
+  },
+  {
+    "id": "items-script-65535",
+    "pass": true,
+    "milliseconds": 7440,
+    "detail": {
+      "loop": "01M5ANA81FTR2NKHD7FD1C9N09",
+      "emittedBytes": 65535,
+      "admitted": 1
+    }
+  },
+  {
+    "id": "items-script-65536",
+    "pass": true,
+    "milliseconds": 8882,
+    "detail": {
+      "loop": "01M5ANA81TKQSNXZ1Y7X3JTHGG",
+      "emittedBytes": 65536,
+      "admitted": 1
+    }
+  },
+  {
+    "id": "items-script-65537",
+    "pass": true,
+    "milliseconds": 9360,
+    "detail": {
+      "loop": "01M5ANA823P6891DE8PQ2X9927",
+      "emittedBytes": 65537,
+      "admitted": 0,
+      "warning": "POLL_STDOUT_OVERFLOW"
+    }
+  },
+  {
+    "id": "items-explicit-overflow-public-port",
+    "pass": true,
+    "milliseconds": 2,
+    "detail": {
+      "controlledPortOnly": true,
+      "admitted": [],
+      "warnings": [
+        {
+          "context": {
+            "loopId": "controlled-loop",
+            "nodeId": "start",
+            "code": "POLL_STDOUT_OVERFLOW"
+          },
+          "message": "poll trigger failed"
+        }
+      ],
+      "requestedCap": 65536,
+      "reportedBytes": 28,
+      "decodedBytes": 28
+    }
+  },
+  {
+    "id": "heartbeat-over",
+    "pass": true,
+    "milliseconds": 255,
+    "detail": {
+      "loop": "01M5ANAH626T0MM6HHX5HDC0F6",
+      "run": "01M5ANAH84FSS0BY8QM1DVGHYB",
+      "status": "failed",
+      "failure": {
+        "code": "HTTP_PROBE_BODY_OVERFLOW",
+        "message": "HTTP heartbeat probe body exceeds the 65536-byte limit; narrow the response or use a script probe",
+        "nodeId": "work",
+        "resumable": true
+      },
+      "beats": 0,
+      "outputPresent": false
+    }
+  },
+  {
+    "id": "heartbeat-fault",
+    "pass": true,
+    "milliseconds": 262,
+    "detail": {
+      "loop": "01M5ANAH6MMVFPZJPEK1CD1JET",
+      "run": "01M5ANAH8W0GRRRGVDRZX8BWD1",
+      "status": "failed",
+      "failure": {
+        "code": "INTERNAL_ERROR",
+        "message": "HTTP probe failed",
+        "nodeId": "work",
+        "resumable": true,
+        "details": {
+          "name": "HttpProbeError",
+          "stack": "HttpProbeError: HTTP probe failed\n    at HttpProbes.fetch (file:///<local-path>/packages/infrastructure/dist/http/probes.js:117:19)\n    at async probe (file:///<local-path>/packages/engine/dist/handlers/heartbeat.js:16:28)\n    at async Object.execute (file:///<local-path>/packages/engine/dist/handlers/heartbeat.js:77:24)\n    at async RunManager.execute (file:///<local-path>/packages/engine/dist/run-manager.js:1157:26)"
+        }
+      },
+      "beats": 0,
+      "outputPresent": false
+    }
+  },
+  {
+    "id": "heartbeat-small",
+    "pass": true,
+    "milliseconds": 324,
+    "detail": {
+      "loop": "01M5ANAH6C379HRSRC0N4HGDPN",
+      "run": "01M5ANAH84H9QAG78F1B2K782M",
+      "status": "succeeded",
+      "beats": 1,
+      "outputPresent": true
+    }
+  },
+  {
+    "id": "heartbeat-resume-after-overflow",
+    "pass": true,
+    "milliseconds": 267,
+    "detail": {
+      "run": "01M5ANAH84FSS0BY8QM1DVGHYB",
+      "status": "succeeded",
+      "restartFailedRun": "01M5ANAHMNZEW9PZSE5A46S0HY"
+    }
+  },
+  {
+    "id": "script-utf8-split-1",
+    "pass": true,
+    "milliseconds": 1327,
+    "detail": {
+      "run": "01M5ANAHY9TEGWXMRTSVDE9PSQ",
+      "split": 1,
+      "stdoutHex": "41c3a9e99baaf09fa68e5a",
+      "stderrHex": "41c3a9e99baaf09fa68e5a",
+      "stdoutBytes": 11
+    }
+  },
+  {
+    "id": "script-utf8-split-7",
+    "pass": true,
+    "milliseconds": 1370,
+    "detail": {
+      "run": "01M5ANAJ1FJ7EJ32A99PJHB2KQ",
+      "split": 7,
+      "stdoutHex": "41c3a9e99baaf09fa68e5a",
+      "stderrHex": "41c3a9e99baaf09fa68e5a",
+      "stdoutBytes": 11
+    }
+  },
+  {
+    "id": "script-utf8-split-2",
+    "pass": true,
+    "milliseconds": 1555,
+    "detail": {
+      "run": "01M5ANAJ199FMDMM2TAAYSA5NW",
+      "split": 2,
+      "stdoutHex": "41c3a9e99baaf09fa68e5a",
+      "stderrHex": "41c3a9e99baaf09fa68e5a",
+      "stdoutBytes": 11
+    }
+  },
+  {
+    "id": "script-utf8-split-0",
+    "pass": true,
+    "milliseconds": 1608,
+    "detail": {
+      "run": "01M5ANAHZCFSF022S5XZVY89NG",
+      "split": 0,
+      "stdoutHex": "41c3a9e99baaf09fa68e5a",
+      "stderrHex": "41c3a9e99baaf09fa68e5a",
+      "stdoutBytes": 11
+    }
+  },
+  {
+    "id": "script-utf8-split-3",
+    "pass": true,
+    "milliseconds": 1632,
+    "detail": {
+      "run": "01M5ANAJ1A55R0P2NMWRJKME3Q",
+      "split": 3,
+      "stdoutHex": "41c3a9e99baaf09fa68e5a",
+      "stderrHex": "41c3a9e99baaf09fa68e5a",
+      "stdoutBytes": 11
+    }
+  },
+  {
+    "id": "script-utf8-split-6",
+    "pass": true,
+    "milliseconds": 1661,
+    "detail": {
+      "run": "01M5ANAJ1F029ZFZVDM9SX5H5Q",
+      "split": 6,
+      "stdoutHex": "41c3a9e99baaf09fa68e5a",
+      "stderrHex": "41c3a9e99baaf09fa68e5a",
+      "stdoutBytes": 11
+    }
+  },
+  {
+    "id": "script-utf8-split-8",
+    "pass": true,
+    "milliseconds": 2071,
+    "detail": {
+      "run": "01M5ANAJ1M9SPCXQ9FV06MMQ2T",
+      "split": 8,
+      "stdoutHex": "41c3a9e99baaf09fa68e5a",
+      "stderrHex": "41c3a9e99baaf09fa68e5a",
+      "stdoutBytes": 11
+    }
+  },
+  {
+    "id": "script-utf8-split-5",
+    "pass": true,
+    "milliseconds": 2220,
+    "detail": {
+      "run": "01M5ANAJ1EKVQJD330FKYF3G9Q",
+      "split": 5,
+      "stdoutHex": "41c3a9e99baaf09fa68e5a",
+      "stderrHex": "41c3a9e99baaf09fa68e5a",
+      "stdoutBytes": 11
+    }
+  },
+  {
+    "id": "script-utf8-split-9",
+    "pass": true,
+    "milliseconds": 2786,
+    "detail": {
+      "run": "01M5ANAJ389MF36KN328QK93S6",
+      "split": 9,
+      "stdoutHex": "41c3a9e99baaf09fa68e5a",
+      "stderrHex": "41c3a9e99baaf09fa68e5a",
+      "stdoutBytes": 11
+    }
+  },
+  {
+    "id": "script-utf8-split-4",
+    "pass": true,
+    "milliseconds": 2791,
+    "detail": {
+      "run": "01M5ANAJ1N9F2C2H1QM9RB5C2E",
+      "split": 4,
+      "stdoutHex": "41c3a9e99baaf09fa68e5a",
+      "stderrHex": "41c3a9e99baaf09fa68e5a",
+      "stdoutBytes": 11
+    }
+  },
+  {
+    "id": "script-utf8-split-10",
+    "pass": true,
+    "milliseconds": 2793,
+    "detail": {
+      "run": "01M5ANAJ23HJTCNFAATFGYT5EM",
+      "split": 10,
+      "stdoutHex": "41c3a9e99baaf09fa68e5a",
+      "stderrHex": "41c3a9e99baaf09fa68e5a",
+      "stdoutBytes": 11
+    }
+  },
+  {
+    "id": "script-utf8-split-11",
+    "pass": true,
+    "milliseconds": 3018,
+    "detail": {
+      "run": "01M5ANAJ37G5RD9431V0XM2YC6",
+      "split": 11,
+      "stdoutHex": "41c3a9e99baaf09fa68e5a",
+      "stderrHex": "41c3a9e99baaf09fa68e5a",
+      "stdoutBytes": 11
+    }
+  },
+  {
+    "id": "script-cap-split-public-component",
+    "pass": true,
+    "milliseconds": 917,
+    "detail": {
+      "exitCode": 0,
+      "timedOut": false,
+      "stdout": "Aé雪",
+      "stdoutBytes": 7,
+      "stderrBytes": 7,
+      "stderr": "Aé雪",
+      "stderrOverflow": true,
+      "stdoutOverflow": true
+    }
+  },
+  {
+    "id": "script-default-cap-built-api",
+    "pass": true,
+    "milliseconds": 8399,
+    "detail": {
+      "run": "01M5ANANMSCK1JTM3JWMETS81Z",
+      "emittedBytes": 10485763,
+      "capturedBytes": 10485760,
+      "decodedBytes": 10485759,
+      "outputSha256": "519cd7ab04f8eec146385149912f88388f8d4db2eda89a0990e7e546c3485010",
+      "capSplitSuffixOmitted": true
+    }
+  },
+  {
+    "id": "script-incomplete-cancel-component",
+    "pass": false,
+    "milliseconds": 3728,
+    "error": "Error: child survived cancellation/timeout for 3000 ms; explicit QA cleanup required; see component evidence\n    at expect (file:///<local-path>/docs/qa/2026-10-19-wp-d3-qa/run-qa.mjs:54:53)\n    at file:///<local-path>/docs/qa/2026-10-19-wp-d3-qa/run-qa.mjs:272:5\n    at async check (file:///<local-path>/docs/qa/2026-10-19-wp-d3-qa/run-qa.mjs:45:20)\n    at async file:///<local-path>/docs/qa/2026-10-19-wp-d3-qa/run-qa.mjs:262:60"
+  },
+  {
+    "id": "script-incomplete-timeout-component",
+    "pass": false,
+    "milliseconds": 3557,
+    "error": "Error: child survived cancellation/timeout for 3000 ms; explicit QA cleanup required; see component evidence\n    at expect (file:///<local-path>/docs/qa/2026-10-19-wp-d3-qa/run-qa.mjs:54:53)\n    at file:///<local-path>/docs/qa/2026-10-19-wp-d3-qa/run-qa.mjs:272:5\n    at async check (file:///<local-path>/docs/qa/2026-10-19-wp-d3-qa/run-qa.mjs:45:20)\n    at async file:///<local-path>/docs/qa/2026-10-19-wp-d3-qa/run-qa.mjs:262:60"
+  },
+  {
+    "id": "script-incomplete-clean-eof-component",
+    "pass": true,
+    "milliseconds": 552,
+    "detail": {
+      "exitCode": 0,
+      "timedOut": false,
+      "stdout": "A�",
+      "stdoutBytes": 3,
+      "stderrBytes": 3,
+      "stderr": "A�",
+      "stderrOverflow": false,
+      "stdoutOverflow": false,
+      "pid": 26220,
+      "processGone": true
+    }
+  },
+  {
+    "id": "script-incomplete-timeout-api",
+    "pass": false,
+    "milliseconds": 4871,
+    "error": "Error: script child survived cancellation/timeout for 4000 ms; explicit QA cleanup required; see API script evidence\n    at expect (file:///<local-path>/docs/qa/2026-10-19-wp-d3-qa/run-qa.mjs:54:53)\n    at file:///<local-path>/docs/qa/2026-10-19-wp-d3-qa/run-qa.mjs:287:5\n    at async check (file:///<local-path>/docs/qa/2026-10-19-wp-d3-qa/run-qa.mjs:45:20)\n    at async Promise.all (index 1)\n    at async file:///<local-path>/docs/qa/2026-10-19-wp-d3-qa/run-qa.mjs:276:3"
+  },
+  {
+    "id": "script-incomplete-cancel-api",
+    "pass": false,
+    "milliseconds": 4890,
+    "error": "Error: script child survived cancellation/timeout for 4000 ms; explicit QA cleanup required; see API script evidence\n    at expect (file:///<local-path>/docs/qa/2026-10-19-wp-d3-qa/run-qa.mjs:54:53)\n    at file:///<local-path>/docs/qa/2026-10-19-wp-d3-qa/run-qa.mjs:287:5\n    at async check (file:///<local-path>/docs/qa/2026-10-19-wp-d3-qa/run-qa.mjs:45:20)\n    at async Promise.all (index 0)\n    at async file:///<local-path>/docs/qa/2026-10-19-wp-d3-qa/run-qa.mjs:276:3"
+  },
+  {
+    "id": "http-read-abort",
+    "pass": true,
+    "milliseconds": 280,
+    "detail": {
+      "error": {
+        "name": "AbortError",
+        "code": 20,
+        "message": "HTTP probe aborted"
+      },
+      "fixture": {
+        "route": "slow-abort",
+        "mode": "slow",
+        "method": "GET",
+        "sent": 100,
+        "total": 100000,
+        "ended": false,
+        "closed": true,
+        "started": 1792433039775,
+        "elapsed": 178
+      }
+    }
+  },
+  {
+    "id": "http-read-timeout",
+    "pass": true,
+    "milliseconds": 467,
+    "detail": {
+      "error": {
+        "name": "TimeoutError",
+        "code": 23,
+        "message": "HTTP probe timed out"
+      },
+      "fixture": {
+        "route": "slow-timeout",
+        "mode": "slow",
+        "method": "GET",
+        "sent": 300,
+        "total": 100000,
+        "ended": false,
+        "closed": true,
+        "started": 1792433039775,
+        "elapsed": 377
+      }
+    }
+  },
+  {
+    "id": "heartbeat-cancel-slow-read-api",
+    "pass": true,
+    "milliseconds": 315,
+    "detail": {
+      "run": "01M5ANBAXF6YRGZ9X02Z2XC77P",
+      "status": "cancelled",
+      "fixture": {
+        "route": "hb-slow",
+        "mode": "slow",
+        "method": "GET",
+        "sent": 100,
+        "total": 100000,
+        "ended": false,
+        "closed": true,
+        "started": 1792433040332,
+        "elapsed": 190
+      },
+      "beats": 0
+    }
+  },
+  {
+    "id": "concurrent-heartbeats-and-polls",
+    "pass": true,
+    "milliseconds": 703,
+    "detail": {
+      "pollLoopsStillArmed": true,
+      "result": [
+        {
+          "run": "01M5ANBB93BH8913EQ6GZBD4YT",
+          "mode": "small",
+          "route": "parallel-0",
+          "status": "succeeded",
+          "beats": 1
+        },
+        {
+          "run": "01M5ANBB9QT83BHSWC449TCQPV",
+          "mode": "over",
+          "route": "parallel-1",
+          "status": "failed",
+          "failureCode": "HTTP_PROBE_BODY_OVERFLOW",
+          "beats": 0
+        },
+        {
+          "run": "01M5ANBBBBVJJVVRF7VQF6R4QY",
+          "mode": "small",
+          "route": "parallel-2",
+          "status": "succeeded",
+          "beats": 1
+        },
+        {
+          "run": "01M5ANBBBBR8EK971304CHD5FC",
+          "mode": "over",
+          "route": "parallel-3",
+          "status": "failed",
+          "failureCode": "HTTP_PROBE_BODY_OVERFLOW",
+          "beats": 0
+        },
+        {
+          "run": "01M5ANBBBBY6PB29KVCG3MWK11",
+          "mode": "small",
+          "route": "parallel-4",
+          "status": "succeeded",
+          "beats": 1
+        },
+        {
+          "run": "01M5ANBBBCY8WKGHZCDPFC3GN7",
+          "mode": "over",
+          "route": "parallel-5",
+          "status": "failed",
+          "failureCode": "HTTP_PROBE_BODY_OVERFLOW",
+          "beats": 0
+        },
+        {
+          "run": "01M5ANBBBCMF3P1GR61EQEZ47Z",
+          "mode": "small",
+          "route": "parallel-6",
+          "status": "succeeded",
+          "beats": 1
+        },
+        {
+          "run": "01M5ANBBBCYE36EC9QCATEVC4X",
+          "mode": "over",
+          "route": "parallel-7",
+          "status": "failed",
+          "failureCode": "HTTP_PROBE_BODY_OVERFLOW",
+          "beats": 0
+        }
+      ],
+      "note": "Public PollTriggers intentionally serializes poll checks; independent runs overlap, no claim of parallel probe dispatch inside one poller."
+    }
+  },
+  {
+    "id": "restart-terminal-runs-and-event-pages",
+    "pass": true,
+    "milliseconds": 7726,
+    "detail": {
+      "statesAndThreadsAndEventsIdentical": true,
+      "eventPagesIdentical": true,
+      "noNodeReexecution": true,
+      "ids": {
+        "overflow": "01M5ANAHMNZEW9PZSE5A46S0HY",
+        "resumed": "01M5ANAH84FSS0BY8QM1DVGHYB",
+        "utf8": "01M5ANAJ1EKVQJD330FKYF3G9Q"
+      }
+    }
+  }
+]

@@ -150,7 +150,7 @@ describe('adversarial infrastructure invariants (forks pool)', () => {
       });
       await manager.waitForIdle();
       manager.stop();
-      const seq = (await e.ports.runs.get(r.id))!.waiting!.startedSeq;
+      const seq = (await e.ports.runs.get(r.id))!.waiting!.waitId;
       expect((await store.list(r.id)).map((t) => t.key)).toEqual([`${key}@${seq}`]);
       // The row is gone but the run still waits: a fire consumed before its wake was recorded.
       await store.remove(r.id);
@@ -197,7 +197,7 @@ describe('adversarial infrastructure invariants (forks pool)', () => {
     manager.stop();
     spy.mockRestore();
     expect((await store.list(r.id)).map((t) => t.key)).toEqual([
-      `timer@${(await e.ports.runs.get(r.id))!.waiting!.startedSeq}`,
+      `timer@${(await e.ports.runs.get(r.id))!.waiting!.waitId}`,
     ]);
     const second = new TimerService(store, e.ports.clock);
     const recovered = new RunManager({ ...e.ports, timers: second }, e.settings);
@@ -286,11 +286,13 @@ describe('timer delivery (review of WP-G)', () => {
 
   it('a throwing timer listener leaves the timer for another delivery', async () => {
     const store = new MemoryTimerStore();
-    const timer = new TimerService(store, new FakeClock());
+    const clock = new FakeClock();
+    const timer = new TimerService(store, clock);
     const listener = vi.fn().mockRejectedValue(new Error('transient store error'));
     timer.onFire(listener);
     await timer.schedule('r', 'timer', new Date(0));
     await timer.poll();
+    clock.advance(1000);
     await timer.poll();
     expect(listener).toHaveBeenCalledTimes(2);
     expect(await store.list('r')).toHaveLength(1);
@@ -317,7 +319,8 @@ describe('timer delivery (review of WP-G)', () => {
     e.ports.clock.advance(2000);
     await timer.poll();
     spy.mockRestore();
-    // The wake is durable already; the next poll finds the run woken and acknowledges.
+    // The durable wake is completed at the next configured delivery attempt.
+    e.ports.clock.advance(1000);
     await timer.poll();
     await manager.waitForIdle();
     manager.stop();
@@ -343,7 +346,7 @@ describe('timer delivery (review of WP-G)', () => {
     const r = await manager.startRun({ ownerId: 'local', loopId: v.loopId, source: 'manual.api' });
     await manager.waitForIdle();
     manager.stop();
-    const seq = (await e.ports.runs.get(r.id))!.waiting!.startedSeq;
+    const seq = (await e.ports.runs.get(r.id))!.waiting!.waitId;
     expect((await store.list(r.id)).map((t) => t.key).sort()).toEqual([
       `timeout@${seq}`,
       `timer@${seq}`,
@@ -421,7 +424,7 @@ describe('finalization on SQLite (review of WP-G, fourth round)', () => {
     });
     await manager.waitForIdle();
     expect((await runs.get(r.id))?.failure?.resumable).toBe(true);
-    expect(await runs.listUnfinalized()).toHaveLength(0);
+    expect((await runs.listRecoveryCandidates()).filter((r) => r.terminal)).toHaveLength(0);
     const transition = runs.transition.bind(runs);
     let blocked = false;
     const spy = vi.spyOn(runs, 'transition').mockImplementation(async (id, from, changes) => {
@@ -442,7 +445,7 @@ describe('finalization on SQLite (review of WP-G, fourth round)', () => {
     second.stop();
     expect((await runs.get(r.id))?.status).toBe('succeeded');
     expect(e.ports.delivery.logged).toHaveLength(1);
-    expect(await runs.listUnfinalized()).toHaveLength(0);
+    expect((await runs.listRecoveryCandidates()).filter((r) => r.terminal)).toHaveLength(0);
   });
 
   it.each(['next success', 'durable resume'] as const)(
@@ -523,7 +526,7 @@ describe('finalization on SQLite (review of WP-G, fourth round)', () => {
       second.stop();
       expect((await runs.get(r.id))?.status).toBe('succeeded');
       expect(e.ports.delivery.logged).toHaveLength(1);
-      expect(await runs.listUnfinalized()).toHaveLength(0);
+      expect((await runs.listRecoveryCandidates()).filter((r) => r.terminal)).toHaveLength(0);
     },
   );
 

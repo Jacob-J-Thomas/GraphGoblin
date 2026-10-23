@@ -85,12 +85,20 @@ it('allows read-only CLI preflight alongside a container without changing its lo
 });
 
 describe('individual checks', () => {
-  it('requires Node 22 or newer', () => {
-    expect(checkNode('23.10.0').status).toBe('ok');
+  it('accepts Node 22 LTS', () => {
     expect(checkNode('v22.0.0').status).toBe('ok');
-    expect(checkNode('20.11.1')).toMatchObject({ status: 'fail', message: /too old/ });
-    expect(checkNode('garbage').status).toBe('fail');
+    expect(checkNode('22.14.0').status).toBe('ok');
   });
+
+  it.each(['20.11.1', '23.10.0', '24.0.0', 'garbage'])(
+    'refuses unsupported Node %s with the supported baseline',
+    (version) => {
+      const result = checkNode(version);
+      expect(result.status).toBe('fail');
+      expect(result.message).toContain('GraphGoblin needs Node 22 LTS');
+      expect(result.message).toContain('Select Node 22 on PATH');
+    },
+  );
 
   it('checks the data directory without creating it', async () => {
     expect((await checkDataDir(dir)).status).toBe('ok');
@@ -195,6 +203,7 @@ describe('runPreflight', () => {
   it('fails when a harness is not ready or none is configured', async () => {
     const harness = new FakeHarness();
     harness.preflightResult = {
+      state: 'unknown',
       ok: false,
       authenticated: false,
       problems: ['Codex CLI is not logged in; run `codex login`'],
@@ -202,18 +211,21 @@ describe('runPreflight', () => {
     const notReady = await runPreflight(sources({ harnesses: { codex: harness } }));
     expect(notReady.ok).toBe(false);
     expect(byId(notReady, 'harness.codex')?.message).toMatch(/codex login/);
-    harness.preflightResult = { ok: false, authenticated: false, problems: [] };
+    harness.preflightResult = { state: 'unknown', ok: false, authenticated: false, problems: [] };
     expect(
       byId(await runPreflight(sources({ harnesses: { codex: harness } })), 'harness.codex')
         ?.message,
-    ).toBe('codex is not ready');
+    ).toMatch(/readiness could not be confirmed/);
     const throwing = new FakeHarness();
     throwing.preflight = () => Promise.reject(new Error('spawn ENOENT'));
     expect(
       byId(await runPreflight(sources({ harnesses: { codex: throwing } })), 'harness.codex'),
-    ).toMatchObject({ status: 'fail', message: 'spawn ENOENT' });
+    ).toMatchObject({
+      status: 'fail',
+      message: expect.stringMatching(/readiness could not be confirmed/),
+    });
     const unversioned = new FakeHarness();
-    unversioned.preflightResult = { ok: true, authenticated: true, problems: [] };
+    unversioned.preflightResult = { state: 'ready', ok: true, authenticated: true, problems: [] };
     expect(
       byId(await runPreflight(sources({ harnesses: { codex: unversioned } })), 'harness.codex')
         ?.message,
@@ -314,7 +326,12 @@ describe('graphgoblin-api --preflight', () => {
     expect(ready.out).toContain('API key set (secret "jev-api-key") (disabled in Settings)');
 
     const harness = new FakeHarness();
-    harness.preflightResult = { ok: false, authenticated: false, problems: ['not logged in'] };
+    harness.preflightResult = {
+      state: 'unknown',
+      ok: false,
+      authenticated: false,
+      problems: ['not logged in'],
+    };
     const notLoggedIn = await cli(env, harness);
     expect(notLoggedIn.code).toBe(1);
     expect(notLoggedIn.out).toMatch(/FAIL\s+Harness codex\s+not logged in/);

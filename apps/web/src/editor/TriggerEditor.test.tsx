@@ -5,6 +5,8 @@ import { TriggerConfigSchema } from '@graphgoblin/contracts';
 import { describe, expect, it } from 'vitest';
 import { getCode, setCode } from '../__fixtures__/codemirror.js';
 import { FakeApi } from '../__fixtures__/fake-api.js';
+import { renderNodeEditor } from '../__fixtures__/node-editor.js';
+import { pasteInto } from '../__fixtures__/user.js';
 import { renderApp } from '../__fixtures__/render.js';
 import { triggerConfig } from '../__fixtures__/triggers.js';
 import { createAppClient } from '../api/context.js';
@@ -21,9 +23,7 @@ async function openTrigger(api = new FakeApi()) {
   const definition = newLoopDefinition('trigger types');
   definition.nodes[0]!.config = triggerConfig('manual', { inputSchema: { type: 'object' } });
   const loop = api.addLoop(definition);
-  renderApp(`/loops/${loop.id}/edit`, api);
-  await screen.findByRole('heading', { name: 'trigger types' });
-  act(() => store().openNode('start'));
+  renderNodeEditor(loop.id, definition, 'start', api);
   return screen.findByRole('dialog', { name: 'Edit trigger start' });
 }
 
@@ -184,11 +184,15 @@ describe('trigger authoring', () => {
       const past = store().past.length;
       await user.click(within(dialog).getByRole('button', { name: 'Start from a preset' }));
       await user.selectOptions(within(dialog).getByLabelText('Preset'), preset);
-      await user.type(within(dialog).getByLabelText('Repository owner'), 'octo-team');
-      await user.type(within(dialog).getByLabelText('Repository'), 'service');
-      await user.type(within(dialog).getByLabelText('Issue label'), 'ready');
+      await pasteInto(user, within(dialog).getByLabelText('Repository owner'), 'octo-team');
+      await pasteInto(user, within(dialog).getByLabelText('Repository'), 'service');
+      await pasteInto(user, within(dialog).getByLabelText('Issue label'), 'ready');
       if (preset === 'issues-labeled')
-        await user.type(within(dialog).getByLabelText('Signing secret name'), 'synthetic-hook');
+        await pasteInto(
+          user,
+          within(dialog).getByLabelText('Signing secret name'),
+          'synthetic-hook',
+        );
       const preview = within(dialog).getByRole('button', { name: 'Preview GitHub preset' });
       preview.focus();
       await user.keyboard('{Enter}');
@@ -246,7 +250,9 @@ it('edits authentication, body and extraction by keyboard with one-step undo and
   auth().focus();
   await user.selectOptions(auth(), within(dialog).getByRole('option', { name: 'Body HMAC' }));
   expect(auth()).toHaveFocus();
-  await user.type(within(dialog).getByLabelText('Secret name'), 'synthetic');
+  // These fixture strings need one input edit; keyboard navigation, pointer text entry and
+  // undo/redo below remain real user-event sequences.
+  await pasteInto(user, within(dialog).getByLabelText('Secret name'), 'synthetic');
   expect(within(dialog).getByLabelText('Signing header')).toHaveAttribute(
     'placeholder',
     'x-hub-signature-256',
@@ -278,7 +284,7 @@ it('edits authentication, body and extraction by keyboard with one-step undo and
   expect(within(modes()).getByRole('radio', { name: 'text' })).toBeChecked();
   const source = () => within(dialog).getByLabelText('Event type source');
   await user.selectOptions(source(), 'header');
-  await user.type(within(dialog).getByLabelText('Event header'), 'x-provider-event');
+  await pasteInto(user, within(dialog).getByLabelText('Event header'), 'x-provider-event');
   expect(within(dialog).getByLabelText('Fallback event type')).toHaveAttribute(
     'placeholder',
     'webhook',

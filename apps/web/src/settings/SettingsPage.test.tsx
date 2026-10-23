@@ -42,8 +42,22 @@ function seeded(source: 'harness' | 'litellm' = 'harness'): FakeApi {
     },
   ];
   api.preflight = [
-    { harness: 'codex', ok: true, version: '1.2', authenticated: true, problems: [] },
-    { harness: 'other', ok: false, version: '', authenticated: false, problems: ['not logged in'] },
+    {
+      harness: 'codex',
+      state: 'ready',
+      ok: true,
+      version: '1.2',
+      authenticated: true,
+      problems: [],
+    },
+    {
+      harness: 'other',
+      state: 'unknown',
+      ok: false,
+      version: '',
+      authenticated: false,
+      problems: ['not logged in'],
+    },
   ];
   return api;
 }
@@ -58,10 +72,12 @@ describe('SettingsPage', () => {
     async (label, confirmation, heading) => {
       const api = seeded('litellm');
       const { queryClient } = renderApp('/settings', api);
-      const user = userEvent.setup();
       const trigger = await screen.findByRole('button', { name: label });
       await waitFor(() => expect(queryClient.isFetching()).toBe(0));
-      await user.click(trigger);
+      await userEvent.setup().click(trigger);
+      // The removal watch expires 500 ms after refresh settles. Hold its clock as well as
+      // rendering: real-time user-event/waitFor delays can otherwise expire it under load.
+      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
       const notifications: (() => void)[] = [];
       const frames: FrameRequestCallback[] = [];
       const frame = vi.spyOn(globalThis, 'requestAnimationFrame').mockImplementation((callback) => {
@@ -70,9 +86,14 @@ describe('SettingsPage', () => {
       });
       notifyManager.setScheduler((callback) => notifications.push(callback));
       try {
-        await user.click(screen.getByRole('button', { name: confirmation }));
-        await waitFor(() => expect(queryClient.isFetching()).toBe(0));
-        await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
+        // Drain promise continuations and zero-delay tasks (including dialog close) without
+        // advancing to the watch's expiry. act commits the close before notification release.
+        await act(async () => {
+          fireEvent.click(screen.getByRole('button', { name: confirmation }));
+          await vi.advanceTimersByTimeAsync(0);
+        });
+        expect(queryClient.isFetching()).toBe(0);
+        expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
         act(() => frames.splice(0).forEach((callback) => callback(0)));
         // The request settled and the old frame ran; the query's render notification is held.
         expect(trigger).toHaveFocus();
@@ -83,8 +104,14 @@ describe('SettingsPage', () => {
         expect(screen.getByRole('heading', { name: heading })).toHaveFocus();
       } finally {
         notifyManager.setScheduler(defaultScheduler);
-        frame.mockRestore();
-        await act(() => Promise.resolve(notifications.splice(0).forEach((callback) => callback())));
+        try {
+          await act(() =>
+            Promise.resolve(notifications.splice(0).forEach((callback) => callback())),
+          );
+        } finally {
+          frame.mockRestore();
+          vi.useRealTimers();
+        }
       }
     },
   );
@@ -486,19 +513,21 @@ describe('SettingsPage', () => {
         byHarness: { codex: { model: 'gpt-6-luna' } },
       });
       expect(model).toHaveAccessibleDescription(
-        'This saved model is unavailable. Choose an enabled catalog model or (server default) before publishing or running.',
+        state === 'disabled'
+          ? 'Disabled in the model catalog. Enable it or choose another default.'
+          : 'Not in the model catalog. Choose another default before publishing or running.',
       );
       if (state === 'disabled') {
         await user.click(enabled);
         await waitFor(() =>
           expect(within(model).getByRole('option', { name: 'Luna' })).toBeInTheDocument(),
         );
-        expect(screen.queryByText(/This saved model is unavailable/)).not.toBeInTheDocument();
+        expect(screen.queryByText(/in the model catalog/)).not.toBeInTheDocument();
       }
       await user.selectOptions(model, '');
       await waitFor(() => expect(api.settingsValues).not.toHaveProperty('defaults'));
       await waitFor(() => expect(model).toHaveValue(''));
-      expect(screen.queryByText(/This saved model is unavailable/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/in the model catalog/)).not.toBeInTheDocument();
     },
   );
 
@@ -573,6 +602,7 @@ describe('SettingsPage', () => {
       );
       api.preflight.push({
         harness: 'claude',
+        state: 'ready',
         ok: true,
         authenticated: true,
         problems: [],
@@ -662,9 +692,10 @@ describe('SettingsPage', () => {
       },
     );
     api.preflight = [
-      { harness: 'codex', ok: true, authenticated: true, problems: [] },
+      { harness: 'codex', state: 'ready', ok: true, authenticated: true, problems: [] },
       {
         harness: 'claude',
+        state: 'ready',
         ok: true,
         version: '2.1.285',
         authenticated: true,
@@ -735,6 +766,7 @@ describe('SettingsPage', () => {
     });
     api.preflight.push({
       harness: 'claude',
+      state: 'ready',
       ok: true,
       version: '2.1.285',
       authenticated: true,
@@ -821,10 +853,11 @@ describe('SettingsPage', () => {
     });
     api.preflight.push({
       harness: 'claude',
+      state: 'auth',
       ok: false,
       version: '2.1.285',
       authenticated: false,
-      problems: ['Claude CLI is not signed in.'],
+      problems: ['Claude is not signed in. Run claude auth login, then retry preflight.'],
       models: [
         {
           model: 'claude-opus-5-5',
@@ -835,16 +868,27 @@ describe('SettingsPage', () => {
     renderApp('/settings', api);
 
     const preflight = await screen.findByRole('region', { name: 'Harness preflight' });
-    expect(await within(preflight).findByText('Claude CLI is not signed in.')).toBeInTheDocument();
+    expect(
+      await within(preflight).findByText(
+        'Claude is not signed in. Run claude auth login, then retry preflight.',
+      ),
+    ).toBeInTheDocument();
     const claudePreflight = within(preflight).getByText('claude').closest('li')!;
-    expect(await within(claudePreflight).findByText('not ready')).toBeInTheDocument();
+    expect(await within(claudePreflight).findByText('Sign-in needed')).toBeInTheDocument();
     const support = within(preflight).getByRole('list', { name: 'Claude model support' });
-    expect(within(support).getByText('supported by adapter')).toBeInTheDocument();
+    expect(within(support).getByText('listed by adapter')).toBeInTheDocument();
     expect(within(support).queryByText('available')).toBeNull();
 
     const model = await screen.findByLabelText('Default model (claude)');
     expect(model).toHaveValue('');
     expect(within(model).queryByRole('option', { name: /claude-opus-5-5/ })).toBeNull();
+    // Defaults gives one short line, not the full server problem.
+    expect(model).toHaveAccessibleDescription(
+      'Claude readiness: Sign-in needed. See Harness preflight below.',
+    );
+    expect(
+      within(screen.getByRole('region', { name: 'Defaults' })).queryByText(/claude auth login/),
+    ).toBeNull();
   });
 
   it('sets and deletes secrets without ever showing values', async () => {
@@ -891,8 +935,8 @@ describe('SettingsPage', () => {
 
   it('shows harness preflight status and the install hint', async () => {
     renderApp('/settings', seeded());
-    expect(await screen.findByText('ready')).toBeInTheDocument();
-    expect(screen.getByText('not ready')).toBeInTheDocument();
+    expect(await screen.findByText('Ready')).toBeInTheDocument();
+    expect(screen.getByText('Unknown')).toBeInTheDocument();
     expect(screen.getByText('not logged in')).toBeInTheDocument();
     expect(screen.getByText(/Install app/)).toBeInTheDocument();
   });
@@ -1002,16 +1046,19 @@ describe('Claude catalog enablement and readiness', () => {
       });
       api.preflight.push({
         harness: 'claude',
+        state: 'cli-incompatible',
         ok: false,
         version: '2.1.287',
         authenticated,
         authMethod: authenticated ? 'claude.ai' : null,
-        problems: ['Claude CLI 2.1.287: required capabilities unavailable: --restricted'],
+        problems: [
+          'Claude CLI 2.1.287 does not list required options: --restricted. Update the Claude CLI, then retry preflight.',
+        ],
         models: [{ model: 'claude-fable-5-1', efforts: ['high'] }],
       });
       renderApp('/settings', api);
       expect(
-        await screen.findByText(/Enabled in catalog; Claude harness not ready/),
+        await screen.findByText('Enabled in catalog. Claude readiness: CLI update needed.'),
       ).toBeInTheDocument();
       const toggle = await screen.findByRole('switch', { name: 'Enable Fable 5.1' });
       expect(toggle).toBeChecked();
@@ -1020,7 +1067,40 @@ describe('Claude catalog enablement and readiness', () => {
       else expect(screen.queryByText('Signed in with Claude.ai.')).not.toBeInTheDocument();
       await userEvent.setup().click(toggle);
       await waitFor(() => expect(toggle).not.toBeChecked());
-      expect(screen.getByText(/Disabled in catalog; Claude harness not ready/)).toBeInTheDocument();
+      expect(
+        screen.getByText('Disabled in catalog. Claude readiness: CLI update needed.'),
+      ).toBeInTheDocument();
     },
   );
+});
+
+describe('Codex catalog rows and readiness', () => {
+  it('notes a known Codex failure on Codex rows as for Claude, but not during the first check', async () => {
+    const pending = seeded();
+    pending.override('GET /harness/preflight', () => new Promise<Response>(() => undefined));
+    const first = renderApp('/settings', pending);
+    expect(await screen.findByRole('switch', { name: 'Enable Luna' })).toBeInTheDocument();
+    expect(screen.queryByText(/readiness:/)).not.toBeInTheDocument();
+    first.unmount();
+
+    const api = seeded();
+    api.preflight = [
+      {
+        harness: 'codex',
+        state: 'transport',
+        ok: false,
+        problems: [
+          "Codex reported a connection or provider service error. Check the network connection and the provider's service status, then retry preflight.",
+        ],
+      },
+    ];
+    renderApp('/settings', api);
+    const catalog = await screen.findByRole('region', { name: 'Model catalog' });
+    expect(
+      await within(catalog).findByText('Enabled in catalog. Codex readiness: Connection failed.'),
+    ).toBeInTheDocument();
+    expect(
+      within(catalog).getByText('Disabled in catalog. Codex readiness: Connection failed.'),
+    ).toBeInTheDocument();
+  });
 });

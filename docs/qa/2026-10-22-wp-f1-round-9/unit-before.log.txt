@@ -1,0 +1,74 @@
+
+ RUN  v5.0.3 [local-path]
+
+ ↓ src/claude/readiness.test.ts > Claude no-turn executable boundary > ready reports ready without exposing CLI bodies
+ ↓ src/claude/readiness.test.ts > Claude no-turn executable boundary > old reports cli-incompatible without exposing CLI bodies
+ ↓ src/claude/readiness.test.ts > Claude no-turn executable boundary > missing-model reports cli-incompatible without exposing CLI bodies
+ ↓ src/claude/readiness.test.ts > Claude no-turn executable boundary > missing-effort reports cli-incompatible without exposing CLI bodies
+ ↓ src/claude/readiness.test.ts > Claude no-turn executable boundary > auth reports auth without exposing CLI bodies
+ ↓ src/claude/readiness.test.ts > Claude no-turn executable boundary > quota reports quota without exposing CLI bodies
+ ↓ src/claude/readiness.test.ts > Claude no-turn executable boundary > transport reports transport without exposing CLI bodies
+ ↓ src/claude/readiness.test.ts > Claude no-turn executable boundary > unknown reports unknown without exposing CLI bodies
+ ↓ src/claude/readiness.test.ts > Claude no-turn executable boundary > hang reports unknown without exposing CLI bodies
+ ↓ src/claude/readiness.test.ts > audited Claude auth evidence > auth-network preserves auth evidence through the executable boundary
+ ↓ src/claude/readiness.test.ts > audited Claude auth evidence > quota-network preserves quota evidence through the executable boundary
+ ↓ src/claude/readiness.test.ts > audited Claude auth evidence > stdout-quota-warning preserves quota evidence through the executable boundary
+ ↓ src/claude/readiness.test.ts > audited Claude auth evidence > auth-empty preserves unknown evidence through the executable boundary
+ ↓ src/claude/readiness.test.ts > audited Claude auth evidence > auth-unrecognised preserves unknown evidence through the executable boundary
+ × src/claude/readiness.test.ts > audited Claude auth evidence > auth-zero-stdout preserves auth evidence through the executable boundary 239ms
+   → expected { state: 'unknown', ok: false, …(5) } to match object { state: 'auth', ok: false }
+(5 matching properties omitted from actual)
+ × src/claude/readiness.test.ts > audited Claude auth evidence > auth-zero-stderr preserves auth evidence through the executable boundary 223ms
+   → expected { state: 'unknown', ok: false, …(5) } to match object { state: 'auth', ok: false }
+(5 matching properties omitted from actual)
+ ↓ src/claude/readiness.test.ts > audited Claude auth evidence > conflict-auth-stderr preserves auth evidence through the executable boundary
+ ↓ src/claude/readiness.test.ts > audited Claude auth evidence > conflict-quota-stderr preserves quota evidence through the executable boundary
+ ↓ src/claude/readiness.test.ts > probes the actual installed native Claude without a model turn
+ ↓ src/claude/readiness.test.ts > reports a missing Claude executable as cli-missing
+ ↓ src/claude/readiness.test.ts > classifies a real installed signed-out Claude in a disposable home as auth
+pnpm.cmd :
+At line:2 char:70
++ ... $env:PATH"; pnpm.cmd --filter @graphgoblin/infrastructure exec vitest ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/claude/readiness.test.ts > audited Claude auth evidence > auth-zero-stdout preserves auth evidence through
+the executable boundary
+ FAIL  src/claude/readiness.test.ts > audited Claude auth evidence > auth-zero-stderr preserves auth evidence through
+the executable boundary
+AssertionError: expected { state: 'unknown', ok: false, …(5) } to match object { state: 'auth', ok: false }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "ok": false,
+-   "state": "auth",
++   "state": "unknown",
+  }
+
+ ❯ src/claude/readiness.test.ts:95:22
+     93|           }),
+     94|       }).preflight();
+     95|       expect(result).toMatchObject({ state, ok: false });
+       |                      ^
+     96|       if (state === 'auth') expect(result.authenticated).toBe(false);
+     97|       if (state === 'unknown') {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 19 skipped (21)
+   Start at  18:00:54
+   Duration  3.18s (import 49%, transform 35%, tests 16%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ [local-path]
+  │ readiness-precision\packages\infrastructure

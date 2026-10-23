@@ -24,7 +24,7 @@ import {
   LoopDefinitionSchema,
   TemplateCatalogEntrySchema,
 } from '@graphgoblin/contracts';
-import { fakeUlid, minimalLoop, sampleThread } from '@graphgoblin/contracts/testing';
+import { fakeUlid, minimalLoop, samplePin, sampleThread } from '@graphgoblin/contracts/testing';
 import {
   exportLoop,
   importLoop,
@@ -45,6 +45,7 @@ export interface RecordedCall {
   search: URLSearchParams;
   body: unknown;
   headers: Headers;
+  signal?: AbortSignal;
 }
 
 type Handler = (call: RecordedCall, params: string[]) => Response | Promise<Response>;
@@ -78,6 +79,7 @@ export function runRecord(overrides: Partial<RunRecord> = {}): RunRecord {
     ownerId: 'local',
     loopId: id('loop'),
     versionId: id('version'),
+    pinned: samplePin(),
     invocationId: id('invocation'),
     status: 'running',
     iteration: 1,
@@ -222,7 +224,14 @@ export class FakeApi {
     };
   }[] = [];
   preflight: ({ harness: string } & HarnessPreflight)[] = [
-    { harness: 'codex', ok: true, version: '1.0', authenticated: true, problems: [] },
+    {
+      harness: 'codex',
+      state: 'ready',
+      ok: true,
+      version: '1.0',
+      authenticated: true,
+      problems: [],
+    },
   ];
   calls: RecordedCall[] = [];
   /** When true every request fails like a dropped network. */
@@ -398,6 +407,7 @@ export class FakeApi {
       search: url.searchParams,
       body: text ? (JSON.parse(text) as unknown) : undefined,
       headers: request.headers,
+      signal: request.signal,
     };
     this.calls.push(call);
     if (this.requiredKey && request.headers.get('authorization') !== `Bearer ${this.requiredKey}`)
@@ -468,7 +478,29 @@ export class FakeApi {
       },
     ],
     ['GET /loops/:id/triggers', () => json({ schedules: [], webhooks: [], polls: [] })],
-    ['GET /loops', () => json({ items: [...this.loops.values()].map((l) => l.loop) })],
+    [
+      'GET /loops',
+      () =>
+        json({
+          items: [...this.loops.values()].map(({ loop }) => {
+            const history = [...this.runs.values()]
+              .filter((r) => r.loopId === loop.id)
+              .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id));
+            const latest = history[0];
+            return {
+              ...loop,
+              runCount: history.length,
+              latestRun: latest
+                ? {
+                    id: latest.id,
+                    status: latest.status,
+                    createdAt: latest.createdAt,
+                  }
+                : null,
+            };
+          }),
+        }),
+    ],
     [
       'POST /loops',
       (call) => {
@@ -660,7 +692,16 @@ export class FakeApi {
         const asked = (call.body as { versionId?: string } | undefined)?.versionId;
         const version = asked ? entry.history.find((v) => v.id === asked) : entry.current;
         if (!version) return problem(404, 'VERSION_NOT_FOUND', `version ${asked} not found`);
-        const run = this.addRun({ loopId: loopId!, versionId: version.id, status: 'queued' });
+        const run = this.addRun({
+          loopId: loopId!,
+          versionId: version.id,
+          pinned: samplePin({
+            version: version.version,
+            name: version.definition.name,
+            label: `${version.definition.name} v${version.version}`,
+          }),
+          status: 'queued',
+        });
         return json({ run }, 202);
       },
     ],
@@ -675,7 +716,16 @@ export class FakeApi {
         if (status) items = items.filter((r) => status.split(',').includes(r.status));
         if (parent === 'none') items = items.filter((r) => !r.parentRunId);
         else if (parent) items = items.filter((r) => r.parentRunId === parent);
-        return json({ items });
+        const before = call.search.get('before');
+        if (before) items = items.filter((r) => r.createdAt < before);
+        items.sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id));
+        const cursor = call.search.get('cursor');
+        if (cursor) items = items.slice(items.findIndex((item) => item.id === cursor) + 1);
+        const limit = Number(call.search.get('limit') ?? 100);
+        return json({
+          items: items.slice(0, limit),
+          nextCursor: items.length > limit ? items[limit - 1]!.id : null,
+        });
       },
     ],
     [
@@ -740,7 +790,18 @@ export class FakeApi {
         return new Response(null, { status: 204 });
       },
     ],
-    ['GET /model-catalog', () => json({ items: this.catalog })],
+    [
+      'GET /model-catalog',
+      () =>
+        json({
+          items: this.catalog.map((entry) => ({
+            ...entry,
+            ecosystemDefault:
+              (entry.harness === 'codex' && entry.model === 'gpt-6-luna') ||
+              (entry.harness === 'claude' && entry.model === 'claude-opus-5-5'),
+          })),
+        }),
+    ],
     [
       'PATCH /model-catalog/:harness/:model',
       (call, [harness, model]) => {
@@ -919,7 +980,23 @@ export class FakeApi {
       },
     ],
     ['GET /harness/preflight', () => json({ items: this.preflight })],
-    ['GET /events', () => json({ items: this.inbound })],
+    [
+      'GET /events',
+      (call) => {
+        let items = [...this.inbound];
+        const type = call.search.get('type');
+        if (type) items = items.filter((event) => event.type === type);
+        const before = call.search.get('before');
+        if (before) items = items.filter((event) => event.receivedAt < before);
+        const cursor = call.search.get('cursor');
+        if (cursor) items = items.slice(items.findIndex((item) => item.id === cursor) + 1);
+        const limit = Number(call.search.get('limit') ?? 100);
+        return json({
+          items: items.slice(0, limit),
+          nextCursor: items.length > limit ? items[limit - 1]!.id : null,
+        });
+      },
+    ],
   ];
 }
 
@@ -935,6 +1012,13 @@ function match(route: string, call: RecordedCall): string[] | undefined {
     else if (want[i] !== got[i]) return undefined;
   }
   return params;
+}
+
+/** The fields every `run.queued` carries: the pinned definition record and its description. */
+export function queuedFields(
+  extra: { initialThread?: ContextThread } = {},
+): Omit<Extract<RunEvent, { type: 'run.queued' }>, 'runId' | 'seq' | 'ts' | 'type'> {
+  return { versionId: fakeUlid('version'), pinned: samplePin(), ...extra };
 }
 
 /** Build a run event with defaults for the base fields. */

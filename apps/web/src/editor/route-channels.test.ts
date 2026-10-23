@@ -1,11 +1,14 @@
 import { expect, it, vi } from 'vitest';
 import { routingInput, simpleLoop } from '../__fixtures__/routing.js';
-import { routeBackwardEdges } from './routing.js';
+import { createRoutingPlan } from './routing.js';
 import { createRouteChannels } from './route-channels.js';
+
+const routesOf = (...args: Parameters<typeof createRoutingPlan>) =>
+  createRoutingPlan(...args).routes;
 
 it('publishes changed geometry only to its edge, releases deleted entries and supports unsubscription', () => {
   const { nodes, edges } = routingInput(simpleLoop());
-  const routes = routeBackwardEdges(nodes, edges);
+  const routes = routesOf(nodes, edges);
   const channels = createRouteChannels();
   const active = new Set(['return', 'pending']);
   const back = channels.edge('return', routes.get('return'));

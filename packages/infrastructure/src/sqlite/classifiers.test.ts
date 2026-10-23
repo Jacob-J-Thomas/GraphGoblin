@@ -1,4 +1,7 @@
-import { applyShippedSqlToHistoricalTestFixture } from './testing/shipped-migrations.js';
+import {
+  applyShippedSqlToHistoricalTestFixture,
+  shippedSqlMigrationCount,
+} from './testing/shipped-migrations.js';
 import { copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -148,8 +151,8 @@ describe('classifier repository', () => {
           .map((column) => `"${column.replaceAll('"', '""')}"`)
           .join(',');
         await writeFile(join(dir, 'meta/_journal.json'), JSON.stringify(journal));
-        // The current catalog includes 0013_trigger_configuration as its fourteenth entry.
-        expect(await handle.pendingMigrations()).toBe(14 - count);
+        // Count shipped entries, including the new owner/history index, after this fixture.
+        expect(await handle.pendingMigrations()).toBe(shippedSqlMigrationCount() - count);
         await expect(handle.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
         await applyShippedSqlToHistoricalTestFixture(handle, dir);
         expect((await handle.client.execute('SELECT * FROM loop_versions')).rows).toEqual(versions);

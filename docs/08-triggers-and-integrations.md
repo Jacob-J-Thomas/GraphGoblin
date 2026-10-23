@@ -87,7 +87,7 @@ Pointers allow 1,024 characters and 32 segments with valid RFC 6901 `~0`/`~1` es
 
 ### Acknowledgement, repeats and recovery
 
-Every saved delivery returns exactly `202 {accepted:true}` without payloads, run/event IDs or dispositions. Private Events exposes pending/admitted/failed/filtered/deduplicated state, attempts, retry time, safe failure code and run links. Unsaved/unconfirmed admission or signing/configuration readiness may return 503; a saved pending or failed admission cannot change the public acknowledgement. Other errors remain 400 decoding/ambiguous extraction, 401 authentication, 404 unknown/disabled hook, 413 body bound, 422 extraction/expression failure and 429 with Retry-After.
+Every saved delivery returns exactly `202 {accepted:true}` without payloads, run/event IDs or dispositions. Private Events exposes pending/admitted/failed/filtered/deduplicated state, attempts, retry time, safe failure code and run links. Unsaved/unconfirmed admission or signing/configuration readiness may return 503; a saved pending or failed admission cannot change the public acknowledgement. Other errors remain 400 decoding/ambiguous extraction, 401 authentication, 404 unknown/disabled hook, 413 body bound, 422 extraction/expression failure and 429 with Retry-After. A target loop whose stored definition still has an exit publishing an Event (ADR-0044) refuses the delivery deterministically with 409 `LOOP_UPGRADE_REQUIRED` and saves nothing; the sender gets no loop details, and the API log names the loop, version and destination paths (cron, event and poll triggers log the same diagnostic).
 
 **Allow** is uniform, with no policy switch: identical unkeyed bytes may create distinct receipts and runs. Raw SHA-256 is audit evidence only; it suppresses nothing. An external repeat is a new delivery; recovery reuses the same saved intent and run ID. An authored nonempty key uses the existing owner/loop/trigger claim lookup across both HMAC recipes and None. A duplicate key is saved as `deduplicated` without an executable intent. Payload checks run downstream after admission; current configs reject `filter`. The `filtered` receipt state is historical only.
 
@@ -147,33 +147,50 @@ Restore sets `/lastOutput` from `$lookup(outputs, "<triggerId>")`. Trigger and s
 
 Review explicitly accepts formerly ignored input creating quiet runs, expression errors occurring after acknowledgement inside an admitted run, keys consumed before the check, and extra visits against the safety cap. This definition rule does not apply SQL, convert device drafts or authorize installation; the shared cutover still composes those operations and binds stored-version review identities.
 
-## Inbound event bus (Decided, shipped in M6)
+## Inbound Events (Decided, shipped in M6; exit chaining retired by ADR-0044)
 
-- `POST /events` accepts `{ type, payload, dedupeKey? }` from any client with the `events:write` scope. The event is stored in `inbound_events` (`source: 'api'`) and fires every `event` trigger node of the owner's published loops whose `eventType` matches. The response is the stored event with `runIds` and `duplicate`.
+- `POST /events` accepts `{ type, payload, dedupeKey? }` from any client with the `events:write` scope. The event is stored in `inbound_events` (`source: 'api'`) and fires every `event` trigger node of the owner's published loops whose `eventType` matches. The response is the stored event with `runIds` and `duplicate`. The runs it starts record `caller: { kind: 'system', id: 'event:<eventId>' }`.
 - Dedupe: an event whose `(type, dedupeKey)` was seen before fires nothing and returns `duplicate: true` with the earlier event's run ids. A trigger node's own `dedupeKey` expression additionally skips the event when that node has already started a run with the same key (looked up in the runs' stored trigger envelopes, so it survives restarts).
-- Exit nodes publish to the same bus through the `event` return channel, which is how loops compose without a parent loop: a triage loop can emit `issue-ready` and an implementation loop can trigger on it. Those events are stored with `source: 'run:<runId>'`, and the runs they start record `caller: { kind: 'run', id: <emitting run> }`.
+- Events come only from outside the engine. Exits do not publish Events and there is no in-process event bus: a loop that needs another loop's work calls it as an awaited subloop, which returns the child's configured output to the parent ([ADR-0044](decisions/ADR-0044-awaited-subloops.md), docs/05). The former `event` return channel, its `source: 'run:<runId>'` Events and the run-chain guard (`MAX_EVENT_CHAIN`) are removed. Inputs and signals for a waiting run go to that run's observed wait by identity (07).
 - `GET /events` lists stored events newest first (`limit`, `type`, `before`).
-
-### Self-trigger guard
-
-A loop that publishes the event it listens for, or two loops that trigger each other, would otherwise run forever. When an exit event arrives, the service walks the run chain back from the emitting run: to the run that started it through an event trigger (`caller.kind = 'run'`), or to its parent for a subloop, and so on. Then:
-
-- an event never starts a loop that already appears in that chain, so a loop cannot re-trigger itself directly or through others;
-- a chain may be at most `MAX_EVENT_CHAIN` (8) runs long, so a long line of distinct loops also stops.
-
-Skipped triggers are logged as warnings; the event itself is still recorded. Events from `POST /events` start a new chain.
 
 ## Polling trigger (Shipped in M6 as the stretch)
 
 A `poll` trigger runs a probe every `intervalSeconds` and starts a run when `fireWhen` holds and, if the node has a `dedupeKey`, the key is new for that trigger node. It shares the `Probe` model with the heartbeat node: an HTTP request with templated URL, headers, and body, or a script run in the data directory. Expressions and templates see `{ now, probe }`, where `probe` is `{ status, headers, body, json }` or `{ exitCode, stdout, stderr, json, timedOut }`; the run's payload is the probe result. `signal-count` and `none` probes produce `null`. Poll targets are armed in memory with the version (the first probe is one interval after arming or boot); seen dedupe keys live in the runs they started. Runs carry `triggerKind: 'poll'` and `source: 'poll'`. This is the trigger to recommend when a laptop should not accept inbound connections at all.
 
+All HTTP probes, including heartbeat and single-result polls, accept at most
+65,536 body bytes. The engineering parameter `PROBE_MAX_BODY_BYTES` is defined
+in `packages/engine/src/ports.ts`, matching strict poll-script stdout's 64 KiB
+budget. `HttpProbes` counts bytes from fetch's decompressed response stream into a
+fixed-size buffer before UTF-8 decoding or JSON parsing. Exact-cap bodies are
+accepted without truncation; the first chunk crossing the cap cancels the reader
+and throws `ProbeBodyOverflowError` with safe code `HTTP_PROBE_BODY_OVERFLOW`.
+No partial body reaches expressions or dispatch. Poll warnings preserve that code.
+An advertised `Content-Length` above the cap is rejected before any body read only
+for identity-encoded responses with a body. Encoded wire lengths do not describe
+the decompressed size; chunked/no-length and compressed responses undergo streamed
+byte counting. HEAD and body-less responses (including 204 and 304) return an empty
+body and accept representation-length metadata above the cap. Accepted UTF-8
+survives split chunks; caller abort or timeout cancels the
+reader and releases its lock and connection. Partition larger queries by repository,
+label or time range; the cap is a code-level parameter, not a new trigger setting.
+
+Single-result HTTP polls and heartbeats previously sliced the displayed body while
+parsing the entire JSON. They now fail above the cap. API warnings named
+`poll trigger failed` identify affected poll targets with `HTTP_PROBE_BODY_OVERFLOW`;
+heartbeat runs fail with that same typed code. Narrow the remote query or use a
+single-result script probe, retaining its 10 MiB capture and full JSON parsing.
+Items-mode scripts keep their stricter 64 KiB budget.
+
 ### Bounded items mode
 
 A poll may add `items: {select, dedupeKey, maxRunsPerPoll}`. `select` evaluates over `{now,probe}` and returns at most 200 curated items. The per-item key evaluates over `{now,probe,item,index}` and must be a unique nonblank string of at most 512 characters. Every candidate and key is validated before one indexed dedupe lookup or any admission. Single-result `dedupeKey` and items mode cannot be combined.
 
-`maxRunsPerPoll` is an integer from 1 to 25, default 5. Each run receives the selected item itself as its trigger payload, not the whole probe envelope. Seen keys do not consume that cap. Unseen items are admitted sequentially; after an admission failure, the failed item and later items remain for a future poll. Runs retain their dedupe keys, so restart does not forget successfully admitted items. A single serialized sweep prevents overlapping probes from consuming the cap twice. Each items-mode admission also checks run keys and pending allocated webhook intents atomically for the same owner/loop/trigger node. This closes the race when a node is republished from webhook to poll while an old delivery awaits recovery. A skipped key does not consume the cap or reuse the earlier run. A pending reservation ends only after admission or permanent failure; an admitted run key remains durable.
+`maxRunsPerPoll` is an integer from 1 to 25, default 5. Each run receives the selected item itself as its trigger payload, not the whole probe envelope. Seen keys do not consume that cap and are skipped silently even if their current payload exceeds the depth bound. Unseen items are admitted sequentially. An unseen candidate exceeding `POLL_ITEM_MAX_NESTING_DEPTH` is refused individually before storage, without consuming its key or the cap, and later eligible items can be admitted in the same poll. The fixed diagnostic `POLL_ITEM_REJECTED` carries only `itemIndex` and reason `NESTING_DEPTH_EXCEEDED` alongside the trigger identity. At most 200 such diagnostics can be emitted per poll. JSON validation and depth counting are iterative. The bound is **996 nested containers below the candidate root**: SQLite JSON1 accepts 1,000 container levels, and the indexed `initial_thread` envelope occupies four through `root.invocation.trigger.payload` (including the candidate's root). An object whose property contains 996 nested arrays fits; 997 does not. Invalid JSON values and invalid/duplicate keys still refuse the whole batch before admission. An unclassified or storage admission failure still stops the tail, logs `POLL_ADMISSION_FAILED` with the failing index, and leaves that item and later items for a future poll. A refused depth key may be retried when its structure is repaired.
 
-Items mode alone rejects non-successful, timed-out or malformed-JSON probes. Script stdout is captured at a strict 65,536-byte bound, and overflow refuses the whole candidate batch before dispatch. Legacy single-result scripts retain their existing truncation and text/exit-code behavior. Partition larger queries by repository, label or time range. Polling observes current state and cannot reconstruct every transition between polls.
+Runs retain their dedupe keys, so restart does not forget successfully admitted items. A single serialized sweep prevents overlapping probes from consuming the cap twice. Each items-mode admission also checks run keys and pending allocated webhook intents atomically for the same owner/loop/trigger node. This closes the race when a node is republished from webhook to poll while an old delivery awaits recovery. A skipped key does not consume the cap or reuse the earlier run. A pending reservation ends only after admission or permanent failure; an admitted run key remains durable.
+
+Items mode alone rejects non-successful, timed-out or malformed-JSON probes. Script stdout is captured at the strict `PROBE_MAX_BODY_BYTES` bound of 65,536 bytes. The consumer checks both the overflow flag and the raw stdout byte count; either overflow refuses the whole candidate batch before dispatch with `POLL_STDOUT_OVERFLOW`. Legacy single-result scripts retain their existing truncation and text/exit-code behavior. Partition larger queries by repository, label or time range. Polling observes current state and cannot reconstruct every transition between polls.
 
 HTTP probe results omit authorization, cookie, set-cookie and API-key response headers. Safe error codes replace raw transport/process diagnostics; application payload fields are not blanket-redacted.
 
@@ -185,6 +202,30 @@ The most secure default for a single-user laptop is to accept nothing inbound an
 - Choose the required signing recipe and timestamp freshness check deliberately. The tunnel is not a substitute.
 - Never expose the whole API through the tunnel. Bind the API to localhost and route only the hooks prefix.
 - For real distribution, the hosted version terminates TLS itself and sits behind the auth provider; webhook endpoints remain signature-gated and unauthenticated by design.
+
+## Outbound webhook returns
+
+An exit webhook destination sends a JSON POST containing `runId`, `loopId`, `outcome` and
+`result`. `Idempotency-Key` carries one durable delivery identity across all attempts. Receivers
+must implement their own deduplication if duplicate effects are unacceptable; GraphGoblin
+does not assume they do. Signing still covers each attempt's timestamp and body.
+
+Five attempts have 10-second acknowledgement deadlines, separated by 2/5/10/20 seconds.
+Connection refusal, timeout, HTTP 408/429/5xx and unknown acknowledgement are eligible;
+other 4xx, redirects and invalid destinations stop once. Redirects are never followed.
+An out-of-range or invalid HTTP status is retryable `transport` / unknown, without a typed
+`httpStatus`. `acknowledgementUncertain` retains prior unknown attempts independently of the
+latest error and response. The inspector keeps its possible-duplicate warning after eventual
+success following an unknown acknowledgement; rejection-only retries do not produce it.
+The complete 2xx acknowledgement is bounded to 64 KiB. Timeouts and truncated/lost responses
+mean the effect may have happened. `run.deliveries` and durable `delivery.*` events expose
+pending, delivered or failed after N attempts and the last typed error, separately from
+execution. Restart retains identity and consumed attempts. See
+[ADR-0043](decisions/ADR-0043-bounded-webhook-return-delivery.md). These engineering values are
+reviewed implementation parameters. On orderly stop, an in-flight request finishes within
+its existing 10-second deadline, no new attempt starts, and pending delivery resumes on the
+next start with the same budget. Loop deletion stops that loop's pending deliveries.
+This outbound journal does not implement targeted Event intake.
 
 ## Concurrency (Decided)
 

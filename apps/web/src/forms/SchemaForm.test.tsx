@@ -16,7 +16,6 @@ import { getCode, setCode } from '../__fixtures__/codemirror.js';
 import { FakeApi } from '../__fixtures__/fake-api.js';
 import { renderWith } from '../__fixtures__/render.js';
 import { NODE_FIELD_CONTROLS } from '../editor/field-controls.js';
-import { historyClock } from '../editor/history.js';
 import { newLoopDefinition } from '../editor/model.js';
 import { useEditorStore } from '../editor/store.js';
 import type { FieldControls } from './fields.js';
@@ -700,9 +699,12 @@ describe('SchemaForm changes and undo steps', () => {
   const undo = () => act(() => useEditorStore.getState().undo());
   beforeEach(() => {
     // Every change lands inside the merge window: only what the form reports keeps steps apart.
-    vi.spyOn(historyClock, 'now').mockReturnValue(0);
+    vi.useFakeTimers({ toFake: ['performance'] });
   });
-  afterEach(() => vi.restoreAllMocks());
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
 
   function load(config: Record<string, unknown>, kind: NodeInput['kind'] = 'mutate') {
     const definition = newLoopDefinition('steps');

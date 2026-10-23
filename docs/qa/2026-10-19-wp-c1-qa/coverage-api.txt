@@ -1,0 +1,73 @@
+apps/api test:coverage$ vitest run --coverage
+apps/api test:coverage: 
+apps/api test:coverage:  RUN  v5.0.3 <worktree>/apps/api
+apps/api test:coverage:       Coverage enabled with v8
+apps/api test:coverage: 
+apps/api test:coverage:  ❯ src/adversarial.test.ts (36 tests | 1 failed) 79374ms
+apps/api test:coverage:    ❯ adversarial API invariants (36)
+apps/api test:coverage:      × ADV-008: every advertised route against every scope 20201ms
+apps/api test:coverage:  ❯ src/routes/templates.test.ts (13 tests | 1 failed) 56581ms
+apps/api test:coverage:    ❯ template API without runtime authority (13)
+apps/api test:coverage:      × reads only manifests without provider, script or credential probes 20597ms
+apps/api test:coverage:  ❯ src/templates/catalog-package.test.ts (4 tests | 1 failed) 31407ms
+apps/api test:coverage:    × ships only declared starting-point assets and removes stale files on rebuild 20058ms
+apps/api test:coverage: 
+apps/api test:coverage: ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+apps/api test:coverage: 
+apps/api test:coverage:  FAIL  src/adversarial.test.ts > adversarial API invariants > ADV-008: every advertised route against every scope
+apps/api test:coverage: Error: Test timed out in 20000ms.
+apps/api test:coverage: If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+apps/api test:coverage:  ❯ src/adversarial.test.ts:184:3
+apps/api test:coverage:     182|   };
+apps/api test:coverage:     183|
+apps/api test:coverage:     184|   it('ADV-008: every advertised route against every scope', async () =…
+apps/api test:coverage:        |   ^
+apps/api test:coverage:     185|     const t = await app({ requireApiKey: true });
+apps/api test:coverage:     186|     const scopes = [...new Set(Object.values(ROUTE_SCOPES))];
+apps/api test:coverage: 
+apps/api test:coverage: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+apps/api test:coverage: 
+apps/api test:coverage:  FAIL  src/templates/catalog-package.test.ts > ships only declared starting-point assets and removes stale files on rebuild
+apps/api test:coverage: Error: Test timed out in 20000ms.
+apps/api test:coverage: If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+apps/api test:coverage:  ❯ src/templates/catalog-package.test.ts:49:1
+apps/api test:coverage:      47| }
+apps/api test:coverage:      48|
+apps/api test:coverage:      49| it('ships only declared starting-point assets and removes stale files …
+apps/api test:coverage:        | ^
+apps/api test:coverage:      50|   const root = await temporaryRoot();
+apps/api test:coverage:      51|   try {
+apps/api test:coverage: 
+apps/api test:coverage: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+apps/api test:coverage: 
+apps/api test:coverage:  FAIL  src/routes/templates.test.ts > template API without runtime authority > reads only manifests without provider, script or credential probes
+apps/api test:coverage: Error: Test timed out in 20000ms.
+apps/api test:coverage: If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+apps/api test:coverage:  ❯ src/routes/templates.test.ts:19:3
+apps/api test:coverage:      17|
+apps/api test:coverage:      18| describe('template API without runtime authority', () => {
+apps/api test:coverage:      19|   it('reads only manifests without provider, script or credential prob…
+apps/api test:coverage:        |   ^
+apps/api test:coverage:      20|     app = await createTestApp();
+apps/api test:coverage:      21|     const preflight = vi.spyOn(app.harness, 'preflight');
+apps/api test:coverage: 
+apps/api test:coverage: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+apps/api test:coverage: 
+apps/api test:coverage: 
+apps/api test:coverage:  Test Files  3 failed | 38 passed | 2 skipped (43)
+apps/api test:coverage:       Tests  3 failed | 636 passed | 2 skipped (641)
+apps/api test:coverage:    Start at  17:45:24
+apps/api test:coverage:    Duration  180.37s (tests 58%, import 23%, transform 19%)
+apps/api test:coverage: 
+apps/api test:coverage: Failed
+pnpm.cmd : [ELIFECYCLE] Command failed with exit code 1.
+At line:2 char:73
++ ...  $env:PATH; pnpm.cmd --workspace-concurrency=2 -r --filter @graphgobl ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([ELIFECYCLE] Co...th exit code 1.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in <wrapped workspace path redacted>
+

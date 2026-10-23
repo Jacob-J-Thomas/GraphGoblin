@@ -41,7 +41,9 @@ describe('adversarial engine invariants', () => {
     expect((await e.settle(r.id)).status).toBe('waiting');
     await Promise.all([e.manager.cancel(r.id), e.manager.cancel(r.id)]);
     expect(e.eventTypes(r.id).filter((t) => t === 'run.cancelled')).toHaveLength(1);
-    await expect(e.manager.signal(r.id, 'late')).rejects.toMatchObject({ code: 'INVALID_STATE' });
+    await expect(
+      e.manager.signal(r.id, 'late', (await e.manager.getRun(r.id))?.waiting?.waitId ?? 'unknown'),
+    ).rejects.toMatchObject({ code: 'WAIT_MISMATCH' });
     await expect(e.manager.resume(r.id)).rejects.toMatchObject({ code: 'INVALID_STATE' });
   });
 
@@ -50,8 +52,16 @@ describe('adversarial engine invariants', () => {
     const v = e.publish(inputLoop());
     const r = await e.runToIdle(v.loopId);
     const results = await Promise.allSettled([
-      e.manager.provideInput(r.id, 'A'),
-      e.manager.provideInput(r.id, 'B'),
+      e.manager.provideInput(
+        r.id,
+        (await e.manager.getRun(r.id))?.waiting?.waitId ?? 'unknown',
+        'A',
+      ),
+      e.manager.provideInput(
+        r.id,
+        (await e.manager.getRun(r.id))?.waiting?.waitId ?? 'unknown',
+        'B',
+      ),
     ]);
     await e.settle(r.id);
     expect(results.filter((x) => x.status === 'fulfilled')).toHaveLength(1);
@@ -64,7 +74,11 @@ describe('adversarial engine invariants', () => {
     const v = e.publish(inputLoop());
     const r = await e.runToIdle(v.loopId);
     e.manager.stop();
-    await e.manager.provideInput(r.id, { answer: 42 });
+    await e.manager.provideInput(
+      r.id,
+      (await e.manager.getRun(r.id))?.waiting?.waitId ?? 'unknown',
+      { answer: 42 },
+    );
     const recovered = new RunManager(e.ports, e.settings);
     await recovered.start();
     await recovered.waitForIdle();
@@ -162,7 +176,11 @@ describe('adversarial engine invariants', () => {
       return transition(id, from, changes);
     });
     const r = await e.runToIdle(v.loopId);
-    await e.manager.provideInput(r.id, 'go');
+    await e.manager.provideInput(
+      r.id,
+      (await e.manager.getRun(r.id))?.waiting?.waitId ?? 'unknown',
+      'go',
+    );
     await vi.waitFor(() =>
       expect(e.events(r.id).some((x) => x.type === 'node.finished' && x.nodeId === 'done')).toBe(
         true,
@@ -298,12 +316,20 @@ describe('adversarial engine invariants', () => {
     const child = e.publish(minimalLoop());
     const r = await e.runToIdle(e.publish(waitThenChild('parent', child.loopId)).loopId);
     e.publish(minimalLoop(), { loopId: child.loopId, version: 2 });
-    await e.manager.provideInput(r.id, null);
+    await e.manager.provideInput(
+      r.id,
+      (await e.manager.getRun(r.id))?.waiting?.waitId ?? 'unknown',
+      null,
+    );
     expect((await e.settle(r.id)).status).toBe('succeeded');
     expect((await e.ports.runs.listChildren(r.id))[0]?.versionId).toBe(child.id);
     // A run created after the publish picks up the new version.
     const later = await e.runToIdle(e.loopId('parent'));
-    await e.manager.provideInput(later.id, null);
+    await e.manager.provideInput(
+      later.id,
+      (await e.manager.getRun(later.id))?.waiting?.waitId ?? 'unknown',
+      null,
+    );
     await e.settle(later.id);
     expect((await e.ports.runs.listChildren(later.id))[0]?.versionId).not.toBe(child.id);
   });
@@ -324,7 +350,11 @@ describe('adversarial engine invariants', () => {
     e.manager.stop();
     const recovered = new RunManager(e.ports, e.settings);
     await recovered.start();
-    await recovered.provideInput(root.id, null);
+    await recovered.provideInput(
+      root.id,
+      (await recovered.getRun(root.id))?.waiting?.waitId ?? 'unknown',
+      null,
+    );
     await recovered.waitForIdle();
     expect((await recovered.getRun(root.id))?.status).toBe('succeeded');
     const [mid] = await e.ports.runs.listChildren(root.id);
@@ -341,7 +371,7 @@ describe('adversarial engine invariants', () => {
     expect((await e.ports.runs.listChildren(fork.id))[0]?.versionId).toBe(middle.id);
   });
 
-  it.each(['log', 'file', 'webhook', 'event'] as const)(
+  it.each(['log', 'file', 'webhook'] as const)(
     '5: failing %s delivery retains outcome and records failure',
     async (kind) => {
       const e = await createTestEngine();
@@ -350,16 +380,13 @@ describe('adversarial engine invariants', () => {
       };
       if (kind === 'file') vi.spyOn(e.ports.workspace, 'writeFile').mockImplementation(fail);
       if (kind === 'log') vi.spyOn(e.ports.delivery, 'log').mockImplementation(fail);
-      if (kind === 'webhook') vi.spyOn(e.ports.delivery, 'webhook').mockImplementation(fail);
-      if (kind === 'event') vi.spyOn(e.ports.delivery, 'publishEvent').mockImplementation(fail);
+      if (kind === 'webhook') e.ports.delivery.failWebhooks = true;
       const channel =
         kind === 'file'
           ? { kind, path: 'out.json' }
           : kind === 'webhook'
             ? { kind, url: 'https://example.invalid' }
-            : kind === 'event'
-              ? { kind, eventType: 'out' }
-              : { kind };
+            : { kind };
       const v = e.publish(
         singleNodeLoop(
           'return',
@@ -374,9 +401,15 @@ describe('adversarial engine invariants', () => {
       );
       const r = await e.runToIdle(v.loopId);
       expect(r).toMatchObject({ status: 'succeeded', result: 42 });
-      expect(e.events(r.id).filter((x) => x.type === 'return.failed')).toMatchObject([
-        { error: 'delivery unavailable' },
-      ]);
+      if (kind === 'webhook') {
+        expect(e.events(r.id).filter((x) => x.type === 'delivery.finished')).toMatchObject([
+          { delivery: { status: 'failed', attempts: 1, lastError: { httpStatus: 400 } } },
+        ]);
+      } else {
+        expect(e.events(r.id).filter((x) => x.type === 'return.failed')).toMatchObject([
+          { error: 'delivery unavailable' },
+        ]);
+      }
       expect(e.eventTypes(r.id).filter((x) => x === 'run.finished')).toHaveLength(1);
     },
   );
@@ -422,18 +455,49 @@ describe('adversarial engine invariants', () => {
     await e.manager.waitForIdle();
   });
 
-  it.each([
-    '[{"op":"replace","path":"/counters/nodeVisits","value":{}}]',
-    '[{"op":"move","from":"/counters/nodeVisits/start","path":"/vars/stolen"}]',
-  ])('ADV-014: custom mapping rejects engine-owned writes: %s', async (patch) => {
+  it('ADV-014: custom mapping allows a protected test read', async () => {
     const e = await createTestEngine({ maxConcurrentRuns: 1 });
     const child = e.publish(minimalLoop());
     const parent = e.publish(
-      subLoop('custom-counter', child.loopId, { mode: 'custom', custom: { patch } }),
+      subLoop('custom-read', child.loopId, {
+        mode: 'custom',
+        custom: {
+          patch:
+            '[{"op":"test","path":"/run/id","value":parent.run.id},{"op":"copy","from":"/invocation/source","path":"/vars/source"}]',
+        },
+      }),
     );
-    const r = await e.runToIdle(parent.loopId);
-    expect(r.failure?.code).toBe('EXPRESSION_ERROR');
+    const run = await e.runToIdle(parent.loopId);
+    expect(run.status).toBe('succeeded');
+    const thread = await e.manager.getThread(run.id);
+    expect(thread?.run.id).toBe(run.id);
+    expect(thread?.invocation.source).toBe('manual.api');
+    expect(thread?.vars['source']).toBe('manual.api');
   });
+
+  it.each([
+    {
+      patch: '[{"op":"replace","path":"/counters/nodeVisits","value":{}}]',
+      location: 'path "/counters/nodeVisits"',
+    },
+    {
+      patch: '[{"op":"move","from":"/counters/nodeVisits/start","path":"/vars/stolen"}]',
+      location: 'from "/counters/nodeVisits/start"',
+    },
+  ])(
+    'ADV-014: custom mapping rejects engine-owned writes at $location',
+    async ({ patch, location }) => {
+      const e = await createTestEngine({ maxConcurrentRuns: 1 });
+      const child = e.publish(minimalLoop());
+      const parent = e.publish(
+        subLoop('custom-counter', child.loopId, { mode: 'custom', custom: { patch } }),
+      );
+      const r = await e.runToIdle(parent.loopId);
+      expect(r.failure?.code).toBe('EXPRESSION_ERROR');
+      expect(r.failure?.message).toMatch(/outside the mutable regions/);
+      expect(r.failure?.message).toContain(location);
+    },
+  );
 
   it('ADV-012: a cancel that loses to the run finishing reports the terminal state', async () => {
     const e = await createTestEngine();
@@ -495,8 +559,18 @@ describe('adversarial engine invariants', () => {
         });
       const r = await e.runToIdle(parent.loopId);
       spy.mockRestore();
-      expect(r.status).toBe('succeeded');
-      expect((await e.manager.getThread(r.id))?.lastOutput?.value).toMatchObject({ status });
+      // The parent learns of the child exactly once, and then follows ordinary rules (#251): a
+      // finished child is data, a failed child fails the parent, a cancelled one cancels it.
+      expect(r.status).toBe(status);
+      expect(
+        e
+          .events(r.id)
+          .flatMap((event) => (event.type === 'child_run.finished' ? [event.status] : [])),
+      ).toEqual([status]);
+      if (status === 'succeeded')
+        expect((await e.manager.getThread(r.id))?.lastOutput?.value).toMatchObject({ status });
+      if (status === 'failed')
+        expect(r.failure).toMatchObject({ code: 'INTERNAL_ERROR', resumable: true });
       expect(e.eventTypes(r.id).filter((t) => t === 'run.woken')).toHaveLength(1);
     },
   );

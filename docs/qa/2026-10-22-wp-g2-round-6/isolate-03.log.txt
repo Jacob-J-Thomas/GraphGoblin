@@ -1,0 +1,36 @@
+
+ RUN  v5.0.3 <worktree>/packages/infrastructure
+
+ ❯ src/claude/process.test.ts (5 tests | 1 failed | 4 skipped) 5114ms
+   ❯ owned native Claude process transport (5)
+     ↓ streams stdout, sends stdin and never retains stderr content
+     ↓ reports missing executable without exposing raw native errors
+     ↓ kills on deadline and output overflow
+     × does not spawn for an already aborted signal and cancels a running process 5112ms
+     ↓ kills the descendant that a long-lived child started
+pnpm.cmd : 
+At line:25 char:3
++   & pnpm.cmd --filter $round6Case.package exec vitest run $round6Case ...
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > does not spawn for an already aborted 
+signal and cancels a running process
+Error: EBUSY: resource busy or locked, rmdir '<temp>\gg-claude-process-hXJ5iC'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 skipped (5)
+   Start at  17:55:30
+   Duration  5.99s (tests 95%, transform 3%, import 2%)
+
+JSON report written to <worktree>/round6-isolate-03-results.log
+[Round-8 retention mapping: this run's original raw Vitest JSON reporter object is retained beside this log as round6-isolate-03-results.log.txt; local path prefixes normalized only. Original output name: round6-isolate-03-results.log.]
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in <worktree>
+

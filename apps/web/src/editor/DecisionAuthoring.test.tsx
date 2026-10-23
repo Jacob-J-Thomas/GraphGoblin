@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { setCode } from '../__fixtures__/codemirror.js';
 import { FakeApi } from '../__fixtures__/fake-api.js';
 import { renderApp } from '../__fixtures__/render.js';
+import { pasteInto } from '../__fixtures__/user.js';
 import {
   clearActiveLocalDraft,
   loadLocalDraft,
@@ -535,15 +536,15 @@ describe('decision authoring checkpoint', () => {
     const field = (path: string) =>
       dialog.querySelector<HTMLInputElement>(`[data-field="${path}"] input`)!;
     await user.clear(field('routes.0.id'));
-    await user.type(field('routes.0.id'), 'review');
+    await pasteInto(user, field('routes.0.id'), 'review');
     await user.click(within(dialog).getByRole('button', { name: 'Move routes 1 down' }));
     expect(store().definition!.edges.find((edge) => edge.id === 'ship-edge')!.from.port).not.toBe(
       'review',
     );
     await user.clear(field('routes.1.id'));
-    await user.type(field('routes.1.id'), 'ready');
+    await pasteInto(user, field('routes.1.id'), 'ready');
     await user.clear(field('routes.1.label'));
-    await user.type(field('routes.1.label'), 'Ready to ship');
+    await pasteInto(user, field('routes.1.label'), 'Ready to ship');
     expect(store().definition!.edges.find((edge) => edge.id === 'ship-edge')!.from.port).toBe(
       'ready',
     );

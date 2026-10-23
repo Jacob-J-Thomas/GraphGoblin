@@ -4,9 +4,10 @@ import type {
   ClassifierModelEntry,
   ContextThread,
   Effort,
-  JsonValue,
   LoopDefinition,
+  LoopVersionStatus,
   RunFailure,
+  RunPin,
   WaitSpec,
 } from '@graphgoblin/contracts';
 import {
@@ -46,7 +47,10 @@ export const loopVersions = sqliteTable(
     id: text('id').primaryKey(),
     loopId: text('loop_id').notNull(),
     version: integer('version').notNull(),
-    status: text('status', { enum: ['draft', 'published'] }).notNull(),
+    /** `snapshot` rows are draft copies pinned by draft runs; triggers keep them immutable. */
+    status: text('status', { enum: ['draft', 'published', 'snapshot'] })
+      .$type<LoopVersionStatus>()
+      .notNull(),
     definition: text('definition', { mode: 'json' }).$type<LoopDefinition>().notNull(),
     createdAt: text('created_at').notNull(),
     publishedAt: text('published_at'),
@@ -71,7 +75,8 @@ export const runs = sqliteTable(
     pausedAt: text('paused_at'),
     failure: text('failure', { mode: 'json' }).$type<RunFailure>(),
     outcome: text('outcome'),
-    result: text('result', { mode: 'json' }).$type<JsonValue>(),
+    /** SQL NULL is absence; JSON text `null` is a present result. Encode explicitly. */
+    result: text('result'),
     createdAt: text('created_at').notNull(),
     startedAt: text('started_at'),
     finishedAt: text('finished_at'),
@@ -82,10 +87,16 @@ export const runs = sqliteTable(
     threadSnapshotSeq: integer('thread_snapshot_seq'),
     /** Set when everything after the terminal status (timers, children, returns, parent) is done. */
     finalizedAt: text('finalized_at'),
+    /**
+     * What `version_id` pins (ADR-0041). Nullable only because SQLite cannot add a NOT NULL column
+     * without a default; every run is written with one and migration 0014 pinned the runs before it.
+     */
+    pinned: text('pinned', { mode: 'json' }).$type<RunPin>(),
   },
   (t) => [
     index('runs_owner_status_idx').on(t.ownerId, t.status),
     index('runs_loop_idx').on(t.loopId, t.createdAt),
+    index('runs_loop_owner_history_idx').on(t.loopId, t.ownerId, t.createdAt, t.id),
     // Drizzle Kit 0.31 renders SQLite expression indexes incorrectly; 0008 supplies exact SQL.
     index('runs_trigger_dedupe_idx').on(
       t.loopId,
@@ -93,6 +104,8 @@ export const runs = sqliteTable(
       sql`json_extract(${t.initialThread}, '$.invocation.trigger.dedupeKey')`,
     ),
     index('runs_parent_idx').on(t.parentRunId),
+    // Which runs pin a definition record: snapshot clean-up and the snapshot delete guard (0014).
+    index('runs_version_idx').on(t.versionId),
   ],
 );
 
@@ -106,7 +119,10 @@ export const runEvents = sqliteTable(
     nodeId: text('node_id'),
     payload: text('payload', { mode: 'json' }).$type<Record<string, unknown>>().notNull(),
   },
-  (t) => [primaryKey({ columns: [t.runId, t.seq] })],
+  (t) => [
+    primaryKey({ columns: [t.runId, t.seq] }),
+    index('run_events_delivery_idx').on(t.runId, t.type, t.seq),
+  ],
 );
 
 export const harnessSessions = sqliteTable(
@@ -172,7 +188,8 @@ export const settings = sqliteTable(
   {
     ownerId: text('owner_id').notNull(),
     key: text('key').notNull(),
-    value: text('value', { mode: 'json' }).$type<JsonValue>().notNull(),
+    /** JSON text, including `null`; Drizzle's json mode would write SQL NULL for it. */
+    value: text('value').notNull(),
     updatedAt: text('updated_at').notNull(),
   },
   (t) => [primaryKey({ columns: [t.ownerId, t.key] })],

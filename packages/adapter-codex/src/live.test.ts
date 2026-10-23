@@ -42,7 +42,7 @@ describe.skipIf(!live)('Codex live smoke', () => {
   it('passes preflight', async () => {
     const result = await harness.preflight();
     console.warn('[live] preflight', JSON.stringify(result));
-    expect(result).toMatchObject({ ok: true, authenticated: true });
+    expect(result).toMatchObject({ state: 'ready', ok: true, authenticated: true });
   }, 60_000);
 
   it('starts a session and resumes it', async () => {

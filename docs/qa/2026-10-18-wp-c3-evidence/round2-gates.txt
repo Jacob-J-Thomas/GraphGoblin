@@ -1,0 +1,21 @@
+WP-C3 round-two final gates (Node v22.14.0)
+pnpm.cmd typecheck: exit 0, 20 successful tasks.
+pnpm.cmd lint: exit 0, 11 successful tasks; no suppressed rules or added exclusions.
+pnpm.cmd check:docs: exit 0, generated docs up to date.
+pnpm.cmd check:layers: exit 0.
+pnpm.cmd check:deps: exit 0, zero errors, existing drizzle.config.ts orphan warning.
+pnpm.cmd --filter @graphgoblin/domain test:coverage: exit 0, 542 passed; lines 98.43%, branches 95.61%.
+pnpm.cmd --filter @graphgoblin/api test:coverage: exit 0, 678 passed, 6 skipped; lines 97.86%, branches 93.04%.
+pnpm.cmd build: exit 0, 11 successful tasks.
+node .tmp/wp-c3-r2-native.mjs: exit 0, real built API, hard restart, repeat polls and repair verified.
+pnpm.cmd format:check: exit 0, all matched files use Prettier code style.
+
+The initial format check found only the committed round-one fast-child.json.
+Prettier changed its layout; canonical parsed JSON equality was verified before/after.
+No historical observations were changed.
+
+All relative links in both QA reports, README and round2-verification.md resolve.
+All five recorded module sources pass Node 22 --check after BOM removal.
+All three PowerShell replay blocks parse successfully.
+git diff --check: exit 0.
+No commit, index operation, directory deletion or owner-app/store operation performed.

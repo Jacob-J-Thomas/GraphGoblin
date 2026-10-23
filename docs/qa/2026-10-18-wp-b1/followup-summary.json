@@ -1,0 +1,266 @@
+{
+  "startedAt": "2026-10-19T07:57:51.493Z",
+  "head": "30da5d7cc215df505a3f8564431b47470cf26cf4",
+  "node": "v22.14.0",
+  "checks": [
+    {
+      "name": "component-failure-9999",
+      "pass": true,
+      "details": {
+        "before": 6,
+        "after": 7
+      }
+    },
+    {
+      "name": "component-failure-10000",
+      "pass": true,
+      "details": {
+        "before": 6,
+        "after": 7
+      }
+    },
+    {
+      "name": "component-failure-10001",
+      "pass": true,
+      "details": {
+        "before": 6,
+        "after": 6,
+        "error": {
+          "name": "RunFailureError",
+          "code": "EVENT_INVALID",
+          "message": "Generated run event could not be recorded: failure.message: Too big: expected string to have <=10000 characters"
+        }
+      }
+    },
+    {
+      "name": "component-wait-9999",
+      "pass": true,
+      "details": {
+        "before": 6,
+        "after": 7
+      }
+    },
+    {
+      "name": "component-wait-10000",
+      "pass": true,
+      "details": {
+        "before": 6,
+        "after": 7
+      }
+    },
+    {
+      "name": "component-wait-10001",
+      "pass": true,
+      "details": {
+        "before": 6,
+        "after": 6,
+        "error": {
+          "name": "RunFailureError",
+          "code": "EVENT_INVALID",
+          "message": "Generated run event could not be recorded: wait.prompt: Too big: expected string to have <=10000 characters"
+        }
+      }
+    },
+    {
+      "name": "component-progress-1999",
+      "pass": true,
+      "details": {
+        "before": 6,
+        "after": 7
+      }
+    },
+    {
+      "name": "component-progress-2000",
+      "pass": true,
+      "details": {
+        "before": 6,
+        "after": 7
+      }
+    },
+    {
+      "name": "component-progress-2001",
+      "pass": true,
+      "details": {
+        "before": 6,
+        "after": 6,
+        "error": {
+          "name": "RunFailureError",
+          "code": "EVENT_INVALID",
+          "message": "Generated run event could not be recorded: progress.stderr: Too big: expected string to have <=2000 characters"
+        }
+      }
+    },
+    {
+      "name": "component-node.failed-not-in-contract",
+      "pass": true,
+      "details": {
+        "before": 6,
+        "after": 6,
+        "error": {
+          "name": "RunFailureError",
+          "code": "EVENT_INVALID",
+          "message": "Generated run event could not be recorded: type: Invalid discriminator value. Expected 'run.queued' | 'run.started' | 'run.finished' | 'run.failed' | 'run.paused' | 'run.resumed' | 'run.cancel_requested' | 'run.cancelled' | 'run.waiting' | 'run.woken' | 'iteration.incremented' | 'node.started' | 'node.finished' | 'node.progress' | 'harness.session' | 'harness.usage' | 'decision.made' | 'exit.evaluated' | 'signal.received' | 'input.received' | 'heartbeat.beat' | 'child_run.started' | 'child_run.finished' | 'return.delivered' | 'return.failed'"
+        }
+      }
+    },
+    {
+      "name": "component-signal-invalid-component",
+      "pass": true,
+      "details": {
+        "before": 6,
+        "after": 6,
+        "error": {
+          "name": "RunFailureError",
+          "code": "EVENT_INVALID",
+          "message": "Generated run event could not be recorded: name: must start with a letter and use letters, digits, _ or -"
+        }
+      }
+    },
+    {
+      "name": "late-event-diagnostics-cursor",
+      "pass": true,
+      "details": {
+        "lastDamagedSeq": 111,
+        "pages": [
+          {
+            "items": 19,
+            "nextCursor": "01M59JBX8VEVNZCZH7CTWYQK8X:0"
+          },
+          {
+            "items": 17,
+            "nextCursor": "01M59JPCTN33K668H8KS2YK673:0"
+          },
+          {
+            "items": 0,
+            "nextCursor": "01M59JPDFBB8GRXZ0A1B0MHS1T:100"
+          },
+          {
+            "items": 1,
+            "nextCursor": null
+          }
+        ],
+        "found": [
+          {
+            "runId": "01M59JPDFBB8GRXZ0A1B0MHS1T",
+            "code": "HISTORY_UNREADABLE",
+            "reason": "Stored run event does not conform: run 01M59JPDFBB8GRXZ0A1B0MHS1T, seq 111, type signal.received"
+          }
+        ]
+      }
+    },
+    {
+      "name": "mixed-empty-page-rest",
+      "pass": true,
+      "details": {
+        "first": {
+          "items": [],
+          "nextCursor": "eyJjcmVhdGVkQXQiOiIyMDI2LTEwLTE5VDA3OjUyOjM5Ljk5MFoiLCJpZCI6IjAxTTU5SkJZOVBaRlYzV1FNTUtLTVFCWEQ0In0"
+        },
+        "healthyOldestInContinuation": true
+      }
+    },
+    {
+      "name": "mixed-empty-page-mcp",
+      "pass": false,
+      "details": {
+        "rawResult": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\n  \"items\": []\n}"
+            }
+          ],
+          "structuredContent": {
+            "items": []
+          }
+        },
+        "note": "Observation: list_runs discards REST nextCursor. With an empty decoded page it returns no nextBefore, although an older healthy run exists."
+      }
+    },
+    {
+      "name": "healthy-sse-correct-contract",
+      "pass": true,
+      "details": {
+        "status": 200,
+        "ids": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
+        "terminal": "run.finished",
+        "note": "Earlier raw probe used nonexistent run.completed as its terminal matcher; corrected by inspecting the same captured stream, with no retry."
+      }
+    }
+  ],
+  "fixtures": {
+    "component-validation": {
+      "loopId": "01M59JPCF47B77BS4JRR496292"
+    },
+    "component-failure-9999": {
+      "loopId": "01M59JPCF47B77BS4JRR496292",
+      "runId": "01M59JPCJYQQQG685RJNGV5NT2"
+    },
+    "component-failure-10000": {
+      "loopId": "01M59JPCF47B77BS4JRR496292",
+      "runId": "01M59JPCNQ11N0Y0ABSPG53TBK"
+    },
+    "component-failure-10001": {
+      "loopId": "01M59JPCF47B77BS4JRR496292",
+      "runId": "01M59JPCR3393T576P8HQNQNPX"
+    },
+    "component-wait-9999": {
+      "loopId": "01M59JPCF47B77BS4JRR496292",
+      "runId": "01M59JPCTN33K668H8KS2YK673"
+    },
+    "component-wait-10000": {
+      "loopId": "01M59JPCF47B77BS4JRR496292",
+      "runId": "01M59JPCX67E2FZ2SKWBN5ZY4Y"
+    },
+    "component-wait-10001": {
+      "loopId": "01M59JPCF47B77BS4JRR496292",
+      "runId": "01M59JPCZMZA4ST96VTBM7JQ3Y"
+    },
+    "component-progress-1999": {
+      "loopId": "01M59JPCF47B77BS4JRR496292",
+      "runId": "01M59JPD1XEQ4QSDX5R3JREX4V"
+    },
+    "component-progress-2000": {
+      "loopId": "01M59JPCF47B77BS4JRR496292",
+      "runId": "01M59JPD4C9JY2PJW0PEBS26DP"
+    },
+    "component-progress-2001": {
+      "loopId": "01M59JPCF47B77BS4JRR496292",
+      "runId": "01M59JPD6FSMMMDBN3C3X4TVFF"
+    },
+    "component-node.failed-not-in-contract": {
+      "loopId": "01M59JPCF47B77BS4JRR496292",
+      "runId": "01M59JPD8EHYC56TZXV6Y8QADP"
+    },
+    "component-signal-invalid-component": {
+      "loopId": "01M59JPCF47B77BS4JRR496292",
+      "runId": "01M59JPDAC6C51DB0HG10KQKT5"
+    },
+    "long-history": {
+      "loopId": "01M59JPDCVNWP7V41SDM12T6BM",
+      "runId": "01M59JPDFBB8GRXZ0A1B0MHS1T"
+    }
+  },
+  "faultInjection": "All fixture-created damage is controlled external fault injection.",
+  "dataDir": "%TEMP%\\gg-wp-b1-qa-cPUFiS",
+  "port": 5610,
+  "processes": [
+    {
+      "phase": 1,
+      "label": "followup-preparation",
+      "pid": 42508,
+      "port": 5610,
+      "dataDir": "%TEMP%\\gg-wp-b1-qa-cPUFiS",
+      "exit": [null, "SIGTERM"]
+    },
+    {
+      "phase": 2,
+      "label": "late-event-damage",
+      "pid": 22064,
+      "port": 5610,
+      "dataDir": "%TEMP%\\gg-wp-b1-qa-cPUFiS",
+      "exit": [null, "SIGTERM"]
+    }
+  ],
+  "completedAt": "2026-10-19T07:58:47.696Z"
+}
