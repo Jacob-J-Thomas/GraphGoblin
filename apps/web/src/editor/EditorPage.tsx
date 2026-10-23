@@ -13,6 +13,8 @@ import {
   keys,
   useClassifierModels,
   useModelCatalog,
+  usePreflight,
+  useSettings,
 } from '../api/queries.js';
 import { ErrorState } from '../components/status.js';
 import { Alert, Button, useSidePanelState } from '../components/ui/index.js';
@@ -120,8 +122,16 @@ export function EditorPage() {
   // them changes. Loading the model catalog here also has it ready before a node dialog or the
   // loop settings form needs it, and its refetch (on focus, say) finds another tab's change.
   const models = useModelCatalog();
+  // Start the first no-turn check and defaults load before an inference dialog is opened.
+  usePreflight();
+  useSettings();
   const classifiers = useClassifierModels();
   const catalogsResolved = models.data !== undefined && classifiers.data !== undefined;
+  // A failed refresh leaves cached choices available, but cannot certify publication readiness.
+  const catalogFailure = models.isError || classifiers.isError;
+  const catalogFailureReason = catalogFailure
+    ? 'A model catalog could not be loaded. Retry its lookup before publishing.'
+    : undefined;
   const catalogState = useMemo(
     () => catalogFingerprint(models.data, classifiers.data),
     [models.data, classifiers.data],
@@ -499,15 +509,17 @@ export function EditorPage() {
             issues={validation.issues}
             definition={def}
             check={
-              serverCheck.isError || (!catalogsResolved && (models.isError || classifiers.isError))
+              serverCheck.isError || catalogFailure
                 ? 'error'
                 : !catalogsResolved || serverCheck.isPending || serverCheck.isFetching
                   ? 'pending'
                   : 'done'
             }
+            unavailableReason={catalogFailureReason}
           />
         }
         publishing={publish.isPending}
+        publishBlockedReason={catalogFailureReason}
         onPublish={() => publish.mutate()}
         saveStatusRef={saveStatusRef}
       />

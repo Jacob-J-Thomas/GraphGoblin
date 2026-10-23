@@ -1,0 +1,43 @@
+{
+  "original": "../round-3/served-checks.mjs",
+  "originalSha256": "9db9c0d3f221a9193a4b56a33d16c9276ae22de030375dbbf271a90b0128bf4f",
+  "method": "Exact committed source with observation insertions only. No case body, assertion, retry, timeout, route or fixture edits.",
+  "edits": [
+    {
+      "before": "const sleep = (ms)",
+      "after": "let activeCheck = 'environment';\nconst observations = [], caseTimes = [], allLogs = [], starts = new WeakMap();\nfunction observe(p) {\n  p.on('request', r => starts.set(r,{case:activeCheck,utc:new Date().toISOString()}));\n  p.on('requestfinished', async r => {\n    const initial=starts.get(r), response=await r.response();\n    observations.push({...initial,source:'Edge',method:r.method(),path:new URL(r.url()).pathname,status:response?.status(),timing:r.timing()});\n  });\n  p.on('requestfailed', r => observations.push({...starts.get(r),source:'Edge',method:r.method(),path:new URL(r.url()).pathname,failure:r.failure(),timing:r.timing()}));\n}\nconst sleep = (ms)"
+    },
+    {
+      "before": "server.stdout.on('data', (x) => (log += x));",
+      "after": "server.stdout.on('data', (x) => { log += x; allLogs.push(String(x)); });"
+    },
+    {
+      "before": "server.stderr.on('data', (x) => (log += x));",
+      "after": "server.stderr.on('data', (x) => { log += x; allLogs.push(String(x)); });"
+    },
+    {
+      "before": "  const r = await fetch(base + path, {",
+      "after": "  const began = performance.now(), caseId=activeCheck, utc=new Date().toISOString();\n  const r = await fetch(base + path, {"
+    },
+    {
+      "before": "  return { status: r.status, body: await r.json() };",
+      "after": "  const body=await r.json();\n  observations.push({case:caseId,utc,source:'Node fetch',method,path,status:r.status,durationMs:performance.now()-began});\n  return { status: r.status, body };"
+    },
+    {
+      "before": "  page.setDefaultTimeout(15000);",
+      "after": "  observe(page);\n  page.setDefaultTimeout(15000);"
+    },
+    {
+      "before": "  try {\n    await api('/settings', 'PUT', {",
+      "after": "  activeCheck=id;\n  const caseStart=performance.now(), startedUtc=new Date().toISOString();\n  try {\n    await api('/settings', 'PUT', {"
+    },
+    {
+      "before": "}\nconst failure =",
+      "after": "  caseTimes.push({id,startedUtc,elapsedMs:performance.now()-caseStart,assertionDefaultMs:5000,pageDefaultMs:15000});\n  await writeFile(join(evidence,'served-timings.json'),sanitize(JSON.stringify({caseTimes,requests:observations},null,2))+String.fromCharCode(10));\n}\nconst failure ="
+    },
+    {
+      "before": "  await writeFile(join(dir, 'api.log'), log);",
+      "after": "  await writeFile(join(dir, 'api.log'), log);\n  await writeFile(join(evidence,'served-api.log.txt'),sanitize(allLogs.join('')));\n  await writeFile(join(evidence,'served-timings.json'),sanitize(JSON.stringify({caseTimes,requests:observations},null,2))+String.fromCharCode(10));"
+    }
+  ]
+}

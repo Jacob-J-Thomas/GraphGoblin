@@ -14,6 +14,8 @@ import { renderApp } from '../__fixtures__/render.js';
 import { LOOP_PANEL_STORAGE_KEY } from '../editor/LoopPanel.js';
 import { fieldErrorIssues, newLoopDefinition, validateDraft } from '../editor/model.js';
 import { useEditorStore } from '../editor/store.js';
+import { AUTOSAVE_DELAY_MS } from '../editor/useAutosave.js';
+import { cachedLocalDraft } from '../drafts/local-drafts.js';
 import { SchemaForm } from './SchemaForm.js';
 import type { Schema } from './introspect.js';
 
@@ -342,13 +344,25 @@ it('S24: conflict reload replaces mounted Settings and Variables and later edits
   const loop = api.addLoop(initial);
   renderApp(`/loops/${loop.id}/edit`, api);
   await screen.findByLabelText('Maximum node visits');
-  setCode('Variables value 1', '{broken');
-  api.saveDraftElsewhere(loop.id, {
-    ...newLoopDefinition('server'),
-    settings: { maxNodeVisits: 7 },
-    variables: { fresh: { type: 'number' } },
-  });
-  act(() => useEditorStore.getState().updateMeta({ description: 'local' }));
+  // The fields can appear before device/server reconciliation has completed. Establish the
+  // loaded copy first, then drive autosave's debounce without spending the conflict wait on it.
+  await waitFor(() => expect(cachedLocalDraft(loop.id)).toBeDefined());
+  vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+  try {
+    setCode('Variables value 1', '{broken');
+    api.saveDraftElsewhere(loop.id, {
+      ...newLoopDefinition('server'),
+      settings: { maxNodeVisits: 7 },
+      variables: { fresh: { type: 'number' } },
+    });
+    act(() => useEditorStore.getState().updateMeta({ description: 'local' }));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(AUTOSAVE_DELAY_MS);
+      await vi.advanceTimersByTimeAsync(0);
+    });
+  } finally {
+    vi.useRealTimers();
+  }
   await screen.findByText('The draft changed on the server', undefined, { timeout: 4000 });
   await user.click(screen.getByRole('button', { name: 'Reload server draft' }));
   await waitFor(() => expect(screen.getByLabelText('Maximum node visits')).toHaveValue(7));

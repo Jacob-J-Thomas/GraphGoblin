@@ -651,14 +651,18 @@ export const ExitConfigSchema = z.strictObject({
     .default('none')
     .meta(
       field(
-        'JSONata return mapping, or none. Gate decisions replace lastOutput; prefer outputs.<workNode>.value.',
+        'JSONata return mapping, or none. None returns nothing: the run has no result and no destination receives anything. Gate decisions replace lastOutput; prefer outputs.<workNode>.value.',
       ),
     ),
   destinations: z
     .array(ReturnChannelSchema)
     .max(16)
     .default([{ kind: 'caller' }])
-    .meta(field('Return destinations; caller by default. No delivery when returns is none.')),
+    .meta(
+      field(
+        'Return destinations; caller by default. No delivery when returns is none. With returns none and no destinations, the exit is quiet.',
+      ),
+    ),
 });
 export type ExitConfig = z.infer<typeof ExitConfigSchema>;
 

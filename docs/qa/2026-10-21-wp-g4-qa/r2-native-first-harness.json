@@ -1,0 +1,41 @@
+{
+  "head": "5d2783359dbcb95aa719146416f02dc303cbd1ed",
+  "node": "v22.14.0",
+  "port": 5641,
+  "stages": [
+    {
+      "action": "start-built-main",
+      "pid": 11600,
+      "health": "ok",
+      "log": ""
+    },
+    {
+      "command": "-NoProfile -File <worktree>\\docs\\qa\\2026-10-21-wp-g4-qa\\r2-import.ps1",
+      "exit": 1,
+      "signal": null,
+      "stdout": "",
+      "stderr": "File \r\n<worktree>\\docs\\qa\\2026-10-21-wp-g4-qa\\r2-import.ps1 \r\ncannot be loaded. The file \r\n<worktree>\\docs\\qa\\2026-10-21-wp-g4-qa\\r2-import.ps1 is \r\nnot digitally signed. You cannot run this script on the current system. For more information about running scripts and \r\nsetting execution policy, see about_Execution_Policies at https:/go.microsoft.com/fwlink/?LinkID=135170.\r\n    + CategoryInfo          : SecurityError: (:) [], ParentContainsErrorRecordException\r\n    + FullyQualifiedErrorId : UnauthorizedAccess\r\n"
+    },
+    {
+      "action": "stop-owned-api",
+      "pid": 11600,
+      "method": "Fixture-owned process termination; no graceful-signal claim",
+      "healthRefused": true
+    }
+  ],
+  "store": "%TEMP%\\gg-qa-129-r2-native-m1qyFd",
+  "key": "Created by built binary; token suppressed and never saved",
+  "verdict": "FAIL",
+  "error": "Error: QA child failed: File \r\n<worktree>\\docs\\qa\\2026-10-21-wp-g4-qa\\r2-import.ps1 \r\ncannot be loaded. The file \r\n<worktree>\\docs\\qa\\2026-10-21-wp-g4-qa\\r2-import.ps1 is \r\nnot digitally signed. You cannot run this script on the current system. For more information about running scripts and \r\nsetting execution policy, see about_Execution_Policies at https:/go.microsoft.com/fwlink/?LinkID=135170.\r\n    + CategoryInfo          : SecurityError: (:) [], ParentContainsErrorRecordException\r\n    + FullyQualifiedErrorId : UnauthorizedAccess\r\n\n    at command (<worktree>\\docs\\qa\\2026-10-21-wp-g4-qa\\r2-native.cjs:6:428)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async <worktree>\\docs\\qa\\2026-10-21-wp-g4-qa\\r2-native.cjs:10:201",
+  "cleanup": {
+    "path": "%TEMP%\\gg-qa-129-r2-native-m1qyFd",
+    "items": [
+      "graphgoblin.db",
+      "graphgoblin.db-shm",
+      "graphgoblin.db-wal",
+      "graphgoblin.lock",
+      "master.key"
+    ],
+    "absent": true
+  }
+}

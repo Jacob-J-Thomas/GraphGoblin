@@ -19,8 +19,10 @@ export const NODE_DOCS = {
   },
   decision: {
     title: 'Decision',
-    purpose: 'Chooses a route using an expression, LLM instructions, or a classifier primitive.',
-    ports: 'Declared route ids for expression/LLM; classifier option, side or band ids.',
+    purpose:
+      'Chooses a route using an expression, LLM instructions, or a classifier primitive. Marking one route as repeat makes it a gate with pass limits.',
+    ports:
+      'Declared route ids for expression/LLM; classifier option, side or band ids. A gate adds `limit-reached`.',
     variantKey: 'kind',
   },
   inference: {
@@ -57,8 +59,8 @@ export const NODE_DOCS = {
   exit: {
     title: 'Exit',
     purpose:
-      'Decides whether the loop is done, what it returns, where that goes, and whether to go around again.',
-    ports: '`loopBack`, only when configured.',
+      'Finishes the run with an outcome, evaluates what it returns, and delivers that value to its destinations. With returns none the run has no result and no destination receives anything; with no destinations as well, the exit is quiet. Exits never loop back: repetition belongs to decision gates.',
+    ports: 'None; exits are terminal.',
   },
 };
 

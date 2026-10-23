@@ -1,0 +1,980 @@
+{"command":"pnpm.cmd --filter @graphgoblin/web exec vitest run --config \"<USERPROFILE>\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-chore-web-test-stability\\apps\\web\\gg-chore-web-round3-probes.config.mjs\" src/editor/EditorPage.test.tsx src/styles/code-theme.test.ts -t \"keeps a set-aside device copy|colours JSON keys\" --reporter=verbose","node":"v22.14.0","start":"2026-10-23T02:21:46.321Z"}
+
+ RUN  v5.0.3 <USERPROFILE>/source/repos/GraphGoblin/.claude/worktrees/codex-chore-web-test-stability/apps/web
+
+ ↓ src/editor/Canvas.test.tsx > Canvas handlers > maps the definition to nodes with ports and issues, and edges with labels
+ ↓ src/editor/Canvas.test.tsx > Canvas handlers > uses routed geometry for backward edges and preserves gate settings on edge deletion
+ ↓ src/editor/Canvas.test.tsx > Canvas handlers > names an obstructed edge for keyboard users
+ ↓ src/editor/Canvas.test.tsx > Canvas handlers > waits for measurements of decision returns and self-loops without drawing a crossing fallback
+ ↓ src/editor/Canvas.test.tsx > Canvas handlers > keeps a node’s data while its node and issues are unchanged, so its card does not re-render
+ ↓ src/editor/Canvas.test.tsx > Canvas handlers > closes the popovers on the canvas when it pans or zooms and when a node drag starts
+ ↓ src/editor/Canvas.test.tsx > Canvas handlers > validates connections and forwards them to the store
+ ↓ src/editor/Canvas.test.tsx > Canvas handlers > applies node changes: measurement, selection, dragging, removal, and drag stop
+ ↓ src/editor/Canvas.test.tsx > Canvas handlers > records each drag as one undo step, though its stop reports the position twice
+ ↓ src/editor/Canvas.test.tsx > Canvas handlers > deletes the selection with Delete or Backspace only while focus is on the canvas
+ ↓ src/editor/Canvas.test.tsx > Canvas handlers > opens a node on a click, but not on a click on one of its port handles
+ ↓ src/editor/Canvas.test.tsx > Canvas handlers > opens the focused node on Enter, and ignores keys from a dialog
+ ↓ src/editor/Canvas.test.tsx > Canvas handlers > finds where focus returns after the node editor: the node, else the canvas
+ ↓ src/editor/Canvas.test.tsx > Canvas handlers > applies edge changes and removals
+ ↓ src/editor/Canvas.test.tsx > Canvas handlers > keeps the replacement edge selected in either callback order (replacement first: false)
+ ↓ src/editor/Canvas.test.tsx > Canvas handlers > keeps the replacement edge selected in either callback order (replacement first: true)
+ ↓ src/editor/Canvas.test.tsx > manual edge routes (#44) > drags a forward edge segment into a manual route in one undo step, and resets it
+ ↓ src/editor/Canvas.test.tsx > manual edge routes (#44) > nudges a loop-back lane by grid lines as one step, through cards when the author wants
+ ↓ src/editor/Canvas.test.tsx > manual edge routes (#44) > keeps a drag where it is released, even across a card, and Escape cancels a drag
+ ↓ src/editor/Canvas.test.tsx > manual edge routes (#44) > resets a moved-card crossing only when the forward replacement is clear (obstacle: false)
+ ↓ src/editor/Canvas.test.tsx > manual edge routes (#44) > resets a moved-card crossing only when the forward replacement is clear (obstacle: true)
+ ↓ src/editor/Canvas.test.tsx > manual edge routes (#44) > announces both a reset and a kept route from one node move in one live message
+ ↓ src/editor/Canvas.test.tsx > manual edge routes (#44) > lets a moved card take a manual route back to automatic, in the move’s own undo step
+ ↓ src/editor/Canvas.test.tsx > manual edge routes (#44) > consumes the drop-position plan when the last position change has no preview frame
+ ↓ src/editor/Canvas.test.tsx > manual edge routes (#44) > protects a deliberately crossing route against a new source-card crossing (new: false)
+ ↓ src/editor/Canvas.test.tsx > manual edge routes (#44) > protects a deliberately crossing route against a new source-card crossing (new: true)
+ ↓ src/editor/Canvas.test.tsx > manual edge routes (#44) > refuses a drag that splits a 63-coordinate route, keeping the valid draft
+ ↓ src/editor/Canvas.test.tsx > manual edge routes (#44) > refuses a nudge that splits a 63-coordinate route, keeping the valid draft
+ ↓ src/editor/Canvas.test.tsx > manual edge routes (#44) > keeps the store valid through 32 alternating edits of the first stub from one coordinate
+ ↓ src/editor/Canvas.test.tsx > manual edge routes (#44) > keeps a nudge immediately after a route drag in its own undo step
+ ↓ src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > trigger draws every field as before, in schema order, with no Advanced section
+ ↓ src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > wait draws every field as before, in schema order, with no Advanced section
+ ↓ src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > heartbeat draws every field as before, in schema order, with no Advanced section
+ ↓ src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > exit draws every field as before, in schema order, with no Advanced section
+ ↓ src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > inference shows its basic set, the rest under a collapsed Advanced
+ ↓ src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > script shows its basic set, the rest under a collapsed Advanced
+ ↓ src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > subloop shows its basic set, the rest under a collapsed Advanced
+ ↓ src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > keeps mutate to its operations, with no Advanced section
+ ↓ src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > keeps every trigger field editable, down to nested leaves, once Advanced and items are open
+ ↓ src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > keeps every decision field editable, down to nested leaves, once Advanced and items are open
+ ↓ src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > keeps every inference field editable, down to nested leaves, once Advanced and items are open
+ ↓ src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > keeps every script field editable, down to nested leaves, once Advanced and items are open
+ ↓ src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > keeps every mutate field editable, down to nested leaves, once Advanced and items are open
+ ↓ src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > keeps every subloop field editable, down to nested leaves, once Advanced and items are open
+ ↓ src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > keeps every wait field editable, down to nested leaves, once Advanced and items are open
+ ↓ src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > keeps every heartbeat field editable, down to nested leaves, once Advanced and items are open
+ ↓ src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > keeps every exit field editable, down to nested leaves, once Advanced and items are open
+ ↓ src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > expects the nested leaves and variant fields, and would notice one not drawn
+ ↓ src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > labels split fields by their title, and shows descriptions as help with code
+ ↓ src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > says how many advanced fields hold a value of their own, and follows edits
+ ↓ src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > flags problems inside a collapsed Advanced: issues and unparsed text
+ ↓ src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > flags a problem on an advanced decision field and shows it there
+ ↓ src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > counts errors found outside the form, such as an expression that does not compile
+ ↓ src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > counts an explicitly empty JSON Schema as set: it turns structured output on
+ ↓ src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > says "1 error" for one problem
+ ↓ src/forms/advanced.test.tsx > basic fields first, advanced ones behind a disclosure > opens Advanced when an issue is followed to a field inside it
+ ↓ src/forms/advanced.test.tsx > advanced fields without a group > sit in the panel without a heading, ahead of the groups that follow them
+ ↓ src/forms/advanced.test.tsx > collapsible operations > shows each operation collapsed to its kind and path, and opens it on request
+ ↓ src/forms/advanced.test.tsx > collapsible operations > opens an added operation with focus on its first control, and flags problems when collapsed
+ ↓ src/forms/advanced.test.tsx > collapsible operations > collapses the transforms of an inference node the same way
+ ↓ src/forms/advanced.test.tsx > registered controls > draws a field with the control registered under its metadata name, else as usual
+ ↓ src/forms/advanced.test.tsx > registered controls > draws the default renderer for a name the registry only inherits, such as toString
+ ↓ src/forms/advanced.test.tsx > registered controls > draws the default renderer when no controls are given
+ ↓ src/forms/json-sections.test.tsx > section JSON mode > returns confirmation cancellation to the JSON editor if parent validation disables Apply
+ ↓ src/forms/json-sections.test.tsx > section JSON mode > caches a held candidate across sibling held-input keystrokes and revalidates semantic changes and Apply
+ ↓ src/forms/json-sections.test.tsx > section JSON mode > keeps parent revalidation in the parent edit without adding undo steps or losing redo
+ ↓ src/forms/json-sections.test.tsx > section JSON mode > rechecks candidate validation at Apply even after the text was accepted
+ ↓ src/forms/json-sections.test.tsx > section JSON mode > validates Config overrides against the complete inference config before writing
+ ↓ src/forms/json-sections.test.tsx > section JSON mode > validates Capabilities against the complete inference config before writing
+ ↓ src/forms/json-sections.test.tsx > section JSON mode > rechecks live sibling values at Apply and maps unrelated parent issues onto the section
+ ↓ src/forms/json-sections.test.tsx > section JSON mode > validates nested array replacements and root refinements without changing the live candidate
+ ↓ src/forms/json-sections.test.tsx > section JSON mode > keeps root union refinements when validating the selected variant section
+ ↓ src/forms/json-sections.test.tsx > section JSON mode > returns to structured fields when history restores descendant held input
+ ↓ src/forms/json-sections.test.tsx > section JSON mode > does not hold whitespace/key-order-only edits, while array order remains significant
+ ↓ src/forms/json-sections.test.tsx > section JSON mode > requires a separate confirmation, rechecks changed consequences, and cancels review without applying
+ ↓ src/forms/json-sections.test.tsx > section JSON mode > refuses JSON mode while descendants hold input, names them, and focuses the first through disclosures
+ ↓ src/forms/json-sections.test.tsx > section JSON mode > round trips a cleared optional child without exposing the internal unset marker
+ ↓ src/forms/json-sections.test.tsx > section JSON mode > round trips declared routes without rewriting saved values and validates empty/absent input
+ ↓ src/forms/json-sections.test.tsx > section JSON mode > round trips input without rewriting saved values and validates empty/absent input
+ ↓ src/forms/json-sections.test.tsx > section JSON mode > round trips output.transforms without rewriting saved values and validates empty/absent input
+ ↓ src/forms/json-sections.test.tsx > section JSON mode > round trips contextFiles without rewriting saved values and validates empty/absent input
+ ↓ src/forms/json-sections.test.tsx > section JSON mode > round trips configOverrides without rewriting saved values and validates empty/absent input
+ ↓ src/forms/json-sections.test.tsx > section JSON mode > round trips capabilities without rewriting saved values and validates empty/absent input
+ ↓ src/forms/json-sections.test.tsx > section JSON mode > round trips choice routes without rewriting saved values and validates empty/absent input
+ ↓ src/forms/json-sections.test.tsx > section JSON mode > round trips noul routes without rewriting saved values and validates empty/absent input
+ ↓ src/forms/json-sections.test.tsx > section JSON mode > round trips score routes and rubric without rewriting saved values and validates empty/absent input
+ ↓ src/forms/json-sections.test.tsx > section JSON mode > round trips provider context without rewriting saved values and validates empty/absent input
+ ↓ src/forms/json-sections.test.tsx > section JSON mode > holds syntax/schema errors, blocks switching, cancels, and focuses nested issues in JSON
+ ↓ src/forms/json-sections.test.tsx > section JSON mode > rejects a different answer type and cross-row schema errors for choice
+ ↓ src/forms/json-sections.test.tsx > section JSON mode > rejects a different answer type and cross-row schema errors for noul
+ ↓ src/forms/json-sections.test.tsx > section JSON mode > rejects a different answer type and cross-row schema errors for score
+ ↓ src/forms/json-sections.test.tsx > section JSON mode > retains held text through Advanced, tabs, history and dialog-session remounts; Apply is one step
+ ↓ src/forms/json-sections.test.tsx > typed inputs > notices each native input event even while badInput and deliberate empty both expose an empty value
+ ↓ src/forms/json-sections.test.tsx > typed inputs > shows capability availability once per section and never renders empty capability datalists
+ ↓ src/forms/json-sections.test.tsx > typed inputs > keeps authored capability slugs editable and rejects malformed identifiers through the schema
+ ↓ src/forms/json-sections.test.tsx > typed inputs > keeps invalid numbers out of saved values
+ ↓ src/forms/json-sections.test.tsx > typed inputs > keeps invalid numbers out of saved values
+ ↓ src/forms/json-sections.test.tsx > typed inputs > holds native incomplete numbers instead of clearing optional, defaulted or required values
+ ↓ src/forms/json-sections.test.tsx > typed inputs > holds native incomplete numbers instead of clearing optional, defaulted or required values
+ ↓ src/forms/json-sections.test.tsx > typed inputs > holds native incomplete numbers instead of clearing optional, defaulted or required values
+ ↓ src/forms/json-sections.test.tsx > typed inputs > updates variable suggestions and accepts undeclared slugs exactly as the schema permits
+ ↓ src/forms/json-sections.test.tsx > typed inputs > keeps criterion/rubric newlines and schema-typed booleans/enums
+ ↓ src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > restores unfinished current JSONata into the editor instead of archiving it as an upgrade failure
+ ↓ src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > converts a v1 draft, archives the exact original and requires explicit first-save overwrite
+ ↓ src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > leaves all device keys untouched after a chunk-load failure and converts on retry
+ ↓ src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > leaves all device keys untouched after a chunk-load failure and converts on reopen
+ ↓ src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > still preserves an inert exportable original when the loaded converter fails
+ ↓ src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > keeps pending v3 review ids and hashes with an exportable inert original, including archives
+ ↓ src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > blocks overwrite of an automatic conversion after archive write failure
+ ↓ src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > blocks overwrite of an automatic conversion after archive readback failure
+ ↓ src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > keeps a converted synced mirror as a clean cache, with offline=false
+ ↓ src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > keeps a converted synced mirror as a clean cache, with offline=true
+ ↓ src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > sets stale converted unsynced work aside and restores it only by explicit choice
+ ↓ src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > does not convert archives or current drafts, with current cache=false
+ ↓ src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > does not convert archives or current drafts, with current cache=true
+ ↓ src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > preserves and converts a set-aside copy and keeps its archived original inert on reopening
+ ↓ src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > keeps an ambiguous v1 device draft raw and prevents it from replacing the server copy
+ ↓ src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > archives an ambiguous set-aside before a newer server copy moves a valid active draft there
+ ↓ src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > offers the original device-copy export when no server definition is available
+ ↓ src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > fails closed without overwriting either raw source when archiving fails
+ ↓ src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > keeps a dismissed restore notice hidden while the restored editor generation is edited
+ ↓ src/editor/EditorPage.restore.test.tsx > restoring a set-aside copy > does not load into another loop opened while the restore was being persisted
+ ↓ src/forms/SchemaForm.test.tsx > keeps errors without a field visible while diagnostic details are collapsed
+ ↓ src/forms/SchemaForm.test.tsx > SchemaForm > does not trigger a second resolver pass for each keystroke while schema issues are unchanged
+ ↓ src/forms/SchemaForm.test.tsx > SchemaForm > orders top-level fields without changing field paths or untouched values
+ ↓ src/forms/SchemaForm.test.tsx > SchemaForm > tabs through record key, Remove, then value in visual order
+ ↓ src/forms/SchemaForm.test.tsx > SchemaForm > tabs through record key, Remove, then value in visual order
+ ↓ src/forms/SchemaForm.test.tsx > SchemaForm > keeps edited script args when adding and removing without remounting
+ ↓ src/forms/SchemaForm.test.tsx > SchemaForm > keeps edited nested decision routes when adding and removing
+ ↓ src/forms/SchemaForm.test.tsx > SchemaForm > omits blank template previews unless a required template, and keeps malformed previews
+ ↓ src/forms/SchemaForm.test.tsx > SchemaForm > omits blank expression previews unless a required template, and keeps malformed previews
+ ↓ src/forms/SchemaForm.test.tsx > SchemaForm > keeps script env values through add, rename, and remove
+ ↓ src/forms/SchemaForm.test.tsx > SchemaForm > keeps the displayed variable schemas in sync when deleting an earlier row
+ ↓ src/forms/SchemaForm.test.tsx > SchemaForm > keeps JSON values in array rows in sync after removal
+ ↓ src/forms/SchemaForm.test.tsx > SchemaForm > edits trigger input schema JSON and clears optional JSON without a preview or parse error
+ ↓ src/forms/SchemaForm.test.tsx > SchemaForm > treats blank optional node conditions as absent
+ ↓ src/forms/SchemaForm.test.tsx > SchemaForm > treats blank optional node conditions as absent
+ ↓ src/forms/SchemaForm.test.tsx > SchemaForm > treats blank optional node conditions as absent
+ ↓ src/forms/SchemaForm.test.tsx > SchemaForm > keeps required mapping and decision expression errors
+ ↓ src/forms/SchemaForm.test.tsx > SchemaForm > keeps required mapping and decision expression errors
+ ↓ src/forms/SchemaForm.test.tsx > SchemaForm > keeps required mapping and decision expression errors
+ ↓ src/forms/SchemaForm.test.tsx > SchemaForm > renders strings, numbers, booleans, enums and reports changes
+ ↓ src/forms/SchemaForm.test.tsx > SchemaForm > edits arrays of strings and records
+ ↓ src/forms/SchemaForm.test.tsx > SchemaForm > switches a root discriminated union and shows literal and nested object fields
+ ↓ src/forms/SchemaForm.test.tsx > SchemaForm > retains the selected body-signature branch while its secret is incomplete
+ ↓ src/forms/SchemaForm.test.tsx > SchemaForm > keeps an unknown stored signing scheme visible in raw form data without coercing it
+ ↓ src/forms/SchemaForm.test.tsx > SchemaForm > handles the decision evaluation union, context unions, option editing, and previews
+ ↓ src/forms/SchemaForm.test.tsx > SchemaForm > edits JSON fields, optional unions, and tri-state booleans
+ ↓ src/forms/SchemaForm.test.tsx > SchemaForm > renders the other node kinds and loop settings without crashing
+ ↓ src/forms/SchemaForm.test.tsx > SchemaForm > clears a field that had an initial value instead of restoring it
+ ↓ src/forms/SchemaForm.test.tsx > SchemaForm > disables adding past an array maximum and keeps non-object initial values
+ ↓ src/forms/SchemaForm.test.tsx > SchemaForm changes and undo steps > makes three keystrokes one step, typing in another field another, and each toggle a step
+ ↓ src/forms/SchemaForm.test.tsx > SchemaForm changes and undo steps > makes the model and then the effort picker two steps
+ ↓ src/forms/SchemaForm.test.tsx > SchemaForm changes and undo steps > makes a row removal one step with the unparsed text it moves, apart from the typing
+ ↓ src/forms/SchemaForm.test.tsx > SchemaForm changes and undo steps > reports typing in a record value at its path, a key rename by its row, and Add as a commit
+ ↓ src/settings/SettingsPage.test.tsx > SettingsPage > recovers heading focus when Delete gpt-6-luna refreshes before React commits its row removal
+ ↓ src/settings/SettingsPage.test.tsx > SettingsPage > recovers heading focus when Delete secret jev-api-key refreshes before React commits its row removal
+ ↓ src/settings/SettingsPage.test.tsx > SettingsPage > recovers heading focus when Revoke mcp refreshes before React commits its row removal
+ ↓ src/settings/SettingsPage.test.tsx > SettingsPage > finishes revocation before a held list refresh, then restores focus after success
+ ↓ src/settings/SettingsPage.test.tsx > SettingsPage > finishes revocation before a held list refresh, then restores focus after 401
+ ↓ src/settings/SettingsPage.test.tsx > SettingsPage > review: refreshes the vanished Delete gpt-6-luna after a 404 is dismissed
+ ↓ src/settings/SettingsPage.test.tsx > SettingsPage > review: refreshes the vanished Delete secret jev-api-key after a 404 is dismissed
+ ↓ src/settings/SettingsPage.test.tsx > SettingsPage > review: refreshes the vanished Revoke mcp after a 404 is dismissed
+ ↓ src/settings/SettingsPage.test.tsx > SettingsPage > review: shows no browser-key warning when no key is stored
+ ↓ src/settings/SettingsPage.test.tsx > SettingsPage > review: describes startup re-seeding in the Jev deletion confirmation
+ ↓ src/settings/SettingsPage.test.tsx > SettingsPage > edits and deletes LiteLLM rows and toggles through PATCH
+ ↓ src/settings/SettingsPage.test.tsx > SettingsPage > explains catalog removal without promising harness models will return
+ ↓ src/settings/SettingsPage.test.tsx > SettingsPage > shows catalog save errors
+ ↓ src/settings/SettingsPage.test.tsx > SettingsPage > shows only enable switches for harness models and keeps Defaults in sync
+ ↓ src/settings/SettingsPage.test.tsx > SettingsPage > offers Add, Edit and Delete only for LiteLLM rows in a mixed catalog
+ ↓ src/settings/SettingsPage.test.tsx > SettingsPage > refreshes a vanished toggle and preserves focus on vanished switch
+ ↓ src/settings/SettingsPage.test.tsx > SettingsPage > refreshes a vanished toggle and preserves focus on another control
+ ↓ src/settings/SettingsPage.test.tsx > SettingsPage > review: focuses the heading when a row vanishes while its toggle is pending, and clears the notice on the next toggle
+ ↓ src/settings/SettingsPage.test.tsx > SettingsPage > keeps the local-model note hidden until the catalog is loaded
+ ↓ src/settings/SettingsPage.test.tsx > SettingsPage > shows the saved disabled default truthfully until another model is chosen
+ ↓ src/settings/SettingsPage.test.tsx > SettingsPage > shows the saved missing default truthfully until another model is chosen
+ ↓ src/settings/SettingsPage.test.tsx > SettingsPage > saves default model and effort
+ ↓ src/settings/SettingsPage.test.tsx > SettingsPage > bounds inherited Claude default efforts without materializing a model, preserving saved undefined
+ ↓ src/settings/SettingsPage.test.tsx > SettingsPage > bounds inherited Claude default efforts without materializing a model, preserving saved minimal
+ ↓ src/settings/SettingsPage.test.tsx > SettingsPage > keeps Claude defaults per harness and enables Fable through the catalog
+ ↓ src/settings/SettingsPage.test.tsx > SettingsPage > keeps every harness default while a settings refresh is held between saves
+ ↓ src/settings/SettingsPage.test.tsx > SettingsPage > shows adapter support separately from a failed Claude CLI preflight
+ ↓ src/settings/SettingsPage.test.tsx > SettingsPage > sets and deletes secrets without ever showing values
+ ↓ src/settings/SettingsPage.test.tsx > SettingsPage > creates an API key, shows the token once, and revokes keys
+ ↓ src/settings/SettingsPage.test.tsx > SettingsPage > shows harness preflight status and the install hint
+ ↓ src/settings/SettingsPage.test.tsx > SettingsPage > confirms Delete gpt-6-luna, cancels without a request, and surfaces a second-delete error
+ ↓ src/settings/SettingsPage.test.tsx > SettingsPage > confirms Delete secret jev-api-key, cancels without a request, and surfaces a second-delete error
+ ↓ src/settings/SettingsPage.test.tsx > SettingsPage > confirms Revoke mcp, cancels without a request, and surfaces a second-delete error
+ ↓ src/settings/SettingsPage.test.tsx > SettingsPage > locks a secret deletion until the API finishes and returns focus to Secrets
+ ↓ src/settings/SettingsPage.test.tsx > SettingsPage > warns about browser access only when revoking the current key
+ ↓ src/settings/SettingsPage.test.tsx > Claude catalog enablement and readiness > keeps owner enable switches usable with failed readiness and login true
+ ↓ src/settings/SettingsPage.test.tsx > Claude catalog enablement and readiness > keeps owner enable switches usable with failed readiness and login false
+ ↓ src/editor/DecisionAuthoring.test.tsx > guides Expression to Classifier setup with field instructions and diagnostic details
+ ↓ src/editor/DecisionAuthoring.test.tsx > guides Noul to Score setup without raw bounds errors in the ordinary form
+ ↓ src/editor/DecisionAuthoring.test.tsx > decision gates > surfaces a visit-cap warning and focuses Maximum passes without blocking publication
+ ↓ src/editor/DecisionAuthoring.test.tsx > decision gates > previews removed gate limits for Routes JSON and applies cleanup with one undo
+ ↓ src/editor/DecisionAuthoring.test.tsx > decision gates > marks only one repeat route and requires maximum passes with focused validation
+ ↓ src/editor/DecisionAuthoring.test.tsx > decision gates > previews removing repeat settings and the Limit reached edge; cancel and undo preserve all
+ ↓ src/editor/DecisionAuthoring.test.tsx > decision gates > marks classifier choice repeat routes and retains limits through kind changes
+ ↓ src/editor/DecisionAuthoring.test.tsx > decision gates > marks classifier noul repeat routes and retains limits through kind changes
+ ↓ src/editor/DecisionAuthoring.test.tsx > decision gates > marks classifier score repeat routes and retains limits through kind changes
+ ↓ src/editor/DecisionAuthoring.test.tsx > decision gates > removing the repeat row previews limits and cleans the gate as one undo step
+ ↓ src/editor/DecisionAuthoring.test.tsx > decision authoring checkpoint > keeps unfinished expression route fields through classifier conversion, cancel and undo
+ ↓ src/editor/DecisionAuthoring.test.tsx > decision authoring checkpoint > keeps unfinished llm route fields through classifier conversion, cancel and undo
+ ↓ src/editor/DecisionAuthoring.test.tsx > decision authoring checkpoint > names lost held route fields in the preview and moves compatible fields between classifier primitives
+ ↓ src/editor/DecisionAuthoring.test.tsx > decision authoring checkpoint > restores active device ownership across reload with unfinished ID ""
+ ↓ src/editor/DecisionAuthoring.test.tsx > decision authoring checkpoint > restores active device ownership across reload with unfinished ID "review"
+ ↓ src/editor/DecisionAuthoring.test.tsx > decision authoring checkpoint > restores set-aside device ownership across reload with unfinished ID ""
+ ↓ src/editor/DecisionAuthoring.test.tsx > decision authoring checkpoint > restores set-aside device ownership across reload with unfinished ID "review"
+ ↓ src/editor/DecisionAuthoring.test.tsx > decision authoring checkpoint > invalidates a connection-removal review when connections change, and keeps compatible held context on kind change
+ ↓ src/editor/DecisionAuthoring.test.tsx > decision authoring checkpoint > previews kind losses before writing; cancel preserves held text and confirm plus undo is atomic
+ ↓ src/editor/DecisionAuthoring.test.tsx > decision authoring checkpoint > leaves new source unsaved, focuses its validation issue, then saves and reloads with edges
+ ↓ src/editor/DecisionAuthoring.test.tsx > decision authoring checkpoint > keeps row ownership through invalid ids, reorders and labels, and reviews removal before one undoable edit
+ ↓ src/editor/DecisionAuthoring.test.tsx > decision authoring checkpoint > refuses a many-route Noul conversion, then preserves ids in an incomplete Score form
+ ↓ src/editor/DecisionAuthoring.test.tsx > decision authoring checkpoint > moves held band input with its row and restores it with undo
+ ↓ src/settings/sections/ClassifierModelsSection.test.tsx > ClassifierModelsSection > sits directly below the LLM catalog and lists the built-in first
+ ↓ src/settings/sections/ClassifierModelsSection.test.tsx > ClassifierModelsSection > shows the built-in alias and secret, only an enable switch, and what disabling stops
+ ↓ src/settings/sections/ClassifierModelsSection.test.tsx > ClassifierModelsSection > keeps configured and enabled independent, and links a missing key to Secrets
+ ↓ src/settings/sections/ClassifierModelsSection.test.tsx > ClassifierModelsSection > shows a configured status again once the secret is set, and needs a key after deletion
+ ↓ src/settings/sections/ClassifierModelsSection.test.tsx > ClassifierModelsSection > adds a custom classifier that starts disabled, after the contract checks pass
+ ↓ src/settings/sections/ClassifierModelsSection.test.tsx > ClassifierModelsSection > review: keeps Add unavailable until the list has loaded, then creates only
+ ↓ src/settings/sections/ClassifierModelsSection.test.tsx > ClassifierModelsSection > review: says why a new entry waits when the list is being refetched with an error
+ ↓ src/settings/sections/ClassifierModelsSection.test.tsx > ClassifierModelsSection > review: an id added elsewhere is refused by the server, explained, and named by the refreshed check
+ ↓ src/settings/sections/ClassifierModelsSection.test.tsx > ClassifierModelsSection > review: an old save finishing after Cancel does not close the form opened since
+ ↓ src/settings/sections/ClassifierModelsSection.test.tsx > ClassifierModelsSection > review: an edit saves to the entry it was opened for, whatever the id field is set to
+ ↓ src/settings/sections/ClassifierModelsSection.test.tsx > ClassifierModelsSection > review: catalog and secret writes mark the editor’s checks of saved drafts stale
+ ↓ src/settings/sections/ClassifierModelsSection.test.tsx > ClassifierModelsSection > opens only the Add form when a classifier has the id new
+ ↓ src/settings/sections/ClassifierModelsSection.test.tsx > ClassifierModelsSection > cancels Add back to its button
+ ↓ src/settings/sections/ClassifierModelsSection.test.tsx > ClassifierModelsSection > edits metadata with a fixed id, picks a secret from Secrets, and keeps enabled
+ ↓ src/settings/sections/ClassifierModelsSection.test.tsx > ClassifierModelsSection > keeps the current secret when the secret names cannot be loaded, and says why
+ ↓ src/settings/sections/ClassifierModelsSection.test.tsx > ClassifierModelsSection > lists an unset referenced secret as not set
+ ↓ src/settings/sections/ClassifierModelsSection.test.tsx > ClassifierModelsSection > keeps the form and the server state when a save is refused (secrets:write)
+ ↓ src/settings/sections/ClassifierModelsSection.test.tsx > ClassifierModelsSection > keeps the form and the server state when a save is refused (settings:write)
+ ↓ src/settings/sections/ClassifierModelsSection.test.tsx > ClassifierModelsSection > keeps the form and the server state when a save is refused (validation)
+ ↓ src/settings/sections/ClassifierModelsSection.test.tsx > ClassifierModelsSection > keeps the form and the server state when a save is refused (validation without details)
+ ↓ src/settings/sections/ClassifierModelsSection.test.tsx > ClassifierModelsSection > keeps the form and the server state when a save is refused (built-in)
+ ↓ src/settings/sections/ClassifierModelsSection.test.tsx > ClassifierModelsSection > ignores a second Save while the first is pending
+ ↓ src/settings/sections/ClassifierModelsSection.test.tsx > ClassifierModelsSection > confirms deletion with its consequences; Keep changes nothing
+ ↓ src/settings/sections/ClassifierModelsSection.test.tsx > ClassifierModelsSection > keeps a failed deletion open with its error, and refreshes a vanished row on dismissal
+ ↓ src/settings/sections/ClassifierModelsSection.test.tsx > ClassifierModelsSection > enables and disables through PATCH and refreshes the summaries
+ ↓ src/settings/sections/ClassifierModelsSection.test.tsx > ClassifierModelsSection > restores a refused toggle and announces a plain sentence
+ ↓ src/settings/sections/ClassifierModelsSection.test.tsx > ClassifierModelsSection > restores a refused toggle and announces a plain sentence
+ ↓ src/settings/sections/ClassifierModelsSection.test.tsx > ClassifierModelsSection > restores a refused toggle and announces a plain sentence
+ ↓ src/settings/sections/ClassifierModelsSection.test.tsx > ClassifierModelsSection > refreshes a toggle refused with 404 and keeps focus sensible (vanished switch)
+ ↓ src/settings/sections/ClassifierModelsSection.test.tsx > ClassifierModelsSection > refreshes a toggle refused with 404 and keeps focus sensible (another control)
+ ↓ src/settings/sections/ClassifierModelsSection.test.tsx > ClassifierModelsSection > review: a row that vanishes while its toggle is pending still returns focus to the heading, and the next toggle clears the notice
+ ↓ src/editor/EditorPage.test.tsx > EditorPage > describes valid pending JSON accurately and refuses Publish until applied or cancelled
+ ↓ src/editor/EditorPage.test.tsx > EditorPage > shows Harness in inference but not in the decision or loop settings
+ ↓ src/editor/EditorPage.test.tsx > EditorPage > collapses and expands the loop panel from its own controls and remembers it
+ ↓ src/editor/EditorPage.test.tsx > EditorPage > starts with the loop panel expanded on wide windows, and counts issues beside Publish
+ ↓ src/editor/EditorPage.test.tsx > EditorPage > loads a draft, adds nodes from the palette, edits properties, and autosaves
+ ↓ src/editor/EditorPage.test.tsx > EditorPage > adds a node dropped from the palette and refuses bad connections
+ ↓ src/editor/EditorPage.test.tsx > EditorPage > opens the node editor’s Advanced group to focus an issue’s field inside it
+ ↓ src/editor/EditorPage.test.tsx > EditorPage > flags a collapsed Advanced group or operation holding an expression that does not compile
+ ↓ src/editor/EditorPage.test.tsx > EditorPage > keeps schema-invalid drafts on the device and explains why
+ ↓ src/editor/EditorPage.test.tsx > EditorPage > shows a dismissed save notice again after the draft returns to the same invalid state
+ ↓ src/editor/EditorPage.test.tsx > EditorPage > keeps a dismissed offline save notice hidden after an edit that remains offline
+ ↓ src/editor/EditorPage.test.tsx > EditorPage > keeps a newer server draft over an older unsynced local copy, and can switch
+ ↓ src/editor/EditorPage.test.tsx > EditorPage > restores an unsynced local draft and reports offline saves
+ ↓ src/editor/EditorPage.test.tsx > EditorPage > opens offline from the local draft, and shows offline or missing states without one
+ ↓ src/editor/EditorPage.test.tsx > EditorPage > shows a missing loop as an error
+ ↓ src/editor/EditorPage.test.tsx > EditorPage > publishes, surfaces 422 issues, and links to the New run flow once published
+ ↓ src/editor/EditorPage.test.tsx > EditorPage > says there is nothing to publish when the loop has no changes, and hides it after an edit
+ ↓ src/editor/EditorPage.test.tsx > EditorPage > waits for the server check before "Ready to publish", and says when it is unavailable
+ ↓ src/editor/EditorPage.test.tsx > EditorPage > shows the issues only the API finds on the node’s badge and in the counts
+ ↓ src/editor/EditorPage.test.tsx > EditorPage > blocks readiness and publish when Monday 07:30 has no day chosen
+ ↓ src/editor/EditorPage.test.tsx > EditorPage > blocks publishing on JSON that does not parse, and discards it from the badges
+ ↓ src/editor/EditorPage.test.tsx > EditorPage > opens a node at an issue’s field from its badge, by pointer or keyboard
+ ↓ src/editor/EditorPage.test.tsx > EditorPage > opens a node at an issue whose path holds a newline, a quote, or a backslash
+ ↓ src/editor/EditorPage.test.tsx > EditorPage > connects nodes from the keyboard and customizes a default list
+ ↓ src/editor/EditorPage.test.tsx > EditorPage > shows the right node when the open editor is switched to another node of the same kind
+ ↓ src/editor/EditorPage.test.tsx > EditorPage > keeps a node editor open under Strict Mode, as the dev server renders the app
+ ↓ src/editor/EditorPage.test.tsx > EditorPage > says in the dialog why a connection was refused
+ ↓ src/editor/EditorPage.test.tsx > EditorPage > never lets an older save land after a newer one
+ ↓ src/editor/EditorPage.test.tsx > EditorPage > keeps a set-aside device copy across edits and reloads until restored or discarded
+ ↓ src/editor/EditorPage.test.tsx > EditorPage > keeps a restored device copy when leaving while an earlier save is in flight
+ ↓ src/editor/EditorPage.test.tsx > EditorPage > loads the editor once an API key is entered after a 401
+ ↓ src/editor/EditorPage.test.tsx > EditorPage > keeps an edit made just before leaving the editor
+ ↓ src/editor/EditorPage.test.tsx > EditorPage > refuses to publish a draft that cannot be saved
+ ↓ src/editor/EditorPage.test.tsx > EditorPage > edits loop settings, variables, node ids, and edges
+ ↓ src/editor/EditorPage.test.tsx > EditorPage > applies an id typed in the dialog when it closes, and stops once for an id that cannot apply
+ ↓ src/editor/EditorPage.test.tsx > EditorPage > picks a published subloop and shows its signature
+ ↓ src/editor/EditorPage.test.tsx > EditorPage > shows when the picked subloop has no published version
+ ↓ src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog evaluator-specific decisions > authors terminal success exits with returns and destinations
+ ↓ src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog evaluator-specific decisions > authors terminal failure exits with returns and destinations
+ ↓ src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog evaluator-specific decisions > authors terminal exhausted exits with returns and destinations
+ ↓ src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog evaluator-specific decisions > authors and saves a new expression decision from the default editor fields
+ ↓ src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog evaluator-specific decisions > authors and saves a new llm decision from the default editor fields
+ ↓ src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog evaluator-specific decisions > authors and saves a new classifier decision from the default editor fields
+ ↓ src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog evaluator-specific decisions > edits and saves a valid expression decision
+ ↓ src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog evaluator-specific decisions > edits and saves a valid llm decision
+ ↓ src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog evaluator-specific decisions > edits and saves a valid classifier decision
+ ↓ src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog evaluator-specific decisions > edits and saves a valid classifier decision
+ ↓ src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog evaluator-specific decisions > edits and saves a valid classifier decision
+ ↓ src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog evaluator-specific decisions > selects each kind with only its applicable fields and keeps source issue focus
+ ↓ src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog webhook receiver > shows Receiver only while the trigger type is Webhook
+ ↓ src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog webhook receiver > does not show Receiver for other node kinds
+ ↓ src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog GitHub trigger presets > applies an editable body-signed fragment as one undoable graph change
+ ↓ src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog GitHub trigger presets > shows bounded item controls for the GitHub poll preset
+ ↓ src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog disclosures across undo and redo > keeps incomplete Monday 07:30 across closing, reopening, undo and redo
+ ↓ src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog disclosures across undo and redo > keeps Advanced open through an undo and a redo of a basic picker, with focus restored
+ ↓ src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog disclosures across undo and redo > keeps opened and added list items open through an undo and a redo
+ ↓ src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog disclosures across undo and redo > redoing a removal from the removed row keeps its neighbour collapsed
+ ↓ src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog disclosures across undo and redo > undoing an add from its picker focuses a shown header without opening that row
+ ↓ src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog disclosures across undo and redo > follows the same row when undo and redo move its header toggle
+ ↓ src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog disclosures across undo and redo > follows the same row when undo and redo move its header remove
+ ↓ src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog disclosures across undo and redo > undoing the only added row returns focus to the collection Add button
+ ↓ src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog disclosures across undo and redo > redoing removal from an injected message focuses the surviving operation header (open: false)
+ ↓ src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog disclosures across undo and redo > redoing removal from an injected message focuses the surviving operation header (open: true)
+ ↓ src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog disclosures across undo and redo > undoing an injected message add returns to its surviving operation collection
+ ↓ src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog inference harness changes > preserves other authored harness options and reports unsupported Claude settings
+ ↓ src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog inference harness changes > keeps the saved model and resets to a supported policy with readiness true
+ ↓ src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog inference harness changes > keeps the saved model and resets to a supported policy with readiness false
+ ↓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > loads the pinned definition for fallback gate counts before any decision event
+ ↓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > shows loading acceptance until the run’s pinned version resolves with its authored Noul threshold
+ ↓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > shows Claude requested effort and states that effective effort is not reported
+ ↓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > streams the timeline, replays the thread at any event, and shows the patch diff
+ ↓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > shows a failed command in progress while the run is still running
+ ↓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > shows a failed tool call without its provider diagnostics
+ ↓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > replays a child run from its seeded first event and reports logs that do not replay
+ ↓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > resumes the stream after the stored cursor on reload
+ ↓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > renders the input form from the wait node schema and submits input
+ ↓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > sends a signal to a run waiting for one, and describes timer waits
+ ↓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > cancels, pauses, and resumes runs
+ ↓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > keeps the keyboard order: loop, parent run, child runs, then the run controls
+ ↓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > explains a deleted child while preserving the parent inspector history
+ ↓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > links an available child from a child-finished event
+ ↓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > shows failures, results, parent links, and stream errors
+ ↓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > links a subloop failure to the child run that failed (#251)
+ ↓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > does not reopen a finished succeeded stream and retains the result
+ ↓ src/runs/RunInspectorPage.test.tsx > RunInspectorPage > does not reopen a finished exhausted stream and retains the result
+ ↓ src/editor/useLoadEditor.test.tsx > times device rendering (warm=false) and distinguishes late set-aside restoration from an autosave 409 (#171)
+ ↓ src/editor/useLoadEditor.test.tsx > times device rendering (warm=true) and distinguishes late set-aside restoration from an autosave 409 (#171)
+ ↓ src/editor/useLoadEditor.test.tsx > gates saves, preserves edits and uses the loaded base token (synced=false)
+ ↓ src/editor/useLoadEditor.test.tsx > gates saves, preserves edits and uses the loaded base token (synced=true)
+ ↓ src/editor/useLoadEditor.test.tsx > replaces an untouched clean device cache with the server without autosaving it
+ ↓ src/editor/useLoadEditor.test.tsx > ignores a stale durable read in favour of the latest warm copy, scoped per loop
+ ↓ src/editor/useLoadEditor.test.tsx > late storage does not replace new edits (edited=false)
+ ↓ src/editor/useLoadEditor.test.tsx > late storage does not replace new edits (edited=true)
+ ↓ src/editor/useLoadEditor.test.tsx > does not reconcile from a cached query while a fresh server read is pending (staleTime=0)
+ ↓ src/editor/useLoadEditor.test.tsx > does not reconcile from a cached query while a fresh server read is pending (staleTime=Infinity)
+ ↓ src/editor/useLoadEditor.test.tsx > recovers offline device work and reconciles before saving (stale=false)
+ ↓ src/editor/useLoadEditor.test.tsx > recovers offline device work and reconciles before saving (stale=true)
+ ↓ src/editor/useLoadEditor.test.tsx > a failed storage read permits reconciliation and keeps device mirrors memory-only until retry
+ ↓ src/editor/useLoadEditor.test.tsx > ignores a late response for an editor that has been replaced by another loop
+ ↓ src/editor/useLoadEditor.test.tsx > retains a set-aside backup when restore fails, and succeeds on retry
+ ↓ src/editor/useLoadEditor.test.tsx > retains a set-aside backup when discard fails, and succeeds on retry
+ ↓ src/editor/useLoadEditor.test.tsx > does not reset held field input when a late server cache is reconciled
+ ↓ src/editor/useLoadEditor.test.tsx > a late format-3 conversion preserves new edits and archives the raw original exactly once
+ ↓ src/editor/useLoadEditor.test.tsx > blocks mirror replacement when a late device recovery copy cannot be preserved
+ ↓ src/editor/useLoadEditor.test.tsx > keeps a different durable copy discovered behind a stale warm cache as explicit recovery work
+ ↓ src/drafts/local-drafts.test.ts > local drafts in IndexedDB > silently skips blocked loads, rejects saves, says it is blocked, and recovers when the old tab closes
+ ↓ src/drafts/local-drafts.test.ts > local drafts in IndexedDB > finishes an upgrade when the older tab closes before the timeout
+ ↓ src/drafts/local-drafts.test.ts > local drafts in IndexedDB > keeps other database failures visible instead of treating them as an absent copy
+ ↓ src/drafts/local-drafts.test.ts > local drafts in IndexedDB > preserves the version 1 store when opening version 2
+ ↓ src/drafts/local-drafts.test.ts > local drafts in IndexedDB > preserves a late-discovered old active copy before any current write
+ ↓ src/drafts/local-drafts.test.ts > local drafts in IndexedDB > preserves a late-discovered old set-aside copy before any current write
+ ↓ src/drafts/local-drafts.test.ts > local drafts in IndexedDB > preserves a late-discovered old server-save copy before any current write
+ ↓ src/drafts/local-drafts.test.ts > local drafts in IndexedDB > refuses to replace an old copy edited by another tab during preservation
+ ↓ src/drafts/local-drafts.test.ts > local drafts in IndexedDB > never clears a changed active source after archiving an earlier copy
+ ↓ src/drafts/local-drafts.test.ts > local drafts in IndexedDB > never clears a changed set-aside source after archiving an earlier copy
+ ↓ src/drafts/local-drafts.test.ts > local drafts in IndexedDB > keeps distinct original metadata when archiving and discarding otherwise identical copies
+ ↓ src/drafts/local-drafts.test.ts > local drafts in IndexedDB > preserves a schema-invalid live draft after reload
+ ↓ src/drafts/local-drafts.test.ts > local drafts in IndexedDB > preserves a schema-invalid set-aside draft after reload
+ ↓ src/drafts/local-drafts.test.ts > local drafts in IndexedDB > saves, loads, and clears a draft per loop, including its set-aside copy
+ ↓ src/drafts/local-drafts.test.ts > per-loop memory copies and durable status > makes each latest write available synchronously without claiming durability early
+ ↓ src/drafts/local-drafts.test.ts > per-loop memory copies and durable status > keeps memory-only work separate from an older durable copy and clears only the expected copy
+ ↓ src/drafts/local-drafts.test.ts > per-loop memory copies and durable status > advances the newest cached edit to the accepted token while keeping it unsynced
+ ↓ src/drafts/local-drafts.test.ts > F3: recording a server save never marks a different memory-only definition durable
+ ↓ src/drafts/local-drafts.test.ts > re-review F1: a differing foreign copy keeps its base in storage and memory without a durability claim
+ ↓ src/drafts/local-drafts.test.ts > re-review F1: a differing unknown copy keeps its base in storage and memory without a durability claim
+ ↓ src/drafts/local-drafts.test.ts > re-review F1: a differing missing copy keeps its base in storage and memory without a durability claim
+ ↓ src/drafts/local-drafts.test.ts > re-review F1: a differing converted copy keeps its base in storage and memory without a durability claim
+ ↓ src/drafts/local-drafts.test.ts > re-review F1: a differing converted matching copy keeps its base in storage and memory without a durability claim
+ ↓ src/drafts/local-drafts.test.ts > re-review F1: a matching memory base cannot claim a foreign durable base was advanced
+ ↓ src/drafts/local-drafts.test.ts > second review F1: a same-base stored definition mismatch with the latest mirror is not rebased
+ ↓ src/drafts/local-drafts.test.ts > second review F1: a same-base stored decision routes mismatch with the latest mirror is not rebased
+ ↓ src/drafts/local-drafts.test.ts > second review F1: a mirror queued after the save replaces the old copy with its already accepted token
+ ↓ src/pwa/register.test.ts > registerPwa > does not prompt for the first worker during registration
+ ↓ src/pwa/register.test.ts > registerPwa > does not prompt for the first worker during native installation
+ ↓ src/pwa/register.test.ts > registerPwa > prompts immediately for a worker already waiting at registration without activating it
+ ↓ src/pwa/register.test.ts > registerPwa > prompts for each native updatefound worker after Later without Workbox events
+ ↓ src/pwa/register.test.ts > registerPwa > finds an unannounced waiting worker on every trigger
+ ↓ src/pwa/register.test.ts > registerPwa > throttles focus checks to one per 60 seconds without throttling visibility
+ ↓ src/pwa/register.test.ts > registerPwa > defers repeated throttled focuses into one check at the 60-second boundary
+ ↓ src/pwa/register.test.ts > registerPwa > cancels a deferred focus check when a visibility check runs
+ ↓ src/pwa/register.test.ts > registerPwa > does not run a deferred check while hidden and checks once visibility permits it
+ ↓ src/pwa/register.test.ts > registerPwa > does not run a deferred check while offline and checks once visibility permits it
+ ↓ src/pwa/register.test.ts > registerPwa > does not run a deferred check while API unreachable and checks once visibility permits it
+ ↓ src/pwa/register.test.ts > registerPwa > checks on registration, focus, visibility and hourly; clears everything on dispose
+ ↓ src/pwa/register.test.ts > registerPwa > never checks while hidden, browser offline, or API unreachable; holds one check in flight
+ ↓ src/pwa/register.test.ts > registerPwa > checks when the API comes back from an outage
+ ↓ src/pwa/register.test.ts > registerPwa > warns only once per failure streak and resets after a successful check
+ ↓ src/pwa/register.test.ts > registerPwa > ignores a registration that finishes after disposal, including a waiting worker
+ ↓ src/pwa/register.test.ts > registerPwa > resumes checks when a page returns from the browser back-forward cache
+ ↓ src/pwa/register.test.ts > registerPwa > prompts on a waiting worker and activates it only after confirmation
+ ↓ src/pwa/register.test.ts > registerPwa > does no worker work on unsupported browsers and disposes safely
+ ↓ src/pwa/register.test.ts > registerPwa > logs a failed registration
+ ↓ src/pwa/register.test.ts > registerPwa > builds a real Workbox for the default worker URL
+ ↓ src/components/ui/confirm-action.test.tsx > ConfirmAction > starts no removal watch after plain Keep, even when unrelated content renders
+ ↓ src/components/ui/confirm-action.test.tsx > ConfirmAction > starts no removal watch after plain Escape, even when unrelated content renders
+ ↓ src/components/ui/confirm-action.test.tsx > ConfirmAction > focuses the section heading when action settlement and row removal occur same tick
+ ↓ src/components/ui/confirm-action.test.tsx > ConfirmAction > focuses the section heading when action settlement and row removal occur after the refresh frame
+ ↓ src/components/ui/confirm-action.test.tsx > ConfirmAction > prevents busy Escape at keydown before the browser can close or restore background focus
+ ↓ src/components/ui/confirm-action.test.tsx > ConfirmAction > ignores a queued stale native close after an idle confirmation has reopened
+ ↓ src/components/ui/confirm-action.test.tsx > ConfirmAction > review: reopens a queued native close while busy
+ ↓ src/components/ui/confirm-action.test.tsx > ConfirmAction > review: follows an idle native close so the trigger can open again
+ ↓ src/components/ui/confirm-action.test.tsx > ConfirmAction > consumes a queued programmatic close after reopening without swallowing the next native close
+ ↓ src/components/ui/confirm-action.test.tsx > ConfirmAction > preserves an existing tabindex on the explicit fallback target
+ ↓ src/components/ui/confirm-action.test.tsx > ConfirmAction > review: derives the revoke name and announces a dialog with a ban icon
+ ↓ src/components/ui/confirm-action.test.tsx > ConfirmAction > review: pending content cannot select status text through a disabled button
+ ↓ src/components/ui/confirm-action.test.tsx > ConfirmAction > review: an explicit focus target wins over the first section heading without tabindex residue
+ ↓ src/components/ui/confirm-action.test.tsx > ConfirmAction > names the item, announces consequences, focuses Keep, and returns focus on cancellation
+ ↓ src/components/ui/confirm-action.test.tsx > ConfirmAction > locks confirmation, Keep and Escape while pending, and closes after success
+ ↓ src/components/ui/confirm-action.test.tsx > ConfirmAction > keeps errors announced until retried or dismissed, including a second failure
+ ↓ src/components/ui/confirm-action.test.tsx > ConfirmAction > returns focus to a surviving heading after row removal (section: true)
+ ↓ src/components/ui/confirm-action.test.tsx > ConfirmAction > returns focus to a surviving heading after row removal (section: false)
+ ↓ src/editor/EditorPage.conflict.test.tsx > draft conflicts (If-Match) > sends the loaded token, and the token from each save after it
+ ↓ src/editor/EditorPage.conflict.test.tsx > draft conflicts (If-Match) > stops saving on a conflict and reloads the server draft on request
+ ↓ src/editor/EditorPage.conflict.test.tsx > draft conflicts (If-Match) > overwrites the server draft with this copy on request
+ ↓ src/editor/EditorPage.conflict.test.tsx > draft conflicts (If-Match) > asks the server for its token when the conflict did not carry one, and shows failures
+ ↓ src/editor/EditorPage.conflict.test.tsx > draft conflicts (If-Match) > answers a conflict from inside an open node editor
+ ↓ src/editor/EditorPage.conflict.test.tsx > draft conflicts (If-Match) > does not save over the server draft when leaving in conflict
+ ↓ src/editor/EditorPage.conflict.test.tsx > draft conflicts (If-Match) > keeps a restored device copy's stale token and requires explicit reconciliation before any save
+ ↓ src/editor/EditorPage.conflict.test.tsx > draft conflicts (If-Match) > saves an undo or redo like any edit: If-Match, the device copy, and the conflict stop
+ ↓ src/editor/EditorPage.conflict.test.tsx > draft conflicts (If-Match) > recognises only DRAFT_CONFLICT problems
+ ↓ src/editor/EditorPage.conflict.test.tsx > draft tokens across editors and saves > does not load a delayed server draft for loop A into the editor of loop B
+ ↓ src/editor/EditorPage.conflict.test.tsx > draft tokens across editors and saves > bases the save sent on leaving on the save still in flight, so it does not conflict
+ ↓ src/editor/EditorPage.conflict.test.tsx > draft tokens across editors and saves > moves a newer unsynced device copy onto the token of the save it follows
+ ↓ src/loops/LoopsPage.test.tsx > LoopsPage > lists loops with publish state and last run status
+ ↓ src/loops/LoopsPage.test.tsx > LoopsPage > creates a loop and opens it in the editor
+ ↓ src/loops/LoopsPage.test.tsx > LoopsPage > creates an editable template draft without setup, defaults, or readiness
+ ↓ src/loops/LoopsPage.test.tsx > LoopsPage > keeps all gallery actions guarded while creating and opening a draft
+ ↓ src/loops/LoopsPage.test.tsx > LoopsPage > omits setup readiness and setup-only queries while allowing a copy
+ ↓ src/loops/LoopsPage.test.tsx > LoopsPage > reports a failed draft request and never retries it automatically
+ ↓ src/loops/LoopsPage.test.tsx > LoopsPage > shows an empty gallery and still creates a template draft without typed settings defaults
+ ↓ src/loops/LoopsPage.test.tsx > LoopsPage > reports a failed create
+ ↓ src/loops/LoopsPage.test.tsx > LoopsPage > imports an export file and reports bad files and server errors
+ ↓ src/loops/LoopsPage.test.tsx > LoopsPage > distinguishes invalid old source from pending import reviews
+ ↓ src/loops/LoopsPage.test.tsx > LoopsPage > shows the automatic changes reported by an old-format import
+ ↓ src/loops/LoopsPage.test.tsx > LoopsPage > exports the published version or the draft as a download
+ ↓ src/loops/LoopsPage.test.tsx > LoopsPage > deletes a loop after confirmation and shows refusals
+ ↓ src/loops/LoopsPage.test.tsx > LoopsPage > omits the run count when the runs listing may be truncated
+ ↓ src/loops/LoopsPage.test.tsx > LoopsPage > shows export progress and ignores repeated clicks until the request finishes
+ ↓ src/loops/LoopsPage.test.tsx > LoopsPage > shows a clear offline state
+ ↓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > keeps the Noul observation separate from the Limit reached port
+ ↓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > keeps the Score observation separate from the Limit reached port
+ ↓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > shows recorded gate pass counts and limit null independently of the observation
+ ↓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > shows recorded gate pass counts and limit max-passes independently of the observation
+ ↓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > shows recorded gate pass counts and limit max-run-time independently of the observation
+ ↓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > shows terminal exit outcome success
+ ↓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > shows terminal exit outcome failure
+ ↓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > shows terminal exit outcome exhausted
+ ↓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > distinguishes loading classifier configuration from unavailable historical configuration
+ ↓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > shows an expression route with no provider, classifier evidence or invented confidence
+ ↓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > shows confidence and reasoning when they were recorded on a historical expression fact
+ ↓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > shows recorded Choice evidence and factual confidence comparison 0
+ ↓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > shows recorded Choice evidence and factual confidence comparison 1
+ ↓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > shows recorded Choice evidence and factual confidence comparison 2
+ ↓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > shows recorded Choice evidence and factual confidence comparison 3
+ ↓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > preserves a historical boolean observation without inventing a route answer or reasoning
+ ↓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > renders nothing for a different event
+ ↓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > labels LLM confidence as self-reported and marks missing historical settings
+ ↓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > shows typed Noul and fractional Score evidence with stable ports and rubric anchors
+ ↓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > shows a confidence-gate rejection as a proposed answer with no selected route
+ ↓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > shows the default Noul threshold for accepted classifier evidence
+ ↓ src/runs/inspector/EvaluationDetails.test.tsx > EvaluationDetails > keeps the rejected Score rubric and classifier identity when alternatives are absent
+ ↓ src/editor/github-fragment.test.ts > editable GitHub fragments > builds and validates issues-labeled with terminal ignore and unchanged successor identity
+ ↓ src/editor/github-fragment.test.ts > editable GitHub fragments > builds and validates pull-request-ready with terminal ignore and unchanged successor identity
+ ↓ src/editor/github-fragment.test.ts > editable GitHub fragments > builds and validates pull-request-merged with terminal ignore and unchanged successor identity
+ ↓ src/editor/github-fragment.test.ts > editable GitHub fragments > ports every signed-body predicate for issues-labeled
+ ↓ src/editor/github-fragment.test.ts > editable GitHub fragments > ports every signed-body predicate for pull-request-ready
+ ↓ src/editor/github-fragment.test.ts > editable GitHub fragments > ports every signed-body predicate for pull-request-merged
+ ↓ src/editor/github-fragment.test.ts > editable GitHub fragments > quotes quotes, backslashes, newlines and Unicode for issues-labeled
+ ↓ src/editor/github-fragment.test.ts > editable GitHub fragments > quotes quotes, backslashes, newlines and Unicode for pull-request-ready
+ ↓ src/editor/github-fragment.test.ts > editable GitHub fragments > quotes quotes, backslashes, newlines and Unicode for pull-request-merged
+ ↓ src/editor/github-fragment.test.ts > editable GitHub fragments > avoids node and edge collisions and card overlaps
+ ↓ src/editor/github-fragment.test.ts > editable GitHub fragments > rewires all 0 successors and reports existing contract constraints
+ ↓ src/editor/github-fragment.test.ts > editable GitHub fragments > rewires all 1 successors and reports existing contract constraints
+ ↓ src/editor/github-fragment.test.ts > editable GitHub fragments > rewires all 3 successors and reports existing contract constraints
+ ↓ src/editor/github-fragment.test.ts > editable GitHub fragments > applies atomically with held input, undo and redo; cancel is read-only
+ ↓ src/editor/github-fragment.test.ts > editable GitHub fragments > refuses a stale definition
+ ↓ src/editor/github-fragment.test.ts > editable GitHub fragments > refuses a stale fieldErrors
+ ↓ src/editor/github-fragment.test.ts > editable GitHub fragments > refuses a stale historyEpoch
+ ↓ src/editor/github-fragment.test.ts > editable GitHub fragments > refuses a stale generation
+ ↓ src/editor/github-fragment.test.ts > editable GitHub fragments > previews replacement of owner edits, including held inputs, and undo restores them
+ ↓ src/editor/github-fragment.test.ts > editable GitHub fragments > removes an edited issues-labeled fragment for poll and reconnects in one undo step
+ ↓ src/editor/github-fragment.test.ts > editable GitHub fragments > removes an edited pull-request-ready fragment for poll and reconnects in one undo step
+ ↓ src/editor/github-fragment.test.ts > editable GitHub fragments > removes an edited pull-request-merged fragment for poll and reconnects in one undo step
+ ↓ src/editor/github-fragment.test.ts > editable GitHub fragments > warns and preserves a unrecognized downstream check when applying poll
+ ↓ src/editor/github-fragment.test.ts > editable GitHub fragments > warns and preserves a ambiguous downstream check when applying poll
+ ↓ src/editor/github-fragment.test.ts > editable GitHub fragments > warns and preserves a nested downstream check when applying poll
+ ↓ src/editor/github-fragment.test.ts > editable GitHub fragments > retains ambiguous/shared downstream graphs and leaves the poll recipe alone
+ ↓ src/editor/github-fragment.test.ts > editable GitHub fragments > refuses limits and invalid graphs without making an undo step
+ ↓ src/editor/github-fragment.test.ts > editable GitHub fragments > validates setup bounds and keeps poll configuration unchanged
+ ↓ src/editor/github-fragment.test.ts > editable GitHub fragments > does not warn about a check when the existing downstream graph has none
+ ↓ src/editor/useLoadEditor.review.test.tsx > F1: failed warm refetch keeps stale data in error state and reconciles only after later success
+ ↓ src/editor/useLoadEditor.review.test.tsx > F2: previous editor save finishes before reconciliation without spurious prompts (new edits=false)
+ ↓ src/editor/useLoadEditor.review.test.tsx > F2: previous editor save finishes before reconciliation without spurious prompts (new edits=true)
+ ↓ src/editor/useLoadEditor.review.test.tsx > F4: permanently unavailable IndexedDB permits server autosave without durable mirrors
+ ↓ src/editor/useLoadEditor.review.test.tsx > F4: permanently unavailable IndexedDB permits server flush without durable mirrors
+ ↓ src/editor/useLoadEditor.review.test.tsx > F4: permanently unavailable IndexedDB permits server navigation without durable mirrors
+ ↓ src/editor/useLoadEditor.review.test.tsx > F4: permanently unavailable IndexedDB keeps its warning and Retry while server autosave works
+ ↓ src/editor/useLoadEditor.review.test.tsx > F4: a transient active-read failure keeps mirrors memory-only and preserves unread device work
+ ↓ src/editor/useLoadEditor.review.test.tsx > F5: a current-format set-aside backup reopens with a backup label, not an unconverted-original label
+ ↓ src/editor/useLoadEditor.review.test.tsx > F6: a server loop with no definition finishes checking (device work=false)
+ ↓ src/editor/useLoadEditor.review.test.tsx > F6: a server loop with no definition finishes checking (device work=true)
+ ↓ src/editor/useLoadEditor.review.test.tsx > F4: read failure stays visible after other storage succeeds, and retry preserves edits and held input
+ ↓ src/editor/useLoadEditor.review.test.tsx > second review F1: failed-read autosave preserves unread work and requires a choice on reopening (same base=false)
+ ↓ src/editor/useLoadEditor.review.test.tsx > second review F1: failed-read navigation preserves unread work and requires a choice on reopening (same base=false)
+ ↓ src/editor/useLoadEditor.review.test.tsx > second review F1: failed-read autosave preserves unread work and requires a choice on reopening (same base=true)
+ ↓ src/editor/useLoadEditor.review.test.tsx > second review F1: failed-read navigation preserves unread work and requires a choice on reopening (same base=true)
+ ↓ src/editor/useLoadEditor.review.test.tsx > re-review F2: absent tokens leave the timestamp comparison in control (server newer=true)
+ ↓ src/editor/useLoadEditor.review.test.tsx > re-review F2: absent tokens leave the timestamp comparison in control (server newer=false)
+ ↓ src/forms/JsonSchemaForm.test.tsx > JsonSchemaForm > renders one field per property and validates before submitting
+ ↓ src/forms/JsonSchemaForm.test.tsx > JsonSchemaForm > sends an enum choice as the value it stands for, not its text
+ ↓ src/forms/JsonSchemaForm.test.tsx > JsonSchemaForm > keeps an enum choice by value when the schema changes under a mounted form
+ ↓ src/forms/JsonSchemaForm.test.tsx > JsonSchemaForm > says so when a segmented choice is no longer offered, and keeps the required ones marked
+ ↓ src/forms/JsonSchemaForm.test.tsx > JsonSchemaForm > gives each field its own ids, whatever its property is called
+ ↓ src/forms/JsonSchemaForm.test.tsx > JsonSchemaForm > puts each problem beside its field: required boolean, text, enum, and the value as a whole
+ ↓ src/forms/JsonSchemaForm.test.tsx > JsonSchemaForm > links the raw JSON editor to its problems, whether the text does not parse or does not fit
+ ↓ src/forms/JsonSchemaForm.test.tsx > JsonSchemaForm > checks an empty input against the schema as the API will (as null)
+ ↓ src/forms/JsonSchemaForm.test.tsx > JsonSchemaForm > falls back to a JSON editor for non-object schemas or none
+ ↓ src/forms/JsonSchemaForm.test.tsx > renderPreview > renders templates and expressions against the sample thread, and reports errors
+ ↓ src/editor/EditorPage.freshness.test.tsx > freshness of the API checks (phase review F3) > checks a reloaded server draft instead of reusing the clean answer of the loaded one
+ ↓ src/editor/EditorPage.freshness.test.tsx > freshness of the API checks (phase review F3) > checks again when another tab disables the selected model, once per catalog change
+ ↓ src/editor/EditorPage.freshness.test.tsx > freshness of the API checks (phase review F3) > drops a check whose answer arrives after the model catalog changed
+ ↓ src/editor/EditorPage.freshness.test.tsx > freshness of the API checks (phase review F3) > never reuses a clean unknown-catalog answer as ready when reopened with a held retry
+ ↓ src/editor/EditorPage.freshness.test.tsx > freshness of the API checks (phase review F3) > checks a changed fingerprint once with a slow unchanged classifier catalog (held check: false)
+ ↓ src/editor/EditorPage.freshness.test.tsx > freshness of the API checks (phase review F3) > checks a changed fingerprint once with a slow unchanged classifier catalog (held check: true)
+ ↓ src/editor/EditorPage.freshness.test.tsx > freshness of the API checks (phase review F3) > waits for the check under the resolved catalog even after a clean early answer
+ ↓ src/editor/EditorPage.freshness.test.tsx > freshness of the API checks (phase review F3) > names a draft without a server token by its content, and by the token once saved
+ ↓ src/editor/routing-manual.test.ts > manual routes in the router (#44) > reserves the manual endpoint horizontal against automatic overlap (last: false)
+ ↓ src/editor/routing-manual.test.ts > manual routes in the router (#44) > reserves the manual endpoint horizontal against automatic overlap (last: true)
+ ↓ src/editor/routing-manual.test.ts > manual routes in the router (#44) > invalidates automatic routes when only a distant port and its endpoint horizontal move (last: false)
+ ↓ src/editor/routing-manual.test.ts > manual routes in the router (#44) > invalidates automatic routes when only a distant port and its endpoint horizontal move (last: true)
+ ↓ src/editor/routing-manual.test.ts > manual routes in the router (#44) > draws a fixed loop-back as given, from the current port tips, labelled on its lane
+ ↓ src/editor/routing-manual.test.ts > manual routes in the router (#44) > keeps a fixed route attached when a card moves: stubs follow the port, segments stay
+ ↓ src/editor/routing-manual.test.ts > manual routes in the router (#44) > sets aside a route a moving card lands on: backward falls back, forward goes automatic
+ ↓ src/editor/routing-manual.test.ts > manual routes in the router (#44) > suspends a newly crossed forward route only if its replacement is clear (obstructed: false)
+ ↓ src/editor/routing-manual.test.ts > manual routes in the router (#44) > suspends a newly crossed forward route only if its replacement is clear (obstructed: true)
+ ↓ src/editor/routing-manual.test.ts > manual routes in the router (#44) > keeps a newly crossed backward route when its automatic port is covered
+ ↓ src/editor/routing-manual.test.ts > manual routes in the router (#44) > makes automatic routes reserve around a fixed route’s lanes and trunks
+ ↓ src/editor/routing-manual.test.ts > manual routes in the router (#44) > keeps the direction across route changes, and replans only routes a moved segment affects
+ ↓ src/components/ui/dialog.test.tsx > Dialog > opens as a named, described modal with focus on its heading, and returns focus on close
+ ↓ src/components/ui/dialog.test.tsx > Dialog > asks to close on Esc, and the owner may refuse
+ ↓ src/components/ui/dialog.test.tsx > Dialog > follows the browser when it closes the dialog without asking
+ ↓ src/components/ui/dialog.test.tsx > Dialog > stays open under Strict Mode, whose replayed effect closes and reopens it (close is a task)
+ ↓ src/components/ui/dialog.test.tsx > Dialog > ignores a close event that arrives while the dialog is open again
+ ↓ src/components/ui/dialog.test.tsx > Dialog > closes on a click on the backdrop only when the press started there too
+ ↓ src/components/ui/dialog.test.tsx > Dialog > ignores the rest of the double-click that opened it, and only that
+ ↓ src/components/ui/dialog.test.tsx > Dialog > ignores the backdrop when closing there could lose input
+ ↓ src/components/ui/dialog.test.tsx > Dialog > keeps Tab and Shift+Tab inside the dialog, in visual order
+ ↓ src/components/ui/dialog.test.tsx > Dialog > returns focus where the owner says, and only to an element still on the page
+ ↓ src/components/ui/dialog.test.tsx > Dialog > leaves focus to the browser when its opener is gone too
+ ↓ src/components/ui/dialog.test.tsx > Dialog > closes and returns focus when it unmounts while open
+ ↓ src/components/ui/dialog.test.tsx > Dialog > does nothing on Tab when it holds no controls but its own
+ ↓ src/components/ui/dialog.test.tsx > Dialog > shows header actions between the title and the close button, outside its name
+ ↓ src/lib/reachability.test.ts > API reachability > probes the client base URL and recovers active failures without a browser event
+ ↓ src/lib/reachability.test.ts > API reachability > backs off a stuck transport route despite a healthy healthz without flapping or recovery
+ ↓ src/lib/reachability.test.ts > API reachability > clears an unreachable claim with no active demand without announcing recovery
+ ↓ src/lib/reachability.test.ts > API reachability > keeps the unreachable claim when navigation swaps failed observers in one tick
+ ↓ src/lib/reachability.test.ts > API reachability > retains the claim while a replacement page read is pending and then fails
+ ↓ src/lib/reachability.test.ts > API reachability > does not reopen an outage from an inactive query cached error
+ ↓ src/lib/reachability.test.ts > API reachability > announces each confirmed recovery once and opens a new outage for a fresh failure
+ ↓ src/lib/reachability.test.ts > API reachability > backs off at 2, 4, 8, 16, then at most every 30 seconds
+ ↓ src/lib/reachability.test.ts > API reachability > does not mistake a manual cache update for confirmed API recovery
+ ↓ src/lib/reachability.test.ts > API reachability > never probes for HTTP 400
+ ↓ src/lib/reachability.test.ts > API reachability > never probes for HTTP 401
+ ↓ src/lib/reachability.test.ts > API reachability > never probes for HTTP 404
+ ↓ src/lib/reachability.test.ts > API reachability > never probes for HTTP 500
+ ↓ src/lib/reachability.test.ts > API reachability > never probes for HTTP 503
+ ↓ src/lib/reachability.test.ts > API reachability > stops when errors become inactive, and resumes when the query becomes active
+ ↓ src/lib/reachability.test.ts > API reachability > pauses while hidden or browser offline and resumes while visible and online
+ ↓ src/lib/reachability.test.ts > API reachability > holds one in-flight probe, aborts on hide, and ignores its late success
+ ↓ src/lib/reachability.test.ts > API reachability > times out an abort-aware fetch and schedules the next backed-off probe
+ ↓ src/lib/reachability.test.ts > API reachability > clears demand that becomes inactive during a recovery refetch
+ ↓ src/lib/reachability.test.ts > API reachability > ignores a recovery refetch that completes after disposal
+ ↓ src/lib/reachability.test.ts > API reachability > treats a refused health response as a failed probe, and disposes pending work
+ ↓ src/editor/useAutosave.test.tsx > autosave on API recovery > saves a pending offline draft with If-Match on the recovery notification
+ ↓ src/editor/useAutosave.test.tsx > autosave on API recovery > saves a pending error draft with If-Match on the recovery notification
+ ↓ src/editor/useAutosave.test.tsx > autosave on API recovery > stops on a 409 from the recovery retry and keeps the device draft and its base token
+ ↓ src/editor/useAutosave.test.tsx > autosave on API recovery > serializes repeated recovery notifications and the browser event into one save
+ ↓ src/editor/useAutosave.test.tsx > autosave on API recovery > does not land a recovered save in a later generation of the same editor
+ ↓ src/editor/useAutosave.test.tsx > autosave on API recovery > does not loop recovery reads and saves when GET succeeds but PUT keeps failing
+ ↓ src/editor/useAutosave.test.tsx > autosave on API recovery > unsubscribes on unmount so later recovery cannot retry its offline draft
+ ↓ src/editor/useAutosave.test.tsx > second review F1: flush keeps this editor's newer mirror safe (queued after response=false)
+ ↓ src/editor/useAutosave.test.tsx > second review F1: browser reconnect keeps this editor's newer mirror safe (queued after response=false)
+ ↓ src/editor/useAutosave.test.tsx > second review F1: API recovery keeps this editor's newer mirror safe (queued after response=false)
+ ↓ src/editor/useAutosave.test.tsx > second review F1: flush keeps this editor's newer mirror safe (queued after response=true)
+ ↓ src/editor/OrthogonalEdge.test.tsx > OrthogonalEdge > draws rounded geometry, a label on the lane, and xyflow hit targets
+ ↓ src/editor/OrthogonalEdge.test.tsx > OrthogonalEdge > shortens long labels to the straight segment and preserves their full title
+ ↓ src/editor/OrthogonalEdge.test.tsx > OrthogonalEdge > keeps an obstructed connection labelled without a colliding path
+ ↓ src/editor/OrthogonalEdge.test.tsx > OrthogonalEdge > draws a forward edge without a route exactly as xyflow’s smoothstep, labelled at its centre
+ ↓ src/editor/OrthogonalEdge.test.tsx > OrthogonalEdge > shows a handle per segment of a selected edge; arrows on the matching axis nudge it
+ ↓ src/editor/OrthogonalEdge.test.tsx > OrthogonalEdge > moves a lane handle aside from the label pill when the lane has room
+ ↓ src/editor/OrthogonalEdge.test.tsx > OrthogonalEdge > never deletes from a handle, returns to the edge on Escape, and starts a drag on press
+ ↓ src/editor/OrthogonalEdge.test.tsx > OrthogonalEdge > keeps focus on a nudged segment, even when the nudge renumbered it
+ ↓ src/editor/OrthogonalEdge.test.tsx > OrthogonalEdge > offers Reset route for a manual route, and says when it crosses a card
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > earlier paths > orders a branch and merge by shortest distance, then id; excludes disconnected successors
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > earlier paths > includes this node only on a nonempty cycle
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > earlier paths > terminates on an earlier cycle without including the current node
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > references use the real run engines > renders producer in Liquid and JSONata
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > references use the real run engines > renders with_underscore in Liquid and JSONata
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > references use the real run engines > renders old-id in Liquid and JSONata
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > references use the real run engines > renders a-b-c in Liquid and JSONata
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > references use the real run engines > renders true in Liquid and JSONata
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > references use the real run engines > renders false in Liquid and JSONata
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > references use the real run engines > renders null in Liquid and JSONata
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > references use the real run engines > renders and in Liquid and JSONata
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > handler-derived notes > undefined: output note respects configuration
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > handler-derived notes > undefined: output note respects configuration
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > handler-derived notes > undefined: output note respects configuration
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > handler-derived notes > undefined: output note respects configuration
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > handler-derived notes > undefined: output note respects configuration
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > handler-derived notes > undefined: output note respects configuration
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > handler-derived notes > undefined: output note respects configuration
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > handler-derived notes > undefined: output note respects configuration
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > handler-derived notes > undefined: output note respects configuration
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > handler-derived notes > undefined: output note respects configuration
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > handler-derived notes > undefined: output note respects configuration
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > handler-derived notes > undefined: output note respects configuration
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > handler-derived notes > undefined: output note respects configuration
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > handler-derived notes > undefined: output note respects configuration
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > handler-derived notes > undefined: output note respects configuration
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > field rendering and clipboard > script args.0 (template) shows list: true
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > field rendering and clipboard > inference prompt.template (template) shows list: true
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > field rendering and clipboard > inference contextFiles.0.template (template) shows list: true
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > field rendering and clipboard > inference input.0.value.jsonata (expression) shows list: true
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > field rendering and clipboard > inference output.schema.repair.prompt (template) shows list: true
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > field rendering and clipboard > inference input.0.where (expression) shows list: false
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > field rendering and clipboard > inference output.transforms.0.where (expression) shows list: false
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > field rendering and clipboard > decision jsonata (expression) shows list: true
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > field rendering and clipboard > decision instructions (template) shows list: true
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > field rendering and clipboard > decision question (template) shows list: true
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > field rendering and clipboard > decision context.messages.where (expression) shows list: false
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > field rendering and clipboard > mutate operations.0.value.template (template) shows list: true
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > field rendering and clipboard > mutate operations.0.where (expression) shows list: false
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > field rendering and clipboard > wait prompt (template) shows list: true
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > field rendering and clipboard > wait timestamp (template) shows list: true
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > field rendering and clipboard > wait filter (expression) shows list: false
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > field rendering and clipboard > heartbeat until (expression) shows list: false
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > field rendering and clipboard > heartbeat deadline (template) shows list: true
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > field rendering and clipboard > heartbeat probe.url (template) shows list: true
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > field rendering and clipboard > heartbeat probe.headers.where (template) shows list: true
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > field rendering and clipboard > subloop input.vars.where (expression) shows list: true
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > field rendering and clipboard > subloop input.trigger.payload (expression) shows list: true
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > field rendering and clipboard > subloop input.inject.0.content (template) shows list: true
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > field rendering and clipboard > subloop input.messages.where (expression) shows list: false
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > field rendering and clipboard > subloop input.artifacts.where (expression) shows list: false
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > field rendering and clipboard > subloop output.vars.map.answer (expression) shows list: false
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > field rendering and clipboard > subloop output.custom.patch (expression) shows list: false
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > field rendering and clipboard > subloop output.messages.where (expression) shows list: false
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > field rendering and clipboard > exit returns (expression) shows list: true
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > field rendering and clipboard > trigger dedupeKey (expression) shows list: false
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > field rendering and clipboard > trigger probe.url (template) shows list: false
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > field rendering and clipboard > trigger fireWhen (expression) shows list: false
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > field rendering and clipboard > trigger items.select (expression) shows list: false
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > field rendering and clipboard > trigger items.dedupeKey (expression) shows list: false
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > field rendering and clipboard > renders nothing without a node context or a field path, or without earlier outputs
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > field rendering and clipboard > starts collapsed, supports keyboard expansion and copies exact template reference
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > field rendering and clipboard > starts collapsed, supports keyboard expansion and copies exact expression reference
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > field rendering and clipboard > announces clipboard failure and leaves the full reference selectable
+ ↓ src/forms/EarlierNodeOutputs.test.tsx > field rendering and clipboard > uses the live store definition in the node dialog when edges and ids change
+ ↓ src/forms/layout.test.ts > formLayout > keeps every field in schema order when nothing is advanced
+ ↓ src/forms/layout.test.ts > formLayout > places inference fields: basic first, a split object, groups by first appearance
+ ↓ src/forms/layout.test.ts > formLayout > places every expression evaluator field by metadata
+ ↓ src/forms/layout.test.ts > formLayout > places every classifier evaluator field by metadata
+ ↓ src/forms/layout.test.ts > formLayout > places every llm evaluator field by metadata
+ ↓ src/forms/layout.test.ts > formLayout > does not move a required authored field into Advanced even if metadata asks for it
+ ↓ src/forms/layout.test.ts > formLayout > reads context tags inside a defaulted object, and merges equal Context groups
+ ↓ src/forms/layout.test.ts > formLayout > labels split subloop modes by their titles, and nests paths under a base
+ ↓ src/forms/layout.test.ts > formLayout > leaves out a skipped key, places optional objects whole, and groups split fields
+ ↓ src/forms/layout.test.ts > formLayout > reads labels from titles
+ ↓ src/forms/layout.test.ts > isCustomized > counts a value of its own, not unset, a default, or an empty collection
+ ↓ src/forms/layout.test.ts > isCustomized > looks inside objects and collections
+ ↓ src/forms/layout.test.ts > isCustomized > compares defaults deeply
+ ↓ src/forms/layout.test.ts > itemSummary > names an item by its kind and its first short text or number, its path
+ ↓ src/forms/layout.test.ts > itemSummary > has nothing to say for anything but a tagged item
+ ↓ src/api/queries.reconnect.test.tsx > query reconnect > recovers a cold offline Loops query on the online event without navigation
+ ↓ src/api/queries.reconnect.test.tsx > query reconnect > recovers Loops when the API returns with the browser still online
+ ↓ src/api/queries.reconnect.test.tsx > query reconnect > recovers loop details when the API returns with the browser still online
+ ↓ src/api/queries.reconnect.test.tsx > query reconnect > recovers Runs when the API returns with the browser still online
+ ↓ src/api/queries.reconnect.test.tsx > query reconnect > recovers run inspector when the API returns with the browser still online
+ ↓ src/api/queries.reconnect.test.tsx > query reconnect > recovers run thread when the API returns with the browser still online
+ ↓ src/api/queries.reconnect.test.tsx > query reconnect > recovers Events when the API returns with the browser still online
+ ↓ src/api/queries.reconnect.test.tsx > query reconnect > recovers Settings defaults when the API returns with the browser still online
+ ↓ src/api/queries.reconnect.test.tsx > query reconnect > recovers Settings models when the API returns with the browser still online
+ ↓ src/api/queries.reconnect.test.tsx > query reconnect > recovers Settings secrets when the API returns with the browser still online
+ ↓ src/api/queries.reconnect.test.tsx > query reconnect > recovers Settings API keys when the API returns with the browser still online
+ ↓ src/api/queries.reconnect.test.tsx > query reconnect > recovers Settings preflight when the API returns with the browser still online
+ ↓ src/api/queries.reconnect.test.tsx > query reconnect > recovers the cold offline Loops query
+ ↓ src/api/queries.reconnect.test.tsx > query reconnect > recovers the cold offline loop details query
+ ↓ src/api/queries.reconnect.test.tsx > query reconnect > recovers the cold offline Runs query
+ ↓ src/api/queries.reconnect.test.tsx > query reconnect > recovers the cold offline run inspector query
+ ↓ src/api/queries.reconnect.test.tsx > query reconnect > recovers the cold offline run thread query
+ ↓ src/api/queries.reconnect.test.tsx > query reconnect > recovers the cold offline Events query
+ ↓ src/api/queries.reconnect.test.tsx > query reconnect > recovers the cold offline Settings defaults query
+ ↓ src/api/queries.reconnect.test.tsx > query reconnect > recovers the cold offline Settings models query
+ ↓ src/api/queries.reconnect.test.tsx > query reconnect > recovers the cold offline Settings secrets query
+ ↓ src/api/queries.reconnect.test.tsx > query reconnect > recovers the cold offline Settings API keys query
+ ↓ src/api/queries.reconnect.test.tsx > query reconnect > recovers the cold offline Settings preflight query
+ ↓ src/api/queries.reconnect.test.tsx > query reconnect > keeps HTTP 400 failures at one retry
+ ↓ src/api/queries.reconnect.test.tsx > query reconnect > keeps HTTP 401 failures at one retry
+ ↓ src/api/queries.reconnect.test.tsx > query reconnect > keeps HTTP 404 failures at one retry
+ ↓ src/api/queries.reconnect.test.tsx > query reconnect > keeps HTTP 500 failures at one retry
+ ↓ src/api/queries.reconnect.test.tsx > query reconnect > caps retries if reconnect still cannot reach the API, then recovers on the next event
+ ↓ src/api/queries.reconnect.test.tsx > query reconnect > does not refetch inactive failures or fresh successful queries, and removes its listener
+ ↓ src/api/queries.reconnect.test.tsx > query reconnect > recovers after Query observes an offline-to-online transition
+ ↓ src/api/queries.reconnect.test.tsx > query reconnect > keeps a cached-data fetch in flight on reconnect without cancelling or starting another request
+ ↓ src/settings/sections/AppearanceSection.test.tsx > AppearanceSection > offers Dark and Light as a labelled radio group, Dark chosen by default
+ ↓ src/settings/sections/AppearanceSection.test.tsx > AppearanceSection > switches at once, persists, and follows the keyboard
+ ↓ src/settings/sections/AppearanceSection.test.tsx > AppearanceSection > reflects a theme chosen in another tab
+ ↓ src/settings/sections/AppearanceSection.test.tsx > the Font control > offers every face by name in a labelled radio group, Geist chosen by default
+ ↓ src/settings/sections/AppearanceSection.test.tsx > the Font control > previews each face in itself: the option sets data-font, its name the display token
+ ↓ src/settings/sections/AppearanceSection.test.tsx > the Font control > draws its options with the same radio states as the theme control (the shared ChoiceGroup)
+ ↓ src/settings/sections/AppearanceSection.test.tsx > the Font control > applies a click at once, remembers it, and leaves the theme alone
+ ↓ src/settings/sections/AppearanceSection.test.tsx > the Font control > follows the keyboard: Tab reaches the chosen face, the arrow keys choose
+ ↓ src/settings/sections/AppearanceSection.test.tsx > the Font control > shows the face the page already shows, and Geist for an unknown one
+ ↓ src/settings/sections/AppearanceSection.test.tsx > the Font control > reflects a face chosen in another tab
+ ↓ src/settings/sections/AppearanceSection.test.tsx > the Font control > still switches when storage throws, without remembering the choice
+ ↓ src/forms/saved-values.test.tsx > the same edits save the same config > inference: basic, split, and advanced fields
+ ↓ src/forms/saved-values.test.tsx > the same edits save the same config > script
+ ↓ src/forms/saved-values.test.tsx > the same edits save the same config > decision
+ ↓ src/forms/saved-values.test.tsx > the same edits save the same config > subloop: the split input and output mappings
+ ↓ src/forms/saved-values.test.tsx > the same edits save the same config > mutate: collapsible operations
+ ↓ src/forms/saved-values.test.tsx > the same edits save the same config > trigger, wait, heartbeat, and exit
+ ↓ src/settings/sections/ApiKeysSection.test.tsx > current browser key in Settings > marks A and revokes B without the browser warning or losing access
+ ↓ src/settings/sections/ApiKeysSection.test.tsx > current browser key in Settings > warns on A, closes after DELETE, and focuses the key panel on the rejected refresh
+ ↓ src/settings/sections/ApiKeysSection.test.tsx > current browser key in Settings > shows the softer trusted-mode warning only when a key is stored, key=undefined
+ ↓ src/settings/sections/ApiKeysSection.test.tsx > current browser key in Settings > shows the softer trusted-mode warning only when a key is stored, key=gg_stored
+ ↓ src/settings/sections/ApiKeysSection.test.tsx > current browser key in Settings > recovers with Forget key after revoking the stored key in trusted mode
+ ↓ src/settings/sections/ApiKeysSection.test.tsx > current browser key in Settings > refreshes the marker after save without a token in a query key
+ ↓ src/settings/sections/ApiKeysSection.test.tsx > current browser key in Settings > refreshes the marker after storage without a token in a query key
+ ↓ src/settings/sections/ApiKeysSection.test.tsx > current browser key in Settings > describes the current key on its Revoke button for keyboard and screen-reader users
+ ↓ src/settings/sections/ApiKeysSection.test.tsx > current browser key in Settings > separates current and revoked badges on an already accepted list response
+ ↓ src/settings/sections/ApiKeysSection.test.tsx > current browser key in Settings > closes an open Revoke dialog when another tab changes the key and the list reloads
+ ↓ src/settings/sections/ApiKeysSection.test.tsx > current browser key in Settings > ignores a late 401 from A after a storage event saves B, and aborts the old list query
+ ↓ src/settings/sections/ApiKeysSection.test.tsx > current browser key in Settings > discards an old in-flight list when the stored key changes during initial loading
+ ↓ src/editor/EditorPage.undo.test.tsx > EditorPage undo and redo > undoes and redoes from the toolbar and the keyboard, not from inside text fields
+ ↓ src/editor/EditorPage.undo.test.tsx > EditorPage undo and redo > undoes typing in a label in one step, from outside the field
+ ↓ src/editor/EditorPage.undo.test.tsx > EditorPage undo and redo > shows restored values in the node’s config form and the loop panel’s forms
+ ↓ src/editor/EditorPage.undo.test.tsx > EditorPage undo and redo > closes the node editor when an undo removes its node, and returns focus to the canvas
+ ↓ src/editor/EditorPage.undo.test.tsx > EditorPage undo and redo > undoes a rename: the id, its edges, and the open editor follow
+ ↓ src/editor/EditorPage.undo.test.tsx > EditorPage undo and redo > undoes a Discard the unparsed text made right after the typing, from the field or the badge
+ ↓ src/editor/EditorPage.undo.test.tsx > EditorPage undo and redo > leaves the keys to a code editor’s search panel, checkboxes and all
+ ↓ src/editor/EditorPage.undo.test.tsx > EditorPage undo and redo > takes unparsed text back and forth with the step that typed it
+ ↓ src/settings/shared.test.tsx > MutationError > uses caller messages, otherwise preserves the normal error display
+ ↓ src/settings/shared.test.tsx > EnableSwitch > checks the generic MODEL_MANAGED_BY_HARNESS message mapping, pending state, rollback and retry
+ ↓ src/settings/shared.test.tsx > EnableSwitch > checks the generic LITELLM_NOT_CONFIGURED message mapping, pending state, rollback and retry
+ ↓ src/settings/shared.test.tsx > EnableSwitch > checks the generic MODEL_NOT_FOUND message mapping, pending state, rollback and retry
+ ↓ src/settings/shared.test.tsx > EnableSwitch > blocks a second activation before the pending render
+ ↓ src/settings/shared.test.tsx > EnableSwitch > keeps focus on the second switch when the first held PATCH finishes first
+ ↓ src/settings/shared.test.tsx > EnableSwitch > keeps focus on the second switch when the second held PATCH finishes first
+ ↓ src/settings/shared.test.tsx > EnableSwitch focus and description > describes the switch with its help and reports the focused opener of a refused toggle
+ ↓ src/settings/shared.test.tsx > restoreVanishedToggleFocus > focuses the heading only when the focused switch is gone and focus fell to the body
+ ↓ src/settings/shared.test.tsx > SecretsLink > moves focus to the Secrets heading, or behaves as a plain link without the section
+ ↓ src/editor/ClassifierField.editor.test.tsx > API checks held across a catalog change (#43 re-review) > drops a check that was running when Settings changed the catalog, and clears after re-enabling
+ ↓ src/editor/ClassifierField.editor.test.tsx > API checks held across a catalog change (#43 re-review) > drops a held check when another tab changes the catalog (a summaries refresh only)
+ ↓ src/editor/ClassifierField.editor.test.tsx > API checks held across a catalog change (#43 re-review) > drops a check whose answer arrives after the catalog changed, before the editor saw it
+ ↓ src/editor/ClassifierField.editor.test.tsx > the classifier picker in the node editor > requires an explicit classifier, changes the saved model, and keeps focus
+ ↓ src/editor/ClassifierField.editor.test.tsx > the classifier picker in the node editor > makes each pick an undo step of its own, however quick
+ ↓ src/editor/ClassifierField.editor.test.tsx > the classifier picker in the node editor > shows a classifier disabled elsewhere on the node badge without a draft edit
+ ↓ src/loops/TemplateGallery.test.tsx > TemplateGallery > offers one Use action for quick-start and opens the returned ordinary draft
+ ↓ src/loops/TemplateGallery.test.tsx > TemplateGallery > offers one Use action for implementation-workflow and opens the returned ordinary draft
+ ↓ src/loops/TemplateGallery.test.tsx > TemplateGallery > offers one Use action for review and opens the returned ordinary draft
+ ↓ src/loops/TemplateGallery.test.tsx > TemplateGallery > offers one Use action for qa and opens the returned ordinary draft
+ ↓ src/loops/TemplateGallery.test.tsx > TemplateGallery > creates directly without settings or readiness and guards repeated cross-card activation
+ ↓ src/loops/TemplateGallery.test.tsx > TemplateGallery > reports create failures without automatically retrying the mutation
+ ↓ src/loops/TemplateGallery.test.tsx > TemplateGallery > retains the created id and retries editor opening without creating another draft
+ ↓ src/loops/TemplateGallery.test.tsx > TemplateGallery > keeps keyboard focus after creation success
+ ↓ src/loops/TemplateGallery.test.tsx > TemplateGallery > keeps keyboard focus after creation failure
+ ↓ src/loops/TemplateGallery.test.tsx > TemplateGallery > preserves a deliberate focus move while creation is pending
+ ↓ src/editor/decision-authoring.test.ts > decision authoring conversions > names unfinished fields and routes without exposing schema paths
+ ↓ src/editor/decision-authoring.test.ts > decision authoring conversions > previews only customized provider context and confidence or recording settings
+ ↓ src/editor/decision-authoring.test.ts > decision authoring conversions > draws ambiguous IDs once without borrowing a label, and refuses ambiguous or invalid connections
+ ↓ src/editor/decision-authoring.test.ts > decision authoring conversions > keeps every representable route when changing expression
+ ↓ src/editor/decision-authoring.test.ts > decision authoring conversions > keeps every representable route when changing llm
+ ↓ src/editor/decision-authoring.test.ts > decision authoring conversions > keeps every representable route when changing classifier
+ ↓ src/editor/decision-authoring.test.ts > decision authoring conversions > keeps every representable route when changing classifier
+ ↓ src/editor/decision-authoring.test.ts > decision authoring conversions > keeps provider context, but leaves instructions, classifier model and criteria unauthored
+ ↓ src/editor/decision-authoring.test.ts > decision authoring conversions > converts exactly two Choice rows to Noul without inventing or swapping criteria
+ ↓ src/editor/decision-authoring.test.ts > decision authoring conversions > refuses 0 routes for Noul without truncation
+ ↓ src/editor/decision-authoring.test.ts > decision authoring conversions > refuses 1 routes for Noul without truncation
+ ↓ src/editor/decision-authoring.test.ts > decision authoring conversions > refuses 3 routes for Noul without truncation
+ ↓ src/editor/decision-authoring.test.ts > decision authoring conversions > refuses 64 routes for Noul without truncation
+ ↓ src/editor/decision-authoring.test.ts > decision authoring conversions > keeps Score route identities while requiring an authored rubric and bounds
+ ↓ src/editor/decision-authoring.test.ts > decision authoring conversions > tolerates incomplete editor rows without creating criteria or route ids
+ ↓ src/components/ui/side-panel.test.tsx > side panel state > uses the default until a state is stored, and ignores values it does not know
+ ↓ src/components/ui/side-panel.test.tsx > side panel state > falls back to the default and keeps working when storage throws
+ ↓ src/components/ui/side-panel.test.tsx > SidePanel > collapses to a rail with a Show button and its summary, and expands again
+ ↓ src/components/ui/side-panel.test.tsx > SidePanel > leaves focus on an outside toggle that collapses it, and focuses the heading when it opens
+ ↓ src/components/ui/side-panel.test.tsx > SidePanel > keeps only its Show button on the rail when it has no summary
+ ↓ src/components/ui/side-panel.test.tsx > SidePanel > floats a right panel over the content below lg while expanded, never as a rail (#41)
+ ↓ src/components/ui/side-panel.test.tsx > SidePanel > floats a left panel over the content below md while expanded, never as a rail (#41)
+ ↓ src/components/ui/side-panel.test.tsx > SidePanel > stays in its own column at every width without overlayBelow
+ ↓ src/components/ui/side-panel.test.tsx > SidePanel > keeps a left panel rail ordered and moves Hide to Show on collapse
+ ↓ src/editor/EditorPage.device.test.tsx > device storage blocked by an older tab > says a schema-invalid edit is in this window only, then saves it on the device once the old tab closes
+ ↓ src/editor/EditorPage.device.test.tsx > device storage blocked by an older tab > shows a valid edit saved to the server, with the device notice apart, until the old tab closes
+ ↓ src/editor/ValidationIndicator.test.tsx > ValidationIndicator > says "Ready to publish" as a status, not a button, when there is nothing to fix
+ ↓ src/editor/ValidationIndicator.test.tsx > ValidationIndicator > says "Ready to publish" only once the server check is done; until then, or if it fails, says so
+ ↓ src/editor/ValidationIndicator.test.tsx > ValidationIndicator > is a button named by the counts, toned by the worst severity
+ ↓ src/editor/ValidationIndicator.test.tsx > ValidationIndicator > lists loop-level and edge issues in full, then one row per node that opens it
+ ↓ src/editor/ValidationIndicator.test.tsx > ValidationIndicator > shows only the groups that have issues
+ ↓ src/editor/ValidationIndicator.test.tsx > ValidationIndicator > discards loop-level unparsed text, leaving focus on "Ready to publish"
+ ↓ src/editor/IssueBadge.test.tsx > IssueBadge > is a button named by the count and node, showing only the icon for one issue
+ ↓ src/editor/IssueBadge.test.tsx > IssueBadge > shows the count from two issues on, and the worst severity by icon shape and tone
+ ↓ src/editor/IssueBadge.test.tsx > IssueBadge > opens its popover on a click that goes no further, and lists each issue
+ ↓ src/editor/IssueBadge.test.tsx > IssueBadge > chooses an issue: the popover closes and the issue goes to onChoose
+ ↓ src/editor/IssueBadge.test.tsx > IssueBadge > discards unparsed text from the popover, keeping focus in sight
+ ↓ src/editor/IssueBadge.test.tsx > IssueList > shows rows that only inform without onChoose, naming each issue’s node or edge
+ ↓ src/editor/IssueBadge.test.tsx > IssueList > refocuses the trigger after a discard, or the fallback when focus was lost
+ ↓ src/runs/new/NewRunPage.test.tsx > New run > builds its address, with or without a loop
+ ↓ src/runs/new/NewRunPage.test.tsx > New run > lists only published loops and keeps the choice in the address
+ ↓ src/runs/new/NewRunPage.test.tsx > New run > opens with the loop of a deep link chosen and starts a run of the current version
+ ↓ src/runs/new/NewRunPage.test.tsx > New run > starts an older published version when chosen, and runs may overlap
+ ↓ src/runs/new/NewRunPage.test.tsx > New run > starts from the manual trigger chosen, with that trigger’s input form
+ ↓ src/runs/new/NewRunPage.test.tsx > New run > shows why a run could not start
+ ↓ src/runs/new/NewRunPage.test.tsx > New run > explains a deep link to a loop that cannot be started
+ ↓ src/runs/new/NewRunPage.test.tsx > New run > says when the chosen version has no manual trigger, and when versions fail to load
+ ↓ src/editor/ClassifierField.test.tsx > ClassifierField > requires an explicit classifier and lists enabled Choice models by display name and ID
+ ↓ src/editor/ClassifierField.test.tsx > ClassifierField > keeps a current catalog choice and commits a new explicit selection
+ ↓ src/editor/ClassifierField.test.tsx > ClassifierField > preserves the saved but unavailable classifier off with a clear reason
+ ↓ src/editor/ClassifierField.test.tsx > ClassifierField > preserves the saved but unavailable classifier scorer with a clear reason
+ ↓ src/editor/ClassifierField.test.tsx > ClassifierField > preserves the saved but unavailable classifier gone with a clear reason
+ ↓ src/editor/ClassifierField.test.tsx > ClassifierField > explains when a selectable classifier still needs a secret
+ ↓ src/editor/ClassifierField.test.tsx > ClassifierField > filters enabled classifiers by Noul and Score while retaining the Choice filter
+ ↓ src/editor/manual-route.test.ts > manual routes > turns stored positions into points with stubs on the current port tips, and back
+ ↓ src/editor/manual-route.test.ts > manual routes > lists the segments a drag can move, and which ones stay on their port
+ ↓ src/editor/manual-route.test.ts > manual routes > moves inner segments in place and splits end segments, keeping stubs on the ports
+ ↓ src/editor/manual-route.test.ts > manual routes > nudges to grid lines and detects segments entering a card
+ ↓ src/editor/manual-route.test.ts > manual routes > can exceed the coordinate limit after repeated stub splits, but a collapsed split still fits
+ ↓ src/editor/manual-route.test.ts > manual routes > matches xyflow’s smoothstep points for a forward edge, wide and narrow
+ ↓ src/settings/classifier-form.test.ts > classifier form values > starts a new entry with Choice and no secret, and copies an entry for editing
+ ↓ src/settings/classifier-form.test.ts > classifier form values > sends custom HTTP metadata in the contract shape, capabilities in a fixed order
+ ↓ src/settings/classifier-form.test.ts > classifier form values > labels Choice as classification too
+ ↓ src/settings/classifier-form.test.ts > validateClassifier > accepts what the contract accepts
+ ↓ src/settings/classifier-form.test.ts > validateClassifier > refuses the new id ""
+ ↓ src/settings/classifier-form.test.ts > validateClassifier > refuses the new id "Kev"
+ ↓ src/settings/classifier-form.test.ts > validateClassifier > refuses the new id "1kev"
+ ↓ src/settings/classifier-form.test.ts > validateClassifier > refuses the new id "jev"
+ ↓ src/settings/classifier-form.test.ts > validateClassifier > refuses the new id "kev"
+ ↓ src/settings/classifier-form.test.ts > validateClassifier > does not check the id of an entry being edited
+ ↓ src/settings/classifier-form.test.ts > validateClassifier > asks for the names and at least one capability
+ ↓ src/settings/classifier-form.test.ts > validateClassifier > explains the contract refusing the endpoint ""
+ ↓ src/settings/classifier-form.test.ts > validateClassifier > explains the contract refusing the endpoint "kev"
+ ↓ src/settings/classifier-form.test.ts > validateClassifier > explains the contract refusing the endpoint "ftp://127.0.0.1"
+ ↓ src/settings/classifier-form.test.ts > validateClassifier > explains the contract refusing the endpoint "http://user:pass@127.0.0.1:8008"
+ ↓ src/settings/classifier-form.test.ts > validateClassifier > explains the contract refusing the endpoint "http://127.0.0.1:8008?x=1"
+ ↓ src/settings/classifier-form.test.ts > validateClassifier > explains the contract refusing the endpoint "http://127.0.0.1:8008#top"
+ ↓ src/settings/classifier-form.test.ts > validateClassifier > explains the contract refusing the endpoint "http://127.0.0.1:0"
+ ↓ src/settings/classifier-form.test.ts > validateClassifier > explains the contract refusing the endpoint "http://127.0.0.1:8008/v1/systemone"
+ ↓ src/settings/classifier-form.test.ts > validateClassifier > explains the contract refusing the endpoint "http://127.0.0.1:8008/a b"
+ ↓ src/settings/classifier-form.test.ts > validateClassifier > explains the contract refusing the endpoint "http://127.0.0.1:8008/%zz"
+ ↓ src/settings/classifier-form.test.ts > validateClassifier > explains the contract refusing the endpoint "http://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+ ↓ src/settings/classifier-form.test.ts > validateClassifier > requires https for a bearer secret except on loopback, even while other fields are empty
+ ↓ src/styles/code-theme.test.ts > code theme > maps tags, and their parents, to syntax roles
+ ↓ src/styles/code-theme.test.ts > code theme > colours JSON keys, strings, numbers, and literals
+ ↓ src/styles/code-theme.test.ts > code theme > draws the search panel (Ctrl+F) and its matches with the tokens, not the base theme
+ ↓ src/styles/code-theme.test.ts > code theme > colours Liquid delimiters and comments, and JSONata operators
+ ↓ src/events/EventsPage.test.tsx > EventsPage delivery dispositions > shows the five receipt states, attempts, retry time, safe failure and admitted run link
+ ↓ src/events/EventsPage.test.tsx > EventsPage delivery dispositions > refreshes a pending receipt when it becomes admitted and stops polling
+ ↓ src/events/EventsPage.test.tsx > EventsPage delivery dispositions > refreshes a pending receipt when it becomes failed and stops polling
+ ↓ src/events/EventsPage.test.tsx > EventsPage delivery dispositions > stops pending refreshes when the Events page unmounts
+ ↓ src/events/EventsPage.test.tsx > shows safe pinned webhook configuration and explains unavailable history
+ ↓ src/app/bootstrap.test.tsx > bootstrap > mounts the app and registers the service worker unless disabled
+ ↓ src/app/bootstrap.test.tsx > bootstrap > applies the stored theme if the boot script did not, and follows other tabs
+ ↓ src/app/bootstrap.test.tsx > bootstrap > follows other tabs only while mounted: mounting again leaves exactly one listener
+ ↓ src/app/bootstrap.test.tsx > bootstrap > applies the stored font if the boot script did not, leaves a shown one, and follows other tabs
+ ↓ src/app/bootstrap.test.tsx > bootstrap > configures queries with one retry
+ ↓ src/app/bootstrap.test.tsx > bootstrap > requires an ApiProvider for useApi
+ ↓ src/components/ui/tabs.test.tsx > Tabs > keeps the main panel identity when a contextual evaluator gains or loses tabs
+ ↓ src/components/ui/tabs.test.tsx > Tabs > links each tab and mounted panel with one tab stop
+ ↓ src/components/ui/tabs.test.tsx > Tabs > automatically activates arrows, wraps, and supports Home and End
+ ↓ src/components/ui/tabs.test.tsx > Tabs > keeps edited values and DOM identity through pointer switches
+ ↓ src/components/ui/tabs.test.tsx > Tabs > reveals synchronously without moving focus and ignores unrelated keys/elements
+ ↓ src/components/layout/layout.test.tsx > MainNav > marks the current page and keeps link names
+ ↓ src/components/layout/layout.test.tsx > MainNav > shows an attention dot with screen-reader text
+ ↓ src/components/layout/layout.test.tsx > MainNav > opens and closes the narrow-width menu
+ ↓ src/components/layout/layout.test.tsx > MainNav Escape > closes the open menu with Escape from inside it and returns focus to the button
+ ↓ src/components/layout/layout.test.tsx > MainNav Escape > closes from the button, and Escape does nothing while the menu is closed
+ ↓ src/components/layout/layout.test.tsx > AppShell > frames the screen with the logo, navigation, and offline banner
+ ↓ src/components/layout/layout.test.tsx > Page and PageHeader > renders a capped column with a title, details, and actions
+ ↓ src/components/layout/layout.test.tsx > Page and PageHeader > lets a wide page use the full width and omits empty actions
+ ↓ src/forms/part-a-audit.test.tsx > Part A audit > drops held JSON when switching schemas at the same union path (nested: false)
+ ↓ src/forms/part-a-audit.test.tsx > Part A audit > drops held JSON when switching schemas at the same union path (nested: true)
+ ↓ src/forms/part-a-audit.test.tsx > Part A audit > replaces local state in a union body (nested: false)
+ ↓ src/forms/part-a-audit.test.tsx > Part A audit > replaces local state in a union body (nested: true)
+ ↓ src/forms/part-a-audit.test.tsx > Part A audit > does not render unrelated inference fields per keystroke
+ ↓ src/forms/part-a-audit.test.tsx > Part A audit > does not render unrelated decision fields per keystroke
+ ↓ src/forms/part-a-audit.test.tsx > Part A audit > keeps empty-path field counts separate from explicit whole-form counts
+ ↓ src/runs/RunsPage.test.tsx > RunsPage > lists and filters exhausted runs with their status badge
+ ↓ src/runs/RunsPage.test.tsx > RunsPage > lists runs with loop names, parents, and children links, and filters through the URL
+ ↓ src/runs/RunsPage.test.tsx > RunsPage > says when nothing matches
+ ↓ src/api/api-key.test.tsx > API key entry > review: focuses the key input when access is rejected without stealing it on later renders
+ ↓ src/api/api-key.test.tsx > API key entry > waits for an open modal to release focus before focusing the rejected-key input
+ ↓ src/api/api-key.test.tsx > API key entry > asks for a key on a 401, sends the stored key, and lets Settings forget it
+ ↓ src/api/api-key.test.tsx > API key entry > restarts a run inspector stream that a 401 ended once a key is entered
+ ↓ src/api/api-key.test.tsx > API key entry > follows a key forgotten or entered in another tab
+ ↓ src/api/api-key.test.tsx > API key entry > reads a key stored by an earlier session
+ ↓ src/editor/ClaudePolicyField.test.tsx > Claude saved policy readiness > preserves the saved pair as unverified and read-only when readiness is pending
+ ↓ src/editor/ClaudePolicyField.test.tsx > Claude saved policy readiness > preserves the saved pair as unverified and read-only when readiness is failed
+ ↓ src/editor/ClaudePolicyField.test.tsx > Claude saved policy readiness > preserves the saved pair as unverified and read-only when readiness is not-ready
+ ↓ src/editor/ClaudePolicyField.test.tsx > Claude saved policy readiness > preserves the saved pair as unverified and read-only when readiness is signed-out
+ ↓ src/editor/ClaudePolicyField.test.tsx > Claude saved policy readiness > keeps saved read-only policy unchanged until an explicit verified choice
+ ↓ src/editor/ClaudePolicyField.test.tsx > Claude saved policy readiness > keeps saved workspace-write policy unchanged until an explicit verified choice
+ ↓ src/app/App.test.tsx > App shell > redirects to loops and navigates between screens
+ ↓ src/app/App.test.tsx > App shell > shows an empty events list and unknown pages
+ ↓ src/app/App.test.tsx > App shell > shows an offline banner while the browser is offline
+ ↓ src/app/App.test.tsx > App shell > distinguishes an unreachable API from browser offline and clears both on recovery
+ ↓ src/app/App.test.tsx > App shell > shows the update toast and updates only after confirmation
+ ↓ src/components/status.test.tsx > QueryState > keeps Offline visible when a reconnect flap pauses a no-data retry
+ ↓ src/components/status.test.tsx > QueryState > shows Offline for a first fetch paused before it can start
+ ↓ src/components/status.test.tsx > QueryState > keeps loaded data visible when a background refetch pauses
+ ↓ src/editor/focus-field.classifier.test.tsx > classifier issue paths > config.model focuses the classifier picker
+ ↓ src/editor/focus-field.classifier.test.tsx > classifier issue paths > config.model with an empty catalog focuses the picker
+ ↓ src/editor/focus-field.classifier.test.tsx > classifier issue paths > config.maxPasses focuses the required gate limit
+ ↓ src/editor/save-status.test.ts > save status: the server copy, and where the edits are besides > finds the device copy from the revision written and the storage state
+ ↓ src/editor/save-status.test.ts > save status: the server copy, and where the edits are besides > labels the three places: this window only, this device only, and the server
+ ↓ src/editor/save-status.test.ts > save status: the server copy, and where the edits are besides > claims device persistence in a notice only once the device write succeeded
+ ↓ src/editor/save-status.test.ts > save status: the server copy, and where the edits are besides > tells the user to close other GraphGoblin windows, with the reason when storage failed
+ ↓ scripts/github-fragment.test.ts > generated GitHub fragments on fake engine ports > quotes a hyphenated trigger ID and restores the entire output record including schemaRef
+ ↓ scripts/github-fragment.test.ts > generated GitHub fragments on fake engine ports > runs the generated fragment on fake engine ports: matching input is restored; ignored input succeeds quietly
+ ↓ src/editor/NodeCard.test.tsx > refreshes committed handle ids and order once, including same-height changes, without refreshing unrelated data
+ ↓ src/editor/Palette.test.tsx > Palette rail > defaults to expanded at the wide threshold and collapsed below it
+ ↓ src/editor/Palette.test.tsx > Palette rail > keeps all nine add buttons, names, tooltips, click and Enter actions while collapsed
+ ↓ src/editor/Palette.test.tsx > Palette rail > keeps the same drag source from the rail
+ ↓ src/api/api-key-fetch.test.ts > API key rejection belongs to the request credentials > ignores a late 401 after changing from gg_A to B
+ ↓ src/api/api-key-fetch.test.ts > API key rejection belongs to the request credentials > ignores a late 401 after changing from undefined to B
+ ↓ src/api/api-key-fetch.test.ts > API key rejection belongs to the request credentials > does not reject the stored key for explicit Bearer gg_other
+ ↓ src/api/api-key-fetch.test.ts > API key rejection belongs to the request credentials > does not reject the stored key for explicit Basic other
+ ↓ src/api/api-key-fetch.test.ts > API key rejection belongs to the request credentials > rejects the matching stored key with header=undefined
+ ↓ src/api/api-key-fetch.test.ts > API key rejection belongs to the request credentials > rejects the matching stored key with header=Bearer gg_stored
+ ↓ src/api/api-key-fetch.test.ts > API key rejection belongs to the request credentials > rejects the matching stored key with header=bearer   gg_stored
+ ↓ src/api/api-key-fetch.test.ts > API key rejection belongs to the request credentials > asks for a key on a current anonymous request, stored=undefined
+ ↓ src/api/api-key-fetch.test.ts > API key rejection belongs to the request credentials > asks for a key on a current anonymous request, stored=
+ ↓ src/api/api-key-fetch.test.ts > API key rejection belongs to the request credentials > asks for a key on a current anonymous request, stored=   
+ ↓ src/api/api-key-fetch.test.ts > API key rejection belongs to the request credentials > keeps the key accepted on a non-401 response
+ ↓ src/editor/decision-gates.test.ts > reserved gate output while authoring invalid IDs > draws Limit reached only once and refuses a reserved authored route without a gate
+ ↓ src/editor/decision-gates.test.ts > reserved gate output while authoring invalid IDs > never transfers the Limit reached connection to a repaired authored route ID
+ ↓ src/runs/inspector/WaitPanel.test.tsx > WaitPanel > keeps the form for the same wait, and starts a fresh one for the next wait
+ ↓ src/runs/inspector/WaitPanel.test.tsx > submits the identity associated with the displayed input form
+ ↓ src/runs/inspector/WaitPanel.test.tsx > binds the displayed identity before an asynchronous mutation can see a newer wait
+ ↓ src/editor/port-targets.test.ts > touch port width limits > shares the 76 px gap between cards 260 px apart without overlapping their hit boxes
+ ↓ src/editor/port-targets.test.ts > touch port width limits > does not constrain targets with the own card or a card outside the vertical hit strip
+ ↓ src/editor/port-targets.test.ts > touch port width limits > limits each output separately and uses the nearest of several cards
+ ↓ src/editor/port-targets.test.ts > touch port width limits > does not extend a hit box into a card covering its port
+ ↓ src/editor/port-targets.test.ts > touch port width limits > supports triggers without inputs and exits without outputs
+ ↓ src/forms/JsonText.test.tsx > preserves unparsed text across value changes until discarded, then uses the latest value
+ ↓ src/forms/JsonText.test.tsx > preserves typed JSON spacing when the form reports the accepted value back
+ ↓ src/styles/palette.test.ts > palette > resolves semantic tokens through the primitive tier for each theme
+ ↓ src/styles/palette.test.ts > palette > gives the app chrome the dark theme by default
+ ↓ src/styles/palette.test.ts > palette > ignores comments and reports unknown or circular tokens
+ ↓ src/editor/route-channels.test.ts > publishes changed geometry only to its edge, releases deleted entries and supports unsubscription
+ ↓ src/lib/variants.test.ts > variants > applies the base, the defaults, and the chosen variants in order
+ ↓ src/lib/variants.test.ts > variants > falls back to the default for an explicitly undefined choice
+ ↓ src/lib/variants.test.ts > variants > drops a choice the groups do not know
+ ↓ src/lib/variants.test.ts > variants > works without a base
+ ↓ src/components/ErrorBoundary.test.tsx > ErrorBoundary > shows the error in place of the screen and retries on request
+ ↓ src/api/prefixes.test.ts > API proxy prefixes > includes every top-level OpenAPI path prefix and the OpenAPI document route
+ ↓ src/main.test.ts > main > bootstraps into #root
+ ↓ src/editor/template-readiness.test.tsx > opens a QA starting point without an instance lookup or configured-parent warning
+ ↓ src/editor/template-readiness.test.tsx > does not infer template authority from a loop name
+ ↓ src/api/templates.test.tsx > loads the manifest-only catalogue without an instance lookup
+
+ Test Files  75 skipped (75)
+      Tests  964 skipped (964)
+   Start at  21:21:47
+   Duration  109.91s (environment 46%, import 26%, setup 22%, transform 6%)
+
+Environment  jsdom was created 75 times · 522.84s total, 46% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+
+
+RESULT {"name":"controlled-probes-bound-config","command":"pnpm.cmd --filter @graphgoblin/web exec vitest run --config \"<USERPROFILE>\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-chore-web-test-stability\\apps\\web\\gg-chore-web-round3-probes.config.mjs\" src/editor/EditorPage.test.tsx src/styles/code-theme.test.ts -t \"keeps a set-aside device copy|colours JSON keys\" --reporter=verbose","code":0,"wallSeconds":111.076}

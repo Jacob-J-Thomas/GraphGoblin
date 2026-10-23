@@ -9,6 +9,7 @@ import {
   TS,
 } from '../../__fixtures__/fake-api.js';
 import { renderApp } from '../../__fixtures__/render.js';
+import { pasteInto } from '../../__fixtures__/user.js';
 import { keys } from '../../api/queries.js';
 
 function seeded(): FakeApi {
@@ -167,21 +168,22 @@ describe('ClassifierModelsSection', () => {
       'Enter the model name the endpoint expects, such as kev-latest.',
       "Enter the endpoint's API root, such as http://127.0.0.1:8008.",
     ]);
-    await user.type(id, 'kev');
+    await pasteInto(user, id, 'kev');
     expect(
       within(form).getByText('A classifier with id kev already exists; edit it instead.'),
     ).toBeInTheDocument();
     await user.clear(id);
-    await user.type(id, 'local');
-    await user.type(within(form).getByLabelText('Display name'), 'Local Kev');
-    await user.type(within(form).getByLabelText('Provider model id'), 'kev-latest');
+    // These complete fixture values exercise contract checks, not individual keystrokes.
+    await pasteInto(user, id, 'local');
+    await pasteInto(user, within(form).getByLabelText('Display name'), 'Local Kev');
+    await pasteInto(user, within(form).getByLabelText('Provider model id'), 'kev-latest');
     const endpoint = within(form).getByLabelText('Endpoint');
-    await user.type(endpoint, 'http://127.0.0.1:8008/v1/systemone');
+    await pasteInto(user, endpoint, 'http://127.0.0.1:8008/v1/systemone');
     expect(endpoint).toHaveAccessibleDescription(
       'The API root. GraphGoblin sends POST <endpoint>/v1/systemone. Enter the API root only; GraphGoblin adds /v1/systemone itself.',
     );
     await user.clear(endpoint);
-    await user.type(endpoint, 'http://127.0.0.1:8008');
+    await pasteInto(user, endpoint, 'http://127.0.0.1:8008');
     await user.click(within(form).getByLabelText('Choice / classification'));
     await user.click(within(form).getByRole('button', { name: 'Save classifier' }));
     expect(within(form).getByLabelText('Choice / classification')).toHaveFocus();
