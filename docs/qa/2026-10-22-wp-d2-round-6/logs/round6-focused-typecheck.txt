@@ -1,0 +1,15 @@
+pnpm.cmd : $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+At line:2 char:560
++ ... un='false'; pnpm.cmd --filter @graphgoblin/infrastructure typecheck * ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ tsc -b tsconf...p tsconfig.json:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+src/sqlite/webhook-receipt-upgrade.ts(17,21): error TS2349: This expression is not callable.
+  Each member of the union type '(<M extends Mask<"type" | "target" | "channel" | "runId" | "seq" | "ts">>(mask: M & Record<Exclude<keyof M, "type" | "target" | "channel" | "runId" | "seq" | "ts">, never>) => ZodObject<...>) | (<M extends Mask<...>>(mask: M & Record<...>) => ZodObject<...>)' has signatures, but none of those signatures are compatible with each other.
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d2-
+  │ webhook-retry\packages\infrastructure

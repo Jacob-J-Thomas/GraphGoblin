@@ -119,7 +119,14 @@ export function useRuns(query: ListRunsQuery = {}, refetchInterval: number | fal
 
 export function useRun(id: string) {
   const client = useApi();
-  return useQuery({ queryKey: keys.run(id), queryFn: () => runs.get(client, id) });
+  return useQuery({
+    queryKey: keys.run(id),
+    queryFn: () => runs.get(client, id),
+    refetchInterval: (query) =>
+      query.state.data?.deliveries?.some((delivery) => delivery.status === 'pending')
+        ? 1000
+        : false,
+  });
 }
 
 export function useRunThread(id: string) {

@@ -1,0 +1,510 @@
+{
+  "loopId": "01M5J9FAQ3FYXJ91ETKEPZ2ZDS",
+  "runId": "01M5J9FAS0MG1NEP4HDZRZS0MG",
+  "path": "http://127.0.0.1:5641/secret",
+  "run": {
+    "id": "01M5J9FAS0MG1NEP4HDZRZS0MG",
+    "ownerId": "local",
+    "loopId": "01M5J9FAQ3FYXJ91ETKEPZ2ZDS",
+    "versionId": "01M5J9FAQ3E9QM0VX6CNWQK6HR",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "Audit resolver",
+      "label": "Audit resolver v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M5J9FAS006QJD0KHTQK561JE",
+    "status": "succeeded",
+    "iteration": 1,
+    "outcome": "success",
+    "result": null,
+    "deliveries": [
+      {
+        "id": "01M5J9FAVYX81AT66ZD5QQMJJ3",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/secret",
+          "secretRef": "broken"
+        },
+        "status": "failed",
+        "attempts": 5,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "lastError": {
+          "code": "transport",
+          "message": "No acknowledgement received; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    ],
+    "createdAt": "2026-10-22T17:10:23.776Z",
+    "startedAt": "2026-10-22T17:10:23.787Z",
+    "finishedAt": "2026-10-22T17:10:23.874Z",
+    "lastEventSeq": 19
+  },
+  "events": [
+    {
+      "runId": "01M5J9FAS0MG1NEP4HDZRZS0MG",
+      "seq": 1,
+      "ts": "2026-10-22T17:10:23.776Z",
+      "type": "run.queued",
+      "versionId": "01M5J9FAQ3E9QM0VX6CNWQK6HR",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Audit resolver",
+        "label": "Audit resolver v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5J9FAS0MG1NEP4HDZRZS0MG",
+          "loopId": "01M5J9FAQ3FYXJ91ETKEPZ2ZDS",
+          "versionId": "01M5J9FAQ3E9QM0VX6CNWQK6HR",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5J9FAS006QJD0KHTQK561JE",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": {
+              "name": "Audit resolver",
+              "value": 42
+            },
+            "receivedAt": "2026-10-22T17:10:23.776Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {},
+        "gates": {},
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    {
+      "runId": "01M5J9FAS0MG1NEP4HDZRZS0MG",
+      "seq": 2,
+      "ts": "2026-10-22T17:10:23.790Z",
+      "type": "run.started",
+      "attempt": 1
+    },
+    {
+      "runId": "01M5J9FAS0MG1NEP4HDZRZS0MG",
+      "seq": 3,
+      "ts": "2026-10-22T17:10:23.800Z",
+      "type": "node.started",
+      "nodeId": "start",
+      "kind": "trigger",
+      "attempt": 1,
+      "configHash": "527dee9c4254fe4e"
+    },
+    {
+      "runId": "01M5J9FAS0MG1NEP4HDZRZS0MG",
+      "seq": 4,
+      "ts": "2026-10-22T17:10:23.805Z",
+      "type": "node.finished",
+      "nodeId": "start",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/outputs/start",
+          "value": {
+            "nodeId": "start",
+            "value": {
+              "name": "Audit resolver",
+              "value": 42
+            },
+            "at": "2026-10-22T17:10:23.804Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "start",
+            "value": {
+              "name": "Audit resolver",
+              "value": 42
+            },
+            "at": "2026-10-22T17:10:23.804Z"
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 0
+    },
+    {
+      "runId": "01M5J9FAS0MG1NEP4HDZRZS0MG",
+      "seq": 5,
+      "ts": "2026-10-22T17:10:23.823Z",
+      "type": "node.started",
+      "nodeId": "done",
+      "kind": "exit",
+      "attempt": 1,
+      "configHash": "b561a80ec0ef1e22"
+    },
+    {
+      "runId": "01M5J9FAS0MG1NEP4HDZRZS0MG",
+      "seq": 6,
+      "ts": "2026-10-22T17:10:23.870Z",
+      "type": "exit.evaluated",
+      "nodeId": "done",
+      "outcome": "success"
+    },
+    {
+      "runId": "01M5J9FAS0MG1NEP4HDZRZS0MG",
+      "seq": 7,
+      "ts": "2026-10-22T17:10:23.870Z",
+      "type": "node.finished",
+      "nodeId": "done",
+      "patch": [],
+      "durationMs": 1
+    },
+    {
+      "runId": "01M5J9FAS0MG1NEP4HDZRZS0MG",
+      "seq": 8,
+      "ts": "2026-10-22T17:10:23.870Z",
+      "type": "run.finished",
+      "status": "succeeded",
+      "outcome": "success",
+      "result": null
+    },
+    {
+      "runId": "01M5J9FAS0MG1NEP4HDZRZS0MG",
+      "seq": 9,
+      "ts": "2026-10-22T17:10:23.870Z",
+      "type": "delivery.queued",
+      "delivery": {
+        "id": "01M5J9FAVYX81AT66ZD5QQMJJ3",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/secret",
+          "secretRef": "broken"
+        },
+        "status": "pending",
+        "attempts": 0,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "not_sent",
+        "effectMayHaveHappened": false
+      }
+    },
+    {
+      "runId": "01M5J9FAS0MG1NEP4HDZRZS0MG",
+      "seq": 10,
+      "ts": "2026-10-22T17:10:23.896Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5J9FAVYX81AT66ZD5QQMJJ3",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/secret",
+          "secretRef": "broken"
+        },
+        "status": "pending",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T17:10:35.889Z"
+      }
+    },
+    {
+      "runId": "01M5J9FAS0MG1NEP4HDZRZS0MG",
+      "seq": 11,
+      "ts": "2026-10-22T17:10:23.902Z",
+      "type": "delivery.attempt_finished",
+      "delivery": {
+        "id": "01M5J9FAVYX81AT66ZD5QQMJJ3",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/secret",
+          "secretRef": "broken"
+        },
+        "status": "pending",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T17:10:25.900Z",
+        "lastError": {
+          "code": "transport",
+          "message": "No acknowledgement received; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    },
+    {
+      "runId": "01M5J9FAS0MG1NEP4HDZRZS0MG",
+      "seq": 12,
+      "ts": "2026-10-22T17:10:25.908Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5J9FAVYX81AT66ZD5QQMJJ3",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/secret",
+          "secretRef": "broken"
+        },
+        "status": "pending",
+        "attempts": 2,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T17:10:40.906Z",
+        "lastError": {
+          "code": "transport",
+          "message": "No acknowledgement received; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    },
+    {
+      "runId": "01M5J9FAS0MG1NEP4HDZRZS0MG",
+      "seq": 13,
+      "ts": "2026-10-22T17:10:25.911Z",
+      "type": "delivery.attempt_finished",
+      "delivery": {
+        "id": "01M5J9FAVYX81AT66ZD5QQMJJ3",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/secret",
+          "secretRef": "broken"
+        },
+        "status": "pending",
+        "attempts": 2,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T17:10:30.910Z",
+        "lastError": {
+          "code": "transport",
+          "message": "No acknowledgement received; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    },
+    {
+      "runId": "01M5J9FAS0MG1NEP4HDZRZS0MG",
+      "seq": 14,
+      "ts": "2026-10-22T17:10:30.933Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5J9FAVYX81AT66ZD5QQMJJ3",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/secret",
+          "secretRef": "broken"
+        },
+        "status": "pending",
+        "attempts": 3,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T17:10:50.931Z",
+        "lastError": {
+          "code": "transport",
+          "message": "No acknowledgement received; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    },
+    {
+      "runId": "01M5J9FAS0MG1NEP4HDZRZS0MG",
+      "seq": 15,
+      "ts": "2026-10-22T17:10:30.939Z",
+      "type": "delivery.attempt_finished",
+      "delivery": {
+        "id": "01M5J9FAVYX81AT66ZD5QQMJJ3",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/secret",
+          "secretRef": "broken"
+        },
+        "status": "pending",
+        "attempts": 3,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T17:10:40.937Z",
+        "lastError": {
+          "code": "transport",
+          "message": "No acknowledgement received; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    },
+    {
+      "runId": "01M5J9FAS0MG1NEP4HDZRZS0MG",
+      "seq": 16,
+      "ts": "2026-10-22T17:10:40.942Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5J9FAVYX81AT66ZD5QQMJJ3",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/secret",
+          "secretRef": "broken"
+        },
+        "status": "pending",
+        "attempts": 4,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T17:11:10.941Z",
+        "lastError": {
+          "code": "transport",
+          "message": "No acknowledgement received; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    },
+    {
+      "runId": "01M5J9FAS0MG1NEP4HDZRZS0MG",
+      "seq": 17,
+      "ts": "2026-10-22T17:10:40.948Z",
+      "type": "delivery.attempt_finished",
+      "delivery": {
+        "id": "01M5J9FAVYX81AT66ZD5QQMJJ3",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/secret",
+          "secretRef": "broken"
+        },
+        "status": "pending",
+        "attempts": 4,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T17:11:00.946Z",
+        "lastError": {
+          "code": "transport",
+          "message": "No acknowledgement received; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    },
+    {
+      "runId": "01M5J9FAS0MG1NEP4HDZRZS0MG",
+      "seq": 18,
+      "ts": "2026-10-22T17:11:00.954Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5J9FAVYX81AT66ZD5QQMJJ3",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/secret",
+          "secretRef": "broken"
+        },
+        "status": "pending",
+        "attempts": 5,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T17:11:10.953Z",
+        "lastError": {
+          "code": "transport",
+          "message": "No acknowledgement received; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    },
+    {
+      "runId": "01M5J9FAS0MG1NEP4HDZRZS0MG",
+      "seq": 19,
+      "ts": "2026-10-22T17:11:00.958Z",
+      "type": "delivery.finished",
+      "delivery": {
+        "id": "01M5J9FAVYX81AT66ZD5QQMJJ3",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5641/secret",
+          "secretRef": "broken"
+        },
+        "status": "failed",
+        "attempts": 5,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "lastError": {
+          "code": "transport",
+          "message": "No acknowledgement received; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    }
+  ],
+  "rows": [
+    {
+      "finalized_at": "2026-10-22T17:11:00.964Z",
+      "last_event_seq": 19,
+      "status": "succeeded"
+    }
+  ],
+  "requests": []
+}

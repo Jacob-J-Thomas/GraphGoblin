@@ -1,0 +1,50 @@
+
+ RUN  v5.0.3 %WORKTREE%/apps/web
+
+ ❯ src/runs/inspector/DeliveryPanel.test.tsx (7 tests | 1 failed) 98ms
+   ❯ delivery in the run inspector (7)
+     × shows prior uncertainty after unknown, rejected and accepted attempts (true) 54ms
+pnpm.cmd :
+At line:5 char:1
++ pnpm.cmd --filter @graphgoblin/web exec vitest run src/runs/inspector ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/runs/inspector/DeliveryPanel.test.tsx > delivery in the run inspector > shows prior uncertainty after
+unknown, rejected and accepted attempts (true)
+AssertionError: expected <p></p> to be Anything // Object.is equality
+
+If it should pass with deep equality, replace "toBe" with "toStrictEqual"
+
+Expected: <p></p>
+Received: serializes to the same string
+
+ ❯ src/runs/inspector/DeliveryPanel.test.tsx:34:66
+     32|     expect(screen.getByText('Delivered after 3 attempts')).toBeInTheDo…
+     33|     expect(screen.getByText(/HTTP 429/)).toBeInTheDocument();
+     34|     expect(screen.queryByText(/An acknowledgement was unknown/)).toBe(…
+       |                                                                  ^
+     35|   });
+     36|   it('shows pending acknowledgement independently of succeeded executi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  12:22:14
+   Duration  13.86s (transform 35%, import 35%, environment 21%, setup 8%, tests 1%)
+
+  Transform  transforming modules took 4.78s · 35% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d2-
+  │ webhook-retry\apps\web
+

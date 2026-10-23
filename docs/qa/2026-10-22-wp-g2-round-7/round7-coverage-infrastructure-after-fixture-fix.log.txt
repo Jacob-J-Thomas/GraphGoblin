@@ -1,0 +1,374 @@
+pnpm.cmd : $ vitest run --coverage --maxWorkers=1 --coverage.reportOnFailure --reporter=default --reporter=json '--outp
+utFile.json=<worktree>\round7-coverage-infr
+astructure-after-fixture-fix-results.log'
+At line:14 char:1
++ pnpm.cmd --filter @graphgoblin/infrastructure test:coverage --maxWork ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...ix-results.log':String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 <worktree>/packages/infrastructure
+      Coverage enabled with v8
+
+ ✓ src/sqlite/upgrade.test.ts (26 tests) 19835ms
+   ✓ definitions-only format-4 cutover (26)
+     ✓ inspects every published version and draft without writes, excludes active template work, and reports disarms/counts 720ms
+     ✓ deletes all history and configured templates, converts definitions, retains signing identities/secrets/settings, and starts through ordinary migrations 1274ms
+     ✓ blocks ordinary queued runs without cancelling them 801ms
+     ✓ blocks ordinary running runs without cancelling them 808ms
+     ✓ blocks ordinary waiting runs without cancelling them 1072ms
+     ✓ blocks ordinary paused runs without cancelling them 900ms
+     ✓ blocks a pending ordinary receipt and its frozen admission intent 806ms
+     ✓ requires every hash-bound review, binds repeated nodes to their stored version, and rejects stale/unused resolutions 2522ms
+     ✓ refuses changed source, damaged SQL/ledger, malformed template identities and invalid definitions 3538ms
+     ✓ rolls back deletions, DDL, ledger, rewrites and marker on a failure after structural SQL 897ms
+     ✓ rechecks safety at commit and rolls back if the lock or backup is lost 654ms
+     ✓ refuses an ordinary definition that would invoke a retired template loop 920ms
+     ✓ requires the stopped lock/backup capability and propagates failed safety verification before transaction 561ms
+     ✓ removes old database archives and converts legacy owner defaults without changing other settings 977ms
+     ✓ refuses invalid/conflicting owner defaults: UPDATE settings SET value='not JSON' 735ms
+     ✓ refuses invalid/conflicting owner defaults: INSERT INTO settings VALUES ('local','defaultModel','"unknown"','2026-10-17T00:00:00.000Z') 961ms
+     ✓ refuses invalid/conflicting owner defaults: INSERT INTO settings VALUES ('other','defaultEffort','"invalid"','2026-10-17T00:00:00.000Z') 821ms
+     ✓ treats a genuinely fresh format-4 store as a no-op 476ms
+ ❯ src/process/scripts.test.ts (39 tests | 3 failed) 44724ms
+   ❯ ProcessScripts (36)
+     ✓ returns raw captured byte counts and truncation for default capture, including incomplete EOF 104ms
+     ✓ preserves both UTF-8 streams split at byte offset 0 with default and explicit bounds 187ms
+     ✓ preserves both UTF-8 streams split at byte offset 1 with default and explicit bounds 214ms
+     ✓ preserves both UTF-8 streams split at byte offset 2 with default and explicit bounds 270ms
+     ✓ preserves both UTF-8 streams split at byte offset 3 with default and explicit bounds 248ms
+     ✓ preserves both UTF-8 streams split at byte offset 4 with default and explicit bounds 211ms
+     ✓ preserves both UTF-8 streams split at byte offset 5 with default and explicit bounds 216ms
+     ✓ preserves both UTF-8 streams split at byte offset 6 with default and explicit bounds 225ms
+     ✓ preserves both UTF-8 streams split at byte offset 7 with default and explicit bounds 233ms
+     ✓ preserves both UTF-8 streams split at byte offset 8 with default and explicit bounds 196ms
+     ✓ preserves both UTF-8 streams split at byte offset 9 with default and explicit bounds 187ms
+     ✓ preserves both UTF-8 streams split at byte offset 10 with default and explicit bounds 197ms
+     ✓ preserves both UTF-8 streams split at byte offset 11 with default and explicit bounds 232ms
+     ✓ counts raw bytes and drops only a cap-split suffix at cap 0 on both streams 196ms
+     ✓ counts raw bytes and drops only a cap-split suffix at cap 1 on both streams 200ms
+     ✓ counts raw bytes and drops only a cap-split suffix at cap 2 on both streams 208ms
+     ✓ counts raw bytes and drops only a cap-split suffix at cap 3 on both streams 234ms
+     ✓ counts raw bytes and drops only a cap-split suffix at cap 4 on both streams 192ms
+     ✓ counts raw bytes and drops only a cap-split suffix at cap 5 on both streams 176ms
+     ✓ counts raw bytes and drops only a cap-split suffix at cap 6 on both streams 189ms
+     ✓ counts raw bytes and drops only a cap-split suffix at cap 7 on both streams 228ms
+     ✓ counts raw bytes and drops only a cap-split suffix at cap 8 on both streams 308ms
+     ✓ counts raw bytes and drops only a cap-split suffix at cap 9 on both streams 330ms
+     ✓ counts raw bytes and drops only a cap-split suffix at cap 10 on both streams 227ms
+     ✓ counts raw bytes and drops only a cap-split suffix at cap 11 on both streams 309ms
+     ✓ replaces an incomplete trailing sequence at clean EOF on both streams 215ms
+     × kills and closes a real process cancelled with incomplete UTF-8 pending on both streams 8033ms
+     ✓ captures stdout, stderr, exit code, env, args, and stdin 124ms
+     ✓ closes stdin when none is provided 214ms
+     × kills the process tree on timeout 15011ms
+     × kills the process when the signal aborts, including when already aborted 15004ms
+     ✓ reports spawn failures as a null exit code with a message 21ms
+     ✓ caps captured output 111ms
+     ✓ bounds opted-in stdout by raw bytes and reports overflow without changing legacy capture 227ms
+     ✓ reports exact-cap output as complete and does not emit a cap-split UTF8 suffix 218ms
+     ✓ uses fixed spawn diagnostics without echoing a credential-bearing command 21ms
+   ✓ killTree (3)
+     ✓ does nothing without a pid 0ms
+     ✓ uses taskkill on Windows and falls back to kill when taskkill is missing 0ms
+     ✓ signals the process group on POSIX and falls back to kill on failure 0ms
+ ❯ src/adversarial.test.ts (20 tests | 1 failed) 34011ms
+   ❯ adversarial infrastructure invariants (forks pool) (11)
+     ✓ 3: concurrent SQLite batches have no sequence gaps 409ms
+     ✓ 15: skip catches missed daily slots across spring DST 65ms
+     ✓ 15: run-once catches missed daily slots across spring DST 92ms
+     ✓ 15: run-each catches missed daily slots across spring DST 68ms
+     ✓ ADV-010: run-once chooses the latest missed slot even beyond the run-each cap 158ms
+     ✓ 15: two scheduler instances have no shared lease (documented single-process limit) 68ms
+     ✓ ADV-011: a duration timer lost before a crash is re-armed from the waiting run 160ms
+     ✓ ADV-011: a input timeout timer lost before a crash is re-armed from the waiting run 118ms
+     ✓ ADV-011: a fire interrupted mid-delivery is delivered again after a restart 142ms
+     ✓ 18: concurrent set of one secret preserves one authenticated ciphertext 90ms
+     × 6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild 30087ms
+   ✓ timer delivery (review of WP-G) (4)
+     ✓ a throwing timer listener leaves the timer for another delivery 85ms
+     ✓ a failed manager wake does not consume the timer 210ms
+     ✓ a duration with a timeout re-arms both lost deadlines (SQLite) 271ms
+     ✓ an obsolete timeout in the same poll batch does not wake a later input wait 194ms
+   ✓ finalization on SQLite (review of WP-G, fourth round) (5)
+     ✓ a resumed failed run is finalized again after a crash on its next terminal status 503ms
+     ✓ an older finalizer in flight cannot hide the next success 548ms
+     ✓ an older finalizer in flight cannot hide the durable resume 269ms
+     ✓ of two concurrent resumes of one failure, only one acts (same failure) 234ms
+     ✓ of two concurrent resumes of one failure, only one acts (newer non-resumable failure) 237ms
+ ❯ src/claude/process.test.ts (5 tests | 3 failed) 29238ms
+   ❯ owned native Claude process transport (5)
+     ✓ streams stdout, sends stdin and never retains stderr content 328ms
+     ✓ reports missing executable without exposing raw native errors 14ms
+     × kills on deadline and output overflow 16178ms
+     × does not spawn for an already aborted signal and cancels a running process 5174ms
+     × kills the descendant that a long-lived child started 7542ms
+stderr | src/sqlite/event-read-benchmark.test.ts > round-trips large mixed evaluation pages and measures read 
+validation overhead
+{"eventReadBenchmark":{"rows":1000,"samples":10,"baselineMedianMs":54.71649999999954,"validatedMedianMs":88.53650000000
+016,"addedMedianMs":33.82000000000062}}
+
+stderr | src/sqlite/event-read-benchmark.test.ts > round-trips large mixed evaluation pages and measures read 
+validation overhead
+{"eventReadBenchmark":{"rows":10000,"samples":10,"baselineMedianMs":437.71489999999903,"validatedMedianMs":798.53129999
+99987,"addedMedianMs":360.8163999999997}}
+
+ ✓ src/sqlite/event-read-benchmark.test.ts (1 test) 21274ms
+   ✓ round-trips large mixed evaluation pages and measures read validation overhead 21272ms
+ ✓ src/sqlite/catalog.test.ts (6 tests) 19659ms
+   ✓ model catalog source migration and repository (6)
+     ✓ enables previously blocked Fable once, then preserves owner switches and every other row 8890ms
+     ✓ preserves seeded, edited, and hand-added 1.0.0 rows, then refreshes only seed metadata 6906ms
+     ✓ runs the previous release without SQL rollback and retains provenance on re-upgrade 3515ms
+ ✓ src/fs/fs.test.ts (11 tests) 1567ms
+   ✓ FsArtifactStore (9)
+     ✓ accepts verified bytes published by another writer while a read handle blocks replacement 928ms
+     ✓ ignores interrupted temporary writes and converges under identical and different concurrent puts 356ms
+ ✓ src/http/probes-bounds.test.ts (23 tests) 8266ms
+   ✓ HTTP probe body bounds over real sockets (23)
+     ✓ cancels a no-length stream on overflow without waiting for EOF 312ms
+     ✓ preserves split UTF-8 JSON at byte offset 1, including at the cap 857ms
+     ✓ preserves split UTF-8 JSON at byte offset 2, including at the cap 775ms
+     ✓ preserves split UTF-8 JSON at byte offset 3, including at the cap 726ms
+     ✓ preserves split UTF-8 JSON at byte offset 4, including at the cap 677ms
+     ✓ preserves split UTF-8 JSON at byte offset 5, including at the cap 694ms
+     ✓ preserves split UTF-8 JSON at byte offset 6, including at the cap 689ms
+     ✓ preserves split UTF-8 JSON at byte offset 7, including at the cap 709ms
+     ✓ preserves split UTF-8 JSON at byte offset 8, including at the cap 778ms
+     ✓ preserves split UTF-8 JSON at byte offset 9, including at the cap 681ms
+     ✓ preserves split UTF-8 JSON at byte offset 10, including at the cap 930ms
+ ✓ src/sqlite/storage.test.ts (42 tests) 12574ms
+   ✓ database (1)
+     ✓ migrates idempotently 318ms
+   ✓ SqliteRunRepository (8)
+     ✓ migration 0002 marks runs that were already terminal as finalized 442ms
+   ✓ migration 0003 model catalog max effort (18)
+     ✓ appends max to an unedited seeded row without changing its other columns 350ms
+     ✓ upgrades every model id seeded in 1.0.0 453ms
+     ✓ preserves an edited display name while adding max 453ms
+     ✓ preserves an edited default effort while adding max 537ms
+     ✓ preserves a disabled row while adding max 469ms
+     ✓ compares efforts as a set and preserves their stored order 428ms
+     ✓ ignores duplicate old values when comparing efforts as a set 488ms
+     ✓ leaves a strict subset unchanged byte for byte 431ms
+     ✓ leaves a strict superset with another extra value unchanged byte for byte 616ms
+     ✓ leaves a strict superset already containing max unchanged byte for byte 653ms
+     ✓ leaves a shorter list already containing max unchanged byte for byte 500ms
+     ✓ leaves a user-added model with the old efforts unchanged 527ms
+     ✓ leaves a non-Codex harness with the old efforts unchanged 613ms
+     ✓ leaves an array with an extra null unchanged 488ms
+     ✓ leaves a JSON object with the old values unchanged 491ms
+     ✓ leaves malformed JSON unchanged without aborting the upgrade 432ms
+     ✓ is idempotent when the shipped SQL statement is executed again 464ms
+     ✓ does not reapply the migration but seeding restores current harness efforts 532ms
+ ✓ src/sqlite/definition-pins.test.ts (8 tests) 1994ms
+   ✓ draft snapshots (6)
+     ✓ are stored with their run, read by id, and kept out of the version history 396ms
+   ✓ migration 0014 pins existing runs (2)
+     ✓ freezes draft-run definitions, pins every run, event and saved intent 631ms
+     ✓ pins healthy history and leaves damaged JSON untouched for unreadable-history reports 422ms
+ ✓ src/sqlite/durable-events.test.ts (20 tests) 3390ms
+   ✓ generated durable event boundaries with SQLite (20)
+     ✓ records the exact prompt bound and fails one over (template=false) 498ms
+     ✓ records the exact prompt bound and fails one over (template=true) 315ms
+ ✓ src/sqlite/history-summaries.test.ts (14 tests) 2847ms
+   ✓ SQLite history queries (14)
+     ✓ applies the history index to an existing current-format store and reruns idempotently 415ms
+     ✓ summarizes each owner loop beyond 500 unrelated runs, with ties and no-history controls 1026ms
+ ✓ src/sqlite/fresh-initialization.test.ts (14 tests) 2963ms
+   ✓ atomic fresh SQLite initialisation (14)
+     ✓ rolls back an interruption after schema persistence and recovers on restart 401ms
+     ✓ applies pending ordinary migrations when another initialiser wins the write-lock race 534ms
+     ✓ refuses a marker table without its row without changing it on either start 306ms
+ ✓ src/sqlite/delivery-runs.test.ts (31 tests) 4450ms
+ ✓ src/sqlite/json-values.test.ts (12 tests) 3387ms
+   ✓ JSON values in real SQLite (12)
+     ✓ preserves absent on create, update, transition and reopen 499ms
+     ✓ preserves null on create, update, transition and reopen 310ms
+     ✓ preserves false on create, update, transition and reopen 413ms
+     ✓ preserves object on create, update, transition and reopen 311ms
+     ✓ rejects an invalid update without changing prior values 315ms
+ ✓ src/sqlite/classifiers.test.ts (3 tests) 1921ms
+   ✓ classifier repository (3)
+     ✓ upgrades a database at 3 migrations without rewriting existing data and reruns idempotently 869ms
+     ✓ upgrades a database at 6 migrations without rewriting existing data and reruns idempotently 749ms
+ ✓ src/sqlite/admission-contract.test.ts (16 tests) 2876ms
+   ✓ SQLite admission contract (16)
+     ✓ historical inbound-only keys are perman… 455ms
+     ✓ create rollback at create.receipt prese… 300ms
+ ✓ src/sqlite/webhook-receipt-upgrade.test.ts (27 tests) 6761ms
+   ✓ frozen receipt contract: omitted optionals 571ms
+   ✓ frozen receipt contract: astral secret 65 303ms
+   ✓ frozen receipt contract: target 4097 code points 319ms
+   ✓ frozen receipt contract: ASCII target overflow 344ms
+   ✓ frozen receipt contract: ASCII secret overflow 304ms
+   ✓ frozen receipt contract: NUL secret overflow 512ms
+ ✓ src/sqlite/readiness.test.ts (22 tests) 2714ms
+   ✓ derives dropped and IF NOT EXISTS indexes from the executed migration catalogue 901ms
+ ✓ src/scheduler/cron-scheduler.test.ts (18 tests) 2575ms
+   ✓ CronScheduler.nextFire (2)
+     ✓ computes slots in the schedule timezone, across daylight saving time 338ms
+   ✓ CronScheduler.recover (missed-fire policies) (11)
+     ✓ run-each drops the 50 oldest of 150 missed slots and fires the latest 100 oldest first 409ms
+ ✓ src/sqlite/admission.test.ts (17 tests) 2138ms
+   ✓ SQLite atomic admission (17)
+     ✓ recovers the frozen run ID after closing the database immediately after claim 582ms
+ ✓ src/sqlite/triggers.test.ts (28 tests) 1745ms
+ ✓ src/sqlite/loop-deletion.test.ts (11 tests) 973ms
+   ✓ loop deletion (11)
+     ✓ deletes terminal runs and every dependent table, with no upgrade orphan (D5) 347ms
+ ✓ src/sqlite/db.test.ts (11 tests) 937ms
+   ✓ serialised client (2)
+     ✓ lets a transaction and other statements interleave safely on a file database 431ms
+   ✓ databaseFilePath (2)
+     ✓ names the file libsql actually creates for an encoded URL 366ms
+ ✓ src/sqlite/run-paging.test.ts (6 tests) 674ms
+   ✓ SqliteRunRepository ordinary paging (6)
+     ✓ permits a 501-row lookahead while list remains capped at 500 378ms
+ ✓ src/sqlite/retired-destinations-guard.test.ts (11 tests) 561ms
+ ✓ src/claude/harness.test.ts (43 tests) 455ms
+ ✓ src/sqlite/upgrade-scan.test.ts (10 tests) 420ms
+ ✓ src/sqlite/event-validation.test.ts (8 tests) 397ms
+ ✓ src/http/classifier.test.ts (43 tests) 261ms
+ ✓ src/sqlite/template-retirement.test.ts (3 tests) 185ms
+ ✓ src/http/delivery-retry.test.ts (19 tests) 227ms
+ ✓ src/http/http.test.ts (5 tests) 208ms
+ ✓ src/sqlite/decision-migration.test.ts (1 test) 122ms
+ ✓ src/sqlite/append-validation.test.ts (1 test) 125ms
+ ✓ src/sqlite/session-family.test.ts (2 tests) 115ms
+ ✓ src/scheduler/timer-service.test.ts (10 tests) 135ms
+ ✓ src/claude/protocol.test.ts (81 tests) 67ms
+ ✓ src/http/probes-security.test.ts (9 tests) 62ms
+ ✓ src/claude/process-failure.test.ts (8 tests) 18ms
+ ✓ src/claude/policy.test.ts (9 tests) 16ms
+ ✓ src/claude/models.test.ts (1 test) 12ms
+ ✓ src/http/body-signature.test.ts (5 tests) 7ms
+ ✓ src/process/output-capture.test.ts (6 tests) 10ms
+ ✓ src/claude/errors.test.ts (6 tests) 8ms
+ ✓ src/claude/environment.test.ts (2 tests) 6ms
+ ✓ src/process/template-support.test.ts (1 test) 6ms
+ ✓ src/claude/queue.test.ts (1 test) 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/adversarial.test.ts > adversarial infrastructure invariants (forks pool) > 6/QA-LIMIT-001: ProcessScripts 
+abort kills a real child and its grandchild
+Error: Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/adversarial.test.ts:225:3
+    223|     expect(() => decryptSecret(Buffer.alloc(32, 5), ciphertext as stri…
+    224|   });
+    225|   it('6/QA-LIMIT-001: ProcessScripts abort kills a real child and its …
+       |   ^
+    226|     const dir = await mkdtemp(join(tmpdir(), 'gg-process-tree-'));
+    227|     const pidFile = join(dir, 'grandchild.pid');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills on deadline and output overflow
+Error: EBUSY: resource busy or locked, rmdir '<temp>\gg-claude-process-7WVfEn'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > does not spawn for an already aborted 
+signal and cancels a running process
+Error: EBUSY: resource busy or locked, rmdir '<temp>\gg-claude-process-fXFoGH'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived 
+child started
+AssertionError: expected 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…' to be 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…' // 
+Object.is equality
+
+Expected: 
+"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+Received: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+xxxxxxxxxxx"
+
+ ❯ src/claude/process.test.ts:146:46
+    144|       const stopped = await readFile(marker, 'utf8');
+    145|       await new Promise((resolve) => setTimeout(resolve, 100));
+    146|       expect(await readFile(marker, 'utf8')).toBe(stopped);
+       |                                              ^
+    147|     } finally {
+    148|       controller.abort();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > kills the descendant that a long-lived 
+child started
+Error: EBUSY: resource busy or locked, rmdir '<temp>\gg-claude-process-9Tt2QQ'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  src/process/scripts.test.ts > ProcessScripts > kills and closes a real process cancelled with incomplete UTF-8 
+pending on both streams
+AssertionError: native process-tree cancellation must finish before fixture cleanup: expected true to be false // 
+Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/process/scripts.test.ts:194:7
+    192|       cleanupRequired,
+    193|       'native process-tree cancellation must finish before fixture cle…
+    194|     ).toBe(false);
+       |       ^
+    195|     expect(streamsReady).toBe(2);
+    196|     expect(result).toMatchObject({ stdout: 'A\ufffd', stderr: 'B\ufffd…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  src/process/scripts.test.ts > ProcessScripts > kills the process tree on timeout
+Error: Test timed out in 15000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/process/scripts.test.ts:237:3
+    235|   });
+    236|
+    237|   it('kills the process tree on timeout', async () => {
+       |   ^
+    238|     const scripts = new ProcessScripts();
+    239|     const started = Date.now();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  src/process/scripts.test.ts > ProcessScripts > kills the process when the signal aborts, including when already 
+aborted
+Error: Test timed out in 15000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/process/scripts.test.ts:248:3
+    246|   }, 15_000);
+    247|
+    248|   it('kills the process when the signal aborts, including when already…
+       |   ^
+    249|     const scripts = new ProcessScripts();
+    250|     const controller = new AbortController();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  3 failed | 45 passed (48)
+      Tests  7 failed | 709 passed (716)
+   Start at  19:24:32
+   Duration  364.88s (tests 71%, import 27%, transform 2%, worker 1%)
+
+     Import  205 modules were evaluated 392 times · 90.49s total, 27% of tracked time
+             ~43.17s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+JSON report written to <worktree>/round7-coverage-infrastructure-after-fixture-fix-results.log
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 97.81% ( 2369/2422 )
+Branches     : 94.92% ( 1646/1734 )
+Functions    : 97.93% ( 521/532 )
+Lines        : 98.69% ( 2110/2138 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in <worktree>
+

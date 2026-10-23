@@ -1,0 +1,702 @@
+pnpm.cmd : $ vitest run --coverage --coverage.reportOnFailure --reporter=default --reporter=json '--outputFile.json=C:\
+Users\<user>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g2-paging-summaries\round7-coverage-api-results.log'
+At line:14 char:2
++  & pnpm.cmd @arguments *> "round7-coverage-$name.log"
++  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...pi-results.log':String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 <worktree>/apps/api
+      Coverage enabled with v8
+
+{"level":30,"time":1792712579168,"pid":47980,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5695"}
+{"level":30,"time":1792712579169,"pid":47980,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5695,"dataDir":"<temp>\\gg-api-process-Eqeyn7","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792712579344,"pid":47980,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792712579352,"pid":47980,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":6.86540000000241,"msg":"request completed"}
+ ✓ src/catalog.test.ts (26 tests) 12539ms
+   ✓ catalog ownership and toggle routes (10)
+     ✓ returns source and enabled, refuses harness edit/delete/create and source spoofing 2249ms
+     ✓ freezes hand-added legacy rows too, without removing their ability to toggle 485ms
+     ✓ PATCH only changes enabled for litellm rows 340ms
+     ✓ rejects invalid PATCH {} without a write 410ms
+     ✓ rejects invalid PATCH {"enabled":false,"displayName":"Oops"} without a write 409ms
+     ✓ rejects invalid PATCH {"enabled":null} without a write 579ms
+     ✓ rejects unauthorized and wrong-scope writes before validating bodies; read/write scopes work 1146ms
+   ✓ advisory model validation (5)
+     ✓ ignores stale Codex models when the decision uses only an expression 435ms
+     ✓ rejects explicit unknown/wrong-family decision models and blocks unavailable selected models 480ms
+     ✓ rejects explicit unknown/wrong-family default models and blocks unavailable selected models 615ms
+     ✓ still requires ownership for validation 319ms
+   ✓ uniform strict evaluator admission (4)
+     ✓ reports explicit unknown model configuration even while its harness is unavailable 491ms
+     ✓ returns a typed cutover refusal for old portable and bare definitions without saving them 908ms
+   ✓ imports an automatic format-1 export as format 4 414ms
+   ✓ imports an automatic format-3 export as format 4 300ms
+   ✓ refuses pending export review with item ids, hashes and reasons, and refuses supplied resolutions 332ms
+   ✓ returns automatic rewrite notices alongside import validation issues 341ms
+   ✓ reports both invalid graph issues and pending reviews in one import refusal 302ms
+ ✓ src/container.test.ts (27 tests) 19006ms
+   ✓ default adapters (6)
+     ✓ registers the Codex harness, structured completions, and the Codex evaluator and classifier registry 2162ms
+     ✓ starts without a Jev key and leaves Jev unavailable 535ms
+     ✓ refreshes Jev when its key secret is set or deleted through the API 344ms
+     ✓ ignores other secrets and other owners 387ms
+     ✓ does not notify when deleting a secret that does not exist 301ms
+     ✓ shares configured Noul and Choice classifier snapshots and invalidates them after key and enable changes 510ms
+   ✓ Jev key at boot (10)
+     ✓ seeds before recovery, refreshes metadata, and preserves a disabled built-in across real restarts 475ms
+     ✓ seeds an encrypted local-owner secret once, keeps it across restarts, and never logs the value 349ms
+     ✓ preserves an existing secret, including an empty value ("stored-key") 625ms
+     ✓ preserves an existing secret, including an empty value ("") 331ms
+   ✓ configuration admission before startup writes (3)
+     ✓ reads existing manual catalog entries without changing database bytes or rows on invalid effort 6921ms
+   ✓ refuses malformed current definitions before master-key creation or database writes 3596ms
+ ✓ src/guide-examples.test.ts (16 tests) 19509ms
+   ✓ executable guide examples (16)
+     ✓ inventories every fence in guides 02 and 03 2070ms
+     ✓ validates settings, imports the draft definition, saves, exports, publishes and executes it 1399ms
+     ✓ executes the exact first-summary and API input, including its prompt and return mapping 2091ms
+     ✓ executes the HTTP request in start-bash 1375ms
+     ✓ executes the HTTP request in start-powershell 756ms
+     ✓ replays the documented node in replay-bash 1370ms
+     ✓ replays the documented node in replay-powershell 784ms
+     ✓ resumes a fake external failure with resume-bash; refuses a finished run 1082ms
+     ✓ resumes a fake external failure with resume-powershell; refuses a finished run 1058ms
+     ✓ reads the documented events request in events-bash 924ms
+     ✓ reads the documented events request in events-powershell 602ms
+     ✓ reads the documented events request in reconnect-bash 1209ms
+     ✓ reads the documented events request in returns-bash 1212ms
+     ✓ reads the documented events request in returns-powershell 1749ms
+     ✓ runs the bounded-repeat example to exactly three passes and an Exhausted exit 1255ms
+     ✓ validates the failure response shape and inventories the non-request snippets 565ms
+ ✓ src/classifiers.test.ts (40 tests) 22287ms
+   ✓ classifier catalog HTTP API (15)
+     ✓ requires secrets:write to attach a secret and permits settings-only edits that clear it 3074ms
+     ✓ returns a configured/enabled distinction and protects builtin metadata 1109ms
+     ✓ creates disabled, replaces metadata preserving enabled, clears auth and retains secrets on delete 509ms
+     ✓ rejects invalid metadata with field paths {"enabled":true} 478ms
+     ✓ rejects invalid metadata with field paths {"source":"custom"} 698ms
+     ✓ checks settings scopes before parsing bodies and isolates owners and their secret state 302ms
+   ✓ classifier publish validation agreement (15)
+     ✓ reports built-in Jev decision warnings on all five endpoints (disabled) 371ms
+     ✓ reports built-in Jev decision warnings on all five endpoints (missing) 1046ms
+     ✓ reports built-in Jev decision warnings on all five endpoints (blank) 1265ms
+     ✓ reports built-in Jev decision warnings on all five endpoints (unreadable) 507ms
+     ✓ reports built-in Jev decision warnings on all five endpoints (configured) 469ms
+     ✓ reports the same diagnostics on every endpoint (missing) 681ms
+     ✓ reports the same diagnostics on every endpoint (no-choice) 431ms
+     ✓ reports the same diagnostics on every endpoint (disabled) 618ms
+     ✓ reports the same diagnostics on every endpoint (secret-blank) 415ms
+     ✓ reports the same diagnostics on every endpoint (secret-unreadable) 493ms
+     ✓ reports the same diagnostics on every endpoint (implicit) 419ms
+     ✓ exports and imports a clean expression evaluator without unused classifier metadata 308ms
+   ✓ classifier runtime hot reload (10)
+     ✓ rejects Jev probabilities with an undeclared secret key before any run read 719ms
+     ✓ keeps real Jev decision HTTP error bodies out of snapshots, events, streams and logs 434ms
+     ✓ sanitizes real built-in Jev validation paths and error bodies (HTTP 200) 538ms
+     ✓ sanitizes real built-in Jev validation paths and error bodies (HTTP 400) 397ms
+     ✓ sanitizes a real Codex turn failure before persisting it for run readers 562ms
+     ✓ never exposes an echoed classifier bearer to runs:read (recordAlternatives true) 759ms
+     ✓ never exposes an echoed classifier bearer to runs:read (recordAlternatives false) 413ms
+     ✓ passes the engine logger to the decision-time Jev SDK client 317ms
+     ✓ uses catalog/provider ids, updates secrets and metadata, preserves in-flight snapshots and fails unavailable deleted/disabled published references 1698ms
+     ✓ reports an unreachable endpoint as a provider failure, without silently falling through 490ms
+ ✓ src/triggers/github-recipe.test.ts (5 tests) 24996ms
+   ✓ documented GitHub polling recipe with a controlled local CLI (5)
+     ✓ curates all pages, drains five then the tail, and retains seen keys through a stopped restart 9974ms
+     ✓ refuses a pagination result above 200 before lookup or admission and keeps process diagnostics private 1866ms
+     ✓ refuses the child-buffer byte boundary before lookup or admission 2018ms
+     ✓ refuses the final-array byte boundary before lookup or admission 2052ms
+     ✓ observes only current state and cannot reconstruct a label transition between snapshots 9082ms
+ ✓ src/wait-identity.test.ts (34 tests) 36051ms
+   ✓ observed wait identities over real SQLite and API (3)
+     ✓ rejects visit A answers at visit B without mutation, and accepts B once 3608ms
+     ✓ resets signal observations on a genuine heartbeat revisit 1118ms
+     ✓ cannot lose a timer delivered synchronously by the injected timer port around parking 1580ms
+   ✓ durable wait boundaries (18)
+     ✓ accepts only one racing API answer and rejects retry without changing the log 1002ms
+     ✓ keeps the observed identity when SQLite is closed and reopened 807ms
+     ✓ recovers an event-first park and its passed deadline at 50 ms polling 534ms
+     ✓ recovers an event-first park and its passed deadline at 1000 ms polling 758ms
+     ✓ acknowledges a due timer while paused and re-arms its original deadline after reopen and resume 563ms
+     ✓ handles deadline -1000, context 8, polling 50 446ms
+     ✓ handles deadline -1000, context 256000, polling 50 633ms
+     ✓ handles deadline 0, context 8, polling 50 609ms
+     ✓ handles deadline 0, context 256000, polling 50 649ms
+     ✓ handles deadline 1000, context 8, polling 50 580ms
+     ✓ handles deadline 1000, context 256000, polling 50 595ms
+     ✓ handles deadline -1000, context 8, polling 1000 547ms
+     ✓ handles deadline -1000, context 256000, polling 1000 776ms
+     ✓ handles deadline 0, context 8, polling 1000 946ms
+     ✓ handles deadline 0, context 256000, polling 1000 870ms
+     ✓ handles deadline 1000, context 8, polling 1000 1041ms
+     ✓ handles deadline 1000, context 256000, polling 1000 1282ms
+     ✓ retains heartbeat observations through beats and real SQLite reopen, then rejects old signals 1321ms
+   ✓ wait rejection and acknowledgement boundaries (4)
+     ✓ requires an observed token and rejects unknown tokens without mutation 555ms
+     ✓ records one signal answer atomically when two API requests race 936ms
+     ✓ recovers a paused event-first park before its snapshot/status commit without advancing it 502ms
+     ✓ closes and reopens SQLite after the wake but before timer acknowledgement 635ms
+   ✓ a delayed wake acknowledgement cannot replace the next observed wait 1369ms
+   ✓ redelivery queues a durable wake after its committed status response was lost 2065ms
+   ✓ retry repairs a durable input answer after its status transition failed 1802ms
+   ✓ retry repairs a durable signal answer after its status transition failed 875ms
+   ✓ acknowledges timers for unreadable event history and keeps healthy work available 1446ms
+   ✓ acknowledges timers for unreadable row history and keeps healthy work available 1503ms
+   ✓ reports a paused input wait as INVALID_STATE without consuming its identity 991ms
+   ✓ reports a paused signal wait as INVALID_STATE without consuming its identity 1348ms
+   ✓ a paused timer acknowledgement cannot delete a resume re-arm at the same deadline 1753ms
+ ✓ src/gates.test.ts (15 tests) 16714ms
+   ✓ decision gate API admission (15)
+     ✓ returns the visit-cap warning on all five admission paths while allowing an early non-repeat 3270ms
+     ✓ agrees across create, import, draft save, validate and publish, and persists runtime counts 1228ms
+     ✓ reports the same repeat-target graph issue on all five paths 1433ms
+     ✓ reports the same limit-unconnected graph issue on all five paths 968ms
+     ✓ reports the same terminal-edge graph issue on all five paths 720ms
+     ✓ rejects missing-max with a precise config path on every authoring endpoint 741ms
+     ✓ rejects multiple-repeats with a precise config path on every authoring endpoint 569ms
+     ✓ rejects reserved-id with a precise config path on every authoring endpoint 752ms
+     ✓ rejects orphan-limit with a precise config path on every authoring endpoint 1126ms
+     ✓ rejects invalid-time with a precise config path on every authoring endpoint 1316ms
+     ✓ rejects removed exit field criteria on every authoring endpoint 671ms
+     ✓ rejects removed exit field predicate on every authoring endpoint 839ms
+     ✓ rejects removed exit field loopBack on every authoring endpoint 1364ms
+     ✓ rejects removed exit field return on every authoring endpoint 736ms
+     ✓ rejects removed exit field default on every authoring endpoint 975ms
+ ✓ src/units.test.ts (14 tests) 5979ms
+   ✓ loadMasterKey (2)
+     ✓ generates a key file once and reuses it, rejecting corrupt files 1349ms
+   ✓ emitOpenApi (1)
+     ✓ writes a document with the expected paths 4024ms
+   ✓ main (1)
+     ✓ boots the server from environment configuration and shuts down 568ms
+ ✓ src/version-migration.test.ts (3 tests) 17183ms
+   ✓ migrated SQLite versions through the API (3)
+     ✓ preserves an old draft version and refuses startup or cutover until format 4 is available 2951ms
+     ✓ preserves an old published version and refuses startup or cutover until format 4 is available 4004ms
+     ✓ recovers a current-format pinned run across restart mid-run without migration 10225ms
+ ✓ src/routes/run-paging.test.ts (29 tests) 16727ms
+   ✓ ordinary run paging (29)
+     ✓ returns an empty final page 2729ms
+     ✓ pages tied timestamps exactly once despite a newer insertion between requests 508ms
+     ✓ returns 500 items plus a cursor for the lookahead row and then a final null cursor 1513ms
+     ✓ leaves damaged lookahead undecoded and continues past an empty unreadable page 380ms
+     ✓ applies each ordinary filter and their intersection 300ms
+     ✓ normalizes before=2026-10-02T07:00:00.000-05:00 to the canonical timestamp page 386ms
+     ✓ normalizes before=2026-10-02T12:00:00Z to the canonical timestamp page 547ms
+     ✓ keeps filter  unchanged across every limit-one page 504ms
+     ✓ keeps filter loopId=D2VJ25FGH4W4R19TMKZK3CGTBW unchanged across every limit-one page 472ms
+     ✓ keeps filter status=succeeded unchanged across every limit-one page 414ms
+     ✓ keeps filter status=succeeded,failed unchanged across every limit-one page 445ms
+     ✓ keeps filter parent=none unchanged across every limit-one page 402ms
+     ✓ keeps filter parent=2RPPNXBH1B9H3F1K4K6FJNSS4B unchanged across every limit-one page 622ms
+     ✓ keeps filter before=2026-10-03T00:00:00.000Z unchanged across every limit-one page 573ms
+     ✓ keeps filter loopId=D2VJ25FGH4W4R19TMKZK3CGTBW&status=failed&parent=2RPPNXBH1B9H3F1K4K6FJNSS4B&before=2026-10-03T00:00:00.000Z unchanged across every limit-one page 482ms
+     ✓ keeps the already-landed invalid-status response typed and readable 684ms
+     ✓ publishes the cursor description and bound in OpenAPI 1221ms
+     ✓ scopes every page and snapshot to the authenticated owner 793ms
+     ✓ lists and reads canonical records with no template table or subject column 473ms
+     ✓ rejects malformed, oversized, noncanonical and non-strict cursors with INVALID_CURSOR 865ms
+     ✓ rejects the removed pullRequest filter instead of widening results 375ms
+ ✓ src/retired-event-startup.test.ts (2 tests) 53020ms
+   ✓ cold start over a stored retired Event destination (#242) (2)
+     ✓ starts with a published version holding one, refuses that loop per loop and serves the rest 29235ms
+     ✓ starts with a draft snapshot only holding one, refuses that loop per loop and serves the rest 23782ms
+ ✓ src/routes/template-drafts.test.ts (23 tests) 51121ms
+   ✓ editable template starting points (18)
+     ✓ creates exactly one ordinary starter draft without credentials, readiness or repository settings 4005ms
+     ✓ creates exactly one ordinary implementation draft without credentials, readiness or repository settings 1848ms
+     ✓ creates exactly one ordinary review draft without credentials, readiness or repository settings 531ms
+     ✓ creates independent starter copies, keeps supplied names literal, and does not alter the package 1643ms
+     ✓ creates independent implementation copies, keeps supplied names literal, and does not alter the package 4598ms
+     ✓ creates independent review copies, keeps supplied names literal, and does not alter the package 3339ms
+     ✓ creates independent qa copies, keeps supplied names literal, and does not alter the package 3851ms
+     ✓ retains truthful missing model readiness issues without blocking draft creation 811ms
+     ✓ retains truthful disabled model readiness issues without blocking draft creation 1242ms
+     ✓ retains truthful no-harness model readiness issues without blocking draft creation 940ms
+     ✓ saves normal prompt edits before defaults are configured and publishes after explicit configuration 1052ms
+     ✓ still rejects explicit invalid choices and preserves the previous draft 1303ms
+     ✓ refuses unknown templates and invalid requests without creating anything 498ms
+     ✓ uses loops:write and keeps the newly created starter draft owner scoped 503ms
+     ✓ uses loops:write and keeps the newly created review draft owner scoped 318ms
+     ✓ uses loops:write and keeps the newly created qa draft owner scoped 863ms
+   ✓ bounded manual starting-point execution (5)
+     ✓ plans, implements and verifies a supplied task through distinct turns 1277ms
+     ✓ reviews, fixes, then reviews again and preserves the prior findings as context 3352ms
+     ✓ exhausts repeated review findings without returning approval 5864ms
+     ✓ assesses QA evidence with a separate challenge and reports missing evidence as failure 5883ms
+     ✓ exhausts one unsound QA rerun without claiming a passing assessment 6889ms
+ ✓ src/routes/run-event-paging.test.ts (5 tests) 3319ms
+   ✓ run-event page boundaries over file-backed SQLite (5)
+     ✓ returns the unchanged requested page when only its lookahead payload is {} 1784ms
+     ✓ returns the unchanged requested page when only its lookahead payload is {invalid-json 427ms
+     ✓ reports corruption inside the requested page after=1 limit=1 384ms
+     ✓ reports corruption inside the requested page after=0 limit=3 388ms
+     ✓ uses sequence existence through exhaustion and retains owner scoping 325ms
+ ✓ src/qa.test.ts (10 tests) 14025ms
+   ✓ owner defaults (Settings) reach the engine at run start (2)
+     ✓ uses the saved defaults for the next run and the configuration after they are removed 5295ms
+     ✓ rejects old reserved keys, invalid defaults, and invalid persisted configuration 1012ms
+   ✓ validate, draft saves, and publish agree (5)
+     ✓ reports cron, subloop, and template problems the same way everywhere 810ms
+     ✓ accepts a published subloop, a pinned version, and a self-reference 1007ms
+     ✓ accepts a self-reference only when it resolves 1447ms
+     ✓ import reports the same issues as create, including trigger checks 752ms
+     ✓ reports a missing subloop on import 466ms
+   ✓ export and import (1)
+     ✓ round-trips: export, import, export again gives the same loop 822ms
+   ✓ run.queued carries the initial thread (1)
+     ✓ records the seeded thread of a subloop child on its first event 1807ms
+   ✓ request errors use stable problem codes (1)
+     ✓ maps malformed, empty, and oversized bodies 602ms
+ ✓ src/api.test.ts (19 tests) 14332ms
+   ✓ system routes (2)
+     ✓ serves health, version, openapi, and preflight 2671ms
+     ✓ returns problem details for unknown routes and validation failures 596ms
+   ✓ loops (9)
+     ✓ keeps type through draft save, reopen, export and import for manual 701ms
+     ✓ keeps type through draft save, reopen, export and import for cron 1153ms
+     ✓ keeps type through draft save, reopen, export and import for hook 779ms
+     ✓ keeps type through draft save, reopen, export and import for event 489ms
+     ✓ keeps type through draft save, reopen, export and import for github-hook 405ms
+     ✓ keeps type through draft save, reopen, export and import for items-poller 754ms
+     ✓ creates, reads, drafts, validates, publishes, exports, imports, and deletes 534ms
+     ✓ refuses to delete a loop with active runs and exports drafts on request 784ms
+   ✓ runs (3)
+     ✓ starts a run, lists, reads the thread and events, and streams nothing when complete 998ms
+     ✓ controls a waiting run: input validation, signals, pause, resume, cancel 1157ms
+     ✓ hides runs of other owners and serves artifacts 752ms
+   ✓ settings, secrets, api keys, catalog, events (3)
+     ✓ round-trips settings and secrets without exposing values 358ms
+     ✓ publishes and lists same-millisecond inbound events in reverse creation order 336ms
+   ✓ authentication (2)
+     ✓ rejects bad keys in local mode and honours scopes 417ms
+     ✓ requires a key when configured, except for public routes 972ms
+ ✓ src/webhook-keys.test.ts (12 tests) 20233ms
+   ✓ uniform webhook keys: none undefined (4)
+     ✓ rejects absent/null/empty/513-character results before claim, preserving literal whitespace and 512 characters 2545ms
+     ✓ uses payload and credential-free header bindings; invalid key expressions stay expression failures 830ms
+     ✓ never invents a key and permits repeated unkeyed bodies 638ms
+     ✓ consumes concurrent keys once, confirms a lost acknowledgement and blocks v2 long after the auth window 1494ms
+   ✓ uniform webhook keys: hmac-sha256 body (4)
+     ✓ rejects absent/null/empty/513-character results before claim, preserving literal whitespace and 512 characters 3135ms
+     ✓ uses payload and credential-free header bindings; invalid key expressions stay expression failures 1836ms
+     ✓ never invents a key and permits repeated unkeyed bodies 1164ms
+     ✓ consumes concurrent keys once, confirms a lost acknowledgement and blocks v2 long after the auth window 888ms
+   ✓ uniform webhook keys: hmac-sha256 timestamp-body (4)
+     ✓ rejects absent/null/empty/513-character results before claim, preserving literal whitespace and 512 characters 2798ms
+     ✓ uses payload and credential-free header bindings; invalid key expressions stay expression failures 1309ms
+     ✓ never invents a key and permits repeated unkeyed bodies 2170ms
+     ✓ consumes concurrent keys once, confirms a lost acknowledgement and blocks v2 long after the auth window 1419ms
+ ✓ src/routes/templates.test.ts (13 tests) 39094ms
+   ✓ template API without runtime authority (13)
+     ✓ reads only manifests without provider, script or credential probes 14245ms
+     ✓ removes configured actions from routing and OpenAPI without allocating state 1612ms
+     ✓ keeps catalogue reads scoped and unknown template IDs explicit 3190ms
+     ✓ sanitizes trusted catalogue asset faults with status 409 552ms
+     ✓ maps a real malformed catalogue asset to a sanitized package fault without allocating a loop 2484ms
+     ✓ maps a real oversized catalogue asset to a sanitized package fault without allocating a loop 950ms
+     ✓ keeps ordinary returns and the unwrapped durable finalization marker 6729ms
+     ✓ preserves ordinary script environment, stdin and JSON stdout through the container 2529ms
+     ✓ preserves ordinary script cancel and finalization 2950ms
+     ✓ preserves ordinary script timeout and finalization 3067ms
+ ✓ src/sse.test.ts (9 tests) 21552ms
+   ✓ SSE event stream (9)
+     ✓ rejects corrupt stored events before SSE headers during replay and releases its subscription 3968ms
+     ✓ rejects corrupt stored events before SSE headers during terminal-check and releases its subscription 2075ms
+     ✓ streams and pages the same decision evidence and exit evidence, advertised in OpenAPI 2223ms
+     ✓ replays history, tails live events, and closes after the run finishes 1488ms
+     ✓ resumes from Last-Event-ID and from the after query parameter 1377ms
+     ✓ closing when the run is terminal (3)
+       ✓ ends at once when the run is terminal and nothing follows the cursor 1156ms
+       ✓ replays the events after Last-Event-ID and ends when the run is already terminal 1749ms
+       ✓ ends promptly after the terminal event when the run finishes mid-stream 1703ms
+     ✓ stops writing when the client disconnects 5806ms
+ ✓ src/edges.test.ts (13 tests) 17765ms
+   ✓ scopes (1)
+     ✓ rejects every write route for a key without the matching scope 4487ms
+   ✓ loop and run route branches (4)
+     ✓ shows the published version without a draft and reports a missing published export 403ms
+     ✓ starts runs with every optional body field, signals without a payload, and delivers caller return defaults 1257ms
+     ✓ reports missing artifact content 2164ms
+     ✓ skips unset harnesses and reports non-Error preflight failures 475ms
+   ✓ error handler (2)
+     ✓ maps every error family to problem details 941ms
+     ✓ serves Swagger UI when enabled 2441ms
+   ✓ SSE framing (1)
+     ✓ merges events appended during replay in order, sends heartbeats, and ignores events after the end 799ms
+   ✓ SSE terminal runs (3)
+     ✓ waits out the grace when the status is terminal but the log has no terminal event 967ms
+     ✓ ends on the terminal event that arrives during the grace 794ms
+     ✓ keeps tailing a run that is not terminal 878ms
+   ✓ test helper (1)
+     ✓ surfaces create and publish failures 1548ms
+   ✓ composition defaults (1)
+     ✓ opens a file database, generates a master key, and runs with default ports 608ms
+ ✓ src/preflight.test.ts (23 tests) 18953ms
+   ✓ allows read-only CLI preflight alongside a container without changing its lock 3874ms
+   ✓ individual checks (10)
+     ✓ refuses unsupported Node 20.11.1 with the supported baseline 357ms
+   ✓ graphgoblin-api --preflight (6)
+     ✓ checks an installation that has started once 2643ms
+     ✓ warns about a database under directories start will create, and start creates them 5049ms
+     ✓ opens an existing database named by a percent-encoded file URL 1701ms
+   ✓ GET /system/preflight (1)
+     ✓ reports on the running installation and requires credentials when keys are required 3751ms
+ ✓ src/subloop-failure.test.ts (2 tests) 7695ms
+   ✓ subloop child failures over the API (#251) (2)
+     ✓ a provider failure in a child fails the parent visibly, and resuming the parent resumes the child 6136ms
+     ✓ cancelling a child cancels the parent that awaits it 1555ms
+ ✓ src/retired-event-destination.test.ts (5 tests) 7345ms
+   ✓ a stored definition with an Event destination (#242) (5)
+     ✓ is refused on every read of the loop and its versions with a per-loop diagnostic 3280ms
+     ✓ is refused before a run starts, and a parent calling it fails before any child exists 1087ms
+     ✓ a run already pinned to a published version holding one fails explicitly before it executes again 1049ms
+     ✓ a run already pinned to a draft-run snapshot holding one fails explicitly before it executes again 825ms
+     ✓ refuses a webhook delivery deterministically and logs the diagnostic, saving nothing 1100ms
+ ✓ src/routes/event-paging.test.ts (4 tests) 3316ms
+   ✓ inbound event paging over real SQLite (4)
+     ✓ preserves type and before filters across limit-one tied pages, owner scope and exact exhaustion 1897ms
+     ✓ rejects invalid cursors and filter values with typed readable 4xx problems 647ms
+     ✓ does not decode damaged payload outside the requested page 486ms
+ ✓ src/cron-preview.test.ts (13 tests) 8249ms
+   ✓ cron preview endpoint (13)
+     ✓ equals the scheduler across the March DST boundary without arming anything 2290ms
+     ✓ uses the server clock by default, supports seconds, and bounds the count 1034ms
+     ✓ returns CRON_INVALID for {"expression":"not cron"} 335ms
+     ✓ returns CRON_INVALID for {"expression":""} 450ms
+     ✓ returns CRON_INVALID for {"timezone":"Mars/Olympus"} 569ms
+     ✓ returns CRON_INVALID for {"timezone":""} 376ms
+     ✓ rejects malformed requests: {"count":11} 469ms
+     ✓ rejects malformed requests: {"count":1.5} 794ms
+     ✓ rejects malformed requests: {"from":"tomorrow"} 520ms
+     ✓ keeps the CRON_INVALID field path on every admission endpoint (expression) 584ms
+     ✓ keeps the CRON_INVALID field path on every admission endpoint (timezone) 368ms
+ ✓ src/durable-events.test.ts (6 tests) 5124ms
+   ✓ user content in durable events (2)
+     ✓ rejects a non-slug signal name before generating an event 1086ms
+     ✓ fails oversized rendered input readably, and rejects malformed API inputs 425ms
+   ✓ damaged history diagnostics (4)
+     ✓ pages diagnostics across run and event bounds and rejects malformed cursors 1803ms
+     ✓ lists healthy runs and deletes an unrelated loop beside damaged active row history 619ms
+     ✓ lists healthy runs and deletes an unrelated loop beside damaged active event history 471ms
+     ✓ identifies event and row damage without changing it and scopes results to the owner 716ms
+ ✓ src/api-key-scopes.test.ts (31 tests) 13193ms
+   ✓ API-key creation in local trusted mode (4)
+     ✓ allows omitted scopes default to wildcard without credentials 2827ms
+     ✓ allows explicit wildcard without credentials 512ms
+     ✓ allows empty scopes without credentials 309ms
+   ✓ API-key creation by a wildcard caller (5)
+     ✓ allows explicit wildcard 622ms
+   ✓ scoped API-key delegation with requireApiKey=false (11)
+     ✓ allows read implied by write 481ms
+     ✓ allows write and its implied read together 710ms
+     ✓ allows an explicit empty list 306ms
+     ✓ rejects a superset with multiple unheld scopes without creating a key 440ms
+     ✓ rejects wildcard without creating a key 478ms
+     ✓ rejects wildcard mixed with held scopes without creating a key 556ms
+     ✓ rejects write when only read is held without creating a key 515ms
+     ✓ requires scopes explicitly without creating a key 306ms
+   ✓ scoped API-key delegation with requireApiKey=true (11)
+     ✓ allows a held subset 581ms
+     ✓ allows all held scopes 354ms
+     ✓ allows write and its implied read together 336ms
+     ✓ rejects wildcard mixed with held scopes without creating a key 368ms
+     ✓ rejects write when only read is held without creating a key 312ms
+     ✓ does not let api-keys:write alone create an administrative key 321ms
+ ✓ src/primitive-classifiers.test.ts (6 tests) 6195ms
+   ✓ primitive classifier API admission and execution (6)
+     ✓ executes the selected HTTP noul primitive with catalog provenance 2666ms
+     ✓ executes the selected HTTP score primitive with catalog provenance 828ms
+     ✓ rejects unsupported noul capability before calls 342ms
+     ✓ rejects unsupported score capability before calls 467ms
+     ✓ blocks disabled noul publication and rechecks an edited capability at runtime 1018ms
+     ✓ blocks disabled score publication and rechecks an edited capability at runtime 871ms
+ ✓ src/artifact-integrity.test.ts (1 test) 3777ms
+   ✓ serves exact verified transcript bytes, reports corruption explicitly, repairs on put and distinguishes missing content 3775ms
+ ✓ src/definition-pins.test.ts (3 tests) 3599ms
+   ✓ runs pin their definition across edits, Settings changes and a restart (1)
+     ✓ keeps published and draft runs on their start definition and defaults 2342ms
+   ✓ classifier bindings are pinned at start (2)
+     ✓ calls the provider model a waiting run pinned, after a catalog edit and a restart 919ms
+     ✓ starts and runs a classifier whose catalog id is an Object property name 335ms
+ ✓ src/triggers.test.ts (82 tests) 99021ms
+   ✓ arming on publish (3)
+     ✓ creates schedules and endpoints, keeps webhook paths, and disables old versions 3244ms
+     ✓ refuses to publish a cron trigger that does not parse 446ms
+     ✓ arms a stored cron node that no longer parses as disabled and logs it 329ms
+   ✓ cron triggers (3)
+     ✓ starts a run when a schedule comes due 1924ms
+     ✓ applies the missed-fire policy after an outage 1539ms
+   ✓ boot (3)
+     ✓ re-arms every published loop and catches up on missed fires 1302ms
+     ✓ keeps body business and content receipts durable after a stopped database restart 854ms
+   ✓ webhooks (9)
+     ✓ starts a run for a correctly signed delivery 795ms
+     ✓ authenticates Buffer request bytes and never persists the presented timestamp signature 461ms
+     ✓ rejects bad signatures, stale or missing timestamps, unknown tokens, and replays 515ms
+     ✓ accepts Unix-second timestamps, literal null, and a custom signature header 575ms
+     ✓ acknowledges formerly ignored payloads and quietly exits inside the admitted run 2072ms
+     ✓ reports downstream expression errors in an admitted run after 202 and keeps its key consumed 2140ms
+     ✓ dedupes authored keys after timestamp freshness windows 2007ms
+     ✓ reports invalid JSON, failing expressions, missing secrets, and oversized bodies 717ms
+     ✓ rate limits each endpoint 1603ms
+   ✓ FixedWindowRateLimiter (1)
+     ✓ counts per key, resets per window, and sweeps idle keys 704ms
+   ✓ event triggers (3)
+     ✓ fires matching event triggers before downstream checks, preserves dedupe, and lists events 4547ms
+     ✓ logs event trigger failures 1457ms
+     ✓ starts event triggers from external Events only; finished runs publish none (#242) 2411ms
+   ✓ poll triggers (3)
+     ✓ probes over HTTP and fires once per new dedupe key 2067ms
+     ✓ probes with scripts, fires without a dedupe key, and logs failures 2020ms
+     ✓ skips overlapping polls, polls on an interval, and disarms with the loop 2400ms
+   ✓ body signing and durable admission (30)
+     ✓ bounds chunked raw input before invoking intake or decoding 574ms
+     ✓ acknowledges a saved claim while create is blocked and exposes only the fixed receipt response 808ms
+     ✓ returns 503 only for an unconfirmed claim; confirms a lost claim acknowledgement without another run 787ms
+     ✓ acknowledges permanently failed saved admission and retries no execution on redelivery 1014ms
+     ✓ excludes the hmac-sha256 credential header x-hub-signature-256 before authoring dedupe keys 1036ms
+     ✓ excludes the hmac-sha256 credential header X-Hub-Signature-256 before authoring dedupe keys 965ms
+     ✓ excludes the hmac-sha256 credential header x-custom-signature before authoring dedupe keys 493ms
+     ✓ excludes the hmac-sha256 credential header X-Custom-Signature before authoring dedupe keys 812ms
+     ✓ excludes the hmac-sha256-body credential header x-hub-signature-256 before authoring dedupe keys 535ms
+     ✓ excludes the hmac-sha256-body credential header X-Hub-Signature-256 before authoring dedupe keys 596ms
+     ✓ excludes the hmac-sha256-body credential header x-custom-signature before authoring dedupe keys 999ms
+     ✓ excludes the hmac-sha256-body credential header X-Custom-Signature before authoring dedupe keys 673ms
+     ✓ keeps credential-free $headers in hmac-sha256 keys and retains delivery/timestamp metadata 546ms
+     ✓ keeps credential-free $headers in hmac-sha256-body keys and retains delivery/timestamp metadata 505ms
+     ✓ rejects overlong business keys before consuming content and preserves exact boundary keys 728ms
+     ✓ logs safe operational context for a missing hmac-sha256 secret 487ms
+     ✓ logs safe operational context for a missing hmac-sha256-body secret 673ms
+     ✓ isolates a corrupt pending intent ({}) during real SQLite boot recovery and admits other due receipts 419ms
+     ✓ isolates a corrupt pending intent (not-json) during real SQLite boot recovery and admits other due receipts 686ms
+     ✓ verifies raw body without timestamp and admits equal content with distinct authored keys 1525ms
+     ✓ consumes distinct bodies with the same authored business key without another run 893ms
+     ✓ serializes concurrent distinct bodies with one key and keeps loop keys isolated 2251ms
+     ✓ keeps quiet-run and pending keys consumed 2927ms
+     ✓ uses the same authored key claims across timestamp and body recipes 1289ms
+     ✓ reserves an old webhook key from items-mode poll admission when recovery is after-lookup 1158ms
+     ✓ reserves an old webhook key from items-mode poll admission when recovery is still-pending 909ms
+     ✓ consumes an authored body key when a current poll wins before the old authenticated claim 1974ms
+     ✓ does not activate business dedupe for generated signature hints 1404ms
+     ✓ allows unkeyed content after downstream check correction, and rejects invalid signatures before JSON 1758ms
+     ✓ returns 202 with a persisted pending intent, blocks deletion, and recovers before redelivery 1873ms
+   ✓ bounded items-mode poll integration (3)
+     ✓ validates all candidates before one indexed lookup, drains cap across sweeps, and uses item payloads 2261ms
+     ✓ refuses failed/timeout/overflow-flag/oversized-byte-count/invalid JSON probes only in new items mode 813ms
+     ✓ skips overlapping sweeps even after republish, and admission failure leaves the unseen tail 1321ms
+   ✓ unified signed webhook admission and Allow (14)
+     ✓ rolls back claim.inbound for actual hmac-sha256 bytes and recovers the same saved ID 866ms
+     ✓ rolls back claim.receipt for actual hmac-sha256 bytes and recovers the same saved ID 1129ms
+     ✓ rolls back create.run for actual hmac-sha256 bytes and recovers the same saved ID 1978ms
+     ✓ rolls back create.event for actual hmac-sha256 bytes and recovers the same saved ID 1146ms
+     ✓ rolls back create.receipt for actual hmac-sha256 bytes and recovers the same saved ID 1232ms
+     ✓ rolls back create.link for actual hmac-sha256 bytes and recovers the same saved ID 1697ms
+     ✓ rolls back claim.inbound for actual hmac-sha256-body bytes and recovers the same saved ID 771ms
+     ✓ rolls back claim.receipt for actual hmac-sha256-body bytes and recovers the same saved ID 1344ms
+     ✓ rolls back create.run for actual hmac-sha256-body bytes and recovers the same saved ID 793ms
+     ✓ rolls back create.event for actual hmac-sha256-body bytes and recovers the same saved ID 682ms
+     ✓ rolls back create.receipt for actual hmac-sha256-body bytes and recovers the same saved ID 837ms
+     ✓ rolls back create.link for actual hmac-sha256-body bytes and recovers the same saved ID 923ms
+     ✓ allows identical concurrent unkeyed hmac-sha256 bytes, but deduplicates an authored key 1104ms
+     ✓ allows identical concurrent unkeyed hmac-sha256-body bytes, but deduplicates an authored key 1222ms
+   ✓ general webhook configuration and unsigned intake (10)
+     ✓ applies Allow to concurrent unsigned repeats while consuming an explicit key once 1262ms
+     ✓ admits unsigned json through saved intent, queued metadata and recovery 1301ms
+     ✓ admits unsigned text through saved intent, queued metadata and recovery 1196ms
+     ✓ admits unsigned bytes through saved intent, queued metadata and recovery 1016ms
+     ✓ refuses signed intake when the real secret storage boundary is unavailable 1529ms
+     ✓ applies the limiter/bound/decoding to None without accepting an authenticated identity 1477ms
+     ✓ never claims an invalid/ambiguous extracted event type and uses fallback for missing metadata 609ms
+     ✓ exposes pinned safe configuration on endpoint/Events summaries and refuses row disagreement before authentication 781ms
+     ✓ marks disabled orphan summaries unavailable and omits absent or foreign endpoint data from Events 1182ms
+     ✓ bounds Events lookups by unique endpoint/version/loop and never caches across requests 684ms
+ ✓ src/routes/loop-summaries.test.ts (9 tests) 9288ms
+   ✓ loop-specific run summaries over real SQLite (9)
+     ✓ isolates damaged latest-run status and identifies it through diagnostics 2520ms
+     ✓ isolates damaged latest-run pinned and identifies it through diagnostics 990ms
+     ✓ isolates damaged latest-run pinned and identifies it through diagnostics 719ms
+     ✓ isolates damaged latest-run waiting and identifies it through diagnostics 706ms
+     ✓ isolates damaged latest-run result and identifies it through diagnostics 700ms
+     ✓ isolates damaged latest-run initial_thread and identifies it through diagnostics 621ms
+     ✓ isolates damaged latest-run thread_snapshot and identifies it through diagnostics 637ms
+     ✓ isolates damaged latest-run thread_snapshot and identifies it through diagnostics 715ms
+     ✓ finds older history beyond 500 unrelated runs, orders ties, and distinguishes no history 1676ms
+ ✓ src/static.test.ts (11 tests) 1880ms
+   ✓ static web app hosting (7)
+     ✓ keeps static routes out of the OpenAPI document 338ms
+ ✓ src/triggers/poll-depth.test.ts (5 tests) 11313ms
+   ✓ structurally refused poll candidates over HTTP and real SQLite (5)
+     ✓ admits both later candidates when the first has 1100 nested arrays 2891ms
+     ✓ admits both later candidates when the first has 3000 nested arrays 1892ms
+     ✓ admits the SQLite boundary and refuses the next depth without blocking the tail 2584ms
+     ✓ silently skips a consumed key even when its payload later exceeds the depth bound 2025ms
+     ✓ keeps middle refusals unconsumed and successful keys deduplicated across store reopen 1918ms
+ ✓ src/templates/catalog-boundary.test.ts (29 tests) 27706ms
+   ✓ installed template catalog boundaries (29)
+     ✓ returns independent drafts across public creation calls 3446ms
+     ✓ applies package bounds, format and graph validation to declared draft files 5660ms
+     ✓ refuses an index with parent traversal without exposing its raw contents 1535ms
+     ✓ refuses a missing declared asset recipe/draft.json as a safe package failure 1232ms
+     ✓ rejects configured manifest fields instead of opening graphs or private support entries 807ms
+     ✓ refuses a schema-valid script node in a shipped draft 1323ms
+     ✓ refuses a schema-valid subloop node in a shipped draft 1526ms
+     ✓ refuses a schema-valid heartbeat node in a shipped draft 3918ms
+     ✓ refuses malformed exports, old format and dangling graph targets 3225ms
+     ✓ rejects a linked interior component before reading its valid manifest 2958ms
+ ✓ src/replay.test.ts (4 tests) 6284ms
+   ✓ POST /runs/{id}/replay (4)
+     ✓ exposes the executable seed through replay events and the queued thread route without changing source bytes 3417ms
+     ✓ forks a finished run at a node and runs it from there 986ms
+     ✓ answers 409 for a node the run never reached, 404 for unknown runs, 400 for bad bodies 765ms
+     ✓ requires the runs:write scope 1076ms
+ ✓ src/loop-deletion.test.ts (9 tests) 7137ms
+   ✓ DELETE /loops/:id (9)
+     ✓ removes armed schedules and webhook endpoints and disarms polls only after commit 2193ms
+     ✓ deletes terminal run history and artifacts and returns 204, then 404 740ms
+     ✓ returns a readable 409 for queued and changes nothing 516ms
+     ✓ returns a readable 409 for running and changes nothing 604ms
+     ✓ returns a readable 409 for waiting and changes nothing 460ms
+     ✓ returns a readable 409 for paused and changes nothing 501ms
+     ✓ returns 500 and rolls back history on a mid-delete storage failure 464ms
+     ✓ keeps a cross-loop parent and its published subloop reference after deleting the child 1468ms
+subloop kill landings:
+delay undefined: leaf waiting at restart; recovery restarts top 0, middle 0, leaf 0
+delay 0: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 10: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 30: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 60: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 100: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 150: leaf succeeded at restart; recovery restarts top 1, middle 0, leaf 0
+delay 250: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+ ✓ src/claude.test.ts (8 tests) 2651ms
+   ✓ Claude public integration (8)
+     ✓ keeps safe policy/model facts in the public typed preflight response 878ms
+     ✓ runs exact claude-opus-5-5 inference and preserves normal output/usage 429ms
+     ✓ runs exact claude-fable-5-1 inference and preserves normal output/usage 385ms
+ ✓ src/data-dir-lock.test.ts (32 tests) 3919ms
+   ✓ data-directory ownership (32)
+     ✓ replaces a stale lock from a process that exited 321ms
+     ✓ admits only one simultaneous contender for a stale lock 499ms
+     ✓ reclaims a sidecar with own PID (main lock exists: true) 462ms
+     ✓ reclaims a sidecar with dead PID (main lock exists: false) 389ms
+ ✓ src/decision-admission.test.ts (8 tests) 7476ms
+   ✓ evaluator-specific decision admission (8)
+     ✓ agrees across create, import, save, validate and publish for expression 2138ms
+     ✓ agrees across create, import, save, validate and publish for llm 507ms
+     ✓ agrees across create, import, save, validate and publish for classifier 680ms
+     ✓ reports the same invalid source path across authoring and publish for expression 959ms
+     ✓ reports the same invalid source path across authoring and publish for llm 1009ms
+     ✓ refuses malformed format-1 source independently of pending review 1522ms
+     ✓ refuses malformed format-2 source independently of pending review 362ms
+ ✓ src/create-api-key.test.ts (12 tests) 1649ms
+   ✓ graphgoblin-api --create-api-key (5)
+     ✓ opens a required-key server with the printed key 868ms
+ ✓ src/triggers/poll-probe.test.ts (6 tests) 97ms
+ ✓ src/run-json-values.test.ts (9 tests) 11430ms
+   ✓ run result snapshots over file SQLite (9)
+     ✓ preserves absent through execution, rejected updates and reopen 2215ms
+     ✓ preserves null through execution, rejected updates and reopen 1156ms
+     ✓ preserves false through execution, rejected updates and reopen 986ms
+     ✓ preserves zero through execution, rejected updates and reopen 945ms
+     ✓ preserves empty string through execution, rejected updates and reopen 1939ms
+     ✓ preserves array through execution, rejected updates and reopen 1061ms
+     ✓ preserves object through execution, rejected updates and reopen 1183ms
+     ✓ preserves nested null through execution, rejected updates and reopen 1233ms
+     ✓ preserves settings null and falsy JSON values across reopen 707ms
+ ✓ src/triggers/poll-http-bounds.test.ts (2 tests) 266ms
+ ✓ src/drafts.test.ts (10 tests) 8945ms
+   ✓ draft version tokens (If-Match) (9)
+     ✓ exposes the token as a body field and an ETag on GET and PUT 2254ms
+     ✓ answers 409 DRAFT_CONFLICT with the server token when the copy is stale 1086ms
+     ✓ keeps saves without If-Match unconditional, and accepts * and weak or listed tags 826ms
+     ✓ keeps the token across a publish, which does not change the content 560ms
+     ✓ lets only one of two concurrent saves with the same token win 676ms
+     ✓ accepts two editors saving the identical change from the same token 1227ms
+     ✓ keeps a publish from landing inside a draft save, so a published version never changes 796ms
+     ✓ answers 422 for an invalid draft and 409 when there is nothing to publish 565ms
+     ✓ refuses a conditional save of another owner’s or a missing loop with 404 500ms
+   ✓ draft token helpers (1)
+     ✓ hashes a definition and matches If-Match forms 452ms
+ ✓ src/ids.test.ts (2 tests) 296ms
+ ✓ src/triggers/webhook-body.test.ts (16 tests) 33ms
+ ✓ src/triggers/poll-items.test.ts (6 tests) 33ms
+ ✓ src/api-key-current.test.ts (8 tests) 5790ms
+   ✓ current API key in required-key mode (7)
+     ✓ flags exactly the authenticated key for two clients, with revoked and foreign-owner records 2316ms
+     ✓ cannot spoof current with a header 598ms
+     ✓ cannot spoof current with a query 462ms
+     ✓ cannot spoof current with a body 363ms
+     ✓ cannot spoof current with a label 497ms
+     ✓ cannot spoof current with a client 575ms
+     ✓ flags nothing for a non-key actor, even when its id matches a key 535ms
+   ✓ current API key in trusted mode (1)
+     ✓ flags nothing with or without a valid bearer key 411ms
+ ✓ src/loop-definition.test.ts (5 tests) 3962ms
+   ✓ canonical loop definition inputs (5)
+     ✓ reports each unknown root key with its own escaped pointer and message 2182ms
+     ✓ reports each unknown nested key with its own escaped pointer and message 315ms
+     ✓ rejects an unsupported inference harness with its node path 493ms
+     ✓ rejects a removed loop-default field valued codex everywhere 556ms
+     ✓ rejects a removed loop-default field valued wrong everywhere 413ms
+ ✓ src/main.test.ts (9 tests | 4 skipped) 120596ms
+   ✓ built API entry and startup failures (6)
+     ✓ holds ownership while listening and releases it on supported HTTP close 16225ms
+     ✓ serves authenticated requests using a binary-created key and refuses a competing process 35385ms
+     ✓ dispatches the API-key and preflight CLIs with their real exit codes 39404ms
+     ✓ releases ownership on a real corrupt-database startup fault before HTTP setup 12767ms
+     ✓ releases ownership after a real occupied-port listen failure 16812ms
+ ✓ src/model-issues-draft.test.ts (3 tests) 90ms
+ ↓ src/perf.test.ts (1 test | 1 skipped)
+ ↓ src/live.test.ts (1 test | 1 skipped)
+ ✓ src/templates/catalog-package.test.ts (4 tests) 15668ms
+   ✓ ships only declared starting-point assets and removes stale files on rebuild 14188ms
+   ✓ refuses a linked target root without touching files beyond the link 396ms
+   ✓ refuses a linked target ancestor without touching files beyond the link 613ms
+   ✓ refuses a linked target entry without touching files beyond the link 459ms
+ ✓ src/webhook-delivery-lifecycle.test.ts (2 tests) 5185ms
+   ✓ loop deletion stops a webhook during in-flight without orphan events 2762ms
+   ✓ loop deletion stops a webhook during backoff without orphan events 2407ms
+ ✓ src/adversarial.test.ts (34 tests) 30271ms
+   ✓ adversarial API invariants (34)
+     ✓ 12: every advertised private route rejects missing and revoked credentials 2667ms
+     ✓ ADV-008: a credential without read scope cannot enumerate private resources 649ms
+     ✓ ADV-008: every advertised route against every scope 13775ms
+     ✓ ADV-008: classifier PUT secretRef requires both write scopes ({"scopes":["settings:write"],"status":403}) 511ms
+     ✓ ADV-008: classifier PUT secretRef requires both write scopes ({"scopes":["settings:write","secrets:read"],"status":403}) 349ms
+     ✓ ADV-008: classifier PUT secretRef requires both write scopes ({"scopes":["secrets:write"],"status":403}) 478ms
+     ✓ 12: every mutating route rejects a valid key with no write scopes 583ms
+     ✓ 12/13: API keys cannot bypass signatures; signatures bind exact body bytes 452ms
+     ✓ 13: timestamp window boundary -300001 ms 315ms
+     ✓ 13: timestamp window boundary 299999 ms 319ms
+     ✓ 13: byte limit, 61st delivery and deleted endpoint are rejected 496ms
+     ✓ 14: exits cannot chain loops through Events; external Event intake still starts runs 333ms
+     ✓ 4: deletion is refused while a version is pinned by an active run 307ms
+     ✓ 16: disconnect during replay validation unsubscribes before headers are sent 4359ms
+     ✓ 16: 1000 persisted events stream in sequence without duplicates 437ms
+     ✓ 18: secrets never appear in read responses or invalid-request errors 410ms
+     ✓ ADV-004 review: a parent started during a DELETE never pins the deleted loop 307ms
+     ✓ ADV-004 review: a loop an active run can still start as a subloop cannot be deleted 371ms
+     ✓ ADV-009: every ULID id route validates before repository lookup 342ms
+ ✓ src/subloop-restart.test.ts (3 tests) 145997ms
+   ✓ awaited subloops across process death (#242) (3)
+     ✓ a hard kill around child completion leaves every parent one continuation after restart 110327ms
+     ✓ the built API recovers a child finished while down with one continuation per parent 22463ms
+     ✓ the built API recovers a parent interrupted mid-wake with one continuation per parent 13204ms
+
+ Test Files  55 passed | 2 skipped (57)
+      Tests  733 passed | 6 skipped (739)
+   Start at  18:42:42
+   Duration  160.33s (tests 70%, import 24%, transform 5%, worker 1%)
+
+JSON report written to <worktree>/round7-coverage-api-results.log
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 96.39% ( 1950/2023 )
+Branches     : 92.91% ( 1259/1355 )
+Functions    : 94.07% ( 381/405 )
+Lines        : 97.84% ( 1771/1810 )
+================================================================================

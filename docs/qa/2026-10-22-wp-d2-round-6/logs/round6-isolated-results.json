@@ -1,0 +1,26 @@
+[
+  {
+    "command": "pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/process/scripts.test.ts --maxWorkers=1",
+    "exitCode": 1
+  },
+  {
+    "command": "pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/claude/process.test.ts --maxWorkers=1",
+    "exitCode": 1
+  },
+  {
+    "command": "pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/adversarial.test.ts --maxWorkers=1",
+    "exitCode": 1
+  },
+  {
+    "command": "pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/sqlite/upgrade.test.ts --maxWorkers=1 --testNamePattern=ordinary",
+    "exitCode": 1
+  },
+  {
+    "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/subloop-restart.test.ts --maxWorkers=1 --testNamePattern=down",
+    "exitCode": 0
+  },
+  {
+    "command": "pnpm.cmd --filter @graphgoblin/web exec vitest run src/editor/TriggerEditor.test.tsx --maxWorkers=1 --testNamePattern=keyboard",
+    "exitCode": 0
+  }
+]

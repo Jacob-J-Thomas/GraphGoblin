@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "0e0325ba-b08f-484f-8bdb-a49beec83def",
+  "id": "d1feab58-5274-4a0b-bb0e-6f23d6ed76f9",
   "prevId": "08aeafd2-e3de-486c-9f4f-b950e3ab1e54",
   "tables": {
     "api_keys": {
@@ -584,7 +584,13 @@
           "autoincrement": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "run_events_delivery_idx": {
+          "name": "run_events_delivery_idx",
+          "columns": ["run_id", "type", "seq"],
+          "isUnique": false
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {
         "run_events_run_id_seq_pk": {
@@ -777,11 +783,6 @@
         "runs_loop_idx": {
           "name": "runs_loop_idx",
           "columns": ["loop_id", "created_at"],
-          "isUnique": false
-        },
-        "runs_loop_owner_history_idx": {
-          "name": "runs_loop_owner_history_idx",
-          "columns": ["loop_id", "owner_id", "created_at", "id"],
           "isUnique": false
         },
         "runs_trigger_dedupe_idx": {

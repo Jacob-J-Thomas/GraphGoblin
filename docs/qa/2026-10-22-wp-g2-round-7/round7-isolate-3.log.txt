@@ -1,0 +1,35 @@
+
+ RUN  v5.0.3 <worktree>/packages/infrastructure
+
+ ❯ src/claude/process.test.ts (5 tests | 1 failed | 4 skipped) 5096ms
+   ❯ owned native Claude process transport (5)
+     ↓ streams stdout, sends stdin and never retains stderr content
+     ↓ reports missing executable without exposing raw native errors
+     ↓ kills on deadline and output overflow
+     × does not spawn for an already aborted signal and cancels a running process 5095ms
+     ↓ kills the descendant that a long-lived child started
+pnpm.cmd : 
+At line:10 char:2
++  & pnpm.cmd --filter $case.package exec vitest run $case.file --maxWo ...
++  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/claude/process.test.ts > owned native Claude process transport > does not spawn for an already aborted 
+signal and cancels a running process
+Error: EBUSY: resource busy or locked, rmdir '<temp>\gg-claude-process-Mbv6Sa'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 skipped (5)
+   Start at  19:35:28
+   Duration  5.51s (tests 97%, transform 2%, import 1%)
+
+JSON report written to <worktree>/round7-isolate-3-results.log
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in <worktree>
+

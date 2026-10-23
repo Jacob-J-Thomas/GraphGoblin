@@ -1,0 +1,117 @@
+$ vitest run --coverage --maxWorkers=2 --coverage.reportOnFailure=true
+
+ RUN  v5.0.3 %WORKTREE%/apps/api
+      Coverage enabled with v8
+
+ ❯ src/triggers/github-recipe.test.ts (5 tests | 1 failed) 35450ms
+   ❯ documented GitHub polling recipe with a controlled local CLI (5)
+     × curates all pages, drains five then the tail, and retains seen keys through a stopped restart 20158ms
+{"level":30,"time":1792631079437,"pid":40700,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5663"}
+{"level":30,"time":1792631079440,"pid":40700,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5663,"dataDir":"%TEMP%\\gg-api-process-1XkX1p","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792631079577,"pid":40700,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792631079598,"pid":40700,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":7.664000000000669,"msg":"request completed"}
+ ❯ src/subloop-restart.test.ts (3 tests | 3 failed) 317947ms
+   ❯ awaited subloops across process death (#242) (3)
+     × a hard kill around child completion leaves every parent one continuation after restart 180194ms
+     × the built API recovers a child finished while down with one continuation per parent 67960ms
+     × the built API recovers a parent interrupted mid-wake with one continuation per parent 69790ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > a hard kill around child completion leaves every parent one continuation after restart
+Error: Test timed out in 180000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/subloop-restart.test.ts:133:3
+    131|
+    132| describe('awaited subloops across process death (#242)', () => {
+    133|   it('a hard kill around child completion leaves every parent one cont…
+       |   ^
+    134|     const api = await boot();
+    135|     let server = await api.start();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a child finished while down with one continuation per parent
+AssertionError: expected undefined to be 'waiting' // Object.is equality
+
+- Expected:
+"waiting"
+
++ Received:
+undefined
+
+ ❯ src/subloop-restart.test.ts:220:32
+    218|         [mid] = await runs.listChildren(run.id);
+    219|         [bottom] = mid ? await runs.listChildren(mid.id) : [];
+    220|         expect(bottom?.status).toBe('waiting');
+       |                                ^
+    221|       });
+    222|       let stranded = false;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a child finished while down with one continuation per parent
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a parent interrupted mid-wake with one continuation per parent
+Error: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ src/subloop-restart.test.ts:23:1
+     21|
+     22| const fixtures: Awaited<ReturnType<typeof createApiProcessFixture>>[] …
+     23| afterEach(async () => {
+       | ^
+     24|   for (const created of fixtures.splice(0)) await created.dispose();
+     25| }, 60_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a parent interrupted mid-wake with one continuation per parent
+AssertionError: expected 'running' to be 'waiting' // Object.is equality
+
+Expected: "waiting"
+Received: "running"
+
+ ❯ src/subloop-restart.test.ts:220:32
+    218|         [mid] = await runs.listChildren(run.id);
+    219|         [bottom] = mid ? await runs.listChildren(mid.id) : [];
+    220|         expect(bottom?.status).toBe('waiting');
+       |                                ^
+    221|       });
+    222|       let stranded = false;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  src/triggers/github-recipe.test.ts > documented GitHub polling recipe with a controlled local CLI > curates all pages, drains five then the tail, and retains seen keys through a stopped restart
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/triggers/github-recipe.test.ts:144:3
+    142| }
+    143| describe('documented GitHub polling recipe with a controlled local CLI…
+    144|   it('curates all pages, drains five then the tail, and retains seen k…
+       |   ^
+    145|     const fixtureData = await fixture();
+    146|     const { first, clock, id } = fixtureData;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+
+ Test Files  2 failed | 49 passed | 2 skipped (53)
+      Tests  4 failed | 698 passed | 6 skipped (708)
+   Start at  19:52:53
+   Duration  1104.91s (tests 69%, import 29%, transform 2%)
+
+     Import  275 modules were evaluated 682 times · 609.05s total, 29% of tracked time
+             ~84.84s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 96.56% ( 1940/2009 )
+Branches     : 92.95% ( 1254/1349 )
+Functions    : 94.55% ( 382/404 )
+Lines        : 97.83% ( 1761/1800 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × pnpm workspace command failed.

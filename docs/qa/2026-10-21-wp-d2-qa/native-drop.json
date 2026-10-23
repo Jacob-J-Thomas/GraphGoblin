@@ -1,0 +1,260 @@
+{
+  "name": "drop",
+  "id": "01M5GHE07KYCZSZE7310HZMXZZ",
+  "expected": "2 attempts; delivered",
+  "actual": [
+    {
+      "id": "01M5GHE09DNKZSZKDHPCWYMV32",
+      "channel": {
+        "kind": "webhook",
+        "url": "http://127.0.0.1:5811/drop"
+      },
+      "status": "delivered",
+      "attempts": 2,
+      "maxAttempts": 5,
+      "inFlight": false,
+      "acknowledgement": "accepted",
+      "effectMayHaveHappened": true,
+      "lastError": {
+        "code": "transport",
+        "message": "Webhook acknowledgement lost; the effect may have happened.",
+        "retryable": true,
+        "acknowledgement": "unknown"
+      }
+    }
+  ],
+  "apiEvents": [
+    {
+      "runId": "01M5GHE07KYCZSZE7310HZMXZZ",
+      "seq": 9,
+      "ts": "2026-10-22T00:51:00.013Z",
+      "type": "delivery.queued",
+      "delivery": {
+        "id": "01M5GHE09DNKZSZKDHPCWYMV32",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5811/drop"
+        },
+        "status": "pending",
+        "attempts": 0,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "not_sent",
+        "effectMayHaveHappened": false
+      }
+    },
+    {
+      "runId": "01M5GHE07KYCZSZE7310HZMXZZ",
+      "seq": 10,
+      "ts": "2026-10-22T00:51:00.034Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5GHE09DNKZSZKDHPCWYMV32",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5811/drop"
+        },
+        "status": "pending",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T00:51:12.030Z"
+      }
+    },
+    {
+      "runId": "01M5GHE07KYCZSZE7310HZMXZZ",
+      "seq": 11,
+      "ts": "2026-10-22T00:51:00.074Z",
+      "type": "delivery.attempt_finished",
+      "delivery": {
+        "id": "01M5GHE09DNKZSZKDHPCWYMV32",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5811/drop"
+        },
+        "status": "pending",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T00:51:02.071Z",
+        "lastError": {
+          "code": "transport",
+          "message": "Webhook acknowledgement lost; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    },
+    {
+      "runId": "01M5GHE07KYCZSZE7310HZMXZZ",
+      "seq": 12,
+      "ts": "2026-10-22T00:51:02.074Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5GHE09DNKZSZKDHPCWYMV32",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5811/drop"
+        },
+        "status": "pending",
+        "attempts": 2,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "nextAttemptAt": "2026-10-22T00:51:17.073Z",
+        "lastError": {
+          "code": "transport",
+          "message": "Webhook acknowledgement lost; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    },
+    {
+      "runId": "01M5GHE07KYCZSZE7310HZMXZZ",
+      "seq": 13,
+      "ts": "2026-10-22T00:51:02.081Z",
+      "type": "delivery.finished",
+      "delivery": {
+        "id": "01M5GHE09DNKZSZKDHPCWYMV32",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://127.0.0.1:5811/drop"
+        },
+        "status": "delivered",
+        "attempts": 2,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "accepted",
+        "effectMayHaveHappened": true,
+        "lastError": {
+          "code": "transport",
+          "message": "Webhook acknowledgement lost; the effect may have happened.",
+          "retryable": true,
+          "acknowledgement": "unknown"
+        }
+      }
+    }
+  ],
+  "sqlite": {
+    "run": {
+      "id": "01M5GHE07KYCZSZE7310HZMXZZ",
+      "status": "succeeded",
+      "finalized_at": "2026-10-22T00:51:02.086Z",
+      "last_event_seq": 13
+    },
+    "events": [
+      {
+        "run_id": "01M5GHE07KYCZSZE7310HZMXZZ",
+        "seq": 1,
+        "ts": "2026-10-22T00:50:59.955Z",
+        "type": "run.queued",
+        "node_id": null,
+        "payload": "{\"versionId\":\"01M5GHE065A6AABX432XYX8310\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"QA drop\",\"label\":\"QA drop v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"classifiers\":{}},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M5GHE07KYCZSZE7310HZMXZZ\",\"loopId\":\"01M5GHE0650RRY2GP76DQ59TK5\",\"versionId\":\"01M5GHE065A6AABX432XYX8310\",\"iteration\":1},\"invocation\":{\"id\":\"01M5GHE07KRMQSHDHYN2RM1R3A\",\"source\":\"manual.api\",\"caller\":{\"kind\":\"api-key\",\"id\":\"01M5GHDVJ7EHE58D5C73745QWV\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"manual\",\"payload\":{\"qa\":\"drop\"},\"receivedAt\":\"2026-10-22T00:50:59.955Z\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}}"
+      },
+      {
+        "run_id": "01M5GHE07KYCZSZE7310HZMXZZ",
+        "seq": 2,
+        "ts": "2026-10-22T00:50:59.974Z",
+        "type": "run.started",
+        "node_id": null,
+        "payload": "{\"attempt\":1}"
+      },
+      {
+        "run_id": "01M5GHE07KYCZSZE7310HZMXZZ",
+        "seq": 3,
+        "ts": "2026-10-22T00:50:59.984Z",
+        "type": "node.started",
+        "node_id": "start",
+        "payload": "{\"kind\":\"trigger\",\"attempt\":1,\"configHash\":\"527dee9c4254fe4e\"}"
+      },
+      {
+        "run_id": "01M5GHE07KYCZSZE7310HZMXZZ",
+        "seq": 4,
+        "ts": "2026-10-22T00:50:59.988Z",
+        "type": "node.finished",
+        "node_id": "start",
+        "payload": "{\"patch\":[{\"op\":\"add\",\"path\":\"/outputs/start\",\"value\":{\"nodeId\":\"start\",\"value\":{\"qa\":\"drop\"},\"at\":\"2026-10-22T00:50:59.988Z\"}},{\"op\":\"add\",\"path\":\"/lastOutput\",\"value\":{\"nodeId\":\"start\",\"value\":{\"qa\":\"drop\"},\"at\":\"2026-10-22T00:50:59.988Z\"}}],\"route\":\"out\",\"durationMs\":0}"
+      },
+      {
+        "run_id": "01M5GHE07KYCZSZE7310HZMXZZ",
+        "seq": 5,
+        "ts": "2026-10-22T00:51:00.007Z",
+        "type": "node.started",
+        "node_id": "done",
+        "payload": "{\"kind\":\"exit\",\"attempt\":1,\"configHash\":\"c359dc85b865f04a\"}"
+      },
+      {
+        "run_id": "01M5GHE07KYCZSZE7310HZMXZZ",
+        "seq": 6,
+        "ts": "2026-10-22T00:51:00.013Z",
+        "type": "exit.evaluated",
+        "node_id": "done",
+        "payload": "{\"outcome\":\"success\"}"
+      },
+      {
+        "run_id": "01M5GHE07KYCZSZE7310HZMXZZ",
+        "seq": 7,
+        "ts": "2026-10-22T00:51:00.013Z",
+        "type": "node.finished",
+        "node_id": "done",
+        "payload": "{\"patch\":[],\"durationMs\":1}"
+      },
+      {
+        "run_id": "01M5GHE07KYCZSZE7310HZMXZZ",
+        "seq": 8,
+        "ts": "2026-10-22T00:51:00.013Z",
+        "type": "run.finished",
+        "node_id": null,
+        "payload": "{\"status\":\"succeeded\",\"outcome\":\"success\",\"result\":null}"
+      },
+      {
+        "run_id": "01M5GHE07KYCZSZE7310HZMXZZ",
+        "seq": 9,
+        "ts": "2026-10-22T00:51:00.013Z",
+        "type": "delivery.queued",
+        "node_id": null,
+        "payload": "{\"delivery\":{\"id\":\"01M5GHE09DNKZSZKDHPCWYMV32\",\"channel\":{\"kind\":\"webhook\",\"url\":\"http://127.0.0.1:5811/drop\"},\"status\":\"pending\",\"attempts\":0,\"maxAttempts\":5,\"inFlight\":false,\"acknowledgement\":\"not_sent\",\"effectMayHaveHappened\":false}}"
+      },
+      {
+        "run_id": "01M5GHE07KYCZSZE7310HZMXZZ",
+        "seq": 10,
+        "ts": "2026-10-22T00:51:00.034Z",
+        "type": "delivery.attempted",
+        "node_id": null,
+        "payload": "{\"delivery\":{\"id\":\"01M5GHE09DNKZSZKDHPCWYMV32\",\"channel\":{\"kind\":\"webhook\",\"url\":\"http://127.0.0.1:5811/drop\"},\"status\":\"pending\",\"attempts\":1,\"maxAttempts\":5,\"inFlight\":true,\"acknowledgement\":\"unknown\",\"effectMayHaveHappened\":true,\"nextAttemptAt\":\"2026-10-22T00:51:12.030Z\"}}"
+      },
+      {
+        "run_id": "01M5GHE07KYCZSZE7310HZMXZZ",
+        "seq": 11,
+        "ts": "2026-10-22T00:51:00.074Z",
+        "type": "delivery.attempt_finished",
+        "node_id": null,
+        "payload": "{\"delivery\":{\"id\":\"01M5GHE09DNKZSZKDHPCWYMV32\",\"channel\":{\"kind\":\"webhook\",\"url\":\"http://127.0.0.1:5811/drop\"},\"status\":\"pending\",\"attempts\":1,\"maxAttempts\":5,\"inFlight\":false,\"acknowledgement\":\"unknown\",\"effectMayHaveHappened\":true,\"nextAttemptAt\":\"2026-10-22T00:51:02.071Z\",\"lastError\":{\"code\":\"transport\",\"message\":\"Webhook acknowledgement lost; the effect may have happened.\",\"retryable\":true,\"acknowledgement\":\"unknown\"}}}"
+      },
+      {
+        "run_id": "01M5GHE07KYCZSZE7310HZMXZZ",
+        "seq": 12,
+        "ts": "2026-10-22T00:51:02.074Z",
+        "type": "delivery.attempted",
+        "node_id": null,
+        "payload": "{\"delivery\":{\"id\":\"01M5GHE09DNKZSZKDHPCWYMV32\",\"channel\":{\"kind\":\"webhook\",\"url\":\"http://127.0.0.1:5811/drop\"},\"status\":\"pending\",\"attempts\":2,\"maxAttempts\":5,\"inFlight\":true,\"acknowledgement\":\"unknown\",\"effectMayHaveHappened\":true,\"nextAttemptAt\":\"2026-10-22T00:51:17.073Z\",\"lastError\":{\"code\":\"transport\",\"message\":\"Webhook acknowledgement lost; the effect may have happened.\",\"retryable\":true,\"acknowledgement\":\"unknown\"}}}"
+      },
+      {
+        "run_id": "01M5GHE07KYCZSZE7310HZMXZZ",
+        "seq": 13,
+        "ts": "2026-10-22T00:51:02.081Z",
+        "type": "delivery.finished",
+        "node_id": null,
+        "payload": "{\"delivery\":{\"id\":\"01M5GHE09DNKZSZKDHPCWYMV32\",\"channel\":{\"kind\":\"webhook\",\"url\":\"http://127.0.0.1:5811/drop\"},\"status\":\"delivered\",\"attempts\":2,\"maxAttempts\":5,\"inFlight\":false,\"acknowledgement\":\"accepted\",\"effectMayHaveHappened\":true,\"lastError\":{\"code\":\"transport\",\"message\":\"Webhook acknowledgement lost; the effect may have happened.\",\"retryable\":true,\"acknowledgement\":\"unknown\"}}}"
+      }
+    ]
+  },
+  "pass": true,
+  "gapsMs": [2033]
+}

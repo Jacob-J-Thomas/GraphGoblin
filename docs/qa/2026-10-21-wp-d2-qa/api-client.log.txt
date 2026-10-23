@@ -1,0 +1,55 @@
+pnpm.cmd : $ vitest run
+At line:2 char:225
++ ... TEXITCODE"; pnpm.cmd --filter @graphgoblin/api-client test *> docs/qa ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 %WORKTREE%/packages/api-client
+
+ o' src/templates.test.ts (2 tests | 1 failed) 19414ms
+   � creates an ordinary editable draft with the generated client without automation setup 15205ms
+
+�#�#�#�#�#�#�# Failed Tests 1 �#�#�#�#�#�#�#
+
+ FAIL  src/templates.test.ts > creates an ordinary editable draft with the generated client without automation setup
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ o' src/templates.test.ts:19:1
+     17| }
+     18|
+     19| it('creates an ordinary editable draft with the generated client witho& 
+       | ^
+     20|   const client = await setup();
+     21|   app!.harness.preflightResult = { ok: false, authenticated: false, pr& 
+
+�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#[1/2]�#
+
+ FAIL  src/templates.test.ts > creates an ordinary editable draft with the generated client without automation setup
+Error: Hook timed out in 10000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ o' src/templates.test.ts:7:1
+      5|
+      6| let app: TestApp | undefined;
+      7| afterEach(async () => {
+       | ^
+      8|   await app?.close();
+      9|   app = undefined;
+
+�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#�#[2/2]�#
+
+
+ Test Files  1 failed | 7 passed (8)
+      Tests  1 failed | 70 passed (71)
+   Start at  19:56:47
+   Duration  115.90s (transform 44%, import 39%, tests 17%)
+
+  Transform  transforming modules took 168.74s � 44% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  � "pnpm recursive run" failed in the workspace package.

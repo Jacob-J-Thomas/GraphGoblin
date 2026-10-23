@@ -1,0 +1,54 @@
+pnpm.cmd : $ vitest run --coverage --coverage.reportOnFailure --reporter=default --reporter=json '--outputFile.json=C:\
+Users\<user>\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g2-paging-summaries\round7-coverage-mcp-results.log'
+At line:14 char:2
++  & pnpm.cmd @arguments *> "round7-coverage-$name.log"
++  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...cp-results.log':String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 <worktree>/apps/mcp
+      Coverage enabled with v8
+
+ ✓ src/describe.test.ts (7 tests) 41ms
+ ✓ src/wait.test.ts (4 tests) 175ms
+ ✓ src/run-pagination.test.ts (1 test) 52ms
+ ✓ src/units.test.ts (13 tests) 107ms
+ ✓ src/classifiers.test.ts (2 tests) 1478ms
+   ✓ MCP classifier consumer regression (2)
+     ✓ runs and inspects explicit expression and classifier kinds without adding tools 656ms
+ ✓ src/paging.test.ts (4 tests) 1615ms
+   ✓ MCP history paging against real SQLite and API (4)
+     ✓ carries opaque cursors and all filters across limit-one timestamp ties to exhaustion 911ms
+     ✓ reports no more events when the final page exactly equals its limit 312ms
+ ✓ src/webhook-delivery.test.ts (2 tests) 1972ms
+   ✓ exposes pending and final HTTP 200 delivery through REST, api-client and MCP 1552ms
+   ✓ exposes pending and final HTTP 400 delivery through REST, api-client and MCP 406ms
+ ✓ src/transports.test.ts (5 tests) 2503ms
+   ✓ transports (5)
+     ✓ serves Streamable HTTP from main --http on an ephemeral port 1354ms
+ ✓ src/mcp.test.ts (11 tests) 4872ms
+   ✓ MCP server against the in-process API (10)
+     ✓ lists and describes loops by id and by name 324ms
+     ✓ starts the start-mcp guide example through start_run with the exact loop name 321ms
+     ✓ reports progress while a run is busy, then succeeds 556ms
+     ✓ returns early for input, and drives input, signals, pause, resume, and cancel 1744ms
+
+ Test Files  9 passed (9)
+      Tests  49 passed (49)
+   Start at  19:19:38
+   Duration  15.37s (import 53%, transform 29%, tests 17%, worker 1%)
+
+  Transform  transforming modules took 21.79s · 29% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+JSON report written to <worktree>/round7-coverage-mcp-results.log
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 95.09% ( 252/265 )
+Branches     : 95.39% ( 207/217 )
+Functions    : 93.97% ( 78/83 )
+Lines        : 96.66% ( 232/240 )
+================================================================================
