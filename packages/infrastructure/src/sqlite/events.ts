@@ -63,11 +63,15 @@ export class SqliteEventStore implements EventStorePort {
   async append(
     runId: string,
     drafts: readonly EventDraft[],
-    options: { expectedLastSeq?: number } = {},
+    options: { expectedLastSeq?: number; requireRun?: boolean } = {},
   ): Promise<RunEvent[]> {
     if (drafts.length === 0) return [];
     const ts = this.clock.now().toISOString();
     const stored = await this.db.transaction(async (tx) => {
+      if (options.requireRun) {
+        const [run] = await tx.select({ id: runs.id }).from(runs).where(eq(runs.id, runId));
+        if (!run) return [];
+      }
       const [current] = await tx
         .select({ max: sql<number>`coalesce(max(${runEvents.seq}), 0)` })
         .from(runEvents)

@@ -10,6 +10,7 @@ import {
 import { ClassifierBindingSchema, ClassifierModelIdSchema } from './classifiers.js';
 import { HarnessDefaultsSchema } from './evaluation.js';
 import { OutcomeSchema, WaitKindSchema } from './nodes.js';
+import { WebhookDeliverySchema } from './delivery.js';
 
 export const RunStatusSchema = z.enum([
   'queued',
@@ -195,6 +196,8 @@ export const RunRecordSchema = z.strictObject({
   failure: RunFailureSchema.optional(),
   outcome: OutcomeSchema.optional(),
   result: JsonValueSchema.optional(),
+  /** Webhook delivery is independent of execution status; absent when no webhook is queued. */
+  deliveries: z.array(WebhookDeliverySchema).optional(),
   createdAt: TimestampSchema,
   startedAt: TimestampSchema.optional(),
   finishedAt: TimestampSchema.optional(),

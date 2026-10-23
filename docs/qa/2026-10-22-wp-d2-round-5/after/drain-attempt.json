@@ -1,0 +1,660 @@
+{
+  "prior": {
+    "loopId": "01M5JASS5Y27CG922HYXQ1SY8Y",
+    "runId": "01M5JASS6YXJYF5KXZXBV5C4JH",
+    "path": "/drain-attempt",
+    "run": {
+      "id": "01M5JASS6YXJYF5KXZXBV5C4JH",
+      "ownerId": "local",
+      "loopId": "01M5JASS5Y27CG922HYXQ1SY8Y",
+      "versionId": "01M5JASS5Y4PVNR9RZ6JEDT6RG",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Audit drain attempt",
+        "label": "Audit drain attempt v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5JASS6YN02CZFT5BPVKKR21",
+      "status": "succeeded",
+      "iteration": 1,
+      "outcome": "success",
+      "result": null,
+      "deliveries": [
+        {
+          "id": "01M5JASS93X47TKSCSET1T3FYN",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5641/drain-attempt"
+          },
+          "status": "pending",
+          "attempts": 1,
+          "maxAttempts": 5,
+          "inFlight": true,
+          "acknowledgement": "unknown",
+          "effectMayHaveHappened": true,
+          "acknowledgementUncertain": false,
+          "nextAttemptAt": "2026-10-22T17:33:46.898Z"
+        }
+      ],
+      "createdAt": "2026-10-22T17:33:34.814Z",
+      "startedAt": "2026-10-22T17:33:34.834Z",
+      "finishedAt": "2026-10-22T17:33:34.887Z",
+      "lastEventSeq": 10
+    },
+    "events": [
+      {
+        "runId": "01M5JASS6YXJYF5KXZXBV5C4JH",
+        "seq": 1,
+        "ts": "2026-10-22T17:33:34.814Z",
+        "type": "run.queued",
+        "versionId": "01M5JASS5Y4PVNR9RZ6JEDT6RG",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Audit drain attempt",
+          "label": "Audit drain attempt v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {}
+        },
+        "initialThread": {
+          "schemaVersion": 1,
+          "run": {
+            "id": "01M5JASS6YXJYF5KXZXBV5C4JH",
+            "loopId": "01M5JASS5Y27CG922HYXQ1SY8Y",
+            "versionId": "01M5JASS5Y4PVNR9RZ6JEDT6RG",
+            "iteration": 1
+          },
+          "invocation": {
+            "id": "01M5JASS6YN02CZFT5BPVKKR21",
+            "source": "manual.api",
+            "caller": {
+              "kind": "user",
+              "id": "local"
+            },
+            "trigger": {
+              "nodeId": "start",
+              "kind": "manual",
+              "payload": {
+                "name": "Audit drain attempt",
+                "value": 42
+              },
+              "receivedAt": "2026-10-22T17:33:34.814Z"
+            }
+          },
+          "messages": [],
+          "vars": {},
+          "artifacts": [],
+          "outputs": {},
+          "gates": {},
+          "counters": {
+            "nodeVisits": {},
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          }
+        }
+      },
+      {
+        "runId": "01M5JASS6YXJYF5KXZXBV5C4JH",
+        "seq": 2,
+        "ts": "2026-10-22T17:33:34.838Z",
+        "type": "run.started",
+        "attempt": 1
+      },
+      {
+        "runId": "01M5JASS6YXJYF5KXZXBV5C4JH",
+        "seq": 3,
+        "ts": "2026-10-22T17:33:34.845Z",
+        "type": "node.started",
+        "nodeId": "start",
+        "kind": "trigger",
+        "attempt": 1,
+        "configHash": "527dee9c4254fe4e"
+      },
+      {
+        "runId": "01M5JASS6YXJYF5KXZXBV5C4JH",
+        "seq": 4,
+        "ts": "2026-10-22T17:33:34.853Z",
+        "type": "node.finished",
+        "nodeId": "start",
+        "patch": [
+          {
+            "op": "add",
+            "path": "/outputs/start",
+            "value": {
+              "nodeId": "start",
+              "value": {
+                "name": "Audit drain attempt",
+                "value": 42
+              },
+              "at": "2026-10-22T17:33:34.851Z"
+            }
+          },
+          {
+            "op": "add",
+            "path": "/lastOutput",
+            "value": {
+              "nodeId": "start",
+              "value": {
+                "name": "Audit drain attempt",
+                "value": 42
+              },
+              "at": "2026-10-22T17:33:34.851Z"
+            }
+          }
+        ],
+        "route": "out",
+        "durationMs": 1
+      },
+      {
+        "runId": "01M5JASS6YXJYF5KXZXBV5C4JH",
+        "seq": 5,
+        "ts": "2026-10-22T17:33:34.876Z",
+        "type": "node.started",
+        "nodeId": "done",
+        "kind": "exit",
+        "attempt": 1,
+        "configHash": "430cdaaea7ebfc36"
+      },
+      {
+        "runId": "01M5JASS6YXJYF5KXZXBV5C4JH",
+        "seq": 6,
+        "ts": "2026-10-22T17:33:34.883Z",
+        "type": "exit.evaluated",
+        "nodeId": "done",
+        "outcome": "success"
+      },
+      {
+        "runId": "01M5JASS6YXJYF5KXZXBV5C4JH",
+        "seq": 7,
+        "ts": "2026-10-22T17:33:34.883Z",
+        "type": "node.finished",
+        "nodeId": "done",
+        "patch": [],
+        "durationMs": 2
+      },
+      {
+        "runId": "01M5JASS6YXJYF5KXZXBV5C4JH",
+        "seq": 8,
+        "ts": "2026-10-22T17:33:34.883Z",
+        "type": "run.finished",
+        "status": "succeeded",
+        "outcome": "success",
+        "result": null
+      },
+      {
+        "runId": "01M5JASS6YXJYF5KXZXBV5C4JH",
+        "seq": 9,
+        "ts": "2026-10-22T17:33:34.883Z",
+        "type": "delivery.queued",
+        "delivery": {
+          "id": "01M5JASS93X47TKSCSET1T3FYN",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5641/drain-attempt"
+          },
+          "status": "pending",
+          "attempts": 0,
+          "maxAttempts": 5,
+          "inFlight": false,
+          "acknowledgement": "not_sent",
+          "effectMayHaveHappened": false,
+          "acknowledgementUncertain": false
+        }
+      },
+      {
+        "runId": "01M5JASS6YXJYF5KXZXBV5C4JH",
+        "seq": 10,
+        "ts": "2026-10-22T17:33:34.902Z",
+        "type": "delivery.attempted",
+        "delivery": {
+          "id": "01M5JASS93X47TKSCSET1T3FYN",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5641/drain-attempt"
+          },
+          "status": "pending",
+          "attempts": 1,
+          "maxAttempts": 5,
+          "inFlight": true,
+          "acknowledgement": "unknown",
+          "effectMayHaveHappened": true,
+          "acknowledgementUncertain": false,
+          "nextAttemptAt": "2026-10-22T17:33:46.898Z"
+        }
+      }
+    ],
+    "rows": [
+      {
+        "finalized_at": null,
+        "last_event_seq": 10,
+        "status": "succeeded"
+      }
+    ],
+    "requests": [
+      {
+        "path": "/drain-attempt",
+        "n": 1,
+        "ms": 1792690414909,
+        "key": "01M5JASS93X47TKSCSET1T3FYN",
+        "body": {
+          "runId": "01M5JASS6YXJYF5KXZXBV5C4JH",
+          "loopId": "01M5JASS5Y27CG922HYXQ1SY8Y",
+          "outcome": "success",
+          "result": null
+        }
+      }
+    ]
+  },
+  "timing": {
+    "elapsedMs": 10095,
+    "newRequests": 0
+  },
+  "saved": [
+    {
+      "payload": "{\"delivery\":{\"id\":\"01M5JASS93X47TKSCSET1T3FYN\",\"channel\":{\"kind\":\"webhook\",\"url\":\"http://127.0.0.1:5641/drain-attempt\"},\"status\":\"pending\",\"attempts\":1,\"maxAttempts\":5,\"inFlight\":false,\"acknowledgement\":\"unknown\",\"effectMayHaveHappened\":true,\"acknowledgementUncertain\":true,\"nextAttemptAt\":\"2026-10-22T17:33:46.919Z\",\"lastError\":{\"code\":\"timeout\",\"message\":\"Webhook acknowledgement timed out; the effect may have happened.\",\"retryable\":true,\"acknowledgement\":\"unknown\"}}}"
+    }
+  ],
+  "done": {
+    "loopId": "01M5JASS5Y27CG922HYXQ1SY8Y",
+    "runId": "01M5JASS6YXJYF5KXZXBV5C4JH",
+    "path": "/drain-attempt",
+    "run": {
+      "id": "01M5JASS6YXJYF5KXZXBV5C4JH",
+      "ownerId": "local",
+      "loopId": "01M5JASS5Y27CG922HYXQ1SY8Y",
+      "versionId": "01M5JASS5Y4PVNR9RZ6JEDT6RG",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Audit drain attempt",
+        "label": "Audit drain attempt v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M5JASS6YN02CZFT5BPVKKR21",
+      "status": "succeeded",
+      "iteration": 1,
+      "outcome": "success",
+      "result": null,
+      "deliveries": [
+        {
+          "id": "01M5JASS93X47TKSCSET1T3FYN",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5641/drain-attempt"
+          },
+          "status": "delivered",
+          "attempts": 2,
+          "maxAttempts": 5,
+          "inFlight": false,
+          "acknowledgement": "accepted",
+          "effectMayHaveHappened": true,
+          "acknowledgementUncertain": true,
+          "lastError": {
+            "code": "timeout",
+            "message": "Webhook acknowledgement timed out; the effect may have happened.",
+            "retryable": true,
+            "acknowledgement": "unknown"
+          }
+        }
+      ],
+      "createdAt": "2026-10-22T17:33:34.814Z",
+      "startedAt": "2026-10-22T17:33:34.834Z",
+      "finishedAt": "2026-10-22T17:33:34.887Z",
+      "lastEventSeq": 13
+    },
+    "events": [
+      {
+        "runId": "01M5JASS6YXJYF5KXZXBV5C4JH",
+        "seq": 1,
+        "ts": "2026-10-22T17:33:34.814Z",
+        "type": "run.queued",
+        "versionId": "01M5JASS5Y4PVNR9RZ6JEDT6RG",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Audit drain attempt",
+          "label": "Audit drain attempt v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "classifiers": {}
+        },
+        "initialThread": {
+          "schemaVersion": 1,
+          "run": {
+            "id": "01M5JASS6YXJYF5KXZXBV5C4JH",
+            "loopId": "01M5JASS5Y27CG922HYXQ1SY8Y",
+            "versionId": "01M5JASS5Y4PVNR9RZ6JEDT6RG",
+            "iteration": 1
+          },
+          "invocation": {
+            "id": "01M5JASS6YN02CZFT5BPVKKR21",
+            "source": "manual.api",
+            "caller": {
+              "kind": "user",
+              "id": "local"
+            },
+            "trigger": {
+              "nodeId": "start",
+              "kind": "manual",
+              "payload": {
+                "name": "Audit drain attempt",
+                "value": 42
+              },
+              "receivedAt": "2026-10-22T17:33:34.814Z"
+            }
+          },
+          "messages": [],
+          "vars": {},
+          "artifacts": [],
+          "outputs": {},
+          "gates": {},
+          "counters": {
+            "nodeVisits": {},
+            "usage": {
+              "inputTokens": 0,
+              "outputTokens": 0,
+              "cachedInputTokens": 0,
+              "reasoningOutputTokens": 0
+            }
+          }
+        }
+      },
+      {
+        "runId": "01M5JASS6YXJYF5KXZXBV5C4JH",
+        "seq": 2,
+        "ts": "2026-10-22T17:33:34.838Z",
+        "type": "run.started",
+        "attempt": 1
+      },
+      {
+        "runId": "01M5JASS6YXJYF5KXZXBV5C4JH",
+        "seq": 3,
+        "ts": "2026-10-22T17:33:34.845Z",
+        "type": "node.started",
+        "nodeId": "start",
+        "kind": "trigger",
+        "attempt": 1,
+        "configHash": "527dee9c4254fe4e"
+      },
+      {
+        "runId": "01M5JASS6YXJYF5KXZXBV5C4JH",
+        "seq": 4,
+        "ts": "2026-10-22T17:33:34.853Z",
+        "type": "node.finished",
+        "nodeId": "start",
+        "patch": [
+          {
+            "op": "add",
+            "path": "/outputs/start",
+            "value": {
+              "nodeId": "start",
+              "value": {
+                "name": "Audit drain attempt",
+                "value": 42
+              },
+              "at": "2026-10-22T17:33:34.851Z"
+            }
+          },
+          {
+            "op": "add",
+            "path": "/lastOutput",
+            "value": {
+              "nodeId": "start",
+              "value": {
+                "name": "Audit drain attempt",
+                "value": 42
+              },
+              "at": "2026-10-22T17:33:34.851Z"
+            }
+          }
+        ],
+        "route": "out",
+        "durationMs": 1
+      },
+      {
+        "runId": "01M5JASS6YXJYF5KXZXBV5C4JH",
+        "seq": 5,
+        "ts": "2026-10-22T17:33:34.876Z",
+        "type": "node.started",
+        "nodeId": "done",
+        "kind": "exit",
+        "attempt": 1,
+        "configHash": "430cdaaea7ebfc36"
+      },
+      {
+        "runId": "01M5JASS6YXJYF5KXZXBV5C4JH",
+        "seq": 6,
+        "ts": "2026-10-22T17:33:34.883Z",
+        "type": "exit.evaluated",
+        "nodeId": "done",
+        "outcome": "success"
+      },
+      {
+        "runId": "01M5JASS6YXJYF5KXZXBV5C4JH",
+        "seq": 7,
+        "ts": "2026-10-22T17:33:34.883Z",
+        "type": "node.finished",
+        "nodeId": "done",
+        "patch": [],
+        "durationMs": 2
+      },
+      {
+        "runId": "01M5JASS6YXJYF5KXZXBV5C4JH",
+        "seq": 8,
+        "ts": "2026-10-22T17:33:34.883Z",
+        "type": "run.finished",
+        "status": "succeeded",
+        "outcome": "success",
+        "result": null
+      },
+      {
+        "runId": "01M5JASS6YXJYF5KXZXBV5C4JH",
+        "seq": 9,
+        "ts": "2026-10-22T17:33:34.883Z",
+        "type": "delivery.queued",
+        "delivery": {
+          "id": "01M5JASS93X47TKSCSET1T3FYN",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5641/drain-attempt"
+          },
+          "status": "pending",
+          "attempts": 0,
+          "maxAttempts": 5,
+          "inFlight": false,
+          "acknowledgement": "not_sent",
+          "effectMayHaveHappened": false,
+          "acknowledgementUncertain": false
+        }
+      },
+      {
+        "runId": "01M5JASS6YXJYF5KXZXBV5C4JH",
+        "seq": 10,
+        "ts": "2026-10-22T17:33:34.902Z",
+        "type": "delivery.attempted",
+        "delivery": {
+          "id": "01M5JASS93X47TKSCSET1T3FYN",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5641/drain-attempt"
+          },
+          "status": "pending",
+          "attempts": 1,
+          "maxAttempts": 5,
+          "inFlight": true,
+          "acknowledgement": "unknown",
+          "effectMayHaveHappened": true,
+          "acknowledgementUncertain": false,
+          "nextAttemptAt": "2026-10-22T17:33:46.898Z"
+        }
+      },
+      {
+        "runId": "01M5JASS6YXJYF5KXZXBV5C4JH",
+        "seq": 11,
+        "ts": "2026-10-22T17:33:44.921Z",
+        "type": "delivery.attempt_finished",
+        "delivery": {
+          "id": "01M5JASS93X47TKSCSET1T3FYN",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5641/drain-attempt"
+          },
+          "status": "pending",
+          "attempts": 1,
+          "maxAttempts": 5,
+          "inFlight": false,
+          "acknowledgement": "unknown",
+          "effectMayHaveHappened": true,
+          "acknowledgementUncertain": true,
+          "nextAttemptAt": "2026-10-22T17:33:46.919Z",
+          "lastError": {
+            "code": "timeout",
+            "message": "Webhook acknowledgement timed out; the effect may have happened.",
+            "retryable": true,
+            "acknowledgement": "unknown"
+          }
+        }
+      },
+      {
+        "runId": "01M5JASS6YXJYF5KXZXBV5C4JH",
+        "seq": 12,
+        "ts": "2026-10-22T17:33:53.603Z",
+        "type": "delivery.attempted",
+        "delivery": {
+          "id": "01M5JASS93X47TKSCSET1T3FYN",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5641/drain-attempt"
+          },
+          "status": "pending",
+          "attempts": 2,
+          "maxAttempts": 5,
+          "inFlight": true,
+          "acknowledgement": "unknown",
+          "effectMayHaveHappened": true,
+          "acknowledgementUncertain": true,
+          "nextAttemptAt": "2026-10-22T17:34:08.597Z",
+          "lastError": {
+            "code": "timeout",
+            "message": "Webhook acknowledgement timed out; the effect may have happened.",
+            "retryable": true,
+            "acknowledgement": "unknown"
+          }
+        }
+      },
+      {
+        "runId": "01M5JASS6YXJYF5KXZXBV5C4JH",
+        "seq": 13,
+        "ts": "2026-10-22T17:33:53.844Z",
+        "type": "delivery.finished",
+        "delivery": {
+          "id": "01M5JASS93X47TKSCSET1T3FYN",
+          "channel": {
+            "kind": "webhook",
+            "url": "http://127.0.0.1:5641/drain-attempt"
+          },
+          "status": "delivered",
+          "attempts": 2,
+          "maxAttempts": 5,
+          "inFlight": false,
+          "acknowledgement": "accepted",
+          "effectMayHaveHappened": true,
+          "acknowledgementUncertain": true,
+          "lastError": {
+            "code": "timeout",
+            "message": "Webhook acknowledgement timed out; the effect may have happened.",
+            "retryable": true,
+            "acknowledgement": "unknown"
+          }
+        }
+      }
+    ],
+    "rows": [
+      {
+        "finalized_at": "2026-10-22T17:33:53.863Z",
+        "last_event_seq": 13,
+        "status": "succeeded"
+      }
+    ],
+    "requests": [
+      {
+        "path": "/drain-attempt",
+        "n": 1,
+        "ms": 1792690414909,
+        "key": "01M5JASS93X47TKSCSET1T3FYN",
+        "body": {
+          "runId": "01M5JASS6YXJYF5KXZXBV5C4JH",
+          "loopId": "01M5JASS5Y27CG922HYXQ1SY8Y",
+          "outcome": "success",
+          "result": null
+        }
+      },
+      {
+        "path": "/drain-attempt",
+        "n": 2,
+        "ms": 1792690433778,
+        "key": "01M5JASS93X47TKSCSET1T3FYN",
+        "body": {
+          "runId": "01M5JASS6YXJYF5KXZXBV5C4JH",
+          "loopId": "01M5JASS5Y27CG922HYXQ1SY8Y",
+          "outcome": "success",
+          "result": null
+        }
+      }
+    ]
+  }
+}

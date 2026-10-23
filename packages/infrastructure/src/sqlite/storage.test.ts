@@ -314,8 +314,8 @@ describe('SqliteRunRepository', () => {
     old.close();
     const current = openDatabase({ url });
     try {
-      // Fifteen shipped migrations minus this fixture's two historical ledger entries.
-      expect(await current.pendingMigrations()).toBe(13);
+      // Sixteen shipped migrations minus this fixture's two historical ledger entries.
+      expect(await current.pendingMigrations()).toBe(14);
       await expect(current.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
       await applyShippedSqlToHistoricalTestFixture(current);
       const repo = new SqliteRunRepository(current.db);
@@ -862,7 +862,7 @@ describe('migration 0003 model catalog max effort', () => {
     try {
       // Includes 0013_trigger_configuration and 0014_run_definition_pins after the three
       // historical catalog migrations.
-      expect(await current.pendingMigrations()).toBe(12);
+      expect(await current.pendingMigrations()).toBe(13);
       await expect(current.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
       await applyShippedSqlToHistoricalTestFixture(current);
       expect(await current.pendingMigrations()).toBe(0);

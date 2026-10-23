@@ -102,11 +102,20 @@ make this safe:
 - **Finalization is recorded.** After a terminal status the engine drops the run's timers,
   cancels its children (when it was cancelled), delivers its returns (when it finished), wakes
   its parent, and only then marks the run finalized (`RunRepository.markFinalized`, column
-  `finalized_at`). Each step is idempotent: returns are delivered per channel, skipping channels
-  whose `return.delivered` or `return.failed` is already in the log. At boot the run manager
+  `finalized_at`). Non-webhook returns skip channels whose `return.delivered` or `return.failed`
+  is already in the log. Webhooks use their durable delivery journal and finite attempt budget
+  ([ADR-0043](decisions/ADR-0043-bounded-webhook-return-delivery.md)). During recovery the finalizer
+  skips a retired Event return of an execution that already finished before upgrade, logging
+  `LOOP_UPGRADE_REQUIRED` with the run, loop and version identities. It neither publishes the
+  Event nor records a fictitious delivery receipt, and does not rewrite the historical outcome
+  or definition. Other returns finish normally, the parent receives the child's execution
+  outcome, and the run is finalized. This terminal bookkeeping exception does not admit or
+  execute a definition with a retired destination; those definitions still require repair.
+  At boot the run manager
   finalizes every terminal run not marked finalized (`listUnfinalized`), so a crash right after
   the status write loses no return and leaves no child running. A channel interrupted
-  mid-delivery is delivered again: returns are at least once. Migration `0002` marks runs that
+  mid-delivery has an unknown acknowledgement; webhook recovery consumes that attempt and
+  retries with the same identity and remaining budget. Migration `0002` marks runs that
   were already terminal as finalized. Finalization belongs to one terminal outcome: resuming a
   failed run clears the marker, so its next terminal outcome is finalized again; the resume waits
   for any finalizer of the failure still in flight (they share a per-run lock), so that finalizer
@@ -200,6 +209,26 @@ and need offline review. See the [offline guide](guide/08-offline-upgrade.md).
 The offline server-store tool uses the same composition for each retained version and draft. Portable export and device conversion do not authorize or perform a server cutover.
 
 ## Crash recovery (Decided)
+
+Webhook return delivery is independent of execution. `delivery.queued` is atomic with
+`run.finished`; `delivery.attempted` consumes an attempt before network I/O. A background
+worker records `delivery.attempt_finished` for a retry or `delivery.finished` for delivered /
+failed. `acknowledgementUncertain` retains any earlier unknown attempt separately from the
+latest error and acknowledgement, including after eventual success. An invalid HTTP response
+status becomes retryable `transport` / unknown, without an invalid `httpStatus` in the journal.
+Five attempts have 10-second deadlines and 2/5/10/20-second retry delays. Recovery
+turns an in-flight attempt into unknown and preserves its identity, deadline and remaining
+budget, including a final failure if the interrupted attempt was the last. Recovery does not
+wait for the network before serving the API. Delivery work does not occupy execution slots;
+`waitForIdle` drains it while running. After `stop()` (D-021), backoff waits wake immediately
+and no new request starts. In-flight requests finish or time out within their existing
+10-second deadline and journal their outcome; pending deliveries retain identity, attempts
+and retry deadline for recovery on the next start. Forced termination retains the same
+durable budget, with an unfinished acknowledgement recorded as unknown during recovery.
+Deleting a loop also stops its delivery workers: they re-read the run before each attempt
+and journal append; the append checks existence transactionally, preventing orphan events.
+The run remains succeeded when its execution succeeded. Finalization
+is marked only after every delivery finishes. See ADR-0043 for eligible failures and ambiguity.
 
 Recovery enumerates raw run identities and decodes each candidate separately. Candidates
 are active runs and terminal runs awaiting finalization; startup checks and logs damaged

@@ -1,0 +1,81 @@
+pnpm.cmd : $ vitest run --coverage --maxWorkers=1 --coverage.reportOnFailure
+At line:2 char:290
++ ... ers.jsonl"; pnpm.cmd --filter @graphgoblin/api test:coverage --maxWor ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...reportOnFailure:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+
+ RUN  v5.0.3 [local-path]
+      Coverage enabled with v8
+
+ ❯ src/readiness-evidence.test.ts (9 tests | 3 failed) 15823ms
+   ❯ CLI evidence through Settings preflight and draft validation (9)
+     × auth-zero-stdout preserves auth for both harnesses 674ms
+     × auth-zero-stderr preserves auth for both harnesses 686ms
+     × auth preserves auth for both harnesses 644ms
+subloop kill landings:
+delay undefined: leaf waiting at restart; recovery restarts top 0, middle 0, leaf 0
+delay 0: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 10: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 30: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 60: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+delay 100: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 150: leaf succeeded at restart; recovery restarts top 1, middle 0, leaf 0
+delay 250: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+{"level":30,"time":1792711138091,"pid":41796,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5636"}
+{"level":30,"time":1792711138092,"pid":41796,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5636,"dataDir":"[local-path]","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792711138140,"pid":41796,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792711138148,"pid":41796,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":7.090500000000247,"msg":"request completed"}
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation >
+auth-zero-stdout preserves auth for both harnesses
+ FAIL  src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation >
+auth-zero-stderr preserves auth for both harnesses
+ FAIL  src/readiness-evidence.test.ts > CLI evidence through Settings preflight and draft validation > auth preserves
+auth for both harnesses
+AssertionError: expected [ Array(1) ] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+  [
+-   "Claude sign-in is missing or invalid. Run claude auth login, then retry preflight.",
++   "Claude is not signed in. Run claude auth login, then retry preflight.",
+  ]
+
+ ❯ src/readiness-evidence.test.ts:99:33
+     97|       const response = await app.app.inject('/harness/preflight');
+     98|       expect(response.statusCode).toBe(200);
+     99|       const items = response.json<{ items: (HarnessPreflight & { harne…
+       |                                 ^
+    100|       expect(items).toHaveLength(2);
+    101|       for (const item of items) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+
+ Test Files  1 failed | 53 passed | 2 skipped (56)
+      Tests  3 failed | 744 passed | 6 skipped (753)
+   Start at  18:16:32
+   Duration  680.55s (tests 76%, import 22%, transform 1%)
+
+    Isolate  56 workers spawned · ~368ms startup each (spawn + environment, per file)
+             at least ~20.25s faster with isolate: false — reuses workers across files instead of one per file
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 96.59% ( 1986/2056 )
+Branches     : 93.25% ( 1286/1379 )
+Functions    : 94.48% ( 394/417 )
+Lines        : 98.04% ( 1805/1841 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ [local-path]
+  │ readiness-precision\apps\api

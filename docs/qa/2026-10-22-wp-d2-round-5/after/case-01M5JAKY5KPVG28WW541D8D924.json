@@ -1,0 +1,294 @@
+{
+  "loopId": "01M5JAKY3BA5NY6PMHH5Z08739",
+  "runId": "01M5JAKY5KPVG28WW541D8D924",
+  "path": "http://user:pass@127.0.0.1:5641/credential",
+  "run": {
+    "id": "01M5JAKY5KPVG28WW541D8D924",
+    "ownerId": "local",
+    "loopId": "01M5JAKY3BA5NY6PMHH5Z08739",
+    "versionId": "01M5JAKY3BSSCMF0NCPADA7W8B",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "Audit credentials",
+      "label": "Audit credentials v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M5JAKY5K4W06Q2JFTQG3C3BG",
+    "status": "succeeded",
+    "iteration": 1,
+    "outcome": "success",
+    "result": null,
+    "deliveries": [
+      {
+        "id": "01M5JAKY87TE63K0R0PC2KH361",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://user:pass@127.0.0.1:5641/credential"
+        },
+        "status": "failed",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "not_sent",
+        "effectMayHaveHappened": false,
+        "acknowledgementUncertain": false,
+        "lastError": {
+          "code": "invalid_destination",
+          "message": "Webhook destination must be an HTTP(S) URL without credentials.",
+          "retryable": false,
+          "acknowledgement": "not_sent"
+        }
+      }
+    ],
+    "createdAt": "2026-10-22T17:30:23.283Z",
+    "startedAt": "2026-10-22T17:30:23.308Z",
+    "finishedAt": "2026-10-22T17:30:23.372Z",
+    "lastEventSeq": 11
+  },
+  "events": [
+    {
+      "runId": "01M5JAKY5KPVG28WW541D8D924",
+      "seq": 1,
+      "ts": "2026-10-22T17:30:23.283Z",
+      "type": "run.queued",
+      "versionId": "01M5JAKY3BSSCMF0NCPADA7W8B",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "Audit credentials",
+        "label": "Audit credentials v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M5JAKY5KPVG28WW541D8D924",
+          "loopId": "01M5JAKY3BA5NY6PMHH5Z08739",
+          "versionId": "01M5JAKY3BSSCMF0NCPADA7W8B",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M5JAKY5K4W06Q2JFTQG3C3BG",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": {
+              "name": "Audit credentials",
+              "value": 42
+            },
+            "receivedAt": "2026-10-22T17:30:23.283Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {},
+        "gates": {},
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    {
+      "runId": "01M5JAKY5KPVG28WW541D8D924",
+      "seq": 2,
+      "ts": "2026-10-22T17:30:23.314Z",
+      "type": "run.started",
+      "attempt": 1
+    },
+    {
+      "runId": "01M5JAKY5KPVG28WW541D8D924",
+      "seq": 3,
+      "ts": "2026-10-22T17:30:23.333Z",
+      "type": "node.started",
+      "nodeId": "start",
+      "kind": "trigger",
+      "attempt": 1,
+      "configHash": "527dee9c4254fe4e"
+    },
+    {
+      "runId": "01M5JAKY5KPVG28WW541D8D924",
+      "seq": 4,
+      "ts": "2026-10-22T17:30:23.341Z",
+      "type": "node.finished",
+      "nodeId": "start",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/outputs/start",
+          "value": {
+            "nodeId": "start",
+            "value": {
+              "name": "Audit credentials",
+              "value": 42
+            },
+            "at": "2026-10-22T17:30:23.340Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "start",
+            "value": {
+              "name": "Audit credentials",
+              "value": 42
+            },
+            "at": "2026-10-22T17:30:23.340Z"
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 0
+    },
+    {
+      "runId": "01M5JAKY5KPVG28WW541D8D924",
+      "seq": 5,
+      "ts": "2026-10-22T17:30:23.362Z",
+      "type": "node.started",
+      "nodeId": "done",
+      "kind": "exit",
+      "attempt": 1,
+      "configHash": "0cfdc7cac9ebd07f"
+    },
+    {
+      "runId": "01M5JAKY5KPVG28WW541D8D924",
+      "seq": 6,
+      "ts": "2026-10-22T17:30:23.367Z",
+      "type": "exit.evaluated",
+      "nodeId": "done",
+      "outcome": "success"
+    },
+    {
+      "runId": "01M5JAKY5KPVG28WW541D8D924",
+      "seq": 7,
+      "ts": "2026-10-22T17:30:23.367Z",
+      "type": "node.finished",
+      "nodeId": "done",
+      "patch": [],
+      "durationMs": 0
+    },
+    {
+      "runId": "01M5JAKY5KPVG28WW541D8D924",
+      "seq": 8,
+      "ts": "2026-10-22T17:30:23.367Z",
+      "type": "run.finished",
+      "status": "succeeded",
+      "outcome": "success",
+      "result": null
+    },
+    {
+      "runId": "01M5JAKY5KPVG28WW541D8D924",
+      "seq": 9,
+      "ts": "2026-10-22T17:30:23.367Z",
+      "type": "delivery.queued",
+      "delivery": {
+        "id": "01M5JAKY87TE63K0R0PC2KH361",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://user:pass@127.0.0.1:5641/credential"
+        },
+        "status": "pending",
+        "attempts": 0,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "not_sent",
+        "effectMayHaveHappened": false,
+        "acknowledgementUncertain": false
+      }
+    },
+    {
+      "runId": "01M5JAKY5KPVG28WW541D8D924",
+      "seq": 10,
+      "ts": "2026-10-22T17:30:23.391Z",
+      "type": "delivery.attempted",
+      "delivery": {
+        "id": "01M5JAKY87TE63K0R0PC2KH361",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://user:pass@127.0.0.1:5641/credential"
+        },
+        "status": "pending",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": true,
+        "acknowledgement": "unknown",
+        "effectMayHaveHappened": true,
+        "acknowledgementUncertain": false,
+        "nextAttemptAt": "2026-10-22T17:30:35.387Z"
+      }
+    },
+    {
+      "runId": "01M5JAKY5KPVG28WW541D8D924",
+      "seq": 11,
+      "ts": "2026-10-22T17:30:23.406Z",
+      "type": "delivery.finished",
+      "delivery": {
+        "id": "01M5JAKY87TE63K0R0PC2KH361",
+        "channel": {
+          "kind": "webhook",
+          "url": "http://user:pass@127.0.0.1:5641/credential"
+        },
+        "status": "failed",
+        "attempts": 1,
+        "maxAttempts": 5,
+        "inFlight": false,
+        "acknowledgement": "not_sent",
+        "effectMayHaveHappened": false,
+        "acknowledgementUncertain": false,
+        "lastError": {
+          "code": "invalid_destination",
+          "message": "Webhook destination must be an HTTP(S) URL without credentials.",
+          "retryable": false,
+          "acknowledgement": "not_sent"
+        }
+      }
+    }
+  ],
+  "rows": [
+    {
+      "finalized_at": "2026-10-22T17:30:23.429Z",
+      "last_event_seq": 11,
+      "status": "succeeded"
+    }
+  ],
+  "requests": []
+}

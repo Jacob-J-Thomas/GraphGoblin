@@ -32,6 +32,10 @@ import {
   hashUpgradeStore,
   quote,
 } from './upgrade-scan.js';
+import {
+  convertHistoricalWebhookReceipts,
+  WEBHOOK_JOURNAL_MIGRATION_TIME,
+} from './webhook-receipt-upgrade.js';
 type Executor = Pick<Client, 'execute'>;
 type RawRow = Record<string, unknown>;
 const MIGRATIONS = SHIPPED_MIGRATIONS;
@@ -237,7 +241,13 @@ export async function initializeFreshDatabase(
         sql: "INSERT INTO gg_upgrade_state (id,format_version,status,source_hash,manifest_hash) VALUES (1,?,'complete','fresh','fresh')",
         args: [CURRENT_DEFINITION_FORMAT],
       });
+    } else {
+      // Another initializer may have won the lock after the caller observed an empty store.
+      // Apply its remaining ordinary migrations under this same lock, without opening a second
+      // initialization transaction (and without ever authenticating an unmarked store).
+      await structuralMigrations(tx, migrationsFolder);
     }
+    await verifyDatabaseHead(tx, migrationsFolder);
     await tx.commit();
     return upgradeState;
   } catch (error) {
@@ -262,11 +272,33 @@ async function structuralMigrations(tx: Transaction, folder: string): Promise<vo
   const lastTime = Number(last?.created_at ?? 0);
   for (const migration of readMigrationFiles({ migrationsFolder: folder })) {
     if (migration.folderMillis <= lastTime) continue;
+    // Convert completed receipts before 0015 allocates identities for unfinished returns.
+    if (migration.folderMillis === WEBHOOK_JOURNAL_MIGRATION_TIME)
+      await convertHistoricalWebhookReceipts(tx);
     for (const statement of migration.sql) await tx.execute(statement);
     await tx.execute({
       sql: 'INSERT INTO __drizzle_migrations (hash,created_at) VALUES (?,?)',
       args: [migration.hash, migration.folderMillis],
     });
+  }
+}
+
+/** Apply ordinary SQL and one-off data rewrites with one atomic migration ledger. */
+export async function migrateCurrentDatabase(client: Client, folder: string): Promise<void> {
+  const tx = await client.transaction('write');
+  try {
+    await structuralMigrations(tx, folder);
+    await verifyDatabaseHead(tx, folder);
+    await tx.commit();
+  } catch (error) {
+    try {
+      await tx.rollback();
+    } catch {
+      // Preserve the migration failure if its connection was lost.
+    }
+    throw error;
+  } finally {
+    tx.close();
   }
 }
 

@@ -1,0 +1,41 @@
+pnpm.cmd : $ vitest run --coverage --maxWorkers=1
+At line:8 char:1
++ pnpm.cmd --filter @graphgoblin/api test:coverage --maxWorkers=1 *> 'C ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --coverage --maxWorkers=1:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 <USERPROFILE>/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f4-prompt-provenance/apps/api
+      Coverage enabled with v8
+
+subloop kill landings:
+delay undefined: leaf waiting at restart; recovery restarts top 0, middle 0, leaf 0
+delay 0: leaf running at restart; recovery restarts top 0, middle 0, leaf 1
+delay 10: leaf running at restart; recovery restarts top 0, middle 0, leaf 1
+delay 30: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 60: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 100: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+delay 150: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 250: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+{"level":30,"time":1792724696170,"pid":56168,"hostname":"<HOST>","msg":"Server listening at http://127.0.0.1:5650"}
+{"level":30,"time":1792724696171,"pid":56168,"hostname":"<HOST>","host":"127.0.0.1","port":5650,"dataDir":"<USERPROFILE>\\AppData\\Local\\Temp\\gg-wp-f4-round10-cbec9a4ac48b48308177f7568cb508e9\\fixtures\\gg-api-process-BQ2zj9","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792724696312,"pid":56168,"hostname":"<HOST>","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792724696319,"pid":56168,"hostname":"<HOST>","reqId":"req-1","res":{"statusCode":200},"responseTime":6.536799999999857,"msg":"request completed"}
+
+ Test Files  59 passed | 2 skipped (61)
+      Tests  1280 passed | 6 skipped (1286)
+   Start at  21:55:49
+   Duration  965.13s (tests 81%, import 13%, transform 5%)
+
+    Isolate  61 workers spawned · ~307ms startup each (spawn + environment, per file)
+             at least ~18.43s faster with isolate: false — reuses workers across files instead of one per file
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 96.59% ( 1986/2056 )
+Branches     : 93.25% ( 1286/1379 )
+Functions    : 94.48% ( 394/417 )
+Lines        : 98.04% ( 1805/1841 )
+================================================================================

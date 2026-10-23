@@ -1,0 +1,13 @@
+src/sqlite/webhook-receipt-upgrade.ts(60,9): error TS2322: Type '{ kind: "caller"; } | { kind: "webhook"; url: string; secretRef?: string | undefined; } | { kind: "file"; path: string; format: "json" | "text" | "markdown"; } | { kind: "event"; eventType: string; } | { ...; }' is not assignable to type '{ kind: "webhook"; url: string; secretRef?: string | undefined; }'.
+  Property 'url' is missing in type '{ kind: "caller"; }' but required in type '{ kind: "webhook"; url: string; secretRef?: string | undefined; }'.
+pnpm.cmd : Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+At line:2 char:99
++ ... un='false'; pnpm.cmd --filter @graphgoblin/infrastructure exec tsc -p ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Error: ERR_PNPM...EXEC_FIRST_FAIL:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d2-
+  │ webhook-retry\packages\infrastructure

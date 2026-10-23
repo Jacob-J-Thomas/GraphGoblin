@@ -222,8 +222,8 @@ export class ClaudeHarness implements HarnessPort {
         maxOutputBytes: 128 * 1024,
         classifyDiagnostics: true,
       });
-      // Signed-out status is structured stdout with exit 1 and no stderr on real Claude.
-      // Parse it before generic exit handling, but keep timeout/start/termination failures authoritative.
+      // Auth status can confirm sign-out in JSON or text, even on exit 0. Interpret it only here;
+      // timeout/start/termination failures remain authoritative and turn output is never inferred.
       let auth: unknown;
       if (authStatus) {
         try {
@@ -232,6 +232,7 @@ export class ClaudeHarness implements HarnessPort {
           /* No structured status. */
         }
       }
+      let signOutDetail: string | undefined;
       if (
         typeof auth === 'object' &&
         auth !== null &&
@@ -241,13 +242,20 @@ export class ClaudeHarness implements HarnessPort {
             auth.authMethod !== '' &&
             auth.authMethod !== 'claude.ai'))
       ) {
+        signOutDetail =
+          'loggedIn' in auth && auth.loggedIn === false
+            ? 'Claude is not signed in.'
+            : 'Claude is not signed in with a Claude.ai account.';
+      }
+      if (
+        authStatus &&
+        (signOutDetail || /\bnot logged in\b/i.test(result.stdout) || result.notLoggedIn)
+      ) {
         checkOutcome({ ...result, exitCode: 0 }, signal, true);
         facts.authenticated = false;
         throw new ClaudeHarnessError(
           'HARNESS_NOT_AUTHENTICATED',
-          'loggedIn' in auth && auth.loggedIn === false
-            ? 'Claude is not signed in.'
-            : 'Claude is not signed in with a Claude.ai account.',
+          signOutDetail ?? 'Claude is not signed in.',
         );
       }
       // This path runs version/help/auth only; stdout cannot be a model response.

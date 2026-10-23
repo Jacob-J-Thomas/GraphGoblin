@@ -197,6 +197,20 @@ following a timezone issue focuses the time zone control.
 
 ## Return delivery (Decided)
 
+Run snapshots include optional `deliveries` for outbound webhooks, with separate pending,
+delivered or failed state, stable identity, attempts/budget, next attempt and typed last error.
+REST run detail/list, the generated api-client, MCP `get_run` and `wait_for_run` preserve it.
+`wait_for_run.finished` means execution finished, even with pending or failed delivery; call
+`get_run` again to observe delivery. The inspector polls once per second while delivery is
+pending. SSE still closes on execution's terminal event; subsequent JSON event pages expose
+`delivery.queued`, `delivery.attempted`, `delivery.attempt_finished` and `delivery.finished`.
+Unknown acknowledgement is never represented as non-delivery. The required
+`acknowledgementUncertain` flag in each delivery snapshot retains earlier uncertainty even
+when `lastError` is a later rejection and the final acknowledgement is accepted. The inspector
+keeps its possible-duplicate warning in that case; rejection-only retries do not set the flag.
+An invalid HTTP response status is a retryable `transport` error with unknown acknowledgement
+and no `httpStatus`. See ADR-0043.
+
 The `caller` return channel resolves at delivery time:
 
 | Invocation source                                     | Delivery                                                                                      |
@@ -205,7 +219,7 @@ The `caller` return channel resolves at delivery time:
 | `manual.mcp`                                          | Also returned as the MCP tool result when the client waited; otherwise fetched with `get_run` |
 | `subloop`                                             | Handed to the parent run's subloop output mapping                                             |
 
-Other channels, webhook, file and log, are delivered by the engine after the run finishes, with one `return.delivered` or `return.failed` event each. There is no Event channel: a loop that needs another loop's result calls it as an awaited subloop (ADR-0044).
+The file and log channels are delivered by the engine after the run finishes, with one `return.delivered` or `return.failed` event each; webhooks use the delivery journal above. There is no Event channel: a loop that needs another loop's result calls it as an awaited subloop (ADR-0044).
 
 ## MCP server (Decided)
 
@@ -327,7 +341,7 @@ Classifier validation joins the same issue collection for create, import, draft 
 
 `POST /loops`, `POST /loops/import` and `PUT /loops/{id}/draft` report catalog/configuration issues without CLI probes. `POST /loops/{id}/validate` and `POST /loops/{id}/publish` add fresh readiness issues. All share the same base checks: the `domain` rules (`validateLoop`, which includes Liquid and JSONata syntax checks), trigger checks such as cron syntax, and subloop references, which must name a loop of the same owner with a published version (`SUBLOOP_NOT_FOUND`, `SUBLOOP_NOT_PUBLISHED`; a loop may reference itself). `publishable` from validate is true exactly when publish would accept the draft. The editor runs the `domain` rules locally and adds the API-only issues from validate.
 
-The API validates explicit and inherited model/effort selections within the selected harness. Unknown or wrong-harness models and unsupported effective effort are errors. Disabled or unconfigured models block publication. Loop and owner defaults use `defaults.byHarness`; process defaults use the same shape through `GG_DEFAULTS`. Precise node-relative paths identify decision `evaluation` selections and inference fields; loop diagnostics identify the selected harness entry. Draft creation, import and saving allow unresolved inherited model or effort defaults, returning catalog/configuration issues for later repair. They never probe harness readiness. Explicit validate, publish and manual API/MCP run admission probe once per referenced harness per request, concurrently across harnesses; `/harness/preflight` supplies editor readiness separately. Run admission returns 422 `HARNESS_NOT_READY` with typed readiness issues before a turn starts when prerequisites fail. Explicit invalid node or loop selections still fail admission. Publication and runtime keep enforcing the full resolution policy.
+The API validates explicit and inherited model/effort selections within the selected harness. Unknown or wrong-harness models and unsupported effective effort are errors. Disabled or unconfigured models block publication. Loop and owner defaults use `defaults.byHarness`; process defaults use the same shape through `GG_DEFAULTS`. Precise node-relative paths identify decision `evaluation` selections and inference fields; loop diagnostics identify the selected harness entry. Draft creation, import and saving allow unresolved inherited model or effort defaults, returning catalog/configuration issues for later repair. They never probe harness readiness. Explicit validate, publish and manual API/MCP trigger start probe once per referenced harness per request, concurrently across harnesses; `/harness/preflight` supplies editor readiness separately. Manual trigger start returns 422 `HARNESS_NOT_READY` with typed readiness issues before a turn starts when prerequisites fail. Replay (`POST /runs/{id}/replay`) has a separate admission policy and does not perform this preflight: it can return 202, execute preceding mutations and then fail at an unready harness. Scheduled/webhook starts, internal subloops and resumes also retain their existing execution checks; see [no-turn readiness](06-harness-integration.md#no-turn-readiness-179). Explicit invalid node or loop selections still fail admission. Publication and runtime keep enforcing the full resolution policy.
 
 Known limitation: loop-default model warnings always check the Codex catalog, the only supported
 inference harness. Revisit this check when a second harness exists so a model inherited by nodes

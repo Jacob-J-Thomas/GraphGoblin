@@ -1,0 +1,28 @@
+pnpm.cmd : $ vitest run --coverage --maxWorkers=2 --coverage.reportOnFailure=true
+At line:8 char:1
++ pnpm.cmd --filter @graphgoblin/contracts test:coverage --maxWorkers=2 ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...tOnFailure=true:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+
+ RUN  v5.0.3 %WORKTREE%/packages/contracts
+      Coverage enabled with v8
+
+
+ Test Files  19 passed (19)
+      Tests  259 passed (259)
+   Start at  13:09:15
+   Duration  9.25s (import 70%, transform 17%, tests 7%, worker 7%)
+
+    Isolate  19 workers spawned · ~284ms startup each (spawn + environment, per file)
+             at least ~2.42s faster with isolate: false — reuses workers across files instead of one per file
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 99.49% ( 394/396 )
+Branches     : 94.92% ( 187/197 )
+Functions    : 100% ( 58/58 )
+Lines        : 99.73% ( 380/381 )
+================================================================================

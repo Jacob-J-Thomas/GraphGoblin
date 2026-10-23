@@ -12,7 +12,7 @@ export interface ClaudeProcessRequest {
   signal: AbortSignal;
   timeoutMs: number;
   maxOutputBytes: number;
-  /** Ephemeral diagnostic inference is permitted only for no-turn prerequisite probes. */
+  /** Readiness diagnostic inference is permitted only for no-turn prerequisite probes. */
   classifyDiagnostics?: true;
 }
 export interface ClaudeProcessResult {
@@ -30,6 +30,8 @@ export interface ClaudeProcessResult {
   failureState?: HarnessReadinessState;
   /** Fixed pre-turn refusal inferred only from bounded CLI stderr, never model stdout. */
   turnRejection?: 'arguments' | 'auth' | 'session-missing';
+  /** Positive sign-out text in bounded no-turn stderr; never a retained diagnostic body. */
+  notLoggedIn?: true;
 }
 export type ClaudeCliRunner = (
   request: ClaudeProcessRequest,
@@ -86,6 +88,9 @@ export const runClaudeProcess = (
         ...(request.classifyDiagnostics && exitCode !== 0 && diagnostic
           ? { failureState: cliFailureState(diagnostic) }
           : {}),
+        ...(request.classifyDiagnostics && /\bnot logged in\b/i.test(diagnostic)
+          ? { notLoggedIn: true }
+          : {}),
       });
     };
     const kill = (): void => {
@@ -109,7 +114,8 @@ export const runClaudeProcess = (
       }
       try {
         // Keep only stderr in this ephemeral window. Turn stdout can contain authored/model text.
-        // No-turn probe stdout is classified separately by the harness inspection path.
+        // The same bounded buffer supports turn refusals and probe-only sign-out inference;
+        // only fixed classifications leave it. Probe stdout is inspected separately by the harness.
         if (!output) {
           diagnostic = (diagnostic + chunk.toString('utf8')).slice(-8192);
           if (/^(?:Error: )?No conversation found with session ID:/im.test(diagnostic))
