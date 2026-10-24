@@ -838,4 +838,83 @@ describe('awaiting a child across failures and restarts (#242)', () => {
       expect(before?.type).toBe('child_run.finished');
     }
   });
+
+  it.each([
+    { name: 'a missing path', patch: '[{"op":"replace","path":"/vars/missing","value":1}]' },
+    { name: 'an invalid thread', patch: '[{"op":"replace","path":"/messages","value":42}]' },
+  ])(
+    'an output patch the executor cannot apply ($name) keeps the child completion with the failure (#398)',
+    async ({ patch }) => {
+      const e = await createTestEngine({ maxConcurrentRuns: 3 });
+      const leaf = e.publish(inputLoop('invalid-patch-leaf'));
+      const parent = await e.runToIdle(
+        e.publish(
+          singleNodeLoop(
+            'invalid-patch-parent',
+            subNode(leaf.loopId, { output: { mode: 'custom', custom: { patch } } }),
+          ),
+        ).loopId,
+      );
+      const [kid] = await e.ports.runs.listChildren(parent.id);
+      await e.manager.provideInput(kid!.id, await waitIdOf(e, kid!.id), 'done');
+      const done = await e.settle(parent.id);
+      e.manager.stop();
+      expect(done.status).toBe('failed');
+      expect(done.failure?.message).toContain('produced an invalid patch');
+      const tail = e
+        .events(parent.id)
+        .map((event) => event.type)
+        .filter((type) => type === 'child_run.finished' || type === 'run.failed');
+      expect(tail).toEqual(['child_run.finished', 'run.failed']);
+    },
+  );
+
+  it.each([
+    { window: 'before its journal append', hold: 'append' as const },
+    { window: 'after its journal append', hold: 'claim' as const },
+  ])(
+    'a parent that dies cancelling for its child $window records the completion once (#398)',
+    async ({ hold }) => {
+      const e = await createTestEngine({ maxConcurrentRuns: 3 });
+      const leaf = e.publish(inputLoop('cancel-window-leaf'));
+      const parent = await e.runToIdle(
+        e.publish(withAfter('cancel-window-parent', leaf.loopId)).loopId,
+      );
+      const [kid] = await e.ports.runs.listChildren(parent.id);
+      let died = false;
+      if (hold === 'append') {
+        const append = e.ports.events.append.bind(e.ports.events);
+        vi.spyOn(e.ports.events, 'append').mockImplementation(async (runId, drafts, options) => {
+          if (
+            runId === parent.id &&
+            drafts.some((draft) => draft.type === 'run.cancel_requested')
+          ) {
+            died = true;
+            return hang();
+          }
+          return append(runId, drafts, options);
+        });
+      } else {
+        const claim = e.ports.runs.claimCancel.bind(e.ports.runs);
+        vi.spyOn(e.ports.runs, 'claimCancel').mockImplementation((runId, ...rest) => {
+          if (runId === parent.id) {
+            died = true;
+            return hang();
+          }
+          return claim(runId, ...rest);
+        });
+      }
+      await e.manager.cancel(kid!.id);
+      await vi.waitFor(() => expect(died).toBe(true));
+      vi.restoreAllMocks();
+
+      const recovered = await recover(e);
+      expect((await recovered.getRun(parent.id))?.status).toBe('cancelled');
+      const types = e.events(parent.id).map((event) => event.type);
+      expect(types.filter((type) => type === 'child_run.finished')).toHaveLength(1);
+      expect(types.filter((type) => type === 'run.cancel_requested')).toHaveLength(1);
+      expect(types.at(-1)).toBe('run.cancelled');
+      expect(count(e, parent.id, started('after'))).toBe(0);
+    },
+  );
 });

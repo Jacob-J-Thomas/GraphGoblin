@@ -1180,7 +1180,9 @@ export class RunManager {
           this.enqueue(run.id);
           continue;
         }
-        if (run.cancelRequestedAt) {
+        // A cancellation journalled before its flag (a child's cancellation, #398) is completed too.
+        if (run.cancelRequestedAt || events.at(-1)?.type === 'run.cancel_requested') {
+          await this.ports.runs.claimCancel(run.id, ACTIVE_STATUSES, this.now());
           await this.finalizeCancel(run.id);
           continue;
         }
@@ -1748,12 +1750,17 @@ export class RunManager {
       try {
         thread = ContextThreadSchema.parse(applyPatch(thread, result.patch));
       } catch (error) {
-        await this.failRun(runId, {
-          code: 'INTERNAL_ERROR',
-          message: `node ${nodeId} produced an invalid patch: ${describeError(error)}`,
-          nodeId,
-          resumable: false,
-        });
+        // What the visit learned stays with the failure it ends in (#398).
+        await this.failRun(
+          runId,
+          {
+            code: 'INTERNAL_ERROR',
+            message: `node ${nodeId} produced an invalid patch: ${describeError(error)}`,
+            nodeId,
+            resumable: false,
+          },
+          result.kind === 'done' ? result.records : undefined,
+        );
         return;
       }
       const route = result.kind === 'exit' ? undefined : result.route;
@@ -2254,11 +2261,16 @@ export class RunManager {
     childRunId: string,
     records: readonly EventDraft[] = [],
   ): Promise<void> {
-    if (await this.ports.runs.claimCancel(runId, ACTIVE_STATUSES, this.now()))
+    // Journal first, then claim (#398): the child's completion and the request it causes are one
+    // append, so a process that dies before it re-executes the visit, and one that dies after it
+    // finds the request as the log's last event and completes the cancellation at recovery.
+    const run = await this.mustGet(runId);
+    if (!run.cancelRequestedAt)
       await this.ports.events.append(runId, [
         ...records,
         { type: 'run.cancel_requested', actor: { kind: 'run', id: childRunId } },
       ]);
+    await this.ports.runs.claimCancel(runId, ACTIVE_STATUSES, this.now());
     await this.finalizeCancel(runId);
   }
 
