@@ -256,8 +256,7 @@ test('the decision LLM uses an explicit harness model and rejects unsupported ef
   await page.goto(`/app/loops/${loop.id}/edit`);
   const dialog = await openNode(page, 'infer');
   const evaluation = dialog;
-  const modelGroup = evaluation.getByRole('group', { name: 'Model', exact: true });
-  const model = modelGroup.getByLabel('Value', { exact: true });
+  const model = evaluation.getByLabel('Model', { exact: true });
   const effort = evaluation.getByLabel('Effort', { exact: true });
   await expect(model).toHaveValue('picker-decision');
   await expect(effort).toHaveValue('high');

@@ -253,7 +253,7 @@ describe('catalog field controls', () => {
 
     await waitFor(() => expect(model()).not.toHaveAttribute('aria-readonly'));
     expect(model()).toHaveValue('claude-fable-5-1');
-    expect(model()).not.toHaveAccessibleDescription(/unavailable/);
+    expect(model()).not.toHaveAccessibleDescription(/read-only|not listed|not in the catalog/);
     expect(within(model()).getByRole('option', { name: /claude-fable-5-1/ })).toBeEnabled();
     expect(within(model()).getByRole('option', { name: /claude-opus-5-5/ })).toBeEnabled();
 
@@ -520,9 +520,7 @@ describe('catalog field controls', () => {
       api,
     );
     const group = screen.getByRole('form', { name: 'Decision' });
-    // Explicit selections are controls nested within the active model and effort unions.
-    const modelGroup = within(group).getByRole('group', { name: 'Model' });
-    const model = within(modelGroup).getByLabelText('Value');
+    const model = within(group).getByLabelText('Model');
     const effort = within(group).getByLabelText('Effort');
     await waitFor(() => expect(model).not.toHaveAttribute('aria-readonly'));
     expect(model).toHaveValue('alpha');

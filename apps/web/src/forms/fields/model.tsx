@@ -27,7 +27,6 @@ import { shapeOf, unwrap, type FieldShape, type Schema } from '../introspect.js'
 import { isUnset } from '../unset.js';
 import { NodeOutputsContext } from '../EarlierNodeOutputs.js';
 import { fieldMeta, FormScopeContext, Row, useField, type FieldProps } from './shared.js';
-import { DefaultField } from './structure.js';
 
 /** Read the shared queries at action time; this hook never starts or refetches a lookup. */
 export function useHarnessSwitch() {
@@ -270,7 +269,7 @@ function useCatalogField(name: string, kind: 'model' | 'effort', value: unknown)
   });
   const model = selection ? (kind === 'model' ? value : selectedModel) : selectedModel;
   const selected =
-    kind === 'effort' && typeof model === 'object' && model !== null
+    typeof model === 'object' && model !== null
       ? (model as { mode?: unknown; value?: unknown }).mode === 'explicit'
         ? (model as { value?: unknown }).value
         : undefined
@@ -492,16 +491,26 @@ function CatalogField({
           label: `${entry.displayName} (${entry.model})`,
         }))
       : efforts.map((effort) => ({ value: effort, label: effort }));
+  const unknownDefault = defaultsPending ? 'checking…' : 'unavailable';
+  const inheritedEffort =
+    query.data === undefined
+      ? query.isPending
+        ? 'checking…'
+        : 'unavailable'
+      : (inherited.effort ?? unknownDefault);
   const placeholder =
     kind === 'model'
-      ? `${unsetLabel}${inherited.model ? ` (${inherited.model})` : ''}`
-      : `Default (${inherited.effort ?? (defaultsPending ? 'checking…' : 'unavailable')})`;
+      ? selection
+        ? `Default (${inherited.model ?? unknownDefault})`
+        : `${unsetLabel}${inherited.model ? ` (${inherited.model})` : ''}`
+      : `Default (${inheritedEffort})`;
   const inheritedUnsupported =
     kind === 'effort' &&
     value === '' &&
     inherited.effort !== undefined &&
     !unavailable &&
     !efforts.includes(inherited.effort);
+  const defaultDescription = `Default ${kind}: ${kind === 'model' ? (inherited.model ?? unknownDefault) : inheritedEffort}.${inheritedUnsupported ? ' This inherited effort is not supported by this model.' : ''}`;
   return (
     <Row
       name={name}
@@ -525,6 +534,7 @@ function CatalogField({
         const describedBy =
           [
             control['aria-describedby'],
+            `${id}-default`,
             messages.length ? noticeId : undefined,
             kind === 'effort' && (unavailable || query.isError) ? catalogNoticeId : undefined,
           ]
@@ -574,6 +584,9 @@ function CatalogField({
                   </option>
                 ))}
             </Select>
+            <HelpText id={`${id}-default`} tone={inheritedUnsupported ? 'warn' : 'muted'}>
+              {defaultDescription}
+            </HelpText>
             {messages.length ? (
               <HelpText id={noticeId} role="status" tone={warn ? 'warn' : 'muted'}>
                 {warn ? (
@@ -625,21 +638,6 @@ export function EffortSelectionField(props: FieldProps) {
   return <CatalogField {...props} kind="effort" selection />;
 }
 
-/** Keep the model's existing explicit/inherit editor, with the inherited identity in sight. */
 export function ModelSelectionField(props: FieldProps) {
-  const value: unknown = useWatch({ name: props.name });
-  const { inherited, defaultsPending } = useCatalogField(`${props.name}.value`, 'model', undefined);
-  return (
-    <>
-      <DefaultField {...props} />
-      {typeof value === 'object' &&
-      value !== null &&
-      'mode' in value &&
-      value.mode === 'inherit' ? (
-        <HelpText>
-          Default model: {inherited.model ?? (defaultsPending ? 'checking…' : 'unavailable')}
-        </HelpText>
-      ) : null}
-    </>
-  );
+  return <CatalogField {...props} kind="model" selection />;
 }

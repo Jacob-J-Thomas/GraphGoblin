@@ -1,0 +1,192 @@
+COMMAND: git diff --unified=0 HEAD -- packages/engine/src/run-manager.ts apps/api/src/routes/runs.ts apps/api/src/run-readiness.ts apps/api/src/nested-readiness.test.ts apps/web/src/api/queries.ts docs/06-harness-integration.md
+diff --git a/apps/api/src/nested-readiness.test.ts b/apps/api/src/nested-readiness.test.ts
+index 433eb628..aa0130e9 100644
+--- a/apps/api/src/nested-readiness.test.ts
++++ b/apps/api/src/nested-readiness.test.ts
+@@ -168 +168 @@ describe('manual admission over pinned nested definitions', () => {
+-  it('shares one probe between same-harness parent and child nodes', async () => {
++  it('shares one admission probe and checks each same-harness parent and child request', async () => {
+@@ -177 +177,2 @@ describe('manual admission over pinned nested definitions', () => {
+-    expect([claude.probes, codex.probes]).toEqual([1, 0]);
++    // One shared admission probe, then one capability check at each Claude request.
++    expect([claude.probes, codex.probes]).toEqual([3, 0]);
+@@ -215 +216 @@ describe('manual admission over pinned nested definitions', () => {
+-    expect([claude.probes, codex.probes]).toEqual([1, 0]);
++    expect([claude.probes, codex.probes]).toEqual([2, 0]); // admission + request
+@@ -296 +297 @@ describe('manual admission over pinned nested definitions', () => {
+-    expect([claude.probes, codex.probes]).toEqual([1, 0]);
++    expect([claude.probes, codex.probes]).toEqual([2, 0]); // admission + pinned child request
+@@ -335 +336 @@ describe('manual admission over pinned nested definitions', () => {
+-    expect([claude.probes, codex.probes]).toEqual([1, 0]);
++    expect([claude.probes, codex.probes]).toEqual([2, 0]); // admission + frozen root request
+diff --git a/apps/api/src/routes/runs.ts b/apps/api/src/routes/runs.ts
+index 1b6996b9..e024b646 100644
+--- a/apps/api/src/routes/runs.ts
++++ b/apps/api/src/routes/runs.ts
+@@ -98 +98 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void
+-          (plan) => assertRunReadiness(plan, readiness),
++          async (plan) => assertRunReadiness(plan, readiness, await ports.modelCatalog.list()),
+diff --git a/apps/api/src/run-readiness.ts b/apps/api/src/run-readiness.ts
+index 89bb1c2a..15778c14 100644
+--- a/apps/api/src/run-readiness.ts
++++ b/apps/api/src/run-readiness.ts
+@@ -1,2 +1,8 @@
+-import type { HarnessId, LoopIssue, LoopVersionRecord } from '@graphgoblin/contracts';
+-import { readinessMessage } from '@graphgoblin/domain';
++import type {
++  Effort,
++  HarnessId,
++  LoopIssue,
++  LoopVersionRecord,
++  ModelCatalogEntry,
++} from '@graphgoblin/contracts';
++import { readinessMessage, resolveHarnessModel } from '@graphgoblin/domain';
+@@ -16,0 +23 @@ export async function assertRunReadiness(
++  catalog: readonly ModelCatalogEntry[],
+@@ -25 +32,7 @@ export async function assertRunReadiness(
+-  const selections: { version: LoopVersionRecord; nodeId: string; harness: HarnessId }[] = [];
++  const selections: {
++    version: LoopVersionRecord;
++    nodeId: string;
++    harness: HarnessId;
++    model: string | undefined;
++    effort: Effort | undefined;
++  }[] = [];
+@@ -32 +45,7 @@ export async function assertRunReadiness(
+-        selections.push({ version, nodeId: node.id, harness: node.config.harness });
++        selections.push({
++          version,
++          nodeId: node.id,
++          harness: node.config.harness,
++          model: node.config.model,
++          effort: node.config.effort,
++        });
+@@ -34 +53,7 @@ export async function assertRunReadiness(
+-        selections.push({ version, nodeId: node.id, harness: node.config.harness });
++        selections.push({
++          version,
++          nodeId: node.id,
++          harness: node.config.harness,
++          model: node.config.model.mode === 'explicit' ? node.config.model.value : undefined,
++          effort: node.config.effort.mode === 'explicit' ? node.config.effort.value : undefined,
++        });
+@@ -50,19 +75,47 @@ export async function assertRunReadiness(
+-    selections.map(async ({ version, nodeId, harness }): Promise<RunReadinessIssue[]> => {
+-      const result = await readiness.probe(harness);
+-      if (result.state === 'ready') return [];
+-      const detail = result.problems.join(' ') || readinessMessage(harness, result.state);
+-      return [
+-        {
+-          code: 'HARNESS_READINESS_' + result.state.toUpperCase().replaceAll('-', '_'),
+-          severity: 'warning',
+-          loopId: version.loopId,
+-          versionId: version.id,
+-          nodeId,
+-          path: 'config.harness',
+-          message:
+-            version.id === plan.root.id
+-              ? detail
+-              : `Loop "${version.definition.name}" (${version.loopId}), node "${nodeId}": ${detail}`,
+-        },
+-      ];
+-    }),
++    selections.map(
++      async ({ version, nodeId, harness, model, effort }): Promise<RunReadinessIssue[]> => {
++        const result = await readiness.probe(harness);
++        if (result.state === 'ready') {
++          if (harness !== 'claude' || result.models === undefined) return [];
++          const resolution = resolveHarnessModel({
++            harness,
++            ...(model !== undefined ? { model } : {}),
++            ...(effort !== undefined ? { effort } : {}),
++            loopDefaults: version.definition.settings.defaults,
++            ownerDefaults: plan.defaults.owner,
++            processDefaults: plan.defaults.process,
++            catalog,
++            claudeCapabilities: result.models,
++          });
++          // Other catalog/configuration failures keep their existing execution-time handling.
++          if (resolution.status !== 'invalid' || resolution.code !== 'EFFORT_UNSUPPORTED')
++            return [];
++          return [
++            {
++              code: resolution.code,
++              severity: 'error',
++              loopId: version.loopId,
++              versionId: version.id,
++              nodeId,
++              path: 'config.effort',
++              message: resolution.message,
++            },
++          ];
++        }
++        const detail = result.problems.join(' ') || readinessMessage(harness, result.state);
++        return [
++          {
++            code: 'HARNESS_READINESS_' + result.state.toUpperCase().replaceAll('-', '_'),
++            severity: 'warning',
++            loopId: version.loopId,
++            versionId: version.id,
++            nodeId,
++            path: 'config.harness',
++            message:
++              version.id === plan.root.id
++                ? detail
++                : `Loop "${version.definition.name}" (${version.loopId}), node "${nodeId}": ${detail}`,
++          },
++        ];
++      },
++    ),
+diff --git a/apps/web/src/api/queries.ts b/apps/web/src/api/queries.ts
+index aec1fc96..d3d196de 100644
+--- a/apps/web/src/api/queries.ts
++++ b/apps/web/src/api/queries.ts
+@@ -150,0 +151,15 @@ export function useProcessModelDefaults() {
++/** Defaults may change in Settings or outside this tab. Refresh both levels together. */
++export async function refreshModelDefaults(queryClient: QueryClient): Promise<void> {
++  const queries = [keys.settings, keys.modelDefaults];
++  // A request begun before this event may hold older Settings. Replace it, including a first
++  // load, without reverting authoritative data just written by the Settings mutation.
++  await Promise.all(
++    queries.map((queryKey) =>
++      queryClient.cancelQueries({ queryKey, exact: true }, { silent: true, revert: false }),
++    ),
++  );
++  await Promise.all(
++    queries.map((queryKey) => queryClient.invalidateQueries({ queryKey, exact: true })),
++  );
++}
++
+diff --git a/docs/06-harness-integration.md b/docs/06-harness-integration.md
+index dc2876f7..ee29e29d 100644
+--- a/docs/06-harness-integration.md
++++ b/docs/06-harness-integration.md
+@@ -114,0 +115,9 @@ become underscores); catalog/configuration issues retain their existing codes.
++Claude's ready `models` list also constrains the effective model and effort (#205). Manual
++admission resolves each pinned inference/LLM selection with the run's pinned owner/process
++defaults and its definition's loop defaults, rejecting `EFFORT_UNSUPPORTED` on the node before
++recording the run. The engine repeats this check in shared model resolution before any adapter
++request, covering manual and automatic starts, subloop children, resumes and recovery. An unknown
++or unready probe retains the existing readiness handling; no capability check substitutes a model
++or effort or claims provider entitlement. The editor intersects the same ready capabilities with
++the catalog's effort choices.
++
+diff --git a/packages/engine/src/run-manager.ts b/packages/engine/src/run-manager.ts
+index ae169721..5e41fdb1 100644
+--- a/packages/engine/src/run-manager.ts
++++ b/packages/engine/src/run-manager.ts
+@@ -127,0 +128 @@ export interface RunStartPlan {
++  defaults: PinnedDefaults;
+@@ -472,0 +474 @@ export class RunManager {
++        defaults: prepared.run.pinned.defaults,
+@@ -1523,0 +1526,6 @@ export class RunManager {
++        // Every inference/LLM request (including triggers, children and resumes) resolves here.
++        // Manual API admission checks earlier too; recheck ready Claude capabilities at use.
++        const preflight =
++          harness === 'claude'
++            ? await this.ports.harnesses.claude?.preflight().catch(() => undefined)
++            : undefined;
+@@ -1547,0 +1556,3 @@ export class RunManager {
++          ...(preflight?.state === 'ready' && preflight.models !== undefined
++            ? { claudeCapabilities: preflight.models }
++            : {}),

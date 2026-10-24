@@ -148,6 +148,21 @@ export function useProcessModelDefaults() {
   });
 }
 
+/** Defaults may change in Settings or outside this tab. Refresh both levels together. */
+export async function refreshModelDefaults(queryClient: QueryClient): Promise<void> {
+  const queries = [keys.settings, keys.modelDefaults];
+  // A request begun before this event may hold older Settings. Replace it, including a first
+  // load, without reverting authoritative data just written by the Settings mutation.
+  await Promise.all(
+    queries.map((queryKey) =>
+      queryClient.cancelQueries({ queryKey, exact: true }, { silent: true, revert: false }),
+    ),
+  );
+  await Promise.all(
+    queries.map((queryKey) => queryClient.invalidateQueries({ queryKey, exact: true })),
+  );
+}
+
 export function useModelCatalog() {
   const client = useApi();
   return useQuery({ queryKey: keys.catalog, queryFn: () => modelCatalog.list(client) });

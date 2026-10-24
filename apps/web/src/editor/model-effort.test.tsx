@@ -235,7 +235,8 @@ for (const kind of ['inference', 'llm'] as const) {
           .map((o) => o.textContent),
       ).toEqual(['Default (high)', 'low', 'high']);
       expect(change).not.toHaveBeenCalled();
-      if (kind === 'llm') expect(screen.getByText('Default model: chosen')).toBeVisible();
+      if (kind === 'llm')
+        expect(screen.getByLabelText('Model')).toHaveAccessibleDescription(/Default model: chosen/);
       else
         expect(
           within(screen.getByLabelText('Model')).getByRole('option', {

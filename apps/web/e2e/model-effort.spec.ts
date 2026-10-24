@@ -2,6 +2,191 @@ import { LoopDefinitionSchema } from '@graphgoblin/contracts';
 import { minimalLoop } from '@graphgoblin/contracts/testing';
 import { test, expect, control, openNode, closeNode } from './fixtures.js';
 
+function inheritedInference(name: string, config: Record<string, unknown> = {}) {
+  const source = minimalLoop();
+  return {
+    ...source,
+    name,
+    nodes: [
+      source.nodes[0],
+      {
+        id: 'work',
+        kind: 'inference',
+        label: 'Work',
+        ui: { x: 260, y: 80 },
+        config: { prompt: { template: 'q' }, ...config },
+      },
+      source.nodes[1],
+    ],
+    edges: [
+      { id: 'start-work', from: { node: 'start', port: 'out' }, to: { node: 'work' } },
+      { id: 'work-done', from: { node: 'work', port: 'out' }, to: { node: 'done' } },
+    ],
+  };
+}
+
+test('open inherited labels refresh on focus after another tab saves Settings and match the next request', async ({
+  page,
+  request,
+  context,
+}) => {
+  const instance = await control(request, '/apps');
+  const url = String(instance['url']);
+  const instanceId = String(instance['instanceId']);
+  const created = await request.post(url + '/loops', {
+    data: { definition: inheritedInference('205 refresh') },
+  });
+  expect(created.status()).toBe(201);
+  const { loop } = (await created.json()) as { loop: { id: string } };
+  expect((await request.post(url + `/loops/${loop.id}/publish`)).status()).toBe(200);
+  await page.goto(url + `/app/loops/${loop.id}/edit`);
+  let dialog = await openNode(page, 'work');
+  await expect(dialog.getByLabel('Effort', { exact: true }).locator('option').first()).toHaveText(
+    'Default (low)',
+  );
+  const settingsTab = await context.newPage();
+  await settingsTab.bringToFront();
+  await settingsTab.goto(url + '/app/settings');
+  await settingsTab.getByLabel('Default model', { exact: true }).selectOption('gpt-6.1-sol');
+  await expect(settingsTab.getByLabel('Default model', { exact: true })).toBeEnabled();
+  await settingsTab.getByLabel('Default effort', { exact: true }).selectOption('high');
+  await expect(settingsTab.getByLabel('Default effort', { exact: true })).toBeEnabled();
+  expect(await (await request.get(url + '/settings')).json()).toMatchObject({
+    defaults: { byHarness: { codex: { model: 'gpt-6.1-sol', effort: 'high' } } },
+  });
+  await page.bringToFront();
+  // In default headless Edge both tabs stay visible/focused; bringToFront emits no window
+  // focus event (recorded in round-3/browser-focus-diagnostic.log.txt). Exercise the public
+  // DOM event explicitly; this case does not claim native window-activation coverage.
+  await page.evaluate(() => window.dispatchEvent(new FocusEvent('focus')));
+  await expect(dialog.getByLabel('Model', { exact: true })).toHaveAccessibleDescription(
+    /Default model: gpt-6.1-sol/,
+  );
+  await expect(dialog.getByLabel('Effort', { exact: true }).locator('option').first()).toHaveText(
+    'Default (high)',
+  );
+  expect((await request.post(url + `/loops/${loop.id}/runs`, { data: {} })).status()).toBe(202);
+  await expect
+    .poll(async () => (await control(request, '/harness/requests', { instanceId }))['started'])
+    .toMatchObject([{ model: 'gpt-6.1-sol', effort: 'high' }]);
+  await closeNode(page);
+  expect((await request.delete(url + '/settings/defaults')).status()).toBe(204);
+  dialog = await openNode(page, 'work');
+  await expect(dialog.getByLabel('Effort', { exact: true }).locator('option').first()).toHaveText(
+    'Default (low)',
+  );
+  await expect(dialog.getByLabel('Model', { exact: true })).toHaveAccessibleDescription(
+    /Default model: gpt-6-luna/,
+  );
+  await settingsTab.close();
+});
+
+test('catalog pending and failure label effort as unknown without changing the selection', async ({
+  page,
+  request,
+}) => {
+  const instance = await control(request, '/apps');
+  const url = String(instance['url']);
+  const created = await request.post(url + '/loops', {
+    data: { definition: inheritedInference('205 unknown catalog') },
+  });
+  const { loop } = (await created.json()) as { loop: { id: string } };
+  let fail!: () => void;
+  const pending = new Promise<void>((resolve) => {
+    fail = resolve;
+  });
+  await page.route('**/model-catalog', async (route) => {
+    await pending;
+    await route.fulfill({
+      status: 503,
+      contentType: 'application/problem+json',
+      body: JSON.stringify({ status: 503, code: 'FAILED', detail: 'catalog unavailable' }),
+    });
+  });
+  await page.goto(url + `/app/loops/${loop.id}/edit`);
+  const dialog = await openNode(page, 'work');
+  await expect(dialog.getByLabel('Model', { exact: true })).toHaveAccessibleDescription(
+    /Default model: gpt-6-luna/,
+  );
+  const effort = dialog.getByLabel('Effort', { exact: true });
+  await expect(effort.locator('option').first()).toHaveText('Default (checking…)');
+  fail();
+  await expect(effort.locator('option').first()).toHaveText('Default (unavailable)');
+  await expect(effort).toHaveValue('');
+});
+
+for (const explicit of [false, true]) {
+  test(`Claude ready capabilities refuse high before admission and still run low (explicit=${explicit})`, async ({
+    page,
+    request,
+  }) => {
+    const instance = await control(request, '/apps', {
+      claude: true,
+      env: {
+        GG_DEFAULTS: JSON.stringify({
+          byHarness: { claude: { model: 'claude-opus-5-5', effort: 'high' } },
+        }),
+      },
+    });
+    const url = String(instance['url']);
+    const instanceId = String(instance['instanceId']);
+    const created = await request.post(url + '/loops', {
+      data: {
+        definition: inheritedInference('205 Claude capability', {
+          harness: 'claude',
+          harnessOptions: { sandbox: 'read-only', approval: 'never' },
+          ...(explicit ? { model: 'claude-opus-5-5', effort: 'high' } : {}),
+        }),
+      },
+    });
+    expect(created.status()).toBe(201);
+    const { loop } = (await created.json()) as { loop: { id: string } };
+    expect((await request.post(url + `/loops/${loop.id}/publish`)).status()).toBe(200);
+    await control(request, '/harness/preflight', {
+      instanceId,
+      harness: 'claude',
+      state: 'ready',
+      models: [{ model: 'claude-opus-5-5', efforts: ['low'] }],
+    });
+    await page.goto(url + `/app/loops/${loop.id}/edit`);
+    const dialog = await openNode(page, 'work');
+    const effort = dialog.getByLabel('Effort', { exact: true });
+    await expect(effort).toHaveValue(explicit ? 'high' : '');
+    await expect(effort).toHaveAccessibleDescription(/not supported/);
+    if (!explicit)
+      await expect(effort).toHaveAccessibleDescription(
+        /Default effort: high.*not supported by this model/,
+      );
+    const rejected = await request.post(url + `/loops/${loop.id}/runs`, { data: {} });
+    expect(rejected.status()).toBe(422);
+    expect(await rejected.json()).toMatchObject({
+      errors: [
+        expect.objectContaining({
+          nodeId: 'work',
+          code: 'EFFORT_UNSUPPORTED',
+          path: 'config.effort',
+        }),
+      ],
+    });
+    expect(
+      (await control(request, '/harness/requests', { instanceId, harness: 'claude' }))['started'],
+    ).toEqual([]);
+    await effort.selectOption('low');
+    await closeNode(page);
+    await page.getByRole('button', { name: 'Publish', exact: true }).click();
+    await expect(page.getByText('Published version 2.')).toBeVisible();
+    expect((await request.post(url + `/loops/${loop.id}/runs`, { data: {} })).status()).toBe(202);
+    await expect
+      .poll(
+        async () =>
+          (await control(request, '/harness/requests', { instanceId, harness: 'claude' }))[
+            'started'
+          ],
+      )
+      .toMatchObject([{ model: 'claude-opus-5-5', effort: 'low' }]);
+  });
+}
+
 for (const kind of ['inference', 'llm'] as const) {
   for (const level of ['explicit', 'loop', 'Settings', 'ecosystem', 'process'] as const) {
     test(`${kind} ${level} effort survives editing, save, reload and adapter request`, async ({
@@ -79,16 +264,18 @@ for (const kind of ['inference', 'llm'] as const) {
         ? 'gpt-6.1-sol'
         : 'gpt-6-luna';
       if (kind === 'llm')
-        await expect(
-          dialog.getByText(`Default model: ${expectedModel}`, { exact: true }),
-        ).toBeVisible();
+        await expect(dialog.getByLabel('Model', { exact: true })).toHaveAccessibleDescription(
+          new RegExp(`Default model: ${expectedModel}`),
+        );
       else
         await expect(
           dialog.getByLabel('Model', { exact: true }).locator('option').first(),
         ).toHaveText(`(loop default) (${expectedModel})`);
       if (level === 'loop') {
         await effort.scrollIntoViewIfNeeded();
-        await page.screenshot({ path: `../../docs/qa/2026-10-23-wp-f2b-205/after-${kind}.png` });
+        await page.screenshot({
+          path: `../../docs/qa/2026-10-23-wp-f2b-205/round-3/after-${kind}.png`,
+        });
       }
       await closeNode(page);
       await page.getByRole('button', { name: 'Publish', exact: true }).click();
@@ -190,7 +377,9 @@ test('classifier keeps Question, Model, Answer visible and has no effort', async
       ]),
   ).toEqual(['question', 'model', 'answer']);
   await expect(dialog.getByLabel('Effort', { exact: true })).toHaveCount(0);
-  await page.screenshot({ path: '../../docs/qa/2026-10-23-wp-f2b-205/after-classifier.png' });
+  await page.screenshot({
+    path: '../../docs/qa/2026-10-23-wp-f2b-205/round-3/after-classifier.png',
+  });
 });
 
 test('a saved unsupported effort stays visible and is refused before the adapter', async ({

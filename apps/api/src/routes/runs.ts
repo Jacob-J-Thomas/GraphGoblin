@@ -95,7 +95,7 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
             ...(versionId ? { versionId } : {}),
             ...(body.allowDraft ? { allowDraft: true } : {}),
           },
-          (plan) => assertRunReadiness(plan, readiness),
+          async (plan) => assertRunReadiness(plan, readiness, await ports.modelCatalog.list()),
         );
         reply.status(202);
         return { run };

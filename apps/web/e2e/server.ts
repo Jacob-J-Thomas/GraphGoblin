@@ -314,7 +314,11 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
       const { harness, fake } = selectedHarness(instance, body);
       if (harness !== 'claude' || !(fake instanceof E2eClaudeHarness))
         throw new E2eControlError('preflight controls are available only for the Claude E2E fake');
-      if (body['state'] === 'ready') fake.preflightResult = readyClaudePreflight;
+      if (body['state'] === 'ready')
+        fake.preflightResult = HarnessPreflightSchema.parse({
+          ...readyClaudePreflight,
+          ...(body['models'] !== undefined ? { models: body['models'] } : {}),
+        });
       else if (body['state'] === 'not-ready') fake.preflightResult = notReadyClaudePreflight;
       else throw new E2eControlError("preflight state must be 'ready' or 'not-ready'");
       return { ok: true };

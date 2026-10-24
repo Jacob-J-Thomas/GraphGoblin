@@ -4,7 +4,7 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
-- Show model and reasoning effort directly in inference and LLM decision editors. One effort dropdown shows the resolved inherited default and supported explicit choices; classifiers keep Question, Model, then Answer with no effort. Process defaults are exposed read-only for accurate labels; saved configuration shapes are unchanged. (#205)
+- Show model and reasoning effort directly in inference and LLM decision editors, each in one dropdown naming the inherited default. Refresh default labels on dialog open, window focus and Settings saves; describe inherited values and unsupported efforts accessibly. Refuse a manual run whose Claude effort is outside the ready capabilities before recording it. Classifiers keep Question, Model, then Answer with no effort. Process defaults are exposed read-only for accurate labels; saved configuration shapes are unchanged. (#205)
 
 - Dependencies: the CI dependency audit accepts the high advisory GHSA-xjj6-f33q-929c (undici below 8.12.2, denial of service via an unhandled error on excessive content encodings), reported from 2026-10-24. undici reaches the workspace only through jsdom, the web test environment, which talks only to local test servers; no workspace code imports it and no built app bundles it. The fixed undici 8.12.x cannot load on Node 22.14, which local gates still use, so web tests would not start (the ADR-0040 patch-floor gap). The exception is listed with its reason in `pnpm-workspace.yaml`. **Upgrade:** none. Once the local Node 22 is 22.22.2 or later, remove the entry and take undici 8.12.2 or later. No behaviour change.
 

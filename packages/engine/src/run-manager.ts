@@ -125,6 +125,7 @@ export interface RunStartPlan {
   root: LoopVersionRecord;
   versions: ReadonlyMap<string, LoopVersionRecord>;
   subloopVersions: Readonly<Record<string, string>>;
+  defaults: PinnedDefaults;
 }
 
 /** A run start prepared outside the pin lock, admitted inside it. */
@@ -470,6 +471,7 @@ export class RunManager {
         root: prepared.version,
         versions,
         subloopVersions: intent.queued.subloopVersions ?? {},
+        defaults: prepared.run.pinned.defaults,
       });
       const admitted = await this.withPinLock(async () => {
         await this.assertVersionPresent(prepared.sourceId, input.loopId);

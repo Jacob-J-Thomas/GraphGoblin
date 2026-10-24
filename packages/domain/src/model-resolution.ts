@@ -1,4 +1,5 @@
 import type {
+  ClaudeModelCapability,
   Effort,
   HarnessDefaults,
   HarnessId,
@@ -14,6 +15,8 @@ export interface HarnessModelResolutionInput {
   ownerDefaults: HarnessDefaults;
   processDefaults: HarnessDefaults;
   catalog: readonly ModelCatalogEntry[];
+  /** A ready Claude probe's model list, when provided by the adapter. */
+  claudeCapabilities?: readonly ClaudeModelCapability[];
 }
 export type HarnessModelResolution =
   | { status: 'ready'; model: string; effort: Effort }
@@ -78,7 +81,14 @@ export function resolveHarnessModel(input: HarnessModelResolutionInput): Harness
       path: 'effort',
       message: 'No reasoning effort is configured for the selected harness',
     };
-  if (!entry.efforts.includes(effort))
+  if (
+    !entry.efforts.includes(effort) ||
+    (harness === 'claude' &&
+      input.claudeCapabilities !== undefined &&
+      !input.claudeCapabilities.some(
+        (capability) => capability.model === model && capability.efforts.includes(effort),
+      ))
+  )
     return {
       status: 'invalid',
       code: 'EFFORT_UNSUPPORTED',
