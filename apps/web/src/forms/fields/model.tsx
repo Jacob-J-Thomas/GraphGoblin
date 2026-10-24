@@ -278,8 +278,15 @@ function useCatalogField(name: string, kind: 'model' | 'effort', value: unknown)
   const owner = HarnessDefaultsSchema.safeParse(settings.data?.['defaults'] ?? {});
   const loop = HarnessDefaultsSchema.safeParse(node?.definition.settings?.defaults ?? {});
   const parsedHarness = HarnessIdSchema.safeParse(harnessId);
-  // Missing/failed Settings cannot certify that a lower-level fallback is effective.
-  const defaultsKnown = settings.data !== undefined && owner.success && loop.success;
+  // Missing/failed Settings cannot certify that a lower-level fallback is effective. Data cached
+  // from an earlier success does not either once a later refresh failed: the defaults may have
+  // changed in between, so the label waits for the next successful read.
+  const defaultsKnown =
+    settings.data !== undefined &&
+    !settings.isError &&
+    !processDefaults.isError &&
+    owner.success &&
+    loop.success;
   const inherited =
     defaultsKnown && parsedHarness.success
       ? inheritedHarnessDefaults({

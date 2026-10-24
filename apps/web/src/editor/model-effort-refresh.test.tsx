@@ -250,6 +250,49 @@ it('uses one LLM model dropdown with an accessible inherited identity and preser
   );
 });
 
+it.each(['owner', 'process'] as const)(
+  'stops vouching for cached %s defaults when a refresh fails, until one succeeds',
+  async (level) => {
+    const api = new FakeApi();
+    let failing = false;
+    let process = defaults();
+    api.override('GET /system/model-defaults', () =>
+      failing && level === 'process'
+        ? problem(503, 'FAILED', 'defaults unavailable')
+        : Response.json(process),
+    );
+    const settings = () =>
+      failing && level === 'owner'
+        ? problem(503, 'FAILED', 'settings unavailable')
+        : Response.json(api.settingsValues);
+    api.override('GET /settings', settings);
+    const change = vi.fn();
+    renderWith(form(inheritedNode, change), '/', api);
+    await expectDefault('low');
+    // The defaults change elsewhere, and this tab's next read of them fails.
+    if (level === 'owner') api.settingsValues = { defaults: defaults('gpt-6.1-sol', 'high') };
+    else process = defaults('gpt-6.1-sol', 'high');
+    failing = true;
+    act(() => {
+      window.dispatchEvent(new Event('focus'));
+    });
+    await expectDefault('unavailable');
+    expect(screen.getByLabelText('Effort')).toHaveAccessibleDescription(
+      /Default effort: unavailable/,
+    );
+    expect(screen.getByLabelText('Model')).not.toHaveAccessibleDescription(/gpt-6-luna/);
+    failing = false;
+    act(() => {
+      window.dispatchEvent(new Event('focus'));
+    });
+    await expectDefault('high');
+    expect(screen.getByLabelText('Model')).toHaveAccessibleDescription(
+      /Default model: gpt-6.1-sol/,
+    );
+    expect(change).not.toHaveBeenCalled();
+  },
+);
+
 it('describes inherited model identity and unsupported inherited effort on the controls', async () => {
   const api = new FakeApi();
   api.catalog = [
