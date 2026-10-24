@@ -1,0 +1,55 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/api exec vitest run src/shutdown-process.test.ts src/shutdown.test.ts src/main.test.ts
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-224/apps/api
+
+{"level":30,"time":1792799688441,"pid":28232,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5680"}
+{"level":30,"time":1792799688442,"pid":28232,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5680,"dataDir":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-api-process-9KRPgq","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792799688609,"pid":28232,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792799688627,"pid":28232,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":17.724299999987124,"msg":"request completed"}
+ ❯ src/main.test.ts (9 tests | 2 failed | 4 skipped) 246540ms
+   ❯ built API entry and startup failures (6)
+     × dispatches the API-key and preflight CLIs with their real exit codes 60640ms
+     × releases ownership after a real occupied-port listen failure 60719ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/main.test.ts > built API entry and startup failures > dispatches the API-key and preflight CLIs with their real exit codes
+Error: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/main.test.ts:67:3
+     65|   }, 60_000);
+     66|
+     67|   it('dispatches the API-key and preflight CLIs with their real exit c…
+       |   ^
+     68|     const f = await fixture();
+     69|     const token = await f.createKey();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/main.test.ts > built API entry and startup failures > releases ownership after a real occupied-port listen failure
+Error: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/main.test.ts:101:3
+     99|   }, 60_000);
+    100|
+    101|   it('releases ownership after a real occupied-port listen failure', a…
+       |   ^
+    102|     const f = await fixture();
+    103|     await f.createKey();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  2 failed | 6 passed | 7 skipped (15)
+   Start at  18:53:37
+   Duration  315.07s (tests 71%, transform 23%, import 6%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-
+  │ 224\apps\api
+
+
+RESULT: {"command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/shutdown-process.test.ts src/shutdown.test.ts src/main.test.ts", "exit": 1, "seconds": 334.73}

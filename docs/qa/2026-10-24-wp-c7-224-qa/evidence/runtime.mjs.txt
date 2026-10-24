@@ -1,0 +1,422 @@
+import { spawn } from 'node:child_process';
+import { mkdtemp, readFile, writeFile, access } from 'node:fs/promises';
+import { createServer } from 'node:net';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+import { setTimeout as sleep } from 'node:timers/promises';
+
+// Independent QA: built production main, real HTTP, real SQLite, no provider calls.
+// Run from the repository root: Get-Content -Raw <this file> | node --input-type=module
+const root = process.cwd();
+const out = resolve('docs/qa/2026-10-24-wp-c7-224-qa/evidence');
+const entry = resolve('apps/api/dist/main.js');
+const summary = [];
+const inventory = [];
+let context;
+const scrub = value => String(value).replaceAll(process.env.USERPROFILE, '%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\', '/'), '%USERPROFILE%').replace(/\bgg_[A-Za-z0-9_-]+/g, '[disposable-key]');
+const save = async (name, value) => writeFile(join(out, name), scrub(typeof value === 'string' ? value : JSON.stringify(value, null, 2)) + '\n');
+function note(kind, data) { context.records.push({ at: new Date().toISOString(), kind, ...data }); }
+function check(name, actual, expected = true) {
+  const pass = JSON.stringify(actual) === JSON.stringify(expected);
+  context.checks.push({ name, pass, actual, expected });
+  console.log(JSON.stringify({ scenario: context.name, name, pass, actual, expected }));
+  return pass;
+}
+async function until(label, fn, timeout = 20000) {
+  const deadline = Date.now() + timeout;
+  while (Date.now() < deadline) {
+    const result = await fn();
+    if (result) { note('condition', { label }); return result; }
+    await sleep(40);
+  }
+  throw new Error('Timed out: ' + label);
+}
+async function exists(path) { try { await access(path); return true; } catch { return false; } }
+function launch(args, env) {
+  const child = spawn(process.execPath, [entry, ...args], { cwd: root, env, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
+  const p = { child, stdout: '', stderr: '', ended: false, code: undefined };
+  child.stdout.on('data', b => p.stdout += b);
+  child.stderr.on('data', b => p.stderr += b);
+  p.exit = new Promise((res, rej) => {
+    child.once('error', rej);
+    child.once('close', (code, signal) => { p.ended = true; p.code = code; res({ code, signal }); });
+  });
+  return p;
+}
+async function freePort() {
+  for (let port = 5860; port <= 5869; port++) {
+    const server = createServer();
+    const available = await new Promise(res => {
+      server.once('error', () => res(false));
+      server.listen(port, '127.0.0.1', () => server.close(() => res(true)));
+    });
+    if (available) return port;
+  }
+  throw new Error('All allowed ports occupied');
+}
+async function fixture(name, options = {}) {
+  const dataDir = await mkdtemp(join(tmpdir(), 'gg-qa-c7-224-' + name + '-'));
+  const port = await freePort();
+  const inherited = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.toUpperCase().startsWith('GG_') && !['JEV_API_KEY', 'NODE_V8_COVERAGE'].includes(key.toUpperCase())));
+  const env = { ...inherited, GG_HOST: '127.0.0.1', GG_PORT: String(port), GG_DATA_DIR: dataDir, GG_DB_URL: 'file:' + join(dataDir, 'graphgoblin.db').replaceAll('\\', '/'), GG_REQUIRE_API_KEY: 'true', GG_WEB_DIST: '', GG_SWAGGER_UI: 'false', GG_LOG_LEVEL: 'info', GG_TIMER_POLL_MS: '50', GG_MAX_CONCURRENT_RUNS: '2', GG_SHUTDOWN_GRACE_MS: '200', ...options };
+  const cli = launch(['--create-api-key', 'Independent QA'], env);
+  const keyExit = await cli.exit;
+  if (keyExit.code !== 0) throw new Error('Key CLI: ' + cli.stderr);
+  const token = cli.stdout.match(/\bgg_[A-Za-z0-9_-]+/)?.[0];
+  if (!token) throw new Error('No CLI token');
+  note('key-cli', { exit: keyExit, stdout: scrub(cli.stdout), stderr: scrub(cli.stderr) });
+  const f = { name, dataDir, port, env, token, processes: [], releases: [], origin: 'http://127.0.0.1:' + port, lock: join(dataDir, 'graphgoblin.lock') };
+  context.fixtures.push(f);
+  inventory.push({ name, dataDir, port });
+  await boot(f);
+  return f;
+}
+async function boot(f) {
+  const p = launch([], f.env);
+  f.current = p;
+  f.processes.push(p);
+  await until('API listening', async () => {
+    if (p.ended) throw new Error('API exited: ' + p.stderr);
+    try { return (await fetch(f.origin + '/healthz', { signal: AbortSignal.timeout(1000) })).status === 200; } catch { return false; }
+  });
+  note('boot', { dataDir: f.dataDir, port: f.port, pid: p.child.pid });
+  return p;
+}
+async function call(f, method, path, body, opts = {}) {
+  const headers = { ...(opts.noAuth ? {} : { authorization: 'Bearer ' + (opts.token ?? f.token) }), ...(body === undefined ? {} : { 'content-type': 'application/json' }), ...opts.headers };
+  const response = await fetch(f.origin + path, { method, headers, ...(body === undefined ? {} : { body: JSON.stringify(body) }), signal: AbortSignal.timeout(15000) });
+  const text = await response.text();
+  let data; try { data = JSON.parse(text); } catch { data = text; }
+  if (!opts.quiet) note('http', { method, path, body, status: response.status, data });
+  return { status: response.status, data };
+}
+function definition(name, work = [], trigger = { type: 'manual' }) {
+  const nodes = [{ id: 'start', kind: 'trigger', label: 'Start', config: trigger }, ...work, { id: 'done', kind: 'exit', label: 'Done', config: {} }];
+  return { schemaVersion: 4, name, nodes, edges: nodes.slice(1).map((n, i) => ({ id: 'e' + i, from: { node: nodes[i].id, port: 'out' }, to: { node: n.id } })) };
+}
+const inputNode = { id: 'ask', kind: 'wait', label: 'Question', config: { mode: 'input', prompt: 'QA answer' } };
+const timerNode = seconds => ({ id: 'timer', kind: 'wait', label: 'Timer', config: { mode: 'duration', seconds } });
+const scriptNode = (id, code, extra = {}) => ({ id, kind: 'script', label: id, config: { command: process.execPath, args: ['-e', code], ...extra } });
+function held(f, id) {
+  const release = join(f.dataDir, id + '-release');
+  const marker = join(f.dataDir, id + '-started');
+  f.releases.push(release);
+  return { release, marker, node: scriptNode(id, `const f=require('node:fs');f.writeFileSync(${JSON.stringify(marker)},String(process.pid));const i=setInterval(()=>{if(f.existsSync(${JSON.stringify(release)}))process.exit(0)},30);setTimeout(()=>process.exit(0),60000)` ) };
+}
+async function publish(f, def) {
+  const created = await call(f, 'POST', '/loops', { definition: def });
+  if (created.status !== 201) throw new Error('Create: ' + JSON.stringify(created));
+  const id = created.data.loop.id;
+  const result = await call(f, 'POST', '/loops/' + id + '/publish');
+  if (result.status !== 200) throw new Error('Publish: ' + JSON.stringify(result));
+  return id;
+}
+async function start(f, id) {
+  const r = await call(f, 'POST', '/loops/' + id + '/runs', {});
+  if (r.status !== 202) throw new Error('Start: ' + JSON.stringify(r));
+  return r.data.run;
+}
+async function run(f, id, quiet = true) { return (await call(f, 'GET', '/runs/' + id, undefined, { quiet })).data; }
+async function state(f, quiet = false) { return (await call(f, 'GET', '/system/shutdown', undefined, { quiet })).data; }
+async function waitRun(f, id, status) { return until(id + ' ' + status, async () => { const r = await run(f, id); return r.status === status && r; }); }
+async function events(f, id) { return (await call(f, 'GET', '/runs/' + id + '/events?limit=1000')).data.items; }
+async function stop(f, action = 'drain') {
+  const t = Date.now();
+  const r = await call(f, 'POST', '/system/shutdown', { action });
+  const exit = await Promise.race([f.current.exit, sleep(20000).then(() => { throw new Error('Stop did not exit'); })]);
+  note('exit', { action, response: r, exit, elapsedMs: Date.now() - t, lockExists: await exists(f.lock) });
+  return { ...exit, elapsedMs: Date.now() - t };
+}
+async function sse(f, id, label) {
+  const response = await fetch(f.origin + '/runs/' + id + '/events', { headers: { authorization: 'Bearer ' + f.token, accept: 'text/event-stream' } });
+  const s = { closed: false, text: '', openedAt: Date.now() };
+  s.done = (async () => {
+    for await (const chunk of response.body) s.text += Buffer.from(chunk).toString();
+    s.closed = true; s.closedAt = Date.now();
+    await save(context.name + '-' + label + '-sse.log.txt', s.text);
+  })();
+  return s;
+}
+
+async function scenario(name, fn) {
+  context = { name, startedAt: new Date().toISOString(), checks: [], records: [], fixtures: [] };
+  console.log('START ' + name);
+  try { await fn(); } catch (error) { context.error = error.stack; console.log('ERROR ' + name + ': ' + error.stack); }
+  finally {
+    for (const f of context.fixtures) {
+      for (const path of f.releases) await writeFile(path, 'QA release');
+      if (!f.current.ended) {
+        try {
+          const s = await state(f, true);
+          await call(f, 'POST', '/system/shutdown', { action: s.phase === 'force-failed' ? 'force' : 'drain' });
+          await Promise.race([f.current.exit, sleep(15000)]);
+        } catch (error) { note('cleanup-error', { error: String(error) }); }
+        if (!f.current.ended) { note('cleanup-root-only-kill', { pid: f.current.child.pid }); f.current.child.kill(); await f.current.exit; }
+      }
+      for (let i = 0; i < f.processes.length; i++) {
+        await save(name + '-api-' + (i + 1) + '.log.txt', f.processes[i].stdout + '\nSTDERR\n' + f.processes[i].stderr);
+      }
+    }
+    const result = { name, startedAt: context.startedAt, endedAt: new Date().toISOString(), checks: context.checks, records: context.records, error: context.error };
+    await save(name + '.json', result);
+    summary.push({ name, checks: result.checks.length, failed: result.checks.filter(c => !c.pass), error: result.error });
+    await save('runtime-summary.json', { node: process.version, platform: process.platform, cases: summary, inventory });
+  }
+}
+
+await scenario('01-drain-family', async () => {
+  const f = await fixture('family');
+  const leaf = await publish(f, definition('QA child timer', [timerNode(1)]));
+  const inputLoop = await publish(f, definition('QA input', [inputNode]));
+  const answer = await start(f, inputLoop); await waitRun(f, answer.id, 'waiting');
+  const cancelled = await start(f, inputLoop); await waitRun(f, cancelled.id, 'waiting');
+  const signalLoop = await publish(f, definition('QA signal', [{ id: 'signal', kind: 'wait', label: 'Signal', config: { mode: 'signal', name: 'go' } }]));
+  const signalled = await start(f, signalLoop); await waitRun(f, signalled.id, 'waiting');
+  const keeper = held(f, 'keeper');
+  const parentHold = held(f, 'parent-hold');
+  const keeperLoop = await publish(f, definition('QA keeper', [keeper.node]));
+  const parentLoop = await publish(f, definition('QA parent', [parentHold.node, { id: 'sub', kind: 'subloop', label: 'Child', config: { loopRef: { loopId: leaf } } }, scriptNode('tail', 'process.stdout.write("tail-complete")')]));
+  const keeping = await start(f, keeperLoop); await until('keeper executing', () => exists(keeper.marker));
+  const parent = await start(f, parentLoop); await until('parent executing', () => exists(parentHold.marker));
+  const queued = await start(f, parentLoop);
+  check('independent queued before stop', (await run(f, queued.id)).status, 'queued');
+  const streams = [await sse(f, parent.id, 'parent'), await sse(f, queued.id, 'queued')];
+  const stopAt = Date.now();
+  check('drain accepted', (await call(f, 'POST', '/system/shutdown', { action: 'drain' })).status, 202);
+  const choice = await until('choice', async () => { const s = await state(f, true); return s.phase === 'awaiting-choice' && s; });
+  note('choice', { state: choice, afterMs: Date.now() - stopAt });
+  check('active parent and keeper listed', [parent.id, keeping.id].every(id => choice.activeRunIds.includes(id)));
+  check('queued independent omitted from family', !choice.activeRunIds.includes(queued.id));
+  await sleep(600);
+  check('grace does not kill or close SSE', !f.current.ended && streams.every(s => !s.closed));
+  check('wait accepted', (await call(f, 'POST', '/system/shutdown', { action: 'wait' })).status, 202);
+  await sleep(700);
+  check('wait has no second countdown', (await state(f)).phase, 'draining');
+  const w = (await run(f, answer.id)).waiting;
+  check('stale input rejected while draining', (await call(f, 'POST', '/runs/' + answer.id + '/input', { waitId: 'stale', input: 'bad' })).status, 409);
+  check('input remains reachable', (await call(f, 'POST', '/runs/' + answer.id + '/input', { waitId: w.waitId, input: 'during drain' })).status, 200);
+  const sw = (await run(f, signalled.id)).waiting;
+  check('signal remains reachable', (await call(f, 'POST', '/runs/' + signalled.id + '/signals/go', { waitId: sw.waitId, payload: 'during drain' })).status, 200);
+  check('cancel remains reachable', (await call(f, 'POST', '/runs/' + cancelled.id + '/cancel', {})).status, 200);
+  await writeFile(parentHold.release, 'continue');
+  await waitRun(f, parent.id, 'succeeded');
+  await waitRun(f, answer.id, 'succeeded');
+  await waitRun(f, signalled.id, 'succeeded');
+  check('cancelled run truthful', (await run(f, cancelled.id)).status, 'cancelled');
+  const pe = await events(f, parent.id);
+  const childEvents = pe.filter(e => e.type === 'child_run.started');
+  check('one required child created during drain', childEvents.length, 1);
+  const childId = childEvents[0]?.childRunId;
+  const ce = await events(f, childId);
+  check('child timer parked and woke', ce.some(e => e.type === 'run.waiting') && ce.some(e => e.type === 'node.finished' && e.nodeId === 'timer'));
+  check('queued independent still queued', (await run(f, queued.id, false)).status, 'queued');
+  check('SSE still open after parent while keeper active', streams.every(s => !s.closed));
+  const releaseAt = Date.now(); await writeFile(keeper.release, 'finish');
+  const exit = await f.current.exit; await Promise.all(streams.map(s => s.done));
+  check('normal exit zero', exit.code, 0);
+  check('both SSE streams close after final keeper release', streams.every(s => s.closedAt >= releaseAt));
+  check('active SSE has completion', streams[0].text.includes('event: run.finished'));
+  check('queued SSE has no start', !streams[1].text.includes('event: run.started'));
+  check('lock removed after drain', await exists(f.lock), false);
+  note('drain-finish', { elapsedMs: Date.now() - stopAt, releaseAt, streamClosedAt: streams.map(s => s.closedAt) });
+  await boot(f);
+  await waitRun(f, queued.id, 'succeeded');
+  check('queued run recovered and completed', (await run(f, queued.id, false)).status, 'succeeded');
+  await events(f, queued.id);
+  check('reopened API normal stop', (await stop(f)).code, 0);
+});
+
+await scenario('02-parks-pauses', async () => {
+  const f = await fixture('parks', { GG_MAX_CONCURRENT_RUNS: '3' });
+  const inputLoop = await publish(f, definition('QA durable input', [inputNode]));
+  const hourLoop = await publish(f, definition('QA one hour timer', [timerNode(3600)]));
+  const shortLoop = await publish(f, definition('QA offline due timer', [timerNode(2)]));
+  const parentLoop = await publish(f, definition('QA durable parent', [{ id: 'sub', kind: 'subloop', label: 'Sub', config: { loopRef: { loopId: inputLoop } } }]));
+  const hour = await start(f, hourLoop); await waitRun(f, hour.id, 'waiting');
+  const input = await start(f, inputLoop); await waitRun(f, input.id, 'waiting');
+  const paused = await start(f, inputLoop); await waitRun(f, paused.id, 'waiting');
+  check('pause accepted', (await call(f, 'POST', '/runs/' + paused.id + '/pause', {})).status, 200);
+  const parent = await start(f, parentLoop); const pr = await waitRun(f, parent.id, 'waiting');
+  const childId = pr.waiting.childRunId; await waitRun(f, childId, 'waiting');
+  // Stabilize all durable parks before each stop; no executor is still committing a park.
+  await sleep(200);
+  const ids = [hour.id, input.id, paused.id, parent.id, childId];
+  const before = await Promise.all(ids.map(id => run(f, id, false)));
+  const drained = await stop(f);
+  check('parks-only drain exits zero', drained.code, 0);
+  check('parks-only drain completes within 3 seconds', drained.elapsedMs < 3000);
+  check('parks-only drain removes lock', await exists(f.lock), false);
+  await boot(f);
+  const afterDrain = await Promise.all(ids.map(id => run(f, id, false)));
+  check('all five records byte-equivalent after normal restart', afterDrain, before);
+  await sleep(200);
+  const forced = await stop(f, 'force');
+  check('parks-only force exits zero', forced.code, 0);
+  check('parks-only force removes lock', await exists(f.lock), false);
+  await boot(f);
+  const afterForce = await Promise.all(ids.map(id => run(f, id, false)));
+  check('force fails none and preserves every field', afterForce, before);
+  for (const id of ids) check('no interruption for parked ' + id, (await events(f, id)).filter(e => e.type === 'run.failed').length, 0);
+  for (const r of [afterForce[1], afterForce[2], afterForce[4]]) {
+    if (r.status === 'paused') check('resume paused after restart', (await call(f, 'POST', '/runs/' + r.id + '/resume', {})).status, 200);
+    check('answer preserved wait after restart ' + r.id, (await call(f, 'POST', '/runs/' + r.id + '/input', { waitId: r.waiting.waitId, input: 'after restart' })).status, 200);
+  }
+  for (const id of [input.id, paused.id, parent.id, childId]) await waitRun(f, id, 'succeeded');
+  const short = await start(f, shortLoop); await waitRun(f, short.id, 'waiting');
+  await stop(f); await sleep(2200); await boot(f);
+  await waitRun(f, short.id, 'succeeded');
+  check('past wall-clock timer wakes once after restart', (await events(f, short.id)).filter(e => e.type === 'node.finished' && e.nodeId === 'timer').length, 1);
+  check('one-hour timer remains identical', await run(f, hour.id, false), before[0]);
+  await stop(f);
+});
+
+await scenario('03-admission', async () => {
+  const f = await fixture('admission');
+  const h = held(f, 'admission-holder');
+  const holderLoop = await publish(f, definition('QA admission holder', [h.node]));
+  const manual = await publish(f, definition('QA manual'));
+  const webhook = await publish(f, definition('QA webhook', [], { type: 'webhook', authentication: { type: 'none' } }));
+  const event = await publish(f, definition('QA Event', [], { type: 'event', eventType: 'qa-stop' }));
+  const cron = await publish(f, definition('QA cron', [], { type: 'cron', expression: '*/2 * * * * *', timezone: 'UTC', missedFirePolicy: 'run-once' }));
+  const poll = await publish(f, definition('QA poll', [], { type: 'poll', intervalSeconds: 5, probe: { kind: 'none' }, fireWhen: 'true', dedupeKey: '"qa-poll-key"' }));
+  const hooks = (await call(f, 'GET', '/loops/' + webhook + '/triggers')).data;
+  const cronBefore = (await call(f, 'GET', '/loops/' + cron + '/triggers')).data;
+  const holder = await start(f, holderLoop); await until('admission hold', () => exists(h.marker));
+  const initialRuns = (await call(f, 'GET', '/runs?limit=500')).data.items;
+  const initialEvents = (await call(f, 'GET', '/events')).data.items;
+  await call(f, 'POST', '/system/shutdown', { action: 'drain' });
+  check('manual refuses 503', (await call(f, 'POST', '/loops/' + manual + '/runs', {})).status, 503);
+  check('webhook refuses 503', (await call(f, 'POST', hooks.webhooks[0].path, { value: 'drain' }, { noAuth: true })).status, 503);
+  const payload = { type: 'qa-stop', payload: { value: 224 }, dedupeKey: 'same-after-restart' };
+  check('Event refuses 503 before recording', (await call(f, 'POST', '/events', payload)).status, 503);
+  check('replay refuses 503', (await call(f, 'POST', '/runs/' + holder.id + '/replay', { nodeId: 'admission-holder' })).status, 503);
+  await sleep(6200);
+  const finalRuns = (await call(f, 'GET', '/runs?limit=500')).data.items;
+  check('no manual webhook Event cron poll or replay run recorded', finalRuns.map(r => r.id).sort(), initialRuns.map(r => r.id).sort());
+  check('no inbound Event or webhook record', (await call(f, 'GET', '/events')).data.items, initialEvents);
+  check('cron slot unchanged across multiple due ticks', (await call(f, 'GET', '/loops/' + cron + '/triggers')).data.schedules, cronBefore.schedules);
+  await writeFile(h.release, 'finish'); await f.current.exit;
+  await boot(f);
+  const accepted = await call(f, 'POST', '/events', payload);
+  check('same Event dedupeKey accepted after restart', accepted.status, 202);
+  check('same Event was not consumed during refusal', accepted.data.duplicate, false);
+  const er = await until('event child run', async () => { const a = (await call(f, 'GET', '/runs?loopId=' + event, undefined, { quiet: true })).data.items; return a.length && a; });
+  await waitRun(f, er[0].id, 'succeeded');
+  check('one Event creates one run', er.length, 1);
+  check('same Event now deduplicates', (await call(f, 'POST', '/events', payload)).data.duplicate, true);
+  await until('poll starts after restart', async () => (await call(f, 'GET', '/runs?loopId=' + poll, undefined, { quiet: true })).data.items.length === 1, 10000);
+  check('poll key still available after drain', (await call(f, 'GET', '/runs?loopId=' + poll)).data.items.length, 1);
+  check('webhook recovers after restart', (await call(f, 'POST', hooks.webhooks[0].path, { value: 'restart' }, { noAuth: true })).status, 202);
+  check('manual recovers after restart', (await call(f, 'POST', '/loops/' + manual + '/runs', {})).status, 202);
+  await stop(f);
+});
+
+await scenario('04-controls', async () => {
+  const f = await fixture('controls');
+  check('initial state running', (await state(f)).phase, 'running');
+  check('initial wait impossible', (await call(f, 'POST', '/system/shutdown', { action: 'wait' })).status, 409);
+  for (const method of ['GET', 'POST']) check(method + ' requires authentication', (await call(f, method, '/system/shutdown', method === 'POST' ? { action: 'drain' } : undefined, { noAuth: true })).status, 401);
+  check('invalid key refuses', (await call(f, 'GET', '/system/shutdown', undefined, { token: 'wrong' })).status, 401);
+  const readKey = await call(f, 'POST', '/api-keys', { label: 'read', scopes: ['system:read'] });
+  const writeKey = await call(f, 'POST', '/api-keys', { label: 'write', scopes: ['system:write'] });
+  const unrelated = await call(f, 'POST', '/api-keys', { label: 'runs', scopes: ['runs:write'] });
+  const readToken = readKey.data.token, writeToken = writeKey.data.token, otherToken = unrelated.data.token;
+  if (!readToken || !writeToken || !otherToken) throw new Error('scope key creation failed');
+  check('system:read GET allowed', (await call(f, 'GET', '/system/shutdown', undefined, { token: readToken })).status, 200);
+  check('system:read POST denied', (await call(f, 'POST', '/system/shutdown', { action: 'drain' }, { token: readToken })).status, 403);
+  check('system:write GET denied', (await call(f, 'GET', '/system/shutdown', undefined, { token: writeToken })).status, 403);
+  check('unrelated scope denied', (await call(f, 'POST', '/system/shutdown', { action: 'drain' }, { token: otherToken })).status, 403);
+  for (const body of [{}, { action: 'kill' }, { action: 'drain', unexpected: true }, { action: null }]) check('malformed shutdown ' + JSON.stringify(body), (await call(f, 'POST', '/system/shutdown', body)).status, 400);
+  const h = held(f, 'control-holder');
+  const id = await publish(f, definition('QA control work', [h.node]));
+  const r = await start(f, id); await until('control work started', () => exists(h.marker));
+  const response = await call(f, 'POST', '/system/shutdown', { action: 'drain' }, { token: writeToken });
+  check('system:write drain allowed', response.status, 202);
+  check('drain response has active run', response.data.activeRunIds.includes(r.id));
+  check('duplicate drain idempotent', (await call(f, 'POST', '/system/shutdown', { action: 'drain' })).status, 202);
+  await until('controls awaiting-choice', async () => (await state(f, true)).phase === 'awaiting-choice');
+  check('wait returns draining', (await call(f, 'POST', '/system/shutdown', { action: 'wait' })).data.phase, 'draining');
+  await sleep(650);
+  check('wait clears automatic notice countdown', (await state(f)).phase, 'draining');
+  await writeFile(h.release, 'finish'); check('control drain exits cleanly', (await f.current.exit).code, 0);
+  await boot(f);
+  check('restart resets controller', (await state(f)).phase, 'running');
+  await stop(f);
+});
+
+await scenario('05-force-native-D015', async () => {
+  const f = await fixture('force');
+  const pidfile = join(f.dataDir, 'tree-pids.json');
+  const native = `const c=require('node:child_process').spawn(process.execPath,['-e','setTimeout(()=>process.exit(0),18000)'],{stdio:'inherit',windowsHide:true});require('node:fs').writeFileSync(${JSON.stringify(pidfile)},JSON.stringify([process.pid,c.pid]));setTimeout(()=>process.exit(0),18000)`;
+  const id = await publish(f, definition('QA forced native tree', [scriptNode('native', native)]));
+  const r = await start(f, id); await until('tree spawned', () => exists(pidfile));
+  const pids = JSON.parse(await readFile(pidfile, 'utf8'));
+  const live = () => pids.map(pid => { try { process.kill(pid, 0); return { pid, alive: true }; } catch { return { pid, alive: false }; } });
+  note('tree', { pids, before: live() });
+  const result = await call(f, 'POST', '/system/shutdown', { action: 'force' });
+  check('force accepted', result.status, 202);
+  const settled = await until('force ready or failed', async () => {
+    if (f.current.ended) return { phase: 'exited', code: f.current.code };
+    const s = await state(f, true); return ['force-failed', 'ready'].includes(s.phase) && s;
+  });
+  note('force-settled', { state: settled, processes: live(), lockExists: await exists(f.lock) });
+  if (settled.phase === 'force-failed') {
+    check('D-015 retains lock', await exists(f.lock));
+    const failed = await run(f, r.id, false);
+    check('unconfirmed cleanup recorded truthfully', failed.failure?.code, 'SCRIPT_TERMINATION_UNCONFIRMED');
+    check('unconfirmed failure identifies node', failed.failure?.nodeId, 'native');
+    check('force-failed wait transition refuses', (await call(f, 'POST', '/system/shutdown', { action: 'wait' })).status, 409);
+    check('force-failed drain transition refuses', (await call(f, 'POST', '/system/shutdown', { action: 'drain' })).status, 409);
+    await events(f, r.id);
+    const contender = launch([], f.env);
+    const ce = await contender.exit;
+    note('competing-store-open', { exit: ce, stdout: contender.stdout, stderr: contender.stderr });
+    check('second process cannot steal retained store', ce.code !== 0);
+    check('failed-force acknowledgement accepted', (await call(f, 'POST', '/system/shutdown', { action: 'force' })).status, 202);
+    check('acknowledged failed force exits one', (await f.current.exit).code, 1);
+    check('emergency exit leaves stale lock', await exists(f.lock));
+    await until('bounded native fixtures exit by themselves', () => live().every(p => !p.alive), 25000);
+    note('tree-self-exited', { processes: live(), reason: 'fixture lifetime; NOT successful force cleanup evidence' });
+    await boot(f);
+    check('new process reclaims dead owner lock', (await state(f)).phase, 'running');
+    check('unconfirmed failure durable after restart', (await run(f, r.id, false)).failure?.code, 'SCRIPT_TERMINATION_UNCONFIRMED');
+    await stop(f);
+  } else {
+    await f.current.exit;
+    check('tree terminated', live().every(p => !p.alive));
+    check('successful force removes lock', await exists(f.lock), false);
+    await boot(f);
+    const failed = await run(f, r.id, false);
+    check('force records interruption', failed.failure?.code, 'RUN_INTERRUPTED_BY_STOP');
+    check('interruption node', failed.failure?.nodeId, 'native');
+    check('interruption attempt', failed.failure?.details?.attempt, 1);
+    await events(f, r.id); await stop(f);
+  }
+});
+
+await scenario('06-earlier-timeout-heartbeat', async () => {
+  const f = await fixture('prior-timeout');
+  const timed = await publish(f, definition('QA earlier script timeout', [scriptNode('watchdog', 'setTimeout(()=>process.exit(0),7000)', { timeoutSeconds: 1 })]));
+  const r = await start(f, timed); const failed = await waitRun(f, r.id, 'failed');
+  note('earlier-timeout', { run: failed });
+  check('earlier timeout failure code', failed.failure?.code, 'SCRIPT_TERMINATION_UNCONFIRMED');
+  await events(f, r.id);
+  const before = await state(f);
+  check('earlier unconfirmed timeout visible', before.unconfirmedRunIds.includes(r.id));
+  const stopped = await stop(f);
+  check('earlier cleanup failure does not trap later drain', stopped.code, 0);
+  check('earlier cleanup failure drain promptly completes', stopped.elapsedMs < 3000);
+  await boot(f);
+  const heartbeat = await publish(f, definition('QA heartbeat timeout condition', [{ id: 'beat', kind: 'heartbeat', label: 'Beat', config: { intervalSeconds: 1, probe: { kind: 'script', command: process.execPath, args: ['-e', 'setTimeout(()=>process.exit(0),7000)'], timeoutSeconds: 1 }, until: 'probe.timedOut', maxBeats: 1, onExhausted: 'fail-run', record: 'full' } }]));
+  const hb = await start(f, heartbeat); await waitRun(f, hb.id, 'succeeded');
+  const be = await events(f, hb.id);
+  const beat = be.find(e => e.type === 'heartbeat.beat');
+  check('heartbeat condition receives timedOut', beat?.result?.timedOut, true);
+  check('heartbeat did not exhaust or fail', be.some(e => e.type === 'run.failed'), false);
+  check('heartbeat outside shutdown', (await state(f)).phase, 'running');
+  await call(f, 'GET', '/runs/' + hb.id + '/thread');
+  check('heartbeat timeout does not trap later drain', (await stop(f)).code, 0);
+});
+
+console.log(JSON.stringify(summary));
+process.exitCode = summary.some(s => s.error || s.failed.length) ? 1 : 0;

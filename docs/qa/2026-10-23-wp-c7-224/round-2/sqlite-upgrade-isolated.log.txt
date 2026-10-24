@@ -1,0 +1,82 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/sqlite/upgrade.test.ts --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-c7-224/packages/infrastructure
+
+ ❯ src/sqlite/upgrade.test.ts (26 tests | 6 failed) 216194ms
+   ❯ definitions-only format-4 cutover (26)
+     × deletes all history and configured templates, converts definitions, retains signing identities/secrets/settings, and starts through ordinary migrations 20535ms
+     × blocks ordinary queued runs without cancelling them 20067ms
+     × blocks ordinary running runs without cancelling them 20128ms
+     × blocks ordinary waiting runs without cancelling them 20028ms
+     × requires every hash-bound review, binds repeated nodes to their stored version, and rejects stale/unused resolutions 20046ms
+     × refuses changed source, damaged SQL/ledger, malformed template identities and invalid definitions 20201ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > deletes all history and configured templates, converts definitions, retains signing identities/secrets/settings, and starts through ordinary migrations
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/sqlite/upgrade.test.ts:118:3
+    116|     await expect(handle.migrate()).rejects.toMatchObject({ code: 'DATA…
+    117|   });
+    118|   it('deletes all history and configured templates, converts definitio…
+       |   ^
+    119|     const handle = await fixture();
+    120|     const retained = await Promise.all(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > blocks ordinary queued runs without cancelling them
+ FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > blocks ordinary running runs without cancelling them
+ FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > blocks ordinary waiting runs without cancelling them
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/sqlite/upgrade.test.ts:205:54
+    203|     expect(await snapshot(handle.client)).toEqual(before);
+    204|   });
+    205|   it.each(['queued', 'running', 'waiting', 'paused'])(
+       |                                                      ^
+    206|     'blocks ordinary %s runs without cancelling them',
+    207|     async (status) => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > requires every hash-bound review, binds repeated nodes to their stored version, and rejects stale/unused resolutions
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/sqlite/upgrade.test.ts:230:3
+    228|     await refuses(handle, await request(handle), /admission intents/);
+    229|   });
+    230|   it('requires every hash-bound review, binds repeated nodes to their …
+       |   ^
+    231|     const handle = await fixture();
+    232|     const definition = frozenDefinition('llm', {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  src/sqlite/upgrade.test.ts > definitions-only format-4 cutover > refuses changed source, damaged SQL/ledger, malformed template identities and invalid definitions
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/sqlite/upgrade.test.ts:302:3
+    300|     expect(await guardDatabaseUpgrade(handle.client)).toBe('current');
+    301|   });
+    302|   it('refuses changed source, damaged SQL/ledger, malformed template i…
+       |   ^
+    303|     const handle = await fixture();
+    304|     const selected = await request(handle);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 20 passed (26)
+   Start at  01:25:21
+   Duration  258.28s (tests 85%, transform 10%, import 5%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-c7-
+  │ 224\packages\infrastructure
+
+
+RESULT: {"command": "pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run src/sqlite/upgrade.test.ts --maxWorkers=1", "exit": 1, "seconds": 274.58}

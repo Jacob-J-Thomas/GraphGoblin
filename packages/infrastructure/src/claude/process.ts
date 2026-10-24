@@ -65,6 +65,10 @@ export const runClaudeProcess = (
       overflow = false,
       stdinFailed = false;
     let callbackError: ClaudeHarnessError | undefined, spawnCode: ClaudeProcessResult['spawnCode'];
+    let killing: Promise<boolean> | undefined;
+    let closed = false;
+    let treeConfirmed = false;
+    let closeCode: number | null = null;
     let killTimer: ReturnType<typeof setTimeout> | undefined;
     let diagnostic = '';
     let rejection: ClaudeProcessResult['turnRejection'];
@@ -96,8 +100,16 @@ export const runClaudeProcess = (
     const kill = (): void => {
       if (settled) return;
       clearTimeout(timer);
-      killTree(child);
-      if (!killTimer) killTimer = setTimeout(() => finish(null, true), 5000);
+      if (killing) return;
+      killTimer = setTimeout(() => finish(null, true), 5000);
+      killing = killTree(child);
+      void killing.then((confirmed) => {
+        if (!confirmed) finish(null, true);
+        else {
+          treeConfirmed = true;
+          if (closed) finish(closeCode);
+        }
+      });
     };
     const timer =
       request.timeoutMs === null
@@ -151,7 +163,11 @@ export const runClaudeProcess = (
         error.code === 'ENOENT' ? 'ENOENT' : error.code === 'EACCES' ? 'EACCES' : 'UNKNOWN';
       finish(null);
     });
-    child.on('close', (code) => finish(code));
+    child.on('close', (code) => {
+      closed = true;
+      closeCode = code;
+      if (!killing || treeConfirmed) finish(code);
+    });
     child.stdin?.on('error', () => {
       stdinFailed = true;
       kill();

@@ -1,0 +1,87 @@
+: connected
+
+id: 1
+event: run.queued
+data: {"runId":"01M5PF9QZ6RS5TDJHT0Z8QFM24","seq":1,"ts":"2026-10-24T08:09:09.862Z","type":"run.queued","versionId":"01M5PF9NPB6FC5V7GXCS0M44RG","pinned":{"source":"published","version":1,"name":"QA parent","label":"QA parent v1","defaults":{"owner":{"byHarness":{}},"process":{"byHarness":{"codex":{"model":"gpt-6-luna","effort":"low"}}}},"limits":{"maxNodeVisits":10,"runDeadlineSeconds":null},"classifiers":{}},"initialThread":{"schemaVersion":1,"run":{"id":"01M5PF9QZ6RS5TDJHT0Z8QFM24","loopId":"01M5PF9NPB6FC5V7GXCS0M44RF","versionId":"01M5PF9NPB6FC5V7GXCS0M44RG","iteration":1},"invocation":{"id":"01M5PF9QZ6RS5TDJHT0Z8QFM25","source":"manual.api","caller":{"kind":"api-key","id":"01M5PF94VY1M0GVVZ6M6BQN5E6"},"trigger":{"nodeId":"start","kind":"manual","payload":null,"receivedAt":"2026-10-24T08:09:09.862Z"}},"messages":[],"vars":{},"artifacts":[],"outputs":{},"gates":{},"counters":{"nodeVisits":{},"usage":{"inputTokens":0,"outputTokens":0,"cachedInputTokens":0,"reasoningOutputTokens":0}}},"subloopVersions":{"01M5PF9MY104SEP2CHM00S1P7P":"01M5PF9MY104SEP2CHM00S1P7Q"}}
+
+id: 2
+event: run.started
+data: {"runId":"01M5PF9QZ6RS5TDJHT0Z8QFM24","seq":2,"ts":"2026-10-24T08:09:09.880Z","type":"run.started","attempt":1}
+
+id: 3
+event: node.started
+data: {"runId":"01M5PF9QZ6RS5TDJHT0Z8QFM24","seq":3,"ts":"2026-10-24T08:09:09.912Z","type":"node.started","nodeId":"start","kind":"trigger","attempt":1,"configHash":"527dee9c4254fe4e"}
+
+id: 4
+event: node.finished
+data: {"runId":"01M5PF9QZ6RS5TDJHT0Z8QFM24","seq":4,"ts":"2026-10-24T08:09:09.919Z","type":"node.finished","nodeId":"start","patch":[{"op":"add","path":"/outputs/start","value":{"nodeId":"start","value":null,"at":"2026-10-24T08:09:09.918Z"}},{"op":"add","path":"/lastOutput","value":{"nodeId":"start","value":null,"at":"2026-10-24T08:09:09.918Z"}}],"route":"out","durationMs":2}
+
+id: 5
+event: node.started
+data: {"runId":"01M5PF9QZ6RS5TDJHT0Z8QFM24","seq":5,"ts":"2026-10-24T08:09:09.943Z","type":"node.started","nodeId":"parent-hold","kind":"script","attempt":1,"configHash":"5ceb4ddba3a9ec90"}
+
+id: 6
+event: node.progress
+data: {"runId":"01M5PF9QZ6RS5TDJHT0Z8QFM24","seq":6,"ts":"2026-10-24T08:09:14.007Z","type":"node.progress","nodeId":"parent-hold","progress":{"exitCode":0,"stderr":"","stdoutBytes":0}}
+
+id: 7
+event: node.finished
+data: {"runId":"01M5PF9QZ6RS5TDJHT0Z8QFM24","seq":7,"ts":"2026-10-24T08:09:14.013Z","type":"node.finished","nodeId":"parent-hold","patch":[{"op":"add","path":"/outputs/parent-hold","value":{"nodeId":"parent-hold","value":"","at":"2026-10-24T08:09:14.011Z"}},{"op":"replace","path":"/lastOutput","value":{"nodeId":"parent-hold","value":"","at":"2026-10-24T08:09:14.011Z"}}],"route":"out","durationMs":4067}
+
+id: 8
+event: node.started
+data: {"runId":"01M5PF9QZ6RS5TDJHT0Z8QFM24","seq":8,"ts":"2026-10-24T08:09:14.044Z","type":"node.started","nodeId":"sub","kind":"subloop","attempt":1,"configHash":"aaf339e95228b72d"}
+
+id: 9
+event: child_run.started
+data: {"runId":"01M5PF9QZ6RS5TDJHT0Z8QFM24","seq":9,"ts":"2026-10-24T08:09:14.071Z","type":"child_run.started","nodeId":"sub","childRunId":"01M5PF9W23BPKF4Z8AD8BQR32Q"}
+
+id: 10
+event: run.waiting
+data: {"runId":"01M5PF9QZ6RS5TDJHT0Z8QFM24","seq":10,"ts":"2026-10-24T08:09:14.089Z","type":"run.waiting","nodeId":"sub","wait":{"waitId":"01M5PF9QZ6RS5TDJHT0Z8QFM24:8","nodeId":"sub","kind":"child","childRunId":"01M5PF9W23BPKF4Z8AD8BQR32Q","startedSeq":8}}
+
+id: 11
+event: run.woken
+data: {"runId":"01M5PF9QZ6RS5TDJHT0Z8QFM24","seq":11,"ts":"2026-10-24T08:09:15.732Z","type":"run.woken","nodeId":"sub","reason":"child","payload":{"childRunId":"01M5PF9W23BPKF4Z8AD8BQR32Q","status":"succeeded","outcome":"success"}}
+
+id: 12
+event: node.started
+data: {"runId":"01M5PF9QZ6RS5TDJHT0Z8QFM24","seq":12,"ts":"2026-10-24T08:09:15.763Z","type":"node.started","nodeId":"sub","kind":"subloop","attempt":2,"configHash":"aaf339e95228b72d"}
+
+id: 13
+event: child_run.finished
+data: {"runId":"01M5PF9QZ6RS5TDJHT0Z8QFM24","seq":13,"ts":"2026-10-24T08:09:15.769Z","type":"child_run.finished","nodeId":"sub","childRunId":"01M5PF9W23BPKF4Z8AD8BQR32Q","outcome":"success","status":"succeeded"}
+
+id: 14
+event: node.finished
+data: {"runId":"01M5PF9QZ6RS5TDJHT0Z8QFM24","seq":14,"ts":"2026-10-24T08:09:15.774Z","type":"node.finished","nodeId":"sub","patch":[{"op":"add","path":"/outputs/sub","value":{"nodeId":"sub","value":{"status":"succeeded","outcome":"success","childRunId":"01M5PF9W23BPKF4Z8AD8BQR32Q"},"at":"2026-10-24T08:09:15.772Z"}},{"op":"replace","path":"/lastOutput","value":{"nodeId":"sub","value":{"status":"succeeded","outcome":"success","childRunId":"01M5PF9W23BPKF4Z8AD8BQR32Q"},"at":"2026-10-24T08:09:15.772Z"}},{"op":"replace","path":"/counters/usage","value":{"inputTokens":0,"outputTokens":0,"cachedInputTokens":0,"reasoningOutputTokens":0}}],"route":"out","durationMs":7}
+
+id: 15
+event: node.started
+data: {"runId":"01M5PF9QZ6RS5TDJHT0Z8QFM24","seq":15,"ts":"2026-10-24T08:09:15.812Z","type":"node.started","nodeId":"tail","kind":"script","attempt":1,"configHash":"bb32c2a57efb166b"}
+
+id: 16
+event: node.progress
+data: {"runId":"01M5PF9QZ6RS5TDJHT0Z8QFM24","seq":16,"ts":"2026-10-24T08:09:17.115Z","type":"node.progress","nodeId":"tail","progress":{"exitCode":0,"stderr":"","stdoutBytes":13}}
+
+id: 17
+event: node.finished
+data: {"runId":"01M5PF9QZ6RS5TDJHT0Z8QFM24","seq":17,"ts":"2026-10-24T08:09:17.130Z","type":"node.finished","nodeId":"tail","patch":[{"op":"add","path":"/outputs/tail","value":{"nodeId":"tail","value":"tail-complete","at":"2026-10-24T08:09:17.128Z"}},{"op":"replace","path":"/lastOutput","value":{"nodeId":"tail","value":"tail-complete","at":"2026-10-24T08:09:17.128Z"}}],"route":"out","durationMs":1313}
+
+id: 18
+event: node.started
+data: {"runId":"01M5PF9QZ6RS5TDJHT0Z8QFM24","seq":18,"ts":"2026-10-24T08:09:17.170Z","type":"node.started","nodeId":"done","kind":"exit","attempt":1,"configHash":"caacd31f1376b30f"}
+
+id: 19
+event: exit.evaluated
+data: {"runId":"01M5PF9QZ6RS5TDJHT0Z8QFM24","seq":19,"ts":"2026-10-24T08:09:17.180Z","type":"exit.evaluated","nodeId":"done","outcome":"success"}
+
+id: 20
+event: node.finished
+data: {"runId":"01M5PF9QZ6RS5TDJHT0Z8QFM24","seq":20,"ts":"2026-10-24T08:09:17.180Z","type":"node.finished","nodeId":"done","patch":[],"durationMs":3}
+
+id: 21
+event: run.finished
+data: {"runId":"01M5PF9QZ6RS5TDJHT0Z8QFM24","seq":21,"ts":"2026-10-24T08:09:17.180Z","type":"run.finished","status":"succeeded","outcome":"success"}
+
+

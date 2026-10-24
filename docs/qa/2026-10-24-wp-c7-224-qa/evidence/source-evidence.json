@@ -1,0 +1,44 @@
+[
+  {
+    "file": "docs/07-api-and-streaming.md",
+    "sha256": "f778814280f2d50f754487d62c2535563a33c311752739954c147ec974add64c",
+    "start": 128,
+    "end": 134,
+    "excerpt": "- Endpoint: `GET /runs/{id}/events` with `Accept: text/event-stream`. The query parameter `after` or the `Last-Event-ID` header sets the starting sequence.\n- Each SSE message has `id: <seq>`, `event: <run event type>`, and `data: <JSON event>`.\n- `node.progress` is validated against the strict `RunEventSchema` payload contract. Inference item variants expose only the bounded summary and allowlisted command/status fields; script progress has its own `{ exitCode, stderr, stdoutBytes }` shape. Invalid progress fields are rejected by clients and are absent from the OpenAPI schema.\n- A `: heartbeat` comment is sent every 15 seconds so proxies and browsers keep the connection open.\n- The stream closes after `run.finished`, `run.failed`, or `run.cancelled` is delivered, whether that event is replayed or arrives live.\n- If the run is already terminal when the client subscribes and the cursor is at or past its terminal event, the response ends right after the replay (a `: connected` comment and no events), so a reconnect after the end never idles. Since WP-G the terminal event is persisted before terminal status (05), so a healthy current log needs no grace. If no terminal event is visible even after re-reading the log, the stream allows up to 2 seconds for late subscription delivery, then closes instead of idling forever. This is a defensive bound for incomplete legacy or inconsistent logs.\n- Reconnecting with the last seen `seq` replays everything missed, because the stream is a tail of the persisted log."
+  },
+  {
+    "file": "docs/07-api-and-streaming.md",
+    "sha256": "f778814280f2d50f754487d62c2535563a33c311752739954c147ec974add64c",
+    "start": 530,
+    "end": 561,
+    "excerpt": "`choices`, and optional `startedAt`, `choiceAt`, `error`. `POST /system/shutdown` requires\n`system:write` and a strict body `{ \"action\": \"drain\" | \"wait\" | \"force\" }`.\nThe 202 snapshot awaits initial family capture so active identities are accurate. It\nacknowledges the control, not completed cleanup. Invalid transitions return 409 with current\nstate: wait requires an open drain, and force cannot restart a failed drain observation.\n\nPhases are running, draining, awaiting-choice, forcing, drain-failed, force-failed, exiting,\nready and stopped. The default grace is five minutes (`GG_SHUTDOWN_GRACE_MS`); expiry offers\n`[\"wait\", \"force\"]` without interruption. Wait has no hidden kill timer. Force is available\nbefore expiry. A force cleanup failure offers `[\"force\"]`: a further explicit force exits\ncode 1, keeping the recorded failure and lock for next-start reclamation. Earlier unconfirmed\nterminations remain warnings without preventing normal completion. A drain observation\nfailure uses drain-failed. Ready/stopped/exiting may be too brief to observe over HTTP.\n#319 will build the browser interaction on these phases and controls.\n\nIndependent starts, replay and unrelated resume return 503 `SHUTTING_DOWN`. Events return\n503 before saving any inbound record or dedupe key, so the same Event can be retried after\nrestart. Webhooks return 503 `WEBHOOK_ADMISSION_FAILED`. Independent queued runs remain\nunstarted and durable. Drain waits for active executors, queued family continuations and\nalready-due family wakes. Durable input/signal waits, future timers, parents waiting on\nparked children and pauses do not hold drain and survive force unchanged. While other work\nholds drain open, input, signals, cancellation, timers and required children remain usable;\nwoken work holds drain until it finishes or parks again. After restart, past wall-clock waits\nbecome eligible and paused runs remain paused.\n\nInterrupted executing/queued work records `RUN_INTERRUPTED_BY_STOP` with node, attempt and\nexternal-effect evidence; it is distinct from user cancellation or successful completion.\nOnly this shutdown's own unconfirmed native interruption blocks release in force-failed.\nAfter applicable execution/delivery cleanup, SSE inspectors (including queued runs) close,\nHTTP closes, SQLite closes and the lock is released. The explicit failed-stop exit instead\npreserves ownership for dead-PID reclamation. See ADR-0049 and docs/11.\n"
+  },
+  {
+    "file": "apps/api/src/plugins/auth.ts",
+    "sha256": "cf16f672cb67f61141df8dd40004fee7d1d8792bc3f005e731c8dacb9ff714d8",
+    "start": 74,
+    "end": 77,
+    "excerpt": "export function hasScope(scopes: AuthContext['scopes'], scope: string): boolean {\n  if (scopes === '*' || scopes.includes('*') || scopes.includes(scope)) return true;\n  return scope.endsWith(':read') && scopes.includes(`${scope.slice(0, -':read'.length)}:write`);\n}"
+  },
+  {
+    "file": "apps/api/src/sse.ts",
+    "sha256": "d24b925c4ac281f9ab639fc645d2926daf6a510fc12ff468d6bdc356b5ad8070",
+    "start": 84,
+    "end": 94,
+    "excerpt": "    if (TERMINAL_EVENTS.has(event.type)) end();\n  };\n  const heartbeat = setInterval(() => {\n    if (!closed) res.write(': heartbeat\\n\\n');\n  }, options.heartbeatMs ?? 15_000);\n  let grace: ReturnType<typeof setTimeout> | undefined;\n  const end = (): void => {\n    if (closed) return;\n    closed = true;\n    clearInterval(heartbeat);\n    clearTimeout(grace);"
+  },
+  {
+    "file": "CHANGELOG.md",
+    "sha256": "fa382ebf1dc7b76ca168c1bb2c440b0071aa3ccfde1745b83fb52f82b9738c45",
+    "start": 5,
+    "end": 7,
+    "excerpt": "## Unreleased\n\n- Normal shutdown drains executing work, queued family continuations and due wakes while preserving durable parks and pauses for restart. Independent Events are refused before consuming their dedupe key. Shutdown controls expose a configurable five-minute wait/force notice; force records interrupted execution with node/attempt evidence and awaits cleanup. Earlier unconfirmed terminations remain visible without trapping a later stop. **Upgrade:** a second SIGINT/SIGTERM at least one second after the first explicitly forces (duplicates within that second are ignored); after `force-failed`, a further force exits code 1 and leaves the lock for reclamation. Update Compose `stop_grace_period` (the example uses `1h`) and supervisor deadlines, or request API drain before stopping the service for indefinite waiting. (#224)"
+  },
+  {
+    "file": "docs/delivery/2026-10-18-i01-i07-register.md",
+    "sha256": "14120c9f419b7746a710321c048e902a8fc4b1bcfb389bdd50f5a7364893bc56",
+    "start": 137,
+    "end": 137,
+    "excerpt": "| D-038 | 2026-10-24 | **A normal shutdown drain does not wait for durably parked or paused runs, and force never fails them (#224).** A run waiting for input, an external signal or a timer that is not yet due, a parent waiting on such a child, and a paused run stay exactly as they are and recover on the next start, as on `main` before #224 (\"past wall-clock waits become eligible after restart; paused runs stay paused\"; \"explicit force yields truthful recoverable state\"). The drain completes when no executor is active, no drain-family run is queued and no drain-family wake is due; a run woken during the drain holds it until it parks or finishes. Force aborts executors and records interruption only for the work it interrupted. Taken by the orchestrator from the #224 review, which showed the first design never completing a normal stop with a sustained loop parked and failing parked runs non-resumably on force; the owner can reverse it.                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |"
+  }
+]
