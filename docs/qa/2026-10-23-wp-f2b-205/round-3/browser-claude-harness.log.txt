@@ -1,0 +1,29 @@
+COMMAND: pnpm.cmd exec playwright test e2e/claude-harness.spec.ts --retries=0
+NODE: v22.14.0
+
+Running 11 tests using 1 worker
+
+pnpm.cmd : (node:55284) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+At line:14 char:3
++   pnpm.cmd @arguments 2>&1 | Out-File -Encoding UTF8 -Append $log
++   ~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:55284) Wa... env being set.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:55284) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  1 [chromium] › e2e\claude-harness.spec.ts:77:1 › Claude inference selection stays family-specific through publish and run (9.3s)
+  ok  2 [chromium] › e2e\claude-harness.spec.ts:169:3 › Claude Sonnet 5.5 selection and effort survive save and reopen and reach the adapter request (4.6s)
+  ok  3 [chromium] › e2e\claude-harness.spec.ts:169:3 › Claude Haiku 5.5 selection and effort survive save and reopen and reach the adapter request (7.4s)
+  ok  4 [chromium] › e2e\claude-harness.spec.ts:264:3 › explicit harness switch on narrow editor with readiness false (4.5s)
+  ok  5 [chromium] › e2e\claude-harness.spec.ts:264:3 › explicit harness switch on narrow editor with readiness true (2.5s)
+  ok  6 [chromium] › e2e\claude-harness.spec.ts:336:1 › a ready Claude model field stays editable while a focus refetch rechecks readiness (8.2s)
+  ok  7 [chromium] › e2e\claude-harness.spec.ts:394:1 › Settings separates Claude adapter support from CLI readiness and supports Fable (2.3s)
+  ok  8 [chromium] › e2e\claude-harness.spec.ts:464:1 › Claude settings stay pending through refresh and preserve the Codex defaults (3.2s)
+  ok  9 [chromium] › e2e\claude-harness.spec.ts:531:1 › Claude inspector shows requested effort and policy artifact, and preserves unconfirmed termination failure (6.3s)
+  ok 10 [chromium] › e2e\claude-harness.spec.ts:704:3 › loaded saved incompatible model is retained without a switch, readiness false (2.5s)
+  ok 11 [chromium] › e2e\claude-harness.spec.ts:704:3 › loaded saved incompatible model is retained without a switch, readiness true (4.0s)
+
+  11 passed (1.7m)
+RESULT: exit 0; seconds 120.54

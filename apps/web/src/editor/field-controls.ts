@@ -1,7 +1,13 @@
 import { ExecutionLimitField } from './ExecutionLimitField.js';
 import type { FieldControls } from '../forms/fields.js';
 import { CronControl, CronTimezoneControl } from '../forms/cron/control.js';
-import { EffortField, LoopModelField, ModelField } from '../forms/fields/model.js';
+import {
+  EffortField,
+  EffortSelectionField,
+  LoopModelField,
+  ModelField,
+  ModelSelectionField,
+} from '../forms/fields/model.js';
 import { ClassifierField } from './ClassifierField.js';
 import { ClaudeApprovalField, ClaudePolicyField } from './ClaudePolicyField.js';
 import { DECISION_FIELD_OVERRIDES } from './DecisionTruthThresholdField.js';
@@ -18,6 +24,8 @@ export const NODE_FIELD_CONTROLS: FieldControls = {
   'execution-limit': ExecutionLimitField,
   model: ModelField,
   effort: EffortField,
+  'effort-selection': EffortSelectionField,
+  'model-selection': ModelSelectionField,
   cron: CronControl,
   'cron-timezone': CronTimezoneControl,
   classifier: ClassifierField,

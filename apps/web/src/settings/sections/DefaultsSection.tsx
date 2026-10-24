@@ -7,7 +7,13 @@ import {
 } from '@graphgoblin/contracts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useApi } from '../../api/context.js';
-import { keys, useModelCatalog, usePreflight, useSettings } from '../../api/queries.js';
+import {
+  keys,
+  refreshModelDefaults,
+  useModelCatalog,
+  usePreflight,
+  useSettings,
+} from '../../api/queries.js';
 import { harnessReadiness, readinessLine, type HarnessReadiness } from '../../api/readiness.js';
 import { Icon } from '../../components/icons/index.js';
 import { QueryState } from '../../components/status.js';
@@ -110,7 +116,7 @@ export function DefaultsSection() {
     },
     onSuccess: async (authoritative) => {
       queryClient.setQueryData(keys.settings, authoritative);
-      await queryClient.invalidateQueries({ queryKey: keys.settings, exact: true });
+      await refreshModelDefaults(queryClient);
     },
   });
   return (

@@ -1,0 +1,64 @@
+pnpm typecheck
+pnpm.cmd : $ turbo run typecheck
+At line:2 char:979
++ ... "$qaPath/$($gateJob.name).log.txt"; & pnpm.cmd @gateArgs 2>&1 | Out-F ...
++                                         ~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ turbo run typecheck:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running typecheck in 12 packages
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/contracts:build: cache miss, executing 834a957103f27bd0
+@graphgoblin/contracts:typecheck: cache miss, executing 3d90195c68f3e28c
+@graphgoblin/contracts:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/domain:build: cache miss, executing f7bfe3b4d93d952e
+@graphgoblin/domain:typecheck: cache miss, executing a053e33b72fe6539
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+@graphgoblin/domain:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/engine:build: cache miss, executing 803793e91f3c3fb7
+@graphgoblin/engine:typecheck: cache miss, executing 763b275b538a5e0a
+@graphgoblin/engine:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+ WARNING  IO error: Access is denied. (os error 5)
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/infrastructure:typecheck: cache miss, executing 1fbaf7aa83161abc
+@graphgoblin/adapter-jev:typecheck: cache miss, executing bcdb4390a6464bb4
+@graphgoblin/adapter-codex:typecheck: cache miss, executing 65ce5f3cf9b6b2ef
+@graphgoblin/adapter-jev:build: cache miss, executing 3fdddb7f39584221
+@graphgoblin/adapter-codex:build: cache miss, executing e2dabddd791b835f
+@graphgoblin/infrastructure:build: cache miss, executing cf83444698cd9a87
+@graphgoblin/adapter-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/infrastructure:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-jev:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/api:build: cache miss, executing 89a7433403a48643
+@graphgoblin/api:typecheck: cache miss, executing 8aad59a6cf1dba26
+@graphgoblin/api:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/api:build: $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+@graphgoblin/api-client:typecheck: cache miss, executing 59ec996f247bdefc
+@graphgoblin/api-client:build: cache miss, executing a247827de6da9430
+@graphgoblin/api-client:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/api-client:build: $ tsc -b tsconfig.build.json
+@graphgoblin/mcp:build: cache miss, executing fddf3527d9508ecb
+@graphgoblin/web:typecheck: cache miss, executing a0cf5ebf28393712
+@graphgoblin/mcp:typecheck: cache miss, executing 98c5bb070fe7fffe
+@graphgoblin/web:typecheck: $ tsc -p tsconfig.json --noEmit
+@graphgoblin/mcp:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/mcp:build: $ tsc -b tsconfig.build.json
+@graphgoblin/plugin-codex:typecheck: cache miss, executing 9dd535ae05919f58
+@graphgoblin/plugin-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+
+ Tasks:    20 successful, 20 total
+Cached:    0 cached, 20 total
+  Time:    4m25.514s 
+

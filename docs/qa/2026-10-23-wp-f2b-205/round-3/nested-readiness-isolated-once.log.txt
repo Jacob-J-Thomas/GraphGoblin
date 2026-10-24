@@ -1,0 +1,124 @@
+COMMAND: pnpm.cmd --filter @graphgoblin/api exec vitest run src/nested-readiness.test.ts --maxWorkers=1
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f2b-205/apps/api
+
+ ❯ src/nested-readiness.test.ts (19 tests | 4 failed) 9004ms
+   ❯ manual admission over pinned nested definitions (19)
+     × shares one probe between same-harness parent and child nodes 876ms
+     × checks the published child, ignoring an unready-harness draft 365ms
+     × keeps the child pin when a new version publishes while its probe is pending 344ms
+     × freezes a draft root before probing and executes that same snapshot 259ms
+pnpm.cmd : 
+At line:5 char:1
++ pnpm.cmd --filter @graphgoblin/api exec vitest run src/nested-readine ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/nested-readiness.test.ts > manual admission over pinned nested definitions > shares one probe between 
+same-harness parent and child nodes
+AssertionError: expected [ 3, +0 ] to deeply equal [ 1, +0 ]
+
+- Expected
++ Received
+
+  [
+-   1,
++   3,
+    0,
+  ]
+
+ ❯ src/nested-readiness.test.ts:177:43
+    175|     expect((await start(parentId)).statusCode).toBe(202);
+    176|     await t.idle();
+    177|     expect([claude.probes, codex.probes]).toEqual([1, 0]);
+       |                                           ^
+    178|     expect(claude.started).toHaveLength(2);
+    179|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/nested-readiness.test.ts > manual admission over pinned nested definitions > checks the published child, 
+ignoring an unready-harness draft
+AssertionError: expected [ 2, +0 ] to deeply equal [ 1, +0 ]
+
+- Expected
++ Received
+
+  [
+-   1,
++   2,
+    0,
+  ]
+
+ ❯ src/nested-readiness.test.ts:215:43
+    213|     expect(response.statusCode).toBe(202);
+    214|     await t.idle();
+    215|     expect([claude.probes, codex.probes]).toEqual([1, 0]);
+       |                                           ^
+    216|     expect(claude.started).toHaveLength(1);
+    217|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/nested-readiness.test.ts > manual admission over pinned nested definitions > keeps the child pin when a new 
+version publishes while its probe is pending
+AssertionError: expected [ 2, +0 ] to deeply equal [ 1, +0 ]
+
+- Expected
++ Received
+
+  [
+-   1,
++   2,
+    0,
+  ]
+
+ ❯ src/nested-readiness.test.ts:296:43
+    294|     expect(events[0]).toMatchObject({ subloopVersions: { [childId]: ol…
+    295|     expect((await t.container.repos.runs.listChildren(run.id))[0]!.ver…
+    296|     expect([claude.probes, codex.probes]).toEqual([1, 0]);
+       |                                           ^
+    297|   });
+    298|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/nested-readiness.test.ts > manual admission over pinned nested definitions > freezes a draft root before 
+probing and executes that same snapshot
+AssertionError: expected [ 2, +0 ] to deeply equal [ 1, +0 ]
+
+- Expected
++ Received
+
+  [
+-   1,
++   2,
+    0,
+  ]
+
+ ❯ src/nested-readiness.test.ts:335:43
+    333|     expect(run.pinned.name).toBe('Original draft');
+    334|     await t.idle();
+    335|     expect([claude.probes, codex.probes]).toEqual([1, 0]);
+       |                                           ^
+    336|     expect(claude.started).toHaveLength(1);
+    337|     expect(codex.started).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 15 passed (19)
+   Start at  03:05:59
+   Duration  20.16s (tests 46%, import 32%, transform 22%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f2b-
+  │ 205\apps\api
+
+RESULT: exit 1

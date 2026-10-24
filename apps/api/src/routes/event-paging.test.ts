@@ -33,6 +33,40 @@ describe('inbound event paging over real SQLite', () => {
     expect(response.statusCode, response.body).toBe(200);
     return response.json<Page>();
   }
+  it('re-reads an inclusive loaded-page anchor despite newer timestamp ties, retaining opaque continuation', async () => {
+    for (let i = 0; i < 5; i++) await seed(i);
+    const first = await page('?type=chosen&limit=3');
+    const head = first.items[0]!.id;
+    await seed(90, { id: 'ZZZZZZZZZZZZZZZZZZZZZZZZZZ' });
+    const anchored = await page(`?type=chosen&anchor=${head}&limit=3`);
+    expect(anchored).toEqual(first);
+    const single = await page(`?anchor=${head}&limit=1`);
+    expect(single.items.map((item) => item.id)).toEqual([head]);
+    expect(single.nextCursor).toBe(encodeEventCursor({ id: head, receivedAt: FIXTURE_TS }));
+    const rest = await page(`?type=chosen&cursor=${anchored.nextCursor}&limit=3`);
+    expect(rest.items).toHaveLength(2);
+    expect(rest.nextCursor).toBeNull();
+    expect(await page(`?anchor=${rest.items[0]!.id}&limit=2`)).toEqual(rest);
+  });
+  it('keeps anchored reads owner-scoped and filtered and rejects ambiguous bounds', async () => {
+    const local = await seed(0);
+    const foreign = await seed(1, { ownerId: 'other' });
+    for (const query of [
+      `anchor=${foreign.id}`,
+      `anchor=${fakeUlid('missing')}`,
+      `anchor=${local.id}&type=other`,
+      `anchor=${local.id}&before=${FIXTURE_TS}`,
+    ])
+      expect(await page('?' + query)).toEqual({ items: [], nextCursor: null });
+    for (const query of [
+      'anchor=invalid',
+      `anchor=${local.id}&cursor=${encodeEventCursor(local)}`,
+    ]) {
+      const response = await t.app.inject({ url: '/events?' + query, headers });
+      expect(response.statusCode).toBe(400);
+      expect(response.json()).toMatchObject({ code: 'VALIDATION_FAILED' });
+    }
+  });
   it('preserves type and before filters across limit-one tied pages, owner scope and exact exhaustion', async () => {
     expect(await page()).toEqual({ items: [], nextCursor: null });
     const records = [];
@@ -118,6 +152,7 @@ describe('inbound event paging over real SQLite', () => {
       const first = await page('?limit=1');
       expect(first.items.map((event) => event.id)).toEqual([records[0]!.id]);
       expect(first.nextCursor).toBeTypeOf('string');
+      expect(await page(`?anchor=${records[0]!.id}&limit=1`)).toEqual(first);
       for (const query of ['?limit=1&cursor=' + first.nextCursor, '?limit=3']) {
         const response = await t.app.inject({ url: '/events' + query, headers });
         expect(response.statusCode).toBe(500);

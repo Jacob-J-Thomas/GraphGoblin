@@ -1,0 +1,66 @@
+COMMAND: pnpm.cmd typecheck
+NODE: v22.14.0
+pnpm.cmd : $ turbo run typecheck
+At line:14 char:3
++   pnpm.cmd @arguments 2>&1 | Out-File -Encoding UTF8 -Append $log
++   ~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ turbo run typecheck:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running typecheck in 12 packages
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/contracts:build: cache miss, executing 834a957103f27bd0
+@graphgoblin/contracts:typecheck: cache miss, executing 3d90195c68f3e28c
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+@graphgoblin/contracts:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/domain:typecheck: cache miss, executing 02f681e241945390
+@graphgoblin/domain:build: cache miss, executing 1ba63fe94ce74428
+@graphgoblin/domain:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/engine:build: cache miss, executing 9c91e7ce81daa819
+@graphgoblin/engine:typecheck: cache miss, executing 246de0327e2113f5
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/infrastructure:typecheck: cache miss, executing 53c98f66f4775071
+@graphgoblin/adapter-codex:build: cache miss, executing 024e1297e250e707
+@graphgoblin/adapter-jev:build: cache miss, executing aca5b0bb7b8c700f
+@graphgoblin/adapter-jev:typecheck: cache miss, executing bd1d0f9832376f47
+@graphgoblin/adapter-codex:typecheck: cache miss, executing 5e959ee6a8cc93de
+@graphgoblin/infrastructure:build: cache miss, executing df307925bc9f8aa5
+@graphgoblin/infrastructure:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-jev:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+ WARNING  IO error: Access is denied. (os error 5)
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/api:build: cache miss, executing bc0285632ea5f914
+@graphgoblin/api:typecheck: cache miss, executing 74ac6f3f20e1c8fd
+@graphgoblin/api:build: $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+@graphgoblin/api:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/api-client:build: cache miss, executing feccbe026a345acd
+@graphgoblin/api-client:typecheck: cache miss, executing 5923314a992a921c
+@graphgoblin/api-client:build: $ tsc -b tsconfig.build.json
+@graphgoblin/api-client:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/mcp:typecheck: cache miss, executing 4abfbb3dde397f3a
+@graphgoblin/mcp:build: cache miss, executing 593ffbd9a9bacf4d
+@graphgoblin/web:typecheck: cache miss, executing 760295841c4701ef
+@graphgoblin/mcp:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/mcp:build: $ tsc -b tsconfig.build.json
+@graphgoblin/web:typecheck: $ tsc -p tsconfig.json --noEmit
+@graphgoblin/plugin-codex:typecheck: cache miss, executing 47902bb39857f107
+@graphgoblin/plugin-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+
+ Tasks:    20 successful, 20 total
+Cached:    0 cached, 20 total
+  Time:    1m56.079s 
+
+RESULT: exit 0; seconds 116.8

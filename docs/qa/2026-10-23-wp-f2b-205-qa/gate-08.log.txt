@@ -1,0 +1,40 @@
+$ vitest run --coverage
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f2b-205/packages/api-client
+      Coverage enabled with v8
+
+ ❯ src/templates.test.ts (2 tests | 1 failed) 8354ms
+   × reads manifest-only catalogue entries through the generated API 5042ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/templates.test.ts > reads manifest-only catalogue entries through the generated API
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/templates.test.ts:45:1
+     43| });
+     44|
+     45| it('reads manifest-only catalogue entries through the generated API', …
+       | ^
+     46|   const client = await setup();
+     47|   const entries = await templates.list(client);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 7 passed (8)
+      Tests  1 failed | 72 passed (73)
+   Start at  01:52:37
+   Duration  30.83s (transform 44%, import 37%, tests 19%)
+
+  Transform  transforming modules took 57.75s · 44% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-f2b-
+  │ 205\packages\api-client
+

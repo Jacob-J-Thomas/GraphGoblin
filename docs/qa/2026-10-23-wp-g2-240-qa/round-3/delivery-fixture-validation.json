@@ -1,0 +1,62 @@
+{
+  "source": "packages/api-client/openapi.json GET /events 200 public schema",
+  "checks": [
+    {
+      "delivery": {
+        "state": "pending",
+        "attempts": 0
+      },
+      "expected": true,
+      "actual": true,
+      "pass": true,
+      "errors": null
+    },
+    {
+      "delivery": {
+        "state": "admitted",
+        "attempts": 1
+      },
+      "expected": true,
+      "actual": true,
+      "pass": true,
+      "errors": null
+    },
+    {
+      "delivery": {
+        "state": "failed",
+        "attempts": 3,
+        "failureCode": "ADMISSION_FAILED"
+      },
+      "expected": true,
+      "actual": true,
+      "pass": true,
+      "errors": null
+    },
+    {
+      "delivery": {
+        "state": "invalid",
+        "attempts": -1
+      },
+      "expected": false,
+      "actual": false,
+      "pass": true,
+      "errors": [
+        {
+          "instancePath": "/items/0/delivery/state",
+          "schemaPath": "#/properties/items/items/properties/delivery/properties/state/enum",
+          "keyword": "enum",
+          "params": {
+            "allowedValues": [
+              "filtered",
+              "deduplicated",
+              "pending",
+              "admitted",
+              "failed"
+            ]
+          },
+          "message": "must be equal to one of the allowed values"
+        }
+      ]
+    }
+  ]
+}

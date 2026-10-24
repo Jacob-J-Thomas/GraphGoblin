@@ -1,0 +1,81 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-g2-240/apps/api
+
+ ❯ src/routes/event-paging.test.ts (6 tests | 2 failed) 2274ms
+   ❯ inbound event paging over real SQLite (6)
+     × re-reads an inclusive loaded-page anchor despite newer timestamp ties, retaining opaque continuation 1494ms
+     × keeps anchored reads owner-scoped and filtered and rejects ambiguous bounds 155ms
+pnpm.cmd : 
+At line:3 char:1
++ pnpm.cmd --filter @graphgoblin/api exec vitest run src/routes/event-p ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/routes/event-paging.test.ts > inbound event paging over real SQLite > re-reads an inclusive loaded-page 
+anchor despite newer timestamp ties, retaining opaque continuation
+AssertionError: {"type":"https://graphgoblin.dev/problems/validation-failed","title":"validation 
+failed","status":400,"code":"VALIDATION_FAILED","detail":"the request did not match the 
+schema","errors":[{"path":"/anchor","message":"Unrecognized key \"anchor\""}]}: expected 400 to be 200 // Object.is 
+equality
+
+- Expected
++ Received
+
+- 200
++ 400
+
+ ❯ page src/routes/event-paging.test.ts:33:48
+     31|   async function page(query = '') {
+     32|     const response = await t.app.inject({ url: '/events' + query, head…
+     33|     expect(response.statusCode, response.body).toBe(200);
+       |                                                ^
+     34|     return response.json<Page>();
+     35|   }
+ ❯ src/routes/event-paging.test.ts:41:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/routes/event-paging.test.ts > inbound event paging over real SQLite > keeps anchored reads owner-scoped and 
+filtered and rejects ambiguous bounds
+AssertionError: {"type":"https://graphgoblin.dev/problems/validation-failed","title":"validation 
+failed","status":400,"code":"VALIDATION_FAILED","detail":"the request did not match the 
+schema","errors":[{"path":"/anchor","message":"Unrecognized key \"anchor\""}]}: expected 400 to be 200 // Object.is 
+equality
+
+- Expected
++ Received
+
+- 200
++ 400
+
+ ❯ page src/routes/event-paging.test.ts:33:48
+     31|   async function page(query = '') {
+     32|     const response = await t.app.inject({ url: '/events' + query, head…
+     33|     expect(response.statusCode, response.body).toBe(200);
+       |                                                ^
+     34|     return response.json<Page>();
+     35|   }
+ ❯ src/routes/event-paging.test.ts:59:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 4 passed (6)
+   Start at  06:03:47
+   Duration  37.81s (transform 73%, import 21%, tests 6%)
+
+  Transform  transforming modules took 26.45s · 73% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g2-
+  │ 240\apps\api
+
+EXIT_CODE=1
