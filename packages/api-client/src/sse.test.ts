@@ -100,6 +100,144 @@ describe('SseParser', () => {
 });
 
 describe('subscribeRunEvents', () => {
+  it.each(['data-newline', 'id-prefix'] as const)(
+    'discards complete JSON in a partial frame at %s without advancing the resume cursor',
+    async (boundary) => {
+      const partial = `event: run.queued\ndata: ${JSON.stringify(event(2))}\n${boundary === 'id-prefix' ? 'id: 2' : ''}`;
+      const reset = `${boundary === 'id-prefix' ? '\n' : ''}data: [interrupted]\nid: 1\n\n`;
+      const { fetch, urls } = scripted([
+        stream([
+          frame(event(1)),
+          partial,
+          `${reset}event: stream.error\ndata: {"code":"SSE_SLOW_CONSUMER","status":503}\n\n`,
+        ]),
+        stream([frame(event(2, 'run.cancelled'))]),
+      ]);
+      const seen: number[] = [];
+      const errors: unknown[] = [];
+      await subscribeRunEvents({
+        client: createGraphGoblinClient({ baseUrl: 'http://api', fetch }),
+        runId,
+        onEvent: (e) => {
+          seen.push(e.seq);
+        },
+        onError: (e) => {
+          errors.push(e);
+        },
+        sleep: recordingSleep().sleep,
+      }).done;
+      expect(seen).toEqual([1, 2]);
+      expect(errors).toHaveLength(2);
+      expect(errors[0]).toBeInstanceOf(RunEventParseError);
+      expect(errors[1]).toMatchObject({ code: 'SSE_SLOW_CONSUMER' });
+      expect(urls[1]).toMatch(/after=1$/);
+    },
+  );
+  it.each(['STORED_EVENT_INVALID'])(
+    'rejects a fatal stream control %s without advancing the cursor or retrying',
+    async (code) => {
+      const problem = { status: 500, code, detail: 'Stored history could not be read.' };
+      const { fetch, urls } = scripted([
+        stream([
+          frame(event(1)),
+          `id: 999\nevent: stream.error\ndata: ${JSON.stringify(problem)}\n\n`,
+        ]),
+      ]);
+      const subscription = subscribeRunEvents({
+        client: createGraphGoblinClient({ baseUrl: 'http://api', fetch }),
+        runId,
+        onEvent: () => undefined,
+        backoff: { maxAttempts: 1 },
+      });
+      await expect(subscription.done).rejects.toMatchObject({ code, problem });
+      expect(subscription.lastSeq).toBe(1);
+      expect(urls).toHaveLength(1);
+    },
+  );
+
+  it('rejects malformed stream controls without consuming their id', async () => {
+    const { fetch } = scripted([stream(['id: 999\nevent: stream.error\ndata: {}\n\n'])]);
+    const subscription = subscribeRunEvents({
+      client: createGraphGoblinClient({ baseUrl: 'http://api', fetch }),
+      runId,
+      after: 4,
+      onEvent: () => undefined,
+      backoff: { maxAttempts: 1 },
+    });
+    await expect(subscription.done).rejects.toBeInstanceOf(RunEventParseError);
+    expect(subscription.lastSeq).toBe(4);
+  });
+
+  it('reports partial data without an id, then retries a slow control from the complete cursor', async () => {
+    const { fetch, urls } = scripted([
+      stream([
+        frame(event(1)),
+        'event: run.queued\ndata: {"seq":2\n\nevent: stream.error\ndata: {"code":"SSE_SLOW_CONSUMER","status":503}\n\n',
+      ]),
+      stream([frame(event(2, 'run.cancelled'))]),
+    ]);
+    const errors: unknown[] = [];
+    const subscription = subscribeRunEvents({
+      client: createGraphGoblinClient({ baseUrl: 'http://api', fetch }),
+      runId,
+      onEvent: () => undefined,
+      onError: (e) => {
+        errors.push(e);
+      },
+      sleep: recordingSleep().sleep,
+    });
+    await subscription.done;
+    expect(errors[0]).toBeInstanceOf(RunEventParseError);
+    expect(errors[1]).toMatchObject({ code: 'SSE_SLOW_CONSUMER' });
+    expect(urls[1]).toMatch(/after=1$/);
+  });
+  it.each(['SSE_SLOW_CONSUMER', 'SSE_REPLAY_FAILED'])(
+    'reports a typed %s problem and retries from the last delivered id',
+    async (code) => {
+      const problem = {
+        status: code === 'SSE_SLOW_CONSUMER' ? 503 : 500,
+        code,
+        detail: 'The reader fell behind; reconnecting from the last received event.',
+      };
+      const { fetch, urls } = scripted([
+        stream([frame(event(1)), `event: stream.error\ndata: ${JSON.stringify(problem)}\n\n`]),
+        stream([frame(event(2, 'run.cancelled'))]),
+      ]);
+      const errors: unknown[] = [];
+      const seen: number[] = [];
+      const subscription = subscribeRunEvents({
+        client: createGraphGoblinClient({ baseUrl: 'http://api', fetch }),
+        runId,
+        onEvent: (e) => {
+          seen.push(e.seq);
+        },
+        onError: (error) => {
+          errors.push(error);
+        },
+        sleep: recordingSleep().sleep,
+      });
+      await subscription.done;
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toBeInstanceOf(GraphGoblinApiError);
+      expect(errors[0]).toMatchObject({ code, problem });
+      expect(seen).toEqual([1, 2]);
+      expect(urls[1]).toMatch(/after=1$/);
+    },
+  );
+  it('provides the received JSON size to batch consumers without another serialization', async () => {
+    const value = event(1, 'run.cancelled');
+    const json = JSON.stringify(value);
+    const { fetch } = scripted([stream([`data: ${json}\nid: 1\n\n`])]);
+    const received: number[] = [];
+    await subscribeRunEvents({
+      client: createGraphGoblinClient({ baseUrl: 'http://api', fetch }),
+      runId,
+      onEvent: (_event, jsonBytes) => {
+        received.push(jsonBytes);
+      },
+    }).done;
+    expect(received).toEqual([json.length * 2]);
+  });
   it('accepts exhausted completion and closes without reconnecting', async () => {
     const finished: RunEvent = {
       runId,

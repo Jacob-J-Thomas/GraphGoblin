@@ -1,0 +1,28 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-e1-186/apps/web
+
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > flushes an oversized single event immediately without dropping its payload 46ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > shows a SSE_SLOW_CONSUMER reason during retry and clears it when the stream reopens 7ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > shows a SSE_REPLAY_FAILED reason during retry and clears it when the stream reopens 19ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > flushes a burst in bounded batches before the batching timer runs 14ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > leaves an accepted clean close on the stream backoff without reporting an outage 5ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > restarts only if the last connection failure was a transport failure 4ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > re-arms an outage on cursor progress rather than acceptance or replay alone 551ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > reports and recovers two quiet-stream outages separated by 15000 ms open 11ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > reports and recovers two quiet-stream outages separated by 20000 ms open 5ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > reports rapid two-second drops once and does not restart again on recovery 14ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > keeps real SSE retries bounded for clean closes after 0 ms 123ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > keeps real SSE retries bounded for clean closes after 2000 ms 60ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > reports transport failure while online and clears it on an accepted stream 2ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > restarts a stream in backoff on recovery with its cursor and cleans up 4ms
+ ✓ src/runs/useRunEvents.test.tsx > run stream reachability > does not report HTTP refusals or malformed event frames as transport failures 2ms
+
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+   Start at  05:28:26
+   Duration  41.36s (transform 50%, environment 23%, setup 12%, import 12%, tests 2%)
+
+  Transform  transforming modules took 20.30s · 50% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+

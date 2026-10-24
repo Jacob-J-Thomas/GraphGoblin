@@ -229,6 +229,22 @@ Native dialog close returns focus to the opener after cancellation; plain Keep/E
 
 Consequences include removal of a loop's versions and triggers and unavailable subloop starts; a removed LiteLLM model leaving loops referencing it (harness models have no deletion action); a removed custom classifier leaving its selected id visible, blocking publication and failing that evaluator at runtime until the selection is restored or changed, while its secret stays (built-in Jev has no deletion action); a deleted secret naming the custom classifiers that use it as their bearer secret; missing secrets causing webhook 503 `HOOK_NOT_READY`, unsigned return deliveries, script `SECRET_MISSING`, and (for `jev-api-key`) unavailable Jev decisions; and API clients receiving 401 immediately after revocation. If `GG_JEV_API_KEY` is set at startup, the deleted `jev-api-key` secret is re-seeded at the next server start. Settings marks the row whose list-response `current` is true with the existing **This browser** badge, linked to its Revoke button through `aria-describedby`. Only that row's confirmation adds: "Revoking this key will sign this browser out and show the API key panel. Enter another valid key to continue." Every active key keeps the general 401 consequence. When a key is stored and no row is marked (including trusted mode), every active row instead adds: "This browser still sends a stored API key. If this is that key, revoking it signs this browser out and shows the API key panel; Forget key in Settings also clears it." A rejected key focuses the API key panel's input once the modal closes. Regression coverage is in `LoopsPage.test.tsx`, `SettingsPage.test.tsx`, `confirm-action.test.tsx`, `api-key.test.tsx`, `api-key-fetch.test.ts`, `ApiKeysSection.test.tsx`, `apps/api/src/api-key-current.test.ts`, and Edge `e2e/actions.spec.ts` and `e2e/api-key-current.spec.ts`; visual evidence lives in `docs/qa/2026-10-04-loops-and-settings-actions/`.
 
+### Bounded stream batches (#186 round 1)
+
+`useRunEvents` retains the 100 ms batching window but flushes early at 256 events or
+1 MiB of estimated UTF-16 JSON storage, including during throttled browser timers.
+The client supplies the received JSON text's size as `onEvent`'s second argument,
+so the hook does not serialize events again merely to measure them.
+A single larger event flushes immediately; no payload is truncated or removed from
+the per-run history. A typed `SSE_SLOW_CONSUMER` or `SSE_REPLAY_FAILED` error flushes the old batch and shows
+the server's one-sentence reason as the stream error while the client retries from
+its last delivered event. A successful open clears that error. Slow-consumer errors
+do not report the API as unreachable. Fatal stream controls use the ordinary error
+state. The existing session-storage/quota behavior is unchanged.
+
+History browsing follows in #186 round 2: the per-run retained history bound and
+windowed Timeline rows are not delivered by round 1, even though G2 paging is merged.
+
 ## What shipped in M5, first pass (Draft)
 
 `apps/web` (`@graphgoblin/web`) implements every screen above except replay-at-node (M8) and a list of webhook endpoints on the Events screen (see "After the WP-D2 QA pass").

@@ -132,6 +132,40 @@ runtime reader is added. See the CHANGELOG upgrade notes.
 - The stream closes after `run.finished`, `run.failed`, or `run.cancelled` is delivered, whether that event is replayed or arrives live.
 - If the run is already terminal when the client subscribes and the cursor is at or past its terminal event, the response ends right after the replay (a `: connected` comment and no events), so a reconnect after the end never idles. Since WP-G the terminal event is persisted before terminal status (05), so a healthy current log needs no grace. If no terminal event is visible even after re-reading the log, the stream allows up to 2 seconds for late subscription delivery, then closes instead of idling forever. This is a defensive bound for incomplete legacy or inconsistent logs.
 - Reconnecting with the last seen `seq` replays everything missed, because the stream is a tail of the persisted log.
+- Replay reads at most 128 events per repository page, writes that page before reading the next,
+  and yields to the event loop between pages. Stored history and execution context stay complete.
+  Replay/catch-up ignores live notifications: subsequent log pages return their committed events.
+  After a short page, live notifications are enabled before another cursor read, closing the
+  read/switch race. Full pages continue catch-up; a short confirmation page hands off to live.
+  The live queue is capped at 256 events or 1 MiB of encoded UTF-8 frames. Overflow, an oversized
+  live event or a live sequence gap clears that queue and resumes paged reads on this connection,
+  without a failure or dropped durable history. Overlap is deduplicated and handoff is sorted.
+  Contiguity is checked only for live notifications; replay follows authoritative repository order.
+- Every write honours backpressure: after `write` returns false, no more payload or heartbeat
+  bytes are written until `drain`. Large event frames are written in 16 KiB chunks; normal Node
+  pending writes are capped at 256 KiB. Event payloads are not truncated. A page still occupies
+  the intrinsic memory of its events, plus one serialized event; these bounds control incidental
+  buffering, not supported stored-value size. Heartbeats are skipped while replay/drain is busy.
+- An outstanding-write ceiling or 5 seconds without `drain` sends an id-less
+  `event: stream.error` with Problem Details: status `503`, code `SSE_SLOW_CONSUMER`, and detail
+  "The reader fell behind; reconnecting from the last received event." This ends the response.
+  The one bounded control frame may exceed the normal write ceiling; a peer that never drains
+  is destroyed after another 2 seconds. A severed connection may prevent the control frame from
+  arriving; clients must report a network/premature-close error and resume from their own cursor.
+  These are engineering parameters, justified in ADR-0050, not owner-approved latency limits.
+- Normal frames place `id` after `data`. On failure an unfinished frame receives an invalid
+  data suffix and its id is reset to the previous complete event before the problem control.
+  This also handles complete JSON followed by an unfinished id, including a newline on a write
+  boundary. A wholly accepted frame is left intact. Invalid partial data can be reported as a
+  parse error; the complete-event cursor remains unchanged.
+  `after` and `Last-Event-ID` remain exclusive sequence cursors and control frames carry no id.
+  The API client surfaces controls as `GraphGoblinApiError`; `SSE_SLOW_CONSUMER` and `SSE_REPLAY_FAILED` retry
+  automatically with the existing exponential backoff. It reports via `onError` before retry,
+  resets backoff on event progress, and rejects `done` when `maxAttempts` is exhausted. A later
+  page corruption ends with fatal `STORED_EVENT_INVALID`; other read failures end with retryable
+  `SSE_REPLAY_FAILED`, matching first-page HTTP 5xx handling. Controls never advance the cursor.
+  The client's `onEvent(event, jsonBytes)` supplies the received JSON's estimated UTF-16 byte size
+  for batching without another serialization. History browsing follows in #186 round 2.
 - `GET /events/stream` (Draft) offers a multiplexed stream of run status changes across all runs for dashboards.
 
 ## Evaluation events
@@ -154,9 +188,11 @@ SQLite reads validate every stored row against `RunEventSchema`. A non-conformin
 the entire requested page; it is neither repaired nor converted into a synthetic event.
 JSON and SSE replay return HTTP 500 Problem Details with code `STORED_EVENT_INVALID` and
 the run id, sequence, and event type in `detail`, without payloads or provider diagnostics.
-SSE validates its replay, including any terminal-status recheck, before sending headers or
-frames, and releases its subscription on failure. No event cursor advances for a rejected
-page. Migration `0007`, rather than the reader, repairs historical decisions missing `skipped`.
+SSE validates the first page (and an empty terminal-cursor recheck) before sending headers;
+a failure there still returns HTTP Problem Details. Once headers are sent, a later unreadable
+page sends an id-less `stream.error` Problem Details control and releases the subscription.
+No event cursor advances for a rejected page. Migration `0007`, rather than the reader,
+repairs historical decisions missing `skipped`.
 
 ## Authentication (Decided for 1.0)
 

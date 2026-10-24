@@ -1,0 +1,55 @@
+# #186 round 1: after measurements
+
+Measured 2026-10-23 on Node 22.14.0, Windows, Inspector profiling, the final built implementation, and a fresh disposable file-backed store. After rebuilding the API:
+
+```text
+node tooling/perf/measure.mjs replay --passes=1000 --profile=inspector --port=5740 --store-prefix=gg-wp-e1-186- --out=.tmp/gg-wp-e1-186-after-verified
+```
+
+The workload is identical to the [before invocation](../../2026-10-22-wp-e1-186-before.md): 1,000 passes, 32 items/turn, 256 bytes/item, same profiler, full/late/slow/interrupted/reconnected raw HTTP readers, one-second initial socket hold and 50 ms slow reads. The prefix option formalizes the prefix already used by the before store. The obsolete harness cleanup call was repaired; the workload and observers did not change.
+
+| Measurement                               |    Before | Final after |
+| ----------------------------------------- | --------: | ----------: |
+| Durable events                            |     41008 |       41008 |
+| Full replay first event (ms)              |   1452.36 |       21.69 |
+| Full replay total (ms)                    |   1947.00 |     7077.82 |
+| Full replay event-loop delay maximum (ms) |   1171.26 |      569.38 |
+| Paused reader peak outstanding wire bytes |  19609162 |      538592 |
+| Full replay sampled peak heap (bytes)     | 156849160 |    55625912 |
+| Full replay baseline heap (bytes)         |  38789408 |    39803824 |
+| Observed host busy fraction               |    81.74% |      98.62% |
+
+These original runs were not interleaved. The reviewer's later interleaved same-host A/B establishes
+that the round-1 7,078 ms total and 569 ms loop maximum were host contention. With 41,001 events,
+a raw-socket reader and three rounds, its summary is:
+
+| Measurement                   |    Base | Round-1 head |
+| ----------------------------- | ------: | -----------: |
+| First event (ms)              | 2561.28 |        17.83 |
+| Total replay (ms)             | 3525.67 |      3315.19 |
+| Maximum event-loop stall (ms) | 2569.01 |       180.75 |
+
+Reviewer-provided evidence, copied for provenance: [bench-out.json](../../2026-10-22-wp-e1-186/round-2/review-ab-bench-out.json),
+[benchmark source](../../2026-10-22-wp-e1-186/round-2/review-bench.mjs.txt) and
+[reader source](../../2026-10-22-wp-e1-186/round-2/review-reader.mjs.txt). The JSON's local user path is normalized
+to `%USERPROFILE%`; the two source captures are unchanged bytes. This is independent reviewer evidence,
+not a rerun by this implementation thread. The original measurements and earlier trials remain intact.
+No universal throughput or latency guarantee is claimed.
+
+All three earlier after trials remain inspectable: [trial 1](../../2026-10-22-wp-e1-186/after-metrics.json), [trial 2](../../2026-10-22-wp-e1-186/after-final-metrics.json), [trial 3](../../2026-10-22-wp-e1-186/after-cursor-metrics.json). They used successive implementations before the final cursor/partial-frame refinements. Trial 1 measured 5,788.14 ms maximum full-replay loop delay, 55.60 ms first event and 17,559.60 ms total; variation is substantial. No unrelated engine or SQL optimization was attempted.
+
+## Exact payload checks
+
+| Reader      | Before events / gaps / SHA-256                                               | Final events / gaps / SHA-256                                                |
+| ----------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| first       | 41008 / 0 / cd1670d1d34ecc82ec64ccff656d10c7db0c132ca4064a6e3ad3ab8f82e96db2 | 41008 / 0 / be020d83683ea023107d4ea2e6723aa019a7be05916c358c119351c384aa265b |
+| late        | 4101 / 0 / 9f11ed0435b9064078747acc7be304833927d5a52964c91dcac20e7cc6872365  | 4101 / 0 / 029ba710bb1297376ded46796293cb468263bc71e2df880f9c6bcd203e8f73d0  |
+| slow        | 41008 / 0 / cd1670d1d34ecc82ec64ccff656d10c7db0c132ca4064a6e3ad3ab8f82e96db2 | 41008 / 0 / be020d83683ea023107d4ea2e6723aa019a7be05916c358c119351c384aa265b |
+| interrupted | 13697 / 0 / d562472d262e3e4a381c447233b6e16a524eeb000bc725e313ef55afda906606 | 13673 / 0 / fe80b4dbcf83d41bfe2ef077b385a2ba21ad0b58e6f8fc2d190e1d6e757d8c18 |
+| reconnected | 27311 / 0 / cd1670d1d34ecc82ec64ccff656d10c7db0c132ca4064a6e3ad3ab8f82e96db2 | 27335 / 0 / be020d83683ea023107d4ea2e6723aa019a7be05916c358c119351c384aa265b |
+
+Full and slow hashes equal each invocation's durable full-log hash; late equals its durable suffix hash. The interrupted hash is a prefix; the reconnected hash includes that prefix cumulatively and equals the durable full-log hash. Every reader has zero gaps; combined reconnect counts are complete. Run ids and timestamps differ between invocations, so before/after hashes differ.
+
+Metrics, repository-read histograms and memory values: [before metrics](../../2026-10-22-wp-e1-186/before-metrics.json), [final metrics](../../2026-10-22-wp-e1-186/after-verified-metrics.json), [final portable summary](../../2026-10-22-wp-e1-186/after-verified-summary.json), and [measurement log](../../2026-10-22-wp-e1-186/measurement-after-verified.log.txt). Large captures and stores: [NOT-KEPT manifest](../../2026-10-22-wp-e1-186/NOT-KEPT.md). The baseline's obsolete-cleanup error is documented in the before report. The final structured summary records cleanup/profile/memory-log results without concealing earlier failed attempts.
+
+Outstanding wire bytes include kernel/client buffers and are not the JavaScript writable queue; timer samples can miss short peaks. Code and the paused real-socket regression establish the bounded writer and explicit failure rather than zero-valued writable samples. See the evidence report for test and gate results. History browsing follows in #186 round 2.

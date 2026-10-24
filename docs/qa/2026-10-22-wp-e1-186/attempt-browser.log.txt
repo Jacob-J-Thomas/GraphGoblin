@@ -1,0 +1,26 @@
+DataCloneError: Cannot clone object of unsupported type.
+
+   at ..\..\..\tooling\perf\common.mjs:10
+
+   8 | export async function dependency(name, app = 'api') {
+   9 |   return import(
+> 10 |     import.meta.resolve(name, new URL('../../apps/' + app + '/package.json', import.meta.url))
+     |                 ^
+  11 |   );
+  12 | }
+  13 | export const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    at dependency (%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-186\tooling\perf\common.mjs:10:17)
+    at setup (%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-186\docs\qa\2026-10-22-wp-e1-186\browser-setup.mjs:6:59)
+
+pnpm.cmd : Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+At line:4 char:1
++ pnpm.cmd --filter @graphgoblin/web exec playwright test --config ../. ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Error: ERR_PNPM...EXEC_FIRST_FAIL:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-
+  │ 186\apps\web
+

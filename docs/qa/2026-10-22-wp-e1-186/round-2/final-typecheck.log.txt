@@ -1,0 +1,54 @@
+pnpm.cmd : $ turbo run typecheck
+At line:7 char:3
++   & pnpm.cmd @GateArguments *> $capture
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ turbo run typecheck:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running typecheck in 12 packages
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/contracts:typecheck: cache hit, replaying logs a3e371aef87dc5da
+@graphgoblin/contracts:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/contracts:build: cache hit, replaying logs 3084238c4d06729b
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+@graphgoblin/domain:typecheck: cache hit, replaying logs 9436aa74d54abb6e
+@graphgoblin/domain:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/domain:build: cache hit, replaying logs 2139360be1fde0b4
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:typecheck: cache hit, replaying logs ac9006cbb5170ebe
+@graphgoblin/engine:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/engine:build: cache hit, replaying logs b133418c2bb56716
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-codex:typecheck: cache hit, replaying logs c1cc6653b778d2c8
+@graphgoblin/infrastructure:typecheck: cache hit, replaying logs 63b025c54355f7b7
+@graphgoblin/infrastructure:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-jev:typecheck: cache hit, replaying logs 5946170cdede3f00
+@graphgoblin/adapter-codex:build: cache hit, replaying logs 18666618ce468d05
+@graphgoblin/adapter-jev:build: cache hit, replaying logs 65464080b6b7ece8
+@graphgoblin/adapter-jev:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:build: cache hit, replaying logs 02fbbb8f918d65cc
+@graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+@graphgoblin/api:build: cache miss, executing 87ba50d6ac58a917
+@graphgoblin/api:typecheck: cache miss, executing b2e7a5f097277e5c
+@graphgoblin/api:build: $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+@graphgoblin/api:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/api:typecheck: src/sse.ts(181,7): error TS2412: Type 'undefined' is not assignable to type '({ type: "delivery.queued"; delivery: { id: string; channel: { kind: "webhook"; url: string; secretRef?: string | undefined; }; status: "failed" | "pending" | "delivered"; attempts: number; ... 6 more ...; lastError?: { ...; } | undefined; }; runId: string; seq: number; ts: string; } | ... 29 more ... | { ...; })[]' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+@graphgoblin/api:typecheck: [ELIFECYCLE] Command failed with exit code 1.
+@graphgoblin/api#typecheck:  ERROR  command 
+(%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-e1-186\apps\api) C:\nvm4w\nodejs\pnpm.cmd run 
+typecheck exited (1)
+
+ Tasks:    12 successful, 14 total
+Cached:    12 cached, 14 total
+  Time:    24.569s 
+Failed:    @graphgoblin/api#typecheck
+
+ ERROR  run failed: command  exited (1)
+[ELIFECYCLE] Command failed with exit code 1.
