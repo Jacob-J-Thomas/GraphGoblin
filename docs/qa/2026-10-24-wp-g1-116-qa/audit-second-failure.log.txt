@@ -1,0 +1,18 @@
+Second report-audit stdout (user paths normalized):
+
+AssertionError [ERR_ASSERTION]: Inspector status resumed-unfinished open
+    at file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-g1-116-corrected-audit-hDv2jR/audit.mjs:18:645
+  actual: false
+  expected: true
+  operator: ==
+Node.js v22.14.0
+FINAL_REPORT_EXIT=1
+
+Full inspection of the retained original captures then found:
+- restart-failed, reload, 390: lifecycle header explicitly unavailable/Offline.
+- resumed-unfinished, open, 1440: failed header while thread/event cursor is resumed.
+- succeeded, open, 390: running header and a cursor before final event 18.
+All original reconstructed threads matched REST. The original observation helper
+waited only for thread equality, so it did not establish lifecycle/cursor convergence.
+The corrected strict browser script waits for all three together, rather than
+silently counting these original frames as status/cursor passes.
