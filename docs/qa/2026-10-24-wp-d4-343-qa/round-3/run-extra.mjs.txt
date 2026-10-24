@@ -1,0 +1,10 @@
+import {readFile,writeFile} from 'node:fs/promises';
+import {join} from 'node:path';
+const out='docs/qa/2026-10-24-wp-d4-343-qa/round-3';
+const dir=JSON.parse(await readFile(join(out,'script-location.json'),'utf8')).staging.replace('%USERPROFILE%',process.env.USERPROFILE);
+const src=await readFile(join(out,'acceptance.mjs.txt'),'utf8');
+const helper=src.slice(0,src.indexOf('let s;')).replaceAll('api-results.json','text-results.json');
+const source=helper+await readFile(join(out,'text-cases.mjs.txt'),'utf8');
+await writeFile(join(out,'text-identities.mjs.txt'),source);
+await writeFile(join(dir,'text-identities.mjs'),source);
+console.log(dir);
