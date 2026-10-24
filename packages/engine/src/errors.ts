@@ -1,4 +1,5 @@
 import type { RunErrorCode, RunFailure } from '@graphgoblin/contracts';
+import type { EventDraft } from './ports.js';
 
 /** Artifact I/O failed explicitly; missing content is represented separately by undefined. */
 export class ArtifactStoreError extends Error {
@@ -40,6 +41,8 @@ export class RunFailureError extends Error {
       details?: unknown;
       nodeId?: string;
       inference?: RunFailure['inference'];
+      /** Facts the failing visit learned, appended in the same write as `run.failed` (#398). */
+      records?: EventDraft[];
     } = {},
   ) {
     super(message);
@@ -96,7 +99,11 @@ export class RunCancelledError extends Error {
  * turn, at the child's request, as cancelling inline work cancels the run that does it (#251).
  */
 export class ChildCancelledError extends Error {
-  constructor(readonly childRunId: string) {
+  /** `records` are appended in the same write as the cancellation request (#398). */
+  constructor(
+    readonly childRunId: string,
+    readonly records: EventDraft[] = [],
+  ) {
     super(`subloop child ${childRunId} was cancelled`);
     this.name = 'ChildCancelledError';
   }
