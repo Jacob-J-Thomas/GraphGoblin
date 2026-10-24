@@ -436,7 +436,7 @@ describe('wait rejection and acknowledgement boundaries', () => {
     await first.container.timers.cancel(r.id);
     const initial = await first.container.ports.runs.getInitialThread(r.id);
     if (!initial) throw Error('initial thread');
-    await first.container.ports.runs.saveThread(r.id, initial, 0);
+    await first.container.ports.runs.saveThread(r.id, initial, 0, { strict: false });
     await first.container.ports.runs.update(r.id, {
       status: 'paused',
       pausedAt: first.clock.now().toISOString(),

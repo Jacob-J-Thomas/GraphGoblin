@@ -1,0 +1,23 @@
+Initial final-audit stdout (paths normalized to %USERPROFILE%):
+
+AssertionError [ERR_ASSERTION]: Inspector status restart-failed reload
+    at file:///%USERPROFILE%/AppData/Local/Temp/gg-qa-g1-116-final-scripts-368575a4ab6d46b5a212f02f4947ead2/audit.mjs:18:391 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '=='
+}
+Node.js v22.14.0
+AUDIT_EXIT=1
+
+Investigation: restart-failed.json, view reload at 390 px, has an explicit Offline
+header and a correct cached thread at event 9. The captured header contains no
+run lifecycle status. The same tab's resumed-unfinished.json and succeeded.json
+captures have the expected running and succeeded status and correct threads.
+All four immediate post-restart views still record a stream transport error.
+
+The initial audit's assumption that every immediate post-restart capture already
+had an available lifecycle header was false. The final audit records the offline
+frame separately; it does not count that frame as a successful status comparison.
+The source prior to this correction asserted statusAgrees unconditionally.

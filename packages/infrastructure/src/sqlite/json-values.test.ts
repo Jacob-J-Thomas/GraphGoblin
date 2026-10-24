@@ -132,12 +132,16 @@ describe('JSON values in real SQLite', () => {
     thread.invocation.trigger.payload = null;
     await repo.create(run, thread);
     const snapshot = { ...thread, vars: { ...thread.vars, changed: null } };
-    await repo.saveThread(run.id, snapshot, 0);
+    await repo.saveThread(run.id, snapshot, 0, { strict: false });
     expect(await repo.get(run.id)).toEqual(run);
     const reader = new SqliteRunRepository((await reopen()).db);
     expect(await reader.get(run.id)).toEqual(run);
     expect(await reader.getInitialThread(run.id)).toEqual(thread);
-    expect(await reader.getThreadCheckpoint(run.id)).toEqual({ thread: snapshot, seq: 0 });
+    expect(await reader.getThreadCheckpoint(run.id)).toEqual({
+      thread: snapshot,
+      seq: 0,
+      replayState: { strict: false },
+    });
     await reader.update(run.id, { waiting: undefined, failure: undefined });
     const cleared = await reader.get(run.id);
     expect(Object.hasOwn(cleared!, 'waiting')).toBe(false);

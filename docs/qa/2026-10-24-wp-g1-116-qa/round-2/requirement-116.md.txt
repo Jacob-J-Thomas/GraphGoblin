@@ -1,0 +1,85 @@
+# #116 [I07/U19/B51] Reconcile snapshot and event tails
+
+state: OPEN | milestone: Later | labels: qa:touched-systems, impl:gpt-6.1-sol, review:claude-opus-5.5, type:bug, area:web, area:api, area:engine, backlog, kind:bolt, status:approved-held
+parent: #308 [I07/U19] Reconcile execution history
+sub-issues: -
+created: 2026-10-07T19:28:19Z updated: 2026-10-18T23:36:09Z
+
+## Body
+
+Part of #308
+
+<!-- graphgoblin-approved-roadmap:2026-10-17:B51 -->
+
+<!-- graphgoblin-approved-revision:2026-10-18 -->
+
+**Owner-approved consolidated revision, 2026-10-18. Implementation remains held by #279.** Latest owner decisions in #278 supersede older proposals and historical comments. This approval authorizes backlog publication only; no implementation, owner-environment change, or provider run is dispatched.
+
+Authority and complete owner decision record: #278. Current text supersedes older model proposals and historical scheduling/approval statements; comments remain historical evidence, not a competing current specification.
+
+## Bounded change
+
+Reconcile snapshot and event tails
+
+## Acceptance criteria
+
+- [ ] Failure/resume/success is represented consistently in current-thread reads, API snapshots and existing/reconnected browser tabs; reads neither apply unfinished patches nor mutate state.
+
+- [ ] Existing tabs, reloaded/reconnected tabs, API and MCP agree through failure/resume/success despite delayed snapshots. Read reconciliation cannot apply unfinished patches or mutate execution state.
+
+## Verification
+
+Real persisted terminal/resume sequences, delayed snapshots, reconnect and reload.
+
+## Dependencies
+
+- #247 — B17
+- #279 — implementation dispatch remains held.
+
+## Scope limits
+
+Only the described behavior and its necessary tests/contracts/docs.
+
+## Delivery and closure
+
+Approved plan; parked pending explicit dispatch. Proposed implementer: GPT-6.1 Sol xhigh; independent reviewer: Claude Opus 5.5 xhigh; independent QA: GPT-6.1 Sol xhigh. QA scope: touched systems, including relevant positive, negative, concurrency, cancellation and restart cases. All tests use supported interfaces; retain existing coverage protections.
+
+**Owner product acceptance required before closure.** PRs use Part of rather than auto-closing this issue until the owner has accepted the running behavior.
+
+No implementation gate labels are applied now. After later dispatch, select the repository gate consistent with owner-review requirements; never combine aidlc-ready and human-in-the-loop.
+
+## Source requirements
+
+#116, #183, #239
+
+## Evidence provenance (not a new test result)
+
+The observations below describe their original assessed baseline. They are not current solution requirements; the approved scope above controls. Reproduce on the accepted target before relying on them.
+
+### Source #116 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/115), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/2f98219fb43620b56d6baf57cbc5987dbd398a522/packages/engine/src/run-manager.ts#L1233), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/2f98219fb43620b56d6baf57cbc5987dbd398a522/packages/engine/src/run-manager.ts#L1326), [source 4](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/2f98219fb43620b56d6baf57cbc5987dbd398a522/apps/api/src/sse.ts#L79)
+
+### Source #239 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/api/src/sse.ts#L83), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/api/src/sse.ts#L85), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/web/src/runs/useRunEvents.ts#L49), [source 4](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/api-client/src/sse.ts#L222), [source 5](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/docs/guide/03-run-and-observe.md#L137)
+
+
+## Consolidated source reports
+
+- #183: Engine: current-thread reads omit the last node start after an expression failure.
+- #239: Run history: show every resumed attempt after an earlier terminal event.
+
+These reports are closed as duplicate tracking records. Their accepted requirements and owner-review conditions remain in this bolt. This bolt is the sole open delivery record; no implementation or acceptance is claimed by consolidation.
+
+
+## Comments (1)
+
+### Jacob-J-Thomas at 2026-10-09T23:19:24Z
+
+### Parked (2026-10-09)
+
+After QA of PR #151 the owner put further development on hold until the after-merge phase finishes: hands-on product evaluation (#166) and an architecture and tech-debt sweep (#163). This issue moves to `Later` with `backlog` and leaves the queue.
+
+When it is unparked, restore the gate `human-in-the-loop`. Its type, area, QA and routing labels are unchanged.
+

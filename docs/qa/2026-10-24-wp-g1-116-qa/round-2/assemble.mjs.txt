@@ -1,0 +1,6 @@
+import {readFile,writeFile} from 'node:fs/promises';
+import {join} from 'node:path';
+const out=join(process.cwd(),'docs/qa/2026-10-24-wp-g1-116-qa/round-2'),p=JSON.parse(await readFile(join(out,'paths.json'),'utf8'));
+const src=await readFile(join(out,'supplement.mjs.txt'),'utf8'),body=await readFile(join(out,'broad-body.mjs.txt'),'utf8');
+let driver=src.slice(0,src.indexOf('try {\n await startServer();')).replace('port=5871','port=5872').replace("save('supplement.json',results)","save('broad-results.json',results)")+body;
+await writeFile(join(out,'broad.mjs.txt'),driver);await writeFile(join(p.work,'broad.mjs'),driver);

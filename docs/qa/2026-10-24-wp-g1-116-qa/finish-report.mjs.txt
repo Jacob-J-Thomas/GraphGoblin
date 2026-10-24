@@ -1,0 +1,36 @@
+// Correct the draft's immediate-reconnect overstatement, preserve the failed audit,
+// format only the changed QA Markdown, then audit the final evidence.
+import assert from 'node:assert/strict';
+import {readFile,writeFile,copyFile,readdir,mkdtemp} from 'node:fs/promises';
+import {join} from 'node:path';
+import {tmpdir} from 'node:os';
+import {spawn} from 'node:child_process';
+const root=process.env.QA_ROOT,out=join(root,'docs/qa/2026-10-24-wp-g1-116-qa');
+const original=join(tmpdir(),'gg-qa-g1-116-final-scripts-368575a4ab6d46b5a212f02f4947ead2','audit.mjs');
+await copyFile(original,join(out,'audit-initial.mjs.txt'));
+let text=await readFile(join(out,'README.md'),'utf8');
+text=text.replace(/^\| Inspector lifecycle metadata.*$/m,'| Inspector lifecycle metadata | Check captured header and cursor in four tabs at five stages | Available status matches REST; distinguish explicit offline/reconnect state | 19/20 headers available and agree; one 390 px reloaded tab is explicitly Offline immediately after restart; all 20 cursors agree; that tab has correct running/succeeded headers in later captures | PASS for available statuses and subsequent recovery; one unavailable status comparison — `ui-metadata-check.json`, stage captures |');
+text=text.replace(/^\| Real process restart and reconnect.*$/m,'| Real process restart and reconnect | Replace native API process on same SQLite directory and port; keep all tabs open; resume and succeed later | Correct cached failure thread; reconnect follows resume and success | PID 60876 replaced by 59304; all four cached threads remain at event 9. Immediate capture still has transport errors, with one explicit Offline header; later resumed/succeeded captures recover in all tabs | PASS for requested reconnect-through-resume behavior — `native-processes.json`, `restart-failed.json`, `resumed-unfinished.json`, `succeeded.json`, screenshots |');
+const correction='\nThe first final-report audit also rejected a draft assertion that all 20 captured lifecycle headers were already available and agreeing. In `restart-failed.json`, the 390 px reloaded tab still explicitly says Offline; all four immediate post-restart views still display a stream transport error. Its cached thread is correct at event 9. The same tab later displays the correct running and succeeded status and thread. The report now records 19 available/agreeing headers, one temporarily unavailable comparison, and 20 agreeing event cursors. The failed audit and its original source are retained; this frame is not relabelled a successful status comparison. The requested follow-through after resume/success passed. Immediate online recovery after a process restart was not established at that capture, and no immediate-reconnect SLA is inferred from ADR-0053\'s bounded backoff.\n';
+text=text.replace('\n## Systems and checks',correction+'\n## Systems and checks');
+text=text.replace('`pnpm.cmd format:check` is recorded in [format-check.log.txt](format-check.log.txt) after the evidence report is formatted.','`pnpm.cmd format:check` passed for the repository; see [format-check.log.txt](format-check.log.txt). After correcting the reconnect wording, the changed QA Markdown was formatted and checked with `pnpm.cmd exec prettier --check docs/qa/2026-10-24-wp-g1-116-qa/README.md docs/qa/2026-10-24-wp-g1-116-qa/NOT-KEPT.md`; see [the scoped check](qa-format-check.log.txt).');
+text=text.replace('and the two QA harness limitations','the QA harness limitations, and the explicit offline/reconnect observation');
+for(const n of ['qa-final-format.log.txt','qa-format-check.log.txt'])await writeFile(join(out,n),'Pending final formatting\n');
+const names=(await readdir(out)).filter(n=>n!=='README.md').sort();
+text=text.replace(/<!-- ARTIFACT_INDEX -->[\s\S]*?(?=\n## Observations outside scope)/,'<!-- ARTIFACT_INDEX -->\n\n'+names.map(n=>'- ['+n+']('+n+')').join('\n')+'\n');
+await writeFile(join(out,'README.md'),text);
+async function command(cmd){return new Promise((resolve,reject)=>{const p=spawn(cmd,{shell:true,cwd:root,env:process.env,windowsHide:true});let log='';p.stdout.on('data',d=>log+=d);p.stderr.on('data',d=>log+=d);p.once('error',reject);p.once('exit',code=>resolve({code,log}));});}
+const paths='docs/qa/2026-10-24-wp-g1-116-qa/README.md docs/qa/2026-10-24-wp-g1-116-qa/NOT-KEPT.md';
+for(const [flag,name]of [['--write','qa-final-format.log.txt'],['--check','qa-format-check.log.txt']]){
+  const cmd='pnpm.cmd exec prettier '+flag+' '+paths;let r=await command(cmd),log='COMMAND: '+cmd+'\n'+r.log+'\nEXIT: '+r.code+'\n';
+  if(r.code&&r.log.includes('ERR_PNPM_STORE_DIR_OPEN_OPERATION_LOCK')){const fallback='node_modules\\.bin\\prettier.cmd '+flag+' '+paths;r=await command(fallback);log+='FALLBACK: '+fallback+'\n'+r.log+'\nEXIT: '+r.code+'\n';}
+  await writeFile(join(out,name),log);assert.equal(r.code,0,log);
+}
+const temp=await mkdtemp(join(tmpdir(),'gg-qa-g1-116-corrected-audit-'));
+await copyFile(join(out,'audit.mjs.txt'),join(temp,'audit.mjs'));
+const state=JSON.parse(await readFile(join(out,'final-state.json'),'utf8'));
+state.temporaryDirectories.push(temp.replace(process.env.USERPROFILE,'%USERPROFILE%'));
+state.reportCorrection='One explicit offline lifecycle header at the immediate restart capture is unavailable, rather than a successful status comparison; subsequent running/succeeded captures agree.';
+await writeFile(join(out,'final-state.json'),JSON.stringify(state,null,2));
+const audit=spawn(process.execPath,[join(temp,'audit.mjs')],{env:process.env,windowsHide:true,stdio:'inherit'});
+assert.equal(await new Promise(r=>audit.once('exit',r)),0,'Final evidence audit');

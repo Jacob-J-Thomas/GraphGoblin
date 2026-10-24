@@ -1,0 +1,58 @@
+import assert from 'node:assert/strict';
+import {mkdtemp,writeFile} from 'node:fs/promises';
+import {join,dirname} from 'node:path';
+import {fileURLToPath,pathToFileURL} from 'node:url';
+import {fork} from 'node:child_process';
+import {createRequire} from 'node:module';
+const root=process.env.AUDIT_ROOT,out=dirname(fileURLToPath(import.meta.url)),port=5877;
+const data=await mkdtemp(join(out,'gg-qa-g1-116-2-store-'));
+const requireMcp=createRequire(join(root,'apps/mcp/package.json')),requireWeb=createRequire(join(root,'apps/web/package.json'));
+const loadMcp=p=>import(pathToFileURL(requireMcp.resolve(p)).href);
+const {Client}=await loadMcp('@modelcontextprotocol/sdk/client/index.js');
+const {StdioClientTransport}=await loadMcp('@modelcontextprotocol/sdk/client/stdio.js');
+const {createMcpServer}=await import(pathToFileURL(join(root,'apps/mcp/dist/index.js')).href);
+const {chromium}=requireWeb('@playwright/test');
+const results={head:'a553d429ad50cf9b528d660b8d39948fc554dda9',data,port,processes:[],checks:[]};
+let proc,serial=0,browser,client,mcp,tabs=[];
+const pending=new Map();
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const save=(name,value)=>writeFile(join(out,name),JSON.stringify(value,null,2));
+const ctrl=(op,args)=>new Promise((resolve,reject)=>{const id=++serial,timer=setTimeout(()=>{pending.delete(id);reject(Error('IPC deadline '+op));},60000);pending.set(id,{resolve:v=>{clearTimeout(timer);resolve(v);},reject:e=>{clearTimeout(timer);reject(e);}});proc.send({id,op,args});});
+async function startServer(){
+ proc=fork(join(out,'audit-server.mjs'),[],{env:{...process.env,AUDIT_ROOT:root,AUDIT_PORT:String(port),AUDIT_DATA:data},silent:true,windowsHide:true});
+ let log='';proc.stdout.on('data',d=>log+=d);proc.stderr.on('data',d=>log+=d);
+ const ready=await new Promise((resolve,reject)=>{const t=setTimeout(()=>reject(Error('startup deadline '+log)),60000);proc.on('message',m=>{if(m.ready){clearTimeout(t);resolve(m);}else if(m.id){const p=pending.get(m.id);if(p){pending.delete(m.id);m.error?p.reject(Error(m.error)):p.resolve(m.value);}}});proc.once('exit',c=>{clearTimeout(t);reject(Error('server exit '+c+' '+log));});});
+ results.processes.push(ready);proc.on('exit',()=>void writeFile(join(out,'server-'+ready.pid+'.log.txt'),log||'No product log output.\n'));return ready;
+}
+async function stopServer(){const child=proc;await ctrl('close');if(child.exitCode===null)await new Promise(r=>child.once('exit',r));}
+async function api(path,method='GET',body){const r=await fetch('http://127.0.0.1:'+port+path,{method,headers:body===undefined?{}:{'content-type':'application/json'},...(body===undefined?{}:{body:JSON.stringify(body)})});const v=await r.json();assert.ok(r.ok,method+' '+path+' '+JSON.stringify(v));return v;}
+async function publish(def){const v=await api('/loops','POST',{definition:def});await api('/loops/'+v.loop.id+'/publish','POST');return v.loop.id;}
+const start=id=>api('/loops/'+id+'/runs','POST',{}).then(v=>v.run);
+async function poll(f,label,ms=60000){const until=Date.now()+ms;let last;do{try{const v=await f();if(v)return v;}catch(e){last=e.message;}await sleep(100);}while(Date.now()<until);throw Error(label+' deadline; '+last);}
+const status=(id,s)=>poll(async()=>{const r=await api('/runs/'+id);return r.status===s?r:false;},s);
+async function mcpConnect(){client=new Client({name:'qa-stdio-116',version:'1'});const transport=new StdioClientTransport({command:process.execPath,args:[join(root,'apps/mcp/dist/main.js'),'--api-url','http://127.0.0.1:'+port],stderr:'pipe',env:{PATH:process.env.PATH,SYSTEMROOT:process.env.SYSTEMROOT,APPDATA:process.env.APPDATA,USERPROFILE:process.env.USERPROFILE}});let diagnostics='';transport.stderr?.on('data',d=>diagnostics+=d);await client.connect(transport);results.mcp={pid:transport.pid,runtime:process.version};results.tools=(await client.listTools()).tools.map(t=>t.name);mcp={close:async()=>{await writeFile(join(out,'stdio-server.log.txt'),diagnostics);}};}
+async function mcpThread(id){const r=await client.callTool({name:'get_run_thread',arguments:{runId:id}});assert.ok(!r.isError,JSON.stringify(r));return JSON.parse(r.content.find(v=>v.type==='text').text);}
+async function check(name,fn){console.log('CHECK '+name);try{const detail=await fn();results.checks.push({name,pass:true,detail});console.log('PASS '+name);}catch(e){results.checks.push({name,pass:false,error:e.stack});console.log('FAIL '+name+': '+e.message);}await save('stdio-results.json',results);if(results.checks.some(c=>!c.pass)||results.fatal)process.exitCode=1;}
+async function readCheck(id){
+ const before=await ctrl('state',id);await ctrl('metrics');
+ const rest=await api('/runs/'+id+'/thread'),tool=await mcpThread(id);
+ const reads=await ctrl('metrics'),after=await ctrl('state',id);
+ assert.deepEqual(rest,before.oracle);assert.deepEqual(tool,rest);assert.equal(before.rowHash,after.rowHash);assert.equal(before.eventHash,after.eventHash);
+ return {seq:before.run.lastEventSeq,vars:rest.vars,visits:rest.counters.nodeVisits,reads};
+}
+async function observe(label,id,expectedStatus){
+ const before=await ctrl('state',id),rest=await api('/runs/'+id+'/thread'),tool=await mcpThread(id);
+ assert.deepEqual(rest,before.oracle);assert.deepEqual(tool,rest);assert.equal(before.run.status,expectedStatus);
+ const views=[];
+ for(const {page,width} of tabs){
+  await poll(async()=>{const thread=JSON.parse(await page.getByTestId('thread-json').innerText()),text=await page.locator('body').innerText();try{assert.deepEqual(thread,rest);assert.ok(text.split('Timeline')[0].includes('\n'+expectedStatus+'\n'));assert.ok(text.includes('Thread at event '+before.run.lastEventSeq));return true;}catch{return false;}},label+' browser '+width);
+  await page.screenshot({path:join(out,label+'-'+width+'.png'),fullPage:true});
+  views.push({width,thread:JSON.parse(await page.getByTestId('thread-json').innerText()),body:await page.locator('body').innerText()});
+ }
+ const after=await ctrl('state',id);assert.equal(before.rowHash,after.rowHash);assert.equal(before.eventHash,after.eventHash);
+ await save(label+'.json',{before,rest,tool,views,afterHash:{row:after.rowHash,events:after.eventHash}});
+ return {status:expectedStatus,seq:before.run.lastEventSeq,vars:rest.vars,visits:rest.counters.nodeVisits};
+}
+const nodeStart=(id)=>({type:'node.started',nodeId:id,kind:'mutate',attempt:1,configHash:'0'.repeat(64)});
+const finish=(id,value)=>({type:'node.finished',nodeId:id,durationMs:1,patch:[{op:'add',path:'/vars/items/-',value}]});
+try {await startServer();await mcpConnect();await ctrl('stop');const defs=await ctrl('definitions'),loop=await publish({...defs.minimal,name:'QA native MCP duplicate'}),r=await start(loop),id=r.id;await ctrl('append',{id,events:[nodeStart('a'),{type:'node.finished',nodeId:'a',durationMs:1,patch:[{op:'add',path:'/vars/items',value:['a']}]},nodeStart('b'),finish('a','duplicate')]});await ctrl('checkpoint',{id,seq:5});await ctrl('append',{id,events:[finish('b','b')]});await check('built MCP stdio child reads B1 durable completion over real HTTP',async()=>{const detail=await readCheck(id);assert.deepEqual(detail.vars.items,['a','b']);return detail;});}catch(e){results.fatal=e.stack;console.log(e.stack);process.exitCode=1;}finally{await client?.close();await mcp?.close();if(proc?.connected)await stopServer();await save('stdio-results.json',results);if(results.checks.some(c=>!c.pass)||results.fatal)process.exitCode=1;}

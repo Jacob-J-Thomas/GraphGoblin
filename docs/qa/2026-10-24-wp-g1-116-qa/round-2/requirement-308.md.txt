@@ -1,0 +1,60 @@
+# #308 [I07/U19] Reconcile execution history
+
+state: OPEN | milestone: Later | labels: type:epic, area:web, area:api, area:engine, backlog, kind:uow, status:approved-held
+parent: #289 [I07] Make run history and completion trustworthy
+sub-issues: #116(OPEN), #245(OPEN), #236(OPEN)
+created: 2026-10-17T19:59:02Z updated: 2026-10-18T23:37:41Z
+
+## Body
+
+Part of #289
+
+<!-- graphgoblin-approved-roadmap:2026-10-17:U19 -->
+
+<!-- graphgoblin-approved-revision:2026-10-18 -->
+
+**Owner-approved consolidated revision, 2026-10-18. Implementation remains held by #279.** Latest owner decisions in #278 supersede older proposals and historical comments. This approval authorizes backlog publication only; no implementation, owner-environment change, or provider run is dispatched.
+
+Authority and complete owner decision record: #278. Current text supersedes older model proposals and historical scheduling/approval statements; comments remain historical evidence, not a competing current specification.
+
+## Outcome and acceptance
+
+Live and reconstructed views agree with the durable run history.
+
+## Touched components
+
+- event projections
+- run snapshots
+- replay seed
+- loop summaries
+
+## Bolts
+
+- #116 **[I07/U19/B51] Reconcile snapshot and event tails** — Failure/resume/success is represented consistently in current-thread reads, API snapshots and existing/reconnected browser tabs; reads neither apply unfinished patches nor mutate state.
+- #245 **[I07/U19/B52] Seed replay from the actual initial thread** — Replay reconstruction starts from that replay run's actual seed and produces correct add/replace values and counters; the original run is unchanged.
+- #236 **[I07/U19/B53] Show truthful latest-run summaries** — A loop with older history is not labeled never run because unrelated loops fill a global page; summaries use the correct loop-specific latest run.
+
+Each nondeferred bolt is the sole implementation record for its scope. Current UoW completion requires their evidence and applicable owner acceptance; parked children do not block current completion. Publication is not dispatch.
+
+## Evidence provenance (not a new test result)
+
+The observations below describe their original assessed baseline. They are not current solution requirements; the approved scope above controls. Reproduce on the accepted target before relying on them.
+
+### Source #116 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/115), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/2f98219fb43620b56d6baf57cbc5987dbd398a522/packages/engine/src/run-manager.ts#L1233), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/2f98219fb43620b56d6baf57cbc5987dbd398a522/packages/engine/src/run-manager.ts#L1326), [source 4](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/2f98219fb43620b56d6baf57cbc5987dbd398a522/apps/api/src/sse.ts#L79)
+
+### Source #236 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/web/src/loops/LoopsPage.tsx#L234), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/infrastructure/src/sqlite/templates.ts#L195)
+
+### Source #239 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/api/src/sse.ts#L83), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/api/src/sse.ts#L85), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/web/src/runs/useRunEvents.ts#L49), [source 4](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/api-client/src/sse.ts#L222), [source 5](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/docs/guide/03-run-and-observe.md#L137)
+
+### Source #245 — historical evidence
+
+Source links: [source 1](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/packages/engine/src/run-manager.ts#L849), [source 2](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/web/src/runs/projections.ts#L13), [source 3](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/c379f806ba8a04433779d98ded7e4196c9d4b663/apps/web/src/runs/inspector/ThreadViewer.tsx#L51)
+
+
+## Comments (0)

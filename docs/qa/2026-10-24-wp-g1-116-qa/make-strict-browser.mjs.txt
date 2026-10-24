@@ -1,0 +1,36 @@
+// Reuse the retained public-interface transport helpers, strengthening their observation wait.
+import {readFile,writeFile} from 'node:fs/promises';
+import {join} from 'node:path';
+import assert from 'node:assert/strict';
+const out=join(process.env.QA_ROOT,'docs/qa/2026-10-24-wp-g1-116-qa');
+const initial=await readFile(join(out,'runner.mjs.txt'),'utf8');
+let prefix=initial.slice(0,initial.indexOf('\ntry {'));
+const weak="await poll(async()=>{latest=await browserThread(p);try{assert.deepEqual(latest,rest);return true;}catch{return false;}},label+' browser '+item.width);";
+const strong="await poll(async()=>{latest=await browserThread(p);const text=await p.locator('body').innerText();const header=text.split('Timeline')[0];try{assert.deepEqual(latest,rest);assert.ok(header.includes('\\n'+expectedStatus+'\\n'));assert.ok(text.includes('Thread at event '+run.lastEventSeq));return true;}catch{return false;}},label+' status/cursor/thread '+item.width,60000);";
+assert.ok(prefix.includes(weak),'Expected retained helper');
+prefix=prefix.replace(weak,strong).replaceAll("'results.json'","'strict-results.json'").replaceAll("'native-processes.json'","'strict-native-processes.json'").replaceAll("'server-'","'strict-server-'");
+prefix=prefix.replace("s=>s.replaceAll(process.env.USERPROFILE,'%USERPROFILE%')","s=>s.replaceAll(JSON.stringify(process.env.USERPROFILE).slice(1,-1),'%USERPROFILE%').replaceAll(process.env.USERPROFILE,'%USERPROFILE%')");
+const body=String.raw`
+try {
+  data=await mkdtemp(join(tmpdir(),'gg-qa-g1-116-strict-'));
+  for(let p=5873;p<=5879;p++){try{await new Promise((resolve,reject)=>{const s=createServer();s.once('error',reject);s.listen(p,'127.0.0.1',()=>s.close(resolve));});port=p;break;}catch{}}
+  assert.ok(port,'No allowed free port');
+  const cli=spawn(process.execPath,[join(root,'apps/api/dist/main.js'),'--create-api-key','qa-strict-browser'],{env:{...process.env,GG_DATA_DIR:data,GG_PORT:String(port),GG_LOG_LEVEL:'silent'},windowsHide:true});
+  let stdout='',stderr='';cli.stdout.on('data',d=>stdout+=d);cli.stderr.on('data',d=>stderr+=d);assert.equal(await new Promise(r=>cli.once('exit',r)),0,stderr);token=stdout.match(/gg_[A-Za-z0-9_-]+/)[0];await save('strict-key-cli.log.txt',stdout+'\n'+stderr);
+  await spawnServer();await connectMcp();browser=await chromium.launch({channel:'msedge',headless:true});
+  const defs=await ctrl('definitions'),loop=await publish(defs.main),run=await start(loop),tabs=[];
+  for(const width of [1440,390]){const c=await browser.newContext({viewport:{width,height:1000},serviceWorkers:'block'});contexts.push(c);await c.addInitScript(v=>localStorage.setItem('graphgoblin-api-key',v),token);for(const name of ['open','reload'])tabs.push({page:await openTab(c,run.id),width,name});}
+  await ctrl('start');await status(run.id,'failed');await ctrl('idle');
+  await check('strict failure: lifecycle, event cursor, full thread, REST and MCP',()=>observe('strict-failed',run.id,tabs,'failed'));
+  for(const t of tabs.filter(t=>t.name==='reload')){await t.page.reload();await t.page.getByRole('button',{name:'Full thread JSON',exact:true}).click();}
+  await check('strict native restart: wait for all lifecycle headers and thread cursors',async()=>{const oldPid=proc.pid;await client.close();await mcp.close();await stopServer();await sleep(2500);await spawnServer();await ctrl('start');await connectMcp();assert.notEqual(proc.pid,oldPid);return observe('strict-restart-failed',run.id,tabs,'failed');});
+  await ctrl('mode','hold');await api('/runs/'+run.id+'/resume','POST');await poll(()=>ctrl('held'),'held resume');
+  await check('strict resume: lifecycle running, cursor 11 and unfinished thread',async()=>{const o=await observe('strict-resumed-unfinished',run.id,tabs,'running');assert.deepEqual(o.rest.vars,{prepared:true});assert.equal(o.rest.counters.nodeVisits.work,2);return{seq:o.run.lastEventSeq,status:o.status,vars:o.rest.vars};});
+  for(const t of tabs.filter(t=>t.name==='reload')){await t.page.reload();await t.page.getByRole('button',{name:'Full thread JSON',exact:true}).click();}
+  await check('strict midway reload: status, cursor and thread agree',()=>observe('strict-midway-reload',run.id,tabs,'running'));
+  await ctrl('release');await status(run.id,'succeeded');await ctrl('idle');
+  await check('strict success: existing and reloaded tabs converge completely',async()=>{const o=await observe('strict-succeeded',run.id,tabs,'succeeded');assert.deepEqual(o.rest.vars,{prepared:true,completed:true});assert.equal(o.rest.counters.nodeVisits.work,2);return{seq:o.run.lastEventSeq,status:o.status,vars:o.rest.vars};});
+}catch(e){results.fatal=e.stack;console.log('FATAL '+e.stack);}
+finally{for(const c of contexts)await c.close().catch(()=>{});await browser?.close().catch(()=>{});await client?.close().catch(()=>{});await mcp?.close().catch(()=>{});if(proc?.connected){await ctrl('release').catch(()=>{});await stopServer().catch(e=>{results.shutdownError=String(e);proc.kill();});}await save('strict-results.json',results);console.log(JSON.stringify({checks:results.checks.map(c=>({name:c.name,pass:c.pass,ms:c.ms})),fatal:results.fatal}));}
+`;
+await writeFile(join(out,'strict-browser.mjs.txt'),prefix+body);

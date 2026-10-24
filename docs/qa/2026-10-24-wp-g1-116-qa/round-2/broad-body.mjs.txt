@@ -1,0 +1,31 @@
+try {
+ await startServer();await mcpConnect();const defs=await ctrl('definitions');await ctrl('stop');
+ const make=async name=>{const loop=await publish({...defs.minimal,name});return (await start(loop)).id;};
+ await check('damaged replay state is a clear per-run error',async()=>{
+  const id=await make('QA damaged state'),healthy=await make('QA healthy neighbor');await ctrl('checkpoint',{id,seq:1});await ctrl('checkpoint',{id:healthy,seq:1});
+  const observations=[];
+  for(const text of ['{','{}','null','[]','{"strict":"true"}','{"strict":true,"openNodeId":4}','{"strict":true,"extra":1}','{"strict":false,"openNodeId":null}']){
+   await ctrl('damage-state',{id,text});const before=await ctrl('raw');const r=await fetch('http://127.0.0.1:'+port+'/runs/'+id+'/thread'),body=await r.json();const good=await api('/runs/'+healthy+'/thread');const after=await ctrl('raw');assert.equal(r.status,409);assert.match(JSON.stringify(body),/UNREADABLE_RUN_HISTORY/);assert.deepEqual(before,after);observations.push({text,status:r.status,body,healthyVars:good.vars,unchanged:true});
+  }
+  await ctrl('damage-state',{id,text:JSON.stringify({strict:false})});await readCheck(id);return observations;
+ });
+ await check('bounded current and 200-event lagging snapshots on 10001 durable events',async()=>{
+  const id=await make('QA 10001 events');for(let offset=0;offset<5000;offset+=100){const batch=[];for(let n=offset;n<offset+100;n++)batch.push(nodeStart('n'),{type:'node.finished',nodeId:'n',durationMs:0,patch:[{op:'add',path:'/vars/count',value:n+1}]});await ctrl('append',{id,events:batch});}
+  const full=await ctrl('state',id);assert.equal(full.events.length,10001);const measurements=[];
+  for(const lag of [0,200]){await ctrl('checkpoint',{id,seq:full.run.lastEventSeq-lag});await ctrl('metrics');const before=await ctrl('state',id),rest=await api('/runs/'+id+'/thread'),tool=await mcpThread(id),reads=await ctrl('metrics'),after=await ctrl('state',id);assert.deepEqual(rest,full.oracle);assert.deepEqual(tool,rest);assert.equal(before.rowHash,after.rowHash);assert.equal(before.eventHash,after.eventHash);assert.deepEqual(reads.map(r=>r.rows),[lag+1,lag+1]);measurements.push({lag,checkpoint:before.checkpoint.seq,replayState:before.checkpoint.replayState,events:10001,reads,thread:rest,hashes:{before:before.rowHash,after:after.rowHash,events:after.eventHash}});}
+  await save('bounded.json',measurements);return measurements;
+ });
+ await check('six polling readers while 100 pairs append and checkpoints advance',async()=>{
+  const id=await make('QA concurrent readers');let stop=false;const values=Array.from({length:6},()=>[]),errors=[];
+  const readers=values.map(async(v,index)=>{while(!stop){try{const t=await api('/runs/'+id+'/thread');const n=t.vars.count??0;assert.ok(!v.length||n>=v.at(-1));assert.ok((t.counters.nodeVisits.n??0)>=n);assert.ok((t.counters.nodeVisits.n??0)<=n+1);v.push(n);}catch(e){errors.push({index,error:e.stack});}await sleep(15);}});
+  try{for(let i=1;i<=100;i++){await ctrl('append',{id,events:[nodeStart('n'),{type:'node.finished',nodeId:'n',durationMs:0,patch:[{op:'add',path:'/vars/count',value:i}]}]});if(i%10===0){const s=await ctrl('state',id);await ctrl('checkpoint',{id,seq:s.run.lastEventSeq});}}}finally{stop=true;await Promise.all(readers);}
+  assert.deepEqual(errors,[]);const detail=await readCheck(id);assert.equal(detail.vars.count,100);const observations={detail,responses:values.reduce((a,b)=>a+b.length,0),values,errors};await save('concurrency.json',observations);return {responses:observations.responses,final:detail.vars,readers:values.map(v=>v.length)};
+ });
+ await check('checkpoint proof and missing boundary fallbacks',async()=>{
+  const id=await make('QA checkpoint boundary');await ctrl('append',{id,events:[nodeStart('a'),{type:'node.finished',nodeId:'a',durationMs:0,patch:[{op:'add',path:'/vars/items',value:['a']}]},nodeStart('b'),finish('b','b')]});
+  const frames=[];for(const seq of [2,3,4,5]){await ctrl('checkpoint',{id,seq});frames.push({seq,...await readCheck(id)});}
+  await ctrl('unsequenced',id);frames.push({fallback:'unsequenced',...await readCheck(id)});await ctrl('checkpoint',{id,seq:4});await ctrl('damage-state',{id,text:null});frames.push({fallback:'no state',...await readCheck(id)});
+  await ctrl('checkpoint',{id,seq:4});await ctrl('delete-event',{id,seq:4});frames.push({fallback:'boundary missing',...await readCheck(id)});return frames;
+ });
+} catch(e){results.fatal=e.stack;console.log('FATAL '+e.stack);process.exitCode=1;}
+finally {await client?.close().catch(()=>{});await mcp?.close().catch(()=>{});if(proc?.connected)await stopServer().catch(e=>{results.closeError=e.stack;console.log(e.stack);});await save('broad-results.json',results);if(results.checks.some(c=>!c.pass)||results.fatal)process.exitCode=1;}

@@ -1,0 +1,41 @@
+pnpm.cmd : $ vitest run --coverage --maxWorkers=2
+At line:13 char:2
++  & pnpm.cmd @argv *> (Join-Path $qa ($job.name+'.log.txt'))
++  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --coverage --maxWorkers=2:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-g1-116-2/apps/api
+      Coverage enabled with v8
+
+{"level":30,"time":1792847226038,"pid":55900,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5601"}
+{"level":30,"time":1792847226039,"pid":55900,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5601,"dataDir":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-api-process-9L76xS","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792847226085,"pid":55900,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792847226093,"pid":55900,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":6.948899999999412,"msg":"request completed"}
+subloop kill landings:
+delay undefined: leaf waiting at restart; recovery restarts top 0, middle 0, leaf 0
+delay 0: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 10: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 30: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 60: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 100: leaf succeeded at restart; recovery restarts top 1, middle 0, leaf 0
+delay 150: leaf succeeded at restart; recovery restarts top 1, middle 0, leaf 0
+delay 250: leaf succeeded at restart; recovery restarts top 1, middle 0, leaf 0
+
+ Test Files  65 passed | 2 skipped (67)
+      Tests  1325 passed | 8 skipped (1333)
+   Start at  07:59:41
+   Duration  731.71s (tests 73%, import 20%, transform 7%)
+
+    Isolate  67 workers spawned · ~612ms startup each (spawn + environment, per file)
+             at least ~19.89s faster with isolate: false — reuses workers across files instead of one per file
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 96.44% ( 2037/2112 )
+Branches     : 92.99% ( 1301/1399 )
+Functions    : 94.37% ( 403/427 )
+Lines        : 97.99% ( 1853/1891 )
+================================================================================

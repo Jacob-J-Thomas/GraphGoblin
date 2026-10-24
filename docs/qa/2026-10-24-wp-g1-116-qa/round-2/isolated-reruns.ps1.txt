@@ -1,0 +1,10 @@
+$env:PATH="$env:APPDATA\nvm\v22.14.0;$env:PATH"
+$qa=Join-Path (Get-Location) 'docs/qa/2026-10-24-wp-g1-116-qa/round-2'
+$records=@()
+foreach($file in @('src/sqlite/upgrade.test.ts','src/process/scripts.test.ts','src/claude/process.test.ts','src/claude/readiness.test.ts')) {
+ $name='isolated-'+($file -replace '[/.]','-')
+ $started=Get-Date
+ pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run $file --maxWorkers=1 *> (Join-Path $qa ($name+'.log.txt'))
+ $records += @{name=$name;file=$file;command=('pnpm.cmd --filter @graphgoblin/infrastructure exec vitest run '+$file+' --maxWorkers=1');exit=$LASTEXITCODE;seconds=((Get-Date)-$started).TotalSeconds}
+ $records | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $qa 'isolation-results.json')
+}

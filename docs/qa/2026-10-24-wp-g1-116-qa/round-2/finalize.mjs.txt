@@ -1,0 +1,32 @@
+import {readFile,writeFile,readdir,stat} from 'node:fs/promises';import {join} from 'node:path';import {createHash} from 'node:crypto';
+const root=process.cwd(),out=join(root,'docs/qa/2026-10-24-wp-g1-116-qa/round-2');
+const digest=b=>createHash('sha256').update(b).digest('hex');
+const decode=b=>b[0]===255&&b[1]===254?b.subarray(2).toString('utf16le'):b.toString('utf8').replace(/^\uFFFD+/, '').replaceAll('\u0000','').replace(/^\uFEFF/,'');
+const redact=s=>s.replaceAll(process.env.USERPROFILE.replaceAll('\\','\\\\'),'%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\','/'),'%USERPROFILE%').replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replaceAll('%USERPROFILE%','%USERPROFILE%').replaceAll(/C:\\(?:\s|[�|])*\\Users\\<user name>/g,'%USERPROFILE%');
+const normalization=[];
+for(const name of await readdir(out)){
+ if(!/\.(txt|md|json)$/.test(name))continue;const file=join(out,name),before=await readFile(file),after=Buffer.from(redact(decode(before)),'utf8');
+ if(!before.equals(after)){await writeFile(file,after);normalization.push({name,beforeBytes:before.length,beforeSha256:digest(before),retainedBytes:after.length,retainedSha256:digest(after)});}
+}
+await writeFile(join(out,'normalization.json'),JSON.stringify({note:'Retained text uses UTF-8 and normalized local user paths. Scenario hashes continue to describe observed raw selected SQL rows, not log encodings.',files:normalization},null,2));
+const asArray=x=>Array.isArray(x)?x:[x];
+const records=[];for(const name of ['gates.json','gates-rest.json','infrastructure-adversarial-isolated.json','infrastructure-complete.json','isolation-results.json']){try{records.push(...asArray(JSON.parse(await readFile(join(out,name),'utf8'))));}catch{}}
+const totals=[];
+for(const pkg of ['domain','engine','infrastructure','mcp','web','api']){
+ const record=records.find(x=>x.name===(pkg==='infrastructure'?'infrastructure-coverage-complete':pkg+'-coverage'));const logName=pkg==='infrastructure'?'infrastructure-complete.log.txt':pkg+'-coverage.log.txt';let log='';try{log=decode(await readFile(join(out,logName)));}catch{}
+ const entry={package:pkg,gate:record?.exit===0?'passed':record?'failed':'no completed full gate',tests:log.match(/Tests[^\n]+/g)?.at(-1),files:log.match(/Test Files[^\n]+/g)?.at(-1)};
+ if(record?.exit===0||(pkg==='infrastructure'&&record)){try{entry.total=JSON.parse(await readFile(join(root,pkg==='api'||pkg==='mcp'||pkg==='web'?'apps':'packages',pkg,'coverage/coverage-summary.json'),'utf8')).total;}catch{entry.lines=log.match(/Lines\s*:\s*([^\n]+)/)?.[1];entry.branches=log.match(/Branches\s*:\s*([^\n]+)/)?.[1];}}
+ totals.push(entry);
+}
+await writeFile(join(out,'coverage-totals.json'),JSON.stringify(totals,null,2));
+let readme=await readFile(join(out,'README.md'),'utf8');readme=readme.split('<!-- FINAL-GATES -->')[0];
+readme+='\n<!-- FINAL-GATES -->\n\n## Final gate records\n\n| Command | Result | Evidence |\n| --- | --- | --- |\n';
+for(const r of records){const file=r.name==='infrastructure-coverage-complete'?'infrastructure-complete.log.txt':(r.name??'infrastructure-adversarial-isolated')+'.log.txt';readme+='| `'+r.command+'` | '+(r.exit===0?'PASS':'FAIL (exit '+r.exit+')')+'; '+Number(r.seconds).toFixed(2)+' s | ['+file+']('+file+') |\n';}
+readme+='| `pnpm.cmd --filter @graphgoblin/infrastructure test:coverage --maxWorkers=1` | INCOMPLETE: native child/grandchild test failed; first run was interrupted after its native failure; quiet output did not establish a stall, no final coverage | [log](infrastructure-coverage.log.txt), [interruption](infrastructure-interruption.json) |\n';
+readme+='\n[Fresh coverage totals](coverage-totals.json). The full infrastructure gate and its measured coverage are distinct: reporting on failure does not turn a failed suite green. The focused SQLite selection and isolated native-file rerun remain separate commands.\n\n## All retained artifacts\n\n';
+const names=(await readdir(out)).filter(n=>n!=='README.md').sort();for(const n of names)readme+='- ['+n+']('+n+')\n';readme+='- [README.md](README.md)\n- [artifact-hashes.json](artifact-hashes.json)\n';
+await writeFile(join(out,'README.md'),readme);
+const entries=[];for(const name of (await readdir(out)).sort()){if(name==='artifact-hashes.json')continue;const b=await readFile(join(out,name));entries.push({file:name,bytes:b.length,sha256:digest(b)});}await writeFile(join(out,'artifact-hashes.json'),JSON.stringify(entries,null,2));
+console.log(JSON.stringify({files:entries.length,records:records.length,coverage:totals}));
+
+

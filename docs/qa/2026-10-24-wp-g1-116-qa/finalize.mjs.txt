@@ -1,0 +1,61 @@
+// Final local evidence inventory; normalizes user paths as explicitly requested.
+import {readFile,writeFile,readdir,stat,mkdtemp,rename} from 'node:fs/promises';
+import {join} from 'node:path';
+import {tmpdir} from 'node:os';
+import {createHash} from 'node:crypto';
+import {createConnection} from 'node:net';
+import {execFileSync} from 'node:child_process';
+import {createRequire} from 'node:module';
+const root=process.env.QA_ROOT,out=join(root,'docs/qa/2026-10-24-wp-g1-116-qa');
+const profile=process.env.USERPROFILE;
+const replaceAllCI=(s,a,b)=>s.replace(new RegExp(a.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'),()=>b);
+const norm=s=>[JSON.stringify(profile).slice(1,-1),profile,profile.replaceAll('\\','/')].reduce((v,p)=>replaceAllCI(v,p,'%USERPROFILE%'),s);
+const textOf=b=>b[0]===255&&b[1]===254?b.subarray(2).toString('utf16le'):b.toString('utf8').replace(/^\uFEFF/,'');
+const hash=b=>createHash('sha256').update(b).digest('hex');
+const j=async n=>JSON.parse(textOf(await readFile(join(out,n))));
+const git=(...args)=>execFileSync('git',args,{cwd:root,encoding:'utf8',windowsHide:true}).trim();
+const final={head:git('rev-parse','HEAD'),branch:git('branch','--show-current'),status:git('status','--short'),trackedDiff:git('diff','--name-only'),indexDiff:git('diff','--cached','--name-only'),runtime:process.version,ports:[],temporaryDirectories:[]};
+for(const port of [5870,5871,5872])final.ports.push(await new Promise(resolve=>{const socket=createConnection({host:'127.0.0.1',port});socket.once('connect',()=>{socket.destroy();resolve({port,open:true});});socket.once('error',e=>resolve({port,open:false,error:e.code}));}));
+final.temporaryDirectories=(await readdir(tmpdir(),{withFileTypes:true})).filter(x=>x.isDirectory()&&x.name.startsWith('gg-qa-g1-116-')).map(x=>norm(join(tmpdir(),x.name)));
+const require=createRequire(join(root,'apps/web/package.json'));
+const {chromium}=require('@playwright/test');const browser=await chromium.launch({channel:'msedge',headless:true});final.browser={channel:'msedge',version:browser.version(),headless:true};await browser.close();
+await writeFile(join(out,'final-state.json'),norm(JSON.stringify(final,null,2)));
+const notes=['Text logs are decoded from UTF-16LE when needed and normalized to UTF-8/LF.','Explicit local profile paths, including escaped JSON and file URL forms, are replaced with %USERPROFILE%.','JSON values and source captures otherwise keep their recorded bytes. Stored snapshot/row hashes describe original SQLite values, not capture-file hashes.'];
+for(const name of await readdir(out)){
+  if(name==='README.md'||name==='manifest.log.txt'||name.endsWith('.png')||name.endsWith('.mjs.txt'))continue;
+  if(!/\.(json|txt|md)$/.test(name))continue;
+  const bytes=await readFile(join(out,name));let s=textOf(bytes);s=norm(s);if(name.endsWith('.log.txt'))s=s.replaceAll('\r\n','\n');
+  if(!bytes.equals(Buffer.from(s)))await writeFile(join(out,name),s);
+}
+await writeFile(join(out,'normalization.log.txt'),notes.join('\n')+'\n');
+const omitted=[];
+for(const packageName of ['domain','engine']){
+  const relative='packages/'+packageName+'/coverage/coverage-final.json';
+  try{const path=join(root,relative),s=await stat(path);if(s.size>1000000){const bytes=await readFile(path);omitted.push({name:relative,size:s.size,sha256:hash(bytes),temporaryLocation:relative});}}catch{}
+}
+for(const name of await readdir(out)){
+  if(['README.md','manifest.log.txt'].includes(name))continue;
+  const path=join(out,name),s=await stat(path);if(!s.isFile()||s.size<=1000000)continue;
+  const bytes=await readFile(path),dest=await mkdtemp(join(tmpdir(),'gg-qa-g1-116-oversized-'));
+  omitted.push({name,size:s.size,sha256:hash(bytes),temporaryLocation:norm(join(dest,name))});await rename(path,join(dest,name));
+}
+await writeFile(join(out,'NOT-KEPT.md'),'# Captures not kept\n\n'+(omitted.length?omitted.map(x=>'- `'+x.name+'`: '+x.size+' bytes; SHA-256 `'+x.sha256+'`. Retained outside the evidence folder at `'+x.temporaryLocation+'` for orchestrator cleanup.').join('\n'):'No selected evidence capture exceeded 1,000,000 bytes. No oversized capture is included in this evidence folder.')+'\n\nGenerated build outputs and `packages/domain/coverage/`, `packages/engine/coverage/`, and `.turbo/` remain outside this evidence folder. The report uses retained gate logs, rather than citing those generated outputs. No directories were deleted.\n');
+const gates=await j('gates.json'),supplement=await j('supplement-results.json'),tails=await j('tail-results.json');
+const gateRows=gates.map(g=>{const ok=(g.fallback?.code??g.code)===0;return'| `'+g.command+'` | '+(ok?'PASS':'FAIL')+' (exit '+g.code+(g.fallback?'; fallback exit '+g.fallback.code:'')+') | ['+g.name+' log]('+g.name+'.log.txt)'+(g.fallback?' / [fallback]('+g.name+'-fallback.log.txt)':'')+' |';});
+let gateTable='| Exact command | Result | Evidence |\n| --- | --- | --- |\n'+gateRows.join('\n')+'\n\n';
+gateTable+='`pnpm.cmd format:check` is recorded in [format-check.log.txt](format-check.log.txt) after the evidence report is formatted.\n\n';
+for(const name of ['domain','engine']){
+  const log=textOf(await readFile(join(out,name+'-coverage.log.txt')));const lines=log.match(/Lines\s*:\s*([^\r\n]+)/)?.[1]?.trim(),branches=log.match(/Branches\s*:\s*([^\r\n]+)/)?.[1]?.trim();const tests=log.split(/\r?\n/).filter(l=>/Test Files|Tests\s/.test(l)).map(l=>l.replace(/\x1b\[[0-9;]*m/g,''));gateTable+='**'+name+' coverage:** lines '+(lines??'see log')+'; branches '+(branches??'see log')+'; '+tests.join('; ')+'.\n\n';
+}
+const success=gates.every(g=>(g.fallback?.code??g.code)===0)&&supplement.checks.every(c=>c.pass)&&tails.checks.every(c=>c.pass)&&!supplement.fatal&&!tails.fatal;
+let readme=textOf(await readFile(join(out,'README.md')));
+readme=readme.replace(/\*\*Functional checks passed[^\n]+/,success?'**PASS at `d7371f25b87ee4d474d1bb75258a851e3cde648f`.** No production defect was found in the completed checks. This is independent QA of PR #397, not implementation, review, merge approval, issue closure, or integrated I07 acceptance.':'**FAIL pending the unresolved gate or check recorded below at `d7371f25b87ee4d474d1bb75258a851e3cde648f`.** Functional findings and verification limitations remain separate below.');
+readme=readme.replace(/<!-- GATE_TABLE -->[\s\S]*?(?=\nFull API\/MCP\/web coverage)/,'<!-- GATE_TABLE -->\n\n'+gateTable);
+const artifacts=(await readdir(out)).filter(x=>x!=='README.md'&&x!=='manifest.log.txt').sort();if(!artifacts.includes('format-check.log.txt'))artifacts.push('format-check.log.txt');if(!artifacts.includes('qa-format.log.txt'))artifacts.push('qa-format.log.txt');artifacts.push('manifest.log.txt');artifacts.sort();
+const index=artifacts.map(name=>'- ['+name+']('+name+')').join('\n');
+readme=readme.replace(/<!-- ARTIFACT_INDEX -->[\s\S]*?(?=\n## Observations outside scope)/,'<!-- ARTIFACT_INDEX -->\n\n'+index+'\n');
+await writeFile(join(out,'README.md'),readme);
+const manifest=['Final artifact bytes and SHA-256; this manifest excludes itself.'];
+for(const name of(await readdir(out)).sort()){if(name==='manifest.log.txt')continue;const b=await readFile(join(out,name));manifest.push(b.length+'\t'+hash(b)+'\t'+name);}
+await writeFile(join(out,'manifest.log.txt'),manifest.join('\n')+'\n');
+console.log(JSON.stringify({success,head:final.head,trackedDiff:final.trackedDiff,indexDiff:final.indexDiff,ports:final.ports,browser:final.browser,artifacts:artifacts.length,oversized:omitted.length}));

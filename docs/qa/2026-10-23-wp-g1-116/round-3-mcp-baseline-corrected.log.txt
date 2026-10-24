@@ -1,0 +1,50 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-g1-116/apps/mcp
+
+ ❯ src/thread-history.test.ts (2 tests | 1 failed | 1 skipped) 1560ms
+   × MCP preserves a different open visit at a persisted delayed-duplicate checkpoint 1557ms
+pnpm.cmd : 
+At line:17 char:1
++ pnpm.cmd --filter @graphgoblin/mcp exec vitest run src/thread-history ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/thread-history.test.ts > MCP preserves a different open visit at a persisted delayed-duplicate checkpoint
+AssertionError: expected [ 'a' ] to deeply equal [ 'a', 'b' ]
+
+- Expected
++ Received
+
+  [
+    "a",
+-   "b",
+  ]
+
+ ❯ src/thread-history.test.ts:92:31
+     90|     if (text?.type !== 'text') throw new Error('Missing tool result');
+     91|     const thread = ContextThreadSchema.parse(JSON.parse(text.text));
+     92|     expect(thread.vars.items).toEqual(['a', 'b']);
+       |                               ^
+     93|     expect(thread).toEqual(reconcileThread(initial, await t.repos.even…
+     94|     expect(await t.bytes(run.id)).toBe(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 skipped (2)
+   Start at  05:41:42
+   Duration  52.77s (transform 75%, import 22%, tests 3%)
+
+  Transform  transforming modules took 37.30s · 75% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g1-
+  │ 116\apps\mcp
+

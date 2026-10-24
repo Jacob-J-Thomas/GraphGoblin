@@ -1,0 +1,54 @@
+pnpm.cmd : $ vitest run --coverage
+At line:6 char:3
++   & pnpm.cmd --filter "@graphgoblin/$packageName" test:coverage *> "d ...
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --coverage:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-g1-116/packages/engine
+      Coverage enabled with v8
+
+ ❯ src/awaited-children.test.ts (16 tests | 1 failed) 9994ms
+   ❯ identity-bound child wakes (#242) (2)
+     × a stale child wake never answers a later input park of its parent 1886ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/awaited-children.test.ts > identity-bound child wakes (#242) > a stale child wake never answers a later 
+input park of its parent
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/awaited-children.test.ts:141:85
+    139|   });
+    140|   const parent = await e.start(parentLoopId);
+    141|   await vi.waitFor(async () => expect(nextPark(await get(parent.id), f…
+       |                                                                                     ^
+    142|   release();
+    143|   await e.manager.waitForIdle();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 39 passed (40)
+      Tests  1 failed | 1580 passed (1581)
+   Start at  22:13:44
+   Duration  105.58s (tests 35%, import 32%, transform 31%, worker 1%)
+
+  Transform  transforming modules took 149.43s · 31% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g1-
+  │ 116\packages\engine
+
