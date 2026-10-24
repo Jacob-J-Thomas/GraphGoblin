@@ -8,7 +8,12 @@ import type { Database } from './db.js';
 import { loopVersions, loops, runs } from './schema.js';
 import { deleteRuns } from './delete-runs.js';
 
-import { rawRunColumns, decodeRunRecord, decodeStoredThread } from './run-decoding.js';
+import {
+  rawRunColumns,
+  decodeRunRecord,
+  decodeStoredReplayState,
+  decodeStoredThread,
+} from './run-decoding.js';
 export { runRecordFromRow } from './run-row.js';
 
 /** Map record changes onto column values; `undefined` becomes NULL so fields can be cleared. */
@@ -333,7 +338,7 @@ export class SqliteRunRepository implements RunRepository {
       .select({
         thread: sql<string | null>`${runs.threadSnapshot}`,
         seq: runs.threadSnapshotSeq,
-        replayState: runs.threadSnapshotReplayState,
+        replayState: sql<string | null>`${runs.threadSnapshotReplayState}`,
       })
       .from(runs)
       .where(eq(runs.id, runId))
@@ -345,7 +350,9 @@ export class SqliteRunRepository implements RunRepository {
       : {
           thread,
           seq: row.seq,
-          ...(row.replayState === null ? {} : { replayState: row.replayState }),
+          ...(row.replayState === null
+            ? {}
+            : { replayState: decodeStoredReplayState(runId, row.replayState) }),
         };
   }
 

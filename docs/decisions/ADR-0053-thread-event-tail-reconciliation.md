@@ -54,7 +54,9 @@ SQL migration `0018_thread_checkpoint_replay_state` adds nullable JSON text
 `runs.thread_snapshot_replay_state`. Existing snapshots retain NULL and use full-prefix replay
 until a writer saves the next checkpoint; no state is guessed or backfilled. Snapshot, sequence
 and state are replaced in one repository update. The required `RunRepository.saveThread` port
-arguments are `(runId, thread, seq, replayState)`.
+arguments are `(runId, thread, seq, replayState)`. A stored state that is not exactly
+`{ strict: boolean, openNodeId?: string }` is damaged history: reading the checkpoint raises
+`UnreadableRunHistoryError`, as a damaged snapshot does, rather than trusting or ignoring it.
 
 A fresh round-3 Node 22.14.0 loopback-HTTP measurement on 2026-10-24 used physical SQLite
 with 10,008 events (an admitted minimal run followed by synthetic started/completed node pairs).

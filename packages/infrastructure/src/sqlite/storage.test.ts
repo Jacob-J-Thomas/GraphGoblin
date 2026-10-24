@@ -187,6 +187,25 @@ describe('SqliteRunRepository', () => {
       seq: 7,
       replayState: { strict: true, openNodeId: 'work' },
     });
+    await repo.saveThread(run.id, next, 7, { strict: true });
+    expect((await repo.getThreadCheckpoint(run.id))?.replayState).toEqual({ strict: true });
+    // The stored state is the bounded read's proof, so damage is refused, never trusted.
+    for (const damaged of [
+      '{',
+      'null',
+      '[]',
+      '{"strict":"yes"}',
+      '{"strict":true,"openNodeId":3}',
+      '{"strict":true,"extra":1}',
+    ]) {
+      await handle.client.execute({
+        sql: 'UPDATE runs SET thread_snapshot_replay_state = ? WHERE id = ?',
+        args: [damaged, run.id],
+      });
+      await expect(repo.getThreadCheckpoint(run.id)).rejects.toThrow(
+        /thread_snapshot_replay_state/,
+      );
+    }
     await repo.clearThreadSnapshot(run.id);
     expect(await repo.getThreadCheckpoint(run.id)).toBeUndefined();
     expect(await repo.getThread(run.id)).toBeUndefined();
