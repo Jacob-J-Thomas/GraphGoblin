@@ -313,8 +313,10 @@ describe('SSE framing', () => {
     } as unknown as RunEvent;
   }
 
-  it('merges events appended during replay in order, sends heartbeats, and ignores events after the end', async () => {
+  it('merges events appended during replay in order, sends heartbeats, and completes after the durable suffix', async () => {
     let listener: ((e: RunEvent) => void) | undefined;
+    const log = [event(1), event(2)];
+    let first = true;
     const store = {
       subscribe: (_runId: string, l: (e: RunEvent) => void) => {
         listener = l;
@@ -322,11 +324,15 @@ describe('SSE framing', () => {
           listener = undefined;
         };
       },
-      read: () => {
-        // Two live events arrive while history is being read, out of order, one overlapping it.
-        listener?.(event(3));
-        listener?.(event(2));
-        return Promise.resolve([event(1), event(2)]);
+      read: (_runId: string, after = 0) => {
+        const page = log.filter((event) => event.seq > after);
+        if (first) {
+          first = false;
+          log.push(event(3));
+          listener?.(event(3));
+          listener?.(event(2));
+        }
+        return Promise.resolve(page);
       },
     } as unknown as EventStorePort;
     const app = await buildApp(t.container, { logger: false });
@@ -338,14 +344,16 @@ describe('SSE framing', () => {
       await vi.waitFor(() => expect(listener).toBeDefined());
       await new Promise((r) => setTimeout(r, 40));
       const finish = listener!;
-      finish(event(4, 'run.finished'));
-      finish(event(5, 'run.waiting'));
+      log.push(event(4, 'run.finished'), event(5, 'return.delivered'));
+      finish(log[3]!);
+      finish(log[4]!);
       const response = await pending;
       const ids = [...response.body.matchAll(/^id: (\d+)$/gm)].map((m) => Number(m[1]));
-      expect(ids).toEqual([1, 2, 3, 4]);
+      expect(ids).toEqual([1, 2, 3, 4, 5]);
       expect(response.body).toContain(': heartbeat');
-      const data = [...response.body.matchAll(/^data: (.+)$/gm)];
-      expect(JSON.parse(data.at(-1)![1]!)).toMatchObject({ type: 'run.finished' });
+      const data = [...response.body.matchAll(/^data: (.+)\nid: \d+$/gm)];
+      expect(JSON.parse(data.at(-1)![1]!)).toMatchObject({ type: 'return.delivered' });
+      expect(response.body).toContain('event: stream.complete');
       expect(listener).toBeUndefined();
     } finally {
       await app.close();

@@ -126,11 +126,12 @@ runtime reader is added. See the CHANGELOG upgrade notes.
 ## SSE protocol (Decided)
 
 - Endpoint: `GET /runs/{id}/events` with `Accept: text/event-stream`. The query parameter `after` or the `Last-Event-ID` header sets the starting sequence.
-- Each SSE message has `id: <seq>`, `event: <run event type>`, and `data: <JSON event>`.
+- Each persisted run-event message has `id: <seq>`, `event: <run event type>`, and `data: <JSON event>`. Stream controls have no id.
 - `node.progress` is validated against the strict `RunEventSchema` payload contract. Inference item variants expose only the bounded summary and allowlisted command/status fields; script progress has its own `{ exitCode, stderr, stdoutBytes }` shape. Invalid progress fields are rejected by clients and are absent from the OpenAPI schema.
 - A `: heartbeat` comment is sent every 15 seconds so proxies and browsers keep the connection open.
-- The stream closes after `run.finished`, `run.failed`, or `run.cancelled` is delivered, whether that event is replayed or arrives live.
-- If the run is already terminal when the client subscribes and the cursor is at or past its current terminal event, the response ends right after replay (a `: connected` comment and no events when nothing follows the cursor). Confirmation uses the indexed lifecycle tail, with five fixed type seeks and one row read, both before an empty replay and after catch-up; it never scans the history. The terminal event precedes its status write, including crash recovery, but delivery audits may follow it. A later `run.started` or `run.resumed` invalidates an earlier outcome. If no current terminal marker is visible, the stream allows up to 2 seconds for late subscription delivery, then closes instead of idling forever. This defensive grace remains for inconsistent logs.
+- A terminal event is history, not a completion signal: an earlier `run.failed`, `run.finished`, or `run.cancelled` can be superseded by `run.started` or `run.resumed`. Replay continues through those markers and through already-durable delivery audits after the final outcome.
+- After catching up, confirm that the current lifecycle is terminal, then read the durable tail again while retaining the single writer. If more rows or held notifications exist, deliver them and repeat confirmation. Once caught up to that read's snapshot, send id-less `event: stream.complete` with `data: {"after":<written cursor>}` and close. This control also completes an empty response opened at or past the terminal cursor; it confirms the cursor without advancing it. Future appends after the completion snapshot require another subscription from that cursor.
+- Confirmation uses the indexed lifecycle tail, with five fixed type seeks and one row read, including the pre-header check for an empty terminal replay; it never scans the history. The terminal event precedes its status write, including crash recovery, but delivery audits may follow it. If no current terminal marker is visible, the stream allows up to 2 seconds for late subscription delivery, then closes without `stream.complete`. This defensive grace remains for inconsistent logs and is unconfirmed EOF, so clients retry it.
 - Reconnecting with the last seen `seq` replays everything missed, because the stream is a tail of the persisted log.
 - Replay reads at most 128 events per repository page, writes that page before reading the next,
   and yields to the event loop between pages. Stored history and execution context stay complete.
@@ -162,8 +163,12 @@ runtime reader is added. See the CHANGELOG upgrade notes.
   The API client surfaces controls as `GraphGoblinApiError`; `SSE_SLOW_CONSUMER` and `SSE_REPLAY_FAILED` retry
   automatically with the existing exponential backoff. It reports via `onError` before retry,
   resets backoff on event progress, and rejects `done` when `maxAttempts` is exhausted. A later
-  page corruption ends with fatal `STORED_EVENT_INVALID`; other read failures end with retryable
-  `SSE_REPLAY_FAILED`, matching first-page HTTP 5xx handling. Controls never advance the cursor.
+  page corruption ends with fatal `STORED_EVENT_INVALID`; this code is also fatal when returned
+  as HTTP Problem Details before SSE headers, whether from the first page or lifecycle lookup.
+  Other read failures end with retryable `SSE_REPLAY_FAILED`, matching transient HTTP 5xx handling.
+  The helper resolves `done` only on valid `stream.complete` (or explicit close/abort), continues
+  past historical terminal events, and retries EOF without completion even after a terminal event.
+  Malformed completion controls reject with `RunEventParseError`. Controls never advance the cursor.
   The client's `onEvent(event, jsonBytes)` supplies the received JSON's estimated UTF-16 byte size
   for batching without another serialization. History browsing follows in #186 round 2.
 - `GET /events/stream` (Draft) offers a multiplexed stream of run status changes across all runs for dashboards.

@@ -110,7 +110,7 @@ describe('bounded SSE transport', () => {
         expect(reads.slice(0, 2)).toEqual([0, 1]);
         expect(reads.length).toBeGreaterThan(2);
         expect(reads[2]).toBeLessThanOrEqual(2);
-        const recovered = [...body.matchAll(/^data: (.+)$/gm)].map((match) =>
+        const recovered = [...body.matchAll(/^data: (.+)\nid: \d+$/gm)].map((match) =>
           RunEventSchema.parse(JSON.parse(match[1]!)),
         );
         expect(recovered).toEqual(stored);

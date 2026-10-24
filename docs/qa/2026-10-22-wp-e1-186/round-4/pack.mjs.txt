@@ -1,0 +1,85 @@
+import { readFileSync, writeFileSync, readdirSync, statSync, existsSync } from 'node:fs';
+import { join, resolve, basename, sep } from 'node:path';
+import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+const out = 'docs/qa/2026-10-22-wp-e1-186/round-4';
+const hash = value => createHash('sha256').update(value).digest('hex');
+const escape = value=>value.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+const profile = process.env.USERPROFILE;
+const safe = value => {
+  // pnpm can wrap the drive onto its own line; its remaining profile prefix still
+  // needs the same placeholder. Preserve word-sized literals as a redacted name.
+  for(const prefix of [profile,profile.replace(/^[a-z]:/i,'')])
+    for(const spelling of [prefix.replaceAll('\\','\\\\'),prefix,prefix.replaceAll('\\','/')])
+      value=value.replace(new RegExp(escape(spelling),'gi'),'%USERPROFILE%');
+  value=value.replace(new RegExp(`\\b${escape(basename(profile))}\\b`,'gi'),'<profile-name>');
+  return value.replaceAll('\r\n','\n');
+};
+const decode = bytes => bytes[0]===255 && bytes[1]===254 ? bytes.subarray(2).toString('utf16le') : bytes.toString('utf8').replace(/^\uFEFF/,'');
+const provenance=[];
+const omitted=[];
+function copy(source,target) {
+  if(!existsSync(source)) return;
+  const original=readFileSync(source);
+  let retained=Buffer.from(safe(decode(original)));
+  if(original.length>1_000_000 || retained.length>1_000_000) {
+    omitted.push({source:safe(source),bytes:original.length,sha256:hash(original)});
+    const text=retained.toString('utf8');
+    retained=Buffer.from(`[Original not kept: ${original.length} bytes; SHA-256 ${hash(original)}. First/last excerpts follow.]\n${text.slice(0,150_000)}\n[... omitted ...]\n${text.slice(-150_000)}`);
+  }
+  writeFileSync(`${out}/${target}`,retained);
+  provenance.push({source:safe(source),target,sourceBytes:original.length,sourceSha256:hash(original),retainedBytes:retained.length,retainedSha256:hash(retained),normalization:'UTF-8, LF, profile and wrapped prefixes replaced; literal profile name redacted; oversized captures excerpted'});
+}
+const logsOnly=process.argv.includes('--logs-only');
+for(const name of readdirSync('.tmp').filter(name=>name.startsWith('r4-') && (logsOnly?/\.log\.txt$/:/\.(log\.txt|json)$/).test(name))) copy(`.tmp/${name}`,name.replace(/^r4-/,''));
+if(logsOnly) {
+  const previous=JSON.parse(readFileSync(`${out}/copy-provenance.json`));
+  for(const item of provenance) {
+    const index=previous.findIndex(entry=>entry.target===item.target);
+    if(index<0) previous.push(item);else previous[index]=item;
+  }
+  writeFileSync(`${out}/copy-provenance.json`,JSON.stringify(previous,null,2)+'\n');
+  console.log(JSON.stringify({logs:provenance.length})); process.exit(0);
+}
+for(const phase of ['before','after']) for(const name of ['transport','initial-corruption']) copy(`.tmp/r4-${phase}/${name}-results.json`,`${name}-${phase}.json`);
+for(const name of ['transport','initial-corruption']) copy(`.tmp/r4-${name}-probe.mjs`,`${name}-probe.mjs.txt`);
+copy('.tmp/r4-transport-probe-before.mjs','transport-probe-before.mjs.txt');
+for(const name of ['prepare','fixtures','gates','final-web','proof-hook','extra-gates','browser-followup','inspect-browser','inspect-browser-initial','isolates','static-fixes','verify','pack','report','validate']) copy(`.tmp/r4-${name}.mjs`,`${name}.mjs.txt`);
+copy('%USERPROFILE%/.claude/codex-runs/GraphGoblin/audit-reports/pr391-round1.md','audit-pr391-round1.md.txt');
+for(const name of ['transport','initial-corruption']) {
+  const source=join(process.env.TEMP,'gg-audit-e1-186-round1-20261024',`${name}-probe.mjs`);
+  copy(source,`audit-${name}-probe.mjs.txt`);
+}
+const frozen = JSON.parse(readFileSync('.tmp/r4-source-frozen.json'));
+for(const source of Object.keys(frozen)) copy(source,source.replaceAll('/','-')+'.txt');
+for(const source of ['apps/api/src/sse.ts','packages/api-client/src/sse.ts','apps/web/src/runs/useRunEvents.ts','apps/web/src/runs/RunInspectorPage.test.tsx','apps/api/src/sse-catchup.test.ts']) {
+  const bytes=execFileSync('git',['show',`HEAD:${source}`]);
+  const target='baseline-'+source.replaceAll('/','-')+'.txt';
+  const retained=Buffer.from(safe(decode(bytes)));
+  writeFileSync(`${out}/${target}`,retained);
+  provenance.push({source:`git HEAD:${source}`,target,sourceBytes:bytes.length,sourceSha256:hash(bytes),retainedBytes:retained.length,retainedSha256:hash(retained)});
+}
+const stores=new Set();
+for(const phase of ['before','after']) for(const name of ['transport','initial-corruption']) {
+  const path=`.tmp/r4-${phase}/${name}-results.json`;
+  if(existsSync(path)) stores.add(JSON.parse(readFileSync(path)).dataDir);
+}
+const walk=dir=>readdirSync(dir,{withFileTypes:true}).flatMap(entry=>entry.isDirectory()?walk(join(dir,entry.name)):[join(dir,entry.name)]);
+for(const dir of stores) {
+  const absolute=resolve(dir);
+  if(!absolute.toLowerCase().startsWith((resolve(process.env.TEMP)+sep).toLowerCase()) || !basename(absolute).startsWith('gg-wp-e1-186-')) throw new Error('unexpected probe store');
+  for(const path of walk(absolute)) if(statSync(path).size>1_000_000 || /\.(db|sqlite)(-wal|-shm)?$/.test(path)) {
+    const bytes=readFileSync(path);omitted.push({source:safe(path),bytes:bytes.length,sha256:hash(bytes)});
+  }
+}
+for(const metadata of readdirSync('.tmp').filter(name=>/^r4-browser.*-output\.json$/.test(name))) {
+  const {output}=JSON.parse(readFileSync(`.tmp/${metadata}`));
+  for(const path of walk(output)) {
+    const bytes=readFileSync(path);omitted.push({source:safe(path),bytes:bytes.length,sha256:hash(bytes)});
+    if(basename(path)==='error-context.md' && bytes.length<=1_000_000) copy(path,metadata.replace(/^r4-/,'').replace('-output.json','-error-context.md.txt'));
+  }
+}
+const notKept=['# Captures not kept in Git','', 'Original large captures remain only in ignored temporary paths; retained logs contain labelled excerpts. Code and JSON captures below 1,000,000 bytes are kept beside the report. Disposable probe stores are transport fixtures and are not proposed for commit.','', '| Capture | Original bytes | SHA-256 |','| --- | ---: | --- |', ...omitted.map(item=>`| ${item.source} | ${item.bytes} | ${item.sha256} |`),''];
+writeFileSync(`${out}/copy-provenance.json`,JSON.stringify(provenance,null,2)+'\n');
+writeFileSync(`${out}/NOT-KEPT.md`,notKept.join('\n'));
+console.log(JSON.stringify({out,copies:provenance.length,notKeptCaptures:omitted.length}));

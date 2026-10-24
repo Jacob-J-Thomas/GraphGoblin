@@ -180,7 +180,7 @@ describe('SSE event stream', () => {
     );
     await t.idle();
     const streamed = parseFrames(await readAll(response))
-      .filter((frame) => frame.event)
+      .filter((frame) => frame.id !== undefined)
       .map((frame) => RunEventSchema.parse(JSON.parse(frame.data!)));
     const page = (await t.app.inject(`/runs/${run.id}/events`)).json<{ items: RunEvent[] }>();
     expect(streamed).toEqual(page.items);
@@ -220,7 +220,7 @@ describe('SSE event stream', () => {
     const text = await readAll(response);
     const frames = parseFrames(text);
     expect(frames[0]?.comment).toBe('connected');
-    const events = frames.filter((f) => f.event);
+    const events = frames.filter((f) => f.id !== undefined);
     expect(events.map((f) => f.event)).toEqual(
       expect.arrayContaining(['run.queued', 'run.waiting', 'run.woken', 'run.finished']),
     );
@@ -254,7 +254,7 @@ describe('SSE event stream', () => {
           headers: { accept: 'text/event-stream', 'last-event-id': String(total - 2) },
         }),
       ),
-    ).filter((f) => f.event);
+    ).filter((f) => f.id !== undefined);
     expect(fromHeader.map((f) => Number(f.id))).toEqual([total - 1, total]);
 
     const fromQuery = parseFrames(
@@ -263,7 +263,7 @@ describe('SSE event stream', () => {
           headers: { accept: 'text/event-stream' },
         }),
       ),
-    ).filter((f) => f.event);
+    ).filter((f) => f.id !== undefined);
     expect(fromQuery.map((f) => Number(f.id))).toEqual([total]);
   });
 
@@ -300,7 +300,10 @@ describe('SSE event stream', () => {
       });
       const { text, ms } = await timed(readAll(response));
       const frames = parseFrames(text);
-      expect(frames).toEqual([{ comment: 'connected' }]);
+      expect(frames).toEqual([
+        { comment: 'connected' },
+        { event: 'stream.complete', data: JSON.stringify({ after: total }) },
+      ]);
       // Well under the 2 s grace and the 15 s heartbeat: the stream did not idle.
       expect(ms).toBeLessThan(1_000);
     });
@@ -311,7 +314,7 @@ describe('SSE event stream', () => {
         headers: { accept: 'text/event-stream', 'last-event-id': String(total - 3) },
       });
       const { text, ms } = await timed(readAll(response));
-      const events = parseFrames(text).filter((f) => f.event);
+      const events = parseFrames(text).filter((f) => f.id !== undefined);
       expect(events.map((f) => Number(f.id))).toEqual([total - 2, total - 1, total]);
       expect(events.at(-1)?.event).toBe('run.finished');
       expect(ms).toBeLessThan(1_000);
@@ -346,7 +349,7 @@ describe('SSE event stream', () => {
         text += decoder.decode(value, { stream: true });
       }
       expect(Date.now() - started).toBeLessThan(1_000);
-      const events = parseFrames(text).filter((f) => f.event);
+      const events = parseFrames(text).filter((f) => f.id !== undefined);
       expect(events.at(-1)?.event).toBe('run.finished');
     });
   });

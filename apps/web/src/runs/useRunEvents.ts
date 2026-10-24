@@ -1,7 +1,6 @@
 import {
   GraphGoblinApiError,
   subscribeRunEvents,
-  TERMINAL_RUN_EVENT_TYPES,
   type RunEventSubscription,
 } from '@graphgoblin/api-client';
 import type { RunEvent } from '@graphgoblin/contracts';
@@ -49,10 +48,8 @@ export function useRunEvents(
   useEffect(() => {
     const { runs, append } = useRunEventStore.getState();
     const known = runs[runId];
-    if (known?.events.some((e) => TERMINAL_RUN_EVENT_TYPES.has(e.type))) {
-      setStatus('finished');
-      return;
-    }
+    // Cached outcomes can be superseded or followed by delivery audits. Resume at the
+    // cached cursor and let the helper's authoritative completion confirm the current tail.
     let active = true;
     let buffer: RunEvent[] = [];
     let bufferBytes = 0;

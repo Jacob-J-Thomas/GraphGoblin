@@ -21,6 +21,9 @@ function event(seq: number, type: 'run.queued' | 'run.cancelled' = 'run.queued')
     : { runId, seq, ts: FIXTURE_TS, type };
 }
 
+const completion = (after: number) =>
+  `event: stream.complete\ndata: ${JSON.stringify({ after })}\n\n`;
+
 function frame(e: RunEvent): string {
   return `id: ${e.seq}\nevent: ${e.type}\ndata: ${JSON.stringify(e)}\n\n`;
 }
@@ -111,7 +114,7 @@ describe('subscribeRunEvents', () => {
           partial,
           `${reset}event: stream.error\ndata: {"code":"SSE_SLOW_CONSUMER","status":503}\n\n`,
         ]),
-        stream([frame(event(2, 'run.cancelled'))]),
+        stream([frame(event(2, 'run.cancelled')), completion(2)]),
       ]);
       const seen: number[] = [];
       const errors: unknown[] = [];
@@ -174,7 +177,7 @@ describe('subscribeRunEvents', () => {
         frame(event(1)),
         'event: run.queued\ndata: {"seq":2\n\nevent: stream.error\ndata: {"code":"SSE_SLOW_CONSUMER","status":503}\n\n',
       ]),
-      stream([frame(event(2, 'run.cancelled'))]),
+      stream([frame(event(2, 'run.cancelled')), completion(2)]),
     ]);
     const errors: unknown[] = [];
     const subscription = subscribeRunEvents({
@@ -201,7 +204,7 @@ describe('subscribeRunEvents', () => {
       };
       const { fetch, urls } = scripted([
         stream([frame(event(1)), `event: stream.error\ndata: ${JSON.stringify(problem)}\n\n`]),
-        stream([frame(event(2, 'run.cancelled'))]),
+        stream([frame(event(2, 'run.cancelled')), completion(2)]),
       ]);
       const errors: unknown[] = [];
       const seen: number[] = [];
@@ -227,7 +230,7 @@ describe('subscribeRunEvents', () => {
   it('provides the received JSON size to batch consumers without another serialization', async () => {
     const value = event(1, 'run.cancelled');
     const json = JSON.stringify(value);
-    const { fetch } = scripted([stream([`data: ${json}\nid: 1\n\n`])]);
+    const { fetch } = scripted([stream([`data: ${json}\nid: 1\n\n`, completion(1)])]);
     const received: number[] = [];
     await subscribeRunEvents({
       client: createGraphGoblinClient({ baseUrl: 'http://api', fetch }),
@@ -247,7 +250,7 @@ describe('subscribeRunEvents', () => {
       status: 'exhausted',
       outcome: 'exhausted',
     };
-    const { fetch, urls } = scripted([stream([frame(finished)])]);
+    const { fetch, urls } = scripted([stream([frame(finished), completion(1)])]);
     const seen: RunEvent[] = [];
     await subscribeRunEvents({
       client: createGraphGoblinClient({ baseUrl: 'http://api', fetch }),
@@ -259,7 +262,7 @@ describe('subscribeRunEvents', () => {
     expect(seen).toEqual([finished]);
     expect(urls).toHaveLength(1);
   });
-  it('delivers validated events in order, skips replays, and stops after a terminal event', async () => {
+  it('delivers validated events in order, skips replays, and stops after authoritative completion', async () => {
     const { fetch, urls, requests } = scripted([
       stream([
         frame(event(1)),
@@ -272,6 +275,7 @@ describe('subscribeRunEvents', () => {
         frame(event(2)),
         frame(event(3, 'run.cancelled')),
         frame(event(4)),
+        completion(4),
       ]),
     ]);
     const { delays, sleep } = recordingSleep();
@@ -289,8 +293,8 @@ describe('subscribeRunEvents', () => {
       sleep,
     });
     await subscription.done;
-    expect(seen).toEqual([1, 2, 3]);
-    expect(subscription.lastSeq).toBe(3);
+    expect(seen).toEqual([1, 2, 3, 4]);
+    expect(subscription.lastSeq).toBe(4);
     expect(urls).toEqual([
       `http://api/runs/${runId}/events?after=0`,
       `http://api/runs/${runId}/events?after=2`,
@@ -305,7 +309,7 @@ describe('subscribeRunEvents', () => {
     const { fetch } = scripted([
       new Response('{"code":"BUSY"}', { status: 503 }),
       stream([': connected\n\n']),
-      stream([frame(event(7, 'run.cancelled'))]),
+      stream([frame(event(7, 'run.cancelled')), completion(7)]),
     ]);
     const { sleep } = recordingSleep();
     const log: string[] = [];
@@ -328,7 +332,7 @@ describe('subscribeRunEvents', () => {
   it('reports invalid frames, advances past their id, and keeps going', async () => {
     const { fetch, urls } = scripted([
       stream(['id: 1\ndata: {not json\n\n', 'data: {"type":"nope"}\n\n']),
-      stream([frame(event(2, 'run.cancelled'))]),
+      stream([frame(event(2, 'run.cancelled')), completion(2)]),
     ]);
     const errors: unknown[] = [];
     const seen: number[] = [];
@@ -355,7 +359,7 @@ describe('subscribeRunEvents', () => {
       new Response('{"status":429,"code":"RATE_LIMITED"}', { status: 429 }),
       new Response('', { status: 408 }),
       new Response('', { status: 425 }),
-      stream([frame(event(5, 'run.cancelled'))]),
+      stream([frame(event(5, 'run.cancelled')), completion(5)]),
     ]);
     const { delays, sleep } = recordingSleep();
     const attempts: number[] = [];
@@ -447,7 +451,7 @@ describe('subscribeRunEvents', () => {
     const { fetch, urls } = scripted([
       new TypeError('refused'),
       stream([frame(event(1))], { fail: true }),
-      stream([frame(event(2, 'run.cancelled'))]),
+      stream([frame(event(2, 'run.cancelled')), completion(2)]),
     ]);
     const { delays, sleep } = recordingSleep();
     await subscribeRunEvents({
@@ -608,7 +612,7 @@ describe('subscribeRunEvents', () => {
         res.write(frame(event(1)));
         res.write(frame(event(2)), () => setTimeout(() => res.destroy(), 20));
       } else {
-        res.end(frame(event(3, 'run.cancelled')));
+        res.end(frame(event(3, 'run.cancelled')) + completion(3));
       }
     });
     await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));

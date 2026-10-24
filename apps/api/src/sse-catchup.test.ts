@@ -62,18 +62,10 @@ describe('durable SSE catch-up', () => {
         expect(appended).toBeGreaterThan(256);
         const stored = await events.read(runId);
         expect(ids(text)).toEqual(stored.map((e) => e.seq));
-        const delivered = [...text.matchAll(/^data: (.+)$/gm)].map((m) =>
+        const delivered = [...text.matchAll(/^data: (.+)\nid: \d+$/gm)].map((m) =>
           RunEventSchema.parse(JSON.parse(m[1]!)),
         );
         expect(delivered).toEqual(stored);
-        console.warn(
-          JSON.stringify({
-            probe: kind,
-            appended,
-            delivered: delivered.length,
-            slowConsumer: false,
-          }),
-        );
       } finally {
         await app.close();
         await t?.close();
@@ -183,7 +175,8 @@ describe('durable SSE catch-up', () => {
         const response = await app.inject('/');
         expect(ids(response.body)).toEqual([]);
         expect(response.body).toContain(': connected');
-        expect(reads.length).toBeLessThanOrEqual(2);
+        // One extra bounded tail read follows lifecycle confirmation before stream.complete.
+        expect(reads.length).toBeLessThanOrEqual(3);
         expect(reads.every((read) => read.after === count + past && read.limit === 128)).toBe(true);
         expect(reads.reduce((sum, read) => sum + read.rows, 0)).toBe(0);
       } finally {
@@ -238,7 +231,7 @@ describe('durable SSE catch-up', () => {
       const response = await app.inject('/');
       expect(ids(response.body)).toEqual(audit.map((event) => event.seq));
       expect(response.body).not.toContain('stream.error');
-      expect(reads).toBeLessThanOrEqual(4);
+      expect(reads).toBeLessThanOrEqual(5);
       expect(rows).toBe(300);
     } finally {
       await app.close();

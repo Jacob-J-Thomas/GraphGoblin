@@ -61,6 +61,8 @@ export async function streamRunEvents(
   let blocked = false;
   let partialFrame = false;
   let partialLineEnded = false;
+  let observedLifecycle: RunEvent | undefined;
+  let needsConfirmation = false;
   // Numeric header bounds are exclusive over integer seqs; negative bounds replay from 1.
   let last = Math.max(0, Math.floor(after));
   let heldBytes = 0;
@@ -152,7 +154,14 @@ export async function streamRunEvents(
     await writeText(text, true);
     if (closed) return;
     last = event.seq;
-    if (TERMINAL_EVENTS.has(event.type)) end();
+    if (
+      TERMINAL_EVENTS.has(event.type) ||
+      event.type === 'run.started' ||
+      event.type === 'run.resumed'
+    ) {
+      observedLifecycle = event;
+      needsConfirmation = TERMINAL_EVENTS.has(event.type);
+    }
   };
   const enterCatchup = (): void => {
     catchingUp = true;
@@ -209,7 +218,29 @@ export async function streamRunEvents(
           await catchUp();
           continue;
         }
-        if (!held.length) break;
+        if (!held.length) {
+          if (!needsConfirmation) break;
+          const consumed = await hasConsumedTerminal();
+          if (closed) break;
+          if (catchingUp || held.length) continue;
+          if (!consumed) {
+            needsConfirmation = false;
+            break;
+          }
+          // The lifecycle lookup can race a resume or a delivery audit. Read AFTER it and
+          // keep the writer locked through this confirmation and the completion control.
+          // Nothing already durable at this read may be omitted, even after a terminal row.
+          const page = await store.read(runId, last, REPLAY_PAGE_SIZE);
+          if (closed) break;
+          if (page.length || catchingUp || held.length) {
+            enterCatchup();
+            await catchUp({ page });
+            continue;
+          }
+          await writeText(`event: stream.complete\ndata: ${JSON.stringify({ after: last })}\n\n`);
+          if (!closed) end();
+          break;
+        }
         held.sort((a, b) => a.event.seq - b.event.seq);
         const next = held.shift()!;
         heldBytes -= next.bytes;
@@ -248,7 +279,12 @@ export async function streamRunEvents(
     // older outcome (RunManager.terminalEvent). The route supplies an indexed lifecycle-tail
     // lookup, so both confirmation sites are bounded without scanning or guessing a tail window.
     // No current terminal marker means the existing defensive grace still applies.
-    const event = await options.lastLifecycleEvent?.();
+    // Standalone port compositions can use the lifecycle observed during replay; consumed
+    // cursors need the route's bounded lookup. A supplied lookup returning no marker is not
+    // replaced with an older observed outcome.
+    const event = options.lastLifecycleEvent
+      ? await options.lastLifecycleEvent()
+      : observedLifecycle;
     return !closed && event !== undefined && TERMINAL_EVENTS.has(event.type) && event.seq <= last;
   };
   try {
@@ -256,8 +292,9 @@ export async function streamRunEvents(
     if (closed) return;
     const terminal = (await options.isTerminal?.()) ?? false;
     if (closed) return;
-    const consumedTerminal =
-      terminal && pending.page.length === 0 ? await hasConsumedTerminal() : false;
+    needsConfirmation = terminal;
+    // Preserve HTTP Problem Details for corruption in an empty consumed-cursor lookup.
+    if (terminal && pending.page.length === 0) await hasConsumedTerminal();
     if (closed) return;
     reply.hijack();
     res.writeHead(200, {
@@ -287,10 +324,7 @@ export async function streamRunEvents(
     busy = false;
     await flushLive();
     if (closed || !terminal) return;
-    if (consumedTerminal || (await hasConsumedTerminal())) {
-      end();
-      return;
-    }
+    // Grace is deliberately unconfirmed EOF, never authoritative stream.complete.
     if (!closed) grace = setTimeout(() => end(), options.terminalGraceMs ?? 2_000);
   } catch (error) {
     if (closed) return;

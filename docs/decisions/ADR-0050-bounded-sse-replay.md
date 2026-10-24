@@ -4,6 +4,7 @@ Date: 2026-10-23. Status: Accepted implementation decision for #186 round 1.
 
 Revised 2026-10-24 after review: durable catch-up replaces overflow/gap failures.
 Round 3 bounds terminal confirmation with indexed lifecycle-tail reads.
+Round 4 confirms durable suffix delivery and adds authoritative stream completion.
 
 ## Context
 
@@ -31,7 +32,19 @@ Stored history and the loop's intended context must remain complete.
   Confirm only a terminal marker at or before the written cursor. This work does not grow
   with history length or post-terminal audit volume and does not assume a fixed tail window.
   If no current terminal marker exists, preserve the 2-second defensive grace close and live
-  subscription. Missing bounded metadata in a standalone stream composition also uses grace.
+  subscription. Missing bounded metadata at a consumed cursor in a standalone composition also uses grace.
+- Never close on an individual terminal event: it can be superseded by a later started/resumed
+  marker, and delivery audits can follow the current outcome. Deliver every replay page and
+  held notification first. With the writer still locked, look up the current lifecycle, then
+  make another bounded cursor read. More rows/notifications re-enter catch-up before another
+  confirmation. A terminal lifecycle plus an empty confirmed tail emits id-less
+  `event: stream.complete` with `data: {"after":<written cursor>}`, then closes. Completion
+  acknowledges the tail-read snapshot, not the immutability of future history. Later appends
+  require a new subscription. Port-only compositions can track the newest lifecycle marker
+  delivered during replay; a consumed cursor still requires the bounded metadata lookup.
+  An empty terminal-cursor reply now uses three bounded empty reads and two lifecycle lookups;
+  one additional tail read closes the lookup/append race without history-size-dependent work.
+  Missing/currently resumed metadata keeps grace, which closes without a completion control.
 - Subscribe before reading, but retain no live copies during replay/catch-up:
   notifications follow commit, so subsequent pages return those events. After a short
   page, enable live notifications first, then read again from the cursor. Keep paging
@@ -77,6 +90,11 @@ Stored history and the loop's intended context must remain complete.
   the existing backoff, preserve the last delivered cursor, and retain finite
   `maxAttempts`. Reject `done` for corrupt history or nonretryable controls. Cancel the underlying Fetch reader
   directly on abort, avoiding transform-stream cancellation stalls on quiet bodies.
+- The client resolves `done` on a valid completion control whose `after` matches its delivered
+  cursor, never on a historical terminal event or arbitrary EOF. Completion carries no id and
+  cannot advance the cursor. EOF without it still retries from the last delivered event.
+  Both initial HTTP Problem Details and in-stream errors use the same classification:
+  `STORED_EVENT_INVALID` is fatal and typed; transient 5xx read failures retain backoff.
 - Flush browser held batches at 256 events or an estimated 1 MiB of UTF-16 JSON,
   including timer throttling. A larger single event flushes immediately. Render the
   slow-consumer reason as the hook's error until a successful reopen. The client

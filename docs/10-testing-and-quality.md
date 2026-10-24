@@ -118,6 +118,11 @@ with that evidence; this comparison is separate from the original non-interleave
 The [round-3 terminal-cursor evidence](qa/2026-10-22-wp-e1-186/README.md#round-3-bounded-terminal-confirmation)
 compares empty replies on 42,102-event histories and verifies constant read work at/past the end,
 including post-terminal delivery audits and resume invalidation. It does not repeat the full replay benchmark.
+The [round-4 completion evidence](qa/2026-10-22-wp-e1-186/README.md#round-4-authoritative-stream-completion)
+reproduces and fixes truncated resumed histories, omitted delivery audits, empty-cursor retries
+and initial corruption retries, using the audit's real SQLite/HTTP and injection probes plus
+regressions run red on the audited head. Completion checks retain bounded reads; this is
+transport correctness evidence rather than a new full-replay performance comparison.
 Shared-host observations are not a quiet-host performance guarantee. History browsing follows
 in #186 round 2.
 

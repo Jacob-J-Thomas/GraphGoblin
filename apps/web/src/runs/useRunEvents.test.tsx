@@ -62,6 +62,32 @@ function emit(index: number, value: Parameters<SubscribeRunEventsOptions['onEven
   return options(index).onEvent(value, JSON.stringify(value).length * 2);
 }
 describe('run stream reachability', () => {
+  it('confirms cached terminal history with the server before reporting completion', async () => {
+    useRunEventStore.getState().append(runId, event(runId, 1, 'run.cancelled', {}));
+    let finish!: () => void;
+    subscribe.mockImplementation(() => ({
+      lastSeq: 1,
+      done: new Promise<void>((resolve) => {
+        finish = resolve;
+      }),
+      close: vi.fn(),
+    }));
+    const { result } = mountStream();
+    expect(subscribe).toHaveBeenCalledTimes(1);
+    expect(options().after).toBe(1);
+    expect(result.current.status).toBe('connecting');
+    await act(async () => {
+      await emit(0, event(runId, 2, 'run.resumed', { actor: { kind: 'user', id: 'local' } }));
+      await emit(0, event(runId, 3, 'run.cancelled', {}));
+      await emit(
+        0,
+        event(runId, 4, 'return.delivered', { channel: { kind: 'caller' }, target: 'run.result' }),
+      );
+      finish();
+    });
+    expect(result.current.events.map((event) => event.seq)).toEqual([1, 2, 3, 4]);
+    expect(result.current.status).toBe('finished');
+  });
   it('flushes an oversized single event immediately without dropping its payload', async () => {
     vi.useFakeTimers();
     mountStream();

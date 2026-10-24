@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { createHash } from 'node:crypto';
+const walk=dir=>readdirSync(dir,{withFileTypes:true}).flatMap(entry=>entry.isDirectory()?walk(join(dir,entry.name)):[join(dir,entry.name)]);
+const results=[];
+for(const name of ['browser','browser-qa-alone']) {
+ const metadata=JSON.parse(readFileSync(`.tmp/r4-${name}-output.json`));
+ const path=walk(metadata.output).find(path=>path.endsWith('error-context.md'));
+ const bytes=readFileSync(path),text=bytes.toString('utf8');
+ const seqs=[...text.matchAll(/^\s+- button "#(\d+) /gm)].map(match=>Number(match[1]));
+ const progress=[...text.matchAll(/^\s+- button "#\d+ node\.progress ask"/gm)].length;
+ assert.equal(seqs.length,1214);assert.equal(new Set(seqs).size,1214);assert.equal(seqs.every((seq,index)=>seq===index+1),true);
+ assert.equal(progress,1200);assert.equal(text.includes('Timeline (1214 events, complete)'),true);
+ results.push({attempt:name,context:path,contextBytes:bytes.length,contextSha256:createHash('sha256').update(bytes).digest('hex'),rows:seqs.length,uniqueRows:new Set(seqs).size,ordered:true,progress,complete:true,expectedInUnchangedSpec:1212});
+}
+writeFileSync('.tmp/r4-browser-qa-observation.json',JSON.stringify(results,null,2));
+console.log(JSON.stringify(results,null,2));
