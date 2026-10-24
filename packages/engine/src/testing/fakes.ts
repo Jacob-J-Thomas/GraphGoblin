@@ -396,6 +396,22 @@ export class InMemorySessionRepository implements HarnessSessionRepository {
       .sort((a, b) => b.attempt - a.attempt);
     return Promise.resolve(rows[0]);
   }
+  forNodeAttempt(
+    runId: string,
+    nodeId: string,
+    attempt: number,
+    harness: HarnessId,
+  ): Promise<HarnessSessionRecord | undefined> {
+    return Promise.resolve(
+      this.rows.find(
+        (r) =>
+          r.runId === runId &&
+          r.nodeId === nodeId &&
+          r.attempt === attempt &&
+          r.harness === harness,
+      ),
+    );
+  }
   latestWithSession(runId: string, harness: HarnessId): Promise<HarnessSessionRecord | undefined> {
     const rows = this.rows
       .filter((r) => r.runId === runId && r.harness === harness && r.sessionId)

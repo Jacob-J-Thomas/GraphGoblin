@@ -200,12 +200,12 @@ Every behaviour-affecting setting is passed as a per-thread option on every sess
 | `harnessOptions.configOverrides`               | client `config` (dotted `--config` keys); values that cannot be TOML (null, non-finite numbers, functions) are dropped                                                                                                                                               |
 | `capabilities.mcpServers`, `plugins`, `skills` | Not yet resolved for Codex: the port receives slugs only and there is no capability profile store. Codex logs and ignores them; use Codex-only `configOverrides` (for example `mcp_servers.<name>.*`) until profiles land. Claude rejects nonempty capability lists. |
 | `workingDirectory`                             | thread options `workingDirectory` (`--cd`) and `skipGitRepoCheck: true`                                                                                                                                                                                              |
-| `session.policy`                               | `fresh` starts a thread; `resume-previous` resumes the session id recorded by the previous inferencing node in this run; `resume-named` resumes the session id stored under `(loopId, key)` or `(workingDirectory, key)`                                             |
+| `session.policy`                               | `fresh` starts; `resume-previous` shares the latest in this run; `resume-named` shares a key; `resume-own` keeps this node/run/harness conversation, with an optional authored reset (below).                                                                        |
 | `prompt.template`                              | Rendered with Liquid, passed as the turn prompt                                                                                                                                                                                                                      |
 | `output.schema` with `native: true`            | `outputSchema` on the turn; the final message is parsed as JSON into `structured`, and the engine validates it                                                                                                                                                       |
 | cancellation                                   | abort the SDK call's signal; see "Cancellation" below                                                                                                                                                                                                                |
 
-`HarnessPort.resume` receives the same `HarnessStartRequest` as `start`: the node's model, effort, harness options, capabilities, and working directory, plus the turn. The engine sends it for `resume-previous` and `resume-named` turns, schema-repair turns, and crash-recovery continuations, so `resumeThread(id, options)` gets exactly the thread options `startThread` would, including after a restart. The adapter keeps no per-session memory.
+`HarnessPort.resume` receives the same `HarnessStartRequest` as `start`: the node's model, effort, harness options, capabilities, and working directory, plus the turn. The engine sends it for `resume-previous`, `resume-named` and `resume-own` turns, schema-repair turns, and crash-recovery continuations, so `resumeThread(id, options)` gets exactly the thread options `startThread` would, including after a restart. The adapter keeps no per-session memory.
 
 Composition: `apps/api` builds the Codex adapters from the Codex entry of the harness-keyed process defaults (`GG_DEFAULTS`) and `GG_CODEX_BINARY`, and registers the harness, structured port, Codex structured evaluator and primitive-aware classifier registry. It also registers the Claude harness on supported native Windows hosts using `GG_CLAUDE_BINARY` or the owner-installed CLI path described below. `GG_CODEX_BINARY` remains an optional executable or JavaScript launcher; otherwise the SDK bundled CLI is used. Constructing adapters starts no model session. Old process-default variables are rejected with migration guidance.
 
@@ -258,6 +258,27 @@ A harness cannot accept conversation history as messages. The thread reaches Cod
 1. **Prompt template.** The default template renders the trigger summary, selected variables, the last N messages, and `lastOutput`. Input transforms shape the view the template sees.
 2. **Context files.** Optional files written under the working directory before the session starts, from templates. The default location is `.graphgoblin/context/<nodeId>.md` and the default prompt mentions it. GraphGoblin never edits the user's own `AGENTS.md`.
 3. **Session resume.** The harness keeps its own history. A resumed turn receives an explicit prompt: a new authored task under its configured policy, a retained definitely-unsubmitted task, or the continuation prompt for uncertain work. See submission markers and recovery below.
+
+### Own-session continuity (#33)
+
+`resume-own` is opt-in; the default stays `fresh`. It uses the same adapter resume
+path and complete per-turn settings as previous/named selection. Its handle is scoped
+to one node/run/harness. The durable log identifies the latest completed visit's exact
+attempt row; no adapter-local memory or new storage schema is required. A new adapter
+instance after restart can resume that persisted native ID. Replay forks and child
+runs have independent IDs/logs and start fresh.
+
+An optional `resetAfterVisits` (positive safe integer, 1 to 9,007,199,254,740,991;
+omitted means never automatically reset) starts a new provider conversation after N
+completed logical visits. Retries and repairs do not count as extra visits. It never
+clears the main-loop thread. Existing prompt templates, input transforms and context
+files deliberately supply the current loop context to either fresh or resumed turns.
+Fresh conversation isolation does not change the authored working-directory/tool policy.
+
+Missing sessions remain `HARNESS_SESSION_MISSING`, non-resumable, without a silent
+fresh fallback. A prior visit's own handle, like previous/named handles, is not proof
+that a new authored task was submitted. #244/ADR-0045's acceptance and exact-task retry
+rules apply unchanged; #265 owns the future explicit recovery choice.
 
 ### Structured output and repair (Decided)
 
@@ -498,8 +519,8 @@ guarantee that a future CLI stream will pass runtime verification.
 
 The text-input transport supplies no acknowledgement tied to the exact prompt bytes. Session
 init and writing stdin are not proof. The adapter does emit `submitted` on validated evidence
-that a turn was consumed (below); it does not claim an exact-byte receipt. Context-delivery
-proof and own-session continuity remain with #38/#33.
+that a turn was consumed (below); it does not claim an exact-byte receipt. This is not exact-byte context-delivery proof (#38). Own-session selection follows
+#33; it does not invent acceptance evidence.
 
 The earlier [Claude Agent SDK research](research/claude-code-agent-sdk.md) records an alternative
 that this adapter does not use.

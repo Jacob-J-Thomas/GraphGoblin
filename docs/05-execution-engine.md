@@ -272,13 +272,42 @@ At boot the run manager loads every run in `queued`, `running`, `waiting`, or `p
 - `waiting` with a durable wake in the log: moved to running, so the woken node runs.
 - Any active run with a durable `run.waiting` and no later wake or node execution: complete the park from that event, including an interrupted snapshot/status write. Keep its original `waitId` and deadlines. Paused runs retain their pause. Re-arm both `until` (timer or heartbeat) and `timeoutAt` with keys containing the recorded `waitId`, then reconcile a completed child for runs that are waiting.
 - `running`: the executor starts from the log. The thread is the last verified checkpoint plus the events after it (see "Event log and projections"), and the cursor is checked against the log: when the log's last node event is the `node.finished` of the node the run record still points at, that node completed and only the cursor write was lost, so the cursor advances along the route it recorded (a gate follows its recorded actual port, with passes in the same append) without running the node again. Otherwise the last `node.started` without a matching `node.finished` identifies the interrupted node. Recovery depends on its kind.
-  - Inferencing: reconstruct the open logical visit and its pending turn from the event log. A proven refusal resends the exact saved task with its original policy selection; uncertain work continues a usable session, or stops non-resumably. An inherited previous/named ID alone is unusable for unaccepted authored work. A missing session also stops. See below.
+  - Inferencing: reconstruct the open logical visit and its pending turn from the event log. A proven refusal resends the exact saved task with its original policy selection; uncertain work continues a usable session, or stops non-resumably. An inherited previous/named/own ID alone is unusable for unaccepted authored work. A missing session also stops. See below.
   - Script: re-executed. Scripts are documented as at-least-once.
   - Decision, mutation, exit: re-executed. They are deterministic given the thread, except Jev and Codex-backed decisions, which are simply asked again. (An exit whose `run.finished` is durable is completed from the log instead.)
   - Subloop: if the visit already recorded `child_run.started`, the handler re-parks on that child, or handles its outcome if it has finished (maps it, or fails or cancels the parent with the child's runtime failure or cancellation); otherwise it creates the child. A crash between creating the child and recording `child_run.started` can still leave an orphan child and start a second one; closing that needs the child id allocated before the child is created.
 - A child that finished while the process was down is finalized first, which wakes its waiting parent; a parent whose child wake was durable but whose status write was lost is moved to running. Either way the parent continues exactly once, at any nesting depth (the built API is checked with real kills and restarts around child completion, `apps/api/src/subloop-restart.test.ts`).
 
 Recovery is automatic and silent apart from a `node.started` event with `attempt` incremented.
+
+## Per-node provider continuity (#33)
+
+`resume-own` starts fresh on the first visit and then resumes only this node's last
+completed conversation in the same run and harness. The handler derives completed
+visits and the last completed visit's final attempt from this run's event log, then
+queries the existing session row by run/node/attempt/harness. Attempt numbers restart
+on a new visit; selecting the largest historical attempt would resume stale work.
+A locally finished row without durable `node.finished` remains unfinished work under
+the submission/recovery rules below.
+
+The optional authored `resetAfterVisits` accepts positive safe integers (1 through
+9,007,199,254,740,991), without a default. N completed visits share one conversation;
+the next visit starts fresh. Retries and schema repairs do not consume visits.
+Reset selection runs only for a new visit: a pending definitely-unsubmitted task
+retains its original fresh/resume selection and exact prompt, and uncertain accepted
+work uses its usable session. The shared thread, feedback and other node sessions
+are never cleared. Existing loop guardrails still apply independently.
+
+A restart retains the reference in SQLite and reconstructs counts/provenance from
+the durable log. Forks and child runs have distinct run IDs and logs, so they start
+their own conversations and reset counts even when their initial graph thread carries
+messages, gates or counters from the source/parent. Native provider expiry still
+fails explicitly; #265 owns the future explicit fresh-session recovery action.
+
+Fresh provider sessions can deliberately receive current main-loop context via
+existing prompt/input/context-file controls. Own continuity adds provider history;
+it does not implicitly copy conversation transcripts into the shared thread or
+change configured output behavior. See [ADR-0052](decisions/ADR-0052-node-own-session-continuity.md).
 
 ## Inference submission and recovery
 
@@ -342,7 +371,7 @@ absence of an acceptance marker, even init-only output, never proves non-submiss
 may assert definite refusal only with positive pre-send/startup/refusal evidence. Once accepted,
 a later authentication/refusal error cannot downgrade the turn to safe resubmission.
 
-Under previous/named policy, an authored or retried authored turn with no durable acceptance
+Under previous/named/own policy, an authored or retried authored turn with no durable acceptance
 cannot use its inherited `resumeSessionId` alone for continuation (ADR-0045, D-022). It fails
 non-resumably on explicit failure and at visit-start recovery. A different newly announced
 session, an accepted turn, or a repair/continuation on the visit's own session can continue.
@@ -362,9 +391,9 @@ cause; durable intent still governs subsequent recovery.
 
 Each repeated visit starts new provenance. Replay forks and child runs have their own logs and
 inherit no pending turn or submission state; an explicitly authored named-session policy keeps
-its existing lookup semantics. This bolt adds no own-session policy (#33) or fresh-session
-recovery action (#265). A normal turn failure stops the run; there is no in-process retry
-loop. Explicit Resume and automatic startup recovery apply the saved provenance: resend
+its existing lookup semantics. Own-session lookup is also limited to the new run; explicit fresh-session
+recovery remains deferred to #265. Other turn failures stop the run; the existing #243 positively unsubmitted transient
+transport failure can retry once in-process without creating another visit. Explicit Resume and automatic startup recovery apply the saved provenance: resend
 proven refused tasks, continue accepted/otherwise usable unfinished sessions, and fail
 uncertain work without a usable session. Recovery can therefore invoke the provider again.
 
@@ -452,7 +481,7 @@ Because every node input is reconstructible, the API offers "re-run this node wi
 - **The invocation** keeps the trigger envelope (node, kind, payload, `receivedAt`, dedupe key) and gets a fresh id and `replayOf: { runId, nodeId }`. Source and caller are those of whoever asked for the replay (the API passes them; the engine keeps the source's when none are given). The source's `returnDefaults` are dropped: they belong to the source's caller. Return channels declared on exit nodes still deliver.
 - **The fork** is a new run on the source's pinned definition record (a draft run's snapshot included) with the source's `pinned`, its own id and event log, created `queued` with `currentNodeId` set to the node and `iteration` from the thread, so the executor starts there. Its first event is `run.queued` with `replayOf` and `initialThread`, exactly the seed admitted to storage and used by the executor. `GET /runs/{id}/thread` returns that seed even before the fork starts. Nothing before the node is re-executed, and the source's child runs are not copied: a subloop node in the fork starts a new child.
 - **Reconstruction continues from the seed**, including inherited messages, variables, outputs, counters, gate passes and iteration. Each fork `node.started` adds one visit to the inherited counter; decision events set absolute gate passes, and historical `iteration.incremented` events set iteration. The fresh-entry guardrail (`maxNodeVisits`) counts only this fork's own attempt-1 starts, independently of its inherited display counters. The inspector uses the same `replayThread` rule and never resets the recorded seed's counters.
-- **Harness sessions are not carried over.** A node that resumes "the previous session" of its run finds none in the fork and starts fresh; named sessions (`resume-named`) are looked up by scope key and still resume. Files the source wrote into a per-run working directory are not copied.
+- **Harness sessions are not carried over.** A node using `resume-previous` or `resume-own` finds no conversation in the fork and starts fresh; named sessions (`resume-named`) are looked up by scope key and still resume. Files the source wrote into a per-run working directory are not copied.
 
 ## Implementation notes from M2 (Decided by implementation, 2026-10-02)
 
