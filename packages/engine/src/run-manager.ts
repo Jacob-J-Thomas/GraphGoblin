@@ -1657,7 +1657,7 @@ export class RunManager {
         result = await (handler as { execute(c: NodeContext): Promise<NodeResult> }).execute(ctx);
       } catch (error) {
         if (error instanceof ChildCancelledError) {
-          await this.cancelForChild(runId, error.childRunId);
+          await this.cancelForChild(runId, error.childRunId, error.records);
           return;
         }
         const terminationUnconfirmed =
@@ -1701,7 +1701,11 @@ export class RunManager {
             'node provider failed',
           );
         else this.ports.logger.error({ runId, nodeId, failure }, 'node failed');
-        await this.failRun(runId, failure);
+        await this.failRun(
+          runId,
+          failure,
+          error instanceof RunFailureError ? error.options.records : undefined,
+        );
         return;
       }
       // A late result cannot replace a deadline/cancel outcome, even if a port ignored abort.
@@ -1794,6 +1798,7 @@ export class RunManager {
         ...(result.kind === 'decision'
           ? [{ type: 'decision.made' as const, nodeId, ...result.evidence }]
           : []),
+        ...(result.kind === 'done' ? (result.records ?? []) : []),
         finishedDraft,
       ]);
       await this.ports.runs.saveThread(runId, thread, seq);
@@ -2036,7 +2041,11 @@ export class RunManager {
     return complete;
   }
 
-  private async failRun(runId: string, authoredFailure: RunFailure): Promise<void> {
+  private async failRun(
+    runId: string,
+    authoredFailure: RunFailure,
+    records: readonly EventDraft[] = [],
+  ): Promise<void> {
     const failure = boundedFailure(authoredFailure);
     const run = await this.ports.runs.get(runId);
     if (!run || isTerminal(run.status)) return;
@@ -2047,7 +2056,7 @@ export class RunManager {
       await this.completeFromLog(run, undefined, events);
       return;
     }
-    await this.ports.events.append(runId, [{ type: 'run.failed', failure }]);
+    await this.ports.events.append(runId, [...records, { type: 'run.failed', failure }]);
     const failed = await this.ports.runs.transition(runId, ACTIVE_STATUSES, {
       status: 'failed',
       failure,
@@ -2213,12 +2222,6 @@ export class RunManager {
   private async childOutcome(childRunId: string): Promise<ChildOutcome> {
     const child = await this.mustGet(childRunId);
     const thread = await this.getThread(childRunId);
-    const completions = (await this.ports.events.read(childRunId)).filter(
-      (event) =>
-        event.type === 'run.finished' ||
-        event.type === 'run.failed' ||
-        event.type === 'run.cancelled',
-    ).length;
     return {
       runId: childRunId,
       status: child.status,
@@ -2226,7 +2229,6 @@ export class RunManager {
       ...(child.result !== undefined ? { result: child.result } : {}),
       ...(child.failure ? { failure: child.failure } : {}),
       ...(thread ? { thread } : {}),
-      completions,
     };
   }
 
@@ -2247,9 +2249,14 @@ export class RunManager {
    * The child this run awaited was cancelled: cancel this run too, as cancelling inline work
    * cancels the run doing it (#251). The request is recorded as the child's.
    */
-  private async cancelForChild(runId: string, childRunId: string): Promise<void> {
+  private async cancelForChild(
+    runId: string,
+    childRunId: string,
+    records: readonly EventDraft[] = [],
+  ): Promise<void> {
     if (await this.ports.runs.claimCancel(runId, ACTIVE_STATUSES, this.now()))
       await this.ports.events.append(runId, [
+        ...records,
         { type: 'run.cancel_requested', actor: { kind: 'run', id: childRunId } },
       ]);
     await this.finalizeCancel(runId);

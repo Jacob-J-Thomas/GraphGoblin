@@ -665,13 +665,13 @@ describe('awaiting a child across failures and restarts (#242)', () => {
     expectOneContinuation(e, parent.id);
   });
 
-  it('a parent that dies after recording its child completion records it once after recovery (#398)', async () => {
+  it('a parent that dies while finishing its subloop records the child completion once after recovery (#398)', async () => {
     const e = await createTestEngine({ maxConcurrentRuns: 3 });
     const leaf = e.publish(inputLoop('completion-leaf'));
     const parent = await e.runToIdle(e.publish(withAfter('completion-parent', leaf.loopId)).loopId);
     const [kid] = await e.ports.runs.listChildren(parent.id);
-    // The child's completion is durable on the parent; the process dies writing the subloop
-    // node's own `node.finished`, a separate append.
+    // The process dies writing the subloop node's `node.finished`, which carries the child's
+    // completion in the same append: neither is stored.
     const append = e.ports.events.append.bind(e.ports.events);
     let died = false;
     vi.spyOn(e.ports.events, 'append').mockImplementation(async (runId, drafts, options) => {
@@ -686,7 +686,7 @@ describe('awaiting a child across failures and restarts (#242)', () => {
     });
     await e.manager.provideInput(kid!.id, await waitIdOf(e, kid!.id), 'completed');
     await vi.waitFor(() => expect(died).toBe(true));
-    expect(count(e, parent.id, (event) => event.type === 'child_run.finished')).toBe(1);
+    expect(count(e, parent.id, (event) => event.type === 'child_run.finished')).toBe(0);
     vi.restoreAllMocks();
 
     const recovered = await recover(e);
@@ -698,11 +698,13 @@ describe('awaiting a child across failures and restarts (#242)', () => {
     });
   });
 
+  // The lost write held the first completion too, so the parent records only what it durably
+  // observed: the child's outcome when the resumed parent finally reaches its own.
   it.each([
-    { second: 'succeeds', exitCode: 0, statuses: ['failed', 'succeeded'], parent: 'succeeded' },
-    { second: 'fails again', exitCode: 1, statuses: ['failed', 'failed'], parent: 'failed' },
+    { second: 'succeeds', exitCode: 0, statuses: ['succeeded'], parent: 'succeeded' },
+    { second: 'fails again', exitCode: 1, statuses: ['failed'], parent: 'failed' },
   ])(
-    'a child resumed directly after its parent lost its failure write records the new completion when it $second (#398)',
+    'a child resumed directly after its parent lost its failure write records the completion the parent observes when it $second (#398)',
     async ({ exitCode, statuses, parent: parentStatus }) => {
       const e = await createTestEngine({ maxConcurrentRuns: 3 });
       const child = e.publish(
@@ -735,7 +737,7 @@ describe('awaiting a child across failures and restarts (#242)', () => {
         );
       });
       const parentLoop = e.publish(withAfter('lost-failure-parent', child.loopId));
-      // The parent records the child's failed completion; the process dies writing `run.failed`.
+      // The process dies writing the parent's `run.failed`, which carries the child's completion.
       const watched: { parentId?: string } = {};
       let died = false;
       const append = e.ports.events.append.bind(e.ports.events);
@@ -755,7 +757,7 @@ describe('awaiting a child across failures and restarts (#242)', () => {
       const parentId = (await e.start(parentLoop.loopId)).id;
       watched.parentId = parentId;
       await vi.waitFor(() => expect(died).toBe(true));
-      expect(count(e, parentId, (event) => event.type === 'child_run.finished')).toBe(1);
+      expect(count(e, parentId, (event) => event.type === 'child_run.finished')).toBe(0);
       // The operator pauses the parent before the restart, then resumes the child directly.
       await e.manager.pause(parentId);
       appendSpy.mockRestore();
@@ -783,7 +785,7 @@ describe('awaiting a child across failures and restarts (#242)', () => {
     },
   );
 
-  it('resuming a parent whose output mapping failed does not record its unchanged child again (#398)', async () => {
+  it('each durable outcome of a parent carries the child completion it observed (#398)', async () => {
     const e = await createTestEngine({ maxConcurrentRuns: 3 });
     const leaf = e.publish(
       singleNodeLoop(
@@ -812,10 +814,28 @@ describe('awaiting a child across failures and restarts (#242)', () => {
     expect(parent.failure?.resumable).toBe(true);
     const [kid] = await e.ports.runs.listChildren(parent.id);
     expect(kid?.status).toBe('succeeded');
+    // The mapping failure is written with the completion the attempt observed.
+    const pairs = () =>
+      e
+        .events(parent.id)
+        .map((event) => event.type)
+        .filter((type) => type === 'child_run.finished' || type === 'run.failed');
+    expect(pairs()).toEqual(['child_run.finished', 'run.failed']);
     await e.manager.resume(parent.id);
     await e.manager.waitForIdle();
     e.manager.stop();
     expect(e.events(kid!.id).filter((event) => event.type === 'run.resumed')).toHaveLength(0);
-    expect(count(e, parent.id, (event) => event.type === 'child_run.finished')).toBe(1);
+    // The resumed attempt observes the same completion and fails the same way: one pair each.
+    expect(pairs()).toEqual([
+      'child_run.finished',
+      'run.failed',
+      'child_run.finished',
+      'run.failed',
+    ]);
+    const failed = e.events(parent.id).filter((event) => event.type === 'run.failed');
+    for (const event of failed) {
+      const before = e.events(parent.id).find((other) => other.seq === event.seq - 1);
+      expect(before?.type).toBe('child_run.finished');
+    }
   });
 });

@@ -42,11 +42,6 @@ export interface ChildOutcome {
   /** The child's runtime failure; absent for an authored Failure exit, which is an outcome. */
   failure?: RunFailure;
   thread?: ContextThread;
-  /**
-   * How many times the child has reached a terminal status: its terminal events. A resume and a
-   * new terminal status add one, so the parent can tell a new completion from one it recorded.
-   */
-  completions: number;
 }
 
 /** Services the executor hands to handlers. Everything that touches the outside world goes through here. */
@@ -100,7 +95,13 @@ export interface NodeContext<K extends NodeKind = NodeKind> {
 }
 
 export type NodeResult =
-  | { kind: 'done'; patch: JsonPatch; route: string }
+  | {
+      kind: 'done';
+      patch: JsonPatch;
+      route: string;
+      /** Facts the visit learned, appended in the same write as its `node.finished` (#398). */
+      records?: EventDraft[];
+    }
   | { kind: 'decision'; patch: JsonPatch; route: string; evidence: DecisionEvidence }
   | { kind: 'park'; patch: JsonPatch; wait: Omit<WaitSpec, 'waitId' | 'startedSeq'> }
   | {
