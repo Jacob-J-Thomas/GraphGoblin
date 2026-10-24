@@ -231,22 +231,45 @@ Inference `node.progress` uses a strict item variant for each normalized type (`
 
 ### Codex structured completions and decider
 
-`CodexStructured` (`StructuredPort`) starts one fresh thread per call with the schema, sandbox `read-only`, approval `never`, no network, no web search, in the request's working directory or an empty temporary directory it removes afterwards. It returns the parsed JSON (or the raw text if the reply is not JSON) for the engine to validate. `CodexDecider` (`DeciderPort`, `id: 'codex'`) asks `{ route: enum of labels, confidence, reasoning }` for choices and `{ holds, confidence, reasoning }` for yes/no questions; schemas follow OpenAI's strict structured-output rules, so Choice confidence bounds are enforced by complete local validation, without clamping or coercion. The exit yes/no contract remains unchanged pending #99. It is always `available()`; harness health is reported by `preflight`.
+`CodexStructured` (`StructuredPort`) starts one fresh thread per call with the schema,
+sandbox `read-only`, approval `never`, no network and no web search, in the request's
+working directory or an empty temporary directory it removes afterwards. It returns
+parsed JSON (or raw text for a non-JSON reply) for the engine to validate.
+`CodexDecider` (`DeciderPort`, `id: 'codex'`) asks for `{ route, confidence, reasoning }`,
+where route is an enum of declared route IDs. Schemas follow strict structured-output
+rules; the adapter validates the entire answer and confidence bounds without clamping
+or coercion. It is always `available()`; harness health is reported by `preflight`.
+
+The engine enforces the run's pinned `settings.structuredTimeoutMs` around LLM decision
+evaluations and output-transform repairs through `StructuredPort`. Inference output-schema
+repairs instead run on the node's own `HarnessPort` session and follow its explicit
+`timeoutSeconds` and the run deadline; this completion limit does not bound them. Omission/null means Unlimited; a finite authored value is milliseconds
+per completion, not a usage budget. The Loop tab, Settings defaults and inspector
+expose it. `CodexStructured` checks abort before acquiring resources and again before
+starting, passes the signal into the harness/SDK call, explicitly cancels the session
+on abort and removes its temporary directory after cancellation cleanup. It never
+adds its own hidden completion deadline. The engine returns the typed
+`STRUCTURED_COMPLETION_TIMEOUT` without waiting forever for a port that ignores abort;
+late fulfillments and non-abort rejections are logged once and cannot reach the run's thread.
+Decision and structured-port repair timeouts include provider, resolved model and effort
+in `details.provenance`. Explicit Cancel
+remains cancellation, and an authored run deadline retains its own failure code.
+See [ADR-0051](decisions/ADR-0051-structured-completion-deadlines.md).
 
 ### Wiring
 
 ```ts
-import { createCodexAdapters } from '@graphgoblin/adapter-codex';
-import { createJevDecider } from '@graphgoblin/adapter-jev';
+import { CodexDecider, createCodexAdapters } from '@graphgoblin/adapter-codex';
 
 const codex = createCodexAdapters({
   logger,
   model: settings.defaults.byHarness.codex?.model,
   effort: settings.defaults.byHarness.codex?.effort,
 });
-const jev = createJevDecider({ secrets, logger }); // resolves `jev-api-key` in the background
-await jev.init();
-// ports: harnesses: { codex: codex.harness }, structured: codex.structured, deciders: [jev, codex.decider]
+const structured = codex.structured; // Or an injected StructuredPort.
+const decider = new CodexDecider(structured);
+// ports: harnesses: { codex: codex.harness }, structured,
+//        deciders: [decider], classifiers: classifierRegistry
 ```
 
 The API additionally supplies `ports.classifiers: ClassifierRegistryPort`. Classifier decisions and exit predicates use `resolve(ownerId, catalogId, primitive)` and check the requested capability before dispatch. Codex supplies the structured LLM evaluator; the separate exit judge facade is removed. The registry creates SDK or HTTP clients from immutable configuration snapshots, invalidates them on catalog/referenced-secret writes and deletes, and rechecks metadata and usable secrets on every resolution. An in-flight request keeps its snapshot; subsequent decisions see the edit.
@@ -578,7 +601,7 @@ No readiness probes, probe directories, model selection or fallback policy chang
 | Codex client options          | Binary override, environment, authored sanitized config overrides; no GraphGoblin usage budget                                                                                                                                                                                                                                                                                                                                                                                    |
 | Codex no-turn probes / cancel | 15-second checks / five-second cancel grace; CLI job-object cancellation evidence has its existing platform qualification                                                                                                                                                                                                                                                                                                                                                         |
 | Codex transcript excerpts     | Command output detail keeps a labelled 16,384-character excerpt; display summaries are bounded. Final answer/protocol are not truncated by this excerpt                                                                                                                                                                                                                                                                                                                           |
-| Structured completion         | Explicit completion deadline contract; enforcement tracked separately by #270                                                                                                                                                                                                                                                                                                                                                                                                     |
+| Structured completion         | `settings.structuredTimeoutMs`: engine-enforced per-call deadline for LLM decision evaluations and output-transform repairs through `StructuredPort`; same-session inference schema repairs follow node/run deadlines; null (default) is Unlimited. Abort cancels provider work; timeout is `STRUCTURED_COMPLETION_TIMEOUT`, and late results are discarded (#270)                                                                                                                |
 | External service              | Context windows, quotas, provider/CLI internals and service failures remain external limits with truthful failures                                                                                                                                                                                                                                                                                                                                                                |
 
 Additional bounded metadata is independent of execution: Claude invalidation names are

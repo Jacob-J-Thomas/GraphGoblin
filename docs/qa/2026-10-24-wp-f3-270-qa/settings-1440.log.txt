@@ -1,0 +1,198 @@
+GraphGoblin
+Loops
+Runs
+Events
+Settings
+Settings
+Appearance
+Theme
+Dark
+Light
+
+Dark is the default. The choice applies at once and is remembered in this browser.
+
+Font
+Geist
+The default: compact and clean.
+Space Grotesk
+Characterful: quirky, engineered letters throughout.
+Chakra Petch
+Robotic headings and wordmark; text stays in Geist.
+Atkinson Hyperlegible
+Easier reading: letters shaped to be hard to confuse.
+OpenDyslexic
+For some dyslexic readers: weighted, wider letters.
+Inter
+Neutral: a plainer alternative to Geist.
+
+Geist is the default. The font applies at once and is remembered in this browser; code stays in Geist Mono.
+
+Model catalog
+
+Local models served through LiteLLM will appear here once the LiteLLM adapter is configured; see the Settings guide, Choose a model and effort.
+
+MODEL	EFFORTS	ENABLED
+Claude Fable 5.1 claude/claude-fable-5-1	low, medium, high, xhigh, max (default high)	
+Claude Fable 5.1:
+Enabled
+
+Enabled in catalog.
+Claude readiness: Unknown.
+
+
+Claude Haiku 5.5 claude/claude-haiku-5-5	low, medium, high, xhigh, max (default high)	
+Claude Haiku 5.5:
+Enabled
+
+Enabled in catalog.
+Claude readiness: Unknown.
+
+
+Claude Opus 5.5 claude/claude-opus-5-5	low, medium, high, xhigh, max (default high)	
+Claude Opus 5.5:
+Enabled
+
+Enabled in catalog.
+Claude readiness: Unknown.
+
+
+Claude Sonnet 5.5 claude/claude-sonnet-5-5	low, medium, high, xhigh, max (default high)	
+Claude Sonnet 5.5:
+Enabled
+
+Enabled in catalog.
+Claude readiness: Unknown.
+
+
+GPT-5.5 codex/gpt-5.5	minimal, low, medium, high, xhigh, max (default medium)	
+GPT-5.5:
+Enabled
+
+GPT-5.6 Luna codex/gpt-5.6-luna	minimal, low, medium, high, xhigh, max (default low)	
+GPT-5.6 Luna:
+Enabled
+
+GPT-5.6 Sol codex/gpt-5.6-sol	minimal, low, medium, high, xhigh, max (default medium)	
+GPT-5.6 Sol:
+Enabled
+
+GPT-5.6 Terra codex/gpt-5.6-terra	minimal, low, medium, high, xhigh, max (default medium)	
+GPT-5.6 Terra:
+Enabled
+
+GPT-6 Astra codex/gpt-6-astra	minimal, low, medium, high, xhigh, max (default medium)	
+GPT-6 Astra:
+Enabled
+
+GPT-6 Luna codex/gpt-6-luna	minimal, low, medium, high, xhigh, max (default low)	
+GPT-6 Luna:
+Enabled
+
+GPT-6 Sol codex/gpt-6-sol	minimal, low, medium, high, xhigh, max (default medium)	
+GPT-6 Sol:
+Enabled
+
+GPT-6.1 Sol codex/gpt-6.1-sol	minimal, low, medium, high, xhigh, max (default medium)	
+GPT-6.1 Sol:
+Enabled
+Classifier models
+Add classifier
+
+Classifier evaluators choose one option for a Choice decision. Jev is built in; register a classifier you host, such as Kev at http://127.0.0.1:8008, with Add classifier. See the Settings guide, Configure classifier models.
+
+MODEL	PROVIDER	CAPABILITIES	STATUS	ENABLED
+Jev jev
+Built in
+	
+TypeSafe
+Model jev-latest
+Secret jev-api-key
+	
+Choice / classification
+Noul
+Score
+	
+Needs a key
+
+Missing or blank secret 'jev-api-key'. Set it in Settings, Secrets.
+
+Open Secrets
+	
+Jev:
+Enabled
+
+Disabling Jev also stops classifier decisions that use Jev.
+
+Defaults
+Codex
+Default model
+(server default)
+GPT-5.5
+GPT-5.6 Luna
+GPT-5.6 Sol
+GPT-5.6 Terra
+GPT-6 Astra
+GPT-6 Luna
+GPT-6 Sol
+GPT-6.1 Sol
+Default effort
+(server default)
+minimal
+low
+medium
+high
+xhigh
+max
+Claude
+Default model (claude)
+(server default)
+Default effort (claude)
+(server default)
+
+This is the requested effort; Claude does not report the effective effort.
+
+Claude readiness: Unknown. See Harness preflight below.
+
+Execution defaults
+
+Maximum node visits: 10. No run deadline unless the loop sets one.
+
+No structured completion deadline unless the loop sets one.
+
+These defaults apply when a loop omits its limits. Change each limit in the editor's Loop tab; Unlimited visits and passes must be chosen explicitly. Intentional repetitions use decision gates with authored maximum passes. GraphGoblin imposes no spending, token, subscription or provider-turn budget.
+
+Secrets
+
+Values are write-only: they are never shown again.
+
+Required fields are marked *
+
+Name
+*
+
+A letter, then letters, digits, _ . or - (up to 128).
+
+Value
+*
+Set secret
+API keys
+
+Required fields are marked *
+
+Label
+*
+Create key
+Independent QA #270 (*)
+Revoke
+This browser's API key
+
+No key is stored. The app asks for one if the server requires it.
+
+Harness preflight
+Retry preflight
+Ready
+codex
+vfake
+Install
+
+GraphGoblin is a progressive web app: use your browser's “Install app” action to open it in its own window. The app shell then opens offline; anything that needs the API shows an offline notice.

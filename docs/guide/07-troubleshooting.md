@@ -263,3 +263,15 @@ An unsupported whole-store format or a database/schema/I/O failure is a separate
 error. Do not reset the whole store to dispose of one damaged run.
 
 Return to the [User guide](README.md), or read [API, streaming, and MCP](../07-api-and-streaming.md) and [Frontend and PWA](../09-frontend-and-pwa.md) for design context.
+
+## Structured completion timeout
+
+`STRUCTURED_COMPLETION_TIMEOUT` means an LLM decision evaluation or output-transform
+repair through the structured port exceeded
+the loop's **Structured completion milliseconds** limit. The failure names that limit
+and stores it in `details.timeoutMs`; the inspector shows the pinned value. The provider
+is aborted, the run slot is released and a late result cannot update the thread. Inspect
+the external cause and use Resume for a deliberate attempt when appropriate, or change
+the loop limit and start a new run. Choose Unlimited to remove this completion cutoff;
+run deadlines and node timeouts still apply. Explicit Cancel ends as `cancelled`, with
+no timeout failure. This limit measures elapsed time, not tokens or provider allowance.

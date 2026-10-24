@@ -42,7 +42,7 @@ function admissionFor(record: LoopVersionRecord, seed: string): RunAdmission {
     label: `${record.definition.name} ${source === 'draft' ? 'draft ' : ''}v${record.version}`,
     defaults: NO_DEFAULTS,
     classifiers: {},
-    limits: { maxNodeVisits: 10, runDeadlineSeconds: null },
+    limits: { structuredTimeoutMs: null, maxNodeVisits: 10, runDeadlineSeconds: null },
   };
   const run: RunRecord = {
     id: fakeUlid(`run:${seed}`),
@@ -102,6 +102,154 @@ describe('draft snapshots', () => {
     return { loop, draft, snapshot, run };
   }
 
+  it.each([null, 250])(
+    'materializes omitted deadline fields in every stored copy, preserving authored %s',
+    async (authored) => {
+      const definition = named('Additive defaults');
+      definition.settings.structuredTimeoutMs = authored;
+      definition.settings.runDeadlineSeconds = authored === null ? null : 5;
+      const { loop, draft } = await loops.create('local', definition);
+      await loops.publish(loop.id);
+      const snapshot: LoopVersionRecord = {
+        ...draft,
+        id: fakeUlid('default-snapshot'),
+        status: 'snapshot',
+      };
+      const intent = admissionFor(snapshot, 'default-copies');
+      intent.run.pinned.limits.structuredTimeoutMs = authored;
+      intent.run.pinned.limits.runDeadlineSeconds = definition.settings.runDeadlineSeconds;
+      // The pinned definition is inserted with pre-field bytes, before its immutability guard applies.
+      const oldDefinition = JSON.stringify(definition);
+      const remove =
+        authored === null
+          ? "json_remove(?, '$.settings.structuredTimeoutMs', '$.settings.runDeadlineSeconds')"
+          : '?';
+      await handle.client.execute({
+        sql: `INSERT INTO loop_versions (id, loop_id, version, status, definition, created_at) VALUES (?, ?, 1, 'snapshot', ${remove}, ?)`,
+        args: [snapshot.id, loop.id, oldDefinition, FIXTURE_TS],
+      });
+      if (authored === null)
+        await handle.client.execute({
+          sql: "UPDATE loop_versions SET definition = json_remove(definition, '$.settings.structuredTimeoutMs', '$.settings.runDeadlineSeconds') WHERE id = ?",
+          args: [draft.id],
+        });
+      await runs.create(intent.run, intent.initialThread);
+      const events = new SqliteEventStore(handle.db, new FakeClock());
+      await events.append(intent.run.id, [intent.queued]);
+      await handle.client.execute({
+        sql: "INSERT INTO webhook_receipts (id, owner_id, loop_id, trigger_node_id, content_hash, inbound_id, status, intent, attempts) VALUES (?, 'local', ?, 'start', ?, ?, 'pending', ?, 0)",
+        args: [
+          fakeUlid('default-receipt'),
+          loop.id,
+          'a'.repeat(64),
+          fakeUlid('default-inbound'),
+          JSON.stringify(intent),
+        ],
+      });
+      if (authored === null) {
+        await handle.client.execute(
+          "UPDATE runs SET pinned = json_remove(pinned, '$.limits.structuredTimeoutMs', '$.limits.runDeadlineSeconds')",
+        );
+        await handle.client.execute(
+          "UPDATE run_events SET payload = json_remove(payload, '$.pinned.limits.structuredTimeoutMs', '$.pinned.limits.runDeadlineSeconds')",
+        );
+        await handle.client.execute(
+          "UPDATE webhook_receipts SET intent = json_remove(intent, '$.run.pinned.limits.structuredTimeoutMs', '$.run.pinned.limits.runDeadlineSeconds', '$.queued.pinned.limits.structuredTimeoutMs', '$.queued.pinned.limits.runDeadlineSeconds', '$.snapshot.definition.settings.structuredTimeoutMs', '$.snapshot.definition.settings.runDeadlineSeconds')",
+        );
+      }
+      const beforeTrigger = (
+        await handle.client.execute(
+          "SELECT sql FROM sqlite_master WHERE name = 'loop_versions_snapshot_immutable'",
+        )
+      ).rows;
+      await handle.client.execute(
+        'DELETE FROM __drizzle_migrations WHERE created_at = 1792818000000',
+      );
+      await handle.migrate();
+      expect(await handle.pendingMigrations()).toBe(0);
+      const expected = {
+        structuredTimeoutMs: authored,
+        runDeadlineSeconds: authored === null ? null : 5,
+      };
+      for (const version of [
+        await loops.getVersion(draft.id),
+        await loops.getVersion(snapshot.id),
+        await loops.getLatestPublished(loop.id),
+        await loops.getPublished(loop.id, 1),
+        ...(await loops.listVersions(loop.id)),
+      ])
+        expect(version?.definition.settings).toMatchObject(expected);
+      expect((await runs.get(intent.run.id))?.pinned.limits).toMatchObject(expected);
+      expect((await events.read(intent.run.id))[0]).toMatchObject({ pinned: { limits: expected } });
+      const saved = (await admission.get(fakeUlid('default-receipt')))?.intent;
+      expect(saved?.run.pinned.limits).toMatchObject(expected);
+      expect(saved?.queued.pinned.limits).toMatchObject(expected);
+      expect(saved?.snapshot?.definition.settings).toMatchObject(expected);
+      if (!saved) throw new Error('expected saved admission');
+      expect((await admission.create(saved)).id).toBe(intent.run.id);
+      expect(
+        (await events.read(intent.run.id)).filter((event) => event.type === 'run.queued'),
+      ).toHaveLength(1);
+      // Each persisted JSON spelling now contains the default; readers need no compatibility path.
+      for (const [table, column, path] of [
+        ['loop_versions', 'definition', '$.settings.structuredTimeoutMs'],
+        ['runs', 'pinned', '$.limits.structuredTimeoutMs'],
+        ['run_events', 'payload', '$.pinned.limits.structuredTimeoutMs'],
+        ['webhook_receipts', 'intent', '$.snapshot.definition.settings.structuredTimeoutMs'],
+      ] as const)
+        expect(
+          (
+            await handle.client.execute(
+              `SELECT json_type(${column}, '${path}') AS type FROM ${table}`,
+            )
+          ).rows.every((row) => row['type'] === (authored === null ? 'null' : 'integer')),
+        ).toBe(true);
+      expect(
+        (
+          await handle.client.execute(
+            "SELECT sql FROM sqlite_master WHERE name = 'loop_versions_snapshot_immutable'",
+          )
+        ).rows,
+      ).toEqual(beforeTrigger);
+      await expect(
+        handle.client.execute({
+          sql: "UPDATE loop_versions SET definition = '{}' WHERE id = ?",
+          args: [snapshot.id],
+        }),
+      ).rejects.toThrow(/LOOP_VERSION_SNAPSHOT_IMMUTABLE/);
+      await handle.migrate();
+      expect((await loops.getVersion(snapshot.id))?.definition.settings).toMatchObject(expected);
+    },
+  );
+
+  it('leaves malformed and invalid values untouched during the additive-default migration', async () => {
+    const { draft } = await loops.create('local', named('Damaged defaults'));
+    for (const stored of [
+      '{broken',
+      JSON.stringify({
+        ...named('Invalid'),
+        settings: { ...named('Invalid').settings, structuredTimeoutMs: -1 },
+      }),
+    ]) {
+      await handle.client.execute({
+        sql: 'UPDATE loop_versions SET definition = ? WHERE id = ?',
+        args: [stored, draft.id],
+      });
+      await handle.client.execute(
+        'DELETE FROM __drizzle_migrations WHERE created_at = 1792818000000',
+      );
+      await applyShippedSqlToHistoricalTestFixture(handle);
+      expect(
+        (
+          await handle.client.execute({
+            sql: 'SELECT definition FROM loop_versions WHERE id = ?',
+            args: [draft.id],
+          })
+        ).rows[0]?.['definition'],
+      ).toBe(stored);
+    }
+  });
+
   it.each([null, 5])(
     'migrates authored deadline %s once and preserves damaged JSON',
     async (deadline) => {
@@ -149,17 +297,23 @@ describe('draft snapshots', () => {
       await apply();
       await apply();
       expect((await runs.get(created.id))?.pinned.limits).toEqual({
+        structuredTimeoutMs: null,
         maxNodeVisits: 4,
         runDeadlineSeconds: deadline,
       });
       expect(
         (await new SqliteEventStore(handle.db, new FakeClock()).read(created.id))[0],
-      ).toMatchObject({ pinned: { limits: { maxNodeVisits: 4, runDeadlineSeconds: deadline } } });
+      ).toMatchObject({
+        pinned: {
+          limits: { maxNodeVisits: 4, runDeadlineSeconds: deadline },
+        },
+      });
       const saved = (await handle.client.execute('SELECT intent FROM webhook_receipts')).rows[0]?.[
         'intent'
       ];
       if (typeof saved !== 'string') throw new Error('Expected saved admission JSON');
       expect(parseRunAdmission(JSON.parse(saved)).run.pinned.limits).toEqual({
+        structuredTimeoutMs: null,
         maxNodeVisits: 4,
         runDeadlineSeconds: deadline,
       });
@@ -413,7 +567,7 @@ describe('migration 0014 pins existing runs', () => {
           label: 'Release v1',
           defaults: { owner, process: { byHarness: {} } },
           classifiers: {},
-          limits: { maxNodeVisits: 10, runDeadlineSeconds: null },
+          limits: { structuredTimeoutMs: null, maxNodeVisits: 10, runDeadlineSeconds: null },
         },
       });
       // The draft run now pins a frozen copy named by its own id, everywhere it is recorded.

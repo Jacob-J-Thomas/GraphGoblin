@@ -31,11 +31,11 @@ the raw expression; a timezone issue focuses the time zone control.
 
 Choose one `kind`; its fields describe that evaluator directly. See [ADR-0035](decisions/ADR-0035-evaluator-specific-decisions.md).
 
-| Kind         | Required authored fields                                                                      | Result and ports                                               |
-| ------------ | --------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| `expression` | `jsonata`, `routes`                                                                           | One JSONata snippet returns a declared scalar route ID.        |
-| `llm`        | Liquid `instructions`, `routes`, `harness: "codex"`, inherit-or-explicit `model` and `effort` | A checked structured completion chooses one declared route.    |
-| `classifier` | catalog `model`, Liquid `question`, `answer`                                                  | Choice options, Noul sides or Score bands derive stable ports. |
+| Kind         | Required authored fields                                                                      | Result and ports                                                                                                       |
+| ------------ | --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `expression` | `jsonata`, `routes`                                                                           | One JSONata snippet returns a declared scalar route ID.                                                                |
+| `llm`        | Liquid `instructions`, `routes`, `harness: "codex"`, inherit-or-explicit `model` and `effort` | A checked structured completion chooses one declared route, bounded by the pinned completion deadline when configured. |
+| `classifier` | catalog `model`, Liquid `question`, `answer`                                                  | Choice options, Noul sides or Score bands derive stable ports.                                                         |
 
 Expression and LLM `routes` are 2-64 `{id,label}` declarations. IDs are unique bounded slugs, excluding `in` and `limit-reached`; trimmed labels are unique, nonblank and at most 120 characters. A plain check becomes a route-returning expression, for example `vars.done ? "done" : "retry"`, with both routes declared.
 

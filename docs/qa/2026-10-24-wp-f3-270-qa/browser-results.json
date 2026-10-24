@@ -1,0 +1,548 @@
+[
+  {
+    "name": "Edge-1440-omitted-default-help-order",
+    "status": "PASS",
+    "loopId": "01M5PFR2WW57JN5STH38G8WTYS",
+    "positions": [
+      null,
+      "Maximum node visits mode",
+      "Run deadline seconds mode",
+      "Structured completion milliseconds mode"
+    ],
+    "screenshot": "loop-unlimited-1440.png",
+    "pageErrors": []
+  },
+  {
+    "name": "Edge-1440-keyboard-boundaries-save-reload",
+    "status": "PASS",
+    "rejections": [
+      {
+        "value": "0",
+        "alerts": [
+          "Too small: expected number to be >0"
+        ]
+      },
+      {
+        "value": "-1",
+        "alerts": [
+          "Too small: expected number to be >0"
+        ]
+      },
+      {
+        "value": "0.5",
+        "alerts": [
+          "Invalid input: expected int, received number"
+        ]
+      },
+      {
+        "value": "31536000001",
+        "alerts": [
+          "Too big: expected number to be <=31536000000"
+        ]
+      }
+    ],
+    "saved": {
+      "loop": {
+        "id": "01M5PFR2WW57JN5STH38G8WTYS",
+        "ownerId": "local",
+        "name": "QA Edge v2 1440",
+        "draftVersionId": "01M5PFR2WW57JN5STH38G8WTYT",
+        "createdAt": "2026-10-24T08:16:59.804Z",
+        "updatedAt": "2026-10-24T08:17:03.948Z"
+      },
+      "draft": {
+        "id": "01M5PFR2WW57JN5STH38G8WTYT",
+        "loopId": "01M5PFR2WW57JN5STH38G8WTYS",
+        "version": 1,
+        "status": "draft",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA Edge v2 1440",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": 500,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 100
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "wait",
+              "label": "Wait",
+              "ui": {
+                "x": 260,
+                "y": 100
+              },
+              "kind": "wait",
+              "config": {
+                "mode": "input",
+                "prompt": "QA wait",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ],
+                "onTimeout": "continue"
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 520,
+                "y": 100
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "a",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "wait",
+                "port": "in"
+              }
+            },
+            {
+              "id": "b",
+              "from": {
+                "node": "wait",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T08:16:59.804Z"
+      },
+      "draftToken": "8147f4cfbd67a2a7"
+    },
+    "screenshot": "loop-limited-1440.png"
+  },
+  {
+    "name": "Edge-1440-export-import-inspector-settings",
+    "status": "PASS",
+    "importedId": "01M5PFRAS7PSGP659XDF0GH6JV",
+    "runId": "01M5PFRASV6TKJQFP0ECAGCS73",
+    "export": {
+      "format": "graphgoblin-loop",
+      "formatVersion": 4,
+      "exportedAt": "2026-10-24T08:17:07.871Z",
+      "loop": {
+        "schemaVersion": 4,
+        "name": "QA Edge v2 import 1440",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": 500,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "start",
+            "label": "Start",
+            "ui": {
+              "x": 0,
+              "y": 100
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "manual",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ]
+            }
+          },
+          {
+            "id": "wait",
+            "label": "Wait",
+            "ui": {
+              "x": 260,
+              "y": 100
+            },
+            "kind": "wait",
+            "config": {
+              "mode": "input",
+              "prompt": "QA wait",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ],
+              "onTimeout": "continue"
+            }
+          },
+          {
+            "id": "done",
+            "label": "Done",
+            "ui": {
+              "x": 520,
+              "y": 100
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "a",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "wait",
+              "port": "in"
+            }
+          },
+          {
+            "id": "b",
+            "from": {
+              "node": "wait",
+              "port": "out"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          }
+        ]
+      }
+    },
+    "pin": {
+      "maxNodeVisits": 10,
+      "runDeadlineSeconds": null,
+      "structuredTimeoutMs": 500
+    },
+    "pageErrors": []
+  },
+  {
+    "name": "Edge-390-omitted-default-help-order",
+    "status": "PASS",
+    "loopId": "01M5PFRCR0XR2WTM72E958H5R6",
+    "positions": [
+      null,
+      "Maximum node visits mode",
+      "Run deadline seconds mode",
+      "Structured completion milliseconds mode"
+    ],
+    "screenshot": "loop-unlimited-390.png",
+    "pageErrors": []
+  },
+  {
+    "name": "Edge-390-keyboard-boundaries-save-reload",
+    "status": "PASS",
+    "rejections": [
+      {
+        "value": "0",
+        "alerts": [
+          "Too small: expected number to be >0"
+        ]
+      },
+      {
+        "value": "-1",
+        "alerts": [
+          "Too small: expected number to be >0"
+        ]
+      },
+      {
+        "value": "0.5",
+        "alerts": [
+          "Invalid input: expected int, received number"
+        ]
+      },
+      {
+        "value": "31536000001",
+        "alerts": [
+          "Too big: expected number to be <=31536000000"
+        ]
+      }
+    ],
+    "saved": {
+      "loop": {
+        "id": "01M5PFRCR0XR2WTM72E958H5R6",
+        "ownerId": "local",
+        "name": "QA Edge v2 390",
+        "draftVersionId": "01M5PFRCR0XR2WTM72E958H5R7",
+        "createdAt": "2026-10-24T08:17:09.888Z",
+        "updatedAt": "2026-10-24T08:17:17.393Z"
+      },
+      "draft": {
+        "id": "01M5PFRCR0XR2WTM72E958H5R7",
+        "loopId": "01M5PFRCR0XR2WTM72E958H5R6",
+        "version": 1,
+        "status": "draft",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA Edge v2 390",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": 500,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 100
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "wait",
+              "label": "Wait",
+              "ui": {
+                "x": 260,
+                "y": 100
+              },
+              "kind": "wait",
+              "config": {
+                "mode": "input",
+                "prompt": "QA wait",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ],
+                "onTimeout": "continue"
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 520,
+                "y": 100
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "a",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "wait",
+                "port": "in"
+              }
+            },
+            {
+              "id": "b",
+              "from": {
+                "node": "wait",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-10-24T08:17:09.888Z"
+      },
+      "draftToken": "4dc38ed931b11c5e"
+    },
+    "screenshot": "loop-limited-390.png"
+  },
+  {
+    "name": "Edge-390-export-import-inspector-settings",
+    "status": "PASS",
+    "importedId": "01M5PFRN5BP29H2TGVC5VWEPDX",
+    "runId": "01M5PFRN60G8WT8XR0NKB33GN8",
+    "export": {
+      "format": "graphgoblin-loop",
+      "formatVersion": 4,
+      "exportedAt": "2026-10-24T08:17:18.502Z",
+      "loop": {
+        "schemaVersion": 4,
+        "name": "QA Edge v2 import 390",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": 500,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "start",
+            "label": "Start",
+            "ui": {
+              "x": 0,
+              "y": 100
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "manual",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ]
+            }
+          },
+          {
+            "id": "wait",
+            "label": "Wait",
+            "ui": {
+              "x": 260,
+              "y": 100
+            },
+            "kind": "wait",
+            "config": {
+              "mode": "input",
+              "prompt": "QA wait",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ],
+              "onTimeout": "continue"
+            }
+          },
+          {
+            "id": "done",
+            "label": "Done",
+            "ui": {
+              "x": 520,
+              "y": 100
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "a",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "wait",
+              "port": "in"
+            }
+          },
+          {
+            "id": "b",
+            "from": {
+              "node": "wait",
+              "port": "out"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          }
+        ]
+      }
+    },
+    "pin": {
+      "maxNodeVisits": 10,
+      "runDeadlineSeconds": null,
+      "structuredTimeoutMs": 500
+    },
+    "pageErrors": []
+  }
+]
