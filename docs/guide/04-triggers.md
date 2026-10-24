@@ -311,11 +311,14 @@ event.json
 
 ```json
 {
+  "loopId": "<stable-loop-id>",
   "type": "issue-ready",
   "payload": { "issueId": "example-7", "approved": true },
   "dedupeKey": "example-delivery-7"
 }
 ```
+
+Omit `dedupeKey` for independent deliveries. If supplied, it must contain 1 to 512 characters of well-formed Unicode. An empty string returns 400 `VALIDATION_FAILED` naming `/dedupeKey` before saving anything; whitespace is a literal key.
 
 ```bash
 curl -sS -X POST 'http://127.0.0.1:4747/events' \
@@ -327,7 +330,11 @@ Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:4747/events' `
   -ContentType 'application/json' -InFile event.json
 ```
 
-Matching published triggers start runs. The response includes `runIds` and `duplicate`. A repeated event type plus request dedupe key returns the earlier event without starting more runs; this dedupe persists without a replay-window expiry. A node's own dedupe expression separately suppresses keys already used by that trigger.
+Replace `<stable-loop-id>` with the owned loop's ID. The request starts exactly one matching Event trigger in that loop's current published version. If more than one matches, add `"triggerNodeId": "your-entry-id"`; an absent target, mismatched entry or ambiguity is refused instead of broadcasting.
+
+The 202 includes a saved `admissionId`, the pinned `target` and `delivery.state: "pending"`; `runIds` fills after admission. You can stop and restart GraphGoblin without resending an accepted request. A request key retry returns the original delivery and identity for this loop/trigger/type, including a failed state. The same key aimed at another loop is independent. Unkeyed repeats may each start a run; bodies are not hashed for suppression. A node's own key expression separately suppresses payload keys, including pending admissions. This protects admission, not exactly-once effects in external systems.
+
+Inspect Events for Pending admission, Admitted or Failed, failure attempts, retry time and safe failure code. The eighth admission failure ends retries; fix the underlying fault and deliberately send a new key for new work. Old broadcast history has no inferred target and shows admission "not tracked". Extremely nested payloads (container depth above 994 with the payload root counted as zero) return 422 `EVENT_PAYLOAD_TOO_DEEP`; URL webhooks use `WEBHOOK_PAYLOAD_TOO_DEEP`. Neither is accepted or retried. Other URL webhook contracts are unchanged.
 
 Events come from outside GraphGoblin. Loops do not publish Events to one another: to run another loop and use its result, call it with a Subloop node. The parent waits for the child and receives its configured output (see [Run and observe](03-run-and-observe.md#read-returns-and-child-runs)).
 

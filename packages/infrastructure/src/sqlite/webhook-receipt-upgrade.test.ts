@@ -48,6 +48,8 @@ beforeEach(async () => {
   handle = await openMemoryDatabase();
   // Restore a pre-0015 ledger prefix; remove the later index before both migrations replay.
   await handle.client.execute('DROP INDEX runs_loop_owner_history_idx');
+  // A pre-0015 fixture must not retain the later targeted Event ledger.
+  await handle.client.execute('DROP TABLE event_receipts');
   await handle.client.execute('DELETE FROM __drizzle_migrations WHERE created_at>=1792454400000');
 });
 afterEach(() => handle.close());

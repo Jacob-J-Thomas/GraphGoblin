@@ -534,3 +534,7 @@ loop controls, pass limits and any authored watchdogs to permit intentionally in
 execution, ending through authored exits, Cancel or an external/resource failure.
 GraphGoblin imposes no spending, token, subscription-usage or provider-turn budget.
 Authors may use script/decision nodes for their own usage-aware behavior.
+
+### Durable targeted Event admission (#343)
+
+`RunManager.receiveEvent` freezes one published version and eligible Event entry, including subloop pins, then claims a separate durable Event receipt before the API acknowledges 202. It shares the deletion/pinning lock and atomic run/thread/queued-event commit with `receiveWebhook`, but uses its own request-key ledger and delivery states (ADR-0048). The initial acceptance does not wait for run execution. Pending Event receipts participate in loop-in-use protection. Boot and the existing 15-second sweep dispatch up to five due Events; work then enters the normal capacity scheduler. The eight-failure budget and safe terminal codes are specified in 08. A later publish never changes the frozen intent. This admission guarantee does not establish exactly-once external effects, and it does not reintroduce exit-to-Event composition.

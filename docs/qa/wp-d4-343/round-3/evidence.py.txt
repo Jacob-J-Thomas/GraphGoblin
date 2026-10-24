@@ -1,0 +1,36 @@
+"""Normalize completed captures and preserve original byte provenance. Never use on active logs."""
+from pathlib import Path
+import hashlib
+import json
+import re
+import sys
+
+ROOT = Path(__file__).resolve().parent
+sys.stdout.reconfigure(encoding='utf-8')
+
+def digest(data):
+    return hashlib.sha256(data).hexdigest()
+
+def portable(text):
+    profile = str(Path.home())
+    for prefix in [profile.replace('\\', '\\\\'), profile, profile.replace('\\', '/')]:
+        text = text.replace(prefix, '%USERPROFILE%')
+    pattern = r'C:[/\\]*\s*(?:[\u2502|]\s*)?[/\\]*Users[/\\]+' + re.escape(Path.home().name)
+    text = re.sub(pattern, '%USERPROFILE%', text, flags=re.I)
+    return text.replace('\r\n', '\n').replace('\r', '\n')
+
+if __name__ == '__main__':
+    provenance = ROOT / 'NORMALIZATION.json'
+    records = json.loads(provenance.read_text(encoding='utf-8')) if provenance.exists() else {}
+    for name in sys.argv[1:]:
+        path = ROOT / name
+        raw = path.read_bytes()
+        if len(raw) > 1_000_000:
+            raise RuntimeError(f'{name} exceeds capture limit: {len(raw)} {digest(raw)}; record NOT-KEPT before removing the capture')
+        decoded = raw.decode('utf-16') if raw.startswith((b'\xff\xfe', b'\xfe\xff')) else raw.decode('utf-8-sig')
+        normalized = portable(decoded).encode('utf-8')
+        records.setdefault(name, {'capturedBytes': len(raw), 'capturedSha256': digest(raw), 'rawBytesKept': False})
+        path.write_bytes(normalized)
+        records[name].update({'retainedBytes': len(normalized), 'retainedSha256': digest(normalized)})
+        print(f'{name}: {len(raw)} -> {len(normalized)} bytes')
+    provenance.write_text(json.dumps(records, indent=2) + '\n', encoding='utf-8')

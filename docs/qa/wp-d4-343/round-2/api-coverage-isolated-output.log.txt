@@ -1,0 +1,109 @@
+pnpm.cmd : $ vitest run --coverage '--coverage.reportsDirectory=%USERPROFILE%\AppData\Local\Temp\gg-wp-d4-343-api-cove
+rage-a36c5167a3b64fb48534f5f717864f9e' --coverage.reportOnFailure
+At line:5 char:3
++   & pnpm.cmd @gateArgs *> "docs/qa/wp-d4-343/round-2/$gateName.log.tx ...
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --...reportOnFailure:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d4-343/apps/api
+      Coverage enabled with v8
+
+{"level":30,"time":1792824353432,"pid":46372,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5633"}
+{"level":30,"time":1792824353433,"pid":46372,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5633,"dataDir":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-api-process-Nfr9r7","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792824353695,"pid":46372,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792824353702,"pid":46372,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":7.146300000000338,"msg":"request completed"}
+[before-receipt] fixture
+[before-receipt] key
+[before-receipt] key-created
+[before-receipt] storage
+[before-receipt] start
+[before-receipt] ready
+[before-receipt] post
+[before-receipt] kill
+[before-receipt] killed
+[before-receipt] storage
+[before-receipt] start
+[before-receipt] ready
+[before-receipt] kill
+[before-receipt] killed
+[pending-before-run] fixture
+[pending-before-run] key
+[pending-before-run] key-created
+[pending-before-run] storage
+[pending-before-run] start
+[pending-before-run] ready
+[pending-before-run] post
+[pending-before-run] kill
+[pending-before-run] killed
+[pending-before-run] storage
+[pending-before-run] start
+subloop kill landings:
+delay undefined: leaf waiting at restart; recovery restarts top 0, middle 0, leaf 0
+delay 0: leaf running at restart; recovery restarts top 0, middle 0, leaf 1
+delay 10: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 30: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 60: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+delay 100: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 150: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 250: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+[pending-before-run] ready
+[pending-before-run] kill
+[pending-before-run] killed
+[after-run] fixture
+[after-run] key
+[after-run] key-created
+[after-run] start
+[after-run] ready
+[after-run] post
+[after-run] kill
+[after-run] killed
+[after-run] storage
+[after-run] start
+[after-run] ready
+[after-run] kill
+[after-run] killed
+ ❯ src/subloop-restart.test.ts (3 tests | 1 failed) 312140ms
+   ❯ awaited subloops across process death (#242) (3)
+     × the built API recovers a child finished while down with one continuation per parent 88862ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a child 
+finished while down with one continuation per parent
+Error: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ src/subloop-restart.test.ts:23:1
+     21|
+     22| const fixtures: Awaited<ReturnType<typeof createApiProcessFixture>>[] …
+     23| afterEach(async () => {
+       | ^
+     24|   for (const created of fixtures.splice(0)) await created.dispose();
+     25| }, 60_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 65 passed | 2 skipped (68)
+      Tests  1 failed | 1346 passed | 8 skipped (1355)
+   Start at  01:43:47
+   Duration  699.18s (tests 76%, import 19%, transform 5%)
+
+    Isolate  68 workers spawned · ~1.94s startup each (spawn + environment, per file)
+             at least ~10.07s faster with isolate: false — reuses workers across files instead of one per file
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 96.44% ( 2033/2108 )
+Branches     : 93.26% ( 1343/1440 )
+Functions    : 94.58% ( 402/425 )
+Lines        : 97.72% ( 1847/1890 )
+================================================================================
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d4-
+  │ 343\apps\api
+

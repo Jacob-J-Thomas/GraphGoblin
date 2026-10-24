@@ -1,0 +1,5 @@
+Diagnostic control record:
+The sequential isolated pipeline completed upgrade-scan (10/10 pass), upgrade (6 fail / 20 pass) and GitHub recipe (5/5 pass). The tool stdin control then interrupted that pipeline (exit 1), before a fourth result was recorded in isolated-results.json.
+The last partial log read had shown only the GitHub RUN header; later retained footer/results establish that GitHub completed before the interruption took effect. It must not be classified as an interrupted GitHub test.
+A separate adversarial API file command completed 34/34 pass (isolated-api-adversarial.log.txt and isolated-api-adversarial-result.json). No broad-suite failure is replaced by that diagnostic result.
+Report-generation attempt 1 encountered EBUSY while trying to normalize an actively written isolated-upgrade.log.txt. Generation was deferred until the diagnostic pipeline and subsequent API diagnostic were complete. No production code changed.

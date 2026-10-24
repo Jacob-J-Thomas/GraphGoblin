@@ -1,0 +1,52 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d4-343/apps/api
+
+ ❯ src/targeted-events.test.ts (24 tests | 1 failed | 23 skipped) 2242ms
+   × returns a typed stored-history error for a corrupt keyed retry without rewriting it 2239ms
+pnpm.cmd : 
+At line:95 char:1
++ pnpm.cmd --filter @graphgoblin/api exec vitest run src/targeted-event ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/targeted-events.test.ts > returns a typed stored-history error for a corrupt keyed retry without rewriting 
+it
+AssertionError: expected { …(5) } to match object { code: 'STORED_EVENT_INVALID' }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "STORED_EVENT_INVALID",
++   "code": "INTERNAL_ERROR",
+  }
+
+ ❯ src/targeted-events.test.ts:534:27
+    532|   const response = await post(loopId, { dedupeKey: 'corrupt-inbound' }…
+    533|   expect(response.statusCode).toBe(500);
+    534|   expect(response.json()).toMatchObject({ code: 'STORED_EVENT_INVALID'…
+       |                           ^
+    535|   expect(response.body).not.toContain('private-corruption');
+    536|   expect((await t.container.handle.client.execute('SELECT payload FROM…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 23 skipped (24)
+   Start at  00:42:56
+   Duration  19.29s (import 47%, transform 41%, tests 12%)
+
+  Transform  transforming modules took 7.55s · 41% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d4-
+  │ 343\apps\api
+

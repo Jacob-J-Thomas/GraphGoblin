@@ -1,0 +1,47 @@
+npx.cmd : npm error code EPERM
+At line:2 char:50
++ ... $env:PATH"; npx.cmd --yes --package @playwright/cli playwright-cli -- ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (npm error code EPERM:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+npm error syscall open
+npm error path %USERPROFILE%\AppData\Local\npm-cache\_cacache\tmp\b0d5b7d0
+npm error errno EPERM
+npm error FetchError: Invalid response body while trying to fetch https://registry.npmjs.org/@playwright%2fcli: EPERM: 
+operation not permitted, open '%USERPROFILE%\AppData\Local\npm-cache\_cacache\tmp\b0d5b7d0'
+npm error     at 
+%USERPROFILE%\AppData\Roaming\nvm\v22.14.0\node_modules\npm\node_modules\minipass-fetch\lib\body.js:170:15
+npm error     at async Response.json 
+(%USERPROFILE%\AppData\Roaming\nvm\v22.14.0\node_modules\npm\node_modules\minipass-fetch\lib\body.js:75:17)
+npm error     at async RegistryFetcher.packument 
+(%USERPROFILE%\AppData\Roaming\nvm\v22.14.0\node_modules\npm\node_modules\pacote\lib\registry.js:98:25)
+npm error     at async RegistryFetcher.manifest 
+(%USERPROFILE%\AppData\Roaming\nvm\v22.14.0\node_modules\npm\node_modules\pacote\lib\registry.js:128:23)
+npm error     at async getManifest 
+(%USERPROFILE%\AppData\Roaming\nvm\v22.14.0\node_modules\npm\node_modules\libnpmexec\lib\index.js:27:22)
+npm error     at async missingFromTree 
+(%USERPROFILE%\AppData\Roaming\nvm\v22.14.0\node_modules\npm\node_modules\libnpmexec\lib\index.js:60:22)
+npm error     at async 
+%USERPROFILE%\AppData\Roaming\nvm\v22.14.0\node_modules\npm\node_modules\libnpmexec\lib\index.js:182:32
+npm error     at async Promise.all (index 0)
+npm error     at async exec 
+(%USERPROFILE%\AppData\Roaming\nvm\v22.14.0\node_modules\npm\node_modules\libnpmexec\lib\index.js:180:3)
+npm error     at async Npm.exec (%USERPROFILE%\AppData\Roaming\nvm\v22.14.0\node_modules\npm\lib\npm.js:207:9) {
+npm error   code: 'EPERM',
+npm error   errno: 'EPERM',
+npm error   syscall: 'open',
+npm error   path: '%USERPROFILE%\\AppData\\Local\\npm-cache\\_cacache\\tmp\\b0d5b7d0',
+npm error   type: 'system'
+npm error }
+npm error
+npm error The operation was rejected by your operating system.
+npm error It's possible that the file was already in use (by a text editor or antivirus),
+npm error or that you lack permissions to access it.
+npm error
+npm error If you believe this might be a permissions issue, please double-check the
+npm error permissions of the file and its containing directories, or try running
+npm error the command again as root/Administrator.
+npm error Log files were not written due to an error writing to the directory: 
+%USERPROFILE%\AppData\Local\npm-cache\_logs
+npm error You can rerun the command with `--loglevel=verbose` to see the logs in your terminal

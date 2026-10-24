@@ -327,3 +327,39 @@ it('lays out a large payload within the cell bound and offers the exact value (#
   const region = screen.getByRole('region', { name: 'Payload of event big' });
   expect(JSON.parse(region.textContent ?? '')).toEqual(payload);
 });
+
+it.each(['pending', 'failed'] as const)(
+  'shows the target and admission identity for a %s Event without a run',
+  async (state) => {
+    const api = new FakeApi();
+    const loopId = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
+    const admissionId = '01ARZ3NDEKTSV4RRFFQ69G5FAW';
+    api.inbound = [
+      {
+        id: 'targeted',
+        ownerId: 'local',
+        type: 'ready',
+        payload: null,
+        receivedAt: TS,
+        source: 'api',
+        runIds: [],
+        target: { loopId, versionId: '01ARZ3NDEKTSV4RRFFQ69G5FAX', triggerNodeId: 'issue-entry' },
+        admissionId,
+        delivery: {
+          state,
+          attempts: 1,
+          ...(state === 'failed' ? { failureCode: 'EVENT_INTENT_CONFLICT' } : {}),
+        },
+      },
+    ];
+    renderApp('/events', api);
+    const row = await screen.findByRole('row', { name: /ready/ });
+    expect(within(row).getByRole('link', { name: loopId })).toHaveAttribute(
+      'href',
+      `/loops/${loopId}/edit`,
+    );
+    expect(within(row).getByText('issue-entry')).toBeVisible();
+    expect(within(row).getByText(admissionId)).toBeVisible();
+    expect(within(row).getByText('none')).toBeVisible();
+  },
+);

@@ -1,0 +1,45 @@
+import { readFile, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+const root=process.cwd(),out=join(root,'docs/qa/2026-10-24-wp-d4-343-qa');
+const ready=JSON.parse(await readFile(join(out,'browser-ready.json'),'utf8'));
+const auth=JSON.parse(await readFile(ready.authFile.replace('%USERPROFILE%',process.env.USERPROFILE),'utf8'));
+const {chromium}=await import(pathToFileURL(join(root,'node_modules/.pnpm/playwright@1.63.0/node_modules/playwright/index.mjs')).href);
+const browser=await chromium.launch({channel:'msedge',headless:true});
+const result={channel:'msedge',version:browser.version(),checks:[],errors:[]};
+const context=await browser.newContext({viewport:{width:1440,height:1000},serviceWorkers:'block'});
+await context.addInitScript(key=>localStorage.setItem('graphgoblin-api-key',key),auth.key);
+const page=await context.newPage();
+page.on('pageerror',e=>result.errors.push(String(e)));
+const headers={authorization:'Bearer '+auth.key,'content-type':'application/json'};
+const request=async(method,path,body)=>{const r=await fetch(auth.url+path,{method,headers,...(body?{body:JSON.stringify(body)}:{})});return {status:r.status,body:await r.json()};};
+// Additional boundary checks use the actual served API, never route interception.
+const extras=[]; /* Original boundary requests retained separately; no need to repeat. */
+for(const key of []) {
+ const rs=[];for(let i=0;i<2;i++)rs.push(await request('POST','/events',{loopId:ready.targets[0],type:'ready',dedupeKey:key,payload:{keyCase:key,i}}));
+ extras.push({requestKey:JSON.stringify(key),responses:rs,sameDelivery:rs[0].body.id===rs[1].body.id});
+}
+
+await page.goto(auth.url+'/app/events');
+await page.getByRole('heading',{name:'Events',exact:true}).waitFor();
+await page.locator('tbody tr').first().waitFor();
+for(const width of [1440,390]) {
+ await page.setViewportSize({width,height:1000});
+ await page.reload();await page.locator('tbody tr').first().waitFor();
+ const api=await request('GET','/events?limit=100');
+ const text=await page.locator('body').innerText();
+ const snapshot=await page.locator('body').ariaSnapshot();
+ await writeFile(join(out,`edge-${width}-snapshot.log.txt`),snapshot);
+ await page.screenshot({path:join(out,`edge-${width}.png`),fullPage:true});
+ const rows=await page.locator('tbody tr').evaluateAll(rows=>rows.map(r=>({text:r.innerText,links:Array.from(r.querySelectorAll('a')).map(a=>({text:a.textContent,href:a.getAttribute('href')}))})));
+ const check={width,apiStates:[...new Set(api.body.items.map(i=>i.delivery?.state))],rows:rows.length,states:{pending:text.includes('Pending admission'),admitted:text.includes('Admitted'),failed:text.includes('Failed'),deduplicated:text.includes('Deduplicated')},attempt8:text.includes('Admission failures: 8'),exhaustedCode:text.includes('EVENT_ADMISSION_EXHAUSTED'),conflictCode:text.includes('EVENT_INTENT_CONFLICT'),targetedFields:{loopVisible:text.includes(ready.targets[3]),triggerVisible:/(triggerNodeId|Trigger|Target loop)/.test(text),admissionVisible:text.includes(ready.pendingId)},horizontalOverflow:await page.evaluate(()=>({viewport:innerWidth,document:document.documentElement.scrollWidth})),rowDetails:rows};
+ const pendingRow=page.locator('tbody tr').filter({hasText:'ui-pending'}).first();
+ await pendingRow.screenshot({path:join(out,`edge-${width}-pending-row.png`)});
+ const admitted=page.locator('tbody tr').filter({hasText:'Admitted'}).first();
+ const link=admitted.getByRole('link').first();if(await link.count()){const href=await link.getAttribute('href');await link.focus();await page.keyboard.press('Enter');await page.waitForURL('**'+href);check.keyboardRunLink={href,url:page.url()};await page.goBack();await page.locator('tbody tr').first().waitFor();}
+ result.checks.push(check);
+}
+const second=await context.newPage();await second.goto(auth.url+'/app/events');await second.locator('tbody tr').first().waitFor();result.secondTabRows=await second.locator('tbody tr').count();
+await writeFile(join(out,'browser-results.json'),JSON.stringify(result,null,2));
+await browser.close();console.log(JSON.stringify(result.checks.map(({rowDetails,...r})=>r)));console.log('pageerrors',result.errors);
+

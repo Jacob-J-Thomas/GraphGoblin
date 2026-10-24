@@ -1,0 +1,531 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-d4-343/apps/api
+
+ ❯ src/targeted-events.test.ts (21 tests | 20 failed) 20255ms
+   ❯ targeted Events (#343) (3)
+     × refuses a missing target without broadcasting 2824ms
+     × records one explicit destination and a durable admission identity 1341ms
+     × refuses and logs the 997-level payload with a bounded diagnostic 921ms
+   × refuses invalid loop identities, ownership, scope, unpublished and ineligible entries 1489ms
+   × requires explicit disambiguation and scopes identical request keys to each recipient 1756ms
+   × reuses one original delivery across concurrent keyed retries and admits unkeyed repeats 1402ms
+   × never acknowledges an unsaved receipt: BEFORE INSERT ON inbound_events 781ms
+   × never acknowledges an unsaved receipt: BEFORE INSERT ON event_receipts 1132ms
+   × recovers the same intent after atomic admission failure: BEFORE INSERT ON runs 889ms
+   × recovers the same intent after atomic admission failure: BEFORE INSERT ON run_events 822ms
+   × recovers the same intent after atomic admission failure: BEFORE UPDATE OF status ON event_receipts WHEN NEW.status='admitted' 860ms
+   × recovers the same intent after atomic admission failure: BEFORE UPDATE OF run_ids ON inbound_events 277ms
+   × pins the accepted version through later publication and keyed retries 302ms
+   × preserves node expression dedupe and refuses expression failures before accepting 423ms
+   × bounds persistent admission failures and keeps failed keyed deliveries truthful 696ms
+   × keeps URL webhook acknowledgements and targeting; refuses deep input with a safe logged code 532ms
+   × admits the shared receipt nesting boundary and refuses the next container before saving 716ms
+   × classifies a corrupt saved intent as failed without retrying or rewriting it 262ms
+   × refuses malformed Unicode request keys instead of accepting an unstable SQLite identity 487ms
+   × refuses non-finite deeply nested JSON without entering a recursive validator 412ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 20 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/targeted-events.test.ts > targeted Events (#343) > refuses a missing target without broadcasting
+AssertionError: expected 202 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 202
+
+ ❯ src/targeted-events.test.ts:37:33
+     35|       payload: { type: 'ready' },
+     36|     });
+     37|     expect(response.statusCode).toBe(400);
+       |                                 ^
+     38|     expect(response.json()).toMatchObject({ code: 'VALIDATION_FAILED' …
+     39|     expect((await t.app.inject('/events')).json()).toMatchObject({ ite…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/20]⎯
+
+ FAIL  src/targeted-events.test.ts > targeted Events (#343) > records one explicit destination and a durable admission identity
+AssertionError: expected { …(8) } to match object { target: { …(2) }, …(2) }
+(8 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "admissionId": Any<String>,
+-   "delivery": {
+-     "state": "pending",
+-   },
+-   "target": {
+-     "loopId": "01M3Y7RKG0KN0HME5X8PPPSK05",
+-     "triggerNodeId": "start",
+-   },
++   "duplicate": false,
++   "id": "01M3Y7RKG0KN0HME5X8PPPSK09",
++   "ownerId": "local",
++   "payload": null,
++   "receivedAt": "2026-10-02T12:00:00.000Z",
++   "runIds": [
++     "01M3Y7RKG0KN0HME5X8PPPSK0A",
++     "01M3Y7RKG0KN0HME5X8PPPSK0C",
++   ],
++   "source": "api",
++   "type": "ready",
+  }
+
+ ❯ src/targeted-events.test.ts:50:29
+     48|     });
+     49|     expect(response.statusCode).toBe(202);
+     50|     expect(response.json()).toMatchObject({
+       |                             ^
+     51|       target: { loopId, triggerNodeId: 'start' },
+     52|       admissionId: expect.any(String),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/20]⎯
+
+ FAIL  src/targeted-events.test.ts > targeted Events (#343) > refuses and logs the 997-level payload with a bounded diagnostic
+AssertionError: expected 202 to be 422 // Object.is equality
+
+- Expected
++ Received
+
+- 422
++ 202
+
+ ❯ src/targeted-events.test.ts:76:33
+     74|       payload,
+     75|     });
+     76|     expect(response.statusCode).toBe(422);
+       |                                 ^
+     77|     expect(response.json()).toMatchObject({ code: 'EVENT_PAYLOAD_TOO_D…
+     78|     expect(response.body.length).toBeLessThan(512);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/20]⎯
+
+ FAIL  src/targeted-events.test.ts > refuses invalid loop identities, ownership, scope, unpublished and ineligible entries
+AssertionError: expected { …(8) } to match object { code: 'VALIDATION_FAILED' }
+(8 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "VALIDATION_FAILED",
++   "duplicate": false,
++   "id": "01M3Y7RKG0TGCMCM76EH963T1G",
++   "ownerId": "local",
++   "payload": null,
++   "receivedAt": "2026-10-02T12:00:00.000Z",
++   "runIds": [
++     "01M3Y7RKG0TGCMCM76EH963T1H",
++   ],
++   "source": "api",
++   "type": "ready",
+  }
+
+ ❯ src/targeted-events.test.ts:118:42
+    116| it('refuses invalid loop identities, ownership, scope, unpublished and…
+    117|   const loopId = await t.publishLoop(eventLoop());
+    118|   expect((await post('invalid')).json()).toMatchObject({ code: 'VALIDA…
+       |                                          ^
+    119|   expect((await post('00000000000000000000000000')).json()).toMatchObj…
+    120|     code: 'LOOP_NOT_FOUND',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/20]⎯
+
+ FAIL  src/targeted-events.test.ts > requires explicit disambiguation and scopes identical request keys to each recipient
+AssertionError: expected { …(8) } to match object { code: 'EVENT_TRIGGER_AMBIGUOUS' }
+(8 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "EVENT_TRIGGER_AMBIGUOUS",
++   "duplicate": false,
++   "id": "01M3Y7RKG06EGETRTJRNV8PJS6",
++   "ownerId": "local",
++   "payload": null,
++   "receivedAt": "2026-10-02T12:00:00.000Z",
++   "runIds": [
++     "01M3Y7RKG06EGETRTJRNV8PJS7",
++     "01M3Y7RKG06EGETRTJRNV8PJS9",
++     "01M3Y7RKG06EGETRTJRNV8PJSB",
++   ],
++   "source": "api",
++   "type": "ready",
+  }
+
+ ❯ src/targeted-events.test.ts:169:39
+    167|   const loopId = await t.publishLoop(definition);
+    168|   const other = await t.publishLoop(eventLoop('other'));
+    169|   expect((await post(loopId)).json()).toMatchObject({ code: 'EVENT_TRI…
+       |                                       ^
+    170|   const responses = await Promise.all([
+    171|     post(loopId, { triggerNodeId: 'start', dedupeKey: 'same' }),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/20]⎯
+
+ FAIL  src/targeted-events.test.ts > reuses one original delivery across concurrent keyed retries and admits unkeyed repeats
+AssertionError: expected { …(9) } to match object { …(5) }
+(7 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -1,10 +1,6 @@
+  {
+-   "admissionId": undefined,
+-   "delivery": {
+-     "state": "admitted",
+-   },
+    "duplicate": true,
+    "id": "01M3Y7RKG00YZC32V5A69KS49W",
+    "runIds": [
+      "01M3Y7RKG00YZC32V5A69KS4A4",
+    ],
+
+ ❯ src/targeted-events.test.ts:194:5
+    192|   expect(
+    193|     (await post(loopId, { dedupeKey: 'key', payload: { changed: true }…
+    194|   ).toMatchObject({
+       |     ^
+    195|     id: first.id,
+    196|     admissionId: first.admissionId,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/20]⎯
+
+ FAIL  src/targeted-events.test.ts > never acknowledges an unsaved receipt: BEFORE INSERT ON inbound_events
+AssertionError: expected 500 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 500
+
+ ❯ src/targeted-events.test.ts:213:33
+    211|     await fault(on);
+    212|     const response = await post(loopId, { dedupeKey: 'retry' });
+    213|     expect(response.statusCode).toBe(503);
+       |                                 ^
+    214|     expect(response.json()).toMatchObject({ code: 'EVENT_ADMISSION_FAI…
+    215|     expect(response.body).not.toContain('private-fault');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/20]⎯
+
+ FAIL  src/targeted-events.test.ts > never acknowledges an unsaved receipt: BEFORE INSERT ON event_receipts
+AssertionError: expected 202 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 202
+
+ ❯ src/targeted-events.test.ts:213:33
+    211|     await fault(on);
+    212|     const response = await post(loopId, { dedupeKey: 'retry' });
+    213|     expect(response.statusCode).toBe(503);
+       |                                 ^
+    214|     expect(response.json()).toMatchObject({ code: 'EVENT_ADMISSION_FAI…
+    215|     expect(response.body).not.toContain('private-fault');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/20]⎯
+
+ FAIL  src/targeted-events.test.ts > recovers the same intent after atomic admission failure: BEFORE INSERT ON runs
+ FAIL  src/targeted-events.test.ts > recovers the same intent after atomic admission failure: BEFORE INSERT ON run_events
+AssertionError: expected { …(8) } to match object { delivery: { …(3) }, runIds: [] }
+(7 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "delivery": {
+-     "attempts": 1,
+-     "failureCode": "EVENT_ADMISSION_RETRY",
+-     "state": "pending",
+-   },
+    "runIds": [],
+  }
+
+ ❯ src/targeted-events.test.ts:239:19
+    237|   await settle();
+    238|   const [pending] = await listed();
+    239|   expect(pending).toMatchObject({
+       |                   ^
+    240|     delivery: { state: 'pending', attempts: 1, failureCode: 'EVENT_ADM…
+    241|     runIds: [],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/20]⎯
+
+ FAIL  src/targeted-events.test.ts > recovers the same intent after atomic admission failure: BEFORE UPDATE OF status ON event_receipts WHEN NEW.status='admitted'
+AssertionError: expected { …(8) } to match object { delivery: { …(3) }, runIds: [] }
+(7 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "delivery": {
+-     "attempts": 1,
+-     "failureCode": "EVENT_ADMISSION_RETRY",
+-     "state": "pending",
+-   },
+-   "runIds": [],
++   "runIds": [
++     "01M3Y7RKG0HY880MEDWBMJVMWW",
++   ],
+  }
+
+ ❯ src/targeted-events.test.ts:239:19
+    237|   await settle();
+    238|   const [pending] = await listed();
+    239|   expect(pending).toMatchObject({
+       |                   ^
+    240|     delivery: { state: 'pending', attempts: 1, failureCode: 'EVENT_ADM…
+    241|     runIds: [],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/20]⎯
+
+ FAIL  src/targeted-events.test.ts > recovers the same intent after atomic admission failure: BEFORE UPDATE OF run_ids ON inbound_events
+AssertionError: expected 500 to be 202 // Object.is equality
+
+- Expected
++ Received
+
+- 202
++ 500
+
+ ❯ src/targeted-events.test.ts:236:31
+    234|   await fault(on);
+    235|   const response = await post(loopId, { dedupeKey: 'retry' });
+    236|   expect(response.statusCode).toBe(202);
+       |                               ^
+    237|   await settle();
+    238|   const [pending] = await listed();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/20]⎯
+
+ FAIL  src/targeted-events.test.ts > pins the accepted version through later publication and keyed retries
+TypeError: Cannot read properties of undefined (reading 'versionId')
+ ❯ src/targeted-events.test.ts:284:42
+    282|   );
+    283|   expect((await post(loopId, { dedupeKey: 'pin' })).json()).toMatchObj…
+    284|     target: { versionId: original.target.versionId },
+       |                                          ^
+    285|   });
+    286|   await clearFault();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/20]⎯
+
+ FAIL  src/targeted-events.test.ts > preserves node expression dedupe and refuses expression failures before accepting
+AssertionError: expected [ { …(8) }, { …(7) } ] to deep equally contain ObjectContaining{…}
+
+- Expected:
+ObjectContaining {
+  "delivery": {
+    "attempts": 0,
+    "state": "deduplicated",
+  },
+  "runIds": [],
+}
+
++ Received:
+[
+  {
+    "dedupeKey": "new-request",
+    "id": "01M3Y7RKG0NJY2C4M313ASFN4W",
+    "ownerId": "local",
+    "payload": {
+      "issue": 7,
+    },
+    "receivedAt": "2026-10-02T12:00:00.000Z",
+    "runIds": [],
+    "source": "api",
+    "type": "ready",
+  },
+  {
+    "id": "01M3Y7RKG0NJY2C4M313ASFN4S",
+    "ownerId": "local",
+    "payload": {
+      "issue": 7,
+    },
+    "receivedAt": "2026-10-02T12:00:00.000Z",
+    "runIds": [
+      "01M3Y7RKG0NJY2C4M313ASFN4T",
+    ],
+    "source": "api",
+    "type": "ready",
+  },
+]
+
+ ❯ src/targeted-events.test.ts:303:26
+    301|   await settle();
+    302|   expect(await t.container.repos.runs.list({ loopId })).toHaveLength(1…
+    303|   expect(await listed()).toContainEqual(
+       |                          ^
+    304|     expect.objectContaining({ delivery: { state: 'deduplicated', attem…
+    305|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/20]⎯
+
+ FAIL  src/targeted-events.test.ts > bounds persistent admission failures and keeps failed keyed deliveries truthful
+AssertionError: expected { …(8) } to match object { delivery: { state: 'failed', …(2) } }
+(8 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "delivery": {
+-     "attempts": 8,
+-     "failureCode": "EVENT_ADMISSION_EXHAUSTED",
+-     "state": "failed",
+-   },
++   "dedupeKey": "fails",
++   "id": "01M3Y7RKG0Q731P51DNZT9GR2V",
++   "ownerId": "local",
++   "payload": null,
++   "receivedAt": "2026-10-02T12:00:00.000Z",
++   "runIds": [],
++   "source": "api",
++   "type": "ready",
+  }
+
+ ❯ src/targeted-events.test.ts:325:18
+    323|   }
+    324|   const failed = (await listed())[0]!;
+    325|   expect(failed).toMatchObject({
+       |                  ^
+    326|     delivery: { state: 'failed', attempts: 8, failureCode: 'EVENT_ADMI…
+    327|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/20]⎯
+
+ FAIL  src/targeted-events.test.ts > keeps URL webhook acknowledgements and targeting; refuses deep input with a safe logged code
+AssertionError: expected 202 to be 422 // Object.is equality
+
+- Expected
++ Received
+
+- 422
++ 202
+
+ ❯ src/targeted-events.test.ts:382:30
+    380|     headers: { 'content-type': 'application/json' },
+    381|   });
+    382|   expect(refused.statusCode).toBe(422);
+       |                              ^
+    383|   expect(refused.json()).toMatchObject({ code: 'WEBHOOK_PAYLOAD_TOO_DE…
+    384|   expect(refused.body.length).toBeLessThan(512);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/20]⎯
+
+ FAIL  src/targeted-events.test.ts > admits the shared receipt nesting boundary and refuses the next container before saving
+AssertionError: expected 202 to be 422 // Object.is equality
+
+- Expected
++ Received
+
+- 422
++ 202
+
+ ❯ src/targeted-events.test.ts:420:33
+    418|       headers: { 'content-type': 'application/json' },
+    419|     });
+    420|     expect(response.statusCode).toBe(status);
+       |                                 ^
+    421|   }
+    422|   await settle();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/20]⎯
+
+ FAIL  src/targeted-events.test.ts > classifies a corrupt saved intent as failed without retrying or rewriting it
+AssertionError: expected { …(8) } to match object { delivery: { state: 'failed', …(2) } }
+(8 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "delivery": {
+-     "attempts": 2,
+-     "failureCode": "EVENT_INTENT_CONFLICT",
+-     "state": "failed",
+-   },
++   "dedupeKey": "corrupt",
++   "id": "01M3Y7RKG0HJFWSHKKVYVEAMHD",
++   "ownerId": "local",
++   "payload": null,
++   "receivedAt": "2026-10-02T12:00:00.000Z",
++   "runIds": [],
++   "source": "api",
++   "type": "ready",
+  }
+
+ ❯ src/targeted-events.test.ts:442:31
+    440|   t.clock.advance(5000);
+    441|   await t.container.manager.retryPendingWebhooks();
+    442|   expect((await listed())[0]).toMatchObject({
+       |                               ^
+    443|     delivery: { state: 'failed', failureCode: 'EVENT_INTENT_CONFLICT',…
+    444|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/20]⎯
+
+ FAIL  src/targeted-events.test.ts > refuses malformed Unicode request keys instead of accepting an unstable SQLite identity
+AssertionError: expected 202 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 202
+
+ ❯ src/targeted-events.test.ts:457:87
+    455| it('refuses malformed Unicode request keys instead of accepting an uns…
+    456|   const loopId = await t.publishLoop(eventLoop());
+    457|   expect((await post(loopId, { dedupeKey: String.fromCharCode(0xd800) …
+       |                                                                                       ^
+    458|   expect(await listed()).toEqual([]);
+    459| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/20]⎯
+
+ FAIL  src/targeted-events.test.ts > refuses non-finite deeply nested JSON without entering a recursive validator
+AssertionError: expected 500 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 500
+
+ ❯ src/targeted-events.test.ts:477:31
+    475|     headers: { 'content-type': 'application/json' },
+    476|   });
+    477|   expect(response.statusCode).toBe(400);
+       |                               ^
+    478|   expect(response.json()).toMatchObject({ code: 'VALIDATION_FAILED' });
+    479|   expect(response.body.length).toBeLessThan(512);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/20]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  20 failed | 1 passed (21)
+   Start at  19:48:47
+   Duration  115.22s (transform 66%, tests 18%, import 15%)
+
+  Transform  transforming modules took 73.07s · 66% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-d4-
+  │ 343\apps\api
+
