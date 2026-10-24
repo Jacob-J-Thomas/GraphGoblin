@@ -1,0 +1,41 @@
+{
+  "sql": "SELECT id,received_at FROM inbound_events WHERE owner_id=? AND (received_at,id)<=(?,?) ORDER BY received_at DESC,id DESC LIMIT ?",
+  "params": [
+    "local",
+    "2026-10-25T00:00:00.000Z",
+    "01M5Q2JEY4YCS73ZSEVEHNSTB1",
+    2
+  ],
+  "plan": [
+    {
+      "id": 7,
+      "parent": 0,
+      "notused": 0,
+      "detail": "SEARCH inbound_events USING INDEX inbound_events_owner_idx (owner_id=? AND received_at<?)"
+    },
+    {
+      "id": 44,
+      "parent": 0,
+      "notused": 0,
+      "detail": "USE TEMP B-TREE FOR RIGHT PART OF ORDER BY"
+    }
+  ],
+  "result": [
+    {
+      "id": "01M5Q2JEY4YCS73ZSEVEHNSTB1",
+      "received_at": "2026-10-25T00:00:00.000Z"
+    },
+    {
+      "id": "01M5Q2JEWXFHY3EJ3844KAEPFW",
+      "received_at": "2026-10-25T00:00:00.000Z"
+    }
+  ],
+  "resultMetadata": [
+    "columns",
+    "columnTypes",
+    "rows",
+    "rowsAffected",
+    "lastInsertRowid"
+  ],
+  "limitation": "Rows returned are not rows scanned. Libsql public ResultSet exposes no scan counter."
+}

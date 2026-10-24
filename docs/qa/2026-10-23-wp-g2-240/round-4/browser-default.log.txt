@@ -1,0 +1,23 @@
+
+Running 7 tests using 1 worker
+
+pnpm.cmd : (node:30292) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+At line:11 char:1
++ pnpm.cmd --filter @graphgoblin/web exec playwright test e2e/events-re ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:30292) Wa... env being set.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:30292) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 [chromium] › e2e\events-refresh.spec.ts:24:1 › Events admits arrivals only on Refresh, preserves filters and pages again (#240) (7.2s)
+  ok 2 [chromium] › e2e\events-refresh.spec.ts:78:1 › Events keeps an offline Refresh snapshot, recovers deliberately and clears filters with the keyboard (#240) (11.2s)
+  ok 3 [chromium] › e2e\events-refresh.spec.ts:175:1 › Events drops an obsolete Refresh after clearing the filter, Back, a newer Refresh and paging (#240) (5.1s)
+  ok 4 [chromium] › e2e\events-refresh.spec.ts:266:1 › Events updates the hundredth pending receipt after a head arrival without Refresh (#240) (5.1s)
+  ok 5 [chromium] › e2e\history.spec.ts:4:1 › Runs appends a second page and preserves loop, status and parent filters (6.9s)
+  ok 6 [chromium] › e2e\history.spec.ts:50:1 › Events appends beyond the first page with reading position and keyboard focus intact (4.6s)
+  ok 7 [chromium] › e2e\history.spec.ts:84:1 › Loops shows older history beyond 500 unrelated runs and a genuine never-run control (28.3s)
+
+  7 passed (2.1m)
+EXIT_CODE=0

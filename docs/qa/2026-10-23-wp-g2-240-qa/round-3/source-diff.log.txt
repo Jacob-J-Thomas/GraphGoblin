@@ -1,0 +1,1703 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index b778d280..482bcd8c 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -4,6 +4,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+ 
+ ## Unreleased
+ 
++- Events keeps loaded history stable when new events arrive or Refresh fails, announces availability and check failures, and offers deliberate Refresh with a newest-page status, individually clearable type/time filters and opaque paging preserved. Obsolete Refresh responses cannot overwrite a newer snapshot across revisits; inclusive anchored receipt reads keep displaced pending rows up to date. (#240)
++
+ - Add opt-in inference `session.policy: resume-own`, isolated per node, run and harness across repeated visits and restart. Optional `resetAfterVisits` resets only that provider conversation after the authored number of completed visits; omission introduces no reset. Existing fresh/previous/named selection and prompt-delivery provenance remain unchanged. The editor exposes the policy and optional reset with context guidance. **Upgrade:** no store rewrite, reset or SQL migration is required; API/export consumers must accept the new session-policy variant and optional positive safe-integer reset field; custom HarnessSessionRepository ports must implement forNodeAttempt. (#33)
+ 
+ - A parent run writes its child's `child_run.finished` in the same append as the outcome it reaches with it (the subloop node's `node.finished`, its `run.failed` or its cancellation), so a process that dies in between no longer leaves a completion that crash recovery records a second time. Each durable outcome carries the completion its attempt observed. (#398)
+diff --git a/apps/api/src/routes/event-paging.test.ts b/apps/api/src/routes/event-paging.test.ts
+index 2989c8a3..1305f0ad 100644
+--- a/apps/api/src/routes/event-paging.test.ts
++++ b/apps/api/src/routes/event-paging.test.ts
+@@ -33,6 +33,40 @@ describe('inbound event paging over real SQLite', () => {
+     expect(response.statusCode, response.body).toBe(200);
+     return response.json<Page>();
+   }
++  it('re-reads an inclusive loaded-page anchor despite newer timestamp ties, retaining opaque continuation', async () => {
++    for (let i = 0; i < 5; i++) await seed(i);
++    const first = await page('?type=chosen&limit=3');
++    const head = first.items[0]!.id;
++    await seed(90, { id: 'ZZZZZZZZZZZZZZZZZZZZZZZZZZ' });
++    const anchored = await page(`?type=chosen&anchor=${head}&limit=3`);
++    expect(anchored).toEqual(first);
++    const single = await page(`?anchor=${head}&limit=1`);
++    expect(single.items.map((item) => item.id)).toEqual([head]);
++    expect(single.nextCursor).toBe(encodeEventCursor({ id: head, receivedAt: FIXTURE_TS }));
++    const rest = await page(`?type=chosen&cursor=${anchored.nextCursor}&limit=3`);
++    expect(rest.items).toHaveLength(2);
++    expect(rest.nextCursor).toBeNull();
++    expect(await page(`?anchor=${rest.items[0]!.id}&limit=2`)).toEqual(rest);
++  });
++  it('keeps anchored reads owner-scoped and filtered and rejects ambiguous bounds', async () => {
++    const local = await seed(0);
++    const foreign = await seed(1, { ownerId: 'other' });
++    for (const query of [
++      `anchor=${foreign.id}`,
++      `anchor=${fakeUlid('missing')}`,
++      `anchor=${local.id}&type=other`,
++      `anchor=${local.id}&before=${FIXTURE_TS}`,
++    ])
++      expect(await page('?' + query)).toEqual({ items: [], nextCursor: null });
++    for (const query of [
++      'anchor=invalid',
++      `anchor=${local.id}&cursor=${encodeEventCursor(local)}`,
++    ]) {
++      const response = await t.app.inject({ url: '/events?' + query, headers });
++      expect(response.statusCode).toBe(400);
++      expect(response.json()).toMatchObject({ code: 'VALIDATION_FAILED' });
++    }
++  });
+   it('preserves type and before filters across limit-one tied pages, owner scope and exact exhaustion', async () => {
+     expect(await page()).toEqual({ items: [], nextCursor: null });
+     const records = [];
+@@ -118,6 +152,7 @@ describe('inbound event paging over real SQLite', () => {
+       const first = await page('?limit=1');
+       expect(first.items.map((event) => event.id)).toEqual([records[0]!.id]);
+       expect(first.nextCursor).toBeTypeOf('string');
++      expect(await page(`?anchor=${records[0]!.id}&limit=1`)).toEqual(first);
+       for (const query of ['?limit=1&cursor=' + first.nextCursor, '?limit=3']) {
+         const response = await t.app.inject({ url: '/events' + query, headers });
+         expect(response.statusCode).toBe(500);
+diff --git a/apps/api/src/routes/triggers.ts b/apps/api/src/routes/triggers.ts
+index 7e8e8696..5d6797db 100644
+--- a/apps/api/src/routes/triggers.ts
++++ b/apps/api/src/routes/triggers.ts
+@@ -187,29 +187,57 @@ export function registerTriggerRoutes(app: ApiInstance, container: Container): v
+       schema: {
+         tags: ['events'],
+         summary: 'Stored inbound events, newest first with stable paging',
+-        querystring: z.strictObject({
+-          type: z.string().max(128).optional(),
+-          before: TimestampSchema.optional(),
+-          cursor: z.string().optional().register(openApiRegistry, {
+-            description: 'Opaque inbound-event cursor, at most 256 base64url characters.',
+-            maxLength: 256,
++        querystring: z
++          .strictObject({
++            type: z.string().max(128).optional(),
++            before: TimestampSchema.optional(),
++            anchor: UlidSchema.optional().register(openApiRegistry, {
++              description:
++                'Re-read a page starting at this event, inclusive; mutually exclusive with cursor.',
++            }),
++            cursor: z.string().optional().register(openApiRegistry, {
++              description: 'Opaque inbound-event cursor, at most 256 base64url characters.',
++              maxLength: 256,
++            }),
++            limit: z.coerce.number().int().min(1).max(500).optional(),
++          })
++          .refine((query) => query.anchor === undefined || query.cursor === undefined, {
++            message: 'Choose either anchor or cursor.',
++            path: ['anchor'],
+           }),
+-          limit: z.coerce.number().int().min(1).max(500).optional(),
+-        }),
+         response: {
+           200: z.object({ items: z.array(InboundEventSchema), nextCursor: z.string().nullable() }),
+         },
+       },
+     },
+     async (request) => {
++      const before = request.query.before
++        ? new Date(request.query.before).toISOString()
++        : undefined;
++      const anchor = request.query.anchor
++        ? await repos.inbound.get(request.query.anchor)
++        : undefined;
++      if (
++        request.query.anchor &&
++        (!anchor ||
++          anchor.ownerId !== request.auth.ownerId ||
++          (request.query.type && anchor.type !== request.query.type) ||
++          (before && anchor.receivedAt >= before))
++      )
++        return { items: [], nextCursor: null };
++      const limit = request.query.limit ?? 100;
+       const page = await repos.inbound.page(request.auth.ownerId, {
+-        limit: request.query.limit ?? 100,
++        limit,
+         ...(request.query.type ? { type: request.query.type } : {}),
+-        ...(request.query.before ? { before: new Date(request.query.before).toISOString() } : {}),
++        ...(before ? { before } : {}),
+         ...(request.query.cursor !== undefined
+           ? { cursor: decodeEventCursor(request.query.cursor) }
+-          : {}),
++          : anchor
++            ? { anchor }
++            : {}),
+       });
++      // An indexed anchor lookup plus one bounded older page includes the loaded head,
++      // even after arbitrary arrivals (or timestamp ties); no history-prefix scan.
+       return {
+         items: await triggers.describeInbound(page.items),
+         nextCursor: page.next ? encodeEventCursor(page.next) : null,
+diff --git a/apps/web/e2e/events-refresh.spec.ts b/apps/web/e2e/events-refresh.spec.ts
+new file mode 100644
+index 00000000..f1e19310
+--- /dev/null
++++ b/apps/web/e2e/events-refresh.spec.ts
+@@ -0,0 +1,312 @@
++import { control, expect, test } from './fixtures.js';
++import type { APIRequestContext } from '@playwright/test';
++
++async function postEvent(
++  request: APIRequestContext,
++  url: string,
++  type: string,
++  index: number | string,
++) {
++  expect(
++    (await request.post(url + '/events', { data: { type, payload: { index } } })).status(),
++  ).toBe(202);
++}
++
++async function seedEvents(request: APIRequestContext, url: string, type: string, count: number) {
++  for (let start = 0; start < count; start += 20)
++    await Promise.all(
++      Array.from({ length: Math.min(20, count - start) }, (_, offset) =>
++        postEvent(request, url, type, start + offset),
++      ),
++    );
++}
++
++test('Events admits arrivals only on Refresh, preserves filters and pages again (#240)', async ({
++  page,
++  request,
++}) => {
++  const url = String((await control(request, '/apps'))['url']);
++  const send = async (type: string, index: number | string) => {
++    expect(
++      (await request.post(url + '/events', { data: { type, payload: { index } } })).status(),
++    ).toBe(202);
++  };
++  for (let i = 0; i < 101; i++) await send('refresh-events', i);
++  const path = '/app/events?type=refresh-events&before=2099-01-01T00%3A00%3A00.000Z';
++  await page.goto(url + path);
++  await expect(page.locator('tbody tr')).toHaveCount(100);
++  const first = await page.locator('tbody tr').first().innerText();
++  await send('refresh-events', 'first-arrival');
++  await expect(page.getByText('New events available', { exact: true })).toBeVisible();
++  expect(await page.locator('tbody tr').first().innerText()).toBe(first);
++  await expect(page.getByText(/first-arrival/)).toHaveCount(0);
++  const more = page.getByRole('button', { name: 'Load more', exact: true });
++  await more.click();
++  await expect(page.locator('tbody tr')).toHaveCount(101);
++  const end = page.getByText('All events loaded.', { exact: true });
++  await expect(end).toBeFocused();
++  const readingY = await page.evaluate(() => window.scrollY);
++  const olderRows = await page.locator('tbody').innerText();
++  await send('other-type', 'excluded');
++  await send('refresh-events', 'older-arrival');
++  // Synchronize on an actual completed probe after the second arrival, not a fixed delay.
++  await page.waitForResponse((response) => {
++    const parsed = new URL(response.url());
++    return parsed.pathname === '/events' && parsed.searchParams.get('limit') === '1';
++  });
++  expect(await page.locator('tbody').innerText()).toBe(olderRows);
++  await expect(end).toBeFocused();
++  expect(Math.abs((await page.evaluate(() => window.scrollY)) - readingY)).toBeLessThanOrEqual(1);
++  await expect(page).toHaveURL(url + path);
++  await page.getByRole('button', { name: 'Refresh', exact: true }).click();
++  await expect(page.locator('tbody tr')).toHaveCount(100);
++  await expect(page.locator('tbody tr').first()).toContainText('older-arrival');
++  await expect(page.getByText('New events available', { exact: true })).toHaveCount(0);
++  await expect(page.getByText('other-type', { exact: true })).toHaveCount(0);
++  await expect(page).toHaveURL(url + path);
++  await more.click();
++  await expect(page.locator('tbody tr')).toHaveCount(103);
++  await expect(end).toBeFocused();
++  const payloads = await page.locator('tbody tr td:last-child pre').allTextContents();
++  expect(new Set(payloads).size).toBe(103);
++  await page.goto(url + '/app/events?type=empty-refresh-filter');
++  await expect(page.getByText('No inbound events match these filters.')).toBeVisible();
++  await page.getByRole('button', { name: 'Refresh', exact: true }).click();
++  await expect(page.getByText('No inbound events match these filters.')).toBeVisible();
++});
++
++test('Events keeps an offline Refresh snapshot, recovers deliberately and clears filters with the keyboard (#240)', async ({
++  page,
++  request,
++}) => {
++  const instance = await control(request, '/apps');
++  const url = String(instance['url']);
++  const instanceId = String(instance['instanceId']);
++  const send = async (type: string, index: number | string) => {
++    expect(
++      (await request.post(url + '/events', { data: { type, payload: { index } } })).status(),
++    ).toBe(202);
++  };
++  // Bound concurrent setup requests, avoiding 201 serial HTTP round trips under host load.
++  for (let start = 0; start < 201; start += 20) {
++    await Promise.all(
++      Array.from({ length: Math.min(20, 201 - start) }, (_, offset) =>
++        send('refresh-outage', start + offset),
++      ),
++    );
++  }
++  await send('other-type', 'excluded');
++  const before = '2099-01-01T00:00:00.000Z';
++  const filters = `type=refresh-outage&before=${encodeURIComponent(before)}`;
++  const path = `/app/events?${filters}&keep=reader`;
++  await page.goto(url + path);
++  await expect(page.locator('tbody tr')).toHaveCount(100);
++  await page.getByRole('button', { name: 'Load more', exact: true }).click();
++  await expect(page.locator('tbody tr')).toHaveCount(200);
++  await send('refresh-outage', 'notice-before-outage');
++  await expect(page.getByText('New events available', { exact: true })).toBeVisible();
++  const oldRows = await page.locator('tbody').innerText();
++  const anchor = page.locator('tbody tr').nth(140);
++  const refresh = page.getByRole('button', { name: 'Refresh', exact: true });
++  try {
++    // Stop this isolated API's real HTTP listener; the control server stays available.
++    await control(request, '/api/listener', { instanceId, listening: false });
++    const status = page.getByRole('status').filter({ hasText: 'New events available' });
++    await expect(status).toContainText('Could not check for new events');
++    await anchor.scrollIntoViewIfNeeded();
++    const oldBox = await anchor.boundingBox();
++    if (!oldBox) throw new Error('The loaded reading anchor is not visible');
++    await refresh.evaluate((element) => element.focus({ preventScroll: true }));
++    await page.keyboard.press('Enter');
++    await expect(status).toContainText('Refresh failed');
++    await expect(status).toContainText('Refresh to try again.');
++    await expect(page.locator('tbody tr')).toHaveCount(200);
++    expect(await page.locator('tbody').innerText()).toBe(oldRows);
++    await expect(page).toHaveURL(url + path);
++    const failedBox = await anchor.boundingBox();
++    if (!failedBox) throw new Error('The failed Refresh removed the reading anchor');
++    expect(Math.abs(failedBox.y - oldBox.y)).toBeLessThanOrEqual(1);
++  } finally {
++    await control(request, '/api/listener', { instanceId, listening: true });
++  }
++  await send('refresh-outage', 'after-outage');
++  const status = page.getByRole('status').filter({ hasText: 'New events available' });
++  await expect(status).not.toContainText('Could not check for new events');
++  expect(await page.locator('tbody').innerText()).toBe(oldRows);
++  await refresh.click();
++  await expect(page.locator('tbody tr')).toHaveCount(100);
++  await expect(page.locator('tbody tr').first()).toContainText('after-outage');
++  await expect(page.getByText('Showing the newest events.', { exact: true })).toBeVisible();
++  await expect(page).toHaveURL(url + path);
++  const first = (await (await request.get(`${url}/events?${filters}`)).json()) as {
++    items: { id: string }[];
++    nextCursor: string;
++  };
++  const second = (await (
++    await request.get(`${url}/events?${filters}&cursor=${encodeURIComponent(first.nextCursor)}`)
++  ).json()) as { items: { id: string }[] };
++  await page.getByRole('button', { name: 'Load more', exact: true }).click();
++  await expect(page.locator('tbody tr')).toHaveCount(200);
++  const loaded = await page
++    .locator('tbody [data-testid^="payload-"]')
++    .evaluateAll((elements) =>
++      elements.map((element) => element.getAttribute('data-testid')?.slice('payload-'.length)),
++    );
++  expect(loaded).toEqual([...first.items, ...second.items].map((event) => event.id));
++  expect(new Set(loaded).size).toBe(200);
++  await refresh.focus();
++  await page.keyboard.press('Tab');
++  await expect(page.getByRole('button', { name: 'Clear type filter', exact: true })).toBeFocused();
++  await page.keyboard.press('Enter');
++  await expect(page).toHaveURL(
++    `${url}/app/events?before=${encodeURIComponent(before)}&keep=reader`,
++  );
++  await expect(refresh).toBeFocused();
++  await expect(page.getByText('other-type', { exact: true })).toBeVisible();
++  await page.keyboard.press('Tab');
++  await expect(
++    page.getByRole('button', { name: 'Clear before filter', exact: true }),
++  ).toBeFocused();
++  await page.keyboard.press('Enter');
++  await expect(page).toHaveURL(`${url}/app/events?keep=reader`);
++  await expect(refresh).toBeFocused();
++});
++
++test('Events drops an obsolete Refresh after clearing the filter, Back, a newer Refresh and paging (#240)', async ({
++  page,
++  request,
++}) => {
++  const url = String((await control(request, '/apps'))['url']);
++  await seedEvents(request, url, 'refresh-race', 201);
++  const path = '/app/events?type=refresh-race&before=2099-01-01T00%3A00%3A00.000Z&keep=reader';
++  await page.goto(url + path);
++  const more = page.getByRole('button', { name: 'Load more', exact: true });
++  const refresh = page.getByRole('button', { name: 'Refresh', exact: true });
++  await more.click();
++  await expect(page.locator('tbody tr')).toHaveCount(200);
++  let unblock = () => {};
++  let captured = () => {};
++  let delivered = () => {};
++  const latch = new Promise<void>((resolve) => {
++    unblock = resolve;
++  });
++  const held = new Promise<void>((resolve) => {
++    captured = resolve;
++  });
++  const delivery = new Promise<void>((resolve) => {
++    delivered = resolve;
++  });
++  let hold = true;
++  await page.route('**/events?**', async (route) => {
++    const parsed = new URL(route.request().url());
++    const query = parsed.searchParams;
++    if (
++      parsed.pathname !== '/events' ||
++      !hold ||
++      query.get('type') !== 'refresh-race' ||
++      query.has('cursor') ||
++      query.has('limit') ||
++      query.has('anchor')
++    ) {
++      await route.continue();
++      return;
++    }
++    hold = false;
++    const response = await route.fetch();
++    captured();
++    await latch;
++    try {
++      await route.fulfill({ response });
++    } finally {
++      delivered();
++    }
++  });
++  try {
++    await refresh.click();
++    await held;
++    await page.getByRole('button', { name: 'Clear type filter', exact: true }).click();
++    await expect(refresh).toHaveAttribute('aria-busy', 'false');
++    await page.goBack();
++    await expect(page).toHaveURL(url + path);
++    await postEvent(request, url, 'refresh-race', 'winning-refresh');
++    await refresh.click();
++    await expect(page.locator('tbody tr').first()).toContainText('winning-refresh');
++    await more.click();
++    await expect(page.locator('tbody tr')).toHaveCount(200);
++    const snapshot = await page.locator('tbody').innerText();
++    const response = page.waitForResponse((result) => {
++      const query = new URL(result.url()).searchParams;
++      return (
++        query.get('type') === 'refresh-race' &&
++        !query.has('cursor') &&
++        !query.has('limit') &&
++        !query.has('anchor')
++      );
++    });
++    unblock();
++    await delivery;
++    await (await response).finished();
++    // Synchronize with response consumption and painting, without a timing sleep.
++    await page.evaluate(
++      () =>
++        new Promise<void>((resolve) =>
++          requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
++        ),
++    );
++    await expect(page.locator('tbody tr')).toHaveCount(200);
++    expect(await page.locator('tbody').innerText()).toBe(snapshot);
++    await expect(page.getByText('Showing the newest events.', { exact: true })).toBeVisible();
++    await expect(page).toHaveURL(url + path);
++  } finally {
++    unblock();
++    await page.unrouteAll({ behavior: 'wait' });
++  }
++});
++
++test('Events updates the hundredth pending receipt after a head arrival without Refresh (#240)', async ({
++  page,
++  request,
++}) => {
++  const url = String((await control(request, '/apps'))['url']);
++  await seedEvents(request, url, 'receipt-boundary', 101);
++  const first = (await (await request.get(url + '/events?type=receipt-boundary')).json()) as {
++    items: { id: string }[];
++  };
++  const receiptId = first.items[99]!.id;
++  let admitted = false;
++  // A valid response fixture controls UI delivery state; admission itself is not simulated evidence.
++  await page.route('**/events?**', async (route) => {
++    const parsed = new URL(route.request().url());
++    if (parsed.pathname !== '/events' || parsed.searchParams.get('type') !== 'receipt-boundary') {
++      await route.continue();
++      return;
++    }
++    const response = await route.fetch();
++    const body = (await response.json()) as {
++      items: { id: string; delivery?: { state: string; attempts: number } }[];
++      nextCursor: string | null;
++    };
++    body.items = body.items.map((item) =>
++      item.id === receiptId
++        ? { ...item, delivery: { state: admitted ? 'admitted' : 'pending', attempts: 0 } }
++        : item,
++    );
++    await route.fulfill({ response, json: body });
++  });
++  await page.goto(url + '/app/events?type=receipt-boundary');
++  await expect(page.getByText('Pending admission', { exact: true })).toBeVisible();
++  const ids = () =>
++    page
++      .locator('[data-testid^="payload-"]')
++      .evaluateAll((nodes) => nodes.map((node) => node.getAttribute('data-testid')));
++  const before = await ids();
++  await postEvent(request, url, 'receipt-boundary', 'new-arrival');
++  admitted = true;
++  await expect(page.getByText('Admitted', { exact: true })).toBeVisible();
++  expect(await ids()).toEqual(before);
++  await expect(page.getByText('New events available', { exact: true })).toBeVisible();
++  await page.getByRole('button', { name: 'Load more', exact: true }).click();
++  await expect(page.locator('tbody tr')).toHaveCount(101);
++  expect(new Set(await ids()).size).toBe(101);
++  await page.unrouteAll({ behavior: 'wait' });
++});
+diff --git a/apps/web/e2e/server.ts b/apps/web/e2e/server.ts
+index 8593040f..369261d0 100644
+--- a/apps/web/e2e/server.ts
++++ b/apps/web/e2e/server.ts
+@@ -191,19 +191,18 @@ async function startApp(
+ }
+ 
+ const main = await startApp({}, false, false, { id: 'main' });
+-const mainPort = Number(new URL(main.url).port);
+ const workerPath = join(dist, 'sw.js');
+ const originalWorker = cleanWorker(await readFile(workerPath, 'utf8'));
+ let workerBuild = 0;
+ 
+ /** Drop real HTTP connections, then reuse the same listener and in-memory API state. */
+-async function setApiListening(listening: boolean): Promise<void> {
+-  const server = main.app.app.server;
++async function setApiListening(instance: E2eInstance, listening: boolean): Promise<void> {
++  const server = instance.app.app.server;
+   if (listening === server.listening) return;
+   if (listening) {
+     await new Promise<void>((done, reject) => {
+       server.once('error', reject);
+-      server.listen(mainPort, '127.0.0.1', () => {
++      server.listen(Number(new URL(instance.url).port), '127.0.0.1', () => {
+         server.removeListener('error', reject);
+         done();
+       });
+@@ -286,7 +285,7 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
+       );
+       return { ok: true };
+     case '/api/listener':
+-      await setApiListening(body['listening'] !== false);
++      await setApiListening(selectedInstance(body), body['listening'] !== false);
+       return { ok: true };
+     case '/worker/build':
+       workerBuild += 1;
+@@ -528,7 +527,7 @@ async function stop(): Promise<void> {
+   if (stopping) return;
+   stopping = true;
+   controlServer.close();
+-  await setApiListening(true);
++  for (const instance of instances.values()) await setApiListening(instance, true);
+   await writeFile(workerPath, originalWorker);
+   for (const app of apps) await app.close();
+   for (const close of closers) await close();
+diff --git a/apps/web/src/__fixtures__/fake-api.ts b/apps/web/src/__fixtures__/fake-api.ts
+index cacfe4eb..7abb91c5 100644
+--- a/apps/web/src/__fixtures__/fake-api.ts
++++ b/apps/web/src/__fixtures__/fake-api.ts
+@@ -988,6 +988,11 @@ export class FakeApi {
+         if (type) items = items.filter((event) => event.type === type);
+         const before = call.search.get('before');
+         if (before) items = items.filter((event) => event.receivedAt < before);
++        const anchor = call.search.get('anchor');
++        if (anchor) {
++          const start = items.findIndex((item) => item.id === anchor);
++          items = start < 0 ? [] : items.slice(start);
++        }
+         const cursor = call.search.get('cursor');
+         if (cursor) items = items.slice(items.findIndex((item) => item.id === cursor) + 1);
+         const limit = Number(call.search.get('limit') ?? 100);
+diff --git a/apps/web/src/api/queries.reconnect.test.tsx b/apps/web/src/api/queries.reconnect.test.tsx
+index 2581eec9..dc0c3166 100644
+--- a/apps/web/src/api/queries.reconnect.test.tsx
++++ b/apps/web/src/api/queries.reconnect.test.tsx
+@@ -132,7 +132,7 @@ describe('query reconnect', () => {
+     },
+   );
+ 
+-  it.each(reads)('recovers the cold offline $name query', async ({ useRead }) => {
++  it.each(reads)('recovers the cold offline $name query', async ({ name, useRead }) => {
+     onlineManager.setOnline(true);
+     const api = new FakeApi();
+     const loop = api.addLoop(minimalLoop());
+@@ -147,7 +147,14 @@ describe('query reconnect', () => {
+       act(reconnect);
+       await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
+       expect(view.result.current.data).toBeDefined();
+-      expect(view.fetch).toHaveBeenCalledTimes(3);
++      const availabilityChecks = view.fetch.mock.calls.filter(([request]) => {
++        const url = new URL(request.url);
++        return url.pathname === '/events' && url.searchParams.get('limit') === '1';
++      });
++      // Initial failure plus its retry, then exactly one recovered history read. Events
++      // starts its separate availability check only after that successful initial load.
++      expect(availabilityChecks).toHaveLength(name === 'Events' ? 1 : 0);
++      expect(view.fetch.mock.calls.length - availabilityChecks.length).toBe(3);
+     } finally {
+       view.unmount();
+       view.queryClient.clear();
+diff --git a/apps/web/src/api/queries.ts b/apps/web/src/api/queries.ts
+index ab6db492..2b20cd9e 100644
+--- a/apps/web/src/api/queries.ts
++++ b/apps/web/src/api/queries.ts
+@@ -19,7 +19,14 @@ import type {
+   ModelCatalogEntry,
+ } from '@graphgoblin/contracts';
+ import { HarnessPreflightSchema } from '@graphgoblin/contracts';
+-import { useInfiniteQuery, useMutation, useQuery, type QueryClient } from '@tanstack/react-query';
++import {
++  useInfiniteQuery,
++  useMutation,
++  useQuery,
++  useQueryClient,
++  type InfiniteData,
++  type QueryClient,
++} from '@tanstack/react-query';
+ import { z } from 'zod';
+ import { useApi } from './context.js';
+ 
+@@ -270,22 +277,74 @@ export function usePreflight() {
+ }
+ 
+ const PENDING_EVENT_REFRESH_MS = 2_000;
++// A single newest row is enough for an availability notice; never count or scan history.
++const NEW_EVENT_CHECK_MS = 2_000;
++type InboundPage = Awaited<ReturnType<typeof events.list>>;
++type InboundRefresh = { scope: object; generation: symbol };
++// Query identities belong to a QueryClient and survive observer/filter remounts. Weak keys
++// expire with the cached query; an evicted/re-created scope cannot accept an old response.
++const inboundRefreshes = new WeakMap<object, symbol>();
+ 
+ export function useInboundEvents(query: ListEventsQuery = {}) {
+   const client = useApi();
+-  return useInfiniteQuery({
+-    queryKey: [...keys.events, query],
++  const cache = useQueryClient();
++  const queryKey = [...keys.events, query];
++  const currentRefresh = (ticket: InboundRefresh | undefined) =>
++    ticket !== undefined &&
++    cache.getQueryCache().find({ queryKey, exact: true }) === ticket.scope &&
++    inboundRefreshes.get(ticket.scope) === ticket.generation;
++  const manualRefresh = useMutation({
++    mutationKey: [...keys.events, 'refresh', query],
++    networkMode: 'always',
++    mutationFn: async (ticket: InboundRefresh) => {
++      const page = await events.list(client, query);
++      if (!currentRefresh(ticket)) return false;
++      // Only the latest explicit Refresh may replace this snapshot. Check again after
++      // cancellation, since a newer Refresh can start during that asynchronous boundary.
++      await cache.cancelQueries({ queryKey, exact: true });
++      if (!currentRefresh(ticket)) return false;
++      cache.setQueryData<InfiniteData<InboundPage>>(queryKey, {
++        pages: [page],
++        pageParams: [query.cursor],
++      });
++      return true;
++    },
++  });
++  const history = useInfiniteQuery({
++    queryKey,
++    enabled: !(manualRefresh.isPending && currentRefresh(manualRefresh.variables)),
+     initialPageParam: query.cursor,
+-    queryFn: ({ pageParam, signal }) =>
+-      events.list(
+-        client,
+-        {
+-          ...query,
+-          ...(pageParam !== undefined ? { cursor: pageParam } : {}),
+-        },
+-        { signal },
+-      ),
++    queryFn: async ({ pageParam, signal }) => {
++      const loaded = cache.getQueryData<InfiniteData<InboundPage>>(queryKey);
++      const index = loaded?.pageParams.indexOf(pageParam) ?? -1;
++      const previous = loaded?.pages[index];
++      const head = previous?.items[0];
++      const request = { ...query };
++      if (head && previous) {
++        delete request.cursor;
++        request.anchor = head.id;
++        request.limit = previous.items.length;
++      } else if (pageParam !== undefined) {
++        delete request.anchor;
++        request.cursor = pageParam;
++      }
++      const page = await events.list(client, request, { signal });
++      if (!previous) return page;
++      // Receipt recovery may update existing rows, but background reads must never replace
++      // membership or paging boundaries. Only a successful manual refresh replaces them.
++      // Re-read at each loaded head (inclusive), not the moving live head: otherwise an
++      // arrival displaces the last pending row beyond both reads. One bounded page per
++      // loaded page also handles tied timestamps without decoding cursors or scanning.
++      const updates = new Map(page.items.map((event) => [event.id, event]));
++      return {
++        ...previous,
++        items: previous.items.map((event) => updates.get(event.id) ?? event),
++      };
++    },
+     getNextPageParam: (page) => page.nextCursor ?? undefined,
++    refetchOnWindowFocus: false,
++    refetchOnReconnect: false,
++    refetchOnMount: false,
+     refetchInterval: (query) =>
+       query.state.data?.pages.some((page) =>
+         page.items.some((event) => event.delivery?.state === 'pending'),
+@@ -293,6 +352,44 @@ export function useInboundEvents(query: ListEventsQuery = {}) {
+         ? PENDING_EVENT_REFRESH_MS
+         : false,
+   });
++  const newest = useQuery({
++    queryKey: ['newest-inbound-event', query],
++    queryFn: ({ signal }) =>
++      events.list(
++        client,
++        {
++          ...(query.type ? { type: query.type } : {}),
++          ...(query.before ? { before: query.before } : {}),
++          limit: 1,
++        },
++        { signal },
++      ),
++    enabled: history.data !== undefined,
++    refetchInterval: NEW_EVENT_CHECK_MS,
++  });
++  const first = history.data?.pages[0]?.items[0];
++  const latest = newest.data?.items[0];
++  const newerAvailable =
++    latest !== undefined &&
++    (first === undefined ||
++      latest.receivedAt > first.receivedAt ||
++      (latest.receivedAt === first.receivedAt && latest.id > first.id));
++  return {
++    ...history,
++    newerAvailable,
++    newerCheckFailed: newest.isError,
++    isRefreshing: manualRefresh.isPending && currentRefresh(manualRefresh.variables),
++    refreshFailed: manualRefresh.isError && currentRefresh(manualRefresh.variables),
++    hasRefreshed:
++      manualRefresh.isSuccess && manualRefresh.data && currentRefresh(manualRefresh.variables),
++    refresh: () => {
++      const scope = cache.getQueryCache().find({ queryKey, exact: true });
++      if (!scope) return;
++      const generation = Symbol();
++      inboundRefreshes.set(scope, generation);
++      manualRefresh.mutate({ scope, generation });
++    },
++  };
+ }
+ 
+ /** The control enables this only once its expression and zone have stopped changing. */
+diff --git a/apps/web/src/components/HistoryState.tsx b/apps/web/src/components/HistoryState.tsx
+index 33085716..a557caf7 100644
+--- a/apps/web/src/components/HistoryState.tsx
++++ b/apps/web/src/components/HistoryState.tsx
+@@ -10,10 +10,12 @@ export function HistoryState<T>({
+   query,
+   what,
+   children,
++  keepDataOnError = false,
+ }: {
+   query: UseInfiniteQueryResult<InfiniteData<HistoryPage<T>>>;
+   what: string;
+   children: (items: T[]) => ReactNode;
++  keepDataOnError?: boolean;
+ }) {
+   const endRef = useRef<HTMLParagraphElement>(null);
+   const userAppendRef = useRef(false);
+@@ -27,7 +29,11 @@ export function HistoryState<T>({
+   }, [isFetchingNextPage, hasNextPage, hasAppended, query.dataUpdatedAt, query.errorUpdatedAt]);
+   return (
+     <>
+-      <QueryState query={query} what={what} keepDataOnError={query.isFetchNextPageError}>
++      <QueryState
++        query={query}
++        what={what}
++        keepDataOnError={keepDataOnError || query.isFetchNextPageError}
++      >
+         {(data) => {
+           const items = data.pages.flatMap((page) => page.items);
+           if (!items.length && (hasNextPage || hasAppended))
+@@ -41,7 +47,9 @@ export function HistoryState<T>({
+           return children(items);
+         }}
+       </QueryState>
+-      {query.isFetchNextPageError ? <ErrorState error={query.error} what={what} /> : null}
++      {query.isFetchNextPageError || (keepDataOnError && query.isRefetchError) ? (
++        <ErrorState error={query.error} what={what} />
++      ) : null}
+       {query.data ? (
+         // Retain footer height at exhaustion so the reading position cannot be clamped.
+         <div className="min-h-9 pointer-coarse:min-h-11">
+diff --git a/apps/web/src/events/EventsPage.races.test.tsx b/apps/web/src/events/EventsPage.races.test.tsx
+new file mode 100644
+index 00000000..77a5dc67
+--- /dev/null
++++ b/apps/web/src/events/EventsPage.races.test.tsx
+@@ -0,0 +1,165 @@
++import { act, screen, waitFor } from '@testing-library/react';
++import userEvent from '@testing-library/user-event';
++import { useNavigate } from 'react-router';
++import { useIsMutating } from '@tanstack/react-query';
++import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
++import { App } from '../app/App.js';
++import { FakeApi, TS } from '../__fixtures__/fake-api.js';
++import { renderApp, renderWith } from '../__fixtures__/render.js';
++
++function event(id: string) {
++  return {
++    id,
++    ownerId: 'local',
++    type: 'chosen',
++    payload: id,
++    source: 'api',
++    receivedAt: TS,
++    runIds: [],
++  };
++}
++
++// A browser Back control supplied through the router's public navigation interface.
++function Back() {
++  const navigate = useNavigate();
++  const pending = useIsMutating();
++  return (
++    <>
++      <button onClick={() => void navigate(-1)}>Back</button>
++      <output data-testid="pending-refreshes">{pending}</output>
++    </>
++  );
++}
++
++function rowIds() {
++  return screen.getAllByTestId(/^payload-/).map((node) => node.getAttribute('data-testid'));
++}
++
++async function refresh(user: ReturnType<typeof userEvent.setup>) {
++  const button = screen.getByRole('button', { name: 'Refresh' });
++  await waitFor(() => expect(button).toHaveAttribute('aria-busy', 'false'));
++  await user.click(button);
++}
++
++beforeEach(() => {
++  vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
++});
++afterEach(() => {
++  vi.useRealTimers();
++});
++
++describe('Events refresh races (#240)', () => {
++  it.each(['filter change', 'page unmount'] as const)(
++    'drops Refresh A after %s, Back, Refresh B and paging',
++    async (leave) => {
++      const api = new FakeApi();
++      const user = userEvent.setup();
++      api.inbound = Array.from({ length: 201 }, (_, i) => event(`row-${200 - i}`));
++      const path = '/events?type=chosen&before=2099-01-01T00%3A00%3A00.000Z&keep=reader';
++      const view = renderWith(
++        <>
++          <App />
++          <Back />
++        </>,
++        path,
++        api,
++      );
++      let release: (() => void) | undefined;
++      try {
++        await user.click(await screen.findByRole('button', { name: 'Load more' }));
++        await screen.findByTestId('payload-row-60');
++        let hold = true;
++        api.override('GET /events', (call) => {
++          if (!hold || call.search.has('cursor') || call.search.has('limit'))
++            return api.builtIn(call);
++          hold = false;
++          const response = api.builtIn(call);
++          return new Promise<Response>((resolve) => {
++            release = () => resolve(response);
++          });
++        });
++        await refresh(user);
++        await waitFor(() => expect(release).toBeDefined());
++        if (leave === 'filter change') {
++          await user.click(screen.getByRole('button', { name: 'Clear type filter' }));
++          await waitFor(() =>
++            expect(screen.getByTestId('location')).not.toHaveTextContent('type=chosen'),
++          );
++        } else {
++          await user.click(screen.getByRole('link', { name: 'Runs' }));
++          await screen.findByRole('heading', { name: 'Runs', level: 1 });
++        }
++        await user.click(screen.getByRole('button', { name: 'Back' }));
++        await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent(path));
++        api.inbound.unshift({ ...event('winner'), receivedAt: '2098-01-01T00:00:00.000Z' });
++        await refresh(user);
++        await screen.findByTestId('payload-winner');
++        await user.click(screen.getByRole('button', { name: 'Load more' }));
++        await screen.findByTestId('payload-row-60');
++        const winningRows = rowIds();
++        expect(winningRows).toHaveLength(200);
++        // The public hook renders after mutation/query notifications reach React. A cache
++        // settlement callback alone runs before the page has received those notifications.
++        await waitFor(() =>
++          expect(screen.getByTestId('pending-refreshes')).toHaveTextContent(/^1$/),
++        );
++        await act(() => Promise.resolve(release?.()));
++        await waitFor(() =>
++          expect(screen.getByTestId('pending-refreshes')).toHaveTextContent(/^0$/),
++        );
++        expect(rowIds()).toEqual(winningRows);
++        expect(screen.getByTestId('payload-winner')).toBeInTheDocument();
++        expect(screen.getByTestId('location')).toHaveTextContent(path);
++      } finally {
++        release?.();
++        view.unmount();
++        view.queryClient.clear();
++      }
++    },
++  );
++
++  it.each([0, 99])(
++    'updates a pending row at loaded index %i despite 501 tied head arrivals',
++    async (index) => {
++      const api = new FakeApi();
++      const user = userEvent.setup();
++      api.inbound = Array.from({ length: 101 }, (_, i) => event(`receipt-${i}`));
++      const pending = api.inbound[index]!;
++      api.inbound[index] = { ...pending, delivery: { state: 'pending', attempts: 0 } };
++      const view = renderApp('/events?type=chosen', api);
++      try {
++        await screen.findByText('Pending admission');
++        const before = rowIds();
++        expect(before).toHaveLength(100);
++        api.inbound[index] = { ...pending, delivery: { state: 'admitted', attempts: 0 } };
++        api.inbound.unshift(...Array.from({ length: 501 }, (_, i) => event(`arrival-${i}`)));
++        await act(async () => {
++          await vi.advanceTimersByTimeAsync(2_000);
++        });
++        expect(await screen.findByText('Admitted', undefined, { timeout: 5_000 })).toBeVisible();
++        expect(rowIds()).toEqual(before);
++        const reads = api
++          .callsTo('GET', '/events')
++          .filter((call) => call.search.has('anchor')).length;
++        await act(async () => {
++          await vi.advanceTimersByTimeAsync(4_000);
++        });
++        expect(
++          api.callsTo('GET', '/events').filter((call) => call.search.has('anchor')),
++        ).toHaveLength(reads);
++        await user.click(screen.getByRole('button', { name: 'Load more' }));
++        await screen.findByTestId('payload-receipt-100');
++        expect(rowIds()).toHaveLength(101);
++        expect(new Set(rowIds()).size).toBe(101);
++        const continuation = api
++          .callsTo('GET', '/events')
++          .filter((call) => call.search.has('cursor'))
++          .at(-1)!;
++        expect(continuation.search.get('cursor')).toBe('receipt-99');
++      } finally {
++        view.unmount();
++        view.queryClient.clear();
++      }
++    },
++  );
++});
+diff --git a/apps/web/src/events/EventsPage.recovery.test.tsx b/apps/web/src/events/EventsPage.recovery.test.tsx
+new file mode 100644
+index 00000000..b5c83897
+--- /dev/null
++++ b/apps/web/src/events/EventsPage.recovery.test.tsx
+@@ -0,0 +1,212 @@
++import userEvent from '@testing-library/user-event';
++import { act, screen, waitFor } from '@testing-library/react';
++import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
++import { FakeApi, TS } from '../__fixtures__/fake-api.js';
++import { renderApp } from '../__fixtures__/render.js';
++
++function event(id: string, type = 'chosen') {
++  return {
++    id,
++    ownerId: 'local',
++    type,
++    payload: id,
++    receivedAt: id === 'new-arrival' ? '2098-01-01T00:00:00.000Z' : TS,
++    source: 'api',
++    runIds: [],
++  };
++}
++
++async function poll() {
++  await act(async () => {
++    await vi.advanceTimersByTimeAsync(2_000);
++  });
++}
++
++async function refresh(user: ReturnType<typeof userEvent.setup>) {
++  const button = screen.getByRole('button', { name: 'Refresh' });
++  await waitFor(() => {
++    expect(button).toBeEnabled();
++    expect(button).not.toHaveAttribute('aria-disabled', 'true');
++  });
++  await user.click(button);
++}
++
++beforeEach(() => {
++  vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
++});
++afterEach(() => {
++  vi.useRealTimers();
++});
++
++describe('Events refresh recovery and orientation (#240)', () => {
++  it('keeps a late Refresh response scoped to the filters it started with', async () => {
++    const api = new FakeApi();
++    const user = userEvent.setup();
++    api.inbound = [event('chosen-row'), event('other-row', 'other')];
++    const view = renderApp('/events?type=chosen', api);
++    let complete: (() => void) | undefined;
++    try {
++      await screen.findByTestId('payload-chosen-row');
++      api.override('GET /events', (call) => {
++        if (call.search.get('type') !== 'chosen' || call.search.get('limit') === '1')
++          return api.builtIn(call);
++        return new Promise<Response>((resolve) => {
++          complete = () => resolve(api.builtIn(call));
++        });
++      });
++      await refresh(user);
++      expect(await screen.findByText('Refreshing events…')).toBeInTheDocument();
++      await user.click(screen.getByRole('button', { name: 'Clear type filter' }));
++      expect(await screen.findByTestId('payload-other-row')).toBeInTheDocument();
++      await act(() => Promise.resolve(complete?.()));
++      expect(screen.getByTestId('payload-other-row')).toBeInTheDocument();
++      expect(screen.getByTestId('location')).toHaveTextContent('/events');
++      expect(screen.queryByText('Showing the newest events.')).not.toBeInTheDocument();
++    } finally {
++      complete?.();
++      view.unmount();
++      view.queryClient.clear();
++    }
++  });
++
++  it('keeps both loaded pages during a Refresh and after failure, then commits a successful newest page', async () => {
++    const api = new FakeApi();
++    const user = userEvent.setup();
++    api.inbound = Array.from({ length: 201 }, (_, i) => event(`event-${200 - i}`));
++    api.inbound[0] = { ...api.inbound[0]!, delivery: { state: 'pending', attempts: 0 } };
++    const path = '/events?type=chosen&before=2099-01-01T00%3A00%3A00.000Z';
++    const view = renderApp(path, api);
++    let resolveRead: ((response: Response) => void) | undefined;
++    let rejectRead: ((reason: Error) => void) | undefined;
++    const held = new Promise<Response>((resolve, reject) => {
++      resolveRead = resolve;
++      rejectRead = reject;
++    });
++    try {
++      await user.click(await screen.findByRole('button', { name: 'Load more' }));
++      const oldRow = await screen.findByTestId('payload-event-60', undefined, { timeout: 5_000 });
++      expect(screen.getAllByRole('row')).toHaveLength(201);
++      let hold = true;
++      let fail = true;
++      api.override('GET /events', (call) => {
++        if (call.search.get('limit') === '1') return api.builtIn(call);
++        if (hold) {
++          hold = false;
++          return held;
++        }
++        if (fail) throw new TypeError('Failed to fetch');
++        return api.builtIn(call);
++      });
++      await refresh(user);
++      await waitFor(() => expect(hold).toBe(false));
++      expect(oldRow).toBeInTheDocument();
++      expect(screen.getAllByRole('row')).toHaveLength(201);
++      expect(screen.getByTestId('location')).toHaveTextContent(path);
++      rejectRead?.(new TypeError('Failed to fetch'));
++      expect(await screen.findByText(/Refresh failed/)).toBeVisible();
++      expect(oldRow).toBeInTheDocument();
++      // Pending-receipt polling may also fail; it must retain the same reading snapshot.
++      await poll();
++      expect(oldRow).toBeInTheDocument();
++      expect(screen.getAllByRole('row')).toHaveLength(201);
++      fail = false;
++      api.inbound.unshift(event('new-arrival'));
++      await refresh(user);
++      expect(await screen.findByTestId('payload-new-arrival')).toBeInTheDocument();
++      expect(screen.getAllByRole('row')).toHaveLength(101);
++      expect(screen.queryByTestId('payload-event-60')).not.toBeInTheDocument();
++      expect(screen.queryByText(/Refresh failed/)).not.toBeInTheDocument();
++      expect(screen.getByTestId('location')).toHaveTextContent(path);
++      await user.click(screen.getByRole('button', { name: 'Load more' }));
++      expect(await screen.findByTestId('payload-event-60')).toBeInTheDocument();
++      expect(screen.getAllByRole('row')).toHaveLength(201);
++    } finally {
++      resolveRead?.(Response.json({ items: [], nextCursor: null }));
++      view.unmount();
++      view.queryClient.clear();
++    }
++  });
++
++  it('clears each filter with the keyboard, preserves other parameters and returns focus to Refresh', async () => {
++    const api = new FakeApi();
++    const user = userEvent.setup();
++    api.inbound = [event('chosen-row'), event('other-row', 'other')];
++    const before = '2099-01-01T00%3A00%3A00.000Z';
++    const view = renderApp(`/events?type=chosen&before=${before}&keep=reader`, api);
++    try {
++      await screen.findByTestId('payload-chosen-row');
++      const button = screen.getByRole('button', { name: 'Refresh' });
++      const typeClear = screen.getByRole('button', { name: 'Clear type filter' });
++      button.focus();
++      await user.tab();
++      expect(typeClear).toHaveFocus();
++      await user.keyboard('{Enter}');
++      expect(await screen.findByTestId('payload-other-row')).toBeInTheDocument();
++      expect(screen.getByTestId('location')).toHaveTextContent(
++        `/events?before=${before}&keep=reader`,
++      );
++      expect(button).toHaveFocus();
++      expect(screen.queryByRole('button', { name: 'Clear type filter' })).not.toBeInTheDocument();
++      await user.tab();
++      expect(screen.getByRole('button', { name: 'Clear before filter' })).toHaveFocus();
++      await user.keyboard('{Enter}');
++      await waitFor(() =>
++        expect(screen.getByTestId('location')).toHaveTextContent('/events?keep=reader'),
++      );
++      expect(button).toHaveFocus();
++      expect(screen.queryByRole('button', { name: 'Clear before filter' })).not.toBeInTheDocument();
++    } finally {
++      view.unmount();
++      view.queryClient.clear();
++    }
++  });
++
++  it('announces that a successful Refresh is showing the newest events in the existing live region', async () => {
++    const api = new FakeApi();
++    const user = userEvent.setup();
++    api.inbound = [event('loaded')];
++    const view = renderApp('/events', api);
++    try {
++      await screen.findByTestId('payload-loaded');
++      await refresh(user);
++      const message = await screen.findByText('Showing the newest events.');
++      expect(message.closest('[role="status"]')).toBeInTheDocument();
++    } finally {
++      view.unmount();
++      view.queryClient.clear();
++    }
++  });
++
++  it('reports a failed check alongside an existing arrival notice and clears only the failure on recovery', async () => {
++    const api = new FakeApi();
++    api.inbound = [event('loaded')];
++    let fail = false;
++    api.override('GET /events', (call) => {
++      if (fail && call.search.get('limit') === '1') throw new TypeError('Failed to fetch');
++      return api.builtIn(call);
++    });
++    const view = renderApp('/events', api);
++    try {
++      await screen.findByTestId('payload-loaded');
++      api.inbound.unshift(event('new-arrival'));
++      await poll();
++      const notice = await screen.findByText('New events available', undefined, { timeout: 5_000 });
++      const region = notice.closest('[role="status"]');
++      fail = true;
++      await poll();
++      await waitFor(() => expect(region).toHaveTextContent('Could not check for new events'), {
++        timeout: 5_000,
++      });
++      expect(region).toHaveTextContent('New events available');
++      expect(screen.getByTestId('payload-loaded')).toBeInTheDocument();
++      expect(screen.queryByTestId('payload-new-arrival')).not.toBeInTheDocument();
++      fail = false;
++      await poll();
++      await waitFor(() => expect(region).not.toHaveTextContent('Could not check for new events'));
++      expect(region).toHaveTextContent('New events available');
++    } finally {
++      view.unmount();
++      view.queryClient.clear();
++    }
++  });
++});
+diff --git a/apps/web/src/events/EventsPage.refresh.test.tsx b/apps/web/src/events/EventsPage.refresh.test.tsx
+new file mode 100644
+index 00000000..185d18ff
+--- /dev/null
++++ b/apps/web/src/events/EventsPage.refresh.test.tsx
+@@ -0,0 +1,154 @@
++import userEvent from '@testing-library/user-event';
++import { act, screen, waitFor } from '@testing-library/react';
++import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
++import { FakeApi, TS } from '../__fixtures__/fake-api.js';
++import { renderApp } from '../__fixtures__/render.js';
++
++function event(id: string, type = 'chosen') {
++  return {
++    id,
++    ownerId: 'local',
++    type,
++    payload: id,
++    receivedAt: id === 'new-arrival' ? '2098-01-01T00:00:00.000Z' : TS,
++    source: 'api',
++    runIds: [],
++  };
++}
++
++async function refreshEvents(user: ReturnType<typeof userEvent.setup>) {
++  const button = screen.getByRole('button', { name: 'Refresh' });
++  await waitFor(() => {
++    expect(button).toBeEnabled();
++    expect(button).not.toHaveAttribute('aria-disabled', 'true');
++  });
++  await user.click(button);
++}
++
++async function checkForNewEvents() {
++  await act(async () => {
++    await vi.advanceTimersByTimeAsync(2_000);
++  });
++}
++
++// Drive the polling cadence explicitly; user input and async rendering keep real timers.
++beforeEach(() => {
++  vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
++});
++afterEach(() => {
++  vi.useRealTimers();
++});
++
++describe('Events manual refresh (#240)', () => {
++  it('announces arrivals on an older page without replacing rows, then refreshes and pages with filters intact', async () => {
++    const api = new FakeApi();
++    const user = userEvent.setup();
++    api.inbound = Array.from({ length: 101 }, (_, i) => event(`event-${100 - i}`));
++    api.inbound[0] = { ...api.inbound[0]!, delivery: { state: 'pending', attempts: 0 } };
++    const path = '/events?type=chosen&before=2099-01-01T00%3A00%3A00.000Z';
++    const view = renderApp(path, api);
++    await user.click(await screen.findByRole('button', { name: 'Load more' }));
++    expect(await screen.findByText('All events loaded.')).toBeInTheDocument();
++    const oldRow = screen.getByTestId('payload-event-0');
++    oldRow.focus();
++    api.inbound.unshift(event('new-arrival'), event('excluded', 'other'));
++    await checkForNewEvents();
++    expect(
++      await screen.findByText('New events available', undefined, { timeout: 5_000 }),
++    ).toBeVisible();
++    expect(oldRow).toBeInTheDocument();
++    expect(screen.getAllByRole('row')).toHaveLength(102);
++    expect(screen.queryByTestId('payload-new-arrival')).not.toBeInTheDocument();
++    // Focus/reconnect cannot replace the reading snapshot either.
++    act(() => {
++      window.dispatchEvent(new Event('online'));
++    });
++    expect(oldRow).toBeInTheDocument();
++    await refreshEvents(user);
++    expect(await screen.findByTestId('payload-new-arrival')).toBeVisible();
++    expect(screen.queryByTestId('payload-event-0')).not.toBeInTheDocument();
++    expect(screen.queryByTestId('payload-excluded')).not.toBeInTheDocument();
++    expect(screen.getByTestId('location')).toHaveTextContent(path);
++    await user.click(screen.getByRole('button', { name: 'Load more' }));
++    expect(await screen.findByTestId('payload-event-0')).toBeInTheDocument();
++    expect(screen.getAllByRole('row')).toHaveLength(103);
++    expect(await screen.findByText('All events loaded.')).toBeInTheDocument();
++    const calls = api.callsTo('GET', '/events');
++    expect(calls.every((call) => call.search.get('type') === 'chosen')).toBe(true);
++    expect(calls.every((call) => call.search.get('before') === '2099-01-01T00:00:00.000Z')).toBe(
++      true,
++    );
++    // A pending-receipt refresh or a newest-event probe may be the last request overall.
++    const continuations = calls.filter((call) => call.search.has('cursor'));
++    expect(continuations.at(-1)!.search.get('cursor')).toBe('event-2');
++    view.unmount();
++    view.queryClient.clear();
++  });
++
++  it('keeps the first page stable until Refresh and retains existing pending-receipt updates', async () => {
++    const api = new FakeApi();
++    const user = userEvent.setup();
++    api.inbound = [{ ...event('receipt'), delivery: { state: 'pending', attempts: 0 } }];
++    const view = renderApp('/events', api);
++    expect(await screen.findByText('Pending admission')).toBeVisible();
++    api.inbound = [
++      event('new-arrival'),
++      { ...event('receipt'), delivery: { state: 'admitted', attempts: 0 } },
++    ];
++    await checkForNewEvents();
++    expect(await screen.findByText('Admitted', undefined, { timeout: 5_000 })).toBeVisible();
++    expect(screen.queryByTestId('payload-new-arrival')).not.toBeInTheDocument();
++    expect(
++      await screen.findByText('New events available', undefined, { timeout: 5_000 }),
++    ).toBeVisible();
++    await refreshEvents(user);
++    expect(await screen.findByTestId('payload-new-arrival')).toBeInTheDocument();
++    await waitFor(() => expect(screen.queryByText('New events available')).not.toBeInTheDocument());
++    view.unmount();
++    view.queryClient.clear();
++  });
++
++  it('shows an empty filtered result and refreshes it without losing the filter', async () => {
++    const api = new FakeApi();
++    const user = userEvent.setup();
++    api.inbound = [event('excluded', 'other')];
++    const view = renderApp('/events?type=chosen', api);
++    expect(await screen.findByText('No inbound events match these filters.')).toBeVisible();
++    api.inbound.unshift(event('new-arrival'));
++    await checkForNewEvents();
++    expect(
++      await screen.findByText('New events available', undefined, { timeout: 5_000 }),
++    ).toBeVisible();
++    expect(screen.queryByTestId('payload-new-arrival')).not.toBeInTheDocument();
++    await refreshEvents(user);
++    expect(await screen.findByTestId('payload-new-arrival')).toBeInTheDocument();
++    expect(screen.getByTestId('location')).toHaveTextContent('/events?type=chosen');
++    view.unmount();
++    view.queryClient.clear();
++  });
++
++  it('retains history when an availability check fails and lets the reader refresh', async () => {
++    const api = new FakeApi();
++    const user = userEvent.setup();
++    api.inbound = [event('loaded')];
++    api.override('GET /events', (call) =>
++      call.search.get('limit') === '1'
++        ? new Response(JSON.stringify({ code: 'INTERNAL_ERROR', detail: 'Unavailable' }), {
++            status: 500,
++            headers: { 'content-type': 'application/json' },
++          })
++        : api.builtIn(call),
++    );
++    const view = renderApp('/events', api);
++    expect(await screen.findByTestId('payload-loaded')).toBeInTheDocument();
++    expect(
++      await screen.findByText('Could not check for new events. Refresh to try again.'),
++    ).toBeVisible();
++    expect(screen.getByTestId('payload-loaded')).toBeInTheDocument();
++    api.inbound.unshift(event('new-arrival'));
++    await refreshEvents(user);
++    expect(await screen.findByTestId('payload-new-arrival')).toBeInTheDocument();
++    view.unmount();
++    view.queryClient.clear();
++  });
++});
+diff --git a/apps/web/src/events/EventsPage.test.tsx b/apps/web/src/events/EventsPage.test.tsx
+index 8b3ecb6f..91984e5b 100644
+--- a/apps/web/src/events/EventsPage.test.tsx
++++ b/apps/web/src/events/EventsPage.test.tsx
+@@ -27,7 +27,7 @@ describe('EventsPage delivery dispositions', () => {
+           }
+         : {}),
+     }));
+-    renderApp('/events?type=ignored&before=invalid', api);
++    renderApp('/events?type=chosen&before=2099-01-01T00%3A00%3A00.000Z', api);
+     const disclosure = await screen.findByText('Webhook configuration');
+     await user.click(disclosure);
+     const expanded = disclosure.closest('details')!;
+@@ -38,9 +38,12 @@ describe('EventsPage delivery dispositions', () => {
+     await waitFor(() => expect(screen.getAllByRole('row')).toHaveLength(201));
+     await waitFor(() => expect(screen.getByText('All events loaded.')).toHaveFocus());
+     expect(screen.queryByRole('button', { name: 'Load more' })).not.toBeInTheDocument();
+-    const call = api.callsTo('GET', '/events').at(-1)!;
+-    expect(call.search.has('type')).toBe(false);
+-    expect(call.search.has('before')).toBe(false);
++    const call = api
++      .callsTo('GET', '/events')
++      .filter((call) => call.search.get('limit') !== '1' || call.search.has('anchor'))
++      .at(-1)!;
++    expect(call.search.get('type')).toBe('chosen');
++    expect(call.search.get('before')).toBe('2099-01-01T00:00:00.000Z');
+     expect(call.search.get('cursor')).toBe('event-99');
+     expect(expanded).toBeInTheDocument();
+     expect(expanded).toHaveAttribute('open');
+@@ -180,7 +183,11 @@ describe('EventsPage delivery dispositions', () => {
+           timeout: 5_000,
+         }),
+       ).toBeVisible();
+-      expect(api.callsTo('GET', '/events')).toHaveLength(1);
++      expect(
++        api
++          .callsTo('GET', '/events')
++          .filter((call) => call.search.get('limit') !== '1' || call.search.has('anchor')),
++      ).toHaveLength(1);
+ 
+       api.inbound = [
+         {
+@@ -201,10 +208,18 @@ describe('EventsPage delivery dispositions', () => {
+       } else {
+         expect(screen.getByText('ADMISSION_UNAVAILABLE')).toBeVisible();
+       }
+-      expect(api.callsTo('GET', '/events')).toHaveLength(2);
++      expect(
++        api
++          .callsTo('GET', '/events')
++          .filter((call) => call.search.get('limit') !== '1' || call.search.has('anchor')),
++      ).toHaveLength(2);
+ 
+       await new Promise((resolve) => setTimeout(resolve, 2_200));
+-      expect(api.callsTo('GET', '/events')).toHaveLength(2);
++      expect(
++        api
++          .callsTo('GET', '/events')
++          .filter((call) => call.search.get('limit') !== '1' || call.search.has('anchor')),
++      ).toHaveLength(2);
+     } finally {
+       view.unmount();
+       view.queryClient.clear();
+@@ -233,11 +248,19 @@ describe('EventsPage delivery dispositions', () => {
+           timeout: 5_000,
+         }),
+       ).toBeVisible();
+-      expect(api.callsTo('GET', '/events')).toHaveLength(1);
++      expect(
++        api
++          .callsTo('GET', '/events')
++          .filter((call) => call.search.get('limit') !== '1' || call.search.has('anchor')),
++      ).toHaveLength(1);
+ 
+       view.unmount();
+       await new Promise((resolve) => setTimeout(resolve, 2_200));
+-      expect(api.callsTo('GET', '/events')).toHaveLength(1);
++      expect(
++        api
++          .callsTo('GET', '/events')
++          .filter((call) => call.search.get('limit') !== '1' || call.search.has('anchor')),
++      ).toHaveLength(1);
+     } finally {
+       view.unmount();
+       view.queryClient.clear();
+diff --git a/apps/web/src/events/EventsPage.tsx b/apps/web/src/events/EventsPage.tsx
+index 61cd40a4..ab7c8f6e 100644
+--- a/apps/web/src/events/EventsPage.tsx
++++ b/apps/web/src/events/EventsPage.tsx
+@@ -1,9 +1,11 @@
+ import { HistoryState } from '../components/HistoryState.js';
+-import { Link } from 'react-router';
++import { Link, useSearchParams } from 'react-router';
++import { useRef } from 'react';
+ import { useInboundEvents } from '../api/queries.js';
+ import { Page, PageHeader } from '../components/layout/index.js';
+ import {
+   Badge,
++  Button,
+   BoundedValue,
+   Card,
+   CELL_PREVIEW_CHARS,
+@@ -113,14 +115,90 @@ function WebhookConfiguration({ webhook }: { webhook: InboundEvent['webhook'] })
+  * of other runs, with the runs each one started.
+  */
+ export function EventsPage() {
+-  const query = useInboundEvents();
++  const [params, setParams] = useSearchParams();
++  const refreshRef = useRef<HTMLButtonElement>(null);
++  const type = params.get('type');
++  const before = params.get('before');
++  const filters = { ...(type ? { type } : {}), ...(before ? { before } : {}) };
++  const query = useInboundEvents(filters);
++  const busy = query.isFetching || query.isRefreshing;
++  const status = [
++    query.isRefreshing
++      ? 'Refreshing events…'
++      : query.refreshFailed
++        ? 'Refresh failed. Your current events are still shown. Refresh to try again.'
++        : query.hasRefreshed && !query.newerAvailable
++          ? 'Showing the newest events.'
++          : null,
++    query.newerAvailable ? 'New events available' : null,
++    query.newerCheckFailed ? 'Could not check for new events. Refresh to try again.' : null,
++  ]
++    .filter(Boolean)
++    .join(' ');
++  function clearFilter(name: 'type' | 'before') {
++    const next = new URLSearchParams(params);
++    next.delete(name);
++    refreshRef.current?.focus({ preventScroll: true });
++    setParams(next);
++  }
+   return (
+     <Page>
+-      <PageHeader title="Events" />
+-      <HistoryState query={query} what="Events">
++      <PageHeader
++        title="Events"
++        actions={
++          <Button
++            ref={refreshRef}
++            variant="outline"
++            aria-disabled={busy}
++            aria-busy={busy}
++            onClick={() => {
++              if (!busy) query.refresh();
++            }}
++          >
++            Refresh
++          </Button>
++        }
++      >
++        <span role="status" className="text-sm text-muted">
++          {status}
++        </span>
++      </PageHeader>
++      {type || before ? (
++        <div className="flex min-w-0 flex-wrap items-center gap-2 text-sm text-muted">
++          {type ? (
++            <span className="inline-flex min-w-0 max-w-full flex-wrap items-center gap-1">
++              <span className="min-w-0 wrap-anywhere">Type: {type}</span>
++              <Button
++                variant="ghost"
++                size="sm"
++                aria-label="Clear type filter"
++                onClick={() => clearFilter('type')}
++              >
++                Clear
++              </Button>
++            </span>
++          ) : null}
++          {before ? (
++            <span className="inline-flex min-w-0 max-w-full flex-wrap items-center gap-1">
++              <span className="min-w-0 wrap-anywhere">Before: {before}</span>
++              <Button
++                variant="ghost"
++                size="sm"
++                aria-label="Clear before filter"
++                onClick={() => clearFilter('before')}
++              >
++                Clear
++              </Button>
++            </span>
++          ) : null}
++        </div>
++      ) : null}
++      <HistoryState query={query} what="Events" keepDataOnError>
+         {(items) =>
+           items.length === 0 ? (
+-            <p className="text-sm text-muted">No inbound events yet.</p>
++            <p className="text-sm text-muted">
++              {type || before ? 'No inbound events match these filters.' : 'No inbound events yet.'}
++            </p>
+           ) : (
+             <Card flush>
+               <Table stack="lg">
+diff --git a/docs/07-api-and-streaming.md b/docs/07-api-and-streaming.md
+index 4c1859b4..07ee3c43 100644
+--- a/docs/07-api-and-streaming.md
++++ b/docs/07-api-and-streaming.md
+@@ -410,6 +410,18 @@ under the new filters. Inbound rows sharing a timestamp are ordered by ID, which
+ creation order within one process. Unknown query parameters return 400, and `before` must
+ be a timestamp. The inbound cursor has the same 256-character bound as the run cursor.
+ 
++For bounded receipt updates, `anchor=<eventId>` re-reads a page starting at that event,
++inclusive, with the same `type`, exclusive `before` and `limit` rules. It is mutually
++exclusive with `cursor` (`400 VALIDATION_FAILED` if combined). An unknown anchor, one
++owned by another reader, or one outside the filters returns an empty page. The server
++uses one indexed lookup and one inclusive SQL range; only the requested rows are decoded,
++and the usual opaque `nextCursor` continues strictly after the returned last row.
++The Events page uses each loaded page's first ID and loaded size for this read, then merges
++updates by ID without replacing its membership or continuation. Thus even a pending head
++or hundredth row displaced by many tied arrivals keeps updating, without scanning history.
++Manual Refresh responses are committed only by the latest request for that cached scope,
++including after filter changes and remounts; an obsolete completion changes no rows or status.
++
+ `GET /runs/{id}/events` retains its sequence-number continuation, returning
+ `{items, nextAfter, hasMore}`. One raw lookahead row determines `hasMore`; an exactly full
+ final page returns false. Only requested rows are decoded and validated: malformed
+@@ -421,12 +433,14 @@ This sequence cursor remains a number; it is not interchangeable with list curso
+ 
+ Runs and Events append older rows through a new outline **Load more** button.
+ Filters remain part of the query key and every page request; changing a filter selects
+-its own history. Runs expose loop/status/parent selects; Events has no hidden URL-only
+-filters. The control is busy only during a next-page fetch, so background polling does
++its own history. Runs expose loop/status/parent selects; Events displays active `type` and
++`before` filters from its URL. The control is busy only during a next-page fetch, so background polling does
+ not block it. End-of-list text appears after an append and receives keyboard focus
+ when that user-initiated load exhausts the list. Next-page failures retain the loaded rows and expanded details and
+ show an error with a retry through the same button. Runs retain their five-second polling;
+-Events retain pending-delivery polling. No manual Events refresh is added here.
++Events retain pending-delivery polling for existing rows, with loaded membership and cursors
++kept stable. A separate `limit=1` read announces newer arrivals; **Refresh** deliberately
++reloads the newest page within the same filters. See [09](09-frontend-and-pwa.md) for the page behaviour (#240).
+ 
+ ### Pinned definitions (ADR-0041)
+ 
+diff --git a/docs/09-frontend-and-pwa.md b/docs/09-frontend-and-pwa.md
+index 39dc7810..feb9373b 100644
+--- a/docs/09-frontend-and-pwa.md
++++ b/docs/09-frontend-and-pwa.md
+@@ -252,8 +252,9 @@ The adversarial QA report is `docs/qa/2026-10-03-wp-d2.md`. Behaviour that chang
+ - **Drafts.** IndexedDB store upgrades preserve live, set-aside and archived copies; they never delete the drafts store. New in-progress drafts remain on the device across reloads even with schema errors. If an older tab or PWA window blocks the store upgrade, the server copy can open while the three-second storage grace runs, and device storage reports itself blocked (see "Device storage and the save states" below). After device inspection, every edit is mirrored to IndexedDB at once and, after safe reconciliation, flushed to the server when the editor unmounts, so leaving inside the debounce window loses nothing. An unsynced local draft older than the server's last save is set aside, under its own IndexedDB key that later edits do not touch, and offered (use or discard) on every load until the user chooses. Draft saves for a loop are serialized, including the one sent when leaving the editor, and a save updates the editor only while the same loop and editor generation are loaded, so an older save never lands after a newer one. Two tabs no longer overwrite each other: see "Draft conflicts" below.
+ - **Editor.** Palette additions pan into view. List fields with a default show the default and a Customize button instead of item fields bound to nothing. Settings' "(server default)" deletes the setting.
+ - **Run inspector.** Replay starts from `run.queued`'s `initialThread`, including a subloop child's or replay fork's inherited messages, variables, outputs, counters, gate passes and iteration. A recorded seed takes precedence over the empty fallback. Domain `replayThread` adds every `node.started` to the seed's visits, projects absolute decision gate passes and historical iteration increments, and applies node patches; the inspector does not recount visits from zero. Thus event 1 shows the actual admitted seed and replace diffs use the same inherited values as execution; an array-append row (a `/-` pointer) still shows both sides as absent because `patchDiff` reads the literal pointer, which #255 addresses. A log that does not replay shows an explanation; an error boundary per screen keeps the shell alive. Events are appended, rendered, and reported in 100 ms batches and session storage never throws on quota: a 1,211-event run opens in about 0.5 s with a handful of run fetches (it took 7 s and one fetch per event before).
+-- **Events screen** shows each event's source (API, webhook delivery, or the run whose exit emitted it) and links to the runs it started. Webhook receipts distinguish historical filtered rows and current deduplicated, pending, admitted and failed delivery states, with retry attempts and safe failure codes. While the mounted page contains pending receipts, it refreshes every two seconds so recovery results and new run links appear automatically; interval refresh stops after all displayed receipts are terminal or the page unmounts. Normal focus and reconnect refresh remain enabled. Each delivery can disclose its pinned safe webhook configuration; complete endpoint history remains available through `GET /loops/{id}/triggers`.
+-  The Events page appends older events with **Load more**, keeps long preformatted payloads visible and the reading position on append or retry, and focuses the end-of-list message after the final user load. Its URL has no hidden type or time filters; those filters remain available through the API and client. The control is busy only while fetching its next page.
++- **Events screen** shows each event's source (API, webhook delivery, or the run whose exit emitted it) and links to the runs it started. Webhook receipts distinguish historical filtered rows and current deduplicated, pending, admitted and failed delivery states, with retry attempts and safe failure codes. While the mounted page contains pending receipts, it checks every two seconds and updates matching loaded receipts so recovery results and new run links appear automatically; this polling stops after displayed receipts are terminal or the page unmounts. Background reads preserve loaded row identities, order and opaque page boundaries. Each loaded page is re-read inclusively at its original first row using the list route's anchor parameter and a limit equal to its loaded size. New arrivals, including timestamp ties, cannot push a loaded pending receipt outside that read. This costs one indexed anchor lookup and one bounded SQL page per loaded page, without scanning history; only requested rows are decoded. Each delivery can disclose its pinned safe webhook configuration; complete endpoint history remains available through `GET /loops/{id}/triggers`.
++  The Events page appends older events with **Load more**, keeps long preformatted payloads visible and the reading position on append or retry, and focuses the end-of-list message after the final user load. **Refresh** deliberately returns to the newest page within the active filters, replacing appended pages only when the fresh first page arrives; subsequent loads use its new opaque cursor. While Refresh is pending or fails, the current rows, position and filters stay. Failure says "Refresh failed. Your current events are still shown. Refresh to try again." Across filter changes, unmounts and revisits, only the latest Refresh for the same cached query scope may replace its snapshot; obsolete responses produce no status. A successful Refresh announces "Showing the newest events." through the existing polite live region. URL `type` and exclusive `before` filters are shown above the table and retained on every page, availability check and Refresh. Each has a keyboard-accessible **Clear** control named for its filter; it removes only that parameter and returns focus to Refresh. An empty filtered result says "No inbound events match these filters." An unfiltered empty result says "No inbound events yet."
++  A separate two-second check requests only the newest matching event (`GET /events` with the same filters and `limit=1`). A newer `(receivedAt, id)` than the loaded head, or a first arrival into an empty result, shows **New events available** in the existing header without inserting rows, changing focus or scrolling. It reports availability rather than an exact count to keep reads bounded. Focus and reconnect do not replace loaded rows. Failed availability checks say "Could not check for new events. Refresh to try again." alongside any existing arrival notice; the failure message clears when checks recover. Refresh remains available without a notice and ignores activation during a history fetch or another Refresh, retaining keyboard focus. Checks stop on unmount and pause in a hidden tab under the normal query defaults. No new endpoint or stored-data change is needed; the existing list route accepts an inclusive anchor for bounded receipt reads (#240).
+ - **Settings** check the secret name rule before sending, and validation messages name the first failing field.
+ 
+ ## Draft conflicts (Decided, WP-F2)
+diff --git a/docs/reference/api.md b/docs/reference/api.md
+index 4463c06d..89f5cf1b 100644
+--- a/docs/reference/api.md
++++ b/docs/reference/api.md
+@@ -95,10 +95,10 @@ Keys for other applications and the MCP server.
+ 
+ Inbound Events and the event triggers they start.
+ 
+-| Method | Path      | Summary                                                 | Parameters                                                                                                                                                           | Request body                     | Responses |
+-| ------ | --------- | ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- | --------- |
+-| GET    | `/events` | Stored inbound events, newest first with stable paging  | `type`: string (query), `before`: string (query), `cursor`: string (query): Opaque inbound-event cursor, at most 256 base64url characters., `limit`: integer (query) | -                                | 200       |
+-| POST   | `/events` | Publish an inbound event; fires matching event triggers | -                                                                                                                                                                    | `{ type, payload?, dedupeKey? }` | 202       |
++| Method | Path      | Summary                                                 | Parameters                                                                                                                                                                                                                                                                        | Request body                     | Responses |
++| ------ | --------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- | --------- |
++| GET    | `/events` | Stored inbound events, newest first with stable paging  | `type`: string (query), `before`: string (query), `anchor`: string (query): Re-read a page starting at this event, inclusive; mutually exclusive with cursor., `cursor`: string (query): Opaque inbound-event cursor, at most 256 base64url characters., `limit`: integer (query) | -                                | 200       |
++| POST   | `/events` | Publish an inbound event; fires matching event triggers | -                                                                                                                                                                                                                                                                                 | `{ type, payload?, dedupeKey? }` | 202       |
+ 
+ ## triggers
+ 
+diff --git a/packages/api-client/openapi.json b/packages/api-client/openapi.json
+index 735e50e7..a1ccd013 100644
+--- a/packages/api-client/openapi.json
++++ b/packages/api-client/openapi.json
+@@ -21234,6 +21234,16 @@
+             "name": "before",
+             "required": false
+           },
++          {
++            "schema": {
++              "type": "string",
++              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
++            },
++            "in": "query",
++            "name": "anchor",
++            "required": false,
++            "description": "Re-read a page starting at this event, inclusive; mutually exclusive with cursor."
++          },
+           {
+             "schema": {
+               "maxLength": 256,
+diff --git a/packages/api-client/src/generated/schema.ts b/packages/api-client/src/generated/schema.ts
+index dd0922b2..d8549f73 100644
+--- a/packages/api-client/src/generated/schema.ts
++++ b/packages/api-client/src/generated/schema.ts
+@@ -2093,6 +2093,8 @@ export interface paths {
+                 query?: {
+                     type?: string;
+                     before?: string;
++                    /** @description Re-read a page starting at this event, inclusive; mutually exclusive with cursor. */
++                    anchor?: string;
+                     /** @description Opaque inbound-event cursor, at most 256 base64url characters. */
+                     cursor?: string;
+                     limit?: number;
+diff --git a/packages/api-client/src/resources.test.ts b/packages/api-client/src/resources.test.ts
+index 3d676217..045a1eaf 100644
+--- a/packages/api-client/src/resources.test.ts
++++ b/packages/api-client/src/resources.test.ts
+@@ -96,6 +96,27 @@ it('exposes opaque cursors and carries every unchanged filter into following his
+   expect(requests[1]!.signal.aborted).toBe(false);
+ });
+ 
++it('passes an inclusive event anchor with filters and a bounded limit', async () => {
++  const requests: Request[] = [];
++  const client = createGraphGoblinClient({
++    baseUrl: 'http://graphgoblin.test',
++    fetch: (request) => {
++      requests.push(request);
++      return Promise.resolve(Response.json({ items: [], nextCursor: null }));
++    },
++  });
++  const query = {
++    anchor: '01ARZ3NDEKTSV4RRFFQ69G5FAV',
++    type: 'chosen',
++    before: '2099-01-01T00:00:00.000Z',
++    limit: 100,
++  };
++  await events.list(client, query);
++  const search = new URL(requests[0]!.url).searchParams;
++  expect(Object.fromEntries(search)).toEqual({ ...query, limit: '100' });
++  expect(search.has('cursor')).toBe(false);
++});
++
+ it('forwards run observation cancellation to GET without cancelling the run', async () => {
+   const requests: Request[] = [];
+   const client = createGraphGoblinClient({
+diff --git a/packages/infrastructure/src/sqlite/triggers.test.ts b/packages/infrastructure/src/sqlite/triggers.test.ts
+index 5f98ff09..e5404dfe 100644
+--- a/packages/infrastructure/src/sqlite/triggers.test.ts
++++ b/packages/infrastructure/src/sqlite/triggers.test.ts
+@@ -154,6 +154,26 @@ describe('SqliteInboundEvents', () => {
+     ...overrides,
+   });
+ 
++  it('re-reads inclusive anchored pages without decoding a damaged lookahead row', async () => {
++    const store = new SqliteInboundEvents(handle.db);
++    for (const id of ['a', 'b', 'c', 'z']) await store.insert(event(id));
++    const anchored = await store.page('local', { anchor: event('c'), limit: 2 });
++    expect(anchored.items.map((row) => row.id)).toEqual(['c', 'b']);
++    expect(anchored.next).toEqual({ receivedAt: FIXTURE_TS, id: 'b' });
++    expect(
++      (await store.page('local', { cursor: anchored.next! })).items.map((row) => row.id),
++    ).toEqual(['a']);
++    expect((await store.page('local', { anchor: event('a'), limit: 1 })).next).toBeNull();
++    expect((await store.page('other', { anchor: event('c') })).items).toEqual([]);
++    await handle.client.execute({
++      sql: 'UPDATE inbound_events SET payload = ? WHERE id = ?',
++      args: ['{invalid', 'b'],
++    });
++    const single = await store.page('local', { anchor: event('c'), limit: 1 });
++    expect(single.items.map((row) => row.id)).toEqual(['c']);
++    expect(single.next).toEqual({ receivedAt: FIXTURE_TS, id: 'c' });
++  });
++
+   it('inserts, lists newest first, pages, and records started runs', async () => {
+     const events = new SqliteInboundEvents(handle.db);
+     await events.insert(event('e1', { receivedAt: '2026-10-02T12:00:00.000Z' }));
+diff --git a/packages/infrastructure/src/sqlite/triggers.ts b/packages/infrastructure/src/sqlite/triggers.ts
+index c2e49d7f..65b92c0f 100644
+--- a/packages/infrastructure/src/sqlite/triggers.ts
++++ b/packages/infrastructure/src/sqlite/triggers.ts
+@@ -389,13 +389,21 @@ export class SqliteInboundEvents {
+       type?: string;
+       before?: string;
+       cursor?: Pick<InboundEventRecord, 'receivedAt' | 'id'>;
++      /** Inclusive page head for re-reading a loaded snapshot. */
++      anchor?: Pick<InboundEventRecord, 'receivedAt' | 'id'>;
+     } = {},
+   ): Promise<{
+     items: InboundEventRecord[];
+     next: Pick<InboundEventRecord, 'receivedAt' | 'id'> | null;
+   }> {
+     const limit = Math.max(1, Math.min(options.limit ?? 100, 500));
+-    const rows = await this.rawPageRows(ownerId, options, limit + 1, options.cursor);
++    const rows = await this.rawPageRows(
++      ownerId,
++      options,
++      limit + 1,
++      options.anchor ?? options.cursor,
++      options.anchor !== undefined,
++    );
+     // Both JSON columns stay raw until after trimming, including Drizzle's eager runIds decoder.
+     const items = await this.withDelivery(
+       rows
+@@ -414,13 +422,16 @@ export class SqliteInboundEvents {
+     options: { type?: string; before?: string },
+     limit: number,
+     cursor?: Pick<InboundEventRecord, 'receivedAt' | 'id'>,
++    inclusive = false,
+   ): Promise<(Omit<EventRow, 'runIds'> & { runIds: string })[]> {
+     const filters: SQL[] = [eq(inboundEvents.ownerId, ownerId)];
+     if (options.type) filters.push(eq(inboundEvents.type, options.type));
+     if (options.before) filters.push(lt(inboundEvents.receivedAt, options.before));
+     if (cursor)
+       filters.push(
+-        sql`(${inboundEvents.receivedAt}, ${inboundEvents.id}) < (${cursor.receivedAt}, ${cursor.id})`,
++        inclusive
++          ? sql`(${inboundEvents.receivedAt}, ${inboundEvents.id}) <= (${cursor.receivedAt}, ${cursor.id})`
++          : sql`(${inboundEvents.receivedAt}, ${inboundEvents.id}) < (${cursor.receivedAt}, ${cursor.id})`,
+       );
+     return this.db
+       .select({ ...getTableColumns(inboundEvents), runIds: sql<string>`${inboundEvents.runIds}` })

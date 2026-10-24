@@ -1,0 +1,101 @@
+pnpm --filter @graphgoblin/api test:coverage
+pnpm.cmd : $ vitest run --coverage
+At line:2 char:979
++ ... "$qaPath/$($gateJob.name).log.txt"; & pnpm.cmd @gateArgs 2>&1 | Out-F ...
++                                         ~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ vitest run --coverage:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-wp-f2b-205/apps/api
+      Coverage enabled with v8
+
+ ❯ src/adversarial.test.ts (34 tests | 1 failed) 28115ms
+   ❯ adversarial API invariants (34)
+     × ADV-008: every advertised route against every scope 657ms
+{"level":30,"time":1792802746842,"pid":30272,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5687"}
+{"level":30,"time":1792802746843,"pid":30272,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5687,"dataDir":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-api-process-yb9jvX","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792802746895,"pid":30272,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792802746902,"pid":30272,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":6.916200000001481,"msg":"request completed"}
+ ❯ src/routes/templates.test.ts (13 tests | 1 failed) 50438ms
+   ❯ template API without runtime authority (13)
+     × reads only manifests without provider, script or credential probes 20443ms
+ ❯ src/subloop-restart.test.ts (3 tests | 1 failed) 318891ms
+   ❯ awaited subloops across process death (#242) (3)
+     × a hard kill around child completion leaves every parent one continuation after restart 180392ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/adversarial.test.ts > adversarial API invariants > ADV-008: every advertised route against every scope
+AssertionError: expected [ 'DELETE /api-keys/{id}', …(51) ] to deeply equal [ 'DELETE /api-keys/{id}', …(50) ]
+
+- Expected
++ Received
+
+@@ -23,10 +23,11 @@
+    "GET /runs/{id}/events",
+    "GET /runs/{id}/sessions",
+    "GET /runs/{id}/thread",
+    "GET /secrets",
+    "GET /settings",
++   "GET /system/model-defaults",
+    "GET /system/preflight",
+    "GET /templates",
+    "GET /templates/{id}",
+    "PATCH /classifier-models/{id}",
+    "PATCH /model-catalog/{harness}/{model}",
+
+ ❯ src/adversarial.test.ts:194:31
+    194|       }
+    195|     }
+    196|     expect(advertised.sort()).toEqual(Object.keys(ROUTE_SCOPES).sort()…
+       |                 ^
+    197|     for (const route of advertised) {
+    198|       const required = ROUTE_SCOPES[route]!;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > a hard kill around child 
+completion leaves every parent one continuation after restart
+Error: Test timed out in 180000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/subloop-restart.test.ts:133:3
+    131|
+    132| describe('awaited subloops across process death (#242)', () => {
+    133|   it('a hard kill around child completion leaves every parent one cont…
+       |   ^
+    134|     const api = await boot();
+    135|     let server = await api.start();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/routes/templates.test.ts > template API without runtime authority > reads only manifests without provider, 
+script or credential probes
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/routes/templates.test.ts:19:3
+     17|
+     18| describe('template API without runtime authority', () => {
+     19|   it('reads only manifests without provider, script or credential prob…
+       |   ^
+     20|     app = await createTestApp();
+     21|     const preflight = vi.spyOn(app.harness, 'preflight');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  3 failed | 62 passed | 2 skipped (67)
+      Tests  3 failed | 1319 passed | 8 skipped (1330)
+   Start at  19:43:59
+   Duration  601.81s (tests 76%, import 19%, transform 4%, worker 1%)
+
+    Isolate  67 workers spawned · ~2.03s startup each (spawn + environment, per file)
+             at least ~10.32s faster with isolate: false — reuses workers across files instead of one per file
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f2b-
+  │ 205\apps\api
+

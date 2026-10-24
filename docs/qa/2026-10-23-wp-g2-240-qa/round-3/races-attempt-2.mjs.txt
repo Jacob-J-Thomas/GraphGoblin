@@ -1,0 +1,85 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import {spawn,execFileSync} from 'node:child_process';
+import {once} from 'node:events';
+import {createRequire} from 'node:module';
+const root=process.cwd(),out=path.join(root,'docs/qa/2026-10-23-wp-g2-240-qa/round-3');
+const req=createRequire(path.join(root,'apps/web/package.json'));
+const {chromium,expect}=req('@playwright/test');
+const clean=s=>String(s).replaceAll(process.env.USERPROFILE,'%USERPROFILE%').replaceAll(process.env.USERPROFILE.replaceAll('\\','/'),'%USERPROFILE%');
+const save=(n,v)=>fs.writeFileSync(path.join(out,n),clean(JSON.stringify(v,null,2))+'\n');
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const wait=async(f,ms=20000)=>{const at=Date.now();while(Date.now()-at<ms){if(await f())return;await sleep(50);}throw new Error('Condition timed out');};
+const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+const results={head:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),node:process.version,checks:[],processes:[],started:new Date().toISOString()};
+if(results.head!=='987b70f72b71b132a19918978d03d8ea09bef040')throw new Error('Wrong head');
+const note=(width,name,pass,details)=>{const evidence=width+'-'+name+'.json';save(evidence,details);results.checks.push({width,name,pass,evidence});save('race-results.json',results);console.log(JSON.stringify({width,name,pass}));};
+let browser,child,page,ctx;
+try{
+ browser=await chromium.launch({channel:'msedge',headless:true});results.browser=browser.version();
+ for(const width of [1440,390]){
+  const data=fs.mkdtempSync(path.join(os.tmpdir(),'gg-qa-g2-240-r3-races-')),port=5924,base='http://127.0.0.1:'+port;
+  const env={...process.env,GG_HOST:'127.0.0.1',GG_PORT:String(port),GG_DATA_DIR:data,GG_DB_URL:'file:'+path.join(data,'graphgoblin.db').replaceAll('\\','/'),GG_REQUIRE_API_KEY:'true',GG_LOG_LEVEL:'silent',GG_WEB_DIST:path.join(root,'apps/web/dist')};
+  delete env.GG_MASTER_KEY;delete env.GG_JEV_API_KEY;delete env.JEV_API_KEY;
+  const key=execFileSync(process.execPath,['apps/api/dist/main.js','--create-api-key','qa-races'],{env,encoding:'utf8'}).match(/\bgg_[A-Za-z0-9_-]+/u)[0];
+  let serverReady=false;child=spawn(process.execPath,['--input-type=module','-'],{cwd:path.join(root,'apps/web'),env,stdio:['pipe','pipe','pipe','ipc'],windowsHide:true});
+  for(const p of [child.stdout,child.stderr])p.on('data',b=>{fs.appendFileSync(path.join(out,'race-server-'+width+'.log.txt'),clean(b));if(String(b).includes('"ready":true'))serverReady=true;});
+  child.stdin.end(fs.readFileSync(path.join(out,'server.mjs.txt')));await wait(()=>serverReady,60000);
+  results.processes.push({width,pid:child.pid,data,port});
+  const api=async(url,body)=>{const response=await fetch(base+url,{method:body===undefined?'GET':'POST',headers:{Authorization:'Bearer '+key,...(body===undefined?{}:{'content-type':'application/json'})},...(body===undefined?{}:{body:JSON.stringify(body)})});const json=await response.json();if(!response.ok)throw new Error(JSON.stringify({url,status:response.status,json}));return json;};
+  const send=(type,index)=>api('/events',{type,payload:{index}});
+  const seed=async(type,n)=>{for(let s=0;s<n;s+=20)await Promise.all(Array.from({length:Math.min(20,n-s)},(_,i)=>send(type,s+i)));};
+  ctx=await browser.newContext({viewport:{width,height:900},serviceWorkers:'block'});await ctx.addInitScript(k=>localStorage.setItem('graphgoblin-api-key',k),key);page=await ctx.newPage();
+  const ids=()=>page.locator('[data-testid^="payload-"]').evaluateAll(a=>a.map(x=>x.getAttribute('data-testid').slice(8)));
+  const snap=async()=>({url:page.url(),ids:await ids(),status:await page.locator('[role="status"]').allTextContents(),busy:await refresh().getAttribute('aria-busy')});
+  const refresh=()=>page.getByRole('button',{name:'Refresh',exact:true});
+  const ready=()=>expect(refresh()).toHaveAttribute('aria-busy','false',{timeout:20000});
+  const goto=async(type)=>{await page.goto(base+'/app/events?type='+type);await expect(page.locator('tbody tr')).toHaveCount(100);await ready();};
+  const more=async(count)=>{await page.getByRole('button',{name:'Load more',exact:true}).click();await expect(page.locator('tbody tr')).toHaveCount(count);await ready();};
+  const revisit=async(mode)=>{if(mode==='unmount'){await page.getByRole('link',{name:'Runs',exact:true}).click();await expect(page.getByRole('heading',{name:'Runs',exact:true})).toBeVisible();await page.goBack();}else{await page.getByRole('button',{name:'Clear type filter'}).click();await ready();await page.goBack();}await ready();};
+  async function hold(type,n){
+   const held=[];let count=0;
+   const handler=async route=>{const u=new URL(route.request().url());if(u.pathname!=='/events'||u.searchParams.get('type')!==type||u.searchParams.has('limit')||u.searchParams.has('cursor')||u.searchParams.has('anchor')){await route.continue();return;}const i=count++;if(i>=n){await route.continue();return;}const response=await route.fetch(),json=await response.json();let release,done;const latch=new Promise(r=>release=r),delivered=new Promise(r=>done=r);const h={ids:json.items.map(x=>x.id),release,delivered,mode:'success'};held[i]=h;await latch;try{if(h.mode==='fail')await route.fulfill({status:503,contentType:'application/problem+json',body:JSON.stringify({title:'QA delayed Refresh failure',status:503,code:'QA_UNAVAILABLE',detail:'Controlled older request failure'})});else await route.fulfill({response});}finally{done();}};
+   await page.route('**/events?**',handler);return{wait:i=>wait(()=>held[i]),release:async(i,mode='success')=>{held[i].mode=mode;held[i].release();await held[i].delivered;},details:()=>held.map(h=>({first:h.ids[0],count:h.ids.length,mode:h.mode})),close:()=>page.unroute('**/events?**',handler)};
+  }
+  await seed('race-proof',205);
+  const raceCases=[['B1-audit-two-filter-revisit',2,'filter',false],['B1-three-filter-revisits',3,'filter',false],['B1-three-unmount-revisits',3,'unmount',false],['B1-old-fails-new-succeeds',2,'filter',true],['B1-three-tab-switches',3,'filter',false]];
+  for(const [name,n,mode,fail] of raceCases){
+   await goto('race-proof');await more(200);const held=await hold('race-proof',n-1);
+   for(let i=0;i<n-1;i++){await refresh().click();await held.wait(i);await revisit(mode);if(name.includes('tab-switches')){const other=await ctx.newPage();await other.goto(base+'/app/events');await other.bringToFront();await page.bringToFront();await other.close();}await send('race-proof',name+'-arrival-'+i);}
+   await refresh().click();await ready();await expect(page.locator('tbody tr')).toHaveCount(100);await more(200);const before=await snap();
+   // Resolve the middle request first, then the oldest, after the newest has appended.
+   for(let i=n-2;i>=0;i--)await held.release(i,fail?'fail':'success');
+   await held.close();await sleep(600);const after=await snap();
+   note(width,name,same(before.ids,after.ids)&&after.status.some(s=>s.includes('Showing the newest events.'))&&!after.status.some(s=>s.includes('Refresh failed')),{steps:'Load 200; hold old Refresh(es); leave/revisit same filter; post newer matching rows; complete newest Refresh; append; resolve older responses last.',expected:'200 winning IDs, order and newest success status retained',before,after,held:held.details()});
+  }
+  // Rapid same-scope activation stays one request while busy.
+  await goto('race-proof');await more(200);let held=await hold('race-proof',1);const old=await ids();await refresh().dblclick({delay:30});await held.wait(0);const during=await snap();await held.release(0);await held.close();await ready();note(width,'rapid-refresh-busy',same(old,during.ids)&&during.busy==='true'&&(await ids()).length===100,{during,after:await snap(),held:held.details()});
+  // A separate tab owns its own query cache while the first tab holds a Refresh.
+  await goto('race-proof');await more(200);held=await hold('race-proof',1);await refresh().click();await held.wait(0);const tabA=await ids(),other=await ctx.newPage();await other.goto(base+'/app/events?type=race-proof');await expect(other.locator('tbody tr')).toHaveCount(100);const arrival=await send('race-proof','second-tab-winner');await other.getByRole('button',{name:'Refresh',exact:true}).click();await expect(other.locator('tbody tr').first()).toContainText('second-tab-winner');const tabB=await other.locator('[data-testid^="payload-"]').evaluateAll(a=>a.map(x=>x.getAttribute('data-testid').slice(8)));const unchanged=same(tabA,await ids());await held.release(0);await held.close();await other.close();await page.bringToFront();await ready();note(width,'two-tab-cache-isolation',unchanged&&tabB[0]===arrival.id,{tabABefore:tabA,tabBAfter:tabB,tabAAfterOwnResponse:await ids(),expected:'other tab Refresh does not write first tab cache'});
+  // B2 follows real API pages; only delivery metadata is a controlled response fixture.
+  const receiptCases=[['B2-audit-one-arrival-admitted',99,1,'admitted',false],['B2-first-row-many-failed',0,501,'failed',false],['B2-second-boundary-many-admitted',199,501,'admitted',false],['B2-third-page-many-failed-tied',249,501,'failed',true],['B2-first-boundary-one-failed-tied',99,1,'failed',true]];
+  for(let c=0;c<receiptCases.length;c++){
+   const [name,index,arrivals,terminal,tied]=receiptCases[c],type='receipt-'+c;await seed(type,305);
+   if(tied){const {createClient}=createRequire(path.join(root,'packages/infrastructure/package.json'))('@libsql/client');const client=createClient({url:env.GG_DB_URL});await client.execute({sql:'UPDATE inbound_events SET received_at=? WHERE type=?',args:['2026-10-24T00:00:00.000Z',type]});client.close();}
+   const all=[];let cursor;do{const p=await api('/events?type='+type+(cursor?'&cursor='+encodeURIComponent(cursor):''));all.push(...p.items);cursor=p.nextCursor;}while(cursor);const receiptId=all[index].id;
+   let state='pending';const polls=[];
+   const fixture=async route=>{const u=new URL(route.request().url());if(u.pathname!=='/events'||u.searchParams.get('type')!==type){await route.continue();return;}const response=await route.fetch(),json=await response.json();json.items=json.items.map(x=>x.id===receiptId?{...x,delivery:state==='pending'?{state:'pending',attempts:0}:state==='admitted'?{state:'admitted',attempts:1}:{state:'failed',attempts:3,failureCode:'ADMISSION_FAILED'}}:x);polls.push({query:u.search,state,count:json.items.length,ids:json.items.map(x=>x.id),containsReceipt:json.items.some(x=>x.id===receiptId)});await route.fulfill({response,json});};
+   await page.route('**/events?**',fixture);await goto(type);const pages=Math.floor(index/100)+1;for(let p=2;p<=pages;p++)await more(p*100);const before=await ids();const receipt=()=>page.locator('tbody tr').filter({has:page.getByTestId('payload-'+receiptId)});await expect(receipt()).toContainText('Pending admission');
+   await seed(type,arrivals);
+   if(tied){const {createClient}=createRequire(path.join(root,'packages/infrastructure/package.json'))('@libsql/client');const client=createClient({url:env.GG_DB_URL});await client.execute({sql:'UPDATE inbound_events SET received_at=? WHERE type=?',args:['2026-10-24T00:00:00.000Z',type]});client.close();}
+   const changedAt=Date.now();state=terminal;await expect(receipt()).toContainText(terminal==='admitted'?'Admitted':'Failed',{timeout:20000});const updatedAt=Date.now(),after=await ids(),text=await receipt().innerText();
+   const anchored=polls.filter(p=>new URLSearchParams(p.query).has('anchor'));const addressed=anchored.some(p=>p.containsReceipt&&p.state===terminal);note(width,name,same(before,after)&&addressed,{steps:'Load receipt at index '+index+'; add '+arrivals+' arrivals; make delivery '+terminal+'; wait for automatic poll without Refresh',expected:'Same loaded IDs/order, terminal badge, anchored bounded read contains receipt',fixture:'Controlled valid delivery metadata; real SQLite rows, API paging and Edge UI. Native admission is not established.',receiptId,index,arrivals,terminal,tied,msToBadge:updatedAt-changedAt,before,after,text,polls});
+   if(c===0||tied)await page.screenshot({path:path.join(out,width+'-'+name+'.png')});
+   const count=anchored.length;await sleep(4500);const terminalAnchors=polls.filter(p=>new URLSearchParams(p.query).has('anchor')).length;note(width,name+'-poll-stops',terminalAnchors===count,{anchoredCountAtTerminal:count,after4500Ms:terminalAnchors,expected:'No more data polling after all displayed deliveries terminal'});
+   await page.unroute('**/events?**',fixture);
+  }
+  await page.evaluate(()=>window.scrollTo(0,0));await page.screenshot({path:path.join(out,width+'-race-final.png')});
+  note(width,'responsive-overflow',await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),{width,scrollWidth:await page.evaluate(()=>document.documentElement.scrollWidth)});
+  await ctx.close();ctx=null;const stopped=once(child,'exit');child.send('stop');const exit=await stopped;results.processes.at(-1).exit=exit;child=null;
+ }
+}catch(e){results.fatal=clean(e.stack);if(page&&!page.isClosed()){results.failurePage={url:page.url(),body:await page.locator('body').innerText()};await page.screenshot({path:path.join(out,'race-fatal.png')}).catch(()=>{});}console.error(e);}
+finally{await ctx?.close();await browser?.close();if(child&&child.exitCode===null){const stopped=once(child,'exit');child.send('stop');await Promise.race([stopped,sleep(15000)]);}results.finished=new Date().toISOString();save('race-results.json',results);}
+if(results.fatal||results.checks.some(x=>!x.pass))process.exitCode=1;
+

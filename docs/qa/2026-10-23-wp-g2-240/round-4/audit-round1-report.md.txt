@@ -1,0 +1,115 @@
+CHANGES REQUIRED: PR #394 at 05b5609bef1bcd31bfda5daa80dca83e6ebba273 must not merge.
+
+## Blocking findings
+
+1. **B1 — An obsolete Refresh can replace a newer reading snapshot (P2).** `apps/web/src/api/queries.ts:292` (unconditional cache write at line 296). Load 200 rows for a type, hold Refresh A's HTTP response, clear the type filter, go Back, post another matching event, complete Refresh B, and load its second page. Release A. The UI drops from **200 to 100 rows**, removes B's newest event, restores A's older first ID, and reports **“Showing the newest events.”** The clean-store proof records winner `01M5PNXFVFK9YF5X1DFEBXW1Z0` replaced by `01M5PNXDA6116V8NPJSH7JP1V9`. This violates #240's deliberate-refresh/reading-position requirement. `cancelQueries` cancels query reads, not the older mutation; leaving the filter removes the pending-mutation guard without preventing its later cache write. **Smallest fix:** supersede/abort obsolete refreshes and allow only the current refresh generation for that query scope to commit. Cover leaving/revisiting the same filter and remounting while a refresh is pending; merely keeping the existing distinct-filter test is insufficient.
+
+2. **B2 — A loaded pending receipt stops updating after an arrival pushes it past the first-page boundary (P2).** `apps/web/src/api/queries.ts:315`–324. Load the first 100 of 101 Events with the 100th row pending. Insert one newer event and make the receipt admitted. Subsequent first-page reads omit the pending ID; the retained next-page cursor excludes that same boundary row. The merge therefore keeps its old pending value indefinitely. The clean-store proof observed repeated first-page and continuation reads missing `01M5PNXG9V3NF2TZ9KFP2VH05B`, while its displayed state remained **“Pending admission.”** A deliberate Refresh plus Load more immediately displayed **“Admitted.”** This regresses the automatic receipt-recovery updates promised in docs/07 and docs/09 and keeps otherwise unnecessary history polling active. **Smallest fix:** reconcile all pending loaded identities even when newer arrivals displace them from the live head page, while preserving displayed membership and cursors. Add this exact boundary regression.
+
+Both are independently reproducible with [repro-blockers.mjs](repro-blockers.mjs) and its supported-container launcher [server.mjs](server.mjs), from the audited worktree:
+
+~~~powershell
+$env:PATH = "$env:APPDATA\nvm\v22.14.0;$env:PATH"
+node "$env:TEMP\gg-audit-g2-240-round1\repro-blockers.mjs"
+~~~
+
+The command exits 1 because both required invariants fail. [blocker-proof.json](blocker-proof.json) contains IDs, before/after state, request boundaries and recovery; [blocker-proof.log](blocker-proof.log) records the failures and server exit. B1 uses real responses held at the browser transport. B2 uses real stored Events and API paging with a controlled, valid delivery-state response fixture; it is **not** a claim of a native webhook-admission failure.
+
+## Non-blocking findings
+
+1. **N1 — QA manifests do not identify the committed bytes.** `docs/qa/2026-10-23-wp-g2-240-qa/artifact-manifest.json:423` and `round-2/artifact-manifest.json:553` (additional entries listed in the evidence). Across the two manifests, **36 SHA-256 values differ from committed blobs**. Thirty-two exactly match after restoring CRLF; three additional differences correspond to the orchestrator's disclosed redactions; `preflight.mjs.txt` is the fourth difference not explained by line endings. No manifest member is missing, no changed QA artifact exceeds 1,000,000 bytes, and all changed QA Markdown links resolve. The evidence is readable, so this is not a third product blocker. Reconcile the manifest with the bytes actually carried, or explicitly distinguish capture hashes from committed-file hashes, including every sanitation/line-ending transformation. Reproduce with [evidence-audit.mjs](evidence-audit.mjs) then [committed-hashes.mjs](committed-hashes.mjs); complete results: [evidence-audit-committed.json](evidence-audit-committed.json).
+
+2. **N2 — Local full-suite timing failure in unchanged routing code.** `apps/web/src/editor/routing-review.test.ts:662`, “seeded sparse graphs preserve geometry and keep detours below twelve bends,” exceeded its 60-second budget at **66,198 ms** in the coverage run. This file has no diff against the stated target. The original failed gate is retained. **Full run:** 130 files passed / 1 failed; 1,642 tests passed / 1 failed; 2,085.44 s Vitest duration (2,101.06 s command wall), exit 1. **One isolated rerun, after the full suite ended:** all 23 tests passed in one file, 150.06 s Vitest duration, exit 0. The rerun used one worker without coverage instrumentation: `pnpm.cmd --filter @graphgoblin/web exec vitest run src/editor/routing-review.test.ts --maxWorkers=1`. It was the only active test command from this audit; the host remained shared. [Original failure](web-coverage.log), [isolated rerun](routing-isolated.log), [rerun metadata](routing-isolated-result.json). This belongs to the existing routing/test-runtime scope; do not expand #240 to repair its algorithm or raise its timeout. A later isolated pass does not turn the original run into a pass.
+
+## Requirement matrix
+
+Bolt **#240**, sole acceptance criterion: “New events appear on deliberate refresh without silently moving the user's reading position or resetting filters.” **Partially satisfied; B1 blocks acceptance.** The retained receipt-update behavior also fails under B2.
+
+| Criterion or necessary behavior | Status | Independently checked evidence |
+| --- | --- | --- |
+| Arrival while reading an older page preserves rows, order and position | Satisfied in normal flow | 300 UI IDs equal three API pages; arrival changes no IDs or reading-anchor position. Maintained `events-refresh.spec.ts` first test also passed its scroll/focus assertions. |
+| Deliberate Refresh replaces pages and retains type/before | Partially satisfied | Normal refresh and three subsequent API pages agree with no gaps/duplicates; B1 fails when an obsolete request completes last. |
+| Refresh pending/failure retains loaded rows and filters | Satisfied for tested active-view flows | Native API stop, failed keyboard Refresh: 200 IDs and URL unchanged; clear failure message. Real process restart preserves the same snapshot. |
+| Filter values visible; independent keyboard clearing | Satisfied | Tab/Enter clears only the selected parameter, retains `keep=reader`, returns focus to Refresh. Clear-before and clear-type during an outstanding request preserve the new scope. |
+| Empty filtered result and first arrival | Satisfied | Separate filtered-empty text; first match remains absent until Refresh. |
+| Arrival notice, failed check beside it, recovery and successful-refresh status | Satisfied for tested active-view flows | Native outage shows both notices; restart clears check failure; success shows newest status. Arrival after a held response snapshot is announced without being inserted. B1 can subsequently make that success status false. |
+| Pending receipt updates continue without changing page membership | Not satisfied | B2; head and retained continuation skip the pending boundary ID. Existing test `keeps the first page stable until Refresh and retains existing pending-receipt updates` covers an interior receipt, not this boundary. |
+| Shared HistoryState consumers retain default behavior | Satisfied | Runs and loop-filtered history: cold/refetch errors show no rows; append errors retain 100 identical rows; retry loads 101. |
+| Check cost at 5,000 stored Events | Satisfied for measured window | Exactly 5,000 unique IDs in a complete REST sweep; three idle `limit=1` responses over seven seconds, 292 bytes each, about 2.00 s apart; no long tasks, maximum sampled animation-frame gap 35.1 ms. |
+
+Production/test mapping: `EventsPage.tsx:119`–200, `queries.ts:284`–369 and `HistoryState.tsx:13`–51; `EventsPage.recovery.test.tsx` tests failed Refresh retention, filter clearing, success status, simultaneous arrival/error status and a late response in a different filter scope. These are meaningful public-page tests. They do not cover B1's return to the original scope or B2's displaced receipt. No thresholds, exclusions, dependencies, suppressed diagnostics, private production exports or skipped/only tests were added by the change.
+
+## Verification you ran beyond the gates
+
+Target: **main at 9240c3c6ec0994af27d644ba199be38aa479df5a**, already contained in the audited head.
+
+Environment: Windows, Node **22.14.0**, Edge **156.0.4314.42**, exact head confirmed, dependencies present, initial and final worktrees clean. Built API/SQLite in disposable `gg-audit-g2-240-*` stores; main diagnostic API **5920**. Fake harnesses supplied through public container overrides; no provider turns. No owner ports, store, checkout, index, commits or GitHub writes.
+
+- Initial 300-row UI/API agreement, arrival stability, reading-anchor stability, normal Refresh and three-page continuation: pass.
+- Exactly full/page-boundary behavior and opaque paging: the maintained Events/history specs passed; REST sweep at 5,000 yielded 5,000 unique IDs.
+- Empty filtered result, first subsequent arrival, explicit Refresh: pass.
+- Pending-arrival notice followed by native API stop, failed Refresh, native restart and explicit recovery: pass; 200 loaded IDs retained.
+- Keyboard clearing of type and before, unrelated URL parameter retained, focus returned: pass.
+- Slow Refresh then clear type or before: distinct current scope remains correct.
+- Rapid double activation while pending: one first-page request; old rows retained until it completes.
+- Arrival during a held Refresh: old response commits its snapshot and a subsequent check announces the later event.
+- Slow Refresh, clear filter, Back, newer Refresh, append, then old completion: **B1 reproduced twice after repairing the diagnostic transport helper**, including a fresh-store minimal proof.
+- Pending receipt displaced from the live first page: **B2 reproduced twice**; explicit Refresh and Load more recover its admitted state.
+- Edge Accessibility.getFullAXTree confirms the status live region has live=polite. Keyboard clearing at 390 px passes; an invalid before filter shows the normal error and its clear control recovers the matching rows. [accessibility-results.json](accessibility-results.json).
+- 390 px two-tab isolation: refreshing the second tab does not replace the first tab's 200 rows; no horizontal overflow. The foreground tab is activated before checking its two-second poll.
+- Runs and loop-filtered history initial/refetch/append failures and recovery: pass.
+- Browser harness: omitted instance ID still stops/restores the default instance, duplicate stop is harmless, unknown ID returns 400; maintained Events outage test stops/restores its extra instance and passes.
+- No commit attribution. The one `git grep -n "<user name>" HEAD -- docs` hit is `docs/qa/2026-10-22-wp-f2b-qa/round-5/audit-evidence.mjs:32`; the exact same line exists on target `9240c3c6`. It is inherited, outside this bolt, and set aside.
+- Evidence checks: all 254 manifest members exist; changed QA links resolve; zero oversized changed QA artifacts; N1 records byte/hash discrepancies.
+
+Scripts/results: [browser-audit.mjs](browser-audit.mjs), [browser-results.json](browser-results.json), [browser-verified.mjs](browser-verified.mjs), [browser-verified-results.json](browser-verified-results.json), [browser-extras.mjs](browser-extras.mjs), [extras-results.json](extras-results.json), [listener-results.json](listener-results.json), and the clean [blocker proof](blocker-proof.json).
+
+Diagnostic limitations were kept rather than counted as product failures: an initial comparison incorrectly sent UI-only `keep` to the REST API (correctly rejected 400); the first delayed-response helper removed interception before delivery completed and was repaired; a first two-tab check waited on a hidden tab although polling intentionally pauses there. The validated proof waits for response delivery before removing interception. Temporary harness startup also required Windows file URLs and an ESM extension; no product assertion ran in those failed setup attempts. All final owned servers stopped; the one server left after a diagnostic process error was explicitly stopped by its recorded PID.
+
+## Gates
+
+All commands used Node 22 and `pnpm.cmd`. Only `@graphgoblin/web` is a changed package.
+
+| Command | Result |
+| --- | --- |
+| `pnpm.cmd build` | PASS, 11 tasks, 10 cached, 28.993 s. Nonfatal Turbo cache-write “Access is denied” warning retained. |
+| `pnpm.cmd typecheck` | PASS, 20 tasks, 17 cached, 68.89 s wall. |
+| `pnpm.cmd lint` | PASS, 11 tasks, one cached, 214.42 s wall. |
+| `pnpm.cmd format:check` | PASS, 278.75 s. |
+| `pnpm.cmd check:layers` | PASS, 1.60 s. |
+| `pnpm.cmd check:deps` | PASS, 16.34 s. |
+| `pnpm.cmd check:tokens` | PASS, 2.18 s. |
+| `pnpm.cmd --filter @graphgoblin/web test:coverage --maxWorkers=2` | **FAIL**, exit 1: 130/131 files and 1,642/1,643 tests passed; one untouched routing timeout, 2,085.44 s. Vitest did not emit local coverage totals after the failure. No thresholds or exclusions changed; exact-head CI coverage numbers are stated below. |
+| `pnpm.cmd --filter @graphgoblin/web exec vitest run src/editor/routing-review.test.ts --maxWorkers=1` | PASS in its one isolated rerun, 1 file / 23 tests, 150.06 s; no coverage instrumentation. The original full gate remains failed. |
+| `pnpm.cmd --filter @graphgoblin/web exec playwright test --config "$env:TEMP\gg-audit-g2-240-round1\e2e.config.ts" e2e/events-refresh.spec.ts e2e/history.spec.ts --retries=0` | PASS, **5/5**, 3.1 minutes, no retries. |
+| `pnpm.cmd check:docs` | Not applicable: no production route or node schema changed. |
+| `pnpm.cmd check:licenses` | Not applicable: no dependency changed. |
+
+Browser runner qualification: the repository config is imported and its test bodies/settings are retained. Only setup/output paths are redirected to the audit folder. A temporary copy of the existing server changes import/dist locations and binds main/control/extra instances to **5921/5922/5923 onward**; listener control logic is unchanged. This accommodates the allocation because the repository harness hard-codes ephemeral ports. No alternative harness/config was added to the repository. [e2e.log](e2e.log), [e2e.config.ts](e2e.config.ts), [e2e-setup.mjs](e2e-setup.mjs), [bounded-e2e-server.mts](bounded-e2e-server.mts).
+
+Current CI was read back independently: [CI run 40080497346](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/40080497346) completed successfully for **05b5609bef1bcd31bfda5daa80dca83e6ebba273**. The exact-head Gates log independently confirms a cache miss and all 131 web files / 1,643 tests passing in 301.24 s: 98.92% lines (7,468/7,549), 95.00% branches (7,779/8,188), 98.04% statements and 98.48% functions, above the unchanged 90% thresholds. [CI coverage excerpt](ci-web-coverage.json). These are CI measurements, not a local pass. CI success does not resolve B1/B2 or convert a failed local run into a pass. Gate transcripts and machine-readable summaries are in [gates.json](gates.json), [web-coverage.log](web-coverage.log), and [build.log](build.log).
+
+## Dispositions checked
+
+- Register section 4b's WP-G2 row principally describes already-merged #231/#236, not an acceptance of #240. Its old defects are not reopened in this audit.
+- Section 7's #240 entry: **agree** the private repository Playwright harness was removed and the maintained spec uses the shared fixtures. **Agree** the four QA defects received real fixes; the entry saying round 3 was still running is historical.
+- QA D1, failed Refresh removes loaded rows: **agree fixed**, independently verified with a real listener/process outage and the maintained browser test.
+- QA D2, missing filter clear controls: **agree fixed**, independently verified through keyboard interaction.
+- QA D3, missing position status: **agree fixed** in ordinary success. B1 is a separate concurrency case that makes a later status misleading.
+- QA D4, pending-arrival notice hides failed-check status: **agree fixed**, both statuses observed during native outage and recovery.
+- QA V1, worker-start failure at `cc1c3fce`: the committed report accurately keeps its full local run failed. The orchestrator's CI rerun disposition is supported by successful exact-head CI read-back; it is not substituted for this audit's own gate result.
+- D-028/D-030: **agree on file completeness**, with N1 qualifying byte fidelity. D-034: no changed QA capture exceeds the cap.
+- “No product defect remains open” is **not accepted as an exact-head conclusion**: B1/B2 are additional reproduced cases.
+- D-035: this is the requested audit round 1. No subagents, additional audit sessions or out-of-scope fixes were launched. The #343 untargeted-event seeding integration is the stated second-merge reconciliation, not a finding here.
+
+## Residual risks
+
+B1 and B2 prevent merge at the audited head. Native webhook admission/recovery itself was not requalified by B2's response fixture; this audit proves the UI reconciliation failure, not an engine failure. Long-run/multi-client performance beyond the measured 5,000-event window is unproven and belongs to the wider sustained-work scope. The listener evidence uses a port-adapted copy, as disclosed. No screen-reader audio or live provider behavior is claimed.
+
+Numbered docs 07/09 and the issue-ending CHANGELOG bullet are present; no new ADR, migration or generated API reference is required by this UI change. Documentation's automatic receipt-update promise remains false in B2. The pending #343/#389 contract change requires the already-agreed integration adjustment if it merges first.
+
+This report and all new diagnostic artifacts live only under `%TEMP%\gg-audit-g2-240-round1`. Repository source and the Git index are unchanged. The full run and the one isolated rerun are complete and recorded separately. The exact audit head was rechecked before delivery.
+
+
+
+

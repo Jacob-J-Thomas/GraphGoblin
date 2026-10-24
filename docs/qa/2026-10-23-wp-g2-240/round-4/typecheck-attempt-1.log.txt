@@ -1,0 +1,75 @@
+pnpm.cmd : $ turbo run typecheck
+At line:8 char:1
++ pnpm.cmd typecheck *> "$folder/typecheck.log.txt"
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ turbo run typecheck:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running typecheck in 12 packages
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/contracts:typecheck: cache hit, replaying logs 15b21fc16c2286b0
+@graphgoblin/contracts:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/contracts:build: cache hit, replaying logs 51bea7c6237eb76e
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+@graphgoblin/domain:typecheck: cache hit, replaying logs c23f3b7a693183e9
+@graphgoblin/domain:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/domain:build: cache hit, replaying logs 2991fa86bbba8a3c
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:build: cache miss, executing 73a80cacdac17fb8
+@graphgoblin/engine:typecheck: cache miss, executing 99c8385a34a1f1e2
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/adapter-codex:typecheck: cache miss, executing d96ecc3b630a092e
+@graphgoblin/infrastructure:typecheck: cache miss, executing 775218610157628d
+@graphgoblin/adapter-codex:build: cache miss, executing 7e2b4d8da14f2648
+@graphgoblin/adapter-jev:build: cache miss, executing a658fd2f629f8e96
+@graphgoblin/infrastructure:build: cache miss, executing 3681cf63e5bfe07f
+@graphgoblin/adapter-jev:typecheck: cache miss, executing 030a675d70f0267d
+@graphgoblin/adapter-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/infrastructure:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-jev:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+ WARNING  IO error: Access is denied. (os error 5)
+ WARNING  IO error: Access is denied. (os error 5)
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/api:build: cache miss, executing 2d3cbadeaf9ab7a1
+@graphgoblin/api:typecheck: cache miss, executing 84b0bf476df5f259
+@graphgoblin/api:build: $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+@graphgoblin/api:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/api-client:build: cache miss, executing 8dc000cc2ec5b970
+@graphgoblin/api-client:typecheck: cache miss, executing b47f8ad5e85fe0e7
+@graphgoblin/api-client:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/api-client:build: $ tsc -b tsconfig.build.json
+@graphgoblin/web:typecheck: cache miss, executing 87e9746c6cbe61e1
+@graphgoblin/mcp:typecheck: cache miss, executing 2b3177447a6cf64b
+@graphgoblin/mcp:build: cache miss, executing 30a76ca1a18e3870
+@graphgoblin/web:typecheck: $ tsc -p tsconfig.json --noEmit
+@graphgoblin/mcp:build: $ tsc -b tsconfig.build.json
+@graphgoblin/mcp:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/plugin-codex:typecheck: cache miss, executing cf2054feb8672cdc
+@graphgoblin/plugin-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/web:typecheck: src/api/queries.ts(324,9): error TS2345: Argument of type '{ cursor: undefined; anchor: string; limit: number; type?: string; before?: string; } | { anchor: undefined; cursor: string; type?: string; before?: string; limit?: number; } | { type?: string; before?: string; anchor?: string; cursor?: string; limit?: number; }' is not assignable to parameter of type '{ type?: string; before?: string; anchor?: string; cursor?: string; limit?: number; } | undefined'.
+@graphgoblin/web:typecheck:   Type '{ cursor: undefined; anchor: string; limit: number; type?: string; before?: string; }' is not assignable to type '{ type?: string; before?: string; anchor?: string; cursor?: string; limit?: number; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+@graphgoblin/web:typecheck:     Types of property 'cursor' are incompatible.
+@graphgoblin/web:typecheck:       Type 'undefined' is not assignable to type 'string'.
+@graphgoblin/web:typecheck: [ELIFECYCLE] Command failed with exit code 2.
+@graphgoblin/web#typecheck:  ERROR  command 
+(%USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g2-240\apps\web) C:\nvm4w\nodejs\pnpm.cmd run 
+typecheck exited (2)
+
+ Tasks:    19 successful, 20 total
+Cached:    4 cached, 20 total
+  Time:    4m38.166s 
+Failed:    @graphgoblin/web#typecheck
+
+ ERROR  run failed: command  exited (2)
+[ELIFECYCLE] Command failed with exit code 2.
+EXIT_CODE=2

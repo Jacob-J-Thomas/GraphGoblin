@@ -802,6 +802,10 @@ export class FakeApi {
     ['POST /runs/:id/signals/:name', () => json({ woke: true })],
     ['GET /settings', () => json(this.settingsValues)],
     [
+      'GET /system/model-defaults',
+      () => json({ byHarness: { codex: { model: 'gpt-6-luna', effort: 'low' } } }),
+    ],
+    [
       'PUT /settings',
       (call) => {
         Object.assign(this.settingsValues, call.body);
@@ -1015,6 +1019,11 @@ export class FakeApi {
         if (type) items = items.filter((event) => event.type === type);
         const before = call.search.get('before');
         if (before) items = items.filter((event) => event.receivedAt < before);
+        const anchor = call.search.get('anchor');
+        if (anchor) {
+          const start = items.findIndex((item) => item.id === anchor);
+          items = start < 0 ? [] : items.slice(start);
+        }
         const cursor = call.search.get('cursor');
         if (cursor) items = items.slice(items.findIndex((item) => item.id === cursor) + 1);
         const limit = Number(call.search.get('limit') ?? 100);

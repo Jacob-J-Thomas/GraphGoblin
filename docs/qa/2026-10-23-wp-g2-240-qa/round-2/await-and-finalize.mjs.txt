@@ -1,0 +1,17 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {spawnSync} from 'node:child_process';
+const root=process.cwd(),dir=path.join(root,'docs/qa/2026-10-23-wp-g2-240-qa/round-2');
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+while(!fs.existsSync(path.join(dir,'coverage-result.json'))){
+ let captures=0;try{captures=fs.readdirSync(path.join(root,'apps/web/coverage'),{recursive:true,withFileTypes:true}).filter(x=>x.isFile()&&x.name.startsWith('coverage-')).length;}catch{}
+ console.log(JSON.stringify({at:new Date().toISOString(),coverageCaptures:captures,finalResult:'pending'}));
+ await sleep(30000);
+}
+const source=path.join(root,'apps/web/coverage/coverage-summary.json');
+if(fs.existsSync(source))fs.copyFileSync(source,path.join(dir,'coverage-summary.json'));
+for(const script of ['make-report.mjs.txt','finalize.mjs.txt']){
+ const result=spawnSync(process.execPath,['--input-type=module','-'],{cwd:root,input:fs.readFileSync(path.join(dir,script)),encoding:'utf8',windowsHide:true});
+ process.stdout.write(result.stdout??'');process.stderr.write(result.stderr??'');
+ if(result.status!==0){process.exitCode=result.status??1;break;}
+}

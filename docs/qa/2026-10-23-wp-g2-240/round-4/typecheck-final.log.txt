@@ -1,0 +1,64 @@
+pnpm.cmd : $ turbo run typecheck
+At line:2 char:52
++ ... $env:PATH"; pnpm.cmd typecheck *> docs/qa/2026-10-23-wp-g2-240/round- ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ($ turbo run typecheck:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running typecheck in 12 packages
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/contracts:typecheck: cache hit, replaying logs 15b21fc16c2286b0
+@graphgoblin/contracts:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/contracts:build: cache hit, replaying logs 51bea7c6237eb76e
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+@graphgoblin/domain:typecheck: cache hit, replaying logs c23f3b7a693183e9
+@graphgoblin/domain:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/domain:build: cache hit, replaying logs 2991fa86bbba8a3c
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:typecheck: cache miss, executing 99c8385a34a1f1e2
+@graphgoblin/engine:build: cache hit, replaying logs 73a80cacdac17fb8
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-codex:typecheck: cache miss, executing d96ecc3b630a092e
+@graphgoblin/adapter-jev:typecheck: cache miss, executing 030a675d70f0267d
+@graphgoblin/adapter-jev:build: cache hit, replaying logs a658fd2f629f8e96
+@graphgoblin/infrastructure:build: cache miss, executing 5d4d5362c2eb6a4a
+@graphgoblin/infrastructure:typecheck: cache miss, executing a0ce7946c98578a6
+@graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-codex:build: cache hit, replaying logs 7e2b4d8da14f2648
+@graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-jev:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/adapter-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/infrastructure:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/api:build: cache miss, executing 5d3940b807750283
+@graphgoblin/api:typecheck: cache miss, executing 76a256129abd5475
+@graphgoblin/api:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/api:build: $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/api-client:typecheck: cache miss, executing f3a0efec2a62f695
+@graphgoblin/api-client:build: cache miss, executing dbce26d6c06406a7
+@graphgoblin/api-client:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/api-client:build: $ tsc -b tsconfig.build.json
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/web:typecheck: cache miss, executing 8e7ab660f3880e3c
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/mcp:typecheck: cache miss, executing 65b4c405b6b7461d
+@graphgoblin/mcp:build: cache miss, executing 0fde6ace6f380fa7
+ WARNING  IO error: Access is denied. (os error 5)
+@graphgoblin/mcp:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+@graphgoblin/mcp:build: $ tsc -b tsconfig.build.json
+@graphgoblin/web:typecheck: $ tsc -p tsconfig.json --noEmit
+@graphgoblin/plugin-codex:typecheck: cache miss, executing a278cff7d457396e
+@graphgoblin/plugin-codex:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+
+ Tasks:    20 successful, 20 total
+Cached:    7 cached, 20 total
+  Time:    2m27.03s 
+
+EXIT_CODE=0

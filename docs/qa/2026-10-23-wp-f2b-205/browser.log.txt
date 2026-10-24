@@ -1,0 +1,128 @@
+
+Running 42 tests using 1 worker
+
+pnpm.cmd : (node:59064) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+At line:2 char:282
++ ... n apps/web; pnpm.cmd exec playwright test e2e/model-effort.spec.ts e2 ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:59064) Wa... env being set.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:59064) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  1 [chromium] › e2e\claude-harness.spec.ts:77:1 › Claude inference selection stays family-specific through publish and run (6.3s)
+  ok  2 [chromium] › e2e\claude-harness.spec.ts:169:3 › Claude Sonnet 5.5 selection and effort survive save and reopen and reach the adapter request (5.2s)
+  ok  3 [chromium] › e2e\claude-harness.spec.ts:169:3 › Claude Haiku 5.5 selection and effort survive save and reopen and reach the adapter request (4.2s)
+  ok  4 [chromium] › e2e\claude-harness.spec.ts:264:3 › explicit harness switch on narrow editor with readiness false (6.4s)
+  ok  5 [chromium] › e2e\claude-harness.spec.ts:264:3 › explicit harness switch on narrow editor with readiness true (2.6s)
+  ok  6 [chromium] › e2e\claude-harness.spec.ts:336:1 › a ready Claude model field stays editable while a focus refetch rechecks readiness (5.9s)
+  ok  7 [chromium] › e2e\claude-harness.spec.ts:394:1 › Settings separates Claude adapter support from CLI readiness and supports Fable (2.1s)
+  ok  8 [chromium] › e2e\claude-harness.spec.ts:464:1 › Claude settings stay pending through refresh and preserve the Codex defaults (2.1s)
+  ok  9 [chromium] › e2e\claude-harness.spec.ts:531:1 › Claude inspector shows requested effort and policy artifact, and preserves unconfirmed termination failure (3.4s)
+  ok 10 [chromium] › e2e\claude-harness.spec.ts:704:3 › loaded saved incompatible model is retained without a switch, readiness false (2.1s)
+  ok 11 [chromium] › e2e\claude-harness.spec.ts:704:3 › loaded saved incompatible model is retained without a switch, readiness true (2.3s)
+  ok 12 [chromium] › e2e\model-effort.spec.ts:7:5 › inference explicit effort survives editing, save, reload and adapter request (3.0s)
+  ok 13 [chromium] › e2e\model-effort.spec.ts:7:5 › inference loop effort survives editing, save, reload and adapter request (3.3s)
+  ok 14 [chromium] › e2e\model-effort.spec.ts:7:5 › inference Settings effort survives editing, save, reload and adapter request (3.2s)
+  ok 15 [chromium] › e2e\model-effort.spec.ts:7:5 › inference ecosystem effort survives editing, save, reload and adapter request (3.8s)
+  ok 16 [chromium] › e2e\model-effort.spec.ts:7:5 › inference process effort survives editing, save, reload and adapter request (3.6s)
+  ok 17 [chromium] › e2e\model-effort.spec.ts:7:5 › llm explicit effort survives editing, save, reload and adapter request (3.3s)
+  ok 18 [chromium] › e2e\model-effort.spec.ts:7:5 › llm loop effort survives editing, save, reload and adapter request (2.9s)
+  ok 19 [chromium] › e2e\model-effort.spec.ts:7:5 › llm Settings effort survives editing, save, reload and adapter request (3.0s)
+  ok 20 [chromium] › e2e\model-effort.spec.ts:7:5 › llm ecosystem effort survives editing, save, reload and adapter request (4.0s)
+  ok 21 [chromium] › e2e\model-effort.spec.ts:7:5 › llm process effort survives editing, save, reload and adapter request (2.5s)
+  x  22 [chromium] › e2e\model-effort.spec.ts:129:1 › classifier keeps Question, Model, Answer visible and has no effort (4.6s)
+(node:39196) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:39196) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  23 [chromium] › e2e\model-effort.spec.ts:192:1 › a saved unsupported effort stays visible and is refused before the adapter (2.2s)
+(node:37680) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:37680) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 24 [chromium] › e2e\model-picker.spec.ts:36:3 › catalog model and effort publish and reach the harness (dark) (14.9s)
+  ok 25 [chromium] › e2e\model-picker.spec.ts:36:3 › catalog model and effort publish and reach the harness (light) (5.9s)
+  ok 26 [chromium] › e2e\model-picker.spec.ts:98:1 › a saved model removed from the catalog stays selected and explicit unknown import is rejected (5.1s)
+  ok 27 [chromium] › e2e\model-picker.spec.ts:155:1 › catalog failure preserves the current values until retry and loop defaults share the picker (5.2s)
+  ok 28 [chromium] › e2e\model-picker.spec.ts:199:1 › the decision LLM uses an explicit harness model and rejects unsupported effort on admission (2.5s)
+  ok 29 [chromium] › e2e\model-picker.spec.ts:279:1 › following a model issue keeps focus through a delayed catalog and a failed cached refresh (9.1s)
+  ok 30 [chromium] › e2e\model-picker.spec.ts:361:1 › explicit Claude to Codex switch persists the owner default and sends the exact request (4.2s)
+  ok 31 [chromium] › e2e\model-picker.spec.ts:413:1 › cached catalog failure holds publication across a harness switch and recovers (8.7s)
+  ok 32 [chromium] › e2e\node-placement.spec.ts:54:1 › inference placement, tab keyboard order, and single-panel kinds (3.2s)
+  ok 33 [chromium] › e2e\node-placement.spec.ts:109:3 › expression choice: placement and save/reload preserve the evaluator and routes (4.2s)
+  ok 34 [chromium] › e2e\node-placement.spec.ts:109:3 › expression noul: placement and save/reload preserve the evaluator and routes (5.3s)
+  ok 35 [chromium] › e2e\node-placement.spec.ts:109:3 › classifier choice: placement and save/reload preserve the evaluator and routes (5.7s)
+  ok 36 [chromium] › e2e\node-placement.spec.ts:109:3 › classifier noul: placement and save/reload preserve the evaluator and routes (6.7s)
+  ok 37 [chromium] › e2e\node-placement.spec.ts:109:3 › classifier score: placement and save/reload preserve the evaluator and routes (5.8s)
+  ok 38 [chromium] › e2e\node-placement.spec.ts:109:3 › llm choice: placement and save/reload preserve the evaluator and routes (4.8s)
+  ok 39 [chromium] › e2e\node-placement.spec.ts:109:3 › llm noul: placement and save/reload preserve the evaluator and routes (4.1s)
+  ok 40 [chromium] › e2e\node-placement.spec.ts:180:1 › a Context issue opens its collapsed Advanced group; undo crosses tabs and retains held JSON (6.5s)
+  ok 41 [chromium] › e2e\node-placement.spec.ts:256:3 › dark: node widths and both mounted panels fit at 360, 768, 1024, 1440 and 1920 px (28.5s)
+  ok 42 [chromium] › e2e\node-placement.spec.ts:256:3 › light: node widths and both mounted panels fit at 360, 768, 1024, 1440 and 1920 px (34.9s)
+
+
+  1) [chromium] › e2e\model-effort.spec.ts:129:1 › classifier keeps Question, Model, Answer visible and has no effort 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 0
+    + Received  + 1
+
+      Array [
+        "question",
+        "model",
+        "answer",
+    +   "answer",
+      ]
+
+      185 |           .filter((name) => ['question', 'model', 'answer'].includes(name ?? '')),
+      186 |       ),
+    > 187 |   ).toEqual(['question', 'model', 'answer']);
+          |     ^
+      188 |   await expect(dialog.getByLabel('Effort', { exact: true })).toHaveCount(0);
+      189 |   await page.screenshot({ path: '../../docs/qa/2026-10-23-wp-f2b-205/after-classifier.png' });
+      190 | });
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f2b-205\apps\web\e2e\model-effort.spec.ts:187:5
+
+    Error Context: test-results\model-effort-classifier-ke-efa62-r-visible-and-has-no-effort-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\model-effort-classifier-ke-efa62-r-visible-and-has-no-effort-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\model-effort-classifier-ke-efa62-r-visible-and-has-no-effort-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium] › e2e\model-effort.spec.ts:192:1 › a saved unsupported effort stays visible and is refused before the adapter 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 201
+    Received: 400
+
+      232 |     },
+      233 |   });
+    > 234 |   expect(created.status()).toBe(201);
+          |                            ^
+      235 |   const { loop } = (await created.json()) as { loop: { id: string } };
+      236 |   expect((await request.post(url + `/loops/${loop.id}/publish`)).status()).toBe(200);
+      237 |   await control(request, '/catalog/upsert', { ...entry, efforts: ['low'] });
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-f2b-205\apps\web\e2e\model-effort.spec.ts:234:28
+
+    Error Context: test-results\model-effort-a-saved-unsup-df431--refused-before-the-adapter-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\model-effort-a-saved-unsup-df431--refused-before-the-adapter-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\model-effort-a-saved-unsup-df431--refused-before-the-adapter-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [chromium] › e2e\model-effort.spec.ts:129:1 › classifier keeps Question, Model, Answer visible and has no effort 
+    [chromium] › e2e\model-effort.spec.ts:192:1 › a saved unsupported effort stays visible and is refused before the adapter 
+  40 passed (7.5m)
