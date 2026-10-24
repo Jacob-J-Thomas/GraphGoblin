@@ -1,6 +1,6 @@
 # ADR-0052 - Opt-in per-node provider conversation continuity
 
-Date: 2026-10-23. Status: Accepted (2026-10-24): reviewed by the orchestrator, live start-and-resume checks passed for Codex and Claude, independent QA passed.
+Date: 2026-10-23. Status: Accepted (2026-10-24): reviewed by the orchestrator, live start-and-resume checks passed for Codex and Claude, independent QA found no functional defect (its gate failures were dispositioned and CI passed), final audit signed off.
 
 ## Context
 
