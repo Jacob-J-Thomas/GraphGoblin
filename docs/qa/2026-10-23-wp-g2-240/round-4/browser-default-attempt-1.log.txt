@@ -1,0 +1,73 @@
+
+Running 7 tests using 1 worker
+
+pnpm.cmd : (node:48120) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+At line:18 char:1
++ pnpm.cmd --filter @graphgoblin/web exec playwright test e2e/events-re ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:48120) Wa... env being set.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:48120) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 [chromium] › e2e\events-refresh.spec.ts:24:1 › Events admits arrivals only on Refresh, preserves filters and pages again (#240) (8.5s)
+  ok 2 [chromium] › e2e\events-refresh.spec.ts:78:1 › Events keeps an offline Refresh snapshot, recovers deliberately and clears filters with the keyboard (#240) (12.0s)
+  ok 3 [chromium] › e2e\events-refresh.spec.ts:175:1 › Events drops an obsolete Refresh after clearing the filter, Back, a newer Refresh and paging (#240) (5.1s)
+  x  4 [chromium] › e2e\events-refresh.spec.ts:264:1 › Events updates the hundredth pending receipt after a head arrival without Refresh (#240) (20.1s)
+(node:59824) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:59824) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 5 [chromium] › e2e\history.spec.ts:4:1 › Runs appends a second page and preserves loop, status and parent filters (9.6s)
+  ok 6 [chromium] › e2e\history.spec.ts:50:1 › Events appends beyond the first page with reading position and keyboard focus intact (3.1s)
+  ok 7 [chromium] › e2e\history.spec.ts:84:1 › Loops shows older history beyond 500 unrelated runs and a genuine never-run control (28.2s)
+
+
+  1) [chromium] › e2e\events-refresh.spec.ts:264:1 › Events updates the hundredth pending receipt after a head arrival without Refresh (#240) 
+
+    SyntaxError: Unexpected token '<', "<!doctype "... is not valid JSON
+
+      280 |     }
+      281 |     const response = await route.fetch();
+    > 282 |     const body = (await response.json()) as {
+          |                   ^
+      283 |       items: { id: string; delivery?: { state: string; attempts: number } }[];
+      284 |       nextCursor: string | null;
+      285 |     };
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g2-240\apps\web\e2e\events-refresh.spec.ts:282:19
+
+    Error: page.goto: net::ERR_ABORTED; maybe frame was detached?
+    Call log:
+      - navigating to "http://127.0.0.1:56277/app/events?type=receipt-boundary", waiting until "load"
+
+
+      291 |     await route.fulfill({ response, json: body });
+      292 |   });
+    > 293 |   await page.goto(url + '/app/events?type=receipt-boundary');
+          |              ^
+      294 |   await expect(page.getByText('Pending admission', { exact: true })).toBeVisible();
+      295 |   const ids = () =>
+      296 |     page
+        at %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g2-240\apps\web\e2e\events-refresh.spec.ts:293:14
+
+    Error Context: test-results\events-refresh-Events-upda-84644-rrival-without-Refresh-240--chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\events-refresh-Events-upda-84644-rrival-without-Refresh-240--chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\events-refresh-Events-upda-84644-rrival-without-Refresh-240--chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › e2e\events-refresh.spec.ts:264:1 › Events updates the hundredth pending receipt after a head arrival without Refresh (#240) 
+  6 passed (3.4m)
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-wp-g2-
+  │ 240\apps\web
+
+EXIT_CODE=1

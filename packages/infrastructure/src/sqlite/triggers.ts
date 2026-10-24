@@ -389,13 +389,21 @@ export class SqliteInboundEvents {
       type?: string;
       before?: string;
       cursor?: Pick<InboundEventRecord, 'receivedAt' | 'id'>;
+      /** Inclusive page head for re-reading a loaded snapshot. */
+      anchor?: Pick<InboundEventRecord, 'receivedAt' | 'id'>;
     } = {},
   ): Promise<{
     items: InboundEventRecord[];
     next: Pick<InboundEventRecord, 'receivedAt' | 'id'> | null;
   }> {
     const limit = Math.max(1, Math.min(options.limit ?? 100, 500));
-    const rows = await this.rawPageRows(ownerId, options, limit + 1, options.cursor);
+    const rows = await this.rawPageRows(
+      ownerId,
+      options,
+      limit + 1,
+      options.anchor ?? options.cursor,
+      options.anchor !== undefined,
+    );
     // Both JSON columns stay raw until after trimming, including Drizzle's eager runIds decoder.
     const items = await this.withDelivery(
       rows
@@ -414,13 +422,16 @@ export class SqliteInboundEvents {
     options: { type?: string; before?: string },
     limit: number,
     cursor?: Pick<InboundEventRecord, 'receivedAt' | 'id'>,
+    inclusive = false,
   ): Promise<(Omit<EventRow, 'runIds'> & { runIds: string })[]> {
     const filters: SQL[] = [eq(inboundEvents.ownerId, ownerId)];
     if (options.type) filters.push(eq(inboundEvents.type, options.type));
     if (options.before) filters.push(lt(inboundEvents.receivedAt, options.before));
     if (cursor)
       filters.push(
-        sql`(${inboundEvents.receivedAt}, ${inboundEvents.id}) < (${cursor.receivedAt}, ${cursor.id})`,
+        inclusive
+          ? sql`(${inboundEvents.receivedAt}, ${inboundEvents.id}) <= (${cursor.receivedAt}, ${cursor.id})`
+          : sql`(${inboundEvents.receivedAt}, ${inboundEvents.id}) < (${cursor.receivedAt}, ${cursor.id})`,
       );
     return this.db
       .select({ ...getTableColumns(inboundEvents), runIds: sql<string>`${inboundEvents.runIds}` })

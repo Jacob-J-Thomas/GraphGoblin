@@ -63,11 +63,7 @@ for (const theme of ['dark', 'light']) {
     await page.keyboard.press('Enter');
     await expect(model).toHaveValue(selected);
     const effort = dialog.getByLabel('Effort', { exact: true });
-    await expect(effort.locator('option')).toHaveText([
-      '(inherited; the catalog suggests low)',
-      'low',
-      'high',
-    ]);
+    await expect(effort.locator('option')).toHaveText(['Default (low)', 'low', 'high']);
     await effort.focus();
     await page.keyboard.press('h');
     await page.keyboard.press('Enter');
@@ -193,7 +189,7 @@ test('catalog failure preserves the current values until retry and loop defaults
   await defaults.getByRole('textbox', { name: 'By harness key 1' }).fill('codex');
   const codexDefaults = settings.locator('[data-field="defaults.byHarness.codex"]');
   const defaultModel = codexDefaults.getByLabel('Model', { exact: true });
-  await expect(defaultModel.locator('option').first()).toHaveText('(owner default)');
+  await expect(defaultModel.locator('option').first()).toHaveText('(owner default) (gpt-6-luna)');
   await defaultModel.selectOption(chosen.model);
   await expect(codexDefaults.getByLabel('Effort', { exact: true }).locator('option')).toHaveCount(
     chosen.efforts.length + 1,
@@ -260,10 +256,8 @@ test('the decision LLM uses an explicit harness model and rejects unsupported ef
   await page.goto(`/app/loops/${loop.id}/edit`);
   const dialog = await openNode(page, 'infer');
   const evaluation = dialog;
-  const modelGroup = evaluation.getByRole('group', { name: 'Model', exact: true });
-  const effortGroup = evaluation.getByRole('group', { name: 'Effort', exact: true });
-  const model = modelGroup.getByLabel('Value', { exact: true });
-  const effort = effortGroup.getByLabel('Value', { exact: true });
+  const model = evaluation.getByLabel('Model', { exact: true });
+  const effort = evaluation.getByLabel('Effort', { exact: true });
   await expect(model).toHaveValue('picker-decision');
   await expect(effort).toHaveValue('high');
   await closeNode(page);

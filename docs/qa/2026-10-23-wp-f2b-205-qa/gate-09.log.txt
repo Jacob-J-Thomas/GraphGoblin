@@ -1,0 +1,101 @@
+$ vitest run --coverage
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f2b-205/apps/api
+      Coverage enabled with v8
+
+ ❯ src/adversarial.test.ts (34 tests | 1 failed) 55529ms
+   ❯ adversarial API invariants (34)
+     × ADV-008: every advertised route against every scope 21185ms
+ ❯ src/nested-readiness.test.ts (19 tests | 1 failed) 73420ms
+   ❯ manual admission over pinned nested definitions (19)
+     × uses the codex executable fixture through public nested admission 20032ms
+{"level":30,"time":1792824961908,"pid":22860,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5664"}
+{"level":30,"time":1792824961910,"pid":22860,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5664,"dataDir":"%USERPROFILE%\\AppData\\Local\\Temp\\gg-api-process-nEnMpa","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1792824961980,"pid":22860,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1792824961998,"pid":22860,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":17.785400000000664,"msg":"request completed"}
+subloop kill landings:
+delay undefined: leaf waiting at restart; recovery restarts top 0, middle 0, leaf 0
+delay 0: leaf running at restart; recovery restarts top 0, middle 0, leaf 1
+delay 10: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 30: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 60: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 100: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 150: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+delay 250: leaf succeeded at restart; recovery restarts top 1, middle 0, leaf 0
+ ❯ src/main.test.ts (9 tests | 1 failed | 4 skipped) 167822ms
+   ❯ built API entry and startup failures (6)
+     × dispatches the API-key and preflight CLIs with their real exit codes 60329ms
+ ❯ src/subloop-restart.test.ts (3 tests | 1 failed) 298740ms
+   ❯ awaited subloops across process death (#242) (3)
+     × the built API recovers a child finished while down with one continuation per parent 98498ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/adversarial.test.ts > adversarial API invariants > ADV-008: every advertised route against every scope
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/adversarial.test.ts:180:3
+    178|   };
+    179|
+    180|   it('ADV-008: every advertised route against every scope', async () =…
+       |   ^
+    181|     const t = await app({ requireApiKey: true });
+    182|     const scopes = [...new Set(Object.values(ROUTE_SCOPES))];
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/main.test.ts > built API entry and startup failures > dispatches the API-key and preflight CLIs with their real exit codes
+Error: Test timed out in 60000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/main.test.ts:67:3
+     65|   }, 60_000);
+     66|
+     67|   it('dispatches the API-key and preflight CLIs with their real exit c…
+       |   ^
+     68|     const f = await fixture();
+     69|     const token = await f.createKey();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/nested-readiness.test.ts > manual admission over pinned nested definitions > uses the codex executable fixture through public nested admission
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/nested-readiness.test.ts:440:40
+    438|   });
+    439|
+    440|   it.each(['claude', 'codex'] as const)(
+       |                                        ^
+    441|     'uses the %s executable fixture through public nested admission',
+    442|     async (id) => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a child finished while down with one continuation per parent
+Error: Hook timed out in 60000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ src/subloop-restart.test.ts:23:1
+     21|
+     22| const fixtures: Awaited<ReturnType<typeof createApiProcessFixture>>[] …
+     23| afterEach(async () => {
+       | ^
+     24|   for (const created of fixtures.splice(0)) await created.dispose();
+     25| }, 60_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  4 failed | 61 passed | 2 skipped (67)
+      Tests  4 failed | 1318 passed | 8 skipped (1330)
+   Start at  01:53:20
+   Duration  638.87s (tests 68%, import 23%, transform 9%, worker 1%)
+
+    Isolate  67 workers spawned · ~2.34s startup each (spawn + environment, per file)
+             at least ~11.93s faster with isolate: false — reuses workers across files instead of one per file
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-f2b-
+  │ 205\apps\api
+

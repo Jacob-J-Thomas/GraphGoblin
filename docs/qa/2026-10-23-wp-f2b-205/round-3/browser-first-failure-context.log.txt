@@ -1,0 +1,202 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: model-effort.spec.ts >> open inherited labels refresh after Settings in another tab and match the next request
+- Location: e2e\model-effort.spec.ts:28:1
+
+# Error details
+
+```
+Error: expect(locator).toHaveAccessibleDescription(expected) failed
+
+Locator: getByRole('dialog').getByLabel('Model', { exact: true })
+Expected pattern: /Default model: gpt-6.1-sol/
+Received string:  "Model; inherits within this harness from loop, owner, then process defaults. Default model: gpt-6-luna."
+Timeout: 10000ms
+
+Call log:
+  - Expect "toHaveAccessibleDescription" getByRole('dialog').getByLabel('Model', { exact: true }) with timeout 10000ms
+  - waiting for getByRole('dialog').getByLabel('Model', { exact: true })
+    23 × locator resolved to <select id="_r_q_" aria-describedby="_r_q_-help _r_q_-default" class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 …>…</select>
+       - unexpected value "Model; inherits within this harness from loop, owner, then process defaults. Default model: gpt-6-luna."
+
+```
+
+```yaml
+- combobox "Model":
+  - option "(loop default) (gpt-6-luna)" [selected]
+  - option "GPT-5.5 (gpt-5.5)"
+  - option "GPT-5.6 Luna (gpt-5.6-luna)"
+  - option "GPT-5.6 Sol (gpt-5.6-sol)"
+  - option "GPT-5.6 Terra (gpt-5.6-terra)"
+  - option "GPT-6 Astra (gpt-6-astra)"
+  - option "GPT-6 Luna (gpt-6-luna)"
+  - option "GPT-6 Sol (gpt-6-sol)"
+  - option "GPT-6.1 Sol (gpt-6.1-sol)"
+```
+
+# Test source
+
+```ts
+  1   | import { LoopDefinitionSchema } from '@graphgoblin/contracts';
+  2   | import { minimalLoop } from '@graphgoblin/contracts/testing';
+  3   | import { test, expect, control, openNode, closeNode } from './fixtures.js';
+  4   | 
+  5   | function inheritedInference(name: string, config: Record<string, unknown> = {}) {
+  6   |   const source = minimalLoop();
+  7   |   return {
+  8   |     ...source,
+  9   |     name,
+  10  |     nodes: [
+  11  |       source.nodes[0],
+  12  |       {
+  13  |         id: 'work',
+  14  |         kind: 'inference',
+  15  |         label: 'Work',
+  16  |         ui: { x: 260, y: 80 },
+  17  |         config: { prompt: { template: 'q' }, ...config },
+  18  |       },
+  19  |       source.nodes[1],
+  20  |     ],
+  21  |     edges: [
+  22  |       { id: 'start-work', from: { node: 'start', port: 'out' }, to: { node: 'work' } },
+  23  |       { id: 'work-done', from: { node: 'work', port: 'out' }, to: { node: 'done' } },
+  24  |     ],
+  25  |   };
+  26  | }
+  27  | 
+  28  | test('open inherited labels refresh after Settings in another tab and match the next request', async ({
+  29  |   page,
+  30  |   request,
+  31  |   context,
+  32  | }) => {
+  33  |   const instance = await control(request, '/apps');
+  34  |   const url = String(instance['url']);
+  35  |   const instanceId = String(instance['instanceId']);
+  36  |   const created = await request.post(url + '/loops', {
+  37  |     data: { definition: inheritedInference('205 refresh') },
+  38  |   });
+  39  |   expect(created.status()).toBe(201);
+  40  |   const { loop } = (await created.json()) as { loop: { id: string } };
+  41  |   expect((await request.post(url + `/loops/${loop.id}/publish`)).status()).toBe(200);
+  42  |   await page.goto(url + `/app/loops/${loop.id}/edit`);
+  43  |   let dialog = await openNode(page, 'work');
+  44  |   await expect(dialog.getByLabel('Effort', { exact: true }).locator('option').first()).toHaveText(
+  45  |     'Default (low)',
+  46  |   );
+  47  |   const settingsTab = await context.newPage();
+  48  |   await settingsTab.bringToFront();
+  49  |   await settingsTab.goto(url + '/app/settings');
+  50  |   await settingsTab.getByLabel('Default model', { exact: true }).selectOption('gpt-6.1-sol');
+  51  |   await expect(settingsTab.getByLabel('Default model', { exact: true })).toBeEnabled();
+  52  |   await settingsTab.getByLabel('Default effort', { exact: true }).selectOption('high');
+  53  |   await expect(settingsTab.getByLabel('Default effort', { exact: true })).toBeEnabled();
+  54  |   await page.bringToFront();
+> 55  |   await expect(dialog.getByLabel('Model', { exact: true })).toHaveAccessibleDescription(
+      |                                                             ^ Error: expect(locator).toHaveAccessibleDescription(expected) failed
+  56  |     /Default model: gpt-6.1-sol/,
+  57  |   );
+  58  |   await expect(dialog.getByLabel('Effort', { exact: true }).locator('option').first()).toHaveText(
+  59  |     'Default (high)',
+  60  |   );
+  61  |   expect((await request.post(url + `/loops/${loop.id}/runs`, { data: {} })).status()).toBe(202);
+  62  |   await expect
+  63  |     .poll(async () => (await control(request, '/harness/requests', { instanceId }))['started'])
+  64  |     .toMatchObject([{ model: 'gpt-6.1-sol', effort: 'high' }]);
+  65  |   await closeNode(page);
+  66  |   expect((await request.delete(url + '/settings/defaults')).status()).toBe(204);
+  67  |   dialog = await openNode(page, 'work');
+  68  |   await expect(dialog.getByLabel('Effort', { exact: true }).locator('option').first()).toHaveText(
+  69  |     'Default (low)',
+  70  |   );
+  71  |   await expect(dialog.getByLabel('Model', { exact: true })).toHaveAccessibleDescription(
+  72  |     /Default model: gpt-6-luna/,
+  73  |   );
+  74  |   await settingsTab.close();
+  75  | });
+  76  | 
+  77  | test('catalog pending and failure label effort as unknown without changing the selection', async ({
+  78  |   page,
+  79  |   request,
+  80  | }) => {
+  81  |   const instance = await control(request, '/apps');
+  82  |   const url = String(instance['url']);
+  83  |   const created = await request.post(url + '/loops', {
+  84  |     data: { definition: inheritedInference('205 unknown catalog') },
+  85  |   });
+  86  |   const { loop } = (await created.json()) as { loop: { id: string } };
+  87  |   let fail!: () => void;
+  88  |   const pending = new Promise<void>((resolve) => {
+  89  |     fail = resolve;
+  90  |   });
+  91  |   await page.route('**/model-catalog', async (route) => {
+  92  |     await pending;
+  93  |     await route.fulfill({
+  94  |       status: 503,
+  95  |       contentType: 'application/problem+json',
+  96  |       body: JSON.stringify({ status: 503, code: 'FAILED', detail: 'catalog unavailable' }),
+  97  |     });
+  98  |   });
+  99  |   await page.goto(url + `/app/loops/${loop.id}/edit`);
+  100 |   const dialog = await openNode(page, 'work');
+  101 |   await expect(dialog.getByLabel('Model', { exact: true })).toHaveAccessibleDescription(
+  102 |     /Default model: gpt-6-luna/,
+  103 |   );
+  104 |   const effort = dialog.getByLabel('Effort', { exact: true });
+  105 |   await expect(effort.locator('option').first()).toHaveText('Default (checking…)');
+  106 |   fail();
+  107 |   await expect(effort.locator('option').first()).toHaveText('Default (unavailable)');
+  108 |   await expect(effort).toHaveValue('');
+  109 | });
+  110 | 
+  111 | for (const explicit of [false, true]) {
+  112 |   test(`Claude ready capabilities refuse high before admission and still run low (explicit=${explicit})`, async ({
+  113 |     page,
+  114 |     request,
+  115 |   }) => {
+  116 |     const instance = await control(request, '/apps', {
+  117 |       claude: true,
+  118 |       env: {
+  119 |         GG_DEFAULTS: JSON.stringify({
+  120 |           byHarness: { claude: { model: 'claude-opus-5-5', effort: 'high' } },
+  121 |         }),
+  122 |       },
+  123 |     });
+  124 |     const url = String(instance['url']);
+  125 |     const instanceId = String(instance['instanceId']);
+  126 |     const created = await request.post(url + '/loops', {
+  127 |       data: {
+  128 |         definition: inheritedInference('205 Claude capability', {
+  129 |           harness: 'claude',
+  130 |           harnessOptions: { sandbox: 'read-only', approval: 'never' },
+  131 |           ...(explicit ? { model: 'claude-opus-5-5', effort: 'high' } : {}),
+  132 |         }),
+  133 |       },
+  134 |     });
+  135 |     expect(created.status()).toBe(201);
+  136 |     const { loop } = (await created.json()) as { loop: { id: string } };
+  137 |     expect((await request.post(url + `/loops/${loop.id}/publish`)).status()).toBe(200);
+  138 |     await control(request, '/harness/preflight', {
+  139 |       instanceId,
+  140 |       harness: 'claude',
+  141 |       state: 'ready',
+  142 |       models: [{ model: 'claude-opus-5-5', efforts: ['low'] }],
+  143 |     });
+  144 |     await page.goto(url + `/app/loops/${loop.id}/edit`);
+  145 |     const dialog = await openNode(page, 'work');
+  146 |     const effort = dialog.getByLabel('Effort', { exact: true });
+  147 |     await expect(effort).toHaveValue(explicit ? 'high' : '');
+  148 |     await expect(effort).toHaveAccessibleDescription(/not supported/);
+  149 |     if (!explicit)
+  150 |       await expect(effort).toHaveAccessibleDescription(
+  151 |         /Default effort: high.*not supported by this model/,
+  152 |       );
+  153 |     const rejected = await request.post(url + `/loops/${loop.id}/runs`, { data: {} });
+  154 |     expect(rejected.status()).toBe(422);
+  155 |     expect(await rejected.json()).toMatchObject({
+```

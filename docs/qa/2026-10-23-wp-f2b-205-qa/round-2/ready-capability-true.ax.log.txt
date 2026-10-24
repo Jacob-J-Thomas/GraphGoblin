@@ -1,0 +1,172 @@
+- banner:
+  - text: GraphGoblin
+  - navigation "Main":
+    - link "Loops":
+      - /url: /app/loops
+    - link "Runs":
+      - /url: /app/runs
+    - link "Events":
+      - /url: /app/events
+    - link "Settings":
+      - /url: /app/settings
+- banner:
+  - link "Loops":
+    - /url: /app/loops
+  - text: /
+  - heading "QA205 2 inference claude" [level=1]
+  - text: published v1 All changes saved
+  - button "Undo" [disabled]
+  - button "Redo" [disabled]
+  - link "Open in Runs":
+    - /url: /app/runs/new?loop=01M5PV68T5J9BE60494F3M5HF5
+  - text: Ready to publish
+  - button "Publish"
+- complementary "Palette":
+  - button "Hide palette" [expanded]
+  - heading "Palette" [level=2]
+  - navigation "Node palette":
+    - button "Add Trigger node": Trigger Starts a run
+    - button "Add Decision node": Decision Chooses a route and can limit repeats
+    - button "Add Inference node": Inference Hands work to a harness
+    - button "Add Script node": Script Runs a program
+    - button "Add Mutate node": Mutate Changes the context thread
+    - button "Add Subloop node": Subloop Runs another loop
+    - button "Add Wait node": Wait Parks until input, time, or a signal
+    - button "Add Heartbeat node": Heartbeat Polls on an interval
+    - button "Add Exit node": Exit Finishes with an outcome and return value
+- main:
+  - application:
+    - img:
+      - group "start out to work"
+    - img:
+      - group "work out to done"
+    - group "Trigger Start (start)": Trigger Start start out
+    - group "Inference Work (work)": Inference Work work out
+    - group "Exit Done (done)": Exit Done done
+    - img
+    - button "Zoom In":
+      - img
+    - button "Zoom Out":
+      - img
+    - button "Fit View":
+      - img
+    - button "Toggle Interactivity":
+      - img
+    - link "React Flow attribution":
+      - /url: https://reactflow.dev?utm_source=attribution
+      - text: React Flow
+- complementary "Loop settings":
+  - heading "Loop settings" [level=2]
+  - button "Hide loop settings" [expanded]
+  - region "Loop settings":
+    - text: Name
+    - textbox "Name": QA205 2 inference claude
+    - text: Description
+    - textbox "Description"
+    - heading "Settings" [level=3]
+    - paragraph: Maximum node visits is a safety cap against unintended cycles. Use a decision gate's maximum passes for an intentional repeat. The elapsed execution deadline includes waits and pauses. There is no run deadline unless you set one. Visits and passes can be explicitly set to Unlimited; cancellation remains available.
+    - form "Loop settings form":
+      - group "Working directory":
+        - text: Working directory Kind
+        - combobox "Kind":
+          - option "fixed"
+          - option "template"
+          - option "temp" [selected]
+      - group "Defaults":
+        - text: Defaults
+        - group "By harness":
+          - text: By harness
+          - paragraph: Defaults keyed by their harness; omitted fields inherit only within that harness.
+          - button "Add entry"
+          - status
+      - text: Maximum node visits
+      - spinbutton "Maximum node visits": "10"
+      - combobox "Maximum node visits mode":
+        - option "Limited" [selected]
+        - option "Unlimited"
+      - paragraph: Fresh entries per node. Default 10; unlimited removes this cutoff.
+      - text: Run deadline seconds
+      - combobox "Run deadline seconds mode":
+        - option "Limited"
+        - option "No run deadline" [selected]
+      - paragraph: Elapsed seconds including waits, pauses and restart downtime. No deadline by default; set seconds to add one.
+      - paragraph: No deadline; set one to stop a forgotten run.
+      - text: Subloop depth limit
+      - spinbutton "Subloop depth limit": "8"
+    - heading "Variables" [level=3]
+    - paragraph: Each variable maps a name to a JSON Schema.
+    - form "Variables form":
+      - group "Variables":
+        - text: Variables
+        - button "Add entry"
+        - status
+- dialog "Edit inference work":
+  - banner:
+    - heading "Edit inference work" [level=2]
+    - button "Close"
+  - region "Node properties":
+    - text: Node id
+    - textbox "Node id": work
+    - text: Label
+    - textbox "Label": Work
+    - group:
+      - form "work config":
+        - tablist "Node configuration":
+          - tab "Settings" [selected]
+          - tab "Context"
+        - tabpanel "Settings":
+          - radiogroup "Harness":
+            - text: Harness
+            - radio "codex"
+            - text: codex
+            - radio "claude" [checked]
+            - text: claude
+          - paragraph: Harness that runs the session.
+          - text: Model
+          - combobox "Model":
+            - option "(loop default) (claude-opus-5-5)" [selected]
+            - option "Claude Fable 5.1 (claude-fable-5-1)"
+            - option "Claude Haiku 5.5 (claude-haiku-5-5)"
+            - option "Claude Opus 5.5 (claude-opus-5-5)"
+            - option "Claude Sonnet 5.5 (claude-sonnet-5-5)"
+          - paragraph: "Default model: claude-opus-5-5."
+          - paragraph: Model; inherits within this harness from loop, owner, then process defaults.
+          - link "Model catalog in Settings":
+            - /url: /app/settings
+          - text: Effort
+          - combobox "Effort":
+            - option "Default (high)"
+            - option "high (not supported by this model)" [disabled] [selected]
+            - option "low"
+          - paragraph: "Default effort: high."
+          - status: This effort is not supported by the selected model. The saved choice stays until you change it.
+          - paragraph: Reasoning effort; inherits within this harness like the model. Catalog effort is guidance only. For Claude, this is the requested effort; the CLI does not report the effective effort.
+          - group "Session":
+            - text: Session Policy
+            - combobox "Policy":
+              - option "fresh" [selected]
+              - option "resume-previous"
+              - option "resume-named"
+            - paragraph: Start fresh, resume the previous session, or resume a named session.
+          - group "Prompt":
+            - text: Prompt
+            - paragraph: Liquid template rendered against the thread.
+            - text: Template Liquid
+            - textbox "Template"
+            - text: "Preview (sample thread): QA choose"
+            - button "Earlier node outputs (1)"
+          - text: Sandbox and approval policy
+          - combobox "Sandbox and approval policy":
+            - option "Read-only — built-in tools only; no OS or read-path isolation" [selected]
+          - paragraph: Read-only restricts built-in tools but provides no filesystem or OS confinement. Danger full access leaves command execution and network unconfined.
+          - button "Advanced"
+    - region "Connections":
+      - heading "Connections" [level=3]
+      - list:
+        - listitem:
+          - text: out →
+          - code: done
+          - button "Remove edge out"
+  - contentinfo:
+    - button "Delete node"
+    - button "Done"
