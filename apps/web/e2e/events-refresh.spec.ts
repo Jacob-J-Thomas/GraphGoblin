@@ -4,10 +4,7 @@ test('Events admits arrivals only on Refresh, preserves filters and pages again 
   page,
   request,
 }) => {
-  const url = process.env['GG_E2E_CONTROL_URL']
-    ? String((await control(request, '/apps'))['url'])
-    : process.env['GG_E2E_BASE_URL'];
-  if (!url) throw new Error('The Events browser setup did not provide a URL');
+  const url = String((await control(request, '/apps'))['url']);
   const send = async (type: string, index: number | string) => {
     expect(
       (await request.post(url + '/events', { data: { type, payload: { index } } })).status(),

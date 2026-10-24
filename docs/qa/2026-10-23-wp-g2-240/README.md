@@ -1,5 +1,7 @@
 ﻿# WP-G2 / #240 implementation evidence
 
+**Round 1 record.** The follow-up [round-2 report](round-2/README.md) removes the private browser harness and records the default-configuration result. The logs below remain the original round-1 evidence.
+
 ## 1. Branch and worktree
 
 - Branch: `codex-wp-g2-240`.
