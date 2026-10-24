@@ -1,0 +1,428 @@
+{
+  "head": "a553d429ad50cf9b528d660b8d39948fc554dda9",
+  "data": "%USERPROFILE%\\AppData\\Local\\Temp\\gg-qa-g1-116-2-scripts-bP2DPL\\gg-qa-g1-116-2-store-YoYNQW",
+  "port": 5874,
+  "processes": [
+    {
+      "ready": true,
+      "pid": 31048,
+      "port": 5874,
+      "runtime": "v22.14.0"
+    },
+    {
+      "ready": true,
+      "pid": 5544,
+      "port": 5874,
+      "runtime": "v22.14.0"
+    }
+  ],
+  "checks": [
+    {
+      "name": "0017 snapshots migrate unchanged with NULL replay state",
+      "pass": true,
+      "detail": {
+        "ids": [
+          "YHFC4R5WP77WRF6FVHZ531CPKW",
+          "MSR5YANGEVEDH9N6X3XVQWZJCJ"
+        ],
+        "oldMigrationCount": 18,
+        "state": [
+          {
+            "id": "MSR5YANGEVEDH9N6X3XVQWZJCJ",
+            "seq": 4,
+            "replayState": null
+          },
+          {
+            "id": "YHFC4R5WP77WRF6FVHZ531CPKW",
+            "seq": 5,
+            "replayState": null
+          }
+        ],
+        "unchangedOldColumns": true,
+        "unchangedEvents": true
+      }
+    },
+    {
+      "name": "upgraded NULL state reads full history then next write restores bounded reads",
+      "pass": true,
+      "detail": [
+        {
+          "id": "YHFC4R5WP77WRF6FVHZ531CPKW",
+          "initialRead": {
+            "seq": 5,
+            "vars": {
+              "items": [
+                "a",
+                "b"
+              ]
+            },
+            "visits": {
+              "a": 1,
+              "b": 1
+            },
+            "reads": [
+              {
+                "id": "YHFC4R5WP77WRF6FVHZ531CPKW",
+                "after": 0,
+                "rows": 5
+              },
+              {
+                "id": "YHFC4R5WP77WRF6FVHZ531CPKW",
+                "after": 0,
+                "rows": 5
+              }
+            ]
+          },
+          "nextRead": {
+            "seq": 5,
+            "vars": {
+              "items": [
+                "a",
+                "b"
+              ]
+            },
+            "visits": {
+              "a": 1,
+              "b": 1
+            },
+            "reads": [
+              {
+                "id": "YHFC4R5WP77WRF6FVHZ531CPKW",
+                "after": 4,
+                "rows": 1
+              },
+              {
+                "id": "YHFC4R5WP77WRF6FVHZ531CPKW",
+                "after": 4,
+                "rows": 1
+              }
+            ]
+          },
+          "checkpoint": {
+            "thread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "YHFC4R5WP77WRF6FVHZ531CPKW",
+                "loopId": "CCKQ1NNWT1Z52QRX4X6RJ61Y21",
+                "versionId": "KF5D1K2WG593SP2S5AE684N033",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "K6R4YXZCNFJZQCWSNFBT0V5NTX",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "api-key",
+                  "id": "test-key"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": {
+                    "topic": "hello"
+                  },
+                  "receivedAt": "2026-10-02T12:00:00.000Z"
+                }
+              },
+              "messages": [],
+              "vars": {
+                "items": [
+                  "a",
+                  "b"
+                ]
+              },
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {
+                  "a": 1,
+                  "b": 1
+                },
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            },
+            "seq": 5,
+            "replayState": {
+              "strict": true
+            }
+          }
+        },
+        {
+          "id": "MSR5YANGEVEDH9N6X3XVQWZJCJ",
+          "initialRead": {
+            "seq": 5,
+            "vars": {
+              "items": [
+                "a",
+                "b"
+              ]
+            },
+            "visits": {
+              "a": 1,
+              "b": 1
+            },
+            "reads": [
+              {
+                "id": "MSR5YANGEVEDH9N6X3XVQWZJCJ",
+                "after": 0,
+                "rows": 5
+              },
+              {
+                "id": "MSR5YANGEVEDH9N6X3XVQWZJCJ",
+                "after": 0,
+                "rows": 5
+              }
+            ]
+          },
+          "nextRead": {
+            "seq": 5,
+            "vars": {
+              "items": [
+                "a",
+                "b"
+              ]
+            },
+            "visits": {
+              "a": 1,
+              "b": 1
+            },
+            "reads": [
+              {
+                "id": "MSR5YANGEVEDH9N6X3XVQWZJCJ",
+                "after": 3,
+                "rows": 2
+              },
+              {
+                "id": "MSR5YANGEVEDH9N6X3XVQWZJCJ",
+                "after": 3,
+                "rows": 2
+              }
+            ]
+          },
+          "checkpoint": {
+            "thread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "MSR5YANGEVEDH9N6X3XVQWZJCJ",
+                "loopId": "4SG8FDC861R5JB3ZHKQRCB15NA",
+                "versionId": "7RGSGFA4H778YX602CQTKMBAGB",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "K6R4YXZCNFJZQCWSNFBT0V5NTX",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "api-key",
+                  "id": "test-key"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": {
+                    "topic": "hello"
+                  },
+                  "receivedAt": "2026-10-02T12:00:00.000Z"
+                }
+              },
+              "messages": [],
+              "vars": {
+                "items": [
+                  "a"
+                ]
+              },
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {
+                  "a": 1,
+                  "b": 1
+                },
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            },
+            "seq": 4,
+            "replayState": {
+              "strict": true,
+              "openNodeId": "b"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "writer state survives physical store reopen",
+      "pass": true,
+      "detail": [
+        {
+          "id": "YHFC4R5WP77WRF6FVHZ531CPKW",
+          "checkpoint": {
+            "thread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "YHFC4R5WP77WRF6FVHZ531CPKW",
+                "loopId": "CCKQ1NNWT1Z52QRX4X6RJ61Y21",
+                "versionId": "KF5D1K2WG593SP2S5AE684N033",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "K6R4YXZCNFJZQCWSNFBT0V5NTX",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "api-key",
+                  "id": "test-key"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": {
+                    "topic": "hello"
+                  },
+                  "receivedAt": "2026-10-02T12:00:00.000Z"
+                }
+              },
+              "messages": [],
+              "vars": {
+                "items": [
+                  "a",
+                  "b"
+                ]
+              },
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {
+                  "a": 1,
+                  "b": 1
+                },
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            },
+            "seq": 5,
+            "replayState": {
+              "strict": true
+            }
+          },
+          "seq": 5,
+          "vars": {
+            "items": [
+              "a",
+              "b"
+            ]
+          },
+          "visits": {
+            "a": 1,
+            "b": 1
+          },
+          "reads": [
+            {
+              "id": "YHFC4R5WP77WRF6FVHZ531CPKW",
+              "after": 4,
+              "rows": 1
+            },
+            {
+              "id": "YHFC4R5WP77WRF6FVHZ531CPKW",
+              "after": 4,
+              "rows": 1
+            }
+          ]
+        },
+        {
+          "id": "MSR5YANGEVEDH9N6X3XVQWZJCJ",
+          "checkpoint": {
+            "thread": {
+              "schemaVersion": 1,
+              "run": {
+                "id": "MSR5YANGEVEDH9N6X3XVQWZJCJ",
+                "loopId": "4SG8FDC861R5JB3ZHKQRCB15NA",
+                "versionId": "7RGSGFA4H778YX602CQTKMBAGB",
+                "iteration": 1
+              },
+              "invocation": {
+                "id": "K6R4YXZCNFJZQCWSNFBT0V5NTX",
+                "source": "manual.api",
+                "caller": {
+                  "kind": "api-key",
+                  "id": "test-key"
+                },
+                "trigger": {
+                  "nodeId": "start",
+                  "kind": "manual",
+                  "payload": {
+                    "topic": "hello"
+                  },
+                  "receivedAt": "2026-10-02T12:00:00.000Z"
+                }
+              },
+              "messages": [],
+              "vars": {
+                "items": [
+                  "a"
+                ]
+              },
+              "artifacts": [],
+              "outputs": {},
+              "gates": {},
+              "counters": {
+                "nodeVisits": {
+                  "a": 1,
+                  "b": 1
+                },
+                "usage": {
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "cachedInputTokens": 0,
+                  "reasoningOutputTokens": 0
+                }
+              }
+            },
+            "seq": 4,
+            "replayState": {
+              "strict": true,
+              "openNodeId": "b"
+            }
+          },
+          "seq": 5,
+          "vars": {
+            "items": [
+              "a",
+              "b"
+            ]
+          },
+          "visits": {
+            "a": 1,
+            "b": 1
+          },
+          "reads": [
+            {
+              "id": "MSR5YANGEVEDH9N6X3XVQWZJCJ",
+              "after": 3,
+              "rows": 2
+            },
+            {
+              "id": "MSR5YANGEVEDH9N6X3XVQWZJCJ",
+              "after": 3,
+              "rows": 2
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
