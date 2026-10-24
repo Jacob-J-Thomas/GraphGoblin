@@ -1,0 +1,27 @@
+import assert from 'node:assert/strict';
+import { readFile, writeFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
+import { resolve, join } from 'node:path';
+const { origin, token } = JSON.parse(await readFile(process.argv[2], 'utf8'));
+const out = resolve('docs/qa/2026-10-23-wp-f4-33-qa');
+const { chromium, expect } = createRequire(resolve('apps/web/package.json'))('@playwright/test');
+const browser = await chromium.launch({ channel: 'msedge', headless: true });
+const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+await context.addInitScript(t => localStorage.setItem('graphgoblin-api-key', t), token);
+async function api(path, body, extra = {}) { const r = await fetch(origin + path, { method: body ? 'PUT' : 'GET', headers: { authorization: 'Bearer ' + token, 'content-type': 'application/json', ...extra }, ...(body ? { body: JSON.stringify(body) } : {}) }); return { status: r.status, data: await r.json() }; }
+const results = [];
+try {
+  const runtime = JSON.parse(await readFile(join(out, 'runtime-corrected/runtime-results.json'), 'utf8'));
+  const ids = runtime.find(r => r.name === 'codex parallel forks children').detail.parallel;
+  for (const id of ids) { const sessions = await api(`/runs/${id}/sessions`); assert.equal(sessions.status, 200); assert.equal(sessions.data.items.length, 2); assert.equal(new Set(sessions.data.items.map(s => s.sessionId)).size, 2); results.push({ name: 'sessions endpoint', id, ...sessions }); }
+  const page = await context.newPage(); await page.goto(origin + '/app/runs/' + ids[0]); await expect(page.getByRole('heading').first()).toBeVisible(); await page.getByText(/^succeeded$/i).first().waitFor(); await writeFile(join(out, 'inspector-snapshot.json'), JSON.stringify({ id: ids[0], snapshot: await page.locator('body').ariaSnapshot() }, null, 2)); await page.screenshot({ path: join(out, 'inspector.png') }); results.push({ name: 'served inspector', id: ids[0], status: 'PASS' });
+  const browserResults = JSON.parse(await readFile(join(out, 'browser-results.json'), 'utf8')); const loopId = browserResults[0].loopId;
+  const first = await api('/loops/' + loopId); const second = await api('/loops/' + loopId); const definition = structuredClone(first.data.draft.definition); definition.nodes.find(n => n.id === 'worker').config.session = { policy: 'resume-own', resetAfterVisits: 3 };
+  const saved = await api(`/loops/${loopId}/draft`, { definition }, { 'if-match': '"' + first.data.draftToken + '"' }); assert.equal(saved.status, 200);
+  const stale = structuredClone(second.data.draft.definition); stale.nodes.find(n => n.id === 'worker').config.session = { policy: 'resume-own', resetAfterVisits: 1 };
+  const refused = await api(`/loops/${loopId}/draft`, { definition: stale }, { 'if-match': '"' + second.data.draftToken + '"' }); assert.equal(refused.status, 409); assert.equal(refused.data.code, 'DRAFT_CONFLICT'); assert.equal((await api('/loops/' + loopId)).data.draft.definition.nodes.find(n => n.id === 'worker').config.session.resetAfterVisits, 3); results.push({ name: 'stale new-field save', saved: saved.data.draftToken, refused });
+  // Two real tabs observe the latest own-session definition without writing stale values.
+  const tabs = [await context.newPage(), await context.newPage()]; for (const tab of tabs) { await tab.bringToFront(); await tab.goto(origin + `/app/loops/${loopId}/edit`); await expect(tab.getByTestId('node-worker')).toBeVisible(); await tab.getByTestId('node-worker').click({ position: { x: 60, y: 12 } }); await expect(tab.getByRole('dialog').getByLabel('Reset after visits')).toHaveValue('3'); } results.push({ name: 'two-tab reload', result: 'PASS', reset: 3 });
+} catch (e) { results.push({ result: 'FAIL', error: e.stack }); console.error(e.stack); }
+finally { await writeFile(join(out, 'adjacent-results.json'), JSON.stringify(results, null, 2)); await browser.close(); }
+

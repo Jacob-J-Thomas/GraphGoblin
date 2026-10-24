@@ -152,6 +152,16 @@ export interface HarnessSessionRecord {
 export interface HarnessSessionRepository {
   upsert(row: HarnessSessionRecord): Promise<void>;
   forNode(runId: string, nodeId: string): Promise<HarnessSessionRecord | undefined>;
+  /** Exact row for the last durably completed visit, whose final attempt comes from its log.
+   * Attempts restart on each visit: the highest attempt can belong to an older visit.
+   * Harness is part of selection even though the current immutable node pins its harness.
+   */
+  forNodeAttempt(
+    runId: string,
+    nodeId: string,
+    attempt: number,
+    harness: HarnessId,
+  ): Promise<HarnessSessionRecord | undefined>;
   latestWithSession(runId: string, harness: HarnessId): Promise<HarnessSessionRecord | undefined>;
   byScopeKey(scopeKey: string, harness: HarnessId): Promise<HarnessSessionRecord | undefined>;
 }

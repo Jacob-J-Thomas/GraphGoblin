@@ -1,0 +1,70 @@
+
+ RUN  v5.0.3 %USERPROFILE%/source/repos/GraphGoblin/.claude/worktrees/codex-qa-wp-f4-33/packages/infrastructure
+
+ ✓ src/claude/readiness.test.ts > Claude no-turn executable boundary > ready reports ready without exposing CLI bodies 589ms
+ ✓ src/claude/readiness.test.ts > Claude no-turn executable boundary > old reports cli-incompatible without exposing CLI bodies 833ms
+ ✓ src/claude/readiness.test.ts > Claude no-turn executable boundary > missing-model reports cli-incompatible without exposing CLI bodies 818ms
+ ✓ src/claude/readiness.test.ts > Claude no-turn executable boundary > missing-effort reports cli-incompatible without exposing CLI bodies 597ms
+ ✓ src/claude/readiness.test.ts > Claude no-turn executable boundary > auth reports auth without exposing CLI bodies 721ms
+ ✓ src/claude/readiness.test.ts > Claude no-turn executable boundary > quota reports quota without exposing CLI bodies 857ms
+ ✓ src/claude/readiness.test.ts > Claude no-turn executable boundary > transport reports transport without exposing CLI bodies 2563ms
+ ✓ src/claude/readiness.test.ts > Claude no-turn executable boundary > unknown reports unknown without exposing CLI bodies 809ms
+ × src/claude/readiness.test.ts > Claude no-turn executable boundary > hang reports unknown without exposing CLI bodies 7005ms
+   → expected [ Array(1) ] to deeply equal [ Array(1) ]
+ ✓ src/claude/readiness.test.ts > audited Claude auth evidence > auth-network preserves auth evidence through the executable boundary 1869ms
+ ✓ src/claude/readiness.test.ts > audited Claude auth evidence > quota-network preserves quota evidence through the executable boundary 1096ms
+ ✓ src/claude/readiness.test.ts > audited Claude auth evidence > stdout-quota-warning preserves quota evidence through the executable boundary 782ms
+ ✓ src/claude/readiness.test.ts > audited Claude auth evidence > auth-empty preserves unknown evidence through the executable boundary 855ms
+ ✓ src/claude/readiness.test.ts > audited Claude auth evidence > auth-unrecognised preserves unknown evidence through the executable boundary 910ms
+ ✓ src/claude/readiness.test.ts > audited Claude auth evidence > auth-zero-stdout preserves auth evidence through the executable boundary 1281ms
+ ✓ src/claude/readiness.test.ts > audited Claude auth evidence > auth-zero-stderr preserves auth evidence through the executable boundary 1544ms
+ ✓ src/claude/readiness.test.ts > audited Claude auth evidence > conflict-auth-stderr preserves auth evidence through the executable boundary 1483ms
+ ✓ src/claude/readiness.test.ts > audited Claude auth evidence > conflict-quota-stderr preserves quota evidence through the executable boundary 910ms
+ ✓ src/claude/readiness.test.ts > probes the actual installed native Claude without a model turn 2230ms
+ ✓ src/claude/readiness.test.ts > reports a missing Claude executable as cli-missing 11ms
+ ✓ src/claude/readiness.test.ts > classifies a real installed signed-out Claude in a disposable home as auth 1886ms
+pnpm.cmd : 
+At line:2 char:52
++ ... $env:PATH"; pnpm.cmd --filter @graphgoblin/infrastructure exec vitest ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/claude/readiness.test.ts > Claude no-turn executable boundary > hang reports unknown without exposing CLI 
+bodies
+AssertionError: expected [ Array(1) ] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+  [
+-   "Claude CLI did not answer before the check deadline. Check that the Claude CLI starts and responds, then retry 
+preflight.",
++   "Claude CLI check process did not confirm that it stopped. Check that the Claude CLI starts and responds, then 
+retry preflight.",
+  ]
+
+ ❯ src/claude/readiness.test.ts:62:31
+     60|         hang: ['Claude CLI did not answer before the check deadline.' …
+     61|       };
+     62|       expect(result.problems).toEqual(problems[scenario]);
+       |                               ^
+     63|     },
+     64|     60000,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 20 passed (21)
+   Start at  04:31:23
+   Duration  35.45s (tests 85%, transform 9%, import 7%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:
+  │ %USERPROFILE%\source\repos\GraphGoblin\.claude\worktrees\codex-qa-wp-f4-
+  │ 33\packages\infrastructure
+

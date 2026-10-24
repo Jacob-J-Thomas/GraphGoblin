@@ -70,7 +70,11 @@ type InferenceConfig = {
   harness: 'codex' | 'claude';
   model?: string;
   effort?: Effort;
-  session: { policy: 'fresh' | 'resume-previous' | 'resume-named'; key?: string };
+  session:
+    | { policy: 'fresh' }
+    | { policy: 'resume-previous' }
+    | { policy: 'resume-named'; key: string }
+    | { policy: 'resume-own'; resetAfterVisits?: number };
   prompt: { template: string }; // Liquid, rendered against the thread
   input: InputTransform[]; // applied to the thread view the template sees
   contextFiles?: { path: string; template: string }[]; // written under the working directory before the session starts
@@ -101,11 +105,19 @@ type RepairPolicy = {
 
 Behaviour: the engine renders the prompt and context files, persists the pending turn and harness session row, starts or resumes the session, streams events into `node.progress`, stores the transcript as an artifact, applies output transforms, validates against the schema if present, runs the configurable repair turns on the same session if validation fails, then patches `messages`, `lastOutput`, and `counters.usage`.
 
+`fresh` remains the default. Supply main-loop context deliberately through the prompt,
+input transforms or context files. Opt-in `resume-own` preserves only this node's provider
+conversation within this run and harness, including after restart; forks and children
+start fresh. Its optional `resetAfterVisits` accepts positive safe integers, without a
+default. N completed visits share a conversation; visit N+1 starts fresh. Retries and
+repairs stay in their visit. Reset never clears shared context or another node's session.
+Previous/named selection remains unchanged. See [ADR-0052](decisions/ADR-0052-node-own-session-continuity.md).
+
 Before invoking the harness, the engine durably records `harness.turn`: the exact rendered
 prompt, selected resume ID, prompt kind and logical visit/turn identities. `harness.submission`
 records refusal, uncertainty, missing-session status and any positive acceptance marker.
 A definitely-not-submitted turn retries that saved task with its original session-policy
-selection when the cause is resumable. Uncertain authored work cannot continue a previous/named
+selection when the cause is resumable. Uncertain authored work cannot continue a previous/named/own
 conversation on its inherited ID alone: this visit needs durable acceptance or a newly
 established session. Repairs and continuations can use the visit's own session. Without a
 usable session, or with a missing session, the run fails non-resumably; Replay from the node

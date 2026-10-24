@@ -90,6 +90,34 @@ provide only model and effort. Definitions containing `settings.defaults.harness
 as unknown keys; imports and API clients must remove it. There is no compatibility parser.
 Current definitions and exports use format 4. Decisions are a strict union on kind: expressions return a declared route ID, LLMs use Liquid instructions and declared routes, and classifiers retain Choice, Noul and Score. Outputs contain portId, provenance and observation. Decision gates own repeat markers and limits; exits are terminal (ADR-0036). [ADR-0035](decisions/ADR-0035-evaluator-specific-decisions.md) supersedes the earlier decision matrix and output shape. Frozen V3 conversion stages remain format 3; old stores and exports are refused until the integrated cutover adds the 3-to-4 stage. Thread format remains 1.
 
+## Inference context and session identity (#33)
+
+Provider conversation selection is independent of authored loop-context selection:
+
+- `session: { policy: "fresh" }` (the unchanged default) starts an isolated provider
+  conversation with the authored task and selected inputs. Use the prompt template,
+  input transforms and context files to deliberately supply current main-loop context.
+- `session: { policy: "resume-own", resetAfterVisits?: number }` opts into this node's
+  independent conversation within this execution and harness. Other nodes, runs,
+  replay forks and subloop children do not inherit its handle. Outputs enter the
+  shared thread only through the existing output configuration.
+- `resume-previous` still selects the latest session for the run and harness;
+  `resume-named` still selects the loop/key and harness, including across runs.
+  These existing shared policies are unchanged.
+
+`resetAfterVisits` is optional, with no default: positive safe integers from 1 to
+9,007,199,254,740,991. Visits 1 through N share a provider conversation; visit N+1
+starts fresh. Only durably completed logical visits advance this count; retries,
+repairs and interrupted recovery stay inside their visit. A reset changes only
+this node's provider conversation, preserving main-loop context and other nodes.
+There is no hidden ten-visit reset, provider-turn ceiling or token cap.
+
+The existing session rows retain `(runId, nodeId, attempt, harness)` identity.
+Attempts restart on each visit, so own continuity selects the exact final attempt
+of the latest durable `node.finished`, not the largest attempt or newest timestamp.
+The log supplies completed-visit/reset counts and open-turn provenance across restart.
+No row schema or stored data rewrite is needed. See [ADR-0052](decisions/ADR-0052-node-own-session-continuity.md).
+
 ## Versioning (Decided)
 
 - Upgrade migration `0005` rewrites stored version definitions once, removing only
@@ -249,7 +277,7 @@ A `failure` carried up from a subloop child has the child's `code` and `resumabl
 
 `failure.inference` contains `visitId`, `turnId`, `promptKind` (`authored`, `repair`, or
 `continuation`), `submission` (`definitely-not-submitted`, `delivery-uncertain`, or
-`session-missing`), and optional `sessionId`. The ID may be an inherited previous/named
+`session-missing`), and optional `sessionId`. The ID may be an inherited previous/named/own
 conversation; it does not by itself establish acceptance of this visit's authored task.
 See [inference recovery](05-execution-engine.md#inference-submission-and-recovery).
 

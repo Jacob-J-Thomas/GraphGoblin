@@ -61,9 +61,24 @@ Only classifiers choose **Choice**, **Noul** or **Score**. Choice keeps criteria
 
 The selected port is `lastOutput.value.portId`, provider details are `lastOutput.value.provenance`, and evidence is `lastOutput.value.observation`. Route observations expose `routeId`; classifier observations expose typed `answer`. Questions/instructions render against the full thread; provider context selection does not restrict Liquid exposure. Invalid configurations have precise diagnostics and no evaluator fallback. Current definitions/exports use format 4; old exports/stores require the integrated cutover.
 
-**Inference (`inference`).** Set `prompt.template` for a Codex or Claude turn. Choose `model`, `effort`, and `session.policy`: `fresh`, `resume-previous`, or `resume-named` with a `key`. Codex supports `read-only`, `workspace-write` (default), and `danger-full-access`. Claude requires native Windows CLI 2.1.285 or newer with required capabilities and an explicit supported `read-only`/`never` or `danger-full-access`/`never` policy. Read-only restricts built-in tools but does not confine filesystem reads or the operating system; full access leaves commands and network unconfined under the API user's account. Claude refuses unsupported pairs, `networkAccess: false`, `webSearch: true`, custom capabilities, and nonempty raw configuration overrides. Use `input` transformations, `contextFiles`, and `output.transforms` to shape context. Set `output.schema.jsonSchema` for structured output and configure its `repair` policy. `output.captureTranscript` defaults to `artifact`, `output.toMessages` to `final`; `timeoutSeconds` is optional. The output goes to `lastOutput.value` and the node follows `out`.
+**Inference (`inference`).** Set `prompt.template` for a Codex or Claude turn. Choose `model`, `effort`, and `session.policy`: `fresh` (default), `resume-previous`, `resume-named` with a `key`, or opt-in `resume-own`. Codex supports `read-only`, `workspace-write` (default), and `danger-full-access`. Claude requires native Windows CLI 2.1.285 or newer with required capabilities and an explicit supported `read-only`/`never` or `danger-full-access`/`never` policy. Read-only restricts built-in tools but does not confine filesystem reads or the operating system; full access leaves commands and network unconfined under the API user's account. Claude refuses unsupported pairs, `networkAccess: false`, `webSearch: true`, custom capabilities, and nonempty raw configuration overrides. Use `input` transformations, `contextFiles`, and `output.transforms` to shape context. Set `output.schema.jsonSchema` for structured output and configure its `repair` policy. `output.captureTranscript` defaults to `artifact`, `output.toMessages` to `final`; `timeoutSeconds` is optional. The output goes to `lastOutput.value` and the node follows `out`.
 
 > Capability profiles for `capabilities.mcpServers`, `capabilities.plugins`, and `capabilities.skills` remain unresolved for Codex; its adapter accepts `harnessOptions.configOverrides`. Claude refuses nonempty capabilities and nonempty raw overrides under its launch policy.
+
+**Choosing inference context.** Use `fresh` for a new provider conversation with your
+authored task and selected inputs. Include current loop context deliberately in
+`prompt.template`, **Context** input transforms or `contextFiles`; fresh does not
+mean an empty task. Use `resume-own` for an independent conversation owned by this
+node within this run and harness. Later visits resume it, including after restart;
+other nodes, runs, replay forks and child runs start their own conversations.
+Previous/named keep their existing shared-session behavior.
+
+Choosing `resume-own` reveals **Reset after visits** on Settings. Leave it blank for
+no automatic reset, or enter a positive safe integer (1 to 9,007,199,254,740,991).
+With 2, visits 1 and 2 share a conversation and visit 3 starts fresh. Retries and
+repairs remain inside a visit. This clears only that node's provider conversation;
+main-loop context and other nodes are kept. A missing provider session fails
+explicitly; an explicit fresh-session recovery choice remains a later feature.
 
 **Script (`script`).** Set an executable `command`, templated `args`, `cwd` (default `workspace`), and optional `env` and `timeoutSeconds`. Commands execute as the API's operating-system user, without a shell wrapper; invoke a shell explicitly if your program needs one. `stdin` accepts `thread`, `last-output`, or `none`; `stdout` accepts `last-output`, `patch` (RFC 6902), or `ignore`. In `env`, use the secret-reference syntax in [Settings and secrets](06-settings-and-secrets.md#store-secrets). Map expected nonzero codes through `exitCodeRoutes`; an unmapped nonzero code fails the run. Connect `out` and every additional route. Make scripts safe to execute again after interruption.
 

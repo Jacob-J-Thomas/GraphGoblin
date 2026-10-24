@@ -2890,6 +2890,10 @@ export interface components {
                         /** @constant */
                         policy: "resume-named";
                         key: string;
+                    } | {
+                        /** @constant */
+                        policy: "resume-own";
+                        resetAfterVisits?: number | undefined;
                     }) | undefined;
                     prompt: {
                         template: string;
@@ -4982,6 +4986,10 @@ export interface components {
                         /** @constant */
                         policy: "resume-named";
                         key: string;
+                    } | {
+                        /** @constant */
+                        policy: "resume-own";
+                        resetAfterVisits?: number | undefined;
                     };
                     prompt: {
                         template: string;
