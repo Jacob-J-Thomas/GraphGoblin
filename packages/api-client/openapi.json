@@ -317,6 +317,19 @@
                 },
                 "additionalProperties": false
               },
+              "structuredTimeoutMs": {
+                "default": null,
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 31536000000
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
               "maxNodeVisits": {
                 "default": 10,
                 "anyOf": [
@@ -4335,6 +4348,7 @@
               "HARNESS_TRANSPORT_FAILED",
               "HARNESS_OUTPUT_LIMIT",
               "RUN_DEADLINE_EXCEEDED",
+              "STRUCTURED_COMPLETION_TIMEOUT",
               "HARNESS_DELIVERY_UNCERTAIN",
               "HARNESS_SESSION_MISSING",
               "HARNESS_TERMINATION_UNCONFIRMED",
@@ -4667,6 +4681,19 @@
               "limits": {
                 "type": "object",
                 "properties": {
+                  "structuredTimeoutMs": {
+                    "default": null,
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 31536000000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
                   "maxNodeVisits": {
                     "default": 10,
                     "anyOf": [
@@ -5758,6 +5785,19 @@
                   "limits": {
                     "type": "object",
                     "properties": {
+                      "structuredTimeoutMs": {
+                        "default": null,
+                        "anyOf": [
+                          {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 31536000000
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
                       "maxNodeVisits": {
                         "default": 10,
                         "anyOf": [
@@ -9011,6 +9051,19 @@
                 ],
                 "additionalProperties": false
               },
+              "structuredTimeoutMs": {
+                "default": null,
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 31536000000
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
               "maxNodeVisits": {
                 "default": 10,
                 "anyOf": [
@@ -9047,6 +9100,7 @@
             "required": [
               "workingDirectory",
               "defaults",
+              "structuredTimeoutMs",
               "maxNodeVisits",
               "runDeadlineSeconds",
               "subloopDepthLimit"
@@ -13165,6 +13219,7 @@
               "HARNESS_TRANSPORT_FAILED",
               "HARNESS_OUTPUT_LIMIT",
               "RUN_DEADLINE_EXCEEDED",
+              "STRUCTURED_COMPLETION_TIMEOUT",
               "HARNESS_DELIVERY_UNCERTAIN",
               "HARNESS_SESSION_MISSING",
               "HARNESS_TERMINATION_UNCONFIRMED",
@@ -13503,6 +13558,19 @@
               "limits": {
                 "type": "object",
                 "properties": {
+                  "structuredTimeoutMs": {
+                    "default": null,
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "exclusiveMinimum": 0,
+                        "maximum": 31536000000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
                   "maxNodeVisits": {
                     "default": 10,
                     "anyOf": [
@@ -13531,6 +13599,7 @@
                   }
                 },
                 "required": [
+                  "structuredTimeoutMs",
                   "maxNodeVisits",
                   "runDeadlineSeconds"
                 ],
@@ -14604,6 +14673,19 @@
                   "limits": {
                     "type": "object",
                     "properties": {
+                      "structuredTimeoutMs": {
+                        "default": null,
+                        "anyOf": [
+                          {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 31536000000
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
                       "maxNodeVisits": {
                         "default": 10,
                         "anyOf": [
@@ -14632,6 +14714,7 @@
                       }
                     },
                     "required": [
+                      "structuredTimeoutMs",
                       "maxNodeVisits",
                       "runDeadlineSeconds"
                     ],

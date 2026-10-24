@@ -13,10 +13,13 @@ import {
 } from '@graphgoblin/contracts';
 import { evaluateExpression, validatePrimitiveAnswer } from '@graphgoblin/domain';
 import { summarizeDeciderError } from './decider-errors.js';
+import { completeWithDeadline } from './completion-deadline.js';
 import { isAbortError, RunFailureError } from './errors.js';
 import type { HandlerServices } from './handler.js';
 import type { ClassifierUnavailableReason, EnginePorts } from './ports.js';
 interface EvaluationRequest {
+  structuredTimeoutMs?: number | null;
+  runId?: string;
   nodeId: string;
   ownerId: string;
   config: { kind: 'expression' | 'llm' | 'classifier' };
@@ -309,9 +312,16 @@ async function evaluateLlm(
   let raw: unknown;
   try {
     const prepared = { instructions, context, ...resolved };
-    raw = await decider.route({ ...prepared, routes: config.routes }, request.signal);
+    raw = await completeWithDeadline(
+      (signal) => decider.route({ ...prepared, routes: config.routes }, signal),
+      request.signal,
+      request.structuredTimeoutMs ?? null,
+      request.ports.logger,
+      { nodeId: request.nodeId, ...(request.runId ? { runId: request.runId } : {}) },
+    );
     request.signal.throwIfAborted();
   } catch (error) {
+    if (error instanceof RunFailureError) throw error;
     providerFailure(request, error, provenance);
   }
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw))

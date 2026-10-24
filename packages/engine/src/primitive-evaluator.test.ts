@@ -174,7 +174,7 @@ describe('separate typed evaluation operations', () => {
         model: 'gpt-6-luna',
         effort: 'low',
       },
-      input.signal,
+      expect.any(AbortSignal),
     );
   });
   it.each(['route'] as const)(

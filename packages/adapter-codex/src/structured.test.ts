@@ -1,4 +1,5 @@
 import { existsSync } from 'node:fs';
+import type { HarnessPort } from '@graphgoblin/engine';
 import { FakeHarness } from '@graphgoblin/engine/testing';
 import { describe, expect, it, vi } from 'vitest';
 import { ReplayCodex } from './__fixtures__/replay.js';
@@ -78,3 +79,87 @@ describe('CodexStructured', () => {
     });
   });
 });
+
+it('does not create a directory or start provider work for an already aborted request', async () => {
+  const harness = new FakeHarness();
+  const tempDir = vi.fn();
+  const structured = createCodexStructured(harness, { tempDir });
+  const controller = new AbortController();
+  controller.abort();
+  await expect(
+    structured.complete({ prompt: 'p', schema }, controller.signal),
+  ).rejects.toMatchObject({ name: 'AbortError' });
+  expect(tempDir).not.toHaveBeenCalled();
+  expect(harness.started).toHaveLength(0);
+});
+
+it('cleans the directory if cancellation occurs while acquiring it', async () => {
+  const harness = new FakeHarness();
+  const cleanup = vi.fn(() => Promise.resolve());
+  const controller = new AbortController();
+  const structured = createCodexStructured(harness, {
+    tempDir: () => {
+      controller.abort();
+      return Promise.resolve({ path: '/scratch', cleanup });
+    },
+  });
+  await expect(
+    structured.complete({ prompt: 'p', schema }, controller.signal),
+  ).rejects.toMatchObject({ name: 'AbortError' });
+  expect(harness.started).toHaveLength(0);
+  expect(cleanup).toHaveBeenCalledOnce();
+});
+
+it('forwards abort through the Codex harness to the SDK call and cleans its directory', async () => {
+  const codex = new ReplayCodex({
+    events: [{ type: 'thread.started', thread_id: 'thread' }],
+    hangAfter: 0,
+  });
+  const cleanup = vi.fn(() => Promise.resolve());
+  const structured = createCodexStructured(new CodexHarness({ clientFactory: codex.factory }), {
+    tempDir: () => Promise.resolve({ path: '/scratch', cleanup }),
+  });
+  const controller = new AbortController();
+  const result = structured.complete({ prompt: 'p', schema }, controller.signal);
+  const rejected = expect(result).rejects.toMatchObject({ name: 'AbortError' });
+  await expect.poll(() => codex.runs[0]?.turnOptions?.signal !== undefined).toBe(true);
+  controller.abort();
+  await rejected;
+  expect(codex.runs[0]?.turnOptions?.signal?.aborted).toBe(true);
+  expect(cleanup).toHaveBeenCalledOnce();
+});
+
+it.each([false, true])(
+  'calls harness cancellation once and cleans up when cancellation rejects=%s',
+  async (fails) => {
+    const cleanup = vi.fn(() => Promise.resolve());
+    const failure = new Error('cancel cleanup failure');
+    const cancelled = new Error('caller cancelled');
+    const cancel = vi.fn(() => (fails ? Promise.reject(failure) : Promise.resolve()));
+    const controller = new AbortController();
+    const harness: HarnessPort = {
+      id: 'codex',
+      preflight: () => new FakeHarness().preflight(),
+      start: () => {
+        controller.abort(cancelled);
+        return {
+          sessionId: Promise.resolve('controlled'),
+          result: new Promise(() => {}),
+          events: { [Symbol.asyncIterator]: () => ({ next: () => new Promise(() => {}) }) },
+          cancel,
+        };
+      },
+      resume: () => {
+        throw new Error('not used');
+      },
+    };
+    const structured = createCodexStructured(harness, {
+      tempDir: () => Promise.resolve({ path: '/scratch', cleanup }),
+    });
+    await expect(structured.complete({ prompt: 'p', schema }, controller.signal)).rejects.toBe(
+      fails ? failure : cancelled,
+    );
+    expect(cancel).toHaveBeenCalledOnce();
+    expect(cleanup).toHaveBeenCalledOnce();
+  },
+);

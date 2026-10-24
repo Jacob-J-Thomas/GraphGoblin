@@ -42,7 +42,7 @@ function admissionFor(record: LoopVersionRecord, seed: string): RunAdmission {
     label: `${record.definition.name} ${source === 'draft' ? 'draft ' : ''}v${record.version}`,
     defaults: NO_DEFAULTS,
     classifiers: {},
-    limits: { maxNodeVisits: 10, runDeadlineSeconds: null },
+    limits: { structuredTimeoutMs: null, maxNodeVisits: 10, runDeadlineSeconds: null },
   };
   const run: RunRecord = {
     id: fakeUlid(`run:${seed}`),
@@ -149,17 +149,23 @@ describe('draft snapshots', () => {
       await apply();
       await apply();
       expect((await runs.get(created.id))?.pinned.limits).toEqual({
+        structuredTimeoutMs: null,
         maxNodeVisits: 4,
         runDeadlineSeconds: deadline,
       });
       expect(
         (await new SqliteEventStore(handle.db, new FakeClock()).read(created.id))[0],
-      ).toMatchObject({ pinned: { limits: { maxNodeVisits: 4, runDeadlineSeconds: deadline } } });
+      ).toMatchObject({
+        pinned: {
+          limits: { maxNodeVisits: 4, runDeadlineSeconds: deadline },
+        },
+      });
       const saved = (await handle.client.execute('SELECT intent FROM webhook_receipts')).rows[0]?.[
         'intent'
       ];
       if (typeof saved !== 'string') throw new Error('Expected saved admission JSON');
       expect(parseRunAdmission(JSON.parse(saved)).run.pinned.limits).toEqual({
+        structuredTimeoutMs: null,
         maxNodeVisits: 4,
         runDeadlineSeconds: deadline,
       });
@@ -413,7 +419,7 @@ describe('migration 0014 pins existing runs', () => {
           label: 'Release v1',
           defaults: { owner, process: { byHarness: {} } },
           classifiers: {},
-          limits: { maxNodeVisits: 10, runDeadlineSeconds: null },
+          limits: { structuredTimeoutMs: null, maxNodeVisits: 10, runDeadlineSeconds: null },
         },
       });
       // The draft run now pins a frozen copy named by its own id, everywhere it is recorded.

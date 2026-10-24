@@ -122,7 +122,7 @@ describe('draft runs pin a snapshot of the draft', () => {
       label: 'Pinned draft v1',
       defaults: { owner: { byHarness: {} }, process: engine.settings.defaults },
       classifiers: {},
-      limits: { maxNodeVisits: 10, runDeadlineSeconds: null },
+      limits: { structuredTimeoutMs: null, maxNodeVisits: 10, runDeadlineSeconds: null },
     });
     const thread = await engine.manager.getThread(run.id);
     expect(thread?.run.versionId).toBe(run.versionId);

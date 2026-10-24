@@ -25,6 +25,7 @@ import { applyMutations, completeRepair, applyPatch } from '@graphgoblin/domain'
 import type { MutationOperation, NodeKind } from '@graphgoblin/contracts';
 import { RunFailureError } from '../errors.js';
 import type { NodeContext } from '../handler.js';
+import { completeWithDeadline } from '../completion-deadline.js';
 
 export function toJson(value: unknown): JsonValue {
   if (value === undefined) return null;
@@ -217,9 +218,12 @@ export async function repairValue<K extends NodeKind>(
         errors,
         attempt,
       });
-      const completion = await structured.complete(
-        { prompt, schema: input.schema, model, effort },
+      const completion = await completeWithDeadline(
+        (signal) => structured.complete({ prompt, schema: input.schema, model, effort }, signal),
         ctx.signal,
+        ctx.run.pinned.limits.structuredTimeoutMs,
+        ctx.ports.logger,
+        { runId: ctx.run.id, nodeId: ctx.node.id },
       );
       const validation = validateJson(input.schema, completion.value);
       if (validation.ok) return { value: toJson(completion.value), repaired: true };

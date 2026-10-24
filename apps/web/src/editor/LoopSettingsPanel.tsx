@@ -82,6 +82,7 @@ export function LoopSettingsPanel({
       >
         <FieldLabelsContext
           value={{
+            structuredTimeoutMs: 'Structured completion milliseconds',
             maxNodeVisits: 'Maximum node visits',
             runDeadlineSeconds: 'Run deadline seconds',
           }}
