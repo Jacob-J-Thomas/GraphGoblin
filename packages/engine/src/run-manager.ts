@@ -1199,7 +1199,9 @@ export class RunManager {
           this.enqueue(run.id);
           continue;
         }
-        if (run.cancelRequestedAt) {
+        // A cancellation journalled before its flag (a child's cancellation, #398) is completed too.
+        if (run.cancelRequestedAt || events.at(-1)?.type === 'run.cancel_requested') {
+          await this.ports.runs.claimCancel(run.id, ACTIVE_STATUSES, this.now());
           await this.finalizeCancel(run.id);
           continue;
         }
@@ -1676,7 +1678,7 @@ export class RunManager {
         result = await (handler as { execute(c: NodeContext): Promise<NodeResult> }).execute(ctx);
       } catch (error) {
         if (error instanceof ChildCancelledError) {
-          await this.cancelForChild(runId, error.childRunId);
+          await this.cancelForChild(runId, error.childRunId, error.records);
           return;
         }
         const terminationUnconfirmed =
@@ -1720,7 +1722,11 @@ export class RunManager {
             'node provider failed',
           );
         else this.ports.logger.error({ runId, nodeId, failure }, 'node failed');
-        await this.failRun(runId, failure);
+        await this.failRun(
+          runId,
+          failure,
+          error instanceof RunFailureError ? error.options.records : undefined,
+        );
         return;
       }
       // A late result cannot replace a deadline/cancel outcome, even if a port ignored abort.
@@ -1763,12 +1769,17 @@ export class RunManager {
       try {
         thread = ContextThreadSchema.parse(applyPatch(thread, result.patch));
       } catch (error) {
-        await this.failRun(runId, {
-          code: 'INTERNAL_ERROR',
-          message: `node ${nodeId} produced an invalid patch: ${describeError(error)}`,
-          nodeId,
-          resumable: false,
-        });
+        // What the visit learned stays with the failure it ends in (#398).
+        await this.failRun(
+          runId,
+          {
+            code: 'INTERNAL_ERROR',
+            message: `node ${nodeId} produced an invalid patch: ${describeError(error)}`,
+            nodeId,
+            resumable: false,
+          },
+          result.kind === 'done' ? result.records : undefined,
+        );
         return;
       }
       const route = result.kind === 'exit' ? undefined : result.route;
@@ -1813,6 +1824,7 @@ export class RunManager {
         ...(result.kind === 'decision'
           ? [{ type: 'decision.made' as const, nodeId, ...result.evidence }]
           : []),
+        ...(result.kind === 'done' ? (result.records ?? []) : []),
         finishedDraft,
       ]);
       await this.ports.runs.saveThread(runId, thread, seq);
@@ -2055,7 +2067,11 @@ export class RunManager {
     return complete;
   }
 
-  private async failRun(runId: string, authoredFailure: RunFailure): Promise<void> {
+  private async failRun(
+    runId: string,
+    authoredFailure: RunFailure,
+    records: readonly EventDraft[] = [],
+  ): Promise<void> {
     const failure = boundedFailure(authoredFailure);
     const run = await this.ports.runs.get(runId);
     if (!run || isTerminal(run.status)) return;
@@ -2066,7 +2082,7 @@ export class RunManager {
       await this.completeFromLog(run, undefined, events);
       return;
     }
-    await this.ports.events.append(runId, [{ type: 'run.failed', failure }]);
+    await this.ports.events.append(runId, [...records, { type: 'run.failed', failure }]);
     const failed = await this.ports.runs.transition(runId, ACTIVE_STATUSES, {
       status: 'failed',
       failure,
@@ -2259,11 +2275,21 @@ export class RunManager {
    * The child this run awaited was cancelled: cancel this run too, as cancelling inline work
    * cancels the run doing it (#251). The request is recorded as the child's.
    */
-  private async cancelForChild(runId: string, childRunId: string): Promise<void> {
-    if (await this.ports.runs.claimCancel(runId, ACTIVE_STATUSES, this.now()))
+  private async cancelForChild(
+    runId: string,
+    childRunId: string,
+    records: readonly EventDraft[] = [],
+  ): Promise<void> {
+    // Journal first, then claim (#398): the child's completion and the request it causes are one
+    // append, so a process that dies before it re-executes the visit, and one that dies after it
+    // finds the request as the log's last event and completes the cancellation at recovery.
+    const run = await this.mustGet(runId);
+    if (!run.cancelRequestedAt)
       await this.ports.events.append(runId, [
+        ...records,
         { type: 'run.cancel_requested', actor: { kind: 'run', id: childRunId } },
       ]);
+    await this.ports.runs.claimCancel(runId, ACTIVE_STATUSES, this.now());
     await this.finalizeCancel(runId);
   }
 
