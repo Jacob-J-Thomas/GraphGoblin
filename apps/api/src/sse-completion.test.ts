@@ -121,6 +121,44 @@ describe('authoritative SSE completion', () => {
     },
   );
 
+  it.each(['empty replay', 'audit suffix'] as const)(
+    'confirms a consumed outcome while the run status still lags (%s)',
+    async (shape) => {
+      const store = new InMemoryEventStore(new FakeClock());
+      const runId = FIXTURE_IDS.run;
+      await store.append(
+        runId,
+        shape === 'empty replay'
+          ? [{ type: 'run.cancelled' }]
+          : [
+              { type: 'run.cancelled' },
+              { type: 'return.delivered', channel: { kind: 'caller' }, target: 'run.result' },
+            ],
+      );
+      const app = Fastify();
+      app.get('/', (request, reply) =>
+        streamRunEvents(request, reply, store, runId, 1, {
+          // The outcome is durable, but the status write has not landed yet.
+          isTerminal: () => Promise.resolve(false),
+          lastLifecycleEvent: async () =>
+            (await store.read(runId)).find((event) => event.type === 'run.cancelled'),
+          // Ends an unconfirmed stream so a regression fails instead of hanging.
+          closeSignal: AbortSignal.timeout(3_000),
+        }),
+      );
+      try {
+        const response = await app.inject('/');
+        const log: RunEvent[] = await store.read(runId);
+        expect(ids(response.body)).toEqual(
+          log.filter((event) => event.seq > 1).map((event) => event.seq),
+        );
+        completion(response.body, log.at(-1)!.seq);
+      } finally {
+        await app.close();
+      }
+    },
+  );
+
   it.each(['audit', 'resume'] as const)(
     'checks the durable tail after a lifecycle lookup racing a %s',
     async (kind) => {

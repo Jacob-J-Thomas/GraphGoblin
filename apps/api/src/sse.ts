@@ -296,7 +296,9 @@ export async function streamRunEvents(
     if (closed) return;
     const terminal = (await options.isTerminal?.()) ?? false;
     if (closed) return;
-    needsConfirmation = terminal;
+    // The cursor may already hold the current outcome while the status write still lags it,
+    // so confirm the lifecycle after catch-up unless replay delivers a later marker itself.
+    needsConfirmation = true;
     // Preserve HTTP Problem Details for corruption in an empty consumed-cursor lookup.
     if (terminal && pending.page.length === 0) await hasConsumedTerminal();
     if (closed) return;
