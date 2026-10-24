@@ -317,7 +317,11 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
       const { harness, fake } = selectedHarness(instance, body);
       if (harness !== 'claude' || !(fake instanceof E2eClaudeHarness))
         throw new E2eControlError('preflight controls are available only for the Claude E2E fake');
-      if (body['state'] === 'ready') fake.preflightResult = readyClaudePreflight;
+      if (body['state'] === 'ready')
+        fake.preflightResult = HarnessPreflightSchema.parse({
+          ...readyClaudePreflight,
+          ...(body['models'] !== undefined ? { models: body['models'] } : {}),
+        });
       else if (body['state'] === 'not-ready') fake.preflightResult = notReadyClaudePreflight;
       else throw new E2eControlError("preflight state must be 'ready' or 'not-ready'");
       return { ok: true };
@@ -338,6 +342,8 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
       target.jev.isAvailable = body['jev'] !== false;
       target.codex.isAvailable = body['codex'] !== false;
       return { ok: true };
+    case '/deciders/requests':
+      return { routes: selectedInstance(body).app.codex.routes };
     case '/deciders/route':
       target.jev.choose = (request) => {
         target.jev.choices.push(request);
@@ -359,7 +365,11 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
       return { ok: true };
     }
     case '/catalog/upsert':
-      await target.container.repos.catalog.upsert(ModelCatalogEntrySchema.parse(body));
+      await selectedInstance(body).app.container.repos.catalog.upsert(
+        ModelCatalogEntrySchema.parse(
+          Object.fromEntries(Object.entries(body).filter(([key]) => key !== 'instanceId')),
+        ),
+      );
       return { ok: true };
     case '/timers/poll':
       await target.container.timers.poll();

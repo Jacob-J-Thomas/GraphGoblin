@@ -114,9 +114,10 @@ Schedules, webhook endpoints, and the public /hooks receiver.
 
 Health, version, harness preflight.
 
-| Method | Path                 | Summary                                                                                        | Parameters | Request body | Responses |
-| ------ | -------------------- | ---------------------------------------------------------------------------------------------- | ---------- | ------------ | --------- |
-| GET    | `/healthz`           | Liveness check                                                                                 | -          | -            | 200       |
-| GET    | `/version`           | API name and version                                                                           | -          | -            | 200       |
-| GET    | `/system/preflight`  | First-run preflight: Node, data directory, master key, database, harnesses, Jev, default model | -          | -            | 200       |
-| GET    | `/harness/preflight` | Is each configured harness installed and authenticated?                                        | -          | -            | 200       |
+| Method | Path                     | Summary                                                                                        | Parameters | Request body | Responses |
+| ------ | ------------------------ | ---------------------------------------------------------------------------------------------- | ---------- | ------------ | --------- |
+| GET    | `/system/model-defaults` | Process model and effort defaults, before loop and owner overrides                             | -          | -            | 200       |
+| GET    | `/healthz`               | Liveness check                                                                                 | -          | -            | 200       |
+| GET    | `/version`               | API name and version                                                                           | -          | -            | 200       |
+| GET    | `/system/preflight`      | First-run preflight: Node, data directory, master key, database, harnesses, Jev, default model | -          | -            | 200       |
+| GET    | `/harness/preflight`     | Is each configured harness installed and authenticated?                                        | -          | -            | 200       |

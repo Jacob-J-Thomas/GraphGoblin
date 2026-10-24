@@ -1,0 +1,58 @@
+- banner:
+  - text: GraphGoblin
+  - navigation "Main":
+    - link "Loops":
+      - /url: /app/loops
+    - link "Runs":
+      - /url: /app/runs
+    - link "Events":
+      - /url: /app/events
+    - link "Settings":
+      - /url: /app/settings
+- heading "New run" [level=1]
+- link "Runs of this loop":
+  - /url: /app/runs?loop=01M5PTS3CJN237VTH2JE0CYSWS
+- text: Loop
+- combobox "Loop":
+  - option "(choose)"
+  - option "QA205 25 inference claude" [selected]
+  - option "QA205 24 inference claude"
+  - option "QA205 23 inference claude"
+  - option "QA205 22 inference codex"
+  - option "QA205 21 inference claude"
+  - option "QA205 20 inference claude"
+  - option "QA205 19 inference claude"
+  - option "QA205 18 llm codex"
+  - option "QA205 17 llm codex"
+  - option "QA205 16 inference codex"
+  - option "QA205 15 llm codex"
+  - option "QA205 14 llm codex"
+  - option "QA205 13 llm codex"
+  - option "QA205 12 inference codex"
+  - option "QA205 11 inference codex"
+  - option "QA205 10 inference codex"
+  - option "QA205 9 inference codex"
+  - option "QA205 8 inference codex"
+  - option "QA205 7 inference codex"
+  - option "QA205 6 inference claude"
+  - option "QA205 5 inference codex"
+  - option "QA205 4 inference codex"
+  - option "QA205 3 inference codex"
+  - option "QA205 2 inference codex"
+  - option "QA205 1 inference claude"
+- region "Start a run":
+  - text: Version
+  - combobox "Version":
+    - option "v1 (current), published 10/24/2026, 6:29:47 AM" [selected]
+  - paragraph: The run keeps this version to the end. Runs of a loop can run at the same time.
+  - text: Trigger
+  - combobox "Trigger":
+    - option "Start (start)" [selected]
+  - form "Start run":
+    - text: Input (JSON)
+    - textbox "Input (JSON)":
+      - /placeholder: "{}"
+    - button "Start run"
+  - alert:
+    - paragraph: Could not start the run
+    - text: Harness readiness checks failed. Fix the listed problems, then start the run again. (HARNESS_NOT_READY)

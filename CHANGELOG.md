@@ -4,6 +4,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Show model and reasoning effort directly in inference and LLM decision editors, each in one dropdown naming the inherited default. Refresh default labels on dialog open, window focus and Settings saves; describe inherited values and unsupported efforts accessibly. Refuse a manual run whose Claude effort is outside the ready capabilities before recording it. Classifiers keep Question, Model, then Answer with no effort. Process defaults are exposed read-only for accurate labels; saved configuration shapes are unchanged. (#205)
+
 - Add opt-in inference `session.policy: resume-own`, isolated per node, run and harness across repeated visits and restart. Optional `resetAfterVisits` resets only that provider conversation after the authored number of completed visits; omission introduces no reset. Existing fresh/previous/named selection and prompt-delivery provenance remain unchanged. The editor exposes the policy and optional reset with context guidance. **Upgrade:** no store rewrite, reset or SQL migration is required; API/export consumers must accept the new session-policy variant and optional positive safe-integer reset field; custom HarnessSessionRepository ports must implement forNodeAttempt. (#33)
 
 - A parent run writes its child's `child_run.finished` in the same append as the outcome it reaches with it (the subloop node's `node.finished`, its `run.failed` or its cancellation), so a process that dies in between no longer leaves a completion that crash recovery records a second time. Each durable outcome carries the completion its attempt observed. (#398)
