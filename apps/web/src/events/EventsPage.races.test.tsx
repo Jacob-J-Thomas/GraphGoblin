@@ -162,4 +162,43 @@ describe('Events refresh races (#240)', () => {
       }
     },
   );
+
+  it('keeps updating loaded receipts after the loaded page head is deleted', async () => {
+    const api = new FakeApi();
+    api.inbound = Array.from({ length: 101 }, (_, i) => event(`receipt-${i}`));
+    for (const index of [0, 99])
+      api.inbound[index] = { ...api.inbound[index]!, delivery: { state: 'pending', attempts: 0 } };
+    const view = renderApp('/events?type=chosen', api);
+    const anchored = () =>
+      api.callsTo('GET', '/events').filter((call) => call.search.has('anchor'));
+    try {
+      expect(await screen.findAllByText('Pending admission')).toHaveLength(2);
+      const before = rowIds();
+      api.inbound.splice(0, 1);
+      api.inbound[98] = { ...api.inbound[98]!, delivery: { state: 'admitted', attempts: 0 } };
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2_000);
+      });
+      await waitFor(() => expect(anchored()).toHaveLength(1));
+      expect(anchored()[0]!.search.get('anchor')).toBe('receipt-0');
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2_000);
+      });
+      // The deleted head cannot anchor a read; the next loaded row does, for the rest.
+      expect(await screen.findByText('Admitted', undefined, { timeout: 5_000 })).toBeVisible();
+      expect(anchored()[1]!.search.get('anchor')).toBe('receipt-1');
+      expect(anchored()[1]!.search.get('limit')).toBe('99');
+      expect(rowIds()).toEqual(before);
+      await user().click(screen.getByRole('button', { name: 'Load more' }));
+      await screen.findByTestId('payload-receipt-100');
+      expect(rowIds()).toHaveLength(101);
+    } finally {
+      view.unmount();
+      view.queryClient.clear();
+    }
+  });
 });
+
+function user() {
+  return userEvent.setup();
+}

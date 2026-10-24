@@ -280,6 +280,8 @@ const PENDING_EVENT_REFRESH_MS = 2_000;
 // A single newest row is enough for an availability notice; never count or scan history.
 const NEW_EVENT_CHECK_MS = 2_000;
 type InboundPage = Awaited<ReturnType<typeof events.list>>;
+/** A loaded page remembers which of its rows anchors its background re-reads. */
+type LoadedInboundPage = InboundPage & { anchor?: string | undefined };
 type InboundRefresh = { scope: object; generation: symbol };
 // Query identities belong to a QueryClient and survive observer/filter remounts. Weak keys
 // expire with the cached query; an evicted/re-created scope cannot accept an old response.
@@ -314,16 +316,17 @@ export function useInboundEvents(query: ListEventsQuery = {}) {
     queryKey,
     enabled: !(manualRefresh.isPending && currentRefresh(manualRefresh.variables)),
     initialPageParam: query.cursor,
-    queryFn: async ({ pageParam, signal }) => {
-      const loaded = cache.getQueryData<InfiniteData<InboundPage>>(queryKey);
+    queryFn: async ({ pageParam, signal }): Promise<LoadedInboundPage> => {
+      const loaded = cache.getQueryData<InfiniteData<LoadedInboundPage>>(queryKey);
       const index = loaded?.pageParams.indexOf(pageParam) ?? -1;
       const previous = loaded?.pages[index];
-      const head = previous?.items[0];
+      const from = Math.max(0, previous?.items.findIndex(({ id }) => id === previous.anchor) ?? 0);
+      const head = previous?.items[from];
       const request = { ...query };
       if (head && previous) {
         delete request.cursor;
         request.anchor = head.id;
-        request.limit = previous.items.length;
+        request.limit = previous.items.length - from;
       } else if (pageParam !== undefined) {
         delete request.anchor;
         request.cursor = pageParam;
@@ -339,6 +342,8 @@ export function useInboundEvents(query: ListEventsQuery = {}) {
       return {
         ...previous,
         items: previous.items.map((event) => updates.get(event.id) ?? event),
+        // Only a deleted anchor reads as empty: the next loaded row anchors the next read.
+        anchor: page.items.length === 0 ? previous.items[from + 1]?.id : head?.id,
       };
     },
     getNextPageParam: (page) => page.nextCursor ?? undefined,
