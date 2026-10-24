@@ -13,7 +13,7 @@ const mode = process.argv[2] ?? 'before';
 assert(['before', 'after'].includes(mode));
 const out = path.join(root, 'docs/qa/2026-10-23-wp-g2-240/round-3');
 const { chromium } = createRequire(path.join(root, 'apps/web/package.json'))('@playwright/test');
-const redact = value => String(value).replace(/(?:C:)?[\\/]+Users[\\/]+98jak/gi, '%USERPROFILE%');
+const redact = value => String(value).replace(/(?:C:)?[\\/]+Users[\\/]+[^\\/]+/gi, '%USERPROFILE%');
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 const wait = async (check, budget = 15000) => {
   const deadline = Date.now() + budget;
